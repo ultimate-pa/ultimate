@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 /**
  * Buchi Complementation based on
@@ -319,6 +320,9 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INestedWordAutomato
 		final Collection<LevelRankingState<LETTER, STATE>> result =
 				generateLevelRankings(predecessorIsSubsetComponent, constraints);
 		if (result.size() > warnSize && mLogger.isWarnEnabled()) {
+			if (!mServices.getProgressMonitorService().continueProcessing()) {
+				throw new ToolchainCanceledException(this.getClass());
+			}
 			// TODO Christian 2016-08-19: Writes "bigX" to logger on <tt>WARN</tt> level in a loop, i.e., spams a lot.
 			mLogger.warn("big" + result.size());
 		}

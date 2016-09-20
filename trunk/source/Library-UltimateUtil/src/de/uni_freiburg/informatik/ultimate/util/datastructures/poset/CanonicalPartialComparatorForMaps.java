@@ -26,17 +26,48 @@
  */
 package de.uni_freiburg.informatik.ultimate.util.datastructures.poset;
 
+import java.util.Comparator;
+import java.util.Map;
+import java.util.Map.Entry;
 
 /**
- * Comperator for partially ordered sets.
+ * Comparator for partially ordered sets.
  * @author Matthias Heizmann
  *
  * @param <T>
  */
-public interface IPartialComperator<T> {
+public class CanonicalPartialComparatorForMaps<K,V> implements IPartialComparator<Map<K,V>> {
 	
-	public enum ComparisonResult { STRICTLY_SMALLER, EQUAL, STRICTLY_GREATER, INCOMPARABLE }
+	private final Comparator<V> mComperator;
 	
-	public ComparisonResult compare(T o1, T o2);
+	public CanonicalPartialComparatorForMaps(final Comparator<V> comperator) {
+		super();
+		mComperator = comperator;
+	}
+
+
+	@Override
+	public ComparisonResult compare(final Map<K, V> o1, final Map<K, V> o2) {
+		ComparisonResult result = ComparisonResult.EQUAL;
+		for (final Entry<K, V> entry : o1.entrySet()) {
+			ComparisonResult currentPartialComparionResult;
+			final V value2 = o2.get(entry.getKey());
+			if (value2 == null) {
+				currentPartialComparionResult = ComparisonResult.STRICTLY_GREATER;
+			} else {
+				currentPartialComparionResult = ComparisonResult.fromNonPartialComparison(
+						mComperator.compare(entry.getValue(), value2));
+			}
+			result = ComparisonResult.aggregate(result, currentPartialComparionResult);
+			if (result == ComparisonResult.INCOMPARABLE) {
+				return result;
+			}
+		}
+		if (result == ComparisonResult.EQUAL && o1.size() < o2.size()) {
+			//not equal but strictly smaller since o2 has elements that o1 does not have.
+			result = ComparisonResult.STRICTLY_SMALLER;
+		}
+		return result;
+	}
 
 }

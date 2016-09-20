@@ -157,9 +157,8 @@ public final class TestUtil {
 		if (lastIndexOf != -1) {
 			final String trunkated = path.substring(lastIndexOf + examples.length(), path.length());
 			return trunkated;
-		} else {
-			return path;
 		}
+		return path;
 	}
 
 	public static String removeTrunkSettingsPrefix(final String path) {
@@ -169,9 +168,8 @@ public final class TestUtil {
 		if (lastIndexOf != -1) {
 			final String trunkated = path.substring(lastIndexOf + examples.length(), path.length());
 			return trunkated;
-		} else {
-			return path;
 		}
+		return path;
 	}
 
 	public static String removeTrunkToolchainPrefix(final String path) {
@@ -181,9 +179,8 @@ public final class TestUtil {
 		if (lastIndexOf != -1) {
 			final String trunkated = path.substring(lastIndexOf + examples.length(), path.length());
 			return trunkated;
-		} else {
-			return path;
 		}
+		return path;
 	}
 
 	/***
@@ -195,7 +192,7 @@ public final class TestUtil {
 	 * @return
 	 */
 	public static Collection<File> filterFiles(final Collection<File> files, final String regex) {
-		final ArrayList<File> singleFiles = new ArrayList<File>();
+		final ArrayList<File> singleFiles = new ArrayList<>();
 
 		for (final File f : files) {
 			final String path = f.getAbsolutePath();
@@ -265,7 +262,7 @@ public final class TestUtil {
 	}
 
 	public static List<File> getFiles(final File root, final String[] endings) {
-		final List<File> rtr = new ArrayList<File>();
+		final List<File> rtr = new ArrayList<>();
 
 		if (root.isFile()) {
 			for (final String s : endings) {
@@ -314,7 +311,7 @@ public final class TestUtil {
 		if (!root.getAbsolutePath().startsWith(prefix)) {
 			throw new IllegalArgumentException("prefix is no prefix of root.getAbsolutePath()");
 		}
-		final List<File> rtr = new ArrayList<File>();
+		final List<File> rtr = new ArrayList<>();
 
 		if (root.isFile()) {
 			rtr.add(root);
@@ -346,7 +343,7 @@ public final class TestUtil {
 	}
 
 	public static <E> Collection<E> uniformN(final Collection<E> collection, final int n) {
-		final List<E> rtr = new ArrayList<E>(n);
+		final List<E> rtr = new ArrayList<>(n);
 		final int size = collection.size();
 
 		int step = 1;
@@ -409,7 +406,7 @@ public final class TestUtil {
 			}
 		}
 
-		if (customMessages != null && customMessages.size() > 0) {
+		if (customMessages != null && !customMessages.isEmpty()) {
 			for (final String s : customMessages) {
 				if (s != null) {
 					logger.write(s);
@@ -448,7 +445,7 @@ public final class TestUtil {
 	 * verification result of a safety checker.
 	 */
 	public static Map<String, SafetyCheckerOverallResult> constructFilenameKeywordMap_SafetyChecker() {
-		final Map<String, SafetyCheckerOverallResult> map = new HashMap<String, SafetyCheckerOverallResult>();
+		final Map<String, SafetyCheckerOverallResult> map = new HashMap<>();
 		map.put(".*-safe.*", SafetyCheckerOverallResult.SAFE);
 		map.put(".*_safe.*", SafetyCheckerOverallResult.SAFE);
 		map.put(".*-Safe.*", SafetyCheckerOverallResult.SAFE);
@@ -486,7 +483,7 @@ public final class TestUtil {
 	 * the expected verification result of a safety checker.
 	 */
 	public static Map<String, SafetyCheckerOverallResult> constructFirstlineKeywordMap_SafetyChecker() {
-		final Map<String, SafetyCheckerOverallResult> map = new HashMap<String, SafetyCheckerOverallResult>();
+		final Map<String, SafetyCheckerOverallResult> map = new HashMap<>();
 		map.put("#Safe", SafetyCheckerOverallResult.SAFE);
 		map.put("#Unsafe", SafetyCheckerOverallResult.UNSAFE);
 		map.put("#SyntaxError", SafetyCheckerOverallResult.SYNTAX_ERROR);
@@ -503,7 +500,7 @@ public final class TestUtil {
 	 */
 	public static Map<String, TerminationAnalysisOverallResult> constructFilenameKeywordMap_TerminationAnalysis() {
 		final Map<String, TerminationAnalysisOverallResult> map =
-				new HashMap<String, TerminationAnalysisOverallResult>();
+				new HashMap<>();
 		// true-unreach-call is the SV-COMP annotation for safe
 		map.put(".*_true-termination.*", TerminationAnalysisOverallResult.TERMINATING);
 		// false-unreach-call is the SV-COMP annotation for safe
@@ -518,7 +515,7 @@ public final class TestUtil {
 	 */
 	public static Map<String, TerminationAnalysisOverallResult> constructPathKeywordMap_TerminationAnalysis() {
 		final Map<String, TerminationAnalysisOverallResult> map =
-				new HashMap<String, TerminationAnalysisOverallResult>();
+				new HashMap<>();
 		// we sometimes put terminating examples in a folder with this name
 		map.put("/terminating", TerminationAnalysisOverallResult.TERMINATING);
 		// we sometimes put nonterminating examples in a folder with this name
@@ -533,7 +530,7 @@ public final class TestUtil {
 	 */
 	public static Map<String, TerminationAnalysisOverallResult> constructFirstlineKeywordMap_TerminationAnalysis() {
 		final Map<String, TerminationAnalysisOverallResult> map =
-				new HashMap<String, TerminationAnalysisOverallResult>();
+				new HashMap<>();
 		map.put("#rTerminationDerivable", TerminationAnalysisOverallResult.TERMINATING);
 		map.put("#rTermination", TerminationAnalysisOverallResult.TERMINATING);
 		map.put("#Terminating", TerminationAnalysisOverallResult.TERMINATING);
@@ -567,7 +564,7 @@ public final class TestUtil {
 	@SuppressWarnings("rawtypes")
 	private static <E extends ICsvProviderProvider> Collection<E> getCsvProviderProviderFromBenchmarkResults(
 			final Collection<BenchmarkResult> benchmarkResults, final Class<E> benchmarkClass) {
-		final List<E> filteredList = new ArrayList<E>();
+		final List<E> filteredList = new ArrayList<>();
 		for (final BenchmarkResult<?> benchmarkResult : benchmarkResults) {
 			@SuppressWarnings("unchecked")
 			final E benchmark = (E) benchmarkResult.getBenchmark();
@@ -627,9 +624,8 @@ public final class TestUtil {
 		}
 		if (path.exists()) {
 			return path.getAbsolutePath();
-		} else {
-			return null;
 		}
+		return null;
 	}
 
 	public static void writeSummary(final ITestSummary testSummary, final ILogger logger) {

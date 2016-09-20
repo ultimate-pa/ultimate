@@ -33,7 +33,6 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword;
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class InCaReTimer {
-	
 	private long mInternal;
 	private long mCall;
 	private long mReturn;

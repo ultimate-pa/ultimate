@@ -69,15 +69,15 @@ public final class ComplementSadd<LETTER, STATE> extends UnaryNwaOperation<LETTE
 			mLogger.info(startMessage());
 		}
 		
-		if (!new IsDeterministic<LETTER, STATE>(services, mOperand).getResult()) {
-			mDeterminizedOperand = (new DeterminizeSadd<LETTER, STATE>(mServices, mOperand)).getResult();
+		if (!new IsDeterministic<>(services, mOperand).getResult()) {
+			mDeterminizedOperand = (new DeterminizeSadd<>(mServices, mOperand)).getResult();
 		} else {
 			mDeterminizedOperand = mOperand;
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug("Operand is already deterministic");
 			}
 		}
-		mResult = new ReachableStatesCopy<LETTER, STATE>(mServices, mDeterminizedOperand, true, true, false, false)
+		mResult = new ReachableStatesCopy<>(mServices, mDeterminizedOperand, true, true, false, false)
 				.getResult();
 		
 		if (mLogger.isInfoEnabled()) {
@@ -92,7 +92,7 @@ public final class ComplementSadd<LETTER, STATE> extends UnaryNwaOperation<LETTE
 	
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + " Result " + mResult.sizeInformation();
+		return "Finished " + operationName() + ". Result " + mResult.sizeInformation();
 	}
 	
 	@Override
@@ -112,10 +112,10 @@ public final class ComplementSadd<LETTER, STATE> extends UnaryNwaOperation<LETTE
 			mLogger.info("Testing correctness of complement");
 		}
 		
-		boolean correct = true;
-		final INestedWordAutomaton<LETTER, STATE> intersectionOperandResult =
-				(new IntersectDD<LETTER, STATE>(mServices, false, mOperand, mResult)).getResult();
-		correct &= (new IsEmpty<LETTER, STATE>(mServices, intersectionOperandResult)).getResult();
+		boolean correct;
+		final INestedWordAutomatonSimple<LETTER, STATE> intersectionOperandResult =
+				(new IntersectDD<>(mServices, false, mOperand, mResult)).getResult();
+		correct = (new IsEmpty<>(mServices, intersectionOperandResult)).getResult();
 		
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Finished testing correctness of complement");

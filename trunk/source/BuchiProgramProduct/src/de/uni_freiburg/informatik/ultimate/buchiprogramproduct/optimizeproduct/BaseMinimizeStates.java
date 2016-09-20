@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE BuchiProgramProduct plug-in.
- * 
+ *
  * The ULTIMATE BuchiProgramProduct plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE BuchiProgramProduct plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE BuchiProgramProduct plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BuchiProgramProduct plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -50,23 +50,18 @@ import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 public abstract class BaseMinimizeStates extends BaseProductOptimizer {
 
-	private boolean mIgnoreBlowup;
+	private final boolean mIgnoreBlowup;
 
-	public BaseMinimizeStates(final RootNode product, final IUltimateServiceProvider services, final IToolchainStorage storage) {
+	public BaseMinimizeStates(final RootNode product, final IUltimateServiceProvider services,
+			final IToolchainStorage storage) {
 		super(product, services, storage);
-		mLogger.info("Removed " + mRemovedEdges + " edges and " + mRemovedLocations
-				+ " locations by large block encoding");
-	}
-
-	@Override
-	protected void init(final RootNode root, final IUltimateServiceProvider services) {
-		super.init(root, services);
 		mIgnoreBlowup = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getBoolean(PreferenceInitializer.OPTIMIZE_MINIMIZE_STATES_IGNORE_BLOWUP);
+
 	}
 
 	@Override
-	protected RootNode process(final RootNode root) {
+	protected final RootNode createResult(final RootNode root) {
 		final Deque<RCFGNode> nodes = new ArrayDeque<>();
 		final Set<RCFGNode> closed = new HashSet<>();
 
@@ -74,7 +69,7 @@ public abstract class BaseMinimizeStates extends BaseProductOptimizer {
 
 		while (!nodes.isEmpty()) {
 			checkForTimeoutOrCancellation();
-			
+
 			final RCFGNode current = nodes.removeFirst();
 			if (closed.contains(current)) {
 				continue;
@@ -92,25 +87,24 @@ public abstract class BaseMinimizeStates extends BaseProductOptimizer {
 		if (mRemovedEdges > 0) {
 			removeDisconnectedLocations(root);
 		}
-
+		mLogger.info(
+				"Removed " + mRemovedEdges + " edges and " + mRemovedLocations + " locations by large block encoding");
 		return root;
 	}
 
 	/**
-	 * Process the state "target" and return a set of nodes that should be
-	 * processed next. Processing means adding and removing edges. The caller
-	 * will take care that this method is called only once per target node.
-	 * 
+	 * Process the state "target" and return a set of nodes that should be processed next. Processing means adding and
+	 * removing edges. The caller will take care that this method is called only once per target node.
+	 *
 	 * @param root
 	 *            The root node of the current RCFG.
 	 * @param target
 	 *            The node that should be processed.
 	 * @param closed
-	 *            A set of already processed nodes. You may add additional nodes
-	 *            here if you know that you do not need to process them. You may
-	 *            also remove some nodes if you want to re-process them.
-	 * @return A set of nodes that should be processed. May not be null. Nodes
-	 *         already in the closed set will not be processed again.
+	 *            A set of already processed nodes. You may add additional nodes here if you know that you do not need
+	 *            to process them. You may also remove some nodes if you want to re-process them.
+	 * @return A set of nodes that should be processed. May not be null. Nodes already in the closed set will not be
+	 *         processed again.
 	 */
 	protected abstract Collection<? extends RCFGNode> processCandidate(RootNode root, ProgramPoint target,
 			Set<RCFGNode> closed);

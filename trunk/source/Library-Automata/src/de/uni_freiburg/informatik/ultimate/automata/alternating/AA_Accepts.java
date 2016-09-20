@@ -31,13 +31,10 @@ import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
-public class AA_Accepts<LETTER,STATE> implements IOperation<LETTER,STATE> {
-	
+public class AA_Accepts<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	private final boolean mIsAccepted;
 	
-	public AA_Accepts(
-			final AlternatingAutomaton<LETTER,STATE> alternatingAutomaton,
-			final Word<LETTER> word) {
+	public AA_Accepts(final AlternatingAutomaton<LETTER, STATE> alternatingAutomaton, final Word<LETTER> word) {
 		mIsAccepted = alternatingAutomaton.accepts(word);
 	}
 	
@@ -45,25 +42,24 @@ public class AA_Accepts<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	public String operationName() {
 		return "AA_Accepts";
 	}
-
+	
 	@Override
 	public String startMessage() {
 		return "Start: " + operationName();
 	}
-
+	
 	@Override
 	public String exitMessage() {
 		return "Exit: " + operationName();
 	}
-
+	
 	@Override
 	public Boolean getResult() {
 		return mIsAccepted;
 	}
-
+	
 	@Override
-	public boolean checkResult(final IStateFactory<STATE> stateFactory)
-			throws AutomataLibraryException {
+	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		return true;
 	}
 }

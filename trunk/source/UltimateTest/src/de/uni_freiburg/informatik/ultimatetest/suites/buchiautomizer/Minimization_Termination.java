@@ -129,13 +129,20 @@ public class Minimization_Termination extends AbstractBuchiAutomizerTestSuite {
 		"buchiAutomizer/minimization/ShrinkNwa.epf",
 		"buchiAutomizer/minimization/MinimizeNwaMaxSat2.epf",
 //		"buchiAutomizer/minimization/MinimizeNwaMaxSat.epf",
+		"buchiAutomizer/minimization/RaqDirectSimulation.epf",
+		"buchiAutomizer/minimization/RaqDelayedSimulation.epf",
+		"buchiAutomizer/minimization/MultiSimulation.epf",
+		"buchiAutomizer/minimization/MultiDefault.epf",
 	};
 	
 	
 	
 	private static final String[] mCToolchains = {
-		"BuchiAutomizerCInlineWithBlockEncoding.xml",
+		"BuchiAutomizerC.xml",
 //		"BuchiAutomizerCWithBlockEncoding.xml",
+//		"BuchiAutomizerCInline.xml",
+//		"BuchiAutomizerCInlineWithBlockEncoding.xml",
+		
 	};
 
 	

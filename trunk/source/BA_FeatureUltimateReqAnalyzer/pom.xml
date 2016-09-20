@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   
   	<parent>
-		<artifactId>de.uni_freiburg.informatik.ultimate.pom</artifactId>
+		<artifactId>mavenparent</artifactId>
 		<groupId>de.uni_freiburg.informatik.ultimate</groupId>
 		<version>0.0.1</version>
 		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>

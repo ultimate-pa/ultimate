@@ -25,6 +25,7 @@
  * to convey the resulting work.
  */
 package pea_to_boogie.translator;
+
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
@@ -38,9 +39,10 @@ import pea.CDD;
 import pea.Decision;
 import pea.EventDecision;
 import pea.RangeDecision;
+
 public class CDDTranslator {
 
-	 public Expression CDD_To_Boogie(CDD cdd,String fileName, BoogieLocation bl) {
+	public Expression CDD_To_Boogie(CDD cdd, final String fileName, final BoogieLocation bl) {
 		    final Expression falseExpr = new BooleanLiteral(bl, false);
 		    Expression expr = falseExpr;
 	        
@@ -87,49 +89,45 @@ public class CDDTranslator {
 	            		String varName;
 	            		if (decision instanceof BooleanDecision) {
 	            			varName = ((BooleanDecision)decision).getVar();
-	            		}
-	            		else {
+					} else {
 	            			varName = ((EventDecision)decision).getEvent();
 	            		}
 	            		decisionExpr = new IdentifierExpression(bl, varName);
-	            			decisionExpr = new UnaryExpression(bl, 
-	            					UnaryExpression.Operator.LOGICNEG, decisionExpr);
-	            	}
+						decisionExpr = new UnaryExpression(bl,
+								UnaryExpression.Operator.LOGICNEG, decisionExpr);
+					}
 	            	
-	            	if (childExpr instanceof BooleanLiteral
-	            		&& ((BooleanLiteral)childExpr).getValue() == true) {
-	            		childExpr = decisionExpr;
-	            	} else {
-		            	childExpr = new BinaryExpression(bl, 
-		            			BinaryExpression.Operator.LOGICAND,
-		            			decisionExpr, childExpr);
-	            	}
-	            }
-	            //del with self
-            	if (expr == falseExpr){
-            		expr = childExpr;
+				if (childExpr instanceof BooleanLiteral && ((BooleanLiteral) childExpr).getValue()) {
+					childExpr = decisionExpr;
 				} else {
-            		expr = new BinaryExpression(bl, 
-            				BinaryExpression.Operator.LOGICOR,
-            				childExpr, expr);
-	        }
-	        }
-	        return expr;	        
-	    }
-		
-	    public Expression toExpressionForRange(int childs, String var, int[] limits, 
-	    		String fileName, BoogieLocation bl ) {
+					childExpr = new BinaryExpression(bl,
+							BinaryExpression.Operator.LOGICAND,
+							decisionExpr, childExpr);
+				}
+			}
+			if (expr == falseExpr) {
+				expr = childExpr;
+			} else {
+				expr = new BinaryExpression(bl,
+						BinaryExpression.Operator.LOGICOR,
+						childExpr, expr);
+			}
+		}
+		return expr;
+	}
+	
+	public static Expression toExpressionForRange(final int childs, final String var, final int[] limits,
+			final String fileName, final BoogieLocation bl) {
 	    	if (childs == 0) {
 	    	  final IdentifierExpression LHS = new IdentifierExpression(bl, var);
 	    	  final RealLiteral RHS = new RealLiteral(bl, Double.toString(limits[0] / 2));
 	    	  if ((limits[0] & 1) == 0) {	    		  
 	    		return new BinaryExpression(bl, BinaryExpression.Operator.COMPLT,
 	    				LHS, RHS);
-	    	  } else {
+			}
 		    	return new BinaryExpression(bl, BinaryExpression.Operator.COMPLEQ,
 		    			LHS, RHS); 
 	    	  }
-	        }
 	  	    
 	        if (childs == limits.length) {
 		    	  final IdentifierExpression LHS = new IdentifierExpression(bl, var);
@@ -137,11 +135,10 @@ public class CDDTranslator {
 		    	  if ((limits[limits.length - 1] & 1) == 1) {	    		  
 		    		return new BinaryExpression(bl, BinaryExpression.Operator.COMPGT,
 		    				LHS, RHS);
-		    	  } else {
+			}
 			    	return new BinaryExpression(bl, BinaryExpression.Operator.COMPGEQ,
 			    			LHS, RHS); 
 		    	  }	
-	        }
 
 	        if ((limits[childs - 1] / 2) == (limits[childs] / 2)) {
 	        	 final IdentifierExpression LHS = new IdentifierExpression(bl, var);
@@ -159,18 +156,18 @@ public class CDDTranslator {
             			varID, RHS);
             	expr = new BinaryExpression(bl, BinaryExpression.Operator.COMPLT, LHS, RHS_LT_LT);
             
-            } else if ((limits[childs - 1] & 1) == 1  &  !((limits[childs] & 1) == 0)){
+		} else if ((limits[childs - 1] & 1) == 1 & ((limits[childs] & 1) != 0)) {
             	
             	final BinaryExpression RHS_LT_LTEQ = new BinaryExpression(bl, BinaryExpression.Operator.COMPLEQ,
             			varID, RHS);
             	expr = new BinaryExpression(bl, BinaryExpression.Operator.COMPLT, LHS, RHS_LT_LTEQ);	
             
-            } else if (!((limits[childs - 1] & 1) == 1)  &  ((limits[childs] & 1) == 0)) {
+		} else if (((limits[childs - 1] & 1) != 1) & ((limits[childs] & 1) == 0)) {
             	
             	final BinaryExpression RHS_LTEQ_LT = new BinaryExpression(bl, BinaryExpression.Operator.COMPLT,
             			varID, RHS);
             	expr = new BinaryExpression(bl, BinaryExpression.Operator.COMPLEQ, LHS, RHS_LTEQ_LT);
-            } else if (!((limits[childs - 1] & 1) == 1)  &  !((limits[childs] & 1) == 0)) {
+		} else if (((limits[childs - 1] & 1) != 1) & ((limits[childs] & 1) != 0)) {
             	
             	final BinaryExpression RHS_LTEQ_LTEQ = new BinaryExpression(bl, BinaryExpression.Operator.COMPLEQ,
             			varID, RHS);
@@ -178,5 +175,4 @@ public class CDDTranslator {
             }
             return expr;
 	    }
-	    
 }

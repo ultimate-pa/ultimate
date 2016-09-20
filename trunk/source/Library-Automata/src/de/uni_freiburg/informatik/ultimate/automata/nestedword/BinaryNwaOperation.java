@@ -39,8 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
  * @param <STATE>
  *            state type
  */
-public abstract class BinaryNwaOperation<LETTER, STATE>
-		extends GeneralOperation<LETTER, STATE> {
+public abstract class BinaryNwaOperation<LETTER, STATE> extends GeneralOperation<LETTER, STATE> {
 	
 	/**
 	 * Constructor.

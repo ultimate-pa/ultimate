@@ -71,7 +71,7 @@ public class BuchiProgramProduct implements IGenerator {
 			return null;
 		}
 
-		final List<String> filenames = new ArrayList<String>();
+		final List<String> filenames = new ArrayList<>();
 		filenames.add("LTL+Program Product");
 		return new ModelType(Activator.PLUGIN_ID, ModelType.Type.OTHER, filenames);
 	}
@@ -110,7 +110,7 @@ public class BuchiProgramProduct implements IGenerator {
 
 	@Override
 	public List<IObserver> getObservers() {
-		final List<IObserver> observers = new ArrayList<IObserver>();
+		final List<IObserver> observers = new ArrayList<>();
 		if (!mPreviousToolFoundErrors) {
 			if (mModelIsRCFG && mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 							.getBoolean(PreferenceInitializer.OPTIMIZE_SBE)) {
@@ -150,10 +150,9 @@ public class BuchiProgramProduct implements IGenerator {
 	public IElement getModel() {
 		if (mBuchiProductObserver.getModel() != null) {
 			return mBuchiProductObserver.getModel();
-		} else {
+		}
 			return null;
 		}
-	}
 
 	@Override
 	public List<String> getDesiredToolID() {

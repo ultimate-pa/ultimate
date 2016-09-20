@@ -38,7 +38,10 @@ import java.util.TreeSet;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
-import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsIncluded;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 
@@ -55,7 +58,7 @@ public class FinitePrefix2PetriNet<L, C> extends GeneralOperation<L, C> {
 		mInput = bp;
 		mLogger.info(startMessage());
 
-		final Map<Condition<L, C>, Place<L, C>> placeMap = new HashMap<Condition<L, C>, Place<L, C>>();
+		final Map<Condition<L, C>, Place<L, C>> placeMap = new HashMap<>();
 
 		mLogger.debug("CONDITIONS:");
 		for (final Condition<L, C> c : bp.getConditions()) {
@@ -67,7 +70,7 @@ public class FinitePrefix2PetriNet<L, C> extends GeneralOperation<L, C> {
 		}
 
 		final PetriNetJulian<L, C> oldNet = mInput.getNet();
-		mNet = new PetriNetJulian<L, C>(mServices, oldNet.getAlphabet(), oldNet.getStateFactory(), false);
+		mNet = new PetriNetJulian<>(mServices, oldNet.getAlphabet(), oldNet.getStateFactory(), false);
 
 		// List<Event<L, C>> events = new ArrayList<Event<L,C>>();
 		// List<Event<L, C>> worklist = new LinkedList<Event<L,C>>();
@@ -93,10 +96,10 @@ public class FinitePrefix2PetriNet<L, C> extends GeneralOperation<L, C> {
 		// for (Event e : bp.getEvents()) {
 		// assert e == bp.getDummyRoot() || visited.contains(e);
 		// }
-		final TreeSet<Event<L, C>> events = new TreeSet<Event<L, C>>(bp.getOrder());
+		final TreeSet<Event<L, C>> events = new TreeSet<>(bp.getOrder());
 		events.addAll(bp.getEvents());
 
-		mRepresentatives = new UnionFind<Condition<L, C>>();
+		mRepresentatives = new UnionFind<>();
 		for (final Condition<L, C> c : bp.getDummyRoot().getSuccessorConditions()) {
 			mRepresentatives.makeEquivalenceClass(c);
 		}
@@ -140,8 +143,8 @@ public class FinitePrefix2PetriNet<L, C> extends GeneralOperation<L, C> {
 			if (e == bp.getDummyRoot()) {
 				continue;
 			}
-			final Set<Place<L, C>> preds = new HashSet<Place<L, C>>();
-			final Set<Place<L, C>> succs = new HashSet<Place<L, C>>();
+			final Set<Place<L, C>> preds = new HashSet<>();
+			final Set<Place<L, C>> succs = new HashSet<>();
 
 			for (final Condition<L, C> c : e.getPredecessorConditions()) {
 				final Condition<L, C> representative = mRepresentatives.find(c);
@@ -192,9 +195,32 @@ public class FinitePrefix2PetriNet<L, C> extends GeneralOperation<L, C> {
 		// }
 
 		mLogger.info(exitMessage());
-		assert ResultChecker.petriNetLanguageEquivalence(mServices, oldNet,
-				mNet) : "The language recognized by the FinitePrefix2PetriNet "
-						+ "is not equal to the language of the original net.";
+		assert petriNetLanguageEquivalence(oldNet, mNet) : "The language recognized by the FinitePrefix2PetriNet is "
+				+ "not equal to the language of the original net.";
+	}
+
+	private boolean petriNetLanguageEquivalence(final PetriNetJulian<L, C> oldNet, final PetriNetJulian<L, C> newNet)
+			throws AutomataLibraryException {
+		mLogger.info("Testing Petri net language equivalence");
+		final INestedWordAutomaton<L, C> finAuto1 =
+				(new PetriNet2FiniteAutomaton<>(mServices, oldNet)).getResult();
+		final INestedWordAutomaton<L, C> finAuto2 =
+				(new PetriNet2FiniteAutomaton<>(mServices, newNet)).getResult();
+		final NestedRun<L, C> subsetCounterex =
+				new IsIncluded<>(mServices, oldNet.getStateFactory(), finAuto1, finAuto2).getCounterexample();
+		final boolean subset = subsetCounterex == null;
+		if (!subset) {
+			mLogger.error("Only accepted by first: " + subsetCounterex.getWord());
+		}
+		final NestedRun<L, C> supersetCounterex =
+				new IsIncluded<>(mServices, oldNet.getStateFactory(), finAuto2, finAuto1).getCounterexample();
+		final boolean superset = supersetCounterex == null;
+		if (!superset) {
+			mLogger.error("Only accepted by second: " + supersetCounterex.getWord());
+		}
+		final boolean result = subset && superset;
+		mLogger.info("Finished Petri net language equivalence");
+		return result;
 	}
 
 	@Override
@@ -227,7 +253,7 @@ public class FinitePrefix2PetriNet<L, C> extends GeneralOperation<L, C> {
 	// }
 
 	private void mergeConditions(final Iterable<Condition<L, C>> set1, final Iterable<Condition<L, C>> set2) {
-		final Map<Place<L, C>, Condition<L, C>> origPlace2Condition = new HashMap<Place<L, C>, Condition<L, C>>();
+		final Map<Place<L, C>, Condition<L, C>> origPlace2Condition = new HashMap<>();
 		for (final Condition<L, C> c1 : set1) {
 			origPlace2Condition.put(c1.getPlace(), c1);
 		}
@@ -247,17 +273,17 @@ public class FinitePrefix2PetriNet<L, C> extends GeneralOperation<L, C> {
 
 	class TransitionSet {
 		private final Map<L, Map<Set<Place<L, C>>, Set<Set<Place<L, C>>>>> mLetter2Predset2Succsets =
-				new HashMap<L, Map<Set<Place<L, C>>, Set<Set<Place<L, C>>>>>();
+				new HashMap<>();
 
 		void addTransition(final L letter, final Set<Place<L, C>> predset, final Set<Place<L, C>> succset) {
 			Map<Set<Place<L, C>>, Set<Set<Place<L, C>>>> predsets2succsets = mLetter2Predset2Succsets.get(letter);
 			if (predsets2succsets == null) {
-				predsets2succsets = new HashMap<Set<Place<L, C>>, Set<Set<Place<L, C>>>>();
+				predsets2succsets = new HashMap<>();
 				mLetter2Predset2Succsets.put(letter, predsets2succsets);
 			}
 			Set<Set<Place<L, C>>> succsets = predsets2succsets.get(predset);
 			if (succsets == null) {
-				succsets = new HashSet<Set<Place<L, C>>>();
+				succsets = new HashSet<>();
 				predsets2succsets.put(predset, succsets);
 			}
 			succsets.add(succset);
@@ -270,8 +296,8 @@ public class FinitePrefix2PetriNet<L, C> extends GeneralOperation<L, C> {
 				for (final Set<Place<L, C>> predset : predsets2succsets.keySet()) {
 					final Set<Set<Place<L, C>>> succsets = predsets2succsets.get(predset);
 					for (final Set<Place<L, C>> succset : succsets) {
-						final List<Place<L, C>> predList = new ArrayList<Place<L, C>>(predset);
-						final List<Place<L, C>> succList = new ArrayList<Place<L, C>>(succset);
+						final List<Place<L, C>> predList = new ArrayList<>(predset);
+						final List<Place<L, C>> succList = new ArrayList<>(succset);
 						net.addTransition(letter, predList, succList);
 					}
 				}

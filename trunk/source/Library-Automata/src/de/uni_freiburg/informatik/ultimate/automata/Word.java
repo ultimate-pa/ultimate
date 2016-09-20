@@ -95,9 +95,8 @@ public class Word<LETTER> implements Iterable<LETTER> {
 		final int lengthWord1 = this.length();
 		final int lengthWord2 = otherWord.length();
 		@SuppressWarnings("unchecked")
-		final LETTER[] concatenationSymbols =
-				(LETTER[]) new Object[lengthWord1 + lengthWord2];
-				
+		final LETTER[] concatenationSymbols = (LETTER[]) new Object[lengthWord1 + lengthWord2];
+		
 		for (int i = 0; i < lengthWord1; i++) {
 			concatenationSymbols[i] = this.getSymbol(i);
 		}

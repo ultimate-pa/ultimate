@@ -22,10 +22,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDim
  * {@code (store (... (store a i_1 x_1) ...) i_n x_n)} analog, but new array is {@code null} then
  *
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
- *
  */
 public class ArrayWrite {
-
 	private final Term mOldArray;
 	private Term mNewArray = null;
 	private final List<MultiDimensionalStore> mStoreList = new ArrayList<>();
@@ -33,15 +31,15 @@ public class ArrayWrite {
 	public ArrayWrite(final Term term) {
 		Term arrayTerm;
 		if (SmtUtils.isFunctionApplication(term, "=")) {
-			final ApplicationTerm a = (ApplicationTerm) term;
-			final Term a1 = a.getParameters()[0];
-			final Term a2 = a.getParameters()[1];
-			if (SmtUtils.isFunctionApplication(a1, "store")) {
-				mNewArray = a2;
-				arrayTerm = a1;
+			final ApplicationTerm applicationTerm = (ApplicationTerm) term;
+			final Term term1 = applicationTerm.getParameters()[0];
+			final Term term2 = applicationTerm.getParameters()[1];
+			if (SmtUtils.isFunctionApplication(term1, "store")) {
+				mNewArray = term2;
+				arrayTerm = term1;
 			} else {
-				mNewArray = a1;
-				arrayTerm = a2;
+				mNewArray = term1;
+				arrayTerm = term2;
 			}
 		} else {
 			arrayTerm = term;

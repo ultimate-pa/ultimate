@@ -1,6 +1,6 @@
 /* SimpleSet
  *
- * The PEA tool set is a collection of tools for 
+ * The PEA tool set is a collection of tools for
  * Phase Event Automata (PEA). See
  * http://csd.informatik.uni-oldenburg.de/projects/peatools.html
  * for more information.
@@ -25,86 +25,86 @@
  */
 
 package pea.util;
+
 import java.util.AbstractSet;
 import java.util.Iterator;
 
-public class SimpleSet<T> extends AbstractSet<T> implements Cloneable
-{
-    T[] elementObjects;
-    int count = 0;
-
-    public SimpleSet() {
-	this(2);
-    }
-
-    @SuppressWarnings("unchecked")
-    public SimpleSet(int initialSize) {
-	elementObjects = (T[]) new Object[initialSize];
-    }
-
-    @Override
+public class SimpleSet<T> extends AbstractSet<T> implements Cloneable {
+	T[] elementObjects;
+	int count = 0;
+	
+	public SimpleSet() {
+		this(2);
+	}
+	
+	@SuppressWarnings("unchecked")
+	public SimpleSet(final int initialSize) {
+		elementObjects = (T[]) new Object[initialSize];
+	}
+	
+	@Override
 	public int size() {
-	return count;
-    }
-
-    @Override
-	@SuppressWarnings("unchecked")
-    public boolean add(T element) {
-	if (element == null) {
-		throw new NullPointerException();
+		return count;
 	}
-
-	for (int i=0; i< count; i++) {
-	    if (element.equals(elementObjects[i])) {
-			return false;
+	
+	@Override
+	@SuppressWarnings("unchecked")
+	public boolean add(final T element) {
+		if (element == null) {
+			throw new IllegalArgumentException();
+		}
+		
+		for (int i = 0; i < count; i++) {
+			if (element.equals(elementObjects[i])) {
+				return false;
+			}
+		}
+		
+		if (count == elementObjects.length) {
+			final T[] newArray = (T[]) new Object[(count + 1) * 3 / 2];
+			System.arraycopy(elementObjects, 0, newArray, 0, count);
+			elementObjects = newArray;
+		}
+		elementObjects[count++] = element;
+		return true;
+	}
+	
+	@Override
+	@SuppressWarnings("unchecked")
+	public Object clone() {
+		try {
+			final SimpleSet<T> other = (SimpleSet<T>) super.clone();
+			other.elementObjects = elementObjects.clone();
+			return other;
+		} catch (final CloneNotSupportedException ex) {
+			throw new InternalError("Clone?");
 		}
 	}
 	
-	if (count == elementObjects.length) {
-            final T[] newArray = (T[]) new Object[(count+1)*3/2];
-            System.arraycopy(elementObjects,0,newArray,0,count);
-            elementObjects = newArray;
-        }
-        elementObjects[count++] = element;
-	return true;
-    }
-	
-    @Override
-	@SuppressWarnings("unchecked")
-    public Object clone() {
-        try {
-            final SimpleSet<T> other = (SimpleSet<T>) super.clone();
-	    other.elementObjects = elementObjects.clone();
-            return other;
-        } catch (final CloneNotSupportedException ex) {
-            throw new InternalError("Clone?");
-        }
-    }
-
-    @Override
+	@Override
 	public Iterator<T> iterator() {
-	return new Iterator<T>() {
-	    int pos = 0;
-
-	    @Override
-		public boolean hasNext() {
-		return pos < count;
-	    }
-	    
-	    @Override
-		public T next() {
-                return elementObjects[pos++];
-	    }
-	  
-	    @Override
-		public void remove() {
-		if (pos < count) {
-			System.arraycopy(elementObjects, pos, 
-				     elementObjects, pos-1, count - pos);
-		}
-		count--;
-		pos--;
-	    }
-	};
-    }
+		return new Iterator<T>() {
+			int pos = 0;
+			
+			@Override
+			public boolean hasNext() {
+				return pos < count;
+			}
+			
+			@Override
+			public T next() {
+				return elementObjects[pos++];
+			}
+			
+			@Override
+			public void remove() {
+				if (pos < count) {
+					System.arraycopy(elementObjects, pos,
+							elementObjects, pos - 1, count - pos);
+				}
+				count--;
+				pos--;
+			}
+		};
+	}
 }

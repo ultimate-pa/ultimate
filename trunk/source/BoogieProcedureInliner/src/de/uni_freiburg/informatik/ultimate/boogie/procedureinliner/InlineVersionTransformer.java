@@ -78,7 +78,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.Cal
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.CallGraphNode;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.exceptions.CancelToolchainException;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.exceptions.InliningUnsupportedException;
-import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.preferences.PreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
@@ -248,7 +247,8 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 	 * The parameters and local variables of a Procedure are mapped, iff call counter > 0.
 	 * <p>
 	 * <b>Note:</b> This has nothing to do with the "single calls only" setting
-	 * ({@link PreferenceItem#IGNORE_MULTIPLE_CALLED}. This counter is used to avoid re-mapping of already mapped
+	 * ({@link de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.preferences.PreferenceItem
+	 * #IGNORE_MULTIPLE_CALLED}. This counter is used to avoid re-mapping of already mapped
 	 * variable ids, whereas the setting is applied using a separate counter on the call graph.
 	 */
 	private final Map<String, Integer> mCallCounter = new HashMap<>();

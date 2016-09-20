@@ -33,7 +33,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDeckerAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.ReachableStatesCopy;
@@ -107,31 +106,31 @@ public final class RemoveUnreachable<LETTER, STATE> extends UnaryNwaOperation<LE
 	
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataOperationCanceledException {
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info("Start testing correctness of " + operationName());
+		}
+		
 		boolean correct = true;
-		if (mOperand instanceof INestedWordAutomaton) {
-			if (mLogger.isInfoEnabled()) {
-				mLogger.info("Start testing correctness of " + operationName());
-			}
-			/*
-			 * correct = correct && (ResultChecker.nwaLanguageInclusion(mInput, mResult) == null);
-			 * correct = correct && (ResultChecker.nwaLanguageInclusion(mResult, mInput) == null);
-			*/
-			assert correct;
-			final DoubleDeckerAutomaton<LETTER, STATE> reachableStatesCopy =
-					(DoubleDeckerAutomaton<LETTER, STATE>) (new ReachableStatesCopy<LETTER, STATE>(mServices, mOperand,
-							false, false, false, false)).getResult();
-			correct &= ResultChecker.isSubset(reachableStatesCopy.getStates(), mResult.getStates());
-			assert correct;
-			correct = correct && ResultChecker.isSubset(mResult.getStates(), reachableStatesCopy.getStates());
-			assert correct;
-			correct = correct && checkEachState(reachableStatesCopy);
-			if (!correct) {
-				AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, operationName() + "Failed",
-						"language is different", mOperand);
-			}
-			if (mLogger.isInfoEnabled()) {
-				mLogger.info("Finished testing correctness of " + operationName());
-			}
+		/*
+		 * correct = correct && (ResultChecker.nwaLanguageInclusion(mInput, mResult) == null);
+		 * correct = correct && (ResultChecker.nwaLanguageInclusion(mResult, mInput) == null);
+		*/
+		assert correct;
+		final DoubleDeckerAutomaton<LETTER, STATE> reachableStatesCopy =
+				(DoubleDeckerAutomaton<LETTER, STATE>) (new ReachableStatesCopy<>(mServices, mOperand,
+						false, false, false, false)).getResult();
+		correct &= ResultChecker.isSubset(reachableStatesCopy.getStates(), mResult.getStates());
+		assert correct;
+		correct = correct && ResultChecker.isSubset(mResult.getStates(), reachableStatesCopy.getStates());
+		assert correct;
+		correct = correct && checkEachState(reachableStatesCopy);
+		if (!correct) {
+			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, operationName() + "Failed",
+					"language is different", mOperand);
+		}
+		
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info("Finished testing correctness of " + operationName());
 		}
 		return correct;
 	}

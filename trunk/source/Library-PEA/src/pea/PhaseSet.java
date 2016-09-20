@@ -1,4 +1,4 @@
-/* $Id$ 
+/* $Id$
  *
  * This file is part of the PEA tool set
  * 
@@ -40,12 +40,12 @@ public class PhaseSet {
     private final ArrayList<DCPhase> phases, waiting, exact;
 
     public PhaseSet() {
-        phases = new ArrayList<DCPhase>();
-        waiting = new ArrayList<DCPhase>();
-        exact = new ArrayList<DCPhase>();
+        phases = new ArrayList<>();
+        waiting = new ArrayList<>();
+        exact = new ArrayList<>();
     }
 
-    public void addPhase(DCPhase ph, boolean isExact) {
+    public void addPhase(final DCPhase ph, final boolean isExact) {
         phases.add(ph);
         if (isExact) {
 			exact.add(ph);
@@ -56,7 +56,7 @@ public class PhaseSet {
     	return this.phases;
     }
 
-    public void addWaitingPhase(DCPhase ph, boolean isExact) {
+    public void addWaitingPhase(final DCPhase ph, final boolean isExact) {
         addPhase(ph, isExact);
         waiting.add(ph);
     }
@@ -69,7 +69,7 @@ public class PhaseSet {
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
-        if (phases.size() == 0) {
+        if (phases.isEmpty()) {
 			return "";
 		}
         final Iterator<DCPhase> it = phases.iterator();

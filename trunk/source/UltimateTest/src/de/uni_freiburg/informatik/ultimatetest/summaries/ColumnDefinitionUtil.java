@@ -161,7 +161,7 @@ public class ColumnDefinitionUtil {
 										numberValue = numberValue.max(new BigDecimal(cell));
 										finalValue = numberValue.toString();
 									} catch (final Exception ex) {
-										finalValue = cell.toString();
+										finalValue = cell;
 									}
 								}
 							} else if (avg.contains(columnTitle)) {

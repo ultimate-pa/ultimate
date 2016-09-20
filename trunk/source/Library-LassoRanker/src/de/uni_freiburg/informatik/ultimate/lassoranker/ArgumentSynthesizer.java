@@ -2,27 +2,27 @@
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2014-2015 Jan Leike (leike@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE LassoRanker Library.
- * 
+ *
  * The ULTIMATE LassoRanker Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE LassoRanker Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE LassoRanker Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE LassoRanker Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE LassoRanker Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE LassoRanker Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.lassoranker;
@@ -43,11 +43,10 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 /**
- * Superclass to TerminationArgumentSynthesizer and
- * NonTerminationArgumentSynthesizer.
- * 
+ * Superclass to TerminationArgumentSynthesizer and NonTerminationArgumentSynthesizer.
+ *
  * Contains some shared code.
- * 
+ *
  * @author Jan Leike
  * @see TerminationArgumentSynthesizer
  * @see NonTerminationArgumentSynthesizer
@@ -55,12 +54,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 public abstract class ArgumentSynthesizer implements Closeable {
 	protected final ILogger mLogger;
 
-
-	
 	/**
-	 * Auxiliary String that we put into the smt script via an echo. This String
-	 * should help to identify the difficult constraints in a bunch of dumped
-	 * smt2 files.
+	 * Auxiliary String that we put into the smt script via an echo. This String should help to identify the difficult
+	 * constraints in a bunch of dumped smt2 files.
 	 */
 	public static String s_SolverUnknownMessage = "Warning solver responded UNKNOWN to the check-sat above";
 
@@ -89,25 +85,23 @@ public abstract class ArgumentSynthesizer implements Closeable {
 	 */
 	private boolean mclosed = false;
 
-	
 	protected IUltimateServiceProvider mservices;
 	protected IToolchainStorage mstorage;
-	
+
 	/**
 	 * Constructor for the argument synthesizer
-	 * 
+	 *
 	 * @param lasso
 	 *            the lasso program
 	 * @param preferences
 	 *            the preferences
 	 * @param constaintsName
 	 *            name of the constraints whose satisfiability is checked
-	 * @param storage 
-	 * @throws IOException 
+	 * @param storage
+	 * @throws IOException
 	 */
-	public ArgumentSynthesizer(Lasso lasso, LassoRankerPreferences preferences,
-			String constaintsName, IUltimateServiceProvider services,
-			IToolchainStorage storage) throws IOException {
+	public ArgumentSynthesizer(final Lasso lasso, final LassoRankerPreferences preferences, final String constaintsName,
+			final IUltimateServiceProvider services, final IToolchainStorage storage) throws IOException {
 		mLogger = services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
 		mpreferences = preferences;
 		mlasso = lasso;
@@ -115,13 +109,13 @@ public abstract class ArgumentSynthesizer implements Closeable {
 		mstorage = storage;
 		mscript = constructScript(mpreferences, constaintsName);
 	}
-	
+
 	/**
-	 * @param constaintsName Identifier for this script.
+	 * @param constaintsName
+	 *            Identifier for this script.
 	 * @return SMT script that will be used for the argument synthesis
 	 */
-	protected abstract Script constructScript(
-			LassoRankerPreferences preferences, String constaintsName);
+	protected abstract Script constructScript(LassoRankerPreferences preferences, String constaintsName);
 
 	/**
 	 * @return the SMT script to be used for the argument synthesis
@@ -139,9 +133,9 @@ public abstract class ArgumentSynthesizer implements Closeable {
 
 	/**
 	 * Try to synthesize an argument for (non-)termination
-	 * 
+	 *
 	 * @return result of the solver while checking the constraints
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	public final LBool synthesize() throws SMTLIBException, TermException, IOException {
 		final LBool lBool = do_synthesis();
@@ -150,19 +144,17 @@ public abstract class ArgumentSynthesizer implements Closeable {
 	}
 
 	/**
-	 * Try to synthesize an argument for (non-)termination This is to be derived
-	 * in the child classes and is wrapped by synthesize().
-	 * 
+	 * Try to synthesize an argument for (non-)termination This is to be derived in the child classes and is wrapped by
+	 * synthesize().
+	 *
 	 * @return result of the solver while checking the constraints
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	protected abstract LBool do_synthesis() throws SMTLIBException, TermException, IOException;
 
-
-
 	/**
 	 * Define a new constant
-	 * 
+	 *
 	 * @param name
 	 *            name of the new constant
 	 * @param sort
@@ -171,11 +163,9 @@ public abstract class ArgumentSynthesizer implements Closeable {
 	 * @throws SMTLIBException
 	 *             if something goes wrong, e.g. the name is already defined
 	 */
-	public Term newConstant(String name, String sortname) throws SMTLIBException {
+	public Term newConstant(final String name, final String sortname) throws SMTLIBException {
 		return SmtUtils.buildNewConstant(mscript, name, sortname);
 	}
-
-
 
 	/**
 	 * Perform cleanup actions
@@ -189,10 +179,11 @@ public abstract class ArgumentSynthesizer implements Closeable {
 	}
 
 	@Override
-	protected void finalize() {
+	protected void finalize() throws Throwable {
 		// Finalize methods are discouraged in Java.
 		// Always call close() as exported by the Closable interface!
 		// This is just a fallback to make sure close() has been called.
 		close();
+		super.finalize();
 	}
 }

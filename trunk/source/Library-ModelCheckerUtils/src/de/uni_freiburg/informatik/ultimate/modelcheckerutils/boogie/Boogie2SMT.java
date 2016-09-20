@@ -29,6 +29,10 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
@@ -42,7 +46,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.IdentifierTranslator;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
@@ -69,7 +75,7 @@ public class Boogie2SMT {
 
 	private final Statements2TransFormula mStatements2TransFormula;
 
-	private final ConstOnlyIdentifierTranslator mConstOnlyIdentifierTranslator;
+//	private final ConstOnlyIdentifierTranslator mConstOnlyIdentifierTranslator;
 
 	private final Collection<Term> mAxioms;
 
@@ -86,7 +92,7 @@ public class Boogie2SMT {
 			mTypeSortTranslator = new TypeSortTranslatorBitvectorWorkaround(boogieDeclarations.getTypeDeclarations(),
 					mScript.getScript(), mBlackHoleArrays, mServices);
 			mBoogie2SmtSymbolTable = new Boogie2SmtSymbolTable(boogieDeclarations, mScript, mTypeSortTranslator);
-			mConstOnlyIdentifierTranslator = new ConstOnlyIdentifierTranslator();
+//			mConstOnlyIdentifierTranslator = new ConstOnlyIdentifierTranslator();
 			mOperationTranslator = new BitvectorWorkaroundOperationTranslator(mBoogie2SmtSymbolTable, mScript.getScript());
 			mExpression2Term = new Expression2Term(mServices, mScript.getScript(), mTypeSortTranslator, mBoogie2SmtSymbolTable,
 					mOperationTranslator, mScript);
@@ -95,7 +101,7 @@ public class Boogie2SMT {
 					mBlackHoleArrays, mServices);
 			mBoogie2SmtSymbolTable = new Boogie2SmtSymbolTable(boogieDeclarations, mScript, mTypeSortTranslator);
 
-			mConstOnlyIdentifierTranslator = new ConstOnlyIdentifierTranslator();
+//			mConstOnlyIdentifierTranslator = new ConstOnlyIdentifierTranslator();
 			mOperationTranslator = new DefaultOperationTranslator(mBoogie2SmtSymbolTable, mScript.getScript());
 			mExpression2Term = new Expression2Term(mServices, mScript.getScript(), mTypeSortTranslator, mBoogie2SmtSymbolTable,
 					mOperationTranslator, mScript);
@@ -144,23 +150,25 @@ public class Boogie2SMT {
 		return mTypeSortTranslator;
 	}
 
-	ConstOnlyIdentifierTranslator getConstOnlyIdentifierTranslator() {
-		return mConstOnlyIdentifierTranslator;
-	}
+//	ConstOnlyIdentifierTranslator getConstOnlyIdentifierTranslator() {
+//		return mConstOnlyIdentifierTranslator;
+//	}
 
 	public Collection<Term> getAxioms() {
 		return mAxioms;
 	}
 
 	private Term declareAxiom(final Axiom ax, final Expression2Term expression2term) {
-		final IdentifierTranslator[] its = new IdentifierTranslator[] { getConstOnlyIdentifierTranslator() };
+		final ConstOnlyIdentifierTranslator coit = new ConstOnlyIdentifierTranslator(null);
+		final IdentifierTranslator[] its = new IdentifierTranslator[] { coit };
 		final Term term = expression2term.translateToTerm(its, ax.getFormula()).getTerm();
-		mScript.getScript().assertTerm(term);
-		return term;
+		final Term closed = coit.variables2functionSymbols(term);
+		mScript.getScript().assertTerm(closed);
+		return closed;
 	}
 
-	public static void reportUnsupportedSyntax(final BoogieASTNode BoogieASTNode, final String longDescription,
-			final IUltimateServiceProvider services) {
+	public static void reportUnsupportedSyntax(final BoogieASTNode BoogieASTNode, 
+			final String longDescription, final IUltimateServiceProvider services) {
 		final UnsupportedSyntaxResult<BoogieASTNode> result = new UnsupportedSyntaxResult<BoogieASTNode>(BoogieASTNode,
 				ModelCheckerUtils.PLUGIN_ID, services.getBacktranslationService(), longDescription);
 		services.getResultService().reportResult(ModelCheckerUtils.PLUGIN_ID, result);
@@ -172,25 +180,54 @@ public class Boogie2SMT {
 	 * Construct auxiliary variables only if the assertion stack of the script is at the lowest level. Auxiliary
 	 * variables are not supported in any backtranslation.
 	 */
-	public IProgramNonOldVar constructAuxiliaryGlobalBoogieVar(final String identifier, final String procedure, final IBoogieType iType,
-			final VarList varList) {
+	public IProgramNonOldVar constructAuxiliaryGlobalBoogieVar(final String identifier, 
+			final String procedure, final IBoogieType iType, final VarList varList) {
 
 		return mBoogie2SmtSymbolTable.constructAuxiliaryGlobalBoogieVar(identifier, procedure, iType, varList);
 	}
 
 	class ConstOnlyIdentifierTranslator implements IdentifierTranslator {
+		
+		private final Set<BoogieConst> mConsts = new HashSet<>();
+		private final TransFormulaBuilder mTfb;
+
+		public ConstOnlyIdentifierTranslator(final TransFormulaBuilder transFormulaBuilder) {
+			mTfb = transFormulaBuilder;
+		}
 
 		@Override
-		public Term getSmtIdentifier(final String id, final DeclarationInformation declInfo, final boolean isOldContext,
-				final BoogieASTNode boogieASTNode) {
+		public Term getSmtIdentifier(final String id, final DeclarationInformation declInfo, 
+				final boolean isOldContext, final BoogieASTNode boogieASTNode) {
 			if (declInfo.getStorageClass() != StorageClass.GLOBAL) {
 				throw new AssertionError();
 			}
-			final Term result = mBoogie2SmtSymbolTable.getBoogieConst(id).getDefaultConstant();
+			final BoogieConst bc = mBoogie2SmtSymbolTable.getBoogieConst(id);
+			mConsts.add(bc);
+			if (mTfb != null) {
+				mTfb.addInVar(bc, bc.getTermVariable());
+				mTfb.addOutVar(bc, bc.getTermVariable());
+			}
+			final Term result = bc.getTermVariable();
+//			final Term result = bc.getDefaultConstant();
 			if (result == null) {
 				throw new AssertionError();
 			}
 			return result;
+		}
+
+		/**
+		 * @return the consts
+		 */
+		public Set<BoogieConst> getConsts() {
+			return mConsts;
+		}
+		
+		public Term variables2functionSymbols(final Term term) {
+			final Map<Term, Term> substitutionMapping = new HashMap<>();
+			for (final BoogieConst bc : getConsts()) {
+				substitutionMapping.put(bc.getTermVariable(), bc.getDefaultConstant());
+			}
+			return new SubstitutionWithLocalSimplification(getManagedScript(), substitutionMapping).transform(term);
 		}
 	}
 }

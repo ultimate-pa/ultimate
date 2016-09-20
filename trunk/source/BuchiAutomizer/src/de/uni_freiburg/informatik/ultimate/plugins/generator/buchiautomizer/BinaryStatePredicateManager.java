@@ -71,12 +71,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker;
 
 public class BinaryStatePredicateManager {
-
-	public final static String s_UnseededIdentifier = "unseeded";
-	public final static String s_OldRankIdentifier = "oldRank";
-	public final static int s_MaxLexComponents = 10;
-	private final static boolean s_Annotate = false;
-
+	public static final String UNSEEDED_IDENTIFIER = "unseeded";
+	public static final String OLD_RANK_IDENTIFIER = "oldRank";
+	public static final int MAX_LEX_COMPONENTS = 10;
+	
+	private static final boolean SIMPLIFY_SUPPORTING_INVARIANTS = true;
+	private static final boolean ANNOTATE = false;
+	
 	private final Script mScript;
 	private final ManagedScript mManagedScript;
 	private final SmtManager mSmtManager;
@@ -86,13 +87,13 @@ public class BinaryStatePredicateManager {
 	
 	private final SimplicationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
-
+	
 	/**
 	 * True if predicates have been computed. False if predicates have been
 	 * cleared or predicates have never been computed so far.
 	 */
 	private boolean mProvidesPredicates;
-
+	
 	private IPredicate mStemPrecondition;
 	private IPredicate mStemPostcondition;
 	private IPredicate mSiConjunction;
@@ -102,13 +103,12 @@ public class BinaryStatePredicateManager {
 	private IPredicate mRankEquality;
 	private IPredicate mRankDecreaseAndBound;
 	
-
 	private TerminationArgument mTerminationArgument;
-
+	
 	private Term[] mLexTerms;
 	private IPredicate[] mLexEquality;
 	private IPredicate[] mLexDecrease;
-
+	
 	/**
 	 * Is the loop also terminating without the stem?
 	 */
@@ -116,7 +116,6 @@ public class BinaryStatePredicateManager {
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	
-
 	public BinaryStatePredicateManager(final SmtManager smtManager,
 			final IUltimateServiceProvider services,
 			final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
@@ -131,41 +130,42 @@ public class BinaryStatePredicateManager {
 		final Boogie2SMT boogie2Smt = smtManager.getBoogie2Smt();
 		
 		mManagedScript.lock(boogie2Smt.getBoogie2SmtSymbolTable());
-		mUnseededVariable = constructGlobalBoogieVar(s_UnseededIdentifier, boogie2Smt, BoogieType.TYPE_BOOL);
-
-		mOldRankVariables = new IProgramNonOldVar[s_MaxLexComponents];
-		for (int i = 0; i < s_MaxLexComponents; i++) {
-			final String name = s_OldRankIdentifier + i;
+		mUnseededVariable = constructGlobalBoogieVar(UNSEEDED_IDENTIFIER, boogie2Smt, BoogieType.TYPE_BOOL);
+		
+		mOldRankVariables = new IProgramNonOldVar[MAX_LEX_COMPONENTS];
+		for (int i = 0; i < MAX_LEX_COMPONENTS; i++) {
+			final String name = OLD_RANK_IDENTIFIER + i;
 			mOldRankVariables[i] = constructGlobalBoogieVar(name, boogie2Smt, BoogieType.TYPE_INT);
 		}
 		mManagedScript.unlock(boogie2Smt.getBoogie2SmtSymbolTable());
 	}
-
+	
 	/**
 	 * Construct a global BoogieVar and the corresponding oldVar. Return the
 	 * global var.
 	 * 
 	 * @param type
 	 */
-	private IProgramNonOldVar constructGlobalBoogieVar(final String name, final Boogie2SMT boogie2Smt, final PrimitiveType type) {
+	private static IProgramNonOldVar constructGlobalBoogieVar(final String name, final Boogie2SMT boogie2Smt,
+			final PrimitiveType type) {
 		final IProgramNonOldVar globalBv = boogie2Smt.constructAuxiliaryGlobalBoogieVar(name, null, type, null);
 		return globalBv;
 	}
-
+	
 	public boolean providesPredicates() {
 		return mProvidesPredicates;
 	}
-
+	
 	public boolean isLoopWithoutStemTerminating() {
 		assert mProvidesPredicates;
 		return mLoopTermination;
 	}
-
+	
 	public TerminationArgument getTerminationArgument() {
 		assert mProvidesPredicates;
 		return mTerminationArgument;
 	}
-
+	
 	/**
 	 * Compute IPredicate that states that the current value of the ranking
 	 * function f is smaller than or equal to the value of oldrank. I.e.,
@@ -174,7 +174,7 @@ public class BinaryStatePredicateManager {
 	public IPredicate getRankEquality() {
 		return mRankEquality;
 	}
-
+	
 	/**
 	 * Compute IPredicate that states that the current value of the ranking
 	 * function f is strictly smaller than the value of oldrank and bounded from
@@ -185,44 +185,44 @@ public class BinaryStatePredicateManager {
 	public IPredicate getRankDecreaseAndBound() {
 		return mRankDecreaseAndBound;
 	}
-
+	
 	public IPredicate getStemPrecondition() {
 		assert mProvidesPredicates;
 		return mStemPrecondition;
 	}
-
+	
 	public IPredicate getStemPostcondition() {
 		assert mProvidesPredicates;
 		return mStemPostcondition;
 	}
-
+	
 	public IPredicate getSiConjunction() {
 		assert mProvidesPredicates;
 		return mSiConjunction;
 	}
-
+	
 	@Deprecated
 	public IPredicate getHondaPredicate() {
 		assert mProvidesPredicates;
 		return mHonda;
 	}
-
+	
 	@Deprecated
 	public IPredicate getRankEqAndSi() {
 		assert mProvidesPredicates;
 		return mRankEqualityAndSi;
 	}
-
+	
 	public IProgramNonOldVar getUnseededVariable() {
 		assert mProvidesPredicates;
 		return mUnseededVariable;
 	}
-
+	
 	public IProgramNonOldVar[] getOldRankVariables() {
 		assert mProvidesPredicates;
 		return mOldRankVariables;
 	}
-
+	
 	public void clearPredicates() {
 		if (!mProvidesPredicates) {
 			throw new AssertionError("no predicates provided cannot clear");
@@ -242,14 +242,14 @@ public class BinaryStatePredicateManager {
 		mLexTerms = null;
 		mModifiableGlobalsAtHonda = null;
 	}
-
+	
 	/**
-	 * 
 	 * @param loopTermination
 	 * @param termArg
 	 * @param removeSuperfluousSupportingInvariants
-	 * @param loopTf TransFormula for loop, has to be provided if we remove
-	 * superfluous supporting invariants.
+	 * @param loopTf
+	 *            TransFormula for loop, has to be provided if we remove
+	 *            superfluous supporting invariants.
 	 * @param loopTf
 	 * @param modifiableGlobalsAtHonda
 	 * @param loop
@@ -278,7 +278,7 @@ public class BinaryStatePredicateManager {
 		final IPredicate unseededPredicate = unseededPredicate();
 		mStemPrecondition = unseededPredicate;
 		mModifiableGlobalsAtHonda = modifiableGlobalsAtHonda;
-
+		
 		final RankingFunction rf = mTerminationArgument.getRankingFunction();
 		decodeLex(rf);
 		mRankEquality = computeRankEquality();
@@ -300,10 +300,10 @@ public class BinaryStatePredicateManager {
 			mRankEqualityAndSi = mPredicateFactory.newPredicate(conjunction);
 		}
 		IPredicate unseededOrRankDecrease;
-		{
-			final Term disjunction = mPredicateFactory.or(false, unseededPredicate, mRankDecreaseAndBound);
-			unseededOrRankDecrease = mPredicateFactory.newPredicate(disjunction);
-		}
+		
+		final Term disjunction = mPredicateFactory.or(false, unseededPredicate, mRankDecreaseAndBound);
+		unseededOrRankDecrease = mPredicateFactory.newPredicate(disjunction);
+		
 		if (siConjunctionIsTrue) {
 			mHonda = unseededOrRankDecrease;
 		} else {
@@ -312,11 +312,12 @@ public class BinaryStatePredicateManager {
 		}
 		mProvidesPredicates = true;
 	}
-
-	private List<Term> removeSuperfluousSupportingInvariants(final List<Term> siTerms, final UnmodifiableTransFormula loopTf, final Set<IProgramVar> modifiableGlobals) {
-		final ArrayList<Term> neededSiTerms = new ArrayList<Term>();
-		for (int i=0; i<siTerms.size(); i++) {
-			final Term[] siTermSubset = startingFromIPlusList(siTerms, i+1, neededSiTerms);
+	
+	private List<Term> removeSuperfluousSupportingInvariants(final List<Term> siTerms,
+			final UnmodifiableTransFormula loopTf, final Set<IProgramVar> modifiableGlobals) {
+		final ArrayList<Term> neededSiTerms = new ArrayList<>();
+		for (int i = 0; i < siTerms.size(); i++) {
+			final Term[] siTermSubset = startingFromIPlusList(siTerms, i + 1, neededSiTerms);
 			final boolean isSi = isSupportingInvariant(siTermSubset, loopTf, modifiableGlobals);
 			if (!isSi) {
 				// we cannot drop the i'th term
@@ -329,47 +330,49 @@ public class BinaryStatePredicateManager {
 		return neededSiTerms;
 	}
 	
-	private boolean isSupportingInvariant(final Term[] siTermSubset, final UnmodifiableTransFormula loopTf, final Set<IProgramVar> modifiableGlobals) {
-		final List<Term> siSubsetAndRankEqualityList = new ArrayList<Term>(Arrays.asList(siTermSubset));
+	private boolean isSupportingInvariant(final Term[] siTermSubset, final UnmodifiableTransFormula loopTf,
+			final Set<IProgramVar> modifiableGlobals) {
+		final List<Term> siSubsetAndRankEqualityList = new ArrayList<>(Arrays.asList(siTermSubset));
 		siSubsetAndRankEqualityList.add(mRankEquality.getFormula());
 		final IPredicate siSubsetAndRankEquality = mPredicateFactory.newPredicate(
-						SmtUtils.and(mScript, siSubsetAndRankEqualityList));
+				SmtUtils.and(mScript, siSubsetAndRankEqualityList));
 		
-		final List<Term> siSubsetAndRankDecreaseAndBoundList = new ArrayList<Term>(Arrays.asList(siTermSubset));
+		final List<Term> siSubsetAndRankDecreaseAndBoundList = new ArrayList<>(Arrays.asList(siTermSubset));
 		siSubsetAndRankDecreaseAndBoundList.add(mRankDecreaseAndBound.getFormula());
 		final IPredicate siSubsetAndRankDecreaseAndBound = mPredicateFactory.newPredicate(
-						SmtUtils.and(mScript, siSubsetAndRankDecreaseAndBoundList));
+				SmtUtils.and(mScript, siSubsetAndRankDecreaseAndBoundList));
 		final LBool sat = PredicateUtils.isInductiveHelper(
 				mScript,
 				siSubsetAndRankEquality,
 				siSubsetAndRankDecreaseAndBound, loopTf,
 				modifiableGlobals, modifiableGlobals);
 		switch (sat) {
-		case SAT:
-		case UNKNOWN:
-			return false;
-		case UNSAT:
-			return true;
-		default:
-			throw new AssertionError("unknown case");
+			case SAT:
+			case UNKNOWN:
+				return false;
+			case UNSAT:
+				return true;
+			default:
+				throw new AssertionError("unknown case");
 		}
 	}
 	
-	private boolean assertSupportingInvariant(final Term[] siTermSubset, final UnmodifiableTransFormula loopTf, final Set<IProgramVar> modifiableGlobals) {
-		final List<Term> siSubsetAndRankEqualityList = new ArrayList<Term>(Arrays.asList(siTermSubset));
+	private boolean assertSupportingInvariant(final Term[] siTermSubset, final UnmodifiableTransFormula loopTf,
+			final Set<IProgramVar> modifiableGlobals) {
+		final List<Term> siSubsetAndRankEqualityList = new ArrayList<>(Arrays.asList(siTermSubset));
 		siSubsetAndRankEqualityList.add(mRankEquality.getFormula());
 		final IPredicate siSubsetAndRankEquality = mPredicateFactory.newPredicate(
-						SmtUtils.and(mScript, siSubsetAndRankEqualityList));
+				SmtUtils.and(mScript, siSubsetAndRankEqualityList));
 		
-		final List<Term> siSubsetAndRankDecreaseAndBoundList = new ArrayList<Term>(Arrays.asList(siTermSubset));
+		final List<Term> siSubsetAndRankDecreaseAndBoundList = new ArrayList<>(Arrays.asList(siTermSubset));
 		siSubsetAndRankDecreaseAndBoundList.add(mRankDecreaseAndBound.getFormula());
-		final List<Term> siSubsetAndRankDecreaseAndBoundConjunctsList = new ArrayList<Term>();
+		final List<Term> siSubsetAndRankDecreaseAndBoundConjunctsList = new ArrayList<>();
 		for (final Term succTerm : siSubsetAndRankDecreaseAndBoundList) {
 			siSubsetAndRankDecreaseAndBoundConjunctsList.addAll(Arrays.asList(SmtUtils.getConjuncts(succTerm)));
 		}
 		for (final Term succTerm : siSubsetAndRankDecreaseAndBoundConjunctsList) {
 			final IPredicate succPred = mPredicateFactory.newPredicate(
-							succTerm);
+					succTerm);
 			final LBool sat = PredicateUtils.isInductiveHelper(
 					mScript,
 					siSubsetAndRankEquality,
@@ -380,36 +383,37 @@ public class BinaryStatePredicateManager {
 		}
 		return true;
 	}
-
+	
 	/**
 	 * Returns an array that contains all elements of list with index greater
 	 * than or equal to i and all elements of the list additionalList.
+	 * 
 	 * @return
 	 */
-	Term[] startingFromIPlusList(final List<Term> list, final int i, final List<Term> additionalList) {
-		final List<Term> result = new ArrayList<Term>(list.size()+i+list.size());
-		for (int j=i; j<list.size(); j++) {
+	static Term[] startingFromIPlusList(final List<Term> list, final int i, final List<Term> additionalList) {
+		final List<Term> result = new ArrayList<>(list.size() + i + list.size());
+		for (int j = i; j < list.size(); j++) {
 			result.add(list.get(j));
 		}
 		result.addAll(additionalList);
 		return result.toArray(new Term[result.size()]);
 	}
-
+	
 	private IPredicate unseededPredicate() {
-		final Set<IProgramVar> vars = new HashSet<IProgramVar>(1);
+		final Set<IProgramVar> vars = new HashSet<>(1);
 		vars.add(mUnseededVariable);
 		final Term formula = mUnseededVariable.getTermVariable();
 		final IPredicate result = mPredicateFactory.newPredicate(formula);
 		return result;
 	}
-
+	
 	private IPredicate computeSiConjunction(
 			final Collection<SupportingInvariant> siList,
 			final Collection<Term> aisi,
 			final boolean removeSuperfluousSupportingInvariants,
 			final UnmodifiableTransFormula stemTf,
 			final UnmodifiableTransFormula loopTf, final Set<IProgramVar> modifiableGlobals) {
-		List<Term> siTerms = new ArrayList<Term>(siList.size() + aisi.size());
+		List<Term> siTerms = new ArrayList<>(siList.size() + aisi.size());
 		for (final SupportingInvariant si : siList) {
 			final Term formula = si.asTerm(mManagedScript.getScript());
 			siTerms.add(formula);
@@ -427,20 +431,23 @@ public class BinaryStatePredicateManager {
 		
 		final Term conjunction = SmtUtils.and(mScript, siTerms);
 		final Term si;
-		if (true) {
+		if (SIMPLIFY_SUPPORTING_INVARIANTS) {
 			final Term simplified = SmtUtils.simplify(mManagedScript, conjunction, mServices, mSimplificationTechnique);
-			final Term normalized = (new AffineSubtermNormalizer(mManagedScript.getScript(), mLogger)).transform(simplified);
+			final Term normalized =
+					(new AffineSubtermNormalizer(mManagedScript.getScript(), mLogger)).transform(simplified);
 			si = normalized;
 			if (SmtUtils.isFalse(si)) {
-				throw new AssertionError("Supporting invariant is false. This is impossible since we only consider feasible stems.");
+				throw new AssertionError(
+						"Supporting invariant is false. This is impossible since we only consider feasible stems.");
 			}
 		} else {
 			si = conjunction;
 		}
 		return mPredicateFactory.newPredicate(si);
 	}
-
-	private boolean impliedByStem(final UnmodifiableTransFormula stemTf, final List<Term> siTerms, final Set<IProgramVar> modifiableGlobals) {
+	
+	private boolean impliedByStem(final UnmodifiableTransFormula stemTf, final List<Term> siTerms,
+			final Set<IProgramVar> modifiableGlobals) {
 		final ArrayList<Term> implied = new ArrayList<>();
 		final ArrayList<Term> notImplied = new ArrayList<>();
 		for (final Term siTerm : siTerms) {
@@ -449,8 +456,7 @@ public class BinaryStatePredicateManager {
 					modifiableGlobals,
 					stemTf,
 					Collections.singleton(siTerm),
-					modifiableGlobals
-					);
+					modifiableGlobals);
 			if (isInductive) {
 				implied.add(siTerm);
 			} else {
@@ -460,15 +466,14 @@ public class BinaryStatePredicateManager {
 		assert notImplied.isEmpty() : "The following invariants are not implied by stem " + notImplied.toString();
 		return notImplied.isEmpty();
 	}
-
+	
 	private boolean isInductive(final Set<Term> precondition,
 			final Set<IProgramVar> preconditionModifiableGlobals, final UnmodifiableTransFormula transFormula,
 			final Set<Term> postcondition, final Set<IProgramVar> postconditionModifiableGlobals) {
-		
 		final IPredicate precondPredicate = mPredicateFactory.newPredicate(
-						SmtUtils.and(mScript, precondition));
+				SmtUtils.and(mScript, precondition));
 		final IPredicate postcondPredicate = mPredicateFactory.newPredicate(
-						SmtUtils.and(mScript, postcondition));
+				SmtUtils.and(mScript, postcondition));
 		final LBool sat = PredicateUtils.isInductiveHelper(
 				mManagedScript.getScript(),
 				precondPredicate,
@@ -476,18 +481,18 @@ public class BinaryStatePredicateManager {
 				preconditionModifiableGlobals, postconditionModifiableGlobals);
 		return sat == LBool.UNSAT;
 	}
-
+	
 	public IPredicate supportingInvariant2Predicate(final SupportingInvariant si) {
 		Term formula = si.asTerm(mManagedScript.getScript());
 		formula = SmtUtils.simplify(mManagedScript, formula, mServices, mSimplificationTechnique);
 		return term2Predicate(formula);
 	}
-
+	
 	public IPredicate term2Predicate(final Term term) {
 		final IPredicate result = mPredicateFactory.newPredicate(term);
 		return result;
 	}
-
+	
 	/**
 	 * Given a RankingFunction with lex terms (f_0, ..., f_n), initialize the
 	 * array mLexEquality with the terms (oldrank_0 >= f_0, ..., oldrank_n >=
@@ -499,7 +504,7 @@ public class BinaryStatePredicateManager {
 		mLexEquality = new IPredicate[mLexTerms.length];
 		for (int i = 0; i < mLexTerms.length; i++) {
 			mLexEquality[i] = getRankInEquality(mLexTerms[i], ">=", mOldRankVariables[i], false);
-			if (s_Annotate) {
+			if (ANNOTATE) {
 				final String name = "equality" + i;
 				final Annotation annot = new Annotation(":named", name);
 				mLexTerms[i] = mScript.annotate(mLexTerms[i], annot);
@@ -508,20 +513,20 @@ public class BinaryStatePredicateManager {
 		mLexDecrease = new IPredicate[mLexTerms.length];
 		for (int i = 0; i < mLexTerms.length; i++) {
 			mLexDecrease[i] = getRankInEquality(mLexTerms[i], ">", mOldRankVariables[i], true);
-			if (s_Annotate) {
+			if (ANNOTATE) {
 				final String name = "strictDecrease" + i;
 				final Annotation annot = new Annotation(":named", name);
 				mLexTerms[i] = mScript.annotate(mLexTerms[i], annot);
 			}
 		}
 	}
-
+	
 	private IPredicate computeRankEquality() {
 		final Term conjunction = mPredicateFactory.and(mLexEquality);
 		final IPredicate result = mPredicateFactory.newPredicate(conjunction);
 		return result;
 	}
-
+	
 	private IPredicate computeRankDecreaseAndBound() {
 		final IPredicate[] disjuncts = new IPredicate[mLexTerms.length];
 		for (int i = 0; i < mLexTerms.length; i++) {
@@ -531,35 +536,35 @@ public class BinaryStatePredicateManager {
 			final Term conjunction = mPredicateFactory.and(conjuncts);
 			disjuncts[i] = mPredicateFactory.newPredicate(conjunction);
 		}
-
+		
 		final Term disjunction = mPredicateFactory.or(false, disjuncts);
 		final IPredicate result = mPredicateFactory.newPredicate(disjunction);
 		return result;
 	}
-
-	private IPredicate getRankInEquality(final Term rfTerm, final String symbol, final IProgramVar oldRankVariable, final boolean addGeq0) {
+	
+	private IPredicate getRankInEquality(final Term rfTerm, final String symbol, final IProgramVar oldRankVariable,
+			final boolean addGeq0) {
 		assert symbol.equals(">=") || symbol.equals(">");
-
+		
 		Term equality = mScript.term(symbol, oldRankVariable.getTermVariable(), rfTerm);
 		if (addGeq0) {
 			equality = Util.and(mScript, equality, getRankGeq0(oldRankVariable));
 		}
-
+		
 		final IPredicate result = mPredicateFactory.newPredicate(equality);
 		return result;
 	}
-
+	
 	private Term getRankGeq0(final IProgramVar oldRankVariable) {
 		final Term geq = mScript.term(">=", oldRankVariable.getTermVariable(), mScript.numeral(BigInteger.ZERO));
 		return geq;
 	}
-
+	
 	public boolean checkSupportingInvariant(IPredicate siPredicate, final NestedWord<CodeBlock> stem,
 			final NestedWord<CodeBlock> loop, final ModifiableGlobalVariableManager modGlobVarManager) {
 		boolean result = true;
 		TraceChecker traceChecker;
-		final IPredicate truePredicate = mPredicateFactory.
-				newPredicate(mManagedScript.getScript().term("true"));
+		final IPredicate truePredicate = mPredicateFactory.newPredicate(mManagedScript.getScript().term("true"));
 		if (isTrue(siPredicate)) {
 			siPredicate = truePredicate;
 		}
@@ -577,15 +582,16 @@ public class BinaryStatePredicateManager {
 		}
 		return result;
 	}
-
-	public boolean checkRankDecrease(final NestedWord<CodeBlock> loop, final ModifiableGlobalVariableManager modGlobVarManager) {
+	
+	public boolean checkRankDecrease(final NestedWord<CodeBlock> loop,
+			final ModifiableGlobalVariableManager modGlobVarManager) {
 		final TraceChecker traceChecker = new TraceChecker(mRankEqualityAndSi, mRankDecreaseAndBound,
 				new TreeMap<Integer, IPredicate>(), loop, mSmtManager, modGlobVarManager,
 				AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false);
 		final LBool loopCheck = traceChecker.isCorrect();
-		return (loopCheck == LBool.UNSAT);
+		return loopCheck == LBool.UNSAT;
 	}
-
+	
 	private static boolean isTrue(final IPredicate pred) {
 		final Term term = pred.getFormula();
 		if (term instanceof ApplicationTerm) {
@@ -596,7 +602,7 @@ public class BinaryStatePredicateManager {
 		}
 		return false;
 	}
-
+	
 	public boolean containsOldRankVariable(final IPredicate pred) {
 		for (final IProgramVar rankVariable : getOldRankVariables()) {
 			if (pred.getVars().contains(rankVariable)) {
@@ -605,5 +611,5 @@ public class BinaryStatePredicateManager {
 		}
 		return false;
 	}
-
+	
 }

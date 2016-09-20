@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE UnitTest Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE UnitTest Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE UnitTest Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.test.decider.expectedresult;
@@ -61,8 +61,8 @@ public class KeywordBasedExpectedResultFinder<OVERALL_RESULT> implements IExpect
 	ExpectedResultFinderStatus mEvaluationStatus;
 	String mExpectedResultEvaluation;
 
-	public KeywordBasedExpectedResultFinder(Map<String, OVERALL_RESULT> filenameKeywords,
-			Map<String, OVERALL_RESULT> pathKeywords, Map<String, OVERALL_RESULT> firstlineKeywords) {
+	public KeywordBasedExpectedResultFinder(final Map<String, OVERALL_RESULT> filenameKeywords,
+			final Map<String, OVERALL_RESULT> pathKeywords, final Map<String, OVERALL_RESULT> firstlineKeywords) {
 		if (filenameKeywords == null) {
 			mFilenameKeywords = Collections.emptyMap();
 		} else {
@@ -81,9 +81,9 @@ public class KeywordBasedExpectedResultFinder<OVERALL_RESULT> implements IExpect
 	}
 
 	@Override
-	public void findExpectedResult(UltimateRunDefinition ultimateRunDefinition) {
+	public void findExpectedResult(final UltimateRunDefinition ultimateRunDefinition) {
 		final File file = ultimateRunDefinition.selectPrimaryInputFile();
-		final Set<OVERALL_RESULT> expectedResult = new HashSet<OVERALL_RESULT>();
+		final Set<OVERALL_RESULT> expectedResult = new HashSet<>();
 		if (file != null) {
 			final String filename = file.getName();
 			for (final Entry<String, OVERALL_RESULT> entry : mFilenameKeywords.entrySet()) {
@@ -108,7 +108,7 @@ public class KeywordBasedExpectedResultFinder<OVERALL_RESULT> implements IExpect
 				}
 			}
 		}
-		if (expectedResult.size() == 0) {
+		if (expectedResult.isEmpty()) {
 			mExpectedResult = null;
 			mEvaluationStatus = ExpectedResultFinderStatus.NO_EXPECTED_RESULT_FOUND;
 			mExpectedResultEvaluation = "Neither filename nor path nor first line contains a keyword that defines the expected result";

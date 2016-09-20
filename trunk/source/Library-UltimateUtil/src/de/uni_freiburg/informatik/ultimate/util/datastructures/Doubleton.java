@@ -39,9 +39,8 @@ public class Doubleton<E> {
 	private final E mOtherElement;
 	
 	public Doubleton(final E oneElement, final E otherElement) {
-		super();
 		if (oneElement == null || otherElement == null) {
-			throw new NullPointerException();
+			throw new IllegalArgumentException();
 		}
 		mOneElement = oneElement;
 		mOtherElement = otherElement;
@@ -57,8 +56,7 @@ public class Doubleton<E> {
 	
 	public E[] toArray() {
 		@SuppressWarnings("unchecked")
-		final
-		E[] result = (E[]) new Object[] { mOneElement, mOtherElement};
+		final E[] result = (E[]) new Object[] { mOneElement, mOtherElement};
 		return result;
 	}
 	
@@ -78,6 +76,7 @@ public class Doubleton<E> {
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
+		@SuppressWarnings("unchecked")
 		final Doubleton<E> other = (Doubleton<E>) obj;
 		final boolean equalSameOrder = this.getOneElement().equals(other.getOneElement())
 				&& this.getOtherElement().equals(other.getOtherElement());

@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game;
@@ -30,21 +30,13 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simul
  * This game automaton state represents a sink state.
  * 
  * @author Daniel Tischner
- *
  */
 public final class GameSinkState implements IGameState {
 	/**
 	 * The string representation of this sink state.
 	 */
 	private static final String mRepresentation = "∅SinkState";
-
-	/**
-	 * Creates a new game automaton sink state.
-	 */
-	public GameSinkState() {
-
-	}
-
+	
 	/*
 	 * (non-Javadoc)
 	 * 

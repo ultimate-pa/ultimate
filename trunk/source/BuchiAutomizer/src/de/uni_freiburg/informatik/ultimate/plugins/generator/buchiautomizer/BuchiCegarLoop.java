@@ -53,14 +53,19 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiIsEmpt
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Accepts;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Difference;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsDeterministic;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveNonLiveStates;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaMaxSat2;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaMulti;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaMulti.Strategy;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeSevpa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.ShrinkNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.arrays.MinimizeNwaMaxSAT;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.delayed.BuchiReduce;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.delayed.nwa.ReduceNwaDelayedSimulation;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.direct.nwa.ReduceNwaDirectSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.fair.ReduceBuchiFairDirectSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.fair.ReduceBuchiFairSimulation;
 import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck;
@@ -305,7 +310,7 @@ public class BuchiCegarLoop {
 		mRefineBuchi = new RefineBuchi(mRootNode, mSmtManager, mPref.dumpAutomata(), mDifference, mDefaultStateFactory,
 				mStateFactoryForRefinement, mUseDoubleDeckers, mPref.dumpPath(), mPref.getAutomataFormat(),
 				mInterpolation, mServices, mLogger, mSimplificationTechnique, mXnfConversionTechnique);
-		mBuchiRefinementSettingSequence = new ArrayList<RefineBuchi.RefinementSetting>();
+		mBuchiRefinementSettingSequence = new ArrayList<>();
 		switch (mInterpolantAutomaton) {
 		case TwoStage:
 			mBuchiRefinementSettingSequence.add(mRefineBuchi.new RefinementSetting(
@@ -569,7 +574,7 @@ public class BuchiCegarLoop {
 	private void reduceAbstractionSize() throws AutomataOperationCanceledException, AssertionError {
 		mBenchmarkGenerator.start(BuchiCegarLoopBenchmark.s_NonLiveStateRemoval);
 		try {
-			mAbstraction = (new RemoveNonLiveStates<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
+			mAbstraction = (new RemoveNonLiveStates<>(new AutomataLibraryServices(mServices),
 					mAbstraction)).getResult();
 		} finally {
 			mBenchmarkGenerator.stop(BuchiCegarLoopBenchmark.s_NonLiveStateRemoval);
@@ -583,6 +588,12 @@ public class BuchiCegarLoop {
 		}
 		mBenchmarkGenerator.start(CegarLoopStatisticsDefinitions.AutomataMinimizationTime.toString());
 		final int statesBeforeMinimization = mAbstraction.size();
+		final boolean isDeterministic = new IsDeterministic<>(new AutomataLibraryServices(mServices), mAbstraction).getResult();
+		if (isDeterministic){
+			mBenchmarkGenerator.reportMinimizationOfDetAutom();
+		} else {
+			mBenchmarkGenerator.reportMinimizationOfNondetAutom();
+		}
 		mLogger.info("Abstraction has " + mAbstraction.sizeInformation());
 		final Collection<Set<IPredicate>> partition = computePartition(mAbstraction);
 		try {
@@ -632,7 +643,7 @@ public class BuchiCegarLoop {
 			break;
 		}
 		case MinimizeSevpa: {
-			final MinimizeSevpa<CodeBlock, IPredicate> minimizeOp = new MinimizeSevpa<CodeBlock, IPredicate>(
+			final MinimizeSevpa<CodeBlock, IPredicate> minimizeOp = new MinimizeSevpa<>(
 					new AutomataLibraryServices(mServices), mAbstraction, partition, mStateFactoryForRefinement,
 					false);
 			assert (minimizeOp.checkResult(mPredicateFactoryResultChecking));
@@ -644,16 +655,16 @@ public class BuchiCegarLoop {
 			break;
 		}
 		case ShrinkNwa: {
-			final ShrinkNwa<CodeBlock, IPredicate> minimizeOp = new ShrinkNwa<CodeBlock, IPredicate>(
+			final ShrinkNwa<CodeBlock, IPredicate> minimizeOp = new ShrinkNwa<>(
 					new AutomataLibraryServices(mServices), mStateFactoryForRefinement, mAbstraction, partition,
 					false, false, false, 200, false, 0, false, false, true);
 			assert minimizeOp.checkResult(mPredicateFactoryResultChecking);
-			result = (new RemoveUnreachable<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
+			result = (new RemoveUnreachable<>(new AutomataLibraryServices(mServices),
 					minimizeOp.getResult())).getResult();
 			break;
 		}
 		case MinimizeNwaMaxSat2: {
-			final MinimizeNwaMaxSat2<CodeBlock, IPredicate> minimizeOp = new MinimizeNwaMaxSat2<CodeBlock, IPredicate>(
+			final MinimizeNwaMaxSat2<CodeBlock, IPredicate> minimizeOp = new MinimizeNwaMaxSat2<>(
 					new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
 					(IDoubleDeckerAutomaton<CodeBlock, IPredicate>) mAbstraction);
 			assert minimizeOp.checkResult(mPredicateFactoryResultChecking);
@@ -661,8 +672,44 @@ public class BuchiCegarLoop {
 			break;
 		}
 		case MinimizeNwaMaxSat: {
-			final MinimizeNwaMaxSAT<CodeBlock, IPredicate> minimizeOp = new MinimizeNwaMaxSAT<CodeBlock, IPredicate>(
+			final MinimizeNwaMaxSAT<CodeBlock, IPredicate> minimizeOp = new MinimizeNwaMaxSAT<>(
 					new AutomataLibraryServices(mServices), mStateFactoryForRefinement, mAbstraction);
+			assert minimizeOp.checkResult(mPredicateFactoryResultChecking);
+			result = minimizeOp.getResult();
+			break;
+		}
+		case RaqDirectSimulation: {
+			final ReduceNwaDirectSimulation<CodeBlock, IPredicate> minimizeOp =
+					new ReduceNwaDirectSimulation<>(new AutomataLibraryServices(mServices),
+							mStateFactoryForRefinement, (IDoubleDeckerAutomaton<CodeBlock, IPredicate>) mAbstraction,
+							false, partition);
+			assert minimizeOp.checkResult(mPredicateFactoryResultChecking);
+			result = minimizeOp.getResult();
+			break;
+		}
+		case RaqDelayedSimulation: {
+			final ReduceNwaDelayedSimulation<CodeBlock, IPredicate> minimizeOp =
+					new ReduceNwaDelayedSimulation<>(new AutomataLibraryServices(mServices),
+							mStateFactoryForRefinement, (IDoubleDeckerAutomaton<CodeBlock, IPredicate>) mAbstraction,
+							false, partition);
+			assert minimizeOp.checkResult(mPredicateFactoryResultChecking);
+			result = minimizeOp.getResult();
+			break;
+		}
+
+		case MultiDefault: {
+			final MinimizeNwaMulti<CodeBlock, IPredicate> minimizeOp = new MinimizeNwaMulti<>(
+					new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
+					(IDoubleDeckerAutomaton<CodeBlock, IPredicate>) mAbstraction, partition, false);
+			assert minimizeOp.checkResult(mPredicateFactoryResultChecking);
+			result = minimizeOp.getResult();
+			break;
+		}
+		case MultiSimulation: {
+			final MinimizeNwaMulti<CodeBlock, IPredicate> minimizeOp = new MinimizeNwaMulti<>(
+					new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
+					(IDoubleDeckerAutomaton<CodeBlock, IPredicate>) mAbstraction, partition, false,
+					Strategy.SIMULATION_BASED);
 			assert minimizeOp.checkResult(mPredicateFactoryResultChecking);
 			result = minimizeOp.getResult();
 			break;
@@ -729,7 +776,7 @@ public class BuchiCegarLoop {
 	}
 
 	private boolean isAbstractionCorrect() throws AutomataLibraryException {
-		final BuchiIsEmpty<CodeBlock, IPredicate> ec = new BuchiIsEmpty<CodeBlock, IPredicate>(
+		final BuchiIsEmpty<CodeBlock, IPredicate> ec = new BuchiIsEmpty<>(
 				new AutomataLibraryServices(mServices), mAbstraction);
 		if (ec.getResult()) {
 			return true;
@@ -737,9 +784,9 @@ public class BuchiCegarLoop {
 			mCounterexample = ec.getAcceptingNestedLassoRun();
 			if (mLogger.isInfoEnabled()) {
 				mLogger.info("Counterexample stem histogram "
-						+ (new HistogramOfIterable<CodeBlock>(mCounterexample.getStem().getWord())));
+						+ (new HistogramOfIterable<>(mCounterexample.getStem().getWord())));
 				mLogger.info("Counterexample loop histogram "
-						+ (new HistogramOfIterable<CodeBlock>(mCounterexample.getLoop().getWord())));
+						+ (new HistogramOfIterable<>(mCounterexample.getLoop().getWord())));
 			}
 			assert mCounterexample.getLoop().getLength() > 1;
 			return false;
@@ -750,7 +797,7 @@ public class BuchiCegarLoop {
 		final CFG2NestedWordAutomaton cFG2NestedWordAutomaton = new CFG2NestedWordAutomaton(mServices,
 				mPref.interprocedural(), mSmtManager, mLogger);
 		Collection<ProgramPoint> acceptingNodes;
-		final Collection<ProgramPoint> allNodes = new HashSet<ProgramPoint>();
+		final Collection<ProgramPoint> allNodes = new HashSet<>();
 		for (final Map<String, ProgramPoint> prog2pp : mRootNode.getRootAnnot().getProgramPoints().values()) {
 			allNodes.addAll(prog2pp.values());
 		}
@@ -758,7 +805,7 @@ public class BuchiCegarLoop {
 		// check if we run in LTL mode and set accepting states accordingly
 		if (LTLPropertyCheck.getAnnotation(mRootNode) != null) {
 			mLTLMode = true;
-			acceptingNodes = new HashSet<ProgramPoint>();
+			acceptingNodes = new HashSet<>();
 			for (final ProgramPoint pp : allNodes) {
 				if (BuchiProgramAcceptingStateAnnotation.getAnnotation(pp) != null) {
 					acceptingNodes.add(pp);
@@ -810,11 +857,11 @@ public class BuchiCegarLoop {
 		final DeterministicInterpolantAutomaton determinized = new DeterministicInterpolantAutomaton(mServices,
 				mSmtManager, modGlobVarManager, htc, mAbstraction, mInterpolAutomaton,
 				traceChecker.getPredicateUnifier(), mLogger, false, false);
-		final PowersetDeterminizer<CodeBlock, IPredicate> psd = new PowersetDeterminizer<CodeBlock, IPredicate>(
+		final PowersetDeterminizer<CodeBlock, IPredicate> psd = new PowersetDeterminizer<>(
 				determinized, true, mDefaultStateFactory);
 		Difference<CodeBlock, IPredicate> diff = null;
 		try {
-			diff = new Difference<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), mAbstraction,
+			diff = new Difference<>(new AutomataLibraryServices(mServices), mAbstraction,
 					determinized, psd, mStateFactoryForRefinement, true);
 		} catch (final AutomataOperationCanceledException e) {
 			mBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
@@ -849,13 +896,13 @@ public class BuchiCegarLoop {
 	protected void constructInterpolantAutomaton(final InterpolatingTraceChecker traceChecker,
 			final NestedRun<CodeBlock, IPredicate> run) throws AutomataOperationCanceledException {
 		final CanonicalInterpolantAutomatonBuilder iab = new CanonicalInterpolantAutomatonBuilder(mServices,
-				traceChecker, CoverageAnalysis.extractProgramPoints(run), new InCaReAlphabet<CodeBlock>(mAbstraction),
+				traceChecker, CoverageAnalysis.extractProgramPoints(run), new InCaReAlphabet<>(mAbstraction),
 				mSmtManager, mAbstraction.getStateFactory(), mLogger);
 		iab.analyze();
 		mInterpolAutomaton = iab.getResult();
 
 		try {
-			assert ((new Accepts<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), mInterpolAutomaton,
+			assert ((new Accepts<>(new AutomataLibraryServices(mServices), mInterpolAutomaton,
 					run.getWord())).getResult()) : "Interpolant automaton broken!";
 		} catch (final AutomataLibraryException e) {
 			throw new AssertionError(e);
@@ -879,7 +926,7 @@ public class BuchiCegarLoop {
 			supporting_invariants[i] = si.asTerm(mSmtManager.getScript());
 			++i;
 		}
-		final TerminationArgumentResult<RcfgElement, Term> result = new TerminationArgumentResult<RcfgElement, Term>(
+		final TerminationArgumentResult<RcfgElement, Term> result = new TerminationArgumentResult<>(
 				honda, Activator.PLUGIN_NAME,
 				rf.asLexTerm(mSmtManager.getScript()),
 				rf.getName(), supporting_invariants, mServices.getBacktranslationService(), Term.class);
@@ -889,27 +936,27 @@ public class BuchiCegarLoop {
 	public Collection<Set<IPredicate>> computePartition(final INestedWordAutomaton<CodeBlock, IPredicate> automaton) {
 		mLogger.info("Start computation of initial partition.");
 		final Collection<IPredicate> states = automaton.getStates();
-		final Map<ProgramPoint, Set<IPredicate>> accepting = new HashMap<ProgramPoint, Set<IPredicate>>();
-		final Map<ProgramPoint, Set<IPredicate>> nonAccepting = new HashMap<ProgramPoint, Set<IPredicate>>();
+		final Map<ProgramPoint, Set<IPredicate>> accepting = new HashMap<>();
+		final Map<ProgramPoint, Set<IPredicate>> nonAccepting = new HashMap<>();
 		for (final IPredicate p : states) {
 			final ISLPredicate sp = (ISLPredicate) p;
 			if (automaton.isFinal(p)) {
 				Set<IPredicate> statesWithSamePP = accepting.get(sp.getProgramPoint());
 				if (statesWithSamePP == null) {
-					statesWithSamePP = new HashSet<IPredicate>();
+					statesWithSamePP = new HashSet<>();
 					accepting.put(sp.getProgramPoint(), statesWithSamePP);
 				}
 				statesWithSamePP.add(p);
 			} else {
 				Set<IPredicate> statesWithSamePP = nonAccepting.get(sp.getProgramPoint());
 				if (statesWithSamePP == null) {
-					statesWithSamePP = new HashSet<IPredicate>();
+					statesWithSamePP = new HashSet<>();
 					nonAccepting.put(sp.getProgramPoint(), statesWithSamePP);
 				}
 				statesWithSamePP.add(p);
 			}
 		}
-		final Collection<Set<IPredicate>> partition = new ArrayList<Set<IPredicate>>();
+		final Collection<Set<IPredicate>> partition = new ArrayList<>();
 		for (final ProgramPoint pp : accepting.keySet()) {
 			final Set<IPredicate> statesWithSamePP = accepting.get(pp);
 			partition.add(statesWithSamePP);

@@ -151,7 +151,7 @@ public final class IsSemiDeterministic<LETTER, STATE> extends UnaryNwaOperation<
 		final Set<DoubleDecker<STATE>> result = new HashSet<>();
 		for (final STATE fin : mOperand.getFinalStates()) {
 			for (final STATE down : mOperand.getDownStates(fin)) {
-				result.add(new DoubleDecker<STATE>(down, fin));
+				result.add(new DoubleDecker<>(down, fin));
 			}
 		}
 		return result;
@@ -161,15 +161,15 @@ public final class IsSemiDeterministic<LETTER, STATE> extends UnaryNwaOperation<
 			final DoubleDecker<STATE> doubleDecker, final NestedWordAutomatonReachableStates<LETTER, STATE> nwa) {
 		final Set<DoubleDecker<STATE>> succs = new HashSet<>();
 		for (final OutgoingInternalTransition<LETTER, STATE> out : nwa.internalSuccessors(doubleDecker.getUp())) {
-			succs.add(new DoubleDecker<STATE>(doubleDecker.getDown(), out.getSucc()));
+			succs.add(new DoubleDecker<>(doubleDecker.getDown(), out.getSucc()));
 		}
 		for (final SummaryReturnTransition<LETTER, STATE> out : nwa.summarySuccessors(doubleDecker.getUp())) {
-			succs.add(new DoubleDecker<STATE>(doubleDecker.getDown(), out.getSucc()));
+			succs.add(new DoubleDecker<>(doubleDecker.getDown(), out.getSucc()));
 		}
 		for (final OutgoingReturnTransition<LETTER, STATE> out : nwa.returnSuccessorsGivenHier(doubleDecker.getUp(),
 				doubleDecker.getDown())) {
 			for (final STATE downOfHier : nwa.getDownStates(doubleDecker.getDown())) {
-				succs.add(new DoubleDecker<STATE>(downOfHier, out.getSucc()));
+				succs.add(new DoubleDecker<>(downOfHier, out.getSucc()));
 			}
 		}
 		return succs;
@@ -179,13 +179,13 @@ public final class IsSemiDeterministic<LETTER, STATE> extends UnaryNwaOperation<
 			final DoubleDecker<STATE> doubleDecker, final NestedWordAutomatonReachableStates<LETTER, STATE> nwa) {
 		final Set<DoubleDecker<STATE>> succs = new HashSet<>();
 		for (final OutgoingInternalTransition<LETTER, STATE> out : nwa.internalSuccessors(doubleDecker.getUp())) {
-			succs.add(new DoubleDecker<STATE>(doubleDecker.getDown(), out.getSucc()));
+			succs.add(new DoubleDecker<>(doubleDecker.getDown(), out.getSucc()));
 		}
 		for (final SummaryReturnTransition<LETTER, STATE> out : nwa.summarySuccessors(doubleDecker.getUp())) {
-			succs.add(new DoubleDecker<STATE>(doubleDecker.getDown(), out.getSucc()));
+			succs.add(new DoubleDecker<>(doubleDecker.getDown(), out.getSucc()));
 		}
 		for (final OutgoingCallTransition<LETTER, STATE> out : nwa.callSuccessors(doubleDecker.getUp())) {
-			succs.add(new DoubleDecker<STATE>(doubleDecker.getUp(), out.getSucc()));
+			succs.add(new DoubleDecker<>(doubleDecker.getUp(), out.getSucc()));
 		}
 		return succs;
 	}
@@ -244,7 +244,7 @@ public final class IsSemiDeterministic<LETTER, STATE> extends UnaryNwaOperation<
 	 * TODO Christian 2016-09-04: This method is not used outside this class. Should it be private?
 	 */
 	public static <LETTER, STATE> boolean isNondeterministicReturnGivenHier(
-			final STATE state, final STATE hier, final INestedWordAutomaton<LETTER, STATE> nwa) {
+			final STATE state, final STATE hier, final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
 		for (final LETTER letter : nwa.lettersReturn(state)) {
 			int numberOfSuccs = 0;
 			for (final Iterator<OutgoingReturnTransition<LETTER, STATE>> iterator =

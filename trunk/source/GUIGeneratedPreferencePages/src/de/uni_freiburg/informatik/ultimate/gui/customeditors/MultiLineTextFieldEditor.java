@@ -580,7 +580,7 @@ public final class MultiLineTextFieldEditor extends FieldEditor {
 	 */
 	private final class KeyAdapterValidateOnKeyStroke extends KeyAdapter {
 		public KeyAdapterValidateOnKeyStroke() {
-			// nothing to do, constructor only present
+			// nothing to do, constructor only present to avoid synthetic constructor
 		}
 		
 		@Override
@@ -597,7 +597,7 @@ public final class MultiLineTextFieldEditor extends FieldEditor {
 	 */
 	private final class KeyAdapterValidateOnFocusLost extends KeyAdapter {
 		public KeyAdapterValidateOnFocusLost() {
-			// nothing to do, constructor only present
+			// nothing to do, constructor only present to avoid synthetic constructor
 		}
 		
 		@Override
@@ -614,7 +614,7 @@ public final class MultiLineTextFieldEditor extends FieldEditor {
 	 */
 	private final class FocusAdapterValidateOnKeyStroke extends FocusAdapter {
 		public FocusAdapterValidateOnKeyStroke() {
-			// nothing to do, constructor only present
+			// nothing to do, constructor only present to avoid synthetic constructor
 		}
 		
 		@Override
@@ -636,7 +636,7 @@ public final class MultiLineTextFieldEditor extends FieldEditor {
 	 */
 	private final class FocusAdapterValidateOnFocusLost extends FocusAdapter {
 		public FocusAdapterValidateOnFocusLost() {
-			// nothing to do, constructor only present
+			// nothing to do, constructor only present to avoid synthetic constructor
 		}
 		
 		@Override

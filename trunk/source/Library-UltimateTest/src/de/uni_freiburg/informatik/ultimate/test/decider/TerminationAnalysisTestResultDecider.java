@@ -52,7 +52,7 @@ public class TerminationAnalysisTestResultDecider extends
 
 	@Override
 	public IExpectedResultFinder<TerminationAnalysisOverallResult> constructExpectedResultFinder() {
-		return new KeywordBasedExpectedResultFinder<TerminationAnalysisOverallResult>(
+		return new KeywordBasedExpectedResultFinder<>(
 				TestUtil.constructFilenameKeywordMap_TerminationAnalysis(),
 				TestUtil.constructPathKeywordMap_TerminationAnalysis(),
 				TestUtil.constructFirstlineKeywordMap_TerminationAnalysis());
@@ -90,6 +90,8 @@ public class TerminationAnalysisTestResultDecider extends
 			case NO_EXPECTED_RESULT_FOUND:
 				evaluateOverallResultWithoutExpectedResult(overallResultDeterminer);
 				return;
+			default:
+				throw new IllegalArgumentException();
 			}
 		}
 		
@@ -110,6 +112,8 @@ public class TerminationAnalysisTestResultDecider extends
 			case TIMEOUT:
 				mTestResult = TestResult.UNKNOWN;
 				break;
+			default:
+				throw new IllegalArgumentException();
 			}
 		}
 

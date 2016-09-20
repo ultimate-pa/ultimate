@@ -37,12 +37,12 @@ import java.util.Vector;
  * @see pea.RelationDecision
  */
 public class BooleanDecision extends Decision {
-    static Vector<String> allVars = new Vector<String>();
+    static Vector<String> allVars = new Vector<>();
     public static final String PRIME = "'";
     String var;
     int globalIdx = -1;
 
-    public BooleanDecision(String v) {
+    public BooleanDecision(final String v) {
         globalIdx = allVars.indexOf(v);
 
         if (globalIdx < 0) {
@@ -57,21 +57,17 @@ public class BooleanDecision extends Decision {
      * Create an boolean constraint.
      * @param var the condition that must hold.
      */
-    public static CDD create(String var) {
+    public static CDD create(final String var) {
         return CDD.create(new BooleanDecision(var), CDD.trueChilds);
     }
 
     @Override
-	public boolean equals(Object o) {
+	public boolean equals(final Object o) {
         if (!(o instanceof BooleanDecision)) {
             return false;
         }
 
-        if (!var.equals(((BooleanDecision) o).var)) {
-            return false;
-        }
-
-        return true;
+        return var.equals(((BooleanDecision) o).var);
     }
 
     @Override
@@ -80,7 +76,7 @@ public class BooleanDecision extends Decision {
     }
 
     @Override
-	public int compareTo(Object o) {
+	public int compareTo(final Object o) {
         if (!(o instanceof BooleanDecision)) {
             return 1;
         }
@@ -97,41 +93,40 @@ public class BooleanDecision extends Decision {
     }
 
     @Override
-	public String toString(int child) {
+	public String toString(final int child) {
         return (child == 0) ? var : ("!" + var);
     }
 
     @Override
-	public String toSmtString(int child) {
+	public String toSmtString(final int child) {
         return toSmtString(child, -1);
     }
 
     @Override
-	public String toSmtString(int child, int index) {
+	public String toSmtString(final int child, final int index) {
         if (index < 0) {
             return (child == 0) ? ("(var_h_" + Math.abs(var.hashCode()) + ")")
                                 : ("(not var_h_" + Math.abs(var.hashCode()) +
             ")");
-        } else {
-            return (child == 0)
-            ? ("(var_h_" + Math.abs(var.hashCode()) + "_" + index + ")")
-            : ("(not var_h_" + Math.abs(var.hashCode()) + "_" + index + ")");
         }
+		return (child == 0)
+			? ("(var_h_" + Math.abs(var.hashCode()) + "_" + index + ")")
+			: ("(not var_h_" + Math.abs(var.hashCode()) + "_" + index + ")");
     }
 
     @Override
-	public String toTexString(int child) {
+	public String toTexString(final int child) {
         return (child == 0) ? var : (" \\neg " + var);
     }
 
     @Override
-	public String toUppaalString(int child) {
+	public String toUppaalString(final int child) {
         //return child == 0 ? var : " \\neg " + var;
         return "true";
     }
 
     @Override
-	public String toUppaalStringDOM(int child) {
+	public String toUppaalStringDOM(final int child) {
         return "true";
     }
 

@@ -229,11 +229,11 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE> extends AbstractMinimizeNw
 	 */
 	private void initializeMappings() {
 		// Allocate the finite space in ArrayList and HashMap.
-		mInt2state = new ArrayList<STATE>(mNumberOfStates);
-		mState2int = new HashMap<STATE, Integer>(
+		mInt2state = new ArrayList<>(mNumberOfStates);
+		mState2int = new HashMap<>(
 				computeHashCap(mNumberOfStates));
-		mInt2letter = new ArrayList<LETTER>(mNumberOfLetters);
-		mLetter2int = new HashMap<LETTER, Integer>(
+		mInt2letter = new ArrayList<>(mNumberOfLetters);
+		mLetter2int = new HashMap<>(
 				computeHashCap(mNumberOfLetters));
 				
 		int index = -1;
@@ -242,7 +242,7 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE> extends AbstractMinimizeNw
 			mState2int.put(state, ++index);
 		}
 		index = -1;
-		for (final LETTER letter : mOperand.getAlphabet()) {
+		for (final LETTER letter : mOperand.getInternalAlphabet()) {
 			mInt2letter.add(letter);
 			mLetter2int.put(letter, ++index);
 		}
@@ -255,9 +255,9 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE> extends AbstractMinimizeNw
 	 */
 	private void initializeLables() {
 		// TODO: Better size handling.
-		final ArrayList<Integer> labels = new ArrayList<Integer>();
-		final ArrayList<Integer> heads = new ArrayList<Integer>();
-		final ArrayList<Integer> tails = new ArrayList<Integer>();
+		final ArrayList<Integer> labels = new ArrayList<>();
+		final ArrayList<Integer> heads = new ArrayList<>();
+		final ArrayList<Integer> tails = new ArrayList<>();
 		
 		// Iterate over all states in mint2state.
 		int index = 0;
@@ -388,7 +388,7 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE> extends AbstractMinimizeNw
 	 */
 	private void buildResult(final boolean addMapping) {
 		final ArrayList<STATE> newStates =
-				new ArrayList<STATE>(mBlocks.mNumberOfSets);
+				new ArrayList<>(mBlocks.mNumberOfSets);
 		final int blockOfInitState = mBlocks.mSetElemBelongsTo[mInitialState];
 		final int[] blockOfFinalStates = new int[mNumberOfFinalStates];
 		for (int i = 0; i < mNumberOfFinalStates; ++i) {
@@ -396,7 +396,7 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE> extends AbstractMinimizeNw
 		}
 		
 		final Map<STATE, STATE> mOldState2newState = addMapping
-				? new HashMap<STATE, STATE>(computeHashCap(mOperand.size()))
+				? new HashMap<>(computeHashCap(mOperand.size()))
 				: null;
 				
 		startResultConstruction();
@@ -408,7 +408,7 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE> extends AbstractMinimizeNw
 			final int lastOfBlockIndex = mBlocks.mPast[i];
 			// For intersecting all STATEs belonging to one block,
 			// build collection of all States.
-			final Collection<STATE> tmp = new ArrayList<STATE>(
+			final Collection<STATE> tmp = new ArrayList<>(
 					lastOfBlockIndex - firstOfBlockIndex);
 			// Iterate in melements over all States belonging to one block
 			// and adding them to the collection created before.

@@ -36,6 +36,8 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
@@ -52,9 +54,15 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Seq
  */
 public class MinimizeStatesMultiEdgeSingleNode extends BaseMinimizeStates {
 
+	private final XnfConversionTechnique mXnfConversionTechnique;
+	private final SimplicationTechnique mSimplificationTechnique;
+
 	public MinimizeStatesMultiEdgeSingleNode(final RootNode product, final IUltimateServiceProvider services,
-			final IToolchainStorage storage) {
+			final IToolchainStorage storage, final SimplicationTechnique simplificationTechnique,
+			final XnfConversionTechnique xnfConversionTechnique) {
 		super(product, services, storage);
+		mSimplificationTechnique = simplificationTechnique;
+		mXnfConversionTechnique = xnfConversionTechnique;
 	}
 
 	@Override
@@ -97,8 +105,8 @@ public class MinimizeStatesMultiEdgeSingleNode extends BaseMinimizeStates {
 			mLogger.debug("    will remove " + target.getPosition());
 		}
 
-		final List<RCFGEdge> predEdges = new ArrayList<RCFGEdge>(target.getIncomingEdges());
-		final List<RCFGEdge> succEdges = new ArrayList<RCFGEdge>(target.getOutgoingEdges());
+		final List<RCFGEdge> predEdges = new ArrayList<>(target.getIncomingEdges());
+		final List<RCFGEdge> succEdges = new ArrayList<>(target.getOutgoingEdges());
 
 		for (final RCFGEdge predEdge : predEdges) {
 			predEdge.disconnectSource();

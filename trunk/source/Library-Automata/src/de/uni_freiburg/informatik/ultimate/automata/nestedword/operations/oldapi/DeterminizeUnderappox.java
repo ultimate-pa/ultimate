@@ -32,6 +32,7 @@ import java.util.Collection;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IStateDeterminizer;
 
@@ -60,7 +61,7 @@ public class DeterminizeUnderappox<LETTER, STATE> extends DeterminizeDD<LETTER, 
 	 *             if operation was canceled
 	 */
 	public DeterminizeUnderappox(final AutomataLibraryServices services,
-			final INestedWordAutomaton<LETTER, STATE> operand,
+			final INestedWordAutomatonSimple<LETTER, STATE> operand,
 			final IStateDeterminizer<LETTER, STATE> stateDeterminizer) throws AutomataOperationCanceledException {
 		super(services, operand, stateDeterminizer);
 	}
@@ -100,13 +101,12 @@ public class DeterminizeUnderappox<LETTER, STATE> extends DeterminizeDD<LETTER, 
 	protected STATE getResState(final DeterminizedState<LETTER, STATE> detState) {
 		if (mDet2res.containsKey(detState)) {
 			return mDet2res.get(detState);
-		} else {
-			final STATE resState = mStateDeterminizer.getState(detState);
-			((NestedWordAutomaton<LETTER, STATE>) mTraversedNwa).addState(false, detState.allFinal(mOperand), resState);
-			mDet2res.put(detState, resState);
-			mRes2det.put(resState, detState);
-			return resState;
 		}
+		final STATE resState = mStateDeterminizer.getState(detState);
+		((NestedWordAutomaton<LETTER, STATE>) mTraversedNwa).addState(false, detState.allFinal(mOperand), resState);
+		mDet2res.put(detState, resState);
+		mRes2det.put(resState, detState);
+		return resState;
 	}
 	
 	@Override

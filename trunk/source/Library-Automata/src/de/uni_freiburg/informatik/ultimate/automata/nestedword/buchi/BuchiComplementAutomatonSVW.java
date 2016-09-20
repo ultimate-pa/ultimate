@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -42,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
@@ -67,7 +67,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * @param <STATE>
  *            state type
  */
-public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAutomatonOldApi<LETTER, STATE> {
+public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAutomaton<LETTER, STATE> {
 	private static final String IS_NOT_YET_KNOWN = " is not (yet) known.";
 	private static final String STATE_STRING = "State ";
 	private static final String UNSUPPORTED_OPERATION_MESSAGE = "Transform to NestedWordAutomaton to get full support.";
@@ -282,7 +282,6 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		return result;
 	}
 	
-	@Override
 	public Collection<STATE> succInternal(final STATE state, final LETTER letter) {
 		Map<LETTER, Set<STATE>> map = mTransitionsOut.get(state);
 		if (map == null) {
@@ -328,7 +327,6 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		return result;
 	}
 	
-	@Override
 	public Collection<STATE> predInternal(final STATE state, final LETTER letter) {
 		Map<LETTER, Set<STATE>> map = mTransitionsIn.get(state);
 		if (map == null) {
@@ -386,7 +384,6 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		return result;
 	}
 	
-	@Override
 	public boolean finalIsTrap() {
 		throw new UnsupportedOperationException(UNSUPPORTED_OPERATION_MESSAGE);
 		// This method can be implemented very easily. There is exactly one
@@ -406,7 +403,6 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		// ---------------------------------------------------------------------
 	}
 	
-	@Override
 	public boolean isDeterministic() {
 		throw new UnsupportedOperationException(UNSUPPORTED_OPERATION_MESSAGE);
 		// This method can be implemented very easily. By construction the TMA
@@ -420,7 +416,6 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		// ---------------------------------------------------------------------
 	}
 	
-	@Override
 	public boolean isTotal() {
 		throw new UnsupportedOperationException(UNSUPPORTED_OPERATION_MESSAGE);
 		// This method can be implemented very easily. Since the TMA is always
@@ -434,43 +429,42 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 	@Override
 	public Set<LETTER> getCallAlphabet() {
 		mLogger.warn("No nwa. Has no call alphabet.");
-		return new HashSet<>(0);
+		return Collections.emptySet();
 	}
 	
 	@Override
 	public Set<LETTER> getReturnAlphabet() {
 		mLogger.warn("No nwa. Has no return alphabet.");
-		return new HashSet<>(0);
+		return Collections.emptySet();
 	}
 	
 	@Override
 	public Set<LETTER> lettersCall(final STATE state) {
 		// mLogger.warn("No nwa. Has no call alphabet.");
-		return new HashSet<>(0);
+		return Collections.emptySet();
 	}
 	
 	@Override
 	public Set<LETTER> lettersReturn(final STATE state) {
 		// mLogger.warn("No nwa. Has no return alphabet.");
-		return new HashSet<>(0);
+		return Collections.emptySet();
 	}
 	
 	@Override
 	public Set<LETTER> lettersCallIncoming(final STATE state) {
-		return new HashSet<>(0);
+		return Collections.emptySet();
 	}
 	
 	@Override
 	public Set<LETTER> lettersReturnIncoming(final STATE state) {
-		return new HashSet<>(0);
+		return Collections.emptySet();
 	}
 	
 	@Override
 	public Set<LETTER> lettersSummary(final STATE state) {
-		return new HashSet<>(0);
+		return Collections.emptySet();
 	}
 	
-	@Override
 	public Collection<STATE> succCall(final STATE state, final LETTER letter) {
 		throw new UnsupportedOperationException(UNSUPPORTED_OPERATION_MESSAGE);
 	}
@@ -480,12 +474,10 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		throw new UnsupportedOperationException(UNSUPPORTED_OPERATION_MESSAGE);
 	}
 	
-	@Override
 	public Collection<STATE> succReturn(final STATE state, final STATE hier, final LETTER letter) {
 		throw new UnsupportedOperationException(UNSUPPORTED_OPERATION_MESSAGE);
 	}
 	
-	@Override
 	public Collection<STATE> predCall(final STATE state, final LETTER letter) {
 		throw new UnsupportedOperationException(UNSUPPORTED_OPERATION_MESSAGE);
 	}
@@ -498,33 +490,28 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 	@Override
 	public Iterable<SummaryReturnTransition<LETTER, STATE>> summarySuccessors(
 			final STATE hier) {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException(UNSUPPORTED_OPERATION_MESSAGE);
 	}
 	
 	@Override
 	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(final STATE succ,
 			final LETTER letter) {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException(UNSUPPORTED_OPERATION_MESSAGE);
 	}
 	
 	@Override
 	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(final STATE succ) {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException(UNSUPPORTED_OPERATION_MESSAGE);
 	}
 	
 	@Override
 	public Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(final STATE succ, final LETTER letter) {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException(UNSUPPORTED_OPERATION_MESSAGE);
 	}
 	
 	@Override
 	public Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(final STATE succ) {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException(UNSUPPORTED_OPERATION_MESSAGE);
 	}
 	
 	@Override
@@ -563,20 +550,17 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 	@Override
 	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(final STATE succ, final STATE hier,
 			final LETTER letter) {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException(UNSUPPORTED_OPERATION_MESSAGE);
 	}
 	
 	@Override
 	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(final STATE succ, final LETTER letter) {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException(UNSUPPORTED_OPERATION_MESSAGE);
 	}
 	
 	@Override
 	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(final STATE succ) {
-		// TODO Auto-generated method stub
-		return null;
+		throw new UnsupportedOperationException(UNSUPPORTED_OPERATION_MESSAGE);
 	}
 	
 	@Override

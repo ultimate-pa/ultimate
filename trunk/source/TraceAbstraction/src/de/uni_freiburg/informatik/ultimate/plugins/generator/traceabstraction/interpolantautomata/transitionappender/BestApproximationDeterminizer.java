@@ -322,9 +322,8 @@ public class BestApproximationDeterminizer implements IStateDeterminizer<CodeBlo
 		if (sat == Validity.VALID) {
 			mNwa.addInternalTransition(state, symbol, succ);
 			return true;
-		} else {
-			return false;
 		}
+		return false;
 	}
 	
 	/**
@@ -441,10 +440,7 @@ public class BestApproximationDeterminizer implements IStateDeterminizer<CodeBlo
 		final IPredicate succPs = succ;
 		final Validity sat = mHoareTriplechecker.checkReturn(presentPs, callerPs, symbol, succPs);
 		mAnswerReturnSolver++;
-		if (sat == Validity.VALID) {
-			return true;
-		}
-		return false;
+		return sat == Validity.VALID;
 	}
 	
 	@Override

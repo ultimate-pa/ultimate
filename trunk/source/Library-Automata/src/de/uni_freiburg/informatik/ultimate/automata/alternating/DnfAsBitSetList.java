@@ -119,7 +119,7 @@ public class DnfAsBitSetList {
 	/**
 	 * Helper method for {@link #rewriteWithNewStateList()}.
 	 */
-	private <STATE> BitSet rewriteBitSet(final BitSet bitSet, final ArrayList<STATE> oldStateList,
+	private static <STATE> BitSet rewriteBitSet(final BitSet bitSet, final ArrayList<STATE> oldStateList,
 			final Map<STATE, Integer> newStateToIndex) {
 		final BitSet newBitSet = new BitSet();
 		int setBit = bitSet.nextSetBit(0);

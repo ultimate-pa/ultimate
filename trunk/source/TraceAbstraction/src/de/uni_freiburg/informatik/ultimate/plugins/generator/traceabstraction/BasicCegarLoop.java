@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Accepts;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Difference;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty.SearchStrategy;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveDeadEnds;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
@@ -57,9 +58,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizeNwaDD;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeDfaHopcroftArrays;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeDfaHopcroftLists;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaCombinator;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaMaxSat2;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaMulti;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaMulti.Strategy;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaOverapproximation;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPattern;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeSevpa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.ShrinkNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.arrays.MinimizeNwaMaxSAT;
@@ -107,6 +110,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.CounterexampleSearchStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareAnnotationPositions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareTripleChecks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolantAutomaton;
@@ -167,6 +171,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	private HashSet<ProgramPoint> mHoareAnnotationPositions;
 
 	private final Collection<INestedWordAutomatonSimple<CodeBlock, IPredicate>> mStoredRawInterpolantAutomata;
+	
+	private final SearchStrategy mSearchStrategy;
 
 	public BasicCegarLoop(final String name, final RootNode rootNode, final SmtManager smtManager,
 			final TAPreferences taPrefs, final Collection<ProgramPoint> errorLocs,
@@ -196,7 +202,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		// InterpolationPreferenceChecker.check(Activator.s_PLUGIN_NAME, interpolation);
 		mComputeHoareAnnotation = computeHoareAnnotation;
 		if (mPref.getHoareAnnotationPositions() == HoareAnnotationPositions.LoopsAndPotentialCycles) {
-			mHoareAnnotationPositions = new HashSet<ProgramPoint>();
+			mHoareAnnotationPositions = new HashSet<>();
 			mHoareAnnotationPositions.addAll(rootNode.getRootAnnot().getLoopLocations().keySet());
 			// mHoareAnnotationPositions.addAll(rootNode.getRootAnnot().getExitNodes().values());
 			mHoareAnnotationPositions.addAll(rootNode.getRootAnnot().getPotentialCycleProgramPoints());
@@ -217,12 +223,12 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		mCegarLoopBenchmark = new CegarLoopStatisticsGenerator();
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.OverallTime.toString());
 
-		final IPreferenceProvider mPrefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
-		mUnsatCores = mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_UNSAT_CORES, UnsatCores.class);
-		mUseLiveVariables = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_LIVE_VARIABLES);
-		mDoFaultLocalizationNonFlowSensitive = mPrefs.getBoolean(
+		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
+		mUnsatCores = prefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_UNSAT_CORES, UnsatCores.class);
+		mUseLiveVariables = prefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_LIVE_VARIABLES);
+		mDoFaultLocalizationNonFlowSensitive = prefs.getBoolean(
 				TraceAbstractionPreferenceInitializer.LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_NonFlowSensitive);
-		mDoFaultLocalizationFlowSensitive = mPrefs
+		mDoFaultLocalizationFlowSensitive = prefs
 				.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_FlowSensitive);
 
 		mAbsIntRunner = new AbstractInterpretationRunner(services, mCegarLoopBenchmark, rootNode,
@@ -230,6 +236,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		mInterpolantAutomatonBuilderFactory = new InterpolantAutomatonBuilderFactory(mServices, mSmtManager,
 				mPredicateFactoryInterpolantAutomata, mRootNode, mAbsIntRunner, taPrefs, mInterpolation,
 				mInterpolantAutomatonConstructionProcedure, mCegarLoopBenchmark);
+		
+		mSearchStrategy = getSearchStrategy(prefs);
 
 		mStoredRawInterpolantAutomata = checkStoreCounterExamples(mPref) ? new ArrayList<>() : null;
 	}
@@ -255,12 +263,12 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			final WitnessProductAutomaton wpa = new WitnessProductAutomaton(mServices,
 					(INestedWordAutomatonSimple<CodeBlock, IPredicate>) mAbstraction, mWitnessAutomaton, mSmtManager);
 			final INestedWordAutomatonSimple<CodeBlock, IPredicate> test =
-					(new RemoveUnreachable<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), wpa))
+					(new RemoveUnreachable<>(new AutomataLibraryServices(mServices), wpa))
 							.getResult();
 			mLogger.info("Full witness product has " + test.sizeInformation());
 			mLogger.info(wpa.generateBadWitnessInformation());
 			final LineCoverageCalculator origCoverage = new LineCoverageCalculator(mServices, mAbstraction);
-			mAbstraction = (new RemoveDeadEnds<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), wpa))
+			mAbstraction = (new RemoveDeadEnds<>(new AutomataLibraryServices(mServices), wpa))
 					.getResult();
 			new LineCoverageCalculator(mServices, mAbstraction, origCoverage).reportCoverage("Witness product");
 		}
@@ -270,7 +278,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	protected boolean isAbstractionCorrect() throws AutomataOperationCanceledException {
 		final INestedWordAutomatonSimple<CodeBlock, IPredicate> abstraction =
 				(INestedWordAutomatonSimple<CodeBlock, IPredicate>) mAbstraction;
-		mCounterexample = (new IsEmpty<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), abstraction))
+		mCounterexample = (new IsEmpty<>(new AutomataLibraryServices(mServices), abstraction, mSearchStrategy))
 					.getNestedRun();
 
 		if (mCounterexample == null) {
@@ -288,7 +296,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			mLogger.debug(mCounterexample.getWord());
 		}
 		final HistogramOfIterable<CodeBlock> traceHistogram =
-				new HistogramOfIterable<CodeBlock>(mCounterexample.getWord());
+				new HistogramOfIterable<>(mCounterexample.getWord());
 		mCegarLoopBenchmark.reportTraceHistogramMaximum(traceHistogram.getVisualizationArray()[0]);
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("trace histogram " + traceHistogram.toString());
@@ -389,10 +397,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		mCegarLoopBenchmark.addTraceCheckerData(interpolatingTraceChecker.getTraceCheckerBenchmark());
 		if (interpolatingTraceChecker.getToolchainCancelledExpection() != null) {
 			throw interpolatingTraceChecker.getToolchainCancelledExpection();
-		} else {
-			if (mPref.useSeparateSolverForTracechecks()) {
-				smtMangerTracechecks.getScript().exit();
-			}
+		} else if (mPref.useSeparateSolverForTracechecks()) {
+			smtMangerTracechecks.getScript().exit();
 		}
 
 		feasibility = interpolatingTraceChecker.isCorrect();
@@ -508,13 +514,13 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				switch (mPref.interpolantAutomatonEnhancement()) {
 				case NONE:
 					final PowersetDeterminizer<CodeBlock, IPredicate> psd =
-							new PowersetDeterminizer<CodeBlock, IPredicate>(interpolAutomaton, true,
+							new PowersetDeterminizer<>(interpolAutomaton, true,
 									mPredicateFactoryInterpolantAutomata);
 					if (mPref.differenceSenwa()) {
-						diff = new DifferenceSenwa<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
+						diff = new DifferenceSenwa<>(new AutomataLibraryServices(mServices),
 								oldAbstraction, interpolAutomaton, psd, false);
 					} else {
-						diff = new Difference<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
+						diff = new Difference<>(new AutomataLibraryServices(mServices),
 								oldAbstraction, interpolAutomaton, psd, mStateFactoryForRefinement,
 								explointSigmaStarConcatOfIA);
 					}
@@ -522,7 +528,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				case BESTAPPROXIMATION_DEPRECATED:
 					final BestApproximationDeterminizer bed = new BestApproximationDeterminizer(mSmtManager, mPref,
 							interpolAutomaton, mPredicateFactoryInterpolantAutomata);
-					diff = new Difference<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), oldAbstraction,
+					diff = new Difference<>(new AutomataLibraryServices(mServices), oldAbstraction,
 							interpolAutomaton, bed, mStateFactoryForRefinement, explointSigmaStarConcatOfIA);
 
 					mLogger.info("Internal Transitions: " + bed.getmAnswerInternalAutomaton()
@@ -539,10 +545,10 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					final SelfloopDeterminizer sed = new SelfloopDeterminizer(mSmtManager, mPref, interpolAutomaton,
 							mPredicateFactoryInterpolantAutomata);
 					if (mPref.differenceSenwa()) {
-						diff = new DifferenceSenwa<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
+						diff = new DifferenceSenwa<>(new AutomataLibraryServices(mServices),
 								oldAbstraction, interpolAutomaton, sed, false);
 					} else {
-						diff = new Difference<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
+						diff = new Difference<>(new AutomataLibraryServices(mServices),
 								oldAbstraction, interpolAutomaton, sed, mStateFactoryForRefinement,
 								explointSigmaStarConcatOfIA);
 					}
@@ -574,10 +580,10 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 						// ComplementDeterministicNwa<CodeBlock, IPredicate>
 						// cdnwa = new ComplementDeterministicNwa<>(dia);
 						final PowersetDeterminizer<CodeBlock, IPredicate> psd2 =
-								new PowersetDeterminizer<CodeBlock, IPredicate>(determinized, true,
+								new PowersetDeterminizer<>(determinized, true,
 										mPredicateFactoryInterpolantAutomata);
 						try {
-							diff = new Difference<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
+							diff = new Difference<>(new AutomataLibraryServices(mServices),
 									oldAbstraction, determinized, psd2, mStateFactoryForRefinement,
 									explointSigmaStarConcatOfIA);
 						} catch (final AutomataOperationCanceledException aoce) {
@@ -586,7 +592,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 							determinized.switchToReadonlyMode();
 						}
 						final INestedWordAutomaton<CodeBlock, IPredicate> completelyBuiltInterpolantAutomaton =
-								(new RemoveUnreachable<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
+								(new RemoveUnreachable<>(new AutomataLibraryServices(mServices),
 										determinized)).getResult();
 						if (mPref.dumpAutomata()) {
 							final String filename = "EnhancedInterpolantAutomaton_Iteration" + mIteration;
@@ -594,7 +600,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 						}
 						if (mAbsIntRunner.isDisabled()) {
 							// check only if AI did not run
-							final boolean ctxAccepted = (new Accepts<CodeBlock, IPredicate>(
+							final boolean ctxAccepted = (new Accepts<>(
 									new AutomataLibraryServices(mServices), completelyBuiltInterpolantAutomaton,
 									(NestedWord<CodeBlock>) mCounterexample.getWord(), true, false)).getResult();
 							if (!ctxAccepted) {
@@ -620,10 +626,10 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 									(INestedWordAutomatonSimple<CodeBlock, IPredicate>) mAbstraction, interpolAutomaton,
 									predicateUnifier, mLogger, conservativeSuccessorCandidateSelection, secondChance);
 					final PowersetDeterminizer<CodeBlock, IPredicate> psd2 =
-							new PowersetDeterminizer<CodeBlock, IPredicate>(nondet, true,
+							new PowersetDeterminizer<>(nondet, true,
 									mPredicateFactoryInterpolantAutomata);
 					try {
-						diff = new Difference<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
+						diff = new Difference<>(new AutomataLibraryServices(mServices),
 								oldAbstraction, nondet, psd2, mStateFactoryForRefinement, explointSigmaStarConcatOfIA);
 					} catch (final AutomataOperationCanceledException aoce) {
 						throw aoce;
@@ -631,14 +637,14 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 						nondet.switchToReadonlyMode();
 					}
 					final INestedWordAutomaton<CodeBlock, IPredicate> test =
-							(new RemoveUnreachable<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
+							(new RemoveUnreachable<>(new AutomataLibraryServices(mServices),
 									nondet)).getResult();
 					if (mPref.dumpAutomata()) {
 						final String filename = "EnhancedInterpolantAutomaton_Iteration" + mIteration;
 						super.writeAutomatonToFile(test, filename);
 					}
 					final boolean ctxAccepted =
-							(new Accepts<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), test,
+							(new Accepts<>(new AutomataLibraryServices(mServices), test,
 									(NestedWord<CodeBlock>) mCounterexample.getWord(), true, false)).getResult();
 					if (!ctxAccepted) {
 						throw new AssertionError("enhanced interpolant automaton in iteration " + mIteration
@@ -676,7 +682,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 
 				mLogger.debug("Start complementation");
 				final INestedWordAutomatonSimple<CodeBlock, IPredicate> nia =
-						(new ComplementDD<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
+						(new ComplementDD<>(new AutomataLibraryServices(mServices),
 								mPredicateFactoryInterpolantAutomata, dia)).getResult();
 				assert (!accepts(mServices, nia, mCounterexample.getWord()));
 				mLogger.info("Complemented interpolant automaton has " + nia.size() + " states");
@@ -686,7 +692,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				}
 				assert (oldAbstraction.getStateFactory() == interpolAutomaton.getStateFactory());
 				mLogger.debug("Start intersection");
-				final IntersectDD<CodeBlock, IPredicate> intersect = new IntersectDD<CodeBlock, IPredicate>(
+				final IntersectDD<CodeBlock, IPredicate> intersect = new IntersectDD<>(
 						new AutomataLibraryServices(mServices), false, oldAbstraction, nia);
 				if (REMOVE_DEAD_ENDS && mComputeHoareAnnotation) {
 					throw new AssertionError("not supported any more");
@@ -727,9 +733,11 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		case NWA_MAX_SAT:
 		case NWA_MAX_SAT2:
 		case RAQ_DIRECT_SIMULATION:
-		case NWA_COMBINATOR:
+		case NWA_COMBINATOR_PATTERN:
 		case NWA_COMBINATOR_EVERY_KTH:
 		case NWA_OVERAPPROXIMATION:
+		case NWA_COMBINATOR_MULTI_DEFAULT:
+		case NWA_COMBINATOR_MULTI_SIMULATION:
 			minimizeAbstraction(mStateFactoryForRefinement, mPredicateFactoryResultChecking, minimization);
 			break;
 		default:
@@ -746,14 +754,10 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		// assert a.numberOfIncomingInternalTransitions(p) <= 25 : p + " has "
 		// +a.numberOfIncomingInternalTransitions(p);
 		// }
-		final boolean stillAccepted = (new Accepts<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
+		final boolean stillAccepted = (new Accepts<>(new AutomataLibraryServices(mServices),
 				(INestedWordAutomatonSimple<CodeBlock, IPredicate>) mAbstraction,
 				(NestedWord<CodeBlock>) mCounterexample.getWord())).getResult();
-		if (stillAccepted) {
-			return false;
-		} else {
-			return true;
-		}
+		return !stillAccepted;
 	}
 
 	public static IHoareTripleChecker getEfficientHoareTripleChecker(final IUltimateServiceProvider services,
@@ -805,20 +809,20 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			final boolean wasMinimized;
 			switch (minimization) {
 			case MINIMIZE_SEVPA: {
-				newAbstractionRaw = new MinimizeSevpa<CodeBlock, IPredicate>(services, oldAbstraction, partition,
+				newAbstractionRaw = new MinimizeSevpa<>(services, oldAbstraction, partition,
 						predicateFactoryRefinement, mComputeHoareAnnotation);
 				wasMinimized = true;
 				break;
 			}
 			case SHRINK_NWA: {
-				newAbstractionRaw = new ShrinkNwa<CodeBlock, IPredicate>(services, predicateFactoryRefinement,
+				newAbstractionRaw = new ShrinkNwa<>(services, predicateFactoryRefinement,
 						oldAbstraction, partition, mComputeHoareAnnotation, false, false,
 						ShrinkNwa.SUGGESTED_RANDOM_SPLIT_SIZE, false, 0, false, false, true);
 				wasMinimized = true;
 				break;
 			}
-			case NWA_COMBINATOR: {
-				newAbstractionRaw = new MinimizeNwaCombinator<CodeBlock, IPredicate>(services,
+			case NWA_COMBINATOR_PATTERN: {
+				newAbstractionRaw = new MinimizeNwaPattern<>(services,
 						predicateFactoryRefinement, (IDoubleDeckerAutomaton<CodeBlock, IPredicate>) oldAbstraction,
 						partition, mComputeHoareAnnotation, mIteration);
 				// it can happen that no minimization took place
@@ -826,7 +830,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				break;
 			}
 			case NWA_COMBINATOR_EVERY_KTH: {
-				newAbstractionRaw = new MinimizeNwaCombinator<CodeBlock, IPredicate>(services,
+				newAbstractionRaw = new MinimizeNwaPattern<>(services,
 						predicateFactoryRefinement, (IDoubleDeckerAutomaton<CodeBlock, IPredicate>) oldAbstraction,
 						partition, mComputeHoareAnnotation, MINIMIZE_EVERY_KTH_ITERATION, mIteration);
 				// it can happen that no minimization took place
@@ -836,43 +840,55 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			case NWA_OVERAPPROXIMATION: {
 				assert mStoredRawInterpolantAutomata != null;
 				mStoredRawInterpolantAutomata.add(mInterpolAutomaton);
-				newAbstractionRaw = new MinimizeNwaOverapproximation<CodeBlock, IPredicate>(services,
+				newAbstractionRaw = new MinimizeNwaOverapproximation<>(services,
 						predicateFactoryRefinement, oldAbstraction, partition, mComputeHoareAnnotation,
 						MINIMIZATION_TIMEOUT, mStoredRawInterpolantAutomata);
 				wasMinimized = true;
 				break;
 			}
 			case DFA_HOPCROFT_ARRAYS: {
-				newAbstractionRaw = new MinimizeDfaHopcroftArrays<CodeBlock, IPredicate>(services, oldAbstraction,
+				newAbstractionRaw = new MinimizeDfaHopcroftArrays<>(services, oldAbstraction,
 						predicateFactoryRefinement, partition, mComputeHoareAnnotation);
 				wasMinimized = true;
 				break;
 			}
 			case DFA_HOPCROFT_LISTS: {
-				newAbstractionRaw = new MinimizeDfaHopcroftLists<CodeBlock, IPredicate>(services, oldAbstraction,
+				newAbstractionRaw = new MinimizeDfaHopcroftLists<>(services, oldAbstraction,
 						predicateFactoryRefinement, partition, mComputeHoareAnnotation);
 				wasMinimized = true;
 				break;
 			}
 			case NWA_MAX_SAT: {
-				newAbstractionRaw = new MinimizeNwaMaxSAT<CodeBlock, IPredicate>(services, predicateFactoryRefinement,
+				newAbstractionRaw = new MinimizeNwaMaxSAT<>(services, predicateFactoryRefinement,
 						oldAbstraction);
 				wasMinimized = true;
 				break;
 			}
 			case NWA_MAX_SAT2: {
-				newAbstractionRaw = new MinimizeNwaMaxSat2<CodeBlock, IPredicate>(services, predicateFactoryRefinement,
+				newAbstractionRaw = new MinimizeNwaMaxSat2<>(services, predicateFactoryRefinement,
 						(IDoubleDeckerAutomaton<CodeBlock, IPredicate>) oldAbstraction, mComputeHoareAnnotation,
 						partition);
 				wasMinimized = true;
 				break;
 			}
 			case RAQ_DIRECT_SIMULATION: {
-				/**
-				 * TODO Christian 2016-08-05: add initial partition
-				 */
-				newAbstractionRaw = new ReduceNwaDirectSimulation<CodeBlock, IPredicate>(services,
-						predicateFactoryRefinement, (IDoubleDeckerAutomaton<CodeBlock, IPredicate>) oldAbstraction);
+				newAbstractionRaw = new ReduceNwaDirectSimulation<>(services,
+						predicateFactoryRefinement, (IDoubleDeckerAutomaton<CodeBlock, IPredicate>) oldAbstraction,
+						false, partition);
+				wasMinimized = true;
+				break;
+			}
+			case NWA_COMBINATOR_MULTI_DEFAULT: {
+				newAbstractionRaw = new MinimizeNwaMulti<>(services, predicateFactoryRefinement,
+						(IDoubleDeckerAutomaton<CodeBlock, IPredicate>) oldAbstraction, partition,
+						mComputeHoareAnnotation);
+				wasMinimized = true;
+				break;
+			}
+			case NWA_COMBINATOR_MULTI_SIMULATION: {
+				newAbstractionRaw = new MinimizeNwaMulti<>(services, predicateFactoryRefinement,
+						(IDoubleDeckerAutomaton<CodeBlock, IPredicate>) oldAbstraction, partition,
+						mComputeHoareAnnotation, Strategy.SIMULATION_BASED);
 				wasMinimized = true;
 				break;
 			}
@@ -897,7 +913,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				} else {
 					// compute DoubleDecker information
 					newAbstraction =
-							(new RemoveUnreachable<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
+							(new RemoveUnreachable<>(new AutomataLibraryServices(mServices),
 									newAbstractionRaw.getResult())).getResult();
 				}
 
@@ -962,12 +978,12 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			computePartition(final INestedWordAutomaton<CodeBlock, IPredicate> automaton) {
 		mLogger.info("Start computation of initial partition.");
 		final Collection<IPredicate> states = automaton.getStates();
-		final Map<ProgramPoint, Set<IPredicate>> pp2p = new HashMap<ProgramPoint, Set<IPredicate>>();
+		final Map<ProgramPoint, Set<IPredicate>> pp2p = new HashMap<>();
 		for (final IPredicate p : states) {
 			final ISLPredicate sp = (ISLPredicate) p;
 			pigeonHole(pp2p, sp);
 		}
-		final Collection<Set<IPredicate>> partition = new ArrayList<Set<IPredicate>>();
+		final Collection<Set<IPredicate>> partition = new ArrayList<>();
 		for (final ProgramPoint pp : pp2p.keySet()) {
 			final Set<IPredicate> statesWithSamePP = pp2p.get(pp);
 			partition.add(statesWithSamePP);
@@ -982,7 +998,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	private static void pigeonHole(final Map<ProgramPoint, Set<IPredicate>> pp2p, final ISLPredicate sp) {
 		Set<IPredicate> statesWithSamePP = pp2p.get(sp.getProgramPoint());
 		if (statesWithSamePP == null) {
-			statesWithSamePP = new HashSet<IPredicate>();
+			statesWithSamePP = new HashSet<>();
 			pp2p.put(sp.getProgramPoint(), statesWithSamePP);
 		}
 		statesWithSamePP.add(sp);
@@ -1004,9 +1020,9 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		INestedWordAutomaton<CodeBlock, IPredicate> dia;
 		switch (mPref.interpolantAutomatonEnhancement()) {
 		case NONE:
-			final PowersetDeterminizer<CodeBlock, IPredicate> psd = new PowersetDeterminizer<CodeBlock, IPredicate>(
+			final PowersetDeterminizer<CodeBlock, IPredicate> psd = new PowersetDeterminizer<>(
 					interpolAutomaton, true, mPredicateFactoryInterpolantAutomata);
-			final DeterminizeDD<CodeBlock, IPredicate> dabps = new DeterminizeDD<CodeBlock, IPredicate>(
+			final DeterminizeDD<CodeBlock, IPredicate> dabps = new DeterminizeDD<>(
 					new AutomataLibraryServices(mServices), interpolAutomaton, psd);
 			dia = dabps.getResult();
 			break;
@@ -1014,14 +1030,14 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			final BestApproximationDeterminizer bed = new BestApproximationDeterminizer(mSmtManager, mPref,
 					(NestedWordAutomaton<CodeBlock, IPredicate>) interpolAutomaton,
 					mPredicateFactoryInterpolantAutomata);
-			final DeterminizeDD<CodeBlock, IPredicate> dab = new DeterminizeDD<CodeBlock, IPredicate>(
+			final DeterminizeDD<CodeBlock, IPredicate> dab = new DeterminizeDD<>(
 					new AutomataLibraryServices(mServices), interpolAutomaton, bed);
 			dia = dab.getResult();
 			break;
 		case SELFLOOP:
 			final SelfloopDeterminizer sed = new SelfloopDeterminizer(mSmtManager, mPref, interpolAutomaton,
 					mPredicateFactoryInterpolantAutomata);
-			final DeterminizeDD<CodeBlock, IPredicate> dabsl = new DeterminizeDD<CodeBlock, IPredicate>(
+			final DeterminizeDD<CodeBlock, IPredicate> dabsl = new DeterminizeDD<>(
 					new AutomataLibraryServices(mServices), interpolAutomaton, sed);
 			dia = dabsl.getResult();
 			break;
@@ -1063,13 +1079,12 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			if (mArtifactAutomaton == null) {
 				mLogger.warn("Preferred Artifact not available," + " visualizing the RCFG instead");
 				return mRootNode;
-			} else {
-				try {
-					return Automaton2UltimateModel.ultimateModel(new AutomataLibraryServices(mServices),
-							mArtifactAutomaton);
-				} catch (final AutomataOperationCanceledException e) {
-					return null;
-				}
+			}
+			try {
+				return Automaton2UltimateModel.ultimateModel(new AutomataLibraryServices(mServices),
+						mArtifactAutomaton);
+			} catch (final AutomataOperationCanceledException e) {
+				return null;
 			}
 		} else if (mPref.artifact() == Artifact.RCFG) {
 			return mRootNode;
@@ -1102,7 +1117,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			final INestedWordAutomatonSimple<CodeBlock, IPredicate> nia, final Word<CodeBlock> word)
 			throws AutomataOperationCanceledException {
 		try {
-			return (new Accepts<CodeBlock, IPredicate>(new AutomataLibraryServices(services), nia,
+			return (new Accepts<>(new AutomataLibraryServices(services), nia,
 					NestedWord.nestedWord(word), false, false)).getResult();
 		} catch (final AutomataOperationCanceledException e) {
 			throw e;
@@ -1127,7 +1142,19 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 
 	}
 
-	private final boolean checkStoreCounterExamples(final TAPreferences pref) {
+	private final static boolean checkStoreCounterExamples(final TAPreferences pref) {
 		return pref.minimize() == Minimization.NWA_OVERAPPROXIMATION;
+	}
+
+	private static SearchStrategy getSearchStrategy(final IPreferenceProvider mPrefs) {
+		switch (mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_COUNTEREXAMPLE_SEARCH_STRATEGY,
+				CounterexampleSearchStrategy.class)) {
+			case BFS:
+				return SearchStrategy.BFS;
+			case DFS:
+				return SearchStrategy.DFS;
+			default:
+				throw new IllegalArgumentException();
+		}
 	}
 }

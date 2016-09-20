@@ -142,7 +142,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		 * A map from variable names to the type they represent. This is needed to check for type conformity, e.g.
 		 * variable assignment.
 		 */
-		private final Map<String, Class<?>> mLocalVariables = new HashMap<String, Class<?>>();
+		private final Map<String, Class<?>> mLocalVariables = new HashMap<>();
 		
 		/**
 		 * Checks the test file for type errors and for undeclared variables.
@@ -579,7 +579,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 			if (n instanceof OperationInvocationExpressionAST) {
 				final OperationInvocationExpressionAST oe = (OperationInvocationExpressionAST) n;
 				final String opName = oe.getOperationName().toLowerCase();
-				final Set<Class<?>> returnTypes = new HashSet<Class<?>>();
+				final Set<Class<?>> returnTypes = new HashSet<>();
 				if (opName.equals("print") || opName.equals("assert") || opName.equals("write")) {
 					return returnTypes;
 				}
@@ -595,17 +595,14 @@ public class TestFileInterpreter implements IMessagePrinter {
 					if (returnTypes.isEmpty()) {
 						throw new UnsupportedOperationException("Operation \"" + opName
 								+ "\" has no operation \"getResult()\"");
-					} else {
-						return returnTypes;
 					}
-				} else {
-					throw new UnsupportedOperationException("Operation \"" + opName + "\" was not found!");
+					return returnTypes;
 				}
-			} else {
-				final Set<Class<?>> returnType = new HashSet<Class<?>>();
-				returnType.add(n.getReturnType());
-				return returnType;
+				throw new UnsupportedOperationException("Operation \"" + opName + "\" was not found!");
 			}
+			final Set<Class<?>> returnType = new HashSet<>();
+			returnType.add(n.getReturnType());
+			return returnType;
 		}
 		
 	}
@@ -656,14 +653,14 @@ public class TestFileInterpreter implements IMessagePrinter {
 		WARNING,
 		ERROR,
 		DEBUG
-	};
+	}
 	
 	private enum Finished {
 		FINISHED,
 		TIMEOUT,
 		ERROR,
 		OUTOFMEMORY
-	};
+	}
 	
 	public static final String sAssertionHoldsMessage = "Assertion holds.";
 	public static final String sAssertionViolatedMessage = "Assertion violated!";
@@ -680,13 +677,13 @@ public class TestFileInterpreter implements IMessagePrinter {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		readPreferences();
-		mVariables = new HashMap<String, Object>();
+		mVariables = new HashMap<>();
 		mFlow = Flow.NORMAL;
 		mAutomataInterpreter = new AutomataDefinitionInterpreter(this, mLogger, mServices);
 		mTypeChecker = new AutomataScriptTypeChecker();
 		mExistingOperations = getOperationClasses();
 		mLastPrintedAutomaton = null;
-		mResultOfAssertStatements = new ArrayList<GenericResultAtElement<AtsASTNode>>();
+		mResultOfAssertStatements = new ArrayList<>();
 		if (mPrintAutomataToFile) {
 			final String path = mPath + File.separator + "automatascriptOutput" + getDateTime() + ".ats";
 			final File file = new File(path);
@@ -830,7 +827,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 	 *            all automata found
 	 * @return command with placeholders replaced by respective automaton name
 	 */
-	private String substituteAutomataNames(final String command, final AutomataDefinitionsAST automataDefinitions) {
+	private static String substituteAutomataNames(final String command, final AutomataDefinitionsAST automataDefinitions) {
 		String result = command;
 		final List<AutomatonAST> automata = automataDefinitions.getListOfAutomataDefinitions();
 		int i = automata.size();
@@ -1023,7 +1020,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		}
 	}
 	
-	private Object interpret(final ConstantExpressionAST ce) {
+	private static Object interpret(final ConstantExpressionAST ce) {
 		return ce.getValue();
 	}
 	
@@ -1071,31 +1068,30 @@ public class TestFileInterpreter implements IMessagePrinter {
 					interpret(children.get(2));
 				}
 			}
-		} else {
-			for (; (Boolean) interpret(children.get(0));) {
-				final List<AtsASTNode> statementList = children.get(3).getOutgoingNodes();
-				secondLoop: for (int i = 0; i < statementList.size(); i++) {
-					interpret(statementList.get(i));
-					if (mFlow != Flow.NORMAL) {
-						switch (mFlow) {
-							case BREAK:
-							case RETURN: {
-								mFlow = Flow.NORMAL;
-								return null;
-							}
-							case CONTINUE: {
-								mFlow = Flow.NORMAL;
-								break secondLoop;
-							}
-							default:
-								throw new UnsupportedOperationException();
+		}
+		for (; (Boolean) interpret(children.get(0));) {
+			final List<AtsASTNode> statementList = children.get(3).getOutgoingNodes();
+			secondLoop: for (int i = 0; i < statementList.size(); i++) {
+				interpret(statementList.get(i));
+				if (mFlow != Flow.NORMAL) {
+					switch (mFlow) {
+						case BREAK:
+						case RETURN: {
+							mFlow = Flow.NORMAL;
+							return null;
 						}
+						case CONTINUE: {
+							mFlow = Flow.NORMAL;
+							break secondLoop;
+						}
+						default:
+							throw new UnsupportedOperationException();
 					}
 				}
-				// execute the updatestatement
-				if (children.get(2) != null) {
-					interpret(children.get(2));
-				}
+			}
+			// execute the updatestatement
+			if (children.get(2) != null) {
+				interpret(children.get(2));
 			}
 		}
 		return null;
@@ -1123,14 +1119,14 @@ public class TestFileInterpreter implements IMessagePrinter {
 		return null;
 	}
 	
-	private NestedWord<String> interpret(final NestedwordAST nw) {
-		return new NestedWord<String>(nw.getWordSymbols(), nw.getNestingRelation());
+	private static NestedWord<String> interpret(final NestedwordAST nw) {
+		return new NestedWord<>(nw.getWordSymbols(), nw.getNestingRelation());
 	}
 	
 	private NestedLassoWord<String> interpret(final NestedLassowordAST nw) {
 		final NestedWord<String> stem = interpret(nw.getStem());
 		final NestedWord<String> loop = interpret(nw.getLoop());
-		return new NestedLassoWord<String>(stem, loop);
+		return new NestedLassoWord<>(stem, loop);
 	}
 	
 	private Object interpret(final OperationInvocationExpressionAST oe) throws InterpreterException {
@@ -1145,7 +1141,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		List<AtsASTNode> argsToInterpret = null;
 		if (children.get(0) != null) {
 			argsToInterpret = children.get(0).getOutgoingNodes();
-			arguments = new ArrayList<Object>(argsToInterpret.size());
+			arguments = new ArrayList<>(argsToInterpret.size());
 			// Interpret the arguments of this operation
 			for (int i = 0; i < argsToInterpret.size(); i++) {
 				arguments.add(interpret(argsToInterpret.get(i)));
@@ -1205,9 +1201,8 @@ public class TestFileInterpreter implements IMessagePrinter {
 					throw new InterpreterException(oe.getLocation(),
 							"if first argument of print command is not an "
 									+ "automaton no second argument allowed");
-				} else {
-					text = String.valueOf(arguments.get(0));
 				}
+				text = String.valueOf(arguments.get(0));
 			}
 			printMessage(Severity.INFO, LoggerSeverity.INFO, text, oe.getAsString(), oe);
 			if (mPrintAutomataToFile) {
@@ -1297,11 +1292,10 @@ public class TestFileInterpreter implements IMessagePrinter {
 		final List<AtsASTNode> children = rst.getOutgoingNodes();
 		// Change the flow
 		mFlow = Flow.RETURN;
-		if (children.size() == 0) {
+		if (children.isEmpty()) {
 			return null;
-		} else {
-			return interpret(children.get(0));
 		}
+		return interpret(children.get(0));
 	}
 	
 	private Object interpret(final StatementListAST stmtList) throws InterpreterException {
@@ -1464,7 +1458,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		if (node == null) {
 			result = new GenericResult(Activator.PLUGIN_ID, shortDescr, longDescr, sev);
 		} else {
-			result = new GenericResultAtElement<AtsASTNode>(node, Activator.PLUGIN_ID,
+			result = new GenericResultAtElement<>(node, Activator.PLUGIN_ID,
 					mServices.getBacktranslationService(), shortDescr, longDescr, sev);
 		}
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
@@ -1550,9 +1544,8 @@ public class TestFileInterpreter implements IMessagePrinter {
 							}
 							if (targetException instanceof InterpreterException) {
 								throw (InterpreterException) targetException;
-							} else {
-								throw new InterpreterException(oe.getLocation(), targetException);
 							}
+							throw new InterpreterException(oe.getLocation(), targetException);
 						} catch (final OutOfMemoryError e) {
 							throw new InterpreterException(oe.getLocation(), e);
 						}
@@ -1611,7 +1604,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 	 * Return args.toArray(), but prepend a new StringFactory if the first parameter of the Constructor c is a
 	 * StateFacotry.
 	 */
-	private Object[] prependStateFactoryIfNecessary(final Constructor<?> c, final List<Object> args) {
+	private static Object[] prependStateFactoryIfNecessary(final Constructor<?> c, final List<Object> args) {
 		boolean firstParameterIsStateFactory;
 		final Class<?> fstParam = c.getParameterTypes()[0];
 		if (IStateFactory.class.isAssignableFrom(fstParam)) {
@@ -1642,7 +1635,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 	 * TODO: get rid of this workaround Workaround that is necessary as long as not all operations use Services as their
 	 * first parameter.
 	 */
-	private boolean firstParameterIsServicesAndSecondParameterIsStateFactory(final Constructor<?> c,
+	private static boolean firstParameterIsServicesAndSecondParameterIsStateFactory(final Constructor<?> c,
 			final Class<?> fstParam) {
 		boolean firstParameterIsServicesAndSecondParameterIsStateFactory;
 		if (c.getParameterTypes().length < 2) {
@@ -1671,7 +1664,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 	 *            The arguments to check
 	 * @return true if and only if all arguments have the correct type. Otherwise false.
 	 */
-	private boolean allArgumentsHaveCorrectTypeForThisConstructor(final Constructor<?> c, final Object[] arguments) {
+	private static boolean allArgumentsHaveCorrectTypeForThisConstructor(final Constructor<?> c, final Object[] arguments) {
 		if (arguments.length == c.getParameterTypes().length) {
 			int i = 0;
 			for (final Class<?> type : c.getParameterTypes()) {
@@ -1682,9 +1675,8 @@ public class TestFileInterpreter implements IMessagePrinter {
 				}
 			}
 			return true;
-		} else {
-			return false;
 		}
+		return false;
 	}
 	
 	/**
@@ -1695,7 +1687,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 	 * @return A map from class names to set of class objects from classes found in the directories.
 	 */
 	private Map<String, Set<Class<?>>> getOperationClasses() {
-		final Map<String, Set<Class<?>>> result = new HashMap<String, Set<Class<?>>>();
+		final Map<String, Set<Class<?>>> result = new HashMap<>();
 		/*
 		 * NOTE: The following directories are scanned recursively. Hence, do not add directories where one directory is
 		 * a subdirectory of another in the list to avoid unnecessary work.
@@ -1739,7 +1731,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		return clazz;
 	}
 	
-	private boolean tryAdd(final Map<String, Set<Class<?>>> result, final Class<?> clazz) {
+	private static boolean tryAdd(final Map<String, Set<Class<?>>> result, final Class<?> clazz) {
 		final String opName = clazz.getSimpleName().toLowerCase();
 		Set<Class<?>> set = result.get(opName);
 		if (set == null) {
@@ -1759,7 +1751,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 	 * @param file
 	 * @return
 	 */
-	private String getQualifiedNameFromFile(final String packageName, final File file) {
+	private static String getQualifiedNameFromFile(final String packageName, final File file) {
 		assert file != null;
 		assert file.getName().endsWith(".class");
 		
@@ -1772,7 +1764,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		return filenameWithoutSuffix.substring(validAfter).replace(File.separatorChar, '.');
 	}
 	
-	private String getPathFromPackageName(final String packageName) {
+	private static String getPathFromPackageName(final String packageName) {
 		return packageName.replace(".", File.separator);
 	}
 	
@@ -1832,9 +1824,9 @@ public class TestFileInterpreter implements IMessagePrinter {
 		return resolveDirectories(Arrays.asList(dirFile));
 	}
 	
-	private Collection<File> resolveDirectories(final Collection<File> files) {
-		final ArrayDeque<File> worklist = new ArrayDeque<File>();
-		final ArrayList<File> rtr = new ArrayList<File>();
+	private static Collection<File> resolveDirectories(final Collection<File> files) {
+		final ArrayDeque<File> worklist = new ArrayDeque<>();
+		final ArrayList<File> rtr = new ArrayList<>();
 		worklist.addAll(files);
 		while (!worklist.isEmpty()) {
 			final File file = worklist.removeFirst();
@@ -1880,12 +1872,11 @@ public class TestFileInterpreter implements IMessagePrinter {
 			mShortDescription = cause.getClass().getSimpleName();
 		}
 		
-		private String generateLongDescriptionFromThrowable(final Throwable throwable) {
+		private static String generateLongDescriptionFromThrowable(final Throwable throwable) {
 			if (throwable.getMessage() == null) {
 				return throwable.getClass().getSimpleName();
-			} else {
-				return throwable.getClass().getSimpleName() + ": " + throwable.getMessage();
 			}
+			return throwable.getClass().getSimpleName() + ": " + throwable.getMessage();
 		}
 		
 		public ILocation getLocation() {

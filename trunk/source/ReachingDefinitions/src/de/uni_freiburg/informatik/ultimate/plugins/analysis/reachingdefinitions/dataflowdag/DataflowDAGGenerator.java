@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ReachingDefinitions plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ReachingDefinitions plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ReachingDefinitions plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.dataflowdag;
@@ -49,16 +49,15 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCF
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 
 public class DataflowDAGGenerator extends BaseObserver {
-
 	private final ILogger mLogger;
 	private final IAnnotationProvider<ReachDefStatementAnnotation> mStatementProvider;
 //	private final IAnnotationProvider<ReachDefEdgeAnnotation> mEdgeProvider;
 	private final LinkedHashMap<RCFGEdge, List<AssumeStatement>> mEdgesWithAssumes;
 	private List<DataflowDAG<Statement>> mForest;
 
-	public DataflowDAGGenerator(ILogger logger, IAnnotationProvider<ReachDefStatementAnnotation> stmtProvider,
-			IAnnotationProvider<ReachDefEdgeAnnotation> edgeProvider,
-			LinkedHashMap<RCFGEdge, List<AssumeStatement>> edgesWithAssumes) {
+	public DataflowDAGGenerator(final ILogger logger, final IAnnotationProvider<ReachDefStatementAnnotation> stmtProvider,
+			final IAnnotationProvider<ReachDefEdgeAnnotation> edgeProvider,
+			final LinkedHashMap<RCFGEdge, List<AssumeStatement>> edgesWithAssumes) {
 		mLogger = logger;
 		mStatementProvider = stmtProvider;
 //		mEdgeProvider = edgeProvider;
@@ -66,8 +65,8 @@ public class DataflowDAGGenerator extends BaseObserver {
 	}
 
 	@Override
-	public boolean process(IElement root) throws Throwable {
-		if (mEdgesWithAssumes == null || mEdgesWithAssumes.size() == 0) {
+	public boolean process(final IElement root) throws Throwable {
+		if (mEdgesWithAssumes == null || mEdgesWithAssumes.isEmpty()) {
 			return false;
 		}
 
@@ -88,20 +87,20 @@ public class DataflowDAGGenerator extends BaseObserver {
 		return mForest;
 	}
 
-	private List<DataflowDAG<Statement>> process(RootNode node) {
-		final List<DataflowDAG<Statement>> forest = new ArrayList<DataflowDAG<Statement>>();
-		for (final RCFGEdge edge : mEdgesWithAssumes.keySet()) {
-			for (final AssumeStatement assm : mEdgesWithAssumes.get(edge)) {
-				forest.add(buildDAG(edge, assm));
+	private List<DataflowDAG<Statement>> process(final RootNode node) {
+		final List<DataflowDAG<Statement>> forest = new ArrayList<>();
+		for (final Entry<RCFGEdge, List<AssumeStatement>> entry : mEdgesWithAssumes.entrySet()) {
+			for (final AssumeStatement assm : entry.getValue()) {
+				forest.add(buildDAG(entry.getKey(), assm));
 			}
 		}
 		return forest;
 	}
 
-	private DataflowDAG<Statement> buildDAG(RCFGEdge edge, AssumeStatement assm) {
+	private DataflowDAG<Statement> buildDAG(final RCFGEdge edge, final AssumeStatement assm) {
 		final LinkedList<DataflowDAG<Statement>> store = new LinkedList<>();
 
-		DataflowDAG<Statement> current = new DataflowDAG<Statement>(assm);
+		DataflowDAG<Statement> current = new DataflowDAG<>(assm);
 		final DataflowDAG<Statement> root = current;
 		store.add(current);
 
@@ -110,9 +109,10 @@ public class DataflowDAGGenerator extends BaseObserver {
 			final Set<Entry<ScopedBoogieVar, HashSet<IndexedStatement>>> uses = getUse(current);
 			for (final Entry<ScopedBoogieVar, HashSet<IndexedStatement>> use : uses) {
 				for (final IndexedStatement stmt : use.getValue()) {
-					final DataflowDAG<Statement> next = new DataflowDAG<Statement>(stmt.getStatement());
+					final DataflowDAG<Statement> next = new DataflowDAG<>(stmt.getStatement());
 					current.addOutgoingNode(next, use.getKey());
-					store.addFirst(next); // use last for BFS
+					// use last for BFS
+					store.addFirst(next);
 				}
 			}
 		}
@@ -120,7 +120,7 @@ public class DataflowDAGGenerator extends BaseObserver {
 
 	}
 
-	private Set<Entry<ScopedBoogieVar, HashSet<IndexedStatement>>> getUse(DataflowDAG<Statement> current) {
+	private Set<Entry<ScopedBoogieVar, HashSet<IndexedStatement>>> getUse(final DataflowDAG<Statement> current) {
 		final ReachDefStatementAnnotation annot = mStatementProvider.getAnnotation(current.getNodeLabel());
 		assert annot != null;
 		final HashMap<ScopedBoogieVar, HashSet<IndexedStatement>> use = annot.getUse();

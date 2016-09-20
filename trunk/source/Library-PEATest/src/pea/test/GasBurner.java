@@ -40,12 +40,9 @@ public class GasBurner {
     PhaseEventAutomata leakChecker, lenChecker;
     PhaseEventAutomata all;
 
-    public GasBurner() {
-    }
-
     public void buildState() {
 	final String[] noresets = new String[0];
-	Phase[] p = new Phase[] { 
+	Phase[] p = new Phase[] {
 	    new Phase("idle", idle.and(purge.negate()).and(ignite.negate()).and(burn.negate()), CDD.TRUE),
 	    new Phase("purge", purge.and(idle.negate()).and(ignite.negate()).and(burn.negate()), CDD.TRUE),
 	    new Phase("ignite", ignite.and(idle.negate()).and(purge.negate()).and(burn.negate()), CDD.TRUE),
@@ -88,13 +85,13 @@ public class GasBurner {
 
     public void buildTimings() {
 	final Trace2PEACompiler compiler = new Trace2PEACompiler();
-	dc1 = compiler.compile("Prog1", 
+	dc1 = compiler.compile("Prog1",
 			     new CounterTrace(new CounterTrace.DCPhase[] {
 	    new CounterTrace.DCPhase(CDD.TRUE),
 	    new CounterTrace.DCPhase(purge, CounterTrace.BOUND_GREATER, 3008),
 	    new CounterTrace.DCPhase(CDD.TRUE)
 	}));
-	dc2 = compiler.compile("Prog2", 
+	dc2 = compiler.compile("Prog2",
 			     new CounterTrace(new CounterTrace.DCPhase[] {
 	    new CounterTrace.DCPhase(CDD.TRUE),
 	    new CounterTrace.DCPhase(ignite, CounterTrace.BOUND_GREATER, 58),
@@ -103,7 +100,7 @@ public class GasBurner {
 	dc3 = compiler.compile("Syn1",
 			     new CounterTrace(new CounterTrace.DCPhase[] {
 	    new CounterTrace.DCPhase(CDD.TRUE),
-	    new CounterTrace.DCPhase(idle.and(heat), 
+	    new CounterTrace.DCPhase(idle.and(heat),
 				     CounterTrace.BOUND_GREATER,  8),
 	    new CounterTrace.DCPhase(CDD.TRUE)
 	}));
@@ -149,17 +146,17 @@ public class GasBurner {
     public void buildReqLeak() {
 	final String[] noresets = new String[0];
 	final CDD leak = flame.negate().and(gas);
-	final Set<String> stopleak = new SimpleSet<String>(1);
+	final Set<String> stopleak = new SimpleSet<>(1);
 	stopleak.add("cleak");
 	final CDD nosync = s1.negate().and(s2.negate());
 	final CDD lteq = BooleanDecision.create("20*cleak-cell<=0");
 	final CDD gteq = BooleanDecision.create("20*cleak-cell<0").negate();
 
-	final List<String> clocks = new ArrayList<String>();
+	final List<String> clocks = new ArrayList<>();
 	clocks.add("cell");
 	clocks.add("cleak");
 	    
-	final Phase[] p = new Phase[] { 
+	final Phase[] p = new Phase[] {
 	    new Phase("init", CDD.TRUE, CDD.TRUE),
 	    new Phase("wleak", leak, lteq),
 	    new Phase("wnleak", leak.negate(), CDD.TRUE, stopleak),
@@ -170,13 +167,13 @@ public class GasBurner {
 	for (int i = 0; i < 6; i++) {
 	    p[i].addTransition(p[i], nosync, noresets);
 	}
-	p[0].addTransition(p[1], s1.and(s2.negate()), 
+	p[0].addTransition(p[1], s1.and(s2.negate()),
 			   new String[] { "cleak", "cell" });
-	p[0].addTransition(p[2], s1.and(s2.negate()), 
+	p[0].addTransition(p[2], s1.and(s2.negate()),
 			   new String[] { "cleak", "cell" });
-	p[0].addTransition(p[3], s1.and(s2.negate()), 
+	p[0].addTransition(p[3], s1.and(s2.negate()),
 			   new String[] { "cleak", "cell" });
-	p[0].addTransition(p[4], s1.and(s2.negate()), 
+	p[0].addTransition(p[4], s1.and(s2.negate()),
 			   new String[] { "cleak", "cell" });
 	p[1].addTransition(p[2], nosync, noresets);
 	p[2].addTransition(p[1], nosync, noresets);
@@ -188,7 +185,7 @@ public class GasBurner {
 	p[4].addTransition(p[2], nosync.and(lteq), noresets);
 	p[3].addTransition(p[5], s2.and(s1.negate()), noresets);
 	p[4].addTransition(p[5], s2.and(s1.negate()).and(lteq.negate()), noresets);
-	leakChecker = new PEATestAutomaton("leakcheck", p, 
+	leakChecker = new PEATestAutomaton("leakcheck", p,
 					   new Phase[] {p[0]},
 					   clocks,
 					   new Phase[] {p[5]});
@@ -199,10 +196,10 @@ public class GasBurner {
 	final CDD nosync = s1.negate().and(s2.negate());
 	final CDD lteq = RangeDecision.create("c", RangeDecision.OP_LTEQ, 6000);
 	final CDD gteq = RangeDecision.create("c", RangeDecision.OP_GTEQ, 6000);
-	final List<String> clocks = new ArrayList<String>();
+	final List<String> clocks = new ArrayList<>();
 	clocks.add("c");
 	    
-	final Phase[] p = new Phase[] { 
+	final Phase[] p = new Phase[] {
 	    new Phase("init", CDD.TRUE, CDD.TRUE),
 	    new Phase("wait", CDD.TRUE, lteq),
 	    new Phase("finished", CDD.TRUE, CDD.TRUE),
@@ -211,12 +208,12 @@ public class GasBurner {
 	for (int i = 0; i < 4; i++) {
 	    p[i].addTransition(p[i], nosync, noresets);
 	}
-	p[0].addTransition(p[1], s1.and(s2.negate()), 
+	p[0].addTransition(p[1], s1.and(s2.negate()),
 			   new String[] { "c" });
 	p[1].addTransition(p[2], nosync.and(gteq), noresets);
 	p[1].addTransition(p[3], s2.and(s1.negate()).and(gteq), noresets);
 	p[2].addTransition(p[3], s2.and(s1.negate()), noresets);
-	lenChecker = new PEATestAutomaton("lencheck", p, 
+	lenChecker = new PEATestAutomaton("lencheck", p,
 					  new Phase[] {p[0]},
 					  clocks,
 					  new Phase[] {p[3]});
@@ -233,7 +230,7 @@ public class GasBurner {
 	    parallel(lenChecker).parallel(leakChecker);
     }
 
-    public static void main(String[] param) {
+    public static void main(final String[] param) {
 	final GasBurner gb = new GasBurner();
 
 	gb.build();
@@ -241,10 +238,10 @@ public class GasBurner {
 	gb.leakChecker.dump();
 	gb.all.dump();
 
-	final PEA2ARMCConverter tcsConverter 
+	final PEA2ARMCConverter tcsConverter
 	    = new PEA2ARMCConverter();
-	final ArrayList<String> mergedVariables0 = new ArrayList<String>();
-	final ArrayList<String> mergedTypes0 = new ArrayList<String>();
+	final ArrayList<String> mergedVariables0 = new ArrayList<>();
+	final ArrayList<String> mergedTypes0 = new ArrayList<>();
 
 	mergedVariables0.add("heat");
 	mergedVariables0.add("flame");

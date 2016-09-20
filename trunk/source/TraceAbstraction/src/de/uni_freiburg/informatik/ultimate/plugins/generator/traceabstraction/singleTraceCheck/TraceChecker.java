@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck;
@@ -237,7 +237,8 @@ public class TraceChecker {
 			return sb.toString();
 		}
 
-		private StringBuilder addTimedStatistic(final IStatisticsDataProvider benchmarkData, final StringBuilder sb, final String key) {
+		private static StringBuilder addTimedStatistic(final IStatisticsDataProvider benchmarkData,
+				final StringBuilder sb, final String key) {
 			sb.append(key);
 			sb.append(": ");
 			final Long time = (Long) benchmarkData.getValue(key);
@@ -411,8 +412,8 @@ public class TraceChecker {
 		mPrecondition = precondition;
 		mPostcondition = postcondition;
 		if (pendingContexts == null) {
-			throw new NullPointerException(
-					"pendingContexts must not be " + "null, if there are no pending contexts, use an empty map");
+			throw new IllegalArgumentException(
+					"pendingContexts must not be null; if there are no pending contexts, use an empty map");
 		}
 		mPendingContexts = pendingContexts;
 		mNestedFormulas = rv;
@@ -557,7 +558,7 @@ public class TraceChecker {
 			final CodeBlock cb = (CodeBlock) mTrace.getSymbolAt(i);
 			final UnmodifiableTransFormula tf = cb.getTransitionFormulaWithBranchEncoders();
 			if (tf.getBranchEncoders().size() > 0) {
-				final Map<TermVariable, Boolean> beMapping = new HashMap<TermVariable, Boolean>();
+				final Map<TermVariable, Boolean> beMapping = new HashMap<>();
 				for (final TermVariable tv : tf.getBranchEncoders()) {
 					final String nameOfConstant = NestedSsaBuilder.branchEncoderConstantName(tv, i);
 					final Term indexedBe = mTcSmtManager.getScript().term(nameOfConstant);
@@ -595,13 +596,13 @@ public class TraceChecker {
 		return SmtUtils.getValues(mTcSmtManager.getScript(), Collections.singleton(term)).get(term);
 	}
 
-	private Boolean getBooleanValue(final Term term) {
+	private static Boolean getBooleanValue(final Term term) {
 		Boolean result;
 		if (SmtUtils.isTrue(term)) {
-			result = true;
+			result = Boolean.TRUE;
 		} else {
 			if (SmtUtils.isFalse(term)) {
-				result = false;
+				result = Boolean.FALSE;
 			} else {
 				throw new AssertionError();
 			}
@@ -642,9 +643,8 @@ public class TraceChecker {
 	public TraceCheckerBenchmarkGenerator getTraceCheckerBenchmark() {
 		if (mTraceCheckFinished || mToolchainCanceledException != null) {
 			return mTraceCheckerBenchmarkGenerator;
-		} else {
-			throw new AssertionError("Benchmark is only available after the trace check is finished.");
 		}
+		throw new AssertionError("Benchmark is only available after the trace check is finished.");
 	}
 
 	/**

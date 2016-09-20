@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Cookiefy plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Cookiefy plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Cookiefy plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.cookiefy.ltl.parser;
@@ -68,7 +68,7 @@ import de.uni_freiburg.informatik.ultimate.cookiefy.ltl.model.WeakUntil;
  * Additionally, the boolean operators & (conjunction), | (disjunction) and !
  * (negation) are used.
  * 
- * Ex.: 
+ * Ex.:
  * 
  * (G (! ((oZ & ! oY) & (F oY)) | (! oW U oY)))
  * 
@@ -90,8 +90,8 @@ public class RERSLTLParser {
 	 *            The list of strings.
 	 * @return
 	 */
-	public List<Formula> parse(List<String> input) {
-		final ArrayList<Formula> formulas = new ArrayList<Formula>();
+	public List<Formula> parse(final List<String> input) {
+		final ArrayList<Formula> formulas = new ArrayList<>();
 		for (final String line : input) {
 			if (line.startsWith("(")) {
 				formulas.add(parseRoot(line));
@@ -111,8 +111,8 @@ public class RERSLTLParser {
 	 *            The list of strings.
 	 * @return
 	 */
-	public List<Formula> testParse(List<String> input) {
-		final ArrayList<Formula> formulas = new ArrayList<Formula>();
+	public List<Formula> testParse(final List<String> input) {
+		final ArrayList<Formula> formulas = new ArrayList<>();
 		int i = 0;
 		int j = 0;
 		for (final String line : input) {
@@ -146,7 +146,7 @@ public class RERSLTLParser {
 		char currentChar = ' ';
 
 		StringBuilder subformula = new StringBuilder();
-		final List<String> parts = new ArrayList<String>();
+		final List<String> parts = new ArrayList<>();
 
 		while (true) {
 			while (pos < input.length()) {
@@ -187,9 +187,9 @@ public class RERSLTLParser {
 				switch (currentChar) {
 				case 'i':
 				case 'o':
-					int literalBound = input.indexOf(" ", pos);
+					int literalBound = input.indexOf(' ', pos);
 					if (literalBound == -1) {
-						literalBound = input.indexOf(")", pos);
+						literalBound = input.indexOf(')', pos);
 					}
 					parts.add(input.substring(pos, literalBound).trim());
 					pos = literalBound;
@@ -290,7 +290,7 @@ public class RERSLTLParser {
 						op = i;
 					}
 				}
-				else 
+				else
 				{
 					break;
 				}
@@ -316,7 +316,7 @@ public class RERSLTLParser {
 		}
 	}
 
-	private Formula constructFormula(String operator, String operand1,
+	private Formula constructFormula(final String operator, String operand1,
 			String operand2) {
 
 		if (operand1.isEmpty()) {

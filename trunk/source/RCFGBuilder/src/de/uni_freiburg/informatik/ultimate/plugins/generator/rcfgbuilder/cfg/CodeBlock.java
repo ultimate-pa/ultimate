@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE RCFGBuilder plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE RCFGBuilder plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE RCFGBuilder plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
@@ -240,12 +240,9 @@ public abstract class CodeBlock extends RCFGEdge implements IAction {
 	@Override
 	public String getPrecedingProcedure() {
 		if (mPrecedingProcedure == null) {
-			throw new NullPointerException("Preceding procedure has not yet been determined.");
-		} else {
-			return mPrecedingProcedure;
+			throw new IllegalArgumentException("Preceding procedure has not yet been determined.");
 		}
-//		final ProgramPoint pp = (ProgramPoint) getSource();
-//		return pp.getProcedure();
+		return mPrecedingProcedure;
 	}
 
 	/**
@@ -255,12 +252,9 @@ public abstract class CodeBlock extends RCFGEdge implements IAction {
 	@Override
 	public String getSucceedingProcedure() {
 		if (mSucceedingProcedure == null) {
-			throw new NullPointerException("Succeeding procedure has not yet been determined.");
-		} else {
-			return mSucceedingProcedure;
+			throw new IllegalArgumentException("Succeeding procedure has not yet been determined.");
 		}
-//		final ProgramPoint pp = (ProgramPoint) getTarget();
-//		return pp.getProcedure();
+		return mSucceedingProcedure;
 	}
 
 	@Override

@@ -34,7 +34,6 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword;
  *            state type
  */
 public class FlaggedDoubleDecker<STATE> extends DoubleDecker<STATE> {
-	
 	private final boolean mFlag;
 	
 	/**

@@ -179,8 +179,8 @@ public class SimplifyPEAs {
 	 * @return new PEA with (possibly) newly identified final locations
 	 */
 	public PEATestAutomaton identifyImplicitFinalLocations(final PEATestAutomaton pea, final CDD assumption) {
-		final ArrayList<Phase> notVisited = new ArrayList<Phase>(Arrays.asList(pea.getFinalPhases()));
-		final Set<Phase> allFinals = new HashSet<Phase>(Arrays.asList(pea.getFinalPhases()));
+		final ArrayList<Phase> notVisited = new ArrayList<>(Arrays.asList(pea.getFinalPhases()));
+		final Set<Phase> allFinals = new HashSet<>(Arrays.asList(pea.getFinalPhases()));
 
 		while (!notVisited.isEmpty()) {
 			final Phase finalPhase = notVisited.remove(0);
@@ -201,7 +201,7 @@ public class SimplifyPEAs {
 			}
 		}
 		return new PEATestAutomaton(pea.getName(), pea.getPhases(), pea.getInit(), pea.getClocks(), pea.getVariables(),
-		        pea.getDeclarations(), allFinals.toArray(new Phase[0]));
+		        pea.getDeclarations(), allFinals.toArray(new Phase[allFinals.size()]));
 	}
 
 	/**
@@ -216,10 +216,10 @@ public class SimplifyPEAs {
 		final Phase[] phases = automaton.getPhases();
 		final Phase[] init = automaton.getInit();
 		final Phase[] finalPhases = new Phase[automaton.getFinalPhases().length];
-		final HashSet<Phase> oldInit = new HashSet<Phase>(Arrays.asList(automaton.getInit()));
-		final HashSet<Phase> oldFinals = new HashSet<Phase>(Arrays.asList(automaton.getFinalPhases()));
+		final HashSet<Phase> oldInit = new HashSet<>(Arrays.asList(automaton.getInit()));
+		final HashSet<Phase> oldFinals = new HashSet<>(Arrays.asList(automaton.getFinalPhases()));
 
-		final HashMap<Phase, Phase> newPhases = new HashMap<Phase, Phase>();
+		final HashMap<Phase, Phase> newPhases = new HashMap<>();
 
 		/** Init newPhases-Map */
 		int initCounter = 0, finalCounter = 0;
@@ -238,8 +238,8 @@ public class SimplifyPEAs {
 		for (int i = 0; i < phases.length; i++) {
 			// System.out.println("in phase for" + phases[i]);
 			final List<Transition> transitions = phases[i].getTransitions();
-			final HashMap<Phase, ArrayList<Transition>> destinations = new HashMap<Phase, ArrayList<Transition>>();
-			final HashMap<Transition, ArrayList<Transition>> transitionsForMerging = new HashMap<Transition, ArrayList<Transition>>();
+			final HashMap<Phase, ArrayList<Transition>> destinations = new HashMap<>();
+			final HashMap<Transition, ArrayList<Transition>> transitionsForMerging = new HashMap<>();
 
 			// Collect the transitions for the merging operation.
 			for (final Transition transition : transitions) {
@@ -258,7 +258,7 @@ public class SimplifyPEAs {
 						if (Arrays.equals(tempTrans.getResets(), transition.getResets())) {
 							if (!transitionsForMerging.containsKey(tempTrans)) {
 								// System.out.println("in merge t1:" + tempTrans + "t2:" + transitions);
-								final ArrayList<Transition> mergeList = new ArrayList<Transition>();
+								final ArrayList<Transition> mergeList = new ArrayList<>();
 								mergeList.add(transition);
 								transitionsForMerging.put(tempTrans, mergeList);
 							} else {
@@ -277,7 +277,7 @@ public class SimplifyPEAs {
 					}
 
 				} else {
-					final ArrayList<Transition> transForDest = new ArrayList<Transition>();
+					final ArrayList<Transition> transForDest = new ArrayList<>();
 					transForDest.add(transition);
 					destinations.put(transition.getDest(), transForDest);
 				}
@@ -355,7 +355,7 @@ public class SimplifyPEAs {
 			return null;
 		}
 
-		final ArrayList<Element> newTransitions = new ArrayList<Element>();
+		final ArrayList<Element> newTransitions = new ArrayList<>();
 
 		final Element guard = (Element) guards.item(0);
 		final NodeList resetList = transition.getElementsByTagName(XMLTags.RESET_TAG);
@@ -411,15 +411,15 @@ public class SimplifyPEAs {
 		final Phase[] phases = automaton.getPhases();
 		final Phase badState = new Phase(badstatestring);
 		// Phase[] newFinalPhases = {badState};
-		final List<Phase> newInit = new ArrayList<Phase>();
-		final ArrayList<Phase> newPhases = new ArrayList<Phase>();
-		final ArrayList<Phase> newFinalPhases = new ArrayList<Phase>();
-		final Set<Phase> initPhases = new HashSet<Phase>(Arrays.asList(automaton.getInit()));
+		final List<Phase> newInit = new ArrayList<>();
+		final ArrayList<Phase> newPhases = new ArrayList<>();
+		final ArrayList<Phase> newFinalPhases = new ArrayList<>();
+		final Set<Phase> initPhases = new HashSet<>(Arrays.asList(automaton.getInit()));
 		final HashSet<Phase> finalPhases = automaton.getFinalPhases() != null
-		        ? new HashSet<Phase>(Arrays.asList(automaton.getFinalPhases())) : null;
+		        ? new HashSet<>(Arrays.asList(automaton.getFinalPhases())) : null;
 
 		// Maps the old phases to new phases.
-		final HashMap<Phase, Phase> oldnewPhases = new HashMap<Phase, Phase>();
+		final HashMap<Phase, Phase> oldnewPhases = new HashMap<>();
 
 		/* fill oldnewPhases map */
 		boolean foundBadState = false;
@@ -492,9 +492,10 @@ public class SimplifyPEAs {
 			}
 		}
 
-		final PEATestAutomaton pta = new PEATestAutomaton(automaton.getName(), newPhases.toArray(new Phase[0]),
-		        newInit.toArray(new Phase[0]), automaton.getClocks(), automaton.getVariables(),
-		        automaton.getDeclarations(), newFinalPhases.toArray(new Phase[0]));
+		final PEATestAutomaton pta = new PEATestAutomaton(automaton.getName(),
+				newPhases.toArray(new Phase[newPhases.size()]), newInit.toArray(new Phase[newInit.size()]),
+				automaton.getClocks(), automaton.getVariables(), automaton.getDeclarations(),
+				newFinalPhases.toArray(new Phase[newFinalPhases.size()]));
 
 		// pta.dump();
 
@@ -644,7 +645,7 @@ public class SimplifyPEAs {
 					// }
 					// PEATestAutomaton[] temp = new PEATestAutomaton[1];
 					// temp[0] = product;
-					final ArrayList<PhaseEventAutomata> peaList = new ArrayList<PhaseEventAutomata>();
+					final ArrayList<PhaseEventAutomata> peaList = new ArrayList<>();
 					peaList.add(product);
 					final PEANet temp = new PEANet();
 					temp.setPeas(peaList);
@@ -706,8 +707,8 @@ public class SimplifyPEAs {
 			// peas = new PEATestAutomaton[1];
 			// peas[0] = product;
 			// Merge variables to one list.
-			final ArrayList<String> mergedVariables0 = new ArrayList<String>();
-			final ArrayList<String> mergedTypes0 = new ArrayList<String>();
+			final ArrayList<String> mergedVariables0 = new ArrayList<>();
+			final ArrayList<String> mergedTypes0 = new ArrayList<>();
 			final ArrayList[] mergedVariables = { mergedVariables0 };
 			final ArrayList[] mergedTypes = { mergedTypes0 };
 			for (int i = 0; i < variables.length; i++) {
@@ -776,7 +777,7 @@ public class SimplifyPEAs {
 			} else {
 				simplifier.logger.info("Convert formulas to DNF and output XML-file.");
 				final List<PhaseEventAutomata> peaL = Arrays.asList((PhaseEventAutomata[]) products);
-				final ArrayList<PhaseEventAutomata> peaList = new ArrayList<PhaseEventAutomata>(peaL);
+				final ArrayList<PhaseEventAutomata> peaList = new ArrayList<>(peaL);
 				final PEANet peanet = new PEANet();
 				peanet.setPeas(peaList);
 				converter.convert(peanet, outputfile);

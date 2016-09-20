@@ -75,8 +75,7 @@ public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple
 	 */
 	public DeterminizeNwa(final AutomataLibraryServices services,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand,
-			final IStateDeterminizer<LETTER, STATE> stateDeterminizer,
-			final IStateFactory<STATE> stateFactory) {
+			final IStateDeterminizer<LETTER, STATE> stateDeterminizer, final IStateFactory<STATE> stateFactory) {
 		this(services, operand, stateDeterminizer, stateFactory, null, false);
 	}
 	
@@ -98,15 +97,13 @@ public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple
 	 */
 	public DeterminizeNwa(final AutomataLibraryServices services,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand,
-			final IStateDeterminizer<LETTER, STATE> stateDeterminizer,
-			final IStateFactory<STATE> stateFactory,
-			final Set<STATE> predefinedInitials,
-			final boolean makeAutomatonTotal) {
+			final IStateDeterminizer<LETTER, STATE> stateDeterminizer, final IStateFactory<STATE> stateFactory,
+			final Set<STATE> predefinedInitials, final boolean makeAutomatonTotal) {
 		mOperand = operand;
 		mStateDeterminizer = stateDeterminizer;
 		mStateFactory = stateFactory;
-		mCache = new NestedWordAutomaton<>(services, operand.getInternalAlphabet(),
-				operand.getCallAlphabet(), operand.getReturnAlphabet(), stateFactory);
+		mCache = new NestedWordAutomaton<>(services, operand.getInternalAlphabet(), operand.getCallAlphabet(),
+				operand.getReturnAlphabet(), stateFactory);
 		mPredefinedInitials = predefinedInitials;
 		mMakeAutomatonTotal = makeAutomatonTotal;
 	}
@@ -117,8 +114,7 @@ public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple
 	
 	private void constructInitialState() {
 		if (mPredefinedInitials == null) {
-			final DeterminizedState<LETTER, STATE> initialDet =
-					mStateDeterminizer.initialState();
+			final DeterminizedState<LETTER, STATE> initialDet = mStateDeterminizer.initialState();
 			final STATE initialState = mStateDeterminizer.getState(initialDet);
 			mDet2res.put(initialDet, initialState);
 			mRes2det.put(initialState, initialDet);
@@ -126,8 +122,7 @@ public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple
 		} else {
 			// add singleton DoubleDecker for each initial state of operand
 			for (final STATE initialOperand : mPredefinedInitials) {
-				final DeterminizedState<LETTER, STATE> initialDet =
-						new DeterminizedState<>(mOperand);
+				final DeterminizedState<LETTER, STATE> initialDet = new DeterminizedState<>(mOperand);
 				initialDet.addPair(mOperand.getEmptyStackState(), initialOperand, mOperand);
 				final STATE initialState = mStateDeterminizer.getState(initialDet);
 				mDet2res.put(initialDet, initialState);
@@ -148,58 +143,6 @@ public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple
 		return state;
 	}
 	
-	/*
-	 * TODO Christian 2016-09-04: Commented out since the methods were not used by anyone.
-	 *      Could be a relict from the old API.
-	 * 
-	public Collection<STATE> succInternal(final STATE state, final LETTER letter) {
-		final Collection<STATE> succs = mCache.succInternal(state, letter);
-		if (succs == null) {
-			final DeterminizedState<LETTER, STATE> detState = mRes2det.get(state);
-			assert detState != null;
-			final DeterminizedState<LETTER, STATE> detSucc =
-					mStateDeterminizer.internalSuccessor(detState, letter);
-			final STATE succ = getOrConstructState(detSucc);
-			mCache.addInternalTransition(state, letter, succ);
-			return mCache.succInternal(state, letter);
-		} else {
-			return succs;
-		}
-	}
-	
-	public Collection<STATE> succCall(final STATE state, final LETTER letter) {
-		final Collection<STATE> succs = mCache.succCall(state, letter);
-		if (succs == null) {
-			final DeterminizedState<LETTER, STATE> detState = mRes2det.get(state);
-			assert detState != null;
-			final DeterminizedState<LETTER, STATE> detSucc =
-					mStateDeterminizer.callSuccessor(detState, letter);
-			final STATE succ = getOrConstructState(detSucc);
-			mCache.addCallTransition(state, letter, succ);
-			return mCache.succCall(state, letter);
-		} else {
-			return succs;
-		}
-	}
-	
-	public Collection<STATE> succReturn(final STATE state, final STATE hier, final LETTER letter) {
-		final Collection<STATE> succs = mCache.succReturn(state, hier, letter);
-		if (succs == null) {
-			final DeterminizedState<LETTER, STATE> detState = mRes2det.get(state);
-			assert detState != null;
-			final DeterminizedState<LETTER, STATE> detHier = mRes2det.get(hier);
-			assert detHier != null;
-			final DeterminizedState<LETTER, STATE> detSucc =
-					mStateDeterminizer.returnSuccessor(detState, detHier, letter);
-			final STATE succ = getOrConstructState(detSucc);
-			mCache.addReturnTransition(state, hier, letter, succ);
-			return mCache.succReturn(state, hier, letter);
-		} else {
-			return succs;
-		}
-	}
-	*/
-	
 	@Override
 	public Iterable<STATE> getInitialStates() {
 		if (mCache.getInitialStates().isEmpty()) {
@@ -209,18 +152,23 @@ public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple
 	}
 	
 	@Override
+	public Set<LETTER> getAlphabet() {
+		return getInternalAlphabet();
+	}
+	
+	@Override
 	public Set<LETTER> getInternalAlphabet() {
-		return mOperand.getInternalAlphabet();
+		return mCache.getInternalAlphabet();
 	}
 	
 	@Override
 	public Set<LETTER> getCallAlphabet() {
-		return mOperand.getCallAlphabet();
+		return mCache.getCallAlphabet();
 	}
 	
 	@Override
 	public Set<LETTER> getReturnAlphabet() {
-		return mOperand.getReturnAlphabet();
+		return mCache.getReturnAlphabet();
 	}
 	
 	@Override
@@ -247,60 +195,56 @@ public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple
 	public Set<LETTER> lettersInternal(final STATE state) {
 		if (mMakeAutomatonTotal) {
 			return getInternalAlphabet();
-		} else {
-			final Set<LETTER> result = new HashSet<>();
-			final DeterminizedState<LETTER, STATE> detState = mRes2det.get(state);
-			for (final STATE downState : detState.getDownStates()) {
-				for (final STATE upState : detState.getUpStates(downState)) {
-					result.addAll(mOperand.lettersInternal(upState));
-				}
-			}
-			return result;
 		}
+		final Set<LETTER> result = new HashSet<>();
+		final DeterminizedState<LETTER, STATE> detState = mRes2det.get(state);
+		for (final STATE downState : detState.getDownStates()) {
+			for (final STATE upState : detState.getUpStates(downState)) {
+				result.addAll(mOperand.lettersInternal(upState));
+			}
+		}
+		return result;
 	}
 	
 	@Override
 	public Set<LETTER> lettersCall(final STATE state) {
 		if (mMakeAutomatonTotal) {
 			return getCallAlphabet();
-		} else {
-			final Set<LETTER> result = new HashSet<>();
-			final DeterminizedState<LETTER, STATE> detState = mRes2det.get(state);
-			for (final STATE downState : detState.getDownStates()) {
-				for (final STATE upState : detState.getUpStates(downState)) {
-					result.addAll(mOperand.lettersCall(upState));
-				}
-			}
-			return result;
 		}
+		final Set<LETTER> result = new HashSet<>();
+		final DeterminizedState<LETTER, STATE> detState = mRes2det.get(state);
+		for (final STATE downState : detState.getDownStates()) {
+			for (final STATE upState : detState.getUpStates(downState)) {
+				result.addAll(mOperand.lettersCall(upState));
+			}
+		}
+		return result;
 	}
 	
 	@Override
 	public Set<LETTER> lettersReturn(final STATE state) {
 		if (mMakeAutomatonTotal) {
 			return getReturnAlphabet();
-		} else {
-			final Set<LETTER> result = new HashSet<>();
-			final DeterminizedState<LETTER, STATE> detState = mRes2det.get(state);
-			for (final STATE downState : detState.getDownStates()) {
-				for (final STATE upState : detState.getUpStates(downState)) {
-					result.addAll(mOperand.lettersReturn(upState));
-				}
-			}
-			return result;
 		}
+		final Set<LETTER> result = new HashSet<>();
+		final DeterminizedState<LETTER, STATE> detState = mRes2det.get(state);
+		for (final STATE downState : detState.getDownStates()) {
+			for (final STATE upState : detState.getUpStates(downState)) {
+				result.addAll(mOperand.lettersReturn(upState));
+			}
+		}
+		return result;
 	}
 	
 	@Override
-	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(
-			final STATE state, final LETTER letter) {
+	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state,
+			final LETTER letter) {
 		final Iterator<OutgoingInternalTransition<LETTER, STATE>> succs =
 				mCache.internalSuccessors(state, letter).iterator();
 		if (!succs.hasNext()) {
 			final DeterminizedState<LETTER, STATE> detState = mRes2det.get(state);
 			assert detState != null;
-			final DeterminizedState<LETTER, STATE> detSucc =
-					mStateDeterminizer.internalSuccessor(detState, letter);
+			final DeterminizedState<LETTER, STATE> detSucc = mStateDeterminizer.internalSuccessor(detState, letter);
 			final STATE succ = getOrConstructState(detSucc);
 			mCache.addInternalTransition(state, letter, succ);
 		}
@@ -317,14 +261,12 @@ public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple
 	}
 	
 	@Override
-	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
-			final STATE state, final LETTER letter) {
+	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final STATE state, final LETTER letter) {
 		final Iterator<OutgoingCallTransition<LETTER, STATE>> succs = mCache.callSuccessors(state, letter).iterator();
 		if (!succs.hasNext()) {
 			final DeterminizedState<LETTER, STATE> detState = mRes2det.get(state);
 			assert detState != null;
-			final DeterminizedState<LETTER, STATE> detSucc =
-					mStateDeterminizer.callSuccessor(detState, letter);
+			final DeterminizedState<LETTER, STATE> detSucc = mStateDeterminizer.callSuccessor(detState, letter);
 			final STATE succ = getOrConstructState(detSucc);
 			mCache.addCallTransition(state, letter, succ);
 		}
@@ -332,8 +274,7 @@ public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple
 	}
 	
 	@Override
-	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
-			final STATE state) {
+	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final STATE state) {
 		for (final LETTER letter : lettersCall(state)) {
 			callSuccessors(state, letter);
 		}
@@ -341,8 +282,8 @@ public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple
 	}
 	
 	@Override
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
-			final STATE state, final STATE hier, final LETTER letter) {
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state, final STATE hier,
+			final LETTER letter) {
 		final Iterator<OutgoingReturnTransition<LETTER, STATE>> succs =
 				mCache.returnSuccessors(state, hier, letter).iterator();
 		if (!succs.hasNext()) {
@@ -359,8 +300,8 @@ public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple
 	}
 	
 	@Override
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(
-			final STATE state, final STATE hier) {
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(final STATE state,
+			final STATE hier) {
 		for (final LETTER letter : lettersReturn(state)) {
 			returnSuccessors(state, hier, letter);
 		}
@@ -369,11 +310,6 @@ public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple
 	
 	@Override
 	public int size() {
-		throw new UnsupportedOperationException();
-	}
-	
-	@Override
-	public Set<LETTER> getAlphabet() {
 		throw new UnsupportedOperationException();
 	}
 	

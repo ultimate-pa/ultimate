@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE IRSDependencies plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE IRSDependencies plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE IRSDependencies plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.loopdetector;
@@ -36,7 +36,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Stack;
 
-import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.Activator;
@@ -56,11 +55,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
  * If your graph looks like this and L1 and L2 are loop heads,
  * 
  * <pre>
- * 		 e1              e4 
+ * 		 e1              e4
  * 		+--+            +--+
  * 		\  v     e2     \  v
- * 		 L1  --------->  L2 
- * 		     <---------     
+ * 		 L1  --------->  L2
+ * 		     <---------
  * 		         e3
  * </pre>
  * 
@@ -69,7 +68,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
  * L2 -> (e4 -> e4) <br>
  * <br>
  * 
- * You should call {@link #process(IElement)} on the root element of your RCFG and then get the resulting map via
+ * You should call {@link #process(RootNode)} on the root element of your RCFG and then get the resulting map via
  * {@link #getResult()}.
  * 
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
@@ -91,7 +90,7 @@ public class RCFGLoopDetector {
 		return mLoopEntryExit;
 	}
 
-	public void process(RootNode rootNode) throws Throwable {
+	public void process(final RootNode rootNode) throws Throwable {
 		final RootAnnot annot = rootNode.getRootAnnot();
 
 		// get a hashset of all loop heads
@@ -114,7 +113,7 @@ public class RCFGLoopDetector {
 		printResult(mLoopEntryExit);
 	}
 
-	private List<ProgramPoint> orderLoopHeads(Set<ProgramPoint> loopHeads, RootNode programStart) {
+	private List<ProgramPoint> orderLoopHeads(final Set<ProgramPoint> loopHeads, final RootNode programStart) {
 		final List<ProgramPoint> rtr = new ArrayList<>();
 
 		final Stack<RCFGNode> open = new Stack<>();
@@ -138,7 +137,7 @@ public class RCFGLoopDetector {
 		return rtr;
 	}
 
-	private void process(ProgramPoint loopHead, Map<RCFGEdge, RCFGEdge> map, List<RCFGEdge> forbiddenEdges) {
+	private void process(final ProgramPoint loopHead, final Map<RCFGEdge, RCFGEdge> map, final List<RCFGEdge> forbiddenEdges) {
 		AStar<RCFGNode, RCFGEdge> walker = new AStar<>(mLogger, loopHead, loopHead, new ZeroHeuristic(),
 				new RcfgWrapper(), forbiddenEdges, mServices.getProgressMonitorService());
 
@@ -160,14 +159,14 @@ public class RCFGLoopDetector {
 		}
 	}
 
-	private IEdgeDenier<RCFGEdge> createDenier(List<RCFGEdge> forbiddenEdges) {
+	private IEdgeDenier<RCFGEdge> createDenier(final List<RCFGEdge> forbiddenEdges) {
 		final List<IEdgeDenier<RCFGEdge>> rtr = new ArrayList<>();
 		rtr.add(new CollectionEdgeDenier<RCFGEdge>(forbiddenEdges));
 		rtr.add(new RcfgCallReturnDenier());
 		return new CompositEdgeDenier<>(rtr);
 	}
 
-	private RCFGEdge addToResult(List<RCFGEdge> path, Map<RCFGEdge, RCFGEdge> map) {
+	private RCFGEdge addToResult(final List<RCFGEdge> path, final Map<RCFGEdge, RCFGEdge> map) {
 		final RCFGEdge first = path.get(0);
 		final RCFGEdge last = path.get(path.size() - 1);
 		assert first.getSource().equals(last.getTarget());

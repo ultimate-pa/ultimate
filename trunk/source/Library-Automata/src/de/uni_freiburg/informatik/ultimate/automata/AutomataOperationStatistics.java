@@ -51,7 +51,7 @@ public class AutomataOperationStatistics implements ICsvProviderProvider<Object>
 	
 	private static final String FIRST_INSERT_THE_VALUE_FOR_KEY = "First insert the value for key ";
 	private static final String MUST_BE_OF_NUMBER_TYPE = "must be of number type.";
-
+	
 	private final TreeMap<StatisticsType, Object> mKeyValueMap = new TreeMap<>();
 	
 	@Override
@@ -123,7 +123,8 @@ public class AutomataOperationStatistics implements ICsvProviderProvider<Object>
 	 *            second key
 	 * @param resultKey
 	 *            result key
-	 * @param invert true iff percentage should be inverted, i.e., instead of <tt>x</tt> we add <tt>100 - x</tt>
+	 * @param invert
+	 *            true iff percentage should be inverted, i.e., instead of <tt>x</tt> we add <tt>100 - x</tt>
 	 */
 	private void addPercentageDataHelper(final StatisticsType fstBaseKey, final StatisticsType sndBaseKey,
 			final StatisticsType resultKey, final boolean invert) {
@@ -156,10 +157,8 @@ public class AutomataOperationStatistics implements ICsvProviderProvider<Object>
 	}
 	
 	private int getDifference(final StatisticsType fstBaseKey, final StatisticsType sndBaseKey) {
-		final Integer fst = getInteger(fstBaseKey);
-		
-		final Integer snd = getInteger(sndBaseKey);
-		
+		final int fst = getInteger(fstBaseKey);
+		final int snd = getInteger(sndBaseKey);
 		return fst - snd;
 	}
 	

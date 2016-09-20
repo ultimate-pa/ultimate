@@ -83,7 +83,7 @@ public abstract class Formula2NFCompiler {
 	 *            form. The recursion stops.
 	 */
 	protected void buildNF(final Node actNode) {
-		if (!(actNode.getNodeType() == Node.ELEMENT_NODE)) {
+		if (actNode.getNodeType() != Node.ELEMENT_NODE) {
 			logger.debug("No element node, returning...");
 			return;
 		}
@@ -304,7 +304,7 @@ public abstract class Formula2NFCompiler {
 	 * @return Element[] The operands of the given formula
 	 */
 	protected Element[] getFormulaOperands(final Element formula) {
-		final ArrayList<Element> result = new ArrayList<Element>();
+		final ArrayList<Element> result = new ArrayList<>();
 		final NodeList children = formula.getChildNodes();
 		final int childrenCount = children.getLength();
 		for (int i = 0; i < childrenCount; i++) {
@@ -313,7 +313,7 @@ public abstract class Formula2NFCompiler {
 				result.add((Element) actChild);
 			}
 		}
-		if (result.size() == 0 && isTreeElement(formula)) {
+		if (result.isEmpty() && isTreeElement(formula)) {
 			throw new RuntimeException("A formula tree with operand count = 0 is not allowed.");
 		}
 		if (formula.getAttribute(XMLTags.OPERATOR_TAG).equals(XMLTags.NOT_CONST) && result.size() != 1) {

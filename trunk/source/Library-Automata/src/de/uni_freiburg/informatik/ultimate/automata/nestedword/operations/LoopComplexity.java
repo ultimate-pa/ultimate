@@ -87,7 +87,7 @@ public final class LoopComplexity<LETTER, STATE> extends UnaryNwaOperation<LETTE
 		if (operand instanceof NestedWordAutomatonReachableStates) {
 			mOperand = operand;
 		} else {
-			mOperand = (new RemoveUnreachable<LETTER, STATE>(mServices, operand)).getResult();
+			mOperand = (new RemoveUnreachable<>(mServices, operand)).getResult();
 		}
 		
 		mGraph = constructGraph();
@@ -122,7 +122,7 @@ public final class LoopComplexity<LETTER, STATE> extends UnaryNwaOperation<LETTE
 		
 		addOutgoingTransitions(letter, graph);
 		
-		return (new RemoveUnreachable<LETTER, STATE>(mServices, graph)).getResult();
+		return (new RemoveUnreachable<>(mServices, graph)).getResult();
 	}
 	
 	private void addOutgoingTransitions(final LETTER letter, final NestedWordAutomaton<LETTER, STATE> graph) {

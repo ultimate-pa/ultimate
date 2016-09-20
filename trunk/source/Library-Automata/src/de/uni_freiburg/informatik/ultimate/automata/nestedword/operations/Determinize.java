@@ -133,13 +133,17 @@ public final class Determinize<LETTER, STATE> extends UnaryNwaOperation<LETTER, 
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		boolean correct = true;
+		/*
+		 * TODO Christian 2016-09-18: mStateDeterminizer is always a PowersetDeterminizer. Was it intended to let the
+		 *                            user decide?
+		 */
 		if (mStateDeterminizer instanceof PowersetDeterminizer) {
 			if (mLogger.isInfoEnabled()) {
 				mLogger.info("Start testing correctness of " + operationName());
 			}
 			
-			final INestedWordAutomaton<LETTER, STATE> resultDd =
-					(new DeterminizeDD<LETTER, STATE>(mServices, stateFactory, mOperand)).getResult();
+			final INestedWordAutomatonSimple<LETTER, STATE> resultDd =
+					(new DeterminizeDD<>(mServices, stateFactory, mOperand)).getResult();
 			// should recognize same language as old computation
 			correct &= new IsIncluded<>(mServices, stateFactory, resultDd, mResult).getResult();
 			correct &= new IsIncluded<>(mServices, stateFactory, mResult, resultDd).getResult();

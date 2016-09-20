@@ -60,8 +60,7 @@ public class IsTotal<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 	 * @param operand
 	 *            input NWA
 	 */
-	public IsTotal(final AutomataLibraryServices services,
-			final INestedWordAutomaton<LETTER, STATE> operand) {
+	public IsTotal(final AutomataLibraryServices services, final INestedWordAutomaton<LETTER, STATE> operand) {
 		super(services);
 		mOperand = operand;
 		mResult = computeIsTotal();
@@ -107,6 +106,7 @@ public class IsTotal<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 		// returns
 		for (final LETTER symbol : mOperand.getReturnAlphabet()) {
 			for (final STATE hier : mOperand.getStates()) {
+				// TODO Christian 2016-09-18: Is this what we want? How can we check that 'hier' is a valid candidate?
 				final Iterable<OutgoingReturnTransition<LETTER, STATE>> it =
 						mOperand.returnSuccessors(state, hier, symbol);
 				if (!it.iterator().hasNext()) {

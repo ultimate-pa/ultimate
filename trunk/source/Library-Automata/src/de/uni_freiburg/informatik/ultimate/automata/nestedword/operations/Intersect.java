@@ -93,7 +93,7 @@ public final class Intersect<LETTER, STATE> extends BinaryNwaOperation<LETTER, S
 	
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + " Result " + mResult.sizeInformation();
+		return "Finished " + operationName() + ". Result " + mResult.sizeInformation();
 	}
 	
 	@Override
@@ -117,8 +117,8 @@ public final class Intersect<LETTER, STATE> extends BinaryNwaOperation<LETTER, S
 			mLogger.info("Start testing correctness of " + operationName());
 		}
 		
-		final INestedWordAutomaton<LETTER, STATE> resultDd =
-				(new IntersectDD<LETTER, STATE>(mServices, mFstOperand, mSndOperand)).getResult();
+		final INestedWordAutomatonSimple<LETTER, STATE> resultDd =
+				(new IntersectDD<>(mServices, mFstOperand, mSndOperand)).getResult();
 		boolean correct = true;
 		correct &= (resultDd.size() == mResult.size());
 		assert correct;

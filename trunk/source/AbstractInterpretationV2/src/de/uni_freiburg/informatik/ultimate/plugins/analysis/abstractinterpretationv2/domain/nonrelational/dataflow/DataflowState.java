@@ -242,10 +242,7 @@ public class DataflowState implements IAbstractState<DataflowState, CodeBlock, I
 		if (!isEqualTo(other)) {
 			return false;
 		}
-		if (other.mId != mId) {
-			return false;
-		}
-		return true;
+		return other.mId == mId;
 	}
 
 	Map<IProgramVar, Set<CodeBlock>> getDef() {

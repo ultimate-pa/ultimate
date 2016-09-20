@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstractionConcurrent plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE TraceAbstractionConcurrent plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE TraceAbstractionConcurrent plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent;
@@ -39,28 +39,26 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 
-public class Cfg2NetJulian extends CFG2Automaton {
-
-	private PetriNetJulian<CodeBlock, IPredicate> mResult;
+public final class Cfg2NetJulian extends CFG2Automaton {
+	private final PetriNetJulian<CodeBlock, IPredicate> mResult;
 	
-	public Cfg2NetJulian(final RootNode rootNode,
-			final IStateFactory<IPredicate> contentFactory, final SmtManager smtManager, final IUltimateServiceProvider services, final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique)
-					throws AutomataLibraryException {
+	public Cfg2NetJulian(final RootNode rootNode, final IStateFactory<IPredicate> contentFactory,
+			final SmtManager smtManager, final IUltimateServiceProvider services,
+			final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique)
+			throws AutomataLibraryException {
 		super(rootNode, contentFactory, smtManager, services, simplificationTechnique, xnfConversionTechnique);
 		
 		constructProcedureAutomata();
-		mResult = new PetriNetJulian<CodeBlock,IPredicate>(new AutomataLibraryServices(services), mAutomata.get(0));
-//		new TestFileWriter<TransAnnot, Predicate>(mAutomata.get(0), true);
-		for (int i=1; i<mAutomata.size(); i++) {
-			mResult = (new PrefixProduct<CodeBlock,IPredicate>(
-					new AutomataLibraryServices(services), mResult, mAutomata.get(i)).getResult());
-//			new TestFileWriter<TransAnnot, Predicate>(mAutomata.get(i), true);
+		PetriNetJulian<CodeBlock, IPredicate> result =
+				new PetriNetJulian<>(new AutomataLibraryServices(services), mAutomata.get(0));
+		for (int i = 1; i < mAutomata.size(); i++) {
+			result = new PrefixProduct<>(new AutomataLibraryServices(services), result, mAutomata.get(i)).getResult();
 		}
+		mResult = result;
 	}
-
+	
 	@Override
-	public PetriNetJulian<CodeBlock,IPredicate> getResult() {
+	public PetriNetJulian<CodeBlock, IPredicate> getResult() {
 		return mResult;
 	}
-
 }

@@ -76,27 +76,23 @@ public class StateContainerFieldMap<LETTER, STATE> {
 	}
 	
 	private boolean inOutMapMode() {
-		return (mOut1 instanceof Map) || (mOut2 instanceof Map)
-				|| (mOut3 instanceof Map) || (mOut4 instanceof Map);
+		return (mOut1 instanceof Map) || (mOut2 instanceof Map) || (mOut3 instanceof Map) || (mOut4 instanceof Map);
 	}
 	
 	@SuppressWarnings("unchecked")
 	private void addOutgoingInternal(final LETTER letter, final STATE succ) {
-		final OutgoingInternalTransition<LETTER, STATE> trans =
-				new OutgoingInternalTransition<>(letter, succ);
+		final OutgoingInternalTransition<LETTER, STATE> trans = new OutgoingInternalTransition<>(letter, succ);
 		if (inOutMapMode()) {
 			addInternalTransitionMap((Map<LETTER, Set<STATE>>) mOut1, letter, succ);
+		} else if (mOut1 == null) {
+			mOut1 = trans;
+		} else if (mOut2 == null) {
+			mOut2 = trans;
+		} else if (mOut3 == null) {
+			mOut3 = trans;
 		} else {
-			if (mOut1 == null) {
-				mOut1 = trans;
-			} else if (mOut2 == null) {
-				mOut2 = trans;
-			} else if (mOut3 == null) {
-				mOut3 = trans;
-			} else {
-				switchOutMode();
-				addInternalTransitionMap((Map<LETTER, Set<STATE>>) mOut1, letter, succ);
-			}
+			switchOutMode();
+			addInternalTransitionMap((Map<LETTER, Set<STATE>>) mOut1, letter, succ);
 		}
 	}
 	
@@ -132,9 +128,7 @@ public class StateContainerFieldMap<LETTER, STATE> {
 		return mOut3;
 	}
 	
-	private void addInternalTransitionMap(
-			final Map<LETTER, Set<STATE>> letter2succs,
-			final LETTER letter,
+	private void addInternalTransitionMap(final Map<LETTER, Set<STATE>> letter2succs, final LETTER letter,
 			final STATE succ) {
 		Set<STATE> succs = letter2succs.get(letter);
 		if (succs == null) {
@@ -188,7 +182,7 @@ public class StateContainerFieldMap<LETTER, STATE> {
 		/**
 		 * Points to next field with {@link OutgoingInternalTransition}.
 		 */
-		private short mPosition;
+		private int mPosition;
 		
 		public FieldIterator() {
 			updatePosition();
@@ -243,7 +237,7 @@ public class StateContainerFieldMap<LETTER, STATE> {
 		private final LETTER mLetter;
 		private Iterator<STATE> mIterator;
 		
-		private MapLetterIterator(final Map<LETTER, Set<STATE>> letter2succ, final LETTER letter) {
+		protected MapLetterIterator(final Map<LETTER, Set<STATE>> letter2succ, final LETTER letter) {
 			this.mLetter = letter;
 			if (letter2succ != null) {
 				if (letter2succ.get(letter) != null) {
@@ -265,10 +259,9 @@ public class StateContainerFieldMap<LETTER, STATE> {
 		public OutgoingInternalTransition<LETTER, STATE> next() {
 			if (mIterator == null) {
 				throw new NoSuchElementException();
-			} else {
-				final STATE succ = mIterator.next();
-				return new OutgoingInternalTransition<>(mLetter, succ);
 			}
+			final STATE succ = mIterator.next();
+			return new OutgoingInternalTransition<>(mLetter, succ);
 		}
 		
 		@Override
@@ -289,7 +282,7 @@ public class StateContainerFieldMap<LETTER, STATE> {
 		private LETTER mCurrentLetter;
 		private Iterator<OutgoingInternalTransition<LETTER, STATE>> mCurrentIterator;
 		
-		private MapNoLetterIterator(final Map<LETTER, Set<STATE>> letter2succ) {
+		protected MapNoLetterIterator(final Map<LETTER, Set<STATE>> letter2succ) {
 			mLetter2succ = letter2succ;
 			mLetterIterator = letter2succ.keySet().iterator();
 			nextLetter();
@@ -320,13 +313,12 @@ public class StateContainerFieldMap<LETTER, STATE> {
 		public OutgoingInternalTransition<LETTER, STATE> next() {
 			if (mCurrentLetter == null) {
 				throw new NoSuchElementException();
-			} else {
-				final OutgoingInternalTransition<LETTER, STATE> result = mCurrentIterator.next();
-				if (!mCurrentIterator.hasNext()) {
-					nextLetter();
-				}
-				return result;
 			}
+			final OutgoingInternalTransition<LETTER, STATE> result = mCurrentIterator.next();
+			if (!mCurrentIterator.hasNext()) {
+				nextLetter();
+			}
+			return result;
 		}
 	}
 }

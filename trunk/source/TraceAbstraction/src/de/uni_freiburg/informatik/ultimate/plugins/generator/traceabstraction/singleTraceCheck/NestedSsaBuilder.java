@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGl
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.MultiElementCounter;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -497,9 +498,13 @@ public class NestedSsaBuilder {
 					// we use current var version of non-oldvar
 					result = getOrSetCurrentGlobalVarVersion(oldVar.getNonOldVar());
 				}
-			} else {
+			} else if (bv instanceof IProgramNonOldVar) {
 				final IProgramNonOldVar bnov = (IProgramNonOldVar) bv;
 				result = getOrSetCurrentGlobalVarVersion(bnov);
+			} else if (bv instanceof IProgramConst) {
+				result = transferToCurrentScriptIfNecessary(bv.getDefaultConstant());
+			} else {
+				throw new AssertionError("unknown kind of IProgramVar " + bv.getClass().getSimpleName());
 			}
 		} else {
 			result = currentLocalAndOldVarVersion.get(bv);

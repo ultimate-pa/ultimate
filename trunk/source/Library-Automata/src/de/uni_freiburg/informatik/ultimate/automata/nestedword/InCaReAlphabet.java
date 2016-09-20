@@ -56,9 +56,8 @@ public class InCaReAlphabet<LETTER> {
 	 * @param returnAlphabet
 	 *            return alphabet
 	 */
-	public InCaReAlphabet(final Set<LETTER> internalAlphabet,
-			final Set<LETTER> callAlphabet, final Set<LETTER> returnAlphabet) {
-		super();
+	public InCaReAlphabet(final Set<LETTER> internalAlphabet, final Set<LETTER> callAlphabet,
+			final Set<LETTER> returnAlphabet) {
 		mInternalAlphabet = internalAlphabet;
 		mCallAlphabet = callAlphabet;
 		mReturnAlphabet = returnAlphabet;
@@ -71,9 +70,8 @@ public class InCaReAlphabet<LETTER> {
 	 *            automaton
 	 */
 	public InCaReAlphabet(final IAutomaton<LETTER, ?> automaton) {
-		if (automaton instanceof INestedWordAutomaton) {
-			final INestedWordAutomaton<LETTER, ?> nwa =
-					(INestedWordAutomaton<LETTER, ?>) automaton;
+		if (automaton instanceof INestedWordAutomatonSimple) {
+			final INestedWordAutomatonSimple<LETTER, ?> nwa = (INestedWordAutomatonSimple<LETTER, ?>) automaton;
 			mInternalAlphabet = nwa.getInternalAlphabet();
 			mCallAlphabet = nwa.getCallAlphabet();
 			mReturnAlphabet = nwa.getReturnAlphabet();
