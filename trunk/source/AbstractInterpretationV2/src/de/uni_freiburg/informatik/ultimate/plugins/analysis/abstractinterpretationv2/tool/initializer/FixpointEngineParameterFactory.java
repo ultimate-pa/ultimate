@@ -2,8 +2,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
@@ -12,6 +12,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferencePro
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
@@ -36,7 +37,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign.SignDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon.OctagonDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon.OctagonDomain.LiteralCollectorFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.vp.PointerExpression;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.vp.EqBaseNode;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.vp.EqFunctionNode;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.vp.EqNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.vp.RCFGArrayIndexCollector;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.vp.VPDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
@@ -120,7 +123,17 @@ public class FixpointEngineParameterFactory {
 			return new EmptyDomain<>();
 		} else if (DataflowDomain.class.getSimpleName().equals(selectedDomain)) {
 			return new DataflowDomain(logger);
-		}
+		} else if (VPDomain.class.getSimpleName().equals(selectedDomain)) {
+			final RCFGArrayIndexCollector arrayIndexCollector = new RCFGArrayIndexCollector(mRoot);
+			if (logger.isDebugEnabled()) {
+				printVPDomainDebug(logger, arrayIndexCollector);
+			}
+			return new VPDomain(logger, mRoot.getRootAnnot().getManagedScript(), 
+					mServices,
+					arrayIndexCollector.getEqNodeSet(), 
+					arrayIndexCollector.getTermToBaseNodeMap(),
+					arrayIndexCollector.getTermToFunctionNodeMap());
+		} 
 		throw new UnsupportedOperationException(getFailureString(selectedDomain));
 	}
 
@@ -138,13 +151,6 @@ public class FixpointEngineParameterFactory {
 					mServices, mRoot.getRootAnnot());
 		} else if (OctagonDomain.class.getSimpleName().equals(selectedDomain)) {
 			return new OctagonDomain(logger, mSymbolTable, mLiteralCollector, mServices, mRoot.getRootAnnot());
-		} else if (VPDomain.class.getSimpleName().equals(selectedDomain)) {
-			final RCFGArrayIndexCollector arrayIndexCollector = new RCFGArrayIndexCollector(mRoot);
-			if (logger.isDebugEnabled()) {
-				printVPDomainDebug(logger, arrayIndexCollector);
-			}
-			return new VPDomain(mServices, arrayIndexCollector.getPointerMap(),
-					arrayIndexCollector.getIndexToArraysMap(), mRoot.getRootAnnot());
 		} else if (CongruenceDomain.class.getSimpleName().equals(selectedDomain)) {
 			return new CongruenceDomain(logger, mServices, mSymbolTable, mRoot.getRootAnnot());
 		} else if (CompoundDomain.class.getSimpleName().equals(selectedDomain)) {
@@ -178,18 +184,26 @@ public class FixpointEngineParameterFactory {
 	}
 
 	private static void printVPDomainDebug(final ILogger logger, final RCFGArrayIndexCollector arrayIndexCollector) {
-		for (final Entry<IProgramVar, Set<PointerExpression>> bv : arrayIndexCollector.getPointerMap().entrySet()) {
-			logger.debug("PointerMap Key: " + bv.getKey());
-			for (final PointerExpression val : bv.getValue()) {
-				logger.debug("PointerMap Value: " + val.toString());
-			}
+		
+		logger.debug("EqNode Set: ");
+		for (EqNode node : arrayIndexCollector.getEqNodeSet()) {
+			logger.debug(node.toString());
 		}
-		logger.debug("============");
-		for (final Entry<IProgramVar, Set<IProgramVar>> bv : arrayIndexCollector.getIndexToArraysMap().entrySet()) {
-			logger.debug("IndexToArraysMap Key: " + bv.getKey());
-			for (final IProgramVar val : bv.getValue()) {
-				logger.debug("IndexToArraysMap Value: " + val);
-			}
+		
+		logger.debug("Base Node: ");
+		for (Entry<Term, EqBaseNode> entry : arrayIndexCollector.getTermToBaseNodeMap().entrySet()) {
+			logger.debug("Term: " + entry.getKey() + ", Node: " + entry.getValue());
 		}
+		
+		logger.debug("Function Node: ");
+		for (Entry<Term, Map<Term, EqFunctionNode>> fnEntry : arrayIndexCollector.getTermToFunctionNodeMap().entrySet()) {
+			logger.debug("Term: " + fnEntry.getKey() + ", Node: ");
+			for (Entry<Term, EqFunctionNode> argEntry : fnEntry.getValue().entrySet()) {
+				logger.debug(argEntry.getKey());
+			}
+			
+			
+		}
+
 	}
 }

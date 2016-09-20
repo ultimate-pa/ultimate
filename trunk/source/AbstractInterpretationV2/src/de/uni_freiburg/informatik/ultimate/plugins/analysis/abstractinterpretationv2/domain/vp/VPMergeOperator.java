@@ -28,12 +28,6 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.vp;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
 
 /**
@@ -43,65 +37,19 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @author Yu-Wen Chen (yuwenchen1105@gmail.com)
  */
 public class VPMergeOperator implements
-		IAbstractStateBinaryOperator<VPDomainState> {
+		IAbstractStateBinaryOperator<VPState> {
 
 	protected VPMergeOperator() {
 	}
 
 	/**
-	 * Merges two abstract states, first and second, into one new abstract
-	 * state. <br />
 	 * 
-	 * @param first
-	 *            The first state to merge.
-	 * @param second
-	 *            The second state to merge.
 	 */
 	@Override
-	public VPDomainState apply(VPDomainState first, VPDomainState second) {
+	public VPState apply(VPState first, VPState second) {
 
-		if (first == null) {
-			return second;
-		}
-		
-		if (second == null) {
-			return first;
-		}
 
-		final VPDomainState newState = first.copy();
-
-		final Map<String, Set<Expression>> mergeExprMap = new HashMap<String, Set<Expression>>(
-				first.getExpressionMap());
-		final Set<Expression> mergeExprSet = new HashSet<Expression>(
-				first.getExprSet());
-		final Map<String, Set<Expression>> mergePtrReadinMap = new HashMap<String, Set<Expression>>(
-				first.getPtrReadintMap());
-
-		for (final String key : second.getExpressionMap().keySet()) {
-			if (!mergeExprMap.containsKey(key)) {
-				mergeExprMap.put(key, second.getExpressionMap().get(key));
-			} else {
-				mergeExprMap.get(key).addAll(
-						second.getExpressionMap().get(key));
-			}
-		}
-
-		mergeExprSet.addAll(second.getExprSet());
-		
-		for (final String key : second.getPtrReadintMap().keySet()) {
-			if (!mergePtrReadinMap.containsKey(key)) {
-				mergePtrReadinMap.put(key, second.getPtrReadintMap().get(key));
-			} else {
-				mergePtrReadinMap.get(key).addAll(
-						second.getPtrReadintMap().get(key));
-			}
-		}
-		
-		newState.setExpressionMap(mergeExprMap);
-		newState.setExpressionSet(mergeExprSet);
-		newState.setPtrReadinMap(mergePtrReadinMap);
-
-		return newState;
+		return null;
 	}
 
 
