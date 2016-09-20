@@ -395,6 +395,7 @@
 				<module>../Library-ModelCheckerUtilsTest</module>
 				<module>../Library-UltimateUtilTest</module>
 				<module>../Library-UltimateTestTest</module>
+				<module>../Library-SMTLIBTest</module>
 				<module>../SMTInterpolTest</module>
 				<module>../BoogiePreprocessorTest</module>
 
@@ -483,6 +484,7 @@
 				<module>../Library-ModelCheckerUtilsTest</module>
 				<module>../Library-UltimateUtilTest</module>
 				<module>../Library-UltimateTestTest</module>
+				<module>../Library-SMTLIBTest</module>
 				<module>../SMTInterpolTest</module>
 				<module>../BoogiePreprocessorTest</module>
 			</modules>
@@ -550,6 +552,7 @@
 				<module>../Library-ModelCheckerUtilsTest</module>
 				<module>../Library-UltimateUtilTest</module>
 				<module>../Library-UltimateTestTest</module>
+				<module>../Library-SMTLIBTest</module>
 				<module>../SMTInterpolTest</module>
 				<module>../BoogiePreprocessorTest</module>
 
