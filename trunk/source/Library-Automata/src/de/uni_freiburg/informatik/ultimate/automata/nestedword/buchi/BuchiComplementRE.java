@@ -75,25 +75,25 @@ public final class BuchiComplementRE<LETTER, STATE> extends UnaryNwaOperation<LE
 		}
 		
 		final INestedWordAutomaton<LETTER, STATE> operandWithoutNonLiveStates =
-				(new ReachableStatesCopy<LETTER, STATE>(mServices, operand, false, false, false, true)).getResult();
+				(new ReachableStatesCopy<>(mServices, operand, false, false, false, true)).getResult();
 		if (new IsDeterministic<>(mServices, operandWithoutNonLiveStates).getResult()) {
 			if (mLogger.isInfoEnabled()) {
 				mLogger.info("Rüdigers determinization knack not necessary, already deterministic");
 			}
-			mResult = (new BuchiComplementDeterministic<LETTER, STATE>(mServices, operandWithoutNonLiveStates))
+			mResult = (new BuchiComplementDeterministic<>(mServices, operandWithoutNonLiveStates))
 					.getResult();
 		} else {
 			final PowersetDeterminizer<LETTER, STATE> pd =
 					new PowersetDeterminizer<>(operandWithoutNonLiveStates, true, stateFactory);
 			final INestedWordAutomaton<LETTER, STATE> determinized =
-					(new DeterminizeUnderappox<LETTER, STATE>(mServices, operandWithoutNonLiveStates, pd)).getResult();
+					(new DeterminizeUnderappox<>(mServices, operandWithoutNonLiveStates, pd)).getResult();
 			final INestedWordAutomaton<LETTER, STATE> determinizedComplement =
-					(new BuchiComplementDeterministic<LETTER, STATE>(mServices, determinized)).getResult();
+					(new BuchiComplementDeterministic<>(mServices, determinized)).getResult();
 			final INestedWordAutomaton<LETTER, STATE> intersectionWithOperand =
-					(new BuchiIntersectDD<LETTER, STATE>(mServices, operandWithoutNonLiveStates, determinizedComplement,
+					(new BuchiIntersectDD<>(mServices, operandWithoutNonLiveStates, determinizedComplement,
 							true)).getResult();
 			final NestedLassoRun<LETTER, STATE> run =
-					(new BuchiIsEmpty<LETTER, STATE>(mServices, intersectionWithOperand)).getAcceptingNestedLassoRun();
+					(new BuchiIsEmpty<>(mServices, intersectionWithOperand)).getAcceptingNestedLassoRun();
 			if (run == null) {
 				if (mLogger.isInfoEnabled()) {
 					mLogger.info("Rüdigers determinization knack applicable");
@@ -129,19 +129,17 @@ public final class BuchiComplementRE<LETTER, STATE> extends UnaryNwaOperation<LE
 	public String exitMessage() {
 		if (mBuchiComplementReApplicable) {
 			return "Finished " + operationName() + ". Result " + mResult.sizeInformation();
-		} else {
-			return "Unable to perform " + operationName() + "on this input";
 		}
+		return "Unable to perform " + operationName() + "on this input";
 	}
 	
 	@Override
 	public INestedWordAutomaton<LETTER, STATE> getResult() {
 		if (mBuchiComplementReApplicable) {
 			return mResult;
-		} else {
-			assert mResult == null;
-			throw new UnsupportedOperationException("Operation was not applicable");
 		}
+		assert mResult == null;
+		throw new UnsupportedOperationException("Operation was not applicable");
 	}
 	
 	@Override

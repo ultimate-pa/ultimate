@@ -89,6 +89,6 @@ public final class BuchiDifferenceNCSB<LETTER, STATE> extends AbstractBuchiDiffe
 	
 	@Override
 	public String operationName() {
-		return "buchiDifferenceBS";
+		return "BuchiDifferenceNCBS";
 	}
 }

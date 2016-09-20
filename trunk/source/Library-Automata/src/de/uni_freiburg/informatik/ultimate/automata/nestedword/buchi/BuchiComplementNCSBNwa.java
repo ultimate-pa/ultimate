@@ -57,8 +57,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LETTER, STATE> {
 	private static final int MAGIC_RANK = 7777;
 	private static final int BARELY_COVERED_MAX_RANK = 3;
-	private static final int RANK_FINAL = 2;
-	private static final int RANK_NONFINAL = 3;
+	private static final Integer RANK_FINAL = Integer.valueOf(2);
+	private static final Integer RANK_NONFINAL = Integer.valueOf(3);
 	
 	/**
 	 * Heuristic where we move to accepting sink already from states with
@@ -80,15 +80,13 @@ public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INestedWordA
 	/**
 	 * Maps BlaStState to its representative in the resulting automaton.
 	 */
-	private final Map<LevelRankingState<LETTER, STATE>, STATE> mDet2res =
-			new HashMap<>();
+	private final Map<LevelRankingState<LETTER, STATE>, STATE> mDet2res = new HashMap<>();
 	
 	/**
 	 * Maps a state in resulting automaton to the BlaStState for which it
 	 * was created.
 	 */
-	private final Map<STATE, LevelRankingState<LETTER, STATE>> mRes2det =
-			new HashMap<>();
+	private final Map<STATE, LevelRankingState<LETTER, STATE>> mRes2det = new HashMap<>();
 	
 	private final BarelyCoveredLevelRankingsGenerator<LETTER, STATE> mBclrg;
 	
@@ -105,17 +103,16 @@ public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INestedWordA
 	 *             if operation was canceled
 	 */
 	public BuchiComplementNCSBNwa(final AutomataLibraryServices services,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand,
-			final IStateFactory<STATE> stateFactory) throws AutomataOperationCanceledException {
+			final INestedWordAutomatonSimple<LETTER, STATE> operand, final IStateFactory<STATE> stateFactory)
+			throws AutomataOperationCanceledException {
 		mServices = services;
 		mOperand = operand;
 		mStateFactory = stateFactory;
-		mCache = new NestedWordAutomatonCache<>(mServices, operand.getInternalAlphabet(),
-				operand.getCallAlphabet(), operand.getReturnAlphabet(), mStateFactory);
+		mCache = new NestedWordAutomatonCache<>(mServices, operand.getInternalAlphabet(), operand.getCallAlphabet(),
+				operand.getReturnAlphabet(), mStateFactory);
 		mEmptyStackStateWri = new StateWithRankInfo<>(getEmptyStackState());
 		mBclrg = new BarelyCoveredLevelRankingsGenerator<>(mServices, mOperand, BARELY_COVERED_MAX_RANK, false, true,
-				false,
-				false, false);
+				false, false, false);
 		constructInitialState();
 	}
 	
@@ -220,8 +217,8 @@ public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INestedWordA
 					somePredecessorHasRank1 = true;
 				}
 				boolean hasSuccessor = false;
-				for (final OutgoingInternalTransition<LETTER, STATE> trans : mOperand.internalSuccessors(
-						upState.getState(), letter)) {
+				for (final OutgoingInternalTransition<LETTER, STATE> trans : mOperand
+						.internalSuccessors(upState.getState(), letter)) {
 					hasSuccessor = true;
 					constraint.addConstraint(downState, trans.getSucc(), upState.getRank(), upState.isInO(),
 							mOperand.isFinal(upState.getState()));
@@ -236,7 +233,7 @@ public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INestedWordA
 		}
 		return constraint;
 	}
-
+	
 	private boolean returnEmptyLrConstraint(final LevelRankingConstraintDrdCheck<LETTER, STATE> constraint,
 			final boolean transitionWouldAnnihilateEvenRank, final boolean somePredecessorHasRank1) {
 		if (EARLY_SINK_HEURISTIC) {
@@ -257,8 +254,7 @@ public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INestedWordA
 	// TODO Christian 2016-09-07: 'downState' is not used, a bug?
 	private boolean transitionWouldAnnihilateEvenRank(final StateWithRankInfo<STATE> downState,
 			final StateWithRankInfo<STATE> upState, final boolean hasSuccessor) {
-		return !hasSuccessor && !mOperand.isFinal(upState.getState())
-				&& LevelRankingConstraint.isEven(upState.getRank());
+		return !hasSuccessor && !mOperand.isFinal(upState.getState()) && LevelRankingState.isEven(upState.getRank());
 	}
 	
 	private LevelRankingConstraintDrdCheck<LETTER, STATE> computeSuccLevelRankingConstraint_Call(final STATE state,
@@ -316,8 +312,8 @@ public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INestedWordA
 			final StateWithRankInfo<STATE> upHier) {
 		for (final StateWithRankInfo<STATE> upState : lvlrkState.getUpStates(upHier)) {
 			boolean hasSuccessor = false;
-			for (final OutgoingReturnTransition<LETTER, STATE> trans : mOperand.returnSuccessors(
-					upState.getState(), upHier.getState(), letter)) {
+			for (final OutgoingReturnTransition<LETTER, STATE> trans : mOperand.returnSuccessors(upState.getState(),
+					upHier.getState(), letter)) {
 				hasSuccessor = true;
 				constraint.addConstraint(downHier, trans.getSucc(), upState.getRank(), upState.isInO(),
 						mOperand.isFinal(upState.getState()));
@@ -413,7 +409,7 @@ public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INestedWordA
 	
 	@Override
 	public Set<LETTER> getAlphabet() {
-		throw new UnsupportedOperationException();
+		return mOperand.getAlphabet();
 	}
 	
 	@Override

@@ -174,20 +174,19 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INestedWordAutomato
 	private STATE getOrAdd(final LevelRankingState<LETTER, STATE> lrkState) {
 		if (lrkState.isEmpty()) {
 			return mSinkState;
-		} else {
-			STATE resSucc = mLrk2res.get(lrkState);
-			if (resSucc == null) {
-				resSucc = mStateFactory.buchiComplementFKV(lrkState);
-				assert resSucc != null;
-				mCache.addState(false, lrkState.isOempty(), resSucc);
-				mLrk2res.put(lrkState, resSucc);
-				mRes2lrk.put(resSucc, lrkState);
-				if (this.mHighestRank < lrkState.mHighestRank) {
-					this.mHighestRank = lrkState.mHighestRank;
-				}
-			}
-			return resSucc;
 		}
+		STATE resSucc = mLrk2res.get(lrkState);
+		if (resSucc == null) {
+			resSucc = mStateFactory.buchiComplementFKV(lrkState);
+			assert resSucc != null;
+			mCache.addState(false, lrkState.isOempty(), resSucc);
+			mLrk2res.put(lrkState, resSucc);
+			mRes2lrk.put(resSucc, lrkState);
+			if (this.mHighestRank < lrkState.mHighestRank) {
+				this.mHighestRank = lrkState.mHighestRank;
+			}
+		}
+		return resSucc;
 	}
 	
 	/**
@@ -198,17 +197,16 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INestedWordAutomato
 		if (detState.isEmpty()) {
 			assert !isInitial : "sink cannot be initial";
 			return mSinkState;
-		} else {
-			STATE resSucc = mDet2res.get(detState);
-			if (resSucc == null) {
-				resSucc = mStateDeterminizer.getState(detState);
-				assert resSucc != null;
-				mCache.addState(isInitial, false, resSucc);
-				mDet2res.put(detState, resSucc);
-				mRes2scs.put(resSucc, new FkvSubsetComponentState<>(detState));
-			}
-			return resSucc;
 		}
+		STATE resSucc = mDet2res.get(detState);
+		if (resSucc == null) {
+			resSucc = mStateDeterminizer.getState(detState);
+			assert resSucc != null;
+			mCache.addState(isInitial, false, resSucc);
+			mDet2res.put(detState, resSucc);
+			mRes2scs.put(resSucc, new FkvSubsetComponentState<>(detState));
+		}
+		return resSucc;
 	}
 	
 	public int getHighesRank() {
@@ -288,8 +286,8 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INestedWordAutomato
 			final Collection<STATE> resSuccs = new ArrayList<>();
 			final FkvSubsetComponentState<LETTER, STATE> detUp = mRes2scs.get(state);
 			if (detUp != null) {
-				final DeterminizedState<LETTER, STATE> detSucc = mStateDeterminizer.internalSuccessor(
-						detUp.getDeterminizedState(), letter);
+				final DeterminizedState<LETTER, STATE> detSucc =
+						mStateDeterminizer.internalSuccessor(detUp.getDeterminizedState(), letter);
 				final STATE resSucc = getOrAdd(detSucc, false);
 				mCache.addInternalTransition(state, letter, resSucc);
 				resSuccs.add(resSucc);
@@ -358,8 +356,7 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INestedWordAutomato
 	}
 	
 	@Override
-	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
-			final STATE state) {
+	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final STATE state) {
 		for (final LETTER letter : getCallAlphabet()) {
 			callSuccessors(state, letter);
 		}
@@ -381,8 +378,8 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INestedWordAutomato
 	}
 	
 	@Override
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
-			final STATE state, final STATE hier, final LETTER letter) {
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state, final STATE hier,
+			final LETTER letter) {
 		final Collection<STATE> succs = mCache.succReturn(state, hier, letter);
 		if (succs == null) {
 			// TODO Christian 2016-09-07: Adding to 'resSuccs' is useless. A bug?
@@ -438,8 +435,8 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INestedWordAutomato
 	}
 	
 	@Override
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(
-			final STATE state, final STATE hier) {
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(final STATE state,
+			final STATE hier) {
 		for (final LETTER letter : getReturnAlphabet()) {
 			returnSuccessors(state, hier, letter);
 		}
@@ -453,7 +450,7 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INestedWordAutomato
 	
 	@Override
 	public Set<LETTER> getAlphabet() {
-		throw new UnsupportedOperationException();
+		return mOperand.getAlphabet();
 	}
 	
 	@Override
