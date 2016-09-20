@@ -1,0 +1,10 @@
+(set-option :produce-proofs true)
+(set-logic QF_UFLIRA)
+(declare-fun i () Int)
+(declare-fun x () Real)
+(assert (= (+ i x) 1))
+(assert (= x 0.5))
+(check-sat)
+(set-option :print-terms-cse false)
+(get-proof)
+
