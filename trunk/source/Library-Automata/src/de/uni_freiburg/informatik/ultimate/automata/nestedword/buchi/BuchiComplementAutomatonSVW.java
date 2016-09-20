@@ -229,7 +229,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 			for (final Integer tmaNb : reachableTmas) {
 				final MetaState metaState = getMetaState1(mTma.getInitialState(), tmaNb);
 				/**
-				 * Christian 2016-08-16: BUG: mFinalStateSet is null here.
+				 * Christian 2016-08-16: BUG: mFinalStateSet is null here because it is ALWAYS null.
 				 */
 				mFinalStateSet.add(metaState.getOutputState());
 			}
@@ -283,7 +283,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		return result;
 	}
 	
-	public Collection<STATE> succInternal(final STATE state, final LETTER letter) {
+	private Collection<STATE> succInternal(final STATE state, final LETTER letter) {
 		Map<LETTER, Set<STATE>> map = mTransitionsOut.get(state);
 		if (map == null) {
 			map = new HashMap<>();
@@ -328,7 +328,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		return result;
 	}
 	
-	public Collection<STATE> predInternal(final STATE state, final LETTER letter) {
+	private Collection<STATE> predInternal(final STATE state, final LETTER letter) {
 		Map<LETTER, Set<STATE>> map = mTransitionsIn.get(state);
 		if (map == null) {
 			map = new HashMap<>();
@@ -385,7 +385,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		return result;
 	}
 	
-	public boolean finalIsTrap() {
+	private static boolean finalIsTrap() {
 		throw new UnsupportedOperationException(UNSUPPORTED_OPERATION_MESSAGE);
 		// This method can be implemented very easily. There is exactly one
 		// final state in each TMA in the looping part (and none in the TMA in
@@ -404,7 +404,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		// ---------------------------------------------------------------------
 	}
 	
-	public boolean isDeterministic() {
+	private static boolean isDeterministic() {
 		throw new UnsupportedOperationException(UNSUPPORTED_OPERATION_MESSAGE);
 		// This method can be implemented very easily. By construction the TMA
 		// is always deterministic and total. Thus the complement automaton is
@@ -417,7 +417,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		// ---------------------------------------------------------------------
 	}
 	
-	public boolean isTotal() {
+	private static boolean isTotal() {
 		throw new UnsupportedOperationException(UNSUPPORTED_OPERATION_MESSAGE);
 		// This method can be implemented very easily. Since the TMA is always
 		// total (by construction), the same holds for the complement automaton.
@@ -470,20 +470,8 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		return Collections.emptySet();
 	}
 	
-	public Collection<STATE> succCall(final STATE state, final LETTER letter) {
-		throw new UnsupportedOperationException(UNSUPPORTED_OPERATION_MESSAGE);
-	}
-	
 	@Override
 	public Collection<STATE> hierarchicalPredecessorsOutgoing(final STATE state, final LETTER letter) {
-		throw new UnsupportedOperationException(UNSUPPORTED_OPERATION_MESSAGE);
-	}
-	
-	public Collection<STATE> succReturn(final STATE state, final STATE hier, final LETTER letter) {
-		throw new UnsupportedOperationException(UNSUPPORTED_OPERATION_MESSAGE);
-	}
-	
-	public Collection<STATE> predCall(final STATE state, final LETTER letter) {
 		throw new UnsupportedOperationException(UNSUPPORTED_OPERATION_MESSAGE);
 	}
 	
@@ -861,6 +849,8 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		}
 		
 		/**
+		 * @param state state
+		 * @param letter letter
 		 * @return the (unique) successor of {@code state} under letter
 		 *         {@code letter}, i.e. δ(state, letter)
 		 */
@@ -869,6 +859,8 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		}
 		
 		/**
+		 * @param state state
+		 * @param letter letter
 		 * @return the set of predecessors of {@code state} under letter
 		 *         {@code letter}, i.e. δ⁻¹(state, letter)
 		 */
@@ -877,6 +869,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		}
 		
 		/**
+		 * @param state state
 		 * @return The largest set of states such that for any included state qₜ
 		 *         it holds that ⟨s,t⟩ is a rejecting s-t-pair, where
 		 *         <ul>
@@ -891,6 +884,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		}
 		
 		/**
+		 * @param state state
 		 * @return The largest set of states such that for any included state qₛ
 		 *         it holds that ⟨s,t⟩ is a rejecting s-t-pair, where
 		 *         <ul>
@@ -989,6 +983,8 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 			}
 			
 			/**
+			 * @param transProfile
+			 *            Transition profile.
 			 * @return Whether s·t = s, where s = {@code this}.
 			 */
 			public boolean isInvariantUnder(final TransitionProfile transProfile) {
@@ -1003,6 +999,8 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 			}
 			
 			/**
+			 * @param transProfile
+			 *            Transition profile.
 			 * @return whether L(⟨s,t⟩) ⊆ L_ω(A), where s = {@code this} <br>
 			 *         Assumes that ⟨s,t⟩ is an s-t-pair, i.e. that L(⟨s,t⟩) is
 			 *         “proper”.
