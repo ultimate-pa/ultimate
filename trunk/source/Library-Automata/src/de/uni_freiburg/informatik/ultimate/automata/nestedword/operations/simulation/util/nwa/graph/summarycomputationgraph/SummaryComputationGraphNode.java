@@ -40,23 +40,60 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
  */
 public class SummaryComputationGraphNode<LETTER, STATE> {
 	
-	private final IGameState mSummarySource = null;
-	private final Map<IGameState, WeightedSummaryTargets> mCurrent2Targets = null;
+	private final IGameState mSummarySource;
+	private final Map<IGameState, Map<IGameState, WeightedSummaryTargets>> mSource2Current2Targets = null;
 	
-	public final Set<IGameState> getCurrent() {
-		return mCurrent2Targets.keySet();
-	}
+	private final Set<IGameState> mSummaryComputationTriggers = null;
 	
-	public final WeightedSummaryTargets getWeightedSummaryTargets(final IGameState current) {
-		return mCurrent2Targets.get(current);
+	public SummaryComputationGraphNode(final IGameState summarySource,
+			final Map<IGameState, WeightedSummaryTargets> current2Targets) {
+		super();
+		mSummarySource = summarySource;
+//		mCurrent2Targets = current2Targets;
 	}
 
-	/**
-	 * @return the current2Targets
-	 */
-	public Map<IGameState, WeightedSummaryTargets> getCurrent2Targets() {
-		return mCurrent2Targets;
+	public Set<IGameState> getSources() {
+		return mSource2Current2Targets.keySet();
 	}
+	
+	public Set<IGameState> getCurrent(final IGameState source) {
+		return mSource2Current2Targets.get(source).keySet();
+	}
+	
+	public Map<IGameState, WeightedSummaryTargets> getCurrent2Targets(final IGameState source) {
+		return mSource2Current2Targets.get(source);
+	}
+	
+//	
+//	public final WeightedSummaryTargets getWeightedSummaryTargets(final IGameState current) {
+//		return mCurrent2Targets.get(current);
+//	}
+
+
+	/**
+	 * @return the summarySource
+	 */
+	public IGameState getSummarySource() {
+		return mSummarySource;
+	}
+	
+	
+//	/**
+//	 * @return the current2Targets
+//	 */
+//	public Map<IGameState, WeightedSummaryTargets> getCurrent2Targets() {
+//		return mCurrent2Targets;
+//	}
+
+	/**
+	 * @return the summaryComputationTriggers
+	 */
+	public Set<IGameState> getSummaryComputationTriggers() {
+		return mSummaryComputationTriggers;
+	}
+
+	
+	
 	
 	
 
