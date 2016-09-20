@@ -21,14 +21,17 @@ package system;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.io.FilenameFilter;
+import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 
+import org.eclipse.core.runtime.FileLocator;
+import org.eclipse.core.runtime.Platform;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
+import org.osgi.framework.Bundle;
 
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.DefaultLogger;
@@ -40,30 +43,18 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 public class SystemTest {
 
 	@Test
-	public void testSystem() throws URISyntaxException, FileNotFoundException {
-		final String name = getClass().getPackage().getName();
-		final URL url = getClass().getClassLoader().getResource(name);
-		final File f = new File(url.toURI());
-		File[] lst = f.getParentFile().getParentFile().listFiles(new FilenameFilter() {
-
-			@Override
-			public boolean accept(final File dir, final String name) {
-				return name.equals("test");
-			}
-		});
-		if (lst == null || lst.length != 1) {
+	public void testSystem() throws URISyntaxException, IOException {
+		final Bundle bundle = Platform.getBundle("SMTInterpolTest");
+		final URL fileURL = bundle.getEntry("test/");
+		final File testDir = new File(FileLocator.resolve(fileURL).toURI());
+		final File[] lst = testDir.listFiles();
+		if (lst == null || lst.length == 0) {
 			throw new IllegalArgumentException("could not locate SMT scripts");
 		}
-		final File testDir = lst[0];
-		lst = testDir.listFiles();
-		for (final File dir : lst) {
-			for (final File tst : dir.listFiles(new FilenameFilter() {
 
-				@Override
-				public boolean accept(final File dir, final String name) {
-					return name.endsWith(".smt2") && !name.endsWith(".msat.smt2");
-				}
-			})) {
+		for (final File dir : lst) {
+			for (final File tst : dir
+					.listFiles((dir1, name) -> name.endsWith(".smt2") && !name.endsWith(".msat.smt2"))) {
 				try {
 					if (shouldExecute(tst)) {
 						performTest(tst);
@@ -75,7 +66,7 @@ public class SystemTest {
 		}
 	}
 
-	private void performTest(final File f) throws SMTLIBException, FileNotFoundException {
+	private static void performTest(final File f) throws SMTLIBException, FileNotFoundException {
 		System.out.println("Testing " + f.getAbsolutePath());
 		final DefaultLogger logger = new DefaultLogger();
 		final OptionMap options = new OptionMap(logger, true);
