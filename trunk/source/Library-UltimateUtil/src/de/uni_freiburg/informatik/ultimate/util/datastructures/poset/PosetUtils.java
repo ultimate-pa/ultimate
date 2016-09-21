@@ -43,7 +43,8 @@ public class PosetUtils {
 	 * greater than element with respect to {@link IPartialComparator} comp.
 	 */
 	public static <T> boolean isMaximalElement(final T elem, final Stream<T> allElems, final IPartialComparator<T> comp) {
-		return allElems.allMatch(x -> comp.compare(x, elem) != ComparisonResult.STRICTLY_GREATER);
+		final boolean result = allElems.allMatch(x -> comp.compare(x, elem) != ComparisonResult.STRICTLY_GREATER);
+		return result;
 	}
 	
 	/**
@@ -51,7 +52,8 @@ public class PosetUtils {
 	 * smaller than element with respect to {@link IPartialComparator} comp.
 	 */
 	public static <T> boolean isMinimalElement(final T eleme, final Stream<T> allElems, final IPartialComparator<T> comp) {
-		return allElems.allMatch(x -> comp.compare(x, eleme) != ComparisonResult.STRICTLY_SMALLER);
+		final boolean result = allElems.allMatch(x -> comp.compare(x, eleme) != ComparisonResult.STRICTLY_SMALLER);
+		return result;
 	}
 	
 	/**
