@@ -52,7 +52,6 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.MatchInOutV
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RemoveNegation;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteArrays2;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteArraysMapElimination;
-import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteArraysMapElimination.MapEliminationSettings;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteBooleans;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteDivision;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteEquality;
@@ -318,7 +317,7 @@ public class LassoAnalysis {
 			mapElimination = new RewriteArraysMapElimination(mServices, mMgdScript, mSymbolTable,
 					lassoBuilder.getReplacementVarFactory(), mStemTransition, mLoopTransition,
 					mModifiableGlobalsAtHonda, mArrayIndexSupportingInvariants,
-					new MapEliminationSettings(mSimplificationTechnique, mXnfConversionTechnique));
+					mPreferences.getMapEliminationSettings(mSimplificationTechnique, mXnfConversionTechnique));
 		}
 		return new LassoPreprocessor[] { new StemAndLoopPreprocessor(mOldScript, new MatchInOutVars(mMgdScript)),
 				new StemAndLoopPreprocessor(mOldScript,

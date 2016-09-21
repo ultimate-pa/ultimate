@@ -132,11 +132,6 @@ public class RewriteArraysMapElimination extends LassoPreprocessor {
 		private final SimplicationTechnique mSimplificationTechnique;
 		private final XnfConversionTechnique mXnfConversionTechnique;
 
-		public MapEliminationSettings(final SimplicationTechnique simplificationTechnique,
-				final XnfConversionTechnique xnfConversionTechnique) {
-			this(false, true, false, true, simplificationTechnique, xnfConversionTechnique);
-		}
-
 		/**
 		 *
 		 * @param addInequalities

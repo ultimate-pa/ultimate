@@ -640,6 +640,11 @@ public class LassoChecker {
 		pref.mOverapproximateArrayIndexConnection = overapproximateArrayIndexConnection;
 		pref.mNlaHandling = nlaHandling;
 		pref.mUseOldMapElimination = baPref.getBoolean(PreferenceInitializer.LABEL_USE_OLD_MAP_ELIMINATION);
+		// TODO: Add Franks settings for debugging / benchmarking
+		pref.mMapElimAddInequalities = false;
+		pref.mMapElimOnlyTrivialImplicationsIndexAssignment = false;
+		pref.mMapElimOnlyTrivialImplicationsArrayWrite = false;
+		pref.mMapElimOnlyIndicesInFormula = false;
 		return pref;
 	}
 

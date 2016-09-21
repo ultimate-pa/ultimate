@@ -31,8 +31,11 @@ import java.io.File;
 import java.io.Serializable;
 import java.util.function.Consumer;
 
+import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteArraysMapElimination.MapEliminationSettings;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.InequalityConverter;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.InequalityConverter.NlaHandling;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 
 /**
@@ -103,6 +106,14 @@ public class LassoRankerPreferences implements Serializable {
 	 */
 	public boolean mUseOldMapElimination;
 
+	public boolean mMapElimAddInequalities;
+
+	public boolean mMapElimOnlyTrivialImplicationsIndexAssignment;
+
+	public boolean mMapElimOnlyTrivialImplicationsArrayWrite;
+
+	public boolean mMapElimOnlyIndicesInFormula;
+
 	/**
 	 * Emulate push/pop using reset and re-asserting and re-declaring.
 	 */
@@ -114,7 +125,6 @@ public class LassoRankerPreferences implements Serializable {
 	public LassoRankerPreferences() {
 		// all default values
 		mFakeNonIncrementalScript = false;
-		mUseOldMapElimination = false;
 		mNlaHandling = NlaHandling.EXCEPTION;
 		mOverapproximateArrayIndexConnection = false;
 		mBaseNameOfDumpedScript = "LassoRankerScript";
@@ -125,6 +135,11 @@ public class LassoRankerPreferences implements Serializable {
 		mAnnotateTerms = false;
 		mExternalSolver = true;
 		mExternalSolverCommand = "z3 -smt2 -in SMTLIB2_COMPLIANT=true ";
+		mUseOldMapElimination = false;
+		mMapElimAddInequalities = false;
+		mMapElimOnlyTrivialImplicationsIndexAssignment = true;
+		mMapElimOnlyTrivialImplicationsArrayWrite = false;
+		mMapElimOnlyIndicesInFormula = true;
 	}
 
 	/**
@@ -190,8 +205,15 @@ public class LassoRankerPreferences implements Serializable {
 	 * @return a Settings object that allows us to build a new solver.
 	 */
 	public Settings getSolverConstructionSettings(final String filenameDumpedScript) {
-		final long timeoutSmtInterpol = 365 * 24 * 60 * 60 * 1000;
+		final long timeoutSmtInterpol = 365 * 24 * 60 * 60 * 1000L;
 		return new Settings(mFakeNonIncrementalScript, mExternalSolver, mExternalSolverCommand, timeoutSmtInterpol,
 				null, mDumpSmtSolverScript, mPathOfDumpedScript, filenameDumpedScript);
+	}
+
+	public MapEliminationSettings getMapEliminationSettings(final SimplicationTechnique simplificationTechnique,
+			final XnfConversionTechnique xnfConversionTechnique) {
+		return new MapEliminationSettings(mMapElimAddInequalities, mMapElimOnlyTrivialImplicationsIndexAssignment,
+				mMapElimOnlyTrivialImplicationsArrayWrite, mMapElimOnlyIndicesInFormula, simplificationTechnique,
+				xnfConversionTechnique);
 	}
 }
