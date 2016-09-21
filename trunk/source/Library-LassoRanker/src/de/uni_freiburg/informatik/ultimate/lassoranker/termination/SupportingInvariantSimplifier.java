@@ -74,7 +74,7 @@ class SupportingInvariantSimplifier {
 	 */
 	public SupportingInvariantSimplifier(final LassoRankerPreferences preferences, final IUltimateServiceProvider services,
 			final IToolchainStorage storage) throws IOException {
-		mannotate_terms = preferences.annotate_terms;
+		mannotate_terms = preferences.mAnnotateTerms;
 
 		// Create a new QF_LRA script
 		mscript = SMTSolver.newScript(preferences, "SimplifySIs", services, storage);

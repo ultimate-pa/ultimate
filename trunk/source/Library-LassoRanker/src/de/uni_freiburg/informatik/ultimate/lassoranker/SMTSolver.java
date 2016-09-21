@@ -61,12 +61,12 @@ public class SMTSolver {
 	public static Script newScript(LassoRankerPreferences preferences, String constraintsName,
 			IUltimateServiceProvider services, IToolchainStorage storage) {
 		final Settings settings = preferences.getSolverConstructionSettings(
-				preferences.baseNameOfDumpedScript + "+" + constraintsName);
+				preferences.mBaseNameOfDumpedScript + "+" + constraintsName);
 		final Script script = SolverBuilder.buildScript(services, storage, settings);
 		
 		// Set options
 		script.setOption(":produce-models", true);
-		if (preferences.annotate_terms) {
+		if (preferences.mAnnotateTerms) {
 			script.setOption(":produce-unsat-cores", true);
 		}
 		return script;

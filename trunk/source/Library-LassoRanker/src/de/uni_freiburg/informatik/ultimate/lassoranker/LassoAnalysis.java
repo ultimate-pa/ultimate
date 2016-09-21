@@ -284,9 +284,9 @@ public class LassoAnalysis {
 	protected void preprocess() throws TermException {
 		mLogger.info("Starting lasso preprocessing...");
 		final LassoBuilder lassoBuilder = new LassoBuilder(mLogger, mOldScript, mMgdScript, mStemTransition,
-				mLoopTransition, mPreferences.nlaHandling);
+				mLoopTransition, mPreferences.mNlaHandling);
 		assert lassoBuilder.isSane("initial lasso construction");
-		lassoBuilder.preprocess(getPreProcessors(lassoBuilder, mPreferences.overapproximateArrayIndexConnection),
+		lassoBuilder.preprocess(getPreProcessors(lassoBuilder, mPreferences.mOverapproximateArrayIndexConnection),
 				getPreProcessors(lassoBuilder, false));
 
 		mPreprocessingBenchmark = lassoBuilder.getPreprocessingBenchmark();
@@ -310,7 +310,7 @@ public class LassoAnalysis {
 	protected LassoPreprocessor[] getPreProcessors(final LassoBuilder lassoBuilder,
 			final boolean overapproximateArrayIndexConnection) {
 		final LassoPreprocessor mapElimination;
-		if (mPreferences.useOldMapElimination) {
+		if (mPreferences.mUseOldMapElimination) {
 			mapElimination = new RewriteArrays2(true, mStemTransition, mLoopTransition, mModifiableGlobalsAtHonda,
 					mServices, mArrayIndexSupportingInvariants, mSymbolTable, mMgdScript,
 					lassoBuilder.getReplacementVarFactory(), mSimplificationTechnique, mXnfConversionTechnique);
@@ -324,11 +324,11 @@ public class LassoAnalysis {
 				new StemAndLoopPreprocessor(mOldScript,
 						new AddAxioms(lassoBuilder.getReplacementVarFactory(), mAxioms)),
 				new StemAndLoopPreprocessor(mOldScript, new CommuHashPreprocessor(mServices)),
-				mPreferences.enable_partitioneer
+				mPreferences.mEnablePartitioneer
 						? new LassoPartitioneerPreprocessor(mOldScript, mServices, mMgdScript, mXnfConversionTechnique)
 						: null,
 				mapElimination, new StemAndLoopPreprocessor(mOldScript, new MatchInOutVars(mMgdScript)),
-				mPreferences.enable_partitioneer
+				mPreferences.mEnablePartitioneer
 						? new LassoPartitioneerPreprocessor(mOldScript, mServices, mMgdScript, mXnfConversionTechnique)
 						: null,
 				new StemAndLoopPreprocessor(mOldScript, new RewriteDivision(lassoBuilder.getReplacementVarFactory())),

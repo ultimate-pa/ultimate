@@ -89,7 +89,7 @@ class StemOverapproximator {
 	 */
 	public StemOverapproximator(LassoRankerPreferences preferences, IUltimateServiceProvider services,
 			IToolchainStorage storage) throws IOException {
-		mannotate_terms = preferences.annotate_terms;
+		mannotate_terms = preferences.mAnnotateTerms;
 
 		// Create a new QF_LRA script
 		mscript = SMTSolver.newScript(preferences, "SimplifySIs", services, storage);
