@@ -210,9 +210,6 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 				}
 				
 			}
-			if (mLogger.isDebugEnabled()) {
-				mLogger.debug(stateContainerInformation());
-			}
 			// assert (new TransitionConsitenceCheck<LETTER,
 			// STATE>(this)).consistentForAll();
 			
@@ -229,6 +226,9 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 			final String message = "// Problem with  removeUnreachable";
 //			ResultChecker.writeToFileIfPreferred(mServices, "FailedremoveUnreachable", message, operand);
 			throw e;
+		}
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug(stateContainerInformation());
 		}
 		assert (new DownStateConsistencyCheck<LETTER, STATE>(mServices, this)).getResult() : "down states inconsistent";
 	}
