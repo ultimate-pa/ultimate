@@ -640,15 +640,13 @@ public class LassoChecker {
 		pref.mOverapproximateArrayIndexConnection = overapproximateArrayIndexConnection;
 		pref.mNlaHandling = nlaHandling;
 		pref.mUseOldMapElimination = baPref.getBoolean(PreferenceInitializer.LABEL_USE_OLD_MAP_ELIMINATION);
-		// TODO: Add Franks settings for debugging / benchmarking
-		baPref.getBoolean(PreferenceInitializer.LABEL_MAP_ELIMINATION_ADD_INEQUALITIES);
-		baPref.getBoolean(PreferenceInitializer.LABEL_MAP_ELIMINATION_ONLY_TRIVIAL_IMPLICATIONS_INDEX_ASSIGNMENT);
-		baPref.getBoolean(PreferenceInitializer.LABEL_MAP_ELIMINATION_ONLY_TRIVIAL_IMPLICATIONS_ARRAY_WRITE);
-		baPref.getBoolean(PreferenceInitializer.LABEL_MAP_ELIMINATION_ONLY_INDICES_IN_FORMULAS);
-		pref.mMapElimAddInequalities = false;
-		pref.mMapElimOnlyTrivialImplicationsIndexAssignment = false;
-		pref.mMapElimOnlyTrivialImplicationsArrayWrite = false;
-		pref.mMapElimOnlyIndicesInFormula = false;
+		pref.mMapElimAddInequalities = baPref.getBoolean(PreferenceInitializer.LABEL_MAP_ELIMINATION_ADD_INEQUALITIES);
+		pref.mMapElimOnlyTrivialImplicationsIndexAssignment = baPref
+				.getBoolean(PreferenceInitializer.LABEL_MAP_ELIMINATION_ONLY_TRIVIAL_IMPLICATIONS_INDEX_ASSIGNMENT);
+		pref.mMapElimOnlyTrivialImplicationsArrayWrite =
+				baPref.getBoolean(PreferenceInitializer.LABEL_MAP_ELIMINATION_ONLY_TRIVIAL_IMPLICATIONS_ARRAY_WRITE);
+		pref.mMapElimOnlyIndicesInFormula =
+				baPref.getBoolean(PreferenceInitializer.LABEL_MAP_ELIMINATION_ONLY_INDICES_IN_FORMULAS);
 		return pref;
 	}
 
