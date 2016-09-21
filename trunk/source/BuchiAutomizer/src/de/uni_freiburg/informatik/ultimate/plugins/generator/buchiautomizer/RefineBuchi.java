@@ -60,8 +60,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.Increme
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer.BComplementationConstruction;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer.BInterpolantAutomaton;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer.BuchiComplementationConstruction;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer.BuchiInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
@@ -131,14 +131,14 @@ public class RefineBuchi {
 	}
 
 	class RefinementSetting {
-		private final BInterpolantAutomaton mInterpolantAutomaton;
+		private final BuchiInterpolantAutomaton mInterpolantAutomaton;
 		private final boolean mBouncerStem;
 		private final boolean mBouncerLoop;
 		private final boolean mScroogeNondeterminismStem;
 		private final boolean mScroogeNondeterminismLoop;
 		private final boolean mCannibalizeLoop;
 
-		public RefinementSetting(final BInterpolantAutomaton interpolantAutomaton, final boolean bouncerStem, final boolean bouncerLoop,
+		public RefinementSetting(final BuchiInterpolantAutomaton interpolantAutomaton, final boolean bouncerStem, final boolean bouncerLoop,
 				final boolean scroogeNondeterminismStem, final boolean scroogeNondeterminismLoop, final boolean cannibalizeLoop) {
 			super();
 			mInterpolantAutomaton = interpolantAutomaton;
@@ -149,7 +149,7 @@ public class RefineBuchi {
 			mCannibalizeLoop = cannibalizeLoop;
 		}
 
-		public BInterpolantAutomaton getInterpolantAutomaton() {
+		public BuchiInterpolantAutomaton getInterpolantAutomaton() {
 			return mInterpolantAutomaton;
 		}
 
@@ -205,7 +205,7 @@ public class RefineBuchi {
 			final NestedLassoRun<CodeBlock, IPredicate> mCounterexample, final int mIteration, final RefinementSetting setting,
 			final BinaryStatePredicateManager bspm, final BuchiModGlobalVarManager buchiModGlobalVarManager,
 			final InterpolationTechnique interpolation, final BuchiCegarLoopBenchmarkGenerator benchmarkGenerator,
-			final BComplementationConstruction complementationConstruction)
+			final BuchiComplementationConstruction complementationConstruction)
 			throws AutomataLibraryException {
 		final NestedWord<CodeBlock> stem = mCounterexample.getStem().getWord();
 		// if (emptyStem(mCounterexample)) {
@@ -325,7 +325,7 @@ public class RefineBuchi {
 				mInterpolAutomatonUsedInRefinement, mUseDoubleDeckers, mStateFactoryInterpolAutom);
 		INestedWordAutomaton<CodeBlock, IPredicate> newAbstraction;
 		if (mDifference) {
-			if (complementationConstruction == BComplementationConstruction.Ncsb) {
+			if (complementationConstruction == BuchiComplementationConstruction.Ncsb) {
 				if (setting.isAlwaysSemiDeterministic()) {
 					newAbstraction = nsbcDifference(abstraction, setting, benchmarkGenerator);
 				} else {

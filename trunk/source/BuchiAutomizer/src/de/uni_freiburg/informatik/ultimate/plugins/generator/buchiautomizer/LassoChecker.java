@@ -260,17 +260,17 @@ public class LassoChecker {
 		mXnfConversionTechnique = xnfConversionTechnique;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		final IPreferenceProvider baPref = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
-		mExternalSolver_RankSynthesis = baPref.getBoolean(PreferenceInitializer.LABEL_ExtSolverRank);
-		mExternalSolverCommand_RankSynthesis = baPref.getString(PreferenceInitializer.LABEL_ExtSolverCommandRank);
-		mExternalSolver_GntaSynthesis = baPref.getBoolean(PreferenceInitializer.LABEL_ExtSolverGNTA);
-		mExternalSolverCommand_GntaSynthesis = baPref.getString(PreferenceInitializer.LABEL_ExtSolverCommandGNTA);
-		mRankAnalysisType = baPref.getEnum(PreferenceInitializer.LABEL_AnalysisTypeRank, AnalysisType.class);
-		mGntaAnalysisType = baPref.getEnum(PreferenceInitializer.LABEL_AnalysisTypeGNTA, AnalysisType.class);
-		mGntaDirections = baPref.getInt(PreferenceInitializer.LABEL_GntaDirections);
+		mExternalSolver_RankSynthesis = baPref.getBoolean(PreferenceInitializer.LABEL_USE_EXTERNAL_SOLVER_RANK);
+		mExternalSolverCommand_RankSynthesis = baPref.getString(PreferenceInitializer.LABEL_EXTERNAL_SOLVER_COMMAND_RANK);
+		mExternalSolver_GntaSynthesis = baPref.getBoolean(PreferenceInitializer.LABEL_USE_EXTERNAL_SOLVER_GNTA);
+		mExternalSolverCommand_GntaSynthesis = baPref.getString(PreferenceInitializer.LABEL_EXTERNAL_SOLVER_COMMAND_GNTA);
+		mRankAnalysisType = baPref.getEnum(PreferenceInitializer.LABEL_ANALYSIS_TYPE_RANK, AnalysisType.class);
+		mGntaAnalysisType = baPref.getEnum(PreferenceInitializer.LABEL_ANALYSIS_TYPE_GNTA, AnalysisType.class);
+		mGntaDirections = baPref.getInt(PreferenceInitializer.LABEL_GNTA_DIRECTIONS);
 
-		mTemplateBenchmarkMode = baPref.getBoolean(PreferenceInitializer.LABEL_TemplateBenchmarkMode);
-		mTrySimplificationTerminationArgument = baPref.getBoolean(PreferenceInitializer.LABEL_Simplify);
-		mTryTwofoldRefinement = baPref.getBoolean(PreferenceInitializer.LABEL_TryTwofoldRefinement);
+		mTemplateBenchmarkMode = baPref.getBoolean(PreferenceInitializer.LABEL_TEMPLATE_BENCHMARK_MODE);
+		mTrySimplificationTerminationArgument = baPref.getBoolean(PreferenceInitializer.LABEL_SIMPLIFY);
+		mTryTwofoldRefinement = baPref.getBoolean(PreferenceInitializer.LABEL_TRY_TWOFOLD_REFINEMENT);
 		mInterpolation = interpolation;
 		mSmtManager = smtManager;
 		mModifiableGlobalVariableManager = modifiableGlobalVariableManager;
@@ -634,8 +634,8 @@ public class LassoChecker {
 			throw new AssertionError();
 		}
 		final IPreferenceProvider baPref = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
-		pref.mDumpSmtSolverScript = baPref.getBoolean(PreferenceInitializer.LABEL_DumpToFile);
-		pref.mPathOfDumpedScript = baPref.getString(PreferenceInitializer.LABEL_DumpPath);
+		pref.mDumpSmtSolverScript = baPref.getBoolean(PreferenceInitializer.LABEL_DUMP_SCRIPT_TO_FILE);
+		pref.mPathOfDumpedScript = baPref.getString(PreferenceInitializer.LABEL_DUMP_SCRIPT_PATH);
 		pref.mBaseNameOfDumpedScript = generateFileBasenamePrefix(withStem);
 		pref.mOverapproximateArrayIndexConnection = overapproximateArrayIndexConnection;
 		pref.mNlaHandling = nlaHandling;
