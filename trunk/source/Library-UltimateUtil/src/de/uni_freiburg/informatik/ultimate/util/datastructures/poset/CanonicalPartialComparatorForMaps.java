@@ -66,6 +66,9 @@ public class CanonicalPartialComparatorForMaps<K,V> implements IPartialComparato
 		if (result == ComparisonResult.EQUAL && o1.size() < o2.size()) {
 			//not equal but strictly smaller since o2 has elements that o1 does not have.
 			result = ComparisonResult.STRICTLY_SMALLER;
+		} else if (result == ComparisonResult.STRICTLY_GREATER && !o1.keySet().containsAll(o2.keySet())) {
+			//not strictly greater but incomparable since o2 has elements that o1 does not have.
+			result = ComparisonResult.INCOMPARABLE;
 		}
 		return result;
 	}
