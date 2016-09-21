@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.lassoranker;
 
 import java.io.File;
 import java.io.Serializable;
+import java.util.function.Consumer;
 
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.InequalityConverter;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.InequalityConverter.NlaHandling;
@@ -46,8 +47,10 @@ public class LassoRankerPreferences implements Serializable {
 
 	/**
 	 * Should the polyhedra for stem and loop be made integral for integer programs? (Not yet implemented.)
+	 *
+	 * Default: false
 	 */
-	public boolean compute_integral_hull = false; // Default: false
+	public boolean compute_integral_hull = false;
 
 	/**
 	 * Enable the LassoPartitioneer that splits lassos into multiple independent components?
@@ -104,12 +107,13 @@ public class LassoRankerPreferences implements Serializable {
 	/**
 	 * Emulate push/pop using reset and re-asserting and re-declaring.
 	 */
-	private final boolean mFakeNonIncrementalScript = false;
+	private final boolean mFakeNonIncrementalScript;
 
 	/**
 	 * Default construction intializes default values
 	 */
 	public LassoRankerPreferences() {
+		mFakeNonIncrementalScript = false;
 	}
 
 	/**
@@ -127,6 +131,7 @@ public class LassoRankerPreferences implements Serializable {
 		overapproximateArrayIndexConnection = other.overapproximateArrayIndexConnection;
 		nlaHandling = other.nlaHandling;
 		useOldMapElimination = other.useOldMapElimination;
+		mFakeNonIncrementalScript = other.mFakeNonIncrementalScript;
 	}
 
 	/**
@@ -149,25 +154,20 @@ public class LassoRankerPreferences implements Serializable {
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
-		sb.append("Compute integeral hull: ");
-		sb.append(compute_integral_hull);
-		sb.append("\nEnable LassoPartitioneer: ");
-		sb.append(enable_partitioneer);
-		sb.append("\nTerm annotations enabled: ");
-		sb.append(annotate_terms);
-		sb.append("\nUse exernal solver: ");
-		sb.append(externalSolver);
-		sb.append("\nSMT solver command: ");
-		sb.append(smt_solver_command);
-		sb.append("\nDump SMT script to file: ");
-		sb.append(dumpSmtSolverScript);
-		sb.append("\nPath of dumped script: ");
-		sb.append(path_of_dumped_script);
-		sb.append("\nFilename of dumped script: ");
-		sb.append(baseNameOfDumpedScript);
-		sb.append("\nMapElimAlgo: ");
-		sb.append(useOldMapElimination ? "Matthias" : "Frank");
+		feedSettingsString(a -> sb.append(a).append("\n"));
 		return sb.toString();
+	}
+
+	public void feedSettingsString(final Consumer<String> consumer) {
+		consumer.accept("Compute integeral hull: " + compute_integral_hull);
+		consumer.accept("Enable LassoPartitioneer: " + enable_partitioneer);
+		consumer.accept("Term annotations enabled: " + annotate_terms);
+		consumer.accept("Use exernal solver: " + externalSolver);
+		consumer.accept("SMT solver command: " + smt_solver_command);
+		consumer.accept("Dump SMT script to file: " + dumpSmtSolverScript);
+		consumer.accept("Path of dumped script: " + path_of_dumped_script);
+		consumer.accept("Filename of dumped script: " + baseNameOfDumpedScript);
+		consumer.accept("MapElimAlgo: " + (useOldMapElimination ? "Matthias" : "Frank"));
 	}
 
 	/**
@@ -180,7 +180,7 @@ public class LassoRankerPreferences implements Serializable {
 	 */
 	public Settings getSolverConstructionSettings(final String filenameDumpedScript) {
 		final long timeoutSmtInterpol = 365 * 24 * 60 * 60 * 1000;
-		return new Settings(mFakeNonIncrementalScript , externalSolver, smt_solver_command, timeoutSmtInterpol, null, dumpSmtSolverScript,
-				path_of_dumped_script, filenameDumpedScript);
+		return new Settings(mFakeNonIncrementalScript, externalSolver, smt_solver_command, timeoutSmtInterpol, null,
+				dumpSmtSolverScript, path_of_dumped_script, filenameDumpedScript);
 	}
 }

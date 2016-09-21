@@ -213,10 +213,11 @@ public class LassoAnalysis {
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
 		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
-		mPreferences = new LassoRankerPreferences(preferences); // defensive
-																// copy
+		// defensive copy
+		mPreferences = new LassoRankerPreferences(preferences);
 		mPreferences.checkSanity();
-		mLogger.info("Preferences:\n" + mPreferences.toString());
+		mLogger.info("Preferences:");
+		mPreferences.feedSettingsString(mLogger::info);
 
 		mOldScript = script;
 		mAxioms = axioms;
