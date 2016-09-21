@@ -46,7 +46,8 @@ public class SystemTest {
 	public void testSystem() throws URISyntaxException, IOException {
 		final Bundle bundle = Platform.getBundle("SMTInterpolTest");
 		final URL fileURL = bundle.getEntry("test/");
-		final File testDir = new File(FileLocator.resolve(fileURL).toURI());
+
+		final File testDir = new File(FileLocator.resolve(fileURL.toURI().toURL()).toURI());
 		final File[] lst = testDir.listFiles();
 		if (lst == null || lst.length == 0) {
 			throw new IllegalArgumentException("could not locate SMT scripts");
