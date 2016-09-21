@@ -96,11 +96,56 @@ public class WeightedSummaryTargets {
 
 		@Override
 		public ComparisonResult compare(final WeightedSummaryTargets o1, final WeightedSummaryTargets o2) {
-			return new CanonicalPartialComparatorForMaps<IGameState, Integer>(
-					new PriorityComparator()).compare(o1.mTarget2Priority, o2.mTarget2Priority);
+			final ComparisonResult result = new CanonicalPartialComparatorForMaps<IGameState, Integer>(
+					new PriorityComparator()).compare(o1.mTarget2Priority, o2.mTarget2Priority); 
+			return result;
 		}
 		
 	}
+
+
+
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((mTarget2Priority == null) ? 0 : mTarget2Priority.hashCode());
+		return result;
+	}
+
+
+
+
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		final WeightedSummaryTargets other = (WeightedSummaryTargets) obj;
+		if (mTarget2Priority == null) {
+			if (other.mTarget2Priority != null)
+				return false;
+		} else if (!mTarget2Priority.equals(other.mTarget2Priority))
+			return false;
+		return true;
+	}
+
+
+
+
+
+	@Override
+	public String toString() {
+		return mTarget2Priority.toString();
+	}
+	
+	
+	
 	
 	
 	
