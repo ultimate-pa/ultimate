@@ -1,0 +1,9 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Library-SMTLIBTest
+Bundle-SymbolicName: Library-SMTLIBTest
+Bundle-Version: 0.0.1
+Fragment-Host: Library-SMTLIB
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Require-Bundle: org.junit
+Export-Package: de.uni_freiburg.informatik.ultimate.logic

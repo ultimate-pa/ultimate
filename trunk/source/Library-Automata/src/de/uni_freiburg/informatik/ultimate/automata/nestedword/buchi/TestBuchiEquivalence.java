@@ -31,7 +31,6 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.BinaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
@@ -154,12 +153,12 @@ public final class TestBuchiEquivalence<LETTER, STATE> extends BinaryNwaOperatio
 		NestedLassoRun<LETTER, STATE> counterexample;
 		
 		// check inclusion of first operand language in second operand language
-		counterexample = (new BuchiIsIncluded<LETTER, STATE>(mServices, mStateFactory, mFstOperand, mSndOperand))
+		counterexample = (new BuchiIsIncluded<>(mServices, mStateFactory, mFstOperand, mSndOperand))
 				.getCounterexample();
 		correct &= (counterexample == null);
 		
 		// check inclusion of second operand language in first operand language
-		counterexample = (new BuchiIsIncluded<LETTER, STATE>(mServices, mStateFactory, mSndOperand, mFstOperand))
+		counterexample = (new BuchiIsIncluded<>(mServices, mStateFactory, mSndOperand, mFstOperand))
 				.getCounterexample();
 		correct &= (counterexample == null);
 		
@@ -170,8 +169,8 @@ public final class TestBuchiEquivalence<LETTER, STATE> extends BinaryNwaOperatio
 		boolean correct = true;
 		
 		// We first do a semi-test for finite language equivalence, which is a sufficient criterion.
-		correct &= (new IsIncluded<LETTER, STATE>(mServices, mStateFactory, mFstOperand, mSndOperand)).getResult();
-		correct &= (new IsIncluded<LETTER, STATE>(mServices, mStateFactory, mSndOperand, mFstOperand)).getResult();
+		correct &= (new IsIncluded<>(mServices, mStateFactory, mFstOperand, mSndOperand)).getResult();
+		correct &= (new IsIncluded<>(mServices, mStateFactory, mSndOperand, mFstOperand)).getResult();
 		
 		if (!correct) {
 			// The finite language is not equivalent. Check with some lasso words.
@@ -192,10 +191,10 @@ public final class TestBuchiEquivalence<LETTER, STATE> extends BinaryNwaOperatio
 	
 	private boolean extractAndCheckLassoWords(final INestedWordAutomatonSimple<LETTER, STATE> source,
 			final INestedWordAutomatonSimple<LETTER, STATE> target) throws AutomataLibraryException {
-			
+		
 		// extract lasso words from the source automaton
 		final List<NestedLassoWord<LETTER>> nestedLassoWords = new ArrayList<>();
-		nestedLassoWords.addAll((new LassoExtractor<LETTER, STATE>(mServices, source)).getResult());
+		nestedLassoWords.addAll((new LassoExtractor<>(mServices, source)).getResult());
 		
 		// check on the target automaton
 		return checkLassoWords(target, nestedLassoWords);
@@ -213,7 +212,7 @@ public final class TestBuchiEquivalence<LETTER, STATE> extends BinaryNwaOperatio
 	
 	private boolean checkLassoWord(final INestedWordAutomatonSimple<LETTER, STATE> automaton,
 			final NestedLassoWord<LETTER> nestedLassoWord) throws AutomataLibraryException {
-		return (new BuchiAccepts<LETTER, STATE>(mServices, automaton, nestedLassoWord)).getResult();
+		return (new BuchiAccepts<>(mServices, automaton, nestedLassoWord)).getResult();
 	}
 	
 	/**
@@ -235,13 +234,11 @@ public final class TestBuchiEquivalence<LETTER, STATE> extends BinaryNwaOperatio
 	}
 	
 	private void addRandomLassoWords(final List<NestedLassoWord<LETTER>> nestedLassoWords, final int lengthOfWords,
-			final int numberOfWords) throws AutomataOperationCanceledException {
+			final int numberOfWords) {
 		for (int i = 0; i < numberOfWords; ++i) {
-			final NestedWord<LETTER> stem =
-					(new GetRandomNestedWord<LETTER, STATE>(mFstOperand, lengthOfWords)).getResult();
-			final NestedWord<LETTER> loop =
-					(new GetRandomNestedWord<LETTER, STATE>(mFstOperand, lengthOfWords)).getResult();
-			nestedLassoWords.add(new NestedLassoWord<LETTER>(stem, loop));
+			final NestedWord<LETTER> stem = (new GetRandomNestedWord<>(mFstOperand, lengthOfWords)).getResult();
+			final NestedWord<LETTER> loop = (new GetRandomNestedWord<>(mFstOperand, lengthOfWords)).getResult();
+			nestedLassoWords.add(new NestedLassoWord<>(stem, loop));
 		}
 	}
 	

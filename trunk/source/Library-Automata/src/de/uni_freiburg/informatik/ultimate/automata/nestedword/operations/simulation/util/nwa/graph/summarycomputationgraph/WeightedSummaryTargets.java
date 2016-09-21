@@ -26,9 +26,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.summarycomputationgraph;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.PriorityComparator;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game.IGameState;
@@ -45,10 +47,28 @@ public class WeightedSummaryTargets {
 	private final Map<IGameState, Integer> mTarget2Priority;
 	
 	
-	public WeightedSummaryTargets(final Map<IGameState, Integer> target2Priority) {
+	private WeightedSummaryTargets(final Map<IGameState, Integer> target2Priority) {
 		super();
 		mTarget2Priority = target2Priority;
 	}
+	
+	
+
+
+
+	public WeightedSummaryTargets(final IGameState gs, final int i) {
+		mTarget2Priority = Collections.singletonMap(gs, i);
+	}
+
+
+
+
+
+	public Set<Entry<IGameState, Integer>> entrySet() {
+		return mTarget2Priority.entrySet();
+	}
+
+
 
 
 

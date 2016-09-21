@@ -117,7 +117,7 @@ public final class BuchiDifferenceFKV<LETTER, STATE> extends AbstractBuchiDiffer
 	
 	@Override
 	public String operationName() {
-		return "buchiDifferenceFKV";
+		return "BuchiDifferenceFKV";
 	}
 	
 	@Override

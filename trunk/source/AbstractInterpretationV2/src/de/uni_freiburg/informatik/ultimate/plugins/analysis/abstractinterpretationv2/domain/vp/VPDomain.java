@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * Copyright (C) 2015 Marius Greitschus (greitsch@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2016 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2016 University of Freiburg
  *
  * This file is part of the ULTIMATE AbstractInterpretationV2 plug-in.
  *
@@ -25,7 +24,6 @@
  * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission
  * to convey the resulting work.
  */
-
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.vp;
 
 import java.util.Map;
@@ -33,89 +31,96 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 
 /**
- * This abstract domain keeps track of the variable separation during abstract interpretation.
+ * Domain of variable partition.
  *
- * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
+ * Note: This domain is work in progress and does not work.
+ *
  * @author Yu-Wen Chen (yuwenchen1105@gmail.com)
  */
-public class VPDomain implements IAbstractDomain<VPDomainState, CodeBlock, IBoogieVar> {
+public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar> {
 
-	private Map<IProgramVar, Set<PointerExpression>> mPointerMap;
-	private Map<IProgramVar, Set<IProgramVar>> mIndexToArraysMap;
-
-	private IAbstractPostOperator<VPDomainState, CodeBlock, IBoogieVar> mPostOperator;
-
-	private final IUltimateServiceProvider mServices;
+	private final VPPostOperator mPost;
+	private final VPMergeOperator mMerge;
 	private final ILogger mLogger;
-	private final RootAnnot mRootAnnotation;
-
-	public VPDomain(final IUltimateServiceProvider services, final RootAnnot rootAnnotation) {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		mRootAnnotation = rootAnnotation;
-	}
-
-	public VPDomain(final IUltimateServiceProvider services, final Map<IProgramVar, Set<PointerExpression>> pointerMap,
-			final Map<IProgramVar, Set<IProgramVar>> indexToArraysMap, final RootAnnot rootAnnotation) {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		mPointerMap = pointerMap;
-		mIndexToArraysMap = indexToArraysMap;
-		mRootAnnotation = rootAnnotation;
-	}
-
-	@Override
-	public VPDomainState createFreshState() {
-		return new VPDomainState();
+	
+	private final Set<EqNode> mEqNodeSet;
+	private final Map<Term, EqBaseNode> mTermToBaseNodeMap;
+	private final Map<Term, Map<Term, EqFunctionNode>> mTermToFunctionNodeMap;
+	
+	public VPDomain(final ILogger logger, ManagedScript script, 
+			IUltimateServiceProvider services,
+			final Set<EqNode> eqNodeSet, final Map<Term, EqBaseNode> termToBaseNodeMap,
+			Map<Term, Map<Term, EqFunctionNode>> termToFunctionNodeMap) {
+		mPost = new VPPostOperator(script, services);
+		mMerge = new VPMergeOperator();
+		mLogger = logger;
+		mEqNodeSet = eqNodeSet;
+		mTermToBaseNodeMap = termToBaseNodeMap;
+		mTermToFunctionNodeMap = termToFunctionNodeMap;
 	}
 
 	@Override
-	public IAbstractStateBinaryOperator<VPDomainState> getWideningOperator() {
-		return new VPMergeOperator();
+	public VPState createFreshState() {
+		return new VPState();
 	}
 
 	@Override
-	public IAbstractStateBinaryOperator<VPDomainState> getMergeOperator() {
-		return new VPMergeOperator();
+	public IAbstractStateBinaryOperator<VPState> getWideningOperator() {
+		return mMerge;
 	}
 
 	@Override
-	public IAbstractPostOperator<VPDomainState, CodeBlock, IBoogieVar> getPostOperator() {
-		if (mPostOperator == null) {
-			mPostOperator = new VPPostOperator(mServices);
-		}
-		return mPostOperator;
+	public IAbstractStateBinaryOperator<VPState> getMergeOperator() {
+		return mMerge;
+	}
+
+	@Override
+	public IAbstractPostOperator<VPState, CodeBlock, IProgramVar> getPostOperator() {
+		return mPost;
 	}
 
 	@Override
 	public int getDomainPrecision() {
-		// TODO Fill with sense.
-		return 0;
+		throw new UnsupportedOperationException("this domain has no precision");
 	}
 
-	public Map<IProgramVar, Set<PointerExpression>> getPointerMap() {
-		return mPointerMap;
+	private final class VPMergeOperator implements IAbstractStateBinaryOperator<VPState> {
+
+		@Override
+		public VPState apply(final VPState first, final VPState second) {
+			final VPState rtr = first.union(second);
+			if (mLogger.isDebugEnabled()) {
+				final StringBuilder sb = new StringBuilder();
+				sb.append("merge(");
+				sb.append(first.toLogString());
+				sb.append(',');
+				sb.append(second.toLogString());
+				sb.append(") = ");
+				sb.append(rtr.toLogString());
+				mLogger.debug(sb);
+			}
+			return rtr;
+		}
 	}
 
-	public void setPointerMap(final Map<IProgramVar, Set<PointerExpression>> pointerMap) {
-		mPointerMap = pointerMap;
+	public Set<EqNode> getEqNodeSet() {
+		return mEqNodeSet;
 	}
 
-	public Map<IProgramVar, Set<IProgramVar>> getIndexToArraysMap() {
-		return mIndexToArraysMap;
+	public Map<Term, EqBaseNode> getmTermToBaseNodeMap() {
+		return mTermToBaseNodeMap;
 	}
 
-	public void setIndexToArraysMap(final Map<IProgramVar, Set<IProgramVar>> indexToArraysMap) {
-		mIndexToArraysMap = indexToArraysMap;
+	public Map<Term, Map<Term, EqFunctionNode>> getmTermToFunctionNodeMap() {
+		return mTermToFunctionNodeMap;
 	}
 }

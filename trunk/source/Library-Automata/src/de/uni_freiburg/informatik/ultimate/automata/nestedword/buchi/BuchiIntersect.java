@@ -87,8 +87,8 @@ public final class BuchiIntersect<LETTER, STATE> extends BinaryNwaOperation<LETT
 	 */
 	public BuchiIntersect(final AutomataLibraryServices services,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
-			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand,
-			final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
+			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand, final IStateFactory<STATE> stateFactory)
+			throws AutomataLibraryException {
 		super(services);
 		mFstOperand = fstOperand;
 		mSndOperand = sndOperand;
@@ -177,9 +177,9 @@ public final class BuchiIntersect<LETTER, STATE> extends BinaryNwaOperation<LETT
 		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, mResult.size()));
 		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, mFstOperand.size()));
 		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, mSndOperand.size()));
-		lassoWords.addAll((new LassoExtractor<LETTER, STATE>(mServices, mFstOperand)).getResult());
-		lassoWords.addAll((new LassoExtractor<LETTER, STATE>(mServices, mSndOperand)).getResult());
-		lassoWords.addAll((new LassoExtractor<LETTER, STATE>(mServices, mResult)).getResult());
+		lassoWords.addAll((new LassoExtractor<>(mServices, mFstOperand)).getResult());
+		lassoWords.addAll((new LassoExtractor<>(mServices, mSndOperand)).getResult());
+		lassoWords.addAll((new LassoExtractor<>(mServices, mResult)).getResult());
 		boolean correct = true;
 		for (final NestedLassoWord<LETTER> nlw : lassoWords) {
 			correct &= checkAcceptance(nlw, mFstOperand, mSndOperand);
@@ -191,9 +191,9 @@ public final class BuchiIntersect<LETTER, STATE> extends BinaryNwaOperation<LETT
 	private boolean checkAcceptance(final NestedLassoWord<LETTER> nlw,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand1,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand2) throws AutomataLibraryException {
-		final boolean op1 = (new BuchiAccepts<LETTER, STATE>(mServices, operand1, nlw)).getResult();
-		final boolean op2 = (new BuchiAccepts<LETTER, STATE>(mServices, operand2, nlw)).getResult();
-		final boolean res = (new BuchiAccepts<LETTER, STATE>(mServices, mResult, nlw)).getResult();
+		final boolean op1 = (new BuchiAccepts<>(mServices, operand1, nlw)).getResult();
+		final boolean op2 = (new BuchiAccepts<>(mServices, operand2, nlw)).getResult();
+		final boolean res = (new BuchiAccepts<>(mServices, mResult, nlw)).getResult();
 		return (op1 && op2) == res;
 	}
 }

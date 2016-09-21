@@ -112,8 +112,8 @@
 			src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain/SerializeType.java,
 			src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain/SubchainType.java,
 			src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain/ToolchainListType.java,
-			src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain/ToolchainModelType.java
-			src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain/OptionType.java
+			src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain/ToolchainModelType.java,
+			src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain/OptionType.java,
 			src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain/RunDefinition.java
 		</sonar.exclusions>
 
@@ -389,15 +389,21 @@
 				<!-- modules containing test utilities -->
 				<module>../Library-UltimateTest</module>
 
-				<!-- modules containing actual tests -->
+				<!-- modules containing unit tests -->
 				<module>../AbstractInterpretationV2Test</module>
 				<module>../CoreRCPTest</module>
 				<module>../Library-ModelCheckerUtilsTest</module>
 				<module>../Library-UltimateUtilTest</module>
 				<module>../Library-UltimateTestTest</module>
+				<module>../Library-SMTLIBTest</module>
+				<module>../SMTInterpolTest</module>
+				<module>../BoogiePreprocessorTest</module>
+
+				<!-- UltimateRegressionTest contains system tests that are relatively fast -->
 				<module>../UltimateRegressionTest</module>
-				
-				<!-- UltimateTest contains actual tests, but should not be run. It is excluded in surefire. -->
+
+				<!-- UltimateTest contains system tests, but should not be run. It is 
+					excluded in surefire. -->
 				<module>../UltimateTest</module>
 			</modules>
 		</profile>
@@ -472,97 +478,15 @@
 				<!-- modules containing test utilities -->
 				<module>../Library-UltimateTest</module>
 
-				<!-- modules containing actual tests -->
+				<!-- modules containing unit tests -->
 				<module>../AbstractInterpretationV2Test</module>
 				<module>../CoreRCPTest</module>
 				<module>../Library-ModelCheckerUtilsTest</module>
 				<module>../Library-UltimateUtilTest</module>
 				<module>../Library-UltimateTestTest</module>
-			</modules>
-		</profile>
-
-		<profile>
-			<!-- The profile coveragemanual can be used to generate jacoco reports 
-				for your local machine. It is mostly used for debug purposes. -->
-			<id>coveragemanual</id>
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>org.eclipse.tycho</groupId>
-						<artifactId>tycho-surefire-plugin</artifactId>
-						<version>${tycho-version}</version>
-						<configuration>
-							<providerHint>junit47</providerHint>
-							<useUIHarness>false</useUIHarness>
-							<useUIThread>false</useUIThread>
-							<reuseForks>false</reuseForks>
-							<showEclipseLog>true</showEclipseLog>
-							<threadCount>1</threadCount>
-							<failIfNoTests>false</failIfNoTests>
-							<trimStackTrace>false</trimStackTrace>
-							<!-- redirectTestOutputToFile=false is the default, but to debug strange 
-								maven/junit bugs, you may want to set it to true to have all the test output 
-								written to file -->
-							<redirectTestOutputToFile>false</redirectTestOutputToFile>
-							<!-- if you want to change the argLine, use the global property -->
-							<argLine>${tycho.testArgLine} ${coverage-argline}</argLine>
-
-							<systemProperties>
-								<svcompdir>../svcomp</svcompdir>
-							</systemProperties>
-
-							<!-- Use this for global timeouts per class -->
-							<!-- <forkedProcessTimeoutInSeconds>28800</forkedProcessTimeoutInSeconds> -->
-
-							<includes>
-								<include>**/*.java</include>
-							</includes>
-						</configuration>
-					</plugin>
-
-					<!-- Code Coverage Analysis -->
-					<plugin>
-						<groupId>org.jacoco</groupId>
-						<artifactId>jacoco-maven-plugin</artifactId>
-						<version>${jacoco-version}</version>
-						<executions>
-							<execution>
-								<goals>
-									<goal>prepare-agent</goal>
-								</goals>
-								<configuration>
-									<destFile>${sonar.jacoco.reportPath}</destFile>
-									<append>true</append>
-									<classDumpDir>${jacoco.reportDir}/classes</classDumpDir>
-									<dumpOnExit>true</dumpOnExit>
-								</configuration>
-							</execution>
-							<execution>
-								<id>default-report</id>
-								<goals>
-									<goal>report</goal>
-								</goals>
-								<configuration>
-									<dataFile>${sonar.jacoco.reportPath}</dataFile>
-									<outputDirectory>${jacoco.reportDir}/report</outputDirectory>
-								</configuration>
-							</execution>
-						</executions>
-					</plugin>
-				</plugins>
-			</build>
-
-			<modules>
-				<!-- modules containing test utilities -->
-				<module>../Library-UltimateTest</module>
-
-				<!-- modules containing actual tests -->
-				<module>../AbstractInterpretationV2Test</module>
-				<module>../CoreRCPTest</module>
-				<module>../Library-ModelCheckerUtilsTest</module>
-				<module>../Library-UltimateUtilTest</module>
-				<module>../Library-UltimateTestTest</module>
-				<module>../UltimateRegressionTest</module>
+				<module>../Library-SMTLIBTest</module>
+				<module>../SMTInterpolTest</module>
+				<module>../BoogiePreprocessorTest</module>
 			</modules>
 		</profile>
 
@@ -619,16 +543,24 @@
 			</build>
 
 			<modules>
-				<!-- modules containing test utilities -->
+			<!-- modules containing test utilities -->
 				<module>../Library-UltimateTest</module>
 
-				<!-- modules containing actual tests -->
+				<!-- modules containing unit tests -->
 				<module>../AbstractInterpretationV2Test</module>
 				<module>../CoreRCPTest</module>
 				<module>../Library-ModelCheckerUtilsTest</module>
 				<module>../Library-UltimateUtilTest</module>
 				<module>../Library-UltimateTestTest</module>
+				<module>../Library-SMTLIBTest</module>
+				<module>../SMTInterpolTest</module>
+				<module>../BoogiePreprocessorTest</module>
+
+				<!-- UltimateRegressionTest contains system tests that are relatively fast -->
 				<module>../UltimateRegressionTest</module>
+
+				<!-- UltimateTest contains system tests, but should not be run. It is 
+					excluded in surefire. -->
 				<module>../UltimateTest</module>
 			</modules>
 		</profile>

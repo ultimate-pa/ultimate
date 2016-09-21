@@ -50,8 +50,7 @@ public class NestedLassoRun<LETTER, STATE> {
 	 * @param loop
 	 *            loop
 	 */
-	public NestedLassoRun(final NestedRun<LETTER, STATE> stem,
-			final NestedRun<LETTER, STATE> loop) {
+	public NestedLassoRun(final NestedRun<LETTER, STATE> stem, final NestedRun<LETTER, STATE> loop) {
 		mStem = stem;
 		mLoop = loop;
 	}

@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game.IGameState;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 /**
  * Node in the graph that we build for computation of summaries.
@@ -40,23 +41,60 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
  */
 public class SummaryComputationGraphNode<LETTER, STATE> {
 	
-	private final IGameState mSummarySource = null;
-	private final Map<IGameState, WeightedSummaryTargets> mCurrent2Targets = null;
+	private final NestedMap2<IGameState, IGameState, WeightedSummaryTargets> mSource2Current2Targets;
+	private final Set<IGameState> mSummaryComputationTriggers;
 	
-	public final Set<IGameState> getCurrent() {
-		return mCurrent2Targets.keySet();
-	}
-	
-	public final WeightedSummaryTargets getWeightedSummaryTargets(final IGameState current) {
-		return mCurrent2Targets.get(current);
+	public SummaryComputationGraphNode(
+			final NestedMap2<IGameState, IGameState, WeightedSummaryTargets> source2Current2Targets,
+			final Set<IGameState> summaryComputationTriggers) {
+		super();
+		mSource2Current2Targets = source2Current2Targets;
+		mSummaryComputationTriggers = summaryComputationTriggers;
 	}
 
-	/**
-	 * @return the current2Targets
-	 */
-	public Map<IGameState, WeightedSummaryTargets> getCurrent2Targets() {
-		return mCurrent2Targets;
+
+	public Set<IGameState> getSources() {
+		return mSource2Current2Targets.keySet();
 	}
+	
+	public Set<IGameState> getCurrent(final IGameState source) {
+		return mSource2Current2Targets.get(source).keySet();
+	}
+	
+	public Map<IGameState, WeightedSummaryTargets> getCurrent2Targets(final IGameState source) {
+		return mSource2Current2Targets.get(source);
+	}
+	
+	
+	
+//	
+//	public final WeightedSummaryTargets getWeightedSummaryTargets(final IGameState current) {
+//		return mCurrent2Targets.get(current);
+//	}
+
+
+	public NestedMap2<IGameState, IGameState, WeightedSummaryTargets> getSource2Current2Targets() {
+		return mSource2Current2Targets;
+	}
+
+	
+	
+//	/**
+//	 * @return the current2Targets
+//	 */
+//	public Map<IGameState, WeightedSummaryTargets> getCurrent2Targets() {
+//		return mCurrent2Targets;
+//	}
+
+	/**
+	 * @return the summaryComputationTriggers
+	 */
+	public Set<IGameState> getSummaryComputationTriggers() {
+		return mSummaryComputationTriggers;
+	}
+
+	
+	
 	
 	
 

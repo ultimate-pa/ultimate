@@ -69,7 +69,7 @@ public final class BuchiComplementNCSB<LETTER, STATE> extends UnaryNwaOperation<
 	public BuchiComplementNCSB(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		super(services);
-		this.mOperand = operand;
+		mOperand = operand;
 		
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
@@ -84,12 +84,12 @@ public final class BuchiComplementNCSB<LETTER, STATE> extends UnaryNwaOperation<
 	
 	@Override
 	public String operationName() {
-		return "BuchiComplementBS";
+		return "BuchiComplementNCBS";
 	}
 	
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + " Operand " + mOperand.sizeInformation() + " Result "
+		return "Finished " + operationName() + ". Operand " + mOperand.sizeInformation() + " Result "
 				+ mResult.sizeInformation();
 	}
 	
@@ -114,16 +114,10 @@ public final class BuchiComplementNCSB<LETTER, STATE> extends UnaryNwaOperation<
 		boolean correct = true;
 		correct &= !(operandEmpty && resultEmpty);
 		assert correct;
-//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, mResult.size()));
-//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, mResult.size()));
-//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, operandOldApi.size()));
-//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, operandOldApi.size()));
-//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, operandOldApi.size()));
-//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, operandOldApi.size()));
-//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, operandOldApi.size()));
-//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, operandOldApi.size()));
-//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, operandOldApi.size()));
-//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, operandOldApi.size()));
+		/*
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, mResult.size()));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, mResult.size()));
+		*/
 		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 1));
 		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 1));
 		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 1));
@@ -135,9 +129,6 @@ public final class BuchiComplementNCSB<LETTER, STATE> extends UnaryNwaOperation<
 		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 1));
 		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 1));
 		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 1));
-		lassoWords.addAll((new LassoExtractor<LETTER, STATE>(mServices, mOperand)).getResult());
-		lassoWords.addAll((new LassoExtractor<LETTER, STATE>(mServices, mResult)).getResult());
-		
 		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 2));
 		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 2));
 		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 2));
@@ -149,6 +140,8 @@ public final class BuchiComplementNCSB<LETTER, STATE> extends UnaryNwaOperation<
 		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 2));
 		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 2));
 		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 2));
+		lassoWords.addAll((new LassoExtractor<>(mServices, mOperand)).getResult());
+		lassoWords.addAll((new LassoExtractor<>(mServices, mResult)).getResult());
 		
 		for (final NestedLassoWord<LETTER> nlw : lassoWords) {
 			boolean thistime = checkAcceptance(nlw, mOperand, underApproximationOfComplement);
@@ -172,8 +165,8 @@ public final class BuchiComplementNCSB<LETTER, STATE> extends UnaryNwaOperation<
 	private boolean checkAcceptance(final NestedLassoWord<LETTER> nlw,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand, final boolean underApproximationOfComplement)
 			throws AutomataLibraryException {
-		final boolean op = (new BuchiAccepts<LETTER, STATE>(mServices, operand, nlw)).getResult();
-		final boolean res = (new BuchiAccepts<LETTER, STATE>(mServices, mResult, nlw)).getResult();
+		final boolean op = (new BuchiAccepts<>(mServices, operand, nlw)).getResult();
+		final boolean res = (new BuchiAccepts<>(mServices, mResult, nlw)).getResult();
 		boolean correct;
 		if (underApproximationOfComplement) {
 			correct = !res || op;
