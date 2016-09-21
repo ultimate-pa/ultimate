@@ -124,7 +124,7 @@ public class LassoAnalysis {
 	/**
 	 * Representation of the lasso that we are analyzing which is split into a conjunction of lassos.
 	 */
-	private Collection<Lasso> mlassos;
+	private Collection<Lasso> mLassos;
 
 	/**
 	 * Global BoogieVars that are modifiable in the procedure where the honda of the lasso lies.
@@ -231,7 +231,7 @@ public class LassoAnalysis {
 		mStemTransition = stemTransition;
 		mLoopTransition = loopTransition;
 		mModifiableGlobalsAtHonda = modifiableGlobalsAtHonda;
-		assert (mLoopTransition != null);
+		assert mLoopTransition != null;
 
 		// Preprocessing creates the Lasso object
 		preprocess();
@@ -292,13 +292,13 @@ public class LassoAnalysis {
 
 		lassoBuilder.constructPolyhedra();
 
-		mlassos = lassoBuilder.getLassos();
+		mLassos = lassoBuilder.getLassos();
 
 		// Some debug messages
 		mLogger.debug(new DebugMessage("Original stem:\n{0}", mStemTransition));
 		mLogger.debug(new DebugMessage("Original loop:\n{0}", mLoopTransition));
 		mLogger.debug(new DebugMessage("After preprocessing:\n{0}", lassoBuilder));
-		mLogger.debug("Guesses for Motzkin coefficients: " + eigenvalueGuesses(mlassos));
+		mLogger.debug("Guesses for Motzkin coefficients: " + eigenvalueGuesses(mLassos));
 		mLogger.info("Preprocessing complete.");
 	}
 
@@ -352,7 +352,7 @@ public class LassoAnalysis {
 	 * @return the preprocessed lassos
 	 */
 	public Collection<Lasso> getLassos() {
-		return mlassos;
+		return mLassos;
 	}
 
 	public List<TerminationAnalysisBenchmark> getTerminationAnalysisBenchmarks() {
@@ -413,11 +413,11 @@ public class LassoAnalysis {
 			throws SMTLIBException, TermException, IOException {
 		mLogger.info("Checking for nontermination...");
 
-		final List<GeometricNonTerminationArgument> ntas = new ArrayList<>(mlassos.size());
-		if (mlassos.isEmpty()) {
-			mlassos.add(new Lasso(LinearTransition.getTranstionTrue(), LinearTransition.getTranstionTrue()));
+		final List<GeometricNonTerminationArgument> ntas = new ArrayList<>(mLassos.size());
+		if (mLassos.isEmpty()) {
+			mLassos.add(new Lasso(LinearTransition.getTranstionTrue(), LinearTransition.getTranstionTrue()));
 		}
-		for (final Lasso lasso : mlassos) {
+		for (final Lasso lasso : mLassos) {
 
 			final long startTime = System.nanoTime();
 			final NonTerminationArgumentSynthesizer nas =
@@ -475,7 +475,7 @@ public class LassoAnalysis {
 		mLogger.info("Using template '" + template.getName() + "'.");
 		mLogger.debug(template);
 
-		for (final Lasso lasso : mlassos) {
+		for (final Lasso lasso : mLassos) {
 			// It suffices to prove termination for one component
 			final long startTime = System.nanoTime();
 
@@ -548,18 +548,17 @@ public class LassoAnalysis {
 		}
 
 		public float computeQuotiontOfLastTwoEntries(final List<Integer> list, final int initialValue) {
-			int lastEntry;
-			int secondLastEntry;
 			if (list.isEmpty()) {
 				throw new IllegalArgumentException();
 			}
-			lastEntry = list.get(list.size() - 1);
+			final double secondLastEntry;
+			final double lastEntry = list.get(list.size() - 1);
 			if (list.size() == 1) {
 				secondLastEntry = initialValue;
 			} else {
 				secondLastEntry = list.get(list.size() - 2);
 			}
-			return ((float) lastEntry) / ((float) secondLastEntry);
+			return (float) (lastEntry / secondLastEntry);
 		}
 
 		public int getIntialMaxDagSizeLassos() {
@@ -584,21 +583,21 @@ public class LassoAnalysis {
 			}
 			final List<String> preprocessors = benchmarks.get(0).getPreprocessors();
 			final List<String> preprocessorAbbreviations = computeAbbrev(preprocessors);
-			final float[] LassosData = new float[preprocessors.size()];
-			int LassosAverageInitial = 0;
+			final float[] lassosData = new float[preprocessors.size()];
+			int lassosAverageInitial = 0;
 			for (final PreprocessingBenchmark pb : benchmarks) {
-				addListElements(LassosData, pb.getMaxDagSizeLassosRelative());
-				LassosAverageInitial += pb.getIntialMaxDagSizeLassos();
+				addListElements(lassosData, pb.getMaxDagSizeLassosRelative());
+				lassosAverageInitial += pb.getIntialMaxDagSizeLassos();
 			}
-			divideAllEntries(LassosData, benchmarks.size());
-			LassosAverageInitial /= benchmarks.size();
+			divideAllEntries(lassosData, benchmarks.size());
+			lassosAverageInitial /= benchmarks.size();
 			final StringBuilder sb = new StringBuilder();
 			sb.append("  ");
 			sb.append("Lassos: ");
 			sb.append("inital");
-			sb.append(LassosAverageInitial);
+			sb.append(lassosAverageInitial);
 			sb.append(" ");
-			sb.append(ppOne(LassosData, preprocessorAbbreviations));
+			sb.append(ppOne(lassosData, preprocessorAbbreviations));
 			return sb.toString();
 		}
 
@@ -656,7 +655,7 @@ public class LassoAnalysis {
 		}
 
 		private static int makePercent(final float f) {
-			return (int) Math.floor(f * 100);
+			return (int) Math.floor(f * 100.0);
 		}
 
 		private static void addListElements(final float[] modifiedArray, final List<Float> incrementList) {
