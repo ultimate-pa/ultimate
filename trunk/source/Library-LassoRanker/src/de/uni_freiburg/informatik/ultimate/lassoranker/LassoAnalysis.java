@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.MatchInOutV
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RemoveNegation;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteArrays2;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteArraysMapElimination;
+import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteArraysMapElimination.MapEliminationSettings;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteBooleans;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteDivision;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteEquality;
@@ -200,8 +201,9 @@ public class LassoAnalysis {
 	 * @throws FileNotFoundException
 	 *             if the file for dumping the script cannot be opened
 	 */
-	public LassoAnalysis(final Script script, final Boogie2SMT boogie2smt, final UnmodifiableTransFormula stemTransition,
-			final UnmodifiableTransFormula loopTransition, final Set<IProgramVar> modifiableGlobalsAtHonda, final Term[] axioms,
+	public LassoAnalysis(final Script script, final Boogie2SMT boogie2smt,
+			final UnmodifiableTransFormula stemTransition, final UnmodifiableTransFormula loopTransition,
+			final Set<IProgramVar> modifiableGlobalsAtHonda, final Term[] axioms,
 			final LassoRankerPreferences preferences, final IUltimateServiceProvider services,
 			final IToolchainStorage storage, final SimplicationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique) throws TermException {
@@ -218,14 +220,13 @@ public class LassoAnalysis {
 
 		mOldScript = script;
 		mAxioms = axioms;
-		mArrayIndexSupportingInvariants = new HashSet<Term>();
+		mArrayIndexSupportingInvariants = new HashSet<>();
 		mMgdScript = boogie2smt.getManagedScript();
 		mSymbolTable = boogie2smt.getBoogie2SmtSymbolTable();
-		
 
-		mLassoTerminationAnalysisBenchmarks = new ArrayList<TerminationAnalysisBenchmark>();
+		mLassoTerminationAnalysisBenchmarks = new ArrayList<>();
 
-		mLassoNonterminationAnalysisBenchmarks = new ArrayList<NonterminationAnalysisBenchmark>();
+		mLassoNonterminationAnalysisBenchmarks = new ArrayList<>();
 
 		mStemTransition = stemTransition;
 		mLoopTransition = loopTransition;
@@ -310,26 +311,25 @@ public class LassoAnalysis {
 		final LassoPreprocessor mapElimination;
 		if (mPreferences.useOldMapElimination) {
 			mapElimination = new RewriteArrays2(true, mStemTransition, mLoopTransition, mModifiableGlobalsAtHonda,
-					mServices, mArrayIndexSupportingInvariants, mSymbolTable, mMgdScript, lassoBuilder.getReplacementVarFactory(),
-					mSimplificationTechnique, mXnfConversionTechnique);
+					mServices, mArrayIndexSupportingInvariants, mSymbolTable, mMgdScript,
+					lassoBuilder.getReplacementVarFactory(), mSimplificationTechnique, mXnfConversionTechnique);
 		} else {
-			mapElimination =
-					new RewriteArraysMapElimination(mServices, mMgdScript, mSymbolTable,
-							lassoBuilder.getReplacementVarFactory(), mStemTransition,
-							mLoopTransition, mModifiableGlobalsAtHonda, mSimplificationTechnique,
-							mXnfConversionTechnique, mArrayIndexSupportingInvariants);
+			mapElimination = new RewriteArraysMapElimination(mServices, mMgdScript, mSymbolTable,
+					lassoBuilder.getReplacementVarFactory(), mStemTransition, mLoopTransition,
+					mModifiableGlobalsAtHonda, mArrayIndexSupportingInvariants,
+					new MapEliminationSettings(mSimplificationTechnique, mXnfConversionTechnique));
 		}
-		return new LassoPreprocessor[] {
-				new StemAndLoopPreprocessor(mOldScript, new MatchInOutVars(mMgdScript)),
+		return new LassoPreprocessor[] { new StemAndLoopPreprocessor(mOldScript, new MatchInOutVars(mMgdScript)),
 				new StemAndLoopPreprocessor(mOldScript,
 						new AddAxioms(lassoBuilder.getReplacementVarFactory(), mAxioms)),
 				new StemAndLoopPreprocessor(mOldScript, new CommuHashPreprocessor(mServices)),
-				mPreferences.enable_partitioneer ? new LassoPartitioneerPreprocessor(mOldScript, mServices,
-						mMgdScript, mXnfConversionTechnique) : null,
-				mapElimination,
-				new StemAndLoopPreprocessor(mOldScript, new MatchInOutVars(mMgdScript)),
-				mPreferences.enable_partitioneer ? new LassoPartitioneerPreprocessor(mOldScript, mServices,
-						mMgdScript, mXnfConversionTechnique) : null,
+				mPreferences.enable_partitioneer
+						? new LassoPartitioneerPreprocessor(mOldScript, mServices, mMgdScript, mXnfConversionTechnique)
+						: null,
+				mapElimination, new StemAndLoopPreprocessor(mOldScript, new MatchInOutVars(mMgdScript)),
+				mPreferences.enable_partitioneer
+						? new LassoPartitioneerPreprocessor(mOldScript, mServices, mMgdScript, mXnfConversionTechnique)
+						: null,
 				new StemAndLoopPreprocessor(mOldScript, new RewriteDivision(lassoBuilder.getReplacementVarFactory())),
 				new StemAndLoopPreprocessor(mOldScript,
 						new RewriteBooleans(lassoBuilder.getReplacementVarFactory(), mMgdScript)),
@@ -339,13 +339,10 @@ public class LassoAnalysis {
 				new StemAndLoopPreprocessor(mOldScript, new RewriteEquality()),
 				new StemAndLoopPreprocessor(mOldScript, new CommuHashPreprocessor(mServices)),
 				new StemAndLoopPreprocessor(mOldScript,
-						new SimplifyPreprocessor(mServices, mStorage, mMgdScript,
-								mSimplificationTechnique)),
+						new SimplifyPreprocessor(mServices, mStorage, mMgdScript, mSimplificationTechnique)),
+				new StemAndLoopPreprocessor(mOldScript, new DNF(mServices, mMgdScript, mXnfConversionTechnique)),
 				new StemAndLoopPreprocessor(mOldScript,
-						new DNF(mServices, mMgdScript, mXnfConversionTechnique)),
-				new StemAndLoopPreprocessor(mOldScript,
-						new SimplifyPreprocessor(mServices, mStorage, mMgdScript,
-								mSimplificationTechnique)),
+						new SimplifyPreprocessor(mServices, mStorage, mMgdScript, mSimplificationTechnique)),
 				new StemAndLoopPreprocessor(mOldScript, new RewriteTrueFalse()),
 				new StemAndLoopPreprocessor(mOldScript, new RemoveNegation()),
 				new StemAndLoopPreprocessor(mOldScript, new RewriteStrictInequalities()), };
@@ -416,7 +413,7 @@ public class LassoAnalysis {
 			throws SMTLIBException, TermException, IOException {
 		mLogger.info("Checking for nontermination...");
 
-		final List<GeometricNonTerminationArgument> ntas = new ArrayList<GeometricNonTerminationArgument>(mlassos.size());
+		final List<GeometricNonTerminationArgument> ntas = new ArrayList<>(mlassos.size());
 		if (mlassos.isEmpty()) {
 			mlassos.add(new Lasso(LinearTransition.getTranstionTrue(), LinearTransition.getTranstionTrue()));
 		}
@@ -527,8 +524,8 @@ public class LassoAnalysis {
 	public static class PreprocessingBenchmark {
 		private final int mIntialMaxDagSizeLassos;
 		private final List<String> mPreprocessors = new ArrayList<>();
-		private final List<Integer> mMaxDagSizeLassosAbsolut = new ArrayList<Integer>();;
-		private final List<Float> mMaxDagSizeLassosRelative = new ArrayList<Float>();
+		private final List<Integer> mMaxDagSizeLassosAbsolut = new ArrayList<>();
+		private final List<Float> mMaxDagSizeLassosRelative = new ArrayList<>();
 
 		public PreprocessingBenchmark(final int intialMaxDagSizeLassos) {
 			super();
@@ -555,13 +552,12 @@ public class LassoAnalysis {
 			int secondLastEntry;
 			if (list.isEmpty()) {
 				throw new IllegalArgumentException();
+			}
+			lastEntry = list.get(list.size() - 1);
+			if (list.size() == 1) {
+				secondLastEntry = initialValue;
 			} else {
-				lastEntry = list.get(list.size() - 1);
-				if (list.size() == 1) {
-					secondLastEntry = initialValue;
-				} else {
-					secondLastEntry = list.get(list.size() - 2);
-				}
+				secondLastEntry = list.get(list.size() - 2);
 			}
 			return ((float) lastEntry) / ((float) secondLastEntry);
 		}

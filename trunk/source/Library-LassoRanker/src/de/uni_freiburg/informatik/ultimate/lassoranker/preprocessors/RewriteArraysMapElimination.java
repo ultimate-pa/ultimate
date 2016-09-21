@@ -55,13 +55,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
  * @author Frank Schüssele
  */
 public class RewriteArraysMapElimination extends LassoPreprocessor {
-	private static final String DESCRIPTION = "Removes arrays by introducing new variables for each relevant array cell";
-
-	// Parameters for the MapEliminator
-	private static final boolean ADD_INEQUALITIES = false;
-	private static final boolean ONLY_TRIVIAL_IMPLICATIONS_INDEX_ASSIGNMENT = true;
-	private static final boolean ONLY_TRIVIAL_IMPLICATIONS_ARRRAY_WRITE = false;
-	private static final boolean ONLY_INDICES_IN_FORMULA = true;
+	private static final String DESCRIPTION =
+			"Removes arrays by introducing new variables for each relevant array cell";
 
 	private final IUltimateServiceProvider mServices;
 	private final ManagedScript mManagedScript;
@@ -70,15 +65,15 @@ public class RewriteArraysMapElimination extends LassoPreprocessor {
 	private final UnmodifiableTransFormula mOriginalStem;
 	private final UnmodifiableTransFormula mOriginalLoop;
 	private final Set<IProgramVar> mModifiableGlobalsAtHonda;
-	private final SimplicationTechnique mSimplificationTechnique;
-	private final XnfConversionTechnique mXnfConversionTechnique;
 	private final Set<Term> mArrayIndexSupportingInvariants;
+
+	private final MapEliminationSettings mSettings;
 
 	public RewriteArraysMapElimination(final IUltimateServiceProvider services, final ManagedScript managedScript,
 			final Boogie2SmtSymbolTable symbolTable, final ReplacementVarFactory replacementVarFactory,
 			final UnmodifiableTransFormula originalStem, final UnmodifiableTransFormula originalLoop,
-			final Set<IProgramVar> modifiableGlobalsAtHonda, final SimplicationTechnique simplificationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique, final Set<Term> arrayIndexSupportingInvariants) {
+			final Set<IProgramVar> modifiableGlobalsAtHonda, final Set<Term> arrayIndexSupportingInvariants,
+			final MapEliminationSettings settings) {
 		mServices = services;
 		mManagedScript = managedScript;
 		mSymbolTable = symbolTable;
@@ -86,10 +81,8 @@ public class RewriteArraysMapElimination extends LassoPreprocessor {
 		mOriginalStem = originalStem;
 		mOriginalLoop = originalLoop;
 		mModifiableGlobalsAtHonda = modifiableGlobalsAtHonda;
-		mSimplificationTechnique = simplificationTechnique;
-		mXnfConversionTechnique = xnfConversionTechnique;
 		mArrayIndexSupportingInvariants = arrayIndexSupportingInvariants;
-
+		mSettings = settings;
 	}
 
 	@Override
@@ -105,9 +98,7 @@ public class RewriteArraysMapElimination extends LassoPreprocessor {
 	@Override
 	public Collection<LassoUnderConstruction> process(final LassoUnderConstruction lasso) throws TermException {
 		final MapEliminator elim = new MapEliminator(mServices, mManagedScript, mSymbolTable, mReplacementVarFactory,
-				mSimplificationTechnique, mXnfConversionTechnique, Arrays.asList(lasso.getStem(), lasso.getLoop()),
-				ADD_INEQUALITIES, ONLY_TRIVIAL_IMPLICATIONS_INDEX_ASSIGNMENT, ONLY_TRIVIAL_IMPLICATIONS_ARRRAY_WRITE,
-				ONLY_INDICES_IN_FORMULA);
+				Arrays.asList(lasso.getStem(), lasso.getLoop()), mSettings);
 		final EqualityAnalysisResult equalityAnalysisStem = new EqualityAnalysisResult(elim.getDoubletons());
 		final EqualitySupportingInvariantAnalysis esia = new EqualitySupportingInvariantAnalysis(elim.getDoubletons(),
 				mSymbolTable, mManagedScript.getScript(), mOriginalStem, mOriginalLoop, mModifiableGlobalsAtHonda);
@@ -116,14 +107,91 @@ public class RewriteArraysMapElimination extends LassoPreprocessor {
 				.addAll(equalityAnalysisLoop.constructListOfEqualities(mManagedScript.getScript()));
 		mArrayIndexSupportingInvariants
 				.addAll(equalityAnalysisLoop.constructListOfNotEquals(mManagedScript.getScript()));
-		final TransFormulaLR newStem = elim.getRewrittenTransFormula(lasso.getStem(), equalityAnalysisStem,
-				equalityAnalysisLoop);
-		final TransFormulaLR newLoop = elim.getRewrittenTransFormula(lasso.getLoop(), equalityAnalysisLoop,
-				equalityAnalysisLoop);
+		final TransFormulaLR newStem =
+				elim.getRewrittenTransFormula(lasso.getStem(), equalityAnalysisStem, equalityAnalysisLoop);
+		final TransFormulaLR newLoop =
+				elim.getRewrittenTransFormula(lasso.getLoop(), equalityAnalysisLoop, equalityAnalysisLoop);
 		final LassoUnderConstruction newLasso = new LassoUnderConstruction(newStem, newLoop);
 		assert RewriteArrays2.checkStemImplication(mServices,
-				mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID), lasso, newLasso,
-				mSymbolTable, mManagedScript) : "result of RewriteArrays too strong";
+				mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID), lasso, newLasso, mSymbolTable,
+				mManagedScript) : "result of RewriteArrays too strong";
 		return Collections.singleton(newLasso);
+	}
+
+	/**
+	 *
+	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+	 * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
+	 */
+	public static final class MapEliminationSettings {
+		private final boolean mAddInequalities;
+		private final boolean mOnlyTrivialImplicationsIndexAssignment;
+		private final boolean mOnlyTrivialImplicationsArrayWrite;
+		private final boolean mOnlyIndicesInFormula;
+
+		private final SimplicationTechnique mSimplificationTechnique;
+		private final XnfConversionTechnique mXnfConversionTechnique;
+
+		public MapEliminationSettings(final SimplicationTechnique simplificationTechnique,
+				final XnfConversionTechnique xnfConversionTechnique) {
+			this(false, true, false, true, simplificationTechnique, xnfConversionTechnique);
+		}
+
+		/**
+		 *
+		 * @param addInequalities
+		 *            If true, inequalities provided by the IndexAnalysis are also added as conjuncts to the
+		 *            transformula (should be disabled for the LassoRanker).
+		 * @param onlyTrivialImplicationsIndexAssignment
+		 *            If true, implications such as (i = j) => (a[i] = a[j]), that occur during handling assignments of
+		 *            indices, are only added as conjuncts to the transformula, if the invariant i = j holds (so in this
+		 *            case only a[i] = a[j] is added).
+		 * @param onlyTrivialImplicationsArrayWrite
+		 *            If true, implications such as (i = j) => (a[i] = a[j]), that occur during handling array-writes,
+		 *            are only added as conjuncts to the transformula, if the invariant i = j holds (so in this case
+		 *            only a[i] = a[j] is added)
+		 * @param onlyIndicesInFormula
+		 *            If true, implications such as (i = j) => (a[i] = a[j]) are only added as conjuncts to the
+		 *            transformula, if all free-vars of i and j occur in the transformula
+		 * @param simplificationTechnique
+		 *            SimplicationTechnique
+		 * @param xnfConversionTechnique
+		 *            XnfConversionTechnique
+		 */
+		public MapEliminationSettings(final boolean addInequalities,
+				final boolean onlyTrivialImplicationsIndexAssignment, final boolean onlyTrivialImplicationsArrayWrite,
+				final boolean onlyIndicesInFormula, final SimplicationTechnique simplificationTechnique,
+				final XnfConversionTechnique xnfConversionTechnique) {
+			mAddInequalities = addInequalities;
+			mOnlyTrivialImplicationsIndexAssignment = onlyTrivialImplicationsIndexAssignment;
+			mOnlyTrivialImplicationsArrayWrite = onlyTrivialImplicationsArrayWrite;
+			mOnlyIndicesInFormula = onlyIndicesInFormula;
+			mSimplificationTechnique = simplificationTechnique;
+			mXnfConversionTechnique = xnfConversionTechnique;
+		}
+
+		public boolean isAddInequalities() {
+			return mAddInequalities;
+		}
+
+		public boolean isOnlyTrivialImplicationsIndexAssignment() {
+			return mOnlyTrivialImplicationsIndexAssignment;
+		}
+
+		public boolean isOnlyTrivialImplicationsArrayWrite() {
+			return mOnlyTrivialImplicationsArrayWrite;
+		}
+
+		public boolean isOnlyIndicesInFormula() {
+			return mOnlyIndicesInFormula;
+		}
+
+		public SimplicationTechnique getSimplificationTechnique() {
+			return mSimplificationTechnique;
+		}
+
+		public XnfConversionTechnique getXnfConversionTechnique() {
+			return mXnfConversionTechnique;
+		}
 	}
 }

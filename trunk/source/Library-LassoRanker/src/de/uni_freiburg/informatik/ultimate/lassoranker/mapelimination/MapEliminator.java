@@ -44,6 +44,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.Activator;
+import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteArraysMapElimination.MapEliminationSettings;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArrays.IndexAnalyzer;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarUtils;
@@ -61,8 +62,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.NonTheorySymbol
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.NonTheorySymbolFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
@@ -83,8 +82,6 @@ public class MapEliminator {
 	private final ReplacementVarFactory mReplacementVarFactory;
 	private final ILogger mLogger;
 	private final Boogie2SmtSymbolTable mSymbolTable;
-	private final SimplicationTechnique mSimplificationTechnique;
-	private final XnfConversionTechnique mXnfConversionTechnique;
 
 	// Stores for each variable, which indices contain it
 	private final HashRelation<Term, ArrayIndex> mVariablesToIndices;
@@ -111,11 +108,7 @@ public class MapEliminator {
 	// Stores for each transformula, which arrays/uf-calls are accssed in it
 	private final Map<TransFormulaLR, HashRelation<ApplicationTermTemplate, ArrayIndex>> mTransFormulasToLocalIndices;
 
-	// Settings
-	private final boolean mAddInequalities;
-	private final boolean mOnlyTrivialImplicationsIndexAssignment;
-	private final boolean mOnlyTrivialImplicationsArrayWrite;
-	private final boolean mOnlyIndicesInFormula;
+	private final MapEliminationSettings mSettings;
 
 	/**
 	 * Creates a new map eliminator and preprocesses (stores the indices and arrays used in the {@code transformulas})
@@ -128,43 +121,20 @@ public class MapEliminator {
 	 *            Boogie2SmtSymbolTable
 	 * @param replacementVarFactory
 	 *            ReplacementVarFactory
-	 * @param simplificationTechnique
-	 *            SimplicationTechnique
-	 * @param xnfConversionTechnique
-	 *            XnfConversionTechnique
 	 * @param transformulas
 	 *            The transformulas, that should be processed
-	 * @param addInequalities
-	 *            If true, inequalities provided by the IndexAnalysis are also added as conjuncts to the transformula
-	 *            (should be disabled for the LassoRanker).
-	 * @param onlyTrivialImplicationsIndexAssignment
-	 *            If true, implications such as (i = j) => (a[i] = a[j]), that occur during handling assignments of
-	 *            indices, are only added as conjuncts to the transformula, if the invariant i = j holds (so in this
-	 *            case only a[i] = a[j] is added).
-	 * @param onlyTrivialImplicationsArrayWrite
-	 *            If true, implications such as (i = j) => (a[i] = a[j]), that occur during handling array-writes, are
-	 *            only added as conjuncts to the transformula, if the invariant i = j holds (so in this case only a[i] =
-	 *            a[j] is added)
-	 * @param onlyIndicesInFormula
-	 *            If true, implications such as (i = j) => (a[i] = a[j]) are only added as conjuncts to the
-	 *            transformula, if all free-vars of i and j occur in the transformula
+	 *
 	 */
 	public MapEliminator(final IUltimateServiceProvider services, final ManagedScript managedScript,
 			final Boogie2SmtSymbolTable symbolTable, final ReplacementVarFactory replacementVarFactory,
-			final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
-			final Collection<TransFormulaLR> transformulas, final boolean addInequalities,
-			final boolean onlyTrivialImplicationsIndexAssignment, final boolean onlyTrivialImplicationsArrayWrite,
-			final boolean onlyIndicesInFormula) {
-		super();
-
+			final Collection<TransFormulaLR> transformulas, final MapEliminationSettings settings) {
+		mSettings = settings;
 		mServices = services;
 		mScript = managedScript.getScript();
 		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
 		mManagedScript = managedScript;
 		mReplacementVarFactory = replacementVarFactory;
 		mSymbolTable = symbolTable;
-		mSimplificationTechnique = simplificationTechnique;
-		mXnfConversionTechnique = xnfConversionTechnique;
 
 		mTransFormulasToLocalIndices = new HashMap<>();
 
@@ -177,11 +147,6 @@ public class MapEliminator {
 
 		mRelatedArays = new HashSet<>();
 		mUninterpretedFunctions = new HashSet<>();
-
-		mAddInequalities = addInequalities;
-		mOnlyTrivialImplicationsIndexAssignment = onlyTrivialImplicationsIndexAssignment;
-		mOnlyTrivialImplicationsArrayWrite = onlyTrivialImplicationsArrayWrite;
-		mOnlyIndicesInFormula = onlyIndicesInFormula;
 
 		findAllIndices(transformulas);
 		mDoubletons = computeDoubletons(mFunctionsToIndices);
@@ -251,7 +216,7 @@ public class MapEliminator {
 					// If the two arrays are different, add them to the set of related arrays
 					// (the indices need to be shared then)
 					if (globalArray1 != globalArray2) {
-						mRelatedArays.add(new Doubleton<Term>(globalArray1, globalArray2));
+						mRelatedArays.add(new Doubleton<>(globalArray1, globalArray2));
 					}
 				}
 			}
@@ -279,8 +244,8 @@ public class MapEliminator {
 	 */
 	private void addArrayAccessToRelation(final Term array, final ArrayIndex index, final TransFormulaLR transformula) {
 		if (allVariablesAreVisible(array, transformula) && isIndexAdded(index, transformula)) {
-			final ArrayIndex globalIndex = new ArrayIndex(
-					translateTermVariablesToDefinitions(mScript, transformula, index));
+			final ArrayIndex globalIndex =
+					new ArrayIndex(translateTermVariablesToDefinitions(mScript, transformula, index));
 			final Term globalArray = translateTermVariablesToDefinitions(mScript, transformula, array);
 			for (final TermVariable var : globalIndex.getFreeVars()) {
 				mVariablesToIndices.addPair(var, globalIndex);
@@ -304,8 +269,8 @@ public class MapEliminator {
 			mUninterpretedFunctions.add(functionName);
 		}
 		if (isIndexAdded(index, transformula)) {
-			final ArrayIndex globalIndex = new ArrayIndex(
-					translateTermVariablesToDefinitions(mScript, transformula, index));
+			final ArrayIndex globalIndex =
+					new ArrayIndex(translateTermVariablesToDefinitions(mScript, transformula, index));
 			for (final TermVariable var : globalIndex.getFreeVars()) {
 				mVariablesToIndices.addPair(var, globalIndex);
 			}
@@ -372,8 +337,8 @@ public class MapEliminator {
 		for (final IProgramVar var : transformula.getAssignedVars()) {
 			assignedVars.add(ReplacementVarUtils.getDefinition(var));
 		}
-		final HashRelation<ApplicationTermTemplate, ArrayIndex> localIndices = mTransFormulasToLocalIndices
-				.get(transformula);
+		final HashRelation<ApplicationTermTemplate, ArrayIndex> localIndices =
+				mTransFormulasToLocalIndices.get(transformula);
 		for (final ApplicationTermTemplate globalTemplate : mFunctionsToIndices.getDomain()) {
 			for (final ApplicationTermTemplate template : getLocalTemplates(globalTemplate, newTF)) {
 				for (final ArrayIndex index : getInAndOutVarIndices(mFunctionsToIndices.getImage(globalTemplate),
@@ -387,15 +352,16 @@ public class MapEliminator {
 		final EqualityAnalysisResult invariants = indexAnalyzer.getResult();
 		// Replace store-expressions
 		final Term storeFreeTerm = replaceStoreExpressions(originalTerm, newTF, invariants);
-		final List<Term> conjuncts = new ArrayList<Term>();
+		final List<Term> conjuncts = new ArrayList<>();
 		conjuncts.addAll(Arrays.asList(SmtUtils.getConjuncts(storeFreeTerm)));
 		conjuncts.addAll(mAdditionalConjuncts);
 		conjuncts.addAll(getReplacementVarEqualities(newTF, localIndices, invariants));
-		if (!mOnlyTrivialImplicationsIndexAssignment) {
+		if (!mSettings.isOnlyTrivialImplicationsIndexAssignment()) {
 			conjuncts.addAll(getAllImplicationsForIndexAssignment(assignedVars, newTF, invariants));
 		}
 		conjuncts.addAll(invariants.constructListOfEqualities(mScript));
-		if (mAddInequalities) {
+
+		if (mSettings.isAddInequalities()) {
 			conjuncts.addAll(invariants.constructListOfNotEquals(mScript));
 		}
 		final Term newTerm = SmtUtils.and(mScript, conjuncts);
@@ -464,14 +430,15 @@ public class MapEliminator {
 			// If aux-vars have been created, eliminate them
 			final Term quantified = SmtUtils.quantifier(mScript, Script.EXISTS, mAuxVars, term);
 			newTerm = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mManagedScript, quantified,
-					mSimplificationTechnique, mXnfConversionTechnique);
+					mSettings.getSimplificationTechnique(), mSettings.getXnfConversionTechnique());
 			// To be safe add all created aux-vars to the transformula (if not needed they're removed again)
 			transformula.addAuxVars(mAuxVars);
 			mAuxVars.clear();
 			mAdditionalConjuncts.clear();
 		}
 		assert SmtUtils.isArrayFree(newTerm) : "The rewritten transformula still contains arrays!";
-		transformula.setFormula(SmtUtils.simplify(mManagedScript, newTerm, mServices, mSimplificationTechnique));
+		transformula.setFormula(
+				SmtUtils.simplify(mManagedScript, newTerm, mServices, mSettings.getSimplificationTechnique()));
 		clearTransFormula(transformula);
 	}
 
@@ -480,7 +447,7 @@ public class MapEliminator {
 	 *
 	 * @param transformula
 	 */
-	private void clearTransFormula(final TransFormulaLR transformula) {
+	private static void clearTransFormula(final TransFormulaLR transformula) {
 		final List<IProgramVar> inVarsToRemove = new ArrayList<>();
 		final List<IProgramVar> outVarsToRemove = new ArrayList<>();
 		final List<TermVariable> auxVarsToRemove = new ArrayList<>();
@@ -597,9 +564,8 @@ public class MapEliminator {
 				+ " was not added to the transformula!";
 		if (allVariablesAreInVars(term, transformula)) {
 			return transformula.getInVars().get(var);
-		} else {
-			return transformula.getOutVars().get(var);
 		}
+		return transformula.getOutVars().get(var);
 	}
 
 	/**
@@ -659,7 +625,7 @@ public class MapEliminator {
 			if (areIndicesEqual(index, assignedIndex, invariants)
 					&& areAllIndicesUnequal(index, processedIndices, invariants)) {
 				mAdditionalConjuncts.add(SmtUtils.binaryEquality(mScript, auxVar, value));
-			} else if (!mOnlyTrivialImplicationsArrayWrite) {
+			} else if (!mSettings.isOnlyTrivialImplicationsArrayWrite()) {
 				final Term newTerm = indexEqualityInequalityImpliesValueEquality(index, assignedIndex, processedIndices,
 						auxVar, value, invariants, transformula);
 				mAdditionalConjuncts.add(newTerm);
@@ -716,7 +682,7 @@ public class MapEliminator {
 						&& areAllIndicesUnequal(index, processedIndices, invariants)) {
 					final Term select = getLocalTerm(newTemplate.getTerm(globalIndex), transformula, newIsInVar);
 					result.add(SmtUtils.binaryEquality(mScript, select, value));
-				} else if (!mOnlyTrivialImplicationsArrayWrite) {
+				} else if (!mSettings.isOnlyTrivialImplicationsArrayWrite()) {
 					final Term select = getLocalTerm(newTemplate.getTerm(globalIndex), transformula, newIsInVar);
 					final Term newTerm = indexEqualityInequalityImpliesValueEquality(index, assignedIndex,
 							processedIndices, select, value, invariants, transformula);
@@ -735,7 +701,7 @@ public class MapEliminator {
 			if (areIndicesEqual(index1, index2, invariants)
 					&& areAllIndicesUnequal(index2, processedIndices, invariants)) {
 				result.add(SmtUtils.binaryEquality(mScript, selectNew, selectOld));
-			} else if (!mOnlyTrivialImplicationsArrayWrite) {
+			} else if (!mSettings.isOnlyTrivialImplicationsArrayWrite()) {
 				final Term newTerm = indexEqualityInequalityImpliesValueEquality(index1, index2, processedIndices,
 						selectNew, selectOld, invariants, transformula);
 				result.add(newTerm);
@@ -933,8 +899,8 @@ public class MapEliminator {
 		return SmtUtils.removeSmtQuoteCharacters(result);
 	}
 
-	private static Set<Doubleton<Term>> computeDoubletons(
-			final HashRelation<ApplicationTermTemplate, ArrayIndex> hashRelation) {
+	private static Set<Doubleton<Term>>
+			computeDoubletons(final HashRelation<ApplicationTermTemplate, ArrayIndex> hashRelation) {
 		final Set<Doubleton<Term>> result = new HashSet<>();
 		for (final ApplicationTermTemplate template : hashRelation.getDomain()) {
 			final Set<ArrayIndex> indicesSet = hashRelation.getImage(template);
@@ -947,7 +913,7 @@ public class MapEliminator {
 						final Term term1 = index1.get(k);
 						final Term term2 = index2.get(k);
 						if (term1 != term2) {
-							result.add(new Doubleton<Term>(term1, term2));
+							result.add(new Doubleton<>(term1, term2));
 						}
 					}
 				}
@@ -1020,7 +986,8 @@ public class MapEliminator {
 		// If mOnlyIndicesInFormula is enabled and one of the indices doesn't occur in the formula, no implications
 		// should be created, so "true" is returned
 		final Set<TermVariable> freeVars = new HashSet<>(Arrays.asList(transformula.getFormula().getFreeVars()));
-		if (mOnlyIndicesInFormula) {
+
+		if (mSettings.isOnlyIndicesInFormula()) {
 			if (!index.freeVarsAreSubset(freeVars) || !equal.freeVarsAreSubset(freeVars)) {
 				return mScript.term("true");
 			}
