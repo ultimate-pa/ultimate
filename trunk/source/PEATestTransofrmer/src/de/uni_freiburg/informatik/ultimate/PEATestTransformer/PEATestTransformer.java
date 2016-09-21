@@ -1,7 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.PEATestTransformer;
 
 import java.io.File;
-import java.util.ArrayList;
+import java.util.ArrayList; 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -20,11 +20,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import srParse.pattern.PatternType; 
 
-public class PeaTestTransformer implements ISource { 
+public class PEATestTransformer implements ISource { 
 	private List<String> fileNames = new ArrayList<String>();
 	private boolean previousToolFoundErrors;
 	private SystemInformation sysInfo = new SystemInformation();
-	private IUltimateServiceProvider mServices;
+	private IUltimateServiceProvider mServices; 
 	private ILogger logger;
 	
 	@Override

@@ -87,6 +87,13 @@ public class PeaSystemModel {
 		return result;
 	}
 	
+	/***
+	 * Returns true if a phase has a time constraint that is greater or equal 
+	 * some time i.e. is equally undesirable for testing as finally.
+	 * @param pea
+	 * @param phase
+	 * @return
+	 */
 	public boolean phaseIsUpperBoundFinal(PhaseEventAutomata pea, Phase phase){
 		ArrayList<Phase> finalPhases = this.getFinalPhases(pea);
 		// decide trivial cases (not final, no clock invar)
@@ -97,6 +104,16 @@ public class PeaSystemModel {
 			if(p.getBoundType() >= CounterTrace.BOUND_GREATEREQUAL) return true;
 		}
 		return false;
+	}
+	
+	/***
+	 * Search for all variables that have direct data flow to the
+	 * given variable.
+	 * @param ident
+	 * @return Set of variables with direct data flow to ident
+	 */
+	public HashSet<String> getConditionVariables(String ident){
+		
 	}
 	
 	public DCPhase getFinalPhase(CounterTrace ct){

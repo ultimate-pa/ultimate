@@ -97,7 +97,7 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 						boolean timed = this.systemModel.phaseIsUpperBoundFinal(pea, source) && 
 								this.systemModel.phaseIsUpperBoundFinal(pea, dest);
 						// untimed or final and timed which means that this must set an effect (and an R_v)
-						CDD deductionGuard = this.transormInvariantToDeductionGuard(targetPhaseConj, destFinal, i, timed, identsToProof );
+						CDD deductionGuard = this.transformInvariantToDeductionGuard(targetPhaseConj, destFinal, i, timed, identsToProof );
 						guard = guard.and(deductionGuard);
 					//}
 					trans.setGuard(guard);
@@ -139,7 +139,7 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 	 * Transforms an invariant of a target state into the annotation deciding if the state can be entered
 	 * because the model can currently deduce the values of all necessary variables.
 	 */
-	private CDD transormInvariantToDeductionGuard(CDD invariant, boolean destinationHasLastPhase, 
+	private CDD transformInvariantToDeductionGuard(CDD invariant, boolean destinationHasLastPhase, 
 			int reqNo, boolean timed, List<String> identsToProof){
 		CDD[] dnf = invariant.toDNF();
 		CDD resultingConjunct = CDD.FALSE;
@@ -189,7 +189,8 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 					CDD closedWorldContition = BoogieBooleanExpressionDecision.create(
 								new IdentifierExpression(new BoogieLocation("",0,0,0,0,false),  READ_GUARD_PREFIX+ident+"'")
 							).negate();
-					//unless one automata allows it		
+					//unless one automata allows it	
+					// and can prove that it is not blocking 
 					for(String guardIdent: this.deductionMonitorVars.get(ident)){
 						closedWorldContition = closedWorldContition.or(BoogieBooleanExpressionDecision.create(
 									BoogieAstSnippet.createIdentifier(guardIdent+"'", "ClosedWorldAsumption")
@@ -209,6 +210,9 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 							));
 				}
 	}
+	
+	
+	
 	
 	/***
 	 * one state with edge (v == v')|| R_v_0 || R_v_1 || ...

@@ -9,6 +9,7 @@ import pea.PhaseEventAutomata;
 import pea.modelchecking.J2UPPAALConverter;
 import pea.reqCheck.PatternToPEA;
 import srParse.ReqParser;
+import srParse.srParsePattern;
 import srParse.pattern.PatternType;
 
 public class ReqToPEA {

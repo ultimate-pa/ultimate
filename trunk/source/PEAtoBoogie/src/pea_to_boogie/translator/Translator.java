@@ -69,6 +69,7 @@ import pea_to_boogie.generator.ConditionGenerator;
 import pea_to_boogie.generator.Permutation;
 import req_to_pea.ReqToPEA;
 import srParse.srParsePattern;
+import srParse.pattern.PatternType;
 
 /**
  * This class translates a phase event automaton to an equivalent Boogie code.
@@ -120,7 +121,7 @@ public class Translator {
 	/**
 	 * The array of input requirements.
 	 */
-	public srParsePattern[] mRequirements;
+	public PatternType[] mRequirements;
 	
 	/**
 	 * The properties for which we check for vacuity.
@@ -912,11 +913,11 @@ public class Translator {
 		}
 	}
 	
-	public srParsePattern getRequirement(final int i) {
+	public PatternType getRequirement(final int i) {
 		return mRequirements[i];
 	}
 	
-	public Unit genBoogie(final srParsePattern[] patterns) {
+	public Unit genBoogie(final PatternType[] patterns) {
 		mRequirements = patterns;
 		return genBoogie(new ReqToPEA().genPEA(patterns));
 	}
