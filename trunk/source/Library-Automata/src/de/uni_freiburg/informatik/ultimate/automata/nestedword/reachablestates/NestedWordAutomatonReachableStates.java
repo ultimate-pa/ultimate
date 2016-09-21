@@ -318,7 +318,19 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 	@Override
 	public String sizeInformation() {
 		final int states = mStates.size();
-		return states + " states and " + mNumberTransitions + " transitions.";
+		String result = states + " states and " + mNumberTransitions + " transitions."; 
+		if (mAcceptingComponentsAnalysis != null) {
+			final int transitions = mNumberTransitions.getSum();
+			final int cyclomaticComplexity = computeCyclomaticComplexity(
+					transitions, states, mAcceptingComponentsAnalysis.getNumberOfAllSccs());
+			result += " cyclomatic complexity: " + cyclomaticComplexity;
+		}
+		return result;
+	}
+	
+	private int computeCyclomaticComplexity(
+			final int numberOfTransitions, final int numberOfStates , final int numberOfSccs) {
+		return numberOfTransitions - numberOfStates + numberOfSccs;
 	}
 	
 	@Override
