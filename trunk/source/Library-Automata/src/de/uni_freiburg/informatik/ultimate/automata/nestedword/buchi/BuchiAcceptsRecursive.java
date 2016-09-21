@@ -92,52 +92,13 @@ public final class BuchiAcceptsRecursive<LETTER, STATE> extends UnaryNwaOperatio
 		mStem = nlw.getStem();
 		mLoop = nlw.getLoop();
 		
-		if (mStem.containsPendingReturns()) {
-			if (mLogger.isWarnEnabled()) {
-				mLogger.warn("This implementation of Buchi acceptance rejects lasso words, where the stem contains "
-						+ "pending returns.");
-			}
+		if (!checkInputValidity()) {
 			mAccepted = false;
 			return;
 		}
 		
-		if (mLoop.containsPendingReturns()) {
-			if (mLogger.isWarnEnabled()) {
-				mLogger.warn("This implementation of Buchi acceptance rejects lasso words, where the loop contains "
-						+ "pending returns.");
-			}
-			mAccepted = false;
-			return;
-			
-		}
+		mAccepted = computeResult(nwa);
 		
-		if (mLoop.length() == 0) {
-			if (mLogger.isDebugEnabled()) {
-				mLogger.debug("LassoWords with empty lasso are rejected by every Büchi automaton");
-			}
-			mAccepted = false;
-			return;
-		}
-		
-		// First compute all states in which the automaton can be after processing the
-		// stem.
-		// Honda denotes the part of the lasso where stem and loop are connected.
-		// Therefore we call theses stats Honda states.
-		final Set<STATE> hondaStates = new HashSet<>();
-		final Iterable<STATE> initialStates = nwa.getInitialStates();
-		for (final STATE initialState : initialStates) {
-			final Set<STATE> reach = getReachableStates(0, initialState, new LinkedList<STATE>());
-			hondaStates.addAll(reach);
-		}
-		
-		// Compute for each hondaState if processing mLoop can lead to a run that
-		// contains an accepting state and brings the automaton back to the honda state.
-		boolean result = false;
-		for (final STATE hondaState : hondaStates) {
-			result = result || isCompleteableToAcceptingRun(new HashMap<STATE, Boolean>(), 0, hondaState,
-					new LinkedList<STATE>());
-		}
-		mAccepted = result;
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
 		}
@@ -156,6 +117,55 @@ public final class BuchiAcceptsRecursive<LETTER, STATE> extends UnaryNwaOperatio
 	@Override
 	public Boolean getResult() {
 		return mAccepted;
+	}
+	
+	private boolean checkInputValidity() {
+		if (mStem.containsPendingReturns()) {
+			if (mLogger.isWarnEnabled()) {
+				mLogger.warn("This implementation of Buchi acceptance rejects lasso words where the stem contains "
+						+ "pending returns.");
+			}
+			return false;
+		}
+		if (mLoop.containsPendingReturns()) {
+			if (mLogger.isWarnEnabled()) {
+				mLogger.warn("This implementation of Buchi acceptance rejects lasso words where the loop contains "
+						+ "pending returns.");
+			}
+			return false;
+			
+		}
+		
+		if (mLoop.length() == 0) {
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("LassoWords with empty lasso are rejected by every Büchi automaton");
+			}
+			return false;
+		}
+		return true;
+	}
+	
+	private boolean computeResult(final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
+		// First compute all states in which the automaton can be after processing the
+		// stem.
+		// Honda denotes the part of the lasso where stem and loop are connected.
+		// Therefore we call theses stats Honda states.
+		final Set<STATE> hondaStates = new HashSet<>();
+		final Iterable<STATE> initialStates = nwa.getInitialStates();
+		for (final STATE initialState : initialStates) {
+			final Set<STATE> reach = getReachableStates(0, initialState, new LinkedList<STATE>());
+			hondaStates.addAll(reach);
+		}
+		
+		// Compute for each hondaState if processing mLoop can lead to a run that
+		// contains an accepting state and brings the automaton back to the honda state.
+		boolean result = false;
+		for (final STATE hondaState : hondaStates) {
+			result = result || isCompleteableToAcceptingRun(new HashMap<STATE, Boolean>(), 0, hondaState,
+					new LinkedList<STATE>());
+		}
+		
+		return result;
 	}
 	
 	/**
@@ -257,14 +267,19 @@ public final class BuchiAcceptsRecursive<LETTER, STATE> extends UnaryNwaOperatio
 		
 		final Iterable<? extends IOutgoingTransitionlet<LETTER, STATE>> outgoingTransitions =
 				getOutgoingTransitions(currentPosition, currentState, callStack, currentSymbol, mLoop, "loop");
-		
-		if (!outgoingTransitions.iterator().hasNext()) {
-			return false;
-		}
 		final List<STATE> succStates = new ArrayList<>();
 		for (final IOutgoingTransitionlet<LETTER, STATE> outgoingTransition : outgoingTransitions) {
 			succStates.add(outgoingTransition.getSucc());
 		}
+		if (succStates.isEmpty()) {
+			return false;
+		}
+		
+		return isCompleteableToAcceptingRunHelper(hondaCandidates2visitedFinal, callStack, currentPosition, succStates);
+	}
+	
+	private boolean isCompleteableToAcceptingRunHelper(final Map<STATE, Boolean> hondaCandidates2visitedFinal,
+			final List<STATE> callStack, final int currentPosition, final List<STATE> succStates) {
 		boolean result = false;
 		for (int i = 0; i < succStates.size(); i++) {
 			// in case of nondeterminism, i.e. several successor states for
