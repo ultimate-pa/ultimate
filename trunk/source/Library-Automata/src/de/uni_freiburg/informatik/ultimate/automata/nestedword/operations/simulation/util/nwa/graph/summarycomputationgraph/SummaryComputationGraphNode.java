@@ -41,17 +41,17 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  */
 public class SummaryComputationGraphNode<LETTER, STATE> {
 	
-	private final IGameState mSummarySource;
-	private final NestedMap2<IGameState, IGameState, WeightedSummaryTargets> mSource2Current2Targets = null;
+	private final NestedMap2<IGameState, IGameState, WeightedSummaryTargets> mSource2Current2Targets;
+	private final Set<IGameState> mSummaryComputationTriggers;
 	
-	private final Set<IGameState> mSummaryComputationTriggers = null;
-	
-	public SummaryComputationGraphNode(final IGameState summarySource,
-			final Map<IGameState, WeightedSummaryTargets> current2Targets) {
+	public SummaryComputationGraphNode(
+			final NestedMap2<IGameState, IGameState, WeightedSummaryTargets> source2Current2Targets,
+			final Set<IGameState> summaryComputationTriggers) {
 		super();
-		mSummarySource = summarySource;
-//		mCurrent2Targets = current2Targets;
+		mSource2Current2Targets = source2Current2Targets;
+		mSummaryComputationTriggers = summaryComputationTriggers;
 	}
+
 
 	public Set<IGameState> getSources() {
 		return mSource2Current2Targets.keySet();
@@ -77,12 +77,6 @@ public class SummaryComputationGraphNode<LETTER, STATE> {
 		return mSource2Current2Targets;
 	}
 
-	/**
-	 * @return the summarySource
-	 */
-	public IGameState getSummarySource() {
-		return mSummarySource;
-	}
 	
 	
 //	/**
