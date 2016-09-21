@@ -77,7 +77,7 @@ public final class LassoExtractor<LETTER, STATE> extends UnaryNwaOperation<LETTE
 		mNestedLassoRuns = mReach.getOrComputeAcceptingComponents().getAllNestedLassoRuns();
 		mNestedLassoWords = new ArrayList<>(mNestedLassoRuns.size());
 		if (mNestedLassoRuns.isEmpty() && mReach.getOrComputeAcceptingComponents().getNestedLassoRun() == null) {
-			assert (new BuchiIsEmpty<LETTER, STATE>(mServices, mReach)).getResult();
+			assert (new BuchiIsEmpty<>(mServices, mReach)).getResult();
 		} else {
 			for (final NestedLassoRun<LETTER, STATE> nlr : mNestedLassoRuns) {
 				mNestedLassoWords.add(nlr.getNestedLassoWord());
@@ -110,5 +110,4 @@ public final class LassoExtractor<LETTER, STATE> extends UnaryNwaOperation<LETTE
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		return true;
 	}
-	
 }

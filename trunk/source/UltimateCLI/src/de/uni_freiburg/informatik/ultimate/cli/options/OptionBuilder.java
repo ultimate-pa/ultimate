@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 public class OptionBuilder {
-	
+
 	private static final int MAX_NAME_LENGTH = 160;
 	private static final int MIN_WIDTH = 80;
 
@@ -265,7 +265,7 @@ public class OptionBuilder {
 		return builder;
 	}
 
-	private String createDescription(final UltimatePreferenceItem<?> item) {
+	private static String createDescription(final UltimatePreferenceItem<?> item) {
 		final StringBuilder sb = new StringBuilder();
 
 		if (item.getToolTip() != null) {
@@ -319,7 +319,7 @@ public class OptionBuilder {
 				sb.append("\", ");
 			}
 			sb.delete(sb.length() - 2, sb.length());
-			sb.append(".");
+			sb.append(". ");
 		}
 
 		addDefaultValue(item, sb);
@@ -327,8 +327,8 @@ public class OptionBuilder {
 		return sb.toString();
 	}
 
-	private void addDefaultValue(final UltimatePreferenceItem<?> item, final StringBuilder sb) {
-		sb.append("The default value is " + item.getDefaultValue() + ".");
+	private static void addDefaultValue(final UltimatePreferenceItem<?> item, final StringBuilder sb) {
+		sb.append("The default value is " + item.getDefaultValue() + ". ");
 	}
 
 	private String convertLabelToLongName(final String pluginId, final UltimatePreferenceItem<?> item) {

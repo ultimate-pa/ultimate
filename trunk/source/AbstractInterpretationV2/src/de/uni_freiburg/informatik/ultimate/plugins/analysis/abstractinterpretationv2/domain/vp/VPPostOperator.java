@@ -1,131 +1,137 @@
 /*
- * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * Copyright (C) 2015 Marius Greitschus (greitsch@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
- * 
+ * Copyright (C) 2016 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2016 University of Freiburg
+ *
  * This file is part of the ULTIMATE AbstractInterpretationV2 plug-in.
- * 
+ *
  * The ULTIMATE AbstractInterpretationV2 plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE AbstractInterpretationV2 plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE AbstractInterpretationV2 plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE AbstractInterpretationV2 plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission
  * to convey the resulting work.
  */
-
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.vp;
 
-import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgStatementExtractor;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 
 /**
- * Applies a post operation to an abstract state of the {@link VPDomain}.
- * 
- * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
+ *
  * @author Yu-Wen Chen (yuwenchen1105@gmail.com)
+ *
  */
-public class VPPostOperator implements IAbstractPostOperator<VPDomainState, CodeBlock, IBoogieVar> {
+public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock, IProgramVar> {
 
-	private final RcfgStatementExtractor mStatementExtractor;
-	private final VPDomainStatementProcessor mStatementProcessor;
-	private final ILogger mLogger;
-
-	/**
-	 * Default constructor.
-	 */
-	protected VPPostOperator(IUltimateServiceProvider services) {
-		mStatementExtractor = new RcfgStatementExtractor();
-		mStatementProcessor = new VPDomainStatementProcessor(services);
-		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+	private final Set<Term> termSet = new HashSet<>();
+	private final ManagedScript mScript;
+	private final IUltimateServiceProvider mServices;
+	
+	public VPPostOperator(ManagedScript script, IUltimateServiceProvider services) {
+		mScript = script;
+		mServices = services;
 	}
-
-	/**
-	 * Applies the post operator to a given {@link IAbstractState}, according to
-	 * some Boogie {@link CodeBlock}.
-	 * 
-	 * @param oldstate
-	 *            The current abstract state, the post operator is applied on.
-	 * @param transition
-	 *            The Boogie code block that is used to apply the post operator.
-	 * @return A new abstract state which is the result of applying the post
-	 *         operator to a given abstract state.
-	 */
+	
 	@Override
-	public List<VPDomainState> apply(final VPDomainState oldstate, final CodeBlock transition) {
-		assert oldstate != null;
-		// assert !oldstate.isBottom();
-		assert transition != null;
+	public List<VPState> apply(final VPState oldstate, final CodeBlock transition) {
+		
+		transition.getTransitionFormula().getAssignedVars();
+		
+		final UnmodifiableTransFormula tf = transition.getTransitionFormula();
+		if (tf.getOutVars().isEmpty()) {
+			return Collections.singletonList(oldstate);
+		}
+		
+		termSet.addAll(new AssignmentFinder().findAssignment(transition.getTransitionFormula().getFormula()));
+		
+		
+		System.out.println("Assignment set: ");
+		for (Term term : termSet) {
+			
+			new Nnf(mScript, mServices, QuantifierHandling.CRASH).transform(term);
+			
+			
+			System.out.println(term.toString());
+		}
+		
+		
+		termSet.clear();
+		
+		
+		final Map<IProgramVar, Set<CodeBlock>> reach = new HashMap<>(oldstate.getReachingDefinitions());
+		final Map<IProgramVar, Set<ProgramPoint>> noWrite = new HashMap<>(oldstate.getNoWrite());
 
-		final List<VPDomainState> currentStates = new ArrayList<>();
-		currentStates.add(oldstate);
-		
-		transition.getTransitionFormula();
-		final List<VPDomainState> processed = mStatementProcessor.process(oldstate, transition);
-		
-//		final List<Statement> statements = mStatementExtractor.process(transition);
-//
-//		for (final Statement stmt : statements) {
-//			final List<VPDomainState> afterProcessStates = new ArrayList<>();
-//			for (final VPDomainState currentState : currentStates) {
-//				final List<VPDomainState> processed = mStatementProcessor.process(currentState, stmt);
-//				assert processed.size() > 0;
-//				afterProcessStates.addAll(processed);
-//			}
-//
-//			currentStates = afterProcessStates;
+//		for (final Entry<IProgramVar, TermVariable> entry : tf.getOutVars().entrySet()) {
+//			reach.put(entry.getKey(), Collections.singleton(transition));
 //		}
-		return processed;
-	}
+		final Set<IProgramVar> defSet = computeDefSetFromTransFormula(tf, oldstate.getVariables());
+		final Set<IProgramVar> nonDefSet = new HashSet<>(oldstate.getVariables());
+		nonDefSet.removeAll(defSet);
 
-	@Override
-	public List<VPDomainState> apply(final VPDomainState stateBeforeLeaving, final VPDomainState stateAfterLeaving,
-			final CodeBlock transition) {
-		assert transition instanceof Call || transition instanceof Return;
-
-		final List<VPDomainState> returnList = new ArrayList<>();
-
-		if (transition instanceof Call) {
-			// nothing changes during this switch
-			returnList.add(stateAfterLeaving);
-		} else if (transition instanceof Return) {
-			// TODO: Handle assign on return! This is just the old behavior
-			final Return ret = (Return) transition;
-			final CallStatement correspondingCall = ret.getCallStatement();
-			mLogger.error("VPDomain does not handle returns correctly: " + ret + " for "
-					+ BoogiePrettyPrinter.print(correspondingCall));
-			returnList.add(stateAfterLeaving);
-		} else {
-			throw new UnsupportedOperationException(
-					"VPDomain does not support context switches other than Call and Return (yet)");
+		for (final IProgramVar pv : defSet) {
+			reach.put(pv, Collections.singleton(transition));
+			noWrite.put(pv, new HashSet<>());
+		}
+		for (final IProgramVar pv : nonDefSet) {
+			Set<ProgramPoint> programPoints = noWrite.get(pv);
+			if (programPoints == null) {
+				programPoints = new HashSet<>();
+				noWrite.put(pv, programPoints);
+			}
+			programPoints.add((ProgramPoint) transition.getSource());
 		}
 
-		return returnList;
+		return Collections
+				.singletonList(new VPState(
+						oldstate.getVariables(), oldstate.getDef(), oldstate.getUse(), reach, noWrite, oldstate.getmEqNodeSet()));
 	}
 
+	@Override
+	public List<VPState> apply(final VPState stateBeforeLeaving, final VPState stateAfterLeaving,
+			final CodeBlock transition) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	private Set<IProgramVar> computeDefSetFromTransFormula(UnmodifiableTransFormula tf, Set<IProgramVar> allVariables) {
+		// TODO I think we will need something like "constrained vars"
+		//  i.e. the set of IProgramVars x where invar(x) = outVar(x) and where
+		//  x is constrained by the formula  (i.e. like from an assume statement)
+		
+		// for now: rudimentary test if it is an assume -- then return all outvars
+		// otherwise return the AssignedVars
+		if (tf.getInVars().keySet().equals(tf.getOutVars().keySet())) { //TODO: don't use keySet()
+			return allVariables;
+		} else {
+			return tf.getAssignedVars();
+		}
+	}
 }

@@ -64,9 +64,8 @@ public final class GetAcceptedLassoWord<LETTER, STATE> extends UnaryNwaOperation
 		final BuchiIsEmpty<LETTER, STATE> isEmpty = new BuchiIsEmpty<>(mServices, operand);
 		if (isEmpty.getResult()) {
 			throw new IllegalArgumentException("unable to get word from emtpy language");
-		} else {
-			mAcceptedWord = isEmpty.getAcceptingNestedLassoRun().getNestedLassoWord();
 		}
+		mAcceptedWord = isEmpty.getAcceptingNestedLassoRun().getNestedLassoWord();
 		mLogger.info(exitMessage());
 	}
 	

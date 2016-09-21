@@ -62,8 +62,7 @@ public class LevelRankingConstraintDrdCheck<LETTER, STATE> extends LevelRankingC
 	 *            {code true} iff double deckers should be used
 	 */
 	public LevelRankingConstraintDrdCheck(final INestedWordAutomatonSimple<LETTER, STATE> operand,
-			final boolean predecessorOwasEmpty,
-			final int userDefinedMaxRank, final boolean useDoubleDeckers) {
+			final boolean predecessorOwasEmpty, final int userDefinedMaxRank, final boolean useDoubleDeckers) {
 		super(operand, predecessorOwasEmpty, userDefinedMaxRank, useDoubleDeckers);
 		mRanksOfPredecessorsNonAcceptingPredecessors = new HashRelation3<>();
 		mRanksOfPredecessorsNonAcceptingPredecessorsEven = new HashRelation3<>();
@@ -151,11 +150,10 @@ public class LevelRankingConstraintDrdCheck<LETTER, STATE> extends LevelRankingC
 		final Integer constraint = getRank(downState, upState);
 		if (allowDelayedRankDecrease) {
 			return isEven(constraint) && !mOperand.isFinal(upState);
-		} else {
-			final Set<Integer> nonAcceptingEvenranks =
-					mRanksOfPredecessorsNonAcceptingPredecessorsEven.projectToTrd(downState, upState);
-			return isEven(constraint) && !mOperand.isFinal(upState) && nonAcceptingEvenranks.isEmpty();
 		}
+		final Set<Integer> nonAcceptingEvenranks =
+				mRanksOfPredecessorsNonAcceptingPredecessorsEven.projectToTrd(downState, upState);
+		return isEven(constraint) && !mOperand.isFinal(upState) && nonAcceptingEvenranks.isEmpty();
 	}
 	
 	@Override
@@ -164,7 +162,7 @@ public class LevelRankingConstraintDrdCheck<LETTER, STATE> extends LevelRankingC
 		for (final StateWithRankInfo<STATE> downState : getDownStates()) {
 			for (final StateWithRankInfo<STATE> upState : getUpStates(downState)) {
 				if (isEligibleForVoluntaryRankDecrease(downState, upState.getState(), true)) {
-					result.add(new DoubleDecker<StateWithRankInfo<STATE>>(downState, upState));
+					result.add(new DoubleDecker<>(downState, upState));
 				}
 			}
 		}

@@ -147,8 +147,7 @@ public final class BuchiComplementFKV<LETTER, STATE> extends UnaryNwaOperation<L
 	private BuchiComplementFKV(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand,
 			final IStateDeterminizer<LETTER, STATE> stateDeterminizer, final FkvOptimization optimization,
-			final int userDefinedMaxRank)
-			throws AutomataOperationCanceledException {
+			final int userDefinedMaxRank) throws AutomataOperationCanceledException {
 		super(services);
 		mStateFactory = stateFactory;
 		mOperand = operand;
@@ -170,8 +169,7 @@ public final class BuchiComplementFKV<LETTER, STATE> extends UnaryNwaOperation<L
 	}
 	
 	@Override
-	public boolean checkResult(final IStateFactory<STATE> stateFactory)
-			throws AutomataLibraryException {
+	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		final boolean underApproximationOfComplement = false;
 		mLogger.info("Start testing correctness of " + operationName());
 		final List<NestedLassoWord<LETTER>> lassoWords = new ArrayList<>();
@@ -188,16 +186,10 @@ public final class BuchiComplementFKV<LETTER, STATE> extends UnaryNwaOperation<L
 		boolean correct = true;
 		correct &= !(operandEmpty && resultEmpty);
 		assert correct;
-//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, mResult.size()));
-//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, mResult.size()));
-//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, operandOldApi.size()));
-//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, operandOldApi.size()));
-//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, operandOldApi.size()));
-//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, operandOldApi.size()));
-//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, operandOldApi.size()));
-//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, operandOldApi.size()));
-//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, operandOldApi.size()));
-//		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, operandOldApi.size()));
+		/*
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, mResult.size()));
+		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, mResult.size()));
+		*/
 		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 1));
 		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 1));
 		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 1));
@@ -209,9 +201,6 @@ public final class BuchiComplementFKV<LETTER, STATE> extends UnaryNwaOperation<L
 		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 1));
 		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 1));
 		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 1));
-		lassoWords.addAll((new LassoExtractor<LETTER, STATE>(mServices, mOperand)).getResult());
-		lassoWords.addAll((new LassoExtractor<LETTER, STATE>(mServices, mResult)).getResult());
-		
 		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 2));
 		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 2));
 		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 2));
@@ -223,6 +212,8 @@ public final class BuchiComplementFKV<LETTER, STATE> extends UnaryNwaOperation<L
 		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 2));
 		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 2));
 		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 2));
+		lassoWords.addAll((new LassoExtractor<>(mServices, mOperand)).getResult());
+		lassoWords.addAll((new LassoExtractor<>(mServices, mResult)).getResult());
 		
 		for (final NestedLassoWord<LETTER> nlw : lassoWords) {
 			boolean thistime = checkAcceptance(nlw, mOperand, underApproximationOfComplement);
@@ -248,14 +239,14 @@ public final class BuchiComplementFKV<LETTER, STATE> extends UnaryNwaOperation<L
 	
 	@Override
 	public String startMessage() {
-		return "Start " + operationName() + " with optimization " + mOptimization
-				+ ". Operand " + mOperand.sizeInformation();
+		return "Start " + operationName() + " with optimization " + mOptimization + ". Operand "
+				+ mOperand.sizeInformation();
 	}
 	
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + " with optimization " + mOptimization
-				+ ". Operand " + mOperand.sizeInformation() + " Result " + mResult.sizeInformation()
+		return "Finished " + operationName() + " with optimization " + mOptimization + ". Operand "
+				+ mOperand.sizeInformation() + " Result " + mResult.sizeInformation()
 				+ mComplemented.getPowersetStates() + " powerset states" + mComplemented.getRankStates()
 				+ " rank states. The highest rank that occured is " + mComplemented.getHighesRank();
 	}
@@ -277,8 +268,8 @@ public final class BuchiComplementFKV<LETTER, STATE> extends UnaryNwaOperation<L
 	private boolean checkAcceptance(final NestedLassoWord<LETTER> nlw,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand, final boolean underApproximationOfComplement)
 			throws AutomataLibraryException {
-		final boolean op = (new BuchiAccepts<LETTER, STATE>(mServices, operand, nlw)).getResult();
-		final boolean res = (new BuchiAccepts<LETTER, STATE>(mServices, mResult, nlw)).getResult();
+		final boolean op = (new BuchiAccepts<>(mServices, operand, nlw)).getResult();
+		final boolean res = (new BuchiAccepts<>(mServices, mResult, nlw)).getResult();
 		boolean correct;
 		if (underApproximationOfComplement) {
 			correct = !res || op;

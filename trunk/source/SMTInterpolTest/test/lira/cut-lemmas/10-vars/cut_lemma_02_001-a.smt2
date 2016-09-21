@@ -1,0 +1,20 @@
+(set-logic QF_UFLIRA)
+(set-info :source |
+Alberto Griggio
+
+|)
+(set-info :smt-lib-version 2.0)
+(set-info :category "crafted")
+(set-info :status unsat)
+(declare-fun x0 () Real)
+(declare-fun x1 () Real)
+(declare-fun x2 () Int)
+(declare-fun x4 () Real)
+(declare-fun x5 () Int)
+(declare-fun x6 () Int)
+(declare-fun x7 () Real)
+(declare-fun x8 () Int)
+(declare-fun x9 () Real)
+(assert (let ((?v_1 (- x0)) (?v_0 (- x7))) (and (not (>= (+ (* x0 (- 8)) (+ (* x1 (- 8)) (+ (* x5 (- 16)) (+ (* x9 16) (+ (* x2 8) (* x8 24)))))) (- 8))) (and (and (and (and (and (and (and (and (<= (- 1) (+ (+ (+ x6 x9) (* x2 2)) x8)) (<= (+ (+ (+ (* x1 2) x0) x5) ?v_0) 0)) (<= (- x4 x9) (- 1))) (<= (+ (+ (- x8) (* x5 2)) ?v_0) 1)) (<= (- 1) (+ (+ (+ (- x6) x9) (* x8 2)) ?v_0))) (<= 0 (+ (+ (- x2) x1) ?v_0))) (<= (+ (+ (+ (+ ?v_1 x6) x5) x8) ?v_0) (- 1))) (<= 0 (+ (+ (+ (+ x9 x4) x6) ?v_1) x2))) (<= 1 (+ x8 x1))))))
+(check-sat)
+(exit)

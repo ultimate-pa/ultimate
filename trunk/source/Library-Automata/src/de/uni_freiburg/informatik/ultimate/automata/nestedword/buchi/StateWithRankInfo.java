@@ -148,18 +148,18 @@ public class StateWithRankInfo<STATE> {
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
-		sb.append("(");
+		sb.append('(');
 		sb.append(getState());
-		sb.append(",");
+		sb.append(',');
 		if (hasRank()) {
 			sb.append(getRank());
 			if (isInO()) {
-				sb.append("X");
+				sb.append('X');
 			}
 		} else {
-			sb.append("∞");
+			sb.append('∞');
 		}
-		sb.append(")");
+		sb.append(')');
 		return sb.toString();
 	}
 }

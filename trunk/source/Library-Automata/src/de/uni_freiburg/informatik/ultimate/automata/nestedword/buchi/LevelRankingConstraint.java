@@ -242,8 +242,8 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 			mHighestRank = predecessorRank;
 		}
 		if (predecessorIsAccepting) {
-			mPredecessorWasAccepting.add(new DoubleDecker<StateWithRankInfo<STATE>>(
-					downState, new StateWithRankInfo<STATE>(upState, predecessorRank, oCandidate)));
+			mPredecessorWasAccepting.add(new DoubleDecker<>(
+					downState, new StateWithRankInfo<>(upState, predecessorRank, oCandidate)));
 		}
 	}
 	
