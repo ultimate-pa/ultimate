@@ -326,7 +326,7 @@ public class CommandLineController implements IController<RunDefinition> {
 		mLogger.info("The following toolchains are available:");
 		for (final Entry<File, IToolchainData<RunDefinition>> entry : availableToolchains.entrySet()) {
 			mLogger.info(entry.getKey());
-			mLogger.info(indent + entry.getValue().getToolchain().getName());
+			mLogger.info(indent + entry.getValue().getRootElement().getName());
 		}
 	}
 

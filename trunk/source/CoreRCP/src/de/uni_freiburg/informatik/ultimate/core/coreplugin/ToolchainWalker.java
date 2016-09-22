@@ -101,12 +101,12 @@ final class ToolchainWalker implements IToolchainCancel {
 		final IToolchainData<RunDefinition> chain = data.getToolchain();
 
 		// convert monitor to submonitor
-		int remainingWork = chain.getToolchain().getToolchain().getPluginOrSubchain().size();
+		int remainingWork = chain.getRootElement().getToolchain().getPluginOrSubchain().size();
 		final SubMonitor progress = SubMonitor.convert(RcpProgressMonitorWrapper.create(monitor), remainingWork);
 		mLogger.info("Walking toolchain with " + remainingWork + " elements.");
 
 		// iterate over toolchain
-		for (final Object o : chain.getToolchain().getToolchain().getPluginOrSubchain()) {
+		for (final Object o : chain.getRootElement().getToolchain().getPluginOrSubchain()) {
 
 			// Deal with the current toolchain element
 			if (o instanceof PluginType) {

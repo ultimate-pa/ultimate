@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
  */
 public interface IToolchainData<T> {
 
-	T getToolchain();
+	T getRootElement();
 
 	IToolchainStorage getStorage();
 

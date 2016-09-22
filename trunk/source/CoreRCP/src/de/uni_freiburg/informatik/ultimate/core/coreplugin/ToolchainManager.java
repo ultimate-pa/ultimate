@@ -205,7 +205,7 @@ public class ToolchainManager {
 				mLogger.warn(getLogPrefix() + ": Dialog was aborted, returning null tools.");
 				return null;
 			}
-			if (!checkToolchain(data.getToolchain().getToolchain().getPluginOrSubchain())) {
+			if (!checkToolchain(data.getRootElement().getToolchain().getPluginOrSubchain())) {
 				mLogger.warn(getLogPrefix() + ": Invalid toolchain selection, returning null tools.");
 				return null;
 			}
