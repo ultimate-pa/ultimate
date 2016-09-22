@@ -221,23 +221,16 @@ public class PredicateUnifier {
 		final HashMap<IPredicate, Validity> impliedPredicates = new HashMap<>();
 		final HashMap<IPredicate, Validity> expliedPredicates = new HashMap<>();
 		for (final IPredicate conjunct : minimalSubset) {
-			for (final IPredicate knownPredicate : mKnownPredicates) {
-				{
-					// if (conjunct ==> knownPredicate) then the conjunction
-					// will also imply the knownPredicate
-					final Validity validity = getCoverageRelation().isCovered(conjunct, knownPredicate);
-					if (validity == Validity.VALID) {
-						impliedPredicates.put(knownPredicate, Validity.VALID);
-					}
-				}
-				{
-					// if !(knownPredicate ==> conjunct) then knownPredicate
-					// will also not imply the conjunction
-					final Validity validity = getCoverageRelation().isCovered(knownPredicate, conjunct);
-					if (validity == Validity.INVALID) {
-						expliedPredicates.put(knownPredicate, Validity.INVALID);
-					}
-				}
+			// all predicates implied by the conjunct will also be implied
+			// by the conjunction
+			for (final IPredicate coverer : getCoverageRelation().getCoveringPredicates(conjunct)) {
+				impliedPredicates.put(coverer, Validity.VALID);
+			}
+
+			// all predicates that do not imply the conjunct will also imply
+			// the conjunction
+			for (final IPredicate noncoverer : ((CoverageRelation) getCoverageRelation()).getNonCoveringPredicates(conjunct)) {
+				expliedPredicates.put(noncoverer, Validity.INVALID);
 			}
 		}
 		final Term term = mPredicateFactory.and(minimalSubset);
@@ -807,9 +800,13 @@ public class PredicateUnifier {
 
 	public class CoverageRelation implements IPredicateCoverageChecker {
 
-		NestedMap2<IPredicate, IPredicate, Validity> mLhs2RhsValidity = new NestedMap2<>();
-		HashRelation<IPredicate, IPredicate> mImpliedPredicates = new HashRelation<>();
-		HashRelation<IPredicate, IPredicate> mExpliedPredicates = new HashRelation<>();
+		private final NestedMap2<IPredicate, IPredicate, Validity> mLhs2RhsValidity = new NestedMap2<>();
+		private final HashRelation<IPredicate, IPredicate> mImpliedPredicates = new HashRelation<>();
+		private final HashRelation<IPredicate, IPredicate> mExpliedPredicates = new HashRelation<>();
+		private final HashRelation<IPredicate, IPredicate> mNotImpliedPredicates = new HashRelation<>();
+		private final HashRelation<IPredicate, IPredicate> mNotExpliedPredicates = new HashRelation<>();
+
+		
 		
 		void addPredicate(final IPredicate pred, final Map<IPredicate, Validity> implied, final Map<IPredicate, Validity> explied) {
 			assert !mKnownPredicates.contains(pred) : "predicate already known";
@@ -826,10 +823,16 @@ public class PredicateUnifier {
 				if (implies == Validity.VALID) {
 					mImpliedPredicates.addPair(pred, known);
 					mExpliedPredicates.addPair(known, pred);
+				} else if (implies == Validity.INVALID) {
+					mNotImpliedPredicates.addPair(pred, known);
+					mNotExpliedPredicates.addPair(known, pred);
 				}
 				if (explies == Validity.VALID) {
 					mImpliedPredicates.addPair(known, pred);
 					mExpliedPredicates.addPair(pred, known);
+				} else if (implies == Validity.INVALID) {
+					mNotImpliedPredicates.addPair(known, pred);
+					mNotExpliedPredicates.addPair(pred, known);
 				}
 			}
 			mImpliedPredicates.addPair(pred, pred);
@@ -855,11 +858,19 @@ public class PredicateUnifier {
 			return mImpliedPredicates.getImage(pred);
 		}
 		
-
+		public Set<IPredicate> getNonCoveringPredicates(final IPredicate pred) {
+			return mNotImpliedPredicates.getImage(pred);
+		}
+		
 		@Override
 		public Set<IPredicate> getCoveredPredicates(final IPredicate pred) {
 			return mExpliedPredicates.getImage(pred);
 		}
+		
+		public Set<IPredicate> getNonCoveredPredicates(final IPredicate pred) {
+			return mNotExpliedPredicates.getImage(pred);
+		}
+
 		
 		public CoverageRelationStatistics getCoverageRelationStatistics() {
 			return new CoverageRelationStatistics(mLhs2RhsValidity);
