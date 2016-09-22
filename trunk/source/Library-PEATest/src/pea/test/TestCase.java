@@ -3,6 +3,7 @@ package pea.test;
 import java.util.Collections;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import pea.BooleanDecision;
 import pea.CDD;
 import pea.CounterTrace;
@@ -15,7 +16,7 @@ import pea.modelchecking.J2UPPAALWriter;
 import pea.modelchecking.MCTrace;
 
 public class TestCase {
-	Trace2PEACompiler compiler = new Trace2PEACompiler();
+	Trace2PEACompiler compiler = new Trace2PEACompiler(ILogger.getLogger(""));
 	CDD entry = EventDecision.create("S1");
 	CDD exit = EventDecision.create("S2");
 	CDD missing = CDD.TRUE;

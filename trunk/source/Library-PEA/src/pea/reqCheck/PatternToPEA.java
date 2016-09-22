@@ -2,6 +2,7 @@ package pea.reqCheck;
 
 import java.util.ArrayList;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import pea.BooleanDecision;
 import pea.CDD;
 import pea.CounterTrace;
@@ -27,15 +28,20 @@ import pea.modelchecking.PEAJ2XMLConverter;
  */
 
 public class PatternToPEA {
-	Trace2PEACompiler compiler = new Trace2PEACompiler();
-	CDD entry = EventDecision.create("S1");
+	private Trace2PEACompiler mCompiler = null;
+	private ILogger mLogger = null;
+	private CDD entry = EventDecision.create("S1");
 	// CDD entry = CDD.FALSE;
-	CDD exit = EventDecision.create("S2");
+	private CDD exit = EventDecision.create("S2");
 	// CDD exit = CDD.TRUE;
-	CDD missing = CDD.TRUE;
+	private CDD missing = CDD.TRUE;
 
-	int nameindex = 0; // this index is needed so that the counters in the peas for the quantitative patterns
+	private int nameindex = 0; // this index is needed so that the counters in the peas for the quantitative patterns
 	// do not have the same names
+	
+	public PatternToPEA(ILogger logger){
+		mCompiler = new Trace2PEACompiler(logger);
+	}
 
 	// %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 	// AbsencePattern
@@ -46,37 +52,37 @@ public class PatternToPEA {
 		if (scope.contains("Globally")) {
 			final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase(),
 			        new CounterTrace.DCPhase(P), new CounterTrace.DCPhase() });
-			ctA = compiler.compile("AbsenceGlob", ct); // ctA.dump();
+			ctA = mCompiler.compile("AbsenceGlob", ct); // ctA.dump();
 			return ctA;
 		} else if (scope.contains("Before")) {
 			final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase(R.negate()),
 			        new CounterTrace.DCPhase(P.and(R.negate())), new CounterTrace.DCPhase(R.negate()),
 			        // new CounterTrace.DCPhase(R),
 			        new CounterTrace.DCPhase() });
-			ctA = compiler.compile("TAbsenceBefore", ct); // ctA.dump();
+			ctA = mCompiler.compile("TAbsenceBefore", ct); // ctA.dump();
 			return ctA;
 		} else if (scope.contains("until")) {
 			final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase(),
 			        new CounterTrace.DCPhase(Q.and(R.negate())), new CounterTrace.DCPhase(R.negate()),
 			        new CounterTrace.DCPhase(P.and(R.negate())), new CounterTrace.DCPhase() });
-			ctA = compiler.compile("TAbsenceUntil", ct); // ctA.dump();
+			ctA = mCompiler.compile("TAbsenceUntil", ct); // ctA.dump();
 			return ctA;
 		} else if (scope.contains("After")) {
 			final CounterTrace ct = new CounterTrace(
 			        new CounterTrace.DCPhase[] { new CounterTrace.DCPhase(), new CounterTrace.DCPhase(Q),
 			                new CounterTrace.DCPhase(), new CounterTrace.DCPhase(P), new CounterTrace.DCPhase() });
-			ctA = compiler.compile("TAbsenceAfter", ct); // ctA.dump();
+			ctA = mCompiler.compile("TAbsenceAfter", ct); // ctA.dump();
 			return ctA;
 		} else if (scope.contains("Between")) {
 			final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase(),
 			        new CounterTrace.DCPhase(Q.and(R.negate())), new CounterTrace.DCPhase(R.negate()),
 			        new CounterTrace.DCPhase(P.and(R.negate())), new CounterTrace.DCPhase(R.negate()),
 			        new CounterTrace.DCPhase(R), new CounterTrace.DCPhase() });
-			ctA = compiler.compile("TAbsBet", ct); // ctA.dump();
+			ctA = mCompiler.compile("TAbsBet", ct); // ctA.dump();
 			return ctA;
 		}
 		final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase() });
-		ctA = compiler.compile("NoKnownScope", ct);
+		ctA = mCompiler.compile("NoKnownScope", ct);
 		return ctA;
 	}
 
@@ -89,7 +95,7 @@ public class PatternToPEA {
 		if (scope.contains("Globally")) {
 			final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase(),
 			        new CounterTrace.DCPhase(P.negate()), new CounterTrace.DCPhase() });
-			ctA = compiler.compile("univG", ct); // ctA.dump();
+			ctA = mCompiler.compile("univG", ct); // ctA.dump();
 			return ctA;
 		} else if (scope.contains("Before")) {
 			final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase(R.negate()),
@@ -97,31 +103,31 @@ public class PatternToPEA {
 			        // new CounterTrace.DCPhase(R.negate()),
 			        // new CounterTrace.DCPhase(R),
 			        new CounterTrace.DCPhase() });
-			ctA = compiler.compile("univB", ct); // ctA.dump();
+			ctA = mCompiler.compile("univB", ct); // ctA.dump();
 			return ctA;
 		} else if (scope.contains("until")) {
 			final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase(),
 			        new CounterTrace.DCPhase(Q.and(R.negate())), new CounterTrace.DCPhase(R.negate()),
 			        new CounterTrace.DCPhase(P.negate().and(R.negate())), new CounterTrace.DCPhase() });
-			ctA = compiler.compile("univU", ct); // ctA.dump();
+			ctA = mCompiler.compile("univU", ct); // ctA.dump();
 			return ctA;
 		} else if (scope.contains("After")) {
 			final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase(),
 			        new CounterTrace.DCPhase(Q), new CounterTrace.DCPhase(), new CounterTrace.DCPhase(P.negate()),
 			        new CounterTrace.DCPhase() });
-			ctA = compiler.compile("univA", ct); // ctA.dump();
+			ctA = mCompiler.compile("univA", ct); // ctA.dump();
 			return ctA;
 		} else if (scope.contains("Between")) {
 			final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase(),
 			        new CounterTrace.DCPhase(Q.and(R.negate())), new CounterTrace.DCPhase(R.negate()),
 			        new CounterTrace.DCPhase(P.negate().and(R.negate())), new CounterTrace.DCPhase(R.negate()),
 			        new CounterTrace.DCPhase(R), new CounterTrace.DCPhase() });
-			ctA = compiler.compile("univBet", ct); // ctA.dump();
+			ctA = mCompiler.compile("univBet", ct); // ctA.dump();
 			return ctA;
 
 		}
 		final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase() });
-		ctA = compiler.compile("NoKnownScope", ct);
+		ctA = mCompiler.compile("NoKnownScope", ct);
 		return ctA;
 	}
 
@@ -144,7 +150,7 @@ public class PatternToPEA {
 			final CounterTrace ct = new CounterTrace(
 			        new CounterTrace.DCPhase[] { new CounterTrace.DCPhase(P.negate().and(R.negate())),
 			                new CounterTrace.DCPhase(R), new CounterTrace.DCPhase() });
-			ctA = compiler.compile("TExistenceBefore", ct); // ctA.dump();
+			ctA = mCompiler.compile("TExistenceBefore", ct); // ctA.dump();
 			return ctA;
 		} else if (scope.contains("until")) {
 			System.out.println("Existence-Until: Hier muß die Methode noch erweitert werden");
@@ -154,12 +160,12 @@ public class PatternToPEA {
 			final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase(),
 			        new CounterTrace.DCPhase(Q.and(R.negate())), new CounterTrace.DCPhase(P.negate().and(R.negate())),
 			        new CounterTrace.DCPhase(R), new CounterTrace.DCPhase() });
-			ctA = compiler.compile("TExistenceBetween", ct); // ctA.dump();
+			ctA = mCompiler.compile("TExistenceBetween", ct); // ctA.dump();
 			return ctA;
 
 		}
 		final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase() });
-		ctA = compiler.compile("NoKnownScope", ct);
+		ctA = mCompiler.compile("NoKnownScope", ct);
 		return ctA;
 	}
 
@@ -173,7 +179,7 @@ public class PatternToPEA {
 			final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase(),
 			        new CounterTrace.DCPhase(P), new CounterTrace.DCPhase(P.negate()), new CounterTrace.DCPhase(P),
 			        new CounterTrace.DCPhase(P.negate()), new CounterTrace.DCPhase(P), new CounterTrace.DCPhase() });
-			ctA = compiler.compile("BndExistenceGlob", ct); // ctA.dump();
+			ctA = mCompiler.compile("BndExistenceGlob", ct); // ctA.dump();
 			return ctA;
 		} else if (scope.contains("Before")) {
 			final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase(R.negate()),
@@ -183,7 +189,7 @@ public class PatternToPEA {
 			        // new CounterTrace.DCPhase(R.negate()),
 			        // new CounterTrace.DCPhase(R),
 			        new CounterTrace.DCPhase() });
-			ctA = compiler.compile("TBndExistenceBefore", ct); // ctA.dump();
+			ctA = mCompiler.compile("TBndExistenceBefore", ct); // ctA.dump();
 			return ctA;
 		} else if (scope.contains("until")) {
 			final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase(),
@@ -192,14 +198,14 @@ public class PatternToPEA {
 			        new CounterTrace.DCPhase(P.and(R.negate())), new CounterTrace.DCPhase(P.negate().and(R.negate())),
 			        new CounterTrace.DCPhase(P.and(R.negate())), new CounterTrace.DCPhase(R.negate()),
 			        new CounterTrace.DCPhase() });
-			ctA = compiler.compile("TBndExistenceUntil", ct); // ctA.dump();
+			ctA = mCompiler.compile("TBndExistenceUntil", ct); // ctA.dump();
 			return ctA;
 		} else if (scope.contains("After")) {
 			final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase(),
 			        new CounterTrace.DCPhase(Q), new CounterTrace.DCPhase(), new CounterTrace.DCPhase(P),
 			        new CounterTrace.DCPhase(P.negate()), new CounterTrace.DCPhase(P),
 			        new CounterTrace.DCPhase(P.negate()), new CounterTrace.DCPhase(P), new CounterTrace.DCPhase() });
-			ctA = compiler.compile("TBndExistenceAfter", ct); // ctA.dump();
+			ctA = mCompiler.compile("TBndExistenceAfter", ct); // ctA.dump();
 			return ctA;
 		} else if (scope.contains("Between")) {
 			final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase(),
@@ -208,12 +214,12 @@ public class PatternToPEA {
 			        new CounterTrace.DCPhase(P.and(R.negate())), new CounterTrace.DCPhase(P.negate().and(R.negate())),
 			        new CounterTrace.DCPhase(P.and(R.negate())), new CounterTrace.DCPhase(R.negate()),
 			        new CounterTrace.DCPhase(R), new CounterTrace.DCPhase() });
-			ctA = compiler.compile("TBndExistenceBetween", ct); // ctA.dump();
+			ctA = mCompiler.compile("TBndExistenceBetween", ct); // ctA.dump();
 			return ctA;
 
 		}
 		final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase() });
-		ctA = compiler.compile("NoKnownScope", ct);
+		ctA = mCompiler.compile("NoKnownScope", ct);
 		return ctA;
 	}
 
@@ -227,7 +233,7 @@ public class PatternToPEA {
 		if (scope.contains("Globally")) {
 			final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase(S.negate()),
 			        new CounterTrace.DCPhase(P), new CounterTrace.DCPhase() });
-			ctA = compiler.compile("precedenceGlob", ct); // ctA.dump();
+			ctA = mCompiler.compile("precedenceGlob", ct); // ctA.dump();
 			return ctA;
 		} else if (scope.contains("Before")) {
 			final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
@@ -235,20 +241,20 @@ public class PatternToPEA {
 			        // new CounterTrace.DCPhase(R.negate()),
 			        // new CounterTrace.DCPhase(R),
 			        new CounterTrace.DCPhase() });
-			ctA = compiler.compile("precedenceBefore", ct); // ctA.dump();
+			ctA = mCompiler.compile("precedenceBefore", ct); // ctA.dump();
 			return ctA;
 		} else if (scope.contains("until")) {
 			final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase(),
 			        new CounterTrace.DCPhase(Q.and(R.negate()).and(S.negate())),
 			        new CounterTrace.DCPhase(S.negate().and(R.negate())), new CounterTrace.DCPhase(P.and(R.negate())),
 			        new CounterTrace.DCPhase() });
-			ctA = compiler.compile("precedenceUntil", ct); // ctA.dump();
+			ctA = mCompiler.compile("precedenceUntil", ct); // ctA.dump();
 			return ctA;
 		} else if (scope.contains("After")) {
 			final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase(),
 			        new CounterTrace.DCPhase(Q.and(S.negate())), new CounterTrace.DCPhase(S.negate()),
 			        new CounterTrace.DCPhase(P), new CounterTrace.DCPhase() });
-			ctA = compiler.compile("precedenceAfter", ct); // ctA.dump();
+			ctA = mCompiler.compile("precedenceAfter", ct); // ctA.dump();
 			return ctA;
 		} else if (scope.contains("Between")) {
 			final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase(),
@@ -256,12 +262,12 @@ public class PatternToPEA {
 			        new CounterTrace.DCPhase(S.negate().and(R.negate())),
 			        new CounterTrace.DCPhase(P.and(R.negate()).and(S.negate())), new CounterTrace.DCPhase(R.negate()),
 			        new CounterTrace.DCPhase(R), new CounterTrace.DCPhase() });
-			ctA = compiler.compile("precBet", ct); // ctA.dump();
+			ctA = mCompiler.compile("precBet", ct); // ctA.dump();
 			return ctA;
 
 		}
 		final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase() });
-		ctA = compiler.compile("NoKnownScope", ct);
+		ctA = mCompiler.compile("NoKnownScope", ct);
 		return ctA;
 	}
 
@@ -275,7 +281,7 @@ public class PatternToPEA {
 			final CounterTrace ct = new CounterTrace(
 			        new CounterTrace.DCPhase[] { new CounterTrace.DCPhase(P.negate()), new CounterTrace.DCPhase(S),
 			                new CounterTrace.DCPhase(), new CounterTrace.DCPhase(T), new CounterTrace.DCPhase() });
-			ctA = compiler.compile("precCh12G", ct); // ctA.dump();
+			ctA = mCompiler.compile("precCh12G", ct); // ctA.dump();
 			return ctA;
 		} else if (scope.contains("Before")) {
 			final CounterTrace ct = new CounterTrace(
@@ -285,7 +291,7 @@ public class PatternToPEA {
 			                // new CounterTrace.DCPhase(R.negate()),
 			                // new CounterTrace.DCPhase(R),
 			                new CounterTrace.DCPhase() });
-			ctA = compiler.compile("precCh12B", ct); // ctA.dump();
+			ctA = mCompiler.compile("precCh12B", ct); // ctA.dump();
 			return ctA;
 		} else if (scope.contains("until")) {
 			final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase(P.negate()),
@@ -293,14 +299,14 @@ public class PatternToPEA {
 			        new CounterTrace.DCPhase(P.negate().and(R.negate())),
 			        new CounterTrace.DCPhase(S.and(P.negate()).and(R.negate())), new CounterTrace.DCPhase(R.negate()),
 			        new CounterTrace.DCPhase(T.and(R.negate())), new CounterTrace.DCPhase() });
-			ctA = compiler.compile("precCh12U", ct); // ctA.dump();
+			ctA = mCompiler.compile("precCh12U", ct); // ctA.dump();
 			return ctA;
 		} else if (scope.contains("After")) {
 			final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase(P.negate()),
 			        new CounterTrace.DCPhase(Q.and(P.negate())), new CounterTrace.DCPhase(P.negate()),
 			        new CounterTrace.DCPhase(S.and(P.negate())), new CounterTrace.DCPhase(),
 			        new CounterTrace.DCPhase(T), new CounterTrace.DCPhase() });
-			ctA = compiler.compile("precCh12A", ct); // ctA.dump();
+			ctA = mCompiler.compile("precCh12A", ct); // ctA.dump();
 			return ctA;
 		} else if (scope.contains("Between")) {
 			final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase(P.negate()),
@@ -309,12 +315,12 @@ public class PatternToPEA {
 			        new CounterTrace.DCPhase(S.and(P.negate()).and(R.negate())), new CounterTrace.DCPhase(R.negate()),
 			        new CounterTrace.DCPhase(T.and(R.negate())), new CounterTrace.DCPhase(R.negate()),
 			        new CounterTrace.DCPhase(R), new CounterTrace.DCPhase() });
-			ctA = compiler.compile("precCh12Bet", ct); // ctA.dump();
+			ctA = mCompiler.compile("precCh12Bet", ct); // ctA.dump();
 			return ctA;
 
 		}
 		final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase() });
-		ctA = compiler.compile("NoKnownScope", ct);
+		ctA = mCompiler.compile("NoKnownScope", ct);
 		return ctA;
 	}
 
@@ -341,16 +347,16 @@ public class PatternToPEA {
 			// new CounterTrace.DCPhase()
 			// });
 
-			ctA1 = compiler.compile("precCh21G", ct1); // ctA1.dump();
+			ctA1 = mCompiler.compile("precCh21G", ct1); // ctA1.dump();
 
-			ctA = compiler.compile("precCh21G2", ct); // ctA.dump();
+			ctA = mCompiler.compile("precCh21G2", ct); // ctA.dump();
 			// ctA = (ctA).parallel(ctA1);
 
 			return ctA;
 		} else if (scope.contains("Before")) {
 			final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase() });
 			System.out.println("not yet provided");
-			ctA = compiler.compile("precCh12B", ct); // ctA.dump();
+			ctA = mCompiler.compile("precCh12B", ct); // ctA.dump();
 			return ctA;
 		} else if (scope.contains("until")) {
 			final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
@@ -362,7 +368,7 @@ public class PatternToPEA {
 			        // new CounterTrace.DCPhase(T.and(R.negate())),
 			        new CounterTrace.DCPhase() });
 			System.out.println("not yet provided");
-			ctA = compiler.compile("precCh12U", ct); // ctA.dump();
+			ctA = mCompiler.compile("precCh12U", ct); // ctA.dump();
 			return ctA;
 		} else if (scope.contains("After")) {
 			final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
@@ -374,7 +380,7 @@ public class PatternToPEA {
 			        // new CounterTrace.DCPhase(T),
 			        new CounterTrace.DCPhase() });
 			System.out.println("not yet provided");
-			ctA = compiler.compile("precCh12A", ct); // ctA.dump();
+			ctA = mCompiler.compile("precCh12A", ct); // ctA.dump();
 			return ctA;
 		} else if (scope.contains("Between")) {
 			final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
@@ -388,12 +394,12 @@ public class PatternToPEA {
 			        // new CounterTrace.DCPhase(R),
 			        new CounterTrace.DCPhase() });
 			System.out.println("not yet provided");
-			ctA = compiler.compile("precCh12Bet", ct); // ctA.dump();
+			ctA = mCompiler.compile("precCh12Bet", ct); // ctA.dump();
 			return ctA;
 
 		}
 		final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase() });
-		ctA = compiler.compile("NoKnownScope", ct);
+		ctA = mCompiler.compile("NoKnownScope", ct);
 		return ctA;
 	}
 
@@ -408,22 +414,22 @@ public class PatternToPEA {
 		if (scope.contains("Globally")) {
 			final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase() });
 
-			ctA = compiler.compile("respCh21G", ct); // ctA.dump();
+			ctA = mCompiler.compile("respCh21G", ct); // ctA.dump();
 			return ctA;
 		} else if (scope.contains("Before")) {
 			final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase(R.negate()),
 			        new CounterTrace.DCPhase(S.and(R.negate()).and(T.negate())), new CounterTrace.DCPhase(R.negate()),
 			        new CounterTrace.DCPhase(T.and(R.negate())), new CounterTrace.DCPhase(P.negate().and(R.negate())),
 			        new CounterTrace.DCPhase(R), new CounterTrace.DCPhase() });
-			ctA = compiler.compile("respCh21B", ct); // ctA.dump();
+			ctA = mCompiler.compile("respCh21B", ct); // ctA.dump();
 			return ctA;
 		} else if (scope.contains("until")) {
 			final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase() });
-			ctA = compiler.compile("respCh21U", ct); // ctA.dump();
+			ctA = mCompiler.compile("respCh21U", ct); // ctA.dump();
 			return ctA;
 		} else if (scope.contains("After")) {
 			final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase() });
-			ctA = compiler.compile("respCh21A", ct); // ctA.dump();
+			ctA = mCompiler.compile("respCh21A", ct); // ctA.dump();
 			return ctA;
 		} else if (scope.contains("Between")) {
 			final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase(),
@@ -431,12 +437,12 @@ public class PatternToPEA {
 			        new CounterTrace.DCPhase(S.and(R.negate()).and(T.negate())), new CounterTrace.DCPhase(R.negate()),
 			        new CounterTrace.DCPhase(T.and(R.negate())), new CounterTrace.DCPhase(P.negate().and(R.negate())),
 			        new CounterTrace.DCPhase(R), new CounterTrace.DCPhase() });
-			ctA = compiler.compile("respCh21Bet", ct); // ctA.dump();
+			ctA = mCompiler.compile("respCh21Bet", ct); // ctA.dump();
 			return ctA;
 
 		}
 		final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase() });
-		ctA = compiler.compile("NoKnownScope", ct);
+		ctA = mCompiler.compile("NoKnownScope", ct);
 		return ctA;
 	}
 
@@ -445,7 +451,7 @@ public class PatternToPEA {
 		System.out.println("Not yet implemented");
 		PhaseEventAutomata ctA;
 		final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase() });
-		ctA = compiler.compile("NoKnownScope", ct);
+		ctA = mCompiler.compile("NoKnownScope", ct);
 		return ctA;
 	}
 
@@ -462,7 +468,7 @@ public class PatternToPEA {
 			                new CounterTrace.DCPhase(P, CounterTrace.BOUND_LESS, timebound),
 			                new CounterTrace.DCPhase(P.negate()), new CounterTrace.DCPhase() });
 
-			ctA = compiler.compile("minDurG" + nameindex, ct);
+			ctA = mCompiler.compile("minDurG" + nameindex, ct);
 
 			nameindex++;
 			return ctA;
@@ -474,7 +480,7 @@ public class PatternToPEA {
 			        // new CounterTrace.DCPhase(R.negate()),
 			        // new CounterTrace.DCPhase(R),
 			        new CounterTrace.DCPhase() });
-			ctA = compiler.compile("minDurB" + nameindex, ct); // ctA.dump();
+			ctA = mCompiler.compile("minDurB" + nameindex, ct); // ctA.dump();
 			nameindex++;
 			return ctA;
 		} else if (scope.contains("until")) {
@@ -484,7 +490,7 @@ public class PatternToPEA {
 			        new CounterTrace.DCPhase(P.and(R.negate()), CounterTrace.BOUND_LESS, timebound),
 			        new CounterTrace.DCPhase(R.negate().and(P.negate())), new CounterTrace.DCPhase(R.negate()),
 			        new CounterTrace.DCPhase() });
-			ctA = compiler.compile("minDurU" + nameindex, ct); // ctA.dump();
+			ctA = mCompiler.compile("minDurU" + nameindex, ct); // ctA.dump();
 			nameindex++;
 			return ctA;
 		} else if (scope.contains("After")) {
@@ -492,7 +498,7 @@ public class PatternToPEA {
 			        new CounterTrace.DCPhase(Q), new CounterTrace.DCPhase(), new CounterTrace.DCPhase(P.negate()),
 			        new CounterTrace.DCPhase(P, CounterTrace.BOUND_LESS, timebound),
 			        new CounterTrace.DCPhase(P.negate()), new CounterTrace.DCPhase() });
-			ctA = compiler.compile("minDurA" + nameindex, ct);
+			ctA = mCompiler.compile("minDurA" + nameindex, ct);
 			nameindex++;
 			// ctA.dump();
 			return ctA;
@@ -503,13 +509,13 @@ public class PatternToPEA {
 			        new CounterTrace.DCPhase(P.and(R.negate()), CounterTrace.BOUND_LESS, timebound),
 			        new CounterTrace.DCPhase(R.negate().and(P.negate())), new CounterTrace.DCPhase(R.negate()),
 			        new CounterTrace.DCPhase(R), new CounterTrace.DCPhase() });
-			ctA = compiler.compile("minDurBetween" + nameindex, ct); // ctA.dump();
+			ctA = mCompiler.compile("minDurBetween" + nameindex, ct); // ctA.dump();
 			nameindex++;
 			return ctA;
 
 		}
 		final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase() });
-		ctA = compiler.compile("NoKnownScope", ct);
+		ctA = mCompiler.compile("NoKnownScope", ct);
 		return ctA;
 	}
 
@@ -528,7 +534,7 @@ public class PatternToPEA {
 			        new CounterTrace.DCPhase(P, CounterTrace.BOUND_GREATEREQUAL, timebound), new CounterTrace.DCPhase()
 
 			});
-			ctA = compiler.compile("maxDurG" + nameindex, ct); // ctA.dump();
+			ctA = mCompiler.compile("maxDurG" + nameindex, ct); // ctA.dump();
 			nameindex++;
 			return ctA;
 		} else if (scope.contains("Before")) {
@@ -538,7 +544,7 @@ public class PatternToPEA {
 			        // new CounterTrace.DCPhase(R.negate()),
 			        // new CounterTrace.DCPhase(R),
 			        new CounterTrace.DCPhase() });
-			ctA = compiler.compile("maxDurB" + nameindex, ct); // ctA.dump();
+			ctA = mCompiler.compile("maxDurB" + nameindex, ct); // ctA.dump();
 			nameindex++;
 			return ctA;
 		} else if (scope.contains("until")) {
@@ -548,7 +554,7 @@ public class PatternToPEA {
 			        new CounterTrace.DCPhase(P.and(R.negate()), CounterTrace.BOUND_GREATEREQUAL, timebound),
 			        // new CounterTrace.DCPhase(R.negate()),
 			        new CounterTrace.DCPhase() });
-			ctA = compiler.compile("maxDurU" + nameindex, ct); // ctA.dump();
+			ctA = mCompiler.compile("maxDurU" + nameindex, ct); // ctA.dump();
 			nameindex++;
 			return ctA;
 		} else if (scope.contains("After")) {
@@ -556,7 +562,7 @@ public class PatternToPEA {
 			        new CounterTrace.DCPhase(Q), new CounterTrace.DCPhase(), new CounterTrace.DCPhase(P.negate()),
 			        new CounterTrace.DCPhase(P, CounterTrace.BOUND_GREATEREQUAL, timebound),
 			        new CounterTrace.DCPhase() });
-			ctA = compiler.compile("maxDurA" + nameindex, ct);
+			ctA = mCompiler.compile("maxDurA" + nameindex, ct);
 			nameindex++;
 			// ctA.dump();
 			return ctA;
@@ -565,13 +571,13 @@ public class PatternToPEA {
 			        new CounterTrace.DCPhase(Q.and(R.negate())), new CounterTrace.DCPhase(R.negate()),
 			        new CounterTrace.DCPhase(P.and(R.negate()), CounterTrace.BOUND_GREATEREQUAL, timebound),
 			        new CounterTrace.DCPhase(R.negate()), new CounterTrace.DCPhase(R), new CounterTrace.DCPhase() });
-			ctA = compiler.compile("maxDurBet" + nameindex, ct); // ctA.dump();
+			ctA = mCompiler.compile("maxDurBet" + nameindex, ct); // ctA.dump();
 			nameindex++;
 			return ctA;
 
 		}
 		final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase() });
-		ctA = compiler.compile("NoKnownScope", ct);
+		ctA = mCompiler.compile("NoKnownScope", ct);
 		return ctA;
 	}
 
@@ -587,7 +593,7 @@ public class PatternToPEA {
 			        // new CounterTrace.DCPhase(S.negate(), CounterTrace.BOUND_GREATEREQUAL, timebound),
 			        new CounterTrace.DCPhase(S.negate(), CounterTrace.BOUND_GREATER, timebound),
 			        new CounterTrace.DCPhase() });
-			ctA = compiler.compile("bndResG" + nameindex, ct); // ctA.dump();
+			ctA = mCompiler.compile("bndResG" + nameindex, ct); // ctA.dump();
 			nameindex++;
 			return ctA;
 		} else if (scope.contains("Before")) {
@@ -595,7 +601,7 @@ public class PatternToPEA {
 			        new CounterTrace.DCPhase(R.negate().and(P).and(S.negate())),
 			        new CounterTrace.DCPhase(S.negate().and(R.negate()), CounterTrace.BOUND_GREATEREQUAL, timebound),
 			        new CounterTrace.DCPhase() });
-			ctA = compiler.compile("bndResB" + nameindex, ct); // ctA.dump();
+			ctA = mCompiler.compile("bndResB" + nameindex, ct); // ctA.dump();
 			nameindex++;
 			return ctA;
 		} else if (scope.contains("until")) {
@@ -604,7 +610,7 @@ public class PatternToPEA {
 			        new CounterTrace.DCPhase(P.and(R.negate()).and(S.negate())),
 			        new CounterTrace.DCPhase(S.negate().and(R.negate()), CounterTrace.BOUND_GREATEREQUAL, timebound),
 			        new CounterTrace.DCPhase() });
-			ctA = compiler.compile("bndResU" + nameindex, ct); // ctA.dump();
+			ctA = mCompiler.compile("bndResU" + nameindex, ct); // ctA.dump();
 			nameindex++;
 			return ctA;
 		} else if (scope.contains("After")) {
@@ -613,7 +619,7 @@ public class PatternToPEA {
 			                new CounterTrace.DCPhase(), new CounterTrace.DCPhase(P.and(S.negate())),
 			                new CounterTrace.DCPhase(S.negate(), CounterTrace.BOUND_GREATEREQUAL, timebound),
 			                new CounterTrace.DCPhase() });
-			ctA = compiler.compile("bndResA" + nameindex, ct);
+			ctA = mCompiler.compile("bndResA" + nameindex, ct);
 			nameindex++;
 			// ctA.dump();
 			return ctA;
@@ -623,13 +629,13 @@ public class PatternToPEA {
 			        new CounterTrace.DCPhase(P.and(R.negate()).and(S.negate())),
 			        new CounterTrace.DCPhase(S.negate().and(R.negate()), CounterTrace.BOUND_GREATEREQUAL, timebound),
 			        new CounterTrace.DCPhase(R.negate()), new CounterTrace.DCPhase(R), new CounterTrace.DCPhase() });
-			ctA = compiler.compile("bndResBet" + nameindex, ct); // ctA.dump();
+			ctA = mCompiler.compile("bndResBet" + nameindex, ct); // ctA.dump();
 			nameindex++;
 			return ctA;
 
 		}
 		final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase() });
-		ctA = compiler.compile("NoKnownScope", ct);
+		ctA = mCompiler.compile("NoKnownScope", ct);
 		return ctA;
 	}
 
@@ -642,7 +648,7 @@ public class PatternToPEA {
 		if (scope.contains("Globally")) {
 			final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase(),
 			        new CounterTrace.DCPhase(P.negate(), CounterTrace.BOUND_GREATER, 10), new CounterTrace.DCPhase() });
-			ctA = compiler.compile("periG" + nameindex, ct); // ctA.dump();
+			ctA = mCompiler.compile("periG" + nameindex, ct); // ctA.dump();
 			nameindex++;
 			return ctA;
 		} else if (scope.contains("Before")) {
@@ -651,7 +657,7 @@ public class PatternToPEA {
 			        // new CounterTrace.DCPhase(R.negate()),
 			        // new CounterTrace.DCPhase(R),
 			        new CounterTrace.DCPhase() });
-			ctA = compiler.compile("periB" + nameindex, ct); // ctA.dump();
+			ctA = mCompiler.compile("periB" + nameindex, ct); // ctA.dump();
 			nameindex++;
 			return ctA;
 		} else if (scope.contains("until")) {
@@ -659,7 +665,7 @@ public class PatternToPEA {
 			        new CounterTrace.DCPhase(Q.and(R.negate())), new CounterTrace.DCPhase(R.negate()),
 			        new CounterTrace.DCPhase(P.negate().and(R.negate()), CounterTrace.BOUND_GREATER, timebound),
 			        new CounterTrace.DCPhase() });
-			ctA = compiler.compile("periU" + nameindex, ct); // ctA.dump();
+			ctA = mCompiler.compile("periU" + nameindex, ct); // ctA.dump();
 			nameindex++;
 			return ctA;
 		} else if (scope.contains("After")) {
@@ -667,7 +673,7 @@ public class PatternToPEA {
 			        new CounterTrace.DCPhase(Q), new CounterTrace.DCPhase(),
 			        new CounterTrace.DCPhase(P.negate(), CounterTrace.BOUND_GREATER, timebound),
 			        new CounterTrace.DCPhase() });
-			ctA = compiler.compile("periA" + nameindex, ct);
+			ctA = mCompiler.compile("periA" + nameindex, ct);
 			nameindex++;
 			// ctA.dump();
 			return ctA;
@@ -676,13 +682,13 @@ public class PatternToPEA {
 			        new CounterTrace.DCPhase(Q.and(R.negate())), new CounterTrace.DCPhase(R.negate()),
 			        new CounterTrace.DCPhase(P.negate().and(R.negate()), CounterTrace.BOUND_GREATER, timebound),
 			        new CounterTrace.DCPhase(R.negate()), new CounterTrace.DCPhase(R), new CounterTrace.DCPhase() });
-			ctA = compiler.compile("periBet" + nameindex, ct); // ctA.dump();
+			ctA = mCompiler.compile("periBet" + nameindex, ct); // ctA.dump();
 			nameindex++;
 			return ctA;
 
 		}
 		final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase() });
-		ctA = compiler.compile("NoKnownScope", ct);
+		ctA = mCompiler.compile("NoKnownScope", ct);
 		return ctA;
 	}
 
@@ -695,26 +701,26 @@ public class PatternToPEA {
 			// hier brauchen wir einen anderen Mechanismus denn S.negate müßte bis zum ende des intervalls gelten
 			final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase() });
 			System.out.println("Not yet provided");
-			ctA = compiler.compile("respG", ct); // ctA.dump();
+			ctA = mCompiler.compile("respG", ct); // ctA.dump();
 			return ctA;
 		} else if (scope.contains("Before")) {
 			final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase(R.negate()),
 			        new CounterTrace.DCPhase(P.and(R.negate()).and(S.negate())),
 			        new CounterTrace.DCPhase(S.negate().and(R.negate())), new CounterTrace.DCPhase(R),
 			        new CounterTrace.DCPhase() });
-			ctA = compiler.compile("respB", ct); // ctA.dump();
+			ctA = mCompiler.compile("respB", ct); // ctA.dump();
 			return ctA;
 		} else if (scope.contains("until")) {
 			// hier brauchen wir einen anderen Mechanismus denn S.negate müßte bis zum ende des intervalls gelten
 			final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase(), });
 			System.out.println("Not yet provided");
-			ctA = compiler.compile("respU", ct); // ctA.dump();
+			ctA = mCompiler.compile("respU", ct); // ctA.dump();
 			return ctA;
 		} else if (scope.contains("After")) {
 			// hier brauchen wir einen anderen Mechanismus denn S.negate müßte bis zum ende des intervalls gelten
 			final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase() });
 			System.out.println("Not yet provided");
-			ctA = compiler.compile("respA", ct);
+			ctA = mCompiler.compile("respA", ct);
 			// ctA.dump();
 			return ctA;
 		} else if (scope.contains("Between")) {
@@ -723,12 +729,12 @@ public class PatternToPEA {
 			        new CounterTrace.DCPhase(P.and(R.negate()).and(S.negate())),
 			        new CounterTrace.DCPhase(R.negate().and(S.negate())), new CounterTrace.DCPhase(R),
 			        new CounterTrace.DCPhase() });
-			ctA = compiler.compile("respBet", ct); // ctA.dump();
+			ctA = mCompiler.compile("respBet", ct); // ctA.dump();
 			return ctA;
 
 		}
 		final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase() });
-		ctA = compiler.compile("NoKnownScope", ct);
+		ctA = mCompiler.compile("NoKnownScope", ct);
 		return ctA;
 	}
 
@@ -742,7 +748,7 @@ public class PatternToPEA {
 			final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase(),
 			        new CounterTrace.DCPhase(P, CounterTrace.BOUND_GREATER, timebound),
 			        new CounterTrace.DCPhase(S.negate()), new CounterTrace.DCPhase() });
-			ctA = compiler.compile("inv1" + nameindex, ct); // ctA.dump();
+			ctA = mCompiler.compile("inv1" + nameindex, ct); // ctA.dump();
 			nameindex++;
 
 			return ctA;
@@ -751,7 +757,7 @@ public class PatternToPEA {
 			final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase(R.negate()),
 			        new CounterTrace.DCPhase(P.and(R.negate()), CounterTrace.BOUND_GREATER, timebound),
 			        new CounterTrace.DCPhase(S.negate().and(R.negate())), new CounterTrace.DCPhase() });
-			ctA = compiler.compile("inv" + nameindex, ct); // ctA.dump();
+			ctA = mCompiler.compile("inv" + nameindex, ct); // ctA.dump();
 			nameindex++;
 			return ctA;
 		} else if (scope.contains("until")) {
@@ -761,7 +767,7 @@ public class PatternToPEA {
 			        new CounterTrace.DCPhase(R.negate()),
 			        new CounterTrace.DCPhase(P.and(R.negate()), CounterTrace.BOUND_GREATER, timebound),
 			        new CounterTrace.DCPhase(S.negate().and(R.negate())), new CounterTrace.DCPhase() });
-			ctA = compiler.compile("inv" + nameindex, ct); // ctA.dump();
+			ctA = mCompiler.compile("inv" + nameindex, ct); // ctA.dump();
 			nameindex++;
 
 			return ctA;
@@ -770,7 +776,7 @@ public class PatternToPEA {
 			        new CounterTrace.DCPhase(Q), new CounterTrace.DCPhase(),
 			        new CounterTrace.DCPhase(P, CounterTrace.BOUND_GREATER, timebound),
 			        new CounterTrace.DCPhase(S.negate()), new CounterTrace.DCPhase() });
-			ctA = compiler.compile("inv" + nameindex, ct); // ctA.dump();
+			ctA = mCompiler.compile("inv" + nameindex, ct); // ctA.dump();
 			nameindex++;
 			return ctA;
 		} else if (scope.contains("Between")) {
@@ -779,13 +785,13 @@ public class PatternToPEA {
 			        new CounterTrace.DCPhase(P.and(R.negate()), CounterTrace.BOUND_GREATER, timebound),
 			        new CounterTrace.DCPhase(S.negate().and(R.negate())), new CounterTrace.DCPhase(R.negate()),
 			        new CounterTrace.DCPhase(R), new CounterTrace.DCPhase() });
-			ctA = compiler.compile("inv" + nameindex, ct); // ctA.dump();
+			ctA = mCompiler.compile("inv" + nameindex, ct); // ctA.dump();
 			nameindex++;
 			return ctA;
 
 		}
 		final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase() });
-		ctA = compiler.compile("NoKnownScope", ct);
+		ctA = mCompiler.compile("NoKnownScope", ct);
 		return ctA;
 	}
 
@@ -810,7 +816,7 @@ public class PatternToPEA {
 			final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase(),
 			        new CounterTrace.DCPhase(P), new CounterTrace.DCPhase(CDD.TRUE, CounterTrace.BOUND_LESS, timebound),
 			        new CounterTrace.DCPhase(S.negate()), new CounterTrace.DCPhase() });
-			ctA = compiler.compile("inv1" + nameindex, ct); // ctA.dump();
+			ctA = mCompiler.compile("inv1" + nameindex, ct); // ctA.dump();
 			nameindex++;
 
 			return ctA;
@@ -820,7 +826,7 @@ public class PatternToPEA {
 			        new CounterTrace.DCPhase(P.and(R.negate())),
 			        new CounterTrace.DCPhase(R.negate(), CounterTrace.BOUND_LESS, timebound),
 			        new CounterTrace.DCPhase(S.negate().and(R.negate())), new CounterTrace.DCPhase() });
-			ctA = compiler.compile("inv" + nameindex, ct); // ctA.dump();
+			ctA = mCompiler.compile("inv" + nameindex, ct); // ctA.dump();
 			nameindex++;
 			return ctA;
 		} else if (scope.contains("until")) {
@@ -830,7 +836,7 @@ public class PatternToPEA {
 			        new CounterTrace.DCPhase(R.negate()), new CounterTrace.DCPhase(P.and(R.negate())),
 			        new CounterTrace.DCPhase(R.negate(), CounterTrace.BOUND_LESS, timebound),
 			        new CounterTrace.DCPhase(S.negate().and(R.negate())), new CounterTrace.DCPhase() });
-			ctA = compiler.compile("inv" + nameindex, ct); // ctA.dump();
+			ctA = mCompiler.compile("inv" + nameindex, ct); // ctA.dump();
 			nameindex++;
 
 			return ctA;
@@ -839,7 +845,7 @@ public class PatternToPEA {
 			        new CounterTrace.DCPhase(Q), new CounterTrace.DCPhase(), new CounterTrace.DCPhase(P),
 			        new CounterTrace.DCPhase(CDD.TRUE, CounterTrace.BOUND_LESS, timebound),
 			        new CounterTrace.DCPhase(S.negate()), new CounterTrace.DCPhase() });
-			ctA = compiler.compile("inv" + nameindex, ct); // ctA.dump();
+			ctA = mCompiler.compile("inv" + nameindex, ct); // ctA.dump();
 			nameindex++;
 			return ctA;
 		} else if (scope.contains("Between")) {
@@ -849,13 +855,13 @@ public class PatternToPEA {
 			        new CounterTrace.DCPhase(R.negate(), CounterTrace.BOUND_LESS, timebound),
 			        new CounterTrace.DCPhase(S.negate().and(R.negate())), new CounterTrace.DCPhase(R.negate()),
 			        new CounterTrace.DCPhase(R), new CounterTrace.DCPhase() });
-			ctA = compiler.compile("inv" + nameindex, ct); // ctA.dump();
+			ctA = mCompiler.compile("inv" + nameindex, ct); // ctA.dump();
 			nameindex++;
 			return ctA;
 
 		}
 		final CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase() });
-		ctA = compiler.compile("NoKnownScope", ct);
+		ctA = mCompiler.compile("NoKnownScope", ct);
 		return ctA;
 	}
 
@@ -879,7 +885,7 @@ public class PatternToPEA {
 		        new CounterTrace.DCPhase(S.negate(), CounterTrace.BOUND_GREATER, bound), new CounterTrace.DCPhase() });
 		// MCTrace mct = new MCTrace(ct, entry, exit, missing, true);
 		// mctA = compiler.compile("TBndResp", mct); //mctA.dump();
-		ctA = compiler.compile("TBndResp" + nameindex, ct); // ctA.dump();
+		ctA = mCompiler.compile("TBndResp" + nameindex, ct); // ctA.dump();
 		nameindex++;
 		return ctA;
 		// return mctA;
@@ -891,7 +897,7 @@ public class PatternToPEA {
 		        new CounterTrace.DCPhase[] { new CounterTrace.DCPhase(S.negate().and(R.negate())),
 		                new CounterTrace.DCPhase((P.and(R.negate())).or(S.negate().and(R.negate()))),
 		                new CounterTrace.DCPhase() });
-		ctA = compiler.compile("Test", ct); // ctA.dump();
+		ctA = mCompiler.compile("Test", ct); // ctA.dump();
 		return ctA;
 	}
 
@@ -902,9 +908,9 @@ public class PatternToPEA {
 		        new CounterTrace.DCPhase[] { new CounterTrace.DCPhase(A, CounterTrace.BOUND_LESS, 1),
 		                new CounterTrace.DCPhase(B, CounterTrace.BOUND_LESSEQUAL, 2) });
 		MCTrace mct = new MCTrace(ct, entry, exit, missing, true);
-		compiler.compile("T3", mct).dump();
+		mCompiler.compile("T3", mct).dump();
 		mct = new MCTrace(ct, null, exit, missing, true);
-		compiler.compile("T4", mct).dump();
+		mCompiler.compile("T4", mct).dump();
 	}
 
 	public PhaseEventAutomata deadlockCounterexample(final CDD P, final CDD S, final int bound, final int bound2) {
@@ -927,9 +933,9 @@ public class PatternToPEA {
 		// new CounterTrace.DCPhase(P),
 		// new CounterTrace.DCPhase()
 		// });
-		ctA = compiler.compile("TCounterEx", ct);
+		ctA = mCompiler.compile("TCounterEx", ct);
 		ctA.dump();
-		ctA2 = compiler.compile("TCounterEx2", ct2);
+		ctA2 = mCompiler.compile("TCounterEx2", ct2);
 		ctA2.dump();
 		ctA = ctA.parallel(ctA2);
 		ctA.dump();
@@ -1035,6 +1041,6 @@ public class PatternToPEA {
 	}
 
 	public static void main(final String[] param) {
-		new PatternToPEA().run();
+		new PatternToPEA(ILogger.getLogger("")).run();
 	}
 }

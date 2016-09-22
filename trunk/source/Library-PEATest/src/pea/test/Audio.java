@@ -8,6 +8,7 @@ import java.util.List;
 
 import org.w3c.dom.Document;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import pea.BooleanDecision;
 import pea.CDD;
 import pea.CounterTrace;
@@ -178,7 +179,7 @@ public class Audio {
 	}
 	
 	PhaseEventAutomata create4DC(final CounterTrace ct, final String name) {
-		final Trace2PEACompiler compiler = new Trace2PEACompiler();
+		final Trace2PEACompiler compiler = new Trace2PEACompiler(ILogger.getLogger(""));
 		final PhaseEventAutomata pea = compiler.compile(name, new MCTrace(ct, null, null, null, false));
 		return abstractAutomaton(pea, ".*st[01W]*2.*");
 	}

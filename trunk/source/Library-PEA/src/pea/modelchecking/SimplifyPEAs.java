@@ -617,7 +617,7 @@ public class SimplifyPEAs {
 
 			// Compile model-check formula and generate the appropriate automata.
 			if (formulafile != null) {
-				final Compiler compiler = new Compiler(false);
+				final Compiler compiler = new Compiler(ILogger.getLogger(SimplifyPEAs.DEFAULT_LOGGER),false);
 				final ArrayList<PEATestAutomaton[]> peanetList = compiler.compile(formulafile, "");
 				if (peanetList.size() > 1) {
 					simplifier.logger.warn("The disjuncts in the normal form have to be checked independently.\n"

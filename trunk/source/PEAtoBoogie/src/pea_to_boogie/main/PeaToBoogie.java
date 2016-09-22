@@ -79,12 +79,12 @@ public class PeaToBoogie implements ISource {
 
 	@Override
 	public IElement parseAST(File file) throws Exception {
-		final Translator translator = new Translator();
+		final Translator translator = new Translator(mLogger);
 		final String inputPath = file.getAbsolutePath();
 		mFileNames = new ArrayList<String>();
 		mFileNames.add(inputPath);
 		mLogger.info("Parsing: '" + inputPath + "'");
-		final srParsePattern[] patterns = new ReqToPEA().genPatterns(inputPath);
+		final srParsePattern[] patterns = new ReqToPEA(mLogger).genPatterns(inputPath);
 		// TODO: Add options to this cruel program
 		final BitSet vacuityChecks = new BitSet(patterns.length);
 		vacuityChecks.set(0, patterns.length);

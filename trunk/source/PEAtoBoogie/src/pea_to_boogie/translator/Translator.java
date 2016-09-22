@@ -61,6 +61,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import pea.Phase;
 import pea.PhaseBits;
 import pea.PhaseEventAutomata;
@@ -136,6 +137,12 @@ public class Translator {
 	 * index reqNr+1 and the location for code that is not specific to any requirements in index 0.
 	 */
 	public BoogieLocation[] boogieLocations;
+	
+	private ILogger mLogger;
+	
+	public Translator(ILogger logger){
+		mLogger = logger;
+	}
 	
 	/**
 	 * Set the input file name. This is used to annotate the Boogie code with the right file name. The Location object
@@ -918,7 +925,7 @@ public class Translator {
 	
 	public Unit genBoogie(final srParsePattern[] patterns) {
 		mRequirements = patterns;
-		return genBoogie(new ReqToPEA().genPEA(patterns));
+		return genBoogie(new ReqToPEA(mLogger).genPEA(patterns));
 	}
 	
 	public Unit genBoogie(final PhaseEventAutomata[] automata) {

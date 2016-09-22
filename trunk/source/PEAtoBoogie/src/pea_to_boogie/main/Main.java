@@ -31,6 +31,7 @@ import java.io.PrintWriter;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogieOutput;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import pea.PhaseEventAutomata;
 import pea.modelchecking.PEAXML2JConverter;
 import pea_to_boogie.translator.Translator;
@@ -44,13 +45,13 @@ public class Main{
 			 return;
 		 }
 
- 		 final Translator translator = new Translator();
+ 		 final Translator translator = new Translator(ILogger.getLogger(""));
     	 
 	     if (args[0].endsWith(".req") && args[1].endsWith(".bpl") && args.length == 3) {
 	    	 final String reqFilePath = args[0];
 	         final String boogieFilePath = args[1];
 	         final int combinationNum = Integer.parseInt(args[2]);
-			 final srParsePattern[] patterns = new ReqToPEA().genPatterns(reqFilePath);
+			 final srParsePattern[] patterns = new ReqToPEA(ILogger.getLogger("")).genPatterns(reqFilePath);
 	         if (!(1 <= combinationNum & combinationNum <= patterns.length)) {
 	        	 throw new IllegalArgumentException("The valid range of combinationNum is integers in [1, pea.length].");
 	         }
@@ -69,8 +70,8 @@ public class Main{
 	     } else if (args[0].endsWith(".req") && args[1].endsWith(".xml")) {
 	    	 final String reqFilePath = args[0];
 	    	 final String xmlFilePath = args[1];
-			 final srParsePattern[] patterns = new ReqToPEA().genPatterns(reqFilePath);
-	    	 new ReqToPEA().genPEAforUPPAAL(patterns, xmlFilePath);
+			 final srParsePattern[] patterns = new ReqToPEA(ILogger.getLogger("")).genPatterns(reqFilePath);
+	    	 new ReqToPEA(ILogger.getLogger("")).genPEAforUPPAAL(patterns, xmlFilePath);
 	    	 System.out.println("==================================================");
 	    	 System.out.println("Translation to Uppaal xml in "+args[1]+" is done!");
 	    	 System.out.println("==================================================");

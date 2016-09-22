@@ -29,6 +29,7 @@ package pea.modelchecking;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import pea.PEATestAutomaton;
 import pea.PhaseEventAutomata;
 
@@ -85,7 +86,7 @@ public class SimplifyPEAsUppaal extends SimplifyPEAs {
 
 			// Compile model-check formula and generate the appropriate automata.
 			if (formulafile != null) {
-				final Compiler compiler = new Compiler(false);
+				final Compiler compiler = new Compiler(ILogger.getLogger(SimplifyPEAsUppaal.DEFAULT_LOGGER),  false);
 				final ArrayList<PEATestAutomaton[]> peanetList = compiler.compile(formulafile, "");
 				if (peanetList.size() > 1) {
 					simplifier.logger

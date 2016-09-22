@@ -94,7 +94,7 @@ public class Compiler {
 	private String peaNetPrefix = "peaNet";
 	private String peaPrefix = "pea";
 
-	private ILogger logger = null;
+	private ILogger mLogger = null;
 
 	private boolean parallel = false;
 
@@ -118,16 +118,11 @@ public class Compiler {
 	 * @see ILogger
 	 * @see PropertyConfigurator
 	 */
-	public Compiler(final String loggerName, final boolean useZDecision) throws Exception {
-		if (loggerName.equals("")) {
-			logger = ILogger.getLogger(Compiler.DEFAULT_LOGGER);
-		} else {
-			logger = ILogger.getLogger(loggerName);
-		}
-
+	public Compiler(ILogger logger, final String loggerName, final boolean useZDecision) throws Exception {
+		mLogger = logger;
 		mcFormCompiler = new TestForm2MCFormCompiler();
 		traceConverter = new MCTraceXML2JConverter(useZDecision);
-		traceCompiler = new Trace2PEACompiler();
+		traceCompiler = new Trace2PEACompiler(logger);
 		peaConverter = new PEAJ2XMLConverter();
 		new XMLWriter();
 	}
@@ -135,8 +130,8 @@ public class Compiler {
 	/**
 	 * Initialises the Compiler object with the default logger.
 	 */
-	public Compiler(final boolean useZDecision) throws Exception {
-		this("", useZDecision);
+	public Compiler(ILogger logger, final boolean useZDecision) throws Exception {
+		this(logger, "", useZDecision);
 	}
 
 	/**
@@ -279,10 +274,10 @@ public class Compiler {
 			resultList.add(peas);
 		}
 
-		logger.info("Duration Compilation NormalForm = " + durNormalForm + "(ms)");
+		mLogger.info("Duration Compilation NormalForm = " + durNormalForm + "(ms)");
 		final long durPEAs = System.currentTimeMillis() - startTime - durNormalForm;
-		logger.info("Duration Compilation PEAS       = " + durPEAs + "(ms)");
-		logger.info("Duration Compilation            = " + (durPEAs + durNormalForm) + "(ms)");
+		mLogger.info("Duration Compilation PEAS       = " + durPEAs + "(ms)");
+		mLogger.info("Duration Compilation            = " + (durPEAs + durNormalForm) + "(ms)");
 		return resultList;
 	}
 
@@ -384,7 +379,7 @@ public class Compiler {
 
 		Compiler compiler = null;
 		try {
-			compiler = new Compiler(false);
+			compiler = new Compiler(ILogger.getLogger(Compiler.DEFAULT_LOGGER), false);
 		} catch (final Exception e) {
 			System.err.println("Compiler could not be initialised");
 			e.printStackTrace();
