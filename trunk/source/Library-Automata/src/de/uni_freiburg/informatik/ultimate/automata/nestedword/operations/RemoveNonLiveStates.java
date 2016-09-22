@@ -98,7 +98,7 @@ public final class RemoveNonLiveStates<LETTER, STATE> extends UnaryNwaOperation<
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
 		}
-//		assert (new TransitionConsitenceCheck<LETTER, STATE>(mResult)).consistentForAll();
+		// assert (new TransitionConsitenceCheck<LETTER, STATE>(mResult)).consistentForAll();
 	}
 	
 	@Override
@@ -128,29 +128,33 @@ public final class RemoveNonLiveStates<LETTER, STATE> extends UnaryNwaOperation<
 			mLogger.info("Start testing correctness of " + operationName());
 		}
 		boolean correct = true;
-//		correct = correct && (ResultChecker.nwaLanguageInclusion(mInput, mResult) == null);
-//		correct = correct && (ResultChecker.nwaLanguageInclusion(mResult, mInput) == null);
+		// correct = correct && (ResultChecker.nwaLanguageInclusion(mInput, mResult) == null);
+		// correct = correct && (ResultChecker.nwaLanguageInclusion(mResult, mInput) == null);
 		assert correct;
 		final ReachableStatesCopy<LETTER, STATE> rsc =
 				new ReachableStatesCopy<>(mServices, mOperand, false, false, false, false);
-//		Set<UpDownEntry<STATE>> rsaEntries = new HashSet<UpDownEntry<STATE>>();
-//		for (UpDownEntry<STATE> rde : mReach.getRemovedUpDownEntry()) {
-//			rsaEntries.add(rde);
-//		}
-//		Set<UpDownEntry<STATE>> rscEntries = new HashSet<UpDownEntry<STATE>>();
-//		for (UpDownEntry<STATE> rde : rsc.getRemovedUpDownEntry()) {
-//			rscEntries.add(rde);
-//		}
-//		correct = correct && ResultChecker.isSubset(rsaEntries,rscEntries);
-//		assert correct;
-//		correct = correct && ResultChecker.isSubset(rscEntries,rsaEntries);
-//		assert correct;
+		/*
+		final Set<UpDownEntry<STATE>> rsaEntries = new HashSet<UpDownEntry<STATE>>();
+		for (final UpDownEntry<STATE> rde : mReach.getRemovedUpDownEntry()) {
+			rsaEntries.add(rde);
+		}
+		final Set<UpDownEntry<STATE>> rscEntries = new HashSet<UpDownEntry<STATE>>();
+		for (final UpDownEntry<STATE> rde : rsc.getRemovedUpDownEntry()) {
+			rscEntries.add(rde);
+		}
+		correct = correct && ResultChecker.isSubset(rsaEntries, rscEntries);
+		assert correct;
+		correct = correct && ResultChecker.isSubset(rscEntries, rsaEntries);
+		assert correct;
+		*/
 		rsc.removeNonLiveStates();
 		final DoubleDeckerAutomaton<LETTER, STATE> reachableStatesCopy =
 				(DoubleDeckerAutomaton<LETTER, STATE>) rsc.getResult();
-//		correct = correct && mResult.getStates().isEmpty()
-//				|| ResultChecker.isSubset(reachableStatesCopy.getStates(), mResult.getStates());
-//		assert correct;
+		/*
+		correct = correct && mResult.getStates().isEmpty()
+				|| ResultChecker.isSubset(reachableStatesCopy.getStates(), mResult.getStates());
+		assert correct;
+		*/
 		correct = correct && ResultChecker.isSubset(mResult.getStates(), reachableStatesCopy.getStates());
 		assert correct;
 		final Collection<STATE> rsaStates = mResult.getStates();
@@ -158,8 +162,10 @@ public final class RemoveNonLiveStates<LETTER, STATE> extends UnaryNwaOperation<
 		correct = correct && ResultChecker.isSubset(rsaStates, rscStates);
 		assert correct;
 		// does not hold. Old non-live removal has bugs, see 'removeNonLive-Bug05.ats' example
-//		correct = correct && ResultChecker.isSubset(rscStates,rsaStates);
-//		assert correct;
+		/*
+		correct = correct && ResultChecker.isSubset(rscStates,rsaStates);
+		assert correct;
+		*/
 		correct = correct && checkEachState(reachableStatesCopy);
 		
 		final List<NestedLassoWord<LETTER>> lassoWords = new ArrayList<>();
@@ -241,8 +247,8 @@ public final class RemoveNonLiveStates<LETTER, STATE> extends UnaryNwaOperation<
 	
 	private boolean checkAcceptance(final NestedLassoWord<LETTER> nlw,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataLibraryException {
-		final boolean op = (new BuchiAccepts<LETTER, STATE>(mServices, operand, nlw)).getResult();
-		final boolean res = (new BuchiAccepts<LETTER, STATE>(mServices, mResult, nlw)).getResult();
+		final boolean op = (new BuchiAccepts<>(mServices, operand, nlw)).getResult();
+		final boolean res = (new BuchiAccepts<>(mServices, mResult, nlw)).getResult();
 		final boolean correct = op == res;
 		assert correct : operationName() + " wrong result!";
 		return correct;

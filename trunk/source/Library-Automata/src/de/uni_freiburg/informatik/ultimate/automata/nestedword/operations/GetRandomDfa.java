@@ -467,10 +467,15 @@ public final class GetRandomDfa extends GeneralOperation<String, String> {
 		}
 		
 		if (!mEnableCaching) {
-			sPermutationsTable = null;
+			setTable(null);
 		}
 		
 		return sequence;
+	}
+
+	@SuppressWarnings("squid:S2444")
+	private static void setTable(final BigInteger[][] nextPermutationsTable) {
+		sPermutationsTable = nextPermutationsTable;
 	}
 	
 	/**
@@ -652,15 +657,15 @@ public final class GetRandomDfa extends GeneralOperation<String, String> {
 		int maxAllowedToDelete;
 		if (mEnsureIsConnected) {
 			//Ensure flag edges are not deleted
-			final float percOfFlags = (mFlags.size() + 0F) / amountOfTrans;
-			// TODO Christian 2016-09-04: Is the following line correct? What does '(PERC_FULL + 0.0f) / PERC_FULL' do?
-			maxAllowedToDelete = Math.round((((PERC_FULL + 0F) / PERC_FULL) - percOfFlags) * amountOfTrans);
+			final double percOfFlags = (mFlags.size() + 0D) / amountOfTrans;
+			// TODO Christian 2016-09-04: Is the following line correct? What does '(PERC_FULL + 0D) / PERC_FULL' do?
+			maxAllowedToDelete = (int) Math.round((((PERC_FULL + 0D) / PERC_FULL) - percOfFlags) * amountOfTrans);
 		} else {
 			//All edges are allowed to delete
 			maxAllowedToDelete = amountOfTrans;
 		}
 		
-		final int desiredToDelete = Math.round(((PERC_FULL - mPercOfTotality + 0F) / PERC_FULL) * amountOfTrans);
+		final int desiredToDelete = (int) Math.round(((PERC_FULL - mPercOfTotality + 0D) / PERC_FULL) * amountOfTrans);
 		final int amountToDelete = Math.min(maxAllowedToDelete, desiredToDelete);
 		
 		final int variantThreshold = dfa.length / 2;
@@ -682,11 +687,11 @@ public final class GetRandomDfa extends GeneralOperation<String, String> {
 		return transToDelete;
 	}
 	
-	private boolean generateRandomIndices(final int[] dfa, final int amountToDelete,
-			final Set<Integer> transToDelete, final int generationVariantMaxTries) {
+	private boolean generateRandomIndices(final int[] dfa, final int amountToDelete, final Set<Integer> transToDelete,
+			final int generationVariantMaxTries) {
 		int counter = 0;
 		while (transToDelete.size() < amountToDelete) {
-			final int transition = mRandom.nextInt(dfa.length);
+			final Integer transition = mRandom.nextInt(dfa.length);
 			if (mEnsureIsConnected) {
 				//Don't add flag edges for deletion
 				if (!mFlags.contains(transition)) {
@@ -818,8 +823,8 @@ public final class GetRandomDfa extends GeneralOperation<String, String> {
 		// first occurrence of 'node' is between 'firstPossiblePos' and
 		// 'PRE_SEQUENCE_LENGTH - 1'.
 		for (int i = firstPossiblePos; i <= preSequenceLength - 1; i++) {
-			permutationsPerStep[counter] = sPermutationsTable[node][i]
-					.multiply(BigInteger.valueOf((int) Math.pow(node, i - firstPossiblePos)));
+			permutationsPerStep[counter] =
+					sPermutationsTable[node][i].multiply(BigInteger.valueOf(node).pow(i - firstPossiblePos));
 			permutations = permutations.add(permutationsPerStep[counter]);
 			counter++;
 		}
@@ -833,9 +838,8 @@ public final class GetRandomDfa extends GeneralOperation<String, String> {
 		for (int i = firstPossiblePos; i <= preSequenceLength - 1; i++) {
 			if (permutation.compareTo(permutationsPerStep[counter]) < 0) {
 				return i;
-			} else {
-				permutation = permutation.subtract(permutationsPerStep[counter]);
 			}
+			permutation = permutation.subtract(permutationsPerStep[counter]);
 			counter++;
 		}
 		return preSequenceLength - 1;
@@ -906,10 +910,10 @@ public final class GetRandomDfa extends GeneralOperation<String, String> {
 			// Calculate the rightest entry of the current row using the
 			// diagonal right entry of the bottom row.
 			BigInteger permutations = BigInteger.ZERO;
-			
+			final int curNodePlusOne = curNode + 1;
 			for (int i = 0; i <= mAlphabetSize - 1; i++) {
-				permutations = permutations.add(nextPermutationsTable[curNode + 1][preSequenceLength + i]
-						.multiply(BigInteger.valueOf((int) Math.pow(curNode + 1D, i))));
+				permutations = permutations.add(nextPermutationsTable[curNodePlusOne][preSequenceLength + i]
+						.multiply(BigInteger.valueOf(curNodePlusOne).pow(i)));
 			}
 			nextPermutationsTable[curNode][preSequenceLength - 1] = permutations;
 			
@@ -917,11 +921,12 @@ public final class GetRandomDfa extends GeneralOperation<String, String> {
 			// using the righter entry of this row and the diagonal right entry
 			// of the bottom row.
 			for (int i = preSequenceLength - 2; i >= curNode - 1; i--) {
-				nextPermutationsTable[curNode][i] = BigInteger.valueOf(curNode + 1L)
-						.multiply(nextPermutationsTable[curNode][i + 1]).add(nextPermutationsTable[curNode + 1][i + 1]);
+				nextPermutationsTable[curNode][i] =
+						BigInteger.valueOf(curNodePlusOne).multiply(nextPermutationsTable[curNode][i + 1])
+								.add(nextPermutationsTable[curNodePlusOne][i + 1]);
 			}
 		}
 		
-		sPermutationsTable = nextPermutationsTable;
+		setTable(nextPermutationsTable);
 	}
 }

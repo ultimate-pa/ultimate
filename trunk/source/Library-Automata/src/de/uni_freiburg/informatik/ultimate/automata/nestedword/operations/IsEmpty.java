@@ -235,6 +235,8 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 	 *            Ultimate services
 	 * @param operand
 	 *            input NWA
+	 * @param strategy
+	 *            search strategy
 	 * @see #IsEmpty(AutomataLibraryServices, INestedWordAutomatonSimple)
 	 */
 	public IsEmpty(final AutomataLibraryServices services, final INestedWordAutomatonSimple<LETTER, STATE> operand,
@@ -329,25 +331,29 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 		markVisited(state, callPred);
 	}
 	
-//  The following implementation of dequeue is faster but leads to unsound
-//	results. See BugBfsEmptinessLowPriorityCallQueue.fat for details.
-//  Alternative workaround (where we may still use the low priority call queue):
-//  When final state is reached, process the whole call queue before
-//  computation of accepting run.
-//	/**
-//	 * Dequeue a state pair. If available take a state pair that has been
-//	 * discovered by taking an internal transition, a return transition or a
-//	 * summary. If not take a state pair that has been discovered by taking a
-//	 * call transition.
-//	 */
-//	private IState<LETTER,STATE>[] dequeue() {
-//		if (!mqueue.isEmpty()) {
-//			return mqueue.removeFirst();
-//		}
-//		else {
-//			return mqueueCall.removeFirst();
-//		}
-//	}
+	//  The following implementation of dequeue is faster but leads to unsound
+	//	results. See BugBfsEmptinessLowPriorityCallQueue.fat for details.
+	//  Alternative workaround (where we may still use the low priority call queue):
+	//  When final state is reached, process the whole call queue before
+	//  computation of accepting run.
+	/*
+	/**
+	 * Dequeue a state pair. If available take a state pair that has been
+	 * discovered by taking an internal transition, a return transition or a
+	 * summary. If not take a state pair that has been discovered by taking a
+	 * call transition.
+	 */
+	/*
+	private IState<LETTER,STATE>[] dequeue() {
+		if (!mqueue.isEmpty()) {
+			return mqueue.removeFirst();
+		}
+		else {
+			return mqueueCall.removeFirst();
+		}
+	}
+	*/
+	
 	/**
 	 * Dequeue a state pair. If available take a state pair that has been
 	 * discovered by taking a
@@ -550,7 +556,7 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 	@SuppressWarnings("squid:S1698")
 	private void addRunInformationCall(final STATE succ, final STATE succK, final LETTER symbol, final STATE state,
 			final STATE stateK) {
-//		mLogger.debug("Call SubrunInformation: From ("+succ+","+succK+") can go to ("+state+","+stateK+")");
+		// mLogger.debug("Call SubrunInformation: From ("+succ+","+succK+") can go to ("+state+","+stateK+")");
 		// equality intended here
 		assert state == succK;
 		Map<STATE, Map<STATE, NestedRun<LETTER, STATE>>> succK2stateK2Run = mCallSubRun.get(succ);
@@ -569,10 +575,11 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 			stateK2Run = new HashMap<>();
 			succK2stateK2Run.put(succK, stateK2Run);
 		}
-//		The following assertion is wrong, there can be a two different call
-//		transitions from stateK to state. (But in this case we always want to
-//		take the one that was first discovered.)
-//		assert (!stateK2Run.containsKey(stateK));
+		/*
+		 * The following assertion is wrong, there can be a two different call transitions from stateK to state.
+		 * (But in this case we always want to take the one that was first discovered.)
+		 */
+		// assert (!stateK2Run.containsKey(stateK));
 		final NestedRun<LETTER, STATE> run = new NestedRun<>(state, symbol, NestedWord.PLUS_INFINITY, succ);
 		stateK2Run.put(stateK, run);
 	}
@@ -614,16 +621,16 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 		return callStatesOfCallStates;
 	}
 	
-//	private void addCallStatesOfCallState(IState<LETTER,STATE> callState,
-//			                              IState<LETTER,STATE> callStateOfCallState) {
-//		Set<IState<LETTER,STATE>> callStatesOfCallStates =
-//							mCallStatesOfCallState.get(callState);
-//		if (callStatesOfCallStates == null) {
-//			callStatesOfCallStates = new HashSet<IState<LETTER,STATE>>();
-//			mCallStatesOfCallState.put(callState,callStatesOfCallStates);
-//		}
-//		callStatesOfCallStates.add(callStateOfCallState);
-//	}
+	/*
+	private void addCallStatesOfCallState(IState<LETTER, STATE> callState, IState<LETTER, STATE> callStateOfCallState) {
+		Set<IState<LETTER, STATE>> callStatesOfCallStates = mCallStatesOfCallState.get(callState);
+		if (callStatesOfCallStates == null) {
+			callStatesOfCallStates = new HashSet<IState<LETTER, STATE>>();
+			mCallStatesOfCallState.put(callState, callStatesOfCallStates);
+		}
+		callStatesOfCallStates.add(callStateOfCallState);
+	}
+	*/
 	
 	/**
 	 * Store information about a discovered summary.
@@ -654,7 +661,7 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 	 * length two.
 	 */
 	private NestedRun<LETTER, STATE> constructRun(final STATE stateIn, final STATE stateKin) {
-//		mLogger.debug("Reconstruction from " + state + " " + stateK);
+		// mLogger.debug("Reconstruction from " + state + " " + stateK);
 		STATE state = stateIn;
 		STATE stateK = stateKin;
 		NestedRun<LETTER, STATE> run = new NestedRun<>(state);
@@ -715,7 +722,7 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 					mReconstructionStack.pop();
 					return true;
 				}
-//				throw new AssertionError();
+				// throw new AssertionError();
 			}
 		}
 		return false;
@@ -768,7 +775,7 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 			if (mLogger.isWarnEnabled()) {
 				mLogger.warn("Correctness of emptinessCheck not tested.");
 			}
-			correct = (new Accepts<LETTER, STATE>(mServices, mOperand, mAcceptingRun.getWord())).getResult();
+			correct = (new Accepts<>(mServices, mOperand, mAcceptingRun.getWord())).getResult();
 			if (mLogger.isInfoEnabled()) {
 				mLogger.info("Finished testing correctness of emptinessCheck");
 			}
