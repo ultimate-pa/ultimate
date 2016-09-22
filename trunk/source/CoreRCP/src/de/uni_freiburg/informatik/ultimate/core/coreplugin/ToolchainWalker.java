@@ -88,6 +88,9 @@ final class ToolchainWalker implements IToolchainCancel {
 
 	public void walk(final CompleteToolchainData data, final IProgressMonitorService service,
 			final IToolchainProgressMonitor monitor) throws Throwable {
+		if (mCountDownLatch.getCount() != 1) {
+			throw new IllegalStateException("You cannot reuse the toolchain walker");
+		}
 		try {
 			walkUnprotected(data, service, monitor);
 		} finally {
@@ -146,7 +149,6 @@ final class ToolchainWalker implements IToolchainCancel {
 		if (mToolchainCancelRequest || monitor.isCanceled()) {
 			mLogger.info("Toolchain execution was canceled (user or tool) before executing " + pluginId);
 			return true;
-
 		}
 
 		if (!service.continueProcessing()) {
@@ -155,7 +157,6 @@ final class ToolchainWalker implements IToolchainCancel {
 			mLogger.info("Toolchain execution was canceled (Timeout) before executing " + pluginId);
 			return true;
 		}
-
 		return false;
 	}
 
