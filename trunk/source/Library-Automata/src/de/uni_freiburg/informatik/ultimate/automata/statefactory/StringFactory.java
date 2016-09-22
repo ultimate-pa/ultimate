@@ -49,7 +49,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
 public class StringFactory implements IStateFactory<String> {
-	
 	private static final String EMPTY_STRING = "";
 	private static final String EMPTY_SET = "{}";
 	private static final char INFINITY = '∞';
@@ -132,25 +131,26 @@ public class StringFactory implements IStateFactory<String> {
 		return "€";
 	}
 	
-//	@Override
-//	public String getContentOnPetriNet2FiniteAutomaton(Collection<String> cList) {
-//		StringBuilder sb = new StringBuilder();
-//		sb.append(OPEN_BRACE);
-//		boolean firstElement = true;
-//		for (String content :cList) {
-//			if (firstElement) {
-//				firstElement = false;
-//			}
-//			else {
-//				sb.append(",");
-//			}
-//			sb.append(content);
-//		}
-//		sb.append(CLOSE_BRACE);
-//		return sb.toString();
-//	}
+	/*
+	@Override
+	public String getContentOnPetriNet2FiniteAutomaton(Collection<String> cList) {
+		StringBuilder sb = new StringBuilder();
+		sb.append(OPEN_BRACE);
+		boolean firstElement = true;
+		for (String content :cList) {
+			if (firstElement) {
+				firstElement = false;
+			}
+			else {
+				sb.append(",");
+			}
+			sb.append(content);
+		}
+		sb.append(CLOSE_BRACE);
+		return sb.toString();
+	}
+	*/
 	
-	@SuppressWarnings("fb-contrib:OCP_OVERLY_CONCRETE_PARAMETER")
 	@Override
 	public String getContentOnPetriNet2FiniteAutomaton(final Marking<?, String> marking) {
 		final StringBuilder builder = new StringBuilder(marking.size() * MINIMUM_LIST_SIZE);
@@ -184,8 +184,7 @@ public class StringFactory implements IStateFactory<String> {
 			return complementState.toString();
 		}
 		
-		final boolean isNestedWordAutomaton =
-				!complementState.getOperand().getCallAlphabet().isEmpty();
+		final boolean isNestedWordAutomaton = !complementState.getOperand().getCallAlphabet().isEmpty();
 		final StringBuilder builder = new StringBuilder();
 		builder.append(OPEN_BRACE);
 		for (final StateWithRankInfo<String> downState : complementState.getDownStates()) {
@@ -249,8 +248,7 @@ public class StringFactory implements IStateFactory<String> {
 	}
 	
 	private static void prettyprintCollectionOfStates(final StringBuilder builder,
-			final List<Pair<StateWithRankInfo<String>, String>> collection,
-			final boolean isNestedWordAutomaton) {
+			final List<Pair<StateWithRankInfo<String>, String>> collection, final boolean isNestedWordAutomaton) {
 		if (collection.isEmpty()) {
 			builder.append(EMPTY_SET);
 		} else {
