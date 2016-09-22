@@ -90,6 +90,7 @@ public final class ConcurrentProduct<LETTER, STATE> extends BinaryNwaOperation<L
 	 *            {@code true} iff a concurrent prefix product should be created (i.e., a place is final if at least one
 	 *            of the old places was final)
 	 */
+	@SuppressWarnings("squid:S1067")
 	public ConcurrentProduct(final AutomataLibraryServices services,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand, final boolean concurrentPrefixProduct) {
