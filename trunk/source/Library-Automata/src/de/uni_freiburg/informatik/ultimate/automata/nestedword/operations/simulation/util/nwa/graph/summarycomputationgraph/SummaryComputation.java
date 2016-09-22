@@ -390,7 +390,7 @@ public class SummaryComputation<LETTER, STATE> {
 				preds.add(pred);
 				c.increment();
 			} while (c.isZero());
-			assert c.getNumberOfValuesProduct() == preds.size() : "inconsistent";
+			assert pred2succ2hier == null || c.getNumberOfValuesProduct() == preds.size() : "inconsistent";
 		}
 		return preds;
 	}
