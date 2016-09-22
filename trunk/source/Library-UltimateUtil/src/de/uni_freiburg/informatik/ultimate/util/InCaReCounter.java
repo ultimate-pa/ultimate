@@ -78,10 +78,17 @@ public class InCaReCounter {
 	/**
 	 * Add all values of another counter to the values of this counter.
 	 */
-	public void add(InCaReCounter inCaReCounter) {
+	public void add(final InCaReCounter inCaReCounter) {
 		mInternal += inCaReCounter.getInternal();
 		mCall += inCaReCounter.getCall();
 		mReturn =+ inCaReCounter.getReturn();
+	}
+	
+	/**
+	 * @return sum of all three counters
+	 */
+	public int getSum() {
+		return getInternal() + getCall() + getReturn();
 	}
 
 }

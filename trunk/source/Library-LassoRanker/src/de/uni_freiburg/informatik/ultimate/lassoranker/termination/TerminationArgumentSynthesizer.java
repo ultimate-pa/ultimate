@@ -155,9 +155,9 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	@Override
 	protected Script constructScript(LassoRankerPreferences preferences, String constraintsName) {
 		final Settings settings = preferences.getSolverConstructionSettings(
-				preferences.baseNameOfDumpedScript + "+" + constraintsName);
+				preferences.mBaseNameOfDumpedScript + "+" + constraintsName);
 		final SolverMode solverMode;
-		if (preferences.annotate_terms) {
+		if (preferences.mAnnotateTerms) {
 			solverMode = SolverMode.External_ModelsAndUnsatCoreMode;
 		} else {
 			solverMode = SolverMode.External_ModelsMode;
@@ -254,7 +254,7 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			++j;
 			for (int m = 0; m < templateConstraints.size(); ++m) {
 				final MotzkinTransformation motzkin = new MotzkinTransformation(mscript, msettings.analysis,
-						mpreferences.annotate_terms);
+						mpreferences.mAnnotateTerms);
 				motzkin.annotation = annotations.get(m) + " " + j;
 				motzkin.add_inequalities(loopConj);
 				motzkin.add_inequalities(templateConstraints.get(m));
@@ -290,7 +290,7 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			for (final List<LinearInequality> stemConj : stem.getPolyhedra()) {
 				++j;
 				final MotzkinTransformation motzkin = new MotzkinTransformation(mscript, msettings.analysis,
-						mpreferences.annotate_terms);
+						mpreferences.mAnnotateTerms);
 				motzkin.annotation = "invariant " + i + " initiation " + j;
 				motzkin.add_inequalities(stemConj);
 				final LinearInequality li = sig.generate(stem.getOutVars());
@@ -305,7 +305,7 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			for (final List<LinearInequality> loopConj : loop.getPolyhedra()) {
 				++j;
 				final MotzkinTransformation motzkin = new MotzkinTransformation(mscript, msettings.analysis,
-						mpreferences.annotate_terms);
+						mpreferences.mAnnotateTerms);
 				motzkin.annotation = "invariant " + i + " consecution " + j;
 				motzkin.add_inequalities(loopConj);
 				motzkin.add_inequality(sig.generate(loop.getInVars())); // si(x)

@@ -177,9 +177,9 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	@Override
 	protected Script constructScript(final LassoRankerPreferences preferences, final String constraintsName) {
 		final Settings settings = preferences.getSolverConstructionSettings(
-				preferences.baseNameOfDumpedScript + "+" + constraintsName);
+				preferences.mBaseNameOfDumpedScript + "+" + constraintsName);
 		final SolverMode solverMode;
-		if (preferences.annotate_terms) {
+		if (preferences.mAnnotateTerms) {
 			solverMode = SolverMode.External_ModelsAndUnsatCoreMode;
 		} else {
 			solverMode = SolverMode.External_ModelsMode;

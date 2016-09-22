@@ -10,8 +10,8 @@
 // move to dB in order to visit an accepting state.
 
 
-print(nwa);
-// print(reduceNwaDelayedSimulation(removeDeadEnds(nwa), false));
+// print(nwa);
+print(reduceNwaDelayedSimulation(removeDeadEnds(nwa), false));
 
 
 NestedWordAutomaton nwa = (

@@ -69,9 +69,11 @@ public class StateWithRankInfo<STATE> {
 			throw new IllegalArgumentException("rank has to be nonnegative");
 		}
 		mRank = rank;
-//		if (inO && BuchiComplementFKVNwa.isOdd(rank)) {
-//			throw new IllegalArgumentException("state can be only in O if rank is even");
-//		}
+		/*
+		if (inO && BuchiComplementFKVNwa.isOdd(rank)) {
+			throw new IllegalArgumentException("state can be only in O if rank is even");
+		}
+		*/
 		mInO = inO;
 	}
 	

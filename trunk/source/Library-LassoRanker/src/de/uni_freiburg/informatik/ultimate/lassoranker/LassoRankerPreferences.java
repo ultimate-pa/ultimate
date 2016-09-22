@@ -29,9 +29,13 @@ package de.uni_freiburg.informatik.ultimate.lassoranker;
 
 import java.io.File;
 import java.io.Serializable;
+import java.util.function.Consumer;
 
+import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteArraysMapElimination.MapEliminationSettings;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.InequalityConverter;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.InequalityConverter.NlaHandling;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 
 /**
@@ -46,100 +50,127 @@ public class LassoRankerPreferences implements Serializable {
 
 	/**
 	 * Should the polyhedra for stem and loop be made integral for integer programs? (Not yet implemented.)
+	 *
 	 */
-	public boolean compute_integral_hull = false; // Default: false
+	public boolean mComputeIntegralHull;
 
 	/**
 	 * Enable the LassoPartitioneer that splits lassos into multiple independent components?
 	 */
-	public boolean enable_partitioneer = true; // Default: true
+	public boolean mEnablePartitioneer;
 
 	/**
 	 * Add annotations to terms for debugging purposes
 	 */
-	public boolean annotate_terms = false; // Default: false
+	public boolean mAnnotateTerms;
 
 	/**
 	 * If true, we use an external tool to solve the constraints. If false, we use SMTInterpol to solve the constraints.
 	 */
-	public boolean externalSolver = true; // Default: true
+	public boolean mExternalSolver;
 
 	/**
 	 * What shell command should be used to call the external smt solver?
 	 */
-	public String smt_solver_command = "z3 -smt2 -in SMTLIB2_COMPLIANT=true ";
+	public String mExternalSolverCommand;
 
 	/**
 	 * Write SMT solver script to file.
 	 */
-	public boolean dumpSmtSolverScript = false; // Default: false
+	public boolean mDumpSmtSolverScript;
 
 	/**
 	 * Path to which the SMT solver script is written.
 	 */
-	public String path_of_dumped_script = "."; // Default: "."
+	public String mPathOfDumpedScript;
 
 	/**
 	 * Base name (without path) of the file to which the SMT solver script is written.
 	 */
-	public String baseNameOfDumpedScript = "LassoRankerScript";
+	public String mBaseNameOfDumpedScript;
 
 	/**
 	 * Overapproximate the result of RewriteArrays by dropping all conjuncts that are not-equals relations of indices.
 	 * If the lasso does not contain arrays, this option has no effect. Otherwise setting this to true is unsound for
 	 * nontermination analysis.
 	 */
-	public boolean overapproximateArrayIndexConnection = false;
+	public boolean mOverapproximateArrayIndexConnection;
 
 	/**
 	 * Defines what the {@link InequalityConverter} does while processing a (Sub-) Term that is nonlinear.
 	 */
-	public NlaHandling nlaHandling = NlaHandling.EXCEPTION;
+	public NlaHandling mNlaHandling;
 
 	/**
 	 * Use Matthias' (true) or Franks (false) map elimination implementation
 	 */
-	public boolean useOldMapElimination = false;
+	public boolean mUseOldMapElimination;
+
+	public boolean mMapElimAddInequalities;
+
+	public boolean mMapElimOnlyTrivialImplicationsIndexAssignment;
+
+	public boolean mMapElimOnlyTrivialImplicationsArrayWrite;
+
+	public boolean mMapElimOnlyIndicesInFormula;
 
 	/**
 	 * Emulate push/pop using reset and re-asserting and re-declaring.
 	 */
-	private final boolean mFakeNonIncrementalScript = false;
+	private final boolean mFakeNonIncrementalScript;
 
 	/**
 	 * Default construction intializes default values
 	 */
 	public LassoRankerPreferences() {
+		// all default values
+		mFakeNonIncrementalScript = false;
+		mNlaHandling = NlaHandling.EXCEPTION;
+		mOverapproximateArrayIndexConnection = false;
+		mBaseNameOfDumpedScript = "LassoRankerScript";
+		mPathOfDumpedScript = ".";
+		mDumpSmtSolverScript = false;
+		mComputeIntegralHull = false;
+		mEnablePartitioneer = true;
+		mAnnotateTerms = false;
+		mExternalSolver = true;
+		mExternalSolverCommand = "z3 -smt2 -in SMTLIB2_COMPLIANT=true ";
+		mUseOldMapElimination = false;
+		mMapElimAddInequalities = false;
+		mMapElimOnlyTrivialImplicationsIndexAssignment = true;
+		mMapElimOnlyTrivialImplicationsArrayWrite = false;
+		mMapElimOnlyIndicesInFormula = true;
 	}
 
 	/**
 	 * Copy constructor copies everything
 	 */
 	public LassoRankerPreferences(final LassoRankerPreferences other) {
-		compute_integral_hull = other.compute_integral_hull;
-		enable_partitioneer = other.enable_partitioneer;
-		annotate_terms = other.annotate_terms;
-		externalSolver = other.externalSolver;
-		smt_solver_command = other.smt_solver_command;
-		dumpSmtSolverScript = other.dumpSmtSolverScript;
-		path_of_dumped_script = other.path_of_dumped_script;
-		baseNameOfDumpedScript = other.baseNameOfDumpedScript;
-		overapproximateArrayIndexConnection = other.overapproximateArrayIndexConnection;
-		nlaHandling = other.nlaHandling;
-		useOldMapElimination = other.useOldMapElimination;
+		mComputeIntegralHull = other.mComputeIntegralHull;
+		mEnablePartitioneer = other.mEnablePartitioneer;
+		mAnnotateTerms = other.mAnnotateTerms;
+		mExternalSolver = other.mExternalSolver;
+		mExternalSolverCommand = other.mExternalSolverCommand;
+		mDumpSmtSolverScript = other.mDumpSmtSolverScript;
+		mPathOfDumpedScript = other.mPathOfDumpedScript;
+		mBaseNameOfDumpedScript = other.mBaseNameOfDumpedScript;
+		mOverapproximateArrayIndexConnection = other.mOverapproximateArrayIndexConnection;
+		mNlaHandling = other.mNlaHandling;
+		mUseOldMapElimination = other.mUseOldMapElimination;
+		mFakeNonIncrementalScript = other.mFakeNonIncrementalScript;
 	}
 
 	/**
 	 * Verify that the settings are self-consistent and sane. Only makes assertion calls.
 	 */
 	public void checkSanity() {
-		assert smt_solver_command != null;
-		assert path_of_dumped_script != null;
-		if (dumpSmtSolverScript) {
-			final File f = new File(path_of_dumped_script);
+		assert mExternalSolverCommand != null;
+		assert mPathOfDumpedScript != null;
+		if (mDumpSmtSolverScript) {
+			final File f = new File(mPathOfDumpedScript);
 			assert f.exists();
 			assert f.isDirectory();
-			assert baseNameOfDumpedScript != null;
+			assert mBaseNameOfDumpedScript != null;
 		}
 	}
 
@@ -149,25 +180,20 @@ public class LassoRankerPreferences implements Serializable {
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
-		sb.append("Compute integeral hull: ");
-		sb.append(compute_integral_hull);
-		sb.append("\nEnable LassoPartitioneer: ");
-		sb.append(enable_partitioneer);
-		sb.append("\nTerm annotations enabled: ");
-		sb.append(annotate_terms);
-		sb.append("\nUse exernal solver: ");
-		sb.append(externalSolver);
-		sb.append("\nSMT solver command: ");
-		sb.append(smt_solver_command);
-		sb.append("\nDump SMT script to file: ");
-		sb.append(dumpSmtSolverScript);
-		sb.append("\nPath of dumped script: ");
-		sb.append(path_of_dumped_script);
-		sb.append("\nFilename of dumped script: ");
-		sb.append(baseNameOfDumpedScript);
-		sb.append("\nMapElimAlgo: ");
-		sb.append(useOldMapElimination ? "Matthias" : "Frank");
+		feedSettingsString(a -> sb.append(a).append("\n"));
 		return sb.toString();
+	}
+
+	public void feedSettingsString(final Consumer<String> consumer) {
+		consumer.accept("Compute integeral hull: " + mComputeIntegralHull);
+		consumer.accept("Enable LassoPartitioneer: " + mEnablePartitioneer);
+		consumer.accept("Term annotations enabled: " + mAnnotateTerms);
+		consumer.accept("Use exernal solver: " + mExternalSolver);
+		consumer.accept("SMT solver command: " + mExternalSolverCommand);
+		consumer.accept("Dump SMT script to file: " + mDumpSmtSolverScript);
+		consumer.accept("Path of dumped script: " + mPathOfDumpedScript);
+		consumer.accept("Filename of dumped script: " + mBaseNameOfDumpedScript);
+		consumer.accept("MapElimAlgo: " + (mUseOldMapElimination ? "Matthias" : "Frank"));
 	}
 
 	/**
@@ -179,8 +205,15 @@ public class LassoRankerPreferences implements Serializable {
 	 * @return a Settings object that allows us to build a new solver.
 	 */
 	public Settings getSolverConstructionSettings(final String filenameDumpedScript) {
-		final long timeoutSmtInterpol = 365 * 24 * 60 * 60 * 1000;
-		return new Settings(mFakeNonIncrementalScript , externalSolver, smt_solver_command, timeoutSmtInterpol, null, dumpSmtSolverScript,
-				path_of_dumped_script, filenameDumpedScript);
+		final long timeoutSmtInterpol = 365 * 24 * 60 * 60 * 1000L;
+		return new Settings(mFakeNonIncrementalScript, mExternalSolver, mExternalSolverCommand, timeoutSmtInterpol,
+				null, mDumpSmtSolverScript, mPathOfDumpedScript, filenameDumpedScript);
+	}
+
+	public MapEliminationSettings getMapEliminationSettings(final SimplicationTechnique simplificationTechnique,
+			final XnfConversionTechnique xnfConversionTechnique) {
+		return new MapEliminationSettings(mMapElimAddInequalities, mMapElimOnlyTrivialImplicationsIndexAssignment,
+				mMapElimOnlyTrivialImplicationsArrayWrite, mMapElimOnlyIndicesInFormula, simplificationTechnique,
+				xnfConversionTechnique);
 	}
 }

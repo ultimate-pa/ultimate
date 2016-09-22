@@ -43,7 +43,7 @@ public class LexicographicCounter {
 		super();
 		mNumberOfValues = numberOfValues;
 		mNumberOfValuesProduct = Arrays.stream(mNumberOfValues).reduce(0, (x,y) -> x*y);
-		mCounter = Arrays.copyOf(numberOfValues, numberOfValues.length);
+		mCounter = new int[mNumberOfValues.length];
 	}
 	
 	public int[] getCurrentValue() {
@@ -70,6 +70,15 @@ public class LexicographicCounter {
 	 */
 	public int getNumberOfValuesProduct() {
 		return mNumberOfValuesProduct;
+	}
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return "Current value=" + Arrays.toString(mCounter) + ", mNumberOfValues="
+				+ Arrays.toString(mNumberOfValues);
 	}
 	
 	
