@@ -73,16 +73,16 @@ public final class AutomatonTransition
 	 *            transition type
 	 * @param transitionLabel
 	 *            transition label
-	 * @param linPred
-	 *            linear predecessor name
+	 * @param hierPred
+	 *            hierarchical predecessor name
 	 * @param succState
 	 *            successor state representation
 	 */
 	public AutomatonTransition(final AutomatonState state, final Transition type, final Object transitionLabel,
-			final String linPred, final AutomatonState succState) {
+			final String hierPred, final AutomatonState succState) {
 		super(state, succState);
-		assert type == Transition.RETURN || linPred == null;
-		assert type != Transition.RETURN || linPred != null;
+		assert type == Transition.RETURN || hierPred == null;
+		assert type != Transition.RETURN || hierPred != null;
 		switch (type) {
 			case CALL:
 				mName = "Call";
@@ -101,7 +101,7 @@ public final class AutomatonTransition
 		}
 		mName = mName + ": " + transitionLabel;
 		if (type == Transition.RETURN) {
-			mName = mName + " " + linPred;
+			mName = mName + " " + hierPred;
 		}
 		
 		if (transitionLabel instanceof IAnnotations) {
