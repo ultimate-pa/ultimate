@@ -72,7 +72,7 @@ public class ToolchainLocator {
 		// TODO: additional tools specified in the options section of this tool
 
 		return availableToolchains.values().stream()
-				.flatMap(a -> a.getToolchain().getToolchain().getPluginOrSubchain().stream())
+				.flatMap(a -> a.getRootElement().getToolchain().getPluginOrSubchain().stream())
 				.filter(a -> a instanceof PluginType).map(a -> ((PluginType) a).getId().toLowerCase())
 				.collect(Collectors.toSet());
 	}

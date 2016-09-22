@@ -129,7 +129,7 @@ public class AnalysisChooseDialog extends Dialog {
 			final String tDir = System.getProperty("java.io.tmpdir");
 			final File tmpToolchain = new File(tDir, "lastUltimateToolchain.xml");
 			new ToolchainFileValidator().saveToolchain(tmpToolchain.getAbsolutePath(), "Last Ultimate Toolchain",
-					resultChain.getToolchain().getToolchain());
+					resultChain.getRootElement().getToolchain());
 			mCore.getPreferenceProvider(GuiController.PLUGIN_ID).put(IPreferencesKeys.LASTTOOLCHAINPATH,
 					tmpToolchain.getAbsolutePath());
 			mLogger.info("Saved custom toolchain to " + tmpToolchain.getAbsolutePath());
