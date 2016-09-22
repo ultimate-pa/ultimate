@@ -346,17 +346,23 @@ public class CommandLineController implements IController<RunDefinition> {
 			mLogger.warn("Received shutdown request...");
 			final IUltimateServiceProvider services = mCurrentToolchain.getServices();
 			if (services == null) {
+				mLogger.fatal(
+						"Cannot interrupt operation gracefully because services are already gone. Forcing shutdown.");
 				return;
 			}
 			final IProgressMonitorService progressMonitor = services.getProgressMonitorService();
 			if (progressMonitor == null) {
+				mLogger.fatal(
+						"Cannot interrupt operation gracefully because progress monitor is already gone. Forcing shutdown");
 				return;
 			}
 
 			final CountDownLatch cdl = progressMonitor.cancelToolchain();
 			try {
-				if (!cdl.await(SHUTDOWN_GRACE_PERIOD_SECONDS, TimeUnit.SECONDS)) {
-					mLogger.fatal("Cannot interrupt operation gracefully, forcing shutdown");
+				if (cdl.await(SHUTDOWN_GRACE_PERIOD_SECONDS, TimeUnit.SECONDS)) {
+					mLogger.info("Completed graceful shutdown");
+				} else {
+					mLogger.fatal("Cannot interrupt operation gracefully because timeout expired. Forcing shutdown");
 				}
 			} catch (@SuppressWarnings("squid:S2142") final InterruptedException e) {
 				mLogger.fatal("Received interrupt while waiting for graceful shutdown: " + e.getMessage());
