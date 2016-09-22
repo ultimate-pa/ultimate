@@ -277,7 +277,7 @@ public class ToolchainManager {
 				}
 
 				final Collection<ISource> parsers = mParsers.values();
-				final CompleteToolchainData data = mToolchainWalker.new CompleteToolchainData(mToolchainData,
+				final CompleteToolchainData data = new CompleteToolchainData(mToolchainData,
 						parsers.toArray(new ISource[parsers.size()]), mCurrentController);
 
 				mToolchainWalker.walk(data, currentToolchainServices.getProgressMonitorService(), monitor);
@@ -296,7 +296,7 @@ public class ToolchainManager {
 
 					// report benchmark results
 					resultService.reportResult(Activator.PLUGIN_ID,
-							new BenchmarkResult<Double>(Activator.PLUGIN_ID, "Toolchain Benchmarks", mBenchmark));
+							new BenchmarkResult<>(Activator.PLUGIN_ID, "Toolchain Benchmarks", mBenchmark));
 
 				}
 
@@ -351,12 +351,11 @@ public class ToolchainManager {
 				final PluginType plugin = (PluginType) elem;
 				if (mPluginFactory.isPluginAvailable(plugin.getId())) {
 					return true;
-				} else {
-					mLogger.error(getLogPrefix() + ": Did not find plugin with id \"" + plugin.getId()
-							+ "\". The following plugins are currently available:");
-					printAvailableTools();
-					return false;
 				}
+				mLogger.error(getLogPrefix() + ": Did not find plugin with id \"" + plugin.getId()
+						+ "\". The following plugins are currently available:");
+				printAvailableTools();
+				return false;
 			} else if (elem instanceof SubchainType) {
 				return checkToolchain(((SubchainType) elem).getPluginOrSubchain());
 			} else {

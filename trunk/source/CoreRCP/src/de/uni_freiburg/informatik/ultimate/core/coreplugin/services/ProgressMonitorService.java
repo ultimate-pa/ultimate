@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.core.coreplugin.services;
 
+import java.util.concurrent.CountDownLatch;
+
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchainProgressMonitor;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
@@ -105,9 +107,9 @@ public class ProgressMonitorService implements IStorable, IToolchainCancel, IPro
 	}
 
 	@Override
-	public void cancelToolchain() {
-		mToolchainCancel.cancelToolchain();
+	public CountDownLatch cancelToolchain() {
 		mCancelRequest = true;
+		return mToolchainCancel.cancelToolchain();
 	}
 
 	@Override

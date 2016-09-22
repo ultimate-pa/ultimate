@@ -30,6 +30,9 @@ package de.uni_freiburg.informatik.ultimate.core.coreplugin;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.SubMonitor;
@@ -62,13 +65,14 @@ final class ToolchainWalker implements IToolchainCancel {
 	/**
 	 * Is a running toolchain supposed to be canceled at the next possible moment?
 	 */
-	private boolean mToolchainCancelRequest = false;
+	private boolean mToolchainCancelRequest;
 
 	private final ILogger mLogger;
-	private final HashMap<String, PluginConnector> mOpenPlugins;
+	private final Map<String, PluginConnector> mOpenPlugins;
 	private final Benchmark mBench;
 	private final IModelManager mModelManager;
 	private final PluginFactory mPluginFactory;
+	private final CountDownLatch mCountDownLatch;
 
 	public ToolchainWalker(final Benchmark bench, final IModelManager mmanager, final PluginFactory factory,
 			final ILogger logger) {
@@ -77,18 +81,28 @@ final class ToolchainWalker implements IToolchainCancel {
 		mModelManager = mmanager;
 		mLogger = logger;
 		mPluginFactory = factory;
-		mOpenPlugins = new HashMap<String, PluginConnector>();
+		mOpenPlugins = new HashMap<>();
+		mCountDownLatch = new CountDownLatch(1);
+		mToolchainCancelRequest = false;
 	}
 
 	public void walk(final CompleteToolchainData data, final IProgressMonitorService service,
+			final IToolchainProgressMonitor monitor) throws Throwable {
+		try {
+			walkUnprotected(data, service, monitor);
+		} finally {
+			mCountDownLatch.countDown();
+			monitor.done();
+		}
+	}
+
+	private void walkUnprotected(final CompleteToolchainData data, final IProgressMonitorService service,
 			final IToolchainProgressMonitor monitor) throws Throwable {
 		final IToolchainData<RunDefinition> chain = data.getToolchain();
 
 		// convert monitor to submonitor
 		int remainingWork = chain.getToolchain().getToolchain().getPluginOrSubchain().size();
-
 		final SubMonitor progress = SubMonitor.convert(RcpProgressMonitorWrapper.create(monitor), remainingWork);
-
 		mLogger.info("Walking toolchain with " + remainingWork + " elements.");
 
 		// iterate over toolchain
@@ -124,9 +138,6 @@ final class ToolchainWalker implements IToolchainCancel {
 				continue;
 			}
 		}
-		// TODO: DD: check if this is needed / correct.
-		monitor.done();
-
 	}
 
 	private boolean shouldCancel(final CompleteToolchainData data, final IProgressMonitorService service,
@@ -155,7 +166,7 @@ final class ToolchainWalker implements IToolchainCancel {
 	 * @return true/false, depending on whether plugin could be successfully processed
 	 * @throws Exception
 	 */
-	private final void processPlugin(final CompleteToolchainData data, final PluginType plugin) throws Throwable {
+	private void processPlugin(final CompleteToolchainData data, final PluginType plugin) throws Throwable {
 
 		// get tool belonging to id
 		final ITool tool = mPluginFactory.createTool(plugin.getId());
@@ -213,36 +224,27 @@ final class ToolchainWalker implements IToolchainCancel {
 	}
 
 	/**
-	 * process a Subchain statement in the toolchain
+	 * Process a subchain statement in the toolchain
 	 *
 	 * @param chain
 	 * @param monitor
 	 * @return true/false, depending on whether subchain could be successfully processed
 	 * @throws Exception
 	 */
-	private final boolean processSubchain(final CompleteToolchainData data, final SubchainType chain,
+	private boolean processSubchain(final CompleteToolchainData data, final SubchainType chain,
 			final IProgressMonitor monitor) throws Throwable {
 		// again, convert monitor into SubMonitor with certain number of ticks
 		// depending of length of subchain
-		int work_remain = chain.getPluginOrSubchain().size();
-		final SubMonitor progress = SubMonitor.convert(monitor, work_remain);
-
-		String firstplugin = null;
+		int workRemaining = chain.getPluginOrSubchain().size();
+		final SubMonitor progress = SubMonitor.convert(monitor, workRemaining);
 
 		// get first plugin if present
-		for (final Object o : chain.getPluginOrSubchain()) {
-			if (o instanceof PluginType) {
-				// we want to know the first plugin in the subchain!
-				if (firstplugin == null) {
-					final PluginType foo = (PluginType) o;
-					firstplugin = foo.getId();
-					break;
-				}
-			}
-		}
+		final Optional<PluginType> firstpluginOpt = chain.getPluginOrSubchain().stream()
+				.filter(o -> o instanceof PluginType).map(a -> (PluginType) a).findFirst();
 
-		// Subchain has at least one plugin
-		if (firstplugin != null) {
+		// Subchain has at least one normal plugin
+		if (firstpluginOpt.isPresent()) {
+			final String firstplugin = firstpluginOpt.get().getId();
 			// document, whether toolchain has changed anything
 			// which depends on outcome of first plugin in chain
 			boolean changes;
@@ -256,7 +258,6 @@ final class ToolchainWalker implements IToolchainCancel {
 			// iterate over subchain until break
 			// caused by first plugin
 			while (true) {
-
 				for (final Object o : chain.getPluginOrSubchain()) {
 					if (monitor.isCanceled() || mToolchainCancelRequest) {
 						mToolchainCancelRequest = true;
@@ -266,16 +267,16 @@ final class ToolchainWalker implements IToolchainCancel {
 						final PluginType plugin = (PluginType) o;
 						processPlugin(data, plugin);
 						progress.worked(1);
-						work_remain--;
-						progress.setWorkRemaining(work_remain);
+						workRemaining--;
+						progress.setWorkRemaining(workRemaining);
 					} else if (o instanceof SubchainType) {
 						final SubchainType subchain = (SubchainType) o;
 						// if chain has at least one plugin
 						// return type of other Subchains is irrelevant
 						processSubchain(data, subchain, progress.newChild(1));
 						progress.worked(1);
-						work_remain--;
-						progress.setWorkRemaining(work_remain);
+						workRemaining--;
+						progress.setWorkRemaining(workRemaining);
 					} else {
 						continue;
 					}
@@ -296,38 +297,36 @@ final class ToolchainWalker implements IToolchainCancel {
 				}
 			}
 			return changes;
-
 			// subchain consists only of other subchains and no plugin
-		} else {
-			boolean changes = false;
-			while (true) {
+		}
+		boolean changes = false;
+		while (true) {
 
-				boolean localchanges = false;
-				for (final Object o : chain.getPluginOrSubchain()) {
-					if (monitor.isCanceled() || mToolchainCancelRequest) {
-						mToolchainCancelRequest = true;
-						return false;
-					}
-					if (o instanceof SubchainType) {
-						final SubchainType subchain = (SubchainType) o;
-						final boolean foo = processSubchain(data, subchain, progress.newChild(1));
-						localchanges = localchanges || foo;
-						progress.worked(1);
-						work_remain--;
-						progress.setWorkRemaining(work_remain);
-					} else {
-						continue;
-					}
+			boolean localchanges = false;
+			for (final Object o : chain.getPluginOrSubchain()) {
+				if (monitor.isCanceled() || mToolchainCancelRequest) {
+					mToolchainCancelRequest = true;
+					return false;
 				}
-				// quit toolchain if all subchains
-				// have returned false
-				changes = changes || localchanges;
-				if (!localchanges) {
-					break;
+				if (o instanceof SubchainType) {
+					final SubchainType subchain = (SubchainType) o;
+					final boolean foo = processSubchain(data, subchain, progress.newChild(1));
+					localchanges = localchanges || foo;
+					progress.worked(1);
+					workRemaining--;
+					progress.setWorkRemaining(workRemaining);
+				} else {
+					continue;
 				}
 			}
-			return changes;
+			// quit toolchain if all subchains
+			// have returned false
+			changes = changes || localchanges;
+			if (!localchanges) {
+				break;
+			}
 		}
+		return changes;
 
 	}
 
@@ -336,12 +335,11 @@ final class ToolchainWalker implements IToolchainCancel {
 	 *
 	 * @param serializeType
 	 */
-	private final void processSerializeStmt(final CompleteToolchainData data, final SerializeType serializeType) {
-		final ArrayList<ModelType> models = new ArrayList<ModelType>();
-		ModelType graphType = null;
+	private void processSerializeStmt(final CompleteToolchainData data, final SerializeType serializeType) {
+		final ArrayList<ModelType> models = new ArrayList<>();
 		if (serializeType.getParser() != null) {
 			for (final ISource parser : data.getParsers()) {
-				graphType = mModelManager.getGraphTypeByGeneratorPluginId(parser.getPluginID());
+				final ModelType graphType = mModelManager.getGraphTypeByGeneratorPluginId(parser.getPluginID());
 				if (graphType != null) {
 					models.add(graphType);
 				} else {
@@ -350,7 +348,8 @@ final class ToolchainWalker implements IToolchainCancel {
 			}
 		}
 		for (final ToolchainModelType modelType : serializeType.getModel()) {
-			if (modelType.getId().equals("mostrecent")) {
+			final ModelType graphType;
+			if ("mostrecent".equals(modelType.getId())) {
 				graphType = mModelManager.getLastAdded();
 			} else {
 				graphType = mModelManager.getGraphTypeByGeneratorPluginId(modelType.getId());
@@ -381,54 +380,44 @@ final class ToolchainWalker implements IToolchainCancel {
 	 *
 	 * @param dt
 	 */
-	private final void processDropmodelStmt(final CompleteToolchainData data, final DropmodelType dt) {
+	private void processDropmodelStmt(final CompleteToolchainData data, final DropmodelType dt) {
 		if (dt.getParser() != null) {
-			ModelType g = null;
 			for (final ISource parser : data.getParsers()) {
-				g = mModelManager.getGraphTypeByGeneratorPluginId(parser.getPluginID());
-				mLogger.debug("Attempting to drop parser model...");
-				if (g != null) {
-					final boolean success = mModelManager.removeItem(g);
-
-					if (success) {
-						mLogger.info("Dropping  model succeeded.");
-					} else {
-						mLogger.warn("Failed to remove parser model.");
-					}
-				}
+				final ModelType model = mModelManager.getGraphTypeByGeneratorPluginId(parser.getPluginID());
+				dropModel(model, parser.getPluginID());
 			}
 		}
 
-		for (final ModelIdOnlyType m : dt.getModel()) {
-			ModelType g = null;
-			g = mModelManager.getGraphTypeByGeneratorPluginId(m.getId());
-			mLogger.debug("Attempting to drop model " + m.getId() + " ...");
-			if (g == null) {
-				mLogger.warn("Tried to remove a model that did not exist: " + m.getId() + ".");
-				continue;
-			}
+		for (final ModelIdOnlyType modelId : dt.getModel()) {
+			final ModelType model = mModelManager.getGraphTypeByGeneratorPluginId(modelId.getId());
+			dropModel(model, modelId.getId());
+		}
+	}
 
-			final boolean success = mModelManager.removeItem(g);
+	private void dropModel(final ModelType modelType, final String id) {
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Attempting to drop model " + id + " ...");
+		}
 
-			if (success) {
-				mLogger.info("Dropping  model succeeded.");
-			} else {
-				mLogger.warn("Failed to remove model " + m.getId() + ".");
-			}
-
+		if (modelType == null || !mModelManager.removeItem(modelType)) {
+			mLogger.warn("Failed to remove model " + id);
+		} else if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Dropping model succeeded.");
 		}
 	}
 
 	@Override
-	public void cancelToolchain() {
+	public CountDownLatch cancelToolchain() {
 		mToolchainCancelRequest = true;
+		return mCountDownLatch;
 	}
 
-	public HashMap<String, PluginConnector> getOpenPlugins() {
-		return mOpenPlugins;
-	}
-
-	final class CompleteToolchainData {
+	/**
+	 *
+	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+	 *
+	 */
+	static final class CompleteToolchainData {
 
 		private final IToolchainData<RunDefinition> mToolchain;
 		private final ISource[] mParsers;
@@ -441,18 +430,16 @@ final class ToolchainWalker implements IToolchainCancel {
 			mController = controller;
 		}
 
-		final IToolchainData<RunDefinition> getToolchain() {
+		IToolchainData<RunDefinition> getToolchain() {
 			return mToolchain;
 		}
 
-		final ISource[] getParsers() {
+		ISource[] getParsers() {
 			return mParsers;
 		}
 
-		final IController<RunDefinition> getController() {
+		IController<RunDefinition> getController() {
 			return mController;
 		}
-
 	}
-
 }
