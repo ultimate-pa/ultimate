@@ -152,7 +152,7 @@ public class CorePreferenceInitializer extends RcpPreferenceInitializer {
 	public static final String VALUE_DEBUG_LOGGING_PREF = "DEBUG";
 	public static final String VALUE_TRACE_LOGGING_PREF = "TRACE";
 	public static final String VALUE_DELIMITER_LOGGING_PREF = ";";
-	protected static final String[] VALUE_VALID_LOG_LEVELS = { VALUE_DEBUG_LOGGING_PREF, VALUE_ERROR_LOGGING_PREF,
+	public static final String[] VALUE_VALID_LOG_LEVELS = { VALUE_DEBUG_LOGGING_PREF, VALUE_ERROR_LOGGING_PREF,
 			VALUE_FATAL_LOGGING_PREF, VALUE_INFO_LOGGING_PREF, VALUE_TRACE_LOGGING_PREF, VALUE_WARN_LOGGING_PREF };
 
 	public static final String LABEL_TIMEOUT = "Toolchain timeout in seconds";
