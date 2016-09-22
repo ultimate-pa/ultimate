@@ -36,9 +36,7 @@ import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IOutgoingTransitionlet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.visualization.AutomatonTransition.Transition;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -102,59 +100,40 @@ public class NwaToUltimateModel<LETTER, STATE> {
 			final STATE state = queue.removeFirst();
 			final AutomatonState vsn = constructed.get(state);
 			
-			for (final OutgoingInternalTransition<LETTER, STATE> trans : nwa.internalSuccessors(state)) {
-				final LETTER symbol = trans.getLetter();
-				final STATE succState = trans.getSucc();
-				AutomatonState succVsn;
-				if (constructed.containsKey(succState)) {
-					succVsn = constructed.get(succState);
-				} else {
-					succVsn = new AutomatonState(succState, nwa.isFinal(succState));
-					mLogger.debug(CREATING_NODE + succVsn.toString());
-					constructed.put(succState, succVsn);
-					queue.add(succState);
-				}
-				new AutomatonTransition(vsn, Transition.INTERNAL, symbol, null, succVsn);
-			}
+			// internal transitions
+			addTransitions(nwa, constructed, queue, vsn, Transition.INTERNAL, null, nwa.internalSuccessors(state));
 			
-			for (final OutgoingCallTransition<LETTER, STATE> trans : nwa.callSuccessors(state)) {
-				final LETTER symbol = trans.getLetter();
-				final STATE succState = trans.getSucc();
-				AutomatonState succVsn;
-				if (constructed.containsKey(succState)) {
-					succVsn = constructed.get(succState);
-				} else {
-					succVsn = new AutomatonState(succState, nwa.isFinal(succState));
-					mLogger.debug(CREATING_NODE + succVsn.toString());
-					constructed.put(succState, succVsn);
-					queue.add(succState);
-				}
-				new AutomatonTransition(vsn, Transition.CALL, symbol, null, succVsn);
+			// call transitions
+			addTransitions(nwa, constructed, queue, vsn, Transition.CALL, null, nwa.callSuccessors(state));
+			
+			// return transitions
+			for (final STATE hierPredState : nwa.getStates()) {
+				addTransitions(nwa, constructed, queue, vsn, Transition.RETURN, hierPredState.toString(),
+						nwa.returnSuccessorsGivenHier(state, hierPredState));
 			}
-			returnTransitionsHelper(nwa, constructed, queue, state, vsn);
 		}
 		return graphroot;
 	}
 	
-	private void returnTransitionsHelper(final INestedWordAutomaton<LETTER, STATE> nwa,
-			final Map<STATE, AutomatonState> constructed, final LinkedList<STATE> queue, final STATE state,
-			final AutomatonState vsn) {
-		for (final STATE hierPredState : nwa.getStates()) {
-			for (final OutgoingReturnTransition<LETTER, STATE> trans : nwa.returnSuccessorsGivenHier(state,
-					hierPredState)) {
-				final LETTER symbol = trans.getLetter();
-				final STATE succState = trans.getSucc();
-				AutomatonState succVsn;
-				if (constructed.containsKey(succState)) {
-					succVsn = constructed.get(succState);
-				} else {
-					succVsn = new AutomatonState(succState, nwa.isFinal(succState));
+	private void addTransitions(final INestedWordAutomaton<LETTER, STATE> nwa,
+			final Map<STATE, AutomatonState> constructed, final LinkedList<STATE> queue, final AutomatonState vsn,
+			final Transition transitionType, final String hierPred,
+			final Iterable<? extends IOutgoingTransitionlet<LETTER, STATE>> transitions) {
+		for (final IOutgoingTransitionlet<LETTER, STATE> trans : transitions) {
+			final LETTER symbol = trans.getLetter();
+			final STATE succState = trans.getSucc();
+			AutomatonState succVsn;
+			if (constructed.containsKey(succState)) {
+				succVsn = constructed.get(succState);
+			} else {
+				succVsn = new AutomatonState(succState, nwa.isFinal(succState));
+				if (mLogger.isDebugEnabled()) {
 					mLogger.debug(CREATING_NODE + succVsn.toString());
-					constructed.put(succState, succVsn);
-					queue.add(succState);
 				}
-				new AutomatonTransition(vsn, Transition.RETURN, symbol, hierPredState.toString(), succVsn);
+				constructed.put(succState, succVsn);
+				queue.add(succState);
 			}
+			new AutomatonTransition(vsn, transitionType, symbol, hierPred, succVsn);
 		}
 	}
 }
