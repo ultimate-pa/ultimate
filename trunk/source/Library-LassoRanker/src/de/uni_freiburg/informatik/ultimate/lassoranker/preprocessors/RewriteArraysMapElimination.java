@@ -188,5 +188,17 @@ public class RewriteArraysMapElimination extends LassoPreprocessor {
 		public XnfConversionTechnique getXnfConversionTechnique() {
 			return mXnfConversionTechnique;
 		}
+
+		@Override
+		public String toString() {
+			final StringBuilder sb = new StringBuilder();
+			sb.append("SimplificationTechnique=").append(getSimplificationTechnique());
+			sb.append(" XnfConversionTechnique=").append(getXnfConversionTechnique());
+			sb.append(" AddInequalities=").append(isAddInequalities());
+			sb.append(" OnlyTrivialImplicationsArrayWrite=").append(isOnlyTrivialImplicationsArrayWrite());
+			sb.append(" OnlyTrivialImplicationsIndexAssignment=").append(isOnlyTrivialImplicationsIndexAssignment());
+			sb.append(" OnlyIndicesInFormula=").append(isOnlyIndicesInFormula());
+			return sb.toString();
+		}
 	}
 }
