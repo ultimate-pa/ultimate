@@ -107,11 +107,10 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 	private final Set<LETTER> mCallAlphabet;
 	private final Set<LETTER> mReturnAlphabet;
 	
-	private final Set<STATE> mInitialStates = new HashSet<STATE>();
-	private final Set<STATE> mFinalStates = new HashSet<STATE>();
+	private final Set<STATE> mInitialStates = new HashSet<>();
+	private final Set<STATE> mFinalStates = new HashSet<>();
 	
-	private final Map<STATE, StateContainer<LETTER, STATE>> mStates =
-			new HashMap<STATE, StateContainer<LETTER, STATE>>();
+	private final Map<STATE, StateContainer<LETTER, STATE>> mStates = new HashMap<>();
 	
 	/**
 	 * Property of reachability.
@@ -144,7 +143,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 	 * map HierPREs -> LETTERs -> LinPREs -> SUCCs.
 	 */
 	private final Map<STATE, Map<LETTER, Map<STATE, Set<STATE>>>> mReturnSummary =
-			new HashMap<STATE, Map<LETTER, Map<STATE, Set<STATE>>>>();
+			new HashMap<>();
 	
 	private final InCaReCounter mNumberTransitions = new InCaReCounter();
 	
@@ -182,8 +181,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 	 *             if timeout exceeds
 	 */
 	public NestedWordAutomatonReachableStates(final AutomataLibraryServices services,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand)
-			throws AutomataOperationCanceledException {
+			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mOperand = operand;
@@ -201,36 +199,59 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 				for (final NestedLassoRun<LETTER, STATE> nlr : runs) {
 					final STATE honda = nlr.getLoop().getStateAtPosition(0);
 					mLogger.debug(new DebugMessage("Test lasso construction for honda state {0}", honda));
-					try {
-						assert (new BuchiAccepts<LETTER, STATE>(mServices, NestedWordAutomatonReachableStates.this,
-								nlr.getNestedLassoWord())).getResult();
-					} catch (final AutomataLibraryException e) {
-						throw new AssertionError(e);
-					}
+					assertBuchiAcceptance(nlr);
 				}
-				
 			}
 			// assert (new TransitionConsitenceCheck<LETTER,
 			// STATE>(this)).consistentForAll();
 			
-			assert (checkTransitionsReturnedConsistent());
+			assert checkTransitionsReturnedConsistent();
 		} catch (final ToolchainCanceledException tce) {
 			throw tce;
 		} catch (final AutomataOperationCanceledException oce) {
 			throw oce;
-		} catch (final Error e) {
-			final String message = "// Problem with  removeUnreachable";
-//			ResultChecker.writeToFileIfPreferred(mServices, "FailedremoveUnreachable", message, operand);
-			throw e;
-		} catch (final RuntimeException e) {
-			final String message = "// Problem with  removeUnreachable";
-//			ResultChecker.writeToFileIfPreferred(mServices, "FailedremoveUnreachable", message, operand);
+		} catch (final Error | RuntimeException e) {
+			// final String message = "// Problem with RemoveUnreachable";
+			// ResultChecker.writeToFileIfPreferred(mServices, "FailedremoveUnreachable", message, operand);
 			throw e;
 		}
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug(stateContainerInformation());
 		}
-		assert (new DownStateConsistencyCheck<LETTER, STATE>(mServices, this)).getResult() : "down states inconsistent";
+		assert (new DownStateConsistencyCheck<>(mServices, this)).getResult() : "down states inconsistent";
+	}
+	
+	AutomataLibraryServices getServices() {
+		return mServices;
+	}
+	
+	Map<STATE, StateContainer<LETTER, STATE>> getStatesMap() {
+		return mStates;
+	}
+	
+	Collection<STATE> getInitialStatesPrivate() {
+		return mInitialStates;
+	}
+	
+	Collection<STATE> getFinalStatesPrivate() {
+		return mFinalStates;
+	}
+	
+	INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
+		return mOperand;
+	}
+	
+	InCaReCounter getNumberTransitions() {
+		return mNumberTransitions;
+	}
+	
+	private void assertBuchiAcceptance(final NestedLassoRun<LETTER, STATE> nlr) throws AssertionError {
+		try {
+			assert (new BuchiAccepts<>(mServices, NestedWordAutomatonReachableStates.this,
+					nlr.getNestedLassoWord())).getResult();
+		} catch (final AutomataLibraryException e) {
+			throw new AssertionError(e);
+		}
 	}
 	
 	/**
@@ -274,7 +295,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 	/**
 	 * @return The accepting components.
 	 */
-	public AcceptingComponentsAnalysis<LETTER, STATE> getOrComputeAcceptingComponents() {
+	public final AcceptingComponentsAnalysis<LETTER, STATE> getOrComputeAcceptingComponents() {
 		if (mAcceptingComponentsAnalysis == null) {
 			computeAcceptingComponents();
 		}
@@ -290,7 +311,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 	 *            A state.
 	 * @return the respective state container
 	 */
-	StateContainer<LETTER, STATE> obtainSC(final STATE state) {
+	StateContainer<LETTER, STATE> obtainStateContainer(final STATE state) {
 		return mStates.get(state);
 	}
 	
@@ -300,9 +321,8 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 				mAcceptingSummaries.getAcceptingSummaries().getImage(callPred);
 		if (summariesForHier == null) {
 			return false;
-		} else {
-			return summariesForHier.contains(summary);
 		}
+		return summariesForHier.contains(summary);
 	}
 	
 	@Override
@@ -318,7 +338,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 	@Override
 	public String sizeInformation() {
 		final int states = mStates.size();
-		String result = states + " states and " + mNumberTransitions + " transitions."; 
+		String result = states + " states and " + mNumberTransitions + " transitions.";
 		if (mAcceptingComponentsAnalysis != null) {
 			final int transitions = mNumberTransitions.getSum();
 			final int cyclomaticComplexity = computeCyclomaticComplexity(
@@ -328,8 +348,8 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 		return result;
 	}
 	
-	private int computeCyclomaticComplexity(
-			final int numberOfTransitions, final int numberOfStates , final int numberOfSccs) {
+	private static int computeCyclomaticComplexity(final int numberOfTransitions, final int numberOfStates,
+			final int numberOfSccs) {
 		return numberOfTransitions - numberOfStates + numberOfSccs;
 	}
 	
@@ -466,35 +486,38 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 		throw new UnsupportedOperationException();
 	}
 	
-	private void addReturnSummary(final STATE pred, final STATE hier, final LETTER letter, final STATE succ) {
+	void addReturnSummary(final STATE pred, final STATE hier, final LETTER letter, final STATE succ) {
 		Map<LETTER, Map<STATE, Set<STATE>>> letter2pred2succs = mReturnSummary.get(hier);
 		if (letter2pred2succs == null) {
-			letter2pred2succs = new HashMap<LETTER, Map<STATE, Set<STATE>>>();
+			letter2pred2succs = new HashMap<>();
 			mReturnSummary.put(hier, letter2pred2succs);
 		}
 		Map<STATE, Set<STATE>> pred2succs = letter2pred2succs.get(letter);
 		if (pred2succs == null) {
-			pred2succs = new HashMap<STATE, Set<STATE>>();
+			pred2succs = new HashMap<>();
 			letter2pred2succs.put(letter, pred2succs);
 		}
 		Set<STATE> succS = pred2succs.get(pred);
 		if (succS == null) {
-			succS = new HashSet<STATE>();
+			succS = new HashSet<>();
 			pred2succs.put(pred, succS);
 		}
 		succS.add(succ);
 	}
 	
+	/**
+	 * @param hier
+	 *            The hierarchical predecessor state.
+	 * @return summary letters with the given hierarchical predecessor state
+	 */
 	public Set<LETTER> lettersSummaryNoAssertion(final STATE hier) {
 		final Map<LETTER, Map<STATE, Set<STATE>>> map = mReturnSummary.get(hier);
 		return map == null ? mEmptySetOfLetters : map.keySet();
 	}
 	
 	@Override
-	public Iterable<SummaryReturnTransition<LETTER, STATE>> summarySuccessors(final STATE hier,
-			final LETTER letter) {
-		final Set<SummaryReturnTransition<LETTER, STATE>> result =
-				new HashSet<SummaryReturnTransition<LETTER, STATE>>();
+	public Iterable<SummaryReturnTransition<LETTER, STATE>> summarySuccessors(final STATE hier, final LETTER letter) {
+		final Set<SummaryReturnTransition<LETTER, STATE>> result = new HashSet<>();
 		final Map<LETTER, Map<STATE, Set<STATE>>> letter2pred2succ = mReturnSummary.get(hier);
 		if (letter2pred2succ == null) {
 			return result;
@@ -509,8 +532,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 			if (succs != null) {
 				for (final STATE succ : succs) {
 					final SummaryReturnTransition<LETTER, STATE> srt =
-							new SummaryReturnTransition<LETTER, STATE>(
-									pred, letter, succ);
+							new SummaryReturnTransition<>(pred, letter, succ);
 					result.add(srt);
 				}
 			}
@@ -520,154 +542,133 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 	
 	@Override
 	public Iterable<SummaryReturnTransition<LETTER, STATE>> summarySuccessors(final STATE hier) {
-		return new Iterable<SummaryReturnTransition<LETTER, STATE>>() {
-			/**
-			 * Iterates over all SummaryReturnTransition of hier.
-			 */
+		return () -> new Iterator<SummaryReturnTransition<LETTER, STATE>>() {
+			private Iterator<LETTER> mLetterIterator;
+			private LETTER mCurrentLetter;
+			private Iterator<SummaryReturnTransition<LETTER, STATE>> mCurrentIterator;
+			
+			{
+				mLetterIterator = lettersSummaryNoAssertion(hier).iterator();
+				nextLetter();
+			}
+			
+			private void nextLetter() {
+				if (mLetterIterator.hasNext()) {
+					do {
+						mCurrentLetter = mLetterIterator.next();
+						mCurrentIterator = summarySuccessors(hier, mCurrentLetter).iterator();
+					} while (!mCurrentIterator.hasNext() && mLetterIterator.hasNext());
+					if (!mCurrentIterator.hasNext()) {
+						mCurrentLetter = null;
+						mCurrentIterator = null;
+					}
+				} else {
+					mCurrentLetter = null;
+					mCurrentIterator = null;
+				}
+			}
+			
 			@Override
-			public Iterator<SummaryReturnTransition<LETTER, STATE>> iterator() {
-				final Iterator<SummaryReturnTransition<LETTER, STATE>> iterator =
-						new Iterator<SummaryReturnTransition<LETTER, STATE>>() {
-							private Iterator<LETTER> mLetterIterator;
-							private LETTER mCurrentLetter;
-							private Iterator<SummaryReturnTransition<LETTER, STATE>> mCurrentIterator;
-							
-							{
-								mLetterIterator = lettersSummaryNoAssertion(hier).iterator();
-								nextLetter();
-							}
-							
-							private void nextLetter() {
-								if (mLetterIterator.hasNext()) {
-									do {
-										mCurrentLetter = mLetterIterator.next();
-										mCurrentIterator = summarySuccessors(hier, mCurrentLetter).iterator();
-									} while (!mCurrentIterator.hasNext() && mLetterIterator.hasNext());
-									if (!mCurrentIterator.hasNext()) {
-										mCurrentLetter = null;
-										mCurrentIterator = null;
-									}
-								} else {
-									mCurrentLetter = null;
-									mCurrentIterator = null;
-								}
-							}
-							
-							@Override
-							public boolean hasNext() {
-								return mCurrentLetter != null;
-							}
-							
-							@Override
-							public SummaryReturnTransition<LETTER, STATE> next() {
-								if (mCurrentLetter == null) {
-									throw new NoSuchElementException();
-								} else {
-									final SummaryReturnTransition<LETTER, STATE> result = mCurrentIterator.next();
-									if (!mCurrentIterator.hasNext()) {
-										nextLetter();
-									}
-									return result;
-								}
-							}
-							
-							@Override
-							public void remove() {
-								throw new UnsupportedOperationException();
-							}
-						};
-				return iterator;
+			public boolean hasNext() {
+				return mCurrentLetter != null;
+			}
+			
+			@Override
+			public SummaryReturnTransition<LETTER, STATE> next() {
+				if (mCurrentLetter == null) {
+					throw new NoSuchElementException();
+				}
+				final SummaryReturnTransition<LETTER, STATE> result = mCurrentIterator.next();
+				if (!mCurrentIterator.hasNext()) {
+					nextLetter();
+				}
+				return result;
+			}
+			
+			@Override
+			public void remove() {
+				throw new UnsupportedOperationException();
 			}
 		};
 	}
 	
 	@Override
-	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(
-			final STATE succ, final LETTER letter) {
+	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(final STATE succ,
+			final LETTER letter) {
 		return mStates.get(succ).internalPredecessors(letter);
 	}
 	
 	@Override
-	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(
-			final STATE succ) {
+	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(final STATE succ) {
 		return mStates.get(succ).internalPredecessors();
 	}
 	
 	@Override
-	public Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(
-			final STATE succ, final LETTER letter) {
+	public Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(final STATE succ, final LETTER letter) {
 		return mStates.get(succ).callPredecessors(letter);
 	}
 	
 	@Override
-	public Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(
-			final STATE succ) {
+	public Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(final STATE succ) {
 		return mStates.get(succ).callPredecessors();
 	}
 	
 	@Override
-	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(
-			final STATE state, final LETTER letter) {
+	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state,
+			final LETTER letter) {
 		return mStates.get(state).internalSuccessors(letter);
 	}
 	
 	@Override
-	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(
-			final STATE state) {
+	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state) {
 		return mStates.get(state).internalSuccessors();
 	}
 	
 	@Override
-	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
-			final STATE state, final LETTER letter) {
+	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final STATE state, final LETTER letter) {
 		return mStates.get(state).callSuccessors(letter);
 	}
 	
 	@Override
-	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(
-			final STATE state) {
+	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final STATE state) {
 		return mStates.get(state).callSuccessors();
 	}
 	
 	@Override
-	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(
-			final STATE succ, final STATE hier, final LETTER letter) {
+	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(final STATE succ, final STATE hier,
+			final LETTER letter) {
 		return mStates.get(succ).returnPredecessors(hier, letter);
 	}
 	
 	@Override
-	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(
-			final STATE succ, final LETTER letter) {
+	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(final STATE succ, final LETTER letter) {
 		return mStates.get(succ).returnPredecessors(letter);
 	}
 	
 	@Override
-	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(
-			final STATE succ) {
+	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(final STATE succ) {
 		return mStates.get(succ).returnPredecessors();
 	}
 	
 	@Override
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
-			final STATE state, final STATE hier, final LETTER letter) {
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state, final STATE hier,
+			final LETTER letter) {
 		return mStates.get(state).returnSuccessors(hier, letter);
 	}
 	
 	@Override
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
-			final STATE state, final LETTER letter) {
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state, final LETTER letter) {
 		return mStates.get(state).returnSuccessors(letter);
 	}
 	
 	@Override
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(
-			final STATE state) {
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state) {
 		return mStates.get(state).returnSuccessors();
 	}
 	
 	@Override
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(
-			final STATE state, final STATE hier) {
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(final STATE state,
+			final STATE hier) {
 		return mStates.get(state).returnSuccessorsGivenHier(hier);
 	}
 	
@@ -679,7 +680,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 			return;
 			// throw new AssertionError("dead are already computed");
 		}
-		final HashSet<StateContainer<LETTER, STATE>> acceptings = new HashSet<StateContainer<LETTER, STATE>>();
+		final HashSet<StateContainer<LETTER, STATE>> acceptings = new HashSet<>();
 		for (final STATE fin : getFinalStates()) {
 			final StateContainer<LETTER, STATE> cont = mStates.get(fin);
 			assert cont.getReachProp() != ReachProp.NODEADEND_AD && cont.getReachProp() != ReachProp.NODEADEND_SD;
@@ -698,7 +699,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 		}
 		assert mAcceptingSummaries == null;
 		mAcceptingSummaries = new AcceptingSummariesComputation();
-		mAcceptingComponentsAnalysis = new AcceptingComponentsAnalysis<LETTER, STATE>(
+		mAcceptingComponentsAnalysis = new AcceptingComponentsAnalysis<>(
 				mServices, this, mAcceptingSummaries, mStates.keySet(), mInitialStates);
 	}
 	
@@ -714,8 +715,8 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 			computeAcceptingComponents();
 		}
 		
-		final HashSet<StateContainer<LETTER, STATE>> nonLiveStartingSet = new HashSet<StateContainer<LETTER, STATE>>(
-				mAcceptingComponentsAnalysis.getStatesOfAllSccs());
+		final HashSet<StateContainer<LETTER, STATE>> nonLiveStartingSet =
+				new HashSet<>(mAcceptingComponentsAnalysis.getStatesOfAllSccs());
 		mOnlyLiveStates = new AncestorComputation(nonLiveStartingSet, ReachProp.LIVE_AD, ReachProp.LIVE_SD,
 				DownStateProp.REACH_FINAL_INFTY, DownStateProp.REACHABLE_AFTER_NONLIVE_REMOVAL);
 	}
@@ -764,8 +765,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 	
 	@Override
 	public Collection<StronglyConnectedComponentWithAcceptanceInformation<LETTER, STATE>> computeBalls(
-			final Set<STATE> stateSubset,
-			final Set<STATE> startStates) {
+			final Set<STATE> stateSubset, final Set<STATE> startStates) {
 		if (!getStates().containsAll(stateSubset)) {
 			throw new IllegalArgumentException("not a subset of the automaton's states: " + stateSubset);
 		}
@@ -786,35 +786,33 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 	
 	/**
 	 * @param state
-	 *            predecessor state
+	 *            The predecessor state.
 	 * @param letter
 	 *            letter
 	 * @param succ
 	 *            successor state
 	 * @return {@code true} iff the automaton contains the respective internal transition
 	 */
-	public boolean containsInternalTransition(final STATE state, final LETTER letter,
-			final STATE succ) {
+	public boolean containsInternalTransition(final STATE state, final LETTER letter, final STATE succ) {
 		return mStates.get(state).containsInternalTransition(letter, succ);
 	}
 	
 	/**
 	 * @param state
-	 *            predecessor state
+	 *            The predecessor state.
 	 * @param letter
 	 *            letter
 	 * @param succ
 	 *            successor state
 	 * @return {@code true} iff the automaton contains the respective call transition
 	 */
-	public boolean containsCallTransition(final STATE state, final LETTER letter,
-			final STATE succ) {
+	public boolean containsCallTransition(final STATE state, final LETTER letter, final STATE succ) {
 		return mStates.get(state).containsCallTransition(letter, succ);
 	}
 	
 	/**
 	 * @param lin
-	 *            linear predecessor state
+	 *            The linear predecessor state.
 	 * @param hier
 	 *            hierarchical predecessor state
 	 * @param letter
@@ -823,14 +821,13 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 	 *            successor state
 	 * @return {@code true} iff the automaton contains the respective return transition
 	 */
-	public boolean containsReturnTransition(final STATE lin, final STATE hier,
-			final LETTER letter, final STATE succ) {
+	public boolean containsReturnTransition(final STATE lin, final STATE hier, final LETTER letter, final STATE succ) {
 		return mStates.get(lin).containsReturnTransition(hier, letter, succ);
 	}
 	
 	/**
 	 * @param lin
-	 *            linear predecessor state
+	 *            The linear predecessor state.
 	 * @param hier
 	 *            hierarchical predecessor state
 	 * @param letter
@@ -839,8 +836,8 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 	 *            successor state
 	 * @return {@code true} iff the automaton contains the respective summary transition
 	 */
-	protected boolean containsSummaryReturnTransition(final STATE lin,
-			final STATE hier, final LETTER letter, final STATE succ) {
+	protected boolean containsSummaryReturnTransition(final STATE lin, final STATE hier, final LETTER letter,
+			final STATE succ) {
 		for (final SummaryReturnTransition<LETTER, STATE> trans : summarySuccessors(hier, letter)) {
 			if (succ.equals(trans.getSucc()) && lin.equals(trans.getLinPred())) {
 				return true;
@@ -854,7 +851,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */
-	private boolean checkTransitionsReturnedConsistent() throws AutomataOperationCanceledException {
+	final boolean checkTransitionsReturnedConsistent() throws AutomataOperationCanceledException {
 		boolean result = true;
 		for (final STATE state : getStates()) {
 			if (!mServices.getProgressMonitorService().continueProcessing()) {
@@ -927,23 +924,24 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 				result &= cont.succReturn(outTrans.getHierPred(), outTrans.getLetter()).contains(outTrans.getSucc());
 				assert result;
 			}
-			// for (LETTER letter : lettersReturnSummary(state)) {
-			// for (SummaryReturnTransition<LETTER, STATE> sumTrans :
-			// returnSummarySuccessor(letter, state)) {
-			// result &= containsReturnTransition(state, sumTrans.getHierPred(),
-			// outTrans.getLetter(), outTrans.getSucc());
-			// assert result;
-			// StateContainer<LETTER, STATE> cont = mStates.get(state);
-			// result &= cont.lettersReturn().contains(outTrans.getLetter());
-			// assert result;
-			// result &=
-			// cont.hierPred(outTrans.getLetter()).contains(outTrans.getHierPred());
-			// assert result;
-			// result &=
-			// cont.succReturn(outTrans.getHierPred(),outTrans.getLetter()).contains(outTrans.getSucc());
-			// assert result;
-			// }
-			// }
+			/*
+			for (LETTER letter : lettersReturnSummary(state)) {
+				for (SummaryReturnTransition<LETTER, STATE> sumTrans : returnSummarySuccessor(letter, state)) {
+					result &= containsReturnTransition(state, sumTrans.getHierPred(),
+							outTrans.getLetter(), outTrans.getSucc());
+					assert result;
+					StateContainer<LETTER, STATE> cont = mStates.get(state);
+					result &= cont.lettersReturn().contains(outTrans.getLetter());
+					assert result;
+					result &=
+							cont.hierPred(outTrans.getLetter()).contains(outTrans.getHierPred());
+					assert result;
+					result &=
+							cont.succReturn(outTrans.getHierPred(), outTrans.getLetter()).contains(outTrans.getSucc());
+					assert result;
+				}
+			}
+			*/
 			
 			for (final OutgoingInternalTransition<LETTER, STATE> trans : internalSuccessors(state)) {
 				result &= containsInternalTransition(state, trans.getLetter(), trans.getSucc());
@@ -975,27 +973,36 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 		return result;
 	}
 	
+	@SuppressWarnings("squid:S1698")
+	boolean checkStateEquality(final STATE state1, final STATE state2) {
+		return state1 == state2;
+	}
+	
+	@SuppressWarnings("squid:S1698")
+	boolean checkStateContainerEquality(final StateContainer<LETTER, STATE> cont,
+			final StateContainer<LETTER, STATE> succCont) {
+		return cont == succCont;
+	}
+	
 	// //////////////////////////////////////////////////////////////////////////
 	
 	/**
-	 * Compute the set of reachable doubledeckers. Construct a state container
+	 * Compute the set of reachable double deckers. Construct a state container
 	 * for each reachable state, add both (state and StateContainer) to mStates
 	 * and set the reachability down state information in the state container.
 	 */
 	private class ReachableStatesComputation {
-		private int mNumberOfConstructedStates = 0;
-		private final LinkedList<StateContainer<LETTER, STATE>> mForwardWorklist =
-				new LinkedList<StateContainer<LETTER, STATE>>();
-		private final LinkedList<StateContainer<LETTER, STATE>> mDownPropagationWorklist =
-				new LinkedList<StateContainer<LETTER, STATE>>();
+		private static final String OPERAND_CONTAINS_TRANSITION_TWICE = "Operand contains transition twice: ";
+		private int mNumberOfConstructedStates;
+		private final LinkedList<StateContainer<LETTER, STATE>> mForwardWorklist = new LinkedList<>();
+		private final LinkedList<StateContainer<LETTER, STATE>> mDownPropagationWorklist = new LinkedList<>();
 		
 		ReachableStatesComputation() throws AutomataOperationCanceledException {
-			addInitialStates(mOperand.getInitialStates());
+			addInitialStates(getOperand().getInitialStates());
 			
 			do {
 				while (!mForwardWorklist.isEmpty()) {
-					if (mServices.getProgressMonitorService() != null
-							&& !mServices.getProgressMonitorService().continueProcessing()) {
+					if (!getServices().getProgressMonitorService().continueProcessing()) {
 						throw new AutomataOperationCanceledException(this.getClass());
 					}
 					final StateContainer<LETTER, STATE> cont = mForwardWorklist.remove(0);
@@ -1004,11 +1011,11 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 					
 					if (candidateForOutgoingReturn(cont.getState())) {
 						for (final STATE down : cont.getDownStates().keySet()) {
-							if (down != getEmptyStackState()) {
+							if (!checkStateEquality(down, getEmptyStackState())) {
 								final Set<STATE> newDownStates = addReturnsAndSuccessors(cont, down);
 								if (newDownStates != null) {
 									if (newDownStatesFormSelfloops == null) {
-										newDownStatesFormSelfloops = new HashSet<STATE>();
+										newDownStatesFormSelfloops = new HashSet<>();
 									}
 									newDownStatesFormSelfloops.addAll(newDownStates);
 								}
@@ -1016,14 +1023,12 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 						}
 					}
 					addInternalsAndSuccessors(cont);
-					{
-						final Set<STATE> newDownStates = addCallsAndSuccessors(cont);
-						if (newDownStates != null) {
-							if (newDownStatesFormSelfloops == null) {
-								newDownStatesFormSelfloops = new HashSet<STATE>();
-							}
-							newDownStatesFormSelfloops.addAll(newDownStates);
+					final Set<STATE> newDownStates = addCallsAndSuccessors(cont);
+					if (newDownStates != null) {
+						if (newDownStatesFormSelfloops == null) {
+							newDownStatesFormSelfloops = new HashSet<>();
 						}
+						newDownStatesFormSelfloops.addAll(newDownStates);
 					}
 					if (newDownStatesFormSelfloops != null) {
 						assert !newDownStatesFormSelfloops.isEmpty();
@@ -1034,7 +1039,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 					}
 				}
 				while (mForwardWorklist.isEmpty() && !mDownPropagationWorklist.isEmpty()) {
-					if (!mServices.getProgressMonitorService().continueProcessing()) {
+					if (!getServices().getProgressMonitorService().continueProcessing()) {
 						// TODO: Check if this has a performance impact
 						// This exception was included because of timeouts on
 						// e.g.
@@ -1050,20 +1055,20 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 				}
 				
 			} while (!mDownPropagationWorklist.isEmpty() || !mForwardWorklist.isEmpty());
-			assert (mForwardWorklist.isEmpty());
-			assert (mDownPropagationWorklist.isEmpty());
+			assert mForwardWorklist.isEmpty();
+			assert mDownPropagationWorklist.isEmpty();
 			assert checkTransitionsReturnedConsistent();
 			
 			if (EXT_RUN_CONSTRUCTION_TESTING) {
 				for (final STATE fin : getFinalStates()) {
 					mLogger.debug(new DebugMessage("Test if can find an accepting run for final state {0}", fin));
-					final NestedRun<LETTER, STATE> run = (new RunConstructor<LETTER, STATE>(
-							mServices,
-							NestedWordAutomatonReachableStates.this, mStates.get(fin))).constructRun();
+					final NestedRun<LETTER, STATE> run =
+							(new RunConstructor<>(getServices(), NestedWordAutomatonReachableStates.this,
+									mStates.get(fin)))
+											.constructRun();
 					try {
-						assert (new Accepts<LETTER, STATE>(mServices, NestedWordAutomatonReachableStates.this,
-								run.getWord()))
-										.getResult();
+						assert (new Accepts<>(getServices(), NestedWordAutomatonReachableStates.this, run.getWord()))
+								.getResult();
 					} catch (final AutomataLibraryException e) {
 						throw new AssertionError(e);
 					}
@@ -1073,11 +1078,11 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 		
 		private void addInitialStates(final Iterable<STATE> initialStates) {
 			for (final STATE state : initialStates) {
-				mInitialStates.add(state);
-				final HashMap<STATE, Integer> downStates = new HashMap<STATE, Integer>();
-				downStates.put(getEmptyStackState(), 0);
+				getInitialStatesPrivate().add(state);
+				final HashMap<STATE, Integer> downStates = new HashMap<>();
+				downStates.put(getEmptyStackState(), Integer.valueOf(0));
 				final StateContainer<LETTER, STATE> sc = addState(state, downStates);
-				mStates.put(state, sc);
+				getStatesMap().put(state, sc);
 			}
 		}
 		
@@ -1086,145 +1091,136 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 		 * CommonEntriesComponent. Add to ForwardWorklist.
 		 */
 		private StateContainer<LETTER, STATE> addState(final STATE state, final HashMap<STATE, Integer> downStates) {
-			assert !mStates.containsKey(state);
-			if (mOperand.isFinal(state)) {
-				mFinalStates.add(state);
+			assert !getStatesMap().containsKey(state);
+			if (getOperand().isFinal(state)) {
+				getFinalStatesPrivate().add(state);
 			}
 			final boolean canHaveOutgoingReturn = candidateForOutgoingReturn(state);
-			final StateContainer<LETTER, STATE> result = new StateContainerFieldAndMap<LETTER, STATE>(state,
+			final StateContainer<LETTER, STATE> result = new StateContainerFieldAndMap<>(state,
 					mNumberOfConstructedStates, downStates, canHaveOutgoingReturn);
 			mNumberOfConstructedStates++;
-			mStates.put(state, result);
+			getStatesMap().put(state, result);
 			mForwardWorklist.add(result);
 			return result;
 		}
 		
 		private boolean candidateForOutgoingReturn(final STATE state) {
-			if (mReturnAlphabet.isEmpty()) {
+			if (getReturnAlphabet().isEmpty()) {
 				return false;
-			} else {
-				return !mOperand.lettersReturn(state).isEmpty();
 			}
+			return !getOperand().lettersReturn(state).isEmpty();
 		}
 		
 		private void addInternalsAndSuccessors(final StateContainer<LETTER, STATE> cont) {
 			final STATE state = cont.getState();
-			for (final OutgoingInternalTransition<LETTER, STATE> trans : mOperand.internalSuccessors(state)) {
+			for (final OutgoingInternalTransition<LETTER, STATE> trans : getOperand().internalSuccessors(state)) {
 				final STATE succ = trans.getSucc();
-				StateContainer<LETTER, STATE> succSc = mStates.get(succ);
+				StateContainer<LETTER, STATE> succSc = getStatesMap().get(succ);
 				if (succSc == null) {
-					succSc = addState(succ, new HashMap<STATE, Integer>(cont.getDownStates()));
+					succSc = addState(succ, new HashMap<>(cont.getDownStates()));
 				} else {
 					addNewDownStates(cont, succSc, cont.getDownStates().keySet());
 				}
-				assert (!containsCallTransition(state, trans.getLetter(), succ)) : "Operand contains transition twice: "
+				assert !containsCallTransition(state, trans.getLetter(), succ) : OPERAND_CONTAINS_TRANSITION_TWICE
 						+ state + trans.getSucc();
 				cont.addInternalOutgoing(trans);
-				succSc.addInternalIncoming(new IncomingInternalTransition<LETTER, STATE>(state, trans.getLetter()));
-				mNumberTransitions.incIn();
+				succSc.addInternalIncoming(new IncomingInternalTransition<>(state, trans.getLetter()));
+				getNumberTransitions().incIn();
 			}
 		}
 		
 		private Set<STATE> addCallsAndSuccessors(final StateContainer<LETTER, STATE> cont) {
 			boolean addedSelfloop = false;
 			final STATE state = cont.getState();
-			for (final OutgoingCallTransition<LETTER, STATE> trans : mOperand.callSuccessors(cont.getState())) {
+			for (final OutgoingCallTransition<LETTER, STATE> trans : getOperand().callSuccessors(cont.getState())) {
 				final STATE succ = trans.getSucc();
-				StateContainer<LETTER, STATE> succCont = mStates.get(succ);
-				final HashMap<STATE, Integer> succDownStates = new HashMap<STATE, Integer>();
-				succDownStates.put(cont.getState(), 0);
+				StateContainer<LETTER, STATE> succCont = getStatesMap().get(succ);
+				final HashMap<STATE, Integer> succDownStates = new HashMap<>();
+				succDownStates.put(cont.getState(), Integer.valueOf(0));
 				if (succCont == null) {
 					succCont = addState(succ, succDownStates);
 				} else {
 					addNewDownStates(cont, succCont, succDownStates.keySet());
-					if (cont == succCont) {
+					if (checkStateContainerEquality(cont, succCont)) {
 						addedSelfloop = true;
 					}
 				}
-				assert (!containsCallTransition(state, trans.getLetter(), succ)) : "Operand contains transition twice: "
+				assert !containsCallTransition(state, trans.getLetter(), succ) : OPERAND_CONTAINS_TRANSITION_TWICE
 						+ state + trans.getSucc();
 				cont.addCallOutgoing(trans);
-				succCont.addCallIncoming(new IncomingCallTransition<LETTER, STATE>(state, trans.getLetter()));
-				mNumberTransitions.incCa();
+				succCont.addCallIncoming(new IncomingCallTransition<>(state, trans.getLetter()));
+				getNumberTransitions().incCa();
 			}
 			if (addedSelfloop) {
-				final HashSet<STATE> newDownStates = new HashSet<STATE>(1);
+				final HashSet<STATE> newDownStates = new HashSet<>(1);
 				newDownStates.add(state);
 				return newDownStatesSelfloop(cont, newDownStates);
-			} else {
-				return null;
 			}
+			return null;
 		}
 		
 		private Set<STATE> addReturnsAndSuccessors(final StateContainer<LETTER, STATE> cont, final STATE down) {
 			boolean addedSelfloop = false;
 			final STATE state = cont.getState();
 			StateContainer<LETTER, STATE> downCont = null;
-			for (final OutgoingReturnTransition<LETTER, STATE> trans : mOperand.returnSuccessorsGivenHier(state,
+			for (final OutgoingReturnTransition<LETTER, STATE> trans : getOperand().returnSuccessorsGivenHier(state,
 					down)) {
-				assert (down.equals(trans.getHierPred()));
+				assert down.equals(trans.getHierPred());
 				if (downCont == null) {
-					downCont = mStates.get(down);
+					downCont = getStatesMap().get(down);
 				}
 				final STATE succ = trans.getSucc();
-				StateContainer<LETTER, STATE> succCont = mStates.get(succ);
+				StateContainer<LETTER, STATE> succCont = getStatesMap().get(succ);
 				if (succCont == null) {
-					succCont = addState(succ, new HashMap<STATE, Integer>(downCont.getDownStates()));
+					succCont = addState(succ, new HashMap<>(downCont.getDownStates()));
 				} else {
 					addNewDownStates(cont, succCont, downCont.getDownStates().keySet());
-					if (cont == succCont) {
+					if (checkStateContainerEquality(cont, succCont)) {
 						addedSelfloop = true;
 					}
 				}
-				assert (!containsReturnTransition(state, down, trans.getLetter(),
-						succ)) : "Operand contains transition twice: "
-								+ state + trans.getSucc();
+				assert !containsReturnTransition(state, down, trans.getLetter(),
+						succ) : OPERAND_CONTAINS_TRANSITION_TWICE + state + trans.getSucc();
 				cont.addReturnOutgoing(trans);
-				succCont.addReturnIncoming(new IncomingReturnTransition<LETTER, STATE>(cont.getState(), down, trans
-						.getLetter()));
+				succCont.addReturnIncoming(new IncomingReturnTransition<>(cont.getState(), down, trans.getLetter()));
 				addReturnSummary(state, down, trans.getLetter(), succ);
-				mNumberTransitions.incRe();
+				getNumberTransitions().incRe();
 				// addSummary(downCont, succCont);
 			}
 			if (addedSelfloop) {
 				return newDownStatesSelfloop(cont, downCont.getDownStates().keySet());
-			} else {
-				return null;
 			}
+			return null;
 		}
 		
-		private Set<STATE> newDownStatesSelfloop(
-				final StateContainer<LETTER, STATE> cont,
+		private Set<STATE> newDownStatesSelfloop(final StateContainer<LETTER, STATE> cont,
 				final Set<STATE> propagatedDownStates) {
 			Set<STATE> newDownStates = null;
 			for (final STATE downs : propagatedDownStates) {
 				if (!cont.getDownStates().keySet().contains(downs)) {
 					if (newDownStates == null) {
-						newDownStates = new HashSet<STATE>();
+						newDownStates = new HashSet<>();
 					}
 					newDownStates.add(downs);
 				}
-				
 			}
 			return newDownStates;
 		}
 		
 		private void addNewDownStates(final StateContainer<LETTER, STATE> cont,
-				final StateContainer<LETTER, STATE> succCont,
-				final Set<STATE> potentiallyNewDownStates) {
-			if (cont == succCont) {
+				final StateContainer<LETTER, STATE> succCont, final Set<STATE> potentiallyNewDownStates) {
+			if (checkStateContainerEquality(cont, succCont)) {
 				return;
-			} else {
-				boolean newDownStateWasPropagated = false;
-				for (final STATE down : potentiallyNewDownStates) {
-					final boolean newlyAdded = succCont.addReachableDownState(down);
-					if (newlyAdded) {
-						newDownStateWasPropagated = true;
-					}
+			}
+			boolean newDownStateWasPropagated = false;
+			for (final STATE down : potentiallyNewDownStates) {
+				final boolean newlyAdded = succCont.addReachableDownState(down);
+				if (newlyAdded) {
+					newDownStateWasPropagated = true;
 				}
-				if (newDownStateWasPropagated) {
-					mDownPropagationWorklist.add(succCont);
-				}
+			}
+			if (newDownStateWasPropagated) {
+				mDownPropagationWorklist.add(succCont);
 			}
 		}
 		
@@ -1234,21 +1230,21 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 				return;
 			}
 			for (final OutgoingInternalTransition<LETTER, STATE> trans : cont.internalSuccessors()) {
-				final StateContainer<LETTER, STATE> succCont = mStates.get(trans.getSucc());
+				final StateContainer<LETTER, STATE> succCont = getStatesMap().get(trans.getSucc());
 				addNewDownStates(cont, succCont, unpropagatedDownStates);
 			}
 			for (final SummaryReturnTransition<LETTER, STATE> trans : summarySuccessors(cont.getState())) {
-				final StateContainer<LETTER, STATE> succCont = mStates.get(trans.getSucc());
+				final StateContainer<LETTER, STATE> succCont = getStatesMap().get(trans.getSucc());
 				addNewDownStates(cont, succCont, unpropagatedDownStates);
 			}
 			if (candidateForOutgoingReturn(cont.getState())) {
 				HashSet<STATE> newDownStatesFormSelfloops = null;
 				for (final STATE down : cont.getUnpropagatedDownStates()) {
-					if (down != getEmptyStackState()) {
+					if (!checkStateEquality(down, getEmptyStackState())) {
 						final Set<STATE> newDownStates = addReturnsAndSuccessors(cont, down);
 						if (newDownStates != null) {
 							if (newDownStatesFormSelfloops == null) {
-								newDownStatesFormSelfloops = new HashSet<STATE>();
+								newDownStatesFormSelfloops = new HashSet<>();
 							}
 							newDownStatesFormSelfloops.addAll(newDownStates);
 						}
@@ -1265,7 +1261,6 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 			} else {
 				cont.eraseUnpropagatedDownStates();
 			}
-			
 		}
 	}
 	
@@ -1288,30 +1283,26 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 	 * <i>up</i>.
 	 */
 	public class AncestorComputation {
-		
-		private final ReachProp mRpAllDown;
-		private final ReachProp mRpSomeDown;
+		protected final ReachProp mRpAllDown;
+		protected final ReachProp mRpSomeDown;
 		/**
 		 * Property stating that from this DoubleDecker precious states are
 		 * reachable (resp reachable infinitely often).
 		 */
-		private final DownStateProp mDspReachPrecious;
+		protected final DownStateProp mDspReachPrecious;
 		/**
 		 * Property stating that this DoubleDecker is reachable after removal of
 		 * states.
 		 */
 		private final DownStateProp mDspReachableAfterRemoval;
 		
-		private final Set<STATE> mAncestors = new HashSet<STATE>();
-		private final Set<STATE> mAncestorsInitial = new HashSet<STATE>();
-		private final Set<STATE> mAncestorsAccepting = new HashSet<STATE>();
+		private final Set<STATE> mAncestors = new HashSet<>();
+		private final Set<STATE> mAncestorsInitial = new HashSet<>();
+		private final Set<STATE> mAncestorsAccepting = new HashSet<>();
 		
-		private final ArrayDeque<StateContainer<LETTER, STATE>> mNonReturnBackwardWorklist =
-				new ArrayDeque<StateContainer<LETTER, STATE>>();
-		private final Set<StateContainer<LETTER, STATE>> mHasIncomingReturn =
-				new HashSet<StateContainer<LETTER, STATE>>();
-		private final ArrayDeque<StateContainer<LETTER, STATE>> mPropagationWorklist =
-				new ArrayDeque<StateContainer<LETTER, STATE>>();
+		private final ArrayDeque<StateContainer<LETTER, STATE>> mNonReturnBackwardWorklist = new ArrayDeque<>();
+		private final Set<StateContainer<LETTER, STATE>> mHasIncomingReturn = new HashSet<>();
+		private final ArrayDeque<StateContainer<LETTER, STATE>> mPropagationWorklist = new ArrayDeque<>();
 		
 		AncestorComputation(final HashSet<StateContainer<LETTER, STATE>> preciousStates, final ReachProp allDownProp,
 				final ReachProp someDownProp, final DownStateProp downStatePropReachPrecious,
@@ -1329,7 +1320,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 			
 			while (!mNonReturnBackwardWorklist.isEmpty()) {
 				final StateContainer<LETTER, STATE> cont = mNonReturnBackwardWorklist.removeFirst();
-				if (mInitialStates.contains(cont.getState())) {
+				if (getInitialStatesPrivate().contains(cont.getState())) {
 					mAncestorsInitial.add(cont.getState());
 				}
 				if (isFinal(cont.getState())) {
@@ -1338,7 +1329,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 				
 				for (final IncomingInternalTransition<LETTER, STATE> inTrans : cont.internalPredecessors()) {
 					final STATE pred = inTrans.getPred();
-					final StateContainer<LETTER, STATE> predCont = mStates.get(pred);
+					final StateContainer<LETTER, STATE> predCont = getStatesMap().get(pred);
 					if (predCont.getReachProp() != mRpAllDown) {
 						predCont.setReachProp(mRpAllDown);
 						mAncestors.add(pred);
@@ -1347,7 +1338,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 				}
 				for (final IncomingReturnTransition<LETTER, STATE> inTrans : cont.returnPredecessors()) {
 					final STATE hier = inTrans.getHierPred();
-					final StateContainer<LETTER, STATE> hierCont = mStates.get(hier);
+					final StateContainer<LETTER, STATE> hierCont = getStatesMap().get(hier);
 					if (hierCont.getReachProp() != mRpAllDown) {
 						hierCont.setReachProp(mRpAllDown);
 						mAncestors.add(hier);
@@ -1357,7 +1348,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 				}
 				for (final IncomingCallTransition<LETTER, STATE> inTrans : cont.callPredecessors()) {
 					final STATE pred = inTrans.getPred();
-					final StateContainer<LETTER, STATE> predCont = mStates.get(pred);
+					final StateContainer<LETTER, STATE> predCont = getStatesMap().get(pred);
 					if (predCont.getReachProp() != mRpAllDown) {
 						predCont.setReachProp(mRpAllDown);
 						mAncestors.add(pred);
@@ -1369,18 +1360,19 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 			for (final StateContainer<LETTER, STATE> cont : mHasIncomingReturn) {
 				for (final IncomingReturnTransition<LETTER, STATE> inTrans : cont.returnPredecessors()) {
 					final STATE lin = inTrans.getLinPred();
-					final StateContainer<LETTER, STATE> linCont = mStates.get(lin);
+					final StateContainer<LETTER, STATE> linCont = getStatesMap().get(lin);
 					if (linCont.getReachProp() != mRpAllDown) {
-						final Set<STATE> potentiallyNewDownStates = new HashSet<STATE>(1);
+						final Set<STATE> potentiallyNewDownStates = new HashSet<>(1);
 						potentiallyNewDownStates.add(inTrans.getHierPred());
 						addNewDownStates(null, linCont, potentiallyNewDownStates);
-						// if (linCont.getUnpropagatedDownStates() == null) {
-						// assert !mPropagationWorklist.contains(linCont);
-						// mPropagationWorklist.addLast(linCont);
-						// }
-						// ReachProp oldValue =
-						// linCont.modifyDownProp(inTrans.getHierPred(),mrpSomeDown);
-						// assert oldValue != mrpAllDown;
+						/*
+						if (linCont.getUnpropagatedDownStates() == null) {
+							assert !mPropagationWorklist.contains(linCont);
+							mPropagationWorklist.addLast(linCont);
+						}
+						ReachProp oldValue = linCont.modifyDownProp(inTrans.getHierPred(), mrpSomeDown);
+						assert oldValue != mrpAllDown;
+						*/
 					}
 				}
 			}
@@ -1409,18 +1401,16 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 			final Iterator<STATE> it = mAncestorsInitial.iterator();
 			while (it.hasNext()) {
 				final STATE state = it.next();
-				final StateContainer<LETTER, STATE> cont = mStates.get(state);
+				final StateContainer<LETTER, STATE> cont = getStatesMap().get(state);
 				if (cont.getReachProp() == mRpAllDown) {
 					continue;
-				} else {
-					final boolean reachFinalOnce =
-							cont.hasDownProp(getEmptyStackState(), DownStateProp.REACH_FINAL_ONCE);
-					if (reachFinalOnce) {
-						continue;
-					} else {
-						it.remove();
-					}
 				}
+				final boolean reachFinalOnce =
+						cont.hasDownProp(getEmptyStackState(), DownStateProp.REACH_FINAL_ONCE);
+				if (reachFinalOnce) {
+					continue;
+				}
+				it.remove();
 			}
 		}
 		
@@ -1430,36 +1420,34 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 			Set<STATE> newUnpropagatedDownStatesSelfloop = null;
 			for (final IncomingInternalTransition<LETTER, STATE> inTrans : cont.internalPredecessors()) {
 				final STATE pred = inTrans.getPred();
-				final StateContainer<LETTER, STATE> predCont = mStates.get(pred);
+				final StateContainer<LETTER, STATE> predCont = getStatesMap().get(pred);
 				if (predCont.getReachProp() != mRpAllDown) {
 					addNewDownStates(cont, predCont, unpropagatedDownStates);
 				}
 			}
 			for (final IncomingReturnTransition<LETTER, STATE> inTrans : cont.returnPredecessors()) {
 				final STATE hier = inTrans.getHierPred();
-				final StateContainer<LETTER, STATE> hierCont = mStates.get(hier);
+				final StateContainer<LETTER, STATE> hierCont = getStatesMap().get(hier);
 				if (hierCont.getReachProp() != mRpAllDown) {
 					addNewDownStates(cont, hierCont, unpropagatedDownStates);
 				}
 				final STATE lin = inTrans.getLinPred();
-				final StateContainer<LETTER, STATE> linCont = mStates.get(lin);
-				if (linCont.getReachProp() != mRpAllDown) {
-					if (atLeastOneOccursAsDownState(hierCont, unpropagatedDownStates)) {
-						if (linCont == cont) {
-							final boolean hierAlreadyPropagated = cont.hasDownProp(hier, mDspReachPrecious);
-							if (!hierAlreadyPropagated) {
-								if (newUnpropagatedDownStatesSelfloop == null) {
-									newUnpropagatedDownStatesSelfloop = new HashSet<STATE>();
-								}
-								newUnpropagatedDownStatesSelfloop.add(hier);
+				final StateContainer<LETTER, STATE> linCont = getStatesMap().get(lin);
+				if (linCont.getReachProp() != mRpAllDown
+						&& atLeastOneOccursAsDownState(hierCont, unpropagatedDownStates)) {
+					if (checkStateContainerEquality(linCont, cont)) {
+						final boolean hierAlreadyPropagated = cont.hasDownProp(hier, mDspReachPrecious);
+						if (!hierAlreadyPropagated) {
+							if (newUnpropagatedDownStatesSelfloop == null) {
+								newUnpropagatedDownStatesSelfloop = new HashSet<>();
 							}
-						} else {
-							final HashSet<STATE> potentiallyNewDownState = new HashSet<STATE>(1);
-							potentiallyNewDownState.add(hier);
-							addNewDownStates(cont, linCont, potentiallyNewDownState);
+							newUnpropagatedDownStatesSelfloop.add(hier);
 						}
+					} else {
+						final HashSet<STATE> potentiallyNewDownState = new HashSet<>(1);
+						potentiallyNewDownState.add(hier);
+						addNewDownStates(cont, linCont, potentiallyNewDownState);
 					}
-					
 				}
 			}
 			if (newUnpropagatedDownStatesSelfloop != null) {
@@ -1482,37 +1470,34 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 		}
 		
 		private void addNewDownStates(final StateContainer<LETTER, STATE> cont,
-				final StateContainer<LETTER, STATE> predCont,
-				final Set<STATE> potentiallyNewDownStates) {
-			if (cont == predCont) {
+				final StateContainer<LETTER, STATE> predCont, final Set<STATE> potentiallyNewDownStates) {
+			if (checkStateContainerEquality(cont, predCont)) {
 				return;
-			} else {
-				final boolean isAlreadyInWorklist = (predCont.getUnpropagatedDownStates() != null);
-				assert isAlreadyInWorklist == mPropagationWorklist.contains(predCont);
-				assert !isAlreadyInWorklist || predCont.getReachProp() == mRpSomeDown;
-				boolean newDownStateWasPropagated = false;
-				for (final STATE down : potentiallyNewDownStates) {
-					if (predCont.getDownStates().containsKey(down)) {
-						final boolean modified = predCont.setDownProp(down, mDspReachPrecious);
-						if (modified) {
-							newDownStateWasPropagated = true;
-						}
-						
+			}
+			final boolean isAlreadyInWorklist = predCont.getUnpropagatedDownStates() != null;
+			assert isAlreadyInWorklist == mPropagationWorklist.contains(predCont);
+			assert !isAlreadyInWorklist || predCont.getReachProp() == mRpSomeDown;
+			boolean newDownStateWasPropagated = false;
+			for (final STATE down : potentiallyNewDownStates) {
+				if (predCont.getDownStates().containsKey(down)) {
+					final boolean modified = predCont.setDownProp(down, mDspReachPrecious);
+					if (modified) {
+						newDownStateWasPropagated = true;
 					}
 				}
-				if (newDownStateWasPropagated) {
-					if (!isAlreadyInWorklist) {
-						assert !mPropagationWorklist.contains(predCont);
-						mPropagationWorklist.add(predCont);
-					}
-					if (predCont.getReachProp() != mRpSomeDown) {
-						assert predCont.getReachProp() != mRpAllDown;
-						predCont.setReachProp(mRpSomeDown);
-						assert !mAncestors.contains(predCont.getState());
-						mAncestors.add(predCont.getState());
-						if (isFinal(predCont.getState())) {
-							mAncestorsAccepting.add(predCont.getState());
-						}
+			}
+			if (newDownStateWasPropagated) {
+				if (!isAlreadyInWorklist) {
+					assert !mPropagationWorklist.contains(predCont);
+					mPropagationWorklist.add(predCont);
+				}
+				if (predCont.getReachProp() != mRpSomeDown) {
+					assert predCont.getReachProp() != mRpAllDown;
+					predCont.setReachProp(mRpSomeDown);
+					assert !mAncestors.contains(predCont.getState());
+					mAncestors.add(predCont.getState());
+					if (isFinal(predCont.getState())) {
+						mAncestorsAccepting.add(predCont.getState());
 					}
 				}
 			}
@@ -1524,16 +1509,14 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 		 * precious states). This method marks all these DoubleDeckers with
 		 * mDspReachableAfterRemoval
 		 */
-		public void propagateReachableAfterRemovalDoubleDeckers() {
-			final LinkedHashSet<StateContainer<LETTER, STATE>> propagationWorklist =
-					new LinkedHashSet<StateContainer<LETTER, STATE>>();
+		public final void propagateReachableAfterRemovalDoubleDeckers() {
+			final LinkedHashSet<StateContainer<LETTER, STATE>> propagationWorklist = new LinkedHashSet<>();
 			final Set<StateContainer<LETTER, STATE>> visited = new HashSet<>();
 			
-			// start only at states that are still initial after removal
-			// of states
+			// start only at states that are still initial after removal of states
 			for (final STATE state : mAncestorsInitial) {
-				assert (isInitial(state));
-				final StateContainer<LETTER, STATE> sc = mStates.get(state);
+				assert isInitial(state);
+				final StateContainer<LETTER, STATE> sc = getStatesMap().get(state);
 				propagationWorklist.add(sc);
 				visited.add(sc);
 			}
@@ -1547,7 +1530,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 						// succ will be removed
 						continue;
 					}
-					final StateContainer<LETTER, STATE> succCont = mStates.get(succ);
+					final StateContainer<LETTER, STATE> succCont = getStatesMap().get(succ);
 					final boolean modified = propagateReachableAfterRemovalProperty(cont, succCont);
 					addToWorklistIfModfiedOrNotVisited(propagationWorklist, visited, modified, succCont);
 				}
@@ -1563,7 +1546,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 						continue;
 					}
 					
-					final StateContainer<LETTER, STATE> succCont = mStates.get(succ);
+					final StateContainer<LETTER, STATE> succCont = getStatesMap().get(succ);
 					final boolean modified = propagateReachableAfterRemovalProperty(cont, succCont);
 					addToWorklistIfModfiedOrNotVisited(propagationWorklist, visited, modified, succCont);
 				}
@@ -1574,7 +1557,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 						continue;
 					}
 					
-					final StateContainer<LETTER, STATE> succCont = mStates.get(succ);
+					final StateContainer<LETTER, STATE> succCont = getStatesMap().get(succ);
 					final boolean modified = false;
 					addToWorklistIfModfiedOrNotVisited(propagationWorklist, visited, modified, succCont);
 				}
@@ -1583,8 +1566,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 		
 		private void addToWorklistIfModfiedOrNotVisited(
 				final LinkedHashSet<StateContainer<LETTER, STATE>> propagationWorklist,
-				final Set<StateContainer<LETTER, STATE>> visited,
-				final boolean modified,
+				final Set<StateContainer<LETTER, STATE>> visited, final boolean modified,
 				final StateContainer<LETTER, STATE> succCont) {
 			if (modified || !visited.contains(succCont)) {
 				propagationWorklist.add(succCont);
@@ -1630,17 +1612,17 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 			return modified;
 		}
 		
-		// private void addToWorklistIfNotAlreadyVisited(
-		// ArrayDeque<StateContainer<LETTER, STATE>> propagationWorklist,
-		// Set<StateContainer<LETTER, STATE>> visited,
-		// StateContainer<LETTER, STATE> succCont) {
-		// boolean alreadyVisited = visited.contains(succCont);
-		// if (!alreadyVisited) {
-		// propagationWorklist.add(succCont);
-		// visited.add(succCont);
-		// }
-		// // return alreadyVisited;
-		// }
+		/*
+		private void addToWorklistIfNotAlreadyVisited(ArrayDeque<StateContainer<LETTER, STATE>> propagationWorklist,
+				Set<StateContainer<LETTER, STATE>> visited, StateContainer<LETTER, STATE> succCont) {
+			boolean alreadyVisited = visited.contains(succCont);
+			if (!alreadyVisited) {
+				propagationWorklist.add(succCont);
+				visited.add(succCont);
+			}
+			// return alreadyVisited;
+		}
+		*/
 		
 		/**
 		 * @param upState
@@ -1654,21 +1636,19 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 		 *         reachable in the resulting automaton
 		 */
 		public boolean isDownState(final STATE upState, final STATE downState) {
-			final StateContainer<LETTER, STATE> cont = mStates.get(upState);
-			assert (cont.getReachProp() == mRpAllDown || cont.getReachProp() == mRpSomeDown);
+			final StateContainer<LETTER, STATE> cont = getStatesMap().get(upState);
+			assert cont.getReachProp() == mRpAllDown || cont.getReachProp() == mRpSomeDown;
 			if (cont.getDownStates().containsKey(downState)) {
 				if (cont.getReachProp() == mRpAllDown) {
-					assert (cont.getDownStates().containsKey(downState));
+					assert cont.getDownStates().containsKey(downState);
 					return true;
-				} else {
-					assert cont.getReachProp() == mRpSomeDown;
-					final boolean notRemoved = cont.hasDownProp(downState, mDspReachPrecious)
-							|| cont.hasDownProp(downState, mDspReachableAfterRemoval);
-					return notRemoved;
 				}
-			} else {
-				return false;
+				assert cont.getReachProp() == mRpSomeDown;
+				final boolean notRemoved = cont.hasDownProp(downState, mDspReachPrecious)
+						|| cont.hasDownProp(downState, mDspReachableAfterRemoval);
+				return notRemoved;
 			}
+			return false;
 		}
 		
 		/**
@@ -1681,14 +1661,14 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 		 *         set of down states in resulting automaton.
 		 */
 		public Set<STATE> getDownStates(final STATE state) {
-			final StateContainer<LETTER, STATE> cont = mStates.get(state);
+			final StateContainer<LETTER, STATE> cont = getStatesMap().get(state);
 			// return cont.getDownStates().keySet();
 			Set<STATE> downStates;
 			if (cont.getReachProp() == mRpAllDown) {
 				downStates = cont.getDownStates().keySet();
 			} else {
 				assert cont.getReachProp() == mRpSomeDown;
-				downStates = new HashSet<STATE>();
+				downStates = new HashSet<>();
 				for (final STATE down : cont.getDownStates().keySet()) {
 					final boolean notRemoved = cont.hasDownProp(down, mDspReachPrecious)
 							|| cont.hasDownProp(down, mDspReachableAfterRemoval);
@@ -1698,22 +1678,21 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 				}
 			}
 			
-			// for(Entry<LETTER,STATE> entry :
-			// mStates.get(up).getCommonEntriesComponent().getEntries()) {
-			// STATE entryState = entry.getState();
-			// for (IncomingCallTransition<LETTER, STATE> trans :
-			// callPredecessors(entryState)) {
-			// STATE callPred = trans.getPred();
-			// StateContainer<LETTER, STATE> callPredCont =
-			// mStates.get(callPred);
-			// if (callPredCont.getReachProp() != ReachProp.REACHABLE) {
-			// downStates.add(callPred);
-			// }
-			// }
-			// if (minitialStatesAfterDeadEndRemoval.contains(entryState)) {
-			// downStates.add(getEmptyStackState());
-			// }
-			// }
+			/*
+			for (Entry<LETTER, STATE> entry : getStatesMap().get(up).getCommonEntriesComponent().getEntries()) {
+				STATE entryState = entry.getState();
+				for (IncomingCallTransition<LETTER, STATE> trans : callPredecessors(entryState)) {
+					STATE callPred = trans.getPred();
+					StateContainer<LETTER, STATE> callPredCont = getStatesMap().get(callPred);
+					if (callPredCont.getReachProp() != ReachProp.REACHABLE) {
+						downStates.add(callPred);
+					}
+				}
+				if (getInitialStatesPrivate()AfterDeadEndRemoval.contains(entryState)) {
+					downStates.add(getEmptyStackState());
+				}
+			}
+			*/
 			return downStates;
 		}
 		
@@ -1725,16 +1704,15 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 		 *         non-live computation)
 		 */
 		public boolean isInitial(final STATE state) {
-			if (!mInitialStates.contains(state)) {
+			if (!getInitialStatesPrivate().contains(state)) {
 				throw new IllegalArgumentException("Not initial state");
 			}
-			final StateContainer<LETTER, STATE> cont = mStates.get(state);
+			final StateContainer<LETTER, STATE> cont = getStatesMap().get(state);
 			if (cont.getReachProp() == mRpAllDown) {
-				// assert cont.getDownStates().get(getEmptyStackState()) ==
-				// ReachProp.REACHABLE;
+				// assert cont.getDownStates().get(getEmptyStackState()) == ReachProp.REACHABLE;
 				return true;
 			}
-			return (cont.hasDownProp(getEmptyStackState(), mDspReachPrecious));
+			return cont.hasDownProp(getEmptyStackState(), mDspReachPrecious);
 		}
 		
 		/**
@@ -1745,109 +1723,94 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 		 *         return triples reachable in resulting automaton.
 		 */
 		public Iterable<UpDownEntry<STATE>> getRemovedUpDownEntry() {
-			
-			return new Iterable<UpDownEntry<STATE>>() {
+			return () -> new Iterator<UpDownEntry<STATE>>() {
+				private Iterator<STATE> mUpIterator;
+				private STATE mUp;
+				private Iterator<STATE> mDownIterator;
+				private STATE mDown;
+				private boolean mHasNext = true;
+				private StateContainer<LETTER, STATE> mStateContainer;
 				
-				@Override
-				public Iterator<UpDownEntry<STATE>> iterator() {
-					return new Iterator<UpDownEntry<STATE>>() {
-						private Iterator<STATE> mUpIterator;
-						private STATE mUp;
-						private Iterator<STATE> mDownIterator;
-						private STATE mDown;
-						private boolean mHasNext = true;
-						private StateContainer<LETTER, STATE> mStateContainer;
-						
-						{
-							mUpIterator = mStates.keySet().iterator();
-							if (mUpIterator.hasNext()) {
-								mUp = mUpIterator.next();
-								mStateContainer = mStates.get(mUp);
-								mDownIterator = mStateContainer.getDownStates().keySet().iterator();
-							} else {
-								mHasNext = false;
-							}
-							computeNextElement();
-							
-						}
-						
-						private void computeNextElement() {
-							mDown = null;
-							while (mDown == null && mHasNext) {
-								if (mStateContainer.getReachProp() != mRpAllDown && mDownIterator.hasNext()) {
-									final STATE downCandidate = mDownIterator.next();
-									if (mStateContainer.getReachProp() == ReachProp.REACHABLE) {
-										mDown = downCandidate;
-									} else {
-										assert mStateContainer.getReachProp() == mRpSomeDown;
-										if (!mStateContainer.hasDownProp(downCandidate, mDspReachPrecious)) {
-											mDown = downCandidate;
-										}
-									}
-								} else {
-									if (mUpIterator.hasNext()) {
-										mUp = mUpIterator.next();
-										mStateContainer = mStates.get(mUp);
-										mDownIterator = mStateContainer.getDownStates().keySet().iterator();
-									} else {
-										mHasNext = false;
-									}
-								}
-								
-							}
-						}
-						
-						@Override
-						public boolean hasNext() {
-							return mHasNext;
-						}
-						
-						@Override
-						public UpDownEntry<STATE> next() {
-							if (!hasNext()) {
-								throw new NoSuchElementException();
-							}
-							STATE entry;
-							final Set<STATE> callSuccs = computeState2CallSuccs(mDown);
-							if (callSuccs.size() > 1) {
-								throw new UnsupportedOperationException("State has more than one call successor");
-							} else if (callSuccs.size() == 1) {
-								entry = callSuccs.iterator().next();
-							} else {
-								entry = null;
-								assert mDown == getEmptyStackState();
-							}
-							final UpDownEntry<STATE> result = new UpDownEntry<STATE>(mUp, mDown, entry);
-							computeNextElement();
-							return result;
-						}
-						
-						@Override
-						public void remove() {
-							throw new UnsupportedOperationException();
-						}
-						
-					};
+				{
+					mUpIterator = getStatesMap().keySet().iterator();
+					if (mUpIterator.hasNext()) {
+						mUp = mUpIterator.next();
+						mStateContainer = getStatesMap().get(mUp);
+						mDownIterator = mStateContainer.getDownStates().keySet().iterator();
+					} else {
+						mHasNext = false;
+					}
+					computeNextElement();
 					
 				}
 				
-				/**
-				 * Compute call successors for a given set of states.
-				 */
-				private Set<STATE> computeState2CallSuccs(final STATE state) {
-					final Set<STATE> callSuccs = new HashSet<STATE>();
-					if (state != getEmptyStackState()) {
-						for (final OutgoingCallTransition<LETTER, STATE> trans : callSuccessors(state)) {
-							callSuccs.add(trans.getSucc());
+				private void computeNextElement() {
+					mDown = null;
+					while (mDown == null && mHasNext) {
+						if (mStateContainer.getReachProp() != mRpAllDown && mDownIterator.hasNext()) {
+							final STATE downCandidate = mDownIterator.next();
+							if (mStateContainer.getReachProp() == ReachProp.REACHABLE) {
+								mDown = downCandidate;
+							} else {
+								assert mStateContainer.getReachProp() == mRpSomeDown;
+								if (!mStateContainer.hasDownProp(downCandidate, mDspReachPrecious)) {
+									mDown = downCandidate;
+								}
+							}
+						} else if (mUpIterator.hasNext()) {
+							mUp = mUpIterator.next();
+							mStateContainer = getStatesMap().get(mUp);
+							mDownIterator = mStateContainer.getDownStates().keySet().iterator();
+						} else {
+							mHasNext = false;
 						}
 					}
-					return callSuccs;
 				}
 				
+				@Override
+				public boolean hasNext() {
+					return mHasNext;
+				}
+				
+				@Override
+				public UpDownEntry<STATE> next() {
+					if (!hasNext()) {
+						throw new NoSuchElementException();
+					}
+					STATE entry;
+					final Set<STATE> callSuccs = computeState2CallSuccs(mDown);
+					if (callSuccs.size() > 1) {
+						throw new UnsupportedOperationException("State has more than one call successor");
+					} else if (callSuccs.size() == 1) {
+						entry = callSuccs.iterator().next();
+					} else {
+						entry = null;
+						assert checkStateEquality(mDown, getEmptyStackState());
+					}
+					final UpDownEntry<STATE> result = new UpDownEntry<>(mUp, mDown, entry);
+					computeNextElement();
+					return result;
+				}
+				
+				@Override
+				public void remove() {
+					throw new UnsupportedOperationException();
+				}
 			};
-			
 		}
 		
+		/**
+		 * Compute call successors for a given set of states.
+		 */
+		Set<STATE> computeState2CallSuccs(final STATE state) {
+			final Set<STATE> callSuccs = new HashSet<>();
+			if (!checkStateEquality(state, getEmptyStackState())) {
+				for (final OutgoingCallTransition<LETTER, STATE> trans : callSuccessors(state)) {
+					callSuccs.add(trans.getSucc());
+				}
+			}
+			return callSuccs;
+		}
 	}
 	
 	// //////////////////////////////////////////////////////////////////////////
@@ -1864,10 +1827,9 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 	 * successors in its values.
 	 */
 	class AcceptingSummariesComputation {
-		private final ArrayDeque<StateContainer<LETTER, STATE>> mFinAncWorklist =
-				new ArrayDeque<StateContainer<LETTER, STATE>>();
-		private final HashRelation<StateContainer<LETTER, STATE>, Summary<LETTER, STATE>> mAcceptingSummaries =
-				new HashRelation<StateContainer<LETTER, STATE>, Summary<LETTER, STATE>>();
+		private final ArrayDeque<StateContainer<LETTER, STATE>> mFinAncWorklist = new ArrayDeque<>();
+		private final HashRelation<StateContainer<LETTER, STATE>, Summary<LETTER, STATE>> mAcceptingSummariesInner =
+				new HashRelation<>();
 		
 		public AcceptingSummariesComputation() {
 			init();
@@ -1878,12 +1840,12 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 		}
 		
 		public HashRelation<StateContainer<LETTER, STATE>, Summary<LETTER, STATE>> getAcceptingSummaries() {
-			return mAcceptingSummaries;
+			return mAcceptingSummariesInner;
 		}
 		
 		private void init() {
-			for (final STATE fin : mFinalStates) {
-				final StateContainer<LETTER, STATE> cont = mStates.get(fin);
+			for (final STATE fin : getFinalStatesPrivate()) {
+				final StateContainer<LETTER, STATE> cont = getStatesMap().get(fin);
 				addNewDownStates(null, cont, cont.getDownStates().keySet());
 			}
 		}
@@ -1891,20 +1853,18 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 		private void addNewDownStates(final StateContainer<LETTER, STATE> cont,
 				final StateContainer<LETTER, STATE> succCont,
 				final Set<STATE> potentiallyNewDownStates) {
-			if (cont == succCont) {
+			if (checkStateContainerEquality(cont, succCont)) {
 				return;
-			} else {
-				boolean newDownStateWasPropagated = false;
-				for (final STATE down : potentiallyNewDownStates) {
-					final boolean modified =
-							succCont.setDownProp(down, DownStateProp.REACHABLE_FROM_FINAL_WITHOUT_CALL);
-					if (modified) {
-						newDownStateWasPropagated = true;
-					}
+			}
+			boolean newDownStateWasPropagated = false;
+			for (final STATE down : potentiallyNewDownStates) {
+				final boolean modified = succCont.setDownProp(down, DownStateProp.REACHABLE_FROM_FINAL_WITHOUT_CALL);
+				if (modified) {
+					newDownStateWasPropagated = true;
 				}
-				if (newDownStateWasPropagated) {
-					mFinAncWorklist.add(succCont);
-				}
+			}
+			if (newDownStateWasPropagated) {
+				mFinAncWorklist.add(succCont);
 			}
 		}
 		
@@ -1914,17 +1874,17 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 				return;
 			}
 			for (final OutgoingInternalTransition<LETTER, STATE> trans : cont.internalSuccessors()) {
-				final StateContainer<LETTER, STATE> succCont = mStates.get(trans.getSucc());
+				final StateContainer<LETTER, STATE> succCont = getStatesMap().get(trans.getSucc());
 				addNewDownStates(cont, succCont, unpropagatedDownStates);
 			}
 			for (final SummaryReturnTransition<LETTER, STATE> trans : summarySuccessors(cont.getState())) {
-				final StateContainer<LETTER, STATE> succCont = mStates.get(trans.getSucc());
+				final StateContainer<LETTER, STATE> succCont = getStatesMap().get(trans.getSucc());
 				addNewDownStates(cont, succCont, unpropagatedDownStates);
 			}
 			cont.eraseUnpropagatedDownStates();
 			for (final OutgoingReturnTransition<LETTER, STATE> trans : cont.returnSuccessors()) {
-				final StateContainer<LETTER, STATE> hierCont = mStates.get(trans.getHierPred());
-				final StateContainer<LETTER, STATE> succCont = mStates.get(trans.getSucc());
+				final StateContainer<LETTER, STATE> hierCont = getStatesMap().get(trans.getHierPred());
+				final StateContainer<LETTER, STATE> succCont = getStatesMap().get(trans.getSucc());
 				final STATE hierPred = trans.getHierPred();
 				if (cont.hasDownProp(hierPred, DownStateProp.REACHABLE_FROM_FINAL_WITHOUT_CALL)) {
 					addNewDownStates(null, succCont, hierCont.getDownStates().keySet());
@@ -1936,179 +1896,167 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 		private void addAcceptingSummary(final StateContainer<LETTER, STATE> callPred,
 				final StateContainer<LETTER, STATE> returnPred, final LETTER letter,
 				final StateContainer<LETTER, STATE> returnSucc) {
-			final Summary<LETTER, STATE> summary = new Summary<LETTER, STATE>(callPred, returnPred, letter, returnSucc);
-			mAcceptingSummaries.addPair(callPred, summary);
+			final Summary<LETTER, STATE> summary = new Summary<>(callPred, returnPred, letter, returnSucc);
+			mAcceptingSummariesInner.addPair(callPred, summary);
 		}
-		
 	}
 	
-	// private boolean cecSumConsistent() {
-	// int sum = 0;
-	// for (CommonEntriesComponent<LETTER,STATE> cec : mAllCECs) {
-	// sum += cec.mSize;
-	// }
-	// int allStates = mStates.keySet().size();
-	// return sum == allStates;
-	// }
-	//
-	// private boolean allStatesAreInTheirCec() {
-	// boolean result = true;
-	// for (STATE state : mStates.keySet()) {
-	// StateContainer<LETTER,STATE> sc = mStates.get(state);
-	// CommonEntriesComponent<LETTER,STATE> cec =
-	// sc.getCommonEntriesComponent();
-	// if (!cec.mBorderOut.keySet().contains(sc)) {
-	// Set<StateContainer<LETTER,STATE>> empty = new
-	// HashSet<StateContainer<LETTER,STATE>>();
-	// result &= internalOutSummaryOutInCecOrForeigners(sc, empty, cec);
-	// }
-	// }
-	// return result;
-	// }
-	//
-	// private boolean
-	// occuringStatesAreConsistent(CommonEntriesComponent<LETTER,STATE> cec) {
-	// boolean result = true;
-	// Set<STATE> downStates = cec.mDownStates;
-	// Set<Entry<LETTER,STATE>> entries = cec.mEntries;
-	// if (cec.mSize > 0) {
-	// result &= downStatesAreCallPredsOfEntries(downStates, entries);
-	// }
-	// assert (result);
-	// result &= eachStateHasThisCec(cec.getReturnOutCandidates(), cec);
-	// assert (result);
-	// for (StateContainer<LETTER, STATE> resident : cec.mBorderOut.keySet()) {
-	// Set<StateContainer<LETTER,STATE>> foreignerSCs =
-	// cec.mBorderOut.get(resident);
-	// result &= internalOutSummaryOutInCecOrForeigners(resident, foreignerSCs,
-	// cec);
-	// assert (result);
-	// }
-	// return result;
-	// }
-	//
-	//
-	// private boolean
-	// downStatesConsistentwithEntriesDownStates(CommonEntriesComponent<LETTER,STATE>
-	// cec) {
-	// boolean result = true;
-	// Set<STATE> downStates = cec.mDownStates;
-	// Set<Entry<LETTER,STATE>> entries = cec.mEntries;
-	// Set<STATE> downStatesofEntries = new HashSet<STATE>();
-	// for (Entry<LETTER,STATE> entry : entries) {
-	// downStatesofEntries.addAll(entry.getDownStates().keySet());
-	// }
-	// result &= isSubset(downStates, downStatesofEntries);
-	// assert (result);
-	// result &= isSubset(downStatesofEntries, downStates);
-	// assert (result);
-	// return result;
-	// }
-	//
-	// private boolean
-	// internalOutSummaryOutInCecOrForeigners(StateContainer<LETTER, STATE>
-	// state, Set<StateContainer<LETTER,STATE>> foreigners,
-	// CommonEntriesComponent<LETTER,STATE> cec) {
-	// Set<StateContainer<LETTER,STATE>> neighbors = new
-	// HashSet<StateContainer<LETTER,STATE>>();
-	//
-	// for (OutgoingInternalTransition<LETTER, STATE> trans :
-	// state.internalSuccessors()) {
-	// STATE succ = trans.getSucc();
-	// StateContainer<LETTER,STATE> succSc = mStates.get(succ);
-	// if (succSc.getCommonEntriesComponent() == cec) {
-	// // do nothing
-	// } else {
-	// neighbors.add(succSc);
-	// }
-	// }
-	// if (mSummaries.containsKey(state)) {
-	// for (StateContainer<LETTER,STATE> succSc : mSummaries.get(state)) {
-	// if (succSc.getCommonEntriesComponent() == cec) {
-	// // do nothing
-	// } else {
-	// neighbors.add(succSc);
-	// }
-	// }
-	// }
-	// boolean allNeighborAreForeigners = isSubset(neighbors, foreigners);
-	// assert allNeighborAreForeigners;
-	// boolean allForeignersAreNeighbor = isSubset(foreigners, neighbors);
-	// assert allForeignersAreNeighbor;
-	// return allNeighborAreForeigners && allForeignersAreNeighbor;
-	// }
-	//
-	// private boolean eachStateHasThisCec(Set<STATE> states,
-	// CommonEntriesComponent<LETTER,STATE> cec) {
-	// boolean result = true;
-	// for (STATE state : states) {
-	// StateContainer<LETTER, STATE> sc = mStates.get(state);
-	// if (sc.getCommonEntriesComponent() != cec) {
-	// result = false;
-	// assert result;
-	// }
-	// }
-	// return result;
-	// }
-	//
-	// private boolean downStatesAreCallPredsOfEntries(Set<STATE> downStates,
-	// Set<Entry<LETTER,STATE>> entries) {
-	// Set<STATE> callPreds = new HashSet<STATE>();
-	// for (Entry<LETTER,STATE> entry : entries) {
-	// STATE entryState = entry.getState();
-	// if (isInitial(entryState)) {
-	// callPreds.add(getEmptyStackState());
-	// }
-	// for (IncomingCallTransition<LETTER, STATE> trans :
-	// callPredecessors(entryState)) {
-	// callPreds.add(trans.getPred());
-	// }
-	// }
-	// boolean callPredsIndownStates = isSubset(callPreds, downStates);
-	// assert (callPredsIndownStates);
-	// boolean downStatesInCallPreds = isSubset(downStates, callPreds);
-	// assert (downStatesInCallPreds);
-	// return callPredsIndownStates && downStatesInCallPreds;
-	// }
-	//
-	// private boolean isBorderOutConsistent(StateContainer<LETTER,STATE> cont)
-	// {
-	// CommonEntriesComponent<LETTER, STATE> cec =
-	// cont.getCommonEntriesComponent();
-	// ArrayList<STATE> preds = new ArrayList<STATE>();
-	// for(IncomingInternalTransition<LETTER, STATE> inTrans :
-	// internalPredecessors(cont.getState())) {
-	// preds.add(inTrans.getPred());
-	// }
-	// for(IncomingReturnTransition<LETTER, STATE> inTrans :
-	// returnPredecessors(cont.getState())) {
-	// preds.add(inTrans.getHierPred());
-	// }
-	// boolean result = true;
-	// for (STATE pred : preds) {
-	// StateContainer<LETTER, STATE> predCont = mStates.get(pred);
-	// if (predCont.getCommonEntriesComponent() != cec) {
-	// if
-	// (predCont.getCommonEntriesComponent().mBorderOut.containsKey(predCont))
-	// {
-	// Set<StateContainer<LETTER, STATE>> foreigners =
-	// predCont.getCommonEntriesComponent().mBorderOut.get(predCont);
-	// result &= foreigners.contains(cont);
-	// } else {
-	// result = false;
-	// }
-	// assert result;
-	// } else {
-	// if
-	// (predCont.getCommonEntriesComponent().mBorderOut.containsKey(predCont))
-	// {
-	// Set<StateContainer<LETTER, STATE>> foreigners =
-	// predCont.getCommonEntriesComponent().mBorderOut.get(predCont);
-	// result&= !foreigners.contains(cont);
-	// assert result;
-	// }
-	// }
-	// }
-	// return result;
-	// }
+	/*
+	private boolean cecSumConsistent() {
+		int sum = 0;
+		for (CommonEntriesComponent<LETTER, STATE> cec : mAllCECs) {
+			sum += cec.mSize;
+		}
+		int allStates = getStatesMap().keySet().size();
+		return sum == allStates;
+	}
+	
+	private boolean allStatesAreInTheirCec() {
+		boolean result = true;
+		for (STATE state : getStatesMap().keySet()) {
+			StateContainer<LETTER, STATE> sc = getStatesMap().get(state);
+			CommonEntriesComponent<LETTER, STATE> cec =
+					sc.getCommonEntriesComponent();
+			if (!cec.mBorderOut.keySet().contains(sc)) {
+				Set<StateContainer<LETTER, STATE>> empty = new HashSet<StateContainer<LETTER, STATE>>();
+				result &= internalOutSummaryOutInCecOrForeigners(sc, empty, cec);
+			}
+		}
+		return result;
+	}
+	
+	private boolean
+			occuringStatesAreConsistent(CommonEntriesComponent<LETTER, STATE> cec) {
+		boolean result = true;
+		Set<STATE> downStates = cec.mDownStates;
+		Set<Entry<LETTER, STATE>> entries = cec.mEntries;
+		if (cec.mSize > 0) {
+			result &= downStatesAreCallPredsOfEntries(downStates, entries);
+		}
+		assert (result);
+		result &= eachStateHasThisCec(cec.getReturnOutCandidates(), cec);
+		assert (result);
+		for (StateContainer<LETTER, STATE> resident : cec.mBorderOut.keySet()) {
+			Set<StateContainer<LETTER, STATE>> foreignerSCs =
+					cec.mBorderOut.get(resident);
+			result &= internalOutSummaryOutInCecOrForeigners(resident, foreignerSCs,
+					cec);
+			assert (result);
+		}
+		return result;
+	}
+	
+	private boolean
+			downStatesConsistentwithEntriesDownStates(CommonEntriesComponent<LETTER, STATE> cec) {
+		boolean result = true;
+		Set<STATE> downStates = cec.mDownStates;
+		Set<Entry<LETTER, STATE>> entries = cec.mEntries;
+		Set<STATE> downStatesofEntries = new HashSet<STATE>();
+		for (Entry<LETTER, STATE> entry : entries) {
+			downStatesofEntries.addAll(entry.getDownStates().keySet());
+		}
+		result &= isSubset(downStates, downStatesofEntries);
+		assert (result);
+		result &= isSubset(downStatesofEntries, downStates);
+		assert (result);
+		return result;
+	}
+	
+	private boolean
+			internalOutSummaryOutInCecOrForeigners(StateContainer<LETTER, STATE> state,
+					Set<StateContainer<LETTER, STATE>> foreigners,
+					CommonEntriesComponent<LETTER, STATE> cec) {
+		Set<StateContainer<LETTER, STATE>> neighbors = new HashSet<StateContainer<LETTER, STATE>>();
+		
+		for (OutgoingInternalTransition<LETTER, STATE> trans : state.internalSuccessors()) {
+			STATE succ = trans.getSucc();
+			StateContainer<LETTER, STATE> succSc = getStatesMap().get(succ);
+			if (succSc.getCommonEntriesComponent() == cec) {
+				// do nothing
+			} else {
+				neighbors.add(succSc);
+			}
+		}
+		if (mSummaries.containsKey(state)) {
+			for (StateContainer<LETTER, STATE> succSc : mSummaries.get(state)) {
+				if (succSc.getCommonEntriesComponent() == cec) {
+					// do nothing
+				} else {
+					neighbors.add(succSc);
+				}
+			}
+		}
+		boolean allNeighborAreForeigners = isSubset(neighbors, foreigners);
+		assert allNeighborAreForeigners;
+		boolean allForeignersAreNeighbor = isSubset(foreigners, neighbors);
+		assert allForeignersAreNeighbor;
+		return allNeighborAreForeigners && allForeignersAreNeighbor;
+	}
+	
+	private boolean eachStateHasThisCec(Set<STATE> states,
+			CommonEntriesComponent<LETTER, STATE> cec) {
+		boolean result = true;
+		for (STATE state : states) {
+			StateContainer<LETTER, STATE> sc = getStatesMap().get(state);
+			if (sc.getCommonEntriesComponent() != cec) {
+				result = false;
+				assert result;
+			}
+		}
+		return result;
+	}
+	
+	private boolean downStatesAreCallPredsOfEntries(Set<STATE> downStates,
+			Set<Entry<LETTER, STATE>> entries) {
+		Set<STATE> callPreds = new HashSet<STATE>();
+		for (Entry<LETTER, STATE> entry : entries) {
+			STATE entryState = entry.getState();
+			if (isInitial(entryState)) {
+				callPreds.add(getEmptyStackState());
+			}
+			for (IncomingCallTransition<LETTER, STATE> trans : callPredecessors(entryState)) {
+				callPreds.add(trans.getPred());
+			}
+		}
+		boolean callPredsIndownStates = isSubset(callPreds, downStates);
+		assert (callPredsIndownStates);
+		boolean downStatesInCallPreds = isSubset(downStates, callPreds);
+		assert (downStatesInCallPreds);
+		return callPredsIndownStates && downStatesInCallPreds;
+	}
+	
+	private boolean isBorderOutConsistent(StateContainer<LETTER, STATE> cont) {
+		CommonEntriesComponent<LETTER, STATE> cec =
+				cont.getCommonEntriesComponent();
+		ArrayList<STATE> preds = new ArrayList<STATE>();
+		for (IncomingInternalTransition<LETTER, STATE> inTrans : internalPredecessors(cont.getState())) {
+			preds.add(inTrans.getPred());
+		}
+		for (IncomingReturnTransition<LETTER, STATE> inTrans : returnPredecessors(cont.getState())) {
+			preds.add(inTrans.getHierPred());
+		}
+		boolean result = true;
+		for (STATE pred : preds) {
+			StateContainer<LETTER, STATE> predCont = getStatesMap().get(pred);
+			if (predCont.getCommonEntriesComponent() != cec) {
+				if (predCont.getCommonEntriesComponent().mBorderOut.containsKey(predCont)) {
+					Set<StateContainer<LETTER, STATE>> foreigners =
+							predCont.getCommonEntriesComponent().mBorderOut.get(predCont);
+					result &= foreigners.contains(cont);
+				} else {
+					result = false;
+				}
+				assert result;
+			} else {
+				if (predCont.getCommonEntriesComponent().mBorderOut.containsKey(predCont)) {
+					Set<StateContainer<LETTER, STATE>> foreigners =
+							predCont.getCommonEntriesComponent().mBorderOut.get(predCont);
+					result &= !foreigners.contains(cont);
+					assert result;
+				}
+			}
+		}
+		return result;
+	}
+	*/
 }
