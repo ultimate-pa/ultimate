@@ -143,24 +143,6 @@ public class LassoRankerPreferences implements Serializable {
 	}
 
 	/**
-	 * Copy constructor copies everything
-	 */
-	public LassoRankerPreferences(final LassoRankerPreferences other) {
-		mComputeIntegralHull = other.mComputeIntegralHull;
-		mEnablePartitioneer = other.mEnablePartitioneer;
-		mAnnotateTerms = other.mAnnotateTerms;
-		mExternalSolver = other.mExternalSolver;
-		mExternalSolverCommand = other.mExternalSolverCommand;
-		mDumpSmtSolverScript = other.mDumpSmtSolverScript;
-		mPathOfDumpedScript = other.mPathOfDumpedScript;
-		mBaseNameOfDumpedScript = other.mBaseNameOfDumpedScript;
-		mOverapproximateArrayIndexConnection = other.mOverapproximateArrayIndexConnection;
-		mNlaHandling = other.mNlaHandling;
-		mUseOldMapElimination = other.mUseOldMapElimination;
-		mFakeNonIncrementalScript = other.mFakeNonIncrementalScript;
-	}
-
-	/**
 	 * Verify that the settings are self-consistent and sane. Only makes assertion calls.
 	 */
 	public void checkSanity() {
