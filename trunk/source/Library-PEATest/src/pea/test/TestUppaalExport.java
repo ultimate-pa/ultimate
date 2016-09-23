@@ -1,5 +1,6 @@
 package pea.test;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import pea.BooleanDecision;
 import pea.CDD;
 import pea.CounterTrace;
@@ -12,7 +13,7 @@ import pea.modelchecking.MCTrace;
 
 public class TestUppaalExport {
 
-	Trace2PEACompiler compiler = new Trace2PEACompiler();
+	Trace2PEACompiler compiler = new Trace2PEACompiler(ILogger.getLogger(""));
 	CDD entry = EventDecision.create("S1");
 	// CDD entry = CDD.FALSE;
 	CDD exit = EventDecision.create("S2");

@@ -34,6 +34,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -324,12 +326,13 @@ public class CommandLineController implements IController<RunDefinition> {
 		mLogger.info("The following toolchains are available:");
 		for (final Entry<File, IToolchainData<RunDefinition>> entry : availableToolchains.entrySet()) {
 			mLogger.info(entry.getKey());
-			mLogger.info(indent + entry.getValue().getToolchain().getName());
+			mLogger.info(indent + entry.getValue().getRootElement().getName());
 		}
 	}
 
 	private static final class SigIntTrap implements Runnable {
 
+		private static final int SHUTDOWN_GRACE_PERIOD_SECONDS = 5;
 		private final IToolchainData<RunDefinition> mCurrentToolchain;
 		private final ILogger mLogger;
 
@@ -343,13 +346,28 @@ public class CommandLineController implements IController<RunDefinition> {
 			mLogger.warn("Received shutdown request...");
 			final IUltimateServiceProvider services = mCurrentToolchain.getServices();
 			if (services == null) {
+				mLogger.fatal(
+						"Cannot interrupt operation gracefully because services are already gone. Forcing shutdown.");
 				return;
 			}
 			final IProgressMonitorService progressMonitor = services.getProgressMonitorService();
 			if (progressMonitor == null) {
+				mLogger.fatal(
+						"Cannot interrupt operation gracefully because progress monitor is already gone. Forcing shutdown");
 				return;
 			}
-			progressMonitor.cancelToolchain();
+
+			final CountDownLatch cdl = progressMonitor.cancelToolchain();
+			try {
+				if (cdl.await(SHUTDOWN_GRACE_PERIOD_SECONDS, TimeUnit.SECONDS)) {
+					mLogger.info("Completed graceful shutdown");
+				} else {
+					mLogger.fatal("Cannot interrupt operation gracefully because timeout expired. Forcing shutdown");
+				}
+			} catch (@SuppressWarnings("squid:S2142") final InterruptedException e) {
+				mLogger.fatal("Received interrupt while waiting for graceful shutdown: " + e.getMessage());
+				return;
+			}
 		}
 	}
 }

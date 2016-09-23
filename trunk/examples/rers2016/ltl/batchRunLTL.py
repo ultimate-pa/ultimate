@@ -21,7 +21,7 @@ def batchRunLTL():
         except:
             os.mkdir(probLogDir)    
         
-        for i in range(0,99):
+        for i in range(0,100):
             #splice  c prgram and ltl formula
             tempFile = getTemporaryCFile(i, prefix, ltlFormulas[i])
         
@@ -31,7 +31,7 @@ def batchRunLTL():
                 print("checking:" + tempFile)
                 startParams = utlimatePath + ultimateParams + ["-i",tempFile]
                 print(startParams)
-                log = open(os.path.join(probLogDir,"log"+str(problem)+"_"+"%02d"%(i)),'w+')
+                log = open(os.path.join(probLogDir,"log"+str(problem)+"_"+str(i)),'w+')
                 #log.write(ltlFormulas[i])
                 process = subprocess.Popen(startParams ,shell=True, stdout=log)
                 log.close()
@@ -57,7 +57,7 @@ def getTemporaryCFile(i, prefix, ltlFormula):
     
     cFile = open(prefix + "_bat.c").readlines()
     cFile.insert(5,annotation + ltlFormula + ";\n")
-    tempFilename = os.path.join(ltlProblemsDir , "temp" + "%02d"%(i) + ".c")
+    tempFilename = os.path.join(ltlProblemsDir , "temp" + str(i) + ".c")
     tempFiles.append(tempFilename)
     tempFile = open(tempFilename, "w+")
     tempFile.writelines(cFile)

@@ -94,7 +94,7 @@ public final class RemoveDeadEnds<LETTER, STATE> extends UnaryNwaOperation<LETTE
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
 		}
-		assert (new TransitionConsistencyCheck<LETTER, STATE>(mResult)).consistentForAll();
+		assert (new TransitionConsistencyCheck<>(mResult)).consistentForAll();
 	}
 	
 	@Override
@@ -124,23 +124,25 @@ public final class RemoveDeadEnds<LETTER, STATE> extends UnaryNwaOperation<LETTE
 			mLogger.info("Start testing correctness of " + operationName());
 		}
 		boolean correct = true;
-//		correct = correct && (ResultChecker.nwaLanguageInclusion(mInput, mResult) == null);
-//		correct = correct && (ResultChecker.nwaLanguageInclusion(mResult, mInput) == null);
+		// correct = correct && (ResultChecker.nwaLanguageInclusion(mInput, mResult) == null);
+		// correct = correct && (ResultChecker.nwaLanguageInclusion(mResult, mInput) == null);
 		assert correct;
 		final ReachableStatesCopy<LETTER, STATE> rsc =
 				new ReachableStatesCopy<>(mServices, mOperand, false, false, false, false);
-//		Set<UpDownEntry<STATE>> rsaEntries = new HashSet<UpDownEntry<STATE>>();
-//		for (UpDownEntry<STATE> rde : mReach.getRemovedUpDownEntry()) {
-//			rsaEntries.add(rde);
-//		}
-//		Set<UpDownEntry<STATE>> rscEntries = new HashSet<UpDownEntry<STATE>>();
-//		for (UpDownEntry<STATE> rde : rsc.getRemovedUpDownEntry()) {
-//			rscEntries.add(rde);
-//		}
-//		correct = correct && ResultChecker.isSubset(rsaEntries,rscEntries);
-//		assert correct;
-//		correct = correct && ResultChecker.isSubset(rscEntries,rsaEntries);
-//		assert correct;
+		/*
+		final Set<UpDownEntry<STATE>> rsaEntries = new HashSet<UpDownEntry<STATE>>();
+		for (final UpDownEntry<STATE> rde : mReach.getRemovedUpDownEntry()) {
+			rsaEntries.add(rde);
+		}
+		final Set<UpDownEntry<STATE>> rscEntries = new HashSet<UpDownEntry<STATE>>();
+		for (final UpDownEntry<STATE> rde : rsc.getRemovedUpDownEntry()) {
+			rscEntries.add(rde);
+		}
+		correct = correct && ResultChecker.isSubset(rsaEntries, rscEntries);
+		assert correct;
+		correct = correct && ResultChecker.isSubset(rscEntries, rsaEntries);
+		assert correct;
+		*/
 		rsc.removeDeadEnds();
 		final DoubleDeckerAutomaton<LETTER, STATE> reachableStatesCopy =
 				(DoubleDeckerAutomaton<LETTER, STATE>) rsc.getResult();
@@ -205,7 +207,7 @@ public final class RemoveDeadEnds<LETTER, STATE> extends UnaryNwaOperation<LETTE
 			correct = correct && ResultChecker.isSubset(rCAdownStates, rCSdownStates);
 			assert correct;
 			// After enhanced non-live/dead end removal the following does not hold.
-//			 correct = correct && ResultChecker.isSubset(rCSdownStates, rCAdownStates);
+			// correct = correct && ResultChecker.isSubset(rCSdownStates, rCAdownStates);
 			assert correct;
 		}
 		return correct;

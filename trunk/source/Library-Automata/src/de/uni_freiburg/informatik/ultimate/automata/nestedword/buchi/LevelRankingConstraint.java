@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Constraints that define a set of LevelRankingStates.
@@ -102,20 +103,11 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 	void internalSuccessorConstraints(final IFkvState<LETTER, STATE> state, final LETTER symbol) {
 		for (final StateWithRankInfo<STATE> downState : state.getDownStates()) {
 			for (final StateWithRankInfo<STATE> upState : state.getUpStates(downState)) {
-				final boolean inO;
-				final Integer upRank;
-				if (state instanceof LevelRankingState) {
-					assert mPredecessorOwasEmpty == ((LevelRankingState<LETTER, STATE>) state).isOempty();
-					inO = upState.isInO();
-					upRank = upState.getRank();
-				} else {
-					assert state instanceof FkvSubsetComponentState;
-					inO = false;
-					upRank = mUserDefinedMaxRank;
-				}
+				final Pair<Boolean, Integer> inOAndUpRank = getInOAndUpRankInternalCall(state, upState);
 				for (final OutgoingInternalTransition<LETTER, STATE> trans : mOperand
 						.internalSuccessors(upState.getState(), symbol)) {
-					addConstraint(downState, trans.getSucc(), upRank, inO, mOperand.isFinal(upState.getState()));
+					addConstraint(downState, trans.getSucc(), inOAndUpRank.getSecond(), inOAndUpRank.getFirst(),
+							mOperand.isFinal(upState.getState()));
 				}
 			}
 		}
@@ -124,17 +116,7 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 	void callSuccessorConstraints(final IFkvState<LETTER, STATE> state, final LETTER symbol) {
 		for (final StateWithRankInfo<STATE> downState : state.getDownStates()) {
 			for (final StateWithRankInfo<STATE> upState : state.getUpStates(downState)) {
-				final boolean inO;
-				final Integer upRank;
-				if (state instanceof LevelRankingState) {
-					assert mPredecessorOwasEmpty == ((LevelRankingState<LETTER, STATE>) state).isOempty();
-					inO = upState.isInO();
-					upRank = upState.getRank();
-				} else {
-					assert state instanceof FkvSubsetComponentState;
-					inO = false;
-					upRank = mUserDefinedMaxRank;
-				}
+				final Pair<Boolean, Integer> inOAndUpRank = getInOAndUpRankInternalCall(state, upState);
 				for (final OutgoingCallTransition<LETTER, STATE> trans : mOperand.callSuccessors(upState.getState(),
 						symbol)) {
 					// if !mUseDoubleDeckers we always use getEmptyStackState()
@@ -143,10 +125,24 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 					final StateWithRankInfo<STATE> succDownState = mUseDoubleDeckers
 							? upState
 							: new StateWithRankInfo<>(mOperand.getEmptyStackState());
-					addConstraint(succDownState, trans.getSucc(), upRank, inO, mOperand.isFinal(upState.getState()));
+					addConstraint(succDownState, trans.getSucc(), inOAndUpRank.getSecond(), inOAndUpRank.getFirst(),
+							mOperand.isFinal(upState.getState()));
 				}
 			}
 		}
+	}
+	
+	private Pair<Boolean, Integer> getInOAndUpRankInternalCall(final IFkvState<LETTER, STATE> state,
+			final StateWithRankInfo<STATE> upState) {
+		final Pair<Boolean, Integer> inOAndUpRank;
+		if (state instanceof LevelRankingState) {
+			assert mPredecessorOwasEmpty == ((LevelRankingState<LETTER, STATE>) state).isOempty();
+			inOAndUpRank = new Pair<>(upState.isInO(), upState.getRank());
+		} else {
+			assert state instanceof FkvSubsetComponentState;
+			inOAndUpRank = new Pair<>(Boolean.FALSE, mUserDefinedMaxRank);
+		}
+		return inOAndUpRank;
 	}
 	
 	void returnSuccessorConstraints(final IFkvState<LETTER, STATE> state, final IFkvState<LETTER, STATE> hier,

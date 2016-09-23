@@ -16,7 +16,8 @@ import pea.reqCheck.PatternToPEA;
 
 public class srParsePattern {
 	
-	private Vector<CDD> cdds; // enthält alle im pattern auftretenden CDDs IN UMGEKEHRTER REIHENFOLGE
+	//contains all CDDs occuring in the pattern in reverse order
+	private Vector<CDD> cdds; 
 	public Vector<CDD> getCdds() {
 		return cdds;
 	}

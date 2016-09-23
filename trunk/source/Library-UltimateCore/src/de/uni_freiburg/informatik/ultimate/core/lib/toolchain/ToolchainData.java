@@ -129,11 +129,11 @@ public class ToolchainData implements IToolchainData<RunDefinition> {
 	 *            the Toolchain object to be appended to this Toolchain object
 	 */
 	public void addToolchain(final ToolchainData tc) {
-		mToolchain.getToolchain().getPluginOrSubchain().addAll(tc.getToolchain().getToolchain().getPluginOrSubchain());
+		mToolchain.getToolchain().getPluginOrSubchain().addAll(tc.getRootElement().getToolchain().getPluginOrSubchain());
 	}
 
 	@Override
-	public RunDefinition getToolchain() {
+	public RunDefinition getRootElement() {
 		return mToolchain;
 	}
 

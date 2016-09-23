@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 
@@ -46,7 +47,11 @@ public class SystemTest {
 	public void testSystem() throws URISyntaxException, IOException {
 		final Bundle bundle = Platform.getBundle("SMTInterpolTest");
 		final URL fileURL = bundle.getEntry("test/");
-		final File testDir = new File(FileLocator.resolve(fileURL).toURI());
+		final URL resolvedUrl = FileLocator.resolve(fileURL);
+		// Do not use Url.toURI as it will throw an exception if your path contains spaces. Thanks Java!!!!einself!!
+		final URI uri = new URI(resolvedUrl.getProtocol(), resolvedUrl.getUserInfo(), resolvedUrl.getHost(),
+				resolvedUrl.getPort(), resolvedUrl.getPath(), resolvedUrl.getQuery(), resolvedUrl.getRef());
+		final File testDir = new File(uri);
 		final File[] lst = testDir.listFiles();
 		if (lst == null || lst.length == 0) {
 			throw new IllegalArgumentException("could not locate SMT scripts");

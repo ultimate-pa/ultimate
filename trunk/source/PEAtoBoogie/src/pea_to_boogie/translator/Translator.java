@@ -61,6 +61,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import pea.Phase;
 import pea.PhaseBits;
 import pea.PhaseEventAutomata;
@@ -69,7 +70,6 @@ import pea_to_boogie.generator.ConditionGenerator;
 import pea_to_boogie.generator.Permutation;
 import req_to_pea.ReqToPEA;
 import srParse.srParsePattern;
-import srParse.pattern.PatternType;
 
 /**
  * This class translates a phase event automaton to an equivalent Boogie code.
@@ -121,7 +121,7 @@ public class Translator {
 	/**
 	 * The array of input requirements.
 	 */
-	public PatternType[] mRequirements;
+	public srParsePattern[] mRequirements;
 	
 	/**
 	 * The properties for which we check for vacuity.
@@ -137,6 +137,12 @@ public class Translator {
 	 * index reqNr+1 and the location for code that is not specific to any requirements in index 0.
 	 */
 	public BoogieLocation[] boogieLocations;
+	
+	private ILogger mLogger;
+	
+	public Translator(ILogger logger){
+		mLogger = logger;
+	}
 	
 	/**
 	 * Set the input file name. This is used to annotate the Boogie code with the right file name. The Location object
@@ -913,13 +919,13 @@ public class Translator {
 		}
 	}
 	
-	public PatternType getRequirement(final int i) {
+	public srParsePattern getRequirement(final int i) {
 		return mRequirements[i];
 	}
 	
-	public Unit genBoogie(final PatternType[] patterns) {
+	public Unit genBoogie(final srParsePattern[] patterns) {
 		mRequirements = patterns;
-		return genBoogie(new ReqToPEA().genPEA(patterns));
+		return genBoogie(new ReqToPEA(mLogger).genPEA(patterns));
 	}
 	
 	public Unit genBoogie(final PhaseEventAutomata[] automata) {

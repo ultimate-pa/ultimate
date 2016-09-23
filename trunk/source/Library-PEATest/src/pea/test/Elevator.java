@@ -3,6 +3,7 @@ package pea.test;
 import java.util.Collections;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import pea.BooleanDecision;
 import pea.CDD;
 import pea.CounterTrace;
@@ -278,7 +279,7 @@ public class Elevator {
 	}
 
 	public void buildDCPart() {
-		final Trace2PEACompiler compiler = new Trace2PEACompiler();
+		final Trace2PEACompiler compiler = new Trace2PEACompiler(ILogger.getLogger(""));
 		PhaseEventAutomata dc1, dc2, dc3, dc4, dc5, dc6;
 		dc1 = compiler.compile("DC1",
 		        new CounterTrace(new CounterTrace.DCPhase[] { new CounterTrace.DCPhase(CDD.TRUE),

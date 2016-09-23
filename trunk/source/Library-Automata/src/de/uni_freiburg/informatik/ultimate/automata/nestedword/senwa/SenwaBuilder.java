@@ -59,7 +59,7 @@ public final class SenwaBuilder<LETTER, STATE> extends UnaryNwaOperation<LETTER,
 	private final Senwa<LETTER, STATE> mSenwa;
 	// TODO Christian 2016-09-18: Can be made INestedWordAutomatonSimple when guarding assertions.
 	private final INestedWordAutomaton<LETTER, STATE> mNwa;
-//	private final Set<STATE> mAdded = new HashSet<>();
+	// private final Set<STATE> mAdded = new HashSet<>();
 	
 	private final Map<STATE, STATE> mResult2Operand = new HashMap<>();
 	private final Map<STATE, Map<STATE, STATE>> mEntry2Operand2Result = new HashMap<>();

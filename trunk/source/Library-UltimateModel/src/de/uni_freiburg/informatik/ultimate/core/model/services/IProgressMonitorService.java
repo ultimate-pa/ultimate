@@ -31,7 +31,7 @@ package de.uni_freiburg.informatik.ultimate.core.model.services;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public interface IProgressMonitorService extends IProgressAwareTimer {
+public interface IProgressMonitorService extends IProgressAwareTimer, IToolchainCancel {
 
 	/**
 	 * Name the currently running task s.t. a user may see the name.
@@ -51,9 +51,4 @@ public interface IProgressMonitorService extends IProgressAwareTimer {
 	 *            midnight, January 1, 1970 UTC) after which a running toolchain should be stopped.
 	 */
 	void setDeadline(long date);
-
-	/**
-	 * Stop the execution of the current toolchain at the next best opportunity.
-	 */
-	void cancelToolchain();
 }

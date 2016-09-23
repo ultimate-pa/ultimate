@@ -127,7 +127,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		reportResult(benchDecomp);
 
 		final boolean constructTermcompProof = (mServices.getPreferenceProvider(Activator.PLUGIN_ID))
-				.getBoolean(PreferenceInitializer.LABEL_TermcompProof);
+				.getBoolean(PreferenceInitializer.LABEL_CONSTRUCT_TERMCOMP_PROOF);
 		if (constructTermcompProof) {
 			final IResult termcompProof = new BenchmarkResult<Double>(Activator.PLUGIN_ID,
 					"Constructed termination proof in form of nested word automata", bcl.getTermcompProofBenchmark());

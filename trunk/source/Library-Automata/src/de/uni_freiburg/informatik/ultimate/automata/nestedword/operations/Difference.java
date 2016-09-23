@@ -105,7 +105,7 @@ public final class Difference<LETTER, STATE> extends BinaryNwaOperation<LETTER, 
 			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) throws AutomataLibraryException {
 		this(services, fstOperand.getStateFactory(), fstOperand, sndOperand,
-				new PowersetDeterminizer<LETTER, STATE>(sndOperand, true, stateFactory), false);
+				new PowersetDeterminizer<>(sndOperand, true, stateFactory), false);
 	}
 	
 	/**
@@ -162,10 +162,9 @@ public final class Difference<LETTER, STATE> extends BinaryNwaOperation<LETTER, 
 					mLogger.info("Subtrahend was deterministic. Have not used determinization.");
 				}
 				return;
-			} else {
-				if (mLogger.isInfoEnabled()) {
-					mLogger.info("Subtrahend was not deterministic. Recomputing result with determinization.");
-				}
+			}
+			if (mLogger.isInfoEnabled()) {
+				mLogger.info("Subtrahend was not deterministic. Recomputing result with determinization.");
 			}
 		}
 		// computation of Hoare annotation in Trace Abstration is incorrect if automaton is not total
@@ -191,9 +190,8 @@ public final class Difference<LETTER, STATE> extends BinaryNwaOperation<LETTER, 
 	public IDoubleDeckerAutomaton<LETTER, STATE> getResult() {
 		if (mResultWOdeadEnds == null) {
 			return mResult;
-		} else {
-			return mResultWOdeadEnds;
 		}
+		return mResultWOdeadEnds;
 	}
 	
 	@Override
@@ -201,12 +199,14 @@ public final class Difference<LETTER, STATE> extends BinaryNwaOperation<LETTER, 
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Start testing correctness of " + operationName());
 		}
-		final INestedWordAutomatonSimple<LETTER, STATE> resultDd = (new DifferenceDD<LETTER, STATE>(mServices,
-				mFstOperand, mSndOperand, new PowersetDeterminizer<LETTER, STATE>(mSndOperand, true, stateFactory),
+		final INestedWordAutomatonSimple<LETTER, STATE> resultDd = (new DifferenceDD<>(mServices,
+				mFstOperand, mSndOperand, new PowersetDeterminizer<>(mSndOperand, true, stateFactory),
 				stateFactory, false, false)).getResult();
 		boolean correct = true;
-//		correct &= (resultDD.size() == mResult.size());
-//		assert correct;
+		/*
+		correct &= (resultDd.size() == mResult.size());
+		assert correct;
+		*/
 		correct &= new IsIncluded<>(mServices, stateFactory, resultDd, mResult).getResult();
 		assert correct;
 		correct &= new IsIncluded<>(mServices, stateFactory, mResult, resultDd).getResult();

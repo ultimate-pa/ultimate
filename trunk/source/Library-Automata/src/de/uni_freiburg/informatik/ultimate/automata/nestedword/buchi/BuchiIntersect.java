@@ -140,10 +140,12 @@ public final class BuchiIntersect<LETTER, STATE> extends BinaryNwaOperation<LETT
 			mLogger.info("Start testing correctness of " + operationName());
 		}
 		boolean correct = true;
-//		final INestedWordAutomaton<LETTER, STATE> resultDD =
-//				(new BuchiIntersectDD<LETTER, STATE>(mServices, mFstOperand, mSndOperand)).getResult();
-//		correct &= (resultDD.size() <= mResult.size());
-//		assert correct;
+		/*
+		final INestedWordAutomaton<LETTER, STATE> resultDD =
+				(new BuchiIntersectDD<LETTER, STATE>(mServices, mFstOperand, mSndOperand)).getResult();
+		correct &= (resultDD.size() <= mResult.size());
+		assert correct;
+		*/
 		correct &= resultCheckWithRandomWords();
 		assert correct;
 		if (!correct) {

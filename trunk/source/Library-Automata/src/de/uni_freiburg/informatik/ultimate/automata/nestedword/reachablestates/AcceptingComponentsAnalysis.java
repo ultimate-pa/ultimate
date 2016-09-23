@@ -141,6 +141,13 @@ public class AcceptingComponentsAnalysis<LETTER, STATE> {
 	}
 	
 	/**
+	 * @return nummber of all SCCs (including non-accepting and non-ball SCCs)
+	 */
+	int getNumberOfAllSccs() {
+		return mSccComputation.getSCCs().size();
+	}
+	
+	/**
 	 * @return {@code true} iff there are no accepting balls.
 	 */
 	public boolean buchiIsEmpty() {

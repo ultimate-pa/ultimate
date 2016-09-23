@@ -133,20 +133,19 @@ public final class BuchiIsEmptyXW<LETTER, STATE> extends UnaryNwaOperation<LETTE
 				mLogger.info("There is no accepting nested lasso run");
 			}
 			return null;
-		} else {
-			if (mLogger.isInfoEnabled()) {
-				mLogger.info("Starting construction of run");
-			}
-			final NestedRun<LETTER, STATE> stem = reconstructionC(mWitnessInitial, mWitnessCritical);
-			final NestedRun<LETTER, STATE> loop = reconstructionAc(mWitnessCritical, mWitnessCritical);
-			final NestedLassoRun<LETTER, STATE> acceptingNestedLassoRun = new NestedLassoRun<>(stem, loop);
-			if (mLogger.isDebugEnabled()) {
-				mLogger.debug("Accepting run: " + acceptingNestedLassoRun);
-				mLogger.debug("Accepted word:  Stem:" + acceptingNestedLassoRun.getStem().getWord() + " Loop: "
-						+ acceptingNestedLassoRun.getLoop().getWord());
-			}
-			return acceptingNestedLassoRun;
 		}
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info("Starting construction of run");
+		}
+		final NestedRun<LETTER, STATE> stem = reconstructionC(mWitnessInitial, mWitnessCritical);
+		final NestedRun<LETTER, STATE> loop = reconstructionAc(mWitnessCritical, mWitnessCritical);
+		final NestedLassoRun<LETTER, STATE> acceptingNestedLassoRun = new NestedLassoRun<>(stem, loop);
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Accepting run: " + acceptingNestedLassoRun);
+			mLogger.debug("Accepted word:  Stem:" + acceptingNestedLassoRun.getStem().getWord() + " Loop: "
+					+ acceptingNestedLassoRun.getLoop().getWord());
+		}
+		return acceptingNestedLassoRun;
 	}
 	
 	/**
@@ -181,7 +180,7 @@ public final class BuchiIsEmptyXW<LETTER, STATE> extends UnaryNwaOperation<LETTE
 		}
 		
 		// Reachability
-//		Bridge reachabilityBridge = new Bridge();
+		// Bridge reachabilityBridge = new Bridge();
 		
 		// line2--5
 		// TODO: xw: naming?
@@ -212,7 +211,7 @@ public final class BuchiIsEmptyXW<LETTER, STATE> extends UnaryNwaOperation<LETTE
 		}
 		
 		// Reachability-A
-//		Bridge reachabilityBridgeA = new Bridge();
+		// Bridge reachabilityBridgeA = new Bridge();
 		
 		assert worklist.isEmpty();
 		for (final STATE acceptingState : acceptingStates) {
@@ -234,7 +233,7 @@ public final class BuchiIsEmptyXW<LETTER, STATE> extends UnaryNwaOperation<LETTE
 		}
 		
 		// Reachability-C
-//		Bridge reachabilityBridgeC = new Bridge();
+		// Bridge reachabilityBridgeC = new Bridge();
 		
 		assert worklist.isEmpty();
 		
@@ -262,7 +261,7 @@ public final class BuchiIsEmptyXW<LETTER, STATE> extends UnaryNwaOperation<LETTE
 		}
 		
 		// Reachability-AC
-//		Bridge reachabilityBridgeAC = new Bridge();
+		// Bridge reachabilityBridgeAC = new Bridge();
 		
 		assert worklist.isEmpty();
 		
@@ -293,7 +292,7 @@ public final class BuchiIsEmptyXW<LETTER, STATE> extends UnaryNwaOperation<LETTE
 		}
 		return true;
 	}
-
+	
 	private void logWitness() {
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(LOG_SEPARATOR);
@@ -302,7 +301,7 @@ public final class BuchiIsEmptyXW<LETTER, STATE> extends UnaryNwaOperation<LETTE
 			mLogger.info(LOG_SEPARATOR);
 		}
 	}
-
+	
 	private void addReachabilityBridgeInternalPredecessors(final Worklist worklist, final Set<STATE> allStates) {
 		for (final STATE internalPredState : allStates) {
 			for (final OutgoingInternalTransition<LETTER, STATE> trans : mOperand
@@ -317,7 +316,7 @@ public final class BuchiIsEmptyXW<LETTER, STATE> extends UnaryNwaOperation<LETTE
 			}
 		}
 	}
-
+	
 	private void addReachabilityBridgeIfNotPresent(final Worklist worklist, final STATE q, final STATE p,
 			final STATE pprime) {
 		if (!mReachabilityBridge.containsPair(p, pprime)) {
@@ -777,36 +776,32 @@ public final class BuchiIsEmptyXW<LETTER, STATE> extends UnaryNwaOperation<LETTE
 		Set<STATE> getAllSources() {
 			if (!mBridgeInOrder.isEmpty()) {
 				return mBridgeInOrder.keySet();
-			} else {
-				return Collections.emptySet();
 			}
+			return Collections.emptySet();
 		}
 		
 		/** Get all states source such that (source, target) in bridge. */
 		Set<STATE> getAllSources(final STATE target) {
 			if (mBridgeReverseOrder.containsKey(target)) {
 				return mBridgeReverseOrder.get(target).keySet();
-			} else {
-				return Collections.emptySet();
 			}
+			return Collections.emptySet();
 		}
 		
 		/** Get all states target such that (source, target) in bridge. */
 		Set<STATE> getAllTargets(final STATE source) {
 			if (mBridgeInOrder.containsKey(source)) {
 				return mBridgeInOrder.get(source).keySet();
-			} else {
-				return Collections.emptySet();
 			}
+			return Collections.emptySet();
 		}
 		
 		/** Get the bridge range of a pair (source, target). */
 		IBridgeRange getBridgeRange(final STATE source, final STATE target) {
 			if (mBridgeInOrder.containsKey(source) && mBridgeInOrder.get(source).containsKey(target)) {
 				return mBridgeInOrder.get(source).get(target);
-			} else {
-				return null;
 			}
+			return null;
 		}
 		
 		boolean containsPair(final STATE source, final STATE target) {
@@ -841,7 +836,7 @@ public final class BuchiIsEmptyXW<LETTER, STATE> extends UnaryNwaOperation<LETTE
 		/** Insert a reachable pair of states (source, target) the worklist. */
 		void enqueue(final STATE source, final STATE target) {
 			final StatePair statePair = new StatePair(source, target);
-//			assert (! worklist.contains(statePair));
+			// assert (! worklist.contains(statePair));
 			mWorklist.addLast(statePair);
 		}
 		

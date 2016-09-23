@@ -105,10 +105,8 @@ public final class SuperDifference<LETTER, STATE> extends BinaryNwaOperation<LET
 		mEpimorphism = automatonEpimorhpism;
 		mStateFactory = minuend.getStateFactory();
 		mContainedStatesHashMap = new HashMap<>();
-		if (minimize) {
-			if (mLogger.isErrorEnabled()) {
-				mLogger.error("Minimization not implemented.");
-			}
+		if (minimize && mLogger.isErrorEnabled()) {
+			mLogger.error("Minimization not implemented.");
 		}
 		
 		if (mLogger.isInfoEnabled()) {
@@ -120,7 +118,7 @@ public final class SuperDifference<LETTER, STATE> extends BinaryNwaOperation<LET
 				minuend.getReturnAlphabet(), mStateFactory);
 		mSinkState = mStateFactory.createSinkStateContent();
 		if (mLogger.isDebugEnabled()) {
-		mLogger.debug("Created Sink-State: " + mSinkState.toString());
+			mLogger.debug("Created Sink-State: " + mSinkState.toString());
 		}
 		
 		// initializes the process by adding the initial states. Since there can
@@ -133,7 +131,7 @@ public final class SuperDifference<LETTER, STATE> extends BinaryNwaOperation<LET
 				assert mSubtrahend.getStates().contains(initS);
 			}
 			if (mLogger.isDebugEnabled()) {
-			mLogger.debug("Add initial state:" + initM + "---" + initS);
+				mLogger.debug("Add initial state:" + initM + "---" + initS);
 			}
 			addState(initM, initS);
 		}
@@ -253,6 +251,12 @@ public final class SuperDifference<LETTER, STATE> extends BinaryNwaOperation<LET
 		}
 		
 		// Traverse all edges = (r, label, r2) \in \delta
+		addStateSinkStateInternal(r, intersection);
+		addStateSinkStateCall(r, intersection);
+		addStateSinkStateReturn(r, intersection);
+	}
+	
+	private void addStateSinkStateInternal(final STATE r, final STATE intersection) {
 		for (final OutgoingInternalTransition<LETTER, STATE> e : mMinuend.internalSuccessors(r)) {
 			// we know that we must take the sink state, since there is no epimorph state
 			if (mLogger.isDebugEnabled()) {
@@ -266,7 +270,9 @@ public final class SuperDifference<LETTER, STATE> extends BinaryNwaOperation<LET
 			}
 			mResult.addInternalTransition(intersection, e.getLetter(), q2);
 		}
-		
+	}
+	
+	private void addStateSinkStateCall(final STATE r, final STATE intersection) {
 		for (final OutgoingCallTransition<LETTER, STATE> e : mMinuend.callSuccessors(r)) {
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug(FOLLOW_LABEL + e.getLetter() + AND_DOTS);
@@ -279,7 +285,9 @@ public final class SuperDifference<LETTER, STATE> extends BinaryNwaOperation<LET
 			}
 			mResult.addCallTransition(intersection, e.getLetter(), q2);
 		}
-		
+	}
+	
+	private void addStateSinkStateReturn(final STATE r, final STATE intersection) {
 		for (final OutgoingReturnTransition<LETTER, STATE> e : mMinuend.returnSuccessors(r)) {
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug(FOLLOW_LABEL + e.getLetter() + AND_DOTS);
@@ -312,7 +320,7 @@ public final class SuperDifference<LETTER, STATE> extends BinaryNwaOperation<LET
 	
 	private void addStateNormalState(final STATE r, final STATE s, final STATE intersection, final STATE hR) {
 		if (mLogger.isDebugEnabled()) {
-		mLogger.debug("epimorph state: " + hR.toString());
+			mLogger.debug("epimorph state: " + hR.toString());
 		}
 		// Traverse all edges = (r, label, r2) \in \delta
 		
@@ -329,7 +337,7 @@ public final class SuperDifference<LETTER, STATE> extends BinaryNwaOperation<LET
 			final STATE mapping = mEpimorphism.getMapping(e.getHierPred());
 			if (mapping != null) {
 				if (mLogger.isDebugEnabled()) {
-				mLogger.debug("found hier pred state mapping:" + mapping.toString());
+					mLogger.debug("found hier pred state mapping:" + mapping.toString());
 				}
 				final STATE hierPred = addState(e.getHierPred(), mapping);
 				traverseEdge(e, r, s, intersection, e.getSucc(), 2, hierPred);
@@ -339,7 +347,7 @@ public final class SuperDifference<LETTER, STATE> extends BinaryNwaOperation<LET
 			final STATE hierPred = addState(e.getHierPred(), mSinkState);
 			
 			if (mLogger.isDebugEnabled()) {
-			mLogger.debug("hier pred is: " + hierPred);
+				mLogger.debug("hier pred is: " + hierPred);
 			}
 			traverseEdge(e, r, s, intersection, e.getSucc(), 2, hierPred);
 		}
@@ -368,13 +376,13 @@ public final class SuperDifference<LETTER, STATE> extends BinaryNwaOperation<LET
 		final LETTER label = e.getLetter();
 		
 		if (mLogger.isDebugEnabled()) {
-		mLogger.debug("Traverse edge: from " + r.toString() + WITH + label + " to " + target.toString());
+			mLogger.debug("Traverse edge: from " + r.toString() + WITH + label + " to " + target.toString());
 		}
 		
 		// get the target state in the subtrahend automaton
 		final STATE hR2 = mEpimorphism.getMapping(target);
 		if (mLogger.isDebugEnabled()) {
-		mLogger.debug("mapping of the target is: " + hR2);
+			mLogger.debug("mapping of the target is: " + hR2);
 		}
 		
 		// now we want to check if the subtrahend automaton has an epimorphic state as well
@@ -400,19 +408,19 @@ public final class SuperDifference<LETTER, STATE> extends BinaryNwaOperation<LET
 		STATE q2;
 		if (targetExistsInMinuend) {
 			if (mLogger.isDebugEnabled()) {
-			mLogger.debug("target state exists");
+				mLogger.debug("target state exists");
 			}
 			// if that state and the corresponding edge with the same label exists
 			q2 = addState(target, hR2);
 		} else {
 			if (mLogger.isDebugEnabled()) {
-			mLogger.debug("target state exists not");
+				mLogger.debug("target state exists not");
 			}
 			// otherwise we fall in to the sink state
 			q2 = addState(target, mSinkState);
 		}
 		
-//		mLogger.debug("Adding the edge from " + q.toString() + " with " + label + " to " + q2.toString());
+		// mLogger.debug("Adding the edge from " + q.toString() + " with " + label + " to " + q2.toString());
 		
 		switch (edgeType) {
 			case 0:
@@ -454,7 +462,7 @@ public final class SuperDifference<LETTER, STATE> extends BinaryNwaOperation<LET
 	@SuppressWarnings("squid:S1698")
 	private boolean findTargetReturn(final STATE state, final STATE hierPred, final LETTER label, final STATE hR2) {
 		if (mLogger.isDebugEnabled()) {
-		mLogger.debug("hierPred for " + hierPred);
+			mLogger.debug("hierPred for " + hierPred);
 		}
 		for (final OutgoingReturnTransition<LETTER, STATE> e2 : mSubtrahend.returnSuccessors(state, hierPred, label)) {
 			// equality intended here

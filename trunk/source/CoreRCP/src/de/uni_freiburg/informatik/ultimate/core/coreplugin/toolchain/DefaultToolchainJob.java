@@ -235,7 +235,11 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 			returnstatus = convert(mToolchain.processToolchain(tpm));
 
 		} catch (final Throwable e) {
-			mLogger.fatal(String.format("The toolchain threw an exception: %s", e.getMessage()));
+			if (mLogger.isDebugEnabled()) {
+				mLogger.fatal("The toolchain threw an exception", e);
+			} else {
+				mLogger.fatal(String.format("The toolchain threw an exception: %s", e.getMessage()));
+			}
 			mController.displayException(mToolchain.getCurrentToolchainData(), "The toolchain threw an exception", e);
 			returnstatus = new Status(IStatus.CANCEL, Activator.PLUGIN_ID, IStatus.ERROR,
 					"Toolchain threw an exception", null);

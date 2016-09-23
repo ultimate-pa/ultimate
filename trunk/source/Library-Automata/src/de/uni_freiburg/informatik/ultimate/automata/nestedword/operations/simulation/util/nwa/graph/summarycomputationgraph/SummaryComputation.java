@@ -37,6 +37,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game.GameLetter;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game.GameSpoilerNwaVertex;
@@ -46,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Incom
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.SummaryReturnTransition;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.LexicographicCounter;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.PosetUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -63,7 +65,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public class SummaryComputation<LETTER, STATE> {
 	
-	protected final AutomataLibraryServices mServices;
+	private final AutomataLibraryServices mServices;
+	private final ILogger mLogger; 
 	
 	private final IDoubleDeckerAutomaton<GameLetter<LETTER, STATE>, IGameState> mGameAutomaton;
 	private final ArrayDeque<SummaryComputationGraphNode<LETTER, STATE>> mWorklist = new ArrayDeque<>();
@@ -105,12 +108,14 @@ public class SummaryComputation<LETTER, STATE> {
 			final IDoubleDeckerAutomaton<GameLetter<LETTER, STATE>, IGameState> gameAutomaton) {
 		super();
 		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mGameAutomaton = gameAutomaton;
 		initialize();
 		while (!mWorklist.isEmpty()) {
 			final SummaryComputationGraphNode<LETTER, STATE> node = mWorklist.remove();
 			process(node);
 		}
+		mLogger.info("Found " + mTrigger2Summaries.size() + " summaries");
 	}
 
 
@@ -172,13 +177,17 @@ public class SummaryComputation<LETTER, STATE> {
 		for (final Pair<IGameState, IGameState> sourceCurrentPair : source2Current2Targets.keys2()) {
 			for (final IncomingReturnTransition<GameLetter<LETTER, STATE>, IGameState> trans : mGameAutomaton.returnPredecessors(sourceCurrentPair.getSecond())) {
 				final GameLetter<LETTER, STATE> gl = trans.getLetter();
-				if (!gl.equals(letter)) {
+				if (!gl.getLetter().equals(letter)) {
 					continue;
 				}
 				dupl2spoi.addPair(trans.getLetter(), sourceCurrentPair.getSecond());
 				dupl2spoi2hier.addTriple(trans.getLetter(), sourceCurrentPair.getSecond(), trans.getHierPred());
 				spoi2dupl.addPair(trans.getLinPred(), trans.getLetter());
 			}
+		}
+		if (dupl2spoi.size() == 0) {
+			// no predecessor for this letter
+			return;
 		}
 		
 		final Set<NestedMap2<IGameState, GameLetter<LETTER, STATE>, WeightedSummaryTargets>> dupl2Wst = 
@@ -381,7 +390,7 @@ public class SummaryComputation<LETTER, STATE> {
 				preds.add(pred);
 				c.increment();
 			} while (c.isZero());
-			assert c.getNumberOfValuesProduct() == preds.size() : "inconsistent";
+			assert pred2succ2hier == null || c.getNumberOfValuesProduct() == preds.size() : "inconsistent";
 		}
 		return preds;
 	}

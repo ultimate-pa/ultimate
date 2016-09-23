@@ -52,8 +52,7 @@ public class IncomingReturnTransition<LETTER, STATE> implements ITransitionlet<L
 	 * @param letter
 	 *            letter
 	 */
-	public IncomingReturnTransition(final STATE linPred, final STATE hierPred,
-			final LETTER letter) {
+	public IncomingReturnTransition(final STATE linPred, final STATE hierPred, final LETTER letter) {
 		mLinPred = linPred;
 		mHierPred = hierPred;
 		mLetter = letter;
@@ -88,14 +87,12 @@ public class IncomingReturnTransition<LETTER, STATE> implements ITransitionlet<L
 	}
 	
 	@Override
+	@SuppressWarnings("checkstyle:com.puppycrawl.tools.checkstyle.checks.metrics.NPathComplexityCheck")
 	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		}
-		if (obj == null) {
-			return false;
-		}
-		if (getClass() != obj.getClass()) {
+		if (obj == null || getClass() != obj.getClass()) {
 			return false;
 		}
 		final IncomingReturnTransition<?, ?> other = (IncomingReturnTransition<?, ?>) obj;

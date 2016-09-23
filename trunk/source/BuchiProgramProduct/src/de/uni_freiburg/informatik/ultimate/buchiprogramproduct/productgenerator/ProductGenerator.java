@@ -2,22 +2,22 @@
  * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
  * Copyright (C) 2015 Vincent Langenfeld (langenfv@informatik.uni-freiburg.de)
- *
+ * 
  * This file is part of the ULTIMATE BuchiProgramProduct plug-in.
- *
+ * 
  * The ULTIMATE BuchiProgramProduct plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * 
  * The ULTIMATE BuchiProgramProduct plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- *
+ * 
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE BuchiProgramProduct plug-in. If not, see <http://www.gnu.org/licenses/>.
- *
+ * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BuchiProgramProduct plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -75,10 +75,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RC
 
 /**
  * This class is implementing the Buchi program product, i.e. interleaving a BuchiAutomaton with the CFG.
- *
+ * 
  * @author dietsch@informatik.uni-freiburg.de
  * @author Langenfeld
- *
+ * 
  * @see Masterarbeit Langenfeld, "Fairness Modulo Theory: A New Approach to LTL Software Model Checking"
  *
  */
@@ -266,7 +266,7 @@ public final class ProductGenerator {
 				} else if (isNonProductNode(origRcfgSourceLoc)) {
 					createReturnEdgesNonProductToProduct(origRcfgSourceLoc, origRcfgTargetLoc, returnEdge);
 				} else {
-					// TODO: here false or true
+					//TODO: here false or true
 					createReturnEdgesOther(origRcfgSourceLoc, returnEdge, false);
 				}
 			}
@@ -279,8 +279,8 @@ public final class ProductGenerator {
 				if (rcfgEdge instanceof Summary && ((Summary) rcfgEdge).calledProcedureHasImplementation()) {
 					// we ignore summaries for which procedures have
 					// implementations
-					continue;
-				}
+						continue;
+					}
 
 				if (rcfgEdge instanceof Return) {
 					// we will handle return in a second iteration
@@ -328,7 +328,7 @@ public final class ProductGenerator {
 		assert mOrigRcfgCallLocs2CallEdges.get(returnEdge.getCallerProgramPoint()).size() == 1;
 
 		for (final String nwaLoc : mNWA.getStates()) {
-			// TODO: if stepwise than only enter initial states here
+			//TODO: if stepwise than only enter initial states here
 			final ProgramPoint productTargetLoc =
 					mProductLocations.get(mNameGenerator.generateStateName(origRcfgTargetLoc, nwaLoc));
 			createNewReturnEdge(productSourceLoc, returnEdge, productTargetLoc,
@@ -362,7 +362,7 @@ public final class ProductGenerator {
 		for (final String nwaLoc : mNWA.getStates()) {
 			final ProgramPoint productSourceLoc =
 					mProductLocations.get(mNameGenerator.generateStateName(origRcfgSourceLoc, nwaLoc));
-
+			
 			addRootEdgeIfNecessary(origRcfgSourceLoc, nwaLoc, productSourceLoc);
 			if (rcfgEdge instanceof StatementSequence) {
 				handleEdgeStatementSequence(productSourceLoc, nwaLoc, (StatementSequence) rcfgEdge, isProgramStep);
@@ -494,33 +494,33 @@ public final class ProductGenerator {
 	}
 
 	private void pruneNonProductSink(final ProgramPoint helper) {
-		final List<RCFGEdge> outEdges = new ArrayList<>(helper.getOutgoingEdges());
-		final Set<RCFGNode> successors = new HashSet<>(helper.getOutgoingNodes());
-		final Set<RCFGNode> predecessors = new HashSet<>(helper.getIncomingNodes());
+			final List<RCFGEdge> outEdges = new ArrayList<>(helper.getOutgoingEdges());
+			final Set<RCFGNode> successors = new HashSet<>(helper.getOutgoingNodes());
+			final Set<RCFGNode> predecessors = new HashSet<>(helper.getIncomingNodes());
 
-		for (final RCFGEdge outgoing : outEdges) {
-			// remove all outgoing edges
-			outgoing.disconnectSource();
-			outgoing.disconnectTarget();
-		}
+			for (final RCFGEdge outgoing : outEdges) {
+				// remove all outgoing edges
+				outgoing.disconnectSource();
+				outgoing.disconnectTarget();
+			}
 
-		// remove the targets and all the nodes that can be reached from the
-		// target
-		for (final RCFGNode successor : successors) {
-			removeProductProgramPointAndSuccessors((ProgramPoint) successor);
-		}
+			// remove the targets and all the nodes that can be reached from the
+			// target
+			for (final RCFGNode successor : successors) {
+				removeProductProgramPointAndSuccessors((ProgramPoint) successor);
+			}
 
-		// we add a self loop that will be used later
-		final StatementSequence seq = mCodeblockFactory.constructStatementSequence(helper, helper,
-				generateNeverClaimAssumeStatement(new BooleanLiteral(null, BoogieType.TYPE_BOOL, true)));
-		mapNewEdge2OldEdge(seq, null);
+			// we add a self loop that will be used later
+			final StatementSequence seq = mCodeblockFactory.constructStatementSequence(helper, helper,
+					generateNeverClaimAssumeStatement(new BooleanLiteral(null, BoogieType.TYPE_BOOL, true)));
+			mapNewEdge2OldEdge(seq, null);
 
-		// determine what kind of loop has to be added to this state based
-		// on the LTL NWA state of the predecessor
-		boolean added = false;
-		for (final String nwaState : mNWA.getStates()) {
-			for (final RCFGNode node : predecessors) {
-				final ProgramPoint predecessor = (ProgramPoint) node;
+			// determine what kind of loop has to be added to this state based
+			// on the LTL NWA state of the predecessor
+			boolean added = false;
+			for (final String nwaState : mNWA.getStates()) {
+				for (final RCFGNode node : predecessors) {
+					final ProgramPoint predecessor = (ProgramPoint) node;
 				if (!predecessor.getPosition().endsWith(nwaState)) {
 					continue;
 				}
@@ -528,25 +528,25 @@ public final class ProductGenerator {
 				// ok, the predecessor is from this node; now we add self loops to the helper state that keep us
 				// in this NWA state
 				for (final OutgoingInternalTransition<CodeBlock, String> autTrans : mNWA.internalSuccessors(nwaState)) {
-					if (autTrans.getSucc().equals(nwaState)) {
-						// TODO: here false or true
-						createNewStatementSequence(helper, seq, helper, autTrans.getLetter(), false);
-						added = true;
+							if (autTrans.getSucc().equals(nwaState)) {
+								//TODO: here false or true
+								createNewStatementSequence(helper, seq, helper, autTrans.getLetter(),false);
+								added = true;
+							}
+						}
+
+						if (mNWA.isFinal(nwaState)) {
+					// and if the nwa state is accepting, this state will also be accepting
+							mAcceptingNodeAnnotation.annotate(helper);
+						}
 					}
 				}
-
-				if (mNWA.isFinal(nwaState)) {
-					// and if the nwa state is accepting, this state will also be accepting
-					mAcceptingNodeAnnotation.annotate(helper);
-				}
+			// hacky shit: the ss is now useless; we remove it
+			if (added) {
+				seq.disconnectSource();
+				seq.disconnectTarget();
 			}
 		}
-		// hacky shit: the ss is now useless; we remove it
-		if (added) {
-			seq.disconnectSource();
-			seq.disconnectTarget();
-		}
-	}
 
 	private static boolean areAllIncomingEdgesReturn(final ProgramPoint helper) {
 		for (final RCFGEdge edge : helper.getIncomingEdges()) {
@@ -635,22 +635,22 @@ public final class ProductGenerator {
 			for (final Entry<String, ProgramPoint> loc : pairs.getValue().entrySet()) {
 				for (final RCFGEdge edge : loc.getValue().getOutgoingEdges()) {
 					generateTransformula(tfb, pairs.getKey(), edge);
+					}
 				}
 			}
 		}
-	}
 
 	private static void generateTransformula(final TransFormulaBuilder tfb, final String procId, final RCFGEdge edge) {
 		if (edge instanceof StatementSequence || edge instanceof Summary) {
 			tfb.addTransFormula((CodeBlock) edge, procId);
-		}
+	}
 	}
 
 	private void handleEdgeStatementSequence(final ProgramPoint productLoc, final String nwaLoc,
 			final StatementSequence rcfgEdge, final boolean isProgramStep) {
 		ProgramPoint targetpp;
 		for (final OutgoingInternalTransition<CodeBlock, String> autTrans : mNWA.internalSuccessors(nwaLoc)) {
-			// add no edges if this is not a program step or not the program flow
+			//add no edges if this is not a program step or not the program flow
 			if (!isProgramStep && !autTrans.getSucc().equals(nwaLoc)) {
 				continue;
 			}
@@ -768,8 +768,8 @@ public final class ProductGenerator {
 		for (final OutgoingInternalTransition<CodeBlock, String> autTrans : mNWA.internalSuccessors(nwaSourceState)) {
 			final ProgramPoint targetpp =
 					mProductLocations.get(mNameGenerator.generateStateName(origRcfgTargetLoc, autTrans.getSucc()));
-			// if the transition would lead into another BA state and is no program step continue
-			if (!isProgramStep && !autTrans.getSucc().equals(nwaSourceState)) {
+			//if the transition would lead into another BA state and is no program step continue
+			if(!isProgramStep && !autTrans.getSucc().equals(nwaSourceState)) {
 				continue;
 			}
 			createNewStatementSequence(helper, null, targetpp, autTrans.getLetter(), isProgramStep);
@@ -887,7 +887,7 @@ public final class ProductGenerator {
 		if (originalSS != null) {
 			stmts.addAll(originalSS.getStatements());
 		}
-		if (isProgramStep) {
+		if(isProgramStep){
 			stmts.addAll(checkLetter(letter));
 		}
 		// create the edge
@@ -908,13 +908,13 @@ public final class ProductGenerator {
 		if (letter == null) {
 			return Collections.emptyList();
 		}
-		if (letter instanceof StatementSequence) {
-			final StatementSequence autTransStmts = (StatementSequence) letter;
-			return autTransStmts.getStatements();
+			if (letter instanceof StatementSequence) {
+				final StatementSequence autTransStmts = (StatementSequence) letter;
+				return autTransStmts.getStatements();
 		}
-		throw new UnsupportedOperationException(
-				"Letter has to be a statement sequence, but is " + letter.getClass().getSimpleName());
-	}
+				throw new UnsupportedOperationException(
+						"Letter has to be a statement sequence, but is " + letter.getClass().getSimpleName());
+			}
 
 	private void mapNewEdge2OldEdge(final RCFGEdge newEdge, final RCFGEdge originalEdge) {
 		mBacktranslator.mapEdges(newEdge, originalEdge);

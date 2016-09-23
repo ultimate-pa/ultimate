@@ -59,7 +59,7 @@ public class Trace2PEACompiler {
 
 	private static final String DEFAULT_LOGGER = "Trace2PEACompiler";
 
-	private ILogger logger = null;
+	private ILogger mLogger = null;
 
 	private String name;
 
@@ -100,8 +100,8 @@ public class Trace2PEACompiler {
 	 * @see ILogger
 	 * @see PropertyConfigurator
 	 */
-	public Trace2PEACompiler(final String loggerName) {
-		logger = ILogger.getLogger(loggerName);
+	public Trace2PEACompiler(ILogger logger, String loggerName) {
+		mLogger = logger;
 
 		allPhases = new TreeMap<>();
 		todo = new LinkedList<>();
@@ -112,8 +112,8 @@ public class Trace2PEACompiler {
 	/**
 	 * Initialises the Trace2PEACompiler object with the default logger.
 	 */
-	public Trace2PEACompiler() {
-		this(Trace2PEACompiler.DEFAULT_LOGGER);
+	public Trace2PEACompiler(ILogger logger) {
+		this(logger, Trace2PEACompiler.DEFAULT_LOGGER);
 	}
 
 	/**
@@ -311,7 +311,7 @@ public class Trace2PEACompiler {
 		        && (canPossiblySeep & (1 << lastphase)) != 0) {
 			lastphase = lastphase - 1;
 		}
-		logger.debug("Lastphase = " + lastphase);
+		mLogger.debug("Lastphase = " + lastphase);
 	}
 
 	/**
@@ -344,7 +344,7 @@ public class Trace2PEACompiler {
 			}
 
 			cEnter[p] = p > 0 ? complete(srcBits, p - 1).and(enter[p]) : CDD.FALSE;
-			logger.debug("initTrans for " + srcBits + "," + p + ": complete: " + complete(srcBits, p) + " enter: "
+			mLogger.debug("initTrans for " + srcBits + "," + p + ": complete: " + complete(srcBits, p) + " enter: "
 			        + cEnter[p] + "  keep: " + cKeep[p]);
 		}
 	}
@@ -376,7 +376,7 @@ public class Trace2PEACompiler {
 	        final String[] resets, final PhaseBits destBits) {
 		Phase dest;
 		if (allPhases.containsKey(destBits)) {
-			logger.debug("Destination phase already exists");
+			mLogger.debug("Destination phase already exists");
 			dest = allPhases.get(destBits);
 		} else {
 			CDD clockInv = CDD.TRUE;
@@ -402,7 +402,7 @@ public class Trace2PEACompiler {
 				}
 			}
 
-			logger.debug("Creating destination phase");
+			mLogger.debug("Creating destination phase");
 			dest = new Phase(destBits.toString(), stateInv, clockInv);
 			dest.phaseBits = destBits;
 			allPhases.put(destBits, dest);
@@ -411,7 +411,7 @@ public class Trace2PEACompiler {
 		guard = guard.assume(dest.getStateInvariant().prime());
 		guard = guard.assume(src.getClockInvariant());
 
-		logger.debug("Creating transition to destination phase");
+		mLogger.debug("Creating transition to destination phase");
 		// JF: only state invariants need to be primed. So, we prime the state
 		// invariants in recursiveBuildTrans.
 		// Transition t = src.addTransition(dest, guard.prime(), resets);
@@ -453,7 +453,7 @@ public class Trace2PEACompiler {
 		if (guard.and(stateInv.prime()) == CDD.FALSE) {
 			return;
 		}
-		logger.debug("recursiveBuildTrans: " + srcBits + "->" + new PhaseBits(active, exactbound, waiting) + " (" + p
+		mLogger.debug("recursiveBuildTrans: " + srcBits + "->" + new PhaseBits(active, exactbound, waiting) + " (" + p
 		        + ") partial guards: " + guard + " inv: " + stateInv);
 		if (p == countertrace.phases.length) {
 			// If countertrace automata are built, the phase satisfying the
@@ -461,7 +461,7 @@ public class Trace2PEACompiler {
 			// (this.buildTotal==true)
 			// the phase needs to be constructed.
 			if (buildTotal || ((active & (1 << (p - 1))) == 0)) {
-				logger.debug("Adding new transition");
+				mLogger.debug("Adding new transition");
 				buildNewTrans(srcBits, src, guard, stateInv, resets, new PhaseBits(active, exactbound, waiting));
 			}
 			return;
@@ -536,7 +536,7 @@ public class Trace2PEACompiler {
 			if (countertrace.phases[p].boundType == CounterTrace.BOUND_GREATEREQUAL) {
 				final CDD enterExact = remaining.and(cEnter[p]);
 				if (enterExact != CDD.FALSE) {
-					logger.debug("Phase " + p + " can be entered exact");
+					mLogger.debug("Phase " + p + " can be entered exact");
 					recursiveBuildTrans(srcBits, src, enterExact, stateInv, resetsPlus, active | pbit, waiting | pbit,
 					        exactbound | pbit, p + 1);
 				}
@@ -684,7 +684,7 @@ public class Trace2PEACompiler {
 			 *
 			 */
 
-			logger.debug("Trying to add transitions from start state");
+			mLogger.debug("Trying to add transitions from start state");
 			start = new Phase(Trace2PEACompiler.START + "_" + name, CDD.TRUE, CDD.TRUE);
 			start.addTransition(start, noSyncEvent.prime(), new String[0]);
 			for (int i = 0; i < countertrace.phases.length; i++) {
@@ -701,9 +701,9 @@ public class Trace2PEACompiler {
 			recursiveBuildTrans(initHash, start, entrySync.and(exitSync.negate()), CDD.TRUE, new String[0], 0, 0, 0, 0);
 
 			init = new Phase[] { start };
-			logger.debug("Adding transitions from start state successful");
+			mLogger.debug("Adding transitions from start state successful");
 		} else {
-			logger.debug("Bulding initial transitions");
+			mLogger.debug("Bulding initial transitions");
 			final Phase dummyinit = new Phase("dummyinit", CDD.TRUE, CDD.TRUE);
 			/*
 			 * Special case: Initially we can enter the first phases, up to the first one that does not allowEnter or
@@ -750,13 +750,13 @@ public class Trace2PEACompiler {
 			}
 		}
 
-		logger.debug("Building automaton");
+		mLogger.debug("Building automaton");
 		while (!todo.isEmpty()) {
 			final PhaseBits srcBits = todo.remove(0);
 			final Phase src = allPhases.get(srcBits);
 			findTrans(srcBits, src);
 		}
-		logger.debug("Automaton complete");
+		mLogger.debug("Automaton complete");
 
 		final Phase[] phases = new Phase[(start != null ? 1 : 0) + allPhases.size() + (exitSync != null ? 1 : 0)];
 
@@ -771,7 +771,7 @@ public class Trace2PEACompiler {
 			phases[phaseNr++] = iter.next();
 		}
 		if (exitSync != null) {
-			logger.debug("Trying to add transitions to final state");
+			mLogger.debug("Trying to add transitions to final state");
 			phases[phaseNr++] = buildExitSyncTransitions();
 			finalPhases[0] = phases[phaseNr - 1];
 		}

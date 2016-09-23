@@ -3,6 +3,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import pea.BooleanDecision;
 import pea.CDD;
 import pea.CounterTrace;
@@ -84,7 +85,7 @@ public class GasBurner {
     }
 
     public void buildTimings() {
-	final Trace2PEACompiler compiler = new Trace2PEACompiler();
+	final Trace2PEACompiler compiler = new Trace2PEACompiler(ILogger.getLogger(""));
 	dc1 = compiler.compile("Prog1",
 			     new CounterTrace(new CounterTrace.DCPhase[] {
 	    new CounterTrace.DCPhase(CDD.TRUE),
