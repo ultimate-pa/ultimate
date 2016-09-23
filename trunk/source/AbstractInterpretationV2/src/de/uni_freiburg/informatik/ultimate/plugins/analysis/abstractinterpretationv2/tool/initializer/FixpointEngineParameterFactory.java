@@ -2,8 +2,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
@@ -12,7 +10,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferencePro
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
@@ -37,9 +34,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign.SignDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon.OctagonDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon.OctagonDomain.LiteralCollectorFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.vp.EqBaseNode;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.vp.EqFunctionNode;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.vp.EqNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.vp.RCFGArrayIndexCollector;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.vp.VPDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
@@ -125,14 +119,12 @@ public class FixpointEngineParameterFactory {
 			return new DataflowDomain(logger);
 		} else if (VPDomain.class.getSimpleName().equals(selectedDomain)) {
 			final RCFGArrayIndexCollector arrayIndexCollector = new RCFGArrayIndexCollector(mRoot);
-			if (logger.isDebugEnabled()) {
-				printVPDomainDebug(logger, arrayIndexCollector);
-			}
 			return new VPDomain(logger, mRoot.getRootAnnot().getManagedScript(), 
 					mServices,
-					arrayIndexCollector.getEqNodeSet(), 
+					arrayIndexCollector.getEqGraphNodeSet(), 
 					arrayIndexCollector.getTermToBaseNodeMap(),
-					arrayIndexCollector.getTermToFunctionNodeMap());
+					arrayIndexCollector.getTermToFnNodeMap(),
+					arrayIndexCollector.getEqNodeToEqGraphNodeMap());
 		} 
 		throw new UnsupportedOperationException(getFailureString(selectedDomain));
 	}
@@ -181,29 +173,5 @@ public class FixpointEngineParameterFactory {
 	private String getFailureString(final String selectedDomain) {
 		return "The value \"" + selectedDomain + "\" of preference \"" + AbsIntPrefInitializer.LABEL_ABSTRACT_DOMAIN
 				+ "\" was not considered before! ";
-	}
-
-	private static void printVPDomainDebug(final ILogger logger, final RCFGArrayIndexCollector arrayIndexCollector) {
-		
-		logger.debug("EqNode Set: ");
-		for (EqNode node : arrayIndexCollector.getEqNodeSet()) {
-			logger.debug(node.toString());
-		}
-		
-		logger.debug("Base Node: ");
-		for (Entry<Term, EqBaseNode> entry : arrayIndexCollector.getTermToBaseNodeMap().entrySet()) {
-			logger.debug("Term: " + entry.getKey() + ", Node: " + entry.getValue());
-		}
-		
-		logger.debug("Function Node: ");
-		for (Entry<Term, Map<Term, EqFunctionNode>> fnEntry : arrayIndexCollector.getTermToFunctionNodeMap().entrySet()) {
-			logger.debug("Term: " + fnEntry.getKey() + ", Node: ");
-			for (Entry<Term, EqFunctionNode> argEntry : fnEntry.getValue().entrySet()) {
-				logger.debug(argEntry.getKey());
-			}
-			
-			
-		}
-
 	}
 }
