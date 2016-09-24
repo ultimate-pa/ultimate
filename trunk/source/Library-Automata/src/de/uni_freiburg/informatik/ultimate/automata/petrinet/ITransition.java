@@ -19,23 +19,43 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet;
 
 import java.util.Collection;
 
-public interface ITransition<S,C> {
+/**
+ * A Petri net transition interface.
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <S>
+ *            symbols type
+ * @param <C>
+ *            place content type
+ */
+public interface ITransition<S, C> {
+	/**
+	 * @return The symbol.
+	 */
 	S getSymbol();
 	
-	Collection<Place<S,C>> getPredecessors();
+	/**
+	 * @return The predecessor places.
+	 */
+	Collection<Place<S, C>> getPredecessors();
 	
-	Collection<Place<S,C>> getSuccessors();
+	/**
+	 * @return The successor places.
+	 */
+	Collection<Place<S, C>> getSuccessors();
 	
-//	public interface Successors extends Iterable<IPlace> {
-//		
-//	}
+	/*
+	public interface Successors extends Iterable<IPlace> {
+		
+	}
+	*/
 }
