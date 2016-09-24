@@ -147,10 +147,10 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 	
 	private final InCaReCounter mNumberTransitions = new InCaReCounter();
 	
-	// private
-	// Map<StateContainer<LETTER,STATE>,Set<StateContainer<LETTER,STATE>>>
-	// mSummaries = new
-	// HashMap<StateContainer<LETTER,STATE>,Set<StateContainer<LETTER,STATE>>>();
+	/*
+	private Map<StateContainer<LETTER, STATE>, Set<StateContainer<LETTER, STATE>>> mSummaries =
+			new HashMap<StateContainer<LETTER, STATE>, Set<StateContainer<LETTER, STATE>>>();
+	*/
 	
 	private final Set<LETTER> mEmptySetOfLetters = Collections.emptySet();
 	
@@ -159,16 +159,16 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 	private AcceptingSummariesComputation mAcceptingSummaries;
 	private AcceptingComponentsAnalysis<LETTER, STATE> mAcceptingComponentsAnalysis;
 	
-	// private void addSummary(StateContainer<LETTER,STATE> callPred,
-	// StateContainer<LETTER,STATE> returnSucc) {
-	// Set<StateContainer<LETTER,STATE>> returnSuccs =
-	// mSummaries.get(callPred);
-	// if (returnSuccs == null) {
-	// returnSuccs = new HashSet<StateContainer<LETTER,STATE>>();
-	// mSummaries.put(callPred, returnSuccs);
-	// }
-	// returnSuccs.add(returnSucc);
-	// }
+	/*
+	private void addSummary(StateContainer<LETTER, STATE> callPred, StateContainer<LETTER, STATE> returnSucc) {
+		Set<StateContainer<LETTER, STATE>> returnSuccs = mSummaries.get(callPred);
+		if (returnSuccs == null) {
+			returnSuccs = new HashSet<StateContainer<LETTER, STATE>>();
+			mSummaries.put(callPred, returnSuccs);
+		}
+		returnSuccs.add(returnSucc);
+	}
+	*/
 	
 	/**
 	 * Constructor.
@@ -279,10 +279,12 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 		return mStates.size() + " StateContainers " + inMap + " in inMapMode" + outMap + " in outMapMode";
 	}
 	
-	// public boolean isDeadEnd(STATE state) {
-	// ReachProp reachProp = mStates.get(state).getReachProp();
-	// return reachProp == ReachProp.REACHABLE;
-	// }
+	/*
+	public boolean isDeadEnd(STATE state) {
+		ReachProp reachProp = mStates.get(state).getReachProp();
+		return reachProp == ReachProp.REACHABLE;
+	}
+	*/
 	
 	public AncestorComputation getWithOutDeadEnds() {
 		return mWithOutDeadEnds;
@@ -583,11 +585,6 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 					nextLetter();
 				}
 				return result;
-			}
-			
-			@Override
-			public void remove() {
-				throw new UnsupportedOperationException();
 			}
 		};
 	}
@@ -924,6 +921,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 				result &= cont.succReturn(outTrans.getHierPred(), outTrans.getLetter()).contains(outTrans.getSucc());
 				assert result;
 			}
+			
 			/*
 			for (LETTER letter : lettersReturnSummary(state)) {
 				for (SummaryReturnTransition<LETTER, STATE> sumTrans : returnSummarySuccessor(letter, state)) {
