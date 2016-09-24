@@ -70,7 +70,7 @@ public class AcceptingComponentsAnalysis<LETTER, STATE> {
 	 */
 	private static final boolean USE_ALTERNATIVE_LASSO_CONSTRUCTION = false;
 	
-	private final NestedWordAutomatonReachableStates<LETTER, STATE> mNestedWordAutomatonReachableStates;
+	private final NestedWordAutomatonReachableStates<LETTER, STATE> mNwars;
 	private final StateBasedTransitionFilterPredicateProvider<LETTER, STATE> mTransitionFilter;
 	
 	private final HashRelation<StateContainer<LETTER, STATE>, Summary<LETTER, STATE>> mAcceptingSummaries;
@@ -79,7 +79,8 @@ public class AcceptingComponentsAnalysis<LETTER, STATE> {
 	
 	private List<NestedLassoRun<LETTER, STATE>> mNestedLassoRuns;
 	private NestedLassoRun<LETTER, STATE> mNestedLassoRun;
-	private final SccComputation<StateContainer<LETTER, STATE>, StronglyConnectedComponentWithAcceptanceInformation<LETTER, STATE>> mSccComputation;
+	private final SccComputation<StateContainer<LETTER, STATE>,
+			StronglyConnectedComponentWithAcceptanceInformation<LETTER, STATE>> mSccComputation;
 	
 	private int mAcceptingBalls;
 	private final AutomataLibraryServices mServices;
@@ -92,7 +93,7 @@ public class AcceptingComponentsAnalysis<LETTER, STATE> {
 	 * 
 	 * @param services
 	 *            Ultimate services
-	 * @param nestedWordAutomatonReachableStates
+	 * @param nwars
 	 *            nested word automaton with reachable states information
 	 * @param asc
 	 *            accepting summary computation
@@ -102,18 +103,17 @@ public class AcceptingComponentsAnalysis<LETTER, STATE> {
 	 *            states to start
 	 */
 	public AcceptingComponentsAnalysis(final AutomataLibraryServices services,
-			final NestedWordAutomatonReachableStates<LETTER, STATE> nestedWordAutomatonReachableStates,
+			final NestedWordAutomatonReachableStates<LETTER, STATE> nwars,
 			final NestedWordAutomatonReachableStates<LETTER, STATE>.AcceptingSummariesComputation asc,
 			final Set<STATE> allStates, final Set<STATE> startStates) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		mNestedWordAutomatonReachableStates = nestedWordAutomatonReachableStates;
-		mScComponentFactory =
-				new StronglyConnectedComponentWithAcceptanceInformation_Factory(mNestedWordAutomatonReachableStates);
-		mNwarsSuccessorProvider = new InSumCaSuccessorProvider(nestedWordAutomatonReachableStates, allStates);
+		mNwars = nwars;
+		mScComponentFactory = new StronglyConnectedComponentWithAcceptanceInformation_Factory(nwars);
+		mNwarsSuccessorProvider = new InSumCaSuccessorProvider(nwars, allStates);
 		final Set<StateContainer<LETTER, STATE>> startNodes = new HashSet<>();
 		for (final STATE state : startStates) {
-			final StateContainer<LETTER, STATE> sc = nestedWordAutomatonReachableStates.getStateContainer(state);
+			final StateContainer<LETTER, STATE> sc = nwars.getStateContainer(state);
 			startNodes.add(sc);
 		}
 		mSccComputation = new SccComputationNonRecursive<>(mLogger, mNwarsSuccessorProvider, mScComponentFactory,
@@ -138,7 +138,7 @@ public class AcceptingComponentsAnalysis<LETTER, STATE> {
 	}
 	
 	/**
-	 * @return nummber of all SCCs (including non-accepting and non-ball SCCs)
+	 * @return Number of all SCCs (including non-accepting and non-ball SCCs).
 	 */
 	int getNumberOfAllSccs() {
 		return mSccComputation.getSCCs().size();
@@ -151,8 +151,8 @@ public class AcceptingComponentsAnalysis<LETTER, STATE> {
 		return mAcceptingBalls == 0;
 	}
 	
-	public SccComputation<StateContainer<LETTER, STATE>, StronglyConnectedComponentWithAcceptanceInformation<LETTER, STATE>>
-			getSccComputation() {
+	public SccComputation<StateContainer<LETTER, STATE>,
+			StronglyConnectedComponentWithAcceptanceInformation<LETTER, STATE>> getSccComputation() {
 		return mSccComputation;
 	}
 	
@@ -160,10 +160,8 @@ public class AcceptingComponentsAnalysis<LETTER, STATE> {
 	 * Computes one nested lasso run per SCC.
 	 * 
 	 * @return nested lasso runs
-	 * @throws AutomataOperationCanceledException
 	 */
-	public List<NestedLassoRun<LETTER, STATE>> computeOneNestedLassoRunPerScc()
-			throws AutomataOperationCanceledException {
+	public List<NestedLassoRun<LETTER, STATE>> computeOneNestedLassoRunPerScc() {
 		throw new UnsupportedOperationException("not yet implemented");
 	}
 	
@@ -180,15 +178,16 @@ public class AcceptingComponentsAnalysis<LETTER, STATE> {
 				continue;
 			}
 			for (final StateContainer<LETTER, STATE> fin : scc.getAcceptingStatesContainers()) {
-				final NestedLassoRun<LETTER, STATE> nlr2 = (new LassoConstructor<>(mServices,
-						mNestedWordAutomatonReachableStates, fin, scc)).getNestedLassoRun();
+				final NestedLassoRun<LETTER, STATE> nlr2 =
+						(new LassoConstructor<>(mServices, mNwars, fin, scc)).getNestedLassoRun();
 				if (USE_ALTERNATIVE_LASSO_CONSTRUCTION) {
 					final int nlr2Size = nlr2.getStem().getLength() + nlr2.getLoop().getLength();
-					final NestedLassoRun<LETTER, STATE> nlr = (new ShortestLassoExtractor<>(mServices,
-							mNestedWordAutomatonReachableStates, fin)).getNestedLassoRun();
+					final NestedLassoRun<LETTER, STATE> nlr =
+							(new ShortestLassoExtractor<>(mServices, mNwars, fin)).getNestedLassoRun();
 					final int nlrSize = nlr.getStem().getLength() + nlr.getLoop().getLength();
-					final NestedLassoRun<LETTER, STATE> nlr3 = (new LassoExtractor<>(mServices,
-							mNestedWordAutomatonReachableStates, fin, scc, mAcceptingSummaries)).getNestedLassoRun();
+					final NestedLassoRun<LETTER, STATE> nlr3 =
+							(new LassoExtractor<>(mServices, mNwars, fin, scc, mAcceptingSummaries))
+									.getNestedLassoRun();
 					final int nlr3Size = nlr3.getStem().getLength() + nlr3.getLoop().getLength();
 				}
 				nestedLassoRuns.add(nlr2);
@@ -196,8 +195,8 @@ public class AcceptingComponentsAnalysis<LETTER, STATE> {
 			for (final StateContainer<LETTER, STATE> sumPred : scc.getAcceptingSummariesOfScc().getDomain()) {
 				final Set<Summary<LETTER, STATE>> summaries = scc.getAcceptingSummariesOfScc().getImage(sumPred);
 				for (final Summary<LETTER, STATE> summary : summaries) {
-					final NestedLassoRun<LETTER, STATE> nlr2 = (new LassoConstructor<>(mServices,
-							mNestedWordAutomatonReachableStates, summary, scc)).getNestedLassoRun();
+					final NestedLassoRun<LETTER, STATE> nlr2 =
+							(new LassoConstructor<>(mServices, mNwars, summary, scc)).getNestedLassoRun();
 					computeNestedLassoRunsHelper(sumPred, nlr2);
 					nestedLassoRuns.add(nlr2);
 				}
@@ -207,11 +206,10 @@ public class AcceptingComponentsAnalysis<LETTER, STATE> {
 	}
 	
 	private void computeNestedLassoRunsHelper(final StateContainer<LETTER, STATE> sumPred,
-			final NestedLassoRun<LETTER, STATE> nlr2) throws AutomataOperationCanceledException {
+			final NestedLassoRun<LETTER, STATE> nlr2) {
 		if (USE_ALTERNATIVE_LASSO_CONSTRUCTION) {
 			final NestedLassoRun<LETTER, STATE> nlr =
-					(new ShortestLassoExtractor<>(mServices, mNestedWordAutomatonReachableStates, sumPred))
-							.getNestedLassoRun();
+					(new ShortestLassoExtractor<>(mServices, mNwars, sumPred)).getNestedLassoRun();
 			final int nlrSize = nlr.getStem().getLength() + nlr.getLoop().getLength();
 			final int nlr2Size = nlr2.getStem().getLength() + nlr2.getLoop().getLength();
 		}
@@ -226,13 +224,13 @@ public class AcceptingComponentsAnalysis<LETTER, STATE> {
 	@SuppressWarnings("squid:S1698")
 	public void computeShortNestedLassoRun() throws AutomataOperationCanceledException {
 		StateContainer<LETTER, STATE> lowestSerialNumber = null;
-		StateContainer<LETTER, STATE> newlowestSerialNumber = null;
 		StronglyConnectedComponentWithAcceptanceInformation<LETTER, STATE> sccOfLowest = null;
 		for (final StronglyConnectedComponentWithAcceptanceInformation<LETTER, STATE> scc : getSccComputation()
 				.getBalls()) {
 			if (scc.isAccepting()) {
 				final StateContainer<LETTER, STATE> lowestOfScc = scc.getAcceptingWithLowestSerialNumber();
-				newlowestSerialNumber = StateContainer.returnLower(lowestSerialNumber, lowestOfScc);
+				final StateContainer<LETTER, STATE> newlowestSerialNumber =
+						StateContainer.returnLower(lowestSerialNumber, lowestOfScc);
 				// equality intended here
 				if (newlowestSerialNumber != lowestSerialNumber) {
 					lowestSerialNumber = newlowestSerialNumber;
@@ -240,28 +238,26 @@ public class AcceptingComponentsAnalysis<LETTER, STATE> {
 				}
 			}
 		}
-		final NestedLassoRun<LETTER, STATE> method4 = (new LassoConstructor<>(mServices,
-				mNestedWordAutomatonReachableStates, lowestSerialNumber, sccOfLowest)).getNestedLassoRun();
+		final NestedLassoRun<LETTER, STATE> method4 =
+				(new LassoConstructor<>(mServices, mNwars, lowestSerialNumber, sccOfLowest)).getNestedLassoRun();
 		mLogger.debug("Method4: stem" + method4.getStem().getLength() + LOOP + method4.getLoop().getLength());
 		if (USE_ALTERNATIVE_LASSO_CONSTRUCTION) {
 			// TODO Christian 2016-09-10: sccOfLowest can be null here!
 			final NestedLassoRun<LETTER, STATE> method0 =
-					(new LassoExtractor<>(mServices, mNestedWordAutomatonReachableStates,
-							sccOfLowest.getStateWithLowestSerialNumber(), sccOfLowest, mAcceptingSummaries))
-									.getNestedLassoRun();
+					(new LassoExtractor<>(mServices, mNwars, sccOfLowest.getStateWithLowestSerialNumber(), sccOfLowest,
+							mAcceptingSummaries)).getNestedLassoRun();
 			mLogger.debug("Method0: stem" + method0.getStem().getLength() + LOOP + method0.getLoop().getLength());
-			final NestedLassoRun<LETTER, STATE> method1 = (new LassoExtractor<>(mServices,
-					mNestedWordAutomatonReachableStates, lowestSerialNumber, sccOfLowest, mAcceptingSummaries))
+			final NestedLassoRun<LETTER, STATE> method1 =
+					(new LassoExtractor<>(mServices, mNwars, lowestSerialNumber, sccOfLowest, mAcceptingSummaries))
 							.getNestedLassoRun();
 			mLogger.debug("Method1: stem" + method1.getStem().getLength() + LOOP + method1.getLoop().getLength());
-			final NestedLassoRun<LETTER, STATE> method2 = (new ShortestLassoExtractor<>(mServices,
-					mNestedWordAutomatonReachableStates, lowestSerialNumber)).getNestedLassoRun();
+			final NestedLassoRun<LETTER, STATE> method2 =
+					(new ShortestLassoExtractor<>(mServices, mNwars, lowestSerialNumber)).getNestedLassoRun();
 			mLogger.debug("Method2: stem" + method2.getStem().getLength() + LOOP + method2.getLoop().getLength());
 			final int method0size = method0.getStem().getLength() + method0.getLoop().getLength();
 			final int method1size = method1.getStem().getLength() + method1.getLoop().getLength();
 			final int method2size = method2.getStem().getLength() + method1.getLoop().getLength();
-			mLogger.debug("Method0size" + method0size + " Method1size" + method1size + " Method2size"
-					+ method2size);
+			mLogger.debug("Method0size" + method0size + " Method1size" + method1size + " Method2size" + method2size);
 		}
 		mNestedLassoRun = method4;
 	}
@@ -413,7 +409,6 @@ public class AcceptingComponentsAnalysis<LETTER, STATE> {
 			}
 			return result;
 		}
-		
 	}
 	
 	/**
@@ -422,17 +417,18 @@ public class AcceptingComponentsAnalysis<LETTER, STATE> {
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 */
 	private class StronglyConnectedComponentWithAcceptanceInformation_Factory implements
-			IStronglyConnectedComponentFactory<StateContainer<LETTER, STATE>, StronglyConnectedComponentWithAcceptanceInformation<LETTER, STATE>> {
-		private final NestedWordAutomatonReachableStates<LETTER, STATE> mNestedWordAutomatonReachableStates;
+			IStronglyConnectedComponentFactory<StateContainer<LETTER, STATE>,
+					StronglyConnectedComponentWithAcceptanceInformation<LETTER, STATE>> {
+		private final NestedWordAutomatonReachableStates<LETTER, STATE> mNwarsInner;
 		
 		public StronglyConnectedComponentWithAcceptanceInformation_Factory(
-				final NestedWordAutomatonReachableStates<LETTER, STATE> nestedWordAutomatonReachableStates) {
-			mNestedWordAutomatonReachableStates = nestedWordAutomatonReachableStates;
+				final NestedWordAutomatonReachableStates<LETTER, STATE> nwars) {
+			mNwarsInner = nwars;
 		}
 		
 		@Override
 		public StronglyConnectedComponentWithAcceptanceInformation<LETTER, STATE> constructNewSCComponent() {
-			return new StronglyConnectedComponentWithAcceptanceInformation<>(mNestedWordAutomatonReachableStates);
+			return new StronglyConnectedComponentWithAcceptanceInformation<>(mNwarsInner);
 		}
 	}
 	
@@ -443,14 +439,13 @@ public class AcceptingComponentsAnalysis<LETTER, STATE> {
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 */
 	private class InSumCaSuccessorProvider implements ISuccessorProvider<StateContainer<LETTER, STATE>> {
-		private final NestedWordAutomatonReachableStates<LETTER, STATE> mNestedWordAutomatonReachableStates;
-		private final StateBasedTransitionFilterPredicateProvider<LETTER, STATE> mTransitionFilter;
+		protected final NestedWordAutomatonReachableStates<LETTER, STATE> mNwarsInner;
+		private final StateBasedTransitionFilterPredicateProvider<LETTER, STATE> mTransitionFilterInner;
 		
-		public InSumCaSuccessorProvider(
-				final NestedWordAutomatonReachableStates<LETTER, STATE> nestedWordAutomatonReachableStates,
+		public InSumCaSuccessorProvider(final NestedWordAutomatonReachableStates<LETTER, STATE> nwars,
 				final Set<STATE> allStates) {
-			mNestedWordAutomatonReachableStates = nestedWordAutomatonReachableStates;
-			mTransitionFilter = new StateBasedTransitionFilterPredicateProvider<>(allStates);
+			mNwarsInner = nwars;
+			mTransitionFilterInner = new StateBasedTransitionFilterPredicateProvider<>(allStates);
 		}
 		
 		private <E extends IOutgoingTransitionlet<LETTER, STATE>> Iterator<StateContainer<LETTER, STATE>>
@@ -463,12 +458,7 @@ public class AcceptingComponentsAnalysis<LETTER, STATE> {
 				
 				@Override
 				public StateContainer<LETTER, STATE> next() {
-					return mNestedWordAutomatonReachableStates.getStateContainer(iterator.next().getSucc());
-				}
-				
-				@Override
-				public void remove() {
-					throw new UnsupportedOperationException("not modifiable");
+					return mNwarsInner.getStateContainer(iterator.next().getSucc());
 				}
 			};
 		}
@@ -477,18 +467,17 @@ public class AcceptingComponentsAnalysis<LETTER, STATE> {
 		public Iterator<StateContainer<LETTER, STATE>>
 				getSuccessors(final StateContainer<LETTER, STATE> statesContainer) {
 			final Iterator<StateContainer<LETTER, STATE>> internalTransitionsIterator =
-					getStateContainerIterator(new FilteredIterable<>(
-							statesContainer.internalSuccessors(), mTransitionFilter.getInternalSuccessorPredicate())
-									.iterator());
+					getStateContainerIterator(new FilteredIterable<>(statesContainer.internalSuccessors(),
+							mTransitionFilterInner.getInternalSuccessorPredicate()).iterator());
 			
 			final Iterator<StateContainer<LETTER, STATE>> returnSummaryTransitionsIterator =
-					getStateContainerIterator(new FilteredIterable<>(
-							mNestedWordAutomatonReachableStates.summarySuccessors(statesContainer.getState()),
-							mTransitionFilter.getReturnSummaryPredicate()).iterator());
+					getStateContainerIterator(
+							new FilteredIterable<>(mNwarsInner.summarySuccessors(statesContainer.getState()),
+									mTransitionFilterInner.getReturnSummaryPredicate()).iterator());
 			
 			final Iterator<StateContainer<LETTER, STATE>> callTransitionsIterator = getStateContainerIterator(
 					new FilteredIterable<>(statesContainer.callSuccessors(),
-							mTransitionFilter.getCallSuccessorPredicate()).iterator());
+							mTransitionFilterInner.getCallSuccessorPredicate()).iterator());
 			
 			@SuppressWarnings("unchecked")
 			final Iterator<StateContainer<LETTER, STATE>>[] iterators =
