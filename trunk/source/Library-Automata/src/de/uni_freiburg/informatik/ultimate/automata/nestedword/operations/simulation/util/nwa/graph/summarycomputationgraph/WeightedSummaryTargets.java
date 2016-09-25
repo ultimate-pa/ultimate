@@ -47,7 +47,7 @@ public class WeightedSummaryTargets {
 	private final Map<IGameState, Integer> mTarget2Priority;
 	
 	
-	private WeightedSummaryTargets(final Map<IGameState, Integer> target2Priority) {
+	WeightedSummaryTargets(final Map<IGameState, Integer> target2Priority) {
 		super();
 		mTarget2Priority = target2Priority;
 	}
