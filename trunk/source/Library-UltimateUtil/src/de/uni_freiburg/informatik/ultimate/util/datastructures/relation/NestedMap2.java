@@ -47,7 +47,7 @@ public class NestedMap2<K1, K2, V> {
 	
 	private final Map<K1, Map<K2, V>> mK1ToK2ToV = new HashMap<K1, Map<K2, V>>();
 	
-	public V put(K1 key1, K2 key2, V value) {
+	public V put(final K1 key1, final K2 key2, final V value) {
 		Map<K2, V> k2toV = mK1ToK2ToV.get(key1);
 		if (k2toV == null) {
 			k2toV = new HashMap<>();
@@ -56,7 +56,7 @@ public class NestedMap2<K1, K2, V> {
 		return k2toV.put(key2, value);
 	}
 	
-	public V get(K1 key1, K2 key2) {
+	public V get(final K1 key1, final K2 key2) {
 		final Map<K2, V> k2toV = mK1ToK2ToV.get(key1);
 		if (k2toV == null) {
 			return null;
@@ -65,7 +65,7 @@ public class NestedMap2<K1, K2, V> {
 		}
 	}
 	
-	public Map<K2,V> get(K1 key1) {
+	public Map<K2,V> get(final K1 key1) {
 		return mK1ToK2ToV.get(key1);
 	}
 	
@@ -139,17 +139,17 @@ public class NestedMap2<K1, K2, V> {
 		return result;
 	}
 
-	public void addAll(NestedMap2<K1, K2, V> nestedMap) {
+	public void addAll(final NestedMap2<K1, K2, V> nestedMap) {
 		for (final Triple<K1, K2, V> triple : nestedMap.entrySet()) {
 			this.put(triple.getFirst(), triple.getSecond(), triple.getThird());
 		}
 	}
 	
-	public Map<K2, V> remove(K1 k1) {
+	public Map<K2, V> remove(final K1 k1) {
 		return mK1ToK2ToV.remove(k1);
 	}
 	
-	public V remove(K1 k1, K2 k2) {
+	public V remove(final K1 k1, final K2 k2) {
 		final Map<K2, V> k2ToV = mK1ToK2ToV.get(k1);
 		if (k2ToV == null) {
 			return null;
@@ -165,5 +165,13 @@ public class NestedMap2<K1, K2, V> {
 	
 	public void clear() {
 		mK1ToK2ToV.clear();
+	}
+	
+	public int size() {
+		int result = 0;
+		for (final Entry<K1, Map<K2, V>> entry : mK1ToK2ToV.entrySet()) {
+			result += entry.getValue().size();
+		}
+		return result;
 	}
 }
