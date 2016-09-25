@@ -2413,19 +2413,30 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 
 				// As there are successors, already add some stuff
 				final ETransitionType transType = duplicatorNwaSucc.getTransitionType();
-				GameLetter<LETTER, STATE> letter = null;
-				if (transType.equals(ETransitionType.INTERNAL)) {
-					letter = new GameLetter<>(duplicatorNwaSucc.getLetter(), duplicatorNwaSucc.getQ0(),
-							ETransitionType.INTERNAL);
-					internalGameAlphabet.add(letter);
-				} else if (transType.equals(ETransitionType.CALL)) {
+				final GameLetter<LETTER, STATE> letter;
+				switch (transType) {
+				case CALL:
 					letter = new GameLetter<>(duplicatorNwaSucc.getLetter(), duplicatorNwaSucc.getQ0(),
 							ETransitionType.CALL);
 					callGameAlphabet.add(letter);
-				} else if (transType.equals(ETransitionType.RETURN)) {
+					break;
+				case INTERNAL:
+					letter = new GameLetter<>(duplicatorNwaSucc.getLetter(), duplicatorNwaSucc.getQ0(),
+							ETransitionType.INTERNAL);
+					internalGameAlphabet.add(letter);
+					break;
+				case RETURN:
 					letter = new GameLetter<>(duplicatorNwaSucc.getLetter(), duplicatorNwaSucc.getQ0(),
 							ETransitionType.RETURN);
 					returnGameAlphabet.add(letter);
+					break;
+				case SINK:
+				case SUMMARIZE_ENTRY:
+				case SUMMARIZE_EXIT:
+					letter = null;
+					break;
+				default:
+					throw new AssertionError("unknown ETransitionType");				
 				}
 				// At this point we know that the source is of relevance, add it
 				// if not already done before
