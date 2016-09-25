@@ -42,7 +42,7 @@ public class LexicographicCounter {
 	public LexicographicCounter(final int[] numberOfValues) {
 		super();
 		mNumberOfValues = numberOfValues;
-		mNumberOfValuesProduct = Arrays.stream(mNumberOfValues).reduce(0, (x,y) -> x*y);
+		mNumberOfValuesProduct = Arrays.stream(mNumberOfValues).reduce(1, (x,y) -> x*y);
 		mCounter = new int[mNumberOfValues.length];
 	}
 	
