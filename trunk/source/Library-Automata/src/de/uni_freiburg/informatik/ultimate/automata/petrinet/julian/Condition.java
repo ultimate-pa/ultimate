@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.julian;
@@ -33,49 +33,72 @@ import java.util.HashSet;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 
+/**
+ * A condition.
+ * 
+ * @author Julian Jarecki (jareckij@informatik.uni-freiburg.de)
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <S>
+ *            symbol type
+ * @param <C>
+ *            place content type
+ **/
 public class Condition<S, C> implements Serializable {
 	private static final long serialVersionUID = -497620137647502376L;
-
-	private static int sSerialNumberCounter = 0;
+	
+	private static int sSerialNumberCounter;
 	
 	private final Event<S, C> mPredecessor;
 	private final Collection<Event<S, C>> mSuccessors;
 	private final Place<S, C> mPlace;
 	
-	private final int mSerialNumber = sSerialNumberCounter++;
-
-	public Condition(Event<S, C> predecessor, Place<S, C> place) {
-		this.mPredecessor = predecessor;
-		this.mSuccessors = new HashSet<Event<S, C>>();
-		this.mPlace = place;
+	private final int mSerialNumber;
+	
+	/**
+	 * Constructor.
+	 * 
+	 * @param predecessor
+	 *            predecessor event
+	 * @param place
+	 *            place
+	 */
+	public Condition(final Event<S, C> predecessor, final Place<S, C> place) {
+		mSerialNumber = sSerialNumberCounter;
+		sSerialNumberCounter++;
+		
+		mPredecessor = predecessor;
+		mSuccessors = new HashSet<>();
+		mPlace = place;
 	}
-
-	public void addSuccesssor(Event<S, C> e) {
-		mSuccessors.add(e);
+	
+	/**
+	 * Adds successors of an event.
+	 * @param event event
+	 */
+	public void addSuccesssor(final Event<S, C> event) {
+		mSuccessors.add(event);
 	}
-
+	
 	public Collection<Event<S, C>> getSuccessorEvents() {
 		return mSuccessors;
 	}
-
+	
 	public Event<S, C> getPredecessorEvent() {
 		return mPredecessor;
 	}
-
+	
 	public Place<S, C> getPlace() {
 		return mPlace;
 	}
 	
 	@Override
 	public String toString() {
-		return "c" + mSerialNumber +  ":CorrespPlace: " + mPlace.toString(); 
+		return "c" + mSerialNumber + ":CorrespPlace: " + mPlace.toString();
 	}
 	
 	@Override
 	public int hashCode() {
 		final int prime = 31;
-		int result = 1;
-		result = prime * result + mSerialNumber;
-		return result;
+		return prime + mSerialNumber;
 	}
 }

@@ -38,9 +38,10 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * Transforms an {@link INestedWordAutomaton} to a {@link PetriNetJulian}.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- *
- * @param <LETTER> letter type
- * @param <STATE> state/place type
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state/place type
  */
 public final class Automaton2Net<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;
