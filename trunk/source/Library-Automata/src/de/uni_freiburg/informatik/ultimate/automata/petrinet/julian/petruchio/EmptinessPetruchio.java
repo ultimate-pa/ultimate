@@ -145,7 +145,7 @@ public final class EmptinessPetruchio<S, C> extends UnaryNetOperation<S, C> {
 	}
 	
 	/**
-	 * Translate sequence of Petruchio transitions to run of PetriNet
+	 * Translate sequence of Petruchio transitions to run of PetriNet.
 	 */
 	private NestedRun<S, C> tracePetruchio2run(final SimpleList<Transition> tracePetruchio) {
 		
