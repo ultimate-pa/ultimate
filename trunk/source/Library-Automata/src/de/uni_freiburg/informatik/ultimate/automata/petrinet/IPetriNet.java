@@ -19,40 +19,59 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet;
 
 import java.util.Collection;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
-public interface IPetriNet<S,C> extends IAutomaton<S,C> {
+/**
+ * General Petri net interface.
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <S>
+ *            symbols type
+ * @param <C>
+ *            place content type
+ */
+public interface IPetriNet<S, C> extends IAutomaton<S, C> {
+	/**
+	 * @return The places.
+	 */
+	Collection<Place<S, C>> getPlaces();
 	
-	@Override
-	Set<S> getAlphabet(); 
+	/**
+	 * @return The transitions.
+	 */
+	Collection<ITransition<S, C>> getTransitions();
 	
-	@Override
-	IStateFactory<C> getStateFactory();
+	/**
+	 * @return The initial marking.
+	 */
+	Marking<S, C> getInitialMarking();
 	
-	Collection<Place<S,C>> getPlaces();
+	/**
+	 * @return The accepting markings.
+	 */
+	Collection<Collection<Place<S, C>>> getAcceptingMarkings();
 	
-	Collection<ITransition<S,C>> getTransitions();
+	/**
+	 * @param marking
+	 *            A marking.
+	 * @return {@code true} iff the marking is accepting.
+	 */
+	boolean isAccepting(Marking<S, C> marking);
 	
-	Marking<S,C> getInitialMarking();
-	
-	Collection<Collection<Place<S,C>>> getAcceptingMarkings();
-	
-	boolean isAccepting(Marking<S,C> marking);
-	
+	/**
+	 * @param word
+	 *            A word.
+	 * @return {@code true} iff the word is accepted.
+	 */
 	boolean accepts(Word<S> word);
-	
-	@Override
-	String sizeInformation();
 }

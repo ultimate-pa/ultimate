@@ -93,6 +93,50 @@ public class SummaryComputationGraphNode<LETTER, STATE> {
 		return mSummaryComputationTriggers;
 	}
 
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((mSource2Current2Targets == null) ? 0 : mSource2Current2Targets.hashCode());
+		result = prime * result + ((mSummaryComputationTriggers == null) ? 0 : mSummaryComputationTriggers.hashCode());
+		return result;
+	}
+
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		final SummaryComputationGraphNode other = (SummaryComputationGraphNode) obj;
+		if (mSource2Current2Targets == null) {
+			if (other.mSource2Current2Targets != null)
+				return false;
+		} else if (!mSource2Current2Targets.equals(other.mSource2Current2Targets))
+			return false;
+		if (mSummaryComputationTriggers == null) {
+			if (other.mSummaryComputationTriggers != null)
+				return false;
+		} else if (!mSummaryComputationTriggers.equals(other.mSummaryComputationTriggers))
+			return false;
+		return true;
+	}
+
+	
+	@Override
+	public String toString() {
+		return mSource2Current2Targets.keySet().size() + " sources " + mSource2Current2Targets.size() + " source-current pairs";
+	}
 	
 	
 	

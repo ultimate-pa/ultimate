@@ -9,15 +9,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  */
 public class EqBaseNode extends EqNode {
 
-	EqNode representative;
-	
 	public EqBaseNode(Term term) {
 		super(term);
-	}
-	
-	public String toString() {
-		return "Base Node: " + term.toString();
-		
 	}
 	
 }

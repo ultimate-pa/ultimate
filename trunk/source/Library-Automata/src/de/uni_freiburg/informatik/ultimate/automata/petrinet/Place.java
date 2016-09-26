@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet;
@@ -30,25 +30,41 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 
-public class Place<S,C> implements Serializable {
+/**
+ * A Petri net place.
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <S>
+ *            symbols type
+ * @param <C>
+ *            place content type
+ */
+public class Place<S, C> implements Serializable {
 	private static final long serialVersionUID = -4577818193149596161L;
-
+	
+	private static int sSerialNumberCounter;
+	
+	private final int mSerialNumber;
+	// TODO Christian 2016-09-24: This field is identical to mSerialNumber and hence could be removed.
 	private final int mHashCode;
 	
-	private static int sSerialNumberCounter = 0;
-	
 	private final C mContent;
-	private final ArrayList<ITransition<S,C>> mPredecessors;
-	private final ArrayList<ITransition<S,C>> mSuccessors;
+	private final ArrayList<ITransition<S, C>> mPredecessors;
+	private final ArrayList<ITransition<S, C>> mSuccessors;
 	
-	private final int mSerialNumber = sSerialNumberCounter++;
-	
-	
-	
+	/**
+	 * Constructor.
+	 * 
+	 * @param content
+	 *            content
+	 */
 	public Place(final C content) {
-		this.mContent = content;
-		this.mPredecessors = new ArrayList<ITransition<S,C>>();
-		this.mSuccessors = new ArrayList<ITransition<S,C>>();
+		mSerialNumber = sSerialNumberCounter;
+		sSerialNumberCounter++;
+		
+		mContent = content;
+		mPredecessors = new ArrayList<>();
+		mSuccessors = new ArrayList<>();
 		mHashCode = computeHashCode();
 	}
 	
@@ -64,11 +80,19 @@ public class Place<S,C> implements Serializable {
 		return mSuccessors;
 	}
 	
-	public void addPredecessor(final ITransition<S,C> transition) {
+	/**
+	 * @param transition
+	 *            Incoming transition.
+	 */
+	public void addPredecessor(final ITransition<S, C> transition) {
 		mPredecessors.add(transition);
 	}
 	
-	public void addSuccessor(final ITransition<S,C> transition) {
+	/**
+	 * @param transition
+	 *            Outgoing transition.
+	 */
+	public void addSuccessor(final ITransition<S, C> transition) {
 		mSuccessors.add(transition);
 	}
 	
@@ -77,17 +101,19 @@ public class Place<S,C> implements Serializable {
 		return String.valueOf(mContent);
 	}
 	
+	/**
+	 * @return String representation with serial number.
+	 */
 	public String toStringWithSerial() {
 		return "#" + mSerialNumber + "#" + mContent;
 	}
-
+	
 	@Override
 	public int hashCode() {
 		return mHashCode;
 	}
 	
-	public int computeHashCode() {
+	private final int computeHashCode() {
 		return mSerialNumber;
 	}
-	
 }

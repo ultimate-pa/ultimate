@@ -27,14 +27,13 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.vp;
 
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -42,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 
 /**
  *
@@ -51,67 +49,90 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Pro
  */
 public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock, IProgramVar> {
 
-	private final Set<Term> termSet = new HashSet<>();
 	private final ManagedScript mScript;
 	private final IUltimateServiceProvider mServices;
-	
+
+	// private Set<EqGraphNode> mEqGraphNodeSet;
+	// private Map<Term, EqNode> mTermToEqNodeMap;
+	// private Map<EqNode, EqGraphNode> mEqNodeToEqGraphNodeMap;
+
 	public VPPostOperator(ManagedScript script, IUltimateServiceProvider services) {
 		mScript = script;
 		mServices = services;
 	}
-	
+
 	@Override
 	public List<VPState> apply(final VPState oldstate, final CodeBlock transition) {
-		
-		transition.getTransitionFormula().getAssignedVars();
-		
+
 		final UnmodifiableTransFormula tf = transition.getTransitionFormula();
 		if (tf.getOutVars().isEmpty()) {
 			return Collections.singletonList(oldstate);
 		}
-		
-		termSet.addAll(new AssignmentFinder().findAssignment(transition.getTransitionFormula().getFormula()));
-		
-		
-		System.out.println("Assignment set: ");
-		for (Term term : termSet) {
-			
-			new Nnf(mScript, mServices, QuantifierHandling.CRASH).transform(term);
-			
-			
-			System.out.println(term.toString());
-		}
-		
-		
-		termSet.clear();
-		
-		
-		final Map<IProgramVar, Set<CodeBlock>> reach = new HashMap<>(oldstate.getReachingDefinitions());
-		final Map<IProgramVar, Set<ProgramPoint>> noWrite = new HashMap<>(oldstate.getNoWrite());
 
-//		for (final Entry<IProgramVar, TermVariable> entry : tf.getOutVars().entrySet()) {
-//			reach.put(entry.getKey(), Collections.singleton(transition));
-//		}
-		final Set<IProgramVar> defSet = computeDefSetFromTransFormula(tf, oldstate.getVariables());
-		final Set<IProgramVar> nonDefSet = new HashSet<>(oldstate.getVariables());
-		nonDefSet.removeAll(defSet);
+		VPState preparedState = prepareState(oldstate, transition.getTransitionFormula().getAssignedVars());
+		Term nnfTerm = new Nnf(mScript, mServices, QuantifierHandling.CRASH)
+				.transform(transition.getTransitionFormula().getFormula());
+		System.out.println("Original term: " + transition.getTransitionFormula().getFormula());
+		System.out.println("Nnf term:      " + nnfTerm);
 
-		for (final IProgramVar pv : defSet) {
-			reach.put(pv, Collections.singleton(transition));
-			noWrite.put(pv, new HashSet<>());
-		}
-		for (final IProgramVar pv : nonDefSet) {
-			Set<ProgramPoint> programPoints = noWrite.get(pv);
-			if (programPoints == null) {
-				programPoints = new HashSet<>();
-				noWrite.put(pv, programPoints);
+		
+		
+		
+		
+		
+		return Collections.singletonList(
+				new VPState(oldstate.getEqGraphNodeSet(), 
+						oldstate.getTermToBaseNodeMap(),
+						oldstate.getTermToFnNodeMap(),
+						oldstate.getEqNodeToEqGraphNodeMap(), 
+						oldstate.getmEqualityMap(), 
+						oldstate.getmDisEqualityMap()));
+	}
+
+	/**
+	 * This is a pre-step before deriving a new @VPState with @CodeBlock
+	 * (transition) in order to handle assignment and assume in the same way. In
+	 * this method, the variables that are about to be assigned will be havoc
+	 * first. Then the graph will be change and return a new @VPState with the
+	 * new graph.
+	 * 
+	 * @param oldState
+	 * @param assignmentVars
+	 * @return
+	 */
+	private VPState prepareState(VPState oldState, Set<IProgramVar> assignmentVars) {
+
+		VPState preparedState = oldState.copy();
+		havoc(preparedState, assignmentVars);
+
+		return oldState;
+	}
+
+	private void havoc(VPState state, Set<IProgramVar> assignmentVars) {
+
+		Map<Term, EqBaseNode> termToBaseNodeMap = state.getTermToBaseNodeMap();
+		Map<Term, Set<EqFunctionNode>> termToFnNodeMap = state.getTermToFnNodeMap();
+		Map<EqNode, EqGraphNode> eqNodeToEqGraphNodeMap = state.getEqNodeToEqGraphNodeMap();
+
+		TermVariable tv;
+		
+		for (IProgramVar var : assignmentVars) {
+			
+			tv = var.getTermVariable();
+			
+			if (termToBaseNodeMap.containsKey(tv)) {
+				if (eqNodeToEqGraphNodeMap.containsKey(termToBaseNodeMap.get(tv))) {
+					eqNodeToEqGraphNodeMap.get(termToBaseNodeMap.get(tv)).setNodeToInitial();
+				}
 			}
-			programPoints.add((ProgramPoint) transition.getSource());
+			if (termToFnNodeMap.containsKey(tv)) {
+				for (EqFunctionNode fnNode : termToFnNodeMap.get(tv)) {
+					if (eqNodeToEqGraphNodeMap.containsKey(fnNode)) {
+						eqNodeToEqGraphNodeMap.get(fnNode).setNodeToInitial();
+					}
+				}
+			}
 		}
-
-		return Collections
-				.singletonList(new VPState(
-						oldstate.getVariables(), oldstate.getDef(), oldstate.getUse(), reach, noWrite, oldstate.getmEqNodeSet()));
 	}
 
 	@Override
@@ -121,17 +142,4 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 		return null;
 	}
 
-	private Set<IProgramVar> computeDefSetFromTransFormula(UnmodifiableTransFormula tf, Set<IProgramVar> allVariables) {
-		// TODO I think we will need something like "constrained vars"
-		//  i.e. the set of IProgramVars x where invar(x) = outVar(x) and where
-		//  x is constrained by the formula  (i.e. like from an assume statement)
-		
-		// for now: rudimentary test if it is an assume -- then return all outvars
-		// otherwise return the AssignedVars
-		if (tf.getInVars().keySet().equals(tf.getOutVars().keySet())) { //TODO: don't use keySet()
-			return allVariables;
-		} else {
-			return tf.getAssignedVars();
-		}
-	}
 }

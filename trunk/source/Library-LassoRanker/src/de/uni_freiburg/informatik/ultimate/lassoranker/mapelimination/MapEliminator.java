@@ -132,6 +132,7 @@ public class MapEliminator {
 		mServices = services;
 		mScript = managedScript.getScript();
 		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+		mLogger.info("Using MapEliminator with " + mSettings);
 		mManagedScript = managedScript;
 		mReplacementVarFactory = replacementVarFactory;
 		mSymbolTable = symbolTable;

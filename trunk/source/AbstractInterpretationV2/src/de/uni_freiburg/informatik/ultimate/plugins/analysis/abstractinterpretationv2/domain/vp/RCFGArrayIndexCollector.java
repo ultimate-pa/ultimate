@@ -55,9 +55,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RC
  */
 public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 
-	private final Set<EqNode> eqNodeSet = new HashSet<EqNode>();
+	private final Set<EqGraphNode> eqGraphNodeSet = new HashSet<EqGraphNode>();
 	private final Map<Term, EqBaseNode> termToBaseNodeMap = new HashMap<>();
-	private final Map<Term, Map<Term, EqFunctionNode>> termToFunctionNodeMap = new HashMap<>();
+	private final Map<Term, Set<EqFunctionNode>> termToFnNodeMap = new HashMap<>();
+	private final Map<EqNode, EqGraphNode> eqNodeToEqGraphNodeMap = new HashMap<>();
 
 	private final Script mScript;
 
@@ -99,6 +100,7 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 		}
 
 		Term subArg0, subArg1, subArg2;
+		EqNode subArg1Node;
 
 		while (argsSetIter.hasNext()) {
 			args = argsSetIter.next();
@@ -106,34 +108,32 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 			subArg0 = new Substitution(mScript, substitionMap).transform(args[0]);
 			subArg1 = new Substitution(mScript, substitionMap).transform(args[1]);
 
-			addNodeToSet(subArg0, subArg1);
-
-			addNodeToSet(subArg1, null);
+			subArg1Node = createNodeAndConnection(subArg1, null);
+			createNodeAndConnection(subArg0, subArg1Node);
 
 			if (args.length == 3) {
 				subArg2 = new Substitution(mScript, substitionMap).transform(args[2]);
 
-				addNodeToSet(subArg2, null);
+				createNodeAndConnection(subArg2, null);
 			}
 		}
 	}
 
-	private void addNodeToSet(Term term, Term arg) {
-		if (arg != null) {
-			eqNodeSet.add(getFunctionNode(term, arg));
+	private EqNode createNodeAndConnection(Term term, EqNode arg) {
+		
+		if (arg == null) {
+			return getEqBaseNode(term);
 		} else {
-			eqNodeSet.add(getBaseNode(term));
-		}
+			return getEqFnNode(term, arg);
+		}			
 	}
 
 	/**
-	 * Check if the term already have a @EqBaseNode in eqNodeSet. If yes, return
-	 * null. If not, return a new @EqBaseNode.
 	 * 
 	 * @param term
 	 * @return
 	 */
-	private EqBaseNode getBaseNode(Term term) {
+	private EqBaseNode getEqBaseNode(Term term) {
 		
 		if (termToBaseNodeMap.containsKey(term)) {
 			return termToBaseNodeMap.get(term);
@@ -141,53 +141,64 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 		
 		EqBaseNode baseNode = new EqBaseNode(term);
 		termToBaseNodeMap.put(term, baseNode);
+		
+		putToEqGraphSet(baseNode, null);		
 		return baseNode;
 	}
-
-	/**
-	 * Check if the term already have a @EqFunctionNode in eqNodeSet. If yes, return
-	 * null. If not, return a new @EqFunctionNode.
-	 * 
-	 * @param function
-	 * @param arg
-	 * @return
-	 */
-	private EqFunctionNode getFunctionNode(Term function, Term arg) {
+	
+	private EqFunctionNode getEqFnNode(Term term, EqNode arg) {
 		
-		EqBaseNode baseNode = getBaseNode(arg);
-		EqFunctionNode functionNode = new EqFunctionNode(function, baseNode);
-		
-		if (termToFunctionNodeMap.containsKey(function)) {
-			for (Entry<Term, EqFunctionNode> fnNode : termToFunctionNodeMap.get(function).entrySet()) {
-				if (fnNode.getKey().equals(arg)) {
-					return fnNode.getValue();
+		if (termToFnNodeMap.containsKey(term)) {
+			for (EqFunctionNode fnNode : termToFnNodeMap.get(term)) {
+				if (fnNode.getArg().term.equals(arg.term)) {
+					return fnNode;
 				}
-			}
-			termToFunctionNodeMap.get(function).put(arg, functionNode);
-			return functionNode;
+			}			
+		}
+			
+		EqFunctionNode fnNode = new EqFunctionNode(term, arg);
+		if (termToFnNodeMap.get(term) == null) {
+			termToFnNodeMap.put(term, new HashSet<EqFunctionNode>());
+		}
+		termToFnNodeMap.get(term).add(fnNode);
+		putToEqGraphSet(fnNode, arg);
+			
+		return fnNode;
+		
+	}
+	
+	private void putToEqGraphSet(EqNode node, EqNode arg) {
+		EqGraphNode graphNode = new EqGraphNode(node);
+		
+		if (arg != null) {
+			graphNode.setArg(arg);
+			eqNodeToEqGraphNodeMap.get(arg).getCcpar().add(node);
 		}
 		
-		Map<Term, EqFunctionNode> map = new HashMap<>();
-		map.put(arg, functionNode);
-		termToFunctionNodeMap.put(function, map);
-		return functionNode;
+		eqGraphNodeSet.add(graphNode);
+		eqNodeToEqGraphNodeMap.put(node, graphNode);
+		
 	}
 
-	@Override
-	public String toString() {
-		return "";
-	}
-
-	public Set<EqNode> getEqNodeSet() {
-		return eqNodeSet;
+	public Set<EqGraphNode> getEqGraphNodeSet() {
+		return eqGraphNodeSet;
 	}
 
 	public Map<Term, EqBaseNode> getTermToBaseNodeMap() {
 		return termToBaseNodeMap;
 	}
 
-	public Map<Term, Map<Term, EqFunctionNode>> getTermToFunctionNodeMap() {
-		return termToFunctionNodeMap;
+	public Map<Term, Set<EqFunctionNode>> getTermToFnNodeMap() {
+		return termToFnNodeMap;
+	}
+
+	public Map<EqNode, EqGraphNode> getEqNodeToEqGraphNodeMap() {
+		return eqNodeToEqGraphNodeMap;
+	}
+
+	@Override
+	public String toString() {
+		return "";
 	}
 
 

@@ -27,14 +27,14 @@
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.ETransitionType;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.DuplicatorNwaVertex;
 
 /**
- * Represents a letter in a game automaton. Such a letter is a pair
- * <tt>(STATE, LETTER)</tt>. The given state is the destination for Spoiler
- * while using the given letter. A destination of an edge using such a game
- * letter is the response of Duplicator to Spoilers choice.
+ * Represents a letter in a game automaton. Such a letter is a Duplicator
+ * game graph node.
  * 
  * @author Daniel Tischner
+ * @author Matthias Heizmann
  *
  * @param <LETTER>
  *            Letter class of nwa automaton
@@ -43,69 +43,20 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
  */
 public final class GameLetter<LETTER, STATE> {
 
-	/**
-	 * The letter used by Spoiler.
-	 */
-	private final LETTER mLetter;
-	/**
-	 * The destination of Spoiler.
-	 */
-	private final STATE mState;
+	private final DuplicatorNwaVertex<LETTER, STATE> mDuplicatorNwaVertex;
 	/**
 	 * The transition type represented by this game letter.
 	 */
 	private final ETransitionType mTransitionType;
 
+
 	/**
-	 * Creates a game letter for a given letter and state. They represent the
-	 * choice of Spoiler. An edge using this game letter may point to the
-	 * response of Duplicator.
-	 * 
-	 * @param letter
-	 *            Letter used by Spoiler
-	 * @param state
-	 *            Destination of Spoiler
 	 * @param transitionType
 	 *            The transition type represented by this game letter
 	 */
-	public GameLetter(final LETTER letter, final STATE state, final ETransitionType transitionType) {
-		mLetter = letter;
-		mState = state;
+	public GameLetter(final DuplicatorNwaVertex<LETTER, STATE> duplicatorNwaVertex, final ETransitionType transitionType) {
+		mDuplicatorNwaVertex = duplicatorNwaVertex;
 		mTransitionType = transitionType;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
-	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (obj == null) {
-			return false;
-		}
-		if (!(obj instanceof GameLetter)) {
-			return false;
-		}
-		final GameLetter<?, ?> other = (GameLetter<?, ?>) obj;
-		if (mLetter == null) {
-			if (other.mLetter != null) {
-				return false;
-			}
-		} else if (!mLetter.equals(other.mLetter)) {
-			return false;
-		}
-		if (mState == null) {
-			if (other.mState != null) {
-				return false;
-			}
-		} else if (!mState.equals(other.mState)) {
-			return false;
-		}
-		return mTransitionType == other.mTransitionType;
 	}
 
 	/**
@@ -114,7 +65,7 @@ public final class GameLetter<LETTER, STATE> {
 	 * @return The letter used by Spoiler.
 	 */
 	public LETTER getLetter() {
-		return mLetter;
+		return mDuplicatorNwaVertex.getLetter();
 	}
 
 	/**
@@ -123,7 +74,7 @@ public final class GameLetter<LETTER, STATE> {
 	 * @return The destination of Spoiler.
 	 */
 	public STATE getState() {
-		return mState;
+		return mDuplicatorNwaVertex.getQ0();
 	}
 
 	/**
@@ -135,29 +86,49 @@ public final class GameLetter<LETTER, STATE> {
 		return mTransitionType;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
+	/* (non-Javadoc)
 	 * @see java.lang.Object#hashCode()
 	 */
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((mLetter == null) ? 0 : mLetter.hashCode());
-		result = prime * result + ((mState == null) ? 0 : mState.hashCode());
+		result = prime * result + ((mDuplicatorNwaVertex == null) ? 0 : mDuplicatorNwaVertex.hashCode());
 		result = prime * result + ((mTransitionType == null) ? 0 : mTransitionType.hashCode());
 		return result;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
+	/* (non-Javadoc)
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		final GameLetter other = (GameLetter) obj;
+		if (mDuplicatorNwaVertex == null) {
+			if (other.mDuplicatorNwaVertex != null)
+				return false;
+		} else if (!mDuplicatorNwaVertex.equals(other.mDuplicatorNwaVertex))
+			return false;
+		if (mTransitionType != other.mTransitionType)
+			return false;
+		return true;
+	}
+
+	/* (non-Javadoc)
 	 * @see java.lang.Object#toString()
 	 */
 	@Override
 	public String toString() {
-		return "(" + mLetter + ", " + mState + ")";
+		return mDuplicatorNwaVertex.toString();
 	}
+
+	
+	
 
 }

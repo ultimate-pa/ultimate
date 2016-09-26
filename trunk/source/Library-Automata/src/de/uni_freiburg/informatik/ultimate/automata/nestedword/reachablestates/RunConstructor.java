@@ -184,7 +184,7 @@ class RunConstructor<LETTER, STATE> {
 				mGoalFound = true;
 				return Collections.singleton(new TransitionWithObligation(inTrans, false));
 			}
-			final StateContainer<LETTER, STATE> predSc = mNwars.obtainSC(inTrans.getPred());
+			final StateContainer<LETTER, STATE> predSc = mNwars.obtainStateContainer(inTrans.getPred());
 			if (mFindSummary && !predSc.getDownStates().containsKey(mGoal.getState())) {
 				continue;
 			}
@@ -211,7 +211,7 @@ class RunConstructor<LETTER, STATE> {
 			final StateContainerWithObligation current, final SortedMap<Integer, Object> number2transition) {
 		for (final IncomingCallTransition<LETTER, STATE> inTrans : mNwars
 				.callPredecessors(current.getObject().getState())) {
-			final StateContainer<LETTER, STATE> predSc = mNwars.obtainSC(inTrans.getPred());
+			final StateContainer<LETTER, STATE> predSc = mNwars.obtainStateContainer(inTrans.getPred());
 			if (mFindSummary) {
 				if (mGoal.equals(predSc) && !current.hasObligation()) {
 					mGoalFound = true;
@@ -246,12 +246,12 @@ class RunConstructor<LETTER, STATE> {
 				mGoalFound = true;
 				return Collections.singleton(new TransitionWithObligation(inTrans, false));
 			}
-			final StateContainer<LETTER, STATE> predSc = mNwars.obtainSC(inTrans.getHierPred());
+			final StateContainer<LETTER, STATE> predSc = mNwars.obtainStateContainer(inTrans.getHierPred());
 			if (mFindSummary && !predSc.getDownStates().containsKey(mGoal.getState())) {
 				continue;
 			}
-			final Summary<LETTER, STATE> summary = new Summary<>(mNwars.obtainSC(inTrans.getHierPred()),
-					mNwars.obtainSC(inTrans.getLinPred()), inTrans.getLetter(), current.getObject());
+			final Summary<LETTER, STATE> summary = new Summary<>(mNwars.obtainStateContainer(inTrans.getHierPred()),
+					mNwars.obtainStateContainer(inTrans.getLinPred()), inTrans.getLetter(), current.getObject());
 			final boolean summaryWillSatisfyObligation = willSummarySatisfyObligation(current, predSc, summary);
 			final SummaryWithObligation summaryWithSatifiedObligation = new SummaryWithObligation(summary, false);
 			if (summaryWillSatisfyObligation) {
@@ -286,7 +286,7 @@ class RunConstructor<LETTER, STATE> {
 			} else {
 				linPredSerial2inTrans = (SortedMap<Integer, TransitionWithObligation>) previousEntry;
 			}
-			final StateContainer<LETTER, STATE> linPredSc = mNwars.obtainSC(inTrans.getLinPred());
+			final StateContainer<LETTER, STATE> linPredSc = mNwars.obtainStateContainer(inTrans.getLinPred());
 			final int linPredSerial = linPredSc.getSerialNumber();
 			linPredSerial2inTrans.put(linPredSerial, new TransitionWithObligation(inTrans, predObligation));
 		}
@@ -381,21 +381,21 @@ class RunConstructor<LETTER, STATE> {
 			if (transitionToLowest instanceof IncomingInternalTransition) {
 				final IncomingInternalTransition<LETTER, STATE> inTrans =
 						(IncomingInternalTransition<LETTER, STATE>) transitionToLowest;
-				predSc = mNwars.obtainSC(inTrans.getPred());
+				predSc = mNwars.obtainStateContainer(inTrans.getPred());
 				newPrefix = new NestedRun<>(inTrans.getPred(), inTrans.getLetter(), NestedWord.INTERNAL_POSITION,
 						current.getObject().getState());
 			} else if (transitionToLowest instanceof IncomingCallTransition) {
 				final IncomingCallTransition<LETTER, STATE> inTrans =
 						(IncomingCallTransition<LETTER, STATE>) transitionToLowest;
-				predSc = mNwars.obtainSC(inTrans.getPred());
+				predSc = mNwars.obtainStateContainer(inTrans.getPred());
 				newPrefix = new NestedRun<>(inTrans.getPred(), inTrans.getLetter(), NestedWord.PLUS_INFINITY,
 						current.getObject().getState());
 			} else if (transitionToLowest instanceof IncomingReturnTransition) {
 				final IncomingReturnTransition<LETTER, STATE> inTrans =
 						(IncomingReturnTransition<LETTER, STATE>) transitionToLowest;
-				predSc = mNwars.obtainSC(inTrans.getHierPred());
-				final Summary<LETTER, STATE> summary = new Summary<>(predSc, mNwars.obtainSC(inTrans.getLinPred()),
-						inTrans.getLetter(), current.getObject());
+				predSc = mNwars.obtainStateContainer(inTrans.getHierPred());
+				final Summary<LETTER, STATE> summary = new Summary<>(predSc,
+						mNwars.obtainStateContainer(inTrans.getLinPred()), inTrans.getLetter(), current.getObject());
 				final boolean isAcceptingSummaryRequired = current.hasObligation()
 						&& !transitionWoToLowest.hasObligation() && !mNwars.isFinal(predSc.getState());
 				assert !isAcceptingSummaryRequired || mNwars.isAccepting(summary);
@@ -476,8 +476,7 @@ class RunConstructor<LETTER, STATE> {
 		@Override
 		public int hashCode() {
 			final int prime = 31;
-			int result = 1;
-			result = prime * result + (mFlag ? 1231 : 1237);
+			int result = prime + (mFlag ? 1231 : 1237);
 			result = prime * result + ((mObject == null) ? 0 : mObject.hashCode());
 			return result;
 		}

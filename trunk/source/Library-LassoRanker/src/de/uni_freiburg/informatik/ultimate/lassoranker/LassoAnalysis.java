@@ -206,14 +206,13 @@ public class LassoAnalysis {
 			final LassoRankerPreferences preferences, final IUltimateServiceProvider services,
 			final IToolchainStorage storage, final SimplicationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique) throws TermException {
-
 		mServices = services;
 		mStorage = storage;
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
 		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
-		// defensive copy
-		mPreferences = new LassoRankerPreferences(preferences);
+
+		mPreferences = preferences;
 		mPreferences.checkSanity();
 		mLogger.info("Preferences:");
 		mPreferences.feedSettingsString(mLogger::info);

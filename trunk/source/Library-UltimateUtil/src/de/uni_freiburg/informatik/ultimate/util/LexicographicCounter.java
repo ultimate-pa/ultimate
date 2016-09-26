@@ -42,7 +42,7 @@ public class LexicographicCounter {
 	public LexicographicCounter(final int[] numberOfValues) {
 		super();
 		mNumberOfValues = numberOfValues;
-		mNumberOfValuesProduct = Arrays.stream(mNumberOfValues).reduce(0, (x,y) -> x*y);
+		mNumberOfValuesProduct = Arrays.stream(mNumberOfValues).reduce(1, (x,y) -> x*y);
 		mCounter = new int[mNumberOfValues.length];
 	}
 	
@@ -51,7 +51,7 @@ public class LexicographicCounter {
 	}
 	
 	public void increment() {
-		for (int i=0; true; i++) {
+		for (int i=0; i < mNumberOfValues.length; i++) {
 			mCounter[i]++;
 			if(mCounter[i] < mNumberOfValues[i]) {
 				return;
@@ -62,7 +62,8 @@ public class LexicographicCounter {
 	}
 	
 	public boolean isZero() {
-		return Arrays.stream(mCounter).allMatch(x -> x == 0);
+		final boolean result = Arrays.stream(mCounter).allMatch(x -> x == 0);
+		return result;
 	}
 
 	/**

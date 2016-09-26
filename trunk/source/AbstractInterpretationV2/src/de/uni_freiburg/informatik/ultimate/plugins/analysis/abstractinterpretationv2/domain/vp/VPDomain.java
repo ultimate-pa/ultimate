@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.vp;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -52,25 +53,32 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 	private final VPMergeOperator mMerge;
 	private final ILogger mLogger;
 	
-	private final Set<EqNode> mEqNodeSet;
+	private final Set<EqGraphNode> mEqGraphNodeSet;
 	private final Map<Term, EqBaseNode> mTermToBaseNodeMap;
-	private final Map<Term, Map<Term, EqFunctionNode>> mTermToFunctionNodeMap;
+	private final Map<Term, Set<EqFunctionNode>> mTermToFnNodeMap;
+	private final Map<EqNode, EqGraphNode> mEqNodeToEqGraphNodeMap;
+	
+	private Map<Term, Set<Term>> mEqualityMap = new HashMap<Term, Set<Term>>();
+	private Map<Term, Set<Term>> mDisEqualityMap = new HashMap<Term, Set<Term>>();
 	
 	public VPDomain(final ILogger logger, ManagedScript script, 
 			IUltimateServiceProvider services,
-			final Set<EqNode> eqNodeSet, final Map<Term, EqBaseNode> termToBaseNodeMap,
-			Map<Term, Map<Term, EqFunctionNode>> termToFunctionNodeMap) {
+			final Set<EqGraphNode> eqGraphNodeSet, 
+			final Map<Term, EqBaseNode> termToBaseNodeMap,
+			final Map<Term, Set<EqFunctionNode>> termToFnNodeMap,
+			final Map<EqNode, EqGraphNode> eqNodeToEqGraphNodeMap) {
 		mPost = new VPPostOperator(script, services);
 		mMerge = new VPMergeOperator();
 		mLogger = logger;
-		mEqNodeSet = eqNodeSet;
+		mEqGraphNodeSet = eqGraphNodeSet;
 		mTermToBaseNodeMap = termToBaseNodeMap;
-		mTermToFunctionNodeMap = termToFunctionNodeMap;
+		mTermToFnNodeMap = termToFnNodeMap;
+		mEqNodeToEqGraphNodeMap = eqNodeToEqGraphNodeMap;
 	}
 
 	@Override
 	public VPState createFreshState() {
-		return new VPState();
+		return new VPState(mEqGraphNodeSet, mTermToBaseNodeMap, mTermToFnNodeMap, mEqNodeToEqGraphNodeMap, mEqualityMap, mDisEqualityMap);
 	}
 
 	@Override
@@ -112,15 +120,20 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 		}
 	}
 
-	public Set<EqNode> getEqNodeSet() {
-		return mEqNodeSet;
+	public Set<EqGraphNode> getmEqGraphNodeSet() {
+		return mEqGraphNodeSet;
 	}
 
 	public Map<Term, EqBaseNode> getmTermToBaseNodeMap() {
 		return mTermToBaseNodeMap;
 	}
 
-	public Map<Term, Map<Term, EqFunctionNode>> getmTermToFunctionNodeMap() {
-		return mTermToFunctionNodeMap;
+	public Map<Term, Set<EqFunctionNode>> getmTermToFnNodeMap() {
+		return mTermToFnNodeMap;
 	}
+
+	public Map<EqNode, EqGraphNode> getmEqNodeToEqGraphNodeMap() {
+		return mEqNodeToEqGraphNodeMap;
+	}
+
 }

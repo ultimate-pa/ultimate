@@ -87,7 +87,6 @@ public class IncomingReturnTransition<LETTER, STATE> implements ITransitionlet<L
 	}
 	
 	@Override
-	@SuppressWarnings("checkstyle:com.puppycrawl.tools.checkstyle.checks.metrics.NPathComplexityCheck")
 	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;

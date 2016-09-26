@@ -46,31 +46,18 @@ public class WeightedSummaryTargets {
 	
 	private final Map<IGameState, Integer> mTarget2Priority;
 	
-	
-	private WeightedSummaryTargets(final Map<IGameState, Integer> target2Priority) {
+	WeightedSummaryTargets(final Map<IGameState, Integer> target2Priority) {
 		super();
 		mTarget2Priority = target2Priority;
 	}
-	
-	
-
-
 
 	public WeightedSummaryTargets(final IGameState gs, final int i) {
 		mTarget2Priority = Collections.singletonMap(gs, i);
 	}
 
-
-
-
-
 	public Set<Entry<IGameState, Integer>> entrySet() {
 		return mTarget2Priority.entrySet();
 	}
-
-
-
-
 
 	public WeightedSummaryTargets computeUpdate(final int priority) {
 		switch (priority) {
@@ -90,20 +77,14 @@ public class WeightedSummaryTargets {
 	}
 
 
-
-
 	public static class WeightedSummaryTargetsComparator implements IPartialComparator<WeightedSummaryTargets> {
-
 		@Override
 		public ComparisonResult compare(final WeightedSummaryTargets o1, final WeightedSummaryTargets o2) {
 			final ComparisonResult result = new CanonicalPartialComparatorForMaps<IGameState, Integer>(
 					new PriorityComparator()).compare(o1.mTarget2Priority, o2.mTarget2Priority); 
 			return result;
 		}
-		
 	}
-
-
 
 
 	@Override
@@ -114,10 +95,7 @@ public class WeightedSummaryTargets {
 		return result;
 	}
 
-
-
-
-
+	
 	@Override
 	public boolean equals(final Object obj) {
 		if (this == obj)
@@ -136,18 +114,8 @@ public class WeightedSummaryTargets {
 	}
 
 
-
-
-
 	@Override
 	public String toString() {
 		return mTarget2Priority.toString();
 	}
-	
-	
-	
-	
-	
-	
-	
 }

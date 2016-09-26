@@ -29,8 +29,10 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simul
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Function;
@@ -39,6 +41,7 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.PriorityComparator;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game.GameLetter;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game.GameSpoilerNwaVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game.IGameState;
@@ -170,9 +173,9 @@ public class SummaryComputation<LETTER, STATE> {
 	private void processReturnPredecessors(final LETTER letter,
 			final NestedMap2<IGameState, IGameState, WeightedSummaryTargets> source2Current2Targets,
 			final Set<IGameState> summaryTriggers) {
-		
+		mLogger.info("computing predecessors under " + letter);
 		final HashRelation<GameLetter<LETTER, STATE>, IGameState> dupl2spoi = new HashRelation<>();
-		final HashRelation3<GameLetter<LETTER, STATE>, IGameState, IGameState> dupl2spoi2hier = new HashRelation3<>();
+		final Map<IGameState, HashRelation<GameLetter<LETTER, STATE>, IGameState>> hier2dupl2spoi = new HashMap<>();
 		final HashRelation<IGameState, GameLetter<LETTER, STATE>> spoi2dupl = new HashRelation<>();
 		for (final Pair<IGameState, IGameState> sourceCurrentPair : source2Current2Targets.keys2()) {
 			for (final IncomingReturnTransition<GameLetter<LETTER, STATE>, IGameState> trans : mGameAutomaton.returnPredecessors(sourceCurrentPair.getSecond())) {
@@ -181,7 +184,15 @@ public class SummaryComputation<LETTER, STATE> {
 					continue;
 				}
 				dupl2spoi.addPair(trans.getLetter(), sourceCurrentPair.getSecond());
-				dupl2spoi2hier.addTriple(trans.getLetter(), sourceCurrentPair.getSecond(), trans.getHierPred());
+				{
+					final IGameState hier = trans.getHierPred();
+					HashRelation<GameLetter<LETTER, STATE>, IGameState> dupl2spoiForHier = hier2dupl2spoi.get(hier);
+					if (dupl2spoiForHier == null) {
+						dupl2spoiForHier = new HashRelation<>();
+						hier2dupl2spoi.put(hier, dupl2spoiForHier);
+					}
+					dupl2spoiForHier.addPair(trans.getLetter(), sourceCurrentPair.getSecond());
+				}
 				spoi2dupl.addPair(trans.getLinPred(), trans.getLetter());
 			}
 		}
@@ -190,10 +201,11 @@ public class SummaryComputation<LETTER, STATE> {
 			return;
 		}
 		
-		final Set<NestedMap2<IGameState, GameLetter<LETTER, STATE>, WeightedSummaryTargets>> dupl2Wst = 
-				computePredecessorsUnderPly(Collections.singleton(source2Current2Targets), dupl2spoi, this::duplicatorNodePriorityProvider, dupl2spoi2hier);
+		final Set<NestedMap2<IGameState, GameLetter<LETTER, STATE>, WeightedSummaryTargets>> dupl2Wst = Collections.singleton( 
+				computeDuplicatorPredecessorUnderReturn(source2Current2Targets, hier2dupl2spoi));
+//				computePredecessorsUnderPly(Collections.singleton(source2Current2Targets), dupl2spoi, this::duplicatorNodePriorityProvider, hier2dupl2spoi);
 		final Set<NestedMap2<IGameState, IGameState, WeightedSummaryTargets>> spoi2Wsts =
-				computePredecessorsUnderPly(dupl2Wst, spoi2dupl, this::spoilerNodePriorityProvider, null);
+				computePredecessorsUnderPly(dupl2Wst, spoi2dupl, this::spoilerNodePriorityProvider, this::spoilerAggregration);
 		
 		for (final NestedMap2<IGameState, IGameState, WeightedSummaryTargets> spoi2Wst : spoi2Wsts) {
 			constructNode(spoi2Wst, summaryTriggers);
@@ -202,14 +214,35 @@ public class SummaryComputation<LETTER, STATE> {
 	}
 
 
+	private NestedMap2<IGameState, GameLetter<LETTER, STATE>, WeightedSummaryTargets> computeDuplicatorPredecessorUnderReturn(
+			final NestedMap2<IGameState, IGameState, WeightedSummaryTargets> source2Current2Targets,
+			final Map<IGameState, HashRelation<GameLetter<LETTER, STATE>, IGameState>> hier2dupl2spoi) {
+		final NestedMap2<IGameState, GameLetter<LETTER, STATE>, WeightedSummaryTargets> result = 
+				new NestedMap2<IGameState, GameLetter<LETTER, STATE>, WeightedSummaryTargets>();
+		for (final Entry<IGameState, HashRelation<GameLetter<LETTER, STATE>, IGameState>> entry : hier2dupl2spoi.entrySet()) {
+			final IGameState source = entry.getKey();
+			for (final GameLetter<LETTER, STATE> dupl : entry.getValue().getDomain()) {
+				final Map<IGameState, Integer> target2priority = new HashMap<>();
+				for (final IGameState target : entry.getValue().getImage(dupl)) {
+					target2priority.put(target, 2);
+				}
+				final WeightedSummaryTargets wst = new WeightedSummaryTargets(target2priority);
+				result.put(source, dupl, wst);
+			}
+		}
+		return result;
+	}
+
+
 	private void processInternalPredecessors(final LETTER letter, final SummaryComputationGraphNode<LETTER, STATE> succNode) {
+		mLogger.info("computing predecessors under " + letter);
 		final HashRelation<GameLetter<LETTER, STATE>, IGameState> dupl2spoi = new HashRelation<>();
 		final HashRelation<IGameState, GameLetter<LETTER, STATE>> spoi2dupl = new HashRelation<>();
 		for (final IGameState source : succNode.getSources()) {
 			for (final IGameState gs : succNode.getCurrent(source)) {
 				for (final IncomingInternalTransition<GameLetter<LETTER, STATE>, IGameState> trans : mGameAutomaton.internalPredecessors(gs)) {
 					final GameLetter<LETTER, STATE> gl = trans.getLetter();
-					if (!gl.equals(letter)) {
+					if (!gl.getLetter().equals(letter)) {
 						continue;
 					}
 					dupl2spoi.addPair(trans.getLetter(), gs);
@@ -218,9 +251,10 @@ public class SummaryComputation<LETTER, STATE> {
 			}
 		}
 		final Set<NestedMap2<IGameState, GameLetter<LETTER, STATE>, WeightedSummaryTargets>> dupl2Wst = 
-				computePredecessorsUnderPly(Collections.singleton(succNode.getSource2Current2Targets()), dupl2spoi, this::duplicatorNodePriorityProvider, null);
+				computePredecessorsUnderPly(Collections.singleton(succNode.getSource2Current2Targets()), dupl2spoi, 
+						this::duplicatorNodePriorityProvider, this::duplicatorAggregration);
 		final Set<NestedMap2<IGameState, IGameState, WeightedSummaryTargets>> spoi2Wsts =
-				computePredecessorsUnderPly(dupl2Wst, spoi2dupl, this::spoilerNodePriorityProvider, null);
+				computePredecessorsUnderPly(dupl2Wst, spoi2dupl, this::spoilerNodePriorityProvider, this::spoilerAggregration);
 		
 		for (final NestedMap2<IGameState, IGameState, WeightedSummaryTargets> spoi2Wst : spoi2Wsts) {
 			constructNode(spoi2Wst, succNode.getSummaryComputationTriggers());
@@ -231,20 +265,26 @@ public class SummaryComputation<LETTER, STATE> {
 	private void constructNode(final NestedMap2<IGameState, IGameState, WeightedSummaryTargets> spoi2Wst,
 			final Set<IGameState> summaryComputationTriggers) {
 		final SummaryComputationGraphNode<LETTER, STATE> node = new SummaryComputationGraphNode<LETTER, STATE>(spoi2Wst, summaryComputationTriggers);
+		mLogger.info("constructed node " + node);
 		if (!mNodes.contains(node)) {
+			mLogger.info("added to worklist");
 			mWorklist.add(node);
+			mNodes.add(node);
+		} else {
+			mLogger.info("already constructed");
 		}
 	}
 	
 	
 	private void processCallPredecessors(final LETTER letter, final SummaryComputationGraphNode<LETTER, STATE> succNode) {
+		mLogger.info("computing predecessors under " + letter);
 		final HashRelation<GameLetter<LETTER, STATE>, IGameState> dupl2spoi = new HashRelation<>();
 		final HashRelation<IGameState, GameLetter<LETTER, STATE>> spoi2dupl = new HashRelation<>();
 		for (final IGameState source : succNode.getSources()) {
 			for (final IGameState gs : succNode.getCurrent(source)) {
 				for (final IncomingCallTransition<GameLetter<LETTER, STATE>, IGameState> trans : mGameAutomaton.callPredecessors(gs)) {
 					final GameLetter<LETTER, STATE> gl = trans.getLetter();
-					if (!gl.equals(letter)) {
+					if (!gl.getLetter().equals(letter)) {
 						continue;
 					}
 					dupl2spoi.addPair(trans.getLetter(), gs);
@@ -253,9 +293,11 @@ public class SummaryComputation<LETTER, STATE> {
 			}
 		}
 		final Set<NestedMap2<IGameState, GameLetter<LETTER, STATE>, WeightedSummaryTargets>> dupl2Wst = 
-				computePredecessorsUnderPly(Collections.singleton(succNode.getSource2Current2Targets()), dupl2spoi, this::duplicatorNodePriorityProvider, null);
+				computePredecessorsUnderPly(Collections.singleton(succNode.getSource2Current2Targets()), dupl2spoi, 
+						this::duplicatorNodePriorityProvider, this::duplicatorAggregration);
 		final Set<NestedMap2<IGameState, IGameState, WeightedSummaryTargets>> spoi2Wsts =
-				computePredecessorsUnderPly(dupl2Wst, spoi2dupl, this::callWorkaroundPriorityProvider, null);
+				computePredecessorsUnderPly(dupl2Wst, spoi2dupl, this::callWorkaroundPriorityProvider,
+						this::spoilerAggregration);
 		
 		for (final NestedMap2<IGameState, IGameState, WeightedSummaryTargets> spoi2Wst : spoi2Wsts) {
 			constructSummary(spoi2Wst, succNode.getSummaryComputationTriggers());
@@ -287,7 +329,8 @@ public class SummaryComputation<LETTER, STATE> {
 			dupl2spoi.addPair(pair.getFirst(), pair.getSecond());
 		}
 		final Set<NestedMap2<IGameState, IGameState, WeightedSummaryTargets>> spoi2Wsts = 
-				computePredecessorsUnderPly(Collections.singleton(waitingForSummary.getSource2Current2Targets()), dupl2spoi, target2source2priority::get, null);
+				computePredecessorsUnderPly(Collections.singleton(waitingForSummary.getSource2Current2Targets()), 
+						dupl2spoi, target2source2priority::get, this::duplicatorAggregration);
 
 		for (final NestedMap2<IGameState, IGameState, WeightedSummaryTargets> spoi2Wst : spoi2Wsts) {
 			constructNode(spoi2Wst, waitingForSummary.getSummaryComputationTriggers());
@@ -345,34 +388,16 @@ public class SummaryComputation<LETTER, STATE> {
 			final Set<NestedMap2<IGameState, SUCC, WeightedSummaryTargets>> succNodes,
 			final HashRelation<PRED, SUCC> pred2succ,
 			final PriorityProvider<PRED, SUCC> priorityProvider,
-			//final Function<PRED, Function<SUCC,Integer>> priorityProvider,
-			final HashRelation3<PRED, SUCC, IGameState> pred2succ2hier) {
+			final Aggregation aggregation) {
 		final Set<NestedMap2<IGameState, PRED, WeightedSummaryTargets>> preds = new HashSet<>();
 		for (final NestedMap2<IGameState, SUCC, WeightedSummaryTargets> succNode : succNodes) {
-
-
 			final List<Pair<IGameState,PRED>> predSourceCurrentPairs = new ArrayList<>();
 			final List<List<WeightedSummaryTargets>> predWeightedSummaryTargets = new ArrayList<>();
-			for (final Pair<IGameState, SUCC> sourceCurrentPair : succNode.keys2()) {
-				for (final PRED pred : pred2succ.getDomain()) {
-					final Set<WeightedSummaryTargets> weightedSummaryTargetsSet = new HashSet<>();
-					final Set<SUCC> succs = pred2succ.getImage(pred);
-					for (final SUCC succ : succs) {
-						final int predPriority = priorityProvider.getPriority(pred, succ);
-						final WeightedSummaryTargets wst = succNode.get(sourceCurrentPair.getFirst(), succ);
-						weightedSummaryTargetsSet.add(wst.computeUpdate(predPriority));
-					}
-					final List<WeightedSummaryTargets> filtered = 
-							PosetUtils.filterMaximalElements(weightedSummaryTargetsSet, mWeightedSummaryTargetsComparator).collect(Collectors.toList());
-					if (pred2succ2hier == null) {
-						predSourceCurrentPairs.add(new Pair<IGameState, PRED>(sourceCurrentPair.getFirst(), pred));
-					} else {
-						for (final IGameState hier : pred2succ2hier.projectToTrd(pred, sourceCurrentPair.getSecond())) {
-							predSourceCurrentPairs.add(new Pair<IGameState, PRED>(hier, pred));
-						}
-					}
-					predWeightedSummaryTargets.add(filtered);
-				}
+			for (final IGameState source : succNode.keySet()) {
+				final Map<SUCC, WeightedSummaryTargets> current2wst = succNode.get(source);
+				addPredecessorsToLists(pred2succ, priorityProvider, current2wst, predSourceCurrentPairs,
+						predWeightedSummaryTargets, source, aggregation);
+
 			}
 			final int[] numberOfElements = new int[predWeightedSummaryTargets.size()];
 			for (int i=0; i<predWeightedSummaryTargets.size(); i++) {
@@ -389,10 +414,78 @@ public class SummaryComputation<LETTER, STATE> {
 				}
 				preds.add(pred);
 				c.increment();
-			} while (c.isZero());
-			assert pred2succ2hier == null || c.getNumberOfValuesProduct() == preds.size() : "inconsistent";
+			} while (!c.isZero());
+			assert c.getNumberOfValuesProduct() == preds.size() : "inconsistent";
 		}
+		mLogger.info(preds.size() + " predecessors under ply");
 		return preds;
 	}
+
+
+	private <SUCC, PRED> void addPredecessorsToLists(final HashRelation<PRED, SUCC> pred2succ,
+			final PriorityProvider<PRED, SUCC> priorityProvider,
+			final Map<SUCC, WeightedSummaryTargets> succNode,
+			final List<Pair<IGameState, PRED>> predSourceCurrentPairs,
+			final List<List<WeightedSummaryTargets>> predWeightedSummaryTargets,
+			final IGameState source,
+			final Aggregation aggregation) {
+		for (final PRED pred : pred2succ.getDomain()) {
+			final Set<WeightedSummaryTargets> weightedSummaryTargetsSet = new HashSet<>();
+			final Set<SUCC> succs = pred2succ.getImage(pred);
+			for (final SUCC succ : succs) {
+				final WeightedSummaryTargets wst = succNode.get(succ);
+				if (wst == null) {
+					// omit, succ not in succNode
+				} else {
+					final int predPriority = priorityProvider.getPriority(pred, succ);
+					weightedSummaryTargetsSet.add(wst.computeUpdate(predPriority));
+				}
+			}
+			if (weightedSummaryTargetsSet.isEmpty()) {
+				// omit, there was not a single successor of pred in succNode
+			} else {
+				final List<WeightedSummaryTargets> aggregated = 
+						aggregation.aggregate(weightedSummaryTargetsSet);
+				predSourceCurrentPairs.add(new Pair<IGameState, PRED>(source, pred));
+				predWeightedSummaryTargets.add(aggregated);
+			}
+		}
+	}
+	
+	 @FunctionalInterface
+	 interface Aggregation {
+		 public List<WeightedSummaryTargets> aggregate(Set<WeightedSummaryTargets> weightedSummaryTargetsSet);
+	 }
+
+
+	private List<WeightedSummaryTargets> spoilerAggregration(
+			final Set<WeightedSummaryTargets> weightedSummaryTargetsSet) {
+		return PosetUtils.filterMinimalElements(weightedSummaryTargetsSet, mWeightedSummaryTargetsComparator).collect(Collectors.toList());
+	}
+	
+	private List<WeightedSummaryTargets> duplicatorAggregration(
+			final Set<WeightedSummaryTargets> weightedSummaryTargetsSet) {
+		final Map<IGameState, Integer> target2priority = new HashMap<>();
+		for (final WeightedSummaryTargets wst : weightedSummaryTargetsSet) {
+			for (final Entry<IGameState, Integer> entry : wst.entrySet()) {
+				final Integer oldPrio = target2priority.get(entry.getKey());
+				Integer resultPrio;
+				if (oldPrio == null) {
+					resultPrio = oldPrio;
+				} else {
+					if (new PriorityComparator().compare(oldPrio, entry.getValue()) >= 0) {
+						resultPrio = oldPrio;
+					} else {
+						resultPrio = entry.getValue();
+					}
+				}
+				target2priority.put(entry.getKey(), resultPrio);
+			}
+		}
+		return Collections.singletonList(new WeightedSummaryTargets(target2priority));
+	}
+
+	
+	
 	
 }

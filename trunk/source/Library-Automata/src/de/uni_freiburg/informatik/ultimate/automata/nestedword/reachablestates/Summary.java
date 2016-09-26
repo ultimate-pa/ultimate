@@ -86,8 +86,7 @@ class Summary<LETTER, STATE> {
 	@Override
 	public int hashCode() {
 		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((mHierPred == null) ? 0 : mHierPred.hashCode());
+		int result = prime + ((mHierPred == null) ? 0 : mHierPred.hashCode());
 		result = prime * result + ((mLinPred == null) ? 0 : mLinPred.hashCode());
 		result = prime * result + ((mSucc == null) ? 0 : mSucc.hashCode());
 		return result;
@@ -98,10 +97,7 @@ class Summary<LETTER, STATE> {
 		if (this == obj) {
 			return true;
 		}
-		if (obj == null) {
-			return false;
-		}
-		if (getClass() != obj.getClass()) {
+		if (obj == null || getClass() != obj.getClass()) {
 			return false;
 		}
 		final Summary<?, ?> other = (Summary<?, ?>) obj;

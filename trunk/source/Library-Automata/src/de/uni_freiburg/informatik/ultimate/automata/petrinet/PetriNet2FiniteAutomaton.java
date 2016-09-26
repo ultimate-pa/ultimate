@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -41,67 +42,72 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
-
 /**
- * Given a PetriNet, constructs a finite Automaton that recognizes the same
- * language.
- * @author heizmann@informatik.uni-freiburg.de
- *
- * @param <S> Symbol
- * @param <C> Content
+ * Given a Petri net, this class constructs a finite automaton that recognizes the same language.
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <S>
+ *            symbols type
+ * @param <C>
+ *            place content type
  */
-public class PetriNet2FiniteAutomaton<S,C> extends UnaryNetOperation<S, C> {
+public final class PetriNet2FiniteAutomaton<S, C> extends UnaryNetOperation<S, C> {
 	private final IPetriNet<S, C> mOperand;
-	private final NestedWordAutomaton<S,C> mResult;
+	private final NestedWordAutomaton<S, C> mResult;
 	
 	/**
 	 * List of markings for which
 	 * <ul>
-	 * <li> there has already been a state constructed
-	 * <li> outgoing transitions of this state have not yet been constructed.
+	 * <li>there has already been a state constructed
+	 * <li>outgoing transitions of this state have not yet been constructed.
 	 * </ul>
 	 */
-	private final List<Marking<S,C>> mWorklist = new LinkedList<>();
+	private final List<Marking<S, C>> mWorklist = new LinkedList<>();
 	/**
 	 * Maps a marking to the automaton state that represents this marking.
 	 */
-	private final Map<Marking<S,C>,C> mMarking2State = new HashMap<>();
+	private final Map<Marking<S, C>, C> mMarking2State = new HashMap<>();
 	private final IStateFactory<C> mContentFactory;
 	
 	/**
 	 * Constructor.
 	 * 
-	 * @param services Ultimate services
-	 * @param operand operand Petri net
+	 * @param services
+	 *            Ultimate services
+	 * @param operand
+	 *            operand Petri net
 	 */
-	public PetriNet2FiniteAutomaton(final AutomataLibraryServices services,
-			final IPetriNet<S,C> operand) {
+	public PetriNet2FiniteAutomaton(final AutomataLibraryServices services, final IPetriNet<S, C> operand) {
 		super(services);
 		mOperand = operand;
-		mLogger.info(startMessage());
+		
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(startMessage());
+		}
+		
 		mContentFactory = operand.getStateFactory();
-		final Set<S> alphabet = new HashSet<S>(operand.getAlphabet());
-		mResult = new NestedWordAutomaton<S,C>(mServices, alphabet,
-									 new HashSet<S>(0),
-									 new HashSet<S>(0),
-									 operand.getStateFactory());
-		getState(operand.getInitialMarking(),true);
+		final Set<S> alphabet = new HashSet<>(operand.getAlphabet());
+		mResult = new NestedWordAutomaton<>(mServices, alphabet, Collections.emptySet(), Collections.emptySet(),
+				operand.getStateFactory());
+		getState(operand.getInitialMarking(), true);
 		while (!mWorklist.isEmpty()) {
-			final Marking<S,C> marking = mWorklist.remove(0);
+			final Marking<S, C> marking = mWorklist.remove(0);
 			constructOutgoingTransitions(marking);
 		}
-		mLogger.info(exitMessage());
+		
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(exitMessage());
+		}
 	}
 	
 	@Override
 	public String operationName() {
-		return "petriNet2FiniteAutomaton";
+		return "PetriNet2FiniteAutomaton";
 	}
 	
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + " Result "
-				+ mResult.sizeInformation();
+		return "Finished " + operationName() + ". Result " + mResult.sizeInformation();
 	}
 	
 	/**
@@ -109,22 +115,22 @@ public class PetriNet2FiniteAutomaton<S,C> extends UnaryNetOperation<S, C> {
 	 * yet constructed, construct it and enqueue the marking. If it has to be
 	 * constructed it is an initial state iff isInitial is true.
 	 */
-	private C getState(final Marking<S,C> marking, final boolean isInitial) {
+	private C getState(final Marking<S, C> marking, final boolean isInitial) {
 		C state = mMarking2State.get(marking);
 		if (state == null) {
-//			boolean isFinal = mNet.getAcceptingMarkings().contains(marking);
+			// boolean isFinal = mNet.getAcceptingMarkings().contains(marking);
 			final boolean isFinal = mOperand.isAccepting(marking);
 			state = mContentFactory.getContentOnPetriNet2FiniteAutomaton(marking);
 			mResult.addState(isInitial, isFinal, state);
-			mMarking2State.put(marking,state);
+			mMarking2State.put(marking, state);
 			mWorklist.add(marking);
 		}
 		return state;
 	}
 	
-	private Collection<C> getMarkingContents(final Set<Place<S,C>> marking) {
-		final ArrayList<C> result = new ArrayList<C>(marking.size());
-		for (final Place<S,C> place : marking) {
+	private Collection<C> getMarkingContents(final Set<Place<S, C>> marking) {
+		final ArrayList<C> result = new ArrayList<>(marking.size());
+		for (final Place<S, C> place : marking) {
 			result.add(place.getContent());
 		}
 		return result;
@@ -135,32 +141,31 @@ public class PetriNet2FiniteAutomaton<S,C> extends UnaryNetOperation<S, C> {
 	 * possible outgoing automaton transitions to state. Construct (and
 	 * enqueue to worklist) successor states if necessary.
 	 */
-	private void constructOutgoingTransitions(final Marking<S,C> marking) {
+	private void constructOutgoingTransitions(final Marking<S, C> marking) {
 		final C state = getState(marking, false);
-		final Set<ITransition<S,C>> outgoing = getOutgoingNetTransitions(marking);
-		for (final ITransition<S,C> transition : outgoing) {
+		final Set<ITransition<S, C>> outgoing = getOutgoingNetTransitions(marking);
+		for (final ITransition<S, C> transition : outgoing) {
 			if (marking.isTransitionEnabled(transition)) {
-				final Marking<S,C> succMarking = marking.fireTransition(transition);
+				final Marking<S, C> succMarking = marking.fireTransition(transition);
 				final C succState = getState(succMarking, false);
-				mResult.addInternalTransition(state, transition.getSymbol(),
-																	succState);
+				mResult.addInternalTransition(state, transition.getSymbol(), succState);
 			}
 		}
 	}
 	
-//
-//	private boolean isEnabled(ITransition<S,C> transition,
-//													Set<Place<S,C>> marking) {
-//		if (marking.containsAll(transition.getPredecessors())) {
-//			return true;
-//		}
-//		else return false;
-//	}
+	/*
+	private boolean isEnabled(ITransition<S, C> transition,
+			Set<Place<S, C>> marking) {
+		if (marking.containsAll(transition.getPredecessors())) {
+			return true;
+		} else
+			return false;
+	}
+	*/
 	
-	private Set<ITransition<S, C>> getOutgoingNetTransitions(
-													final Marking<S,C> marking) {
-		final Set<ITransition<S,C>> transitions = new HashSet<ITransition<S,C>>();
-		for (final Place<S,C> place : marking) {
+	private Set<ITransition<S, C>> getOutgoingNetTransitions(final Marking<S, C> marking) {
+		final Set<ITransition<S, C>> transitions = new HashSet<>();
+		for (final Place<S, C> place : marking) {
 			transitions.addAll(place.getSuccessors());
 		}
 		return transitions;
@@ -172,13 +177,12 @@ public class PetriNet2FiniteAutomaton<S,C> extends UnaryNetOperation<S, C> {
 	}
 	
 	@Override
-	public INestedWordAutomaton<S,C> getResult() {
+	public INestedWordAutomaton<S, C> getResult() {
 		return mResult;
 	}
-
+	
 	@Override
-	public boolean checkResult(final IStateFactory<C> stateFactory)
-			throws AutomataLibraryException {
+	public boolean checkResult(final IStateFactory<C> stateFactory) throws AutomataLibraryException {
 		return true;
 	}
 }

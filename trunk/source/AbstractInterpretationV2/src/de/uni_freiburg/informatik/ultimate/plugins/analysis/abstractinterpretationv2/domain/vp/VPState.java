@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 
 /**
  *
@@ -50,42 +49,179 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Pro
  */
 public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> {
 
-	private static int sId;
-	private final int mId;
-
 	private final Set<IProgramVar> mVars;
-	private final Map<IProgramVar, Set<CodeBlock>> mDef;
-	private final Map<IProgramVar, Set<CodeBlock>> mUse;
-	private final Map<IProgramVar, Set<CodeBlock>> mReachDef;
-	private final Map<IProgramVar, Set<ProgramPoint>> mNoWrite;
 	
-	private final Set<EqNode> mEqNodeSet;
-
-	public Set<EqNode> getmEqNodeSet() {
-		return mEqNodeSet;
+	private final Set<EqGraphNode> mEqGraphNodeSet;
+	private final Map<Term, EqBaseNode> mTermToBaseNodeMap;
+	private final Map<Term, Set<EqFunctionNode>> mTermToFnNodeMap;
+	private final Map<EqNode, EqGraphNode> mEqNodeToEqGraphNodeMap;
+	
+	private Map<Term, Set<Term>> mEqualityMap;
+	private Map<Term, Set<Term>> mDisEqualityMap;
+	
+	public Set<EqGraphNode> getEqGraphNodeSet() {
+		return mEqGraphNodeSet;
 	}
 
-	VPState() {
-		this(new HashSet<>(), new HashMap<>(), new HashMap<>(), new HashMap<>(), new HashMap<>(), new HashSet<>());
+	public Map<Term, EqBaseNode> getTermToBaseNodeMap() {
+		return mTermToBaseNodeMap;
+	}
+	
+	public Map<Term, Set<EqFunctionNode>> getTermToFnNodeMap() {
+		return mTermToFnNodeMap;
 	}
 
-	VPState(final Set<IProgramVar> vars, final Map<IProgramVar, Set<CodeBlock>> def,
-			final Map<IProgramVar, Set<CodeBlock>> use, final Map<IProgramVar, Set<CodeBlock>> reachdef,
-			final Map<IProgramVar, Set<ProgramPoint>> noWrite,
-			final Set<EqNode> eqNodeSet) {
-		assert vars != null;
-		assert def != null;
-		assert use != null;
-		assert reachdef != null;
-		mVars = vars;
-		mDef = def;
-		mUse = use;
-		mReachDef = reachdef;
-		mId = getFreshId();
-		mNoWrite = noWrite;
-		mEqNodeSet = eqNodeSet;
+	public Map<EqNode, EqGraphNode> getEqNodeToEqGraphNodeMap() {
+		return mEqNodeToEqGraphNodeMap;
 	}
 
+	public Map<Term, Set<Term>> getmEqualityMap() {
+		return mEqualityMap;
+	}
+
+	public void setmEqualityMap(Map<Term, Set<Term>> mEqualityMap) {
+		this.mEqualityMap = mEqualityMap;
+	}
+
+	public Map<Term, Set<Term>> getmDisEqualityMap() {
+		return mDisEqualityMap;
+	}
+
+	public void setmDisEqualityMap(Map<Term, Set<Term>> mDisEqualityMap) {
+		this.mDisEqualityMap = mDisEqualityMap;
+	}
+
+	VPState(Set<EqGraphNode> eqGraphNodeSet, 
+			Map<Term, EqBaseNode> termToBaseNodeMap,
+			Map<Term, Set<EqFunctionNode>> termToFnNodeMap,
+			Map<EqNode, EqGraphNode> eqNodeToEqGraphNodeMap,
+			Map<Term, Set<Term>> equalityMap, 
+			Map<Term, Set<Term>> disEqualityMap) {
+		mVars = new HashSet<IProgramVar>();
+		mEqGraphNodeSet = eqGraphNodeSet;
+		mTermToBaseNodeMap = termToBaseNodeMap;
+		mTermToFnNodeMap = termToFnNodeMap;
+		mEqNodeToEqGraphNodeMap = eqNodeToEqGraphNodeMap;
+		mEqualityMap = equalityMap;
+		mDisEqualityMap = disEqualityMap;
+	}
+	
+	private VPState conjoin(VPState state1, VPState state2) {
+		
+		VPState conjoinedState = state1.copy();
+		
+		return null;
+		
+	}
+
+	private VPState disjoin(VPState state1, VPState state2) {
+		return null;
+	}
+	
+	private void addEquality(Term term1, Term term2) {
+		
+	}
+	
+	private void addDisEquality(Term term1, Term term2) {
+		
+	}
+	
+	/**
+	 * Returns the representative of a @param node's equivalence class.
+	 * 
+	 * @param node
+	 * @return
+	 */
+	private EqGraphNode find(EqGraphNode node) {
+		if (node.getFind() == node.getEqNode()) {
+			return node;
+		} else {
+			return find(node);
+		}
+	}
+	
+	/**
+	 * Union of two equivalence classes.
+	 * 
+	 * @param node1
+	 * @param node2
+	 */
+	private void union(EqGraphNode node1, EqGraphNode node2) {
+
+		EqGraphNode findNode1 = find(node1);
+		EqGraphNode findNode2 = find(node2);
+		
+		findNode1.setFind(findNode2.eqNode);
+		findNode2.ccpar.addAll(findNode1.ccpar);
+		findNode1.ccpar.clear();
+	}
+	
+	/**
+	 * Returns the parents of all nodes in @param node's congruence class.
+	 * 
+	 * @param node
+	 * @return
+	 */
+	private Set<EqNode> ccpar(EqGraphNode node) {
+		return find(node).ccpar;
+	}
+	
+	/**
+	 * Test whether @param i1 and @param i2 are congruent.
+	 * 
+	 * @param i1
+	 * @param i2
+	 * @return
+	 */
+	private boolean congruent(EqGraphNode node1, EqGraphNode node2) {
+		if (!(node1.eqNode instanceof EqFunctionNode) || !(node2.eqNode instanceof EqFunctionNode)) {
+			return false;
+		}
+		
+		EqFunctionNode fnNode1 = (EqFunctionNode)node1.eqNode;
+		EqFunctionNode fnNode2 = (EqFunctionNode)node2.eqNode;
+		
+		if (!(fnNode1.term.equals(fnNode2.term))) {
+			return false;
+		}
+		if ((fnNode1.getArg() == null && fnNode2.getArg() != null)
+				|| (fnNode2.getArg() == null && fnNode1.getArg() != null)) {
+			return false;
+		}
+		if (fnNode1.getArg() != fnNode2.getArg()) {
+			return false;
+		}
+		return true;
+	}
+	
+	/**
+	 * Merge two congruence class.
+	 * 
+	 * @param i1
+	 * @param i2
+	 */
+	private void merge(EqGraphNode i1, EqGraphNode i2) {
+		
+		if (find(i1) != find(i2)) {
+			
+			Set<EqNode> p1 = ccpar(i1);
+			Set<EqNode> p2 = ccpar(i2);
+			
+			union(i1, i2);
+			
+			for (EqNode t1 : p1) {
+				for (EqNode t2 : p2) {
+					if ((find(mEqNodeToEqGraphNodeMap.get(t1)) != find(mEqNodeToEqGraphNodeMap.get(t2)))
+							&& congruent(mEqNodeToEqGraphNodeMap.get(t1), mEqNodeToEqGraphNodeMap.get(t2))) {
+						merge(mEqNodeToEqGraphNodeMap.get(t1), mEqNodeToEqGraphNodeMap.get(t2));
+					}
+				}
+			}
+			
+		}
+		
+	}
+	
 	@Override
 	public VPState addVariable(final IProgramVar variable) {
 		if (mVars.contains(variable)) {
@@ -93,7 +229,7 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 		}
 		final Set<IProgramVar> vars = AbsIntUtil.getFreshSet(mVars, mVars.size() + 1);
 		vars.add(variable);
-		return new VPState(vars, mDef, mUse, mReachDef, mNoWrite, mEqNodeSet);
+		return this;
 	}
 
 	@Override
@@ -103,15 +239,7 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 		}
 		final Set<IProgramVar> vars = AbsIntUtil.getFreshSet(mVars);
 		vars.remove(variable);
-		final Map<IProgramVar, Set<CodeBlock>> def = AbsIntUtil.getFreshMap(mDef);
-		def.remove(variable);
-		final Map<IProgramVar, Set<CodeBlock>> use = AbsIntUtil.getFreshMap(mUse);
-		use.remove(variable);
-		final Map<IProgramVar, Set<CodeBlock>> reachdef = AbsIntUtil.getFreshMap(mReachDef);
-		use.remove(variable);
-		final Map<IProgramVar, Set<ProgramPoint>> noWrite = AbsIntUtil.getFreshMap(mNoWrite);
-		use.remove(variable);
-		return new VPState(vars, def, use, reachdef, noWrite, mEqNodeSet);
+		return this;
 	}
 
 	@Override
@@ -121,7 +249,7 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 		}
 		final Set<IProgramVar> vars = AbsIntUtil.getFreshSet(mVars, mVars.size() + variables.size());
 		vars.addAll(variables);
-		return new VPState(vars, mDef, mUse, mReachDef, mNoWrite, mEqNodeSet);
+		return this;
 	}
 
 	@Override
@@ -129,19 +257,51 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 		if (variables == null || variables.isEmpty()) {
 			return this;
 		}
-		final Set<IProgramVar> vars = AbsIntUtil.getFreshSet(mVars);
-		final Map<IProgramVar, Set<CodeBlock>> def = AbsIntUtil.getFreshMap(mDef);
-		final Map<IProgramVar, Set<CodeBlock>> use = AbsIntUtil.getFreshMap(mUse);
-		final Map<IProgramVar, Set<CodeBlock>> reachdef = AbsIntUtil.getFreshMap(mReachDef);
-		final Map<IProgramVar, Set<ProgramPoint>> noWrite = AbsIntUtil.getFreshMap(mNoWrite);
-		variables.stream().forEach(a -> {
-			vars.remove(a);
-			def.remove(a);
-			use.remove(a);
-			reachdef.remove(a);
-			noWrite.remove(a);
-		});
-		return new VPState(vars, def, use, reachdef, noWrite, mEqNodeSet);
+		return this;
+	}
+	
+	public VPState copy() {
+		
+		final Set<EqGraphNode> newEqGraphNodeSet = new HashSet<EqGraphNode>();
+		for (EqGraphNode node : mEqGraphNodeSet) {
+			newEqGraphNodeSet.add(node.copy());
+			
+		}
+		
+		final Map<Term, EqBaseNode> newTermToBaseNodeMap = new HashMap<Term, EqBaseNode>();
+		for (final Entry<Term, EqBaseNode> entry : mTermToBaseNodeMap.entrySet()) {
+			newTermToBaseNodeMap.put(entry.getKey(), entry.getValue());
+		}
+		
+		final Map<Term, Set<EqFunctionNode>> newTermToFnNodeMap = new HashMap<Term, Set<EqFunctionNode>>();
+		for (final Entry<Term, Set<EqFunctionNode>> entry : mTermToFnNodeMap.entrySet()) {
+			Set<EqFunctionNode> fnNodeSet = new HashSet<EqFunctionNode>();
+			for (EqFunctionNode fnNode : entry.getValue()) {
+				fnNodeSet.add(fnNode);
+			}
+			newTermToFnNodeMap.put(entry.getKey(), fnNodeSet);
+		}
+		
+		final Map<EqNode, EqGraphNode> newEqNodeToEqGraphNodeMap = new HashMap<EqNode, EqGraphNode>();
+		for (final Entry<EqNode, EqGraphNode> entry : mEqNodeToEqGraphNodeMap.entrySet()) {
+			newEqNodeToEqGraphNodeMap.put(entry.getKey(), entry.getValue().copy());
+		}
+		
+		final Map<Term, Set<Term>> newEqualityMap = new HashMap<Term, Set<Term>>();
+		for (final Entry<Term, Set<Term>> entry : mEqualityMap.entrySet()) {
+			final Set<Term> newEqTermSet = new HashSet<Term>();
+			newEqTermSet.addAll(entry.getValue());
+			newEqualityMap.put(entry.getKey(), newEqTermSet);
+		}
+		
+		final Map<Term, Set<Term>> newDisEqualityMap = new HashMap<Term, Set<Term>>();
+		for (final Entry<Term, Set<Term>> entry : mDisEqualityMap.entrySet()) {
+			final Set<Term> newDisEqTermSet = new HashSet<Term>();
+			newDisEqTermSet.addAll(entry.getValue());
+			newDisEqualityMap.put(entry.getKey(), newDisEqTermSet);
+		}
+		
+		return new VPState(newEqGraphNodeSet, newTermToBaseNodeMap, newTermToFnNodeMap, newEqNodeToEqGraphNodeMap, newEqualityMap, newDisEqualityMap);		
 	}
 
 	@Override
@@ -176,22 +336,8 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 		if (other == null) {
 			return false;
 		}
-		if (!other.mVars.equals(mVars)) {
-			return false;
-		}
-		if (!other.mDef.equals(mDef)) {
-			return false;
-		}
-		if (!other.mUse.equals(mUse)) {
-			return false;
-		}
-		if (!other.mReachDef.equals(mReachDef)) {
-			return false;
-		}
-		if (!other.mNoWrite.equals(mNoWrite)) {
-			return false;
-		}
-		return true;
+		// TODO
+		return false;
 	}
 
 	@Override
@@ -210,32 +356,13 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 	@Override
 	public String toLogString() {
 		final StringBuilder sb = new StringBuilder();
-		sb.append('{');
-		for (final Entry<IProgramVar, Set<CodeBlock>> entry : mReachDef.entrySet()) {
-			if (entry.getValue().isEmpty()) {
-				continue;
-			}
-			sb.append(entry.getKey().getGloballyUniqueId());
-			sb.append("->");
-			if (entry.getValue().size() == 1) {
-				sb.append(entry.getValue().iterator().next().getSerialNumber());
-			} else {
-				sb.append('{');
-				for (final CodeBlock value : entry.getValue()) {
-					sb.append(value.getSerialNumber());
-					sb.append(", ");
-				}
-				sb.delete(sb.length() - 2, sb.length());
-				sb.append('}');
-			}
-		}
+		sb.append('{');	
+		sb.append("->");
 		sb.append('}');
+		
+		// TODO
+		
 		return sb.toString();
-	}
-
-	@Override
-	public int hashCode() {
-		return mId;
 	}
 
 	@Override
@@ -253,26 +380,8 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 		if (!isEqualTo(other)) {
 			return false;
 		}
-		if (other.mId != mId) {
-			return false;
-		}
-		return true;
-	}
-
-	Map<IProgramVar, Set<CodeBlock>> getDef() {
-		return Collections.unmodifiableMap(mDef);
-	}
-
-	Map<IProgramVar, Set<CodeBlock>> getUse() {
-		return Collections.unmodifiableMap(mUse);
-	}
-
-	Map<IProgramVar, Set<CodeBlock>> getReachingDefinitions() {
-		return Collections.unmodifiableMap(mReachDef);
-	}
-
-	Map<IProgramVar, Set<ProgramPoint>> getNoWrite() {
-		return Collections.unmodifiableMap(mNoWrite);
+		// TODO
+		return false;
 	}
 
 	VPState union(final VPState other) {
@@ -280,55 +389,10 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 			return this;
 		}
 
-		if (!mVars.equals(other.mVars)) {
-			throw new UnsupportedOperationException("Cannot create union of two incompatible dataflow states");
-		}
+		// TODO
 
-		final Set<IProgramVar> vars = AbsIntUtil.getFreshSet(mVars);
-		final Map<IProgramVar, Set<CodeBlock>> def = AbsIntUtil.getFreshMap(mDef);
-		final Map<IProgramVar, Set<CodeBlock>> use = AbsIntUtil.getFreshMap(mUse);
-		final Map<IProgramVar, Set<CodeBlock>> reachdef = AbsIntUtil.getFreshMap(mReachDef);
-		final Map<IProgramVar, Set<ProgramPoint>> noWrite = AbsIntUtil.getFreshMap(mNoWrite);
-
-		// TODO: What about def and use?
-
-		for (final Entry<IProgramVar, Set<CodeBlock>> otherEntry : other.mReachDef.entrySet()) {
-			final Set<CodeBlock> set = reachdef.get(otherEntry.getKey());
-			if (set == null) {
-				reachdef.put(otherEntry.getKey(), new HashSet<>(otherEntry.getValue()));
-			} else {
-				final Set<CodeBlock> newset = new HashSet<>();
-				newset.addAll(otherEntry.getValue());
-				newset.addAll(set);
-				reachdef.put(otherEntry.getKey(), newset);
-			}
-		}
-		
-		for (final Entry<IProgramVar, Set<ProgramPoint>> otherEntry : other.mNoWrite.entrySet()) {
-			final Set<ProgramPoint> set = noWrite.get(otherEntry.getKey());
-			if (set == null) {
-				noWrite.put(otherEntry.getKey(), new HashSet<>(otherEntry.getValue()));
-			} else {
-				final Set<ProgramPoint> newset = new HashSet<>();
-				newset.addAll(otherEntry.getValue());
-				newset.addAll(set);
-				noWrite.put(otherEntry.getKey(), newset);
-			}
-		}
-
-		return new VPState(vars, def, use, reachdef, noWrite, mEqNodeSet);
+		return null;
+//		return new VPState(vars, def, use, reachdef, noWrite, mEqNodeSet);
 	}
 
-	private static int getFreshId() {
-		sId++;
-		return sId;
-	}
-
-	public Set<ProgramPoint> getNowriteLocations(final IProgramVar iProgramVar) {
-		return mNoWrite.get(iProgramVar);
-	}
-	
-	public Set<CodeBlock> getReachingDefinitions(final IProgramVar var) {
-		return mReachDef.get(var);
-	}
 }

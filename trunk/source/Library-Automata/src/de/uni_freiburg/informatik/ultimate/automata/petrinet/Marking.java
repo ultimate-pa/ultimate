@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet;
@@ -36,33 +36,54 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.InhibitorTransition;
 
 /**
- * A Marking of a PetriNet which is a set of Places.
+ * A marking of a Petri Net which is a set of places.
  * 
- * @author heizmann@informatik.uni-freiburg.de
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @author Julian Jarecki (jareckij@informatik.uni-freiburg.de)
+ * @param <S>
+ *            symbols type
+ * @param <C>
+ *            place content type
  */
-
 public class Marking<S, C> implements Iterable<Place<S, C>>, Serializable {
 	private static final long serialVersionUID = -357669345268897194L;
 	
 	private final Set<Place<S, C>> mPlaces;
-
+	
+	/**
+	 * Constructor.
+	 * 
+	 * @param places
+	 *            places
+	 */
 	public Marking(final Set<Place<S, C>> places) {
 		mPlaces = places;
 	}
-
-	public boolean contains(final Place<S, C> p) {
-		return mPlaces.contains(p);
-	}
-
+	
 	/**
-	 * @see java.util.Set#containsAll(java.util.Collection)
+	 * @param place
+	 *            The place.
+	 * @return {@code true} iff the place is contained
+	 * @see java.util.Set#contains(Object)
 	 */
-	public boolean containsAll(final Collection<?> c) {
-		return mPlaces.containsAll(c);
+	public boolean contains(final Place<S, C> place) {
+		return mPlaces.contains(place);
 	}
 	
 	/**
-	 * returns true, if the marking contains any of the specified places.
+	 * @param places
+	 *            The places.
+	 * @return {@code true} iff all places are contained
+	 * @see java.util.Set#containsAll(java.util.Collection)
+	 */
+	public boolean containsAll(final Collection<Place<S, C>> places) {
+		return mPlaces.containsAll(places);
+	}
+	
+	/**
+	 * @param places
+	 *            The places.
+	 * @return {@code true} if the marking contains any of the specified places.
 	 */
 	public boolean containsAny(final Collection<Place<S, C>> places) {
 		for (final Place<S, C> place : places) {
@@ -72,14 +93,14 @@ public class Marking<S, C> implements Iterable<Place<S, C>>, Serializable {
 		}
 		return false;
 	}
-
+	
 	/**
 	 * @see java.util.Set#isEmpty()
 	 */
 	public boolean isEmpty() {
 		return mPlaces.isEmpty();
 	}
-
+	
 	/**
 	 * @see java.util.Set#iterator()
 	 */
@@ -87,29 +108,22 @@ public class Marking<S, C> implements Iterable<Place<S, C>>, Serializable {
 	public Iterator<Place<S, C>> iterator() {
 		return mPlaces.iterator();
 	}
-
+	
 	/**
+	 * @return The number of places.
 	 * @see java.util.Set#size()
 	 */
 	public int size() {
 		return mPlaces.size();
 	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
+	
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		}
-		if (obj == null) {
-			return false;
-		}
-		if (getClass() != obj.getClass()) {
+		if (obj == null || getClass() != obj.getClass()) {
 			return false;
 		}
 		final Marking<S, C> other = (Marking<S, C>) obj;
@@ -122,23 +136,16 @@ public class Marking<S, C> implements Iterable<Place<S, C>>, Serializable {
 		}
 		return true;
 	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see java.lang.Object#hashCode()
-	 */
+	
 	@Override
 	public int hashCode() {
 		final int prime = 31;
-		int result = 1;
-		result = prime * result
-				+ ((mPlaces == null) ? 0 : mPlaces.hashCode());
-		return result;
+		return prime + ((mPlaces == null) ? 0 : mPlaces.hashCode());
 	}
-
+	
 	/**
-	 * 
+	 * @param transition
+	 *            The transition.
 	 * @return true, if the marking enables the specified transition.
 	 */
 	public boolean isTransitionEnabled(final ITransition<S, C> transition) {
@@ -150,29 +157,37 @@ public class Marking<S, C> implements Iterable<Place<S, C>>, Serializable {
 		}
 		return mPlaces.containsAll(transition.getPredecessors());
 	}
-
-//	/**
-//	 * Adds the places of another marking.
-//	 * 
-//	 * @param other
-//	 */
-//	public void add(Marking<S, C> other) {
-//		mPlaces.addAll(other.mPlaces);
-//	}
-
+	
+	/*
 	/**
-	 * returns the marking to which the occurrence of the specified transition
-	 * leads.
+	 * Adds the places of another marking.
+	 *
+	 * @param other
+	 */
+	/*
+	public void add(Marking<S, C> other) {
+		mPlaces.addAll(other.mPlaces);
+	}
+	*/
+	
+	/**
+	 * @param transition
+	 *            The transition.
+	 * @return The marking to which the occurrence of the specified transition leads.
 	 */
 	public Marking<S, C> fireTransition(final ITransition<S, C> transition) {
-		final HashSet<Place<S, C>> resultSet = new HashSet<Place<S, C>>(mPlaces);
+		final HashSet<Place<S, C>> resultSet = new HashSet<>(mPlaces);
 		resultSet.removeAll(transition.getPredecessors());
 		resultSet.addAll(transition.getSuccessors());
-		return new Marking<S, C>(resultSet);
+		return new Marking<>(resultSet);
 	}
-
+	
 	/**
-	 * revokes the occurence of the specified transition if valid.
+	 * Revokes the occurrence of the specified transition if valid.
+	 * 
+	 * @param transition
+	 *            transition
+	 * @return {@code true} iff all successor places are contained.
 	 */
 	public boolean undoTransition(final ITransition<S, C> transition) {
 		if (!mPlaces.containsAll(transition.getSuccessors())) {
@@ -182,20 +197,9 @@ public class Marking<S, C> implements Iterable<Place<S, C>>, Serializable {
 		mPlaces.addAll(transition.getPredecessors());
 		return true;
 	}
-
-	@Deprecated
-	public Marking(final Collection<Place<S, C>> places) {
-		mPlaces = new HashSet<Place<S, C>>(places);
-	}
-
-	@Deprecated
-	public Set<Place<S, C>> getPlaces() {
-		return mPlaces;
-	}
 	
 	@Override
 	public String toString() {
 		return this.mPlaces.toString();
 	}
-
 }

@@ -9,15 +9,13 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  */
 public class EqFunctionNode extends EqNode {
 	
-	private Term function;
-	private EqNode arg;
-	
+	public EqNode arg;
+
 	public EqFunctionNode(Term function, EqNode arg) {
 		super(function);
-		this.function = function;
 		this.arg = arg;
 	}
-
+	
 	public EqNode getArg() {
 		return arg;
 	}
@@ -27,8 +25,7 @@ public class EqFunctionNode extends EqNode {
 	}
 	
 	public String toString() {
-		return "Function Node: " + function.toString() + ", arg: " + arg.term.toString();
-		
+		return term.toString() + "[" + arg + "]";
 	}
-
+	
 }
