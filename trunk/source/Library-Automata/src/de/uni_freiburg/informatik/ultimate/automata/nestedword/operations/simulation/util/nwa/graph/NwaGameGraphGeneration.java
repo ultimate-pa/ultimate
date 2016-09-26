@@ -2416,18 +2416,15 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 				final GameLetter<LETTER, STATE> letter;
 				switch (transType) {
 				case CALL:
-					letter = new GameLetter<>(duplicatorNwaSucc.getLetter(), duplicatorNwaSucc.getQ0(),
-							ETransitionType.CALL);
+					letter = new GameLetter<>(duplicatorNwaSucc, ETransitionType.CALL);
 					callGameAlphabet.add(letter);
 					break;
 				case INTERNAL:
-					letter = new GameLetter<>(duplicatorNwaSucc.getLetter(), duplicatorNwaSucc.getQ0(),
-							ETransitionType.INTERNAL);
+					letter = new GameLetter<>(duplicatorNwaSucc, ETransitionType.INTERNAL);
 					internalGameAlphabet.add(letter);
 					break;
 				case RETURN:
-					letter = new GameLetter<>(duplicatorNwaSucc.getLetter(), duplicatorNwaSucc.getQ0(),
-							ETransitionType.RETURN);
+					letter = new GameLetter<>(duplicatorNwaSucc, ETransitionType.RETURN);
 					returnGameAlphabet.add(letter);
 					break;
 				case SINK:
@@ -2436,7 +2433,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 					letter = null;
 					break;
 				default:
-					throw new AssertionError("unknown ETransitionType");				
+					throw new AssertionError("unknown ETransitionType");
 				}
 				// At this point we know that the source is of relevance, add it
 				// if not already done before
@@ -2497,7 +2494,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 
 			// First setup the game letter we need and ensure it is contained in
 			// the alphabet
-			final GameLetter<LETTER, STATE> gameLetter = new GameLetter<>(letter, spoilerDest, ETransitionType.RETURN);
+			final GameLetter<LETTER, STATE> gameLetter = new GameLetter<>(duplicatorNwaSucc, ETransitionType.RETURN);
 			returnGameAlphabet.add(gameLetter);
 
 			// We now add return edges for all corresponding game hierPreds
