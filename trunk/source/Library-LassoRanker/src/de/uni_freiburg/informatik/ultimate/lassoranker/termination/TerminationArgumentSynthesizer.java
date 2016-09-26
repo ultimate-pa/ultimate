@@ -262,7 +262,7 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 					final SupportingInvariantGenerator sig = new SupportingInvariantGenerator(mscript, siVars, false);
 					si_generators.add(sig);
 					final LinearInequality li = sig.generate(loop.getInVars());
-					li.motzkin_coefficient = PossibleMotzkinCoefficients.ONE;
+					li.mMotzkinCoefficient = PossibleMotzkinCoefficients.ONE;
 					motzkin.add_inequality(li);
 				}
 				mLogger.debug(motzkin);
@@ -286,7 +286,7 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 				motzkin.add_inequalities(stemConj);
 				final LinearInequality li = sig.generate(stem.getOutVars());
 				li.negate();
-				li.motzkin_coefficient = PossibleMotzkinCoefficients.ONE;
+				li.mMotzkinCoefficient = PossibleMotzkinCoefficients.ONE;
 				motzkin.add_inequality(li);
 				conj.add(motzkin.transform(eigenvalue_guesses));
 			}
@@ -301,7 +301,7 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 				motzkin.add_inequalities(loopConj);
 				motzkin.add_inequality(sig.generate(loop.getInVars())); // si(x)
 				final LinearInequality li = sig.generate(loop.getOutVars()); // ~si(x')
-				li.motzkin_coefficient = msettings.nondecreasing_invariants || msettings.analysis == AnalysisType.LINEAR
+				li.mMotzkinCoefficient = msettings.nondecreasing_invariants || msettings.analysis == AnalysisType.LINEAR
 						? PossibleMotzkinCoefficients.ZERO_AND_ONE : PossibleMotzkinCoefficients.ANYTHING;
 				li.negate();
 				motzkin.add_inequality(li);

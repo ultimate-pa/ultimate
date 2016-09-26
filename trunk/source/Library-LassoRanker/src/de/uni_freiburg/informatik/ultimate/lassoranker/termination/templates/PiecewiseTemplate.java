@@ -144,7 +144,7 @@ public class PiecewiseTemplate extends RankingTemplate {
 				final LinearInequality li1 = mpgens[i].generate(inVars);
 				li1.negate();
 				li1.setStrict(true);
-				li1.motzkin_coefficient = sBlueAtoms && i == j ?
+				li1.mMotzkinCoefficient = sBlueAtoms && i == j ?
 						PossibleMotzkinCoefficients.ZERO_AND_ONE
 						: PossibleMotzkinCoefficients.ANYTHING;
 				disjunction.add(li1);
@@ -152,7 +152,7 @@ public class PiecewiseTemplate extends RankingTemplate {
 				final LinearInequality li2 = mpgens[j].generate(outVars);
 				li2.negate();
 				li2.setStrict(true);
-				li2.motzkin_coefficient = PossibleMotzkinCoefficients.ANYTHING;
+				li2.mMotzkinCoefficient = PossibleMotzkinCoefficients.ANYTHING;
 				disjunction.add(li2);
 				
 				final LinearInequality li3 = mfgens[i].generate(inVars);
@@ -162,7 +162,7 @@ public class PiecewiseTemplate extends RankingTemplate {
 				final AffineTerm a = new AffineTerm(mdelta, Rational.MONE);
 				li3.add(a);
 				li3.setStrict(true);
-				li3.motzkin_coefficient = sRedAtoms ?
+				li3.mMotzkinCoefficient = sRedAtoms ?
 						PossibleMotzkinCoefficients.ZERO_AND_ONE
 						: PossibleMotzkinCoefficients.ANYTHING;
 				disjunction.add(li3);
@@ -174,7 +174,7 @@ public class PiecewiseTemplate extends RankingTemplate {
 		for (int i = 0; i < size; ++i) {
 			final LinearInequality li = mfgens[i].generate(inVars);
 			li.setStrict(true);
-			li.motzkin_coefficient = sRedAtoms ? PossibleMotzkinCoefficients.ONE
+			li.mMotzkinCoefficient = sRedAtoms ? PossibleMotzkinCoefficients.ONE
 					: PossibleMotzkinCoefficients.ANYTHING;
 			conjunction.add(Collections.singletonList(li));
 		}
@@ -184,7 +184,7 @@ public class PiecewiseTemplate extends RankingTemplate {
 		for (int i = 0; i < size; ++i) {
 			final LinearInequality li = mpgens[i].generate(inVars);
 			li.setStrict(false);
-			li.motzkin_coefficient = sRedAtoms && i == 0 ?
+			li.mMotzkinCoefficient = sRedAtoms && i == 0 ?
 					PossibleMotzkinCoefficients.ZERO_AND_ONE
 					: PossibleMotzkinCoefficients.ANYTHING;
 			disjunction.add(li);

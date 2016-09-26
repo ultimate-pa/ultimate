@@ -164,14 +164,14 @@ public class MultiphaseTemplate extends ComposableTemplate {
 			final AffineTerm a = new AffineTerm(mdeltas[i], Rational.MONE);
 			li.add(a);
 			li.setStrict(true);
-			li.motzkin_coefficient = sRedAtoms ?
+			li.mMotzkinCoefficient = sRedAtoms ?
 					PossibleMotzkinCoefficients.ZERO_AND_ONE
 					: PossibleMotzkinCoefficients.ANYTHING;
 			disjunction.add(li);
 			if (i > 0) {
 				final LinearInequality li3 = mfgens[i - 1].generate(inVars);
 				li3.setStrict(true);
-				li3.motzkin_coefficient = sBlueAtoms ?
+				li3.mMotzkinCoefficient = sBlueAtoms ?
 						PossibleMotzkinCoefficients.ZERO_AND_ONE
 						: PossibleMotzkinCoefficients.ANYTHING;
 				disjunction.add(li3);
@@ -196,14 +196,14 @@ public class MultiphaseTemplate extends ComposableTemplate {
 			li2.negate();
 			li.add(li2);
 			li.setStrict(false);
-			li.motzkin_coefficient = sRedAtoms ?
+			li.mMotzkinCoefficient = sRedAtoms ?
 					PossibleMotzkinCoefficients.ZERO_AND_ONE
 					: PossibleMotzkinCoefficients.ANYTHING;
 			disjunction.add(li);
 			if (i > 0) {
 				final LinearInequality li3 = mfgens[i - 1].generate(inVars);
 				li3.setStrict(true);
-				li3.motzkin_coefficient = sBlueAtoms ?
+				li3.mMotzkinCoefficient = sBlueAtoms ?
 						PossibleMotzkinCoefficients.ZERO_AND_ONE
 						: PossibleMotzkinCoefficients.ANYTHING;
 				disjunction.add(li3);
@@ -221,7 +221,7 @@ public class MultiphaseTemplate extends ComposableTemplate {
 		for (int i = 0; i < size; ++i) {
 			final LinearInequality li = mfgens[i].generate(inVars);
 			li.setStrict(true);
-			li.motzkin_coefficient = (i == 0 && sRedAtoms) || (i > 0 && sBlueAtoms) ?
+			li.mMotzkinCoefficient = (i == 0 && sRedAtoms) || (i > 0 && sBlueAtoms) ?
 					PossibleMotzkinCoefficients.ZERO_AND_ONE
 					: PossibleMotzkinCoefficients.ANYTHING;
 			disjunction.add(li);

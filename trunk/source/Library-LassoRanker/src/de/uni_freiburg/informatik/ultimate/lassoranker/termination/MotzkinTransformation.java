@@ -187,7 +187,7 @@ public class MotzkinTransformation extends InstanceCounting {
 		if (manalysis_type.isLinear()) {
 			return li.allAffineTermsAreConstant();
 		} else if (manalysis_type == AnalysisType.NONLINEAR) {
-			return li.motzkin_coefficient != PossibleMotzkinCoefficients.ONE;
+			return li.mMotzkinCoefficient != PossibleMotzkinCoefficients.ONE;
 		} else {
 			assert false;
 		}
@@ -350,7 +350,7 @@ public class MotzkinTransformation extends InstanceCounting {
 				// This array is way to big, but I don't care
 			for (int i = 0; i < minequalities.size(); ++i) {
 				final LinearInequality li = minequalities.get(i);
-				if (!needsMotzkinCoefficient(li) && li.motzkin_coefficient
+				if (!needsMotzkinCoefficient(li) && li.mMotzkinCoefficient
 						!= PossibleMotzkinCoefficients.ONE) {
 					fixed_indeces[numfixed_coeffs] = i;
 					++numfixed_coeffs;
@@ -419,7 +419,7 @@ public class MotzkinTransformation extends InstanceCounting {
 			// Fixed Motzkin coefficients
 			for (int i = 0; i < minequalities.size(); ++i) {
 				final LinearInequality li = minequalities.get(i);
-				if (li.motzkin_coefficient
+				if (li.mMotzkinCoefficient
 						== PossibleMotzkinCoefficients.ZERO_AND_ONE) {
 					// Fixing Motzkin coefficient to { 0, 1 }
 					conjunction.add(Util.or(mscript,
