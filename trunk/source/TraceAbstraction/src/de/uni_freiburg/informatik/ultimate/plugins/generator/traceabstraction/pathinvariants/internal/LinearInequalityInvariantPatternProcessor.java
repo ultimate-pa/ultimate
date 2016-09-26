@@ -482,7 +482,7 @@ public final class LinearInequalityInvariantPatternProcessor
 		final Collection<Term> resultTerms = new ArrayList<Term>(
 				conjunctionDNF.size());
 		final AnalysisType analysisType = mUseNonlinearConstraints ? 
-				AnalysisType.Nonlinear : AnalysisType.Linear;
+				AnalysisType.NONLINEAR : AnalysisType.LINEAR;
 		for (final Collection<LinearInequality> conjunct : conjunctionDNF) {
 			logger.info( "[LIIPP] Transforming conjunct "
 					+ conjunct);

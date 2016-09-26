@@ -49,7 +49,7 @@ public class NonTerminationAnalysisSettings implements Serializable {
 	 * Use a linear SMT query, use a linear SMT query but guess some eigenvalues
 	 * of the loop, or use a nonlinear SMT query?
 	 */
-	public AnalysisType analysis = AnalysisType.Linear_with_guesses;
+	public AnalysisType analysis = AnalysisType.LINEAR_WITH_GUESSES;
 		// Default: AnalysisType.LINEAR_PLUS_GUESSES
 	
 	/**

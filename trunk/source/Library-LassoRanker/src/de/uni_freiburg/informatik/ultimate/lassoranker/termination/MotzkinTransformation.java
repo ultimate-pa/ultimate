@@ -186,7 +186,7 @@ public class MotzkinTransformation extends InstanceCounting {
 	private boolean needsMotzkinCoefficient(final LinearInequality li) {
 		if (manalysis_type.isLinear()) {
 			return li.allAffineTermsAreConstant();
-		} else if (manalysis_type == AnalysisType.Nonlinear) {
+		} else if (manalysis_type == AnalysisType.NONLINEAR) {
 			return li.motzkin_coefficient != PossibleMotzkinCoefficients.ONE;
 		} else {
 			assert false;
@@ -413,7 +413,7 @@ public class MotzkinTransformation extends InstanceCounting {
 				conjunction.add(
 						Util.or(mscript, disjunction.toArray(new Term[disjunction.size()])));
 			}
-		} else if (manalysis_type == AnalysisType.Nonlinear) {
+		} else if (manalysis_type == AnalysisType.NONLINEAR) {
 			conjunction.add(doTransform(mcoefficients, vars));
 			
 			// Fixed Motzkin coefficients

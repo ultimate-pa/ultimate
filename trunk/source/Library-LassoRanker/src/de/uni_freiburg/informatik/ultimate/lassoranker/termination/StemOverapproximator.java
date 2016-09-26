@@ -125,7 +125,7 @@ class StemOverapproximator {
 			mScript.push(1);
 			for (final List<LinearInequality> polyhedron : stem.getPolyhedra()) {
 				final MotzkinTransformation motzkin =
-						new MotzkinTransformation(mScript, AnalysisType.Linear, mAnnotateTerms);
+						new MotzkinTransformation(mScript, AnalysisType.LINEAR, mAnnotateTerms);
 				motzkin.add_inequalities(polyhedron);
 				final LinearInequality li = new LinearInequality(candidate_li);
 				li.negate();

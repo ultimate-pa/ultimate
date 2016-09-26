@@ -280,7 +280,7 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 
 		List<Term> lambda_guesses; // possible guesses for lambda if we are generating linear constraints
 		List<Term> nu_guesses; // possible values for nus
-		if (mAnalysisType == AnalysisType.Nonlinear) {
+		if (mAnalysisType == AnalysisType.NONLINEAR) {
 			// Use a variable for lambda
 			lambda_guesses = Collections.singletonList(null);
 			nu_guesses = Collections.singletonList(null);
@@ -290,10 +290,10 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			l.add(one);
 			nu_guesses = Collections.unmodifiableList(l);
 
-			if (mAnalysisType == AnalysisType.Linear) {
+			if (mAnalysisType == AnalysisType.LINEAR) {
 				// Just use lambda = 1
 				lambda_guesses = Collections.singletonList(one);
-			} else if (mAnalysisType == AnalysisType.Linear_with_guesses) {
+			} else if (mAnalysisType == AnalysisType.LINEAR_WITH_GUESSES) {
 				// Use a list of guesses for lambda
 				final Rational[] eigenvalues = mlasso.guessEigenvalues(false);
 				lambda_guesses = new ArrayList<>(eigenvalues.length);

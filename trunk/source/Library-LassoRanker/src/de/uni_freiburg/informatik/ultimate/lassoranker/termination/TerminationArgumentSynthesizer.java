@@ -135,7 +135,7 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		} else {
 			mscript.setLogic(Logics.QF_NRA);
 		}
-		if (msettings.analysis == AnalysisType.Linear && !settings.nondecreasing_invariants) {
+		if (msettings.analysis == AnalysisType.LINEAR && !settings.nondecreasing_invariants) {
 			mLogger.warn("Termination analysis type is 'Linear', " + "hence invariants must be non-decreasing!");
 		}
 
@@ -301,7 +301,7 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 				motzkin.add_inequalities(loopConj);
 				motzkin.add_inequality(sig.generate(loop.getInVars())); // si(x)
 				final LinearInequality li = sig.generate(loop.getOutVars()); // ~si(x')
-				li.motzkin_coefficient = msettings.nondecreasing_invariants || msettings.analysis == AnalysisType.Linear
+				li.motzkin_coefficient = msettings.nondecreasing_invariants || msettings.analysis == AnalysisType.LINEAR
 						? PossibleMotzkinCoefficients.ZERO_AND_ONE : PossibleMotzkinCoefficients.ANYTHING;
 				li.negate();
 				motzkin.add_inequality(li);

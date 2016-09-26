@@ -112,7 +112,7 @@ class SupportingInvariantSimplifier {
 		for (final SupportingInvariant si : sis) {
 			mScript.push(1);
 			final MotzkinTransformation motzkin =
-					new MotzkinTransformation(mScript, AnalysisType.Linear, mAnnotateTerms);
+					new MotzkinTransformation(mScript, AnalysisType.LINEAR, mAnnotateTerms);
 			final LinearInequality li = SI2LI(si);
 			li.negate();
 			motzkin.add_inequality(li);
