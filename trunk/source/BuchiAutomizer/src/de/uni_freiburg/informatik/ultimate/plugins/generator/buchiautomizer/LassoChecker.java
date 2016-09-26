@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.FixpointCh
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.FixpointCheck.HasFixpoint;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationAnalysisSettings;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationArgument;
+import de.uni_freiburg.informatik.ultimate.lassoranker.termination.DefaultTerminationAnalysisSettings;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.NonterminationAnalysisBenchmark;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.SupportingInvariant;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationAnalysisBenchmark;
@@ -685,14 +686,37 @@ public class LassoChecker {
 	}
 
 	private TerminationAnalysisSettings constructTASettings() {
-		final TerminationAnalysisSettings settings = new TerminationAnalysisSettings();
-		settings.analysis = mRankAnalysisType;
-		settings.numnon_strict_invariants = 1;
-		settings.numstrict_invariants = 0;
-		settings.nondecreasing_invariants = true;
-		settings.simplify_termination_argument = mTrySimplificationTerminationArgument;
-		settings.simplify_supporting_invariants = mTrySimplificationTerminationArgument;
-		return settings;
+		return new TerminationAnalysisSettings(new DefaultTerminationAnalysisSettings() {
+			@Override
+			public AnalysisType getAnalysis() {
+				return mRankAnalysisType;
+			}
+
+			@Override
+			public int getNumNonStrictInvariants() {
+				return 1;
+			}
+
+			@Override
+			public int getNumStrictInvariants() {
+				return 0;
+			}
+
+			@Override
+			public boolean isNonDecreasingInvariants() {
+				return true;
+			}
+
+			@Override
+			public boolean isSimplifySupportingInvariants() {
+				return mTrySimplificationTerminationArgument;
+			}
+
+			@Override
+			public boolean isSimplifyTerminationArgument() {
+				return mTrySimplificationTerminationArgument;
+			}
+		});
 	}
 
 	private NonTerminationAnalysisSettings constructNTASettings() {

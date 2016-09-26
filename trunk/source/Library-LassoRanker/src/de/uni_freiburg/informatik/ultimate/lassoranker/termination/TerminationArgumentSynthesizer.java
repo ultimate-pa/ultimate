@@ -70,7 +70,7 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	/**
 	 * The (local) settings for termination analysis
 	 */
-	private final TerminationAnalysisSettings msettings;
+	private TerminationAnalysisSettings mSettings;
 
 	/**
 	 * The template to be used
@@ -118,24 +118,20 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			final Set<Term> arrayIndexSupportingInvariants, final IUltimateServiceProvider services,
 			final IToolchainStorage storage) throws IOException {
 		super(lasso, preferences, template.getName() + "Template", services, storage);
-
-		// Check the settings
-		msettings = new TerminationAnalysisSettings(settings); // defensive
-																// copy
-		msettings.checkSanity();
+		mSettings = settings;
 		mLogger.info("Termination Analysis Settings:\n" + settings.toString());
-		assert !msettings.analysis.isDisabled();
-		if (msettings.numstrict_invariants == 0 && msettings.numnon_strict_invariants == 0) {
+		assert !mSettings.getAnalysis().isDisabled();
+		if (mSettings.getNumStrictInvariants() == 0 && mSettings.getNumNonStrictInvariants() == 0) {
 			mLogger.info("Generation of supporting invariants is disabled.");
 		}
 
 		// Set logic
-		if (msettings.analysis.isLinear()) {
+		if (mSettings.getAnalysis().isLinear()) {
 			mscript.setLogic(Logics.QF_LRA);
 		} else {
 			mscript.setLogic(Logics.QF_NRA);
 		}
-		if (msettings.analysis == AnalysisType.LINEAR && !settings.nondecreasing_invariants) {
+		if (mSettings.getAnalysis() == AnalysisType.LINEAR && !settings.isNonDecreasingInvariants()) {
 			mLogger.warn("Termination analysis type is 'Linear', " + "hence invariants must be non-decreasing!");
 		}
 
@@ -231,7 +227,7 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 
 		// Get guesses for loop eigenvalues as possible Motzkin coefficients
 		Rational[] eigenvalue_guesses;
-		if (msettings.analysis.wantsGuesses()) {
+		if (mSettings.getAnalysis().wantsGuesses()) {
 			eigenvalue_guesses = mlasso.guessEigenvalues(false);
 			assert eigenvalue_guesses.length >= 2;
 		} else {
@@ -245,20 +241,20 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			++j;
 			for (int m = 0; m < templateConstraints.size(); ++m) {
 				final MotzkinTransformation motzkin =
-						new MotzkinTransformation(mscript, msettings.analysis, mPreferences.isAnnotateTerms());
+						new MotzkinTransformation(mscript, mSettings.getAnalysis(), mPreferences.isAnnotateTerms());
 				motzkin.annotation = annotations.get(m) + " " + j;
 				motzkin.add_inequalities(loopConj);
 				motzkin.add_inequalities(templateConstraints.get(m));
 
 				// Add supporting invariants
-				assert (msettings.numstrict_invariants >= 0);
-				for (int i = 0; i < msettings.numstrict_invariants; ++i) {
+				assert (mSettings.getNumStrictInvariants() >= 0);
+				for (int i = 0; i < mSettings.getNumStrictInvariants(); ++i) {
 					final SupportingInvariantGenerator sig = new SupportingInvariantGenerator(mscript, siVars, true);
 					si_generators.add(sig);
 					motzkin.add_inequality(sig.generate(loop.getInVars()));
 				}
-				assert (msettings.numnon_strict_invariants >= 0);
-				for (int i = 0; i < msettings.numnon_strict_invariants; ++i) {
+				assert (mSettings.getNumNonStrictInvariants() >= 0);
+				for (int i = 0; i < mSettings.getNumNonStrictInvariants(); ++i) {
 					final SupportingInvariantGenerator sig = new SupportingInvariantGenerator(mscript, siVars, false);
 					si_generators.add(sig);
 					final LinearInequality li = sig.generate(loop.getInVars());
@@ -281,7 +277,7 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			for (final List<LinearInequality> stemConj : stem.getPolyhedra()) {
 				++j;
 				final MotzkinTransformation motzkin =
-						new MotzkinTransformation(mscript, msettings.analysis, mPreferences.isAnnotateTerms());
+						new MotzkinTransformation(mscript, mSettings.getAnalysis(), mPreferences.isAnnotateTerms());
 				motzkin.annotation = "invariant " + i + " initiation " + j;
 				motzkin.add_inequalities(stemConj);
 				final LinearInequality li = sig.generate(stem.getOutVars());
@@ -296,13 +292,14 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			for (final List<LinearInequality> loopConj : loop.getPolyhedra()) {
 				++j;
 				final MotzkinTransformation motzkin =
-						new MotzkinTransformation(mscript, msettings.analysis, mPreferences.isAnnotateTerms());
+						new MotzkinTransformation(mscript, mSettings.getAnalysis(), mPreferences.isAnnotateTerms());
 				motzkin.annotation = "invariant " + i + " consecution " + j;
 				motzkin.add_inequalities(loopConj);
 				motzkin.add_inequality(sig.generate(loop.getInVars())); // si(x)
 				final LinearInequality li = sig.generate(loop.getOutVars()); // ~si(x')
-				li.mMotzkinCoefficient = msettings.nondecreasing_invariants || msettings.analysis == AnalysisType.LINEAR
-						? PossibleMotzkinCoefficients.ZERO_AND_ONE : PossibleMotzkinCoefficients.ANYTHING;
+				li.mMotzkinCoefficient =
+						mSettings.isNonDecreasingInvariants() || mSettings.getAnalysis() == AnalysisType.LINEAR
+								? PossibleMotzkinCoefficients.ZERO_AND_ONE : PossibleMotzkinCoefficients.ANYTHING;
 				li.negate();
 				motzkin.add_inequality(li);
 				conj.add(motzkin.transform(eigenvalue_guesses));
@@ -333,7 +330,7 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	@Override
 	protected LBool do_synthesis() throws SMTLIBException, TermException, IOException {
 		mtemplate.init(this);
-		if (msettings.analysis.isLinear() && mtemplate.getDegree() > 0) {
+		if (mSettings.getAnalysis().isLinear() && mtemplate.getDegree() > 0) {
 			mLogger.warn(
 					"Using a linear SMT query and a templates of degree " + "> 0, hence this method is incomplete.");
 		}
@@ -353,9 +350,45 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		 */
 		if (mlasso.getStem().isTrue()) {
 			mLogger.info("There is no stem transition; " + "disabling supporting invariant generation.");
-			msettings.numstrict_invariants = 0;
-			msettings.numnon_strict_invariants = 0;
-		} else if (msettings.overapproximate_stem) {
+			mSettings = new TerminationAnalysisSettings(new ITerminationAnalysisSettings() {
+
+				@Override
+				public AnalysisType getAnalysis() {
+					return mSettings.getAnalysis();
+				}
+
+				@Override
+				public int getNumStrictInvariants() {
+					return 0;
+				}
+
+				@Override
+				public int getNumNonStrictInvariants() {
+					return 0;
+				}
+
+				@Override
+				public boolean isNonDecreasingInvariants() {
+					return mSettings.isNonDecreasingInvariants();
+				}
+
+				@Override
+				public boolean isSimplifyTerminationArgument() {
+					return mSettings.isSimplifyTerminationArgument();
+				}
+
+				@Override
+				public boolean isSimplifySupportingInvariants() {
+					return mSettings.isSimplifySupportingInvariants();
+				}
+
+				@Override
+				public boolean isOverapproximateStem() {
+					return mSettings.isOverapproximateStem();
+				}
+
+			});
+		} else if (mSettings.isOverapproximateStem()) {
 			mLogger.info("Overapproximating stem...");
 			final StemOverapproximator so = new StemOverapproximator(mPreferences, mservices, mstorage);
 			final int stematoms = stem.getNumInequalities();
@@ -384,7 +417,7 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 
 			// Get valuation for the variables
 			Map<Term, Rational> val;
-			if (msettings.simplify_termination_argument) {
+			if (mSettings.isSimplifyTerminationArgument()) {
 				mLogger.info("Found a termination argument, trying to simplify.");
 				val = ModelExtractionUtils.getSimplifiedAssignment_TwoMode(mscript, coefficients, mLogger, mservices);
 			} else {
@@ -398,7 +431,7 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			}
 
 			// Simplify supporting invariants
-			if (msettings.simplify_supporting_invariants) {
+			if (mSettings.isSimplifySupportingInvariants()) {
 				final SupportingInvariantSimplifier tas =
 						new SupportingInvariantSimplifier(mPreferences, mservices, mstorage);
 				mLogger.info("Simplifying supporting invariants...");

@@ -220,7 +220,7 @@ public class LassoRankerStarter {
 
 		// Get all templates
 		RankingTemplate[] templates;
-		if (terminationSettings.analysis == AnalysisType.DISABLED) {
+		if (terminationSettings.getAnalysis() == AnalysisType.DISABLED) {
 			templates = new RankingTemplate[0];
 		} else {
 			templates = getTemplates();

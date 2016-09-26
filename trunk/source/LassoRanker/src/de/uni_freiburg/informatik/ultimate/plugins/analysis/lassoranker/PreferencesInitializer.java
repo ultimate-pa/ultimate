@@ -38,6 +38,8 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.LassoRankerPreferences;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.DefaultNonTerminationAnalysisSettings;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.INonTerminationAnalysisSettings;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationAnalysisSettings;
+import de.uni_freiburg.informatik.ultimate.lassoranker.termination.DefaultTerminationAnalysisSettings;
+import de.uni_freiburg.informatik.ultimate.lassoranker.termination.ITerminationAnalysisSettings;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationAnalysisSettings;
 
 /**
@@ -107,7 +109,7 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
 		// Get default preferences and settings
 		final ILassoRankerPreferences lassoRankerDefaults = new DefaultLassoRankerPreferences();
-		final TerminationAnalysisSettings terminationSettings = new TerminationAnalysisSettings();
+		final ITerminationAnalysisSettings terminationSettings = new DefaultTerminationAnalysisSettings();
 		final INonTerminationAnalysisSettings nonTerminationDefaults = new DefaultNonTerminationAnalysisSettings();
 		return new UltimatePreferenceItem<?>[] {
 				new UltimatePreferenceItem<>(LABEL_enable_partitioneer, lassoRankerDefaults.isEnablePartitioneer(),
@@ -120,14 +122,14 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 						nonTerminationDefaults.isNilpotentComponents(), PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_nontermination_bounded_executions,
 						nonTerminationDefaults.isAllowBounded(), PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_termination_analysis, terminationSettings.analysis,
+				new UltimatePreferenceItem<>(LABEL_termination_analysis, terminationSettings.getAnalysis(),
 						PreferenceType.Combo, AnalysisType.values()),
-				new UltimatePreferenceItem<>(LABEL_numstrict_invariants, terminationSettings.numstrict_invariants,
+				new UltimatePreferenceItem<>(LABEL_numstrict_invariants, terminationSettings.getNumStrictInvariants(),
 						PreferenceType.Integer),
 				new UltimatePreferenceItem<>(LABEL_numnon_strict_invariants,
-						terminationSettings.numnon_strict_invariants, PreferenceType.Integer),
+						terminationSettings.getNumNonStrictInvariants(), PreferenceType.Integer),
 				new UltimatePreferenceItem<>(LABEL_nondecreasing_invariants,
-						terminationSettings.nondecreasing_invariants, PreferenceType.Boolean),
+						terminationSettings.isNonDecreasingInvariants(), PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_compute_integral_hull, lassoRankerDefaults.isComputeIntegralHull(),
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_annotate_terms, lassoRankerDefaults.isAnnotateTerms(),
@@ -214,17 +216,38 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 	 * @return the (local) termination analysis settings from the GUI
 	 */
 	public static TerminationAnalysisSettings getTerminationAnalysisSettings(final IUltimateServiceProvider services) {
-		// Get default preferences
-		final TerminationAnalysisSettings settings = new TerminationAnalysisSettings();
-
 		final IPreferenceProvider store = services.getPreferenceProvider(Activator.PLUGIN_ID);
-		settings.analysis = store.getEnum(LABEL_termination_analysis, AnalysisType.class);
-		settings.numstrict_invariants = store.getInt(LABEL_numstrict_invariants);
-		settings.numnon_strict_invariants = store.getInt(LABEL_numnon_strict_invariants);
-		settings.nondecreasing_invariants = store.getBoolean(LABEL_nondecreasing_invariants);
-		settings.simplify_termination_argument = store.getBoolean(LABEL_simplify_result);
-		settings.simplify_supporting_invariants = store.getBoolean(LABEL_simplify_result);
-		return settings;
+		return new TerminationAnalysisSettings(new DefaultTerminationAnalysisSettings() {
+			@Override
+			public AnalysisType getAnalysis() {
+				return store.getEnum(LABEL_termination_analysis, AnalysisType.class);
+			}
+
+			@Override
+			public int getNumStrictInvariants() {
+				return store.getInt(LABEL_numstrict_invariants);
+			}
+
+			@Override
+			public int getNumNonStrictInvariants() {
+				return store.getInt(LABEL_numnon_strict_invariants);
+			}
+
+			@Override
+			public boolean isNonDecreasingInvariants() {
+				return store.getBoolean(LABEL_nondecreasing_invariants);
+			}
+
+			@Override
+			public boolean isSimplifyTerminationArgument() {
+				return store.getBoolean(LABEL_simplify_result);
+			}
+
+			@Override
+			public boolean isSimplifySupportingInvariants() {
+				return store.getBoolean(LABEL_simplify_result);
+			}
+		});
 	}
 
 	/**
