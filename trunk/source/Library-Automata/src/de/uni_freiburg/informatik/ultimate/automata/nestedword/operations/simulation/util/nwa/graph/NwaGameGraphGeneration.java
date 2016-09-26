@@ -322,8 +322,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 					// Find out all SpoilerInvoker and create search elements
 					for (final SpoilerNwaVertex<LETTER, STATE> spoilerInvoker : summarizeEdge
 							.getSpoilerInvokers(duplicatorChoiceEntry)) {
-						final SearchElement<LETTER, STATE> searchElement = new SearchElement<LETTER, STATE>(
-								spoilerInvoker, edgeSource, null, summarizeEdge, duplicatorChoiceEntry, spoilerInvoker);
+						final SearchElement<LETTER, STATE> searchElement = new SearchElement<>(spoilerInvoker,
+								edgeSource, null, summarizeEdge, duplicatorChoiceEntry, spoilerInvoker);
 						searchQueue.add(searchElement);
 					}
 				}
@@ -443,14 +443,13 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 									|| transitionType == ETransitionType.SUMMARIZE_EXIT) {
 								// Ignore return and special edges
 								break;
-							} else {
-								final Integer succSearchPriority = vertexToSubSummarizeToSearchPriority.get(succ,
-										searchSummarizeEdge, searchDuplicatorChoice);
-								if (succSearchPriority == null || succSearchPriority == SummarizeEdge.NO_PRIORITY) {
-									continue;
-								}
-								succPriority = succSearchPriority;
 							}
+							final Integer succSearchPriority = vertexToSubSummarizeToSearchPriority.get(succ,
+									searchSummarizeEdge, searchDuplicatorChoice);
+							if (succSearchPriority == null || succSearchPriority == SummarizeEdge.NO_PRIORITY) {
+								continue;
+							}
+							succPriority = succSearchPriority;
 						}
 					}
 					// Evaluate the priority of the current successor
@@ -581,11 +580,11 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 								// Follow summarize edge to the source and use
 								// this vertex
 								final Vertex<LETTER, STATE> source = predAsDuplicatorNwa.getSummarizeEdge().getSource();
-								searchQueue.add(new SearchElement<LETTER, STATE>(source, searchTarget, searchVertex,
+								searchQueue.add(new SearchElement<>(source, searchTarget, searchVertex,
 										searchSummarizeEdge, searchDuplicatorChoice, searchOrigin));
 							} else {
 								// Create a search element
-								searchQueue.add(new SearchElement<LETTER, STATE>(pred, searchTarget, searchVertex,
+								searchQueue.add(new SearchElement<>(pred, searchTarget, searchVertex,
 										searchSummarizeEdge, searchDuplicatorChoice, searchOrigin));
 							}
 						} else {
@@ -597,11 +596,10 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 										|| transitionType == ETransitionType.SUMMARIZE_EXIT) {
 									// Ignore return and special edges
 									break;
-								} else {
-									// Create a search element
-									searchQueue.add(new SearchElement<LETTER, STATE>(pred, searchTarget, searchVertex,
-											searchSummarizeEdge, searchDuplicatorChoice, searchOrigin));
 								}
+								// Create a search element
+								searchQueue.add(new SearchElement<>(pred, searchTarget, searchVertex,
+										searchSummarizeEdge, searchDuplicatorChoice, searchOrigin));
 							}
 						}
 						// If operation was canceled, for example from the
@@ -717,7 +715,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			final MinimizeNwaMaxSat2<LETTER, STATE> minimizer = new MinimizeNwaMaxSat2<>(mServices, stateFactory, mNwa,
 					useFinalStateConstraints, equivalenceClassesAsCollection, false, false, false, true, false);
 			mSimulationPerformance.stopTimeMeasure(ETimeMeasure.SOLVE_MAX_SAT);
-			result = new RemoveUnreachable<LETTER, STATE>(mServices, minimizer.getResult()).getResult();
+			result = new RemoveUnreachable<>(mServices, minimizer.getResult()).getResult();
 		} else {
 			// If there are no merge-able states simply
 			// copy the inputed automaton
@@ -760,11 +758,10 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		// Remove unreachable states which can occur due to transition removal
 		if (areThereRemoveableTransitions) {
 			final INestedWordAutomaton<LETTER, STATE> nwaReachableStates =
-					new RemoveUnreachable<LETTER, STATE>(mServices, result).getResult();
+					new RemoveUnreachable<>(mServices, result).getResult();
 			return nwaReachableStates;
-		} else {
-			return result;
 		}
+		return result;
 	}
 
 	/**
@@ -1436,9 +1433,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		// Determinizing is very expensive, it is the dominant part of the
 		// whole algorithm
 		final INestedWordAutomatonSimple<GameLetter<LETTER, STATE>, IGameState> determinizedGameAutomaton =
-				new Determinize<GameLetter<LETTER, STATE>, IGameState>(mServices,
-						gameAutomatonWithSummaries.getStateFactory(), gameAutomatonWithSummaries, summarySources)
-								.getResult();
+				new Determinize<>(mServices, gameAutomatonWithSummaries.getStateFactory(), gameAutomatonWithSummaries,
+						summarySources).getResult();
 		mSimulationPerformance.setCountingMeasure(ECountingMeasure.DETERMINIZED_GAME_AUTOMATON_STATES,
 				determinizedGameAutomaton.size());
 		final NestedWordAutomatonReachableStates<GameLetter<LETTER, STATE>, IGameState> gameAutomatonWithMergedSummaries =
@@ -2210,9 +2206,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		if (mSimulationType == ESimulationType.DELAYED) {
 			if (!mNwa.isFinal(rightState)) {
 				return 1;
-			} else {
-				return 0;
 			}
+			return 0;
 		}
 
 		if (mNwa.isFinal(rightState)) {
