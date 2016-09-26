@@ -446,7 +446,7 @@ public class LassoRankerStarter {
 		states.add(nta.getStateInit());
 		states.add(nta.getStateHonda());
 		states.addAll(nta.getGEVs());
-		final List<Map<Term, Rational>> initHondaRays = BacktranslationUtil.rank2Rcfg(term2expression, states);
+		final List<Map<Term, Rational>> initHondaRays = BacktranslationUtil.rank2Rcfg(states);
 
 		final NonTerminationArgumentResult<RcfgElement, Term> result =
 				new GeometricNonTerminationArgumentResult<>(mHonda, Activator.PLUGIN_NAME, initHondaRays.get(0),
