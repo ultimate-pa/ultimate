@@ -186,7 +186,7 @@ public class LassoRankerStarter {
 		// Try to prove non-termination
 		final NonTerminationAnalysisSettings nonterminationSettings =
 				PreferencesInitializer.getNonTerminationAnalysisSettings(mServices);
-		if (nonterminationSettings.analysis != AnalysisType.DISABLED) {
+		if (nonterminationSettings.getAnalysis() != AnalysisType.DISABLED) {
 			try {
 				final GeometricNonTerminationArgument nta = laNT.checkNonTermination(nonterminationSettings);
 				if (nta != null) {

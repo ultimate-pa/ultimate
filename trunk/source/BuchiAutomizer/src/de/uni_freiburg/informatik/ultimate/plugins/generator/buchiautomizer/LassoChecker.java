@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.LassoAnalysis;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LassoAnalysis.AnalysisTechnique;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LassoAnalysis.PreprocessingBenchmark;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
+import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.DefaultNonTerminationAnalysisSettings;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.FixpointCheck;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.FixpointCheck.HasFixpoint;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationAnalysisSettings;
@@ -695,10 +696,17 @@ public class LassoChecker {
 	}
 
 	private NonTerminationAnalysisSettings constructNTASettings() {
-		final NonTerminationAnalysisSettings settings = new NonTerminationAnalysisSettings();
-		settings.analysis = mGntaAnalysisType;
-		settings.number_of_gevs = mGntaDirections;
-		return settings;
+		return new NonTerminationAnalysisSettings(new DefaultNonTerminationAnalysisSettings() {
+			@Override
+			public AnalysisType getAnalysis() {
+				return mGntaAnalysisType;
+			}
+
+			@Override
+			public int getNumberOfGevs() {
+				return mGntaDirections;
+			}
+		});
 	}
 
 	private SynthesisResult synthesize(final boolean withStem, UnmodifiableTransFormula stemTF,

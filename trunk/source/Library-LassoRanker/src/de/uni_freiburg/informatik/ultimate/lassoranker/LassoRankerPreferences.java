@@ -78,10 +78,6 @@ public class LassoRankerPreferences implements Serializable, ILassoRankerPrefere
 
 	private final boolean mFakeNonIncrementalScript;
 
-	public LassoRankerPreferences() {
-		this(new DefaultLassoRankerPreferences());
-	}
-
 	/**
 	 * Copy constructor. Call this with an anonymous extension of {@link DefaultLassoRankerPreferences} to create a
 	 * custom {@link ILassoRankerPreferences} instance.

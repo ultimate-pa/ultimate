@@ -33,7 +33,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePrefer
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.AnalysisType;
 import de.uni_freiburg.informatik.ultimate.lassoranker.DefaultLassoRankerPreferences;
+import de.uni_freiburg.informatik.ultimate.lassoranker.ILassoRankerPreferences;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LassoRankerPreferences;
+import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.DefaultNonTerminationAnalysisSettings;
+import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.INonTerminationAnalysisSettings;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationAnalysisSettings;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationAnalysisSettings;
 
@@ -103,31 +106,31 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
 		// Get default preferences and settings
-		final LassoRankerPreferences preferences = new LassoRankerPreferences();
-		final TerminationAnalysisSettings termination_settings = new TerminationAnalysisSettings();
-		final NonTerminationAnalysisSettings nontermination_settings = new NonTerminationAnalysisSettings();
+		final ILassoRankerPreferences lassoRankerDefaults = new DefaultLassoRankerPreferences();
+		final TerminationAnalysisSettings terminationSettings = new TerminationAnalysisSettings();
+		final INonTerminationAnalysisSettings nonTerminationDefaults = new DefaultNonTerminationAnalysisSettings();
 		return new UltimatePreferenceItem<?>[] {
-				new UltimatePreferenceItem<>(LABEL_enable_partitioneer, preferences.isEnablePartitioneer(),
+				new UltimatePreferenceItem<>(LABEL_enable_partitioneer, lassoRankerDefaults.isEnablePartitioneer(),
 						PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_nontermination_analysis, nontermination_settings.analysis,
+				new UltimatePreferenceItem<>(LABEL_nontermination_analysis, nonTerminationDefaults.getAnalysis(),
 						PreferenceType.Combo, AnalysisType.values()),
-				new UltimatePreferenceItem<>(LABEL_nontermination_number_gevs, nontermination_settings.number_of_gevs,
+				new UltimatePreferenceItem<>(LABEL_nontermination_number_gevs, nonTerminationDefaults.getNumberOfGevs(),
 						PreferenceType.Integer),
 				new UltimatePreferenceItem<>(LABEL_nontermination_nilpotent_components,
-						nontermination_settings.nilpotent_components, PreferenceType.Boolean),
+						nonTerminationDefaults.isNilpotentComponents(), PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_nontermination_bounded_executions,
-						nontermination_settings.allowBounded, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_termination_analysis, termination_settings.analysis,
+						nonTerminationDefaults.isAllowBounded(), PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_termination_analysis, terminationSettings.analysis,
 						PreferenceType.Combo, AnalysisType.values()),
-				new UltimatePreferenceItem<>(LABEL_numstrict_invariants, termination_settings.numstrict_invariants,
+				new UltimatePreferenceItem<>(LABEL_numstrict_invariants, terminationSettings.numstrict_invariants,
 						PreferenceType.Integer),
 				new UltimatePreferenceItem<>(LABEL_numnon_strict_invariants,
-						termination_settings.numnon_strict_invariants, PreferenceType.Integer),
+						terminationSettings.numnon_strict_invariants, PreferenceType.Integer),
 				new UltimatePreferenceItem<>(LABEL_nondecreasing_invariants,
-						termination_settings.nondecreasing_invariants, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_compute_integral_hull, preferences.isComputeIntegralHull(),
+						terminationSettings.nondecreasing_invariants, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_compute_integral_hull, lassoRankerDefaults.isComputeIntegralHull(),
 						PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_annotate_terms, preferences.isAnnotateTerms(),
+				new UltimatePreferenceItem<>(LABEL_annotate_terms, lassoRankerDefaults.isAnnotateTerms(),
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_simplify_result, s_simplify_result, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_enable_affine_template, s_enable_affine_template,
@@ -155,11 +158,11 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<>(LABEL_multilex_template_size, s_multilex_template_size,
 						PreferenceType.Integer),
 				new UltimatePreferenceItem<>(LABEL_use_external_solver, true, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_smt_solver_command, preferences.getExternalSolverCommand(),
+				new UltimatePreferenceItem<>(LABEL_smt_solver_command, lassoRankerDefaults.getExternalSolverCommand(),
 						PreferenceType.String),
-				new UltimatePreferenceItem<>(LABEL_dump_smt_script, preferences.isDumpSmtSolverScript(),
+				new UltimatePreferenceItem<>(LABEL_dump_smt_script, lassoRankerDefaults.isDumpSmtSolverScript(),
 						PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_path_of_dumped_script, preferences.getPathOfDumpedScript(),
+				new UltimatePreferenceItem<>(LABEL_path_of_dumped_script, lassoRankerDefaults.getPathOfDumpedScript(),
 						PreferenceType.String) };
 	}
 
@@ -229,14 +232,28 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 	 */
 	public static NonTerminationAnalysisSettings
 			getNonTerminationAnalysisSettings(final IUltimateServiceProvider services) {
-		// Get default preferences
-		final NonTerminationAnalysisSettings settings = new NonTerminationAnalysisSettings();
-
 		final IPreferenceProvider store = services.getPreferenceProvider(Activator.PLUGIN_ID);
-		settings.analysis = store.getEnum(LABEL_nontermination_analysis, AnalysisType.class);
-		settings.number_of_gevs = store.getInt(LABEL_nontermination_number_gevs);
-		settings.nilpotent_components = store.getBoolean(LABEL_nontermination_nilpotent_components);
-		settings.allowBounded = store.getBoolean(LABEL_nontermination_bounded_executions);
-		return settings;
+
+		return new NonTerminationAnalysisSettings(new DefaultNonTerminationAnalysisSettings() {
+			@Override
+			public AnalysisType getAnalysis() {
+				return store.getEnum(LABEL_nontermination_analysis, AnalysisType.class);
+			}
+
+			@Override
+			public int getNumberOfGevs() {
+				return store.getInt(LABEL_nontermination_number_gevs);
+			}
+
+			@Override
+			public boolean isNilpotentComponents() {
+				return store.getBoolean(LABEL_nontermination_nilpotent_components);
+			}
+
+			@Override
+			public boolean isAllowBounded() {
+				return store.getBoolean(LABEL_nontermination_bounded_executions);
+			}
+		});
 	}
 }
