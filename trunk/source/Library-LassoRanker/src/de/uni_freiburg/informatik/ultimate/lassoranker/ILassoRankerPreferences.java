@@ -28,7 +28,7 @@ package de.uni_freiburg.informatik.ultimate.lassoranker;
 
 import java.util.function.Consumer;
 
-import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteArraysMapElimination.MapEliminationSettings;
+import de.uni_freiburg.informatik.ultimate.lassoranker.mapelimination.MapEliminationSettings;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.InequalityConverter;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.InequalityConverter.NlaHandling;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
@@ -42,12 +42,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.S
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * @author Jan Leike
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- *
  */
 public interface ILassoRankerPreferences {
 	/**
 	 * Should the polyhedra for stem and loop be made integral for integer programs? (Not yet implemented.)
-	 *
 	 */
 	public boolean isComputeIntegralHull();
 
