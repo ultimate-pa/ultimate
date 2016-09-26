@@ -2,7 +2,7 @@
 #include <assert.h>
 #include <math.h>
 
-//#Safe
+//#Unsafe
 //@ ltl invariant positive: []( AP(a > b) );
 
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));

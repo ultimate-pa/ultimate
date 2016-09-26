@@ -266,7 +266,6 @@ public final class ProductGenerator {
 				} else if (isNonProductNode(origRcfgSourceLoc)) {
 					createReturnEdgesNonProductToProduct(origRcfgSourceLoc, origRcfgTargetLoc, returnEdge);
 				} else {
-					//TODO: here false or true
 					createReturnEdgesOther(origRcfgSourceLoc, returnEdge, false);
 				}
 			}
@@ -328,7 +327,6 @@ public final class ProductGenerator {
 		assert mOrigRcfgCallLocs2CallEdges.get(returnEdge.getCallerProgramPoint()).size() == 1;
 
 		for (final String nwaLoc : mNWA.getStates()) {
-			//TODO: if stepwise than only enter initial states here
 			final ProgramPoint productTargetLoc =
 					mProductLocations.get(mNameGenerator.generateStateName(origRcfgTargetLoc, nwaLoc));
 			createNewReturnEdge(productSourceLoc, returnEdge, productTargetLoc,
@@ -529,7 +527,6 @@ public final class ProductGenerator {
 				// in this NWA state
 				for (final OutgoingInternalTransition<CodeBlock, String> autTrans : mNWA.internalSuccessors(nwaState)) {
 							if (autTrans.getSucc().equals(nwaState)) {
-								//TODO: here false or true
 								createNewStatementSequence(helper, seq, helper, autTrans.getLetter(),false);
 								added = true;
 							}
@@ -649,16 +646,27 @@ public final class ProductGenerator {
 	private void handleEdgeStatementSequence(final ProgramPoint productLoc, final String nwaLoc,
 			final StatementSequence rcfgEdge, final boolean isProgramStep) {
 		ProgramPoint targetpp;
-		for (final OutgoingInternalTransition<CodeBlock, String> autTrans : mNWA.internalSuccessors(nwaLoc)) {
-			//add no edges if this is not a program step or not the program flow
-			if (!isProgramStep && !autTrans.getSucc().equals(nwaLoc)) {
-				continue;
+		// if this is a program step encode normal (crossproduct) else 
+		// stay in the same buchi state and append program flow
+		if(isProgramStep){
+			for (final OutgoingInternalTransition<CodeBlock, String> autTrans : mNWA.internalSuccessors(nwaLoc)) {
+				//add no edges if this is not a program step or not the program flow
+				targetpp = mProductLocations
+						.get(mNameGenerator.generateStateName((ProgramPoint) rcfgEdge.getTarget(), autTrans.getSucc()));
+				// append statements of rcfg and ltl
+				createNewStatementSequence(productLoc, rcfgEdge, targetpp, autTrans.getLetter(), isProgramStep);
 			}
+		} else {
+			//add no edges if this is not a program step or not the program flow
 			targetpp = mProductLocations
-					.get(mNameGenerator.generateStateName((ProgramPoint) rcfgEdge.getTarget(), autTrans.getSucc()));
+					.get(mNameGenerator.generateStateName((ProgramPoint) rcfgEdge.getTarget(), nwaLoc));
 			// append statements of rcfg and ltl
-			createNewStatementSequence(productLoc, rcfgEdge, targetpp, autTrans.getLetter(), isProgramStep);
+			createNewStatementSequence(productLoc, rcfgEdge, targetpp, null, isProgramStep);
 		}
+		
+		
+		
+
 	}
 
 	private void handleEdgeReturn(final ProgramPoint productLoc, final String nwaLoc, final Return returnEdge,
@@ -891,7 +899,7 @@ public final class ProductGenerator {
 			stmts.addAll(checkLetter(letter));
 		}
 		// create the edge
-		StatementSequence newSS;
+		StatementSequence newSS; 
 		assert currentpp != null;
 		assert targetpp != null;
 		if (originalSS == null) {

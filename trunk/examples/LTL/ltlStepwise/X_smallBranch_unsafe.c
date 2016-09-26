@@ -2,27 +2,27 @@
 #include <assert.h>
 #include <math.h>
 
-//#Safe
-//@ ltl invariant positive: []( AP(a >= b) ) ;
+//#Unsafe
+//@ ltl invariant positive: [](AP(a==1) ==> X(AP(a==2)));
 
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));
 extern void __VERIFIER_ltl_step() __attribute__ ((__noreturn__));
+extern int __VERIFIER_nondet_int() __attribute__ ((__noreturn__));
 
-int a = 5;
-int b = 3;
-int c = 1;
-	
-	
+int a, x = 5;
+
 int main()
 {
+	x = 1;
+	a = 1;
 	__VERIFIER_ltl_step();
-	b = 6;
-	a = a + b;
-	c = 1;
-	c = 1;
+	if (x > 5){
+		a = 2;
+	} else {
+		a = 6;
+	}
+	x = 0;
 	__VERIFIER_ltl_step();
-	c = 1;
-	c = 1;
-	__VERIFIER_ltl_step();
+	a = 9;
 }
 
