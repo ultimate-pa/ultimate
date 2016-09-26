@@ -73,7 +73,7 @@ public abstract class ArgumentSynthesizer implements Closeable {
 	/**
 	 * Preferences
 	 */
-	protected final LassoRankerPreferences mpreferences;
+	protected final ILassoRankerPreferences mPreferences;
 
 	/**
 	 * Whether synthesize() has been called
@@ -100,14 +100,15 @@ public abstract class ArgumentSynthesizer implements Closeable {
 	 * @param storage
 	 * @throws IOException
 	 */
-	public ArgumentSynthesizer(final Lasso lasso, final LassoRankerPreferences preferences, final String constaintsName,
-			final IUltimateServiceProvider services, final IToolchainStorage storage) throws IOException {
+	public ArgumentSynthesizer(final Lasso lasso, final ILassoRankerPreferences preferences,
+			final String constaintsName, final IUltimateServiceProvider services, final IToolchainStorage storage)
+			throws IOException {
 		mLogger = services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
-		mpreferences = preferences;
+		mPreferences = preferences;
 		mlasso = lasso;
 		mservices = services;
 		mstorage = storage;
-		mscript = constructScript(mpreferences, constaintsName);
+		mscript = constructScript(mPreferences, constaintsName);
 	}
 
 	/**
@@ -115,7 +116,7 @@ public abstract class ArgumentSynthesizer implements Closeable {
 	 *            Identifier for this script.
 	 * @return SMT script that will be used for the argument synthesis
 	 */
-	protected abstract Script constructScript(LassoRankerPreferences preferences, String constaintsName);
+	protected abstract Script constructScript(ILassoRankerPreferences preferences, String constaintsName);
 
 	/**
 	 * @return the SMT script to be used for the argument synthesis

@@ -32,6 +32,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferencePro
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.AnalysisType;
+import de.uni_freiburg.informatik.ultimate.lassoranker.DefaultLassoRankerPreferences;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LassoRankerPreferences;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationAnalysisSettings;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationAnalysisSettings;
@@ -106,7 +107,7 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 		final TerminationAnalysisSettings termination_settings = new TerminationAnalysisSettings();
 		final NonTerminationAnalysisSettings nontermination_settings = new NonTerminationAnalysisSettings();
 		return new UltimatePreferenceItem<?>[] {
-				new UltimatePreferenceItem<>(LABEL_enable_partitioneer, preferences.mEnablePartitioneer,
+				new UltimatePreferenceItem<>(LABEL_enable_partitioneer, preferences.isEnablePartitioneer(),
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_nontermination_analysis, nontermination_settings.analysis,
 						PreferenceType.Combo, AnalysisType.values()),
@@ -124,9 +125,10 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 						termination_settings.numnon_strict_invariants, PreferenceType.Integer),
 				new UltimatePreferenceItem<>(LABEL_nondecreasing_invariants,
 						termination_settings.nondecreasing_invariants, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_compute_integral_hull, preferences.mComputeIntegralHull,
+				new UltimatePreferenceItem<>(LABEL_compute_integral_hull, preferences.isComputeIntegralHull(),
 						PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_annotate_terms, preferences.mAnnotateTerms, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_annotate_terms, preferences.isAnnotateTerms(),
+						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_simplify_result, s_simplify_result, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_enable_affine_template, s_enable_affine_template,
 						PreferenceType.Boolean),
@@ -153,11 +155,11 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<>(LABEL_multilex_template_size, s_multilex_template_size,
 						PreferenceType.Integer),
 				new UltimatePreferenceItem<>(LABEL_use_external_solver, true, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_smt_solver_command, preferences.mExternalSolverCommand,
+				new UltimatePreferenceItem<>(LABEL_smt_solver_command, preferences.getExternalSolverCommand(),
 						PreferenceType.String),
-				new UltimatePreferenceItem<>(LABEL_dump_smt_script, preferences.mDumpSmtSolverScript,
+				new UltimatePreferenceItem<>(LABEL_dump_smt_script, preferences.isDumpSmtSolverScript(),
 						PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_path_of_dumped_script, preferences.mPathOfDumpedScript,
+				new UltimatePreferenceItem<>(LABEL_path_of_dumped_script, preferences.getPathOfDumpedScript(),
 						PreferenceType.String) };
 	}
 
@@ -165,18 +167,44 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 	 * @return the (global) LassoRanker preferences from the GUI
 	 */
 	public static LassoRankerPreferences getLassoRankerPreferences(final IUltimateServiceProvider services) {
-		// Get default preferences
-		final LassoRankerPreferences preferences = new LassoRankerPreferences();
-
 		final IPreferenceProvider store = services.getPreferenceProvider(Activator.PLUGIN_ID);
-		preferences.mEnablePartitioneer = store.getBoolean(LABEL_enable_partitioneer);
-		preferences.mComputeIntegralHull = store.getBoolean(LABEL_compute_integral_hull);
-		preferences.mAnnotateTerms = store.getBoolean(LABEL_annotate_terms);
-		preferences.mDumpSmtSolverScript = store.getBoolean(LABEL_dump_smt_script);
-		preferences.mExternalSolver = store.getBoolean(LABEL_use_external_solver);
-		preferences.mExternalSolverCommand = store.getString(LABEL_smt_solver_command);
-		preferences.mPathOfDumpedScript = store.getString(LABEL_path_of_dumped_script);
-		return preferences;
+		// create new preferences
+		return new LassoRankerPreferences(new DefaultLassoRankerPreferences() {
+			@Override
+			public boolean isEnablePartitioneer() {
+				return store.getBoolean(LABEL_enable_partitioneer);
+			}
+
+			@Override
+			public boolean isComputeIntegralHull() {
+				return store.getBoolean(LABEL_compute_integral_hull);
+			}
+
+			@Override
+			public boolean isAnnotateTerms() {
+				return store.getBoolean(LABEL_annotate_terms);
+			}
+
+			@Override
+			public boolean isDumpSmtSolverScript() {
+				return store.getBoolean(LABEL_dump_smt_script);
+			}
+
+			@Override
+			public boolean isExternalSolver() {
+				return store.getBoolean(LABEL_use_external_solver);
+			}
+
+			@Override
+			public String getExternalSolverCommand() {
+				return store.getString(LABEL_smt_solver_command);
+			}
+
+			@Override
+			public String getPathOfDumpedScript() {
+				return store.getString(LABEL_path_of_dumped_script);
+			}
+		});
 	}
 
 	/**
