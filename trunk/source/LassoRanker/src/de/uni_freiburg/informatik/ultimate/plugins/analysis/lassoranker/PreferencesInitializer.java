@@ -48,10 +48,6 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationAn
  */
 public class PreferencesInitializer extends UltimatePreferenceInitializer {
 
-	public PreferencesInitializer() {
-		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
-	}
-
 	/*
 	 * Default values for GUI-only preferences
 	 */
@@ -102,6 +98,10 @@ public class PreferencesInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_smt_solver_command = "SMT solver command";
 	public static final String LABEL_dump_smt_script = "Dump SMT script to file";
 	public static final String LABEL_path_of_dumped_script = "Path of dumped script";
+
+	public PreferencesInitializer() {
+		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
+	}
 
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
