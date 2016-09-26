@@ -3,7 +3,7 @@
 <plugin>
    <extension
          point="de.uni_freiburg.informatik.ultimate.ep.source">
-      <impl class="de.uni_freiburg.informatik.ultimate.PEATestTransformer.PeaTestTransformer"/>
+      <impl class="de.uni_freiburg.informatik.ultimate.PEATestTransformer.PEATestTransformer"/>
    </extension>
   
 

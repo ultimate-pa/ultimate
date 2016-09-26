@@ -94,7 +94,7 @@ public class PEATestTransformer implements ISource {
 		//TODO: how to switch transformer? 
 		return parser.generatePEA(filledPatterns);
 	}
-
+ 
 	@Override
 	public IElement parseAST(File file) throws Exception {
 		return this.parseAST(new File[]{file});

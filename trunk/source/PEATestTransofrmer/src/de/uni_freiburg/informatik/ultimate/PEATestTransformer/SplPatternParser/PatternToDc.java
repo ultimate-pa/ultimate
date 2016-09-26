@@ -39,7 +39,7 @@ public class PatternToDc {
 				p = pattern.getCdds().get(0);
 			}
 		int t = pattern.getDuration();
-		return this.translate(pattern, q, r,p,s, t);
+		return this.translate(pattern, q, r, p, s, t);
 	} 
 	/*
 	 * Translates a pattern type into a Counter trace DC Formula

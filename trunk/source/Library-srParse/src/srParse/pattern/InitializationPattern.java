@@ -6,7 +6,7 @@ import pea.CDD;
 
 public class InitializationPattern extends PatternType {
 	
-	public enum VarAccess{in, out, internal};
+	public enum VarAccess{in, out, hidden};
 	
 	private String type;
 	private VarAccess access;
@@ -29,7 +29,7 @@ public class InitializationPattern extends PatternType {
 	
 	public InitializationPattern(String ident, String type, boolean internal){
 		if(internal){
-			this.access = VarAccess.internal;
+			this.access = VarAccess.hidden;
 		}else{
 			this.access = VarAccess.out;
 		}

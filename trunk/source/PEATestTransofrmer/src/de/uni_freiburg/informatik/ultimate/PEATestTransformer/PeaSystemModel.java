@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.PEATestTransformer;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 
 import de.uni_freiburg.informatik.ultimate.PEATestTransformer.SplPatternParser.PatternToDc;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -31,24 +32,26 @@ public class PeaSystemModel {
 	
 	/***
 	 * New system model from patterns.
-	 * Does directly transform to peas.
+	 * Directly handles the transformation to PEAs and filters out the variable definition patterns
+	 * beforehand.
 	 * @param patterns
 	 */
-	public PeaSystemModel(ILogger logger, SystemInformation sysInfo, ArrayList<PatternType> patterns){
+	public PeaSystemModel(ILogger logger, SystemInformation sysInfo, 
+			ArrayList<PatternType> unsanitizedPatterns){
 		this.sysInfo = sysInfo;
 		this.logger = logger;
-		for(PatternType pattern: patterns){
+		for(PatternType pattern: unsanitizedPatterns){
 			if(pattern instanceof InitializationPattern){
 				InitializationPattern aux = ((InitializationPattern) pattern);
 				switch(aux.getAccessability()){
-				case in:
-					this.sysInfo.addInputVariable(aux.getIdent(), aux.getType());
-				case internal:
-					this.sysInfo.addInternalVariable(aux.getIdent(), aux.getType());
-				case out:
-					this.sysInfo.addOutputVariable(aux.getIdent(), aux.getType());
-				default:
-					new RuntimeException("Unknown Initialization pattern");
+					case in:
+						this.sysInfo.addInputVariable(aux.getIdent(), aux.getType());
+					case hidden:
+						this.sysInfo.addInternalVariable(aux.getIdent(), aux.getType());
+					case out:
+						this.sysInfo.addOutputVariable(aux.getIdent(), aux.getType());
+					default:
+						new RuntimeException("Unknown Initialization pattern");
 				}
 			} else {
 				this.patterns.add(pattern);
@@ -56,7 +59,8 @@ public class PeaSystemModel {
 		}
 		
 		this.logger.debug("Transforming to DCTraces");
-		this.counterTraces = this.translateToDc(patterns);
+		//TODO: check/change types of variabels in pattern before generating PEAs 
+		this.counterTraces = this.translateToDc(this.patterns);
 		this.peas = this.translateToPea(counterTraces);
 		
 	}
@@ -113,7 +117,8 @@ public class PeaSystemModel {
 	 * @return Set of variables with direct data flow to ident
 	 */
 	public HashSet<String> getConditionVariables(String ident){
-		
+		//TODO: dk
+		return null;	
 	}
 	
 	public DCPhase getFinalPhase(CounterTrace ct){
@@ -158,14 +163,14 @@ public class PeaSystemModel {
 		ArrayList<CounterTrace> counterTraces = new ArrayList<CounterTrace>();
 		for(PatternType pattern : patterns){
 			// make PEA from remaining patterns
-			CounterTrace counterTrace = patternToDc.translate(pattern);
+			CounterTrace counterTrace = patternToDc.translate(pattern); 
 			counterTraces.add(counterTrace);
 		}
 		return counterTraces;
 	}
 	
 	private ArrayList<PhaseEventAutomata> translateToPea(ArrayList<CounterTrace> counterTraces){
-		Trace2PEACompiler compiler = new Trace2PEACompiler();
+		Trace2PEACompiler compiler = new Trace2PEACompiler(this.logger);
 		ArrayList<PhaseEventAutomata> peas = new ArrayList<PhaseEventAutomata>();
 		for(CounterTrace ct : counterTraces){
 			peas.add(compiler.compile(ct.toString(), ct));
