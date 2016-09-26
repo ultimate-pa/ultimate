@@ -471,7 +471,7 @@ public class SummaryComputation<LETTER, STATE> {
 				final Integer oldPrio = target2priority.get(entry.getKey());
 				Integer resultPrio;
 				if (oldPrio == null) {
-					resultPrio = oldPrio;
+					resultPrio = entry.getValue();
 				} else {
 					if (new PriorityComparator().compare(oldPrio, entry.getValue()) >= 0) {
 						resultPrio = oldPrio;
