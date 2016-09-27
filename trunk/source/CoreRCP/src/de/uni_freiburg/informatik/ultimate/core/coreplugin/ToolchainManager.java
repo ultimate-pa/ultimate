@@ -309,6 +309,7 @@ public class ToolchainManager {
 				ResultUtil.logResults(controllerLogger, resultService, appendCompleteLongDescription);
 				mCurrentController.displayToolchainResults(mToolchainData, resultService.getResults());
 				mModelManager.removeAll();
+				mToolchainWalker.endToolchain();
 			}
 		}
 

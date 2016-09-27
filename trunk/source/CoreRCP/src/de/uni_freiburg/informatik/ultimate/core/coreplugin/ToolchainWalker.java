@@ -63,13 +63,16 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
 
+/**
+ *
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ */
 final class ToolchainWalker implements IToolchainCancel {
 
-	/**
-	 * Is a running toolchain supposed to be canceled at the next possible moment?
-	 */
-	private boolean mToolchainCancelRequest;
+	private static final int INITIAL_COUNTDOWN = 2;
 
+	private boolean mToolchainCancelRequest;
 	private final ILogger mLogger;
 	private final Map<String, PluginConnector> mOpenPlugins;
 	private final Benchmark mBench;
@@ -77,7 +80,7 @@ final class ToolchainWalker implements IToolchainCancel {
 	private final PluginFactory mPluginFactory;
 	private final CountDownLatch mCountDownLatch;
 
-	public ToolchainWalker(final Benchmark bench, final IModelManager mmanager, final PluginFactory factory,
+	ToolchainWalker(final Benchmark bench, final IModelManager mmanager, final PluginFactory factory,
 			final ILogger logger) {
 		assert logger != null;
 		mBench = bench;
@@ -85,13 +88,13 @@ final class ToolchainWalker implements IToolchainCancel {
 		mLogger = logger;
 		mPluginFactory = factory;
 		mOpenPlugins = new HashMap<>();
-		mCountDownLatch = new CountDownLatch(1);
+		mCountDownLatch = new CountDownLatch(INITIAL_COUNTDOWN);
 		mToolchainCancelRequest = false;
 	}
 
-	public ReturnCode walk(final CompleteToolchainData data, final IProgressMonitorService service,
+	ReturnCode walk(final CompleteToolchainData data, final IProgressMonitorService service,
 			final IToolchainProgressMonitor monitor) throws Throwable {
-		if (mCountDownLatch.getCount() != 1) {
+		if (mCountDownLatch.getCount() != INITIAL_COUNTDOWN) {
 			throw new IllegalStateException("You cannot reuse the toolchain walker");
 		}
 		try {
@@ -100,6 +103,19 @@ final class ToolchainWalker implements IToolchainCancel {
 			mCountDownLatch.countDown();
 			monitor.done();
 		}
+	}
+
+	@Override
+	public CountDownLatch cancelToolchain() {
+		mToolchainCancelRequest = true;
+		return mCountDownLatch;
+	}
+
+	/**
+	 * The toolchain manager calls this method after he is finished processing this toolchain.
+	 */
+	void endToolchain() {
+		mCountDownLatch.countDown();
 	}
 
 	private ReturnCode walkUnprotected(final CompleteToolchainData data, final IProgressMonitorService service,
@@ -363,12 +379,6 @@ final class ToolchainWalker implements IToolchainCancel {
 		} else if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Dropping model succeeded.");
 		}
-	}
-
-	@Override
-	public CountDownLatch cancelToolchain() {
-		mToolchainCancelRequest = true;
-		return mCountDownLatch;
 	}
 
 	/**
