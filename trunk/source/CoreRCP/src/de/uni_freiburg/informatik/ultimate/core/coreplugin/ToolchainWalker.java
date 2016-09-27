@@ -218,7 +218,7 @@ final class ToolchainWalker implements IToolchainCancel {
 					"Toolchain cancelled while executing plugin " + plugin.getId() + ". Reason: " + e.getMessage());
 			return ReturnCode.Cancel;
 		} catch (final SMTLIBException e) {
-			mLogger.fatal("An unrecoverable error occured during communication with an SMT solver:", e);
+			mLogger.fatal("An unrecoverable error occured during an interaction with an SMT solver:", e);
 			reportExceptionOrError(data, plugin, e);
 			return ReturnCode.Error;
 		} catch (final Throwable e) {
