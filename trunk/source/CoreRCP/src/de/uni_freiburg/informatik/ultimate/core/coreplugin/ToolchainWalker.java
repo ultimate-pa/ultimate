@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.core.coreplugin;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
@@ -257,101 +258,6 @@ final class ToolchainWalker implements IToolchainCancel {
 			final IProgressMonitor monitor) {
 		mLogger.fatal("Subchain support is broken");
 		return ReturnCode.Error;
-		// // again, convert monitor into SubMonitor with certain number of ticks
-		// // depending of length of subchain
-		// int workRemaining = chain.getPluginOrSubchain().size();
-		// final SubMonitor progress = SubMonitor.convert(monitor, workRemaining);
-		//
-		// // get first plugin if present
-		// final Optional<PluginType> firstpluginOpt = chain.getPluginOrSubchain().stream()
-		// .filter(o -> o instanceof PluginType).map(a -> (PluginType) a).findFirst();
-		//
-		// // Subchain has at least one normal plugin
-		// if (firstpluginOpt.isPresent()) {
-		// final String firstplugin = firstpluginOpt.get().getId();
-		// // document, whether toolchain has changed anything
-		// // which depends on outcome of first plugin in chain
-		// boolean changes;
-		// PluginConnector foo = mOpenPlugins.get(firstplugin);
-		// if (foo != null) {
-		// changes = foo.hasPerformedChanges();
-		// } else {
-		// changes = false;
-		// }
-		//
-		// // iterate over subchain until break
-		// // caused by first plugin
-		// while (true) {
-		// for (final Object o : chain.getPluginOrSubchain()) {
-		// if (monitor.isCanceled() || mToolchainCancelRequest) {
-		// mToolchainCancelRequest = true;
-		// return ReturnCode.Cancel;
-		// }
-		// if (o instanceof PluginType) {
-		// final PluginType plugin = (PluginType) o;
-		// processPlugin(data, plugin);
-		// progress.worked(1);
-		// workRemaining--;
-		// progress.setWorkRemaining(workRemaining);
-		// } else if (o instanceof SubchainType) {
-		// final SubchainType subchain = (SubchainType) o;
-		// // if chain has at least one plugin
-		// // return type of other Subchains is irrelevant
-		// processSubchain(data, subchain, progress.newChild(1));
-		// progress.worked(1);
-		// workRemaining--;
-		// progress.setWorkRemaining(workRemaining);
-		// } else {
-		// continue;
-		// }
-		// }
-		//
-		// foo = mOpenPlugins.get(firstplugin);
-		// boolean bar;
-		// if (foo != null) {
-		// bar = foo.hasPerformedChanges();
-		// } else {
-		// bar = false;
-		// }
-		//
-		// changes = changes || bar;
-		//
-		// if (!bar) {
-		// break;
-		// }
-		// }
-		// return changes;
-		// // subchain consists only of other subchains and no plugin
-		// }
-		// boolean changes = false;
-		// while (true) {
-		//
-		// boolean localchanges = false;
-		// for (final Object o : chain.getPluginOrSubchain()) {
-		// if (monitor.isCanceled() || mToolchainCancelRequest) {
-		// mToolchainCancelRequest = true;
-		// return false;
-		// }
-		// if (o instanceof SubchainType) {
-		// final SubchainType subchain = (SubchainType) o;
-		// final boolean foo = processSubchain(data, subchain, progress.newChild(1));
-		// localchanges = localchanges || foo;
-		// progress.worked(1);
-		// workRemaining--;
-		// progress.setWorkRemaining(workRemaining);
-		// } else {
-		// continue;
-		// }
-		// }
-		// // quit toolchain if all subchains
-		// // have returned false
-		// changes = changes || localchanges;
-		// if (!localchanges) {
-		// break;
-		// }
-		// }
-		// return changes;
-
 	}
 
 	/**
@@ -360,7 +266,7 @@ final class ToolchainWalker implements IToolchainCancel {
 	 * @param serializeType
 	 */
 	private void processSerializeStmt(final CompleteToolchainData data, final SerializeType serializeType) {
-		final ArrayList<ModelType> models = new ArrayList<>();
+		final List<ModelType> models = new ArrayList<>();
 		if (serializeType.getParser() != null) {
 			for (final ISource parser : data.getParsers()) {
 				final ModelType graphType = mModelManager.getGraphTypeByGeneratorPluginId(parser.getPluginID());
@@ -395,7 +301,6 @@ final class ToolchainWalker implements IToolchainCancel {
 			} catch (final GraphNotFoundException e) {
 				mLogger.error("Specified graph could not be found.", e);
 			}
-
 		}
 	}
 
