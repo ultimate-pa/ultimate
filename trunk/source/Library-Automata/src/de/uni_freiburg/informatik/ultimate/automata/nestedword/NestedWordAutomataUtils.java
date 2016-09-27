@@ -70,4 +70,9 @@ public final class NestedWordAutomataUtils {
 			}
 		}
 	}
+
+	public static <LETTER, STATE> boolean hasOutgoingReturnTransition(
+			final IDoubleDeckerAutomaton<LETTER, STATE> operand, final STATE lin, final STATE hier, final LETTER letter) {
+		return operand.returnSuccessors(lin, hier, letter).iterator().hasNext();
+	}
 }

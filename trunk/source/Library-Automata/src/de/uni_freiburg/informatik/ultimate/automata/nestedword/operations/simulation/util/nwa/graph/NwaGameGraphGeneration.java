@@ -69,6 +69,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game.GameSpecialSinkState;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game.GameSpoilerNwaVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game.IGameState;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.summarycomputationgraph.SummaryComputation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
@@ -1396,170 +1397,204 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		final INestedWordAutomatonSimple<GameLetter<LETTER, STATE>, IGameState> gameAutomaton = createGameAutomaton();
 		final NestedWordAutomatonReachableStates<GameLetter<LETTER, STATE>, IGameState> gameAutomatonWithSummaries =
 				new RemoveUnreachable<>(mServices, gameAutomaton).getResult();
-
-		// Retrieve all single summary edge sources
-		final Set<IGameState> summarySources = new HashSet<>();
-		for (final SpoilerVertex<LETTER, STATE> spoilerVertex : mGameGraph.getSpoilerVertices()) {
-			if (!(spoilerVertex instanceof SpoilerNwaVertex<?, ?>)) {
-				continue;
+		
+		final boolean backwardSummaryComputation = false;
+		if (backwardSummaryComputation ) {
+			final SummaryComputation<LETTER, STATE> sc = new SummaryComputation<LETTER, STATE>(mServices, gameAutomatonWithSummaries, mNwa);
+			for (final IGameState gameState : sc.getNeedSpoilerWinningSink()) {
+				final SpoilerNwaVertex<LETTER, STATE> src = ((GameSpoilerNwaVertex<LETTER, STATE>) gameState).getSpoilerNwaVertex();
+				addSpoilerWinningSinkExtended(src);
 			}
-			final SpoilerNwaVertex<LETTER, STATE> spoilerNwaVertex = (SpoilerNwaVertex<LETTER, STATE>) spoilerVertex;
-			final GameSpoilerNwaVertex<LETTER, STATE> gameNwaVertex = new GameSpoilerNwaVertex<>(spoilerNwaVertex);
-
-			final Iterable<SummaryReturnTransition<GameLetter<LETTER, STATE>, IGameState>> summariesOfSource =
-					gameAutomatonWithSummaries.summarySuccessors(gameNwaVertex);
-			if (summariesOfSource.iterator().hasNext()) {
-				summarySources.add(gameNwaVertex);
-			}
-
-			// If operation was canceled, for example from the
-			// Ultimate framework
-			if (mProgressTimer != null && !mProgressTimer.continueProcessing()) {
-				mLogger.debug("Stopped in generateSummarizeEdges/all summary sources");
-				throw new AutomataOperationCanceledException(this.getClass());
-			}
-		}
-		// Retrieve the merged summary edges for the game graph that start at
-		// the given source.
-		// We make all summarySources the only initial game states and
-		// determinize the automaton.
-
-		final boolean alreadyWasDeterministic =
-				!new IsDeterministic<>(mServices, gameAutomatonWithSummaries).hasNondeterministicTransitions();
-		if (alreadyWasDeterministic) {
-			mSimulationPerformance.setCountingMeasure(ECountingMeasure.ALREADY_WAS_DETERMINISTIC, 1);
-		}
-
-		// Determinizing is very expensive, it is the dominant part of the
-		// whole algorithm
-		final INestedWordAutomatonSimple<GameLetter<LETTER, STATE>, IGameState> determinizedGameAutomaton =
-				new Determinize<>(mServices, gameAutomatonWithSummaries.getStateFactory(), gameAutomatonWithSummaries,
-						summarySources).getResult();
-		mSimulationPerformance.setCountingMeasure(ECountingMeasure.DETERMINIZED_GAME_AUTOMATON_STATES,
-				determinizedGameAutomaton.size());
-		final NestedWordAutomatonReachableStates<GameLetter<LETTER, STATE>, IGameState> gameAutomatonWithMergedSummaries =
-				new RemoveUnreachable<>(mServices, determinizedGameAutomaton).getResult();
-		final IGameState emptyStackState = gameAutomatonWithMergedSummaries.getEmptyStackState();
-
-		// The initial game states are the source of
-		// the summary edges we are interested in
-		for (final IGameState mergedSummarySourceAsGameState : gameAutomatonWithMergedSummaries.getInitialStates()) {
-			if (!(mergedSummarySourceAsGameState instanceof GameDoubleDeckerSet)) {
-				throw new IllegalStateException(
-						"Expected cast to be possible, something seems to be wrong with the game graph.");
-			}
-			final GameDoubleDeckerSet mergedSummarySourceDDSet = (GameDoubleDeckerSet) mergedSummarySourceAsGameState;
-
-			// We are only interested in sources where the down state is the
-			// empty stack symbol
-			final Set<IGameState> mergedSummarySourceUpStates = mergedSummarySourceDDSet.getUpStates(emptyStackState);
-			if (mergedSummarySourceUpStates.size() > 1) {
-				throw new IllegalStateException(
-						"Expected only one up state after determizing the game automaton at summary sources.");
-			}
-			final IGameState mergedSummarySourceUpStateAsGameState = mergedSummarySourceUpStates.iterator().next();
-			if (!(mergedSummarySourceUpStateAsGameState instanceof GameSpoilerNwaVertex<?, ?>)) {
-				throw new IllegalStateException(
-						"Expected cast to be possible, something seems to be wrong with the game graph.");
-			}
-			@SuppressWarnings("unchecked")
-			final SpoilerNwaVertex<LETTER, STATE> mergedSummarySource =
-					((GameSpoilerNwaVertex<LETTER, STATE>) mergedSummarySourceUpStateAsGameState).getSpoilerNwaVertex();
-
-			final Map<STATE, Set<Pair<STATE, Boolean>>> spoilerToDuplicatorChoices = new HashMap<>();
-			boolean hasSinkWinningForSpoiler = false;
-			boolean hasSinkWinningForDuplicator = false;
-			boolean runsInDuplicatorDeadEnd = false;
-			// Collect all summarize edges
-			for (final SummaryReturnTransition<GameLetter<LETTER, STATE>, IGameState> summary : gameAutomatonWithMergedSummaries
-					.summarySuccessors(mergedSummarySourceAsGameState)) {
-				final IGameState summaryDestinationAsGameState = summary.getSucc();
-				final GameDoubleDeckerSet summaryDestinationAsDD = (GameDoubleDeckerSet) summaryDestinationAsGameState;
-				final Set<IGameState> summaryDestinationUpStates = summaryDestinationAsDD.getUpStates(emptyStackState);
-
-				// If the destination up states are null, then the destination
-				// is empty. This is the case if the source is not total,
-				// because Determinize makes the automaton total. We can just
-				// ignore this event and continue.
-				if (summaryDestinationUpStates == null) {
+			
+			for (final SummaryComputation<LETTER, STATE>.GameSummary game : sc.getGameSummaries()) {
+				if (sc.getNeedSpoilerWinningSink().contains(game.getSummarySource())) {
+					// we already added a winning sink, 
+					// no need to add another summary 
 					continue;
 				}
-				// If this summarize edge only points to one destination, which
-				// means Duplicator has no other possibility than this, and it
-				// is the auxiliary state, then Duplicator runs in a dead end
-				// and can not evade.
-				if (summaryDestinationUpStates.size() == 1) {
-					final IGameState summaryDestinationUpState = summaryDestinationUpStates.iterator().next();
-					if (summaryDestinationUpState.equals(mAuxiliaryGameState)) {
-						runsInDuplicatorDeadEnd = true;
-						// Continue as there are no other destinations to
-						// consider
-						continue;
-					}
+				
+				final SpoilerNwaVertex<LETTER, STATE> src = ((GameSpoilerNwaVertex<LETTER, STATE>) game.getSummarySource()).getSpoilerNwaVertex();
+				final STATE spoilerChoice = game.getSpoilerDestinationState();
+				final Set<Pair<STATE, Boolean>> duplicatorChoices = new HashSet<>();
+				final Map<Pair<STATE, Boolean>, Integer> duplicatorChoice2Priority = new HashMap<>();
+				for (final Entry<IGameState, Integer> entry : game.getDuplicatorResponses().entrySet()) {
+					final SpoilerNwaVertex<LETTER, STATE> duplicatorChoice = ((GameSpoilerNwaVertex<LETTER, STATE>) entry.getKey()).getSpoilerNwaVertex();
+					duplicatorChoices.add(new Pair<STATE, Boolean>(duplicatorChoice.getQ1(), duplicatorChoice.isB()));
+					duplicatorChoice2Priority.put(new Pair<STATE, Boolean>(duplicatorChoice.getQ1(), duplicatorChoice.isB()), entry.getValue());
 				}
-				for (final IGameState summaryDestinationUpState : summaryDestinationUpStates) {
-					// If an up state represents Duplicator running in a
-					// dead-end but there also are other up states, Duplicator
-					// will evade, thus ignoring this up state. If there would
-					// be no other up states, we would already have continued
-					// before.
-					if (summaryDestinationUpState.equals(mAuxiliaryGameState)) {
-						continue;
-					}
+				addSummarizeEdge(src, spoilerChoice, duplicatorChoices);
+				final SummarizeEdge<LETTER, STATE> summaryEdge = mSrcDestToSummarizeEdges.get(src, new Pair<STATE, Set<Pair<STATE,Boolean>>>(spoilerChoice, duplicatorChoices));
+				for (final Entry<Pair<STATE, Boolean>, Integer> entry : duplicatorChoice2Priority.entrySet()) {
+					summaryEdge.setPriority(entry.getKey(), entry.getValue());
+				}
+				
+			}
+		} else {
 
-					@SuppressWarnings("unchecked")
-					final SpoilerNwaVertex<LETTER, STATE> summaryDestination =
-							((GameSpoilerNwaVertex<LETTER, STATE>) summaryDestinationUpState).getSpoilerNwaVertex();
-					// Add the summary to Duplicators choices for this
-					// merged summary
-					final IWinningSink<LETTER, STATE> sinkTarget = summaryDestination.getSink();
-					if (sinkTarget == null) {
-						// Target is no sink
-						final STATE spoilerTarget = summaryDestination.getQ0();
-						final STATE duplicatorTarget = summaryDestination.getQ1();
-						final boolean bitTarget = summaryDestination.isB();
-						if (!spoilerToDuplicatorChoices.containsKey(spoilerTarget)) {
-							spoilerToDuplicatorChoices.put(spoilerTarget, new LinkedHashSet<>());
-						}
-						final Set<Pair<STATE, Boolean>> choices = spoilerToDuplicatorChoices.get(spoilerTarget);
-						choices.add(new Pair<>(duplicatorTarget, bitTarget));
-						spoilerToDuplicatorChoices.put(spoilerTarget, choices);
-					} else {
-						// Target is a sink, put it in a separate container
-						if (sinkTarget.isWinningForSpoiler()) {
-							hasSinkWinningForSpoiler = true;
-						} else {
-							hasSinkWinningForDuplicator = true;
-						}
-					}
+			// Retrieve all single summary edge sources
+			final Set<IGameState> summarySources = new HashSet<>();
+			for (final SpoilerVertex<LETTER, STATE> spoilerVertex : mGameGraph.getSpoilerVertices()) {
+				if (!(spoilerVertex instanceof SpoilerNwaVertex<?, ?>)) {
+					continue;
+				}
+				final SpoilerNwaVertex<LETTER, STATE> spoilerNwaVertex = (SpoilerNwaVertex<LETTER, STATE>) spoilerVertex;
+				final GameSpoilerNwaVertex<LETTER, STATE> gameNwaVertex = new GameSpoilerNwaVertex<>(spoilerNwaVertex);
+
+				final Iterable<SummaryReturnTransition<GameLetter<LETTER, STATE>, IGameState>> summariesOfSource =
+						gameAutomatonWithSummaries.summarySuccessors(gameNwaVertex);
+				if (summariesOfSource.iterator().hasNext()) {
+					summarySources.add(gameNwaVertex);
 				}
 
 				// If operation was canceled, for example from the
 				// Ultimate framework
 				if (mProgressTimer != null && !mProgressTimer.continueProcessing()) {
-					mLogger.debug("Stopped in generateSummarizeEdges/each summary");
+					mLogger.debug("Stopped in generateSummarizeEdges/all summary sources");
 					throw new AutomataOperationCanceledException(this.getClass());
 				}
 			}
-			// Patch the source to a winning sink for Spoiler
-			if (runsInDuplicatorDeadEnd) {
-				addSpoilerWinningSinkExtended(mergedSummarySource);
+			// Retrieve the merged summary edges for the game graph that start at
+			// the given source.
+			// We make all summarySources the only initial game states and
+			// determinize the automaton.
+
+			final boolean alreadyWasDeterministic =
+					!new IsDeterministic<>(mServices, gameAutomatonWithSummaries).hasNondeterministicTransitions();
+			if (alreadyWasDeterministic) {
+				mSimulationPerformance.setCountingMeasure(ECountingMeasure.ALREADY_WAS_DETERMINISTIC, 1);
 			}
-			// Create and add the merged summaries
-			if (hasSinkWinningForSpoiler) {
-				// If there is a winning sink for Spoiler, no other summaries
-				// are needed.
-				addSpoilerWinningSinkExtended(mergedSummarySource);
-			} else {
-				for (final Entry<STATE, Set<Pair<STATE, Boolean>>> choiceEntry : spoilerToDuplicatorChoices
-						.entrySet()) {
-					final STATE spoilerChoice = choiceEntry.getKey();
-					addSummarizeEdge(mergedSummarySource, spoilerChoice, choiceEntry.getValue());
+
+			// Determinizing is very expensive, it is the dominant part of the
+			// whole algorithm
+			final INestedWordAutomatonSimple<GameLetter<LETTER, STATE>, IGameState> determinizedGameAutomaton =
+					new Determinize<>(mServices, gameAutomatonWithSummaries.getStateFactory(), gameAutomatonWithSummaries,
+							summarySources).getResult();
+			mSimulationPerformance.setCountingMeasure(ECountingMeasure.DETERMINIZED_GAME_AUTOMATON_STATES,
+					determinizedGameAutomaton.size());
+			final NestedWordAutomatonReachableStates<GameLetter<LETTER, STATE>, IGameState> gameAutomatonWithMergedSummaries =
+					new RemoveUnreachable<>(mServices, determinizedGameAutomaton).getResult();
+			final IGameState emptyStackState = gameAutomatonWithMergedSummaries.getEmptyStackState();
+
+			// The initial game states are the source of
+			// the summary edges we are interested in
+			for (final IGameState mergedSummarySourceAsGameState : gameAutomatonWithMergedSummaries.getInitialStates()) {
+				if (!(mergedSummarySourceAsGameState instanceof GameDoubleDeckerSet)) {
+					throw new IllegalStateException(
+							"Expected cast to be possible, something seems to be wrong with the game graph.");
 				}
-				// If no summarize edges where added, we are forced to add the
-				// winning sink for Duplicator, if it was present.
-				if (spoilerToDuplicatorChoices.isEmpty() && hasSinkWinningForDuplicator) {
-					addDuplicatorWinningSink(mergedSummarySource);
+				final GameDoubleDeckerSet mergedSummarySourceDDSet = (GameDoubleDeckerSet) mergedSummarySourceAsGameState;
+
+				// We are only interested in sources where the down state is the
+				// empty stack symbol
+				final Set<IGameState> mergedSummarySourceUpStates = mergedSummarySourceDDSet.getUpStates(emptyStackState);
+				if (mergedSummarySourceUpStates.size() > 1) {
+					throw new IllegalStateException(
+							"Expected only one up state after determizing the game automaton at summary sources.");
+				}
+				final IGameState mergedSummarySourceUpStateAsGameState = mergedSummarySourceUpStates.iterator().next();
+				if (!(mergedSummarySourceUpStateAsGameState instanceof GameSpoilerNwaVertex<?, ?>)) {
+					throw new IllegalStateException(
+							"Expected cast to be possible, something seems to be wrong with the game graph.");
+				}
+				@SuppressWarnings("unchecked")
+				final SpoilerNwaVertex<LETTER, STATE> mergedSummarySource =
+				((GameSpoilerNwaVertex<LETTER, STATE>) mergedSummarySourceUpStateAsGameState).getSpoilerNwaVertex();
+
+				final Map<STATE, Set<Pair<STATE, Boolean>>> spoilerToDuplicatorChoices = new HashMap<>();
+				boolean hasSinkWinningForSpoiler = false;
+				boolean hasSinkWinningForDuplicator = false;
+				boolean runsInDuplicatorDeadEnd = false;
+				// Collect all summarize edges
+				for (final SummaryReturnTransition<GameLetter<LETTER, STATE>, IGameState> summary : gameAutomatonWithMergedSummaries
+						.summarySuccessors(mergedSummarySourceAsGameState)) {
+					final IGameState summaryDestinationAsGameState = summary.getSucc();
+					final GameDoubleDeckerSet summaryDestinationAsDD = (GameDoubleDeckerSet) summaryDestinationAsGameState;
+					final Set<IGameState> summaryDestinationUpStates = summaryDestinationAsDD.getUpStates(emptyStackState);
+
+					// If the destination up states are null, then the destination
+					// is empty. This is the case if the source is not total,
+					// because Determinize makes the automaton total. We can just
+					// ignore this event and continue.
+					if (summaryDestinationUpStates == null) {
+						continue;
+					}
+					// If this summarize edge only points to one destination, which
+					// means Duplicator has no other possibility than this, and it
+					// is the auxiliary state, then Duplicator runs in a dead end
+					// and can not evade.
+					if (summaryDestinationUpStates.size() == 1) {
+						final IGameState summaryDestinationUpState = summaryDestinationUpStates.iterator().next();
+						if (summaryDestinationUpState.equals(mAuxiliaryGameState)) {
+							runsInDuplicatorDeadEnd = true;
+							// Continue as there are no other destinations to
+							// consider
+							continue;
+						}
+					}
+					for (final IGameState summaryDestinationUpState : summaryDestinationUpStates) {
+						// If an up state represents Duplicator running in a
+						// dead-end but there also are other up states, Duplicator
+						// will evade, thus ignoring this up state. If there would
+						// be no other up states, we would already have continued
+						// before.
+						if (summaryDestinationUpState.equals(mAuxiliaryGameState)) {
+							continue;
+						}
+
+						@SuppressWarnings("unchecked")
+						final SpoilerNwaVertex<LETTER, STATE> summaryDestination =
+						((GameSpoilerNwaVertex<LETTER, STATE>) summaryDestinationUpState).getSpoilerNwaVertex();
+						// Add the summary to Duplicators choices for this
+						// merged summary
+						final IWinningSink<LETTER, STATE> sinkTarget = summaryDestination.getSink();
+						if (sinkTarget == null) {
+							// Target is no sink
+							final STATE spoilerTarget = summaryDestination.getQ0();
+							final STATE duplicatorTarget = summaryDestination.getQ1();
+							final boolean bitTarget = summaryDestination.isB();
+							if (!spoilerToDuplicatorChoices.containsKey(spoilerTarget)) {
+								spoilerToDuplicatorChoices.put(spoilerTarget, new LinkedHashSet<>());
+							}
+							final Set<Pair<STATE, Boolean>> choices = spoilerToDuplicatorChoices.get(spoilerTarget);
+							choices.add(new Pair<>(duplicatorTarget, bitTarget));
+							spoilerToDuplicatorChoices.put(spoilerTarget, choices);
+						} else {
+							// Target is a sink, put it in a separate container
+							if (sinkTarget.isWinningForSpoiler()) {
+								hasSinkWinningForSpoiler = true;
+							} else {
+								hasSinkWinningForDuplicator = true;
+							}
+						}
+					}
+
+					// If operation was canceled, for example from the
+					// Ultimate framework
+					if (mProgressTimer != null && !mProgressTimer.continueProcessing()) {
+						mLogger.debug("Stopped in generateSummarizeEdges/each summary");
+						throw new AutomataOperationCanceledException(this.getClass());
+					}
+				}
+				// Patch the source to a winning sink for Spoiler
+				if (runsInDuplicatorDeadEnd) {
+					addSpoilerWinningSinkExtended(mergedSummarySource);
+				}
+				// Create and add the merged summaries
+				if (hasSinkWinningForSpoiler) {
+					// If there is a winning sink for Spoiler, no other summaries
+					// are needed.
+					addSpoilerWinningSinkExtended(mergedSummarySource);
+				} else {
+					for (final Entry<STATE, Set<Pair<STATE, Boolean>>> choiceEntry : spoilerToDuplicatorChoices
+							.entrySet()) {
+						final STATE spoilerChoice = choiceEntry.getKey();
+						addSummarizeEdge(mergedSummarySource, spoilerChoice, choiceEntry.getValue());
+					}
+					// If no summarize edges where added, we are forced to add the
+					// winning sink for Duplicator, if it was present.
+					if (spoilerToDuplicatorChoices.isEmpty() && hasSinkWinningForDuplicator) {
+						addDuplicatorWinningSink(mergedSummarySource);
+					}
 				}
 			}
 		}
