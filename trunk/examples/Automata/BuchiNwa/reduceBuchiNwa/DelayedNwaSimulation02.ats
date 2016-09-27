@@ -32,13 +32,13 @@ NestedWordAutomaton nwa = (
 		 ("p0" "c" "pe")
 	},
 	internalTransitions = {
-		 ("se" "a" "s2")
-         ("s2" "a" "sx")
-		 ("pe" "a" "p2")
-         ("p2" "a" "px")
+		("se" "a" "s2")
+		("s2" "a" "sx")
+		("pe" "a" "p2")
+		("p2" "a" "px")
          
-		 ("sf" "a" "s0")
-         ("pf" "a" "p0")
+		("sf" "a" "s0")
+		("pf" "a" "p0")
 	},
 	returnTransitions = {
 		 ("sx" "s0" "r" "sf")
