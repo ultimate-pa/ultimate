@@ -25,7 +25,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  *
  */
 public final class AbstractInterpretationResult<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL, LOCATION>
-        implements IAbstractInterpretationResult<STATE, ACTION, VARDECL, LOCATION> {
+		implements IAbstractInterpretationResult<STATE, ACTION, VARDECL, LOCATION> {
 
 	private final IAbstractDomain<STATE, ACTION, VARDECL> mAbstractDomain;
 	private final List<AbstractCounterexample<STATE, ACTION, VARDECL, LOCATION>> mCounterexamples;
@@ -47,7 +47,7 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 	}
 
 	protected void reachedError(final ITransitionProvider<ACTION, LOCATION> transitionProvider,
-	        final WorklistItem<STATE, ACTION, VARDECL, LOCATION> finalItem, final STATE postState) {
+			final WorklistItem<STATE, ACTION, VARDECL, LOCATION> finalItem, final STATE postState) {
 
 		final List<Triple<STATE, LOCATION, ACTION>> abstractExecution = new ArrayList<>();
 
@@ -65,17 +65,14 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 
 		Collections.reverse(abstractExecution);
 		mCounterexamples
-		        .add(new AbstractCounterexample<>(post, transitionProvider.getSource(transition), abstractExecution));
+				.add(new AbstractCounterexample<>(post, transitionProvider.getSource(transition), abstractExecution));
 	}
 
-	protected void saveTerms(final IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> rootStateStorage,
-	        final ACTION start, final Script script, final Boogie2SMT bpl2smt) {
-		mLoc2Term.putAll(rootStateStorage.getLoc2Term(start, script, bpl2smt));
+	protected void saveRootStorage(final IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> rootStateStorage,
+			final ACTION start, final Script script, final Boogie2SMT bpl2smt) {
+
 		mTerms.addAll(rootStateStorage.getTerms(start, script, bpl2smt));
-	}
-
-	protected void saveStates(final IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> rootStateStorage,
-	        final ACTION start) {
+		mLoc2Term.putAll(rootStateStorage.getLoc2Term(start, script, bpl2smt));
 		mLoc2States.putAll(rootStateStorage.getLoc2States(start));
 		mLoc2SingleStates.putAll(rootStateStorage.getLoc2SingleStates(start));
 	}
@@ -130,7 +127,7 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 		if (getTerms() != null) {
 			sb.append(" Found terms ");
 			sb.append(
-			        String.join(", ", getTerms().stream().map(a -> funSimplify.apply(a)).collect(Collectors.toList())));
+					String.join(", ", getTerms().stream().map(a -> funSimplify.apply(a)).collect(Collectors.toList())));
 		}
 		return sb.toString();
 	}

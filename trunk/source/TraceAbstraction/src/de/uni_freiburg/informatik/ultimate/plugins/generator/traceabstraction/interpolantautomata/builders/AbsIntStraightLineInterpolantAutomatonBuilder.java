@@ -98,9 +98,9 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder
 			final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> aiResult,
 			final PredicateUnifier predicateUnifier) {
 
-		mLogger.info("Creating automaton from AI predicates.");
+		mLogger.info("Creating interpolant automaton from AI predicates (straight)");
 
-		final NestedWordAutomaton<CodeBlock, IPredicate> result = new NestedWordAutomaton<CodeBlock, IPredicate>(
+		final NestedWordAutomaton<CodeBlock, IPredicate> result = new NestedWordAutomaton<>(
 				new AutomataLibraryServices(mServices), oldAbstraction.getInternalAlphabet(),
 				oldAbstraction.getCallAlphabet(), oldAbstraction.getReturnAlphabet(), oldAbstraction.getStateFactory());
 
@@ -114,6 +114,7 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder
 
 		final IPredicate falsePredicate = predicateUnifier.getFalsePredicate();
 		final Set<IPredicate> alreadyThereAsState = new HashSet<>();
+
 		IPredicate previous = predicateUnifier.getTruePredicate();
 		alreadyThereAsState.add(previous);
 		result.addState(true, false, previous);
@@ -145,10 +146,9 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder
 				result.addCallTransition(previous, symbol, target);
 				callStack.addFirst(hierarchicalPreState);
 			} else if (symbol instanceof Return) {
-				final Return returnSymbol = (Return) symbol;
 				assert !callStack.isEmpty() : "Return does not have a corresponding call.";
 				hierarchicalPreState = callStack.removeFirst();
-				assert returnSymbol.getCorrespondingCall() == hierarchicalPreState.getFirst() : "Callstack broken";
+				assert ((Return) symbol).getCorrespondingCall() == hierarchicalPreState.getFirst() : "Callstack broken";
 				result.addReturnTransition(previous, hierarchicalPreState.getSecond(), symbol, target);
 			} else {
 				hierarchicalPreState = null;
