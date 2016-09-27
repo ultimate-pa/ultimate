@@ -69,7 +69,7 @@ public class ResultUtil {
 	 */
 	public static <E extends IResult> Collection<E> filterResults(final Map<String, List<IResult>> ultimateIResults,
 			final Class<E> resClass) {
-		final ArrayList<E> filteredList = new ArrayList<E>();
+		final ArrayList<E> filteredList = new ArrayList<>();
 		for (final Entry<String, List<IResult>> entry : ultimateIResults.entrySet()) {
 			for (final IResult res : entry.getValue()) {
 				if (resClass.isAssignableFrom(res.getClass())) {
@@ -104,9 +104,8 @@ public class ResultUtil {
 			check = element.getPayload().getAnnotations().get(Check.getIdentifier());
 			if (check instanceof Check) {
 				return (Check) check;
-			} else {
-				return null;
 			}
+			return null;
 		}
 		final ILocation loc = element.getPayload().getLocation();
 		if (loc == null) {
