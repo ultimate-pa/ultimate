@@ -23,13 +23,15 @@ import srParse.pattern.PatternType;
 public class PEATestTransformer implements ISource { 
 	private List<String> fileNames = new ArrayList<String>();
 	private boolean previousToolFoundErrors;
-	private SystemInformation sysInfo = new SystemInformation();
+	private SystemInformation sysInfo;
 	private IUltimateServiceProvider mServices; 
 	private ILogger logger;
 	
 	@Override
 	public void setServices(IUltimateServiceProvider services) {
 		mServices = services;
+		this.logger = this.mServices.getLoggingService().getLogger(getPluginID());
+		this.sysInfo= new SystemInformation(this.logger);
 		Collection<CounterExampleResult> cex = ResultUtil.filterResults(services.getResultService().getResults(),
 				CounterExampleResult.class);
 		previousToolFoundErrors = !cex.isEmpty();
@@ -38,7 +40,7 @@ public class PEATestTransformer implements ISource {
 				.getBoolean(PreferenceInitializer.LABEL_DOBACKTRANSLATE)) {
 			services.getBacktranslationService().addTranslator(backtranslator);
 		}
-		this.logger = this.mServices.getLoggingService().getLogger(getPluginID());
+		
 	}
 
 	@Override
@@ -83,7 +85,6 @@ public class PEATestTransformer implements ISource {
 
 	@Override
 	public IElement parseAST(File[] files) throws Exception {
-		this.sysInfo = new SystemInformation();
 		SplToBoogie parser = new SplToBoogie(this.mServices, this.logger);
 		//parse all files with reqs into one list of filled in patterns
 		ArrayList<PatternType> filledPatterns = new ArrayList<PatternType>();
@@ -92,7 +93,7 @@ public class PEATestTransformer implements ISource {
 		}
 		//parse test definition file into a test definition and a system definition
 		//TODO: how to switch transformer? 
-		return parser.generatePEA(filledPatterns);
+		return parser.generatePEA(filledPatterns, this.sysInfo);
 	}
  
 	@Override

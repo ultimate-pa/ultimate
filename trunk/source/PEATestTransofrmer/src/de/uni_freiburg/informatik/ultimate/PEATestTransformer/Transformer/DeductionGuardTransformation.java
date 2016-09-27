@@ -58,48 +58,31 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 					Phase dest = trans.getDest();
 					ArrayList<String> identsToProof = this.getPhaseToPhaseToProve(counterTrace, pea, source, dest);
 					boolean destFinal = false;
-					// build conjunct from phase invariants (invariant - seeps)
-					// check if last phase of the allowed prefix of the counter
-					// trace is in the phase
+					// build conjunct of all phases that are part of the PEA phase
 					CDD targetPhaseConj = CDD.TRUE;
 					for (DCPhase phase : this.systemModel.getDcPhases(pea, dest)) {
 						if (lastPhase == phase) {
 							destFinal = true;
 						}
-						// also build conjunct of phases of the target state to
-						// ignore seeping
 						targetPhaseConj = targetPhaseConj.and(phase.getInvariant());
-					}
-					// create guard for edge
-					logger.warn(dest.getStateInvariant().toString()+ " | isfinal: " + Boolean.toString(destFinal));
-					// take the state invariant in the last phase (including
-					// seeping invariants)
-					if (destFinal) {
+					}	
+					//destFilan: for flag that output is determined
+					//True: determine that there is no seeping here
+					if (destFinal || targetPhaseConj == CDD.TRUE) {
 						targetPhaseConj = dest.getStateInvariant();
 					}
+					
+					logger.info(dest.getStateInvariant().toString()+ " | isfinal: " + Boolean.toString(destFinal));
+
 					CDD guard = trans.getGuard();
 					targetPhaseConj = targetPhaseConj.and(guard.unprime());
 					//handling for timed automata (only necessary for upper bounds on states)
-					/// destFinal && bound is > or >= && sourceFinal && dest.timeinv != true && sourceinv != false
-					/*if(this.systemModel.phaseIsUpperBoundFinal(pea, source) && 
-							this.systemModel.phaseIsUpperBoundFinal(pea, dest)){
-						// as timer is ticking all input has no effect
-						guard = guard.and(this.encodeNotDeducedInConjunct(i));
-					} else if (this.systemModel.phaseIsUpperBoundFinal(pea, source)){
-						// on leaving the timer the effect must be marked to be deduced
-						// wich is to do noting!
-					} else if(this.systemModel.phaseIsUpperBoundFinal(pea, dest)){
-						// when jumping into a timer phase the precondition must be deduced
-						guard = guard.and(this.encodeReadConjunct(guard, i, true, identsToProof));
-						guard = guard.and(this.encodeNotDeducedInConjunct(i));
-					} else {*/
-						// if timer is running supress read guards on edges
-						boolean timed = this.systemModel.phaseIsUpperBoundFinal(pea, source) && 
-								this.systemModel.phaseIsUpperBoundFinal(pea, dest);
-						// untimed or final and timed which means that this must set an effect (and an R_v)
-						CDD deductionGuard = this.transformInvariantToDeductionGuard(targetPhaseConj, destFinal, i, timed, identsToProof );
-						guard = guard.and(deductionGuard);
-					//}
+					// if timer is running supress read guards on edges
+					boolean timed = this.systemModel.phaseIsUpperBoundFinal(pea, source) && 
+							this.systemModel.phaseIsUpperBoundFinal(pea, dest);
+					// untimed or final and timed which means that this must set an effect (and an R_v)
+					CDD deductionGuard = this.transformInvariantToDeductionGuard(targetPhaseConj, destFinal, i, timed, identsToProof );
+					guard = guard.and(deductionGuard);
 					trans.setGuard(guard);
 				}			
 			}
@@ -108,36 +91,35 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 	}
 	
 	/***
-	 * Determine the values of variables that have to be proven to progress from PEA automaton
-	 * phase source to pea automaton phase dest, without having to prove unnecessary facts.
+	 * Determine all variables that have to be determined to get from phase "source" to phase "dest".
 	 * @param ct
 	 * @param source
 	 * @param dest
 	 * @return
 	 */
 	private ArrayList<String> getPhaseToPhaseToProve(CounterTrace ct, PhaseEventAutomata pea, Phase source, Phase dest){
-		ArrayList<String> result = new ArrayList<String>();
+		ArrayList<String> aux = new ArrayList<String>();
 		int maxSource = this.systemModel.getDCPhasesMax(ct, pea, source);
 		int maxDest = this.systemModel.getDCPhasesMax(ct, pea, dest);
-		// add identifiers of all variables that must be deduced on the way from source to dest
+		// add identifiers of all variables that must be deduced on the way from source to effect phase
 		for(int i = maxSource +1; i <= maxDest; i++){
-			result.addAll(ct.getPhases()[i].getInvariant().getIdents());
+			aux.addAll(ct.getPhases()[i].getInvariant().getIdents());
 		}
 		// selfloops
 		if (maxDest == maxSource){
-			result.addAll(ct.getPhases()[maxDest].getInvariant().getIdents());
+			aux.addAll(ct.getPhases()[maxDest].getInvariant().getIdents());
 		}
 		// if final phase, add seeps
 		if(maxDest == this.systemModel.getFinalPhaseNumber(ct)){
-			result.addAll(ct.getPhases()[maxDest+1].getInvariant().getIdents());
+			aux.addAll(ct.getPhases()[maxDest+1].getInvariant().getIdents());
 		}
-		return result; 
+		return aux; 
 	}
 	
 	
 	/**
-	 * Transforms an invariant of a target state into the annotation deciding if the state can be entered
-	 * because the model can currently deduce the values of all necessary variables.
+	 * Builds a guard that is true iff for all variables in the invariant passed, the models state can
+	 * determine values for all variables in the invariant.
 	 */
 	private CDD transformInvariantToDeductionGuard(CDD invariant, boolean destinationHasLastPhase, 
 			int reqNo, boolean timed, List<String> identsToProof){
@@ -177,7 +159,9 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 	}
 	
 	/***
-	 * one state with edge !L*_v || R_v_0 || R_v_1 || ...
+	 * Generates the deduction monitor:
+	 * Pea with one phase whose invariant is !L*_v || R_v_i || R_v_j || ... for an internal variable v and
+	 * automata i, j,... that may determine the variables value.
 	 */
 	private void generateDeductionAutomatonInstant(){
 		// Add deduction guard automata 
@@ -203,109 +187,10 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 							"CW_" + ident,  			//name
 							new Phase[]{phase}, 		//pahses
 							new Phase[]{phase}, 		//initial pahses
-							new ArrayList<String>(){}, 	//clocks
+							new ArrayList<String>(), 	//clocks
 							variables, 					//variables and types thereof
-							new HashSet<String>(){}, 	//events
-							new ArrayList<String>(){}	//declatrations
-							));
-				}
-	}
-	
-	
-	
-	
-	/***
-	 * one state with edge (v == v')|| R_v_0 || R_v_1 || ...
-	 */
-	private void generateDeductionAutomatonInstantValueComp(){
-		// Add deduction guard automata 
-				for(String ident: this.deductionMonitorVars.keySet()){
-					Phase phase = new Phase("p0", CDD.TRUE);
-					HashMap<String,String> variables = new HashMap<String,String>();
-					//the variable stays the same
-					//CDD closedWorldContition = CDD.FALSE;
-					CDD closedWorldContition = BoogieBooleanExpressionDecision.create(
-								new BinaryExpression(new BoogieLocation("",0,0,0,0,false), BinaryExpression.Operator.COMPEQ,  
-										new IdentifierExpression(new BoogieLocation("",0,0,0,0,false),ident+"'"),
-										new IdentifierExpression(new BoogieLocation("",0,0,0,0,false),ident)
-										)
-							);
-					//unless one automata allows it		
-					for(String guardIdent: this.deductionMonitorVars.get(ident)){
-						closedWorldContition = closedWorldContition.or(BoogieBooleanExpressionDecision.create(
-									BoogieAstSnippet.createIdentifier(guardIdent+"'", "ClosedWorldAsumption")
-								));
-						variables.put(guardIdent, "bool");	
-					}
-					variables.put(READ_GUARD_PREFIX+ident, "bool");
-					phase.addTransition(phase, closedWorldContition, new String[]{});
-					this.systemModel.addPea(new PhaseEventAutomata(
-							"CW_" + ident,  			//name
-							new Phase[]{phase}, 		//pahses
-							new Phase[]{phase}, 		//initial pahses
-							new ArrayList<String>(){}, 	//clocks
-							variables, 					//variables and types thereof
-							new HashSet<String>(){}, 	//events
-							new ArrayList<String>(){}	//declatrations
-							));
-				}
-	}
-	
-	/***
-	 * two states     q0{ !L*_v  } , q1{L*_v}
-	 * edge q0->01{ R_v_0 || R_v_1 || ... }
-	 * edge q1->00{ !(R_v_0 || R_v_1 || ...) }
-	 * self loops with same guards as targets.
-	 * 
-	 * L_v is delayed one step by this, thus output can be consumed.
-	 */
-	private void generateDeductionAutomatonNextStep(){
-		// Add deduction guard automata 
-				for(String ident: this.deductionMonitorVars.keySet()){
-					HashMap<String,String> variables = new HashMap<String,String>();
-					
-					CDD mayRead = BoogieBooleanExpressionDecision.create(
-							new IdentifierExpression(BoogieAstSnippet.createDummyLocation(), this.READ_GUARD_PREFIX + ident +"'")
-							);
-					// v = v'
-					CDD mayReadSame = mayRead.and(BoogieBooleanExpressionDecision.create(
-							new BinaryExpression(
-									new BoogieLocation("",0,0,0,0,false), BinaryExpression.Operator.COMPEQ,  
-									new IdentifierExpression(new BoogieLocation("",0,0,0,0,false),ident+"'"),
-									new IdentifierExpression(new BoogieLocation("",0,0,0,0,false),ident)
-									)
-						));
-					
-					variables.put(READ_GUARD_PREFIX+ident, "bool");
-					Phase phase0 = new Phase("p0", mayRead.negate());
-					Phase phase1 = new Phase("p1", mayReadSame);
-					//the variable stays the same
-					//CDD closedWorldContition = CDD.FALSE;
-					CDD closedWorldContition = CDD.FALSE;
-					//unless one automata allows it		
-					for(String guardIdent: this.deductionMonitorVars.get(ident)){
-						closedWorldContition = closedWorldContition.or(BoogieBooleanExpressionDecision.create(
-									BoogieAstSnippet.createIdentifier(guardIdent+"'", "ClosedWorldAsumption")
-								));
-						variables.put(guardIdent, "bool");	
-					}
-					// stay here if not written
-					phase0.addTransition(phase0, closedWorldContition.negate(), new String[]{});
-					// goto one if written
-					phase1.addTransition(phase1, closedWorldContition, new String[]{});
-					// go back if not written
-					phase1.addTransition(phase0, closedWorldContition.negate(), new String[]{});
-					// stay if written
-					phase0.addTransition(phase1, closedWorldContition, new String[]{});
-					
-					this.systemModel.addPea(new PhaseEventAutomata(
-							"CW_" + ident,  			//name
-							new Phase[]{phase0, phase1},//pahses
-							new Phase[]{phase0}, 		//initial pahses
-							new ArrayList<String>(){}, 	//clocks
-							variables, 					//variables and types thereof
-							new HashSet<String>(){}, 	//events
-							new ArrayList<String>(){}	//declatrations
+							new HashSet<String>(), 	//events
+							new ArrayList<String>()	//declatrations
 							));
 				}
 	}
@@ -348,7 +233,7 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 	}
 	
 	/**
-	 * Encode internal identifiert o be checkt if readable 
+	 * Encode if internal variable can be read
 	 * e.g. "a" -> "(L'_a && a')"
 	 */
 	private Expression encodeInternalVar(String ident){
@@ -359,7 +244,7 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 	}
 	
 	/**
-	 * Encode an effect of a variable as true
+	 * Encode an effect of a variable as determined
 	 * e.g. "a" -> "R'_a_reqNo"
 	 */
 	private Expression encodeEffectVar(String ident, int reqNo){	

@@ -26,7 +26,7 @@ public class PeaSystemModel {
 	
 	private final SystemInformation sysInfo;
 	private final ILogger logger;
-	private final ArrayList<PatternType> patterns = new ArrayList<PatternType>();
+	private ArrayList<PatternType> patterns = new ArrayList<PatternType>();
 	private final ArrayList<CounterTrace> counterTraces;
 	private final ArrayList<PhaseEventAutomata> peas;
 	
@@ -40,29 +40,41 @@ public class PeaSystemModel {
 			ArrayList<PatternType> unsanitizedPatterns){
 		this.sysInfo = sysInfo;
 		this.logger = logger;
+		this.patterns = this.sanitizePatternList(unsanitizedPatterns);
+		
+		this.logger.debug("Transforming to DCTraces");
+		//TODO: check/change types of variabels in pattern before generating PEAs 
+		this.counterTraces = this.translatePatternListToDc(this.patterns);
+		this.peas = this.translateToPea(counterTraces);
+		
+	}
+	
+	/*
+	 * Filter out InitializationPatterns and add information on variables to system information
+	 */
+	private ArrayList<PatternType> sanitizePatternList(ArrayList<PatternType> unsanitizedPatterns){
+		ArrayList<PatternType> aux = new ArrayList<>();
 		for(PatternType pattern: unsanitizedPatterns){
 			if(pattern instanceof InitializationPattern){
-				InitializationPattern aux = ((InitializationPattern) pattern);
-				switch(aux.getAccessability()){
+				InitializationPattern initPattern = ((InitializationPattern) pattern);
+				switch(initPattern.getAccessability()){
 					case in:
-						this.sysInfo.addInputVariable(aux.getIdent(), aux.getType());
+						this.sysInfo.addInputVariable(initPattern.getIdent(), initPattern.getType());
+						break;
 					case hidden:
-						this.sysInfo.addInternalVariable(aux.getIdent(), aux.getType());
+						this.sysInfo.addInternalVariable(initPattern.getIdent(), initPattern.getType());
+						break;
 					case out:
-						this.sysInfo.addOutputVariable(aux.getIdent(), aux.getType());
+						this.sysInfo.addOutputVariable(initPattern.getIdent(), initPattern.getType());
+						break;
 					default:
 						new RuntimeException("Unknown Initialization pattern");
 				}
 			} else {
-				this.patterns.add(pattern);
+				aux.add(pattern);
 			}
 		}
-		
-		this.logger.debug("Transforming to DCTraces");
-		//TODO: check/change types of variabels in pattern before generating PEAs 
-		this.counterTraces = this.translateToDc(this.patterns);
-		this.peas = this.translateToPea(counterTraces);
-		
+		return aux;
 	}
 	
 	/**
@@ -157,7 +169,7 @@ public class PeaSystemModel {
 		return ps.getPhases();
 	}
 	
-	private ArrayList<CounterTrace> translateToDc(ArrayList<PatternType> patterns){
+	private ArrayList<CounterTrace> translatePatternListToDc(ArrayList<PatternType> patterns){
 		PatternToDc patternToDc = new PatternToDc();
 		// Translate to Counter Traces
 		ArrayList<CounterTrace> counterTraces = new ArrayList<CounterTrace>();

@@ -2,55 +2,81 @@ package de.uni_freiburg.informatik.ultimate.PEATestTransformer;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
- * Description of all meta information of the SUT that is not derivable from the reauirements.
+ * Description of all meta information of the SUT that is not derivable from the requirements.
  * - Variable sets Input and Output
- * TODO: Types of variables for additional check if the types were infered correctly from the requirements
+ * TODO: Types of variables for additional check if the types were inferred correctly from the requirements
  * @author Langenfeld
  *
  */
 public class SystemInformation {
 	
+	private ILogger logger;
+	
 	//input and output variables of the System 
-	private HashMap<String, String> inputVariables = new HashMap<String, String>();
-	private HashMap<String, String> outputVariables = new HashMap<String, String>();
-	private HashMap<String, String> internalVariables = new HashMap<String, String>();
+	private HashSet<String> inputVariables = new HashSet<>();
+	private HashSet<String> outputVariables = new HashSet<>();
+	private HashSet<String> internalVariables = new HashSet<>();
+	private HashMap<String, String> systemVariables = new HashMap<>();
 	//information which test to conduct
 	//TODO:private TestInformation 
 	
 	//TODO: initial assignment for variables
 	
+	public SystemInformation(ILogger logger){
+		this.logger = logger;
+	}
+	
 	public void addInputVariable(String ident, String type){
-		this.inputVariables.put(ident, type);
+		logger.info("Variable added as Input: " + ident + " as " + type);
+		this.inputVariables.add(ident);
+		this.systemVariables.put(ident, type);
 	}
 	
 	public void addOutputVariable(String ident, String type){
-		this.outputVariables.put(ident, type);
+		logger.info("Variable added as Output: " + ident + " as " + type);
+		this.outputVariables.add(ident);
+		this.systemVariables.put(ident, type);
 	}
 	
 	public void addInternalVariable(String ident, String type){
-		this.internalVariables.put(ident, type);
+		logger.info("Variable added as Internal: " + ident + " as " + type);
+		this.internalVariables.add(ident);
+		this.systemVariables.put(ident, type);
 	}
 	
 	
-	//TODO: this is a hack and should really check if the variable is not in the inputs
 	public boolean isInput(String ident) {
-		return ident.startsWith("I");
+		return this.inputVariables.contains(ident);
 	}
-	//TODO: this is a hack and should really check if the variable is not in the inputs
+	
 	public boolean isOutput(String ident) {
-		return ident.startsWith("O");
+		return this.outputVariables.contains(ident);
 	}
 	
 	public boolean isInternal(String ident) {
 		return !this.isInput(ident) && !this.isOutput(ident);
+	}
+	
+	public String getTypeOf(String ident){
+		if (this.systemVariables.containsKey(ident)){
+			return this.systemVariables.get(ident);
+		} else {
+			throw new RuntimeException("System Variable " + ident + " does not exist!");
+		}
+	}
+	
+	public Set<String> getVariableList(){
+		return this.systemVariables.keySet();
 	}
 	
 	/**

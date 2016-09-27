@@ -58,36 +58,17 @@ public class SplToBoogie {
 	 * @param requirements as patterns
 	 * @return requirements as peas
 	 */
-	public Unit generatePEA(ArrayList<PatternType> patterns){
+	public Unit generatePEA(ArrayList<PatternType> patterns, SystemInformation sysInfo){
 		//TODO: correctly parse system information
-		PeaSystemModel model = new PeaSystemModel(this.logger, new SystemInformation(), patterns);
-		
-		PatternTransformerTypes ttype =  mService.getPreferenceProvider(Activator.PLUGIN_ID)
-			.getEnum(PreferenceInitializer.LABEL_TRANSFORMER, PreferenceInitializer.PatternTransformerTypes.class);
-		this.logger.info("Running Transformation mode: "+ ttype.toString());
+		PeaSystemModel model = new PeaSystemModel(this.logger, sysInfo , patterns);
+	
+		this.logger.info("Starting PEA transformation");
 		IPeaTransformer peaTransformer;
-		switch(ttype){
-			case None: peaTransformer = new NullTransformer(); 
-					break;
-			case DeductionMonitor: peaTransformer = new DeductionGuardTransformation(this.logger, model);
-				break; 
-			default:
-				throw new UnsupportedOperationException("Non supported test Transformer");
-		}
+		peaTransformer = new DeductionGuardTransformation(this.logger, model);
 		peaTransformer.translate();
-		//TODO: set parser for peas depending on ttype --> a tranlation type is a combination of pea transformations
 		// and boogie translation
-		BasicTranslator peaToBoogie;
-		logger.debug("Running Boogie Encoding mode: "+ ttype.toString());
-		switch(ttype){
-		case None: peaToBoogie = new BasicTranslator(model); 
-				break;
-		case DeductionMonitor: peaToBoogie = new SimplePositiveTestTranslator(model);
-			break;
-		default:
-			throw new UnsupportedOperationException("Non supported test Transformer");
-		}
-	return peaToBoogie.generateBoogieTranslation();
+		BasicTranslator peaToBoogie = new SimplePositiveTestTranslator(model);
+		return peaToBoogie.generateBoogieTranslation();
 	}
 	
 	

@@ -8,9 +8,8 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.PEATestTransformer.PeaSystemModel;
+import de.uni_freiburg.informatik.ultimate.PEATestTransformer.SystemInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
@@ -40,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import pea.BoogieBooleanExpressionDecision;
 import pea.CDD;
-import pea.PEATestAutomaton;
 import pea.Phase;
 import pea.PhaseEventAutomata;
 import pea.Transition;
@@ -85,6 +83,16 @@ public class BasicTranslator {
 		//collect all variables
 		for(int i =0; i < peas.size(); i++){
 			this.preProcessVariables(peas.get(i), i);
+		}
+		SystemInformation sysInfo =  sysModel.getSystemInformation();
+		for(String ident: sysInfo.getVariableList()){
+			String primedIdent = ident+PRIME_SYMBOL;
+			this.varsByTypeAdd(sysInfo.getTypeOf(ident), ident);
+			this.varsByTypeAdd(sysInfo.getTypeOf(ident), primedIdent);
+			this.modifiedVariables.add(ident);
+			this.modifiedVariables.add(primedIdent);
+			this.havocInLoop.add(primedIdent);
+			this.vars.add(ident);
 		}
 		//generate delta variable, that is shared by all automata
 		this.varsByTypeAdd("real", "delta");
