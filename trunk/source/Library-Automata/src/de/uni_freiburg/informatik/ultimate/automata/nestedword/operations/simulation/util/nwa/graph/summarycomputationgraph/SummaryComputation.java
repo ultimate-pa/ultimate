@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -41,7 +42,10 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.PriorityComparator;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.SpoilerNwaVertex;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game.GameEmptyState;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game.GameLetter;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game.GameSpoilerNwaVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game.IGameState;
@@ -49,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.SummaryReturnTransition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.LexicographicCounter;
@@ -57,6 +62,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation3;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * Class for computation of game graph summaries.
@@ -102,28 +108,90 @@ public class SummaryComputation<LETTER, STATE> {
 	private final HashRelation<Set<IGameState>, NestedMap2<IGameState, IGameState, Integer>> mTrigger2Summaries = new HashRelation<>();
 	
 	private final HashRelation<Set<IGameState>, SummaryComputationGraphNode<LETTER, STATE>> mSummaryTrigger2Node = new HashRelation<>();
+	private final IDoubleDeckerAutomaton<LETTER, STATE> mOperand;
+	private final Set<IGameState> mNeedSpoilerWinningSink;
+	private final LinkedHashSet<GameSummary> mGameSummaries;
 	
 	
 	
 	
 	
 	public SummaryComputation(final AutomataLibraryServices services,
-			final IDoubleDeckerAutomaton<GameLetter<LETTER, STATE>, IGameState> gameAutomaton) {
+			final IDoubleDeckerAutomaton<GameLetter<LETTER, STATE>, IGameState> gameAutomaton,
+			final IDoubleDeckerAutomaton<LETTER, STATE> operand) {
 		super();
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mGameAutomaton = gameAutomaton;
+		mOperand = operand;
+		mNeedSpoilerWinningSink = computeSpoilerWinningSink();
 		initialize();
 		while (!mWorklist.isEmpty()) {
 			final SummaryComputationGraphNode<LETTER, STATE> node = mWorklist.remove();
 			process(node);
 		}
 		mLogger.info("Found " + mTrigger2Summaries.size() + " summaries");
+		
+		mGameSummaries = new LinkedHashSet<>();
+		for (final Entry<Set<IGameState>, NestedMap2<IGameState, IGameState, Integer>> entry : mTrigger2Summaries.entrySet()) {
+			final NestedMap2<IGameState, IGameState, Integer> target2source2prio = entry.getValue();
+			final NestedMap2<IGameState, IGameState, Integer> source2target2prio = entry.getValue();
+			for (final Triple<IGameState, IGameState, Integer> triple : target2source2prio.entrySet()) {
+				source2target2prio.put(triple.getSecond(), triple.getFirst(), triple.getThird());
+			}
+			for (final IGameState source : source2target2prio.keySet()) {
+				final Map<IGameState, Integer> target2prio = source2target2prio.get(source);
+				final NestedMap2<STATE, IGameState, Integer> spoilerChoice2Target2Prio = new NestedMap2<>();
+				for (final Entry<IGameState, Integer> targetPrio : target2prio.entrySet()) {
+					final STATE spoilerChoice = ((GameSpoilerNwaVertex<LETTER, STATE>) targetPrio.getKey()).getSpoilerNwaVertex().getQ0();
+					spoilerChoice2Target2Prio.put(spoilerChoice, targetPrio.getKey(), targetPrio.getValue());
+				}
+				for (final STATE spoilerDestinationState : spoilerChoice2Target2Prio.keySet()) {
+					final Map<IGameState, Integer> duplicatorResponses = spoilerChoice2Target2Prio.get(spoilerDestinationState);
+					final GameSummary gameSummary = new GameSummary(source, spoilerDestinationState, duplicatorResponses);
+					mGameSummaries.add(gameSummary);
+				}
+			}
+		}
+		final ArrayList gameSummaries2 = new ArrayList<>(mGameSummaries);
+		mLogger.info("Found " + mGameSummaries.size() + " summaries");
+	}
+
+
+	private Set<IGameState> computeSpoilerWinningSink() {
+		final Set<IGameState> result = new HashSet<>();
+		for (final IGameState gameState : mGameAutomaton.getStates()) {
+			if (needWinningSink(gameState)) {
+				result.add(gameState);
+			}
+		}
+		return result;
+	}
+
+
+	private boolean needWinningSink(final IGameState gameState) {
+		for (final IGameState downState : mGameAutomaton.getDownStates(gameState)) {
+			if (downState instanceof GameEmptyState) {
+				continue;
+			}
+			final SpoilerNwaVertex<LETTER, STATE> spoilerVertex = ((GameSpoilerNwaVertex<LETTER, STATE>) gameState).getSpoilerNwaVertex();
+			final SpoilerNwaVertex<LETTER, STATE> downVertex = ((GameSpoilerNwaVertex<LETTER, STATE>) downState).getSpoilerNwaVertex();
+			final Set<LETTER> lettersForWhichSpoilerHasOutgoing = new HashSet<>();
+			for (final OutgoingReturnTransition<LETTER, STATE> trans : mOperand.returnSuccessorsGivenHier(spoilerVertex.getQ0(), downVertex.getQ0())) {
+				lettersForWhichSpoilerHasOutgoing.add(trans.getLetter());
+			}
+			for (final LETTER letter : lettersForWhichSpoilerHasOutgoing) {
+				final boolean duplicatorCanRespond = NestedWordAutomataUtils.hasOutgoingReturnTransition(mOperand, spoilerVertex.getQ1(), downVertex.getQ1(), letter);
+				if (!duplicatorCanRespond) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 
 	private void initialize() {
-		
 		for (final IGameState gs : mGameAutomaton.getStates()) {
 			final HashRelation<LETTER, IGameState> letter2summarySucc = new HashRelation<>();
 			for (final SummaryReturnTransition<GameLetter<LETTER, STATE>, IGameState> trans : mGameAutomaton.summarySuccessors(gs)) {
@@ -164,9 +232,6 @@ public class SummaryComputation<LETTER, STATE> {
 				processInternalPredecessors(letter, succNode);
 			}
 		}
-		
-		
-		
 	}
 	
 	
@@ -471,7 +536,7 @@ public class SummaryComputation<LETTER, STATE> {
 				final Integer oldPrio = target2priority.get(entry.getKey());
 				Integer resultPrio;
 				if (oldPrio == null) {
-					resultPrio = oldPrio;
+					resultPrio = entry.getValue();
 				} else {
 					if (new PriorityComparator().compare(oldPrio, entry.getValue()) >= 0) {
 						resultPrio = oldPrio;
@@ -484,7 +549,131 @@ public class SummaryComputation<LETTER, STATE> {
 		}
 		return Collections.singletonList(new WeightedSummaryTargets(target2priority));
 	}
+	
+	
+	
+	
+	
 
+	
+	/**
+	 * @return the needSpoilerWinningSink
+	 */
+	public Set<IGameState> getNeedSpoilerWinningSink() {
+		return mNeedSpoilerWinningSink;
+	}
+	
+	/**
+	 * @return the gameSummaries
+	 */
+	public LinkedHashSet<GameSummary> getGameSummaries() {
+		return mGameSummaries;
+	}
+
+	public class GameSummary {
+		private final IGameState mSummarySource;
+		private final STATE mSpoilerDestinationState;
+		private final Map<IGameState, Integer> mDuplicatorResponses;
+		
+		public GameSummary(final IGameState summarySource, final STATE spoilerDestinationState,
+				final Map<IGameState, Integer> duplicatorResponses) {
+			super();
+			mSummarySource = summarySource;
+			mSpoilerDestinationState = spoilerDestinationState;
+			mDuplicatorResponses = duplicatorResponses;
+		}
+		
+		/**
+		 * @return the summarySource
+		 */
+		public IGameState getSummarySource() {
+			return mSummarySource;
+		}
+
+		/**
+		 * @return the spoilerDestinationState
+		 */
+		public STATE getSpoilerDestinationState() {
+			return mSpoilerDestinationState;
+		}
+
+		/**
+		 * @return the duplicatorResponses
+		 */
+		public Map<IGameState, Integer> getDuplicatorResponses() {
+			return mDuplicatorResponses;
+		}
+
+
+		/* (non-Javadoc)
+		 * @see java.lang.Object#hashCode()
+		 */
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + getOuterType().hashCode();
+			result = prime * result + ((mDuplicatorResponses == null) ? 0 : mDuplicatorResponses.hashCode());
+			result = prime * result + ((mSpoilerDestinationState == null) ? 0 : mSpoilerDestinationState.hashCode());
+			result = prime * result + ((mSummarySource == null) ? 0 : mSummarySource.hashCode());
+			return result;
+		}
+
+
+
+
+		/* (non-Javadoc)
+		 * @see java.lang.Object#equals(java.lang.Object)
+		 */
+		@Override
+		public boolean equals(final Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			final GameSummary other = (GameSummary) obj;
+			if (!getOuterType().equals(other.getOuterType()))
+				return false;
+			if (mDuplicatorResponses == null) {
+				if (other.mDuplicatorResponses != null)
+					return false;
+			} else if (!mDuplicatorResponses.equals(other.mDuplicatorResponses))
+				return false;
+			if (mSpoilerDestinationState == null) {
+				if (other.mSpoilerDestinationState != null)
+					return false;
+			} else if (!mSpoilerDestinationState.equals(other.mSpoilerDestinationState))
+				return false;
+			if (mSummarySource == null) {
+				if (other.mSummarySource != null)
+					return false;
+			} else if (!mSummarySource.equals(other.mSummarySource))
+				return false;
+			return true;
+		}
+
+
+
+
+		/* (non-Javadoc)
+		 * @see java.lang.Object#toString()
+		 */
+		@Override
+		public String toString() {
+			return "Source:" + mSummarySource + ", SpoilerDestinationState:"
+					+ mSpoilerDestinationState + ", DuplicatorResponses:" + mDuplicatorResponses + "]";
+		}
+
+
+
+
+		private SummaryComputation getOuterType() {
+			return SummaryComputation.this;
+		}
+	}
+	
 	
 	
 	

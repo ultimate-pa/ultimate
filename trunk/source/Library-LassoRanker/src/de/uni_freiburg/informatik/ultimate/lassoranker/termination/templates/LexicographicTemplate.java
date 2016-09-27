@@ -134,7 +134,7 @@ public class LexicographicTemplate extends RankingTemplate {
 		for (int i = 0; i < size; ++i) {
 			final LinearInequality li = mfgens[i].generate(inVars);
 			li.setStrict(true);
-			li.motzkin_coefficient = sRedAtoms ? PossibleMotzkinCoefficients.ONE
+			li.mMotzkinCoefficient = sRedAtoms ? PossibleMotzkinCoefficients.ONE
 					: PossibleMotzkinCoefficients.ANYTHING;
 			conjunction.add(Collections.singletonList(li));
 		}
@@ -148,7 +148,7 @@ public class LexicographicTemplate extends RankingTemplate {
 			li2.negate();
 			li.add(li2);
 			li.setStrict(false);
-			li.motzkin_coefficient = sBlueAtoms ?
+			li.mMotzkinCoefficient = sBlueAtoms ?
 					PossibleMotzkinCoefficients.ZERO_AND_ONE
 					: PossibleMotzkinCoefficients.ANYTHING;
 			disjunction.add(li);
@@ -161,7 +161,7 @@ public class LexicographicTemplate extends RankingTemplate {
 				final AffineTerm a = new AffineTerm(mdeltas[j], Rational.MONE);
 				li.add(a);
 				li.setStrict(true);
-				li.motzkin_coefficient = sRedAtoms && j == 0 ?
+				li.mMotzkinCoefficient = sRedAtoms && j == 0 ?
 						PossibleMotzkinCoefficients.ZERO_AND_ONE
 						: PossibleMotzkinCoefficients.ANYTHING;
 				disjunction.add(li);
@@ -179,7 +179,7 @@ public class LexicographicTemplate extends RankingTemplate {
 			final AffineTerm a = new AffineTerm(mdeltas[i], Rational.MONE);
 			li.add(a);
 			li.setStrict(true);
-			li.motzkin_coefficient = (sRedAtoms && i == 0) || (sBlueAtoms && i == size - 1) ?
+			li.mMotzkinCoefficient = (sRedAtoms && i == 0) || (sBlueAtoms && i == size - 1) ?
 					PossibleMotzkinCoefficients.ZERO_AND_ONE
 					: PossibleMotzkinCoefficients.ANYTHING;
 			disjunction.add(li);

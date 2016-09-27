@@ -157,7 +157,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			states.add(gnta.getStateInit());
 			states.add(gnta.getStateHonda());
 			states.addAll(gnta.getGEVs());
-			final List<Map<Term, Rational>> initHondaRays = BacktranslationUtil.rank2Rcfg(term2expression, states);
+			final List<Map<Term, Rational>> initHondaRays = BacktranslationUtil.rank2Rcfg(states);
 
 			result = new GeometricNonTerminationArgumentResult<RcfgElement, Term>(
 					honda, Activator.PLUGIN_NAME, initHondaRays.get(0), initHondaRays.get(1),

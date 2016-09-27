@@ -23,7 +23,7 @@ void foo(int x, int y){
 int main()
 {
 	while(1){
-		a = 20;
+		a = 44;
 		foo(33, 1);
 	}
 }

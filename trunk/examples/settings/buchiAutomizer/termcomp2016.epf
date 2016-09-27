@@ -32,7 +32,7 @@ file_export_version=3.0
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer=
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Compute\ Interpolants\ along\ a\ Counterexample=ForwardPredicates
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Use\ external\ solver\ (rank\ synthesis)=false
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Rank\ analysis=Linear_with_guesses
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Rank\ analysis=LINEAR_WITH_GUESSES
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Command\ for\ external\ solver\ (GNTA\ synthesis)=z3 SMTLIB2_COMPLIANT\=true -memory\:4560 -smt2 -in -t\:12000
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Construct\ termination\ proof\ for\ TermComp=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Automata\ minimization=MinimizeSevpa

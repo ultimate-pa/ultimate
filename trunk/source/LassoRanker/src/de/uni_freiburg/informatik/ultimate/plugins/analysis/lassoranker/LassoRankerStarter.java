@@ -3,22 +3,22 @@
  * Copyright (C) 2014-2015 Jan Leike (leike@informatik.uni-freiburg.de)
  * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE LassoRanker plug-in.
- * 
+ *
  * The ULTIMATE LassoRanker plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE LassoRanker plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE LassoRanker plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE LassoRanker plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -99,12 +99,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 
 /**
  * Takes the root node of an RCFG, extracts a lasso and analyzes its termination.
- * 
+ *
  * @author Matthias Heizmann, Jan Leike
  */
 public class LassoRankerStarter {
 	private final ILogger mLogger;
-	private static final String s_LassoError = "This is not a lasso program (a lasso program is a program "
+	private static final String LASSO_ERROR_MSG = "This is not a lasso program (a lasso program is a program "
 			+ "consisting of a stem and a loop transition)";
 
 	private final RootAnnot mRootAnnot;
@@ -114,10 +114,11 @@ public class LassoRankerStarter {
 	private final SmtManager mSmtManager;
 	private final IUltimateServiceProvider mServices;
 	private final SimplicationTechnique mSimplificationTechnique = SimplicationTechnique.SIMPLIFY_DDA;
-	private final XnfConversionTechnique mXnfConversionTechnique = XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
+	private final XnfConversionTechnique mXnfConversionTechnique =
+			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 
-	public LassoRankerStarter(final RootNode rootNode, final IUltimateServiceProvider services, final IToolchainStorage storage)
-			throws IOException {
+	public LassoRankerStarter(final RootNode rootNode, final IUltimateServiceProvider services,
+			final IToolchainStorage storage) throws IOException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 
@@ -126,7 +127,8 @@ public class LassoRankerStarter {
 		// checkRCFGBuilderSettings();
 		final LassoRankerPreferences preferences = PreferencesInitializer.getLassoRankerPreferences(mServices);
 		mSmtManager = new SmtManager(mRootAnnot.getScript(), mRootAnnot.getBoogie2SMT(),
-				mRootAnnot.getModGlobVarManager(), mServices, false, mRootAnnot.getManagedScript(), mSimplificationTechnique, mXnfConversionTechnique);
+				mRootAnnot.getModGlobVarManager(), mServices, false, mRootAnnot.getManagedScript(),
+				mSimplificationTechnique, mXnfConversionTechnique);
 
 		AbstractLassoExtractor lassoExtractor;
 		final boolean useNewExtraction = true;
@@ -143,7 +145,7 @@ public class LassoRankerStarter {
 			lassoExtractor = new LassoExtractorNaive(rootNode);
 		}
 		if (!lassoExtractor.wasLassoFound()) {
-			reportUnuspportedSyntax(lassoExtractor.getSomeNoneForErrorReport(), s_LassoError);
+			reportUnuspportedSyntax(lassoExtractor.getSomeNoneForErrorReport(), LASSO_ERROR_MSG);
 			mStem = null;
 			mLoop = null;
 			mHonda = null;
@@ -167,25 +169,26 @@ public class LassoRankerStarter {
 		loopTf = tvr.renameVars(loopTf, "Loop");
 
 		final Term[] axioms = mRootAnnot.getBoogie2SMT().getAxioms().toArray(new Term[0]);
-		final Set<IProgramVar> modifiableGlobalsAtHonda = mRootAnnot.getModGlobVarManager()
-				.getModifiedBoogieVars(mHonda.getProcedure());
+		final Set<IProgramVar> modifiableGlobalsAtHonda =
+				mRootAnnot.getModGlobVarManager().getModifiedBoogieVars(mHonda.getProcedure());
 
 		// Construct LassoAnalysis for nontermination
 		LassoAnalysis laNT = null;
 		try {
-			laNT = new LassoAnalysis(script.getScript(), mRootAnnot.getBoogie2SMT(), stemTF, loopTf, modifiableGlobalsAtHonda,
-					axioms, preferences, mServices, storage, mSimplificationTechnique, mXnfConversionTechnique);
+			laNT = new LassoAnalysis(script.getScript(), mRootAnnot.getBoogie2SMT(), stemTF, loopTf,
+					modifiableGlobalsAtHonda, axioms, preferences, mServices, storage, mSimplificationTechnique,
+					mXnfConversionTechnique);
 		} catch (final TermException e) {
 			reportUnuspportedSyntax(mHonda, e.getMessage());
 			return;
 		}
 
 		// Try to prove non-termination
-		final NonTerminationAnalysisSettings nontermination_settings = PreferencesInitializer
-				.getNonTerminationAnalysisSettings(mServices);
-		if (nontermination_settings.analysis != AnalysisType.Disabled) {
+		final NonTerminationAnalysisSettings nonterminationSettings =
+				PreferencesInitializer.getNonTerminationAnalysisSettings(mServices);
+		if (nonterminationSettings.getAnalysis() != AnalysisType.DISABLED) {
 			try {
-				final GeometricNonTerminationArgument nta = laNT.checkNonTermination(nontermination_settings);
+				final GeometricNonTerminationArgument nta = laNT.checkNonTermination(nonterminationSettings);
 				if (nta != null) {
 					if (!lassoWasOverapproximated().isEmpty()) {
 						reportFailBecauseOfOverapproximationResult();
@@ -201,14 +204,15 @@ public class LassoRankerStarter {
 			}
 		}
 
-		final TerminationAnalysisSettings termination_settings = PreferencesInitializer
-				.getTerminationAnalysisSettings(mServices);
+		final TerminationAnalysisSettings terminationSettings =
+				PreferencesInitializer.getTerminationAnalysisSettings(mServices);
 
 		// Construct LassoAnalysis for nontermination
 		LassoAnalysis laT = null;
 		try {
-			laT = new LassoAnalysis(script.getScript(), mRootAnnot.getBoogie2SMT(), stemTF, loopTf, modifiableGlobalsAtHonda,
-					axioms, preferences, mServices, storage, mSimplificationTechnique, mXnfConversionTechnique);
+			laT = new LassoAnalysis(script.getScript(), mRootAnnot.getBoogie2SMT(), stemTF, loopTf,
+					modifiableGlobalsAtHonda, axioms, preferences, mServices, storage, mSimplificationTechnique,
+					mXnfConversionTechnique);
 		} catch (final TermException e) {
 			reportUnuspportedSyntax(mHonda, e.getMessage());
 			return;
@@ -216,7 +220,7 @@ public class LassoRankerStarter {
 
 		// Get all templates
 		RankingTemplate[] templates;
-		if (termination_settings.analysis == AnalysisType.Disabled) {
+		if (terminationSettings.getAnalysis() == AnalysisType.DISABLED) {
 			templates = new RankingTemplate[0];
 		} else {
 			templates = getTemplates();
@@ -229,7 +233,7 @@ public class LassoRankerStarter {
 				return;
 			}
 			try {
-				final TerminationArgument arg = laT.tryTemplate(template, termination_settings);
+				final TerminationArgument arg = laT.tryTemplate(template, terminationSettings);
 				if (arg != null) {
 					// try {
 					assert isTerminationArgumentCorrect(arg, stemTF, loopTf) : "Incorrect termination argument from"
@@ -271,19 +275,19 @@ public class LassoRankerStarter {
 		final boolean withBranchEncoders = false;
 		final List<CodeBlock> codeBlocks = Collections.unmodifiableList(nw.asList());
 		return SequentialComposition.getInterproceduralTransFormula(mgdScript, modGlobVarManager, simplify, extPqe,
-				tranformToCNF, withBranchEncoders, mLogger, mServices, codeBlocks,
-				mXnfConversionTechnique, mSimplificationTechnique, mRootAnnot.getBoogie2SMT().getBoogie2SmtSymbolTable());
+				tranformToCNF, withBranchEncoders, mLogger, mServices, codeBlocks, mXnfConversionTechnique,
+				mSimplificationTechnique, mRootAnnot.getBoogie2SMT().getBoogie2SmtSymbolTable());
 	}
 
 	/**
 	 * Build a list of templates. Add all templates from size 2 up to the given size.
-	 * 
+	 *
 	 * @param preferences
 	 * @return the templates specified in the preferences
 	 */
 	private RankingTemplate[] getTemplates() {
 		final IPreferenceProvider store = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
-		final List<RankingTemplate> templates = new ArrayList<RankingTemplate>();
+		final List<RankingTemplate> templates = new ArrayList<>();
 
 		if (store.getBoolean(PreferencesInitializer.LABEL_enable_affine_template)) {
 			templates.add(new AffineTemplate());
@@ -337,13 +341,13 @@ public class LassoRankerStarter {
 
 	/**
 	 * Build a list of templates. Add all templates with exactly the given size.
-	 * 
+	 *
 	 * @param preferences
 	 * @return the templates specified in the preferences
 	 */
 	private RankingTemplate[] getTemplatesExactly() {
 		final IPreferenceProvider store = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
-		final List<RankingTemplate> templates = new ArrayList<RankingTemplate>();
+		final List<RankingTemplate> templates = new ArrayList<>();
 
 		if (store.getBoolean(PreferencesInitializer.LABEL_enable_affine_template)) {
 			templates.add(new AffineTemplate());
@@ -366,11 +370,13 @@ public class LassoRankerStarter {
 		return templates.toArray(new RankingTemplate[templates.size()]);
 	}
 
-	private boolean isTerminationArgumentCorrect(final TerminationArgument arg, final UnmodifiableTransFormula stemTF, final UnmodifiableTransFormula loopTf) {
+	private boolean isTerminationArgumentCorrect(final TerminationArgument arg, final UnmodifiableTransFormula stemTF,
+			final UnmodifiableTransFormula loopTf) {
 
-		final BinaryStatePredicateManager bspm = new BinaryStatePredicateManager(mSmtManager, mServices, mSimplificationTechnique, mXnfConversionTechnique);
-		final Set<IProgramVar> modifiableGlobals = mRootAnnot.getModGlobVarManager()
-				.getModifiedBoogieVars(mHonda.getProcedure());
+		final BinaryStatePredicateManager bspm = new BinaryStatePredicateManager(mSmtManager, mServices,
+				mSimplificationTechnique, mXnfConversionTechnique);
+		final Set<IProgramVar> modifiableGlobals =
+				mRootAnnot.getModGlobVarManager().getModifiedBoogieVars(mHonda.getProcedure());
 		bspm.computePredicates(false, arg, false, stemTF, loopTf, modifiableGlobals);
 
 		// check supporting invariants
@@ -403,32 +409,32 @@ public class LassoRankerStarter {
 
 	/**
 	 * Report a termination argument back to Ultimate's toolchain.
-	 * 
+	 *
 	 * @param arg
 	 *            the termination argument
 	 */
 	private void reportTerminationResult(final TerminationArgument arg) {
 		final RankingFunction rf = arg.getRankingFunction();
-		final Collection<SupportingInvariant> si_list = arg.getSupportingInvariants();
+		final Collection<SupportingInvariant> suppInvs = arg.getSupportingInvariants();
 
 		final Script script = mRootAnnot.getScript();
 
-		final Term[] supporting_invariants = new Term[si_list.size()];
+		final Term[] suppInvArray = new Term[suppInvs.size()];
 		int i = 0;
-		for (final SupportingInvariant si : si_list) {
-			supporting_invariants[i] = si.asTerm(script);
+		for (final SupportingInvariant si : suppInvs) {
+			suppInvArray[i] = si.asTerm(script);
 			++i;
 		}
 
-		final TerminationArgumentResult<RcfgElement, Term> result = new TerminationArgumentResult<RcfgElement, Term>(
-				mHonda, Activator.PLUGIN_NAME, rf.asLexTerm(script), rf.getName(),
-				supporting_invariants, getTranslatorSequence(), Term.class);
+		final TerminationArgumentResult<RcfgElement, Term> result =
+				new TerminationArgumentResult<>(mHonda, Activator.PLUGIN_NAME, rf.asLexTerm(script), rf.getName(),
+						suppInvArray, getTranslatorSequence(), Term.class);
 		reportResult(result);
 	}
 
 	/**
 	 * Report a nontermination argument back to Ultimate's toolchain
-	 * 
+	 *
 	 * @param arg
 	 */
 	private void reportNonTerminationResult(final GeometricNonTerminationArgument nta) {
@@ -436,28 +442,27 @@ public class LassoRankerStarter {
 		// mRootAnnot.getBoogie2Smt().translate(term)
 		final Term2Expression term2expression = mRootAnnot.getBoogie2SMT().getTerm2Expression();
 
-		final List<Map<IProgramVar, Rational>> states = new ArrayList<Map<IProgramVar, Rational>>();
+		final List<Map<IProgramVar, Rational>> states = new ArrayList<>();
 		states.add(nta.getStateInit());
 		states.add(nta.getStateHonda());
 		states.addAll(nta.getGEVs());
-		final List<Map<Term, Rational>> initHondaRays = BacktranslationUtil.rank2Rcfg(term2expression, states);
+		final List<Map<Term, Rational>> initHondaRays = BacktranslationUtil.rank2Rcfg(states);
 
-		final NonTerminationArgumentResult<RcfgElement, Term> result = new GeometricNonTerminationArgumentResult<RcfgElement, Term>(
-				mHonda, Activator.PLUGIN_NAME, initHondaRays.get(0), initHondaRays.get(1),
-				initHondaRays.subList(2, initHondaRays.size()), nta.getLambdas(), nta.getNus(), getTranslatorSequence(),
-				Term.class);
+		final NonTerminationArgumentResult<RcfgElement, Term> result =
+				new GeometricNonTerminationArgumentResult<>(mHonda, Activator.PLUGIN_NAME, initHondaRays.get(0),
+						initHondaRays.get(1), initHondaRays.subList(2, initHondaRays.size()), nta.getLambdas(),
+						nta.getNus(), getTranslatorSequence(), Term.class);
 		reportResult(result);
 	}
 
 	/**
 	 * Report that no result has been found to Ultimate's toolchain
-	 * 
+	 *
 	 * @param preferences
 	 *            the current preferences
 	 */
 	private void reportNoResult(final RankingTemplate[] templates) {
-		final NoResult<RcfgElement> result = new NoResult<RcfgElement>(mHonda, Activator.PLUGIN_NAME,
-				getTranslatorSequence());
+		final NoResult<RcfgElement> result = new NoResult<>(mHonda, Activator.PLUGIN_NAME, getTranslatorSequence());
 		result.setShortDescription("LassoRanker could not prove termination");
 		final StringBuilder sb = new StringBuilder();
 		sb.append(
@@ -474,13 +479,12 @@ public class LassoRankerStarter {
 
 	/**
 	 * Report that no result has been found and that the reason might be that the lasso was overapproximated.
-	 * 
+	 *
 	 * @param preferences
 	 *            the current preferences
 	 */
 	private void reportFailBecauseOfOverapproximationResult() {
-		final NoResult<RcfgElement> result = new NoResult<RcfgElement>(mHonda, Activator.PLUGIN_NAME,
-				getTranslatorSequence());
+		final NoResult<RcfgElement> result = new NoResult<>(mHonda, Activator.PLUGIN_NAME, getTranslatorSequence());
 		result.setShortDescription("LassoRanker could not prove termination");
 		final StringBuilder sb = new StringBuilder();
 		sb.append(
@@ -494,7 +498,8 @@ public class LassoRankerStarter {
 	/**
 	 * Report that there was a timeout. TODO: which templates already failed, where did the timeout occur.
 	 */
-	private void reportTimeoutResult(final RankingTemplate[] templates, final RankingTemplate templateWhereTimeoutOccurred) {
+	private void reportTimeoutResult(final RankingTemplate[] templates,
+			final RankingTemplate templateWhereTimeoutOccurred) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append(
 				"LassoRanker could not prove termination " + "or nontermination of the given linear lasso program.\n");
@@ -503,15 +508,15 @@ public class LassoRankerStarter {
 			sb.append(" ");
 			sb.append(template.getClass().getSimpleName());
 		}
-		final TimeoutResultAtElement<RcfgElement> result = new TimeoutResultAtElement<RcfgElement>(mHonda,
-				Activator.PLUGIN_NAME, getTranslatorSequence(), sb.toString());
+		final TimeoutResultAtElement<RcfgElement> result =
+				new TimeoutResultAtElement<>(mHonda, Activator.PLUGIN_NAME, getTranslatorSequence(), sb.toString());
 		mLogger.info(sb.toString());
 		reportResult(result);
 	}
 
 	/**
 	 * Report that unsupported syntax was discovered
-	 * 
+	 *
 	 * @param position
 	 *            the program point
 	 * @param message
@@ -519,14 +524,14 @@ public class LassoRankerStarter {
 	 */
 	private void reportUnuspportedSyntax(final RcfgElement position, final String message) {
 		mLogger.error(message);
-		final UnsupportedSyntaxResult<RcfgElement> result = new UnsupportedSyntaxResult<RcfgElement>(position,
-				Activator.PLUGIN_NAME, getTranslatorSequence(), message);
+		final UnsupportedSyntaxResult<RcfgElement> result =
+				new UnsupportedSyntaxResult<>(position, Activator.PLUGIN_NAME, getTranslatorSequence(), message);
 		reportResult(result);
 	}
 
 	/**
 	 * Report a result back to the Ultimate toolchain
-	 * 
+	 *
 	 * @param result
 	 *            the result
 	 */

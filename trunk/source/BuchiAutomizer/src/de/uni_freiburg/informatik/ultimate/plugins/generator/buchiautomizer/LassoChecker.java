@@ -44,15 +44,18 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.AnalysisType;
+import de.uni_freiburg.informatik.ultimate.lassoranker.DefaultLassoRankerPreferences;
+import de.uni_freiburg.informatik.ultimate.lassoranker.ILassoRankerPreferences;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LassoAnalysis;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LassoAnalysis.AnalysisTechnique;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LassoAnalysis.PreprocessingBenchmark;
-import de.uni_freiburg.informatik.ultimate.lassoranker.LassoRankerPreferences;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
+import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.DefaultNonTerminationAnalysisSettings;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.FixpointCheck;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.FixpointCheck.HasFixpoint;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationAnalysisSettings;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationArgument;
+import de.uni_freiburg.informatik.ultimate.lassoranker.termination.DefaultTerminationAnalysisSettings;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.NonterminationAnalysisBenchmark;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.SupportingInvariant;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationAnalysisBenchmark;
@@ -127,23 +130,6 @@ public class LassoChecker {
 	private static final boolean s_AvoidNonterminationCheckIfArraysAreContained = true;
 
 	private final InterpolationTechnique mInterpolation;
-
-	/**
-	 * Use an external solver. If false, we use SMTInterpol.
-	 */
-	private final boolean mExternalSolver_RankSynthesis;
-	/**
-	 * Command of external solver.
-	 */
-	private final String mExternalSolverCommand_RankSynthesis;
-	/**
-	 * Use an external solver. If false, we use SMTInterpol.
-	 */
-	private final boolean mExternalSolver_GntaSynthesis;
-	/**
-	 * Command of external solver.
-	 */
-	private final String mExternalSolverCommand_GntaSynthesis;
 
 	private final AnalysisType mRankAnalysisType;
 	private final AnalysisType mGntaAnalysisType;
@@ -260,10 +246,6 @@ public class LassoChecker {
 		mXnfConversionTechnique = xnfConversionTechnique;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		final IPreferenceProvider baPref = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
-		mExternalSolver_RankSynthesis = baPref.getBoolean(PreferenceInitializer.LABEL_USE_EXTERNAL_SOLVER_RANK);
-		mExternalSolverCommand_RankSynthesis = baPref.getString(PreferenceInitializer.LABEL_EXTERNAL_SOLVER_COMMAND_RANK);
-		mExternalSolver_GntaSynthesis = baPref.getBoolean(PreferenceInitializer.LABEL_USE_EXTERNAL_SOLVER_GNTA);
-		mExternalSolverCommand_GntaSynthesis = baPref.getString(PreferenceInitializer.LABEL_EXTERNAL_SOLVER_COMMAND_GNTA);
 		mRankAnalysisType = baPref.getEnum(PreferenceInitializer.LABEL_ANALYSIS_TYPE_RANK, AnalysisType.class);
 		mGntaAnalysisType = baPref.getEnum(PreferenceInitializer.LABEL_ANALYSIS_TYPE_GNTA, AnalysisType.class);
 		mGntaDirections = baPref.getInt(PreferenceInitializer.LABEL_GNTA_DIRECTIONS);
@@ -615,57 +597,140 @@ public class LassoChecker {
 		return mLassoCheckerIdentifier + "_" + (withStem ? "Lasso" : "Loop");
 	}
 
-	private LassoRankerPreferences constructLassoRankerPreferences(final boolean withStem,
+	private ILassoRankerPreferences constructLassoRankerPreferences(final boolean withStem,
 			final boolean overapproximateArrayIndexConnection, final NlaHandling nlaHandling,
 			final AnalysisTechnique analysis) {
-		final LassoRankerPreferences pref = new LassoRankerPreferences();
-		switch (analysis) {
-		case GEOMETRIC_NONTERMINATION_ARGUMENTS: {
-			pref.mExternalSolver = mExternalSolver_GntaSynthesis;
-			pref.mExternalSolverCommand = mExternalSolverCommand_GntaSynthesis;
-			break;
-		}
-		case RANKING_FUNCTIONS_SUPPORTING_INVARIANTS: {
-			pref.mExternalSolver = mExternalSolver_RankSynthesis;
-			pref.mExternalSolverCommand = mExternalSolverCommand_RankSynthesis;
-			break;
-		}
-		default:
-			throw new AssertionError();
-		}
 		final IPreferenceProvider baPref = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
-		pref.mDumpSmtSolverScript = baPref.getBoolean(PreferenceInitializer.LABEL_DUMP_SCRIPT_TO_FILE);
-		pref.mPathOfDumpedScript = baPref.getString(PreferenceInitializer.LABEL_DUMP_SCRIPT_PATH);
-		pref.mBaseNameOfDumpedScript = generateFileBasenamePrefix(withStem);
-		pref.mOverapproximateArrayIndexConnection = overapproximateArrayIndexConnection;
-		pref.mNlaHandling = nlaHandling;
-		pref.mUseOldMapElimination = baPref.getBoolean(PreferenceInitializer.LABEL_USE_OLD_MAP_ELIMINATION);
-		pref.mMapElimAddInequalities = baPref.getBoolean(PreferenceInitializer.LABEL_MAP_ELIMINATION_ADD_INEQUALITIES);
-		pref.mMapElimOnlyTrivialImplicationsIndexAssignment = baPref
-				.getBoolean(PreferenceInitializer.LABEL_MAP_ELIMINATION_ONLY_TRIVIAL_IMPLICATIONS_INDEX_ASSIGNMENT);
-		pref.mMapElimOnlyTrivialImplicationsArrayWrite =
-				baPref.getBoolean(PreferenceInitializer.LABEL_MAP_ELIMINATION_ONLY_TRIVIAL_IMPLICATIONS_ARRAY_WRITE);
-		pref.mMapElimOnlyIndicesInFormula =
-				baPref.getBoolean(PreferenceInitializer.LABEL_MAP_ELIMINATION_ONLY_INDICES_IN_FORMULAS);
+		final ILassoRankerPreferences pref = new DefaultLassoRankerPreferences() {
+			@Override
+			public boolean isDumpSmtSolverScript() {
+				return baPref.getBoolean(PreferenceInitializer.LABEL_DUMP_SCRIPT_TO_FILE);
+			}
+
+			@Override
+			public String getPathOfDumpedScript() {
+				return baPref.getString(PreferenceInitializer.LABEL_DUMP_SCRIPT_PATH);
+			}
+
+			@Override
+			public String getBaseNameOfDumpedScript() {
+				return generateFileBasenamePrefix(withStem);
+			}
+
+			@Override
+			public boolean isOverapproximateArrayIndexConnection() {
+				return overapproximateArrayIndexConnection;
+			}
+
+			@Override
+			public NlaHandling getNlaHandling() {
+				return nlaHandling;
+			}
+
+			@Override
+			public boolean isUseOldMapElimination() {
+				return baPref.getBoolean(PreferenceInitializer.LABEL_USE_OLD_MAP_ELIMINATION);
+			}
+
+			@Override
+			public boolean isMapElimAddInequalities() {
+				return baPref.getBoolean(PreferenceInitializer.LABEL_MAP_ELIMINATION_ADD_INEQUALITIES);
+			}
+
+			@Override
+			public boolean isMapElimOnlyTrivialImplicationsArrayWrite() {
+				return baPref
+						.getBoolean(PreferenceInitializer.LABEL_MAP_ELIMINATION_ONLY_TRIVIAL_IMPLICATIONS_ARRAY_WRITE);
+			}
+
+			@Override
+			public boolean isMapElimOnlyTrivialImplicationsIndexAssignment() {
+				return baPref.getBoolean(
+						PreferenceInitializer.LABEL_MAP_ELIMINATION_ONLY_TRIVIAL_IMPLICATIONS_INDEX_ASSIGNMENT);
+			}
+
+			@Override
+			public boolean isMapElimOnlyIndicesInFormula() {
+				return baPref.getBoolean(PreferenceInitializer.LABEL_MAP_ELIMINATION_ONLY_INDICES_IN_FORMULAS);
+			}
+
+			@Override
+			public boolean isExternalSolver() {
+				switch (analysis) {
+				case GEOMETRIC_NONTERMINATION_ARGUMENTS: {
+					return baPref.getBoolean(PreferenceInitializer.LABEL_USE_EXTERNAL_SOLVER_GNTA);
+				}
+				case RANKING_FUNCTIONS_SUPPORTING_INVARIANTS: {
+					return baPref.getBoolean(PreferenceInitializer.LABEL_USE_EXTERNAL_SOLVER_RANK);
+				}
+				default:
+					throw new UnsupportedOperationException("Analysis type " + analysis + " unknown");
+				}
+			}
+
+			@Override
+			public String getExternalSolverCommand() {
+				switch (analysis) {
+				case GEOMETRIC_NONTERMINATION_ARGUMENTS: {
+					return baPref.getString(PreferenceInitializer.LABEL_EXTERNAL_SOLVER_COMMAND_GNTA);
+				}
+				case RANKING_FUNCTIONS_SUPPORTING_INVARIANTS: {
+					return baPref.getString(PreferenceInitializer.LABEL_EXTERNAL_SOLVER_COMMAND_RANK);
+				}
+				default:
+					throw new UnsupportedOperationException("Analysis type " + analysis + " unknown");
+				}
+			}
+		};
 		return pref;
 	}
 
 	private TerminationAnalysisSettings constructTASettings() {
-		final TerminationAnalysisSettings settings = new TerminationAnalysisSettings();
-		settings.analysis = mRankAnalysisType;
-		settings.numnon_strict_invariants = 1;
-		settings.numstrict_invariants = 0;
-		settings.nondecreasing_invariants = true;
-		settings.simplify_termination_argument = mTrySimplificationTerminationArgument;
-		settings.simplify_supporting_invariants = mTrySimplificationTerminationArgument;
-		return settings;
+		return new TerminationAnalysisSettings(new DefaultTerminationAnalysisSettings() {
+			@Override
+			public AnalysisType getAnalysis() {
+				return mRankAnalysisType;
+			}
+
+			@Override
+			public int getNumNonStrictInvariants() {
+				return 1;
+			}
+
+			@Override
+			public int getNumStrictInvariants() {
+				return 0;
+			}
+
+			@Override
+			public boolean isNonDecreasingInvariants() {
+				return true;
+			}
+
+			@Override
+			public boolean isSimplifySupportingInvariants() {
+				return mTrySimplificationTerminationArgument;
+			}
+
+			@Override
+			public boolean isSimplifyTerminationArgument() {
+				return mTrySimplificationTerminationArgument;
+			}
+		});
 	}
 
 	private NonTerminationAnalysisSettings constructNTASettings() {
-		final NonTerminationAnalysisSettings settings = new NonTerminationAnalysisSettings();
-		settings.analysis = mGntaAnalysisType;
-		settings.number_of_gevs = mGntaDirections;
-		return settings;
+		return new NonTerminationAnalysisSettings(new DefaultNonTerminationAnalysisSettings() {
+			@Override
+			public AnalysisType getAnalysis() {
+				return mGntaAnalysisType;
+			}
+
+			@Override
+			public int getNumberOfGevs() {
+				return mGntaDirections;
+			}
+		});
 	}
 
 	private SynthesisResult synthesize(final boolean withStem, UnmodifiableTransFormula stemTF,

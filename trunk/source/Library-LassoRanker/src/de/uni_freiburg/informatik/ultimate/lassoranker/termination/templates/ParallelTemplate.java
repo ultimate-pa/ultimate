@@ -148,7 +148,7 @@ public class ParallelTemplate extends RankingTemplate {
 			final LinearInequality li2 = mfgens[i].generate(outVars);
 			li2.negate();
 			li.add(li2);
-			li.motzkin_coefficient = sRedAtoms ?
+			li.mMotzkinCoefficient = sRedAtoms ?
 					PossibleMotzkinCoefficients.ONE
 					: PossibleMotzkinCoefficients.ANYTHING;
 			conjunction.add(Collections.singletonList(li));
@@ -164,7 +164,7 @@ public class ParallelTemplate extends RankingTemplate {
 					// f_i(x) > 0
 					final LinearInequality li = mfgens[i].generate(inVars);
 					li.setStrict(true);
-					li.motzkin_coefficient = sRedAtoms && i == 0 ?
+					li.mMotzkinCoefficient = sRedAtoms && i == 0 ?
 							PossibleMotzkinCoefficients.ZERO_AND_ONE
 							: PossibleMotzkinCoefficients.ANYTHING;
 					disjunction.add(li);
@@ -177,7 +177,7 @@ public class ParallelTemplate extends RankingTemplate {
 					final AffineTerm a = new AffineTerm(mdeltas[i], Rational.MONE);
 					li.add(a);
 					li.setStrict(true);
-					li.motzkin_coefficient = sRedAtoms && i == 0 ?
+					li.mMotzkinCoefficient = sRedAtoms && i == 0 ?
 							PossibleMotzkinCoefficients.ZERO_AND_ONE
 							: PossibleMotzkinCoefficients.ANYTHING;
 					disjunction.add(li);
