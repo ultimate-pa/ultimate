@@ -355,7 +355,7 @@ public class MapEliminator {
 		final List<Term> conjuncts = new ArrayList<>();
 		conjuncts.addAll(Arrays.asList(SmtUtils.getConjuncts(storeFreeTerm)));
 		conjuncts.addAll(mAdditionalConjuncts);
-		conjuncts.addAll(getReplacementVarEqualities(newTF, localIndices, invariants));
+		conjuncts.addAll(getReplacementVarEqualities(localIndices, invariants));
 		if (!mSettings.onlyTrivialImplicationsForModifiedArguments()) {
 			conjuncts.addAll(getAllImplicationsForIndexAssignment(assignedVars, newTF, invariants));
 		}
@@ -377,8 +377,6 @@ public class MapEliminator {
 	 * Returns all equalites of replacement-variables based on the index analysis. To reduce the number of conjuncts,
 	 * UnionFind is used.
 	 *
-	 * @param transformula
-	 *            A TransFormulaLR
 	 * @param localIndices
 	 *            A HashRelation, which maps all ApplicationTermTemplates, which are considered to the needed local
 	 *            indices.
@@ -386,8 +384,8 @@ public class MapEliminator {
 	 *            The valid invariants at this transformula
 	 * @return A list of terms (= conjuncts) with equalities that are valid at this transformula
 	 */
-	private List<Term> getReplacementVarEqualities(final TransFormulaLR transformula,
-			final HashRelation<MapTemplate, ArrayIndex> localIndices, final EqualityAnalysisResult invariants) {
+	private List<Term> getReplacementVarEqualities(final HashRelation<MapTemplate, ArrayIndex> localIndices,
+			final EqualityAnalysisResult invariants) {
 		final List<Term> result = new ArrayList<>();
 		for (final MapTemplate template : localIndices.getDomain()) {
 			final UnionFind<ArrayIndex> unionFind = new UnionFind<>();
@@ -616,13 +614,11 @@ public class MapEliminator {
 			if (processedIndices.contains(assignedIndex) || !allVariablesAreVisible(assignedIndex, transformula)) {
 				continue;
 			}
-			final Term value = store.getValue();
-			if (areIndicesEqual(index, assignedIndex, invariants)
-					&& areAllIndicesUnequal(index, processedIndices, invariants)) {
-				mAdditionalConjuncts.add(SmtUtils.binaryEquality(mScript, auxVar, value));
-			} else if (!mSettings.onlyTrivialImplicationsArrayWrite()) {
-				final Term newTerm = indexEqualityInequalityImpliesValueEquality(index, assignedIndex, processedIndices,
-						auxVar, value, invariants, transformula);
+			final Term newTerm = indexEqualityInequalityImpliesValueEquality(index, assignedIndex, processedIndices,
+					auxVar, store.getValue(), invariants, transformula);
+			// If the implication is not trivial (no "or"-term) and onlyTrivialImplicationsArrayWrite is enabled,
+			// don't add the implication to the conjuncts
+			if (!SmtUtils.isFunctionApplication(newTerm, "or") || !mSettings.onlyTrivialImplicationsArrayWrite()) {
 				mAdditionalConjuncts.add(newTerm);
 			}
 			processedIndices.add(assignedIndex);
@@ -673,14 +669,12 @@ public class MapEliminator {
 				if (processedIndices.contains(index)) {
 					continue;
 				}
-				if (areIndicesEqual(index, assignedIndex, invariants)
-						&& areAllIndicesUnequal(index, processedIndices, invariants)) {
-					final Term select = getLocalTerm(newTemplate.getTerm(globalIndex), transformula, newIsInVar);
-					result.add(SmtUtils.binaryEquality(mScript, select, value));
-				} else if (!mSettings.onlyTrivialImplicationsArrayWrite()) {
-					final Term select = getLocalTerm(newTemplate.getTerm(globalIndex), transformula, newIsInVar);
-					final Term newTerm = indexEqualityInequalityImpliesValueEquality(index, assignedIndex,
-							processedIndices, select, value, invariants, transformula);
+				final Term select = getLocalTerm(newTemplate.getTerm(globalIndex), transformula, newIsInVar);
+				final Term newTerm = indexEqualityInequalityImpliesValueEquality(index, assignedIndex, processedIndices,
+						select, value, invariants, transformula);
+				// If the implication is not trivial (no "or"-term) and onlyTrivialImplicationsArrayWrite is enabled,
+				// don't add the implication to the conjuncts
+				if (!SmtUtils.isFunctionApplication(newTerm, "or") || !mSettings.onlyTrivialImplicationsArrayWrite()) {
 					result.add(newTerm);
 				}
 
@@ -693,12 +687,11 @@ public class MapEliminator {
 			final Term selectNew = getLocalTerm(newTemplate.getTerm(globalIndex), transformula, newIsInVar);
 			final ArrayIndex index1 = getLocalIndex(globalIndex, transformula, oldIsInVar);
 			final ArrayIndex index2 = getLocalIndex(globalIndex, transformula, newIsInVar);
-			if (areIndicesEqual(index1, index2, invariants)
-					&& areAllIndicesUnequal(index2, processedIndices, invariants)) {
-				result.add(SmtUtils.binaryEquality(mScript, selectNew, selectOld));
-			} else if (!mSettings.onlyTrivialImplicationsArrayWrite()) {
-				final Term newTerm = indexEqualityInequalityImpliesValueEquality(index1, index2, processedIndices,
-						selectNew, selectOld, invariants, transformula);
+			final Term newTerm = indexEqualityInequalityImpliesValueEquality(index1, index2, processedIndices,
+					selectNew, selectOld, invariants, transformula);
+			// If the implication is not trivial (no "or"-term) and onlyTrivialImplicationsArrayWrite is enabled,
+			// don't add the implication to the conjuncts
+			if (!SmtUtils.isFunctionApplication(newTerm, "or") || !mSettings.onlyTrivialImplicationsArrayWrite()) {
 				result.add(newTerm);
 			}
 		}
@@ -815,14 +808,14 @@ public class MapEliminator {
 		return new ArrayIndex(list);
 	}
 
-	private Set<MapTemplate> getLocalTemplates(final MapTemplate template, final TransFormulaLR transformula) {
+	private Collection<MapTemplate> getLocalTemplates(final MapTemplate template, final TransFormulaLR transformula) {
 		if (template instanceof ArrayTemplate) {
 			final Term array = (Term) template.getIdentifier();
 			final ArrayTemplate inVarTemplate = new ArrayTemplate(getLocalTerm(array, transformula, true), mScript);
 			final ArrayTemplate outVarTemplate = new ArrayTemplate(getLocalTerm(array, transformula, false), mScript);
-			return new HashSet<>(Arrays.asList(inVarTemplate, outVarTemplate));
+			return Arrays.asList(inVarTemplate, outVarTemplate);
 		}
-		return Collections.singleton(template);
+		return Arrays.asList(template);
 	}
 
 	/**
@@ -849,7 +842,7 @@ public class MapEliminator {
 
 	/**
 	 * Get an aux-var with the given term as name (in a nicer representation, especially for select-terms) and add it to
-	 * the set of aux-vars. For different terms the methods returns different aux-vars.
+	 * the set of aux-vars. The method returns the same aux-var for two terms iff they're equal
 	 *
 	 * @param term
 	 * @return An aux-var
@@ -865,7 +858,7 @@ public class MapEliminator {
 		if (SmtUtils.isFunctionApplication(term, "select")) {
 			final StringBuilder stringBuilder = new StringBuilder();
 			final MultiDimensionalSelect select = new MultiDimensionalSelect(term);
-			stringBuilder.append("array_").append((niceTermString(select.getArray()))).append('[');
+			stringBuilder.append("array_").append(niceTermString(select.getArray())).append('[');
 			final ArrayIndex index = select.getIndex();
 			for (int i = 0; i < index.size(); i++) {
 				stringBuilder.append(niceTermString(index.get(i))).append(i == index.size() - 1 ? ']' : ',');
@@ -931,31 +924,9 @@ public class MapEliminator {
 		return true;
 	}
 
-	private static boolean areIndicesUnequal(final ArrayIndex index1, final ArrayIndex index2,
-			final EqualityAnalysisResult invariants) {
-		for (int i = 0; i < index1.size(); i++) {
-			final Term term1 = index1.get(i);
-			final Term term2 = index2.get(i);
-			if (invariants.getDistinctDoubletons().contains(new Doubleton<>(term1, term2))) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	private static boolean areAllIndicesUnequal(final ArrayIndex index, final Collection<ArrayIndex> indices,
-			final EqualityAnalysisResult invariants) {
-		for (final ArrayIndex index2 : indices) {
-			if (!areIndicesUnequal(index, index2, invariants)) {
-				return false;
-			}
-		}
-		return true;
-	}
-
 	private Term getEqualTerm(final ArrayIndex index1, final ArrayIndex index2,
 			final EqualityAnalysisResult invariants) {
-		Term result = mScript.term("true");
+		final List<Term> result = new ArrayList<>();
 		for (int i = 0; i < index1.size(); i++) {
 			final Term term1 = index1.get(i);
 			final Term term2 = index2.get(i);
@@ -967,36 +938,28 @@ public class MapEliminator {
 				return mScript.term("false");
 			}
 			if (!invariants.getEqualDoubletons().contains(doubleton)) {
-				result = Util.and(mScript, result, SmtUtils.binaryEquality(mScript, term1, term2));
+				result.add(SmtUtils.binaryEquality(mScript, term1, term2));
 			}
 		}
-		return result;
+		return SmtUtils.and(mScript, result);
 	}
 
 	private Term indexEqualityInequalityImpliesValueEquality(final ArrayIndex index, final ArrayIndex equal,
 			final Collection<ArrayIndex> unequal, final Term value1, final Term value2,
 			final EqualityAnalysisResult invariants, final TransFormulaLR transformula) {
-		// If mOnlyIndicesInFormula is enabled and one of the indices doesn't occur in the formula, no implications
-		// should be created, so "true" is returned
-		final Set<TermVariable> freeVars = new HashSet<>(Arrays.asList(transformula.getFormula().getFreeVars()));
-
-		if (mSettings.onlyArgumentsInFormula()) {
-			if (!index.freeVarsAreSubset(freeVars) || !equal.freeVarsAreSubset(freeVars)) {
-				return mScript.term("true");
-			}
-			for (final ArrayIndex i : unequal) {
-				if (!i.freeVarsAreSubset(freeVars)) {
-					return mScript.term("true");
-				}
-			}
-		}
 		Term lhs = getEqualTerm(index, equal, invariants);
 		for (final ArrayIndex i : unequal) {
 			lhs = Util.and(mScript, lhs, Util.not(mScript, getEqualTerm(index, i, invariants)));
 		}
 		final Term rhs = SmtUtils.binaryEquality(mScript, value1, value2);
-		final Term result = Util.or(mScript, SmtUtils.not(mScript, lhs), rhs);
-		return result;
+		// Check if all vars of the lhs also occur in the formula
+		// If not and onlyArgumentsInFormula is enable, return "true" as an overapproximation
+		final List<TermVariable> freeVarsTerm = Arrays.asList(lhs.getFreeVars());
+		final List<TermVariable> freeVarsFormula = Arrays.asList(transformula.getFormula().getFreeVars());
+		if (!freeVarsFormula.containsAll(freeVarsTerm) && mSettings.onlyArgumentsInFormula()) {
+			return mScript.term("true");
+		}
+		return Util.or(mScript, SmtUtils.not(mScript, lhs), rhs);
 	}
 
 	private Term indexEqualityImpliesValueEquality(final ArrayIndex index, final ArrayIndex equal, final Term value1,
