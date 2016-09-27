@@ -2,27 +2,27 @@
  * Copyright (C) 2013-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2010-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE TraceAbstraction plug-in.
- * 
+ *
  * The ULTIMATE TraceAbstraction plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE TraceAbstraction plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE TraceAbstraction plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainExceptionWrapper;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
@@ -82,9 +83,9 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
  * CEGAR loop of a trace abstraction. Can be used to check safety and termination of sequential and concurrent programs.
  * Defines roughly the structure of the CEGAR loop, concrete algorithms are implemented in classes which extend this
  * one.
- * 
+ *
  * @author heizmann@informatik.uni-freiburg.de
- * 
+ *
  */
 public abstract class AbstractCegarLoop {
 
@@ -105,6 +106,7 @@ public abstract class AbstractCegarLoop {
 	public enum Result {
 		SAFE, UNSAFE, TIMEOUT, UNKNOWN
 	}
+
 	public static Result aggregateResult(final Object value1, final Object value2) {
 		final Result result1 = (Result) value1;
 		final Result result2 = (Result) value2;
@@ -123,13 +125,14 @@ public abstract class AbstractCegarLoop {
 			throw new AssertionError();
 		}
 	}
-	
-	public static Function<Object, Function<Object,Object>> s_DefaultAggregation = 
-			x -> y -> { return aggregateResult(x, y); };
+
+	public static Function<Object, Function<Object, Object>> s_DefaultAggregation = x -> y -> {
+		return aggregateResult(x, y);
+	};
 
 	/**
-	 * Unique mName of this CEGAR loop to distinguish this instance from other instances in a complex verification
-	 * task. Important only for debugging and debugging output written to files.
+	 * Unique mName of this CEGAR loop to distinguish this instance from other instances in a complex verification task.
+	 * Important only for debugging and debugging output written to files.
 	 */
 	private final String mName;
 
@@ -210,9 +213,9 @@ public abstract class AbstractCegarLoop {
 		return mToolchainCancelledException;
 	}
 
-	public AbstractCegarLoop(final IUltimateServiceProvider services, final IToolchainStorage storage, final String name,
-			final RootNode rootNode, final SmtManager smtManager, final TAPreferences taPrefs, final Collection<ProgramPoint> errorLocs,
-			final ILogger logger) {
+	public AbstractCegarLoop(final IUltimateServiceProvider services, final IToolchainStorage storage,
+			final String name, final RootNode rootNode, final SmtManager smtManager, final TAPreferences taPrefs,
+			final Collection<ProgramPoint> errorLocs, final ILogger logger) {
 		mServices = services;
 		mLogger = logger;
 		mSimplificationTechnique = taPrefs.getSimplificationTechnique();
@@ -232,14 +235,14 @@ public abstract class AbstractCegarLoop {
 	 * Construct the automaton mAbstraction such that the language recognized by mAbstation is a superset of the
 	 * language of the program. The initial abstraction in our implementations will usually be an automaton that has the
 	 * same graph as the program.
-	 * 
+	 *
 	 * @throws AutomataLibraryException
 	 */
 	protected abstract void getInitialAbstraction() throws AutomataOperationCanceledException, AutomataLibraryException;
 
 	/**
 	 * Return true iff the mAbstraction does not accept any trace.
-	 * 
+	 *
 	 * @throws AutomataOperationCanceledException
 	 */
 	protected abstract boolean isAbstractionCorrect() throws AutomataOperationCanceledException;
@@ -260,7 +263,7 @@ public abstract class AbstractCegarLoop {
 	 * <li>accepts the trace of mCounterexample,
 	 * <li>accepts only infeasible traces.
 	 * </ul>
-	 * 
+	 *
 	 * @throws AutomataOperationCanceledException
 	 */
 	protected abstract void constructInterpolantAutomaton() throws AutomataOperationCanceledException;
@@ -270,12 +273,11 @@ public abstract class AbstractCegarLoop {
 	 * <ul>
 	 * <li>the language of the new mAbstraction is (not necessary strictly) smaller than the language of the old
 	 * mAbstraction
-	 * <li>the new mAbstraction accepts all feasible traces of the old mAbstraction (only infeasible traces are
-	 * removed)
+	 * <li>the new mAbstraction accepts all feasible traces of the old mAbstraction (only infeasible traces are removed)
 	 * <ul>
-	 * 
-	 * @return true iff the trace of mCounterexample (which was accepted by the old mAbstraction) is not accepted by
-	 *         the mAbstraction.
+	 *
+	 * @return true iff the trace of mCounterexample (which was accepted by the old mAbstraction) is not accepted by the
+	 *         mAbstraction.
 	 * @throws AutomataLibraryException
 	 */
 	protected abstract boolean refineAbstraction() throws AutomataOperationCanceledException, AutomataLibraryException;
@@ -290,7 +292,7 @@ public abstract class AbstractCegarLoop {
 	 * Return the Artifact whose computation was requested. This artifact can be either the control flow graph, an
 	 * abstraction, an interpolant automaton, or a negated interpolant automaton. The artifact is only used for
 	 * debugging.
-	 * 
+	 *
 	 * @return The root node of the artifact after it was transformed to an ULTIMATE model.
 	 */
 	public abstract IElement getArtifact();
@@ -334,7 +336,7 @@ public abstract class AbstractCegarLoop {
 			mCegarLoopBenchmark.setResult(Result.TIMEOUT);
 			return Result.TIMEOUT;
 		} catch (final AutomataLibraryException e) {
-			throw new AssertionError(e.getMessage());
+			throw new ToolchainExceptionWrapper(Activator.PLUGIN_ID, e);
 		}
 
 		if (mIteration <= mPref.watchIteration()
@@ -432,11 +434,10 @@ public abstract class AbstractCegarLoop {
 			mLogger.info("Abstraction has " + mAbstraction.sizeInformation());
 			mLogger.info("Interpolant automaton has " + mInterpolAutomaton.sizeInformation());
 
-			if (mPref.computeHoareAnnotation() && 
-					mPref.getHoareAnnotationPositions() == HoareAnnotationPositions.All) {
+			if (mPref.computeHoareAnnotation() && mPref.getHoareAnnotationPositions() == HoareAnnotationPositions.All) {
 				assert (new InductivityCheck(mServices, (INestedWordAutomaton<CodeBlock, IPredicate>) mAbstraction,
-						false, true, new IncrementalHoareTripleChecker(mRootNode.getRootAnnot().getManagedScript(), mModGlobVarManager)))
-								.getResult() : "Not inductive";
+						false, true, new IncrementalHoareTripleChecker(mRootNode.getRootAnnot().getManagedScript(),
+								mModGlobVarManager))).getResult() : "Not inductive";
 			}
 
 			if (mIteration <= mPref.watchIteration() && mPref.artifact() == Artifact.ABSTRACTION) {
@@ -486,7 +487,8 @@ public abstract class AbstractCegarLoop {
 	/*
 	 * TODO unify sequential and concurrent
 	 */
-	protected static void dumpNestedRun(final IRun<CodeBlock, IPredicate> run, final PrintWriter pW, final ILogger logger) {
+	protected static void dumpNestedRun(final IRun<CodeBlock, IPredicate> run, final PrintWriter pW,
+			final ILogger logger) {
 		final NestedWord<CodeBlock> counterexample = NestedWord.nestedWord(run.getWord());
 		ArrayList<IPredicate> stateSequence = null;
 		if (run instanceof NestedRun) {
@@ -564,8 +566,9 @@ public abstract class AbstractCegarLoop {
 	}
 
 	static void dumpBackedges(final ProgramPoint repLocName, final int position, final IPredicate state,
-			final Collection<IPredicate> linPredStates, final CodeBlock transition, final IPredicate succState, final IPredicate sf1,
-			final IPredicate sf2, final LBool result, final int iteration, final int satProblem, final PrintWriter iterationPW) {
+			final Collection<IPredicate> linPredStates, final CodeBlock transition, final IPredicate succState,
+			final IPredicate sf1, final IPredicate sf2, final LBool result, final int iteration, final int satProblem,
+			final PrintWriter iterationPW) {
 		try {
 			iterationPW.println(repLocName + " occured once again at position " + position + ". Added backedge");
 			iterationPW.println("from:   " + state);
@@ -588,38 +591,64 @@ public abstract class AbstractCegarLoop {
 			iterationPW.flush();
 		}
 	}
-	
-	
+
 	public enum CegarLoopStatisticsDefinitions implements IStatisticsElement {
-		
-		Result(Result.class, AbstractCegarLoop.s_DefaultAggregation, AStatisticsType.s_DataBeforeKey),
-		OverallTime(Long.class, AStatisticsType.s_LongAddition, AStatisticsType.s_TimeBeforeKey),
-		OverallIterations(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
-		TraceHistogramMax(Integer.class, AStatisticsType.s_IntegerMaximum, AStatisticsType.s_DataBeforeKey),
-		AutomataDifference(Long.class, AStatisticsType.s_LongAddition, AStatisticsType.s_TimeBeforeKey),
-		DeadEndRemovalTime(Long.class, AStatisticsType.s_LongAddition, AStatisticsType.s_TimeBeforeKey),
-		AutomataMinimizationTime(Long.class, AStatisticsType.s_LongAddition, AStatisticsType.s_TimeBeforeKey),
-		HoareAnnotationTime(Long.class, AStatisticsType.s_LongAddition, AStatisticsType.s_TimeBeforeKey),
-		HoareTripleCheckerStatistics(StatisticsData.class, AStatisticsType.s_StatisticsDataAggregation, AStatisticsType.s_KeyBeforeData),
-		PredicateUnifierStatistics(StatisticsData.class, AStatisticsType.s_StatisticsDataAggregation, AStatisticsType.s_KeyBeforeData),
-		StatesRemovedByMinimization(Long.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
-		BasicInterpolantAutomatonTime(Long.class, AStatisticsType.s_LongAddition, AStatisticsType.s_TimeBeforeKey),
-		BiggestAbstraction(Integer.class, CegarStatisticsType.s_SizeIterationPairDataAggregation, AStatisticsType.s_KeyBeforeData),
-		TraceCheckerStatistics(StatisticsData.class, AStatisticsType.s_StatisticsDataAggregation, AStatisticsType.s_KeyBeforeData),
-		InterpolantConsolidationStatistics(StatisticsData.class, AStatisticsType.s_StatisticsDataAggregation, AStatisticsType.s_KeyBeforeData),
-		InterpolantCoveringCapability(BackwardCoveringInformation.class, CoverageAnalysis.s_DefaultAggregation, AStatisticsType.s_DataBeforeKey),
-		TotalInterpolationStatistics(StatisticsData.class, AStatisticsType.s_StatisticsDataAggregation, AStatisticsType.s_KeyBeforeData),
-		AbstIntTime(Long.class, AStatisticsType.s_LongAddition, AStatisticsType.s_TimeBeforeKey),
-		AbstIntIterations(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
-		AbstIntStrong(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
-		;
-		
+
+		Result(Result.class, AbstractCegarLoop.s_DefaultAggregation, AStatisticsType.s_DataBeforeKey), OverallTime(
+				Long.class, AStatisticsType.s_LongAddition,
+				AStatisticsType.s_TimeBeforeKey), OverallIterations(Integer.class, AStatisticsType.s_IntegerAddition,
+						AStatisticsType.s_DataBeforeKey), TraceHistogramMax(Integer.class,
+								AStatisticsType.s_IntegerMaximum, AStatisticsType.s_DataBeforeKey), AutomataDifference(
+										Long.class, AStatisticsType.s_LongAddition,
+										AStatisticsType.s_TimeBeforeKey), DeadEndRemovalTime(Long.class,
+												AStatisticsType.s_LongAddition,
+												AStatisticsType.s_TimeBeforeKey), AutomataMinimizationTime(Long.class,
+														AStatisticsType.s_LongAddition,
+														AStatisticsType.s_TimeBeforeKey), HoareAnnotationTime(
+																Long.class, AStatisticsType.s_LongAddition,
+																AStatisticsType.s_TimeBeforeKey), HoareTripleCheckerStatistics(
+																		StatisticsData.class,
+																		AStatisticsType.s_StatisticsDataAggregation,
+																		AStatisticsType.s_KeyBeforeData), PredicateUnifierStatistics(
+																				StatisticsData.class,
+																				AStatisticsType.s_StatisticsDataAggregation,
+																				AStatisticsType.s_KeyBeforeData), StatesRemovedByMinimization(
+																						Long.class,
+																						AStatisticsType.s_IntegerAddition,
+																						AStatisticsType.s_DataBeforeKey), BasicInterpolantAutomatonTime(
+																								Long.class,
+																								AStatisticsType.s_LongAddition,
+																								AStatisticsType.s_TimeBeforeKey), BiggestAbstraction(
+																										Integer.class,
+																										CegarStatisticsType.s_SizeIterationPairDataAggregation,
+																										AStatisticsType.s_KeyBeforeData), TraceCheckerStatistics(
+																												StatisticsData.class,
+																												AStatisticsType.s_StatisticsDataAggregation,
+																												AStatisticsType.s_KeyBeforeData), InterpolantConsolidationStatistics(
+																														StatisticsData.class,
+																														AStatisticsType.s_StatisticsDataAggregation,
+																														AStatisticsType.s_KeyBeforeData), InterpolantCoveringCapability(
+																																BackwardCoveringInformation.class,
+																																CoverageAnalysis.s_DefaultAggregation,
+																																AStatisticsType.s_DataBeforeKey), TotalInterpolationStatistics(
+																																		StatisticsData.class,
+																																		AStatisticsType.s_StatisticsDataAggregation,
+																																		AStatisticsType.s_KeyBeforeData), AbstIntTime(
+																																				Long.class,
+																																				AStatisticsType.s_LongAddition,
+																																				AStatisticsType.s_TimeBeforeKey), AbstIntIterations(
+																																						Integer.class,
+																																						AStatisticsType.s_IntegerAddition,
+																																						AStatisticsType.s_DataBeforeKey), AbstIntStrong(
+																																								Integer.class,
+																																								AStatisticsType.s_IntegerAddition,
+																																								AStatisticsType.s_DataBeforeKey),;
+
 		private final Class<?> mClazz;
 		private final Function<Object, Function<Object, Object>> mAggr;
 		private final Function<String, Function<Object, String>> mPrettyprinter;
-		
-		CegarLoopStatisticsDefinitions(final Class<?> clazz, 
-				final Function<Object, Function<Object, Object>> aggr, 
+
+		CegarLoopStatisticsDefinitions(final Class<?> clazz, final Function<Object, Function<Object, Object>> aggr,
 				final Function<String, Function<Object, String>> prettyprinter) {
 			mClazz = clazz;
 			mAggr = aggr;
