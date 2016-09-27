@@ -50,9 +50,8 @@ public class ExceptionOrErrorResult extends AbstractResult {
 	private static String getPluginName(final String plugin, final Throwable throwable) {
 		if (throwable instanceof ToolchainExceptionWrapper) {
 			return ((ToolchainExceptionWrapper) throwable).getPluginId();
-		} else {
-			return plugin;
 		}
+		return plugin;
 	}
 
 	@Override
