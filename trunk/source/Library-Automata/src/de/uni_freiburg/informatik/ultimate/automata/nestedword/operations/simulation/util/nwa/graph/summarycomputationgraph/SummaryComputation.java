@@ -135,7 +135,7 @@ public class SummaryComputation<LETTER, STATE> {
 		mGameSummaries = new LinkedHashSet<>();
 		for (final Entry<Set<IGameState>, NestedMap2<IGameState, IGameState, Integer>> entry : mTrigger2Summaries.entrySet()) {
 			final NestedMap2<IGameState, IGameState, Integer> target2source2prio = entry.getValue();
-			final NestedMap2<IGameState, IGameState, Integer> source2target2prio = entry.getValue();
+			final NestedMap2<IGameState, IGameState, Integer> source2target2prio = new NestedMap2<>();
 			for (final Triple<IGameState, IGameState, Integer> triple : target2source2prio.entrySet()) {
 				source2target2prio.put(triple.getSecond(), triple.getFirst(), triple.getThird());
 			}
@@ -376,8 +376,13 @@ public class SummaryComputation<LETTER, STATE> {
 		for (final IGameState source : spoi2Wst.keySet()) {
 			// take only these, where current state and summary source coincide
 			final WeightedSummaryTargets wst = spoi2Wst.get(source, source);
-			for (final Entry<IGameState, Integer> target2priority : wst.entrySet()) {
-				target2source2priority.put(target2priority.getKey(), source, target2priority.getValue());
+			if (wst == null) {
+				// do nothing, 
+				// this was a state for a different summary source
+			} else {
+				for (final Entry<IGameState, Integer> target2priority : wst.entrySet()) {
+					target2source2priority.put(target2priority.getKey(), source, target2priority.getValue());
+				}
 			}
 		}
 		mTrigger2Summaries.addPair(summaryComputationTriggers, target2source2priority);
