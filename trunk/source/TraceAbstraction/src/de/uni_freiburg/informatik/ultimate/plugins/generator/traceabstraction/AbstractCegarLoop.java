@@ -27,11 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -45,18 +41,14 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.F
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainExceptionWrapper;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
@@ -67,7 +59,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Pro
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
@@ -89,10 +80,6 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
  */
 public abstract class AbstractCegarLoop {
 
-	protected final ILogger mLogger;
-	protected final SimplicationTechnique mSimplificationTechnique;
-	protected final XnfConversionTechnique mXnfConversionTechnique;
-
 	/**
 	 * Result of CEGAR loop iteration
 	 * <ul>
@@ -107,28 +94,12 @@ public abstract class AbstractCegarLoop {
 		SAFE, UNSAFE, TIMEOUT, UNKNOWN
 	}
 
-	public static Result aggregateResult(final Object value1, final Object value2) {
-		final Result result1 = (Result) value1;
-		final Result result2 = (Result) value2;
-		final Set<Result> results = new HashSet<Result>();
-		results.add(result1);
-		results.add(result2);
-		if (results.contains(Result.UNSAFE)) {
-			return Result.UNSAFE;
-		} else if (results.contains(Result.UNKNOWN)) {
-			return Result.UNKNOWN;
-		} else if (results.contains(Result.TIMEOUT)) {
-			return Result.TIMEOUT;
-		} else if (results.contains(Result.SAFE)) {
-			return Result.SAFE;
-		} else {
-			throw new AssertionError();
-		}
-	}
+	public static final Function<Object, Function<Object, Object>> DEFAULT_AGGREGATION_FUN =
+			x -> y -> aggregateResult(x, y);
 
-	public static Function<Object, Function<Object, Object>> s_DefaultAggregation = x -> y -> {
-		return aggregateResult(x, y);
-	};
+	protected final ILogger mLogger;
+	protected final SimplicationTechnique mSimplificationTechnique;
+	protected final XnfConversionTechnique mXnfConversionTechnique;
 
 	/**
 	 * Unique mName of this CEGAR loop to distinguish this instance from other instances in a complex verification task.
@@ -198,20 +169,17 @@ public abstract class AbstractCegarLoop {
 
 	// used for debugging only
 	protected IAutomaton<CodeBlock, IPredicate> mArtifactAutomaton;
-	protected PrintWriter mIterationPW;
+
 	protected final Format mPrintAutomataLabeling;
 
 	protected CegarLoopStatisticsGenerator mCegarLoopBenchmark;
 
 	protected final IUltimateServiceProvider mServices;
-	// protected final IToolchainStorage mToolchainStorage = null; TODO: this is not what we want, is it?
 	protected final IToolchainStorage mToolchainStorage;
 
 	private ToolchainCanceledException mToolchainCancelledException;
 
-	public ToolchainCanceledException getToolchainCancelledException() {
-		return mToolchainCancelledException;
-	}
+	protected Dumper mDumper;
 
 	public AbstractCegarLoop(final IUltimateServiceProvider services, final IToolchainStorage storage,
 			final String name, final RootNode rootNode, final SmtManager smtManager, final TAPreferences taPrefs,
@@ -228,7 +196,29 @@ public abstract class AbstractCegarLoop {
 		mPref = taPrefs;
 		mErrorLocs = errorLocs;
 		mToolchainStorage = storage;
+	}
 
+	public ToolchainCanceledException getToolchainCancelledException() {
+		return mToolchainCancelledException;
+	}
+
+	public static Result aggregateResult(final Object value1, final Object value2) {
+		final Result result1 = (Result) value1;
+		final Result result2 = (Result) value2;
+		final Set<Result> results = new HashSet<>();
+		results.add(result1);
+		results.add(result2);
+		if (results.contains(Result.UNSAFE)) {
+			return Result.UNSAFE;
+		} else if (results.contains(Result.UNKNOWN)) {
+			return Result.UNKNOWN;
+		} else if (results.contains(Result.TIMEOUT)) {
+			return Result.TIMEOUT;
+		} else if (results.contains(Result.SAFE)) {
+			return Result.SAFE;
+		} else {
+			throw new AssertionError();
+		}
 	}
 
 	/**
@@ -327,7 +317,7 @@ public abstract class AbstractCegarLoop {
 
 		// intialize dump of debugging output to files if necessary
 		if (mPref.dumpAutomata()) {
-			dumpInitinalize();
+			mDumper = new Dumper(mLogger, mPref, mName, mIteration);
 		}
 		try {
 			getInitialAbstraction();
@@ -368,7 +358,7 @@ public abstract class AbstractCegarLoop {
 			mLogger.info("=== Iteration " + mIteration + " === " + errorLocs() + "===");
 			mCegarLoopBenchmark.announceNextIteration();
 			if (mPref.dumpAutomata()) {
-				dumpInitinalize();
+				mDumper = new Dumper(mLogger, mPref, mName, mIteration);
 			}
 			try {
 				final LBool isCounterexampleFeasible = isCounterexampleFeasible();
@@ -428,7 +418,7 @@ public abstract class AbstractCegarLoop {
 				mCegarLoopBenchmark.stopIfRunning(CegarLoopStatisticsDefinitions.AbstIntTime.toString());
 				return Result.TIMEOUT;
 			} catch (final AutomataLibraryException e) {
-				throw new AssertionError("Automata Operation failed" + e.getMessage());
+				throw new ToolchainExceptionWrapper(Activator.PLUGIN_ID, e);
 			}
 
 			mLogger.info("Abstraction has " + mAbstraction.sizeInformation());
@@ -473,89 +463,6 @@ public abstract class AbstractCegarLoop {
 				mPref.dumpPath() + "/" + filename, mPrintAutomataLabeling, "", automaton);
 	}
 
-	private void dumpInitinalize() {
-		final File file = new File(mPref.dumpPath() + "/" + mName + "_iteration" + mIteration + ".txt");
-		FileWriter fileWriter;
-		try {
-			fileWriter = new FileWriter(file);
-			mIterationPW = new PrintWriter(fileWriter);
-		} catch (final IOException e) {
-			e.printStackTrace();
-		}
-	}
-
-	/*
-	 * TODO unify sequential and concurrent
-	 */
-	protected static void dumpNestedRun(final IRun<CodeBlock, IPredicate> run, final PrintWriter pW,
-			final ILogger logger) {
-		final NestedWord<CodeBlock> counterexample = NestedWord.nestedWord(run.getWord());
-		ArrayList<IPredicate> stateSequence = null;
-		if (run instanceof NestedRun) {
-			stateSequence = ((NestedRun<CodeBlock, IPredicate>) run).getStateSequence();
-		}
-		String line;
-		int indentation = 0;
-		try {
-			line = "===============Run of potential Counterexample==========";
-			pW.println(line);
-			for (int i = 0; i < counterexample.length(); i++) {
-
-				if (run instanceof NestedRun) {
-					line = addIndentation(indentation,
-							"Location" + i + ": " + ((ISLPredicate) stateSequence.get(i)).getProgramPoint());
-					logger.debug(line);
-					pW.println(line);
-				}
-
-				if (counterexample.isCallPosition(i)) {
-					indentation++;
-				}
-				line = addIndentation(indentation,
-						"Statement" + i + ": " + counterexample.getSymbolAt(i).getPrettyPrintedStatements());
-				logger.debug(line);
-				pW.println(line);
-				if (counterexample.isReturnPosition(i)) {
-					indentation--;
-				}
-			}
-			pW.println("ErrorLocation");
-			pW.println("");
-			pW.println("");
-		} finally {
-			pW.flush();
-		}
-	}
-
-	@SuppressWarnings("unused")
-	private void dumpSsa(final Term[] ssa) {
-		final FormulaUnLet unflet = new FormulaUnLet();
-		try {
-			mIterationPW.println("===============SSA of potential Counterexample==========");
-			for (int i = 0; i < ssa.length; i++) {
-				mIterationPW.println("UnFletedTerm" + i + ": " + unflet.unlet(ssa[i]));
-			}
-			mIterationPW.println("");
-			mIterationPW.println("");
-		} finally {
-			mIterationPW.flush();
-		}
-	}
-
-	@SuppressWarnings("unused")
-	private void dumpStateFormulas(final IPredicate[] interpolants) {
-		try {
-			mIterationPW.println("===============Interpolated StateFormulas==========");
-			for (int i = 0; i < interpolants.length; i++) {
-				mIterationPW.println("Interpolant" + i + ": " + interpolants[i]);
-			}
-			mIterationPW.println("");
-			mIterationPW.println("");
-		} finally {
-			mIterationPW.flush();
-		}
-	}
-
 	public static String addIndentation(final int indentation, final String s) {
 		final StringBuilder sb = new StringBuilder("");
 		for (int i = 0; i < indentation; i++) {
@@ -580,7 +487,7 @@ public abstract class AbstractCegarLoop {
 			if (satProblem == -1) {
 				iterationPW.println("because ");
 			} else {
-				assert (result == Script.LBool.UNSAT);
+				assert result == Script.LBool.UNSAT;
 				iterationPW.println("because Iteration" + iteration + "_SatProblem" + satProblem + " says:");
 			}
 			iterationPW.println("  " + sf1);
@@ -594,55 +501,53 @@ public abstract class AbstractCegarLoop {
 
 	public enum CegarLoopStatisticsDefinitions implements IStatisticsElement {
 
-		Result(Result.class, AbstractCegarLoop.s_DefaultAggregation, AStatisticsType.s_DataBeforeKey), OverallTime(
-				Long.class, AStatisticsType.s_LongAddition,
-				AStatisticsType.s_TimeBeforeKey), OverallIterations(Integer.class, AStatisticsType.s_IntegerAddition,
-						AStatisticsType.s_DataBeforeKey), TraceHistogramMax(Integer.class,
-								AStatisticsType.s_IntegerMaximum, AStatisticsType.s_DataBeforeKey), AutomataDifference(
-										Long.class, AStatisticsType.s_LongAddition,
-										AStatisticsType.s_TimeBeforeKey), DeadEndRemovalTime(Long.class,
-												AStatisticsType.s_LongAddition,
-												AStatisticsType.s_TimeBeforeKey), AutomataMinimizationTime(Long.class,
-														AStatisticsType.s_LongAddition,
-														AStatisticsType.s_TimeBeforeKey), HoareAnnotationTime(
-																Long.class, AStatisticsType.s_LongAddition,
-																AStatisticsType.s_TimeBeforeKey), HoareTripleCheckerStatistics(
-																		StatisticsData.class,
-																		AStatisticsType.s_StatisticsDataAggregation,
-																		AStatisticsType.s_KeyBeforeData), PredicateUnifierStatistics(
-																				StatisticsData.class,
-																				AStatisticsType.s_StatisticsDataAggregation,
-																				AStatisticsType.s_KeyBeforeData), StatesRemovedByMinimization(
-																						Long.class,
-																						AStatisticsType.s_IntegerAddition,
-																						AStatisticsType.s_DataBeforeKey), BasicInterpolantAutomatonTime(
-																								Long.class,
-																								AStatisticsType.s_LongAddition,
-																								AStatisticsType.s_TimeBeforeKey), BiggestAbstraction(
-																										Integer.class,
-																										CegarStatisticsType.s_SizeIterationPairDataAggregation,
-																										AStatisticsType.s_KeyBeforeData), TraceCheckerStatistics(
-																												StatisticsData.class,
-																												AStatisticsType.s_StatisticsDataAggregation,
-																												AStatisticsType.s_KeyBeforeData), InterpolantConsolidationStatistics(
-																														StatisticsData.class,
-																														AStatisticsType.s_StatisticsDataAggregation,
-																														AStatisticsType.s_KeyBeforeData), InterpolantCoveringCapability(
-																																BackwardCoveringInformation.class,
-																																CoverageAnalysis.s_DefaultAggregation,
-																																AStatisticsType.s_DataBeforeKey), TotalInterpolationStatistics(
-																																		StatisticsData.class,
-																																		AStatisticsType.s_StatisticsDataAggregation,
-																																		AStatisticsType.s_KeyBeforeData), AbstIntTime(
-																																				Long.class,
-																																				AStatisticsType.s_LongAddition,
-																																				AStatisticsType.s_TimeBeforeKey), AbstIntIterations(
-																																						Integer.class,
-																																						AStatisticsType.s_IntegerAddition,
-																																						AStatisticsType.s_DataBeforeKey), AbstIntStrong(
-																																								Integer.class,
-																																								AStatisticsType.s_IntegerAddition,
-																																								AStatisticsType.s_DataBeforeKey),;
+		Result(Result.class, AbstractCegarLoop.DEFAULT_AGGREGATION_FUN, AStatisticsType.s_DataBeforeKey),
+
+		OverallTime(Long.class, AStatisticsType.s_LongAddition, AStatisticsType.s_TimeBeforeKey),
+
+		OverallIterations(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
+
+		TraceHistogramMax(Integer.class, AStatisticsType.s_IntegerMaximum, AStatisticsType.s_DataBeforeKey),
+
+		AutomataDifference(Long.class, AStatisticsType.s_LongAddition, AStatisticsType.s_TimeBeforeKey),
+
+		DeadEndRemovalTime(Long.class, AStatisticsType.s_LongAddition, AStatisticsType.s_TimeBeforeKey),
+
+		AutomataMinimizationTime(Long.class, AStatisticsType.s_LongAddition, AStatisticsType.s_TimeBeforeKey),
+
+		HoareAnnotationTime(Long.class, AStatisticsType.s_LongAddition, AStatisticsType.s_TimeBeforeKey),
+
+		HoareTripleCheckerStatistics(StatisticsData.class, AStatisticsType.s_StatisticsDataAggregation,
+				AStatisticsType.s_KeyBeforeData),
+
+		PredicateUnifierStatistics(StatisticsData.class, AStatisticsType.s_StatisticsDataAggregation,
+				AStatisticsType.s_KeyBeforeData),
+
+		StatesRemovedByMinimization(Long.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
+
+		BasicInterpolantAutomatonTime(Long.class, AStatisticsType.s_LongAddition, AStatisticsType.s_TimeBeforeKey),
+
+		BiggestAbstraction(Integer.class, CegarStatisticsType.s_SizeIterationPairDataAggregation,
+				AStatisticsType.s_KeyBeforeData),
+
+		TraceCheckerStatistics(StatisticsData.class, AStatisticsType.s_StatisticsDataAggregation,
+				AStatisticsType.s_KeyBeforeData),
+
+		InterpolantConsolidationStatistics(StatisticsData.class,
+
+				AStatisticsType.s_StatisticsDataAggregation, AStatisticsType.s_KeyBeforeData),
+
+		InterpolantCoveringCapability(BackwardCoveringInformation.class, CoverageAnalysis.s_DefaultAggregation,
+				AStatisticsType.s_DataBeforeKey),
+
+		TotalInterpolationStatistics(StatisticsData.class, AStatisticsType.s_StatisticsDataAggregation,
+				AStatisticsType.s_KeyBeforeData),
+
+		AbstIntTime(Long.class, AStatisticsType.s_LongAddition, AStatisticsType.s_TimeBeforeKey),
+
+		AbstIntIterations(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
+
+		AbstIntStrong(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),;
 
 		private final Class<?> mClazz;
 		private final Function<Object, Function<Object, Object>> mAggr;
@@ -670,5 +575,4 @@ public abstract class AbstractCegarLoop {
 			return mClazz;
 		}
 	}
-
 }
