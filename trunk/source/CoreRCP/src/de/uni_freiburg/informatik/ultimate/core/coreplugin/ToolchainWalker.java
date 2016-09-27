@@ -39,6 +39,7 @@ import org.eclipse.core.runtime.SubMonitor;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions.GraphNotFoundException;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions.StoreObjectException;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainExceptionWrapper;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ExceptionOrErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.DropmodelType;
@@ -207,25 +208,8 @@ final class ToolchainWalker implements IToolchainCancel {
 		try {
 			pc.run();
 			return ReturnCode.Ok;
-		} catch (final ToolchainCanceledException e) {
-			String longDescription =
-					ToolchainCanceledException.MESSAGE + " while executing " + e.getClassOfThrower().getSimpleName();
-			if (e.getRunningTaskInfo() != null) {
-				longDescription += " during the following task: " + e.getRunningTaskInfo();
-			}
-			final TimeoutResult timeoutResult = new TimeoutResult(plugin.getId(), longDescription);
-			data.getToolchain().getServices().getResultService().reportResult(plugin.getId(), timeoutResult);
-			mLogger.info(
-					"Toolchain cancelled while executing plugin " + plugin.getId() + ". Reason: " + e.getMessage());
-			return ReturnCode.Cancel;
-		} catch (final SMTLIBException e) {
-			mLogger.fatal("An unrecoverable error occured during an interaction with an SMT solver:", e);
-			reportExceptionOrError(data, plugin, e);
-			return ReturnCode.Error;
 		} catch (final Throwable e) {
-			mLogger.fatal("The Plugin " + plugin.getId() + " has thrown an exception:", e);
-			reportExceptionOrError(data, plugin, e);
-			return ReturnCode.Error;
+			return handleException(data, plugin, e);
 		} finally {
 			if (mBench != null) {
 				mBench.stop(pc.toString());
@@ -244,10 +228,56 @@ final class ToolchainWalker implements IToolchainCancel {
 		}
 	}
 
-	private static void reportExceptionOrError(final CompleteToolchainData data, final PluginType plugin,
+	private ReturnCode handleException(final CompleteToolchainData data, final PluginType plugin,
+			final ToolchainCanceledException e) {
+		mLogger.info("Toolchain cancelled while executing plugin " + plugin.getId() + ". Reason: " + e.getMessage());
+		String longDescription =
+				ToolchainCanceledException.MESSAGE + " while executing " + e.getClassOfThrower().getSimpleName();
+		if (e.getRunningTaskInfo() != null) {
+			longDescription += " during the following task: " + e.getRunningTaskInfo();
+		}
+		final TimeoutResult timeoutResult = new TimeoutResult(plugin.getId(), longDescription);
+		data.getToolchain().getServices().getResultService().reportResult(plugin.getId(), timeoutResult);
+		return ReturnCode.Cancel;
+	}
+
+	private ReturnCode handleException(final CompleteToolchainData data, final PluginType plugin,
+			final SMTLIBException e) {
+		mLogger.fatal("An unrecoverable error occured during an interaction with an SMT solver:", e);
+		reportExceptionOrError(data, plugin.getId(), e);
+		return ReturnCode.Error;
+	}
+
+	private ReturnCode handleException(final CompleteToolchainData data, final PluginType plugin,
+			final ToolchainExceptionWrapper e) {
+		mLogger.fatal("A wrapped exception occured:", e);
+		return handleException(data, plugin, e.getCause());
+	}
+
+	private ReturnCode handleException(final CompleteToolchainData data, final PluginType plugin,
+			final Throwable cause) {
+		if (cause instanceof ToolchainExceptionWrapper) {
+			return handleException(data, plugin, (ToolchainExceptionWrapper) cause);
+		} else if (cause instanceof SMTLIBException) {
+			return handleException(data, plugin, (SMTLIBException) cause);
+		} else if (cause instanceof ToolchainCanceledException) {
+			return handleException(data, plugin, (ToolchainCanceledException) cause);
+		} else {
+			return handleExceptionFallback(data, plugin, cause);
+		}
+	}
+
+	private ReturnCode handleExceptionFallback(final CompleteToolchainData data, final PluginType plugin,
 			final Throwable e) {
 		final String pluginId = plugin.getId();
-		data.getToolchain().getServices().getResultService().reportResult(plugin.getId(),
+		mLogger.fatal("The Plugin " + pluginId + " has thrown an exception:", e);
+		reportExceptionOrError(data, pluginId, e);
+		return ReturnCode.Error;
+	}
+
+	private static void reportExceptionOrError(final CompleteToolchainData data, final String pluginId,
+			final Throwable e) {
+		data.getToolchain().getServices().getResultService().reportResult(pluginId,
 				new ExceptionOrErrorResult(pluginId, e));
 	}
 
