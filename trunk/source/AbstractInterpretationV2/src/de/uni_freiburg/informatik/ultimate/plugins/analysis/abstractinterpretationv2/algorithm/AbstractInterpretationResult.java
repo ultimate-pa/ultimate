@@ -28,7 +28,7 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 		implements IAbstractInterpretationResult<STATE, ACTION, VARDECL, LOCATION> {
 
 	private final IAbstractDomain<STATE, ACTION, VARDECL> mAbstractDomain;
-	private final List<AbstractCounterexample<STATE, ACTION, VARDECL, LOCATION>> mCounterexamples;
+	private final List<AbstractCounterexample<AbstractMultiState<STATE, ACTION, VARDECL>, ACTION, VARDECL, LOCATION>> mCounterexamples;
 	private final AbstractInterpretationBenchmark<ACTION, LOCATION> mBenchmark;
 	private final Map<LOCATION, Term> mLoc2Term;
 	private final Map<LOCATION, Set<STATE>> mLoc2States;
@@ -47,15 +47,17 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 	}
 
 	protected void reachedError(final ITransitionProvider<ACTION, LOCATION> transitionProvider,
-			final WorklistItem<STATE, ACTION, VARDECL, LOCATION> finalItem, final STATE postState) {
+			final WorklistItem<STATE, ACTION, VARDECL, LOCATION> currentItem,
+			final AbstractMultiState<STATE, ACTION, VARDECL> postState) {
 
-		final List<Triple<STATE, LOCATION, ACTION>> abstractExecution = new ArrayList<>();
+		final List<Triple<AbstractMultiState<STATE, ACTION, VARDECL>, LOCATION, ACTION>> abstractExecution =
+				new ArrayList<>();
 
-		ACTION transition = finalItem.getAction();
+		ACTION transition = currentItem.getAction();
 		abstractExecution.add(new Triple<>(postState, transitionProvider.getTarget(transition), transition));
 
-		STATE post = finalItem.getPreState();
-		WorklistItem<STATE, ACTION, VARDECL, LOCATION> current = finalItem.getPredecessor();
+		AbstractMultiState<STATE, ACTION, VARDECL> post = currentItem.getPreState();
+		WorklistItem<STATE, ACTION, VARDECL, LOCATION> current = currentItem.getPredecessor();
 		while (current != null) {
 			transition = current.getAction();
 			abstractExecution.add(new Triple<>(post, transitionProvider.getTarget(transition), transition));
@@ -73,7 +75,10 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 
 		mTerms.addAll(rootStateStorage.getTerms(start, script, bpl2smt));
 		mLoc2Term.putAll(rootStateStorage.getLoc2Term(start, script, bpl2smt));
-		mLoc2States.putAll(rootStateStorage.getLoc2States(start));
+		final Map<LOCATION, Set<AbstractMultiState<STATE, ACTION, VARDECL>>> loc2states =
+				rootStateStorage.getLoc2States(start);
+		loc2states.entrySet().forEach(a -> mLoc2States.put(a.getKey(),
+				a.getValue().stream().flatMap(b -> b.getStates().stream()).collect(Collectors.toSet())));
 		mLoc2SingleStates.putAll(rootStateStorage.getLoc2SingleStates(start));
 	}
 
@@ -93,7 +98,8 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 	}
 
 	@Override
-	public List<AbstractCounterexample<STATE, ACTION, VARDECL, LOCATION>> getCounterexamples() {
+	public List<AbstractCounterexample<AbstractMultiState<STATE, ACTION, VARDECL>, ACTION, VARDECL, LOCATION>>
+			getCounterexamples() {
 		return mCounterexamples;
 	}
 

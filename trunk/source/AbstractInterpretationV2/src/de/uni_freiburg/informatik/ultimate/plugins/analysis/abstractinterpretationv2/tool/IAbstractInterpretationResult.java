@@ -32,6 +32,7 @@ import java.util.Set;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.AbstractMultiState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 
@@ -72,7 +73,8 @@ public interface IAbstractInterpretationResult<STATE extends IAbstractState<STAT
 	 *         counterexample does not contain the correct number of loop unrollings, but rather the number of loop
 	 *         unrollings until a fixpoint was computed.
 	 */
-	List<AbstractCounterexample<STATE, ACTION, VARDECL, LOCATION>> getCounterexamples();
+	List<AbstractCounterexample<AbstractMultiState<STATE, ACTION, VARDECL>, ACTION, VARDECL, LOCATION>>
+			getCounterexamples();
 
 	/**
 	 * @return true if the analysis could reach an error location, false otherwise.

@@ -464,6 +464,17 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	@Override
 	public SubsetResult isSubsetOf(final STATE other) {
 		assert hasSameVariables(other);
+
+		if (isBottom() && other.isBottom()) {
+			return SubsetResult.EQUAL;
+		}
+		if (isBottom()) {
+			return SubsetResult.STRICT;
+		}
+		if (other.isBottom()) {
+			return SubsetResult.NONE;
+		}
+
 		for (final Entry<IBoogieVar, V> entry : getVar2ValueNonrelational().entrySet()) {
 			final V thisValue = entry.getValue();
 			final V otherValue = other.getVar2ValueNonrelational().get(entry.getKey());

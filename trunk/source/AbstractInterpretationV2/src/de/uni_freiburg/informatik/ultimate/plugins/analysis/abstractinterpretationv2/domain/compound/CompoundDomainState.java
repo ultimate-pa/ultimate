@@ -3,27 +3,27 @@
  * Copyright (C) 2015 Claus Schaetzle (schaetzc@informatik.uni-freiburg.de)
  * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE AbstractInterpretationV2 plug-in.
- * 
+ *
  * The ULTIMATE AbstractInterpretationV2 plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE AbstractInterpretationV2 plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE AbstractInterpretationV2 plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE AbstractInterpretationV2 plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission
  * to convey the resulting work.
  */
 
@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 
 /**
  * A state in the {@link CompoundDomain}.
- * 
+ *
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  * @author Claus Schaetzle (schaetzc@informatik.uni-freiburg.de)
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
@@ -89,27 +89,27 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 	}
 
 	@Override
-	public CompoundDomainState addVariable(IBoogieVar variable) {
+	public CompoundDomainState addVariable(final IBoogieVar variable) {
 		return performStateOperation(state -> state.addVariable(variable));
 	}
 
 	@Override
-	public CompoundDomainState removeVariable(IBoogieVar variable) {
+	public CompoundDomainState removeVariable(final IBoogieVar variable) {
 		return performStateOperation(state -> state.removeVariable(variable));
 	}
 
 	@Override
-	public CompoundDomainState addVariables(Collection<IBoogieVar> variables) {
+	public CompoundDomainState addVariables(final Collection<IBoogieVar> variables) {
 		return performStateOperation(state -> state.addVariables(variables));
 	}
 
 	@Override
-	public CompoundDomainState removeVariables(Collection<IBoogieVar> variables) {
+	public CompoundDomainState removeVariables(final Collection<IBoogieVar> variables) {
 		return performStateOperation(state -> state.removeVariables(variables));
 	}
 
 	@Override
-	public boolean containsVariable(IBoogieVar var) {
+	public boolean containsVariable(final IBoogieVar var) {
 		return mAbstractStates.get(0).containsVariable(var);
 	}
 
@@ -119,7 +119,7 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 	}
 
 	@Override
-	public CompoundDomainState patch(CompoundDomainState dominator) {
+	public CompoundDomainState patch(final CompoundDomainState dominator) {
 		assert mAbstractStates.size() == dominator.mAbstractStates.size();
 
 		final List<IAbstractState<?, CodeBlock, IBoogieVar>> returnList = new ArrayList<>();
@@ -130,7 +130,7 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 		return new CompoundDomainState(mServices, mDomainList, returnList);
 	}
 
-	private static <T extends IAbstractState> T patchInternally(T current, T dominator) {
+	private static <T extends IAbstractState> T patchInternally(final T current, final T dominator) {
 		return (T) current.patch(dominator);
 	}
 
@@ -145,7 +145,7 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 	}
 
 	@Override
-	public boolean isEqualTo(CompoundDomainState other) {
+	public boolean isEqualTo(final CompoundDomainState other) {
 		assert mAbstractStates.size() == other.mAbstractStates.size();
 		for (int i = 0; i < mAbstractStates.size(); i++) {
 			if (!isEqualToInternally(mAbstractStates.get(i), other.mAbstractStates.get(i))) {
@@ -165,8 +165,8 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 
 	@Override
 	public Term getTerm(final Script script, final Boogie2SMT bpl2smt) {
-//		return Util.and(script,
-//				mAbstractStates.stream().map(state -> state.getTerm(script, bpl2smt)).toArray(i -> new Term[i]));
+		// return Util.and(script,
+		// mAbstractStates.stream().map(state -> state.getTerm(script, bpl2smt)).toArray(i -> new Term[i]));
 		return script.term("and",
 				mAbstractStates.stream().map(state -> state.getTerm(script, bpl2smt)).toArray(i -> new Term[i]));
 	}
@@ -182,7 +182,7 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 		return sb.toString();
 	}
 
-	private String getShortName(Class<?> clazz) {
+	private static String getShortName(final Class<?> clazz) {
 		final String s = clazz.getSimpleName();
 		if (s.length() < 4) {
 			return s;
@@ -191,7 +191,7 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 	}
 
 	private CompoundDomainState performStateOperation(
-			Function<IAbstractState<?, CodeBlock, IBoogieVar>, IAbstractState<?, CodeBlock, IBoogieVar>> state) {
+			final Function<IAbstractState<?, CodeBlock, IBoogieVar>, IAbstractState<?, CodeBlock, IBoogieVar>> state) {
 		return new CompoundDomainState(mServices, mDomainList,
 				mAbstractStates.stream().map(state).collect(Collectors.toList()));
 	}
@@ -221,32 +221,11 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 		return rtr;
 	}
 
-	private SubsetResult isStrictSubsetOf(final SubsetResult current,
+	private static SubsetResult isStrictSubsetOf(final SubsetResult current,
 			final IAbstractState<?, CodeBlock, IBoogieVar> aState,
 			final IAbstractState<?, CodeBlock, IBoogieVar> bState) {
 		final SubsetResult result = isSubsetOfInternally(aState, bState);
-		switch (current) {
-		case EQUAL:
-			if (result == SubsetResult.EQUAL) {
-				return SubsetResult.EQUAL;
-			}
-			break;
-		case STRICT:
-			if (result == SubsetResult.STRICT || result == SubsetResult.EQUAL) {
-				return SubsetResult.STRICT;
-			}
-			break;
-		case NON_STRICT:
-			if (result != SubsetResult.NONE) {
-				return SubsetResult.NON_STRICT;
-			}
-			break;
-		case NONE:
-			return SubsetResult.NONE;
-		default:
-			throw new UnsupportedOperationException("Unhandled case " + current);
-		}
-		return result;
+		return current.update(result);
 	}
 
 }

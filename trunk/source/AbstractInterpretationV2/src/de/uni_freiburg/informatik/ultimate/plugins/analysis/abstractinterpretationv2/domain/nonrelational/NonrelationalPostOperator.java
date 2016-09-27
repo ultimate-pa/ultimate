@@ -88,7 +88,7 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 	@Override
 	public List<STATE> apply(final STATE oldstate, final CodeBlock transition) {
 		assert oldstate != null;
-		assert !oldstate.isBottom();
+		assert !oldstate.isBottom() : "You should not need to calculate post of a bottom state";
 		assert transition != null;
 
 		List<STATE> currentStates = new ArrayList<>();
