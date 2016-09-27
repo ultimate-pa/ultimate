@@ -31,6 +31,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Collection;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
@@ -39,9 +40,12 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainExceptionWrapper;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 
@@ -132,6 +136,32 @@ public final class Dumper {
 			}
 			mIterationPW.println("ErrorLocation");
 			mIterationPW.println("");
+			mIterationPW.println("");
+		} finally {
+			mIterationPW.flush();
+		}
+	}
+
+	void dumpBackedges(final ProgramPoint repLocName, final int position, final IPredicate state,
+			final Collection<IPredicate> linPredStates, final CodeBlock transition, final IPredicate succState,
+			final IPredicate sf1, final IPredicate sf2, final LBool result, final int iteration, final int satProblem) {
+		try {
+			mIterationPW.println(repLocName + " occured once again at position " + position + ". Added backedge");
+			mIterationPW.println("from:   " + state);
+			mIterationPW.println("labeled with:   " + transition.getPrettyPrintedStatements());
+			mIterationPW.println("to:   " + succState);
+			if (linPredStates != null) {
+				mIterationPW.println("for each linPredStates:   " + linPredStates);
+			}
+			if (satProblem == -1) {
+				mIterationPW.println("because ");
+			} else {
+				assert result == Script.LBool.UNSAT;
+				mIterationPW.println("because Iteration" + iteration + "_SatProblem" + satProblem + " says:");
+			}
+			mIterationPW.println("  " + sf1);
+			mIterationPW.println("implies");
+			mIterationPW.println("  " + sf2);
 			mIterationPW.println("");
 		} finally {
 			mIterationPW.flush();

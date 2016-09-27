@@ -27,11 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
-import java.io.PrintWriter;
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -58,7 +54,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
@@ -66,9 +61,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareAnnotationPositions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
-import de.uni_freiburg.informatik.ultimate.util.statistics.AStatisticsType;
-import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsElement;
-import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
 /**
  * CEGAR loop of a trace abstraction. Can be used to check safety and termination of sequential and concurrent programs.
@@ -93,9 +85,6 @@ public abstract class AbstractCegarLoop {
 	public enum Result {
 		SAFE, UNSAFE, TIMEOUT, UNKNOWN
 	}
-
-	public static final Function<Object, Function<Object, Object>> DEFAULT_AGGREGATION_FUN =
-			x -> y -> aggregateResult(x, y);
 
 	protected final ILogger mLogger;
 	protected final SimplicationTechnique mSimplificationTechnique;
@@ -200,25 +189,6 @@ public abstract class AbstractCegarLoop {
 
 	public ToolchainCanceledException getToolchainCancelledException() {
 		return mToolchainCancelledException;
-	}
-
-	public static Result aggregateResult(final Object value1, final Object value2) {
-		final Result result1 = (Result) value1;
-		final Result result2 = (Result) value2;
-		final Set<Result> results = new HashSet<>();
-		results.add(result1);
-		results.add(result2);
-		if (results.contains(Result.UNSAFE)) {
-			return Result.UNSAFE;
-		} else if (results.contains(Result.UNKNOWN)) {
-			return Result.UNKNOWN;
-		} else if (results.contains(Result.TIMEOUT)) {
-			return Result.TIMEOUT;
-		} else if (results.contains(Result.SAFE)) {
-			return Result.SAFE;
-		} else {
-			throw new AssertionError();
-		}
 	}
 
 	/**
@@ -470,109 +440,5 @@ public abstract class AbstractCegarLoop {
 		}
 		sb.append(s);
 		return sb.toString();
-	}
-
-	static void dumpBackedges(final ProgramPoint repLocName, final int position, final IPredicate state,
-			final Collection<IPredicate> linPredStates, final CodeBlock transition, final IPredicate succState,
-			final IPredicate sf1, final IPredicate sf2, final LBool result, final int iteration, final int satProblem,
-			final PrintWriter iterationPW) {
-		try {
-			iterationPW.println(repLocName + " occured once again at position " + position + ". Added backedge");
-			iterationPW.println("from:   " + state);
-			iterationPW.println("labeled with:   " + transition.getPrettyPrintedStatements());
-			iterationPW.println("to:   " + succState);
-			if (linPredStates != null) {
-				iterationPW.println("for each linPredStates:   " + linPredStates);
-			}
-			if (satProblem == -1) {
-				iterationPW.println("because ");
-			} else {
-				assert result == Script.LBool.UNSAT;
-				iterationPW.println("because Iteration" + iteration + "_SatProblem" + satProblem + " says:");
-			}
-			iterationPW.println("  " + sf1);
-			iterationPW.println("implies");
-			iterationPW.println("  " + sf2);
-			iterationPW.println("");
-		} finally {
-			iterationPW.flush();
-		}
-	}
-
-	public enum CegarLoopStatisticsDefinitions implements IStatisticsElement {
-
-		Result(Result.class, AbstractCegarLoop.DEFAULT_AGGREGATION_FUN, AStatisticsType.s_DataBeforeKey),
-
-		OverallTime(Long.class, AStatisticsType.s_LongAddition, AStatisticsType.s_TimeBeforeKey),
-
-		OverallIterations(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
-
-		TraceHistogramMax(Integer.class, AStatisticsType.s_IntegerMaximum, AStatisticsType.s_DataBeforeKey),
-
-		AutomataDifference(Long.class, AStatisticsType.s_LongAddition, AStatisticsType.s_TimeBeforeKey),
-
-		DeadEndRemovalTime(Long.class, AStatisticsType.s_LongAddition, AStatisticsType.s_TimeBeforeKey),
-
-		AutomataMinimizationTime(Long.class, AStatisticsType.s_LongAddition, AStatisticsType.s_TimeBeforeKey),
-
-		HoareAnnotationTime(Long.class, AStatisticsType.s_LongAddition, AStatisticsType.s_TimeBeforeKey),
-
-		HoareTripleCheckerStatistics(StatisticsData.class, AStatisticsType.s_StatisticsDataAggregation,
-				AStatisticsType.s_KeyBeforeData),
-
-		PredicateUnifierStatistics(StatisticsData.class, AStatisticsType.s_StatisticsDataAggregation,
-				AStatisticsType.s_KeyBeforeData),
-
-		StatesRemovedByMinimization(Long.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
-
-		BasicInterpolantAutomatonTime(Long.class, AStatisticsType.s_LongAddition, AStatisticsType.s_TimeBeforeKey),
-
-		BiggestAbstraction(Integer.class, CegarStatisticsType.s_SizeIterationPairDataAggregation,
-				AStatisticsType.s_KeyBeforeData),
-
-		TraceCheckerStatistics(StatisticsData.class, AStatisticsType.s_StatisticsDataAggregation,
-				AStatisticsType.s_KeyBeforeData),
-
-		InterpolantConsolidationStatistics(StatisticsData.class,
-
-				AStatisticsType.s_StatisticsDataAggregation, AStatisticsType.s_KeyBeforeData),
-
-		InterpolantCoveringCapability(BackwardCoveringInformation.class, CoverageAnalysis.s_DefaultAggregation,
-				AStatisticsType.s_DataBeforeKey),
-
-		TotalInterpolationStatistics(StatisticsData.class, AStatisticsType.s_StatisticsDataAggregation,
-				AStatisticsType.s_KeyBeforeData),
-
-		AbstIntTime(Long.class, AStatisticsType.s_LongAddition, AStatisticsType.s_TimeBeforeKey),
-
-		AbstIntIterations(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
-
-		AbstIntStrong(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),;
-
-		private final Class<?> mClazz;
-		private final Function<Object, Function<Object, Object>> mAggr;
-		private final Function<String, Function<Object, String>> mPrettyprinter;
-
-		CegarLoopStatisticsDefinitions(final Class<?> clazz, final Function<Object, Function<Object, Object>> aggr,
-				final Function<String, Function<Object, String>> prettyprinter) {
-			mClazz = clazz;
-			mAggr = aggr;
-			mPrettyprinter = prettyprinter;
-		}
-
-		@Override
-		public Object aggregate(final Object o1, final Object o2) {
-			return mAggr.apply(o1).apply(o2);
-		}
-
-		@Override
-		public String prettyprint(final Object o) {
-			return mPrettyprinter.apply(name()).apply(o);
-		}
-
-		@Override
-		public Class<?> getDataType() {
-			return mClazz;
-		}
 	}
 }
