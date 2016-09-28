@@ -143,7 +143,14 @@ public class SummaryComputation<LETTER, STATE> {
 				final Map<IGameState, Integer> target2prio = source2target2prio.get(source);
 				final NestedMap2<STATE, IGameState, Integer> spoilerChoice2Target2Prio = new NestedMap2<>();
 				for (final Entry<IGameState, Integer> targetPrio : target2prio.entrySet()) {
-					final STATE spoilerChoice = ((GameSpoilerNwaVertex<LETTER, STATE>) targetPrio.getKey()).getSpoilerNwaVertex().getQ0();
+					final SpoilerNwaVertex<LETTER, STATE> spoilerVertex = ((GameSpoilerNwaVertex<LETTER, STATE>) targetPrio.getKey()).getSpoilerNwaVertex();
+					if (spoilerVertex.getSink() != null) {
+						// omit, target is sink
+//						assert mNeedSpoilerWinningSink.contains(source);
+						continue;
+					}
+					final STATE spoilerChoice = spoilerVertex.getQ0();
+					assert spoilerChoice != null;
 					spoilerChoice2Target2Prio.put(spoilerChoice, targetPrio.getKey(), targetPrio.getValue());
 				}
 				for (final STATE spoilerDestinationState : spoilerChoice2Target2Prio.keySet()) {
@@ -583,8 +590,11 @@ public class SummaryComputation<LETTER, STATE> {
 		public GameSummary(final IGameState summarySource, final STATE spoilerDestinationState,
 				final Map<IGameState, Integer> duplicatorResponses) {
 			super();
+			assert summarySource != null;
 			mSummarySource = summarySource;
+			assert spoilerDestinationState != null;
 			mSpoilerDestinationState = spoilerDestinationState;
+			assert !duplicatorResponses.isEmpty();
 			mDuplicatorResponses = duplicatorResponses;
 		}
 		
