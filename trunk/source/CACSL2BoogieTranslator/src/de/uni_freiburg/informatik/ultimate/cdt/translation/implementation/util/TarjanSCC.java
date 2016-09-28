@@ -29,6 +29,8 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util;
 
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.Stack;
 
 /**
@@ -49,19 +51,19 @@ public final class TarjanSCC {
     /**
      * The graph to work on. Map of vertex id to its successor ids.
      */
-    private LinkedHashMap<String, LinkedHashSet<String>> graph;
+    private Map<String, Set<String>> graph;
     /**
      * The SCCs to return.
      */
-    private LinkedHashSet<LinkedHashSet<String>> sccs;
+    private Set<Set<String>> sccs;
     /**
      * The Tarjan indices for the vertices.
      */
-    private LinkedHashMap<String, Integer> indices;
+    private Map<String, Integer> indices;
     /**
      * The Tarjan lowlinks for the vertices.
      */
-    private LinkedHashMap<String, Integer> lowLink;
+    private Map<String, Integer> lowLink;
 
     /**
      * Calculate SCCs for the given graph.
@@ -70,15 +72,15 @@ public final class TarjanSCC {
      *            the graph to work on
      * @return a list of SCCs
      */
-    public LinkedHashSet<LinkedHashSet<String>> getSCCs(
-            final LinkedHashMap<String, LinkedHashSet<String>> graph) {
+    public Set<Set<String>> getSCCs(
+            final Map<String, Set<String>> graph) {
         if (graph == null || graph.values().contains(null)) {
             throw new IllegalArgumentException();
         }
         this.graph = graph;
         maxIndex = 0;
         stack = new Stack<String>();
-        sccs = new LinkedHashSet<LinkedHashSet<String>>();
+        sccs = new LinkedHashSet<Set<String>>();
         indices = new LinkedHashMap<String, Integer>();
         lowLink = new LinkedHashMap<String, Integer>();
         for (final String v : this.graph.keySet()) {
