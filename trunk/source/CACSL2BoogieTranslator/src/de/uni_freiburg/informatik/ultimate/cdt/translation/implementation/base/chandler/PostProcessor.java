@@ -34,6 +34,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -229,9 +230,7 @@ public class PostProcessor {
 			final MemoryHandler memoryHandler, final StructHandler structHandler) {
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 		final ArrayList<Declaration> result = new ArrayList<>();
-//		for (CFunction cFunc : functionHandler.functionSignaturesThatHaveAFunctionPointer) {
-		for (final ProcedureSignature cFunc : functionHandler.mFunctionSignaturesThatHaveAFunctionPointer) {
-//			String procName = cFunc.functionSignatureAsProcedureName();
+		for (final ProcedureSignature cFunc : functionHandler.getFunctionsSignaturesWithFunctionPointers()) {
 			final String procName = cFunc.toString();
 			
 			final VarList[] inParams = functionHandler.getProcedures().get(procName).getInParams();
@@ -433,18 +432,13 @@ public class PostProcessor {
 				&& procedures.containsKey(checkedMethod)) {
 			mLogger.info("Settings: Checked method=" + checkedMethod);
 
-			final LinkedHashMap<String, LinkedHashSet<String>> modifiedGlobals = functionHandler.getModifiedGlobals();
 			functionHandler.beginUltimateInit(main, loc, SFO.START);
 			
 			Procedure startDeclaration = null;
 			Specification[] specsStart = new Specification[0];
 
-			if (!functionHandler.getCallGraph().containsKey(SFO.START)) {
-				functionHandler.getCallGraph().put(SFO.START, new LinkedHashSet<String>());
-			}
-			functionHandler.getCallGraph().get(SFO.START).add(SFO.INIT);
-
-			functionHandler.getCallGraph().get(SFO.START).add(checkedMethod);
+			functionHandler.addCallGraphEdge(SFO.START, SFO.INIT);
+			functionHandler.addCallGraphEdge(SFO.START, checkedMethod);
 
 			final ArrayList<Statement> startStmt = new ArrayList<Statement>();
 			final ArrayList<VariableDeclaration> startDecl = new ArrayList<VariableDeclaration>();
@@ -506,7 +500,7 @@ public class PostProcessor {
 			//					startModifiesClause.add(new VariableLHS(loc, SFO.MEMORY + "_" + t));
 			//				}
 			//			}
-			for (final String id: modifiedGlobals.get(checkedMethod)) {
+			for (final String id: functionHandler.getModifiedGlobals().get(checkedMethod)) {
 				startModifiesClause.add(new VariableLHS(loc, id));
 			}
 			specsStart[0] = new ModifiesSpecification(loc, false,

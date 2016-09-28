@@ -304,28 +304,30 @@ public class MemoryHandler {
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations()
 				.contains(MemoryModelDeclarations.Ultimate_Alloc)) {
 			decl.addAll(declareMalloc(mTypeHandler, tuLoc));
-			mFunctionHandler.registerProcedureForCallGraphAndModifies(MemoryModelDeclarations.Ultimate_Alloc.getName());
+			mFunctionHandler.addCallGraphNode(MemoryModelDeclarations.Ultimate_Alloc.getName());
+			mFunctionHandler.addModifiedGlobalEntry(MemoryModelDeclarations.Ultimate_Alloc.getName());
 		}
 
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations()
 				.contains(MemoryModelDeclarations.C_Memset)) {
 			decl.addAll(declareMemset(main, heapDataArrays));
-			mFunctionHandler.registerProcedureForCallGraphAndModifies(MemoryModelDeclarations.C_Memset.getName());
+			mFunctionHandler.addCallGraphNode(MemoryModelDeclarations.C_Memset.getName());
+			mFunctionHandler.addModifiedGlobalEntry(MemoryModelDeclarations.C_Memset.getName());
 		}
 
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations()
 				.contains(MemoryModelDeclarations.Ultimate_MemInit)) {
 			decl.addAll(declareUltimateMeminit(main, heapDataArrays));
-			mFunctionHandler
-					.registerProcedureForCallGraphAndModifies(MemoryModelDeclarations.Ultimate_MemInit.getName());
+			mFunctionHandler.addCallGraphNode(MemoryModelDeclarations.Ultimate_MemInit.getName());
+			mFunctionHandler.addModifiedGlobalEntry(MemoryModelDeclarations.Ultimate_MemInit.getName());
 		}
 
 		if (mRequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations()
 				.contains(MemoryModelDeclarations.C_Memcpy)) {
 			decl.addAll(declareMemcpy(main, heapDataArrays));
-			mFunctionHandler.registerProcedureForCallGraphAndModifies(MemoryModelDeclarations.C_Memcpy.getName());
+			mFunctionHandler.addCallGraphNode(MemoryModelDeclarations.C_Memcpy.getName());
+			mFunctionHandler.addModifiedGlobalEntry(MemoryModelDeclarations.C_Memcpy.getName());
 		}
-
 		return decl;
 	}
 
@@ -447,13 +449,8 @@ public class MemoryHandler {
 			final String memArrayName = hda.getVariableName();
 			modifiesLHSs.add(new VariableLHS(ignoreLoc, memArrayName));
 
-			if (mFunctionHandler.getModifiedGlobals().get(proc) == null) {
-				mFunctionHandler.getModifiedGlobals().put(proc, new LinkedHashSet<String>());
-			}
-			if (mFunctionHandler.getCallGraph().get(proc) == null) {
-				mFunctionHandler.getCallGraph().put(proc, new LinkedHashSet<String>());
-			}
-			mFunctionHandler.getModifiedGlobals().get(proc).add(memArrayName);
+			mFunctionHandler.addCallGraphNode(proc);
+			mFunctionHandler.addModifiedGlobal(proc, memArrayName);
 		}
 		return new ModifiesSpecification(ignoreLoc, false, modifiesLHSs.toArray(new VariableLHS[modifiesLHSs.size()]));
 	}
@@ -1390,13 +1387,9 @@ public class MemoryHandler {
 				new Expression[] { lrVal.getValue() });
 		// add required information to function handler.
 		if (fh.getCurrentProcedureID() != null) {
-			final LinkedHashSet<String> mgM = new LinkedHashSet<String>();
-			mgM.add(SFO.VALID);
-			if (!fh.getModifiedGlobals().containsKey(SFO.FREE)) {
-				fh.getModifiedGlobals().put(SFO.FREE, mgM);
-				fh.getCallGraph().put(SFO.FREE, new LinkedHashSet<String>());
-			}
-			fh.getCallGraph().get(fh.getCurrentProcedureID()).add(SFO.FREE);
+			fh.addModifiedGlobal(SFO.FREE, SFO.VALID);
+			fh.addCallGraphNode(SFO.FREE);
+			fh.addCallGraphEdge(fh.getCurrentProcedureID(), SFO.FREE);
 		}
 		return freeCall;
 	}
@@ -1415,13 +1408,9 @@ public class MemoryHandler {
 				new Expression[] { lrVal.getValue() });
 		// add required information to function handler.
 		if (fh.getCurrentProcedureID() != null) {
-			final LinkedHashSet<String> mgM = new LinkedHashSet<String>();
-			mgM.add(SFO.VALID);
-			if (!fh.getModifiedGlobals().containsKey(SFO.DEALLOC)) {
-				fh.getModifiedGlobals().put(SFO.DEALLOC, mgM);
-				fh.getCallGraph().put(SFO.DEALLOC, new LinkedHashSet<String>());
-			}
-			fh.getCallGraph().get(fh.getCurrentProcedureID()).add(SFO.DEALLOC);
+			fh.addModifiedGlobal(SFO.DEALLOC, SFO.VALID);
+			fh.addCallGraphNode(SFO.DEALLOC);
+			fh.addCallGraphEdge(fh.getCurrentProcedureID(), SFO.DEALLOC);
 		}
 		return freeCall;
 	}
@@ -1471,16 +1460,12 @@ public class MemoryHandler {
 
 		// add required information to function handler.
 		if (mFunctionHandler.getCurrentProcedureID() != null) {
-			final LinkedHashSet<String> mgM = new LinkedHashSet<String>();
-			mgM.add(SFO.VALID);
-			mgM.add(SFO.LENGTH);
-			if (!mFunctionHandler.getModifiedGlobals().containsKey(MemoryModelDeclarations.Ultimate_Alloc.getName())) {
-				mFunctionHandler.getModifiedGlobals().put(MemoryModelDeclarations.Ultimate_Alloc.getName(), mgM);
-				mFunctionHandler.getCallGraph().put(MemoryModelDeclarations.Ultimate_Alloc.getName(),
-						new LinkedHashSet<String>());
-			}
-			mFunctionHandler.getCallGraph().get(mFunctionHandler.getCurrentProcedureID())
-					.add(MemoryModelDeclarations.Ultimate_Alloc.getName());
+			mFunctionHandler.addModifiedGlobal(MemoryModelDeclarations.Ultimate_Alloc.getName(), SFO.VALID);
+			mFunctionHandler.addModifiedGlobal(MemoryModelDeclarations.Ultimate_Alloc.getName(), SFO.LENGTH);
+
+			mFunctionHandler.addCallGraphNode(MemoryModelDeclarations.Ultimate_Alloc.getName());
+			mFunctionHandler.addCallGraphEdge(mFunctionHandler.getCurrentProcedureID(), 
+					MemoryModelDeclarations.Ultimate_Alloc.getName());
 		}
 		return result;
 	}
@@ -1641,8 +1626,7 @@ public class MemoryHandler {
 			mRequiredMemoryModelFeatures.reportDataOnHeapRequired(cp.getType());
 			final String writeCallProcedureName = mMemoryModel.getWriteProcedureName(cp.getType());
 			final HeapDataArray dhp = mMemoryModel.getDataHeapArray(cp.getType());
-			mFunctionHandler.getModifiedGlobals().get(mFunctionHandler.getCurrentProcedureID())
-					.add(dhp.getVariableName());
+			mFunctionHandler.addModifiedGlobal(mFunctionHandler.getCurrentProcedureID(), dhp.getVariableName());
 			stmt.add(new CallStatement(loc, false, new VariableLHS[0], writeCallProcedureName,
 					new Expression[] { value, hlv.getAddress(), calculateSizeOf(loc, hlv.getCType()) }));
 		} else if (valueType instanceof CEnum) {
@@ -1650,16 +1634,14 @@ public class MemoryHandler {
 			mRequiredMemoryModelFeatures.reportDataOnHeapRequired(CPrimitives.INT);
 			final String writeCallProcedureName = mMemoryModel.getWriteProcedureName(CPrimitives.INT);
 			final HeapDataArray dhp = mMemoryModel.getDataHeapArray(CPrimitives.INT);
-			mFunctionHandler.getModifiedGlobals().get(mFunctionHandler.getCurrentProcedureID())
-					.add(dhp.getVariableName());
+			mFunctionHandler.addModifiedGlobal(mFunctionHandler.getCurrentProcedureID(), dhp.getVariableName());
 			stmt.add(new CallStatement(loc, false, new VariableLHS[0], writeCallProcedureName,
 					new Expression[] { value, hlv.getAddress(), calculateSizeOf(loc, hlv.getCType()) }));
 		} else if (valueType instanceof CPointer) {
 			mRequiredMemoryModelFeatures.reportPointerOnHeapRequired();
 			final String writeCallProcedureName = mMemoryModel.getWritePointerProcedureName();
 			final HeapDataArray dhp = mMemoryModel.getPointerHeapArray();
-			mFunctionHandler.getModifiedGlobals().get(mFunctionHandler.getCurrentProcedureID())
-					.add(dhp.getVariableName());
+			mFunctionHandler.addModifiedGlobal(mFunctionHandler.getCurrentProcedureID(), dhp.getVariableName());
 			stmt.add(new CallStatement(loc, false, new VariableLHS[0], writeCallProcedureName,
 					new Expression[] { value, hlv.getAddress(), calculateSizeOf(loc, hlv.getCType()) }));
 		} else if (valueType instanceof CStruct) {

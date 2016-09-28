@@ -13,7 +13,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher
 /**
  * Represents the signature of a Boogie procedure in simpler terms, than the Procedure class.
  * Used for tracking the signatures of the dispatching procedures for function pointer calls. (ref. FunctionHandler)
- * @author alex
+ * 
+ * @author Alexander Nutz
  */
 public class ProcedureSignature {
 	public ArrayList<ASTType> inParams = new ArrayList<>();

@@ -32,6 +32,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
@@ -119,6 +120,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
  * 
  * @author Markus Lindenmann
  * @date 12.10.2012
+ * @author Alexander Nutz
  */
 public class FunctionHandler {
 	/**
@@ -160,7 +162,7 @@ public class FunctionHandler {
 	 * Herein the function Signatures (as a CFunction) are stored for which a boogie procedure has to be created in the
 	 * postProcessor that deals with the function pointer calls that can happen.
 	 */
-	LinkedHashSet<ProcedureSignature> mFunctionSignaturesThatHaveAFunctionPointer;
+	private final LinkedHashSet<ProcedureSignature> mFunctionSignaturesThatHaveAFunctionPointer;
 
 	private final AExpressionTranslation mExpressionTranslation;
 	private final TypeSizeAndOffsetComputer mTypeSizeComputer;
@@ -325,7 +327,9 @@ public class FunctionHandler {
 		mCurrentProcedure = declWithCorrectlyNamedInParams;
 		mCurrentProcedureIsVoid = returnTypeIsVoid;
 		final String procId = mCurrentProcedure.getIdentifier();
-		registerProcedureForCallGraphAndModifies(procId);
+
+		addModifiedGlobalEntry(procId);
+		addCallGraphNode(procId);
 
 		/*
 		 * The structure is as follows: 1) Preprocessing of the method body: - add new variables for parameters - havoc
@@ -1379,24 +1383,21 @@ public class FunctionHandler {
 	}
 
 	public Body getFunctionPointerFunctionBody(final ILocation loc, final Dispatcher main, final MemoryHandler memoryHandler,
-			// StructHandler structHandler, String fpfName, CFunction funcSignature, VarList[] inParams, VarList[]
-			// outParam) {
 			final StructHandler structHandler, final String fpfName, final ProcedureSignature funcSignature, final VarList[] inParams,
 			final VarList[] outParam) {
-		// CFunction calledFuncType = funcSignature;
 
-		// boolean resultTypeIsVoid = calledFuncType.getResultType() instanceof CPrimitive
-		// && ((CPrimitive) calledFuncType.getResultType()).getType() == PRIMITIVE.VOID;
 		final boolean resultTypeIsVoid = funcSignature.returnType == null;
 
 		final ArrayList<Statement> stmt = new ArrayList<>();
 		final ArrayList<VariableDeclaration> decl = new ArrayList<>();
 
+		/*
+		 * setup the input parameters
+		 * the last inParam is the function pointer in this case, here we only handle the
+		 * normal in params --> therefore we iterate to inParams.lenth - 1 only..
+		 */
 		final ArrayList<Expression> args = new ArrayList<>();
-		for (int i = 0; i < inParams.length - 1; i++) {// the last inParam is
-														// the function pointer
-														// -> therefore
-														// "..length - 1"
+		for (int i = 0; i < inParams.length - 1; i++) {
 			final VarList vl = inParams[i];
 			assert vl.getIdentifiers().length == 1;
 			final String oldId = vl.getIdentifiers()[0];
@@ -1604,12 +1605,34 @@ public class FunctionHandler {
 	}
 
 	/**
-	 * Getter for modified globals.
-	 * 
-	 * @return modified globals.
+	 * Getter for modified globals. Returns an unmodifiable map -- if you want to 
+	 * add something to the map, use the addModifiedGlobal(..) method
 	 */
-	public LinkedHashMap<String, LinkedHashSet<String>> getModifiedGlobals() {
-		return mModifiedGlobals;
+	public Map<String, LinkedHashSet<String>> getModifiedGlobals() {
+		return Collections.unmodifiableMap(mModifiedGlobals);
+	}
+	
+	public void addModifiedGlobal(String procedureName, String globVarName) {
+		LinkedHashSet<String> set = mModifiedGlobals.get(procedureName);
+		if (set == null) {
+			set = new LinkedHashSet<>();
+			mModifiedGlobals.put(procedureName, set);
+		}
+		set.add(globVarName);
+	}
+	
+	
+	/**
+	 * Introduces an empty entry for a procedure in mModifiedGlobals.
+	 * (TODO: used once, currently, not sure if it's necessary)
+	 * @param procedureName
+	 */
+	public void addModifiedGlobalEntry(String procedureName) {
+		LinkedHashSet<String> set = mModifiedGlobals.get(procedureName);
+		if (set == null) {
+			set = new LinkedHashSet<>();
+			mModifiedGlobals.put(procedureName, set);
+		}
 	}
 
 	/**
@@ -1643,12 +1666,32 @@ public class FunctionHandler {
 	 * 
 	 * @return the call graph.
 	 */
-	public LinkedHashMap<String, LinkedHashSet<String>> getCallGraph() {
-		return mCallGraph;
+	public Map<String, LinkedHashSet<String>> getCallGraph() {
+		return Collections.unmodifiableMap(mCallGraph);
+	}
+	
+	public void addCallGraphEdge(String source, String target) {
+		LinkedHashSet<String> set = mCallGraph.get(source);
+		if (set == null) {
+			set = new LinkedHashSet<>();
+			mCallGraph.put(source, set);
+		}
+		set.add(target);
+	}
+	
+	public void addCallGraphNode(String node) {
+		LinkedHashSet<String> set = mCallGraph.get(node);
+		if (set == null) {
+			set = new LinkedHashSet<>();
+			mCallGraph.put(node, set);
+		}
 	}
 
 	public CFunction getCFunctionType(final String function) {
 		return mProcedureToCFunctionType.get(function);
 	}
 
+	public LinkedHashSet<ProcedureSignature> getFunctionsSignaturesWithFunctionPointers() {
+		return mFunctionSignaturesThatHaveAFunctionPointer;
+	}
 }

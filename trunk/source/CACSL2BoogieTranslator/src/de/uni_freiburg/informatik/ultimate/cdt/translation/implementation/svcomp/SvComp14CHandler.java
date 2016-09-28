@@ -323,16 +323,10 @@ public class SvComp14CHandler extends CHandler {
 					new RValue(new IdentifierExpression(loc, tId), new CPointer(new CPrimitive(CPrimitives.VOID)));
 
 			// add required information to function handler.
-			if (!getFunctionHandler().getCallGraph().containsKey(MemoryModelDeclarations.C_Memcpy.getName())) {
-				getFunctionHandler().getCallGraph().put(MemoryModelDeclarations.C_Memcpy.getName(),
-						new LinkedHashSet<String>());
-			}
-			if (!getFunctionHandler().getModifiedGlobals().containsKey(MemoryModelDeclarations.C_Memcpy.getName())) {
-				getFunctionHandler().getModifiedGlobals().put(MemoryModelDeclarations.C_Memcpy.getName(),
-						new LinkedHashSet<String>());
-			}
-			getFunctionHandler().getCallGraph().get(getFunctionHandler().getCurrentProcedureID())
-					.add(MemoryModelDeclarations.C_Memcpy.getName());
+			getFunctionHandler().addCallGraphNode(MemoryModelDeclarations.C_Memcpy.getName());
+			getFunctionHandler().addCallGraphEdge(getFunctionHandler().getCurrentProcedureID(), 
+					MemoryModelDeclarations.C_Memcpy.getName());
+			getFunctionHandler().addModifiedGlobalEntry(MemoryModelDeclarations.C_Memcpy.getName());
 
 			return result;
 		}
