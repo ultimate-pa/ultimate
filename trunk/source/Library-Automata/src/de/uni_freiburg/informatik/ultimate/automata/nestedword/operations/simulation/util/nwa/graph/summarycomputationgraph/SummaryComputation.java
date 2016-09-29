@@ -40,6 +40,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
@@ -118,7 +119,7 @@ public class SummaryComputation<LETTER, STATE> {
 	
 	public SummaryComputation(final AutomataLibraryServices services,
 			final IDoubleDeckerAutomaton<GameLetter<LETTER, STATE>, IGameState> gameAutomaton,
-			final IDoubleDeckerAutomaton<LETTER, STATE> operand) {
+			final IDoubleDeckerAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		super();
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
@@ -127,6 +128,9 @@ public class SummaryComputation<LETTER, STATE> {
 		mNeedSpoilerWinningSink = computeSpoilerWinningSink();
 		initialize();
 		while (!mWorklist.isEmpty()) {
+			if (!mServices.getProgressMonitorService().continueProcessing()) {
+				throw new AutomataOperationCanceledException(this.getClass());
+			}
 			final SummaryComputationGraphNode<LETTER, STATE> node = mWorklist.remove();
 			process(node);
 		}
