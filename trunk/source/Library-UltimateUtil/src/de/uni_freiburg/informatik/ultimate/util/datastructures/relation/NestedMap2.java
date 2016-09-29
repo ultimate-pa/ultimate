@@ -174,4 +174,32 @@ public class NestedMap2<K1, K2, V> {
 		}
 		return result;
 	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((mK1ToK2ToV == null) ? 0 : mK1ToK2ToV.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		final NestedMap2 other = (NestedMap2) obj;
+		if (mK1ToK2ToV == null) {
+			if (other.mK1ToK2ToV != null)
+				return false;
+		} else if (!mK1ToK2ToV.equals(other.mK1ToK2ToV))
+			return false;
+		return true;
+	}
+	
+	
+	
 }
