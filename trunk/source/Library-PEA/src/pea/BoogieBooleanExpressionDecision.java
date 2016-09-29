@@ -92,7 +92,7 @@ public class BoogieBooleanExpressionDecision extends Decision {
 		protected Expression processExpression(Expression expr){
 			if(expr instanceof IdentifierExpression){
 				if (this.ignore != null && ((IdentifierExpression)expr).getIdentifier().equals(this.ignore)){
-					return super.processExpression(expr);
+					return expr;
 				}
 				return new IdentifierExpression(expr.getLocation(),
 						((IdentifierExpression) expr).getIdentifier()
@@ -119,7 +119,7 @@ public class BoogieBooleanExpressionDecision extends Decision {
 		protected Expression processExpression(Expression expr){
 			if(expr instanceof IdentifierExpression){
 				if (this.ignore != null && ((IdentifierExpression)expr).getIdentifier().equals(this.ignore)){
-					return super.processExpression(expr);
+					return expr;
 				}
 				return new IdentifierExpression(expr.getLocation(),
 						((IdentifierExpression) expr).getIdentifier()

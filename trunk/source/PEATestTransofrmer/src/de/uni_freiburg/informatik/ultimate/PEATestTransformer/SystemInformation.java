@@ -96,6 +96,10 @@ public class SystemInformation {
 	public boolean isSystemVariable(String ident) {
 		return this.systemVariables.keySet().contains(ident);
 	}
+
+	public Set<String> getInputs() {
+		return this.inputVariables;
+	}
 	
 	
 

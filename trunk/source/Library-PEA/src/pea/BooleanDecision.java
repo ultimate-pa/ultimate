@@ -134,6 +134,13 @@ public class BooleanDecision extends Decision {
     private Decision primeCache;
     @Override
     public Decision prime() {
+    	return this.prime(null);
+    } 
+    @Override
+    public Decision prime(String ignore){
+    	if (this.var.equals(ignore)){
+    		return this;
+    	}
     	if (primeCache != null) {
 			return primeCache;
 		}
@@ -147,18 +154,17 @@ public class BooleanDecision extends Decision {
     //by Ami
     @Override
     public Decision unprime() {
-        final String result = var.replaceAll("([a-zA-Z_])(\\w*)" +
-                BooleanDecision.PRIME, "$1$2"); // SR 2010-08-02
-
-        return (new BooleanDecision(result));
+    	return this.unprime(null);
     }
     
     @Override
     public Decision unprime(String ignore){
-    	return this.unprime();
-    }
-    @Override
-    public Decision prime(String ignore){
-    	return this.prime();
+    			if(this.var.equals(ignore)){
+    				return this;
+    			}
+    	        final String result = var.replaceAll("([a-zA-Z_])(\\w*)" +
+                BooleanDecision.PRIME, "$1$2"); // SR 2010-08-02
+
+        return (new BooleanDecision(result));
     }
 }

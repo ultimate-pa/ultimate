@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.PEATestTransformer.BoogieAstSnippet;
 import de.uni_freiburg.informatik.ultimate.PEATestTransformer.PeaSystemModel;
@@ -40,14 +41,14 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 	}
 
 	/**
-	 * 
+	 * Initiate transformation.
 	 */
 	@Override
 	public void translate() {
-		ArrayList<PatternType> pats = this.systemModel.getPattern();
+		ArrayList<PatternType> patterns = this.systemModel.getPattern();
 		// add deduction guard to every edge of the automaton
 		this.logger.info("Beginning DeductionGuard transformation.");
-		for (int i = 0; i < pats.size(); i++) {
+		for (int i = 0; i < patterns.size(); i++) {
 			PhaseEventAutomata pea = this.systemModel.getPeas().get(i);
 			CounterTrace counterTrace = this.systemModel.getCounterTraces().get(i);
 			String clockVar = null;
@@ -57,44 +58,73 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 			// get last active phase of counter trace automaton
 			// int lastphase = counterTrace.getPhases().length -3;
 			DCPhase lastPhase = this.systemModel.getFinalPhase(counterTrace);
-			for (Phase source : pea.getPhases()) {
-				for (Transition trans : source.getTransitions()) {
-					Phase dest = trans.getDest();
-					ArrayList<String> identsToProof = this.getPhaseToPhaseToProve(counterTrace, pea, source, dest);
-					boolean destFinal = false;
-					// build conjunct of all phases that are part of the PEA phase
-					CDD targetPhaseConj = CDD.TRUE;
-					for (DCPhase phase : this.systemModel.getDcPhases(pea, dest)) {
-						if (lastPhase == phase) {
-							destFinal = true;
-						}
-						targetPhaseConj = targetPhaseConj.and(phase.getInvariant());
-					}	
-					//destFilan: for flag that output is determined
-					//True: determine that there is no seeping here
-					//TODO: simplified version for testing, not only and the seeps on this but
-					//  or it
-					if (destFinal){// || (targetPhaseConj == CDD.TRUE)) {
-						targetPhaseConj = dest.getStateInvariant();
-					}
-					
-					logger.info(dest.getStateInvariant().toString()+ " | isfinal: " + Boolean.toString(destFinal));
-
-					CDD guard = trans.getGuard();
-					targetPhaseConj = targetPhaseConj.and(guard.unprime());
-					//handling for timed automata (only necessary for upper bounds on states)
-					// if timer is running supress read guards on edges
-					boolean timed = this.systemModel.phaseIsUpperBoundFinal(pea, source) && 
-							this.systemModel.phaseIsUpperBoundFinal(pea, dest);
-					// untimed or final and timed which means that this must set an effect (and an R_v)
-					CDD deductionGuard = this.transformInvariantToDeductionGuard(targetPhaseConj, destFinal, i, timed, identsToProof, clockVar );
-					guard = guard.and(deductionGuard);
-					trans.setGuard(guard);
-				}			
-			}
+			this.transformPea(pea, counterTrace, lastPhase, clockVar, i);
 		}
 		this.generateDeductionAutomatonInstant();	
 	}
+	
+	private void transformPea(PhaseEventAutomata pea, CounterTrace ct, DCPhase lastPhase, String clockVar, int reqNum){
+		for (Phase source : pea.getPhases()) {
+			for (Transition trans : source.getTransitions()) {
+				Phase dest = trans.getDest();
+				Set<String> identsToProof = this.getPhaseToPhaseToProve(ct, pea, source, dest);
+				boolean destFinal = false;
+				// build conjunct of all phases that are part of the PEA phase
+				CDD targetPhaseConj = CDD.TRUE;
+				for (DCPhase phase : this.systemModel.getDcPhases(pea, dest)) {
+					if (lastPhase == phase) {
+						destFinal = true;
+					}
+					targetPhaseConj = targetPhaseConj.and(phase.getInvariant());
+				}	
+				// determine which variables are seeping variables in the next state
+				// Of the seeping vars only one must be deduceable to be sure that this is an ok state
+				Set<String> seepVars = new HashSet<String>();
+				if(!destFinal){
+					Set<String> phaseVars = targetPhaseConj.getIdents();
+					seepVars = dest.getStateInvariant().getIdents();
+					seepVars.remove(clockVar);
+					seepVars.removeAll(this.sysInfo.getInputs());
+					seepVars.removeAll(lastPhase.getInvariant().getIdents());
+					seepVars.removeAll(phaseVars); //vars not in the targetPhaseConjunct must be seep vars or timers
+				}
+				this.logger.info("State Invariant:" + dest.getStateInvariant()+ " | isfinal: " + Boolean.toString(destFinal));
+				this.logger.info("SeepVars: " + seepVars.toString());
+				//On a final destination it is always the whole invariant that we need to encode
+				if (destFinal) {
+					targetPhaseConj = dest.getStateInvariant();
+				}
+
+				CDD guard = trans.getGuard();
+				// must guarantee that all variables in the guard are deduced too
+				targetPhaseConj = targetPhaseConj.and(guard.unprime());
+				//handling for timed automata (only necessary for upper bounds on states)
+				// if timer is running supress read guards on edges
+				boolean timed = this.systemModel.phaseIsUpperBoundFinal(pea, source) && 
+						this.systemModel.phaseIsUpperBoundFinal(pea, dest);
+				// untimed or final and timed which means that this must set an effect (and an R_v)
+				CDD deductionGuard = this.transformInvariantToDeductionGuard(targetPhaseConj, destFinal, reqNum, 
+						timed, identsToProof, clockVar );
+				CDD seepGuard = this.encodeNonSeepGuard(seepVars);
+				guard = guard.and(deductionGuard).and(seepGuard);
+				trans.setGuard(guard);
+				this.logger.info("Finished Guard: " + guard.toString());
+			}			
+		}
+	}
+	
+	private CDD encodeNonSeepGuard(Set<String> idents){
+		CDD result = CDD.FALSE;
+		for(String ident: idents){
+			CDD temp = BoogieBooleanExpressionDecision.create(this.encodeInternalVar(ident));
+			result = result.or(temp);
+		}
+		if (result == CDD.FALSE){
+			return CDD.TRUE;
+		}
+		return result;
+	}
+	
 	
 	/***
 	 * Determine all variables that have to be determined to get from phase "source" to phase "dest".
@@ -103,8 +133,8 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 	 * @param dest
 	 * @return
 	 */
-	private ArrayList<String> getPhaseToPhaseToProve(CounterTrace ct, PhaseEventAutomata pea, Phase source, Phase dest){
-		ArrayList<String> aux = new ArrayList<String>();
+	private Set<String> getPhaseToPhaseToProve(CounterTrace ct, PhaseEventAutomata pea, Phase source, Phase dest){
+		Set<String> aux = new HashSet<String>();
 		int maxSource = this.systemModel.getDCPhasesMax(ct, pea, source);
 		int maxDest = this.systemModel.getDCPhasesMax(ct, pea, dest);
 		// add identifiers of all variables that must be deduced on the way from source to effect phase
@@ -132,7 +162,7 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 	 * determine values for all variables in the invariant.
 	 */
 	private CDD transformInvariantToDeductionGuard(CDD invariant, boolean destinationHasLastPhase, 
-			int reqNo, boolean timed, List<String> identsToProof, String clockVar){
+			int reqNo, boolean timed, Set<String> identsToProof, String clockVar){
 		CDD[] dnf = invariant.toDNF();
 		CDD resultingConjunct = CDD.FALSE;
 		CDD temp = CDD.TRUE;
@@ -208,7 +238,7 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 	/*
 	 * L_ ... anotniation
 	 */
-	private CDD encodeReadConjunct(CDD conjunct, int reqNo, boolean finalPhase, List<String> neccesaryIdents){
+	private CDD encodeReadConjunct(CDD conjunct, int reqNo, boolean finalPhase, Set<String> neccesaryIdents){
 		CDD result = CDD.TRUE;
 		for(String ident: conjunct.getIdents()){
 			if(finalPhase && this.systemModel.getPattern(reqNo).getEffectVariabels().contains(ident)){
@@ -286,25 +316,6 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 			}
 		}
 		return false;
-	}
-
-	protected Expression primeVars(Expression e){
-			if(e instanceof BinaryExpression){
-				BinaryExpression bchild = ((BinaryExpression)e);
-				return new BinaryExpression(e.getLocation(),
-						bchild.getOperator(),
-						this.primeVars(bchild.getLeft()), this.primeVars(bchild.getRight()));
-			}else if(e instanceof UnaryExpression){
-				UnaryExpression bchild = ((UnaryExpression)e);
-				return new UnaryExpression(e.getLocation(),
-						bchild.getOperator(),
-						this.primeVars(bchild.getExpr()));
-			} else if(e instanceof IdentifierExpression){
-				return new IdentifierExpression(e.getLocation(),
-						((IdentifierExpression)e).getIdentifier()+"'");
-			} else {
-				return e;
-			}
 	}
 	
 	

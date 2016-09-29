@@ -561,7 +561,10 @@ public class RangeDecision extends Decision {
     }
 
     @Override
-    public Decision prime() {
+    public Decision prime(String ignore) {
+    	if (ignore != null && this.var.equals(ignore)){
+    		return this;
+    	}
         final String primed = var + RangeDecision.PRIME;
         final int[] limits = this.limits.clone();
 
@@ -570,7 +573,10 @@ public class RangeDecision extends Decision {
 
     //by Ami
     @Override
-    public Decision unprime() {
+    public Decision unprime(String ignore) {
+    	if (ignore != null && this.var.equals(ignore)){
+    		return this;
+    	}
         String unprimed = var;
 
         if (var.endsWith(PRIME)) {
@@ -606,11 +612,11 @@ public class RangeDecision extends Decision {
     }
     
     @Override
-    public Decision unprime(String ignore){
-    	return this.unprime();
+    public Decision unprime(){
+    	return this.unprime(null);
     }
     @Override
-    public Decision prime(String ignore){
-    	return this.prime();
+    public Decision prime(){
+    	return this.prime(null);
     }
 }
