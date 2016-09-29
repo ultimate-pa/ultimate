@@ -123,7 +123,7 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 
 	private static final String[] INPUT = new String[] {
 //			"examples/programs/abstractInterpretation/regression",
-			"examples/programs/abstractInterpretation/regression/all/simple-assign.bpl",
+			"examples/programs/abstractInterpretation/regression/all/multiparams-bug.bpl",
 			"examples/programs/abstractInterpretation/regression/all/ite-unsafe.bpl",
 			"examples/programs/abstractInterpretation/regression/all/recursive-easy-1.bpl",
 			"examples/programs/abstractInterpretation/regression/assign-relational-twoVar.bpl",
