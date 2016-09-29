@@ -56,8 +56,12 @@ public class AutomataScriptTestSuite extends UltimateTestSuite {
 	private static final File mToolchainFile = new File(TestUtil.getPathFromTrunk(mToolchain));
 	private static int mTimeout = 10 * 1000;
 	private static final String[] mDirectories = { "examples/Automata/AlternatingAutomata",
-			"examples/Automata/atsTestFiles", "examples/Automata/AUTOMATA_SCRIPT", "examples/Automata/BuchiAutomata",
-			"examples/Automata/BuchiNwa", "examples/Automata/finiteAutomata", "examples/Automata/nwa",
+			"examples/Automata/atsTestFiles", 
+			"examples/Automata/AUTOMATA_SCRIPT", 
+			"examples/Automata/BuchiAutomata",
+			"examples/Automata/BuchiNwa", 
+			"examples/Automata/finiteAutomata", 
+			"examples/Automata/nwa",
 			"examples/Automata/nwaOperations",
 			// "examples/Automata/BuchiNwa/reduceBuchiNwa/",
 			// "examples/Automata/nwaOperations/minimizeMaxSAT/",
