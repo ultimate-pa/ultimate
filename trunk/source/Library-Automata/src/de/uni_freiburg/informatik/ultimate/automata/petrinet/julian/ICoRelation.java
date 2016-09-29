@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.julian;
@@ -31,11 +31,11 @@ import java.util.Collection;
 import java.util.Set;
 
 /**
- * Represents the co-Relation in Ocurrence nets.
- * 
- * <p>It is updated when an event is added to a branching-process.
- * 
- * <p>Two Nodes x,y are in <i>co-relation</i> if all of the following conditions
+ * Represents the co-Relation in Occurrence nets.
+ * <p>
+ * It is updated when an event is added to a branching-process.
+ * <p>
+ * Two Nodes x,y are in <i>co-relation</i> if all of the following conditions
  * are false:
  * <ul>
  * <li>x&lt;y</li>
@@ -43,41 +43,55 @@ import java.util.Set;
  * <li>y#x</li>
  * </ul>
  * whereas &lt; is the causal relation and # the conflict-relation.
+ * <p>
+ * Since the relation is only needed on Conditions, only related Methods exist.
  * 
- * <p>Since the relation is only needed on Conditions, only related Methods exist.
- * 
- * @author iari
- * 
+ * @author Julian Jarecki (jareckij@informatik.uni-freiburg.de)
+ * @param <S>
+ *            symbol type
+ * @param <C>
+ *            place content type
  */
 public interface ICoRelation<S, C> {
 	/**
 	 * Updates the Co-relation regarding an event that just has been added to
 	 * the branching process.
 	 * 
-	 * @param e
+	 * @param event
 	 *            the Event that has been added.
 	 */
-	void update(Event<S, C> e);
-
-	/**
-	 * checks, if 2 Conditions are in co-relation.
-	 */
-	boolean isInCoRelation(Condition<S, C> c1, Condition<S, C> c2);
+	void update(Event<S, C> event);
 	
 	/**
-	 * gets the number of co-relation queries that have been issued.
+	 * @param cond1
+	 *            One condition.
+	 * @param cond2
+	 *            Another condition.
+	 * @return {@code true} iff 2 Conditions are in co-relation.
+	 */
+	boolean isInCoRelation(Condition<S, C> cond1, Condition<S, C> cond2);
+	
+	/**
+	 * @return The number of co-relation queries that have been issued.
 	 */
 	int getCoRelationQueries();
-
+	
 	/**
 	 * All initial Conditions in a branchin process are in co relation. Hence,
 	 * all pairs of Conditions from <code>initialConditions</code> are added.
+	 * 
+	 * @param initialConditions
+	 *            set of initial conditions
 	 */
 	void initialize(Set<Condition<S, C>> initialConditions);
-
+	
 	/**
-	 * given the co-set <code>coSet</code>, checks whether the unification with
-	 * condition <code>c</code> is still a co-set.
+	 * @param coSet
+	 *            A co-set.
+	 * @param cond
+	 *            condition
+	 * @return {@code true} iff, given the co-set <code>coSet</code>, the unification with
+	 *         condition <code>c</code> is still a co-set.
 	 */
-	boolean isCoset(Collection<Condition<S, C>> coSet, Condition<S, C> c);
+	boolean isCoset(Collection<Condition<S, C>> coSet, Condition<S, C> cond);
 }

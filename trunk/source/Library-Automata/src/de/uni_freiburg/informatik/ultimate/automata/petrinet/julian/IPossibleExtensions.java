@@ -20,27 +20,48 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.julian;
 
+/**
+ * Interface for possible extensions.
+ * 
+ * @author Julian Jarecki (jareckij@informatik.uni-freiburg.de)
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <S>
+ *            symbol type
+ * @param <C>
+ *            place content type
+ */
 public interface IPossibleExtensions<S, C> {
 	/**
-	 * remove and return the minimal element with respect to the specified Order.
+	 * Removes and returns the minimal element with respect to the specified Order.
 	 * Throws an Exception if queue empty.
+	 * 
+	 * @return the minimal element
 	 */
 	Event<S, C> remove();
 	
 	/**
-	 * Extend set of possible extensions by all possible extensions which are
-	 * successors of e. 
+	 * Extends set of possible extensions by all possible extensions which are
+	 * successors of e.
+	 * 
+	 * @param event
+	 *            event
 	 */
-	void update(Event<S, C> e);
+	void update(Event<S, C> event);
 	
+	/**
+	 * @return The size.
+	 */
 	int size();
 	
+	/**
+	 * @return {@code true} iff there is no extension.
+	 */
 	boolean isEmpy();
 }

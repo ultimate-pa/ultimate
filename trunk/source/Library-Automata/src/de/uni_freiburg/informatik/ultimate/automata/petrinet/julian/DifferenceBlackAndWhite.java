@@ -109,16 +109,15 @@ public final class DifferenceBlackAndWhite<S, C> extends UnaryNetOperation<S, C>
 		if (!nwa.finalIsTrap()) {
 			throw new UnsupportedOperationException(
 					"Second operand has to be closed under concatenation with Sigma star.");
-			//otherwise the result won't be the intersection of languages
+			// otherwise the result won't be the intersection of languages
 		}
 		final C nwaInitialState = nwa.getInitialStates().iterator().next();
 		classifySymbols();
-//		mSymbol2AutomatonTransition = createSymbol2AutomatonTransitionMap();
+		// mSymbol2AutomatonTransition = createSymbol2AutomatonTransitionMap();
 		if (nwa.isFinal(nwaInitialState)) {
 			// case where nwa accepts everything. Result will be a net that
 			// accepts the empty language
-			mResult = new PetriNetJulian<>(mServices, mOperand.getAlphabet(), mOperand.getStateFactory(),
-					true);
+			mResult = new PetriNetJulian<>(mServices, mOperand.getAlphabet(), mOperand.getStateFactory(), true);
 			final C sinkContent = mContentFactory.createSinkStateContent();
 			mResult.addPlace(sinkContent, true, false);
 		} else {
@@ -184,34 +183,36 @@ public final class DifferenceBlackAndWhite<S, C> extends UnaryNetOperation<S, C>
 		}
 	}
 	
-//	private Map<S,Set<NestedWordAutomaton<S,C>.InternalTransition>> createSymbol2AutomatonTransitionMap() {
-//		Map<S,Set<NestedWordAutomaton<S,C>.InternalTransition>> result =
-//			new HashMap<S,Set<NestedWordAutomaton<S,C>.InternalTransition>>();
-//		for (NestedWordAutomaton<S,C>.InternalTransition trans : mNwa.getInternalTransitions()) {
-//			S symbol = trans.getSymbol();
-//			Set<NestedWordAutomaton<S,C>.InternalTransition> transitions =
-//				result.get(symbol);
-//			if (transitions == null) {
-//				transitions = new HashSet<NestedWordAutomaton<S,C>.InternalTransition>();
-//				result.put(symbol,transitions);
-//			}
-//			transitions.add(trans);
-//		}
-//		return result;
-//	}
-
-//	private Map<S,Set<ITransition<S,C>>> createSymbol2TransitionMap(
-//														PetriNetJulian<S,C> net) {
-//		Map<S,Set<ITransition<S,C>>> result =
-//			new HashMap<S,Set<ITransition<S,C>>>();
-//		for (S symbol : net.getAlphabet()) {
-//			result.put(symbol, new HashSet<ITransition<S,C>>());
-//		}
-//		for (ITransition<S,C> transition : net.getTransitions()) {
-//			result.get(transition.getSymbol()).add(transition);
-//		}
-//		return result;
-//	}
+	/*
+	private Map<S,Set<NestedWordAutomaton<S,C>.InternalTransition>> createSymbol2AutomatonTransitionMap() {
+		Map<S,Set<NestedWordAutomaton<S,C>.InternalTransition>> result =
+			new HashMap<S,Set<NestedWordAutomaton<S,C>.InternalTransition>>();
+		for (NestedWordAutomaton<S,C>.InternalTransition trans : mNwa.getInternalTransitions()) {
+			S symbol = trans.getSymbol();
+			Set<NestedWordAutomaton<S,C>.InternalTransition> transitions =
+				result.get(symbol);
+			if (transitions == null) {
+				transitions = new HashSet<NestedWordAutomaton<S,C>.InternalTransition>();
+				result.put(symbol,transitions);
+			}
+			transitions.add(trans);
+		}
+		return result;
+	}
+	
+	private Map<S, Set<ITransition<S, C>>> createSymbol2TransitionMap(
+			PetriNetJulian<S, C> net) {
+		Map<S, Set<ITransition<S, C>>> result =
+				new HashMap<S, Set<ITransition<S, C>>>();
+		for (S symbol : net.getAlphabet()) {
+			result.put(symbol, new HashSet<ITransition<S, C>>());
+		}
+		for (ITransition<S, C> transition : net.getTransitions()) {
+			result.get(transition.getSymbol()).add(transition);
+		}
+		return result;
+	}
+	*/
 	
 	private void copyNetStatesOnly() {
 		// difference black and white preserves the constantTokenAmount invariant
@@ -285,24 +286,30 @@ public final class DifferenceBlackAndWhite<S, C> extends UnaryNetOperation<S, C>
 			
 			// One copy for the selfloops
 			if (!mSelfloop.isEmpty()) {
-//				Collection<IState<S,C>> succStates = predState.getInternalSucc(symbol);
-//				assert (succStates.size() == 1);
-//				IState<S,C> succState = succStates.iterator().next();
+				/*
+				Collection<IState<S,C>> succStates = predState.getInternalSucc(symbol);
+				assert (succStates.size() == 1);
+				IState<S,C> succState = succStates.iterator().next();
+				*/
 				final Collection<Place<S, C>> predecessors = new ArrayList<>();
 				for (final Place<S, C> oldPlace : oldTrans.getPredecessors()) {
 					final Place<S, C> newPlace = mOldPlace2NewPlace.get(oldPlace);
 					predecessors.add(newPlace);
 				}
-//				predecessors.add(mWhitePlace.get(predState));
-//				predecessors.add(mBlackPlace.get(succState));
+				/*
+				predecessors.add(mWhitePlace.get(predState));
+				predecessors.add(mBlackPlace.get(succState));
+				*/
 				
 				final Collection<Place<S, C>> successors = new ArrayList<>();
 				for (final Place<S, C> oldPlace : oldTrans.getSuccessors()) {
 					final Place<S, C> newPlace = mOldPlace2NewPlace.get(oldPlace);
 					successors.add(newPlace);
 				}
-//				successors.add(mWhitePlace.get(succState));
-//				successors.add(mBlackPlace.get(predState));
+				/*
+				successors.add(mWhitePlace.get(succState));
+				successors.add(mBlackPlace.get(predState));
+				*/
 				
 				for (final C state : mStateChanger.get(symbol)) {
 					predecessors.add(mBlackPlace.get(state));
@@ -314,17 +321,19 @@ public final class DifferenceBlackAndWhite<S, C> extends UnaryNetOperation<S, C>
 		}
 	}
 	
-//	private IState<S,C> getSuccessorState(IState<S,C> state, S symbol) {
-//		Collection<IState<S, C>> successors = state.getInternalSucc(symbol);
-//		if (successors.size() > 1) {
-//			throw new IllegalArgumentException(
-//							"Only deterministic automata supported");
-//		}
-//		for (IState<S,C> succ : successors) {
-//			return succ;
-//		}
-//		return null;
-//	}
+	/*
+	private IState<S, C> getSuccessorState(IState<S, C> state, S symbol) {
+		Collection<IState<S, C>> successors = state.getInternalSucc(symbol);
+		if (successors.size() > 1) {
+			throw new IllegalArgumentException(
+					"Only deterministic automata supported");
+		}
+		for (IState<S, C> succ : successors) {
+			return succ;
+		}
+		return null;
+	}
+	*/
 	
 	@Override
 	protected IPetriNet<S, C> getOperand() {
@@ -377,11 +386,11 @@ public final class DifferenceBlackAndWhite<S, C> extends UnaryNetOperation<S, C>
 		}
 		
 		final INestedWordAutomatonSimple<S, C> op1AsNwa =
-				(new PetriNet2FiniteAutomaton<S, C>(mServices, mOperand)).getResult();
+				(new PetriNet2FiniteAutomaton<>(mServices, mOperand)).getResult();
 		final INestedWordAutomatonSimple<S, C> rcResult =
-				(new DifferenceDD<S, C>(mServices, stateFactory, op1AsNwa, mNwa)).getResult();
+				(new DifferenceDD<>(mServices, stateFactory, op1AsNwa, mNwa)).getResult();
 		final INestedWordAutomatonSimple<S, C> resultAsNwa =
-				(new PetriNet2FiniteAutomaton<S, C>(mServices, mResult)).getResult();
+				(new PetriNet2FiniteAutomaton<>(mServices, mResult)).getResult();
 		
 		boolean correct = true;
 		correct &= new IsIncluded<>(mServices, stateFactory, resultAsNwa, rcResult).getResult();

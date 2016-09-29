@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.julian;
@@ -31,20 +31,43 @@ import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 
+/**
+ * An inhibitor transition.
+ * 
+ * @author Julian Jarecki (jareckij@informatik.uni-freiburg.de)
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <S>
+ *            symbol type
+ * @param <C>
+ *            place content type
+ */
 public class InhibitorTransition<S, C> extends Transition<S, C> {
 	private static final long serialVersionUID = 933451776613619705L;
-
+	
 	private final Collection<Place<S, C>> mInhibitors;
-
-	public InhibitorTransition(S symbol, Collection<Place<S, C>> predecessors,
-			Collection<Place<S, C>> inhibitors,
-			Collection<Place<S, C>> successors, int totalOrderId) {
+	
+	/**
+	 * Constructor.
+	 * 
+	 * @param symbol
+	 *            symbol
+	 * @param predecessors
+	 *            predecessor places
+	 * @param inhibitors
+	 *            inhibitor places
+	 * @param successors
+	 *            successor places
+	 * @param totalOrderId
+	 *            total order ID
+	 */
+	public InhibitorTransition(final S symbol, final Collection<Place<S, C>> predecessors,
+			final Collection<Place<S, C>> inhibitors, final Collection<Place<S, C>> successors,
+			final int totalOrderId) {
 		super(symbol, predecessors, successors, totalOrderId);
-		this.mInhibitors = inhibitors;
+		mInhibitors = inhibitors;
 	}
-
+	
 	public Collection<Place<S, C>> getInhibitors() {
 		return mInhibitors;
 	}
-
 }

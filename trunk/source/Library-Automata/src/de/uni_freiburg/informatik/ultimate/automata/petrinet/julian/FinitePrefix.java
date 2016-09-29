@@ -32,7 +32,16 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetUnfolder.order;
 
-public class FinitePrefix<LETTER, STATE> extends UnaryNetOperation<LETTER, STATE> {
+/**
+ * A finite prefix.
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            symbol type
+ * @param <STATE>
+ *            place content type
+ */
+public final class FinitePrefix<LETTER, STATE> extends UnaryNetOperation<LETTER, STATE> {
 	private final IPetriNet<LETTER, STATE> mOperand;
 	private final BranchingProcess<LETTER, STATE> mResult;
 	
@@ -46,28 +55,30 @@ public class FinitePrefix<LETTER, STATE> extends UnaryNetOperation<LETTER, STATE
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */
-	public FinitePrefix(final AutomataLibraryServices services,
-			final PetriNetJulian<LETTER, STATE> operand)
+	public FinitePrefix(final AutomataLibraryServices services, final PetriNetJulian<LETTER, STATE> operand)
 			throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
-		mLogger.info(startMessage());
-		final PetriNetUnfolder<LETTER, STATE> unf =
-				new PetriNetUnfolder<LETTER, STATE>(
-						mServices, operand, order.ERV, true, false);
+		
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(startMessage());
+		}
+		final PetriNetUnfolder<LETTER, STATE> unf = new PetriNetUnfolder<>(mServices, operand, order.ERV, true, false);
 		mResult = unf.getFinitePrefix();
-		mLogger.info(exitMessage());
+		
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(exitMessage());
+		}
 	}
 	
 	@Override
 	public String operationName() {
-		return "finitePrefix";
+		return "FinitePrefix";
 	}
 	
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName()
-				+ " Result " + mResult.sizeInformation();
+		return "Finished " + operationName() + " Result " + mResult.sizeInformation();
 	}
 	
 	@Override

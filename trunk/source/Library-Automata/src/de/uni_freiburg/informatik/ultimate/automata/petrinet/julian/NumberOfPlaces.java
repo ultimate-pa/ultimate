@@ -33,10 +33,11 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
 /**
  * Operation that returns the number of places of a Petri net.
  * 
- * @author heizmann@informatik.uni-freiburg.de
- *
- * @param <LETTER> letter type
- * @param <PLACE> place type
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ * @param <PLACE>
+ *            place type
  */
 public class NumberOfPlaces<LETTER, PLACE> extends UnaryNetOperation<LETTER, PLACE> {
 	private final IPetriNet<LETTER, PLACE> mOperand;
@@ -44,25 +45,26 @@ public class NumberOfPlaces<LETTER, PLACE> extends UnaryNetOperation<LETTER, PLA
 	/**
 	 * Constructor.
 	 * 
-	 * @param services Ultimate services
-	 * @param operand operand
+	 * @param services
+	 *            Ultimate services
+	 * @param operand
+	 *            operand
 	 */
-	public NumberOfPlaces(final AutomataLibraryServices services,
-			final IPetriNet<LETTER, PLACE> operand) {
+	public NumberOfPlaces(final AutomataLibraryServices services, final IPetriNet<LETTER, PLACE> operand) {
 		super(services);
 		mOperand = operand;
 	}
-
+	
 	@Override
 	public String operationName() {
-		return "numberOfStates";
+		return "NumberOfPlaces";
 	}
 	
 	@Override
 	protected IPetriNet<LETTER, PLACE> getOperand() {
 		return mOperand;
 	}
-
+	
 	@Override
 	public Integer getResult() {
 		return mOperand.getPlaces().size();
