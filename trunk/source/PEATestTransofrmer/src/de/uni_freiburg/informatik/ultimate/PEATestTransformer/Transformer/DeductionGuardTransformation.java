@@ -50,6 +50,10 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 		for (int i = 0; i < pats.size(); i++) {
 			PhaseEventAutomata pea = this.systemModel.getPeas().get(i);
 			CounterTrace counterTrace = this.systemModel.getCounterTraces().get(i);
+			String clockVar = null;
+			if (!pea.getClocks().isEmpty()){
+				clockVar = pea.getClocks().get(0);
+			}
 			// get last active phase of counter trace automaton
 			// int lastphase = counterTrace.getPhases().length -3;
 			DCPhase lastPhase = this.systemModel.getFinalPhase(counterTrace);
@@ -68,7 +72,9 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 					}	
 					//destFilan: for flag that output is determined
 					//True: determine that there is no seeping here
-					if (destFinal || targetPhaseConj == CDD.TRUE) {
+					//TODO: simplified version for testing, not only and the seeps on this but
+					//  or it
+					if (destFinal){// || (targetPhaseConj == CDD.TRUE)) {
 						targetPhaseConj = dest.getStateInvariant();
 					}
 					
@@ -81,7 +87,7 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 					boolean timed = this.systemModel.phaseIsUpperBoundFinal(pea, source) && 
 							this.systemModel.phaseIsUpperBoundFinal(pea, dest);
 					// untimed or final and timed which means that this must set an effect (and an R_v)
-					CDD deductionGuard = this.transformInvariantToDeductionGuard(targetPhaseConj, destFinal, i, timed, identsToProof );
+					CDD deductionGuard = this.transformInvariantToDeductionGuard(targetPhaseConj, destFinal, i, timed, identsToProof, clockVar );
 					guard = guard.and(deductionGuard);
 					trans.setGuard(guard);
 				}			
@@ -113,6 +119,10 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 		if(maxDest == this.systemModel.getFinalPhaseNumber(ct)){
 			aux.addAll(ct.getPhases()[maxDest+1].getInvariant().getIdents());
 		}
+		// remove clocks that were added to the list 
+		for(String clockIdent: pea.getClocks()){
+			aux.remove(clockIdent);
+		}
 		return aux; 
 	}
 	
@@ -122,7 +132,7 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 	 * determine values for all variables in the invariant.
 	 */
 	private CDD transformInvariantToDeductionGuard(CDD invariant, boolean destinationHasLastPhase, 
-			int reqNo, boolean timed, List<String> identsToProof){
+			int reqNo, boolean timed, List<String> identsToProof, String clockVar){
 		CDD[] dnf = invariant.toDNF();
 		CDD resultingConjunct = CDD.FALSE;
 		CDD temp = CDD.TRUE;
@@ -133,10 +143,10 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 					// conjunct && L_wholePhaseNecessary && !(all other conjuncts)
 					CDD l = this.encodeReadConjunct(invariant, reqNo, true, identsToProof);
 					if (timed) l = CDD.TRUE; //TODO: HACK
-					temp = conjunct.prime().and(l);
+					temp = conjunct.prime(clockVar).and(l);
 					for(CDD t: dnf){
 						if(!this.containsEffect(t, reqNo)){
-							t = t.negate().prime();
+							t = t.negate().prime(clockVar);
 							temp = temp.and(t);
 						}
 					}
@@ -150,7 +160,7 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 				// conjunct && !R_effect && L_conjunt
 				CDD l = this.encodeReadConjunct(conjunct, reqNo, false, identsToProof);
 				CDD r = this.encodeNotDeducedInConjunct(reqNo);
-				temp = conjunct.prime().and(r).and(l);
+				temp = conjunct.prime(clockVar).and(r).and(l);
 			}
 			// add result to new conjunct
 			resultingConjunct = resultingConjunct.or(temp);
@@ -202,12 +212,10 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 		CDD result = CDD.TRUE;
 		for(String ident: conjunct.getIdents()){
 			if(finalPhase && this.systemModel.getPattern(reqNo).getEffectVariabels().contains(ident)){
-				logger.warn("Effect Variabels:" + this.systemModel.getPattern(reqNo).getEffectVariabels().toString());
 				// do not encode if variable is an effect AND its the last phase
 				continue;
 			}
 			if(! neccesaryIdents.contains(ident)){
-				logger.warn("Variable no necessary to deduce:"+ident );
 				// do not encode if variable if its not listed in necessary idents
 				continue;
 			}

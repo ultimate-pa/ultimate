@@ -345,9 +345,12 @@ public class BasicTranslator {
 		this.modifiedVariables.add(phaseCounter);
 		this.varsByTypeAdd("int", phaseCounter);
 		//clocks
-		this.clocks.addAll(pea.getClocks());
-		this.varsByTypeAdd("real", pea.getClocks());
-		this.modifiedVariables.addAll(pea.getClocks());
+		List<String> clocks = pea.getClocks();
+		if (!clocks.isEmpty()){
+			this.clocks.addAll(clocks);
+			this.varsByTypeAdd("real", clocks);
+			this.modifiedVariables.addAll( clocks);
+		}
 		//state vars
 		Map<String,String> vars = pea.getVariables();
 		String primedIdent;

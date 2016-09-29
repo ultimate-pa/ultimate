@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import java.util.Vector;
 
@@ -903,7 +904,10 @@ try_next:
     }
 
     private CDD primeCache;
-    public CDD prime() {
+    public CDD prime(){
+    	return this.prime(null);
+    }
+    public CDD prime(String ignore) {
         if ((this == CDD.TRUE) || (this == CDD.FALSE)) {
             return this;
         }
@@ -921,7 +925,7 @@ try_next:
             newChildren[i] = children[i].prime();
         }
 
-        newDecision = decision.prime();
+        newDecision = decision.prime(ignore);
 
         primeCache = CDD.create(newDecision, newChildren);
         return primeCache;
@@ -942,7 +946,10 @@ try_next:
             cdd.isAtomic());
     }
 
-    public CDD unprime() {
+    public CDD unprime(){
+    	return this.unprime(null);
+    }
+    public CDD unprime(String ignore) {
         if ((this == CDD.TRUE) || (this == CDD.FALSE)) {
             return this;
         }
@@ -954,10 +961,11 @@ try_next:
         final CDD[] newChildren = new CDD[children.length];
 
         for (int i = 0; i < children.length; i++) {
+
             newChildren[i] = children[i].unprime();
         }
 
-        newDecision = decision.unprime();
+        newDecision = decision.unprime(ignore);
 
         return CDD.create(newDecision, newChildren);
     }

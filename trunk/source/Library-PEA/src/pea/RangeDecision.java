@@ -27,6 +27,7 @@
 package pea;
 
 import java.util.HashMap;
+import java.util.List;
 
 public class RangeDecision extends Decision {
     public static final int OP_LT = -2;
@@ -602,5 +603,14 @@ public class RangeDecision extends Decision {
         (((limits[childs - 1] & 1) == 1) ? " < " : " \\leq ") + var +
         (((limits[childs] & 1) == 0) ? " < " : " \\leq ") +
         (limits[childs] / 2);
+    }
+    
+    @Override
+    public Decision unprime(String ignore){
+    	return this.unprime();
+    }
+    @Override
+    public Decision prime(String ignore){
+    	return this.prime();
     }
 }

@@ -105,7 +105,7 @@ public class PatternToDc {
 			// ... it is always the case that if p holds after at most c time units.
 			if(pattern.getScope().getClass() == srParseScopeGlob.class){	 
 				return this.GlobalBndResponsePattern(pattern, q, r, p, s, t);			//test [used]
-			} else if(pattern.getScope().getClass() == srParseScopeAfterUntil.class){	 
+			} else if(pattern.getScope().getClass() == srParseScopeAfterUntil.class){	
 				return this.AfterUnitlBndResponsePattern(pattern, q, r, p, s, t);			//test []
 			} else {
 				throw new UnsupportedOperationException();
@@ -121,7 +121,7 @@ public class PatternToDc {
 			} else {
 				throw new UnsupportedOperationException();
 			}
-		} else {
+		} else {	
 			throw new UnsupportedOperationException("Pattern not implemented");
 		}
 	}

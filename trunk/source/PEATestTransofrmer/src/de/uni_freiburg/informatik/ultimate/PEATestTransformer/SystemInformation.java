@@ -92,6 +92,10 @@ public class SystemInformation {
 									new IdentifierExpression(loc, ident), 
 									new BooleanLiteral(loc, false));
 	}
+
+	public boolean isSystemVariable(String ident) {
+		return this.systemVariables.keySet().contains(ident);
+	}
 	
 	
 

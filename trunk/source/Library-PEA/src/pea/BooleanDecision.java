@@ -26,6 +26,7 @@
  */
 package pea;
 
+import java.util.List;
 import java.util.Vector;
 
 /**
@@ -150,5 +151,14 @@ public class BooleanDecision extends Decision {
                 BooleanDecision.PRIME, "$1$2"); // SR 2010-08-02
 
         return (new BooleanDecision(result));
+    }
+    
+    @Override
+    public Decision unprime(String ignore){
+    	return this.unprime();
+    }
+    @Override
+    public Decision prime(String ignore){
+    	return this.prime();
     }
 }

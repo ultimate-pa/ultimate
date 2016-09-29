@@ -26,7 +26,9 @@
  */
 package pea;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 
 /**
@@ -102,12 +104,14 @@ public abstract class Decision implements Comparable {
      * @return  the primed version of this Decision.
      */
     public abstract Decision prime();
+    public abstract Decision prime(String ignore);
 
     /**
      * Create a Decision where primed variable names occur as unprimed versions.
      * @return  the unprimed version of this Decision.
      */
     public abstract Decision unprime();
+    public abstract Decision unprime(String ignore);
 
     public abstract String toString(int child);
 
@@ -128,4 +132,5 @@ public abstract class Decision implements Comparable {
     public String toSmtString(int child, int index) {
         return toSmtString(child);
     }
+	
 }

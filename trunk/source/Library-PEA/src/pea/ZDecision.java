@@ -23,6 +23,8 @@
  */
 package pea;
 
+import java.util.List;
+
 import net.sourceforge.czt.parser.util.ParseException;
 import net.sourceforge.czt.z.util.ZString;
 import pea.util.z.PrimeVisitor;
@@ -356,6 +358,15 @@ public final class ZDecision extends Decision {
     @Override
     public String toTexString(final int child) {
         return (child == 0) ? predicate : (ZString.NOT + predicate);
+    }
+    
+    @Override
+    public Decision unprime(String ignore){
+    	return this.unprime();
+    }
+    @Override
+    public Decision prime(String ignore){
+    	return this.prime();
     }
 
     @Override

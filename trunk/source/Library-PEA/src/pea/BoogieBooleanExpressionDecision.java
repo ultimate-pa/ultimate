@@ -2,6 +2,7 @@ package pea;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
@@ -80,10 +81,19 @@ public class BoogieBooleanExpressionDecision extends Decision {
 	 *
 	 */
 	class BoogiePrimeIdentifierTransformer extends BoogieTransformer{
+		private String ignore = new String();
+		public void setIgnore(String ignore){
+			if (ignore != null){
+				this.ignore = ignore;
+			}
+		}
 		
 		@Override
 		protected Expression processExpression(Expression expr){
 			if(expr instanceof IdentifierExpression){
+				if (this.ignore != null && ((IdentifierExpression)expr).getIdentifier().equals(this.ignore)){
+					return super.processExpression(expr);
+				}
 				return new IdentifierExpression(expr.getLocation(),
 						((IdentifierExpression) expr).getIdentifier()
 						.replaceAll("([a-zA-Z_])(\\w*)","$1$2" + "'"));
@@ -98,10 +108,19 @@ public class BoogieBooleanExpressionDecision extends Decision {
 	 *
 	 */
 	class BoogieRemovePrimeIdentifierTransformer extends BoogieTransformer{
+		private String ignore = new String();
+		public void setIgnore(String ignore){
+			if (ignore != null){
+				this.ignore = ignore;
+			}
+		}
 		
 		@Override
 		protected Expression processExpression(Expression expr){
 			if(expr instanceof IdentifierExpression){
+				if (this.ignore != null && ((IdentifierExpression)expr).getIdentifier().equals(this.ignore)){
+					return super.processExpression(expr);
+				}
 				return new IdentifierExpression(expr.getLocation(),
 						((IdentifierExpression) expr).getIdentifier()
 						.replaceAll("([a-zA-Z_])(\\w*)" + "'", "$1$2"));
@@ -113,17 +132,28 @@ public class BoogieBooleanExpressionDecision extends Decision {
 
 	@Override
 	public Decision prime() {
-		BoogiePrimeIdentifierTransformer bpit = new BoogiePrimeIdentifierTransformer();
-		Expression primed =  bpit.processExpression(this.expression);
-		return new BoogieBooleanExpressionDecision(primed);
+		return this.prime(null);
 	}
 
 	@Override
 	public Decision unprime() {
-		BoogieRemovePrimeIdentifierTransformer bpit = new BoogieRemovePrimeIdentifierTransformer();
+		return this.unprime(null);
+	}
+	
+    @Override
+    public Decision unprime(String ignore){
+    	BoogieRemovePrimeIdentifierTransformer bpit = new BoogieRemovePrimeIdentifierTransformer();
+    	bpit.setIgnore(ignore);
 		Expression primed =  bpit.processExpression(this.expression);
 		return new BoogieBooleanExpressionDecision(primed);
-	}
+    }
+    @Override
+    public Decision prime(String ignore){
+    	BoogiePrimeIdentifierTransformer bpit = new BoogiePrimeIdentifierTransformer();
+    	bpit.setIgnore(ignore);
+		Expression primed =  bpit.processExpression(this.expression);
+		return new BoogieBooleanExpressionDecision(primed);
+    }
 
 	@Override
 	public String toString(int child) {

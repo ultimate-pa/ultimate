@@ -1,3 +1,6 @@
-<toolchain>
-	<plugin id="de.uni_freiburg.informatik.ultimate.boogie.printer"/>
-</toolchain>
+<rundefinition>
+	<name>Ultimate Toolchain</name>
+	<toolchain>
+		<plugin id="de.uni_freiburg.informatik.ultimate.boogie.printer"/>
+	</toolchain>
+</rundefinition>
