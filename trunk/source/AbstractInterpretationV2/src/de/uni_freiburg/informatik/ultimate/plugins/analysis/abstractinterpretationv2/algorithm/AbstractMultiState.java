@@ -1,3 +1,29 @@
+/*
+ * Copyright (C) 2015-2016 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2015-2016 University of Freiburg
+ *
+ * This file is part of the ULTIMATE AbstractInterpretationV2 plug-in.
+ *
+ * The ULTIMATE AbstractInterpretationV2 plug-in is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE AbstractInterpretationV2 plug-in is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE AbstractInterpretationV2 plug-in. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE AbstractInterpretationV2 plug-in, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission
+ * to convey the resulting work.
+ */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm;
 
 import java.util.Collection;
@@ -158,6 +184,7 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, ACTION, VARD
 	@Override
 	public String toLogString() {
 		final StringBuilder sb = new StringBuilder();
+		sb.append('#').append(mStates.size());
 		sb.append('{');
 		for (final STATE state : mStates) {
 			final String logStr = state.toLogString();
@@ -173,34 +200,6 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, ACTION, VARD
 		}
 		sb.append('}');
 		return sb.toString();
-	}
-
-	private AbstractMultiState<STATE, ACTION, VARDECL> applyToAll(final Function<STATE, STATE> func) {
-		final Set<STATE> newSet = newSet(mStates.size());
-		for (final STATE state : mStates) {
-			newSet.add(func.apply(state));
-		}
-		if (mStates.equals(newSet)) {
-			return this;
-		}
-		return new AbstractMultiState<>(mMaxSize, newSet);
-	}
-
-	private AbstractMultiState<STATE, ACTION, VARDECL>
-			applyToAllCollection(final Function<STATE, Collection<STATE>> func) {
-		final Set<STATE> newSet = newSet();
-		for (final STATE state : mStates) {
-			newSet.addAll(func.apply(state));
-		}
-		return new AbstractMultiState<>(mMaxSize, getMaximalElements(newSet));
-	}
-
-	private Set<STATE> newSet() {
-		return newSet(mMaxSize);
-	}
-
-	private static <STATE> Set<STATE> newSet(final int maxSize) {
-		return new LinkedHashSet<>(maxSize, 1.0F);
 	}
 
 	@Override
@@ -231,76 +230,6 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, ACTION, VARD
 			return false;
 		}
 		return true;
-	}
-
-	Set<STATE> getStates() {
-		return Collections.unmodifiableSet(mStates);
-	}
-
-	public STATE getSingleState(final IAbstractStateBinaryOperator<STATE> mergeOp) {
-		return mStates.stream().reduce((a, b) -> mergeOp.apply(a, b)).orElse(null);
-	}
-
-	public AbstractMultiState<STATE, ACTION, VARDECL> merge(final IAbstractStateBinaryOperator<STATE> mergeOp,
-			final AbstractMultiState<STATE, ACTION, VARDECL> other) {
-		assert other != null && other.getVariables().equals(getVariables()) : "Cannot merge incompatible states";
-		final Set<STATE> set = newSet();
-		set.addAll(mStates);
-		set.addAll(other.mStates);
-		return new AbstractMultiState<>(mMaxSize, reduce(mergeOp, set));
-	}
-
-	private Set<STATE> reduce(final IAbstractStateBinaryOperator<STATE> mergeOp, final Set<STATE> states) {
-		final Set<STATE> maximalElements = getMaximalElements(states);
-		if (maximalElements.size() <= mMaxSize) {
-			return maximalElements;
-		}
-		return reduceByOrderedMerge(mergeOp, maximalElements);
-	}
-
-	private Set<STATE> reduceByOrderedMerge(final IAbstractStateBinaryOperator<STATE> mergeOp,
-			final Set<STATE> states) {
-		final Set<STATE> reducibleSet = new LinkedHashSet<>(states);
-		int numberOfMerges = states.size() - mMaxSize;
-		while (numberOfMerges > 0) {
-			final Iterator<STATE> iter = reducibleSet.iterator();
-			final STATE first = iter.next();
-			iter.remove();
-			final STATE second = iter.next();
-			iter.remove();
-			reducibleSet.add(mergeOp.apply(first, second));
-			--numberOfMerges;
-		}
-		assert reducibleSet.size() <= mMaxSize;
-		return reducibleSet;
-	}
-
-	private Set<STATE> getMaximalElements(final Set<STATE> states) {
-		final Set<STATE> maximalElements = newSet(states.size());
-		for (final STATE state : states) {
-			final Iterator<STATE> iter = maximalElements.iterator();
-			boolean maximal = true;
-			while (iter.hasNext()) {
-				final STATE candidate = iter.next();
-				final SubsetResult stateIsCovered = state.isSubsetOf(candidate);
-				final SubsetResult stateCovers = candidate.isSubsetOf(state);
-				if (stateIsCovered != SubsetResult.NONE) {
-					// state is covered by someone, it cannot be maximal
-					maximal = false;
-					break;
-				}
-				if (stateCovers != SubsetResult.NONE) {
-					// state covers someone
-					iter.remove();
-				}
-			}
-
-			if (maximal) {
-				maximalElements.add(state);
-			}
-		}
-		assert maximalElements.stream().filter(a -> a.isBottom()).count() <= 1 : "There can be only one bottom element";
-		return maximalElements;
 	}
 
 	/**
@@ -357,5 +286,103 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, ACTION, VARD
 	@Override
 	public String toString() {
 		return toLogString();
+	}
+
+	Set<STATE> getStates() {
+		return Collections.unmodifiableSet(mStates);
+	}
+
+	public STATE getSingleState(final IAbstractStateBinaryOperator<STATE> mergeOp) {
+		return mStates.stream().reduce((a, b) -> mergeOp.apply(a, b)).orElse(null);
+	}
+
+	public AbstractMultiState<STATE, ACTION, VARDECL> merge(final IAbstractStateBinaryOperator<STATE> mergeOp,
+			final AbstractMultiState<STATE, ACTION, VARDECL> other) {
+		assert other != null && other.getVariables().equals(getVariables()) : "Cannot merge incompatible states";
+		final Set<STATE> set = newSet();
+		set.addAll(mStates);
+		set.addAll(other.mStates);
+		return new AbstractMultiState<>(mMaxSize, reduce(mergeOp, set));
+	}
+
+	private AbstractMultiState<STATE, ACTION, VARDECL> applyToAll(final Function<STATE, STATE> func) {
+		final Set<STATE> newSet = newSet(mStates.size());
+		for (final STATE state : mStates) {
+			newSet.add(func.apply(state));
+		}
+		if (mStates.equals(newSet)) {
+			return this;
+		}
+		return new AbstractMultiState<>(mMaxSize, newSet);
+	}
+
+	private AbstractMultiState<STATE, ACTION, VARDECL>
+			applyToAllCollection(final Function<STATE, Collection<STATE>> func) {
+		final Set<STATE> newSet = newSet();
+		for (final STATE state : mStates) {
+			newSet.addAll(func.apply(state));
+		}
+		return new AbstractMultiState<>(mMaxSize, getMaximalElements(newSet));
+	}
+
+	private Set<STATE> newSet() {
+		return newSet(mMaxSize);
+	}
+
+	private static <STATE> Set<STATE> newSet(final int maxSize) {
+		return new LinkedHashSet<>(maxSize, 1.0F);
+	}
+
+	private Set<STATE> reduce(final IAbstractStateBinaryOperator<STATE> mergeOp, final Set<STATE> states) {
+		final Set<STATE> maximalElements = getMaximalElements(states);
+		if (maximalElements.size() <= mMaxSize) {
+			return maximalElements;
+		}
+		return reduceByOrderedMerge(mergeOp, maximalElements);
+	}
+
+	private Set<STATE> reduceByOrderedMerge(final IAbstractStateBinaryOperator<STATE> mergeOp,
+			final Set<STATE> states) {
+		final Set<STATE> reducibleSet = new LinkedHashSet<>(states);
+		int numberOfMerges = states.size() - mMaxSize;
+		while (numberOfMerges > 0) {
+			final Iterator<STATE> iter = reducibleSet.iterator();
+			final STATE first = iter.next();
+			iter.remove();
+			final STATE second = iter.next();
+			iter.remove();
+			reducibleSet.add(mergeOp.apply(first, second));
+			--numberOfMerges;
+		}
+		assert reducibleSet.size() <= mMaxSize;
+		return reducibleSet;
+	}
+
+	private Set<STATE> getMaximalElements(final Set<STATE> states) {
+		final Set<STATE> maximalElements = newSet(states.size());
+		for (final STATE state : states) {
+			final Iterator<STATE> iter = maximalElements.iterator();
+			boolean maximal = true;
+			while (iter.hasNext()) {
+				final STATE candidate = iter.next();
+				final SubsetResult stateIsCovered = state.isSubsetOf(candidate);
+				final SubsetResult stateCovers = candidate.isSubsetOf(state);
+				if (stateIsCovered != SubsetResult.NONE) {
+					// state is covered by someone, it cannot be maximal
+					maximal = false;
+					break;
+				}
+				if (stateCovers != SubsetResult.NONE) {
+					// state covers someone
+					iter.remove();
+				}
+			}
+
+			if (maximal) {
+				maximalElements.add(state);
+			}
+		}
+		assert maximalElements.stream().filter(a -> a.isBottom()).count() <= 1 : "There can be only one bottom element";
+		return maximalElements;
 	}
 }

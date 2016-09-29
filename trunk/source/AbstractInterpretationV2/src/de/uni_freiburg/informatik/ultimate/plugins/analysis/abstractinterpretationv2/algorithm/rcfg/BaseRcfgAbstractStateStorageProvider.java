@@ -83,8 +83,8 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 	@Override
 	public AbstractMultiState<STATE, CodeBlock, VARDECL> addAbstractPostState(final CodeBlock transition,
 			final AbstractMultiState<STATE, CodeBlock, VARDECL> state) {
-		assert transition != null;
-		assert state != null;
+		assert transition != null : "Cannot add state to null transition";
+		assert state != null : "Cannot add null state";
 		final AbstractMultiState<STATE, CodeBlock, VARDECL> oldState = getPostState(transition);
 		if (oldState == null) {
 			replacePostState(transition, state);
