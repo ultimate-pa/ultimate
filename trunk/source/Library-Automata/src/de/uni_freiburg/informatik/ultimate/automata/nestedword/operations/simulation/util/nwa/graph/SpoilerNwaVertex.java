@@ -165,7 +165,7 @@ public final class SpoilerNwaVertex<LETTER, STATE> extends SpoilerVertex<LETTER,
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		}
@@ -263,8 +263,6 @@ public final class SpoilerNwaVertex<LETTER, STATE> extends SpoilerVertex<LETTER,
 		if (mSink != null) {
 			sb.append("[Sink/").append(mSink.hashCode() + "]");
 		}
-		sb.append("<" + getPriority() + ">");
-
 		sb.append("),p:").append(getPriority()).append(",pm:").append(mPm);
 		sb.append(">");
 		return sb.toString();

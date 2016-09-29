@@ -40,6 +40,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
@@ -118,7 +119,7 @@ public class SummaryComputation<LETTER, STATE> {
 	
 	public SummaryComputation(final AutomataLibraryServices services,
 			final IDoubleDeckerAutomaton<GameLetter<LETTER, STATE>, IGameState> gameAutomaton,
-			final IDoubleDeckerAutomaton<LETTER, STATE> operand) {
+			final IDoubleDeckerAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		super();
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
@@ -127,6 +128,9 @@ public class SummaryComputation<LETTER, STATE> {
 		mNeedSpoilerWinningSink = computeSpoilerWinningSink();
 		initialize();
 		while (!mWorklist.isEmpty()) {
+			if (!mServices.getProgressMonitorService().continueProcessing()) {
+				throw new AutomataOperationCanceledException(this.getClass());
+			}
 			final SummaryComputationGraphNode<LETTER, STATE> node = mWorklist.remove();
 			process(node);
 		}
@@ -135,7 +139,7 @@ public class SummaryComputation<LETTER, STATE> {
 		mGameSummaries = new LinkedHashSet<>();
 		for (final Entry<Set<IGameState>, NestedMap2<IGameState, IGameState, Integer>> entry : mTrigger2Summaries.entrySet()) {
 			final NestedMap2<IGameState, IGameState, Integer> target2source2prio = entry.getValue();
-			final NestedMap2<IGameState, IGameState, Integer> source2target2prio = entry.getValue();
+			final NestedMap2<IGameState, IGameState, Integer> source2target2prio = new NestedMap2<>();
 			for (final Triple<IGameState, IGameState, Integer> triple : target2source2prio.entrySet()) {
 				source2target2prio.put(triple.getSecond(), triple.getFirst(), triple.getThird());
 			}
@@ -143,7 +147,14 @@ public class SummaryComputation<LETTER, STATE> {
 				final Map<IGameState, Integer> target2prio = source2target2prio.get(source);
 				final NestedMap2<STATE, IGameState, Integer> spoilerChoice2Target2Prio = new NestedMap2<>();
 				for (final Entry<IGameState, Integer> targetPrio : target2prio.entrySet()) {
-					final STATE spoilerChoice = ((GameSpoilerNwaVertex<LETTER, STATE>) targetPrio.getKey()).getSpoilerNwaVertex().getQ0();
+					final SpoilerNwaVertex<LETTER, STATE> spoilerVertex = ((GameSpoilerNwaVertex<LETTER, STATE>) targetPrio.getKey()).getSpoilerNwaVertex();
+					if (spoilerVertex.getSink() != null) {
+						// omit, target is sink
+//						assert mNeedSpoilerWinningSink.contains(source);
+						continue;
+					}
+					final STATE spoilerChoice = spoilerVertex.getQ0();
+					assert spoilerChoice != null;
 					spoilerChoice2Target2Prio.put(spoilerChoice, targetPrio.getKey(), targetPrio.getValue());
 				}
 				for (final STATE spoilerDestinationState : spoilerChoice2Target2Prio.keySet()) {
@@ -376,8 +387,13 @@ public class SummaryComputation<LETTER, STATE> {
 		for (final IGameState source : spoi2Wst.keySet()) {
 			// take only these, where current state and summary source coincide
 			final WeightedSummaryTargets wst = spoi2Wst.get(source, source);
-			for (final Entry<IGameState, Integer> target2priority : wst.entrySet()) {
-				target2source2priority.put(target2priority.getKey(), source, target2priority.getValue());
+			if (wst == null) {
+				// do nothing, 
+				// this was a state for a different summary source
+			} else {
+				for (final Entry<IGameState, Integer> target2priority : wst.entrySet()) {
+					target2source2priority.put(target2priority.getKey(), source, target2priority.getValue());
+				}
 			}
 		}
 		mTrigger2Summaries.addPair(summaryComputationTriggers, target2source2priority);
@@ -578,8 +594,11 @@ public class SummaryComputation<LETTER, STATE> {
 		public GameSummary(final IGameState summarySource, final STATE spoilerDestinationState,
 				final Map<IGameState, Integer> duplicatorResponses) {
 			super();
+			assert summarySource != null;
 			mSummarySource = summarySource;
+			assert spoilerDestinationState != null;
 			mSpoilerDestinationState = spoilerDestinationState;
+			assert !duplicatorResponses.isEmpty();
 			mDuplicatorResponses = duplicatorResponses;
 		}
 		

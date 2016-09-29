@@ -134,8 +134,8 @@ public class MinimizeNwaMulti<LETTER, STATE> extends MinimizeNwaCombinator<LETTE
 			// use MaxSat-based minimization up to certain limit
 			return MinimizationMethods.NWA_MAX_SAT2;
 		}
-		// use Hopcroft-based minimization for bigger automata
-		return MinimizationMethods.SHRINK_NWA;
+		// use no minimization for bigger automata
+		return MinimizationMethods.NONE;
 	}
 	
 	/**

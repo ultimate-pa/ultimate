@@ -156,7 +156,8 @@ public abstract class BasicToolchainJob extends Job {
 			return Status.CANCEL_STATUS;
 		case Error:
 		default:
-			return new Status(IStatus.ERROR, Activator.PLUGIN_ID, IStatus.ERROR, result.toString(), null);
+			// TODO: we use IStatus.Cancel to prevent RCP error messages; but better return status would be nice
+			return new Status(IStatus.CANCEL, Activator.PLUGIN_ID, IStatus.ERROR, result.toString(), null);
 		}
 	}
 }

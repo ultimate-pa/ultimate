@@ -280,7 +280,7 @@ public class ToolchainManager {
 				final CompleteToolchainData data = new CompleteToolchainData(mToolchainData,
 						parsers.toArray(new ISource[parsers.size()]), mCurrentController);
 
-				mToolchainWalker.walk(data, currentToolchainServices.getProgressMonitorService(), monitor);
+				return mToolchainWalker.walk(data, currentToolchainServices.getProgressMonitorService(), monitor);
 
 			} finally {
 				final IResultService resultService = currentToolchainServices.getResultService();
@@ -309,9 +309,8 @@ public class ToolchainManager {
 				ResultUtil.logResults(controllerLogger, resultService, appendCompleteLongDescription);
 				mCurrentController.displayToolchainResults(mToolchainData, resultService.getResults());
 				mModelManager.removeAll();
+				mToolchainWalker.endToolchain();
 			}
-
-			return ReturnCode.Ok;
 		}
 
 		@Override

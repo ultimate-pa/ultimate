@@ -37,6 +37,7 @@ import java.util.TreeMap;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainExceptionWrapper;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
@@ -903,13 +904,9 @@ public class LassoChecker {
 					}
 				}
 			} catch (final SMTLIBException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-				throw new AssertionError("SMTLIBException " + e);
+				throw new ToolchainExceptionWrapper(Activator.PLUGIN_ID, e);
 			} catch (final TermException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-				throw new AssertionError("TermException " + e);
+				throw new ToolchainExceptionWrapper(Activator.PLUGIN_ID, e);
 			}
 			if (termArg != null) {
 				assert termArg.getRankingFunction() != null;

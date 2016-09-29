@@ -31,7 +31,7 @@ import java.util.ArrayList;
 
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiAutomizerModuleDecompositionBenchmark;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiAutomizerTimingBenchmark;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.CegarLoopStatisticsDefinitions;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.decider.TerminationAnalysisTestResultDecider;

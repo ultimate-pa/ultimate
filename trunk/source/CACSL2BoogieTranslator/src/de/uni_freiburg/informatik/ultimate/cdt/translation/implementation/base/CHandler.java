@@ -226,6 +226,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
  * @author Oleksii Saukh
  * @author Stefan Wissert
  * @author Matthias Heizmann
+ * @author Alexander Nutz
  */
 public class CHandler implements ICHandler {
 
@@ -661,6 +662,15 @@ public class CHandler implements ICHandler {
 	 */
 	@Override
 	public Result visit(final Dispatcher main, final IASTSimpleDeclaration node) {
+
+		/*
+		 * 
+		 */
+		final ILocation loc = LocationFactory.createCLocation(node);
+
+		/*
+		 * skip this declaration if we have inferred that it is not reachable
+		 */
 		final LinkedHashSet<IASTDeclaration> reachableDecs = main.getReachableDeclarationsOrDeclarators();
 		if (reachableDecs != null) {
 			if (node.getParent() instanceof IASTTranslationUnit) {
@@ -681,25 +691,34 @@ public class CHandler implements ICHandler {
 			}
 		}
 
-		final ILocation loc = LocationFactory.createCLocation(node);
+		/*
+		 * not sure what it means when the declspecifier is null .. 
+		 */
 		if (node.getDeclSpecifier() == null) {
 			final String msg = "This statement can be removed!";
 			main.warn(loc, msg);
 			return new SkipResult();
 		}
 
-		// enum case
+		/*
+		 * we have an enum declaration
+		 */
 		if (node.getDeclSpecifier() instanceof IASTEnumerationSpecifier) {
 			handleEnumDeclaration(main, node);
 		}
 
-		final Result r = main.dispatch(node.getDeclSpecifier());
-		assert r instanceof SkipResult || r instanceof TypesResult;
-		if (r instanceof SkipResult) {
-			return r;
+		/*
+		 * obtain type information from the DeclSpecifier
+		 */
+		final Result declSpecifierResult = main.dispatch(node.getDeclSpecifier());
+		assert declSpecifierResult instanceof SkipResult || declSpecifierResult instanceof TypesResult;
+
+		if (declSpecifierResult instanceof SkipResult) {
+			return declSpecifierResult;
 		}
-		if (r instanceof TypesResult) {
-			final TypesResult resType = (TypesResult) r;
+
+		if (declSpecifierResult instanceof TypesResult) {
+			final TypesResult resType = (TypesResult) declSpecifierResult;
 			Result result = new SkipResult(); // Skip will be overwritten in
 												// case of a global or a local
 												// initialized variable
@@ -898,7 +917,7 @@ public class CHandler implements ICHandler {
 			// createHavocsForAuxVars(((ExpressionResult) result).auxVars));
 			return result;
 		}
-		final String msg = "Unknown result type: " + r.getClass();
+		final String msg = "Unknown result type: " + declSpecifierResult.getClass();
 		throw new UnsupportedSyntaxException(loc, msg);
 	}
 
@@ -918,15 +937,12 @@ public class CHandler implements ICHandler {
 		final TypesResult resType = mCurrentDeclaredTypes.peek();
 		final TypesResult newResType = new TypesResult(resType);
 
+		// are we running the PRDispatcher (PR stands for PreRun)?
+		// --> in that case "isOnHeap" has not yet been determined, we set it to false
 		newResType.isOnHeap |=
-				main instanceof MainDispatcher ? ((MainDispatcher) main).getVariablesForHeap().contains(node) : false; // in
-																														// this
-																														// case
-																														// we
-																														// are
-																														// in
-																														// the
-																														// PRDispatcher
+				main instanceof MainDispatcher ? 
+						((MainDispatcher) main).getVariablesForHeap().contains(node) : 
+							false; 
 
 		final IASTPointerOperator[] pointerOps = node.getPointerOperators();
 		for (int i = 0; i < pointerOps.length; i++) {

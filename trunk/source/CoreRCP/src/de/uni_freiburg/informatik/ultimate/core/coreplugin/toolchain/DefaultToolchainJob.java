@@ -35,6 +35,7 @@ import org.eclipse.core.runtime.Status;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.RcpProgressMonitorWrapper;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions.ParserInitializationException;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ExceptionOrErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.RunDefinition;
 import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainData;
@@ -153,8 +154,6 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 	@Override
 	protected IStatus rerunToolchain(final IProgressMonitor monitor) {
 		final IToolchainProgressMonitor tpm = RcpProgressMonitorWrapper.create(monitor);
-		IStatus returnstatus = Status.OK_STATUS;
-
 		tpm.beginTask(getName(), IProgressMonitor.UNKNOWN);
 
 		try {
@@ -171,34 +170,22 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 			mToolchain.runParsers();
 			tpm.worked(1);
 
-			returnstatus = convert(mToolchain.processToolchain(tpm));
+			return convert(mToolchain.processToolchain(tpm));
 
 		} catch (final Throwable e) {
-			mLogger.fatal(String.format("The toolchain threw an exception: %s", e.getMessage()));
-			mLogger.fatal(e);
-			mController.displayException(mToolchain.getCurrentToolchainData(), "The toolchain threw an exception", e);
-			returnstatus = Status.CANCEL_STATUS;
-			final String idOfCore = Activator.PLUGIN_ID;
-			if (mServices != null) {
-				mServices.getResultService().reportResult(idOfCore, new ExceptionOrErrorResult(idOfCore, e));
-			}
+			return handleException(e);
 		} finally {
 			tpm.done();
 			releaseToolchain();
 		}
-
-		return returnstatus;
 	}
 
 	@Override
 	protected IStatus runToolchainDefault(final IProgressMonitor monitor) {
 		final IToolchainProgressMonitor tpm = RcpProgressMonitorWrapper.create(monitor);
-		IStatus returnstatus = Status.OK_STATUS;
 		tpm.beginTask(getName(), IProgressMonitor.UNKNOWN);
 
 		try {
-			boolean retval;
-
 			setToolchain(mCore.requestToolchain());
 			tpm.worked(1);
 
@@ -208,9 +195,8 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 			mToolchain.setInputFiles(mInputFiles);
 			tpm.worked(1);
 
-			retval = mToolchain.initializeParsers();
-			if (!retval) {
-				throw new RuntimeException("Parser initialization failed");
+			if (!mToolchain.initializeParsers()) {
+				throw new ParserInitializationException();
 			}
 			tpm.worked(1);
 
@@ -232,27 +218,27 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 			mToolchain.runParsers();
 			tpm.worked(1);
 
-			returnstatus = convert(mToolchain.processToolchain(tpm));
-
+			return convert(mToolchain.processToolchain(tpm));
 		} catch (final Throwable e) {
-			if (mLogger.isDebugEnabled()) {
-				mLogger.fatal("The toolchain threw an exception", e);
-			} else {
-				mLogger.fatal(String.format("The toolchain threw an exception: %s", e.getMessage()));
-			}
-			mController.displayException(mToolchain.getCurrentToolchainData(), "The toolchain threw an exception", e);
-			returnstatus = new Status(IStatus.CANCEL, Activator.PLUGIN_ID, IStatus.ERROR,
-					"Toolchain threw an exception", null);
-			final String idOfCore = Activator.PLUGIN_ID;
-			if (mServices != null) {
-				mServices.getResultService().reportResult(idOfCore, new ExceptionOrErrorResult(idOfCore, e));
-			}
+			return handleException(e);
 		} finally {
 			tpm.done();
 			releaseToolchain();
 		}
+	}
 
-		return returnstatus;
+	private IStatus handleException(final Throwable e) {
+		if (mLogger.isDebugEnabled()) {
+			mLogger.fatal("The toolchain threw an exception", e);
+		} else {
+			mLogger.fatal(String.format("The toolchain threw an exception: %s", e.getMessage()));
+		}
+		mController.displayException(mToolchain.getCurrentToolchainData(), "The toolchain threw an exception", e);
+		if (mServices != null) {
+			final String idOfCore = Activator.PLUGIN_ID;
+			mServices.getResultService().reportResult(idOfCore, new ExceptionOrErrorResult(idOfCore, e));
+		}
+		return new Status(IStatus.ERROR, Activator.PLUGIN_ID, IStatus.ERROR, "Toolchain threw an exception", null);
 	}
 
 }
