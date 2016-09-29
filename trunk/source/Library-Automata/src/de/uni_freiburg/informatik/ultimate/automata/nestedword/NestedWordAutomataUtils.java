@@ -26,8 +26,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.function.Consumer;
 
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IOutgoingTransitionlet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
@@ -75,4 +78,19 @@ public final class NestedWordAutomataUtils {
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand, final STATE lin, final STATE hier, final LETTER letter) {
 		return operand.returnSuccessors(lin, hier, letter).iterator().hasNext();
 	}
+	
+	
+	/**
+	 * Given an Iterable of {@link IOutgoingTransitionlet} return the set of
+	 * all successor states.
+	 */
+	public static <E extends IOutgoingTransitionlet<LETTER, STATE>, LETTER, STATE> Set<STATE> constructSuccessorSet(final Iterable<E> it) {
+		final Set<STATE> result = new HashSet<>();
+		for (final E trans : it) {
+			result.add(trans.getSucc());
+			
+		}
+		return result;
+	}
+
 }
