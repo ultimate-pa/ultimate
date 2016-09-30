@@ -26,14 +26,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg;
 
-import java.util.ArrayDeque;
-import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.AbstractMultiState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ITransitionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
@@ -47,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 public class RcfgAbstractStateStorageProvider<STATE extends IAbstractState<STATE, CodeBlock, VARDECL>, LOCATION, VARDECL>
 		extends BaseRcfgAbstractStateStorageProvider<STATE, LOCATION, VARDECL> {
 
-	private final Map<LOCATION, Deque<STATE>> mStorage;
+	private final Map<LOCATION, AbstractMultiState<STATE, CodeBlock, VARDECL>> mStorage;
 
 	public RcfgAbstractStateStorageProvider(final IAbstractStateBinaryOperator<STATE> mergeOperator,
 			final IUltimateServiceProvider services, final ITransitionProvider<CodeBlock, LOCATION> transprovider) {
@@ -56,21 +55,23 @@ public class RcfgAbstractStateStorageProvider<STATE extends IAbstractState<STATE
 	}
 
 	@Override
-	protected Deque<STATE> getPostStates(final CodeBlock action) {
+	protected AbstractMultiState<STATE, CodeBlock, VARDECL> getPostState(final CodeBlock action) {
 		assert action != null;
 		final LOCATION node = getTransitionProvider().getTarget(action);
-		Deque<STATE> rtr = mStorage.get(node);
-		if (rtr == null) {
-			rtr = new ArrayDeque<STATE>();
-			mStorage.put(node, rtr);
-		}
-		return rtr;
+		return mStorage.get(node);
+	}
+
+	@Override
+	protected void replacePostState(final CodeBlock action,
+			final AbstractMultiState<STATE, CodeBlock, VARDECL> newState) {
+		assert action != null;
+		final LOCATION node = getTransitionProvider().getTarget(action);
+		mStorage.put(node, newState);
 	}
 
 	@Override
 	public BaseRcfgAbstractStateStorageProvider<STATE, LOCATION, VARDECL> create() {
-		return new RcfgAbstractStateStorageProvider<STATE, LOCATION, VARDECL>(getMergeOperator(), getServices(),
-				getTransitionProvider());
+		return new RcfgAbstractStateStorageProvider<>(getMergeOperator(), getServices(), getTransitionProvider());
 	}
 
 	@Override
@@ -82,15 +83,12 @@ public class RcfgAbstractStateStorageProvider<STATE extends IAbstractState<STATE
 			return "{}";
 		}
 		final StringBuilder sb = new StringBuilder().append('{');
-		final Set<Entry<LOCATION, Deque<STATE>>> entries = mStorage.entrySet();
-		for (final Entry<?, Deque<STATE>> entry : entries) {
+		final Set<Entry<LOCATION, AbstractMultiState<STATE, CodeBlock, VARDECL>>> entries = mStorage.entrySet();
+		for (final Entry<LOCATION, AbstractMultiState<STATE, CodeBlock, VARDECL>> entry : entries) {
 			sb.append(entry.getKey().toString()).append("=[");
-			for (final STATE state : entry.getValue()) {
-				sb.append('[').append(state.hashCode()).append("] ");
-				sb.append(state.toLogString()).append(", ");
-			}
-			if (!entry.getValue().isEmpty()) {
-				sb.delete(sb.length() - 2, sb.length());
+			final AbstractMultiState<STATE, CodeBlock, VARDECL> state = entry.getValue();
+			if (!state.isEmpty()) {
+				sb.append(state.toLogString());
 			}
 			sb.append("], ");
 		}
@@ -100,4 +98,5 @@ public class RcfgAbstractStateStorageProvider<STATE extends IAbstractState<STATE
 		sb.append('}');
 		return sb.toString();
 	}
+
 }

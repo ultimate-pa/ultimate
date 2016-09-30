@@ -210,6 +210,41 @@ public interface IAbstractState<STATE extends IAbstractState<STATE, ACTION, VARD
 		/**
 		 * If none of the other results apply.
 		 */
-		NONE,
+		NONE;
+
+		/**
+		 * Update this (the current result) with another one. Useful to determine the combined {@link SubsetResult} of a
+		 * collection.
+		 *
+		 * @param accumulated
+		 *            The so far accumulated result of an operation.
+		 * @param current
+		 *            The current intermediate result.
+		 * @return The current overall result.
+		 */
+		public SubsetResult update(final SubsetResult current) {
+			switch (this) {
+			case EQUAL:
+				if (current == SubsetResult.EQUAL) {
+					return this;
+				}
+				break;
+			case STRICT:
+				if (current == SubsetResult.STRICT || current == SubsetResult.EQUAL) {
+					return this;
+				}
+				break;
+			case NON_STRICT:
+				if (current != SubsetResult.NONE) {
+					return this;
+				}
+				break;
+			case NONE:
+				return this;
+			default:
+				throw new UnsupportedOperationException("Unhandled case " + this);
+			}
+			return current;
+		}
 	}
 }

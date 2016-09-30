@@ -25,7 +25,6 @@
  * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission
  * to convey the resulting work.
  */
-
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool;
 
 import java.util.Collection;
@@ -312,8 +311,7 @@ public final class AbstractInterpreter {
 		}
 		if (isLibrary) {
 			return new RcfgLibraryModeResultReporter<>(services);
-		} else {
-			return new RcfgResultReporter<>(services);
 		}
+		return new RcfgResultReporter<>(services);
 	}
 }

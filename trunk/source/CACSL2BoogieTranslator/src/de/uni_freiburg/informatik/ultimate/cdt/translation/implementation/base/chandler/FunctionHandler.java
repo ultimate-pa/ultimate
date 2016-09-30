@@ -40,6 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Queue;
+import java.util.Set;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
@@ -126,7 +127,7 @@ public class FunctionHandler {
 	/**
 	 * A map from procedure name to procedure declaration.
 	 */
-	private final LinkedHashMap<String, Procedure> mProcedures;
+	private final Map<String, Procedure> mProcedures;
 	/**
 	 * The currently handled procedure.
 	 */
@@ -135,11 +136,11 @@ public class FunctionHandler {
 	 * Whether the modified globals is user defined or not. If it is in this set, then it is a modifies clause defined
 	 * by the user.
 	 */
-	private final LinkedHashSet<String> mModifiedGlobalsIsUserDefined;
+	private final Set<String> mModifiedGlobalsIsUserDefined;
 	/**
 	 * A map from method name to all called methods of the specified one.
 	 */
-	private final LinkedHashMap<String, LinkedHashSet<String>> mCallGraph;
+	private final Map<String, Set<String>> mCallGraph;
 	/**
 	 * Whether the current procedure is declared to return void.
 	 */
@@ -147,14 +148,14 @@ public class FunctionHandler {
 	/**
 	 * Modified global variables of the current function.
 	 */
-	private final LinkedHashMap<String, LinkedHashSet<String>> mModifiedGlobals;
+	private final Map<String, LinkedHashSet<String>> mModifiedGlobals;
 	/**
 	 * Methods that have been called before they were declared. These methods need a special treatment, as they are
 	 * assumed to be returning int!
 	 */
-	private final LinkedHashSet<String> mMethodsCalledBeforeDeclared;
+	private final Set<String> mMethodsCalledBeforeDeclared;
 
-	private final LinkedHashMap<String, CFunction> mProcedureToCFunctionType;
+	private final Map<String, CFunction> mProcedureToCFunctionType;
 
 	private final boolean mCheckMemoryLeakAtEndOfMain;
 
@@ -178,7 +179,7 @@ public class FunctionHandler {
 			final TypeSizeAndOffsetComputer typeSizeComputer, final boolean checkMemoryLeakAtEndOfMain) {
 		mExpressionTranslation = expressionTranslation;
 		mTypeSizeComputer = typeSizeComputer;
-		mCallGraph = new LinkedHashMap<String, LinkedHashSet<String>>();
+		mCallGraph = new LinkedHashMap<String, Set<String>>();
 		mCurrentProcedureIsVoid = false;
 		mModifiedGlobals = new LinkedHashMap<String, LinkedHashSet<String>>();
 		mMethodsCalledBeforeDeclared = new LinkedHashSet<String>();
@@ -241,27 +242,20 @@ public class FunctionHandler {
 
 		VarList[] in = processInParams(main, loc, (CFunction) cDec.getType(), methodName);
 
+		// There is only one return parameter in C, so this array always has size 1.
 		VarList[] out = new VarList[1];
 		final ASTType type = main.mTypeHandler.ctype2asttype(loc, returnCType);
 
 		if (returnTypeIsVoid) { // void, so there are no out vars
 			out = new VarList[0];
 		} else if (mMethodsCalledBeforeDeclared.contains(methodName)) {
-			// TODO: defaulting to int -- but does this work on all examples?
+			// defaulting to int, when a method is called that is only declared later 
 			final CPrimitive cPrimitive = new CPrimitive(CPrimitives.INT);
 			out[0] = new VarList(loc, new String[] { SFO.RES }, main.mTypeHandler.ctype2asttype(loc, cPrimitive));
 		} else { // "normal case"
 			assert type != null;
-			// out[0] = new VarList(loc, new String[] { methodName }, type); // at
-			out[0] = new VarList(loc, new String[] { SFO.RES }, type); // at
-																		// most
-																		// one
-																		// out
-																		// param
-																		// in
-																		// C
+			out[0] = new VarList(loc, new String[] { SFO.RES }, type);
 		}
-
 		Specification[] spec = makeBoogieSpecFromACSLContract(main, contract, methodName);
 
 		Procedure proc = mProcedures.get(methodName);
@@ -364,15 +358,6 @@ public class FunctionHandler {
 		mCurrentProcedureIsVoid = false;
 		main.mCHandler.endScope();
 		return new Result(impl);
-	}
-
-	public void registerProcedureForCallGraphAndModifies(final String procId) {
-		if (!mModifiedGlobals.containsKey(procId)) {
-			mModifiedGlobals.put(procId, new LinkedHashSet<String>());
-		}
-		if (!mCallGraph.containsKey(procId)) {
-			mCallGraph.put(procId, new LinkedHashSet<String>());
-		}
 	}
 
 	/**
@@ -497,44 +482,45 @@ public class FunctionHandler {
 	 * @return procedure declarations
 	 */
 	public ArrayList<Declaration> calculateTransitiveModifiesClause(final Dispatcher main, final MemoryHandler memoryHandler) {
-		assert isEveryCalledProcedureDeclared() == null;
+		assert isEveryCalledProcedureDeclared() == null : "a function that is called in the program "
+				+ "is not declared in the program:" + isEveryCalledProcedureDeclared();
 		// calculate SCCs and a mapping for each methodId to its SCC
 		// O(|edges| + |calls|)
-		final LinkedHashSet<LinkedHashSet<String>> sccs = new TarjanSCC().getSCCs(mCallGraph);
-		final LinkedHashMap<String, LinkedHashSet<String>> functionNameToScc =
-				new LinkedHashMap<String, LinkedHashSet<String>>();
-		for (final LinkedHashSet<String> scc : sccs) { // O(|proc|)
+		final Set<Set<String>> sccs = new TarjanSCC().getSCCs(mCallGraph);
+		final Map<String, Set<String>> functionNameToScc =
+				new LinkedHashMap<String, Set<String>>();
+		for (final Set<String> scc : sccs) { // O(|proc|)
 			for (final String s : scc) {
 				functionNameToScc.put(s, scc);
 			}
 		}
 		// counts how many incoming edges an scc has in the updateGraph
-		final LinkedHashMap<LinkedHashSet<String>, Integer> incomingEdges =
-				new LinkedHashMap<LinkedHashSet<String>, Integer>();
-		for (final LinkedHashSet<String> scc : sccs) {
+		final Map<Set<String>, Integer> incomingEdges =
+				new LinkedHashMap<Set<String>, Integer>();
+		for (final Set<String> scc : sccs) {
 			incomingEdges.put(scc, 0);
 		}
 		// calculate the SCC update graph without loops and dead ends
-		final Queue<LinkedHashSet<String>> deadEnds = new LinkedList<LinkedHashSet<String>>();
+		final Queue<Set<String>> deadEnds = new LinkedList<Set<String>>();
 		deadEnds.addAll(sccs);
 
 		// updateGraph maps a calleeSCC to many callerSCCs
 		// This graph might not be complete! It is i.e. missing all procedures,
 		// that do not have incoming or outgoing edges!
 		// But: They don't need an update anyway!
-		final LinkedHashMap<LinkedHashSet<String>, LinkedHashSet<LinkedHashSet<String>>> updateGraph =
-				new LinkedHashMap<LinkedHashSet<String>, LinkedHashSet<LinkedHashSet<String>>>();
+		final Map<Set<String>, Set<Set<String>>> updateGraph =
+				new LinkedHashMap<Set<String>, Set<Set<String>>>();
 		for (final String caller : mCallGraph.keySet()) { // O(|calls|)
 			for (final String callee : mCallGraph.get(caller)) { // foreach s : succ(p)
-				final LinkedHashSet<String> sccCaller = functionNameToScc.get(caller);
-				final LinkedHashSet<String> sccCallee = functionNameToScc.get(callee);
+				final Set<String> sccCaller = functionNameToScc.get(caller);
+				final Set<String> sccCallee = functionNameToScc.get(callee);
 				if (sccCaller == sccCallee) {
 					continue; // skip self loops
 				}
 				if (updateGraph.containsKey(sccCallee)) {
 					updateGraph.get(sccCallee).add(sccCaller);
 				} else {
-					final LinkedHashSet<LinkedHashSet<String>> predSCCs = new LinkedHashSet<LinkedHashSet<String>>();
+					final Set<Set<String>> predSCCs = new LinkedHashSet<Set<String>>();
 					predSCCs.add(sccCaller);
 					updateGraph.put(sccCallee, predSCCs);
 				}
@@ -544,19 +530,19 @@ public class FunctionHandler {
 
 		// incoming edges must be computed on a graph that has Sccs as nodes (updategraph), not just the functions
 		// (callgraph)
-		for (final LinkedHashSet<String> calleeScc : updateGraph.keySet()) {
-			for (final LinkedHashSet<String> callerScc : updateGraph.get(calleeScc)) {
+		for (final Set<String> calleeScc : updateGraph.keySet()) {
+			for (final Set<String> callerScc : updateGraph.get(calleeScc)) {
 				incomingEdges.put(callerScc, incomingEdges.get(callerScc) + 1);
 			}
 		}
 
 		// calculate transitive modifies clause
-		final LinkedHashMap<LinkedHashSet<String>, LinkedHashSet<String>> sccToModifiedGlobals =
-				new LinkedHashMap<LinkedHashSet<String>, LinkedHashSet<String>>();
+		final Map<Set<String>, Set<String>> sccToModifiedGlobals =
+				new LinkedHashMap<Set<String>, Set<String>>();
 		while (!deadEnds.isEmpty()) {
 			// O (|proc| + |edges in updateGraph|), where
 			// |edges in updateGraph| <= |calls|
-			final LinkedHashSet<String> deadEnd = deadEnds.poll();
+			final Set<String> deadEnd = deadEnds.poll();
 
 			// the modified globals of the scc is the union of the modified globals of all its functions
 			for (final String func : deadEnd) {
@@ -574,9 +560,9 @@ public class FunctionHandler {
 
 			// for all callers of the scc, add the modified globals to them, make them deadends, if all their input has
 			// been processed
-			for (final LinkedHashSet<String> caller : updateGraph.get(deadEnd)) {
+			for (final Set<String> caller : updateGraph.get(deadEnd)) {
 				if (!sccToModifiedGlobals.containsKey(caller)) {
-					final LinkedHashSet<String> n = new LinkedHashSet<String>();
+					final Set<String> n = new LinkedHashSet<String>();
 					n.addAll(sccToModifiedGlobals.get(deadEnd));
 					sccToModifiedGlobals.put(caller, n);
 				} else {
@@ -597,7 +583,7 @@ public class FunctionHandler {
 			final CACSLLocation loc = (CACSLLocation) procDecl.getLocation();
 			if (!mModifiedGlobalsIsUserDefined.contains(mId)) {
 				assert functionNameToScc.get(mId) != null;
-				final LinkedHashSet<String> currModClause = sccToModifiedGlobals.get(functionNameToScc.get(mId));
+				final Set<String> currModClause = sccToModifiedGlobals.get(functionNameToScc.get(mId));
 				assert currModClause != null : "No modifies clause proc " + mId;
 
 				mModifiedGlobals.get(mId).addAll(currModClause);
@@ -1346,7 +1332,7 @@ public class FunctionHandler {
 	 * @return null if all called procedures were declared, otherwise the identifier of one procedure that was called
 	 *         but not declared.
 	 */
-	public String isEveryCalledProcedureDeclared() {
+	private String isEveryCalledProcedureDeclared() {
 		for (final String s : mMethodsCalledBeforeDeclared) {
 			if (!mProcedures.containsKey(s)) {
 				return s;
@@ -1355,7 +1341,7 @@ public class FunctionHandler {
 		return null;
 	}
 
-	void beginUltimateInit(final Dispatcher main, final ILocation loc, final String startOrInit) {
+	void beginUltimateInitOrStart(final Dispatcher main, final ILocation loc, final String startOrInit) {
 		main.mCHandler.beginScope();
 		mCallGraph.put(startOrInit, new LinkedHashSet<String>());
 		mCurrentProcedure = new Procedure(loc, new Attribute[0], startOrInit, new String[0], new VarList[0],
@@ -1364,12 +1350,12 @@ public class FunctionHandler {
 		mModifiedGlobals.put(mCurrentProcedure.getIdentifier(), new LinkedHashSet<String>());
 	}
 
-	void endUltimateInit(final Dispatcher main, final Procedure initDecl, final String startOrInit) {
+	void endUltimateInitOrStart(final Dispatcher main, final Procedure initDecl, final String startOrInit) {
 		mProcedures.put(startOrInit, initDecl);
 		main.mCHandler.endScope();
 	}
 
-	public CFunction addFPParamToCFunction(final CFunction calledFuncCFunction) {
+	private CFunction addFPParamToCFunction(final CFunction calledFuncCFunction) {
 		final CDeclaration[] newCDecs = new CDeclaration[calledFuncCFunction.getParameterTypes().length + 1];
 		for (int i = 0; i < newCDecs.length - 1; i++) {
 			newCDecs[i] = calledFuncCFunction.getParameterTypes()[i];
@@ -1382,155 +1368,155 @@ public class FunctionHandler {
 		return cFuncWithFP;
 	}
 
-	public Body getFunctionPointerFunctionBody(final ILocation loc, final Dispatcher main, final MemoryHandler memoryHandler,
-			final StructHandler structHandler, final String fpfName, final ProcedureSignature funcSignature, final VarList[] inParams,
-			final VarList[] outParam) {
-
-		final boolean resultTypeIsVoid = funcSignature.returnType == null;
-
-		final ArrayList<Statement> stmt = new ArrayList<>();
-		final ArrayList<VariableDeclaration> decl = new ArrayList<>();
-
-		/*
-		 * setup the input parameters
-		 * the last inParam is the function pointer in this case, here we only handle the
-		 * normal in params --> therefore we iterate to inParams.lenth - 1 only..
-		 */
-		final ArrayList<Expression> args = new ArrayList<>();
-		for (int i = 0; i < inParams.length - 1; i++) {
-			final VarList vl = inParams[i];
-			assert vl.getIdentifiers().length == 1;
-			final String oldId = vl.getIdentifiers()[0];
-			final String newId = oldId.replaceFirst("in", "");
-			decl.add(new VariableDeclaration(loc, new Attribute[0],
-					new VarList[] { new VarList(loc, new String[] { newId }, vl.getType()) }));
-			stmt.add(new AssignmentStatement(loc, new LeftHandSide[] { new VariableLHS(loc, newId) },
-					new Expression[] { new IdentifierExpression(loc, oldId) }));
-			args.add(new IdentifierExpression(loc, newId));
-		}
-
-		// collect all functions that are addressoffed in the program and that
-		// match the signature
-		final ArrayList<String> fittingFunctions = new ArrayList<>();
-		for (final Entry<String, Integer> en : main.getFunctionToIndex().entrySet()) {
-			final CFunction ptdToFuncType = mProcedureToCFunctionType.get(en.getKey());
-			// if (ptdToFuncType.isCompatibleWith(calledFuncType)) {
-			if (new ProcedureSignature(main, ptdToFuncType).equals(funcSignature)) {
-				fittingFunctions.add(en.getKey());
-			}
-		}
-
-		// add the functionPointerProcedure and the procedures it calls to the
-		// call graph and modifiedGlobals
-		// such that calculateTransitive (which is executed later, in
-		// visit(TranslationUnit) after the postprocessor)
-		// can compute the correct modifies clause
-		mModifiedGlobals.put(fpfName, new LinkedHashSet<String>());
-		mCallGraph.get(fpfName).addAll(fittingFunctions);
-
-		// generate the actual body
-		IdentifierExpression funcCallResult = null;
-		if (fittingFunctions.isEmpty()) {
-			return new Body(loc, decl.toArray(new VariableDeclaration[decl.size()]),
-					stmt.toArray(new Statement[stmt.size()]));
-		} else if (fittingFunctions.size() == 1) {
-			final ExpressionResult rex = (ExpressionResult) makeTheFunctionCallItself(main, loc,
-					fittingFunctions.get(0), new ArrayList<Statement>(), new ArrayList<Declaration>(),
-					new LinkedHashMap<VariableDeclaration, ILocation>(), new ArrayList<Overapprox>(), args);
-			funcCallResult = (IdentifierExpression) rex.lrVal.getValue();
-			for (final Declaration dec : rex.decl) {
-				decl.add((VariableDeclaration) dec);
-			}
-
-			stmt.addAll(rex.stmt);
-			if (outParam.length == 1) {
-				stmt.add(new AssignmentStatement(loc,
-						new LeftHandSide[] { new VariableLHS(loc, outParam[0].getIdentifiers()[0]) },
-						new Expression[] { funcCallResult }));
-			}
-			stmt.addAll(CHandler.createHavocsForAuxVars(rex.auxVars));
-			stmt.add(new ReturnStatement(loc));
-			return new Body(loc, decl.toArray(new VariableDeclaration[decl.size()]),
-					stmt.toArray(new Statement[stmt.size()]));
-		} else {
-			final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
-
-			String tmpId = null;
-
-			if (!resultTypeIsVoid) {
-				tmpId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.FUNCPTRRES, null);
-				final VariableDeclaration tmpVarDec = new VariableDeclaration(loc, new Attribute[0],
-						new VarList[] { new VarList(loc, new String[] { tmpId },
-								// main.typeHandler.ctype2asttype(loc,
-								// ((CFunction) calledFuncType).getResultType())) });
-								funcSignature.returnType) });
-				decl.add(tmpVarDec);
-				auxVars.put(tmpVarDec, loc);
-				funcCallResult = new IdentifierExpression(loc, tmpId);
-			}
-
-			final ExpressionResult firstElseRex = (ExpressionResult) makeTheFunctionCallItself(main, loc,
-					fittingFunctions.get(0), new ArrayList<Statement>(), new ArrayList<Declaration>(),
-					new LinkedHashMap<VariableDeclaration, ILocation>(), new ArrayList<Overapprox>(), args);
-			for (final Declaration dec : firstElseRex.decl) {
-				decl.add((VariableDeclaration) dec);
-			}
-			auxVars.putAll(firstElseRex.auxVars);
-
-			final ArrayList<Statement> firstElseStmt = new ArrayList<>();
-			firstElseStmt.addAll(firstElseRex.stmt);
-			if (!resultTypeIsVoid) {
-				final AssignmentStatement assignment =
-						new AssignmentStatement(loc, new VariableLHS[] { new VariableLHS(loc, tmpId) },
-								new Expression[] { firstElseRex.lrVal.getValue() });
-				firstElseStmt.add(assignment);
-			}
-			IfStatement currentIfStmt = null;
-
-			for (int i = 1; i < fittingFunctions.size(); i++) {
-				final ExpressionResult currentRex = (ExpressionResult) makeTheFunctionCallItself(main, loc,
-						fittingFunctions.get(i), new ArrayList<Statement>(), new ArrayList<Declaration>(),
-						new LinkedHashMap<VariableDeclaration, ILocation>(), new ArrayList<Overapprox>(), args);
-				for (final Declaration dec : currentRex.decl) {
-					decl.add((VariableDeclaration) dec);
-				}
-				auxVars.putAll(currentRex.auxVars);
-
-				final ArrayList<Statement> newStmts = new ArrayList<>();
-				newStmts.addAll(currentRex.stmt);
-				if (!resultTypeIsVoid) {
-					final AssignmentStatement assignment =
-							new AssignmentStatement(loc, new VariableLHS[] { new VariableLHS(loc, tmpId) },
-									new Expression[] { currentRex.lrVal.getValue() });
-					newStmts.add(assignment);
-				}
-
-				final Expression condition =
-						ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ,
-								new IdentifierExpression(loc, inParams[inParams.length - 1].getIdentifiers()[0]),
-								new IdentifierExpression(loc, SFO.FUNCTION_ADDRESS + fittingFunctions.get(i)));
-
-				if (i == 1) {
-					currentIfStmt = new IfStatement(loc, condition, newStmts.toArray(new Statement[newStmts.size()]),
-							firstElseStmt.toArray(new Statement[firstElseStmt.size()]));
-				} else {
-					currentIfStmt = new IfStatement(loc, condition, newStmts.toArray(new Statement[newStmts.size()]),
-							new Statement[] { currentIfStmt });
-				}
-			}
-
-			stmt.add(currentIfStmt);
-			if (outParam.length == 1) {
-				stmt.add(new AssignmentStatement(loc,
-						new LeftHandSide[] { new VariableLHS(loc, outParam[0].getIdentifiers()[0]) },
-						new Expression[] { funcCallResult }));
-			}
-			stmt.addAll(CHandler.createHavocsForAuxVars(auxVars));
-			stmt.add(new ReturnStatement(loc));
-			return new Body(loc, decl.toArray(new VariableDeclaration[decl.size()]),
-					stmt.toArray(new Statement[stmt.size()]));
-		}
-	}
+//	public Body getFunctionPointerFunctionBody(final ILocation loc, final Dispatcher main, final MemoryHandler memoryHandler,
+//			final StructHandler structHandler, final String fpfName, final ProcedureSignature funcSignature, final VarList[] inParams,
+//			final VarList[] outParam) {
+//
+//		final boolean resultTypeIsVoid = funcSignature.returnType == null;
+//
+//		final ArrayList<Statement> stmt = new ArrayList<>();
+//		final ArrayList<VariableDeclaration> decl = new ArrayList<>();
+//
+//		/*
+//		 * setup the input parameters
+//		 * the last inParam is the function pointer in this case, here we only handle the
+//		 * normal in params --> therefore we iterate to inParams.lenth - 1 only..
+//		 */
+//		final ArrayList<Expression> args = new ArrayList<>();
+//		for (int i = 0; i < inParams.length - 1; i++) {
+//			final VarList vl = inParams[i];
+//			assert vl.getIdentifiers().length == 1;
+//			final String oldId = vl.getIdentifiers()[0];
+//			final String newId = oldId.replaceFirst("in", "");
+//			decl.add(new VariableDeclaration(loc, new Attribute[0],
+//					new VarList[] { new VarList(loc, new String[] { newId }, vl.getType()) }));
+//			stmt.add(new AssignmentStatement(loc, new LeftHandSide[] { new VariableLHS(loc, newId) },
+//					new Expression[] { new IdentifierExpression(loc, oldId) }));
+//			args.add(new IdentifierExpression(loc, newId));
+//		}
+//
+//		// collect all functions that are addressoffed in the program and that
+//		// match the signature
+//		final ArrayList<String> fittingFunctions = new ArrayList<>();
+//		for (final Entry<String, Integer> en : main.getFunctionToIndex().entrySet()) {
+//			final CFunction ptdToFuncType = mProcedureToCFunctionType.get(en.getKey());
+//			// if (ptdToFuncType.isCompatibleWith(calledFuncType)) {
+//			if (new ProcedureSignature(main, ptdToFuncType).equals(funcSignature)) {
+//				fittingFunctions.add(en.getKey());
+//			}
+//		}
+//
+//		// add the functionPointerProcedure and the procedures it calls to the
+//		// call graph and modifiedGlobals
+//		// such that calculateTransitive (which is executed later, in
+//		// visit(TranslationUnit) after the postprocessor)
+//		// can compute the correct modifies clause
+//		addModifiedGlobalEntry(fpfName);
+//		for (String fittingFunc : fittingFunctions) {
+//			addCallGraphEdge(fpfName, fittingFunc);
+//		}
+//
+//		// generate the actual body
+//		IdentifierExpression funcCallResult = null;
+//		if (fittingFunctions.isEmpty()) {
+//			return new Body(loc, decl.toArray(new VariableDeclaration[decl.size()]),
+//					stmt.toArray(new Statement[stmt.size()]));
+//		} else if (fittingFunctions.size() == 1) {
+//			final ExpressionResult rex = (ExpressionResult) makeTheFunctionCallItself(main, loc,
+//					fittingFunctions.get(0), new ArrayList<Statement>(), new ArrayList<Declaration>(),
+//					new LinkedHashMap<VariableDeclaration, ILocation>(), new ArrayList<Overapprox>(), args);
+//			funcCallResult = (IdentifierExpression) rex.lrVal.getValue();
+//			for (final Declaration dec : rex.decl) {
+//				decl.add((VariableDeclaration) dec);
+//			}
+//
+//			stmt.addAll(rex.stmt);
+//			if (outParam.length == 1) {
+//				stmt.add(new AssignmentStatement(loc,
+//						new LeftHandSide[] { new VariableLHS(loc, outParam[0].getIdentifiers()[0]) },
+//						new Expression[] { funcCallResult }));
+//			}
+//			stmt.addAll(CHandler.createHavocsForAuxVars(rex.auxVars));
+//			stmt.add(new ReturnStatement(loc));
+//			return new Body(loc, decl.toArray(new VariableDeclaration[decl.size()]),
+//					stmt.toArray(new Statement[stmt.size()]));
+//		} else {
+//			final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
+//
+//			String tmpId = null;
+//
+//			if (!resultTypeIsVoid) {
+//				tmpId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.FUNCPTRRES, null);
+//				final VariableDeclaration tmpVarDec = new VariableDeclaration(loc, new Attribute[0],
+//						new VarList[] { new VarList(loc, new String[] { tmpId },
+//								funcSignature.returnType) });
+//				decl.add(tmpVarDec);
+//				auxVars.put(tmpVarDec, loc);
+//				funcCallResult = new IdentifierExpression(loc, tmpId);
+//			}
+//
+//			final ExpressionResult firstElseRex = (ExpressionResult) makeTheFunctionCallItself(main, loc,
+//					fittingFunctions.get(0), new ArrayList<Statement>(), new ArrayList<Declaration>(),
+//					new LinkedHashMap<VariableDeclaration, ILocation>(), new ArrayList<Overapprox>(), args);
+//			for (final Declaration dec : firstElseRex.decl) {
+//				decl.add((VariableDeclaration) dec);
+//			}
+//			auxVars.putAll(firstElseRex.auxVars);
+//
+//			final ArrayList<Statement> firstElseStmt = new ArrayList<>();
+//			firstElseStmt.addAll(firstElseRex.stmt);
+//			if (!resultTypeIsVoid) {
+//				final AssignmentStatement assignment =
+//						new AssignmentStatement(loc, new VariableLHS[] { new VariableLHS(loc, tmpId) },
+//								new Expression[] { firstElseRex.lrVal.getValue() });
+//				firstElseStmt.add(assignment);
+//			}
+//			IfStatement currentIfStmt = null;
+//
+//			for (int i = 1; i < fittingFunctions.size(); i++) {
+//				final ExpressionResult currentRex = (ExpressionResult) makeTheFunctionCallItself(main, loc,
+//						fittingFunctions.get(i), new ArrayList<Statement>(), new ArrayList<Declaration>(),
+//						new LinkedHashMap<VariableDeclaration, ILocation>(), new ArrayList<Overapprox>(), args);
+//				for (final Declaration dec : currentRex.decl) {
+//					decl.add((VariableDeclaration) dec);
+//				}
+//				auxVars.putAll(currentRex.auxVars);
+//
+//				final ArrayList<Statement> newStmts = new ArrayList<>();
+//				newStmts.addAll(currentRex.stmt);
+//				if (!resultTypeIsVoid) {
+//					final AssignmentStatement assignment =
+//							new AssignmentStatement(loc, new VariableLHS[] { new VariableLHS(loc, tmpId) },
+//									new Expression[] { currentRex.lrVal.getValue() });
+//					newStmts.add(assignment);
+//				}
+//
+//				final Expression condition =
+//						ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ,
+//								new IdentifierExpression(loc, inParams[inParams.length - 1].getIdentifiers()[0]),
+//								new IdentifierExpression(loc, SFO.FUNCTION_ADDRESS + fittingFunctions.get(i)));
+//
+//				if (i == 1) {
+//					currentIfStmt = new IfStatement(loc, condition, newStmts.toArray(new Statement[newStmts.size()]),
+//							firstElseStmt.toArray(new Statement[firstElseStmt.size()]));
+//				} else {
+//					currentIfStmt = new IfStatement(loc, condition, newStmts.toArray(new Statement[newStmts.size()]),
+//							new Statement[] { currentIfStmt });
+//				}
+//			}
+//
+//			stmt.add(currentIfStmt);
+//			if (outParam.length == 1) {
+//				stmt.add(new AssignmentStatement(loc,
+//						new LeftHandSide[] { new VariableLHS(loc, outParam[0].getIdentifiers()[0]) },
+//						new Expression[] { funcCallResult }));
+//			}
+//			stmt.addAll(CHandler.createHavocsForAuxVars(auxVars));
+//			stmt.add(new ReturnStatement(loc));
+//			return new Body(loc, decl.toArray(new VariableDeclaration[decl.size()]),
+//					stmt.toArray(new Statement[stmt.size()]));
+//		}
+//	}
 
 	public Result makeTheFunctionCallItself(final Dispatcher main, final ILocation loc, final String methodName,
 			final ArrayList<Statement> stmt, final ArrayList<Declaration> decl, final Map<VariableDeclaration, ILocation> auxVars,
@@ -1624,7 +1610,6 @@ public class FunctionHandler {
 	
 	/**
 	 * Introduces an empty entry for a procedure in mModifiedGlobals.
-	 * (TODO: used once, currently, not sure if it's necessary)
 	 * @param procedureName
 	 */
 	public void addModifiedGlobalEntry(String procedureName) {
@@ -1636,17 +1621,13 @@ public class FunctionHandler {
 	}
 
 	/**
-	 * Getter for procedures.
-	 * 
 	 * @return procedures.
 	 */
-	public LinkedHashMap<String, Procedure> getProcedures() {
+	public Map<String, Procedure> getProcedures() {
 		return mProcedures;
 	}
 
 	/**
-	 * Returns the identifier of the current procedure.
-	 * 
 	 * @return the identifier of the current procedure.
 	 */
 	public String getCurrentProcedureID() {
@@ -1661,17 +1642,8 @@ public class FunctionHandler {
 		return mCurrentProcedure == null;
 	}
 
-	/**
-	 * Getter for the call graph.
-	 * 
-	 * @return the call graph.
-	 */
-	public Map<String, LinkedHashSet<String>> getCallGraph() {
-		return Collections.unmodifiableMap(mCallGraph);
-	}
-	
 	public void addCallGraphEdge(String source, String target) {
-		LinkedHashSet<String> set = mCallGraph.get(source);
+		Set<String> set = mCallGraph.get(source);
 		if (set == null) {
 			set = new LinkedHashSet<>();
 			mCallGraph.put(source, set);
@@ -1680,7 +1652,7 @@ public class FunctionHandler {
 	}
 	
 	public void addCallGraphNode(String node) {
-		LinkedHashSet<String> set = mCallGraph.get(node);
+		Set<String> set = mCallGraph.get(node);
 		if (set == null) {
 			set = new LinkedHashSet<>();
 			mCallGraph.put(node, set);
@@ -1691,7 +1663,7 @@ public class FunctionHandler {
 		return mProcedureToCFunctionType.get(function);
 	}
 
-	public LinkedHashSet<ProcedureSignature> getFunctionsSignaturesWithFunctionPointers() {
-		return mFunctionSignaturesThatHaveAFunctionPointer;
+	public Set<ProcedureSignature> getFunctionsSignaturesWithFunctionPointers() {
+		return Collections.unmodifiableSet(mFunctionSignaturesThatHaveAFunctionPointer);
 	}
 }

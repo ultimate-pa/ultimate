@@ -87,82 +87,26 @@ public class AbsIntNonSmtInterpolantAutomatonBuilder implements IInterpolantAuto
 	}
 
 	private NestedWordAutomaton<CodeBlock, IPredicate> getPathProgramAutomaton(
-			final INestedWordAutomatonSimple<CodeBlock, IPredicate> oldAbstraction, final PredicateUnifier predicateUnifier) {
+			final INestedWordAutomatonSimple<CodeBlock, IPredicate> oldAbstraction,
+			final PredicateUnifier predicateUnifier) {
 		return getPathProgramAutomatonNew(oldAbstraction, predicateUnifier);
-		// return getPathProgramAutomatonOld(oldAbstraction, predicateUnifier);
-	}
-
-	private NestedWordAutomaton<CodeBlock, IPredicate> getPathProgramAutomatonOld(
-			final INestedWordAutomatonSimple<CodeBlock, IPredicate> oldAbstraction, final PredicateUnifier predicateUnifier) {
-
-		mLogger.info("Creating interpolant automaton from AI using only explored space.");
-
-		final NestedWordAutomaton<CodeBlock, IPredicate> result = new NestedWordAutomaton<>(
-				new AutomataLibraryServices(mServices), oldAbstraction.getInternalAlphabet(),
-				oldAbstraction.getCallAlphabet(), oldAbstraction.getReturnAlphabet(), oldAbstraction.getStateFactory());
-		IPredicate currentState = predicateUnifier.getTruePredicate();
-		result.addState(true, false, currentState);
-
-		final IPredicate falsePred = predicateUnifier.getFalsePredicate();
-
-		// TODO: is it correct to go to length - 1 here? I assume that the last state is the error location and we don't
-		// want anything to to with that as we are introducing this location in the end.
-		for (int cexI = 0; cexI < mCurrentCounterExample.getLength() - 1; cexI++) {
-			final IPredicate prevState = currentState;
-
-			// Add state
-			currentState = mPredicateFactory.newPredicate(mBoogie2Smt.getScript().term("true"));
-			result.addState(false, false, currentState);
-
-			// Add transition
-			final CodeBlock currentSymbol = mCurrentCounterExample.getSymbol(cexI);
-			if (currentSymbol instanceof Call) {
-				result.addCallTransition(prevState, currentSymbol, currentState);
-			} else if (currentSymbol instanceof Return) {
-				final IPredicate heirState = mPredicateFactory.newPredicate(mBoogie2Smt.getScript().term("true"));
-				result.addState(false, false, heirState);
-				result.addReturnTransition(prevState, heirState, currentSymbol, currentState);
-			} else {
-				result.addInternalTransition(prevState, currentSymbol, currentState);
-			}
-		}
-
-		// Add final state
-		if (result.getFinalStates().isEmpty()) {
-			final Word<CodeBlock> word = mCurrentCounterExample.getWord();
-			final IPredicate finalState = predicateUnifier.getFalsePredicate();
-			result.addState(false, true, finalState);
-			// HERE GOES SOMETHING WRONG! length is strangely enough not equal to the counter example length?!
-			result.addInternalTransition(currentState, word.getSymbol(word.length() - 1), finalState);
-			// Add self-loop to the final state, annotated with the alphabet of the counterexample.
-			oldAbstraction.getAlphabet().forEach(l -> result.addInternalTransition(finalState, l, finalState));
-		}
-
-		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("Resulting abstract interpretation automaton: " + result);
-		}
-
-		// TODO remove next line; debugging only!
-		mLogger.info("Current abstraction: " + oldAbstraction);
-		mLogger.info("AI interpolation automaton: " + result);
-
-		return result;
 	}
 
 	private NestedWordAutomaton<CodeBlock, IPredicate> getPathProgramAutomatonNew(
-			final INestedWordAutomatonSimple<CodeBlock, IPredicate> oldAbstraction, final PredicateUnifier predicateUnifier) {
-		mLogger.info("Creating interpolant automaton from AI using only explored space.");
-
-		final NestedWordAutomaton<CodeBlock, IPredicate> result = new NestedWordAutomaton<>(
-				new AutomataLibraryServices(mServices), oldAbstraction.getInternalAlphabet(),
-				oldAbstraction.getCallAlphabet(), oldAbstraction.getReturnAlphabet(), oldAbstraction.getStateFactory());
+			final INestedWordAutomatonSimple<CodeBlock, IPredicate> oldAbstraction,
+			final PredicateUnifier predicateUnifier) {
+		mLogger.info("Creating interpolant automaton from AI using abstract post for generalization");
 
 		final NestedRun<CodeBlock, IPredicate> cex = (NestedRun<CodeBlock, IPredicate>) mCurrentCounterExample;
 		final ArrayList<IPredicate> stateSequence = cex.getStateSequence();
 
 		if (stateSequence.size() <= 1) {
-			throw new AssertionError("Unexpected");
+			throw new AssertionError("Unexpected: state sequence size <= 1");
 		}
+
+		final NestedWordAutomaton<CodeBlock, IPredicate> result = new NestedWordAutomaton<>(
+				new AutomataLibraryServices(mServices), oldAbstraction.getInternalAlphabet(),
+				oldAbstraction.getCallAlphabet(), oldAbstraction.getReturnAlphabet(), oldAbstraction.getStateFactory());
 
 		final Map<IPredicate, IPredicate> newStates = new HashMap<>();
 		final Map<Call, IPredicate> callHierPreds = new HashMap<>();

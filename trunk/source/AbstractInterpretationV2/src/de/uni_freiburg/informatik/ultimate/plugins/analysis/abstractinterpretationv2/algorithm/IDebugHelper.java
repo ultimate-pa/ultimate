@@ -13,7 +13,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 public interface IDebugHelper<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL, LOCATION> {
 
 	/**
-	 * Check whether the Hoare triple {stateBeforeLeaving} {stateAfterLeaving} transition {/\ postStates} holds.
+	 * Check whether the Hoare triple {stateBeforeLeaving} {stateAfterLeaving} transition {\/ postStates} holds.
 	 *
 	 * @param stateBeforeLeaving
 	 *            The abstract state in the old scope, i.e., the scope that we are leaving.
@@ -27,4 +27,8 @@ public interface IDebugHelper<STATE extends IAbstractState<STATE, ACTION, VARDEC
 	 */
 	boolean isPostSound(final STATE stateBeforeLeaving, final STATE stateAfterLeaving, final List<STATE> postStates,
 			final ACTION transition);
+
+	boolean isPostSound(final AbstractMultiState<STATE, ACTION, VARDECL> stateBeforeLeaving,
+			final AbstractMultiState<STATE, ACTION, VARDECL> stateAfterLeaving,
+			final AbstractMultiState<STATE, ACTION, VARDECL> postState, final ACTION transition);
 }

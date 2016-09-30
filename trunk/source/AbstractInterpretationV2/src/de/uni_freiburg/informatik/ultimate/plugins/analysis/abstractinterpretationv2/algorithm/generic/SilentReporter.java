@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.generic;
 
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.AbstractMultiState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IResultReporter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractCounterexample;
@@ -15,16 +16,17 @@ public final class SilentReporter<STATE extends IAbstractState<STATE, ACTION, VA
 
 	@Override
 	public void reportSafe(final ACTION elem) {
-
+		// do nothing to stay silent
 	}
 
 	@Override
 	public void reportSafe(final ACTION elem, final String msg) {
-
+		// do nothing to stay silent
 	}
 
 	@Override
-	public void reportPossibleError(final AbstractCounterexample<STATE, ACTION, ?, LOCATION> cex) {
-
+	public void reportPossibleError(
+			final AbstractCounterexample<AbstractMultiState<STATE, ACTION, VARDECL>, ACTION, ?, LOCATION> cex) {
+		// do nothing to stay silent
 	}
 }

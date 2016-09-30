@@ -58,7 +58,7 @@ public abstract class NestedWordAutomatonOnDemandStateAndLetter<LETTER, STATE> i
 	private final Set<STATE> mCallSuccessorsConstruted;
 	private final HashRelation<STATE,STATE> mReturnSuccessorsConstruted;
 	
-	private final NestedWordAutomatonCache<LETTER, STATE> mCache;
+	protected final NestedWordAutomatonCache<LETTER, STATE> mCache;
 
 	protected final Set<LETTER> mInternalAlphabet;
 	protected final Set<LETTER> mCallAlphabet;

@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.AbstractMultiState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IResultReporter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractCounterexample;
@@ -64,33 +65,36 @@ public class RcfgResultReporter<STATE extends IAbstractState<STATE, CodeBlock, V
 	}
 
 	@Override
-	public void reportPossibleError(final AbstractCounterexample<STATE, CodeBlock, ?, ProgramPoint> cex) {
+	public void reportPossibleError(
+			final AbstractCounterexample<AbstractMultiState<STATE, CodeBlock, VARDECL>, CodeBlock, ?, ProgramPoint> cex) {
 		final Map<Integer, ProgramState<Term>> programStates = new HashMap<>();
 		final List<RCFGEdge> trace = new ArrayList<>();
 
 		programStates.put(-1, computeProgramState(cex.getInitialState()));
 
 		int i = 0;
-		for (final Triple<STATE, ProgramPoint, CodeBlock> elem : cex.getAbstractExecution()) {
+		for (final Triple<AbstractMultiState<STATE, CodeBlock, VARDECL>, ProgramPoint, CodeBlock> elem : cex
+				.getAbstractExecution()) {
 			trace.add(elem.getThird());
 			programStates.put(i, computeProgramState(elem.getFirst()));
 			++i;
 		}
 		final RcfgProgramExecution pex = new RcfgProgramExecution(trace, programStates);
 
-		final IResult result =
-				new UnprovableResult<ProgramPoint, RCFGEdge, Term>(Activator.PLUGIN_ID, getLast(cex),
-						mServices.getBacktranslationService(), pex, "abstract domain could reach this error location");
+		final IResult result = new UnprovableResult<>(Activator.PLUGIN_ID, getLast(cex),
+				mServices.getBacktranslationService(), pex, "abstract domain could reach this error location");
 
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
 	}
 
-	private ProgramState<Term> computeProgramState(final STATE state) {
+	private ProgramState<Term>
+			computeProgramState(final AbstractMultiState<STATE, CodeBlock, VARDECL> abstractMultiState) {
 		// TODO: Compute program state
 		return new ProgramState<>(Collections.emptyMap());
 	}
 
-	private ProgramPoint getLast(final AbstractCounterexample<STATE, CodeBlock, ?, ProgramPoint> cex) {
+	private ProgramPoint getLast(
+			final AbstractCounterexample<AbstractMultiState<STATE, CodeBlock, VARDECL>, CodeBlock, ?, ProgramPoint> cex) {
 		final int size = cex.getAbstractExecution().size();
 		return cex.getAbstractExecution().get(size - 1).getSecond();
 	}

@@ -46,102 +46,116 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BidirectionalMap;
 
 /**
- * Matrix representation of octagons,
- * based on A. Miné's "The octagon abstract domain" (https://www-apr.lip6.fr/~mine/publi/article-mine-ast01.pdf).
- * 
+ * Matrix representation of octagons, based on A. Miné's "The octagon abstract domain"
+ * (https://www-apr.lip6.fr/~mine/publi/article-mine-ast01.pdf).
+ *
  * <p>
- * Octagons store constraints of the form <i>±vi ± vj ≤ c</i> over numerical variables
- * <i>{v0, v1, ..., v(n-1)}</i>. An octagon over <i>n</i> variables is a <i>2n×2n</i> matrix.
- * Matrix indices are zero-based. Names and types of the variables are not stored by the octagon.
- * Each variable <i>vi</i> has two forms, a positive form <i>(+vi)</i> and a negative form <i>(-vi)</i>.
- * <i>vi+</i> corresponds to matrix row/colum <i>2i</i> and <i>vi-</i> corresponds to matrix row/colum <i>2i+1</i>.
- * Each matrix entry stores a constraint:
+ * Octagons store constraints of the form <i>±vi ± vj ≤ c</i> over numerical variables <i>{v0, v1, ..., v(n-1)}</i>. An
+ * octagon over <i>n</i> variables is a <i>2n×2n</i> matrix. Matrix indices are zero-based. Names and types of the
+ * variables are not stored by the octagon. Each variable <i>vi</i> has two forms, a positive form <i>(+vi)</i> and a
+ * negative form <i>(-vi)</i>. <i>vi+</i> corresponds to matrix row/colum <i>2i</i> and <i>vi-</i> corresponds to matrix
+ * row/colum <i>2i+1</i>. Each matrix entry stores a constraint:
  * <table>
  * <thead>
- *   <tr><th>Constraint</th><th>Corresponding matrix entry</th></tr>
- * <thead>
- * <tbody>
- *   <tr><td><i>(+vj) - (+vi) ≤ c</i></td> <td><i>m(2i,   2j) = c<i></td></tr>
- *   <tr><td><i>(+vj) - (-vi) ≤ c</i></td> <td><i>m(2i+1, 2j) = c<i></td></tr>
- *   <tr><td><i>(-vj) - (+vi) ≤ c</i></td> <td><i>m(2i,   2j+1) = c<i></td></tr>
- *   <tr><td><i>(-vj) - (-vi) ≤ c</i></td> <td><i>m(2i+1, 2j+1) = c<i></td></tr>
+ * <tr>
+ * <th>Constraint</th>
+ * <th>Corresponding matrix entry</th>
+ * </tr>
+ * <thead> <tbody>
+ * <tr>
+ * <td><i>(+vj) - (+vi) ≤ c</i></td>
+ * <td><i>m(2i, 2j) = c<i></td>
+ * </tr>
+ * <tr>
+ * <td><i>(+vj) - (-vi) ≤ c</i></td>
+ * <td><i>m(2i+1, 2j) = c<i></td>
+ * </tr>
+ * <tr>
+ * <td><i>(-vj) - (+vi) ≤ c</i></td>
+ * <td><i>m(2i, 2j+1) = c<i></td>
+ * </tr>
+ * <tr>
+ * <td><i>(-vj) - (-vi) ≤ c</i></td>
+ * <td><i>m(2i+1, 2j+1) = c<i></td>
+ * </tr>
  * </tbody>
  * </table>
- * Octagon matrices are divided into <i>2x2</i> blocks.
- * Block row/column <i>i</i> contains the matrix rows/columns <i>2i</i> and <i>2i+1</i>.
- * 
+ * Octagon matrices are divided into <i>2x2</i> blocks. Block row/column <i>i</i> contains the matrix rows/columns
+ * <i>2i</i> and <i>2i+1</i>.
+ *
  * <p>
- * The same constraint can be represented by in two ways:
- * <i>(+vj)-(+vi)≤c ⇔ (-vi)-(-vj)≤c ⇔ m(2i,2j)=c ⇔ m(2j+1,2i+1)=c</i>.
- * The following ASCII art shows matrix entries that effectively store the same constraints.
+ * The same constraint can be represented by in two ways: <i>(+vj)-(+vi)≤c ⇔ (-vi)-(-vj)≤c ⇔ m(2i,2j)=c ⇔
+ * m(2j+1,2i+1)=c</i>. The following ASCII art shows matrix entries that effectively store the same constraints.
+ *
  * <pre>
  *     \ .   D B   L J
  *     . \   C A   K I
- *                 
+ *
  *     A B   \ .   W Y
  *     C D   . \   Z X
- *                 
+ *
  *     I J   X Y   \ .
  *     K L   Z W   . \
  * </pre>
+ *
  * An octagon matrix is coherent iff matrix entries that effectively represent the same constraint have the same values.
  * This class ensures coherence by storing only the block lower triangular matrix.
- * 
+ *
  * <p>
- * Different octagons (matrices with different entries) may have the same concretization.
- * Closures can be used as a normal form for non-bottom octagons.
- * 
+ * Different octagons (matrices with different entries) may have the same concretization. Closures can be used as a
+ * normal form for non-bottom octagons.
+ *
  * @author schaetzc@informatik.uni-freiburg.de
  */
 public class OctMatrix {
 
 	/**
-	 * Empty octagon that stores constraints over the empty set of variables.
-	 * Use {@link #NEW} and {@link #addVariables(int)} to create octagons of any size.
+	 * Empty octagon that stores constraints over the empty set of variables. Use {@link #NEW} and
+	 * {@link #addVariables(int)} to create octagons of any size.
 	 */
 	public final static OctMatrix NEW = new OctMatrix(0);
 
 	/**
-	 * Used algorithm to compute the shortest path closure.
-	 * All shortest path closure algorithms compute the same result, but may vary in terms of speed.
-	 * The runtime of some algorithms depends on the content of the matrix.
+	 * Used algorithm to compute the shortest path closure. All shortest path closure algorithms compute the same
+	 * result, but may vary in terms of speed. The runtime of some algorithms depends on the content of the matrix.
 	 */
-	private final static Consumer<OctMatrix> sDefaultShortestPathClosure = OctMatrix::shortestPathClosurePrimitiveSparse;
+	private final static Consumer<OctMatrix> sDefaultShortestPathClosure =
+			OctMatrix::shortestPathClosurePrimitiveSparse;
 
-//	// Code to generate closure benchmark.
-//	// Writes a string representation of this matrix to a file, each time a closure is computed.
-//	private final static Consumer<OctMatrix> sDefaultShortestPathClosure = m -> {
-//		if (m.mSize <= 0) {
-//			return;
-//		}
-//		String s = m.toStringLower();
-//		BufferedWriter bw;
-//		try {
-//			bw = new BufferedWriter(new FileWriter(makeFilename()), s.length() * 2);
-//			try {
-//				bw.write(s);
-//			} finally {
-//				bw.close();
-//			}
-//		} catch (IOException e) {
-//			throw new AssertionError("Could not write benchmark file.", e);
-//		}
-//		m.shortestPathClosurePrimitiveSparse();
-//	};
-//
-//	private static String makeFilename() {
-//		int i;
-//		synchronized (OctMatrix.class) {
-//			i = ++sFileNameCounter;
-//		}
-//		return "/tmp/closureBenchmark/" + String.format("%08d", i);
-//	}
-//
-//	private static volatile int sFileNameCounter = 0;
+	// // Code to generate closure benchmark.
+	// // Writes a string representation of this matrix to a file, each time a closure is computed.
+	// private final static Consumer<OctMatrix> sDefaultShortestPathClosure = m -> {
+	// if (m.mSize <= 0) {
+	// return;
+	// }
+	// String s = m.toStringLower();
+	// BufferedWriter bw;
+	// try {
+	// bw = new BufferedWriter(new FileWriter(makeFilename()), s.length() * 2);
+	// try {
+	// bw.write(s);
+	// } finally {
+	// bw.close();
+	// }
+	// } catch (IOException e) {
+	// throw new AssertionError("Could not write benchmark file.", e);
+	// }
+	// m.shortestPathClosurePrimitiveSparse();
+	// };
+	//
+	// private static String makeFilename() {
+	// int i;
+	// synchronized (OctMatrix.class) {
+	// i = ++sFileNameCounter;
+	// }
+	// return "/tmp/closureBenchmark/" + String.format("%08d", i);
+	// }
+	//
+	// private static volatile int sFileNameCounter = 0;
 
 	/**
 	 * Size of this matrix (size = #rows = #columns). Size is always an even number.
-	 * 
+	 *
 	 * @see #variables()
 	 */
 	private final int mSize;
@@ -149,41 +163,41 @@ public class OctMatrix {
 	/**
 	 * Stores the entries (= elements) of this matrix.
 	 * <p>
-	 * Some entries are neglected because they are coherent to other entries (see documentation of this class).
-	 * The stored entries and their indices are shown in the following ASCII art.
-	 * 
+	 * Some entries are neglected because they are coherent to other entries (see documentation of this class). The
+	 * stored entries and their indices are shown in the following ASCII art.
+	 *
 	 * <pre>
 	 *     0 1 . . . .    legend
 	 *     2 3 . . . .    -----------------
 	 *     4 5 6 7 . .    .      not stored
-	 *     8 9 # # . .    0-9 #  stored    
+	 *     8 9 # # . .    0-9 #  stored
 	 *     # # # # # #
 	 *     # # # # # #    m_0,0 is top left
 	 * </pre>
-	 * 
+	 *
 	 * The matrix is divided into 2x2 blocks. Every block that contains at least one element from the block lower
 	 * triangular matrix is completely stored. Entries are stored row-wise from top to bottom, left to right.
-	 * 
+	 *
 	 * @see #indexOf(int, int)
 	 */
 	private final OctValue[] mEntries;
 
 	/**
-	 * Cached strong closure of this matrix.
-	 * {@code null} if cache is empty. This cache has to be updated, if this matrix changes.
+	 * Cached strong closure of this matrix. {@code null} if cache is empty. This cache has to be updated, if this
+	 * matrix changes.
 	 */
 	private OctMatrix mStrongClosure;
 
 	/**
-	 * Cached tight closure of this matrix.
-	 * {@code null} if cache is empty. This cache has to be updated, if this matrix changes.
+	 * Cached tight closure of this matrix. {@code null} if cache is empty. This cache has to be updated, if this matrix
+	 * changes.
 	 */
 	private OctMatrix mTightClosure;
 
 	/**
-	 * Creates a copy of this matrix.
-	 * The copy can be used like a deep copy. Only the cached closures are shallow copies.
-	 * 
+	 * Creates a copy of this matrix. The copy can be used like a deep copy. Only the cached closures are shallow
+	 * copies.
+	 *
 	 * @return Copy of this matrix
 	 */
 	public OctMatrix copy() {
@@ -195,22 +209,24 @@ public class OctMatrix {
 	}
 
 	/**
-	 * Creates a new matrix by parsing a string representation of a matrix.
-	 * The string representation must list the matrix entries row-wise, from top to bottom and left to right.
-	 * The entries must be parsable by {@link OctValue#parse(String)} and be separated by any whitespace.
-	 * Only entries of he block lower triangular matrix should be included.
-	 * Line breaks for new rows of the matrix are not necessary.
+	 * Creates a new matrix by parsing a string representation of a matrix. The string representation must list the
+	 * matrix entries row-wise, from top to bottom and left to right. The entries must be parsable by
+	 * {@link OctValue#parse(String)} and be separated by any whitespace. Only entries of he block lower triangular
+	 * matrix should be included. Line breaks for new rows of the matrix are not necessary.
 	 * <p>
 	 * Example string representation of a 4×4 matrix:
+	 *
 	 * <pre>
 	 * 1 inf
 	 * 3   4
 	 * 5   6   7   8
 	 * 9  10  11  12
 	 * </pre>
+	 *
 	 * is the same as <code>1 inf 3 4 5 6 7 8 9 10 11 12</code>.
-	 * 
-	 * @param m String representation of the matrix to be created
+	 *
+	 * @param m
+	 *            String representation of the matrix to be created
 	 * @return Parsed matrix
 	 */
 	public static OctMatrix parseBlockLowerTriangular(String m) {
@@ -229,10 +245,11 @@ public class OctMatrix {
 	}
 
 	/**
-	 * Creates a matrix of the given size, filled with random values.
-	 * This methods uses {@link #random(int, double)} and sets the infinity probability to a random value.
-	 * 
-	 * @param variables Number of variables in the octagon
+	 * Creates a matrix of the given size, filled with random values. This methods uses {@link #random(int, double)} and
+	 * sets the infinity probability to a random value.
+	 *
+	 * @param variables
+	 *            Number of variables in the octagon
 	 * @return Random matrix
 	 */
 	public static OctMatrix random(final int variables) {
@@ -240,12 +257,14 @@ public class OctMatrix {
 	}
 
 	/**
-	 * Creates a matrix of the given size, filled with random values.
-	 * Matrix entries have the probability {@code infProbability} to be {@link OctValue#INFINITY}.
-	 * Finite entries are random values from the interval [-10, 10).
-	 * 
-	 * @param variables Number of variables in the octagon
-	 * @param infProbability Probability that an entry will be infinity (0 = never, 1 = always)
+	 * Creates a matrix of the given size, filled with random values. Matrix entries have the probability
+	 * {@code infProbability} to be {@link OctValue#INFINITY}. Finite entries are random values from the interval [-10,
+	 * 10).
+	 *
+	 * @param variables
+	 *            Number of variables in the octagon
+	 * @param infProbability
+	 *            Probability that an entry will be infinity (0 = never, 1 = always)
 	 */
 	public static OctMatrix random(final int variables, final double infProbability) {
 		final OctMatrix m = new OctMatrix(variables * 2);
@@ -267,10 +286,10 @@ public class OctMatrix {
 	}
 
 	/**
-	 * Creates a new matrix of the given size.
-	 * Initially, the matrix entries are {@code null}.
-	 * 
-	 * @param size Size (= #rows = #columns) of the matrix
+	 * Creates a new matrix of the given size. Initially, the matrix entries are {@code null}.
+	 *
+	 * @param size
+	 *            Size (= #rows = #columns) of the matrix
 	 */
 	protected OctMatrix(final int size) {
 		mSize = size;
@@ -279,8 +298,9 @@ public class OctMatrix {
 
 	/**
 	 * Fill this matrix with a given value.
-	 * 
-	 * @param fill Value to be used for all entries
+	 *
+	 * @param fill
+	 *            Value to be used for all entries
 	 */
 	protected void fill(final OctValue fill) {
 		for (int i = 0; i < mEntries.length; ++i) {
@@ -292,7 +312,7 @@ public class OctMatrix {
 	/**
 	 * Returns the number of rows (= number of columns) in this octagon matrix. Octagon matrices always have an
 	 * even-numbered size, since every variable corresponds to two rows (and two columns) of the octagon matrix.
-	 * 
+	 *
 	 * @return size of this octagon matrix.
 	 */
 	public int getSize() {
@@ -300,9 +320,9 @@ public class OctMatrix {
 	}
 
 	/**
-	 * Returns the number of variables, stored by this octagon.
-	 * Each variable corresponds to two rows and two columns of the octagon matrix.
-	 * 
+	 * Returns the number of variables, stored by this octagon. Each variable corresponds to two rows and two columns of
+	 * the octagon matrix.
+	 *
 	 * @return number of variables in this octagon
 	 */
 	public int variables() {
@@ -310,11 +330,13 @@ public class OctMatrix {
 	}
 
 	/**
-	 * Reads an entry of this matrix.
-	 * This method can also read entries from the block upper triangular matrix (which is not explicitly stored).
-	 * 
-	 * @param row Matrix row (zero-based)
-	 * @param col Matrix column (zero-based)
+	 * Reads an entry of this matrix. This method can also read entries from the block upper triangular matrix (which is
+	 * not explicitly stored).
+	 *
+	 * @param row
+	 *            Matrix row (zero-based)
+	 * @param col
+	 *            Matrix column (zero-based)
 	 * @return Matrix entry in the given row and column
 	 */
 	public OctValue get(final int row, final int col) {
@@ -322,12 +344,13 @@ public class OctMatrix {
 	}
 
 	/**
-	 * Writes an entry of this matrix.
-	 * This method can also write entries of the block upper triangular matrix (which is not explicitly stored).
-	 * Coherence is assured, which means that writing one entry also changes the coherent entry.
-	 * 
-	 * @param row Matrix row (zero-based)
-	 * @param col Matrix column (zero-based)
+	 * Writes an entry of this matrix. This method can also write entries of the block upper triangular matrix (which is
+	 * not explicitly stored). Coherence is assured, which means that writing one entry also changes the coherent entry.
+	 *
+	 * @param row
+	 *            Matrix row (zero-based)
+	 * @param col
+	 *            Matrix column (zero-based)
 	 * @return Matrix entry in the given row and column
 	 */
 	protected void set(final int row, final int col, final OctValue value) {
@@ -342,10 +365,13 @@ public class OctMatrix {
 	 * <p>
 	 * This method models the effect of {@code assume vCol - vRow <= newValue}, where {@code vRow} and {@code vCol} are
 	 * positive or negative forms of a program variable.
-	 * 
-	 * @param row Row of the matrix entry
-	 * @param col Column of the matrix entry
-	 * @param newValue New value of the matrix entry (must be smaller than the old value to have an effect)
+	 *
+	 * @param row
+	 *            Row of the matrix entry
+	 * @param col
+	 *            Column of the matrix entry
+	 * @param newValue
+	 *            New value of the matrix entry (must be smaller than the old value to have an effect)
 	 */
 	protected void setMin(final int row, final int col, final OctValue newValue) {
 		assert newValue != null : "null is not a valid matrix entry.";
@@ -361,7 +387,7 @@ public class OctMatrix {
 	 * Sets positive values on the main diagonal to zero. Negative values are kept, since they denote that this octagon
 	 * is \bot. When encountering a negative value, this method exits early => positive values may remain on the
 	 * diagonal.
-	 * 
+	 *
 	 * @return A value on the main diagonal was smaller than zero (=> negative self loop => this=\bot)
 	 */
 	private boolean minimizeDiagonal() {
@@ -373,7 +399,9 @@ public class OctMatrix {
 
 	/**
 	 * Updates a diagonal entry {@code x} with {@code min(x,0)}.
-	 * @param rowCol Row (= column) of the diagonal entry
+	 *
+	 * @param rowCol
+	 *            Row (= column) of the diagonal entry
 	 */
 	private void minimizeDiagonalEntries(final int rowCol) {
 		final int idx = indexOfLower(rowCol, rowCol);
@@ -385,11 +413,13 @@ public class OctMatrix {
 	}
 
 	/**
-	 * Computes the index of any matrix entry for the array {@link #mEntries}.
-	 * Coherent matrix entries have the same index.
-	 * 
-	 * @param row Matrix row
-	 * @param col Matrix column
+	 * Computes the index of any matrix entry for the array {@link #mEntries}. Coherent matrix entries have the same
+	 * index.
+	 *
+	 * @param row
+	 *            Matrix row
+	 * @param col
+	 *            Matrix column
 	 * @return Index (for {@link #mEntries}) of the given matrix entry
 	 */
 	private int indexOf(final int row, final int col) {
@@ -401,30 +431,33 @@ public class OctMatrix {
 	}
 
 	/**
-	 * Computes the index of an block lower triangular matrix entry for the array {@link #mEntries}.
-	 * This method only works for entries of the block lower triangular matrix!
-	 * 
-	 * @param row Matrix row
-	 * @param col Matrix column
+	 * Computes the index of an block lower triangular matrix entry for the array {@link #mEntries}. This method only
+	 * works for entries of the block lower triangular matrix!
+	 *
+	 * @param row
+	 *            Matrix row
+	 * @param col
+	 *            Matrix column
 	 * @return Index (for {@link #mEntries}) of the given matrix entry
-	 * 
+	 *
 	 * @see #indexOf(int, int)
 	 */
-	private int indexOfLower(final int row, final int col) {
+	private static int indexOfLower(final int row, final int col) {
 		return col + (row + 1) * (row + 1) / 2;
 	}
 
 	/**
-	 * Performs a binary element-wise (= point-wise) operation on matrices.
-	 * {@code this} is the first operand and {@code other} is the second operand.
-	 * Both operands remain unchanged.
-	 * 
-	 * @param other Second operand
-	 * @param operator Operation to be performed for each pair of entries
+	 * Performs a binary element-wise (= point-wise) operation on matrices. {@code this} is the first operand and
+	 * {@code other} is the second operand. Both operands remain unchanged.
+	 *
+	 * @param other
+	 *            Second operand
+	 * @param operator
+	 *            Operation to be performed for each pair of entries
 	 * @return Result of the operation
 	 */
-	public OctMatrix elementwiseOperation(
-			final OctMatrix other, final BiFunction<OctValue, OctValue, OctValue> operator) {
+	public OctMatrix elementwiseOperation(final OctMatrix other,
+			final BiFunction<OctValue, OctValue, OctValue> operator) {
 		checkCompatibility(other);
 		final OctMatrix result = new OctMatrix(mSize);
 		for (int i = 0; i < mEntries.length; ++i) {
@@ -434,13 +467,14 @@ public class OctMatrix {
 	}
 
 	/**
-	 * Checks a binary element-wise (= point-wise) relation on matrices.
-	 * {@code this} is the left hand side and {@code other} is the right hand side of the relation.
-	 * Both sides remain unchanged.
-	 * 
-	 * @param other Right hand side of the relation
-	 * @param relation Relation to be checked for each pair of entries
-	 * @return All pairs of entries were in the relation 
+	 * Checks a binary element-wise (= point-wise) relation on matrices. {@code this} is the left hand side and
+	 * {@code other} is the right hand side of the relation. Both sides remain unchanged.
+	 *
+	 * @param other
+	 *            Right hand side of the relation
+	 * @param relation
+	 *            Relation to be checked for each pair of entries
+	 * @return All pairs of entries were in the relation
 	 */
 	public boolean elementwiseRelation(final OctMatrix other, final BiFunction<OctValue, OctValue, Boolean> relation) {
 		checkCompatibility(other);
@@ -452,13 +486,14 @@ public class OctMatrix {
 		return true;
 	}
 
-	
 	/**
-	 * Checks whether this and another matrix are compatible for a element-wise operation or relation.
-	 * An exception is thrown for incompatible matrices.
-	 * 
-	 * @param other Other octagon
-	 * @throws IllegalArgumentException The matrices are incompatible
+	 * Checks whether this and another matrix are compatible for a element-wise operation or relation. An exception is
+	 * thrown for incompatible matrices.
+	 *
+	 * @param other
+	 *            Other octagon
+	 * @throws IllegalArgumentException
+	 *             The matrices are incompatible
 	 */
 	private void checkCompatibility(final OctMatrix other) {
 		if (other.mSize != mSize) {
@@ -468,8 +503,9 @@ public class OctMatrix {
 
 	/**
 	 * Computes the element-wise addition of this and another matrix.
-	 * 
-	 * @param other Other octagon
+	 *
+	 * @param other
+	 *            Other octagon
 	 * @return Element-wise addition
 	 */
 	public OctMatrix add(final OctMatrix other) {
@@ -477,11 +513,13 @@ public class OctMatrix {
 	}
 
 	/**
-	 * Computes the element-wise minimum of two matrices with the same size.
-	 * The element-wise minimum is a meet operator for octagons (over-approximates the intersection of octagons).
-	 * 
-	 * @param m First matrix
-	 * @param n Second matrix
+	 * Computes the element-wise minimum of two matrices with the same size. The element-wise minimum is a meet operator
+	 * for octagons (over-approximates the intersection of octagons).
+	 *
+	 * @param m
+	 *            First matrix
+	 * @param n
+	 *            Second matrix
 	 * @return Element-wise minimum
 	 */
 	public static OctMatrix min(final OctMatrix m, final OctMatrix n) {
@@ -489,11 +527,13 @@ public class OctMatrix {
 	}
 
 	/**
-	 * Computes the element-wise maximum of two matrices with the same size.
-	 * The element-wise maximum is a join operator for octagons (over-approximates the union of octagons).
-	 * 
-	 * @param m First matrix
-	 * @param n Second matrix
+	 * Computes the element-wise maximum of two matrices with the same size. The element-wise maximum is a join operator
+	 * for octagons (over-approximates the union of octagons).
+	 *
+	 * @param m
+	 *            First matrix
+	 * @param n
+	 *            Second matrix
 	 * @return Element-wise minimum
 	 */
 	public static OctMatrix max(final OctMatrix m, final OctMatrix n) {
@@ -503,10 +543,11 @@ public class OctMatrix {
 
 	/**
 	 * Checks whether this and another matrix of the same size are equal, that is, if both have the same entries.
-	 * Different octagon matrices may have the same concretization!
-	 * Closures can be used as a normal form for non-bottom octagons.
-	 * 
-	 * @param other Other matrix
+	 * Different octagon matrices may have the same concretization! Closures can be used as a normal form for non-bottom
+	 * octagons.
+	 *
+	 * @param other
+	 *            Other matrix
 	 * @return The matrices are equal
 	 */
 	public boolean isEqualTo(final OctMatrix other) {
@@ -517,23 +558,22 @@ public class OctMatrix {
 	}
 
 	/**
-	 * Checks whether this and another octagon matrix of the same size are
-	 * equal, considering that the order of variables was permutated in the
-	 * other matrix.
+	 * Checks whether this and another octagon matrix of the same size are equal, considering that the order of
+	 * variables was permutated in the other matrix.
 	 * <p>
-	 * The permutation must be known. If this octagon matrix uses the variable
-	 * order <code>{v0, v1, v2}</code> and the other octagon matrix uses the
-	 * variable order <code>{v1, v2, v0}</code>, then the permutation is
+	 * The permutation must be known. If this octagon matrix uses the variable order <code>{v0, v1, v2}</code> and the
+	 * other octagon matrix uses the variable order <code>{v1, v2, v0}</code>, then the permutation is
 	 * <code>[2, 0, 1]</code>.
 	 * <p>
-	 * Different octagon matrices may have the same concretization! Closures can
-	 * be used as a normal form for non-bottom octagons.
-	 * 
-	 * 
-	 * @param permutation Other matrix (possibly a permutation of this matrix)
+	 * Different octagon matrices may have the same concretization! Closures can be used as a normal form for non-bottom
+	 * octagons.
+	 *
+	 *
+	 * @param permutation
+	 *            Other matrix (possibly a permutation of this matrix)
 	 * @param mapThisVarIndexToPermVarIndex
-	 *            Map from variable indices (array index) of this octagon matrix
-	 *            to the corresponding variable indices (array entries) of the permuted octagon matrix
+	 *            Map from variable indices (array index) of this octagon matrix to the corresponding variable indices
+	 *            (array entries) of the permuted octagon matrix
 	 * @return The matrices are equal
 	 */
 	public boolean isEqualToPermutation(final OctMatrix permutation, final int[] mapThisVarIndexToPermVarIndex) {
@@ -551,14 +591,19 @@ public class OctMatrix {
 	}
 
 	/**
-	 * Checks whether a 2×2 block of this matrix equals another 2×2 block of another matrix.
-	 * Block row/column with index <i>i</i> contains the rows/columns <i>2i</i> and <i>2i+1</i>.
-	 * 
-	 * @param bRow Block row index in this matrix
-	 * @param bCol Block column index in this matrix
-	 * @param other Other matrix
-	 * @param otherBRow Block row index in other matrix
-	 * @param otherBCol Block column index in the other matrix
+	 * Checks whether a 2×2 block of this matrix equals another 2×2 block of another matrix. Block row/column with index
+	 * <i>i</i> contains the rows/columns <i>2i</i> and <i>2i+1</i>.
+	 *
+	 * @param bRow
+	 *            Block row index in this matrix
+	 * @param bCol
+	 *            Block column index in this matrix
+	 * @param other
+	 *            Other matrix
+	 * @param otherBRow
+	 *            Block row index in other matrix
+	 * @param otherBCol
+	 *            Block column index in the other matrix
 	 * @return The blocks are equal
 	 */
 	public boolean isBlockEqualTo(int bRow, int bCol, final OctMatrix other, int otherBRow, int otherBCol) {
@@ -579,10 +624,11 @@ public class OctMatrix {
 	/**
 	 * Checks whether this octagon matrix is element-wise less or equal than another octagon matrix.
 	 * <p>
-	 * Note: <i>"not less-equal than"</i> does not necessarily mean <i>"greater than"</i>.
-	 * OctMatrices are only partially ordered!
-	 * 
-	 * @param other Other octagon matrix
+	 * Note: <i>"not less-equal than"</i> does not necessarily mean <i>"greater than"</i>. OctMatrices are only
+	 * partially ordered!
+	 *
+	 * @param other
+	 *            Other octagon matrix
 	 * @return This matrix is element-wise less than or equal to the other matrix
 	 */
 	public boolean isLessEqualThan(final OctMatrix other) {
@@ -590,10 +636,9 @@ public class OctMatrix {
 	}
 
 	/**
-	 * Returns the strong closure of this octagon matrix.
-	 * The strong closure is only computed, if it is not already cached.
-	 * The original cache is returned. Do not modify!
-	 * 
+	 * Returns the strong closure of this octagon matrix. The strong closure is only computed, if it is not already
+	 * cached. The original cache is returned. Do not modify!
+	 *
 	 * @return Strong closure
 	 */
 	public OctMatrix cachedStrongClosure() {
@@ -609,9 +654,9 @@ public class OctMatrix {
 	}
 
 	/**
-	 * Computes the strong closure of this octagon matrix.
-	 * The strong closure is a normal form for non-bottom octagon matrices over real-valued variables.
-	 * 
+	 * Computes the strong closure of this octagon matrix. The strong closure is a normal form for non-bottom octagon
+	 * matrices over real-valued variables.
+	 *
 	 * @param shortestPathClosureAlgorithm
 	 *            Algorithm to be used for the computation of the shortest path closure
 	 * @return Strong closure
@@ -629,10 +674,9 @@ public class OctMatrix {
 	}
 
 	/**
-	 * Returns the tight closure of this octagon matrix.
-	 * The tight closure is only computed, if it is not already cached.
-	 * The original cache is returned. Do not modify!
-	 * 
+	 * Returns the tight closure of this octagon matrix. The tight closure is only computed, if it is not already
+	 * cached. The original cache is returned. Do not modify!
+	 *
 	 * @return Tight closure
 	 */
 	public OctMatrix cachedTightClosure() {
@@ -646,11 +690,11 @@ public class OctMatrix {
 	public boolean hasCachedTightClosure() {
 		return mTightClosure != null;
 	}
-	
+
 	/**
-	 * Computes the tight closure of this octagon matrix.
-	 * The tight closure is a normal form for non-bottom octagon matrices over integer variables.
-	 * 
+	 * Computes the tight closure of this octagon matrix. The tight closure is a normal form for non-bottom octagon
+	 * matrices over integer variables.
+	 *
 	 * @param shortestPathClosureAlgorithm
 	 *            Algorithm to be used for the computation of the shortest path closure
 	 * @return Tight closure
@@ -687,8 +731,8 @@ public class OctMatrix {
 	 * Compute the shortest path closure in-place, using Singh's "Sparse Closure" algorithm
 	 * (http://e-collection.library.ethz.ch/eserv/eth:8628/eth-8628-01.pdf).
 	 * <p>
-	 * This algorithm is based on Floyd-Warshall and runs on the full matrix.
-	 * Finite matrix entries are indexed. Updates are computed using only the indexed entries.
+	 * This algorithm is based on Floyd-Warshall and runs on the full matrix. Finite matrix entries are indexed. Updates
+	 * are computed using only the indexed entries.
 	 */
 	protected void shortestPathClosureFullSparse() {
 		for (int k = 0; k < mSize; ++k) {
@@ -709,12 +753,13 @@ public class OctMatrix {
 
 	/**
 	 * Indexes the the finite entries in a matrix column.
-	 * 
-	 * @param k Column index
+	 *
+	 * @param k
+	 *            Column index
 	 * @return Index of finite entries in column k (incoming edges of k)
 	 */
 	private List<Integer> indexFiniteEntriesInColumn(final int k) {
-		final List<Integer> index = new ArrayList<Integer>(mSize);
+		final List<Integer> index = new ArrayList<>(mSize);
 		for (int i = 0; i < mSize; ++i) {
 			if (!get(i, k).isInfinity()) {
 				index.add(i);
@@ -725,12 +770,13 @@ public class OctMatrix {
 
 	/**
 	 * Indexes the the finite entries in a matrix row.
-	 * 
-	 * @param k Row index
+	 *
+	 * @param k
+	 *            Row index
 	 * @return Index of finite entries in row k (outgoing edges of k)
 	 */
 	private List<Integer> indexFiniteEntriesInRow(final int k) {
-		final List<Integer> index = new ArrayList<Integer>(mSize);
+		final List<Integer> index = new ArrayList<>(mSize);
 		for (int j = 0; j < mSize; ++j) {
 			if (!get(k, j).isInfinity()) {
 				index.add(j);
@@ -740,8 +786,8 @@ public class OctMatrix {
 	}
 
 	/**
-	 * Compute the shortest path closure in-place, using a sparse algorithm
-	 * that iterates only the block lower triangular matrix.
+	 * Compute the shortest path closure in-place, using a sparse algorithm that iterates only the block lower
+	 * triangular matrix.
 	 * <p>
 	 * This is a modification of {@link #shortestPathClosureFullSparse()}.
 	 */
@@ -774,15 +820,16 @@ public class OctMatrix {
 	}
 
 	/**
-	 * Indexes the the finite entries in a matrix block column.
-	 * The index contains only the row indices of finite entries in the block column k/2.
-	 * The index can not be used to determine whether the finite entry is in column k or column k+1.
-	 * 
-	 * @param k First column index of the block column (always an even number)
+	 * Indexes the the finite entries in a matrix block column. The index contains only the row indices of finite
+	 * entries in the block column k/2. The index can not be used to determine whether the finite entry is in column k
+	 * or column k+1.
+	 *
+	 * @param k
+	 *            First column index of the block column (always an even number)
 	 * @return Index of finite entries in block column k/2 (incoming edges of k and k+1)
 	 */
 	private List<Integer> indexFiniteEntriesInBlockColumn(final int k) {
-		final List<Integer> index = new ArrayList<Integer>(mSize);
+		final List<Integer> index = new ArrayList<>(mSize);
 		final int kk = k ^ 1;
 		for (int i = 0; i < mSize; ++i) {
 			if (!get(i, k).isInfinity() || !get(i, kk).isInfinity()) {
@@ -793,15 +840,16 @@ public class OctMatrix {
 	}
 
 	/**
-	 * Indexes the the finite entries in a matrix block row.
-	 * The index contains only the column indices of finite entries in the block row k/2.
-	 * The index can not be used to determine whether the finite entry is in row k or row k+1.
-	 * 
-	 * @param k First column index of the block row (always an even number)
+	 * Indexes the the finite entries in a matrix block row. The index contains only the column indices of finite
+	 * entries in the block row k/2. The index can not be used to determine whether the finite entry is in row k or row
+	 * k+1.
+	 *
+	 * @param k
+	 *            First column index of the block row (always an even number)
 	 * @return Index of finite entries in block row k/2 (outgoing edges of k and k+1)
 	 */
 	private List<Integer> indexFiniteEntriesInBlockRow(final int k) {
-		final List<Integer> index = new ArrayList<Integer>(mSize);
+		final List<Integer> index = new ArrayList<>(mSize);
 		final int kk = k ^ 1;
 		for (int j = 0; j < mSize; ++j) {
 			if (!get(k, j).isInfinity() || !get(kk, j).isInfinity()) {
@@ -812,8 +860,8 @@ public class OctMatrix {
 	}
 
 	/**
-	 * Computes the shortest path closure in-place, as in {@link #shortestPathClosureSparse()},
-	 * while using only one primitive array instead of two java collections to represent the index.
+	 * Computes the shortest path closure in-place, as in {@link #shortestPathClosureSparse()}, while using only one
+	 * primitive array instead of two java collections to represent the index.
 	 */
 	protected void shortestPathClosurePrimitiveSparse() {
 		int[] rk = null; // indices of finite entries in rows k and k^1
@@ -848,25 +896,24 @@ public class OctMatrix {
 	}
 
 	/**
-	 * Indexes the the finite entries in block row k/2 and a block column k/2 at the same time.
-	 * If the computed row index contains the value i, then there is a finite matrix entry at
-	 * matrix index (i,k) or (i,k+1). If the computed column index contains the value i, then
-	 * there is a finite matrix entry at matrix index (k,i), or (k+1,i).
+	 * Indexes the the finite entries in block row k/2 and a block column k/2 at the same time. If the computed row
+	 * index contains the value i, then there is a finite matrix entry at matrix index (i,k) or (i,k+1). If the computed
+	 * column index contains the value i, then there is a finite matrix entry at matrix index (k,i), or (k+1,i).
 	 * <p>
-	 * The returned array has always the length {@link #getSize()}, but only the first n index entries are used.
-	 * The length n of the index is the return value of this method.
-	 * The row and column index always have the same length.
-	 * 
-	 * @param k First row/column index of the block row/column (always an even number)
+	 * The returned array has always the length {@link #getSize()}, but only the first n index entries are used. The
+	 * length n of the index is the return value of this method. The row and column index always have the same length.
+	 *
+	 * @param k
+	 *            First row/column index of the block row/column (always an even number)
 	 * @param rowIndex
-	 *            Index of finite entries in block row k/2 (outgoing edges of k and k+1).
-	 *            This index is not completely sorted! The values 2i and 2i+1 are swapped.
+	 *            Index of finite entries in block row k/2 (outgoing edges of k and k+1). This index is not completely
+	 *            sorted! The values 2i and 2i+1 are swapped.
 	 * @param colIndex
 	 *            Index of finite entries in block column k/2 (incoming edges of k and k+1)
 	 * @return Actual length of the row/column index
 	 */
-	private int primitiveIndexFiniteEntriesInBlockRowAndColumn(
-			final int k, final int[] rowIndex, final int[] colIndex) {
+	private int primitiveIndexFiniteEntriesInBlockRowAndColumn(final int k, final int[] rowIndex,
+			final int[] colIndex) {
 		int indexLength = 0;
 		final int kk = k ^ 1;
 		for (int i = 0; i < mSize; ++i) {
@@ -880,8 +927,8 @@ public class OctMatrix {
 	}
 
 	/**
-	 * Compute the shortest path closure in-place, using the closure algorithm of APRON (a library)
-	 * as recalled by Singh (http://e-collection.library.ethz.ch/eserv/eth:8628/eth-8628-01.pdf).
+	 * Compute the shortest path closure in-place, using the closure algorithm of APRON (a library) as recalled by Singh
+	 * (http://e-collection.library.ethz.ch/eserv/eth:8628/eth-8628-01.pdf).
 	 * <p>
 	 * This algorithm is based on Floyd-Warshall and iterates only the block lower triangular matrix.
 	 */
@@ -904,8 +951,8 @@ public class OctMatrix {
 	}
 
 	/**
-	 * Computes the strong closure from this matrix in-place, as presented by
-	 * Bagnara, Hill, and Zaffanella (https://arxiv.org/pdf/0705.4618v2).
+	 * Computes the strong closure from this matrix in-place, as presented by Bagnara, Hill, and Zaffanella
+	 * (https://arxiv.org/pdf/0705.4618v2).
 	 * <p>
 	 * This matrix has to be in shortest-path-closure form.
 	 */
@@ -926,8 +973,8 @@ public class OctMatrix {
 	}
 
 	/**
-	 * Computes the tight closure of this matrix in-place, as presented by
-	 * Bagnara, Hill, and Zaffanella (https://arxiv.org/pdf/0705.4618v2).
+	 * Computes the tight closure of this matrix in-place, as presented by Bagnara, Hill, and Zaffanella
+	 * (https://arxiv.org/pdf/0705.4618v2).
 	 * <p>
 	 * This matrix has to be in shortest-path-closure form.
 	 */
@@ -951,7 +998,7 @@ public class OctMatrix {
 	 * <p>
 	 * <b>m</b> is strongly closed and has a negative self loop <=> <b>m</b> is empty in <b>R</b><br>
 	 * <b>m</b> is tightly closed and has a negative self loop <=> <b>m</b> is empty in <b>Z</b>
-	 * 
+	 *
 	 * @return a negative self loop exists
 	 */
 	public boolean hasNegativeSelfLoop() {
@@ -964,12 +1011,13 @@ public class OctMatrix {
 	}
 
 	/**
-	 * Widens this octagon by another one.
-	 * Constraints that would be loosened by a normal join are immediately removed by this widening operator.
+	 * Widens this octagon by another one. Constraints that would be loosened by a normal join are immediately removed
+	 * by this widening operator.
 	 * <p>
 	 * This widening operator was presented by Mine (http://www-apr.lip6.fr/~mine/publi/article-mine-ast01.pdf).
-	 * 
-	 * @param n Other octagon
+	 *
+	 * @param n
+	 *            Other octagon
 	 * @return This octagon, widened with {@code n}
 	 */
 	public OctMatrix widenSimple(final OctMatrix n) {
@@ -978,12 +1026,13 @@ public class OctMatrix {
 
 	/**
 	 * Widens this octagon by another one. Constraints that would be loosened by a normal join are loosened even more,
-	 * using a binary exponential backoff.
-	 * Constraints are removed, once the backoff reaches a given threshold. The threshold has to be finite
-	 * to ensure stabilization of this widening operator.
-	 * 
-	 * @param n Other octagon
-	 * @param threshold Finite threshold (updated matrix entries > threshold will be set to infinity)
+	 * using a binary exponential backoff. Constraints are removed, once the backoff reaches a given threshold. The
+	 * threshold has to be finite to ensure stabilization of this widening operator.
+	 *
+	 * @param n
+	 *            Other octagon
+	 * @param threshold
+	 *            Finite threshold (updated matrix entries > threshold will be set to infinity)
 	 * @return This octagon, widened with {@code n}
 	 */
 	public OctMatrix widenExponential(final OctMatrix n, final OctValue threshold) {
@@ -1012,18 +1061,17 @@ public class OctMatrix {
 
 	/**
 	 * Used for {@link OctMatrix#widenStepwise(OctMatrix, WideningStepSupplier)}.
-	 * 
+	 *
 	 * @author schaetzc@informatik.uni-freiburg.de
 	 */
 	public interface WideningStepSupplier {
-		
+
 		/**
-		 * Returns a value used for widening.
-		 * The widened value must be greater than or equal to the old value.
-		 * The value infinity must be reached in an infinite number of steps
-		 * for the widening operator to stabilize.
-		 * 
-		 * @param val Matrix entry which was increased by join and should be widened.
+		 * Returns a value used for widening. The widened value must be greater than or equal to the old value. The
+		 * value infinity must be reached in an infinite number of steps for the widening operator to stabilize.
+		 *
+		 * @param val
+		 *            Matrix entry which was increased by join and should be widened.
 		 * @return Value greater than or equal to {@code val}
 		 */
 		public OctValue nextWideningStep(final OctValue val);
@@ -1031,37 +1079,40 @@ public class OctMatrix {
 
 	/**
 	 * Widens this octagon by another one. Constraints that would be loosened by a normal join are loosened even more,
-	 * using a {@link WideningStepSupplier} to look up the next looser constraint.
-	 * Usually, the widening steps are the literals from the analyzed program.
-	 * 
-	 * @param n Other octagon
-	 * @param stepSupplier Widening step supplier
+	 * using a {@link WideningStepSupplier} to look up the next looser constraint. Usually, the widening steps are the
+	 * literals from the analyzed program.
+	 *
+	 * @param n
+	 *            Other octagon
+	 * @param stepSupplier
+	 *            Widening step supplier
 	 * @return This octagon, widened with {@code n}
 	 */
-	public OctMatrix widenStepwise(OctMatrix n, WideningStepSupplier stepSupplier) {
+	public OctMatrix widenStepwise(final OctMatrix n, final WideningStepSupplier stepSupplier) {
 		return elementwiseOperation(n, (mij, nij) -> {
 			if (mij.compareTo(nij) >= 0) {
 				return mij;
-			} else {
-				return stepSupplier.nextWideningStep(nij);
 			}
+			return stepSupplier.nextWideningStep(nij);
 		});
 	}
 
 	/**
-	 * Appends new block rows and block columns at the lower and right side of this matrix.
-	 * New entries are initialized with {@link OctValue#INFINITY}. This matrix remains unchanged.
+	 * Appends new block rows and block columns at the lower and right side of this matrix. New entries are initialized
+	 * with {@link OctValue#INFINITY}. This matrix remains unchanged.
+	 *
 	 * <pre>
 	 * # # . .     Result of this method
-	 * # # . .     
+	 * # # . .
 	 * . . . .     # entries of this matrix
-	 * . . . .     . appended entries  
+	 * . . . .     . appended entries
 	 * </pre>
-	 * 
-	 * @param count Number of block rows/columns to be appended
+	 *
+	 * @param count
+	 *            Number of block rows/columns to be appended
 	 * @return New matrix with appended block rows and columns
 	 */
-	public OctMatrix addVariables(int count) {
+	public OctMatrix addVariables(final int count) {
 		if (count < 0) {
 			throw new IllegalArgumentException("Cannot add " + count + " variables.");
 		} else if (count == 0) {
@@ -1075,36 +1126,36 @@ public class OctMatrix {
 	}
 
 	/**
-	 * Removes a single block row and block column from this matrix.
-	 * This matrix remains unchanged.
-	 * 
-	 * @param varIndex Index of the block row/column to be removed
+	 * Removes a single block row and block column from this matrix. This matrix remains unchanged.
+	 *
+	 * @param varIndex
+	 *            Index of the block row/column to be removed
 	 * @return New matrix without the specified block row/column
-	 * 
+	 *
 	 * @see #removeVariables(Set)
 	 */
-	public OctMatrix removeVariable(int varIndex) {
+	public OctMatrix removeVariable(final int varIndex) {
 		return removeVariables(Collections.singleton(varIndex));
 	}
 
 	/**
-	 * Removes multiple block rows and block columns.
-	 * This matrix remains unchanged.
-	 * 
-	 * @param varIndices Indices of the block rows/columns to be removed
+	 * Removes multiple block rows and block columns. This matrix remains unchanged.
+	 *
+	 * @param varIndices
+	 *            Indices of the block rows/columns to be removed
 	 * @return New matrix without the specified block rows/columns
 	 */
 	public OctMatrix removeVariables(final Set<Integer> varIndices) {
 		if (areVariablesLast(varIndices)) {
 			return removeLastVariables(varIndices.size()); // note: sets cannot contain duplicates
-		} else {
-			return removeArbitraryVariables(varIndices);
 		}
+		return removeArbitraryVariables(varIndices);
 	}
 
 	/**
-	 * Determines, whether a set of variables corresponds to the last block rows/columns in this matrix.
-	 * A set of n variables is last, if the variables correspond to the n last block rows/columns.
+	 * Determines, whether a set of variables corresponds to the last block rows/columns in this matrix. A set of n
+	 * variables is last, if the variables correspond to the n last block rows/columns.
+	 *
 	 * <pre>
 	 *      # # . #                  # # # .
 	 *      # # . #                  # # # .
@@ -1113,8 +1164,9 @@ public class OctMatrix {
 	 * Selected variables       Selected variables
 	 * (.) are NOT last         (.) are last
 	 * </pre>
-	 * 
-	 * @param varIndices Block row/column indices
+	 *
+	 * @param varIndices
+	 *            Block row/column indices
 	 * @return The variables are last
 	 */
 	private boolean areVariablesLast(final Set<Integer> varIndices) {
@@ -1134,10 +1186,11 @@ public class OctMatrix {
 	}
 
 	/**
-	 * Removes multiple block rows and block columns from the end (bottom and right side) of this matrix.
-	 * This matrix remains unchanged.
-	 * 
-	 * @param varIndices Number of block rows/columns to be removed
+	 * Removes multiple block rows and block columns from the end (bottom and right side) of this matrix. This matrix
+	 * remains unchanged.
+	 *
+	 * @param varIndices
+	 *            Number of block rows/columns to be removed
 	 * @return New matrix without the specified block rows/columns
 	 */
 	private OctMatrix removeLastVariables(final int count) {
@@ -1151,13 +1204,13 @@ public class OctMatrix {
 	}
 
 	/**
-	 * Removes multiple block rows and block columns from this matrix.
-	 * This matrix remains unchanged.
+	 * Removes multiple block rows and block columns from this matrix. This matrix remains unchanged.
 	 * <p>
-	 * This method is meant to cut out block rows/columns from the middle of
-	 * a matrix. There are more efficient methods for special cases.
-	 * 
-	 * @param varIndices Indices of block rows/columns to be removed
+	 * This method is meant to cut out block rows/columns from the middle of a matrix. There are more efficient methods
+	 * for special cases.
+	 *
+	 * @param varIndices
+	 *            Indices of block rows/columns to be removed
 	 * @return New matrix without the specified block rows/columns
 	 */
 	private OctMatrix removeArbitraryVariables(final Set<Integer> vars) {
@@ -1184,13 +1237,13 @@ public class OctMatrix {
 	}
 
 	/**
-	 * Copies selected block rows/columns of any matrix to this matrix.
-	 * The matrices can be of different size. The source and target (this) matrix have to be different objects.
+	 * Copies selected block rows/columns of any matrix to this matrix. The matrices can be of different size. The
+	 * source and target (this) matrix have to be different objects.
 	 * <p>
-	 * This method can also be used to permute the order of variables (that is, the order of block/rows columns).
-	 * The following ASCII art shows what this method does.
-	 * Each symbol from <code>· A B C D | -- ∞</code> depicts a 2x2 block.
-	 * The ∞-blocks are filled with {@link OctValue#INFINITY}.
+	 * This method can also be used to permute the order of variables (that is, the order of block/rows columns). The
+	 * following ASCII art shows what this method does. Each symbol from <code>· A B C D | -- ∞</code> depicts a 2x2
+	 * block. The ∞-blocks are filled with {@link OctValue#INFINITY}.
+	 *
 	 * <pre>
 	 * target (this)     source           result
 	 *                       x y            y   x
@@ -1204,14 +1257,14 @@ public class OctMatrix {
 	 *       3 ------------> 2
 	 *   mapTargetVarToSourceVar
 	 * </pre>
+	 *
 	 * Computing the closure in advance, can reduce information loss.
-	 * 
+	 *
 	 * @param source
 	 *            Matrix to copy values from. Must be a different object than this matrix.
 	 * @param mapTargetVarToSourceVar
-	 *            Indices of block rows/columns to be copied.
-	 *            The keys are indices in the source matrix.
-	 *            The values are indices in the target (this) matrix.
+	 *            Indices of block rows/columns to be copied. The keys are indices in the source matrix. The values are
+	 *            indices in the target (this) matrix.
 	 */
 	protected void copySelection(final OctMatrix source,
 			final BidirectionalMap<Integer, Integer> mapTargetVarToSourceVar) {
@@ -1268,7 +1321,7 @@ public class OctMatrix {
 		}
 	}
 
-	protected void setBlock(int bRow, int bCol, OctValue v) {
+	protected void setBlock(int bRow, int bCol, final OctValue v) {
 		bRow *= 2;
 		bCol *= 2;
 		for (int j = 0; j < 2; ++j) {
@@ -1283,11 +1336,13 @@ public class OctMatrix {
 	 * <p>
 	 * This method is exact. No precision is lost. Closure in advance is not necessary. Already closed matrices remain
 	 * closed.
-	 * 
-	 * @param targetVar variable which will be changed
-	 * @param sourceVar variable which will be copied
+	 *
+	 * @param targetVar
+	 *            variable which will be changed
+	 * @param sourceVar
+	 *            variable which will be copied
 	 */
-	protected void assignVarCopy(int targetVar, int sourceVar) {
+	protected void assignVarCopy(final int targetVar, final int sourceVar) {
 		if (targetVar == sourceVar) {
 			return;
 		}
@@ -1331,10 +1386,11 @@ public class OctMatrix {
 	 * <p>
 	 * This method is exact. No precision is lost. Closure in advance is not necessary. Already closed matrices remain
 	 * closed.
-	 * 
-	 * @param targetVar variable which will be negated
+	 *
+	 * @param targetVar
+	 *            variable which will be negated
 	 */
-	protected void negateVar(int targetVar) {
+	protected void negateVar(final int targetVar) {
 		final int t2 = targetVar * 2;
 		final int t21 = t2 + 1;
 
@@ -1369,9 +1425,11 @@ public class OctMatrix {
 	 * <p>
 	 * This method is exact. No precision is lost. Closure in advance is not necessary. Already closed matrices remain
 	 * closed.
-	 * 
-	 * @param targetVar variable to be incremented
-	 * @param constant summand
+	 *
+	 * @param targetVar
+	 *            variable to be incremented
+	 * @param constant
+	 *            summand
 	 */
 	protected void incrementVar(final int targetVar, final OctValue constant) {
 		final int t2 = targetVar * 2;
@@ -1441,7 +1499,7 @@ public class OctMatrix {
 
 	// var1 + var2 <= constant
 	protected void assumeVarRelationLeConstant(int var1, final boolean var1Negate, int var2, final boolean var2Negate,
-			OctValue constant) {
+			final OctValue constant) {
 		var1 *= 2;
 		var2 *= 2;
 		if (!var1Negate) {
@@ -1468,9 +1526,9 @@ public class OctMatrix {
 	}
 
 	/**
-	 * Computes the percentage of infinity-entries in the block lower half of this matrix.
-	 * Empty matrices have a infinity percentage of {@link Double#NaN}.
-	 * 
+	 * Computes the percentage of infinity-entries in the block lower half of this matrix. Empty matrices have a
+	 * infinity percentage of {@link Double#NaN}.
+	 *
 	 * @return Percentage of infinity-entries in the block lower half of this matrix.
 	 */
 	public double infinityPercentageInBlockLowerHalf() {
@@ -1487,7 +1545,7 @@ public class OctMatrix {
 	}
 
 	public List<Term> getTerm(final Script script, final Term[] vars) {
-		final List<Term> rtr = new ArrayList<Term>(variables() * variables());
+		final List<Term> rtr = new ArrayList<>(variables() * variables());
 		for (int row = 0; row < 2 * variables(); ++row) {
 			final Term rowVar = selectVar(script, row, vars);
 			// iterate only block lower triangular matrix (skip coherent upper part)
@@ -1496,9 +1554,8 @@ public class OctMatrix {
 				if (col == row) {
 					if (entry.signum() < 0) {
 						return Collections.singletonList(script.term("false")); // constraint of the form (0 <= -1)
-					} else {
-						continue; // constraint of the form (0 <= 1)
 					}
+					continue; // constraint of the form (0 <= 1)
 				}
 				final Term colVar = selectVar(script, col, vars);
 				rtr.add(createBoundedDiffTerm(script, colVar, rowVar, entry));
@@ -1508,7 +1565,7 @@ public class OctMatrix {
 	}
 
 	// returns variable in positive or negative form, depending on row or column
-	private Term selectVar(final Script script, final int rowCol, final Term[] vars) {
+	private static Term selectVar(final Script script, final int rowCol, final Term[] vars) {
 		final Term posNegVar = vars[rowCol / 2];
 		if (rowCol % 2 == 1) {
 			return script.term("-", posNegVar);
@@ -1517,7 +1574,8 @@ public class OctMatrix {
 	}
 
 	// returns minuend - subtrahend <= bound
-	private Term createBoundedDiffTerm(final Script script, Term minuend, Term subtrahend, final OctValue bound) {
+	private static Term createBoundedDiffTerm(final Script script, Term minuend, Term subtrahend,
+			final OctValue bound) {
 		if (bound.isInfinity()) {
 			return script.term("true");
 		}

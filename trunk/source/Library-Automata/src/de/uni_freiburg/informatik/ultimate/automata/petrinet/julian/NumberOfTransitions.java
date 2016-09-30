@@ -33,10 +33,11 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
 /**
  * Operation that returns the number of transitions of a Petri net.
  * 
- * @author heizmann@informatik.uni-freiburg.de
- *
- * @param <LETTER> letter type
- * @param <PLACE> place type
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ * @param <PLACE>
+ *            place type
  */
 public class NumberOfTransitions<LETTER, PLACE> extends UnaryNetOperation<LETTER, PLACE> {
 	private final IPetriNet<LETTER, PLACE> mOperand;
@@ -44,25 +45,26 @@ public class NumberOfTransitions<LETTER, PLACE> extends UnaryNetOperation<LETTER
 	/**
 	 * Constructor.
 	 * 
-	 * @param services Ultimate services
-	 * @param operand operand
+	 * @param services
+	 *            Ultimate services
+	 * @param operand
+	 *            operand
 	 */
-	public NumberOfTransitions(final AutomataLibraryServices services,
-			final IPetriNet<LETTER, PLACE> operand) {
+	public NumberOfTransitions(final AutomataLibraryServices services, final IPetriNet<LETTER, PLACE> operand) {
 		super(services);
 		mOperand = operand;
 	}
-
+	
 	@Override
 	public String operationName() {
-		return "numberOfPlaces";
+		return "NumberOfTransitions";
 	}
 	
 	@Override
 	protected IPetriNet<LETTER, PLACE> getOperand() {
 		return mOperand;
 	}
-
+	
 	@Override
 	public Integer getResult() {
 		return mOperand.getTransitions().size();

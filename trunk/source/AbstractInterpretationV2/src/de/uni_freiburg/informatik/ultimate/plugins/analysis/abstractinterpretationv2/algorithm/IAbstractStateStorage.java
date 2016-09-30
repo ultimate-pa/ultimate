@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -46,19 +45,19 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public interface IAbstractStateStorage<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL, LOCATION> {
 
-	List<STATE> getAbstractPostStates(ACTION transition);
+	AbstractMultiState<STATE, ACTION, VARDECL> getAbstractPostStates(ACTION transition);
 
-	void addAbstractPostState(ACTION transition, STATE state);
+	AbstractMultiState<STATE, ACTION, VARDECL> addAbstractPostState(ACTION transition,
+			AbstractMultiState<STATE, ACTION, VARDECL> state);
 
-	STATE mergePostStates(ACTION transition);
-
-	List<STATE> widenPostState(ACTION transition, IAbstractStateBinaryOperator<STATE> wideningOp, STATE leftOperand);
+	AbstractMultiState<STATE, ACTION, VARDECL> widenPostState(ACTION transition,
+			IAbstractStateBinaryOperator<STATE> wideningOp, AbstractMultiState<STATE, ACTION, VARDECL> leftOperand);
 
 	IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> createStorage();
 
 	Map<LOCATION, Term> getLoc2Term(final ACTION initialTransition, final Script script, final Boogie2SMT bpl2smt);
 
-	Map<LOCATION, Set<STATE>> getLoc2States(final ACTION initialTransition);
+	Map<LOCATION, Set<AbstractMultiState<STATE, ACTION, VARDECL>>> getLoc2States(final ACTION initialTransition);
 
 	Map<LOCATION, STATE> getLoc2SingleStates(final ACTION initialTransition);
 

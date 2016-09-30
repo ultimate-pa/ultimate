@@ -72,8 +72,7 @@ public class FixpointEngineParameterFactory {
 		final IAbstractDomain<STATE, CodeBlock, IBoogieVar> domain =
 				(IAbstractDomain<STATE, CodeBlock, IBoogieVar>) selectDomain();
 		final IAbstractStateStorage<STATE, CodeBlock, IBoogieVar, ProgramPoint> storageProvider =
-				new RcfgAbstractStateStorageProvider<STATE, ProgramPoint, IBoogieVar>(domain.getMergeOperator(),
-						mServices, transitionProvider);
+				new RcfgAbstractStateStorageProvider<>(domain.getMergeOperator(), mServices, transitionProvider);
 		final IVariableProvider<STATE, CodeBlock, IBoogieVar> variableProvider = new RcfgVariableProvider<>(
 				mSymbolTable, rootAnnot.getBoogie2SMT().getBoogie2SmtSymbolTable(), mServices);
 		final IDebugHelper<STATE, CodeBlock, IBoogieVar, ProgramPoint> debugHelper =
@@ -95,8 +94,7 @@ public class FixpointEngineParameterFactory {
 		final IAbstractDomain<STATE, CodeBlock, IProgramVar> domain =
 				(IAbstractDomain<STATE, CodeBlock, IProgramVar>) selectDomainFutureCfg();
 		final IAbstractStateStorage<STATE, CodeBlock, IProgramVar, ProgramPoint> storageProvider =
-				new RcfgAbstractStateStorageProvider<STATE, ProgramPoint, IProgramVar>(domain.getMergeOperator(),
-						mServices, transitionProvider);
+				new RcfgAbstractStateStorageProvider<>(domain.getMergeOperator(), mServices, transitionProvider);
 		final IVariableProvider<STATE, CodeBlock, IProgramVar> variableProvider = new FutureRcfgVariableProvider<>(
 				mSymbolTable, rootAnnot.getBoogie2SMT().getBoogie2SmtSymbolTable(), mServices);
 		final IDebugHelper<STATE, CodeBlock, IProgramVar, ProgramPoint> debugHelper =
@@ -119,13 +117,10 @@ public class FixpointEngineParameterFactory {
 			return new DataflowDomain(logger);
 		} else if (VPDomain.class.getSimpleName().equals(selectedDomain)) {
 			final RCFGArrayIndexCollector arrayIndexCollector = new RCFGArrayIndexCollector(mRoot);
-			return new VPDomain(logger, mRoot.getRootAnnot().getManagedScript(), 
-					mServices,
-					arrayIndexCollector.getEqGraphNodeSet(), 
-					arrayIndexCollector.getTermToBaseNodeMap(),
-					arrayIndexCollector.getTermToFnNodeMap(),
-					arrayIndexCollector.getEqNodeToEqGraphNodeMap());
-		} 
+			return new VPDomain(logger, mRoot.getRootAnnot().getManagedScript(), mServices,
+					arrayIndexCollector.getEqGraphNodeSet(), arrayIndexCollector.getTermToBaseNodeMap(),
+					arrayIndexCollector.getTermToFnNodeMap(), arrayIndexCollector.getEqNodeToEqGraphNodeMap());
+		}
 		throw new UnsupportedOperationException(getFailureString(selectedDomain));
 	}
 
@@ -170,7 +165,7 @@ public class FixpointEngineParameterFactory {
 		throw new UnsupportedOperationException(getFailureString(selectedDomain));
 	}
 
-	private String getFailureString(final String selectedDomain) {
+	private static String getFailureString(final String selectedDomain) {
 		return "The value \"" + selectedDomain + "\" of preference \"" + AbsIntPrefInitializer.LABEL_ABSTRACT_DOMAIN
 				+ "\" was not considered before! ";
 	}

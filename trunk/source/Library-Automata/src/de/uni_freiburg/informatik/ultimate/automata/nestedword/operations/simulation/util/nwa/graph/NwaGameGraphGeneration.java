@@ -65,9 +65,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.SearchElement;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game.GameDoubleDeckerSet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game.GameFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game.GameLetter;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game.GameSpecialSinkState;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game.GameSpoilerNwaVertex;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game.IGameLetter;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game.IGameState;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.summarycomputationgraph.SummaryComputation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
@@ -1394,8 +1394,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			mLogger.debug("Generating summarize edges.");
 		}
 		// Create the game automaton, we will use it for summarize computation
-		final INestedWordAutomatonSimple<GameLetter<LETTER, STATE>, IGameState> gameAutomaton = createGameAutomaton();
-		final NestedWordAutomatonReachableStates<GameLetter<LETTER, STATE>, IGameState> gameAutomatonWithSummaries =
+		final INestedWordAutomatonSimple<IGameLetter<LETTER, STATE>, IGameState> gameAutomaton = createGameAutomaton();
+		final NestedWordAutomatonReachableStates<IGameLetter<LETTER, STATE>, IGameState> gameAutomatonWithSummaries =
 				new RemoveUnreachable<>(mServices, gameAutomaton).getResult();
 		
 		final boolean backwardSummaryComputation = false;
@@ -1440,7 +1440,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 				final SpoilerNwaVertex<LETTER, STATE> spoilerNwaVertex = (SpoilerNwaVertex<LETTER, STATE>) spoilerVertex;
 				final GameSpoilerNwaVertex<LETTER, STATE> gameNwaVertex = new GameSpoilerNwaVertex<>(spoilerNwaVertex);
 
-				final Iterable<SummaryReturnTransition<GameLetter<LETTER, STATE>, IGameState>> summariesOfSource =
+				final Iterable<SummaryReturnTransition<IGameLetter<LETTER, STATE>, IGameState>> summariesOfSource =
 						gameAutomatonWithSummaries.summarySuccessors(gameNwaVertex);
 				if (summariesOfSource.iterator().hasNext()) {
 					summarySources.add(gameNwaVertex);
@@ -1466,12 +1466,12 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 
 			// Determinizing is very expensive, it is the dominant part of the
 			// whole algorithm
-			final INestedWordAutomatonSimple<GameLetter<LETTER, STATE>, IGameState> determinizedGameAutomaton =
+			final INestedWordAutomatonSimple<IGameLetter<LETTER, STATE>, IGameState> determinizedGameAutomaton =
 					new Determinize<>(mServices, gameAutomatonWithSummaries.getStateFactory(), gameAutomatonWithSummaries,
 							summarySources).getResult();
 			mSimulationPerformance.setCountingMeasure(ECountingMeasure.DETERMINIZED_GAME_AUTOMATON_STATES,
 					determinizedGameAutomaton.size());
-			final NestedWordAutomatonReachableStates<GameLetter<LETTER, STATE>, IGameState> gameAutomatonWithMergedSummaries =
+			final NestedWordAutomatonReachableStates<IGameLetter<LETTER, STATE>, IGameState> gameAutomatonWithMergedSummaries =
 					new RemoveUnreachable<>(mServices, determinizedGameAutomaton).getResult();
 			final IGameState emptyStackState = gameAutomatonWithMergedSummaries.getEmptyStackState();
 
@@ -1505,7 +1505,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 				boolean hasSinkWinningForDuplicator = false;
 				boolean runsInDuplicatorDeadEnd = false;
 				// Collect all summarize edges
-				for (final SummaryReturnTransition<GameLetter<LETTER, STATE>, IGameState> summary : gameAutomatonWithMergedSummaries
+				for (final SummaryReturnTransition<IGameLetter<LETTER, STATE>, IGameState> summary : gameAutomatonWithMergedSummaries
 						.summarySuccessors(mergedSummarySourceAsGameState)) {
 					final IGameState summaryDestinationAsGameState = summary.getSucc();
 					final GameDoubleDeckerSet summaryDestinationAsDD = (GameDoubleDeckerSet) summaryDestinationAsGameState;
@@ -2008,8 +2008,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 * @param gameAutomaton
 	 *            Game automaton to add to
 	 */
-	private void addEdgeToGameAutomaton(final IGameState src, final GameLetter<LETTER, STATE> letter,
-			final IGameState dest, final NestedWordAutomaton<GameLetter<LETTER, STATE>, IGameState> gameAutomaton) {
+	private void addEdgeToGameAutomaton(final IGameState src, final IGameLetter<LETTER, STATE> letter,
+			final IGameState dest, final NestedWordAutomaton<IGameLetter<LETTER, STATE>, IGameState> gameAutomaton) {
 		final ETransitionType transType = letter.getTransitionType();
 		if (transType.equals(ETransitionType.INTERNAL)) {
 			if (!gameAutomaton.containsInternalTransition(src, letter, dest)) {
@@ -2040,8 +2040,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 *            Game automaton to add to
 	 */
 	private void addEdgeToGameAutomaton(final IGameState src, final IGameState hierPred,
-			final GameLetter<LETTER, STATE> letter, final IGameState dest,
-			final NestedWordAutomaton<GameLetter<LETTER, STATE>, IGameState> gameAutomaton) {
+			final IGameLetter<LETTER, STATE> letter, final IGameState dest,
+			final NestedWordAutomaton<IGameLetter<LETTER, STATE>, IGameState> gameAutomaton) {
 		final ETransitionType transType = letter.getTransitionType();
 		if (transType.equals(ETransitionType.RETURN)) {
 			if (!gameAutomaton.containsReturnTransition(src, hierPred, letter, dest)) {
@@ -2063,7 +2063,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 *            Game automaton to add to
 	 */
 	private void addGameStateToGameAutomaton(final IGameState gameState,
-			final NestedWordAutomaton<GameLetter<LETTER, STATE>, IGameState> gameAutomaton) {
+			final NestedWordAutomaton<IGameLetter<LETTER, STATE>, IGameState> gameAutomaton) {
 		if (!gameAutomaton.contains(gameState)) {
 			gameAutomaton.addState(true, false, gameState);
 		}
@@ -2389,13 +2389,13 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
-	private INestedWordAutomatonSimple<GameLetter<LETTER, STATE>, IGameState> createGameAutomaton()
+	private INestedWordAutomatonSimple<IGameLetter<LETTER, STATE>, IGameState> createGameAutomaton()
 			throws AutomataOperationCanceledException {
-		final Set<GameLetter<LETTER, STATE>> internalGameAlphabet = new HashSet<>();
-		final Set<GameLetter<LETTER, STATE>> callGameAlphabet = new HashSet<>();
-		final Set<GameLetter<LETTER, STATE>> returnGameAlphabet = new HashSet<>();
+		final Set<IGameLetter<LETTER, STATE>> internalGameAlphabet = new HashSet<>();
+		final Set<IGameLetter<LETTER, STATE>> callGameAlphabet = new HashSet<>();
+		final Set<IGameLetter<LETTER, STATE>> returnGameAlphabet = new HashSet<>();
 
-		final NestedWordAutomaton<GameLetter<LETTER, STATE>, IGameState> gameAutomaton = new NestedWordAutomaton<>(
+		final NestedWordAutomaton<IGameLetter<LETTER, STATE>, IGameState> gameAutomaton = new NestedWordAutomaton<>(
 				mServices, internalGameAlphabet, callGameAlphabet, returnGameAlphabet, new GameFactory());
 
 		// Collect all data by using
@@ -2443,18 +2443,18 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 
 				// As there are successors, already add some stuff
 				final ETransitionType transType = duplicatorNwaSucc.getTransitionType();
-				final GameLetter<LETTER, STATE> letter;
+				final IGameLetter<LETTER, STATE> letter;
 				switch (transType) {
 				case CALL:
-					letter = new GameLetter<>(duplicatorNwaSucc, ETransitionType.CALL);
+					letter = duplicatorNwaSucc;
 					callGameAlphabet.add(letter);
 					break;
 				case INTERNAL:
-					letter = new GameLetter<>(duplicatorNwaSucc, ETransitionType.INTERNAL);
+					letter = duplicatorNwaSucc;
 					internalGameAlphabet.add(letter);
 					break;
 				case RETURN:
-					letter = new GameLetter<>(duplicatorNwaSucc, ETransitionType.RETURN);
+					letter = duplicatorNwaSucc;
 					returnGameAlphabet.add(letter);
 					break;
 				case SINK:
@@ -2524,14 +2524,13 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 
 			// First setup the game letter we need and ensure it is contained in
 			// the alphabet
-			final GameLetter<LETTER, STATE> gameLetter = new GameLetter<>(duplicatorNwaSucc, ETransitionType.RETURN);
-			returnGameAlphabet.add(gameLetter);
+			returnGameAlphabet.add(duplicatorNwaSucc);
 
 			// We now add return edges for all corresponding game hierPreds
 			for (final GameSpoilerNwaVertex<LETTER, STATE> possibleGameHierPred : computeAllGameHierPreds(
 					spoilerNwaVertex, spoilerDest, letter)) {
 				addGameStateToGameAutomaton(possibleGameHierPred, gameAutomaton);
-				addEdgeToGameAutomaton(gameNwaVertex, possibleGameHierPred, gameLetter, mAuxiliaryGameState,
+				addEdgeToGameAutomaton(gameNwaVertex, possibleGameHierPred, duplicatorNwaSucc, mAuxiliaryGameState,
 						gameAutomaton);
 
 				if (mLogger.isDebugEnabled()) {

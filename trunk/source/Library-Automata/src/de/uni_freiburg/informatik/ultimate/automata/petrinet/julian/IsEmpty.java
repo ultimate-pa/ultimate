@@ -34,9 +34,18 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetUnfolder.order;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetUnfolder.UnfoldingOrder;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
+/**
+ * Emptiness check for Petri nets.
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            place content type
+ */
 public final class IsEmpty<LETTER, STATE> extends UnaryNetOperation<LETTER, STATE> {
 	private final IPetriNet<LETTER, STATE> mOperand;
 	private final boolean mResult;
@@ -56,7 +65,8 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNetOperation<LETTER, STAT
 		super(services);
 		mOperand = operand;
 		mLogger.info(startMessage());
-		final PetriNetUnfolder<LETTER, STATE> unf = new PetriNetUnfolder<>(mServices, operand, order.ERV, false, true);
+		final PetriNetUnfolder<LETTER, STATE> unf =
+				new PetriNetUnfolder<>(mServices, operand, UnfoldingOrder.ERV, false, true);
 		final PetriNetRun<LETTER, STATE> run = unf.getAcceptingRun();
 		mResult = run == null;
 		mLogger.info(exitMessage());
@@ -83,8 +93,7 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNetOperation<LETTER, STAT
 	}
 	
 	@Override
-	public boolean checkResult(final IStateFactory<STATE> stateFactory)
-			throws AutomataLibraryException {
+	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		final INestedWordAutomatonSimple<LETTER, STATE> finiteAutomaton =
 				(new PetriNet2FiniteAutomaton<>(mServices, mOperand)).getResult();
 		final boolean automatonEmpty =

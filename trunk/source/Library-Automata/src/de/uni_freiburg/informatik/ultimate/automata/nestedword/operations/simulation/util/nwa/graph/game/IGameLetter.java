@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2011-2015 Julian Jarecki (jareckij@informatik.uni-freiburg.de)
- * Copyright (C) 2011-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2009-2015 University of Freiburg
+ * Copyright (C) 2015-2016 Daniel Tischner
+ * Copyright (C) 2009-2016 University of Freiburg
  * 
  * This file is part of the ULTIMATE Automata Library.
  * 
@@ -25,43 +24,27 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.automata.petrinet.julian;
+package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game;
+
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.ETransitionType;
 
 /**
- * Interface for possible extensions.
+ * Represents a letter in a game automaton. Such a letter is a Duplicator
+ * game graph node.
  * 
- * @author Julian Jarecki (jareckij@informatik.uni-freiburg.de)
- * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * @param <S>
- *            symbol type
- * @param <C>
- *            place content type
+ * @author Daniel Tischner
+ * @author Matthias Heizmann
+ *
+ * @param <LETTER>
+ *            Letter class of nwa automaton
+ * @param <STATE>
+ *            State class of nwa automaton
  */
-public interface IPossibleExtensions<S, C> {
-	/**
-	 * Removes and returns the minimal element with respect to the specified Order.
-	 * Throws an Exception if queue empty.
-	 * 
-	 * @return the minimal element
-	 */
-	Event<S, C> remove();
-	
-	/**
-	 * Extends set of possible extensions by all possible extensions which are
-	 * successors of e.
-	 * 
-	 * @param event
-	 *            event
-	 */
-	void update(Event<S, C> event);
-	
-	/**
-	 * @return The size.
-	 */
-	int size();
-	
-	/**
-	 * @return {@code true} iff there is no extension.
-	 */
-	boolean isEmpy();
+public interface IGameLetter<LETTER, STATE> {
+
+	ETransitionType getTransitionType();
+
+	LETTER getLetter();
+
+
 }

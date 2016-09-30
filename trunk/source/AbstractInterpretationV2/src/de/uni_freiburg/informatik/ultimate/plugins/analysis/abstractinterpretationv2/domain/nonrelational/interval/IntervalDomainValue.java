@@ -2,27 +2,27 @@
  * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE AbstractInterpretationV2 plug-in.
- * 
+ *
  * The ULTIMATE AbstractInterpretationV2 plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE AbstractInterpretationV2 plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE AbstractInterpretationV2 plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE AbstractInterpretationV2 plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission
  * to convey the resulting work.
  */
 
@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 
 /**
  * Representation of an interval value in the interval domain.
- * 
+ *
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
@@ -64,7 +64,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 	 * Constructor for a new {@link IntervalDomainValue}. The interval created is dependent on the value of the
 	 * parameter. If {@code isBottom} is set to <code>false</code>, the created interval will be (-&infin; ; &infin;).
 	 * If {@code isBottom} is set to <code>true</code>, the created interval will be &bot;.
-	 * 
+	 *
 	 * @param isBottom
 	 *            Specifies whether the interval should be &bot; or an actual interval.
 	 */
@@ -82,7 +82,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 
 	/**
 	 * Constructor for a new {@link IntervalDomainValue}.
-	 * 
+	 *
 	 * @param lower
 	 *            The lower value of the interval.
 	 * @param upper
@@ -102,7 +102,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 
 	/**
 	 * Constructor for a new {@link IntervalDomainValue}.
-	 * 
+	 *
 	 * @param lower
 	 *            The lower value of the interval.
 	 * @param upper
@@ -114,7 +114,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 
 	/**
 	 * Constructor for a new {@link IntervalDomainValue}.
-	 * 
+	 *
 	 * @param lower
 	 *            The lower value of the interval.
 	 * @param upper
@@ -126,7 +126,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 
 	/**
 	 * Performs a deep copy of <code>this</code>.
-	 * 
+	 *
 	 * @return A new {@link IntervalDomainValue} which is the deep copy of <code>this</code>.
 	 */
 	@Override
@@ -143,7 +143,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 	 * <p>
 	 * [a, b] &gt;= [c, d] results in [max(a, c), b]
 	 * </p>
-	 * 
+	 *
 	 * @param other
 	 *            The value to compare against.
 	 * @return A new {@link IntervalDomainValue} that is the result of the greater or equal operation.
@@ -186,7 +186,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 	 * <p>
 	 * [a, b] &lt;= [c, d] results in [a, min(b, d)]
 	 * </p>
-	 * 
+	 *
 	 * @param other
 	 *            The value to compare against.
 	 * @return A new {@link IntervalDomainValue} that is the result of the less or equal operation.
@@ -222,7 +222,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 
 	/**
 	 * Compares <code>this</code> with another {@link IntervalDomainValue} for equality.
-	 * 
+	 *
 	 * @param other
 	 *            The other value to compare to.
 	 * @return <code>true</code> if and only if <code>this</code> and other are both bottom, or if the lower and upper
@@ -248,7 +248,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 	/**
 	 * Compares <code>this</code> with another {@link IntervalDomainValue} and checks whether <code>this</code> is
 	 * included in other, or vice versa.
-	 * 
+	 *
 	 * @param other
 	 *            The other value to compare to.
 	 * @return <code>true</code> if and only if either <code>this</code> is included in other, or vice versa,
@@ -274,15 +274,15 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 		}
 
 		return (mLower.compareTo(other.mLower) <= 0 && mUpper.compareTo(other.mUpper) >= 0)
-		        || (other.mLower.compareTo(mLower) <= 0 && other.mUpper.compareTo(mUpper) >= 0);
+				|| (other.mLower.compareTo(mLower) <= 0 && other.mUpper.compareTo(mUpper) >= 0);
 	}
 
 	/**
 	 * Compares <code>this</code> with another {@link IntervalDomainValue} and checks whether <code>this</code> is
 	 * included in other.
-	 * 
+	 *
 	 * DD added this method to check for containment
-	 * 
+	 *
 	 * @param other
 	 *            The other value to compare to.
 	 * @return <code>true</code> if and only if <code>this</code> is included in other, <code>false</code> otherwise.
@@ -335,13 +335,13 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 
 	/**
 	 * Adds another {@link IntervalDomainValue} to <code>this</code> following the scheme:
-	 * 
+	 *
 	 * <p>
 	 * <ul>
 	 * <li>[a, b] + [c, d] = [a + c, b + d]</li>
 	 * </ul>
 	 * </p>
-	 * 
+	 *
 	 * @param other
 	 *            The other interval.
 	 * @return A new evaluation result corresponding to the addition of the two input intervals.
@@ -381,7 +381,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 
 	/**
 	 * Returns <code>true</code> if and only if <code>0</code> is part of the interval.
-	 * 
+	 *
 	 * @return <code>true</code> if 0 is part of the interval, <code>false</code> otherwise.
 	 */
 	public boolean containsZero() {
@@ -394,12 +394,12 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 		}
 
 		return (mLower.isInfinity() || mLower.getValue().signum() <= 0)
-		        && (mUpper.isInfinity() || mUpper.getValue().signum() >= 0);
+				&& (mUpper.isInfinity() || mUpper.getValue().signum() >= 0);
 	}
 
 	/**
 	 * Returns the lower value of the interval.
-	 * 
+	 *
 	 * @return
 	 */
 	public IntervalValue getLower() {
@@ -408,7 +408,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 
 	/**
 	 * Returns the upper value of the interval.
-	 * 
+	 *
 	 * @return
 	 */
 	public IntervalValue getUpper() {
@@ -417,7 +417,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 
 	/**
 	 * Intersects the current interval with another interval.
-	 * 
+	 *
 	 * @param other
 	 *            The other interval to intersect with.
 	 * @return A new {@link IntervalDomainValue} representing the result of the intersection.
@@ -482,7 +482,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 
 	/**
 	 * Computes the merger of this with another {@link IntervalDomainValue}.
-	 * 
+	 *
 	 * @param other
 	 *            The other interval to merge with.
 	 * @return A new interval which is the result of merging this with other.
@@ -572,7 +572,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 	/**
 	 * Returns <code>true</code> if the interval is unbounded, i.e. if one bound of the interval is -&infin; or &infin;,
 	 * respectively.
-	 * 
+	 *
 	 * @return <code>true</code> or <code>false</code>.
 	 */
 	public boolean isUnbounded() {
@@ -585,13 +585,13 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 	/**
 	 * Computes the result of the multiplication of another {@link IntervalDomainValue} with <code>this</code> following
 	 * the scheme:
-	 * 
+	 *
 	 * <p>
 	 * <ul>
 	 * <li>[a, b] * [c, d] = [min(a*c, a*d, b*c, b*d), max(a*c, a*d, b*c, b*d)]</li>
 	 * </ul>
 	 * </p>
-	 * 
+	 *
 	 * @param other
 	 *            The other interval.
 	 * @return A new interval representing the result of <code>firstResult</code> * <code>secondRestult</code>.
@@ -632,7 +632,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 	 * <li>[a, b] - [c, d] = [a - d, b - c]</li>
 	 * </ul>
 	 * </p>
-	 * 
+	 *
 	 * @param other
 	 *            The other interval.
 	 * @return A new interval representing the result of <code>firstResult</code> - <code>secondResult</code>.
@@ -671,7 +671,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 
 	/**
 	 * Computes the euclidean modulo operation of two {@link IntervalDomainValue}s.
-	 * 
+	 *
 	 * @param divisor
 	 *            The other value to compute the modulus for.
 	 * @param integerDivision
@@ -704,7 +704,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 
 		// [a; b] % [c; d] = [a; b], when (0 <= a) and (b < c)
 		if (!mLower.isInfinity() && !absDivisor.mLower.isInfinity() && new IntervalValue(0).compareTo(mLower) <= 0
-		        && mUpper.compareTo(absDivisor.mLower) < 0) {
+				&& mUpper.compareTo(absDivisor.mLower) < 0) {
 			return new IntervalDomainValue(mLower, mUpper);
 		}
 
@@ -733,7 +733,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 	 * </tr>
 	 * </table>
 	 * </p>
-	 * 
+	 *
 	 * @return Non-negative interval abs([a, b]).
 	 */
 	public IntervalDomainValue abs() {
@@ -768,7 +768,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 
 	/**
 	 * Negates the given interval.
-	 * 
+	 *
 	 * @param interval
 	 *            The interval to negate.
 	 * @return A new interval which corresponds to the negated input interval.
@@ -793,18 +793,18 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 		}
 
 		return new IntervalDomainValue(new IntervalValue(getUpper().getValue().negate()),
-		        new IntervalValue(getLower().getValue().negate()));
+				new IntervalValue(getLower().getValue().negate()));
 	}
 
 	/**
 	 * Returns an SMT {@link Term} of <code>this</code>.
-	 * 
+	 *
 	 * <p>
 	 * Variables are expressed as var &geq; lowerBound, var &leq; upperBound. If a variable has no lower, or upper
 	 * bound, no constraint is added. If a variable is &top;, <code>true</code> is used as term. If a variable is &bot;,
 	 * <code>false</code> is used as term.
 	 * </p>
-	 * 
+	 *
 	 * @param script
 	 *            The script to use.
 	 * @param sort
@@ -847,11 +847,11 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 
 	/**
 	 * Computes the maximum value of the multiplication of two intervals:
-	 * 
+	 *
 	 * <p>
 	 * [a, b] and [c, d]: max(ac, ad, bc, bd).
 	 * </p>
-	 * 
+	 *
 	 * @param other
 	 *            The other interval of the form [c, d].
 	 * @return max(ac, ad, bc, bd).
@@ -872,17 +872,16 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 			// -\infty * -\infty = \infty
 			if (other.getLower().isInfinity()) {
 				return new IntervalValue();
-			} else {
-				// -\infty * val = \infty, if val < 0
-				if (other.getLower().getValue().signum() < 0) {
-					return new IntervalValue();
-				}
+			}
+			// -\infty * val = \infty, if val < 0
+			if (other.getLower().getValue().signum() < 0) {
+				return new IntervalValue();
+			}
 
-				// -\infty * 0 = 0
-				if (other.getLower().getValue().signum() == 0) {
-					returnValue = updateIfLarger(returnValue, BigDecimal.ZERO, valuePresent);
-					valuePresent = true;
-				}
+			// -\infty * 0 = 0
+			if (other.getLower().getValue().signum() == 0) {
+				returnValue = updateIfLarger(returnValue, BigDecimal.ZERO, valuePresent);
+				valuePresent = true;
 			}
 		} else {
 			if (other.getLower().isInfinity()) {
@@ -898,7 +897,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 				}
 			} else {
 				returnValue = updateIfLarger(returnValue, getLower().getValue().multiply(other.getLower().getValue()),
-				        valuePresent);
+						valuePresent);
 				valuePresent = true;
 			}
 		}
@@ -932,7 +931,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 				}
 			} else {
 				returnValue = updateIfLarger(returnValue, getLower().getValue().multiply(other.getUpper().getValue()),
-				        valuePresent);
+						valuePresent);
 				valuePresent = true;
 			}
 		}
@@ -965,7 +964,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 				}
 			} else {
 				returnValue = updateIfLarger(returnValue, getUpper().getValue().multiply(other.getLower().getValue()),
-				        valuePresent);
+						valuePresent);
 				valuePresent = true;
 			}
 		}
@@ -975,17 +974,16 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 			// \infty * \infty = \infty
 			if (other.getUpper().isInfinity()) {
 				return new IntervalValue();
-			} else {
-				// \infty * val = \infty, if val > 0
-				if (other.getUpper().getValue().signum() > 0) {
-					return new IntervalValue();
-				}
+			}
+			// \infty * val = \infty, if val > 0
+			if (other.getUpper().getValue().signum() > 0) {
+				return new IntervalValue();
+			}
 
-				// \infty * 0 = 0
-				if (other.getUpper().getValue().signum() == 0) {
-					returnValue = updateIfLarger(returnValue, BigDecimal.ZERO, valuePresent);
-					valuePresent = true;
-				}
+			// \infty * 0 = 0
+			if (other.getUpper().getValue().signum() == 0) {
+				returnValue = updateIfLarger(returnValue, BigDecimal.ZERO, valuePresent);
+				valuePresent = true;
 			}
 		} else {
 			if (other.getUpper().isInfinity()) {
@@ -1001,7 +999,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 				}
 			} else {
 				returnValue = updateIfLarger(returnValue, getUpper().getValue().multiply(other.getUpper().getValue()),
-				        valuePresent);
+						valuePresent);
 				valuePresent = true;
 			}
 		}
@@ -1012,11 +1010,11 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 
 	/**
 	 * Computes the minimum value of the multiplication of two intervals:
-	 * 
+	 *
 	 * <p>
 	 * [a, b] and [c, d]: min(ac, ad, bc, bd).
 	 * </p>
-	 * 
+	 *
 	 * @param other
 	 *            The other interval of the form [c, d].
 	 * @return min(ac, ad, bc, bd).
@@ -1061,7 +1059,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 					}
 				} else {
 					returnValue = updateIfSmaller(returnValue,
-					        getLower().getValue().multiply(other.getLower().getValue()), valuePresent);
+							getLower().getValue().multiply(other.getLower().getValue()), valuePresent);
 					valuePresent = true;
 				}
 			}
@@ -1100,7 +1098,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 					}
 				} else {
 					returnValue = updateIfSmaller(returnValue,
-					        getLower().getValue().multiply(other.getUpper().getValue()), valuePresent);
+							getLower().getValue().multiply(other.getUpper().getValue()), valuePresent);
 					valuePresent = true;
 				}
 			}
@@ -1138,7 +1136,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 				}
 			} else {
 				returnValue = updateIfSmaller(returnValue, getUpper().getValue().multiply(other.getLower().getValue()),
-				        valuePresent);
+						valuePresent);
 				valuePresent = true;
 			}
 		}
@@ -1171,7 +1169,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 				}
 			} else {
 				returnValue = updateIfSmaller(returnValue, getUpper().getValue().multiply(other.getUpper().getValue()),
-				        valuePresent);
+						valuePresent);
 				valuePresent = true;
 			}
 		}
@@ -1180,43 +1178,39 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 		return returnValue;
 	}
 
-	private IntervalValue updateIfLarger(final IntervalValue oldValue, final BigDecimal newValue,
-	        final boolean valuePresent) {
+	private static IntervalValue updateIfLarger(final IntervalValue oldValue, final BigDecimal newValue,
+			final boolean valuePresent) {
 		if (valuePresent) {
 			if (oldValue.getValue().compareTo(newValue) <= 0) {
 				return new IntervalValue(newValue);
-			} else {
-				return oldValue;
 			}
-		} else {
-			return new IntervalValue(newValue);
+			return oldValue;
 		}
+		return new IntervalValue(newValue);
 	}
 
-	private IntervalValue updateIfSmaller(final IntervalValue oldValue, final BigDecimal newValue,
-	        final boolean valuePresent) {
+	private static IntervalValue updateIfSmaller(final IntervalValue oldValue, final BigDecimal newValue,
+			final boolean valuePresent) {
 		if (valuePresent) {
 			if (oldValue.getValue().compareTo(newValue) >= 0) {
 				return new IntervalValue(newValue);
-			} else {
-				return oldValue;
 			}
-		} else {
-			return new IntervalValue(newValue);
+			return oldValue;
 		}
+		return new IntervalValue(newValue);
 	}
 
 	/**
 	 * Performs the devision of <code>this</code> with the given {@link IntervalDomainValue} following the scheme:
-	 * 
+	 *
 	 * <p>
 	 * [a; b] / [c; d] = [min(a / c, a / d, b / c, b / d); max(a / c, a / d, b / c, b / d)]
 	 * </p>
-	 * 
+	 *
 	 * <p>
 	 * If 0 is containd in [x; y], the resulting interval will always be (-&infin;; &infin;).
 	 * </p>
-	 * 
+	 *
 	 * @param other
 	 *            Another {@link IntervalDomainValue} of the form [x; y].
 	 * @return A new {@link IntervalDomainValue} corresponding to the result of the computation of the division.
@@ -1229,7 +1223,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 	/**
 	 * Performs the divison of <code>this</code> with the given {@link IntervalDomainValue}. The division is done using
 	 * the euclidean method.
-	 * 
+	 *
 	 * @param other
 	 *            Another {@link IntervalDomainValue} of the form [x; y].
 	 * @return A new {@link IntervalDomainValue} corresponding to the result of the computation of the division.
@@ -1310,11 +1304,11 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 
 	/**
 	 * Computes the minimum value of the division of two intervals:
-	 * 
+	 *
 	 * <p>
 	 * [a; b] and [c; d]: min(a / c, a / d, b / c, b / d).
 	 * </p>
-	 * 
+	 *
 	 * @param other
 	 *            The other interval of the form [c; d].
 	 * @return min(a / c, a / d, b / c, b / d).
@@ -1452,7 +1446,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 		return returnValue;
 	}
 
-	private BigDecimal divide(final BigDecimal numerator, final BigDecimal divisor) {
+	private static BigDecimal divide(final BigDecimal numerator, final BigDecimal divisor) {
 		try {
 			return numerator.divide(divisor);
 		} catch (final ArithmeticException e) {
@@ -1462,11 +1456,11 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 
 	/**
 	 * Computes the maximum value of the division of two interval values:
-	 * 
+	 *
 	 * <p>
 	 * [a; b] and [c; d]: max(a / c, a / d, b / c, b / d).
 	 * </p>
-	 * 
+	 *
 	 * @param other
 	 *            The other interval of the form [c; d].
 	 * @return max(a / c, a / d, b / c, b / d).
@@ -1495,11 +1489,10 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 			// -\infty / -\infty = \infty
 			if (c.isInfinity()) {
 				return new IntervalValue();
-			} else {
-				// -\infty / val = \infty, if val < 0
-				if (c.getValue().signum() < 0) {
-					return new IntervalValue();
-				}
+			}
+			// -\infty / val = \infty, if val < 0
+			if (c.getValue().signum() < 0) {
+				return new IntervalValue();
 			}
 		} else {
 			if (c.isInfinity()) {
@@ -1576,11 +1569,10 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 			// \infty / \infty = \infty
 			if (d.isInfinity()) {
 				return new IntervalValue();
-			} else {
-				// \infty / val = \infty, if val > 0
-				if (d.getValue().signum() > 0) {
-					return new IntervalValue();
-				}
+			}
+			// \infty / val = \infty, if val > 0
+			if (d.getValue().signum() > 0) {
+				return new IntervalValue();
 			}
 		} else {
 			if (d.isInfinity()) {
@@ -1605,58 +1597,57 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 	}
 
 	@Override
-	public IntervalDomainValue greaterThan(IntervalDomainValue other) {
+	public IntervalDomainValue greaterThan(final IntervalDomainValue other) {
 		return greaterOrEqual(other);
 	}
 
 	@Override
-	public BooleanValue isGreaterThan(IntervalDomainValue other) {
+	public BooleanValue isGreaterThan(final IntervalDomainValue other) {
 		return isGreaterOrEqual(other);
 	}
 
 	@Override
-	public BooleanValue isGreaterOrEqual(IntervalDomainValue other) {
+	public BooleanValue isGreaterOrEqual(final IntervalDomainValue other) {
 		final IntervalDomainValue geq = greaterOrEqual(other);
 		if (geq.isBottom() || geq.isPointInterval()) {
 			return new BooleanValue(true);
-		} else {
-			return new BooleanValue();
 		}
+		return new BooleanValue();
 	}
 
 	@Override
-	public IntervalDomainValue lessThan(IntervalDomainValue other) {
+	public IntervalDomainValue lessThan(final IntervalDomainValue other) {
 		return lessOrEqual(other);
 	}
 
 	@Override
-	public BooleanValue isLessThan(IntervalDomainValue other) {
+	public BooleanValue isLessThan(final IntervalDomainValue other) {
 		return isLessOrEqual(other);
 	}
 
 	@Override
-	public BooleanValue isLessOrEqual(IntervalDomainValue other) {
+	public BooleanValue isLessOrEqual(final IntervalDomainValue other) {
 		final IntervalDomainValue leq = lessOrEqual(other);
 		if (leq.isBottom() || leq.isPointInterval()) {
 			return new BooleanValue(true);
-		} else {
-			return new BooleanValue();
 		}
+		return new BooleanValue();
 	}
 
 	@Override
-	public IntervalDomainValue inverseModulo(IntervalDomainValue referenceValue, IntervalDomainValue oldValue,
-	        boolean isLeft) {
+	public IntervalDomainValue inverseModulo(final IntervalDomainValue referenceValue,
+			final IntervalDomainValue oldValue, final boolean isLeft) {
 		return oldValue;
 	}
 
 	@Override
-	public IntervalDomainValue inverseEquality(IntervalDomainValue oldValue, IntervalDomainValue referenceValue) {
+	public IntervalDomainValue inverseEquality(final IntervalDomainValue oldValue,
+			final IntervalDomainValue referenceValue) {
 		return referenceValue;
 	}
 
 	@Override
-	public IntervalDomainValue inverseLessOrEqual(IntervalDomainValue oldValue, boolean isLeft) {
+	public IntervalDomainValue inverseLessOrEqual(final IntervalDomainValue oldValue, final boolean isLeft) {
 		final IntervalDomainValue newValue;
 		if (isLeft) {
 			newValue = new IntervalDomainValue(new IntervalValue(), getUpper());
@@ -1667,12 +1658,12 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 	}
 
 	@Override
-	public IntervalDomainValue inverseLessThan(IntervalDomainValue oldValue, boolean isLeft) {
+	public IntervalDomainValue inverseLessThan(final IntervalDomainValue oldValue, final boolean isLeft) {
 		return inverseLessOrEqual(oldValue, isLeft);
 	}
 
 	@Override
-	public IntervalDomainValue inverseGreaterOrEqual(IntervalDomainValue oldValue, boolean isLeft) {
+	public IntervalDomainValue inverseGreaterOrEqual(final IntervalDomainValue oldValue, final boolean isLeft) {
 		final IntervalDomainValue newValue;
 		if (isLeft) {
 			newValue = new IntervalDomainValue(getLower(), new IntervalValue());
@@ -1683,12 +1674,13 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 	}
 
 	@Override
-	public IntervalDomainValue inverseGreaterThan(IntervalDomainValue oldValue, boolean isLeft) {
+	public IntervalDomainValue inverseGreaterThan(final IntervalDomainValue oldValue, final boolean isLeft) {
 		return inverseGreaterOrEqual(oldValue, isLeft);
 	}
 
 	@Override
-	public IntervalDomainValue inverseNotEqual(IntervalDomainValue oldValue, IntervalDomainValue referenceValue) {
+	public IntervalDomainValue inverseNotEqual(final IntervalDomainValue oldValue,
+			final IntervalDomainValue referenceValue) {
 		return referenceValue;
 	}
 
@@ -1703,7 +1695,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 	}
 
 	@Override
-	public BooleanValue compareEquality(IntervalDomainValue firstOther, IntervalDomainValue secondOther) {
+	public BooleanValue compareEquality(final IntervalDomainValue firstOther, final IntervalDomainValue secondOther) {
 		if (isEqualTo(firstOther) && isEqualTo(secondOther)) {
 			return new BooleanValue(true);
 		}
@@ -1711,8 +1703,8 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 	}
 
 	@Override
-	public BooleanValue compareInequality(IntervalDomainValue firstOther, IntervalDomainValue secondOther) {
+	public BooleanValue compareInequality(final IntervalDomainValue firstOther, final IntervalDomainValue secondOther) {
 		throw new UnsupportedOperationException(
-		        "Not equals expressions should have been removed during expression normalization.");
+				"Not equals expressions should have been removed during expression normalization.");
 	}
 }

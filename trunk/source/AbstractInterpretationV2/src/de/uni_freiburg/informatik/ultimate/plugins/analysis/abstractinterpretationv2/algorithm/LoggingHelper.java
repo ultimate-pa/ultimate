@@ -14,6 +14,9 @@ public final class LoggingHelper {
 	}
 
 	public static <STATE extends IAbstractState<STATE, ?, ?>> StringBuilder getStateString(final STATE current) {
+		if (current == null) {
+			return new StringBuilder("__");
+		}
 		return addHashCodeString(new StringBuilder(), current).append(' ').append(current.toLogString());
 	}
 

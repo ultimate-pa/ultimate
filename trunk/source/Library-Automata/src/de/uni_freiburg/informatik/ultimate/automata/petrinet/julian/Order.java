@@ -20,30 +20,49 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.julian;
 
 import java.util.Comparator;
 
+/**
+ * Order of events.
+ * 
+ * @author Julian Jarecki (jareckij@informatik.uni-freiburg.de)
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <S>
+ *            symbol type
+ * @param <C>
+ *            place content type
+ */
 public abstract class Order<S, C> implements Comparator<Event<S, C>> {
+	@SuppressWarnings("squid:S1698")
 	@Override
-	public int compare(Event<S, C> o1, Event<S, C> o2) {
+	public int compare(final Event<S, C> o1, final Event<S, C> o2) {
+		// equality intended here
 		if (o1 == o2) {
-			//mLogger.info("compared " + o1 + " with itsself.");
+			// mLogger.info("compared " + o1 + " with itself.");
 			return 0;
 		}
 		final Configuration<S, C> c1 = o1.getLocalConfiguration();
 		final Configuration<S, C> c2 = o2.getLocalConfiguration();
 		assert !(c1.containsAll(c2) && c2.containsAll(c1)) : "Different events with equal local configurations. equals:"
 				+ c1.equals(c2);
-		final int result = compare(c1, c2);
-
-		return result;
+		return compare(c1, c2);
 	}
-
+	
+	/**
+	 * Compares two configurations.
+	 * 
+	 * @param o1
+	 *            first configuration
+	 * @param o2
+	 *            second configuration
+	 * @return the value according to the {@link Comparator} interface
+	 */
 	public abstract int compare(Configuration<S, C> o1, Configuration<S, C> o2);
 }

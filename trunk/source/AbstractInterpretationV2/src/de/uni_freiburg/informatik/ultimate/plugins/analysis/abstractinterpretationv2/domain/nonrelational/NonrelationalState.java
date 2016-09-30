@@ -464,6 +464,17 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	@Override
 	public SubsetResult isSubsetOf(final STATE other) {
 		assert hasSameVariables(other);
+
+		if (isBottom() && other.isBottom()) {
+			return SubsetResult.EQUAL;
+		}
+		if (isBottom()) {
+			return SubsetResult.STRICT;
+		}
+		if (other.isBottom()) {
+			return SubsetResult.NONE;
+		}
+
 		for (final Entry<IBoogieVar, V> entry : getVar2ValueNonrelational().entrySet()) {
 			final V thisValue = entry.getValue();
 			final V otherValue = other.getVar2ValueNonrelational().get(entry.getKey());
@@ -514,7 +525,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 			return (STATE) this;
 		}
 
-		final Set<IBoogieVar> newVars = new HashSet<IBoogieVar>(mVariables);
+		final Set<IBoogieVar> newVars = new HashSet<>(mVariables);
 		final Map<IBoogieVar, V> newValMap = new HashMap<>(getVar2ValueNonrelational());
 		final Map<IBoogieVar, BooleanValue> newBooleanValMap = new HashMap<>(getVar2ValueBoolean());
 
@@ -735,7 +746,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 			return script.term("false");
 		}
 
-		final List<Term> acc = new ArrayList<Term>(getVar2ValueNonrelational().size() + getVar2ValueBoolean().size());
+		final List<Term> acc = new ArrayList<>(getVar2ValueNonrelational().size() + getVar2ValueBoolean().size());
 
 		for (final Entry<IBoogieVar, V> entry : getVar2ValueNonrelational().entrySet()) {
 			final IBoogieVar boogievar = entry.getKey();
@@ -767,7 +778,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	 *            The variable to generate the SMT Term for.
 	 * @return The SMT Term.
 	 */
-	private Term getTermVar(final IBoogieVar var) {
+	private static Term getTermVar(final IBoogieVar var) {
 		assert var != null : "Cannot get TermVariable from null";
 		if (var instanceof IProgramVar) {
 			final TermVariable termvar = ((IProgramVar) var).getTermVariable();

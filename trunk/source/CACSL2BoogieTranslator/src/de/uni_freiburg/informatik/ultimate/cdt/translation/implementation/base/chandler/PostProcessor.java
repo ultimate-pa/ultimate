@@ -38,11 +38,13 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
@@ -51,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IfStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ModifiesSpecification;
@@ -59,6 +62,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RequiresSpecification;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ReturnStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StringLiteral;
@@ -73,6 +77,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.F
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.AExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.BitvectorTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitiveCategory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
@@ -82,6 +87,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.BoogieASTUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
@@ -245,7 +251,8 @@ public class PostProcessor {
 					//(instead of a procedure) in Boogie
 //					new Specification[0],
 					null,
-					functionHandler.getFunctionPointerFunctionBody(ignoreLoc, main, memoryHandler, structHandler, procName, cFunc, inParams, outParams));
+//					functionHandler.getFunctionPointerFunctionBody(ignoreLoc, main, memoryHandler, structHandler, procName, cFunc, inParams, outParams));
+					getFunctionPointerFunctionBody(ignoreLoc, main, functionHandler, memoryHandler, structHandler, procName, cFunc, inParams, outParams));
 			result.add(functionPointerMuxProc);
 		}
 		return result;
@@ -293,7 +300,7 @@ public class PostProcessor {
 			final Dispatcher main, final MemoryHandler memoryHandler, final ArrayHandler arrayHandler, final FunctionHandler functionHandler,
 			final StructHandler structHandler, final LinkedHashMap<Declaration, CDeclaration> declarationsGlobalInBoogie,
 			final AExpressionTranslation expressionTranslation) {
-		functionHandler.beginUltimateInit(main, translationUnitLoc, SFO.INIT);
+		functionHandler.beginUltimateInitOrStart(main, translationUnitLoc, SFO.INIT);
 		final ArrayList<Statement> initStatements = new ArrayList<Statement>();
 
 		final ArrayList<Declaration> decl = new ArrayList<Declaration>();
@@ -401,7 +408,7 @@ public class PostProcessor {
 		decl.add(new Procedure(translationUnitLoc, new Attribute[0], SFO.INIT, new String[0],
 				new VarList[0], new VarList[0], null, initBody));
 
-		functionHandler.endUltimateInit(main, initProcedureDecl, SFO.INIT);
+		functionHandler.endUltimateInitOrStart(main, initProcedureDecl, SFO.INIT);
 		return decl;
 	}
 
@@ -424,7 +431,7 @@ public class PostProcessor {
 	 */
 	private ArrayList<Declaration> createUltimateStartProcedure(
 			final Dispatcher main, final ILocation loc, final FunctionHandler functionHandler) {
-		final LinkedHashMap<String, Procedure> procedures = functionHandler.getProcedures();
+		final Map<String, Procedure> procedures = functionHandler.getProcedures();
 		final String checkedMethod = main.getCheckedMethod();
 		final ArrayList<Declaration> decl = new ArrayList<Declaration>();
 
@@ -432,7 +439,7 @@ public class PostProcessor {
 				&& procedures.containsKey(checkedMethod)) {
 			mLogger.info("Settings: Checked method=" + checkedMethod);
 
-			functionHandler.beginUltimateInit(main, loc, SFO.START);
+			functionHandler.beginUltimateInitOrStart(main, loc, SFO.START);
 			
 			Procedure startDeclaration = null;
 			Specification[] specsStart = new Specification[0];
@@ -523,7 +530,7 @@ public class PostProcessor {
 			startDeclaration = new Procedure(loc, new Attribute[0], SFO.START,
 					new String[0], new VarList[0], new VarList[0], specsStart,
 					null);
-			functionHandler.endUltimateInit(main, startDeclaration, SFO.START);
+			functionHandler.endUltimateInitOrStart(main, startDeclaration, SFO.START);
 		} else {
 			mLogger.info("Settings: Library mode!");
 			if (procedures.containsKey("main")) {
@@ -665,4 +672,153 @@ public class PostProcessor {
 		return decls;
 	}
 			
+	public Body getFunctionPointerFunctionBody(final ILocation loc, final Dispatcher main, FunctionHandler functionHandler, final MemoryHandler memoryHandler,
+			final StructHandler structHandler, final String fpfName, final ProcedureSignature funcSignature, final VarList[] inParams,
+			final VarList[] outParam) {
+
+		final boolean resultTypeIsVoid = funcSignature.returnType == null;
+
+		final ArrayList<Statement> stmt = new ArrayList<>();
+		final ArrayList<VariableDeclaration> decl = new ArrayList<>();
+
+		/*
+		 * setup the input parameters
+		 * the last inParam is the function pointer in this case, here we only handle the
+		 * normal in params --> therefore we iterate to inParams.lenth - 1 only..
+		 */
+		final ArrayList<Expression> args = new ArrayList<>();
+		for (int i = 0; i < inParams.length - 1; i++) {
+			final VarList vl = inParams[i];
+			assert vl.getIdentifiers().length == 1;
+			final String oldId = vl.getIdentifiers()[0];
+			final String newId = oldId.replaceFirst("in", "");
+			decl.add(new VariableDeclaration(loc, new Attribute[0],
+					new VarList[] { new VarList(loc, new String[] { newId }, vl.getType()) }));
+			stmt.add(new AssignmentStatement(loc, new LeftHandSide[] { new VariableLHS(loc, newId) },
+					new Expression[] { new IdentifierExpression(loc, oldId) }));
+			args.add(new IdentifierExpression(loc, newId));
+		}
+
+		// collect all functions that are addressoffed in the program and that
+		// match the signature
+		final ArrayList<String> fittingFunctions = new ArrayList<>();
+		for (final Entry<String, Integer> en : main.getFunctionToIndex().entrySet()) {
+			final CFunction ptdToFuncType = functionHandler.getCFunctionType(en.getKey());
+			// if (ptdToFuncType.isCompatibleWith(calledFuncType)) {
+			if (new ProcedureSignature(main, ptdToFuncType).equals(funcSignature)) {
+				fittingFunctions.add(en.getKey());
+			}
+		}
+
+		// add the functionPointerProcedure and the procedures it calls to the
+		// call graph and modifiedGlobals
+		// such that calculateTransitive (which is executed later, in
+		// visit(TranslationUnit) after the postprocessor)
+		// can compute the correct modifies clause
+		functionHandler.addModifiedGlobalEntry(fpfName);
+		for (String fittingFunc : fittingFunctions) {
+			functionHandler.addCallGraphEdge(fpfName, fittingFunc);
+		}
+
+		// generate the actual body
+		IdentifierExpression funcCallResult = null;
+		if (fittingFunctions.isEmpty()) {
+			return new Body(loc, decl.toArray(new VariableDeclaration[decl.size()]),
+					stmt.toArray(new Statement[stmt.size()]));
+		} else if (fittingFunctions.size() == 1) {
+			final ExpressionResult rex = (ExpressionResult) functionHandler.makeTheFunctionCallItself(main, loc,
+					fittingFunctions.get(0), new ArrayList<Statement>(), new ArrayList<Declaration>(),
+					new LinkedHashMap<VariableDeclaration, ILocation>(), new ArrayList<Overapprox>(), args);
+			funcCallResult = (IdentifierExpression) rex.lrVal.getValue();
+			for (final Declaration dec : rex.decl) {
+				decl.add((VariableDeclaration) dec);
+			}
+
+			stmt.addAll(rex.stmt);
+			if (outParam.length == 1) {
+				stmt.add(new AssignmentStatement(loc,
+						new LeftHandSide[] { new VariableLHS(loc, outParam[0].getIdentifiers()[0]) },
+						new Expression[] { funcCallResult }));
+			}
+			stmt.addAll(CHandler.createHavocsForAuxVars(rex.auxVars));
+			stmt.add(new ReturnStatement(loc));
+			return new Body(loc, decl.toArray(new VariableDeclaration[decl.size()]),
+					stmt.toArray(new Statement[stmt.size()]));
+		} else {
+			final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
+
+			String tmpId = null;
+
+			if (!resultTypeIsVoid) {
+				tmpId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.FUNCPTRRES, null);
+				final VariableDeclaration tmpVarDec = new VariableDeclaration(loc, new Attribute[0],
+						new VarList[] { new VarList(loc, new String[] { tmpId },
+								funcSignature.returnType) });
+				decl.add(tmpVarDec);
+				auxVars.put(tmpVarDec, loc);
+				funcCallResult = new IdentifierExpression(loc, tmpId);
+			}
+
+			final ExpressionResult firstElseRex = (ExpressionResult) functionHandler.makeTheFunctionCallItself(main, loc,
+					fittingFunctions.get(0), new ArrayList<Statement>(), new ArrayList<Declaration>(),
+					new LinkedHashMap<VariableDeclaration, ILocation>(), new ArrayList<Overapprox>(), args);
+			for (final Declaration dec : firstElseRex.decl) {
+				decl.add((VariableDeclaration) dec);
+			}
+			auxVars.putAll(firstElseRex.auxVars);
+
+			final ArrayList<Statement> firstElseStmt = new ArrayList<>();
+			firstElseStmt.addAll(firstElseRex.stmt);
+			if (!resultTypeIsVoid) {
+				final AssignmentStatement assignment =
+						new AssignmentStatement(loc, new VariableLHS[] { new VariableLHS(loc, tmpId) },
+								new Expression[] { firstElseRex.lrVal.getValue() });
+				firstElseStmt.add(assignment);
+			}
+			IfStatement currentIfStmt = null;
+
+			for (int i = 1; i < fittingFunctions.size(); i++) {
+				final ExpressionResult currentRex = (ExpressionResult) functionHandler.makeTheFunctionCallItself(main, loc,
+						fittingFunctions.get(i), new ArrayList<Statement>(), new ArrayList<Declaration>(),
+						new LinkedHashMap<VariableDeclaration, ILocation>(), new ArrayList<Overapprox>(), args);
+				for (final Declaration dec : currentRex.decl) {
+					decl.add((VariableDeclaration) dec);
+				}
+				auxVars.putAll(currentRex.auxVars);
+
+				final ArrayList<Statement> newStmts = new ArrayList<>();
+				newStmts.addAll(currentRex.stmt);
+				if (!resultTypeIsVoid) {
+					final AssignmentStatement assignment =
+							new AssignmentStatement(loc, new VariableLHS[] { new VariableLHS(loc, tmpId) },
+									new Expression[] { currentRex.lrVal.getValue() });
+					newStmts.add(assignment);
+				}
+
+				final Expression condition =
+						ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ,
+								new IdentifierExpression(loc, inParams[inParams.length - 1].getIdentifiers()[0]),
+								new IdentifierExpression(loc, SFO.FUNCTION_ADDRESS + fittingFunctions.get(i)));
+
+				if (i == 1) {
+					currentIfStmt = new IfStatement(loc, condition, newStmts.toArray(new Statement[newStmts.size()]),
+							firstElseStmt.toArray(new Statement[firstElseStmt.size()]));
+				} else {
+					currentIfStmt = new IfStatement(loc, condition, newStmts.toArray(new Statement[newStmts.size()]),
+							new Statement[] { currentIfStmt });
+				}
+			}
+
+			stmt.add(currentIfStmt);
+			if (outParam.length == 1) {
+				stmt.add(new AssignmentStatement(loc,
+						new LeftHandSide[] { new VariableLHS(loc, outParam[0].getIdentifiers()[0]) },
+						new Expression[] { funcCallResult }));
+			}
+			stmt.addAll(CHandler.createHavocsForAuxVars(auxVars));
+			stmt.add(new ReturnStatement(loc));
+			return new Body(loc, decl.toArray(new VariableDeclaration[decl.size()]),
+					stmt.toArray(new Statement[stmt.size()]));
+		}
+	}
 }

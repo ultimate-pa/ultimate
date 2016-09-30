@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.julian;
@@ -35,71 +35,88 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 
-public class Transition<S, C>
-		implements ITransition<S, C>,
-			Serializable,
-			Comparable<Transition<S, C>> {
+/**
+ * A Petri net transition.
+ * 
+ * @author Julian Jarecki (jareckij@informatik.uni-freiburg.de)
+ *         Copyright (C) 2011-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <S>
+ *            symbol type
+ * @param <C>
+ *            place content type
+ */
+public class Transition<S, C> implements ITransition<S, C>, Serializable, Comparable<Transition<S, C>> {
 	private static final long serialVersionUID = 5948089529814334197L;
-
+	
 	private final int mHashCode;
 	private final S mSymbol;
 	private final Collection<Place<S, C>> mPredecessors;
 	private final Collection<Place<S, C>> mSuccessors;
-
+	
 	private final int mTotalOrderId;
-
+	
 	/**
+	 * Constructor.
+	 * <p>
 	 * TODO Christian 2016-08-16: The code assumes that the Collection
-	 *      parameters are of type List. Why not explicitly type-check this?
+	 * parameters are of type List. Why not explicitly type-check this?
+	 * 
+	 * @param symbol
+	 *            symbol
+	 * @param predecessors
+	 *            predecessor places
+	 * @param successors
+	 *            successor places
+	 * @param totalOrderId
+	 *            total order ID
 	 */
 	public Transition(final S symbol, final Collection<Place<S, C>> predecessors,
 			final Collection<Place<S, C>> successors, final int totalOrderId) {
 		mSymbol = symbol;
-		mPredecessors = Collections
-				.unmodifiableList((List<Place<S, C>>) predecessors);
-		mSuccessors = Collections
-				.unmodifiableList((List<Place<S, C>>) successors);
+		mPredecessors = Collections.unmodifiableList((List<Place<S, C>>) predecessors);
+		mSuccessors = Collections.unmodifiableList((List<Place<S, C>>) successors);
 		mHashCode = computeHashCode();
 		mTotalOrderId = totalOrderId;
 	}
-
+	
 	@Override
 	public S getSymbol() {
 		return mSymbol;
 	}
-
+	
 	@Override
 	public Collection<Place<S, C>> getPredecessors() {
 		return mPredecessors;
 	}
-
+	
 	@Override
 	public Collection<Place<S, C>> getSuccessors() {
 		return mSuccessors;
 	}
-
+	
 	@Override
 	public int hashCode() {
 		return mHashCode;
 	}
-
-	public int computeHashCode() {
-		return 13 * mPredecessors.hashCode() + 7 * mSuccessors.hashCode() + 3
-				* mSymbol.hashCode();
+	
+	private int computeHashCode() {
+		final int prime1 = 13;
+		final int prime2 = 7;
+		final int prime3 = 3;
+		return prime1 * mPredecessors.hashCode() + prime2 * mSuccessors.hashCode() + prime3 * mSymbol.hashCode();
 	}
-
+	
 	@Override
 	public String toString() {
 		return mSymbol.toString() + "[" + mTotalOrderId + "]";
 	}
-
+	
 	public int getTotalOrderId() {
 		return mTotalOrderId;
 	}
-
+	
 	@Override
-	public int compareTo(final Transition<S, C> o) {
-		return mTotalOrderId - o.mTotalOrderId;
+	public int compareTo(final Transition<S, C> other) {
+		return mTotalOrderId - other.mTotalOrderId;
 	}
-
 }

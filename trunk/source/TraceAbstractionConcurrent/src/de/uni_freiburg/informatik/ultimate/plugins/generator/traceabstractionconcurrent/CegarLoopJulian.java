@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.DifferenceBl
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.FinitePrefix2PetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJulian;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetUnfolder;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetUnfolder.order;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetUnfolder.UnfoldingOrder;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
@@ -118,13 +118,13 @@ public class CegarLoopJulian extends BasicCegarLoop {
 		final PetriNetJulian<CodeBlock, IPredicate> abstraction = (PetriNetJulian<CodeBlock, IPredicate>) mAbstraction;
 		final String orderString = mPref.order();
 		final boolean cutOffSameTrans = mPref.cutOffRequiresSameTransition();
-		order ord;
-		if (orderString.equals(order.KMM.getDescription())) {
-			ord = order.KMM;
-		} else if (orderString.equals(order.ERV.getDescription())) {
-			ord = order.ERV;
-		} else if (orderString.equals(order.ERV_MARK.getDescription())) {
-			ord = order.ERV_MARK;
+		UnfoldingOrder ord;
+		if (orderString.equals(UnfoldingOrder.KMM.getDescription())) {
+			ord = UnfoldingOrder.KMM;
+		} else if (orderString.equals(UnfoldingOrder.ERV.getDescription())) {
+			ord = UnfoldingOrder.ERV;
+		} else if (orderString.equals(UnfoldingOrder.ERV_MARK.getDescription())) {
+			ord = UnfoldingOrder.ERV_MARK;
 		} else {
 			throw new IllegalArgumentException();
 		}
