@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
@@ -153,6 +154,7 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 
 			final AssignmentStatement assign = new AssignmentStatement(callStatement.getLocation(),
 					idents.toArray(new LeftHandSide[idents.size()]), args);
+			System.out.println(BoogiePrettyPrinter.print(assign));
 			final STATE interimState = stateBeforeLeaving.addVariables(tmpParamVars.values());
 			final List<STATE> result = mStatementProcessor.process(interimState, assign, tmpVarUses);
 			if (result.isEmpty()) {

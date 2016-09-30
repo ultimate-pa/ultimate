@@ -29,11 +29,14 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVisitor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
@@ -72,6 +75,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.Permutation;
 
 /**
  * Processes Boogie {@link Statement}s and returns a new {@link IntervalDomainState} for the given statement.
@@ -203,26 +207,63 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 	private void handleAssignment(final AssignmentStatement statement) {
 		final LeftHandSide[] lhs = statement.getLhs();
 		final Expression[] rhs = statement.getRhs();
+		final int count = lhs.length;
+		assert lhs.length == rhs.length && count > 0 : "Broken assignment statement";
 
-		final List<List<STATE>> currentStateList = new ArrayList<>();
-
-		for (int i = 0; i < lhs.length; i++) {
-			// TODO: We have to project the result of a single assignment to the left-hand-side and update only this
-			// part of the non-relational state
-			currentStateList.add(handleSingleAssignment(lhs[i], rhs[i], mOldState));
+		if (count > 1) {
+			handleMultiAssignment(lhs, rhs);
+			return;
 		}
-		if (currentStateList.size() == 1) {
-			// this was not a parallel assignment
-			mReturnState.addAll(currentStateList.get(0));
-		} else {
-			// just mush them all together
-			final Optional<STATE> result =
-					currentStateList.stream().flatMap(a -> a.stream()).reduce((a, b) -> a.merge(b));
-			mReturnState.add(result.get());
-		}
+		// it is a single assignment
+		mReturnState.addAll(handleSingleAssignment(getLhsVariable(lhs[0]), rhs[0], mOldState));
 	}
 
-	private List<STATE> handleSingleAssignment(final LeftHandSide lhs, final Expression rhs, final STATE oldstate) {
+	private void handleMultiAssignment(final LeftHandSide[] lhs, final Expression[] rhs) {
+		final List<List<STATE>> multiAssignmentResults = new ArrayList<>();
+		for (int i = 0; i < lhs.length; i++) {
+			final IBoogieVar lhsVar = getLhsVariable(lhs[i]);
+			final List<STATE> unprojectedState = handleSingleAssignment(lhsVar, rhs[i], mOldState);
+			final List<STATE> projectedState = project(lhsVar, unprojectedState);
+			assert projectedState != null;
+			multiAssignmentResults.add(projectedState);
+		}
+
+		// now patch each of the results in the old state
+		// each of the lists contains the result of one assignment; the end result has to be the cartesian product
+		final List<List<STATE>> stateList = Permutation.crossProduct(multiAssignmentResults);
+		stateList.stream().map(stateAsList -> stateAsList.stream().reduce((a, b) -> a.patch(b)))
+				.forEach(a -> mReturnState.add(mOldState.patch(a.get())));
+	}
+
+	/**
+	 * Project away all variables expect lhsVar from each STATE in states.
+	 *
+	 * @param lhsVar
+	 *            The {@link IBoogieVar} to keep.
+	 * @param states
+	 *            The states which should be projected on lhsVar.
+	 * @return A {@link List} of states containing only lhsVar.
+	 */
+	private List<STATE> project(final IBoogieVar lhsVar, final List<STATE> states) {
+		return states.stream().map(a -> project(lhsVar, a)).collect(Collectors.toList());
+	}
+
+	/**
+	 * Project away all variables expect lhsVar from state.
+	 *
+	 * @param lhsVar
+	 *            The {@link IBoogieVar} to keep.
+	 * @param state
+	 *            The state which should be projected on lhsVar.
+	 * @return A STATE containing only lhsVar.
+	 */
+	private STATE project(final IBoogieVar lhsVar, final STATE state) {
+		final Set<IBoogieVar> varsToRemove = new HashSet<>(state.getVariables());
+		varsToRemove.remove(lhsVar);
+		return state.removeVariables(varsToRemove);
+	}
+
+	private List<STATE> handleSingleAssignment(final IBoogieVar lhsVar, final Expression rhs, final STATE oldstate) {
 		mExpressionEvaluator = new ExpressionEvaluator<>();
 		processExpression(rhs);
 
@@ -236,26 +277,25 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 					"There is supposed to be at least on evaluation result for assignment expressions.");
 		}
 
-		final IBoogieVar var = getLhsVariable(lhs);
 		final List<STATE> newStates = new ArrayList<>();
 		for (final IEvaluationResult<V> res : results) {
 			final STATE newState;
 
-			if (var.getIType() instanceof PrimitiveType) {
-				final PrimitiveType primitiveType = (PrimitiveType) var.getIType();
+			if (lhsVar.getIType() instanceof PrimitiveType) {
+				final PrimitiveType primitiveType = (PrimitiveType) lhsVar.getIType();
 
 				if (primitiveType.getTypeCode() == PrimitiveType.BOOL) {
-					newState = oldstate.setBooleanValue(var, res.getBooleanValue());
+					newState = oldstate.setBooleanValue(lhsVar, res.getBooleanValue());
 				} else {
-					newState = oldstate.setValue(var, res.getValue());
+					newState = oldstate.setValue(lhsVar, res.getValue());
 				}
-			} else if (var.getIType() instanceof ArrayType) {
+			} else if (lhsVar.getIType() instanceof ArrayType) {
 				// TODO: treat array correctly
 				// We treat Arrays as normal variables for the time being.
-				newState = oldstate.setValue(var, res.getValue());
+				newState = oldstate.setValue(lhsVar, res.getValue());
 			} else {
 				// just assume that the domain value handles those
-				newState = oldstate.setValue(var, res.getValue());
+				newState = oldstate.setValue(lhsVar, res.getValue());
 			}
 
 			newStates.add(newState);
@@ -340,7 +380,7 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 	@Override
 	protected void visit(final IntegerLiteral expr) {
 		final IEvaluator<V, STATE, CodeBlock> evaluator =
-				mEvaluatorFactory.createSingletonValueExpressionEvaluator(expr.getValue(), BigDecimal.class);
+				mEvaluatorFactory.createSingletonValueExpressionEvaluator(expr.getValue(), BigInteger.class);
 		mExpressionEvaluator.addEvaluator(evaluator);
 	}
 
