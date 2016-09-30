@@ -57,7 +57,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 public final class PrefixProduct<S, C> extends UnaryNetOperation<S, C> {
 	private final PetriNetJulian<S, C> mOperand;
 	private final INestedWordAutomaton<S, C> mNwa;
-	private PetriNetJulian<S, C> mResult;
+	private final PetriNetJulian<S, C> mResult;
 	
 	private final Map<Place<S, C>, Place<S, C>> mOldPlace2newPlace = new HashMap<>();
 	private final Map<C, Place<S, C>> mState2newPlace = new HashMap<>();
@@ -75,8 +75,7 @@ public final class PrefixProduct<S, C> extends UnaryNetOperation<S, C> {
 	 * @param nwa
 	 *            nested word automaton
 	 */
-	public PrefixProduct(final AutomataLibraryServices services,
-			final PetriNetJulian<S, C> operand,
+	public PrefixProduct(final AutomataLibraryServices services, final PetriNetJulian<S, C> operand,
 			final INestedWordAutomaton<S, C> nwa) {
 		super(services);
 		mOperand = operand;
@@ -88,7 +87,9 @@ public final class PrefixProduct<S, C> extends UnaryNetOperation<S, C> {
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
-		computeResult();
+		
+		mResult = computeResult();
+		
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
 		}
@@ -101,15 +102,14 @@ public final class PrefixProduct<S, C> extends UnaryNetOperation<S, C> {
 	
 	@Override
 	public String startMessage() {
-		return "Start " + operationName()
-		+ "First Operand " + mOperand.sizeInformation()
-		+ "Second Operand " + mNwa.sizeInformation();
+		return "Start " + operationName() + "First Operand " + mOperand.sizeInformation() + "Second Operand "
+				+ mNwa.sizeInformation();
 	}
 	
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName()
-		+ " Result " + mResult.sizeInformation();
+				+ " Result " + mResult.sizeInformation();
 	}
 	
 	@Override
@@ -119,11 +119,10 @@ public final class PrefixProduct<S, C> extends UnaryNetOperation<S, C> {
 	
 	@Override
 	public PetriNetJulian<S, C> getResult() {
-		return this.mResult;
+		return mResult;
 	}
 	
-	private void updateSymbol2netTransitions(final S symbol,
-			final ITransition<S, C> netTransition) {
+	private void updateSymbol2netTransitions(final S symbol, final ITransition<S, C> netTransition) {
 		Collection<ITransition<S, C>> netTransitions;
 		netTransitions = mSymbol2netTransitions.get(symbol);
 		if (netTransitions == null) {
@@ -133,8 +132,7 @@ public final class PrefixProduct<S, C> extends UnaryNetOperation<S, C> {
 		netTransitions.add(netTransition);
 	}
 	
-	private void updateSymbol2nwaTransitions(final S symbol,
-			final AutomatonTransition nwaTransition) {
+	private void updateSymbol2nwaTransitions(final S symbol, final AutomatonTransition nwaTransition) {
 		Collection<AutomatonTransition> nwaTransitions;
 		nwaTransitions = mSymbol2nwaTransitions.get(symbol);
 		if (nwaTransitions == null) {
@@ -144,7 +142,7 @@ public final class PrefixProduct<S, C> extends UnaryNetOperation<S, C> {
 		nwaTransitions.add(nwaTransition);
 	}
 	
-	private void computeResult() {
+	private PetriNetJulian<S, C> computeResult() {
 		final HashSet<S> netOnlyAlphabet = new HashSet<>(mOperand.getAlphabet());
 		netOnlyAlphabet.removeAll(mNwa.getInternalAlphabet());
 		final HashSet<S> sharedAlphabet = new HashSet<>(mOperand.getAlphabet());
@@ -156,7 +154,8 @@ public final class PrefixProduct<S, C> extends UnaryNetOperation<S, C> {
 		
 		// prefix product preserves the constantTokenAmount invariant
 		final boolean constantTokenAmount = mOperand.constantTokenAmount();
-		mResult = new PetriNetJulian<>(mServices, unionAlphabet, mOperand.getStateFactory(), constantTokenAmount);
+		final PetriNetJulian<S, C> result =
+				new PetriNetJulian<>(mServices, unionAlphabet, mOperand.getStateFactory(), constantTokenAmount);
 		
 		addPlacesAndStates();
 		
@@ -180,6 +179,7 @@ public final class PrefixProduct<S, C> extends UnaryNetOperation<S, C> {
 		addUnsharedTransitions(netOnlyAlphabet, nwaOnlyAlphabet);
 		
 		addSharedTransitions(sharedAlphabet);
+		return result;
 	}
 	
 	private void addSharedTransitions(final HashSet<S> sharedAlphabet) {
@@ -268,8 +268,7 @@ public final class PrefixProduct<S, C> extends UnaryNetOperation<S, C> {
 	}
 	
 	@Override
-	public boolean checkResult(final IStateFactory<C> stateFactory)
-			throws AutomataLibraryException {
+	public boolean checkResult(final IStateFactory<C> stateFactory) throws AutomataLibraryException {
 		mLogger.info("Testing correctness of prefixProduct");
 		
 		final INestedWordAutomatonSimple<S, C> op1AsNwa =
@@ -278,9 +277,9 @@ public final class PrefixProduct<S, C> extends UnaryNetOperation<S, C> {
 				(new PetriNet2FiniteAutomaton<>(mServices, mResult)).getResult();
 		final INestedWordAutomatonSimple<S, C> nwaResult =
 				(new ConcurrentProduct<>(mServices, op1AsNwa, mNwa, true)).getResult();
-		boolean correct = true;
-		correct &= (new IsIncluded<>(mServices, stateFactory, resultAsNwa, nwaResult)).getResult();
-		correct &= (new IsIncluded<>(mServices, stateFactory, nwaResult, resultAsNwa)).getResult();
+		boolean correct;
+		correct = (new IsIncluded<>(mServices, stateFactory, resultAsNwa, nwaResult)).getResult();
+		correct = correct && (new IsIncluded<>(mServices, stateFactory, nwaResult, resultAsNwa)).getResult();
 		
 		mLogger.info("Finished testing correctness of prefixProduct");
 		return correct;
@@ -297,9 +296,9 @@ public final class PrefixProduct<S, C> extends UnaryNetOperation<S, C> {
 		private final C mSuccessor;
 		
 		public AutomatonTransition(final C predecessor, final S letter, final C successor) {
-			this.mPredecessor = predecessor;
-			this.mLetter = letter;
-			this.mSuccessor = successor;
+			mPredecessor = predecessor;
+			mLetter = letter;
+			mSuccessor = successor;
 		}
 		
 		public C getPredecessor() {

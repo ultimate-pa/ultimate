@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetUnfolder.order;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetUnfolder.UnfoldingOrder;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
@@ -65,7 +65,8 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNetOperation<LETTER, STAT
 		super(services);
 		mOperand = operand;
 		mLogger.info(startMessage());
-		final PetriNetUnfolder<LETTER, STATE> unf = new PetriNetUnfolder<>(mServices, operand, order.ERV, false, true);
+		final PetriNetUnfolder<LETTER, STATE> unf =
+				new PetriNetUnfolder<>(mServices, operand, UnfoldingOrder.ERV, false, true);
 		final PetriNetRun<LETTER, STATE> run = unf.getAcceptingRun();
 		mResult = run == null;
 		mLogger.info(exitMessage());

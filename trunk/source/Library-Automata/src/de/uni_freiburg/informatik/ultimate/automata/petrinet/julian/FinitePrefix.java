@@ -30,7 +30,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
-import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetUnfolder.order;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetUnfolder.UnfoldingOrder;
 
 /**
  * A finite prefix.
@@ -63,7 +63,8 @@ public final class FinitePrefix<LETTER, STATE> extends UnaryNetOperation<LETTER,
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
-		final PetriNetUnfolder<LETTER, STATE> unf = new PetriNetUnfolder<>(mServices, operand, order.ERV, true, false);
+		final PetriNetUnfolder<LETTER, STATE> unf =
+				new PetriNetUnfolder<>(mServices, operand, UnfoldingOrder.ERV, true, false);
 		mResult = unf.getFinitePrefix();
 		
 		if (mLogger.isInfoEnabled()) {

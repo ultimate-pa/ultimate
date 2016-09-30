@@ -260,7 +260,7 @@ public final class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 	public PetriNetRun<S, C> acceptingRun() throws AutomataOperationCanceledException {
 		// NestedRun<S, C> test = getAcceptingNestedRun();
 		// System.out.print(test);
-		return (new PetriNetUnfolder<>(mServices, this, PetriNetUnfolder.order.ERV, false, true)).getAcceptingRun();
+		return (new PetriNetUnfolder<>(mServices, this, PetriNetUnfolder.UnfoldingOrder.ERV, false, true)).getAcceptingRun();
 	}
 	
 	public NestedRun<S, C> getAcceptingNestedRun() {
