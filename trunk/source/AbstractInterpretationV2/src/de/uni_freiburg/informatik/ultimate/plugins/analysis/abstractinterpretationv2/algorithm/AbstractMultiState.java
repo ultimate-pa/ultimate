@@ -185,20 +185,20 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, ACTION, VARD
 	public String toLogString() {
 		final StringBuilder sb = new StringBuilder();
 		sb.append('#').append(mStates.size());
-		sb.append('{');
 		for (final STATE state : mStates) {
+			sb.append('{');
 			final String logStr = state.toLogString();
 			if (logStr == null || logStr.isEmpty()) {
 				sb.append("__");
 			} else {
 				sb.append(logStr);
 			}
+			sb.append('}');
 			sb.append(", ");
 		}
 		if (!mStates.isEmpty()) {
 			sb.delete(sb.length() - 2, sb.length());
 		}
-		sb.append('}');
 		return sb.toString();
 	}
 
