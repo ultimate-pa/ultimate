@@ -30,7 +30,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.SpoilerVertex;
 
 /**
- * Provide information about simulations that are needed for constructing
+ * Provide information about delayed simulation that is needed for constructing
  * the game graph and for obtaining simulation results.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
@@ -38,20 +38,49 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
  * @param <LETTER>
  * @param <STATE>
  */
-public interface ISimulationInfoProvider<LETTER, STATE> {
+public class DelayedSimulationInfoProvider<LETTER, STATE> implements ISimulationInfoProvider<LETTER, STATE> {
+
+	@Override
+	public boolean computeBitForInitialVertex(final boolean isSpoilerAccepting, final boolean isDuplicatorAccepting) {
+		return isSpoilerAccepting && !isDuplicatorAccepting;
+	}
+
+	@Override
+	public boolean computeBitForSpoilerVertex(final boolean predecessorBit, final boolean isSpoilerAccepting) {
+		return predecessorBit || isSpoilerAccepting;
+	}
+
+	@Override
+	public boolean computeBitForDuplicatorVertex(final boolean predecessorBit, final boolean isDuplicatorAccepting) {
+		return predecessorBit && !isDuplicatorAccepting;
+	}
+
+	@Override
+	public int computePriority(final boolean bit, final boolean isSpoilerAccepting, final boolean isDuplicatorAccepting) {
+		if (bit) {
+			return 1;
+		} else {
+			return 0;
+		}
+	}
 	
-	
-	public boolean computeBitForInitialVertex(boolean isSpoilerAccepting, boolean isDuplicatorAccepting);
-	public boolean computeBitForSpoilerVertex(boolean predecessorBit, boolean isSpoilerAccepting);
-	public boolean computeBitForDuplicatorVertex(boolean predecessorBit, boolean isDuplicatorAccepting);
-	
-	public int computePriority(boolean bit, boolean isSpoilerAccepting, boolean isDuplicatorAccepting);
-	
-	public boolean isImmediatelyWinningForSpoiler(boolean isSpoilerAccepting, boolean isDuplicatorAccepting);
-	
-	public boolean isSimulationInformationProvider(SpoilerVertex<LETTER, STATE> spoilerVertex, 
-			INestedWordAutomatonSimple<LETTER, STATE> inputAutomaton);
-	
-	
+	@Override
+	public boolean isImmediatelyWinningForSpoiler(final boolean isSpoilerAccepting, final boolean isDuplicatorAccepting) {
+		return false;
+	}
+
+	@Override
+	public boolean isSimulationInformationProvider(final SpoilerVertex<LETTER, STATE> spoilerVertex, 
+			final INestedWordAutomatonSimple<LETTER, STATE> inputAutomaton) {
+		if (spoilerVertex.getQ0() == null || spoilerVertex.getQ1() == null) {
+			throw new UnsupportedOperationException("no states are not supported");
+		}
+		if (inputAutomaton.isFinal(spoilerVertex.getQ0()) && !inputAutomaton.isFinal(spoilerVertex.getQ1())) {
+			return spoilerVertex.isB();
+		} else {
+			return !spoilerVertex.isB();
+		}
+	}
+
 	
 }
