@@ -216,7 +216,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 					if (returnValue.isBottom()) {
 						returnBool = new BooleanValue(false);
 					} else {
-						returnBool = res1.getValue().isGreaterOrEqual(res2.getValue());
+						returnBool = res1.getValue().isLessOrEqual(res2.getValue());
 					}
 					break;
 				case COMPPO:
@@ -225,7 +225,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 					returnBool = new BooleanValue(false);
 					returnValue = mNonrelationalValueFactory.createTopValue();
 				}
-				returnList.add(new NonrelationalEvaluationResult<VALUE>(returnValue, returnBool));
+				returnList.add(new NonrelationalEvaluationResult<>(returnValue, returnBool));
 			}
 		}
 
@@ -283,9 +283,9 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 					final VALUE newRight = computeNewValue(referenceValue, right.getValue(), left.getValue(), false);
 
 					final NonrelationalEvaluationResult<VALUE> leftEvalresult =
-							new NonrelationalEvaluationResult<VALUE>(newLeft, right.getBooleanValue());
+							new NonrelationalEvaluationResult<>(newLeft, right.getBooleanValue());
 					final NonrelationalEvaluationResult<VALUE> rightEvalresult =
-							new NonrelationalEvaluationResult<VALUE>(newRight, left.getBooleanValue());
+							new NonrelationalEvaluationResult<>(newRight, left.getBooleanValue());
 
 					final List<STATE> leftEq = mLeftSubEvaluator.inverseEvaluate(leftEvalresult, currentState);
 					final List<STATE> rightEq = mRightSubEvaluator.inverseEvaluate(rightEvalresult, currentState);
@@ -311,9 +311,9 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 							computeNewValue(referenceValue, right.getValue(), left.getValue(), false);
 
 					final NonrelationalEvaluationResult<VALUE> inverseResultLeft =
-							new NonrelationalEvaluationResult<VALUE>(newValueLeft, referenceBool);
+							new NonrelationalEvaluationResult<>(newValueLeft, referenceBool);
 					final NonrelationalEvaluationResult<VALUE> inverseResultRight =
-							new NonrelationalEvaluationResult<VALUE>(newValueRight, referenceBool);
+							new NonrelationalEvaluationResult<>(newValueRight, referenceBool);
 
 					final List<STATE> leftInverseArith =
 							mLeftSubEvaluator.inverseEvaluate(inverseResultLeft, currentState);
