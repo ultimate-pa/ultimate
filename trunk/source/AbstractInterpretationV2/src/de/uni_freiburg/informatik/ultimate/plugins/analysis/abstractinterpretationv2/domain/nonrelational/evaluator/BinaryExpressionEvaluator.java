@@ -207,7 +207,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 					if (returnValue.isBottom()) {
 						returnBool = new BooleanValue(false);
 					} else {
-						returnBool = res1.getValue().isGreaterThan(res2.getValue());
+						returnBool = res1.getValue().isLessThan(res2.getValue());
 					}
 					break;
 				case COMPLEQ:
