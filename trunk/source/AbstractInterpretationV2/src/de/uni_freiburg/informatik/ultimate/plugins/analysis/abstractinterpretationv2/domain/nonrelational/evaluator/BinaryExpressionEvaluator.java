@@ -373,17 +373,17 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 			newValue = newValue.intersect(oldValue);
 			break;
 		case ARITHDIV:
-			if (isLeft) {
-				newValue = referenceValue.multiply(otherValue);
-			} else {
-				if (mEvaluatorType == EvaluatorType.INTEGER) {
-					newValue = otherValue.integerDivide(referenceValue);
-				} else if (mEvaluatorType == EvaluatorType.REAL) {
-					newValue = otherValue.divide(referenceValue);
+			if (mEvaluatorType == EvaluatorType.INTEGER) {
+				newValue = oldValue;
+			} else if (mEvaluatorType == EvaluatorType.REAL) {
+				if (isLeft) {
+					newValue = referenceValue.multiply(otherValue);
 				} else {
-					throw new UnsupportedOperationException(
-							"Division on types other than integers and reals is not defined.");
+					newValue = otherValue.divide(referenceValue);
 				}
+			} else {
+				throw new UnsupportedOperationException(
+						"Division on types other than integers and reals is not defined.");
 			}
 			newValue = newValue.intersect(oldValue);
 			break;
