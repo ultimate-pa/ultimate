@@ -49,6 +49,8 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 		// add deduction guard to every edge of the automaton
 		this.logger.info("Beginning DeductionGuard transformation.");
 		for (int i = 0; i < patterns.size(); i++) {
+			PatternType pattern = this.systemModel.getPattern(i);
+			this.logger.info("Transforming:" + pattern);
 			PhaseEventAutomata pea = this.systemModel.getPeas().get(i);
 			CounterTrace counterTrace = this.systemModel.getCounterTraces().get(i);
 			String clockVar = null;
@@ -57,7 +59,7 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 			}
 			// get last active phase of counter trace automaton
 			// int lastphase = counterTrace.getPhases().length -3;
-			Set<String> effectVars = this.systemModel.getPattern(i).getEffectVariabels();
+			Set<String> effectVars = pattern.getEffectVariabels();
 			DCPhase lastPhase = this.systemModel.getFinalPhase(counterTrace);
 			this.transformPea(pea, counterTrace, lastPhase, clockVar, effectVars, i);
 		}
@@ -75,6 +77,9 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 				CDD targetPhaseConj = CDD.TRUE;
 				for (DCPhase phase : this.systemModel.getDcPhases(pea, dest)) {
 					if (lastPhase == phase) {
+						// TODO: this is not true in the presence of timing:
+						// if < timing then there is no final phase, but only a final "edge" on which reading is allowed
+						// usw
 						destFinal = true;
 					}
 					targetPhaseConj = targetPhaseConj.and(phase.getInvariant());

@@ -161,10 +161,10 @@ public class PatternToDc {
 		pattern.setEffect(s);
 		return new CounterTrace(new CounterTrace.DCPhase[] {
 			    new CounterTrace.DCPhase(),
-			    new CounterTrace.DCPhase(q),
-			    new CounterTrace.DCPhase(),
-			    new CounterTrace.DCPhase(p.and(s.negate())),
-			    new CounterTrace.DCPhase(s.negate(), CounterTrace.BOUND_GREATER, t),
+			    new CounterTrace.DCPhase(q.and(r.negate())),
+			    new CounterTrace.DCPhase(r.negate()),
+			    new CounterTrace.DCPhase(p.and(s.negate()).and(r.negate())),
+			    new CounterTrace.DCPhase(s.negate().and(r.negate()), CounterTrace.BOUND_GREATER, t),
 			    new CounterTrace.DCPhase()
 			});
 	}

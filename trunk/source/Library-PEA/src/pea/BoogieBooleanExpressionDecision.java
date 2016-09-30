@@ -36,7 +36,6 @@ public class BoogieBooleanExpressionDecision extends Decision {
 	public BoogieBooleanExpressionDecision(Expression expression)
 	{
 		this.expression = expression;
-		System.out.println(expression.toString());
 	}
 	
     /**

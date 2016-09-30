@@ -9,36 +9,27 @@ public class InitializationPattern extends PatternType {
 	public enum VarAccess{in, out, hidden};
 	
 	private String type;
-	private VarAccess access;
+	private VarAccess visibility;
 	private String ident;
 	
-	public InitializationPattern(String ident, String type, CDD initial){
-		this.access = VarAccess.in;
+	public InitializationPattern(String ident, String type, VarAccess visibility){
+		this.ident = ident;
+		this.type = type;
+		this.visibility = visibility;
+	}
+	
+	public InitializationPattern(String ident, String type, VarAccess visibility, CDD initially){
+		this.ident = ident;
+		this.type = type;
+		this.visibility = visibility;
+		
 		Vector<CDD> aux = new Vector<CDD>();
-		aux.add(initial);
+		aux.add(initially);
 		this.mergeCDDs(aux);
-		this.ident = ident;
-		this.type = type;
-	}
-	
-	public InitializationPattern(String ident, String type){
-		this.access = VarAccess.in;
-		this.ident = ident;
-		this.type = type;
-	}
-	
-	public InitializationPattern(String ident, String type, boolean internal){
-		if(internal){
-			this.access = VarAccess.hidden;
-		}else{
-			this.access = VarAccess.out;
-		}
-		this.ident = ident;
-		this.type = type;
 	}
 	
 	public VarAccess getAccessability(){
-		return this.access;
+		return this.visibility;
 		}
 	
 	public String getIdent(){

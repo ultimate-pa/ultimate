@@ -84,6 +84,7 @@ RealIntegerLiteral = {DecIntegerLiteral} "." [0-9]+
    "is"             { return symbol(ReqSymbols.IS); }
    "it"             { return symbol(ReqSymbols.IT); }
    "least"          { return symbol(ReqSymbols.LEAST); }
+   "initially"      { return symbol(ReqSymbols.INITIALLY); }
    "less"           { return symbol(ReqSymbols.LESS); }
    "most"           { return symbol(ReqSymbols.MOST); }
    "msec"           { return symbol(ReqSymbols.MSEC); }

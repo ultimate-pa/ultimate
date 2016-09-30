@@ -180,11 +180,11 @@ property ::= scope:s COMMA? pattern:p DOT?
            | error
              {: RESULT = null; :}
           	| INPUT cid:i IS ID:t
-		  	{: RESULT = new InitializationPattern(i,t); :}
+		  	{: RESULT = new InitializationPattern(i,t,InitializationPattern.VarAccess.in); :}
 		  	| OUTPUT cid:i IS ID:t
-		  	{: RESULT = new InitializationPattern(i,t,false); :}
+		  	{: RESULT = new InitializationPattern(i,t,InitializationPattern.VarAccess.out); :}
 		 	| INTERNAL cid:i IS ID:t
-		  	{: RESULT = new InitializationPattern(i,t,true); :}
+		  	{: RESULT = new InitializationPattern(i,t,InitializationPattern.VarAccess.hidden); :}
            ;
 
 scope ::=
