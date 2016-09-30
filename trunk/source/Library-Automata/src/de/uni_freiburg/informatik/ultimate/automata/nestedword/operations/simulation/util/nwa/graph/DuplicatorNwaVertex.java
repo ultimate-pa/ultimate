@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simul
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.DuplicatorVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.ETransitionType;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game.IGameLetter;
 
 /**
  * A vertex representing that its <i>Duplicator</i>s turn in the game defined by
@@ -51,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
  * @param <STATE>
  *            State class of nwa automaton
  */
-public final class DuplicatorNwaVertex<LETTER, STATE> extends DuplicatorVertex<LETTER, STATE> {
+public final class DuplicatorNwaVertex<LETTER, STATE> extends DuplicatorVertex<LETTER, STATE> implements IGameLetter<LETTER, STATE> {
 
 	/**
 	 * The sink this vertex belongs to if it is generated as a shadow vertex for
