@@ -50,29 +50,28 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  *
  */
 public class CongruenceDomainStatementProcessor
-        extends NonrelationalStatementProcessor<CongruenceDomainState, CongruenceDomainValue> {
+		extends NonrelationalStatementProcessor<CongruenceDomainState, CongruenceDomainValue> {
 
 	protected CongruenceDomainStatementProcessor(final ILogger logger, final BoogieSymbolTable symbolTable,
-	        final Boogie2SmtSymbolTable bpl2smtTable, final int maxParallelStates) {
+			final Boogie2SmtSymbolTable bpl2smtTable, final int maxParallelStates) {
 		super(logger, symbolTable, bpl2smtTable, maxParallelStates);
 	}
 
 	@Override
-	protected IEvaluatorFactory<CongruenceDomainValue, CongruenceDomainState, CodeBlock> createEvaluatorFactory(
-	        final int maxParallelStates) {
-		final EvaluatorFactory.Function<String, CongruenceDomainValue> singletonValueExpressionEvaluatorCreator = (
-		        value, type) -> {
-			assert value != null;
-			assert type != null;
-			if (type == BigInteger.class) {
-				return CongruenceDomainValue.createConstant(new BigInteger(value));
-			} else {
-				assert type == BigDecimal.class;
-				return CongruenceDomainValue.createTop();
-			}
-		};
+	protected IEvaluatorFactory<CongruenceDomainValue, CongruenceDomainState, CodeBlock>
+			createEvaluatorFactory(final int maxParallelStates) {
+		final EvaluatorFactory.Function<String, CongruenceDomainValue> singletonValueExpressionEvaluatorCreator =
+				(value, type) -> {
+					assert value != null;
+					assert type != null;
+					if (type == BigInteger.class) {
+						return CongruenceDomainValue.createConstant(new BigInteger(value));
+					}
+					assert type == BigDecimal.class;
+					return CongruenceDomainValue.createTop();
+				};
 		return new EvaluatorFactory<>(getLogger(), maxParallelStates, new CongruenceValueFactory(),
-		        singletonValueExpressionEvaluatorCreator);
+				singletonValueExpressionEvaluatorCreator);
 	}
 
 	@Override

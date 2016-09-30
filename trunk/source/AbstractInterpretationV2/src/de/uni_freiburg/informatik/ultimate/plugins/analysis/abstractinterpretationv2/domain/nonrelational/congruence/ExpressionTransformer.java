@@ -133,8 +133,8 @@ public final class ExpressionTransformer {
 		final Expression right = expr.getRight();
 
 		Operator newOp = op;
-		Expression newLeft = left;
-		Expression newRight = right;
+		final Expression newLeft;
+		final Expression newRight;
 
 		final ILocation loc = expr.getLocation();
 
@@ -273,24 +273,23 @@ public final class ExpressionTransformer {
 	}
 
 	private void processUnary(final UnaryExpression expr) {
-		if (expr.getOperator() == UnaryExpression.Operator.ARITHNEGATIVE) {
-			final ExpressionTransformer sub = new ExpressionTransformer();
-			sub.process(expr.getExpr());
-			mIdentifiers.putAll(sub.mIdentifiers);
-			if (sub.mIsLinear) {
-				mConstant = sub.mConstant.negate();
-				for (final Entry<String, BigInteger> entry : sub.mCoefficients.entrySet()) {
-					mCoefficients.put(entry.getKey(), entry.getValue().negate());
-				}
-				if (sub.mHasNormalForm) {
-					if (sub.mCoefficients.isEmpty() && sub.mConstant.signum() > 0
-							|| sub.mCoefficients.size() == 1 && sub.mConstant.signum() == 0) {
-						mHasNormalForm = true;
-					}
-				}
-			} else {
-				mIsLinear = false;
+		if (expr.getOperator() != UnaryExpression.Operator.ARITHNEGATIVE) {
+			return;
+		}
+		final ExpressionTransformer sub = new ExpressionTransformer();
+		sub.process(expr.getExpr());
+		mIdentifiers.putAll(sub.mIdentifiers);
+		if (sub.mIsLinear) {
+			mConstant = sub.mConstant.negate();
+			for (final Entry<String, BigInteger> entry : sub.mCoefficients.entrySet()) {
+				mCoefficients.put(entry.getKey(), entry.getValue().negate());
 			}
+			if (sub.mHasNormalForm && (sub.mCoefficients.isEmpty() && sub.mConstant.signum() > 0
+					|| sub.mCoefficients.size() == 1 && sub.mConstant.signum() == 0)) {
+				mHasNormalForm = true;
+			}
+		} else {
+			mIsLinear = false;
 		}
 	}
 
