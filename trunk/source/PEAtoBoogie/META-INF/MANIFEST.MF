@@ -9,6 +9,7 @@ Require-Bundle: Library-UltimateCore,
  Library-BoogieAST,
  Library-PEA,
  Library-srParse,
- JavaCup
+ JavaCup,
+ Library-UltimateUtil
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
