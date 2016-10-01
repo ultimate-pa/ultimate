@@ -518,24 +518,24 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> extends UnaryNwaOperati
 		final NestedWordAutomatonReachableStates<LETTER, STATE> operandReachable = new RemoveUnreachable<LETTER, STATE>(
 				mServices, new RemoveDeadEnds<LETTER, STATE>(mServices, operand).getResult()).getResult();
 
-		String automatonName = "";
-		BufferedReader br = null;
-		try {
-			br = new BufferedReader(new FileReader(new File(LOG_PATH, "currentAutomatonName.txt")));
-			while (br.ready()) {
-				automatonName = br.readLine();
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		} finally {
-			if (br != null) {
-				try {
-					br.close();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-		}
+		final String automatonName = "";
+//		BufferedReader br = null;
+//		try {
+//			br = new BufferedReader(new FileReader(new File(LOG_PATH, "currentAutomatonName.txt")));
+//			while (br.ready()) {
+//				automatonName = br.readLine();
+//			}
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		} finally {
+//			if (br != null) {
+//				try {
+//					br.close();
+//				} catch (IOException e) {
+//					e.printStackTrace();
+//				}
+//			}
+//		}
 
 		measurePerformances(automatonName, simulationTimeoutMillis, stateFactory, operandReachable);
 
