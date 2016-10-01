@@ -34,7 +34,7 @@ import java.util.Set;
  * Wrapper that represents a double decker set of a game automaton. They assign
  * multiply up states to each down state.
  * 
- * @author Daniel Tischner
+ * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  *
  */
 public final class GameDoubleDeckerSet implements IGameState {

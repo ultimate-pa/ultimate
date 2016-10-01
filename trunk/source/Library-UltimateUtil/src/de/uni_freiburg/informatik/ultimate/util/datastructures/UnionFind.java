@@ -42,7 +42,7 @@ import java.util.Set;
  * class the representative
  *
  * @author Matthias Heizmann
- * @author Daniel Tischner
+ * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  */
 public class UnionFind<E> {
 	/**

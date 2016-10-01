@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.util.datastructures.relation;
 /**
  * Generic Quintuple that stores 5 different values.
  * 
- * @author Daniel Tischner
+ * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  *
  * @param <E1>
  *            Type of the first element

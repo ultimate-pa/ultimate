@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
- * @author Daniel Tischner
+ * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  */
 public enum StatisticsType {
 	/**

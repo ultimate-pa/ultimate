@@ -32,7 +32,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
  * Represents a letter in a game automaton. Such a letter is a Duplicator
  * game graph node.
  * 
- * @author Daniel Tischner
+ * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  * @author Matthias Heizmann
  *
  * @param <LETTER>

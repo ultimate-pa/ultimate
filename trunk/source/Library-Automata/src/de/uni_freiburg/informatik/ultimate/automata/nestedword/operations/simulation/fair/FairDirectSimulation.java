@@ -61,7 +61,7 @@ import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
  * The algorithm is based on the paper: <i>Fair simulation minimization</i> by
  * <i>Gurumurthy, Bloem and Somenzi</i>.
  * 
- * @author Daniel Tischner
+ * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  * 
  * @param <LETTER>
  *            Letter class of buechi automaton

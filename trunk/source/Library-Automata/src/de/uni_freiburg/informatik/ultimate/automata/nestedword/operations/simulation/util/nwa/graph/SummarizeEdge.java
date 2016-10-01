@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * default the priorities are not valid and need to be assigned after creation,
  * else the graph is in an illegal state.
  * 
- * @author Daniel Tischner
+ * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  *
  * @param <LETTER>
  *            Letter class of nwa automaton

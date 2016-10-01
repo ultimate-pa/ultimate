@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * For correctness its important that the inputed automaton has <b>no dead
  * ends</b> nor <b>duplicate transitions</b>.
  * 
- * @author Daniel Tischner
+ * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  * 
  * @param <LETTER>
  *            Letter class of nwa automaton

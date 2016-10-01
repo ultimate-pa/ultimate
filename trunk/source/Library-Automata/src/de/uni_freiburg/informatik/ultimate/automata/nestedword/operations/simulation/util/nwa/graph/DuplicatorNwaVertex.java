@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
  * This object extends regular DuplicatorVertices by giving it extra information
  * that only occur in Nwa Game Graphs, like sinks.
  * 
- * @author Daniel Tischner
+ * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  * 
  * @param <LETTER>
  *            Letter class of nwa automaton

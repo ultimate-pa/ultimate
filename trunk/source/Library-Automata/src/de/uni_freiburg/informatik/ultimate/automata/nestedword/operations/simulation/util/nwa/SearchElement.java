@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * Element for a breadth-first search that computes the priority of a given
  * summarize edge based on the priorities of vertices in the game graph.
  * 
- * @author Daniel Tischner
+ * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  *
  * @param <LETTER>
  *            Letter class of nwa automaton

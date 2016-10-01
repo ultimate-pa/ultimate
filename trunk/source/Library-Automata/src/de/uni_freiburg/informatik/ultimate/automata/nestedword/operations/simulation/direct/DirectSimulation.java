@@ -62,7 +62,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTim
  * games, and state space reduction for büchi automata</i> by <i>Etessami, Wilke
  * and Schuller</i>.
  * 
- * @author Daniel Tischner
+ * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  *
  * @param <LETTER>
  *            Letter class of buechi automaton

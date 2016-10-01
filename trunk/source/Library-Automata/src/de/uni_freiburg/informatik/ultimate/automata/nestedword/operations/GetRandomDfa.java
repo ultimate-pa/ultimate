@@ -64,7 +64,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
  * where 'n' is the amount of nodes, 'k' the size of the alphabet and 'random'
  * methods of {@link java.util.Random}.
  * 
- * @author Daniel Tischner
+ * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  */
 public final class GetRandomDfa extends GeneralOperation<String, String> {
 	/**

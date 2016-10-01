@@ -94,7 +94,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 /**
  * Generates double decker game graphs based on nwa automaton. Supports different types of simulation types.
  *
- * @author Daniel Tischner
+ * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  *
  * @param <LETTER>
  *            Letter class of nwa automaton

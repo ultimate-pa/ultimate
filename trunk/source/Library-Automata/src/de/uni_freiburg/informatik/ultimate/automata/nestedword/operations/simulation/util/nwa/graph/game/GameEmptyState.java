@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simul
 /**
  * This game automaton state represents an empty stack symbol.
  * 
- * @author Daniel Tischner
+ * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  *
  */
 public final class GameEmptyState implements IGameState {

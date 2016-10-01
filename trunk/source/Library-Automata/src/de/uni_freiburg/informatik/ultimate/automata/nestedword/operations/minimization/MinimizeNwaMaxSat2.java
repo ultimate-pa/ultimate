@@ -72,7 +72,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
- * @author Daniel Tischner
+ * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  * @param <LETTER>
  *            letter type
  * @param <STATE>

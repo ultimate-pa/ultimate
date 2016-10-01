@@ -33,7 +33,7 @@ import java.util.Comparator;
  * {@link Vertex#getPM(java.util.Set, int)} but with reverse ordering, i.e.
  * greater values come before smaller ones.
  * 
- * @author Daniel Tischner
+ * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  *
  * @param <LETTER>
  *            Letter class for vertices

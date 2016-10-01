@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.util.scc.SccComputation.ISuccessorPro
  * Successor provider for a {@link AGameGraph}. Given a vertex it gets all its
  * successors.
  * 
- * @author Daniel Tischner
+ * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  *
  * @param <LETTER>
  *            Letter class of buechi automaton

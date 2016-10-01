@@ -41,7 +41,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simul
  * before whereas <i>Duplicator</i> now is at q1 and must try to also use an
  * a-transition. The bit encodes extra information if needed.
  * 
- * @author Daniel Tischner
+ * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  * @author Markus Lindenmann (lindenmm@informatik.uni-freiburg.de)
  * @author Oleksii Saukh (saukho@informatik.uni-freiburg.de)
  * @date 16.01.2012

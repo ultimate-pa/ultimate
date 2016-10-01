@@ -30,7 +30,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simul
  * Represents a sink that is winning for a given player. The winning player is
  * specified by {@link #getPriority()}.
  * 
- * @author Daniel Tischner
+ * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  *
  * @param <LETTER>
  *            Letter class of nwa automaton

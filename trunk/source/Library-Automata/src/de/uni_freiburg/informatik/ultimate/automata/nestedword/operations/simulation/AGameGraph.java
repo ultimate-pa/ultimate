@@ -72,7 +72,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  * 
  * For simulations see {@link ASimulation}.
  * 
- * @author Daniel Tischner
+ * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  *
  * @param <LETTER>
  *            Letter class of buechi automaton

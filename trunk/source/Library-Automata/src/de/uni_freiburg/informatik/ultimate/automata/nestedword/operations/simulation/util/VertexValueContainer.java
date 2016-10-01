@@ -30,7 +30,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simul
  * Container for vertex values. Holds relevant fields of
  * {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.Vertex vertices}.
  * 
- * @author Daniel Tischner
+ * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  *
  */
 public final class VertexValueContainer {

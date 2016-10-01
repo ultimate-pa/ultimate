@@ -69,7 +69,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  * q0</b> where q0 was the starting state of <i>Spoiler</i> and q1 of
  * <i>Duplicator</i>.
  * 
- * @author Daniel Tischner
+ * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  *
  * @param <LETTER>
  *            Letter class of buechi automaton
