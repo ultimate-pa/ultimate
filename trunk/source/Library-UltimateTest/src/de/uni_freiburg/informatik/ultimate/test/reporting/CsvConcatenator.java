@@ -29,6 +29,7 @@
 package de.uni_freiburg.informatik.ultimate.test.reporting;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -37,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider.TestResult;
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
+import de.uni_freiburg.informatik.ultimate.util.csv.CsvProviderTransformerCombinator;
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvUtils;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
@@ -67,19 +69,6 @@ public class CsvConcatenator implements ITestSummary {
 	private ICsvProvider<Object> mCsvProvider;
 	
 	/**
-	 * Constructor without a transformer.
-	 * 
-	 * @param ultimateTestSuite
-	 *            Ultimate test suite
-	 * @param benchmark
-	 *            benchmark
-	 */
-	public CsvConcatenator(final Class<? extends UltimateTestSuite> ultimateTestSuite,
-			final Class<? extends ICsvProviderProvider<?>> benchmark) {
-		this(ultimateTestSuite, benchmark, null);
-	}
-	
-	/**
 	 * Constructor with a transformer which is automatically applied to the result in {@link #getSummaryLog()}.
 	 * 
 	 * @param ultimateTestSuite
@@ -91,10 +80,10 @@ public class CsvConcatenator implements ITestSummary {
 	 */
 	public CsvConcatenator(final Class<? extends UltimateTestSuite> ultimateTestSuite,
 			final Class<? extends ICsvProviderProvider<?>> benchmark,
-			final ICsvProviderTransformer<Object> transformer) {
+			final ICsvProviderTransformer<Object>... transformer) {
 		mUltimateTestSuite = ultimateTestSuite;
 		mBenchmark = benchmark;
-		mTransformer = transformer;
+		mTransformer = new CsvProviderTransformerCombinator<>(Arrays.asList(transformer));
 		final List<String> emtpyList = Collections.emptyList();
 		mCsvProvider = new SimpleCsvProvider<Object>(emtpyList);
 	}
