@@ -64,6 +64,8 @@ public abstract class NestedWordAutomatonOnDemandStateAndLetter<LETTER, STATE> i
 	protected final Set<LETTER> mCallAlphabet;
 	protected final Set<LETTER> mReturnAlphabet;
 
+	private boolean mInitialStateHaveBeenConstructed = false;
+
 	public NestedWordAutomatonOnDemandStateAndLetter(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory) {
 		super();
 		mServices = services;
@@ -74,7 +76,7 @@ public abstract class NestedWordAutomatonOnDemandStateAndLetter<LETTER, STATE> i
 		mCallAlphabet = new HashSet<>();
 		mReturnAlphabet = new HashSet<>();
 		mCache = new NestedWordAutomatonCache<LETTER, STATE>(mServices, mInternalAlphabet, mCallAlphabet, mReturnAlphabet, stateFactory);
-		constructInitialStates();
+
 	}
 	
 	protected abstract void constructInitialStates();
@@ -143,6 +145,10 @@ public abstract class NestedWordAutomatonOnDemandStateAndLetter<LETTER, STATE> i
 	 */
 	@Override
 	public Collection<STATE> getInitialStates() {
+		if (!mInitialStateHaveBeenConstructed) {
+			constructInitialStates();
+			mInitialStateHaveBeenConstructed = true;
+		}
 		return mCache.getInitialStates();
 	}
 
