@@ -1103,10 +1103,14 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 		}
 		
 		private boolean candidateForOutgoingReturn(final STATE state) {
-			if (getReturnAlphabet().isEmpty()) {
-				return false;
+			if (mOperand.hasModifiableAlphabet()) {
+				return true;
+			} else {
+				if (getReturnAlphabet().isEmpty()) {
+					return false;
+				}
+				return !getOperand().lettersReturn(state).isEmpty();
 			}
-			return !getOperand().lettersReturn(state).isEmpty();
 		}
 		
 		private void addInternalsAndSuccessors(final StateContainer<LETTER, STATE> cont) {
