@@ -1398,7 +1398,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		final NestedWordAutomatonReachableStates<IGameLetter<LETTER, STATE>, IGameState> gameAutomatonWithSummaries =
 				new RemoveUnreachable<>(mServices, gameAutomaton).getResult();
 		
-		final boolean backwardSummaryComputation = false;
+		final boolean backwardSummaryComputation = !false;
 		if (backwardSummaryComputation ) {
 			final SummaryComputation<LETTER, STATE> sc = new SummaryComputation<LETTER, STATE>(mServices, gameAutomatonWithSummaries, mNwa);
 			for (final IGameState gameState : sc.getNeedSpoilerWinningSink()) {
