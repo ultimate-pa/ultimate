@@ -54,7 +54,7 @@ public class AutomataMinimizationTestSuite extends UltimateTestSuite {
 
 	private static final String mToolchain = "examples/toolchains/AutomataScriptInterpreter.xml";
 	private static final File mToolchainFile = new File(TestUtil.getPathFromTrunk(mToolchain));
-	private static int mTimeout = 60 * 1000;
+	private static int mTimeout = 20 * 1000;
 	private static final String[] mDirectories = { 
 			"examples/Automata/nwaOperations/MinimizationBenchmarks", 
 			};
@@ -63,7 +63,9 @@ public class AutomataMinimizationTestSuite extends UltimateTestSuite {
 	private static final String[] SETTINGS = { 
 			"AutomataScript/minimizeSevpa.epf", 
 			"AutomataScript/shrinkNwa.epf",
-			"AutomataScript/minimizeNwaMaxSat2.epf", 
+			"AutomataScript/minimizeNwaMaxSat2.epf",
+			"AutomataScript/reduceNwaDirectSimulation.epf", 
+			"AutomataScript/reduceNwaDirectSimulationB.epf", 
 			};
 
 	@Override
