@@ -29,10 +29,17 @@ package de.uni_freiburg.informatik.ultimatetest.suites.automatascript;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
+import de.uni_freiburg.informatik.ultimate.automata.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateStarter;
@@ -43,7 +50,11 @@ import de.uni_freiburg.informatik.ultimate.test.reporting.CsvConcatenator;
 import de.uni_freiburg.informatik.ultimate.test.reporting.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
+import de.uni_freiburg.informatik.ultimate.util.csv.CsvProviderColumnFilter;
+import de.uni_freiburg.informatik.ultimate.util.csv.CsvProviderRowFilter;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
+import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderTransformer;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimatetest.summaries.AutomataScriptTestSummary;
 import de.uni_freiburg.informatik.ultimatetest.summaries.ColumnDefinition;
 import de.uni_freiburg.informatik.ultimatetest.summaries.ColumnDefinition.Aggregate;
@@ -55,7 +66,8 @@ public class AutomataMinimizationTestSuite extends UltimateTestSuite {
 	private static final String mToolchain = "examples/toolchains/AutomataScriptInterpreter.xml";
 	private static final File mToolchainFile = new File(TestUtil.getPathFromTrunk(mToolchain));
 	private static int mTimeout = 20 * 1000;
-	private static final String[] mDirectories = { 
+	private static final String[] mDirectories = {
+			"examples/Automata/finiteAutomata/minimizeDfa", 
 			"examples/Automata/nwaOperations/MinimizationBenchmarks", 
 			};
 	private static final String[] mFileEndings = { ".ats" };
@@ -67,6 +79,29 @@ public class AutomataMinimizationTestSuite extends UltimateTestSuite {
 			"AutomataScript/reduceNwaDirectSimulation.epf", 
 			"AutomataScript/reduceNwaDirectSimulationB.epf", 
 			};
+	
+	private static final String[] INTERESTING_COLUMNS = {
+		"File",
+//		"Settings",
+//		StatisticsType.ATS_ID.toString(),
+		StatisticsType.OPERATION_NAME.toString(),
+		StatisticsType.RUNTIME_TOTAL.toString(),
+		StatisticsType.STATES_INPUT.toString(),
+		StatisticsType.STATES_OUTPUT.toString(),
+		StatisticsType.STATES_REDUCTION_ABSOLUTE.toString(),
+		StatisticsType.STATES_REDUCTION_RELATIVE.toString(),
+	};
+	private final Set<String> mInterestingColumnsAsSet = new HashSet<>(Arrays.asList(INTERESTING_COLUMNS));  
+
+	
+	private static final Object[] INTERESTING_OPERATIONS = {
+			"minimizeNwaMaxSat2",
+			"minimizeSevpa",
+			"shrinkNwa",
+			"reduceNwaDirectSimulation",
+			"reduceNwaDirectSimulationB",
+		};
+	private final Set<Object> mIntersetingOperationsAsSet = new HashSet<>(Arrays.asList(INTERESTING_OPERATIONS));  
 
 	@Override
 	protected ITestSummary[] constructTestSummaries() {
@@ -77,8 +112,15 @@ public class AutomataMinimizationTestSuite extends UltimateTestSuite {
 				new ColumnDefinition(CegarLoopStatisticsDefinitions.OverallTime.toString(), "Avg. runtime",
 						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Sum, Aggregate.Average), };
 
+		final Predicate<String> columnPredicate = (x -> mInterestingColumnsAsSet.contains(x));
+		final ICsvProviderTransformer<Object> columnFilter = new CsvProviderColumnFilter<>(columnPredicate);
+		
+		
+		final Map<String, Set<Object>> column2allowedValues = Collections.singletonMap(StatisticsType.OPERATION_NAME.toString(), mIntersetingOperationsAsSet);
+		final Predicate<Pair<List<Object>, List<String>>> predicate = new CsvProviderRowFilter.AllowedValuesRowFilter<Object>(column2allowedValues);
+		final ICsvProviderTransformer<Object> rowFilter = new CsvProviderRowFilter<Object>(predicate);
 		return new ITestSummary[] { new AutomataScriptTestSummary(this.getClass()),
-				new CsvConcatenator(this.getClass(), AutomataOperationStatistics.class),
+				new CsvConcatenator(this.getClass(), AutomataOperationStatistics.class, columnFilter, rowFilter),
 				new LatexOverviewSummary(getClass(), benchmarks, columnDef), };
 	}
 
