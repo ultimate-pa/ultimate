@@ -30,6 +30,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.TestBuchiEquivalence;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
@@ -39,21 +40,20 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <LETTER>
  * @param <STATE>
  */
-public class ReduceNwaDirectSimulationB<LETTER, STATE> extends ReduceNwaSimulationBased<LETTER, STATE> {
+public class ReduceNwaDelayedSimulationB<LETTER, STATE> extends ReduceNwaSimulationBased<LETTER, STATE> {
 
-	public ReduceNwaDirectSimulationB(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+	public ReduceNwaDelayedSimulationB(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
-		super(services, stateFactory, operand, new DirectSimulationInfoProvider<>());
+		super(services, stateFactory, operand, new DelayedSimulationInfoProvider<>());
 	}
 	
 	
-	
-	
-	/* (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.automata.GeneralOperation#checkResult(de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory)
-	 */
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
-		return super.checkLanguageEquivalence(stateFactory).getFirst();
+		mLogger.info("Start testing correctness of " + operationName());
+		final boolean correct = (new TestBuchiEquivalence<LETTER, STATE>(mServices, stateFactory, getOperand(),
+				getResult())).getResult();
+		mLogger.info("Finished testing correctness of " + operationName());
+		return correct;
 	}
 }
