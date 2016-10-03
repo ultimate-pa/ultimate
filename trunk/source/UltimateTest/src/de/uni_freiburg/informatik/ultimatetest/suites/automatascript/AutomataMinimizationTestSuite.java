@@ -65,9 +65,9 @@ public class AutomataMinimizationTestSuite extends UltimateTestSuite {
 
 	private static final String mToolchain = "examples/toolchains/AutomataScriptInterpreter.xml";
 	private static final File mToolchainFile = new File(TestUtil.getPathFromTrunk(mToolchain));
-	private static int mTimeout = 20 * 1000;
+	private static int mTimeout = 30 * 1000;
 	private static final String[] mDirectories = {
-			"examples/Automata/finiteAutomata/minimizeDfa", 
+//			"examples/Automata/finiteAutomata/minimizeDfa", 
 			"examples/Automata/nwaOperations/MinimizationBenchmarks", 
 			};
 	private static final String[] mFileEndings = { ".ats" };
@@ -77,7 +77,9 @@ public class AutomataMinimizationTestSuite extends UltimateTestSuite {
 			"AutomataScript/shrinkNwa.epf",
 			"AutomataScript/minimizeNwaMaxSat2.epf",
 			"AutomataScript/reduceNwaDirectSimulation.epf", 
-			"AutomataScript/reduceNwaDirectSimulationB.epf", 
+			"AutomataScript/reduceNwaDirectSimulationB.epf",
+			"AutomataScript/reduceNwaDelayedSimulation.epf", 
+			"AutomataScript/reduceNwaDelayedSimulationB.epf", 
 			};
 	
 	private static final String[] INTERESTING_COLUMNS = {
@@ -91,7 +93,7 @@ public class AutomataMinimizationTestSuite extends UltimateTestSuite {
 		StatisticsType.STATES_REDUCTION_ABSOLUTE.toString(),
 		StatisticsType.STATES_REDUCTION_RELATIVE.toString(),
 	};
-	private final Set<String> mInterestingColumnsAsSet = new HashSet<>(Arrays.asList(INTERESTING_COLUMNS));  
+	private static final Set<String> INTERESTING_COLUMNS_AS_SET = new HashSet<>(Arrays.asList(INTERESTING_COLUMNS));  
 
 	
 	private static final Object[] INTERESTING_OPERATIONS = {
@@ -100,8 +102,10 @@ public class AutomataMinimizationTestSuite extends UltimateTestSuite {
 			"shrinkNwa",
 			"reduceNwaDirectSimulation",
 			"reduceNwaDirectSimulationB",
+			"reduceNwaDelayedSimulation",
+			"reduceNwaDelayedSimulationB",
 		};
-	private final Set<Object> mIntersetingOperationsAsSet = new HashSet<>(Arrays.asList(INTERESTING_OPERATIONS));  
+	private static final Set<Object> INTERESTING_OPERATIONS_AS_SET = new HashSet<>(Arrays.asList(INTERESTING_OPERATIONS));  
 
 	@Override
 	protected ITestSummary[] constructTestSummaries() {
@@ -112,11 +116,11 @@ public class AutomataMinimizationTestSuite extends UltimateTestSuite {
 				new ColumnDefinition(CegarLoopStatisticsDefinitions.OverallTime.toString(), "Avg. runtime",
 						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Sum, Aggregate.Average), };
 
-		final Predicate<String> columnPredicate = (x -> mInterestingColumnsAsSet.contains(x));
+		final Predicate<String> columnPredicate = (x -> INTERESTING_COLUMNS_AS_SET.contains(x));
 		final ICsvProviderTransformer<Object> columnFilter = new CsvProviderColumnFilter<>(columnPredicate);
 		
 		
-		final Map<String, Set<Object>> column2allowedValues = Collections.singletonMap(StatisticsType.OPERATION_NAME.toString(), mIntersetingOperationsAsSet);
+		final Map<String, Set<Object>> column2allowedValues = Collections.singletonMap(StatisticsType.OPERATION_NAME.toString(), INTERESTING_OPERATIONS_AS_SET);
 		final Predicate<Pair<List<Object>, List<String>>> predicate = new CsvProviderRowFilter.AllowedValuesRowFilter<Object>(column2allowedValues);
 		final ICsvProviderTransformer<Object> rowFilter = new CsvProviderRowFilter<Object>(predicate);
 		return new ITestSummary[] { new AutomataScriptTestSummary(this.getClass()),
