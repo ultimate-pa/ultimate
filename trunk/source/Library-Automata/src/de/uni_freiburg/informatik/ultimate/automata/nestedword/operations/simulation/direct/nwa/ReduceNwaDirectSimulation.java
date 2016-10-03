@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.direct.nwa;
 
-import java.util.Collection;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
@@ -130,7 +129,7 @@ public final class ReduceNwaDirectSimulation<LETTER, STATE> extends MinimizeDfaS
 	 */
 	public ReduceNwaDirectSimulation(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand, final boolean useSCCs,
-			final Collection<Set<STATE>> possibleEquivalenceClasses) throws AutomataOperationCanceledException {
+			final Iterable<Set<STATE>> possibleEquivalenceClasses) throws AutomataOperationCanceledException {
 		super(services, stateFactory, operand,
 				new DirectNwaSimulation<LETTER, STATE>(services.getProgressMonitorService(),
 						services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), useSCCs, stateFactory,

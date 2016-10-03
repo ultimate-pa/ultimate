@@ -158,7 +158,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 * A collection of sets which contains states of the an automaton that may be merge-able. States which are not in
 	 * the same set are definitely not merge-able which is used as an optimization for the game graph.
 	 */
-	private final Collection<Set<STATE>> mPossibleEquivalenceClasses;
+	private final Iterable<Set<STATE>> mPossibleEquivalenceClasses;
 	/**
 	 * Data structure of all duplicator vertices that may end up being a dead end and are not using a return transition.
 	 */
@@ -245,7 +245,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	public NwaGameGraphGeneration(final AutomataLibraryServices services, final IProgressAwareTimer progressTimer,
 			final ILogger logger, final IDoubleDeckerAutomaton<LETTER, STATE> nwa,
 			final AGameGraph<LETTER, STATE> gameGraph, final ESimulationType simulationType,
-			final Collection<Set<STATE>> possibleEquivalenceClasses, final boolean restrictGraphToInitPart) {
+			final Iterable<Set<STATE>> possibleEquivalenceClasses, final boolean restrictGraphToInitPart) {
 		mServices = services;
 		mNwa = nwa;
 		mAutomatonStatesToGraphDuplicatorVertex = new HashMap<>();
@@ -1408,8 +1408,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			
 			for (final SummaryComputation<LETTER, STATE>.GameSummary game : sc.getGameSummaries()) {
 				if (sc.getNeedSpoilerWinningSink().contains(game.getSummarySource())) {
-					// we already added a winning sink, 
-					// no need to add another summary 
+					// we already added a winning sink,
+					// no need to add another summary
 					continue;
 				}
 				
