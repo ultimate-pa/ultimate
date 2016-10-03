@@ -81,6 +81,13 @@ public class DelayedSimulationInfoProvider<LETTER, STATE> implements ISimulation
 			return !spoilerVertex.isB();
 		}
 	}
+	
+	
+	@Override
+	public boolean mayMergeFinalAndNonFinalStates() {
+		return true;
+	}
+
 
 	
 }

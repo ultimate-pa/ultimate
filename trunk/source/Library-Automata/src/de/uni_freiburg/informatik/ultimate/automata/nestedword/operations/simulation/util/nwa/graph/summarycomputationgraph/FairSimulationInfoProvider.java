@@ -85,5 +85,10 @@ public class FairSimulationInfoProvider<LETTER, STATE> implements ISimulationInf
 		return true;
 	}
 
+	@Override
+	public boolean mayMergeFinalAndNonFinalStates() {
+		return true;
+	}
+
 	
 }

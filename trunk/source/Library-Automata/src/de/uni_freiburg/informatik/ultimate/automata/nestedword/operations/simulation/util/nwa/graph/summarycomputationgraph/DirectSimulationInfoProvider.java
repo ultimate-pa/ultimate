@@ -76,5 +76,13 @@ public class DirectSimulationInfoProvider<LETTER, STATE> implements ISimulationI
 		}
 		return true;
 	}
+	
+	
+	
+	@Override
+	public boolean mayMergeFinalAndNonFinalStates() {
+		return false;
+	}
+
 
 }

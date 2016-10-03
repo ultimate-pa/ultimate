@@ -51,6 +51,7 @@ public interface ISimulationInfoProvider<LETTER, STATE> {
 	
 	public boolean isSimulationInformationProvider(SpoilerVertex<LETTER, STATE> spoilerVertex, 
 			INestedWordAutomatonSimple<LETTER, STATE> inputAutomaton);
+	public boolean mayMergeFinalAndNonFinalStates();
 	
 	
 	
