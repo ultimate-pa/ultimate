@@ -131,7 +131,7 @@ public abstract class ASimulation<LETTER, STATE> {
 	/**
 	 * The resulting possible reduced buechi automaton.
 	 */
-	private INestedWordAutomaton<LETTER, STATE> mResult;
+	protected INestedWordAutomaton<LETTER, STATE> mResult;
 	/**
 	 * The object that computes the SCCs of a given buechi automaton.
 	 */
