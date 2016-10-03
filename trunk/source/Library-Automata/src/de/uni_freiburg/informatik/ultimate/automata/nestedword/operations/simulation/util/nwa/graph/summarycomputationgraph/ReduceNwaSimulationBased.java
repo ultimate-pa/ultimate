@@ -32,8 +32,10 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
+import de.uni_freiburg.informatik.ultimate.automata.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.LookaheadPartitionConstructor;
@@ -73,6 +75,8 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends UnaryNwaOp
 		super(services);
 		mOperand = operand;
 		final Collection<Set<STATE>> possibleEquivalentClasses = new LookaheadPartitionConstructor<LETTER, STATE>(mServices, mOperand).getResult();
+		final int sizeOfLargestEquivalenceClass = NestedWordAutomataUtils.computeSizeOfLargestEquivalenceClass(possibleEquivalentClasses);
+		
 		final GameFactory gameFactory = new GameFactory();
 		final SpoilerNwaVertex<LETTER, STATE> uniqueSpoilerWinningSink = constructUniqueSpoilerWinninSink();
 		final INestedWordAutomatonSimple<IGameLetter<LETTER, STATE>, IGameState> gameAutomaton = 
@@ -102,6 +106,7 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends UnaryNwaOp
 		NwaSimulationUtil.retrieveGeneralNwaAutomataPerformance(sim.getSimulationPerformance(),
 				mOperand, mResult, mServices);
 		mStatistics = sim.getSimulationPerformance().exportToAutomataOperationStatistics();
+		mStatistics.addKeyValuePair(StatisticsType.SIZE_MAXIMAL_INITIAL_EQUIVALENCE_CLASS, sizeOfLargestEquivalenceClass);
 	}
 
 	private SpoilerNwaVertex<LETTER, STATE> constructUniqueSpoilerWinninSink() {

@@ -27,6 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata;
 
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.LookaheadPartitionConstructor;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.performance.ECountingMeasure;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.performance.ETimeMeasure;
 
@@ -290,6 +291,12 @@ public enum StatisticsType {
 	 * compatibility with {@link ECountingMeasure}).
 	 */
 	SIMULATION_STEPS,
+	/**
+	 * Number of states in the biggest equivalence class of an initial
+	 * partition which is provided e.g., by the 
+	 * {@link LookaheadPartitionConstructor}. 
+	 */
+	SIZE_MAXIMAL_INITIAL_EQUIVALENCE_CLASS,
 	/**
 	 * The time solving the Max-Sat problem at nwa game graph resulting
 	 * automaton generation took (used in simulation, for compatibility with
