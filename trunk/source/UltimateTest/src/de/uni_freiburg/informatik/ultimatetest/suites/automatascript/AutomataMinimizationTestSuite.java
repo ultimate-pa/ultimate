@@ -124,6 +124,7 @@ public class AutomataMinimizationTestSuite extends UltimateTestSuite {
 		final Predicate<Pair<List<Object>, List<String>>> predicate = new CsvProviderRowFilter.AllowedValuesRowFilter<Object>(column2allowedValues);
 		final ICsvProviderTransformer<Object> rowFilter = new CsvProviderRowFilter<Object>(predicate);
 		return new ITestSummary[] { new AutomataScriptTestSummary(this.getClass()),
+				new CsvConcatenator(this.getClass(), AutomataOperationStatistics.class),
 				new CsvConcatenator(this.getClass(), AutomataOperationStatistics.class, columnFilter, rowFilter),
 				new LatexOverviewSummary(getClass(), benchmarks, columnDef), };
 	}
