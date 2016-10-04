@@ -83,4 +83,8 @@ public class EvaluatorLogger {
 		mLogger.warn("Possible loss of precision. Operator " + op + " is not implemented.");
 	}
 
+	public ILogger getLogger() {
+		return mLogger;
+	}
+
 }

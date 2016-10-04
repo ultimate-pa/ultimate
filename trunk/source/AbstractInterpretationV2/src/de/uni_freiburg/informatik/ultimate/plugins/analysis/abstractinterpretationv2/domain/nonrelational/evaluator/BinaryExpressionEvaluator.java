@@ -35,8 +35,8 @@ import java.util.Set;
 import java.util.function.BiFunction;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.AbstractBoolean;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValue;
@@ -58,8 +58,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  */
 public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends INonrelationalAbstractState<STATE, CodeBlock>>
 		implements INAryEvaluator<VALUE, STATE, CodeBlock> {
-
-	private static final BooleanValue INVALID = new BooleanValue(AbstractBoolean.INVALID);
 
 	private final Set<IBoogieVar> mVariableSet;
 	private final EvaluatorLogger mLogger;
@@ -97,9 +95,12 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 		mLeftSubEvaluator.getVarIdentifiers().forEach(mVariableSet::add);
 		mRightSubEvaluator.getVarIdentifiers().forEach(mVariableSet::add);
 
+		final ILogger logger = mLogger.getLogger();
 		for (final IEvaluationResult<VALUE> res1 : firstResult) {
 			for (final IEvaluationResult<VALUE> res2 : secondResult) {
-				returnList.add(evaluate(mOperator, res1, res2));
+				final IEvaluationResult<VALUE> result = evaluate(mOperator, res1, res2);
+				logger.debug("(" + mOperator + " " + res1 + " " + res2 + ") = " + result);
+				returnList.add(result);
 			}
 		}
 
@@ -117,17 +118,9 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 		case ARITHMUL:
 			return onlyValue(first.getValue().multiply(second.getValue()));
 		case ARITHDIV:
-			switch (mEvaluatorType) {
-			case INTEGER:
-				return onlyValue(first.getValue().divideInteger(second.getValue()));
-			case REAL:
-				return onlyValue(first.getValue().divide(second.getValue()));
-			default:
-				throw new UnsupportedOperationException(
-						"Division on types other than integers and reals is undefined.");
-			}
+			return evaluateArithDiv(first, second);
 		case ARITHMOD:
-			assert mEvaluatorType == EvaluatorType.INTEGER;
+			assert mEvaluatorType == EvaluatorType.INTEGER : "Type error: modulo is not defined on reals";
 			return onlyValue(first.getValue().modulo(second.getValue()));
 		case LOGICAND:
 			return onlyBoolean(first.getBooleanValue().and(second.getBooleanValue()));
@@ -140,7 +133,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 			throw new UnsupportedOperationException(
 					"If and only if expressions should have been removed during expression normalization.");
 		case COMPEQ:
-			return evaluateCompareEquality(first, second);
+			return evaluateCompEq(first, second);
 		case COMPNEQ:
 			// Don't do anything with the return value here. Just check for inequality and return the
 			// appropriate boolean value.
@@ -174,32 +167,43 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 		}
 	}
 
+	private IEvaluationResult<VALUE> evaluateArithDiv(final IEvaluationResult<VALUE> first,
+			final IEvaluationResult<VALUE> second) {
+		switch (mEvaluatorType) {
+		case INTEGER:
+			return onlyValue(first.getValue().divideInteger(second.getValue()));
+		case REAL:
+			return onlyValue(first.getValue().divide(second.getValue()));
+		default:
+			throw new UnsupportedOperationException("Division on types other than integers and reals is undefined.");
+		}
+	}
+
 	private IEvaluationResult<VALUE> evaluateCompare(final VALUE first, final VALUE second,
 			final BiFunction<VALUE, VALUE, VALUE> compareValue,
 			final BiFunction<VALUE, VALUE, BooleanValue> compareBoolean) {
 		final VALUE returnValue = compareValue.apply(first, second);
 		final BooleanValue returnBool;
 		if (returnValue.isBottom()) {
-			returnBool = new BooleanValue(false);
+			returnBool = BooleanValue.FALSE;
 		} else {
 			returnBool = compareBoolean.apply(first, second);
 		}
 		return both(returnValue, returnBool);
 	}
 
-	private IEvaluationResult<VALUE> evaluateCompareEquality(final IEvaluationResult<VALUE> first,
+	private IEvaluationResult<VALUE> evaluateCompEq(final IEvaluationResult<VALUE> first,
 			final IEvaluationResult<VALUE> second) {
-		BooleanValue returnBool = INVALID;
+		BooleanValue returnBool = BooleanValue.INVALID;
 		if (mLeftSubEvaluator.containsBool() || mRightSubEvaluator.containsBool()) {
-			returnBool =
-					first.getBooleanValue().intersect(second.getBooleanValue()).getValue() != AbstractBoolean.BOTTOM
-							? new BooleanValue(true) : new BooleanValue(AbstractBoolean.BOTTOM);
+			returnBool = first.getBooleanValue().intersect(second.getBooleanValue()) != BooleanValue.BOTTOM
+					? BooleanValue.TRUE : BooleanValue.BOTTOM;
 		}
 
 		final VALUE returnValue = first.getValue().intersect(second.getValue());
 
 		if (returnBool.isBottom() || returnValue.isBottom()) {
-			returnBool = new BooleanValue(false);
+			returnBool = BooleanValue.FALSE;
 		} else if (!mLeftSubEvaluator.containsBool() && !mRightSubEvaluator.containsBool()) {
 			returnBool = first.getValue().compareEquality(second.getValue());
 		}
@@ -245,7 +249,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 				case COMPEQ:
 					final BooleanValue intersectBool = left.getBooleanValue().intersect(right.getBooleanValue());
 					if ((mLeftSubEvaluator.containsBool() || mRightSubEvaluator.containsBool())
-							&& (intersectBool.getValue() == AbstractBoolean.TOP)) {
+							&& (intersectBool == BooleanValue.TOP)) {
 						returnStates.add(currentState);
 						break;
 					}
@@ -503,18 +507,18 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 	private IEvaluationResult<VALUE> both(final VALUE value, final BooleanValue bvalue) {
 		assert value != null;
 		assert bvalue != null;
-		assert bvalue.getValue() != AbstractBoolean.INVALID;
+		assert bvalue != BooleanValue.INVALID;
 		return new NonrelationalEvaluationResult<>(value, bvalue);
 	}
 
 	private IEvaluationResult<VALUE> onlyValue(final VALUE value) {
 		assert value != null;
-		return new NonrelationalEvaluationResult<>(value, INVALID);
+		return new NonrelationalEvaluationResult<>(value, BooleanValue.INVALID);
 	}
 
 	private IEvaluationResult<VALUE> onlyBoolean(final BooleanValue value) {
 		assert value != null;
-		assert value.getValue() != AbstractBoolean.INVALID;
+		assert value != BooleanValue.INVALID;
 		return new NonrelationalEvaluationResult<>(mTopValue, value);
 	}
 

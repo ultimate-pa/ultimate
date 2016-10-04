@@ -39,19 +39,28 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class BooleanValue {
-
-	public static final BooleanValue TOP = new BooleanValue(AbstractBoolean.TOP);
-	public static final BooleanValue BOTTOM = new BooleanValue(AbstractBoolean.BOTTOM);
-
-	private AbstractBoolean mValue;
+public enum BooleanValue {
 
 	/**
-	 * Default constructor. The constructed boolean value is &top;.
+	 * Exactly true.
 	 */
-	public BooleanValue() {
-		mValue = AbstractBoolean.TOP;
-	}
+	TRUE,
+	/**
+	 * Exactly false.
+	 */
+	FALSE,
+	/**
+	 * Either true or false.
+	 */
+	TOP,
+	/**
+	 * Neither true nor false
+	 */
+	BOTTOM,
+	/**
+	 * Type error or some other error.
+	 */
+	INVALID;
 
 	/**
 	 * Sets the constructed boolean value to the given value.
@@ -59,12 +68,8 @@ public class BooleanValue {
 	 * @param value
 	 *            The value to set.
 	 */
-	public BooleanValue(final boolean value) {
-		if (value) {
-			mValue = AbstractBoolean.TRUE;
-		} else {
-			mValue = AbstractBoolean.FALSE;
-		}
+	public static BooleanValue getBooleanValue(final boolean value) {
+		return value ? TRUE : FALSE;
 	}
 
 	/**
@@ -73,35 +78,8 @@ public class BooleanValue {
 	 * @param value
 	 *            The value to set.
 	 */
-	public BooleanValue(final String value) {
-		this(Boolean.parseBoolean(value));
-	}
-
-	/**
-	 * Sets the constructed boolean value to the given value.
-	 *
-	 * @param value
-	 *            The value to set.
-	 */
-	public BooleanValue(final AbstractBoolean value) {
-		mValue = value;
-	}
-
-	/**
-	 * Sets the constructed boolean value to the given value.
-	 *
-	 * @param value
-	 *            The value to set.
-	 */
-	public BooleanValue(final BooleanValue value) {
-		mValue = value.getValue();
-	}
-
-	/**
-	 * @return The value of the {@link BooleanValue}.
-	 */
-	public AbstractBoolean getValue() {
-		return mValue;
+	public static BooleanValue getBooleanValue(final String value) {
+		return getBooleanValue(Boolean.parseBoolean(value));
 	}
 
 	/**
@@ -117,7 +95,7 @@ public class BooleanValue {
 			return false;
 		}
 
-		return mValue == other.mValue;
+		return this == other;
 	}
 
 	/**
@@ -132,20 +110,20 @@ public class BooleanValue {
 		if (other == null) {
 			return false;
 		}
-		if (other.mValue == AbstractBoolean.TOP) {
+		if (other == TOP) {
 			return true;
 		}
-		if (mValue == other.mValue) {
+		if (other == this) {
 			return true;
 		}
-		return mValue == AbstractBoolean.BOTTOM;
+		return this == BOTTOM;
 	}
 
 	/**
 	 * @return <code>true</code> if and only if the value of <code>this</code> is &bot;, <code>false</code> otherwise.
 	 */
 	public boolean isBottom() {
-		return mValue.equals(AbstractBoolean.BOTTOM);
+		return this == BOTTOM;
 	}
 
 	/**
@@ -158,19 +136,19 @@ public class BooleanValue {
 	public BooleanValue intersect(final BooleanValue other) {
 		assert other != null;
 
-		if (mValue == other.mValue) {
-			return new BooleanValue(mValue);
+		if (this == other) {
+			return this;
 		}
 
-		if (mValue == AbstractBoolean.TOP) {
-			return new BooleanValue(other.mValue);
+		if (this == TOP) {
+			return other;
 		}
 
-		if (other.mValue == AbstractBoolean.TOP) {
-			return new BooleanValue(mValue);
+		if (other == TOP) {
+			return this;
 		}
 
-		return new BooleanValue(AbstractBoolean.BOTTOM);
+		return BOTTOM;
 	}
 
 	/**
@@ -183,21 +161,20 @@ public class BooleanValue {
 	public BooleanValue merge(final BooleanValue other) {
 		assert other != null;
 
-		if (mValue == AbstractBoolean.BOTTOM && other.mValue == AbstractBoolean.BOTTOM) {
-			return new BooleanValue(AbstractBoolean.BOTTOM);
+		if (this == BOTTOM && other == BOTTOM) {
+			return this;
 		}
 
-		if (mValue == AbstractBoolean.BOTTOM && other.mValue != AbstractBoolean.BOTTOM) {
-			return new BooleanValue(other.mValue);
-		} else if (mValue != AbstractBoolean.BOTTOM && other.mValue == AbstractBoolean.BOTTOM) {
-			return new BooleanValue(mValue);
+		if (this == BOTTOM && other != BOTTOM) {
+			return other;
+		} else if (this != BOTTOM && other == BOTTOM) {
+			return this;
 		}
 
 		if (!isEqualTo(other)) {
-			return new BooleanValue(AbstractBoolean.TOP);
+			return TOP;
 		}
-
-		return new BooleanValue(mValue);
+		return this;
 	}
 
 	/**
@@ -210,19 +187,19 @@ public class BooleanValue {
 	public BooleanValue and(final BooleanValue other) {
 		assert other != null;
 
-		if (mValue == AbstractBoolean.BOTTOM || other.mValue == AbstractBoolean.BOTTOM) {
-			return new BooleanValue(AbstractBoolean.BOTTOM);
+		if (this == BOTTOM || other == BOTTOM) {
+			return BOTTOM;
 		}
 
-		if (mValue == AbstractBoolean.FALSE || other.mValue == AbstractBoolean.FALSE) {
-			return new BooleanValue(false);
+		if (this == FALSE || other == FALSE) {
+			return FALSE;
 		}
 
-		if (mValue == AbstractBoolean.TRUE && other.mValue == AbstractBoolean.TRUE) {
-			return new BooleanValue(true);
+		if (this == TRUE && other == TRUE) {
+			return TRUE;
 		}
 
-		return new BooleanValue(AbstractBoolean.TOP);
+		return TOP;
 	}
 
 	/**
@@ -235,19 +212,19 @@ public class BooleanValue {
 	public BooleanValue or(final BooleanValue other) {
 		assert other != null;
 
-		if (mValue == AbstractBoolean.BOTTOM || other.mValue == AbstractBoolean.BOTTOM) {
-			return new BooleanValue(AbstractBoolean.BOTTOM);
+		if (this == BOTTOM || other == BOTTOM) {
+			return BOTTOM;
 		}
 
-		if (mValue == AbstractBoolean.TRUE || other.mValue == AbstractBoolean.TRUE) {
-			return new BooleanValue(true);
+		if (this == TRUE || other == TRUE) {
+			return TRUE;
 		}
 
-		if (mValue == AbstractBoolean.TOP || other.mValue == AbstractBoolean.TOP) {
-			return new BooleanValue(AbstractBoolean.TOP);
+		if (this == TOP || other == TOP) {
+			return TOP;
 		}
 
-		return new BooleanValue(false);
+		return FALSE;
 	}
 
 	/**
@@ -257,47 +234,23 @@ public class BooleanValue {
 	 *         opeartor.
 	 */
 	public BooleanValue neg() {
-		if (mValue == AbstractBoolean.TRUE) {
-			return new BooleanValue(false);
+		if (this == TRUE) {
+			return FALSE;
 		}
 
-		if (mValue == AbstractBoolean.FALSE) {
-			return new BooleanValue(true);
+		if (this == FALSE) {
+			return TRUE;
 		}
 
-		if (mValue == AbstractBoolean.TOP) {
-			return new BooleanValue(AbstractBoolean.TOP);
+		if (this == TOP) {
+			return TOP;
 		}
 
-		return new BooleanValue(AbstractBoolean.BOTTOM);
-	}
-
-	@Override
-	public String toString() {
-		final StringBuilder stringBuilder = new StringBuilder();
-
-		switch (mValue) {
-		case TRUE:
-			stringBuilder.append("TRUE");
-			break;
-		case FALSE:
-			stringBuilder.append("FALSE");
-			break;
-		case TOP:
-			stringBuilder.append("TOP");
-			break;
-		case BOTTOM:
-			stringBuilder.append("BOTTOM");
-			break;
-		default:
-			throw new UnsupportedOperationException("The boolean value type " + mValue + " is not implemented.");
-		}
-
-		return stringBuilder.toString();
+		return BOTTOM;
 	}
 
 	public Term getTerm(final Script script, final Sort sort, final Term var) {
-		switch (mValue) {
+		switch (this) {
 		case BOTTOM:
 			return script.term("false");
 		case TOP:
@@ -307,7 +260,7 @@ public class BooleanValue {
 		case TRUE:
 			return script.term("=", var, script.term("true"));
 		default:
-			throw new UnsupportedOperationException("The boolean value type " + mValue + " is not implemented.");
+			throw new UnsupportedOperationException("The boolean value type " + this + " is not implemented.");
 		}
 	}
 }

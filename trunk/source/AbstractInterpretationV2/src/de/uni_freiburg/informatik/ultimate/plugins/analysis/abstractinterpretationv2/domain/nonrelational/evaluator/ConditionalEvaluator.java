@@ -2,27 +2,27 @@
  * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE AbstractInterpretationV2 plug-in.
- * 
+ *
  * The ULTIMATE AbstractInterpretationV2 plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE AbstractInterpretationV2 plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE AbstractInterpretationV2 plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE AbstractInterpretationV2 plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission
  * to convey the resulting work.
  */
 
@@ -34,7 +34,6 @@ import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.AbstractBoolean;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValueFactory;
@@ -45,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 
 /**
  * Evaluator for conditional expressions for nonrelational abstract domains.
- * 
+ *
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  * @param <VALUE>
@@ -54,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  *            The type of states of the abstract domain.
  */
 public class ConditionalEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends NonrelationalState<STATE, VALUE>>
-        implements IEvaluator<VALUE, STATE, CodeBlock> {
+		implements IEvaluator<VALUE, STATE, CodeBlock> {
 
 	private final Set<IBoogieVar> mVariables;
 	private final INonrelationalValueFactory<VALUE> mNonrelationalValueFactory;
@@ -82,7 +81,7 @@ public class ConditionalEvaluator<VALUE extends INonrelationalValue<VALUE>, STAT
 			final List<STATE> conditionStates = mConditionEvaluator.inverseEvaluate(cond, currentState);
 
 			for (final STATE conditionState : conditionStates) {
-				switch (cond.getBooleanValue().getValue()) {
+				switch (cond.getBooleanValue()) {
 				case TRUE:
 				case TOP:
 					final List<IEvaluationResult<VALUE>> trueResult = mIfEvaluator.evaluate(conditionState);
@@ -90,7 +89,7 @@ public class ConditionalEvaluator<VALUE extends INonrelationalValue<VALUE>, STAT
 					for (final IEvaluationResult<VALUE> ifRes : trueResult) {
 						if (!ifRes.getValue().isBottom() && !ifRes.getBooleanValue().isBottom()) {
 							returnList.add(
-							        new NonrelationalEvaluationResult<>(ifRes.getValue(), ifRes.getBooleanValue()));
+									new NonrelationalEvaluationResult<>(ifRes.getValue(), ifRes.getBooleanValue()));
 						}
 					}
 
@@ -106,7 +105,7 @@ public class ConditionalEvaluator<VALUE extends INonrelationalValue<VALUE>, STAT
 			final List<STATE> conditionStates = mNegatedConditionEvaluator.inverseEvaluate(cond, currentState);
 
 			for (final STATE conditionState : conditionStates) {
-				switch (cond.getBooleanValue().getValue()) {
+				switch (cond.getBooleanValue()) {
 				case TRUE:
 				case TOP:
 					final List<IEvaluationResult<VALUE>> falseResult = mElseEvaluator.evaluate(conditionState);
@@ -114,7 +113,7 @@ public class ConditionalEvaluator<VALUE extends INonrelationalValue<VALUE>, STAT
 					for (final IEvaluationResult<VALUE> elseRes : falseResult) {
 						if (!elseRes.getValue().isBottom() && !elseRes.getBooleanValue().isBottom()) {
 							returnList.add(
-							        new NonrelationalEvaluationResult<>(elseRes.getValue(), elseRes.getBooleanValue()));
+									new NonrelationalEvaluationResult<>(elseRes.getValue(), elseRes.getBooleanValue()));
 						}
 					}
 
@@ -128,7 +127,7 @@ public class ConditionalEvaluator<VALUE extends INonrelationalValue<VALUE>, STAT
 
 		if (returnList.isEmpty()) {
 			returnList.add(new NonrelationalEvaluationResult<>(mNonrelationalValueFactory.createTopValue(),
-			        new BooleanValue(AbstractBoolean.FALSE)));
+					BooleanValue.FALSE));
 		}
 
 		return NonrelationalUtils.mergeIfNecessary(returnList, 1);
@@ -148,7 +147,7 @@ public class ConditionalEvaluator<VALUE extends INonrelationalValue<VALUE>, STAT
 			final List<STATE> conditionStates = mConditionEvaluator.inverseEvaluate(cond, currentState);
 
 			for (final STATE conditionState : conditionStates) {
-				switch (cond.getBooleanValue().getValue()) {
+				switch (cond.getBooleanValue()) {
 				case TRUE:
 				case TOP:
 					final List<IEvaluationResult<VALUE>> trueResult = mIfEvaluator.evaluate(conditionState);
@@ -174,7 +173,7 @@ public class ConditionalEvaluator<VALUE extends INonrelationalValue<VALUE>, STAT
 			final List<STATE> conditionStates = mNegatedConditionEvaluator.inverseEvaluate(cond, currentState);
 
 			for (final STATE conditionState : conditionStates) {
-				switch (cond.getBooleanValue().getValue()) {
+				switch (cond.getBooleanValue()) {
 				case TRUE:
 				case TOP:
 					final List<IEvaluationResult<VALUE>> falseResult = mElseEvaluator.evaluate(conditionState);
@@ -238,7 +237,7 @@ public class ConditionalEvaluator<VALUE extends INonrelationalValue<VALUE>, STAT
 		final StringBuilder sb = new StringBuilder();
 
 		sb.append("if ").append(mConditionEvaluator).append(" [[ ").append(mNegatedConditionEvaluator).append(" ]]")
-		        .append(" then ").append(mIfEvaluator).append(" else ").append(mElseEvaluator);
+				.append(" then ").append(mIfEvaluator).append(" else ").append(mElseEvaluator);
 
 		return sb.toString();
 	}

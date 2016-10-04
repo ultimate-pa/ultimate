@@ -6,5 +6,5 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 public interface INonrelationalAbstractState<STATE extends IAbstractState<STATE, ACTION, IBoogieVar>, ACTION>
 		extends IAbstractState<STATE, ACTION, IBoogieVar> {
 
-	public STATE intersect(final STATE other);
+	STATE intersect(final STATE other);
 }

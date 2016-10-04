@@ -81,7 +81,7 @@ public class UnaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, 
 
 			switch (mOperator) {
 			case ARITHNEGATIVE:
-				returnBool = new BooleanValue(false);
+				returnBool = BooleanValue.FALSE;
 				returnValue = result.getValue().negate();
 				break;
 			case LOGICNEG:
@@ -89,7 +89,7 @@ public class UnaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, 
 				returnValue = mNonrelationalValueFactory.createTopValue();
 				break;
 			default:
-				returnBool = new BooleanValue();
+				returnBool = BooleanValue.TOP;
 				mLogger.warnUnknownOperator(mOperator);
 				returnValue = mNonrelationalValueFactory.createTopValue();
 				break;

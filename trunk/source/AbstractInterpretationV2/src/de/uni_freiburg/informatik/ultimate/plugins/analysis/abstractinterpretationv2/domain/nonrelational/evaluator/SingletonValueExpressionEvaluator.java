@@ -70,7 +70,7 @@ public class SingletonValueExpressionEvaluator<VALUE extends INonrelationalValue
 		assert currentState != null;
 
 		final List<IEvaluationResult<VALUE>> returnList = new ArrayList<>();
-		returnList.add(new NonrelationalEvaluationResult<>(mValue, new BooleanValue()));
+		returnList.add(new NonrelationalEvaluationResult<>(mValue, BooleanValue.TOP));
 		return returnList;
 	}
 

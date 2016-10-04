@@ -1607,9 +1607,9 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 	public BooleanValue isGreaterOrEqual(final IntervalDomainValue other) {
 		final IntervalDomainValue geq = greaterOrEqual(other);
 		if (geq.isBottom() || geq.isPointInterval()) {
-			return new BooleanValue(true);
+			return BooleanValue.TRUE;
 		}
-		return new BooleanValue();
+		return BooleanValue.TOP;
 	}
 
 	@Override
@@ -1626,9 +1626,9 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 	public BooleanValue isLessOrEqual(final IntervalDomainValue other) {
 		final IntervalDomainValue leq = lessOrEqual(other);
 		if (leq.isBottom() || leq.isPointInterval()) {
-			return new BooleanValue(true);
+			return BooleanValue.TRUE;
 		}
-		return new BooleanValue();
+		return BooleanValue.TOP;
 	}
 
 	@Override
@@ -1694,9 +1694,9 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 	@Override
 	public BooleanValue compareEquality(final IntervalDomainValue secondOther) {
 		if (isEqualTo(secondOther)) {
-			return new BooleanValue(true);
+			return BooleanValue.TRUE;
 		}
-		return new BooleanValue();
+		return BooleanValue.TOP;
 	}
 
 	@Override

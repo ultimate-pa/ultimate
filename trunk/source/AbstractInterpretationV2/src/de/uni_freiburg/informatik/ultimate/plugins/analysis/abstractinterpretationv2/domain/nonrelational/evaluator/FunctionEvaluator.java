@@ -64,7 +64,7 @@ public class FunctionEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE e
 
 		final List<IEvaluationResult<VALUE>> returnList = new ArrayList<>();
 		final IEvaluationResult<VALUE> res = new NonrelationalEvaluationResult<>(
-		        mNonrelationalValueFactory.createTopValue(), new BooleanValue());
+		        mNonrelationalValueFactory.createTopValue(), BooleanValue.TOP);
 		returnList.add(res);
 
 		return returnList;

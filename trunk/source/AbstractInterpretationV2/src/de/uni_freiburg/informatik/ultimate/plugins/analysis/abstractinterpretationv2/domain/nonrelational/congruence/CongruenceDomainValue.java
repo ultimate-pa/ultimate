@@ -417,9 +417,9 @@ public final class CongruenceDomainValue
 	@Override
 	public BooleanValue isGreaterThan(final CongruenceDomainValue other) {
 		if (isConstant() && other.isConstant()) {
-			return new BooleanValue(value().compareTo(other.value()) > 0);
+			return BooleanValue.getBooleanValue(value().compareTo(other.value()) > 0);
 		}
-		return new BooleanValue();
+		return BooleanValue.TOP;
 	}
 
 	@Override
@@ -430,9 +430,9 @@ public final class CongruenceDomainValue
 	@Override
 	public BooleanValue isGreaterOrEqual(final CongruenceDomainValue other) {
 		if (isConstant() && other.isConstant()) {
-			return new BooleanValue(value().compareTo(other.value()) >= 0);
+			return BooleanValue.getBooleanValue(value().compareTo(other.value()) >= 0);
 		}
-		return new BooleanValue();
+		return BooleanValue.TOP;
 	}
 
 	@Override
@@ -443,9 +443,9 @@ public final class CongruenceDomainValue
 	@Override
 	public BooleanValue isLessThan(final CongruenceDomainValue other) {
 		if (isConstant() && other.isConstant()) {
-			return new BooleanValue(value().compareTo(other.value()) < 0);
+			return BooleanValue.getBooleanValue(value().compareTo(other.value()) < 0);
 		}
-		return new BooleanValue();
+		return BooleanValue.TOP;
 	}
 
 	@Override
@@ -456,9 +456,9 @@ public final class CongruenceDomainValue
 	@Override
 	public BooleanValue isLessOrEqual(final CongruenceDomainValue other) {
 		if (isConstant() && other.isConstant()) {
-			return new BooleanValue(value().compareTo(other.value()) <= 0);
+			return BooleanValue.getBooleanValue(value().compareTo(other.value()) <= 0);
 		}
-		return new BooleanValue();
+		return BooleanValue.TOP;
 	}
 
 	@Override
@@ -532,16 +532,16 @@ public final class CongruenceDomainValue
 	@Override
 	public BooleanValue compareEquality(final CongruenceDomainValue secondOther) {
 		if (isConstant() && secondOther.isConstant()) {
-			return new BooleanValue(value().equals(secondOther.value()));
+			return BooleanValue.getBooleanValue(value().equals(secondOther.value()));
 		}
-		return new BooleanValue();
+		return BooleanValue.TOP;
 	}
 
 	@Override
 	public BooleanValue compareInequality(final CongruenceDomainValue secondOther) {
 		if (isConstant() && secondOther.isConstant()) {
-			return new BooleanValue(!value().equals(secondOther.value()));
+			return BooleanValue.getBooleanValue(!value().equals(secondOther.value()));
 		}
-		return new BooleanValue();
+		return BooleanValue.TOP;
 	}
 }

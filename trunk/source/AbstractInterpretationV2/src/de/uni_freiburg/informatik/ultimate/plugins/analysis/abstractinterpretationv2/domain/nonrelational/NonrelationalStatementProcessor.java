@@ -333,8 +333,8 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 		final List<IEvaluationResult<V>> result = mExpressionEvaluator.getRootEvaluator().evaluate(mOldState);
 
 		for (final IEvaluationResult<V> res : result) {
-			if (res.getValue().isBottom() || res.getBooleanValue().getValue() == AbstractBoolean.BOTTOM
-					|| res.getBooleanValue().getValue() == AbstractBoolean.FALSE) {
+			if (res.getValue().isBottom() || res.getBooleanValue() == BooleanValue.BOTTOM
+					|| res.getBooleanValue() == BooleanValue.FALSE) {
 				if (!mOldState.getVariables().isEmpty()) {
 					mReturnState.add(mOldState.bottomState());
 				}
@@ -356,7 +356,7 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 				final PrimitiveType primitiveType = (PrimitiveType) type.getIType();
 
 				if (primitiveType.getTypeCode() == PrimitiveType.BOOL) {
-					currentNewState = currentNewState.setBooleanValue(type, new BooleanValue());
+					currentNewState = currentNewState.setBooleanValue(type, BooleanValue.TOP);
 				} else {
 					currentNewState = currentNewState.setValue(type, currentNewState.createTopValue());
 				}
@@ -444,8 +444,8 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 
 	@Override
 	protected void visit(final BooleanLiteral expr) {
-		final IEvaluator<V, STATE, CodeBlock> evaluator =
-				mEvaluatorFactory.createSingletonLogicalValueExpressionEvaluator(new BooleanValue(expr.getValue()));
+		final IEvaluator<V, STATE, CodeBlock> evaluator = mEvaluatorFactory
+				.createSingletonLogicalValueExpressionEvaluator(BooleanValue.getBooleanValue(expr.getValue()));
 		mExpressionEvaluator.addEvaluator(evaluator);
 	}
 
