@@ -76,6 +76,8 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends UnaryNwaOp
 		mOperand = operand;
 		final Collection<Set<STATE>> possibleEquivalentClasses = new LookaheadPartitionConstructor<LETTER, STATE>(mServices, mOperand).getResult();
 		final int sizeOfLargestEquivalenceClass = NestedWordAutomataUtils.computeSizeOfLargestEquivalenceClass(possibleEquivalentClasses);
+		mLogger.info("Initial partition has " + possibleEquivalentClasses.size() + 
+				" equivalence classes, largest equivalence class has " + sizeOfLargestEquivalenceClass + " states.");
 		
 		final GameFactory gameFactory = new GameFactory();
 		final SpoilerNwaVertex<LETTER, STATE> uniqueSpoilerWinningSink = constructUniqueSpoilerWinninSink();
@@ -85,11 +87,12 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends UnaryNwaOp
 		final AGameGraph<LETTER, STATE> graph = new GameAutomatonToGamGraphTransformer<LETTER, STATE>(mServices, ga, uniqueSpoilerWinningSink, mOperand).getResult();
 		final ParsimoniousSimulation sim = new ParsimoniousSimulation(null, mLogger, false, null, null, graph);
 		sim.doSimulation();
-		assert (NwaSimulationUtil.areNwaSimulationResultsCorrect(graph, mOperand, ESimulationType.DIRECT,
-				mLogger)) : "The computed simulation results are incorrect.";
-		
 		final HashRelation<STATE, STATE> simRelation = readoutSimulationRelation(graph, simulationInfoProvider, operand);
 		final UnionFind<STATE> equivalenceRelation = computeEquivalenceRelation(simRelation, operand.getStates());
+		
+		assert (NwaSimulationUtil.areNwaSimulationResultsCorrect(graph, mOperand, ESimulationType.DIRECT,
+				mLogger)) : "The computed simulation results are incorrect.";
+
 		if (mOperand.getCallAlphabet().isEmpty()) {
 			final boolean addMapping = false;
 			final QuotientNwaConstructor<LETTER, STATE> quotientNwaConstructor =
