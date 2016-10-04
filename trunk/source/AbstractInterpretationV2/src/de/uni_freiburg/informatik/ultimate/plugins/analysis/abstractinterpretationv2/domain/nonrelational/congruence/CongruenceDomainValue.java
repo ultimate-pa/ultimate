@@ -1,6 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.congruence;
 
 import java.math.BigInteger;
+import java.util.Collection;
+import java.util.Collections;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -543,5 +545,21 @@ public final class CongruenceDomainValue
 			return BooleanValue.getBooleanValue(!value().equals(secondOther.value()));
 		}
 		return BooleanValue.TOP;
+	}
+
+	@Override
+	public Collection<CongruenceDomainValue> complement() {
+		if (!isConstant() && mValue == BigInteger.ONE) {
+			// its top
+			return Collections.singleton(createBottom());
+		}
+		// all other cases are top
+		return Collections.singleton(createTop());
+	}
+
+	@Override
+	public Collection<CongruenceDomainValue> complementInteger() {
+		// no difference
+		return complement();
 	}
 }

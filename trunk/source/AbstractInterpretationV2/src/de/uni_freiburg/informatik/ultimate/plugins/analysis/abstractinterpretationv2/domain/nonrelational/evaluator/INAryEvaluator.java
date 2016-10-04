@@ -45,12 +45,12 @@ public interface INAryEvaluator<VALUE, STATE extends IAbstractState<STATE, ACTIO
 	 * @param operator
 	 *            The operator to set.
 	 */
-	public void setOperator(Object operator);
+	void setOperator(Object operator);
 
 	/**
 	 * Returns the arity of the evaluator.
 	 *
 	 * @return An integer corresponding to the arity of the evaluator.
 	 */
-	public int getArity();
+	int getArity();
 }

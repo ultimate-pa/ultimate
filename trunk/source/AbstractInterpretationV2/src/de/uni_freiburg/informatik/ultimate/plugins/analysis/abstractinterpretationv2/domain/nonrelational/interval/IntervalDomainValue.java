@@ -31,6 +31,9 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -1703,5 +1706,59 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 	public BooleanValue compareInequality(final IntervalDomainValue secondOther) {
 		throw new UnsupportedOperationException(
 				"Not equals expressions should have been removed during expression normalization.");
+	}
+
+	@Override
+	public Collection<IntervalDomainValue> complement() {
+		if (isBottom()) {
+			return Collections.singleton(new IntervalDomainValue());
+		}
+
+		if (getLower().isInfinity() && getUpper().isInfinity()) {
+			return Collections.singleton(new IntervalDomainValue(true));
+		}
+
+		if (getLower().isInfinity()) {
+			return Collections
+					.singleton(new IntervalDomainValue(new IntervalValue(getUpper().getValue()), new IntervalValue()));
+		}
+
+		if (getUpper().isInfinity()) {
+			return Collections
+					.singleton(new IntervalDomainValue(new IntervalValue(), new IntervalValue(getLower().getValue())));
+		}
+
+		final ArrayList<IntervalDomainValue> rtr = new ArrayList<>();
+		rtr.add(new IntervalDomainValue(new IntervalValue(getUpper().getValue()), new IntervalValue()));
+		rtr.add(new IntervalDomainValue(new IntervalValue(), new IntervalValue(getLower().getValue())));
+		return rtr;
+	}
+
+	@Override
+	public Collection<IntervalDomainValue> complementInteger() {
+		if (isBottom()) {
+			return Collections.singleton(new IntervalDomainValue());
+		}
+
+		if (getLower().isInfinity() && getUpper().isInfinity()) {
+			return Collections.singleton(new IntervalDomainValue(true));
+		}
+
+		if (getLower().isInfinity()) {
+			return Collections
+					.singleton(new IntervalDomainValue(new IntervalValue(getUpper().getValue()), new IntervalValue()));
+		}
+
+		if (getUpper().isInfinity()) {
+			return Collections
+					.singleton(new IntervalDomainValue(new IntervalValue(), new IntervalValue(getLower().getValue())));
+		}
+
+		final ArrayList<IntervalDomainValue> rtr = new ArrayList<>();
+		rtr.add(new IntervalDomainValue(new IntervalValue(getUpper().getValue().add(BigDecimal.ONE)),
+				new IntervalValue()));
+		rtr.add(new IntervalDomainValue(new IntervalValue(),
+				new IntervalValue(getLower().getValue().subtract(BigDecimal.ONE))));
+		return rtr;
 	}
 }

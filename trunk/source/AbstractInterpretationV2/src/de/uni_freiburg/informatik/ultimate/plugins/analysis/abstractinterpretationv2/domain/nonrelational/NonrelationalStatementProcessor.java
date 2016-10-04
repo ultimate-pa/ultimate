@@ -152,12 +152,14 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 	protected Expression processExpression(final Expression expr) {
 		// TODO: implement proper array handling. Currently, TOP is returned for all array accesses.
 		if (expr instanceof ArrayStoreExpression || expr instanceof ArrayAccessExpression) {
-			mExpressionEvaluator.addEvaluator(mEvaluatorFactory.createSingletonValueTopEvaluator());
+			mExpressionEvaluator.addEvaluator(mEvaluatorFactory
+					.createSingletonValueTopEvaluator(EvaluatorUtils.getEvaluatorType(expr.getType())));
 			return expr;
 		}
 
 		final Expression newExpr = normalizeExpression(expr);
 		assert newExpr != null;
+		assert newExpr.getType() != null : "Normalization did set a null type";
 
 		if (expr == newExpr) {
 			addEvaluators(mExpressionEvaluator, mEvaluatorFactory, newExpr);
@@ -405,7 +407,8 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 
 		// If we don't have a specification for the function, we return top.
 		if (decls == null || decls.isEmpty()) {
-			evaluator = mEvaluatorFactory.createSingletonValueTopEvaluator();
+			evaluator =
+					mEvaluatorFactory.createSingletonValueTopEvaluator(EvaluatorUtils.getEvaluatorType(expr.getType()));
 		} else {
 
 			assert decls.get(0) instanceof FunctionDeclaration;
@@ -414,7 +417,8 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 
 			// If the body is empty (as in undefined), we return top.
 			if (fun.getBody() == null) {
-				evaluator = mEvaluatorFactory.createFunctionEvaluator(fun.getIdentifier(), fun.getInParams().length);
+				evaluator = mEvaluatorFactory.createFunctionEvaluator(fun.getIdentifier(), fun.getInParams().length,
+						EvaluatorUtils.getEvaluatorType(expr.getType()));
 			} else {
 				// TODO Handle bitshifts, bitwise and, bitwise or, etc.
 				throw new UnsupportedOperationException(

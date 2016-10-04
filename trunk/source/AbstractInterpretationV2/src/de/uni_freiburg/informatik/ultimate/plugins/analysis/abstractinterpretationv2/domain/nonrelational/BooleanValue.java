@@ -263,4 +263,8 @@ public enum BooleanValue {
 			throw new UnsupportedOperationException("The boolean value type " + this + " is not implemented.");
 		}
 	}
+
+	public boolean isSingleton() {
+		return this == FALSE || this == TRUE;
+	}
 }

@@ -29,6 +29,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -36,7 +37,6 @@ import java.util.Set;
 import java.util.function.BiFunction;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalAbstractState;
@@ -45,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalStateUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
@@ -97,14 +96,10 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 		mLeftSubEvaluator.getVarIdentifiers().forEach(mVariableSet::add);
 		mRightSubEvaluator.getVarIdentifiers().forEach(mVariableSet::add);
 
-		final ILogger logger = mLogger.getLogger();
 		for (final IEvaluationResult<VALUE> res1 : firstResult) {
 			for (final IEvaluationResult<VALUE> res2 : secondResult) {
 				final List<IEvaluationResult<VALUE>> result = evaluate(mOperator, res1, res2);
-				if (logger.isDebugEnabled()) {
-					logger.debug(AbsIntPrefInitializer.DINDENT + "(" + mOperator + " " + res1 + " " + res2 + ") = "
-							+ result);
-				}
+				mLogger.logEvaluation(mOperator, result, res1, res2);
 				returnList.addAll(result);
 			}
 		}
@@ -187,14 +182,30 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 			final BiFunction<VALUE, VALUE, VALUE> compareValue,
 			final BiFunction<VALUE, VALUE, BooleanValue> compareBoolean) {
 		final VALUE returnValue = compareValue.apply(first, second);
-		// returnValue.negate()
 		final BooleanValue returnBool;
 		if (returnValue.isBottom()) {
 			returnBool = BooleanValue.FALSE;
 		} else {
 			returnBool = compareBoolean.apply(first, second);
 		}
-		return both(returnValue, returnBool);
+
+		if (!returnBool.isSingleton()) {
+			return both(returnValue, returnBool);
+		}
+
+		final List<IEvaluationResult<VALUE>> rtr = new ArrayList<>();
+		rtr.add(new NonrelationalEvaluationResult<>(returnValue, returnBool));
+		final BooleanValue negBool = returnBool.neg();
+		final Collection<VALUE> compl;
+		if (mLeftSubEvaluator.getType() == EvaluatorType.INTEGER) {
+			compl = returnValue.complementInteger();
+		} else {
+			compl = returnValue.complement();
+		}
+		for (final VALUE complement : compl) {
+			rtr.add(new NonrelationalEvaluationResult<>(complement, negBool));
+		}
+		return rtr;
 	}
 
 	private List<IEvaluationResult<VALUE>> evaluateCompEq(final IEvaluationResult<VALUE> first,
@@ -315,7 +326,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 				if (returnStates.isEmpty()) {
 					returnStates.add(currentState);
 				}
-
+				mLogger.logEvaluation(mOperator, returnStates, left, right);
 				returnList.addAll(returnStates);
 			}
 		}
@@ -561,6 +572,12 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 
 	private BooleanValue lessOrEqualBool(final VALUE first, final VALUE second) {
 		return first.isLessOrEqual(second);
+	}
+
+	@Override
+	public EvaluatorType getType() {
+		assert mLeftSubEvaluator.getType() == mRightSubEvaluator.getType();
+		return mEvaluatorType;
 	}
 
 }

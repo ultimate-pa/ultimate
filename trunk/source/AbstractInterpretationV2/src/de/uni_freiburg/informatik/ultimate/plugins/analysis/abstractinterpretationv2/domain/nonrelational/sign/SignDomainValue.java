@@ -28,6 +28,8 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign;
 
+import java.util.Collection;
+
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -402,6 +404,18 @@ public class SignDomainValue implements IEvaluationResult<SignDomainValue.SignVa
 
 	@Override
 	public SignDomainValue negate() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Collection<SignDomainValue> complement() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Collection<SignDomainValue> complementInteger() {
 		// TODO Auto-generated method stub
 		return null;
 	}

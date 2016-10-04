@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValueFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalUtils;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
@@ -73,19 +74,19 @@ public class UnaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, 
 
 		final List<IEvaluationResult<VALUE>> returnList = new ArrayList<>();
 
-		final List<IEvaluationResult<VALUE>> subEvaluatorResult = mSubEvaluator.evaluate(currentState);
+		final List<IEvaluationResult<VALUE>> subResults = mSubEvaluator.evaluate(currentState);
 
-		for (final IEvaluationResult<VALUE> result : subEvaluatorResult) {
+		for (final IEvaluationResult<VALUE> subResult : subResults) {
 			final VALUE returnValue;
 			final BooleanValue returnBool;
 
 			switch (mOperator) {
 			case ARITHNEGATIVE:
 				returnBool = BooleanValue.INVALID;
-				returnValue = result.getValue().negate();
+				returnValue = subResult.getValue().negate();
 				break;
 			case LOGICNEG:
-				returnBool = result.getBooleanValue().neg();
+				returnBool = subResult.getBooleanValue().neg();
 				returnValue = mNonrelationalValueFactory.createTopValue();
 				break;
 			default:
@@ -95,7 +96,10 @@ public class UnaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, 
 				break;
 			}
 
-			returnList.add(new NonrelationalEvaluationResult<>(returnValue, returnBool));
+			final NonrelationalEvaluationResult<VALUE> result =
+					new NonrelationalEvaluationResult<>(returnValue, returnBool);
+			mLogger.logEvaluation(mOperator, result, subResult);
+			returnList.add(result);
 		}
 
 		assert !returnList.isEmpty();
@@ -121,6 +125,7 @@ public class UnaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, 
 
 		final NonrelationalEvaluationResult<VALUE> evalResult =
 				new NonrelationalEvaluationResult<>(evalValue, evalBool);
+		mLogger.logEvaluation(mOperator, evalResult, computedValue);
 		return mSubEvaluator.inverseEvaluate(evalResult, currentState);
 	}
 
@@ -186,5 +191,10 @@ public class UnaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, 
 		}
 
 		return sb.toString();
+	}
+
+	@Override
+	public EvaluatorType getType() {
+		return mSubEvaluator.getType();
 	}
 }

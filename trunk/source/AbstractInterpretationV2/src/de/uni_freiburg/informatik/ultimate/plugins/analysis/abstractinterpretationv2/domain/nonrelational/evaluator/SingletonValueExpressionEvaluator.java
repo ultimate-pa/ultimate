@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalEvaluationResult;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
@@ -53,15 +54,18 @@ public class SingletonValueExpressionEvaluator<VALUE extends INonrelationalValue
 		implements IEvaluator<VALUE, STATE, CodeBlock> {
 
 	private final VALUE mValue;
+	private final EvaluatorType mType;
 
 	/**
 	 * Constructor for a new singleton value expression evaluator.
 	 *
 	 * @param value
 	 *            The value of the evaluated expression.
+	 * @param type
 	 */
-	public SingletonValueExpressionEvaluator(final VALUE value) {
+	public SingletonValueExpressionEvaluator(final VALUE value, final EvaluatorType type) {
 		mValue = value;
+		mType = type;
 	}
 
 	@Override
@@ -101,5 +105,10 @@ public class SingletonValueExpressionEvaluator<VALUE extends INonrelationalValue
 	@Override
 	public String toString() {
 		return mValue.toString();
+	}
+
+	@Override
+	public EvaluatorType getType() {
+		return mType;
 	}
 }

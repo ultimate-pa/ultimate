@@ -28,6 +28,8 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational;
 
+import java.util.Collection;
+
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -48,7 +50,9 @@ public interface INonrelationalValue<V extends INonrelationalValue<V>> {
 
 	V merge(final V other);
 
-	V negate();
+	Collection<V> complement();
+
+	Collection<V> complementInteger();
 
 	boolean isEqualTo(final V other);
 
@@ -61,6 +65,8 @@ public interface INonrelationalValue<V extends INonrelationalValue<V>> {
 	V subtract(final V other);
 
 	V multiply(final V other);
+
+	V negate();
 
 	V divideInteger(final V other);
 

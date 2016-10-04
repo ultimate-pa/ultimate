@@ -29,7 +29,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator;
 
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValueFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalState;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
@@ -57,17 +58,18 @@ public class SingletonVariableExpressionEvaluator<VALUE extends INonrelationalVa
 		implements IEvaluator<VALUE, STATE, CodeBlock> {
 
 	private final Set<IBoogieVar> mVariableSet;
-	private final IBoogieVar mVariableName;
+	private final IBoogieVar mVar;
 	private final INonrelationalValueFactory<VALUE> mNonrelationalValueFactory;
 
 	private boolean mContainsBoolean = false;
+	private final EvaluatorType mType;
 
-	public SingletonVariableExpressionEvaluator(final IBoogieVar variableName,
+	public SingletonVariableExpressionEvaluator(final IBoogieVar var,
 			final INonrelationalValueFactory<VALUE> nonrelationalValueFactory) {
-		mVariableName = variableName;
-		mVariableSet = new HashSet<>();
-		mVariableSet.add(variableName);
+		mVar = var;
+		mVariableSet = Collections.singleton(var);
 		mNonrelationalValueFactory = nonrelationalValueFactory;
+		mType = EvaluatorUtils.getEvaluatorType(mVar.getIType());
 	}
 
 	@Override
@@ -79,24 +81,24 @@ public class SingletonVariableExpressionEvaluator<VALUE extends INonrelationalVa
 		VALUE val;
 		BooleanValue returnBool = BooleanValue.TOP;
 
-		if (mVariableName.getIType() instanceof PrimitiveType) {
-			final PrimitiveType primitiveType = (PrimitiveType) mVariableName.getIType();
+		if (mVar.getIType() instanceof PrimitiveType) {
+			final PrimitiveType primitiveType = (PrimitiveType) mVar.getIType();
 
 			if (primitiveType.getTypeCode() == PrimitiveType.BOOL) {
 				val = mNonrelationalValueFactory.createTopValue();
-				returnBool = currentState.getBooleanValue(mVariableName);
+				returnBool = currentState.getBooleanValue(mVar);
 				mContainsBoolean = true;
 			} else {
-				val = currentState.getValue(mVariableName);
+				val = currentState.getValue(mVar);
 
-				assert val != null : "The variable with name " + mVariableName
+				assert val != null : "The variable with name " + mVar
 						+ " has not been found in the current abstract state.";
 			}
-		} else if (mVariableName.getIType() instanceof ArrayType) {
+		} else if (mVar.getIType() instanceof ArrayType) {
 			// TODO: Implement better handling of arrays.
-			val = currentState.getValue(mVariableName);
+			val = currentState.getValue(mVar);
 		} else {
-			val = currentState.getValue(mVariableName);
+			val = currentState.getValue(mVar);
 		}
 
 		if (val.isBottom() || returnBool.isBottom()) {
@@ -118,9 +120,9 @@ public class SingletonVariableExpressionEvaluator<VALUE extends INonrelationalVa
 		final List<STATE> returnList = new ArrayList<>();
 
 		if (mContainsBoolean) {
-			returnList.add(currentState.setBooleanValue(mVariableName, computedValue.getBooleanValue()));
+			returnList.add(currentState.setBooleanValue(mVar, computedValue.getBooleanValue()));
 		} else {
-			returnList.add(currentState.setValue(mVariableName, computedValue.getValue()));
+			returnList.add(currentState.setValue(mVar, computedValue.getValue()));
 		}
 
 		return returnList;
@@ -149,6 +151,11 @@ public class SingletonVariableExpressionEvaluator<VALUE extends INonrelationalVa
 
 	@Override
 	public String toString() {
-		return mVariableName.getGloballyUniqueId();
+		return mVar.getGloballyUniqueId();
+	}
+
+	@Override
+	public EvaluatorType getType() {
+		return mType;
 	}
 }

@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalUtils;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
@@ -240,6 +241,12 @@ public class ConditionalEvaluator<VALUE extends INonrelationalValue<VALUE>, STAT
 				.append(" then ").append(mIfEvaluator).append(" else ").append(mElseEvaluator);
 
 		return sb.toString();
+	}
+
+	@Override
+	public EvaluatorType getType() {
+		assert mIfEvaluator.getType() == mElseEvaluator.getType();
+		return mIfEvaluator.getType();
 	}
 
 }
