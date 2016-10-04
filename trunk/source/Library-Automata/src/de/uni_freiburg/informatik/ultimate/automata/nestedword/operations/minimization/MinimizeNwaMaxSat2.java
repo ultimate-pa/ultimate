@@ -39,6 +39,8 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
+import de.uni_freiburg.informatik.ultimate.automata.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.AbstractMaxSatSolver;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.GeneralMaxSatSolver;
@@ -102,6 +104,8 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 	 * be similar in this case.
 	 */
 	private final boolean mUseTransitionHornClauses;
+
+	private final int mLargestBlockInitialPartition;
 	
 	/**
 	 * Constructor that should be called by the automata script interpreter.
@@ -154,9 +158,8 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 	 * @param useFinalStateConstraints
 	 *            add constraints that final and non-final states cannot be
 	 *            merged
-	 * @param initialEquivalenceClasses
-	 *            We only try to merge states that are in one of the equivalence
-	 *            classes
+	 * @param initialPartition
+	 *            We only try to merge states that are in one of the blocks.
 	 * @param services
 	 *            Ultimate services
 	 * @param stateFactory
@@ -177,7 +180,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 	 */
 	public MinimizeNwaMaxSat2(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand, final boolean addMapOldState2newState,
-			final Iterable<Set<STATE>> initialEquivalenceClasses, final boolean useFinalStateConstraints,
+			final Iterable<Set<STATE>> initialPartition, final boolean useFinalStateConstraints,
 			final boolean useTransitionHornClauses, final boolean useHornSolver, final boolean useTransitivityGenerator,
 			final boolean usePathCompression) throws AutomataOperationCanceledException {
 		super(services, stateFactory, "minimizeNwaMaxSat2", operand);
@@ -186,17 +189,20 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 		// throw new AssertionError("not deterministic");
 		// }
 		mUseFinalStateConstraints = useFinalStateConstraints;
-		mInitialEquivalenceClasses = initialEquivalenceClasses;
+		mInitialEquivalenceClasses = initialPartition;
 		mUseTransitionHornClauses = useTransitionHornClauses;
 		mOperandHasNoReturns = mOperand.getReturnAlphabet().isEmpty();
 		
 		// TODO even copy an existing HashMap?
 		mState2EquivalenceClass = new HashMap<>();
+		int largestBlockInitialPartition = 0;
 		for (final Set<STATE> equivalenceClass : mInitialEquivalenceClasses) {
 			for (final STATE state : equivalenceClass) {
 				mState2EquivalenceClass.put(state, equivalenceClass);
 			}
+			largestBlockInitialPartition = Math.max(largestBlockInitialPartition, equivalenceClass.size());
 		}
+		mLargestBlockInitialPartition = largestBlockInitialPartition;
 		
 		// create solver
 		if (!mUseTransitionHornClauses && useHornSolver) {
@@ -222,6 +228,16 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
 		}
+	}
+	
+	@Override
+	public AutomataOperationStatistics getAutomataOperationStatistics() {
+		final AutomataOperationStatistics statistics = super.getAutomataOperationStatistics();
+		if (mLargestBlockInitialPartition != 0) {
+			statistics.addKeyValuePair(StatisticsType.SIZE_MAXIMAL_INITIAL_EQUIVALENCE_CLASS,
+					mLargestBlockInitialPartition);
+		}
+		return statistics;
 	}
 	
 	private void constructResult(final boolean addMapOldState2newState)
