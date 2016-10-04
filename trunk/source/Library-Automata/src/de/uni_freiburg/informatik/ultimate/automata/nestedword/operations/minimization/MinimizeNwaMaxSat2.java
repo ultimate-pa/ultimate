@@ -448,11 +448,9 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 	private void generateTransitionConstraintInternalGeneral(final STATE predState1, final STATE predState2,
 			final Doubleton<STATE> predDoubleton) {
 		// NOTE: We exploit the knowledge that the states have the same outgoing symbols
-		final Map<LETTER, Pair<Set<STATE>, Set<STATE>>> letter2succPairs = new HashMap<>();
 		for (final LETTER letter : mOperand.lettersInternal(predState1)) {
 			final Set<STATE> succs1 = new LinkedHashSet<>();
 			final Set<STATE> succs2 = new LinkedHashSet<>();
-			letter2succPairs.put(letter, new Pair<>(succs1, succs2));
 			for (final OutgoingInternalTransition<LETTER, STATE> trans : mOperand.internalSuccessors(predState1,
 					letter)) {
 				succs1.add(trans.getSucc());
@@ -461,9 +459,8 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 					letter)) {
 				succs2.add(trans.getSucc());
 			}
+			generateTransitionConstraintGeneralInternalCallHelperSymmetric(predDoubleton, succs1, succs2);
 		}
-		
-		generateTransitionConstraintGeneralInternalCallHelperSymmetric(predDoubleton, letter2succPairs);
 	}
 	
 	private void generateTransitionConstraintCallHorn(final STATE predState1, final STATE predState2,
@@ -481,11 +478,9 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 	private void generateTransitionConstraintCallGeneral(final STATE predState1, final STATE predState2,
 			final Doubleton<STATE> predDoubleton) {
 		// NOTE: We exploit the knowledge that the states have the same outgoing symbols
-		final Map<LETTER, Pair<Set<STATE>, Set<STATE>>> letter2succPairs = new HashMap<>();
 		for (final LETTER letter : mOperand.lettersCall(predState1)) {
 			final Set<STATE> succs1 = new LinkedHashSet<>();
 			final Set<STATE> succs2 = new LinkedHashSet<>();
-			letter2succPairs.put(letter, new Pair<>(succs1, succs2));
 			for (final OutgoingCallTransition<LETTER, STATE> trans : mOperand.callSuccessors(predState1,
 					letter)) {
 				succs1.add(trans.getSucc());
@@ -494,36 +489,27 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 					letter)) {
 				succs2.add(trans.getSucc());
 			}
+			generateTransitionConstraintGeneralInternalCallHelperSymmetric(predDoubleton, succs1, succs2);
 		}
-		
-		generateTransitionConstraintGeneralInternalCallHelperSymmetric(predDoubleton, letter2succPairs);
 	}
 	
 	private void generateTransitionConstraintGeneralInternalCallHelperSymmetric(final Doubleton<STATE> predDoubleton,
-			final Map<LETTER, Pair<Set<STATE>, Set<STATE>>> letter2succPairs) {
-		final Collection<STATE> succs2remove = new ArrayList<>();
+			final Set<STATE> succs1, final Set<STATE> succs2) {
+		final Collection<STATE> succsToRemove = new ArrayList<>();
 		
-		for (final Pair<Set<STATE>, Set<STATE>> succPair : letter2succPairs.values()) {
-			final Set<STATE> succs2 = succPair.getSecond();
-			generateTransitionConstraintGeneralInternalCallHelperOneSide(predDoubleton, succPair.getFirst(), succs2,
-					succs2remove);
-			/*
-			 * Optimization: If a state from the second set is known to be similar to another on from the first set, we
-			 * should not try to add a clause for the other direction (as it will be found out again that they are
-			 * similar).
-			 */
-			succs2.removeAll(succs2remove);
-			
-			generateTransitionConstraintGeneralInternalCallHelperOneSide(predDoubleton, succs2, succPair.getFirst(),
-					null);
-			
-			// clear the list again to reuse it (more efficient than recreating all the time)
-			succs2remove.clear();
-		}
+		generateTransitionConstraintGeneralInternalCallHelperOneSide(predDoubleton, succs1, succs2, succsToRemove);
+		/*
+		 * Optimization: If a state from the second set is known to be similar to another on from the first set, we
+		 * should not try to add a clause for the other direction (as it will be found out again that they are
+		 * similar).
+		 */
+		succs2.removeAll(succsToRemove);
+		
+		generateTransitionConstraintGeneralInternalCallHelperOneSide(predDoubleton, succs2, succs1, null);
 	}
 	
 	private void generateTransitionConstraintGeneralInternalCallHelperOneSide(final Doubleton<STATE> predDoubleton,
-			final Iterable<STATE> succs1, final Iterable<STATE> succs2, final Collection<STATE> succs2remove) {
+			final Iterable<STATE> succs1, final Iterable<STATE> succs2, final Collection<STATE> succsToRemove) {
 		boolean ignoreConstraint = false;
 		for (final STATE succState1 : succs1) {
 			for (final STATE succState2 : succs2) {
@@ -531,7 +517,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 					// clause is trivially true
 					
 					// remember this state, it needs not be checked in the other direction
-					addIfNotNull(succs2remove, succState2);
+					addIfNotNull(succsToRemove, succState2);
 					
 					// continue with next state
 					ignoreConstraint = true;
@@ -597,11 +583,9 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 			// both DoubleDeckers have same outgoing return symbols
 			
 			// NOTE: We exploit the knowledge that the states have the same outgoing symbols
-			final Map<LETTER, Pair<Set<STATE>, Set<STATE>>> letter2succPairs = new HashMap<>();
 			for (final LETTER letter : sameOutgoingReturnSymbols) {
 				final Set<STATE> succs1 = new LinkedHashSet<>();
 				final Set<STATE> succs2 = new LinkedHashSet<>();
-				letter2succPairs.put(letter, new Pair<>(succs1, succs2));
 				for (final OutgoingReturnTransition<LETTER, STATE> trans : mOperand.returnSuccessors(linPredState1,
 						hierPredState1, letter)) {
 					succs1.add(trans.getSucc());
@@ -610,47 +594,39 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 						hierPredState2, letter)) {
 					succs2.add(trans.getSucc());
 				}
+				generateTransitionConstraintGeneralReturnHelperSymmetric(linPredDoubleton, hierPredDoubleton,
+						succs1, succs2);
 			}
-			
-			generateTransitionConstraintGeneralReturnHelperSymmetric(linPredDoubleton, hierPredDoubleton,
-					letter2succPairs);
 		}
 	}
 	
 	private void generateTransitionConstraintGeneralReturnHelperSymmetric(final Doubleton<STATE> linPredDoubleton,
-			final Doubleton<STATE> hierPredDoubleton,
-			final Map<LETTER, Pair<Set<STATE>, Set<STATE>>> letter2succPairs) {
-		final Collection<STATE> succs2remove = new ArrayList<>();
+			final Doubleton<STATE> hierPredDoubleton, final Set<STATE> succs1, final Set<STATE> succs2) {
+		final Collection<STATE> succsToRemove = new ArrayList<>();
 		
-		for (final Pair<Set<STATE>, Set<STATE>> succPair : letter2succPairs.values()) {
-			final Set<STATE> succs2 = succPair.getSecond();
-			generateTransitionConstraintGeneralReturnHelperOneSide(linPredDoubleton, hierPredDoubleton,
-					succPair.getFirst(), succs2, succs2remove);
-			/*
-			 * Optimization: If a state from the second set is known to be similar to another on from the first set, we
-			 * should not try to add a clause for the other direction (as it will be found out again that they are
-			 * similar).
-			 */
-			succs2.removeAll(succs2remove);
-			
-			generateTransitionConstraintGeneralReturnHelperOneSide(linPredDoubleton, hierPredDoubleton, succs2,
-					succPair.getFirst(), null);
-			
-			// clear the list again to reuse it (more efficient than recreating all the time)
-			succs2remove.clear();
-		}
+		generateTransitionConstraintGeneralReturnHelperOneSide(linPredDoubleton, hierPredDoubleton, succs1, succs2,
+				succsToRemove);
+		/*
+		 * Optimization: If a state from the second set is known to be similar to another on from the first set, we
+		 * should not try to add a clause for the other direction (as it will be found out again that they are
+		 * similar).
+		 */
+		succs2.removeAll(succsToRemove);
+		
+		generateTransitionConstraintGeneralReturnHelperOneSide(linPredDoubleton, hierPredDoubleton, succs2, succs1,
+				null);
 	}
 	
 	private void generateTransitionConstraintGeneralReturnHelperOneSide(final Doubleton<STATE> linPredDoubleton,
 			final Doubleton<STATE> hierPredDoubleton, final Set<STATE> succs1, final Set<STATE> succs2,
-			final Collection<STATE> succs2remove) {
+			final Collection<STATE> succsToRemove) {
 		boolean ignore = false;
 		for (final STATE succState1 : succs1) {
 			for (final STATE succState2 : succs2) {
 				if (knownToBeSimilar(succState1, succState2)) {
 					// clause is trivially true
 					
-					addIfNotNull(succs2remove, succState2);
+					addIfNotNull(succsToRemove, succState2);
 					
 					// continue with next state
 					ignore = true;
