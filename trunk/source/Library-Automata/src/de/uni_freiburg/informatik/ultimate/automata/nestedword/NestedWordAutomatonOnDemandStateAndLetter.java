@@ -31,6 +31,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
@@ -52,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  */
 public abstract class NestedWordAutomatonOnDemandStateAndLetter<LETTER, STATE> implements INestedWordAutomatonSimple<LETTER, STATE> {
 	
-	private final AutomataLibraryServices mServices;
+	protected final AutomataLibraryServices mServices;
 	
 	private final Set<STATE> mInternalSuccessorsConstruted;
 	private final Set<STATE> mCallSuccessorsConstruted;
@@ -64,7 +65,7 @@ public abstract class NestedWordAutomatonOnDemandStateAndLetter<LETTER, STATE> i
 	protected final Set<LETTER> mCallAlphabet;
 	protected final Set<LETTER> mReturnAlphabet;
 
-	private boolean mInitialStateHaveBeenConstructed = false;
+	protected boolean mInitialStateHaveBeenConstructed = false;
 
 	public NestedWordAutomatonOnDemandStateAndLetter(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory) {
 		super();
@@ -79,7 +80,7 @@ public abstract class NestedWordAutomatonOnDemandStateAndLetter<LETTER, STATE> i
 
 	}
 	
-	protected abstract void constructInitialStates();
+	protected abstract void constructInitialStates() throws AutomataOperationCanceledException;
 
 	protected abstract void constructInternalSuccessors(STATE state);
 	protected abstract void constructCallSuccessors(STATE state);
@@ -146,8 +147,7 @@ public abstract class NestedWordAutomatonOnDemandStateAndLetter<LETTER, STATE> i
 	@Override
 	public Collection<STATE> getInitialStates() {
 		if (!mInitialStateHaveBeenConstructed) {
-			constructInitialStates();
-			mInitialStateHaveBeenConstructed = true;
+			throw new AssertionError("initial states not constructed");
 		}
 		return mCache.getInitialStates();
 	}

@@ -31,6 +31,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonOnDemandStateAndLetter;
@@ -73,24 +74,24 @@ public class GameAutomaton<LETTER, STATE> extends NestedWordAutomatonOnDemandSta
 	private final GameLetterFactory mGameLetterFactory;
 
 
-//	private final DuplicatorWinningSink<LETTER, STATE> mDuplicatorWinningSink;
-	
-	
-	
 	public GameAutomaton(final AutomataLibraryServices services, final IStateFactory<IGameState> stateFactory,
 			final Collection<Set<STATE>> possibleEquivalentClasses, final IDoubleDeckerAutomaton<LETTER, STATE> operand,
-			final ISimulationInfoProvider<LETTER, STATE> simulationInfoProvider, final SpoilerNwaVertex<LETTER, STATE> uniqueSpoilerWinningSink) {
+			final ISimulationInfoProvider<LETTER, STATE> simulationInfoProvider, 
+			final SpoilerNwaVertex<LETTER, STATE> uniqueSpoilerWinningSink) throws AutomataOperationCanceledException {
 		super(services, stateFactory);
 		mPossibleEquivalentClasses = possibleEquivalentClasses;
 		mOperand = operand;
 		mSimulationInfoProvider = simulationInfoProvider;
 		mGameLetterFactory = new GameLetterFactory();
 		mGameStateFactory = new GameStateFactory(uniqueSpoilerWinningSink);
-//		mDuplicatorWinningSink = new DuplicatorWinningSink<>(null);
+		constructInitialStates();
 	}
 	@Override
-	protected void constructInitialStates() {
+	protected void constructInitialStates() throws AutomataOperationCanceledException {
 		for (final Set<STATE> eqClass : mPossibleEquivalentClasses) {
+			if (!mServices.getProgressMonitorService().continueProcessing()) {
+				throw new AutomataOperationCanceledException(this.getClass());
+			}
 			for (final STATE q0 : eqClass) {
 				for (final STATE q1 : eqClass) {
 					if (mOmitSymmetricPairs && q0.equals(q1)) {
@@ -101,6 +102,7 @@ public class GameAutomaton<LETTER, STATE> extends NestedWordAutomatonOnDemandSta
 				}
 			}
 		}
+		mInitialStateHaveBeenConstructed = true;
 	}
 	
 	
@@ -243,7 +245,7 @@ public class GameAutomaton<LETTER, STATE> extends NestedWordAutomatonOnDemandSta
 		final boolean isSpoilerAccepting = mOperand.isFinal(spoilerSucc);
 		final boolean isDuplicatorAccepting = mOperand.isFinal(duplicatorSucc);
 		final boolean isImmediatelyWinningForSpoiler = mSimulationInfoProvider.isImmediatelyWinningForSpoiler(isSpoilerAccepting, isDuplicatorAccepting);
-		final boolean delayedbit = mSimulationInfoProvider.computeBitForSpoilerVertex(predBit, isSpoilerAccepting);
+		final boolean delayedbit = mSimulationInfoProvider.computeBitForSpoilerVertex(predBit, isDuplicatorAccepting);
 		final int priority = mSimulationInfoProvider.computePriority(delayedbit, isSpoilerAccepting, isDuplicatorAccepting);
 		final IGameState result = mGameStateFactory.getOrConstructGameState(
 				spoilerSucc, duplicatorSucc, delayedbit , priority, isImmediatelyWinningForSpoiler, spoilerStateNeededInSucc);
@@ -251,8 +253,8 @@ public class GameAutomaton<LETTER, STATE> extends NestedWordAutomatonOnDemandSta
 	}
 	private IGameLetter<LETTER, STATE> getOrConstuctSuccessorGameLetter(final SpoilerNwaVertex<LETTER, STATE> predVertex, final LETTER letter,
 			final ETransitionType transitionType, final STATE spoilerSucc) {
-		final boolean isDuplicatorAccepting = mOperand.isFinal(predVertex.getQ1());
-		final boolean delayedbit = mSimulationInfoProvider.computeBitForDuplicatorVertex(predVertex.isB(), isDuplicatorAccepting);
+		final boolean isSpoilerAccepting = mOperand.isFinal(spoilerSucc);
+		final boolean delayedbit = mSimulationInfoProvider.computeBitForDuplicatorVertex(predVertex.isB(), isSpoilerAccepting);
 		final IGameLetter<LETTER, STATE> result = mGameLetterFactory.getOrConstructGameLetter(spoilerSucc, predVertex.getQ1(), letter, delayedbit, transitionType);
 		return result;
 	}
