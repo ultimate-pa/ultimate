@@ -67,40 +67,21 @@ public class DimacsMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 		++mVariablesNumber;
 	}
 	
-	@Override
-	public boolean solve() throws AutomataOperationCanceledException {
-		// TODO Auto-generated method stub
-		return false;
-	}
-	
-	@Override
-	public Map<V, Boolean> getValues() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-	
-	@Override
-	public VariableStatus getValue(final V var) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-	
+	@SuppressWarnings("unchecked")
 	@Override
 	public void addHornClause(final V[] negativeAtoms, final V positiveAtom) {
-		// TODO Auto-generated method stub
-		
+		addClause(negativeAtoms, (V[]) new Object[] { positiveAtom });
 	}
 	
 	@Override
 	public void addClause(final V[] negativeAtoms, final V[] positiveAtoms) {
 		// TODO Auto-generated method stub
-		
 	}
 	
 	@Override
-	protected void log() {
+	public boolean solve() throws AutomataOperationCanceledException {
 		// TODO Auto-generated method stub
-		
+		return false;
 	}
 	
 	@Override
@@ -110,32 +91,38 @@ public class DimacsMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 	}
 	
 	@Override
-	protected VariableStatus getTemporaryAssignment(final V var) {
+	public Map<V, Boolean> getValues() {
 		// TODO Auto-generated method stub
 		return null;
 	}
 	
 	@Override
+	protected void log() {
+		throw new UnsupportedOperationException();
+	}
+	
+	@Override
+	protected VariableStatus getTemporaryAssignment(final V var) {
+		throw new UnsupportedOperationException();
+	}
+	
+	@Override
 	protected void backtrack(final V var) {
-		// TODO Auto-generated method stub
-		
+		throw new UnsupportedOperationException();
 	}
 	
 	@Override
 	protected void makeAssignmentPersistent() {
-		// TODO Auto-generated method stub
-		
+		throw new UnsupportedOperationException();
 	}
 	
 	@Override
 	protected void setVariable(final V var, final boolean newStatus) {
-		// TODO Auto-generated method stub
-		
+		throw new UnsupportedOperationException();
 	}
 	
 	@Override
 	protected void decideOne() {
-		// TODO Auto-generated method stub
-		
+		throw new UnsupportedOperationException();
 	}
 }
