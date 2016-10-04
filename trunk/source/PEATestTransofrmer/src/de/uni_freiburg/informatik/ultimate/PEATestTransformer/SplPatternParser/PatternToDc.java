@@ -112,7 +112,7 @@ public class PatternToDc {
 			}
 		} else if (pattern instanceof BndExistencePattern){
 			// ... it is always the case that if p holds after at most c time units.
-			if(pattern.getScope().getClass() == srParseScopeBefore.class){	 
+			if(pattern.getScope().getClass() == srParseScopeGlob.class){	 
 				return this.GlobalBndExistence(pattern, q, r, p, s, t);			//test []
 			} else if(pattern.getScope().getClass() == srParseScopeAfter.class){	 
 				return this.AfterBndExistence(pattern, q, r, p, s, t);			//test []

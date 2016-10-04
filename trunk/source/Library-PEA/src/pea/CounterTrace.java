@@ -240,9 +240,23 @@ public class CounterTrace {
 	this.phases = phases;
     }
 
-    public DCPhase[] getPhases()
-    {
+    public DCPhase[] getPhases(){
         return phases;
+    }
+    
+    /***
+     * Returns the successor phase of a phase in a counter trace. Returns null if phase is 
+     * already the last phase. 
+     * @param phase
+     * @return successor of phase, or null if phase is last phase
+     */
+    public DCPhase getSuccessor(DCPhase phase){
+    	for(int i=0; i < this.phases.length; i++){
+    		if(this.phases[i] == phase && i < this.phases.length-1){
+    			return this.phases[i+1];
+    		}
+    	}
+    	return null;
     }
 
     /**
