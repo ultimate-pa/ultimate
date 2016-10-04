@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.util.csv;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.function.Predicate;
@@ -94,5 +95,29 @@ public class CsvProviderColumnFilter<T> implements ICsvProviderTransformer<T> {
 		}
 		
 		return result;
+	}
+	
+	/**
+	 * A predicate which filters for certain names.
+	 * 
+	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+	 */
+	public static class NameFilter implements Predicate<String> {
+		private final Collection<String> mFilterNames;
+		
+		/**
+		 * Constructor.
+		 * 
+		 * @param allowedNames
+		 *            names for which the test is positive
+		 */
+		public NameFilter(final Collection<String> allowedNames) {
+			mFilterNames = allowedNames;
+		}
+		
+		@Override
+		public boolean test(final String name) {
+			return mFilterNames.contains(name);
+		}
 	}
 }

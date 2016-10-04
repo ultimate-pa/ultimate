@@ -10,7 +10,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * computation in NWA game graphs. A game automaton uses IGameState, which
  * usually are Spoiler vertices, as states and GameLetter as letters.
  * 
- * @author Daniel Tischner
+ * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  *
  */
 public final class GameFactory implements IStateFactory<IGameState> {

@@ -105,7 +105,7 @@ import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
  * games, and state space reduction for büchi automata</i> by <i>Etessami, Wilke
  * and Schuller</i>.
  * 
- * @author Daniel Tischner
+ * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  * @author Markus Lindenmann (lindenmm@informatik.uni-freiburg.de)
  * @author Oleksii Saukh (saukho@informatik.uni-freiburg.de)
  * 
@@ -131,7 +131,7 @@ public abstract class ASimulation<LETTER, STATE> {
 	/**
 	 * The resulting possible reduced buechi automaton.
 	 */
-	private INestedWordAutomaton<LETTER, STATE> mResult;
+	protected INestedWordAutomaton<LETTER, STATE> mResult;
 	/**
 	 * The object that computes the SCCs of a given buechi automaton.
 	 */

@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
  * Class that is used by {@link ASimulation} to measure its performance. Has
  * timer and counter to save performance data.
  * 
- * @author Daniel Tischner
+ * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  *
  */
 public final class SimulationPerformance {

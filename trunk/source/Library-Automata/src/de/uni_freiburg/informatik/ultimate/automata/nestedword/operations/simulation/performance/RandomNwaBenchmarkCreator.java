@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.ToolchainSto
 /**
  * Creates a set of random Nwa automata and saves them as ats-Files.
  *
- * @author Daniel Tischner
+ * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  *
  */
 public final class RandomNwaBenchmarkCreator {

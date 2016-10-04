@@ -142,7 +142,7 @@ public class AutomatonDeltaDebugger<LETTER, STATE> implements IAnalysis {
 				default:
 					throw new IllegalArgumentException("Unknown mode.");
 			}
-			mObservers.add(new AutomatonDeltaDebuggerObserver<LETTER, STATE>(
+			mObservers.add(new AutomatonDeltaDebuggerObserver<>(
 					mServices, tester, getShrinkersLoop(), getShrinkersBridge(),
 					getShrinkersEnd(), mDebugPolicy));
 		} else {

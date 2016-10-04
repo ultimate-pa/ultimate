@@ -27,6 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata;
 
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.LookaheadPartitionConstructor;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.performance.ECountingMeasure;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.performance.ETimeMeasure;
 
@@ -39,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
- * @author Daniel Tischner
+ * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  */
 public enum StatisticsType {
 	/**
@@ -290,6 +291,12 @@ public enum StatisticsType {
 	 * compatibility with {@link ECountingMeasure}).
 	 */
 	SIMULATION_STEPS,
+	/**
+	 * Number of states in the biggest equivalence class of an initial
+	 * partition which is provided e.g., by the 
+	 * {@link LookaheadPartitionConstructor}. 
+	 */
+	SIZE_MAXIMAL_INITIAL_EQUIVALENCE_CLASS,
 	/**
 	 * The time solving the Max-Sat problem at nwa game graph resulting
 	 * automaton generation took (used in simulation, for compatibility with

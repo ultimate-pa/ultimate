@@ -67,6 +67,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.Basi
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
+import de.uni_freiburg.informatik.ultimate.util.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 /**
@@ -163,8 +164,9 @@ public class TransFormulaUtils {
 				final Term simplified = SmtUtils.simplify(mgdScript, formula, services, simplificationTechnique);
 				formula = simplified;
 			} catch (final ToolchainCanceledException tce) {
-				throw new ToolchainCanceledException(UnmodifiableTransFormula.class, tce.getRunningTaskInfo() +
-						" while doing sequential composition of " + transFormula.size() + " TransFormulas");
+				final String taskDescription = "doing sequential composition of " + transFormula.size() + " TransFormulas";
+				tce.addRunningTaskInfo(new RunningTaskInfo(PartialQuantifierElimination.class, taskDescription));
+				throw tce;
 			}
 		}
 

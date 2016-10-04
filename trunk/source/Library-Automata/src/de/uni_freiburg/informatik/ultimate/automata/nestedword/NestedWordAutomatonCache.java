@@ -868,6 +868,15 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 		return sb.toString();
 	}
 	
+	private boolean assertThatAllStatesAreInAutomaton(final Collection<STATE> succs) {
+		boolean result = true;
+		for (final STATE state :succs) {
+			result &= contains(state);
+			assert result : "State " + state + " not in automaton";
+		}
+		return result;
+	}
+	
 	public void addInternalTransition(final STATE pred, final LETTER letter, final STATE succ) {
 		if (!contains(pred)) {
 			throw new IllegalArgumentException("State " + pred + " not in automaton");
@@ -893,7 +902,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 			throw new IllegalArgumentException("State " + pred + " not in automaton");
 		}
 		assert contains(pred) : "State " + pred + " not in automaton";
-//		assert contains(succ) : "State " + succ + " not in automaton";
+		assert assertThatAllStatesAreInAutomaton(succs);
 		assert getInternalAlphabet().contains(letter);
 		Map<LETTER, Set<STATE>> letter2succs = mInternalOut.get(pred);
 		if (letter2succs == null) {
@@ -927,7 +936,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 	
 	public void addCallTransitions(final STATE pred, final LETTER letter, final Collection<STATE> succs) {
 		assert contains(pred) : "State " + pred + " not in automaton";
-//		assert contains(succ) : "State " + succ + " not in automaton";
+		assert assertThatAllStatesAreInAutomaton(succs);
 		assert getCallAlphabet().contains(letter);
 		Map<LETTER, Set<STATE>> letter2succs = mCallOut.get(pred);
 		if (letter2succs == null) {
@@ -968,7 +977,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 	public void addReturnTransitions(final STATE pred, final STATE hier,
 			final LETTER letter, final Collection<STATE> succs) {
 		assert contains(pred) : "State " + pred + " not in automaton";
-//		assert contains(succ) : "State " + succ + " not in automaton";
+		assert assertThatAllStatesAreInAutomaton(succs);
 		assert contains(hier) : "State " + hier + " not in automaton";
 		assert getReturnAlphabet().contains(letter);
 		Map<LETTER, Map<STATE, Set<STATE>>> letter2hier2succs = mReturnOut.get(pred);

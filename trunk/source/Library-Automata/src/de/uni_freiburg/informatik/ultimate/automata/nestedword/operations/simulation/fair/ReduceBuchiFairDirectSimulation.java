@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * Once constructed the reduction automatically starts, the result can be get by
  * using {@link #getResult()}.
  * 
- * @author Daniel Tischner
+ * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  * 
  * @param <LETTER>
  *            Letter class of buechi automaton

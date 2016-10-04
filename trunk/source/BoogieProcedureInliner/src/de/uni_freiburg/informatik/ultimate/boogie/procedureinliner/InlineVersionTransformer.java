@@ -1257,7 +1257,7 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 
 	private void checkTimeout() {
 		if (!mProgressMonitorService.continueProcessing()) {
-			final String msg = "Timeout while inlining. Statistic: " + mInlinerStatistic;
+			final String msg = "inlining (statistic: " + mInlinerStatistic + ")";
 			throw new ToolchainCanceledException(this.getClass(), msg);
 		}
 	}

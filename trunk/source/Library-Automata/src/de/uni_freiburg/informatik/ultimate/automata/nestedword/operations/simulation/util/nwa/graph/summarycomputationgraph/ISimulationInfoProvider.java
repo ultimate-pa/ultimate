@@ -26,8 +26,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.summarycomputationgraph;
 
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.SpoilerVertex;
+
 /**
- * TODO
+ * Provide information about simulations that are needed for constructing
+ * the game graph and for obtaining simulation results.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
@@ -37,9 +41,18 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simul
 public interface ISimulationInfoProvider<LETTER, STATE> {
 	
 	
+	public boolean computeBitForInitialVertex(boolean isSpoilerAccepting, boolean isDuplicatorAccepting);
 	public boolean computeBitForSpoilerVertex(boolean predecessorBit, boolean isSpoilerAccepting);
 	public boolean computeBitForDuplicatorVertex(boolean predecessorBit, boolean isDuplicatorAccepting);
 	
 	public int computePriority(boolean bit, boolean isSpoilerAccepting, boolean isDuplicatorAccepting);
+	
+	public boolean isImmediatelyWinningForSpoiler(boolean isSpoilerAccepting, boolean isDuplicatorAccepting);
+	
+	public boolean isSimulationInformationProvider(SpoilerVertex<LETTER, STATE> spoilerVertex, 
+			INestedWordAutomatonSimple<LETTER, STATE> inputAutomaton);
+	public boolean mayMergeFinalAndNonFinalStates();
+	
+	
 	
 }

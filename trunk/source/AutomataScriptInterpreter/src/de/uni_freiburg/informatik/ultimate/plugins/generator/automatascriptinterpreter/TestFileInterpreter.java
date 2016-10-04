@@ -1242,7 +1242,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 						}
 						statistics.addKeyValuePair(StatisticsType.ATS_ID, oe.getAsString());
 						statistics.addKeyValuePair(StatisticsType.OPERATION_NAME, oe.getOperationName());
-						statistics.addKeyValuePair(StatisticsType.RUNTIME_TOTAL, timer.checkTime());
+						statistics.addKeyValuePair(StatisticsType.RUNTIME_TOTAL, timer.checkTime()/1000);
 						final BenchmarkResult<?> br = new BenchmarkResult<>(Activator.PLUGIN_ID,
 								"automata script interpreter benchmark results", statistics);
 						mServices.getResultService().reportResult(Activator.PLUGIN_ID, br);

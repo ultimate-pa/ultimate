@@ -67,7 +67,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTim
  * State Space Reduction for Bu"chi Automata. SIAM J. Comput. 34(5): 1159-1175
  * (2005)
  * 
- * @author Daniel Tischner
+ * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  * @author Markus Lindenmann (lindenmm@informatik.uni-freiburg.de)
  * @author Oleksii Saukh (saukho@informatik.uni-freiburg.de)
  * 

@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTim
  * For more information on the type of simulation see
  * {@link DelayedNwaGameGraph}.
  * 
- * @author Daniel Tischner
+ * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  *
  * @param <LETTER>
  *            Letter class of nwa automaton

@@ -57,10 +57,17 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 /**
  * Provides utility methods for simulation with NWA automata.
  * 
- * @author Daniel Tischner
+ * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  *
  */
 public final class NwaSimulationUtil {
+	
+	/**
+	 * Utility class. No implementation.
+	 */
+	private NwaSimulationUtil() {
+
+	}
 
 	/**
 	 * Computes if the simulation results saved in the given game graph are
@@ -373,11 +380,7 @@ public final class NwaSimulationUtil {
 		simulationPerformance.setCountingMeasure(ECountingMeasure.RESULT_TRANSITION_RETURN_DENSITY_MILLION,
 				(int) Math.round(outputAnalyzer.getTransitionDensity(SymbolType.RETURN) * 1_000_000));
 	}
-
-	/**
-	 * Utility class. No implementation.
-	 */
-	private NwaSimulationUtil() {
-
-	}
+	
+	
+	
 }

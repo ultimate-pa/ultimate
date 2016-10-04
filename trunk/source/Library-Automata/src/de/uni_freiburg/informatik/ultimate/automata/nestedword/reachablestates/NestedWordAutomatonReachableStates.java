@@ -221,27 +221,23 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 		assert (new DownStateConsistencyCheck<>(mServices, this)).getResult() : "down states inconsistent";
 	}
 	
-	AutomataLibraryServices getServices() {
+	private AutomataLibraryServices getServices() {
 		return mServices;
 	}
 	
-	Map<STATE, StateContainer<LETTER, STATE>> getStatesMap() {
+	private Map<STATE, StateContainer<LETTER, STATE>> getStatesMap() {
 		return mStates;
 	}
 	
-	Collection<STATE> getInitialStatesPrivate() {
+	private Collection<STATE> getInitialStatesPrivate() {
 		return mInitialStates;
 	}
 	
-	Collection<STATE> getFinalStatesPrivate() {
+	private Collection<STATE> getFinalStatesPrivate() {
 		return mFinalStates;
 	}
 	
-	INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
-		return mOperand;
-	}
-	
-	InCaReCounter getNumberTransitions() {
+	private InCaReCounter getNumberTransitions() {
 		return mNumberTransitions;
 	}
 	
@@ -996,7 +992,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 		private final LinkedList<StateContainer<LETTER, STATE>> mDownPropagationWorklist = new LinkedList<>();
 		
 		ReachableStatesComputation() throws AutomataOperationCanceledException {
-			addInitialStates(getOperand().getInitialStates());
+			addInitialStates(mOperand.getInitialStates());
 			
 			do {
 				while (!mForwardWorklist.isEmpty()) {
@@ -1090,7 +1086,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 		 */
 		private StateContainer<LETTER, STATE> addState(final STATE state, final HashMap<STATE, Integer> downStates) {
 			assert !getStatesMap().containsKey(state);
-			if (getOperand().isFinal(state)) {
+			if (mOperand.isFinal(state)) {
 				getFinalStatesPrivate().add(state);
 			}
 			final boolean canHaveOutgoingReturn = candidateForOutgoingReturn(state);
@@ -1103,15 +1099,19 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 		}
 		
 		private boolean candidateForOutgoingReturn(final STATE state) {
-			if (getReturnAlphabet().isEmpty()) {
-				return false;
+			if (mOperand.hasModifiableAlphabet()) {
+				return true;
+			} else {
+				if (getReturnAlphabet().isEmpty()) {
+					return false;
+				}
+				return !mOperand.lettersReturn(state).isEmpty();
 			}
-			return !getOperand().lettersReturn(state).isEmpty();
 		}
 		
 		private void addInternalsAndSuccessors(final StateContainer<LETTER, STATE> cont) {
 			final STATE state = cont.getState();
-			for (final OutgoingInternalTransition<LETTER, STATE> trans : getOperand().internalSuccessors(state)) {
+			for (final OutgoingInternalTransition<LETTER, STATE> trans : mOperand.internalSuccessors(state)) {
 				final STATE succ = trans.getSucc();
 				StateContainer<LETTER, STATE> succSc = getStatesMap().get(succ);
 				if (succSc == null) {
@@ -1130,7 +1130,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 		private Set<STATE> addCallsAndSuccessors(final StateContainer<LETTER, STATE> cont) {
 			boolean addedSelfloop = false;
 			final STATE state = cont.getState();
-			for (final OutgoingCallTransition<LETTER, STATE> trans : getOperand().callSuccessors(cont.getState())) {
+			for (final OutgoingCallTransition<LETTER, STATE> trans : mOperand.callSuccessors(cont.getState())) {
 				final STATE succ = trans.getSucc();
 				StateContainer<LETTER, STATE> succCont = getStatesMap().get(succ);
 				final HashMap<STATE, Integer> succDownStates = new HashMap<>();
@@ -1161,7 +1161,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 			boolean addedSelfloop = false;
 			final STATE state = cont.getState();
 			StateContainer<LETTER, STATE> downCont = null;
-			for (final OutgoingReturnTransition<LETTER, STATE> trans : getOperand().returnSuccessorsGivenHier(state,
+			for (final OutgoingReturnTransition<LETTER, STATE> trans : mOperand.returnSuccessorsGivenHier(state,
 					down)) {
 				assert down.equals(trans.getHierPred());
 				if (downCont == null) {

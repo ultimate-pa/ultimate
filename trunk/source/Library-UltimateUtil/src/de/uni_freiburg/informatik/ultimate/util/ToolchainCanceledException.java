@@ -26,61 +26,64 @@
  */
 package de.uni_freiburg.informatik.ultimate.util;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
- * Exception that can be thrown if a plugin detects that the timeout is overdue or a cancellation of the toolchain was
- * requested.
+ * Exception that can be thrown if a plugin detects that the timeout is overdue 
+ * or a cancellation of the toolchain was requested.
  * 
  * The core will create TimeoutResult if this exception is thrown.
  *
- * @author heizmann
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class ToolchainCanceledException extends RuntimeException {
 
 	private static final long serialVersionUID = 7090759880566576629L;
 
 	public static final String MESSAGE = "Timeout or Toolchain cancelled by user";
-	private final Class<?> mClassOfThrower;
-	private final String mRunningTaskInfo;
+	
+	private final List<RunningTaskInfo> mRunningTaskInfos = new ArrayList<>();
 
-	public ToolchainCanceledException(Class<?> thrower) {
+	public ToolchainCanceledException(final Class<?> thrower) {
 		super(MESSAGE);
-		mClassOfThrower = thrower;
-		mRunningTaskInfo = null;
+		mRunningTaskInfos.add(new RunningTaskInfo(thrower, null));
 	}
 
-	public ToolchainCanceledException(Class<?> thrower, String runningTaskInfo) {
+	public ToolchainCanceledException(final Class<?> thrower, final String runningTaskDescription) {
 		super(MESSAGE);
-		mClassOfThrower = thrower;
-		mRunningTaskInfo = runningTaskInfo;
+		mRunningTaskInfos.add(new RunningTaskInfo(thrower, runningTaskDescription));
+	}
+	
+	public ToolchainCanceledException(final String message, final Class<?> thrower, final String runningTaskDescription) {
+		super(message);
+		mRunningTaskInfos.add(new RunningTaskInfo(thrower, runningTaskDescription));
 	}
 
-	@Override
-	public String getMessage() {
-		return super.getMessage();
+	public void addRunningTaskInfo(final RunningTaskInfo runningTaskInfo) {
+		mRunningTaskInfos.add(runningTaskInfo);
 	}
 
-	/**
-	 * Get the class of the object that has thrown this Exception.
-	 * 
-	 * @return
-	 */
-	public Class<?> getClassOfThrower() {
-		return mClassOfThrower;
-	}
-
-	/**
-	 * Return optional message that was added by the algorithm/task that has thrown this Exception. Null if no optional
-	 * message was provided. The message should provide some information that can be helpful for finding the reason for
-	 * the timeout (e.g., algorithm with exponential space complexity was applied to problem of input size 23).
-	 */
-	public String getRunningTaskInfo() {
-		return mRunningTaskInfo;
-	}
-
-	public String prettyPrint() {
-		return "(Timeout occurred in class " + getClassOfThrower().getSimpleName()
-				+ (getRunningTaskInfo() == null ? "" : " during the following task: " + getRunningTaskInfo())
-				+ ")";
+	public String printRunningTaskInfos() {
+		final StringBuilder sb = new StringBuilder();
+		sb.append("Cancelled");
+		
+		for (int i = mRunningTaskInfos.size() - 1; i>= 0; i--) {
+			final RunningTaskInfo rti = mRunningTaskInfos.get(i);
+			if (rti.getTaskDescription() == null) {
+				sb.append(" while executing" + rti.getClassOfTaskExecutor().getSimpleName());
+			} else {
+				sb.append(" while ");
+				sb.append(rti.getClassOfTaskExecutor().getSimpleName());
+				sb.append(" was ");
+				sb.append(rti.getTaskDescription());
+			}
+			if (i > 0) {
+				sb.append(",");
+			}
+		}
+		sb.append(".");
+		return sb.toString();
 	}
 
 }

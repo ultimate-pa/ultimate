@@ -27,7 +27,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator;
 
-import java.util.Stack;
+import java.util.ArrayDeque;
+import java.util.Deque;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
@@ -42,14 +43,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public class ExpressionEvaluator<VALUE, STATE extends IAbstractState<STATE, ACTION, IBoogieVar>, ACTION> {
 
-	private final Stack<IEvaluator<VALUE, STATE, ACTION>> mEvaluators;
+	private final Deque<IEvaluator<VALUE, STATE, ACTION>> mEvaluators;
 	private IEvaluator<VALUE, STATE, ACTION> mRootEvaluator;
 
 	/**
 	 * The default constructor.
 	 */
 	public ExpressionEvaluator() {
-		mEvaluators = new Stack<IEvaluator<VALUE, STATE, ACTION>>();
+		mEvaluators = new ArrayDeque<>();
 		mRootEvaluator = null;
 	}
 

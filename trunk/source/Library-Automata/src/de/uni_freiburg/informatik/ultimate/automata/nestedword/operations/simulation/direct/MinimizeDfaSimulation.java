@@ -56,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * For correctness its important that the inputed automaton has <b>no dead
  * ends</b> nor <b>duplicate transitions</b>.
  * 
- * @author Daniel Tischner
+ * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  * @author heizmann@informatik.uni-freiburg.de
  * @author schillic@informatik.uni-freiburg.de
  * 

@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
  * reduction using random automata.<br/>
  * The resulting automaton is the input automaton.
  * 
- * @author Daniel Tischner
+ * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  * 
  * @param <LETTER>
  *            Letter class of buechi automaton, not used

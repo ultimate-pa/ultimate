@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  * A GameGraphChanges object can then be used to undo made changes for a game
  * graph by using {@link AGameGraph#undoChanges(GameGraphChanges)}.
  * 
- * @author Daniel Tischner
+ * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  *
  * @param <LETTER>
  *            Letter class of buechi automaton

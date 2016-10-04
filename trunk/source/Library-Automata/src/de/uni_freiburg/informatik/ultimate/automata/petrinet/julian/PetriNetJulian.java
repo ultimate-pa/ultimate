@@ -53,11 +53,19 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.petruchio.Em
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
+/**
+ * A Petri net implementation.
+ * 
+ * @author Julian Jarecki (jareckij@informatik.uni-freiburg.de)
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <S>
+ *            symbol type
+ * @param <C>
+ *            place content type
+ */
 public final class PetriNetJulian<S, C> implements IPetriNet<S, C> {
-	
 	private final AutomataLibraryServices mServices;
 	
-	@SuppressWarnings("unused")
 	private final ILogger mLogger;
 	
 	private final Set<S> mAlphabet;
@@ -75,23 +83,61 @@ public final class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 	 */
 	private final boolean mConstantTokenAmount;
 	
-	public PetriNetJulian(final AutomataLibraryServices services, final Set<S> alphabet,
-			final IStateFactory<C> stateFactory, final boolean constantTokenAmount) {
+	/**
+	 * Private constructor.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param alphabet
+	 *            alphabet
+	 * @param stateFactory
+	 *            state factory
+	 * @param constantTokenAmount
+	 *            amount of constant tokens
+	 * @param dummy
+	 *            dummy parameter to avoid duplicate method signature
+	 */
+	@SuppressWarnings({ "unused", "squid:S1172" })
+	private PetriNetJulian(final AutomataLibraryServices services, final Set<S> alphabet,
+			final IStateFactory<C> stateFactory, final boolean constantTokenAmount, final boolean dummy) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mAlphabet = alphabet;
 		mStateFactory = stateFactory;
 		mConstantTokenAmount = constantTokenAmount;
+	}
+	
+	/**
+	 * Standard constructor.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param alphabet
+	 *            alphabet
+	 * @param stateFactory
+	 *            state factory
+	 * @param constantTokenAmount
+	 *            amount of constant tokens
+	 */
+	public PetriNetJulian(final AutomataLibraryServices services, final Set<S> alphabet,
+			final IStateFactory<C> stateFactory, final boolean constantTokenAmount) {
+		this(services, alphabet, stateFactory, constantTokenAmount, true);
 		assert !constantTokenAmount() || transitionsPreserveTokenAmount();
 	}
 	
+	/**
+	 * Constructor from a nested word automaton.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param nwa
+	 *            nested word automaton
+	 * @throws AutomataLibraryException
+	 *             if inclusion check in assertion fails
+	 */
 	public PetriNetJulian(final AutomataLibraryServices services, final INestedWordAutomaton<S, C> nwa)
 			throws AutomataLibraryException {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		mAlphabet = nwa.getInternalAlphabet();
-		mStateFactory = nwa.getStateFactory();
-		mConstantTokenAmount = true;
+		this(services, nwa.getInternalAlphabet(), nwa.getStateFactory(), true, false);
 		final Map<C, Place<S, C>> state2place = new HashMap<>();
 		for (final C content : nwa.getStates()) {
 			// C content = state.getContent();
@@ -143,6 +189,18 @@ public final class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 		return correct;
 	}
 	
+	/**
+	 * Adds a place.
+	 * 
+	 * @param content
+	 *            content
+	 * @param isInitial
+	 *            {@code true} iff the place is initial
+	 * @param isFinal
+	 *            {@code true} iff the place is final
+	 * @return the newly added place
+	 */
+	@SuppressWarnings("squid:S2301")
 	public Place<S, C> addPlace(final C content, final boolean isInitial, final boolean isFinal) {
 		final Place<S, C> place = new Place<>(content);
 		mPlaces.add(place);
@@ -155,6 +213,17 @@ public final class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 		return place;
 	}
 	
+	/**
+	 * Adds a transition.
+	 * 
+	 * @param symbol
+	 *            symbol
+	 * @param preds
+	 *            predecessor places
+	 * @param succs
+	 *            successor places
+	 * @return the newly added transition
+	 */
 	public Transition<S, C> addTransition(final S symbol, final Collection<Place<S, C>> preds,
 			final Collection<Place<S, C>> succs) {
 		if (!mAlphabet.contains(symbol)) {
@@ -178,11 +247,11 @@ public final class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 	}
 	
 	/**
-	 * Hack to satisfy requirements from IPetriNet. Used by visualization
+	 * Hack to satisfy requirements from IPetriNet. Used by visualization.
 	 */
 	@Override
 	public Collection<Collection<Place<S, C>>> getAcceptingMarkings() {
-		final ArrayList<Collection<Place<S, C>>> list = new ArrayList<>();
+		final Collection<Collection<Place<S, C>>> list = new ArrayList<>(1);
 		list.add(mAcceptingPlaces);
 		return list;
 	}
@@ -198,10 +267,26 @@ public final class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 	}
 	*/
 	
+	/**
+	 * @param transition
+	 *            A transition.
+	 * @param marking
+	 *            marking
+	 * @return {@code true} iff the transition is enabled
+	 */
 	public boolean isTransitionEnabled(final ITransition<S, C> transition, final Collection<Place<S, C>> marking) {
 		return marking.containsAll(transition.getPredecessors());
 	}
 	
+	/**
+	 * Fires a transition.
+	 * 
+	 * @param transition
+	 *            transition
+	 * @param marking
+	 *            marking
+	 * @return resulting marking
+	 */
 	public Collection<Place<S, C>> fireTransition(final ITransition<S, C> transition,
 			final Collection<Place<S, C>> marking) {
 		marking.removeAll(transition.getPredecessors());
@@ -240,8 +325,8 @@ public final class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 	}
 	
 	/**
-	 * if true, then the number of tokens in the net is constant (= size of
-	 * initial marking) during every run of the net
+	 * @return {@code true} if the number of tokens in the net is constant (= size of
+	 *         initial marking) during every run of the net.
 	 */
 	public boolean constantTokenAmount() {
 		return mConstantTokenAmount;
@@ -257,12 +342,21 @@ public final class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 		return false;
 	}
 	
+	/**
+	 * @return An accepting run.
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled
+	 */
 	public PetriNetRun<S, C> acceptingRun() throws AutomataOperationCanceledException {
 		// NestedRun<S, C> test = getAcceptingNestedRun();
 		// System.out.print(test);
-		return (new PetriNetUnfolder<>(mServices, this, PetriNetUnfolder.UnfoldingOrder.ERV, false, true)).getAcceptingRun();
+		return (new PetriNetUnfolder<>(mServices, this, PetriNetUnfolder.UnfoldingOrder.ERV, false, true))
+				.getAcceptingRun();
 	}
 	
+	/**
+	 * @return An accepting nested run.
+	 */
 	public NestedRun<S, C> getAcceptingNestedRun() {
 		final EmptinessPetruchio<S, C> ep = new EmptinessPetruchio<>(mServices, this);
 		// NestedRun<S,C> result = (new PetriNet2FiniteAutomaton<S,C>(this)).getResult().getAcceptingNestedRun();

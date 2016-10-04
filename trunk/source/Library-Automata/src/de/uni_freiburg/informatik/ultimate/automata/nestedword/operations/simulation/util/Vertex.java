@@ -44,7 +44,7 @@ import java.util.Set;
  * {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ASimulation
  * ASimulation}.
  * 
- * @author Daniel Tischner
+ * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  *
  * @param <LETTER>
  *            Letter class of buechi automaton

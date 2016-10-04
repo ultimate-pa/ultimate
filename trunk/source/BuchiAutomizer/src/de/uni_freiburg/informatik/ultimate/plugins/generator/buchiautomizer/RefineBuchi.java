@@ -78,6 +78,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerSpWp;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerUtils;
+import de.uni_freiburg.informatik.ultimate.util.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 public class RefineBuchi {
@@ -299,11 +300,9 @@ public class RefineBuchi {
 							mSmtManager, buchiModGlobalVarManager, interpolation, mServices, mSimplificationTechnique, mXnfConversionTechnique);
 					loopInterpolantsForRefinement = lc.getResult();
 				} catch (final ToolchainCanceledException tce) {
-					String taskMessage = "loop cannibalization: ";
-					if (tce.getRunningTaskInfo() != null) {
-						taskMessage += tce.getRunningTaskInfo();
-					}
-					throw new ToolchainCanceledException(getClass(), taskMessage);
+					final String taskDescription = "loop cannibalization";
+					tce.addRunningTaskInfo(new RunningTaskInfo(getClass(), taskDescription));
+					throw tce;
 				}
 			} else {
 				loopInterpolantsForRefinement = new HashSet<IPredicate>(Arrays.asList(loopInterpolants));

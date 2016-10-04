@@ -363,7 +363,7 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 				resultXJuncts.add(PartialQuantifierElimination.composeXjunctsInner(mScript, mquantifier, resultAtoms.toArray(new Term[resultAtoms.size()])));
 				if (!mServices.getProgressMonitorService().continueProcessing()) {
 					throw new ToolchainCanceledException(this.getClass(),
-							"TIR is building " + Math.pow(2,mantiDer.size()) + " xjuncts");
+							"building " + Math.pow(2,mantiDer.size()) + " xjuncts");
 				}
 			}
 			return PartialQuantifierElimination.composeXjunctsOuter(mScript, mquantifier, resultXJuncts.toArray(new Term[resultXJuncts.size()]));

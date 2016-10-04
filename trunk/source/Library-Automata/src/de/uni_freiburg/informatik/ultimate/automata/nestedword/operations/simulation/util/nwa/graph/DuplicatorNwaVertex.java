@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
  * This object extends regular DuplicatorVertices by giving it extra information
  * that only occur in Nwa Game Graphs, like sinks.
  * 
- * @author Daniel Tischner
+ * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  * 
  * @param <LETTER>
  *            Letter class of nwa automaton
@@ -290,6 +290,7 @@ public final class DuplicatorNwaVertex<LETTER, STATE> extends DuplicatorVertex<L
 	 * 
 	 * @return The type of the transition represented by this vertex.
 	 */
+	@Override
 	public ETransitionType getTransitionType() {
 		return mTransitionType;
 	}
@@ -328,8 +329,6 @@ public final class DuplicatorNwaVertex<LETTER, STATE> extends DuplicatorVertex<L
 		} else {
 			sb.append(getLetter());
 		}
-		sb.append("<" + getPriority() + ">");
-
 		sb.append("),p:").append(getPriority()).append(",pm:").append(mPm);
 		sb.append(">");
 		return sb.toString();

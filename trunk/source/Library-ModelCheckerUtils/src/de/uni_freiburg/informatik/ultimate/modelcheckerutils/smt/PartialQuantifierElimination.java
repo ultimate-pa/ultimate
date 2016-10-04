@@ -60,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifi
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XnfUpd;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XnfUsr;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
+import de.uni_freiburg.informatik.ultimate.util.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 /**
@@ -210,8 +211,9 @@ public class PartialQuantifierElimination {
 			elim = elim(mgdScript, quantifier, varSet, elim, services, logger, simplificationTechnique,
 					xnfConversionTechnique);
 		} catch (final ToolchainCanceledException tce) {
-			throw new ToolchainCanceledException(PartialQuantifierElimination.class,
-					tce.getRunningTaskInfo() + " during partial quantifier elimination");
+			final String taskDescription = "eliminating quantifiers";
+			tce.addRunningTaskInfo(new RunningTaskInfo(PartialQuantifierElimination.class, taskDescription));
+			throw tce;
 		}
 		if (varSet.isEmpty()) {
 			return elim;

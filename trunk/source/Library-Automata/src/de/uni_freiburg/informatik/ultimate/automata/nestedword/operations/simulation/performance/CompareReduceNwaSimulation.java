@@ -56,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTim
  * reduction.<br/>
  * The resulting automaton is the input automaton.
  * 
- * @author Daniel Tischner
+ * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  * 
  * @param <LETTER>
  *            Letter class of nwa automaton

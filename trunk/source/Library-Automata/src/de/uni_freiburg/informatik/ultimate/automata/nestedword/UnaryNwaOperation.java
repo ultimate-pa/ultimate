@@ -86,17 +86,16 @@ public abstract class UnaryNwaOperation<LETTER, STATE> extends GeneralOperation<
 		
 		// check language equivalence via two inclusion checks
 		final String message;
-		boolean correct = true;
-		if (new IsIncluded<LETTER, STATE>(mServices, stateFactory, operand, result).getResult()) {
-			if (new IsIncluded<LETTER, STATE>(mServices, stateFactory, result, operand).getResult()) {
-				message = null;
-			} else {
-				message = "The result recognizes less words than before.";
-				correct = false;
-			}
-		} else {
+		final Boolean correct;
+		if (!new IsIncluded<>(mServices, stateFactory, operand, result).getResult()) {
+			message = "The result recognizes less words than before.";
+			correct = Boolean.FALSE;
+		} else if (!new IsIncluded<>(mServices, stateFactory, result, operand).getResult()) {
 			message = "The result recognizes more words than before.";
-			correct = false;
+			correct = Boolean.FALSE;
+		} else {
+			message = null;
+			correct = Boolean.TRUE;
 		}
 		
 		return new Pair<>(correct, message);

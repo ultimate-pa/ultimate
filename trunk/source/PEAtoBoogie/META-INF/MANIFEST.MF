@@ -7,9 +7,9 @@ Bundle-Activator: pea_to_boogie.Activator
 Require-Bundle: Library-UltimateCore,
  UltimateCore,
  Library-BoogieAST,
+ Library-PEA,
  Library-srParse,
  JavaCup,
- Library-PEA
+ Library-UltimateUtil
 Bundle-ActivationPolicy: lazy
-Bundle-RequiredExecutionEnvironment: JavaSE-1.6
-Export-Package: pea_to_boogie.translator
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8

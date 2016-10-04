@@ -53,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * where 'n' is the number of states, 'm' the number of edges and 'k' the size
  * of the alphabet.
  * 
- * @author Daniel Tischner
+ * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  * @param <LETTER>
  *            Class of the letters from the automata
  * @param <STATE>

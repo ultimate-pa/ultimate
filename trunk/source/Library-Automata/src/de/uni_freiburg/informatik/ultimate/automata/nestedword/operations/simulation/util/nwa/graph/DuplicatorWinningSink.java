@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
  * <b>sinkEntry -> DuplicatorSink -> SpoilerSink -> DuplicatorSink -> ...</b>.
  * Where <tt>SpoilerSink</tt> has a priority of 0.
  * 
- * @author Daniel Tischner
+ * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  *
  * @param <LETTER>
  *            Letter class of nwa automaton

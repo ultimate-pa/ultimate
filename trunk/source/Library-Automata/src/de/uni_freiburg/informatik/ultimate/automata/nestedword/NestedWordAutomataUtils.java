@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -89,6 +90,14 @@ public final class NestedWordAutomataUtils {
 		for (final E trans : it) {
 			result.add(trans.getSucc());
 			
+		}
+		return result;
+	}
+
+	public static <STATE> int computeSizeOfLargestEquivalenceClass(final Collection<Set<STATE>> possibleEquivalentClasses) {
+		int result = 0;
+		for (final Set<STATE> eqClass : possibleEquivalentClasses) {
+			result = Math.max(result, eqClass.size());
 		}
 		return result;
 	}

@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * Once constructed the reduction automatically starts, the result can be get by
  * using {@link #getResult()}.
  * 
- * @author Daniel Tischner
+ * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  * @author Markus Lindenmann (lindenmm@informatik.uni-freiburg.de)
  * @author Oleksii Saukh (saukho@informatik.uni-freiburg.de)
  * @date 10.12.2011

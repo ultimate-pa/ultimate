@@ -30,7 +30,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simul
  * Types of possible game graph changes, mainly used by
  * {@link GameGraphChanges}.
  * 
- * @author Daniel Tischner
+ * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  *
  */
 public enum EGameGraphChangeType {

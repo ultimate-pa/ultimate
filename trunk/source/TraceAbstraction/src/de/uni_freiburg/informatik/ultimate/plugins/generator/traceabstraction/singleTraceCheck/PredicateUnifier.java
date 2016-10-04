@@ -72,6 +72,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.Term
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
+import de.uni_freiburg.informatik.ultimate.util.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.PosetUtils;
@@ -366,7 +367,8 @@ public class PredicateUnifier {
 				final Term tmp = SmtUtils.simplify(mMgnScript, commuNF, mServices, mSimplificationTechnique);
 				simplifiedTerm  = (new CommuhashNormalForm(mServices, mScript)).transform(tmp);
 			} catch (final ToolchainCanceledException tce) {
-				throw new ToolchainCanceledException(getClass(), tce.getRunningTaskInfo() + " while unifying predicates");
+				tce.addRunningTaskInfo(new RunningTaskInfo(getClass(), "unifying predicates"));
+				throw tce;
 			}
 		}
 		result = mPredicateFactory.newPredicate(simplifiedTerm);
@@ -694,7 +696,7 @@ public class PredicateUnifier {
 			if (!mServices.getProgressMonitorService().continueProcessing()) {
 				final String quantifierInformation = generateQuantifierInformation(closedTerm);
 				throw new ToolchainCanceledException(this.getClass(),
-						"PredicateUnifier was comparing new predicate (" +
+						"comparing new predicate (" +
 						quantifierInformation + ") to " +
 						mKnownPredicates.size() + " known predicates");
 			}

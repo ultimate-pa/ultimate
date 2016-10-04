@@ -92,9 +92,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Quin;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
- * Generates double decker game graphs based on nwa automaton. Supports different types of simulation types.
+ * Generates double decker game graphs based on nwa automaton. Supports
+ * different types of simulation types.
  *
- * @author Daniel Tischner
+ * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  *
  * @param <LETTER>
  *            Letter class of nwa automaton
@@ -108,30 +109,36 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 */
 	public static final int DUPLICATOR_PRIORITY = 2;
 	/**
-	 * Data structure that allows a fast access to {@link DuplicatorVertex} objects by using their representation:<br/>
-	 * <b>(Up state of spoiler or q0, up state of duplicator or q1, letter spoiler used before, bit, type of transition,
-	 * summarize edge, sink)</b>.
+	 * Data structure that allows a fast access to {@link DuplicatorVertex}
+	 * objects by using their representation:<br/>
+	 * <b>(Up state of spoiler or q0, up state of duplicator or q1, letter
+	 * spoiler used before, bit, type of transition, summarize edge, sink)</b>.
 	 */
 	private final HashMap<Hep<STATE, STATE, LETTER, Boolean, ETransitionType, SummarizeEdge<LETTER, STATE>, IWinningSink<LETTER, STATE>>, DuplicatorVertex<LETTER, STATE>> mAutomatonStatesToGraphDuplicatorVertex;
 	/**
-	 * Data structure that allows a fast access to {@link SpoilerVertex} objects by using their representation:<br/>
-	 * <b>(Up state of spoiler or q0, up state of duplicator or q1, bit, summarize edge, sink)</b>.
+	 * Data structure that allows a fast access to {@link SpoilerVertex} objects
+	 * by using their representation:<br/>
+	 * <b>(Up state of spoiler or q0, up state of duplicator or q1, bit,
+	 * summarize edge, sink)</b>.
 	 */
 	private final HashMap<Quin<STATE, STATE, Boolean, SummarizeEdge<LETTER, STATE>, IWinningSink<LETTER, STATE>>, SpoilerVertex<LETTER, STATE>> mAutomatonStatesToGraphSpoilerVertex;
 
 	/**
-	 * Auxiliary game state, is used at summarize edge computation for pointing to dead-end return vertices.
+	 * Auxiliary game state, is used at summarize edge computation for pointing
+	 * to dead-end return vertices.
 	 */
 	private final GameSpecialSinkState mAuxiliaryGameState;
 	/**
-	 * Provides a fast access to all Spoiler vertices that are directly losing for Duplicator, if he moves in. The set
-	 * is only used if the simulation type is direct simulation.
+	 * Provides a fast access to all Spoiler vertices that are directly losing
+	 * for Duplicator, if he moves in. The set is only used if the simulation
+	 * type is direct simulation.
 	 */
 	private final HashSet<SpoilerNwaVertex<LETTER, STATE>> mDuplicatorDirectlyLosesInSpoiler;
 
 	/**
-	 * Data structure of all duplicator vertices that have the transition type {@link ETransitionType#RETURN}. They are
-	 * used for summarize edge generation.
+	 * Data structure of all duplicator vertices that have the transition type
+	 * {@link ETransitionType#RETURN}. They are used for summarize edge
+	 * generation.
 	 */
 	private final HashSet<DuplicatorNwaVertex<LETTER, STATE>> mDuplicatorReturningVertices;
 	/**
@@ -139,7 +146,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 */
 	private DuplicatorWinningSink<LETTER, STATE> mDuplicatorWinningSink;
 	/**
-	 * Map of all winning sinks of the graph. Provides a fast access via the sink entry.
+	 * Map of all winning sinks of the graph. Provides a fast access via the
+	 * sink entry.
 	 */
 	private final HashMap<Vertex<LETTER, STATE>, IWinningSink<LETTER, STATE>> mEntryToSink;
 	/**
@@ -151,21 +159,24 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 */
 	private final ILogger mLogger;
 	/**
-	 * The underlying nwa automaton, as double decker automaton, from which the game graph gets generated.
+	 * The underlying nwa automaton, as double decker automaton, from which the
+	 * game graph gets generated.
 	 */
 	private final IDoubleDeckerAutomaton<LETTER, STATE> mNwa;
 	/**
-	 * A collection of sets which contains states of the an automaton that may be merge-able. States which are not in
-	 * the same set are definitely not merge-able which is used as an optimization for the game graph.
+	 * A collection of sets which contains states of the an automaton that may
+	 * be merge-able. States which are not in the same set are definitely not
+	 * merge-able which is used as an optimization for the game graph.
 	 */
-	private final Collection<Set<STATE>> mPossibleEquivalenceClasses;
+	private final Iterable<Set<STATE>> mPossibleEquivalenceClasses;
 	/**
-	 * Data structure of all duplicator vertices that may end up being a dead end and are not using a return transition.
+	 * Data structure of all duplicator vertices that may end up being a dead
+	 * end and are not using a return transition.
 	 */
 	private final HashSet<DuplicatorNwaVertex<LETTER, STATE>> mPossibleNonReturnDuplicatorDeadEnd;
 	/**
-	 * Data structure of all spoiler vertices that may end up being a dead end, because they can not take a
-	 * return-transition due to their down state.
+	 * Data structure of all spoiler vertices that may end up being a dead end,
+	 * because they can not take a return-transition due to their down state.
 	 */
 	private final HashSet<SpoilerNwaVertex<LETTER, STATE>> mPossibleSpoilerDeadEnd;
 	/**
@@ -173,15 +184,17 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 */
 	private final IProgressAwareTimer mProgressTimer;
 	/**
-	 * Object that stores all changes made for removing return vertices and their edges. It includes the removed
-	 * returning vertex, its out- and in-going edges and generated push-over edges.
+	 * Object that stores all changes made for removing return vertices and
+	 * their edges. It includes the removed returning vertex, its out- and
+	 * in-going edges and generated push-over edges.
 	 */
 	private final GameGraphChanges<LETTER, STATE> mRemovedReturnBridges;
 	/**
-	 * If the game graph should be restricted to the initial partition, given by the parameter
-	 * <tt>possibleEquivalenceClasses</tt>. If <tt>true</tt> only vertices that represent state combinations which
-	 * possibly are simulating get generated, all other will be rejected. If <tt>false</tt> also vertices that are
-	 * reachable by the initial partition get generated.
+	 * If the game graph should be restricted to the initial partition, given by
+	 * the parameter <tt>possibleEquivalenceClasses</tt>. If <tt>true</tt> only
+	 * vertices that represent state combinations which possibly are simulating
+	 * get generated, all other will be rejected. If <tt>false</tt> also
+	 * vertices that are reachable by the initial partition get generated.
 	 */
 	private final boolean mRestrictGraphToInitPart;
 	/**
@@ -205,47 +218,59 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 */
 	private SpoilerWinningSinkExtended<LETTER, STATE> mSpoilerWinningSinkExtended;
 	/**
-	 * Map of all summarize edges of the graph. Provides a fast access via source and destinations of the edge.
+	 * Map of all summarize edges of the graph. Provides a fast access via
+	 * source and destinations of the edge.
 	 */
 	private final NestedMap2<SpoilerNwaVertex<LETTER, STATE>, Pair<STATE, Set<Pair<STATE, Boolean>>>, SummarizeEdge<LETTER, STATE>> mSrcDestToSummarizeEdges;
 	/**
-	 * If the game graph should use push-over edges between successors and predecessors of return-invoking Duplicator
-	 * vertices. If set to <tt>true</tt>, push-over edges will be generated.
+	 * If the game graph should use push-over edges between successors and
+	 * predecessors of return-invoking Duplicator vertices. If set to
+	 * <tt>true</tt>, push-over edges will be generated.
 	 */
 	private final boolean mUsePushOverEdges;
 
 	/**
-	 * Creates a new generation object that modifies a given graph using a given nwa automaton and a desired simulation
-	 * method.
+	 * Creates a new generation object that modifies a given graph using a given
+	 * nwa automaton and a desired simulation method.
 	 *
 	 * @param services
 	 *            Service provider of Ultimate framework
 	 * @param progressTimer
-	 *            Timer used for responding to timeouts and operation cancellation.
+	 *            Timer used for responding to timeouts and operation
+	 *            cancellation.
 	 * @param logger
 	 *            ILogger of the Ultimate framework.
 	 * @param nwa
-	 *            The underlying nwa automaton from which the game graph gets generated.
+	 *            The underlying nwa automaton from which the game graph gets
+	 *            generated.
 	 * @param gameGraph
 	 *            Game graph that should get modified by this object
 	 * @param simulationType
-	 *            Simulation method to use for graph generation. Supported types are {@link ESimulationType#DIRECT
-	 *            DIRECT}, {@link ESimulationType#DELAYED DELAYED} and {@link ESimulationType#FAIR FAIR}.
+	 *            Simulation method to use for graph generation. Supported types
+	 *            are {@link ESimulationType#DIRECT DIRECT},
+	 *            {@link ESimulationType#DELAYED DELAYED} and
+	 *            {@link ESimulationType#FAIR FAIR}.
 	 * @param possibleEquivalenceClasses
-	 *            A collection of sets which contains states of an automaton that may be merge-able. States which are
-	 *            not in the same set are definitely not merge-able which is used as an optimization for the game graph
+	 *            A collection of sets which contains states of an automaton
+	 *            that may be merge-able. States which are not in the same set
+	 *            are definitely not merge-able which is used as an optimization
+	 *            for the game graph
 	 * @param restrictGraphToInitPart
-	 *            If the game graph should be restricted to the initial partition, given by the parameter
-	 *            <tt>possibleEquivalenceClasses</tt>. If <tt>true</tt> only vertices that represent state combinations
-	 *            which possibly are simulating get generated, all other will be rejected. If <tt>false</tt> also
-	 *            vertices that are reachable by the initial partition get generated.
+	 *            If the game graph should be restricted to the initial
+	 *            partition, given by the parameter
+	 *            <tt>possibleEquivalenceClasses</tt>. If <tt>true</tt> only
+	 *            vertices that represent state combinations which possibly are
+	 *            simulating get generated, all other will be rejected. If
+	 *            <tt>false</tt> also vertices that are reachable by the initial
+	 *            partition get generated.
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate framework.
+	 *             If the operation was canceled, for example from the Ultimate
+	 *             framework.
 	 */
 	public NwaGameGraphGeneration(final AutomataLibraryServices services, final IProgressAwareTimer progressTimer,
 			final ILogger logger, final IDoubleDeckerAutomaton<LETTER, STATE> nwa,
 			final AGameGraph<LETTER, STATE> gameGraph, final ESimulationType simulationType,
-			final Collection<Set<STATE>> possibleEquivalenceClasses, final boolean restrictGraphToInitPart) {
+			final Iterable<Set<STATE>> possibleEquivalenceClasses, final boolean restrictGraphToInitPart) {
 		mServices = services;
 		mNwa = nwa;
 		mAutomatonStatesToGraphDuplicatorVertex = new HashMap<>();
@@ -292,9 +317,11 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 * Computes the priorities of all previous generated summarize edges.
 	 *
 	 * @throws IllegalStateException
-	 *             If computing summarize edge priorities could not be done because a live lock occurred.
+	 *             If computing summarize edge priorities could not be done
+	 *             because a live lock occurred.
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate framework.
+	 *             If the operation was canceled, for example from the Ultimate
+	 *             framework.
 	 */
 	public void computeSummarizeEdgePriorities() throws AutomataOperationCanceledException {
 		if (mLogger.isDebugEnabled()) {
@@ -302,8 +329,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		}
 
 		final Queue<SearchElement<LETTER, STATE>> searchQueue = new UniqueQueue<>();
-		final NestedMap3<Vertex<LETTER, STATE>, SummarizeEdge<LETTER, STATE>, Pair<STATE, Boolean>, Integer> vertexToSubSummarizeToSearchPriority =
-				new NestedMap3<>();
+		final NestedMap3<Vertex<LETTER, STATE>, SummarizeEdge<LETTER, STATE>, Pair<STATE, Boolean>, Integer> vertexToSubSummarizeToSearchPriority = new NestedMap3<>();
 		final LoopDetector<LETTER, STATE> loopDetector = new LoopDetector<>(mGameGraph, mLogger, mProgressTimer);
 
 		// Add starting elements
@@ -375,8 +401,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 					}
 					if (succ instanceof DuplicatorNwaVertex<?, ?>) {
 						// Successor is duplicator vertex
-						final DuplicatorNwaVertex<LETTER, STATE> succAsDuplicatorNwa =
-								(DuplicatorNwaVertex<LETTER, STATE>) succ;
+						final DuplicatorNwaVertex<LETTER, STATE> succAsDuplicatorNwa = (DuplicatorNwaVertex<LETTER, STATE>) succ;
 						final ETransitionType transitionType = succAsDuplicatorNwa.getTransitionType();
 						// We will reject successor if it has no search priority
 						// yet. This may indicate that the successor is
@@ -406,8 +431,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 							// history element
 							final STATE duplicatorChoiceHistory = searchHistory.getQ1();
 							final boolean choiceBitHistory = searchHistory.isB();
-							final Pair<STATE, Boolean> choiceHistory =
-									new Pair<>(duplicatorChoiceHistory, choiceBitHistory);
+							final Pair<STATE, Boolean> choiceHistory = new Pair<>(duplicatorChoiceHistory,
+									choiceBitHistory);
 							final Vertex<LETTER, STATE> destination = summarizeEdge.getDestination(choiceHistory);
 							int summarizeEdgePriority = summarizeEdge.getPriority(choiceHistory);
 							if (summarizeEdgePriority == SummarizeEdge.NO_PRIORITY) {
@@ -570,8 +595,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 						}
 						if (pred instanceof DuplicatorNwaVertex) {
 							// Predecessor is duplicator vertex
-							final DuplicatorNwaVertex<LETTER, STATE> predAsDuplicatorNwa =
-									(DuplicatorNwaVertex<LETTER, STATE>) pred;
+							final DuplicatorNwaVertex<LETTER, STATE> predAsDuplicatorNwa = (DuplicatorNwaVertex<LETTER, STATE>) pred;
 							final ETransitionType transitionType = predAsDuplicatorNwa.getTransitionType();
 							if (transitionType == ETransitionType.RETURN || transitionType == ETransitionType.SINK
 									|| transitionType == ETransitionType.SUMMARIZE_ENTRY) {
@@ -616,14 +640,17 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	}
 
 	/**
-	 * Generates a possible reduced nwa automaton by using the current state of the game graph that may hold
-	 * information, usable for reduction, generated by an {@link ASimulation}.
+	 * Generates a possible reduced nwa automaton by using the current state of
+	 * the game graph that may hold information, usable for reduction, generated
+	 * by an {@link ASimulation}.
 	 *
 	 * @param useFinalStateConstraints
-	 *            true iff accepting states should not be merged with non-accepting states
+	 *            true iff accepting states should not be merged with
+	 *            non-accepting states
 	 * @return A possible reduced nwa automaton
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate framework.
+	 *             If the operation was canceled, for example from the Ultimate
+	 *             framework.
 	 */
 	public INestedWordAutomaton<LETTER, STATE> generateAutomatonFromGraph(final boolean useFinalStateConstraints)
 			throws AutomataOperationCanceledException {
@@ -709,6 +736,9 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			}
 
 			final Collection<Set<STATE>> equivalenceClassesAsCollection = equivalenceClasses.getAllEquivalenceClasses();
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("Offering the following merges for MaxSat: " + equivalenceClassesAsCollection);
+			}
 
 			// Use a Max-Sat-Solver that minimizes the automaton based on
 			// our simulation results
@@ -758,18 +788,20 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 
 		// Remove unreachable states which can occur due to transition removal
 		if (areThereRemoveableTransitions) {
-			final INestedWordAutomaton<LETTER, STATE> nwaReachableStates =
-					new RemoveUnreachable<>(mServices, result).getResult();
+			final INestedWordAutomaton<LETTER, STATE> nwaReachableStates = new RemoveUnreachable<>(mServices, result)
+					.getResult();
 			return nwaReachableStates;
 		}
 		return result;
 	}
 
 	/**
-	 * Generates the game graph out of an original nwa automaton. The graph represents a game, see {@link AGameGraph}.
+	 * Generates the game graph out of an original nwa automaton. The graph
+	 * represents a game, see {@link AGameGraph}.
 	 *
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate framework.
+	 *             If the operation was canceled, for example from the Ultimate
+	 *             framework.
 	 */
 	public void generateGameGraphFromAutomaton() throws AutomataOperationCanceledException {
 		mSimulationPerformance.startTimeMeasure(ETimeMeasure.BUILD_GRAPH);
@@ -791,10 +823,12 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	}
 
 	/**
-	 * Generates the vertices and regular of the game graph from the input automaton.
+	 * Generates the vertices and regular of the game graph from the input
+	 * automaton.
 	 *
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate framework.
+	 *             If the operation was canceled, for example from the Ultimate
+	 *             framework.
 	 */
 	public void generateGraphBase() throws AutomataOperationCanceledException {
 		mLogger.debug("Generating graph base.");
@@ -813,14 +847,14 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 					// priority zero. Conditionally we also add a vertex with
 					// priority one.
 					if (mSimulationType == ESimulationType.DELAYED) {
-						final Vertex<LETTER, STATE> initialVertex =
-								addSpoilerVertexHelper(0, false, leftState, rightState);
+						final Vertex<LETTER, STATE> initialVertex = addSpoilerVertexHelper(0, false, leftState,
+								rightState);
 						if (initialVertex != null) {
 							workingList.add(initialVertex);
 						}
 					} else {
-						final Vertex<LETTER, STATE> initialVertex =
-								addSpoilerVertexHelper(priority, false, leftState, rightState);
+						final Vertex<LETTER, STATE> initialVertex = addSpoilerVertexHelper(priority, false, leftState,
+								rightState);
 						if (initialVertex != null) {
 							workingList.add(initialVertex);
 						}
@@ -830,8 +864,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 					// priority one that has the bit set to true.
 					if (mSimulationType == ESimulationType.DELAYED) {
 						if (priority == 1) {
-							final Vertex<LETTER, STATE> initialVertex =
-									addSpoilerVertexHelper(1, true, leftState, rightState);
+							final Vertex<LETTER, STATE> initialVertex = addSpoilerVertexHelper(1, true, leftState,
+									rightState);
 							if (initialVertex != null) {
 								workingList.add(initialVertex);
 							}
@@ -983,8 +1017,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 				}
 			} else if (workingVertex instanceof DuplicatorNwaVertex<?, ?>) {
 				// Working with a Duplicator vertex
-				final DuplicatorNwaVertex<LETTER, STATE> duplicatorVertex =
-						(DuplicatorNwaVertex<LETTER, STATE>) workingVertex;
+				final DuplicatorNwaVertex<LETTER, STATE> duplicatorVertex = (DuplicatorNwaVertex<LETTER, STATE>) workingVertex;
 				final STATE leftState = duplicatorVertex.getQ0();
 				final STATE rightState = duplicatorVertex.getQ1();
 				final LETTER letter = duplicatorVertex.getLetter();
@@ -1007,8 +1040,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 						if (mSimulationType == ESimulationType.DELAYED && mNwa.isFinal(edgeDest)) {
 							bitForDestination = false;
 						}
-						Vertex<LETTER, STATE> spoilerDest =
-								getSpoilerVertex(leftState, edgeDest, bitForDestination, null, null);
+						Vertex<LETTER, STATE> spoilerDest = getSpoilerVertex(leftState, edgeDest, bitForDestination,
+								null, null);
 						if (spoilerDest == null) {
 							if (mRestrictGraphToInitPart) {
 								// If Spoiler vertex is not existent at this
@@ -1059,8 +1092,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 						if (mSimulationType == ESimulationType.DELAYED && mNwa.isFinal(edgeDest)) {
 							bitForDestination = false;
 						}
-						Vertex<LETTER, STATE> spoilerDest =
-								getSpoilerVertex(leftState, edgeDest, bitForDestination, null, null);
+						Vertex<LETTER, STATE> spoilerDest = getSpoilerVertex(leftState, edgeDest, bitForDestination,
+								null, null);
 						if (spoilerDest == null) {
 							if (mRestrictGraphToInitPart) {
 								// If Spoiler vertex is not existent at this
@@ -1112,8 +1145,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 						if (mSimulationType == ESimulationType.DELAYED && mNwa.isFinal(edgeDest)) {
 							bitForDestination = false;
 						}
-						Vertex<LETTER, STATE> spoilerDest =
-								getSpoilerVertex(leftState, edgeDest, bitForDestination, null, null);
+						Vertex<LETTER, STATE> spoilerDest = getSpoilerVertex(leftState, edgeDest, bitForDestination,
+								null, null);
 						if (spoilerDest == null) {
 							if (mRestrictGraphToInitPart) {
 								// If Spoiler vertex is not existent at this
@@ -1158,9 +1191,10 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 * Generates the regular edges of the game graph from the input automaton.
 	 *
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate framework.
-	 * @deprecated The operation does not support the usage of an initial partition, use {@link #generateGraphBase()}
-	 *             instead.
+	 *             If the operation was canceled, for example from the Ultimate
+	 *             framework.
+	 * @deprecated The operation does not support the usage of an initial
+	 *             partition, use {@link #generateGraphBase()} instead.
 	 */
 	@Deprecated
 	public void generateRegularEdges() throws AutomataOperationCanceledException {
@@ -1339,8 +1373,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 					}
 
 					// Spoiler edges q1 -r/q0-> q2 : (q1, x) -> (q2, x, r/q0)
-					Vertex<LETTER, STATE> spoilerSrc =
-							getSpoilerVertex(trans.getLinPred(), fixState, false, null, null);
+					Vertex<LETTER, STATE> spoilerSrc = getSpoilerVertex(trans.getLinPred(), fixState, false, null,
+							null);
 					Vertex<LETTER, STATE> duplicatorDest = getDuplicatorVertex(edgeDest, fixState, trans.getLetter(),
 							false, ETransitionType.RETURN, null, null);
 					if (spoilerSrc != null) {
@@ -1387,7 +1421,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 * Generates the summarize edges of the game graph from the input automaton.
 	 *
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate framework.
+	 *             If the operation was canceled, for example from the Ultimate
+	 *             framework.
 	 */
 	public void generateSummarizeEdges() throws AutomataOperationCanceledException {
 		if (mLogger.isDebugEnabled()) {
@@ -1395,39 +1430,46 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		}
 		// Create the game automaton, we will use it for summarize computation
 		final INestedWordAutomatonSimple<IGameLetter<LETTER, STATE>, IGameState> gameAutomaton = createGameAutomaton();
-		final NestedWordAutomatonReachableStates<IGameLetter<LETTER, STATE>, IGameState> gameAutomatonWithSummaries =
-				new RemoveUnreachable<>(mServices, gameAutomaton).getResult();
-		
-		final boolean backwardSummaryComputation = false;
-		if (backwardSummaryComputation ) {
-			final SummaryComputation<LETTER, STATE> sc = new SummaryComputation<LETTER, STATE>(mServices, gameAutomatonWithSummaries, mNwa);
+		final NestedWordAutomatonReachableStates<IGameLetter<LETTER, STATE>, IGameState> gameAutomatonWithSummaries = new RemoveUnreachable<>(
+				mServices, gameAutomaton).getResult();
+
+		final boolean backwardSummaryComputation = !false;
+		if (backwardSummaryComputation) {
+			final SummaryComputation<LETTER, STATE> sc = new SummaryComputation<LETTER, STATE>(mServices,
+					gameAutomatonWithSummaries, mNwa);
 			for (final IGameState gameState : sc.getNeedSpoilerWinningSink()) {
-				final SpoilerNwaVertex<LETTER, STATE> src = ((GameSpoilerNwaVertex<LETTER, STATE>) gameState).getSpoilerNwaVertex();
+				final SpoilerNwaVertex<LETTER, STATE> src = ((GameSpoilerNwaVertex<LETTER, STATE>) gameState)
+						.getSpoilerNwaVertex();
 				addSpoilerWinningSinkExtended(src);
 			}
-			
+
 			for (final SummaryComputation<LETTER, STATE>.GameSummary game : sc.getGameSummaries()) {
 				if (sc.getNeedSpoilerWinningSink().contains(game.getSummarySource())) {
-					// we already added a winning sink, 
-					// no need to add another summary 
+					// we already added a winning sink,
+					// no need to add another summary
 					continue;
 				}
-				
-				final SpoilerNwaVertex<LETTER, STATE> src = ((GameSpoilerNwaVertex<LETTER, STATE>) game.getSummarySource()).getSpoilerNwaVertex();
+
+				final SpoilerNwaVertex<LETTER, STATE> src = ((GameSpoilerNwaVertex<LETTER, STATE>) game
+						.getSummarySource()).getSpoilerNwaVertex();
 				final STATE spoilerChoice = game.getSpoilerDestinationState();
 				final Set<Pair<STATE, Boolean>> duplicatorChoices = new HashSet<>();
 				final Map<Pair<STATE, Boolean>, Integer> duplicatorChoice2Priority = new HashMap<>();
 				for (final Entry<IGameState, Integer> entry : game.getDuplicatorResponses().entrySet()) {
-					final SpoilerNwaVertex<LETTER, STATE> duplicatorChoice = ((GameSpoilerNwaVertex<LETTER, STATE>) entry.getKey()).getSpoilerNwaVertex();
+					final SpoilerNwaVertex<LETTER, STATE> duplicatorChoice = ((GameSpoilerNwaVertex<LETTER, STATE>) entry
+							.getKey()).getSpoilerNwaVertex();
 					duplicatorChoices.add(new Pair<STATE, Boolean>(duplicatorChoice.getQ1(), duplicatorChoice.isB()));
-					duplicatorChoice2Priority.put(new Pair<STATE, Boolean>(duplicatorChoice.getQ1(), duplicatorChoice.isB()), entry.getValue());
+					duplicatorChoice2Priority.put(
+							new Pair<STATE, Boolean>(duplicatorChoice.getQ1(), duplicatorChoice.isB()),
+							entry.getValue());
 				}
 				addSummarizeEdge(src, spoilerChoice, duplicatorChoices);
-				final SummarizeEdge<LETTER, STATE> summaryEdge = mSrcDestToSummarizeEdges.get(src, new Pair<STATE, Set<Pair<STATE,Boolean>>>(spoilerChoice, duplicatorChoices));
+				final SummarizeEdge<LETTER, STATE> summaryEdge = mSrcDestToSummarizeEdges.get(src,
+						new Pair<STATE, Set<Pair<STATE, Boolean>>>(spoilerChoice, duplicatorChoices));
 				for (final Entry<Pair<STATE, Boolean>, Integer> entry : duplicatorChoice2Priority.entrySet()) {
 					summaryEdge.setPriority(entry.getKey(), entry.getValue());
 				}
-				
+
 			}
 		} else {
 
@@ -1440,8 +1482,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 				final SpoilerNwaVertex<LETTER, STATE> spoilerNwaVertex = (SpoilerNwaVertex<LETTER, STATE>) spoilerVertex;
 				final GameSpoilerNwaVertex<LETTER, STATE> gameNwaVertex = new GameSpoilerNwaVertex<>(spoilerNwaVertex);
 
-				final Iterable<SummaryReturnTransition<IGameLetter<LETTER, STATE>, IGameState>> summariesOfSource =
-						gameAutomatonWithSummaries.summarySuccessors(gameNwaVertex);
+				final Iterable<SummaryReturnTransition<IGameLetter<LETTER, STATE>, IGameState>> summariesOfSource = gameAutomatonWithSummaries
+						.summarySuccessors(gameNwaVertex);
 				if (summariesOfSource.iterator().hasNext()) {
 					summarySources.add(gameNwaVertex);
 				}
@@ -1453,31 +1495,33 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 					throw new AutomataOperationCanceledException(this.getClass());
 				}
 			}
-			// Retrieve the merged summary edges for the game graph that start at
+			// Retrieve the merged summary edges for the game graph that start
+			// at
 			// the given source.
 			// We make all summarySources the only initial game states and
 			// determinize the automaton.
 
-			final boolean alreadyWasDeterministic =
-					!new IsDeterministic<>(mServices, gameAutomatonWithSummaries).hasNondeterministicTransitions();
+			final boolean alreadyWasDeterministic = !new IsDeterministic<>(mServices, gameAutomatonWithSummaries)
+					.hasNondeterministicTransitions();
 			if (alreadyWasDeterministic) {
 				mSimulationPerformance.setCountingMeasure(ECountingMeasure.ALREADY_WAS_DETERMINISTIC, 1);
 			}
 
 			// Determinizing is very expensive, it is the dominant part of the
 			// whole algorithm
-			final INestedWordAutomatonSimple<IGameLetter<LETTER, STATE>, IGameState> determinizedGameAutomaton =
-					new Determinize<>(mServices, gameAutomatonWithSummaries.getStateFactory(), gameAutomatonWithSummaries,
-							summarySources).getResult();
+			final INestedWordAutomatonSimple<IGameLetter<LETTER, STATE>, IGameState> determinizedGameAutomaton = new Determinize<>(
+					mServices, gameAutomatonWithSummaries.getStateFactory(), gameAutomatonWithSummaries, summarySources)
+							.getResult();
 			mSimulationPerformance.setCountingMeasure(ECountingMeasure.DETERMINIZED_GAME_AUTOMATON_STATES,
 					determinizedGameAutomaton.size());
-			final NestedWordAutomatonReachableStates<IGameLetter<LETTER, STATE>, IGameState> gameAutomatonWithMergedSummaries =
-					new RemoveUnreachable<>(mServices, determinizedGameAutomaton).getResult();
+			final NestedWordAutomatonReachableStates<IGameLetter<LETTER, STATE>, IGameState> gameAutomatonWithMergedSummaries = new RemoveUnreachable<>(
+					mServices, determinizedGameAutomaton).getResult();
 			final IGameState emptyStackState = gameAutomatonWithMergedSummaries.getEmptyStackState();
 
 			// The initial game states are the source of
 			// the summary edges we are interested in
-			for (final IGameState mergedSummarySourceAsGameState : gameAutomatonWithMergedSummaries.getInitialStates()) {
+			for (final IGameState mergedSummarySourceAsGameState : gameAutomatonWithMergedSummaries
+					.getInitialStates()) {
 				if (!(mergedSummarySourceAsGameState instanceof GameDoubleDeckerSet)) {
 					throw new IllegalStateException(
 							"Expected cast to be possible, something seems to be wrong with the game graph.");
@@ -1486,7 +1530,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 
 				// We are only interested in sources where the down state is the
 				// empty stack symbol
-				final Set<IGameState> mergedSummarySourceUpStates = mergedSummarySourceDDSet.getUpStates(emptyStackState);
+				final Set<IGameState> mergedSummarySourceUpStates = mergedSummarySourceDDSet
+						.getUpStates(emptyStackState);
 				if (mergedSummarySourceUpStates.size() > 1) {
 					throw new IllegalStateException(
 							"Expected only one up state after determizing the game automaton at summary sources.");
@@ -1497,8 +1542,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 							"Expected cast to be possible, something seems to be wrong with the game graph.");
 				}
 				@SuppressWarnings("unchecked")
-				final SpoilerNwaVertex<LETTER, STATE> mergedSummarySource =
-				((GameSpoilerNwaVertex<LETTER, STATE>) mergedSummarySourceUpStateAsGameState).getSpoilerNwaVertex();
+				final SpoilerNwaVertex<LETTER, STATE> mergedSummarySource = ((GameSpoilerNwaVertex<LETTER, STATE>) mergedSummarySourceUpStateAsGameState)
+						.getSpoilerNwaVertex();
 
 				final Map<STATE, Set<Pair<STATE, Boolean>>> spoilerToDuplicatorChoices = new HashMap<>();
 				boolean hasSinkWinningForSpoiler = false;
@@ -1509,18 +1554,24 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 						.summarySuccessors(mergedSummarySourceAsGameState)) {
 					final IGameState summaryDestinationAsGameState = summary.getSucc();
 					final GameDoubleDeckerSet summaryDestinationAsDD = (GameDoubleDeckerSet) summaryDestinationAsGameState;
-					final Set<IGameState> summaryDestinationUpStates = summaryDestinationAsDD.getUpStates(emptyStackState);
+					final Set<IGameState> summaryDestinationUpStates = summaryDestinationAsDD
+							.getUpStates(emptyStackState);
 
-					// If the destination up states are null, then the destination
+					// If the destination up states are null, then the
+					// destination
 					// is empty. This is the case if the source is not total,
-					// because Determinize makes the automaton total. We can just
+					// because Determinize makes the automaton total. We can
+					// just
 					// ignore this event and continue.
 					if (summaryDestinationUpStates == null) {
 						continue;
 					}
-					// If this summarize edge only points to one destination, which
-					// means Duplicator has no other possibility than this, and it
-					// is the auxiliary state, then Duplicator runs in a dead end
+					// If this summarize edge only points to one destination,
+					// which
+					// means Duplicator has no other possibility than this, and
+					// it
+					// is the auxiliary state, then Duplicator runs in a dead
+					// end
 					// and can not evade.
 					if (summaryDestinationUpStates.size() == 1) {
 						final IGameState summaryDestinationUpState = summaryDestinationUpStates.iterator().next();
@@ -1533,17 +1584,20 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 					}
 					for (final IGameState summaryDestinationUpState : summaryDestinationUpStates) {
 						// If an up state represents Duplicator running in a
-						// dead-end but there also are other up states, Duplicator
-						// will evade, thus ignoring this up state. If there would
-						// be no other up states, we would already have continued
+						// dead-end but there also are other up states,
+						// Duplicator
+						// will evade, thus ignoring this up state. If there
+						// would
+						// be no other up states, we would already have
+						// continued
 						// before.
 						if (summaryDestinationUpState.equals(mAuxiliaryGameState)) {
 							continue;
 						}
 
 						@SuppressWarnings("unchecked")
-						final SpoilerNwaVertex<LETTER, STATE> summaryDestination =
-						((GameSpoilerNwaVertex<LETTER, STATE>) summaryDestinationUpState).getSpoilerNwaVertex();
+						final SpoilerNwaVertex<LETTER, STATE> summaryDestination = ((GameSpoilerNwaVertex<LETTER, STATE>) summaryDestinationUpState)
+								.getSpoilerNwaVertex();
 						// Add the summary to Duplicators choices for this
 						// merged summary
 						final IWinningSink<LETTER, STATE> sinkTarget = summaryDestination.getSink();
@@ -1581,7 +1635,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 				}
 				// Create and add the merged summaries
 				if (hasSinkWinningForSpoiler) {
-					// If there is a winning sink for Spoiler, no other summaries
+					// If there is a winning sink for Spoiler, no other
+					// summaries
 					// are needed.
 					addSpoilerWinningSinkExtended(mergedSummarySource);
 				} else {
@@ -1590,7 +1645,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 						final STATE spoilerChoice = choiceEntry.getKey();
 						addSummarizeEdge(mergedSummarySource, spoilerChoice, choiceEntry.getValue());
 					}
-					// If no summarize edges where added, we are forced to add the
+					// If no summarize edges where added, we are forced to add
+					// the
 					// winning sink for Duplicator, if it was present.
 					if (spoilerToDuplicatorChoices.isEmpty() && hasSinkWinningForDuplicator) {
 						addDuplicatorWinningSink(mergedSummarySource);
@@ -1627,7 +1683,11 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 						// If we are in delayed simulation and the bit is set to
 						// true, Spoiler is winning
 						if (mSimulationType.equals(ESimulationType.DELAYED) && predAsNwa.isB()) {
-							addSpoilerWinningSinkExtended(predAsNwa);
+							// TODO We do not distinguish cases, we also
+							// add a DuplicatorWinningSink. However, the exact
+							// behavior needs to be verified.
+							addDuplicatorWinningSink(predAsNwa);
+							// addSpoilerWinningSinkExtended(predAsNwa);
 						} else {
 							addDuplicatorWinningSink(predAsNwa);
 						}
@@ -1667,9 +1727,10 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 * Generates the vertices of the game graph from the input automaton.
 	 *
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate framework.
-	 * @deprecated The operation does not support the usage of an initial partition, use {@link #generateGraphBase()}
-	 *             instead.
+	 *             If the operation was canceled, for example from the Ultimate
+	 *             framework.
+	 * @deprecated The operation does not support the usage of an initial
+	 *             partition, use {@link #generateGraphBase()} instead.
 	 */
 	@Deprecated
 	public void generateVertices() throws AutomataOperationCanceledException {
@@ -1760,12 +1821,14 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 * @param transType
 	 *            Type of the transition
 	 * @param summarizeEdge
-	 *            Summarize edge the vertex belongs to if the transition is of type
-	 *            {@link ETransitionType#SUMMARIZE_ENTRY} or {@link ETransitionType#SUMMARIZE_EXIT}. Use <tt>null</tt>
-	 *            if that is not the case.
+	 *            Summarize edge the vertex belongs to if the transition is of
+	 *            type {@link ETransitionType#SUMMARIZE_ENTRY} or
+	 *            {@link ETransitionType#SUMMARIZE_EXIT}. Use <tt>null</tt> if
+	 *            that is not the case.
 	 * @param sink
-	 *            Sink the vertex belongs to if the transition is of type {@link ETransitionType#SINK}. Use
-	 *            <tt>null</tt> if that is not the case.
+	 *            Sink the vertex belongs to if the transition is of type
+	 *            {@link ETransitionType#SINK}. Use <tt>null</tt> if that is not
+	 *            the case.
 	 * @return The duplicator vertex associated to the given signature. See
 	 *         {@link #getDuplicatorVertex(Object, Object, Object, boolean)}.
 	 */
@@ -1776,10 +1839,12 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	}
 
 	/**
-	 * Gets the changes that where made for removing return vertices and their edges. It includes the removed returning
-	 * vertex, its out- and in-going edges and generated push-over edges.
+	 * Gets the changes that where made for removing return vertices and their
+	 * edges. It includes the removed returning vertex, its out- and in-going
+	 * edges and generated push-over edges.
 	 *
-	 * @return The changes that where made for removing return vertices and their edges.
+	 * @return The changes that where made for removing return vertices and
+	 *         their edges.
 	 */
 	public GameGraphChanges<LETTER, STATE> getRemovedReturnBridgesChanges() {
 		return mRemovedReturnBridges;
@@ -1795,7 +1860,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	}
 
 	/**
-	 * Gets a Spoiler vertex by its signature. See {@link #getSpoilerVertex(Object, Object, boolean)}.
+	 * Gets a Spoiler vertex by its signature. See
+	 * {@link #getSpoilerVertex(Object, Object, boolean)}.
 	 *
 	 * @param q0
 	 *            Left state
@@ -1804,11 +1870,14 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 * @param bit
 	 *            Extra bit of the vertex
 	 * @param summarizeEdge
-	 *            Summarize edge the vertex belongs to. Use <tt>null</tt> if the vertex does not belong to one. This is
-	 *            used for special vertices that are used to represent a summary edge correctly for a valid game graph.
+	 *            Summarize edge the vertex belongs to. Use <tt>null</tt> if the
+	 *            vertex does not belong to one. This is used for special
+	 *            vertices that are used to represent a summary edge correctly
+	 *            for a valid game graph.
 	 * @param sink
-	 *            Sink the vertex belongs to. Use <tt>null</tt> if the vertex does not belong to one. This is used for
-	 *            special vertices that are used to represent a sink correctly for a valid game graph.
+	 *            Sink the vertex belongs to. Use <tt>null</tt> if the vertex
+	 *            does not belong to one. This is used for special vertices that
+	 *            are used to represent a sink correctly for a valid game graph.
 	 * @return The spoiler vertex associated to the given signature. See
 	 *         {@link #getSpoilerVertex(Object, Object, boolean)}.
 	 */
@@ -1818,15 +1887,18 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	}
 
 	/**
-	 * Transforms dead ending Spoiler/Duplicator vertices into instant wins for Duplicator/Spoiler by adding a
-	 * Duplicator/Spoiler-Winning-Sink. Such vertices may occur if they can not use a return-transition due to their
+	 * Transforms dead ending Spoiler/Duplicator vertices into instant wins for
+	 * Duplicator/Spoiler by adding a Duplicator/Spoiler-Winning-Sink. Such
+	 * vertices may occur if they can not use a return-transition due to their
 	 * down state and if no other transitions are available.<br/>
 	 * <br/>
-	 * In direct simulation it correctly takes care of spoiler vertices that are directly loosing for Duplicator. Such
-	 * vertices need to form a legal win for Spoiler though they are dead-ends.
+	 * In direct simulation it correctly takes care of spoiler vertices that are
+	 * directly loosing for Duplicator. Such vertices need to form a legal win
+	 * for Spoiler though they are dead-ends.
 	 *
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate framework.
+	 *             If the operation was canceled, for example from the Ultimate
+	 *             framework.
 	 */
 	public void patchGraph() throws AutomataOperationCanceledException {
 		// Patch Spoiler vertices that are directly losing for Duplicator in
@@ -1895,7 +1967,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	}
 
 	/**
-	 * Adds a given transition to the internal field of buechi transitions, if fair simulation.
+	 * Adds a given transition to the internal field of buechi transitions, if
+	 * fair simulation.
 	 *
 	 * @param transition
 	 *            Transition to add
@@ -1908,8 +1981,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	}
 
 	/**
-	 * Generates and adds the duplicator vertex represented by the arguments. Also possibly adds the vertex to some data
-	 * structures.
+	 * Generates and adds the duplicator vertex represented by the arguments.
+	 * Also possibly adds the vertex to some data structures.
 	 *
 	 * @param priority
 	 *            Priority of the vertices
@@ -1923,7 +1996,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 *            Letter of the vertices
 	 * @param type
 	 *            Type of the vertices
-	 * @return The generated and added Duplicator vertex or <tt>null</tt> if not created
+	 * @return The generated and added Duplicator vertex or <tt>null</tt> if not
+	 *         created
 	 */
 	private DuplicatorNwaVertex<LETTER, STATE> addDuplicatorVertexHelper(final int priority, final boolean bit,
 			final STATE leftState, final STATE rightState, final LETTER letter, final ETransitionType type) {
@@ -1933,8 +2007,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		// that we check it.
 		if (type != ETransitionType.RETURN
 				|| (getDuplicatorVertex(leftState, rightState, letter, bit, type, null, null) == null)) {
-			final DuplicatorNwaVertex<LETTER, STATE> duplicatorVertex =
-					new DuplicatorNwaVertex<>(priority, bit, leftState, rightState, letter, type);
+			final DuplicatorNwaVertex<LETTER, STATE> duplicatorVertex = new DuplicatorNwaVertex<>(priority, bit,
+					leftState, rightState, letter, type);
 			addDuplicatorVertex(duplicatorVertex);
 
 			// Memorize vertices that possible end up as dead-ends because they
@@ -1969,11 +2043,13 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	}
 
 	/**
-	 * Creates and adds a duplicator winning sink to the given sink entry. To form a valid edge it creates a pair of two
-	 * states after the entry. In detail this will be: <b>sinkEntry -> DuplicatorSink -> SpoilerSink -> DuplicatorSink
-	 * -> ...</b>. <br/>
+	 * Creates and adds a duplicator winning sink to the given sink entry. To
+	 * form a valid edge it creates a pair of two states after the entry. In
+	 * detail this will be: <b>sinkEntry -> DuplicatorSink -> SpoilerSink ->
+	 * DuplicatorSink -> ...</b>. <br/>
 	 * <br/>
-	 * The SpoilerSink will have a priority of 0 to form a winning vertex for Duplicator.
+	 * The SpoilerSink will have a priority of 0 to form a winning vertex for
+	 * Duplicator.
 	 *
 	 * @param sinkEntry
 	 *            Entry vertex of the sink
@@ -2026,7 +2102,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	}
 
 	/**
-	 * Adds a given return edge to the given game automaton, if not already existent.
+	 * Adds a given return edge to the given game automaton, if not already
+	 * existent.
 	 *
 	 * @param src
 	 *            Source game state of the edge to add
@@ -2054,8 +2131,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	}
 
 	/**
-	 * Adds a given game state to the given game automaton, if not already existent. The state will be initial and not
-	 * final.
+	 * Adds a given game state to the given game automaton, if not already
+	 * existent. The state will be initial and not final.
 	 *
 	 * @param gameState
 	 *            Game state to add
@@ -2070,8 +2147,9 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	}
 
 	/**
-	 * Generates and adds the spoiler vertex represented by the arguments. Also increases global infinity bound and
-	 * possibly adds the vertex to some data structures.
+	 * Generates and adds the spoiler vertex represented by the arguments. Also
+	 * increases global infinity bound and possibly adds the vertex to some data
+	 * structures.
 	 *
 	 * @param priority
 	 *            Priority of the vertex
@@ -2081,12 +2159,13 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 *            Left state of the vertex
 	 * @param rightState
 	 *            Right state of the vertex
-	 * @return The generated and added Spoiler vertex or <tt>null</tt> if not created
+	 * @return The generated and added Spoiler vertex or <tt>null</tt> if not
+	 *         created
 	 */
 	private SpoilerNwaVertex<LETTER, STATE> addSpoilerVertexHelper(final int priority, final boolean bit,
 			final STATE leftState, final STATE rightState) {
-		final SpoilerNwaVertex<LETTER, STATE> spoilerVertex =
-				new SpoilerNwaVertex<>(priority, bit, leftState, rightState);
+		final SpoilerNwaVertex<LETTER, STATE> spoilerVertex = new SpoilerNwaVertex<>(priority, bit, leftState,
+				rightState);
 		addSpoilerVertex(spoilerVertex);
 		// Increase the infinity bound for every such vertex
 		if (priority == 1) {
@@ -2127,11 +2206,13 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	}
 
 	/**
-	 * Creates and adds a spoiler winning sink to the given sink entry. To form a valid edge it creates a pair of two
-	 * states after the entry. In detail this will be: <b>sinkEntry -> SpoilerSink -> DuplicatorSink -> SpoilerSink ->
-	 * ...</b>. <br/>
+	 * Creates and adds a spoiler winning sink to the given sink entry. To form
+	 * a valid edge it creates a pair of two states after the entry. In detail
+	 * this will be: <b>sinkEntry -> SpoilerSink -> DuplicatorSink ->
+	 * SpoilerSink -> ...</b>. <br/>
 	 * <br/>
-	 * The SpoilerSink will have a priority of 1 to form a winning vertex for Spoiler.
+	 * The SpoilerSink will have a priority of 1 to form a winning vertex for
+	 * Spoiler.
 	 *
 	 * @param sinkEntry
 	 *            Entry vertex of the sink
@@ -2155,11 +2236,13 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	}
 
 	/**
-	 * Creates and adds a spoiler winning sink to the given sink entry. To form a valid edge it creates a pair of two
-	 * states after the entry. In detail this will be: <b>sinkEntry -> DuplicatorSink -> SpoilerSink -> DuplicatorSink
-	 * -> ...</b>. <br/>
+	 * Creates and adds a spoiler winning sink to the given sink entry. To form
+	 * a valid edge it creates a pair of two states after the entry. In detail
+	 * this will be: <b>sinkEntry -> DuplicatorSink -> SpoilerSink ->
+	 * DuplicatorSink -> ...</b>. <br/>
 	 * <br/>
-	 * The SpoilerSink will have a priority of 1 to form a winning vertex for Spoiler.
+	 * The SpoilerSink will have a priority of 1 to form a winning vertex for
+	 * Spoiler.
 	 *
 	 * @param sinkEntry
 	 *            Entry vertex of the sink
@@ -2183,28 +2266,31 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	}
 
 	/**
-	 * Creates and adds a summarize edge with given source and destinations. <br/>
+	 * Creates and adds a summarize edge with given source and destinations.
 	 * <br/>
-	 * The sub-summarize edges will have no priority by default, it must be taken care of this afterwards.
+	 * <br/>
+	 * The sub-summarize edges will have no priority by default, it must be
+	 * taken care of this afterwards.
 	 *
 	 * @param src
 	 *            Source of the summarize edge
 	 * @param spoilerChoice
 	 *            The choice Spoiler did take for this summarize edge
 	 * @param duplicatorChoices
-	 *            Choices Duplicator can make with the bit it leads to, determine the sub-summarize edges
+	 *            Choices Duplicator can make with the bit it leads to,
+	 *            determine the sub-summarize edges
 	 */
 	private void addSummarizeEdge(final SpoilerNwaVertex<LETTER, STATE> src, final STATE spoilerChoice,
 			final Set<Pair<STATE, Boolean>> duplicatorChoices) {
 		// Only add if not already existent
 		if (mSrcDestToSummarizeEdges.get(src, new Pair<>(spoilerChoice, duplicatorChoices)) == null) {
-			final SummarizeEdge<LETTER, STATE> summarizeEdge =
-					new SummarizeEdge<>(src, spoilerChoice, duplicatorChoices, this);
+			final SummarizeEdge<LETTER, STATE> summarizeEdge = new SummarizeEdge<>(src, spoilerChoice,
+					duplicatorChoices, this);
 			summarizeEdge.addToGameGraph();
 			mSrcDestToSummarizeEdges.put(src, new Pair<>(spoilerChoice, duplicatorChoices), summarizeEdge);
 			mSimulationPerformance.increaseCountingMeasure(ECountingMeasure.SUMMARIZE_EDGES);
-			int currentAmountOfSubSummarize =
-					mSimulationPerformance.getCountingMeasureResult(ECountingMeasure.SUB_SUMMARIZE_EDGES);
+			int currentAmountOfSubSummarize = mSimulationPerformance
+					.getCountingMeasureResult(ECountingMeasure.SUB_SUMMARIZE_EDGES);
 			if (currentAmountOfSubSummarize == SimulationPerformance.NO_COUNTING_RESULT) {
 				currentAmountOfSubSummarize = 0;
 			}
@@ -2218,16 +2304,18 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	}
 
 	/**
-	 * Calculates the priority of a given {@link SpoilerVertex} by its representation <i>(state spoiler is at, state
-	 * duplicator is at)</i>.<br/>
-	 * Note that {@link DuplicatorVertex} objects always should have priority of {@link #DUPLICATOR_PRIORITY}.
+	 * Calculates the priority of a given {@link SpoilerVertex} by its
+	 * representation <i>(state spoiler is at, state duplicator is at)</i>.<br/>
+	 * Note that {@link DuplicatorVertex} objects always should have priority of
+	 * {@link #DUPLICATOR_PRIORITY}.
 	 *
 	 * @param leftState
 	 *            The state spoiler is at
 	 * @param rightState
 	 *            The state duplicator is at
-	 * @return The calculated priority of the given {@link SpoilerVertex} which is 0 if the right state is final, 2 if
-	 *         both are final and 1 if only the left state is final.
+	 * @return The calculated priority of the given {@link SpoilerVertex} which
+	 *         is 0 if the right state is final, 2 if both are final and 1 if
+	 *         only the left state is final.
 	 */
 	private int calculatePriority(final STATE leftState, final STATE rightState) {
 		// In direct simulation, every vertex has zero as priority
@@ -2257,7 +2345,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	/**
 	 * Tries to cast the game graph to a fair game graph and returns it.
 	 *
-	 * @return The graph casted to a fair game graph, <tt>null</tt> if not possible.
+	 * @return The graph casted to a fair game graph, <tt>null</tt> if not
+	 *         possible.
 	 */
 	private FairGameGraph<LETTER, STATE> castGraphToFairGameGraph() {
 		FairGameGraph<LETTER, STATE> fairGraph = null;
@@ -2268,7 +2357,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	}
 
 	/**
-	 * Computes all hierPreds for a game automaton, given the source and destination for both players as SpoilerVertex.
+	 * Computes all hierPreds for a game automaton, given the source and
+	 * destination for both players as SpoilerVertex.
 	 *
 	 * @param src
 	 *            Source of both players
@@ -2276,7 +2366,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 *            Destination of both players
 	 * @param returnLetter
 	 *            Letter used for returning
-	 * @return All hierPreds for a game automaton, given the source and destination for both players as SpoilerVertex.
+	 * @return All hierPreds for a game automaton, given the source and
+	 *         destination for both players as SpoilerVertex.
 	 */
 	private Iterable<GameSpoilerNwaVertex<LETTER, STATE>> computeAllGameHierPreds(
 			final SpoilerVertex<LETTER, STATE> src, final SpoilerVertex<LETTER, STATE> dest,
@@ -2285,8 +2376,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	}
 
 	/**
-	 * Computes all hierPreds for a game automaton, given the source for both players and at least the destination of
-	 * Spoiler as SpoilerVertex.
+	 * Computes all hierPreds for a game automaton, given the source for both
+	 * players and at least the destination of Spoiler as SpoilerVertex.
 	 *
 	 * @param src
 	 *            Source of both players
@@ -2294,8 +2385,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 *            Destination of Spoiler
 	 * @param returnLetter
 	 *            Letter used for returning
-	 * @return All hierPreds for a game automaton, given the source for both players and at least the destination of
-	 *         Spoiler as SpoilerVertex.
+	 * @return All hierPreds for a game automaton, given the source for both
+	 *         players and at least the destination of Spoiler as SpoilerVertex.
 	 */
 	private Iterable<GameSpoilerNwaVertex<LETTER, STATE>> computeAllGameHierPreds(
 			final SpoilerVertex<LETTER, STATE> src, final STATE spoilerDestination, final LETTER returnLetter) {
@@ -2303,21 +2394,25 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	}
 
 	/**
-	 * Computes all hierPreds for a game automaton, given the source and destination for both players.
+	 * Computes all hierPreds for a game automaton, given the source and
+	 * destination for both players.
 	 *
 	 * @param spoilerSrc
 	 *            Source of Spoiler
 	 * @param duplicatorSrc
 	 *            Source of Duplicator
 	 * @param spoilerDest
-	 *            Destination of Spoiler. This value is allowed to be <tt>null</tt>, in this case every down state of
-	 *            the source gets considered as SpoilerHierPred.
+	 *            Destination of Spoiler. This value is allowed to be
+	 *            <tt>null</tt>, in this case every down state of the source
+	 *            gets considered as SpoilerHierPred.
 	 * @param duplicatorDest
-	 *            Destination of Duplicator. This value is allowed to be <tt>null</tt>, in this case every down state of
-	 *            the source gets considered as DuplicatorHierPred.
+	 *            Destination of Duplicator. This value is allowed to be
+	 *            <tt>null</tt>, in this case every down state of the source
+	 *            gets considered as DuplicatorHierPred.
 	 * @param returnLetter
 	 *            Letter used for returning
-	 * @return All hierPreds for a game automaton, given the source and destination for both players.
+	 * @return All hierPreds for a game automaton, given the source and
+	 *         destination for both players.
 	 */
 	private Iterable<GameSpoilerNwaVertex<LETTER, STATE>> computeAllGameHierPreds(final STATE spoilerSrc,
 			final STATE duplicatorSrc, final STATE spoilerDest, final STATE duplicatorDest, final LETTER returnLetter) {
@@ -2360,8 +2455,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		// Merge both sets
 		for (final STATE spoilerHierPred : spoilerHierPreds) {
 			for (final STATE duplicatorHierPred : duplicatorHierPreds) {
-				SpoilerVertex<LETTER, STATE> representingHierPred =
-						getSpoilerVertex(spoilerHierPred, duplicatorHierPred, false, null, null);
+				SpoilerVertex<LETTER, STATE> representingHierPred = getSpoilerVertex(spoilerHierPred,
+						duplicatorHierPred, false, null, null);
 				if (representingHierPred != null && representingHierPred instanceof SpoilerNwaVertex<?, ?>) {
 					gameHierPreds
 							.add(new GameSpoilerNwaVertex<>((SpoilerNwaVertex<LETTER, STATE>) representingHierPred));
@@ -2382,12 +2477,14 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	}
 
 	/**
-	 * Creates a game automaton that is used for summarize edge computation. All states are initial and no state will be
-	 * final. This can afterwards be changed by using {@link NestedWordAutomatonFilteredStates} as a wrapper.
+	 * Creates a game automaton that is used for summarize edge computation. All
+	 * states are initial and no state will be final. This can afterwards be
+	 * changed by using {@link NestedWordAutomatonFilteredStates} as a wrapper.
 	 *
 	 * @return A game automaton that is used for summarize edge computation
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate framework.
+	 *             If the operation was canceled, for example from the Ultimate
+	 *             framework.
 	 */
 	private INestedWordAutomatonSimple<IGameLetter<LETTER, STATE>, IGameState> createGameAutomaton()
 			throws AutomataOperationCanceledException {
@@ -2400,8 +2497,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 
 		// Collect all data by using
 		// (spoilerVertex -> duplicatorSucc -> spoilerSucc)
-		final List<Pair<SpoilerNwaVertex<LETTER, STATE>, DuplicatorNwaVertex<LETTER, STATE>>> runningInDuplicatorDeadEnd =
-				new LinkedList<>();
+		final List<Pair<SpoilerNwaVertex<LETTER, STATE>, DuplicatorNwaVertex<LETTER, STATE>>> runningInDuplicatorDeadEnd = new LinkedList<>();
 		for (final SpoilerVertex<LETTER, STATE> spoilerVertex : mGameGraph.getSpoilerVertices()) {
 			if (!(spoilerVertex instanceof SpoilerNwaVertex<?, ?>)) {
 				continue;
@@ -2423,8 +2519,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 					// This should not be possible in a correct game graph.
 					continue;
 				}
-				final DuplicatorNwaVertex<LETTER, STATE> duplicatorNwaSucc =
-						(DuplicatorNwaVertex<LETTER, STATE>) firstSuccessor;
+				final DuplicatorNwaVertex<LETTER, STATE> duplicatorNwaSucc = (DuplicatorNwaVertex<LETTER, STATE>) firstSuccessor;
 				final Set<Vertex<LETTER, STATE>> secondSuccessors = mGameGraph.getSuccessors(duplicatorNwaSucc);
 				if (secondSuccessors == null) {
 					// Duplicator dead-end, only possible for some return
@@ -2477,8 +2572,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 						// This should not be possible in a correct game graph.
 						continue;
 					}
-					final SpoilerNwaVertex<LETTER, STATE> spoilerNwaSucc =
-							(SpoilerNwaVertex<LETTER, STATE>) secondSuccessor;
+					final SpoilerNwaVertex<LETTER, STATE> spoilerNwaSucc = (SpoilerNwaVertex<LETTER, STATE>) secondSuccessor;
 
 					// We add (spoilerVertex -> duplicatorSucc -> spoilerSucc)
 					// to the game automaton
@@ -2543,15 +2637,18 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	}
 
 	/**
-	 * Returns whether Duplicator would directly lose in direct simulation if moving to the given Spoiler vertex, or if
-	 * Spoiler moves from here to him. This is the case if Spoilers left state is final and the right state is not.
+	 * Returns whether Duplicator would directly lose in direct simulation if
+	 * moving to the given Spoiler vertex, or if Spoiler moves from here to him.
+	 * This is the case if Spoilers left state is final and the right state is
+	 * not.
 	 *
 	 * @param leftSpoilerState
 	 *            Left state of Spoilers vertex
 	 * @param rightSpoilerState
 	 *            Right state of Spoilers vertex
-	 * @return Whether Duplicator would directly lose in direct simulation if moving to the given Spoiler vertex, or if
-	 *         Spoiler moves from here to him.
+	 * @return Whether Duplicator would directly lose in direct simulation if
+	 *         moving to the given Spoiler vertex, or if Spoiler moves from here
+	 *         to him.
 	 */
 	private boolean doesLoseInDirectSim(final STATE leftSpoilerState, final STATE rightSpoilerState) {
 		final boolean doesLose = mNwa.isFinal(leftSpoilerState) && !mNwa.isFinal(rightSpoilerState);
@@ -2578,7 +2675,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	}
 
 	/**
-	 * Adds a given duplicator vertex to the graph and all corresponding internal fields.
+	 * Adds a given duplicator vertex to the graph and all corresponding
+	 * internal fields.
 	 *
 	 * @param vertex
 	 *            Vertex to add
@@ -2609,7 +2707,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	}
 
 	/**
-	 * Adds a given spoiler vertex to the graph and all corresponding internal fields.
+	 * Adds a given spoiler vertex to the graph and all corresponding internal
+	 * fields.
 	 *
 	 * @param vertex
 	 *            Vertex to add
@@ -2635,7 +2734,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	}
 
 	/**
-	 * Removes a given duplicator vertex from the graph and all corresponding internal fields.
+	 * Removes a given duplicator vertex from the graph and all corresponding
+	 * internal fields.
 	 *
 	 * @param vertex
 	 *            Vertex to remove
@@ -2654,7 +2754,8 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	}
 
 	/**
-	 * Removes a given spoiler vertex from the graph and all corresponding internal fields.
+	 * Removes a given spoiler vertex from the graph and all corresponding
+	 * internal fields.
 	 *
 	 * @param vertex
 	 *            Vertex to remove

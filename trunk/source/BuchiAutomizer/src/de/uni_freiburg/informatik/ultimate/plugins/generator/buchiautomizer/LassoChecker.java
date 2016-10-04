@@ -93,6 +93,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceCheckerCraig;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerSpWp;
+import de.uni_freiburg.informatik.ultimate.util.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 public class LassoChecker {
@@ -528,8 +529,9 @@ public class LassoChecker {
 			}
 			return stemTF;
 		} catch (final ToolchainCanceledException tce) {
-			throw new ToolchainCanceledException(getClass(),
-					tce.getRunningTaskInfo() + " while constructing stem TransFormula");
+			final String taskDescription = "constructing stem TransFormula";
+			tce.addRunningTaskInfo(new RunningTaskInfo(getClass(), taskDescription));
+			throw tce;
 		}
 	}
 
@@ -545,8 +547,9 @@ public class LassoChecker {
 			}
 			return loopTF;
 		} catch (final ToolchainCanceledException tce) {
-			throw new ToolchainCanceledException(getClass(),
-					tce.getRunningTaskInfo() + " while constructing loop TransFormula");
+			final String taskDescription = "constructing loop TransFormula";
+			tce.addRunningTaskInfo(new RunningTaskInfo(getClass(), taskDescription));
+			throw tce;
 		}
 	}
 

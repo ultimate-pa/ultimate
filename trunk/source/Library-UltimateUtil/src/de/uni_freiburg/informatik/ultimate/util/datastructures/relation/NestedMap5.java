@@ -32,7 +32,7 @@ import java.util.Map;
 /**
  * Nested map that stores a value accessible by 5 different keys.
  * 
- * @author Daniel Tischner
+ * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  *
  * @param <K1>
  *            First key
