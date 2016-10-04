@@ -13,3 +13,4 @@ Require-Bundle: Library-UltimateCore,
  Library-UltimateUtil
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Export-Package: pea_to_boogie.translator
