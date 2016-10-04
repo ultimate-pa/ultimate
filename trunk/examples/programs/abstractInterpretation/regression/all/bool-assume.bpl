@@ -9,8 +9,6 @@ procedure ULTIMATE.start()
 	assume y >= 0 && y <= 10;
 
 	assert true;
-	//assume b && false == false && (x > y);
-//	assume x >= y;
 	assume b == (x >= y);
 
 	assert true;
