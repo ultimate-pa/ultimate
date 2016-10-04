@@ -46,13 +46,13 @@ public class DelayedSimulationInfoProvider<LETTER, STATE> implements ISimulation
 	}
 
 	@Override
-	public boolean computeBitForSpoilerVertex(final boolean predecessorBit, final boolean isSpoilerAccepting) {
-		return predecessorBit || isSpoilerAccepting;
+	public boolean computeBitForSpoilerVertex(final boolean predecessorBit, final boolean isDuplicatorAccepting) {
+		return predecessorBit && !isDuplicatorAccepting;
 	}
 
 	@Override
-	public boolean computeBitForDuplicatorVertex(final boolean predecessorBit, final boolean isDuplicatorAccepting) {
-		return predecessorBit && !isDuplicatorAccepting;
+	public boolean computeBitForDuplicatorVertex(final boolean predecessorBit, final boolean isSpoilerAccepting) {
+		return predecessorBit || isSpoilerAccepting;
 	}
 
 	@Override
