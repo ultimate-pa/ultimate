@@ -88,7 +88,10 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 	private final Map<STATE, Set<STATE>> mState2EquivalenceClass;
 	private final IDoubleDeckerAutomaton<LETTER, STATE> mOperand;
 	private final boolean mUseFinalStateConstraints;
-	private final boolean mOperandIsFiniteAutomaton;
+	
+	// if true, we can omit transitivity clauses
+	private final boolean mOperandHasNoReturns;
+	
 	private int mNumberClausesAcceptance;
 	private int mNumberClausesTransitions;
 	private int mNumberClausesTransitionsNondeterministic;
@@ -185,7 +188,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 		mUseFinalStateConstraints = useFinalStateConstraints;
 		mInitialEquivalenceClasses = initialEquivalenceClasses;
 		mUseTransitionHornClauses = useTransitionHornClauses;
-		mOperandIsFiniteAutomaton = isFiniteAutomaton();
+		mOperandHasNoReturns = mOperand.getReturnAlphabet().isEmpty();
 		
 		// TODO even copy an existing HashMap?
 		mState2EquivalenceClass = new HashMap<>();
@@ -204,7 +207,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 		if (useHornSolver) {
 			mSolver = new HornMaxSatSolver<>(mServices);
 		} else {
-			if (useTransitivityGenerator && !mOperandIsFiniteAutomaton) {
+			if (useTransitivityGenerator && !mOperandHasNoReturns) {
 				transitivityGenerator = new ScopedTransitivityGenerator<>(usePathCompression);
 				mSolver = new TransitivityGeneralMaxSatSolver<>(mServices, transitivityGenerator);
 			} else {
@@ -236,7 +239,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 			final ScopedTransitivityGenerator<STATE> transitivityGenerator) throws AutomataOperationCanceledException {
 		generateVariables(transitivityGenerator);
 		generateTransitionConstraints();
-		if (!useTransitivityGenerator && !mOperandIsFiniteAutomaton) {
+		if (!useTransitivityGenerator && !mOperandHasNoReturns) {
 			generateTransitivityConstraints();
 		}
 		if (mLogger.isInfoEnabled()) {
@@ -269,7 +272,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 			}
 		}
 		
-		if (mOperandIsFiniteAutomaton) {
+		if (mOperandHasNoReturns) {
 			// check that direct simulation is the same for automata without calls and returns
 			// TODO use new direct simulation when it also supports an initial partition
 			final ReduceNwaDirectSimulation<LETTER, STATE> directSimulation = new ReduceNwaDirectSimulation<>(mServices,
