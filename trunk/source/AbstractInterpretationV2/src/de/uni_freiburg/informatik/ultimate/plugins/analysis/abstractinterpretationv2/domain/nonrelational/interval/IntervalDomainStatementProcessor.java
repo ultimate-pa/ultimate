@@ -38,7 +38,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalStatementProcessor;
@@ -93,21 +92,21 @@ public class IntervalDomainStatementProcessor
 				final PrimitiveType rightPrim = (PrimitiveType) expr.getRight().getType();
 				if (prim.getTypeCode() == PrimitiveType.BOOL && leftPrim.getTypeCode() == PrimitiveType.BOOL
 						&& rightPrim.getTypeCode() == PrimitiveType.BOOL) {
-					final UnaryExpression negatedRight = new UnaryExpression(expr.getLocation(),
-							expr.getRight().getType(), UnaryExpression.Operator.LOGICNEG, expr.getRight());
-					final BinaryExpression newExp = new BinaryExpression(expr.getLocation(), expr.getType(),
+					final UnaryExpression negatedRight = new UnaryExpression(expr.getLocation(), BoogieType.TYPE_BOOL,
+							UnaryExpression.Operator.LOGICNEG, expr.getRight());
+					final BinaryExpression newExp = new BinaryExpression(expr.getLocation(), BoogieType.TYPE_BOOL,
 							Operator.COMPEQ, expr.getLeft(), negatedRight);
 
 					return newExp;
 				}
 			}
 
-			final BinaryExpression negativeCase = new BinaryExpression(expr.getLocation(), expr.getType(),
+			final BinaryExpression negativeCase = new BinaryExpression(expr.getLocation(), BoogieType.TYPE_BOOL,
 					Operator.COMPLT, expr.getLeft(), expr.getRight());
-			final BinaryExpression positiveCase = new BinaryExpression(expr.getLocation(), expr.getType(),
+			final BinaryExpression positiveCase = new BinaryExpression(expr.getLocation(), BoogieType.TYPE_BOOL,
 					Operator.COMPGT, expr.getLeft(), expr.getRight());
 
-			final Expression newExp = new BinaryExpression(expr.getLocation(), expr.getType(), Operator.LOGICOR,
+			final Expression newExp = new BinaryExpression(expr.getLocation(), BoogieType.TYPE_BOOL, Operator.LOGICOR,
 					negativeCase, positiveCase);
 
 			return newExp;
@@ -126,7 +125,7 @@ public class IntervalDomainStatementProcessor
 								expr.getRight().getType(), Operator.ARITHPLUS, expr.getRight(),
 								new IntegerLiteral(expr.getRight().getLocation(), BoogieType.TYPE_INT, "1"));
 
-						newExp = new BinaryExpression(expr.getLocation(), expr.getType(), Operator.COMPGEQ,
+						newExp = new BinaryExpression(expr.getLocation(), BoogieType.TYPE_BOOL, Operator.COMPGEQ,
 								expr.getLeft(), newRightGt);
 						break;
 					case COMPLT:
@@ -134,7 +133,7 @@ public class IntervalDomainStatementProcessor
 								expr.getRight().getType(), Operator.ARITHMINUS, expr.getRight(),
 								new IntegerLiteral(expr.getRight().getLocation(), BoogieType.TYPE_INT, "1"));
 
-						newExp = new BinaryExpression(expr.getLocation(), expr.getType(), Operator.COMPLEQ,
+						newExp = new BinaryExpression(expr.getLocation(), BoogieType.TYPE_BOOL, Operator.COMPLEQ,
 								expr.getLeft(), newRightLt);
 						break;
 					default:
@@ -145,25 +144,25 @@ public class IntervalDomainStatementProcessor
 				}
 			}
 		} else if (operator == Operator.LOGICIMPLIES) {
-			final UnaryExpression newLeft = new UnaryExpression(expr.getLocation(), expr.getLeft().getType(),
+			final UnaryExpression newLeft = new UnaryExpression(expr.getLocation(), BoogieType.TYPE_BOOL,
 					UnaryExpression.Operator.LOGICNEG, expr.getLeft());
 
-			final BinaryExpression newExp = new BinaryExpression(expr.getLocation(), expr.getType(), Operator.LOGICOR,
-					newLeft, expr.getRight());
+			final BinaryExpression newExp = new BinaryExpression(expr.getLocation(), BoogieType.TYPE_BOOL,
+					Operator.LOGICOR, newLeft, expr.getRight());
 			return newExp;
 		} else if (operator == Operator.LOGICIFF) {
-			final BinaryExpression newTrueExpression = new BinaryExpression(expr.getLocation(), expr.getType(),
+			final BinaryExpression newTrueExpression = new BinaryExpression(expr.getLocation(), BoogieType.TYPE_BOOL,
 					Operator.LOGICAND, expr.getLeft(), expr.getRight());
 
-			final UnaryExpression negatedLeft = new UnaryExpression(expr.getLocation(), expr.getLeft().getType(),
+			final UnaryExpression negatedLeft = new UnaryExpression(expr.getLocation(), BoogieType.TYPE_BOOL,
 					UnaryExpression.Operator.LOGICNEG, expr.getLeft());
-			final UnaryExpression negatedRight = new UnaryExpression(expr.getLocation(), expr.getRight().getType(),
+			final UnaryExpression negatedRight = new UnaryExpression(expr.getLocation(), BoogieType.TYPE_BOOL,
 					UnaryExpression.Operator.LOGICNEG, expr.getRight());
-			final BinaryExpression newFalseExpression = new BinaryExpression(expr.getLocation(), expr.getType(),
+			final BinaryExpression newFalseExpression = new BinaryExpression(expr.getLocation(), BoogieType.TYPE_BOOL,
 					Operator.LOGICAND, negatedLeft, negatedRight);
 
-			final BinaryExpression newExp = new BinaryExpression(expr.getLocation(), expr.getType(), Operator.LOGICOR,
-					newTrueExpression, newFalseExpression);
+			final BinaryExpression newExp = new BinaryExpression(expr.getLocation(), BoogieType.TYPE_BOOL,
+					Operator.LOGICOR, newTrueExpression, newFalseExpression);
 			return newExp;
 		} else if (operator == Operator.ARITHPLUS || operator == Operator.ARITHMINUS) {
 
@@ -236,10 +235,7 @@ public class IntervalDomainStatementProcessor
 				Operator newOp;
 
 				Expression newLeft = binexp.getLeft();
-				final IBoogieType leftType = binexp.getLeft().getType();
 				Expression newRight = binexp.getRight();
-				final IBoogieType rightType = binexp.getRight().getType();
-
 				switch (binexp.getOperator()) {
 				case COMPEQ:
 					newOp = Operator.COMPNEQ;
@@ -261,35 +257,35 @@ public class IntervalDomainStatementProcessor
 					break;
 				case LOGICAND:
 					newOp = Operator.LOGICOR;
-					newLeft = new UnaryExpression(binexp.getLocation(), leftType, UnaryExpression.Operator.LOGICNEG,
-							newLeft);
-					newRight = new UnaryExpression(binexp.getLocation(), rightType, UnaryExpression.Operator.LOGICNEG,
-							newRight);
+					newLeft = new UnaryExpression(binexp.getLocation(), BoogieType.TYPE_BOOL,
+							UnaryExpression.Operator.LOGICNEG, newLeft);
+					newRight = new UnaryExpression(binexp.getLocation(), BoogieType.TYPE_BOOL,
+							UnaryExpression.Operator.LOGICNEG, newRight);
 					break;
 				case LOGICOR:
 					newOp = Operator.LOGICAND;
-					newLeft = new UnaryExpression(binexp.getLocation(), leftType, UnaryExpression.Operator.LOGICNEG,
-							newLeft);
-					newRight = new UnaryExpression(binexp.getLocation(), rightType, UnaryExpression.Operator.LOGICNEG,
-							newRight);
+					newLeft = new UnaryExpression(binexp.getLocation(), BoogieType.TYPE_BOOL,
+							UnaryExpression.Operator.LOGICNEG, newLeft);
+					newRight = new UnaryExpression(binexp.getLocation(), BoogieType.TYPE_BOOL,
+							UnaryExpression.Operator.LOGICNEG, newRight);
 					break;
 				case LOGICIMPLIES:
 					// !(a ==> b) becomes (a && !b)
 					newOp = Operator.LOGICAND;
 					newLeft = binexp.getLeft();
-					newRight = new UnaryExpression(binexp.getLocation(), rightType, UnaryExpression.Operator.LOGICNEG,
-							newRight);
+					newRight = new UnaryExpression(binexp.getLocation(), BoogieType.TYPE_BOOL,
+							UnaryExpression.Operator.LOGICNEG, newRight);
 					break;
 				case LOGICIFF:
 					// !(a <==> b) becomes (!(a && b)) && (a || b)
 					newOp = Operator.LOGICAND;
-					final Expression nonNegated = new BinaryExpression(binexp.getLocation(), leftType,
+					final Expression nonNegated = new BinaryExpression(binexp.getLocation(), BoogieType.TYPE_BOOL,
 							Operator.LOGICAND, binexp.getLeft(), binexp.getRight());
-					final Expression negated = new BinaryExpression(binexp.getLocation(), leftType, Operator.LOGICOR,
-							binexp.getLeft(), binexp.getRight());
+					final Expression negated = new BinaryExpression(binexp.getLocation(), BoogieType.TYPE_BOOL,
+							Operator.LOGICOR, binexp.getLeft(), binexp.getRight());
 
-					newLeft = new UnaryExpression(binexp.getLocation(), leftType, UnaryExpression.Operator.LOGICNEG,
-							nonNegated);
+					newLeft = new UnaryExpression(binexp.getLocation(), BoogieType.TYPE_BOOL,
+							UnaryExpression.Operator.LOGICNEG, nonNegated);
 					newRight = negated;
 					break;
 				case COMPPO:
@@ -300,7 +296,7 @@ public class IntervalDomainStatementProcessor
 				}
 
 				final BinaryExpression newExp =
-						new BinaryExpression(binexp.getLocation(), expr.getType(), newOp, newLeft, newRight);
+						new BinaryExpression(binexp.getLocation(), BoogieType.TYPE_BOOL, newOp, newLeft, newRight);
 
 				return newExp;
 			} else if (expr.getExpr() instanceof UnaryExpression) {

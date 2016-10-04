@@ -43,6 +43,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public class EvaluatorLogger {
 
+	private static final boolean MORE_LOGGING = false;
+
 	private final ILogger mLogger;
 	private final Set<UnaryExpression.Operator> mWarningsUnknownUnaryOps;
 	private final Set<BinaryExpression.Operator> mWarningsUnknownBinaryOps;
@@ -86,7 +88,7 @@ public class EvaluatorLogger {
 	}
 
 	public void logEvaluation(final Object op, final Object result, final Object... args) {
-		if (mLogger.isDebugEnabled()) {
+		if (MORE_LOGGING && mLogger.isDebugEnabled()) {
 			final StringBuilder sb = new StringBuilder();
 			Arrays.stream(args).forEach(a -> sb.append(' ').append(a));
 			mLogger.debug(AbsIntPrefInitializer.DINDENT + "(" + op + sb + ") = " + result);
