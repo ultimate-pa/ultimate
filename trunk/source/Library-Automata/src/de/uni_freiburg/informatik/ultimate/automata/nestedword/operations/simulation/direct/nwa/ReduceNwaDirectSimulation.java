@@ -33,7 +33,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.TestBuchiEquivalence;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizeNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.LookaheadPartitionConstructor;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.direct.MinimizeDfaSimulation;
@@ -45,12 +44,10 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * Once constructed the reduction automatically starts, the result can be get by
  * using {@link #getResult()}.<br/>
  * <br/>
- * 
  * For correctness its important that the inputed automaton has <b>no dead
  * ends</b> nor <b>duplicate transitions</b>.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
- * 
  * @param <LETTER>
  *            Letter class of nwa automaton
  * @param <STATE>
@@ -58,7 +55,6 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  */
 public final class ReduceNwaDirectSimulation<LETTER, STATE> extends MinimizeDfaSimulation<LETTER, STATE>
 		implements IMinimizeNwa<LETTER, STATE> {
-
 	/**
 	 * Creates a new nwa reduce object that starts reducing the given nwa
 	 * automaton.<br/>
@@ -78,7 +74,7 @@ public final class ReduceNwaDirectSimulation<LETTER, STATE> extends MinimizeDfaS
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, false);
 	}
-
+	
 	/**
 	 * Creates a new nwa reduce object that starts reducing the given nwa
 	 * automaton.<br/>
@@ -99,11 +95,11 @@ public final class ReduceNwaDirectSimulation<LETTER, STATE> extends MinimizeDfaS
 	 */
 	public ReduceNwaDirectSimulation(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand, final boolean useSCCs)
-					throws AutomataOperationCanceledException {
+			throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, useSCCs,
-				new LookaheadPartitionConstructor<LETTER, STATE>(services, operand, true).getResult());
+				new LookaheadPartitionConstructor<>(services, operand, true).getResult());
 	}
-
+	
 	/**
 	 * Creates a new nwa reduce object that starts reducing the given nwa
 	 * automaton.<br/>
@@ -131,13 +127,13 @@ public final class ReduceNwaDirectSimulation<LETTER, STATE> extends MinimizeDfaS
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand, final boolean useSCCs,
 			final Iterable<Set<STATE>> possibleEquivalenceClasses) throws AutomataOperationCanceledException {
 		super(services, stateFactory, operand,
-				new DirectNwaSimulation<LETTER, STATE>(services.getProgressMonitorService(),
+				new DirectNwaSimulation<>(services.getProgressMonitorService(),
 						services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), useSCCs, stateFactory,
-						new DirectNwaGameGraph<LETTER, STATE>(services, services.getProgressMonitorService(),
+						new DirectNwaGameGraph<>(services, services.getProgressMonitorService(),
 								services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), operand,
 								stateFactory, possibleEquivalenceClasses)));
 	}
-
+	
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -148,12 +144,11 @@ public final class ReduceNwaDirectSimulation<LETTER, STATE> extends MinimizeDfaS
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		getLogger().info("Start testing correctness of " + operationName());
-		final boolean correct = (new TestBuchiEquivalence<LETTER, STATE>(getServices(), stateFactory, getOperand(),
-				getResult())).getResult();
+		final boolean correct = super.checkLanguageEquivalence(stateFactory).getFirst();
 		getLogger().info("Finished testing correctness of " + operationName());
 		return correct;
 	}
-
+	
 	/*
 	 * (non-Javadoc)
 	 * 
