@@ -245,12 +245,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 				case LOGICAND:
 					final List<STATE> leftAnd = mLeftSubEvaluator.inverseEvaluate(computedValue, currentState);
 					final List<STATE> rightAnd = mRightSubEvaluator.inverseEvaluate(computedValue, currentState);
-
-					for (final STATE le : leftAnd) {
-						for (final STATE ri : rightAnd) {
-							returnStates.add(le.intersect(ri));
-						}
-					}
+					returnStates.addAll(crossIntersect(leftAnd, rightAnd));
 					break;
 				case LOGICOR:
 					mLeftSubEvaluator.inverseEvaluate(computedValue, currentState).forEach(returnStates::add);
@@ -280,12 +275,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 
 					final List<STATE> leftEq = mLeftSubEvaluator.inverseEvaluate(leftEvalresult, currentState);
 					final List<STATE> rightEq = mRightSubEvaluator.inverseEvaluate(rightEvalresult, currentState);
-
-					for (final STATE le : leftEq) {
-						for (final STATE ri : rightEq) {
-							returnStates.add(le.intersect(ri));
-						}
-					}
+					returnStates.addAll(crossIntersect(leftEq, rightEq));
 					break;
 				case COMPNEQ:
 				case COMPGT:
@@ -311,11 +301,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 					final List<STATE> rightInverseArith =
 							mRightSubEvaluator.inverseEvaluate(inverseResultRight, currentState);
 
-					for (final STATE le : leftInverseArith) {
-						for (final STATE ri : rightInverseArith) {
-							returnStates.add(le.intersect(ri));
-						}
-					}
+					returnStates.addAll(crossIntersect(leftInverseArith, rightInverseArith));
 					break;
 				default:
 					mLogger.warnUnknownOperator(mOperator);
@@ -333,6 +319,16 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 
 		assert !returnList.isEmpty();
 		return returnList;
+	}
+
+	private List<STATE> crossIntersect(final List<STATE> left, final List<STATE> right) {
+		final List<STATE> rtr = new ArrayList<>(left.size() * right.size());
+		for (final STATE le : left) {
+			for (final STATE ri : right) {
+				rtr.add(le.intersect(ri));
+			}
+		}
+		return rtr;
 	}
 
 	private VALUE computeNewValue(final VALUE referenceValue, final VALUE oldValue, final VALUE otherValue,
