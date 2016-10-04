@@ -64,17 +64,17 @@ public class AStar<V, E> {
 	private final IGraph<V, E> mGraph;
 	private final IProgressAwareTimer mTimer;
 
-	public AStar(ILogger logger, V start, V target, IHeuristic<V, E> heuristic, IGraph<V, E> graph, IProgressAwareTimer timer) {
+	public AStar(final ILogger logger, final V start, final V target, final IHeuristic<V, E> heuristic, final IGraph<V, E> graph, final IProgressAwareTimer timer) {
 		this(logger, start, target, heuristic, graph, new NoEdgeDenier<E>(),timer);
 	}
 
-	public AStar(ILogger logger, V start, V target, IHeuristic<V, E> heuristic, IGraph<V, E> graph,
-			Collection<E> forbiddenEdges, IProgressAwareTimer timer) {
+	public AStar(final ILogger logger, final V start, final V target, final IHeuristic<V, E> heuristic, final IGraph<V, E> graph,
+			final Collection<E> forbiddenEdges, final IProgressAwareTimer timer) {
 		this(logger, start, target, heuristic, graph, new CollectionEdgeDenier<>(forbiddenEdges),timer);
 	}
 
-	public AStar(ILogger logger, V start, V target, IHeuristic<V, E> heuristic, IGraph<V, E> graph,
-			IEdgeDenier<E> edgeDenier, IProgressAwareTimer timer) {
+	public AStar(final ILogger logger, final V start, final V target, final IHeuristic<V, E> heuristic, final IGraph<V, E> graph,
+			final IEdgeDenier<E> edgeDenier, final IProgressAwareTimer timer) {
 		mLogger = logger;
 		mHeuristic = heuristic;
 		mStart = start;
@@ -108,11 +108,11 @@ public class AStar<V, E> {
 		return astar(initialOpenItem);
 	}
 
-	private List<E> astar(OpenItem<V, E> initialOpenItem) {
+	private List<E> astar(final OpenItem<V, E> initialOpenItem) {
 		final FasterPriorityQueue<OpenItem<V, E>> open = new FasterPriorityQueue<OpenItem<V, E>>(
 				new Comparator<OpenItem<V, E>>() {
 					@Override
-					public int compare(OpenItem<V, E> o1, OpenItem<V, E> o2) {
+					public int compare(final OpenItem<V, E> o1, final OpenItem<V, E> o2) {
 						return Integer.compare(o1.getAnnotation().getExpectedCostToTarget(),
 								o2.getAnnotation().getExpectedCostToTarget());
 					}
@@ -153,7 +153,7 @@ public class AStar<V, E> {
 	private void checkTimeout() {
 		if(!mTimer.continueProcessing()){
 			mLogger.warn("Received timeout, aborting AStar engine");
-			throw new ToolchainCanceledException(getClass(), "Got cancel request during AStar");
+			throw new ToolchainCanceledException(getClass());
 		}
 	}
 
@@ -212,7 +212,7 @@ public class AStar<V, E> {
 		}
 	}
 
-	private List<E> createPath(OpenItem<V, E> currentItem) {
+	private List<E> createPath(final OpenItem<V, E> currentItem) {
 		assert currentItem.getNode() == mTarget;
 		final AStar<V, E>.BackpointerIterator iter = new BackpointerIterator(currentItem.getAnnotation());
 		final List<E> rtr = new ArrayList<E>();
@@ -252,7 +252,7 @@ public class AStar<V, E> {
 		return rtr;
 	}
 
-	private OpenItem<V, E> createInitialSuccessorItem(V initialNode) {
+	private OpenItem<V, E> createInitialSuccessorItem(final V initialNode) {
 		final Map<V, AstarAnnotation<E>> map = new HashMap<>();
 		map.put(initialNode, new AstarAnnotation<E>());
 		return new OpenItem<V, E>(initialNode, map);
@@ -260,7 +260,7 @@ public class AStar<V, E> {
 
 	private static final class NoEdgeDenier<E> implements IEdgeDenier<E> {
 		@Override
-		public boolean isForbidden(E edge, Iterator<E> currentTrace) {
+		public boolean isForbidden(final E edge, final Iterator<E> currentTrace) {
 			return false;
 		}
 	}
@@ -270,7 +270,7 @@ public class AStar<V, E> {
 		private AstarAnnotation<E> mAnnotation;
 		private final Set<AstarAnnotation<E>> mClosed;
 
-		private BackpointerIterator(AstarAnnotation<E> currentAnnotation) {
+		private BackpointerIterator(final AstarAnnotation<E> currentAnnotation) {
 			mAnnotation = currentAnnotation;
 			mClosed = new HashSet<AstarAnnotation<E>>();
 		}

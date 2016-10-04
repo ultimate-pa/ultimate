@@ -564,7 +564,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 	private void checkTimeout() {
 		if (!mTimer.continueProcessing()) {
 			mLogger.warn("Received timeout, aborting fixpoint engine");
-			throw new ToolchainCanceledException(getClass(), "Got cancel request during abstract interpretation");
+			throw new ToolchainCanceledException(getClass(), "executing abstract interpretation");
 		}
 	}
 

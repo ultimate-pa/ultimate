@@ -696,7 +696,7 @@ public class PredicateUnifier {
 			if (!mServices.getProgressMonitorService().continueProcessing()) {
 				final String quantifierInformation = generateQuantifierInformation(closedTerm);
 				throw new ToolchainCanceledException(this.getClass(),
-						"PredicateUnifier was comparing new predicate (" +
+						"comparing new predicate (" +
 						quantifierInformation + ") to " +
 						mKnownPredicates.size() + " known predicates");
 			}

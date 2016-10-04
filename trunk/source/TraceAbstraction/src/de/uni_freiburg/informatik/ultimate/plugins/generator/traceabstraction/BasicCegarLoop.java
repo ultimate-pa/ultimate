@@ -301,7 +301,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		if (TRACE_HISTOGRAMM_BAILOUT) {
 			if (traceHistogram.getVisualizationArray()[0] > traceHistogram.getVisualizationArray().length) {
 				throw new ToolchainCanceledException(getClass(),
-						"bailout by trace histogram " + traceHistogram.toString());
+						"!!!!!!! bailout by trace histogram " + traceHistogram.toString());
 			}
 		}
 		// s_Logger.info("Cutpoints: " + mRunAnalyzer.getCutpoints());
