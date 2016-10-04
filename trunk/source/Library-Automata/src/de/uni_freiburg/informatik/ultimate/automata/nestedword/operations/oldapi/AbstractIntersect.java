@@ -44,9 +44,15 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
+/**
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
+ */
 public abstract class AbstractIntersect<LETTER, STATE> extends DoubleDeckerBuilder<LETTER, STATE>
 		implements IOperation<LETTER, STATE> {
-		
 	private final INestedWordAutomatonSimple<LETTER, STATE> mFstNwa;
 	private final INestedWordAutomatonSimple<LETTER, STATE> mSndNwa;
 	private final NestedWordAutomaton<LETTER, STATE> mResultNwa;
@@ -54,21 +60,32 @@ public abstract class AbstractIntersect<LETTER, STATE> extends DoubleDeckerBuild
 	
 	private final boolean mBuchi;
 	
-	private final Map<STATE, STATE> mResult2fst =
-			new HashMap<>();
-	private final Map<STATE, STATE> mResult2snd =
-			new HashMap<>();
-	private final Map<STATE, Integer> mResult2track =
-			new HashMap<>();
-			
+	private final Map<STATE, STATE> mResult2fst = new HashMap<>();
+	private final Map<STATE, STATE> mResult2snd = new HashMap<>();
+	private final Map<STATE, Integer> mResult2track = new HashMap<>();
+	
 	private final Map<STATE, Map<STATE, STATE>> mTrack1_fst2snd2result = new HashMap<>();
 	private final Map<STATE, Map<STATE, STATE>> mTrack2_fst2snd2result = new HashMap<>();
-			
-	public AbstractIntersect(final AutomataLibraryServices services,
-			final boolean buchiIntersection, final boolean minimizeResult,
-			final INestedWordAutomatonSimple<LETTER, STATE> fstNwa,
-			final INestedWordAutomatonSimple<LETTER, STATE> sndNwa)
-					throws AutomataLibraryException {
+	
+	/**
+	 * Constructor.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param buchiIntersection
+	 *            {@code true} iff Buchi intersection is used
+	 * @param minimizeResult
+	 *            {@code true} iff result should be minimized
+	 * @param fstNwa
+	 *            first operand
+	 * @param sndNwa
+	 *            second operand
+	 * @throws AutomataLibraryException
+	 *             if alphabets differ
+	 */
+	public AbstractIntersect(final AutomataLibraryServices services, final boolean buchiIntersection,
+			final boolean minimizeResult, final INestedWordAutomatonSimple<LETTER, STATE> fstNwa,
+			final INestedWordAutomatonSimple<LETTER, STATE> sndNwa) throws AutomataLibraryException {
 		super(services);
 		
 		mBuchi = buchiIntersection;
@@ -93,8 +110,7 @@ public abstract class AbstractIntersect<LETTER, STATE> extends DoubleDeckerBuild
 		newReturns.addAll(mFstNwa.getReturnAlphabet());
 		newReturns.retainAll(mSndNwa.getReturnAlphabet());
 		
-		mResultNwa = new NestedWordAutomaton<>(mServices,
-				newInternals, newCalls, newReturns, mContentFactory);
+		mResultNwa = new NestedWordAutomaton<>(mServices, newInternals, newCalls, newReturns, mContentFactory);
 		super.mTraversedNwa = mResultNwa;
 		super.traverseDoubleDeckerGraph();
 		mLogger.info(exitMessage());
@@ -105,28 +121,17 @@ public abstract class AbstractIntersect<LETTER, STATE> extends DoubleDeckerBuild
 	}
 	
 	@Override
-	public abstract String operationName();
-	
-	@Override
-	public String startMessage() {
-		if (mBuchi) {
-			return "Start buchiIntersect. First operand " + mFstNwa.sizeInformation() + ". Second operand "
-					+ mSndNwa.sizeInformation();
-		}
-		return "Start intersect. First operand " + mFstNwa.sizeInformation() + ". Second operand "
+	public final String startMessage() {
+		return "Start " + operationName() + ". First operand " + mFstNwa.sizeInformation() + " Second operand "
 				+ mSndNwa.sizeInformation();
 	}
 	
 	@Override
-	public String exitMessage() {
-		if (mBuchi) {
-			return "Finished buchiIntersect. Result " + mTraversedNwa.sizeInformation();
-		}
-		return "Finished intersect. Result " + mTraversedNwa.sizeInformation();
+	public final String exitMessage() {
+		return "Finished " + operationName() + ". Result " + mTraversedNwa.sizeInformation();
 	}
 	
-	private STATE getOrConstructOnTrack1(
-			final STATE fst, final STATE snd, final boolean isInitial) {
+	private STATE getOrConstructOnTrack1(final STATE fst, final STATE snd, final boolean isInitial) {
 		Map<STATE, STATE> snd2result = mTrack1_fst2snd2result.get(fst);
 		if (snd2result == null) {
 			snd2result = new HashMap<>();
@@ -157,8 +162,7 @@ public abstract class AbstractIntersect<LETTER, STATE> extends DoubleDeckerBuild
 		return state;
 	}
 	
-	private STATE getOrConstructOnTrack2(
-			final STATE fst, final STATE snd) {
+	private STATE getOrConstructOnTrack2(final STATE fst, final STATE snd) {
 		Map<STATE, STATE> snd2result = mTrack2_fst2snd2result.get(fst);
 		if (snd2result == null) {
 			snd2result = new HashMap<>();
@@ -189,7 +193,7 @@ public abstract class AbstractIntersect<LETTER, STATE> extends DoubleDeckerBuild
 					succTrack = 1;
 				}
 			} else {
-				assert (stateTrack == 2);
+				assert stateTrack == 2;
 				if (mSndNwa.isFinal(sndState)) {
 					succTrack = 1;
 				} else {
@@ -204,9 +208,8 @@ public abstract class AbstractIntersect<LETTER, STATE> extends DoubleDeckerBuild
 	
 	@Override
 	protected Collection<STATE> getInitialStates() {
-//		final int amount = mFstNwa.getInitialStates().size() *
-//										mSndNwa.getInitialStates().size();
-//		final Collection<STATE> resInits = new ArrayList<STATE>(amount);
+		// final int amount = mFstNwa.getInitialStates().size() * mSndNwa.getInitialStates().size();
+		// final Collection<STATE> resInits = new ArrayList<STATE>(amount);
 		final Collection<STATE> resInits = new ArrayList<>();
 		for (final STATE fstInit : mFstNwa.getInitialStates()) {
 			for (final STATE sndInit : mSndNwa.getInitialStates()) {
@@ -218,66 +221,62 @@ public abstract class AbstractIntersect<LETTER, STATE> extends DoubleDeckerBuild
 	}
 	
 	@Override
-	protected Collection<STATE> buildInternalSuccessors(
-			final DoubleDecker<STATE> doubleDecker) {
+	protected Collection<STATE> buildInternalSuccessors(final DoubleDecker<STATE> doubleDecker) {
 		final STATE resState = doubleDecker.getUp();
 		final STATE fstState = mResult2fst.get(resState);
 		final STATE sndState = mResult2snd.get(resState);
 		final int stateTrack = mResult2track.get(resState);
 		final int succTrack = getSuccTrack(stateTrack, fstState, sndState);
 		final Collection<STATE> resSuccs = new ArrayList<>();
-		for (final LETTER symbol : mFstNwa.lettersInternal(fstState)) {
-			for (final OutgoingInternalTransition<LETTER, STATE> fstTrans : mFstNwa.internalSuccessors(fstState,
+		for (final OutgoingInternalTransition<LETTER, STATE> fstTrans : mFstNwa.internalSuccessors(fstState)) {
+			final LETTER symbol = fstTrans.getLetter();
+			for (final OutgoingInternalTransition<LETTER, STATE> sndTrans : mSndNwa.internalSuccessors(sndState,
 					symbol)) {
-				for (final OutgoingInternalTransition<LETTER, STATE> sndTrans : mSndNwa.internalSuccessors(sndState,
-						symbol)) {
-					STATE resSucc;
-					if (succTrack == 1) {
-						resSucc = getOrConstructOnTrack1(fstTrans.getSucc(), sndTrans.getSucc(), false);
-					} else {
-						assert (succTrack == 2);
-						resSucc = getOrConstructOnTrack2(fstTrans.getSucc(), sndTrans.getSucc());
-					}
-					mResultNwa.addInternalTransition(resState, symbol, resSucc);
-					resSuccs.add(resSucc);
+				STATE resSucc;
+				if (succTrack == 1) {
+					resSucc = getOrConstructOnTrack1(fstTrans.getSucc(), sndTrans.getSucc(), false);
+				} else {
+					assert succTrack == 2;
+					resSucc = getOrConstructOnTrack2(fstTrans.getSucc(), sndTrans.getSucc());
 				}
+				mResultNwa.addInternalTransition(resState, symbol, resSucc);
+				resSuccs.add(resSucc);
 			}
 		}
 		return resSuccs;
 	}
 	
 	@Override
-	protected Collection<STATE> buildCallSuccessors(
-			final DoubleDecker<STATE> doubleDecker) {
+	protected Collection<STATE> buildCallSuccessors(final DoubleDecker<STATE> doubleDecker) {
 		final STATE resState = doubleDecker.getUp();
 		final STATE fstState = mResult2fst.get(resState);
 		final STATE sndState = mResult2snd.get(resState);
 		final int stateTrack = mResult2track.get(resState);
 		final int succTrack = getSuccTrack(stateTrack, fstState, sndState);
 		final Collection<STATE> resSuccs = new ArrayList<>();
-		for (final LETTER symbol : mFstNwa.lettersCall(fstState)) {
-			for (final OutgoingCallTransition<LETTER, STATE> fstTrans : mFstNwa.callSuccessors(fstState, symbol)) {
-				for (final OutgoingCallTransition<LETTER, STATE> sndTrans : mSndNwa.callSuccessors(sndState, symbol)) {
-					STATE resSucc;
-					if (succTrack == 1) {
-						resSucc = getOrConstructOnTrack1(fstTrans.getSucc(), sndTrans.getSucc(), false);
-					} else {
-						assert (succTrack == 2);
-						resSucc = getOrConstructOnTrack2(fstTrans.getSucc(), sndTrans.getSucc());
-					}
-					mResultNwa.addCallTransition(resState, symbol, resSucc);
-					resSuccs.add(resSucc);
+		for (final OutgoingCallTransition<LETTER, STATE> fstTrans : mFstNwa.callSuccessors(fstState)) {
+			final LETTER symbol = fstTrans.getLetter();
+			for (final OutgoingCallTransition<LETTER, STATE> sndTrans : mSndNwa.callSuccessors(sndState, symbol)) {
+				STATE resSucc;
+				if (succTrack == 1) {
+					resSucc = getOrConstructOnTrack1(fstTrans.getSucc(), sndTrans.getSucc(), false);
+				} else {
+					assert succTrack == 2;
+					resSucc = getOrConstructOnTrack2(fstTrans.getSucc(), sndTrans.getSucc());
 				}
+				mResultNwa.addCallTransition(resState, symbol, resSucc);
+				resSuccs.add(resSucc);
 			}
 		}
 		return resSuccs;
 	}
 	
+	@SuppressWarnings("squid:S1698")
 	@Override
-	protected Collection<STATE> buildReturnSuccessors(
-			final DoubleDecker<STATE> doubleDecker) {
+	protected Collection<STATE> buildReturnSuccessors(final DoubleDecker<STATE> doubleDecker) {
 		final Collection<STATE> resSuccs = new ArrayList<>();
 		final STATE resHierPre = doubleDecker.getDown();
+		// equality intended here
 		if (resHierPre == mResultNwa.getEmptyStackState()) {
 			return resSuccs;
 		}
@@ -289,21 +288,20 @@ public abstract class AbstractIntersect<LETTER, STATE> extends DoubleDeckerBuild
 		final int stateTrack = mResult2track.get(resState);
 		final int succTrack = getSuccTrack(stateTrack, fstState, sndState);
 		
-		for (final LETTER symbol : mFstNwa.lettersReturn(fstState)) {
-			for (final OutgoingReturnTransition<LETTER, STATE> fstTrans : mFstNwa.returnSuccessors(fstState, fstHierPre,
-					symbol)) {
-				for (final OutgoingReturnTransition<LETTER, STATE> sndTrans : mSndNwa.returnSuccessors(sndState,
-						sndHierPre, symbol)) {
-					STATE resSucc;
-					if (succTrack == 1) {
-						resSucc = getOrConstructOnTrack1(fstTrans.getSucc(), sndTrans.getSucc(), false);
-					} else {
-						assert (succTrack == 2);
-						resSucc = getOrConstructOnTrack2(fstTrans.getSucc(), sndTrans.getSucc());
-					}
-					mResultNwa.addReturnTransition(resState, resHierPre, symbol, resSucc);
-					resSuccs.add(resSucc);
+		for (final OutgoingReturnTransition<LETTER, STATE> fstTrans : mFstNwa.returnSuccessorsGivenHier(fstState,
+				fstHierPre)) {
+			final LETTER symbol = fstTrans.getLetter();
+			for (final OutgoingReturnTransition<LETTER, STATE> sndTrans : mSndNwa.returnSuccessors(sndState,
+					sndHierPre, symbol)) {
+				STATE resSucc;
+				if (succTrack == 1) {
+					resSucc = getOrConstructOnTrack1(fstTrans.getSucc(), sndTrans.getSucc(), false);
+				} else {
+					assert succTrack == 2;
+					resSucc = getOrConstructOnTrack2(fstTrans.getSucc(), sndTrans.getSucc());
 				}
+				mResultNwa.addReturnTransition(resState, resHierPre, symbol, resSucc);
+				resSuccs.add(resSucc);
 			}
 		}
 		return resSuccs;
