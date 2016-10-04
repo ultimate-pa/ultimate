@@ -32,11 +32,12 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.BiFunction;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.AbstractBoolean;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue.Value;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValueFactory;
@@ -58,6 +59,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends INonrelationalAbstractState<STATE, CodeBlock>>
 		implements INAryEvaluator<VALUE, STATE, CodeBlock> {
 
+	private static final BooleanValue INVALID = new BooleanValue(AbstractBoolean.INVALID);
+
 	private final Set<IBoogieVar> mVariableSet;
 	private final EvaluatorLogger mLogger;
 	private final EvaluatorType mEvaluatorType;
@@ -70,6 +73,8 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 
 	private Operator mOperator;
 
+	private final VALUE mTopValue;
+
 	public BinaryExpressionEvaluator(final EvaluatorLogger logger, final EvaluatorType type,
 			final int maxParallelStates, final INonrelationalValueFactory<VALUE> nonrelationalValueFactory) {
 		mLogger = logger;
@@ -77,6 +82,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 		mEvaluatorType = type;
 		mMaxParallelSates = maxParallelStates;
 		mNonrelationalValueFactory = nonrelationalValueFactory;
+		mTopValue = mNonrelationalValueFactory.createTopValue();
 	}
 
 	@Override
@@ -88,149 +94,116 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 		final List<IEvaluationResult<VALUE>> firstResult = mLeftSubEvaluator.evaluate(currentState);
 		final List<IEvaluationResult<VALUE>> secondResult = mRightSubEvaluator.evaluate(currentState);
 
-		mLeftSubEvaluator.getVarIdentifiers().forEach(var -> mVariableSet.add(var));
-		mRightSubEvaluator.getVarIdentifiers().forEach(var -> mVariableSet.add(var));
+		mLeftSubEvaluator.getVarIdentifiers().forEach(mVariableSet::add);
+		mRightSubEvaluator.getVarIdentifiers().forEach(mVariableSet::add);
 
 		for (final IEvaluationResult<VALUE> res1 : firstResult) {
 			for (final IEvaluationResult<VALUE> res2 : secondResult) {
-				VALUE returnValue = mNonrelationalValueFactory.createTopValue();
-				BooleanValue returnBool = new BooleanValue();
-
-				switch (mOperator) {
-				case ARITHPLUS:
-					returnValue = res1.getValue().add(res2.getValue());
-					returnBool = new BooleanValue(false);
-					break;
-				case ARITHMINUS:
-					returnValue = res1.getValue().subtract(res2.getValue());
-					returnBool = new BooleanValue(false);
-					break;
-				case ARITHMUL:
-					returnValue = res1.getValue().multiply(res2.getValue());
-					returnBool = new BooleanValue(false);
-					break;
-				case ARITHDIV:
-					switch (mEvaluatorType) {
-					case INTEGER:
-						returnValue = res1.getValue().integerDivide(res2.getValue());
-						break;
-					case REAL:
-						returnValue = res1.getValue().divide(res2.getValue());
-						break;
-					default:
-						throw new UnsupportedOperationException(
-								"Division on types other than integers and reals is undefined.");
-					}
-					returnBool = new BooleanValue(false);
-					break;
-				case ARITHMOD:
-					switch (mEvaluatorType) {
-					case INTEGER:
-						returnValue = res1.getValue().modulo(res2.getValue(), true);
-						break;
-					case REAL:
-						returnValue = res1.getValue().modulo(res2.getValue(), false);
-						break;
-					default:
-						throw new UnsupportedOperationException(
-								"Modulo operation on types other than integers and reals is undefined.");
-					}
-					returnBool = new BooleanValue(false);
-					break;
-				case LOGICAND:
-					returnBool = res1.getBooleanValue().and(res2.getBooleanValue());
-					break;
-				case LOGICOR:
-					returnBool = res1.getBooleanValue().or(res2.getBooleanValue());
-					break;
-				case LOGICIMPLIES:
-					throw new UnsupportedOperationException(
-							"Implications should have been removed during expression normalization.");
-				case LOGICIFF:
-					throw new UnsupportedOperationException(
-							"If and only if expressions should have been removed during expression normalization.");
-				case COMPEQ:
-					if (mLeftSubEvaluator.containsBool() || mRightSubEvaluator.containsBool()) {
-						returnBool =
-								((res1.getBooleanValue().intersect(res2.getBooleanValue())).getValue() != Value.BOTTOM
-										? new BooleanValue(true) : new BooleanValue(Value.BOTTOM));
-					}
-
-					returnValue = res1.getValue().intersect(res2.getValue());
-
-					if (returnBool.isBottom() || returnValue.isBottom()) {
-						returnBool = new BooleanValue(false);
-						break;
-					}
-
-					if (!mLeftSubEvaluator.containsBool() && !mRightSubEvaluator.containsBool()) {
-						returnBool = returnValue.compareEquality(res1.getValue(), res2.getValue());
-					}
-					break;
-				case COMPNEQ:
-					// Don't do anything with the return value here. Just check for inequality and return the
-					// appropriate boolean value.
-					// TODO it might be necessary to overthink this behavior for different other abstract domains!
-					if (!mLeftSubEvaluator.containsBool() && !mRightSubEvaluator.containsBool()) {
-						returnBool = returnValue.compareInequality(res1.getValue(), res2.getValue());
-					}
-					break;
-				case COMPGT:
-					if (!res1.getValue().canHandleReals()) {
-						mLogger.warnOverapproximatingOperator(mOperator);
-					}
-
-					returnValue = res1.getValue().greaterThan(res2.getValue());
-
-					if (returnValue.isBottom()) {
-						returnBool = new BooleanValue(false);
-					} else {
-						returnBool = res1.getValue().isGreaterThan(res2.getValue());
-					}
-					break;
-				case COMPGEQ:
-					returnValue = res1.getValue().greaterOrEqual(res2.getValue());
-
-					if (returnValue.isBottom()) {
-						returnBool = new BooleanValue(false);
-					} else {
-						returnBool = res1.getValue().isGreaterOrEqual(res2.getValue());
-					}
-					break;
-				case COMPLT:
-					if (!res1.getValue().canHandleReals()) {
-						mLogger.warnOverapproximatingOperator(mOperator);
-					}
-
-					returnValue = res1.getValue().lessThan(res2.getValue());
-
-					if (returnValue.isBottom()) {
-						returnBool = new BooleanValue(false);
-					} else {
-						returnBool = res1.getValue().isLessThan(res2.getValue());
-					}
-					break;
-				case COMPLEQ:
-					returnValue = res1.getValue().lessOrEqual(res2.getValue());
-
-					if (returnValue.isBottom()) {
-						returnBool = new BooleanValue(false);
-					} else {
-						returnBool = res1.getValue().isLessOrEqual(res2.getValue());
-					}
-					break;
-				case COMPPO:
-				default:
-					mLogger.warnUnknownOperator(mOperator);
-					returnBool = new BooleanValue(false);
-					returnValue = mNonrelationalValueFactory.createTopValue();
-				}
-				returnList.add(new NonrelationalEvaluationResult<>(returnValue, returnBool));
+				returnList.add(evaluate(mOperator, res1, res2));
 			}
 		}
 
 		assert !returnList.isEmpty();
 		return NonrelationalStateUtils.mergeIfNecessary(returnList, mMaxParallelSates);
+	}
+
+	private IEvaluationResult<VALUE> evaluate(final Operator op, final IEvaluationResult<VALUE> first,
+			final IEvaluationResult<VALUE> second) {
+		switch (op) {
+		case ARITHPLUS:
+			return onlyValue(first.getValue().add(second.getValue()));
+		case ARITHMINUS:
+			return onlyValue(first.getValue().subtract(second.getValue()));
+		case ARITHMUL:
+			return onlyValue(first.getValue().multiply(second.getValue()));
+		case ARITHDIV:
+			switch (mEvaluatorType) {
+			case INTEGER:
+				return onlyValue(first.getValue().divideInteger(second.getValue()));
+			case REAL:
+				return onlyValue(first.getValue().divide(second.getValue()));
+			default:
+				throw new UnsupportedOperationException(
+						"Division on types other than integers and reals is undefined.");
+			}
+		case ARITHMOD:
+			assert mEvaluatorType == EvaluatorType.INTEGER;
+			return onlyValue(first.getValue().modulo(second.getValue()));
+		case LOGICAND:
+			return onlyBoolean(first.getBooleanValue().and(second.getBooleanValue()));
+		case LOGICOR:
+			return onlyBoolean(first.getBooleanValue().or(second.getBooleanValue()));
+		case LOGICIMPLIES:
+			throw new UnsupportedOperationException(
+					"Implications should have been removed during expression normalization.");
+		case LOGICIFF:
+			throw new UnsupportedOperationException(
+					"If and only if expressions should have been removed during expression normalization.");
+		case COMPEQ:
+			return evaluateCompareEquality(first, second);
+		case COMPNEQ:
+			// Don't do anything with the return value here. Just check for inequality and return the
+			// appropriate boolean value.
+			// TODO it might be necessary to change this behavior for different other abstract domains!
+			if (!mLeftSubEvaluator.containsBool() && !mRightSubEvaluator.containsBool()) {
+				return onlyBoolean(first.getValue().compareInequality(second.getValue()));
+			}
+			return onlyTop();
+		case COMPGT:
+			if (!first.getValue().canHandleReals()) {
+				mLogger.warnOverapproximatingOperator(mOperator);
+			}
+			return evaluateCompare(first.getValue(), second.getValue(), (a, b) -> a.greaterThan(b),
+					(a, b) -> a.isGreaterThan(b));
+		case COMPGEQ:
+			return evaluateCompare(first.getValue(), second.getValue(), (a, b) -> a.greaterOrEqual(b),
+					(a, b) -> a.isGreaterOrEqual(b));
+		case COMPLT:
+			if (!first.getValue().canHandleReals()) {
+				mLogger.warnOverapproximatingOperator(mOperator);
+			}
+			return evaluateCompare(first.getValue(), second.getValue(), (a, b) -> a.lessThan(b),
+					(a, b) -> a.isLessThan(b));
+		case COMPLEQ:
+			return evaluateCompare(first.getValue(), second.getValue(), (a, b) -> a.lessOrEqual(b),
+					(a, b) -> a.isLessOrEqual(b));
+		case COMPPO:
+		default:
+			mLogger.warnUnknownOperator(mOperator);
+			return onlyTop();
+		}
+	}
+
+	private IEvaluationResult<VALUE> evaluateCompare(final VALUE first, final VALUE second,
+			final BiFunction<VALUE, VALUE, VALUE> compareValue,
+			final BiFunction<VALUE, VALUE, BooleanValue> compareBoolean) {
+		final VALUE returnValue = compareValue.apply(first, second);
+		final BooleanValue returnBool;
+		if (returnValue.isBottom()) {
+			returnBool = new BooleanValue(false);
+		} else {
+			returnBool = compareBoolean.apply(first, second);
+		}
+		return both(returnValue, returnBool);
+	}
+
+	private IEvaluationResult<VALUE> evaluateCompareEquality(final IEvaluationResult<VALUE> first,
+			final IEvaluationResult<VALUE> second) {
+		BooleanValue returnBool = INVALID;
+		if (mLeftSubEvaluator.containsBool() || mRightSubEvaluator.containsBool()) {
+			returnBool =
+					first.getBooleanValue().intersect(second.getBooleanValue()).getValue() != AbstractBoolean.BOTTOM
+							? new BooleanValue(true) : new BooleanValue(AbstractBoolean.BOTTOM);
+		}
+
+		final VALUE returnValue = first.getValue().intersect(second.getValue());
+
+		if (returnBool.isBottom() || returnValue.isBottom()) {
+			returnBool = new BooleanValue(false);
+		} else if (!mLeftSubEvaluator.containsBool() && !mRightSubEvaluator.containsBool()) {
+			returnBool = first.getValue().compareEquality(second.getValue());
+		}
+		return new NonrelationalEvaluationResult<>(returnValue, returnBool);
 	}
 
 	@Override
@@ -260,10 +233,8 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 					}
 					break;
 				case LOGICOR:
-					mLeftSubEvaluator.inverseEvaluate(computedValue, currentState)
-							.forEach(leftOr -> returnStates.add(leftOr));
-					mRightSubEvaluator.inverseEvaluate(computedValue, currentState)
-							.forEach(rightOr -> returnStates.add(rightOr));
+					mLeftSubEvaluator.inverseEvaluate(computedValue, currentState).forEach(returnStates::add);
+					mRightSubEvaluator.inverseEvaluate(computedValue, currentState).forEach(returnStates::add);
 					break;
 				case LOGICIMPLIES:
 					throw new UnsupportedOperationException(
@@ -274,7 +245,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 				case COMPEQ:
 					final BooleanValue intersectBool = left.getBooleanValue().intersect(right.getBooleanValue());
 					if ((mLeftSubEvaluator.containsBool() || mRightSubEvaluator.containsBool())
-							&& (intersectBool.getValue() == Value.TOP)) {
+							&& (intersectBool.getValue() == AbstractBoolean.TOP)) {
 						returnStates.add(currentState);
 						break;
 					}
@@ -363,7 +334,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 			break;
 		case ARITHMUL:
 			if (mEvaluatorType == EvaluatorType.INTEGER) {
-				newValue = referenceValue.integerDivide(otherValue);
+				newValue = referenceValue.divideInteger(otherValue);
 			} else if (mEvaluatorType == EvaluatorType.REAL) {
 				newValue = referenceValue.divide(otherValue);
 			} else {
@@ -446,7 +417,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 
 	@Override
 	public boolean hasFreeOperands() {
-		return (mLeftSubEvaluator == null || mRightSubEvaluator == null);
+		return mLeftSubEvaluator == null || mRightSubEvaluator == null;
 	}
 
 	@Override
@@ -527,6 +498,28 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 		sb.append(mRightSubEvaluator);
 
 		return sb.toString();
+	}
+
+	private IEvaluationResult<VALUE> both(final VALUE value, final BooleanValue bvalue) {
+		assert value != null;
+		assert bvalue != null;
+		assert bvalue.getValue() != AbstractBoolean.INVALID;
+		return new NonrelationalEvaluationResult<>(value, bvalue);
+	}
+
+	private IEvaluationResult<VALUE> onlyValue(final VALUE value) {
+		assert value != null;
+		return new NonrelationalEvaluationResult<>(value, INVALID);
+	}
+
+	private IEvaluationResult<VALUE> onlyBoolean(final BooleanValue value) {
+		assert value != null;
+		assert value.getValue() != AbstractBoolean.INVALID;
+		return new NonrelationalEvaluationResult<>(mTopValue, value);
+	}
+
+	private IEvaluationResult<VALUE> onlyTop() {
+		return new NonrelationalEvaluationResult<>(mTopValue, BooleanValue.TOP);
 	}
 
 }

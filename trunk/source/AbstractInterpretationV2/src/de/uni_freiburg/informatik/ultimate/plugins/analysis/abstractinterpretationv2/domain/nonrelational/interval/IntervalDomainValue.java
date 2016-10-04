@@ -670,17 +670,14 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 	}
 
 	/**
-	 * Computes the euclidean modulo operation of two {@link IntervalDomainValue}s.
+	 * Computes the Euclidean modulo operation of two {@link IntervalDomainValue}s.
 	 *
 	 * @param divisor
 	 *            The other value to compute the modulus for.
-	 * @param integerDivision
-	 *            The modulo operation is an integer operation.
 	 * @return A new {@link IntervalDomainValue} which corresponds to the application of the modulus operator.
 	 */
 	@Override
-	public IntervalDomainValue modulo(final IntervalDomainValue divisor, final boolean integerDivision) {
-
+	public IntervalDomainValue modulo(final IntervalDomainValue divisor) {
 		assert divisor != null;
 
 		if (isBottom() || divisor.isBottom()) {
@@ -708,10 +705,10 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 			return new IntervalDomainValue(mLower, mUpper);
 		}
 
-		// euclidean division (x / y) has the remainder (r) with (0 <= r < |y|).
+		// Euclidean division x / y has a remainder r with 0 <= r < |y|.
 		final IntervalValue min = new IntervalValue(0);
 		final IntervalValue max = absDivisor.mUpper;
-		if (integerDivision && !max.isInfinity()) {
+		if (!max.isInfinity()) {
 			max.setValue(max.getValue().subtract(BigDecimal.ONE));
 		}
 		return new IntervalDomainValue(min, max);
@@ -1229,7 +1226,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 	 * @return A new {@link IntervalDomainValue} corresponding to the result of the computation of the division.
 	 */
 	@Override
-	public IntervalDomainValue integerDivide(final IntervalDomainValue other) {
+	public IntervalDomainValue divideInteger(final IntervalDomainValue other) {
 		IntervalDomainValue result;
 
 		if (other.containsZero()) {
@@ -1695,15 +1692,15 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 	}
 
 	@Override
-	public BooleanValue compareEquality(final IntervalDomainValue firstOther, final IntervalDomainValue secondOther) {
-		if (isEqualTo(firstOther) && isEqualTo(secondOther)) {
+	public BooleanValue compareEquality(final IntervalDomainValue secondOther) {
+		if (isEqualTo(secondOther)) {
 			return new BooleanValue(true);
 		}
 		return new BooleanValue();
 	}
 
 	@Override
-	public BooleanValue compareInequality(final IntervalDomainValue firstOther, final IntervalDomainValue secondOther) {
+	public BooleanValue compareInequality(final IntervalDomainValue secondOther) {
 		throw new UnsupportedOperationException(
 				"Not equals expressions should have been removed during expression normalization.");
 	}

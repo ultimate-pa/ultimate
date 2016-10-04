@@ -38,8 +38,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.generic.LiteralCollection;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.AbstractBoolean;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue.Value;
 
 /**
  * Implementation of a widening operator in the interval domain which widens according to number literals occurring in
@@ -62,7 +62,7 @@ public class IntervalLiteralWideningOperator implements IAbstractStateBinaryOper
 		assert !first.isBottom() && !second.isBottom();
 
 		final List<IBoogieVar> boolsToWiden = new ArrayList<>();
-		final List<BooleanValue.Value> boolValues = new ArrayList<>();
+		final List<AbstractBoolean> boolValues = new ArrayList<>();
 		final List<IBoogieVar> varsToWiden = new ArrayList<>();
 		final List<IntervalDomainValue> varValues = new ArrayList<>();
 		final List<IBoogieVar> arraysToWiden = new ArrayList<>();
@@ -81,7 +81,7 @@ public class IntervalLiteralWideningOperator implements IAbstractStateBinaryOper
 					if (!firstValue.isEqualTo(secondValue)) {
 						boolsToWiden.add(var);
 						// Bools are always set to top.
-						boolValues.add(Value.TOP);
+						boolValues.add(AbstractBoolean.TOP);
 					}
 				} else {
 					final IntervalDomainValue firstValue = first.getValue(var);
@@ -118,7 +118,7 @@ public class IntervalLiteralWideningOperator implements IAbstractStateBinaryOper
 		final IBoogieVar[] vars = varsToWiden.toArray(new IBoogieVar[varsToWiden.size()]);
 		final IntervalDomainValue[] vals = varValues.toArray(new IntervalDomainValue[varValues.size()]);
 		final IBoogieVar[] bools = boolsToWiden.toArray(new IBoogieVar[boolsToWiden.size()]);
-		final BooleanValue.Value[] boolVals = boolValues.toArray(new BooleanValue.Value[boolValues.size()]);
+		final AbstractBoolean[] boolVals = boolValues.toArray(new AbstractBoolean[boolValues.size()]);
 		final IBoogieVar[] arrays = arraysToWiden.toArray(new IBoogieVar[arraysToWiden.size()]);
 		final IntervalDomainValue[] arrayVals = arrayValues.toArray(new IntervalDomainValue[arrayValues.size()]);
 

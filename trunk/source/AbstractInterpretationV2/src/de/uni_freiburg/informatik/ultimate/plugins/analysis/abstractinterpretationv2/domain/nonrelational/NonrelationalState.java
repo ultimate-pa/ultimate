@@ -53,7 +53,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.LoggingHelper;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue.Value;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainValue;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
@@ -186,7 +185,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 		assert values != null;
 		assert vars.length == values.length;
 
-		return setMixedValues(vars, values, new IBoogieVar[0], new BooleanValue.Value[0], new IBoogieVar[0],
+		return setMixedValues(vars, values, new IBoogieVar[0], new AbstractBoolean[0], new IBoogieVar[0],
 				getArray(0));
 	}
 
@@ -200,7 +199,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	 * @return A new {@link NonrelationalState} which is the copy of <code>this</code> where the value of the given
 	 *         variable has been set to the given value.
 	 */
-	protected STATE setBooleanValue(final IBoogieVar name, final BooleanValue.Value value) {
+	protected STATE setBooleanValue(final IBoogieVar name, final AbstractBoolean value) {
 		assert name != null;
 		assert value != null;
 
@@ -255,7 +254,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	 *         variables have been set to the given values.
 	 */
 	protected NonrelationalState<STATE, V> setBooleanValues(final IBoogieVar[] vars,
-			final BooleanValue.Value[] values) {
+			final AbstractBoolean[] values) {
 		assert vars != null;
 		assert values != null;
 		assert vars.length == values.length;
@@ -288,7 +287,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 		assert values != null;
 		assert arrays.length == values.length;
 
-		return setMixedValues(new IBoogieVar[0], getArray(0), new IBoogieVar[0], new BooleanValue.Value[0], arrays,
+		return setMixedValues(new IBoogieVar[0], getArray(0), new IBoogieVar[0], new AbstractBoolean[0], arrays,
 				values);
 	}
 
@@ -308,7 +307,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	 * @return A new {@link NonrelationalState} which is the copy of <code>this</code> but with the updated values.
 	 */
 	public STATE setMixedValues(final IBoogieVar[] vars, final V[] values, final IBoogieVar[] booleanVars,
-			final BooleanValue.Value[] booleanValues, final IBoogieVar[] arrays, final V[] arrayValues) {
+			final AbstractBoolean[] booleanValues, final IBoogieVar[] arrays, final V[] arrayValues) {
 		assert vars != null;
 		assert values != null;
 		assert booleanVars != null;
@@ -593,7 +592,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 		}
 
 		for (final Entry<IBoogieVar, BooleanValue> entry : getVar2ValueBoolean().entrySet()) {
-			if (entry.getValue().getValue() == Value.BOTTOM) {
+			if (entry.getValue().getValue() == AbstractBoolean.BOTTOM) {
 				return true;
 			}
 		}
@@ -802,7 +801,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 		}
 
 		for (final Entry<IBoogieVar, BooleanValue> entry : ret.getVar2ValueBoolean().entrySet()) {
-			entry.setValue(new BooleanValue(Value.BOTTOM));
+			entry.setValue(new BooleanValue(AbstractBoolean.BOTTOM));
 		}
 
 		return ret;
@@ -858,7 +857,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 			setValueInternally(returnState, var, createBottomValue());
 		}
 		for (final IBoogieVar bool : bools) {
-			setValueInternally(returnState, bool, new BooleanValue(Value.BOTTOM));
+			setValueInternally(returnState, bool, new BooleanValue(AbstractBoolean.BOTTOM));
 		}
 		for (final IBoogieVar array : arrays) {
 			// TODO: Implement proper handling of arrays.

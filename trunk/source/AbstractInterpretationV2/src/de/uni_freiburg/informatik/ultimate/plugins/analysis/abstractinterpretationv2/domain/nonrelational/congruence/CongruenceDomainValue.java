@@ -400,12 +400,12 @@ public final class CongruenceDomainValue
 	}
 
 	@Override
-	public CongruenceDomainValue integerDivide(final CongruenceDomainValue other) {
+	public CongruenceDomainValue divideInteger(final CongruenceDomainValue other) {
 		return divide(other);
 	}
 
 	@Override
-	public CongruenceDomainValue modulo(final CongruenceDomainValue other, final boolean isInteger) {
+	public CongruenceDomainValue modulo(final CongruenceDomainValue other) {
 		return mod(other);
 	}
 
@@ -530,19 +530,17 @@ public final class CongruenceDomainValue
 	}
 
 	@Override
-	public BooleanValue compareEquality(final CongruenceDomainValue firstOther,
-			final CongruenceDomainValue secondOther) {
-		if (firstOther.isConstant() && secondOther.isConstant()) {
-			return new BooleanValue(firstOther.value().equals(secondOther.value()));
+	public BooleanValue compareEquality(final CongruenceDomainValue secondOther) {
+		if (isConstant() && secondOther.isConstant()) {
+			return new BooleanValue(value().equals(secondOther.value()));
 		}
 		return new BooleanValue();
 	}
 
 	@Override
-	public BooleanValue compareInequality(final CongruenceDomainValue firstOther,
-			final CongruenceDomainValue secondOther) {
-		if (firstOther.isConstant() && secondOther.isConstant()) {
-			return new BooleanValue(!firstOther.value().equals(secondOther.value()));
+	public BooleanValue compareInequality(final CongruenceDomainValue secondOther) {
+		if (isConstant() && secondOther.isConstant()) {
+			return new BooleanValue(!value().equals(secondOther.value()));
 		}
 		return new BooleanValue();
 	}

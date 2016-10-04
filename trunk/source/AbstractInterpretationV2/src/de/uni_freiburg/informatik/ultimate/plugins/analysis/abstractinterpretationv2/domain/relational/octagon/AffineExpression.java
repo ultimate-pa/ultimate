@@ -413,7 +413,8 @@ public class AffineExpression {
 		final StringBuilder strBuilder = new StringBuilder();
 		for (final Entry<IBoogieVar, BigDecimal> entry : mCoefficients.entrySet()) {
 			strBuilder.append(entry.getValue());
-			strBuilder.append('\u22C5'); // multiplication dot
+			// multiplication dot
+			strBuilder.append('\u22C5');
 			strBuilder.append(entry.getKey());
 			strBuilder.append(" + ");
 		}

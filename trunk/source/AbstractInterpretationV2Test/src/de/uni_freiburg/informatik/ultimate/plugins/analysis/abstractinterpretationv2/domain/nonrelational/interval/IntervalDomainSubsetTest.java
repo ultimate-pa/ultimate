@@ -70,7 +70,7 @@ public class IntervalDomainSubsetTest {
 
 		IntervalDomainState s2 = new IntervalDomainState(new ConsoleLogger());
 		s2 = s2.addVariable(varA);
-		s2 = s2.setValue(varA, new IntervalDomainValue(5, 5));
+		s2 = s2.setValue(varA, new IntervalDomainValue(0, 5));
 
 		System.out.println("State 1: " + s1);
 		System.out.println("State 2: " + s2);
