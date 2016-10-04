@@ -290,6 +290,7 @@ public final class DuplicatorNwaVertex<LETTER, STATE> extends DuplicatorVertex<L
 	 * 
 	 * @return The type of the transition represented by this vertex.
 	 */
+	@Override
 	public ETransitionType getTransitionType() {
 		return mTransitionType;
 	}
@@ -328,8 +329,6 @@ public final class DuplicatorNwaVertex<LETTER, STATE> extends DuplicatorVertex<L
 		} else {
 			sb.append(getLetter());
 		}
-		sb.append("<" + getPriority() + ">");
-
 		sb.append("),p:").append(getPriority()).append(",pm:").append(mPm);
 		sb.append(">");
 		return sb.toString();
