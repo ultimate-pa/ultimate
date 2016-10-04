@@ -77,8 +77,7 @@ public class DeterminizeUnderappox<LETTER, STATE> extends DeterminizeDD<LETTER, 
 	 */
 	@Override
 	protected Collection<STATE> getInitialStates() {
-//		final ArrayList<STATE> resInitials =
-//				new ArrayList<>(mOperand.getInitialStates().size());
+		// final ArrayList<STATE> resInitials = new ArrayList<>(mOperand.getInitialStates().size());
 		final ArrayList<STATE> resInitials = new ArrayList<>();
 		final DeterminizedState<LETTER, STATE> detState = mStateDeterminizer.initialState();
 		final STATE resState = mStateDeterminizer.getState(detState);

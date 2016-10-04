@@ -330,7 +330,7 @@ public final class DeterminizeSadd<LETTER, STATE> extends UnaryNwaOperation<LETT
 		}
 		return succMacrostate;
 	}
-
+	
 	private void returnSuccMacrostateHelper(final Macrostate linPredMacrostate, final Macrostate succMacrostate,
 			final STATE linPred, final OutgoingReturnTransition<LETTER, STATE> trans) {
 		final STATE succ = trans.getSucc();
