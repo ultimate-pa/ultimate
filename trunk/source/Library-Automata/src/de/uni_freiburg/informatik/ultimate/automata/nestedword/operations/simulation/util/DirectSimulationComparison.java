@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simul
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
@@ -50,9 +51,9 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  */
 public class DirectSimulationComparison<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;
-	private final int mSizeOldSimulation;
-	private final int mSizeNewSimulation;
-	private final int mSizeMaxSat;
+	private final ReduceNwaDirectSimulation<LETTER, STATE> mOldSimulation;
+	private final ReduceNwaDirectSimulationB<LETTER, STATE> mNewSimulation;
+	private final MinimizeNwaMaxSat2<LETTER, STATE> mMaxSat;
 	
 	/**
 	 * Constructor.
@@ -71,14 +72,14 @@ public class DirectSimulationComparison<LETTER, STATE> extends UnaryNwaOperation
 		super(services);
 		mOperand = operand;
 		final IDoubleDeckerAutomaton<LETTER, STATE> dd = new RemoveDeadEnds<>(mServices, mOperand).getResult();
-		mSizeOldSimulation = new ReduceNwaDirectSimulation<>(mServices, stateFactory, dd).getResult().size();
-		mSizeNewSimulation = new ReduceNwaDirectSimulationB<>(mServices, stateFactory, dd).getResult().size();
-		mSizeMaxSat = new MinimizeNwaMaxSat2<>(mServices, stateFactory, dd).getResult().size();
+		mOldSimulation = new ReduceNwaDirectSimulation<>(mServices, stateFactory, dd);
+		mNewSimulation = new ReduceNwaDirectSimulationB<>(mServices, stateFactory, dd);
+		mMaxSat = new MinimizeNwaMaxSat2<>(mServices, stateFactory, dd);
 	}
 	
 	@Override
 	public Object getResult() {
-		return mSizeNewSimulation;
+		return mNewSimulation.getResult();
 	}
 	
 	@Override
@@ -87,11 +88,29 @@ public class DirectSimulationComparison<LETTER, STATE> extends UnaryNwaOperation
 	}
 	
 	@Override
+	public String operationName() {
+		return "DirectSimulationComparison";
+	}
+	
+	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
-		final boolean correct = mSizeOldSimulation == mSizeNewSimulation && mSizeOldSimulation == mSizeMaxSat;
-		if (! correct && mLogger.isInfoEnabled()) {
-			mLogger.info(String.format("old size: %d   new size: %d   Max-SAT size: %d", mSizeOldSimulation,
-					mSizeNewSimulation, mSizeMaxSat));
+		boolean correct;
+		final boolean correctOld = mOldSimulation.checkResult(stateFactory);
+		final boolean correctNew = mNewSimulation.checkResult(stateFactory);
+		final boolean correctMaxSat = mMaxSat.checkResult(stateFactory);
+		final int oldSize = mOldSimulation.getResult().size();
+		final int newSize = mNewSimulation.getResult().size();
+		final int maxSatSize = mMaxSat.getResult().size();
+		correct = correctOld && correctNew && correctMaxSat;
+		correct = correct && oldSize == newSize && oldSize == maxSatSize;
+		if (mLogger.isWarnEnabled()) {
+			mLogger.warn(String.format(
+					"old: (%b, %d)  new: (%b, %d)  Max-SAT: (%b, %d)", correctOld, oldSize, correctNew, newSize,
+					correctMaxSat, maxSatSize));
+		}
+		if (!correct) {
+			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, operationName() + "Failed",
+					operationName(), mOperand);
 		}
 		return correct;
 	}
