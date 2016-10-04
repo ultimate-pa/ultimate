@@ -33,7 +33,6 @@ import java.util.HashMap;
 import java.util.concurrent.Callable;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.AbstractMinimizeNwa;
@@ -497,8 +496,6 @@ public final class MinimizeDfaParallel<LETTER, STATE> extends AbstractMinimizeNw
 					this.wait();
 				}
 
-			} catch (final AutomataLibraryException e) {
-				throw new AssertionError("unhandeled AutomataLibraryException");
 			} catch (final InterruptedException e) {
 				//e.printStackTrace();
 			}

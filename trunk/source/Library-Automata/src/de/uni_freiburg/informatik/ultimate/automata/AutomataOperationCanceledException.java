@@ -26,6 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata;
 
+import de.uni_freiburg.informatik.ultimate.util.RunningTaskInfo;
+import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
+
 /**
  * Exception that is thrown by automata operations if they detected that the
  * caller requested a cancellation of the operation (e.g., because a timeout was
@@ -33,19 +36,17 @@ package de.uni_freiburg.informatik.ultimate.automata;
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
-public class AutomataOperationCanceledException extends AutomataLibraryException {
+public class AutomataOperationCanceledException extends ToolchainCanceledException {
 	
 	private static final long serialVersionUID = -1713238821191695165L;
 	
 	private static final String MESSAGE_CANCELED = "Timeout or canceled by user.";
 	
-	/**
-	 * Constructor.
-	 * 
-	 * @param thrower
-	 *            thrower
-	 */
 	public AutomataOperationCanceledException(final Class<?> thrower) {
-		super(thrower, MESSAGE_CANCELED);
+		super(MESSAGE_CANCELED, thrower, null);
+	}
+	
+	public AutomataOperationCanceledException(final RunningTaskInfo rti) {
+		super(MESSAGE_CANCELED, rti);
 	}
 }

@@ -208,8 +208,6 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 			assert checkTransitionsReturnedConsistent();
 		} catch (final ToolchainCanceledException tce) {
 			throw tce;
-		} catch (final AutomataOperationCanceledException oce) {
-			throw oce;
 		} catch (final Error | RuntimeException e) {
 			// final String message = "// Problem with RemoveUnreachable";
 			// ResultChecker.writeToFileIfPreferred(mServices, "FailedremoveUnreachable", message, operand);

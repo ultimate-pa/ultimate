@@ -56,6 +56,11 @@ public class ToolchainCanceledException extends RuntimeException {
 	public ToolchainCanceledException(final RunningTaskInfo runningTaskInfo) {
 		this(MESSAGE, runningTaskInfo);
 	}
+	public ToolchainCanceledException(final ToolchainCanceledException tce, final RunningTaskInfo runningTaskInfo) {
+		super(MESSAGE);
+		mRunningTaskInfos.addAll(tce.mRunningTaskInfos);
+		mRunningTaskInfos.add(runningTaskInfo);
+	}
 	
 	public ToolchainCanceledException(final String message, final Class<?> thrower, final String runningTaskDescription) {
 		this(message, new RunningTaskInfo(thrower, runningTaskDescription));
