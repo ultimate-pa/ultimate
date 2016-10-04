@@ -107,6 +107,8 @@ public class GameAutomatonToGamGraphTransformer<LETTER, STATE>  {
 				addEdgeToDuplicatorSink(gameState);
 			}
 		}
+		// global infinity has to be one plus the number of prio 1 nodes
+		mGameGraph.increaseGlobalInfinity();
 	}
 
 	private SpoilerNwaVertex<LETTER, STATE> getSpoilerVertex(final IGameState gameState) {
@@ -127,6 +129,7 @@ public class GameAutomatonToGamGraphTransformer<LETTER, STATE>  {
 
 	private void addEdges(final IGameState gameState, final IGameLetter<LETTER, STATE> letter, final IGameState succ) {
 		mGameGraph.addEdge(getSpoilerVertex(gameState), (Vertex<LETTER, STATE>) letter);
+		mGameGraph.addEdge((Vertex<LETTER, STATE>) letter, getSpoilerVertex(succ));
 	}
 
 
@@ -147,6 +150,9 @@ public class GameAutomatonToGamGraphTransformer<LETTER, STATE>  {
 			mGameGraph.addSpoilerVertex(spoilerVertex);
 			if (spoilerVertex.getPriority() == 1) {
 				mGameGraph.increaseGlobalInfinity();
+			}
+			if (spoilerVertex == mSpoilerWinningSink) {
+				mGameGraph.addEdge(mSpoilerWinningSink, mSpoilerWinningSink);
 			}
 		}
 		
