@@ -363,7 +363,7 @@ public class TraceAbstractionStarter {
 			timeOutMessage += ResultUtil.getCheckedSpecification(errorLoc).getPositiveMessage();
 			timeOutMessage += " (line " + origin.getStartLine() + ").";
 			if (toolchainCanceledException != null) {
-				timeOutMessage += " " + toolchainCanceledException.prettyPrint();
+				timeOutMessage += " " + toolchainCanceledException.printRunningTaskInfos();
 			}
 			final TimeoutResultAtElement<RcfgElement> timeOutRes = new TimeoutResultAtElement<>(errorLoc,
 					Activator.PLUGIN_NAME, mServices.getBacktranslationService(), timeOutMessage);

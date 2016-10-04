@@ -72,6 +72,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XnfDer;
+import de.uni_freiburg.informatik.ultimate.util.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 /**
@@ -153,7 +154,9 @@ public class Statements2TransFormula {
 			mAuxVars = null;
 			mAssumes = null;
 		} catch (final ToolchainCanceledException tce) {
-			throw new ToolchainCanceledException(getClass(), tce.getRunningTaskInfo() + " while contructing transformula");
+			final String taskDescription = "constructing TransFormula";
+			tce.addRunningTaskInfo(new RunningTaskInfo(getClass(), taskDescription));
+			throw tce;
 		}
 		return new TranslationResult(tf, mOverapproximations);
 	}

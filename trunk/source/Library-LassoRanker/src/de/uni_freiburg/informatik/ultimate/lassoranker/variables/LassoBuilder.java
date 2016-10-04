@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.util.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 /**
@@ -164,11 +165,9 @@ public class LassoBuilder {
 			try {
 				newLassos.addAll(preprocessor.process(lasso));
 			} catch (final ToolchainCanceledException tce) {
-				String taskMessage = "applying " + preprocessor.getName() + " to lasso for termination ";
-				if (tce.getRunningTaskInfo() != null) {
-					taskMessage += tce.getRunningTaskInfo();
-				}
-				throw new ToolchainCanceledException(getClass(), taskMessage);
+				final String taskDescription = "applying " + preprocessor.getName() + " to lasso for termination ";
+				tce.addRunningTaskInfo(new RunningTaskInfo(getClass(), taskDescription));
+				throw tce;
 			}
 		}
 		mLassosUC = newLassos;

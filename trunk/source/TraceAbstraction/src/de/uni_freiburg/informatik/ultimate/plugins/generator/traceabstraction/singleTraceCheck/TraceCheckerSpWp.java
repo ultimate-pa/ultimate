@@ -64,6 +64,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
+import de.uni_freiburg.informatik.ultimate.util.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
@@ -254,7 +255,9 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 						mPrecondition, mPostcondition, mPendingContexts, null, mSimplificationTechnique, mXnfConversionTechnique, mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
 				mInterpolantsFp = spt.computeStrongestPostconditionSequence(rtf, postprocs).getInterpolants();
 			} catch (final ToolchainCanceledException tce) {
-				throw new ToolchainCanceledException(getClass(), tce.getRunningTaskInfo() + " while constructing forward predicates");
+				final String taskDescription = "constructing forward predicates";
+				tce.addRunningTaskInfo(new RunningTaskInfo(getClass(), taskDescription));
+				throw tce;
 			}
 			assert TraceCheckerUtils.checkInterpolantsInductivityForward(mInterpolantsFp, 
 					mTrace, mPrecondition, mPostcondition, mPendingContexts, "FP", 
@@ -280,7 +283,9 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 						mPrecondition, mPostcondition, mPendingContexts, null, mSimplificationTechnique, mXnfConversionTechnique, mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
 				mInterpolantsBp = spt.computeWeakestPreconditionSequence(rtf, postprocs, false).getInterpolants();
 			} catch (final ToolchainCanceledException tce) {
-				throw new ToolchainCanceledException(getClass(), tce.getRunningTaskInfo() + " while constructing backward predicates");
+				final String taskDescription = "constructing backward predicates";
+				tce.addRunningTaskInfo(new RunningTaskInfo(getClass(), taskDescription));
+				throw tce;
 			}
 			assert TraceCheckerUtils.checkInterpolantsInductivityBackward(mInterpolantsBp, 
 					mTrace, mPrecondition, mPostcondition, mPendingContexts, "BP", 
