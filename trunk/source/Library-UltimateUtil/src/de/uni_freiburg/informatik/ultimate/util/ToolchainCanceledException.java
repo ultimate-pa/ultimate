@@ -46,24 +46,30 @@ public class ToolchainCanceledException extends RuntimeException {
 	private final List<RunningTaskInfo> mRunningTaskInfos = new ArrayList<>();
 
 	public ToolchainCanceledException(final Class<?> thrower) {
-		super(MESSAGE);
-		mRunningTaskInfos.add(new RunningTaskInfo(thrower, null));
+		this(MESSAGE, new RunningTaskInfo(thrower, null));
 	}
 
 	public ToolchainCanceledException(final Class<?> thrower, final String runningTaskDescription) {
-		super(MESSAGE);
-		mRunningTaskInfos.add(new RunningTaskInfo(thrower, runningTaskDescription));
+		this(MESSAGE, new RunningTaskInfo(thrower, runningTaskDescription));
+	}
+	
+	public ToolchainCanceledException(final RunningTaskInfo runningTaskInfo) {
+		this(MESSAGE, runningTaskInfo);
 	}
 	
 	public ToolchainCanceledException(final String message, final Class<?> thrower, final String runningTaskDescription) {
-		super(message);
-		mRunningTaskInfos.add(new RunningTaskInfo(thrower, runningTaskDescription));
+		this(message, new RunningTaskInfo(thrower, runningTaskDescription));
 	}
-
+	
+	public ToolchainCanceledException(final String message, final RunningTaskInfo runningTaskInfo) {
+		super(message);
+		mRunningTaskInfos.add(runningTaskInfo);
+	}
+	
 	public void addRunningTaskInfo(final RunningTaskInfo runningTaskInfo) {
 		mRunningTaskInfos.add(runningTaskInfo);
 	}
-
+	
 	public String printRunningTaskInfos() {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("Cancelled");
