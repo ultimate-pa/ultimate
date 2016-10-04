@@ -28,8 +28,7 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator;
 
-import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -66,19 +65,13 @@ public class SingletonBooleanExpressionEvaluator<VALUE extends INonrelationalVal
 	@Override
 	public List<IEvaluationResult<VALUE>> evaluate(final STATE currentState) {
 		assert currentState != null;
-
-		final List<IEvaluationResult<VALUE>> returnList = new ArrayList<>();
-
-		returnList.add(new NonrelationalEvaluationResult<>(mNonrelationalValueFactory.createTopValue(), mBooleanValue));
-
-		return returnList;
+		return Collections.singletonList(
+				new NonrelationalEvaluationResult<>(mNonrelationalValueFactory.createTopValue(), mBooleanValue));
 	}
 
 	@Override
 	public List<STATE> inverseEvaluate(final IEvaluationResult<VALUE> computedValue, final STATE currentState) {
-		final List<STATE> returnList = new ArrayList<>();
-		returnList.add(currentState);
-		return returnList;
+		return Collections.singletonList(currentState);
 	}
 
 	@Override
@@ -89,7 +82,7 @@ public class SingletonBooleanExpressionEvaluator<VALUE extends INonrelationalVal
 
 	@Override
 	public Set<IBoogieVar> getVarIdentifiers() {
-		return new HashSet<>();
+		return Collections.emptySet();
 	}
 
 	@Override

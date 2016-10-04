@@ -76,12 +76,12 @@ public class UnaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, 
 		final List<IEvaluationResult<VALUE>> subEvaluatorResult = mSubEvaluator.evaluate(currentState);
 
 		for (final IEvaluationResult<VALUE> result : subEvaluatorResult) {
-			VALUE returnValue = mNonrelationalValueFactory.createTopValue();
-			BooleanValue returnBool;
+			final VALUE returnValue;
+			final BooleanValue returnBool;
 
 			switch (mOperator) {
 			case ARITHNEGATIVE:
-				returnBool = BooleanValue.FALSE;
+				returnBool = BooleanValue.INVALID;
 				returnValue = result.getValue().negate();
 				break;
 			case LOGICNEG:
@@ -89,8 +89,8 @@ public class UnaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, 
 				returnValue = mNonrelationalValueFactory.createTopValue();
 				break;
 			default:
-				returnBool = BooleanValue.TOP;
 				mLogger.warnUnknownOperator(mOperator);
+				returnBool = BooleanValue.TOP;
 				returnValue = mNonrelationalValueFactory.createTopValue();
 				break;
 			}

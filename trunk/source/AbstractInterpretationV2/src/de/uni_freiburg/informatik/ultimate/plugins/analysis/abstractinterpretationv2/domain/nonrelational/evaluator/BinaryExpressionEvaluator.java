@@ -115,18 +115,21 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 
 	private List<IEvaluationResult<VALUE>> evaluate(final Operator op, final IEvaluationResult<VALUE> first,
 			final IEvaluationResult<VALUE> second) {
+
+		final VALUE firstValue = first.getValue();
+		final VALUE secondValue = second.getValue();
 		switch (op) {
 		case ARITHPLUS:
-			return onlyValue(first.getValue().add(second.getValue()));
+			return onlyValue(firstValue.add(secondValue));
 		case ARITHMINUS:
-			return onlyValue(first.getValue().subtract(second.getValue()));
+			return onlyValue(firstValue.subtract(secondValue));
 		case ARITHMUL:
-			return onlyValue(first.getValue().multiply(second.getValue()));
+			return onlyValue(firstValue.multiply(secondValue));
 		case ARITHDIV:
 			return evaluateArithDiv(first, second);
 		case ARITHMOD:
 			assert mEvaluatorType == EvaluatorType.INTEGER : "Type error: modulo is not defined on reals";
-			return onlyValue(first.getValue().modulo(second.getValue()));
+			return onlyValue(firstValue.modulo(secondValue));
 		case LOGICAND:
 			return onlyBoolean(first.getBooleanValue().and(second.getBooleanValue()));
 		case LOGICOR:
@@ -144,27 +147,23 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 			// appropriate boolean value.
 			// TODO it might be necessary to change this behavior for different other abstract domains!
 			if (!mLeftSubEvaluator.containsBool() && !mRightSubEvaluator.containsBool()) {
-				return onlyBoolean(first.getValue().compareInequality(second.getValue()));
+				return onlyBoolean(firstValue.compareInequality(secondValue));
 			}
 			return onlyTop();
 		case COMPGT:
-			if (!first.getValue().canHandleReals()) {
+			if (!firstValue.canHandleReals()) {
 				mLogger.warnOverapproximatingOperator(mOperator);
 			}
-			return evaluateCompare(first.getValue(), second.getValue(), (a, b) -> a.greaterThan(b),
-					(a, b) -> a.isGreaterThan(b));
+			return evaluateCompare(firstValue, secondValue, this::greaterThan, this::greaterThanBool);
 		case COMPGEQ:
-			return evaluateCompare(first.getValue(), second.getValue(), (a, b) -> a.greaterOrEqual(b),
-					(a, b) -> a.isGreaterOrEqual(b));
+			return evaluateCompare(firstValue, secondValue, this::greaterOrEqual, this::greaterOrEqualBool);
 		case COMPLT:
-			if (!first.getValue().canHandleReals()) {
+			if (!firstValue.canHandleReals()) {
 				mLogger.warnOverapproximatingOperator(mOperator);
 			}
-			return evaluateCompare(first.getValue(), second.getValue(), (a, b) -> a.lessThan(b),
-					(a, b) -> a.isLessThan(b));
+			return evaluateCompare(firstValue, secondValue, this::lessThan, this::lessThanBool);
 		case COMPLEQ:
-			return evaluateCompare(first.getValue(), second.getValue(), (a, b) -> a.lessOrEqual(b),
-					(a, b) -> a.isLessOrEqual(b));
+			return evaluateCompare(firstValue, secondValue, this::lessOrEqual, this::lessOrEqualBool);
 		case COMPPO:
 		default:
 			mLogger.warnUnknownOperator(mOperator);
@@ -188,6 +187,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 			final BiFunction<VALUE, VALUE, VALUE> compareValue,
 			final BiFunction<VALUE, VALUE, BooleanValue> compareBoolean) {
 		final VALUE returnValue = compareValue.apply(first, second);
+		// returnValue.negate()
 		final BooleanValue returnBool;
 		if (returnValue.isBottom()) {
 			returnBool = BooleanValue.FALSE;
@@ -529,6 +529,38 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 
 	private List<IEvaluationResult<VALUE>> onlyTop() {
 		return Collections.singletonList(new NonrelationalEvaluationResult<>(mTopValue, BooleanValue.TOP));
+	}
+
+	private VALUE greaterThan(final VALUE first, final VALUE second) {
+		return first.greaterThan(second);
+	}
+
+	private VALUE greaterOrEqual(final VALUE first, final VALUE second) {
+		return first.greaterOrEqual(second);
+	}
+
+	private VALUE lessThan(final VALUE first, final VALUE second) {
+		return first.lessThan(second);
+	}
+
+	private VALUE lessOrEqual(final VALUE first, final VALUE second) {
+		return first.lessOrEqual(second);
+	}
+
+	private BooleanValue greaterThanBool(final VALUE first, final VALUE second) {
+		return first.isGreaterThan(second);
+	}
+
+	private BooleanValue greaterOrEqualBool(final VALUE first, final VALUE second) {
+		return first.isGreaterOrEqual(second);
+	}
+
+	private BooleanValue lessThanBool(final VALUE first, final VALUE second) {
+		return first.isLessThan(second);
+	}
+
+	private BooleanValue lessOrEqualBool(final VALUE first, final VALUE second) {
+		return first.isLessOrEqual(second);
 	}
 
 }
