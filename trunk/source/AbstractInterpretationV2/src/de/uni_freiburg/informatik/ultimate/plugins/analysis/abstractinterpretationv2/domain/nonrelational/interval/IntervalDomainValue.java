@@ -330,7 +330,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 		final String lower = mLower.isInfinity() ? "-\\infty" : mLower.toString();
 		final String upper = mUpper.isInfinity() ? "\\infty" : mUpper.toString();
 
-		return new StringBuilder().append("[ ").append(lower).append("; ").append(upper).append(" ]").toString();
+		return new StringBuilder().append('[').append(lower).append(';').append(upper).append(']').toString();
 	}
 
 	/**

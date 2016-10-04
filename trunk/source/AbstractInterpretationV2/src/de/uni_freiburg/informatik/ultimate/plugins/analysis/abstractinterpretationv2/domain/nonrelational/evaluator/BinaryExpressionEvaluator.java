@@ -29,6 +29,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -99,12 +100,12 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 		final ILogger logger = mLogger.getLogger();
 		for (final IEvaluationResult<VALUE> res1 : firstResult) {
 			for (final IEvaluationResult<VALUE> res2 : secondResult) {
-				final IEvaluationResult<VALUE> result = evaluate(mOperator, res1, res2);
+				final List<IEvaluationResult<VALUE>> result = evaluate(mOperator, res1, res2);
 				if (logger.isDebugEnabled()) {
 					logger.debug(AbsIntPrefInitializer.DINDENT + "(" + mOperator + " " + res1 + " " + res2 + ") = "
 							+ result);
 				}
-				returnList.add(result);
+				returnList.addAll(result);
 			}
 		}
 
@@ -112,7 +113,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 		return NonrelationalStateUtils.mergeIfNecessary(returnList, mMaxParallelSates);
 	}
 
-	private IEvaluationResult<VALUE> evaluate(final Operator op, final IEvaluationResult<VALUE> first,
+	private List<IEvaluationResult<VALUE>> evaluate(final Operator op, final IEvaluationResult<VALUE> first,
 			final IEvaluationResult<VALUE> second) {
 		switch (op) {
 		case ARITHPLUS:
@@ -171,7 +172,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 		}
 	}
 
-	private IEvaluationResult<VALUE> evaluateArithDiv(final IEvaluationResult<VALUE> first,
+	private List<IEvaluationResult<VALUE>> evaluateArithDiv(final IEvaluationResult<VALUE> first,
 			final IEvaluationResult<VALUE> second) {
 		switch (mEvaluatorType) {
 		case INTEGER:
@@ -183,7 +184,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 		}
 	}
 
-	private IEvaluationResult<VALUE> evaluateCompare(final VALUE first, final VALUE second,
+	private List<IEvaluationResult<VALUE>> evaluateCompare(final VALUE first, final VALUE second,
 			final BiFunction<VALUE, VALUE, VALUE> compareValue,
 			final BiFunction<VALUE, VALUE, BooleanValue> compareBoolean) {
 		final VALUE returnValue = compareValue.apply(first, second);
@@ -196,7 +197,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 		return both(returnValue, returnBool);
 	}
 
-	private IEvaluationResult<VALUE> evaluateCompEq(final IEvaluationResult<VALUE> first,
+	private List<IEvaluationResult<VALUE>> evaluateCompEq(final IEvaluationResult<VALUE> first,
 			final IEvaluationResult<VALUE> second) {
 		BooleanValue returnBool = BooleanValue.INVALID;
 		if (mLeftSubEvaluator.containsBool() || mRightSubEvaluator.containsBool()) {
@@ -211,7 +212,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 		} else if (!mLeftSubEvaluator.containsBool() && !mRightSubEvaluator.containsBool()) {
 			returnBool = first.getValue().compareEquality(second.getValue());
 		}
-		return new NonrelationalEvaluationResult<>(returnValue, returnBool);
+		return Collections.singletonList(new NonrelationalEvaluationResult<>(returnValue, returnBool));
 	}
 
 	@Override
@@ -508,26 +509,26 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 		return sb.toString();
 	}
 
-	private IEvaluationResult<VALUE> both(final VALUE value, final BooleanValue bvalue) {
+	private List<IEvaluationResult<VALUE>> both(final VALUE value, final BooleanValue bvalue) {
 		assert value != null;
 		assert bvalue != null;
 		assert bvalue != BooleanValue.INVALID;
-		return new NonrelationalEvaluationResult<>(value, bvalue);
+		return Collections.singletonList(new NonrelationalEvaluationResult<>(value, bvalue));
 	}
 
-	private IEvaluationResult<VALUE> onlyValue(final VALUE value) {
+	private List<IEvaluationResult<VALUE>> onlyValue(final VALUE value) {
 		assert value != null;
-		return new NonrelationalEvaluationResult<>(value, BooleanValue.INVALID);
+		return Collections.singletonList(new NonrelationalEvaluationResult<>(value, BooleanValue.INVALID));
 	}
 
-	private IEvaluationResult<VALUE> onlyBoolean(final BooleanValue value) {
+	private List<IEvaluationResult<VALUE>> onlyBoolean(final BooleanValue value) {
 		assert value != null;
 		assert value != BooleanValue.INVALID;
-		return new NonrelationalEvaluationResult<>(mTopValue, value);
+		return Collections.singletonList(new NonrelationalEvaluationResult<>(mTopValue, value));
 	}
 
-	private IEvaluationResult<VALUE> onlyTop() {
-		return new NonrelationalEvaluationResult<>(mTopValue, BooleanValue.TOP);
+	private List<IEvaluationResult<VALUE>> onlyTop() {
+		return Collections.singletonList(new NonrelationalEvaluationResult<>(mTopValue, BooleanValue.TOP));
 	}
 
 }
