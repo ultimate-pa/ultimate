@@ -47,6 +47,8 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
+import de.uni_freiburg.informatik.ultimate.automata.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.util.IBlock;
@@ -161,6 +163,8 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 	
 	private final BufferedWriter mWriter1;
 	private final BufferedWriter mWriter2;
+
+	private int mLargestBlockInitialPartition;
 	
 	/**
 	 * This constructor creates a copy of the operand.
@@ -381,6 +385,16 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 							: (((double) mReturnFirstTimeHierAlternative) / ((double) mWholeTime)))
 					+ ", without: " + (mWholeTime - mReturnFirstTimeHierAlternative) + " ms");
 		}
+	}
+	
+	@Override
+	public AutomataOperationStatistics getAutomataOperationStatistics() {
+		final AutomataOperationStatistics statistics = super.getAutomataOperationStatistics();
+		if (mLargestBlockInitialPartition != 0) {
+			statistics.addKeyValuePair(StatisticsType.SIZE_MAXIMAL_INITIAL_EQUIVALENCE_CLASS,
+					mLargestBlockInitialPartition);
+		}
+		return statistics;
 	}
 	
 	// --- [start] main methods --- //
@@ -949,6 +963,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 					+ "respect to their final status.";
 			for (final Set<STATE> module : modules) {
 				mPartition.addEcInitialization(module);
+				mLargestBlockInitialPartition = Math.max(mLargestBlockInitialPartition, module.size());
 			}
 		}
 		
