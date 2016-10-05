@@ -54,6 +54,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
+import de.uni_freiburg.informatik.ultimate.util.RunningTaskInfo;
+import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
@@ -81,8 +83,14 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends UnaryNwaOp
 		
 		final GameFactory gameFactory = new GameFactory();
 		final SpoilerNwaVertex<LETTER, STATE> uniqueSpoilerWinningSink = constructUniqueSpoilerWinninSink();
-		final INestedWordAutomatonSimple<IGameLetter<LETTER, STATE>, IGameState> gameAutomaton = 
-				new GameAutomaton<LETTER, STATE>(mServices, gameFactory, possibleEquivalentClasses, operand, simulationInfoProvider, uniqueSpoilerWinningSink);
+		final INestedWordAutomatonSimple<IGameLetter<LETTER, STATE>, IGameState> gameAutomaton;
+		try {
+			gameAutomaton = new GameAutomaton<LETTER, STATE>(mServices, gameFactory, possibleEquivalentClasses, operand, simulationInfoProvider, uniqueSpoilerWinningSink);
+		} catch (final ToolchainCanceledException tce) {
+			final RunningTaskInfo rti = new RunningTaskInfo(getClass(), NestedWordAutomataUtils.generateGenericMinimizationRunningTaskDescription(mOperand, possibleEquivalentClasses));
+			tce.addRunningTaskInfo(rti);
+			throw tce;
+		}
 		final IDoubleDeckerAutomaton<IGameLetter<LETTER, STATE>, IGameState> ga = new RemoveUnreachable<IGameLetter<LETTER, STATE>, IGameState>(mServices, gameAutomaton).getResult();
 		final AGameGraph<LETTER, STATE> graph = new GameAutomatonToGamGraphTransformer<LETTER, STATE>(mServices, ga, uniqueSpoilerWinningSink, mOperand).getResult();
 		final ParsimoniousSimulation sim = new ParsimoniousSimulation(null, mLogger, false, null, null, graph);

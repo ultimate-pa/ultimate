@@ -101,5 +101,22 @@ public final class NestedWordAutomataUtils {
 		}
 		return result;
 	}
+	
+	public static <STATE> long computeNumberOfEquivalentPairs(final Collection<Set<STATE>> possibleEquivalentClasses) {
+		int result = 0;
+		for (final Set<STATE> eqClass : possibleEquivalentClasses) {
+			result += eqClass.size() * eqClass.size();
+		}
+		return result;
+	}
+	
+	public static <LETTER, STATE> String generateGenericMinimizationRunningTaskDescription(
+			final INestedWordAutomaton<LETTER, STATE> operand, final Collection<Set<STATE>> initialEquivalenceClasses) {
+		final int sizeOfLargestEquivalenceClass = NestedWordAutomataUtils.computeSizeOfLargestEquivalenceClass(initialEquivalenceClasses);
+		final String taskDescription = "minimizing NWA with " + operand.size() + " states" +
+				"(initial partition has " + initialEquivalenceClasses.size() + 
+				" equivalence classes, largest equivalence class has " + sizeOfLargestEquivalenceClass + " states)";
+		return taskDescription;
+	}
 
 }
