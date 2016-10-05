@@ -92,6 +92,7 @@ public class AutomataMinimizationTestSuite extends UltimateTestSuite {
 		StatisticsType.STATES_OUTPUT.toString(),
 		StatisticsType.STATES_REDUCTION_ABSOLUTE.toString(),
 		StatisticsType.STATES_REDUCTION_RELATIVE.toString(),
+		StatisticsType.SIZE_MAXIMAL_INITIAL_EQUIVALENCE_CLASS.toString(),
 	};
 	private static final Set<String> INTERESTING_COLUMNS_AS_SET = new HashSet<>(Arrays.asList(INTERESTING_COLUMNS));  
 
