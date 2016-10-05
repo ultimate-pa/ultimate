@@ -49,7 +49,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.ScopedTransitivityGenerator;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.TransitivityGeneralMaxSatSolver;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.VariableStatus;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.direct.nwa.ReduceNwaDirectSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
@@ -278,31 +277,19 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 			return result1;
 		}
 		
-		if (!mUseTransitionHornClauses) {
-			// check that automaton cannot be minimized by merging states (incomplete check!)
-			final ShrinkNwa<LETTER, STATE> minimizedAgain = new ShrinkNwa<>(mServices, stateFactory, getResult());
-			final int minimizedAgainSize = minimizedAgain.getResult().size();
-			assert minimizedAgain.checkResult(stateFactory);
-			final int resultSize = getResult().size();
-			if (resultSize != minimizedAgainSize) {
-				return new Pair<>(Boolean.FALSE, String.format(
-						"The result was still mergeable from %d states to %d states.", resultSize, minimizedAgainSize));
-			}
-		}
-		
-		if (mOperandHasNoReturns) {
-			// check that direct simulation is the same for automata without calls and returns
-			// TODO use new direct simulation when it also supports an initial partition
-			final ReduceNwaDirectSimulation<LETTER, STATE> directSimulation = new ReduceNwaDirectSimulation<>(mServices,
-					stateFactory, mOperand, false, mInitialEquivalenceClasses);
-			final int directSimulationSize = directSimulation.getResult().size();
-			final int resultSize = getResult().size();
-			if (resultSize != directSimulationSize) {
-				return new Pair<>(Boolean.FALSE,
-						String.format("The result has %d states, but the direct simulation result has %d states.",
-								resultSize, directSimulationSize));
-			}
-		}
+//		if (mOperandHasNoReturns) {
+//			// check that direct simulation is the same for automata without calls and returns
+//			// TODO use new direct simulation when it also supports an initial partition
+//			final ReduceNwaDirectSimulation<LETTER, STATE> directSimulation = new ReduceNwaDirectSimulation<>(mServices,
+//					stateFactory, mOperand, false, mInitialEquivalenceClasses);
+//			final int directSimulationSize = directSimulation.getResult().size();
+//			final int resultSize = getResult().size();
+//			if (resultSize != directSimulationSize) {
+//				return new Pair<>(Boolean.FALSE,
+//						String.format("The result has %d states, but the direct simulation result has %d states.",
+//								resultSize, directSimulationSize));
+//			}
+//		}
 		
 		return new Pair<>(Boolean.TRUE, "");
 	}
