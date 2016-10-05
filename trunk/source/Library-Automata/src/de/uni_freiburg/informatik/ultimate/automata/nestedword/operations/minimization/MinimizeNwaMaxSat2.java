@@ -87,7 +87,6 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 	
 	private final NestedMap2<STATE, STATE, Doubleton<STATE>> mStatePairs = new NestedMap2<>();
 	private final AbstractMaxSatSolver<Doubleton<STATE>> mSolver;
-	private final Collection<Set<STATE>> mInitialEquivalenceClasses;
 	private final Map<STATE, Set<STATE>> mState2EquivalenceClass;
 	private final IDoubleDeckerAutomaton<LETTER, STATE> mOperand;
 	private final boolean mUseFinalStateConstraints;
@@ -105,8 +104,9 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 	 * be similar in this case.
 	 */
 	private final boolean mUseTransitionHornClauses;
-
+	
 	private final int mLargestBlockInitialPartition;
+	private final int mInitialPartitionSize;
 	
 	/**
 	 * Constructor that should be called by the automata script interpreter.
@@ -190,20 +190,20 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 		// throw new AssertionError("not deterministic");
 		// }
 		mUseFinalStateConstraints = useFinalStateConstraints;
-		mInitialEquivalenceClasses = initialPartition;
 		mUseTransitionHornClauses = useTransitionHornClauses;
 		mOperandHasNoReturns = mOperand.getReturnAlphabet().isEmpty();
 		
 		// TODO even copy an existing HashMap?
 		mState2EquivalenceClass = new HashMap<>();
 		int largestBlockInitialPartition = 0;
-		for (final Set<STATE> equivalenceClass : mInitialEquivalenceClasses) {
+		for (final Set<STATE> equivalenceClass : initialPartition) {
 			for (final STATE state : equivalenceClass) {
 				mState2EquivalenceClass.put(state, equivalenceClass);
 			}
 			largestBlockInitialPartition = Math.max(largestBlockInitialPartition, equivalenceClass.size());
 		}
 		mLargestBlockInitialPartition = largestBlockInitialPartition;
+		mInitialPartitionSize = initialPartition.size();
 		
 		// create solver
 		if (!mUseTransitionHornClauses && useHornSolver) {
@@ -222,7 +222,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 			}
 		}
 		
-		feedSolver(useTransitivityGenerator, transitivityGenerator);
+		feedSolver(useTransitivityGenerator, initialPartition, transitivityGenerator);
 		
 		constructResult(addMapOldState2newState);
 		
@@ -259,12 +259,12 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 		constructResultFromUnionFind(resultingEquivalenceClasses, addMapOldState2newState);
 	}
 	
-	private void feedSolver(final boolean useTransitivityGenerator,
+	private void feedSolver(final boolean useTransitivityGenerator, final Collection<Set<STATE>> initialPartition,
 			final ScopedTransitivityGenerator<STATE> transitivityGenerator) throws AutomataOperationCanceledException {
-		generateVariables(transitivityGenerator);
-		generateTransitionConstraints();
+		generateVariables(initialPartition, transitivityGenerator);
+		generateTransitionConstraints(initialPartition);
 		if (!useTransitivityGenerator && !mOperandHasNoReturns) {
-			generateTransitivityConstraints();
+			generateTransitivityConstraints(initialPartition);
 		}
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(
@@ -332,9 +332,9 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 		return resultingEquivalenceClasses;
 	}
 	
-	private void generateVariables(final ScopedTransitivityGenerator<STATE> transitivityGenerator)
-			throws AutomataOperationCanceledException {
-		for (final Set<STATE> equivalenceClass : mInitialEquivalenceClasses) {
+	private void generateVariables(final Collection<Set<STATE>> initialPartition,
+			final ScopedTransitivityGenerator<STATE> transitivityGenerator) throws AutomataOperationCanceledException {
+		for (final Set<STATE> equivalenceClass : initialPartition) {
 			final STATE[] states = constructStateArray(equivalenceClass);
 			generateVariablesHelper(transitivityGenerator, states);
 			checkTimeout();
@@ -376,8 +376,9 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 		setStatesDifferent(mStatePairs.get(state1, state2));
 	}
 	
-	private void generateTransitionConstraints() throws AutomataOperationCanceledException {
-		for (final Set<STATE> equivalenceClass : mInitialEquivalenceClasses) {
+	private void generateTransitionConstraints(final Collection<Set<STATE>> initialPartition)
+			throws AutomataOperationCanceledException {
+		for (final Set<STATE> equivalenceClass : initialPartition) {
 			final STATE[] states = constructStateArray(equivalenceClass);
 			for (int i = 0; i < states.length; i++) {
 				generateTransitionConstraintsHelper(states, i);
@@ -861,8 +862,9 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 		return true;
 	}
 	
-	private void generateTransitivityConstraints() throws AutomataOperationCanceledException {
-		for (final Set<STATE> equivalenceClass : mInitialEquivalenceClasses) {
+	private void generateTransitivityConstraints(final Collection<Set<STATE>> initialPartition)
+			throws AutomataOperationCanceledException {
+		for (final Set<STATE> equivalenceClass : initialPartition) {
 			final STATE[] states = constructStateArray(equivalenceClass);
 			generateTransitivityConstraintsHelper(states);
 		}
@@ -914,12 +916,12 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 			throw new AutomataOperationCanceledException(rti);
 		}
 	}
-
+	
 	private RunningTaskInfo getRunningTaskInfo() {
 		final String taskDescription = NestedWordAutomataUtils.generateGenericMinimizationRunningTaskDescription(
-				mOperand, mInitialEquivalenceClasses);
+				mOperand, mInitialPartitionSize, mLargestBlockInitialPartition);
 		final RunningTaskInfo rti = new RunningTaskInfo(getClass(), taskDescription);
 		return rti;
 	}
-
+	
 }

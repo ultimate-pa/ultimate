@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
 import de.uni_freiburg.informatik.ultimate.automata.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.util.IBlock;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.util.IPartition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingCallTransition;
@@ -60,6 +61,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.util.RunningTaskInfo;
 
 /**
  * This class minimizes nested word automata.
@@ -164,6 +166,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 	private final BufferedWriter mWriter1;
 	private final BufferedWriter mWriter2;
 
+	private final int mInitialPartitionSize;
 	private int mLargestBlockInitialPartition;
 	
 	/**
@@ -294,6 +297,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 		mNegativeSet.add(mNegativeClass);
 		mSingletonMatrix = new Matrix();
 		mDownStateMap = new DummyMap();
+		mInitialPartitionSize = equivalenceClasses == null ? 0 : equivalenceClasses.size();
 		
 		/* options */
 		mSplitOutgoing = splitOutgoing;
@@ -430,9 +434,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 			// iterative refinement
 			while (mWorkListIntCall.hasNext()) {
 				// cancel if signal is received
-				if (isCancellationRequested()) {
-					throw new AutomataOperationCanceledException(this.getClass());
-				}
+				checkTimeOut();
 				
 				final EquivalenceClass a = mWorkListIntCall.next();
 				
@@ -445,10 +447,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 			
 			// iterative refinement
 			outer: while (true) {
-				// cancel if signal is received
-				if (isCancellationRequested()) {
-					throw new AutomataOperationCanceledException(this.getClass());
-				}
+				checkTimeOut();
 				
 				// internals and calls
 				while (mWorkListIntCall.hasNext()) {
@@ -476,10 +475,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 					}
 				}
 				
-				// cancel if signal is received
-				if (isCancellationRequested()) {
-					throw new AutomataOperationCanceledException(this.getClass());
-				}
+				checkTimeOut();
 				
 				// return predecessors
 				if (mWorkListRet.hasNext()) {
@@ -608,6 +604,14 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 		}
 		if (DEBUG) {
 			mLogger.debug("----------------END----------------");
+		}
+	}
+
+	private void checkTimeOut() {
+		if (isCancellationRequested()) {
+			final String taskDescription = NestedWordAutomataUtils.generateGenericMinimizationRunningTaskDescription(
+					mOperand, mInitialPartitionSize, mLargestBlockInitialPartition);
+			throw new AutomataOperationCanceledException(new RunningTaskInfo(this.getClass(), taskDescription));
 		}
 	}
 	

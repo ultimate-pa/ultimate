@@ -74,18 +74,19 @@ public final class NestedWordAutomataUtils {
 			}
 		}
 	}
-
+	
 	public static <LETTER, STATE> boolean hasOutgoingReturnTransition(
-			final IDoubleDeckerAutomaton<LETTER, STATE> operand, final STATE lin, final STATE hier, final LETTER letter) {
+			final IDoubleDeckerAutomaton<LETTER, STATE> operand, final STATE lin, final STATE hier,
+			final LETTER letter) {
 		return operand.returnSuccessors(lin, hier, letter).iterator().hasNext();
 	}
-	
 	
 	/**
 	 * Given an Iterable of {@link IOutgoingTransitionlet} return the set of
 	 * all successor states.
 	 */
-	public static <E extends IOutgoingTransitionlet<LETTER, STATE>, LETTER, STATE> Set<STATE> constructSuccessorSet(final Iterable<E> it) {
+	public static <E extends IOutgoingTransitionlet<LETTER, STATE>, LETTER, STATE> Set<STATE>
+			constructSuccessorSet(final Iterable<E> it) {
 		final Set<STATE> result = new HashSet<>();
 		for (final E trans : it) {
 			result.add(trans.getSucc());
@@ -93,8 +94,9 @@ public final class NestedWordAutomataUtils {
 		}
 		return result;
 	}
-
-	public static <STATE> int computeSizeOfLargestEquivalenceClass(final Collection<Set<STATE>> possibleEquivalentClasses) {
+	
+	public static <STATE> int
+			computeSizeOfLargestEquivalenceClass(final Collection<Set<STATE>> possibleEquivalentClasses) {
 		int result = 0;
 		for (final Set<STATE> eqClass : possibleEquivalentClasses) {
 			result = Math.max(result, eqClass.size());
@@ -112,11 +114,16 @@ public final class NestedWordAutomataUtils {
 	
 	public static <LETTER, STATE> String generateGenericMinimizationRunningTaskDescription(
 			final INestedWordAutomaton<LETTER, STATE> operand, final Collection<Set<STATE>> initialEquivalenceClasses) {
-		final int sizeOfLargestEquivalenceClass = NestedWordAutomataUtils.computeSizeOfLargestEquivalenceClass(initialEquivalenceClasses);
-		final String taskDescription = "minimizing NWA with " + operand.size() + " states" +
-				"(initial partition has " + initialEquivalenceClasses.size() + 
-				" equivalence classes, largest equivalence class has " + sizeOfLargestEquivalenceClass + " states)";
-		return taskDescription;
+		final int sizeOfLargestEquivalenceClass =
+				NestedWordAutomataUtils.computeSizeOfLargestEquivalenceClass(initialEquivalenceClasses);
+		return generateGenericMinimizationRunningTaskDescription(operand, initialEquivalenceClasses.size(),
+				sizeOfLargestEquivalenceClass);
 	}
-
+	
+	public static <LETTER, STATE> String generateGenericMinimizationRunningTaskDescription(
+			final INestedWordAutomaton<LETTER, STATE> operand, final int initialPartitionSize,
+			final int sizeOfLargestEquivalenceClass) {
+		return "minimizing NWA with " + operand.size() + " states" + "(initial partition has " + initialPartitionSize +
+				" blocks, largest block has " + sizeOfLargestEquivalenceClass + " states)";
+	}
 }
