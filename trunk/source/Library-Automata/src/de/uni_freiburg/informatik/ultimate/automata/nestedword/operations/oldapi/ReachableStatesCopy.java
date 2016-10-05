@@ -114,7 +114,7 @@ public final class ReachableStatesCopy<LETTER, STATE> extends DoubleDeckerBuilde
 		mComplement = complement;
 		mOperand = operand;
 		mLogger.info(startMessage());
-		mTraversedNwa = new DoubleDeckerAutomaton<LETTER, STATE>(mServices, operand.getInternalAlphabet(),
+		mTraversedNwa = new DoubleDeckerAutomaton<>(mServices, operand.getInternalAlphabet(),
 				operand.getCallAlphabet(), operand.getReturnAlphabet(), operand.getStateFactory());
 		super.mRemoveDeadEnds = removeDeadEnds;
 		super.mRemoveNonLiveStates = removeNonLiveStates;
@@ -129,8 +129,8 @@ public final class ReachableStatesCopy<LETTER, STATE> extends DoubleDeckerBuilde
 			makeAutomatonTotal(sinkState);
 		}
 		mLogger.info(exitMessage());
-//		assert (new DownStateConsistencyCheck<LETTER, STATE>(mServices,
-//				(IDoubleDeckerAutomaton) mTraversedNwa)).getResult() : "down states inconsistent";
+		// assert (new DownStateConsistencyCheck<LETTER, STATE>(mServices,
+		// 		(IDoubleDeckerAutomaton) mTraversedNwa)).getResult() : "down states inconsistent";
 	}
 	
 	private void makeAutomatonTotal(final STATE sinkState) throws AutomataOperationCanceledException {
@@ -287,10 +287,10 @@ public final class ReachableStatesCopy<LETTER, STATE> extends DoubleDeckerBuilde
 			} else {
 				// intersection of operand and result should be empty
 				final INestedWordAutomatonSimple<LETTER, STATE> intersectionOperandResult =
-						(new IntersectDD<LETTER, STATE>(mServices, mOperand, mTraversedNwa)).getResult();
-				correct &= (new IsEmpty<LETTER, STATE>(mServices, intersectionOperandResult)).getResult();
+						(new IntersectDD<>(mServices, mOperand, mTraversedNwa)).getResult();
+				correct &= (new IsEmpty<>(mServices, intersectionOperandResult)).getResult();
 				final INestedWordAutomatonSimple<LETTER, STATE> resultSadd =
-						(new ComplementDD<LETTER, STATE>(mServices, stateFactory, mOperand)).getResult();
+						(new ComplementDD<>(mServices, stateFactory, mOperand)).getResult();
 				input = resultSadd;
 			}
 			// should recognize same language as old computation

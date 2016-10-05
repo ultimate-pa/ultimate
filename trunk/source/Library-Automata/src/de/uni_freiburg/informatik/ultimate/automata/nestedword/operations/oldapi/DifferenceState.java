@@ -63,7 +63,7 @@ public class DifferenceState<LETTER, STATE> {
 		this.mMinuendState = minuendState;
 		this.mSubtrahendDeterminizedState = subtrahendDeterminizedState;
 		this.mIsFinal = isFinal;
-		//			minuend.isFinal(minuendState) && !subtrahendDeterminizedState.containsFinal();
+		// minuend.isFinal(minuendState) && !subtrahendDeterminizedState.containsFinal();
 		this.mHashCode = computehashCode();
 	}
 	
@@ -89,25 +89,18 @@ public class DifferenceState<LETTER, STATE> {
 	public STATE getState(final IStateFactory<STATE> stateFactory,
 			final IStateDeterminizer<LETTER, STATE> stateDeterminizer) {
 		if (mState == null) {
-			mState = stateFactory.intersection(
-					this.getMinuendState(),
+			mState = stateFactory.intersection(this.getMinuendState(),
 					stateDeterminizer.getState(getSubtrahendDeterminizedState()));
 		}
 		return mState;
 	}
 	
-	/* (non-Javadoc)
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
 	@Override
 	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		}
-		if (obj == null) {
-			return false;
-		}
-		if (getClass() != obj.getClass()) {
+		if (obj == null || getClass() != obj.getClass()) {
 			return false;
 		}
 		final DifferenceState<?, ?> other = (DifferenceState<?, ?>) obj;
@@ -132,9 +125,6 @@ public class DifferenceState<LETTER, STATE> {
 		return true;
 	}
 	
-	/* (non-Javadoc)
-	 * @see java.lang.Object#hashCode()
-	 */
 	@Override
 	public int hashCode() {
 		return mHashCode;
@@ -144,22 +134,15 @@ public class DifferenceState<LETTER, STATE> {
 		final int prime1 = 31;
 		final int prime2 = 1231;
 		final int prime3 = 1237;
-		int result = 1;
-		result = prime1 * result + (mIsFinal ? prime2 : prime3);
-		result = prime1
-				* result
-				+ ((mMinuendState == null) ? 0 : mMinuendState.hashCode());
-		result = prime1
-				* result
-				+ ((mSubtrahendDeterminizedState == null)
-						? 0
-						: mSubtrahendDeterminizedState.hashCode());
+		int result = prime1 + (mIsFinal ? prime2 : prime3);
+		result = prime1 * result + ((mMinuendState == null) ? 0 : mMinuendState.hashCode());
+		result = prime1 * result
+				+ ((mSubtrahendDeterminizedState == null) ? 0 : mSubtrahendDeterminizedState.hashCode());
 		return result;
 	}
 	
 	@Override
 	public String toString() {
-		return "<[< " + mMinuendState.toString() + " , "
-				+ mSubtrahendDeterminizedState.toString() + ">]>";
+		return "<[< " + mMinuendState.toString() + " , " + mSubtrahendDeterminizedState.toString() + ">]>";
 	}
 }
