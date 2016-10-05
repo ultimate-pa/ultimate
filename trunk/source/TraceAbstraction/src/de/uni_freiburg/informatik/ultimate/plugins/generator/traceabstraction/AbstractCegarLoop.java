@@ -376,11 +376,6 @@ public abstract class AbstractCegarLoop {
 					throw new AssertionError("No progress! Counterexample is still accepted by refined abstraction.");
 					// return Result.UNKNOWN;
 				}
-			} catch (final AutomataOperationCanceledException e) {
-				mLogger.warn("Verification cancelled");
-				mCegarLoopBenchmark.setResult(Result.TIMEOUT);
-				mCegarLoopBenchmark.stopIfRunning(CegarLoopStatisticsDefinitions.AbstIntTime.toString());
-				return Result.TIMEOUT;
 			} catch (final ToolchainCanceledException e) {
 				mToolchainCancelledException = e;
 				mLogger.warn("Verification cancelled");
