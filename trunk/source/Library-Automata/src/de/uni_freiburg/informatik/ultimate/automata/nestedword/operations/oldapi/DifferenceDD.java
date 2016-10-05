@@ -119,8 +119,8 @@ public final class DifferenceDD<LETTER, STATE> extends DoubleDeckerBuilder<LETTE
 	private final Map<DeterminizedState<LETTER, STATE>, Map<LETTER, DeterminizedState<LETTER, STATE>>>
 			mCallSuccessorCache = new HashMap<>();
 	
-	private final Map<DeterminizedState<LETTER, STATE>, Map<DeterminizedState<LETTER, STATE>, Map<LETTER,
-			DeterminizedState<LETTER, STATE>>>> mReturnSuccessorCache = new HashMap<>();
+	private final Map<DeterminizedState<LETTER, STATE>, Map<DeterminizedState<LETTER, STATE>,
+			Map<LETTER, DeterminizedState<LETTER, STATE>>>> mReturnSuccessorCache = new HashMap<>();
 	
 	/**
 	 * Constructor with {@link IStateDeterminizer}.
@@ -147,28 +147,11 @@ public final class DifferenceDD<LETTER, STATE> extends DoubleDeckerBuilder<LETTE
 			final IStateDeterminizer<LETTER, STATE> stateDeterminizer,
 			final IStateFactory<STATE> stateFactoryForIntersection, final boolean removeDeadEnds,
 			final boolean subtrahendSigmaStarClosed) throws AutomataLibraryException {
-		super(services);
-		mSubtrahendSigmaStarClosed = subtrahendSigmaStarClosed;
-		mStateFactoryForIntersection = stateFactoryForIntersection;
-		mMinuend = minuend;
-		mSubtrahend = subtrahend;
-		if (!INestedWordAutomatonSimple.sameAlphabet(mMinuend, mSubtrahend)) {
-			throw new AutomataLibraryException(this.getClass(),
-					"Unable to apply operation to automata with different alphabets.");
-		}
-		mLogger.info(startMessage());
-		mStateDeterminizer = stateDeterminizer;
-		super.mTraversedNwa = new DoubleDeckerAutomaton<>(mServices, minuend.getInternalAlphabet(),
-				minuend.getCallAlphabet(), minuend.getReturnAlphabet(), mStateFactoryForIntersection);
-		super.mRemoveDeadEnds = removeDeadEnds;
+		this(services, minuend, subtrahend, stateDeterminizer, stateFactoryForIntersection, removeDeadEnds,
+				subtrahendSigmaStarClosed, false);
 		
-		/*
-		mDeterminizedSubtrahend =
-				new NestedWordAutomaton<LETTER, DeterminizedState<LETTER, STATE>>(minuend.getInternalAlphabet(),
-						minuend.getCallAlphabet(), minuend.getReturnAlphabet(), null);
-		*/
-		traverseDoubleDeckerGraph();
-		((DoubleDeckerAutomaton<LETTER, STATE>) super.mTraversedNwa).setUp2Down(getUp2DownMapping());
+		runConstruction();
+		
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
 			mLogger.info("Computed internal successors:" + mInternalSuccs);
@@ -200,21 +183,10 @@ public final class DifferenceDD<LETTER, STATE> extends DoubleDeckerBuilder<LETTE
 			final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> minuend,
 			final INestedWordAutomatonSimple<LETTER, STATE> subtrahend) throws AutomataLibraryException {
-		super(services);
-		mSubtrahendSigmaStarClosed = false;
-		mStateFactoryForIntersection = stateFactory;
-		mMinuend = minuend;
-		mSubtrahend = subtrahend;
-		if (!INestedWordAutomatonSimple.sameAlphabet(mMinuend, mSubtrahend)) {
-			throw new AutomataLibraryException(this.getClass(),
-					"Unable to apply operation to automata with different alphabets.");
-		}
-		mLogger.info(startMessage());
-		mStateDeterminizer = new PowersetDeterminizer<>(subtrahend, true, stateFactory);
-		super.mTraversedNwa = new DoubleDeckerAutomaton<>(mServices, minuend.getInternalAlphabet(),
-				minuend.getCallAlphabet(), minuend.getReturnAlphabet(), mStateFactoryForIntersection);
-		super.mRemoveDeadEnds = false;
+		this(services, minuend, subtrahend, new PowersetDeterminizer<>(subtrahend, true, stateFactory), stateFactory,
+				false, false, false);
 		
+		// TODO Christian 2016-10-05: These sets are never used - a bug?
 		final Set<LETTER> newInternals = new HashSet<>();
 		newInternals.addAll(minuend.getInternalAlphabet());
 		newInternals.retainAll(subtrahend.getInternalAlphabet());
@@ -225,14 +197,46 @@ public final class DifferenceDD<LETTER, STATE> extends DoubleDeckerBuilder<LETTE
 		newReturns.addAll(minuend.getReturnAlphabet());
 		newReturns.retainAll(subtrahend.getReturnAlphabet());
 		
+		runConstruction();
+		
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(exitMessage());
+		}
+	}
+	
+	private DifferenceDD(final AutomataLibraryServices services,
+			final INestedWordAutomatonSimple<LETTER, STATE> minuend,
+			final INestedWordAutomatonSimple<LETTER, STATE> subtrahend,
+			final IStateDeterminizer<LETTER, STATE> stateDeterminizer,
+			final IStateFactory<STATE> stateFactoryForIntersection, final boolean removeDeadEnds,
+			final boolean subtrahendSigmaStarClosed, @SuppressWarnings({ "unused", "squid:S1172" }) final boolean dummy)
+			throws AutomataLibraryException {
+		super(services);
+		
+		if (!INestedWordAutomatonSimple.sameAlphabet(minuend, subtrahend)) {
+			throw new AutomataLibraryException(this.getClass(),
+					"Unable to apply operation to automata with different alphabets.");
+		}
+		
+		mMinuend = minuend;
+		mSubtrahend = subtrahend;
+		mStateDeterminizer = stateDeterminizer;
+		mStateFactoryForIntersection = stateFactoryForIntersection;
+		mSubtrahendSigmaStarClosed = subtrahendSigmaStarClosed;
+		super.mRemoveDeadEnds = removeDeadEnds;
+		
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(startMessage());
+		}
+		
+		super.mTraversedNwa = new DoubleDeckerAutomaton<>(mServices, minuend.getInternalAlphabet(),
+				minuend.getCallAlphabet(), minuend.getReturnAlphabet(), mStateFactoryForIntersection);
+		
 		/*
 		mDeterminizedSubtrahend =
 				new NestedWordAutomaton<LETTER, DeterminizedState<LETTER, STATE>>(minuend.getInternalAlphabet(),
 						minuend.getCallAlphabet(), minuend.getReturnAlphabet(), null);
 		*/
-		traverseDoubleDeckerGraph();
-		((DoubleDeckerAutomaton<LETTER, STATE>) super.mTraversedNwa).setUp2Down(getUp2DownMapping());
-		mLogger.info(exitMessage());
 	}
 	
 	@Override
@@ -251,6 +255,11 @@ public final class DifferenceDD<LETTER, STATE> extends DoubleDeckerBuilder<LETTE
 		return "Finished " + operationName() + " Result " + mTraversedNwa.sizeInformation()
 				+ ". Max degree of Nondeterminism is " + mStateDeterminizer.getMaxDegreeOfNondeterminism()
 				+ ". DeterminizedStates: " + mDetStateCache.size();
+	}
+	
+	private void runConstruction() {
+		traverseDoubleDeckerGraph();
+		((DoubleDeckerAutomaton<LETTER, STATE>) super.mTraversedNwa).setUp2Down(getUp2DownMapping());
 	}
 	
 	private DeterminizedState<LETTER, STATE> internalSuccessorCache(final DeterminizedState<LETTER, STATE> state,
