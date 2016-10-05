@@ -243,7 +243,14 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 	
 	private void constructResult(final boolean addMapOldState2newState)
 			throws AutomataOperationCanceledException, AssertionError {
-		final boolean satisfiable = mSolver.solve();
+		final boolean satisfiable;
+		try {
+			satisfiable = mSolver.solve();
+		} catch (final AutomataOperationCanceledException e) {
+			final RunningTaskInfo rti = getRunningTaskInfo();
+			e.addRunningTaskInfo(rti);
+			throw e;
+		}
 		if (!satisfiable) {
 			throw new AssertionError("Constructed constraints were unsatisfiable");
 		}
@@ -903,11 +910,16 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 	
 	private void checkTimeout() throws AutomataOperationCanceledException {
 		if (isCancellationRequested()) {
-			final String taskDescription = NestedWordAutomataUtils.generateGenericMinimizationRunningTaskDescription(
-					mOperand, mInitialEquivalenceClasses);
-			final RunningTaskInfo rti = new RunningTaskInfo(getClass(), taskDescription);
+			final RunningTaskInfo rti = getRunningTaskInfo();
 			throw new AutomataOperationCanceledException(rti);
 		}
+	}
+
+	private RunningTaskInfo getRunningTaskInfo() {
+		final String taskDescription = NestedWordAutomataUtils.generateGenericMinimizationRunningTaskDescription(
+				mOperand, mInitialEquivalenceClasses);
+		final RunningTaskInfo rti = new RunningTaskInfo(getClass(), taskDescription);
+		return rti;
 	}
 
 }

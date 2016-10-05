@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.util.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -168,7 +169,7 @@ public abstract class AbstractMaxSatSolver<V> {
 				return false;
 			}
 			if (!mServices.getProgressMonitorService().continueProcessing()) {
-				throw new AutomataOperationCanceledException(this.getClass());
+				throw new AutomataOperationCanceledException(getRunningTaskInfo());
 			}
 		}
 		makeAssignmentPersistent();
@@ -179,7 +180,7 @@ public abstract class AbstractMaxSatSolver<V> {
 		mLogger.debug("neithers total: " + Clause.neithers);
 		return true;
 	}
-	
+
 	/**
 	 * Called after all clauses have been added and pseudo-unit clauses have
 	 * been propagated.
@@ -471,5 +472,9 @@ public abstract class AbstractMaxSatSolver<V> {
 			assert consistent;
 		}
 		return consistent;
+	}
+	
+	private RunningTaskInfo getRunningTaskInfo() {
+		return new RunningTaskInfo(this.getClass(), "Solving system of " + mClauses + " clauses.");
 	}
 }
