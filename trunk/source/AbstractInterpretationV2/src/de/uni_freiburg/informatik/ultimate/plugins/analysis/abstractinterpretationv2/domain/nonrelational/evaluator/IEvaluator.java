@@ -62,6 +62,8 @@ public interface IEvaluator<VALUE, STATE extends IAbstractState<STATE, ACTION, I
 	 * Computes the inverse of {@link #evaluate(IAbstractState)} relative to some result of
 	 * {@link #evaluate(IAbstractState)}.
 	 *
+	 * TODO: Explain application of inverseEvaluate better
+	 *
 	 * @param evalResult
 	 *            The result of an earlier application of evaluate to <code>state</code>.
 	 * @param state

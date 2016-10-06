@@ -297,8 +297,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 					final NonrelationalEvaluationResult<VALUE> inverseResultRight =
 							new NonrelationalEvaluationResult<>(newValueRight, evalResultBool);
 
-					final List<STATE> leftInverseArith =
-							mLeftSubEvaluator.inverseEvaluate(inverseResultLeft, oldState);
+					final List<STATE> leftInverseArith = mLeftSubEvaluator.inverseEvaluate(inverseResultLeft, oldState);
 					final List<STATE> rightInverseArith =
 							mRightSubEvaluator.inverseEvaluate(inverseResultRight, oldState);
 
@@ -313,7 +312,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 				if (returnStates.isEmpty()) {
 					returnStates.add(oldState);
 				}
-				mLogger.logInverseEvaluation(mOperator, returnStates, leftOp, rightOp);
+				mLogger.logInverseEvaluation(mOperator, returnStates, evalResult, oldState);
 				returnList.addAll(returnStates);
 			}
 		}
