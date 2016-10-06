@@ -84,7 +84,7 @@ public final class AbsIntUtil {
 
 	public static <LOC> void logPredicates(final Map<CodeBlock, Map<LOC, Term>> preds, final Script script,
 			final Consumer<String> printer) {
-		final Map<LOC, Term> predsPerLoc = new HashMap<LOC, Term>();
+		final Map<LOC, Term> predsPerLoc = new HashMap<>();
 		for (final Entry<CodeBlock, Map<LOC, Term>> entryPerBlock : preds.entrySet()) {
 			for (final Entry<LOC, Term> entryPerLoc : entryPerBlock.getValue().entrySet()) {
 				final Term current = predsPerLoc.get(entryPerLoc.getKey());
@@ -105,7 +105,7 @@ public final class AbsIntUtil {
 	}
 
 	public static <K, V> Map<K, V> getFreshMap(final Map<K, V> oldMap, final int capacity) {
-		final Map<K, V> rtr = new HashMap<K, V>(capacity);
+		final Map<K, V> rtr = new HashMap<>(capacity);
 		rtr.putAll(oldMap);
 		return rtr;
 	}
@@ -115,7 +115,7 @@ public final class AbsIntUtil {
 	}
 
 	public static <T> Set<T> getFreshSet(final Set<T> oldSet, final int capacity) {
-		final Set<T> rtr = new HashSet<T>(capacity);
+		final Set<T> rtr = new HashSet<>(capacity);
 		rtr.addAll(oldSet);
 		return rtr;
 	}

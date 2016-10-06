@@ -32,18 +32,16 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
-import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState.SubsetResult;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.BoogieVarMockup;
 import de.uni_freiburg.informatik.ultimate.test.ConsoleLogger;
 
 public class IntervalDomainSubsetTest {
 
 	@Test
 	public void TestSubsetRelatedToBug() {
-		final BoogieVarMockup varA = new BoogieVarMockup("a");
+		final BoogieVarMockup varA = new BoogieVarMockup("a", BoogieType.TYPE_INT);
 
 		IntervalDomainState state1 = new IntervalDomainState(new ConsoleLogger());
 		state1 = state1.addVariable(varA);
@@ -64,7 +62,7 @@ public class IntervalDomainSubsetTest {
 
 	@Test
 	public void TestContainment() {
-		final BoogieVarMockup varA = new BoogieVarMockup("a");
+		final BoogieVarMockup varA = new BoogieVarMockup("a", BoogieType.TYPE_INT);
 
 		IntervalDomainState s1 = new IntervalDomainState(new ConsoleLogger());
 		s1 = s1.addVariable(varA);
@@ -72,7 +70,7 @@ public class IntervalDomainSubsetTest {
 
 		IntervalDomainState s2 = new IntervalDomainState(new ConsoleLogger());
 		s2 = s2.addVariable(varA);
-		s2 = s2.setValue(varA, new IntervalDomainValue(5, 5));
+		s2 = s2.setValue(varA, new IntervalDomainValue(0, 5));
 
 		System.out.println("State 1: " + s1);
 		System.out.println("State 2: " + s2);
@@ -81,36 +79,5 @@ public class IntervalDomainSubsetTest {
 		System.out.println("Subset result: " + subsetResult);
 
 		assertTrue(subsetResult != SubsetResult.NONE);
-	}
-
-	private static final class BoogieVarMockup implements IBoogieVar {
-
-		private final String mName;
-		private final IBoogieType mBoogieType;
-
-		BoogieVarMockup(final String name) {
-			mName = name;
-			mBoogieType = PrimitiveType.TYPE_INT;
-		}
-
-		@Override
-		public String getGloballyUniqueId() {
-			return mName;
-		}
-
-		@Override
-		public IBoogieType getIType() {
-			return mBoogieType;
-		}
-
-		@Override
-		public ApplicationTerm getDefaultConstant() {
-			return null;
-		}
-
-		@Override
-		public String toString() {
-			return mName;
-		}
 	}
 }

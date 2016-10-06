@@ -307,9 +307,22 @@ public class CsvUtils {
 					pAindex++;
 					pBindex++;
 				} else if (pAindex < providerAColumns.size() && !providerBColumns.contains(currentPACol)) {
-					resultColumns.add(currentPACol);
-					additionalColumnForProviderB.add(pBindex);
-					pAindex++;
+					if (pBindex < providerBColumns.size() && !providerAColumns.contains(currentPBCol) && 
+							currentPBCol.compareTo(currentPACol) < 0) {
+						// special case: 
+						// currentPACol does not occur in providerBColumns
+						// currentPBCol does not occur in providerAColumns
+						// hence we may add both next
+						// Since currentPBCol precedes currentPACol in a lexicographic ordering,
+						// we take currentPBCol
+						resultColumns.add(currentPBCol);
+						additionalColumnForProviderA.add(pAindex);
+						pBindex++;
+					} else {
+						resultColumns.add(currentPACol);
+						additionalColumnForProviderB.add(pBindex);
+						pAindex++;
+					}
 				} else if (pBindex < providerBColumns.size() && !providerAColumns.contains(currentPBCol)) {
 					resultColumns.add(currentPBCol);
 					additionalColumnForProviderA.add(pAindex);

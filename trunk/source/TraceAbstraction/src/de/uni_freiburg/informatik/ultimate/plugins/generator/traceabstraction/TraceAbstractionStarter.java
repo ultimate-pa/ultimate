@@ -73,7 +73,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.LanguageOperation;
-import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
+import de.uni_freiburg.informatik.ultimate.util.IRunningTaskStackProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
@@ -297,7 +297,7 @@ public class TraceAbstractionStarter {
 			reportCounterexampleResult(basicCegarLoop.getRcfgProgramExecution());
 			return result;
 		case TIMEOUT:
-			reportTimeoutResult(errorLocs, basicCegarLoop.getToolchainCancelledException());
+			reportTimeoutResult(errorLocs, basicCegarLoop.getRunningTaskStackProvider());
 			return mOverallResult != Result.UNSAFE ? result : mOverallResult;
 		case UNKNOWN:
 			final RcfgProgramExecution pe = basicCegarLoop.getRcfgProgramExecution();
@@ -355,15 +355,15 @@ public class TraceAbstractionStarter {
 	}
 
 	private void reportTimeoutResult(final Collection<ProgramPoint> errorLocs,
-			final ToolchainCanceledException toolchainCanceledException) {
+			final IRunningTaskStackProvider rtsp) {
 		for (final ProgramPoint errorIpp : errorLocs) {
 			final ProgramPoint errorLoc = errorIpp;
 			final ILocation origin = errorLoc.getBoogieASTNode().getLocation().getOrigin();
 			String timeOutMessage = "Unable to prove that ";
 			timeOutMessage += ResultUtil.getCheckedSpecification(errorLoc).getPositiveMessage();
 			timeOutMessage += " (line " + origin.getStartLine() + ").";
-			if (toolchainCanceledException != null) {
-				timeOutMessage += " " + toolchainCanceledException.printRunningTaskInfos();
+			if (rtsp != null) {
+				timeOutMessage += " Cancelled " + rtsp.printRunningTaskMessage();
 			}
 			final TimeoutResultAtElement<RcfgElement> timeOutRes = new TimeoutResultAtElement<>(errorLoc,
 					Activator.PLUGIN_NAME, mServices.getBacktranslationService(), timeOutMessage);

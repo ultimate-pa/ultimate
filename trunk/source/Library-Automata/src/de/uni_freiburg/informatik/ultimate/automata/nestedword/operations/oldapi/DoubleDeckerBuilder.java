@@ -49,7 +49,7 @@ public abstract class DoubleDeckerBuilder<LETTER, STATE> extends DoubleDeckerVis
 		implements IOpWithDelayedDeadEndRemoval<LETTER, STATE> {
 	protected Set<STATE> mSuccessorsConstructedIn = new HashSet<>();
 	protected Set<STATE> mSuccessorsConstructedCa = new HashSet<>();
-//	protected Set<STATE> mSuccessorsConstructedRe = new HashSet<>();
+	// protected Set<STATE> mSuccessorsConstructedRe = new HashSet<>();
 	
 	/**
 	 * Constructor.
@@ -64,47 +64,47 @@ public abstract class DoubleDeckerBuilder<LETTER, STATE> extends DoubleDeckerVis
 	@Override
 	protected Collection<STATE> visitAndGetInternalSuccessors(final DoubleDecker<STATE> doubleDecker) {
 		final STATE up = doubleDecker.getUp();
-		if (mSuccessorsConstructedIn.contains(up)) {
-			final HashSet<STATE> succs = new HashSet<>();
-			for (final LETTER letter : mTraversedNwa.lettersInternal(up)) {
-				for (final OutgoingInternalTransition<LETTER, STATE> trans : mTraversedNwa.internalSuccessors(up,
-						letter)) {
-					succs.add(trans.getSucc());
-				}
-			}
-			return succs;
-		} else {
+		if (!mSuccessorsConstructedIn.contains(up)) {
 			mSuccessorsConstructedIn.add(up);
 			return buildInternalSuccessors(doubleDecker);
 		}
+		final HashSet<STATE> succs = new HashSet<>();
+		for (final LETTER letter : mTraversedNwa.lettersInternal(up)) {
+			for (final OutgoingInternalTransition<LETTER, STATE> trans : mTraversedNwa.internalSuccessors(up, letter)) {
+				succs.add(trans.getSucc());
+			}
+		}
+		return succs;
 	}
 	
 	@Override
 	protected Collection<STATE> visitAndGetCallSuccessors(final DoubleDecker<STATE> doubleDecker) {
 		final STATE up = doubleDecker.getUp();
-		if (mSuccessorsConstructedCa.contains(up)) {
-			final HashSet<STATE> succs = new HashSet<>();
-			for (final LETTER letter : mTraversedNwa.lettersCall(up)) {
-				for (final OutgoingCallTransition<LETTER, STATE> trans : mTraversedNwa.callSuccessors(up, letter)) {
-					succs.add(trans.getSucc());
-				}
-			}
-			return succs;
-		} else {
+		if (!mSuccessorsConstructedCa.contains(up)) {
 			mSuccessorsConstructedCa.add(up);
 			return buildCallSuccessors(doubleDecker);
 		}
+		final HashSet<STATE> succs = new HashSet<>();
+		for (final LETTER letter : mTraversedNwa.lettersCall(up)) {
+			for (final OutgoingCallTransition<LETTER, STATE> trans : mTraversedNwa.callSuccessors(up, letter)) {
+				succs.add(trans.getSucc());
+			}
+		}
+		return succs;
 	}
 	
 	@Override
 	protected Collection<STATE> visitAndGetReturnSuccessors(final DoubleDecker<STATE> doubleDecker) {
-//		STATE up = doubleDecker.getUp();
-//		if (mSuccessorsConstructedRe.contains(up)) {
-//			return mTraversedNwa.succReturn(up);
-//		} else {
-//			mSuccessorsConstructedRe.add(up);
+		/*
+		STATE up = doubleDecker.getUp();
+		if (mSuccessorsConstructedRe.contains(up)) {
+			return mTraversedNwa.succReturn(up);
+		} else {
+			mSuccessorsConstructedRe.add(up);
+			return buildReturnSuccessors(doubleDecker);
+		}
+		*/
 		return buildReturnSuccessors(doubleDecker);
-//		}
 	}
 	
 	protected abstract Collection<STATE> buildInternalSuccessors(DoubleDecker<STATE> doubleDecker);

@@ -31,6 +31,9 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -330,7 +333,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 		final String lower = mLower.isInfinity() ? "-\\infty" : mLower.toString();
 		final String upper = mUpper.isInfinity() ? "\\infty" : mUpper.toString();
 
-		return new StringBuilder().append("[ ").append(lower).append("; ").append(upper).append(" ]").toString();
+		return new StringBuilder().append('[').append(lower).append(';').append(upper).append(']').toString();
 	}
 
 	/**
@@ -670,17 +673,14 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 	}
 
 	/**
-	 * Computes the euclidean modulo operation of two {@link IntervalDomainValue}s.
+	 * Computes the Euclidean modulo operation of two {@link IntervalDomainValue}s.
 	 *
 	 * @param divisor
 	 *            The other value to compute the modulus for.
-	 * @param integerDivision
-	 *            The modulo operation is an integer operation.
 	 * @return A new {@link IntervalDomainValue} which corresponds to the application of the modulus operator.
 	 */
 	@Override
-	public IntervalDomainValue modulo(final IntervalDomainValue divisor, final boolean integerDivision) {
-
+	public IntervalDomainValue modulo(final IntervalDomainValue divisor) {
 		assert divisor != null;
 
 		if (isBottom() || divisor.isBottom()) {
@@ -708,10 +708,10 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 			return new IntervalDomainValue(mLower, mUpper);
 		}
 
-		// euclidean division (x / y) has the remainder (r) with (0 <= r < |y|).
+		// Euclidean division x / y has a remainder r with 0 <= r < |y|.
 		final IntervalValue min = new IntervalValue(0);
 		final IntervalValue max = absDivisor.mUpper;
-		if (integerDivision && !max.isInfinity()) {
+		if (!max.isInfinity()) {
 			max.setValue(max.getValue().subtract(BigDecimal.ONE));
 		}
 		return new IntervalDomainValue(min, max);
@@ -1229,7 +1229,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 	 * @return A new {@link IntervalDomainValue} corresponding to the result of the computation of the division.
 	 */
 	@Override
-	public IntervalDomainValue integerDivide(final IntervalDomainValue other) {
+	public IntervalDomainValue divideInteger(final IntervalDomainValue other) {
 		IntervalDomainValue result;
 
 		if (other.containsZero()) {
@@ -1610,9 +1610,9 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 	public BooleanValue isGreaterOrEqual(final IntervalDomainValue other) {
 		final IntervalDomainValue geq = greaterOrEqual(other);
 		if (geq.isBottom() || geq.isPointInterval()) {
-			return new BooleanValue(true);
+			return BooleanValue.TRUE;
 		}
-		return new BooleanValue();
+		return BooleanValue.TOP;
 	}
 
 	@Override
@@ -1629,9 +1629,9 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 	public BooleanValue isLessOrEqual(final IntervalDomainValue other) {
 		final IntervalDomainValue leq = lessOrEqual(other);
 		if (leq.isBottom() || leq.isPointInterval()) {
-			return new BooleanValue(true);
+			return BooleanValue.TRUE;
 		}
-		return new BooleanValue();
+		return BooleanValue.TOP;
 	}
 
 	@Override
@@ -1695,16 +1695,70 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 	}
 
 	@Override
-	public BooleanValue compareEquality(final IntervalDomainValue firstOther, final IntervalDomainValue secondOther) {
-		if (isEqualTo(firstOther) && isEqualTo(secondOther)) {
-			return new BooleanValue(true);
+	public BooleanValue compareEquality(final IntervalDomainValue secondOther) {
+		if (isEqualTo(secondOther)) {
+			return BooleanValue.TRUE;
 		}
-		return new BooleanValue();
+		return BooleanValue.TOP;
 	}
 
 	@Override
-	public BooleanValue compareInequality(final IntervalDomainValue firstOther, final IntervalDomainValue secondOther) {
+	public BooleanValue compareInequality(final IntervalDomainValue secondOther) {
 		throw new UnsupportedOperationException(
 				"Not equals expressions should have been removed during expression normalization.");
+	}
+
+	@Override
+	public Collection<IntervalDomainValue> complement() {
+		if (isBottom()) {
+			return Collections.singleton(new IntervalDomainValue());
+		}
+
+		if (getLower().isInfinity() && getUpper().isInfinity()) {
+			return Collections.singleton(new IntervalDomainValue(true));
+		}
+
+		if (getLower().isInfinity()) {
+			return Collections
+					.singleton(new IntervalDomainValue(new IntervalValue(getUpper().getValue()), new IntervalValue()));
+		}
+
+		if (getUpper().isInfinity()) {
+			return Collections
+					.singleton(new IntervalDomainValue(new IntervalValue(), new IntervalValue(getLower().getValue())));
+		}
+
+		final ArrayList<IntervalDomainValue> rtr = new ArrayList<>();
+		rtr.add(new IntervalDomainValue(new IntervalValue(getUpper().getValue()), new IntervalValue()));
+		rtr.add(new IntervalDomainValue(new IntervalValue(), new IntervalValue(getLower().getValue())));
+		return rtr;
+	}
+
+	@Override
+	public Collection<IntervalDomainValue> complementInteger() {
+		if (isBottom()) {
+			return Collections.singleton(new IntervalDomainValue());
+		}
+
+		if (getLower().isInfinity() && getUpper().isInfinity()) {
+			return Collections.singleton(new IntervalDomainValue(true));
+		}
+
+		if (getLower().isInfinity()) {
+			return Collections
+					.singleton(new IntervalDomainValue(new IntervalValue(getUpper().getValue()), new IntervalValue()));
+		}
+
+		if (getUpper().isInfinity()) {
+			return Collections
+					.singleton(new IntervalDomainValue(new IntervalValue(), new IntervalValue(getLower().getValue())));
+		}
+
+		final ArrayList<IntervalDomainValue> rtr = new ArrayList<>();
+		rtr.add(new IntervalDomainValue(new IntervalValue(getUpper().getValue().add(BigDecimal.ONE)),
+				new IntervalValue()));
+		rtr.add(new IntervalDomainValue(new IntervalValue(),
+				new IntervalValue(getLower().getValue().subtract(BigDecimal.ONE))));
+		return rtr;
 	}
 }

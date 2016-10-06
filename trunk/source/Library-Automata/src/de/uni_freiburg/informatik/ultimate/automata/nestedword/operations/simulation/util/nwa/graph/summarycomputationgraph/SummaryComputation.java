@@ -47,8 +47,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.PriorityComparator;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.SpoilerNwaVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game.GameEmptyState;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game.IGameLetter;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game.GameSpoilerNwaVertex;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game.IGameLetter;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game.IGameState;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.summarycomputationgraph.WeightedSummaryTargets.WeightedSummaryTargetsComparator;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingCallTransition;
@@ -111,7 +111,7 @@ public class SummaryComputation<LETTER, STATE> {
 	private final HashRelation<Set<IGameState>, SummaryComputationGraphNode<LETTER, STATE>> mSummaryTrigger2Node = new HashRelation<>();
 	private final IDoubleDeckerAutomaton<LETTER, STATE> mOperand;
 	private final Set<IGameState> mNeedSpoilerWinningSink;
-	private final LinkedHashSet<GameSummary> mGameSummaries;
+	private final LinkedHashSet<GameCallReturnSummary<STATE>> mGameSummaries;
 	
 	
 	
@@ -159,7 +159,7 @@ public class SummaryComputation<LETTER, STATE> {
 				}
 				for (final STATE spoilerDestinationState : spoilerChoice2Target2Prio.keySet()) {
 					final Map<IGameState, Integer> duplicatorResponses = spoilerChoice2Target2Prio.get(spoilerDestinationState);
-					final GameSummary gameSummary = new GameSummary(source, spoilerDestinationState, duplicatorResponses);
+					final GameCallReturnSummary gameSummary = new GameCallReturnSummary(source, spoilerDestinationState, duplicatorResponses);
 					mGameSummaries.add(gameSummary);
 				}
 			}
@@ -582,118 +582,9 @@ public class SummaryComputation<LETTER, STATE> {
 	/**
 	 * @return the gameSummaries
 	 */
-	public LinkedHashSet<GameSummary> getGameSummaries() {
+	public LinkedHashSet<GameCallReturnSummary<STATE>> getGameSummaries() {
 		return mGameSummaries;
 	}
 
-	public class GameSummary {
-		private final IGameState mSummarySource;
-		private final STATE mSpoilerDestinationState;
-		private final Map<IGameState, Integer> mDuplicatorResponses;
-		
-		public GameSummary(final IGameState summarySource, final STATE spoilerDestinationState,
-				final Map<IGameState, Integer> duplicatorResponses) {
-			super();
-			assert summarySource != null;
-			mSummarySource = summarySource;
-			assert spoilerDestinationState != null;
-			mSpoilerDestinationState = spoilerDestinationState;
-			assert !duplicatorResponses.isEmpty();
-			mDuplicatorResponses = duplicatorResponses;
-		}
-		
-		/**
-		 * @return the summarySource
-		 */
-		public IGameState getSummarySource() {
-			return mSummarySource;
-		}
 
-		/**
-		 * @return the spoilerDestinationState
-		 */
-		public STATE getSpoilerDestinationState() {
-			return mSpoilerDestinationState;
-		}
-
-		/**
-		 * @return the duplicatorResponses
-		 */
-		public Map<IGameState, Integer> getDuplicatorResponses() {
-			return mDuplicatorResponses;
-		}
-
-
-		/* (non-Javadoc)
-		 * @see java.lang.Object#hashCode()
-		 */
-		@Override
-		public int hashCode() {
-			final int prime = 31;
-			int result = 1;
-			result = prime * result + getOuterType().hashCode();
-			result = prime * result + ((mDuplicatorResponses == null) ? 0 : mDuplicatorResponses.hashCode());
-			result = prime * result + ((mSpoilerDestinationState == null) ? 0 : mSpoilerDestinationState.hashCode());
-			result = prime * result + ((mSummarySource == null) ? 0 : mSummarySource.hashCode());
-			return result;
-		}
-
-
-
-
-		/* (non-Javadoc)
-		 * @see java.lang.Object#equals(java.lang.Object)
-		 */
-		@Override
-		public boolean equals(final Object obj) {
-			if (this == obj)
-				return true;
-			if (obj == null)
-				return false;
-			if (getClass() != obj.getClass())
-				return false;
-			final GameSummary other = (GameSummary) obj;
-			if (!getOuterType().equals(other.getOuterType()))
-				return false;
-			if (mDuplicatorResponses == null) {
-				if (other.mDuplicatorResponses != null)
-					return false;
-			} else if (!mDuplicatorResponses.equals(other.mDuplicatorResponses))
-				return false;
-			if (mSpoilerDestinationState == null) {
-				if (other.mSpoilerDestinationState != null)
-					return false;
-			} else if (!mSpoilerDestinationState.equals(other.mSpoilerDestinationState))
-				return false;
-			if (mSummarySource == null) {
-				if (other.mSummarySource != null)
-					return false;
-			} else if (!mSummarySource.equals(other.mSummarySource))
-				return false;
-			return true;
-		}
-
-
-
-
-		/* (non-Javadoc)
-		 * @see java.lang.Object#toString()
-		 */
-		@Override
-		public String toString() {
-			return "Source:" + mSummarySource + ", SpoilerDestinationState:"
-					+ mSpoilerDestinationState + ", DuplicatorResponses:" + mDuplicatorResponses + "]";
-		}
-
-
-
-
-		private SummaryComputation getOuterType() {
-			return SummaryComputation.this;
-		}
-	}
-	
-	
-	
-	
 }

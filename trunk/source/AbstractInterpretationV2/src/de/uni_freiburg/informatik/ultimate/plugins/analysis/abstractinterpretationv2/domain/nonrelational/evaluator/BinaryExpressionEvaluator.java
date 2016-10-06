@@ -29,14 +29,16 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.BiFunction;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue.Value;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValueFactory;
@@ -70,6 +72,8 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 
 	private Operator mOperator;
 
+	private final VALUE mTopValue;
+
 	public BinaryExpressionEvaluator(final EvaluatorLogger logger, final EvaluatorType type,
 			final int maxParallelStates, final INonrelationalValueFactory<VALUE> nonrelationalValueFactory) {
 		mLogger = logger;
@@ -77,6 +81,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 		mEvaluatorType = type;
 		mMaxParallelSates = maxParallelStates;
 		mNonrelationalValueFactory = nonrelationalValueFactory;
+		mTopValue = mNonrelationalValueFactory.createTopValue();
 	}
 
 	@Override
@@ -88,149 +93,137 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 		final List<IEvaluationResult<VALUE>> firstResult = mLeftSubEvaluator.evaluate(currentState);
 		final List<IEvaluationResult<VALUE>> secondResult = mRightSubEvaluator.evaluate(currentState);
 
-		mLeftSubEvaluator.getVarIdentifiers().forEach(var -> mVariableSet.add(var));
-		mRightSubEvaluator.getVarIdentifiers().forEach(var -> mVariableSet.add(var));
+		mLeftSubEvaluator.getVarIdentifiers().forEach(mVariableSet::add);
+		mRightSubEvaluator.getVarIdentifiers().forEach(mVariableSet::add);
 
 		for (final IEvaluationResult<VALUE> res1 : firstResult) {
 			for (final IEvaluationResult<VALUE> res2 : secondResult) {
-				VALUE returnValue = mNonrelationalValueFactory.createTopValue();
-				BooleanValue returnBool = new BooleanValue();
-
-				switch (mOperator) {
-				case ARITHPLUS:
-					returnValue = res1.getValue().add(res2.getValue());
-					returnBool = new BooleanValue(false);
-					break;
-				case ARITHMINUS:
-					returnValue = res1.getValue().subtract(res2.getValue());
-					returnBool = new BooleanValue(false);
-					break;
-				case ARITHMUL:
-					returnValue = res1.getValue().multiply(res2.getValue());
-					returnBool = new BooleanValue(false);
-					break;
-				case ARITHDIV:
-					switch (mEvaluatorType) {
-					case INTEGER:
-						returnValue = res1.getValue().integerDivide(res2.getValue());
-						break;
-					case REAL:
-						returnValue = res1.getValue().divide(res2.getValue());
-						break;
-					default:
-						throw new UnsupportedOperationException(
-								"Division on types other than integers and reals is undefined.");
-					}
-					returnBool = new BooleanValue(false);
-					break;
-				case ARITHMOD:
-					switch (mEvaluatorType) {
-					case INTEGER:
-						returnValue = res1.getValue().modulo(res2.getValue(), true);
-						break;
-					case REAL:
-						returnValue = res1.getValue().modulo(res2.getValue(), false);
-						break;
-					default:
-						throw new UnsupportedOperationException(
-								"Modulo operation on types other than integers and reals is undefined.");
-					}
-					returnBool = new BooleanValue(false);
-					break;
-				case LOGICAND:
-					returnBool = res1.getBooleanValue().and(res2.getBooleanValue());
-					break;
-				case LOGICOR:
-					returnBool = res1.getBooleanValue().or(res2.getBooleanValue());
-					break;
-				case LOGICIMPLIES:
-					throw new UnsupportedOperationException(
-							"Implications should have been removed during expression normalization.");
-				case LOGICIFF:
-					throw new UnsupportedOperationException(
-							"If and only if expressions should have been removed during expression normalization.");
-				case COMPEQ:
-					if (mLeftSubEvaluator.containsBool() || mRightSubEvaluator.containsBool()) {
-						returnBool =
-								((res1.getBooleanValue().intersect(res2.getBooleanValue())).getValue() != Value.BOTTOM
-										? new BooleanValue(true) : new BooleanValue(Value.BOTTOM));
-					}
-
-					returnValue = res1.getValue().intersect(res2.getValue());
-
-					if (returnBool.isBottom() || returnValue.isBottom()) {
-						returnBool = new BooleanValue(false);
-						break;
-					}
-
-					if (!mLeftSubEvaluator.containsBool() && !mRightSubEvaluator.containsBool()) {
-						returnBool = returnValue.compareEquality(res1.getValue(), res2.getValue());
-					}
-					break;
-				case COMPNEQ:
-					// Don't do anything with the return value here. Just check for inequality and return the
-					// appropriate boolean value.
-					// TODO it might be necessary to overthink this behavior for different other abstract domains!
-					if (!mLeftSubEvaluator.containsBool() && !mRightSubEvaluator.containsBool()) {
-						returnBool = returnValue.compareInequality(res1.getValue(), res2.getValue());
-					}
-					break;
-				case COMPGT:
-					if (!res1.getValue().canHandleReals()) {
-						mLogger.warnOverapproximatingOperator(mOperator);
-					}
-
-					returnValue = res1.getValue().greaterThan(res2.getValue());
-
-					if (returnValue.isBottom()) {
-						returnBool = new BooleanValue(false);
-					} else {
-						returnBool = res1.getValue().isGreaterThan(res2.getValue());
-					}
-					break;
-				case COMPGEQ:
-					returnValue = res1.getValue().greaterOrEqual(res2.getValue());
-
-					if (returnValue.isBottom()) {
-						returnBool = new BooleanValue(false);
-					} else {
-						returnBool = res1.getValue().isGreaterOrEqual(res2.getValue());
-					}
-					break;
-				case COMPLT:
-					if (!res1.getValue().canHandleReals()) {
-						mLogger.warnOverapproximatingOperator(mOperator);
-					}
-
-					returnValue = res1.getValue().lessThan(res2.getValue());
-
-					if (returnValue.isBottom()) {
-						returnBool = new BooleanValue(false);
-					} else {
-						returnBool = res1.getValue().isLessThan(res2.getValue());
-					}
-					break;
-				case COMPLEQ:
-					returnValue = res1.getValue().lessOrEqual(res2.getValue());
-
-					if (returnValue.isBottom()) {
-						returnBool = new BooleanValue(false);
-					} else {
-						returnBool = res1.getValue().isLessOrEqual(res2.getValue());
-					}
-					break;
-				case COMPPO:
-				default:
-					mLogger.warnUnknownOperator(mOperator);
-					returnBool = new BooleanValue(false);
-					returnValue = mNonrelationalValueFactory.createTopValue();
-				}
-				returnList.add(new NonrelationalEvaluationResult<>(returnValue, returnBool));
+				final List<IEvaluationResult<VALUE>> result = evaluate(mOperator, res1, res2);
+				mLogger.logEvaluation(mOperator, result, res1, res2);
+				returnList.addAll(result);
 			}
 		}
 
 		assert !returnList.isEmpty();
 		return NonrelationalStateUtils.mergeIfNecessary(returnList, mMaxParallelSates);
+	}
+
+	private List<IEvaluationResult<VALUE>> evaluate(final Operator op, final IEvaluationResult<VALUE> first,
+			final IEvaluationResult<VALUE> second) {
+
+		final VALUE firstValue = first.getValue();
+		final VALUE secondValue = second.getValue();
+		switch (op) {
+		case ARITHPLUS:
+			return onlyValue(firstValue.add(secondValue));
+		case ARITHMINUS:
+			return onlyValue(firstValue.subtract(secondValue));
+		case ARITHMUL:
+			return onlyValue(firstValue.multiply(secondValue));
+		case ARITHDIV:
+			return evaluateArithDiv(first, second);
+		case ARITHMOD:
+			assert mEvaluatorType == EvaluatorType.INTEGER : "Type error: modulo is not defined on reals";
+			return onlyValue(firstValue.modulo(secondValue));
+		case LOGICAND:
+			return onlyBoolean(first.getBooleanValue().and(second.getBooleanValue()));
+		case LOGICOR:
+			return onlyBoolean(first.getBooleanValue().or(second.getBooleanValue()));
+		case LOGICIMPLIES:
+			throw new UnsupportedOperationException(
+					"Implications should have been removed during expression normalization.");
+		case LOGICIFF:
+			throw new UnsupportedOperationException(
+					"If and only if expressions should have been removed during expression normalization.");
+		case COMPEQ:
+			return evaluateCompEq(first, second);
+		case COMPNEQ:
+			// Don't do anything with the return value here. Just check for inequality and return the
+			// appropriate boolean value.
+			// TODO it might be necessary to change this behavior for different other abstract domains!
+			if (!mLeftSubEvaluator.containsBool() && !mRightSubEvaluator.containsBool()) {
+				return onlyBoolean(firstValue.compareInequality(secondValue));
+			}
+			return onlyTop();
+		case COMPGT:
+			if (!firstValue.canHandleReals()) {
+				mLogger.warnOverapproximatingOperator(mOperator);
+			}
+			return evaluateCompare(firstValue, secondValue, this::greaterThan, this::greaterThanBool);
+		case COMPGEQ:
+			return evaluateCompare(firstValue, secondValue, this::greaterOrEqual, this::greaterOrEqualBool);
+		case COMPLT:
+			if (!firstValue.canHandleReals()) {
+				mLogger.warnOverapproximatingOperator(mOperator);
+			}
+			return evaluateCompare(firstValue, secondValue, this::lessThan, this::lessThanBool);
+		case COMPLEQ:
+			return evaluateCompare(firstValue, secondValue, this::lessOrEqual, this::lessOrEqualBool);
+		case COMPPO:
+		default:
+			mLogger.warnUnknownOperator(mOperator);
+			return onlyTop();
+		}
+	}
+
+	private List<IEvaluationResult<VALUE>> evaluateArithDiv(final IEvaluationResult<VALUE> first,
+			final IEvaluationResult<VALUE> second) {
+		switch (mEvaluatorType) {
+		case INTEGER:
+			return onlyValue(first.getValue().divideInteger(second.getValue()));
+		case REAL:
+			return onlyValue(first.getValue().divide(second.getValue()));
+		default:
+			throw new UnsupportedOperationException("Division on types other than integers and reals is undefined.");
+		}
+	}
+
+	private List<IEvaluationResult<VALUE>> evaluateCompare(final VALUE first, final VALUE second,
+			final BiFunction<VALUE, VALUE, VALUE> compareValue,
+			final BiFunction<VALUE, VALUE, BooleanValue> compareBoolean) {
+		final VALUE returnValue = compareValue.apply(first, second);
+		final BooleanValue returnBool;
+		if (returnValue.isBottom()) {
+			returnBool = BooleanValue.FALSE;
+		} else {
+			returnBool = compareBoolean.apply(first, second);
+		}
+
+		if (!returnBool.isSingleton()) {
+			return both(returnValue, returnBool);
+		}
+
+		final List<IEvaluationResult<VALUE>> rtr = new ArrayList<>();
+		rtr.add(new NonrelationalEvaluationResult<>(returnValue, returnBool));
+		final BooleanValue negBool = returnBool.neg();
+		final Collection<VALUE> compl;
+		if (mLeftSubEvaluator.getType() == EvaluatorType.INTEGER) {
+			compl = returnValue.complementInteger();
+		} else {
+			compl = returnValue.complement();
+		}
+		for (final VALUE complement : compl) {
+			rtr.add(new NonrelationalEvaluationResult<>(complement, negBool));
+		}
+		return rtr;
+	}
+
+	private List<IEvaluationResult<VALUE>> evaluateCompEq(final IEvaluationResult<VALUE> first,
+			final IEvaluationResult<VALUE> second) {
+		BooleanValue returnBool = BooleanValue.INVALID;
+		if (mLeftSubEvaluator.containsBool() || mRightSubEvaluator.containsBool()) {
+			returnBool = first.getBooleanValue().intersect(second.getBooleanValue()) != BooleanValue.BOTTOM
+					? BooleanValue.TRUE : BooleanValue.BOTTOM;
+		}
+
+		final VALUE returnValue = first.getValue().intersect(second.getValue());
+
+		if (returnBool.isBottom() || returnValue.isBottom()) {
+			returnBool = BooleanValue.FALSE;
+		} else if (!mLeftSubEvaluator.containsBool() && !mRightSubEvaluator.containsBool()) {
+			returnBool = first.getValue().compareEquality(second.getValue());
+		}
+		return Collections.singletonList(new NonrelationalEvaluationResult<>(returnValue, returnBool));
 	}
 
 	@Override
@@ -252,18 +245,11 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 				case LOGICAND:
 					final List<STATE> leftAnd = mLeftSubEvaluator.inverseEvaluate(computedValue, currentState);
 					final List<STATE> rightAnd = mRightSubEvaluator.inverseEvaluate(computedValue, currentState);
-
-					for (final STATE le : leftAnd) {
-						for (final STATE ri : rightAnd) {
-							returnStates.add(le.intersect(ri));
-						}
-					}
+					returnStates.addAll(crossIntersect(leftAnd, rightAnd));
 					break;
 				case LOGICOR:
-					mLeftSubEvaluator.inverseEvaluate(computedValue, currentState)
-							.forEach(leftOr -> returnStates.add(leftOr));
-					mRightSubEvaluator.inverseEvaluate(computedValue, currentState)
-							.forEach(rightOr -> returnStates.add(rightOr));
+					mLeftSubEvaluator.inverseEvaluate(computedValue, currentState).forEach(returnStates::add);
+					mRightSubEvaluator.inverseEvaluate(computedValue, currentState).forEach(returnStates::add);
 					break;
 				case LOGICIMPLIES:
 					throw new UnsupportedOperationException(
@@ -274,7 +260,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 				case COMPEQ:
 					final BooleanValue intersectBool = left.getBooleanValue().intersect(right.getBooleanValue());
 					if ((mLeftSubEvaluator.containsBool() || mRightSubEvaluator.containsBool())
-							&& (intersectBool.getValue() == Value.TOP)) {
+							&& (intersectBool == BooleanValue.TOP)) {
 						returnStates.add(currentState);
 						break;
 					}
@@ -289,12 +275,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 
 					final List<STATE> leftEq = mLeftSubEvaluator.inverseEvaluate(leftEvalresult, currentState);
 					final List<STATE> rightEq = mRightSubEvaluator.inverseEvaluate(rightEvalresult, currentState);
-
-					for (final STATE le : leftEq) {
-						for (final STATE ri : rightEq) {
-							returnStates.add(le.intersect(ri));
-						}
-					}
+					returnStates.addAll(crossIntersect(leftEq, rightEq));
 					break;
 				case COMPNEQ:
 				case COMPGT:
@@ -320,11 +301,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 					final List<STATE> rightInverseArith =
 							mRightSubEvaluator.inverseEvaluate(inverseResultRight, currentState);
 
-					for (final STATE le : leftInverseArith) {
-						for (final STATE ri : rightInverseArith) {
-							returnStates.add(le.intersect(ri));
-						}
-					}
+					returnStates.addAll(crossIntersect(leftInverseArith, rightInverseArith));
 					break;
 				default:
 					mLogger.warnUnknownOperator(mOperator);
@@ -335,13 +312,23 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 				if (returnStates.isEmpty()) {
 					returnStates.add(currentState);
 				}
-
+				mLogger.logEvaluation(mOperator, returnStates, left, right);
 				returnList.addAll(returnStates);
 			}
 		}
 
 		assert !returnList.isEmpty();
 		return returnList;
+	}
+
+	private List<STATE> crossIntersect(final List<STATE> left, final List<STATE> right) {
+		final List<STATE> rtr = new ArrayList<>(left.size() * right.size());
+		for (final STATE le : left) {
+			for (final STATE ri : right) {
+				rtr.add(le.intersect(ri));
+			}
+		}
+		return rtr;
 	}
 
 	private VALUE computeNewValue(final VALUE referenceValue, final VALUE oldValue, final VALUE otherValue,
@@ -363,7 +350,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 			break;
 		case ARITHMUL:
 			if (mEvaluatorType == EvaluatorType.INTEGER) {
-				newValue = referenceValue.integerDivide(otherValue);
+				newValue = referenceValue.divideInteger(otherValue);
 			} else if (mEvaluatorType == EvaluatorType.REAL) {
 				newValue = referenceValue.divide(otherValue);
 			} else {
@@ -446,7 +433,7 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 
 	@Override
 	public boolean hasFreeOperands() {
-		return (mLeftSubEvaluator == null || mRightSubEvaluator == null);
+		return mLeftSubEvaluator == null || mRightSubEvaluator == null;
 	}
 
 	@Override
@@ -527,6 +514,66 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 		sb.append(mRightSubEvaluator);
 
 		return sb.toString();
+	}
+
+	private List<IEvaluationResult<VALUE>> both(final VALUE value, final BooleanValue bvalue) {
+		assert value != null;
+		assert bvalue != null;
+		assert bvalue != BooleanValue.INVALID;
+		return Collections.singletonList(new NonrelationalEvaluationResult<>(value, bvalue));
+	}
+
+	private List<IEvaluationResult<VALUE>> onlyValue(final VALUE value) {
+		assert value != null;
+		return Collections.singletonList(new NonrelationalEvaluationResult<>(value, BooleanValue.INVALID));
+	}
+
+	private List<IEvaluationResult<VALUE>> onlyBoolean(final BooleanValue value) {
+		assert value != null;
+		assert value != BooleanValue.INVALID;
+		return Collections.singletonList(new NonrelationalEvaluationResult<>(mTopValue, value));
+	}
+
+	private List<IEvaluationResult<VALUE>> onlyTop() {
+		return Collections.singletonList(new NonrelationalEvaluationResult<>(mTopValue, BooleanValue.TOP));
+	}
+
+	private VALUE greaterThan(final VALUE first, final VALUE second) {
+		return first.greaterThan(second);
+	}
+
+	private VALUE greaterOrEqual(final VALUE first, final VALUE second) {
+		return first.greaterOrEqual(second);
+	}
+
+	private VALUE lessThan(final VALUE first, final VALUE second) {
+		return first.lessThan(second);
+	}
+
+	private VALUE lessOrEqual(final VALUE first, final VALUE second) {
+		return first.lessOrEqual(second);
+	}
+
+	private BooleanValue greaterThanBool(final VALUE first, final VALUE second) {
+		return first.isGreaterThan(second);
+	}
+
+	private BooleanValue greaterOrEqualBool(final VALUE first, final VALUE second) {
+		return first.isGreaterOrEqual(second);
+	}
+
+	private BooleanValue lessThanBool(final VALUE first, final VALUE second) {
+		return first.isLessThan(second);
+	}
+
+	private BooleanValue lessOrEqualBool(final VALUE first, final VALUE second) {
+		return first.isLessOrEqual(second);
+	}
+
+	@Override
+	public EvaluatorType getType() {
+		assert mLeftSubEvaluator.getType() == mRightSubEvaluator.getType();
+		return mEvaluatorType;
 	}
 
 }

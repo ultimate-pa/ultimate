@@ -54,6 +54,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
+import de.uni_freiburg.informatik.ultimate.util.RunningTaskInfo;
+import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
@@ -74,44 +76,58 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends UnaryNwaOp
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand, final ISimulationInfoProvider<LETTER, STATE> simulationInfoProvider) throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
+		
+		mLogger.info(startMessage());
+		
 		final Collection<Set<STATE>> possibleEquivalentClasses = new LookaheadPartitionConstructor<LETTER, STATE>(mServices, mOperand).getResult();
 		final int sizeOfLargestEquivalenceClass = NestedWordAutomataUtils.computeSizeOfLargestEquivalenceClass(possibleEquivalentClasses);
 		mLogger.info("Initial partition has " + possibleEquivalentClasses.size() + 
 				" equivalence classes, largest equivalence class has " + sizeOfLargestEquivalenceClass + " states.");
 		
-		final GameFactory gameFactory = new GameFactory();
-		final SpoilerNwaVertex<LETTER, STATE> uniqueSpoilerWinningSink = constructUniqueSpoilerWinninSink();
-		final INestedWordAutomatonSimple<IGameLetter<LETTER, STATE>, IGameState> gameAutomaton = 
-				new GameAutomaton<LETTER, STATE>(mServices, gameFactory, possibleEquivalentClasses, operand, simulationInfoProvider, uniqueSpoilerWinningSink);
-		final IDoubleDeckerAutomaton<IGameLetter<LETTER, STATE>, IGameState> ga = new RemoveUnreachable<IGameLetter<LETTER, STATE>, IGameState>(mServices, gameAutomaton).getResult();
-		final AGameGraph<LETTER, STATE> graph = new GameAutomatonToGamGraphTransformer<LETTER, STATE>(mServices, ga, uniqueSpoilerWinningSink, mOperand).getResult();
-		final ParsimoniousSimulation sim = new ParsimoniousSimulation(null, mLogger, false, null, null, graph);
-		sim.doSimulation();
-		final HashRelation<STATE, STATE> simRelation = readoutSimulationRelation(graph, simulationInfoProvider, operand);
-		final UnionFind<STATE> equivalenceRelation = computeEquivalenceRelation(simRelation, operand.getStates());
+		try {
 		
-		assert (NwaSimulationUtil.areNwaSimulationResultsCorrect(graph, mOperand, ESimulationType.DIRECT,
-				mLogger)) : "The computed simulation results are incorrect.";
+			final GameFactory gameFactory = new GameFactory();
+			final SpoilerNwaVertex<LETTER, STATE> uniqueSpoilerWinningSink = constructUniqueSpoilerWinninSink();
+			final INestedWordAutomatonSimple<IGameLetter<LETTER, STATE>, IGameState> gameAutomaton;
 
-		if (mOperand.getCallAlphabet().isEmpty()) {
-			final boolean addMapping = false;
-			final QuotientNwaConstructor<LETTER, STATE> quotientNwaConstructor =
-					new QuotientNwaConstructor<LETTER, STATE>(mServices, stateFactory, mOperand, equivalenceRelation, addMapping );
-			mResult = (IDoubleDeckerAutomaton<LETTER, STATE>) quotientNwaConstructor.getResult();
-		} else {
-			final boolean mergeFinalAndNonFinalStates = simulationInfoProvider.mayMergeFinalAndNonFinalStates();
-			final MinimizeNwaMaxSat2<LETTER, STATE> maxSatMinimizer = new MinimizeNwaMaxSat2<LETTER, STATE>(mServices, stateFactory, mOperand,
-					!mergeFinalAndNonFinalStates, equivalenceRelation.getAllEquivalenceClasses(), false, false, false, true, false);
-			mResult = maxSatMinimizer.getResult();
+			gameAutomaton = new GameAutomaton<LETTER, STATE>(mServices, gameFactory, possibleEquivalentClasses, operand, simulationInfoProvider, uniqueSpoilerWinningSink);
+			final IDoubleDeckerAutomaton<IGameLetter<LETTER, STATE>, IGameState> ga = new RemoveUnreachable<IGameLetter<LETTER, STATE>, IGameState>(mServices, gameAutomaton).getResult();
+			final AGameGraph<LETTER, STATE> graph = new GameAutomatonToGamGraphTransformer<LETTER, STATE>(mServices, ga, uniqueSpoilerWinningSink, mOperand).getResult();
+			final ParsimoniousSimulation sim = new ParsimoniousSimulation(null, mLogger, false, null, null, graph);
+			sim.doSimulation();
+			final HashRelation<STATE, STATE> simRelation = readoutSimulationRelation(graph, simulationInfoProvider, operand);
+			final UnionFind<STATE> equivalenceRelation = computeEquivalenceRelation(simRelation, operand.getStates());
+
+			assert (NwaSimulationUtil.areNwaSimulationResultsCorrect(graph, mOperand, ESimulationType.DIRECT,
+					mLogger)) : "The computed simulation results are incorrect.";
+
+			if (mOperand.getCallAlphabet().isEmpty()) {
+				final boolean addMapping = false;
+				final QuotientNwaConstructor<LETTER, STATE> quotientNwaConstructor =
+						new QuotientNwaConstructor<LETTER, STATE>(mServices, stateFactory, mOperand, equivalenceRelation, addMapping );
+				mResult = (IDoubleDeckerAutomaton<LETTER, STATE>) quotientNwaConstructor.getResult();
+			} else {
+				final boolean mergeFinalAndNonFinalStates = simulationInfoProvider.mayMergeFinalAndNonFinalStates();
+				final MinimizeNwaMaxSat2<LETTER, STATE> maxSatMinimizer = new MinimizeNwaMaxSat2<LETTER, STATE>(mServices, stateFactory, mOperand,
+						!mergeFinalAndNonFinalStates, equivalenceRelation.getAllEquivalenceClasses(), false, false, false, true, false);
+				mResult = maxSatMinimizer.getResult();
+			}
+			sim.triggerComputationOfPerformanceData(mResult);
+			sim.getSimulationPerformance();
+			NwaSimulationUtil.retrieveGeneralNwaAutomataPerformance(sim.getSimulationPerformance(),
+					mOperand, mResult, mServices);
+			mStatistics = sim.getSimulationPerformance().exportToAutomataOperationStatistics();
+			mStatistics.addKeyValuePair(StatisticsType.SIZE_MAXIMAL_INITIAL_EQUIVALENCE_CLASS, sizeOfLargestEquivalenceClass);
+		
+		} catch (final ToolchainCanceledException tce) {
+			final RunningTaskInfo rti = new RunningTaskInfo(getClass(), 
+					NestedWordAutomataUtils.generateGenericMinimizationRunningTaskDescription(mOperand, possibleEquivalentClasses));
+			tce.addRunningTaskInfo(rti);
+			throw tce;
 		}
-		sim.triggerComputationOfPerformanceData(mResult);
-		sim.getSimulationPerformance();
-		NwaSimulationUtil.retrieveGeneralNwaAutomataPerformance(sim.getSimulationPerformance(),
-				mOperand, mResult, mServices);
-		mStatistics = sim.getSimulationPerformance().exportToAutomataOperationStatistics();
-		mStatistics.addKeyValuePair(StatisticsType.SIZE_MAXIMAL_INITIAL_EQUIVALENCE_CLASS, sizeOfLargestEquivalenceClass);
+		mLogger.info(exitMessage());
 	}
-
+	
 	private SpoilerNwaVertex<LETTER, STATE> constructUniqueSpoilerWinninSink() {
 		final SpoilerNwaVertex<LETTER, STATE> uniqueSpoilerWinningSink = new SpoilerNwaVertex<LETTER, STATE>(1, false, null, null, new SpoilerWinningSink<>(null));
 		return uniqueSpoilerWinningSink;

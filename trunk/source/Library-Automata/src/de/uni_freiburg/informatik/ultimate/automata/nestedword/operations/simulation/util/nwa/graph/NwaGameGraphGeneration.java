@@ -69,6 +69,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game.GameSpoilerNwaVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game.IGameLetter;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game.IGameState;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.summarycomputationgraph.GameCallReturnSummary;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.summarycomputationgraph.SummaryComputation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingCallTransition;
@@ -1443,7 +1444,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 				addSpoilerWinningSinkExtended(src);
 			}
 
-			for (final SummaryComputation<LETTER, STATE>.GameSummary game : sc.getGameSummaries()) {
+			for (final GameCallReturnSummary<STATE> game : sc.getGameSummaries()) {
 				if (sc.getNeedSpoilerWinningSink().contains(game.getSummarySource())) {
 					// we already added a winning sink,
 					// no need to add another summary

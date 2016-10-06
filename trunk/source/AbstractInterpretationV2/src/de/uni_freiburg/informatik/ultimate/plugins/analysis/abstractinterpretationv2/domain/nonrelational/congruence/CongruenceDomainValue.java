@@ -1,6 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.congruence;
 
 import java.math.BigInteger;
+import java.util.Collection;
+import java.util.Collections;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -400,12 +402,12 @@ public final class CongruenceDomainValue
 	}
 
 	@Override
-	public CongruenceDomainValue integerDivide(final CongruenceDomainValue other) {
+	public CongruenceDomainValue divideInteger(final CongruenceDomainValue other) {
 		return divide(other);
 	}
 
 	@Override
-	public CongruenceDomainValue modulo(final CongruenceDomainValue other, final boolean isInteger) {
+	public CongruenceDomainValue modulo(final CongruenceDomainValue other) {
 		return mod(other);
 	}
 
@@ -417,9 +419,9 @@ public final class CongruenceDomainValue
 	@Override
 	public BooleanValue isGreaterThan(final CongruenceDomainValue other) {
 		if (isConstant() && other.isConstant()) {
-			return new BooleanValue(value().compareTo(other.value()) > 0);
+			return BooleanValue.getBooleanValue(value().compareTo(other.value()) > 0);
 		}
-		return new BooleanValue();
+		return BooleanValue.TOP;
 	}
 
 	@Override
@@ -430,9 +432,9 @@ public final class CongruenceDomainValue
 	@Override
 	public BooleanValue isGreaterOrEqual(final CongruenceDomainValue other) {
 		if (isConstant() && other.isConstant()) {
-			return new BooleanValue(value().compareTo(other.value()) >= 0);
+			return BooleanValue.getBooleanValue(value().compareTo(other.value()) >= 0);
 		}
-		return new BooleanValue();
+		return BooleanValue.TOP;
 	}
 
 	@Override
@@ -443,9 +445,9 @@ public final class CongruenceDomainValue
 	@Override
 	public BooleanValue isLessThan(final CongruenceDomainValue other) {
 		if (isConstant() && other.isConstant()) {
-			return new BooleanValue(value().compareTo(other.value()) < 0);
+			return BooleanValue.getBooleanValue(value().compareTo(other.value()) < 0);
 		}
-		return new BooleanValue();
+		return BooleanValue.TOP;
 	}
 
 	@Override
@@ -456,9 +458,9 @@ public final class CongruenceDomainValue
 	@Override
 	public BooleanValue isLessOrEqual(final CongruenceDomainValue other) {
 		if (isConstant() && other.isConstant()) {
-			return new BooleanValue(value().compareTo(other.value()) <= 0);
+			return BooleanValue.getBooleanValue(value().compareTo(other.value()) <= 0);
 		}
-		return new BooleanValue();
+		return BooleanValue.TOP;
 	}
 
 	@Override
@@ -530,20 +532,34 @@ public final class CongruenceDomainValue
 	}
 
 	@Override
-	public BooleanValue compareEquality(final CongruenceDomainValue firstOther,
-			final CongruenceDomainValue secondOther) {
-		if (firstOther.isConstant() && secondOther.isConstant()) {
-			return new BooleanValue(firstOther.value().equals(secondOther.value()));
+	public BooleanValue compareEquality(final CongruenceDomainValue secondOther) {
+		if (isConstant() && secondOther.isConstant()) {
+			return BooleanValue.getBooleanValue(value().equals(secondOther.value()));
 		}
-		return new BooleanValue();
+		return BooleanValue.TOP;
 	}
 
 	@Override
-	public BooleanValue compareInequality(final CongruenceDomainValue firstOther,
-			final CongruenceDomainValue secondOther) {
-		if (firstOther.isConstant() && secondOther.isConstant()) {
-			return new BooleanValue(!firstOther.value().equals(secondOther.value()));
+	public BooleanValue compareInequality(final CongruenceDomainValue secondOther) {
+		if (isConstant() && secondOther.isConstant()) {
+			return BooleanValue.getBooleanValue(!value().equals(secondOther.value()));
 		}
-		return new BooleanValue();
+		return BooleanValue.TOP;
+	}
+
+	@Override
+	public Collection<CongruenceDomainValue> complement() {
+		if (!isConstant() && mValue == BigInteger.ONE) {
+			// its top
+			return Collections.singleton(createBottom());
+		}
+		// all other cases are top
+		return Collections.singleton(createTop());
+	}
+
+	@Override
+	public Collection<CongruenceDomainValue> complementInteger() {
+		// no difference
+		return complement();
 	}
 }

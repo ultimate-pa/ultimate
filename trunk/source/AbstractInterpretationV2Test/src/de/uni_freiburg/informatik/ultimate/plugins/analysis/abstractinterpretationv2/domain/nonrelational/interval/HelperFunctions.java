@@ -37,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.SingletonValueExpressionEvaluator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.LoggerInitializer;
 import de.uni_freiburg.informatik.ultimate.test.ConsoleLogger;
 
 /**
@@ -46,7 +45,12 @@ import de.uni_freiburg.informatik.ultimate.test.ConsoleLogger;
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class HelperFunctions {
+public final class HelperFunctions {
+
+	private HelperFunctions() {
+		// do not instantiate utility class
+	}
+
 	protected static IntervalDomainValue createInterval(final int lower, final int upper) {
 		return new IntervalDomainValue(new IntervalValue(new BigDecimal(lower)),
 				new IntervalValue(new BigDecimal(upper)));
@@ -60,13 +64,11 @@ public class HelperFunctions {
 			final IntervalDomainValue first, final IntervalDomainValue second, final Operator operator,
 			final EvaluatorType type, final int maxParallelStates) {
 
-		final LoggerInitializer loggerInitializer = new LoggerInitializer();
-		final EvaluatorLogger logger =
-				new EvaluatorLogger(loggerInitializer.getLogger(HelperFunctions.class.toGenericString()));
+		final EvaluatorLogger logger = new EvaluatorLogger(new ConsoleLogger());
 		final SingletonValueExpressionEvaluator<IntervalDomainValue, IntervalDomainState> value1Evaluator =
-				new SingletonValueExpressionEvaluator<>(first);
+				new SingletonValueExpressionEvaluator<>(first, type);
 		final SingletonValueExpressionEvaluator<IntervalDomainValue, IntervalDomainState> value2Evaluator =
-				new SingletonValueExpressionEvaluator<>(second);
+				new SingletonValueExpressionEvaluator<>(second, type);
 		final BinaryExpressionEvaluator<IntervalDomainValue, IntervalDomainState> binaryExpressionEvaluator =
 				new BinaryExpressionEvaluator<>(logger, type, maxParallelStates, new IntervalValueFactory());
 

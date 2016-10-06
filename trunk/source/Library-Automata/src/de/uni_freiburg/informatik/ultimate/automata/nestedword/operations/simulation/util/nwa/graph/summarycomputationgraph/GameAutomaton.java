@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.util.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
@@ -90,7 +91,10 @@ public class GameAutomaton<LETTER, STATE> extends NestedWordAutomatonOnDemandSta
 	protected void constructInitialStates() throws AutomataOperationCanceledException {
 		for (final Set<STATE> eqClass : mPossibleEquivalentClasses) {
 			if (!mServices.getProgressMonitorService().continueProcessing()) {
-				throw new AutomataOperationCanceledException(this.getClass());
+				final long initialNodes = NestedWordAutomataUtils.computeNumberOfEquivalentPairs(mPossibleEquivalentClasses);
+				final RunningTaskInfo rti = new RunningTaskInfo(getClass(),
+						"constructing " + initialNodes + "initial vertices");
+				throw new AutomataOperationCanceledException(rti);
 			}
 			for (final STATE q0 : eqClass) {
 				for (final STATE q1 : eqClass) {

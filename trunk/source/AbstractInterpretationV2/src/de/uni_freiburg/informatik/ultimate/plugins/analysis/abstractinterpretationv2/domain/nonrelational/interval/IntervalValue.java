@@ -2,27 +2,27 @@
  * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE AbstractInterpretationV2 plug-in.
- * 
+ *
  * The ULTIMATE AbstractInterpretationV2 plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE AbstractInterpretationV2 plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE AbstractInterpretationV2 plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE AbstractInterpretationV2 plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission
  * to convey the resulting work.
  */
 
@@ -37,14 +37,14 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 /**
  * A value in the interval domain for abstract interpretation. This value can be of any numbered type or can be
  * infinity.
- * 
+ *
  * <p>
  * For interpreting values, one must always account for possible infinity. If {@link #isInfinity()} returns
  * <code>true</code>, the value obtained through {@link #getValue()} must be ignored as it is unsound.
  * </p>
- * 
+ *
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
- * 
+ *
  */
 public class IntervalValue implements Comparable<IntervalValue> {
 
@@ -66,7 +66,7 @@ public class IntervalValue implements Comparable<IntervalValue> {
 
 	/**
 	 * Constructor for a new {@link IntervalValue} that sets the value to a provided value.
-	 * 
+	 *
 	 * @param val
 	 *            The value to set.
 	 */
@@ -82,7 +82,7 @@ public class IntervalValue implements Comparable<IntervalValue> {
 
 	/**
 	 * Constructor for a new {@link IntervalValue} that sets the value to a provided value.
-	 * 
+	 *
 	 * @param val
 	 *            The value to set.
 	 */
@@ -95,7 +95,7 @@ public class IntervalValue implements Comparable<IntervalValue> {
 
 	/**
 	 * Constructor for a new {@link IntervalValue} that sets the value to the provided value.
-	 * 
+	 *
 	 * @param val
 	 *            The value to set.
 	 */
@@ -105,7 +105,7 @@ public class IntervalValue implements Comparable<IntervalValue> {
 
 	/**
 	 * Constructor for a new {@link IntervalValue} that sets the value to the provided value.
-	 * 
+	 *
 	 * @param val
 	 *            The value to set.
 	 */
@@ -116,7 +116,7 @@ public class IntervalValue implements Comparable<IntervalValue> {
 	/**
 	 * Constructor for a new {@link IntervalValue} that sets the value to a provided value of type string. May throw an
 	 * exception if the provided string is not parsable.
-	 * 
+	 *
 	 * @param val
 	 *            The value to set.
 	 */
@@ -126,7 +126,7 @@ public class IntervalValue implements Comparable<IntervalValue> {
 
 	/**
 	 * Sets the value to the given value. If the value before was infinity, the infinity flag will be revoked.
-	 * 
+	 *
 	 * @param val
 	 *            The value to set.
 	 */
@@ -140,11 +140,11 @@ public class IntervalValue implements Comparable<IntervalValue> {
 
 	/**
 	 * Returns the value of this.
-	 * 
+	 *
 	 * <p>
 	 * Note that this value is unsound if {@link #isInfinity()} returns <code>true</code>.
 	 * </p>
-	 * 
+	 *
 	 * @return The value of this.
 	 */
 	public BigDecimal getValue() {
@@ -161,7 +161,7 @@ public class IntervalValue implements Comparable<IntervalValue> {
 
 	/**
 	 * Returns <code>true</code> if the value is corresponding to infinity, <code>false</code> otherwise.
-	 * 
+	 *
 	 * @return <code>true</code> or <code>false</code>
 	 */
 	public boolean isInfinity() {
@@ -170,14 +170,14 @@ public class IntervalValue implements Comparable<IntervalValue> {
 
 	/**
 	 * Multiply two {@link IntervalValue}s.
-	 * 
+	 *
 	 * @param a
 	 *            The first operand.
 	 * @param b
 	 *            The second operand.
 	 * @return The result of a * b.
 	 */
-	public static IntervalValue multiply(IntervalValue a, IntervalValue b) {
+	public static IntervalValue multiply(final IntervalValue a, final IntervalValue b) {
 		if (a == null || b == null) {
 			throw new IllegalArgumentException("Arguments may not be null");
 		}
@@ -191,18 +191,16 @@ public class IntervalValue implements Comparable<IntervalValue> {
 			if (b.getValue().signum() == 0) {
 				// infinity times 0 is 0
 				return new IntervalValue(0);
-			} else {
-				// infinity times something is infinity
-				return new IntervalValue();
 			}
+			// infinity times something is infinity
+			return new IntervalValue();
 		}
 
 		if (b.isInfinity()) {
 			if (a.getValue().signum() == 0) {
 				return new IntervalValue(0);
-			} else {
-				return new IntervalValue();
 			}
+			return new IntervalValue();
 		}
 
 		// neither a nor b are infinity, thus a.getValue() has always a value
@@ -277,11 +275,9 @@ public class IntervalValue implements Comparable<IntervalValue> {
 		assert sort.isNumericSort() : "Sort has to be numeric";
 		if (sort.getName().equals("Int")) {
 			return script.numeral(mValue.toBigIntegerExact());
-		} else {
-			assert sort.getName()
-					.equals("Real") : "Seems that numeric sort now has something different then Int or Real";
-			// has to be real
-			return script.decimal(mValue);
 		}
+		assert sort.getName().equals("Real") : "Seems that numeric sort now has something different then Int or Real";
+		// has to be real
+		return script.decimal(mValue);
 	}
 }

@@ -60,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareAnnotationPositions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.IInterpolantGenerator;
+import de.uni_freiburg.informatik.ultimate.util.IRunningTaskStackProvider;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 /**
@@ -166,7 +167,7 @@ public abstract class AbstractCegarLoop {
 	protected final IUltimateServiceProvider mServices;
 	protected final IToolchainStorage mToolchainStorage;
 
-	private ToolchainCanceledException mToolchainCancelledException;
+	private IRunningTaskStackProvider mRunningTaskStackProvider;
 
 	protected Dumper mDumper;
 
@@ -187,8 +188,8 @@ public abstract class AbstractCegarLoop {
 		mToolchainStorage = storage;
 	}
 
-	public ToolchainCanceledException getToolchainCancelledException() {
-		return mToolchainCancelledException;
+	public IRunningTaskStackProvider getRunningTaskStackProvider() {
+		return mRunningTaskStackProvider;
 	}
 
 	/**
@@ -315,6 +316,7 @@ public abstract class AbstractCegarLoop {
 		try {
 			initalAbstractionCorrect = isAbstractionCorrect();
 		} catch (final AutomataOperationCanceledException e1) {
+			mRunningTaskStackProvider = e1;
 			mLogger.warn("Verification cancelled");
 			mCegarLoopBenchmark.setResult(Result.TIMEOUT);
 			return Result.TIMEOUT;
@@ -341,11 +343,11 @@ public abstract class AbstractCegarLoop {
 					return Result.UNKNOWN;
 				}
 			} catch (final ToolchainCanceledException e) {
-				mToolchainCancelledException = e;
+				mRunningTaskStackProvider = e;
 				mLogger.warn("Verification cancelled");
 				mCegarLoopBenchmark.setResult(Result.TIMEOUT);
 				return Result.TIMEOUT;
-			}
+			} 
 
 			try {
 				constructInterpolantAutomaton();
@@ -354,7 +356,7 @@ public abstract class AbstractCegarLoop {
 				mCegarLoopBenchmark.setResult(Result.TIMEOUT);
 				return Result.TIMEOUT;
 			} catch (final ToolchainCanceledException e) {
-				mToolchainCancelledException = e;
+				mRunningTaskStackProvider = e;
 				mLogger.warn("Verification cancelled");
 				mCegarLoopBenchmark.setResult(Result.TIMEOUT);
 				return Result.TIMEOUT;
@@ -376,13 +378,14 @@ public abstract class AbstractCegarLoop {
 					throw new AssertionError("No progress! Counterexample is still accepted by refined abstraction.");
 					// return Result.UNKNOWN;
 				}
-			} catch (final AutomataOperationCanceledException e) {
+			} catch (final ToolchainCanceledException e) {
+				mRunningTaskStackProvider = e;
 				mLogger.warn("Verification cancelled");
 				mCegarLoopBenchmark.setResult(Result.TIMEOUT);
 				mCegarLoopBenchmark.stopIfRunning(CegarLoopStatisticsDefinitions.AbstIntTime.toString());
 				return Result.TIMEOUT;
-			} catch (final ToolchainCanceledException e) {
-				mToolchainCancelledException = e;
+			} catch (final AutomataOperationCanceledException e) {
+				mRunningTaskStackProvider = e;
 				mLogger.warn("Verification cancelled");
 				mCegarLoopBenchmark.setResult(Result.TIMEOUT);
 				mCegarLoopBenchmark.stopIfRunning(CegarLoopStatisticsDefinitions.AbstIntTime.toString());

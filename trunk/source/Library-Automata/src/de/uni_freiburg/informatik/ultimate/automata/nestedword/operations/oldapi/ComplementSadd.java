@@ -106,8 +106,7 @@ public final class ComplementSadd<LETTER, STATE> extends UnaryNwaOperation<LETTE
 	}
 	
 	@Override
-	public boolean checkResult(final IStateFactory<STATE> stateFactory)
-			throws AutomataLibraryException {
+	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Testing correctness of complement");
 		}

@@ -448,6 +448,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			} catch (final AutomataOperationCanceledException e) {
 				// Timeout
 				e.printStackTrace();
+				throw new AssertionError("react on timeout, not yet implemented");
 			}
 		}
 		return feasibility;

@@ -111,8 +111,7 @@ public interface IOpWithDelayedDeadEndRemoval<LETTER, STATE> {
 		@Override
 		public int hashCode() {
 			final int prime = 31;
-			int result = 1;
-			result = prime * result + ((mDown == null) ? 0 : mDown.hashCode());
+			int result = prime + ((mDown == null) ? 0 : mDown.hashCode());
 			result = prime * result + ((mEntry == null) ? 0 : mEntry.hashCode());
 			result = prime * result + ((mUp == null) ? 0 : mUp.hashCode());
 			return result;
@@ -123,10 +122,7 @@ public interface IOpWithDelayedDeadEndRemoval<LETTER, STATE> {
 			if (this == obj) {
 				return true;
 			}
-			if (obj == null) {
-				return false;
-			}
-			if (getClass() != obj.getClass()) {
+			if (obj == null || getClass() != obj.getClass()) {
 				return false;
 			}
 			final UpDownEntry<?> other = (UpDownEntry<?>) obj;

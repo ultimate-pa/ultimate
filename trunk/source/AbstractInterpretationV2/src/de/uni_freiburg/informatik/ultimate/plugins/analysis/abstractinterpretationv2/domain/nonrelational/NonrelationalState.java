@@ -53,7 +53,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.LoggingHelper;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue.Value;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainValue;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
@@ -147,8 +146,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 			throw new UnsupportedOperationException(
 					"There is no boolean variable with name " + booleanVariableName + ".");
 		}
-
-		return new BooleanValue(getVar2ValueBoolean().get(booleanVariableName));
+		return getVar2ValueBoolean().get(booleanVariableName);
 	}
 
 	/**
@@ -186,8 +184,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 		assert values != null;
 		assert vars.length == values.length;
 
-		return setMixedValues(vars, values, new IBoogieVar[0], new BooleanValue.Value[0], new IBoogieVar[0],
-				getArray(0));
+		return setMixedValues(vars, values, new IBoogieVar[0], new BooleanValue[0], new IBoogieVar[0], getArray(0));
 	}
 
 	/**
@@ -200,44 +197,13 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	 * @return A new {@link NonrelationalState} which is the copy of <code>this</code> where the value of the given
 	 *         variable has been set to the given value.
 	 */
-	protected STATE setBooleanValue(final IBoogieVar name, final BooleanValue.Value value) {
+	public STATE setBooleanValue(final IBoogieVar name, final BooleanValue value) {
 		assert name != null;
 		assert value != null;
 
 		final STATE returnState = createCopy();
-		setValueInternally(returnState, name, new BooleanValue(value));
+		setValueInternally(returnState, name, value);
 		return returnState;
-	}
-
-	/**
-	 * Sets the value of a boolean variable.
-	 *
-	 * @param name
-	 *            The boolean variable to set the value for.
-	 * @param value
-	 *            The value to set.
-	 * @return A new {@link NonrelationalState} which is the copy of <code>this</code> where the value of the given
-	 *         variable has been set to the given value.
-	 */
-	protected NonrelationalState<STATE, V> setBooleanValue(final IBoogieVar bool, final boolean value) {
-		return setBooleanValue(bool, new BooleanValue(value));
-	}
-
-	/**
-	 * Sets the value of a boolean variable.
-	 *
-	 * @param name
-	 *            The boolean variable to set the value for.
-	 * @param value
-	 *            The value to set.
-	 * @return A new {@link NonrelationalState} which is the copy of <code>this</code> where the value of the given
-	 *         variable has been set to the given value.
-	 */
-	public STATE setBooleanValue(final IBoogieVar bool, final BooleanValue value) {
-		assert bool != null;
-		assert value != null;
-
-		return setBooleanValue(bool, value.getValue());
 	}
 
 	/**
@@ -254,8 +220,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	 * @return A new {@link NonrelationalState} which is the copy of <code>this</code> where the values of the given
 	 *         variables have been set to the given values.
 	 */
-	protected NonrelationalState<STATE, V> setBooleanValues(final IBoogieVar[] vars,
-			final BooleanValue.Value[] values) {
+	protected NonrelationalState<STATE, V> setBooleanValues(final IBoogieVar[] vars, final BooleanValue[] values) {
 		assert vars != null;
 		assert values != null;
 		assert vars.length == values.length;
@@ -288,8 +253,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 		assert values != null;
 		assert arrays.length == values.length;
 
-		return setMixedValues(new IBoogieVar[0], getArray(0), new IBoogieVar[0], new BooleanValue.Value[0], arrays,
-				values);
+		return setMixedValues(new IBoogieVar[0], getArray(0), new IBoogieVar[0], new BooleanValue[0], arrays, values);
 	}
 
 	/**
@@ -308,7 +272,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	 * @return A new {@link NonrelationalState} which is the copy of <code>this</code> but with the updated values.
 	 */
 	public STATE setMixedValues(final IBoogieVar[] vars, final V[] values, final IBoogieVar[] booleanVars,
-			final BooleanValue.Value[] booleanValues, final IBoogieVar[] arrays, final V[] arrayValues) {
+			final BooleanValue[] booleanValues, final IBoogieVar[] arrays, final V[] arrayValues) {
 		assert vars != null;
 		assert values != null;
 		assert booleanVars != null;
@@ -322,7 +286,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 		}
 
 		for (int i = 0; i < booleanVars.length; i++) {
-			setValueInternally(returnState, booleanVars[i], new BooleanValue(booleanValues[i]));
+			setValueInternally(returnState, booleanVars[i], booleanValues[i]);
 		}
 
 		for (int i = 0; i < arrays.length; i++) {
@@ -416,7 +380,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 			final PrimitiveType primitiveType = (PrimitiveType) variable.getIType();
 
 			if (primitiveType.getTypeCode() == PrimitiveType.BOOL) {
-				state.getVar2ValueBoolean().put(variable, new BooleanValue(true));
+				state.getVar2ValueBoolean().put(variable, BooleanValue.TRUE);
 			} else {
 				state.getVar2ValueNonrelational().put(variable, createTopValue());
 			}
@@ -538,7 +502,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 				final PrimitiveType primitiveType = (PrimitiveType) var.getIType();
 
 				if (primitiveType.getTypeCode() == PrimitiveType.BOOL) {
-					newBooleanValMap.put(var, new BooleanValue());
+					newBooleanValMap.put(var, BooleanValue.TOP);
 				} else {
 					newValMap.put(var, createTopValue());
 				}
@@ -593,7 +557,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 		}
 
 		for (final Entry<IBoogieVar, BooleanValue> entry : getVar2ValueBoolean().entrySet()) {
-			if (entry.getValue().getValue() == Value.BOTTOM) {
+			if (entry.getValue() == BooleanValue.BOTTOM) {
 				return true;
 			}
 		}
@@ -734,7 +698,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 
 		for (final Entry<IBoogieVar, BooleanValue> entry : getVar2ValueBoolean().entrySet()) {
 			setValueInternally(returnState, entry.getKey(),
-					new BooleanValue(entry.getValue().intersect(other.getVar2ValueBoolean().get(entry.getKey()))));
+					entry.getValue().intersect(other.getVar2ValueBoolean().get(entry.getKey())));
 		}
 
 		return returnState;
@@ -802,7 +766,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 		}
 
 		for (final Entry<IBoogieVar, BooleanValue> entry : ret.getVar2ValueBoolean().entrySet()) {
-			entry.setValue(new BooleanValue(Value.BOTTOM));
+			entry.setValue(BooleanValue.BOTTOM);
 		}
 
 		return ret;
@@ -828,7 +792,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 			setValueInternally(returnState, var, createTopValue());
 		}
 		for (final IBoogieVar bool : bools) {
-			setValueInternally(returnState, bool, new BooleanValue());
+			setValueInternally(returnState, bool, BooleanValue.TOP);
 		}
 		for (final IBoogieVar array : arrays) {
 			// TODO: Implement proper handling of arrays.
@@ -858,7 +822,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 			setValueInternally(returnState, var, createBottomValue());
 		}
 		for (final IBoogieVar bool : bools) {
-			setValueInternally(returnState, bool, new BooleanValue(Value.BOTTOM));
+			setValueInternally(returnState, bool, BooleanValue.BOTTOM);
 		}
 		for (final IBoogieVar array : arrays) {
 			// TODO: Implement proper handling of arrays.

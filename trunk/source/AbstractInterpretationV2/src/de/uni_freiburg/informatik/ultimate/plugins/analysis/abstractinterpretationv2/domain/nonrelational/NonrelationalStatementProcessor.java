@@ -65,7 +65,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue.Value;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.ExpressionEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
@@ -153,12 +152,14 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 	protected Expression processExpression(final Expression expr) {
 		// TODO: implement proper array handling. Currently, TOP is returned for all array accesses.
 		if (expr instanceof ArrayStoreExpression || expr instanceof ArrayAccessExpression) {
-			mExpressionEvaluator.addEvaluator(mEvaluatorFactory.createSingletonValueTopEvaluator());
+			mExpressionEvaluator.addEvaluator(mEvaluatorFactory
+					.createSingletonValueTopEvaluator(EvaluatorUtils.getEvaluatorType(expr.getType())));
 			return expr;
 		}
 
 		final Expression newExpr = normalizeExpression(expr);
 		assert newExpr != null;
+		assert newExpr.getType() != null : "Normalization did set a null type";
 
 		if (expr == newExpr) {
 			addEvaluators(mExpressionEvaluator, mEvaluatorFactory, newExpr);
@@ -334,8 +335,8 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 		final List<IEvaluationResult<V>> result = mExpressionEvaluator.getRootEvaluator().evaluate(mOldState);
 
 		for (final IEvaluationResult<V> res : result) {
-			if (res.getValue().isBottom() || res.getBooleanValue().getValue() == Value.BOTTOM
-					|| res.getBooleanValue().getValue() == Value.FALSE) {
+			if (res.getValue().isBottom() || res.getBooleanValue() == BooleanValue.BOTTOM
+					|| res.getBooleanValue() == BooleanValue.FALSE) {
 				if (!mOldState.getVariables().isEmpty()) {
 					mReturnState.add(mOldState.bottomState());
 				}
@@ -357,7 +358,7 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 				final PrimitiveType primitiveType = (PrimitiveType) type.getIType();
 
 				if (primitiveType.getTypeCode() == PrimitiveType.BOOL) {
-					currentNewState = currentNewState.setBooleanValue(type, new BooleanValue());
+					currentNewState = currentNewState.setBooleanValue(type, BooleanValue.TOP);
 				} else {
 					currentNewState = currentNewState.setValue(type, currentNewState.createTopValue());
 				}
@@ -406,7 +407,8 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 
 		// If we don't have a specification for the function, we return top.
 		if (decls == null || decls.isEmpty()) {
-			evaluator = mEvaluatorFactory.createSingletonValueTopEvaluator();
+			evaluator =
+					mEvaluatorFactory.createSingletonValueTopEvaluator(EvaluatorUtils.getEvaluatorType(expr.getType()));
 		} else {
 
 			assert decls.get(0) instanceof FunctionDeclaration;
@@ -415,7 +417,8 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 
 			// If the body is empty (as in undefined), we return top.
 			if (fun.getBody() == null) {
-				evaluator = mEvaluatorFactory.createFunctionEvaluator(fun.getIdentifier(), fun.getInParams().length);
+				evaluator = mEvaluatorFactory.createFunctionEvaluator(fun.getIdentifier(), fun.getInParams().length,
+						EvaluatorUtils.getEvaluatorType(expr.getType()));
 			} else {
 				// TODO Handle bitshifts, bitwise and, bitwise or, etc.
 				throw new UnsupportedOperationException(
@@ -445,8 +448,8 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 
 	@Override
 	protected void visit(final BooleanLiteral expr) {
-		final IEvaluator<V, STATE, CodeBlock> evaluator =
-				mEvaluatorFactory.createSingletonLogicalValueExpressionEvaluator(new BooleanValue(expr.getValue()));
+		final IEvaluator<V, STATE, CodeBlock> evaluator = mEvaluatorFactory
+				.createSingletonLogicalValueExpressionEvaluator(BooleanValue.getBooleanValue(expr.getValue()));
 		mExpressionEvaluator.addEvaluator(evaluator);
 	}
 

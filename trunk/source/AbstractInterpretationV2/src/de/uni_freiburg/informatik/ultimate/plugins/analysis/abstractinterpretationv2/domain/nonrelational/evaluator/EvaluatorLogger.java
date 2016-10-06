@@ -26,12 +26,14 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 
 /**
  * The {@link EvaluatorLogger} allows the issuing of warning messages without polluting the log.
@@ -40,6 +42,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  *
  */
 public class EvaluatorLogger {
+
+	private static final boolean MORE_LOGGING = true;
 
 	private final ILogger mLogger;
 	private final Set<UnaryExpression.Operator> mWarningsUnknownUnaryOps;
@@ -81,6 +85,18 @@ public class EvaluatorLogger {
 			return;
 		}
 		mLogger.warn("Possible loss of precision. Operator " + op + " is not implemented.");
+	}
+
+	public void logEvaluation(final Object op, final Object result, final Object... args) {
+		if (MORE_LOGGING && mLogger.isDebugEnabled()) {
+			final StringBuilder sb = new StringBuilder();
+			Arrays.stream(args).forEach(a -> sb.append(' ').append(a));
+			mLogger.debug(AbsIntPrefInitializer.DINDENT + "(" + op + sb + ") = " + result);
+		}
+	}
+
+	public ILogger getLogger() {
+		return mLogger;
 	}
 
 }

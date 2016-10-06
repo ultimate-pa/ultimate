@@ -28,6 +28,9 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
@@ -87,8 +90,8 @@ public class EvaluatorFactory<VALUE extends INonrelationalValue<VALUE>, STATE ex
 
 	@Override
 	public IEvaluator<VALUE, STATE, CodeBlock> createFunctionEvaluator(final String functionName,
-			final int inputParamCount) {
-		return new FunctionEvaluator<>(functionName, inputParamCount, mNonrelationalValueFactory);
+			final int inputParamCount, final EvaluatorType type) {
+		return new FunctionEvaluator<>(functionName, inputParamCount, mNonrelationalValueFactory, type);
 	}
 
 	@Override
@@ -97,16 +100,26 @@ public class EvaluatorFactory<VALUE extends INonrelationalValue<VALUE>, STATE ex
 	}
 
 	@Override
-	public IEvaluator<VALUE, STATE, CodeBlock> createSingletonValueTopEvaluator() {
-		return new SingletonValueExpressionEvaluator<>(mNonrelationalValueFactory.createTopValue());
+	public IEvaluator<VALUE, STATE, CodeBlock> createSingletonValueTopEvaluator(final EvaluatorType type) {
+		return new SingletonValueExpressionEvaluator<>(mNonrelationalValueFactory.createTopValue(), type);
 	}
 
 	@Override
 	public IEvaluator<VALUE, STATE, CodeBlock> createSingletonValueExpressionEvaluator(final String value,
 			final Class<?> valueType) {
 		assert value != null;
+		final EvaluatorType evaluatorType;
+		if (valueType == BigInteger.class) {
+			evaluatorType = EvaluatorType.INTEGER;
+		} else if (valueType == BigDecimal.class) {
+			evaluatorType = EvaluatorType.REAL;
+		} else if (valueType == Boolean.class) {
+			evaluatorType = EvaluatorType.BOOL;
+		} else {
+			throw new IllegalArgumentException("Unknown type " + valueType);
+		}
 		return new SingletonValueExpressionEvaluator<>(
-				mSingletonValueExpressionEvaluatorCreator.apply(value, valueType));
+				mSingletonValueExpressionEvaluatorCreator.apply(value, valueType), evaluatorType);
 	}
 
 	@Override

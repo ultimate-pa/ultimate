@@ -122,6 +122,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
+import de.uni_freiburg.informatik.ultimate.util.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 public class BuchiCegarLoop {
@@ -543,7 +544,8 @@ public class BuchiCegarLoop {
 				mBenchmarkGenerator.reportAbstractionSize(mAbstraction.size(), mIteration);
 
 			} catch (final AutomataOperationCanceledException e) {
-				mToolchainCancelledException = new ToolchainCanceledException(e.getClassOfThrower());
+				final RunningTaskInfo rti = new RunningTaskInfo(getClass(), "performing iteration " + mIteration);
+				mToolchainCancelledException = new ToolchainCanceledException(e, rti);
 				mBenchmarkGenerator.setResult(Result.TIMEOUT);
 				return Result.TIMEOUT;
 			} catch (final ToolchainCanceledException e) {
@@ -737,9 +739,8 @@ public class BuchiCegarLoop {
 						mComplementationConstruction);
 			} catch (final AutomataOperationCanceledException e) {
 				mBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
-				final String runningTaskInfo = "applying " + e.getClassOfThrower().getSimpleName() + " in stage "
-						+ stage;
-				throw new ToolchainCanceledException(getClass(), runningTaskInfo);
+				final RunningTaskInfo rti = new RunningTaskInfo(getClass(), "applying stage " + stage);
+				throw new ToolchainCanceledException(e, rti);
 			} catch (final ToolchainCanceledException e) {
 				mBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 				throw e;

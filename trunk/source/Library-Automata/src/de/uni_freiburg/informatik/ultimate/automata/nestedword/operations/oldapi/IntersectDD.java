@@ -41,11 +41,37 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  *            state type
  */
 public class IntersectDD<LETTER, STATE> extends AbstractIntersect<LETTER, STATE> {
+	/**
+	 * Short constructor.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param fstNwa
+	 *            first operand
+	 * @param sndNwa
+	 *            second operand
+	 * @throws AutomataLibraryException
+	 *             if alphabets differ
+	 */
 	public IntersectDD(final AutomataLibraryServices services, final INestedWordAutomatonSimple<LETTER, STATE> fstNwa,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndNwa) throws AutomataLibraryException {
-		super(services, false, false, fstNwa, sndNwa);
+		this(services, false, fstNwa, sndNwa);
 	}
 	
+	/**
+	 * Extended constructor.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param minimizeResult
+	 *            {@code true} iff result should be minimized
+	 * @param fstNwa
+	 *            first operand
+	 * @param sndNwa
+	 *            second operand
+	 * @throws AutomataLibraryException
+	 *             if alphabets differ
+	 */
 	public IntersectDD(final AutomataLibraryServices services, final boolean minimizeResult,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstNwa,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndNwa)
