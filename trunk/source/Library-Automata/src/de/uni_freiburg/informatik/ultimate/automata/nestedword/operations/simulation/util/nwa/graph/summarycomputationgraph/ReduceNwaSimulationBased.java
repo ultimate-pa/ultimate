@@ -77,6 +77,8 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends UnaryNwaOp
 		super(services);
 		mOperand = operand;
 		
+		mLogger.info(startMessage());
+		
 		final Collection<Set<STATE>> possibleEquivalentClasses = new LookaheadPartitionConstructor<LETTER, STATE>(mServices, mOperand).getResult();
 		final int sizeOfLargestEquivalenceClass = NestedWordAutomataUtils.computeSizeOfLargestEquivalenceClass(possibleEquivalentClasses);
 		mLogger.info("Initial partition has " + possibleEquivalentClasses.size() + 
@@ -123,9 +125,9 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends UnaryNwaOp
 			tce.addRunningTaskInfo(rti);
 			throw tce;
 		}
-
+		mLogger.info(exitMessage());
 	}
-
+	
 	private SpoilerNwaVertex<LETTER, STATE> constructUniqueSpoilerWinninSink() {
 		final SpoilerNwaVertex<LETTER, STATE> uniqueSpoilerWinningSink = new SpoilerNwaVertex<LETTER, STATE>(1, false, null, null, new SpoilerWinningSink<>(null));
 		return uniqueSpoilerWinningSink;
