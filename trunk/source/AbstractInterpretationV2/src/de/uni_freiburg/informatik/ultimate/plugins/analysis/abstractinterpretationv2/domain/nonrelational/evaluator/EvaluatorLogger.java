@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public class EvaluatorLogger {
 
-	private static final boolean MORE_LOGGING = true;
+	private static final boolean MORE_LOGGING = false;
 
 	private final ILogger mLogger;
 	private final Set<UnaryExpression.Operator> mWarningsUnknownUnaryOps;
