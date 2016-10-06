@@ -67,8 +67,9 @@ public class AutomataMinimizationTestSuite extends UltimateTestSuite {
 	private static final File mToolchainFile = new File(TestUtil.getPathFromTrunk(mToolchain));
 	private static int mTimeout = 30 * 1000;
 	private static final String[] mDirectories = {
-//			"examples/Automata/finiteAutomata/minimizeDfa", 
-			"examples/Automata/nwaOperations/MinimizationBenchmarks", 
+//			"examples/Automata/finiteAutomata/minimizeDfa",
+			"examples/Automata/BuchiNwa/reduceBuchiNwa"
+//			"examples/Automata/nwaOperations/MinimizationBenchmarks", 
 			};
 	private static final String[] mFileEndings = { ".ats" };
 
