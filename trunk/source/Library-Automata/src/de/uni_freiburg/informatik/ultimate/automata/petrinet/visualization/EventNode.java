@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization;
@@ -35,33 +35,35 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotat
 
 /**
  * Ultimate model of a OcurrenceNet event.
- * @author heizmann@informatik.uni-freiburg.de 
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <S>
+ *            symbol type
+ * @param <C>
+ *            place content type
  */
-
-public class EventNode<S,C> extends PetriNetVisualizationNode {
-
+public final class EventNode<S, C> extends PetriNetVisualizationNode {
 	private static final long serialVersionUID = -2531826841396458461L;
 	
-	
-	public EventNode(Event<S,C> event) {
+	/**
+	 * @param event
+	 *            Event.
+	 */
+	public EventNode(final Event<S, C> event) {
 		super(event.getTransition().getSymbol().toString());
 		
 		final DefaultAnnotations annot = new DefaultAnnotations();
-		annot.put("Transition",event.getTransition());
+		annot.put("Transition", event.getTransition());
 		annot.put("Companion", event.getCompanion());
 		annot.put("Ancestors", event.getAncestors());
-		annot.put("ByLocalConfigurationRepresentedMarking",event.getMark());
-	
-		final Map<String,IAnnotations> annotations =  getPayload().getAnnotations();
+		annot.put("ByLocalConfigurationRepresentedMarking", event.getMark());
+		
+		final Map<String, IAnnotations> annotations = getPayload().getAnnotations();
 		annotations.put(LibraryIdentifiers.PLUGIN_ID, annot);
 		
 		final S symbol = event.getTransition().getSymbol();
 		if (symbol instanceof IAnnotations) {
 			annot.put("Symbol", symbol);
-
 		}
-		
 	}
-
-
 }

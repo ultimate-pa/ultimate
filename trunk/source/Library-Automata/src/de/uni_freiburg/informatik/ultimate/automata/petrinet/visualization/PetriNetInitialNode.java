@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization;
@@ -36,21 +36,28 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotat
 
 /**
  * Ultimate model of a PetriNet place.
- * @author heizmann@informatik.uni-freiburg.de 
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <S>
+ *            symbol type
+ * @param <C>
+ *            place content type
  */
-
-public class PetriNetInitialNode extends PetriNetVisualizationNode {
+public final class PetriNetInitialNode extends PetriNetVisualizationNode {
 	private static final long serialVersionUID = 264254789648279608L;
 	
-	public PetriNetInitialNode(Collection<String> acceptingMarkings) {
+	/**
+	 * @param acceptingMarkings
+	 *            Accepting markings.
+	 */
+	public PetriNetInitialNode(final Collection<String> acceptingMarkings) {
 		super("My sucessors are the initial marking");
 		
 		final IPayload payload = getPayload();
 		final DefaultAnnotations thisPluginsAnnotations = new DefaultAnnotations();
 		thisPluginsAnnotations.put("accepting markings of this petri net",
 				acceptingMarkings);
-		final Map<String,IAnnotations> annotations = payload.getAnnotations();
+		final Map<String, IAnnotations> annotations = payload.getAnnotations();
 		annotations.put(LibraryIdentifiers.PLUGIN_ID, thisPluginsAnnotations);
 	}
-	
 }
