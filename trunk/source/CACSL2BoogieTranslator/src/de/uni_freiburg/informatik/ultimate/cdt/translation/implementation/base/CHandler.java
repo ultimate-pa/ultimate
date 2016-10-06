@@ -375,8 +375,7 @@ public class CHandler implements ICHandler {
 				new PostProcessor(main, mLogger, mExpressionTranslation, overapproximateFloatingPointOperations);
 		mTypeSizeComputer =
 				new TypeSizeAndOffsetComputer((TypeHandler) mTypeHandler, mExpressionTranslation, main.getTypeSizes());
-		mFunctionHandler = new FunctionHandler(mExpressionTranslation, mTypeSizeComputer,
-				prefs.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_MEMORY_LEAK_IN_MAIN));
+		mFunctionHandler = new FunctionHandler(mExpressionTranslation, mTypeSizeComputer);
 		final boolean smtBoolArraysWorkaround =
 				prefs.getBoolean(CACSLPreferenceInitializer.LABEL_SMT_BOOL_ARRAYS_WORKAROUND);
 		mMemoryHandler = new MemoryHandler(typeHandler, mFunctionHandler, checkPointerValidity, mTypeSizeComputer,
@@ -3759,16 +3758,14 @@ public class CHandler implements ICHandler {
 	public void beginScope() {
 		mTypeHandler.beginScope();
 		mSymbolTable.beginScope();
-		mMemoryHandler.getVariablesToBeMalloced().beginScope();
-		mMemoryHandler.getVariablesToBeFreed().beginScope();
+		mMemoryHandler.beginScope();
 	}
 
 	@Override
 	public void endScope() {
 		mTypeHandler.endScope();
 		mSymbolTable.endScope();
-		mMemoryHandler.getVariablesToBeMalloced().endScope();
-		mMemoryHandler.getVariablesToBeFreed().endScope();
+		mMemoryHandler.endScope();
 	}
 
 	/**
