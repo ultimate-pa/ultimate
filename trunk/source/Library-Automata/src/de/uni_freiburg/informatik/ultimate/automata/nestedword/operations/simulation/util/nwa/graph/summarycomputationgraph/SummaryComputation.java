@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAuto
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.PriorityComparator;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.SpoilerNwaVertex;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.SpoilerWinningSink;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game.GameEmptyState;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game.GameSpoilerNwaVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game.IGameLetter;
@@ -181,11 +182,15 @@ public class SummaryComputation<LETTER, STATE> {
 
 
 	private boolean needWinningSink(final IGameState gameState) {
+		final SpoilerNwaVertex<LETTER, STATE> spoilerVertex = GameAutomaton.unwrapSpoilerNwaVertex(gameState);
+		if (isSpoilerWinningSink(spoilerVertex)) {
+			// is already winning sink
+			return false;
+		}
 		for (final IGameState downState : mGameAutomaton.getDownStates(gameState)) {
 			if (downState instanceof GameEmptyState) {
 				continue;
 			}
-			final SpoilerNwaVertex<LETTER, STATE> spoilerVertex = ((GameSpoilerNwaVertex<LETTER, STATE>) gameState).getSpoilerNwaVertex();
 			final SpoilerNwaVertex<LETTER, STATE> downVertex = ((GameSpoilerNwaVertex<LETTER, STATE>) downState).getSpoilerNwaVertex();
 			final Set<LETTER> lettersForWhichSpoilerHasOutgoing = new HashSet<>();
 			for (final OutgoingReturnTransition<LETTER, STATE> trans : mOperand.returnSuccessorsGivenHier(spoilerVertex.getQ0(), downVertex.getQ0())) {
@@ -199,6 +204,11 @@ public class SummaryComputation<LETTER, STATE> {
 			}
 		}
 		return false;
+	}
+
+
+	private boolean isSpoilerWinningSink(final SpoilerNwaVertex<LETTER, STATE> spoilerVertex) {
+		return spoilerVertex.getSink() instanceof SpoilerWinningSink;
 	}
 
 

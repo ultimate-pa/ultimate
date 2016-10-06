@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.summarycomputationgraph;
 
+import java.util.Collection;
+
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
@@ -35,7 +37,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.ETransitionType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.DuplicatorNwaVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.DuplicatorWinningSink;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.DuplicatorySubSummaryChoiceVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.SpoilerNwaVertex;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.SpoilerSubSummaryPriorityVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game.IGameLetter;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game.IGameState;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
@@ -65,7 +69,9 @@ public class GameAutomatonToGamGraphTransformer<LETTER, STATE>  {
 	public GameAutomatonToGamGraphTransformer(
 			final AutomataLibraryServices services,
 			final INestedWordAutomaton<IGameLetter<LETTER, STATE>, IGameState> gameAutomaton, 
-			final SpoilerNwaVertex<LETTER, STATE> spoilerWinningSink, final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+			final SpoilerNwaVertex<LETTER, STATE> spoilerWinningSink, 
+			final INestedWordAutomaton<LETTER, STATE> operand,
+			final Collection<GameCallReturnSummary<STATE>> gameSummaries) throws AutomataOperationCanceledException {
 		super();
 		mServices = services;
 		mGameAutomaton = gameAutomaton;
@@ -107,9 +113,15 @@ public class GameAutomatonToGamGraphTransformer<LETTER, STATE>  {
 				addEdgeToDuplicatorSink(gameState);
 			}
 		}
+		
+		for (final GameCallReturnSummary<STATE> gameSummary : gameSummaries) {
+			addGameSummary(gameSummary);
+		}
 		// global infinity has to be one plus the number of prio 1 nodes
 		mGameGraph.increaseGlobalInfinity();
 	}
+	
+
 
 	private SpoilerNwaVertex<LETTER, STATE> getSpoilerVertex(final IGameState gameState) {
 		if (GameAutomaton.isSpoilerSink(gameState)) {
@@ -155,8 +167,28 @@ public class GameAutomatonToGamGraphTransformer<LETTER, STATE>  {
 				mGameGraph.addEdge(mSpoilerWinningSink, mSpoilerWinningSink);
 			}
 		}
-		
 	}
+	
+
+	private void addGameSummary(final GameCallReturnSummary<STATE> gameSummary) {
+		final SpoilerNwaVertex<LETTER, STATE> sourceVertex = getSpoilerVertex(gameSummary.getSummarySource());
+		assert mGameGraph.getSpoilerVertices().contains(sourceVertex) : "source missing";
+		final DuplicatorySubSummaryChoiceVertex<LETTER, STATE> duplicatorChoice = 
+				new DuplicatorySubSummaryChoiceVertex<>(gameSummary);
+		assert !mGameGraph.getDuplicatorVertices().contains(duplicatorChoice) : "duplicator choice already there";
+		mGameGraph.addEdge(sourceVertex, duplicatorChoice);
+		for (final IGameState duplicatorResponse : gameSummary.getDuplicatorResponses().keySet()) {
+			final SpoilerSubSummaryPriorityVertex<LETTER, STATE> spoilerPrioVertex = 
+					new SpoilerSubSummaryPriorityVertex<>(gameSummary, duplicatorResponse);
+			assert !mGameGraph.getSpoilerVertices().contains(spoilerPrioVertex) : "spoiler priority vertex already there";
+			final SpoilerNwaVertex<LETTER, STATE> targetVertex = getSpoilerVertex(duplicatorResponse);
+			assert mGameGraph.getSpoilerVertices().contains(targetVertex) : "target missing";
+			mGameGraph.addEdge(duplicatorChoice, spoilerPrioVertex);
+			mGameGraph.addEdge(spoilerPrioVertex, targetVertex);
+		}
+	}
+	
+	
 
 	public AGameGraph<LETTER, STATE> getResult() {
 		return mGameGraph;

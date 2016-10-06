@@ -92,7 +92,8 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends UnaryNwaOp
 
 			gameAutomaton = new GameAutomaton<LETTER, STATE>(mServices, gameFactory, possibleEquivalentClasses, operand, simulationInfoProvider, uniqueSpoilerWinningSink);
 			final IDoubleDeckerAutomaton<IGameLetter<LETTER, STATE>, IGameState> ga = new RemoveUnreachable<IGameLetter<LETTER, STATE>, IGameState>(mServices, gameAutomaton).getResult();
-			final AGameGraph<LETTER, STATE> graph = new GameAutomatonToGamGraphTransformer<LETTER, STATE>(mServices, ga, uniqueSpoilerWinningSink, mOperand).getResult();
+			final SummaryComputation<LETTER, STATE> sc = new SummaryComputation<LETTER, STATE>(mServices, ga, mOperand);
+			final AGameGraph<LETTER, STATE> graph = new GameAutomatonToGamGraphTransformer<LETTER, STATE>(mServices, ga, uniqueSpoilerWinningSink, mOperand, sc.getGameSummaries()).getResult();
 			final ParsimoniousSimulation sim = new ParsimoniousSimulation(null, mLogger, false, null, null, graph);
 			sim.doSimulation();
 			final HashRelation<STATE, STATE> simRelation = readoutSimulationRelation(graph, simulationInfoProvider, operand);
