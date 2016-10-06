@@ -26,8 +26,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import de.uni_freiburg.informatik.ultimate.util.IRunningTaskStackProvider;
 import de.uni_freiburg.informatik.ultimate.util.RunningTaskInfo;
-import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 /**
  * Exception that is thrown by automata operations if they detected that the
@@ -36,17 +39,33 @@ import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
-public class AutomataOperationCanceledException extends ToolchainCanceledException {
+public class AutomataOperationCanceledException extends AutomataLibraryException implements IRunningTaskStackProvider {
 	
 	private static final long serialVersionUID = -1713238821191695165L;
 	
 	private static final String MESSAGE_CANCELED = "Timeout or canceled by user.";
 	
+	private final List<RunningTaskInfo> mRunningTaskInfos = new ArrayList<>();
+	
 	public AutomataOperationCanceledException(final Class<?> thrower) {
-		super(MESSAGE_CANCELED, thrower, null);
+		super(thrower, MESSAGE_CANCELED);
+		mRunningTaskInfos.add(new RunningTaskInfo(thrower, null));
 	}
 	
-	public AutomataOperationCanceledException(final RunningTaskInfo rti) {
-		super(MESSAGE_CANCELED, rti);
+	public AutomataOperationCanceledException(final RunningTaskInfo runningTaskInfo) {
+		super(runningTaskInfo.getClassOfTaskExecutor(), MESSAGE_CANCELED);
+		mRunningTaskInfos.add(runningTaskInfo);
+	}
+	
+	public void addRunningTaskInfo(final RunningTaskInfo runningTaskInfo) {
+		mRunningTaskInfos.add(runningTaskInfo);
+	}
+	
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.util.IRunningTaskStackProvider#getRunningTaskStack()
+	 */
+	@Override
+	public List<RunningTaskInfo> getRunningTaskStack() {
+		return mRunningTaskInfos;
 	}
 }

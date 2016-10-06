@@ -54,7 +54,6 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJulian;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 /**
  * Writes the automaton definition for given automata. Writing can either be to a string or to a file.
@@ -416,7 +415,7 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 		} else {
 			try {
 				nwa = new NestedWordAutomatonReachableStates<>(mServices, automaton);
-			} catch (final ToolchainCanceledException e) {
+			} catch (final AutomataOperationCanceledException e) {
 				throw new AssertionError("Timeout while preparing automaton for printing.");
 			}
 		}

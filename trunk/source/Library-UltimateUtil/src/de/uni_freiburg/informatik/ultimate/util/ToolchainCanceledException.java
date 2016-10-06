@@ -37,7 +37,7 @@ import java.util.List;
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
-public class ToolchainCanceledException extends RuntimeException {
+public class ToolchainCanceledException extends RuntimeException implements IRunningTaskStackProvider {
 
 	private static final long serialVersionUID = 7090759880566576629L;
 
@@ -56,9 +56,9 @@ public class ToolchainCanceledException extends RuntimeException {
 	public ToolchainCanceledException(final RunningTaskInfo runningTaskInfo) {
 		this(MESSAGE, runningTaskInfo);
 	}
-	public ToolchainCanceledException(final ToolchainCanceledException tce, final RunningTaskInfo runningTaskInfo) {
+	public ToolchainCanceledException(final IRunningTaskStackProvider rtsp, final RunningTaskInfo runningTaskInfo) {
 		super(MESSAGE);
-		mRunningTaskInfos.addAll(tce.mRunningTaskInfos);
+		mRunningTaskInfos.addAll(rtsp.getRunningTaskStack());
 		mRunningTaskInfos.add(runningTaskInfo);
 	}
 	
@@ -75,26 +75,14 @@ public class ToolchainCanceledException extends RuntimeException {
 		mRunningTaskInfos.add(runningTaskInfo);
 	}
 	
-	public String printRunningTaskInfos() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append("Cancelled");
-		
-		for (int i = mRunningTaskInfos.size() - 1; i>= 0; i--) {
-			final RunningTaskInfo rti = mRunningTaskInfos.get(i);
-			if (rti.getTaskDescription() == null) {
-				sb.append(" while executing" + rti.getClassOfTaskExecutor().getSimpleName());
-			} else {
-				sb.append(" while ");
-				sb.append(rti.getClassOfTaskExecutor().getSimpleName());
-				sb.append(" was ");
-				sb.append(rti.getTaskDescription());
-			}
-			if (i > 0) {
-				sb.append(",");
-			}
-		}
-		sb.append(".");
-		return sb.toString();
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.util.IRunningTaskStackProvider#getRunningTaskStack()
+	 */
+	@Override
+	public List<RunningTaskInfo> getRunningTaskStack() {
+		return mRunningTaskInfos;
 	}
+
+
 
 }

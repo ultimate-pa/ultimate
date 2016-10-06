@@ -34,6 +34,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.AbstractMinimizeNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.util.Interrupt;
@@ -497,7 +498,10 @@ public final class MinimizeDfaParallel<LETTER, STATE> extends AbstractMinimizeNw
 				}
 
 			} catch (final InterruptedException e) {
-				//e.printStackTrace();
+				throw new AssertionError("not yet implemented");
+			} catch (final AutomataOperationCanceledException e) {
+				// TODO Auto-generated catch block
+				throw new AssertionError("not yet implemented");
 			}
 		}
 	}
