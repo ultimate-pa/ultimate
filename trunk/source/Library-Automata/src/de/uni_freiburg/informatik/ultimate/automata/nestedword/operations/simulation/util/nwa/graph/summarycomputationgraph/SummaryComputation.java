@@ -36,7 +36,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -48,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.SpoilerNwaVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.SpoilerWinningSink;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game.GameEmptyState;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game.GameSpoilerNwaVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game.IGameLetter;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game.IGameState;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.summarycomputationgraph.WeightedSummaryTargets.WeightedSummaryTargetsComparator;
@@ -88,19 +86,13 @@ public class SummaryComputation<LETTER, STATE> {
 	private final WeightedSummaryTargetsComparator mWeightedSummaryTargetsComparator = new WeightedSummaryTargetsComparator();
 	
 	
-	final Function<IGameLetter<LETTER, STATE>, Function<IGameState, Integer>> mDuplicatorNodePriorityProvider = (x -> (y -> 2));
-	
 	private Integer duplicatorNodePriorityProvider(final IGameLetter<LETTER, STATE> duplicatorNode, final IGameState spoilerNode) {
 		return 2;
 	}
-	final Function<IGameState, Function<IGameLetter<LETTER, STATE>, Integer>> mSpoilerNodePriorityProvider = (x -> (y -> ((GameSpoilerNwaVertex<LETTER, STATE>) x).getSpoilerNwaVertex().getPriority()));
 
 	private Integer spoilerNodePriorityProvider(final IGameState spoilerNode, final IGameLetter<LETTER, STATE> duplicatorNode) {
-		return ((GameSpoilerNwaVertex<LETTER, STATE>) spoilerNode).getSpoilerNwaVertex().getPriority();
+		return GameAutomaton.unwrapSpoilerNwaVertex(spoilerNode).getPriority();
 	}
-
-	
-	final Function<IGameState, Function<IGameLetter<LETTER, STATE>, Integer>> mCallWorkaroundPriorityProvider = (x -> (y -> 2));
 	
 	private Integer callWorkaroundPriorityProvider(final IGameState spoilerNode, final IGameLetter<LETTER, STATE> duplicatorNode) {
 		return 2;
@@ -148,7 +140,7 @@ public class SummaryComputation<LETTER, STATE> {
 				final Map<IGameState, Integer> target2prio = source2target2prio.get(source);
 				final NestedMap2<STATE, IGameState, Integer> spoilerChoice2Target2Prio = new NestedMap2<>();
 				for (final Entry<IGameState, Integer> targetPrio : target2prio.entrySet()) {
-					final SpoilerNwaVertex<LETTER, STATE> spoilerVertex = ((GameSpoilerNwaVertex<LETTER, STATE>) targetPrio.getKey()).getSpoilerNwaVertex();
+					final SpoilerNwaVertex<LETTER, STATE> spoilerVertex = GameAutomaton.unwrapSpoilerNwaVertex(targetPrio.getKey());
 					if (spoilerVertex.getSink() != null) {
 						// omit, target is sink
 //						assert mNeedSpoilerWinningSink.contains(source);
@@ -160,7 +152,7 @@ public class SummaryComputation<LETTER, STATE> {
 				}
 				for (final STATE spoilerDestinationState : spoilerChoice2Target2Prio.keySet()) {
 					final Map<IGameState, Integer> duplicatorResponses = spoilerChoice2Target2Prio.get(spoilerDestinationState);
-					final GameCallReturnSummary gameSummary = new GameCallReturnSummary(source, spoilerDestinationState, duplicatorResponses);
+					final GameCallReturnSummary<STATE> gameSummary = new GameCallReturnSummary<STATE>(source, spoilerDestinationState, duplicatorResponses);
 					mGameSummaries.add(gameSummary);
 				}
 			}
@@ -191,7 +183,7 @@ public class SummaryComputation<LETTER, STATE> {
 			if (downState instanceof GameEmptyState) {
 				continue;
 			}
-			final SpoilerNwaVertex<LETTER, STATE> downVertex = ((GameSpoilerNwaVertex<LETTER, STATE>) downState).getSpoilerNwaVertex();
+			final SpoilerNwaVertex<LETTER, STATE> downVertex = GameAutomaton.unwrapSpoilerNwaVertex(downState);
 			final Set<LETTER> lettersForWhichSpoilerHasOutgoing = new HashSet<>();
 			for (final OutgoingReturnTransition<LETTER, STATE> trans : mOperand.returnSuccessorsGivenHier(spoilerVertex.getQ0(), downVertex.getQ0())) {
 				lettersForWhichSpoilerHasOutgoing.add(trans.getLetter());
