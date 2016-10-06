@@ -224,27 +224,27 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE> {
 	 * internal predecessors, summary predecessors or return predecesssors.
 	 */
 	/*
-		private final void memorizePredecessor(
-			DoubleDecker<STATE> doubleDecker,
-			DoubleDecker<STATE> preDoubleDecker,
-			Map<DoubleDecker<STATE>, Set<DoubleDecker<STATE>>> predecessorMapping) {
-		if (!mComputePredecessorDoubleDeckers) {
-			return;
+	private final void memorizePredecessor(
+		DoubleDecker<STATE> doubleDecker,
+		DoubleDecker<STATE> preDoubleDecker,
+		Map<DoubleDecker<STATE>, Set<DoubleDecker<STATE>>> predecessorMapping) {
+	if (!mComputePredecessorDoubleDeckers) {
+		return;
+	}
+	assert (predecessorMapping == mCallPredecessors
+			|| predecessorMapping == mReturnPredecessors
+			|| predecessorMapping == mInternalPredecessors
+			|| predecessorMapping == mSummaryPredecessors);
+	if (preDoubleDecker != null) {
+		Set<DoubleDecker<STATE>> predSet = predecessorMapping.get(doubleDecker);
+		if (predSet == null) {
+			predSet = new HashSet<DoubleDecker<STATE>>();
+			predecessorMapping.put(doubleDecker, predSet);
 		}
-		assert (predecessorMapping == mCallPredecessors
-				|| predecessorMapping == mReturnPredecessors
-				|| predecessorMapping == mInternalPredecessors
-				|| predecessorMapping == mSummaryPredecessors);
-		if (preDoubleDecker != null) {
-			Set<DoubleDecker<STATE>> predSet = predecessorMapping.get(doubleDecker);
-			if (predSet == null) {
-				predSet = new HashSet<DoubleDecker<STATE>>();
-				predecessorMapping.put(doubleDecker, predSet);
-			}
-			predSet.add(preDoubleDecker);
-		}
-		}
-		*/
+		predSet.add(preDoubleDecker);
+	}
+	}
+	*/
 	
 	/**
 	 * Record that summarySucc is reachable from summaryPred via a run over a
@@ -537,8 +537,10 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE> {
 		// deckers (up,down) of an up state are reachable.
 		for (final STATE state : mTraversedNwa.getFinalStates()) {
 			final Map<STATE, ReachFinal> down2reachFinal = mMarkedUp2Down.get(state);
-			if (down2reachFinal == null && mLogger.isDebugEnabled()) {
-				mLogger.debug("Unreachable final state: " + state);
+			if (down2reachFinal == null) {
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug("Unreachable final state: " + state);
+				}
 			} else {
 				for (final STATE down : mMarkedUp2Down.get(state).keySet()) {
 					nonRetAncest.add(state, down);
@@ -689,9 +691,6 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE> {
 	 // doubleDeckersThatCanReachFinal = nonReturnAncestors;
 	 // doubleDeckersThatCanReachFinal.addAll(acceptingDoubleDeckers);
 	 // }
-	
-	
-	
 	
 	 Set<STATE> statesNeverReachFin =
 	 computeStatesThatCanNotReachFinalNewVersion();
