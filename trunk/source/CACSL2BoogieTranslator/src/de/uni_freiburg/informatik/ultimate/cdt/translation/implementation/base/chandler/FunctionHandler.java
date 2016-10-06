@@ -44,11 +44,15 @@ import java.util.Set;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
+import org.eclipse.cdt.core.dom.ast.IASTFunctionDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTIdExpression;
 import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
+import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTParameterDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTReturnStatement;
+import org.eclipse.cdt.core.dom.ast.IASTStandardFunctionDeclarator;
+import org.eclipse.cdt.core.dom.ast.gnu.c.ICASTKnRFunctionDeclarator;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTFunctionDeclarator;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
@@ -1101,24 +1105,37 @@ public class FunctionHandler {
 	private void handleFunctionsInParams(final Dispatcher main, final ILocation loc, final MemoryHandler memoryHandler,
 			final ArrayList<Declaration> decl, final ArrayList<Statement> stmt, final IASTFunctionDefinition parent) {
 		final VarList[] varListArray = mCurrentProcedure.getInParams();
-		IASTParameterDeclaration[] paramDecs;
+//		IASTParameterDeclaration[] paramDecs;
+		IASTNode[] paramDecs;
 		if (varListArray.length == 0) {
 			/*
-			 * In C it is possible to write func(void) { ... } This results in the empty name. (alex: what is an empty
-			 * name??)
+			 * In C it is possible to write func(void) { ... } This results in the empty name. 
+			 * (alex: what is an empty name??)
 			 */
-			assert ((CASTFunctionDeclarator) parent.getDeclarator()).getParameters().length == 0
-					|| (((CASTFunctionDeclarator) parent.getDeclarator()).getParameters().length == 1
-							&& ((CASTFunctionDeclarator) parent.getDeclarator()).getParameters()[0].getDeclarator()
-									.getName().toString().equals(""));
+			if (parent.getDeclarator() instanceof IASTStandardFunctionDeclarator) {
+				assert ((IASTStandardFunctionDeclarator) parent.getDeclarator()).getParameters().length == 0
+						|| (((IASTStandardFunctionDeclarator) parent.getDeclarator()).getParameters().length == 1
+						&& ((IASTStandardFunctionDeclarator) parent.getDeclarator()).getParameters()[0].getDeclarator()
+						.getName().toString().equals(""));
+
+			} 
 			paramDecs = new IASTParameterDeclaration[0];
 		} else {
-			paramDecs = ((CASTFunctionDeclarator) parent.getDeclarator()).getParameters();
+			if (parent.getDeclarator() instanceof IASTStandardFunctionDeclarator) {
+				paramDecs = ((IASTStandardFunctionDeclarator) parent.getDeclarator()).getParameters();
+			} else if (parent.getDeclarator() instanceof ICASTKnRFunctionDeclarator) {
+				paramDecs = ((ICASTKnRFunctionDeclarator) parent.getDeclarator()).getParameterDeclarations();
+			} else {
+				paramDecs = null;
+				assert false : "are we missing a type of function declarator??";
+			}
 		}
+
 		assert varListArray.length == paramDecs.length;
 		for (int i = 0; i < paramDecs.length; ++i) {
 			final VarList varList = varListArray[i];
-			final IASTParameterDeclaration paramDec = paramDecs[i];
+//			final IASTParameterDeclaration paramDec = paramDecs[i];
+			final IASTNode paramDec = paramDecs[i];
 			for (final String bId : varList.getIdentifiers()) {
 				final String cId = main.mCHandler.getSymbolTable().getCID4BoogieID(bId, loc);
 
