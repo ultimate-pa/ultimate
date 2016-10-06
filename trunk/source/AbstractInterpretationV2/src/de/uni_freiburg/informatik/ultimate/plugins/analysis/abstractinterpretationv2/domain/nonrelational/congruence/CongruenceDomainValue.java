@@ -3,6 +3,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.math.BigInteger;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.function.BiPredicate;
+import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -418,10 +420,7 @@ public final class CongruenceDomainValue
 
 	@Override
 	public BooleanValue isGreaterThan(final CongruenceDomainValue other) {
-		if (isConstant() && other.isConstant()) {
-			return BooleanValue.getBooleanValue(value().compareTo(other.value()) > 0);
-		}
-		return BooleanValue.TOP;
+		return keepZeroInverseBooleanAssociative(other, (a, b) -> a.compareTo(b) > 0);
 	}
 
 	@Override
@@ -431,10 +430,7 @@ public final class CongruenceDomainValue
 
 	@Override
 	public BooleanValue isGreaterOrEqual(final CongruenceDomainValue other) {
-		if (isConstant() && other.isConstant()) {
-			return BooleanValue.getBooleanValue(value().compareTo(other.value()) >= 0);
-		}
-		return BooleanValue.TOP;
+		return keepZeroInverseBooleanAssociative(other, (a, b) -> a.compareTo(b) >= 0);
 	}
 
 	@Override
@@ -444,10 +440,7 @@ public final class CongruenceDomainValue
 
 	@Override
 	public BooleanValue isLessThan(final CongruenceDomainValue other) {
-		if (isConstant() && other.isConstant()) {
-			return BooleanValue.getBooleanValue(value().compareTo(other.value()) < 0);
-		}
-		return BooleanValue.TOP;
+		return keepZeroInverseBooleanAssociative(other, (a, b) -> a.compareTo(b) < 0);
 	}
 
 	@Override
@@ -457,10 +450,7 @@ public final class CongruenceDomainValue
 
 	@Override
 	public BooleanValue isLessOrEqual(final CongruenceDomainValue other) {
-		if (isConstant() && other.isConstant()) {
-			return BooleanValue.getBooleanValue(value().compareTo(other.value()) <= 0);
-		}
-		return BooleanValue.TOP;
+		return keepZeroInverseBooleanAssociative(other, (a, b) -> a.compareTo(b) <= 0);
 	}
 
 	@Override
@@ -482,43 +472,52 @@ public final class CongruenceDomainValue
 
 	@Override
 	public CongruenceDomainValue inverseLessOrEqual(final CongruenceDomainValue oldValue, final boolean isLeft) {
-		if (isConstant() && value().signum() < 0) {
-			return oldValue.getNonZeroValue();
-		}
-		return oldValue;
+		return keepZeroInverseNonAssociative(oldValue, isLeft, a -> a.signum() < 0);
 	}
 
 	@Override
 	public CongruenceDomainValue inverseLessThan(final CongruenceDomainValue oldValue, final boolean isLeft) {
-		if (isConstant() && value().signum() <= 0) {
-			return oldValue.getNonZeroValue();
-		}
-		return oldValue;
+		return keepZeroInverseNonAssociative(oldValue, isLeft, a -> a.signum() <= 0);
 	}
 
 	@Override
 	public CongruenceDomainValue inverseGreaterOrEqual(final CongruenceDomainValue oldValue, final boolean isLeft) {
-		if (isConstant() && value().signum() > 0) {
-			return oldValue.getNonZeroValue();
-		}
-		return oldValue;
+		return keepZeroInverseNonAssociative(oldValue, isLeft, a -> a.signum() > 0);
 	}
 
 	@Override
 	public CongruenceDomainValue inverseGreaterThan(final CongruenceDomainValue oldValue, final boolean isLeft) {
-		if (isConstant() && value().signum() >= 0) {
-			return oldValue.getNonZeroValue();
-		}
-		return oldValue;
+		return keepZeroInverseNonAssociative(oldValue, isLeft, a -> a.signum() >= 0);
 	}
 
 	@Override
 	public CongruenceDomainValue inverseNotEqual(final CongruenceDomainValue oldValue,
 			final CongruenceDomainValue referenceValue) {
-		if (isConstant() && value().signum() == 0) {
+		return keepZeroInverseAssociative(oldValue, a -> a.signum() == 0);
+	}
+
+	private CongruenceDomainValue keepZeroInverseNonAssociative(final CongruenceDomainValue oldValue,
+			final boolean isLeft, final Predicate<BigInteger> signumCheck) {
+		if (isLeft && isConstant() && signumCheck.test(value())) {
 			return oldValue.getNonZeroValue();
 		}
 		return oldValue;
+	}
+
+	private CongruenceDomainValue keepZeroInverseAssociative(final CongruenceDomainValue oldValue,
+			final Predicate<BigInteger> signumCheck) {
+		if (isConstant() && signumCheck.test(value())) {
+			return oldValue.getNonZeroValue();
+		}
+		return oldValue;
+	}
+
+	private BooleanValue keepZeroInverseBooleanAssociative(final CongruenceDomainValue oldValue,
+			final BiPredicate<BigInteger, BigInteger> comparison) {
+		if (isConstant() && oldValue.isConstant()) {
+			return BooleanValue.getBooleanValue(comparison.test(value(), oldValue.value()));
+		}
+		return BooleanValue.TOP;
 	}
 
 	@Override
