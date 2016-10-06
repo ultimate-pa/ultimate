@@ -87,12 +87,22 @@ public class EvaluatorLogger {
 		mLogger.warn("Possible loss of precision. Operator " + op + " is not implemented.");
 	}
 
+	public void logInverseEvaluation(final Object op, final Object result, final Object... args) {
+		if (MORE_LOGGING && mLogger.isDebugEnabled()) {
+			logEvaluation("I", op, result, args);
+		}
+	}
+
 	public void logEvaluation(final Object op, final Object result, final Object... args) {
 		if (MORE_LOGGING && mLogger.isDebugEnabled()) {
-			final StringBuilder sb = new StringBuilder();
-			Arrays.stream(args).forEach(a -> sb.append(' ').append(a));
-			mLogger.debug(AbsIntPrefInitializer.DINDENT + "(" + op + sb + ") = " + result);
+			logEvaluation("E", op, result, args);
 		}
+	}
+
+	private void logEvaluation(final String prefix, final Object op, final Object result, final Object... args) {
+		final StringBuilder sb = new StringBuilder();
+		Arrays.stream(args).forEach(a -> sb.append(' ').append(a));
+		mLogger.debug(AbsIntPrefInitializer.DINDENT + prefix + " (" + op + sb + ") = " + result);
 	}
 
 	public ILogger getLogger() {
