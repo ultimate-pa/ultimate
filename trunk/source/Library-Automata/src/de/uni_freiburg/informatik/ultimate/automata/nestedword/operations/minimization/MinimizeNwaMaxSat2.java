@@ -85,6 +85,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LETTER, STATE> {
 	private static final int THREE = 3;
+
+	private static final String GENERATING_VARIABLES = "generating variables";
+	private static final String ADDING_TRANSITION_CONSTRAINTS = "adding transition constraints";
+	private static final String ADDING_TRANSITIVITY_CONSTRAINTS = "adding transitivity constraints";
+	private static final String SOLVER_TIMEOUT = "solving";
 	
 	private final NestedMap2<STATE, STATE, Doubleton<STATE>> mStatePairs = new NestedMap2<>();
 	private final AbstractMaxSatSolver<Doubleton<STATE>> mSolver;
@@ -272,7 +277,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 		try {
 			satisfiable = mSolver.solve();
 		} catch (final AutomataOperationCanceledException e) {
-			final RunningTaskInfo rti = getRunningTaskInfo();
+			final RunningTaskInfo rti = getRunningTaskInfo(SOLVER_TIMEOUT);
 			e.addRunningTaskInfo(rti);
 			throw e;
 		}
@@ -362,7 +367,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 		for (final Set<STATE> equivalenceClass : initialPartition) {
 			final STATE[] states = constructStateArray(equivalenceClass);
 			generateVariablesHelper(transitivityGenerator, states);
-			checkTimeout();
+			checkTimeout(GENERATING_VARIABLES);
 		}
 	}
 	
@@ -407,7 +412,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 			final STATE[] states = constructStateArray(equivalenceClass);
 			for (int i = 0; i < states.length; i++) {
 				generateTransitionConstraintsHelper(states, i);
-				checkTimeout();
+				checkTimeout(ADDING_TRANSITION_CONSTRAINTS);
 			}
 		}
 	}
@@ -911,7 +916,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 					mSolver.addHornClause(consArr(doubletonIk, doubletonIj), doubletonJk);
 					mNumberClausesTransitivity += THREE;
 				}
-				checkTimeout();
+				checkTimeout(ADDING_TRANSITIVITY_CONSTRAINTS);
 			}
 		}
 	}
@@ -935,17 +940,29 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 		return true;
 	}
 	
-	private void checkTimeout() throws AutomataOperationCanceledException {
+	private void checkTimeout(final String currentTask) throws AutomataOperationCanceledException {
 		if (isCancellationRequested()) {
-			final RunningTaskInfo rti = getRunningTaskInfo();
+			final RunningTaskInfo rti = getRunningTaskInfo(currentTask);
 			throw new AutomataOperationCanceledException(rti);
 		}
 	}
 	
-	private RunningTaskInfo getRunningTaskInfo() {
+	private RunningTaskInfo getRunningTaskInfo(final String currentTask) {
+		final StringBuilder builder = new StringBuilder();
 		final String taskDescription = NestedWordAutomataUtils.generateGenericMinimizationRunningTaskDescription(
 				mOperand, mInitialPartitionSize, mLargestBlockInitialPartition);
-		final RunningTaskInfo rti = new RunningTaskInfo(getClass(), taskDescription);
+		// @formatter:off
+		builder.append(taskDescription)
+				.append(". Currently ")
+				.append(currentTask)
+				.append(". Solver was fed with ")
+				.append(mSolver.getNumberOfClauses())
+				.append(" variables and ")
+				.append(mSolver.getNumberOfClauses())
+				.append(" clauses");
+		// @formatter:on
+		
+		final RunningTaskInfo rti = new RunningTaskInfo(getClass(), builder.toString());
 		return rti;
 	}
 	

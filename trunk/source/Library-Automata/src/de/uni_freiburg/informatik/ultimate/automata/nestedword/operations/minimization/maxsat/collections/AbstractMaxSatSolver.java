@@ -110,6 +110,20 @@ public abstract class AbstractMaxSatSolver<V> {
 	}
 	
 	/**
+	 * @return The number of variables.
+	 */
+	public final int getNumberOfVariables() {
+		return mVariables.size();
+	}
+	
+	/**
+	 * @return The number of clauses.
+	 */
+	public final int getNumberOfClauses() {
+		return mClauses;
+	}
+	
+	/**
 	 * Add a new variable. Variables have to be added before they can be
 	 * used in clauses.
 	 * 
