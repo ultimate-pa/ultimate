@@ -9,25 +9,25 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceRange;
 
 public class PSTRegularNode extends PSTNode implements IPSTRegularNode {
 
-	public PSTRegularNode(ISourceDocument source, ISourceRange location, IASTNode astNode) {
+	public PSTRegularNode(final ISourceDocument source, final ISourceRange location, final IASTNode astNode) {
 		super(source, location, astNode);
 	}
 
 	@Override
-	int dispatchVisit(IPSTVisitor action) {
-		return action.visit(this);
-	}
-	
-	@Override
-	int dispatchLeave(IPSTVisitor action) {
+	int dispatchLeave(final IPSTVisitor action) {
 		return action.leave(this);
 	}
 
 	@Override
-	public IPSTRegularNode findRegularChild(IASTNode astNode) {
+	int dispatchVisit(final IPSTVisitor action) {
+		return action.visit(this);
+	}
+
+	@Override
+	public IPSTRegularNode findRegularChild(final IASTNode astNode) {
 		final PSTVisitorWithResult<IPSTRegularNode> action = new PSTVisitorWithResult<IPSTRegularNode>() {
 			@Override
-			public int visit(IPSTRegularNode node) {
+			public int visit(final IPSTRegularNode node) {
 				if (PSTRegularNode.this == node) {
 					return PROCESS_CONTINUE;
 				} else if (node.getASTNode() == astNode) {
@@ -37,8 +37,8 @@ public class PSTRegularNode extends PSTNode implements IPSTRegularNode {
 				return PROCESS_SKIP;
 			}
 		};
-		this.accept(action);
+		accept(action);
 		return action.getResult().orElse(null);
 	}
-	
+
 }

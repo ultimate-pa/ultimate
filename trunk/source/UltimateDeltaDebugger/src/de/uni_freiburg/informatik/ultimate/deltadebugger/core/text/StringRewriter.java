@@ -1,9 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.deltadebugger.core.text;
 
 public class StringRewriter extends AbstractTextRewriter {
-	private String text;
+	private final String text;
 
-	public  StringRewriter(String text) {
+	public StringRewriter(final String text) {
 		this.text = text;
 	}
 

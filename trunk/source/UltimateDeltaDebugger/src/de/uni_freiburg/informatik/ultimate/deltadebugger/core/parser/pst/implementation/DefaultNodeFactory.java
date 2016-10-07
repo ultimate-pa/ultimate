@@ -22,54 +22,55 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceDocume
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceRange;
 
 public class DefaultNodeFactory implements IPSTNodeFactory {
-	
+
 	ISourceDocument source = null;
-	
-	@Override
-	public void setSourceDocument(ISourceDocument sourceDocument) {
-		source = sourceDocument;
-	}
 
 	@Override
-	public IPSTRegularNode createRegularNode(ISourceRange location, IASTNode astNode) {
-		return new PSTRegularNode(source, location, astNode);
-	}
-
-	@Override
-	public IPSTTranslationUnit createTranslationUnit(ISourceRange location, IASTTranslationUnit tu) {
-		return new PSTTranslationUnit(source, location, tu);
-	}
-
-	@Override
-	public IPSTMacroExpansion createMacroExpansion(ISourceRange location, IASTPreprocessorMacroExpansion expansion) {
-		return new PSTMacroExpansion(source, location, expansion);
-	}
-
-	@Override
-	public IPSTIncludeDirective createIncludeDirective(ISourceRange location,
-			IASTPreprocessorIncludeStatement include) {
-		return new PSTIncludeDirective(source, location, include);
-	}
-
-	@Override
-	public IPSTDirective createDirective(ISourceRange location, IASTPreprocessorStatement statement) {
-		return new PSTDirective(source, location, statement);
-	}
-
-	@Override
-	public IPSTComment createComment(ISourceRange location, IASTComment comment) {
+	public IPSTComment createComment(final ISourceRange location, final IASTComment comment) {
 		return new PSTComment(source, location, comment);
 	}
 
 	@Override
-	public IPSTConditionalBlock createConditionalBlock(ISourceRange location, List<IPSTDirective> conditionalDirectives,
-			ISourceRange activeBranchLocation) {
+	public IPSTConditionalBlock createConditionalBlock(final ISourceRange location,
+			final List<IPSTDirective> conditionalDirectives, final ISourceRange activeBranchLocation) {
 		return new PSTConditionalBlock(source, location, conditionalDirectives, activeBranchLocation);
 	}
 
 	@Override
-	public IPSTOverlappingRegion createOverlappingRegion(ISourceRange location) {
+	public IPSTDirective createDirective(final ISourceRange location, final IASTPreprocessorStatement statement) {
+		return new PSTDirective(source, location, statement);
+	}
+
+	@Override
+	public IPSTIncludeDirective createIncludeDirective(final ISourceRange location,
+			final IASTPreprocessorIncludeStatement include) {
+		return new PSTIncludeDirective(source, location, include);
+	}
+
+	@Override
+	public IPSTMacroExpansion createMacroExpansion(final ISourceRange location,
+			final IASTPreprocessorMacroExpansion expansion) {
+		return new PSTMacroExpansion(source, location, expansion);
+	}
+
+	@Override
+	public IPSTOverlappingRegion createOverlappingRegion(final ISourceRange location) {
 		return new PSTOverlappingRegion(source, location);
+	}
+
+	@Override
+	public IPSTRegularNode createRegularNode(final ISourceRange location, final IASTNode astNode) {
+		return new PSTRegularNode(source, location, astNode);
+	}
+
+	@Override
+	public IPSTTranslationUnit createTranslationUnit(final ISourceRange location, final IASTTranslationUnit tu) {
+		return new PSTTranslationUnit(source, location, tu);
+	}
+
+	@Override
+	public void setSourceDocument(final ISourceDocument sourceDocument) {
+		source = sourceDocument;
 	}
 
 }

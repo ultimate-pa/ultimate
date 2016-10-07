@@ -7,18 +7,18 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceRange;
 
 public class PSTOverlappingRegion extends PSTNode implements IPSTOverlappingRegion {
 
-	public PSTOverlappingRegion(ISourceDocument source, ISourceRange location) {
+	public PSTOverlappingRegion(final ISourceDocument source, final ISourceRange location) {
 		super(source, location, null);
 	}
 
 	@Override
-	int dispatchVisit(IPSTVisitor action) {
-		return action.visit(this);
-	}
-	
-	@Override
-	int dispatchLeave(IPSTVisitor action) {
+	int dispatchLeave(final IPSTVisitor action) {
 		return action.leave(this);
 	}
-	
+
+	@Override
+	int dispatchVisit(final IPSTVisitor action) {
+		return action.visit(this);
+	}
+
 }

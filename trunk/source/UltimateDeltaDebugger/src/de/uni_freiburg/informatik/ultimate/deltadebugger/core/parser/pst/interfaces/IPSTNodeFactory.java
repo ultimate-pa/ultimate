@@ -13,24 +13,6 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceDocume
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceRange;
 
 public interface IPSTNodeFactory {
-	
-	void setSourceDocument(ISourceDocument sourceDocument);
-	
-	/*
-	 * IPSTRegularNode
-	 */
-	IPSTRegularNode createRegularNode(ISourceRange location, IASTNode astNode);
-
-	IPSTTranslationUnit createTranslationUnit(ISourceRange location, IASTTranslationUnit tu);
-
-	/*
-	 * IPSTPreprocessorNode
-	 */
-	IPSTMacroExpansion createMacroExpansion(ISourceRange location, IASTPreprocessorMacroExpansion expansion);
-
-	IPSTIncludeDirective createIncludeDirective(ISourceRange location, IASTPreprocessorIncludeStatement include);
-
-	IPSTDirective createDirective(ISourceRange location, IASTPreprocessorStatement statement);
 
 	IPSTComment createComment(ISourceRange location, IASTComment comment);
 
@@ -40,6 +22,24 @@ public interface IPSTNodeFactory {
 	IPSTConditionalBlock createConditionalBlock(ISourceRange location, List<IPSTDirective> conditionalDirectives,
 			ISourceRange activeBranchLocation);
 
+	IPSTDirective createDirective(ISourceRange location, IASTPreprocessorStatement statement);
+
+	IPSTIncludeDirective createIncludeDirective(ISourceRange location, IASTPreprocessorIncludeStatement include);
+
+	/*
+	 * IPSTPreprocessorNode
+	 */
+	IPSTMacroExpansion createMacroExpansion(ISourceRange location, IASTPreprocessorMacroExpansion expansion);
+
 	IPSTOverlappingRegion createOverlappingRegion(ISourceRange location);
+
+	/*
+	 * IPSTRegularNode
+	 */
+	IPSTRegularNode createRegularNode(ISourceRange location, IASTNode astNode);
+
+	IPSTTranslationUnit createTranslationUnit(ISourceRange location, IASTTranslationUnit tu);
+
+	void setSourceDocument(ISourceDocument sourceDocument);
 
 }

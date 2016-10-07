@@ -6,8 +6,8 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.SourceRewrite
 
 public class DeleteConditionalDirectivesChange extends Change {
 	private final ISourceRange[] deleteLocations;
-	
-	public DeleteConditionalDirectivesChange(IPSTConditionalBlock block) {
+
+	public DeleteConditionalDirectivesChange(final IPSTConditionalBlock block) {
 		super(block);
 		if (!block.hasActiveBranch()) {
 			deleteLocations = null;
@@ -20,7 +20,7 @@ public class DeleteConditionalDirectivesChange extends Change {
 	}
 
 	@Override
-	public void apply(SourceRewriter rewriter) {
+	public void apply(final SourceRewriter rewriter) {
 		if (deleteLocations == null) {
 			rewriter.delete(getNode());
 		} else {
@@ -31,7 +31,7 @@ public class DeleteConditionalDirectivesChange extends Change {
 
 	@Override
 	public String toString() {
-		return "Delete conditional directives " + getNode()
-				+ (deleteLocations != null ? " (deleting " + deleteLocations[0] + " and " + deleteLocations[1] + ")" : "");
+		return "Delete conditional directives " + getNode() + (deleteLocations != null
+				? " (deleting " + deleteLocations[0] + " and " + deleteLocations[1] + ")" : "");
 	}
 }

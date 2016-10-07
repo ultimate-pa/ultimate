@@ -9,9 +9,8 @@ import org.eclipse.cdt.core.dom.ast.IASTPreprocessorIfndefStatement;
 import org.eclipse.cdt.core.dom.ast.IASTPreprocessorStatement;
 
 /**
- * A preprocessor directive, e.g. #include, #define, #pragma, #if etc.
- * getASTNode() always returns a non-null IASTPreprocessorStatement (which is
- * admittedly not exactly useful by itself).
+ * A preprocessor directive, e.g. #include, #define, #pragma, #if etc. getASTNode() always returns a non-null
+ * IASTPreprocessorStatement (which is admittedly not exactly useful by itself).
  *
  */
 public interface IPSTDirective extends IPSTPreprocessorNode {

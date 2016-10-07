@@ -104,193 +104,208 @@ import org.eclipse.cdt.core.dom.ast.gnu.c.IGCCASTArrayRangeDesignator;
 /**
  * Simulates a double double dispatch function for an IASTNode argument.
  *
- * Extend this class and override the corresponding on() overloads to implement
- * specialized functions based on the runtime IASTNode type. Each on() overload
- * defaults to the overload for it's direct super type, e.g.
- * on(IASTBinaryExpression) calls on(IASTExpression) calls on(IASTNode) unless
- * overridden.
- * 
- * This code is generated to only support interfaces relevant for C code, i.e.
- * it does not support ICPPAST* interfaces. Certain ICAST* interfaces have been
- * removed as well, because they do not add new methods or cause problems
- * because of multiple inheritance.
- * 
- * The main reason for using this class is that the instanceof-mess and/or
- * visitor boilerplate is not part of the code containing actual logic anymore.
- * 
+ * Extend this class and override the corresponding on() overloads to implement specialized functions based on the
+ * runtime IASTNode type. Each on() overload defaults to the overload for it's direct super type, e.g.
+ * on(IASTBinaryExpression) calls on(IASTExpression) calls on(IASTNode) unless overridden.
+ *
+ * This code is generated to only support interfaces relevant for C code, i.e. it does not support ICPPAST* interfaces.
+ * Certain ICAST* interfaces have been removed as well, because they do not add new methods or cause problems because of
+ * multiple inheritance.
+ *
+ * The main reason for using this class is that the instanceof-mess and/or visitor boilerplate is not part of the code
+ * containing actual logic anymore.
+ *
  * Note that there are multiple benefits over the original ASTVisitor:
- * 
- * * The visitor only supports part of the type hierarchy, e.g. it only has
- * overloads for IASTExpression but not for any subtypes like
- * IASTBinaryExpression.
- * 
- * * In those cases where it does support a subtype, the default visit()
- * implementation * will not be overriden if the user only overrides the visit()
- * of the supertype.
- * 
+ *
+ * * The visitor only supports part of the type hierarchy, e.g. it only has overloads for IASTExpression but not for any
+ * subtypes like IASTBinaryExpression.
+ *
+ * * In those cases where it does support a subtype, the default visit() implementation * will not be overriden if the
+ * user only overrides the visit() of the supertype.
+ *
  * * The visitor does not support certain types at all, i.e. preprocessor nodes
- * 
- * However, it may come with a small performance penalty, if there are only few
- * overridden overloads. Especially if the JIT-compiler fails to remove
- * redundant branches that all end inside on(IASTNode) (I have no idea if it
- * does).
- * 
- * The comment of each overload also serves as a quick reference to the expected
- * properties a node may have in it's parent (not duplicated for subtypes).
- * 
+ *
+ * However, it may come with a small performance penalty, if there are only few overridden overloads. Especially if the
+ * JIT-compiler fails to remove redundant branches that all end inside on(IASTNode) (I have no idea if it does).
+ *
+ * The comment of each overload also serves as a quick reference to the expected properties a node may have in it's
+ * parent (not duplicated for subtypes).
+ *
  * * @param <T> returned type
  */
 public interface IASTNodeFunction<T> {
 
-	T on(IASTNode node);
-
 	/**
 	 * <pre>
-	 * IASTAlignmentSpecifier.getPropertyInParent() values 
+	 * IASTAlignmentSpecifier.getPropertyInParent() values
 	 *   {@link IASTDeclSpecifier#ALIGNMENT_SPECIFIER}
 	 *
 	 * </pre>
 	 */
-	default T on(IASTAlignmentSpecifier alignmentSpecifier) {
+	default T on(final IASTAlignmentSpecifier alignmentSpecifier) {
 		return on((IASTNode) alignmentSpecifier);
 	}
 
 	/**
+	 * Overrides {@link ASTNodeFunction#on(IASTDeclarator)}
+	 *
+	 */
+	default T on(final IASTArrayDeclarator arrayDeclarator) {
+		return on((IASTDeclarator) arrayDeclarator);
+	}
+
+	/**
 	 * <pre>
-	 * Overridden by 
+	 * Overridden by
 	 *   {@link ASTNodeFunction#on(ICASTArrayModifier)}
 	 *
-	 * IASTArrayModifier.getPropertyInParent() values 
+	 * IASTArrayModifier.getPropertyInParent() values
 	 *   {@link IASTArrayDeclarator#ARRAY_MODIFIER}
 	 *
 	 * </pre>
 	 */
-	default T on(IASTArrayModifier arrayModifier) {
+	default T on(final IASTArrayModifier arrayModifier) {
 		return on((IASTNode) arrayModifier);
 	}
 
 	/**
-	 * Overrides {@link ASTNodeFunction#on(IASTArrayModifier)}
+	 * Overrides {@link ASTNodeFunction#on(IASTExpression)}
 	 *
 	 */
-	default T on(ICASTArrayModifier cArrayModifier) {
-		return on((IASTArrayModifier) cArrayModifier);
+	default T on(final IASTArraySubscriptExpression arraySubscriptExpression) {
+		return on((IASTExpression) arraySubscriptExpression);
+	}
+
+	/**
+	 * Overrides {@link ASTNodeFunction#on(IASTDeclaration)}
+	 *
+	 */
+	default T on(final IASTASMDeclaration asmDeclaration) {
+		return on((IASTDeclaration) asmDeclaration);
 	}
 
 	/**
 	 * <pre>
-	 * IASTAttribute.getPropertyInParent() values 
+	 * IASTAttribute.getPropertyInParent() values
 	 *   {@link IASTAttributeSpecifier#ATTRIBUTE}
 	 *
 	 * </pre>
 	 */
-	default T on(IASTAttribute attribute) {
+	default T on(final IASTAttribute attribute) {
 		return on((IASTNode) attribute);
 	}
 
 	/**
 	 * <pre>
-	 * Overridden by 
+	 * Overridden by
 	 *   {@link ASTNodeFunction#on(IGCCASTAttributeSpecifier)}
 	 *
-	 * IASTAttributeSpecifier.getPropertyInParent() values 
+	 * IASTAttributeSpecifier.getPropertyInParent() values
 	 *   {@link IASTAttributeOwner#ATTRIBUTE_SPECIFIER}
 	 *
 	 * </pre>
 	 */
-	default T on(IASTAttributeSpecifier attributeSpecifier) {
+	default T on(final IASTAttributeSpecifier attributeSpecifier) {
 		return on((IASTNode) attributeSpecifier);
 	}
 
 	/**
-	 * Overrides {@link ASTNodeFunction#on(IASTAttributeSpecifier)}
+	 * Overrides {@link ASTNodeFunction#on(IASTExpression)}
 	 *
 	 */
-	default T on(IGCCASTAttributeSpecifier gccAttributeSpecifier) {
-		return on((IASTAttributeSpecifier) gccAttributeSpecifier);
+	default T on(final IASTBinaryExpression binaryExpression) {
+		return on((IASTExpression) binaryExpression);
+	}
+
+	/**
+	 * Overrides {@link ASTNodeFunction#on(IASTExpression)}
+	 *
+	 */
+	default T on(final IASTBinaryTypeIdExpression binaryTypeIdExpression) {
+		return on((IASTExpression) binaryTypeIdExpression);
+	}
+
+	/**
+	 * Overrides {@link ASTNodeFunction#on(IASTStatement)}
+	 *
+	 */
+	default T on(final IASTBreakStatement breakStatement) {
+		return on((IASTStatement) breakStatement);
+	}
+
+	/**
+	 * Overrides {@link ASTNodeFunction#on(IASTStatement)}
+	 *
+	 */
+	default T on(final IASTCaseStatement caseStatement) {
+		return on((IASTStatement) caseStatement);
+	}
+
+	/**
+	 * Overrides {@link ASTNodeFunction#on(IASTExpression)}
+	 *
+	 */
+	default T on(final IASTCastExpression castExpression) {
+		return on((IASTExpression) castExpression);
 	}
 
 	/**
 	 * <pre>
-	 * IASTComment.getPropertyInParent() values 
+	 * IASTComment.getPropertyInParent() values
 	 *   {@link IASTTranslationUnit#PREPROCESSOR_STATEMENT}
 	 *
 	 * </pre>
 	 */
-	default T on(IASTComment comment) {
+	default T on(final IASTComment comment) {
 		return on((IASTNode) comment);
 	}
 
 	/**
-	 * <pre>
-	 * Overridden by 
-	 *   {@link ASTNodeFunction#on(IASTCompositeTypeSpecifier)}
-	 *   {@link ASTNodeFunction#on(IASTElaboratedTypeSpecifier)}
-	 *   {@link ASTNodeFunction#on(IASTEnumerationSpecifier)}
-	 *   {@link ASTNodeFunction#on(IASTNamedTypeSpecifier)}
-	 *   {@link ASTNodeFunction#on(IASTSimpleDeclSpecifier)}
-	 *
-	 * IASTDeclSpecifier.getPropertyInParent() values 
-	 *   {@link IASTFunctionDefinition#DECL_SPECIFIER}
-	 *   {@link IASTParameterDeclaration#DECL_SPECIFIER}
-	 *   {@link IASTSimpleDeclaration#DECL_SPECIFIER}
-	 *   {@link IASTTypeId#DECL_SPECIFIER}
-	 *
-	 * </pre>
-	 */
-	default T on(IASTDeclSpecifier declSpecifier) {
-		return on((IASTNode) declSpecifier);
-	}
-
-	/**
 	 * Overrides {@link ASTNodeFunction#on(IASTDeclSpecifier)}
 	 *
 	 */
-	default T on(IASTCompositeTypeSpecifier compositeTypeSpecifier) {
+	default T on(final IASTCompositeTypeSpecifier compositeTypeSpecifier) {
 		return on((IASTDeclSpecifier) compositeTypeSpecifier);
 	}
 
 	/**
-	 * Overrides {@link ASTNodeFunction#on(IASTDeclSpecifier)}
+	 * Overrides {@link ASTNodeFunction#on(IASTStatement)}
 	 *
+	 * <pre>
+	 * IASTCompoundStatement.getPropertyInParent() values
+	 *   {@link IGNUASTCompoundStatementExpression#STATEMENT}
+	 *
+	 * </pre>
 	 */
-	default T on(IASTElaboratedTypeSpecifier elaboratedTypeSpecifier) {
-		return on((IASTDeclSpecifier) elaboratedTypeSpecifier);
+	default T on(final IASTCompoundStatement compoundStatement) {
+		return on((IASTStatement) compoundStatement);
 	}
 
 	/**
-	 * Overrides {@link ASTNodeFunction#on(IASTDeclSpecifier)}
+	 * Overrides {@link ASTNodeFunction#on(IASTExpression)}
 	 *
 	 */
-	default T on(IASTEnumerationSpecifier enumerationSpecifier) {
-		return on((IASTDeclSpecifier) enumerationSpecifier);
+	default T on(final IASTConditionalExpression conditionalExpression) {
+		return on((IASTExpression) conditionalExpression);
 	}
 
 	/**
-	 * Overrides {@link ASTNodeFunction#on(IASTDeclSpecifier)}
+	 * Overrides {@link ASTNodeFunction#on(IASTStatement)}
 	 *
 	 */
-	default T on(IASTNamedTypeSpecifier namedTypeSpecifier) {
-		return on((IASTDeclSpecifier) namedTypeSpecifier);
-	}
-
-	/**
-	 * Overrides {@link ASTNodeFunction#on(IASTDeclSpecifier)}
-	 *
-	 */
-	default T on(IASTSimpleDeclSpecifier simpleDeclSpecifier) {
-		return on((IASTDeclSpecifier) simpleDeclSpecifier);
+	default T on(final IASTContinueStatement continueStatement) {
+		return on((IASTStatement) continueStatement);
 	}
 
 	/**
 	 * <pre>
-	 * Overridden by 
+	 * Overridden by
 	 *   {@link ASTNodeFunction#on(IASTASMDeclaration)}
 	 *   {@link ASTNodeFunction#on(IASTFunctionDefinition)}
 	 *   {@link ASTNodeFunction#on(IASTProblemDeclaration)}
 	 *   {@link ASTNodeFunction#on(IASTSimpleDeclaration)}
 	 *
-	 * IASTDeclaration.getPropertyInParent() values 
+	 * IASTDeclaration.getPropertyInParent() values
 	 *   {@link IASTCompositeTypeSpecifier#MEMBER_DECLARATION}
 	 *   {@link IASTDeclarationStatement#DECLARATION}
 	 *   {@link IASTIfStatement#CONDITION}
@@ -299,50 +314,26 @@ public interface IASTNodeFunction<T> {
 	 *
 	 * </pre>
 	 */
-	default T on(IASTDeclaration declaration) {
+	default T on(final IASTDeclaration declaration) {
 		return on((IASTNode) declaration);
 	}
 
 	/**
-	 * Overrides {@link ASTNodeFunction#on(IASTDeclaration)}
+	 * Overrides {@link ASTNodeFunction#on(IASTStatement)}
 	 *
 	 */
-	default T on(IASTASMDeclaration asmDeclaration) {
-		return on((IASTDeclaration) asmDeclaration);
-	}
-
-	/**
-	 * Overrides {@link ASTNodeFunction#on(IASTDeclaration)}
-	 *
-	 */
-	default T on(IASTFunctionDefinition functionDefinition) {
-		return on((IASTDeclaration) functionDefinition);
-	}
-
-	/**
-	 * Overrides {@link ASTNodeFunction#on(IASTDeclaration)}
-	 *
-	 */
-	default T on(IASTProblemDeclaration problemDeclaration) {
-		return on((IASTDeclaration) problemDeclaration);
-	}
-
-	/**
-	 * Overrides {@link ASTNodeFunction#on(IASTDeclaration)}
-	 *
-	 */
-	default T on(IASTSimpleDeclaration simpleDeclaration) {
-		return on((IASTDeclaration) simpleDeclaration);
+	default T on(final IASTDeclarationStatement declarationStatement) {
+		return on((IASTStatement) declarationStatement);
 	}
 
 	/**
 	 * <pre>
-	 * Overridden by 
+	 * Overridden by
 	 *   {@link ASTNodeFunction#on(IASTArrayDeclarator)}
 	 *   {@link ASTNodeFunction#on(IASTFieldDeclarator)}
 	 *   {@link ASTNodeFunction#on(IASTFunctionDeclarator)}
 	 *
-	 * IASTDeclarator.getPropertyInParent() values 
+	 * IASTDeclarator.getPropertyInParent() values
 	 *   {@link IASTDeclarator#NESTED_DECLARATOR}
 	 *   {@link IASTParameterDeclaration#DECLARATOR}
 	 *   {@link IASTSimpleDeclaration#DECLARATOR}
@@ -350,73 +341,85 @@ public interface IASTNodeFunction<T> {
 	 *
 	 * </pre>
 	 */
-	default T on(IASTDeclarator declarator) {
+	default T on(final IASTDeclarator declarator) {
 		return on((IASTNode) declarator);
 	}
 
 	/**
-	 * Overrides {@link ASTNodeFunction#on(IASTDeclarator)}
-	 *
-	 */
-	default T on(IASTArrayDeclarator arrayDeclarator) {
-		return on((IASTDeclarator) arrayDeclarator);
-	}
-
-	/**
-	 * Overrides {@link ASTNodeFunction#on(IASTDeclarator)}
-	 *
-	 */
-	default T on(IASTFieldDeclarator fieldDeclarator) {
-		return on((IASTDeclarator) fieldDeclarator);
-	}
-
-	/**
-	 * Overrides {@link ASTNodeFunction#on(IASTDeclarator)}
-	 *
 	 * <pre>
-	 * Overridden by 
-	 *   {@link ASTNodeFunction#on(IASTStandardFunctionDeclarator)}
-	 *   {@link ASTNodeFunction#on(ICASTKnRFunctionDeclarator)}
+	 * Overridden by
+	 *   {@link ASTNodeFunction#on(IASTCompositeTypeSpecifier)}
+	 *   {@link ASTNodeFunction#on(IASTElaboratedTypeSpecifier)}
+	 *   {@link ASTNodeFunction#on(IASTEnumerationSpecifier)}
+	 *   {@link ASTNodeFunction#on(IASTNamedTypeSpecifier)}
+	 *   {@link ASTNodeFunction#on(IASTSimpleDeclSpecifier)}
 	 *
-	 * IASTFunctionDeclarator.getPropertyInParent() values 
-	 *   {@link IASTFunctionDefinition#DECLARATOR}
+	 * IASTDeclSpecifier.getPropertyInParent() values
+	 *   {@link IASTFunctionDefinition#DECL_SPECIFIER}
+	 *   {@link IASTParameterDeclaration#DECL_SPECIFIER}
+	 *   {@link IASTSimpleDeclaration#DECL_SPECIFIER}
+	 *   {@link IASTTypeId#DECL_SPECIFIER}
 	 *
 	 * </pre>
 	 */
-	default T on(IASTFunctionDeclarator functionDeclarator) {
-		return on((IASTDeclarator) functionDeclarator);
+	default T on(final IASTDeclSpecifier declSpecifier) {
+		return on((IASTNode) declSpecifier);
 	}
 
 	/**
-	 * Overrides {@link ASTNodeFunction#on(IASTFunctionDeclarator)}
+	 * Overrides {@link ASTNodeFunction#on(IASTStatement)}
 	 *
 	 */
-	default T on(IASTStandardFunctionDeclarator standardFunctionDeclarator) {
-		return on((IASTFunctionDeclarator) standardFunctionDeclarator);
+	default T on(final IASTDefaultStatement defaultStatement) {
+		return on((IASTStatement) defaultStatement);
 	}
 
 	/**
-	 * Overrides {@link ASTNodeFunction#on(IASTFunctionDeclarator)}
+	 * Overrides {@link ASTNodeFunction#on(IASTStatement)}
 	 *
 	 */
-	default T on(ICASTKnRFunctionDeclarator cKnRFunctionDeclarator) {
-		return on((IASTFunctionDeclarator) cKnRFunctionDeclarator);
+	default T on(final IASTDoStatement doStatement) {
+		return on((IASTStatement) doStatement);
+	}
+
+	/**
+	 * Overrides {@link ASTNodeFunction#on(IASTDeclSpecifier)}
+	 *
+	 */
+	default T on(final IASTElaboratedTypeSpecifier elaboratedTypeSpecifier) {
+		return on((IASTDeclSpecifier) elaboratedTypeSpecifier);
+	}
+
+	/**
+	 * Overrides {@link ASTNodeFunction#on(IASTDeclSpecifier)}
+	 *
+	 */
+	default T on(final IASTEnumerationSpecifier enumerationSpecifier) {
+		return on((IASTDeclSpecifier) enumerationSpecifier);
 	}
 
 	/**
 	 * <pre>
-	 * IASTEnumerator.getPropertyInParent() values 
+	 * IASTEnumerator.getPropertyInParent() values
 	 *   {@link IASTEnumerationSpecifier#ENUMERATOR}
 	 *
 	 * </pre>
 	 */
-	default T on(IASTEnumerator enumerator) {
+	default T on(final IASTEnumerator enumerator) {
 		return on((IASTNode) enumerator);
 	}
 
 	/**
+	 * Overrides {@link ASTNodeFunction#on(IASTInitializer)}
+	 *
+	 */
+	default T on(final IASTEqualsInitializer equalsInitializer) {
+		return on((IASTInitializer) equalsInitializer);
+	}
+
+	/**
 	 * <pre>
-	 * Overridden by 
+	 * Overridden by
 	 *   {@link ASTNodeFunction#on(IASTArraySubscriptExpression)}
 	 *   {@link ASTNodeFunction#on(IASTBinaryExpression)}
 	 *   {@link ASTNodeFunction#on(IASTBinaryTypeIdExpression)}
@@ -433,7 +436,7 @@ public interface IASTNodeFunction<T> {
 	 *   {@link ASTNodeFunction#on(IASTUnaryExpression)}
 	 *   {@link ASTNodeFunction#on(IGNUASTCompoundStatementExpression)}
 	 *
-	 * IASTExpression.getPropertyInParent() values 
+	 * IASTExpression.getPropertyInParent() values
 	 *   {@link IASTAlignmentSpecifier#ALIGNMENT_EXPRESSION}
 	 *   {@link IASTArrayModifier#CONSTANT_EXPRESSION}
 	 *   {@link IASTArraySubscriptExpression#ARRAY}
@@ -471,7 +474,7 @@ public interface IASTNodeFunction<T> {
 	 *
 	 * </pre>
 	 */
-	default T on(IASTExpression expression) {
+	default T on(final IASTExpression expression) {
 		return on((IASTNode) expression);
 	}
 
@@ -479,152 +482,150 @@ public interface IASTNodeFunction<T> {
 	 * Overrides {@link ASTNodeFunction#on(IASTExpression)}
 	 *
 	 */
-	default T on(IASTArraySubscriptExpression arraySubscriptExpression) {
-		return on((IASTExpression) arraySubscriptExpression);
-	}
-
-	/**
-	 * Overrides {@link ASTNodeFunction#on(IASTExpression)}
-	 *
-	 */
-	default T on(IASTBinaryExpression binaryExpression) {
-		return on((IASTExpression) binaryExpression);
-	}
-
-	/**
-	 * Overrides {@link ASTNodeFunction#on(IASTExpression)}
-	 *
-	 */
-	default T on(IASTBinaryTypeIdExpression binaryTypeIdExpression) {
-		return on((IASTExpression) binaryTypeIdExpression);
-	}
-
-	/**
-	 * Overrides {@link ASTNodeFunction#on(IASTExpression)}
-	 *
-	 */
-	default T on(IASTCastExpression castExpression) {
-		return on((IASTExpression) castExpression);
-	}
-
-	/**
-	 * Overrides {@link ASTNodeFunction#on(IASTExpression)}
-	 *
-	 */
-	default T on(IASTConditionalExpression conditionalExpression) {
-		return on((IASTExpression) conditionalExpression);
-	}
-
-	/**
-	 * Overrides {@link ASTNodeFunction#on(IASTExpression)}
-	 *
-	 */
-	default T on(IASTExpressionList expressionList) {
+	default T on(final IASTExpressionList expressionList) {
 		return on((IASTExpression) expressionList);
 	}
 
 	/**
+	 * Overrides {@link ASTNodeFunction#on(IASTStatement)}
+	 *
+	 */
+	default T on(final IASTExpressionStatement expressionStatement) {
+		return on((IASTStatement) expressionStatement);
+	}
+
+	/**
+	 * Overrides {@link ASTNodeFunction#on(IASTDeclarator)}
+	 *
+	 */
+	default T on(final IASTFieldDeclarator fieldDeclarator) {
+		return on((IASTDeclarator) fieldDeclarator);
+	}
+
+	/**
 	 * Overrides {@link ASTNodeFunction#on(IASTExpression)}
 	 *
 	 */
-	default T on(IASTFieldReference fieldReference) {
+	default T on(final IASTFieldReference fieldReference) {
 		return on((IASTExpression) fieldReference);
 	}
 
 	/**
+	 * Overrides {@link ASTNodeFunction#on(IASTStatement)}
+	 *
+	 */
+	default T on(final IASTForStatement forStatement) {
+		return on((IASTStatement) forStatement);
+	}
+
+	/**
 	 * Overrides {@link ASTNodeFunction#on(IASTExpression)}
 	 *
 	 */
-	default T on(IASTFunctionCallExpression functionCallExpression) {
+	default T on(final IASTFunctionCallExpression functionCallExpression) {
 		return on((IASTExpression) functionCallExpression);
 	}
 
 	/**
+	 * Overrides {@link ASTNodeFunction#on(IASTDeclarator)}
+	 *
+	 * <pre>
+	 * Overridden by
+	 *   {@link ASTNodeFunction#on(IASTStandardFunctionDeclarator)}
+	 *   {@link ASTNodeFunction#on(ICASTKnRFunctionDeclarator)}
+	 *
+	 * IASTFunctionDeclarator.getPropertyInParent() values
+	 *   {@link IASTFunctionDefinition#DECLARATOR}
+	 *
+	 * </pre>
+	 */
+	default T on(final IASTFunctionDeclarator functionDeclarator) {
+		return on((IASTDeclarator) functionDeclarator);
+	}
+
+	/**
+	 * Overrides {@link ASTNodeFunction#on(IASTDeclaration)}
+	 *
+	 */
+	default T on(final IASTFunctionDefinition functionDefinition) {
+		return on((IASTDeclaration) functionDefinition);
+	}
+
+	/**
+	 * Overrides {@link ASTNodeFunction#on(IASTStatement)}
+	 *
+	 */
+	default T on(final IASTGotoStatement gotoStatement) {
+		return on((IASTStatement) gotoStatement);
+	}
+
+	/**
 	 * Overrides {@link ASTNodeFunction#on(IASTExpression)}
 	 *
 	 */
-	default T on(IASTIdExpression idExpression) {
+	default T on(final IASTIdExpression idExpression) {
 		return on((IASTExpression) idExpression);
 	}
 
 	/**
-	 * Overrides {@link ASTNodeFunction#on(IASTExpression)}
+	 * Overrides {@link ASTNodeFunction#on(IASTStatement)}
 	 *
 	 */
-	default T on(IASTLiteralExpression literalExpression) {
-		return on((IASTExpression) literalExpression);
+	default T on(final IASTIfStatement ifStatement) {
+		return on((IASTStatement) ifStatement);
 	}
 
 	/**
-	 * Overrides {@link ASTNodeFunction#on(IASTExpression)}
+	 * Overrides {@link ASTNodeFunction#on(IASTImplicitName)}
 	 *
+	 * <pre>
+	 * IASTImplicitDestructorName.getPropertyInParent() values
+	 *   {@link IASTImplicitDestructorNameOwner#IMPLICIT_DESTRUCTOR_NAME}
+	 *
+	 * </pre>
 	 */
-	default T on(IASTProblemExpression problemExpression) {
-		return on((IASTExpression) problemExpression);
+	default T on(final IASTImplicitDestructorName implicitDestructorName) {
+		return on((IASTImplicitName) implicitDestructorName);
 	}
 
 	/**
-	 * Overrides {@link ASTNodeFunction#on(IASTExpression)}
+	 * Overrides {@link ASTNodeFunction#on(IASTName)}
 	 *
-	 */
-	default T on(IASTTypeIdExpression typeIdExpression) {
-		return on((IASTExpression) typeIdExpression);
-	}
-
-	/**
-	 * Overrides {@link ASTNodeFunction#on(IASTExpression)}
+	 * <pre>
+	 * Overridden by
+	 *   {@link ASTNodeFunction#on(IASTImplicitDestructorName)}
 	 *
-	 */
-	default T on(IASTTypeIdInitializerExpression typeIdInitializerExpression) {
-		return on((IASTExpression) typeIdInitializerExpression);
-	}
-
-	/**
-	 * Overrides {@link ASTNodeFunction#on(IASTExpression)}
+	 * IASTImplicitName.getPropertyInParent() values
+	 *   {@link IASTImplicitNameOwner#IMPLICIT_NAME}
 	 *
+	 * </pre>
 	 */
-	default T on(IASTUnaryExpression unaryExpression) {
-		return on((IASTExpression) unaryExpression);
-	}
-
-	/**
-	 * Overrides {@link ASTNodeFunction#on(IASTExpression)}
-	 *
-	 */
-	default T on(IGNUASTCompoundStatementExpression gnuCompoundStatementExpression) {
-		return on((IASTExpression) gnuCompoundStatementExpression);
+	default T on(final IASTImplicitName implicitName) {
+		return on((IASTName) implicitName);
 	}
 
 	/**
 	 * <pre>
-	 * Overridden by 
+	 * Overridden by
 	 *   {@link ASTNodeFunction#on(IASTEqualsInitializer)}
 	 *   {@link ASTNodeFunction#on(IASTInitializerList)}
 	 *   {@link ASTNodeFunction#on(ICASTDesignatedInitializer)}
 	 *
-	 * IASTInitializer.getPropertyInParent() values 
+	 * IASTInitializer.getPropertyInParent() values
 	 *   {@link IASTDeclarator#INITIALIZER}
 	 *   {@link IASTTypeIdInitializerExpression#INITIALIZER}
 	 *
 	 * </pre>
 	 */
-	default T on(IASTInitializer initializer) {
+	default T on(final IASTInitializer initializer) {
 		return on((IASTNode) initializer);
 	}
 
 	/**
 	 * Overrides {@link ASTNodeFunction#on(IASTInitializer)}
 	 *
-	 */
-	default T on(IASTEqualsInitializer equalsInitializer) {
-		return on((IASTInitializer) equalsInitializer);
-	}
-
-	/**
-	 * Overrides {@link ASTNodeFunction#on(IASTInitializer)}
-	 *
 	 * <pre>
-	 * IASTInitializerList.getPropertyInParent() values 
+	 * IASTInitializerList.getPropertyInParent() values
 	 *   {@link IASTEqualsInitializer#INITIALIZER}
 	 *   {@link IASTFunctionCallExpression#ARGUMENT}
 	 *   {@link IASTInitializerList#NESTED_INITIALIZER}
@@ -633,33 +634,32 @@ public interface IASTNodeFunction<T> {
 	 *
 	 * </pre>
 	 */
-	default T on(IASTInitializerList initializerList) {
+	default T on(final IASTInitializerList initializerList) {
 		return on((IASTInitializer) initializerList);
 	}
 
 	/**
-	 * Overrides {@link ASTNodeFunction#on(IASTInitializer)}
+	 * Overrides {@link ASTNodeFunction#on(IASTStatement)}
 	 *
-	 * <pre>
-	 * ICASTDesignatedInitializer.getPropertyInParent() values 
-	 *   {@link IASTEqualsInitializer#INITIALIZER}
-	 *   {@link IASTFunctionCallExpression#ARGUMENT}
-	 *   {@link IASTInitializerList#NESTED_INITIALIZER}
-	 *   {@link IASTReturnStatement#RETURNVALUE}
-	 *   {@link ICASTDesignatedInitializer#OPERAND}
-	 *
-	 * </pre>
 	 */
-	default T on(ICASTDesignatedInitializer cDesignatedInitializer) {
-		return on((IASTInitializer) cDesignatedInitializer);
+	default T on(final IASTLabelStatement labelStatement) {
+		return on((IASTStatement) labelStatement);
+	}
+
+	/**
+	 * Overrides {@link ASTNodeFunction#on(IASTExpression)}
+	 *
+	 */
+	default T on(final IASTLiteralExpression literalExpression) {
+		return on((IASTExpression) literalExpression);
 	}
 
 	/**
 	 * <pre>
-	 * Overridden by 
+	 * Overridden by
 	 *   {@link ASTNodeFunction#on(IASTImplicitName)}
 	 *
-	 * IASTName.getPropertyInParent() values 
+	 * IASTName.getPropertyInParent() values
 	 *   {@link IASTCompositeTypeSpecifier#TYPE_NAME}
 	 *   {@link IASTDeclarator#DECLARATOR_NAME}
 	 *   {@link IASTElaboratedTypeSpecifier#TYPE_NAME}
@@ -680,99 +680,182 @@ public interface IASTNodeFunction<T> {
 	 *
 	 * </pre>
 	 */
-	default T on(IASTName name) {
+	default T on(final IASTName name) {
 		return on((IASTNode) name);
 	}
 
 	/**
-	 * Overrides {@link ASTNodeFunction#on(IASTName)}
+	 * Overrides {@link ASTNodeFunction#on(IASTDeclSpecifier)}
 	 *
-	 * <pre>
-	 * Overridden by 
-	 *   {@link ASTNodeFunction#on(IASTImplicitDestructorName)}
-	 *
-	 * IASTImplicitName.getPropertyInParent() values 
-	 *   {@link IASTImplicitNameOwner#IMPLICIT_NAME}
-	 *
-	 * </pre>
 	 */
-	default T on(IASTImplicitName implicitName) {
-		return on((IASTName) implicitName);
+	default T on(final IASTNamedTypeSpecifier namedTypeSpecifier) {
+		return on((IASTDeclSpecifier) namedTypeSpecifier);
 	}
 
+	T on(IASTNode node);
+
 	/**
-	 * Overrides {@link ASTNodeFunction#on(IASTImplicitName)}
+	 * Overrides {@link ASTNodeFunction#on(IASTStatement)}
 	 *
-	 * <pre>
-	 * IASTImplicitDestructorName.getPropertyInParent() values 
-	 *   {@link IASTImplicitDestructorNameOwner#IMPLICIT_DESTRUCTOR_NAME}
-	 *
-	 * </pre>
 	 */
-	default T on(IASTImplicitDestructorName implicitDestructorName) {
-		return on((IASTImplicitName) implicitDestructorName);
+	default T on(final IASTNullStatement nullStatement) {
+		return on((IASTStatement) nullStatement);
 	}
 
 	/**
 	 * <pre>
-	 * IASTParameterDeclaration.getPropertyInParent() values 
+	 * IASTParameterDeclaration.getPropertyInParent() values
 	 *   {@link IASTStandardFunctionDeclarator#FUNCTION_PARAMETER}
 	 *
 	 * </pre>
 	 */
-	default T on(IASTParameterDeclaration parameterDeclaration) {
+	default T on(final IASTParameterDeclaration parameterDeclaration) {
 		return on((IASTNode) parameterDeclaration);
-	}
-
-	/**
-	 * <pre>
-	 * Overridden by 
-	 *   {@link ASTNodeFunction#on(IASTPointer)}
-	 *
-	 * IASTPointerOperator.getPropertyInParent() values 
-	 *   {@link IASTDeclarator#POINTER_OPERATOR}
-	 *
-	 * </pre>
-	 */
-	default T on(IASTPointerOperator pointerOperator) {
-		return on((IASTNode) pointerOperator);
 	}
 
 	/**
 	 * Overrides {@link ASTNodeFunction#on(IASTPointerOperator)}
 	 *
 	 * <pre>
-	 * Overridden by 
+	 * Overridden by
 	 *   {@link ASTNodeFunction#on(ICASTPointer)}
 	 *
 	 * </pre>
 	 */
-	default T on(IASTPointer pointer) {
+	default T on(final IASTPointer pointer) {
 		return on((IASTPointerOperator) pointer);
 	}
 
 	/**
-	 * Overrides {@link ASTNodeFunction#on(IASTPointer)}
+	 * <pre>
+	 * Overridden by
+	 *   {@link ASTNodeFunction#on(IASTPointer)}
+	 *
+	 * IASTPointerOperator.getPropertyInParent() values
+	 *   {@link IASTDeclarator#POINTER_OPERATOR}
+	 *
+	 * </pre>
+	 */
+	default T on(final IASTPointerOperator pointerOperator) {
+		return on((IASTNode) pointerOperator);
+	}
+
+	/**
+	 * Overrides {@link ASTNodeFunction#on(IASTPreprocessorStatement)}
 	 *
 	 */
-	default T on(ICASTPointer cPointer) {
-		return on((IASTPointer) cPointer);
+	default T on(final IASTPreprocessorElifStatement preprocessorElifStatement) {
+		return on((IASTPreprocessorStatement) preprocessorElifStatement);
+	}
+
+	/**
+	 * Overrides {@link ASTNodeFunction#on(IASTPreprocessorStatement)}
+	 *
+	 */
+	default T on(final IASTPreprocessorElseStatement preprocessorElseStatement) {
+		return on((IASTPreprocessorStatement) preprocessorElseStatement);
+	}
+
+	/**
+	 * Overrides {@link ASTNodeFunction#on(IASTPreprocessorStatement)}
+	 *
+	 */
+	default T on(final IASTPreprocessorEndifStatement preprocessorEndifStatement) {
+		return on((IASTPreprocessorStatement) preprocessorEndifStatement);
+	}
+
+	/**
+	 * Overrides {@link ASTNodeFunction#on(IASTPreprocessorStatement)}
+	 *
+	 */
+	default T on(final IASTPreprocessorErrorStatement preprocessorErrorStatement) {
+		return on((IASTPreprocessorStatement) preprocessorErrorStatement);
+	}
+
+	/**
+	 * Overrides {@link ASTNodeFunction#on(IASTPreprocessorMacroDefinition)}
+	 *
+	 */
+	default T on(final IASTPreprocessorFunctionStyleMacroDefinition preprocessorFunctionStyleMacroDefinition) {
+		return on((IASTPreprocessorMacroDefinition) preprocessorFunctionStyleMacroDefinition);
+	}
+
+	/**
+	 * Overrides {@link ASTNodeFunction#on(IASTPreprocessorStatement)}
+	 *
+	 */
+	default T on(final IASTPreprocessorIfdefStatement preprocessorIfdefStatement) {
+		return on((IASTPreprocessorStatement) preprocessorIfdefStatement);
+	}
+
+	/**
+	 * Overrides {@link ASTNodeFunction#on(IASTPreprocessorStatement)}
+	 *
+	 */
+	default T on(final IASTPreprocessorIfndefStatement preprocessorIfndefStatement) {
+		return on((IASTPreprocessorStatement) preprocessorIfndefStatement);
+	}
+
+	/**
+	 * Overrides {@link ASTNodeFunction#on(IASTPreprocessorStatement)}
+	 *
+	 */
+	default T on(final IASTPreprocessorIfStatement preprocessorIfStatement) {
+		return on((IASTPreprocessorStatement) preprocessorIfStatement);
+	}
+
+	/**
+	 * Overrides {@link ASTNodeFunction#on(IASTPreprocessorStatement)}
+	 *
+	 */
+	default T on(final IASTPreprocessorIncludeStatement preprocessorIncludeStatement) {
+		return on((IASTPreprocessorStatement) preprocessorIncludeStatement);
+	}
+
+	/**
+	 * Overrides {@link ASTNodeFunction#on(IASTPreprocessorStatement)}
+	 *
+	 * <pre>
+	 * Overridden by
+	 *   {@link ASTNodeFunction#on(IASTPreprocessorFunctionStyleMacroDefinition)}
+	 *   {@link ASTNodeFunction#on(IASTPreprocessorObjectStyleMacroDefinition)}
+	 *
+	 * </pre>
+	 */
+	default T on(final IASTPreprocessorMacroDefinition preprocessorMacroDefinition) {
+		return on((IASTPreprocessorStatement) preprocessorMacroDefinition);
 	}
 
 	/**
 	 * <pre>
-	 * IASTPreprocessorMacroExpansion.getPropertyInParent() values 
+	 * IASTPreprocessorMacroExpansion.getPropertyInParent() values
 	 *   {@link IASTTranslationUnit#MACRO_EXPANSION}
 	 *
 	 * </pre>
 	 */
-	default T on(IASTPreprocessorMacroExpansion preprocessorMacroExpansion) {
+	default T on(final IASTPreprocessorMacroExpansion preprocessorMacroExpansion) {
 		return on((IASTNode) preprocessorMacroExpansion);
 	}
 
 	/**
+	 * Overrides {@link ASTNodeFunction#on(IASTPreprocessorMacroDefinition)}
+	 *
+	 */
+	default T on(final IASTPreprocessorObjectStyleMacroDefinition preprocessorObjectStyleMacroDefinition) {
+		return on((IASTPreprocessorMacroDefinition) preprocessorObjectStyleMacroDefinition);
+	}
+
+	/**
+	 * Overrides {@link ASTNodeFunction#on(IASTPreprocessorStatement)}
+	 *
+	 */
+	default T on(final IASTPreprocessorPragmaStatement preprocessorPragmaStatement) {
+		return on((IASTPreprocessorStatement) preprocessorPragmaStatement);
+	}
+
+	/**
 	 * <pre>
-	 * Overridden by 
+	 * Overridden by
 	 *   {@link ASTNodeFunction#on(IASTPreprocessorElifStatement)}
 	 *   {@link ASTNodeFunction#on(IASTPreprocessorElseStatement)}
 	 *   {@link ASTNodeFunction#on(IASTPreprocessorEndifStatement)}
@@ -785,12 +868,12 @@ public interface IASTNodeFunction<T> {
 	 *   {@link ASTNodeFunction#on(IASTPreprocessorPragmaStatement)}
 	 *   {@link ASTNodeFunction#on(IASTPreprocessorUndefStatement)}
 	 *
-	 * IASTPreprocessorStatement.getPropertyInParent() values 
+	 * IASTPreprocessorStatement.getPropertyInParent() values
 	 *   {@link IASTTranslationUnit#PREPROCESSOR_STATEMENT}
 	 *
 	 * </pre>
 	 */
-	default T on(IASTPreprocessorStatement preprocessorStatement) {
+	default T on(final IASTPreprocessorStatement preprocessorStatement) {
 		return on((IASTNode) preprocessorStatement);
 	}
 
@@ -798,126 +881,88 @@ public interface IASTNodeFunction<T> {
 	 * Overrides {@link ASTNodeFunction#on(IASTPreprocessorStatement)}
 	 *
 	 */
-	default T on(IASTPreprocessorElifStatement preprocessorElifStatement) {
-		return on((IASTPreprocessorStatement) preprocessorElifStatement);
-	}
-
-	/**
-	 * Overrides {@link ASTNodeFunction#on(IASTPreprocessorStatement)}
-	 *
-	 */
-	default T on(IASTPreprocessorElseStatement preprocessorElseStatement) {
-		return on((IASTPreprocessorStatement) preprocessorElseStatement);
-	}
-
-	/**
-	 * Overrides {@link ASTNodeFunction#on(IASTPreprocessorStatement)}
-	 *
-	 */
-	default T on(IASTPreprocessorEndifStatement preprocessorEndifStatement) {
-		return on((IASTPreprocessorStatement) preprocessorEndifStatement);
-	}
-
-	/**
-	 * Overrides {@link ASTNodeFunction#on(IASTPreprocessorStatement)}
-	 *
-	 */
-	default T on(IASTPreprocessorErrorStatement preprocessorErrorStatement) {
-		return on((IASTPreprocessorStatement) preprocessorErrorStatement);
-	}
-
-	/**
-	 * Overrides {@link ASTNodeFunction#on(IASTPreprocessorStatement)}
-	 *
-	 */
-	default T on(IASTPreprocessorIfStatement preprocessorIfStatement) {
-		return on((IASTPreprocessorStatement) preprocessorIfStatement);
-	}
-
-	/**
-	 * Overrides {@link ASTNodeFunction#on(IASTPreprocessorStatement)}
-	 *
-	 */
-	default T on(IASTPreprocessorIfdefStatement preprocessorIfdefStatement) {
-		return on((IASTPreprocessorStatement) preprocessorIfdefStatement);
-	}
-
-	/**
-	 * Overrides {@link ASTNodeFunction#on(IASTPreprocessorStatement)}
-	 *
-	 */
-	default T on(IASTPreprocessorIfndefStatement preprocessorIfndefStatement) {
-		return on((IASTPreprocessorStatement) preprocessorIfndefStatement);
-	}
-
-	/**
-	 * Overrides {@link ASTNodeFunction#on(IASTPreprocessorStatement)}
-	 *
-	 */
-	default T on(IASTPreprocessorIncludeStatement preprocessorIncludeStatement) {
-		return on((IASTPreprocessorStatement) preprocessorIncludeStatement);
-	}
-
-	/**
-	 * Overrides {@link ASTNodeFunction#on(IASTPreprocessorStatement)}
-	 *
-	 * <pre>
-	 * Overridden by 
-	 *   {@link ASTNodeFunction#on(IASTPreprocessorFunctionStyleMacroDefinition)}
-	 *   {@link ASTNodeFunction#on(IASTPreprocessorObjectStyleMacroDefinition)}
-	 *
-	 * </pre>
-	 */
-	default T on(IASTPreprocessorMacroDefinition preprocessorMacroDefinition) {
-		return on((IASTPreprocessorStatement) preprocessorMacroDefinition);
-	}
-
-	/**
-	 * Overrides {@link ASTNodeFunction#on(IASTPreprocessorMacroDefinition)}
-	 *
-	 */
-	default T on(IASTPreprocessorFunctionStyleMacroDefinition preprocessorFunctionStyleMacroDefinition) {
-		return on((IASTPreprocessorMacroDefinition) preprocessorFunctionStyleMacroDefinition);
-	}
-
-	/**
-	 * Overrides {@link ASTNodeFunction#on(IASTPreprocessorMacroDefinition)}
-	 *
-	 */
-	default T on(IASTPreprocessorObjectStyleMacroDefinition preprocessorObjectStyleMacroDefinition) {
-		return on((IASTPreprocessorMacroDefinition) preprocessorObjectStyleMacroDefinition);
-	}
-
-	/**
-	 * Overrides {@link ASTNodeFunction#on(IASTPreprocessorStatement)}
-	 *
-	 */
-	default T on(IASTPreprocessorPragmaStatement preprocessorPragmaStatement) {
-		return on((IASTPreprocessorStatement) preprocessorPragmaStatement);
-	}
-
-	/**
-	 * Overrides {@link ASTNodeFunction#on(IASTPreprocessorStatement)}
-	 *
-	 */
-	default T on(IASTPreprocessorUndefStatement preprocessorUndefStatement) {
+	default T on(final IASTPreprocessorUndefStatement preprocessorUndefStatement) {
 		return on((IASTPreprocessorStatement) preprocessorUndefStatement);
 	}
 
 	/**
 	 * <pre>
-	 * IASTProblem.getPropertyInParent() values 
+	 * IASTProblem.getPropertyInParent() values
 	 *   {@link IASTTranslationUnit#SCANNER_PROBLEM}
 	 *
 	 * </pre>
 	 */
-	default T on(IASTProblem problem) {
+	default T on(final IASTProblem problem) {
 		return on((IASTNode) problem);
 	}
 
 	/**
+	 * Overrides {@link ASTNodeFunction#on(IASTDeclaration)}
+	 *
+	 */
+	default T on(final IASTProblemDeclaration problemDeclaration) {
+		return on((IASTDeclaration) problemDeclaration);
+	}
+
+	/**
+	 * Overrides {@link ASTNodeFunction#on(IASTExpression)}
+	 *
+	 */
+	default T on(final IASTProblemExpression problemExpression) {
+		return on((IASTExpression) problemExpression);
+	}
+
+	/**
+	 * Overrides {@link ASTNodeFunction#on(IASTStatement)}
+	 *
+	 */
+	default T on(final IASTProblemStatement problemStatement) {
+		return on((IASTStatement) problemStatement);
+	}
+
+	/**
+	 * Overrides {@link ASTNodeFunction#on(IASTTypeId)}
+	 *
+	 */
+	default T on(final IASTProblemTypeId problemTypeId) {
+		return on((IASTTypeId) problemTypeId);
+	}
+
+	/**
+	 * Overrides {@link ASTNodeFunction#on(IASTStatement)}
+	 *
+	 */
+	default T on(final IASTReturnStatement returnStatement) {
+		return on((IASTStatement) returnStatement);
+	}
+
+	/**
+	 * Overrides {@link ASTNodeFunction#on(IASTDeclaration)}
+	 *
+	 */
+	default T on(final IASTSimpleDeclaration simpleDeclaration) {
+		return on((IASTDeclaration) simpleDeclaration);
+	}
+
+	/**
+	 * Overrides {@link ASTNodeFunction#on(IASTDeclSpecifier)}
+	 *
+	 */
+	default T on(final IASTSimpleDeclSpecifier simpleDeclSpecifier) {
+		return on((IASTDeclSpecifier) simpleDeclSpecifier);
+	}
+
+	/**
+	 * Overrides {@link ASTNodeFunction#on(IASTFunctionDeclarator)}
+	 *
+	 */
+	default T on(final IASTStandardFunctionDeclarator standardFunctionDeclarator) {
+		return on((IASTFunctionDeclarator) standardFunctionDeclarator);
+	}
+
+	/**
 	 * <pre>
-	 * Overridden by 
+	 * Overridden by
 	 *   {@link ASTNodeFunction#on(IASTBreakStatement)}
 	 *   {@link ASTNodeFunction#on(IASTCaseStatement)}
 	 *   {@link ASTNodeFunction#on(IASTCompoundStatement)}
@@ -937,7 +982,7 @@ public interface IASTNodeFunction<T> {
 	 *   {@link ASTNodeFunction#on(IASTWhileStatement)}
 	 *   {@link ASTNodeFunction#on(IGNUASTGotoStatement)}
 	 *
-	 * IASTStatement.getPropertyInParent() values 
+	 * IASTStatement.getPropertyInParent() values
 	 *   {@link IASTCompoundStatement#NESTED_STATEMENT}
 	 *   {@link IASTDoStatement#BODY}
 	 *   {@link IASTForStatement#BODY}
@@ -951,7 +996,7 @@ public interface IASTNodeFunction<T> {
 	 *
 	 * </pre>
 	 */
-	default T on(IASTStatement statement) {
+	default T on(final IASTStatement statement) {
 		return on((IASTNode) statement);
 	}
 
@@ -959,163 +1004,22 @@ public interface IASTNodeFunction<T> {
 	 * Overrides {@link ASTNodeFunction#on(IASTStatement)}
 	 *
 	 */
-	default T on(IASTBreakStatement breakStatement) {
-		return on((IASTStatement) breakStatement);
-	}
-
-	/**
-	 * Overrides {@link ASTNodeFunction#on(IASTStatement)}
-	 *
-	 */
-	default T on(IASTCaseStatement caseStatement) {
-		return on((IASTStatement) caseStatement);
-	}
-
-	/**
-	 * Overrides {@link ASTNodeFunction#on(IASTStatement)}
-	 *
-	 * <pre>
-	 * IASTCompoundStatement.getPropertyInParent() values 
-	 *   {@link IGNUASTCompoundStatementExpression#STATEMENT}
-	 *
-	 * </pre>
-	 */
-	default T on(IASTCompoundStatement compoundStatement) {
-		return on((IASTStatement) compoundStatement);
-	}
-
-	/**
-	 * Overrides {@link ASTNodeFunction#on(IASTStatement)}
-	 *
-	 */
-	default T on(IASTContinueStatement continueStatement) {
-		return on((IASTStatement) continueStatement);
-	}
-
-	/**
-	 * Overrides {@link ASTNodeFunction#on(IASTStatement)}
-	 *
-	 */
-	default T on(IASTDeclarationStatement declarationStatement) {
-		return on((IASTStatement) declarationStatement);
-	}
-
-	/**
-	 * Overrides {@link ASTNodeFunction#on(IASTStatement)}
-	 *
-	 */
-	default T on(IASTDefaultStatement defaultStatement) {
-		return on((IASTStatement) defaultStatement);
-	}
-
-	/**
-	 * Overrides {@link ASTNodeFunction#on(IASTStatement)}
-	 *
-	 */
-	default T on(IASTDoStatement doStatement) {
-		return on((IASTStatement) doStatement);
-	}
-
-	/**
-	 * Overrides {@link ASTNodeFunction#on(IASTStatement)}
-	 *
-	 */
-	default T on(IASTExpressionStatement expressionStatement) {
-		return on((IASTStatement) expressionStatement);
-	}
-
-	/**
-	 * Overrides {@link ASTNodeFunction#on(IASTStatement)}
-	 *
-	 */
-	default T on(IASTForStatement forStatement) {
-		return on((IASTStatement) forStatement);
-	}
-
-	/**
-	 * Overrides {@link ASTNodeFunction#on(IASTStatement)}
-	 *
-	 */
-	default T on(IASTGotoStatement gotoStatement) {
-		return on((IASTStatement) gotoStatement);
-	}
-
-	/**
-	 * Overrides {@link ASTNodeFunction#on(IASTStatement)}
-	 *
-	 */
-	default T on(IASTIfStatement ifStatement) {
-		return on((IASTStatement) ifStatement);
-	}
-
-	/**
-	 * Overrides {@link ASTNodeFunction#on(IASTStatement)}
-	 *
-	 */
-	default T on(IASTLabelStatement labelStatement) {
-		return on((IASTStatement) labelStatement);
-	}
-
-	/**
-	 * Overrides {@link ASTNodeFunction#on(IASTStatement)}
-	 *
-	 */
-	default T on(IASTNullStatement nullStatement) {
-		return on((IASTStatement) nullStatement);
-	}
-
-	/**
-	 * Overrides {@link ASTNodeFunction#on(IASTStatement)}
-	 *
-	 */
-	default T on(IASTProblemStatement problemStatement) {
-		return on((IASTStatement) problemStatement);
-	}
-
-	/**
-	 * Overrides {@link ASTNodeFunction#on(IASTStatement)}
-	 *
-	 */
-	default T on(IASTReturnStatement returnStatement) {
-		return on((IASTStatement) returnStatement);
-	}
-
-	/**
-	 * Overrides {@link ASTNodeFunction#on(IASTStatement)}
-	 *
-	 */
-	default T on(IASTSwitchStatement switchStatement) {
+	default T on(final IASTSwitchStatement switchStatement) {
 		return on((IASTStatement) switchStatement);
 	}
 
 	/**
-	 * Overrides {@link ASTNodeFunction#on(IASTStatement)}
-	 *
-	 */
-	default T on(IASTWhileStatement whileStatement) {
-		return on((IASTStatement) whileStatement);
-	}
-
-	/**
-	 * Overrides {@link ASTNodeFunction#on(IASTStatement)}
-	 *
-	 */
-	default T on(IGNUASTGotoStatement gnuGotoStatement) {
-		return on((IASTStatement) gnuGotoStatement);
-	}
-
-	/**
 	 * <pre>
-	 * Overridden by 
+	 * Overridden by
 	 *   {@link ASTNodeFunction#on(IASTTokenList)}
 	 *
-	 * IASTToken.getPropertyInParent() values 
+	 * IASTToken.getPropertyInParent() values
 	 *   {@link IASTAttribute#ARGUMENT_CLAUSE}
 	 *   {@link IASTTokenList#NESTED_TOKEN}
 	 *
 	 * </pre>
 	 */
-	default T on(IASTToken token) {
+	default T on(final IASTToken token) {
 		return on((IASTNode) token);
 	}
 
@@ -1123,20 +1027,20 @@ public interface IASTNodeFunction<T> {
 	 * Overrides {@link ASTNodeFunction#on(IASTToken)}
 	 *
 	 */
-	default T on(IASTTokenList tokenList) {
+	default T on(final IASTTokenList tokenList) {
 		return on((IASTToken) tokenList);
 	}
 
-	default T on(IASTTranslationUnit translationUnit) {
+	default T on(final IASTTranslationUnit translationUnit) {
 		return on((IASTNode) translationUnit);
 	}
 
 	/**
 	 * <pre>
-	 * Overridden by 
+	 * Overridden by
 	 *   {@link ASTNodeFunction#on(IASTProblemTypeId)}
 	 *
-	 * IASTTypeId.getPropertyInParent() values 
+	 * IASTTypeId.getPropertyInParent() values
 	 *   {@link IASTAlignmentSpecifier#ALIGNMENT_TYPEID}
 	 *   {@link IASTBinaryTypeIdExpression#OPERAND1}
 	 *   {@link IASTBinaryTypeIdExpression#OPERAND2}
@@ -1146,31 +1050,88 @@ public interface IASTNodeFunction<T> {
 	 *
 	 * </pre>
 	 */
-	default T on(IASTTypeId typeId) {
+	default T on(final IASTTypeId typeId) {
 		return on((IASTNode) typeId);
 	}
 
 	/**
-	 * Overrides {@link ASTNodeFunction#on(IASTTypeId)}
+	 * Overrides {@link ASTNodeFunction#on(IASTExpression)}
 	 *
 	 */
-	default T on(IASTProblemTypeId problemTypeId) {
-		return on((IASTTypeId) problemTypeId);
+	default T on(final IASTTypeIdExpression typeIdExpression) {
+		return on((IASTExpression) typeIdExpression);
+	}
+
+	/**
+	 * Overrides {@link ASTNodeFunction#on(IASTExpression)}
+	 *
+	 */
+	default T on(final IASTTypeIdInitializerExpression typeIdInitializerExpression) {
+		return on((IASTExpression) typeIdInitializerExpression);
+	}
+
+	/**
+	 * Overrides {@link ASTNodeFunction#on(IASTExpression)}
+	 *
+	 */
+	default T on(final IASTUnaryExpression unaryExpression) {
+		return on((IASTExpression) unaryExpression);
+	}
+
+	/**
+	 * Overrides {@link ASTNodeFunction#on(IASTStatement)}
+	 *
+	 */
+	default T on(final IASTWhileStatement whileStatement) {
+		return on((IASTStatement) whileStatement);
+	}
+
+	/**
+	 * Overrides {@link ASTNodeFunction#on(ICASTDesignator)}
+	 *
+	 */
+	default T on(final ICASTArrayDesignator cArrayDesignator) {
+		return on((ICASTDesignator) cArrayDesignator);
+	}
+
+	/**
+	 * Overrides {@link ASTNodeFunction#on(IASTArrayModifier)}
+	 *
+	 */
+	default T on(final ICASTArrayModifier cArrayModifier) {
+		return on((IASTArrayModifier) cArrayModifier);
+	}
+
+	/**
+	 * Overrides {@link ASTNodeFunction#on(IASTInitializer)}
+	 *
+	 * <pre>
+	 * ICASTDesignatedInitializer.getPropertyInParent() values
+	 *   {@link IASTEqualsInitializer#INITIALIZER}
+	 *   {@link IASTFunctionCallExpression#ARGUMENT}
+	 *   {@link IASTInitializerList#NESTED_INITIALIZER}
+	 *   {@link IASTReturnStatement#RETURNVALUE}
+	 *   {@link ICASTDesignatedInitializer#OPERAND}
+	 *
+	 * </pre>
+	 */
+	default T on(final ICASTDesignatedInitializer cDesignatedInitializer) {
+		return on((IASTInitializer) cDesignatedInitializer);
 	}
 
 	/**
 	 * <pre>
-	 * Overridden by 
+	 * Overridden by
 	 *   {@link ASTNodeFunction#on(ICASTArrayDesignator)}
 	 *   {@link ASTNodeFunction#on(ICASTFieldDesignator)}
 	 *   {@link ASTNodeFunction#on(IGCCASTArrayRangeDesignator)}
 	 *
-	 * ICASTDesignator.getPropertyInParent() values 
+	 * ICASTDesignator.getPropertyInParent() values
 	 *   {@link ICASTDesignatedInitializer#DESIGNATOR}
 	 *
 	 * </pre>
 	 */
-	default T on(ICASTDesignator cDesignator) {
+	default T on(final ICASTDesignator cDesignator) {
 		return on((IASTNode) cDesignator);
 	}
 
@@ -1178,24 +1139,56 @@ public interface IASTNodeFunction<T> {
 	 * Overrides {@link ASTNodeFunction#on(ICASTDesignator)}
 	 *
 	 */
-	default T on(ICASTArrayDesignator cArrayDesignator) {
-		return on((ICASTDesignator) cArrayDesignator);
-	}
-
-	/**
-	 * Overrides {@link ASTNodeFunction#on(ICASTDesignator)}
-	 *
-	 */
-	default T on(ICASTFieldDesignator cFieldDesignator) {
+	default T on(final ICASTFieldDesignator cFieldDesignator) {
 		return on((ICASTDesignator) cFieldDesignator);
 	}
 
 	/**
+	 * Overrides {@link ASTNodeFunction#on(IASTFunctionDeclarator)}
+	 *
+	 */
+	default T on(final ICASTKnRFunctionDeclarator cKnRFunctionDeclarator) {
+		return on((IASTFunctionDeclarator) cKnRFunctionDeclarator);
+	}
+
+	/**
+	 * Overrides {@link ASTNodeFunction#on(IASTPointer)}
+	 *
+	 */
+	default T on(final ICASTPointer cPointer) {
+		return on((IASTPointer) cPointer);
+	}
+
+	/**
 	 * Overrides {@link ASTNodeFunction#on(ICASTDesignator)}
 	 *
 	 */
-	default T on(IGCCASTArrayRangeDesignator gccArrayRangeDesignator) {
+	default T on(final IGCCASTArrayRangeDesignator gccArrayRangeDesignator) {
 		return on((ICASTDesignator) gccArrayRangeDesignator);
+	}
+
+	/**
+	 * Overrides {@link ASTNodeFunction#on(IASTAttributeSpecifier)}
+	 *
+	 */
+	default T on(final IGCCASTAttributeSpecifier gccAttributeSpecifier) {
+		return on((IASTAttributeSpecifier) gccAttributeSpecifier);
+	}
+
+	/**
+	 * Overrides {@link ASTNodeFunction#on(IASTExpression)}
+	 *
+	 */
+	default T on(final IGNUASTCompoundStatementExpression gnuCompoundStatementExpression) {
+		return on((IASTExpression) gnuCompoundStatementExpression);
+	}
+
+	/**
+	 * Overrides {@link ASTNodeFunction#on(IASTStatement)}
+	 *
+	 */
+	default T on(final IGNUASTGotoStatement gnuGotoStatement) {
+		return on((IASTStatement) gnuGotoStatement);
 	}
 
 }

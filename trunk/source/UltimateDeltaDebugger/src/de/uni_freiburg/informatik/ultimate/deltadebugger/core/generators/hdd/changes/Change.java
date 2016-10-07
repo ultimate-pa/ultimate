@@ -9,41 +9,42 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceRange;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.SourceRewriter;
 
 public abstract class Change implements ChangeHandle {
+	static void deleteNodeText(final SourceRewriter rewriter, final IPSTNode node) {
+		rewriter.replace(node, RewriteUtils.getDeletionStringWithWhitespaces(node));
+	}
+
+	static void replaceByWhitespace(final SourceRewriter rewriter, final ISourceRange location) {
+		rewriter.replace(location, " ");
+	}
+
 	private final IPSTNode node;
+
 	private int index = -1;
-	
-	public Change(IPSTNode node) {
+
+	public Change(final IPSTNode node) {
 		this.node = node;
 	}
-	
+
+	public abstract void apply(SourceRewriter rewriter);
+
 	public IPSTNode getNode() {
 		return node;
 	}
-	
-	public abstract void apply(SourceRewriter rewriter);
-	
-	public boolean hasDeferredChange() {
-		return false;
-	}
-	
-	public void updateDeferredChange(Map<IPSTNode, Change> deferredChangeMap) {
-		throw new UnsupportedOperationException();
-	}
-	
+
 	@Override
 	public int getSequenceIndex() {
 		return index;
 	}
-	
-	void setIndex(int index) {
+
+	public boolean hasDeferredChange() {
+		return false;
+	}
+
+	void setIndex(final int index) {
 		this.index = index;
 	}
-	
-	static void replaceByWhitespace(SourceRewriter rewriter, ISourceRange location) {
-		rewriter.replace(location, " ");
-	}
-	
-	static void deleteNodeText(SourceRewriter rewriter, IPSTNode node) {
-		rewriter.replace(node, RewriteUtils.getDeletionStringWithWhitespaces(node));
+
+	public void updateDeferredChange(final Map<IPSTNode, Change> deferredChangeMap) {
+		throw new UnsupportedOperationException();
 	}
 }

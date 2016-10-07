@@ -4,7 +4,7 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfa
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.util.RewriteUtils;
 
 public class DeleteChange extends ReplaceChange {
-	DeleteChange(IPSTNode node) {
+	DeleteChange(final IPSTNode node) {
 		super(node, RewriteUtils.getDeletionStringWithWhitespaces(node));
 	}
 

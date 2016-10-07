@@ -8,9 +8,19 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceDocume
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceRange;
 
 public class PSTTranslationUnit extends PSTRegularNode implements IPSTTranslationUnit {
-	
-	public PSTTranslationUnit(ISourceDocument source, ISourceRange location, IASTTranslationUnit tu) {
+
+	public PSTTranslationUnit(final ISourceDocument source, final ISourceRange location, final IASTTranslationUnit tu) {
 		super(source, location, tu);
+	}
+
+	@Override
+	int dispatchLeave(final IPSTVisitor action) {
+		return action.leave(this);
+	}
+
+	@Override
+	int dispatchVisit(final IPSTVisitor action) {
+		return action.visit(this);
 	}
 
 	@Override
@@ -18,14 +28,4 @@ public class PSTTranslationUnit extends PSTRegularNode implements IPSTTranslatio
 		return (IASTTranslationUnit) astNode;
 	}
 
-	@Override
-	int dispatchVisit(IPSTVisitor action) {
-		return action.visit(this);
-	}
-	
-	@Override
-	int dispatchLeave(IPSTVisitor action) {
-		return action.leave(this);
-	}
-	
 }

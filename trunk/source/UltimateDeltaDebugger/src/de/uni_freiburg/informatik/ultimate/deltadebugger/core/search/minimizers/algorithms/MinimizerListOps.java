@@ -8,43 +8,45 @@ import java.util.List;
  * Provides basic list operators used by the minimizer implementations.
  */
 public class MinimizerListOps {
-	
-	private MinimizerListOps() {
-	}
-	
+
 	/**
 	 * Allocate a new list of the requested capacity.
-	 * 
+	 *
 	 * @param capacity
 	 * @return list
 	 */
-	public static <E> List<E> newList(int capacity) {
+	public static <E> List<E> newList(final int capacity) {
 		return new ArrayList<>(capacity);
 	}
-	
+
 	/**
-	 * Returns the sublist between the specified
-	 * <tt>fromIndex</tt>, inclusive, and <tt>toIndex</tt>, exclusive.
-	 * 
-	 * @param source source list
-	 * @param fromIndex low endpoint (inclusive) of the subsequence
-	 * @param toIndex high endpoint (exclusive) of the subsequence
+	 * Returns the sublist between the specified <tt>fromIndex</tt>, inclusive, and <tt>toIndex</tt>, exclusive.
+	 *
+	 * @param source
+	 *            source list
+	 * @param fromIndex
+	 *            low endpoint (inclusive) of the subsequence
+	 * @param toIndex
+	 *            high endpoint (exclusive) of the subsequence
 	 * @return a list containing the subsequence of the source list in the specified range
 	 */
-	public static <E> List<E> subList(List<E> source, int fromIndex, int toIndex) {
+	public static <E> List<E> subList(final List<E> source, final int fromIndex, final int toIndex) {
 		return source.subList(fromIndex, toIndex);
 	}
 
 	/**
-	 * Returns the complement of the sublist between the specified
-	 * <tt>fromIndex</tt>, inclusive, and <tt>toIndex</tt>, exclusive.
-	 * 
-	 * @param source source list
-	 * @param fromIndex low endpoint (inclusive) of the subsequence to remove
-	 * @param toIndex high endpoint (exclusive) of the subsequence to remove
+	 * Returns the complement of the sublist between the specified <tt>fromIndex</tt>, inclusive, and <tt>toIndex</tt>,
+	 * exclusive.
+	 *
+	 * @param source
+	 *            source list
+	 * @param fromIndex
+	 *            low endpoint (inclusive) of the subsequence to remove
+	 * @param toIndex
+	 *            high endpoint (exclusive) of the subsequence to remove
 	 * @return a list containing the subsequence of the source list not in the specified range
 	 */
-	public static <E> List<E> subListComplement(List<E> source, int fromIndex, int toIndex) {
+	public static <E> List<E> subListComplement(final List<E> source, final int fromIndex, final int toIndex) {
 		final int size = source.size();
 		if (fromIndex < 0 || toIndex > size || fromIndex > toIndex) {
 			throw new IndexOutOfBoundsException();
@@ -66,5 +68,8 @@ public class MinimizerListOps {
 		complement.addAll(source.subList(0, fromIndex));
 		complement.addAll(source.subList(toIndex, size));
 		return complement;
+	}
+
+	private MinimizerListOps() {
 	}
 }

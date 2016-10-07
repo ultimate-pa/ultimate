@@ -9,19 +9,25 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfa
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceDocument;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceRange;
 
-public class PSTConditionalBlock extends PSTNode implements IPSTConditionalBlock {	
+public class PSTConditionalBlock extends PSTNode implements IPSTConditionalBlock {
 	protected final List<IPSTDirective> conditionalDirectives;
 	protected final ISourceRange activeBranchLocation;
-	
-	public PSTConditionalBlock(ISourceDocument source, ISourceRange location, List<IPSTDirective> conditionalDirectives, ISourceRange activeBranchLocation) {
+
+	public PSTConditionalBlock(final ISourceDocument source, final ISourceRange location,
+			final List<IPSTDirective> conditionalDirectives, final ISourceRange activeBranchLocation) {
 		super(source, location, null);
 		this.conditionalDirectives = Objects.requireNonNull(conditionalDirectives);
 		this.activeBranchLocation = activeBranchLocation;
 	}
 
 	@Override
-	public boolean hasActiveBranch() {
-		return activeBranchLocation != null;
+	int dispatchLeave(final IPSTVisitor action) {
+		return action.leave(this);
+	}
+
+	@Override
+	int dispatchVisit(final IPSTVisitor action) {
+		return action.visit(this);
 	}
 
 	@Override
@@ -31,21 +37,15 @@ public class PSTConditionalBlock extends PSTNode implements IPSTConditionalBlock
 		}
 		return source.newSourceRange(offset(), offset());
 	}
-	
+
 	@Override
 	public List<IPSTDirective> getConditionalDirectives() {
 		return conditionalDirectives;
 	}
 
 	@Override
-	int dispatchVisit(IPSTVisitor action) {
-		return action.visit(this);
+	public boolean hasActiveBranch() {
+		return activeBranchLocation != null;
 	}
-	
-	@Override
-	int dispatchLeave(IPSTVisitor action) {
-		return action.leave(this);
-	}
-	
-}
 
+}

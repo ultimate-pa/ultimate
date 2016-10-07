@@ -16,8 +16,7 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.exceptions.Uncheck
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.SearchStep;
 
 /**
- * Runs a speculative search on an arbitrary number of worker threads with a
- * given test function.
+ * Runs a speculative search on an arbitrary number of worker threads with a given test function.
  *
  * @param <T>
  *            search step type
@@ -30,67 +29,28 @@ public class ParallelSearchIteratorIterator<T extends SearchStep<?, T>> {
 
 	/**
 	 * Constructs a new instance that can be used for one iteration.
-	 * 
-	 * Note that all concurrent access to the SpeculativeSearchIterator is
-	 * synchronized on the searchIterator instance and only the test function if
-	 * executed without any synchronization.
-	 * 
+	 *
+	 * Note that all concurrent access to the SpeculativeSearchIterator is synchronized on the searchIterator instance
+	 * and only the test function if executed without any synchronization.
+	 *
 	 * @param searchIterator
 	 *            speculative iterator to work on
 	 * @param cancelableTest
 	 *            test function that is called to determine test results
 	 */
-	public ParallelSearchIteratorIterator(SpeculativeSearchIterator<T> searchIterator,
-			CancelableStepTest<T> cancelableTest) {
+	public ParallelSearchIteratorIterator(final SpeculativeSearchIterator<T> searchIterator,
+			final CancelableStepTest<T> cancelableTest) {
 		this.searchIterator = searchIterator;
 		this.cancelableTest = cancelableTest;
 	}
 
-	public boolean isStopRequested() {
-		return stopRequested;
-	}
-
 	/**
-	 * Request workers to stop the iteration.
-	 */
-	public void stopWorkers() {
-		stopRequested = true;
-	}
-
-	/**
-	 * @return the current step of the non-speculative iteration
-	 */
-	public T getCurrentStep() {
-		synchronized (searchIterator) {
-			return searchIterator.getCurrentStep();
-		}
-	}
-
-	/**
-	 * Begin and wait for iteration to end, then return the step.
-	 * 
-	 * @param executorService
-	 * @param workerCount
-	 * @return the step reached  at the end of iteration
-	 */
-	public T iterateToEnd(ExecutorService executorService, int workerCount) {
-		beginIteration(executorService, workerCount);
-		try {
-			return endIteration();
-		} catch (InterruptedException unexpected) {
-			Thread.currentThread().interrupt();
-			throw new UncheckedInterruptedException(unexpected);
-		}
-	}
-
-	/**
-	 * Start iteration using the given number of worker threads that are started
-	 * by the given executor service.
-	 * 
+	 * Start iteration using the given number of worker threads that are started by the given executor service.
+	 *
 	 * @param executorService
 	 * @param workerCount
 	 */
-	public void beginIteration(ExecutorService executorService, int workerCount) {
+	public void beginIteration(final ExecutorService executorService, final int workerCount) {
 		if (workerCount < 1) {
 			throw new IllegalArgumentException();
 		}
@@ -103,51 +63,8 @@ public class ParallelSearchIteratorIterator<T extends SearchStep<?, T>> {
 	}
 
 	/**
-	 * Checks if iteration has ended (either successfully or non-successfully)
-	 * without blocking.
-	 * 
-	 * @return true if iteration has ended
-	 */
-	public boolean pollIsDone() {
-		if (pendingWorkers.isEmpty()) {
-			throw new IllegalStateException("beginIteration has not been called");
-		}
-		return pendingWorkers.stream().allMatch(Future::isDone);
-	}
-
-	/**
-	 * Wait until iteration has ended for a limited timespan only.
-	 * 
-	 * @param timeout
-	 * @param unit
-	 * @return true if all workers have ended at the time of return
-	 * @throws InterruptedException
-	 */
-	public boolean waitForEnd(long timeout, TimeUnit unit) throws InterruptedException {
-		long nanosLeft = unit.toNanos(timeout);
-		final long deadline = System.nanoTime() + nanosLeft;
-
-		for (Future<?> f : pendingWorkers) {
-			if (!f.isDone()) {
-				if (nanosLeft <= 0L) {
-					return false;
-				}
-				try {
-					f.get(nanosLeft, TimeUnit.NANOSECONDS);
-				} catch (CancellationException | ExecutionException e) {
-					// deferr exception to endIteration
-				} catch (TimeoutException e) {
-					return false;
-				}
-				nanosLeft = deadline - System.nanoTime();
-			}
-		}
-		return true;
-	}
-
-	/**
 	 * Wait until iteration has ended and return the result.
-	 * 
+	 *
 	 * @return current result.
 	 * @throws InterruptedException
 	 */
@@ -163,11 +80,11 @@ public class ParallelSearchIteratorIterator<T extends SearchStep<?, T>> {
 		// previous ones have completed
 		// - all parallel execution is limited to this method
 		try {
-			for (Future<?> f : pendingWorkers) {
+			for (final Future<?> f : pendingWorkers) {
 				f.get();
 			}
-		} catch (ExecutionException e) {
-			Throwable inner = e.getCause();
+		} catch (final ExecutionException e) {
+			final Throwable inner = e.getCause();
 			if (inner instanceof Error) {
 				throw (Error) inner;
 			}
@@ -180,18 +97,12 @@ public class ParallelSearchIteratorIterator<T extends SearchStep<?, T>> {
 		return getCurrentStep();
 	}
 
-	private void worker() {
-		try {
-			while (!isStopRequested()) {
-				final SpeculativeTask<T> task = getNextTask();
-				if (task.isDone()) {
-					return;
-				}
-				runTestAndCompleteTask(task);
-			}
-		} catch (Exception e) {
-			stopWorkers();
-			throw e;
+	/**
+	 * @return the current step of the non-speculative iteration
+	 */
+	public T getCurrentStep() {
+		synchronized (searchIterator) {
+			return searchIterator.getCurrentStep();
 		}
 	}
 
@@ -213,7 +124,7 @@ public class ParallelSearchIteratorIterator<T extends SearchStep<?, T>> {
 			// that there is another task pending...
 			try {
 				TimeUnit.MILLISECONDS.sleep(10);
-			} catch (InterruptedException e) {
+			} catch (final InterruptedException e) {
 				// There is no expected interruption, if this happens it's
 				// like any other unexpected runtime exception
 				Thread.currentThread().interrupt();
@@ -222,7 +133,40 @@ public class ParallelSearchIteratorIterator<T extends SearchStep<?, T>> {
 		}
 	}
 
-	private void runTestAndCompleteTask(SpeculativeTask<T> task) {
+	public boolean isStopRequested() {
+		return stopRequested;
+	}
+
+	/**
+	 * Begin and wait for iteration to end, then return the step.
+	 *
+	 * @param executorService
+	 * @param workerCount
+	 * @return the step reached at the end of iteration
+	 */
+	public T iterateToEnd(final ExecutorService executorService, final int workerCount) {
+		beginIteration(executorService, workerCount);
+		try {
+			return endIteration();
+		} catch (final InterruptedException unexpected) {
+			Thread.currentThread().interrupt();
+			throw new UncheckedInterruptedException(unexpected);
+		}
+	}
+
+	/**
+	 * Checks if iteration has ended (either successfully or non-successfully) without blocking.
+	 *
+	 * @return true if iteration has ended
+	 */
+	public boolean pollIsDone() {
+		if (pendingWorkers.isEmpty()) {
+			throw new IllegalStateException("beginIteration has not been called");
+		}
+		return pendingWorkers.stream().allMatch(Future::isDone);
+	}
+
+	private void runTestAndCompleteTask(final SpeculativeTask<T> task) {
 		final BooleanSupplier isCanceled = () -> task.isCanceled() || isStopRequested();
 		final Optional<Boolean> result = cancelableTest.test(task.getStep(), isCanceled);
 		if (!result.isPresent()) {
@@ -239,6 +183,58 @@ public class ParallelSearchIteratorIterator<T extends SearchStep<?, T>> {
 		}
 		synchronized (searchIterator) {
 			task.complete(result.get());
+		}
+	}
+
+	/**
+	 * Request workers to stop the iteration.
+	 */
+	public void stopWorkers() {
+		stopRequested = true;
+	}
+
+	/**
+	 * Wait until iteration has ended for a limited timespan only.
+	 *
+	 * @param timeout
+	 * @param unit
+	 * @return true if all workers have ended at the time of return
+	 * @throws InterruptedException
+	 */
+	public boolean waitForEnd(final long timeout, final TimeUnit unit) throws InterruptedException {
+		long nanosLeft = unit.toNanos(timeout);
+		final long deadline = System.nanoTime() + nanosLeft;
+
+		for (final Future<?> f : pendingWorkers) {
+			if (!f.isDone()) {
+				if (nanosLeft <= 0L) {
+					return false;
+				}
+				try {
+					f.get(nanosLeft, TimeUnit.NANOSECONDS);
+				} catch (CancellationException | ExecutionException e) {
+					// deferr exception to endIteration
+				} catch (final TimeoutException e) {
+					return false;
+				}
+				nanosLeft = deadline - System.nanoTime();
+			}
+		}
+		return true;
+	}
+
+	private void worker() {
+		try {
+			while (!isStopRequested()) {
+				final SpeculativeTask<T> task = getNextTask();
+				if (task.isDone()) {
+					return;
+				}
+				runTestAndCompleteTask(task);
+			}
+		} catch (final Exception e) {
+			stopWorkers();
+			throw e;
 		}
 	}
 }

@@ -11,37 +11,37 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.StringSourceD
 
 public class DefaultPassContext implements PassContext {
 	private final ISourceDocument input;
-	private final Parser parser;	
+	private final Parser parser;
 	private volatile IASTTranslationUnit ast = null;
 	private volatile IPSTTranslationUnit pst = null;
-	
-	public DefaultPassContext(String input) {
-		this(new StringSourceDocument(input));
-	}
-	
-	public DefaultPassContext(ISourceDocument input) {
+
+	public DefaultPassContext(final ISourceDocument input) {
 		this(input, new DefaultParser());
 	}
 
-	public DefaultPassContext(String input, Parser parser) {
-		this(new StringSourceDocument(input), parser);
-	}
-	
-	public DefaultPassContext(ISourceDocument input, Parser parser) {
+	public DefaultPassContext(final ISourceDocument input, final Parser parser) {
 		this.input = input;
 		this.parser = parser;
 	}
-	
+
+	public DefaultPassContext(final String input) {
+		this(new StringSourceDocument(input));
+	}
+
+	public DefaultPassContext(final String input, final Parser parser) {
+		this(new StringSourceDocument(input), parser);
+	}
+
 	@Override
 	public ISourceDocument getInput() {
 		return input;
 	}
-	
+
 	@Override
 	public Parser getParser() {
 		return parser;
 	}
-	
+
 	@Override
 	public IASTTranslationUnit getSharedAST() {
 		if (ast == null) {
@@ -53,7 +53,7 @@ public class DefaultPassContext implements PassContext {
 		}
 		return ast;
 	}
-	
+
 	@Override
 	public IPSTTranslationUnit getSharedPST() {
 		if (pst == null) {
@@ -63,7 +63,7 @@ public class DefaultPassContext implements PassContext {
 				}
 			}
 		}
-		return pst;		
+		return pst;
 	}
-	
+
 }

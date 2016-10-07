@@ -16,27 +16,40 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceDocume
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.SourceRewriter;
 
 public class RemoveCommentsGenerator implements VariantGenerator {
-	final ISourceDocument source;
-	final List<MyChange> changes;
-	
-	private RemoveCommentsGenerator(ISourceDocument source, List<MyChange> changes) {
-		this.source = source;
-		this.changes = changes;
+	private static class MyChange implements ChangeHandle {
+		final int index;
+		final int offset;
+		final int endOffset;
+
+		public MyChange(final int index, final int offset, final int endOffset) {
+			this.index = index;
+			this.offset = offset;
+			this.endOffset = endOffset;
+		}
+
+		void apply(final SourceRewriter rewriter) {
+			rewriter.replace(offset, endOffset, " ");
+		}
+
+		@Override
+		public int getSequenceIndex() {
+			return index;
+		}
 	}
-	
-	public static Optional<VariantGenerator> analyze(PassContext context) {
+
+	public static Optional<VariantGenerator> analyze(final PassContext context) {
 		final List<MyChange> changes = collectChanges(context.getSharedAST());
 		return changes.isEmpty() ? Optional.empty()
 				: Optional.of(new RemoveCommentsGenerator(context.getInput(), changes));
 	}
-	
-	private static List<MyChange> collectChanges(IASTTranslationUnit ast) {
+
+	private static List<MyChange> collectChanges(final IASTTranslationUnit ast) {
 		final List<MyChange> changes = new ArrayList<>();
-		for (IASTComment comment : ast.getComments()) {
+		for (final IASTComment comment : ast.getComments()) {
 			if (!comment.isPartOfTranslationUnitFile()) {
 				continue;
 			}
-			IASTFileLocation loc = comment.getFileLocation();
+			final IASTFileLocation loc = comment.getFileLocation();
 			if (loc == null) {
 				continue;
 			}
@@ -44,37 +57,25 @@ public class RemoveCommentsGenerator implements VariantGenerator {
 		}
 		return changes;
 	}
-	
+
+	final ISourceDocument source;
+
+	final List<MyChange> changes;
+
+	private RemoveCommentsGenerator(final ISourceDocument source, final List<MyChange> changes) {
+		this.source = source;
+		this.changes = changes;
+	}
+
+	@Override
+	public String apply(final List<ChangeHandle> activeChanges) {
+		final SourceRewriter rewriter = new SourceRewriter(source);
+		activeChanges.stream().forEach(c -> ((MyChange) c).apply(rewriter));
+		return rewriter.apply();
+	}
+
 	@Override
 	public List<ChangeHandle> getChanges() {
 		return Collections.unmodifiableList(changes);
-	}
-	
-	@Override
-	public String apply(List<ChangeHandle> activeChanges) {
-		final SourceRewriter rewriter = new SourceRewriter(source);
-		activeChanges.stream().forEach(c -> ((MyChange)c).apply(rewriter));
-		return rewriter.apply();
-	}
-	
-	private static class MyChange implements ChangeHandle {
-		final int index;
-		final int offset;
-		final int endOffset;
-		
-		public MyChange(int index, int offset, int endOffset) {
-			this.index = index;
-			this.offset = offset;
-			this.endOffset = endOffset;
-		}
-
-		void apply(SourceRewriter rewriter) {
-			rewriter.replace(offset, endOffset, " ");
-		}
-		
-		@Override
-		public int getSequenceIndex() {
-			return index;
-		}
 	}
 }

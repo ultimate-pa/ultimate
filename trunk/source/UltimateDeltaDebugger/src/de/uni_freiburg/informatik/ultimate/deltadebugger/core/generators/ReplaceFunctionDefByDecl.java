@@ -18,28 +18,39 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceDocume
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.SourceRewriter;
 
 public class ReplaceFunctionDefByDecl implements VariantGenerator {
-	final ISourceDocument source;
-	final List<MyChange> changes;
+	private static class MyChange implements ChangeHandle {
+		final int index;
+		final IPSTRegularNode node;
 
-	private ReplaceFunctionDefByDecl(ISourceDocument source, List<MyChange> changes) {
-		this.source = source;
-		this.changes = changes;
+		public MyChange(final int index, final IPSTRegularNode node) {
+			this.index = index;
+			this.node = node;
+		}
+
+		void apply(final SourceRewriter rewriter) {
+			rewriter.replace(node, ";");
+		}
+
+		@Override
+		public int getSequenceIndex() {
+			return index;
+		}
 	}
 
-	public static Optional<VariantGenerator> analyze(PassContext context) {
+	public static Optional<VariantGenerator> analyze(final PassContext context) {
 		final List<MyChange> changes = collectChanges(context.getSharedPST());
 		return changes.isEmpty() ? Optional.empty()
 				: Optional.of(new ReplaceFunctionDefByDecl(context.getInput(), changes));
 	}
 
-	private static List<MyChange> collectChanges(IPSTTranslationUnit tu) {
+	private static List<MyChange> collectChanges(final IPSTTranslationUnit tu) {
 		final List<MyChange> changes = new ArrayList<>();
 		tu.accept(new IPSTVisitor() {
 			@Override
-			public int visit(IPSTRegularNode node) {
-				IASTNode astNode = node.getASTNode();
+			public int visit(final IPSTRegularNode node) {
+				final IASTNode astNode = node.getASTNode();
 				if (astNode instanceof IASTFunctionDefinition) {
-					IPSTRegularNode body = node.findRegularChild(((IASTFunctionDefinition) astNode).getBody());
+					final IPSTRegularNode body = node.findRegularChild(((IASTFunctionDefinition) astNode).getBody());
 					if (body != null) {
 						changes.add(new MyChange(changes.size(), body));
 					}
@@ -53,34 +64,24 @@ public class ReplaceFunctionDefByDecl implements VariantGenerator {
 		return changes;
 	}
 
-	@Override
-	public List<ChangeHandle> getChanges() {
-		return Collections.unmodifiableList(changes);
+	final ISourceDocument source;
+
+	final List<MyChange> changes;
+
+	private ReplaceFunctionDefByDecl(final ISourceDocument source, final List<MyChange> changes) {
+		this.source = source;
+		this.changes = changes;
 	}
 
 	@Override
-	public String apply(List<ChangeHandle> activeChanges) {
+	public String apply(final List<ChangeHandle> activeChanges) {
 		final SourceRewriter rewriter = new SourceRewriter(source);
 		activeChanges.stream().forEach(c -> ((MyChange) c).apply(rewriter));
 		return rewriter.apply();
 	}
 
-	private static class MyChange implements ChangeHandle {
-		final int index;
-		final IPSTRegularNode node;
-
-		public MyChange(int index, IPSTRegularNode node) {
-			this.index = index;
-			this.node = node;
-		}
-
-		void apply(SourceRewriter rewriter) {
-			rewriter.replace(node, ";");
-		}
-
-		@Override
-		public int getSequenceIndex() {
-			return index;
-		}
+	@Override
+	public List<ChangeHandle> getChanges() {
+		return Collections.unmodifiableList(changes);
 	}
 }

@@ -5,14 +5,14 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.SourceRewrite
 
 public class ReplaceChange extends Change {
 	final String replacement;
-	
-	ReplaceChange(IPSTNode node, String replacement) {
+
+	ReplaceChange(final IPSTNode node, final String replacement) {
 		super(node);
 		this.replacement = replacement;
 	}
 
 	@Override
-	public void apply(SourceRewriter rewriter) {
+	public void apply(final SourceRewriter rewriter) {
 		rewriter.replace(getNode(), replacement);
 	}
 

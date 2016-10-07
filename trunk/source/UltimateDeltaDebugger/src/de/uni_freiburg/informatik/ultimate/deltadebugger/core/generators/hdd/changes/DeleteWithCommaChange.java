@@ -12,12 +12,38 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.HierarchicalS
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.SourceRewriter;
 
 public class DeleteWithCommaChange extends Change {
+	class CombinedChange extends Change {
+		List<IPSTNode> childrenToDelete = new ArrayList<>();
+
+		CombinedChange(final IPSTNode node) {
+			super(node);
+		}
+
+		void addChild(final IPSTNode child) {
+			childrenToDelete.add(child);
+		}
+
+		@Override
+		public void apply(final SourceRewriter rewriter) {
+			// Just sort the nodes instead of relying that they are already
+			// in order (which should be the case, though)
+			childrenToDelete.sort(HierarchicalSourceRangeComparator.getInstance());
+
+			if (keepOne && commaPositions.size() - childrenToDelete.size() < 1) {
+				throw new ChangeConflictException("Applying this combination of changes would delete the last element");
+			}
+
+			CommaDeleter.deleteNodesWithComma(rewriter, childrenToDelete, commaPositions);
+		}
+	}
+
 	IPSTNode parent;
 	List<CommaSeparatedChild> commaPositions;
+
 	boolean keepOne;
 
-	public DeleteWithCommaChange(IPSTRegularNode node, IPSTRegularNode parent, List<CommaSeparatedChild> commaPositions,
-			boolean keepOne) {
+	public DeleteWithCommaChange(final IPSTRegularNode node, final IPSTRegularNode parent,
+			final List<CommaSeparatedChild> commaPositions, final boolean keepOne) {
 		super(node);
 		this.parent = parent;
 		this.commaPositions = commaPositions;
@@ -25,7 +51,7 @@ public class DeleteWithCommaChange extends Change {
 	}
 
 	@Override
-	public void apply(SourceRewriter rewriter) {
+	public void apply(final SourceRewriter rewriter) {
 		// no immediate modification possible, because we need to know all nodes
 		// to be delete to know how commas are deleted (to handle cases where
 		// commas are missing in non-preprocessed code)
@@ -37,37 +63,12 @@ public class DeleteWithCommaChange extends Change {
 	}
 
 	@Override
-	public void updateDeferredChange(Map<IPSTNode, Change> deferredChangeMap) {
-		((CombinedChange) deferredChangeMap.computeIfAbsent(parent, CombinedChange::new)).addChild(getNode());
-	}
-
-	@Override
 	public String toString() {
 		return "Delete with comma " + getNode() + " (from " + parent + ")";
 	}
 
-	class CombinedChange extends Change {
-		List<IPSTNode> childrenToDelete = new ArrayList<>();
-
-		CombinedChange(IPSTNode node) {
-			super(node);
-		}
-
-		void addChild(IPSTNode child) {
-			childrenToDelete.add(child);
-		}
-
-		@Override
-		public void apply(SourceRewriter rewriter) {
-			// Just sort the nodes instead of relying that they are already
-			// in order (which should be the case, though)
-			childrenToDelete.sort(HierarchicalSourceRangeComparator.getInstance());
-
-			if (keepOne && commaPositions.size() - childrenToDelete.size() < 1) {
-				throw new ChangeConflictException("Applying this combination of changes would delete the last element");
-			}
-
-			CommaDeleter.deleteNodesWithComma(rewriter, childrenToDelete, commaPositions);
-		}
+	@Override
+	public void updateDeferredChange(final Map<IPSTNode, Change> deferredChangeMap) {
+		((CombinedChange) deferredChangeMap.computeIfAbsent(parent, CombinedChange::new)).addChild(getNode());
 	}
 }

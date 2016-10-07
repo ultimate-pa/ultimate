@@ -33,45 +33,46 @@ public class DefaultParser implements Parser {
 		this(DEFAULT_FILEPATH);
 	}
 
-	public DefaultParser(String dummySourceFilePath) {
+	public DefaultParser(final String dummySourceFilePath) {
 		this(dummySourceFilePath, new ScannerInfo(), IncludeFileContentProvider.getEmptyFilesProvider(),
 				new NullLogService());
 	}
 
-	public DefaultParser(String dummySourceFilePath, String[] includeFilePaths, String[] localIncludePaths) {
-		this(dummySourceFilePath, new ExtendedScannerInfo(null, includeFilePaths, null, null, localIncludePaths),
-				new NoWorkspaceSavedFilesProvider(), new NullLogService());
-	}
-
-	public DefaultParser(String dummySourceFilePath, ScannerInfo scannerInfo,
-			IncludeFileContentProvider includeFileContentProvider, IParserLogService parserLogService) {
+	public DefaultParser(final String dummySourceFilePath, final ScannerInfo scannerInfo,
+			final IncludeFileContentProvider includeFileContentProvider, final IParserLogService parserLogService) {
 		this.dummySourceFilePath = Objects.requireNonNull(dummySourceFilePath);
 		this.scannerInfo = Objects.requireNonNull(scannerInfo);
 		this.includeFileContentProvider = Objects.requireNonNull(includeFileContentProvider);
 		this.parserLogService = Objects.requireNonNull(parserLogService);
 	}
 
+	public DefaultParser(final String dummySourceFilePath, final String[] includeFilePaths,
+			final String[] localIncludePaths) {
+		this(dummySourceFilePath, new ExtendedScannerInfo(null, includeFilePaths, null, null, localIncludePaths),
+				new NoWorkspaceSavedFilesProvider(), new NullLogService());
+	}
+
 	@Override
-	public IASTTranslationUnit parse(String source) {
+	public IPSTTranslationUnit createPST(final IASTTranslationUnit ast, final ISourceDocument sourceDocument) {
+		return new PSTBuilder(ast, sourceDocument).build();
+	}
+
+	@Override
+	public IASTTranslationUnit parse(final String source) {
 		return parse(source, DEFAULT_OPTIONS);
 	}
 
 	@Override
-	public IASTTranslationUnit parse(String source, int options) {
+	public IASTTranslationUnit parse(final String source, final int options) {
 		try {
 			return GCCLanguage.getDefault().getASTTranslationUnit(
 					FileContent.create(dummySourceFilePath, source.toCharArray()), scannerInfo,
 					includeFileContentProvider, null, options, parserLogService);
-		} catch (CoreException e) {
+		} catch (final CoreException e) {
 			// No idea when and why this and why this would happen, so just wrap
 			// the checked exception
 			throw new ParserException(e);
 		}
-	}
-
-	@Override
-	public IPSTTranslationUnit createPST(IASTTranslationUnit ast, ISourceDocument sourceDocument) {
-		return new PSTBuilder(ast, sourceDocument).build();
 	}
 
 }

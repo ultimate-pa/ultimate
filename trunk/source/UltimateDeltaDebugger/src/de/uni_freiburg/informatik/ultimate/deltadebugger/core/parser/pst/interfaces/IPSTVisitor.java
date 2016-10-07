@@ -6,77 +6,77 @@ public interface IPSTVisitor {
 	public static final int PROCESS_SKIP = ASTVisitor.PROCESS_SKIP;
 	public static final int PROCESS_ABORT = ASTVisitor.PROCESS_ABORT;
 	public static final int PROCESS_CONTINUE = ASTVisitor.PROCESS_CONTINUE;
-	
-	default int defaultVisit(IPSTNode node) {
+
+	default int defaultLeave(final IPSTNode node) {
 		return PROCESS_CONTINUE;
-	}
-	
-	default int defaultLeave(IPSTNode node) {
-		return PROCESS_CONTINUE;
-	}
-	
-	default int visit(IPSTTranslationUnit tu) {
-		return defaultVisit(tu);
-	}
-	
-	default int visit(IPSTRegularNode node) {
-		return defaultVisit(node);
-	}
-	
-	default int visit(IPSTMacroExpansion expansion) {
-		return defaultVisit(expansion);
 	}
 
-	default int visit(IPSTIncludeDirective include) {
-		return defaultVisit(include);
+	default int defaultVisit(final IPSTNode node) {
+		return PROCESS_CONTINUE;
 	}
-	
-	default int visit(IPSTDirective directive) {
-		return defaultVisit(directive);
+
+	default int leave(final IPSTComment comment) {
+		return defaultLeave(comment);
 	}
-	
-	default int visit(IPSTComment comment) {
-		return defaultVisit(comment);
+
+	default int leave(final IPSTConditionalBlock conditionalBlock) {
+		return defaultLeave(conditionalBlock);
 	}
-	
-	default int visit(IPSTConditionalBlock conditionalBlock) {
-		return defaultVisit(conditionalBlock);
+
+	default int leave(final IPSTDirective directive) {
+		return defaultLeave(directive);
 	}
-	
-	default int visit(IPSTLiteralRegion literalRegion) {
+
+	default int leave(final IPSTIncludeDirective include) {
+		return defaultLeave(include);
+	}
+
+	default int leave(final IPSTLiteralRegion literalRegion) {
 		return PROCESS_SKIP;
 	}
-	
-	default int leave(IPSTTranslationUnit tu) {
-		return defaultLeave(tu);
-	}
-	
-	default int leave(IPSTRegularNode node) {
-		return defaultLeave(node);
-	}
-	
-	default int leave(IPSTMacroExpansion expansion) {
+
+	default int leave(final IPSTMacroExpansion expansion) {
 		return defaultLeave(expansion);
 	}
 
-	default int leave(IPSTIncludeDirective include) {
-		return defaultLeave(include);
+	default int leave(final IPSTRegularNode node) {
+		return defaultLeave(node);
 	}
-	
-	default int leave(IPSTDirective directive) {
-		return defaultLeave(directive);
+
+	default int leave(final IPSTTranslationUnit tu) {
+		return defaultLeave(tu);
 	}
-	
-	default int leave(IPSTComment comment) {
-		return defaultLeave(comment);
+
+	default int visit(final IPSTComment comment) {
+		return defaultVisit(comment);
 	}
-	
-	default int leave(IPSTConditionalBlock conditionalBlock) {
-		return defaultLeave(conditionalBlock);
+
+	default int visit(final IPSTConditionalBlock conditionalBlock) {
+		return defaultVisit(conditionalBlock);
 	}
-	
-	default int leave(IPSTLiteralRegion literalRegion) {
+
+	default int visit(final IPSTDirective directive) {
+		return defaultVisit(directive);
+	}
+
+	default int visit(final IPSTIncludeDirective include) {
+		return defaultVisit(include);
+	}
+
+	default int visit(final IPSTLiteralRegion literalRegion) {
 		return PROCESS_SKIP;
 	}
-	
+
+	default int visit(final IPSTMacroExpansion expansion) {
+		return defaultVisit(expansion);
+	}
+
+	default int visit(final IPSTRegularNode node) {
+		return defaultVisit(node);
+	}
+
+	default int visit(final IPSTTranslationUnit tu) {
+		return defaultVisit(tu);
+	}
+
 }

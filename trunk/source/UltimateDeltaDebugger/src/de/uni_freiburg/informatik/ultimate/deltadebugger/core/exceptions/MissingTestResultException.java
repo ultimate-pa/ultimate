@@ -2,12 +2,17 @@ package de.uni_freiburg.informatik.ultimate.deltadebugger.core.exceptions;
 
 public class MissingTestResultException extends RuntimeException {
 
-    public MissingTestResultException(){
-        super();
-    }
+	/**
+	 *
+	 */
+	private static final long serialVersionUID = 1L;
 
-    public MissingTestResultException(String message){
-        super(message);
-    }
-	
+	public MissingTestResultException() {
+		super();
+	}
+
+	public MissingTestResultException(final String message) {
+		super(message);
+	}
+
 }

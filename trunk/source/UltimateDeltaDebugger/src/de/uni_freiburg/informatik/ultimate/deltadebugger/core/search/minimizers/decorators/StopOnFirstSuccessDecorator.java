@@ -7,46 +7,19 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.minimizers.
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.minimizers.algorithms.FinalMinimizerStep;
 
 /**
- * Stop after the first successful reduction. Probably useless except for
- * testing.
+ * Stop after the first successful reduction. Probably useless except for testing.
  */
 public class StopOnFirstSuccessDecorator implements Minimizer {
-	final Minimizer delegateMinimizer;
-
-	public StopOnFirstSuccessDecorator(Minimizer minimizer) {
-		this.delegateMinimizer = minimizer;
-	}
-
-	public static Minimizer decorate(Minimizer minimizer) {
-		return (minimizer instanceof StopOnFirstSuccessDecorator) ? minimizer
-				: new StopOnFirstSuccessDecorator(minimizer);
-	}
-
-	@Override
-	public <E> MinimizerStep<E> create(List<E> input) {
-		return new StepDecorator<>(delegateMinimizer.create(input));
-	}
-
-	@Override
-	public boolean isResultMinimal() {
-		return delegateMinimizer.isResultMinimal();
-	}
-
-	@Override
-	public boolean isEachVariantUnique() {
-		return delegateMinimizer.isEachVariantUnique();
-	}
-
 	static final class StepDecorator<E> implements MinimizerStep<E> {
 		final MinimizerStep<E> delegate;
 
-		private StepDecorator(MinimizerStep<E> delegate) {
+		private StepDecorator(final MinimizerStep<E> delegate) {
 			this.delegate = delegate;
 		}
 
 		@Override
-		public boolean isDone() {
-			return delegate.isDone();
+		public List<E> getResult() {
+			return delegate.getResult();
 		}
 
 		@Override
@@ -55,14 +28,40 @@ public class StopOnFirstSuccessDecorator implements Minimizer {
 		}
 
 		@Override
-		public MinimizerStep<E> next(boolean keepVariant) {
-			final MinimizerStep<E> nextSstep = delegate.next(keepVariant);
-			return keepVariant ? new FinalMinimizerStep<>(nextSstep.getResult()) : new StepDecorator<>(nextSstep);
+		public boolean isDone() {
+			return delegate.isDone();
 		}
 
 		@Override
-		public List<E> getResult() {
-			return delegate.getResult();
+		public MinimizerStep<E> next(final boolean keepVariant) {
+			final MinimizerStep<E> nextSstep = delegate.next(keepVariant);
+			return keepVariant ? new FinalMinimizerStep<>(nextSstep.getResult()) : new StepDecorator<>(nextSstep);
 		}
+	}
+
+	public static Minimizer decorate(final Minimizer minimizer) {
+		return minimizer instanceof StopOnFirstSuccessDecorator ? minimizer
+				: new StopOnFirstSuccessDecorator(minimizer);
+	}
+
+	final Minimizer delegateMinimizer;
+
+	public StopOnFirstSuccessDecorator(final Minimizer minimizer) {
+		delegateMinimizer = minimizer;
+	}
+
+	@Override
+	public <E> MinimizerStep<E> create(final List<E> input) {
+		return new StepDecorator<>(delegateMinimizer.create(input));
+	}
+
+	@Override
+	public boolean isEachVariantUnique() {
+		return delegateMinimizer.isEachVariantUnique();
+	}
+
+	@Override
+	public boolean isResultMinimal() {
+		return delegateMinimizer.isResultMinimal();
 	}
 }

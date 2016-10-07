@@ -42,52 +42,7 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.util.IASTNo
 public class DefaultStrategy implements HDDStrategy {
 
 	@Override
-	public boolean expandUnchangeableNodeImmediately(IPSTNode node) {
-		return node instanceof IPSTConditionalBlock;
-	}
-
-	@Override
-	public boolean skipSubTree(IPSTNode node) {
-		// Could try to remove the region completely, but have to make sure not
-		// to expand it
-		// return node instanceof IPSTLiteralRegion;
-		return false;
-	}
-
-	@Override
-	public boolean expandIntoOwnGroup(IPSTNode node) {
-		// reduce each function individually
-		// if (node instanceof IPSTRegularNode) {
-		// return node.getASTNode().getPropertyInParent() ==
-		// IASTFunctionDefinition.FUNCTION_BODY;
-		// }
-		return false;
-	}
-
-	@Override
-	public void createChangeForNode(IPSTNode node, ChangeCollector collector) {
-		if (node instanceof IPSTRegularNode) {
-			RegularNodeHandler.invoke((IPSTRegularNode) node, collector);
-		} else if (node instanceof IPSTConditionalBlock) {
-			// Only delete full blocks if they are on the top level or inside
-			// compund statements
-			// This is one way to prevent rewrite conflicts caused by deleting
-			// tokens inside nested conditional blocks and the blocks at the
-			// same time
-			final IPSTRegularNode regularParent = node.getRegularParent();
-			if (regularParent instanceof IPSTTranslationUnit
-					|| regularParent.getASTNode() instanceof IASTCompoundStatement) {
-				collector.addDeleteChange(node);
-			}
-			return;
-		} else {
-			// delete every preprocessor node
-			collector.addDeleteChange(node);
-		}
-	}
-
-	@Override
-	public void createAdditionalChangesForExpandedNode(IPSTNode node, ChangeCollector collector) {
+	public void createAdditionalChangesForExpandedNode(final IPSTNode node, final ChangeCollector collector) {
 		// Add a change to remove the inactive parts of the conditional block
 		if (node instanceof IPSTConditionalBlock) {
 			collector.addDeleteConditionalDirectivesChange((IPSTConditionalBlock) node);
@@ -118,18 +73,55 @@ public class DefaultStrategy implements HDDStrategy {
 			collector.addDeleteAllTokensChange(node);
 		}
 	}
+
+	@Override
+	public void createChangeForNode(final IPSTNode node, final ChangeCollector collector) {
+		if (node instanceof IPSTRegularNode) {
+			RegularNodeHandler.invoke((IPSTRegularNode) node, collector);
+		} else if (node instanceof IPSTConditionalBlock) {
+			// Only delete full blocks if they are on the top level or inside
+			// compund statements
+			// This is one way to prevent rewrite conflicts caused by deleting
+			// tokens inside nested conditional blocks and the blocks at the
+			// same time
+			final IPSTRegularNode regularParent = node.getRegularParent();
+			if (regularParent instanceof IPSTTranslationUnit
+					|| regularParent.getASTNode() instanceof IASTCompoundStatement) {
+				collector.addDeleteChange(node);
+			}
+			return;
+		} else {
+			// delete every preprocessor node
+			collector.addDeleteChange(node);
+		}
+	}
+
+	@Override
+	public boolean expandIntoOwnGroup(final IPSTNode node) {
+		// reduce each function individually
+		// if (node instanceof IPSTRegularNode) {
+		// return node.getASTNode().getPropertyInParent() ==
+		// IASTFunctionDefinition.FUNCTION_BODY;
+		// }
+		return false;
+	}
+
+	@Override
+	public boolean expandUnchangeableNodeImmediately(final IPSTNode node) {
+		return node instanceof IPSTConditionalBlock;
+	}
+
+	@Override
+	public boolean skipSubTree(final IPSTNode node) {
+		// Could try to remove the region completely, but have to make sure not
+		// to expand it
+		// return node instanceof IPSTLiteralRegion;
+		return false;
+	}
 }
 
 class RegularNodeHandler implements IASTNodeConsumer {
-	private final IPSTRegularNode currentNode;
-	private final ChangeCollector collector;
-
-	private RegularNodeHandler(IPSTRegularNode node, ChangeCollector collector) {
-		currentNode = node;
-		this.collector = collector;
-	}
-
-	static void invoke(IPSTRegularNode node, ChangeCollector collector) {
+	static void invoke(final IPSTRegularNode node, final ChangeCollector collector) {
 		final IASTNode astNode = node.getASTNode();
 
 		// Delete everything that is known to be comma separated accordingly
@@ -149,14 +141,17 @@ class RegularNodeHandler implements IASTNodeConsumer {
 		new ASTNodeConsumerDispatcher(new RegularNodeHandler(node, collector)).dispatch(astNode);
 	}
 
-	@Override
-	public void on(IASTNode node) {
-		// Unless overriden regular nodes are simply deleted
-		collector.addDeleteChange(currentNode);
+	private final IPSTRegularNode currentNode;
+
+	private final ChangeCollector collector;
+
+	private RegularNodeHandler(final IPSTRegularNode node, final ChangeCollector collector) {
+		currentNode = node;
+		this.collector = collector;
 	}
 
 	@Override
-	public void on(IASTArrayModifier arrayModifier) {
+	public void on(final IASTArrayModifier arrayModifier) {
 		// Removing the brackets from an array declaration (that could not be
 		// removed itself)
 		// should have a very low probability to still type check, so better
@@ -164,7 +159,7 @@ class RegularNodeHandler implements IASTNodeConsumer {
 	}
 
 	@Override
-	public void on(IASTDeclaration declaration) {
+	public void on(final IASTDeclaration declaration) {
 
 		// The declaration is usually the same as the parent statement without
 		// the ";"
@@ -183,13 +178,13 @@ class RegularNodeHandler implements IASTNodeConsumer {
 	}
 
 	@Override
-	public void on(IASTDeclarator declarator) {
+	public void on(final IASTDeclarator declarator) {
 		// includes function/variable/whatever name and additional syntax that
 		// cannot be deleted alone
 	}
 
 	@Override
-	public void on(IASTDeclSpecifier declSpecifier) {
+	public void on(final IASTDeclSpecifier declSpecifier) {
 		// Too many typechecking errors if we change it.
 		// Of course, it should be possible to simplify it, replace macros and
 		// type qualifiers
@@ -198,7 +193,7 @@ class RegularNodeHandler implements IASTNodeConsumer {
 	}
 
 	@Override
-	public void on(IASTEqualsInitializer equalsInitializer) {
+	public void on(final IASTEqualsInitializer equalsInitializer) {
 		// We don't want to create uninitialized variables (and thus undefined
 		// behaviour),
 		// so always keep equals initializer.
@@ -212,7 +207,7 @@ class RegularNodeHandler implements IASTNodeConsumer {
 	}
 
 	@Override
-	public void on(IASTExpression expression) {
+	public void on(final IASTExpression expression) {
 		final ASTNodeProperty property = expression.getPropertyInParent();
 
 		// delete the function name from function calls, leaving an expression
@@ -252,7 +247,7 @@ class RegularNodeHandler implements IASTNodeConsumer {
 
 		// All other expressions have to be replaced by a smaller alternatively,
 		// optimally of the same type. IASTExpression.getExpressionType()
-		// appears to be pretty useful for this. 
+		// appears to be pretty useful for this.
 
 		if (expression instanceof IASTLiteralExpression) {
 			final IASTLiteralExpression literalExpression = (IASTLiteralExpression) expression;
@@ -268,10 +263,8 @@ class RegularNodeHandler implements IASTNodeConsumer {
 		collector.addReplaceChange(currentNode, "0");
 	}
 
-
-
 	@Override
-	public void on(IASTInitializerList initializerList) {
+	public void on(final IASTInitializerList initializerList) {
 		// An empty initializer list is not valid C syntax (see C grammer).
 		// Unfortunately putting a "0" as single element only works if the first
 		// member of
@@ -288,19 +281,25 @@ class RegularNodeHandler implements IASTNodeConsumer {
 	}
 
 	@Override
-	public void on(IASTName name) {
+	public void on(final IASTName name) {
 		// no point in messing with names
 	}
 
 	@Override
-	public void on(IASTPointerOperator pointerOperator) {
+	public void on(final IASTNode node) {
+		// Unless overriden regular nodes are simply deleted
+		collector.addDeleteChange(currentNode);
+	}
+
+	@Override
+	public void on(final IASTPointerOperator pointerOperator) {
 		// removing a pointer operator appears to be a bad idea, because of
 		// compilation errors.
 		// could try to remove specifiers, like const, restrict etc. though.
 	}
 
 	@Override
-	public void on(IASTStatement statement) {
+	public void on(final IASTStatement statement) {
 		// delete statements inside compund statements
 		if (statement.getPropertyInParent() == IASTCompoundStatement.NESTED_STATEMENT) {
 			collector.addDeleteChange(currentNode);
@@ -317,7 +316,7 @@ class RegularNodeHandler implements IASTNodeConsumer {
 	}
 
 	@Override
-	public void on(IASTTypeId typeId) {
+	public void on(final IASTTypeId typeId) {
 
 		// Delete typeid and parenthesis from cast expression
 		if (typeId.getPropertyInParent() == IASTCastExpression.TYPE_ID) {

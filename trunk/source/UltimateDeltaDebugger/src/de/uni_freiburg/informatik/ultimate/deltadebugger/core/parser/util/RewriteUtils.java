@@ -21,63 +21,17 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfa
  */
 public class RewriteUtils {
 
-	private RewriteUtils() {
-	}
-
 	/**
-	 * Deleting certain nodes from the source text may require a replacement
-	 * with a whitespace to ensure that no enclosing tokens are joined.
-	 * 
-	 * @param node
-	 * @return
-	 */
-	public static String getDeletionStringWithWhitespaces(IPSTNode node) {
-		// Deleteing comments and (function style) macro expansions
-		// completely can cause problems if there are no whitespaces
-		// to the left or right and tokens are joined.
-		if (node instanceof IPSTComment || node instanceof IPSTMacroExpansion) {
-			return " ";
-		}
-		// Not sure if there are other cases where a whitespace is required,
-		// just use a space anywhere for now.
-		return " ";
-	}
-
-	
-	/**
-	 * Checks if the given replacement string is the same as the existing source
-	 * text and would not have any effect.
-	 * 
-	 * @param node
-	 * @param replacement
-	 * @return if replacement by the given string should be skipped
-	 */
-	public static boolean skipEquivalentReplacement(IPSTNode node, String replacementString) {
-		// Do not replace something by itself
-		// It would be better to compare tokens, but we can at least ignore
-		// differences in whitespaces
-		final String lhs = node.getSourceText().replaceAll("\\s+", " ");
-		final String rhs = replacementString.replaceAll("\\s+", " ");
-		return lhs.equals(rhs);
-	}
-	
-	public static String removeMultipleEmptyLines(String input) {
-		return input.replaceAll("(?m)^(\\s*\r?\n){2,}", "\n");
-	}
-	
-	/**
-	 * Pretty print source code using the CDT code formatter. Seems to work
-	 * without workspace and/or OSGi, but can cause extreme lags/freezes for
-	 * larger inputs.
-	 * 
-	 * Maybe this should be removed by something that removes redundant
-	 * whitespace.
-	 * 
+	 * Pretty print source code using the CDT code formatter. Seems to work without workspace and/or OSGi, but can cause
+	 * extreme lags/freezes for larger inputs.
+	 *
+	 * Maybe this should be removed by something that removes redundant whitespace.
+	 *
 	 * @param input
 	 *            source code
 	 * @return pretty printed source code
 	 */
-	public static String debugPrettyPrintSourceCode(String input) {
+	public static String debugPrettyPrintSourceCode(final String input) {
 		// The formatter can be ridiculously slow for large inputs (possible
 		// related to deeply nested expressions).
 		// This is just a hack that reduces the chance to freeze.
@@ -95,5 +49,47 @@ public class RewriteUtils {
 		} catch (MalformedTreeException | BadLocationException e) {
 			return input;
 		}
+	}
+
+	/**
+	 * Deleting certain nodes from the source text may require a replacement with a whitespace to ensure that no
+	 * enclosing tokens are joined.
+	 *
+	 * @param node
+	 * @return
+	 */
+	public static String getDeletionStringWithWhitespaces(final IPSTNode node) {
+		// Deleteing comments and (function style) macro expansions
+		// completely can cause problems if there are no whitespaces
+		// to the left or right and tokens are joined.
+		if (node instanceof IPSTComment || node instanceof IPSTMacroExpansion) {
+			return " ";
+		}
+		// Not sure if there are other cases where a whitespace is required,
+		// just use a space anywhere for now.
+		return " ";
+	}
+
+	public static String removeMultipleEmptyLines(final String input) {
+		return input.replaceAll("(?m)^(\\s*\r?\n){2,}", "\n");
+	}
+
+	/**
+	 * Checks if the given replacement string is the same as the existing source text and would not have any effect.
+	 *
+	 * @param node
+	 * @param replacement
+	 * @return if replacement by the given string should be skipped
+	 */
+	public static boolean skipEquivalentReplacement(final IPSTNode node, final String replacementString) {
+		// Do not replace something by itself
+		// It would be better to compare tokens, but we can at least ignore
+		// differences in whitespaces
+		final String lhs = node.getSourceText().replaceAll("\\s+", " ");
+		final String rhs = replacementString.replaceAll("\\s+", " ");
+		return lhs.equals(rhs);
+	}
+
+	private RewriteUtils() {
 	}
 }

@@ -5,15 +5,30 @@ package de.uni_freiburg.informatik.ultimate.deltadebugger.core.text;
  */
 public interface ISourceRange {
 
-	/**
-	 * @return start offset of the range
-	 */
-	int offset();
-		
+	default boolean contains(final int index) {
+		return offset() <= index && index < endOffset();
+	}
+
+	default boolean contains(final int offset, final int endOffset) {
+		return offset() <= offset && endOffset <= endOffset();
+	}
+
+	default boolean contains(final ISourceRange other) {
+		return offset() <= other.offset() && other.endOffset() <= endOffset();
+	}
+
+	default boolean disjoint(final ISourceRange other) {
+		return endOffset() <= other.offset() || other.endOffset() <= offset();
+	}
+
 	/**
 	 * @return exlusive end-offset of the range
 	 */
 	int endOffset();
+
+	default boolean equalsSourceRange(final ISourceRange other) {
+		return offset() == other.offset() && endOffset() == other.endOffset();
+	}
 
 	/**
 	 * @return number of characters in this range
@@ -21,24 +36,9 @@ public interface ISourceRange {
 	default int length() {
 		return endOffset() - offset();
 	}
-	
-	default boolean contains(int index) {
-		return offset() <= index && index < endOffset();
-	}
-	
-	default boolean contains(ISourceRange other) {
-		return offset() <= other.offset() && other.endOffset() <= endOffset();
-	}
-	
-	default boolean contains(int offset, int endOffset) {
-		return offset() <= offset && endOffset <= endOffset();
-	}
-	
-	default boolean disjoint(ISourceRange other) {
-		return endOffset() <= other.offset() || other.endOffset() <= offset();
-	}
-	
-	default boolean equalsSourceRange(ISourceRange other) {
-		return offset() == other.offset() && endOffset() == other.endOffset();
-	}
+
+	/**
+	 * @return start offset of the range
+	 */
+	int offset();
 }

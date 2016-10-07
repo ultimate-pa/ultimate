@@ -12,47 +12,46 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfa
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTTranslationUnit;
 
 /**
- * Simluate a double dispatch function for an IPSTNode argument. Analoguous to
- * IASTNodeConsumer for consistency reasons.
+ * Simluate a double dispatch function for an IPSTNode argument. Analoguous to IASTNodeConsumer for consistency reasons.
  *
  */
 public interface IPSTNodeConsumer {
 
-	void on(IPSTNode node);
-
-	default void on(IPSTConditionalBlock conditionalBlock) {
-		on((IPSTNode) conditionalBlock);
-	}
-
-	default void on(IPSTLiteralRegion literalRegion) {
-		on((IPSTNode) literalRegion);
-	}
-
-	default void on(IPSTPreprocessorNode preprocessOrNode) {
-		on((IPSTNode) preprocessOrNode);
-	}
-
-	default void on(IPSTComment comment) {
+	default void on(final IPSTComment comment) {
 		on((IPSTPreprocessorNode) comment);
 	}
 
-	default void on(IPSTDirective directive) {
+	default void on(final IPSTConditionalBlock conditionalBlock) {
+		on((IPSTNode) conditionalBlock);
+	}
+
+	default void on(final IPSTDirective directive) {
 		on((IPSTPreprocessorNode) directive);
 	}
 
-	default void on(IPSTIncludeDirective includeDirective) {
+	default void on(final IPSTIncludeDirective includeDirective) {
 		on((IPSTDirective) includeDirective);
 	}
 
-	default void on(IPSTMacroExpansion macroExpansion) {
+	default void on(final IPSTLiteralRegion literalRegion) {
+		on((IPSTNode) literalRegion);
+	}
+
+	default void on(final IPSTMacroExpansion macroExpansion) {
 		on((IPSTPreprocessorNode) macroExpansion);
 	}
 
-	default void on(IPSTRegularNode node) {
+	void on(IPSTNode node);
+
+	default void on(final IPSTPreprocessorNode preprocessOrNode) {
+		on((IPSTNode) preprocessOrNode);
+	}
+
+	default void on(final IPSTRegularNode node) {
 		on((IPSTNode) node);
 	}
 
-	default void on(IPSTTranslationUnit translationUnit) {
+	default void on(final IPSTTranslationUnit translationUnit) {
 		on((IPSTRegularNode) translationUnit);
 	}
 }

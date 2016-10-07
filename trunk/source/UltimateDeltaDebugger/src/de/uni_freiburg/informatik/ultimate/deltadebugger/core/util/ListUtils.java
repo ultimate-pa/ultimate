@@ -7,21 +7,18 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 public class ListUtils {
-	private ListUtils() {
-	}
-	
 	/**
-	 * Computing the complement of the subsequence wrt. the given sequence.
-	 * Important: subsequence must be a subsequence of universe (minimizer
-	 * results guarantee that). Null elements are not supported.
-	 * 
+	 * Computing the complement of the subsequence wrt. the given sequence. Important: subsequence must be a subsequence
+	 * of universe (minimizer results guarantee that). Null elements are not supported.
+	 *
 	 * @param subseqeuence
 	 * @param universe
 	 * @return complement
 	 * @throws NoSuchElementException
 	 *             if not actually a subsequence of universe
 	 */
-	public static <E> List<E> complementOfSubsequence(List<? extends E> subseqeuence, List<? extends E> universe) {
+	public static <E> List<E> complementOfSubsequence(final List<? extends E> subseqeuence,
+			final List<? extends E> universe) {
 		if (subseqeuence.isEmpty()) {
 			return Collections.unmodifiableList(universe);
 		}
@@ -47,5 +44,8 @@ public class ListUtils {
 		}
 
 		return complement;
+	}
+
+	private ListUtils() {
 	}
 }

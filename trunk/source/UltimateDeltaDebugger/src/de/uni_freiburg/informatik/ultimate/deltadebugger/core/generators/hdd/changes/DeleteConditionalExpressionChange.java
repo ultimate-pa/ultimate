@@ -10,60 +10,19 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.util.TokenC
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.SourceRewriter;
 
 public class DeleteConditionalExpressionChange extends Change {
-	final IPSTRegularNode conditionalExpressionNode;
-	final int position;
-	final Token tQUESTION;
-	final Token tCOLON;
-	final String replacement;
-
-	public DeleteConditionalExpressionChange(IPSTRegularNode node, IPSTRegularNode conditionalExpressionNode,
-			Token tQUESTION, Token tCOLON, int position, String replacement) {
-		super(node);
-		this.conditionalExpressionNode = Objects.requireNonNull(conditionalExpressionNode);
-		this.position = position;
-		this.tQUESTION = Objects.requireNonNull(tQUESTION);
-		this.tCOLON = Objects.requireNonNull(tCOLON);
-		this.replacement = Objects.requireNonNull(replacement);
-		if (position < 0 || position > 2) {
-			throw new IllegalArgumentException();
-		}
-	}
-
-	@Override
-	public void apply(SourceRewriter rewriter) {
-		// no immediate modification possible
-	}
-
-	@Override
-	public boolean hasDeferredChange() {
-		return true;
-	}
-
-	@Override
-	public void updateDeferredChange(Map<IPSTNode, Change> deferredChangeMap) {
-		((CombinedChange) deferredChangeMap.computeIfAbsent(conditionalExpressionNode, CombinedChange::new))
-				.addChange(this);
-	}
-
-	@Override
-	public String toString() {
-		return "Delete/Replace conditional expression part " + getNode() + " by \"" + replacement + "\"" + "(from "
-				+ conditionalExpressionNode + ")";
-	}
-	
 	class CombinedChange extends Change {
 		DeleteConditionalExpressionChange[] parts = new DeleteConditionalExpressionChange[3];
-		
-		CombinedChange(IPSTNode node) {
+
+		CombinedChange(final IPSTNode node) {
 			super(node);
 		}
-		
-		void addChange(DeleteConditionalExpressionChange change) {
+
+		void addChange(final DeleteConditionalExpressionChange change) {
 			parts[change.position] = change;
 		}
 
 		@Override
-		public void apply(SourceRewriter rewriter) {
+		public void apply(final SourceRewriter rewriter) {
 			final long count = Arrays.stream(parts).filter(Objects::nonNull).count();
 			if (count == 3) {
 				// Replace whole expression by the replacement of the negative result
@@ -72,7 +31,7 @@ public class DeleteConditionalExpressionChange extends Change {
 				deleteNodeText(rewriter, parts[1].getNode());
 				replaceByWhitespace(rewriter, tQUESTION);
 				rewriter.replace(parts[2].getNode(), parts[2].replacement);
-				
+
 			} else if (count == 2) {
 				if (parts[0] == null) {
 					// replace both results (keep condition and ? : tokens)
@@ -97,9 +56,52 @@ public class DeleteConditionalExpressionChange extends Change {
 					rewriter.replace(parts[1].getNode(), parts[1].replacement);
 				} else {
 					rewriter.replace(parts[2].getNode(), parts[2].replacement);
-				} 
+				}
 			}
 		}
-		
+
+	}
+
+	final IPSTRegularNode conditionalExpressionNode;
+	final int position;
+	final Token tQUESTION;
+	final Token tCOLON;
+
+	final String replacement;
+
+	public DeleteConditionalExpressionChange(final IPSTRegularNode node,
+			final IPSTRegularNode conditionalExpressionNode, final Token tQUESTION, final Token tCOLON,
+			final int position, final String replacement) {
+		super(node);
+		this.conditionalExpressionNode = Objects.requireNonNull(conditionalExpressionNode);
+		this.position = position;
+		this.tQUESTION = Objects.requireNonNull(tQUESTION);
+		this.tCOLON = Objects.requireNonNull(tCOLON);
+		this.replacement = Objects.requireNonNull(replacement);
+		if (position < 0 || position > 2) {
+			throw new IllegalArgumentException();
+		}
+	}
+
+	@Override
+	public void apply(final SourceRewriter rewriter) {
+		// no immediate modification possible
+	}
+
+	@Override
+	public boolean hasDeferredChange() {
+		return true;
+	}
+
+	@Override
+	public String toString() {
+		return "Delete/Replace conditional expression part " + getNode() + " by \"" + replacement + "\"" + "(from "
+				+ conditionalExpressionNode + ")";
+	}
+
+	@Override
+	public void updateDeferredChange(final Map<IPSTNode, Change> deferredChangeMap) {
+		((CombinedChange) deferredChangeMap.computeIfAbsent(conditionalExpressionNode, CombinedChange::new))
+				.addChange(this);
 	}
 }

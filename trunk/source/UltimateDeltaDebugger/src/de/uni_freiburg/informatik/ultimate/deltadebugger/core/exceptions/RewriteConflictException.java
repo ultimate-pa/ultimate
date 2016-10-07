@@ -1,24 +1,28 @@
 package de.uni_freiburg.informatik.ultimate.deltadebugger.core.exceptions;
 
 /**
- * Thrown when several rewrite operations are conflicting, i.e. overlap the same
- * location.
+ * Thrown when several rewrite operations are conflicting, i.e. overlap the same location.
  */
 public class RewriteConflictException extends RuntimeException {
+
+	/**
+	 *
+	 */
+	private static final long serialVersionUID = 1L;
 
 	public RewriteConflictException() {
 		super();
 	}
 
-	public RewriteConflictException(String message, Throwable cause) {
-		super(message, cause);
-	}
-
-	public RewriteConflictException(String message) {
+	public RewriteConflictException(final String message) {
 		super(message);
 	}
 
-	public RewriteConflictException(Throwable cause) {
+	public RewriteConflictException(final String message, final Throwable cause) {
+		super(message, cause);
+	}
+
+	public RewriteConflictException(final Throwable cause) {
 		super(cause);
 	}
 

@@ -6,20 +6,20 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfa
 
 public class PSTVisitorWithResult<T> implements IPSTVisitor {
 	private Optional<T> result;
-	
+
 	public PSTVisitorWithResult() {
 		result = Optional.empty();
 	}
-	
-	public PSTVisitorWithResult(T initialValue) {
+
+	public PSTVisitorWithResult(final T initialValue) {
 		result = Optional.of(initialValue);
 	}
-	
+
 	public Optional<T> getResult() {
 		return result;
 	}
-	
-	public void setResult(T value) {
+
+	public void setResult(final T value) {
 		result = Optional.of(value);
 	}
 }

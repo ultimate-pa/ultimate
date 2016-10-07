@@ -15,39 +15,10 @@ import org.eclipse.cdt.core.dom.ast.IASTPreprocessorIfndefStatement;
 import org.eclipse.cdt.core.dom.ast.IASTStandardFunctionDeclarator;
 
 public class ASTNodeUtils {
-	
-	private ASTNodeUtils() {
-	}
-	
-	public static boolean isConditionalPreprocessorStatement(IASTNode node) {
-		return node instanceof IASTPreprocessorIfStatement 
-				|| node instanceof IASTPreprocessorIfdefStatement
-				|| node instanceof IASTPreprocessorIfndefStatement
-				|| node instanceof IASTPreprocessorElseStatement
-				|| node instanceof IASTPreprocessorElifStatement
-				|| node instanceof IASTPreprocessorEndifStatement;
-	}
-	
-	public static boolean isConditionalPreprocessorStatementTaken(IASTNode node) {
-		if (node instanceof IASTPreprocessorIfStatement) {
-			return ((IASTPreprocessorIfStatement)node).taken();
-		} else if (node instanceof IASTPreprocessorIfdefStatement) {
-			return ((IASTPreprocessorIfdefStatement)node).taken();
-		} else if (node instanceof IASTPreprocessorIfndefStatement) {
-			return ((IASTPreprocessorIfndefStatement)node).taken();
-		} else if (node instanceof IASTPreprocessorElseStatement) {
-			return ((IASTPreprocessorElseStatement)node).taken();
-		} else if (node instanceof IASTPreprocessorElifStatement) {
-			return ((IASTPreprocessorElifStatement)node).taken();
-		}
 
-		return false;
-	}
-	
-	
-	public static IASTNode[] getCommaSeparatedChildNodes(IASTNode astNode) {
+	public static IASTNode[] getCommaSeparatedChildNodes(final IASTNode astNode) {
 		if (astNode instanceof IASTStandardFunctionDeclarator) {
-			return  ((IASTStandardFunctionDeclarator) astNode).getParameters();
+			return ((IASTStandardFunctionDeclarator) astNode).getParameters();
 		} else if (astNode instanceof IASTExpressionList) {
 			return ((IASTExpressionList) astNode).getExpressions();
 		} else if (astNode instanceof IASTInitializerList) {
@@ -59,9 +30,8 @@ public class ASTNodeUtils {
 		}
 		return new IASTNode[0];
 	}
-	
-	
-	public static ASTNodeProperty getPropertyOfCommaSeparatedChildNodes(IASTNode astNode) {
+
+	public static ASTNodeProperty getPropertyOfCommaSeparatedChildNodes(final IASTNode astNode) {
 		if (astNode instanceof IASTStandardFunctionDeclarator) {
 			return IASTStandardFunctionDeclarator.FUNCTION_PARAMETER;
 		} else if (astNode instanceof IASTExpressionList) {
@@ -74,5 +44,30 @@ public class ASTNodeUtils {
 			return IASTEnumerationSpecifier.ENUMERATOR;
 		}
 		return null;
+	}
+
+	public static boolean isConditionalPreprocessorStatement(final IASTNode node) {
+		return node instanceof IASTPreprocessorIfStatement || node instanceof IASTPreprocessorIfdefStatement
+				|| node instanceof IASTPreprocessorIfndefStatement || node instanceof IASTPreprocessorElseStatement
+				|| node instanceof IASTPreprocessorElifStatement || node instanceof IASTPreprocessorEndifStatement;
+	}
+
+	public static boolean isConditionalPreprocessorStatementTaken(final IASTNode node) {
+		if (node instanceof IASTPreprocessorIfStatement) {
+			return ((IASTPreprocessorIfStatement) node).taken();
+		} else if (node instanceof IASTPreprocessorIfdefStatement) {
+			return ((IASTPreprocessorIfdefStatement) node).taken();
+		} else if (node instanceof IASTPreprocessorIfndefStatement) {
+			return ((IASTPreprocessorIfndefStatement) node).taken();
+		} else if (node instanceof IASTPreprocessorElseStatement) {
+			return ((IASTPreprocessorElseStatement) node).taken();
+		} else if (node instanceof IASTPreprocessorElifStatement) {
+			return ((IASTPreprocessorElifStatement) node).taken();
+		}
+
+		return false;
+	}
+
+	private ASTNodeUtils() {
 	}
 }

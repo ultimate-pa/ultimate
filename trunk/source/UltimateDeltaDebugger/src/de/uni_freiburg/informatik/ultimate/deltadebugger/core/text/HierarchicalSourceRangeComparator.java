@@ -13,7 +13,7 @@ public enum HierarchicalSourceRangeComparator implements Comparator<ISourceRange
 	}
 
 	@Override
-	public int compare(ISourceRange lhs, ISourceRange rhs) {
+	public int compare(final ISourceRange lhs, final ISourceRange rhs) {
 		final int res = Integer.compare(lhs.offset(), rhs.offset());
 		if (res == 0) {
 			return Integer.compare(rhs.endOffset(), lhs.endOffset());

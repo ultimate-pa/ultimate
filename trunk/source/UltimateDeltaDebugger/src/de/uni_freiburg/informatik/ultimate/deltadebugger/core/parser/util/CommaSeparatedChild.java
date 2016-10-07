@@ -8,8 +8,7 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfa
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceRange;
 
 /**
- * A child node in a comma separated list together with the location of the
- * next comma (if known).
+ * A child node in a comma separated list together with the location of the next comma (if known).
  */
 public class CommaSeparatedChild {
 
@@ -18,10 +17,12 @@ public class CommaSeparatedChild {
 	ISourceRange nextCommaLocation = null;
 
 	/**
-	 * @param astNode the child node in the AST
-	 * @param node the corresponding regular PST node if existing
+	 * @param astNode
+	 *            the child node in the AST
+	 * @param node
+	 *            the corresponding regular PST node if existing
 	 */
-	public CommaSeparatedChild(IASTNode astNode, IPSTRegularNode node) {
+	public CommaSeparatedChild(final IASTNode astNode, final IPSTRegularNode node) {
 		this.astNode = Objects.requireNonNull(astNode);
 		this.node = node;
 	}
@@ -34,19 +35,17 @@ public class CommaSeparatedChild {
 	}
 
 	/**
-	 * @return regular PST node corresponding to the IASTNode if it exists
-	 *         (null otherwise)
-	 */
-	public IPSTRegularNode node() {
-		return node;
-	}
-	
-	/**
-	 * @return location of the first comma encountered after the child node.
-	 *         null of co comma was found.
+	 * @return location of the first comma encountered after the child node. null of co comma was found.
 	 */
 	public ISourceRange nextCommaLocation() {
 		return nextCommaLocation;
+	}
+
+	/**
+	 * @return regular PST node corresponding to the IASTNode if it exists (null otherwise)
+	 */
+	public IPSTRegularNode node() {
+		return node;
 	}
 
 	@Override

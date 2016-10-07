@@ -6,48 +6,22 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.minimizers.
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.minimizers.MinimizerStep;
 
 /**
- * Ensure local minimality by restarting on the result until the size stays the
- * same.
+ * Ensure local minimality by restarting on the result until the size stays the same.
  *
  */
 public class RepeatUntilMinimalDecorator implements Minimizer {
-	final Minimizer delegateMinimizer;
-
-	public RepeatUntilMinimalDecorator(Minimizer delegate) {
-		this.delegateMinimizer = delegate;
-	}
-
-	public static Minimizer decorate(Minimizer minimizer) {
-		return minimizer.isResultMinimal() ? minimizer : new RepeatUntilMinimalDecorator(minimizer);
-	}
-
-	@Override
-	public <E> MinimizerStep<E> create(List<E> input) {
-		return new StepDecorator<>(delegateMinimizer.create(input), input.size());
-	}
-
-	@Override
-	public boolean isResultMinimal() {
-		return true;
-	}
-
-	@Override
-	public boolean isEachVariantUnique() {
-		return false;
-	}
-
 	final class StepDecorator<E> implements MinimizerStep<E> {
 		final MinimizerStep<E> delegate;
 		final int initialSize;
 
-		private StepDecorator(MinimizerStep<E> delegate, int initialSize) {
+		private StepDecorator(final MinimizerStep<E> delegate, final int initialSize) {
 			this.delegate = delegate;
 			this.initialSize = initialSize;
 		}
 
 		@Override
-		public boolean isDone() {
-			return delegate.isDone();
+		public List<E> getResult() {
+			return delegate.getResult();
 		}
 
 		@Override
@@ -56,7 +30,12 @@ public class RepeatUntilMinimalDecorator implements Minimizer {
 		}
 
 		@Override
-		public MinimizerStep<E> next(boolean keepVariant) {
+		public boolean isDone() {
+			return delegate.isDone();
+		}
+
+		@Override
+		public MinimizerStep<E> next(final boolean keepVariant) {
 			final MinimizerStep<E> nextStep = delegate.next(keepVariant);
 			if (nextStep.isDone()) {
 				// Restart if something was removed
@@ -68,10 +47,30 @@ public class RepeatUntilMinimalDecorator implements Minimizer {
 
 			return new StepDecorator<>(nextStep, initialSize);
 		}
+	}
 
-		@Override
-		public List<E> getResult() {
-			return delegate.getResult();
-		}
+	public static Minimizer decorate(final Minimizer minimizer) {
+		return minimizer.isResultMinimal() ? minimizer : new RepeatUntilMinimalDecorator(minimizer);
+	}
+
+	final Minimizer delegateMinimizer;
+
+	public RepeatUntilMinimalDecorator(final Minimizer delegate) {
+		delegateMinimizer = delegate;
+	}
+
+	@Override
+	public <E> MinimizerStep<E> create(final List<E> input) {
+		return new StepDecorator<>(delegateMinimizer.create(input), input.size());
+	}
+
+	@Override
+	public boolean isEachVariantUnique() {
+		return false;
+	}
+
+	@Override
+	public boolean isResultMinimal() {
+		return true;
 	}
 }

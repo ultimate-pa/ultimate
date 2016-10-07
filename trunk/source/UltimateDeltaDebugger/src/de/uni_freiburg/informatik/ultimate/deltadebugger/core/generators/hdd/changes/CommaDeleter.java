@@ -11,42 +11,41 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceRange;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.SourceRewriter;
 
 final class CommaDeleter extends CommaSeparatedChildDeleter {
-	private SourceRewriter rewriter;
-
-	private CommaDeleter(List<IPSTNode> childrenToDelete, List<CommaSeparatedChild> allChildren,
-			SourceRewriter rewriter) {
-		super(childrenToDelete, allChildren);
-		this.rewriter = rewriter;
+	static void deleteNodesWithComma(final SourceRewriter rewriter, final List<IPSTNode> nodesToDelete,
+			final List<CommaSeparatedChild> commaPositions) {
+		try {
+			new CommaDeleter(nodesToDelete, commaPositions, rewriter).deleteChildren();
+		} catch (final MissingCommaLocationException e) {
+			throw new ChangeConflictException(e);
+		}
 	}
-	
-	static boolean isDeletionWithCommaPossible(IPSTNode node, List<CommaSeparatedChild> commaPositions) {
+
+	static boolean isDeletionWithCommaPossible(final IPSTNode node, final List<CommaSeparatedChild> commaPositions) {
 		try {
 			new CommaDeleter(Arrays.asList(node), commaPositions, null).deleteChildren();
-		} catch (MissingCommaLocationException e) {
+		} catch (final MissingCommaLocationException e) {
 			return false;
 		}
 		return true;
 	}
-	
-	static void deleteNodesWithComma(SourceRewriter rewriter, List<IPSTNode> nodesToDelete,
-			List<CommaSeparatedChild> commaPositions) {
-		try {
-			new CommaDeleter(nodesToDelete, commaPositions, rewriter).deleteChildren();
-		} catch (MissingCommaLocationException e) {
-			throw new ChangeConflictException(e);
-		}
+
+	private final SourceRewriter rewriter;
+
+	private CommaDeleter(final List<IPSTNode> childrenToDelete, final List<CommaSeparatedChild> allChildren,
+			final SourceRewriter rewriter) {
+		super(childrenToDelete, allChildren);
+		this.rewriter = rewriter;
 	}
-	
 
 	@Override
-	protected void deleteComma(ISourceRange location) {
+	protected void deleteComma(final ISourceRange location) {
 		if (rewriter != null) {
 			Change.replaceByWhitespace(rewriter, location);
 		}
 	}
 
 	@Override
-	protected void deleteNode(IPSTNode node) {
+	protected void deleteNode(final IPSTNode node) {
 		if (rewriter != null) {
 			Change.deleteNodeText(rewriter, node);
 		}

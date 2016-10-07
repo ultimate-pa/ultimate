@@ -18,20 +18,40 @@ public class DirectSearchIteratorIterator<T extends SearchStep<?, T>> {
 
 	/**
 	 * Constructs a new instance that can be used for one iteration.
-	 * 
+	 *
 	 * @param searchIterator
 	 *            speculative iterator to work on
 	 * @param cancelableTest
 	 *            test function that is called to determine test results
 	 */
-	public DirectSearchIteratorIterator(SpeculativeSearchIterator<T> searchIterator,
-			CancelableStepTest<T> cancelableTest) {
+	public DirectSearchIteratorIterator(final SpeculativeSearchIterator<T> searchIterator,
+			final CancelableStepTest<T> cancelableTest) {
 		this.searchIterator = searchIterator;
 		this.cancelableTest = cancelableTest;
 	}
 
 	public T getCurrentStep() {
 		return searchIterator.getCurrentStep();
+	}
+
+	/**
+	 * Iterates for a certain time limit.
+	 *
+	 * @param timeout
+	 * @param unit
+	 * @return true iff iteration has ended
+	 */
+	public boolean iterateFor(final long timeout, final TimeUnit unit) {
+		final long deadline = System.currentTimeMillis() + unit.toMillis(timeout);
+		do {
+			final SpeculativeTask<T> task = searchIterator.getNextTask();
+			if (task.isDone()) {
+				return true;
+			}
+			runTestAndCompleteTask(task);
+		} while (System.currentTimeMillis() < deadline);
+
+		return false;
 	}
 
 	/**
@@ -47,27 +67,7 @@ public class DirectSearchIteratorIterator<T extends SearchStep<?, T>> {
 		}
 	}
 
-	/**
-	 * Iterates for a certain time limit.
-	 * 
-	 * @param timeout
-	 * @param unit
-	 * @return true iff iteration has ended
-	 */
-	public boolean iterateFor(long timeout, TimeUnit unit) {
-		final long deadline = System.currentTimeMillis() + unit.toMillis(timeout);
-		do {
-			final SpeculativeTask<T> task = searchIterator.getNextTask();
-			if (task.isDone()) {
-				return true;
-			}
-			runTestAndCompleteTask(task);
-		} while (System.currentTimeMillis() < deadline);
-
-		return false;
-	}
-
-	private void runTestAndCompleteTask(SpeculativeTask<T> task) {
+	private void runTestAndCompleteTask(final SpeculativeTask<T> task) {
 		final Optional<Boolean> result = cancelableTest.test(task.getStep(), task::isCanceled);
 		if (!result.isPresent()) {
 			// A test is only allowed to return no result if cancelation

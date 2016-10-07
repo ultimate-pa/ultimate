@@ -10,48 +10,34 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.speculation
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.speculation.SpeculativeTask;
 
 class SearchObserver implements SpeculativeIterationObserver<GeneratorSearchStep> {
+	public static void debugLogChangeDetails(final List<ChangeHandle> changes) {
+		for (int i = 0; i != changes.size(); ++i) {
+			PassRunner.logger.debug("[" + i + "] " + changes.get(i));
+		}
+	}
+
+	public static void debugLogStats(final SearchStats stats) {
+		PassRunner.logger.info("Overall test count: " + stats.getOverallTestCount());
+		PassRunner.logger.info(" - successful: " + stats.getSuccessfulSteps());
+		PassRunner.logger.info(
+				" - failed: " + stats.getFailedSteps() + " (" + stats.getChangeConflicts() + " change conflicts)");
+		PassRunner.logger.info(" - canceled: " + stats.getCanceledSpeculativeSteps());
+		PassRunner.logger.info(" - duplicate tests skipped: " + stats.getSkippedDuplicateMinimizerSteps());
+	}
+
 	private final VariantTestFunction testFunction;
+
 	private final SearchStats stats;
 
 	private GeneratorSearchStep previousStep;
 
-	public SearchObserver(VariantTestFunction testFunction, SearchStats stats) {
+	public SearchObserver(final VariantTestFunction testFunction, final SearchStats stats) {
 		this.testFunction = testFunction;
 		this.stats = stats;
 	}
 
-	/**
-	 * This method is called by the step iterator, possibly from multiple
-	 * threads in parallel. Forwards the call to the external test if the
-	 * variant string can be generated.
-	 * 
-	 * @param step
-	 * @param isCanceled
-	 * @return
-	 */
-	Optional<Boolean> runTestForStep(GeneratorSearchStep step, BooleanSupplier isCanceled) {
-		stats.overallTestCount.incrementAndGet();
-
-		String variant;
-		try {
-			variant = step.getVariant();
-		} catch (ChangeConflictException e) {
-			PassRunner.logger.warn("Skipping test because of change conflict: " + e.getMessage());
-			PassRunner.logger.trace("change conflict details", e);
-
-			stats.changeConflicts.incrementAndGet();
-			return Optional.of(false);
-		}
-
-		if (isCanceled.getAsBoolean()) {
-			return Optional.empty();
-		}
-
-		return testFunction.cancelableTest(variant, isCanceled);
-	}
-
 	@Override
-	public void onStepBegin(GeneratorSearchStep step) {
+	public void onStepBegin(final GeneratorSearchStep step) {
 		if (previousStep == null || step.getVariantGenerator() != previousStep.getVariantGenerator()) {
 			// Handle change of variant generator
 			if (previousStep != null) {
@@ -71,7 +57,7 @@ class SearchObserver implements SpeculativeIterationObserver<GeneratorSearchStep
 	}
 
 	@Override
-	public void onStepComplete(GeneratorSearchStep step, boolean keepVariant) {
+	public void onStepComplete(final GeneratorSearchStep step, final boolean keepVariant) {
 		// Update the duplicate tracker with the result, now that we know
 		// that this step is valid
 		step.updateDuplicateTrackerWithTestResult(keepVariant);
@@ -90,23 +76,37 @@ class SearchObserver implements SpeculativeIterationObserver<GeneratorSearchStep
 	}
 
 	@Override
-	public void onTasksCanceled(List<? extends SpeculativeTask<GeneratorSearchStep>> tasks) {
+	public void onTasksCanceled(final List<? extends SpeculativeTask<GeneratorSearchStep>> tasks) {
 		stats.canceledSpeculativeSteps += tasks.size();
 	}
 
-	public static void debugLogChangeDetails(List<ChangeHandle> changes) {
-		for (int i = 0; i != changes.size(); ++i) {
-			PassRunner.logger.debug("[" + i + "] " + changes.get(i));
+	/**
+	 * This method is called by the step iterator, possibly from multiple threads in parallel. Forwards the call to the
+	 * external test if the variant string can be generated.
+	 *
+	 * @param step
+	 * @param isCanceled
+	 * @return
+	 */
+	Optional<Boolean> runTestForStep(final GeneratorSearchStep step, final BooleanSupplier isCanceled) {
+		stats.overallTestCount.incrementAndGet();
+
+		String variant;
+		try {
+			variant = step.getVariant();
+		} catch (final ChangeConflictException e) {
+			PassRunner.logger.warn("Skipping test because of change conflict: " + e.getMessage());
+			PassRunner.logger.trace("change conflict details", e);
+
+			stats.changeConflicts.incrementAndGet();
+			return Optional.of(false);
 		}
-	}
-	
-	
-	public static void debugLogStats(SearchStats stats) {
-		PassRunner.logger.info("Overall test count: " + stats.getOverallTestCount());
-		PassRunner.logger.info(" - successful: " + stats.getSuccessfulSteps());
-		PassRunner.logger.info(" - failed: " + stats.getFailedSteps() + " (" + stats.getChangeConflicts() + " change conflicts)");
-		PassRunner.logger.info(" - canceled: " + stats.getCanceledSpeculativeSteps());
-		PassRunner.logger.info(" - duplicate tests skipped: " + stats.getSkippedDuplicateMinimizerSteps());
+
+		if (isCanceled.getAsBoolean()) {
+			return Optional.empty();
+		}
+
+		return testFunction.cancelableTest(variant, isCanceled);
 	}
 
 }

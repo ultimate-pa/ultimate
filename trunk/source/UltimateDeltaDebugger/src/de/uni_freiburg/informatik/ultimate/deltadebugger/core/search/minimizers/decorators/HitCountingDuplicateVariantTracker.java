@@ -11,22 +11,19 @@ public class HitCountingDuplicateVariantTracker implements DuplicateVariantTrack
 	private final DuplicateVariantTracker<ChangeHandle> delegate;
 	private final AtomicInteger counter;
 
-	public HitCountingDuplicateVariantTracker(DuplicateVariantTracker<ChangeHandle> delegate, AtomicInteger counter) {
+	public HitCountingDuplicateVariantTracker(final DuplicateVariantTracker<ChangeHandle> delegate,
+			final AtomicInteger counter) {
 		this.delegate = Objects.requireNonNull(delegate);
 		this.counter = Objects.requireNonNull(counter);
 	}
 
-	public AtomicInteger getCounter() {
-		return counter;
-	}
-
 	@Override
-	public void add(List<? extends ChangeHandle> variant) {
+	public void add(final List<? extends ChangeHandle> variant) {
 		delegate.add(variant);
 	}
 
 	@Override
-	public boolean contains(List<? extends ChangeHandle> variant) {
+	public boolean contains(final List<? extends ChangeHandle> variant) {
 		final boolean result = delegate.contains(variant);
 		if (result) {
 			counter.incrementAndGet();
@@ -34,8 +31,12 @@ public class HitCountingDuplicateVariantTracker implements DuplicateVariantTrack
 		return result;
 	}
 
+	public AtomicInteger getCounter() {
+		return counter;
+	}
+
 	@Override
-	public void removeLargerVariants(int keptVariantSize) {
+	public void removeLargerVariants(final int keptVariantSize) {
 		delegate.removeLargerVariants(keptVariantSize);
 	}
 

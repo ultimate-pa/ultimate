@@ -8,22 +8,24 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.minimizers.
 /**
  * Final minimizer state, only carries the result.
  *
- * @param <E> element type
+ * @param <E>
+ *            element type
  */
 public class FinalMinimizerStep<E> implements MinimizerStep<E> {
 	final List<E> result;
 
 	/**
 	 * The constructor.
+	 * 
 	 * @param result
 	 */
-	public FinalMinimizerStep(List<E> result) {
+	public FinalMinimizerStep(final List<E> result) {
 		this.result = result;
 	}
 
 	@Override
-	public boolean isDone() {
-		return true;
+	public List<E> getResult() {
+		return result;
 	}
 
 	@Override
@@ -32,12 +34,12 @@ public class FinalMinimizerStep<E> implements MinimizerStep<E> {
 	}
 
 	@Override
-	public MinimizerStep<E> next(boolean keepVariant) {
-		throw new NoSuchElementException();
+	public boolean isDone() {
+		return true;
 	}
 
 	@Override
-	public List<E> getResult() {
-		return result;
+	public MinimizerStep<E> next(final boolean keepVariant) {
+		throw new NoSuchElementException();
 	}
 }

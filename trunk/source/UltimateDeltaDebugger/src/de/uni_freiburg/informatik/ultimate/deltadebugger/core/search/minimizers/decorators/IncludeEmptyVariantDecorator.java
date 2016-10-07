@@ -10,46 +10,16 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.minimizers.
  * Adds an empty variant as first step to another minimizer.
  */
 public class IncludeEmptyVariantDecorator implements Minimizer {
-	private final Minimizer delegate;
-
-	public IncludeEmptyVariantDecorator(Minimizer delegate) {
-		this.delegate = delegate;
-	}
-	
-	public static Minimizer decorate(Minimizer minimizer) {
-		return (minimizer instanceof IncludeEmptyVariantDecorator) ? minimizer
-				: new IncludeEmptyVariantDecorator(minimizer);
-	}
-
-	@Override
-	public <E> MinimizerStep<E> create(List<E> input) {
-		if (input.isEmpty()) {
-			return delegate.create(input);
-		}
-		return new StepDecorator<>(input);
-	}
-
-	@Override
-	public boolean isResultMinimal() {
-		return delegate.isResultMinimal();
-	}
-
-	@Override
-	public boolean isEachVariantUnique() {
-		return delegate.isEachVariantUnique();
-	}
-
-
 	final class StepDecorator<E> implements MinimizerStep<E> {
 		final List<E> input;
 
-		private StepDecorator(List<E> input) {
+		private StepDecorator(final List<E> input) {
 			this.input = input;
 		}
 
 		@Override
-		public boolean isDone() {
-			return false;
+		public List<E> getResult() {
+			return input;
 		}
 
 		@Override
@@ -58,13 +28,42 @@ public class IncludeEmptyVariantDecorator implements Minimizer {
 		}
 
 		@Override
-		public MinimizerStep<E> next(boolean keepVariant) {
-			return delegate.create(keepVariant ? Collections.emptyList() : input);
+		public boolean isDone() {
+			return false;
 		}
 
 		@Override
-		public List<E> getResult() {
-			return input;
+		public MinimizerStep<E> next(final boolean keepVariant) {
+			return delegate.create(keepVariant ? Collections.emptyList() : input);
 		}
+	}
+
+	public static Minimizer decorate(final Minimizer minimizer) {
+		return minimizer instanceof IncludeEmptyVariantDecorator ? minimizer
+				: new IncludeEmptyVariantDecorator(minimizer);
+	}
+
+	private final Minimizer delegate;
+
+	public IncludeEmptyVariantDecorator(final Minimizer delegate) {
+		this.delegate = delegate;
+	}
+
+	@Override
+	public <E> MinimizerStep<E> create(final List<E> input) {
+		if (input.isEmpty()) {
+			return delegate.create(input);
+		}
+		return new StepDecorator<>(input);
+	}
+
+	@Override
+	public boolean isEachVariantUnique() {
+		return delegate.isEachVariantUnique();
+	}
+
+	@Override
+	public boolean isResultMinimal() {
+		return delegate.isResultMinimal();
 	}
 }
