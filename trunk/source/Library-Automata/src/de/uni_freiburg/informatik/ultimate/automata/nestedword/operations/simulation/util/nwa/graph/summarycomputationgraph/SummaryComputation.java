@@ -57,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.SummaryReturnTransition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.LexicographicCounter;
+import de.uni_freiburg.informatik.ultimate.util.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.PosetUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation3;
@@ -122,7 +123,10 @@ public class SummaryComputation<LETTER, STATE> {
 		initialize();
 		while (!mWorklist.isEmpty()) {
 			if (!mServices.getProgressMonitorService().continueProcessing()) {
-				throw new AutomataOperationCanceledException(this.getClass());
+				final String taskDescription = "processing worklist (game automaton has " + 
+						mGameAutomaton.size() + " states, worklist contains " + mWorklist.size() + " elements)";
+				final RunningTaskInfo rti = new RunningTaskInfo(getClass(), taskDescription );
+				throw new AutomataOperationCanceledException(rti);
 			}
 			final SummaryComputationGraphNode<LETTER, STATE> node = mWorklist.remove();
 			process(node);
@@ -204,8 +208,14 @@ public class SummaryComputation<LETTER, STATE> {
 	}
 
 
-	private void initialize() {
+	private void initialize() throws AutomataOperationCanceledException {
 		for (final IGameState gs : mGameAutomaton.getStates()) {
+			if (!mServices.getProgressMonitorService().continueProcessing()) {
+				final String taskDescription = "initializing worklist (game automaton has " + 
+						mGameAutomaton.size() + " states, worklist contains " + mWorklist.size() + " elements)";
+				final RunningTaskInfo rti = new RunningTaskInfo(getClass(), taskDescription );
+				throw new AutomataOperationCanceledException(rti);
+			}
 			final HashRelation<LETTER, IGameState> letter2summarySucc = new HashRelation<>();
 			for (final SummaryReturnTransition<IGameLetter<LETTER, STATE>, IGameState> trans : mGameAutomaton.summarySuccessors(gs)) {
 				letter2summarySucc.addPair(trans.getLetter().getLetter(), trans.getSucc());
