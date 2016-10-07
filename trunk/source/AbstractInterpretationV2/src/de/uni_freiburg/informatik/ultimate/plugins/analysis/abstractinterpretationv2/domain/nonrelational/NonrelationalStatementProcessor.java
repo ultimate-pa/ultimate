@@ -156,21 +156,21 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 					.createSingletonValueTopEvaluator(EvaluatorUtils.getEvaluatorType(expr.getType())));
 			return expr;
 		}
-
-		final Expression newExpr = normalizeExpression(expr);
-		assert newExpr != null;
-		assert newExpr.getType() != null : "Normalization did set a null type";
-
-		if (expr == newExpr) {
-			addEvaluators(mExpressionEvaluator, mEvaluatorFactory, newExpr);
-			return super.processExpression(expr);
+		Expression oldExpr = expr;
+		Expression newExpr = normalizeExpression(oldExpr);
+		while (newExpr != oldExpr) {
+			assert newExpr != null;
+			assert newExpr.getType() != null : "Normalization did set a null type";
+			oldExpr = newExpr;
+			newExpr = normalizeExpression(oldExpr);
 		}
-		if (mLogger.isDebugEnabled()) {
+
+		if (mLogger.isDebugEnabled() && expr != newExpr) {
 			mLogger.debug(new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Expression ")
 					.append(BoogiePrettyPrinter.print(expr)).append(" rewritten to: ")
 					.append(BoogiePrettyPrinter.print(newExpr)).toString());
 		}
-		return processExpression(newExpr);
+		return super.processExpression(newExpr);
 	}
 
 	protected abstract IEvaluatorFactory<V, STATE, CodeBlock> createEvaluatorFactory(final int maxParallelStates);
