@@ -40,8 +40,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
- * @param <ACTION>
- * @param <VARDECL>
  */
 public interface IAbstractStateStorage<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL, LOCATION> {
 
