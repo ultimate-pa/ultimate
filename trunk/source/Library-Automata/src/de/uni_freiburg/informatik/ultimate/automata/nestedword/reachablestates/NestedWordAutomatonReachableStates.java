@@ -996,10 +996,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 			do {
 				while (!mForwardWorklist.isEmpty()) {
 					if (!getServices().getProgressMonitorService().continueProcessing()) {
-						final String taskDescription = "computing reachable states (" 
-								+ mNumberOfConstructedStates + " states constructed"
-								+ "input type " + mOperand.getClass().getSimpleName() + ")";
-						final RunningTaskInfo rti = new RunningTaskInfo(getClass(), taskDescription );
+						final RunningTaskInfo rti = constructRunningTaskInfo();
 						throw new AutomataOperationCanceledException(rti);
 					}
 					final StateContainer<LETTER, STATE> cont = mForwardWorklist.remove(0);
@@ -1043,8 +1040,8 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 						// svcomp/systemc/token_ring.07_false-unreach-call_false-termination.cil.c
 						// (Settings:settings/TACASInterpolation2015/ForwardPredicates.epf,
 						// Toolchain:toolchains/AutomizerC.xml)
-						
-						throw new AutomataOperationCanceledException(this.getClass());
+						final RunningTaskInfo rti = constructRunningTaskInfo();
+						throw new AutomataOperationCanceledException(rti);
 					}
 					
 					final StateContainer<LETTER, STATE> cont = mDownPropagationWorklist.remove(0);
@@ -1071,6 +1068,14 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 					}
 				}
 			}
+		}
+
+		private RunningTaskInfo constructRunningTaskInfo() {
+			final String taskDescription = "computing reachable states (" 
+					+ mNumberOfConstructedStates + " states constructed"
+					+ "input type " + mOperand.getClass().getSimpleName() + ")";
+			final RunningTaskInfo rti = new RunningTaskInfo(getClass(), taskDescription );
+			return rti;
 		}
 		
 		private void addInitialStates(final Iterable<STATE> initialStates) {
