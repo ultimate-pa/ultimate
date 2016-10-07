@@ -85,7 +85,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LETTER, STATE> {
 	private static final int THREE = 3;
-
+	
 	private static final String GENERATING_VARIABLES = "generating variables";
 	private static final String ADDING_TRANSITION_CONSTRAINTS = "adding transition constraints";
 	private static final String ADDING_TRANSITIVITY_CONSTRAINTS = "adding transitivity constraints";
@@ -113,6 +113,10 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 	
 	private final int mLargestBlockInitialPartition;
 	private final int mInitialPartitionSize;
+	
+	private long mTimer;
+	private long mTimePreprocessing;
+	private long mTimeSolving;
 	
 	/**
 	 * Constructor that should be called by the automata script interpreter.
@@ -213,6 +217,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 			final boolean useTransitionHornClauses, final boolean useHornSolver, final boolean useTransitivityGenerator,
 			final boolean usePathCompression) throws AutomataOperationCanceledException {
 		super(services, stateFactory, "minimizeNwaMaxSat2", operand);
+		mTimer = System.currentTimeMillis();
 		mOperand = operand;
 		// if (!new IsDeterministic<>(mServices, operand).getResult()) {
 		// throw new AssertionError("not deterministic");
@@ -254,7 +259,15 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 		
 		feedSolver(useTransitivityGenerator, initialPartition, transitivityGenerator);
 		
+		mTimePreprocessing = mTimer;
+		mTimer = System.currentTimeMillis();
+		mTimePreprocessing = mTimer - mTimePreprocessing;
+		
 		constructResult(addMapOldState2newState);
+		
+		mTimeSolving = mTimer;
+		mTimer = System.currentTimeMillis();
+		mTimeSolving = mTimer - mTimeSolving;
 		
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
@@ -267,6 +280,12 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 		if (mLargestBlockInitialPartition != 0) {
 			statistics.addKeyValuePair(StatisticsType.SIZE_MAXIMAL_INITIAL_EQUIVALENCE_CLASS,
 					mLargestBlockInitialPartition);
+		}
+		if (mTimePreprocessing != 0L) {
+			statistics.addKeyValuePair(StatisticsType.TIME_PREPROCESSING, mTimePreprocessing);
+		}
+		if (mTimeSolving != 0L) {
+			statistics.addKeyValuePair(StatisticsType.TIME_SOLVING, mTimeSolving);
 		}
 		return statistics;
 	}
@@ -314,19 +333,19 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 			return result1;
 		}
 		
-//		if (mOperandHasNoReturns) {
-//			// check that direct simulation is the same for automata without calls and returns
-//			// TODO use new direct simulation when it also supports an initial partition
-//			final ReduceNwaDirectSimulation<LETTER, STATE> directSimulation = new ReduceNwaDirectSimulation<>(mServices,
-//					stateFactory, mOperand, false, mInitialEquivalenceClasses);
-//			final int directSimulationSize = directSimulation.getResult().size();
-//			final int resultSize = getResult().size();
-//			if (resultSize != directSimulationSize) {
-//				return new Pair<>(Boolean.FALSE,
-//						String.format("The result has %d states, but the direct simulation result has %d states.",
-//								resultSize, directSimulationSize));
-//			}
-//		}
+		// if (mOperandHasNoReturns) {
+		// 	// check that direct simulation is the same for automata without calls and returns
+		// 	// TODO use new direct simulation when it also supports an initial partition
+		// 	final ReduceNwaDirectSimulation<LETTER, STATE> directSimulation = new ReduceNwaDirectSimulation<>(mServices,
+		// 			stateFactory, mOperand, false, mInitialEquivalenceClasses);
+		// 	final int directSimulationSize = directSimulation.getResult().size();
+		// 	final int resultSize = getResult().size();
+		// 	if (resultSize != directSimulationSize) {
+		// 		return new Pair<>(Boolean.FALSE,
+		// 				String.format("The result has %d states, but the direct simulation result has %d states.",
+		// 						resultSize, directSimulationSize));
+		// 	}
+		// }
 		
 		return new Pair<>(Boolean.TRUE, "");
 	}
@@ -962,8 +981,13 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 				.append(" clauses");
 		// @formatter:on
 		
-		final RunningTaskInfo rti = new RunningTaskInfo(getClass(), builder.toString());
-		return rti;
+		if (mTimePreprocessing != 0L) {
+			builder.append(". Preprocessing time ").append(mTimePreprocessing);
+		}
+		if (mTimeSolving != 0L) {
+			builder.append(". Solving time ").append(mTimeSolving);
+		}
+		
+		return new RunningTaskInfo(getClass(), builder.toString());
 	}
-	
 }

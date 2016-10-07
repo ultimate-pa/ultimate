@@ -293,8 +293,8 @@ public enum StatisticsType {
 	SIMULATION_STEPS,
 	/**
 	 * Number of states in the biggest equivalence class of an initial
-	 * partition which is provided e.g., by the 
-	 * {@link LookaheadPartitionConstructor}. 
+	 * partition which is provided e.g., by the
+	 * {@link LookaheadPartitionConstructor}.
 	 */
 	SIZE_MAXIMAL_INITIAL_EQUIVALENCE_CLASS,
 	/**
@@ -328,5 +328,13 @@ public enum StatisticsType {
 	 * Amount of summarize edges a nwa game graph has (used in simulation, for
 	 * compatibility with {@link ECountingMeasure}).
 	 */
-	SUMMARIZE_EDGES
+	SUMMARIZE_EDGES,
+	/**
+	 * Run time for preprocessing.
+	 */
+	TIME_PREPROCESSING,
+	/**
+	 * Run time for solving.
+	 */
+	TIME_SOLVING,
 }
