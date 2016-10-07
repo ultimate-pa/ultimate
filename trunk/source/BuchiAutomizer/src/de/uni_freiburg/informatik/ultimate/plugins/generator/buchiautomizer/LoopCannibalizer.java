@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -71,14 +71,14 @@ public class LoopCannibalizer {
 
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
-	private final SimplicationTechnique mSimplificationTechnique;
+	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
 
 	public LoopCannibalizer(final NestedLassoRun<CodeBlock, IPredicate> counterexample, final Set<IPredicate> loopInterpolants,
 			final BinaryStatePredicateManager bspm, final PredicateUnifier predicateUnifier, final SmtManager smtManager,
 			final BuchiModGlobalVarManager buchiModGlobalVarManager, final InterpolationTechnique interpolation,
 			final IUltimateServiceProvider services,
-			final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
+			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		super();
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);

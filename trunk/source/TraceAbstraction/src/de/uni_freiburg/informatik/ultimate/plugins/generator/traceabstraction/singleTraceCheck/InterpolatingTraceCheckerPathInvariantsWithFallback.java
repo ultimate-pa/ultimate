@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -71,7 +71,7 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends
 			final boolean computeRcfgProgramExecution,
 			final PredicateUnifier predicateUnifier, 
 			final boolean useNonlinerConstraints, final Settings solverSettings,
-			final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique) {
+			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique) {
 		super(precondition, postcondition, pendingContexts, run.getWord(), smtManager,
 				modifiedGlobals, assertCodeBlocksIncrementally, services,
 				computeRcfgProgramExecution, predicateUnifier, smtManager, simplificationTechnique, xnfConversionTechnique);

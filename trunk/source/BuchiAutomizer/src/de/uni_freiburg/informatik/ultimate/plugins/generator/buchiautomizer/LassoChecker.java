@@ -78,7 +78,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Unm
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.DagSizePrinter;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer;
@@ -99,7 +99,7 @@ import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 public class LassoChecker {
 
 	private final ILogger mLogger;
-	private final SimplicationTechnique mSimplificationTechnique;
+	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
 
 	enum ContinueDirective {
@@ -240,7 +240,7 @@ public class LassoChecker {
 			final ModifiableGlobalVariableManager modifiableGlobalVariableManager, final Collection<Term> axioms,
 			final BinaryStatePredicateManager bspm, final NestedLassoRun<CodeBlock, IPredicate> counterexample,
 			final String lassoCheckerIdentifier, final IUltimateServiceProvider services,
-			final IToolchainStorage storage, final SimplicationTechnique simplificationTechnique,
+			final IToolchainStorage storage, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique) throws IOException {
 		mServices = services;
 		mStorage = storage;

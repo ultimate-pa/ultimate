@@ -27,7 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.lassoranker.mapelimination;
 
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 
 /**
@@ -40,7 +40,7 @@ public final class MapEliminationSettings {
 	private final boolean mOnlyTrivialImplicationsArrayWrite;
 	private final boolean mOnlyArgumentsInFormula;
 
-	private final SimplicationTechnique mSimplificationTechnique;
+	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
 
 	/**
@@ -65,7 +65,7 @@ public final class MapEliminationSettings {
 	 */
 	public MapEliminationSettings(final boolean addInequalities,
 			final boolean onlyTrivialImplicationsForModifiedArguments, final boolean onlyTrivialImplicationsArrayWrite,
-			final boolean onlyArgumentsInFormula, final SimplicationTechnique simplificationTechnique,
+			final boolean onlyArgumentsInFormula, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique) {
 		mAddInequalities = addInequalities;
 		mOnlyTrivialImplicationsForModifiedArguments = onlyTrivialImplicationsForModifiedArguments;
@@ -91,7 +91,7 @@ public final class MapEliminationSettings {
 		return mOnlyArgumentsInFormula;
 	}
 
-	public SimplicationTechnique getSimplificationTechnique() {
+	public SimplificationTechnique getSimplificationTechnique() {
 		return mSimplificationTechnique;
 	}
 

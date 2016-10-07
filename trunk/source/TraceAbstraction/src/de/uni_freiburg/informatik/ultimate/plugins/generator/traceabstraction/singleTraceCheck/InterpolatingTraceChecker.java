@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
@@ -54,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  */
 public abstract class InterpolatingTraceChecker extends TraceChecker implements IInterpolantGenerator {
 	
-	protected final SimplicationTechnique mSimplificationTechnique;
+	protected final SimplificationTechnique mSimplificationTechnique;
 	protected final XnfConversionTechnique mXnfConversionTechnique;
 
 	/**
@@ -87,7 +87,7 @@ public abstract class InterpolatingTraceChecker extends TraceChecker implements 
 			final ModifiableGlobalVariableManager modifiedGlobals, final AssertCodeBlockOrder assertCodeBlocksIncrementally,
 			final IUltimateServiceProvider services, final boolean computeRcfgProgramExecution, 
 			final PredicateUnifier predicateUnifier, final SmtManager tcSmtManager, 
-			final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
+			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		super(precondition, postcondition, pendingContexts, trace, smtManager, modifiedGlobals,
 				new DefaultTransFormulas(trace, precondition, postcondition, pendingContexts, modifiedGlobals, false),
 				assertCodeBlocksIncrementally, services, computeRcfgProgramExecution, false, tcSmtManager);

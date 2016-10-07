@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGl
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -97,7 +97,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 			final IToolchainStorage storage,
 			final PredicateUnifier predicateUnifier, final SmtManager smtManager,
 			final boolean useNonlinerConstraints, final Settings solverSettings,
-			final SimplicationTechnique simplicationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
+			final SimplificationTechnique simplicationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		final ILinearInequalityInvariantPatternStrategy strategy = new LocationIndependentLinearInequalityInvariantPatternStrategy(
 				1, 1, 1, 1, 5);
 		return new LinearInequalityInvariantPatternProcessorFactory(services,
@@ -136,7 +136,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 			final PredicateUnifier predicateUnifier, final SmtManager smtManager,
 			final ModifiableGlobalVariableManager modGlobVarManager,
 			final boolean useNonlinerConstraints, final Settings solverSettings,
-			final SimplicationTechnique simplicationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
+			final SimplificationTechnique simplicationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		this(services, run, precondition, postcondition, predicateUnifier,
 				modGlobVarManager, createDefaultFactory(services, storage,
 						predicateUnifier, smtManager, useNonlinerConstraints, solverSettings, simplicationTechnique, xnfConversionTechnique));

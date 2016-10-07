@@ -33,7 +33,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
@@ -46,7 +46,7 @@ public class InterproceduralSequentialComposition extends SequentialComposition 
 			final ModifiableGlobalVariableManager modGlobVarManager, 
 			final boolean simplify, final boolean extPqe, final List<CodeBlock> codeBlocks, 
 			final ILogger logger, final IUltimateServiceProvider services,
-			final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique, 
+			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique, 
 			final Boogie2SmtSymbolTable symbolTable) {
 		super(serialNumber, source, target, mgdScript, modGlobVarManager, simplify, extPqe, services, codeBlocks, 
 				xnfConversionTechnique, simplificationTechnique, symbolTable);

@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ScriptWithTermConstructionChecks;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
@@ -54,7 +54,7 @@ public class LinearInequalityInvariantPatternProcessorFactory
 
 	protected final IUltimateServiceProvider services;
 	protected final IToolchainStorage storage;
-	private final SimplicationTechnique mSimplificationTechnique;
+	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
 	protected final PredicateUnifier predUnifier;
 	protected final ManagedScript smtManager;
@@ -84,7 +84,7 @@ public class LinearInequalityInvariantPatternProcessorFactory
 			final IUltimateServiceProvider services,
 			final IToolchainStorage storage,
 			final PredicateUnifier predUnifier, final SmtManager smtManager,
-			final ILinearInequalityInvariantPatternStrategy strategy, final boolean useNonlinerConstraints, final Settings solverSettings, final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
+			final ILinearInequalityInvariantPatternStrategy strategy, final boolean useNonlinerConstraints, final Settings solverSettings, final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		this.services = services;
 		this.storage = storage;
 		mSimplificationTechnique = simplificationTechnique;

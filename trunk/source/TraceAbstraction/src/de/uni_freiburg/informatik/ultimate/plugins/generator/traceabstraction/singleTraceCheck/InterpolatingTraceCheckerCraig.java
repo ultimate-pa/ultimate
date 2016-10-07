@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
@@ -84,7 +84,7 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 			final ModifiableGlobalVariableManager modifiedGlobals, final AssertCodeBlockOrder assertCodeBlocksIncrementally,
 			final IUltimateServiceProvider services, final boolean computeRcfgProgramExecution, 
 			final PredicateUnifier predicateUnifier, final InterpolationTechnique interpolation, final SmtManager tcSmtManager, final boolean instanticateArrayExt,
-			final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique) {
+			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique) {
 		super(precondition, postcondition, pendingContexts, trace, smtManager, modifiedGlobals,
 				assertCodeBlocksIncrementally, services, computeRcfgProgramExecution, predicateUnifier, tcSmtManager, simplificationTechnique, xnfConversionTechnique);
 		mInstantiateArrayExt = instanticateArrayExt;
@@ -98,7 +98,7 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 			final ModifiableGlobalVariableManager modifiedGlobals, final AssertCodeBlockOrder assertCodeBlocksIncrementally,
 			final IUltimateServiceProvider services, final boolean computeRcfgProgramExecution, 
 			final PredicateUnifier predicateUnifier, final InterpolationTechnique interpolation, final boolean instanticateArrayExt,
-			final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique) {
+			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique) {
 		this(precondition, postcondition, pendingContexts, trace, smtManager, 
 				modifiedGlobals, assertCodeBlocksIncrementally, services, computeRcfgProgramExecution, 
 				predicateUnifier, interpolation, smtManager, instanticateArrayExt, xnfConversionTechnique, simplificationTechnique);

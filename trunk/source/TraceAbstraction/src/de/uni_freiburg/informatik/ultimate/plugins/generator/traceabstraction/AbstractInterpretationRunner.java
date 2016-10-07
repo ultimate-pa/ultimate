@@ -18,7 +18,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractInterpreter;
@@ -56,14 +56,14 @@ public class AbstractInterpretationRunner {
 
 	private final AbstractInterpretationMode mMode;
 	private final boolean mAlwaysRefine;
-	private final SimplicationTechnique mSimplificationTechnique;
+	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
 
 	private boolean mSkipIteration;
 
 	public AbstractInterpretationRunner(final IUltimateServiceProvider services,
 	        final CegarLoopStatisticsGenerator benchmark, final RootNode root,
-	        final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
+	        final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
 	        final SmtManager smtManager) {
 		mCegarLoopBenchmark = benchmark;
 		mServices = services;

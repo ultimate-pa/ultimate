@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicateFactory;
@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
 public class PredicateFactory extends BasicPredicateFactory {
 
-	public PredicateFactory(final IUltimateServiceProvider services, final ManagedScript mgdScript, final Boogie2SmtSymbolTable symbolTable, final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
+	public PredicateFactory(final IUltimateServiceProvider services, final ManagedScript mgdScript, final Boogie2SmtSymbolTable symbolTable, final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		super(services, mgdScript, symbolTable, simplificationTechnique, xnfConversionTechnique);
 	}
 	

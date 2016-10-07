@@ -56,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.CommuhashNormal
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ContainsQuantifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.MonolithicImplicationChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.BinaryNumericRelation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.BinaryRelation.NoRelationOfThisKindException;
@@ -106,7 +106,7 @@ public class PredicateUnifier {
 	private final Script mScript;
 	private final MonolithicImplicationChecker mImplicationChecker;
 	private final Boogie2SmtSymbolTable mSymbolTable;
-	private final SimplicationTechnique mSimplificationTechnique;
+	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
 	
 	private final IPredicate mTruePredicate;
@@ -116,7 +116,7 @@ public class PredicateUnifier {
 
 	public PredicateUnifier(final IUltimateServiceProvider services, final ManagedScript mgnScript,
 			final PredicateFactory predicateFactory, final Boogie2SmtSymbolTable symbolTable,
-			final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
+			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
 			final IPredicate... initialPredicates) {
 		mPredicateUnifierBenchmarkGenerator = new PredicateUnifierStatisticsGenerator();
 		mSimplificationTechnique = simplificationTechnique;

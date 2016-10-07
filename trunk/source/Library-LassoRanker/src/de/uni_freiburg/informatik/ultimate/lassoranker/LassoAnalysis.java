@@ -77,7 +77,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
@@ -108,7 +108,7 @@ public class LassoAnalysis {
 	}
 
 	private final ILogger mLogger;
-	private final SimplicationTechnique mSimplificationTechnique;
+	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
 
 	/**
@@ -205,7 +205,7 @@ public class LassoAnalysis {
 			final UnmodifiableTransFormula stemTransition, final UnmodifiableTransFormula loopTransition,
 			final Set<IProgramVar> modifiableGlobalsAtHonda, final Term[] axioms,
 			final ILassoRankerPreferences preferences, final IUltimateServiceProvider services,
-			final IToolchainStorage storage, final SimplicationTechnique simplificationTechnique,
+			final IToolchainStorage storage, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique) throws TermException {
 		mServices = services;
 		mStorage = storage;
@@ -264,7 +264,7 @@ public class LassoAnalysis {
 			final Set<IProgramVar> modifiableGlobalsAtHonda, final Term[] axioms,
 			final LassoRankerPreferences preferences, final IUltimateServiceProvider services,
 			final IToolchainStorage storage, final XnfConversionTechnique xnfConversionTechnique,
-			final SimplicationTechnique simplificationTechnique) throws TermException, FileNotFoundException {
+			final SimplificationTechnique simplificationTechnique) throws TermException, FileNotFoundException {
 		this(script, boogie2smt, null, loop, modifiableGlobalsAtHonda, axioms, preferences, services, storage,
 				simplificationTechnique, xnfConversionTechnique);
 	}

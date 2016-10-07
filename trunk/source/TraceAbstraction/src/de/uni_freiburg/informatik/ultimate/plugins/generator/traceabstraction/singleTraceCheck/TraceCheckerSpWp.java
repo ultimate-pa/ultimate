@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareT
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ContainsQuantifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.MonolithicImplicationChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierPusher;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -108,7 +108,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			final UnsatCores unsatCores, final boolean useLiveVariables, 
 			final IUltimateServiceProvider services, final boolean computeRcfgProgramExecution, 
 			final PredicateUnifier predicateUnifier, final InterpolationTechnique interpolation, final SmtManager smtManagerTc, 
-			final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique) {
+			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique) {
 		// superclass does feasibility check
 		super(precondition, postcondition, pendingContexts, trace, smtManager, modifiedGlobals,
 				assertCodeBlocksIncrementally, services, computeRcfgProgramExecution, predicateUnifier, 

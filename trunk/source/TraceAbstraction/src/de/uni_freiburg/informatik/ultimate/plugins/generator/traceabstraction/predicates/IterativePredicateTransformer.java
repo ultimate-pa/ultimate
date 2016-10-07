@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Tra
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierPusher;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -71,7 +71,7 @@ public class IterativePredicateTransformer {
 	private final ModifiableGlobalVariableManager mModifiedGlobals;
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
-	private final SimplicationTechnique mSimplificationTechnique;
+	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
 	private final ManagedScript mMgdScript;
 	
@@ -95,7 +95,7 @@ public class IterativePredicateTransformer {
 			final IPredicate precondition, final IPredicate postcondition,
 			final SortedMap<Integer, IPredicate> pendingContexts,
 			final IPredicate falsePredicate,
-			final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
+			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
 			final Boogie2SmtSymbolTable symbolTable) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -214,7 +214,7 @@ public class IterativePredicateTransformer {
 		private final ILogger mLogger;
 		private final ManagedScript mMgdScript;
 		private final PredicateFactory mPredicateFactory;
-		private final SimplicationTechnique mSimplificationTechnique;
+		private final SimplificationTechnique mSimplificationTechnique;
 		private final XnfConversionTechnique mXnfConversionTechnique;
 		
 
@@ -222,7 +222,7 @@ public class IterativePredicateTransformer {
 				final IUltimateServiceProvider services,
 				final ILogger logger, final ManagedScript boogie2smt,
 				final PredicateFactory predicateFactory,
-				final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
+				final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 			super();
 			mServices = services;
 			mLogger = logger;

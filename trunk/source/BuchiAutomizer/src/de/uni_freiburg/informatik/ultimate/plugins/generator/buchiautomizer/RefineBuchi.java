@@ -57,7 +57,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer.BuchiComplementationConstruction;
@@ -84,7 +84,7 @@ import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 public class RefineBuchi {
 
 	protected final ILogger mLogger;
-	private final SimplicationTechnique mSimplificationTechnique;
+	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
 
 	/**
@@ -113,7 +113,7 @@ public class RefineBuchi {
 	public RefineBuchi(final RootNode rootNode, final SmtManager smtManager, final boolean dumpAutomata, final boolean difference,
 			final PredicateFactoryForInterpolantAutomata stateFactoryInterpolAutom, final PredicateFactoryRefinement stateFactoryForRefinement,
 			final boolean useDoubleDeckers, final String dumpPath, final Format format, final InterpolationTechnique interpolation, final IUltimateServiceProvider services,
-			final ILogger logger, final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
+			final ILogger logger, final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		super();
 		mServices = services;
 		mLogger = logger;

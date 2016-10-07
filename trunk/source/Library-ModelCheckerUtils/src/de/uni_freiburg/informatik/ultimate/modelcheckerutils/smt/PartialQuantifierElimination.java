@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.PrenexNormalForm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierPusher;
@@ -78,7 +78,7 @@ public class PartialQuantifierElimination {
 	
 	public static Term tryToEliminate(final IUltimateServiceProvider services, final ILogger logger,
 			final ManagedScript mgdScript,
-			final Term term, final SimplicationTechnique simplificationTechnique,
+			final Term term, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique) {
 		final Term withoutIte = (new IteRemover(mgdScript)).transform(term);
 		final Term nnf = new Nnf(mgdScript, services, QuantifierHandling.KEEP).transform(withoutIte);
@@ -182,7 +182,7 @@ public class PartialQuantifierElimination {
 	 */
 	public static Term quantifier(final IUltimateServiceProvider services, final ILogger logger,
 			final ManagedScript mgdScript,
-			final SimplicationTechnique simplificationTechnique,
+			final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique, final int quantifier,
 			final Collection<TermVariable> vars,
 			final Term body, final Term[]... patterns) {
@@ -251,7 +251,7 @@ public class PartialQuantifierElimination {
 	public static Term elim(final ManagedScript mgdScript, final int quantifier, final Set<TermVariable> eliminatees,
 			final Term term,
 			final IUltimateServiceProvider services, final ILogger logger,
-			final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
+			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		final Script script = mgdScript.getScript();
 		final Set<TermVariable> occuringVars = new HashSet<>(Arrays.asList(term.getFreeVars()));
 		final Iterator<TermVariable> it = eliminatees.iterator();
@@ -413,7 +413,7 @@ public class PartialQuantifierElimination {
 	
 	private static Term[] applyStoreOverSelect(final ManagedScript mgdScript, final int quantifier,
 			final Set<TermVariable> eliminatees, final IUltimateServiceProvider services, final ILogger logger,
-			final SimplicationTechnique simplificationTechnique, final Script script, final Term resultOld) {
+			final SimplificationTechnique simplificationTechnique, final Script script, final Term resultOld) {
 		final Set<TermVariable> remainingAndNewAfterSOS = new HashSet<>();
 		final Term[] oldParams = getXjunctsOuter(quantifier, resultOld);
 		final Term[] newParams = new Term[oldParams.length];
@@ -430,7 +430,7 @@ public class PartialQuantifierElimination {
 	
 	private static Term applyUsr(final ManagedScript mgdScript, final int quantifier,
 			final Set<TermVariable> eliminatees, final IUltimateServiceProvider services, final ILogger logger,
-			final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
+			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
 			final Script script, final Term resultOld) {
 		final XnfUsr xnfUsr = new XnfUsr(mgdScript, services);
 		final Term[] oldParams = getXjunctsOuter(quantifier, resultOld);
@@ -531,7 +531,7 @@ public class PartialQuantifierElimination {
 	public static Term sos(final Script script, final int quantifier, final Term term,
 			final Set<TermVariable> eliminatees, final ILogger logger,
 			final IUltimateServiceProvider services, final ManagedScript freshTermVariableConstructor,
-			final SimplicationTechnique simplicationTechnique) {
+			final SimplificationTechnique simplicationTechnique) {
 		Term result = term;
 		final Set<TermVariable> overallAuxVars = new HashSet<>();
 		final Iterator<TermVariable> it = eliminatees.iterator();

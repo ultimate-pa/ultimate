@@ -73,7 +73,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieDeclarations;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Statements2TransFormula.TranslationResult;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
@@ -129,7 +129,7 @@ public class CfgBuilder {
 
 	private final CodeBlockFactory mCbf;
 
-	private final SimplicationTechnique mSimplificationTechnique = SimplicationTechnique.SIMPLIFY_DDA;
+	private final SimplificationTechnique mSimplificationTechnique = SimplificationTechnique.SIMPLIFY_DDA;
 	private final XnfConversionTechnique mXnfConversionTechnique =
 			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 
@@ -272,7 +272,7 @@ public class CfgBuilder {
 	 *            that summarizes execution of an implemented procedure.
 	 */
 	private void addCallTransitionAndReturnTransition(final Summary edge,
-			final SimplicationTechnique simplificationTechnique) {
+			final SimplificationTechnique simplificationTechnique) {
 		final CallStatement st = edge.getCallStatement();
 		final String callee = st.getMethodName();
 		assert (mRootAnnot.mentryNode.containsKey(callee)) : "Source code contains" + " call of " + callee

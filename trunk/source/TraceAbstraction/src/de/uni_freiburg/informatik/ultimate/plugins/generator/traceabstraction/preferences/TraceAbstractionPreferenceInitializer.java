@@ -32,7 +32,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferen
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
@@ -116,7 +116,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_FlowSensitive,
 						DEF_ERROR_TRACE_RELEVANCE_ANALYSIS_FlowSensitive, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_SIMPLIFICATION_TECHNIQUE,
-						DEF_SIMPLIFICATION_TECHNIQUE, PreferenceType.Combo, SimplicationTechnique.values()),
+						DEF_SIMPLIFICATION_TECHNIQUE, PreferenceType.Combo, SimplificationTechnique.values()),
 				new UltimatePreferenceItem<>(LABEL_XNF_CONVERSION_TECHNIQUE,
 						DEF_XNF_CONVERSION_TECHNIQUE, PreferenceType.Combo, XnfConversionTechnique.values()),
 				new UltimatePreferenceItem<>(LABEL_COUNTEREXAMPLE_SEARCH_STRATEGY, DEF_COUNTEREXAMPLE_SEARCH_STRATEGY,
@@ -216,7 +216,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final boolean DEF_ERROR_TRACE_RELEVANCE_ANALYSIS_NonFlowSensitive = false;
 	public static final boolean DEF_ERROR_TRACE_RELEVANCE_ANALYSIS_FlowSensitive = false;
 	
-	public static final SimplicationTechnique DEF_SIMPLIFICATION_TECHNIQUE = SimplicationTechnique.SIMPLIFY_DDA;
+	public static final SimplificationTechnique DEF_SIMPLIFICATION_TECHNIQUE = SimplificationTechnique.SIMPLIFY_DDA;
 	public static final XnfConversionTechnique DEF_XNF_CONVERSION_TECHNIQUE =
 			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 	
