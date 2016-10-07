@@ -1,0 +1,13 @@
+#! /bin/bash
+
+# Extract from overview-reachability.csv for each Problem??.c
+# how many errors we proved to be reachable/unreachable.
+
+for i in {10..18}; do
+	echo "Problem$i"
+	grep -P "^$i," overview-reachability.csv > /tmp/rersOverviewPart;
+	for r in yes no unkn; do
+		printf '    %4s: ' "$r"
+		grep -Fc ",$r," /tmp/rersOverviewPart
+	done
+done

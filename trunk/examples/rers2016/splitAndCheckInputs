@@ -1,0 +1,31 @@
+#! /bin/bash
+
+# Splits a "Problem*.c" into sections according to "calculate_output"-functions.
+# Checks if the same input value appears multiple times.
+
+if [[ -z "$1" ]]; then
+	echo "usage: $(basename $0) [C-FILE]"
+	exit 1;
+fi
+
+CFILE="$1"
+TMPDIR="$(mktemp -d split.XXXXXX)"
+PREFIX="$TMPDIR/sec"
+DUPLICATE=false
+csplit --silent --prefix="$PREFIX" "$CFILE" '/void calculate_output[^;]*$/' '{*}'
+for i in "$TMPDIR/"*; do
+#	echo "-------- $i"
+	grep -Po "input\s*[=!<>+\-*/%]+\s*\K.+?(?=\)|&|\s)" -- "$i" |
+#	cat -
+	sort -n |
+	uniq -d |
+	grep -qP '.' && (
+		echo "Duplicated input value in $i"
+		DUPLICATE=true
+	)
+done
+
+if ! $DUPLICATE; then
+	echo "No duplicates found"
+	rm -r -- "$TMPDIR"
+fi
