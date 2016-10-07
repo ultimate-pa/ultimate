@@ -233,12 +233,9 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, ACTION, VARD
 	}
 
 	/**
-	 * This state is the local pre state.
-	 *
-	 * @param varProvider
-	 * @param current
-	 * @param hierachicalPreState
-	 * @return
+	 * Apply the {@link IVariableProvider#defineVariablesAfter(Object, IAbstractState, IAbstractState)} function to all
+	 * states in this multi-state. This state acts as local pre state, and all states in hierachicalPreState are used as
+	 * hierachical pre states.
 	 */
 	public AbstractMultiState<STATE, ACTION, VARDECL> defineVariablesAfter(
 			final IVariableProvider<STATE, ACTION, VARDECL> varProvider, final ACTION transition,

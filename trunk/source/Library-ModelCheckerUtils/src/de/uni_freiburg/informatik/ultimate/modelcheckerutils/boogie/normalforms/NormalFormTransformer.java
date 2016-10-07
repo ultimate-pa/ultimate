@@ -94,40 +94,39 @@ public class NormalFormTransformer<E> {
 	 * <li>Replace all terms of the form x != y with x < y || x > y
 	 * </ol>
 	 */
-	public E rewriteNotEquals(E formula) {
+	public E rewriteNotEquals(final E formula) {
 		if (formula == null) {
 			return null;
 		}
+		final E nnfFormula = toNnf(formula);
 
-		formula = toNnf(formula);
-
-		if (mWrapper.isAtom(formula)) {
-			return mWrapper.rewritePredNotEquals(formula);
-		} else if (mWrapper.isLiteral(formula)) {
-			return formula;
-		} else if (mWrapper.isNot(formula)) {
+		if (mWrapper.isAtom(nnfFormula)) {
+			return mWrapper.rewritePredNotEquals(nnfFormula);
+		} else if (mWrapper.isLiteral(nnfFormula)) {
+			return nnfFormula;
+		} else if (mWrapper.isNot(nnfFormula)) {
 			// because the formula is in NNF, the negation can only be in front
 			// of a term
-			final E oper = mWrapper.getOperand(formula);
+			final E oper = mWrapper.getOperand(nnfFormula);
 			final E neg = mWrapper.negatePred(oper);
 			if (oper == neg) {
 				// the operand cannot be negated any more
-				return formula;
+				return nnfFormula;
 			}
 			// the operand was negated
 			return mWrapper.rewritePredNotEquals(neg);
-		} else if (mWrapper.isAnd(formula)) {
+		} else if (mWrapper.isAnd(nnfFormula)) {
 			final Deque<E> operands = new ArrayDeque<>();
-			final Iterator<E> iter = mWrapper.getOperands(formula);
+			final Iterator<E> iter = mWrapper.getOperands(nnfFormula);
 			while (iter.hasNext()) {
 				final E operand = rewriteNotEquals(iter.next());
 				iter.remove();
 				operands.addFirst(operand);
 			}
 			return mWrapper.makeAnd(operands.iterator());
-		} else if (mWrapper.isOr(formula)) {
+		} else if (mWrapper.isOr(nnfFormula)) {
 			final Deque<E> operands = new ArrayDeque<>();
-			final Iterator<E> iter = mWrapper.getOperands(formula);
+			final Iterator<E> iter = mWrapper.getOperands(nnfFormula);
 			while (iter.hasNext()) {
 				final E operand = rewriteNotEquals(iter.next());
 				iter.remove();
@@ -179,15 +178,15 @@ public class NormalFormTransformer<E> {
 		return terms;
 	}
 
-	private E simplifyDnf(E formula) {
-		formula = simplify(formula);
-		if (!mWrapper.isOr(formula)) {
+	private E simplifyDnf(final E formula) {
+		final E simplFormula = simplify(formula);
+		if (!mWrapper.isOr(simplFormula)) {
 			// is singleton, cannot be simpler
-			return formula;
+			return simplFormula;
 		}
-		final Set<E> result = getSet(mWrapper.getOperands(formula));
+		final Set<E> result = getSet(mWrapper.getOperands(simplFormula));
 
-		final Iterator<E> operands = mWrapper.getOperands(formula);
+		final Iterator<E> operands = mWrapper.getOperands(simplFormula);
 		while (operands.hasNext()) {
 			final E current = operands.next();
 			result.remove(current);
@@ -238,7 +237,6 @@ public class NormalFormTransformer<E> {
 				return true;
 			}
 		}
-
 		return false;
 	}
 
@@ -307,9 +305,8 @@ public class NormalFormTransformer<E> {
 
 				if (mWrapper.isOr(firstOperand)) {
 					if (mWrapper.isOr(secondOperand)) {
-						// Both operands are or, apply
-						// (a || b) && (c || d)
-						// = (a && c) || (a && d) || (b && c) || (b && d)
+						// Both operands are or, apply transformation (a || b) && (c || d)
+						// to (a && c) || (a && d) || (b && c) || (b && d)
 
 						final ArrayList<E> newOrOperands = new ArrayList<>();
 						final Iterator<E> firstOrOperands = mWrapper.getOperands(firstOperand);

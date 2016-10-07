@@ -36,7 +36,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
@@ -72,7 +71,6 @@ public class ExpressionNormalizer extends BoogieTransformer {
 	}
 
 	private Expression normalizeBinaryExpression(final BinaryExpression expr) {
-		System.out.println(BoogiePrettyPrinter.print(expr));
 		final Operator operator = expr.getOperator();
 		final Expression right = processExpression(expr.getRight());
 		final Expression left = processExpression(expr.getLeft());
@@ -158,9 +156,9 @@ public class ExpressionNormalizer extends BoogieTransformer {
 				if (idLeft.getIdentifier().equals(idRight.getIdentifier())) {
 					// x - x ==> 0
 					// x + x ==> 2x
-					return (operator == Operator.ARITHPLUS
+					return operator == Operator.ARITHPLUS
 							? createBinaryExpr(expr, Operator.ARITHMUL, createIntegerLiteral(expr, "2"), idLeft)
-							: createIntegerLiteral(expr, "0"));
+							: createIntegerLiteral(expr, "0");
 				}
 			}
 		}
@@ -173,7 +171,6 @@ public class ExpressionNormalizer extends BoogieTransformer {
 	}
 
 	private Expression normalizeUnaryExpression(final UnaryExpression expr) {
-		System.out.println(BoogiePrettyPrinter.print(expr));
 		final Expression left = processExpression(expr.getExpr());
 
 		if (expr.getOperator() == UnaryExpression.Operator.LOGICNEG) {
@@ -251,11 +248,10 @@ public class ExpressionNormalizer extends BoogieTransformer {
 	private static IBoogieType getNewTypeUnary(final UnaryExpression.Operator op, final Expression opper) {
 		switch (op) {
 		case ARITHNEGATIVE:
+		case OLD:
 			return opper.getType();
 		case LOGICNEG:
 			return BoogieType.TYPE_BOOL;
-		case OLD:
-			return opper.getType();
 		default:
 			throw new IllegalArgumentException("Unknown operator: " + op);
 		}
