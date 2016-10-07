@@ -51,13 +51,13 @@ public class AutomataScriptInterpreterOverallResult extends AbstractResult
 	private final OverallResult mOverallResult;
 	private final String mErrorMessage;
 	
-	public AutomataScriptInterpreterOverallResult(String plugin, OverallResult overallResult, String errorMessage) {
+	public AutomataScriptInterpreterOverallResult(final String plugin, final OverallResult overallResult, final String errorMessage) {
 		super(plugin);
 		if (errorMessage == null && overallResult == OverallResult.EXCEPTION_OR_ERROR) {
 			throw new UnsupportedOperationException("provide error message if there was an error");
 		}
-		if (errorMessage != null && overallResult != OverallResult.EXCEPTION_OR_ERROR) {
-			throw new UnsupportedOperationException("provide error message only if there was an error");
+		if (errorMessage != null && overallResult != OverallResult.EXCEPTION_OR_ERROR && overallResult != OverallResult.TIMEOUT) {
+			throw new UnsupportedOperationException("provide error message only if there was an error or timeout");
 		}
 		mOverallResult = overallResult;
 		mErrorMessage = errorMessage;

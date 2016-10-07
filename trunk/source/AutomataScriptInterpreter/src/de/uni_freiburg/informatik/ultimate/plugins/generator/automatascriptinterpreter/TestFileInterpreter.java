@@ -795,6 +795,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 					if (cause != null) {
 						if (cause instanceof AutomataOperationCanceledException) {
 							interpretationFinished = Finished.TIMEOUT;
+							errorMessage = "Timeout" + ((AutomataOperationCanceledException) cause).printRunningTaskMessage();
 						} else if (cause instanceof OutOfMemoryError) {
 							interpretationFinished = Finished.OUTOFMEMORY;
 						} else {
@@ -1231,22 +1232,33 @@ public class TestFileInterpreter implements IMessagePrinter {
 					format, "output according to \"write\" command", automaton);
 		} else {
 			final SimpleTimer timer = new SimpleTimer();
-			final IOperation<String, String> op = getAutomataOperation(oe, arguments);
-			if (op != null) {
-				try {
-					if (mProvideStatisticsResults) {
-						mLogger.info("reporting benchmark results");
-						AutomataOperationStatistics statistics = op.getAutomataOperationStatistics();
+			IOperation<String, String> op = null;
+			try {
+				op = getAutomataOperation(oe, arguments);
+			} catch (final InterpreterException ie) {
+				throw ie;
+			} finally {
+				if (mProvideStatisticsResults) {
+					mLogger.info("reporting benchmark results");
+					AutomataOperationStatistics statistics;
+					if (op == null) {
+						statistics = new AutomataOperationStatistics();
+					} else { 
+						statistics = op.getAutomataOperationStatistics(); 
 						if (statistics == null) {
 							statistics = new AutomataOperationStatistics();
 						}
-						statistics.addKeyValuePair(StatisticsType.ATS_ID, oe.getAsString());
-						statistics.addKeyValuePair(StatisticsType.OPERATION_NAME, oe.getOperationName());
-						statistics.addKeyValuePair(StatisticsType.RUNTIME_TOTAL, timer.checkTime()/1000);
-						final BenchmarkResult<?> br = new BenchmarkResult<>(Activator.PLUGIN_ID,
-								"automata script interpreter benchmark results", statistics);
-						mServices.getResultService().reportResult(Activator.PLUGIN_ID, br);
 					}
+					statistics.addKeyValuePair(StatisticsType.ATS_ID, oe.getAsString());
+					statistics.addKeyValuePair(StatisticsType.OPERATION_NAME, oe.getOperationName());
+					statistics.addKeyValuePair(StatisticsType.RUNTIME_TOTAL, timer.checkTime()/1000);
+					final BenchmarkResult<?> br = new BenchmarkResult<>(Activator.PLUGIN_ID,
+							"automata script interpreter benchmark results", statistics);
+					mServices.getResultService().reportResult(Activator.PLUGIN_ID, br);
+				}
+			}
+			if (op != null) {
+				try {
 					assert op.checkResult(new StringFactory()) : "Result of operation " + op.operationName()
 							+ " is wrong (according to its checkResult method)";
 					result = op.getResult();
