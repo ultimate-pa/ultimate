@@ -353,7 +353,7 @@ public final class PetriNetUnfolder<S, C> extends UnaryNetOperation<S, C> {
 	}
 	
 	@Override
-	public boolean checkResult(final IStateFactory<C> stateFactory) {
+	public boolean checkResult(final IStateFactory<C> stateFactory) throws AutomataOperationCanceledException {
 		mLogger.info("Testing correctness of emptinessCheck");
 		
 		boolean correct;

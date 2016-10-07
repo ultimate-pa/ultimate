@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
@@ -73,6 +74,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.DefaultTransFormulas;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
+import de.uni_freiburg.informatik.ultimate.util.RunningTaskInfo;
+import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 /**
  * Relevance information of a trace. Used to compute the relevant statements
  * in an Error trace that are relevant (or responsible) for the reaching the
@@ -653,8 +656,13 @@ public class FlowSensitiveFaultLocalizer {
 	private NestedRun<CodeBlock, IPredicate> findPathInCFG(final IPredicate startPoint,
 			final IPredicate parent_state, final Set<IPredicate> possibleEndPoints, final INestedWordAutomaton<CodeBlock,
 			IPredicate> cfg) {
-		return (new IsEmpty<>(new AutomataLibraryServices(mServices), cfg,
-				Collections.singleton(startPoint), Collections.singleton(parent_state), possibleEndPoints)).getNestedRun();
+		try {
+			return (new IsEmpty<>(new AutomataLibraryServices(mServices), cfg,
+					Collections.singleton(startPoint), Collections.singleton(parent_state), possibleEndPoints)).getNestedRun();
+		} catch (final AutomataOperationCanceledException e) {
+			final RunningTaskInfo runningTaskInfo = new RunningTaskInfo(getClass(), null);
+			throw new ToolchainCanceledException(e, runningTaskInfo);
+		}
 	}
 	
 	/**
