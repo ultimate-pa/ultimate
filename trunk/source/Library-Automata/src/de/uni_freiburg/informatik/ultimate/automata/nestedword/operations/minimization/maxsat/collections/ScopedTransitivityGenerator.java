@@ -158,7 +158,7 @@ public class ScopedTransitivityGenerator<C> {
 	}
 	
 	/**
-	 * Creates all pairs if contents which are also equal as a consequence of melding two trees.
+	 * Creates all pairs of contents which are also equal as a consequence of melding two trees.
 	 * 
 	 * @param root1
 	 *            root of first tree
