@@ -10,4 +10,9 @@ for i in {10..18}; do
 		printf '    %4s: ' "$r"
 		grep -Fc ",$r," /tmp/rersOverviewPart
 	done
+	# Uncomment to count answers without bruteforcer results
+	#for r in 'yes,\w*[fu]+\w*,' 'no,\w*[fu]+\w*,' 'unkn,|yes,[bd]+,'; do
+	#	printf '    %4s: ' "$r"
+	#	grep -Pc ",$r" /tmp/rersOverviewPart
+	#done
 done
