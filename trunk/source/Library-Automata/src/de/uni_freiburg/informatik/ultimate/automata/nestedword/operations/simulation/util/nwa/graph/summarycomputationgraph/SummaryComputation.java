@@ -212,7 +212,8 @@ public class SummaryComputation<LETTER, STATE> {
 		for (final IGameState gs : mGameAutomaton.getStates()) {
 			if (!mServices.getProgressMonitorService().continueProcessing()) {
 				final String taskDescription = "initializing worklist (game automaton has " + 
-						mGameAutomaton.size() + " states, worklist contains " + mWorklist.size() + " elements)";
+						mGameAutomaton.size() + " states, worklist contains " + mWorklist.size() + 
+						" elements, input had " + mOperand.size() + " states)";
 				final RunningTaskInfo rti = new RunningTaskInfo(getClass(), taskDescription );
 				throw new AutomataOperationCanceledException(rti);
 			}

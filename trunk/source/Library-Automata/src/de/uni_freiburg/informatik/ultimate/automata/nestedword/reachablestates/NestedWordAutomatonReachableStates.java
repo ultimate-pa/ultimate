@@ -69,6 +69,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 import de.uni_freiburg.informatik.ultimate.util.InCaReCounter;
+import de.uni_freiburg.informatik.ultimate.util.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
@@ -995,7 +996,11 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 			do {
 				while (!mForwardWorklist.isEmpty()) {
 					if (!getServices().getProgressMonitorService().continueProcessing()) {
-						throw new AutomataOperationCanceledException(this.getClass());
+						final String taskDescription = "computing reachable states (" 
+								+ mNumberOfConstructedStates + " states constructed"
+								+ "input type " + mOperand.getClass().getSimpleName() + ")";
+						final RunningTaskInfo rti = new RunningTaskInfo(getClass(), taskDescription );
+						throw new AutomataOperationCanceledException(rti);
 					}
 					final StateContainer<LETTER, STATE> cont = mForwardWorklist.remove(0);
 					cont.eraseUnpropagatedDownStates();
