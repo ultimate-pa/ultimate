@@ -9,6 +9,6 @@ Require-Bundle: Library-UltimateCore,
  org.apache.commons.cli,
  Library-UltimateUtil,
  de.uni_freiburg.informatik.ultimate.cli,
- org.eclipse.cdt.core;bundle-version="6.0.0",
- org.eclipse.jface.text;bundle-version="3.11.0",
- Library-log4j;bundle-version="1.2.15"
+ org.eclipse.cdt.core,
+ org.eclipse.jface.text,
+ Library-log4j
