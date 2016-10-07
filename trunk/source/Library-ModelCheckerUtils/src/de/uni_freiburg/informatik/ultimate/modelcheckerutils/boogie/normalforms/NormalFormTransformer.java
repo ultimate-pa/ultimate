@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE ModelCheckerUtils Library.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE ModelCheckerUtils Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms;
@@ -40,22 +40,22 @@ import java.util.Set;
  * NormalFormTransformer converts expressions or terms to various other forms (e.g., NNF, DNG, CNF, PNF, etc.). It has
  * to be used together with {@link INormalFormable}, which provides an interface for, e.g., Boogie or SMT s.t. the
  * operations here can ignore the specifics of the implementation.
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * 
+ *
  */
 public class NormalFormTransformer<E> {
 
 	private final INormalFormable<E> mWrapper;
 
-	public NormalFormTransformer(INormalFormable<E> wrapper) {
+	public NormalFormTransformer(final INormalFormable<E> wrapper) {
 		mWrapper = wrapper;
 	}
 
 	/**
 	 * Create negation normal form from parameter.
 	 */
-	public E toNnf(E formula) {
+	public E toNnf(final E formula) {
 		if (formula == null) {
 			return null;
 		}
@@ -71,7 +71,7 @@ public class NormalFormTransformer<E> {
 	/**
 	 * Create distributive normal form (DNF) from parameter.
 	 */
-	public E toDnf(E formula) {
+	public E toDnf(final E formula) {
 		if (formula == null) {
 			return null;
 		}
@@ -103,6 +103,8 @@ public class NormalFormTransformer<E> {
 
 		if (mWrapper.isAtom(formula)) {
 			return mWrapper.rewritePredNotEquals(formula);
+		} else if (mWrapper.isLiteral(formula)) {
+			return formula;
 		} else if (mWrapper.isNot(formula)) {
 			// because the formula is in NNF, the negation can only be in front
 			// of a term
@@ -111,10 +113,9 @@ public class NormalFormTransformer<E> {
 			if (oper == neg) {
 				// the operand cannot be negated any more
 				return formula;
-			} else {
-				// the operand was negated
-				return mWrapper.rewritePredNotEquals(neg);
 			}
+			// the operand was negated
+			return mWrapper.rewritePredNotEquals(neg);
 		} else if (mWrapper.isAnd(formula)) {
 			final Deque<E> operands = new ArrayDeque<>();
 			final Iterator<E> iter = mWrapper.getOperands(formula);
@@ -142,7 +143,7 @@ public class NormalFormTransformer<E> {
 	 * Creates distributive normal form (DNF) from parameter, but provides a collection of disjuncts instead of a whole
 	 * new formula.
 	 */
-	public Collection<E> toDnfDisjuncts(E formula) {
+	public Collection<E> toDnfDisjuncts(final E formula) {
 		final E dnf = toDnf(formula);
 		if (dnf == null) {
 			return null;
@@ -206,7 +207,7 @@ public class NormalFormTransformer<E> {
 		return mWrapper.makeOr(result.iterator());
 	}
 
-	private boolean isSubformula(E root, E candidate) {
+	private boolean isSubformula(final E root, final E candidate) {
 		// requires normalized nesting
 		if (mWrapper.isEqual(root, candidate)) {
 			return true;
@@ -241,7 +242,7 @@ public class NormalFormTransformer<E> {
 		return false;
 	}
 
-	private boolean isOperandSubset(E root, E candidate) {
+	private boolean isOperandSubset(final E root, final E candidate) {
 		final Set<E> operands = getSet(mWrapper.getOperands(root));
 		final Iterator<E> childOperands = mWrapper.getOperands(candidate);
 		boolean isSub = true;
@@ -253,7 +254,7 @@ public class NormalFormTransformer<E> {
 		return isSub;
 	}
 
-	private LinkedHashSet<E> getSet(Iterator<E> iter) {
+	private LinkedHashSet<E> getSet(final Iterator<E> iter) {
 		final LinkedHashSet<E> set = new LinkedHashSet<>();
 		while (iter.hasNext()) {
 			set.add(iter.next());
@@ -261,7 +262,7 @@ public class NormalFormTransformer<E> {
 		return set;
 	}
 
-	private E skolemize(E current) {
+	private E skolemize(final E current) {
 		// TODO implement skolemization:
 		// 1. unify variables
 		// 2. move quantifiers outward
@@ -270,7 +271,7 @@ public class NormalFormTransformer<E> {
 		return current;
 	}
 
-	private E makeDnf(E current) {
+	private E makeDnf(final E current) {
 		if (mWrapper.isAtom(current)) {
 			// nothing to do, already finished
 			return current;
@@ -323,10 +324,9 @@ public class NormalFormTransformer<E> {
 						}
 						operands.addFirst(mWrapper.makeOr(newOrOperands.iterator()));
 						continue;
-					} else {
-						or = firstOperand;
-						notOr = secondOperand;
 					}
+					or = firstOperand;
+					notOr = secondOperand;
 				} else if (mWrapper.isOr(secondOperand)) {
 					or = secondOperand;
 					notOr = firstOperand;
@@ -365,7 +365,7 @@ public class NormalFormTransformer<E> {
 		}
 	}
 
-	private E makeNnf(E condition) {
+	private E makeNnf(final E condition) {
 		if (mWrapper.isAtom(condition)) {
 			// nothing to do here
 			return condition;
@@ -441,7 +441,7 @@ public class NormalFormTransformer<E> {
 			absorbing = trueTerm;
 		}
 
-		final LinkedHashSet<E> formulas = new LinkedHashSet<E>();
+		final LinkedHashSet<E> formulas = new LinkedHashSet<>();
 		final Iterator<E> iter = mWrapper.getOperands(formula);
 		while (iter.hasNext()) {
 			final E f = iter.next();
@@ -460,16 +460,14 @@ public class NormalFormTransformer<E> {
 		if (formulas.size() <= 1) {
 			if (formulas.isEmpty()) {
 				return neutral;
-			} else {
-				return formulas.iterator().next();
 			}
+			return formulas.iterator().next();
 		}
 
 		if (isAnd) {
 			return mWrapper.makeAnd(formulas.iterator());
-		} else {
-			return mWrapper.makeOr(formulas.iterator());
 		}
+		return mWrapper.makeOr(formulas.iterator());
 	}
 
 }

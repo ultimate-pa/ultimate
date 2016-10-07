@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE ModelCheckerUtils Library.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE ModelCheckerUtils Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ModelCheckerUtils Library library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ModelCheckerUtils Library library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms;
@@ -69,19 +69,19 @@ public class ConditionTransformerTest {
 
 	}
 
-	private Expression not(Expression exp) {
+	private static Expression not(final Expression exp) {
 		return new UnaryExpression(null, UnaryExpression.Operator.LOGICNEG, exp);
 	}
 
-	private Expression and(Expression left, Expression right) {
+	private static Expression and(final Expression left, final Expression right) {
 		return new BinaryExpression(null, Operator.LOGICAND, left, right);
 	}
 
-	private Expression or(Expression left, Expression right) {
+	private static Expression or(final Expression left, final Expression right) {
 		return new BinaryExpression(null, Operator.LOGICOR, left, right);
 	}
 
-	private Expression and(Expression... left) {
+	private Expression and(final Expression... left) {
 		if (left == null || left.length == 0) {
 			throw new IllegalArgumentException();
 		} else if (left.length == 1) {
@@ -92,7 +92,7 @@ public class ConditionTransformerTest {
 		}
 	}
 
-	private Expression or(Expression... left) {
+	private Expression or(final Expression... left) {
 		if (left == null || left.length == 0) {
 			throw new IllegalArgumentException();
 		} else if (left.length == 1) {
@@ -102,7 +102,7 @@ public class ConditionTransformerTest {
 		}
 	}
 
-	private Expression var(String varname) {
+	private Expression var(final String varname) {
 		Expression exp = mIdentifier.get(varname);
 		if (exp == null) {
 			exp = new IdentifierExpression(null, varname);
@@ -114,7 +114,7 @@ public class ConditionTransformerTest {
 	/**
 	 * No Typechecking!
 	 */
-	private Expression term(Expression var, int lit, Operator op) {
+	private static Expression term(final Expression var, final int lit, final Operator op) {
 		return new BinaryExpression(null, op, var, new IntegerLiteral(null, String.valueOf(lit)));
 	}
 
@@ -122,7 +122,7 @@ public class ConditionTransformerTest {
 	public void TestRewriteA() {
 		final Expression input = term(mA, 1, Operator.COMPNEQ);
 		final Expression afterRewrite = or(term(mA, 1, Operator.COMPLT), term(mA, 1, Operator.COMPGT));
-		TestRewrite(input, afterRewrite);
+		testRewrite(input, afterRewrite);
 	}
 
 	@Test
@@ -130,24 +130,30 @@ public class ConditionTransformerTest {
 		final Expression input = or(mExp2, term(mA, 1, Operator.COMPNEQ));
 		final Expression afterRewrite = or(or(and(and(or(mA, mD), or(mB, mC)), mA), term(mA, 1, Operator.COMPGT)),
 				term(mA, 1, Operator.COMPLT));
-		TestRewrite(input, afterRewrite);
+		testRewrite(input, afterRewrite);
 	}
 
 	@Test
 	public void TestRewriteC() {
 		final Expression input = and(and(not(term(mA, 0, Operator.COMPNEQ)), not(term(mB, 1, Operator.COMPEQ))),
 				not(term(mC, 1, Operator.COMPEQ)));
-		final Expression afterRewrite = and(
-				and(term(mA, 0, Operator.COMPEQ), or(term(mB, 1, Operator.COMPLT), term(mB, 1, Operator.COMPGT))),
-				or(term(mC, 1, Operator.COMPLT), term(mC, 1, Operator.COMPGT)));
-		TestRewrite(input, afterRewrite);
+		final Expression afterRewrite =
+				and(and(term(mA, 0, Operator.COMPEQ), or(term(mB, 1, Operator.COMPLT), term(mB, 1, Operator.COMPGT))),
+						or(term(mC, 1, Operator.COMPLT), term(mC, 1, Operator.COMPGT)));
+		testRewrite(input, afterRewrite);
 	}
 
 	@Test
 	public void TestSimplifyA() {
 		final Expression input = and(mA, mA);
 		final Expression afterSimplify = mA;
-		TestSimplify(input, afterSimplify);
+		testSimplify(input, afterSimplify);
+	}
+
+	@Test
+	public void testIgnoreVariable() {
+		testRewrite(mA, mA);
+		testRewrite(not(mA), not(mA));
 	}
 
 	// @Test
@@ -155,7 +161,7 @@ public class ConditionTransformerTest {
 		// TODO: Implement this
 		final Expression input = and(mA, or(mA, mB));
 		final Expression afterSimplify = mA;
-		TestSimplify(input, afterSimplify);
+		testSimplify(input, afterSimplify);
 	}
 
 	@Test
@@ -163,7 +169,7 @@ public class ConditionTransformerTest {
 		final Expression input = not(mExp1);
 		final Expression nnf = and(not(mB), not(mC));
 		final Expression dnf = and(not(mC), not(mB));
-		Test(input, nnf, dnf);
+		test(input, nnf, dnf);
 	}
 
 	@Test
@@ -171,7 +177,7 @@ public class ConditionTransformerTest {
 		final Expression input = mExp2;
 		final Expression nnf = and(and(mA, or(mC, mB)), or(mD, mA));
 		final Expression dnf = or(and(mA, mB), and(mA, mC));
-		Test(input, nnf, dnf);
+		test(input, nnf, dnf);
 	}
 
 	@Test
@@ -179,7 +185,7 @@ public class ConditionTransformerTest {
 		final Expression input = mExp3;
 		final Expression nnf = and(and(mA, or(mC, mB)), or(mD, mA));
 		final Expression dnf = or(and(mA, mB), and(mA, mC));
-		Test(input, nnf, dnf);
+		test(input, nnf, dnf);
 	}
 
 	@Test
@@ -187,7 +193,7 @@ public class ConditionTransformerTest {
 		final Expression input = mExp4;
 		final Expression nnf = or(or(not(mA), and(not(mC), not(mB))), and(not(mD), not(mA)));
 		final Expression dnf = or(and(not(mC), not(mB)), not(mA));
-		Test(input, nnf, dnf);
+		test(input, nnf, dnf);
 	}
 
 	@Test
@@ -197,25 +203,23 @@ public class ConditionTransformerTest {
 				or(var("G"), var("H")));
 		final Expression nnf = and(and(and(or(var("B"), var("A")), or(var("D"), var("C"))), or(var("F"), var("E"))),
 				or(var("H"), var("G")));
-		final Expression dnf = or(
-				and(var("C"), var("A"), var("G"), var("E")), and(var("C"), var("A"), var("G"), var("E")),
-				and(var("C"), var("A"), var("H"), var("E")), and(var("C"), var("A"), var("G"), var("F")),
-				and(var("C"), var("A"), var("H"), var("F")), and(var("D"), var("A"), var("G"), var("E")),
-				and(var("D"), var("A"), var("H"), var("E")), and(var("D"), var("A"), var("G"), var("F")),
-				and(var("D"), var("A"), var("H"), var("F")), and(var("C"), var("B"), var("G"), var("E")),
-				and(var("C"), var("B"), var("H"), var("E")), and(var("C"), var("B"), var("G"), var("F")),
-				and(var("C"), var("B"), var("H"), var("F")), and(var("D"), var("B"), var("G"), var("E")),
-				and(var("D"), var("B"), var("H"), var("E")), and(var("D"), var("B"), var("G"), var("F")),
-				and(var("D"), var("B"), var("H"), var("F")));
-		//i dont want to order this s.t. it fits :(
-		Test(input, nnf, null);
+		final Expression dnf = or(and(var("C"), var("A"), var("G"), var("E")),
+				and(var("C"), var("A"), var("G"), var("E")), and(var("C"), var("A"), var("H"), var("E")),
+				and(var("C"), var("A"), var("G"), var("F")), and(var("C"), var("A"), var("H"), var("F")),
+				and(var("D"), var("A"), var("G"), var("E")), and(var("D"), var("A"), var("H"), var("E")),
+				and(var("D"), var("A"), var("G"), var("F")), and(var("D"), var("A"), var("H"), var("F")),
+				and(var("C"), var("B"), var("G"), var("E")), and(var("C"), var("B"), var("H"), var("E")),
+				and(var("C"), var("B"), var("G"), var("F")), and(var("C"), var("B"), var("H"), var("F")),
+				and(var("D"), var("B"), var("G"), var("E")), and(var("D"), var("B"), var("H"), var("E")),
+				and(var("D"), var("B"), var("G"), var("F")), and(var("D"), var("B"), var("H"), var("F")));
+		// i dont want to order this s.t. it fits :(
+		test(input, nnf, null);
 	}
 
-	private void TestRewrite(Expression input, Expression afterRewrite) {
+	private static void testRewrite(final Expression input, final Expression afterRewrite) {
 		final NormalFormTransformer<Expression> ct = new NormalFormTransformer<>(new BoogieExpressionTransformer());
 		System.out.println();
 		System.out.println("Input: " + printExpression(input));
-		ct.simplify(input);
 		final Expression result = ct.rewriteNotEquals(input);
 		System.out.println("Rewri: " + printExpression(result));
 
@@ -223,11 +227,10 @@ public class ConditionTransformerTest {
 				printExpression(result));
 	}
 
-	private void TestSimplify(Expression input, Expression afterSimplify) {
+	private static void testSimplify(final Expression input, final Expression afterSimplify) {
 		final NormalFormTransformer<Expression> ct = new NormalFormTransformer<>(new BoogieExpressionTransformer());
 		System.out.println();
 		System.out.println("Input: " + printExpression(input));
-		ct.simplify(input);
 		final Expression result = ct.simplify(input);
 		System.out.println("Simpl: " + printExpression(result));
 
@@ -235,7 +238,7 @@ public class ConditionTransformerTest {
 				printExpression(result));
 	}
 
-	private void Test(Expression input, Expression afterNnf, Expression afterDnf) {
+	private static void test(final Expression input, final Expression afterNnf, final Expression afterDnf) {
 		System.out.println();
 		final NormalFormTransformer<Expression> ct = new NormalFormTransformer<>(new BoogieExpressionTransformer());
 		System.out.println("Input: " + printExpression(input));
@@ -254,11 +257,10 @@ public class ConditionTransformerTest {
 		}
 	}
 
-	private String printExpression(Expression result) {
+	private static String printExpression(final Expression result) {
 		if (result != null) {
 			return BoogiePrettyPrinter.print(result);
-		} else {
-			return "NULL";
 		}
+		return "NULL";
 	}
 }
