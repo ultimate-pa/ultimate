@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.LookaheadPartitionConstructor;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.LookaheadPartitionConstructor.PartitionPairsWrapper;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaMaxSat2;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeSevpa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.ShrinkNwa;
@@ -137,13 +138,14 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 		}
 		final IDoubleDeckerAutomaton<LETTER, STATE> operand = (IDoubleDeckerAutomaton<LETTER, STATE>) operandRaw;
 
-		final Collection<Set<STATE>> possibleEquivalenceClasses = new LookaheadPartitionConstructor<LETTER, STATE>(services,
+		final PartitionPairsWrapper<STATE> partitionAndPairs = new LookaheadPartitionConstructor<LETTER, STATE>(services,
 				operand).getResult();
+		final Collection<Set<STATE>> possibleEquivalenceClasses = partitionAndPairs.getPartition();
 
 		try {
 			if (type.equals(ESimulationType.DIRECT)) {
 				final Collection<Set<STATE>> possibleEquivalenceClassesForDirect = new LookaheadPartitionConstructor<LETTER, STATE>(services,
-						operand, true).getResult();
+						operand, true).getPartition();
 				
 				final DirectNwaGameGraph<LETTER, STATE> graph = new DirectNwaGameGraph<>(services, progressTimer,
 						logger, operand, stateFactory, possibleEquivalenceClassesForDirect);
@@ -184,8 +186,8 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 				} else {
 					operandAsNwa = new RemoveUnreachable<LETTER, STATE>(services, operand).getResult();
 				}
-				method = new MinimizeNwaMaxSat2<LETTER, STATE>(services, stateFactory, operandAsNwa,
-						true, possibleEquivalenceClasses);
+				method = new MinimizeNwaMaxSat2<LETTER, STATE>(services, stateFactory, operandAsNwa, true,
+						partitionAndPairs);
 				setExternalOverallTime(System.currentTimeMillis() - startTime);
 			}
 		} catch (final AutomataOperationCanceledException e) {

@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
 import de.uni_freiburg.informatik.ultimate.automata.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.LookaheadPartitionConstructor.PartitionPairsWrapper;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.AbstractMaxSatSolver;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.GeneralMaxSatSolver;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.HornMaxSatSolver;
@@ -136,7 +137,29 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 	 *            input nested word automaton
 	 * @param addMapOldState2newState
 	 *            add map 'old state -> new state'
-	 * @param initialEquivalenceClasses
+	 * @param partitionPairsWrapper
+	 *            wrapper for initial partition and list of inequalities
+	 * @throws AutomataOperationCanceledException
+	 *             thrown by cancel request
+	 */
+	public MinimizeNwaMaxSat2(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
+			final IDoubleDeckerAutomaton<LETTER, STATE> operand, final boolean addMapOldState2newState,
+			final PartitionPairsWrapper<STATE> partitionPairsWrapper) throws AutomataOperationCanceledException {
+		this(services, stateFactory, operand, addMapOldState2newState, partitionPairsWrapper.getPartition());
+	}
+	
+	/**
+	 * Constructor with an initial partition and option for backmapping.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param stateFactory
+	 *            state factory
+	 * @param operand
+	 *            input nested word automaton
+	 * @param addMapOldState2newState
+	 *            add map 'old state -> new state'
+	 * @param initialPartition
 	 *            We only try to merge states that are in one of the equivalence
 	 *            classes
 	 * @throws AutomataOperationCanceledException
@@ -144,9 +167,9 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 	 */
 	public MinimizeNwaMaxSat2(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand, final boolean addMapOldState2newState,
-			final Collection<Set<STATE>> initialEquivalenceClasses) throws AutomataOperationCanceledException {
-		this(services, stateFactory, operand, addMapOldState2newState, initialEquivalenceClasses, true, false, false,
-				true, false);
+			final Collection<Set<STATE>> initialPartition) throws AutomataOperationCanceledException {
+		this(services, stateFactory, operand, addMapOldState2newState, initialPartition, true,
+				false, false, true, false);
 	}
 	
 	/**
@@ -181,7 +204,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 	 */
 	public MinimizeNwaMaxSat2(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand, final boolean addMapOldState2newState,
-			final Collection<Set<STATE>> initialPartition, final boolean useFinalStateConstraints,
+			final Iterable<Set<STATE>> initialPartition, final boolean useFinalStateConstraints,
 			final boolean useTransitionHornClauses, final boolean useHornSolver, final boolean useTransitivityGenerator,
 			final boolean usePathCompression) throws AutomataOperationCanceledException {
 		super(services, stateFactory, "minimizeNwaMaxSat2", operand);
@@ -196,14 +219,16 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 		// TODO even copy an existing HashMap?
 		mState2EquivalenceClass = new HashMap<>();
 		int largestBlockInitialPartition = 0;
+		int initialPartitionSize = 0;
 		for (final Set<STATE> equivalenceClass : initialPartition) {
 			for (final STATE state : equivalenceClass) {
 				mState2EquivalenceClass.put(state, equivalenceClass);
 			}
 			largestBlockInitialPartition = Math.max(largestBlockInitialPartition, equivalenceClass.size());
+			++initialPartitionSize;
 		}
 		mLargestBlockInitialPartition = largestBlockInitialPartition;
-		mInitialPartitionSize = initialPartition.size();
+		mInitialPartitionSize = initialPartitionSize;
 		
 		// create solver
 		if (!mUseTransitionHornClauses && useHornSolver) {
@@ -259,7 +284,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 		constructResultFromUnionFind(resultingEquivalenceClasses, addMapOldState2newState);
 	}
 	
-	private void feedSolver(final boolean useTransitivityGenerator, final Collection<Set<STATE>> initialPartition,
+	private void feedSolver(final boolean useTransitivityGenerator, final Iterable<Set<STATE>> initialPartition,
 			final ScopedTransitivityGenerator<STATE> transitivityGenerator) throws AutomataOperationCanceledException {
 		generateVariables(initialPartition, transitivityGenerator);
 		generateTransitionConstraints(initialPartition);
@@ -332,7 +357,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 		return resultingEquivalenceClasses;
 	}
 	
-	private void generateVariables(final Collection<Set<STATE>> initialPartition,
+	private void generateVariables(final Iterable<Set<STATE>> initialPartition,
 			final ScopedTransitivityGenerator<STATE> transitivityGenerator) throws AutomataOperationCanceledException {
 		for (final Set<STATE> equivalenceClass : initialPartition) {
 			final STATE[] states = constructStateArray(equivalenceClass);
@@ -376,7 +401,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 		setStatesDifferent(mStatePairs.get(state1, state2));
 	}
 	
-	private void generateTransitionConstraints(final Collection<Set<STATE>> initialPartition)
+	private void generateTransitionConstraints(final Iterable<Set<STATE>> initialPartition)
 			throws AutomataOperationCanceledException {
 		for (final Set<STATE> equivalenceClass : initialPartition) {
 			final STATE[] states = constructStateArray(equivalenceClass);
@@ -862,7 +887,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 		return true;
 	}
 	
-	private void generateTransitivityConstraints(final Collection<Set<STATE>> initialPartition)
+	private void generateTransitivityConstraints(final Iterable<Set<STATE>> initialPartition)
 			throws AutomataOperationCanceledException {
 		for (final Set<STATE> equivalenceClass : initialPartition) {
 			final STATE[] states = constructStateArray(equivalenceClass);
