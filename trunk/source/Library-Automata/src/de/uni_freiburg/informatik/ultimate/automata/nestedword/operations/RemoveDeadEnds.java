@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.util.RunningTaskInfo;
 
 /**
  * Creates a nested word automaton where dead end states have been removed.
@@ -88,7 +89,9 @@ public final class RemoveDeadEnds<LETTER, STATE> extends UnaryNwaOperation<LETTE
 			mReach.computeDeadEnds();
 			mResult = new DoubleDeckerAutomatonFilteredStates<>(mServices, mReach, mReach.getWithOutDeadEnds());
 		} catch (final AutomataOperationCanceledException oce) {
-			throw new AutomataOperationCanceledException(getClass());
+			final String taskDescription = "removing dead ends from automaton with " + mOperand.size() + " states.";
+			oce.addRunningTaskInfo(new RunningTaskInfo(getClass(), taskDescription));
+			throw oce;
 		}
 		
 		if (mLogger.isInfoEnabled()) {
