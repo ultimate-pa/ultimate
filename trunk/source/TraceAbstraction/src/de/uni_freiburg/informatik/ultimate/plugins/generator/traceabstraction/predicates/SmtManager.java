@@ -127,21 +127,21 @@ public class SmtManager {
 	 * that are modifiable by procedure proc according to
 	 * ModifiableGlobalVariableManager modGlobVarManager.
 	 */
-	public TermVarsProc getOldVarsEquality(final String proc, final ModifiableGlobalVariableManager modGlobVarManager) {
+	public static TermVarsProc getOldVarsEquality(final String proc, final ModifiableGlobalVariableManager modGlobVarManager, final Script script) {
 		final Set<IProgramVar> vars = new HashSet<IProgramVar>();
-		Term term = getScript().term("true");
+		Term term = script.term("true");
 		for (final IProgramVar bv : modGlobVarManager.getGlobalVarsAssignment(proc).getAssignedVars()) {
 			vars.add(bv);
 			final IProgramVar bvOld = ((IProgramNonOldVar) bv).getOldVar();
 			vars.add(bvOld);
 			final TermVariable tv = bv.getTermVariable();
 			final TermVariable tvOld = bvOld.getTermVariable();
-			final Term equality = getScript().term("=", tv, tvOld);
-			term = Util.and(getScript(), term, equality);
+			final Term equality = script.term("=", tv, tvOld);
+			term = Util.and(script, term, equality);
 		}
 		final String[] procs = new String[0];
 		final TermVarsProc result = new TermVarsProc(term, vars, procs, PredicateUtils.computeClosedFormula(term, vars,
-				getScript()));
+				script));
 		return result;
 
 	}

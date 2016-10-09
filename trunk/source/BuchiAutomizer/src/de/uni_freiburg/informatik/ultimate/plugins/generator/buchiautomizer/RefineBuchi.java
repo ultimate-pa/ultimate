@@ -489,21 +489,22 @@ public class RefineBuchi {
 		case Craig_NestedInterpolation:
 		case Craig_TreeInterpolation: {
 			itc = new InterpolatingTraceCheckerCraig(precond, postcond, new TreeMap<Integer, IPredicate>(), word,
-					mSmtManager, buchiModGlobalVarManager,
+					mSmtManager.getManagedScript(), buchiModGlobalVarManager,
 					/*
 					 * TODO: When Matthias
 					 * introduced this parameter he
 					 * set the argument to AssertCodeBlockOrder.NOT_INCREMENTALLY.
 					 * Check if you want to set this
 					 * to a different value.
-					 */AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, pu, interpolation, true, mXnfConversionTechnique, mSimplificationTechnique);
+					 */AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, pu, interpolation, true, 
+					 mXnfConversionTechnique, mSimplificationTechnique, mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
 			break;
 		}
 		case ForwardPredicates:
 		case BackwardPredicates:
 		case FPandBP: {
 			itc = new TraceCheckerSpWp(precond, postcond, new TreeMap<Integer, IPredicate>(),
-					word, mSmtManager, buchiModGlobalVarManager,
+					word, mSmtManager.getManagedScript(), buchiModGlobalVarManager,
 					/*
 					 * TODO: When Matthias
 					 * introduced this parameter he
@@ -511,7 +512,8 @@ public class RefineBuchi {
 					 * Check if you want to set this
 					 * to a different value.
 					 */AssertCodeBlockOrder.NOT_INCREMENTALLY,
-					 UnsatCores.CONJUNCT_LEVEL, true, mServices, false, pu, interpolation, mSmtManager, mXnfConversionTechnique, mSimplificationTechnique);
+					 UnsatCores.CONJUNCT_LEVEL, true, mServices, false, pu, interpolation, mSmtManager.getManagedScript(), 
+					 mXnfConversionTechnique, mSimplificationTechnique, mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
 			break;
 		}
 		default:

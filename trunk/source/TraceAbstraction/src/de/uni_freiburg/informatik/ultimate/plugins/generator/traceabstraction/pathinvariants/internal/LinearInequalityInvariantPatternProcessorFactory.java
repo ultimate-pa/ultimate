@@ -42,7 +42,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.S
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 
 /**
@@ -79,19 +78,20 @@ public class LinearInequalityInvariantPatternProcessorFactory
 	 *            the invariant strategy to pass to the produced processor
 	 * @param simplificationTechnique 
 	 * @param xnfConversionTechnique 
+	 * @param axioms 
 	 */
 	public LinearInequalityInvariantPatternProcessorFactory(
 			final IUltimateServiceProvider services,
 			final IToolchainStorage storage,
-			final PredicateUnifier predUnifier, final SmtManager smtManager,
-			final ILinearInequalityInvariantPatternStrategy strategy, final boolean useNonlinerConstraints, final Settings solverSettings, final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
+			final PredicateUnifier predUnifier, final ManagedScript smtManager,
+			final ILinearInequalityInvariantPatternStrategy strategy, final boolean useNonlinerConstraints, final Settings solverSettings, final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique, final Collection<Term> axioms) {
 		this.services = services;
 		this.storage = storage;
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
 		this.predUnifier = predUnifier;
-		this.smtManager = smtManager.getManagedScript();
-		mAxioms = smtManager.getBoogie2Smt().getAxioms();
+		this.smtManager = smtManager;
+		mAxioms = axioms;
 		this.strategy = strategy;
 		mUseNonlinearConstraints = useNonlinerConstraints;
 		mSolverSettings = solverSettings;

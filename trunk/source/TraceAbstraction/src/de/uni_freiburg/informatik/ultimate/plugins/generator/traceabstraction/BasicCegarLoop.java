@@ -349,20 +349,20 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		case Craig_NestedInterpolation:
 		case Craig_TreeInterpolation: {
 			interpolatingTraceChecker = new InterpolatingTraceCheckerCraig(truePredicate, falsePredicate,
-					new TreeMap<Integer, IPredicate>(), NestedWord.nestedWord(mCounterexample.getWord()), mSmtManager,
+					new TreeMap<Integer, IPredicate>(), NestedWord.nestedWord(mCounterexample.getWord()), mSmtManager.getManagedScript(),
 					mRootNode.getRootAnnot().getModGlobVarManager(), mAssertCodeBlocksIncrementally, mServices, true,
-					predicateUnifier, mInterpolation, smtMangerTracechecks, true, mXnfConversionTechnique,
-					mSimplificationTechnique);
+					predicateUnifier, mInterpolation, smtMangerTracechecks.getManagedScript(), true, mXnfConversionTechnique,
+					mSimplificationTechnique, mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
 		}
 			break;
 		case ForwardPredicates:
 		case BackwardPredicates:
 		case FPandBP:
 			interpolatingTraceChecker = new TraceCheckerSpWp(truePredicate, falsePredicate,
-					new TreeMap<Integer, IPredicate>(), NestedWord.nestedWord(mCounterexample.getWord()), mSmtManager,
+					new TreeMap<Integer, IPredicate>(), NestedWord.nestedWord(mCounterexample.getWord()), mSmtManager.getManagedScript(),
 					mRootNode.getRootAnnot().getModGlobVarManager(), mAssertCodeBlocksIncrementally, mUnsatCores,
-					mUseLiveVariables, mServices, true, predicateUnifier, mInterpolation, smtMangerTracechecks,
-					mXnfConversionTechnique, mSimplificationTechnique);
+					mUseLiveVariables, mServices, true, predicateUnifier, mInterpolation, smtMangerTracechecks.getManagedScript(),
+					mXnfConversionTechnique, mSimplificationTechnique, mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
 
 			break;
 		case PathInvariants: {
@@ -384,9 +384,10 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					dumpSmtScriptToFile, pathOfDumpedScript, baseNameOfDumpedScript);
 			interpolatingTraceChecker = new InterpolatingTraceCheckerPathInvariantsWithFallback(truePredicate,
 					falsePredicate, new TreeMap<Integer, IPredicate>(),
-					(NestedRun<CodeBlock, IPredicate>) mCounterexample, mSmtManager, mModGlobVarManager,
+					(NestedRun<CodeBlock, IPredicate>) mCounterexample, mSmtManager.getManagedScript(), mModGlobVarManager,
 					mAssertCodeBlocksIncrementally, mServices, mToolchainStorage, true, predicateUnifier,
-					useNonlinerConstraints, settings, mXnfConversionTechnique, mSimplificationTechnique);
+					useNonlinerConstraints, settings, mXnfConversionTechnique, mSimplificationTechnique, 
+					mSmtManager.getBoogie2Smt().getAxioms(), mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
 		}
 			break;
 		default:

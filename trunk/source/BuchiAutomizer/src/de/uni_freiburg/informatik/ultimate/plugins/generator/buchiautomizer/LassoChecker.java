@@ -442,25 +442,25 @@ public class LassoChecker {
 			case Craig_NestedInterpolation:
 			case Craig_TreeInterpolation:
 				result = new InterpolatingTraceCheckerCraig(mTruePredicate, mFalsePredicate,
-						new TreeMap<Integer, IPredicate>(), run.getWord(), mSmtManager,
+						new TreeMap<Integer, IPredicate>(), run.getWord(), mSmtManager.getManagedScript(),
 						mModifiableGlobalVariableManager,
 						/*
 						 * TODO: When Matthias introduced this parameter he set the argument to
 						 * AssertCodeBlockOrder.NOT_INCREMENTALLY. Check if you want to set this to a different value.
 						 */AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, mPredicateUnifier, mInterpolation,
-						true, mXnfConversionTechnique, mSimplificationTechnique);
+						true, mXnfConversionTechnique, mSimplificationTechnique, mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
 				break;
 			case ForwardPredicates:
 			case BackwardPredicates:
 			case FPandBP:
 				result = new TraceCheckerSpWp(mTruePredicate, mFalsePredicate, new TreeMap<Integer, IPredicate>(),
-						run.getWord(), mSmtManager, mModifiableGlobalVariableManager,
+						run.getWord(), mSmtManager.getManagedScript(), mModifiableGlobalVariableManager,
 						/*
 						 * TODO: When Matthias introduced this parameter he set the argument to
 						 * AssertCodeBlockOrder.NOT_INCREMENTALLY. Check if you want to set this to a different value.
 						 */AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true, mServices, false,
-						mPredicateUnifier, mInterpolation, mSmtManager, mXnfConversionTechnique,
-						mSimplificationTechnique);
+						mPredicateUnifier, mInterpolation, mSmtManager.getManagedScript(), mXnfConversionTechnique,
+						mSimplificationTechnique, mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
 				break;
 			default:
 				throw new UnsupportedOperationException("unsupported interpolation");

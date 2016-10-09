@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
@@ -54,13 +55,13 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierPusher;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer.PredicatePostprocessor;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
@@ -103,16 +104,17 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	
 
 	public TraceCheckerSpWp(final IPredicate precondition, final IPredicate postcondition,
-			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IAction> trace, final SmtManager smtManager,
+			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IAction> trace, final ManagedScript mgdScriptCfg,
 			final ModifiableGlobalVariableManager modifiedGlobals, final AssertCodeBlockOrder assertCodeBlocksIncrementally,
 			final UnsatCores unsatCores, final boolean useLiveVariables, 
 			final IUltimateServiceProvider services, final boolean computeRcfgProgramExecution, 
-			final PredicateUnifier predicateUnifier, final InterpolationTechnique interpolation, final SmtManager smtManagerTc, 
-			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique) {
+			final PredicateUnifier predicateUnifier, final InterpolationTechnique interpolation, final ManagedScript mgdScriptTc, 
+			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique, 
+			final Boogie2SmtSymbolTable symbolTable) {
 		// superclass does feasibility check
-		super(precondition, postcondition, pendingContexts, trace, smtManager, modifiedGlobals,
+		super(precondition, postcondition, pendingContexts, trace, mgdScriptCfg, modifiedGlobals,
 				assertCodeBlocksIncrementally, services, computeRcfgProgramExecution, predicateUnifier, 
-				smtManagerTc, simplificationTechnique, xnfConversionTechnique);
+				mgdScriptTc, simplificationTechnique, xnfConversionTechnique, symbolTable);
 		mUnsatCores = unsatCores;
 		mLiveVariables = useLiveVariables;
 		switch (interpolation) {
@@ -228,7 +230,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		if (museLiveVariablesInsteadOfRelevantVariables) {
 			// computation of live variables whose input is the original trace
 			final LiveVariables lvar = new LiveVariables(mNsb.getVariable2Constant(), mNsb.getConstants2BoogieVar(),
-					mNsb.getIndexedVarRepresentative(), mSmtManager, mModifiedGlobals);
+					mNsb.getIndexedVarRepresentative(), mModifiedGlobals);
 			liveVariables = lvar.getLiveVariables();
 		} else {
 			// computation of live variables whose input takes the unsat core into a account (if applicable)
@@ -248,11 +250,11 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 					postprocs.add(new LiveVariablesPostprocessor_Forward(liveVariables));
 				}
 				postprocs.add(new IterativePredicateTransformer.QuantifierEliminationPostprocessor(
-						mServices, mLogger, mSmtManager.getManagedScript(), mSmtManager.getPredicateFactory(), mSimplificationTechnique, mXnfConversionTechnique));
+						mServices, mLogger, mCfgManagedScript, mPredicateFactory, mSimplificationTechnique, mXnfConversionTechnique));
 				postprocs.add(new UnifyPostprocessor());
 				final IterativePredicateTransformer spt = new IterativePredicateTransformer(
-						mSmtManager.getPredicateFactory(), mSmtManager.getScript(), mSmtManager.getManagedScript(), mModifiedGlobals, mServices, mTrace, 
-						mPrecondition, mPostcondition, mPendingContexts, null, mSimplificationTechnique, mXnfConversionTechnique, mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
+						mPredicateFactory, mCfgManagedScript.getScript(), mCfgManagedScript, mModifiedGlobals, mServices, mTrace, 
+						mPrecondition, mPostcondition, mPendingContexts, null, mSimplificationTechnique, mXnfConversionTechnique, mBoogie2SmtSymbolTable);
 				mInterpolantsFp = spt.computeStrongestPostconditionSequence(rtf, postprocs).getInterpolants();
 			} catch (final ToolchainCanceledException tce) {
 				final String taskDescription = "constructing forward predicates";
@@ -261,7 +263,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			}
 			assert TraceCheckerUtils.checkInterpolantsInductivityForward(mInterpolantsFp, 
 					mTrace, mPrecondition, mPostcondition, mPendingContexts, "FP", 
-					mModifiedGlobals, mLogger, mManagedScript) : "invalid Hoare triple in FP";
+					mModifiedGlobals, mLogger, mCfgManagedScript) : "invalid Hoare triple in FP";
 			mTraceCheckerBenchmarkGenerator.reportSequenceOfInterpolants(mInterpolantsFp);
 			if (mCollectInformationAboutSizeOfPredicates) {
 				sizeOfPredicatesFP = PredicateUtils.computeDagSizeOfPredicates(mInterpolantsFp);
@@ -276,11 +278,11 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 					postprocs.add(new LiveVariablesPostprocessor_Backward(liveVariables));
 				}
 				postprocs.add(new IterativePredicateTransformer.QuantifierEliminationPostprocessor(
-						mServices, mLogger, mSmtManager.getManagedScript(), mSmtManager.getPredicateFactory(), mSimplificationTechnique, mXnfConversionTechnique));
+						mServices, mLogger, mCfgManagedScript, mPredicateFactory, mSimplificationTechnique, mXnfConversionTechnique));
 				postprocs.add(new UnifyPostprocessor());
 				final IterativePredicateTransformer spt = new IterativePredicateTransformer(
-						mSmtManager.getPredicateFactory(), mSmtManager.getScript(), mSmtManager.getManagedScript(), mModifiedGlobals, mServices, mTrace, 
-						mPrecondition, mPostcondition, mPendingContexts, null, mSimplificationTechnique, mXnfConversionTechnique, mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
+						mPredicateFactory, mCfgManagedScript.getScript(), mCfgManagedScript, mModifiedGlobals, mServices, mTrace, 
+						mPrecondition, mPostcondition, mPendingContexts, null, mSimplificationTechnique, mXnfConversionTechnique, mBoogie2SmtSymbolTable);
 				mInterpolantsBp = spt.computeWeakestPreconditionSequence(rtf, postprocs, false).getInterpolants();
 			} catch (final ToolchainCanceledException tce) {
 				final String taskDescription = "constructing backward predicates";
@@ -289,7 +291,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			}
 			assert TraceCheckerUtils.checkInterpolantsInductivityBackward(mInterpolantsBp, 
 					mTrace, mPrecondition, mPostcondition, mPendingContexts, "BP", 
-					mModifiedGlobals, mLogger, mManagedScript) : "invalid Hoare triple in BP";
+					mModifiedGlobals, mLogger, mCfgManagedScript) : "invalid Hoare triple in BP";
 			mTraceCheckerBenchmarkGenerator.reportSequenceOfInterpolants(mInterpolantsBp);
 			if (mCollectInformationAboutSizeOfPredicates) {
 				sizeOfPredicatesBP = PredicateUtils.computeDagSizeOfPredicates(mInterpolantsBp);
@@ -352,10 +354,10 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 					localVarAssignmentAtCallInUnsatCore, oldVarAssignmentAtCallInUnsatCore);
 			rtf = new RelevantTransFormulas(mTrace, mPrecondition, mPostcondition, mPendingContexts,
 					codeBlocksInUnsatCore, mModifiedGlobals, localVarAssignmentAtCallInUnsatCore,
-					oldVarAssignmentAtCallInUnsatCore, mSmtManager.getManagedScript());
+					oldVarAssignmentAtCallInUnsatCore, mCfgManagedScript);
 		} else if (mUnsatCores == UnsatCores.CONJUNCT_LEVEL) {
 			rtf = new RelevantTransFormulas(mTrace, mPrecondition, mPostcondition, mPendingContexts,
-					unsatCore, mModifiedGlobals, mSmtManager.getManagedScript(), mAAA, mAnnotateAndAsserterConjuncts);
+					unsatCore, mModifiedGlobals, mCfgManagedScript, mAAA, mAnnotateAndAsserterConjuncts);
 		} else {
 			throw new AssertionError("unknown case:" + mUnsatCores);
 		}
@@ -412,8 +414,8 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	 */
 	private boolean stillInfeasible(final NestedFormulas<UnmodifiableTransFormula, IPredicate> rv) {
 		final TraceChecker tc = new TraceChecker(rv.getPrecondition(), rv.getPostcondition(),
-				new TreeMap<Integer, IPredicate>(), rv.getTrace(), mSmtManager, mModifiedGlobals, rv,
-				AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, true);
+				new TreeMap<Integer, IPredicate>(), rv.getTrace(), mCfgManagedScript, mModifiedGlobals, rv,
+				AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, true, mBoogie2SmtSymbolTable);
 		if (tc.getToolchainCancelledExpection() != null) {
 			throw tc.getToolchainCancelledExpection();
 		}
@@ -476,10 +478,10 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		public IPredicate postprocess(final IPredicate pred, final int i) {
 			assert mLiveVariables : "use this postprocessor only if mLiveVariables";
 			final Set<TermVariable> nonLiveVars = computeIrrelevantVariables(mRelevantVars[i], pred);
-			final Term projectedT = SmtUtils.quantifier(mSmtManager.getScript(), 
+			final Term projectedT = SmtUtils.quantifier(mCfgManagedScript.getScript(), 
 					QuantifiedFormula.EXISTS, nonLiveVars, pred.getFormula());
-			final Term pushed = new QuantifierPusher(mSmtManager.getManagedScript(), mServices).transform(projectedT);
-			final IPredicate projected = mSmtManager.getPredicateFactory().newPredicate(pushed);
+			final Term pushed = new QuantifierPusher(mCfgManagedScript, mServices).transform(projectedT);
+			final IPredicate projected = mPredicateFactory.newPredicate(pushed);
 			mNonLiveVariablesFp += nonLiveVars.size();
 			return projected;
 		}
@@ -505,10 +507,10 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		public IPredicate postprocess(final IPredicate pred, final int i) {
 			assert mLiveVariables : "use this postprocessor only if mLiveVariables";
 			final Set<TermVariable> nonLiveVars = computeIrrelevantVariables(mRelevantVars[i], pred);
-			final Term projectedT = SmtUtils.quantifier(mSmtManager.getScript(), 
+			final Term projectedT = SmtUtils.quantifier(mCfgManagedScript.getScript(), 
 					QuantifiedFormula.FORALL, nonLiveVars, pred.getFormula());
-			final Term pushed = new QuantifierPusher(mSmtManager.getManagedScript(), mServices).transform(projectedT);
-			final IPredicate projected = mSmtManager.getPredicateFactory().newPredicate(pushed);
+			final Term pushed = new QuantifierPusher(mCfgManagedScript, mServices).transform(projectedT);
+			final IPredicate projected = mPredicateFactory.newPredicate(pushed);
 			mNonLiveVariablesBp += nonLiveVars.size();
 			return projected;
 		}
@@ -558,7 +560,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	 */
 	private void checkSPImpliesWP(final IPredicate[] interpolantsSP, final IPredicate[] interpolantsWP) {
 		mLogger.debug("Checking implication of SP and WP...");
-		final MonolithicImplicationChecker mic = new MonolithicImplicationChecker(mServices, mManagedScript);
+		final MonolithicImplicationChecker mic = new MonolithicImplicationChecker(mServices, mCfgManagedScript);
 		for (int i = 0; i < interpolantsSP.length; i++) {
 			final Validity result = mic.checkImplication(interpolantsSP[i], false, interpolantsWP[i], false);
 			mLogger.debug("SP {" + interpolantsSP[i] + "} ==> WP {" + interpolantsWP[i] + "} is "
@@ -570,8 +572,8 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	@Override
 	protected AnnotateAndAssertCodeBlocks getAnnotateAndAsserterCodeBlocks(final NestedFormulas<Term, Term> ssa) {
 		if (mAnnotateAndAsserterConjuncts == null) {
-			mAnnotateAndAsserterConjuncts = new AnnotateAndAssertConjunctsOfCodeBlocks(mTcSmtManager, ssa,
-					mNestedFormulas, mLogger, mSmtManager);
+			mAnnotateAndAsserterConjuncts = new AnnotateAndAssertConjunctsOfCodeBlocks(mTcSmtManager, mTraceCheckerLock,
+					ssa, mNestedFormulas, mLogger, mCfgManagedScript);
 		}
 		return mAnnotateAndAsserterConjuncts;
 	}

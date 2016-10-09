@@ -973,8 +973,13 @@ public class PredicateUnifier {
 		
 	}
 	
-	
-	
+	/**
+	 * @return the predicateFactory
+	 */
+	public PredicateFactory getPredicateFactory() {
+		return mPredicateFactory;
+	}
+
 	public enum PredicateUniferStatisticsDefinitions implements IStatisticsElement {
 		
 		DeclaredPredicates(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),

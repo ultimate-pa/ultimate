@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
@@ -46,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Unm
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
@@ -59,7 +61,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pa
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.LinearInequalityInvariantPatternProcessorFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.LocationIndependentLinearInequalityInvariantPatternStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 
@@ -90,18 +91,20 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	 *            {@link IInvariantPatternProcessorFactory}
 	 * @param simplicationTechnique
 	 * @param xnfConversionTechnique
+	 * @param axioms 
 	 * @return a default invariant pattern processor factory
 	 */
 	private static IInvariantPatternProcessorFactory<?> createDefaultFactory(
 			final IUltimateServiceProvider services,
 			final IToolchainStorage storage,
-			final PredicateUnifier predicateUnifier, final SmtManager smtManager,
+			final PredicateUnifier predicateUnifier, final ManagedScript smtManager,
 			final boolean useNonlinerConstraints, final Settings solverSettings,
-			final SimplificationTechnique simplicationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
+			final SimplificationTechnique simplicationTechnique, final XnfConversionTechnique xnfConversionTechnique, final Collection<Term> axioms) {
 		final ILinearInequalityInvariantPatternStrategy strategy = new LocationIndependentLinearInequalityInvariantPatternStrategy(
 				1, 1, 1, 1, 5);
 		return new LinearInequalityInvariantPatternProcessorFactory(services,
-				storage, predicateUnifier, smtManager, strategy, useNonlinerConstraints, solverSettings, simplicationTechnique, xnfConversionTechnique);
+				storage, predicateUnifier, smtManager, strategy, useNonlinerConstraints, 
+				solverSettings, simplicationTechnique, xnfConversionTechnique, axioms);
 	}
 
 	/**
@@ -129,17 +132,18 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	 *            reserved for future use.
 	 * @param simplicationTechnique
 	 * @param xnfConversionTechnique
+	 * @param axioms 
 	 */
 	public PathInvariantsGenerator(final IUltimateServiceProvider services,
 			final IToolchainStorage storage, final NestedRun<? extends IAction, IPredicate> run,
 			final IPredicate precondition, final IPredicate postcondition,
-			final PredicateUnifier predicateUnifier, final SmtManager smtManager,
+			final PredicateUnifier predicateUnifier, final ManagedScript smtManager,
 			final ModifiableGlobalVariableManager modGlobVarManager,
 			final boolean useNonlinerConstraints, final Settings solverSettings,
-			final SimplificationTechnique simplicationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
+			final SimplificationTechnique simplicationTechnique, final XnfConversionTechnique xnfConversionTechnique, final Collection<Term> axioms) {
 		this(services, run, precondition, postcondition, predicateUnifier,
 				modGlobVarManager, createDefaultFactory(services, storage,
-						predicateUnifier, smtManager, useNonlinerConstraints, solverSettings, simplicationTechnique, xnfConversionTechnique));
+						predicateUnifier, smtManager, useNonlinerConstraints, solverSettings, simplicationTechnique, xnfConversionTechnique, axioms));
 	}
 
 	/**

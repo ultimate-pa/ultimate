@@ -37,11 +37,13 @@ import java.util.TreeMap;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
@@ -78,15 +80,17 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 	 * @param predicateUnifier 
 	 * @param interpolation 
 	 * @param instanticateArrayExt 
+	 * @param symbolTable 
 	 */
 	public InterpolatingTraceCheckerCraig(final IPredicate precondition, final IPredicate postcondition,
-			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IAction> trace, final SmtManager smtManager,
+			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IAction> trace, final ManagedScript mgdScriptCfg,
 			final ModifiableGlobalVariableManager modifiedGlobals, final AssertCodeBlockOrder assertCodeBlocksIncrementally,
 			final IUltimateServiceProvider services, final boolean computeRcfgProgramExecution, 
-			final PredicateUnifier predicateUnifier, final InterpolationTechnique interpolation, final SmtManager tcSmtManager, final boolean instanticateArrayExt,
-			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique) {
-		super(precondition, postcondition, pendingContexts, trace, smtManager, modifiedGlobals,
-				assertCodeBlocksIncrementally, services, computeRcfgProgramExecution, predicateUnifier, tcSmtManager, simplificationTechnique, xnfConversionTechnique);
+			final PredicateUnifier predicateUnifier, final InterpolationTechnique interpolation, final ManagedScript mgdScriptTc, final boolean instanticateArrayExt,
+			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique, final Boogie2SmtSymbolTable symbolTable) {
+		super(precondition, postcondition, pendingContexts, trace, mgdScriptCfg, modifiedGlobals,
+				assertCodeBlocksIncrementally, services, computeRcfgProgramExecution, predicateUnifier, mgdScriptTc, 
+				simplificationTechnique, xnfConversionTechnique, symbolTable);
 		mInstantiateArrayExt = instanticateArrayExt;
 		if (isCorrect() == LBool.UNSAT) {
 			computeInterpolants(new AllIntegers(), interpolation);
@@ -94,14 +98,14 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 	}
 
 	public InterpolatingTraceCheckerCraig(final IPredicate precondition, final IPredicate postcondition,
-			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IAction> trace, final SmtManager smtManager,
+			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IAction> trace, final ManagedScript smtManager,
 			final ModifiableGlobalVariableManager modifiedGlobals, final AssertCodeBlockOrder assertCodeBlocksIncrementally,
 			final IUltimateServiceProvider services, final boolean computeRcfgProgramExecution, 
 			final PredicateUnifier predicateUnifier, final InterpolationTechnique interpolation, final boolean instanticateArrayExt,
-			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique) {
+			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique, final Boogie2SmtSymbolTable symbolTable) {
 		this(precondition, postcondition, pendingContexts, trace, smtManager, 
 				modifiedGlobals, assertCodeBlocksIncrementally, services, computeRcfgProgramExecution, 
-				predicateUnifier, interpolation, smtManager, instanticateArrayExt, xnfConversionTechnique, simplificationTechnique);
+				predicateUnifier, interpolation, smtManager, instanticateArrayExt, xnfConversionTechnique, simplificationTechnique, symbolTable);
 	}
 
 
@@ -191,13 +195,15 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 		if (mInterpolants != null) {
 			throw new AssertionError("You already computed interpolants");
 		}
-		final NestedInterpolantsBuilder nib = new NestedInterpolantsBuilder(mTcSmtManager, mAAA.getAnnotatedSsa(),
-				mNsb.getConstants2BoogieVar(), mPredicateUnifier, interpolatedPositions, true, mServices, this, mSmtManager, mInstantiateArrayExt, mSimplificationTechnique, mXnfConversionTechnique);
+		final NestedInterpolantsBuilder nib = new NestedInterpolantsBuilder(mTcSmtManager, mTraceCheckerLock, 
+				mAAA.getAnnotatedSsa(),	mNsb.getConstants2BoogieVar(), mPredicateUnifier, mPredicateFactory, 
+				interpolatedPositions, true, mServices, this, mCfgManagedScript, mInstantiateArrayExt, 
+				mSimplificationTechnique, mXnfConversionTechnique);
 		mInterpolants = nib.getNestedInterpolants();
 		assert TraceCheckerUtils.checkInterpolantsInductivityForward(
 				Arrays.asList(mInterpolants), mTrace, mPrecondition, mPostcondition, 
 				mPendingContexts, "Craig", mModifiedGlobals, mLogger, 
-				mManagedScript) : 
+				mCfgManagedScript) : 
 					"invalid Hoare triple in tree interpolants";
 		assert mInterpolants != null;
 	}
@@ -223,8 +229,10 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 		final Set<Integer> newInterpolatedPositions = interpolatedPositionsForSubtraces(interpolatedPositions,
 				nonPendingCallPositions);
 
-		final NestedInterpolantsBuilder nib = new NestedInterpolantsBuilder(mTcSmtManager, mAAA.getAnnotatedSsa(),
-				mNsb.getConstants2BoogieVar(), mPredicateUnifier, newInterpolatedPositions, false, mServices, this, mSmtManager, mInstantiateArrayExt, mSimplificationTechnique, mXnfConversionTechnique);
+		final NestedInterpolantsBuilder nib = new NestedInterpolantsBuilder(mTcSmtManager, mTraceCheckerLock, 
+				mAAA.getAnnotatedSsa(),	mNsb.getConstants2BoogieVar(), mPredicateUnifier, mPredicateFactory, 
+				newInterpolatedPositions, false, mServices, this, mCfgManagedScript, mInstantiateArrayExt, 
+				mSimplificationTechnique, mXnfConversionTechnique);
 		mInterpolants = nib.getNestedInterpolants();
 		final IPredicate oldPrecondition = mPrecondition;
 		final IPredicate oldPostcondition = mPostcondition;
@@ -236,7 +244,7 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 
 			final Call call = (Call) mTrace.getSymbol(nonPendingCall);
 			final String calledMethod = call.getCallStatement().getMethodName();
-			final TermVarsProc oldVarsEquality = mSmtManager.getOldVarsEquality(calledMethod, mModifiedGlobals);
+			final TermVarsProc oldVarsEquality = SmtManager.getOldVarsEquality(calledMethod, mModifiedGlobals, mCfgManagedScript.getScript());
 
 			final IPredicate precondition = mPredicateUnifier.getOrConstructPredicate(oldVarsEquality.getFormula());
 
@@ -272,8 +280,8 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 			// Compute interpolants for subsequence and add them to interpolants
 			// computed by this TraceChecker
 			final InterpolatingTraceCheckerCraig tc = new InterpolatingTraceCheckerCraig(precondition, interpolantAtReturnPosition, pendingContexts, subtrace,
-					mSmtManager, mModifiedGlobals, massertCodeBlocksIncrementally, mServices, false, mPredicateUnifier, 
-					InterpolationTechnique.Craig_NestedInterpolation, mTcSmtManager, mInstantiateArrayExt, mXnfConversionTechnique, mSimplificationTechnique);
+					mCfgManagedScript, mModifiedGlobals, massertCodeBlocksIncrementally, mServices, false, mPredicateUnifier, 
+					InterpolationTechnique.Craig_NestedInterpolation, mTcSmtManager, mInstantiateArrayExt, mXnfConversionTechnique, mSimplificationTechnique, mBoogie2SmtSymbolTable);
 			final LBool isSafe = tc.isCorrect();
 			if (isSafe == LBool.SAT) {
 				throw new AssertionError("has to be unsat by construction, we do check only for interpolant computation");
@@ -288,10 +296,10 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 			// tc.computeInterpolants_Recursive(interpolatedPositions, mPredicateUnifier);
 			final IPredicate[] interpolantSubsequence = tc.getInterpolants();
 
-			assert mSmtManager.getPredicateFactory().isDontCare(mInterpolants[nonPendingCall]);
+			assert mPredicateFactory.isDontCare(mInterpolants[nonPendingCall]);
 			mInterpolants[nonPendingCall] = precondition;
 			for (int i = 0; i < interpolantSubsequence.length; i++) {
-				assert mSmtManager.getPredicateFactory().isDontCare(mInterpolants[nonPendingCall + 1 + i]);
+				assert mPredicateFactory.isDontCare(mInterpolants[nonPendingCall + 1 + i]);
 				mInterpolants[nonPendingCall + 1 + i] = interpolantSubsequence[i];
 			}
 		}
@@ -300,7 +308,7 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 			assert TraceCheckerUtils.checkInterpolantsInductivityForward(
 					Arrays.asList(mInterpolants), mTrace, mPrecondition, mPostcondition, 
 					mPendingContexts, "Craig", mModifiedGlobals, mLogger,
-					mManagedScript) : 
+					mCfgManagedScript) : 
 						"invalid Hoare triple in nested interpolants";
 //		}
 	}

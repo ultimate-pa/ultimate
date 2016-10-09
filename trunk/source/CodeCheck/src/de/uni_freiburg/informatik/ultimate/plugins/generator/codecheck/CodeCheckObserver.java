@@ -592,10 +592,10 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 			try {
 				return new InterpolatingTraceCheckerCraig(mPredicateUnifier.getTruePredicate(),
 						mPredicateUnifier.getFalsePredicate(), new TreeMap<Integer, IPredicate>(), errorRun.getWord(),
-						mSmtManager, mOriginalRoot.getRootAnnot().getModGlobVarManager(),
+						mSmtManager.getManagedScript(), mOriginalRoot.getRootAnnot().getModGlobVarManager(),
 						AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, true, mPredicateUnifier,
-						GlobalSettings._instance._interpolationMode, smtManagerTracechecks, true,
-						mXnfConversionTechnique, mSimplificationTechnique);
+						GlobalSettings._instance._interpolationMode, smtManagerTracechecks.getManagedScript(), true,
+						mXnfConversionTechnique, mSimplificationTechnique, mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
 			} catch (final Exception e) {
 				if (!GlobalSettings._instance.useFallbackForSeparateSolverForTracechecks) {
 					throw e;
@@ -607,11 +607,11 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 				 * The fallback interpolation mode is hardcoded for now
 				 */
 				return new TraceCheckerSpWp(mPredicateUnifier.getTruePredicate(), mPredicateUnifier.getFalsePredicate(),
-						new TreeMap<Integer, IPredicate>(), errorRun.getWord(), mSmtManager,
+						new TreeMap<Integer, IPredicate>(), errorRun.getWord(), mSmtManager.getManagedScript(),
 						mOriginalRoot.getRootAnnot().getModGlobVarManager(), AssertCodeBlockOrder.NOT_INCREMENTALLY,
 						UnsatCores.CONJUNCT_LEVEL, true, mServices, true, mPredicateUnifier,
-						InterpolationTechnique.ForwardPredicates, mSmtManager, mXnfConversionTechnique,
-						mSimplificationTechnique);
+						InterpolationTechnique.ForwardPredicates, mSmtManager.getManagedScript(), mXnfConversionTechnique,
+						mSimplificationTechnique, mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
 			}
 		case ForwardPredicates:
 		case BackwardPredicates:
@@ -619,22 +619,22 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 			// return LBool.UNSAT if trace is infeasible
 			try {
 				return new TraceCheckerSpWp(mPredicateUnifier.getTruePredicate(), mPredicateUnifier.getFalsePredicate(),
-						new TreeMap<Integer, IPredicate>(), errorRun.getWord(), mSmtManager,
+						new TreeMap<Integer, IPredicate>(), errorRun.getWord(), mSmtManager.getManagedScript(),
 						mOriginalRoot.getRootAnnot().getModGlobVarManager(), AssertCodeBlockOrder.NOT_INCREMENTALLY,
 						GlobalSettings._instance.useUnsatCores, GlobalSettings._instance.useLiveVariables, mServices,
-						true, mPredicateUnifier, GlobalSettings._instance._interpolationMode, smtManagerTracechecks,
-						mXnfConversionTechnique, mSimplificationTechnique);
+						true, mPredicateUnifier, GlobalSettings._instance._interpolationMode, smtManagerTracechecks.getManagedScript(),
+						mXnfConversionTechnique, mSimplificationTechnique, mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
 			} catch (final Exception e) {
 				if (!GlobalSettings._instance.useFallbackForSeparateSolverForTracechecks) {
 					throw e;
 				}
 
 				return new TraceCheckerSpWp(mPredicateUnifier.getTruePredicate(), mPredicateUnifier.getFalsePredicate(),
-						new TreeMap<Integer, IPredicate>(), errorRun.getWord(), mSmtManager,
+						new TreeMap<Integer, IPredicate>(), errorRun.getWord(), mSmtManager.getManagedScript(),
 						mOriginalRoot.getRootAnnot().getModGlobVarManager(), AssertCodeBlockOrder.NOT_INCREMENTALLY,
 						UnsatCores.CONJUNCT_LEVEL, true, mServices, true, mPredicateUnifier,
-						GlobalSettings._instance._interpolationMode, mSmtManager, mXnfConversionTechnique,
-						mSimplificationTechnique);
+						GlobalSettings._instance._interpolationMode, mSmtManager.getManagedScript(), mXnfConversionTechnique,
+						mSimplificationTechnique, mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
 			}
 		default:
 			throw new UnsupportedOperationException(

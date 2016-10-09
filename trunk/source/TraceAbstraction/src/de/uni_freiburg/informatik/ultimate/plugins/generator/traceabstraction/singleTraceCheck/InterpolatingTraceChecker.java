@@ -34,13 +34,15 @@ import java.util.SortedMap;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 
@@ -61,6 +63,7 @@ public abstract class InterpolatingTraceChecker extends TraceChecker implements 
 	 * Data structure that unifies Predicates with respect to its Term.
 	 */
 	protected final PredicateUnifier mPredicateUnifier;
+	protected final PredicateFactory mPredicateFactory;
 
 	protected IPredicate[] mInterpolants;
 	
@@ -80,18 +83,21 @@ public abstract class InterpolatingTraceChecker extends TraceChecker implements 
 	 * @param predicateUnifier 
 	 * @param simplificationTechnique 
 	 * @param xnfConversionTechnique 
+	 * @param symbolTable 
 	 * @param interpolation 
 	 */
 	public InterpolatingTraceChecker(final IPredicate precondition, final IPredicate postcondition,
-			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IAction> trace, final SmtManager smtManager,
+			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IAction> trace, final ManagedScript smtManager,
 			final ModifiableGlobalVariableManager modifiedGlobals, final AssertCodeBlockOrder assertCodeBlocksIncrementally,
 			final IUltimateServiceProvider services, final boolean computeRcfgProgramExecution, 
-			final PredicateUnifier predicateUnifier, final SmtManager tcSmtManager, 
-			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
+			final PredicateUnifier predicateUnifier, final ManagedScript tcSmtManager, 
+			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique, 
+			final Boogie2SmtSymbolTable symbolTable) {
 		super(precondition, postcondition, pendingContexts, trace, smtManager, modifiedGlobals,
 				new DefaultTransFormulas(trace, precondition, postcondition, pendingContexts, modifiedGlobals, false),
-				assertCodeBlocksIncrementally, services, computeRcfgProgramExecution, false, tcSmtManager);
+				assertCodeBlocksIncrementally, services, computeRcfgProgramExecution, false, tcSmtManager, symbolTable);
 		mPredicateUnifier = predicateUnifier;
+		mPredicateFactory = predicateUnifier.getPredicateFactory();
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
 	}

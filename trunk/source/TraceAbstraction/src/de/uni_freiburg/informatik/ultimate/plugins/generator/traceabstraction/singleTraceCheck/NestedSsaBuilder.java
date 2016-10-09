@@ -50,11 +50,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 
 /**
  * A trace has single static assignment form (SSA) is each variable is assigned
@@ -97,10 +97,7 @@ public class NestedSsaBuilder {
 
 	private final ILogger mLogger;
 
-	private final static String s_GotosUnsupportedMessage = "TraceChecker is only applicable to RCFGs whose auxilliary goto edges have been removed";
-
 	private final Script mScript;
-	private final SmtManager mSmtManager;
 
 	/**
 	 * Map global BoogieVar bv to the constant bv_j that represents bv at the
@@ -175,13 +172,12 @@ public class NestedSsaBuilder {
 			new MultiElementCounter<TermVariable>();
 	
 
-	public NestedSsaBuilder(final NestedWord<? extends IAction> trace, final SmtManager smtManager,
+	public NestedSsaBuilder(final NestedWord<? extends IAction> trace, final ManagedScript smtManager,
 			final NestedFormulas<UnmodifiableTransFormula, IPredicate> nestedTransFormulas,
 			final ModifiableGlobalVariableManager globModVarManager, final ILogger logger,
 			final boolean transferToScriptNeeded) {
 		mLogger = logger;
 		mScript = smtManager.getScript();
-		mSmtManager = smtManager;
 		mFormulas = nestedTransFormulas;
 		mModGlobVarManager = globModVarManager;
 		mSsa = new ModifiableNestedFormulas<Term, Term>(trace, new TreeMap<Integer, Term>());

@@ -145,7 +145,7 @@ public class LoopCannibalizer {
 		case Craig_NestedInterpolation:
 		case Craig_TreeInterpolation:
 			traceChecker = new InterpolatingTraceCheckerCraig(mBspm.getRankEqAndSi(), mBspm.getHondaPredicate(),
-					new TreeMap<Integer, IPredicate>(), shifted, mSmtManager, mbuchiModGlobalVarManager,
+					new TreeMap<Integer, IPredicate>(), shifted, mSmtManager.getManagedScript(), mbuchiModGlobalVarManager,
 					/*
 					 * TODO: When Matthias
 					 * introduced this parameter he
@@ -153,13 +153,14 @@ public class LoopCannibalizer {
 					 * Check if you want to set this
 					 * to a different value.
 					 */AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, mPredicateUnifier,
-						interpolation, true, mXnfConversionTechnique, mSimplificationTechnique);
+						interpolation, true, mXnfConversionTechnique, mSimplificationTechnique, 
+						mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
 			break;
 		case ForwardPredicates:
 		case BackwardPredicates:
 		case FPandBP:
 			traceChecker = new TraceCheckerSpWp(mBspm.getRankEqAndSi(), mBspm.getHondaPredicate(),
-					new TreeMap<Integer, IPredicate>(), shifted, mSmtManager, mbuchiModGlobalVarManager,
+					new TreeMap<Integer, IPredicate>(), shifted, mSmtManager.getManagedScript(), mbuchiModGlobalVarManager,
 					/*
 					 * TODO: When Matthias
 					 * introduced this parameter he
@@ -168,7 +169,8 @@ public class LoopCannibalizer {
 					 * to a different value.
 					 */AssertCodeBlockOrder.NOT_INCREMENTALLY,
 					 UnsatCores.CONJUNCT_LEVEL, true, mServices, false, mPredicateUnifier,
-						interpolation, mSmtManager, mXnfConversionTechnique, mSimplificationTechnique);
+						interpolation, mSmtManager.getManagedScript(), mXnfConversionTechnique, mSimplificationTechnique, 
+						mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
 			break;
 		default:
 			throw new UnsupportedOperationException("unsupported interpolation");
