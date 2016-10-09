@@ -203,23 +203,11 @@ public class SmtManager {
 		if (getPredicateFactory().isDontCare(ps)) {
 			throw new UnsupportedOperationException("don't cat not expected");
 		}
-
-		final Set<IProgramVar> allVars = ps.getVars();
-		final Set<IProgramVar> varsOfRenamed = new HashSet<IProgramVar>();
-		varsOfRenamed.addAll(allVars);
-		final Set<IProgramVar> globalVars = new HashSet<IProgramVar>();
-		for (final IProgramVar var : allVars) {
-			if (var.isGlobal()) {
-				globalVars.add(var);
-				varsOfRenamed.remove(var);
-			}
-		}
 		final Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
-		for (final IProgramVar globalBoogieVar : globalVars) {
-			if (!globalBoogieVar.isOldvar()) {
-				final IProgramVar oldBoogieVar = ((IProgramNonOldVar) globalBoogieVar).getOldVar();
-				varsOfRenamed.add(oldBoogieVar);
-				substitutionMapping.put(globalBoogieVar.getTermVariable(), oldBoogieVar.getTermVariable());
+		for (final IProgramVar pv : ps.getVars()) {
+			if (pv instanceof IProgramNonOldVar) {
+				final IProgramVar oldVar = ((IProgramNonOldVar) pv).getOldVar();
+				substitutionMapping.put(pv.getTermVariable(), oldVar.getTermVariable());
 			}
 		}
 		Term renamedFormula = (new Substitution(getManagedScript(), substitutionMapping)).transform(ps.getFormula());
