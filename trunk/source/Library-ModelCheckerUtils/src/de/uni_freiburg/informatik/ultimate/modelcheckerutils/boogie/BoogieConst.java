@@ -54,6 +54,10 @@ public class BoogieConst implements IBoogieVar, IProgramConst {
 	 */
 	private final ApplicationTerm mSmtConstant;
 
+	/**
+	 * 
+	 * @param null iff constant belongs to SMT theory
+	 */
 	public BoogieConst(final String identifier, final IBoogieType iType,
 			final TermVariable termVariable, final ApplicationTerm smtConstant) {
 		mIdentifier = identifier;
@@ -78,6 +82,9 @@ public class BoogieConst implements IBoogieVar, IProgramConst {
 	}
 	
 	@Override
+	/**
+	 * null iff constant belongs to SMT theory
+	 */
 	public TermVariable getTermVariable() {
 		return mTermVariable;
 	}
