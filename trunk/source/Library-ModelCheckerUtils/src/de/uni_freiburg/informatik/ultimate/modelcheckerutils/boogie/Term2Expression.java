@@ -70,6 +70,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.BitvectorUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
 
@@ -429,26 +430,28 @@ public class Term2Expression implements Serializable {
 			result = new IdentifierExpression(null, type, getFreshIdenfier(),
 					new DeclarationInformation(StorageClass.QUANTIFIED, null));
 			mfreeVariables.add((IdentifierExpression) result);
-		}
-		else {
-			final BoogieVar bv = (BoogieVar) mBoogie2SmtSymbolTable.getBoogieVar(term);
-			final ILocation loc = mBoogie2SmtSymbolTable.getAstNode(bv).getLocation();
+		} else {
+			final IProgramVar pv = mBoogie2SmtSymbolTable.getBoogieVar(term);
+			final ILocation loc = mBoogie2SmtSymbolTable.getAstNode(pv).getLocation();
 			final DeclarationInformation declInfo = 
-					mBoogie2SmtSymbolTable.getDeclarationInformation(bv);
-			if (bv instanceof LocalBoogieVar) {
+					mBoogie2SmtSymbolTable.getDeclarationInformation(pv);
+			if (pv instanceof LocalBoogieVar) {
 				result = new IdentifierExpression(loc, type, 
-						((LocalBoogieVar) bv).getIdentifier(), declInfo);
-			} else if (bv instanceof BoogieNonOldVar) {
+						((LocalBoogieVar) pv).getIdentifier(), declInfo);
+			} else if (pv instanceof BoogieNonOldVar) {
 				result = new IdentifierExpression(loc, type, 
-						((BoogieNonOldVar) bv).getIdentifier(), declInfo);
-			} else if (bv instanceof BoogieOldVar) {
-				assert(bv.isGlobal());
+						((BoogieNonOldVar) pv).getIdentifier(), declInfo);
+			} else if (pv instanceof BoogieOldVar) {
+				assert(pv.isGlobal());
 				final Expression nonOldExpression = new IdentifierExpression(loc, type, 
-						((BoogieOldVar) bv).getIdentifierOfNonOldVar(), declInfo);
+						((BoogieOldVar) pv).getIdentifierOfNonOldVar(), declInfo);
 				result = new UnaryExpression(loc, type, 
 						UnaryExpression.Operator.OLD, nonOldExpression);
+			} else if (pv instanceof BoogieConst) {
+				result = new IdentifierExpression(loc, type, 
+						((BoogieConst) pv).getIdentifier(), declInfo);
 			} else {
-				throw new AssertionError("unsupported kind of variable " + bv.getClass().getSimpleName());
+				throw new AssertionError("unsupported kind of variable " + pv.getClass().getSimpleName());
 			}
 		}
 		return result;
