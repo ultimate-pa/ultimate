@@ -103,8 +103,8 @@ public class DeltaDebuggerController extends CommandLineController {
 		if (!mResults.isPresent()) {
 			return false;
 		}
-		return ResultUtil.filterResults(mResults.get(), ExceptionOrErrorResult.class).stream().anyMatch(a -> a
-				.getShortDescription().startsWith("UnsupportedOperationException: createNanOrInfinity is unsupported"));
+		return ResultUtil.filterResults(mResults.get(), ExceptionOrErrorResult.class).stream()
+				.anyMatch(a -> a.getShortDescription().startsWith("AssertionError: not outermost"));
 
 	}
 
