@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.DefaultPassContext;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.PassRunner;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.exceptions.UncheckedInterruptedException;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.util.RewriteUtils;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.passes.HDDPass;
 
 /**
@@ -105,7 +106,6 @@ public class DeltaDebuggerController extends CommandLineController {
 		}
 		return ResultUtil.filterResults(mResults.get(), ExceptionOrErrorResult.class).stream()
 				.anyMatch(a -> a.getShortDescription().startsWith("AssertionError: not outermost"));
-
 	}
 
 	Optional<String> runDeltaDebuggerLoop(final ICore<RunDefinition> core, final ILogger logger,
@@ -131,7 +131,8 @@ public class DeltaDebuggerController extends CommandLineController {
 
 		});
 
-		runner.setPasses(HDDPass.DEFAULT);
+		// TODO: Make this a setting
+		runner.setPasses(HDDPass.HDDSTAR);
 
 		// No parallel testing is currently possible because global state is
 		// used to store toolchain results/exception.
@@ -197,7 +198,7 @@ public class DeltaDebuggerController extends CommandLineController {
 		final Optional<String> reducedResult = runDeltaDebuggerLoop(core, logger, toolchain, inputSource);
 
 		logger.warn("\n------------------------------------\n");
-		logger.warn(reducedResult.orElse("[No reduction possible]").trim());
+		logger.warn(reducedResult.map(RewriteUtils::removeMultipleEmptyLines).orElse("[No reduction possible]"));
 		logger.warn("\n------------------------------------\n");
 	}
 
