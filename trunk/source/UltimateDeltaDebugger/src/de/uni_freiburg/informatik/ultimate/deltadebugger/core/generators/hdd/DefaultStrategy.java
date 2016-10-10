@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfa
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.util.ASTNodeConsumerDispatcher;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.util.IASTNodeConsumer;
 
-public class DefaultStrategy implements HDDStrategy {
+public class DefaultStrategy implements IHDDStrategy {
 
 	@Override
 	public void createAdditionalChangesForExpandedNode(final IPSTNode node, final ChangeCollector collector) {

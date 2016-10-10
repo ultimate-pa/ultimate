@@ -27,11 +27,11 @@ class ChangeGenerator {
 		}
 	}
 
-	protected final HDDStrategy strategy;
+	protected final IHDDStrategy strategy;
 
 	private final Map<IPSTRegularNode, List<CommaSeparatedChild>> parentToCommaPositionMap = new IdentityHashMap<>();
 
-	public ChangeGenerator(final HDDStrategy strategy) {
+	public ChangeGenerator(final IHDDStrategy strategy) {
 		this.strategy = strategy;
 	}
 

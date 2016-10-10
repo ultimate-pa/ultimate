@@ -160,7 +160,7 @@ public class HDDGeneratorFactory {
 		}
 	}
 
-	private final HDDStrategy strategy;
+	private final IHDDStrategy strategy;
 
 	private final boolean reparseBetweenLevels;
 
@@ -168,7 +168,7 @@ public class HDDGeneratorFactory {
 		this(new DefaultStrategy(), false);
 	}
 
-	public HDDGeneratorFactory(final HDDStrategy strategy, final boolean reparseBetweenLevels) {
+	public HDDGeneratorFactory(final IHDDStrategy strategy, final boolean reparseBetweenLevels) {
 		this.strategy = strategy;
 		this.reparseBetweenLevels = reparseBetweenLevels;
 	}
