@@ -100,9 +100,15 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 		mAbsIntStrong++;
 	}
 
-	public void reportAbstractionSize(final int size, final int iteration) {
+	/**
+	 * @return true iff size is the new maximum
+	 */
+	public boolean reportAbstractionSize(final int size, final int iteration) {
 		if (size > mBiggestAbstraction.getSize()) {
 			mBiggestAbstraction = new SizeIterationPair(size, iteration);
+			return true;
+		} else {
+			return false;
 		}
 	}
 	

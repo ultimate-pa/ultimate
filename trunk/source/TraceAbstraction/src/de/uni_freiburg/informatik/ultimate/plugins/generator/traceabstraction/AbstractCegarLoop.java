@@ -170,6 +170,7 @@ public abstract class AbstractCegarLoop {
 	private IRunningTaskStackProvider mRunningTaskStackProvider;
 
 	protected Dumper mDumper;
+	private static final boolean DUMP_BIGGEST_AUTOMATON = false;
 
 	public AbstractCegarLoop(final IUltimateServiceProvider services, final IToolchainStorage storage,
 			final String name, final RootNode rootNode, final SmtManager smtManager, final TAPreferences taPrefs,
@@ -412,7 +413,11 @@ public abstract class AbstractCegarLoop {
 				writeAutomatonToFile(mAbstraction, filename);
 			}
 
-			mCegarLoopBenchmark.reportAbstractionSize(mAbstraction.size(), mIteration);
+			final boolean newMaximumReached = mCegarLoopBenchmark.reportAbstractionSize(mAbstraction.size(), mIteration);
+			if (DUMP_BIGGEST_AUTOMATON && newMaximumReached) {
+				final String filename = mRootNode.getFilename();
+				writeAutomatonToFile(mAbstraction, filename);
+			}
 
 			boolean isAbstractionCorrect;
 			try {
