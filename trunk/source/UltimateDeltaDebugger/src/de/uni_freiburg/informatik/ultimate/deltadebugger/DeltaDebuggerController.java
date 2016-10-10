@@ -111,7 +111,7 @@ public class DeltaDebuggerController extends CommandLineController {
 	Optional<String> runDeltaDebuggerLoop(final ICore<RunDefinition> core, final ILogger logger,
 			final IToolchainData<RunDefinition> toolchain, final String inputSource)
 			throws ParseException, InvalidFileArgumentException, InterruptedException {
-		final PassRunner runner = new PassRunner();
+		final PassRunner runner = new PassRunner(logger);
 		runner.setContextFactory(DefaultPassContext::new);
 		runner.setTestFunction(variant -> {
 			logger.debug("testing variant\n-----------------------\n" + variant + "\n----------------------------\n");

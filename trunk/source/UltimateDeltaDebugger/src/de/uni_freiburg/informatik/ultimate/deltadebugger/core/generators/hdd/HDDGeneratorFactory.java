@@ -165,8 +165,7 @@ public class HDDGeneratorFactory {
 	private final boolean reparseBetweenLevels;
 
 	public HDDGeneratorFactory() {
-		strategy = new DefaultStrategy();
-		reparseBetweenLevels = false;
+		this(new DefaultStrategy(), false);
 	}
 
 	public HDDGeneratorFactory(final HDDStrategy strategy, final boolean reparseBetweenLevels) {

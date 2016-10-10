@@ -8,8 +8,7 @@ import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.log4j.Logger;
-
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.exceptions.UncheckedInterruptedException;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.GeneratorSearchStep;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.GeneratorSearchStepFactory;
@@ -26,27 +25,38 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.speculation
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.speculation.SpeculativeSearchIterator;
 
 public class PassRunner {
-	static Logger logger = Logger.getLogger(PassRunner.class);
 
-	private List<PassDescription> passes = Collections.emptyList();
 	private VariantTestFunction testFunction; // required
-	private PassContextFactory contextFactory = DefaultPassContext::new;
-	private Minimizer defaultMinimizer = IncludeEmptyVariantDecorator.decorate(new BinarySearchMinimizer(false));
-	private ExecutorService executorService;
-	private int workerCount = 1;
-	private int timeLimitPerPassInSeconds = 0;
+	private List<PassDescription> mPasses;
+	private PassContextFactory mContextFactory;
+	private Minimizer mDefaultMinimizer;
+	private ExecutorService mExecutorService;
+	private int mWorkerCount;
+	private int mTimeLimitPerPassInSeconds;
 
-	private SearchStats stats = new SearchStats();
+	private SearchStats mStats;
+
+	protected final ILogger mLogger;
+
+	public PassRunner(final ILogger logger) {
+		mLogger = logger;
+		mPasses = Collections.emptyList();
+		mContextFactory = DefaultPassContext::new;
+		mWorkerCount = 1;
+		mTimeLimitPerPassInSeconds = 0;
+		mStats = new SearchStats();
+		mDefaultMinimizer = IncludeEmptyVariantDecorator.decorate(new BinarySearchMinimizer(false));
+	}
 
 	Optional<String> applyGenerators(final VariantGenerator firstGenerator, final Minimizer minimizer,
 			final boolean useSpeculativeIteration) {
-		final SearchObserver observer = new SearchObserver(testFunction, stats);
+		final SearchObserver observer = new SearchObserver(testFunction, mStats, mLogger);
 		final GeneratorSearchStepFactory searchStepFactory =
 				new GeneratorSearchStepFactory(minimizer, this::createDuplicateVariantTrackerLinkedToStats);
 		final SpeculativeSearchIterator<GeneratorSearchStep> stepIterator =
 				new SpeculativeSearchIterator<>(searchStepFactory.create(firstGenerator), observer);
 
-		final int successfulStepsBefore = stats.successfulSteps;
+		final int successfulStepsBefore = mStats.successfulSteps;
 
 		GeneratorSearchStep lastStep;
 		if (useSpeculativeIteration) {
@@ -55,7 +65,7 @@ public class PassRunner {
 			lastStep = iterateDirect(new DirectSearchIteratorIterator<>(stepIterator, observer::runTestForStep));
 		}
 
-		return successfulStepsBefore != stats.successfulSteps ? Optional.of(lastStep.getResult()) : Optional.empty();
+		return successfulStepsBefore != mStats.successfulSteps ? Optional.of(lastStep.getResult()) : Optional.empty();
 	}
 
 	Optional<String> applyPass(final PassDescription pass, final PassContext context) {
@@ -64,8 +74,8 @@ public class PassRunner {
 			return Optional.empty();
 		}
 
-		final Minimizer minmizer = pass.getMinimizer().orElse(defaultMinimizer);
-		final boolean useSpeculativeIteration = executorService != null && !pass.disableSpeculativeTesting();
+		final Minimizer minmizer = pass.getMinimizer().orElse(mDefaultMinimizer);
+		final boolean useSpeculativeIteration = mExecutorService != null && !pass.disableSpeculativeTesting();
 
 		return applyGenerators(generator.get(), minmizer, useSpeculativeIteration);
 	}
@@ -88,12 +98,12 @@ public class PassRunner {
 	DuplicateVariantTracker<ChangeHandle> createDuplicateVariantTrackerLinkedToStats(final Minimizer minimizer,
 			final List<ChangeHandle> allChanges) {
 		return new HitCountingDuplicateVariantTracker(createDuplicateVariantTracker(minimizer, allChanges),
-				stats.skippedDuplicateMinimizerSteps);
+				mStats.skippedDuplicateMinimizerSteps);
 	}
 
 	public PassRunner disableParallelTesting() {
-		executorService = null;
-		workerCount = 1;
+		mExecutorService = null;
+		mWorkerCount = 1;
 		return this;
 	}
 
@@ -102,29 +112,29 @@ public class PassRunner {
 			throw new IllegalArgumentException();
 		}
 
-		this.executorService = Objects.requireNonNull(executorService);
-		this.workerCount = workerCount;
+		mExecutorService = Objects.requireNonNull(executorService);
+		mWorkerCount = workerCount;
 		return this;
 	}
 
 	public PassContextFactory getContextFactory() {
-		return contextFactory;
+		return mContextFactory;
 	}
 
 	public Minimizer getDefaultMinimizer() {
-		return defaultMinimizer;
+		return mDefaultMinimizer;
 	}
 
 	public ExecutorService getExecutorService() {
-		return executorService;
+		return mExecutorService;
 	}
 
 	public List<PassDescription> getPasses() {
-		return passes;
+		return mPasses;
 	}
 
 	public SearchStats getStats() {
-		return stats;
+		return mStats;
 	}
 
 	public VariantTestFunction getTestFunction() {
@@ -132,21 +142,21 @@ public class PassRunner {
 	}
 
 	public int getTimeLimitPerPassInSeconds() {
-		return timeLimitPerPassInSeconds;
+		return mTimeLimitPerPassInSeconds;
 	}
 
 	public int getWorkerCount() {
-		return workerCount;
+		return mWorkerCount;
 	}
 
 	public boolean isParallelTestingEnabled() {
-		return executorService != null;
+		return mExecutorService != null;
 	}
 
 	GeneratorSearchStep iterateDirect(final DirectSearchIteratorIterator<GeneratorSearchStep> iterIterator) {
-		if (timeLimitPerPassInSeconds > 0) {
-			if (!iterIterator.iterateFor(timeLimitPerPassInSeconds, TimeUnit.SECONDS)) {
-				logger.warn("Stopping search after " + timeLimitPerPassInSeconds + " seconds...");
+		if (mTimeLimitPerPassInSeconds > 0) {
+			if (!iterIterator.iterateFor(mTimeLimitPerPassInSeconds, TimeUnit.SECONDS)) {
+				mLogger.warn("Stopping search after " + mTimeLimitPerPassInSeconds + " seconds...");
 			}
 		} else {
 			iterIterator.iterateToEnd();
@@ -156,11 +166,11 @@ public class PassRunner {
 	}
 
 	GeneratorSearchStep iterateParallel(final ParallelSearchIteratorIterator<GeneratorSearchStep> iterIterator) {
-		iterIterator.beginIteration(executorService, workerCount);
+		iterIterator.beginIteration(mExecutorService, mWorkerCount);
 		try {
-			if (timeLimitPerPassInSeconds > 0
-					&& !iterIterator.waitForEnd(timeLimitPerPassInSeconds, TimeUnit.SECONDS)) {
-				logger.warn("Stopping search after " + timeLimitPerPassInSeconds + " seconds...");
+			if (mTimeLimitPerPassInSeconds > 0
+					&& !iterIterator.waitForEnd(mTimeLimitPerPassInSeconds, TimeUnit.SECONDS)) {
+				mLogger.warn("Stopping search after " + mTimeLimitPerPassInSeconds + " seconds...");
 				iterIterator.stopWorkers();
 			}
 
@@ -172,7 +182,7 @@ public class PassRunner {
 	}
 
 	public void resetStats() {
-		stats = new SearchStats();
+		mStats = new SearchStats();
 	}
 
 	/**
@@ -188,22 +198,22 @@ public class PassRunner {
 		}
 
 		Optional<String> result = Optional.empty();
-		PassContext context = contextFactory.create(input);
+		PassContext context = mContextFactory.create(input);
 
-		for (int i = 0; i != passes.size(); ++i) {
-			final PassDescription pass = passes.get(i);
+		for (int i = 0; i != mPasses.size(); ++i) {
+			final PassDescription pass = mPasses.get(i);
 
-			logger.info("\n-------------------------");
-			logger.info("Pass: " + pass.getName());
-			logger.info("Description: " + pass.getDescription());
-			logger.info("-------------------------\n");
+			mLogger.info("\n-------------------------");
+			mLogger.info("Pass: " + pass.getName());
+			mLogger.info("Description: " + pass.getDescription());
+			mLogger.info("-------------------------\n");
 
 			final Optional<String> thisResult = applyPass(pass, context);
 			if (thisResult.isPresent()) {
 				// Create context using new best variant for the next pass, if
 				// there is one
-				if (i + 1 != passes.size() || pass.repeatUntilReductionFails()) {
-					context = contextFactory.create(thisResult.get());
+				if (i + 1 != mPasses.size() || pass.repeatUntilReductionFails()) {
+					context = mContextFactory.create(thisResult.get());
 				}
 				result = thisResult;
 
@@ -211,31 +221,31 @@ public class PassRunner {
 					--i;
 				}
 			}
-			logger.info("\n-------------------------\n");
-			SearchObserver.debugLogStats(stats);
-			logger.info("\n-------------------------\n");
+			mLogger.info("\n-------------------------\n");
+			SearchObserver.debugLogStats(mLogger, mStats);
+			mLogger.info("\n-------------------------\n");
 		}
 
 		return result;
 	}
 
 	public PassRunner setContextFactory(final PassContextFactory contextFactory) {
-		this.contextFactory = Objects.requireNonNull(contextFactory);
+		mContextFactory = Objects.requireNonNull(contextFactory);
 		return this;
 	}
 
 	public PassRunner setDefaultMinimizer(final Minimizer defaultMinimizer) {
-		this.defaultMinimizer = defaultMinimizer;
+		mDefaultMinimizer = defaultMinimizer;
 		return this;
 	}
 
 	public PassRunner setPasses(final List<PassDescription> passes) {
-		this.passes = Objects.requireNonNull(passes);
+		mPasses = Objects.requireNonNull(passes);
 		return this;
 	}
 
 	public PassRunner setPasses(final PassDescription... passes) {
-		this.passes = Arrays.asList(passes);
+		mPasses = Arrays.asList(passes);
 		return this;
 	}
 
@@ -248,6 +258,6 @@ public class PassRunner {
 		if (timeLimitPerPassInSeconds < 0) {
 			throw new IllegalArgumentException();
 		}
-		this.timeLimitPerPassInSeconds = timeLimitPerPassInSeconds;
+		mTimeLimitPerPassInSeconds = timeLimitPerPassInSeconds;
 	}
 }

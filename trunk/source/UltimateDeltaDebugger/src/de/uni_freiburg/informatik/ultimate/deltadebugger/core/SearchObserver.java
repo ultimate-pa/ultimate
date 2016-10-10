@@ -4,36 +4,39 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.BooleanSupplier;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.exceptions.ChangeConflictException;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.GeneratorSearchStep;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.speculation.SpeculativeIterationObserver;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.speculation.SpeculativeTask;
 
 class SearchObserver implements SpeculativeIterationObserver<GeneratorSearchStep> {
-	public static void debugLogChangeDetails(final List<ChangeHandle> changes) {
-		for (int i = 0; i != changes.size(); ++i) {
-			PassRunner.logger.debug("[" + i + "] " + changes.get(i));
-		}
-	}
+	private final VariantTestFunction mTestFunction;
 
-	public static void debugLogStats(final SearchStats stats) {
-		PassRunner.logger.info("Overall test count: " + stats.getOverallTestCount());
-		PassRunner.logger.info(" - successful: " + stats.getSuccessfulSteps());
-		PassRunner.logger.info(
-				" - failed: " + stats.getFailedSteps() + " (" + stats.getChangeConflicts() + " change conflicts)");
-		PassRunner.logger.info(" - canceled: " + stats.getCanceledSpeculativeSteps());
-		PassRunner.logger.info(" - duplicate tests skipped: " + stats.getSkippedDuplicateMinimizerSteps());
-	}
-
-	private final VariantTestFunction testFunction;
-
-	private final SearchStats stats;
+	private final SearchStats mStats;
 
 	private GeneratorSearchStep previousStep;
 
-	public SearchObserver(final VariantTestFunction testFunction, final SearchStats stats) {
-		this.testFunction = testFunction;
-		this.stats = stats;
+	private final ILogger mLogger;
+
+	public SearchObserver(final VariantTestFunction testFunction, final SearchStats stats, final ILogger logger) {
+		mTestFunction = testFunction;
+		mStats = stats;
+		mLogger = logger;
+	}
+
+	public void debugLogChangeDetails(final List<ChangeHandle> changes) {
+		for (int i = 0; i != changes.size(); ++i) {
+			mLogger.debug("[" + i + "] " + changes.get(i));
+		}
+	}
+
+	public static void debugLogStats(final ILogger logger, final SearchStats stats) {
+		logger.info("Overall test count: " + stats.getOverallTestCount());
+		logger.info(" - successful: " + stats.getSuccessfulSteps());
+		logger.info(" - failed: " + stats.getFailedSteps() + " (" + stats.getChangeConflicts() + " change conflicts)");
+		logger.info(" - canceled: " + stats.getCanceledSpeculativeSteps());
+		logger.info(" - duplicate tests skipped: " + stats.getSkippedDuplicateMinimizerSteps());
 	}
 
 	@Override
@@ -41,15 +44,15 @@ class SearchObserver implements SpeculativeIterationObserver<GeneratorSearchStep
 		if (previousStep == null || step.getVariantGenerator() != previousStep.getVariantGenerator()) {
 			// Handle change of variant generator
 			if (previousStep != null) {
-				PassRunner.logger.debug("\n########################################################################");
-				PassRunner.logger.debug(previousStep.getActiveChanges().size() + " active changes found!");
-				PassRunner.logger.debug("########################################################################\n");
+				mLogger.debug("\n########################################################################");
+				mLogger.debug(previousStep.getActiveChanges().size() + " active changes found!");
+				mLogger.debug("########################################################################\n");
 				debugLogChangeDetails(previousStep.getActiveChanges());
 			}
 
-			PassRunner.logger.debug("\n########################################################################");
-			PassRunner.logger.debug("Searching over " + step.getVariantGenerator().getChanges().size() + " changes...");
-			PassRunner.logger.debug("########################################################################\n");
+			mLogger.debug("\n########################################################################");
+			mLogger.debug("Searching over " + step.getVariantGenerator().getChanges().size() + " changes...");
+			mLogger.debug("########################################################################\n");
 			debugLogChangeDetails(step.getVariantGenerator().getChanges());
 		}
 
@@ -63,21 +66,21 @@ class SearchObserver implements SpeculativeIterationObserver<GeneratorSearchStep
 		step.updateDuplicateTrackerWithTestResult(keepVariant);
 
 		if (keepVariant) {
-			++stats.successfulSteps;
-			PassRunner.logger.info("Success: " + step.getVariant().length() + " bytes");
+			++mStats.successfulSteps;
+			mLogger.info("Success: " + step.getVariant().length() + " bytes");
 		} else {
-			++stats.failedSteps;
+			++mStats.failedSteps;
 		}
 
-		if (0 == stats.overallTestCount.get() % 100) {
-			debugLogStats(stats);
+		if (0 == mStats.overallTestCount.get() % 100) {
+			debugLogStats(mLogger, mStats);
 		}
 
 	}
 
 	@Override
 	public void onTasksCanceled(final List<? extends SpeculativeTask<GeneratorSearchStep>> tasks) {
-		stats.canceledSpeculativeSteps += tasks.size();
+		mStats.canceledSpeculativeSteps += tasks.size();
 	}
 
 	/**
@@ -89,16 +92,16 @@ class SearchObserver implements SpeculativeIterationObserver<GeneratorSearchStep
 	 * @return
 	 */
 	Optional<Boolean> runTestForStep(final GeneratorSearchStep step, final BooleanSupplier isCanceled) {
-		stats.overallTestCount.incrementAndGet();
+		mStats.overallTestCount.incrementAndGet();
 
 		String variant;
 		try {
 			variant = step.getVariant();
 		} catch (final ChangeConflictException e) {
-			PassRunner.logger.warn("Skipping test because of change conflict: " + e.getMessage());
-			PassRunner.logger.trace("change conflict details", e);
+			mLogger.warn("Skipping test because of change conflict: " + e.getMessage());
+			mLogger.debug("change conflict details " + e);
 
-			stats.changeConflicts.incrementAndGet();
+			mStats.changeConflicts.incrementAndGet();
 			return Optional.of(false);
 		}
 
@@ -106,7 +109,7 @@ class SearchObserver implements SpeculativeIterationObserver<GeneratorSearchStep
 			return Optional.empty();
 		}
 
-		return testFunction.cancelableTest(variant, isCanceled);
+		return mTestFunction.cancelableTest(variant, isCanceled);
 	}
 
 }
