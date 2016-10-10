@@ -44,7 +44,7 @@ public abstract class AbstractCTranslationTestSuite extends UltimateTestSuite {
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		final ArrayList<UltimateTestCase> rtr = new ArrayList<UltimateTestCase>();
+		final ArrayList<UltimateTestCase> rtr = new ArrayList<>();
 
 		// get a set of input files
 
