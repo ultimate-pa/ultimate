@@ -368,7 +368,7 @@ public class MapEliminator {
 		assert !SmtUtils.containsFunctionApplication(newTerm, "store") : "The formula contains still store-expressions";
 		final Term replacedTerm = replaceReadExpressions(newTF, newTerm);
 		assert SmtUtils.isArrayFree(replacedTerm) : "The formula contains still arrays";
-		assert SmtUtils.containsUninterpretedFunctioApplication(replacedTerm) : "The formula contains still UFs";
+		assert !SmtUtils.containsUninterpretedFunctioApplication(replacedTerm) : "The formula contains still UFs";
 		setFormulaAndSimplify(newTF, replacedTerm);
 		return newTF;
 	}
