@@ -351,12 +351,12 @@ public class RelevantVariables {
 	}
 	
 	private void addAllNonModifiableGlobals(final Set<IProgramVar> bvSet, final String proc,
-			final int startPos, final int endPos, final Set<IProgramVar> modifiedSet) {
+			final int startPos, final int endPos, final Set<IProgramVar> nonModifiableSet) {
 		for (final IProgramVar bv : bvSet) {
 			if (bv.isGlobal()) {
 				if (bv instanceof IProgramConst) {
 					if (occursBetween(bv, startPos, endPos)) {
-						modifiedSet.add(bv);
+						nonModifiableSet.add(bv);
 					}
 				} else {
 					IProgramNonOldVar bnov;
@@ -367,7 +367,7 @@ public class RelevantVariables {
 					}
 					if (!mModifiableGlobals.isModifiable(bnov, proc)) {
 						if (occursBetween(bnov, startPos, endPos)) {
-							modifiedSet.add(bnov);
+							nonModifiableSet.add(bnov);
 						}
 					}
 				}
@@ -376,17 +376,21 @@ public class RelevantVariables {
 	}
 	
 	private void addAllNonModifiableGlobals(final Set<IProgramVar> bvSet, final String proc,
-			final Set<IProgramVar> modifiedSet) {
+			final Set<IProgramVar> nonModifiableSet) {
 		for (final IProgramVar bv : bvSet) {
 			if (bv.isGlobal()) {
-				IProgramNonOldVar bnov;
-				if (bv instanceof IProgramOldVar) {
-					bnov = ((IProgramOldVar) bv).getNonOldVar();
+				if (bv instanceof IProgramConst) {
+					nonModifiableSet.add(bv);
 				} else {
-					bnov = (IProgramNonOldVar) bv;
-				}
-				if (!mModifiableGlobals.isModifiable(bnov, proc)) {
-					modifiedSet.add(bv);
+					IProgramNonOldVar bnov;
+					if (bv instanceof IProgramOldVar) {
+						bnov = ((IProgramOldVar) bv).getNonOldVar();
+					} else {
+						bnov = (IProgramNonOldVar) bv;
+					}
+					if (!mModifiableGlobals.isModifiable(bnov, proc)) {
+						nonModifiableSet.add(bv);
+					}
 				}
 			}
 		}

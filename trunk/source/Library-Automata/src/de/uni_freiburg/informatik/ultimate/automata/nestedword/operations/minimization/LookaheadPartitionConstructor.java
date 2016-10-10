@@ -30,6 +30,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -40,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IOutgoingTransitionlet;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Detect non-mergeable states quickly.
@@ -76,7 +78,8 @@ public class LookaheadPartitionConstructor<LETTER, STATE> {
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;
-	private final Set<Set<STATE>> mResult;
+	private final Set<Set<STATE>> mPartition;
+	private final List<Pair<STATE, STATE>> mPairs;
 	
 	/**
 	 * Standard constructor.
@@ -107,14 +110,29 @@ public class LookaheadPartitionConstructor<LETTER, STATE> {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mOperand = operand;
-		mResult = createPartition(separateAcceptingStates);
+		mPartition = createPartition(separateAcceptingStates);
+		mPairs = findDifferentPairs(mPartition);
 	}
 	
 	/**
 	 * @return The partition.
 	 */
-	public Collection<Set<STATE>> getResult() {
-		return mResult;
+	public PartitionPairsWrapper<STATE> getResult() {
+		return new PartitionPairsWrapper<>(mPartition, mPairs);
+	}
+	
+	/**
+	 * @return The partition.
+	 */
+	public Collection<Set<STATE>> getPartition() {
+		return mPartition;
+	}
+	
+	/**
+	 * @return The pairs of different states (not including the partition).
+	 */
+	public List<Pair<STATE, STATE>> getDifferencePairs() {
+		return mPairs;
 	}
 	
 	private Set<Set<STATE>> createPartition(final boolean separateAcceptingStates) {
@@ -241,6 +259,11 @@ public class LookaheadPartitionConstructor<LETTER, STATE> {
 		return partition;
 	}
 	
+	private List<Pair<STATE, STATE>> splitHierarchicalPredecessors(final Set<Set<STATE>> partition) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	
 	private boolean splitLetterSuccessors(final Map<STATE, Set<STATE>> state2block, final Set<STATE> block,
 			final LETTER letter, final Set<Set<STATE>> partition, final boolean isInternal) {
 		final Map<Set<STATE>, Set<STATE>> targetBlock2states = new HashMap<>();
@@ -359,6 +382,19 @@ public class LookaheadPartitionConstructor<LETTER, STATE> {
 		return true;
 	}
 	
+	private List<Pair<STATE, STATE>> findDifferentPairs(final Set<Set<STATE>> partition) {
+		final List<Pair<STATE, STATE>> pairsList;
+		
+		// split states with (unique) split successors wrt. a symbol
+		pairsList = splitHierarchicalPredecessors(partition);
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Splitting by different hierarchical predecessors, result:");
+			mLogger.debug(partition);
+		}
+		
+		return pairsList;
+	}
+	
 	/**
 	 * Outgoing internal and call symbols container.
 	 * 
@@ -412,6 +448,40 @@ public class LookaheadPartitionConstructor<LETTER, STATE> {
 		@Override
 		public String toString() {
 			return "OutgoingInCaSymbols [mInternal=" + mInternal + ", mCall=" + mCall + "]";
+		}
+	}
+	
+	/**
+	 * Wraps the two possible results, namely a partition and a list of pairs.
+	 * 
+	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+	 * @param <STATE>
+	 *            state type
+	 */
+	public static final class PartitionPairsWrapper<STATE> {
+		private final Set<Set<STATE>> mPartitionInner;
+		
+		private final List<Pair<STATE, STATE>> mPairsInner;
+		
+		/**
+		 * Constructor.
+		 * 
+		 * @param partition
+		 *            partition
+		 * @param pairs
+		 *            pairs
+		 */
+		public PartitionPairsWrapper(final Set<Set<STATE>> partition, final List<Pair<STATE, STATE>> pairs) {
+			mPartitionInner = partition;
+			mPairsInner = pairs;
+		}
+		
+		public Set<Set<STATE>> getPartition() {
+			return mPartitionInner;
+		}
+		
+		public List<Pair<STATE, STATE>> getDifferencePairs() {
+			return mPairsInner;
 		}
 	}
 }

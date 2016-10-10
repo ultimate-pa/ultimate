@@ -202,15 +202,17 @@ public class Boogie2SMT {
 				throw new AssertionError();
 			}
 			final BoogieConst bc = mBoogie2SmtSymbolTable.getBoogieConst(id);
-			mConsts.add(bc);
-			if (mTfb != null) {
-				mTfb.addInVar(bc, bc.getTermVariable());
-				mTfb.addOutVar(bc, bc.getTermVariable());
-			}
-			final Term result = bc.getTermVariable();
-//			final Term result = bc.getDefaultConstant();
-			if (result == null) {
-				throw new AssertionError();
+			Term result;
+			if (bc.getTermVariable() == null) {
+				// constant belongs to theory
+				result = bc.getDefaultConstant();
+			} else {
+				mConsts.add(bc);
+				if (mTfb != null) {
+					mTfb.addInVar(bc, bc.getTermVariable());
+					mTfb.addOutVar(bc, bc.getTermVariable());
+				}
+				result = bc.getTermVariable();
 			}
 			return result;
 		}

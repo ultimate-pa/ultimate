@@ -1797,12 +1797,12 @@ public class MemoryHandler {
 		mVariablesToBeFreed.put(llvp, mVariablesToBeFreed.getActiveScopeNum());
 	}
 
-	public LinkedScopedHashMap<LocalLValueILocationPair, Integer> getVariablesToBeMalloced() {
-		return mVariablesToBeMalloced;
+	public Map<LocalLValueILocationPair, Integer> getVariablesToBeMalloced() {
+		return Collections.unmodifiableMap(mVariablesToBeMalloced);
 	}
 
-	public LinkedScopedHashMap<LocalLValueILocationPair, Integer> getVariablesToBeFreed() {
-		return mVariablesToBeFreed;
+	public Map<LocalLValueILocationPair, Integer> getVariablesToBeFreed() {
+		return Collections.unmodifiableMap(mVariablesToBeFreed);
 	}
 
 	public PointerCheckMode getPointerSubtractionAndComparisonValidityCheckMode() {
@@ -2002,4 +2002,16 @@ public class MemoryHandler {
 			return mName;
 		}
 	}
+
+	public void beginScope() {
+		mVariablesToBeMalloced.beginScope();
+		mVariablesToBeFreed.beginScope();
+	}
+	
+	public void endScope() {
+		mVariablesToBeMalloced.endScope();
+		mVariablesToBeFreed.endScope();
+	}
+
+	
 }

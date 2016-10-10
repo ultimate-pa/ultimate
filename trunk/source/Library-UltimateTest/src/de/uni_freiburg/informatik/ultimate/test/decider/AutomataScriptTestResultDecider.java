@@ -55,7 +55,7 @@ public class AutomataScriptTestResultDecider implements ITestResultDecider {
 			throw new AssertionError("no overall result - interpretation of ats file failed");
 		} else {
 			mCategory = asior.getOverallResult();
-			if (mCategory == OverallResult.EXCEPTION_OR_ERROR) {
+			if (mCategory == OverallResult.EXCEPTION_OR_ERROR || mCategory == OverallResult.TIMEOUT) {
 				mErrorMessage = asior.getErrorMessage();
 			} else {
 				mErrorMessage = null;
@@ -72,7 +72,7 @@ public class AutomataScriptTestResultDecider implements ITestResultDecider {
 
 	@Override
 	public String getResultMessage() {
-		if (mCategory == OverallResult.EXCEPTION_OR_ERROR) {
+		if (mCategory == OverallResult.EXCEPTION_OR_ERROR || mCategory == OverallResult.TIMEOUT) {
 			return mCategory.toString() + " " + mErrorMessage;
 		} else {
 			return mCategory.toString();

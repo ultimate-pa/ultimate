@@ -8,4 +8,7 @@ Require-Bundle: Library-UltimateCore,
  UltimateCore,
  org.apache.commons.cli,
  Library-UltimateUtil,
- de.uni_freiburg.informatik.ultimate.cli
+ de.uni_freiburg.informatik.ultimate.cli,
+ org.eclipse.cdt.core,
+ org.eclipse.jface.text,
+ Library-log4j

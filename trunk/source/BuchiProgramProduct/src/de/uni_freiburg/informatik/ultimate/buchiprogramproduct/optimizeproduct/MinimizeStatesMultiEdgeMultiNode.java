@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.BaseMultigraphEdge;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
@@ -59,7 +59,7 @@ public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
 	private final TransFormulaBuilder mTransFormulaBuilder;
 
 	public MinimizeStatesMultiEdgeMultiNode(final RootNode product, final IUltimateServiceProvider services,
-			final IToolchainStorage storage, final SimplicationTechnique simplificationTechnique,
+			final IToolchainStorage storage, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique) {
 		super(product, services, storage);
 		mTransFormulaBuilder =

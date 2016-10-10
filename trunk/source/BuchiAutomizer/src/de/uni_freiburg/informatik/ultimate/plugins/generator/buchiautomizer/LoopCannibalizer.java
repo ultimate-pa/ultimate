@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -71,14 +71,14 @@ public class LoopCannibalizer {
 
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
-	private final SimplicationTechnique mSimplificationTechnique;
+	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
 
 	public LoopCannibalizer(final NestedLassoRun<CodeBlock, IPredicate> counterexample, final Set<IPredicate> loopInterpolants,
 			final BinaryStatePredicateManager bspm, final PredicateUnifier predicateUnifier, final SmtManager smtManager,
 			final BuchiModGlobalVarManager buchiModGlobalVarManager, final InterpolationTechnique interpolation,
 			final IUltimateServiceProvider services,
-			final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
+			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		super();
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -145,7 +145,7 @@ public class LoopCannibalizer {
 		case Craig_NestedInterpolation:
 		case Craig_TreeInterpolation:
 			traceChecker = new InterpolatingTraceCheckerCraig(mBspm.getRankEqAndSi(), mBspm.getHondaPredicate(),
-					new TreeMap<Integer, IPredicate>(), shifted, mSmtManager, mbuchiModGlobalVarManager,
+					new TreeMap<Integer, IPredicate>(), shifted, mSmtManager.getManagedScript(), mbuchiModGlobalVarManager,
 					/*
 					 * TODO: When Matthias
 					 * introduced this parameter he
@@ -153,13 +153,14 @@ public class LoopCannibalizer {
 					 * Check if you want to set this
 					 * to a different value.
 					 */AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, mPredicateUnifier,
-						interpolation, true, mXnfConversionTechnique, mSimplificationTechnique);
+						interpolation, true, mXnfConversionTechnique, mSimplificationTechnique, 
+						mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
 			break;
 		case ForwardPredicates:
 		case BackwardPredicates:
 		case FPandBP:
 			traceChecker = new TraceCheckerSpWp(mBspm.getRankEqAndSi(), mBspm.getHondaPredicate(),
-					new TreeMap<Integer, IPredicate>(), shifted, mSmtManager, mbuchiModGlobalVarManager,
+					new TreeMap<Integer, IPredicate>(), shifted, mSmtManager.getManagedScript(), mbuchiModGlobalVarManager,
 					/*
 					 * TODO: When Matthias
 					 * introduced this parameter he
@@ -168,7 +169,8 @@ public class LoopCannibalizer {
 					 * to a different value.
 					 */AssertCodeBlockOrder.NOT_INCREMENTALLY,
 					 UnsatCores.CONJUNCT_LEVEL, true, mServices, false, mPredicateUnifier,
-						interpolation, mSmtManager, mXnfConversionTechnique, mSimplificationTechnique);
+						interpolation, mSmtManager.getManagedScript(), mXnfConversionTechnique, mSimplificationTechnique, 
+						mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
 			break;
 		default:
 			throw new UnsupportedOperationException("unsupported interpolation");

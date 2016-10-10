@@ -75,6 +75,7 @@ import org.eclipse.cdt.core.dom.ast.IASTExpressionStatement;
 import org.eclipse.cdt.core.dom.ast.IASTFieldReference;
 import org.eclipse.cdt.core.dom.ast.IASTForStatement;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
+import org.eclipse.cdt.core.dom.ast.IASTFunctionDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTGotoStatement;
 import org.eclipse.cdt.core.dom.ast.IASTIdExpression;
@@ -97,6 +98,7 @@ import org.eclipse.cdt.core.dom.ast.IASTProblemStatement;
 import org.eclipse.cdt.core.dom.ast.IASTProblemTypeId;
 import org.eclipse.cdt.core.dom.ast.IASTReturnStatement;
 import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclaration;
+import org.eclipse.cdt.core.dom.ast.IASTStandardFunctionDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTStatement;
 import org.eclipse.cdt.core.dom.ast.IASTSwitchStatement;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
@@ -105,6 +107,7 @@ import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTWhileStatement;
 import org.eclipse.cdt.core.dom.ast.c.ICASTCompositeTypeSpecifier;
 import org.eclipse.cdt.core.dom.ast.gnu.IGNUASTCompoundStatementExpression;
+import org.eclipse.cdt.core.dom.ast.gnu.c.ICASTKnRFunctionDeclarator;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTDeclarator;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTDesignatedInitializer;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTFunctionDeclarator;
@@ -375,8 +378,7 @@ public class CHandler implements ICHandler {
 				new PostProcessor(main, mLogger, mExpressionTranslation, overapproximateFloatingPointOperations);
 		mTypeSizeComputer =
 				new TypeSizeAndOffsetComputer((TypeHandler) mTypeHandler, mExpressionTranslation, main.getTypeSizes());
-		mFunctionHandler = new FunctionHandler(mExpressionTranslation, mTypeSizeComputer,
-				prefs.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_MEMORY_LEAK_IN_MAIN));
+		mFunctionHandler = new FunctionHandler(mExpressionTranslation, mTypeSizeComputer);
 		final boolean smtBoolArraysWorkaround =
 				prefs.getBoolean(CACSLPreferenceInitializer.LABEL_SMT_BOOL_ARRAYS_WORKAROUND);
 		mMemoryHandler = new MemoryHandler(typeHandler, mFunctionHandler, checkPointerValidity, mTypeSizeComputer,
@@ -569,6 +571,7 @@ public class CHandler implements ICHandler {
 		mCurrentDeclaredTypes.push(resType);
 		final DeclaratorResult declResult = (DeclaratorResult) main.dispatch(node.getDeclarator());
 		mCurrentDeclaredTypes.pop();
+		assert declResult.getDeclaration().getType() instanceof CFunction;
 		return mFunctionHandler.handleFunctionDefinition(main, mMemoryHandler, node, declResult.getDeclaration(),
 				mContract);
 	}
@@ -998,8 +1001,8 @@ public class CHandler implements ICHandler {
 			final CArray arrayType = new CArray(size.toArray(new RValue[size.size()]), newResType.cType);
 			newResType.cType = arrayType;
 
-		} else if (node instanceof CASTFunctionDeclarator) {
-			final CASTFunctionDeclarator funcDecl = (CASTFunctionDeclarator) node;
+		} else if (node instanceof IASTStandardFunctionDeclarator) {
+			final IASTStandardFunctionDeclarator funcDecl = (IASTStandardFunctionDeclarator) node;
 
 			final IASTParameterDeclaration[] paramDecls = funcDecl.getParameters();
 			CDeclaration[] paramsParsed = new CDeclaration[paramDecls.length];
@@ -1015,7 +1018,22 @@ public class CHandler implements ICHandler {
 			}
 			final CFunction funcType = new CFunction(newResType.cType, paramsParsed, funcDecl.takesVarArgs());
 			newResType.cType = funcType;
-		} else if (node instanceof CASTDeclarator) {
+		} else if (node instanceof ICASTKnRFunctionDeclarator) {
+			final ICASTKnRFunctionDeclarator funcDecl = (ICASTKnRFunctionDeclarator) node;
+			
+			assert funcDecl.getParameterDeclarations().length == funcDecl.getParameterNames().length :
+				"implicit int declarations are forbidden from C99 on, this is one, right?";
+			
+			CDeclaration[] paramsParsed = new CDeclaration[funcDecl.getParameterDeclarations().length];
+			for (int i = 0; i < funcDecl.getParameterDeclarations().length; i++) {
+				DeclarationResult paramDeclRes = (DeclarationResult) main.dispatch(funcDecl.getParameterDeclarations()[i]);
+				assert paramDeclRes.getDeclarations().size() == 1;
+				paramsParsed[i] = paramDeclRes.getDeclarations().get(0);
+			}
+
+			final CFunction funcType = new CFunction(newResType.cType, paramsParsed, false);
+			newResType.cType = funcType;
+		} else if (node instanceof IASTDeclarator) {
 			/* nothing */
 		} else {
 			throw new UnsupportedSyntaxException(loc, "Unknown Declarator " + node.getClass());
@@ -3759,16 +3777,14 @@ public class CHandler implements ICHandler {
 	public void beginScope() {
 		mTypeHandler.beginScope();
 		mSymbolTable.beginScope();
-		mMemoryHandler.getVariablesToBeMalloced().beginScope();
-		mMemoryHandler.getVariablesToBeFreed().beginScope();
+		mMemoryHandler.beginScope();
 	}
 
 	@Override
 	public void endScope() {
 		mTypeHandler.endScope();
 		mSymbolTable.endScope();
-		mMemoryHandler.getVariablesToBeMalloced().endScope();
-		mMemoryHandler.getVariablesToBeFreed().endScope();
+		mMemoryHandler.endScope();
 	}
 
 	/**

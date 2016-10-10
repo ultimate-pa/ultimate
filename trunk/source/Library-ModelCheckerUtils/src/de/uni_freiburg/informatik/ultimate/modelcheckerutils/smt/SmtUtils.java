@@ -74,7 +74,7 @@ public final class SmtUtils {
 		BDD_BASED, BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION
 	};
 
-	public enum SimplicationTechnique {
+	public enum SimplificationTechnique {
 		SIMPLIFY_BDD_PROP, SIMPLIFY_BDD_FIRST_ORDER, SIMPLIFY_QUICK, SIMPLIFY_DDA
 	};
 
@@ -88,7 +88,7 @@ public final class SmtUtils {
 	private static final boolean BINARY_BITVECTOR_SUM_WORKAROUND = false;
 
 	public static Term simplify(final ManagedScript script, final Term formula, final IUltimateServiceProvider services,
-			final SimplicationTechnique simplificationTechnique) {
+			final SimplificationTechnique simplificationTechnique) {
 		final ILogger logger = services.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
 		if (logger.isDebugEnabled()) {
 			logger.debug(new DebugMessage("simplifying formula of DAG size {0}", new DagSizePrinter(formula)));

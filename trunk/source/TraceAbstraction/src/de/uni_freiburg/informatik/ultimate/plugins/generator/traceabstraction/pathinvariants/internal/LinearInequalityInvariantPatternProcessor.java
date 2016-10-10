@@ -60,7 +60,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -155,7 +155,7 @@ public final class LinearInequalityInvariantPatternProcessor
 			final IPredicate postcondition,
 			final ILinearInequalityInvariantPatternStrategy strategy,
 			final boolean useNonlinearConstraints, 
-			final SimplicationTechnique simplicationTechnique, 
+			final SimplificationTechnique simplicationTechnique, 
 			final XnfConversionTechnique xnfConversionTechnique) {
 		super(predicateUnifier, predicateScript);
 		this.services = services;

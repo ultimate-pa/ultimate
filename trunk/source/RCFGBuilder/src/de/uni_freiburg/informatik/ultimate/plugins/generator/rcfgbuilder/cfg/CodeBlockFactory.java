@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
@@ -74,7 +74,7 @@ public class CodeBlockFactory implements IStorable {
 
 	public InterproceduralSequentialComposition constuctInterproceduralSequentialComposition(final ProgramPoint source,
 			final ProgramPoint target, final boolean simplify, final boolean extPqe, final List<CodeBlock> codeBlocks,
-			final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique) {
+			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique) {
 		return new InterproceduralSequentialComposition(mSerialNumberCounter++, source, target, mMgdScript, mMgvManager,
 				simplify, extPqe, codeBlocks, mLogger, mServices, xnfConversionTechnique, simplificationTechnique, mSymbolTable);
 	}
@@ -85,7 +85,7 @@ public class CodeBlockFactory implements IStorable {
 
 	public ParallelComposition constructParallelComposition(final ProgramPoint source, final ProgramPoint target,
 			final List<CodeBlock> codeBlocks, final XnfConversionTechnique xnfConversionTechnique,
-			final SimplicationTechnique simplificationTechnique) {
+			final SimplificationTechnique simplificationTechnique) {
 		return new ParallelComposition(mSerialNumberCounter++, source, target, mMgdScript, mServices, codeBlocks,
 				xnfConversionTechnique);
 	}
@@ -96,7 +96,7 @@ public class CodeBlockFactory implements IStorable {
 
 	public SequentialComposition constructSequentialComposition(final ProgramPoint source, final ProgramPoint target,
 			final boolean simplify, final boolean extPqe, final List<CodeBlock> codeBlocks,
-			final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique) {
+			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique) {
 		return new SequentialComposition(mSerialNumberCounter++, source, target, mMgdScript, mMgvManager, simplify,
 				extPqe, mServices, codeBlocks, xnfConversionTechnique, simplificationTechnique, mSymbolTable);
 	}

@@ -42,7 +42,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
@@ -80,7 +81,7 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder
 			final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> aiResult,
 			final PredicateUnifier predUnifier, final SmtManager smtManager,
 			final IRun<CodeBlock, IPredicate> currentCounterExample,
-			final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
+			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mSmtManager = smtManager;
@@ -125,14 +126,18 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder
 			@SuppressWarnings("unchecked")
 			final Set<IAbstractState<?, ?, ?>> nextStates =
 					(Set<IAbstractState<?, ?, ?>>) aiResult.getLoc2States().get(symbol.getTarget());
+			final IAbstractState<?, ?, ?> nextSingleState = aiResult.getLoc2SingleStates().get(symbol.getTarget());
 
 			final IPredicate target;
 			if (nextStates == null) {
 				target = falsePredicate;
 			} else {
-				target = predicateUnifier.getOrConstructPredicateForDisjunction(
-						nextStates.stream().map(s -> s.getTerm(mSmtManager.getScript(), mSmtManager.getBoogie2Smt()))
-								.map(predicateUnifier::getOrConstructPredicate).collect(Collectors.toSet()));
+				target = predicateUnifier.getOrConstructPredicate(
+						nextSingleState.getTerm(mSmtManager.getScript(), mSmtManager.getBoogie2Smt()));
+				// target = predicateUnifier.getOrConstructPredicateForDisjunction(
+				// nextStates.stream().map(s -> s.getTerm(mSmtManager.getScript(), mSmtManager.getBoogie2Smt()))
+				// .map(predicateUnifier::getOrConstructPredicate).collect(Collectors.toSet()));
+
 			}
 
 			if (alreadyThereAsState.add(target)) {
@@ -192,19 +197,21 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder
 		}
 		mLogger.debug("Transition: " + symbol);
 		if (nextStates == null) {
-			mLogger.debug("AI Post States: NONE");
+			mLogger.debug("Post States: NONE");
 		} else {
-			mLogger.debug("AI Post States:");
+			mLogger.debug("Post States:");
 			for (final IAbstractState<?, ?, ?> nextState : nextStates) {
 				mLogger.debug("  " + nextState);
 			}
 		}
 
-		mLogger.debug("Pre Term: " + source);
+		mLogger.debug("Pre: " + source);
 		if (hierarchicalPreState != null) {
-			mLogger.debug("HierachicalPre Term: " + hierarchicalPreState);
+			mLogger.debug("HierPre: " + hierarchicalPreState);
 		}
-		mLogger.debug("Post Term: " + target);
+		mLogger.debug("Post: " + target);
+		mLogger.debug("Post (S): " + SmtUtils.simplify(mSmtManager.getManagedScript(), target.getFormula(), mServices,
+				SimplificationTechnique.SIMPLIFY_DDA));
 		mLogger.debug(divider);
 	}
 }

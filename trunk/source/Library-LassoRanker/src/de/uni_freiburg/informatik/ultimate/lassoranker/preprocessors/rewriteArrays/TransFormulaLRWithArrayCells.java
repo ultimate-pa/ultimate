@@ -54,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ApplicationTermFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
@@ -79,7 +79,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 public class TransFormulaLRWithArrayCells {
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
-	private final SimplicationTechnique mSimplificationTechnique;
+	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
 	
 	static final String s_AuxArray = "auxArray";
@@ -127,7 +127,7 @@ public class TransFormulaLRWithArrayCells {
 			final EqualityAnalysisResult equalityAnalysisAtHonda,
 			final Boogie2SmtSymbolTable boogie2smt, final ArrayCellRepVarConstructor acrvc,
 			final boolean moverapproximateByOmmitingDisjointIndices, final boolean isStem,
-			final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
+			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
 		mSimplificationTechnique = simplificationTechnique;

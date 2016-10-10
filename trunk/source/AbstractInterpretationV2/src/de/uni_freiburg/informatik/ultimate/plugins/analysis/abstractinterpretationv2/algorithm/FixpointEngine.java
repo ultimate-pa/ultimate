@@ -94,7 +94,8 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 			final AbstractInterpretationResult<STATE, ACTION, VARDECL, LOCATION> intermediateResult) {
 		mLogger.info("Starting fixpoint engine with domain " + mDomain.getClass().getSimpleName() + " (maxUnwinding="
 				+ mMaxUnwindings + ", maxParallelStates=" + mMaxParallelStates + ")");
-		mResult = intermediateResult == null ? new AbstractInterpretationResult<>(mDomain) : intermediateResult;
+		mResult = intermediateResult == null ? new AbstractInterpretationResult<>(mDomain)
+				: intermediateResult;
 		mBenchmark = mResult.getBenchmark();
 		calculateFixpoint(start);
 		mResult.saveRootStorage(mStateStorage, start, script, bpl2smt);
@@ -575,18 +576,18 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 	// .append(mMaxParallelStates).append(" allowed, ").append(postStates.size()).append(" received.");
 	// }
 
-	private void logDebugPostChanged(final AbstractMultiState<STATE, ACTION, VARDECL> postStates,
-			final AbstractMultiState<STATE, ACTION, VARDECL> postStatesAfterWidening, final String reason) {
+	private void logDebugPostChanged(final AbstractMultiState<STATE, ACTION, VARDECL> postState,
+			final AbstractMultiState<STATE, ACTION, VARDECL> postStateAfterChange, final String reason) {
 		if (!mLogger.isDebugEnabled()) {
 			return;
 		}
-		if (postStates == postStatesAfterWidening) {
+		if (postState == postStateAfterChange) {
 			return;
 		}
 		final String prefix = AbsIntPrefInitializer.INDENT + AbsIntPrefInitializer.INDENT;
 		mLogger.debug(prefix + reason);
-		mLogger.debug(prefix + "Before: " + LoggingHelper.getStateString(postStates));
-		mLogger.debug(prefix + "After: " + LoggingHelper.getStateString(postStatesAfterWidening));
+		mLogger.debug(prefix + "Before: " + LoggingHelper.getStateString(postState));
+		mLogger.debug(prefix + "After: " + LoggingHelper.getStateString(postStateAfterChange));
 	}
 
 	private String getLogMessageUnsoundPost(final AbstractMultiState<STATE, ACTION, VARDECL> preState,

@@ -68,7 +68,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
@@ -129,7 +129,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final IToolchainStorage mToolchainStorage;
-	private final SimplicationTechnique mSimplificationTechnique = SimplicationTechnique.SIMPLIFY_DDA;
+	private final SimplificationTechnique mSimplificationTechnique = SimplificationTechnique.SIMPLIFY_DDA;
 	private final XnfConversionTechnique mXnfConversionTechnique =
 			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 
@@ -592,10 +592,10 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 			try {
 				return new InterpolatingTraceCheckerCraig(mPredicateUnifier.getTruePredicate(),
 						mPredicateUnifier.getFalsePredicate(), new TreeMap<Integer, IPredicate>(), errorRun.getWord(),
-						mSmtManager, mOriginalRoot.getRootAnnot().getModGlobVarManager(),
+						mSmtManager.getManagedScript(), mOriginalRoot.getRootAnnot().getModGlobVarManager(),
 						AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, true, mPredicateUnifier,
-						GlobalSettings._instance._interpolationMode, smtManagerTracechecks, true,
-						mXnfConversionTechnique, mSimplificationTechnique);
+						GlobalSettings._instance._interpolationMode, smtManagerTracechecks.getManagedScript(), true,
+						mXnfConversionTechnique, mSimplificationTechnique, mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
 			} catch (final Exception e) {
 				if (!GlobalSettings._instance.useFallbackForSeparateSolverForTracechecks) {
 					throw e;
@@ -607,11 +607,11 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 				 * The fallback interpolation mode is hardcoded for now
 				 */
 				return new TraceCheckerSpWp(mPredicateUnifier.getTruePredicate(), mPredicateUnifier.getFalsePredicate(),
-						new TreeMap<Integer, IPredicate>(), errorRun.getWord(), mSmtManager,
+						new TreeMap<Integer, IPredicate>(), errorRun.getWord(), mSmtManager.getManagedScript(),
 						mOriginalRoot.getRootAnnot().getModGlobVarManager(), AssertCodeBlockOrder.NOT_INCREMENTALLY,
 						UnsatCores.CONJUNCT_LEVEL, true, mServices, true, mPredicateUnifier,
-						InterpolationTechnique.ForwardPredicates, mSmtManager, mXnfConversionTechnique,
-						mSimplificationTechnique);
+						InterpolationTechnique.ForwardPredicates, mSmtManager.getManagedScript(), mXnfConversionTechnique,
+						mSimplificationTechnique, mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
 			}
 		case ForwardPredicates:
 		case BackwardPredicates:
@@ -619,22 +619,22 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 			// return LBool.UNSAT if trace is infeasible
 			try {
 				return new TraceCheckerSpWp(mPredicateUnifier.getTruePredicate(), mPredicateUnifier.getFalsePredicate(),
-						new TreeMap<Integer, IPredicate>(), errorRun.getWord(), mSmtManager,
+						new TreeMap<Integer, IPredicate>(), errorRun.getWord(), mSmtManager.getManagedScript(),
 						mOriginalRoot.getRootAnnot().getModGlobVarManager(), AssertCodeBlockOrder.NOT_INCREMENTALLY,
 						GlobalSettings._instance.useUnsatCores, GlobalSettings._instance.useLiveVariables, mServices,
-						true, mPredicateUnifier, GlobalSettings._instance._interpolationMode, smtManagerTracechecks,
-						mXnfConversionTechnique, mSimplificationTechnique);
+						true, mPredicateUnifier, GlobalSettings._instance._interpolationMode, smtManagerTracechecks.getManagedScript(),
+						mXnfConversionTechnique, mSimplificationTechnique, mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
 			} catch (final Exception e) {
 				if (!GlobalSettings._instance.useFallbackForSeparateSolverForTracechecks) {
 					throw e;
 				}
 
 				return new TraceCheckerSpWp(mPredicateUnifier.getTruePredicate(), mPredicateUnifier.getFalsePredicate(),
-						new TreeMap<Integer, IPredicate>(), errorRun.getWord(), mSmtManager,
+						new TreeMap<Integer, IPredicate>(), errorRun.getWord(), mSmtManager.getManagedScript(),
 						mOriginalRoot.getRootAnnot().getModGlobVarManager(), AssertCodeBlockOrder.NOT_INCREMENTALLY,
 						UnsatCores.CONJUNCT_LEVEL, true, mServices, true, mPredicateUnifier,
-						GlobalSettings._instance._interpolationMode, mSmtManager, mXnfConversionTechnique,
-						mSimplificationTechnique);
+						GlobalSettings._instance._interpolationMode, mSmtManager.getManagedScript(), mXnfConversionTechnique,
+						mSimplificationTechnique, mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
 			}
 		default:
 			throw new UnsupportedOperationException(

@@ -58,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.DagSizePrinter;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineSubtermNormalizer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -85,7 +85,7 @@ public class BinaryStatePredicateManager {
 	private final IProgramNonOldVar mUnseededVariable;
 	private final IProgramNonOldVar[] mOldRankVariables;
 	
-	private final SimplicationTechnique mSimplificationTechnique;
+	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
 	
 	/**
@@ -118,7 +118,7 @@ public class BinaryStatePredicateManager {
 	
 	public BinaryStatePredicateManager(final SmtManager smtManager,
 			final IUltimateServiceProvider services,
-			final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
+			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mSimplificationTechnique = simplificationTechnique;
@@ -569,13 +569,15 @@ public class BinaryStatePredicateManager {
 			siPredicate = truePredicate;
 		}
 		traceChecker = new TraceChecker(truePredicate, siPredicate, new TreeMap<Integer, IPredicate>(), stem,
-				mSmtManager, modGlobVarManager, AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false);
+				mSmtManager.getManagedScript(), modGlobVarManager, AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, 
+				mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
 		final LBool stemCheck = traceChecker.isCorrect();
 		if (stemCheck != LBool.UNSAT) {
 			result = false;
 		}
 		traceChecker = new TraceChecker(siPredicate, siPredicate, new TreeMap<Integer, IPredicate>(), stem,
-				mSmtManager, modGlobVarManager, AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false);
+				mSmtManager.getManagedScript(), modGlobVarManager, AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, 
+				mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
 		final LBool loopCheck = traceChecker.isCorrect();
 		if (loopCheck != LBool.UNSAT) {
 			result = false;
@@ -586,8 +588,8 @@ public class BinaryStatePredicateManager {
 	public boolean checkRankDecrease(final NestedWord<CodeBlock> loop,
 			final ModifiableGlobalVariableManager modGlobVarManager) {
 		final TraceChecker traceChecker = new TraceChecker(mRankEqualityAndSi, mRankDecreaseAndBound,
-				new TreeMap<Integer, IPredicate>(), loop, mSmtManager, modGlobVarManager,
-				AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false);
+				new TreeMap<Integer, IPredicate>(), loop, mSmtManager.getManagedScript(), modGlobVarManager,
+				AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
 		final LBool loopCheck = traceChecker.isCorrect();
 		return loopCheck == LBool.UNSAT;
 	}

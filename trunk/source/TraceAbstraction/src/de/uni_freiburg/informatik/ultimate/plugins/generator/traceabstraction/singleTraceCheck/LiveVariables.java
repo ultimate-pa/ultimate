@@ -36,7 +36,6 @@ import java.util.TreeMap;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashSet;
 
 /**
@@ -76,7 +75,7 @@ public class LiveVariables {
 			Map<Term,Term>> traceWithConstants,
 			final Map<Term,IProgramVar> constants2BoogieVar,
 			final Map<IProgramVar, TreeMap<Integer, Term>> indexedVarRepresentative,
-			final SmtManager smtManager, final ModifiableGlobalVariableManager modifiedGlobals) {
+			final ModifiableGlobalVariableManager modifiedGlobals) {
 		mConstants2BoogieVar = constants2BoogieVar;
 		mTraceWithConstants = traceWithConstants;
 		mIndexedVarRepresentative = indexedVarRepresentative;

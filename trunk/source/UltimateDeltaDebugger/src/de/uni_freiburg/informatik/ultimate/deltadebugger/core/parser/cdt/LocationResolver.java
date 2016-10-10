@@ -1,0 +1,120 @@
+package de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.cdt;
+
+import org.eclipse.cdt.core.dom.ast.IASTComment;
+import org.eclipse.cdt.core.dom.ast.IASTFileLocation;
+import org.eclipse.cdt.core.dom.ast.IASTNode;
+import org.eclipse.cdt.core.dom.ast.IASTPreprocessorIncludeStatement;
+import org.eclipse.cdt.core.dom.ast.IASTPreprocessorMacroExpansion;
+import org.eclipse.cdt.core.dom.ast.IASTPreprocessorStatement;
+
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceDocument;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceRange;
+
+public class LocationResolver {
+	static final CommentLocationHack commentHack = CommentLocationHack.getDefaultInstance();
+	final String translationUnitFilePath;
+	final ISourceDocument sourceDocument;
+
+	public LocationResolver(final String translationUnitFilePath, final ISourceDocument sourceDocument) {
+		this.translationUnitFilePath = translationUnitFilePath;
+		this.sourceDocument = sourceDocument;
+	}
+
+	public ISourceRange asSourceRange(final IASTFileLocation loc) {
+		final int offset = loc.getNodeOffset();
+		final int length = loc.getNodeLength();
+		return sourceDocument.newSourceRange(offset, offset + length);
+	}
+
+	public IASTFileLocation getFileLocation(final IASTNode node) {
+		if (node instanceof IASTComment) {
+			return commentHack.getFileLocation((IASTComment) node, sourceDocument);
+		}
+		return node.getFileLocation();
+	}
+
+	public ISourceRange getSourceRange(final IASTNode node) {
+		return asSourceRange(getFileLocation(node));
+	}
+
+	/**
+	 * Compute the location of a node in the translation unit file.
+	 *
+	 * @param node
+	 * @return source range in the translation unit file or null if node is not part of it
+	 */
+	public ISourceRange getSourceRangeInTranslationUnitFile(final IASTNode node) {
+		if (!isPartOfTranslationUnitFile(node)) {
+			return null;
+		}
+
+		final IASTFileLocation loc = getFileLocation(node);
+		if (loc == null) {
+			return null;
+		}
+
+		return asSourceRange(loc);
+	}
+
+	/**
+	 * Compute the source range of any node. If a node is located in an included file, the location of the outermost
+	 * inclusion statement is returned.
+	 *
+	 * @param node
+	 * @return source range of either the node itself or the originating inclusion statement. null if no location
+	 *         information is available.
+	 */
+	public ISourceRange getSourceRangeMappedToInclusionStatement(final IASTNode node) {
+		IASTNode current = node;
+		for (;;) {
+			final ISourceRange range = getSourceRangeInTranslationUnitFile(current);
+			if (range != null) {
+				return range;
+			}
+
+			final IASTFileLocation loc = getFileLocation(current);
+			if (loc == null) {
+				return null;
+			}
+
+			// map nodes inside external files to originating include
+			final IASTPreprocessorIncludeStatement include = loc.getContextInclusionStatement();
+			if (include == null) {
+				// This should not happen, because getRangeInTranslationUnitFile() determined that
+				// the current node is not inside the translation unit file, so it should either
+				// have no file location or be part of an included file
+				assert false : "should not happen!?!";
+				return null;
+			}
+
+			current = include;
+		}
+	}
+
+	/**
+	 * Check if a node is located in the translation unit file. Note that in contrast to
+	 * IASTNode.isPartOfTranslationUnitFile() it returns true for nodes that span over multiple files and only partly
+	 * overlap the translation unit file.
+	 *
+	 * @param node
+	 * @return true iff node is (partly) located in the translation unit file
+	 */
+	public boolean isPartOfTranslationUnitFile(final IASTNode node) {
+		// Note that isPartOfTranslationUnitFile() only checks the begin-offset
+		// and not the end-offset. This means it returns false for nodes
+		// that start inside a header but span into the translation unit file.
+		// To prevent false negative for nodes that do have a valid file location
+		// (even though overlapping with preprocessor nodes) only use it for nodes
+		// that cannot span over file boundaries, i.e. preprocessor nodes and check
+		// the filename of the computed file location otherwise.
+		if (node instanceof IASTComment) {
+			return commentHack.isPartOfTranslationUnitFile((IASTComment) node, translationUnitFilePath);
+		}
+		if (node instanceof IASTPreprocessorStatement || node instanceof IASTPreprocessorMacroExpansion) {
+			return node.isPartOfTranslationUnitFile();
+		}
+		final IASTFileLocation loc = node.getFileLocation();
+		return loc != null && translationUnitFilePath.equals(loc.getFileName());
+	}
+
+}

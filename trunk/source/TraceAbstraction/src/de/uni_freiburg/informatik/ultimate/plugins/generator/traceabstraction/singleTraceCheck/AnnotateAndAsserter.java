@@ -38,11 +38,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ParallelComposition;
@@ -66,8 +66,7 @@ public class AnnotateAndAsserter {
 	protected final IUltimateServiceProvider mServices;
 	protected final ILogger mLogger;
 
-	protected final Script mScript;
-	protected final SmtManager mSmtManager;
+	protected final ManagedScript mMgdScriptTc;
 	protected final NestedWord<? extends IAction> mTrace;
 
 
@@ -79,14 +78,13 @@ public class AnnotateAndAsserter {
 
 	protected final TraceCheckerBenchmarkGenerator mTcbg;
 
-	public AnnotateAndAsserter(SmtManager smtManager,
-			NestedFormulas<Term, Term> nestedSSA, 
-			AnnotateAndAssertCodeBlocks aaacb, 
-			TraceCheckerBenchmarkGenerator tcbg, IUltimateServiceProvider services) {
+	public AnnotateAndAsserter(final ManagedScript mgdScriptTc,
+			final NestedFormulas<Term, Term> nestedSSA, 
+			final AnnotateAndAssertCodeBlocks aaacb, 
+			final TraceCheckerBenchmarkGenerator tcbg, final IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		mSmtManager = smtManager;
-		mScript = smtManager.getScript();
+		mMgdScriptTc = mgdScriptTc;
 		mTrace = nestedSSA.getTrace();
 		mSSA = nestedSSA;
 		mAnnotateAndAssertCodeBlocks = aaacb;
@@ -148,7 +146,7 @@ public class AnnotateAndAsserter {
 			pendingContextCode++;
 		}
 		try {
-			mSatisfiable = mSmtManager.getScript().checkSat();
+			mSatisfiable = mMgdScriptTc.getScript().checkSat();
 		} catch (final SMTLIBException e) {
 			if (e.getMessage().contains("Received EOF on stdin. No stderr output.")
 					&& !mServices.getProgressMonitorService().continueProcessing()) {
@@ -184,7 +182,7 @@ public class AnnotateAndAsserter {
 	 * for which the branch indicator evaluates to true is taken.
 	 */
 	public static List<CodeBlock> constructFailureTrace(
-			Word<CodeBlock> word, SmtManager smtManager) {
+			final Word<CodeBlock> word, final SmtManager smtManager) {
 		final List<CodeBlock> failurePath = new ArrayList<CodeBlock>();
 		for (int i=0; i<word.length(); i++) {
 			final CodeBlock codeBlock = word.getSymbol(i);
@@ -196,8 +194,8 @@ public class AnnotateAndAsserter {
 	/**
 	 * Recursive method used by getFailurePath
 	 */
-	private static void addToFailureTrace(CodeBlock codeBlock, int pos, 
-			List<CodeBlock> failureTrace, SmtManager smtManager) {
+	private static void addToFailureTrace(final CodeBlock codeBlock, final int pos, 
+			final List<CodeBlock> failureTrace, final SmtManager smtManager) {
 		if (codeBlock instanceof Call) {
 			failureTrace.add(codeBlock);
 		} else if (codeBlock instanceof Return) {

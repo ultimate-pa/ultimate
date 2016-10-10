@@ -32,7 +32,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJuli
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PrefixProduct;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -44,7 +44,7 @@ public final class Cfg2NetJulian extends CFG2Automaton {
 	
 	public Cfg2NetJulian(final RootNode rootNode, final IStateFactory<IPredicate> contentFactory,
 			final SmtManager smtManager, final IUltimateServiceProvider services,
-			final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique)
+			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique)
 			throws AutomataLibraryException {
 		super(rootNode, contentFactory, smtManager, services, simplificationTechnique, xnfConversionTechnique);
 		

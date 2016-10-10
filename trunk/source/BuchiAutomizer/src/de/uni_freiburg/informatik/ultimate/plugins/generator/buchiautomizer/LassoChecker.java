@@ -78,7 +78,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Unm
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.DagSizePrinter;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer;
@@ -99,7 +99,7 @@ import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 public class LassoChecker {
 
 	private final ILogger mLogger;
-	private final SimplicationTechnique mSimplificationTechnique;
+	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
 
 	enum ContinueDirective {
@@ -240,7 +240,7 @@ public class LassoChecker {
 			final ModifiableGlobalVariableManager modifiableGlobalVariableManager, final Collection<Term> axioms,
 			final BinaryStatePredicateManager bspm, final NestedLassoRun<CodeBlock, IPredicate> counterexample,
 			final String lassoCheckerIdentifier, final IUltimateServiceProvider services,
-			final IToolchainStorage storage, final SimplicationTechnique simplificationTechnique,
+			final IToolchainStorage storage, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique) throws IOException {
 		mServices = services;
 		mStorage = storage;
@@ -442,25 +442,25 @@ public class LassoChecker {
 			case Craig_NestedInterpolation:
 			case Craig_TreeInterpolation:
 				result = new InterpolatingTraceCheckerCraig(mTruePredicate, mFalsePredicate,
-						new TreeMap<Integer, IPredicate>(), run.getWord(), mSmtManager,
+						new TreeMap<Integer, IPredicate>(), run.getWord(), mSmtManager.getManagedScript(),
 						mModifiableGlobalVariableManager,
 						/*
 						 * TODO: When Matthias introduced this parameter he set the argument to
 						 * AssertCodeBlockOrder.NOT_INCREMENTALLY. Check if you want to set this to a different value.
 						 */AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, mPredicateUnifier, mInterpolation,
-						true, mXnfConversionTechnique, mSimplificationTechnique);
+						true, mXnfConversionTechnique, mSimplificationTechnique, mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
 				break;
 			case ForwardPredicates:
 			case BackwardPredicates:
 			case FPandBP:
 				result = new TraceCheckerSpWp(mTruePredicate, mFalsePredicate, new TreeMap<Integer, IPredicate>(),
-						run.getWord(), mSmtManager, mModifiableGlobalVariableManager,
+						run.getWord(), mSmtManager.getManagedScript(), mModifiableGlobalVariableManager,
 						/*
 						 * TODO: When Matthias introduced this parameter he set the argument to
 						 * AssertCodeBlockOrder.NOT_INCREMENTALLY. Check if you want to set this to a different value.
 						 */AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true, mServices, false,
-						mPredicateUnifier, mInterpolation, mSmtManager, mXnfConversionTechnique,
-						mSimplificationTechnique);
+						mPredicateUnifier, mInterpolation, mSmtManager.getManagedScript(), mXnfConversionTechnique,
+						mSimplificationTechnique, mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
 				break;
 			default:
 				throw new UnsupportedOperationException("unsupported interpolation");

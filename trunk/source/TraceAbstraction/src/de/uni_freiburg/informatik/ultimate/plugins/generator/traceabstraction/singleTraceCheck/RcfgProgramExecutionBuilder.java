@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecut
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
@@ -165,10 +166,10 @@ public class RcfgProgramExecutionBuilder {
 			final Map<Term, Collection<Term>> variable2Values = 
 					new HashMap<Term, Collection<Term>>();
 			for (final Entry<IProgramVar, Term> entry : varValAtPos.entrySet()) {
-				if (!(entry.getKey() instanceof BoogieVar)) {
+				if (!(entry.getKey() instanceof BoogieVar) && !(entry.getKey() instanceof BoogieConst)) {
 					throw new IllegalArgumentException("in backtranslation we need BoogieVars");
 				}
-				final BoogieVar bv = (BoogieVar) entry.getKey();
+				final IProgramVar bv = entry.getKey();
 				variable2Values.put(bv.getTermVariable(), Collections.singleton(entry.getValue()));
 			}
 			final ProgramState<Term> pps = new ProgramState<Term>(variable2Values);

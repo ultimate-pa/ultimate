@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 public class BuchiAutomizerLassoRankerTests extends AbstractBuchiAutomizerTestSuite {
 
 	private static final int FILES_PER_DIR_LIMIT = Integer.MAX_VALUE;
-	// private static final int FILES_PER_DIR_LIMIT = 5;
+//	 private static final int FILES_PER_DIR_LIMIT = 5;
 
 	//@formatter:off
 	private static final DirectoryFileEndingsPair[] SVCOMP_EXAMPLES = {
@@ -86,15 +86,15 @@ public class BuchiAutomizerLassoRankerTests extends AbstractBuchiAutomizerTestSu
 //		new DirectoryFileEndingsPair("examples/svcomp/systemc/", new String[]{ ".c" }, FILES_PER_DIR_LIMIT) ,
 //		new DirectoryFileEndingsPair("examples/svcomp/seq-mthreaded/", new String[]{ ".c" }, FILES_PER_DIR_LIMIT) ,
 //		new DirectoryFileEndingsPair("examples/svcomp/seq-pthread/", new String[]{ ".i" }, FILES_PER_DIR_LIMIT) ,
-
+//
 		/*** Category 12. Termination ***/
-		new DirectoryFileEndingsPair("examples/svcomp/termination-15/", new String[]{ ".c" }, FILES_PER_DIR_LIMIT) ,
 		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted/", new String[]{ ".c" }, FILES_PER_DIR_LIMIT) ,
 		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted-lit/", new String[]{ ".c" }, FILES_PER_DIR_LIMIT) ,
-		new DirectoryFileEndingsPair("examples/svcomp/termination-libowfat/", new String[]{ ".c" }, FILES_PER_DIR_LIMIT) ,
+		new DirectoryFileEndingsPair("examples/svcomp/termination-libowfat/", new String[]{ ".i" }, FILES_PER_DIR_LIMIT) ,
 		new DirectoryFileEndingsPair("examples/svcomp/termination-memory-alloca/", new String[]{ ".i" }, FILES_PER_DIR_LIMIT) ,
 		new DirectoryFileEndingsPair("examples/svcomp/termination-numeric/", new String[]{ ".c" }, FILES_PER_DIR_LIMIT) ,
 		new DirectoryFileEndingsPair("examples/svcomp/termination-restricted-15/", new String[]{ ".c" }, FILES_PER_DIR_LIMIT) ,
+		new DirectoryFileEndingsPair("examples/svcomp/termination-15/", new String[]{ ".i" }, FILES_PER_DIR_LIMIT) ,
 	};
 
 
@@ -110,7 +110,7 @@ public class BuchiAutomizerLassoRankerTests extends AbstractBuchiAutomizerTestSu
 //		"examples/termination/cooperatingT2/difficult/solved",
 //		"examples/termination/cooperatingT2",
 //		"examples/termination/Brainfuck/nonterminating",
-		"examples/termination/Brainfuck-terminating",
+//		"examples/termination/Brainfuck-terminating",
 	};
 
 	/**
@@ -145,7 +145,7 @@ public class BuchiAutomizerLassoRankerTests extends AbstractBuchiAutomizerTestSu
 
 	@Override
 	public long getTimeout() {
-		return 120 * 1000;
+		return 60 * 1000;
 	}
 
 	@Override

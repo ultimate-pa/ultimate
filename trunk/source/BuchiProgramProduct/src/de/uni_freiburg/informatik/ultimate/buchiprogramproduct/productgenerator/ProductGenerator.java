@@ -55,7 +55,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LTLStepAnn
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.annot.BuchiProgramAcceptingStateAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
@@ -100,13 +100,13 @@ public final class ProductGenerator {
 	private final Set<ProgramPoint> mHelperProductStates;
 	private final Map<String, ProgramPoint> mProductLocations;
 	private final Map<ProgramPoint, List<Call>> mOrigRcfgCallLocs2CallEdges;
-	private final SimplicationTechnique mSimplificationTechnique;
+	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
 	private final boolean mEverythingIsAStep;
 
 	public ProductGenerator(final INestedWordAutomaton<CodeBlock, String> nwa, final RootNode rcfg,
 			final LTLPropertyCheck ltlAnnot, final IUltimateServiceProvider services,
-			final ProductBacktranslator backtrans, final SimplicationTechnique simplificationTechnique,
+			final ProductBacktranslator backtrans, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique) {
 		// services and logger
 		mServices = services;

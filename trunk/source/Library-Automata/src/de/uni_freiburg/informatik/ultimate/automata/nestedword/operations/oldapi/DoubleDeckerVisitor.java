@@ -81,30 +81,17 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE> {
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 */
 	public enum ReachFinal {
+		/**
+		 * Whether an accepting state is reachable is unknown.
+		 */
 		UNKNOWN,
+		/**
+		 * An accepting state can be reached at least once.
+		 */
 		AT_LEAST_ONCE
 	}
 	
 	protected INestedWordAutomaton<LETTER, STATE> mTraversedNwa;
-	
-	/**
-	 * We call a DoubleDecker marked if it has been visited or is contained in
-	 * the worklist. The DoubleDecker (<i>down</i>,<i>up</i>) is marked iff
-	 * <i>down</i> is contained in the range of <i>up</i>.
-	 */
-	private final Map<STATE, Map<STATE, ReachFinal>> mMarkedUp2Down = new HashMap<>();
-	
-	/**
-	 * DoubleDecker that are already known but have not yet been visited.
-	 */
-	private final List<DoubleDecker<STATE>> mWorklist = new LinkedList<>();
-	
-	/**
-	 * Pairs of states (q,q') of the automaton such that q' is reachable from q
-	 * via a well-matched nested word in which the first position is a call
-	 * position and the last position is a return position.
-	 */
-	private final Map<STATE, Map<STATE, STATE>> mCallReturnSummary = new HashMap<>();
 	
 	/**
 	 * We remove afterwards all dead ends iff set to true.
@@ -123,6 +110,7 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE> {
 	 */
 	protected boolean mComputePredecessorDoubleDeckers = true;
 	
+	/*
 	/**
 	 * Predecessor DoubleDeckers under internal transitions.
 	 * Used only for removal of dead ends and non-live states.
@@ -149,6 +137,25 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE> {
 	 * protected Map<STATE, STATE> mCallSuccOfRemovedDown;
 	 * protected DoubleDecker<STATE> auxiliaryEmptyStackDoubleDecker;
 	 */
+	
+	/**
+	 * We call a DoubleDecker marked if it has been visited or is contained in
+	 * the worklist. The DoubleDecker (<i>down</i>,<i>up</i>) is marked iff
+	 * <i>down</i> is contained in the range of <i>up</i>.
+	 */
+	private final Map<STATE, Map<STATE, ReachFinal>> mMarkedUp2Down = new HashMap<>();
+	
+	/**
+	 * DoubleDecker that are already known but have not yet been visited.
+	 */
+	private final List<DoubleDecker<STATE>> mWorklist = new LinkedList<>();
+	
+	/**
+	 * Pairs of states (q,q') of the automaton such that q' is reachable from q
+	 * via a well-matched nested word in which the first position is a call
+	 * position and the last position is a return position.
+	 */
+	private final Map<STATE, Map<STATE, STATE>> mCallReturnSummary = new HashMap<>();
 	
 	private long mDeadEndRemovalTime;
 	
@@ -189,12 +196,14 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE> {
 		}
 		downStates.put(doubleDecker.getDown(), ReachFinal.UNKNOWN);
 		
-//		Set<STATE> upStates = mMarked_Down2Up.get(doubleDecker.getDown());
-//		if (upStates == null) {
-//			upStates = new HashSet<STATE>();
-//			mMarked_Down2Up.put(doubleDecker.getDown(), upStates);
-//		}
-//		upStates.add(doubleDecker.getUp());
+		/*
+		Set<STATE> upStates = mMarked_Down2Up.get(doubleDecker.getDown());
+		if (upStates == null) {
+			upStates = new HashSet<STATE>();
+			mMarked_Down2Up.put(doubleDecker.getDown(), upStates);
+		}
+		upStates.add(doubleDecker.getUp());
+		*/
 	}
 	
 	/**
@@ -213,28 +222,29 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE> {
 	 * doubleDecker.
 	 * predecessorMapping should be the mapping for either, call predecessors,
 	 * internal predecessors, summary predecessors or return predecesssors.
-	 *//*
-		private final void memorizePredecessor(
-			DoubleDecker<STATE> doubleDecker,
-			DoubleDecker<STATE> preDoubleDecker,
-			Map<DoubleDecker<STATE>, Set<DoubleDecker<STATE>>> predecessorMapping) {
-		if (!mComputePredecessorDoubleDeckers) {
-			return;
+	 */
+	/*
+	private final void memorizePredecessor(
+		DoubleDecker<STATE> doubleDecker,
+		DoubleDecker<STATE> preDoubleDecker,
+		Map<DoubleDecker<STATE>, Set<DoubleDecker<STATE>>> predecessorMapping) {
+	if (!mComputePredecessorDoubleDeckers) {
+		return;
+	}
+	assert (predecessorMapping == mCallPredecessors
+			|| predecessorMapping == mReturnPredecessors
+			|| predecessorMapping == mInternalPredecessors
+			|| predecessorMapping == mSummaryPredecessors);
+	if (preDoubleDecker != null) {
+		Set<DoubleDecker<STATE>> predSet = predecessorMapping.get(doubleDecker);
+		if (predSet == null) {
+			predSet = new HashSet<DoubleDecker<STATE>>();
+			predecessorMapping.put(doubleDecker, predSet);
 		}
-		assert (predecessorMapping == mCallPredecessors
-				|| predecessorMapping == mReturnPredecessors
-				|| predecessorMapping == mInternalPredecessors
-				|| predecessorMapping == mSummaryPredecessors);
-		if (preDoubleDecker != null) {
-			Set<DoubleDecker<STATE>> predSet = predecessorMapping.get(doubleDecker);
-			if (predSet == null) {
-				predSet = new HashSet<DoubleDecker<STATE>>();
-				predecessorMapping.put(doubleDecker, predSet);
-			}
-			predSet.add(preDoubleDecker);
-		}
-		}
-		*/
+		predSet.add(preDoubleDecker);
+	}
+	}
+	*/
 	
 	/**
 	 * Record that summarySucc is reachable from summaryPred via a run over a
@@ -258,11 +268,13 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE> {
 	 */
 	private final void enqueueSummarySuccs(final STATE summaryPred, final STATE summarySucc, final STATE returnPred) {
 		for (final STATE summaryPreDown : mMarkedUp2Down.get(summaryPred).keySet()) {
-			final DoubleDecker<STATE> doubleDecker = new DoubleDecker<>(summaryPreDown, summaryPred);
 			final DoubleDecker<STATE> summarySuccDoubleDecker = new DoubleDecker<>(summaryPreDown, summarySucc);
+			/*
+			final DoubleDecker<STATE> doubleDecker = new DoubleDecker<>(summaryPreDown, summaryPred);
 			final DoubleDecker<STATE> summaryReturnPred = new DoubleDecker<>(summaryPred, returnPred);
-			// memorizePredecessor(summarySuccDoubleDecker, summaryReturnPred, mReturnPredecessors);
-			// memorizePredecessor(summarySuccDoubleDecker, doubleDecker, mSummaryPredecessors);
+			memorizePredecessor(summarySuccDoubleDecker, summaryReturnPred, mReturnPredecessors);
+			memorizePredecessor(summarySuccDoubleDecker, doubleDecker, mSummaryPredecessors);
+			*/
 			enqueueAndMark(summarySuccDoubleDecker);
 		}
 	}
@@ -271,8 +283,8 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE> {
 	 * Get all states <i>down</i> such that the DoubleDecker
 	 * (<i>down</i>,<i>up</i>) has been visited so far.
 	 */
-	private final Set<STATE> getKnownDownStates(final STATE up) {
-		final Set<STATE> downStates = mMarkedUp2Down.get(up).keySet();
+	private final Set<STATE> getKnownDownStates(final STATE upState) {
+		final Set<STATE> downStates = mMarkedUp2Down.get(upState).keySet();
 		if (downStates == null) {
 			return new HashSet<>(0);
 		}
@@ -320,11 +332,11 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE> {
 				final Map<STATE, STATE> summarySucc2returnPred = mCallReturnSummary.get(doubleDecker.getUp());
 				for (final Entry<STATE, STATE> entry : summarySucc2returnPred.entrySet()) {
 					final STATE summarySucc = entry.getKey();
-					final STATE returnPred = entry.getValue();
 					final DoubleDecker<STATE> summarySuccDoubleDecker = new DoubleDecker<>(doubleDecker.getDown(),
 							summarySucc);
-					final DoubleDecker<STATE> shortcutReturnPred =
-							new DoubleDecker<>(doubleDecker.getUp(), returnPred);
+					// final STATE returnPred = entry.getValue();
+					// final DoubleDecker<STATE> shortcutReturnPred =
+					// 		new DoubleDecker<>(doubleDecker.getUp(), returnPred);
 					// memorizePredecessor(summarySuccDoubleDecker, shortcutReturnPred, mReturnPredecessors);
 					// memorizePredecessor(summarySuccDoubleDecker, doubleDecker, mSummaryPredecessors);
 					enqueueAndMark(summarySuccDoubleDecker);
@@ -336,17 +348,21 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE> {
 			}
 			
 		}
-		mLogger.info("Before removal of dead ends " + mTraversedNwa.sizeInformation());
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info("Before removal of dead ends " + mTraversedNwa.sizeInformation());
+		}
 		if (mRemoveDeadEnds && mRemoveNonLiveStates) {
 			throw new IllegalArgumentException("RemoveDeadEnds and RemoveNonLiveStates is set");
 		}
 		
 		mDeadEnds = computeDeadEnds();
 		
-//		final Set<DoubleDecker<STATE>> oldMethod = removedDoubleDeckersOldMethod();
-//		final Set<DoubleDecker<STATE>> newMethod = removedDoubleDeckersViaIterator();
-//		assert oldMethod.containsAll(newMethod);
-//		assert newMethod.containsAll(oldMethod);
+		/*
+		final Set<DoubleDecker<STATE>> oldMethod = removedDoubleDeckersOldMethod();
+		final Set<DoubleDecker<STATE>> newMethod = removedDoubleDeckersViaIterator();
+		assert oldMethod.containsAll(newMethod);
+		assert newMethod.containsAll(oldMethod);
+		*/
 		
 		if (mRemoveDeadEnds) {
 			// new TestFileWriter(mTraversedNwa, "TheAutomaotn", TestFileWriter.Labeling.TOSTRING);
@@ -354,22 +370,26 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE> {
 			if (mTraversedNwa.getInitialStates().isEmpty()) {
 				assert mTraversedNwa.getStates().isEmpty();
 			}
-			mLogger.info("After removal of dead ends " + mTraversedNwa.sizeInformation());
+			if (mLogger.isInfoEnabled()) {
+				mLogger.info("After removal of dead ends " + mTraversedNwa.sizeInformation());
+			}
 			
 		}
 		if (mRemoveNonLiveStates) {
-//			mLogger.warn("Minimize before non-live removal: " +
-//					((NestedWordAutomaton<LETTER, STATE>) (new MinimizeDfa<LETTER, STATE>(mTraversedNwa)).getResult())
-//							.sizeInformation());
+			// mLogger.warn("Minimize before non-live removal: " +
+			// 		((NestedWordAutomaton<LETTER, STATE>) (new MinimizeDfa<LETTER, STATE>(mTraversedNwa)).getResult())
+			// 				.sizeInformation());
 			removeNonLiveStates();
-//			mLogger.warn("Minimize after non-live removal: " +
-//					((NestedWordAutomaton<LETTER, STATE>) (new MinimizeDfa<LETTER, STATE>(mTraversedNwa)).getResult())
-//							.sizeInformation());
+			// mLogger.warn("Minimize after non-live removal: " +
+			// 		((NestedWordAutomaton<LETTER, STATE>) (new MinimizeDfa<LETTER, STATE>(mTraversedNwa)).getResult())
+			// 				.sizeInformation());
 			if (mTraversedNwa.getInitialStates().isEmpty()) {
 				assert mTraversedNwa.getStates().isEmpty();
 				// mTraversedNwa = getTotalizedEmptyAutomaton();
 			}
-			mLogger.info("After removal of nonLiveStates " + mTraversedNwa.sizeInformation());
+			if (mLogger.isInfoEnabled()) {
+				mLogger.info("After removal of nonLiveStates " + mTraversedNwa.sizeInformation());
+			}
 		}
 	}
 	
@@ -427,15 +447,15 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE> {
 	 */
 	protected abstract Collection<STATE> visitAndGetReturnSuccessors(DoubleDecker<STATE> doubleDecker);
 	
-	private void enqueueInternalPred(final STATE up, final Collection<STATE> downStates,
+	private void enqueueInternalPred(final STATE upState, final Collection<STATE> downStates,
 			final DoubleDeckerWorkList worklist) {
-		for (final IncomingInternalTransition<LETTER, STATE> inTrans : mTraversedNwa.internalPredecessors(up)) {
+		for (final IncomingInternalTransition<LETTER, STATE> inTrans : mTraversedNwa.internalPredecessors(upState)) {
 			final STATE predUp = inTrans.getPred();
 			for (final STATE down : downStates) {
 				final ReachFinal doubleDeckerReach = mMarkedUp2Down.get(predUp).get(down);
 				if (doubleDeckerReach == ReachFinal.UNKNOWN) {
-//					assert (doubleDeckersThatCanReachFinal
-//							.contains(new DoubleDecker<STATE>(down, predUp))) : "deadEndRemovalFailed";
+					// assert (doubleDeckersThatCanReachFinal
+					// 		.contains(new DoubleDecker<STATE>(down, predUp))) : "deadEndRemovalFailed";
 					worklist.add(predUp, down);
 				} else {
 					assert doubleDeckerReach == null || doubleDeckerReach == ReachFinal.AT_LEAST_ONCE;
@@ -444,17 +464,17 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE> {
 		}
 	}
 	
-	private void enqueueCallPred(final STATE up, final Collection<STATE> downStates,
+	private void enqueueCallPred(final STATE upState, final Collection<STATE> downStates,
 			final DoubleDeckerWorkList worklist) {
 		// we for call transitions we may use all of predecessors
 		// down states (use only when considering only non ret ancestors!)
-		for (final IncomingCallTransition<LETTER, STATE> inTrans : mTraversedNwa.callPredecessors(up)) {
+		for (final IncomingCallTransition<LETTER, STATE> inTrans : mTraversedNwa.callPredecessors(upState)) {
 			final STATE predUp = inTrans.getPred();
 			for (final STATE predDown : mMarkedUp2Down.get(predUp).keySet()) {
 				final ReachFinal doubleDeckerReach = mMarkedUp2Down.get(predUp).get(predDown);
 				if (doubleDeckerReach == ReachFinal.UNKNOWN) {
-//					assert (doubleDeckersThatCanReachFinal
-//							.contains(new DoubleDecker<STATE>(predDown, predUp))) : "deadEndRemovalFailed";
+					// assert (doubleDeckersThatCanReachFinal
+					// 		.contains(new DoubleDecker<STATE>(predDown, predUp))) : "deadEndRemovalFailed";
 					worklist.add(predUp, predDown);
 				} else {
 					assert doubleDeckerReach == null || doubleDeckerReach == ReachFinal.AT_LEAST_ONCE;
@@ -463,10 +483,10 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE> {
 		}
 	}
 	
-	private void enqueueReturnPred(final STATE up, final Collection<STATE> downStates,
+	private void enqueueReturnPred(final STATE upState, final Collection<STATE> downStates,
 			final DoubleDeckerWorkList summaryWorklist,
 			final DoubleDeckerWorkList linPredworklist) {
-		for (final IncomingReturnTransition<LETTER, STATE> inTrans : mTraversedNwa.returnPredecessors(up)) {
+		for (final IncomingReturnTransition<LETTER, STATE> inTrans : mTraversedNwa.returnPredecessors(upState)) {
 			final STATE hier = inTrans.getHierPred();
 			// We have to check if there is some double decker (hier,down) with
 			// down∈downStates. Only in that case we may add (lin,hier) to the
@@ -479,8 +499,8 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE> {
 				}
 				hierIsUpOfSomePredDoubleDecker = true;
 				if (doubleDeckerReach == ReachFinal.UNKNOWN) {
-//					assert (doubleDeckersThatCanReachFinal
-//							.contains(new DoubleDecker<STATE>(down, hier))) : "deadEndRemovalFailed";
+					// assert (doubleDeckersThatCanReachFinal
+					// 		.contains(new DoubleDecker<STATE>(down, hier))) : "deadEndRemovalFailed";
 					summaryWorklist.add(hier, down);
 				} else {
 					assert doubleDeckerReach == ReachFinal.AT_LEAST_ONCE;
@@ -490,8 +510,8 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE> {
 			if (hierIsUpOfSomePredDoubleDecker) {
 				final ReachFinal doubleDeckerReach = mMarkedUp2Down.get(linPred).get(hier);
 				if (doubleDeckerReach == ReachFinal.UNKNOWN) {
-//					assert (doubleDeckersThatCanReachFinal
-//							.contains(new DoubleDecker<STATE>(hier, linPred))) : "deadEndRemovalFailed";
+					// assert (doubleDeckersThatCanReachFinal
+					// 		.contains(new DoubleDecker<STATE>(hier, linPred))) : "deadEndRemovalFailed";
 					linPredworklist.add(linPred, hier);
 				} else {
 					assert doubleDeckerReach == ReachFinal.AT_LEAST_ONCE;
@@ -518,7 +538,9 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE> {
 		for (final STATE state : mTraversedNwa.getFinalStates()) {
 			final Map<STATE, ReachFinal> down2reachFinal = mMarkedUp2Down.get(state);
 			if (down2reachFinal == null) {
-				mLogger.debug("Unreachable final state: " + state);
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug("Unreachable final state: " + state);
+				}
 			} else {
 				for (final STATE down : mMarkedUp2Down.get(state).keySet()) {
 					nonRetAncest.add(state, down);
@@ -540,7 +562,9 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE> {
 				} else {
 					assert mMarkedUp2Down.get(up).get(down) == ReachFinal.AT_LEAST_ONCE;
 				}
-//				assert (doubleDeckersThatCanReachFinal.contains(new DoubleDecker<>(down, up))) : "deadEndRemovalFailed";
+				/*
+				assert (doubleDeckersThatCanReachFinal.contains(new DoubleDecker<>(down, up))) : "deadEndRemovalFailed";
+				*/
 				mMarkedUp2Down.get(up).put(down, ReachFinal.AT_LEAST_ONCE);
 			}
 			
@@ -566,7 +590,9 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE> {
 				if (mMarkedUp2Down.get(up).get(down) == ReachFinal.UNKNOWN) {
 					updatedDowns.add(down);
 				}
-//				assert (doubleDeckersThatCanReachFinal.contains(new DoubleDecker<>(down, up))) : "deadEndRemovalFailed";
+				/*
+				assert (doubleDeckersThatCanReachFinal.contains(new DoubleDecker<>(down, up))) : "deadEndRemovalFailed";
+				*/
 				mMarkedUp2Down.get(up).put(down, ReachFinal.AT_LEAST_ONCE);
 			}
 			if (!updatedDowns.isEmpty()) {
@@ -666,9 +692,6 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE> {
 	 // doubleDeckersThatCanReachFinal.addAll(acceptingDoubleDeckers);
 	 // }
 	
-	
-	
-	
 	 Set<STATE> statesNeverReachFin =
 	 computeStatesThatCanNotReachFinalNewVersion();
 	 // mLogger.error("STATEs " + mTraversedNwa.getStates().size());
@@ -712,6 +735,7 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE> {
 	 *             if operation was canceled
 	 */
 	public final boolean removeDeadEnds() throws AutomataOperationCanceledException {
+		@SuppressWarnings("squid:S1941")
 		final long startTime = System.currentTimeMillis();
 		
 		// some states are not removed but lose initial property
@@ -728,7 +752,9 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE> {
 		}
 		for (final STATE state : statesThatShouldNotBeInitialAnyMore) {
 			((NestedWordAutomaton<LETTER, STATE>) mTraversedNwa).makeStateNonIntial(state);
-			mLogger.warn("The following state is not final any more: " + state);
+			if (mLogger.isWarnEnabled()) {
+				mLogger.warn("The following state is not final any more: " + state);
+			}
 		}
 		
 		for (final STATE state : mDeadEnds) {
@@ -741,7 +767,9 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE> {
 		final boolean atLeastOneStateRemoved = !mDeadEnds.isEmpty();
 		mDeadEnds = null;
 		mDeadEndRemovalTime += (System.currentTimeMillis() - startTime);
-		mLogger.info("After removal of dead ends " + mTraversedNwa.sizeInformation());
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info("After removal of dead ends " + mTraversedNwa.sizeInformation());
+		}
 		return atLeastOneStateRemoved;
 	}
 	
@@ -878,6 +906,40 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE> {
 		return mDeadEndRemovalTime;
 	}
 	
+	/**
+	 * @return Removed up-down entries.
+	 */
+	public Iterable<UpDownEntry<STATE>> getRemovedUpDownEntry() {
+		return RemovedUpDownEntryIterator::new;
+	}
+	
+	private Set<DoubleDecker<STATE>> removedDoubleDeckersOldMethod() {
+		final Set<DoubleDecker<STATE>> result = new HashSet<>();
+		for (final Entry<STATE, Map<STATE, ReachFinal>> entry : mMarkedUp2Down.entrySet()) {
+			final STATE upState = entry.getKey();
+			for (final Entry<STATE, ReachFinal> entry2 : entry.getValue().entrySet()) {
+				if (entry2.getValue() == ReachFinal.UNKNOWN) {
+					final STATE downState = entry2.getKey();
+					result.add(new DoubleDecker<>(downState, upState));
+				}
+			}
+		}
+		return result;
+	}
+	
+	private Set<DoubleDecker<STATE>> removedDoubleDeckersViaIterator() {
+		final Set<DoubleDecker<STATE>> result = new HashSet<>();
+		for (final UpDownEntry<STATE> upDownEntry : getRemovedUpDownEntry()) {
+			result.add(new DoubleDecker<>(upDownEntry.getDown(), upDownEntry.getUp()));
+		}
+		return result;
+	}
+	
+	/**
+	 * Double decker set.
+	 * 
+	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+	 */
 	private class DoubleDeckerSet {
 		private final Map<STATE, Set<STATE>> mUp2down = new HashMap<>();
 		
@@ -911,6 +973,11 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE> {
 		}
 	}
 	
+	/**
+	 * Double decker work list.
+	 * 
+	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+	 */
 	private class DoubleDeckerWorkList {
 		private final Map<STATE, Set<STATE>> mUp2down;
 		
@@ -957,132 +1024,102 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE> {
 		 */
 		public Map<STATE, Set<STATE>> removeUpAndItsDowns() {
 			final STATE up = mUp2down.keySet().iterator().next();
-			final Map<STATE, Set<STATE>> result = Collections.singletonMap(up, mUp2down.get(up));
-			mUp2down.remove(up);
+			final Map<STATE, Set<STATE>> result = Collections.singletonMap(up, mUp2down.remove(up));
 			return result;
 		}
 	}
 	
-	public Iterable<UpDownEntry<STATE>> getRemovedUpDownEntry() {
-		return new Iterable<UpDownEntry<STATE>>() {
-			@Override
-			public Iterator<UpDownEntry<STATE>> iterator() {
-				return new Iterator<UpDownEntry<STATE>>() {
-					private Iterator<STATE> mUpIterator;
-					private STATE mUp;
-					private Iterator<STATE> mDownIterator;
-					private STATE mDown;
-					private boolean mHasNext = true;
-					
-					{
-						mUpIterator = getUp2DownMapping().keySet().iterator();
-						if (mUpIterator.hasNext()) {
-							mUp = mUpIterator.next();
-							mDownIterator = getUp2DownMapping().get(mUp).keySet().iterator();
-						} else {
-							mHasNext = false;
-						}
-						computeNextElement();
-						
-					}
-					
-					private void computeNextElement() {
-						mDown = null;
-						while (mDown == null && mHasNext) {
-							if (mDownIterator.hasNext()) {
-								final STATE downCandidate = mDownIterator.next();
-								final ReachFinal reach = getUp2DownMapping().get(mUp).get(downCandidate);
-								if (reach == ReachFinal.UNKNOWN) {
-									mDown = downCandidate;
-								} else {
-									assert reach == ReachFinal.AT_LEAST_ONCE;
-								}
-							} else {
-								if (mUpIterator.hasNext()) {
-									mUp = mUpIterator.next();
-									mDownIterator = getUp2DownMapping().get(mUp).keySet().iterator();
-								} else {
-									mHasNext = false;
-								}
-							}
-							
-						}
-					}
-					
-					@Override
-					public boolean hasNext() {
-						return mHasNext;
-					}
-					
-					@Override
-					@SuppressWarnings("squid:S1698")
-					public UpDownEntry<STATE> next() {
-						if (!hasNext()) {
-							throw new NoSuchElementException();
-						}
-						STATE entry;
-						final Set<STATE> callSuccs = computeState2CallSuccs(mDown);
-						if (callSuccs.size() > 1) {
-							throw new UnsupportedOperationException("State has more than one call successor");
-						} else if (callSuccs.size() == 1) {
-							entry = callSuccs.iterator().next();
-						} else {
-							entry = null;
-							// equality intended here
-							assert mDown == mTraversedNwa.getEmptyStackState();
-						}
-						final UpDownEntry<STATE> result = new UpDownEntry<>(mUp, mDown, entry);
-						computeNextElement();
-						return result;
-					}
-					
-					@Override
-					public void remove() {
-						throw new UnsupportedOperationException();
-					}
-					
-				};
-				
-			}
-			
-			/**
-			 * Compute call successors for a given set of states.
-			 */
-			@SuppressWarnings("squid:S1698")
-			private Set<STATE> computeState2CallSuccs(final STATE state) {
-				final Set<STATE> callSuccs = new HashSet<>();
-				// equality intended here
-				if (state != mTraversedNwa.getEmptyStackState()) {
-					for (final OutgoingCallTransition<LETTER, STATE> trans : mTraversedNwa.callSuccessors(state)) {
-						callSuccs.add(trans.getSucc());
-					}
-				}
-				return callSuccs;
-			}
-			
-		};
+	/**
+	 * Iterator for removed up-down entries.
+	 * 
+	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+	 */
+	private class RemovedUpDownEntryIterator implements Iterator<UpDownEntry<STATE>> {
+		private final Iterator<STATE> mUpIterator;
+		private STATE mUp;
+		private Iterator<STATE> mDownIterator;
+		private STATE mDown;
+		private boolean mHasNext = true;
 		
-	}
-	
-	private Set<DoubleDecker<STATE>> removedDoubleDeckersOldMethod() {
-		final Set<DoubleDecker<STATE>> result = new HashSet<>();
-		for (final Entry<STATE, Map<STATE, ReachFinal>> entry : mMarkedUp2Down.entrySet()) {
-			final STATE upState = entry.getKey();
-			for (final Entry<STATE, ReachFinal> entry2 : entry.getValue().entrySet()) {
-				if (entry2.getValue() == ReachFinal.UNKNOWN) {
-					final STATE downState = entry2.getKey();
-					result.add(new DoubleDecker<>(downState, upState));
+		public RemovedUpDownEntryIterator() {
+			mUpIterator = getUp2DownMapping().keySet().iterator();
+			if (mUpIterator.hasNext()) {
+				mUp = mUpIterator.next();
+				mDownIterator = getUp2DownMapping().get(mUp).keySet().iterator();
+			} else {
+				mHasNext = false;
+			}
+			computeNextElement();
+		}
+		
+		private void computeNextElement() {
+			mDown = null;
+			while (mDown == null && mHasNext) {
+				if (mDownIterator.hasNext()) {
+					final STATE downCandidate = mDownIterator.next();
+					final ReachFinal reach = getUp2DownMapping().get(mUp).get(downCandidate);
+					if (reach == ReachFinal.UNKNOWN) {
+						mDown = downCandidate;
+					} else {
+						assert reach == ReachFinal.AT_LEAST_ONCE;
+					}
+				} else {
+					if (mUpIterator.hasNext()) {
+						mUp = mUpIterator.next();
+						mDownIterator = getUp2DownMapping().get(mUp).keySet().iterator();
+					} else {
+						mHasNext = false;
+					}
 				}
 			}
 		}
-		return result;
-	}
-	
-	private Set<DoubleDecker<STATE>> removedDoubleDeckersViaIterator() {
-		final Set<DoubleDecker<STATE>> result = new HashSet<>();
-		for (final UpDownEntry<STATE> upDownEntry : getRemovedUpDownEntry()) {
-			result.add(new DoubleDecker<>(upDownEntry.getDown(), upDownEntry.getUp()));
+		
+		@Override
+		public boolean hasNext() {
+			return mHasNext;
 		}
-		return result;
+		
+		@Override
+		@SuppressWarnings("squid:S1698")
+		public UpDownEntry<STATE> next() {
+			if (!hasNext()) {
+				throw new NoSuchElementException();
+			}
+			STATE entry;
+			final Set<STATE> callSuccs = computeState2CallSuccs(mDown);
+			if (callSuccs.size() > 1) {
+				throw new UnsupportedOperationException("State has more than one call successor");
+			} else if (callSuccs.size() == 1) {
+				entry = callSuccs.iterator().next();
+			} else {
+				entry = null;
+				// equality intended here
+				assert mDown == mTraversedNwa.getEmptyStackState();
+			}
+			final UpDownEntry<STATE> result = new UpDownEntry<>(mUp, mDown, entry);
+			computeNextElement();
+			return result;
+		}
+		
+		@Override
+		public void remove() {
+			throw new UnsupportedOperationException();
+		}
+		
+		/**
+		 * Compute call successors for a given set of states.
+		 */
+		@SuppressWarnings("squid:S1698")
+		private Set<STATE> computeState2CallSuccs(final STATE state) {
+			final Set<STATE> callSuccs = new HashSet<>();
+			// equality intended here
+			if (state != mTraversedNwa.getEmptyStackState()) {
+				for (final OutgoingCallTransition<LETTER, STATE> trans : mTraversedNwa.callSuccessors(state)) {
+					callSuccs.add(trans.getSucc());
+				}
+			}
+			return callSuccs;
+		}
 	}
 }

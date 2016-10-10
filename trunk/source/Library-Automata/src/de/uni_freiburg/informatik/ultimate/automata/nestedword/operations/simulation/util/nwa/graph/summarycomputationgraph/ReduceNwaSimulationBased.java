@@ -55,7 +55,6 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.util.RunningTaskInfo;
-import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
@@ -79,9 +78,9 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends UnaryNwaOp
 		
 		mLogger.info(startMessage());
 		
-		final Collection<Set<STATE>> possibleEquivalentClasses = new LookaheadPartitionConstructor<LETTER, STATE>(mServices, mOperand).getResult();
+		final Collection<Set<STATE>> possibleEquivalentClasses = new LookaheadPartitionConstructor<LETTER, STATE>(mServices, mOperand).getPartition();
 		final int sizeOfLargestEquivalenceClass = NestedWordAutomataUtils.computeSizeOfLargestEquivalenceClass(possibleEquivalentClasses);
-		mLogger.info("Initial partition has " + possibleEquivalentClasses.size() + 
+		mLogger.info("Initial partition has " + possibleEquivalentClasses.size() +
 				" equivalence classes, largest equivalence class has " + sizeOfLargestEquivalenceClass + " states.");
 		
 		try {
@@ -92,7 +91,8 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends UnaryNwaOp
 
 			gameAutomaton = new GameAutomaton<LETTER, STATE>(mServices, gameFactory, possibleEquivalentClasses, operand, simulationInfoProvider, uniqueSpoilerWinningSink);
 			final IDoubleDeckerAutomaton<IGameLetter<LETTER, STATE>, IGameState> ga = new RemoveUnreachable<IGameLetter<LETTER, STATE>, IGameState>(mServices, gameAutomaton).getResult();
-			final AGameGraph<LETTER, STATE> graph = new GameAutomatonToGamGraphTransformer<LETTER, STATE>(mServices, ga, uniqueSpoilerWinningSink, mOperand).getResult();
+			final SummaryComputation<LETTER, STATE> sc = new SummaryComputation<LETTER, STATE>(mServices, ga, mOperand);
+			final AGameGraph<LETTER, STATE> graph = new GameAutomatonToGamGraphTransformer<LETTER, STATE>(mServices, ga, uniqueSpoilerWinningSink, mOperand, sc.getGameSummaries()).getResult();
 			final ParsimoniousSimulation sim = new ParsimoniousSimulation(null, mLogger, false, null, null, graph);
 			sim.doSimulation();
 			final HashRelation<STATE, STATE> simRelation = readoutSimulationRelation(graph, simulationInfoProvider, operand);
@@ -119,11 +119,11 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends UnaryNwaOp
 			mStatistics = sim.getSimulationPerformance().exportToAutomataOperationStatistics();
 			mStatistics.addKeyValuePair(StatisticsType.SIZE_MAXIMAL_INITIAL_EQUIVALENCE_CLASS, sizeOfLargestEquivalenceClass);
 		
-		} catch (final ToolchainCanceledException tce) {
-			final RunningTaskInfo rti = new RunningTaskInfo(getClass(), 
+		} catch (final AutomataOperationCanceledException aoce) {
+			final RunningTaskInfo rti = new RunningTaskInfo(getClass(),
 					NestedWordAutomataUtils.generateGenericMinimizationRunningTaskDescription(mOperand, possibleEquivalentClasses));
-			tce.addRunningTaskInfo(rti);
-			throw tce;
+			aoce.addRunningTaskInfo(rti);
+			throw aoce;
 		}
 		mLogger.info(exitMessage());
 	}
@@ -151,8 +151,8 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends UnaryNwaOp
 	}
 
 	/**
-	 * @return relation that contains a pair of states (q0, q1) iff the 
-	 * analysis of the game graph yielded the information that the state q1 
+	 * @return relation that contains a pair of states (q0, q1) iff the
+	 * analysis of the game graph yielded the information that the state q1
 	 * simulates the state q0.
 	 */
 	private HashRelation<STATE, STATE> readoutSimulationRelation(final AGameGraph<LETTER, STATE> gameGraph,
@@ -174,7 +174,7 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends UnaryNwaOp
 	/**
 	 * Workaround to check if vertex is auxiliary vertex. This method check
 	 * if one the vertex' states is null. In the future we want to have
-	 * separate classes for auxiliary vertices. 
+	 * separate classes for auxiliary vertices.
 	 */
 	private boolean isAuxiliaryVertex(final SpoilerVertex<LETTER, STATE> spoilerVertex) {
 		return spoilerVertex.getQ0() == null || spoilerVertex.getQ1() == null;

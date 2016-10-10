@@ -39,11 +39,13 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
+import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
@@ -58,7 +60,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCF
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
@@ -117,10 +118,10 @@ public class TraceChecker {
 	/**
 	 * Interface for query the SMT solver.
 	 */
-	protected final SmtManager mSmtManager;
-	protected final ManagedScript mManagedScript;
+	protected final ManagedScript mCfgManagedScript;
 	protected final Script mScript;
-	protected final SmtManager mTcSmtManager;
+	protected final ManagedScript mTcSmtManager;
+	protected final TraceCheckerLock mTraceCheckerLock = new TraceCheckerLock();
 	/**
 	 * Maps a procedure name to the set of global variables which may be modified by the procedure. The set of variables
 	 * is represented as a map where the identifier of the variable is mapped to the type of the variable.
@@ -145,6 +146,7 @@ public class TraceChecker {
 	protected final TraceCheckerBenchmarkGenerator mTraceCheckerBenchmarkGenerator;
 	protected final AssertCodeBlockOrder massertCodeBlocksIncrementally;
 	protected ToolchainCanceledException mToolchainCanceledException;
+	protected final Boogie2SmtSymbolTable mBoogie2SmtSymbolTable;
 
 	/**
 	 * Defines benchmark for measuring data about the usage of TraceCheckers. E.g., number and size of predicates
@@ -370,44 +372,46 @@ public class TraceChecker {
 	 *            result to a check-sat is UNSAT.
 	 * @param logger
 	 * @param services
+	 * @param symbolTable 
 	 */
 	public TraceChecker(final IPredicate precondition, final IPredicate postcondition,
-			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IAction> trace, final SmtManager smtManager,
+			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IAction> trace, final ManagedScript managedScriptCfg,
 			final ModifiableGlobalVariableManager modifiedGlobals, final AssertCodeBlockOrder assertCodeBlocksIncrementally,
-			final IUltimateServiceProvider services, final boolean computeRcfgProgramExecution) {
-		this(precondition, postcondition, pendingContexts, trace, smtManager, modifiedGlobals,
+			final IUltimateServiceProvider services, final boolean computeRcfgProgramExecution, final Boogie2SmtSymbolTable symbolTable) {
+		this(precondition, postcondition, pendingContexts, trace, managedScriptCfg, modifiedGlobals,
 				new DefaultTransFormulas(trace, precondition, postcondition, pendingContexts, modifiedGlobals, false),
-				assertCodeBlocksIncrementally, services, computeRcfgProgramExecution, true);
+				assertCodeBlocksIncrementally, services, computeRcfgProgramExecution, true, symbolTable);
 	}
 
 	protected TraceChecker(final IPredicate precondition, final IPredicate postcondition,
-			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IAction> trace, final SmtManager smtManager,
+			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IAction> trace, final ManagedScript managedScriptCfg,
 			final ModifiableGlobalVariableManager modifiedGlobals, final NestedFormulas<UnmodifiableTransFormula, IPredicate> rv,
 			final AssertCodeBlockOrder assertCodeBlocksIncrementally, final IUltimateServiceProvider services,
-			final boolean computeRcfgProgramExecution, final boolean unlockSmtSolverAlsoIfUnsat) {
-		this(precondition, postcondition, pendingContexts, trace, smtManager, modifiedGlobals, rv,
+			final boolean computeRcfgProgramExecution, final boolean unlockSmtSolverAlsoIfUnsat, final Boogie2SmtSymbolTable symbolTable) {
+		this(precondition, postcondition, pendingContexts, trace, managedScriptCfg, modifiedGlobals, rv,
 				assertCodeBlocksIncrementally, services, computeRcfgProgramExecution, unlockSmtSolverAlsoIfUnsat,
-				smtManager);
+				managedScriptCfg, symbolTable);
 	}
 
 	/**
 	 * Commit additionally the DefaultTransFormulas
 	 * 
 	 * @param services
+	 * @param symbolTable 
 	 * 
 	 */
 	protected TraceChecker(final IPredicate precondition, final IPredicate postcondition,
-			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IAction> trace, final SmtManager smtManager,
+			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IAction> trace, final ManagedScript managedScriptCfg,
 			final ModifiableGlobalVariableManager modifiedGlobals, final NestedFormulas<UnmodifiableTransFormula, IPredicate> rv,
 			final AssertCodeBlockOrder assertCodeBlocksIncrementally, final IUltimateServiceProvider services,
-			final boolean computeRcfgProgramExecution, final boolean unlockSmtSolverAlsoIfUnsat, final SmtManager tcSmtManager) {
+			final boolean computeRcfgProgramExecution, final boolean unlockSmtSolverAlsoIfUnsat, final ManagedScript managedScriptTc, final Boogie2SmtSymbolTable symbolTable) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		mSmtManager = smtManager;
-		mManagedScript = smtManager.getManagedScript();
-		mScript = smtManager.getScript();
-		mTcSmtManager = tcSmtManager;
+		mCfgManagedScript = managedScriptCfg;
+		mScript = managedScriptCfg.getScript();
+		mTcSmtManager = managedScriptTc;
 		mModifiedGlobals = modifiedGlobals;
+		mBoogie2SmtSymbolTable = symbolTable;
 		mTrace = trace;
 		mPrecondition = precondition;
 		mPostcondition = postcondition;
@@ -449,8 +453,8 @@ public class TraceChecker {
 	 */
 	protected LBool checkTrace() {
 		LBool isSafe;
-		mTcSmtManager.startTraceCheck(this);
-		final boolean transferToDifferentScript = (mTcSmtManager != mSmtManager);
+		startTraceCheck();
+		final boolean transferToDifferentScript = (mTcSmtManager != mCfgManagedScript);
 		mTraceCheckerBenchmarkGenerator.start(TraceCheckerBenchmarkType.s_SsaConstruction);
 		mNsb = new NestedSsaBuilder(mTrace, mTcSmtManager, mNestedFormulas, mModifiedGlobals, mLogger,
 				transferToDifferentScript);
@@ -511,8 +515,8 @@ public class TraceChecker {
 						mModifiedGlobals, true);
 				final TraceChecker tc = new TraceChecker(mNestedFormulas.getPrecondition(),
 						mNestedFormulas.getPostcondition(), mPendingContexts, mNestedFormulas.getTrace(),
-						mSmtManager, mModifiedGlobals, withBE, AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices,
-						true, true, mTcSmtManager);
+						mCfgManagedScript, mModifiedGlobals, withBE, AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices,
+						true, true, mTcSmtManager, mBoogie2SmtSymbolTable);
 				if (tc.getToolchainCancelledExpection() != null) {
 					throw tc.getToolchainCancelledExpection();
 				}
@@ -553,7 +557,7 @@ public class TraceChecker {
 	private RcfgProgramExecution computeRcfgProgramExecutionCaseSAT(final NestedSsaBuilder nsb) {
 		final RelevantVariables relVars = new RelevantVariables(mNestedFormulas, mModifiedGlobals);
 		final RcfgProgramExecutionBuilder rpeb = new RcfgProgramExecutionBuilder(mModifiedGlobals,
-				(NestedWord<CodeBlock>) mTrace, relVars, mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
+				(NestedWord<CodeBlock>) mTrace, relVars, mBoogie2SmtSymbolTable);
 		for (int i = 0; i < mTrace.length(); i++) {
 			final CodeBlock cb = (CodeBlock) mTrace.getSymbolAt(i);
 			final UnmodifiableTransFormula tf = cb.getTransitionFormulaWithBranchEncoders();
@@ -574,8 +578,8 @@ public class TraceChecker {
 				for (final Integer index : nsb.getIndexedVarRepresentative().get(bv).keySet()) {
 					final Term indexedVar = nsb.getIndexedVarRepresentative().get(bv).get(index);
 					Term valueT = getValue(indexedVar);
-					if (mSmtManager != mTcSmtManager) {
-						valueT = new TermTransferrer(mSmtManager.getScript()).transform(valueT);
+					if (mCfgManagedScript != mTcSmtManager) {
+						valueT = new TermTransferrer(mCfgManagedScript.getScript()).transform(valueT);
 					}
 					rpeb.addValueAtVarAssignmentPosition(bv, index, valueT);
 				}
@@ -586,7 +590,7 @@ public class TraceChecker {
 	}
 
 	protected AnnotateAndAssertCodeBlocks getAnnotateAndAsserterCodeBlocks(final NestedFormulas<Term, Term> ssa) {
-		return new AnnotateAndAssertCodeBlocks(mTcSmtManager, ssa, mLogger);
+		return new AnnotateAndAssertCodeBlocks(mTcSmtManager, mTraceCheckerLock, ssa, mLogger);
 
 		// AnnotateAndAssertCodeBlocks aaacb =
 		// return new AnnotateAndAsserter(mSmtManager, ssa, aaacb);
@@ -637,7 +641,7 @@ public class TraceChecker {
 	}
 
 	protected void unlockSmtManager() {
-		mTcSmtManager.endTraceCheck(this);
+		endTraceCheck();
 	}
 
 	public TraceCheckerBenchmarkGenerator getTraceCheckerBenchmark() {
@@ -653,6 +657,27 @@ public class TraceChecker {
 	 */
 	public ToolchainCanceledException getToolchainCancelledExpection() {
 		return mToolchainCanceledException;
+	}
+	
+	private void startTraceCheck() {
+		mTcSmtManager.lock(mTraceCheckerLock);
+		mTcSmtManager.echo(mTraceCheckerLock, new QuotedObject("starting trace check"));
+		mTcSmtManager.push(mTraceCheckerLock, 1);
+	}
+
+	private void endTraceCheck() {
+		mTcSmtManager.echo(mTraceCheckerLock, new QuotedObject("finished trace check"));
+		mTcSmtManager.pop(mTraceCheckerLock, 1);
+		mTcSmtManager.unlock(mTraceCheckerLock);
+	}
+	
+	/**
+	 * Package private class used by trace checker to lock the 
+	 * {@link ManagedScript}
+	 * 
+	 */
+	class TraceCheckerLock {
+		
 	}
 
 }

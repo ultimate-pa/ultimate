@@ -39,6 +39,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
@@ -49,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.util.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.util.Utils;
 
 /**
@@ -223,8 +225,9 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 	 *            Ultimate services
 	 * @param operand
 	 *            input NWA
+	 * @throws AutomataOperationCanceledException 
 	 */
-	public IsEmpty(final AutomataLibraryServices services, final INestedWordAutomatonSimple<LETTER, STATE> operand) {
+	public IsEmpty(final AutomataLibraryServices services, final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		this(services, operand, SearchStrategy.BFS);
 	}
 	
@@ -237,10 +240,11 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 	 *            input NWA
 	 * @param strategy
 	 *            search strategy
+	 * @throws AutomataOperationCanceledException 
 	 * @see #IsEmpty(AutomataLibraryServices, INestedWordAutomatonSimple)
 	 */
 	public IsEmpty(final AutomataLibraryServices services, final INestedWordAutomatonSimple<LETTER, STATE> operand,
-			final SearchStrategy strategy) {
+			final SearchStrategy strategy) throws AutomataOperationCanceledException {
 		this(services, operand, Utils.constructHashSet(operand.getInitialStates()), Collections.emptySet(), null, true,
 				strategy);
 	}
@@ -261,9 +265,10 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 	 *            forbidden states
 	 * @param goalStates
 	 *            goal states
+	 * @throws AutomataOperationCanceledException 
 	 */
 	public IsEmpty(final AutomataLibraryServices services, final INestedWordAutomaton<LETTER, STATE> operand,
-			final Set<STATE> startStates, final Set<STATE> forbiddenStates, final Set<STATE> goalStates) {
+			final Set<STATE> startStates, final Set<STATE> forbiddenStates, final Set<STATE> goalStates) throws AutomataOperationCanceledException {
 		this(services, operand, startStates, forbiddenStates, goalStates, false, SearchStrategy.BFS);
 		assert operand.getStates().containsAll(startStates) : "unknown states";
 		assert operand.getStates().containsAll(goalStates) : "unknown states";
@@ -271,7 +276,7 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 	
 	private IsEmpty(final AutomataLibraryServices services, final INestedWordAutomatonSimple<LETTER, STATE> operand,
 			final Set<STATE> startStates, final Set<STATE> forbiddenStates, final Set<STATE> goalStates,
-			final boolean goalStateIsAcceptingState, final SearchStrategy strategy) {
+			final boolean goalStateIsAcceptingState, final SearchStrategy strategy) throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
 		mDummyEmptyStackState = mOperand.getEmptyStackState();
@@ -424,14 +429,20 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 	/**
 	 * Get an accepting run of the automaton passed to the constructor. Return
 	 * null if the automaton does not accept any nested word.
+	 * @throws AutomataOperationCanceledException 
 	 */
 	@SuppressWarnings("squid:S1698")
-	private NestedRun<LETTER, STATE> getAcceptingRun() {
+	private NestedRun<LETTER, STATE> getAcceptingRun() throws AutomataOperationCanceledException {
 		for (final STATE state : mStartStates) {
 			enqueueAndMarkVisited(state, mDummyEmptyStackState);
 		}
 		
 		while (!isQueueEmpty()) {
+			if (!mServices.getProgressMonitorService().continueProcessing()) {
+				final String taskDescription = "searching accepting run (input had " + mOperand.size() + " states)";
+				final RunningTaskInfo rti = new RunningTaskInfo(getClass(), taskDescription );
+				throw new AutomataOperationCanceledException(rti);
+			}
 			final DoubleDecker<STATE> pair = dequeue();
 			final STATE state = pair.getUp();
 			final STATE stateK = pair.getDown();

@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
@@ -51,12 +51,12 @@ public class SimplifyPreprocessor extends TransitionPreprocessor {
 	private final IToolchainStorage mStorage;
 	private final boolean mUseSMTInterpolForSimplification = !true;
 	private final ManagedScript mMgdScript;
-	private final SimplicationTechnique mXnfConversionTechnique;
+	private final SimplificationTechnique mXnfConversionTechnique;
 	
 	public static final String s_Description = "Simplify formula using SimplifyDDA";
 	
 	public SimplifyPreprocessor(final IUltimateServiceProvider services, final IToolchainStorage storage, 
-			final ManagedScript mgdScript, final SimplicationTechnique xnfConversionTechnique) {
+			final ManagedScript mgdScript, final SimplificationTechnique xnfConversionTechnique) {
 		super();
 		mServices = services;
 		mStorage = storage;

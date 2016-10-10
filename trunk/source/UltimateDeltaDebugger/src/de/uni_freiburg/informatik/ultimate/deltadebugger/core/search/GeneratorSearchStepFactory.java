@@ -1,0 +1,173 @@
+package de.uni_freiburg.informatik.ultimate.deltadebugger.core.search;
+
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Optional;
+
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.ChangeHandle;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.VariantGenerator;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.minimizers.DuplicateVariantTracker;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.minimizers.Minimizer;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.minimizers.MinimizerStep;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.util.ListUtils;
+
+/**
+ * Creates a GeneratorSearchStep that uses a given minimizer and duplicate tracker to search for the best set of active
+ * changes supported by a VariantGenerator. Also includes the iteration over multiple chained VariantGenerators.
+ */
+public class GeneratorSearchStepFactory {
+	private class GeneratorSearchStepContext {
+		private abstract class BaseStep implements GeneratorSearchStep {
+			protected final MinimizerStep<ChangeHandle> minimizerStep;
+			protected final List<ChangeHandle> activeChanges;
+
+			private BaseStep(final MinimizerStep<ChangeHandle> minimizerStep, final List<ChangeHandle> activeChanges) {
+				this.minimizerStep = minimizerStep;
+				this.activeChanges = activeChanges;
+			}
+
+			@Override
+			public List<ChangeHandle> getActiveChanges() {
+				return activeChanges;
+			}
+
+			@Override
+			public DuplicateVariantTracker<ChangeHandle> getDuplicateTracker() {
+				return duplicateTracker;
+			}
+
+			@Override
+			public MinimizerStep<ChangeHandle> getMinimizerStep() {
+				return minimizerStep;
+			}
+
+			@Override
+			public VariantGenerator getVariantGenerator() {
+				return generator;
+			}
+
+		}
+
+		private class CompletedStep extends BaseStep {
+			private CompletedStep(final MinimizerStep<ChangeHandle> minimizerStep,
+					final List<ChangeHandle> activeChanges) {
+				super(minimizerStep, activeChanges);
+			}
+
+			@Override
+			public String getResult() {
+				return generator.apply(activeChanges);
+			}
+
+			@Override
+			public String getVariant() {
+				throw new UnsupportedOperationException();
+			}
+
+			@Override
+			public boolean isDone() {
+				return true;
+			}
+
+			@Override
+			public GeneratorSearchStep next(final boolean keepVariant) {
+				throw new NoSuchElementException();
+			}
+		}
+
+		private class Step extends BaseStep {
+
+			private Step(final MinimizerStep<ChangeHandle> minimizerStep) {
+				super(minimizerStep, complementOf(minimizerStep.getVariant()));
+			}
+
+			@Override
+			public String getResult() {
+				return generator.apply(complementOf(minimizerStep.getResult()));
+			}
+
+			@Override
+			public String getVariant() {
+				return generator.apply(activeChanges);
+			}
+
+			@Override
+			public boolean isDone() {
+				return false;
+			}
+
+			@Override
+			public GeneratorSearchStep next(final boolean keepVariant) {
+				final MinimizerStep<ChangeHandle> nextMinimizerStep =
+						skipDuplicateSteps(minimizerStep.next(keepVariant));
+				if (!nextMinimizerStep.isDone()) {
+					return new Step(nextMinimizerStep);
+				}
+
+				final List<ChangeHandle> nextActiveChanges = complementOf(nextMinimizerStep.getResult());
+				final Optional<VariantGenerator> nextGenerator = generator.next(nextActiveChanges);
+				if (nextGenerator.isPresent()) {
+					return create(nextGenerator.get());
+				}
+
+				return new CompletedStep(nextMinimizerStep, nextActiveChanges);
+			}
+
+			private MinimizerStep<ChangeHandle> skipDuplicateSteps(final MinimizerStep<ChangeHandle> step) {
+				MinimizerStep<ChangeHandle> current = step;
+				while (!current.isDone() && duplicateTracker.contains(current.getVariant())) {
+					current = current.next(false);
+				}
+				return current;
+			}
+		}
+
+		private final VariantGenerator generator;
+
+		private final DuplicateVariantTracker<ChangeHandle> duplicateTracker;
+
+		private GeneratorSearchStepContext(final VariantGenerator generator) {
+			this.generator = generator;
+			duplicateTracker = duplicateTrackerFactory.create(minimizer, generator.getChanges());
+		}
+
+		private List<ChangeHandle> complementOf(final List<ChangeHandle> changes) {
+			return ListUtils.complementOfSubsequence(changes, generator.getChanges());
+		}
+	}
+
+	private final Minimizer minimizer;
+
+	private final DuplicateVariantTrackerFactory duplicateTrackerFactory;
+
+	/**
+	 * Create a factory object that uses the specified minimizer and duplicate tracker.
+	 *
+	 * @param minimizer
+	 *            minimization algorithm
+	 * @param duplicateTrackerFactory
+	 *            function to create a duplicate tracker for a certain input
+	 */
+	public GeneratorSearchStepFactory(final Minimizer minimizer,
+			final DuplicateVariantTrackerFactory duplicateTrackerFactory) {
+		this.minimizer = minimizer;
+		this.duplicateTrackerFactory = duplicateTrackerFactory;
+	}
+
+	/**
+	 * Factory method to create the initial state for a search over the variants generated by the given generator.
+	 *
+	 * @param generator
+	 * @return inital search step
+	 */
+	public GeneratorSearchStep create(final VariantGenerator generator) {
+		final GeneratorSearchStepContext context = new GeneratorSearchStepContext(generator);
+		final MinimizerStep<ChangeHandle> minimizerStep = minimizer.create(generator.getChanges());
+		if (!minimizerStep.isDone()) {
+			return context.new Step(minimizerStep);
+		}
+
+		return context.new CompletedStep(minimizerStep, context.complementOf(minimizerStep.getResult()));
+	}
+
+}

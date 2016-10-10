@@ -69,7 +69,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Unm
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XnfDer;
 import de.uni_freiburg.informatik.ultimate.util.RunningTaskInfo;
@@ -145,7 +145,7 @@ public class Statements2TransFormula {
 		}
 	}
 
-	private TranslationResult getTransFormula(final boolean simplify, final boolean feasibilityKnown, final SimplicationTechnique simplicationTechnique) {
+	private TranslationResult getTransFormula(final boolean simplify, final boolean feasibilityKnown, final SimplificationTechnique simplicationTechnique) {
 		UnmodifiableTransFormula tf = null;
 		try {
 			tf = constructTransFormula(simplify, feasibilityKnown, simplicationTechnique);
@@ -161,7 +161,7 @@ public class Statements2TransFormula {
 		return new TranslationResult(tf, mOverapproximations);
 	}
 
-	private UnmodifiableTransFormula constructTransFormula(final boolean simplify, final boolean feasibilityKnown, final SimplicationTechnique simplicationTechnique) {
+	private UnmodifiableTransFormula constructTransFormula(final boolean simplify, final boolean feasibilityKnown, final SimplificationTechnique simplicationTechnique) {
 		final Set<TermVariable> auxVars = mAuxVars;
 		Term formula = mAssumes;
 		formula = eliminateAuxVars(mAssumes, auxVars);
@@ -635,7 +635,7 @@ public class Statements2TransFormula {
 		return result;
 	}
 
-	public TranslationResult statementSequence(final boolean simplify, final SimplicationTechnique simplicationTechnique,
+	public TranslationResult statementSequence(final boolean simplify, final SimplificationTechnique simplicationTechnique,
 			final String procId, final List<Statement> statements) {
 		initialize(procId);
 		for (int i = statements.size() - 1; i >= 0; i--) {
@@ -664,7 +664,7 @@ public class Statements2TransFormula {
 	 * BoogieVar which is equivalent to the BoogieVars which were constructed
 	 * while processing the callee.
 	 */
-	public TranslationResult inParamAssignment(final CallStatement st, final SimplicationTechnique simplicationTechnique) {
+	public TranslationResult inParamAssignment(final CallStatement st, final SimplificationTechnique simplicationTechnique) {
 		final String callee = st.getMethodName();
 		initialize(callee);
 		final Procedure calleeImpl = mBoogieDeclarations.getProcImplementation().get(callee);
@@ -704,7 +704,7 @@ public class Statements2TransFormula {
 	 * BoogieVar which is equivalent to the BoogieVars of the corresponding
 	 * procedures.
 	 */
-	public TranslationResult resultAssignment(final CallStatement st, final String caller, final SimplicationTechnique simplicationTechnique) {
+	public TranslationResult resultAssignment(final CallStatement st, final String caller, final SimplificationTechnique simplicationTechnique) {
 		initialize(caller);
 		final String callee = st.getMethodName();
 		final Procedure impl = mBoogieDeclarations.getProcImplementation().get(callee);

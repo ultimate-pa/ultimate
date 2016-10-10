@@ -125,7 +125,7 @@ public class UnaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, 
 
 		final NonrelationalEvaluationResult<VALUE> evalResult =
 				new NonrelationalEvaluationResult<>(evalValue, evalBool);
-		mLogger.logEvaluation(mOperator, evalResult, computedValue);
+		mLogger.logInverseEvaluation(mOperator, evalResult, computedValue);
 		return mSubEvaluator.inverseEvaluate(evalResult, currentState);
 	}
 

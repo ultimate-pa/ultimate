@@ -56,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSy
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayEquality;
@@ -83,7 +83,7 @@ public class TransFormulaLRWithArrayInformation {
 
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
-	private final SimplicationTechnique mSimplificationTechnique;
+	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
 
 	
@@ -132,7 +132,7 @@ public class TransFormulaLRWithArrayInformation {
 			final ReplacementVarFactory replacementVarFactory, final ManagedScript script, 
 			final Boogie2SmtSymbolTable boogie2smt, 
 			final TransFormulaLRWithArrayInformation stem, 
-			final SimplicationTechnique simplificationTechnique, 
+			final SimplificationTechnique simplificationTechnique, 
 			final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
@@ -791,7 +791,7 @@ public class TransFormulaLRWithArrayInformation {
 
 
 	private static TransFormulaLR constructTransFormulaLRWInSunf(final IUltimateServiceProvider services, 
-			final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique, 
+			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique, 
 			final ILogger logger, final ManagedScript ftvc, final ReplacementVarFactory repVarFactory, 
 			final Script script, final TransFormulaLR tf, 
 			final List<List<ArrayEquality>> arrayEqualities, final SingleUpdateNormalFormTransformer... sunfts) {

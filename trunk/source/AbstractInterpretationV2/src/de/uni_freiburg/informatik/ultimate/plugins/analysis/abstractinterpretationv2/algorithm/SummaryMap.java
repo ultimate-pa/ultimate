@@ -68,7 +68,6 @@ final class SummaryMap<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACT
 				+ LoggingHelper.getTransitionString(current, mTransProvider) + ":");
 		mLogger.debug(AbsIntPrefInitializer.DINDENT + " PreCall " + LoggingHelper.getStateString(summary.getFirst())
 				+ " PostCall " + LoggingHelper.getStateString(summary.getSecond()));
-
 	}
 
 	private ACTION getSummaryAction(final ACTION current) {

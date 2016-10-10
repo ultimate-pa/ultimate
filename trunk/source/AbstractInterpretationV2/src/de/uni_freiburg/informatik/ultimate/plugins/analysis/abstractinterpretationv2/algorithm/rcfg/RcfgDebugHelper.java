@@ -17,7 +17,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareT
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
@@ -45,7 +45,7 @@ public class RcfgDebugHelper<STATE extends IAbstractState<STATE, CodeBlock, VARD
 	private final IHoareTripleChecker mHTC;
 	private final Script mScript;
 	private final Boogie2SMT mBoogie2Smt;
-	private final SimplicationTechnique mSimplificationTechnique;
+	private final SimplificationTechnique mSimplificationTechnique;
 
 	private static int sIllegalPredicates = Integer.MAX_VALUE;
 
@@ -55,7 +55,7 @@ public class RcfgDebugHelper<STATE extends IAbstractState<STATE, CodeBlock, VARD
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mBoogie2Smt = rootAnnot.getBoogie2SMT();
 		// TODO: Make parameter
-		mSimplificationTechnique = SimplicationTechnique.SIMPLIFY_DDA;
+		mSimplificationTechnique = SimplificationTechnique.SIMPLIFY_DDA;
 		mHTC = new IncrementalHoareTripleChecker(rootAnnot.getManagedScript(), rootAnnot.getModGlobVarManager());
 	}
 

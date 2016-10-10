@@ -31,7 +31,7 @@ import java.util.function.Consumer;
 import de.uni_freiburg.informatik.ultimate.lassoranker.mapelimination.MapEliminationSettings;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.InequalityConverter;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.InequalityConverter.NlaHandling;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 
@@ -146,7 +146,7 @@ public interface ILassoRankerPreferences {
 				timeoutSmtInterpol, null, isDumpSmtSolverScript(), getPathOfDumpedScript(), filenameDumpedScript);
 	}
 
-	default MapEliminationSettings getMapEliminationSettings(final SimplicationTechnique simplificationTechnique,
+	default MapEliminationSettings getMapEliminationSettings(final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique) {
 		return new MapEliminationSettings(isMapElimAddInequalities(), isMapElimOnlyTrivialImplicationsIndexAssignment(),
 				isMapElimOnlyTrivialImplicationsArrayWrite(), isMapElimOnlyIndicesInFormula(), simplificationTechnique,

@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInte
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
@@ -69,7 +69,7 @@ public class SequentialComposition extends CodeBlock implements IInternalAction 
 	SequentialComposition(final int serialNumber, final ProgramPoint source, final ProgramPoint target, final ManagedScript mgdScript,
 			final ModifiableGlobalVariableManager modGlobVarManager, final boolean simplify, final boolean extPqe,
 			final IUltimateServiceProvider services, final List<CodeBlock> codeBlocks, 
-			final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique, final Boogie2SmtSymbolTable symbolTable) {
+			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique, final Boogie2SmtSymbolTable symbolTable) {
 		super(serialNumber, source, target, services.getLoggingService().getLogger(Activator.PLUGIN_ID));
 		mCodeBlocks = codeBlocks;
 
@@ -165,7 +165,7 @@ public class SequentialComposition extends CodeBlock implements IInternalAction 
 	public static UnmodifiableTransFormula getInterproceduralTransFormula(final ManagedScript boogie2smt,
 			final ModifiableGlobalVariableManager modGlobVarManager, final boolean simplify, final boolean extPqe, final boolean tranformToCNF,
 			final boolean withBranchEncoders, final ILogger logger, final IUltimateServiceProvider services, 
-			final List<CodeBlock> codeBlocks,final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique, 
+			final List<CodeBlock> codeBlocks,final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique, 
 			final Boogie2SmtSymbolTable symbolTable) {
 		return getInterproceduralTransFormula(boogie2smt, modGlobVarManager, simplify, extPqe, tranformToCNF,
 				withBranchEncoders, null, null, null, null, logger, services, codeBlocks, xnfConversionTechnique, simplificationTechnique, symbolTable);
@@ -175,7 +175,7 @@ public class SequentialComposition extends CodeBlock implements IInternalAction 
 			final ModifiableGlobalVariableManager modGlobVarManager, final boolean simplify, final boolean extPqe, final boolean tranformToCNF,
 			final boolean withBranchEncoders, final String nameStartProcedure, final UnmodifiableTransFormula[] beforeCall, final Call call, final Return ret, final ILogger logger,
 			final IUltimateServiceProvider services, final List<CodeBlock> codeBlocks, 
-			final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique, final Boogie2SmtSymbolTable symbolTable) {
+			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique, final Boogie2SmtSymbolTable symbolTable) {
 		final List<UnmodifiableTransFormula> beforeFirstPendingCall = new ArrayList<UnmodifiableTransFormula>();
 		Call lastUnmatchedCall = null;
 		int callsSinceLastUnmatchedCall = 0;

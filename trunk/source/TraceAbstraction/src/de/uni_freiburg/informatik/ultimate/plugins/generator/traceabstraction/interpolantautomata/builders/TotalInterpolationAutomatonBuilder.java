@@ -61,7 +61,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInte
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -105,14 +105,14 @@ public class TotalInterpolationAutomatonBuilder implements IInterpolantAutomaton
 
 	private final TotalInterpolationBenchmarkGenerator mBenchmarkGenerator = new TotalInterpolationBenchmarkGenerator();
 	private final IUltimateServiceProvider mServices;
-	private final SimplicationTechnique mSimplificationTechnique;
+	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
 
 	public TotalInterpolationAutomatonBuilder(final INestedWordAutomaton<CodeBlock, IPredicate> abstraction,
 			final ArrayList<IPredicate> stateSequence, final IInterpolantGenerator interpolantGenerator, final SmtManager smtManager,
 			final PredicateFactoryForInterpolantAutomata predicateFactory, final ModifiableGlobalVariableManager modifiableGlobals,
 			final InterpolationTechnique interpolation, final IUltimateServiceProvider services, final HoareTripleChecks hoareTripleChecks,
-			final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) throws AutomataOperationCanceledException {
+			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) throws AutomataOperationCanceledException {
 		super();
 		mServices = services;
 		mSimplificationTechnique = simplificationTechnique;
@@ -316,15 +316,17 @@ public class TotalInterpolationAutomatonBuilder implements IInterpolantAutomaton
 		case Craig_TreeInterpolation:
 			tc = new InterpolatingTraceCheckerCraig(precondition, postcondition,
 					pendingContexts, run.getWord(),
-					mSmtManager, mModifiedGlobals, AssertCodeBlockOrder.NOT_INCREMENTALLY,
-					mServices, true, mPredicateUnifier, mInterpolation, true, mXnfConversionTechnique, mSimplificationTechnique);
+					mSmtManager.getManagedScript(), mModifiedGlobals, AssertCodeBlockOrder.NOT_INCREMENTALLY,
+					mServices, true, mPredicateUnifier, mInterpolation, true, mXnfConversionTechnique, mSimplificationTechnique, 
+					mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
 			break;
 		case ForwardPredicates:
 		case BackwardPredicates:
 		case FPandBP:
-			tc = new TraceCheckerSpWp(precondition, postcondition, pendingContexts, run.getWord(), mSmtManager,
+			tc = new TraceCheckerSpWp(precondition, postcondition, pendingContexts, run.getWord(), mSmtManager.getManagedScript(),
 					mModifiedGlobals, AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true,
-					mServices, true, mPredicateUnifier, mInterpolation, mSmtManager, mXnfConversionTechnique, mSimplificationTechnique);
+					mServices, true, mPredicateUnifier, mInterpolation, mSmtManager.getManagedScript(), 
+					mXnfConversionTechnique, mSimplificationTechnique, mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
 
 			break;
 		case PathInvariants:

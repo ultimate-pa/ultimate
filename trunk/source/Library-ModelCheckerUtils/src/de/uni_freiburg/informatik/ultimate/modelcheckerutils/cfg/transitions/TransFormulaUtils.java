@@ -57,7 +57,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.DagSizePrinter;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.MonolithicImplicationChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierPusher;
@@ -83,7 +83,7 @@ public class TransFormulaUtils {
 	 */
 	public static UnmodifiableTransFormula sequentialComposition(final ILogger logger, final IUltimateServiceProvider services,
 			final ManagedScript mgdScript, final boolean simplify, final boolean extPqe, final boolean tranformToCNF,
-			final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique,
+			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique,
 			final List<UnmodifiableTransFormula> transFormula) {
 		logger.debug("sequential composition with" + (simplify ? "" : "out") + " formula simplification");
 		final Script script = mgdScript.getScript();
@@ -418,7 +418,7 @@ public class TransFormulaUtils {
 			final UnmodifiableTransFormula afterCall, final ILogger logger,
 			final IUltimateServiceProvider services,
 			final Set<IProgramVar> modifiableGlobalsOfEndProcedure,
-			final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique,
+			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique,
 			final Boogie2SmtSymbolTable symbolTable,
 			final String procAtStart, final String procBeforeCall, final String procAfterCall, final String procAtEnd,
 			final ModifiableGlobalVariableManager modGlobVarManager) {
@@ -608,7 +608,7 @@ public class TransFormulaUtils {
 	
 	
 	private static boolean predicateBasedResultCheck(final IUltimateServiceProvider services, final ManagedScript mgdScript,
-			final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique,
+			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique,
 			final List<UnmodifiableTransFormula> beforeCall,
 			final UnmodifiableTransFormula callTf, final UnmodifiableTransFormula oldVarsAssignment,
 			final UnmodifiableTransFormula globalVarsAssignment, final UnmodifiableTransFormula afterCallTf,
@@ -660,7 +660,7 @@ public class TransFormulaUtils {
 			final boolean extPqe, final boolean transformToCNF, final UnmodifiableTransFormula callTf,
 			final UnmodifiableTransFormula oldVarsAssignment, final UnmodifiableTransFormula globalVarsAssignment,
 			final UnmodifiableTransFormula procedureTf, final UnmodifiableTransFormula returnTf, final ILogger logger,
-			final IUltimateServiceProvider services, final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique,
+			final IUltimateServiceProvider services, final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique,
 			final Boogie2SmtSymbolTable symbolTable, final Set<IProgramVar> modifiableGlobalsOfCallee) {
 		logger.debug("sequential composition (call/return) with" + (simplify ? "" : "out") + " formula simplification");
 		final UnmodifiableTransFormula composition = sequentialComposition(logger, services, mgdScript,
@@ -759,7 +759,7 @@ public class TransFormulaUtils {
 	
 	
 	private static boolean predicateBasedResultCheck(final IUltimateServiceProvider services, final ManagedScript mgdScript,
-			final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique,
+			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique,
 			final UnmodifiableTransFormula callTf, final UnmodifiableTransFormula oldVarsAssignment,
 			final UnmodifiableTransFormula globalVarsAssignment, final UnmodifiableTransFormula procedureTf,
 			final UnmodifiableTransFormula returnTf, final UnmodifiableTransFormula result,
@@ -827,7 +827,7 @@ public class TransFormulaUtils {
 	}
 	
 	private static UnmodifiableTransFormula negate(final UnmodifiableTransFormula tf, final ManagedScript maScript, final IUltimateServiceProvider services,
-			final ILogger logger,final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique) {
+			final ILogger logger,final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique) {
 		if (!tf.getBranchEncoders().isEmpty()) {
 			throw new AssertionError("I think this does not make sense with branch enconders");
 		}
@@ -851,7 +851,7 @@ public class TransFormulaUtils {
 	
 	public static UnmodifiableTransFormula computeMarkhorTransFormula(final UnmodifiableTransFormula tf,
 			final ManagedScript maScript, final IUltimateServiceProvider services,
-			final ILogger logger, final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique) {
+			final ILogger logger, final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique) {
 		final UnmodifiableTransFormula guard = computeGuard(tf, maScript);
 		final UnmodifiableTransFormula negGuard = negate(guard, maScript, services, logger, xnfConversionTechnique, simplificationTechnique);
 		final UnmodifiableTransFormula markhor = parallelComposition(logger, services, tf.hashCode(), maScript, null, false, xnfConversionTechnique, tf, negGuard);

@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization;
@@ -34,16 +34,22 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DefaultAnn
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 
 /**
- * Ultimate model of a PetriNet place.
+ * Ultimate model of a {@link BranchingProcess} (Petri net) place.
  * 
- * @author heizmann@informatik.uni-freiburg.de
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <S>
+ *            symbol type
+ * @param <C>
+ *            place content type
  */
-
-public class BranchingProcessInitialNode<S, C> extends PetriNetVisualizationNode {
-
+public final class BranchingProcessInitialNode<S, C> extends PetriNetVisualizationNode {
 	private static final long serialVersionUID = 264254789648279608L;
-
-	public BranchingProcessInitialNode(BranchingProcess<S, C> net) {
+	
+	/**
+	 * @param net
+	 *            Branching process (UNUSED!).
+	 */
+	public BranchingProcessInitialNode(final BranchingProcess<S, C> net) {
 		super("My sucessors are the initial conditions");
 		final IAnnotations thisPluginsAnnotations = new DefaultAnnotations();
 		final Map<String, IAnnotations> annotations = getPayload().getAnnotations();

@@ -69,12 +69,12 @@ public class Minimization extends AbstractTraceAbstractionTestSuite {
 			new DirectoryFileEndingsPair("examples/svcomp/ntdrivers-simplified/", new String[]{".c" }, mFilesPerDirectoryLimit) ,
 			new DirectoryFileEndingsPair("examples/svcomp/ssh-simplified/", new String[]{".c" }, mFilesPerDirectoryLimit) ,
 			new DirectoryFileEndingsPair("examples/svcomp/locks/", new String[]{".c" }, mFilesPerDirectoryLimit) ,
-//			
+			
 //			new DirectoryFileEndingsPair("examples/svcomp/ntdrivers/", new String[]{ ".c" }, mFilesPerDirectoryLimit) ,
 //			new DirectoryFileEndingsPair("examples/svcomp/ssh/", new String[]{ ".c" }, mFilesPerDirectoryLimit) ,
-//	
+	
 			new DirectoryFileEndingsPair("examples/svcomp/eca-rers2012/", new String[]{".c" }, mFilesPerDirectoryLimit) ,
-//			
+			
 			new DirectoryFileEndingsPair("examples/svcomp/loops/", new String[]{".i"}, mFilesPerDirectoryLimit),
 			new DirectoryFileEndingsPair("examples/svcomp/loop-acceleration/", new String[]{".i" }, mFilesPerDirectoryLimit) ,
 			new DirectoryFileEndingsPair("examples/svcomp/loop-invgen/", new String[]{".i"}, mFilesPerDirectoryLimit) ,
@@ -130,18 +130,19 @@ public class Minimization extends AbstractTraceAbstractionTestSuite {
 	 * 
 	 */
 	private static final String[] s_Settings = {
-		"automizer/minimization/TreeInterpolants-DFA_HOPCROFT_ARRAYS.epf",
-		"automizer/minimization/TreeInterpolants-MINIMIZE_SEVPA.epf",
+//		"automizer/minimization/TreeInterpolants-DFA_HOPCROFT_ARRAYS.epf",
+//		"automizer/minimization/TreeInterpolants-MINIMIZE_SEVPA.epf",
 		"automizer/minimization/TreeInterpolants-NONE.epf",
 		"automizer/minimization/TreeInterpolants-SHRINK_NWA.epf",
-		"automizer/minimization/TreeInterpolants-NWA_COMBINATOR.epf",
+//		"automizer/minimization/TreeInterpolants-NWA_COMBINATOR.epf",
 //		"automizer/minimization/TreeInterpolants-NWA_MAX_SAT.epf", // use with caution, does not respect timeout
 		"automizer/minimization/TreeInterpolants-NWA_MAX_SAT2.epf",
-		"automizer/minimization/TreeInterpolants-RAQ_DIRECT_SIMULATION.epf",
+//		"automizer/minimization/TreeInterpolants-RAQ_DIRECT_SIMULATION.epf",
+		"automizer/minimization/TreeInterpolants-RAQ_DIRECT_SIMULATION_B.epf",
 		"automizer/minimization/TreeInterpolants-NWA_COMBINATOR_MULTI_DEFAULT.epf",
-		"automizer/minimization/TreeInterpolants-NWA_COMBINATOR_MULTI_SIMULATION.epf",
-		"automizer/minimization/TreeInterpolants-NONE-DFS.epf",
-		"automizer/minimization/TreeInterpolants-SHRINK_NWA-DFS.epf",
+//		"automizer/minimization/TreeInterpolants-NWA_COMBINATOR_MULTI_SIMULATION.epf",
+//		"automizer/minimization/TreeInterpolants-NONE-DFS.epf",
+//		"automizer/minimization/TreeInterpolants-SHRINK_NWA-DFS.epf",
 	};
 	
 	/**

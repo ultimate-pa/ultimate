@@ -69,6 +69,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 import de.uni_freiburg.informatik.ultimate.util.InCaReCounter;
+import de.uni_freiburg.informatik.ultimate.util.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
@@ -995,7 +996,8 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 			do {
 				while (!mForwardWorklist.isEmpty()) {
 					if (!getServices().getProgressMonitorService().continueProcessing()) {
-						throw new AutomataOperationCanceledException(this.getClass());
+						final RunningTaskInfo rti = constructRunningTaskInfo();
+						throw new AutomataOperationCanceledException(rti);
 					}
 					final StateContainer<LETTER, STATE> cont = mForwardWorklist.remove(0);
 					cont.eraseUnpropagatedDownStates();
@@ -1038,8 +1040,8 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 						// svcomp/systemc/token_ring.07_false-unreach-call_false-termination.cil.c
 						// (Settings:settings/TACASInterpolation2015/ForwardPredicates.epf,
 						// Toolchain:toolchains/AutomizerC.xml)
-						
-						throw new AutomataOperationCanceledException(this.getClass());
+						final RunningTaskInfo rti = constructRunningTaskInfo();
+						throw new AutomataOperationCanceledException(rti);
 					}
 					
 					final StateContainer<LETTER, STATE> cont = mDownPropagationWorklist.remove(0);
@@ -1066,6 +1068,14 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 					}
 				}
 			}
+		}
+
+		private RunningTaskInfo constructRunningTaskInfo() {
+			final String taskDescription = "computing reachable states (" 
+					+ mNumberOfConstructedStates + " states constructed"
+					+ "input type " + mOperand.getClass().getSimpleName() + ")";
+			final RunningTaskInfo rti = new RunningTaskInfo(getClass(), taskDescription );
+			return rti;
 		}
 		
 		private void addInitialStates(final Iterable<STATE> initialStates) {

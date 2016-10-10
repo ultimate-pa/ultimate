@@ -97,7 +97,7 @@ public final class ReduceNwaDirectSimulation<LETTER, STATE> extends MinimizeDfaS
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand, final boolean useSCCs)
 			throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, useSCCs,
-				new LookaheadPartitionConstructor<>(services, operand, true).getResult());
+				new LookaheadPartitionConstructor<>(services, operand, true).getPartition());
 	}
 	
 	/**
