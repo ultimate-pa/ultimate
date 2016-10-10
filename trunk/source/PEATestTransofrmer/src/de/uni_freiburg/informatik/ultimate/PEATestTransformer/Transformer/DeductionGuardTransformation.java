@@ -60,8 +60,9 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 			// get last active phase of counter trace automaton
 			// int lastphase = counterTrace.getPhases().length -3;
 			Set<String> effectVars = pattern.getEffectVariabels();
-			DCPhase lastPhase = this.systemModel.getFinalPhase(counterTrace);
-			this.transformPea(pea, counterTrace, lastPhase, clockVar, effectVars, i);
+			int effectPhaseNumber = counterTrace.getPhases().length - pattern.getEffectOffset();
+			DCPhase effectPhase = counterTrace.getPhases()[effectPhaseNumber];
+			this.transformPea(pea, counterTrace, effectPhase, clockVar, effectVars, i);
 		}
 		this.generateDeductionAutomatonInstant();	
 	}
@@ -82,31 +83,32 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 				if (targetPhaseConj == CDD.TRUE){
 					targetPhaseConj = dest.getStateInvariant();
 				}
-				// determine the kind of edge 
-				if(destPhases.contains(lastPhase) && lastPhase.getBoundType() <= CounterTrace.BOUND_NONE
-						&& ct.getSuccessor(lastPhase).getBoundType() == 0){
-					// edge leads to last phase that has a minimum time bound to last
+				// determine kind of the edge...
+				if(destPhases.contains(lastPhase) && lastPhase.getBoundType() <= CounterTrace.BOUND_NONE){
+					// variable is determined for this long
 					isEffectEdge = true;
-				} else if (sourcePhases.contains(lastPhase) && !destPhases.contains(lastPhase) 
-						&& ct.getSuccessor(lastPhase).getBoundType() > CounterTrace.BOUND_NONE){
-					// edge leads back from a time bound phase that may only last a certain time.  
+				} else if(sourcePhases.contains(lastPhase) && !destPhases.contains(lastPhase) &&
+						lastPhase.getBoundType() > CounterTrace.BOUND_NONE) {
+					// variable is detemined after this long latest
 					isEffectEdge = true;
-				} else {
-					// normal edge without any effect happening 
-					isEffectEdge = false;
 				}
-				
+				// determine if a timer is running 
+				boolean timerIsRunning = false;
+				if(sourcePhases.contains(lastPhase) && destPhases.contains(lastPhase) && 
+						lastPhase.getBoundType() != CounterTrace.BOUND_NONE){
+					// variable is determined for this long
+					timerIsRunning = true;
+				}
+							
 				// determine which variables are seeping variables in the next state
 				// Of the seeping vars only one must be deduceable to be sure that this is an ok state
 				Set<String> seepVars = new HashSet<String>();
-				if(!isEffectEdge){
-					Set<String> phaseVars = targetPhaseConj.getIdents();
-					seepVars = dest.getStateInvariant().getIdents();
-					seepVars.remove(clockVar);
-					seepVars.removeAll(this.sysInfo.getInputs());
-					seepVars.removeAll(lastPhase.getInvariant().getIdents());
-					seepVars.removeAll(phaseVars); //vars not in the targetPhaseConjunct must be seep vars or timers
-				}
+				Set<String> phaseVars = targetPhaseConj.getIdents();
+				seepVars = dest.getStateInvariant().getIdents();
+				seepVars.remove(clockVar);
+				seepVars.removeAll(this.sysInfo.getInputs());
+				seepVars.removeAll(lastPhase.getInvariant().getIdents());
+				seepVars.removeAll(phaseVars); //vars not in the targetPhaseConjunct must be seep vars or timers
 				this.logger.info("State Invariant:" + dest.getStateInvariant()+ " | isfinal: " + Boolean.toString(isEffectEdge));
 				this.logger.info("SeepVars: " + seepVars.toString());
 				//On a final destination it is always the whole invariant that we need to encode
@@ -114,27 +116,15 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 				CDD guard = trans.getGuard();
 				// must guarantee that all variables in the guard are deduced too
 				targetPhaseConj = targetPhaseConj.and(guard.unprime());
-				//handling for timed automata (only necessary for upper bounds on states)
-				// if timer is running supress read guards on edges
-				boolean timed = this.systemModel.phaseIsUpperBoundFinal(pea, source) && 
-						this.systemModel.phaseIsUpperBoundFinal(pea, dest);
 				// untimed or final and timed which means that this must set an effect (and an R_v)
-				CDD deductionGuard = this.transformInvariantToDeductionGuard(targetPhaseConj, isEffectEdge, effectVars, 
-						timed, identsToProof, clockVar, reqNo);
+				CDD deductionGuard = this.transformInvariantToDeductionGuard(targetPhaseConj, isEffectEdge, effectVars
+						, identsToProof, clockVar, reqNo, timerIsRunning);
 				CDD seepGuard = this.encodeNonSeepGuard(seepVars);
 				guard = guard.and(deductionGuard).and(seepGuard);
 				trans.setGuard(guard);
 				this.logger.info("Finished Guard: " + guard.toString());
 			}			
 		}
-	}
-	
-	private CDD getInvariantWithoutSeep(ArrayList<DCPhase> phases){
-		CDD result = CDD.TRUE;
-		for(DCPhase phase: phases){
-			result = result.and(phase.getInvariant());
-		}
-		return result;
 	}
 	
 	private CDD encodeNonSeepGuard(Set<String> idents){
@@ -185,8 +175,8 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 	 * Builds a guard that is true iff for all variables in the invariant passed, the models state can
 	 * determine values for all variables in the invariant.
 	 */
-	private CDD transformInvariantToDeductionGuard(CDD invariant, boolean isEffectEdge, 
-			Set<String> effectVars, boolean timed, Set<String> identsToProof, String clockVar, int reqNo){
+	private CDD transformInvariantToDeductionGuard(CDD invariant, boolean isEffectEdge, Set<String> effectVars,
+			Set<String> identsToProof, String clockVar, int reqNo, boolean timerIsRunning){
 		CDD[] dnf = invariant.toDNF();
 		CDD resultingConjunct = CDD.FALSE;
 		CDD temp = CDD.TRUE;
@@ -195,8 +185,10 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 			if(isEffectEdge){
 				if (this.containsEffect(conjunct, effectVars)){
 					// conjunct && L_wholePhaseNecessary && !(all other conjuncts)
-					CDD l = this.encodeReadConjunct(invariant, true, identsToProof, effectVars);
-					if (timed) l = CDD.TRUE; //TODO: HACK
+					CDD l = this.encodeMustBeDeduced(invariant, true, identsToProof, effectVars);
+					if (timerIsRunning){
+						l = CDD.TRUE;
+					}
 					temp = conjunct.prime(clockVar).and(l);
 					for(CDD t: dnf){
 						if(!this.containsEffect(t, effectVars)){
@@ -207,15 +199,19 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 				} else {
 					// conjunct && !R_effect
 					// may loop on not deducable but not effect triggering variables because it is an implication
-					CDD r = this.encodeNotDeducedInConjunct(effectVars, reqNo);
+					CDD r = this.encodeNotDeduced(effectVars, reqNo);
 					// encode that we still want to be able to read the lhs anytime
-					CDD l = this.encodeReadConjunct(conjunct, true, identsToProof, effectVars);
+					CDD l = this.encodeMustBeDeduced(conjunct, true, identsToProof, effectVars);
 					temp = r.and(l);
 				}
 			} else {
-				// conjunct && !R_effect && L_conjunt
-				CDD l = this.encodeReadConjunct(conjunct, false, identsToProof, effectVars);
-				CDD r = this.encodeNotDeducedInConjunct(effectVars, reqNo);
+				// conjunct && !R_effect && L_conjunt#
+				CDD r = this.encodeNotDeduced(effectVars, reqNo);
+				// only make deduction guards when no timer is running
+				CDD l = this.encodeMustBeDeduced(conjunct, false, identsToProof, effectVars);
+				if (timerIsRunning){
+					l = CDD.TRUE;
+				}
 				temp = conjunct.prime(clockVar).and(r).and(l);
 			}
 			// add result to new conjunct
@@ -264,7 +260,7 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 	/*
 	 * L_ ... anotniation
 	 */
-	private CDD encodeReadConjunct(CDD conjunct, boolean finalPhase, 
+	private CDD encodeMustBeDeduced(CDD conjunct, boolean finalPhase, 
 			Set<String> neccesaryIdents, Set<String> effectVars){
 		CDD result = CDD.TRUE;
 		for(String ident: conjunct.getIdents()){
@@ -288,7 +284,7 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 	/* 
 	 * R_... anotation
 	 */
-	private CDD encodeNotDeducedInConjunct(Set<String> effectVars, int reqNo){
+	private CDD encodeNotDeduced(Set<String> effectVars, int reqNo){
 		CDD result = CDD.TRUE;
 		for(String ident: effectVars){
 			CDD temp = BoogieBooleanExpressionDecision.create(this.encodeEffectVar(ident, reqNo)).negate();
@@ -345,12 +341,4 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 		return false;
 	}
 	
-	
-	
-	
-	
-	
-	
-	
-
 }

@@ -306,7 +306,7 @@ public class BasicTranslator {
 			location = new BoogieLocation(l.getFileName(), l.getStartLine(), l.getEndLine(), l.getStartColumn(), l.getEndColumn(),
 				new PEALocation<Phase>(phase));
 		}	
-		if(phase.getClockInvariant() != CDD.TRUE){
+		if(phase.getClockInvariant() != CDD.TRUE){ 
 			stmt.add(
 					this.generateAssumeCDD(phase.getClockInvariant(), file, location)
 					);	
@@ -325,8 +325,12 @@ public class BasicTranslator {
 	 */
 	private void preProcessInitialEdgesAssume(PhaseEventAutomata pea, int id){
 		this.initialEdgesAssume.put(id, new ArrayList<Phase>());
+		//TODO: fix initial edges 
 		for(Phase phase: pea.getInit()){
+			//TODO: implement checks for initial edges
+			if(phase.getClockInvariant() != CDD.TRUE) continue;
 			this.initialEdgesAssume.get(id).add(phase);
+			break;
 		}
 		
 	}

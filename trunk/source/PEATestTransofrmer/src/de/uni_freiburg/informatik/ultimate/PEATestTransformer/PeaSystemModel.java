@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.PEATestTransformer;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.PEATestTransformer.SplPatternParser.PatternToDc;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -133,10 +134,6 @@ public class PeaSystemModel {
 		return null;	
 	}
 	
-	public DCPhase getFinalPhase(CounterTrace ct){
-		return ct.getPhases()[ct.getPhases().length - 3];
-	}
-	
 	public int getFinalPhaseNumber(CounterTrace ct){
 		return ct.getPhases().length - 3;
 	}
@@ -219,6 +216,9 @@ public class PeaSystemModel {
 	public CounterTrace getCounterTrace(PhaseEventAutomata pea){
 		int index = this.peas.indexOf(pea);
 		return this.counterTraces.get(index);
+	}
+	public Set<String> getEffectVars(){
+		return this.patterns.get(this.patterns.size()-1).getEffectVariabels();
 	}
 	/**
 	 * returns the ith phase of the DC formula of a pea.

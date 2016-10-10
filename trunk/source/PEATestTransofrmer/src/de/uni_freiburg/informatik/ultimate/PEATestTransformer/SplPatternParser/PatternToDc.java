@@ -102,16 +102,18 @@ public class PatternToDc {
 				throw new UnsupportedOperationException();
 			}
 		} else if (pattern instanceof BndResponsePattern){
-			// ... it is always the case that if p holds after at most c time units.
+			// ... it is always the case that if p holds then s holds after at most c time units.
 			if(pattern.getScope().getClass() == srParseScopeGlob.class){	 
 				return this.GlobalBndResponsePattern(pattern, q, r, p, s, t);			//test [used]
 			} else if(pattern.getScope().getClass() == srParseScopeAfterUntil.class){	
 				return this.AfterUnitlBndResponsePattern(pattern, q, r, p, s, t);			//test []
+			} else if(pattern.getScope().getClass() == srParseScopeAfter.class){	
+				return this.AfterBndResponsePattern(pattern, q, r, p, s, t);			//test []
 			} else {
 				throw new UnsupportedOperationException();
 			}
 		} else if (pattern instanceof BndExistencePattern){
-			// ... it is always the case that if p holds after at most c time units.
+			// ... it is always the case transitions to p only happen two times.
 			if(pattern.getScope().getClass() == srParseScopeGlob.class){	 
 				return this.GlobalBndExistence(pattern, q, r, p, s, t);			//test []
 			} else if(pattern.getScope().getClass() == srParseScopeAfter.class){	 
@@ -126,6 +128,18 @@ public class PatternToDc {
 		}
 	}
 	
+	protected CounterTrace AfterBndResponsePattern(PatternType pattern, CDD q, CDD r, CDD p, CDD s, int t){
+		pattern.setEffect(s, 2);
+		return new CounterTrace(new CounterTrace.DCPhase[] {
+			    new CounterTrace.DCPhase(),
+			    new CounterTrace.DCPhase(q),
+			    new CounterTrace.DCPhase(),
+			    new CounterTrace.DCPhase(p.and(s.negate())),
+			    new CounterTrace.DCPhase(s.negate(), CounterTrace.BOUND_GREATER, t),
+			    new CounterTrace.DCPhase(),
+			});
+	}
+		
 	protected CounterTrace AfterBndExistence(PatternType pattern, CDD q, CDD r, CDD p, CDD s, int t){
 		pattern.setEffect(p);
 		return new CounterTrace(new CounterTrace.DCPhase[] {
@@ -158,7 +172,7 @@ public class PatternToDc {
 	}
 	
 	protected CounterTrace AfterUnitlBndResponsePattern(PatternType pattern, CDD q, CDD r, CDD p, CDD s, int t){
-		pattern.setEffect(s);
+		pattern.setEffect(s, 2);
 		return new CounterTrace(new CounterTrace.DCPhase[] {
 			    new CounterTrace.DCPhase(),
 			    new CounterTrace.DCPhase(q.and(r.negate())),
@@ -194,11 +208,11 @@ public class PatternToDc {
 	}
 	
 	protected CounterTrace GlobalBndResponsePattern(PatternType pattern, CDD q, CDD r, CDD p, CDD s, int t){
-		pattern.setEffect(s);
+		pattern.setEffect(s, 2);
 		return new CounterTrace(new CounterTrace.DCPhase[] {
 			    new CounterTrace.DCPhase(),
 			    new CounterTrace.DCPhase(p.and(s.negate())),
-			    new CounterTrace.DCPhase(s.negate(), CounterTrace.BOUND_GREATER, t),
+			    new CounterTrace.DCPhase(s.negate(), CounterTrace.BOUND_GREATER, t), // <- second in reverse!
 			    new CounterTrace.DCPhase()
 			});
 	}

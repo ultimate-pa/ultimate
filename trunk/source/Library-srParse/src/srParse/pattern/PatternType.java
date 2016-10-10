@@ -20,6 +20,7 @@ public class PatternType
 	protected static CDD r_cdd_default = BooleanDecision.create("R");
 	protected int duration;
 	protected PhaseEventAutomata pea;
+	protected int effectOffset;
 	
 	protected srParseScope scope;
 	protected PatternToPEA peaTransformator;
@@ -33,11 +34,22 @@ public class PatternType
 	
 	/***
 	 * Requirement has an effect on a set of Variables such as 
+	 * @param effectOffset is the number of the effect phase counted from the last phase (most times -3 
+	 * with upper bounds -2, -1 is always the last [true] phase)
 	 * @example:  "After Q, it is always the case that if P holds then S holds". (t;[Q];t;[P && !S];t)
 	 * Effect is S in this case
 	 */
+	public void setEffect(CDD effect, int effectOffset){
+		this.effect = effect;
+		assert(effectOffset > 0);
+		this.effectOffset = effectOffset;
+	}
 	public void setEffect(CDD effect){
 		this.effect = effect;
+		this.effectOffset = 3; // default for all untimed non Before patterns.
+	}
+	public int getEffectOffset(){
+		return this.effectOffset;
 	}
 	/***
 	 * Determine if a variable name is in the set of variables that are affected by the requirement.
