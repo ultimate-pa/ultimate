@@ -33,7 +33,6 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -54,11 +53,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.Term
 
 public class SmtManager {
 
-	enum Status {
-		IDLE, TRACECHECK, CODEBLOCKCHECK1, CODEBLOCKCHECK2, EDGECHECK
-	};
-	
-	
 
 	private final Boogie2SMT mBoogie2Smt;
 	private final Script mScript;
@@ -71,7 +65,7 @@ public class SmtManager {
 
 	long mSatCheckTime = 0;
 	private long mSatCheckSolverTime = 0;
-	private long mInterpolQuriesTime = 0;
+	private final long mInterpolQuriesTime = 0;
 	
 
 
@@ -148,27 +142,7 @@ public class SmtManager {
 
 
 
-
-	public void startTraceCheck(final Object lockClaimer) {
-		lock(lockClaimer);
-		mScript.echo(new QuotedObject("starting trace check"));
-		if (mInterpolationModeSwitchNeeded) {
-			mScript.setOption(":produce-interpolants", true);
-		}
-		mScript.push(1);
-	}
-
-	public void endTraceCheck(final Object lockOwner) {
-		if (mInterpolationModeSwitchNeeded) {
-			mScript.setOption(":produce-interpolants", false);
-		}
-		mScript.echo(new QuotedObject("finished trace check"));
-		mScript.pop(1);
-		unlock(lockOwner);
-	}
-	
-	
-
+	@Deprecated
 	public LBool assertTerm(final Term term) {
 		final long startTime = System.nanoTime();
 		LBool result = null;
@@ -176,24 +150,6 @@ public class SmtManager {
 		mSatCheckSolverTime += (System.nanoTime() - startTime);
 		return result;
 	}
-
-	public Term[] computeInterpolants(final Term[] interpolInput, final int[] startOfSubtree) {
-		final long startTime = System.nanoTime();
-		final Term[] result = mScript.getInterpolants(interpolInput, startOfSubtree);
-		mInterpolQuriesTime += (System.nanoTime() - startTime);
-		return result;
-	}
-
-	public Term[] computeInterpolants(final Term[] interpolInput) {
-		final long startTime = System.nanoTime();
-		final Term[] result = mScript.getInterpolants(interpolInput);
-		mInterpolQuriesTime += (System.nanoTime() - startTime);
-		return result;
-	}
-
-
-
-
 
 	/**
 	 * Construct Predicate which represents the same Predicate as ps, but where
@@ -223,29 +179,11 @@ public class SmtManager {
 		return mManagedScript;
 	}
 
-	
-	public void lock(final Object lockOwner) {
-		mManagedScript.lock(lockOwner);
-	}
-	
-	public void unlock(final Object lockOwner) {
-		mManagedScript.unlock(lockOwner);
-	}
-	
+	@Deprecated
 	public boolean isLocked() {
 		return mManagedScript.isLocked();
 	}
 	
-	public boolean requestLockRelease() {
-		return mManagedScript.requestLockRelease();
-	}
-	
-	boolean isLockOwner(final Object allegedLockOwner) {
-		return mManagedScript.isLockOwner(allegedLockOwner);
-	}
-
-
-
 	public ModifiableGlobalVariableManager getModifiableGlobals() {
 		return mModifiableGlobals;
 	}
