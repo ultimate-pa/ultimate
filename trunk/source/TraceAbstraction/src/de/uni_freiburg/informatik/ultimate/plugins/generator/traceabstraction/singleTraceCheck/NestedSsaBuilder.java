@@ -498,7 +498,7 @@ public class NestedSsaBuilder {
 				final IProgramNonOldVar bnov = (IProgramNonOldVar) bv;
 				result = getOrSetCurrentGlobalVarVersion(bnov);
 			} else if (bv instanceof IProgramConst) {
-				result = transferToCurrentScriptIfNecessary(bv.getDefaultConstant());
+				result = getOrSetCurrentGlobalVarVersion(bv);
 			} else {
 				throw new AssertionError("unknown kind of IProgramVar " + bv.getClass().getSimpleName());
 			}
@@ -516,7 +516,8 @@ public class NestedSsaBuilder {
 	 * Get current version for global variable. Set current var version if it
 	 * has not yet been set.
 	 */
-	private Term getOrSetCurrentGlobalVarVersion(final IProgramNonOldVar bv) {
+	private Term getOrSetCurrentGlobalVarVersion(final IProgramVar bv) {
+		assert (bv instanceof IProgramNonOldVar) || (bv instanceof IProgramConst) : "not global";
 		Term result;
 		result = currentGlobalVarVersion.get(bv);
 		if (result == null) {
@@ -560,9 +561,14 @@ public class NestedSsaBuilder {
 			mIndexedVarRepresentative.put(bv, index2constant);
 		}
 		assert !index2constant.containsKey(index) : "version was already constructed";
-		final Sort sort = transferToCurrentScriptIfNecessary(bv.getTermVariable()).getSort();
-		final Term constant = PredicateUtils.getIndexedConstant(bv.getGloballyUniqueId(),
-				sort, index, mIndexedConstants, mScript);
+		final Term constant;
+		if (bv instanceof IProgramConst) {
+			constant = transferToCurrentScriptIfNecessary(bv.getDefaultConstant());
+		} else {
+			final Sort sort = transferToCurrentScriptIfNecessary(bv.getTermVariable()).getSort();
+			constant = PredicateUtils.getIndexedConstant(bv.getGloballyUniqueId(),
+					sort, index, mIndexedConstants, mScript);
+		}
 		index2constant.put(index, constant);
 		return constant;
 	}
