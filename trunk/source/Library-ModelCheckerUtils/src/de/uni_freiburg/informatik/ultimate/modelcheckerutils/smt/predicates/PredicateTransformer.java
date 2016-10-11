@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ILocalProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -783,16 +784,21 @@ public class PredicateTransformer {
 
 		public TermVariable getOrConstuctAfterCallInstance(final IProgramVar pv) {
 			if (pv.isGlobal()) {
-				if (pv.isOldvar()) {
+				if (pv instanceof IProgramConst) {
+					return pv.getTermVariable();
+				} else if (pv instanceof IProgramOldVar) {
 					return mFreshVariables.getOrConstruct(pv);
-				} else {
+				} else if (pv instanceof IProgramNonOldVar) {
 					if (mModifiableGlobals.contains(pv)) {
 						return mFreshVariables.getOrConstruct(pv);
 					} else {
 						return pv.getTermVariable();
 					}
+				} else {
+					throw new AssertionError("illegal IProgramVar " + pv.getClass().getSimpleName());
 				}
 			} else {
+				assert (pv instanceof ILocalProgramVar) : "illegal IProgramVar " + pv.getClass().getSimpleName();
 				return mFreshVariables.getOrConstruct(pv);
 			}
 		}
@@ -838,9 +844,11 @@ public class PredicateTransformer {
 
 		public TermVariable getOrConstuctBeforeCallInstance(final IProgramVar pv) {
 			if (pv.isGlobal()) {
-				if (pv.isOldvar()) {
+				if (pv instanceof IProgramConst) {
+					return pv.getTermVariable();
+				} else if (pv instanceof IProgramOldVar) {
 					return getOrConstructTermVariable(mBeforeAfterCallCoincide, pv);
-				} else {
+				} else if (pv instanceof IProgramNonOldVar) {
 					if (mModifiableGlobals.contains(pv)) {
 						return getOrConstructTermVariable(mBeforeCall, pv);
 					} else {
@@ -850,29 +858,39 @@ public class PredicateTransformer {
 							return getOrConstructTermVariable_BeforeAndAfterIfNecessary(pv, mBeforeCall);
 						}
 					}
+				} else {
+					throw new AssertionError("illegal IProgramVar " + pv.getClass().getSimpleName());
 				}
 			} else {
+				assert (pv instanceof ILocalProgramVar) : "illegal IProgramVar " + pv.getClass().getSimpleName();
 				return getOrConstructTermVariable_BeforeAndAfterIfNecessary(pv, mBeforeCall);
 			}
 		}
 
 		public TermVariable getOrConstuctBeforeReturnInstance(final IProgramVar pv) {
 			if (pv.isGlobal()) {
-				if (pv.isOldvar()) {
+				if (pv instanceof IProgramConst) {
 					return pv.getTermVariable();
-				} else {
+				} else if (pv instanceof IProgramOldVar) {
+					return pv.getTermVariable();
+				} else if (pv instanceof IProgramNonOldVar) {
 					throw new AssertionError("illegal case");
+				} else {
+					throw new AssertionError("illegal IProgramVar " + pv.getClass().getSimpleName());
 				}
 			} else {
+				assert (pv instanceof ILocalProgramVar) : "illegal IProgramVar " + pv.getClass().getSimpleName();
 				return pv.getTermVariable();
 			}
 		}
 		
 		public TermVariable getOrConstuctAfterReturnInstance(final IProgramVar pv) {
 			if (pv.isGlobal()) {
-				if (pv.isOldvar()) {
+				if (pv instanceof IProgramConst) {
+					return pv.getTermVariable();
+				} else if (pv instanceof IProgramOldVar) {
 					return getOrConstructTermVariable(mBeforeAfterCallCoincide, pv);
-				} else {
+				} else if (pv instanceof IProgramNonOldVar) {
 					if (mModifiableGlobals.contains(pv)) {
 						if (mAssignedOnReturn.contains(pv)) {
 							return getOrConstructTermVariable(mAfterReturn, pv);
@@ -890,8 +908,11 @@ public class PredicateTransformer {
 							return getOrConstructTermVariable_BeforeAndAfterIfNecessary(pv, mAfterReturn);
 						}
 					}
+				} else {
+					throw new AssertionError("illegal IProgramVar " + pv.getClass().getSimpleName());
 				}
 			} else {
+				assert (pv instanceof ILocalProgramVar) : "illegal IProgramVar " + pv.getClass().getSimpleName();
 				return getOrConstructTermVariable_BeforeAndAfterIfNecessary(pv, mAfterReturn);
 			}
 		}
