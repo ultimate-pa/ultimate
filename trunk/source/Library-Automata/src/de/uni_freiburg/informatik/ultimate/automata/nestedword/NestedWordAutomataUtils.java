@@ -75,6 +75,21 @@ public final class NestedWordAutomataUtils {
 		}
 	}
 	
+	/**
+	 * @param operand
+	 *            A double decker automaton.
+	 * @param lin
+	 *            linear predecessor state
+	 * @param hier
+	 *            hierarchical predecessor state
+	 * @param letter
+	 *            return letter
+	 * @param <LETTER>
+	 *            letter type
+	 * @param <STATE>
+	 *            state type
+	 * @return {@code true} iff operand has a respective outgoing return transition
+	 */
 	public static <LETTER, STATE> boolean hasOutgoingReturnTransition(
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand, final STATE lin, final STATE hier,
 			final LETTER letter) {
@@ -82,48 +97,92 @@ public final class NestedWordAutomataUtils {
 	}
 	
 	/**
-	 * Given an Iterable of {@link IOutgoingTransitionlet} return the set of
-	 * all successor states.
+	 * @param iterable
+	 *            An {@link Iterable} of {@link IOutgoingTransitionlet}.
+	 * @param <E>
+	 *            transition type
+	 * @param <LETTER>
+	 *            letter type
+	 * @param <STATE>
+	 *            state type
+	 * @return the set of all successor states
 	 */
 	public static <E extends IOutgoingTransitionlet<LETTER, STATE>, LETTER, STATE> Set<STATE>
-			constructSuccessorSet(final Iterable<E> it) {
+			constructSuccessorSet(final Iterable<E> iterable) {
 		final Set<STATE> result = new HashSet<>();
-		for (final E trans : it) {
+		for (final E trans : iterable) {
 			result.add(trans.getSucc());
 			
 		}
 		return result;
 	}
 	
-	public static <STATE> int
-			computeSizeOfLargestEquivalenceClass(final Collection<Set<STATE>> possibleEquivalentClasses) {
+	/**
+	 * @param partition
+	 *            A partition of states.
+	 * @param <STATE>
+	 *            state type
+	 * @return the size of the largest set
+	 */
+	public static <STATE> int computeSizeOfLargestEquivalenceClass(final Collection<Set<STATE>> partition) {
 		int result = 0;
-		for (final Set<STATE> eqClass : possibleEquivalentClasses) {
+		for (final Set<STATE> eqClass : partition) {
 			result = Math.max(result, eqClass.size());
 		}
 		return result;
 	}
 	
-	public static <STATE> long computeNumberOfEquivalentPairs(final Collection<Set<STATE>> possibleEquivalentClasses) {
+	/**
+	 * @param partition
+	 *            A partition of states.
+	 * @param <STATE>
+	 *            state type
+	 * @return the number of pairs of states from within the same blocks
+	 */
+	public static <STATE> long computeNumberOfEquivalentPairs(final Collection<Set<STATE>> partition) {
 		int result = 0;
-		for (final Set<STATE> eqClass : possibleEquivalentClasses) {
+		for (final Set<STATE> eqClass : partition) {
 			result += eqClass.size() * eqClass.size();
 		}
 		return result;
 	}
 	
+	/**
+	 * @param operand
+	 *            A nested word automaton.
+	 * @param initialPartition
+	 *            initial partition
+	 * @param <LETTER>
+	 *            letter type
+	 * @param <STATE>
+	 *            state type
+	 * @return string summary of initial partition
+	 */
 	public static <LETTER, STATE> String generateGenericMinimizationRunningTaskDescription(
-			final INestedWordAutomaton<LETTER, STATE> operand, final Collection<Set<STATE>> initialEquivalenceClasses) {
+			final INestedWordAutomaton<LETTER, STATE> operand, final Collection<Set<STATE>> initialPartition) {
 		final int sizeOfLargestEquivalenceClass =
-				NestedWordAutomataUtils.computeSizeOfLargestEquivalenceClass(initialEquivalenceClasses);
-		return generateGenericMinimizationRunningTaskDescription(operand, initialEquivalenceClasses.size(),
+				NestedWordAutomataUtils.computeSizeOfLargestEquivalenceClass(initialPartition);
+		return generateGenericMinimizationRunningTaskDescription(operand, initialPartition.size(),
 				sizeOfLargestEquivalenceClass);
 	}
 	
+	/**
+	 * @param operand
+	 *            A nested word automaton.
+	 * @param initialPartitionSize
+	 *            size of initial partition
+	 * @param sizeOfLargestBlock
+	 *            size of the largest block in the partition
+	 * @param <LETTER>
+	 *            letter type
+	 * @param <STATE>
+	 *            state type
+	 * @return string summary of initial partition
+	 */
 	public static <LETTER, STATE> String generateGenericMinimizationRunningTaskDescription(
 			final INestedWordAutomaton<LETTER, STATE> operand, final int initialPartitionSize,
-			final int sizeOfLargestEquivalenceClass) {
-		return "minimizing NWA with " + operand.size() + " states" + "(initial partition has " + initialPartitionSize +
-				" blocks, largest block has " + sizeOfLargestEquivalenceClass + " states)";
+			final int sizeOfLargestBlock) {
+		return "minimizing NWA with " + operand.size() + " states" + "(initial partition has " + initialPartitionSize
+				+ " blocks, largest block has " + sizeOfLargestBlock + " states)";
 	}
 }
