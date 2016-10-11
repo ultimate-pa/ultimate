@@ -3,7 +3,7 @@
  * ArrayHandler.handleArraySubscriptExpression(..) throws AssertionError: not outermost 
  */
 
-static const char * decode_one_format()
+int main()
 {
     static const unsigned char * const doux_bytes_to_XXX[0] = {};
            doux_bytes_to_XXX[0][0];
