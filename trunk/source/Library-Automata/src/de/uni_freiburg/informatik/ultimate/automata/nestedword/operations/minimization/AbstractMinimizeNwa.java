@@ -45,6 +45,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyze;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyze.SymbolType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsDeterministic;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.util.IPartition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DoubleDeckerVisitor.ReachFinal;
@@ -183,6 +185,32 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperati
 		result.addPercentageDataInverted(StatisticsType.STATES_INPUT, StatisticsType.STATES_OUTPUT,
 				StatisticsType.STATES_REDUCTION_RELATIVE);
 		
+		/* TODO Christian 2016-10-12: make this optional, this has performance impact */
+		if (true) {
+			// Input automaton
+			final Analyze<LETTER, STATE> inputAnalyzer = new Analyze<>(mServices, mOperand, true);
+			final int inputTransitions = inputAnalyzer.getNumberOfTransitions(SymbolType.TOTAL);
+			result.addKeyValuePair(StatisticsType.BUCHI_NONDETERMINISTIC_STATES,
+					inputAnalyzer.getNumberOfNondeterministicStates());
+			result.addKeyValuePair(StatisticsType.BUCHI_ALPHABET_SIZE,
+					inputAnalyzer.getNumberOfSymbols(SymbolType.TOTAL));
+			result.addKeyValuePair(StatisticsType.BUCHI_TRANSITIONS, inputTransitions);
+			result.addKeyValuePair(StatisticsType.BUCHI_TRANSITION_DENSITY_MILLION,
+					(int) Math.round(inputAnalyzer.getTransitionDensity(SymbolType.TOTAL) * 1_000_000));
+			
+			// Output automaton
+			final Analyze<LETTER, STATE> outputAnalyzer = new Analyze<>(mServices, mResult, true);
+			final int outputTransitions = outputAnalyzer.getNumberOfTransitions(SymbolType.TOTAL);
+			result.addKeyValuePair(StatisticsType.RESULT_NONDETERMINISTIC_STATES,
+					outputAnalyzer.getNumberOfNondeterministicStates());
+			result.addKeyValuePair(StatisticsType.RESULT_ALPHABET_SIZE,
+					outputAnalyzer.getNumberOfSymbols(SymbolType.TOTAL));
+			result.addKeyValuePair(StatisticsType.RESULT_TRANSITIONS, outputTransitions);
+			result.addKeyValuePair(StatisticsType.RESULT_TRANSITION_DENSITY_MILLION,
+					(int) Math.round(outputAnalyzer.getTransitionDensity(SymbolType.TOTAL) * 1_000_000));
+			result.addKeyValuePair(StatisticsType.REMOVED_TRANSITIONS, inputTransitions - outputTransitions);
+		}
+		
 		return result;
 	}
 	
@@ -299,7 +327,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperati
 			throw new AssertionError(
 					"The result has already been constructed.");
 		}
-		mTemporaryResult = new DoubleDeckerAutomaton<LETTER, STATE>(
+		mTemporaryResult = new DoubleDeckerAutomaton<>(
 				mServices,
 				mOperand.getInternalAlphabet(),
 				mOperand.getCallAlphabet(),
@@ -503,7 +531,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperati
 	 */
 	protected final boolean isDeterministic()
 			throws AutomataOperationCanceledException {
-		return new IsDeterministic<LETTER, STATE>(mServices, mOperand).getResult();
+		return new IsDeterministic<>(mServices, mOperand).getResult();
 	}
 	
 	/**
