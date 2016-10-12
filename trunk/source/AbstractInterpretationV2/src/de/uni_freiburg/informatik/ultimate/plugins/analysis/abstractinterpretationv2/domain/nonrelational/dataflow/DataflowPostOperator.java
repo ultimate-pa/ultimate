@@ -56,9 +56,9 @@ public class DataflowPostOperator implements IAbstractPostOperator<DataflowState
 		final Map<IProgramVar, Set<CodeBlock>> reach = new HashMap<>(oldstate.getReachingDefinitions());
 		final Map<IProgramVar, Set<ProgramPoint>> noWrite = new HashMap<>(oldstate.getNoWrite());
 
-//		for (final Entry<IProgramVar, TermVariable> entry : tf.getOutVars().entrySet()) {
-//			reach.put(entry.getKey(), Collections.singleton(transition));
-//		}
+		// for (final Entry<IProgramVar, TermVariable> entry : tf.getOutVars().entrySet()) {
+		// reach.put(entry.getKey(), Collections.singleton(transition));
+		// }
 		final Set<IProgramVar> defSet = computeDefSetFromTransFormula(tf, oldstate.getVariables());
 		final Set<IProgramVar> nonDefSet = new HashSet<>(oldstate.getVariables());
 		nonDefSet.removeAll(defSet);
@@ -76,9 +76,8 @@ public class DataflowPostOperator implements IAbstractPostOperator<DataflowState
 			programPoints.add((ProgramPoint) transition.getSource());
 		}
 
-		return Collections
-				.singletonList(new DataflowState(
-						oldstate.getVariables(), oldstate.getDef(), oldstate.getUse(), reach, noWrite));
+		return Collections.singletonList(
+				new DataflowState(oldstate.getVariables(), oldstate.getDef(), oldstate.getUse(), reach, noWrite));
 	}
 
 	@Override
@@ -88,17 +87,17 @@ public class DataflowPostOperator implements IAbstractPostOperator<DataflowState
 		return null;
 	}
 
-	private Set<IProgramVar> computeDefSetFromTransFormula(UnmodifiableTransFormula tf, Set<IProgramVar> allVariables) {
+	private Set<IProgramVar> computeDefSetFromTransFormula(final UnmodifiableTransFormula tf,
+			final Set<IProgramVar> allVariables) {
 		// TODO I think we will need something like "constrained vars"
-		//  i.e. the set of IProgramVars x where invar(x) = outVar(x) and where
-		//  x is constrained by the formula  (i.e. like from an assume statement)
-		
+		// i.e. the set of IProgramVars x where invar(x) = outVar(x) and where
+		// x is constrained by the formula (i.e. like from an assume statement)
+
 		// for now: rudimentary test if it is an assume -- then return all outvars
 		// otherwise return the AssignedVars
-		if (tf.getInVars().keySet().equals(tf.getOutVars().keySet())) { //TODO: don't use keySet()
+		if (tf.getInVars().keySet().equals(tf.getOutVars().keySet())) { // TODO: don't use keySet()
 			return allVariables;
-		} else {
-			return tf.getAssignedVars();
 		}
+		return tf.getAssignedVars();
 	}
 }
