@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm;
 
-import java.util.List;
+import java.util.Collections;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 
@@ -25,10 +26,16 @@ public interface IDebugHelper<STATE extends IAbstractState<STATE, ACTION, VARDEC
 	 *            The transition.
 	 * @return true iff the Hoare triple holds.
 	 */
-	boolean isPostSound(final STATE stateBeforeLeaving, final STATE stateAfterLeaving, final List<STATE> postStates,
-			final ACTION transition);
+	default boolean isPostSound(final STATE stateBeforeLeaving, final STATE stateAfterLeaving,
+			final Set<STATE> postStates, final ACTION transition) {
+		return isPostSound(Collections.singleton(stateBeforeLeaving), Collections.singleton(stateBeforeLeaving),
+				postStates, transition);
+	}
 
 	boolean isPostSound(final AbstractMultiState<STATE, ACTION, VARDECL> stateBeforeLeaving,
 			final AbstractMultiState<STATE, ACTION, VARDECL> stateAfterLeaving,
 			final AbstractMultiState<STATE, ACTION, VARDECL> postState, final ACTION transition);
+
+	boolean isPostSound(final Set<STATE> statesBeforeLeaving, final Set<STATE> stateAfterLeaving,
+			final Set<STATE> postStates, final ACTION transition);
 }

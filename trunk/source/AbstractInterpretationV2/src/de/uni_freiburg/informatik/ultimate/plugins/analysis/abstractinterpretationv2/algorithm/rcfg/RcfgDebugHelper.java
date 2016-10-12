@@ -1,8 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg;
 
 import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.Set;
+import java.util.function.Supplier;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -10,6 +10,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
@@ -28,7 +29,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 
 /**
  *
@@ -49,40 +49,15 @@ public class RcfgDebugHelper<STATE extends IAbstractState<STATE, CodeBlock, VARD
 
 	private static int sIllegalPredicates = Integer.MAX_VALUE;
 
-	public RcfgDebugHelper(final RootAnnot rootAnnot, final IUltimateServiceProvider services) {
+	public RcfgDebugHelper(final Boogie2SMT bpl2smt, final ModifiableGlobalVariableManager modGlobVarMan,
+			final IUltimateServiceProvider services) {
 		mServices = services;
-		mScript = rootAnnot.getScript();
+		mBoogie2Smt = bpl2smt;
+		mScript = bpl2smt.getScript();
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		mBoogie2Smt = rootAnnot.getBoogie2SMT();
 		// TODO: Make parameter
 		mSimplificationTechnique = SimplificationTechnique.SIMPLIFY_DDA;
-		mHTC = new IncrementalHoareTripleChecker(rootAnnot.getManagedScript(), rootAnnot.getModGlobVarManager());
-	}
-
-	@Override
-	public boolean isPostSound(final STATE stateBeforeLeaving, final STATE stateAfterLeaving,
-			final List<STATE> postStates, final CodeBlock transition) {
-		final IPredicate precond = createPredicateFromState(Collections.singletonList(stateBeforeLeaving));
-		final IPredicate postcond = createPredicateFromState(postStates);
-		final IPredicate precondHier;
-		final Validity result;
-
-		if (transition instanceof Call) {
-			precondHier = null;
-			result = mHTC.checkCall(precond, (ICallAction) transition, postcond);
-		} else if (transition instanceof Return) {
-			precondHier = createPredicateFromState(Collections.singletonList(stateAfterLeaving));
-			result = mHTC.checkReturn(precond, precondHier, (IReturnAction) transition, postcond);
-		} else {
-			precondHier = null;
-			result = mHTC.checkInternal(precond, (IInternalAction) transition, postcond);
-		}
-		mHTC.releaseLock();
-
-		if (result != Validity.VALID) {
-			logUnsoundness(transition, precond, postcond, precondHier);
-		}
-		return result != Validity.INVALID;
+		mHTC = new IncrementalHoareTripleChecker(bpl2smt.getManagedScript(), modGlobVarMan);
 	}
 
 	@Override
@@ -91,17 +66,34 @@ public class RcfgDebugHelper<STATE extends IAbstractState<STATE, CodeBlock, VARD
 			final AbstractMultiState<STATE, CodeBlock, VARDECL> postState, final CodeBlock transition) {
 		final IPredicate precond = createPredicateFromState(stateBeforeLeaving);
 		final IPredicate postcond = createPredicateFromState(postState);
-		final IPredicate precondHier;
-		final Validity result;
+		final IPredicate hierPre = getHierachicalPre(transition, () -> createPredicateFromState(stateAfterLeaving));
+		return isPostSound(hierPre, transition, precond, postcond);
+	}
 
+	@Override
+	public boolean isPostSound(final Set<STATE> statesBeforeLeaving, final Set<STATE> stateAfterLeaving,
+			final Set<STATE> postStates, final CodeBlock transition) {
+		final IPredicate precond = createPredicateFromState(statesBeforeLeaving);
+		final IPredicate postcond = createPredicateFromState(postStates);
+		final IPredicate hierPre = getHierachicalPre(transition, () -> createPredicateFromState(stateAfterLeaving));
+		return isPostSound(hierPre, transition, precond, postcond);
+	}
+
+	private static IPredicate getHierachicalPre(final CodeBlock transition, final Supplier<IPredicate> func) {
+		if (transition instanceof Return) {
+			return func.get();
+		}
+		return null;
+	}
+
+	private boolean isPostSound(final IPredicate precondHier, final CodeBlock transition, final IPredicate precond,
+			final IPredicate postcond) {
+		final Validity result;
 		if (transition instanceof Call) {
-			precondHier = null;
 			result = mHTC.checkCall(precond, (ICallAction) transition, postcond);
 		} else if (transition instanceof Return) {
-			precondHier = createPredicateFromState(stateAfterLeaving);
 			result = mHTC.checkReturn(precond, precondHier, (IReturnAction) transition, postcond);
 		} else {
-			precondHier = null;
 			result = mHTC.checkInternal(precond, (IInternalAction) transition, postcond);
 		}
 		mHTC.releaseLock();
@@ -125,7 +117,7 @@ public class RcfgDebugHelper<STATE extends IAbstractState<STATE, CodeBlock, VARD
 			mLogger.fatal("PreAfter: {" + SmtUtils.simplify(mBoogie2Smt.getManagedScript(), precondHier.getFormula(),
 					mServices, mSimplificationTechnique).toStringDirect() + "}");
 		}
-		mLogger.fatal(transition.getTransitionFormula().getFormula().toStringDirect());
+		mLogger.fatal(transition.getTransitionFormula().getFormula().toStringDirect() + " (" + transition + ")");
 		mLogger.fatal("Post: {" + SmtUtils
 				.simplify(mBoogie2Smt.getManagedScript(), postcond.getFormula(), mServices, mSimplificationTechnique)
 				.toStringDirect() + "}");

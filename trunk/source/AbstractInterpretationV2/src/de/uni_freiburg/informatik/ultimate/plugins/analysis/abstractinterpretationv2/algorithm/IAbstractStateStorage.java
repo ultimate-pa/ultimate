@@ -59,4 +59,6 @@ public interface IAbstractStateStorage<STATE extends IAbstractState<STATE, ACTIO
 	Set<Term> getTerms(final ACTION initialTransition, final Script script, final Boogie2SMT bpl2smt);
 
 	Set<STATE> getAbstractPostStates(Deque<ACTION> callStack, ACTION symbol);
+
+	void scopeFixpointReached();
 }
