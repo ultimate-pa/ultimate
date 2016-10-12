@@ -135,4 +135,11 @@ public class BoogieConst implements IBoogieVar, IProgramConst {
 		return true;
 	}
 
+	@Override
+	public String toString() {
+		return mIdentifier;
+	}
+	
+	
+
 }
