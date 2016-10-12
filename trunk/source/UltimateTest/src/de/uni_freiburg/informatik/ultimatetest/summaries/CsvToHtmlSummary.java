@@ -55,11 +55,11 @@ public final class CsvToHtmlSummary {
 	 * If an data entry of the CSV-content is equals to this constant, then the
 	 * HTML table will highlight the entry.
 	 */
-	public static final String CSV_ENTRY_NO_VALUE = "NO_VALUE";
+	public static final String CSV_ENTRY_NO_VALUE = "null";
 	/**
 	 * Separator to use for dividing the content in a CSV-formatted text.
 	 */
-	private static final String CSV_SEPARATOR = ";";
+	private static final String CSV_SEPARATOR = ",";
 	/**
 	 * Html text to use between head and content.
 	 */
@@ -108,7 +108,10 @@ public final class CsvToHtmlSummary {
 		// the file and include it in ULTIMATE, together with the
 		// ULTIMATE-license).
 		// Java-Script
+		htmlText.append(
+				"<script type=\"text/javascript\" src=\"https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js\"></script>");
 		htmlText.append("<script type=\"text/javascript\" src=\"http://zabuza.square7.ch/sorttable.js\"></script>");
+		htmlText.append("<script type=\"text/javascript\" src=\"http://zabuza.square7.ch/markRows.js\"></script>");
 
 		// TODO Store the CSS as file and somewhere more appropriate.
 		// CSS
@@ -130,13 +133,18 @@ public final class CsvToHtmlSummary {
 		// Sortable icons
 		htmlText.append("table.sortable th:not(.sorttable_sorted):not(.sorttable_sorted_reverse)"
 				+ ":not(.sorttable_nosort):after { content: \" \\25B4\\25BE\"; }");
+		// Mark rows
+		htmlText.append("#markRowText { margin-left: 1em; }");
+		htmlText.append(".markedRow { background-color: #FFB0B0 !important; }");
 		htmlText.append("</style>");
 
 		htmlText.append(HTML_HEAD_TO_CONTENT);
 		final String htmlOpeningSymbol = "<";
 		final String htmlClosingSymbol = ">";
 		final String htmlClosingOpeningSymbol = "</";
-		htmlText.append("<table class=\"wikitable sortable\">");
+		htmlText.append(
+				"<span class=\"markedRow demoText\">Mark rows:</span><input type=\"text\" id=\"markRowText\" name=\"markRowText\" oninput=\"markRows()\" /><br/>");
+		htmlText.append("<table id=\"contentTable\" class=\"wikitable sortable\">");
 
 		boolean isFirstRow = true;
 		for (final String row : csvFileRows) {
