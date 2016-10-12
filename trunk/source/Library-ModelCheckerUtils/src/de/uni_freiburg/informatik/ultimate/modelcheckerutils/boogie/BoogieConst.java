@@ -28,9 +28,6 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 
 
 /**
@@ -38,15 +35,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
  * @author heizmann@informatik.uni-freiburg.de
  *
  */
-public class BoogieConst implements IBoogieVar, IProgramConst {
+public class BoogieConst implements IBoogieVar {
 	private final String mIdentifier;
 	private final IBoogieType mIType;
-	
-	/**
-	 * TermVariable that represents this constant in {@link TransFormula}s
-	 * and {@link IPredicate}s.
-	 */
-	private final TermVariable mTermVariable;
+	private final boolean mBelongsToSmtTheory;
 	
 	/**
 	 * Constant (0-ary ApplicationTerm) which represents this BoogieVar in
@@ -59,14 +51,13 @@ public class BoogieConst implements IBoogieVar, IProgramConst {
 	 * @param null iff constant belongs to SMT theory
 	 */
 	public BoogieConst(final String identifier, final IBoogieType iType,
-			final TermVariable termVariable, final ApplicationTerm smtConstant) {
+			final ApplicationTerm smtConstant, final boolean belongsToSmtTheory) {
 		mIdentifier = identifier;
 		mIType = iType;
-		mTermVariable = termVariable;
 		mSmtConstant = smtConstant;
+		mBelongsToSmtTheory = belongsToSmtTheory;
 	}
 	
-	@Override
 	public String getIdentifier() {
 		return mIdentifier;
 	}
@@ -81,14 +72,6 @@ public class BoogieConst implements IBoogieVar, IProgramConst {
 		return mIType;
 	}
 	
-	@Override
-	/**
-	 * null iff constant belongs to SMT theory
-	 */
-	public TermVariable getTermVariable() {
-		return mTermVariable;
-	}
-
 	@Override
 	public ApplicationTerm getDefaultConstant() {
 		return mSmtConstant;

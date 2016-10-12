@@ -29,9 +29,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
@@ -46,9 +44,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.IdentifierTranslator;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
@@ -159,12 +155,11 @@ public class Boogie2SMT {
 	}
 
 	private Term declareAxiom(final Axiom ax, final Expression2Term expression2term) {
-		final ConstOnlyIdentifierTranslator coit = new ConstOnlyIdentifierTranslator(null);
+		final ConstOnlyIdentifierTranslator coit = new ConstOnlyIdentifierTranslator();
 		final IdentifierTranslator[] its = new IdentifierTranslator[] { coit };
-		final Term term = expression2term.translateToTerm(its, ax.getFormula()).getTerm();
-		final Term closed = coit.variables2functionSymbols(term);
-		mScript.getScript().assertTerm(closed);
-		return closed;
+		final Term closedTerm = expression2term.translateToTerm(its, ax.getFormula()).getTerm();
+		mScript.getScript().assertTerm(closedTerm);
+		return closedTerm;
 	}
 
 	public static void reportUnsupportedSyntax(final BoogieASTNode BoogieASTNode, 
@@ -189,10 +184,8 @@ public class Boogie2SMT {
 	class ConstOnlyIdentifierTranslator implements IdentifierTranslator {
 		
 		private final Set<BoogieConst> mConsts = new HashSet<>();
-		private final TransFormulaBuilder mTfb;
 
-		public ConstOnlyIdentifierTranslator(final TransFormulaBuilder transFormulaBuilder) {
-			mTfb = transFormulaBuilder;
+		public ConstOnlyIdentifierTranslator() {
 		}
 
 		@Override
@@ -202,19 +195,8 @@ public class Boogie2SMT {
 				throw new AssertionError();
 			}
 			final BoogieConst bc = mBoogie2SmtSymbolTable.getBoogieConst(id);
-			Term result;
-			if (bc.getTermVariable() == null) {
-				// constant belongs to theory
-				result = bc.getDefaultConstant();
-			} else {
-				mConsts.add(bc);
-				if (mTfb != null) {
-					mTfb.addInVar(bc, bc.getTermVariable());
-					mTfb.addOutVar(bc, bc.getTermVariable());
-				}
-				result = bc.getTermVariable();
-			}
-			return result;
+			mConsts.add(bc);
+			return bc.getDefaultConstant();
 		}
 
 		/**
@@ -224,12 +206,5 @@ public class Boogie2SMT {
 			return mConsts;
 		}
 		
-		public Term variables2functionSymbols(final Term term) {
-			final Map<Term, Term> substitutionMapping = new HashMap<>();
-			for (final BoogieConst bc : getConsts()) {
-				substitutionMapping.put(bc.getTermVariable(), bc.getDefaultConstant());
-			}
-			return new SubstitutionWithLocalSimplification(getManagedScript(), substitutionMapping).transform(term);
-		}
 	}
 }
