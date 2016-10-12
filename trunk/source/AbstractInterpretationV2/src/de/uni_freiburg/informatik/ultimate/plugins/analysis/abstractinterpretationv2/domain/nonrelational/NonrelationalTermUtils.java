@@ -26,28 +26,41 @@
  * to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.congruence;
+package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational;
 
-import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalPostOperator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 /**
- * The post operator of the Congruence domain.
+ * Utilities for the creation of terms for nonrelational domains.
  *
- * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class CongruencePostOperator extends NonrelationalPostOperator<CongruenceDomainState, CongruenceDomainValue> {
+public class NonrelationalTermUtils {
 
-	public CongruencePostOperator(final ILogger logger, final BoogieSymbolTable symbolTable,
-	        final CongruenceDomainStatementProcessor statementProcessor, final Boogie2SmtSymbolTable bpl2SmtSymbolTable,
-	        final int maxParallelStates, final Boogie2SMT boogie2Smt, final RootAnnot rootAnnotation) {
-		super(logger, symbolTable, bpl2SmtSymbolTable, statementProcessor, maxParallelStates, boogie2Smt,
-		        rootAnnotation);
+	/**
+	 * Generates an SMT {@link Term} for a given variable.
+	 *
+	 * @param var
+	 *            The variable to generate the SMT Term for.
+	 * @return The SMT Term.
+	 */
+	public static Term getTermVar(final IBoogieVar var) {
+		assert var != null : "Cannot get TermVariable from null";
+		if (var instanceof IProgramVar) {
+			final TermVariable termvar = ((IProgramVar) var).getTermVariable();
+			assert termvar != null : "There seems to be no termvar for this BoogieVar";
+			return termvar;
+		} else if (var instanceof BoogieConst) {
+			final ApplicationTerm termvar = ((BoogieConst) var).getDefaultConstant();
+			assert termvar != null : "There seems to be no termvar for this BoogieConst";
+			return termvar;
+		}
+		return null;
 	}
 }

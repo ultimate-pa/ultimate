@@ -124,6 +124,10 @@ public class Boogie2SMT {
 	public Term2Expression getTerm2Expression() {
 		return mTerm2Expression;
 	}
+	
+	public Expression2Term getExpression2Term() {
+		return mExpression2Term;
+	}
 
 	static String quoteId(final String id) {
 		// return Term.quoteId(id);
@@ -181,7 +185,7 @@ public class Boogie2SMT {
 		return mBoogie2SmtSymbolTable.constructAuxiliaryGlobalBoogieVar(identifier, procedure, iType, varList);
 	}
 
-	class ConstOnlyIdentifierTranslator implements IdentifierTranslator {
+	public class ConstOnlyIdentifierTranslator implements IdentifierTranslator {
 		
 		private final Set<BoogieConst> mConsts = new HashSet<>();
 
