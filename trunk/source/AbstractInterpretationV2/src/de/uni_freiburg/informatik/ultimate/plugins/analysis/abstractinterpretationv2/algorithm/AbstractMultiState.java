@@ -285,7 +285,7 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, ACTION, VARD
 		return toLogString();
 	}
 
-	Set<STATE> getStates() {
+	public Set<STATE> getStates() {
 		return Collections.unmodifiableSet(mStates);
 	}
 

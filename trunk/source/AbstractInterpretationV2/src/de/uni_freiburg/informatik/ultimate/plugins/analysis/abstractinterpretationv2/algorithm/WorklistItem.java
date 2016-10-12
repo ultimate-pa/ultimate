@@ -108,7 +108,7 @@ final class WorklistItem<STATE extends IAbstractState<STATE, ACTION, VARDECL>, A
 		}
 		mScopes.addFirst(new Pair<>(scope, mHierachicalPreState));
 		mHierachicalPreState = mPreState;
-		mScopedStorages.addFirst(getCurrentStorage().createStorage());
+		mScopedStorages.addFirst(getCurrentStorage().createStorage(scope));
 	}
 
 	ACTION getCurrentScope() {

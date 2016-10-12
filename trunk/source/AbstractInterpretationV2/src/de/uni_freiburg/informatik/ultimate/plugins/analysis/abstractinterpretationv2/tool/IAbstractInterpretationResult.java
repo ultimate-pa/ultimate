@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool;
 
+import java.util.Deque;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -95,4 +96,6 @@ public interface IAbstractInterpretationResult<STATE extends IAbstractState<STAT
 	 * @return The {@link IAbstractDomain} used during the analysis.
 	 */
 	IAbstractDomain<STATE, ACTION, VARDECL> getUsedDomain();
+
+	Set<STATE> getPostStates(Deque<ACTION> callStack, ACTION symbol);
 }

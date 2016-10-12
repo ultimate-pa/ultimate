@@ -28,13 +28,16 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
@@ -62,9 +65,11 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 	private final IUltimateServiceProvider mServices;
 	private final List<BaseRcfgAbstractStateStorageProvider<STATE, LOCATION, VARDECL>> mChildStores;
 	private final ITransitionProvider<CodeBlock, LOCATION> mTransProvider;
+	private final CodeBlock mScope;
 
 	public BaseRcfgAbstractStateStorageProvider(final IAbstractStateBinaryOperator<STATE> mergeOperator,
-			final IUltimateServiceProvider services, final ITransitionProvider<CodeBlock, LOCATION> transProvider) {
+			final IUltimateServiceProvider services, final ITransitionProvider<CodeBlock, LOCATION> transProvider,
+			final CodeBlock scope) {
 		assert mergeOperator != null;
 		assert services != null;
 		assert transProvider != null;
@@ -72,6 +77,7 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 		mServices = services;
 		mTransProvider = transProvider;
 		mChildStores = new ArrayList<>();
+		mScope = scope;
 	}
 
 	@Override
@@ -96,28 +102,8 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 	}
 
 	@Override
-	public AbstractMultiState<STATE, CodeBlock, VARDECL> widenPostState(final CodeBlock transition,
-			final IAbstractStateBinaryOperator<STATE> wideningOp,
-			final AbstractMultiState<STATE, CodeBlock, VARDECL> operand) {
-		// assert transition != null;
-		// final Deque<STATE> states = getPostState(transition);
-		// final Iterator<STATE> iterator = states.iterator();
-		// final Deque<STATE> newStates = new ArrayDeque<>(states.size());
-		// while (iterator.hasNext()) {
-		// final STATE newState = wideningOp.apply(operand, iterator.next());
-		// assert newState.getVariables().equals(operand.getVariables()) : "states have different variables";
-		// assert newState != null;
-		// iterator.remove();
-		// newStates.addFirst(newState);
-		// }
-		// newStates.forEach(a -> addAbstractPostState(transition, a));
-		// return getAbstractPostStates(transition);
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public final IAbstractStateStorage<STATE, CodeBlock, VARDECL, LOCATION> createStorage() {
-		final BaseRcfgAbstractStateStorageProvider<STATE, LOCATION, VARDECL> rtr = create();
+	public final IAbstractStateStorage<STATE, CodeBlock, VARDECL, LOCATION> createStorage(final CodeBlock scope) {
+		final BaseRcfgAbstractStateStorageProvider<STATE, LOCATION, VARDECL> rtr = create(scope);
 		mChildStores.add(rtr);
 		return rtr;
 	}
@@ -156,6 +142,29 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 			rtr.addAll(child.getTerms(initialTransition, script, bpl2smt));
 		}
 		return rtr;
+	}
+
+	@Override
+	public Set<STATE> getAbstractPostStates(final Deque<CodeBlock> callStack, final CodeBlock symbol) {
+		assert symbol != null;
+		assert mScope == null;
+		if (callStack.isEmpty()) {
+			return Optional.ofNullable(getAbstractPostStates(symbol)).map(a -> a.getStates())
+					.orElse(Collections.emptySet());
+		}
+
+		final Iterator<CodeBlock> iterator = callStack.descendingIterator();
+		List<BaseRcfgAbstractStateStorageProvider<STATE, LOCATION, VARDECL>> currentChilds =
+				Collections.singletonList(this);
+		while (iterator.hasNext()) {
+			final CodeBlock currentScope = iterator.next();
+			currentChilds = currentChilds.stream().flatMap(a -> a.mChildStores.stream())
+					.filter(a -> a.mScope == currentScope).collect(Collectors.toList());
+		}
+
+		return currentChilds.stream().map(a -> Optional.ofNullable(a.getAbstractPostStates(symbol))
+				.map(b -> b.getStates()).orElse(Collections.emptySet())).flatMap(a -> a.stream())
+				.collect(Collectors.toSet());
 	}
 
 	private Map<LOCATION, StateDecorator> getMergedStatesOfAllChildren(final CodeBlock initialTransition) {
@@ -332,7 +341,7 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 		return rtr;
 	}
 
-	protected abstract BaseRcfgAbstractStateStorageProvider<STATE, LOCATION, VARDECL> create();
+	protected abstract BaseRcfgAbstractStateStorageProvider<STATE, LOCATION, VARDECL> create(CodeBlock scope);
 
 	protected abstract AbstractMultiState<STATE, CodeBlock, VARDECL> getPostState(CodeBlock action);
 

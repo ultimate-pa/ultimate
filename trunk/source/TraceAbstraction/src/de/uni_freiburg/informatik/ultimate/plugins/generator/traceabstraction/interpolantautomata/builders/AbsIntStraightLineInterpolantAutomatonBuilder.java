@@ -81,7 +81,8 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder
 			final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> aiResult,
 			final PredicateUnifier predUnifier, final SmtManager smtManager,
 			final IRun<CodeBlock, IPredicate> currentCounterExample,
-			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
+			final SimplificationTechnique simplificationTechnique,
+			final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mSmtManager = smtManager;
@@ -111,7 +112,7 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder
 		final int wordlength = word.length();
 		assert wordlength > 1 : "Unexpected: length of word smaller or equal to 1.";
 
-		final Deque<Pair<Call, IPredicate>> callStack = new ArrayDeque<>();
+		final DualStack callStack = new DualStack();
 
 		final IPredicate falsePredicate = predicateUnifier.getFalsePredicate();
 		final Set<IPredicate> alreadyThereAsState = new HashSet<>();
@@ -123,20 +124,22 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder
 		for (int i = 0; i < wordlength; i++) {
 			final CodeBlock symbol = word.getSymbol(i);
 
+			final Pair<Call, IPredicate> hierarchicalPreState = getHierachicalPreState(symbol, previous, callStack);
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("CallStack " + callStack.getCalls().stream()
+						.map(a -> '[' + String.valueOf(a.hashCode()) + ']').reduce((a, b) -> a + ',' + b).orElse(""));
+			}
 			@SuppressWarnings("unchecked")
-			final Set<IAbstractState<?, ?, ?>> nextStates =
-					(Set<IAbstractState<?, ?, ?>>) aiResult.getLoc2States().get(symbol.getTarget());
-			final IAbstractState<?, ?, ?> nextSingleState = aiResult.getLoc2SingleStates().get(symbol.getTarget());
+			final Set<IAbstractState<?, ?, ?>> postStates =
+					(Set<IAbstractState<?, ?, ?>>) aiResult.getPostStates(callStack.getCalls(), symbol);
 
 			final IPredicate target;
-			if (nextStates == null) {
+			if (postStates.isEmpty()) {
 				target = falsePredicate;
 			} else {
-				target = predicateUnifier.getOrConstructPredicate(
-						nextSingleState.getTerm(mSmtManager.getScript(), mSmtManager.getBoogie2Smt()));
-				// target = predicateUnifier.getOrConstructPredicateForDisjunction(
-				// nextStates.stream().map(s -> s.getTerm(mSmtManager.getScript(), mSmtManager.getBoogie2Smt()))
-				// .map(predicateUnifier::getOrConstructPredicate).collect(Collectors.toSet()));
+				target = predicateUnifier.getOrConstructPredicateForDisjunction(
+						postStates.stream().map(s -> s.getTerm(mSmtManager.getScript(), mSmtManager.getBoogie2Smt()))
+								.map(predicateUnifier::getOrConstructPredicate).collect(Collectors.toSet()));
 
 			}
 
@@ -145,23 +148,16 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder
 			}
 
 			// Add transition
-			final Pair<Call, IPredicate> hierarchicalPreState;
 			if (symbol instanceof Call) {
-				hierarchicalPreState = new Pair<>((Call) symbol, previous);
 				result.addCallTransition(previous, symbol, target);
-				callStack.addFirst(hierarchicalPreState);
 			} else if (symbol instanceof Return) {
-				assert !callStack.isEmpty() : "Return does not have a corresponding call.";
-				hierarchicalPreState = callStack.removeFirst();
-				assert ((Return) symbol).getCorrespondingCall() == hierarchicalPreState.getFirst() : "Callstack broken";
 				result.addReturnTransition(previous, hierarchicalPreState.getSecond(), symbol, target);
 			} else {
-				hierarchicalPreState = null;
 				result.addInternalTransition(previous, symbol, target);
 			}
 
 			if (mLogger.isDebugEnabled()) {
-				writeTransitionAddLog(i, symbol, nextStates, previous,
+				writeTransitionAddLog(i, symbol, postStates, previous,
 						hierarchicalPreState == null ? null : hierarchicalPreState.getSecond(), target);
 			}
 
@@ -186,6 +182,23 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder
 		}
 
 		return result;
+	}
+
+	private static Pair<Call, IPredicate> getHierachicalPreState(final CodeBlock symbol, final IPredicate previous,
+			final DualStack callStack) {
+		// Add transition
+		final Pair<Call, IPredicate> hierarchicalPreState;
+		if (symbol instanceof Call) {
+			hierarchicalPreState = new Pair<>((Call) symbol, previous);
+			callStack.addFirst(hierarchicalPreState);
+		} else if (symbol instanceof Return) {
+			assert !callStack.isEmpty() : "Return does not have a corresponding call.";
+			hierarchicalPreState = callStack.removeFirst();
+			assert ((Return) symbol).getCorrespondingCall() == hierarchicalPreState.getFirst() : "Callstack broken";
+		} else {
+			hierarchicalPreState = null;
+		}
+		return hierarchicalPreState;
 	}
 
 	private void writeTransitionAddLog(final int i, final CodeBlock symbol,
@@ -213,5 +226,38 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder
 		mLogger.debug("Post (S): " + SmtUtils.simplify(mSmtManager.getManagedScript(), target.getFormula(), mServices,
 				SimplificationTechnique.SIMPLIFY_DDA));
 		mLogger.debug(divider);
+	}
+
+	private static final class DualStack {
+		private final Deque<CodeBlock> mCalls;
+		private final Deque<IPredicate> mPredicates;
+
+		private DualStack() {
+			mCalls = new ArrayDeque<>();
+			mPredicates = new ArrayDeque<>();
+		}
+
+		public Deque<CodeBlock> getCalls() {
+			return mCalls;
+		}
+
+		public Pair<Call, IPredicate> removeFirst() {
+			return new Pair<>((Call) mCalls.removeFirst(), mPredicates.removeFirst());
+		}
+
+		public boolean isEmpty() {
+			// its enough, they always have the same size
+			return mCalls.isEmpty();
+		}
+
+		public void addFirst(final Pair<Call, IPredicate> pair) {
+			mCalls.addFirst(pair.getFirst());
+			mPredicates.addFirst(pair.getSecond());
+		}
+
+		@Override
+		public String toString() {
+			return getCalls().toString();
+		}
 	}
 }

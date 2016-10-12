@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -60,6 +61,7 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 	private final Map<LOCATION, Set<STATE>> mLoc2States;
 	private final Map<LOCATION, STATE> mLoc2SingleStates;
 	private final Set<Term> mTerms;
+	private IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> mRootStorage;
 
 	protected AbstractInterpretationResult(final IAbstractDomain<STATE, ACTION, VARDECL> abstractDomain) {
 		assert abstractDomain != null;
@@ -72,7 +74,7 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 		mTerms = new LinkedHashSet<>();
 	}
 
-	protected void reachedError(final ITransitionProvider<ACTION, LOCATION> transitionProvider,
+	void reachedError(final ITransitionProvider<ACTION, LOCATION> transitionProvider,
 			final WorklistItem<STATE, ACTION, VARDECL, LOCATION> currentItem,
 			final AbstractMultiState<STATE, ACTION, VARDECL> postState) {
 
@@ -96,16 +98,22 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 				.add(new AbstractCounterexample<>(post, transitionProvider.getSource(transition), abstractExecution));
 	}
 
-	protected void saveRootStorage(final IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> rootStateStorage,
+	void saveRootStorage(final IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> rootStateStorage,
 			final ACTION start, final Script script, final Boogie2SMT bpl2smt) {
-
+		mRootStorage = rootStateStorage;
 		mTerms.addAll(rootStateStorage.getTerms(start, script, bpl2smt));
 		mLoc2Term.putAll(rootStateStorage.getLoc2Term(start, script, bpl2smt));
+
 		final Map<LOCATION, Set<AbstractMultiState<STATE, ACTION, VARDECL>>> loc2states =
 				rootStateStorage.getLoc2States(start);
 		loc2states.entrySet().forEach(a -> mLoc2States.put(a.getKey(),
 				a.getValue().stream().flatMap(b -> b.getStates().stream()).collect(Collectors.toSet())));
 		mLoc2SingleStates.putAll(rootStateStorage.getLoc2SingleStates(start));
+	}
+
+	@Override
+	public Set<STATE> getPostStates(final Deque<ACTION> callStack, final ACTION symbol) {
+		return mRootStorage.getAbstractPostStates(callStack, symbol);
 	}
 
 	@Override
@@ -158,8 +166,7 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 		}
 		if (getTerms() != null) {
 			sb.append(" Found terms ");
-			sb.append(
-					String.join(", ", getTerms().stream().map(a -> funSimplify.apply(a)).collect(Collectors.toList())));
+			sb.append(String.join(", ", getTerms().stream().map(funSimplify::apply).collect(Collectors.toList())));
 		}
 		return sb.toString();
 	}
