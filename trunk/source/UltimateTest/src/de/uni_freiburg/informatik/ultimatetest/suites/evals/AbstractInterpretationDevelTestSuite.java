@@ -56,15 +56,16 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 	@SuppressWarnings("unchecked")
 	private static final Triple<String, String[], String>[] TOOLCHAINS = new Triple[] {
 			//### BPL
-//			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default.epf"),
+			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_P1.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_total.epf"),
-//			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
+			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_P1_Debug.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug_noPredAbs.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug_refineAlways.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT.epf"),
+			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON_Debug.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP.epf"),
@@ -73,10 +74,10 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 
 //			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf"),
 //			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_P1.epf"),
-//			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
+			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
 //			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_P1_Debug.epf"),
 //			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT.epf"),
-//			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
+			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
 //			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON.epf"),
 			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON_Debug.epf"),
 //			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP.epf"),
@@ -122,33 +123,38 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 	};
 
 	private static final String[] INPUT = new String[] {
-//			"examples/programs/abstractInterpretation/regression",
+			"examples/programs/abstractInterpretation/regression",
 
-			"examples/programs/abstractInterpretation/regression/assign-relational-twoVar.bpl",
-			"examples/programs/abstractInterpretation/regression/varupdate-multiplication.bpl",
-			"examples/programs/abstractInterpretation/regression/modulo-assume-bug.bpl",
-			"examples/programs/abstractInterpretation/regression/modulo-assume-bug-npe.bpl",
+//			"examples/programs/abstractInterpretation/regression/inequalityTest_reals.bpl",
+//			"examples/programs/abstractInterpretation/regression/all/logicimplies-test.bpl",
+//			"examples/programs/abstractInterpretation/regression/all/logiciff.bpl",
+//			"examples/programs/abstractInterpretation/regression/all/procedure-statesplit-logiciff.bpl",
+//			"examples/programs/abstractInterpretation/regression/all/recursive-easy-3.bpl",
+//			"examples/programs/abstractInterpretation/regression/recursive-CallABAB_count.bpl",
+//			"examples/programs/abstractInterpretation/regression/recursive-CallABAB_simple_incorrect.bpl",
+//			"examples/programs/abstractInterpretation/regression/recursive-CallABAB_count_incorrect.bpl",
 
-			"examples/programs/abstractInterpretation/regression/loop-CountTillBound-2.bpl",
 
-			"examples/programs/abstractInterpretation/regression/recursive-wrong-prestate.bpl",
-			"examples/programs/abstractInterpretation/regression/recursive-easy-4.bpl",
-			"examples/programs/abstractInterpretation/regression/all/recursive-easy-3.bpl",
-			"examples/programs/abstractInterpretation/regression/all/recursive-easy-2.bpl",
-			"examples/programs/abstractInterpretation/regression/all/recursive-easy-1.bpl",
-
-			"examples/programs/abstractInterpretation/regression/recursive-CallABAB_simple_incorrect.bpl",
-			"examples/programs/abstractInterpretation/regression/recursive-CallABAB_count_incorrect.bpl",
-			"examples/programs/abstractInterpretation/regression/all/recursive-CallABAB_incorrect.bpl",
-			"examples/programs/abstractInterpretation/regression/recursive-CallABAB.bpl",
-			"examples/programs/abstractInterpretation/regression/recursive-CallABAB_count.bpl",
+//			"examples/programs/abstractInterpretation/regression/all/bool-assume.bpl",
+//			"examples/programs/abstractInterpretation/regression/varupdate-multiplication.bpl",
+//			"examples/programs/abstractInterpretation/regression/modulo-assume-bug.bpl",
+//			"examples/programs/abstractInterpretation/regression/modulo-assume-bug-npe.bpl",
+//			"examples/programs/abstractInterpretation/regression/loop-CountTillBound-2.bpl",
+//			"examples/programs/abstractInterpretation/regression/recursive-wrong-prestate.bpl",
+//			"examples/programs/abstractInterpretation/regression/recursive-easy-4.bpl",
+//			"examples/programs/abstractInterpretation/regression/all/recursive-easy-2.bpl",
+//			"examples/programs/abstractInterpretation/regression/all/recursive-easy-1.bpl",
+//			"examples/programs/abstractInterpretation/regression/all/recursive-CallABAB_incorrect.bpl",
+//			"examples/programs/abstractInterpretation/regression/recursive-CallABAB.bpl",
+//			"examples/svcomp/loops/invert_string_false-unreach-call.i",
+//			"examples/svcomp/loops/bubble_sort_false-unreach-call.i"
 	};
 	// @formatter:on
 
 	@Override
 	protected long getTimeout() {
 		// return 90 * 1000 * 1000;
-		return 90 * 1000;
+		return 30 * 1000;
 	}
 
 	@Override
