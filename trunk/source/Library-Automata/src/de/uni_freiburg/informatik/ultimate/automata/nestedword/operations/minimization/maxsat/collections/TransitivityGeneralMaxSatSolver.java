@@ -62,14 +62,15 @@ public class TransitivityGeneralMaxSatSolver<V> extends GeneralMaxSatSolver<Doub
 					return;
 				
 				case UNSET:
-					setVariable(equalityPair, true);
+					// do not check transitivity for this variable, we have already done that
+					super.setVariable(equalityPair, true);
 					break;
 				
 				default:
 					throw new IllegalArgumentException("Unknown variable status.");
 			}
 		}
-		propagateAll();
+		// do not call propagateAll() here, this will lead to (heavy) recursion!
 	}
 	
 	@Override
