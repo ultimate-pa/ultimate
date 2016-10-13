@@ -1,6 +1,10 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm;
 
+import java.util.Deque;
+
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  *
@@ -34,5 +38,25 @@ public final class LoggingHelper {
 			return builder.append("[?]");
 		}
 		return builder.append('[').append(current.hashCode()).append(']');
+	}
+
+	public static <ACTION, STORE extends IAbstractStateStorage<?, ACTION, ?, ?>> String
+			getScopeStackString(final Deque<Pair<ACTION, STORE>> scopeStack) {
+		return scopeStack.stream().sequential().map(a -> a.getFirst())
+				.map(a -> a == null ? "[G]" : getHashCodeString(a).toString()).reduce((a, b) -> a + b)
+				.orElseThrow(AssertionError::new);
+	}
+
+	public static String getPrecedessorSequence(final WorklistItem<?, ?, ?, ?> item) {
+		if (item == null) {
+			return "???";
+		}
+		final StringBuilder sb = new StringBuilder();
+		WorklistItem<?, ?, ?, ?> currentItem = item;
+		while (currentItem.getPredecessor() != null) {
+			sb.append(currentItem.toExtendedString()).append(CoreUtil.getPlatformLineSeparator());
+			currentItem = currentItem.getPredecessor();
+		}
+		return sb.toString();
 	}
 }

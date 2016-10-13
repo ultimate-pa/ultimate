@@ -31,6 +31,7 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Optional;
 
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -145,7 +146,7 @@ final class WorklistItem<STATE extends IAbstractState<STATE, ACTION, VARDECL>, A
 
 		mScopedStorages.removeFirst();
 		final ScopeStackItem rtr = mScopes.removeFirst();
-		mHierachicalPreState = rtr.getHierachicalPreState();
+		mHierachicalPreState = rtr.getScopeHierPreState();
 		return rtr.getAction();
 	}
 
@@ -159,7 +160,7 @@ final class WorklistItem<STATE extends IAbstractState<STATE, ACTION, VARDECL>, A
 		return mScopedStorages.peek();
 	}
 
-	int getCallStackDepth() {
+	int getScopeStackDepth() {
 		if (mScopes == null || mScopes.isEmpty()) {
 			return 0;
 		}
@@ -170,7 +171,7 @@ final class WorklistItem<STATE extends IAbstractState<STATE, ACTION, VARDECL>, A
 	 *
 	 * @return A {@link Deque} that contains pairs of scopes and the corresponding state storage.
 	 */
-	Deque<Pair<ACTION, IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION>>> getStack() {
+	Deque<Pair<ACTION, IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION>>> getScopeStack() {
 		final ArrayDeque<Pair<ACTION, IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION>>> rtr =
 				new ArrayDeque<>();
 		final Iterator<IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION>> storageIter =
@@ -255,6 +256,13 @@ final class WorklistItem<STATE extends IAbstractState<STATE, ACTION, VARDECL>, A
 		return builder.toString();
 	}
 
+	String toExtendedString() {
+		return toString() + " Pre: " + LoggingHelper.getHashCodeString(mPreState) + " "
+				+ Optional.ofNullable(mPreState).map(a -> a.toLogString()).orElse("?") + " HierPre: "
+				+ LoggingHelper.getHashCodeString(mHierachicalPreState) + " "
+				+ Optional.ofNullable(mHierachicalPreState).map(a -> a.toLogString()).orElse("?");
+	}
+
 	/**
 	 * Container for scope stack items.
 	 *
@@ -276,11 +284,11 @@ final class WorklistItem<STATE extends IAbstractState<STATE, ACTION, VARDECL>, A
 			return mScope;
 		}
 
-		AbstractMultiState<STATE, ACTION, VARDECL> getHierachicalPreState() {
+		AbstractMultiState<STATE, ACTION, VARDECL> getScopeHierPreState() {
 			return mScopeHierachicalPreState;
 		}
 
-		AbstractMultiState<STATE, ACTION, VARDECL> getPreState() {
+		AbstractMultiState<STATE, ACTION, VARDECL> getScopePreState() {
 			return mScopePreState;
 		}
 	}

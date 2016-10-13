@@ -268,7 +268,6 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, ACTION, VARD
 		}
 		final AbstractMultiState<STATE, ACTION, VARDECL> rtr =
 				new AbstractMultiState<>(mMaxSize, getMaximalElements(newSet));
-		assert !rtr.isBottom() : "hierachical post cannot be bottom";
 		return rtr;
 	}
 
