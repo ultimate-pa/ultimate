@@ -228,9 +228,9 @@ public class PredicateUnifier {
 				impliedPredicates.put(coverer, Validity.VALID);
 			}
 
-			// all predicates that do not imply the conjunct will also imply
+			// all predicates that do not imply the conjunct will also not imply
 			// the conjunction
-			for (final IPredicate noncoverer : ((CoverageRelation) getCoverageRelation()).getNonCoveringPredicates(conjunct)) {
+			for (final IPredicate noncoverer : ((CoverageRelation) getCoverageRelation()).getNonCoveredPredicates(conjunct)) {
 				expliedPredicates.put(noncoverer, Validity.INVALID);
 			}
 		}
