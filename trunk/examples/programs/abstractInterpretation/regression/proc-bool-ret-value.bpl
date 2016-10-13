@@ -1,6 +1,6 @@
 //#Safe
 
-procedure ULTIMATE.init()
+procedure ULTIMATE.start()
 {
   var x : int;
   var b : bool;
