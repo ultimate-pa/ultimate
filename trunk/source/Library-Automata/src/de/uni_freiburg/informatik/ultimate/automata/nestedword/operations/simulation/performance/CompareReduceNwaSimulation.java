@@ -218,7 +218,15 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 		measureMethodPerformance(automatonName, ESimulationType.DIRECT, false, getServices(), timeOutMillis,
 				stateFactory, reachableOperand);
 		// Delayed nwa simulation without SCC
-		measureMethodPerformance(automatonName, ESimulationType.DELAYED, false, getServices(), timeOutMillis,
+//		measureMethodPerformance(automatonName, ESimulationType.DELAYED, false, getServices(), timeOutMillis,
+//				stateFactory, reachableOperand);
+		
+		// Other minimization methods
+		measureMethodPerformance(automatonName, ESimulationType.EXT_MINIMIZESEVPA, false, mServices, timeOutMillis,
+				stateFactory, reachableOperand);
+		measureMethodPerformance(automatonName, ESimulationType.EXT_SHRINKNWA, false, mServices, timeOutMillis,
+				stateFactory, reachableOperand);
+		measureMethodPerformance(automatonName, ESimulationType.EXT_MINIMIZENWAMAXSAT, false, mServices, timeOutMillis,
 				stateFactory, reachableOperand);
 	}
 }

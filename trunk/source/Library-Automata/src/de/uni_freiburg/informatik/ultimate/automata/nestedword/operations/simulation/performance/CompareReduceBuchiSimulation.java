@@ -332,11 +332,14 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> extends UnaryNwaOperati
 		htmlText.append("<title>Simulation Performance Test-Results</title>");
 
 		// JS
+		htmlText.append(
+				"<script type=\"text/javascript\" src=\"https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js\"></script>");
 		htmlText.append("<script type=\"text/javascript\" src=\"http://zabuza.square7.ch/sorttable.js\"></script>");
+		htmlText.append("<script type=\"text/javascript\" src=\"http://zabuza.square7.ch/markRows.js\"></script>");
 
 		// CSS
 		htmlText.append("<style>");
-		// Wikitable class
+		// Wikitable classes
 		htmlText.append("table.wikitable { margin: 1em 0; background-color: #f9f9f9;"
 				+ " border: 1px solid #aaa;border-collapse: collapse; color: black }");
 		htmlText.append("table.wikitable > tr > th, table.wikitable > tr > td,"
@@ -345,15 +348,24 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> extends UnaryNwaOperati
 		htmlText.append("table.wikitable > tr > th, table.wikitable > * > tr > th {"
 				+ " background-color: #f2f2f2; text-align: center }");
 		htmlText.append("table.wikitable > caption { font-weight: bold }");
-		// Other classes
+		// Alternating row coloring
 		htmlText.append("tr:nth-child(even) { background-color: #f9f9f9 }");
 		htmlText.append("tr:nth-child(odd) { background-color: #e9e9e9 }");
+		// Empty row highlighting
 		htmlText.append(".emptyrow { background-color: #c9c9c9 !important; }");
+		// Sortable icons
 		htmlText.append("table.sortable th:not(.sorttable_sorted):not(.sorttable_sorted_reverse)"
 				+ ":not(.sorttable_nosort):after { content: \" \\25B4\\25BE\"; }");
+		// Mark rows
+		htmlText.append("#markRowText { margin-left: 1em; }");
+		htmlText.append(".markedRow { background-color: #FFB0B0 !important; }");
 		htmlText.append("</style>");
 
-		htmlText.append("</head><body><table class=\"wikitable sortable\">");
+		htmlText.append("</head><body>");
+		htmlText.append(
+				"<span class=\"markedRow demoText\">Mark rows:</span><input type=\"text\" id=\"markRowText\" name=\"markRowText\" oninput=\"markRows()\" /><br/>");
+		htmlText.append("<table id=\"contentTable\" class=\"wikitable sortable\">");
+		
 		boolean isFirstRow = true;
 		for (final String row : table) {
 			// First row is header
@@ -827,6 +839,18 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> extends UnaryNwaOperati
 		} else if (method instanceof ShrinkNwa) {
 			final ShrinkNwa<LETTER, STATE> shrinkNwa = (ShrinkNwa<LETTER, STATE>) method;
 			final INestedWordAutomatonSimple<LETTER, STATE> methodResult = shrinkNwa.getResult();
+			// Removed states
+			if (methodResult != null) {
+				final int removedStates = operand.size() - methodResult.size();
+				mCountingMeasures.put(ECountingMeasure.REMOVED_STATES, removedStates);
+			}
+			// Buechi states
+			mCountingMeasures.put(ECountingMeasure.BUCHI_STATES, operand.size());
+			// Overall time
+			mTimeMeasures.put(ETimeMeasure.OVERALL, ComparisonTables.millisToSeconds(mExternalOverallTime));
+		} else if (method instanceof MinimizeNwaMaxSat2) {
+			final MinimizeNwaMaxSat2<LETTER, STATE> minimizeNwaMaxSat2 = (MinimizeNwaMaxSat2<LETTER, STATE>) method;
+			final INestedWordAutomatonSimple<LETTER, STATE> methodResult = minimizeNwaMaxSat2.getResult();
 			// Removed states
 			if (methodResult != null) {
 				final int removedStates = operand.size() - methodResult.size();
