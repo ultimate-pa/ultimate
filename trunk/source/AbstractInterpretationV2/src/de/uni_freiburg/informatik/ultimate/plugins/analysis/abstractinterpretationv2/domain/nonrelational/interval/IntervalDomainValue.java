@@ -277,7 +277,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 		}
 
 		return (mLower.compareTo(other.mLower) <= 0 && mUpper.compareTo(other.mUpper) >= 0)
-				|| (other.mLower.compareTo(mLower) <= 0 && other.mUpper.compareTo(mUpper) >= 0);
+		        || (other.mLower.compareTo(mLower) <= 0 && other.mUpper.compareTo(mUpper) >= 0);
 	}
 
 	/**
@@ -397,7 +397,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 		}
 
 		return (mLower.isInfinity() || mLower.getValue().signum() <= 0)
-				&& (mUpper.isInfinity() || mUpper.getValue().signum() >= 0);
+		        && (mUpper.isInfinity() || mUpper.getValue().signum() >= 0);
 	}
 
 	/**
@@ -704,7 +704,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 
 		// [a; b] % [c; d] = [a; b], when (0 <= a) and (b < c)
 		if (!mLower.isInfinity() && !absDivisor.mLower.isInfinity() && new IntervalValue(0).compareTo(mLower) <= 0
-				&& mUpper.compareTo(absDivisor.mLower) < 0) {
+		        && mUpper.compareTo(absDivisor.mLower) < 0) {
 			return new IntervalDomainValue(mLower, mUpper);
 		}
 
@@ -793,7 +793,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 		}
 
 		return new IntervalDomainValue(new IntervalValue(getUpper().getValue().negate()),
-				new IntervalValue(getLower().getValue().negate()));
+		        new IntervalValue(getLower().getValue().negate()));
 	}
 
 	/**
@@ -897,7 +897,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 				}
 			} else {
 				returnValue = updateIfLarger(returnValue, getLower().getValue().multiply(other.getLower().getValue()),
-						valuePresent);
+				        valuePresent);
 				valuePresent = true;
 			}
 		}
@@ -931,7 +931,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 				}
 			} else {
 				returnValue = updateIfLarger(returnValue, getLower().getValue().multiply(other.getUpper().getValue()),
-						valuePresent);
+				        valuePresent);
 				valuePresent = true;
 			}
 		}
@@ -964,7 +964,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 				}
 			} else {
 				returnValue = updateIfLarger(returnValue, getUpper().getValue().multiply(other.getLower().getValue()),
-						valuePresent);
+				        valuePresent);
 				valuePresent = true;
 			}
 		}
@@ -999,7 +999,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 				}
 			} else {
 				returnValue = updateIfLarger(returnValue, getUpper().getValue().multiply(other.getUpper().getValue()),
-						valuePresent);
+				        valuePresent);
 				valuePresent = true;
 			}
 		}
@@ -1059,7 +1059,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 					}
 				} else {
 					returnValue = updateIfSmaller(returnValue,
-							getLower().getValue().multiply(other.getLower().getValue()), valuePresent);
+					        getLower().getValue().multiply(other.getLower().getValue()), valuePresent);
 					valuePresent = true;
 				}
 			}
@@ -1098,7 +1098,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 					}
 				} else {
 					returnValue = updateIfSmaller(returnValue,
-							getLower().getValue().multiply(other.getUpper().getValue()), valuePresent);
+					        getLower().getValue().multiply(other.getUpper().getValue()), valuePresent);
 					valuePresent = true;
 				}
 			}
@@ -1136,7 +1136,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 				}
 			} else {
 				returnValue = updateIfSmaller(returnValue, getUpper().getValue().multiply(other.getLower().getValue()),
-						valuePresent);
+				        valuePresent);
 				valuePresent = true;
 			}
 		}
@@ -1169,7 +1169,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 				}
 			} else {
 				returnValue = updateIfSmaller(returnValue, getUpper().getValue().multiply(other.getUpper().getValue()),
-						valuePresent);
+				        valuePresent);
 				valuePresent = true;
 			}
 		}
@@ -1179,7 +1179,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 	}
 
 	private static IntervalValue updateIfLarger(final IntervalValue oldValue, final BigDecimal newValue,
-			final boolean valuePresent) {
+	        final boolean valuePresent) {
 		if (valuePresent) {
 			if (oldValue.getValue().compareTo(newValue) <= 0) {
 				return new IntervalValue(newValue);
@@ -1190,7 +1190,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 	}
 
 	private static IntervalValue updateIfSmaller(final IntervalValue oldValue, final BigDecimal newValue,
-			final boolean valuePresent) {
+	        final boolean valuePresent) {
 		if (valuePresent) {
 			if (oldValue.getValue().compareTo(newValue) >= 0) {
 				return new IntervalValue(newValue);
@@ -1636,13 +1636,13 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 
 	@Override
 	public IntervalDomainValue inverseModulo(final IntervalDomainValue referenceValue,
-			final IntervalDomainValue oldValue, final boolean isLeft) {
+	        final IntervalDomainValue oldValue, final boolean isLeft) {
 		return oldValue;
 	}
 
 	@Override
 	public IntervalDomainValue inverseEquality(final IntervalDomainValue oldValue,
-			final IntervalDomainValue referenceValue) {
+	        final IntervalDomainValue referenceValue) {
 		return referenceValue;
 	}
 
@@ -1680,7 +1680,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 
 	@Override
 	public IntervalDomainValue inverseNotEqual(final IntervalDomainValue oldValue,
-			final IntervalDomainValue referenceValue) {
+	        final IntervalDomainValue referenceValue) {
 		return referenceValue;
 	}
 
@@ -1705,7 +1705,7 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 	@Override
 	public BooleanValue compareInequality(final IntervalDomainValue secondOther) {
 		throw new UnsupportedOperationException(
-				"Not equals expressions should have been removed during expression normalization.");
+		        "Not equals expressions should have been removed during expression normalization.");
 	}
 
 	@Override
@@ -1720,12 +1720,12 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 
 		if (getLower().isInfinity()) {
 			return Collections
-					.singleton(new IntervalDomainValue(new IntervalValue(getUpper().getValue()), new IntervalValue()));
+			        .singleton(new IntervalDomainValue(new IntervalValue(getUpper().getValue()), new IntervalValue()));
 		}
 
 		if (getUpper().isInfinity()) {
 			return Collections
-					.singleton(new IntervalDomainValue(new IntervalValue(), new IntervalValue(getLower().getValue())));
+			        .singleton(new IntervalDomainValue(new IntervalValue(), new IntervalValue(getLower().getValue())));
 		}
 
 		final ArrayList<IntervalDomainValue> rtr = new ArrayList<>();
@@ -1746,19 +1746,19 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 
 		if (getLower().isInfinity()) {
 			return Collections
-					.singleton(new IntervalDomainValue(new IntervalValue(getUpper().getValue()), new IntervalValue()));
+			        .singleton(new IntervalDomainValue(new IntervalValue(getUpper().getValue()), new IntervalValue()));
 		}
 
 		if (getUpper().isInfinity()) {
 			return Collections
-					.singleton(new IntervalDomainValue(new IntervalValue(), new IntervalValue(getLower().getValue())));
+			        .singleton(new IntervalDomainValue(new IntervalValue(), new IntervalValue(getLower().getValue())));
 		}
 
 		final ArrayList<IntervalDomainValue> rtr = new ArrayList<>();
 		rtr.add(new IntervalDomainValue(new IntervalValue(getUpper().getValue().add(BigDecimal.ONE)),
-				new IntervalValue()));
+		        new IntervalValue()));
 		rtr.add(new IntervalDomainValue(new IntervalValue(),
-				new IntervalValue(getLower().getValue().subtract(BigDecimal.ONE))));
+		        new IntervalValue(getLower().getValue().subtract(BigDecimal.ONE))));
 		return rtr;
 	}
 }

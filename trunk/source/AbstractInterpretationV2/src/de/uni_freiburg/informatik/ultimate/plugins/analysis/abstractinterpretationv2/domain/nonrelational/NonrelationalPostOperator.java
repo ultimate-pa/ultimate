@@ -62,6 +62,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.IdentifierTranslator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgStatementExtractor;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.ITermProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.BoogieUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
@@ -170,7 +171,6 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 
 			final AssignmentStatement assign = new AssignmentStatement(callStatement.getLocation(),
 			        idents.toArray(new LeftHandSide[idents.size()]), args);
-			System.out.println(BoogiePrettyPrinter.print(assign));
 			final STATE interimState = stateBeforeLeaving.addVariables(tmpParamVars.values());
 			final List<STATE> result = mStatementProcessor.process(interimState, assign, tmpVarUses);
 			if (result.isEmpty()) {
@@ -230,7 +230,7 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 
 			final Procedure procedure = getProcedure(correspondingCall.getMethodName());
 			final List<V> outVals = getOutParamValues(procedure, stateBeforeLeaving);
-			final List<V> inVals = getInParamValues(procedure, stateBeforeLeaving);
+			final List<ITermProvider> inVals = getInParamValues(procedure, stateBeforeLeaving);
 			final VariableLHS[] lhs = correspondingCall.getLhs();
 			final Expression[] args = correspondingCall.getArguments();
 
@@ -256,7 +256,7 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 
 			// Update input expressions wrt. parameter values at the end of the executed procedure
 			for (int i = 0; i < inVals.size(); i++) {
-				final V inValue = inVals.get(i);
+				final ITermProvider inValue = inVals.get(i);
 				final Expression inExpression = args[i];
 
 				final IdentifierTranslator[] translators = new IdentifierTranslator[] { new SimpleTranslator(),
@@ -270,10 +270,7 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 
 				final Expression termExpression = mBoogie2Smt.getTerm2Expression().translate(valueTerm);
 
-				if (mLogger.isDebugEnabled()) {
-					mLogger.debug("Term for InParam-expression \"" + inExpression + "\" with value " + inValue + ": "
-					        + termExpression);
-				}
+				assert termExpression.getType() == PrimitiveType.TYPE_BOOL;
 
 				inputParameterExpressionTerms.add(termExpression);
 			}
@@ -287,10 +284,10 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 				for (int i = 1; i < inputParameterExpressionTerms.size(); i++) {
 					current = new BinaryExpression(correspondingCall.getLocation(), Operator.LOGICAND, current,
 					        inputParameterExpressionTerms.get(i));
-				}
 
-				if (mLogger.isDebugEnabled()) {
-					mLogger.debug("Conjunction expression of input parameters: " + current);
+					if (current.getType() == null) {
+						current.setType(PrimitiveType.TYPE_BOOL);
+					}
 				}
 
 				// Construct an assume statement
@@ -298,10 +295,20 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 				final List<Statement> stmtList = new ArrayList<>();
 				stmtList.add(assume);
 
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug("    Computing post after return for arguments with statement: "
+					        + BoogiePrettyPrinter.print(assume));
+				}
+
 				final CodeBlock newPostBlock = mRootAnnotation.getCodeBlockFactory().constructStatementSequence(null,
 				        null, stmtList, Origin.IMPLEMENTATION);
 
 				final List<STATE> postResults = apply(stateAfterLeaving, newPostBlock);
+
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug("    Resulting post states: "
+					        + postResults.stream().map(r -> r.toLogString()).collect(Collectors.toList()));
+				}
 				rets.addAll(postResults);
 			}
 
@@ -310,6 +317,7 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 			}
 
 			for (final STATE s : rets) {
+
 				returnList.add(s.setValues(updateVarNames.toArray(new IBoogieVar[updateVarNames.size()]),
 				        outVals.toArray(stateAfterLeaving.getArray(outVals.size()))));
 			}
@@ -384,13 +392,28 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 		return vals;
 	}
 
-	private List<V> getInParamValues(final Procedure procedure, final STATE stateBeforeLeaving) {
-		final List<V> vals = new ArrayList<>();
+	private List<ITermProvider> getInParamValues(final Procedure procedure, final STATE stateBeforeLeaving) {
+		final List<ITermProvider> vals = new ArrayList<>();
 		for (final VarList list : procedure.getInParams()) {
 			for (final String s : list.getIdentifiers()) {
 				final IBoogieVar boogieVar = mBoogie2SmtSymbolTable.getBoogieVar(s,
 				        new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procedure.getIdentifier()), false);
-				vals.add(stateBeforeLeaving.getValue(boogieVar));
+
+				if (boogieVar.getIType() instanceof PrimitiveType) {
+					final PrimitiveType primitiveType = (PrimitiveType) boogieVar.getIType();
+
+					if (primitiveType.getTypeCode() == PrimitiveType.BOOL) {
+						vals.add(stateBeforeLeaving.getBooleanValue(boogieVar));
+					} else {
+						vals.add(stateBeforeLeaving.getValue(boogieVar));
+					}
+
+				} else if (boogieVar.getIType() instanceof ArrayType) {
+					// TODO: Implement better handling of arrays.
+					vals.add(stateBeforeLeaving.getValue(boogieVar));
+				} else {
+					vals.add(stateBeforeLeaving.getValue(boogieVar));
+				}
 			}
 		}
 

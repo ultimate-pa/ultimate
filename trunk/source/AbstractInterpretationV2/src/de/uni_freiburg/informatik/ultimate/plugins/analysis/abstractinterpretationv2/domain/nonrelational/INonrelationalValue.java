@@ -30,9 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.Collection;
 
-import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Sort;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.ITermProvider;
 
 /**
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
@@ -40,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  *
  * @param <V>
  */
-public interface INonrelationalValue<V extends INonrelationalValue<V>> {
+public interface INonrelationalValue<V extends INonrelationalValue<V>> extends ITermProvider {
 
 	V copy();
 
@@ -55,8 +53,6 @@ public interface INonrelationalValue<V extends INonrelationalValue<V>> {
 	Collection<V> complementInteger();
 
 	boolean isEqualTo(final V other);
-
-	Term getTerm(final Script script, final Sort sort, final Term var);
 
 	boolean isContainedIn(final V other);
 
