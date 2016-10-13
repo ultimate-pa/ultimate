@@ -266,7 +266,10 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, ACTION, VARD
 				newSet.addAll(postOp.apply(stateBeforeLeaving, stateAfterLeaving, transition));
 			}
 		}
-		return new AbstractMultiState<>(mMaxSize, getMaximalElements(newSet));
+		final AbstractMultiState<STATE, ACTION, VARDECL> rtr =
+				new AbstractMultiState<>(mMaxSize, getMaximalElements(newSet));
+		assert !rtr.isBottom() : "hierachical post cannot be bottom";
+		return rtr;
 	}
 
 	public AbstractMultiState<STATE, ACTION, VARDECL> apply(final IAbstractStateBinaryOperator<STATE> op,

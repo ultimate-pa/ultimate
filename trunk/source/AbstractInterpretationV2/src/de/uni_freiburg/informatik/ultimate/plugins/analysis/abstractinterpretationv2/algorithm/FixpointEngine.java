@@ -185,13 +185,6 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 				currentAction) : getLogMessageUnsoundPost(preState, preStateWithFreshVariables, postState,
 						currentAction);
 
-		// TODO: how do we track merges?
-		// if (postState.size() > mMaxParallelStates) {
-		// mLogger.warn(getLogMessageWarnTooManyPostStates(postState));
-		// mBenchmark.addMerge(postState.size());
-		// postState = merge(mergeOp, postState);
-		// }
-
 		// check if we enter or leave a scope and act accordingly (saving summaries, creating new scope storages, etc.)
 		postState = prepareScope(currentItem, postState, mergeOp);
 
@@ -434,12 +427,6 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		return postStateAfterWidening;
 	}
 
-	// private List<AbstractMultiState<STATE, ACTION, VARDECL>> merge(
-	// final IAbstractStateBinaryOperator<AbstractMultiState<STATE, ACTION, VARDECL>> mergeOp,
-	// final List<AbstractMultiState<STATE, ACTION, VARDECL>> postStates) {
-	// return Collections.singletonList(postStates.stream().reduce((a, b) -> mergeOp.apply(a, b)).get());
-	// }
-
 	/**
 	 * Check if we are entering or leaving a scope and if so, create or delete it.
 	 *
@@ -452,14 +439,13 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 			final IAbstractStateBinaryOperator<STATE> mergeOp) {
 		final ACTION action = currentItem.getAction();
 		if (mTransitionProvider.isEnteringScope(action)) {
-			currentItem.addScope(action);
+			currentItem.addScope(action, postState);
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug(getLogMessageEnterScope(currentItem));
 			}
 			return postState;
 		} else if (isLeavingScope(currentItem)) {
-			currentItem.saveSummary(postState);
-			currentItem.removeCurrentScope();
+			currentItem.removeCurrentScope(postState);
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug(getLogMessageLeaveScope(currentItem));
 			}
