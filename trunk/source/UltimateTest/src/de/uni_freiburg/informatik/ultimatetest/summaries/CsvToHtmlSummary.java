@@ -112,6 +112,7 @@ public final class CsvToHtmlSummary {
 				"<script type=\"text/javascript\" src=\"https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js\"></script>");
 		htmlText.append("<script type=\"text/javascript\" src=\"http://zabuza.square7.ch/sorttable.js\"></script>");
 		htmlText.append("<script type=\"text/javascript\" src=\"http://zabuza.square7.ch/markRows.js\"></script>");
+		htmlText.append("<script type=\"text/javascript\" src=\"http://zabuza.square7.ch/toggleEmptyColumns.js\"></script>");
 
 		// TODO Store the CSS as file and somewhere more appropriate.
 		// CSS
@@ -136,6 +137,9 @@ public final class CsvToHtmlSummary {
 		// Mark rows
 		htmlText.append("#markRowText { margin-left: 1em; }");
 		htmlText.append(".markedRow { background-color: #FFB0B0 !important; }");
+		// Toggle empty columns
+		htmlText.append(".cellOfEmptyColumn { display: none; }");
+		htmlText.append("#toggleEmptyColumnsButton { margin-left: 1em; }");
 		htmlText.append("</style>");
 
 		htmlText.append(HTML_HEAD_TO_CONTENT);
@@ -143,7 +147,9 @@ public final class CsvToHtmlSummary {
 		final String htmlClosingSymbol = ">";
 		final String htmlClosingOpeningSymbol = "</";
 		htmlText.append(
-				"<span class=\"markedRow demoText\">Mark rows:</span><input type=\"text\" id=\"markRowText\" name=\"markRowText\" oninput=\"markRows()\" /><br/>");
+				"<span class=\"markedRow demoText\">Mark rows:</span><input type=\"text\" id=\"markRowText\" name=\"markRowText\" oninput=\"markRows()\" />");
+		htmlText.append("<button type=\"button\" id=\"toggleEmptyColumnsButton\" onclick=\"toggleEmptyColumns()\">Hide/Show empty columns</button>");
+		htmlText.append("<br/>");
 		htmlText.append("<table id=\"contentTable\" class=\"wikitable sortable\">");
 
 		boolean isFirstRow = true;

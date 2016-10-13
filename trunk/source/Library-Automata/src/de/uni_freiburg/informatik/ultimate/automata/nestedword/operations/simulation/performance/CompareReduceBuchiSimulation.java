@@ -336,6 +336,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> extends UnaryNwaOperati
 				"<script type=\"text/javascript\" src=\"https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js\"></script>");
 		htmlText.append("<script type=\"text/javascript\" src=\"http://zabuza.square7.ch/sorttable.js\"></script>");
 		htmlText.append("<script type=\"text/javascript\" src=\"http://zabuza.square7.ch/markRows.js\"></script>");
+		htmlText.append("<script type=\"text/javascript\" src=\"http://zabuza.square7.ch/toggleEmptyColumns.js\"></script>");
 
 		// CSS
 		htmlText.append("<style>");
@@ -359,11 +360,16 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> extends UnaryNwaOperati
 		// Mark rows
 		htmlText.append("#markRowText { margin-left: 1em; }");
 		htmlText.append(".markedRow { background-color: #FFB0B0 !important; }");
+		// Toggle empty columns
+		htmlText.append(".cellOfEmptyColumn { display: none; }");
+		htmlText.append("#toggleEmptyColumnsButton { margin-left: 1em; }");
 		htmlText.append("</style>");
 
 		htmlText.append("</head><body>");
 		htmlText.append(
-				"<span class=\"markedRow demoText\">Mark rows:</span><input type=\"text\" id=\"markRowText\" name=\"markRowText\" oninput=\"markRows()\" /><br/>");
+				"<span class=\"markedRow demoText\">Mark rows:</span><input type=\"text\" id=\"markRowText\" name=\"markRowText\" oninput=\"markRows()\" />");
+		htmlText.append("<button type=\"button\" id=\"toggleEmptyColumnsButton\" onclick=\"toggleEmptyColumns()\">Hide/Show empty columns</button>");
+		htmlText.append("<br/>");
 		htmlText.append("<table id=\"contentTable\" class=\"wikitable sortable\">");
 		
 		boolean isFirstRow = true;
@@ -959,13 +965,13 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> extends UnaryNwaOperati
 				method = new ShrinkNwa<>(mServices, stateFactory, operand);
 				mExternalOverallTime = System.currentTimeMillis() - startTime;
 			} else if (type.equals(ESimulationType.EXT_MINIMIZENWAMAXSAT)) {
-				final long startTime = System.currentTimeMillis();
 				IDoubleDeckerAutomaton<LETTER, STATE> operandAsNwa = null;
 				if (operand instanceof IDoubleDeckerAutomaton<?, ?>) {
 					operandAsNwa = (IDoubleDeckerAutomaton<LETTER, STATE>) operand;
 				} else {
 					operandAsNwa = new RemoveUnreachable<LETTER, STATE>(services, operand).getResult();
 				}
+				final long startTime = System.currentTimeMillis();
 				method = new MinimizeNwaMaxSat2<LETTER, STATE>(mServices, stateFactory, operandAsNwa);
 				mExternalOverallTime = System.currentTimeMillis() - startTime;
 			}

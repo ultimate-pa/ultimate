@@ -179,13 +179,13 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 				method = new ShrinkNwa<>(getServices(), stateFactory, operand);
 				setExternalOverallTime(System.currentTimeMillis() - startTime);
 			} else if (type.equals(ESimulationType.EXT_MINIMIZENWAMAXSAT)) {
-				final long startTime = System.currentTimeMillis();
 				IDoubleDeckerAutomaton<LETTER, STATE> operandAsNwa = null;
 				if (operand instanceof IDoubleDeckerAutomaton<?, ?>) {
 					operandAsNwa = operand;
 				} else {
 					operandAsNwa = new RemoveUnreachable<LETTER, STATE>(services, operand).getResult();
 				}
+				final long startTime = System.currentTimeMillis();
 				method = new MinimizeNwaMaxSat2<LETTER, STATE>(services, stateFactory, operandAsNwa, true,
 						partitionAndPairs);
 				setExternalOverallTime(System.currentTimeMillis() - startTime);
@@ -215,8 +215,8 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 			final IStateFactory<STATE> stateFactory,
 			final NestedWordAutomatonReachableStates<LETTER, STATE> reachableOperand) {
 		// Direct nwa simulation without SCC
-		measureMethodPerformance(automatonName, ESimulationType.DIRECT, false, getServices(), timeOutMillis,
-				stateFactory, reachableOperand);
+//		measureMethodPerformance(automatonName, ESimulationType.DIRECT, false, getServices(), timeOutMillis,
+//				stateFactory, reachableOperand);
 		// Delayed nwa simulation without SCC
 //		measureMethodPerformance(automatonName, ESimulationType.DELAYED, false, getServices(), timeOutMillis,
 //				stateFactory, reachableOperand);

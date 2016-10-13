@@ -1497,11 +1497,11 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 				}
 			}
 			// Retrieve the merged summary edges for the game graph that start
-			// at
-			// the given source.
+			// at the given source.
 			// We make all summarySources the only initial game states and
 			// determinize the automaton.
-
+			// TODO Only enable this for testing purpose!
+			// This test is extremely expensive.
 			final boolean alreadyWasDeterministic = !new IsDeterministic<>(mServices, gameAutomatonWithSummaries)
 					.hasNondeterministicTransitions();
 			if (alreadyWasDeterministic) {
