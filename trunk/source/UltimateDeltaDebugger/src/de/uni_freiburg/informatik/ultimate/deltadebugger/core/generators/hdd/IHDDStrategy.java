@@ -8,7 +8,7 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfa
  *
  */
 @FunctionalInterface
-public interface HDDStrategy {
+public interface IHDDStrategy {
 
 	/**
 	 * Allows to add changes that are not directly related to a child node, for instance individual tokens. In fact, the
@@ -18,6 +18,7 @@ public interface HDDStrategy {
 	 * @param changeCollector
 	 */
 	default void createAdditionalChangesForExpandedNode(final IPSTNode node, final ChangeCollector changeCollector) {
+		// no default behavior required
 	}
 
 	/**
@@ -67,5 +68,4 @@ public interface HDDStrategy {
 	default boolean skipSubTree(final IPSTNode node) {
 		return false;
 	}
-
 }

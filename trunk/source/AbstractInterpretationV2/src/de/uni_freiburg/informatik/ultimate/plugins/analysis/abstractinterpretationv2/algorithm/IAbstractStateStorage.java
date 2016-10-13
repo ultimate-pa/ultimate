@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm;
 
+import java.util.Deque;
 import java.util.Map;
 import java.util.Set;
 
@@ -33,7 +34,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
 
 /**
  * Interface that describes how abstract states can be stored and retrieved relative to actions of a (program) model.
@@ -48,10 +48,7 @@ public interface IAbstractStateStorage<STATE extends IAbstractState<STATE, ACTIO
 	AbstractMultiState<STATE, ACTION, VARDECL> addAbstractPostState(ACTION transition,
 			AbstractMultiState<STATE, ACTION, VARDECL> state);
 
-	AbstractMultiState<STATE, ACTION, VARDECL> widenPostState(ACTION transition,
-			IAbstractStateBinaryOperator<STATE> wideningOp, AbstractMultiState<STATE, ACTION, VARDECL> leftOperand);
-
-	IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> createStorage();
+	IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> createStorage(ACTION scope);
 
 	Map<LOCATION, Term> getLoc2Term(final ACTION initialTransition, final Script script, final Boogie2SMT bpl2smt);
 
@@ -60,4 +57,8 @@ public interface IAbstractStateStorage<STATE extends IAbstractState<STATE, ACTIO
 	Map<LOCATION, STATE> getLoc2SingleStates(final ACTION initialTransition);
 
 	Set<Term> getTerms(final ACTION initialTransition, final Script script, final Boogie2SMT bpl2smt);
+
+	Set<STATE> getAbstractPostStates(Deque<ACTION> callStack, ACTION symbol);
+
+	void scopeFixpointReached();
 }

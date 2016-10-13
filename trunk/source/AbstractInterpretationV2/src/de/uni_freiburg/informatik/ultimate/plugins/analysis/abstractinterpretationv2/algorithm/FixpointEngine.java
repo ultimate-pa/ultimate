@@ -94,8 +94,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 			final AbstractInterpretationResult<STATE, ACTION, VARDECL, LOCATION> intermediateResult) {
 		mLogger.info("Starting fixpoint engine with domain " + mDomain.getClass().getSimpleName() + " (maxUnwinding="
 				+ mMaxUnwindings + ", maxParallelStates=" + mMaxParallelStates + ")");
-		mResult = intermediateResult == null ? new AbstractInterpretationResult<>(mDomain)
-				: intermediateResult;
+		mResult = intermediateResult == null ? new AbstractInterpretationResult<>(mDomain) : intermediateResult;
 		mBenchmark = mResult.getBenchmark();
 		calculateFixpoint(start);
 		mResult.saveRootStorage(mStateStorage, start, script, bpl2smt);
@@ -141,6 +140,10 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 					widenIfNecessary(currentItem, postState, wideningOp);
 			if (postStateAfterWidening == null) {
 				// we have reached a fixpoint
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug(AbsIntPrefInitializer.INDENT
+							+ " Skipping successors because post state is already contained");
+				}
 				continue;
 			}
 			logDebugPostChanged(postState, postStateAfterWidening, "Widening");
@@ -403,10 +406,12 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		final LOCATION target = mTransitionProvider.getTarget(currentAction);
 		final Pair<Integer, AbstractMultiState<STATE, ACTION, VARDECL>> loopPair = currentItem.getLoopPair(target);
 		final AbstractMultiState<STATE, ACTION, VARDECL> oldState;
+		boolean scopeWidening = false;
 		if (loopPair != null && loopPair.getFirst() > mMaxUnwindings) {
 			oldState = loopPair.getSecond();
 		} else if (mTransitionProvider.isEnteringScope(currentAction)) {
 			oldState = getWidenStateAtScopeEntry(currentItem);
+			scopeWidening = true;
 		} else {
 			oldState = null;
 		}
@@ -419,6 +424,11 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		// we widen with the oldState and all postStates and keep the states that are not fixpoints
 		final AbstractMultiState<STATE, ACTION, VARDECL> postStateAfterWidening = oldState.apply(wideningOp, postState);
 		if (isFixpoint(oldState, postStateAfterWidening)) {
+			if (scopeWidening) {
+				// if we found a fixpoint during scope widening, it means that we will not continue into this scope but
+				// rather subsume all calls to this scope by the current one
+				currentItem.getCurrentStorage().scopeFixpointReached();
+			}
 			return null;
 		}
 		return postStateAfterWidening;
@@ -648,20 +658,6 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 				.append(oldPostState.hashCode()).append("] ").append(oldPostState.toLogString())
 				.append(" is equal to [").append(newPostState.hashCode()).append("]");
 	}
-
-	// private StringBuilder getLogMessageMergeResult(final AbstractMultiState<STATE, ACTION, VARDECL> newPostState) {
-	// return new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Merging resulted in [")
-	// .append(newPostState.hashCode()).append("] ").append(newPostState.toLogString());
-	// }
-	//
-	// private StringBuilder getLogMessageMergeStates(final int availablePostStatesCount,
-	// final Collection<AbstractMultiState<STATE, ACTION, VARDECL>> availablePostStates) {
-	// final List<String> postStates = availablePostStates.stream().map(a -> '[' + String.valueOf(a.hashCode()) + ']')
-	// .collect(Collectors.toList());
-	// return new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Merging ")
-	// .append(availablePostStatesCount).append(" states at target location: ")
-	// .append(String.join(",", postStates));
-	// }
 
 	private StringBuilder getLogMessageNewPostState(final AbstractMultiState<STATE, ACTION, VARDECL> newPostState) {
 		return new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Adding post state [")

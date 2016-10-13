@@ -26,7 +26,17 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Scanner;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
@@ -49,51 +59,207 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
  * The weight of a clause (the first integer in the clause) must be positive and the sum of all soft clauses must be
  * smaller than 2^63. Hard clauses have weight greater or equal to <i>W</i> and soft clauses have weight 1. <i>W</i> is
  * always greater than the sum of the weights of violated soft clauses in the solution.
+ * <p>
+ * TODO Christian: At the moment the solver and output files are hard-coded and must reside in the home folder. Make
+ * this more general.
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <V>
- *            variably type
+ *            variable type
  */
 public class DimacsMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
-	private int mVariablesNumber;
+	private static final String LINE_SEPARATOR = System.lineSeparator();
+	public static final String FILE_NAME_TMP = "dimacs.wcnf.tmp";
+	public static final String ENCODING = "UTF-8";
 	
-	public DimacsMaxSatSolver(final AutomataLibraryServices services) {
+	private static final String FILE_NAME = "dimacs.wcnf";
+	
+	private static final String AHMAXSAT_COMMAND = "./ahmaxsat-ls-1.68";
+	
+	private static final String RESULT_OUTPUT_BEGINNING = "s OPTIMUM FOUND";
+	
+	private static final String HEADER = "c CNF\np wcnf ";
+	private static final char BLANK = ' ';
+	private static final char NEG = '-';
+	private static final String END_LINE = " 0" + LINE_SEPARATOR;
+	private static final String BLANK_STRING = " ";
+	private static final CharSequence SOFT_CLAUSE_WEIGHT = "1 ";
+	
+	private static final Object[] EMPTY_ARRAY = new Object[0];
+	
+	private final Appendable mWriter;
+	private final Map<V, String> mVar2NumberString;
+	private final ArrayList<V> mNumber2Var;
+	private Map<V, Boolean> mVar2Assignment;
+	
+	private final String mMaxWeight;
+	
+	/**
+	 * Constructor.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param writer
+	 *            object where CNF should be written to
+	 */
+	public DimacsMaxSatSolver(final AutomataLibraryServices services, final Appendable writer) {
 		super(services);
-		mVariablesNumber = 0;
+		mWriter = writer;
+		mVar2NumberString = new HashMap<>();
+		mNumber2Var = new ArrayList<>();
+		mMaxWeight = Integer.toString(Integer.MAX_VALUE) + BLANK;
 	}
 	
 	@Override
 	public void addVariable(final V var) {
-		++mVariablesNumber;
+		mVar2NumberString.put(var, Integer.toString(mVar2NumberString.size() + 1));
+		mNumber2Var.add(var);
 	}
 	
 	@SuppressWarnings("unchecked")
 	@Override
 	public void addHornClause(final V[] negativeAtoms, final V positiveAtom) {
-		addClause(negativeAtoms, (V[]) new Object[] { positiveAtom });
+		final V[] positiveAtoms;
+		if (positiveAtom == null) {
+			positiveAtoms = (V[]) EMPTY_ARRAY;
+		} else {
+			positiveAtoms = (V[]) new Object[] { positiveAtom };
+		}
+		addClause(negativeAtoms, positiveAtoms);
 	}
 	
 	@Override
 	public void addClause(final V[] negativeAtoms, final V[] positiveAtoms) {
-		// TODO Auto-generated method stub
+		++mClauses;
+		try {
+			mWriter.append(mMaxWeight);
+			for (final V var : negativeAtoms) {
+				mWriter.append(NEG).append(mVar2NumberString.get(var));
+			}
+			for (final V var : positiveAtoms) {
+				mWriter.append(BLANK).append(mVar2NumberString.get(var));
+			}
+			mWriter.append(END_LINE);
+		} catch (final IOException e) {
+			throw new AssertionError(e);
+		}
 	}
 	
 	@Override
 	public boolean solve() throws AutomataOperationCanceledException {
-		// TODO Auto-generated method stub
-		return false;
+		fixFile();
+		
+		// run external Max-SAT solver
+		final ArrayList<String> commands = new ArrayList<>(1);
+		commands.add(AHMAXSAT_COMMAND);
+		commands.add(FILE_NAME);
+		final ProcessBuilder pb = new ProcessBuilder(commands);
+		/* we ccould set the path via "pb.directory(...)" */
+		// run solver
+		final Process p;
+		try {
+			p = pb.start();
+		} catch (final IOException e) {
+			throw new AssertionError(e);
+		}
+		
+		return parseResult(p.getInputStream());
 	}
 	
-	@Override
-	protected Boolean getPersistentAssignment(final V var) {
-		// TODO Auto-generated method stub
-		return null;
+	@SuppressWarnings("squid:S1141")
+	private void fixFile() {
+		// new, final file
+		try (Writer writer = new OutputStreamWriter(new FileOutputStream(FILE_NAME), ENCODING)) {
+			// add header
+			// @formatter:off
+			writer.append(HEADER)
+					.append(Integer.toString(mVar2NumberString.size()))
+					.append(BLANK)
+					.append(Integer.toString(mClauses))
+					.append(BLANK)
+					.append(mMaxWeight)
+					.append(LINE_SEPARATOR);
+			// @formatter:on
+			
+			// copy hard clauses
+			try (Scanner scanner = new Scanner(new File(FILE_NAME_TMP), ENCODING)) {
+				scanner.useDelimiter(LINE_SEPARATOR);
+				while (scanner.hasNext()) {
+					final String line = scanner.next();
+					writer.append(line).append(LINE_SEPARATOR);
+				}
+			} catch (final FileNotFoundException e) {
+				throw new AssertionError(e);
+			}
+			
+			// add soft clauses
+			addSoftClauses(writer);
+		} catch (final IOException e) {
+			throw new AssertionError(e);
+		}
+	}
+	
+	private void addSoftClauses(final Writer writer) throws IOException {
+		for (final String var : mVar2NumberString.values()) {
+			writer.append(SOFT_CLAUSE_WEIGHT).append(var).append(END_LINE);
+		}
+	}
+	
+	private boolean parseResult(final InputStream inputStream) {
+		mVar2Assignment = new HashMap<>(mVar2NumberString.size());
+		
+		try (Scanner scanner = new Scanner(inputStream, ENCODING)) {
+			// find beginning of result output
+			scanner.useDelimiter(LINE_SEPARATOR);
+			while (scanner.hasNext()) {
+				final String line = scanner.next();
+				if (line.startsWith(RESULT_OUTPUT_BEGINNING)) {
+					break;
+				}
+			}
+			
+			// parse result output
+			scanner.useDelimiter(BLANK_STRING);
+			if (scanner.hasNext()) {
+				// ignore line beginning "v "
+				scanner.next();
+			}
+			while (scanner.hasNext()) {
+				final String literal = scanner.next();
+				if (literal.startsWith(LINE_SEPARATOR)) {
+					break;
+				}
+				int num = Integer.parseInt(literal);
+				final Boolean isPositive;
+				if (num < 0) {
+					num = -num;
+					isPositive = Boolean.FALSE;
+				} else {
+					isPositive = Boolean.TRUE;
+				}
+				// our numbers start at zero
+				num--;
+				final V var = mNumber2Var.get(num);
+				mVar2Assignment.put(var, isPositive);
+			}
+		}
+		
+		return true;
 	}
 	
 	@Override
 	public Map<V, Boolean> getValues() {
-		// TODO Auto-generated method stub
-		return null;
+		return mVar2Assignment;
+	}
+	
+	@Override
+	public VariableStatus getValue(final V var) {
+		return VariableStatus.UNSET;
+	}
+	
+	@Override
+	protected Boolean getPersistentAssignment(final V var) {
+		throw new UnsupportedOperationException();
 	}
 	
 	@Override

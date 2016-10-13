@@ -50,7 +50,13 @@ public class RcfgAbstractStateStorageProvider<STATE extends IAbstractState<STATE
 
 	public RcfgAbstractStateStorageProvider(final IAbstractStateBinaryOperator<STATE> mergeOperator,
 			final IUltimateServiceProvider services, final ITransitionProvider<CodeBlock, LOCATION> transprovider) {
-		super(mergeOperator, services, transprovider);
+		this(mergeOperator, services, transprovider, null, null);
+	}
+
+	private RcfgAbstractStateStorageProvider(final IAbstractStateBinaryOperator<STATE> mergeOperator,
+			final IUltimateServiceProvider services, final ITransitionProvider<CodeBlock, LOCATION> transprovider,
+			final CodeBlock scope, final BaseRcfgAbstractStateStorageProvider<STATE, LOCATION, VARDECL> parent) {
+		super(mergeOperator, services, transprovider, scope, parent);
 		mStorage = new HashMap<>();
 	}
 
@@ -70,8 +76,10 @@ public class RcfgAbstractStateStorageProvider<STATE extends IAbstractState<STATE
 	}
 
 	@Override
-	public BaseRcfgAbstractStateStorageProvider<STATE, LOCATION, VARDECL> create() {
-		return new RcfgAbstractStateStorageProvider<>(getMergeOperator(), getServices(), getTransitionProvider());
+	protected BaseRcfgAbstractStateStorageProvider<STATE, LOCATION, VARDECL> create(final CodeBlock scope,
+			final BaseRcfgAbstractStateStorageProvider<STATE, LOCATION, VARDECL> parent) {
+		return new RcfgAbstractStateStorageProvider<>(getMergeOperator(), getServices(), getTransitionProvider(), scope,
+				parent);
 	}
 
 	@Override
@@ -99,4 +107,8 @@ public class RcfgAbstractStateStorageProvider<STATE extends IAbstractState<STATE
 		return sb.toString();
 	}
 
+	@Override
+	protected boolean isEmpty() {
+		return mStorage.isEmpty();
+	}
 }

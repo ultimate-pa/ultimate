@@ -238,6 +238,8 @@ public class BuchiCegarLoop {
 	private final IToolchainStorage mStorage;
 
 	private ToolchainCanceledException mToolchainCancelledException;
+	
+	private static final boolean DUMP_BIGGEST_AUTOMATON = false;
 
 	public ToolchainCanceledException getToolchainCancelledException() {
 		return mToolchainCancelledException;
@@ -538,10 +540,13 @@ public class BuchiCegarLoop {
 
 				if (mPref.dumpAutomata()) {
 					final String filename = mRootNode.getFilename() + "_" + "Abstraction" + mIteration;
-					writeAutomatonToFile(mServices, mAbstraction, mPref.dumpPath(), filename, mPref.getAutomataFormat(),
-							"");
+					writeAutomatonToFile(mServices, mAbstraction, mPref.dumpPath(), filename, mPref.getAutomataFormat(),"");
 				}
-				mBenchmarkGenerator.reportAbstractionSize(mAbstraction.size(), mIteration);
+				final boolean newMaximumReached = mBenchmarkGenerator.reportAbstractionSize(mAbstraction.size(), mIteration);
+				if (DUMP_BIGGEST_AUTOMATON && newMaximumReached) {
+					final String filename = mRootNode.getFilename();
+					writeAutomatonToFile(mServices, mAbstraction, mPref.dumpPath(), filename, mPref.getAutomataFormat(),"");
+				}
 
 			} catch (final AutomataOperationCanceledException e) {
 				final RunningTaskInfo rti = new RunningTaskInfo(getClass(), "performing iteration " + mIteration);

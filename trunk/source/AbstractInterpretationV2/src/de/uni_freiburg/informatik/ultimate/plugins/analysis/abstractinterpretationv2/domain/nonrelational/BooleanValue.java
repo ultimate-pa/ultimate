@@ -31,6 +31,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.ITermProvider;
 
 /**
  * Represents a boolean value in abstract interpretation. The value can either be <code>true</code>, <code>false</code>,
@@ -39,11 +40,11 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public enum BooleanValue {
+public enum BooleanValue implements ITermProvider {
 
-	/**
-	 * Exactly true.
-	 */
+    /**
+     * Exactly true.
+     */
 	TRUE,
 	/**
 	 * Exactly false.
@@ -249,6 +250,7 @@ public enum BooleanValue {
 		return BOTTOM;
 	}
 
+	@Override
 	public Term getTerm(final Script script, final Sort sort, final Term var) {
 		switch (this) {
 		case BOTTOM:

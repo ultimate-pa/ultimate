@@ -40,8 +40,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
- * Nested Word Automaton with on-demand construction for letters and states.
- * Supports all methods that are required by 
+ * Nested word automaton with on-demand construction for letters and states.
+ * Supports all methods that are required by
  * {@link NestedWordAutomatonReachableStates} which is able to transform
  * objects of this class into an {@link IDoubleDeckerAutomaton}.
  * 
@@ -51,24 +51,33 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  * @param <STATE>
  *            state type
  */
-public abstract class NestedWordAutomatonOnDemandStateAndLetter<LETTER, STATE> implements INestedWordAutomatonSimple<LETTER, STATE> {
+public abstract class NestedWordAutomatonOnDemandStateAndLetter<LETTER, STATE>
+		implements INestedWordAutomatonSimple<LETTER, STATE> {
 	
 	protected final AutomataLibraryServices mServices;
 	
-	private final Set<STATE> mInternalSuccessorsConstruted;
-	private final Set<STATE> mCallSuccessorsConstruted;
-	private final HashRelation<STATE,STATE> mReturnSuccessorsConstruted;
-	
 	protected final NestedWordAutomatonCache<LETTER, STATE> mCache;
-
+	
 	protected final Set<LETTER> mInternalAlphabet;
 	protected final Set<LETTER> mCallAlphabet;
 	protected final Set<LETTER> mReturnAlphabet;
-
-	protected boolean mInitialStateHaveBeenConstructed = false;
-
-	public NestedWordAutomatonOnDemandStateAndLetter(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory) {
-		super();
+	
+	protected boolean mInitialStateHaveBeenConstructed;
+	
+	private final Set<STATE> mInternalSuccessorsConstruted;
+	private final Set<STATE> mCallSuccessorsConstruted;
+	private final HashRelation<STATE, STATE> mReturnSuccessorsConstruted;
+	
+	/**
+	 * Constructor.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param stateFactory
+	 *            state factory
+	 */
+	public NestedWordAutomatonOnDemandStateAndLetter(final AutomataLibraryServices services,
+			final IStateFactory<STATE> stateFactory) {
 		mServices = services;
 		mInternalSuccessorsConstruted = new HashSet<>();
 		mCallSuccessorsConstruted = new HashSet<>();
@@ -76,72 +85,67 @@ public abstract class NestedWordAutomatonOnDemandStateAndLetter<LETTER, STATE> i
 		mInternalAlphabet = new HashSet<>();
 		mCallAlphabet = new HashSet<>();
 		mReturnAlphabet = new HashSet<>();
-		mCache = new NestedWordAutomatonCache<LETTER, STATE>(mServices, mInternalAlphabet, mCallAlphabet, mReturnAlphabet, stateFactory);
-
+		mCache = new NestedWordAutomatonCache<>(mServices, mInternalAlphabet, mCallAlphabet, mReturnAlphabet,
+				stateFactory);
 	}
 	
 	protected abstract void constructInitialStates() throws AutomataOperationCanceledException;
-
+	
 	protected abstract void constructInternalSuccessors(STATE state);
+	
 	protected abstract void constructCallSuccessors(STATE state);
+	
 	protected abstract void constructReturnSuccessors(STATE lin, STATE hier);
-
+	
 	/**
-	 * @return
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonCache#getInternalAlphabet()
 	 */
 	@Override
 	public Set<LETTER> getInternalAlphabet() {
 		return mCache.getInternalAlphabet();
 	}
-
+	
 	/**
-	 * @return
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonCache#getCallAlphabet()
 	 */
 	@Override
 	public Set<LETTER> getCallAlphabet() {
 		return mCache.getCallAlphabet();
 	}
-
+	
 	/**
-	 * @return
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonCache#getReturnAlphabet()
 	 */
 	@Override
 	public Set<LETTER> getReturnAlphabet() {
 		return mCache.getReturnAlphabet();
 	}
-
+	
 	/**
-	 * @return
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonCache#getEmptyStackState()
 	 */
 	@Override
 	public STATE getEmptyStackState() {
 		return mCache.getEmptyStackState();
 	}
-
+	
 	/**
-	 * @return
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonCache#size()
 	 */
 	@Override
 	public int size() {
 		return mCache.size();
 	}
-
+	
 	/**
-	 * @return
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonCache#getAlphabet()
 	 */
 	@Override
 	public Set<LETTER> getAlphabet() {
 		return mCache.getAlphabet();
 	}
-
+	
 	/**
-	 * @return
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonCache#getInitialStates()
 	 */
 	@Override
@@ -151,52 +155,48 @@ public abstract class NestedWordAutomatonOnDemandStateAndLetter<LETTER, STATE> i
 		}
 		return mCache.getInitialStates();
 	}
-
+	
 	/**
-	 * @param state
-	 * @return
-	 * @see de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonCache#lettersInternal(java.lang.Object)
+	 * @see de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonCache#lettersInternal(
+	 *      java.lang.Object)
 	 */
 	@Override
 	public Set<LETTER> lettersInternal(final STATE state) {
 		throw new UnsupportedOperationException();
 	}
-
+	
 	/**
-	 * @param state
-	 * @return
-	 * @see de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonCache#lettersCall(java.lang.Object)
+	 * @see de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonCache#lettersCall(
+	 * java.lang.Object)
 	 */
 	@Override
 	public Set<LETTER> lettersCall(final STATE state) {
 		throw new UnsupportedOperationException();
 	}
-
+	
 	/**
-	 * @param state
-	 * @return
-	 * @see de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonCache#lettersReturn(java.lang.Object)
+	 * @see de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonCache#lettersReturn(
+	 * java.lang.Object)
 	 */
 	@Override
 	public Set<LETTER> lettersReturn(final STATE state) {
 		throw new UnsupportedOperationException();
 	}
-
+	
 	/**
-	 * @param state
-	 * @param letter
-	 * @return
-	 * @see de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonCache#internalSuccessors(java.lang.Object, java.lang.Object)
+	 * @see de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonCache#internalSuccessors(
+	 * java.lang.Object,
+	 *      java.lang.Object)
 	 */
 	@Override
-	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state, final LETTER letter) {
+	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state,
+			final LETTER letter) {
 		throw new UnsupportedOperationException();
 	}
-
+	
 	/**
-	 * @param state
-	 * @return
-	 * @see de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonCache#internalSuccessors(java.lang.Object)
+	 * @see de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonCache#internalSuccessors(
+	 * java.lang.Object)
 	 */
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state) {
@@ -206,22 +206,20 @@ public abstract class NestedWordAutomatonOnDemandStateAndLetter<LETTER, STATE> i
 		}
 		return mCache.internalSuccessors(state);
 	}
-
+	
 	/**
-	 * @param state
-	 * @param letter
-	 * @return
-	 * @see de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonCache#callSuccessors(java.lang.Object, java.lang.Object)
+	 * @see de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonCache#callSuccessors(
+	 * java.lang.Object,
+	 *      java.lang.Object)
 	 */
 	@Override
 	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final STATE state, final LETTER letter) {
 		throw new UnsupportedOperationException();
 	}
-
+	
 	/**
-	 * @param state
-	 * @return
-	 * @see de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonCache#callSuccessors(java.lang.Object)
+	 * @see de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonCache#callSuccessors(
+	 * java.lang.Object)
 	 */
 	@Override
 	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final STATE state) {
@@ -231,74 +229,62 @@ public abstract class NestedWordAutomatonOnDemandStateAndLetter<LETTER, STATE> i
 		}
 		return mCache.callSuccessors(state);
 	}
-
+	
 	/**
-	 * @param state
-	 * @param hier
-	 * @param letter
-	 * @return
-	 * @see de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonCache#returnSuccessors(java.lang.Object, java.lang.Object, java.lang.Object)
+	 * @see de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonCache#returnSuccessors(
+	 * java.lang.Object,
+	 *      java.lang.Object, java.lang.Object)
 	 */
 	@Override
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state, final STATE hier, final LETTER letter) {
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state, final STATE hier,
+			final LETTER letter) {
 		throw new UnsupportedOperationException();
 	}
-
+	
 	/**
-	 * @param state
-	 * @param hier
-	 * @return
-	 * @see de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonCache#returnSuccessorsGivenHier(java.lang.Object, java.lang.Object)
+	 * @see de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonCache#returnSuccessorsGivenHier(
+	 * java.lang.Object,
+	 *      java.lang.Object)
 	 */
 	@Override
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(final STATE state, final STATE hier) {
+	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(final STATE state,
+			final STATE hier) {
 		if (!mReturnSuccessorsConstruted.containsPair(state, hier)) {
 			constructReturnSuccessors(state, hier);
 			mReturnSuccessorsConstruted.addPair(state, hier);
 		}
 		return mCache.returnSuccessorsGivenHier(state, hier);
 	}
-
+	
 	/**
-	 * @return
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonCache#sizeInformation()
 	 */
 	@Override
 	public String sizeInformation() {
 		return mCache.sizeInformation();
 	}
-
+	
 	/**
-	 * @param state
-	 * @return
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonCache#isInitial(java.lang.Object)
 	 */
 	@Override
 	public boolean isInitial(final STATE state) {
 		return mCache.isInitial(state);
 	}
-
+	
 	/**
-	 * @param state
-	 * @return
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonCache#isFinal(java.lang.Object)
 	 */
 	@Override
 	public boolean isFinal(final STATE state) {
 		return mCache.isFinal(state);
 	}
-
+	
 	/**
-	 * @return
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonCache#getStateFactory()
 	 */
 	@Override
 	public IStateFactory<STATE> getStateFactory() {
 		return mCache.getStateFactory();
 	}
-
-	
-	
-	
-
 }

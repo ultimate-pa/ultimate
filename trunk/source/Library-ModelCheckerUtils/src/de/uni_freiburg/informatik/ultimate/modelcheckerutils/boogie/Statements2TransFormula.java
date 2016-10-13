@@ -61,6 +61,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT.ConstOnlyIdentifierTranslator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.IdentifierTranslator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.MultiTermResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.SingleTermResult;
@@ -110,6 +111,7 @@ public class Statements2TransFormula {
 
 	private Term mAssumes;
 	private Term mAsserts;
+	private ConstOnlyIdentifierTranslator mConstOnlyIdentifierTranslator;
 	private final IUltimateServiceProvider mServices;
 	private Map<String, ILocation> mOverapproximations = null;
 
@@ -134,12 +136,14 @@ public class Statements2TransFormula {
 		assert mTransFormulaBuilder == null;
 		assert mAuxVars == null;
 		assert mAssumes == null;
+		assert mConstOnlyIdentifierTranslator == null;
 		
 		mOverapproximations = new HashMap<>();
 		mCurrentProcedure = procId;
 		mTransFormulaBuilder = new TransFormulaBuilder(null, null, true, null, false);
 		mAuxVars = new HashSet<>();
 		mAssumes = mScript.term("true");
+		mConstOnlyIdentifierTranslator = mBoogie2SMT.new ConstOnlyIdentifierTranslator();
 		if (s_ComputeAsserts) {
 			mAsserts = mScript.term("true");
 		}
@@ -153,6 +157,7 @@ public class Statements2TransFormula {
 			mTransFormulaBuilder = null;
 			mAuxVars = null;
 			mAssumes = null;
+			mConstOnlyIdentifierTranslator = null;
 		} catch (final ToolchainCanceledException tce) {
 			final String taskDescription = "constructing TransFormula";
 			tce.addRunningTaskInfo(new RunningTaskInfo(getClass(), taskDescription));
@@ -226,12 +231,12 @@ public class Statements2TransFormula {
 	private IdentifierTranslator[] getIdentifierTranslatorsIntraprocedural(final TransFormulaBuilder transFormulaBuilder) {
 		return new IdentifierTranslator[] { new LocalVarTranslatorWithInOutVarManagement(),
 				new GlobalVarTranslatorWithInOutVarManagement(mCurrentProcedure, false),
-				mBoogie2SMT.new ConstOnlyIdentifierTranslator(transFormulaBuilder) };
+				mConstOnlyIdentifierTranslator };
 	}
 
 	/**
 	 * Let assign be a statement of the form v_i:=expr_i Remove v_i from the
-	 * inVars (if contained). If neccessary v_i is put to outVars (possibly by
+	 * inVars (if contained). If necessary v_i is put to outVars (possibly by
 	 * getSmtIdentifier).
 	 */
 	private void addAssignment(final AssignmentStatement assign) {
@@ -395,7 +400,7 @@ public class Statements2TransFormula {
 		final IdentifierTranslator[] ensIts = new IdentifierTranslator[] { new SubstitutionTranslatorId(substitution),
 				new SubstitutionTranslatorBoogieVar(ensuresSubstitution),
 				new GlobalVarTranslatorWithInOutVarManagement(calledProcedure, false),
-				mBoogie2SMT.new ConstOnlyIdentifierTranslator(mTransFormulaBuilder) };
+				mConstOnlyIdentifierTranslator };
 
 		for (final Specification spec : procedure.getSpecification()) {
 			if (spec instanceof EnsuresSpecification) {
@@ -418,7 +423,7 @@ public class Statements2TransFormula {
 		final IdentifierTranslator[] reqIts = new IdentifierTranslator[] { new SubstitutionTranslatorId(substitution),
 				new SubstitutionTranslatorBoogieVar(requiresSubstitution),
 				new GlobalVarTranslatorWithInOutVarManagement(calledProcedure, false),
-				mBoogie2SMT.new ConstOnlyIdentifierTranslator(mTransFormulaBuilder) };
+				mConstOnlyIdentifierTranslator };
 
 		for (final Specification spec : procedure.getSpecification()) {
 			if (spec instanceof RequiresSpecification) {

@@ -61,6 +61,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 @SuppressWarnings("squid:UselessParenthesesCheck")
 public class GeneralMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
+	private static final Object[] EMPTY_ARRAY = new Object[0];
+
 	private final SolverStack mStack;
 	
 	// TODO temporary improvement, should become more sophisticated
@@ -92,7 +94,7 @@ public class GeneralMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 	public void addHornClause(final V[] negativeAtoms, final V positiveAtom) {
 		final V[] positiveAtoms;
 		if (positiveAtom == null) {
-			positiveAtoms = (V[]) new Object[0];
+			positiveAtoms = (V[]) EMPTY_ARRAY;
 		} else {
 			positiveAtoms = (V[]) new Object[] { positiveAtom };
 		}

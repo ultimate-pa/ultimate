@@ -26,41 +26,14 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables;
 
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-
-public interface IProgramConst extends IProgramVar {
+public interface IProgramConst {
 	
 	String getIdentifier();
 
-	@Override
 	default public String getGloballyUniqueId() {
 		return getIdentifier();
 	};
 	
-	@Override
-	default boolean isGlobal() {
-		return true;
-	}
-	
-	@Override
-	default boolean isOldvar() {
-		return false;
-	}
-	
-	@Override
-	default String getProcedure() {
-		return null;
-	}
-
-	
-	/**
-	 * Since constants cannot be modified we never need a primed version
-	 * that is different from the unprimed version.
-	 */
-	@Override
-	default ApplicationTerm getPrimedConstant() {
-		return getDefaultConstant();
-	}
 
 
 }

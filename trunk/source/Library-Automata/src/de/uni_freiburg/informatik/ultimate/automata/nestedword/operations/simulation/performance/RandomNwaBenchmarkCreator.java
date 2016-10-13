@@ -48,12 +48,14 @@ import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.ToolchainSto
 public final class RandomNwaBenchmarkCreator {
 
 	/**
-	 * Default path where the Nwa automata benchmark set gets saved if no other path is specified.
+	 * Default path where the Nwa automata benchmark set gets saved if no other
+	 * path is specified.
 	 */
-	public static final File DEFAULT_PATH =
-			new File(new File(System.getProperty("user.home"), "Desktop"), "randomNwaBenchmark");
+	public static final File DEFAULT_PATH = new File(new File(System.getProperty("user.home"), "Desktop"),
+			"randomNwaBenchmark");
 	/**
-	 * Default amount of created Nwa automata after which a logging message gets printed.
+	 * Default amount of created Nwa automata after which a logging message gets
+	 * printed.
 	 */
 	public static final int LOG_EVERY = 50;
 	/**
@@ -61,7 +63,8 @@ public final class RandomNwaBenchmarkCreator {
 	 */
 	private static final int PERC_LOWER_BOUND = 0;
 	/**
-	 * Converts a value in percentage, if multiplied with, into a value between 0.0 and 1.0.
+	 * Converts a value in percentage, if multiplied with, into a value between
+	 * 0.0 and 1.0.
 	 */
 	private static final int PERC_TO_DOUBLE = 100;
 	/**
@@ -78,25 +81,34 @@ public final class RandomNwaBenchmarkCreator {
 	 *             If an I/O-Exception occurred
 	 */
 	public static void main(final String[] args) throws IOException {
-		final int n = 50;
+		final int n = 100;
 		final int k = 2;
-		final float acceptanceInPerc = 50;
-		final float totalityInternalInPerc = 1;
-		final float totalityCallInPerc = 0.15f;
-		final float totalityReturnInPerc = 0.003f;
-		final int amount = 1000;
-		final boolean operationSwitchUseCompareReduce = false;
+		final float acceptanceInPerc = 10;
+		final float totalityInternalInPerc = 10f;
+		final float totalityCallInPerc = 10f;
+		final float totalityReturnInPerc = 0.1f;
+		final int amount = 500;
+		final int operationSwitch = 2;
 
 		final String operation;
-		if (operationSwitchUseCompareReduce) {
+		switch (operationSwitch) {
+		case 0:
 			operation = "compareReduceNwaSimulation(removeDeadEnds(nwa));";
-		} else {
+			break;
+		case 1:
 			operation = "reduceNwaDirectSimulation(removeDeadEnds(nwa), false);";
+			break;
+		case 2:
+			operation = "minimizeNwaMaxSat2(removeUnreachable(nwa));";
+			break;
+		default:
+			operation = "";
+			break;
 		}
 
 		final String timeStamp = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(new Date());
 		final String preamble = "// Random nwa automaton dumped by RandomNwaBenchmarkCreator at " + timeStamp + "\n"
-				+ "// Author: Daniel Tischner\n\n" + operation + "\n\n";
+				+ "// Author: Daniel Tischner {@literal <zabuza.dev@gmail.com>}\n\n" + operation + "\n\n";
 
 		// Create the object and pass settings
 		final RandomNwaBenchmarkCreator creator = new RandomNwaBenchmarkCreator(n, k, acceptanceInPerc,
@@ -104,12 +116,17 @@ public final class RandomNwaBenchmarkCreator {
 		creator.setPreamble(preamble);
 
 		System.out.println("Starting automata generation.");
-		creator.createAndSaveABenchmark(amount);
+		String label = "#" + amount + "_n" + n + "_k" + k + "_f" + acceptanceInPerc + "%_ti" + totalityInternalInPerc
+				+ "%_tc" + totalityCallInPerc + "%_tr" + totalityReturnInPerc + "%";
+		creator.createAndSaveABenchmark(amount, label);
 		System.out.println("Finished automata generation.");
+		System.out.println("Overview label:");
+		System.out.println(label);
 	}
 
 	/**
-	 * The percentage of how many states should be accepting, between 0 and 100 (both inclusive).
+	 * The percentage of how many states should be accepting, between 0 and 100
+	 * (both inclusive).
 	 */
 	private final float mAcceptance;
 	/**
@@ -117,16 +134,19 @@ public final class RandomNwaBenchmarkCreator {
 	 */
 	private final int mAlphabetSize;
 	/**
-	 * The percentage of how many call transitions each state should be have, between 0 and 100 (both inclusive).
+	 * The percentage of how many call transitions each state should be have,
+	 * between 0 and 100 (both inclusive).
 	 */
 	private final float mCallTotality;
 	/**
-	 * The percentage of how many internal transitions each state should be have, between 0 and 100 (both inclusive).
+	 * The percentage of how many internal transitions each state should be
+	 * have, between 0 and 100 (both inclusive).
 	 */
 	private final float mInternalTotality;
 	private String mPreamble;
 	/**
-	 * The percentage of how many return transitions each state should be have, between 0 and 100 (both inclusive).
+	 * The percentage of how many return transitions each state should be have,
+	 * between 0 and 100 (both inclusive).
 	 */
 	private final float mReturnTotality;
 
@@ -141,30 +161,32 @@ public final class RandomNwaBenchmarkCreator {
 	private final int mSize;
 
 	/**
-	 * Creates a new creator object that is able to generate random automata with the given properties. A benchmark set
-	 * can then be created using {@link #createAndSaveABenchmark(int, File, int)}.
+	 * Creates a new creator object that is able to generate random automata
+	 * with the given properties. A benchmark set can then be created using
+	 * {@link #createAndSaveABenchmark(int, File, int)}.
 	 *
 	 * @param size
 	 *            The amount of states generated Nwa automata should have
 	 * @param alphabetSize
 	 *            The size of the alphabet generated Nwa automata should have
 	 * @param acceptance
-	 *            The percentage of how many states should be accepting, between 0 and 100 (both inclusive)
+	 *            The percentage of how many states should be accepting, between
+	 *            0 and 100 (both inclusive)
 	 * @param internalTotality
-	 *            The percentage of how many internal transitions each state should be have, between 0 and 100 (both
-	 *            inclusive)
+	 *            The percentage of how many internal transitions each state
+	 *            should be have, between 0 and 100 (both inclusive)
 	 * @param callTotality
-	 *            The percentage of how many call transitions each state should be have, between 0 and 100 (both
-	 *            inclusive)
+	 *            The percentage of how many call transitions each state should
+	 *            be have, between 0 and 100 (both inclusive)
 	 * @param returnTotality
-	 *            The percentage of how many return transitions each state should be have, between 0 and 100 (both
-	 *            inclusive)
+	 *            The percentage of how many return transitions each state
+	 *            should be have, between 0 and 100 (both inclusive)
 	 * @throws IllegalArgumentException
 	 *             If a percentage value is not between 0 and 100 (inclusive)
 	 */
 	public RandomNwaBenchmarkCreator(final int size, final int alphabetSize, final float acceptance,
 			final float internalTotality, final float callTotality, final float returnTotality)
-			throws IllegalArgumentException {
+					throws IllegalArgumentException {
 		mSize = size;
 		mAlphabetSize = alphabetSize;
 		mAcceptance = ensureIsPercentage(acceptance);
@@ -177,8 +199,10 @@ public final class RandomNwaBenchmarkCreator {
 	}
 
 	/**
-	 * Creates and saves random generated Nwa automata to the default path, specified by {@link #DEFAULT_PATH}, in the
-	 * ats-Format. Prints a debug message to {@link System#out} after every {@link #LOG_EVERY} created automata.
+	 * Creates and saves random generated Nwa automata to the default path,
+	 * specified by {@link #DEFAULT_PATH}, in the ats-Format. Prints a debug
+	 * message to {@link System#out} after every {@link #LOG_EVERY} created
+	 * automata.
 	 *
 	 * @param amount
 	 *            Amount of random Nwa automata to generate
@@ -190,8 +214,9 @@ public final class RandomNwaBenchmarkCreator {
 	}
 
 	/**
-	 * Creates and saves random generated Nwa automata to the given path in the ats-Format. Prints a debug message to
-	 * {@link System#out} after every {@link #LOG_EVERY} created automata.
+	 * Creates and saves random generated Nwa automata to the given path in the
+	 * ats-Format. Prints a debug message to {@link System#out} after every
+	 * {@link #LOG_EVERY} created automata.
 	 *
 	 * @param amount
 	 *            Amount of random Nwa automata to generate
@@ -205,14 +230,16 @@ public final class RandomNwaBenchmarkCreator {
 	}
 
 	/**
-	 * Creates and saves random generated Nwa automata to the given path in the ats-Format.
+	 * Creates and saves random generated Nwa automata to the given path in the
+	 * ats-Format.
 	 *
 	 * @param amount
 	 *            Amount of random Nwa automata to generate
 	 * @param pathToSaveBenchmark
 	 *            The path where the automata should get saved
 	 * @param logEvery
-	 *            Amount of generated automata after which a logging message gets printed to {@link System#out}
+	 *            Amount of generated automata after which a logging message
+	 *            gets printed to {@link System#out}
 	 * @throws IOException
 	 *             If an I/O-Exception occurred
 	 */
@@ -261,8 +288,27 @@ public final class RandomNwaBenchmarkCreator {
 	}
 
 	/**
-	 * Sets a text that gets saved in every following created ats-File right before the automaton itself. Can be used to
-	 * write operations, that use the automaton, directly in the same file.
+	 * Creates and saves random generated Nwa automata to the default path,
+	 * specified by {@link #DEFAULT_PATH}, in the ats-Format. Prints a debug
+	 * message to {@link System#out} after every {@link #LOG_EVERY} created
+	 * automata.
+	 *
+	 * @param amount
+	 *            Amount of random Nwa automata to generate
+	 * @param folderName
+	 *            Name of the folder to save the files in, the folder itself is
+	 *            located at the default path
+	 * @throws IOException
+	 *             If an I/O-Exception occurred
+	 */
+	public void createAndSaveABenchmark(final int amount, final String folderName) throws IOException {
+		createAndSaveABenchmark(amount, new File(DEFAULT_PATH, folderName), LOG_EVERY);
+	}
+
+	/**
+	 * Sets a text that gets saved in every following created ats-File right
+	 * before the automaton itself. Can be used to write operations, that use
+	 * the automaton, directly in the same file.
 	 *
 	 * @param preamble
 	 *            Text to set right before the generated automata
@@ -272,13 +318,15 @@ public final class RandomNwaBenchmarkCreator {
 	}
 
 	/**
-	 * Ensures the given value is a percentage. For this, it must be between 0 and 100 (both inclusive).
+	 * Ensures the given value is a percentage. For this, it must be between 0
+	 * and 100 (both inclusive).
 	 *
 	 * @param percentage
 	 *            Value to ensure
 	 * @return The given value if it is valid
 	 * @throws IllegalArgumentException
-	 *             If the given value is no percentage, i.e. not between 0 and 100 (both inclusive)
+	 *             If the given value is no percentage, i.e. not between 0 and
+	 *             100 (both inclusive)
 	 */
 	private float ensureIsPercentage(final float percentage) throws IllegalArgumentException {
 		if (percentage < PERC_LOWER_BOUND || percentage > PERC_UPPER_BOUND) {
@@ -288,7 +336,8 @@ public final class RandomNwaBenchmarkCreator {
 	}
 
 	/**
-	 * Converts a given value, in percentage, to a double value between 0.0 and 1.0.
+	 * Converts a given value, in percentage, to a double value between 0.0 and
+	 * 1.0.
 	 *
 	 * @param percentage
 	 *            Value between 0 and 100 (both inclusive).

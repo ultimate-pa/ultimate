@@ -109,7 +109,7 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends UnaryNwaOp
 			} else {
 				final boolean mergeFinalAndNonFinalStates = simulationInfoProvider.mayMergeFinalAndNonFinalStates();
 				final MinimizeNwaMaxSat2<LETTER, STATE> maxSatMinimizer = new MinimizeNwaMaxSat2<LETTER, STATE>(mServices, stateFactory, mOperand,
-						!mergeFinalAndNonFinalStates, equivalenceRelation.getAllEquivalenceClasses(), false, false, false, true, false);
+						!mergeFinalAndNonFinalStates, equivalenceRelation.getAllEquivalenceClasses(), false, false, false, true, false, false);
 				mResult = maxSatMinimizer.getResult();
 			}
 			sim.triggerComputationOfPerformanceData(mResult);

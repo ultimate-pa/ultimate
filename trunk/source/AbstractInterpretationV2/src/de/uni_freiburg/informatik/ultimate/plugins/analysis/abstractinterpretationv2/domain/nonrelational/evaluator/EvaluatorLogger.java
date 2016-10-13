@@ -43,6 +43,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public class EvaluatorLogger {
 
+	private static final String POSSIBLE_LOSS_OF_PRECISION = "Possible loss of precision. Operator ";
+
 	private static final boolean MORE_LOGGING = false;
 
 	private final ILogger mLogger;
@@ -64,7 +66,7 @@ public class EvaluatorLogger {
 		if (!mWarningsUnknownUnaryOps.add(op)) {
 			return;
 		}
-		mLogger.warn("Possible loss of precision. Operator " + op + " is not implemented.");
+		mLogger.warn(POSSIBLE_LOSS_OF_PRECISION + op + " is not implemented.");
 	}
 
 	public void warnOverapproximatingOperator(final BinaryExpression.Operator op) {
@@ -74,7 +76,7 @@ public class EvaluatorLogger {
 		if (!mWarningsOverapproxBinaryOps.add(op)) {
 			return;
 		}
-		mLogger.warn("Possible loss of precision. Operator " + op + " has no precise implementation.");
+		mLogger.warn(POSSIBLE_LOSS_OF_PRECISION + op + " has no precise implementation.");
 	}
 
 	public void warnUnknownOperator(final BinaryExpression.Operator op) {
@@ -84,7 +86,7 @@ public class EvaluatorLogger {
 		if (!mWarningsUnknownBinaryOps.add(op)) {
 			return;
 		}
-		mLogger.warn("Possible loss of precision. Operator " + op + " is not implemented.");
+		mLogger.warn(POSSIBLE_LOSS_OF_PRECISION + op + " is not implemented.");
 	}
 
 	public void logInverseEvaluation(final Object op, final Object result, final Object... args) {

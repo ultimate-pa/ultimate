@@ -28,6 +28,14 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.SourceRewrite
 public class ChangeCollector {
 	static Logger logger = Logger.getLogger(ChangeCollector.class);
 
+	private final Map<IPSTRegularNode, List<CommaSeparatedChild>> parentToCommaPositionMap;
+
+	private final List<Change> changes = new ArrayList<>();
+
+	public ChangeCollector(final Map<IPSTRegularNode, List<CommaSeparatedChild>> parentToCommaPositionMap) {
+		this.parentToCommaPositionMap = parentToCommaPositionMap;
+	}
+
 	private static int getInsertionPoint(final Token rparenToken, final IPSTRegularNode expecteRightSibling) {
 		if (rparenToken != null) {
 			return rparenToken.endOffset();
@@ -36,14 +44,6 @@ public class ChangeCollector {
 			return expecteRightSibling.offset();
 		}
 		return -1;
-	}
-
-	private final Map<IPSTRegularNode, List<CommaSeparatedChild>> parentToCommaPositionMap;
-
-	private final List<Change> changes = new ArrayList<>();
-
-	public ChangeCollector(final Map<IPSTRegularNode, List<CommaSeparatedChild>> parentToCommaPositionMap) {
-		this.parentToCommaPositionMap = parentToCommaPositionMap;
 	}
 
 	public boolean addChange(final Change newChange) {

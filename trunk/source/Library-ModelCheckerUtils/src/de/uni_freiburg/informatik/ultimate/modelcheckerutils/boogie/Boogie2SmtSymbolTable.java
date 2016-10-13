@@ -271,7 +271,7 @@ public class Boogie2SmtSymbolTable {
 				final String constId = varlist.getIdentifiers()[0];
 				final ApplicationTerm constant =
 						(ApplicationTerm) mScript.term(this, attributeDefinedIdentifier, indices, null);
-				final BoogieConst boogieConst = new BoogieConst(constId, iType, null, constant);
+				final BoogieConst boogieConst = new BoogieConst(constId, iType, constant, true);
 				final BoogieConst previousValue = mConstants.put(constId, boogieConst);
 				assert previousValue == null : "constant already contained";
 				mSmtConst2BoogieConst.put(constant, boogieConst);
@@ -280,15 +280,11 @@ public class Boogie2SmtSymbolTable {
 		}
 		for (final String constId : varlist.getIdentifiers()) {
 			mScript.declareFun(this, constId, paramTypes, sort);
-			final TermVariable termVariable = mScript.variable(constId, sort);
 			final ApplicationTerm constant = (ApplicationTerm) mScript.term(this, constId);
-			final BoogieConst boogieConst = new BoogieConst(constId, iType, termVariable, constant);
+			final BoogieConst boogieConst = new BoogieConst(constId, iType, constant, false);
 			final BoogieConst previousValue = mConstants.put(constId, boogieConst);
 			assert previousValue == null : "constant already contained";
 			mSmtConst2BoogieConst.put(constant, boogieConst);
-			mSmtVar2BoogieVar.put(termVariable, boogieConst);
-			mBoogieVar2DeclarationInformation.put(boogieConst, declarationInformation);
-			mBoogieVar2AstNode.put(boogieConst, varlist);
 		}
 	}
 

@@ -66,8 +66,8 @@ public class IntervalDomain implements IAbstractDomain<IntervalDomainState, Code
 	private IAbstractPostOperator<IntervalDomainState, CodeBlock, IBoogieVar> mPostOperator;
 
 	public IntervalDomain(final ILogger logger, final BoogieSymbolTable symbolTable,
-			final LiteralCollection literalCollector, final IUltimateServiceProvider services,
-			final RootAnnot rootAnnotation) {
+	        final LiteralCollection literalCollector, final IUltimateServiceProvider services,
+	        final RootAnnot rootAnnotation) {
 		mLogger = logger;
 		mLiteralCollection = literalCollector;
 		mServices = services;
@@ -89,15 +89,15 @@ public class IntervalDomain implements IAbstractDomain<IntervalDomainState, Code
 			if (wideningOperator.equals(IntervalDomainPreferences.VALUE_WIDENING_OPERATOR_SIMPLE)) {
 				mWideningOperator = new IntervalSimpleWideningOperator();
 			} else if (wideningOperator.equals(IntervalDomainPreferences.VALUE_WIDENING_OPERATOR_LITERALS)) {
-				final IAbstractStateBinaryOperator<IntervalDomainState> rtr =
-						new IntervalLiteralWideningOperator(mLiteralCollection);
+				final IAbstractStateBinaryOperator<IntervalDomainState> rtr = new IntervalLiteralWideningOperator(
+				        mLiteralCollection);
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug("Using the following literals during widening: " + mLiteralCollection);
 				}
 				mWideningOperator = rtr;
 			} else {
 				throw new UnsupportedOperationException(
-						"The widening operator " + wideningOperator + " is not implemented.");
+				        "The widening operator " + wideningOperator + " is not implemented.");
 			}
 		}
 
@@ -118,7 +118,8 @@ public class IntervalDomain implements IAbstractDomain<IntervalDomainState, Code
 			final Boogie2SmtSymbolTable bpl2SmtSymbolTable = mRootAnnotation.getBoogie2SMT().getBoogie2SmtSymbolTable();
 			final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 			final int maxParallelStates = prefs.getInt(AbsIntPrefInitializer.LABEL_MAX_PARALLEL_STATES);
-			mPostOperator = new IntervalPostOperator(mLogger, mSymbolTable, bpl2SmtSymbolTable, maxParallelStates);
+			mPostOperator = new IntervalPostOperator(mLogger, mSymbolTable, bpl2SmtSymbolTable, maxParallelStates,
+			        mRootAnnotation.getBoogie2SMT(), mRootAnnotation);
 		}
 		return mPostOperator;
 	}
