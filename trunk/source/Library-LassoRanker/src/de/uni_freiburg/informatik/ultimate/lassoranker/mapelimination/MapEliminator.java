@@ -908,6 +908,11 @@ public class MapEliminator {
 		return result;
 	}
 
+	/**
+	 * Return set of unordered pairs ({@link Doubleton}s) of all Terms {x,y}
+	 * such that x and y occur as entry of a (potentially multi-dimentional) 
+	 * argument i_x i_y of the same (or equivalent) map.    
+	 */
 	public Set<Doubleton<Term>> getDoubletons() {
 		return mDoubletons;
 	}
