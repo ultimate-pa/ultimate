@@ -28,7 +28,9 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -70,6 +72,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence.Origin;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * The post operator of the interval domain.
@@ -142,191 +145,261 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 		assert transition instanceof Call
 		        || transition instanceof Return : "Cannot calculate hierachical post for non-hierachical transition";
 
-		final List<STATE> returnList = new ArrayList<>();
-
 		if (transition instanceof Call) {
 			final Call call = (Call) transition;
-			final CallStatement callStatement = call.getCallStatement();
-			final Expression[] args = callStatement.getArguments();
-
-			// If there are no arguments, we don't need to rewrite states.
-			if (args.length == 0) {
-				returnList.add(stateAfterLeaving);
-				return returnList;
-			}
-
-			final Map<Integer, String> tmpParamNames = getArgumentTemporaries(args.length, stateBeforeLeaving);
-			final List<LeftHandSide> idents = new ArrayList<>();
-			final Map<LeftHandSide, IBoogieVar> tmpVarUses = new HashMap<>();
-			final Map<String, IBoogieVar> tmpParamVars = new HashMap<>();
-			final ILocation loc = callStatement.getLocation();
-			for (int i = 0; i < args.length; i++) {
-				final String name = tmpParamNames.get(i);
-				final IBoogieVar boogieVar = BoogieUtil.createTemporaryIBoogieVar(name, args[i].getType());
-				final VariableLHS lhs = new VariableLHS(loc, name);
-				tmpParamVars.put(name, boogieVar);
-				tmpVarUses.put(lhs, boogieVar);
-				idents.add(lhs);
-			}
-
-			final AssignmentStatement assign = new AssignmentStatement(callStatement.getLocation(),
-			        idents.toArray(new LeftHandSide[idents.size()]), args);
-			final STATE interimState = stateBeforeLeaving.addVariables(tmpParamVars.values());
-			final List<STATE> result = mStatementProcessor.process(interimState, assign, tmpVarUses);
-			if (result.isEmpty()) {
-				throw new UnsupportedOperationException("The assingment operation resulted in 0 states.");
-			}
-
-			final Procedure procedure = getProcedure(callStatement.getMethodName());
-			assert procedure != null;
-			final VarList[] inParams = procedure.getInParams();
-			final List<IBoogieVar> realParamVars = new ArrayList<>();
-
-			for (final VarList varlist : inParams) {
-				for (final String var : varlist.getIdentifiers()) {
-					realParamVars.add(mBoogie2SmtSymbolTable.getBoogieVar(var, callStatement.getMethodName(), true));
-				}
-			}
-
-			if (args.length != realParamVars.size()) {
-				throw new UnsupportedOperationException(
-				        "The number of the expressions in the call statement arguments does not correspond to the length of the number of arguments in the symbol table.");
-			}
-
-			for (final STATE resultState : result) {
-				STATE returnState = stateAfterLeaving.createCopy();
-
-				for (int i = 0; i < realParamVars.size(); i++) {
-					final String tempName = tmpParamNames.get(i);
-					final IBoogieVar realVar = realParamVars.get(i);
-					final IBoogieVar tempVar = tmpParamVars.get(tempName);
-
-					if (tempVar.getIType() instanceof PrimitiveType) {
-						final PrimitiveType primitiveType = (PrimitiveType) tempVar.getIType();
-
-						if (primitiveType.getTypeCode() == PrimitiveType.BOOL) {
-							returnState = returnState.setBooleanValue(realVar, resultState.getBooleanValue(tempVar));
-						} else {
-							returnState = returnState.setValue(realVar, resultState.getValue(tempVar));
-						}
-					} else if (tempVar.getIType() instanceof ArrayType) {
-						// TODO:
-						// We treat Arrays as normal variables for the time being.
-						returnState = returnState.setValue(realVar, resultState.getValue(tempVar));
-					} else {
-						mLogger.warn("The IBoogieVar type " + tempVar.getIType()
-						        + " cannot be handled. Assuming normal variable type.");
-						returnState = returnState.setValue(realVar, resultState.getValue(tempVar));
-					}
-				}
-
-				returnList.add(returnState);
-			}
-
-			return NonrelationalUtils.mergeStatesIfNecessary(returnList, mParallelStates);
+			return handleCallTransition(stateBeforeLeaving, stateAfterLeaving, call);
 		} else if (transition instanceof Return) {
 			final Return ret = (Return) transition;
-			final CallStatement correspondingCall = ret.getCallStatement();
-
-			final Procedure procedure = getProcedure(correspondingCall.getMethodName());
-			final List<V> outVals = getOutParamValues(procedure, stateBeforeLeaving);
-			final List<ITermProvider> inVals = getInParamValues(procedure, stateBeforeLeaving);
-			final VariableLHS[] lhs = correspondingCall.getLhs();
-			final Expression[] args = correspondingCall.getArguments();
-
-			if (outVals.size() != lhs.length) {
-				throw new UnsupportedOperationException("The expected number of return variables (" + lhs.length
-				        + ") is different from the function's number of return variables (" + outVals.size() + ").");
-			}
-
-			if (inVals.size() != args.length) {
-				throw new UnsupportedOperationException("The expected number of input expressions (" + args.length
-				        + ") is different from the function's number of input parameters (" + inVals.size() + ").");
-			}
-
-			// Update return variables and values for the return abstract state
-			final List<IBoogieVar> updateVarNames = new ArrayList<>();
-			for (final VariableLHS varLhs : lhs) {
-				final BoogieVar boogieVar = mBoogie2SmtSymbolTable.getBoogieVar(varLhs.getIdentifier(),
-				        varLhs.getDeclarationInformation(), false);
-				updateVarNames.add(boogieVar);
-			}
-
-			final List<Expression> inputParameterExpressionTerms = new ArrayList<>();
-
-			// Update input expressions wrt. parameter values at the end of the executed procedure
-			for (int i = 0; i < inVals.size(); i++) {
-				final ITermProvider inValue = inVals.get(i);
-				final Expression inExpression = args[i];
-
-				final IdentifierTranslator[] translators = new IdentifierTranslator[] { new SimpleTranslator(),
-				        mBoogie2Smt.new ConstOnlyIdentifierTranslator() };
-
-				final Term expressionTerm = mBoogie2Smt.getExpression2Term().translateToTerm(translators, inExpression)
-				        .getTerm();
-
-				final Term valueTerm = inValue.getTerm(mBoogie2Smt.getScript(), expressionTerm.getSort(),
-				        expressionTerm);
-
-				final Expression termExpression = mBoogie2Smt.getTerm2Expression().translate(valueTerm);
-
-				assert termExpression.getType() == PrimitiveType.TYPE_BOOL;
-
-				inputParameterExpressionTerms.add(termExpression);
-			}
-
-			final List<STATE> rets = new ArrayList<>();
-
-			// Construct conjunction of input parameter expressions
-			if (inputParameterExpressionTerms.size() > 0) {
-				Expression current = inputParameterExpressionTerms.get(0);
-
-				for (int i = 1; i < inputParameterExpressionTerms.size(); i++) {
-					current = new BinaryExpression(correspondingCall.getLocation(), Operator.LOGICAND, current,
-					        inputParameterExpressionTerms.get(i));
-
-					if (current.getType() == null) {
-						current.setType(PrimitiveType.TYPE_BOOL);
-					}
-				}
-
-				// Construct an assume statement
-				final AssumeStatement assume = new AssumeStatement(correspondingCall.getLocation(), current);
-				final List<Statement> stmtList = new ArrayList<>();
-				stmtList.add(assume);
-
-				if (mLogger.isDebugEnabled()) {
-					mLogger.debug("    Computing post after return for arguments with statement: "
-					        + BoogiePrettyPrinter.print(assume));
-				}
-
-				final CodeBlock newPostBlock = mRootAnnotation.getCodeBlockFactory().constructStatementSequence(null,
-				        null, stmtList, Origin.IMPLEMENTATION);
-
-				final List<STATE> postResults = apply(stateAfterLeaving, newPostBlock);
-
-				if (mLogger.isDebugEnabled()) {
-					mLogger.debug("    Resulting post states: "
-					        + postResults.stream().map(r -> r.toLogString()).collect(Collectors.toList()));
-				}
-				rets.addAll(postResults);
-			}
-
-			if (rets.size() == 0) {
-				rets.add(stateAfterLeaving);
-			}
-
-			for (final STATE s : rets) {
-
-				returnList.add(s.setValues(updateVarNames.toArray(new IBoogieVar[updateVarNames.size()]),
-				        outVals.toArray(stateAfterLeaving.getArray(outVals.size()))));
-			}
-
-			return NonrelationalUtils.mergeStatesIfNecessary(returnList, mParallelStates);
+			return handleReturnTransition(stateBeforeLeaving, stateAfterLeaving, ret);
 		} else {
 			throw new UnsupportedOperationException(
 			        "Nonrelational domains do not support context switches other than Call and Return (yet)");
 		}
+	}
+
+	private List<STATE> handleCallTransition(final STATE stateBeforeLeaving, final STATE stateAfterLeaving,
+	        final Call call) {
+		final List<STATE> returnList = new ArrayList<>();
+		final CallStatement callStatement = call.getCallStatement();
+		final Expression[] args = callStatement.getArguments();
+
+		// If there are no arguments, we don't need to rewrite states.
+		if (args.length == 0) {
+			returnList.add(stateAfterLeaving);
+			return returnList;
+		}
+
+		final Map<Integer, String> tmpParamNames = getArgumentTemporaries(args.length, stateBeforeLeaving);
+		final List<LeftHandSide> idents = new ArrayList<>();
+		final Map<LeftHandSide, IBoogieVar> tmpVarUses = new HashMap<>();
+		final Map<String, IBoogieVar> tmpParamVars = new HashMap<>();
+		final ILocation loc = callStatement.getLocation();
+		for (int i = 0; i < args.length; i++) {
+			final String name = tmpParamNames.get(i);
+			final IBoogieVar boogieVar = BoogieUtil.createTemporaryIBoogieVar(name, args[i].getType());
+			final VariableLHS lhs = new VariableLHS(loc, name);
+			tmpParamVars.put(name, boogieVar);
+			tmpVarUses.put(lhs, boogieVar);
+			idents.add(lhs);
+		}
+
+		final AssignmentStatement assign = new AssignmentStatement(callStatement.getLocation(),
+		        idents.toArray(new LeftHandSide[idents.size()]), args);
+		final STATE interimState = stateBeforeLeaving.addVariables(tmpParamVars.values());
+		final List<STATE> result = mStatementProcessor.process(interimState, assign, tmpVarUses);
+		if (result.isEmpty()) {
+			throw new UnsupportedOperationException("The assingment operation resulted in 0 states.");
+		}
+
+		final Procedure procedure = getProcedure(callStatement.getMethodName());
+		assert procedure != null;
+		final VarList[] inParams = procedure.getInParams();
+		final List<IBoogieVar> realParamVars = new ArrayList<>();
+
+		for (final VarList varlist : inParams) {
+			for (final String var : varlist.getIdentifiers()) {
+				realParamVars.add(mBoogie2SmtSymbolTable.getBoogieVar(var, callStatement.getMethodName(), true));
+			}
+		}
+
+		if (args.length != realParamVars.size()) {
+			throw new UnsupportedOperationException(
+			        "The number of the expressions in the call statement arguments does not correspond to the length of the number of arguments in the symbol table.");
+		}
+
+		for (final STATE resultState : result) {
+			STATE returnState = stateAfterLeaving.createCopy();
+
+			for (int i = 0; i < realParamVars.size(); i++) {
+				final String tempName = tmpParamNames.get(i);
+				final IBoogieVar realVar = realParamVars.get(i);
+				final IBoogieVar tempVar = tmpParamVars.get(tempName);
+
+				if (tempVar.getIType() instanceof PrimitiveType) {
+					final PrimitiveType primitiveType = (PrimitiveType) tempVar.getIType();
+
+					if (primitiveType.getTypeCode() == PrimitiveType.BOOL) {
+						returnState = returnState.setBooleanValue(realVar, resultState.getBooleanValue(tempVar));
+					} else {
+						returnState = returnState.setValue(realVar, resultState.getValue(tempVar));
+					}
+				} else if (tempVar.getIType() instanceof ArrayType) {
+					// TODO:
+					// We treat Arrays as normal variables for the time being.
+					returnState = returnState.setValue(realVar, resultState.getValue(tempVar));
+				} else {
+					mLogger.warn("The IBoogieVar type " + tempVar.getIType()
+					        + " cannot be handled. Assuming normal variable type.");
+					returnState = returnState.setValue(realVar, resultState.getValue(tempVar));
+				}
+			}
+
+			returnList.add(returnState);
+		}
+
+		return NonrelationalUtils.mergeStatesIfNecessary(returnList, mParallelStates);
+	}
+
+	/**
+	 * Computes the result of applying the return transition with a given state before leaving the inner scope (before
+	 * the return) and the previous state after the method has been called.
+	 *
+	 * <p>
+	 * This method updates the state after leaving with the return value of the called method and adapts the different
+	 * parameter expressions from the calls according to the effect in the method itself.
+	 * </p>
+	 *
+	 * @param stateBeforeLeaving
+	 * @param stateAfterLeaving
+	 * @param returnTransition
+	 * @return
+	 */
+	private List<STATE> handleReturnTransition(final STATE stateBeforeLeaving, final STATE stateAfterLeaving,
+	        final Return returnTransition) {
+		final List<STATE> returnList = new ArrayList<>();
+
+		final CallStatement correspondingCall = returnTransition.getCallStatement();
+
+		final Procedure procedure = getProcedure(correspondingCall.getMethodName());
+		final Pair<Deque<V>, Deque<BooleanValue>> outVals = getOutParamValues(procedure, stateBeforeLeaving);
+		final List<ITermProvider> inVals = getInParamValues(procedure, stateBeforeLeaving);
+		final VariableLHS[] lhs = correspondingCall.getLhs();
+		final Expression[] args = correspondingCall.getArguments();
+
+		if (outVals.getFirst().size() + outVals.getSecond().size() != lhs.length) {
+			throw new UnsupportedOperationException("The expected number of return variables (" + lhs.length
+			        + ") is different from the function's number of return variables (" + outVals.getFirst().size()
+			        + " vals, " + outVals.getSecond().size() + " bools).");
+		}
+
+		if (inVals.size() != args.length) {
+			throw new UnsupportedOperationException("The expected number of input expressions (" + args.length
+			        + ") is different from the function's number of input parameters (" + inVals.size() + ").");
+		}
+
+		// Gather return variables and values for the return abstract state
+		final List<IBoogieVar> updateVarNames = new ArrayList<>();
+		for (final VariableLHS varLhs : lhs) {
+			final BoogieVar boogieVar = mBoogie2SmtSymbolTable.getBoogieVar(varLhs.getIdentifier(),
+			        varLhs.getDeclarationInformation(), false);
+			updateVarNames.add(boogieVar);
+		}
+
+		final List<Pair<IBoogieVar, V>> updateVars = new ArrayList<>();
+		final List<Pair<IBoogieVar, BooleanValue>> updateBools = new ArrayList<>();
+
+		// Assign to each return variable the corresponding return value
+		for (final IBoogieVar boogieVar : updateVarNames) {
+			if (boogieVar.getIType() instanceof PrimitiveType) {
+				final PrimitiveType primitiveType = (PrimitiveType) boogieVar.getIType();
+
+				if (primitiveType.getTypeCode() == PrimitiveType.BOOL) {
+					final BooleanValue bool = outVals.getSecond().removeFirst();
+					assert bool != null;
+
+					updateBools.add(new Pair<>(boogieVar, bool));
+				} else {
+					final V value = outVals.getFirst().removeFirst();
+					assert value != null;
+
+					updateVars.add(new Pair<>(boogieVar, value));
+				}
+			} else if (boogieVar.getIType() instanceof ArrayType) {
+				// TODO: Implement better handling of arrays.
+				final V value = outVals.getFirst().removeFirst();
+				assert value != null;
+
+				updateVars.add(new Pair<>(boogieVar, value));
+			} else {
+				final V value = outVals.getFirst().removeFirst();
+				assert value != null;
+
+				updateVars.add(new Pair<>(boogieVar, value));
+			}
+		}
+		assert outVals.getFirst().size() == 0;
+		assert outVals.getSecond().size() == 0;
+
+		final List<Expression> inputParameterExpressionTerms = new ArrayList<>();
+
+		// Update input expressions wrt. parameter values at the end of the executed procedure
+		for (int i = 0; i < inVals.size(); i++) {
+			final ITermProvider inValue = inVals.get(i);
+			final Expression inExpression = args[i];
+
+			final IdentifierTranslator[] translators = new IdentifierTranslator[] { new SimpleTranslator(),
+			        mBoogie2Smt.new ConstOnlyIdentifierTranslator() };
+
+			final Term expressionTerm = mBoogie2Smt.getExpression2Term().translateToTerm(translators, inExpression)
+			        .getTerm();
+
+			final Term valueTerm = inValue.getTerm(mBoogie2Smt.getScript(), expressionTerm.getSort(), expressionTerm);
+
+			final Expression termExpression = mBoogie2Smt.getTerm2Expression().translate(valueTerm);
+
+			assert termExpression.getType() == PrimitiveType.TYPE_BOOL;
+
+			inputParameterExpressionTerms.add(termExpression);
+		}
+
+		final List<STATE> rets = new ArrayList<>();
+
+		// Construct conjunction of input parameter expressions
+		if (inputParameterExpressionTerms.size() > 0) {
+			Expression current = inputParameterExpressionTerms.get(0);
+
+			for (int i = 1; i < inputParameterExpressionTerms.size(); i++) {
+				current = new BinaryExpression(correspondingCall.getLocation(), Operator.LOGICAND, current,
+				        inputParameterExpressionTerms.get(i));
+
+				if (current.getType() == null) {
+					current.setType(PrimitiveType.TYPE_BOOL);
+				}
+			}
+
+			// Construct an assume statement
+			final AssumeStatement assume = new AssumeStatement(correspondingCall.getLocation(), current);
+			final List<Statement> stmtList = new ArrayList<>();
+			stmtList.add(assume);
+
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("    Computing post after return for arguments with statement: "
+				        + BoogiePrettyPrinter.print(assume));
+			}
+
+			final CodeBlock newPostBlock = mRootAnnotation.getCodeBlockFactory().constructStatementSequence(null, null,
+			        stmtList, Origin.IMPLEMENTATION);
+
+			final List<STATE> postResults = apply(stateAfterLeaving, newPostBlock);
+
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("    Resulting post states: "
+				        + postResults.stream().map(r -> r.toLogString()).collect(Collectors.toList()));
+			}
+			rets.addAll(postResults);
+		}
+
+		if (rets.size() == 0) {
+			rets.add(stateAfterLeaving);
+		}
+
+		// Create arrays for state update functions.
+		final IBoogieVar[] updateVarNameArray = updateVars.stream().map(entry -> entry.getFirst())
+		        .collect(Collectors.toList()).toArray(new IBoogieVar[updateVars.size()]);
+		final V[] updateVarValsArray = updateVars.stream().map(entry -> entry.getSecond()).collect(Collectors.toList())
+		        .toArray(stateAfterLeaving.getArray(updateVars.size()));
+		final IBoogieVar[] updateBoolNameArray = updateBools.stream().map(entry -> entry.getFirst())
+		        .collect(Collectors.toList()).toArray(new IBoogieVar[updateBools.size()]);
+		final BooleanValue[] updateBoolValsArray = updateBools.stream().map(entry -> entry.getSecond())
+		        .collect(Collectors.toList()).toArray(new BooleanValue[updateBools.size()]);
+
+		for (final STATE s : rets) {
+			// TODO: Implement better handling of arrays.
+			returnList.add(s.setMixedValues(updateVarNameArray, updateVarValsArray, updateBoolNameArray,
+			        updateBoolValsArray, new IBoogieVar[0], stateAfterLeaving.getArray(0)));
+		}
+
+		return NonrelationalUtils.mergeStatesIfNecessary(returnList, mParallelStates);
 	}
 
 	/**
@@ -378,18 +451,34 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 		        .filter(proc -> proc.getBody() != null).findFirst().get();
 	}
 
-	private List<V> getOutParamValues(final Procedure procedure, final STATE stateBeforeLeaving) {
+	private Pair<Deque<V>, Deque<BooleanValue>> getOutParamValues(final Procedure procedure,
+	        final STATE stateBeforeLeaving) {
 		// functions are already inlined and if there are procedure and implementation declaration for a proc, we know
 		// that we only get the implementation from the FXPE
-		final List<V> vals = new ArrayList<>();
+		final Deque<V> vals = new ArrayDeque<>();
+		final Deque<BooleanValue> boolVals = new ArrayDeque<>();
+
 		for (final VarList list : procedure.getOutParams()) {
 			for (final String s : list.getIdentifiers()) {
-				final BoogieVar boogieVar = mBoogie2SmtSymbolTable.getBoogieVar(s, procedure.getIdentifier(), false);
-				vals.add(stateBeforeLeaving.getValue(boogieVar));
+				final IBoogieVar boogieVar = mBoogie2SmtSymbolTable.getBoogieVar(s, procedure.getIdentifier(), false);
+				if (boogieVar.getIType() instanceof PrimitiveType) {
+					final PrimitiveType type = (PrimitiveType) boogieVar.getIType();
+
+					if (type.getTypeCode() != PrimitiveType.BOOL) {
+						vals.add(stateBeforeLeaving.getValue(boogieVar));
+					} else {
+						boolVals.add(stateBeforeLeaving.getBooleanValue(boogieVar));
+					}
+				} else if (boogieVar.getIType() instanceof ArrayType) {
+					// TODO: Implement better handling of arrays.
+					vals.add(stateBeforeLeaving.getValue(boogieVar));
+				} else {
+					vals.add(stateBeforeLeaving.getValue(boogieVar));
+				}
 			}
 		}
 
-		return vals;
+		return new Pair<>(vals, boolVals);
 	}
 
 	private List<ITermProvider> getInParamValues(final Procedure procedure, final STATE stateBeforeLeaving) {
