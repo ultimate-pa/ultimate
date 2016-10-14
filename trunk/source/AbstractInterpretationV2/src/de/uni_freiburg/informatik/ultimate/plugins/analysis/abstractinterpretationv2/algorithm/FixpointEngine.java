@@ -361,6 +361,15 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 				continue;
 			}
 
+			if (summaryPostState.isBottom()) {
+				// skip all successors if the summary is already bottom
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug(AbsIntPrefInitializer.INDENT + " The summary for "
+							+ LoggingHelper.getTransitionString(callSuccessor, mTransitionProvider) + " is bottom");
+				}
+				continue;
+			}
+
 			// we have a usable summary for this call
 			// instead of using the call, we add the successors of the summary:
 			final Collection<ACTION> summarySuccessorSuccessors =
