@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 
 /**
  *
@@ -112,25 +113,29 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE, CodeBlock,
 		if (action instanceof Call) {
 			return defineVariablesAfterCall(action, localPreState);
 		} else if (action instanceof Return) {
-			return defineVariablesAfterReturn(action, localPreState, hierachicalPreState);
+			final String sourceProc = action.getPrecedingProcedure();
+			final String targetProc = action.getSucceedingProcedure();
+			return defineVariablesAfterReturn(localPreState, hierachicalPreState, sourceProc, targetProc);
+		} else if (action instanceof Summary) {
+			final Summary sum = (Summary) action;
+			final String sourceProc = sum.getCallStatement().getMethodName();
+			final String targetProc = action.getSucceedingProcedure();
+			return defineVariablesAfterReturn(localPreState, hierachicalPreState, sourceProc, targetProc);
 		} else {
 			// nothing changes
 			return localPreState;
 		}
 	}
 
-	private STATE defineVariablesAfterReturn(final CodeBlock action, final STATE localPreState,
-			final STATE hierachicalPreState) {
+	private STATE defineVariablesAfterReturn(final STATE localPreState, final STATE hierachicalPreState,
+			final String sourceProc, final String targetProc) {
 		// if the action is a return, we have to:
 		// - remove all currently local variables
 		// - keep all unmasked globals
 		// - add old locals from the scope we are returning to
 		// - add globals that were masked by this scope from the scope we are returning to
 
-		final String sourceProc = action.getPrecedingProcedure();
-		final String targetProc = action.getSucceedingProcedure();
 		final Set<IBoogieVar> varsNeededFromOldScope = new HashSet<>();
-
 		if (sourceProc != null) {
 			// we need masked globals from the old scope, so we have to determine which globals are masked
 			varsNeededFromOldScope.addAll(getMaskedGlobalsVariables(sourceProc));

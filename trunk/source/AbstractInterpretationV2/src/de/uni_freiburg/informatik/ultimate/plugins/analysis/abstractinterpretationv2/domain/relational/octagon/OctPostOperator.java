@@ -56,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class OctPostOperator implements IAbstractPostOperator<OctDomainState, CodeBlock, IBoogieVar> {
@@ -187,14 +188,17 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 	}
 
 	@Override
-	public List<OctDomainState> apply(final OctDomainState stateBeforeTransition, final OctDomainState stateAfterTransition,
-			final CodeBlock transition) {
+	public List<OctDomainState> apply(final OctDomainState stateBeforeTransition,
+			final OctDomainState stateAfterTransition, final CodeBlock transition) {
 
 		List<OctDomainState> result;
 		if (transition instanceof Call) {
 			result = applyCall(stateBeforeTransition, stateAfterTransition, (Call) transition);
 		} else if (transition instanceof Return) {
-			result = applyReturn(stateBeforeTransition, stateAfterTransition, (Return) transition);
+			result = applyReturn(stateBeforeTransition, stateAfterTransition, ((Return) transition).getCallStatement());
+		} else if (transition instanceof Summary) {
+			result = applyReturn(stateBeforeTransition, stateAfterTransition,
+					((Summary) transition).getCallStatement());
 		} else {
 			throw new UnsupportedOperationException("Unsupported transition: " + transition);
 		}
@@ -255,14 +259,13 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 	}
 
 	private List<OctDomainState> applyReturn(final OctDomainState stateBeforeReturn, OctDomainState stateAfterReturn,
-			final Return returnTransition) {
+			final CallStatement correspondingCall) {
 
 		final ArrayList<OctDomainState> result = new ArrayList<>();
 		if (!stateAfterReturn.isBottom()) {
-			final CallStatement call = returnTransition.getCallStatement();
-			final Procedure procedure = calledProcedure(call);
+			final Procedure procedure = calledProcedure(correspondingCall);
 			final List<Pair<IBoogieVar, IBoogieVar>> mapLhsToOut =
-					generateMapCallLhsToOutParams(call.getLhs(), procedure);
+					generateMapCallLhsToOutParams(correspondingCall.getLhs(), procedure);
 			stateAfterReturn = stateAfterReturn.copyValuesOnScopeChange(stateBeforeReturn, mapLhsToOut);
 			result.add(stateAfterReturn);
 		}

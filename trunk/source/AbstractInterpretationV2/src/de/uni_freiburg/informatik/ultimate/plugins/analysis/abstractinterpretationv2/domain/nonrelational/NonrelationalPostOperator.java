@@ -54,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -72,6 +73,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence.Origin;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -81,7 +83,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public abstract class NonrelationalPostOperator<STATE extends NonrelationalState<STATE, V>, V extends INonrelationalValue<V>>
-        implements IAbstractPostOperator<STATE, CodeBlock, IBoogieVar> {
+		implements IAbstractPostOperator<STATE, CodeBlock, IBoogieVar> {
 
 	private final ILogger mLogger;
 	private final RcfgStatementExtractor mStatementExtractor;
@@ -93,9 +95,9 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 	private final RootAnnot mRootAnnotation;
 
 	protected NonrelationalPostOperator(final ILogger logger, final BoogieSymbolTable symbolTable,
-	        final Boogie2SmtSymbolTable bpl2smtSymbolTable,
-	        final NonrelationalStatementProcessor<STATE, V> statementProcessor, final int parallelStates,
-	        final Boogie2SMT boogie2Smt, final RootAnnot rootAnnotation) {
+			final Boogie2SmtSymbolTable bpl2smtSymbolTable,
+			final NonrelationalStatementProcessor<STATE, V> statementProcessor, final int parallelStates,
+			final Boogie2SMT boogie2Smt, final RootAnnot rootAnnotation) {
 		mLogger = logger;
 		mStatementExtractor = new RcfgStatementExtractor();
 		mBoogie2SmtSymbolTable = bpl2smtSymbolTable;
@@ -141,24 +143,27 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 
 	@Override
 	public List<STATE> apply(final STATE stateBeforeLeaving, final STATE stateAfterLeaving,
-	        final CodeBlock transition) {
-		assert transition instanceof Call
-		        || transition instanceof Return : "Cannot calculate hierachical post for non-hierachical transition";
+			final CodeBlock transition) {
+		assert transition instanceof Call || transition instanceof Return
+				|| transition instanceof Summary : "Cannot calculate hierachical post for non-hierachical transition";
 
 		if (transition instanceof Call) {
 			final Call call = (Call) transition;
 			return handleCallTransition(stateBeforeLeaving, stateAfterLeaving, call);
 		} else if (transition instanceof Return) {
 			final Return ret = (Return) transition;
-			return handleReturnTransition(stateBeforeLeaving, stateAfterLeaving, ret);
+			return handleReturnTransition(stateBeforeLeaving, stateAfterLeaving, ret.getCallStatement());
+		} else if (transition instanceof Summary) {
+			final Summary summary = (Summary) transition;
+			return handleReturnTransition(stateBeforeLeaving, stateAfterLeaving, summary.getCallStatement());
 		} else {
 			throw new UnsupportedOperationException(
-			        "Nonrelational domains do not support context switches other than Call and Return (yet)");
+					"Nonrelational domains do not support context switches other than Call and Return (yet)");
 		}
 	}
 
 	private List<STATE> handleCallTransition(final STATE stateBeforeLeaving, final STATE stateAfterLeaving,
-	        final Call call) {
+			final Call call) {
 		final List<STATE> returnList = new ArrayList<>();
 		final CallStatement callStatement = call.getCallStatement();
 		final Expression[] args = callStatement.getArguments();
@@ -184,7 +189,7 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 		}
 
 		final AssignmentStatement assign = new AssignmentStatement(callStatement.getLocation(),
-		        idents.toArray(new LeftHandSide[idents.size()]), args);
+				idents.toArray(new LeftHandSide[idents.size()]), args);
 		final STATE interimState = stateBeforeLeaving.addVariables(tmpParamVars.values());
 		final List<STATE> result = mStatementProcessor.process(interimState, assign, tmpVarUses);
 		if (result.isEmpty()) {
@@ -204,7 +209,7 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 
 		if (args.length != realParamVars.size()) {
 			throw new UnsupportedOperationException(
-			        "The number of the expressions in the call statement arguments does not correspond to the length of the number of arguments in the symbol table.");
+					"The number of the expressions in the call statement arguments does not correspond to the length of the number of arguments in the symbol table.");
 		}
 
 		for (final STATE resultState : result) {
@@ -229,7 +234,7 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 					returnState = returnState.setValue(realVar, resultState.getValue(tempVar));
 				} else {
 					mLogger.warn("The IBoogieVar type " + tempVar.getIType()
-					        + " cannot be handled. Assuming normal variable type.");
+							+ " cannot be handled. Assuming normal variable type.");
 					returnState = returnState.setValue(realVar, resultState.getValue(tempVar));
 				}
 			}
@@ -255,10 +260,8 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 	 * @return
 	 */
 	private List<STATE> handleReturnTransition(final STATE stateBeforeLeaving, final STATE stateAfterLeaving,
-	        final Return returnTransition) {
+			final CallStatement correspondingCall) {
 		final List<STATE> returnList = new ArrayList<>();
-
-		final CallStatement correspondingCall = returnTransition.getCallStatement();
 
 		final Procedure procedure = getProcedure(correspondingCall.getMethodName());
 		final Pair<Deque<V>, Deque<BooleanValue>> outVals = getOutParamValues(procedure, stateBeforeLeaving);
@@ -268,20 +271,20 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 
 		if (outVals.getFirst().size() + outVals.getSecond().size() != lhs.length) {
 			throw new UnsupportedOperationException("The expected number of return variables (" + lhs.length
-			        + ") is different from the function's number of return variables (" + outVals.getFirst().size()
-			        + " vals, " + outVals.getSecond().size() + " bools).");
+					+ ") is different from the function's number of return variables (" + outVals.getFirst().size()
+					+ " vals, " + outVals.getSecond().size() + " bools).");
 		}
 
 		if (inVals.size() != args.length) {
 			throw new UnsupportedOperationException("The expected number of input expressions (" + args.length
-			        + ") is different from the function's number of input parameters (" + inVals.size() + ").");
+					+ ") is different from the function's number of input parameters (" + inVals.size() + ").");
 		}
 
 		// Gather return variables and values for the return abstract state
 		final List<IBoogieVar> updateVarNames = new ArrayList<>();
 		for (final VariableLHS varLhs : lhs) {
 			final BoogieVar boogieVar = mBoogie2SmtSymbolTable.getBoogieVar(varLhs.getIdentifier(),
-			        varLhs.getDeclarationInformation(), false);
+					varLhs.getDeclarationInformation(), false);
 			updateVarNames.add(boogieVar);
 		}
 
@@ -328,16 +331,16 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 			final Expression inExpression = args[i];
 
 			final IdentifierTranslator[] translators = new IdentifierTranslator[] { new SimpleTranslator(),
-			        mBoogie2Smt.new ConstOnlyIdentifierTranslator() };
+					mBoogie2Smt.new ConstOnlyIdentifierTranslator() };
 
-			final Term expressionTerm = mBoogie2Smt.getExpression2Term().translateToTerm(translators, inExpression)
-			        .getTerm();
+			final Term expressionTerm =
+					mBoogie2Smt.getExpression2Term().translateToTerm(translators, inExpression).getTerm();
 
 			final Term valueTerm = inValue.getTerm(mBoogie2Smt.getScript(), expressionTerm.getSort(), expressionTerm);
 
 			final Expression termExpression = mBoogie2Smt.getTerm2Expression().translate(valueTerm);
 
-			assert termExpression.getType() == PrimitiveType.TYPE_BOOL;
+			assert termExpression.getType() == BoogieType.TYPE_BOOL;
 
 			inputParameterExpressionTerms.add(termExpression);
 		}
@@ -350,10 +353,10 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 
 			for (int i = 1; i < inputParameterExpressionTerms.size(); i++) {
 				current = new BinaryExpression(correspondingCall.getLocation(), Operator.LOGICAND, current,
-				        inputParameterExpressionTerms.get(i));
+						inputParameterExpressionTerms.get(i));
 
 				if (current.getType() == null) {
-					current.setType(PrimitiveType.TYPE_BOOL);
+					current.setType(BoogieType.TYPE_BOOL);
 				}
 			}
 
@@ -364,17 +367,17 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug("    Computing post after return for arguments with statement: "
-				        + BoogiePrettyPrinter.print(assume));
+						+ BoogiePrettyPrinter.print(assume));
 			}
 
 			final CodeBlock newPostBlock = mRootAnnotation.getCodeBlockFactory().constructStatementSequence(null, null,
-			        stmtList, Origin.IMPLEMENTATION);
+					stmtList, Origin.IMPLEMENTATION);
 
 			final List<STATE> postResults = apply(stateAfterLeaving, newPostBlock);
 
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug("    Resulting post states: "
-				        + postResults.stream().map(r -> r.toLogString()).collect(Collectors.toList()));
+						+ postResults.stream().map(r -> r.toLogString()).collect(Collectors.toList()));
 			}
 			rets.addAll(postResults);
 		}
@@ -385,18 +388,18 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 
 		// Create arrays for state update functions.
 		final IBoogieVar[] updateVarNameArray = updateVars.stream().map(entry -> entry.getFirst())
-		        .collect(Collectors.toList()).toArray(new IBoogieVar[updateVars.size()]);
+				.collect(Collectors.toList()).toArray(new IBoogieVar[updateVars.size()]);
 		final V[] updateVarValsArray = updateVars.stream().map(entry -> entry.getSecond()).collect(Collectors.toList())
-		        .toArray(stateAfterLeaving.getArray(updateVars.size()));
+				.toArray(stateAfterLeaving.getArray(updateVars.size()));
 		final IBoogieVar[] updateBoolNameArray = updateBools.stream().map(entry -> entry.getFirst())
-		        .collect(Collectors.toList()).toArray(new IBoogieVar[updateBools.size()]);
+				.collect(Collectors.toList()).toArray(new IBoogieVar[updateBools.size()]);
 		final BooleanValue[] updateBoolValsArray = updateBools.stream().map(entry -> entry.getSecond())
-		        .collect(Collectors.toList()).toArray(new BooleanValue[updateBools.size()]);
+				.collect(Collectors.toList()).toArray(new BooleanValue[updateBools.size()]);
 
 		for (final STATE s : rets) {
 			// TODO: Implement better handling of arrays.
 			returnList.add(s.setMixedValues(updateVarNameArray, updateVarValsArray, updateBoolNameArray,
-			        updateBoolValsArray, new IBoogieVar[0], stateAfterLeaving.getArray(0)));
+					updateBoolValsArray, new IBoogieVar[0], stateAfterLeaving.getArray(0)));
 		}
 
 		return NonrelationalUtils.mergeStatesIfNecessary(returnList, mParallelStates);
@@ -417,8 +420,8 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 		final Map<Integer, String> returnMap = new HashMap<>();
 
 		String paramPrefix = "param_";
-		final Set<String> varNames = state.getVariables().stream().map(a -> a.getGloballyUniqueId())
-		        .collect(Collectors.toSet());
+		final Set<String> varNames =
+				state.getVariables().stream().map(a -> a.getGloballyUniqueId()).collect(Collectors.toSet());
 		boolean uniqueFound = false;
 
 		while (!uniqueFound) {
@@ -447,12 +450,12 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 
 	private Procedure getProcedure(final String procedureName) {
 		return mSymbolTable.getFunctionOrProcedureDeclaration(procedureName).stream()
-		        .filter(decl -> decl instanceof Procedure).map(decl -> (Procedure) decl)
-		        .filter(proc -> proc.getBody() != null).findFirst().get();
+				.filter(decl -> decl instanceof Procedure).map(decl -> (Procedure) decl)
+				.filter(proc -> proc.getBody() != null).findFirst().get();
 	}
 
 	private Pair<Deque<V>, Deque<BooleanValue>> getOutParamValues(final Procedure procedure,
-	        final STATE stateBeforeLeaving) {
+			final STATE stateBeforeLeaving) {
 		// functions are already inlined and if there are procedure and implementation declaration for a proc, we know
 		// that we only get the implementation from the FXPE
 		final Deque<V> vals = new ArrayDeque<>();
@@ -486,7 +489,7 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 		for (final VarList list : procedure.getInParams()) {
 			for (final String s : list.getIdentifiers()) {
 				final IBoogieVar boogieVar = mBoogie2SmtSymbolTable.getBoogieVar(s,
-				        new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procedure.getIdentifier()), false);
+						new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procedure.getIdentifier()), false);
 
 				if (boogieVar.getIType() instanceof PrimitiveType) {
 					final PrimitiveType primitiveType = (PrimitiveType) boogieVar.getIType();
@@ -512,7 +515,7 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 	private class SimpleTranslator implements IdentifierTranslator {
 		@Override
 		public Term getSmtIdentifier(final String id, final DeclarationInformation declInfo, final boolean isOldContext,
-		        final BoogieASTNode boogieASTNode) {
+				final BoogieASTNode boogieASTNode) {
 			return mBoogie2SmtSymbolTable.getBoogieVar(id, declInfo, isOldContext).getTermVariable();
 		}
 	}

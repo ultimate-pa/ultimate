@@ -125,12 +125,14 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug(getLogMessageCurrentTransition(currentItem));
 			}
-			final AbstractMultiState<STATE, ACTION, VARDECL> pendingPostState =
-					calculateAbstractPost(currentItem, postOp);
-			final AbstractMultiState<STATE, ACTION, VARDECL> postState =
-					preprocessPostState(currentItem, pendingPostState);
 
-			if (postState == null) {
+			final AbstractMultiState<STATE, ACTION, VARDECL> postState = calculateAbstractPost(currentItem, postOp);
+
+			if (isUnnecessaryPostState(currentItem, postState)) {
+				continue;
+			}
+
+			if (useSummaryInstead(currentItem, postState, worklist)) {
 				continue;
 			}
 
@@ -159,6 +161,57 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		}
 	}
 
+	/**
+	 * This method checks whether the current item can be ignored by a summary. This is the case if this item is a call
+	 * to a procedure for which a summary is already calculated. In this case, the item will count as processed and
+	 * instead a new item will be added to the worklist.
+	 *
+	 * @param currentItem
+	 * @param postState
+	 * @param worklist
+	 * @return true if a summary item was added to the worklist and this item should be ignored.
+	 */
+	private boolean useSummaryInstead(final WorklistItem<STATE, ACTION, VARDECL, LOCATION> currentItem,
+			final AbstractMultiState<STATE, ACTION, VARDECL> postState,
+			final Deque<WorklistItem<STATE, ACTION, VARDECL, LOCATION>> worklist) {
+		final ACTION callAction = currentItem.getAction();
+		if (!mTransitionProvider.isEnteringScope(callAction)) {
+			// can only use summary if entering a scope
+			return false;
+		}
+		final ACTION summaryAction = mTransitionProvider.getSummaryForCall(callAction);
+
+		final AbstractMultiState<STATE, ACTION, VARDECL> summaryPostState =
+				currentItem.getSummaryPostState(summaryAction, postState);
+		if (summaryPostState == null) {
+			// we do not have a usable summary for this call, we have to use it as-it
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug(AbsIntPrefInitializer.INDENT + " No summary available for "
+						+ LoggingHelper.getTransitionString(callAction, mTransitionProvider));
+			}
+			return false;
+		}
+
+		if (summaryPostState.isBottom()) {
+			// skip this item without adding a new one if the summary is already bottom
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug(AbsIntPrefInitializer.INDENT + " The summary for "
+						+ LoggingHelper.getTransitionString(callAction, mTransitionProvider) + " is bottom");
+			}
+			return true;
+		}
+
+		// we have a usable summary for this call
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug(AbsIntPrefInitializer.INDENT + " Using summary for "
+					+ LoggingHelper.getTransitionString(callAction, mTransitionProvider));
+			mLogger.debug(AbsIntPrefInitializer.DINDENT + " Using " + LoggingHelper.getStateString(summaryPostState));
+			mLogger.debug(AbsIntPrefInitializer.DINDENT + " Instead of " + LoggingHelper.getStateString(postState));
+		}
+		worklist.add(new WorklistItem<>(summaryPostState, summaryAction, currentItem));
+		return true;
+	}
+
 	private AbstractMultiState<STATE, ACTION, VARDECL> calculateAbstractPost(
 			final WorklistItem<STATE, ACTION, VARDECL, LOCATION> currentItem,
 			final IAbstractPostOperator<STATE, ACTION, VARDECL> postOp) {
@@ -183,9 +236,9 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 			isHierachicalPostResultBottom(postState, currentItem);
 		}
 
-		assert mDebugHelper.isPostSound(preState, preStateWithFreshVariables, postState,
-				currentAction) : getLogMessageUnsoundPost(preState, preStateWithFreshVariables, postState,
-						currentAction);
+		assert mTransitionProvider.isSummaryWithImplementation(currentAction) || mDebugHelper.isPostSound(preState,
+				preStateWithFreshVariables, postState, currentAction) : getLogMessageUnsoundPost(preState,
+						preStateWithFreshVariables, postState, currentAction);
 
 		// check if we enter or leave a scope and act accordingly (saving summaries, creating new scope storages, etc.)
 		postState = prepareScope(currentItem, postState);
@@ -194,18 +247,16 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 	}
 
 	/**
-	 * Preprocess a pending post state before it is saved to the current location. This includes checking for validity
-	 * and checking whether a loop is entered or left.
+	 * Check whether a pending post state is bottom or already subsumed by the current fixpoint.
 	 *
 	 * @param currentItem
 	 *            The worklist item for which we calculate a post state.
 	 * @param pendingPostState
 	 *            The post state as computed by the abstract post.
-	 * @return null if the pendingPostState is either false or already subsumed by an existing state (i.e., a fixpoint),
-	 *         and a AbstractMultiState<STATE,ACTION,VARDECL> otherwise.
+	 * @return true if the pendingPostState is either false or already subsumed by an existing state (i.e., a fixpoint),
+	 *         and false otherwise.
 	 */
-	private AbstractMultiState<STATE, ACTION, VARDECL> preprocessPostState(
-			final WorklistItem<STATE, ACTION, VARDECL, LOCATION> currentItem,
+	private boolean isUnnecessaryPostState(final WorklistItem<STATE, ACTION, VARDECL, LOCATION> currentItem,
 			final AbstractMultiState<STATE, ACTION, VARDECL> pendingPostState) {
 		if (pendingPostState.isBottom()) {
 			// if the new abstract state is bottom, we do not enter loops and we do not add
@@ -213,7 +264,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug(getLogMessagePostIsBottom(pendingPostState));
 			}
-			return null;
+			return true;
 		}
 
 		final IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> currentStateStorage =
@@ -222,10 +273,10 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		// check if the pending post state is already subsumed by a pre-existing state and if this is not a return
 		if (checkSubset(currentStateStorage, currentItem.getAction(), pendingPostState)) {
 			// it is subsumed, we can skip all successors safely
-			return null;
+			return true;
 		}
 
-		return pendingPostState;
+		return false;
 	}
 
 	private boolean isHierachicalPostResultBottom(final AbstractMultiState<STATE, ACTION, VARDECL> postState,
@@ -319,74 +370,13 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		}
 
 		final List<WorklistItem<STATE, ACTION, VARDECL, LOCATION>> successorItems =
-				createSuccessorItems(successors, currentItem, postState);
+				successors.stream().filter(a -> !mTransitionProvider.isSummaryWithImplementation(a))
+						.map(succ -> new WorklistItem<>(postState, succ, currentItem)).collect(Collectors.toList());
 
 		if (mLogger.isDebugEnabled()) {
-			successorItems.stream().forEach(item -> mLogger.debug(getLogMessageAddTransition(item)));
+			successorItems.stream().map(this::getLogMessageAddTransition).forEach(mLogger::debug);
 		}
 
-		return successorItems;
-	}
-
-	private List<WorklistItem<STATE, ACTION, VARDECL, LOCATION>> createSuccessorItems(
-			final Collection<ACTION> successors, final WorklistItem<STATE, ACTION, VARDECL, LOCATION> currentItem,
-			final AbstractMultiState<STATE, ACTION, VARDECL> postState) {
-		final Set<ACTION> callSuccessors =
-				successors.stream().filter(a -> mTransitionProvider.isEnteringScope(a)).collect(Collectors.toSet());
-
-		// first, we create successor items for each outgoing transition which is neither a
-		// summary for an existing procedure nor a call successor.
-		final List<WorklistItem<STATE, ACTION, VARDECL, LOCATION>> successorItems = successors.stream()
-				.filter(a -> !callSuccessors.contains(a) && !mTransitionProvider.isSummaryWithImplementation(a))
-				.map(succ -> new WorklistItem<>(postState, succ, currentItem)).collect(Collectors.toList());
-
-		if (callSuccessors.isEmpty()) {
-			return successorItems;
-		}
-
-		// if there are call successors, we have to create additional successors for them
-		for (final ACTION callSuccessor : callSuccessors) {
-			final ACTION summarySuccessor =
-					successors.stream().filter(a -> mTransitionProvider.isSummaryForCall(a, callSuccessor)).findAny()
-							.orElseThrow(AssertionError::new);
-			final AbstractMultiState<STATE, ACTION, VARDECL> summaryPostState =
-					currentItem.getSummaryPostState(summarySuccessor, postState);
-			if (summaryPostState == null) {
-				// we do not have a usable summary for this call, we have to use it as-it
-				if (mLogger.isDebugEnabled()) {
-					mLogger.debug(AbsIntPrefInitializer.INDENT + " No summary available for "
-							+ LoggingHelper.getTransitionString(callSuccessor, mTransitionProvider));
-				}
-				successorItems.add(new WorklistItem<>(postState, callSuccessor, currentItem));
-				continue;
-			}
-
-			if (summaryPostState.isBottom()) {
-				// skip all successors if the summary is already bottom
-				if (mLogger.isDebugEnabled()) {
-					mLogger.debug(AbsIntPrefInitializer.INDENT + " The summary for "
-							+ LoggingHelper.getTransitionString(callSuccessor, mTransitionProvider) + " is bottom");
-				}
-				continue;
-			}
-
-			// we have a usable summary for this call
-			// instead of using the call, we add the successors of the summary:
-			final Collection<ACTION> summarySuccessorSuccessors =
-					mTransitionProvider.getSuccessors(summarySuccessor, currentItem.getCurrentScope());
-			for (final ACTION sss : summarySuccessorSuccessors) {
-				if (mLogger.isDebugEnabled()) {
-					mLogger.debug(AbsIntPrefInitializer.INDENT + " Using summary for "
-							+ LoggingHelper.getTransitionString(callSuccessor, mTransitionProvider));
-					mLogger.debug(
-							AbsIntPrefInitializer.DINDENT + " Using " + LoggingHelper.getStateString(summaryPostState));
-					mLogger.debug(
-							AbsIntPrefInitializer.DINDENT + " Instead of " + LoggingHelper.getStateString(postState));
-				}
-				successorItems.add(new WorklistItem<>(summaryPostState, sss, currentItem));
-			}
-
-		}
 		return successorItems;
 	}
 
@@ -447,7 +437,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 			}
 			return postState;
 		} else if (isLeavingScope(currentItem)) {
-			final ACTION oldScope = currentItem.removeCurrentScope(postState);
+			final ACTION oldScope = currentItem.removeCurrentScope(currentItem.getPreState());
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug(getLogMessageLeaveScope(oldScope, currentItem));
 			}

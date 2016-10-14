@@ -129,11 +129,11 @@ final class WorklistItem<STATE extends IAbstractState<STATE, ACTION, VARDECL>, A
 	 * Has to be called whenever {@link FixpointEngine} leaves a scope. Ensures that the state storage is in the correct
 	 * state and that the summary map is updated.
 	 *
-	 * @param postReturnState
+	 * @param preReturnState
 	 *            The post state after leaving the current scope.
 	 * @return The scope that left.
 	 */
-	ACTION removeCurrentScope(final AbstractMultiState<STATE, ACTION, VARDECL> postReturnState) {
+	ACTION removeCurrentScope(final AbstractMultiState<STATE, ACTION, VARDECL> preReturnState) {
 		if (mScopes == null || mScopes.isEmpty()) {
 			// happens when we leave the global scope
 			return null;
@@ -142,7 +142,7 @@ final class WorklistItem<STATE extends IAbstractState<STATE, ACTION, VARDECL>, A
 		// called when ACTION is a return; but before the scope is changed
 		// meaning that the scope is the corresponding call, and one of its predecessors is the matching summary
 		final ScopeStackItem currentScopeItem = mScopes.peek();
-		mSummaryMap.addSummary(mHierachicalPreState, postReturnState, currentScopeItem.getAction());
+		mSummaryMap.addSummary(currentScopeItem.getScopeFirstState(), preReturnState, currentScopeItem.getAction());
 
 		mScopedStorages.removeFirst();
 		final ScopeStackItem rtr = mScopes.removeFirst();
@@ -271,13 +271,13 @@ final class WorklistItem<STATE extends IAbstractState<STATE, ACTION, VARDECL>, A
 	private final class ScopeStackItem {
 		private final ACTION mScope;
 		private final AbstractMultiState<STATE, ACTION, VARDECL> mScopeHierachicalPreState;
-		private final AbstractMultiState<STATE, ACTION, VARDECL> mScopePreState;
+		private final AbstractMultiState<STATE, ACTION, VARDECL> mScopeFirstState;
 
 		private ScopeStackItem(final ACTION action, final AbstractMultiState<STATE, ACTION, VARDECL> hierPre,
-				final AbstractMultiState<STATE, ACTION, VARDECL> preState) {
+				final AbstractMultiState<STATE, ACTION, VARDECL> scopeFirst) {
 			mScope = action;
 			mScopeHierachicalPreState = hierPre;
-			mScopePreState = preState;
+			mScopeFirstState = scopeFirst;
 		}
 
 		ACTION getAction() {
@@ -288,8 +288,8 @@ final class WorklistItem<STATE extends IAbstractState<STATE, ACTION, VARDECL>, A
 			return mScopeHierachicalPreState;
 		}
 
-		AbstractMultiState<STATE, ACTION, VARDECL> getScopePreState() {
-			return mScopePreState;
+		AbstractMultiState<STATE, ACTION, VARDECL> getScopeFirstState() {
+			return mScopeFirstState;
 		}
 	}
 }
