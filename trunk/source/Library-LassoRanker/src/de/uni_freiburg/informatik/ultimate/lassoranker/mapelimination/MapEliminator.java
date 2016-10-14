@@ -351,7 +351,7 @@ public class MapEliminator {
 		return newTF;
 	}
 
-	public HashRelation<MapTemplate, ArrayIndex> getLocalIndices(final TransFormulaLR transformula,
+	private HashRelation<MapTemplate, ArrayIndex> getLocalIndices(final TransFormulaLR transformula,
 			final HashRelation<MapTemplate, ArrayIndex> occurringIndices) {
 		final HashRelation<MapTemplate, ArrayIndex> result = new HashRelation<>();
 		result.addAll(occurringIndices);
@@ -933,19 +933,24 @@ public class MapEliminator {
 	private Term indexEqualityInequalityImpliesValueEquality(final ArrayIndex index, final ArrayIndex equal,
 			final Collection<ArrayIndex> unequal, final Term value1, final Term value2,
 			final EqualityAnalysisResult invariants, final TransFormulaLR transformula) {
-		Term lhs = getEqualTerm(index, equal, invariants);
-		for (final ArrayIndex i : unequal) {
-			lhs = Util.and(mScript, lhs, Util.not(mScript, getEqualTerm(index, i, invariants)));
-		}
-		// Check if all vars of the lhs also occur in the formula
-		// If not and onlyArgumentsInFormula is enabled, return "true" as an overapproximation
-		final List<TermVariable> freeVarsTerm = Arrays.asList(lhs.getFreeVars());
+		final List<Term> disjuncts = new ArrayList<>();
 		final List<TermVariable> freeVarsFormula = Arrays.asList(transformula.getFormula().getFreeVars());
-		if (!freeVarsFormula.containsAll(freeVarsTerm) && mSettings.onlyArgumentsInFormula()) {
+		final Term inequality = Util.not(mScript, getEqualTerm(index, equal, invariants));
+		final List<TermVariable> freeVarsInequality = Arrays.asList(inequality.getFreeVars());
+		if (!freeVarsFormula.containsAll(freeVarsInequality) && mSettings.onlyArgumentsInFormula()) {
 			return mScript.term("true");
 		}
-		final Term rhs = SmtUtils.binaryEquality(mScript, value1, value2);
-		return Util.or(mScript, SmtUtils.not(mScript, lhs), rhs);
+		disjuncts.add(inequality);
+		for (final ArrayIndex i : unequal) {
+			final Term equality = getEqualTerm(index, i, invariants);
+			final List<TermVariable> freeVarsEquality = Arrays.asList(equality.getFreeVars());
+			if (!freeVarsFormula.containsAll(freeVarsEquality) && mSettings.onlyArgumentsInFormula()) {
+				return mScript.term("true");
+			}
+			disjuncts.add(equality);
+		}
+		disjuncts.add(SmtUtils.binaryEquality(mScript, value1, value2));
+		return SmtUtils.or(mScript, disjuncts);
 	}
 
 	private Term indexEqualityImpliesValueEquality(final ArrayIndex index, final ArrayIndex equal, final Term value1,
