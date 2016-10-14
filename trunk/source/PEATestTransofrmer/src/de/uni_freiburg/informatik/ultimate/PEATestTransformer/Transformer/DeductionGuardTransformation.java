@@ -180,7 +180,7 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 		CDD[] dnf = invariant.toDNF();
 		CDD resultingConjunct = CDD.FALSE;
 		CDD temp = CDD.TRUE;
-		for(CDD conjunct: dnf){
+		for(CDD conjunct: dnf){ 
 			temp = CDD.TRUE;
 			if(isEffectEdge){
 				if (this.containsEffect(conjunct, effectVars)){
@@ -190,12 +190,12 @@ public class DeductionGuardTransformation implements IPeaTransformer {
 						l = CDD.TRUE;
 					}
 					temp = conjunct.prime(clockVar).and(l);
-					for(CDD t: dnf){
+					/*for(CDD t: dnf){
 						if(!this.containsEffect(t, effectVars)){
 							t = t.negate().prime(clockVar);
 							temp = temp.and(t);
 						}
-					}
+					}*/
 				} else {
 					// conjunct && !R_effect
 					// may loop on not deducable but not effect triggering variables because it is an implication
