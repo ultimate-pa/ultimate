@@ -185,8 +185,9 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 	public MinimizeNwaMaxSat2(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand, final boolean addMapOldState2newState,
 			final Collection<Set<STATE>> initialPartition) throws AutomataOperationCanceledException {
-		this(services, stateFactory, operand, addMapOldState2newState, initialPartition, true,
-				false, false, true, false, false);
+		this(services, stateFactory, operand, addMapOldState2newState, 
+				new LookaheadPartitionConstructor<>(services, operand, initialPartition, false).getPartition(), 
+				true, false, false, true, false, false);
 	}
 	
 	/**
@@ -251,6 +252,8 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 		}
 		mLargestBlockInitialPartition = largestBlockInitialPartition;
 		mInitialPartitionSize = initialPartitionSize;
+		mLogger.info("Initial partition has " + initialPartitionSize + 
+				" blocks, largest block has " + largestBlockInitialPartition + " states");
 		
 		// create solver
 		if (!mUseTransitionHornClauses && useHornSolver) {
