@@ -75,6 +75,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *            state type
  */
 public class LookaheadPartitionConstructor<LETTER, STATE> {
+	// fast enable/disable for arbitrary lookahead vs. lookahead of depth 1
+	// TODO activate this again after making benchmarks
+	private static final boolean ARBITRARY_LOOKAHEAD = false;
+	
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;
@@ -217,11 +221,14 @@ public class LookaheadPartitionConstructor<LETTER, STATE> {
 	/**
 	 * NOTE: The method assumes that all states in the same block have the same
 	 * outgoing internal and call symbols.
+	 * <p>
+	 * The method loops as long as a change has been detected. This roughly corresponds to lookahead of arbitrary depth.
 	 * 
 	 * @param inputPartition
 	 *            old partition
 	 * @return new partition
 	 */
+	@SuppressWarnings("squid:S3047")
 	private Set<Set<STATE>> splitSuccessorsDeterministic(final Set<Set<STATE>> inputPartition) {
 		Set<Set<STATE>> partition = inputPartition;
 		final Map<STATE, Set<STATE>> state2block = new HashMap<>(mOperand.size());
@@ -254,6 +261,8 @@ public class LookaheadPartitionConstructor<LETTER, STATE> {
 			assert (!hasChanged) || (partition.size() < newPartition.size()) : "Inconsistent partition refinement.";
 			assert partitionsConsistency(partition, newPartition);
 			partition = newPartition;
+			
+			hasChanged &= ARBITRARY_LOOKAHEAD;
 		}
 		
 		return partition;
