@@ -129,7 +129,7 @@ public class LookaheadPartitionConstructor<LETTER, STATE> {
 	 *            states can be in a set
 	 */
 	public LookaheadPartitionConstructor(final AutomataLibraryServices services,
-			final INestedWordAutomaton<LETTER, STATE> operand, final Set<Set<STATE>> initialPartition,
+			final INestedWordAutomaton<LETTER, STATE> operand, final Collection<Set<STATE>> initialPartition,
 			final boolean separateAcceptingStates) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
@@ -159,7 +159,7 @@ public class LookaheadPartitionConstructor<LETTER, STATE> {
 		return mPairs;
 	}
 	
-	private Set<Set<STATE>> createPartition(final Set<Set<STATE>> initialPartition,
+	private Set<Set<STATE>> createPartition(final Collection<Set<STATE>> initialPartition,
 			final boolean separateAcceptingStates) {
 		// result partition (changed several times)
 		Set<Set<STATE>> partition;
@@ -190,7 +190,7 @@ public class LookaheadPartitionConstructor<LETTER, STATE> {
 		return partition;
 	}
 	
-	private Set<Set<STATE>> splitDifferentSymbols(final Set<Set<STATE>> oldPartition) {
+	private Set<Set<STATE>> splitDifferentSymbols(final Collection<Set<STATE>> oldPartition) {
 		final Set<Set<STATE>> newPartition = new LinkedHashSet<>();
 		
 		for (final Set<STATE> block : oldPartition) {
