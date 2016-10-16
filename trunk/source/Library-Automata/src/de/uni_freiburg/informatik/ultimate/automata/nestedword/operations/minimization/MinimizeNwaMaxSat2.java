@@ -189,7 +189,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand, final boolean addMapOldState2newState,
 			final Collection<Set<STATE>> initialPartition) throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, addMapOldState2newState,
-				new LookaheadPartitionConstructor<>(services, operand, initialPartition, true).getPartition(),
+				new LookaheadPartitionConstructor<>(services, operand, initialPartition, false).getPartition(),
 				true, false, false, true, false, false);
 	}
 	
