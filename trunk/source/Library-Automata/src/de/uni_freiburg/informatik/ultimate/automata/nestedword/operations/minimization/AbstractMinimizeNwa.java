@@ -209,6 +209,8 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperati
 					inputAnalyzer.getNumberOfTransitions(SymbolType.CALL));
 			result.addKeyValuePair(StatisticsType.TRANSITIONS_RETURN_INPUT,
 					inputAnalyzer.getNumberOfTransitions(SymbolType.RETURN));
+			result.addKeyValuePair(StatisticsType.BUCHI_NONDETERMINISTIC_STATES,
+					inputAnalyzer.getNumberOfNondeterministicStates());
 			
 			// Output automaton
 			final Analyze<LETTER, STATE> outputAnalyzer = new Analyze<>(mServices, mResult, true);
@@ -222,11 +224,13 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperati
 					(int) Math.round(outputAnalyzer.getTransitionDensity(SymbolType.TOTAL) * 1_000_000));
 			result.addKeyValuePair(StatisticsType.REMOVED_TRANSITIONS, inputTransitions - outputTransitions);
 			result.addKeyValuePair(StatisticsType.TRANSITIONS_INTERNAL_OUTPUT,
-					inputAnalyzer.getNumberOfTransitions(SymbolType.INTERNAL));
+					outputAnalyzer.getNumberOfTransitions(SymbolType.INTERNAL));
 			result.addKeyValuePair(StatisticsType.TRANSITIONS_CALL_OUTPUT,
-					inputAnalyzer.getNumberOfTransitions(SymbolType.CALL));
+					outputAnalyzer.getNumberOfTransitions(SymbolType.CALL));
 			result.addKeyValuePair(StatisticsType.TRANSITIONS_RETURN_OUTPUT,
-					inputAnalyzer.getNumberOfTransitions(SymbolType.RETURN));
+					outputAnalyzer.getNumberOfTransitions(SymbolType.RETURN));
+			result.addKeyValuePair(StatisticsType.RESULT_NONDETERMINISTIC_STATES,
+					outputAnalyzer.getNumberOfNondeterministicStates());
 		}
 		
 		return result;
