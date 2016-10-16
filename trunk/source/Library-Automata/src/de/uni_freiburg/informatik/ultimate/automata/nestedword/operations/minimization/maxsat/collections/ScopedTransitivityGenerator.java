@@ -42,7 +42,7 @@ public class ScopedTransitivityGenerator<C> {
 	 */
 	public ScopedTransitivityGenerator(final boolean compressPaths) {
 		mContent2node = new HashMap<>();
-		mStack = new ScopeStack<C>();
+		mStack = new ScopeStack<>();
 		mTemporaryRootPredicate = new TemporaryRootPredicate();
 		mPersistentRootPredicate = new PersistentRootPredicate();
 		mCompressPaths = compressPaths;
@@ -58,7 +58,7 @@ public class ScopedTransitivityGenerator<C> {
 	 *            new content
 	 */
 	public void addContent(final C content) {
-		final NormalNode<C> oldValue = mContent2node.put(content, new NormalNode<C>(content));
+		final NormalNode<C> oldValue = mContent2node.put(content, new NormalNode<>(content));
 		assert oldValue == null : "Never add a content twice.";
 	}
 	
@@ -143,9 +143,8 @@ public class ScopedTransitivityGenerator<C> {
 				persistentParent.addNormalChild(source);
 			}
 			return findNextRoot(persistentParent, mTemporaryRootPredicate);
-		} else {
-			return findNextRoot(source, mTemporaryRootPredicate);
 		}
+		return findNextRoot(source, mTemporaryRootPredicate);
 	}
 	
 	private NormalNode<C> findNextRoot(final NormalNode<C> source, final INodePredicate predicate) {
@@ -177,7 +176,7 @@ public class ScopedTransitivityGenerator<C> {
 	}
 	
 	/**
-	 * This implementation first transforms the trees to arrays and the just iterates over the two arrays to create all
+	 * This implementation first transforms the trees to arrays and then just iterates over the two arrays to create all
 	 * pairs.<br>
 	 * While this needs more time and space initially, iteration afterward should be very fast.
 	 * <p>
@@ -203,7 +202,7 @@ public class ScopedTransitivityGenerator<C> {
 		final List<Doubleton<C>> result = new ArrayList<>(asList1.size() * asList2.size() - 1);
 		for (final C content1 : asList1) {
 			for (final C content2 : asList2) {
-				final Doubleton<C> doubleton = new Doubleton<C>(content1, content2);
+				final Doubleton<C> doubleton = new Doubleton<>(content1, content2);
 				if (!doubleton.equals(inputDoubleton)) {
 					result.add(doubleton);
 				}
@@ -262,8 +261,8 @@ public class ScopedTransitivityGenerator<C> {
 			 */
 			addScope();
 			
-			mRevertBridgeAction = new TemporaryBridgeAction<T>();
-			mPersistentBridgeAction = new PersistentBridgeAction<T>();
+			mRevertBridgeAction = new TemporaryBridgeAction<>();
+			mPersistentBridgeAction = new PersistentBridgeAction<>();
 		}
 		
 		/**
@@ -328,7 +327,7 @@ public class ScopedTransitivityGenerator<C> {
 		 * @return the temporary bridge node
 		 */
 		public BridgeNode<T> bridgeTrees(final NormalNode<T> newRoot, final NormalNode<T> newChild) {
-			final BridgeNode<T> bridgeNode = new BridgeNode<T>(newRoot, newChild);
+			final BridgeNode<T> bridgeNode = new BridgeNode<>(newRoot, newChild);
 			newChild.setParent(bridgeNode);
 			newRoot.addBridgeChild(bridgeNode);
 			mStack.peek().add(bridgeNode);
@@ -355,6 +354,7 @@ public class ScopedTransitivityGenerator<C> {
 		 * @param <T>
 		 *            node type
 		 */
+		@FunctionalInterface
 		private interface IBridgeAction<T> {
 			void execute(BridgeNode<T> bridgeNode);
 		}
@@ -408,6 +408,7 @@ public class ScopedTransitivityGenerator<C> {
 	 * 
 	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 	 */
+	@FunctionalInterface
 	private interface INodePredicate {
 		boolean check(INode<?> node);
 	}
@@ -517,7 +518,7 @@ public class ScopedTransitivityGenerator<C> {
 		
 		@Override
 		public Iterable<INode<T>> getChildren() {
-			return new ChildrenIterable<T>(mNormalChildren, mBridgeChildren);
+			return new ChildrenIterable<>(mNormalChildren, mBridgeChildren);
 		}
 		
 		/**
@@ -593,7 +594,7 @@ public class ScopedTransitivityGenerator<C> {
 			
 			@Override
 			public Iterator<INode<T>> iterator() {
-				return new ChildrenIterator<T>(mNormalChildren, mBridgeChildren);
+				return new ChildrenIterator<>(mNormalChildren, mBridgeChildren);
 			}
 		}
 		
