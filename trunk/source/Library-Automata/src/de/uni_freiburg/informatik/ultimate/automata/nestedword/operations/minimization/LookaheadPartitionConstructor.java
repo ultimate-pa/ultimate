@@ -76,9 +76,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *            state type
  */
 public class LookaheadPartitionConstructor<LETTER, STATE> {
-	// fast enable/disable for arbitrary lookahead vs. lookahead of depth 1
+	// fast enable/disable for deterministic lookahead (<0 to deactivate)
 	// TODO activate this again after making benchmarks
-	private static final boolean ARBITRARY_LOOKAHEAD = false;
+	private static final int LOOKAHEAD = 0;
 	
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
@@ -180,11 +180,13 @@ public class LookaheadPartitionConstructor<LETTER, STATE> {
 			}
 		}
 		
-		// split states with (unique) split successors wrt. a symbol
-		partition = splitSuccessorsDeterministic(partition);
-		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("Splitting by different deterministic successors, result:");
-			mLogger.debug(partition);
+		if (LOOKAHEAD >= 0) {
+			// split states with (unique) split successors wrt. a symbol
+			partition = splitSuccessorsDeterministic(partition);
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("Splitting by different deterministic successors, result:");
+				mLogger.debug(partition);
+			}
 		}
 		
 		return partition;
@@ -263,6 +265,7 @@ public class LookaheadPartitionConstructor<LETTER, STATE> {
 		}
 		
 		boolean hasChanged = true;
+		int iterations = 0;
 		while (hasChanged) {
 			hasChanged = false;
 			
@@ -286,7 +289,8 @@ public class LookaheadPartitionConstructor<LETTER, STATE> {
 			assert partitionsConsistency(partition, newPartition);
 			partition = newPartition;
 			
-			hasChanged &= ARBITRARY_LOOKAHEAD;
+			++iterations;
+			hasChanged &= (LOOKAHEAD < 0) || (iterations < LOOKAHEAD);
 		}
 		
 		return partition;
