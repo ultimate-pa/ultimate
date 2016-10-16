@@ -46,27 +46,15 @@ public enum StatisticsType {
 	/**
 	 * Number of internal symbols.
 	 */
-	ALPHABET_SIZE_INTERNAL_INPUT,
-	/**
-	 * Number of internal symbols.
-	 */
-	ALPHABET_SIZE_INTERNAL_OUTPUT,
+	ALPHABET_SIZE_INTERNAL,
 	/**
 	 * Number of call symbols.
 	 */
-	ALPHABET_SIZE_CALL_INPUT,
-	/**
-	 * Number of call symbols.
-	 */
-	ALPHABET_SIZE_CALL_OUTPUT,
+	ALPHABET_SIZE_CALL,
 	/**
 	 * Number of return symbols.
 	 */
-	ALPHABET_SIZE_RETURN_INPUT,
-	/**
-	 * Number of return symbols.
-	 */
-	ALPHABET_SIZE_RETURN_OUTPUT,
+	ALPHABET_SIZE_RETURN,
 	/**
 	 * One if the game automaton of a nwa game graph already was deterministic
 	 * before using the determinizer, zero or not set else (used in simulation,
