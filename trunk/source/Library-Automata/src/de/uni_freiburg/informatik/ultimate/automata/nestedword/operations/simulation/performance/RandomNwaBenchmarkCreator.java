@@ -34,6 +34,7 @@ import java.util.Date;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.GetRandomNwaTv;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyze;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyze.SymbolType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.GetRandomNwa;
@@ -57,7 +58,7 @@ public final class RandomNwaBenchmarkCreator {
 	 * Default amount of created Nwa automata after which a logging message gets
 	 * printed.
 	 */
-	public static final int LOG_EVERY = 50;
+	public static final int LOG_EVERY = 10;
 	/**
 	 * The lower bound for a value that can be interpreted as percentage.
 	 */
@@ -83,20 +84,22 @@ public final class RandomNwaBenchmarkCreator {
 	public static void main(final String[] args) throws IOException {
 		final int n = 100;
 		final int k = 2;
-		final float acceptanceInPerc = 10;
-		final float totalityInternalInPerc = 10f;
-		final float totalityCallInPerc = 10f;
-		final float totalityReturnInPerc = 0.1f;
-		final int amount = 500;
-		final int operationSwitch = 2;
+		final float acceptanceInPerc = 50;
+		final float totalityInternalInPerc = 100f;
+		final float totalityCallInPerc = 100f;
+		final float totalityReturnInPerc = 100f;
+		final float totalityHierPredInPerc = 100f;
+		final int amount = 100;
+		final int operationSwitch = 0;
+		final boolean useRandomTvModel = true;
 
 		final String operation;
 		switch (operationSwitch) {
 		case 0:
-			operation = "compareReduceNwaSimulation(removeDeadEnds(nwa));";
+			operation = "compareReduceNwaSimulation(removeUnreachable(nwa));";
 			break;
 		case 1:
-			operation = "reduceNwaDirectSimulation(removeDeadEnds(nwa), false);";
+			operation = "reduceNwaDirectSimulation(removeUnreachable(nwa), false);";
 			break;
 		case 2:
 			operation = "minimizeNwaMaxSat2(removeUnreachable(nwa));";
@@ -111,13 +114,24 @@ public final class RandomNwaBenchmarkCreator {
 				+ "// Author: Daniel Tischner {@literal <zabuza.dev@gmail.com>}\n\n" + operation + "\n\n";
 
 		// Create the object and pass settings
-		final RandomNwaBenchmarkCreator creator = new RandomNwaBenchmarkCreator(n, k, acceptanceInPerc,
-				totalityInternalInPerc, totalityCallInPerc, totalityReturnInPerc);
+		final RandomNwaBenchmarkCreator creator;
+		if (useRandomTvModel) {
+			creator = new RandomNwaBenchmarkCreator(n, k, acceptanceInPerc, totalityInternalInPerc, totalityCallInPerc, totalityReturnInPerc, totalityHierPredInPerc);
+		} else {
+			creator = new RandomNwaBenchmarkCreator(n, k, acceptanceInPerc, totalityInternalInPerc, totalityCallInPerc, totalityReturnInPerc);
+		}
 		creator.setPreamble(preamble);
 
 		System.out.println("Starting automata generation.");
-		String label = "#" + amount + "_n" + n + "_k" + k + "_f" + acceptanceInPerc + "%_ti" + totalityInternalInPerc
-				+ "%_tc" + totalityCallInPerc + "%_tr" + totalityReturnInPerc + "%";
+		String label;
+		if (useRandomTvModel) {
+			label = "#" + amount + "_n" + n + "_k" + k + "_f" + acceptanceInPerc + "%_ti" + totalityInternalInPerc
+					+ "%_tc" + totalityCallInPerc + "%_tr" + totalityReturnInPerc + "%_th" + totalityHierPredInPerc + "%";
+		} else {
+			label = "#" + amount + "_n" + n + "_k" + k + "_f" + acceptanceInPerc + "%_ti" + totalityInternalInPerc
+					+ "%_tc" + totalityCallInPerc + "%_tr" + totalityReturnInPerc + "%";
+		}
+		
 		creator.createAndSaveABenchmark(amount, label);
 		System.out.println("Finished automata generation.");
 		System.out.println("Overview label:");
@@ -143,7 +157,17 @@ public final class RandomNwaBenchmarkCreator {
 	 * have, between 0 and 100 (both inclusive).
 	 */
 	private final float mInternalTotality;
+	/**
+	 * The text that gets saved in every following created ats-File right before
+	 * the automaton itself. Can be used to write operations, that use the
+	 * automaton, directly in the same file.
+	 */
 	private String mPreamble;
+	/**
+	 * The percentage of how many hierarchical predecessor for return
+	 * transitions each state should have, greater equals 0
+	 */
+	private final float mHierarchicalPredecessorDensity;
 	/**
 	 * The percentage of how many return transitions each state should be have,
 	 * between 0 and 100 (both inclusive).
@@ -159,11 +183,17 @@ public final class RandomNwaBenchmarkCreator {
 	 * The amount of states generated Nwa automata should have.
 	 */
 	private final int mSize;
+	/**
+	 * If <tt>true</tt> {@link GetRandomNwaTv}, else {@link GetRandomNwa} gets
+	 * used for creation.
+	 */
+	private final boolean mUseRandomTvModel;
 
 	/**
 	 * Creates a new creator object that is able to generate random automata
 	 * with the given properties. A benchmark set can then be created using
-	 * {@link #createAndSaveABenchmark(int, File, int)}.
+	 * {@link #createAndSaveABenchmark(int, File, int)}. This constructor
+	 * internally uses {@link GetRandomNwa}.
 	 *
 	 * @param size
 	 *            The amount of states generated Nwa automata should have
@@ -193,6 +223,52 @@ public final class RandomNwaBenchmarkCreator {
 		mInternalTotality = ensureIsPercentage(internalTotality);
 		mCallTotality = ensureIsPercentage(callTotality);
 		mReturnTotality = ensureIsPercentage(returnTotality);
+		mHierarchicalPredecessorDensity = -1f;
+		mUseRandomTvModel = false;
+
+		mServices = new AutomataLibraryServices(new ToolchainStorage());
+		mPreamble = "";
+	}
+
+	/**
+	 * Creates a new creator object that is able to generate random automata
+	 * with the given properties. A benchmark set can then be created using
+	 * {@link #createAndSaveABenchmark(int, File, int)}. This constructor
+	 * internally uses {@link GetRandomNwaTv}.
+	 *
+	 * @param size
+	 *            The amount of states generated Nwa automata should have
+	 * @param alphabetSize
+	 *            The size of the alphabet generated Nwa automata should have
+	 * @param acceptance
+	 *            The percentage of how many states should be accepting, between
+	 *            0 and 100 (both inclusive)
+	 * @param internalDensity
+	 *            The percentage of how many internal transitions each state
+	 *            should have, greater equals 0
+	 * @param callDensity
+	 *            The percentage of how many call transitions each state should
+	 *            have, greater equals 0
+	 * @param returnDensity
+	 *            The percentage of how many return transitions each state
+	 *            should have, greater equals 0
+	 * @param hierarchicalPredecessorDensity
+	 *            The percentage of how many hierarchical predecessor for return
+	 *            transitions each state should have, greater equals 0
+	 * @throws IllegalArgumentException
+	 *             If a percentage value is not in the given range.
+	 */
+	public RandomNwaBenchmarkCreator(final int size, final int alphabetSize, final float acceptance,
+			final float internalDensity, final float callDensity, final float returnDensity,
+			final float hierarchicalPredecessorDensity) throws IllegalArgumentException {
+		mSize = size;
+		mAlphabetSize = alphabetSize;
+		mAcceptance = ensureIsPercentage(acceptance);
+		mInternalTotality = internalDensity;
+		mCallTotality = callDensity;
+		mReturnTotality = returnDensity;
+		mHierarchicalPredecessorDensity = hierarchicalPredecessorDensity;
+		mUseRandomTvModel = true;
 
 		mServices = new AutomataLibraryServices(new ToolchainStorage());
 		mPreamble = "";
@@ -267,8 +343,15 @@ public final class RandomNwaBenchmarkCreator {
 				System.out.println("Created automata: " + i);
 			}
 
-			nwa = new GetRandomNwa(mServices, mAlphabetSize, mSize, internalTotalityDouble, callTotalityDouble,
-					returnTotalityDouble, acceptanceDouble).getResult();
+			// Use the appropriate method depending on the input
+			if (mUseRandomTvModel) {
+				nwa = new GetRandomNwaTv(mServices, mSize, mAlphabetSize, mAlphabetSize, mAlphabetSize,
+						(int) mInternalTotality, (int) mCallTotality, (int) mReturnTotality,
+						(int) mHierarchicalPredecessorDensity, (int) mAcceptance).getResult();
+			} else {
+				nwa = new GetRandomNwa(mServices, mAlphabetSize, mSize, internalTotalityDouble, callTotalityDouble,
+						returnTotalityDouble, acceptanceDouble).getResult();
+			}
 
 			if (i == 1) {
 				// Print some debug information
