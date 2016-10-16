@@ -105,12 +105,44 @@ public class CsvProviderRowFilter<T> implements ICsvProviderTransformer<T> {
 					continue;
 				}
 				
-				if (!allowedValues.contains(rowValues.get(i))) {
-					// value is not allowed
+				if (checkForbiddenValue(rowValues, i, allowedValues)) {
 					return false;
 				}
 			}
 			return true;
+		}
+
+		protected boolean checkForbiddenValue(final List<T> rowValues, final int i, final Set<T> allowedValues) {
+			if (!allowedValues.contains(rowValues.get(i))) {
+				// value is not allowed
+				return false;
+			}
+			return true;
+		}
+	}
+	
+	/**
+	 * A predicate which filters rows such that certain columns contain none of the predefined values.
+	 * 
+	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+	 * @param <T>
+	 *            CSV provider type
+	 */
+	public static class DisallowedValuesRowFilter<T> extends AllowedValuesRowFilter<T> {
+		/**
+		 * Constructor.
+		 * 
+		 * @param column2disallowedValues
+		 *            maps a column title to a set containing all values which are not allowed in this column
+		 */
+		public DisallowedValuesRowFilter(final Map<String, Set<T>> column2disallowedValues) {
+			super(column2disallowedValues);
+		}
+
+		@Override
+		protected boolean checkForbiddenValue(final List<T> rowValues, final int i, final Set<T> allowedValues) {
+			// invert the result
+			return !super.checkForbiddenValue(rowValues, i, allowedValues);
 		}
 	}
 }
