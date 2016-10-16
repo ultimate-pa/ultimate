@@ -194,6 +194,14 @@ public enum StatisticsType {
 	 */
 	IS_USING_SCCS,
 	/**
+	 * Number of variables.
+	 */
+	NUMBER_OF_VARIABLES,
+	/**
+	 * Number of clauses.
+	 */
+	NUMBER_OF_CLAUSES,
+	/**
 	 * Operation name.
 	 */
 	OPERATION_NAME,

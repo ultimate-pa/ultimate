@@ -258,6 +258,16 @@ public class DimacsMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 	}
 	
 	@Override
+	public int getNumberOfVariables() {
+		return mVar2NumberString.size();
+	}
+	
+	@Override
+	public int getNumberOfClauses() {
+		return mClauses;
+	}
+	
+	@Override
 	protected Boolean getPersistentAssignment(final V var) {
 		throw new UnsupportedOperationException();
 	}

@@ -112,14 +112,14 @@ public abstract class AbstractMaxSatSolver<V> {
 	/**
 	 * @return The number of variables.
 	 */
-	public final int getNumberOfVariables() {
+	public int getNumberOfVariables() {
 		return mVariables.size();
 	}
 	
 	/**
 	 * @return The number of clauses.
 	 */
-	public final int getNumberOfClauses() {
+	public int getNumberOfClauses() {
 		return mClauses;
 	}
 	

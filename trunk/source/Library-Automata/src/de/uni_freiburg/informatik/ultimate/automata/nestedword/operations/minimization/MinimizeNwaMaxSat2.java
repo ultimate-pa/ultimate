@@ -323,6 +323,8 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 		if (mTimeSolving != 0L) {
 			statistics.addKeyValuePair(StatisticsType.TIME_SOLVING, mTimeSolving);
 		}
+		statistics.addKeyValuePair(StatisticsType.NUMBER_OF_VARIABLES, mSolver.getNumberOfVariables());
+		statistics.addKeyValuePair(StatisticsType.NUMBER_OF_CLAUSES, mSolver.getNumberOfClauses());
 		return statistics;
 	}
 	
