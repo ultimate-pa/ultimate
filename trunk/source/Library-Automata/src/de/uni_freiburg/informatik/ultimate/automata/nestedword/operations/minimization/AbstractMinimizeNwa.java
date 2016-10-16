@@ -197,6 +197,18 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperati
 			result.addKeyValuePair(StatisticsType.BUCHI_TRANSITIONS, inputTransitions);
 			result.addKeyValuePair(StatisticsType.BUCHI_TRANSITION_DENSITY_MILLION,
 					(int) Math.round(inputAnalyzer.getTransitionDensity(SymbolType.TOTAL) * 1_000_000));
+			result.addKeyValuePair(StatisticsType.ALPHABET_SIZE_INTERNAL_INPUT,
+					inputAnalyzer.getNumberOfSymbols(SymbolType.INTERNAL));
+			result.addKeyValuePair(StatisticsType.ALPHABET_SIZE_CALL_INPUT,
+					inputAnalyzer.getNumberOfSymbols(SymbolType.CALL));
+			result.addKeyValuePair(StatisticsType.ALPHABET_SIZE_RETURN_INPUT,
+					inputAnalyzer.getNumberOfSymbols(SymbolType.RETURN));
+			result.addKeyValuePair(StatisticsType.TRANSITIONS_INTERNAL_INPUT,
+					inputAnalyzer.getNumberOfTransitions(SymbolType.INTERNAL));
+			result.addKeyValuePair(StatisticsType.TRANSITIONS_CALL_INPUT,
+					inputAnalyzer.getNumberOfTransitions(SymbolType.CALL));
+			result.addKeyValuePair(StatisticsType.TRANSITIONS_RETURN_INPUT,
+					inputAnalyzer.getNumberOfTransitions(SymbolType.RETURN));
 			
 			// Output automaton
 			final Analyze<LETTER, STATE> outputAnalyzer = new Analyze<>(mServices, mResult, true);
@@ -209,6 +221,18 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperati
 			result.addKeyValuePair(StatisticsType.RESULT_TRANSITION_DENSITY_MILLION,
 					(int) Math.round(outputAnalyzer.getTransitionDensity(SymbolType.TOTAL) * 1_000_000));
 			result.addKeyValuePair(StatisticsType.REMOVED_TRANSITIONS, inputTransitions - outputTransitions);
+			result.addKeyValuePair(StatisticsType.ALPHABET_SIZE_INTERNAL_OUTPUT,
+					inputAnalyzer.getNumberOfSymbols(SymbolType.INTERNAL));
+			result.addKeyValuePair(StatisticsType.ALPHABET_SIZE_CALL_OUTPUT,
+					inputAnalyzer.getNumberOfSymbols(SymbolType.CALL));
+			result.addKeyValuePair(StatisticsType.ALPHABET_SIZE_RETURN_OUTPUT,
+					inputAnalyzer.getNumberOfSymbols(SymbolType.RETURN));
+			result.addKeyValuePair(StatisticsType.TRANSITIONS_INTERNAL_OUTPUT,
+					inputAnalyzer.getNumberOfTransitions(SymbolType.INTERNAL));
+			result.addKeyValuePair(StatisticsType.TRANSITIONS_CALL_OUTPUT,
+					inputAnalyzer.getNumberOfTransitions(SymbolType.CALL));
+			result.addKeyValuePair(StatisticsType.TRANSITIONS_RETURN_OUTPUT,
+					inputAnalyzer.getNumberOfTransitions(SymbolType.RETURN));
 		}
 		
 		return result;

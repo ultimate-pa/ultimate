@@ -44,6 +44,30 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
  */
 public enum StatisticsType {
 	/**
+	 * Number of internal symbols.
+	 */
+	ALPHABET_SIZE_INTERNAL_INPUT,
+	/**
+	 * Number of internal symbols.
+	 */
+	ALPHABET_SIZE_INTERNAL_OUTPUT,
+	/**
+	 * Number of call symbols.
+	 */
+	ALPHABET_SIZE_CALL_INPUT,
+	/**
+	 * Number of call symbols.
+	 */
+	ALPHABET_SIZE_CALL_OUTPUT,
+	/**
+	 * Number of return symbols.
+	 */
+	ALPHABET_SIZE_RETURN_INPUT,
+	/**
+	 * Number of return symbols.
+	 */
+	ALPHABET_SIZE_RETURN_OUTPUT,
+	/**
 	 * One if the game automaton of a nwa game graph already was deterministic
 	 * before using the determinizer, zero or not set else (used in simulation,
 	 * for compatibility with {@link ECountingMeasure}).
@@ -345,4 +369,28 @@ public enum StatisticsType {
 	 * Run time for solving.
 	 */
 	TIME_SOLVING,
+	/**
+	 * Number of internal transitions.
+	 */
+	TRANSITIONS_INTERNAL_INPUT,
+	/**
+	 * Number of internal transitions.
+	 */
+	TRANSITIONS_INTERNAL_OUTPUT,
+	/**
+	 * Number of call transitions.
+	 */
+	TRANSITIONS_CALL_INPUT,
+	/**
+	 * Number of call transitions.
+	 */
+	TRANSITIONS_CALL_OUTPUT,
+	/**
+	 * Number of return transitions.
+	 */
+	TRANSITIONS_RETURN_INPUT,
+	/**
+	 * Number of return transitions.
+	 */
+	TRANSITIONS_RETURN_OUTPUT,
 }
