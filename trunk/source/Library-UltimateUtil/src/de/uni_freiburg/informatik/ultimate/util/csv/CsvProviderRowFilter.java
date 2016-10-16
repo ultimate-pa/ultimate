@@ -95,7 +95,7 @@ public class CsvProviderRowFilter<T> implements ICsvProviderTransformer<T> {
 			/*
 			 * TODO One could speed things up here if it runs too slowly for big tables by caching the column index
 			 * during the first run and then only checking those.
-			 * This would work under the (reasonable) assumption that all subsequent calls use the same column order.y
+			 * This would work under the (reasonable) assumption that all subsequent calls use the same column order.
 			 */
 			for (int i = 0; i < size; ++i) {
 				final String columnTitle = iterator.next();
