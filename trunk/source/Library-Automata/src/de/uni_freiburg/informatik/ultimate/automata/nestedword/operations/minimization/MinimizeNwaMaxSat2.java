@@ -32,6 +32,7 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -99,6 +100,8 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 	private static final String ADDING_TRANSITIVITY_CONSTRAINTS = "adding transitivity constraints";
 	private static final String SOLVER_TIMEOUT = "solving";
 	
+	private static final boolean WRITE_TO_STD_OUT = false;
+	
 	private final NestedMap2<STATE, STATE, Doubleton<STATE>> mStatePairs = new NestedMap2<>();
 	private final AbstractMaxSatSolver<Doubleton<STATE>> mSolver;
 	private final Map<STATE, Set<STATE>> mState2EquivalenceClass;
@@ -140,7 +143,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 	 */
 	public MinimizeNwaMaxSat2(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
-		this(services, stateFactory, operand, true, new LookaheadPartitionConstructor<>(services, operand).getResult());
+		this(services, stateFactory, operand, true, Collections.singleton(operand.getStates()));
 	}
 	
 	/**
@@ -185,8 +188,8 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 	public MinimizeNwaMaxSat2(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand, final boolean addMapOldState2newState,
 			final Collection<Set<STATE>> initialPartition) throws AutomataOperationCanceledException {
-		this(services, stateFactory, operand, addMapOldState2newState, 
-				new LookaheadPartitionConstructor<>(services, operand, initialPartition, false).getPartition(), 
+		this(services, stateFactory, operand, addMapOldState2newState,
+				new LookaheadPartitionConstructor<>(services, operand, initialPartition, true).getPartition(),
 				true, false, false, true, false, false);
 	}
 	
@@ -252,8 +255,8 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 		}
 		mLargestBlockInitialPartition = largestBlockInitialPartition;
 		mInitialPartitionSize = initialPartitionSize;
-		mLogger.info("Initial partition has " + initialPartitionSize + 
-				" blocks, largest block has " + largestBlockInitialPartition + " states");
+		mLogger.info("Initial partition has " + initialPartitionSize + " blocks, largest block has "
+				+ largestBlockInitialPartition + " states");
 		
 		// create solver
 		if (!mUseTransitionHornClauses && useHornSolver) {
@@ -263,8 +266,7 @@ public class MinimizeNwaMaxSat2<LETTER, STATE> extends AbstractMinimizeNwaDd<LET
 		ScopedTransitivityGenerator<STATE> transitivityGenerator = null;
 		Appendable cnfWriter = null;
 		if (useExternalSolver) {
-			final boolean writeToStdOut = false;
-			if (writeToStdOut) {
+			if (WRITE_TO_STD_OUT) {
 				cnfWriter = null;
 			} else {
 				try {
