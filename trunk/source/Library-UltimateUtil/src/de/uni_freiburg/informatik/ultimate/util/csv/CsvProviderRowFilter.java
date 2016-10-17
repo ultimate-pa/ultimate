@@ -105,19 +105,15 @@ public class CsvProviderRowFilter<T> implements ICsvProviderTransformer<T> {
 					continue;
 				}
 				
-				if (checkForbiddenValue(rowValues, i, allowedValues)) {
+				if (isForbiddenValue(rowValues, i, allowedValues)) {
 					return false;
 				}
 			}
 			return true;
 		}
 
-		protected boolean checkForbiddenValue(final List<T> rowValues, final int i, final Set<T> allowedValues) {
-			if (!allowedValues.contains(rowValues.get(i))) {
-				// value is not allowed
-				return false;
-			}
-			return true;
+		protected boolean isForbiddenValue(final List<T> rowValues, final int i, final Set<T> allowedValues) {
+			return !allowedValues.contains(rowValues.get(i));
 		}
 	}
 	
@@ -140,9 +136,9 @@ public class CsvProviderRowFilter<T> implements ICsvProviderTransformer<T> {
 		}
 
 		@Override
-		protected boolean checkForbiddenValue(final List<T> rowValues, final int i, final Set<T> allowedValues) {
+		protected boolean isForbiddenValue(final List<T> rowValues, final int i, final Set<T> allowedValues) {
 			// invert the result
-			return !super.checkForbiddenValue(rowValues, i, allowedValues);
+			return !super.isForbiddenValue(rowValues, i, allowedValues);
 		}
 	}
 }
