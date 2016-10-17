@@ -27,13 +27,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -48,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Powers
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IOpWithDelayedDeadEndRemoval;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.senwa.DifferenceSenwa;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
@@ -60,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ba
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.StraightLineInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IMLPredicate;
@@ -111,34 +112,9 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 	}
 
 	@Override
-	protected Collection<Set<IPredicate>> computePartition(final INestedWordAutomaton<CodeBlock, IPredicate> automaton) {
-		mLogger.info("Start computation of initial partition.");
-		final Collection<IPredicate> states = automaton.getStates();
-		final Map<Set<ProgramPoint>, Set<IPredicate>> pp2p = new HashMap<>();
-		for (final IPredicate p : states) {
-			final IMLPredicate mp = (IMLPredicate) p;
-			pigeonHole(pp2p, mp);
-		}
-		final Collection<Set<IPredicate>> partition = new ArrayList<>();
-		for (final Set<ProgramPoint> pps : pp2p.keySet()) {
-			final Set<IPredicate> statesWithSamePP = pp2p.get(pps);
-			partition.add(statesWithSamePP);
-		}
-		mLogger.info("Finished computation of initial partition.");
-		return partition;
-	}
-
-	/**
-	 * Pigeon-hole (german: einsortieren) predicates according to their
-	 * ProgramPoint
-	 */
-	protected static void pigeonHole(final Map<Set<ProgramPoint>, Set<IPredicate>> pp2p, final IMLPredicate mp) {
-		Set<IPredicate> statesWithSamePPs = pp2p.get(asHashSet(mp.getProgramPoints()));
-		if (statesWithSamePPs == null) {
-			statesWithSamePPs = new HashSet<>();
-			pp2p.put(asHashSet(mp.getProgramPoints()), statesWithSamePPs);
-		}
-		statesWithSamePPs.add(mp);
+	protected Collection<Set<IPredicate>> computePartition(final INestedWordAutomaton<CodeBlock, IPredicate> automaton, final ILogger logger) {
+		final Function<IMLPredicate, Set<ProgramPoint>> locProvider = (x -> asHashSet(x.getProgramPoints()));
+		return TraceAbstractionUtils.computePartition(automaton, logger, locProvider );
 	}
 
 	private static <E> Set<E> asHashSet(final E[] array) {
@@ -174,7 +150,7 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 				determinized, false, mPredicateFactoryInterpolantAutomata);
 
 		if (mPref.differenceSenwa()) {
-			diff = new DifferenceSenwa<>(new AutomataLibraryServices(mServices), oldAbstraction, (INestedWordAutomaton<CodeBlock, IPredicate>) determinized, psd2, false);
+			diff = new DifferenceSenwa<>(new AutomataLibraryServices(mServices), oldAbstraction, determinized, psd2, false);
 		} else {
 			diff = new Difference<>(new AutomataLibraryServices(mServices), oldAbstraction, determinized, psd2,
 					mStateFactoryForRefinement, explointSigmaStarConcatOfIA);

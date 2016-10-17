@@ -29,11 +29,11 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -76,6 +76,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.senwa.DifferenceS
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -794,7 +795,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		// long startTime = System.currentTimeMillis();
 		final INestedWordAutomaton<CodeBlock, IPredicate> oldAbstraction =
 				(INestedWordAutomaton<CodeBlock, IPredicate>) mAbstraction;
-		final Collection<Set<IPredicate>> partition = computePartition(oldAbstraction);
+		final Collection<Set<IPredicate>> partition = computePartition(oldAbstraction, mLogger);
 		try {
 			// output of minimization
 			final IMinimizeNwa<CodeBlock, IPredicate> newAbstractionRaw;
@@ -971,34 +972,12 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	// }
 
 	protected Collection<Set<IPredicate>>
-			computePartition(final INestedWordAutomaton<CodeBlock, IPredicate> automaton) {
-		mLogger.info("Start computation of initial partition.");
-		final Collection<IPredicate> states = automaton.getStates();
-		final Map<ProgramPoint, Set<IPredicate>> pp2p = new HashMap<>();
-		for (final IPredicate p : states) {
-			final ISLPredicate sp = (ISLPredicate) p;
-			pigeonHole(pp2p, sp);
-		}
-		final Collection<Set<IPredicate>> partition = new ArrayList<>();
-		for (final ProgramPoint pp : pp2p.keySet()) {
-			final Set<IPredicate> statesWithSamePP = pp2p.get(pp);
-			partition.add(statesWithSamePP);
-		}
-		mLogger.info("Finished computation of initial partition.");
-		return partition;
+			computePartition(final INestedWordAutomaton<CodeBlock, IPredicate> automaton, final ILogger logger) {
+		final Function<ISLPredicate, ProgramPoint> locProvider = (x -> x.getProgramPoint());
+		return TraceAbstractionUtils.computePartition(automaton, logger, locProvider );
+
 	}
 
-	/**
-	 * Pigeon-hole (german: einsortieren) predicates according to their ProgramPoint
-	 */
-	private static void pigeonHole(final Map<ProgramPoint, Set<IPredicate>> pp2p, final ISLPredicate sp) {
-		Set<IPredicate> statesWithSamePP = pp2p.get(sp.getProgramPoint());
-		if (statesWithSamePP == null) {
-			statesWithSamePP = new HashSet<>();
-			pp2p.put(sp.getProgramPoint(), statesWithSamePP);
-		}
-		statesWithSamePP.add(sp);
-	}
 
 	// private boolean eachStateIsFinal(Collection<IPredicate> states,
 	// INestedWordAutomatonOldApi<CodeBlock, IPredicate> automaton) {

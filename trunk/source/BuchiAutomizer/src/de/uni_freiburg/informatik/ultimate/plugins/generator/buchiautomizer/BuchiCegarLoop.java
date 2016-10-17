@@ -35,6 +35,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -108,6 +109,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ho
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryResultChecking;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.CanonicalInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EfficientHoareTripleChecker;
@@ -602,7 +604,7 @@ public class BuchiCegarLoop {
 			mBenchmarkGenerator.reportMinimizationOfNondetAutom();
 		}
 		mLogger.info("Abstraction has " + mAbstraction.sizeInformation());
-		final Collection<Set<IPredicate>> partition = computePartition(mAbstraction);
+		final Collection<Set<IPredicate>> partition = computePartition(mAbstraction, mLogger);
 		try {
 			if (mAbstraction.size() > 0) {
 				final INestedWordAutomaton<CodeBlock, IPredicate> minimized = minimize(partition);
@@ -939,40 +941,9 @@ public class BuchiCegarLoop {
 		return result;
 	}
 
-	public Collection<Set<IPredicate>> computePartition(final INestedWordAutomaton<CodeBlock, IPredicate> automaton) {
-		mLogger.info("Start computation of initial partition.");
-		final Collection<IPredicate> states = automaton.getStates();
-		final Map<ProgramPoint, Set<IPredicate>> accepting = new HashMap<>();
-		final Map<ProgramPoint, Set<IPredicate>> nonAccepting = new HashMap<>();
-		for (final IPredicate p : states) {
-			final ISLPredicate sp = (ISLPredicate) p;
-			if (automaton.isFinal(p)) {
-				Set<IPredicate> statesWithSamePP = accepting.get(sp.getProgramPoint());
-				if (statesWithSamePP == null) {
-					statesWithSamePP = new HashSet<>();
-					accepting.put(sp.getProgramPoint(), statesWithSamePP);
-				}
-				statesWithSamePP.add(p);
-			} else {
-				Set<IPredicate> statesWithSamePP = nonAccepting.get(sp.getProgramPoint());
-				if (statesWithSamePP == null) {
-					statesWithSamePP = new HashSet<>();
-					nonAccepting.put(sp.getProgramPoint(), statesWithSamePP);
-				}
-				statesWithSamePP.add(p);
-			}
-		}
-		final Collection<Set<IPredicate>> partition = new ArrayList<>();
-		for (final ProgramPoint pp : accepting.keySet()) {
-			final Set<IPredicate> statesWithSamePP = accepting.get(pp);
-			partition.add(statesWithSamePP);
-		}
-		for (final ProgramPoint pp : nonAccepting.keySet()) {
-			final Set<IPredicate> statesWithSamePP = nonAccepting.get(pp);
-			partition.add(statesWithSamePP);
-		}
-		mLogger.info("Finished computation of initial partition.");
-		return partition;
+	public Collection<Set<IPredicate>> computePartition(final INestedWordAutomaton<CodeBlock, IPredicate> automaton, final ILogger logger) {
+		final Function<ISLPredicate, ProgramPoint> locProvider = (x -> x.getProgramPoint());
+		return TraceAbstractionUtils.computePartition(automaton, logger, locProvider );
 	}
 
 	protected static void writeAutomatonToFile(final IUltimateServiceProvider services,
