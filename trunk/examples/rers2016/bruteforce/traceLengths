@@ -12,8 +12,10 @@ for i in result1?.txt; do
 	tracelengths="$(grep -Poe ' -> \K[0-9]+' "$i" | sort -nr | tr '\n' ' ')"
 	errorcount="$(wc -w <<< "$tracelengths")"
 
-	printf "${color1}%s ${color2}t=%s ${color3}#err=%02d ${color4}len=%02d${resetcolor}" \
-		"$i" "$runtime" "$errorcount" "$inputlength"
+	#printf "${color1}%s ${color2}t=%s ${color3}#err=%02d ${color4}len=%02d${resetcolor}" \
+	#	"$i" "$runtime" "$errorcount" "$inputlength"
+	printf "${color1}%s ${color3}#err=%02d ${color4}len=%02d${resetcolor}" \
+		"$i" "$errorcount" "$inputlength"
 	xargs printf ' %2d' <<< "$tracelengths"
 	echo
 done
