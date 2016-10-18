@@ -25,7 +25,7 @@ import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderTransformer;
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
-public class PrepareOfflineCsv {
+public final class PrepareOfflineCsv {
 	private static final String INPUT_FILE_NAME = "AutomizerOffline.csv";
 	
 	private PrepareOfflineCsv() {
@@ -44,9 +44,12 @@ public class PrepareOfflineCsv {
 		transformers.add(getInterestingColumnFilter());
 		transformers.add(getNonNullFilter());
 		
+		// full table
 		final ICsvProvider<String> result = transformer.transform(input);
 		final StringBuilder builder = new StringBuilder();
 		System.out.println(result.toCsv(builder, ",").toString());
+		
+		// TODO aggregate
 	}
 	
 	private static ICsvProviderTransformer<String> getOperationFilter() {
@@ -57,9 +60,8 @@ public class PrepareOfflineCsv {
 	}
 	
 	private static ICsvProviderTransformer<String> getInterestingColumnFilter() {
-		final String[] forbiddenNames =
-				new String[] { "Toolchain", "SETTINGS", "ATS_ID", "BUCHI_ALPHABET_SIZE",
-						"BUCHI_TRANSITION_DENSITY_MILLION", "OPERATION_NAME", };
+		final String[] forbiddenNames = new String[] { "Toolchain", "SETTINGS", "ATS_ID", "BUCHI_ALPHABET_SIZE",
+				"BUCHI_TRANSITION_DENSITY_MILLION", "OPERATION_NAME", "RESULT_TRANSITION_DENSITY_MILLION" };
 		final CsvProviderColumnFilter.NameFilter forbiddenNamesFilter = new CsvProviderColumnFilter.NameFilter(
 				new HashSet<>(Arrays.asList(forbiddenNames)));
 		return new CsvProviderColumnFilter<>(x -> !x.isEmpty() && !forbiddenNamesFilter.test(x));
