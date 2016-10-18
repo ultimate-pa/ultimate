@@ -37,6 +37,7 @@ import java.util.function.Function;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.InCaReAlphabet;
@@ -47,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Powers
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IOpWithDelayedDeadEndRemoval;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.senwa.DifferenceSenwa;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
@@ -56,11 +56,12 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AutomataMinimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryResultChecking;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.StraightLineInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IMLPredicate;
@@ -111,15 +112,54 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 		}
 	}
 
-	@Override
-	protected Collection<Set<IPredicate>> computePartition(final INestedWordAutomaton<CodeBlock, IPredicate> automaton, final ILogger logger) {
-		final Function<IMLPredicate, Set<ProgramPoint>> locProvider = (x -> asHashSet(x.getProgramPoints()));
-		return TraceAbstractionUtils.computePartition(automaton, logger, locProvider );
-	}
-
 	private static <E> Set<E> asHashSet(final E[] array) {
 		return new HashSet<>(Arrays.asList(array));
 	}
+	
+	@Override
+	protected void minimizeAbstraction(final PredicateFactoryForInterpolantAutomata predicateFactoryRefinement,
+			final PredicateFactoryResultChecking resultCheckPredFac, final Minimization minimization)
+			throws AutomataOperationCanceledException, AutomataLibraryException, AssertionError {
+		if (mPref.dumpAutomata()) {
+			final String filename = mRootNode.getFilename() + "_DiffAutomatonBeforeMinimization_Iteration" + mIteration;
+			super.writeAutomatonToFile(mAbstraction, filename);
+		}
+		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AutomataMinimizationTime.toString());
+		final Function<IMLPredicate, Set<ProgramPoint>> lcsProvider = (x -> asHashSet(x.getProgramPoints()));
+		try {
+			final AutomataMinimization<Set<ProgramPoint>, IMLPredicate> am = new AutomataMinimization<>(
+					mServices, (INestedWordAutomaton<CodeBlock, IPredicate>) mAbstraction, minimization, mComputeHoareAnnotation, 
+					mIteration, predicateFactoryRefinement, MINIMIZE_EVERY_KTH_ITERATION, 
+					mStoredRawInterpolantAutomata, mInterpolAutomaton, MINIMIZATION_TIMEOUT, resultCheckPredFac, lcsProvider);
+			final boolean wasMinimized = am.wasMinimized();
+			
+			if (wasMinimized) {
+				// postprocessing after minimization
+				final IDoubleDeckerAutomaton<CodeBlock, IPredicate> newAbstraction = am.getMinimizedAutomaton();
+
+				// extract Hoare annotation
+				if (mComputeHoareAnnotation) {
+					final Map<IPredicate, IPredicate> oldState2newState = am.getOldState2newStateMapping();
+					if (oldState2newState == null) {
+						throw new AssertionError("Hoare annotation and " + minimization + " incompatible");
+					}
+					mHaf.updateOnMinimization(oldState2newState, newAbstraction);
+				}
+
+				// use result
+				mAbstraction = newAbstraction;
+
+				// statistics
+				final int oldSize = mAbstraction.size();
+				final int newSize = newAbstraction.size();
+				assert (oldSize == 0 || oldSize >= newSize) : "Minimization increased state space";
+				mCegarLoopBenchmark.announceStatesRemovedByMinimization(oldSize - newSize);
+			}
+		} finally {
+			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.AutomataMinimizationTime.toString());
+		}
+	}
+	
 
 	@Override
 	protected boolean refineAbstraction() throws AutomataLibraryException {

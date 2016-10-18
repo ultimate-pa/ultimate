@@ -31,7 +31,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Function;
 
@@ -53,30 +52,14 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpt
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveDeadEnds;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.AbstractMinimizeNwa;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizeNwa;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizeNwaDD;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeDfaHopcroftArrays;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeDfaHopcroftLists;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaMaxSat2;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaMulti;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaMulti.Strategy;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaOverapproximation;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPattern;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeSevpa;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.ShrinkNwa;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.arrays.MinimizeNwaMaxSAT;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.ComplementDD;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DeterminizeDD;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IOpWithDelayedDeadEndRemoval;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IntersectDD;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.direct.nwa.ReduceNwaDirectSimulation;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.summarycomputationgraph.ReduceNwaDirectSimulationB;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.senwa.DifferenceSenwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -139,11 +122,11 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
  */
 public class BasicCegarLoop extends AbstractCegarLoop {
 
-	private static final int MINIMIZE_EVERY_KTH_ITERATION = 10;
+	protected static final int MINIMIZE_EVERY_KTH_ITERATION = 10;
 	private static final boolean DIFFERENCE_INSTEAD_OF_INTERSECTION = true;
 	protected static final boolean REMOVE_DEAD_ENDS = true;
 	protected static final boolean TRACE_HISTOGRAMM_BAILOUT = false;
-	private static final int MINIMIZATION_TIMEOUT = 1_000;
+	protected static final int MINIMIZATION_TIMEOUT = 1_000;
 
 	protected HoareAnnotationFragments mHaf;
 
@@ -172,7 +155,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	private final boolean mDoFaultLocalizationFlowSensitive;
 	private HashSet<ProgramPoint> mHoareAnnotationPositions;
 
-	private final Collection<INestedWordAutomatonSimple<CodeBlock, IPredicate>> mStoredRawInterpolantAutomata;
+	protected final Collection<INestedWordAutomatonSimple<CodeBlock, IPredicate>> mStoredRawInterpolantAutomata;
 
 	private final SearchStrategy mSearchStrategy;
 
@@ -792,136 +775,24 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			super.writeAutomatonToFile(mAbstraction, filename);
 		}
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AutomataMinimizationTime.toString());
-		// long startTime = System.currentTimeMillis();
-		final INestedWordAutomaton<CodeBlock, IPredicate> oldAbstraction =
-				(INestedWordAutomaton<CodeBlock, IPredicate>) mAbstraction;
-		final Collection<Set<IPredicate>> partition = computePartition(oldAbstraction, mLogger);
+		final Function<ISLPredicate, ProgramPoint> lcsProvider = (x -> x.getProgramPoint());
 		try {
-			// output of minimization
-			final IMinimizeNwa<CodeBlock, IPredicate> newAbstractionRaw;
-			final AutomataLibraryServices services = new AutomataLibraryServices(mServices);
-			final boolean wasMinimized;
-			switch (minimization) {
-			case MINIMIZE_SEVPA: {
-				newAbstractionRaw = new MinimizeSevpa<>(services, oldAbstraction, partition, predicateFactoryRefinement,
-						mComputeHoareAnnotation);
-				wasMinimized = true;
-				break;
-			}
-			case SHRINK_NWA: {
-				newAbstractionRaw = new ShrinkNwa<>(services, predicateFactoryRefinement, oldAbstraction, partition,
-						mComputeHoareAnnotation, false, false, ShrinkNwa.SUGGESTED_RANDOM_SPLIT_SIZE, false, 0, false,
-						false, true);
-				wasMinimized = true;
-				break;
-			}
-			case NWA_COMBINATOR_PATTERN: {
-				newAbstractionRaw = new MinimizeNwaPattern<>(services, predicateFactoryRefinement,
-						(IDoubleDeckerAutomaton<CodeBlock, IPredicate>) oldAbstraction, partition,
-						mComputeHoareAnnotation, mIteration);
-				// it can happen that no minimization took place
-				wasMinimized = (newAbstractionRaw == oldAbstraction);
-				break;
-			}
-			case NWA_COMBINATOR_EVERY_KTH: {
-				newAbstractionRaw = new MinimizeNwaPattern<>(services, predicateFactoryRefinement,
-						(IDoubleDeckerAutomaton<CodeBlock, IPredicate>) oldAbstraction, partition,
-						mComputeHoareAnnotation, MINIMIZE_EVERY_KTH_ITERATION, mIteration);
-				// it can happen that no minimization took place
-				wasMinimized = (newAbstractionRaw == oldAbstraction);
-				break;
-			}
-			case NWA_OVERAPPROXIMATION: {
-				assert mStoredRawInterpolantAutomata != null;
-				mStoredRawInterpolantAutomata.add(mInterpolAutomaton);
-				newAbstractionRaw = new MinimizeNwaOverapproximation<>(services, predicateFactoryRefinement,
-						oldAbstraction, partition, mComputeHoareAnnotation, MINIMIZATION_TIMEOUT,
-						mStoredRawInterpolantAutomata);
-				wasMinimized = true;
-				break;
-			}
-			case DFA_HOPCROFT_ARRAYS: {
-				newAbstractionRaw = new MinimizeDfaHopcroftArrays<>(services, oldAbstraction,
-						predicateFactoryRefinement, partition, mComputeHoareAnnotation);
-				wasMinimized = true;
-				break;
-			}
-			case DFA_HOPCROFT_LISTS: {
-				newAbstractionRaw = new MinimizeDfaHopcroftLists<>(services, oldAbstraction, predicateFactoryRefinement,
-						partition, mComputeHoareAnnotation);
-				wasMinimized = true;
-				break;
-			}
-			case NWA_MAX_SAT: {
-				newAbstractionRaw = new MinimizeNwaMaxSAT<>(services, predicateFactoryRefinement, oldAbstraction);
-				wasMinimized = true;
-				break;
-			}
-			case NWA_MAX_SAT2: {
-				newAbstractionRaw = new MinimizeNwaMaxSat2<>(services, predicateFactoryRefinement,
-						(IDoubleDeckerAutomaton<CodeBlock, IPredicate>) oldAbstraction, mComputeHoareAnnotation,
-						partition);
-				wasMinimized = true;
-				break;
-			}
-			case RAQ_DIRECT_SIMULATION: {
-				newAbstractionRaw = new ReduceNwaDirectSimulation<>(services, predicateFactoryRefinement,
-						(IDoubleDeckerAutomaton<CodeBlock, IPredicate>) oldAbstraction, false, partition);
-				wasMinimized = true;
-				break;
-			}
-			case RAQ_DIRECT_SIMULATION_B: {
-				newAbstractionRaw = new ReduceNwaDirectSimulationB<CodeBlock, IPredicate>(services, predicateFactoryRefinement,
-						(IDoubleDeckerAutomaton<CodeBlock, IPredicate>) oldAbstraction);
-				wasMinimized = true;
-				break;
-			}
-			case NWA_COMBINATOR_MULTI_DEFAULT: {
-				newAbstractionRaw = new MinimizeNwaMulti<>(services, predicateFactoryRefinement,
-						(IDoubleDeckerAutomaton<CodeBlock, IPredicate>) oldAbstraction, partition,
-						mComputeHoareAnnotation);
-				wasMinimized = true;
-				break;
-			}
-			case NWA_COMBINATOR_MULTI_SIMULATION: {
-				newAbstractionRaw = new MinimizeNwaMulti<>(services, predicateFactoryRefinement,
-						(IDoubleDeckerAutomaton<CodeBlock, IPredicate>) oldAbstraction, partition,
-						mComputeHoareAnnotation, Strategy.SIMULATION_BASED);
-				wasMinimized = true;
-				break;
-			}
-			case NONE:
-				throw new IllegalArgumentException("No minimization method specified.");
-			default:
-				throw new AssertionError("Unknown minimization method.");
-			}
-			// postprocessing after minimization
-			final IDoubleDeckerAutomaton<CodeBlock, IPredicate> newAbstraction;
+			final AutomataMinimization<ProgramPoint, ISLPredicate> am = new AutomataMinimization<>(
+					mServices, (INestedWordAutomaton<CodeBlock, IPredicate>) mAbstraction, minimization, mComputeHoareAnnotation, 
+					mIteration, predicateFactoryRefinement, MINIMIZE_EVERY_KTH_ITERATION, 
+					mStoredRawInterpolantAutomata, mInterpolAutomaton, MINIMIZATION_TIMEOUT, resultCheckPredFac, lcsProvider);
+			final boolean wasMinimized = am.wasMinimized();
+			
 			if (wasMinimized) {
-				// extract result
-				assert newAbstractionRaw.checkResult(resultCheckPredFac);
-				if (newAbstractionRaw instanceof IMinimizeNwaDD) {
-					/**
-					 * TODO Christian 2016-08-05: remove RemoveUnreachable() call (test thoroughly first!)
-					 */
-					// DoubleDecker information already present in output
-					newAbstraction = (IDoubleDeckerAutomaton<CodeBlock, IPredicate>) newAbstractionRaw.getResult();
-					// (new RemoveUnreachable<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
-					// newAbstractionRaw.getResult())).getResult();
-				} else {
-					// compute DoubleDecker information
-					newAbstraction = (new RemoveUnreachable<>(new AutomataLibraryServices(mServices),
-							newAbstractionRaw.getResult())).getResult();
-				}
+				// postprocessing after minimization
+				final IDoubleDeckerAutomaton<CodeBlock, IPredicate> newAbstraction = am.getMinimizedAutomaton();
 
 				// extract Hoare annotation
 				if (mComputeHoareAnnotation) {
-					if (!(newAbstractionRaw instanceof AbstractMinimizeNwa)) {
+					final Map<IPredicate, IPredicate> oldState2newState = am.getOldState2newStateMapping();
+					if (oldState2newState == null) {
 						throw new AssertionError("Hoare annotation and " + minimization + " incompatible");
 					}
-					final AbstractMinimizeNwa<CodeBlock, IPredicate> minimizeOpCast =
-							(AbstractMinimizeNwa<CodeBlock, IPredicate>) newAbstractionRaw;
-					final Map<IPredicate, IPredicate> oldState2newState = minimizeOpCast.getOldState2newState();
 					mHaf.updateOnMinimization(oldState2newState, newAbstraction);
 				}
 
@@ -929,7 +800,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				mAbstraction = newAbstraction;
 
 				// statistics
-				final int oldSize = oldAbstraction.size();
+				final int oldSize = mAbstraction.size();
 				final int newSize = newAbstraction.size();
 				assert (oldSize == 0 || oldSize >= newSize) : "Minimization increased state space";
 				mCegarLoopBenchmark.announceStatesRemovedByMinimization(oldSize - newSize);
@@ -970,14 +841,6 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	// logger.info("Finished computation of initial partition.");
 	// return partition;
 	// }
-
-	protected Collection<Set<IPredicate>>
-			computePartition(final INestedWordAutomaton<CodeBlock, IPredicate> automaton, final ILogger logger) {
-		final Function<ISLPredicate, ProgramPoint> locProvider = (x -> x.getProgramPoint());
-		return TraceAbstractionUtils.computePartition(automaton, logger, locProvider );
-
-	}
-
 
 	// private boolean eachStateIsFinal(Collection<IPredicate> states,
 	// INestedWordAutomatonOldApi<CodeBlock, IPredicate> automaton) {

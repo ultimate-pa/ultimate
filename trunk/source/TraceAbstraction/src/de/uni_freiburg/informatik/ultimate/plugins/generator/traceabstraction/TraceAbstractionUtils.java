@@ -36,6 +36,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IMLPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
@@ -47,20 +50,25 @@ public class TraceAbstractionUtils {
 
 	
 	
-	
-	public static <PRED extends IPredicate, PP> Collection<Set<IPredicate>> computePartition(
-			final INestedWordAutomaton<CodeBlock, IPredicate> automaton, final ILogger logger, final Function<PRED, PP> ppProvider) {
+	/**
+	 * @param <LCS> local control state, e.g., {@link ProgramPoint} for sequential
+	 * programs or a set of {@link ProgramPoint}s for parallel programs.
+	 * @param <LCSP> local control state provider, e.g., {@link ISLPredicate}, or
+	 * {@link IMLPredicate}
+	 */
+	public static <LCSP extends IPredicate, LCS> Collection<Set<IPredicate>> computePartition(
+			final INestedWordAutomaton<CodeBlock, IPredicate> automaton, final ILogger logger, final Function<LCSP, LCS> lcsProvider) {
 		logger.debug("Start computation of initial partition.");
 		final Collection<IPredicate> states = automaton.getStates();
-		final HashRelation<PP, IPredicate> pp2p = new HashRelation<>();
+		final HashRelation<LCS, IPredicate> lcs2p = new HashRelation<>();
 		for (final IPredicate p : states) {
-			final PRED sp = (PRED) p;
-			pp2p.addPair(ppProvider.apply(sp), p);
+			final LCSP sp = (LCSP) p;
+			lcs2p.addPair(lcsProvider.apply(sp), p);
 		}
 		final Collection<Set<IPredicate>> partition = new ArrayList<>();
-		for (final PP pp : pp2p.getDomain()) {
-			final Set<IPredicate> statesWithSamePP = new HashSet<>(pp2p.getImage(pp));
-			partition.add(statesWithSamePP);
+		for (final LCS pp : lcs2p.getDomain()) {
+			final Set<IPredicate> statesWithSameLcs = new HashSet<>(lcs2p.getImage(pp));
+			partition.add(statesWithSameLcs);
 		}
 		logger.debug("Finished computation of initial partition.");
 		return partition;
