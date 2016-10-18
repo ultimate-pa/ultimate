@@ -62,8 +62,11 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 	private final Map<LOCATION, STATE> mLoc2SingleStates;
 	private final Set<Term> mTerms;
 	private IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> mRootStorage;
+	private ISummaryStorage<STATE, ACTION, VARDECL, LOCATION> mSummaryMap;
+	private final ITransitionProvider<ACTION, LOCATION> mTransProvider;
 
-	protected AbstractInterpretationResult(final IAbstractDomain<STATE, ACTION, VARDECL> abstractDomain) {
+	protected AbstractInterpretationResult(final IAbstractDomain<STATE, ACTION, VARDECL> abstractDomain,
+			final ITransitionProvider<ACTION, LOCATION> transProvider) {
 		assert abstractDomain != null;
 		mAbstractDomain = abstractDomain;
 		mCounterexamples = new ArrayList<>();
@@ -72,6 +75,7 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 		mLoc2States = new HashMap<>();
 		mLoc2SingleStates = new HashMap<>();
 		mTerms = new LinkedHashSet<>();
+		mTransProvider = transProvider;
 	}
 
 	void reachedError(final ITransitionProvider<ACTION, LOCATION> transitionProvider,
@@ -111,9 +115,30 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 		mLoc2SingleStates.putAll(rootStateStorage.getLoc2SingleStates(start));
 	}
 
+	void saveSummaryStorage(final ISummaryStorage<STATE, ACTION, VARDECL, LOCATION> summaryStorage) {
+		mSummaryMap = summaryStorage;
+	}
+
 	@Override
 	public Set<STATE> getPostStates(final Deque<ACTION> callStack, final ACTION symbol) {
 		return mRootStorage.getAbstractPostStates(callStack, symbol);
+	}
+
+	@Override
+	public Set<STATE> getPostStates(final Deque<ACTION> callStack, final ACTION symbol, final Set<STATE> preStates) {
+
+		final Set<STATE> states = mRootStorage.getAbstractPostStates(callStack, symbol);
+
+		if (states.isEmpty() && mTransProvider.isEnteringScope(symbol)) {
+			// because this is a call, it could also be somewhere in the summary map
+			final AbstractMultiState<STATE, ACTION, VARDECL> summaryState =
+					mSummaryMap.getSummaryPostState(symbol, new AbstractMultiState<>(preStates));
+			if (summaryState != null) {
+				states.addAll(summaryState.getStates());
+			}
+		}
+
+		return states;
 	}
 
 	@Override

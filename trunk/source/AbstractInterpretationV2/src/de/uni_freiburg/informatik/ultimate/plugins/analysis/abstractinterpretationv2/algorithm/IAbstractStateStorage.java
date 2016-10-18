@@ -61,4 +61,7 @@ public interface IAbstractStateStorage<STATE extends IAbstractState<STATE, ACTIO
 	Set<STATE> getAbstractPostStates(Deque<ACTION> callStack, ACTION symbol);
 
 	void scopeFixpointReached();
+
+	void saveSummarySubstituion(ACTION action, AbstractMultiState<STATE, ACTION, VARDECL> summaryPostState,
+			ACTION summaryAction);
 }

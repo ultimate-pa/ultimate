@@ -79,9 +79,6 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder
 	private final SmtManager mSmtManager;
 	private final IRun<CodeBlock, IPredicate> mCurrentCounterExample;
 
-	@SuppressWarnings("rawtypes")
-	private final RcfgDebugHelper mDebugHelper;
-
 	public AbsIntStraightLineInterpolantAutomatonBuilder(final IUltimateServiceProvider services,
 			final INestedWordAutomatonSimple<CodeBlock, IPredicate> oldAbstraction,
 			final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> aiResult,
@@ -93,8 +90,6 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mSmtManager = smtManager;
 		mCurrentCounterExample = currentCounterExample;
-		mDebugHelper = new RcfgDebugHelper<>(smtManager.getBoogie2Smt(), smtManager.getModifiableGlobals(), services);
-
 		mResult = constructAutomaton(oldAbstraction, aiResult, predUnifier);
 	}
 
@@ -103,11 +98,13 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder
 		return mResult;
 	}
 
-	private NestedWordAutomaton<CodeBlock, IPredicate> constructAutomaton(
-			final INestedWordAutomatonSimple<CodeBlock, IPredicate> oldAbstraction,
-			final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> aiResult,
-			final PredicateUnifier predicateUnifier) {
+	private <STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>> NestedWordAutomaton<CodeBlock, IPredicate>
+			constructAutomaton(final INestedWordAutomatonSimple<CodeBlock, IPredicate> oldAbstraction,
+					final IAbstractInterpretationResult<STATE, CodeBlock, IBoogieVar, ?> aiResult,
+					final PredicateUnifier predicateUnifier) {
 
+		final RcfgDebugHelper<STATE, IBoogieVar, ?> debugHelper =
+				new RcfgDebugHelper<>(mSmtManager.getBoogie2Smt(), mSmtManager.getModifiableGlobals(), mServices);
 		mLogger.info("Creating interpolant automaton from AI predicates (straight)");
 
 		final NestedWordAutomaton<CodeBlock, IPredicate> result = new NestedWordAutomaton<>(
@@ -120,12 +117,12 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder
 		final int wordlength = word.length();
 		assert wordlength > 1 : "Unexpected: length of word smaller or equal to 1.";
 
-		final TripleStack callStack = new TripleStack();
+		final TripleStack<STATE> callStack = new TripleStack<>();
 
 		final IPredicate falsePredicate = predicateUnifier.getFalsePredicate();
 		final Set<IPredicate> alreadyThereAsState = new HashSet<>();
 
-		Set<IAbstractState<?, ?, ?>> previousStates = Collections.emptySet();
+		Set<STATE> previousStates = Collections.emptySet();
 		IPredicate previous = predicateUnifier.getTruePredicate();
 		alreadyThereAsState.add(previous);
 		result.addState(true, false, previous);
@@ -134,18 +131,28 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder
 			final CodeBlock symbol = word.getSymbol(i);
 
 			if (mLogger.isDebugEnabled()) {
-				mLogger.debug("CallStack " + callStack.getCalls().stream()
+				mLogger.debug("CallStack Before" + callStack.getCalls().stream()
 						.map(a -> '[' + String.valueOf(a.hashCode()) + ']').reduce((a, b) -> a + ',' + b).orElse(""));
 			}
-			final Triple<Call, IPredicate, Set<IAbstractState<?, ?, ?>>> hierarchicalPreState =
-					getHierachicalPreState(symbol, previous, previousStates, callStack);
+			final Set<STATE> postStates;
+			final Triple<Call, IPredicate, Set<STATE>> hierarchicalPreState;
+
+			if (symbol instanceof Call) {
+				hierarchicalPreState = getHierachicalPreState(symbol, previous, previousStates, callStack);
+				postStates = aiResult.getPostStates(callStack.getCalls(), symbol, previousStates);
+			} else if (symbol instanceof Return) {
+
+				hierarchicalPreState = getHierachicalPreState(symbol, previous, previousStates, callStack);
+				postStates = aiResult.getPostStates(callStack.getCalls(), symbol, previousStates);
+			} else {
+				postStates = aiResult.getPostStates(callStack.getCalls(), symbol, previousStates);
+				hierarchicalPreState = getHierachicalPreState(symbol, previous, previousStates, callStack);
+			}
+
 			if (mLogger.isDebugEnabled()) {
-				mLogger.debug("CallStack " + callStack.getCalls().stream()
+				mLogger.debug("CallStack After" + callStack.getCalls().stream()
 						.map(a -> '[' + String.valueOf(a.hashCode()) + ']').reduce((a, b) -> a + ',' + b).orElse(""));
 			}
-			@SuppressWarnings("unchecked")
-			final Set<IAbstractState<?, ?, ?>> postStates =
-					(Set<IAbstractState<?, ?, ?>>) aiResult.getPostStates(callStack.getCalls(), symbol);
 
 			final IPredicate target;
 			if (postStates.isEmpty()) {
@@ -161,8 +168,8 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder
 			}
 
 			// Add transition
-			assert isSound(previousStates, hierarchicalPreState, symbol,
-					postStates) : "About to insert unsound transition";
+			assert isSound(previousStates, hierarchicalPreState, symbol, postStates,
+					debugHelper) : "About to insert unsound transition";
 			if (symbol instanceof Call) {
 				result.addCallTransition(previous, symbol, target);
 			} else if (symbol instanceof Return) {
@@ -201,8 +208,9 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder
 		return result;
 	}
 
-	private static void addSelfLoops(final INestedWordAutomatonSimple<CodeBlock, IPredicate> oldAbstraction,
-			final NestedWordAutomaton<CodeBlock, IPredicate> result, final TripleStack callStack) {
+	private static <STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>> void addSelfLoops(
+			final INestedWordAutomatonSimple<CodeBlock, IPredicate> oldAbstraction,
+			final NestedWordAutomaton<CodeBlock, IPredicate> result, final TripleStack<STATE> callStack) {
 		if (!result.getFinalStates().isEmpty()) {
 			for (final IPredicate finalState : result.getFinalStates()) {
 				oldAbstraction.getInternalAlphabet()
@@ -211,7 +219,7 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder
 				for (final CodeBlock returnSymbol : oldAbstraction.getReturnAlphabet()) {
 					final Return ret = (Return) returnSymbol;
 					result.addReturnTransition(finalState, finalState, ret, finalState);
-					for (final Triple<CodeBlock, IPredicate, Set<IAbstractState<?, ?, ?>>> openCall : callStack) {
+					for (final Triple<CodeBlock, IPredicate, Set<STATE>> openCall : callStack) {
 						if (ret.getCorrespondingCall().equals(openCall.getFirst())) {
 							result.addReturnTransition(finalState, openCall.getSecond(), ret, finalState);
 						}
@@ -221,20 +229,20 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder
 		}
 	}
 
-	@SuppressWarnings("unchecked")
-	private boolean isSound(final Set<IAbstractState<?, ?, ?>> previousStates,
-			final Triple<Call, IPredicate, Set<IAbstractState<?, ?, ?>>> hierarchicalPreState, final CodeBlock symbol,
-			final Set<IAbstractState<?, ?, ?>> postStates) {
+	private static <STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>> boolean isSound(
+			final Set<STATE> previousStates, final Triple<Call, IPredicate, Set<STATE>> hierarchicalPreState,
+			final CodeBlock symbol, final Set<STATE> postStates,
+			final RcfgDebugHelper<STATE, IBoogieVar, ?> debugHelper) {
 		if (hierarchicalPreState == null) {
-			return mDebugHelper.isPostSound(previousStates, null, postStates, symbol);
+			return debugHelper.isPostSound(previousStates, null, postStates, symbol);
 		}
-		return mDebugHelper.isPostSound(previousStates, hierarchicalPreState.getThird(), postStates, symbol);
+		return debugHelper.isPostSound(previousStates, hierarchicalPreState.getThird(), postStates, symbol);
 	}
 
-	private static Triple<Call, IPredicate, Set<IAbstractState<?, ?, ?>>> getHierachicalPreState(final CodeBlock symbol,
-			final IPredicate previous, final Set<IAbstractState<?, ?, ?>> previousStates, final TripleStack callStack) {
-		// Add transition
-		final Triple<Call, IPredicate, Set<IAbstractState<?, ?, ?>>> hierarchicalPreState;
+	private static <STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>> Triple<Call, IPredicate, Set<STATE>>
+			getHierachicalPreState(final CodeBlock symbol, final IPredicate previous, final Set<STATE> previousStates,
+					final TripleStack<STATE> callStack) {
+		final Triple<Call, IPredicate, Set<STATE>> hierarchicalPreState;
 		if (symbol instanceof Call) {
 			hierarchicalPreState = new Triple<>((Call) symbol, previous, previousStates);
 			callStack.addFirst(hierarchicalPreState);
@@ -248,8 +256,8 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder
 		return hierarchicalPreState;
 	}
 
-	private void writeTransitionAddLog(final int i, final CodeBlock symbol,
-			final Set<IAbstractState<?, ?, ?>> nextStates, final IPredicate source,
+	private <STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>> void writeTransitionAddLog(final int i,
+			final CodeBlock symbol, final Set<STATE> nextStates, final IPredicate source,
 			final IPredicate hierarchicalPreState, final IPredicate target) {
 		final String divider = "------------------------------------------------";
 		if (i == 0) {
@@ -260,7 +268,7 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder
 			mLogger.debug("Post States: NONE");
 		} else {
 			mLogger.debug("Post States:");
-			for (final IAbstractState<?, ?, ?> nextState : nextStates) {
+			for (final STATE nextState : nextStates) {
 				mLogger.debug("  " + nextState);
 			}
 		}
@@ -275,11 +283,11 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder
 		mLogger.debug(divider);
 	}
 
-	private static final class TripleStack
-			implements Iterable<Triple<CodeBlock, IPredicate, Set<IAbstractState<?, ?, ?>>>> {
+	private static final class TripleStack<STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>>
+			implements Iterable<Triple<CodeBlock, IPredicate, Set<STATE>>> {
 		private final Deque<CodeBlock> mCalls;
 		private final Deque<IPredicate> mPredicates;
-		private final Deque<Set<IAbstractState<?, ?, ?>>> mStates;
+		private final Deque<Set<STATE>> mStates;
 
 		private TripleStack() {
 			mCalls = new ArrayDeque<>();
@@ -291,7 +299,7 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder
 			return mCalls;
 		}
 
-		public Triple<Call, IPredicate, Set<IAbstractState<?, ?, ?>>> removeFirst() {
+		public Triple<Call, IPredicate, Set<STATE>> removeFirst() {
 			return new Triple<>((Call) mCalls.removeFirst(), mPredicates.removeFirst(), mStates.removeFirst());
 		}
 
@@ -300,7 +308,7 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder
 			return mCalls.isEmpty();
 		}
 
-		public void addFirst(final Triple<Call, IPredicate, Set<IAbstractState<?, ?, ?>>> hierarchicalPreState) {
+		public void addFirst(final Triple<Call, IPredicate, Set<STATE>> hierarchicalPreState) {
 			mCalls.addFirst(hierarchicalPreState.getFirst());
 			mPredicates.addFirst(hierarchicalPreState.getSecond());
 			mStates.addFirst(hierarchicalPreState.getThird());
@@ -312,11 +320,11 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder
 		}
 
 		@Override
-		public Iterator<Triple<CodeBlock, IPredicate, Set<IAbstractState<?, ?, ?>>>> iterator() {
-			return new Iterator<Triple<CodeBlock, IPredicate, Set<IAbstractState<?, ?, ?>>>>() {
+		public Iterator<Triple<CodeBlock, IPredicate, Set<STATE>>> iterator() {
+			return new Iterator<Triple<CodeBlock, IPredicate, Set<STATE>>>() {
 				private final Iterator<CodeBlock> mCallIter = mCalls.iterator();
 				private final Iterator<IPredicate> mPredicatesIter = mPredicates.iterator();
-				private final Iterator<Set<IAbstractState<?, ?, ?>>> mStatesIter = mStates.iterator();
+				private final Iterator<Set<STATE>> mStatesIter = mStates.iterator();
 
 				@Override
 				public boolean hasNext() {
@@ -324,7 +332,7 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder
 				}
 
 				@Override
-				public Triple<CodeBlock, IPredicate, Set<IAbstractState<?, ?, ?>>> next() {
+				public Triple<CodeBlock, IPredicate, Set<STATE>> next() {
 					return new Triple<>(mCallIter.next(), mPredicatesIter.next(), mStatesIter.next());
 				}
 			};

@@ -98,4 +98,6 @@ public interface IAbstractInterpretationResult<STATE extends IAbstractState<STAT
 	IAbstractDomain<STATE, ACTION, VARDECL> getUsedDomain();
 
 	Set<STATE> getPostStates(Deque<ACTION> callStack, ACTION symbol);
+
+	Set<STATE> getPostStates(final Deque<ACTION> callStack, final ACTION symbol, final Set<STATE> preStates);
 }

@@ -55,39 +55,41 @@ final class WorklistItem<STATE extends IAbstractState<STATE, ACTION, VARDECL>, A
 	private AbstractMultiState<STATE, ACTION, VARDECL> mHierachicalPreState;
 	private Deque<ScopeStackItem> mScopes;
 
+	private WorklistItem(final AbstractMultiState<STATE, ACTION, VARDECL> pre,
+			final AbstractMultiState<STATE, ACTION, VARDECL> hierpre, final ACTION action,
+			final Deque<IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION>> scopedStorages,
+			final Deque<LOCATION> activeLoops,
+			final Map<LOCATION, Pair<Integer, AbstractMultiState<STATE, ACTION, VARDECL>>> loopPairs,
+			final WorklistItem<STATE, ACTION, VARDECL, LOCATION> predecessorItem,
+			final SummaryMap<STATE, ACTION, VARDECL, LOCATION> summaryMap, final Deque<ScopeStackItem> scopes) {
+		assert action != null;
+		assert pre != null : "Prestate may not be null";
+		assert summaryMap != null;
+		mHierachicalPreState = hierpre;
+		mPreState = pre;
+		mAction = action;
+		mScopedStorages = scopedStorages;
+		mActiveLoops = activeLoops;
+		mLoopPairs = loopPairs;
+		mPredecessor = predecessorItem;
+		mSummaryMap = summaryMap;
+		mScopes = scopes;
+	}
+
 	WorklistItem(final AbstractMultiState<STATE, ACTION, VARDECL> pre, final ACTION action,
 			final IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> globalStorage,
 			final SummaryMap<STATE, ACTION, VARDECL, LOCATION> summaryMap) {
-		assert action != null;
-		assert pre != null : "Prestate may not be null";
+		this(pre, pre, action, new ArrayDeque<>(), new ArrayDeque<>(), new HashMap<>(), null, summaryMap, null);
 		assert globalStorage != null;
-
-		mHierachicalPreState = pre;
-		mPreState = pre;
-		mAction = action;
-		mScopedStorages = new ArrayDeque<>();
 		mScopedStorages.addFirst(globalStorage);
-		mActiveLoops = new ArrayDeque<>();
-		mLoopPairs = new HashMap<>();
-		mPredecessor = null;
-		mSummaryMap = summaryMap;
 	}
 
 	WorklistItem(final AbstractMultiState<STATE, ACTION, VARDECL> pre, final ACTION action,
 			final WorklistItem<STATE, ACTION, VARDECL, LOCATION> oldItem) {
-		assert pre != null;
-		assert action != null;
-		assert oldItem != null;
-		mPredecessor = oldItem;
-		mPreState = pre;
-		mAction = action;
-		mSummaryMap = oldItem.mSummaryMap;
-		mHierachicalPreState = oldItem.getHierachicalPreState();
-		mScopes = oldItem.getScopesCopy();
-		mScopedStorages = oldItem.getStoragesCopy();
-		mActiveLoops = new ArrayDeque<>(oldItem.mActiveLoops);
-		mLoopPairs = new HashMap<>(oldItem.mLoopPairs);
-
+		// TODO: Replace eager initialization with lazy initialization
+		this(pre, oldItem.getHierachicalPreState(), action, oldItem.getStoragesCopy(),
+				new ArrayDeque<>(oldItem.mActiveLoops), new HashMap<>(oldItem.mLoopPairs), oldItem, oldItem.mSummaryMap,
+				oldItem.getScopesCopy());
 	}
 
 	ACTION getAction() {
@@ -134,25 +136,50 @@ final class WorklistItem<STATE extends IAbstractState<STATE, ACTION, VARDECL>, A
 	 * @return The scope that left.
 	 */
 	ACTION removeCurrentScope(final AbstractMultiState<STATE, ACTION, VARDECL> preReturnState) {
-		if (mScopes == null || mScopes.isEmpty()) {
+		final ScopeStackItem currentScopeItem = removeCurrentScopeWithoutSummary();
+		if (currentScopeItem == null) {
 			// happens when we leave the global scope
 			return null;
 		}
-
 		// called when ACTION is a return; but before the scope is changed
 		// meaning that the scope is the corresponding call, and one of its predecessors is the matching summary
-		final ScopeStackItem currentScopeItem = mScopes.peek();
 		mSummaryMap.addSummary(currentScopeItem.getScopeFirstState(), preReturnState, currentScopeItem.getAction());
-
-		mScopedStorages.removeFirst();
-		final ScopeStackItem rtr = mScopes.removeFirst();
-		mHierachicalPreState = rtr.getScopeHierPreState();
-		return rtr.getAction();
+		return currentScopeItem.getAction();
 	}
 
 	AbstractMultiState<STATE, ACTION, VARDECL> getSummaryPostState(final ACTION summary,
 			final AbstractMultiState<STATE, ACTION, VARDECL> preState) {
 		return mSummaryMap.getSummaryPostState(summary, preState);
+	}
+
+	WorklistItem<STATE, ACTION, VARDECL, LOCATION> createSummarySubstitution(
+			final AbstractMultiState<STATE, ACTION, VARDECL> summaryPostState, final ACTION summaryAction) {
+		// facts about the state when this method is called:
+		// - a summary replaces a call statement after the new post state of the call statement is already calculated
+		// - this instance is the call item
+		// - the summary will be treated as a normal statement for purposes of scoping, but as an return for purposes of
+		// post calculation
+		// - the summary should have as hierprestate and prestate both the prestate of the call (?)
+		// - loops, scopestorage, scopes should be as if the call never happened
+		// TODO: Cleanup
+		getCurrentStorage().saveSummarySubstituion(getAction(), summaryPostState, summaryAction);
+		final AbstractMultiState<STATE, ACTION, VARDECL> hierPreState = mHierachicalPreState;
+		removeCurrentScopeWithoutSummary();
+		final WorklistItem<STATE, ACTION, VARDECL, LOCATION> rtr =
+				new WorklistItem<>(summaryPostState, summaryAction, this);
+		rtr.mHierachicalPreState = hierPreState;
+		return rtr;
+	}
+
+	private ScopeStackItem removeCurrentScopeWithoutSummary() {
+		if (mScopes == null || mScopes.isEmpty()) {
+			// happens when we leave the global scope
+			return null;
+		}
+		mScopedStorages.removeFirst();
+		final ScopeStackItem rtr = mScopes.removeFirst();
+		mHierachicalPreState = rtr.getScopeHierPreState();
+		return rtr;
 	}
 
 	IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> getCurrentStorage() {

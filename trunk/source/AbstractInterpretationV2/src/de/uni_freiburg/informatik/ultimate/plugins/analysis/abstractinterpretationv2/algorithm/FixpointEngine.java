@@ -73,6 +73,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 
 	private AbstractInterpretationBenchmark<ACTION, LOCATION> mBenchmark;
 	private AbstractInterpretationResult<STATE, ACTION, VARDECL, LOCATION> mResult;
+	private final SummaryMap<STATE, ACTION, VARDECL, LOCATION> mSummaryMap;
 
 	public FixpointEngine(final FixpointEngineParameters<STATE, ACTION, VARDECL, LOCATION, EXPRESSION> params) {
 		if (params == null || !params.isValid()) {
@@ -88,6 +89,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		mDebugHelper = params.getDebugHelper();
 		mMaxUnwindings = params.getMaxUnwindings();
 		mMaxParallelStates = params.getMaxParallelStates();
+		mSummaryMap = new SummaryMap<>(mDomain.getMergeOperator(), mTransitionProvider, mLogger);
 	}
 
 	public AbstractInterpretationResult<STATE, ACTION, VARDECL, LOCATION> run(final ACTION start, final Script script,
@@ -95,26 +97,27 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 			final AbstractInterpretationResult<STATE, ACTION, VARDECL, LOCATION> intermediateResult) {
 		mLogger.info("Starting fixpoint engine with domain " + mDomain.getClass().getSimpleName() + " (maxUnwinding="
 				+ mMaxUnwindings + ", maxParallelStates=" + mMaxParallelStates + ")");
-		mResult = intermediateResult == null ? new AbstractInterpretationResult<>(mDomain) : intermediateResult;
+		mResult = intermediateResult == null ? new AbstractInterpretationResult<>(mDomain, mTransitionProvider)
+				: intermediateResult;
 		mBenchmark = mResult.getBenchmark();
 		calculateFixpoint(start);
 		mResult.saveRootStorage(mStateStorage, start, script, bpl2smt);
+		mResult.saveSummaryStorage(mSummaryMap);
 		return mResult;
 	}
 
 	public AbstractInterpretationResult<STATE, ACTION, VARDECL, LOCATION> run(final ACTION start, final Script script,
 			final Boogie2SMT bpl2smt) {
-		return run(start, script, bpl2smt, new AbstractInterpretationResult<>(mDomain));
+		return run(start, script, bpl2smt, new AbstractInterpretationResult<>(mDomain, mTransitionProvider));
 	}
 
 	private void calculateFixpoint(final ACTION start) {
 		final Deque<WorklistItem<STATE, ACTION, VARDECL, LOCATION>> worklist = new ArrayDeque<>();
 		final IAbstractPostOperator<STATE, ACTION, VARDECL> postOp = mDomain.getPostOperator();
 		final IAbstractStateBinaryOperator<STATE> wideningOp = mDomain.getWideningOperator();
-		final IAbstractStateBinaryOperator<STATE> mergeOp = mDomain.getMergeOperator();
 		final Set<ACTION> reachedErrors = new HashSet<>();
 
-		worklist.add(createInitialWorklistItem(start, new SummaryMap<>(mergeOp, mTransitionProvider, mLogger)));
+		worklist.add(createInitialWorklistItem(start));
 
 		while (!worklist.isEmpty()) {
 			checkTimeout();
@@ -132,9 +135,9 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 				continue;
 			}
 
-			if (useSummaryInstead(currentItem, postState, worklist)) {
-				continue;
-			}
+			// if (useSummaryInstead(currentItem, postState, worklist)) {
+			// continue;
+			// }
 
 			setActiveLoopState(currentItem);
 			checkReachedError(currentItem, postState, reachedErrors);
@@ -208,7 +211,9 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 			mLogger.debug(AbsIntPrefInitializer.DINDENT + " Using " + LoggingHelper.getStateString(summaryPostState));
 			mLogger.debug(AbsIntPrefInitializer.DINDENT + " Instead of " + LoggingHelper.getStateString(postState));
 		}
-		worklist.add(new WorklistItem<>(summaryPostState, summaryAction, currentItem));
+		final WorklistItem<STATE, ACTION, VARDECL, LOCATION> newItem =
+				currentItem.createSummarySubstitution(summaryPostState, summaryAction);
+		worklist.add(newItem);
 		return true;
 	}
 
@@ -348,12 +353,11 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		}
 	}
 
-	private WorklistItem<STATE, ACTION, VARDECL, LOCATION> createInitialWorklistItem(final ACTION elem,
-			final SummaryMap<STATE, ACTION, VARDECL, LOCATION> summaryMap) {
+	private WorklistItem<STATE, ACTION, VARDECL, LOCATION> createInitialWorklistItem(final ACTION elem) {
 		final STATE preState = mVarProvider.defineInitialVariables(elem, mDomain.createFreshState());
 		final AbstractMultiState<STATE, ACTION, VARDECL> preMultiState =
 				new AbstractMultiState<>(mMaxParallelStates, preState);
-		return new WorklistItem<>(preMultiState, elem, mStateStorage, summaryMap);
+		return new WorklistItem<>(preMultiState, elem, mStateStorage, mSummaryMap);
 	}
 
 	private List<WorklistItem<STATE, ACTION, VARDECL, LOCATION>> createSuccessorItems(
@@ -409,6 +413,11 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		}
 
 		// we widen with the oldState and all postStates and keep the states that are not fixpoints
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug(AbsIntPrefInitializer.DINDENT + "Applying widening op:");
+			mLogger.debug(AbsIntPrefInitializer.DINDENT + "Op1: " + LoggingHelper.getStateString(oldState));
+			mLogger.debug(AbsIntPrefInitializer.DINDENT + "Op2: " + LoggingHelper.getStateString(postState));
+		}
 		final AbstractMultiState<STATE, ACTION, VARDECL> postStateAfterWidening = oldState.apply(wideningOp, postState);
 		if (isFixpoint(oldState, postStateAfterWidening)) {
 			if (scopeWidening) {
