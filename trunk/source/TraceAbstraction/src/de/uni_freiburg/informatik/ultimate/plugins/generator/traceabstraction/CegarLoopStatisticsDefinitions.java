@@ -35,6 +35,8 @@ public enum CegarLoopStatisticsDefinitions implements IStatisticsElement {
 			AStatisticsType.s_KeyBeforeData),
 
 	StatesRemovedByMinimization(Long.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
+	
+	MinimizatonAttempts(Long.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
 
 	BasicInterpolantAutomatonTime(Long.class, AStatisticsType.s_LongAddition, AStatisticsType.s_TimeBeforeKey),
 

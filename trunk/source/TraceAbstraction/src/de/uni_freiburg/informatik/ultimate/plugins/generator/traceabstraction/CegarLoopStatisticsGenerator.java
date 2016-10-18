@@ -44,6 +44,7 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 	private final StatisticsData mTiData = new StatisticsData();
 	private final StatisticsData mInterpolantConsolidationBenchmarks = new StatisticsData();
 	private int mStatesRemovedByMinimization = 0;
+	private int mMinimizationAttempts = 0;
 	private int mIterations = 0;
 	private int mAbsIntIterations = 0;
 	private SizeIterationPair mBiggestAbstraction = new SizeIterationPair(-1, -1);
@@ -117,6 +118,10 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 			mTraceHistogramMaximum = maxCurrentTrace;
 		}
 	}
+	
+	public void reportMinimizationAttempt() {
+		mMinimizationAttempts++;
+	}
 
 	@Override
 	public Object getValue(final String key) {
@@ -148,6 +153,8 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 			return mTiData;
 		case StatesRemovedByMinimization:
 			return mStatesRemovedByMinimization;
+		case MinimizatonAttempts:
+			return mMinimizationAttempts;
 		case OverallIterations:
 			return mIterations;
 		case TraceHistogramMax:
@@ -180,6 +187,8 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 				CegarLoopStatisticsDefinitions.HoareAnnotationTime.toString(),
 				CegarLoopStatisticsDefinitions.BasicInterpolantAutomatonTime.toString() };
 	}
+
+
 
 
 }

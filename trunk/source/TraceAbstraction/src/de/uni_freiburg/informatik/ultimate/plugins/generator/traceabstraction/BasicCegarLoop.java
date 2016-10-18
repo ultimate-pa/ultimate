@@ -782,6 +782,9 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					mIteration, predicateFactoryRefinement, MINIMIZE_EVERY_KTH_ITERATION, 
 					mStoredRawInterpolantAutomata, mInterpolAutomaton, MINIMIZATION_TIMEOUT, resultCheckPredFac, lcsProvider);
 			final boolean wasMinimized = am.wasMinimized();
+			if (am.wasMinimizationAttempted()) {
+				mCegarLoopBenchmark.reportMinimizationAttempt();
+			}
 			
 			if (wasMinimized) {
 				// postprocessing after minimization
