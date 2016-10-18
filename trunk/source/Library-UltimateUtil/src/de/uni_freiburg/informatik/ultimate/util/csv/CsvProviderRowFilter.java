@@ -111,7 +111,7 @@ public class CsvProviderRowFilter<T> implements ICsvProviderTransformer<T> {
 			}
 			return true;
 		}
-
+		
 		protected boolean isForbiddenValue(final T value, final Set<T> allowedValues) {
 			return !allowedValues.contains(value);
 		}
@@ -134,11 +134,30 @@ public class CsvProviderRowFilter<T> implements ICsvProviderTransformer<T> {
 		public DisallowedValuesRowFilter(final Map<String, Set<T>> column2disallowedValues) {
 			super(column2disallowedValues);
 		}
-
+		
 		@Override
 		protected boolean isForbiddenValue(final T value, final Set<T> allowedValues) {
 			// invert the result
 			return !super.isForbiddenValue(value, allowedValues);
+		}
+	}
+	
+	/**
+	 * Checks that all entries in a CSV are non-null. Since CSVs can originate from text files, we also check that the
+	 * {@link #toString()} representation is different from "null".
+	 * 
+	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+	 */
+	public static class AllEntriesNonNullFilter<T> implements Predicate<Pair<List<T>, List<String>>> {
+		@Override
+		public boolean test(final Pair<List<T>, List<String>> pair) {
+			final List<T> row = pair.getFirst();
+			for (final T entry : row) {
+				if (entry == null || "null".equals(entry.toString())) {
+					return false;
+				}
+			}
+			return true;
 		}
 	}
 }
