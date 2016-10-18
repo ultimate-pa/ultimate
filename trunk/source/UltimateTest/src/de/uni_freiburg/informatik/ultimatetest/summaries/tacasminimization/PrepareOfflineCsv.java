@@ -12,6 +12,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvProviderColumnFilter;
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvProviderFromFile;
+import de.uni_freiburg.informatik.ultimate.util.csv.CsvProviderPartition;
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvProviderRowFilter;
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvProviderTransformerCombinator;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
@@ -46,8 +47,15 @@ public final class PrepareOfflineCsv {
 		
 		// full table
 		final ICsvProvider<String> result = transformer.transform(input);
-		final StringBuilder builder = new StringBuilder();
-		System.out.println(result.toCsv(builder, ",").toString());
+		System.out.println(result.toCsv(new StringBuilder(), ",").toString());
+		
+		// separated tables
+		final String statesColumn = "STATES_INPUT";
+		final int[] thresholds = new int[] {100,500,2500};
+		final CsvProviderPartition<String> partition = new CsvProviderPartition<>(result, statesColumn, thresholds);
+		for (final ICsvProvider<String> csv : partition.getCsvs()) {
+			System.out.println(csv.toCsv(new StringBuilder(), ",").toString());
+		}
 		
 		// TODO aggregate
 	}
