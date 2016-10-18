@@ -231,6 +231,12 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE> extends UnaryNwaOperati
 					outputAnalyzer.getNumberOfTransitions(SymbolType.RETURN));
 			result.addKeyValuePair(StatisticsType.RESULT_NONDETERMINISTIC_STATES,
 					outputAnalyzer.getNumberOfNondeterministicStates());
+			
+			// comparisons (can only be computed after relevant data was added)
+			result.addDifferenceData(StatisticsType.BUCHI_TRANSITIONS, StatisticsType.RESULT_TRANSITIONS,
+					StatisticsType.TRANSITIONS_REDUCTION_ABSOLUTE);
+			result.addPercentageDataInverted(StatisticsType.BUCHI_TRANSITIONS, StatisticsType.RESULT_TRANSITIONS,
+					StatisticsType.TRANSITIONS_REDUCTION_RELATIVE);
 		}
 		
 		return result;

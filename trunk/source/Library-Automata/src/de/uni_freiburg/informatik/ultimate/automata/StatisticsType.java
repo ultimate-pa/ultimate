@@ -381,4 +381,12 @@ public enum StatisticsType {
 	 * Number of return transitions.
 	 */
 	TRANSITIONS_RETURN_OUTPUT,
+	/**
+	 * Absolute difference in the number of transitions between input and output.
+	 */
+	TRANSITIONS_REDUCTION_ABSOLUTE,
+	/**
+	 * Relative difference in the number of transitions between input and output.
+	 */
+	TRANSITIONS_REDUCTION_RELATIVE,
 }
