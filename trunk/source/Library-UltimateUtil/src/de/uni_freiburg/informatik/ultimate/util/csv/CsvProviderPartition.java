@@ -88,7 +88,7 @@ public class CsvProviderPartition<T> {
 		for (final ICsvProvider<T> csv : mCsvs) {
 			final int numberOfRows = csv.getRowHeaders().size();
 			for (int i = 0; i < numberOfRows; ++i) {
-				result.addRow(csv.getRow(i));
+				result.addRow(csv.getRowHeaders().get(i), csv.getRow(i));
 			}
 		}
 		
