@@ -43,6 +43,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizeNwaDD;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeDfaHopcroftArrays;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeDfaHopcroftLists;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaCombinator;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaCombinator.MinimizationMethods;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaMaxSat2;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaMulti;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaMulti.Strategy;
@@ -81,6 +83,7 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate> {
 	private final IDoubleDeckerAutomaton<CodeBlock, IPredicate> mMinimizedAutomaton;
 	private final Map<IPredicate, IPredicate> mOldState2newState;
 	private final boolean mWasMinimized;
+	private final boolean mMinimizationAttempt;
 
 	public AutomataMinimization(final IUltimateServiceProvider services, 
 			final INestedWordAutomaton<CodeBlock, IPredicate> operand, 
@@ -106,6 +109,7 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate> {
 				newAbstractionRaw = new MinimizeSevpa<>(autServices, operand, partition, predicateFactoryRefinement,
 						computeOldState2NewStateMapping);
 				mWasMinimized = true;
+				mMinimizationAttempt = true;
 				break;
 			}
 			case SHRINK_NWA: {
@@ -113,6 +117,7 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate> {
 						computeOldState2NewStateMapping, false, false, ShrinkNwa.SUGGESTED_RANDOM_SPLIT_SIZE, false, 0, false,
 						false, true);
 				mWasMinimized = true;
+				mMinimizationAttempt = true;
 				break;
 			}
 			case NWA_COMBINATOR_PATTERN: {
@@ -121,6 +126,7 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate> {
 						computeOldState2NewStateMapping, iteration);
 				// it can happen that no minimization took place
 				mWasMinimized = (newAbstractionRaw == operand);
+				mMinimizationAttempt = true;
 				break;
 			}
 			case NWA_COMBINATOR_EVERY_KTH: {
@@ -129,7 +135,7 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate> {
 						computeOldState2NewStateMapping, minimizeEveryKthIteration, iteration);
 				// it can happen that no minimization took place
 				mWasMinimized = (newAbstractionRaw == operand);
-				break;
+				throw new UnsupportedOperationException("currently unsupported - check minimizaton attemp");
 			}
 			case NWA_OVERAPPROXIMATION: {
 				assert storedRawInterpolantAutomata != null;
@@ -138,23 +144,26 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate> {
 						operand, partition, computeOldState2NewStateMapping, minimizationTimeout,
 						storedRawInterpolantAutomata);
 				mWasMinimized = true;
-				break;
+				throw new UnsupportedOperationException("currently unsupported - check minimizaton attemp");
 			}
 			case DFA_HOPCROFT_ARRAYS: {
 				newAbstractionRaw = new MinimizeDfaHopcroftArrays<>(autServices, operand,
 						predicateFactoryRefinement, partition, computeOldState2NewStateMapping);
 				mWasMinimized = true;
+				mMinimizationAttempt = true;
 				break;
 			}
 			case DFA_HOPCROFT_LISTS: {
 				newAbstractionRaw = new MinimizeDfaHopcroftLists<>(autServices, operand, predicateFactoryRefinement,
 						partition, computeOldState2NewStateMapping);
 				mWasMinimized = true;
+				mMinimizationAttempt = true;
 				break;
 			}
 			case NWA_MAX_SAT: {
 				newAbstractionRaw = new MinimizeNwaMaxSAT<>(autServices, predicateFactoryRefinement, operand);
 				mWasMinimized = true;
+				mMinimizationAttempt = true;
 				break;
 			}
 			case NWA_MAX_SAT2: {
@@ -162,18 +171,21 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate> {
 						(IDoubleDeckerAutomaton<CodeBlock, IPredicate>) operand, computeOldState2NewStateMapping,
 						partition);
 				mWasMinimized = true;
+				mMinimizationAttempt = true;
 				break;
 			}
 			case RAQ_DIRECT_SIMULATION: {
 				newAbstractionRaw = new ReduceNwaDirectSimulation<>(autServices, predicateFactoryRefinement,
 						(IDoubleDeckerAutomaton<CodeBlock, IPredicate>) operand, false, partition);
 				mWasMinimized = true;
+				mMinimizationAttempt = true;
 				break;
 			}
 			case RAQ_DIRECT_SIMULATION_B: {
 				newAbstractionRaw = new ReduceNwaDirectSimulationB<CodeBlock, IPredicate>(autServices, predicateFactoryRefinement,
 						(IDoubleDeckerAutomaton<CodeBlock, IPredicate>) operand);
 				mWasMinimized = true;
+				mMinimizationAttempt = true;
 				break;
 			}
 			case NWA_COMBINATOR_MULTI_DEFAULT: {
@@ -181,6 +193,7 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate> {
 						(IDoubleDeckerAutomaton<CodeBlock, IPredicate>) operand, partition,
 						computeOldState2NewStateMapping);
 				mWasMinimized = true;
+				mMinimizationAttempt = ((MinimizeNwaCombinator<CodeBlock, IPredicate>) newAbstractionRaw).getMode() != MinimizationMethods.NONE;
 				break;
 			}
 			case NWA_COMBINATOR_MULTI_SIMULATION: {
@@ -188,6 +201,7 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate> {
 						(IDoubleDeckerAutomaton<CodeBlock, IPredicate>) operand, partition,
 						computeOldState2NewStateMapping, Strategy.SIMULATION_BASED);
 				mWasMinimized = true;
+				mMinimizationAttempt = ((MinimizeNwaCombinator<CodeBlock, IPredicate>) newAbstractionRaw).getMode() != MinimizationMethods.NONE;
 				break;
 			}
 			case NONE:
@@ -240,25 +254,20 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate> {
 			}
 	}
 
-	/**
-	 * @return the abstraction
-	 */
 	public IDoubleDeckerAutomaton<CodeBlock, IPredicate> getMinimizedAutomaton() {
 		return mMinimizedAutomaton;
 	}
 
-	/**
-	 * @return the oldState2newState
-	 */
 	public Map<IPredicate, IPredicate> getOldState2newStateMapping() {
 		return mOldState2newState;
 	}
 
-	/**
-	 * @return the wasMinimized
-	 */
 	public boolean wasMinimized() {
 		return mWasMinimized;
+	}
+
+	public boolean wasMinimizationAttempted() {
+		return mMinimizationAttempt;
 	}
 	
 	

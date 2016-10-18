@@ -53,7 +53,7 @@ public abstract class MinimizeNwaCombinator<LETTER, STATE> extends AbstractMinim
 	/**
 	 * Possible minimization methods.
 	 */
-	protected enum MinimizationMethods {
+	public enum MinimizationMethods {
 		/**
 		 * Use {@link MinimizeSevpa}.
 		 */
@@ -193,4 +193,10 @@ public abstract class MinimizeNwaCombinator<LETTER, STATE> extends AbstractMinim
 			throw new IllegalArgumentException(MAP_NOT_SUPPORTED_MESSAGE + mMode);
 		}
 	}
+
+	public MinimizationMethods getMode() {
+		return mMode;
+	}
+	
+	
 }
