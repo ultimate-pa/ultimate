@@ -58,7 +58,7 @@ public final class RandomNwaBenchmarkCreator {
 	 * Default amount of created Nwa automata after which a logging message gets
 	 * printed.
 	 */
-	public static final int LOG_EVERY = 10;
+	public static final int LOG_EVERY = 100;
 	/**
 	 * The lower bound for a value that can be interpreted as percentage.
 	 */
@@ -97,15 +97,15 @@ public final class RandomNwaBenchmarkCreator {
 		final float totalityHierPredInPerc = 50f;
 
 		// Settings for space coverage sets
-		final float totalityInternalInPercMin = 0f;
+		final float totalityInternalInPercMin = 1f;
 		final float totalityInternalInPercMax = 100f;
-		final float totalityCallInPercMin = 0f;
+		final float totalityCallInPercMin = 1f;
 		final float totalityCallInPercMax = 100f;
-		final float totalityReturnInPercMin = 0f;
+		final float totalityReturnInPercMin = 1f;
 		final float totalityReturnInPercMax = 100f;
 		final float totalityHierPredInPercMin = 50f;
 		final float totalityHierPredInPercMax = 50f;
-		final int stepSize = 5;
+		final int stepSize = 10;
 
 		// Which method to use
 		final boolean createExplicit = false;
@@ -124,7 +124,48 @@ public final class RandomNwaBenchmarkCreator {
 	/**
 	 * Creates benchmark sets that cover the whole given spice by using the
 	 * {@link RandomNwaBenchmarkCreator} class.
-	 *
+	 * 
+	 * @param n
+	 *            The amount of states generated Nwa automata should have
+	 * @param k
+	 *            The size of the alphabet generated Nwa automata should have
+	 * @param acceptanceInPerc
+	 *            The percentage of how many states should be accepting, between
+	 *            0 and 100 (both inclusive)
+	 * @param amount
+	 *            Amount of random Nwa automata to generate
+	 * @param operationSwitch
+	 *            Which operation to use
+	 * @param useRandomTvModel
+	 *            If the random TV-Model should be used for generation
+	 * @param totalityInternalInPercMin
+	 *            The minimum percentage of how many internal transitions each
+	 *            state should have, greater equals 0
+	 * @param totalityInternalInPercMax
+	 *            The maximum percentage of how many internal transitions each
+	 *            state should have, greater equals 0
+	 * @param totalityCallInPercMin
+	 *            The minimum percentage of how many call transitions each state
+	 *            should have, greater equals 0
+	 * @param totalityCallInPercMax
+	 *            The maximum percentage of how many call transitions each state
+	 *            should have, greater equals 0
+	 * @param totalityReturnInPercMin
+	 *            The minimum percentage of how many return transitions each
+	 *            state should have, greater equals 0
+	 * @param totalityReturnInPercMax
+	 *            The maximum percentage of how many return transitions each
+	 *            state should have, greater equals 0
+	 * @param totalityHierPredInPercMin
+	 *            The minimum percentage of how many hierarchical predecessor
+	 *            for return transitions each state should have, greater equals
+	 *            0
+	 * @param totalityHierPredInPercMax
+	 *            The maximum percentage of how many hierarchical predecessor
+	 *            for return transitions each state should have, greater equals
+	 *            0
+	 * @param stepSize
+	 *            How big the steps between each iteration should be
 	 * @throws IOException
 	 *             If an I/O-Exception occurred
 	 */
@@ -136,10 +177,22 @@ public final class RandomNwaBenchmarkCreator {
 					throws IOException {
 		System.out.println("Starting creation of space coverage sets...");
 
-		int internalSteps = (int) ((totalityInternalInPercMax - totalityInternalInPercMin) / stepSize);
-		int callSteps = (int) ((totalityCallInPercMax - totalityCallInPercMin) / stepSize);
-		int returnSteps = (int) ((totalityReturnInPercMax - totalityReturnInPercMin) / stepSize);
-		int hierPredSteps = (int) ((totalityHierPredInPercMax - totalityHierPredInPercMin) / stepSize);
+		int internalSteps = (int) Math.ceil((totalityInternalInPercMax - totalityInternalInPercMin) / stepSize);
+		int callSteps = (int) Math.ceil((totalityCallInPercMax - totalityCallInPercMin) / stepSize);
+		int returnSteps = (int) Math.ceil((totalityReturnInPercMax - totalityReturnInPercMin) / stepSize);
+		int hierPredSteps = (int) Math.ceil((totalityHierPredInPercMax - totalityHierPredInPercMin) / stepSize);
+		if (internalSteps == 0) {
+			internalSteps = 1;
+		}
+		if (callSteps == 0) {
+			callSteps = 1;
+		}
+		if (returnSteps == 0) {
+			returnSteps = 1;
+		}
+		if (hierPredSteps == 0) {
+			hierPredSteps = 1;
+		}
 
 		int stepsToGo = internalSteps * callSteps * returnSteps * hierPredSteps;
 		System.out.println("Sets to create: " + stepsToGo);
@@ -163,7 +216,32 @@ public final class RandomNwaBenchmarkCreator {
 	/**
 	 * Creates a benchmark set with given explicit settings by using the
 	 * {@link RandomNwaBenchmarkCreator} class.
-	 *
+	 * 
+	 * @param n
+	 *            The amount of states generated Nwa automata should have
+	 * @param k
+	 *            The size of the alphabet generated Nwa automata should have
+	 * @param acceptanceInPerc
+	 *            The percentage of how many states should be accepting, between
+	 *            0 and 100 (both inclusive)
+	 * @param totalityInternalInPerc
+	 *            The percentage of how many internal transitions each state
+	 *            should have, greater equals 0
+	 * @param totalityCallInPerc
+	 *            The percentage of how many call transitions each state should
+	 *            have, greater equals 0
+	 * @param totalityReturnInPerc
+	 *            The percentage of how many return transitions each state
+	 *            should have, greater equals 0
+	 * @param totalityHierPredInPerc
+	 *            The percentage of how many hierarchical predecessor for return
+	 *            transitions each state should have, greater equals 0
+	 * @param amount
+	 *            Amount of random Nwa automata to generate
+	 * @param operationSwitch
+	 *            Which operation to use
+	 * @param useRandomTvModel
+	 *            If the random TV-Model should be used for generation
 	 * @throws IOException
 	 *             If an I/O-Exception occurred
 	 */

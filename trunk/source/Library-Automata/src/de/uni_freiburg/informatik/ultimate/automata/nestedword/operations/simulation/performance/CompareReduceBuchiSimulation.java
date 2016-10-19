@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simul
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -82,14 +83,31 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class CompareReduceBuchiSimulation<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
 
 	/**
+	 * Constant for representing no value in the html format.
+	 */
+	public static final String HTML_NO_VALUE = "&ndash;";
+	/**
+	 * Path where simulation perfomance relevant logs and data gets saved.
+	 */
+	public static final File LOG_PATH = new File(new File(System.getProperty("user.home"), "Desktop"),
+			"simulationPerformance");
+	/**
+	 * Separator that is used in the log.
+	 */
+	public static final String LOG_SEPARATOR = "\t";
+	/**
+	 * Constant for representing no value in the plot format.
+	 */
+	public static final String PLOT_NO_VALUE = "--";
+	/**
+	 * Separator that is used in plot files.
+	 */
+	public static final String PLOT_SEPARATOR = "\t";
+	/**
 	 * Amount of fix fields in the log format. Currently this is name, type,
 	 * usedSCCs, timedOut and outOfMemory.
 	 */
 	private static final int FIX_FIELD_AMOUNT = 5;
-	/**
-	 * Constant for representing no value in the html format.
-	 */
-	private static final String HTML_NO_VALUE = "&ndash;";
 	/**
 	 * Marks the end of the head from an entry.
 	 */
@@ -99,14 +117,13 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> extends UnaryNwaOperati
 	 */
 	private static final String LOG_ENTRY_HEAD_START = "<!--";
 	/**
-	 * Path where simulation perfomance relevant logs and data gets saved.
-	 */
-	private static final File LOG_PATH = new File(new File(System.getProperty("user.home"), "Desktop"),
-			"simulationPerformance");
-	/**
 	 * Name for the object of the log file.
 	 */
-	private static final String LOG_PATH_DATA = "testData.tsv";
+	private static final String LOG_PATH_DATA = "testData";
+	/**
+	 * Extension for the object of the log file.
+	 */
+	private static final String LOG_PATH_DATA_EXT = ".tsv";
 	/**
 	 * Prefix for test result files.
 	 */
@@ -123,18 +140,6 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> extends UnaryNwaOperati
 	 * Suffix for test result files.
 	 */
 	private static final String LOG_PATH_PLOT_SUFF = ".csv";
-	/**
-	 * Separator that is used in the log.
-	 */
-	private static final String LOG_SEPARATOR = "\t";
-	/**
-	 * Constant for representing no value in the plot format.
-	 */
-	private static final String PLOT_NO_VALUE = "--";
-	/**
-	 * Separator that is used in plot files.
-	 */
-	private static final String PLOT_SEPARATOR = "\t";
 	/**
 	 * Time in seconds after which a simulation method should timeout.
 	 */
@@ -158,17 +163,20 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> extends UnaryNwaOperati
 //				ComparisonTables.createInstanceTimePartitioningTable(performanceEntries, LOG_SEPARATOR)));
 //		tables.add(new Pair<>("instanceAlgoWork",
 //				ComparisonTables.createInstanceAlgoWorkTable(performanceEntries, LOG_SEPARATOR)));
-		tables.add(new Pair<>("averagedSimulationFullComparison",
-				ComparisonTables.createAveragedSimulationFullComparisonTable(performanceEntries, LOG_SEPARATOR, null, false, false, true)));
+//		tables.add(new Pair<>("averagedSimulationFullComparison",
+//				ComparisonTables.createAveragedSimulationFullComparisonTable(performanceEntries, LOG_SEPARATOR, null, false, false, true)));
+		tables.add(new Pair<>("averagedSimulationPerDirectoryTable",
+				ComparisonTables.createAveragedSimulationPerDirectoryTable(performanceEntries, LOG_SEPARATOR,
+						ESimulationType.EXT_MINIMIZENWAMAXSAT, false, false, true)));
 //		tables.add(new Pair<>("averagedSimulationTimePartitioning",
 //				ComparisonTables.createAveragedSimulationTimePartitioningTable(performanceEntries, LOG_SEPARATOR)));
 //		tables.add(new Pair<>("averagedSimulationAlgoWork",
 //				ComparisonTables.createAveragedSimulationAlgoWorkTable(performanceEntries, LOG_SEPARATOR)));
-		tables.add(new Pair<>("timedOutNames", ComparisonTables.createTimedOutNamesTable(performanceEntries)));
-		tables.add(new Pair<>("noRemoveNames", ComparisonTables.createNoRemoveNamesTable(performanceEntries)));
-		tables.add(new Pair<>("smallSizeNames", ComparisonTables.createSmallSizeNamesTable(performanceEntries)));
-		tables.add(new Pair<>("longerThanOneSecondNames",
-				ComparisonTables.createLongerThanOneSecondNamesTable(performanceEntries)));
+//		tables.add(new Pair<>("timedOutNames", ComparisonTables.createTimedOutNamesTable(performanceEntries)));
+//		tables.add(new Pair<>("noRemoveNames", ComparisonTables.createNoRemoveNamesTable(performanceEntries)));
+//		tables.add(new Pair<>("smallSizeNames", ComparisonTables.createSmallSizeNamesTable(performanceEntries)));
+//		tables.add(new Pair<>("longerThanOneSecondNames",
+//				ComparisonTables.createLongerThanOneSecondNamesTable(performanceEntries)));
 		
 //		tables.add(new Pair<>("directFilteredInstanceFullComparison",
 //				ComparisonTables.createInstanceFullComparisonTable(performanceEntries, LOG_SEPARATOR, ESimulationType.DIRECT, true, true, true)));
@@ -184,10 +192,10 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> extends UnaryNwaOperati
 			tableToHtmlFile(pair.getFirst(), pair.getSecond());
 		}
 		
-//		System.out.println("Creating plot files...");
-//		for (final Pair<String, List<String>> pair : tables) {
-//			tableToPlotFile(pair.getFirst(), pair.getSecond());
-//		}
+		System.out.println("Creating plot files...");
+		for (final Pair<String, List<String>> pair : tables) {
+			tableToPlotFile(pair.getFirst(), pair.getSecond());
+		}
 
 		System.out.println("Terminated.");
 	}
@@ -217,84 +225,98 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> extends UnaryNwaOperati
 				nameToCountingMeasure.put(measure.name(), measure);
 			}
 
-			br = new BufferedReader(new FileReader(new File(LOG_PATH, LOG_PATH_DATA)));
-			while (br.ready()) {
-				final String line = br.readLine();
-
-				final String[] lineElements = line.split(LOG_SEPARATOR);
-				if (lineElements[0].startsWith(LOG_ENTRY_HEAD_START)) {
-					// Line marks start of a head entry
-
-					// Save last entry before starting a new one
-					if (currentPerformanceEntry != null && !currentPerformanceEntry.isEmpty()) {
-						performanceEntries.add((LinkedList<SimulationPerformance>) currentPerformanceEntry.clone());
-					}
-
-					// Start a new entry
-					currentPerformanceEntry = new LinkedList<>();
-					currentTimeMeasures.clear();
-					currentCountingMeasures.clear();
-
-					// Parse the current header and the order of measures
-					for (int i = FIX_FIELD_AMOUNT + 1; i < lineElements.length; i++) {
-						// End if end of the head entry is reached
-						final String measureName = lineElements[i];
-						if (measureName.equals(LOG_ENTRY_HEAD_END)) {
-							break;
-						}
-						if (nameToTimeMeasure.containsKey(measureName)) {
-							currentTimeMeasures.add(nameToTimeMeasure.get(measureName));
-						} else if (nameToCountingMeasure.containsKey(measureName)) {
-							currentCountingMeasures.add(nameToCountingMeasure.get(measureName));
-						}
-					}
-				} else {
-					// Line is a data set of the current performance entry
-					// Fix fields
-					final String name = lineElements[0];
-					final ESimulationType type = ESimulationType.valueOf(lineElements[1]);
-					final boolean usedSCCs = Boolean.parseBoolean(lineElements[2]);
-					final boolean timedOut = Boolean.parseBoolean(lineElements[3]);
-					final boolean outOfMemory = Boolean.parseBoolean(lineElements[4]);
-					final SimulationPerformance performance = new SimulationPerformance(type, usedSCCs);
-					if (timedOut) {
-						performance.timeOut();
-					}
-					if (outOfMemory) {
-						performance.outOfMemory();
-					}
-					performance.setName(name);
-
-					// Parse the rest of the data set
-					for (int i = FIX_FIELD_AMOUNT; i < lineElements.length; i++) {
-						final int indexTimeMeasure = i - FIX_FIELD_AMOUNT;
-						final int indexCountingMeasure = i - FIX_FIELD_AMOUNT - currentTimeMeasures.size();
-						if (indexTimeMeasure >= 0 && indexTimeMeasure < currentTimeMeasures.size()) {
-							final ETimeMeasure measure = currentTimeMeasures.get(indexTimeMeasure);
-							final float value = Float.parseFloat(lineElements[i]);
-							if (value == SimulationPerformance.NO_TIME_RESULT) {
-								performance.addTimeMeasureValue(measure, SimulationPerformance.NO_TIME_RESULT);
-							} else {
-								performance.addTimeMeasureValue(measure, ComparisonTables.secondsToMillis(value));
-							}
-						} else if (indexCountingMeasure >= 0 && indexCountingMeasure < currentCountingMeasures.size()) {
-							final ECountingMeasure measure = currentCountingMeasures.get(indexCountingMeasure);
-							final int value = Integer.parseInt(lineElements[i]);
-							if (value == SimulationPerformance.NO_COUNTING_RESULT) {
-								performance.setCountingMeasure(measure, SimulationPerformance.NO_COUNTING_RESULT);
-							} else {
-								performance.setCountingMeasure(measure, value);
-							}
-						}
-					}
-
-					// Put the data in the element
-					currentPerformanceEntry.add(performance);
+			final FileFilter logFileFilter = new FileFilter() {
+				/*
+				 * (non-Javadoc)
+				 * 
+				 * @see java.io.FileFilter#accept(java.io.File)
+				 */
+				@Override
+				public boolean accept(final File pathname) {
+					String name = pathname.getName();
+					return name.startsWith(LOG_PATH_DATA) && name.endsWith(LOG_PATH_DATA_EXT);
 				}
-			}
-			// Save last entry
-			if (currentPerformanceEntry != null && !currentPerformanceEntry.isEmpty()) {
-				performanceEntries.add(currentPerformanceEntry);
+			};
+			for (final File logFile : LOG_PATH.listFiles(logFileFilter)) {
+				br = new BufferedReader(new FileReader(logFile));
+				while (br.ready()) {
+					final String line = br.readLine();
+
+					final String[] lineElements = line.split(LOG_SEPARATOR);
+					if (lineElements[0].startsWith(LOG_ENTRY_HEAD_START)) {
+						// Line marks start of a head entry
+
+						// Save last entry before starting a new one
+						if (currentPerformanceEntry != null && !currentPerformanceEntry.isEmpty()) {
+							performanceEntries.add((LinkedList<SimulationPerformance>) currentPerformanceEntry.clone());
+						}
+
+						// Start a new entry
+						currentPerformanceEntry = new LinkedList<>();
+						currentTimeMeasures.clear();
+						currentCountingMeasures.clear();
+
+						// Parse the current header and the order of measures
+						for (int i = FIX_FIELD_AMOUNT + 1; i < lineElements.length; i++) {
+							// End if end of the head entry is reached
+							final String measureName = lineElements[i];
+							if (measureName.equals(LOG_ENTRY_HEAD_END)) {
+								break;
+							}
+							if (nameToTimeMeasure.containsKey(measureName)) {
+								currentTimeMeasures.add(nameToTimeMeasure.get(measureName));
+							} else if (nameToCountingMeasure.containsKey(measureName)) {
+								currentCountingMeasures.add(nameToCountingMeasure.get(measureName));
+							}
+						}
+					} else {
+						// Line is a data set of the current performance entry
+						// Fix fields
+						final String name = lineElements[0];
+						final ESimulationType type = ESimulationType.valueOf(lineElements[1]);
+						final boolean usedSCCs = Boolean.parseBoolean(lineElements[2]);
+						final boolean timedOut = Boolean.parseBoolean(lineElements[3]);
+						final boolean outOfMemory = Boolean.parseBoolean(lineElements[4]);
+						final SimulationPerformance performance = new SimulationPerformance(type, usedSCCs);
+						if (timedOut) {
+							performance.timeOut();
+						}
+						if (outOfMemory) {
+							performance.outOfMemory();
+						}
+						performance.setName(name);
+
+						// Parse the rest of the data set
+						for (int i = FIX_FIELD_AMOUNT; i < lineElements.length; i++) {
+							final int indexTimeMeasure = i - FIX_FIELD_AMOUNT;
+							final int indexCountingMeasure = i - FIX_FIELD_AMOUNT - currentTimeMeasures.size();
+							if (indexTimeMeasure >= 0 && indexTimeMeasure < currentTimeMeasures.size()) {
+								final ETimeMeasure measure = currentTimeMeasures.get(indexTimeMeasure);
+								final float value = Float.parseFloat(lineElements[i]);
+								if (value == SimulationPerformance.NO_TIME_RESULT) {
+									performance.addTimeMeasureValue(measure, SimulationPerformance.NO_TIME_RESULT);
+								} else {
+									performance.addTimeMeasureValue(measure, ComparisonTables.secondsToMillis(value));
+								}
+							} else if (indexCountingMeasure >= 0 && indexCountingMeasure < currentCountingMeasures.size()) {
+								final ECountingMeasure measure = currentCountingMeasures.get(indexCountingMeasure);
+								final int value = Integer.parseInt(lineElements[i]);
+								if (value == SimulationPerformance.NO_COUNTING_RESULT) {
+									performance.setCountingMeasure(measure, SimulationPerformance.NO_COUNTING_RESULT);
+								} else {
+									performance.setCountingMeasure(measure, value);
+								}
+							}
+						}
+
+						// Put the data in the element
+						currentPerformanceEntry.add(performance);
+					}
+				}
+				// Save last entry
+				if (currentPerformanceEntry != null && !currentPerformanceEntry.isEmpty()) {
+					performanceEntries.add(currentPerformanceEntry);
+				}
 			}
 
 			return performanceEntries;
@@ -496,6 +518,14 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> extends UnaryNwaOperati
 	 * Holds time measures of the comparison.
 	 */
 	private final LinkedHashMap<ETimeMeasure, Float> mTimeMeasures;
+	/**
+	 * Filter for logging files.
+	 */
+	private final FileFilter mLogFileFilter;
+	/**
+	 * Threshold in bytes at which a log file should get finalized.
+	 */
+	private final static int LOG_FILE_SIZE_THRESHOLD = 1_000_000;
 
 	/**
 	 * Compares the different types of simulation methods for buechi reduction.
@@ -524,6 +554,18 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> extends UnaryNwaOperati
 		mTimeMeasures = new LinkedHashMap<>();
 		mCountingMeasures = new LinkedHashMap<>();
 		mExternalOverallTime = 0;
+		mLogFileFilter = new FileFilter() {
+			/*
+			 * (non-Javadoc)
+			 * 
+			 * @see java.io.FileFilter#accept(java.io.File)
+			 */
+			@Override
+			public boolean accept(final File pathname) {
+				String name = pathname.getName();
+				return name.startsWith(LOG_PATH_DATA) && name.endsWith(LOG_PATH_DATA_EXT);
+			}
+		};
 
 		mLogger.info(startMessage());
 
@@ -572,11 +614,6 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> extends UnaryNwaOperati
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		return true;
-	}
-
-	@Override
-	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
-		return mOperand;
 	}
 
 	/*
@@ -734,7 +771,28 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> extends UnaryNwaOperati
 		}
 
 		PrintWriter writer = null;
-		final File dataFile = new File(LOG_PATH, LOG_PATH_DATA);
+		
+		File dataFile = null;
+		boolean foundSmallLogFile = false;
+		int highestLogFileIndex = 0;
+		for (final File logFile : LOG_PATH.listFiles(mLogFileFilter)) {
+			if (logFile.length() < LOG_FILE_SIZE_THRESHOLD) {
+				foundSmallLogFile = true;
+				dataFile = logFile;
+				break;
+			}
+			// Get the index of this log file
+			final String name = logFile.getName();
+			final int index = Integer.parseInt(name.replaceFirst(LOG_PATH_DATA, "").replaceFirst(LOG_PATH_DATA_EXT, ""));
+			if (index > highestLogFileIndex) {
+				highestLogFileIndex = index;
+			}
+		}
+		if (!foundSmallLogFile) {
+			highestLogFileIndex++;
+			dataFile = new File(LOG_PATH, LOG_PATH_DATA + highestLogFileIndex + LOG_PATH_DATA_EXT);
+		}
+		
 		try {
 			writer = new PrintWriter(new BufferedWriter(new FileWriter(dataFile, true)));
 			for (final String message : mLoggedLines) {
@@ -884,6 +942,11 @@ public class CompareReduceBuchiSimulation<LETTER, STATE> extends UnaryNwaOperati
 	 */
 	protected ILogger getLogger() {
 		return mLogger;
+	}
+
+	@Override
+	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
+		return mOperand;
 	}
 
 	/**

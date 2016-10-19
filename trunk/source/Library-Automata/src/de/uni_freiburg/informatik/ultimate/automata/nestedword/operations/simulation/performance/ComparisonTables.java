@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.performance;
 
+import java.io.File;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.HashMap;
@@ -34,9 +35,12 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ESimulationType;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -152,8 +156,8 @@ public final class ComparisonTables {
 			if (averageOfValuesForSimSteps == 0 || averageOfValuesForGraphStates == 0) {
 				valueAsString = NO_VALUE;
 			} else {
-				valueAsString = Float.toString(roundTo((averageOfValuesForSimSteps + 0.0) / averageOfValuesForGraphStates,
-						DECIMAL_PLACES));
+				valueAsString = Float.toString(
+						roundTo((averageOfValuesForSimSteps + 0.0) / averageOfValuesForGraphStates, DECIMAL_PLACES));
 			}
 			row += separator + valueAsString;
 
@@ -361,6 +365,161 @@ public final class ComparisonTables {
 				row += separator + valueAsString;
 			}
 			table.add(row);
+		}
+
+		return table;
+	}
+
+	/**
+	 * Creates a table that holds the full comparison data for each simulation
+	 * type averaged over all directories of the automata instances
+	 * respectively.
+	 * 
+	 * @param performanceEntries
+	 *            Data structure holding the performance entries
+	 * @param separator
+	 *            Separator to use for separating cells
+	 * @param simulationType
+	 *            The simulation type interested in, or <tt>null</tt> if
+	 *            interested in all results
+	 * @param filtered
+	 *            If the result should not contain results where the input
+	 *            automaton has an empty size, at least one of the methods timed
+	 *            out or an OutOfMemory-Error occurred.
+	 * @param filterOnlyNwa
+	 *            If the result should only contain nested word automaton, this
+	 *            removes every automaton which has no return transitions
+	 * @param convertTransitionDensityToDouble
+	 *            Converts transition density values from Integer back to
+	 *            Double.
+	 * @return A table in a tsv-like format, specified by
+	 *         {@link #LOG_SEPARATOR}.
+	 */
+	public static List<String> createAveragedSimulationPerDirectoryTable(
+			final LinkedList<LinkedList<SimulationPerformance>> performanceEntries, final String separator,
+			final ESimulationType simulationType, final boolean filtered, final boolean filterOnlyNwa,
+			final boolean convertTransitionDensityToDouble) {
+		final List<String> table = new LinkedList<>();
+		if (performanceEntries.isEmpty()) {
+			return table;
+		}
+
+		// Process performance list into a sorted map structure
+		final NestedMap2<String, Pair<ESimulationType, Boolean>, LinkedList<SimulationPerformance>> directoryAndSimulationToPerformances = calcDirAndSimToPerformances(
+				performanceEntries);
+
+		// Header of table
+		String header = "DIRECTORY" + separator + "TYPE" + separator + "USED_SCCS";
+		final SimulationPerformance headerCandidate = performanceEntries.get(0).get(0);
+		final Set<ETimeMeasure> timeMeasures = headerCandidate.getTimeMeasures().keySet();
+		for (final ETimeMeasure measure : timeMeasures) {
+			header += separator + measure;
+		}
+		final Set<ECountingMeasure> countingMeasures = headerCandidate.getCountingMeasures().keySet();
+		for (final ECountingMeasure measure : countingMeasures) {
+			header += separator + measure;
+		}
+		table.add(header);
+
+		// Rows of table
+		for (final String directory : directoryAndSimulationToPerformances.keySet()) {
+			for (final Entry<Pair<ESimulationType, Boolean>, LinkedList<SimulationPerformance>> entry : directoryAndSimulationToPerformances
+					.get(directory).entrySet()) {
+				if (simulationType != null && entry.getKey().getFirst() != simulationType) {
+					// If we are interested in a explicit simulation, ignore
+					// other
+					// results
+					continue;
+				}
+
+				String row = directory + separator + entry.getKey().getFirst() + separator + entry.getKey().getSecond();
+
+				final Map<SimulationPerformance, Boolean> ignoreThisPerformance = new HashMap<>();
+				if (filtered || filterOnlyNwa) {
+					for (final SimulationPerformance performance : entry.getValue()) {
+						if (filtered) {
+							// If filtering, we are not interested in this
+							// comparison if the automaton is empty,
+							// a simulation had OOM or timed out
+							final int size = performance.getCountingMeasureResult(ECountingMeasure.BUCHI_STATES);
+							if (performance.hasTimedOut() || performance.isOutOfMemory() || size == 0
+									|| size == SimulationPerformance.NO_COUNTING_RESULT) {
+								ignoreThisPerformance.put(performance, true);
+							}
+						}
+						if (filterOnlyNwa) {
+							// In this case every automaton that has no return
+							// transitions should get removed
+							final int returnTransitions = performance
+									.getCountingMeasureResult(ECountingMeasure.BUCHI_TRANSITIONS_RETURN);
+							if (returnTransitions == 0
+									|| returnTransitions == SimulationPerformance.NO_COUNTING_RESULT) {
+								ignoreThisPerformance.put(performance, true);
+							}
+						}
+					}
+				}
+
+				for (final ETimeMeasure measure : timeMeasures) {
+					long sumOfAllValues = 0;
+					int amountOfValues = 0;
+					for (final SimulationPerformance performance : entry.getValue()) {
+						if (ignoreThisPerformance.get(performance) != null && ignoreThisPerformance.get(performance)) {
+							continue;
+						}
+
+						final long value = performance.getTimeMeasureResult(measure, EMultipleDataOption.ADDITIVE);
+						if (value != SimulationPerformance.NO_TIME_RESULT) {
+							sumOfAllValues += value;
+						}
+						amountOfValues++;
+					}
+					final long averageOfValues = Math.round((sumOfAllValues + 0.0) / amountOfValues);
+					String valueAsString;
+					if (averageOfValues == 0) {
+						valueAsString = NO_VALUE;
+					} else {
+						final float valueInSeconds = millisToSeconds(averageOfValues);
+						valueAsString = Float.toString(valueInSeconds);
+					}
+
+					row += separator + valueAsString;
+
+				}
+				for (final ECountingMeasure measure : countingMeasures) {
+					long sumOfAllValues = 0;
+					int amountOfValues = 0;
+					for (final SimulationPerformance performance : entry.getValue()) {
+						if (ignoreThisPerformance.get(performance) != null && ignoreThisPerformance.get(performance)) {
+							continue;
+						}
+
+						final long value = performance.getCountingMeasureResult(measure);
+						if (value != SimulationPerformance.NO_COUNTING_RESULT) {
+							sumOfAllValues += value;
+						}
+						amountOfValues++;
+					}
+
+					final long averageOfValues = Math.round((sumOfAllValues + 0.0) / amountOfValues);
+					String valueAsString = Long.toString(averageOfValues);
+					if (averageOfValues == 0) {
+						valueAsString = NO_VALUE;
+					}
+					if (convertTransitionDensityToDouble) {
+						final Double sumOfAllValuesAsDouble = convertTransitionDensityToDouble(measure, sumOfAllValues);
+						if (sumOfAllValuesAsDouble != null) {
+							final double averageOfValuesAsDouble = sumOfAllValuesAsDouble / amountOfValues;
+							valueAsString = Double.toString(averageOfValuesAsDouble);
+							if (averageOfValuesAsDouble == 0.0) {
+								valueAsString = NO_VALUE;
+							}
+						}
+					}
+					row += separator + valueAsString;
+				}
+				table.add(row);
+			}
 		}
 
 		return table;
@@ -1008,6 +1167,67 @@ public final class ComparisonTables {
 	 */
 	public static long secondsToMillis(final float seconds) {
 		return Math.round(seconds * SECONDS_TO_MILLIS);
+	}
+
+	/**
+	 * Processes a given performance list into a sorted map structure. A
+	 * performance entry is completely ignored if one simulation of it had a
+	 * timeout.
+	 * 
+	 * @param performanceEntries
+	 *            List of performances to process
+	 * @return Performance entries in a sorted map structure
+	 */
+	private static NestedMap2<String, Pair<ESimulationType, Boolean>, LinkedList<SimulationPerformance>> calcDirAndSimToPerformances(
+			final LinkedList<LinkedList<SimulationPerformance>> performanceEntries) {
+		final NestedMap2<String, Pair<ESimulationType, Boolean>, LinkedList<SimulationPerformance>> directoryAndSimulationToPerformances = new NestedMap2<>();
+		for (final LinkedList<SimulationPerformance> performanceComparison : performanceEntries) {
+			boolean simulationOfComparisonHasTimedOut = false;
+			boolean simulationOfComparisonWasOutOfMemory = false;
+			final LinkedList<SimulationPerformance> performancesToAdd = new LinkedList<>();
+
+			for (final SimulationPerformance performanceOfSimulation : performanceComparison) {
+				// Ignore comparison if a simulation has timed out or was out of
+				// memory
+				if (performanceOfSimulation.hasTimedOut()) {
+					simulationOfComparisonHasTimedOut = true;
+					break;
+				} else if (performanceOfSimulation.isOutOfMemory()) {
+					simulationOfComparisonWasOutOfMemory = true;
+					break;
+				}
+
+				performancesToAdd.add(performanceOfSimulation);
+			}
+			if (!simulationOfComparisonHasTimedOut && !simulationOfComparisonWasOutOfMemory) {
+				// No timeout and no out of memory occurred, add performances
+				for (final SimulationPerformance performance : performancesToAdd) {
+					final ESimulationType type = performance.getSimType();
+
+					// Extract directory out of name
+					final String directoryKey;
+					final String name = performance.getName();
+					final String separator = File.separator;
+					Pattern pattern = Pattern.compile("(.*)\\" + separator + "[^\\" + separator + "]*");
+					Matcher matcher = pattern.matcher(name);
+					if (matcher.find()) {
+						directoryKey = matcher.group(1);
+					} else {
+						directoryKey = name;
+					}
+
+					final Pair<ESimulationType, Boolean> simulationKey = new Pair<>(type, performance.isUsingSCCs());
+					LinkedList<SimulationPerformance> performances = directoryAndSimulationToPerformances
+							.get(directoryKey, simulationKey);
+					if (performances == null) {
+						performances = new LinkedList<>();
+						directoryAndSimulationToPerformances.put(directoryKey, simulationKey, performances);
+					}
+					performances.add(performance);
+				}
+			}
+		}
+		return directoryAndSimulationToPerformances;
 	}
 
 	/**

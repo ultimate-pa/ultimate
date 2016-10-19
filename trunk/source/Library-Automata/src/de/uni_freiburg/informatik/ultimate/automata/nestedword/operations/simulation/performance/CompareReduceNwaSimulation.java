@@ -222,10 +222,10 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 //				stateFactory, reachableOperand);
 		
 		// Other minimization methods
-		measureMethodPerformance(automatonName, ESimulationType.EXT_MINIMIZESEVPA, false, mServices, timeOutMillis,
-				stateFactory, reachableOperand);
-		measureMethodPerformance(automatonName, ESimulationType.EXT_SHRINKNWA, false, mServices, timeOutMillis,
-				stateFactory, reachableOperand);
+//		measureMethodPerformance(automatonName, ESimulationType.EXT_MINIMIZESEVPA, false, mServices, timeOutMillis,
+//				stateFactory, reachableOperand);
+//		measureMethodPerformance(automatonName, ESimulationType.EXT_SHRINKNWA, false, mServices, timeOutMillis,
+//				stateFactory, reachableOperand);
 		measureMethodPerformance(automatonName, ESimulationType.EXT_MINIMIZENWAMAXSAT, false, mServices, timeOutMillis,
 				stateFactory, reachableOperand);
 	}
