@@ -40,6 +40,7 @@ public final class PrepareOfflineCsv {
 	private static final String OUTPUT_PARTITIONED_FILE_NAME = "AutomizerOfflinePartitioned";
 	private static final String OUTPUT_AGGREGATED_FILE_NAME = "AutomizerOfflineAggregated";
 	private static final String COUNT = "Count";
+	private static final int[] THRESHOLDS = new int[] { 100, 500, 2500 };
 	private static final boolean VERBOSE = true;
 	
 	private static final String TRANSITIONS_RETURN_OUTPUT = "TRANSITIONS_RETURN_OUTPUT";
@@ -90,14 +91,13 @@ public final class PrepareOfflineCsv {
 		
 		// separated tables
 		final String statesColumn = STATES_INPUT;
-		final int[] thresholds = new int[] { 100, 500, 2500 };
-		final CsvProviderPartition<String> partition = new CsvProviderPartition<>(fullTable, statesColumn, thresholds);
+		final CsvProviderPartition<String> partition = new CsvProviderPartition<>(fullTable, statesColumn, THRESHOLDS);
 		final CsvProviderAggregator<String> csvProviderAggregator = getStatesAggregation();
 		final CsvProviderRounding<String> csvProviderRound = getRounding();
 		int i = 0;
 		final List<ICsvProvider<String>> aggregatedCsvs = new ArrayList<>();
 		for (final ICsvProvider<String> csv : partition.getCsvs()) {
-			writeCsvToFile(csv, OUTPUT_PARTITIONED_FILE_NAME + thresholds[i]);
+			writeCsvToFile(csv, OUTPUT_PARTITIONED_FILE_NAME + i);
 			
 			// aggregate
 			final ICsvProvider<String> aggregatedCsv = csvProviderAggregator.transform(csv);
@@ -105,7 +105,7 @@ public final class PrepareOfflineCsv {
 			// round
 			final ICsvProvider<String> roundedCsv = csvProviderRound.transform(aggregatedCsv);
 			
-			writeCsvToFile(roundedCsv, OUTPUT_AGGREGATED_FILE_NAME + thresholds[i]);
+			writeCsvToFile(roundedCsv, OUTPUT_AGGREGATED_FILE_NAME + i);
 			
 			aggregatedCsvs.add(roundedCsv);
 			
