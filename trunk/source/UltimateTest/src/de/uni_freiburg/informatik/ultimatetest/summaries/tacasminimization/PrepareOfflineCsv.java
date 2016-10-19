@@ -94,6 +94,7 @@ public final class PrepareOfflineCsv {
 		final CsvProviderAggregator<String> csvProviderAggregator = getStatesAggregation();
 		final CsvProviderRounding<String> csvProviderRound = getRounding();
 		int i = 0;
+		final List<ICsvProvider<String>> aggregatedCsvs = new ArrayList<>();
 		for (final ICsvProvider<String> csv : partition.getCsvs()) {
 			writeCsvToFile(csv, OUTPUT_PARTITIONED_FILE_NAME + thresholds[i]);
 			
@@ -105,8 +106,11 @@ public final class PrepareOfflineCsv {
 			
 			writeCsvToFile(roundedCsv, OUTPUT_AGGREGATED_FILE_NAME + thresholds[i]);
 			
+			aggregatedCsvs.add(roundedCsv);
+			
 			++i;
 		}
+		writeCsvToFile(new CsvProviderPartition(aggregatedCsvs).toCsvProvider(), OUTPUT_AGGREGATED_FILE_NAME);
 	}
 	
 	private static CsvProviderRounding<String> getRounding() {
