@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.util.csv;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
@@ -201,7 +202,7 @@ public class CsvProviderAggregator<T> implements ICsvProviderTransformer<T> {
 			return (T) d;
 		}
 		if (typeSample instanceof String) {
-			return (T) Double.toString(d);
+			return (T) BigDecimal.valueOf(d).toPlainString();
 		}
 		throw new IllegalArgumentException(
 				"Received data not of type Double but of type " + typeSample.getClass().toGenericString());
