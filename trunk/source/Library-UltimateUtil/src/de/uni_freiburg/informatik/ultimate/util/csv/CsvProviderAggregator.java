@@ -59,15 +59,26 @@ public class CsvProviderAggregator<T> implements ICsvProviderTransformer<T> {
 	}
 	
 	private final Map<String, Aggregation> mColumn2aggregation;
+	private final String mCountColumnTitle;
 	
 	/**
-	 * Constructor.
-	 * 
 	 * @param column2aggregation
-	 *            maps columns to aggregation mode
+	 *            Maps columns to aggregation mode.
 	 */
 	public CsvProviderAggregator(final Map<String, Aggregation> column2aggregation) {
+		this(column2aggregation, null);
+	}
+	
+	/**
+	 * @param column2aggregation
+	 *            Maps columns to aggregation mode.
+	 * @param countColumnTitle
+	 *            column title for a new column counting the elements (null for deactivation)<br>
+	 *            NOTE: To this feature, the CSV entries must be of type {@link String}.
+	 */
+	public CsvProviderAggregator(final Map<String, Aggregation> column2aggregation, final String countColumnTitle) {
 		mColumn2aggregation = column2aggregation;
+		mCountColumnTitle = countColumnTitle;
 	}
 	
 	/**
@@ -77,10 +88,18 @@ public class CsvProviderAggregator<T> implements ICsvProviderTransformer<T> {
 	 *            CSV
 	 * @return aggregates CSV
 	 */
+	@SuppressWarnings("unchecked")
 	@Override
 	public ICsvProvider<T> transform(final ICsvProvider<T> csv) {
-		final int columnsOld = csv.getColumnTitles().size();
+		final List<String> rowHeaders = csv.getRowHeaders();
+		final int rows = rowHeaders.size();
 		final ArrayList<String> columnTitles = new ArrayList<>();
+		if (rows == 0) {
+			return new SimpleCsvProvider<>(columnTitles);
+		}
+		
+		final int columnsOld = csv.getColumnTitles().size();
+		
 		final boolean[] useColumn = new boolean[columnsOld];
 		int index = 0;
 		for (final String columnTitle : csv.getColumnTitles()) {
@@ -95,9 +114,8 @@ public class CsvProviderAggregator<T> implements ICsvProviderTransformer<T> {
 			++index;
 		}
 		columnTitles.trimToSize();
+		isCountColumnFresh(columnTitles);
 		
-		final List<String> rowHeaders = csv.getRowHeaders();
-		final int rows = rowHeaders.size();
 		final List<T> aggRow = filter(csv.getRow(0), useColumn, columnTitles.size());
 		for (int i = 1; i < rows; ++i) {
 			final List<T> row = csv.getRow(i);
@@ -105,14 +123,32 @@ public class CsvProviderAggregator<T> implements ICsvProviderTransformer<T> {
 			aggregateRows(aggRow, filteredRow, columnTitles, i);
 		}
 		
-		final ICsvProvider<T> result = new SimpleCsvProvider<>(columnTitles);
+		List<String> columnTitlesEnhanced;
+		if (mCountColumnTitle != null) {
+			// insert count
+			columnTitlesEnhanced = new ArrayList<>(columnTitles.size() + 1);
+			for (int i = 0; i < columnTitles.size(); ++i) {
+				columnTitlesEnhanced.add(columnTitles.get(i));
+			}
+			columnTitlesEnhanced.add(mCountColumnTitle);
+			if (!csv.getRow(0).isEmpty() && csv.getRow(0).get(0) instanceof String) {
+				aggRow.add((T) Integer.toString(rowHeaders.size()));
+			} else {
+				throw new IllegalArgumentException(
+						"Aggregation with adding a count column only works if the CSV has type String.");
+			}
+		} else {
+			columnTitlesEnhanced = columnTitles;
+		}
+		
+		final ICsvProvider<T> result = new SimpleCsvProvider<>(columnTitlesEnhanced);
 		final String rowHeader = rowHeaders.get(0);
 		result.addRow(rowHeader, aggRow);
 		return result;
 	}
 	
-	private void aggregateRows(final List<T> aggregatedRow, final List<T> singleRow,
-			final List<String> columnTitles, final int numberOfAggregationsSoFar) {
+	private void aggregateRows(final List<T> aggregatedRow, final List<T> singleRow, final List<String> columnTitles,
+			final int numberOfAggregationsSoFar) {
 		final ListIterator<T> aggIt = aggregatedRow.listIterator();
 		final ListIterator<T> singleIt = singleRow.listIterator();
 		final ListIterator<String> columnTitlesIt = columnTitles.listIterator();
@@ -169,5 +205,11 @@ public class CsvProviderAggregator<T> implements ICsvProviderTransformer<T> {
 		}
 		throw new IllegalArgumentException(
 				"Received data not of type Double but of type " + typeSample.getClass().toGenericString());
+	}
+	
+	private void isCountColumnFresh(final ArrayList<String> columnTitles) {
+		if (mCountColumnTitle != null && columnTitles.contains(mCountColumnTitle)) {
+			throw new IllegalArgumentException();
+		}
 	}
 }
