@@ -39,6 +39,7 @@ public final class PrepareOfflineCsv {
 	private static final String OUTPUT_FULL_FILE_NAME = "AutomizerOfflineFull";
 	private static final String OUTPUT_PARTITIONED_FILE_NAME = "AutomizerOfflinePartitioned";
 	private static final String OUTPUT_AGGREGATED_FILE_NAME = "AutomizerOfflineAggregated";
+	private static final String COUNT = "Count";
 	private static final boolean VERBOSE = true;
 	
 	private static final String TRANSITIONS_RETURN_OUTPUT = "TRANSITIONS_RETURN_OUTPUT";
@@ -167,7 +168,7 @@ public final class PrepareOfflineCsv {
 		column2aggregation.put(TRANSITIONS_RETURN_INPUT, Aggregation.AVERAGE);
 		column2aggregation.put(TRANSITIONS_RETURN_OUTPUT, Aggregation.AVERAGE);
 		
-		return new CsvProviderAggregator<>(column2aggregation);
+		return new CsvProviderAggregator<>(column2aggregation, COUNT);
 	}
 	
 	private static void writeCsvToFile(final ICsvProvider<String> csv, final String fileName) {
