@@ -192,7 +192,7 @@ public class CsvProviderPartition<T> {
 				result.add(group);
 				if (thresholds == null) {
 					key2group.put(entry, group);
-					rowTitle = null;
+					rowTitle = entry.toString();
 				} else {
 					bin2group.put(bin, group);
 					final String lower = bin == 0 ? "-\\infty" : Integer.toString(thresholds[bin - 1]);
@@ -201,7 +201,9 @@ public class CsvProviderPartition<T> {
 				}
 			} else {
 				final List<String> rowHeaders = group.getRowHeaders();
-				rowTitle = rowHeaders.isEmpty() ? null : rowHeaders.get(0);
+				rowTitle = rowHeaders.isEmpty()
+						? entry.toString()
+						: rowHeaders.get(0) == null ? entry.toString() : rowHeaders.get(0);
 			}
 			group.addRow(rowTitle, new ArrayList<>(row));
 		}
