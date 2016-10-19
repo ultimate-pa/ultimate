@@ -4,16 +4,16 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvProviderAggregator;
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvProviderAggregator.Aggregation;
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvProviderFromFile;
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvProviderPartition;
-import de.uni_freiburg.informatik.ultimate.util.csv.CsvProviderRowFilter;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 
 /**
@@ -25,6 +25,7 @@ import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
 public final class PrepareOnlineCsv {
+	private static final String COMBINATOR_ALONE = "Combination only";
 	private static final String COMBINATOR = "Combination";
 	private static final String NONE = "Standalone";
 	private static final String FILE = "File";
@@ -54,21 +55,27 @@ public final class PrepareOnlineCsv {
 		final ICsvProvider<String> noTimeOuts = getNoTimeoutFilter(partitionByExample);
 		
 		// partition table by setting
-		final ICsvProvider<String> settingsFiltered = getSettingsFilter(noTimeOuts);
+		final CsvProviderPartition<String> partitionBySetting = getSettingsPartition(noTimeOuts);
 		
-		final CsvProviderPartition<String> partitionBySetting = getSettingsPartition(settingsFiltered);
+		// aggregate data settings runs
 		aggregate(partitionBySetting);
 		
-		final String[] settings = new String[] { NONE, COMBINATOR };
-		int i = 0;
+		final List<ICsvProvider<String>> csvs = new ArrayList<>(3);
 		for (final ICsvProvider<String> csv : partitionBySetting.getCsvs()) {
+			csvs.add(csv);
+		}
+		
+		final String[] settings = new String[] { NONE, COMBINATOR_ALONE, COMBINATOR };
+		int i = 0;
+		final List<ICsvProvider<String>> aggregatedCsvs = new ArrayList<>();
+		for (final ICsvProvider<String> csv : csvs) {
 			writeCsvToFile(csv, OUTPUT_AGGREGATED_FILE_NAME + settings[i]);
+			
+			aggregatedCsvs.add(csv);
 			
 			++i;
 		}
-		
-		System.out.println(settingsFiltered.toCsv(null, ","));
-//		writeCsvToFile(new CsvProviderPartition(aggregatedCsvs).toCsvProvider(), OUTPUT_AGGREGATED_FILE_NAME);
+		writeCsvToFile(new CsvProviderPartition(aggregatedCsvs).toCsvProvider(), OUTPUT_AGGREGATED_FILE_NAME);
 	}
 	
 	private static CsvProviderPartition<String> getExamplePartition(final ICsvProvider<String> csv) {
@@ -81,13 +88,6 @@ public final class PrepareOnlineCsv {
 	private static ICsvProvider<String> getNoTimeoutFilter(final CsvProviderPartition<String> partition) {
 		partition.filterGroups(new TimeOutFilter());
 		return partition.toCsvProvider();
-	}
-	
-	private static ICsvProvider<String> getSettingsFilter(final ICsvProvider<String> csv) {
-		final Map<String, Set<String>> column2allowed = new HashMap<>();
-		final CsvProviderRowFilter<String> settingsFilter =
-				new CsvProviderRowFilter<>(new CsvProviderRowFilter.AllowedValuesRowFilter<>(column2allowed));
-		return settingsFilter.transform(csv);
 	}
 	
 	private static CsvProviderPartition<String> getSettingsPartition(final ICsvProvider<String> settingsFiltered) {

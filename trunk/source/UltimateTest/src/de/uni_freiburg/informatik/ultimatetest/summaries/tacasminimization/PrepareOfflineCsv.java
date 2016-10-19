@@ -111,7 +111,7 @@ public final class PrepareOfflineCsv {
 			
 			++i;
 		}
-		writeCsvToFile(new CsvProviderPartition(aggregatedCsvs).toCsvProvider(), OUTPUT_AGGREGATED_FILE_NAME);
+		writeCsvToFile(new CsvProviderPartition<>(aggregatedCsvs).toCsvProvider(), OUTPUT_AGGREGATED_FILE_NAME);
 	}
 	
 	private static CsvProviderRounding<String> getRounding() {
