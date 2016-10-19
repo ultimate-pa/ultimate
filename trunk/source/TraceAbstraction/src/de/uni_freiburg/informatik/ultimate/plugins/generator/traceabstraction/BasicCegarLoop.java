@@ -799,14 +799,14 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					mHaf.updateOnMinimization(oldState2newState, newAbstraction);
 				}
 
-				// use result
-				mAbstraction = newAbstraction;
-
 				// statistics
 				final int oldSize = mAbstraction.size();
 				final int newSize = newAbstraction.size();
 				assert (oldSize == 0 || oldSize >= newSize) : "Minimization increased state space";
 				mCegarLoopBenchmark.announceStatesRemovedByMinimization(oldSize - newSize);
+				
+				// use result
+				mAbstraction = newAbstraction;
 			}
 		} finally {
 			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.AutomataMinimizationTime.toString());
