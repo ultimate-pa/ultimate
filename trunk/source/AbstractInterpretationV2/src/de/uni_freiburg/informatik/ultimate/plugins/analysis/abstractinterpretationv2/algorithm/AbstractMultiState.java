@@ -69,6 +69,10 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, ACTION, VARD
 		mStates.add(state);
 	}
 
+	AbstractMultiState(final Set<STATE> state) {
+		this(state.size(), state);
+	}
+
 	private AbstractMultiState(final int maxSize, final Set<STATE> states) {
 		mMaxSize = maxSize;
 		mStates = states;
@@ -250,7 +254,9 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, ACTION, VARD
 		if (newSet.equals(mStates)) {
 			return this;
 		}
-		return new AbstractMultiState<>(mMaxSize, getMaximalElements(newSet));
+		final AbstractMultiState<STATE, ACTION, VARDECL> rtr =
+				new AbstractMultiState<>(mMaxSize, getMaximalElements(newSet));
+		return rtr;
 	}
 
 	public AbstractMultiState<STATE, ACTION, VARDECL> apply(final IAbstractPostOperator<STATE, ACTION, VARDECL> postOp,

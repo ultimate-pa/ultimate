@@ -1,8 +1,36 @@
+/*
+ * Copyright (C) 2016 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2016 University of Freiburg
+ *
+ * This file is part of the ULTIMATE AbstractInterpretationV2 plug-in.
+ *
+ * The ULTIMATE AbstractInterpretationV2 plug-in is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE AbstractInterpretationV2 plug-in is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE AbstractInterpretationV2 plug-in. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE AbstractInterpretationV2 plug-in, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission
+ * to convey the resulting work.
+ */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm;
 
-import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
@@ -15,9 +43,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-final class SummaryMap<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL, LOCATION> {
+final class SummaryMap<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL, LOCATION>
+		implements ISummaryStorage<STATE, ACTION, VARDECL, LOCATION> {
 
-	private final Map<ACTION, Summary> mSummaries;
+	private final Map<String, Set<Summary>> mSummaries;
 	private final IAbstractStateBinaryOperator<STATE> mMergeOp;
 	private final ITransitionProvider<ACTION, LOCATION> mTransProvider;
 	private final ILogger mLogger;
@@ -30,68 +59,84 @@ final class SummaryMap<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACT
 		mLogger = logger;
 	}
 
-	/**
-	 *
-	 * @param hierachicalPreState
-	 * @param postState
-	 * @param current
-	 *            An action that leaves a scope
-	 */
-	void addSummary(final AbstractMultiState<STATE, ACTION, VARDECL> hierachicalPreState,
-			final AbstractMultiState<STATE, ACTION, VARDECL> postState, final ACTION current) {
-		// current is a call, but we have to find the summary
-		final ACTION summaryAction = getSummaryAction(current);
-		final Summary oldSummary = mSummaries.get(summaryAction);
-		final Summary newSummary;
-		if (oldSummary != null && hierachicalPreState.isSubsetOf(oldSummary.getPreState()) != SubsetResult.NONE) {
-			newSummary = getMergedSummary(oldSummary, hierachicalPreState, postState);
-		} else {
-			newSummary = new Summary(hierachicalPreState, postState);
-		}
-		mSummaries.put(summaryAction, newSummary);
-		logCurrentSummaries(current);
+	@Override
+	public AbstractMultiState<STATE, ACTION, VARDECL> getSummaryPostState(final ACTION summaryAction,
+			final AbstractMultiState<STATE, ACTION, VARDECL> preCallState) {
+		final String procName = mTransProvider.getProcedureName(summaryAction);
+		final Set<Summary> summary = getSummary(procName);
+		final AbstractMultiState<STATE, ACTION, VARDECL> rtr =
+				summary.stream().filter(a -> preCallState.isSubsetOf(a.getCallPostState()) != SubsetResult.NONE)
+						.findAny().map(a -> a.getReturnPreState()).orElse(null);
+		return rtr;
 	}
 
-	private void logCurrentSummaries(final ACTION current) {
+	/**
+	 *
+	 * @param callPostState
+	 * @param returnPreState
+	 * @param callStatement
+	 *            An action that leaves a scope
+	 */
+	void addSummary(final AbstractMultiState<STATE, ACTION, VARDECL> callPostState,
+			final AbstractMultiState<STATE, ACTION, VARDECL> returnPreState, final ACTION callStatement) {
+		// current is a call, but we have to find the summary
+		final String procName = mTransProvider.getProcedureName(callStatement);
+		final Set<Summary> oldSummaries = getSummary(procName);
+
+		final Summary newSummary;
+		if (oldSummaries.isEmpty()) {
+			newSummary = new Summary(callPostState, returnPreState);
+			logCurrentSummaries("Adding first summary", callStatement, newSummary);
+		} else {
+			newSummary = updateSummaries(oldSummaries, callPostState, returnPreState, callStatement);
+		}
+		oldSummaries.add(newSummary);
+	}
+
+	private Summary updateSummaries(final Set<Summary> oldSummaries,
+			final AbstractMultiState<STATE, ACTION, VARDECL> callPostState,
+			final AbstractMultiState<STATE, ACTION, VARDECL> returnPreState, final ACTION callStatement) {
+		final Iterator<Summary> iter = oldSummaries.iterator();
+		final Summary rtr;
+		while (iter.hasNext()) {
+			final Summary current = iter.next();
+			final AbstractMultiState<STATE, ACTION, VARDECL> currentPre = current.getCallPostState();
+			final AbstractMultiState<STATE, ACTION, VARDECL> currentPost = current.getReturnPreState();
+			if (callPostState.isSubsetOf(currentPre) != SubsetResult.NONE) {
+				final AbstractMultiState<STATE, ACTION, VARDECL> newCallPost =
+						currentPre.merge(mMergeOp, callPostState);
+				final AbstractMultiState<STATE, ACTION, VARDECL> newReturnPre =
+						currentPost.merge(mMergeOp, returnPreState);
+				iter.remove();
+				rtr = new Summary(newCallPost, newReturnPre);
+				logCurrentSummaries("Del summary", callStatement, current);
+				logCurrentSummaries("Add summary", callStatement, rtr);
+				return rtr;
+			}
+		}
+		rtr = new Summary(callPostState, returnPreState);
+		logCurrentSummaries("Add summary", callStatement, rtr);
+		return rtr;
+	}
+
+	private void logCurrentSummaries(final String message, final ACTION current, final Summary newSummary) {
 		if (!mLogger.isDebugEnabled()) {
 			return;
 		}
-		final ACTION summaryAction = getSummaryAction(current);
-		final Summary summary = mSummaries.get(summaryAction);
-		if (summary == null) {
-			return;
-		}
-		mLogger.debug(AbsIntPrefInitializer.INDENT + " Current summaries for "
-				+ LoggingHelper.getTransitionString(current, mTransProvider) + ":");
-		mLogger.debug(AbsIntPrefInitializer.DINDENT + " PreCall " + LoggingHelper.getStateString(summary.getPreState())
-				+ " PostCall " + LoggingHelper.getStateString(summary.getPostState()));
+		assert newSummary != null;
+		mLogger.debug(AbsIntPrefInitializer.DINDENT + " " + message + " " + LoggingHelper.getHashCodeString(current)
+				+ ": PreCall " + LoggingHelper.getStateString(newSummary.getCallPostState()) + " PreReturn "
+				+ LoggingHelper.getStateString(newSummary.getReturnPreState()));
 	}
 
-	private ACTION getSummaryAction(final ACTION current) {
-		final Collection<ACTION> succActions = mTransProvider.getSuccessorActions(mTransProvider.getSource(current));
-		return succActions.stream().filter(a -> mTransProvider.isSummaryForCall(a, current)).findAny()
-				.orElseThrow(AssertionError::new);
-	}
-
-	AbstractMultiState<STATE, ACTION, VARDECL> getSummaryPostState(final ACTION current,
-			final AbstractMultiState<STATE, ACTION, VARDECL> preCallState) {
-		final Summary summary = mSummaries.get(current);
-		if (summary == null) {
-			return null;
+	private Set<Summary> getSummary(final String procName) {
+		final Set<Summary> summaries = mSummaries.get(procName);
+		if (summaries == null) {
+			final HashSet<Summary> freshSummaries = new HashSet<>();
+			mSummaries.put(procName, freshSummaries);
+			return freshSummaries;
 		}
-		if (preCallState.isSubsetOf(summary.getPreState()) != SubsetResult.NONE) {
-			return summary.getPostState();
-		}
-		return null;
-	}
-
-	private Summary getMergedSummary(final Summary summary,
-			final AbstractMultiState<STATE, ACTION, VARDECL> hierachicalPreState,
-			final AbstractMultiState<STATE, ACTION, VARDECL> postState) {
-		final AbstractMultiState<STATE, ACTION, VARDECL> newPre =
-				summary.getPreState().merge(mMergeOp, hierachicalPreState);
-		final AbstractMultiState<STATE, ACTION, VARDECL> newPost = summary.getPostState().merge(mMergeOp, postState);
-		return new Summary(newPre, newPost);
+		return summaries;
 	}
 
 	@Override
@@ -100,26 +145,71 @@ final class SummaryMap<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACT
 	}
 
 	/**
-	 * Container for scope stack items.
+	 * Container a procedure summary, consisting of state after call and state before return
 	 *
 	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
 	 */
 	private final class Summary {
-		private final AbstractMultiState<STATE, ACTION, VARDECL> mPreState;
-		private final AbstractMultiState<STATE, ACTION, VARDECL> mPostState;
+		private final AbstractMultiState<STATE, ACTION, VARDECL> mCallPostState;
+		private final AbstractMultiState<STATE, ACTION, VARDECL> mReturnPreState;
 
-		private Summary(final AbstractMultiState<STATE, ACTION, VARDECL> preState,
-				final AbstractMultiState<STATE, ACTION, VARDECL> postState) {
-			mPreState = preState;
-			mPostState = postState;
+		private Summary(final AbstractMultiState<STATE, ACTION, VARDECL> callPost,
+				final AbstractMultiState<STATE, ACTION, VARDECL> returnPre) {
+			mCallPostState = callPost;
+			mReturnPreState = returnPre;
 		}
 
-		AbstractMultiState<STATE, ACTION, VARDECL> getPostState() {
-			return mPostState;
+		AbstractMultiState<STATE, ACTION, VARDECL> getReturnPreState() {
+			return mReturnPreState;
 		}
 
-		AbstractMultiState<STATE, ACTION, VARDECL> getPreState() {
-			return mPreState;
+		AbstractMultiState<STATE, ACTION, VARDECL> getCallPostState() {
+			return mCallPostState;
+		}
+
+		@Override
+		public String toString() {
+			return "{CallPost: " + LoggingHelper.getStateString(mCallPostState) + " ReturnPre: "
+					+ LoggingHelper.getStateString(mReturnPreState) + "}";
+		}
+
+		@Override
+		public int hashCode() {
+			final int prime = 31;
+			int result = 1;
+			result = prime * result + ((mReturnPreState == null) ? 0 : mReturnPreState.hashCode());
+			result = prime * result + ((mCallPostState == null) ? 0 : mCallPostState.hashCode());
+			return result;
+		}
+
+		@Override
+		public boolean equals(final Object obj) {
+			if (this == obj) {
+				return true;
+			}
+			if (obj == null) {
+				return false;
+			}
+			if (getClass() != obj.getClass()) {
+				return false;
+			}
+			@SuppressWarnings("unchecked")
+			final Summary other = (Summary) obj;
+			if (mReturnPreState == null) {
+				if (other.mReturnPreState != null) {
+					return false;
+				}
+			} else if (!mReturnPreState.equals(other.mReturnPreState)) {
+				return false;
+			}
+			if (mCallPostState == null) {
+				if (other.mCallPostState != null) {
+					return false;
+				}
+			} else if (!mCallPostState.equals(other.mCallPostState)) {
+				return false;
+			}
+			return true;
 		}
 	}
 }

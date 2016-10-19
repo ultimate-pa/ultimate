@@ -103,7 +103,6 @@ public class BinaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>,
 				returnList.addAll(result);
 			}
 		}
-
 		assert !returnList.isEmpty();
 		return NonrelationalStateUtils.mergeIfNecessary(returnList, mMaxParallelSates);
 	}

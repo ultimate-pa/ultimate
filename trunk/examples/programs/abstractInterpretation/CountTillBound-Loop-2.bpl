@@ -1,6 +1,6 @@
 //#Safe
 /*
- * Ultimate Automizer ist not are unable to prove safety (efficiently) because
+ * Ultimate Automizer is unable to prove safety efficiently because
  * (in r9676) we get the following interpolants.
  * [(<= _x_-1 0), (<= _x_1 1), (<= _x_2 2), false]
  * 

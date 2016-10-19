@@ -91,7 +91,7 @@ public class CACSL2BoogieTranslator implements IGenerator {
 	}
 
 	@Override
-	public void setInputDefinition(ModelType graphType) {
+	public void setInputDefinition(final ModelType graphType) {
 		if (!(graphType.getCreator() == "de.uni_freiburg.informatik.ultimate.ltl2aut")){
 			mInputDefinition = graphType;
 		}
@@ -125,12 +125,12 @@ public class CACSL2BoogieTranslator implements IGenerator {
 	}
 
 	@Override
-	public void setToolchainStorage(IToolchainStorage storage) {
+	public void setToolchainStorage(final IToolchainStorage storage) {
 		mStorage = storage;
 	}
 
 	@Override
-	public void setServices(IUltimateServiceProvider services) {
+	public void setServices(final IUltimateServiceProvider services) {
 		mServices = services;
 	}
 

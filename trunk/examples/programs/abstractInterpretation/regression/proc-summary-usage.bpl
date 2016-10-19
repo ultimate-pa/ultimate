@@ -1,13 +1,13 @@
 //#Safe
 
-procedure ULTIMATE.init()
+procedure ULTIMATE.start()
 {
-  var x : int;
+  var x,y : int;
   x := 0;
-  while (x < 10){
-	call x := foo(x);
-  }
-  assert x == 10;
+  y := 0;
+  call x := foo(x);
+  call x := foo(y);
+  assert x == 1;
 }
 
 procedure foo(a : int) returns (ret : int)

@@ -545,7 +545,7 @@ public class BuchiCegarLoop {
 					writeAutomatonToFile(mServices, mAbstraction, mPref.dumpPath(), filename, mPref.getAutomataFormat(),"");
 				}
 				final boolean newMaximumReached = mBenchmarkGenerator.reportAbstractionSize(mAbstraction.size(), mIteration);
-				if (DUMP_BIGGEST_AUTOMATON && newMaximumReached) {
+				if (DUMP_BIGGEST_AUTOMATON && mIteration > 4 && newMaximumReached) {
 					final String filename = mRootNode.getFilename();
 					writeAutomatonToFile(mServices, mAbstraction, mPref.dumpPath(), filename, mPref.getAutomataFormat(),"");
 				}

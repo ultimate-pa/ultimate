@@ -67,7 +67,23 @@ public class CsvProviderPartition<T> {
 	 *            aggregation column
 	 */
 	public CsvProviderPartition(final ICsvProvider<T> csv, final String column) {
-		mCsvs = groupByColumnKey(csv, column);
+		mCsvs = groupByColumnKeyAndThreshold(csv, column, null);
+	}
+	
+	/**
+	 * Constructor from an existing CSV where grouping is applied with respect to an integer split of one column.
+	 * <p>
+	 * This constructor only makes sense if the values in the respective row are numeric data.
+	 * 
+	 * @param csv
+	 *            CSV provider
+	 * @param column
+	 *            aggregation column
+	 * @param thresholds
+	 *            threshold values for different bins
+	 */
+	public CsvProviderPartition(final ICsvProvider<T> csv, final String column, final int[] thresholds) {
+		mCsvs = groupByColumnKeyAndThreshold(csv, column, thresholds);
 	}
 	
 	public Iterable<ICsvProvider<T>> getCsvs() {
@@ -88,7 +104,7 @@ public class CsvProviderPartition<T> {
 		for (final ICsvProvider<T> csv : mCsvs) {
 			final int numberOfRows = csv.getRowHeaders().size();
 			for (int i = 0; i < numberOfRows; ++i) {
-				result.addRow(csv.getRow(i));
+				result.addRow(csv.getRowHeaders().get(i), csv.getRow(i));
 			}
 		}
 		
@@ -139,28 +155,74 @@ public class CsvProviderPartition<T> {
 		}
 	}
 	
-	private List<ICsvProvider<T>> groupByColumnKey(final ICsvProvider<T> csv, final String column) {
+	/**
+	 * NOTE: The method has two use cases. Either {@code thresholds} is {@code null}, then we use a {@link HashMap} with
+	 * the entry in the defined column as key. Or {@code thresholds} has a value, then we use thresholds to pack the
+	 * data (assumed to be {@code Integer}s) into bins.
+	 */
+	private List<ICsvProvider<T>> groupByColumnKeyAndThreshold(final ICsvProvider<T> csv, final String column,
+			final int[] thresholds) {
 		final int columnIndex = csv.getColumnTitles().indexOf(column);
 		if (columnIndex == -1) {
 			throw new IllegalArgumentException("The CSV key does not exist: " + column);
 		}
 		
 		final List<ICsvProvider<T>> result = new ArrayList<>();
-		final Map<T, ICsvProvider<T>> key2group = new HashMap<>();
+		
+		final Map<T, ICsvProvider<T>> key2group;
+		final Map<Integer, ICsvProvider<T>> bin2group;
+		if (thresholds == null) {
+			key2group = new HashMap<>();
+			bin2group = null;
+		} else {
+			key2group = null;
+			bin2group = new HashMap<>();
+		}
 		
 		final int numberOfRows = csv.getRowHeaders().size();
 		for (int i = 0; i < numberOfRows; ++i) {
 			final List<T> row = csv.getRow(i);
 			final T entry = row.get(columnIndex);
-			ICsvProvider<T> group = key2group.get(entry);
+			assert entry instanceof Integer;
+			final int bin = getBin(entry, thresholds);
+			ICsvProvider<T> group = (thresholds == null) ? key2group.get(entry) : bin2group.get(bin);
+			final String rowTitle;
 			if (group == null) {
 				group = new SimpleCsvProvider<>(csv.getColumnTitles());
 				result.add(group);
-				key2group.put(entry, group);
+				if (thresholds == null) {
+					key2group.put(entry, group);
+					rowTitle = null;
+				} else {
+					bin2group.put(bin, group);
+					rowTitle = bin == 0
+							? ("* < " + thresholds[bin])
+							: (bin == thresholds.length
+									? ("* > " + thresholds[thresholds.length - 1])
+									: (thresholds[bin - 1] + " < * < " + thresholds[bin]));
+				}
+			} else {
+				final List<String> rowHeaders = group.getRowHeaders();
+				rowTitle = rowHeaders.isEmpty() ? null : rowHeaders.get(0);
 			}
-			group.addRow(new ArrayList<>(row));
+			group.addRow(rowTitle, new ArrayList<>(row));
 		}
 		return result;
+	}
+	
+	private int getBin(final T entryRaw, final int[] thresholds) {
+		if (thresholds == null) {
+			return 0;
+		}
+		
+		final int entry = Integer.parseInt(entryRaw.toString());
+		
+		for (int i = 0; i < thresholds.length; ++i) {
+			if (entry < thresholds[i]) {
+				return i;
+			}
+		}
+		return thresholds.length;
 	}
 	
 	/**
