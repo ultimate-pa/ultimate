@@ -14,6 +14,7 @@ import de.uni_freiburg.informatik.ultimate.util.csv.CsvProviderAggregator;
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvProviderAggregator.Aggregation;
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvProviderFromFile;
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvProviderPartition;
+import de.uni_freiburg.informatik.ultimate.util.csv.CsvProviderRounding;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 
 /**
@@ -52,10 +53,10 @@ public final class PrepareOnlineCsv {
 		final CsvProviderPartition<String> partitionByExample = getExamplePartition(input);
 		
 		// filter examples with at least one timeout
-		final ICsvProvider<String> noTimeOuts = getNoTimeoutFilter(partitionByExample);
+		final ICsvProvider<String> bothFinished = getBothFinishedFilter(partitionByExample);
 		
 		// partition table by setting
-		final CsvProviderPartition<String> partitionBySetting = getSettingsPartition(noTimeOuts);
+		final CsvProviderPartition<String> partitionBySetting = getSettingsPartition(bothFinished);
 		
 		// aggregate data settings runs
 		aggregate(partitionBySetting);
@@ -67,9 +68,12 @@ public final class PrepareOnlineCsv {
 		
 		final String[] settings = new String[] { NONE, COMBINATOR_ALONE, COMBINATOR };
 		int i = 0;
+		final CsvProviderRounding<String> csvProviderRound = getRounding();
 		final List<ICsvProvider<String>> aggregatedCsvs = new ArrayList<>();
 		for (final ICsvProvider<String> csv : csvs) {
-			writeCsvToFile(csv, OUTPUT_AGGREGATED_FILE_NAME + settings[i]);
+			final ICsvProvider<String> roundedCsv = csvProviderRound.transform(csv);
+			
+			writeCsvToFile(roundedCsv, OUTPUT_AGGREGATED_FILE_NAME + i);
 			
 			aggregatedCsvs.add(csv);
 			
@@ -85,13 +89,18 @@ public final class PrepareOnlineCsv {
 		return partitionByExample;
 	}
 	
-	private static ICsvProvider<String> getNoTimeoutFilter(final CsvProviderPartition<String> partition) {
+	private static ICsvProvider<String> getBothFinishedFilter(final CsvProviderPartition<String> partition) {
 		partition.filterGroups(new TimeOutFilter());
+		partition.filterGroups(new OnlyOneFilter());
 		return partition.toCsvProvider();
 	}
 	
 	private static CsvProviderPartition<String> getSettingsPartition(final ICsvProvider<String> settingsFiltered) {
 		return new CsvProviderPartition<>(settingsFiltered, SETTING);
+	}
+	
+	private static CsvProviderRounding<String> getRounding() {
+		return new CsvProviderRounding<>(0);
 	}
 	
 	private static void aggregate(final CsvProviderPartition<String> partitionBySetting) {
@@ -154,6 +163,18 @@ public final class PrepareOnlineCsv {
 				}
 			}
 			return true;
+		}
+	}
+	
+	/**
+	 * Checks whether the CSV two rows.
+	 * 
+	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+	 */
+	private static class OnlyOneFilter implements Predicate<ICsvProvider<String>> {
+		@Override
+		public boolean test(final ICsvProvider<String> csv) {
+			return csv.getRowHeaders().size() == 2;
 		}
 	}
 }
