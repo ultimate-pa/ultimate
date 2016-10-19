@@ -19,6 +19,7 @@ import de.uni_freiburg.informatik.ultimate.util.csv.CsvProviderAggregator.Aggreg
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvProviderColumnFilter;
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvProviderFromFile;
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvProviderPartition;
+import de.uni_freiburg.informatik.ultimate.util.csv.CsvProviderRounding;
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvProviderRowFilter;
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvProviderTransformerCombinator;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
@@ -91,16 +92,25 @@ public final class PrepareOfflineCsv {
 		final int[] thresholds = new int[] { 100, 500, 2500 };
 		final CsvProviderPartition<String> partition = new CsvProviderPartition<>(fullTable, statesColumn, thresholds);
 		final CsvProviderAggregator<String> csvProviderAggregator = getStatesAggregation();
+		final CsvProviderRounding<String> csvProviderRound = getRounding();
 		int i = 0;
 		for (final ICsvProvider<String> csv : partition.getCsvs()) {
-			writeCsvToFile(csv, OUTPUT_PARTITIONED_FILE_NAME);
+			writeCsvToFile(csv, OUTPUT_PARTITIONED_FILE_NAME + thresholds[i]);
 			
 			// aggregate
 			final ICsvProvider<String> aggregatedCsv = csvProviderAggregator.transform(csv);
-			writeCsvToFile(aggregatedCsv, OUTPUT_AGGREGATED_FILE_NAME + thresholds[i]);
+			
+			// round
+			final ICsvProvider<String> roundedCsv = csvProviderRound.transform(aggregatedCsv);
+			
+			writeCsvToFile(roundedCsv, OUTPUT_AGGREGATED_FILE_NAME + thresholds[i]);
 			
 			++i;
 		}
+	}
+	
+	private static CsvProviderRounding<String> getRounding() {
+		return new CsvProviderRounding<>(0);
 	}
 	
 	private static ICsvProviderTransformer<String> getOperationFilter() {
@@ -163,7 +173,7 @@ public final class PrepareOfflineCsv {
 		}
 		final File file = new File(fileName + EXTENSION);
 		try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
-		    writer.append(builder);
+			writer.append(builder);
 		} catch (final IOException e) {
 			System.err.println("Writing file " + fileName + " failed.");
 			e.printStackTrace();
