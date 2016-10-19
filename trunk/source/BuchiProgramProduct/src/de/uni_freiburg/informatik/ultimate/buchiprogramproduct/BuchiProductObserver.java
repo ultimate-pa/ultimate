@@ -102,14 +102,14 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 		}
 
 		// measure size of nwa and rcfg
-		reportSizeBenchmark("Initial property automaton", mNeverClaimNWAContainer.getNWA());
+		reportSizeBenchmark("Initial property automaton", mNeverClaimNWAContainer.getValue());
 		reportSizeBenchmark("Initial RCFG", mRcfg);
 
 		mLogger.info("Beginning generation of product automaton");
 		final IPreferenceProvider ups = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		try {
 			final LTLPropertyCheck ltlAnnot = LTLPropertyCheck.getAnnotation(mNeverClaimNWAContainer);
-			mProduct = new ProductGenerator(mNeverClaimNWAContainer.getNWA(), mRcfg, ltlAnnot, mServices,
+			mProduct = new ProductGenerator(mNeverClaimNWAContainer.getValue(), mRcfg, ltlAnnot, mServices,
 					mBacktranslator, mSimplificationTechnique, mXnfConversionTechnique).getProductRcfg();
 			mLogger.info("Finished generation of product automaton successfully");
 			reportSizeBenchmark("Initial product", mProduct);
