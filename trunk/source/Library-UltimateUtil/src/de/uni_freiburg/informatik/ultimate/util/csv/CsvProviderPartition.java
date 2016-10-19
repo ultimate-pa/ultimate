@@ -195,11 +195,9 @@ public class CsvProviderPartition<T> {
 					rowTitle = null;
 				} else {
 					bin2group.put(bin, group);
-					rowTitle = bin == 0
-							? ("* < " + thresholds[bin])
-							: (bin == thresholds.length
-									? ("* > " + thresholds[thresholds.length - 1])
-									: (thresholds[bin - 1] + " < * < " + thresholds[bin]));
+					final String lower = bin == 0 ? "-\\infty" : Integer.toString(thresholds[bin - 1]);
+					final String upper = bin == thresholds.length ? "\\infty" : Integer.toString(thresholds[bin]);
+					rowTitle = "$n \\in [" + lower + "; " + upper + "]$";
 				}
 			} else {
 				final List<String> rowHeaders = group.getRowHeaders();
