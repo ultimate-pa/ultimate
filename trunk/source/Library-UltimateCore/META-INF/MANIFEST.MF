@@ -16,3 +16,4 @@ Export-Package: de.uni_freiburg.informatik.ultimate.core.lib.exceptions,
 Require-Bundle: Library-UltimateModel;visibility:=reexport,
  Library-UltimateUtil,
  Library-SMTLIB
+Import-Package: de.uni_freiburg.informatik.ultimate.model.acsl
