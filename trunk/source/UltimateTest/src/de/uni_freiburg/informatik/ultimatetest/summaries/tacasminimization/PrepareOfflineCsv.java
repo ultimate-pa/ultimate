@@ -1,6 +1,9 @@
 package de.uni_freiburg.informatik.ultimatetest.summaries.tacasminimization;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -30,6 +33,13 @@ import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderTransformer;
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
 public final class PrepareOfflineCsv {
+	private static final String EXTENSION = ".csv";
+	private static final String INPUT_FILE_NAME = "AutomizerOffline";
+	private static final String OUTPUT_FULL_FILE_NAME = "AutomizerOfflineFull";
+	private static final String OUTPUT_PARTITIONED_FILE_NAME = "AutomizerOfflinePartitioned";
+	private static final String OUTPUT_AGGREGATED_FILE_NAME = "AutomizerOfflineAggregated";
+	private static final boolean VERBOSE = true;
+	
 	private static final String TRANSITIONS_RETURN_OUTPUT = "TRANSITIONS_RETURN_OUTPUT";
 	private static final String TRANSITIONS_RETURN_INPUT = "TRANSITIONS_RETURN_INPUT";
 	private static final String TRANSITIONS_CALL_OUTPUT = "TRANSITIONS_CALL_OUTPUT";
@@ -56,14 +66,12 @@ public final class PrepareOfflineCsv {
 	private static final String STATES_INPUT = "STATES_INPUT";
 	private static final String FILE = "File";
 	
-	private static final String INPUT_FILE_NAME = "AutomizerOffline.csv";
-	
 	private PrepareOfflineCsv() {
 		// main class
 	}
 	
 	public static void main(final String[] args) {
-		final File inputFile = new File(INPUT_FILE_NAME);
+		final File inputFile = new File(INPUT_FILE_NAME + EXTENSION);
 		final ICsvProvider<String> input = CsvProviderFromFile.parse(inputFile);
 		
 		final List<ICsvProviderTransformer<String>> transformers = new ArrayList<>();
@@ -75,20 +83,23 @@ public final class PrepareOfflineCsv {
 		transformers.add(getNonNullFilter());
 		
 		// full table
-		final ICsvProvider<String> result = transformer.transform(input);
-		System.out.println(result.toCsv(new StringBuilder(), ",").toString());
+		final ICsvProvider<String> fullTable = transformer.transform(input);
+		writeCsvToFile(fullTable, OUTPUT_FULL_FILE_NAME);
 		
 		// separated tables
 		final String statesColumn = STATES_INPUT;
 		final int[] thresholds = new int[] { 100, 500, 2500 };
-		final CsvProviderPartition<String> partition = new CsvProviderPartition<>(result, statesColumn, thresholds);
+		final CsvProviderPartition<String> partition = new CsvProviderPartition<>(fullTable, statesColumn, thresholds);
 		final CsvProviderAggregator<String> csvProviderAggregator = getStatesAggregation();
+		int i = 0;
 		for (final ICsvProvider<String> csv : partition.getCsvs()) {
-			System.out.println(csv.toCsv(new StringBuilder(), ",").toString());
+			writeCsvToFile(csv, OUTPUT_PARTITIONED_FILE_NAME);
 			
 			// aggregate
 			final ICsvProvider<String> aggregatedCsv = csvProviderAggregator.transform(csv);
-			System.out.println(aggregatedCsv.toCsv(new StringBuilder(), ",").toString());
+			writeCsvToFile(aggregatedCsv, OUTPUT_AGGREGATED_FILE_NAME + thresholds[i]);
+			
+			++i;
 		}
 	}
 	
@@ -143,5 +154,19 @@ public final class PrepareOfflineCsv {
 		column2aggregation.put(TRANSITIONS_RETURN_OUTPUT, Aggregation.AVERAGE);
 		
 		return new CsvProviderAggregator<>(column2aggregation);
+	}
+	
+	private static void writeCsvToFile(final ICsvProvider<String> csv, final String fileName) {
+		final StringBuilder builder = csv.toCsv(new StringBuilder(), ",");
+		if (VERBOSE) {
+			System.out.println(builder.toString());
+		}
+		final File file = new File(fileName + EXTENSION);
+		try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+		    writer.append(builder);
+		} catch (final IOException e) {
+			System.err.println("Writing file " + fileName + " failed.");
+			e.printStackTrace();
+		}
 	}
 }
