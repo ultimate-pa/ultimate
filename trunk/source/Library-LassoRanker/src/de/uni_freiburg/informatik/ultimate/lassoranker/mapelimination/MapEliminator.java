@@ -186,7 +186,7 @@ public class MapEliminator {
 	}
 
 	/**
-	 * A method that finds arrays and their indices in the given {@code transformula} and stores them in the maps
+	 * A method that finds arrays and their indices in the given {@code transformula} and stores them in the maps.
 	 */
 	private void findIndices(final TransFormulaLR transformula) {
 		final Term term = transformula.getFormula();
@@ -198,7 +198,7 @@ public class MapEliminator {
 		for (final ApplicationTerm t : new ApplicationTermFinder("=", false).findMatchingSubterms(term)) {
 			if (t.getParameters()[0].getSort().isArraySort()) {
 				final ArrayWrite arrayWrite = new ArrayWrite(t);
-				// The new array can be also a store-expression, so also find indices in this expression
+				// The new array can be also a store-term, so also find indices in this term
 				final ArrayWrite arrayWrite2 = new ArrayWrite(arrayWrite.getNewArray());
 				findIndicesArrayWrite(arrayWrite, transformula);
 				findIndicesArrayWrite(arrayWrite2, transformula);
@@ -294,12 +294,12 @@ public class MapEliminator {
 	 * Given a TransFormula with possibly array accesses or calls of uninterpreted functions, returns a new
 	 * TransFormula, where these are replaced. In general an overapproximation is returned.
 	 * <p>
-	 * The given TransFormula has to be in the collection given to the constructor
+	 * The given TransFormula has to be in the collection given to the constructor and its formula has to be in NNF.
 	 * <p>
 	 * This method ignores the index analysis
 	 *
 	 * @param transformula
-	 *            The old TransFormulaLR, which might contain arrays accesses
+	 *            The old TransFormulaLR, which might contain maps
 	 * @return A TransFormulaLR, where array accesses and calls of uninterpreted functions are replaced
 	 */
 	public TransFormulaLR getRewrittenTransFormula(final TransFormulaLR transformula) {
@@ -311,10 +311,10 @@ public class MapEliminator {
 	 * Given a TransFormula with possibly array accesses or calls of uninterpreted functions, returns a new
 	 * TransFormula, where these are replaced. In general an overapproximation is returned.
 	 * <p>
-	 * The given TransFormula has to be in the collection given to the constructor
+	 * The given TransFormula has to be in the collection given to the constructor and its formula has to be in NNF.
 	 *
 	 * @param transformula
-	 *            The old TransFormulaLR, which might contain arrays accesses
+	 *            The old TransFormulaLR, which might contain maps
 	 * @param equalityAnalysisBefore
 	 *            The invariants that are valid before the transformula
 	 * @param equalityAnalysisAfter
@@ -331,12 +331,11 @@ public class MapEliminator {
 		final IndexAnalyzer indexAnalyzer = new IndexAnalyzer(originalTerm, computeDoubletons(localIndices),
 				mSymbolTable, newTF, equalityAnalysisBefore, equalityAnalysisAfter, mLogger, mReplacementVarFactory);
 		final EqualityAnalysisResult invariants = indexAnalyzer.getResult();
-		final Term storeFreeTerm = replaceStoreExpressions(originalTerm, newTF, invariants);
-		assert !SmtUtils.containsFunctionApplication(storeFreeTerm,
-				"store") : "The formula contains still store-expressions";
+		final Term storeFreeTerm = replaceStoreTerms(originalTerm, newTF, invariants);
+		assert !SmtUtils.containsFunctionApplication(storeFreeTerm, "store") : "The formula contains still store-terms";
 		final List<Term> conjuncts = new ArrayList<>();
 		conjuncts.addAll(Arrays.asList(SmtUtils.getConjuncts(storeFreeTerm)));
-		conjuncts.addAll(getReplacementVarEqualities(localIndices, invariants));
+		conjuncts.addAll(getAdditionalEqualities(localIndices, invariants));
 		if (!mSettings.onlyTrivialImplicationsForModifiedArguments()) {
 			conjuncts.addAll(getAllImplicationsForIndexAssignment(newTF, invariants));
 		}
@@ -344,7 +343,7 @@ public class MapEliminator {
 		if (mSettings.addInequalities()) {
 			conjuncts.addAll(invariants.constructListOfNotEquals(mScript));
 		}
-		final Term mapFreeTerm = replaceReadExpressions(newTF, SmtUtils.and(mScript, conjuncts));
+		final Term mapFreeTerm = replaceMapReads(newTF, SmtUtils.and(mScript, conjuncts));
 		assert SmtUtils.isArrayFree(mapFreeTerm) : "The formula contains still arrays";
 		assert !SmtUtils.containsUninterpretedFunctioApplication(mapFreeTerm) : "The formula contains still UFs";
 		setFormulaAndSimplify(newTF, mapFreeTerm);
@@ -374,17 +373,15 @@ public class MapEliminator {
 	}
 
 	/**
-	 * Returns all equalites of replacement-variables based on the index analysis. To reduce the number of conjuncts,
-	 * UnionFind is used.
+	 * Returns all equalities of based on the index analysis. To reduce the number of conjuncts, UnionFind is used.
 	 *
 	 * @param localIndices
-	 *            A HashRelation, which maps all ApplicationTermTemplates, which are considered to the needed local
-	 *            indices.
+	 *            A HashRelation, which maps all MapTemplates, which are considered to the needed local indices.
 	 * @param invariants
 	 *            The valid invariants at this transformula
 	 * @return A list of terms (= conjuncts) with equalities that are valid at this transformula
 	 */
-	private List<Term> getReplacementVarEqualities(final HashRelation<MapTemplate, ArrayIndex> localIndices,
+	private List<Term> getAdditionalEqualities(final HashRelation<MapTemplate, ArrayIndex> localIndices,
 			final EqualityAnalysisResult invariants) {
 		final List<Term> result = new ArrayList<>();
 		for (final MapTemplate template : localIndices.getDomain()) {
@@ -405,7 +402,11 @@ public class MapEliminator {
 					if (index1 == index2) {
 						continue;
 					}
-					result.add(SmtUtils.binaryEquality(mScript, template.getTerm(index1), template.getTerm(index2)));
+					final Term term1 = template.getTerm(index1);
+					final Term term2 = template.getTerm(index2);
+					if (!term1.getSort().isArraySort()) {
+						result.add(SmtUtils.binaryEquality(mScript, term1, term2));
+					}
 				}
 			}
 		}
@@ -416,8 +417,6 @@ public class MapEliminator {
 	 * This methods eliminates aux-var from the term, sets it to the transformula and simplifies the transformula then.
 	 */
 	private void setFormulaAndSimplify(final TransFormulaLR transformula, final Term term) {
-		// store-expressions have already be replaced
-		// It remains to replace select-expressions and uf-calls by introducing replacementVars
 		Term newTerm;
 		if (mAuxVars.isEmpty()) {
 			newTerm = term;
@@ -447,7 +446,8 @@ public class MapEliminator {
 			final IProgramVar var = entry.getKey();
 			if (inVar.getSort().isArraySort()) {
 				inVarsToRemove.add(var);
-			} else if (!freeVars.contains(inVar) && transformula.getOutVars().get(var) == inVar) {
+			} else if (!freeVars.contains(inVar) && transformula.getOutVars().get(var) == inVar
+					&& !SmtUtils.isConstant(inVar)) {
 				inVarsToRemove.add(var);
 				outVarsToRemove.add(var);
 			}
@@ -474,17 +474,17 @@ public class MapEliminator {
 		}
 	}
 
-	/***
-	 * Replaces all "simple" select-expressions (without store) and uf-calls int the {@code term} with the replacement-
-	 * or aux-vars.
+	/**
+	 * Replaces all read-accesses of maps (select-terms without store and UF-calls) in {@code term} with replacement- or
+	 * aux-vars. So this method produces a map-free term.
 	 *
 	 * @param transformula
 	 *            A TransFormulaLR
 	 * @param term
-	 *            A SMT-Term without store-expressions
+	 *            A store-free term
 	 * @return A new map-free term
 	 */
-	private Term replaceReadExpressions(final TransFormulaLR transformula, final Term term) {
+	private Term replaceMapReads(final TransFormulaLR transformula, final Term term) {
 		addReplacementVarsToTransFormula(transformula);
 		final Map<Term, Term> substitution = new HashMap<>();
 		for (final ApplicationTerm select : new ApplicationTermFinder("select", true).findMatchingSubterms(term)) {
@@ -500,7 +500,7 @@ public class MapEliminator {
 		return new Substitution(mManagedScript, substitution).transform(term);
 	}
 
-	/***
+	/**
 	 * Adds all replacement-vars as in- and out-vars to the transformula.
 	 */
 	private void addReplacementVarsToTransFormula(final TransFormulaLR transformula) {
@@ -532,7 +532,7 @@ public class MapEliminator {
 		}
 	}
 
-	/***
+	/**
 	 * Returns the corresponding replacementVar (or auxVar) for the given {@code term}. The replacementVars have to be
 	 * already to it added by calling {@code addReplacementVarsToTransFormula}.
 	 */
@@ -551,9 +551,8 @@ public class MapEliminator {
 	}
 
 	/**
-	 * This methods replaces all store-expressions and array-equalities in the {@code term} and adds the neeeded
-	 * in-/out-vars to the {@code transformula} (The returned term can still contain select-expressions or uninterpreted
-	 * functions).
+	 * This methods replaces all store-terms and array-equalities in the {@code term} and adds the neeeded in-/out-vars
+	 * to the {@code transformula} (The returned term can still contain select-terms or uninterpreted functions).
 	 *
 	 * @param term
 	 *            The term to be replaced
@@ -561,9 +560,9 @@ public class MapEliminator {
 	 *            The new TransFormulaLR (in-/out-vars are added)
 	 * @param invariants
 	 *            The valid invariants
-	 * @return A term, that doen't contain store-expressions
+	 * @return A term, that doen't contain store-terms
 	 */
-	private Term replaceStoreExpressions(final Term term, final TransFormulaLR transformula,
+	private Term replaceStoreTerms(final Term term, final TransFormulaLR transformula,
 			final EqualityAnalysisResult invariants) {
 		final Map<Term, Term> substitutionMap = new HashMap<>();
 		final List<Term> auxVarEqualities = new ArrayList<>();
@@ -573,12 +572,12 @@ public class MapEliminator {
 			if (SmtUtils.isFunctionApplication(select.getArray(), "store")) {
 				final Term selectTerm = select.getSelectTerm();
 				substitutionMap.put(selectTerm,
-						replaceStoreExpressionsInArrayRead(selectTerm, transformula, invariants, auxVarEqualities));
+						replaceSelectStoreTerm(selectTerm, transformula, invariants, auxVarEqualities));
 			}
 		}
 		for (final ApplicationTerm t : new ApplicationTermFinder("=", false).findMatchingSubterms(newTerm)) {
 			if (t.getParameters()[0].getSort().isArraySort()) {
-				substitutionMap.put(t, replaceStoreExpressionsInArrayWrite(t, transformula, invariants));
+				substitutionMap.put(t, replaceArrayEquality(t, transformula, invariants));
 			}
 		}
 		final List<Term> conjuncts = new ArrayList<>();
@@ -588,11 +587,15 @@ public class MapEliminator {
 		return substitution.transform(substitution.transform(SmtUtils.and(mScript, conjuncts)));
 	}
 
+	/**
+	 * Replaces all array inequalities with true as an overapproximation to avoid unsoundness. This requires a formula
+	 * in NNF.
+	 */
 	private Term replaceArrayInequalities(final Term term) {
 		final Map<Term, Term> substitutionMap = new HashMap<>();
 		for (final ApplicationTerm t : new ApplicationTermFinder("not", false).findMatchingSubterms(term)) {
 			final Term subterm = t.getParameters()[0];
-			assert !SmtUtils.isFunctionApplication(subterm, "not") : "The term is not in NNF";
+			assert SmtUtils.isAtomicFormula(subterm) : "The term is not in NNF";
 			if (SmtUtils.isFunctionApplication(subterm, "=")) {
 				final ApplicationTerm equality = (ApplicationTerm) subterm;
 				if (equality.getParameters()[0].getSort().isArraySort()) {
@@ -604,10 +607,10 @@ public class MapEliminator {
 	}
 
 	/**
-	 * Replaces store-expressions in read-expressions (e.g. (select (store a i x) j)) with aux-vars. For these aux-vars
+	 * Replaces a select-store-term (e.g. (select (store a i x) j)) with an aux-var. For this aux-var additional
 	 * equalities are added to as conjuncts to {@code auxVarEqualities}.
 	 */
-	private TermVariable replaceStoreExpressionsInArrayRead(final Term term, final TransFormulaLR transformula,
+	private TermVariable replaceSelectStoreTerm(final Term term, final TransFormulaLR transformula,
 			final EqualityAnalysisResult invariants, final List<Term> auxVarEqualities) {
 		final MultiDimensionalSelect multiDimensionalSelect = new MultiDimensionalSelect(term);
 		final ArrayIndex index = multiDimensionalSelect.getIndex();
@@ -638,7 +641,7 @@ public class MapEliminator {
 	}
 
 	/**
-	 * Replaces write accesses of arrays with a term that only contains select-expressions.
+	 * Replaces an array-equality with a term that only contains select-terms.
 	 *
 	 * @param term
 	 *            A term of the form: (= b (store ... (store a i_1 x_1) i_n x_n))
@@ -648,13 +651,13 @@ public class MapEliminator {
 	 *            The valid invariants
 	 * @return A term store-free term
 	 */
-	private Term replaceStoreExpressionsInArrayWrite(final Term term, final TransFormulaLR transformula,
+	private Term replaceArrayEquality(final Term term, final TransFormulaLR transformula,
 			final EqualityAnalysisResult invariants) {
 		final ArrayWrite arrayWrite = new ArrayWrite(term);
 		final Term oldArray = arrayWrite.getOldArray();
 		final Term newArray = arrayWrite.getNewArray();
 		// If the old or new array is an aux-var, just return true
-		// If both arrays are store-expressions, also just return true
+		// If both arrays are store-terms, also just return true
 		if (!allVariablesAreVisible(oldArray, transformula) || !allVariablesAreVisible(newArray, transformula)
 				|| SmtUtils.isFunctionApplication(newArray, "store")) {
 			return mScript.term("true");
@@ -673,8 +676,6 @@ public class MapEliminator {
 				continue;
 			}
 			final Term value = store.getValue();
-			// TODO: Use special form of union find (mapping from in/out-var-index to equivalence-class) and iterate
-			// only over representatives instead of all indices
 			for (final ArrayIndex globalIndex : mMapsToIndices.getImage(newTemplate)) {
 				final ArrayIndex index = getLocalIndex(globalIndex, transformula, newIsInVar);
 				if (processedIndices.contains(index)) {
@@ -836,7 +837,6 @@ public class MapEliminator {
 	}
 
 	private static String niceTermString(final Term term) {
-		final String result;
 		if (SmtUtils.isFunctionApplication(term, "select")) {
 			final StringBuilder stringBuilder = new StringBuilder();
 			final MultiDimensionalSelect select = new MultiDimensionalSelect(term);
@@ -845,11 +845,9 @@ public class MapEliminator {
 			for (int i = 0; i < index.size(); i++) {
 				stringBuilder.append(niceTermString(index.get(i))).append(i == index.size() - 1 ? ']' : ',');
 			}
-			result = stringBuilder.toString();
-		} else if (term instanceof TermVariable) {
-			final TermVariable termVariable = (TermVariable) term;
-			result = termVariable.getName();
-		} else if (term instanceof ApplicationTerm) {
+			return stringBuilder.toString();
+		}
+		if (term instanceof ApplicationTerm && !SmtUtils.isConstant(term)) {
 			final StringBuilder stringBuilder = new StringBuilder();
 			final ApplicationTerm applicationTerm = (ApplicationTerm) term;
 			final FunctionSymbol function = applicationTerm.getFunction();
@@ -861,11 +859,9 @@ public class MapEliminator {
 			for (int i = 0; i < params.length; i++) {
 				stringBuilder.append(niceTermString(params[i])).append(i == params.length - 1 ? ')' : ' ');
 			}
-			result = stringBuilder.toString();
-		} else {
-			result = term.toString();
+			return stringBuilder.toString();
 		}
-		return SmtUtils.removeSmtQuoteCharacters(result);
+		return SmtUtils.removeSmtQuoteCharacters(term.toString());
 	}
 
 	private static Set<Doubleton<Term>> computeDoubletons(final HashRelation<MapTemplate, ArrayIndex> hashRelation) {
@@ -933,13 +929,13 @@ public class MapEliminator {
 	private Term indexEqualityInequalityImpliesValueEquality(final ArrayIndex index, final ArrayIndex equal,
 			final Collection<ArrayIndex> unequal, final Term value1, final Term value2,
 			final EqualityAnalysisResult invariants, final TransFormulaLR transformula) {
-		final List<Term> disjuncts = new ArrayList<>();
 		final List<TermVariable> freeVarsFormula = Arrays.asList(transformula.getFormula().getFreeVars());
 		final Term inequality = Util.not(mScript, getEqualTerm(index, equal, invariants));
 		final List<TermVariable> freeVarsInequality = Arrays.asList(inequality.getFreeVars());
 		if (!freeVarsFormula.containsAll(freeVarsInequality) && mSettings.onlyArgumentsInFormula()) {
 			return mScript.term("true");
 		}
+		final List<Term> disjuncts = new ArrayList<>();
 		disjuncts.add(inequality);
 		for (final ArrayIndex i : unequal) {
 			final Term equality = getEqualTerm(index, i, invariants);

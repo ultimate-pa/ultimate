@@ -620,6 +620,20 @@ public final class SmtUtils {
 	}
 
 	/**
+	 * Returns true iff the given term is an atomic formula, which means it does not contain any logical symbols (and,
+	 * or, not, quantifiers)
+	 */
+	public static boolean isAtomicFormula(final Term term) {
+		if (isTrue(term) || isFalse(term) || isConstant(term)) {
+			return true;
+		}
+		if (term instanceof ApplicationTerm) {
+			return !allParamsAreBool((ApplicationTerm) term);
+		}
+		return term instanceof TermVariable;
+	}
+
+	/**
 	 * Return all free TermVariables that occur in a set of Terms.
 	 */
 	public static Set<TermVariable> getFreeVars(final Collection<Term> terms) {
