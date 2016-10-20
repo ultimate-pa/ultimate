@@ -15,7 +15,10 @@ import de.uni_freiburg.informatik.ultimate.util.csv.CsvProviderAggregator.Aggreg
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvProviderFromFile;
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvProviderPartition;
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvProviderRounding;
+import de.uni_freiburg.informatik.ultimate.util.csv.CsvProviderScale;
+import de.uni_freiburg.informatik.ultimate.util.csv.CsvProviderScale.ScaleMode;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Test class to produce benchmark results.
@@ -26,15 +29,15 @@ import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
 public final class PrepareOnlineCsv {
-	private static final String COMBINATOR_ALONE = "Combination only";
-	private static final String COMBINATOR = "Combination";
-	private static final String NONE = "Standalone";
-	private static final String FILE = "File";
+	private static final String MINIMIZATON_ATTEMPTS = "MinimizatonAttempts";
+	private static final String STATES_REMOVED_BY_MINIMIZATION = "StatesRemovedByMinimization";
+	private static final String OVERALL_ITERATIONS = "OverallIterations";
+	private static final String OVERALL_TIME = "OverallTime";
 	private static final String SETTING = "Settings";
+	private static final String FILE = "File";
 	
 	private static final String EXTENSION = ".csv";
 	private static final String INPUT_FILE_NAME = "AutomizerOnline";
-	private static final String OUTPUT_FULL_FILE_NAME = "AutomizerOnlineFull";
 	private static final String OUTPUT_AGGREGATED_FILE_NAME = "AutomizerOnlineAggregated";
 	private static final String COUNT = "Count";
 	private static final boolean VERBOSE = true;
@@ -66,12 +69,13 @@ public final class PrepareOnlineCsv {
 			csvs.add(csv);
 		}
 		
-		final String[] settings = new String[] { NONE, COMBINATOR_ALONE, COMBINATOR };
 		int i = 0;
+		final CsvProviderScale csvProviderScale = getScaling();
 		final CsvProviderRounding<String> csvProviderRound = getRounding();
 		final List<ICsvProvider<String>> aggregatedCsvs = new ArrayList<>();
 		for (final ICsvProvider<String> csv : csvs) {
-			final ICsvProvider<String> roundedCsv = csvProviderRound.transform(csv);
+			final ICsvProvider<String> scaledCsv = csvProviderScale.transform(csv);
+			final ICsvProvider<String> roundedCsv = csvProviderRound.transform(scaledCsv);
 			
 			writeCsvToFile(roundedCsv, OUTPUT_AGGREGATED_FILE_NAME + i);
 			
@@ -79,9 +83,9 @@ public final class PrepareOnlineCsv {
 			
 			++i;
 		}
-		writeCsvToFile(new CsvProviderPartition(aggregatedCsvs).toCsvProvider(), OUTPUT_AGGREGATED_FILE_NAME);
+		writeCsvToFile(new CsvProviderPartition<>(aggregatedCsvs).toCsvProvider(), OUTPUT_AGGREGATED_FILE_NAME);
 	}
-	
+
 	private static CsvProviderPartition<String> getExamplePartition(final ICsvProvider<String> csv) {
 		final CsvProviderPartition<String> partitionByExample;
 		final String statesColumn = FILE;
@@ -103,13 +107,21 @@ public final class PrepareOnlineCsv {
 		return new CsvProviderRounding<>(0);
 	}
 	
+	private static CsvProviderScale getScaling() {
+		final Map<String, Pair<Double, ScaleMode>> column2Scale = new HashMap<>();
+		
+		column2Scale.put(OVERALL_TIME, new Pair<>(1_000_000.0, CsvProviderScale.ScaleMode.DIV_INT));
+		
+		return new CsvProviderScale(column2Scale);
+	}
+	
 	private static void aggregate(final CsvProviderPartition<String> partitionBySetting) {
 		final Map<String, CsvProviderAggregator.Aggregation> column2aggregation = new HashMap<>();
 		
-		column2aggregation.put("OverallTime", Aggregation.AVERAGE);
-		column2aggregation.put("OverallIterations", Aggregation.AVERAGE);
-		column2aggregation.put("StatesRemovedByMinimization", Aggregation.AVERAGE);
-		column2aggregation.put("MinimizatonAttempts", Aggregation.AVERAGE);
+		column2aggregation.put(OVERALL_TIME, Aggregation.AVERAGE);
+		column2aggregation.put(OVERALL_ITERATIONS, Aggregation.AVERAGE);
+		column2aggregation.put(STATES_REMOVED_BY_MINIMIZATION, Aggregation.AVERAGE);
+		column2aggregation.put(MINIMIZATON_ATTEMPTS, Aggregation.AVERAGE);
 		
 		partitionBySetting.transform(new CsvProviderAggregator<>(column2aggregation, COUNT));
 	}
