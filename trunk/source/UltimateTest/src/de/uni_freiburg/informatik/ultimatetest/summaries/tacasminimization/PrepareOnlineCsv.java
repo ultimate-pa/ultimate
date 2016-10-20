@@ -34,7 +34,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
 public final class PrepareOnlineCsv {
-	private static final String COMBINATOR_ONLY = "Combination only";
+	private static final String STANDALONE = "No minimization";
+	private static final String MINIMIZATION = "Minimization";
+	private static final String MINIMIZATION_ONLY = "Minimization exclusive";
 	private static final String COMBINATOR = "NWA_COMBINATOR_MULTI_DEFAULT.epf";
 	private static final String NONE = "NONE.epf";
 	private static final String SETTINGS_PREFIX =
@@ -53,6 +55,7 @@ public final class PrepareOnlineCsv {
 	private static final String INPUT_FILE_NAME = "AutomizerOnline";
 	private static final String OUTPUT_AGGREGATED_FILE_NAME = "AutomizerOnlineAggregated";
 	private static final String COUNT = "Count";
+	private static final String AGGREGATION = "Aggregation";
 	private static final Double SCALING = Double.valueOf(1_000_000.0);
 	private static final boolean VERBOSE = false;
 	
@@ -86,7 +89,7 @@ public final class PrepareOnlineCsv {
 		
 		// add row header for combination only data
 		final ICsvProvider<String> combinationOnly = partitionBySettingCombination.getCsvs().iterator().next();
-		renameRowHeaders(combinationOnly, COMBINATOR_ONLY);
+		renameRowHeaders(combinationOnly, MINIMIZATION_ONLY);
 		
 		final List<ICsvProvider<String>> csvs = new ArrayList<>(3);
 		for (final ICsvProvider<String> csv : partitionBySettingBoth.getCsvs()) {
@@ -106,13 +109,13 @@ public final class PrepareOnlineCsv {
 							roundedCsv.getColumnTitles().indexOf(MINIMIZATON_ATTEMPTS), MINIMIZATON_ATTEMPTS_RELATIVE);
 			renameRowHeaders(addedColumnCsv, null);
 			
-			writeCsvToFile(addedColumnCsv, OUTPUT_AGGREGATED_FILE_NAME + i);
+			writeCsvToFile(addedColumnCsv, OUTPUT_AGGREGATED_FILE_NAME + i, true);
 			
 			aggregatedCsvs.add(addedColumnCsv);
 			
 			++i;
 		}
-		writeCsvToFile(new CsvProviderPartition<>(aggregatedCsvs).toCsvProvider(), OUTPUT_AGGREGATED_FILE_NAME);
+		writeCsvToFile(new CsvProviderPartition<>(aggregatedCsvs).toCsvProvider(), OUTPUT_AGGREGATED_FILE_NAME, true);
 	}
 	
 	private static CsvProviderPartition<String> getExamplePartition(final ICsvProvider<String> csv) {
@@ -207,12 +210,12 @@ public final class PrepareOnlineCsv {
 			if (replaceString == null) {
 				switch (shortened) {
 					case NONE:
-						newRowHeader = "Standalone";
+						newRowHeader = STANDALONE;
 						break;
 					case COMBINATOR:
-						newRowHeader = "Combination";
+						newRowHeader = MINIMIZATION;
 						break;
-					case COMBINATOR_ONLY:
+					case MINIMIZATION_ONLY:
 						continue;
 					default:
 						throw new IllegalArgumentException("Unknown setting: " + shortened);
@@ -224,8 +227,13 @@ public final class PrepareOnlineCsv {
 		}
 	}
 	
-	private static void writeCsvToFile(final ICsvProvider<String> csv, final String fileName) {
-		final StringBuilder builder = csv.toCsv(new StringBuilder(), ",");
+	private static void writeCsvToFile(final ICsvProvider<String> csv, final String fileName,
+			final boolean aggregation) {
+		final StringBuilder predefinedBuilder = new StringBuilder();
+		if (aggregation) {
+			predefinedBuilder.append(AGGREGATION);
+		}
+		final StringBuilder builder = csv.toCsv(predefinedBuilder, ",");
 		if (VERBOSE) {
 			System.out.println(builder.toString());
 		}
