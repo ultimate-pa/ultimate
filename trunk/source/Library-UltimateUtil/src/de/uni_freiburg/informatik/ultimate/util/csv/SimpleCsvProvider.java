@@ -114,11 +114,10 @@ public class SimpleCsvProvider<T> implements ICsvProvider<T> {
 			}
 			
 			checkForSeparators(rowTitle, separator, lineSeparator);
-			sb.append(rowTitle).append(separator);
+			sb.append(rowTitle);
 			for (int j = 0; j < maxLength + 1 - rowTitle.length(); j++) {
 				sb.append(" ");
 			}
-			sb.append(rowTitle).append(separator);
 			for (final T value : row) {
 				final String cellString = String.valueOf(value);
 				checkForSeparators(cellString, separator, lineSeparator);

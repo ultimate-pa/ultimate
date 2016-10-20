@@ -65,7 +65,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 
 public class CegarLoopJulian extends BasicCegarLoop {
-
+	
 	private BranchingProcess<CodeBlock, IPredicate> mUnfolding;
 	public int mCoRelationQueries = 0;
 	public int mBiggestAbstractionTransitions;
@@ -100,17 +100,19 @@ public class CegarLoopJulian extends BasicCegarLoop {
 	@Override
 	protected void constructInterpolantAutomaton() throws AutomataOperationCanceledException {
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.BasicInterpolantAutomatonTime.toString());
-		final StraightLineInterpolantAutomatonBuilder iab =
-				new StraightLineInterpolantAutomatonBuilder(mServices, new InCaReAlphabet<CodeBlock>(mAbstraction),
-						mInterpolantGenerator, mPredicateFactoryInterpolantAutomata);
-		mInterpolAutomaton = iab.getResult();
-		mLogger.info("Interpolatants " + mInterpolAutomaton.getStates());
-
-		mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.BasicInterpolantAutomatonTime.toString());
-		assert (accepts(mServices, mInterpolAutomaton, mCounterexample.getWord())) : "Interpolant automaton broken!";
-		assert (new InductivityCheck(mServices, mInterpolAutomaton, false, true,
-				new IncrementalHoareTripleChecker(mRootNode.getRootAnnot().getManagedScript(), mModGlobVarManager)))
-						.getResult() : "Not inductive";
+		try {
+			final StraightLineInterpolantAutomatonBuilder iab =
+					new StraightLineInterpolantAutomatonBuilder(mServices, new InCaReAlphabet<CodeBlock>(mAbstraction),
+							mInterpolantGenerator, mPredicateFactoryInterpolantAutomata);
+			mInterpolAutomaton = iab.getResult();
+			mLogger.info("Interpolatants " + mInterpolAutomaton.getStates());
+			assert accepts(mServices, mInterpolAutomaton, mCounterexample.getWord()) : "Interpolant automaton broken!";
+			assert new InductivityCheck(mServices, mInterpolAutomaton, false, true,
+					new IncrementalHoareTripleChecker(mRootNode.getRootAnnot().getManagedScript(), mModGlobVarManager))
+							.getResult() : "Not inductive";
+		} finally {
+			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.BasicInterpolantAutomatonTime.toString());
+		}
 	}
 
 	@Override
@@ -149,8 +151,9 @@ public class CegarLoopJulian extends BasicCegarLoop {
 	protected boolean refineAbstraction() throws AutomataLibraryException {
 		PetriNetJulian<CodeBlock, IPredicate> abstraction = (PetriNetJulian<CodeBlock, IPredicate>) mAbstraction;
 		if (mPref.unfoldingToNet()) {
-			abstraction = (new FinitePrefix2PetriNet<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
-					mUnfolding)).getResult();
+			abstraction =
+					new FinitePrefix2PetriNet<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), mUnfolding)
+							.getResult();
 		}
 
 		// Determinize the interpolant automaton
@@ -159,16 +162,16 @@ public class CegarLoopJulian extends BasicCegarLoop {
 
 		// Complement the interpolant automaton
 		final INestedWordAutomatonSimple<CodeBlock, IPredicate> nia =
-				(new ComplementDD<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
-						mPredicateFactoryInterpolantAutomata, dia)).getResult();
-		assert (!accepts(mServices, nia, mCounterexample.getWord())) : "Complementation broken!";
+				new ComplementDD<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
+						mPredicateFactoryInterpolantAutomata, dia).getResult();
+		assert !accepts(mServices, nia, mCounterexample.getWord()) : "Complementation broken!";
 		mLogger.info("Complemented interpolant automaton has " + nia.size() + " states");
 
 		if (mIteration <= mPref.watchIteration() && mPref.artifact() == Artifact.NEG_INTERPOLANT_AUTOMATON) {
 			mArtifactAutomaton = nia;
 		}
-		mAbstraction = (new DifferenceBlackAndWhite<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
-				abstraction, (NestedWordAutomaton<CodeBlock, IPredicate>) dia)).getResult();
+		mAbstraction = new DifferenceBlackAndWhite<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
+				abstraction, (NestedWordAutomaton<CodeBlock, IPredicate>) dia).getResult();
 
 		mCegarLoopBenchmark.reportAbstractionSize(mAbstraction.size(), mIteration);
 		// if (mBiggestAbstractionSize < mAbstraction.size()){
@@ -178,7 +181,7 @@ public class CegarLoopJulian extends BasicCegarLoop {
 		// mBiggestAbstractionIteration = mIteration;
 		// }
 
-		assert (!acceptsPetriViaFA(mServices, mAbstraction, mCounterexample.getWord())) : "Intersection broken!";
+		assert !acceptsPetriViaFA(mServices, mAbstraction, mCounterexample.getWord()) : "Intersection broken!";
 
 		// int[] statistic = mAbstraction.transitions();
 		// s_Logger.debug("Abstraction has " +
@@ -207,8 +210,8 @@ public class CegarLoopJulian extends BasicCegarLoop {
 			throws AutomataOperationCanceledException {
 		final NestedWord<CodeBlock> nw = NestedWord.nestedWord(word);
 		final INestedWordAutomatonSimple<CodeBlock, IPredicate> petriNetAsFA =
-				(new PetriNet2FiniteAutomaton<CodeBlock, IPredicate>(new AutomataLibraryServices(services),
-						(IPetriNet<CodeBlock, IPredicate>) automaton)).getResult();
+				new PetriNet2FiniteAutomaton<CodeBlock, IPredicate>(new AutomataLibraryServices(services),
+						(IPetriNet<CodeBlock, IPredicate>) automaton).getResult();
 		return BasicCegarLoop.accepts(services, petriNetAsFA, nw);
 
 	}

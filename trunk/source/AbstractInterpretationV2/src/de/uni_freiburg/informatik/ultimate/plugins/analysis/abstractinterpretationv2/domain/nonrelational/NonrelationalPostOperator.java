@@ -449,9 +449,11 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 	}
 
 	private Procedure getProcedure(final String procedureName) {
+
 		return mSymbolTable.getFunctionOrProcedureDeclaration(procedureName).stream()
 				.filter(decl -> decl instanceof Procedure).map(decl -> (Procedure) decl)
-				.filter(proc -> proc.getBody() != null).findFirst().get();
+				.filter(proc -> proc.getBody() != null).findFirst().orElseThrow(() -> new UnsupportedOperationException(
+						"Only uninterpreted functions available for " + procedureName));
 	}
 
 	private Pair<Deque<V>, Deque<BooleanValue>> getOutParamValues(final Procedure procedure,

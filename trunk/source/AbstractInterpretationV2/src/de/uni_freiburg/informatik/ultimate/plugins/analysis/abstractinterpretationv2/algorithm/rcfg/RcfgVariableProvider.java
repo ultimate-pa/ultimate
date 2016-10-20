@@ -37,10 +37,8 @@ import java.util.function.Function;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
-import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
@@ -64,17 +62,13 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE, CodeBlock,
 
 	private static final StorageClass[] LOCAL_STORAGE_CLASSES = new StorageClass[] { StorageClass.LOCAL,
 			StorageClass.IMPLEMENTATION_INPARAM, StorageClass.IMPLEMENTATION_OUTPARAM };
-	private final BoogieSymbolTable mSymbolTable;
-	private final Boogie2SmtSymbolTable mBoogieVarTable;
+	private final ISymbolTableAdapter mSymbolTable;
 	private final ILogger mLogger;
 
-	public RcfgVariableProvider(final BoogieSymbolTable table, final Boogie2SmtSymbolTable boogieVarTable,
-			final IUltimateServiceProvider services) {
-		assert table != null;
-		assert boogieVarTable != null;
+	public RcfgVariableProvider(final ISymbolTableAdapter symbolTable, final IUltimateServiceProvider services) {
+		assert symbolTable != null;
 		assert services != null;
-		mSymbolTable = table;
-		mBoogieVarTable = boogieVarTable;
+		mSymbolTable = symbolTable;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
 
@@ -85,10 +79,10 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE, CodeBlock,
 		assert state.isEmpty();
 
 		final Set<IBoogieVar> vars = new HashSet<>();
-		for (final Entry<String, IProgramNonOldVar> entry : mBoogieVarTable.getGlobals().entrySet()) {
+		for (final Entry<String, IProgramNonOldVar> entry : mSymbolTable.getGlobals().entrySet()) {
 			vars.add((IBoogieVar) entry.getValue());
 		}
-		vars.addAll(mBoogieVarTable.getConsts().values());
+		vars.addAll(mSymbolTable.getConsts().values());
 
 		// add locals if applicable, thereby overriding globals
 		final String procedure = current.getPrecedingProcedure();
@@ -118,13 +112,16 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE, CodeBlock,
 			return defineVariablesAfterReturn(localPreState, hierachicalPreState, sourceProc, targetProc);
 		} else if (action instanceof Summary) {
 			final Summary sum = (Summary) action;
-			final String sourceProc = sum.getCallStatement().getMethodName();
-			final String targetProc = action.getSucceedingProcedure();
-			return defineVariablesAfterReturn(localPreState, hierachicalPreState, sourceProc, targetProc);
-		} else {
-			// nothing changes
-			return localPreState;
+			if (sum.calledProcedureHasImplementation()) {
+				// this summary is used because we have pre/poststate from our summary map
+				final String sourceProc = sum.getCallStatement().getMethodName();
+				final String targetProc = action.getSucceedingProcedure();
+				return defineVariablesAfterReturn(localPreState, hierachicalPreState, sourceProc, targetProc);
+			}
 		}
+
+		// nothing changes
+		return localPreState;
 	}
 
 	private STATE defineVariablesAfterReturn(final STATE localPreState, final STATE hierachicalPreState,
@@ -233,10 +230,10 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE, CodeBlock,
 	private Set<IBoogieVar> getMaskedGlobalsVariables(final String procedure) {
 		assert procedure != null;
 		final Set<IBoogieVar> globals = new HashSet<>();
-		for (final Entry<String, IProgramNonOldVar> entry : mBoogieVarTable.getGlobals().entrySet()) {
+		for (final Entry<String, IProgramNonOldVar> entry : mSymbolTable.getGlobals().entrySet()) {
 			globals.add((IBoogieVar) entry.getValue());
 		}
-		globals.addAll(mBoogieVarTable.getConsts().values());
+		globals.addAll(mSymbolTable.getConsts().values());
 
 		final Set<IBoogieVar> locals = new HashSet<>();
 		locals.addAll(getLocalVariables(procedure));
@@ -255,8 +252,8 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE, CodeBlock,
 	private Map<String, IBoogieVar> getOldVars() {
 		final DeclarationInformation sc = new DeclarationInformation(StorageClass.GLOBAL, null);
 		final Map<String, IBoogieVar> rtr = new HashMap<>();
-		for (final Entry<String, IProgramNonOldVar> entry : mBoogieVarTable.getGlobals().entrySet()) {
-			final BoogieOldVar oldVar = (BoogieOldVar) mBoogieVarTable.getBoogieVar(entry.getKey(), sc, true);
+		for (final Entry<String, IProgramNonOldVar> entry : mSymbolTable.getGlobals().entrySet()) {
+			final BoogieOldVar oldVar = (BoogieOldVar) mSymbolTable.getBoogieVar(entry.getKey(), sc, true);
 			rtr.put("old(" + oldVar.getIdentifierOfNonOldVar() + ")", oldVar);
 		}
 		return rtr;
@@ -287,7 +284,7 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE, CodeBlock,
 	}
 
 	private IBoogieVar getLocalVariable(final String key, final String procedure, final StorageClass sclass) {
-		return mBoogieVarTable.getBoogieVar(key, new DeclarationInformation(sclass, procedure), false);
+		return mSymbolTable.getBoogieVar(key, new DeclarationInformation(sclass, procedure), false);
 	}
 
 	private StringBuilder getLogMessageRemoveLocalsPreCall(final STATE state, final Set<IBoogieVar> toberemoved) {

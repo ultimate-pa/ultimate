@@ -1,10 +1,23 @@
 #!/bin/bash
 FILE=${1}
-for i in `grep -oh 'Settings:[^ ]*' target/surefire-reports/de.uni_freiburg.informatik.ultimatetest.suites.svcomp.SVCOMP16TestSuite/IncrementalLogWithVMParameters\ 2016-04-12_13-41-39-470-incremental.log | sort | uniq`
+for j in `grep -oh 'Toolchain:[^ ]*\.xml' ${FILE} | sort | uniq`
 do
-	SETTING=${i#Settings:}
-	SUCCESS=`ack SUCCESS "$FILE" | grep "$SETTING" | wc -l`
-	echo "$SUCCESS $SETTING"
+    TOOLCHAIN=${j#Toolchain:}
+        echo $TOOLCHAIN
+        echo "--"
+        RTR=""
+        for i in `grep -oh 'Settings:[^ ]*' ${FILE} | sort | uniq`
+        do
+                SETTING=${i#Settings:}
+                SUCCESS=`ack SUCCESS "$FILE" | grep "$SETTING.*$TOOLCHAIN" | wc -l`
+                FAILURE=`ack FAIL "$FILE" | grep "$SETTING.*$TOOLCHAIN" | wc -l`
+                UNKNOWN=`ack UNKNOWN "$FILE" | grep "$SETTING.*$TOOLCHAIN" | wc -l`
+                TOTAL=$((SUCCESS+FAILURE+UNKNOWN))
+                if [ $TOTAL -gt "0" ]; then
+                        RTR="${RTR}S: $SUCCESS F: $FAILURE U: $UNKNOWN T: $TOTAL $SETTING\n"
+                fi
+        done
+        echo -e "$RTR" | column -t
+        echo "--"
 done
-
 

@@ -41,13 +41,11 @@ import de.uni_freiburg.informatik.ultimatetest.summaries.ColumnDefinition.Aggreg
 import de.uni_freiburg.informatik.ultimatetest.summaries.ConversionContext;
 
 /**
- *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- *
  */
 @SuppressWarnings("unused")
 public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite {
-
+	
 	private static final String[] C = new String[] { ".i", ".c" };
 	private static final String[] BPL = new String[] { ".bpl" };
 	private static final int DEFAULT_LIMIT = Integer.MAX_VALUE;
@@ -106,7 +104,7 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 //			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_total.epf"),
 //			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
 //			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON.epf"),
-//			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Simple.epf"),
+			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Simple.epf"),
 //			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Simple_total.epf"),
 
 //			new Triple<>("AbstractInterpretationC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf"),
@@ -123,7 +121,8 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 	};
 
 	private static final String[] INPUT = new String[] {
-			"examples/programs/abstractInterpretation/regression",
+//			"examples/programs/abstractInterpretation/regression",
+			"examples/svcomp/ssh-simplified/s3_srvr_13_false-unreach-call.cil.c",
 
 //			"examples/programs/abstractInterpretation/regression/inequalityTest_reals.bpl",
 //			"examples/programs/abstractInterpretation/regression/all/logicimplies-test.bpl",
@@ -154,7 +153,8 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 	@Override
 	protected long getTimeout() {
 		// return 90 * 1000 * 1000;
-		return 30 * 1000;
+		return 90 * 1000;
+		// return 30 * 1000;
 	}
 
 	@Override

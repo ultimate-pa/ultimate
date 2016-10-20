@@ -79,11 +79,11 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
 public class TraceAbstractionStarter {
-
+	
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final IToolchainStorage mToolchainStorage;
-
+	
 	/**
 	 * Root Node of this Ultimate model. I use this to store information that should be passed to the next plugin. The
 	 * Successors of this node exactly the initial nodes of procedures.
@@ -91,7 +91,7 @@ public class TraceAbstractionStarter {
 	private IElement mRootOfNewModel;
 	private Result mOverallResult;
 	private IElement mArtifact;
-
+	
 	public TraceAbstractionStarter(final IUltimateServiceProvider services, final IToolchainStorage storage,
 			final RootNode rcfgRootNode, final INestedWordAutomatonSimple<WitnessEdge, WitnessNode> witnessAutomaton) {
 		mServices = services;
@@ -99,34 +99,34 @@ public class TraceAbstractionStarter {
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		runCegarLoops(rcfgRootNode, witnessAutomaton);
 	}
-
+	
 	private void runCegarLoops(final RootNode rcfgRootNode,
 			final INestedWordAutomatonSimple<WitnessEdge, WitnessNode> witnessAutomaton) {
 		final RootAnnot rootAnnot = rcfgRootNode.getRootAnnot();
 		final TAPreferences taPrefs = new TAPreferences(mServices);
-
+		
 		String settings = "Automizer settings:";
 		settings += " Hoare:" + taPrefs.computeHoareAnnotation();
 		settings += " " + (taPrefs.differenceSenwa() ? "SeNWA" : "NWA");
 		settings += " Interpolation:" + taPrefs.interpolation();
 		settings += " Determinization: " + taPrefs.interpolantAutomatonEnhancement();
 		mLogger.info(settings);
-
+		
 		final SmtManager smtManager =
 				new SmtManager(rootAnnot.getScript(), rootAnnot.getBoogie2SMT(), rootAnnot.getModGlobVarManager(),
 						mServices, interpolationModeSwitchNeeded(), rootAnnot.getManagedScript(),
 						taPrefs.getSimplificationTechnique(), taPrefs.getXnfConversionTechnique());
 		final TraceAbstractionBenchmarks traceAbstractionBenchmark = new TraceAbstractionBenchmarks(rootAnnot);
-
+		
 		final Map<String, Collection<ProgramPoint>> proc2errNodes = rootAnnot.getErrorNodes();
 		final Collection<ProgramPoint> errNodesOfAllProc = new ArrayList<>();
 		for (final Collection<ProgramPoint> errNodeOfProc : proc2errNodes.values()) {
 			errNodesOfAllProc.addAll(errNodeOfProc);
 		}
-
+		
 		mOverallResult = Result.SAFE;
 		mArtifact = null;
-
+		
 		if (taPrefs.allErrorLocsAtOnce()) {
 			final String name = "AllErrorsAtOnce";
 			iterate(name, rcfgRootNode, taPrefs, smtManager, traceAbstractionBenchmark, errNodesOfAllProc,
@@ -154,7 +154,7 @@ public class TraceAbstractionStarter {
 					new AllSpecificationsHoldResult(Activator.PLUGIN_NAME, longDescription);
 			reportResult(result);
 		}
-
+		
 		mLogger.debug("Compute Hoare Annotation: " + taPrefs.computeHoareAnnotation());
 		mLogger.debug("Overall result: " + mOverallResult);
 		mLogger.debug("Continue processing: " + mServices.getProgressMonitorService().continueProcessing());
@@ -162,15 +162,15 @@ public class TraceAbstractionStarter {
 				&& mServices.getProgressMonitorService().continueProcessing()) {
 			assert new HoareAnnotationChecker(mServices, rcfgRootNode, smtManager)
 					.isInductive() : "incorrect Hoare annotation";
-
+			
 			final IBacktranslationService backTranslatorService = mServices.getBacktranslationService();
 			final Term trueterm = smtManager.getScript().term("true");
-
+			
 			final Set<ProgramPoint> locsForLoopLocations = new HashSet<>();
 			locsForLoopLocations.addAll(rootAnnot.getPotentialCycleProgramPoints());
 			locsForLoopLocations.addAll(rootAnnot.getLoopLocations().keySet());
 			// find all locations that have outgoing edges which are annotated with LoopEntry, i.e., all loop candidates
-
+			
 			for (final ProgramPoint locNode : locsForLoopLocations) {
 				final HoareAnnotation hoare = getHoareAnnotation(locNode);
 				if (hoare == null) {
@@ -180,15 +180,15 @@ public class TraceAbstractionStarter {
 				final InvariantResult<RcfgElement, Term> invResult =
 						new InvariantResult<>(Activator.PLUGIN_NAME, locNode, backTranslatorService, formula);
 				reportResult(invResult);
-
+				
 				if (formula.equals(trueterm)) {
 					continue;
 				}
 				final String inv = backTranslatorService.translateExpressionToString(formula, Term.class);
 				new WitnessInvariant(inv).annotate(locNode);
-
+				
 			}
-
+			
 			final Map<String, ProgramPoint> finalNodes = rootAnnot.getExitNodes();
 			for (final Entry<String, ProgramPoint> proc : finalNodes.entrySet()) {
 				final String procName = proc.getKey();
@@ -201,7 +201,7 @@ public class TraceAbstractionStarter {
 					final Term formula = hoare.getFormula();
 					final ProcedureContractResult<RcfgElement, Term> result = new ProcedureContractResult<>(
 							Activator.PLUGIN_NAME, finalNode, backTranslatorService, procName, formula);
-
+					
 					reportResult(result);
 					// TODO: Add setting that controls the generation of those witness invariants
 				}
@@ -221,10 +221,10 @@ public class TraceAbstractionStarter {
 		default:
 			throw new UnsupportedOperationException("Unknown overall result " + mOverallResult);
 		}
-
+		
 		mRootOfNewModel = mArtifact;
 	}
-
+	
 	private void logNumberOfWitnessInvariants(final Collection<ProgramPoint> errNodesOfAllProc) {
 		int numberOfCheckedInvariants = 0;
 		for (final ProgramPoint err : errNodesOfAllProc) {
@@ -242,7 +242,7 @@ public class TraceAbstractionStarter {
 			mLogger.info("WitnessConsidered=" + numberOfCheckedInvariants);
 		}
 	}
-
+	
 	private void iterate(final String name, final RootNode root, final TAPreferences taPrefs,
 			final SmtManager smtManager, final TraceAbstractionBenchmarks taBenchmark,
 			final Collection<ProgramPoint> errorLocs,
@@ -250,30 +250,31 @@ public class TraceAbstractionStarter {
 		final BasicCegarLoop basicCegarLoop =
 				constructCegarLoop(name, root, taPrefs, smtManager, taBenchmark, errorLocs);
 		basicCegarLoop.setWitnessAutomaton(witnessAutomaton);
-
+		
 		final Result result = basicCegarLoop.iterate();
 		basicCegarLoop.finish();
 		final CegarLoopStatisticsGenerator cegarLoopBenchmarkGenerator = basicCegarLoop.getCegarLoopBenchmark();
 		cegarLoopBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.OverallTime.toString());
+		// TODO: Stop AI clock
 		taBenchmark.aggregateBenchmarkData(cegarLoopBenchmarkGenerator);
-
+		
 		mOverallResult = computeOverallResult(errorLocs, basicCegarLoop, result);
-
+		
 		if (taPrefs.computeHoareAnnotation() && mOverallResult == Result.SAFE) {
 			mLogger.debug("Computing Hoare annotation of CFG");
 			basicCegarLoop.computeCFGHoareAnnotation();
 			writeHoareAnnotationToLogger(root);
 		} else {
 			mLogger.debug("Ommiting computation of Hoare annotation");
-
+			
 		}
 		mArtifact = basicCegarLoop.getArtifact();
 	}
-
+	
 	private BasicCegarLoop constructCegarLoop(final String name, final RootNode root, final TAPreferences taPrefs,
 			final SmtManager smtManager, final TraceAbstractionBenchmarks taBenchmark,
 			final Collection<ProgramPoint> errorLocs) {
-		final LanguageOperation languageOperation = (mServices.getPreferenceProvider(Activator.PLUGIN_ID))
+		final LanguageOperation languageOperation = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getEnum(TraceAbstractionPreferenceInitializer.LABEL_LANGUAGE_OPERATION, LanguageOperation.class);
 		if (languageOperation == LanguageOperation.DIFFERENCE) {
 			if (taPrefs.interpolantAutomaton() == InterpolantAutomaton.TOTALINTERPOLATION) {
@@ -286,7 +287,7 @@ public class TraceAbstractionStarter {
 		return new IncrementalInclusionCegarLoop(name, root, smtManager, taPrefs, errorLocs, taPrefs.interpolation(),
 				taPrefs.computeHoareAnnotation(), mServices, mToolchainStorage, languageOperation);
 	}
-
+	
 	private Result computeOverallResult(final Collection<ProgramPoint> errorLocs, final BasicCegarLoop basicCegarLoop,
 			final Result result) {
 		switch (result) {
@@ -307,7 +308,7 @@ public class TraceAbstractionStarter {
 			throw new IllegalArgumentException();
 		}
 	}
-
+	
 	private void writeHoareAnnotationToLogger(final RootNode root) {
 		for (final Entry<String, Map<String, ProgramPoint>> proc2label2pp : root.getRootAnnot().getProgramPoints()
 				.entrySet()) {
@@ -323,7 +324,7 @@ public class TraceAbstractionStarter {
 			}
 		}
 	}
-
+	
 	private static String prettyPrintProgramPoint(final ProgramPoint pp) {
 		final int startLine = pp.getPayload().getLocation().getStartLine();
 		final int endLine = pp.getPayload().getLocation().getStartLine();
@@ -336,7 +337,7 @@ public class TraceAbstractionStarter {
 		}
 		return sb.toString();
 	}
-
+	
 	private void reportPositiveResults(final Collection<ProgramPoint> errorLocs) {
 		for (final ProgramPoint errorLoc : errorLocs) {
 			final PositiveResult<RcfgElement> pResult =
@@ -344,7 +345,7 @@ public class TraceAbstractionStarter {
 			reportResult(pResult);
 		}
 	}
-
+	
 	private void reportCounterexampleResult(final RcfgProgramExecution pe) {
 		if (!pe.getOverapproximations().isEmpty()) {
 			reportUnproveableResult(pe, pe.getUnprovabilityReasons());
@@ -353,9 +354,8 @@ public class TraceAbstractionStarter {
 		reportResult(new CounterExampleResult<RcfgElement, RCFGEdge, Term>(getErrorPP(pe), Activator.PLUGIN_NAME,
 				mServices.getBacktranslationService(), pe));
 	}
-
-	private void reportTimeoutResult(final Collection<ProgramPoint> errorLocs,
-			final IRunningTaskStackProvider rtsp) {
+	
+	private void reportTimeoutResult(final Collection<ProgramPoint> errorLocs, final IRunningTaskStackProvider rtsp) {
 		for (final ProgramPoint errorIpp : errorLocs) {
 			final ProgramPoint errorLoc = errorIpp;
 			final ILocation origin = errorLoc.getBoogieASTNode().getLocation().getOrigin();
@@ -370,7 +370,7 @@ public class TraceAbstractionStarter {
 			reportResult(timeOutRes);
 		}
 	}
-
+	
 	private void reportUnproveableResult(final RcfgProgramExecution pe,
 			final List<UnprovabilityReason> unproabilityReasons) {
 		final ProgramPoint errorPP = getErrorPP(pe);
@@ -378,40 +378,40 @@ public class TraceAbstractionStarter {
 				errorPP, mServices.getBacktranslationService(), pe, unproabilityReasons);
 		reportResult(uknRes);
 	}
-
+	
 	private <T> void reportBenchmark(final ICsvProviderProvider<T> benchmark) {
 		final String shortDescription = "Ultimate Automizer benchmark data";
 		final BenchmarkResult<T> res = new BenchmarkResult<>(Activator.PLUGIN_NAME, shortDescription, benchmark);
 		reportResult(res);
 	}
-
+	
 	private static boolean isAuxilliaryProcedure(final String proc) {
 		return "ULTIMATE.init".equals(proc) || "ULTIMATE.start".equals(proc);
 	}
-
+	
 	private void reportResult(final IResult res) {
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, res);
 	}
-
+	
 	/**
 	 * @return the root of the CFG.
 	 */
 	public IElement getRootOfNewModel() {
 		return mRootOfNewModel;
 	}
-
+	
 	public static HoareAnnotation getHoareAnnotation(final ProgramPoint programPoint) {
 		return HoareAnnotation.getAnnotation(programPoint);
 	}
-
+	
 	public static ProgramPoint getErrorPP(final RcfgProgramExecution rcfgProgramExecution) {
 		final int lastPosition = rcfgProgramExecution.getLength() - 1;
 		final RCFGEdge last = rcfgProgramExecution.getTraceElement(lastPosition).getTraceElement();
 		return (ProgramPoint) last.getTarget();
 	}
-
+	
 	private boolean interpolationModeSwitchNeeded() {
-		final SolverMode solver = (mServices.getPreferenceProvider(Activator.PLUGIN_ID))
+		final SolverMode solver = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getEnum(RcfgPreferenceInitializer.LABEL_Solver, SolverMode.class);
 		return solver == SolverMode.External_PrincessInterpolationMode;
 	}
