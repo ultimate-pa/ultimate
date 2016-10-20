@@ -32,6 +32,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.function.Predicate;
 
 /**
@@ -174,8 +175,6 @@ public class CsvProviderPartition<T> {
 			throw new IllegalArgumentException("The CSV key does not exist: " + column);
 		}
 		
-		final List<ICsvProvider<T>> result = new ArrayList<>();
-		
 		final Map<T, ICsvProvider<T>> key2group;
 		final Map<Integer, ICsvProvider<T>> bin2group;
 		if (thresholds == null) {
@@ -183,7 +182,7 @@ public class CsvProviderPartition<T> {
 			bin2group = null;
 		} else {
 			key2group = null;
-			bin2group = new HashMap<>();
+			bin2group = new TreeMap<>();
 		}
 		
 		final int numberOfRows = csv.getRowHeaders().size();
@@ -196,7 +195,6 @@ public class CsvProviderPartition<T> {
 			final String rowTitle;
 			if (group == null) {
 				group = new SimpleCsvProvider<>(csv.getColumnTitles());
-				result.add(group);
 				if (thresholds == null) {
 					key2group.put(entry, group);
 					rowTitle = entry.toString();
@@ -213,6 +211,17 @@ public class CsvProviderPartition<T> {
 						: (rowHeaders.get(0) == null ? entry.toString() : rowHeaders.get(0));
 			}
 			group.addRow(rowTitle, new ArrayList<>(row));
+		}
+		
+		final List<ICsvProvider<T>> result = new ArrayList<>();
+		Collection<ICsvProvider<T>> csvs;
+		if (thresholds == null) {
+			csvs = key2group.values();
+		} else {
+			csvs = bin2group.values();
+		}
+		for (final ICsvProvider<T> group : csvs) {
+			result.add(group);
 		}
 		return result;
 	}
