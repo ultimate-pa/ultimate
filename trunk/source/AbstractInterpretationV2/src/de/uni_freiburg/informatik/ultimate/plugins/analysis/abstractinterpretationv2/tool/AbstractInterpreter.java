@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.Set;
 import java.util.function.Supplier;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
@@ -71,7 +72,7 @@ import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public final class AbstractInterpreter {
-
+	
 	/**
 	 * Run abstract interpretation on the whole RCFG.
 	 *
@@ -88,7 +89,7 @@ public final class AbstractInterpreter {
 				() -> run(root, initials, timer, services, true);
 		return runSilently(fun, logger);
 	}
-
+	
 	/**
 	 * Run abstract interpretation on the whole RCFG.
 	 *
@@ -99,26 +100,28 @@ public final class AbstractInterpreter {
 					final IUltimateServiceProvider services) {
 		return run(root, initials, timer, services, false);
 	}
-
+	
 	/**
 	 * Run abstract interpretation on a path program constructed from a counterexample.
+	 * 
+	 * @param pathProgramProjection
 	 *
 	 */
 	public static <STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>>
 			IAbstractInterpretationResult<STATE, CodeBlock, IBoogieVar, ProgramPoint>
 			runOnPathProgram(final RootNode root, final INestedWordAutomatonSimple<CodeBlock, ?> abstraction,
-					final NestedRun<CodeBlock, ?> counterexample, final IProgressAwareTimer timer,
-					final IUltimateServiceProvider services) {
+					final NestedRun<CodeBlock, ?> counterexample, final Set<CodeBlock> pathProgramProjection,
+					final IProgressAwareTimer timer, final IUltimateServiceProvider services) {
 		assert counterexample != null && counterexample.getLength() > 0 : "Invalid counterexample";
 		assert abstraction != null;
 		assert root != null;
 		assert services != null;
 		assert timer != null;
-
+		
 		final ILogger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		try {
-			final NWAPathProgramTransitionProvider transProvider =
-					new NWAPathProgramTransitionProvider(counterexample, services, root.getRootAnnot());
+			final NWAPathProgramTransitionProvider transProvider = new NWAPathProgramTransitionProvider(counterexample,
+					pathProgramProjection, services, root.getRootAnnot());
 			final CodeBlock initial = counterexample.getSymbol(0);
 			final RootAnnot rootAnnot = root.getRootAnnot();
 			final Boogie2SMT bpl2smt = rootAnnot.getBoogie2SMT();
@@ -126,7 +129,7 @@ public final class AbstractInterpreter {
 			final FixpointEngineParameterFactory domFac =
 					new FixpointEngineParameterFactory(root, () -> new RCFGLiteralCollector(root), services);
 			final FixpointEngineParameters<STATE, CodeBlock, IBoogieVar, ProgramPoint, Expression> params =
-					domFac.createParams(timer, transProvider, transProvider);
+					domFac.createParamsPathProgram(timer, transProvider, transProvider);
 			final FixpointEngine<STATE, CodeBlock, IBoogieVar, ProgramPoint, Expression> fxpe =
 					new FixpointEngine<>(params);
 			try {
@@ -153,7 +156,7 @@ public final class AbstractInterpreter {
 			return null;
 		}
 	}
-
+	
 	private static <STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>>
 			IAbstractInterpretationResult<STATE, CodeBlock, IBoogieVar, ProgramPoint> run(final RootNode root,
 					final Collection<CodeBlock> initials, final IProgressAwareTimer timer,
@@ -164,15 +167,15 @@ public final class AbstractInterpreter {
 		if (timer == null) {
 			throw new IllegalArgumentException("timer is null");
 		}
-
+		
 		final ITransitionProvider<CodeBlock, ProgramPoint> transProvider = new RcfgTransitionProvider();
 		final Collection<CodeBlock> filteredInitialElements = transProvider.filterInitialElements(initials);
-
+		
 		if (filteredInitialElements.isEmpty()) {
 			getReporter(services, false, false).reportSafe(null, "The program is empty");
 			return null;
 		}
-
+		
 		final RootAnnot rootAnnot = root.getRootAnnot();
 		final Boogie2SMT bpl2smt = rootAnnot.getBoogie2SMT();
 		final Script script = rootAnnot.getScript();
@@ -182,21 +185,21 @@ public final class AbstractInterpreter {
 		final Iterator<CodeBlock> iter = filteredInitialElements.iterator();
 		final ILoopDetector<CodeBlock> loopDetector =
 				new RcfgLoopDetector<>(rootAnnot.getLoopLocations().keySet(), transProvider);
-
+		
 		AbstractInterpretationResult<STATE, CodeBlock, IBoogieVar, ProgramPoint> result = null;
-
+		
 		// TODO: If an if is at the beginning of a method, this method will be analyzed two times
 		while (iter.hasNext()) {
 			final CodeBlock initial = iter.next();
-
+			
 			final FixpointEngineParameters<STATE, CodeBlock, IBoogieVar, ProgramPoint, Expression> params =
 					domFac.createParams(timer, transProvider, loopDetector);
-
+			
 			final FixpointEngine<STATE, CodeBlock, IBoogieVar, ProgramPoint, Expression> fxpe =
 					new FixpointEngine<>(params);
 			result = fxpe.run(initial, script, bpl2smt, result);
 		}
-
+		
 		final ILogger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		if (result == null) {
 			logger.error("Could not run because no initial element could be found");
@@ -216,7 +219,7 @@ public final class AbstractInterpreter {
 		logger.info(result.getBenchmark());
 		return result;
 	}
-
+	
 	/**
 	 * Run abstract interpretation on the RCFG of the future (experimental).
 	 *
@@ -231,15 +234,15 @@ public final class AbstractInterpreter {
 		if (timer == null) {
 			throw new IllegalArgumentException("timer is null");
 		}
-
+		
 		final ITransitionProvider<CodeBlock, ProgramPoint> transProvider = new RcfgTransitionProvider();
 		final Collection<CodeBlock> filteredInitialElements = transProvider.filterInitialElements(initials);
-
+		
 		if (filteredInitialElements.isEmpty()) {
 			getReporter(services, false, false).reportSafe(null, "The program is empty");
 			return null;
 		}
-
+		
 		final RootAnnot rootAnnot = root.getRootAnnot();
 		final Boogie2SMT bpl2smt = rootAnnot.getBoogie2SMT();
 		final Script script = rootAnnot.getScript();
@@ -249,21 +252,21 @@ public final class AbstractInterpreter {
 		final Iterator<CodeBlock> iter = filteredInitialElements.iterator();
 		final ILoopDetector<CodeBlock> loopDetector =
 				new RcfgLoopDetector<>(rootAnnot.getLoopLocations().keySet(), transProvider);
-
+		
 		AbstractInterpretationResult<STATE, CodeBlock, IProgramVar, ProgramPoint> result = null;
-
+		
 		// TODO: If an if is at the beginning of a method, this method will be analyzed two times
 		while (iter.hasNext()) {
 			final CodeBlock initial = iter.next();
-
+			
 			final FixpointEngineParameters<STATE, CodeBlock, IProgramVar, ProgramPoint, Expression> params =
 					domFac.createParamsFuture(timer, transProvider, loopDetector);
-
+			
 			final FixpointEngine<STATE, CodeBlock, IProgramVar, ProgramPoint, Expression> fxpe =
 					new FixpointEngine<>(params);
 			result = fxpe.run(initial, script, bpl2smt, result);
 		}
-
+		
 		final ILogger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		if (result == null) {
 			logger.error("Could not run because no initial element could be found");
@@ -283,7 +286,7 @@ public final class AbstractInterpreter {
 		logger.info(result.getBenchmark());
 		return result;
 	}
-
+	
 	private static <STATE extends IAbstractState<STATE, CodeBlock, VARDECL>, VARDECL, LOC>
 			IAbstractInterpretationResult<STATE, CodeBlock, VARDECL, LOC>
 			runSilently(final Supplier<IAbstractInterpretationResult<STATE, CodeBlock, VARDECL, LOC>> fun,
@@ -302,7 +305,7 @@ public final class AbstractInterpreter {
 			return null;
 		}
 	}
-
+	
 	private static <STATE extends IAbstractState<STATE, CodeBlock, VARDECL>, VARDECL>
 			IResultReporter<STATE, CodeBlock, VARDECL, ProgramPoint>
 			getReporter(final IUltimateServiceProvider services, final boolean isLibrary, final boolean isSilent) {
