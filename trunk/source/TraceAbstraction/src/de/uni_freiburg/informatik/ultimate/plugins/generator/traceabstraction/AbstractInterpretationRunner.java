@@ -43,24 +43,24 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  *
  */
 public class AbstractInterpretationRunner {
-	
+
 	private final CegarLoopStatisticsGenerator mCegarLoopBenchmark;
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
-	
+
 	private final SmtManager mSmtManager;
 	private final RootNode mRoot;
-	
+
 	private final Set<Set<CodeBlock>> mKnownPathPrograms;
 	private IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> mAbsIntResult;
-	
+
 	private final AbstractInterpretationMode mMode;
 	private final boolean mAlwaysRefine;
 	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
-	
+
 	private boolean mSkipIteration;
-	
+
 	public AbstractInterpretationRunner(final IUltimateServiceProvider services,
 			final CegarLoopStatisticsGenerator benchmark, final RootNode root,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
@@ -75,14 +75,14 @@ public class AbstractInterpretationRunner {
 		mSkipIteration = false;
 		mKnownPathPrograms = new HashSet<Set<CodeBlock>>();
 		mSmtManager = smtManager;
-		
+
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		mAlwaysRefine = prefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_ABSINT_ALWAYS_REFINE);
 		mMode = prefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_ABSINT_MODE,
 				AbstractInterpretationMode.class);
 		checkSettings();
 	}
-	
+
 	private void checkSettings() {
 		if (mMode == AbstractInterpretationMode.USE_PATH_PROGRAM && mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getEnum(TraceAbstractionPreferenceInitializer.LABEL_INTERPOLANT_AUTOMATON_ENHANCEMENT,
@@ -98,7 +98,7 @@ public class AbstractInterpretationRunner {
 					+ TraceAbstractionPreferenceInitializer.LABEL_ABSINT_ALWAYS_REFINE + "\"=true");
 		}
 	}
-	
+
 	/**
 	 * Generate fixpoints for each program location of a path program represented by the current counterexample in the
 	 * current abstraction.
@@ -116,13 +116,13 @@ public class AbstractInterpretationRunner {
 		if (mMode == AbstractInterpretationMode.NONE) {
 			return;
 		}
-		
+
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AbstIntTime.toString());
 		try {
 			mAbsIntResult = null;
-			
+
 			final Set<CodeBlock> pathProgramSet = convertCex2Set(currentCex);
-			
+
 			if (!mKnownPathPrograms.add(pathProgramSet)) {
 				mSkipIteration = true;
 				mLogger.info("Skipping current iteration for AI because we have already analyzed this path program");
@@ -133,10 +133,10 @@ public class AbstractInterpretationRunner {
 				mLogger.info("Skipping current iteration for AI because the path program does not contain any loops");
 				return;
 			}
-			
+
 			mSkipIteration = false;
 			mCegarLoopBenchmark.announceNextAbsIntIteration();
-			
+
 			// allow for 20% of the remaining time
 			final IProgressAwareTimer timer = mServices.getProgressMonitorService().getChildTimer(0.2);
 			mLogger.info("Running AI on error trace of length " + currentCex.getLength()
@@ -145,7 +145,7 @@ public class AbstractInterpretationRunner {
 					.map(a -> '[' + String.valueOf(a) + ']').collect(Collectors.toList())));
 			if (mLogger.isDebugEnabled()) {
 				for (final CodeBlock trans : pathProgramSet) {
-					mLogger.debug('[' + trans.hashCode() + "] " + trans);
+					mLogger.debug("[" + trans.hashCode() + "] " + trans);
 				}
 			}
 			final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> result =
@@ -159,12 +159,12 @@ public class AbstractInterpretationRunner {
 			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.AbstIntTime.toString());
 		}
 	}
-	
+
 	private boolean containsLoop(final Set<CodeBlock> pathProgramSet) {
 		final Set<RCFGNode> programPoints = new HashSet<>();
 		return pathProgramSet.stream().anyMatch(a -> !programPoints.add(a.getTarget()));
 	}
-	
+
 	/**
 	 *
 	 * @return true iff abstract interpretation was strong enough to prove infeasibility of the current counterexample.
@@ -172,11 +172,11 @@ public class AbstractInterpretationRunner {
 	public boolean hasShownInfeasibility() {
 		return mMode != AbstractInterpretationMode.NONE && mAbsIntResult != null && !mAbsIntResult.hasReachedError();
 	}
-	
+
 	public boolean isDisabled() {
 		return mMode == AbstractInterpretationMode.NONE;
 	}
-	
+
 	public IInterpolantAutomatonBuilder<CodeBlock, IPredicate> createInterpolantAutomatonBuilder(
 			final IInterpolantGenerator interpolGenerator,
 			final INestedWordAutomaton<CodeBlock, IPredicate> abstraction,
@@ -191,7 +191,7 @@ public class AbstractInterpretationRunner {
 			mLogger.warn("Cannot construct AI interpolant automaton without calculating fixpoint first");
 			return null;
 		}
-		
+
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AbstIntTime.toString());
 		try {
 			mLogger.info("Constructing AI automaton with mode " + mMode);
@@ -225,7 +225,7 @@ public class AbstractInterpretationRunner {
 			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.AbstIntTime.toString());
 		}
 	}
-	
+
 	public void refineAnyways(final IInterpolantGenerator interpolGenerator,
 			final INestedWordAutomaton<CodeBlock, IPredicate> abstraction, final IRun<CodeBlock, IPredicate> cex,
 			final IRefineFunction refineFun) throws AutomataLibraryException {
@@ -237,7 +237,7 @@ public class AbstractInterpretationRunner {
 				createInterpolantAutomatonBuilder(interpolGenerator, abstraction, cex).getResult();
 		refine(interpolGenerator.getPredicateUnifier(), aiInterpolAutomaton, cex, refineFun);
 	}
-	
+
 	/**
 	 *
 	 * @return true iff abstract interpretation was strong enough to prove infeasibility of the current counterexample.
@@ -257,7 +257,7 @@ public class AbstractInterpretationRunner {
 			mLogger.warn("Cannot refine abstraction with AI automaton without calculating fixpoint first");
 			return false;
 		}
-		
+
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AbstIntTime.toString());
 		try {
 			mLogger.info("Refining with AI automaton");
@@ -271,7 +271,7 @@ public class AbstractInterpretationRunner {
 			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.AbstIntTime.toString());
 		}
 	}
-	
+
 	private Set<CodeBlock> convertCex2Set(final IRun<CodeBlock, IPredicate> currentCex) {
 		final Set<CodeBlock> transitions = new HashSet<CodeBlock>();
 		// words count their states, so 0 is first state, length is last state
@@ -281,7 +281,7 @@ public class AbstractInterpretationRunner {
 		}
 		return transitions;
 	}
-	
+
 	private boolean hasAiProgress(final boolean result,
 			final INestedWordAutomaton<CodeBlock, IPredicate> aiInterpolAutomaton,
 			final IRun<CodeBlock, IPredicate> cex) {
@@ -300,16 +300,16 @@ public class AbstractInterpretationRunner {
 		mLogger.fatal("Automaton had the following predicates: " + aiInterpolAutomaton.getStates());
 		return false;
 	}
-	
+
 	private String simplify(final Term term) {
 		return SmtUtils.simplify(mRoot.getRootAnnot().getManagedScript(), term, mServices, mSimplificationTechnique)
 				.toStringDirect();
 	}
-	
+
 	@FunctionalInterface
 	public interface IRefineFunction {
 		boolean refine(NestedWordAutomaton<CodeBlock, IPredicate> interpolAutomaton, PredicateUnifier unifier)
 				throws AssertionError, AutomataOperationCanceledException, AutomataLibraryException;
 	}
-	
+
 }
