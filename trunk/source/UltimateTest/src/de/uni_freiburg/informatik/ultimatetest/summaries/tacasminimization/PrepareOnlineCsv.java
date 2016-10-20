@@ -5,9 +5,12 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvProviderAggregator;
@@ -15,6 +18,7 @@ import de.uni_freiburg.informatik.ultimate.util.csv.CsvProviderAggregator.Aggreg
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvProviderFromFile;
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvProviderPartition;
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvProviderRounding;
+import de.uni_freiburg.informatik.ultimate.util.csv.CsvProviderRowFilter;
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvProviderScale;
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvProviderScale.ScaleMode;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
@@ -30,6 +34,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
 public final class PrepareOnlineCsv {
+	private static final String COMBINATOR_ONLY = "Combination only";
+	private static final String COMBINATOR = "NWA_COMBINATOR_MULTI_DEFAULT.epf";
+	private static final String NONE = "NONE.epf";
 	private static final String SETTINGS_PREFIX =
 			"/mnt/storage/ultimate/trunk/examples/settings/automizer/minimization/TreeInterpolants-";
 	private static final String MINIMIZATON_ATTEMPTS_RELATIVE = "MinimizatonAttemptsRelative";
@@ -57,24 +64,33 @@ public final class PrepareOnlineCsv {
 		final File inputFile = new File(INPUT_FILE_NAME + EXTENSION);
 		final ICsvProvider<String> input = CsvProviderFromFile.parse(inputFile);
 		
-		// TODO what about runs with 1 iteration? table contains "null" values due to this issue
-		
 		// partition table by example
 		final CsvProviderPartition<String> partitionByExample = getExamplePartition(input);
+		final CsvProviderPartition<String> partitionByExampleCopy = partitionByExample.copy();
 		
-		// filter examples with at least one timeout
+		// filter examples with at least one timeout/nontermination
 		final ICsvProvider<String> bothFinished = getBothFinishedFilter(partitionByExample);
 		
+		// filter examples for which the combinator finished
+		final ICsvProvider<String> combinationFinished = getCombinationFinishedFilter(partitionByExampleCopy);
+		
 		// partition table by setting
-		final CsvProviderPartition<String> partitionBySetting = getSettingsPartition(bothFinished);
+		final CsvProviderPartition<String> partitionBySettingBoth = getSettingsPartition(bothFinished);
+		final CsvProviderPartition<String> partitionBySettingCombination = getSettingsPartition(combinationFinished);
 		
 		// aggregate data settings runs
-		aggregate(partitionBySetting);
+		aggregate(partitionBySettingBoth);
+		aggregate(partitionBySettingCombination);
+		
+		// add row header for combination only data
+		final ICsvProvider<String> combinationOnly = partitionBySettingCombination.getCsvs().iterator().next();
+		renameRowHeaders(combinationOnly, COMBINATOR_ONLY);
 		
 		final List<ICsvProvider<String>> csvs = new ArrayList<>(3);
-		for (final ICsvProvider<String> csv : partitionBySetting.getCsvs()) {
+		for (final ICsvProvider<String> csv : partitionBySettingBoth.getCsvs()) {
 			csvs.add(csv);
 		}
+		csvs.add(combinationOnly);
 		
 		int i = 0;
 		final CsvProviderScale csvProviderScale = getScaling();
@@ -86,7 +102,7 @@ public final class PrepareOnlineCsv {
 			final ICsvProvider<String> addedColumnCsv =
 					addRelativeColumn(roundedCsv, roundedCsv.getColumnTitles().indexOf(OVERALL_ITERATIONS),
 							roundedCsv.getColumnTitles().indexOf(MINIMIZATON_ATTEMPTS), MINIMIZATON_ATTEMPTS_RELATIVE);
-			renameRowHeaders(addedColumnCsv);
+			renameRowHeaders(addedColumnCsv, null);
 			
 			writeCsvToFile(addedColumnCsv, OUTPUT_AGGREGATED_FILE_NAME + i);
 			
@@ -107,6 +123,17 @@ public final class PrepareOnlineCsv {
 	private static ICsvProvider<String> getBothFinishedFilter(final CsvProviderPartition<String> partition) {
 		partition.filterGroups(new TimeOutFilter());
 		partition.filterGroups(new OnlyOneFilter());
+		return partition.toCsvProvider();
+	}
+	
+	private static ICsvProvider<String> getCombinationFinishedFilter(final CsvProviderPartition<String> partition) {
+		final Map<String, Set<String>> column2allowedValues = new HashMap<>();
+		column2allowedValues.put(SETTING, new HashSet<>(Arrays.asList(new String[] { SETTINGS_PREFIX + COMBINATOR })));
+		final CsvProviderRowFilter<String> valuesFilter =
+				new CsvProviderRowFilter<>(new CsvProviderRowFilter.AllowedValuesRowFilter<>(column2allowedValues));
+		partition.transform(valuesFilter);
+		
+		partition.filterGroups(new TimeOutFilter());
 		return partition.toCsvProvider();
 	}
 	
@@ -169,21 +196,27 @@ public final class PrepareOnlineCsv {
 		return result;
 	}
 	
-	private static void renameRowHeaders(final ICsvProvider<String> csv) {
+	private static void renameRowHeaders(final ICsvProvider<String> csv, final String replaceString) {
 		final List<String> rowHeaders = csv.getRowHeaders();
 		for (int i = 0; i < rowHeaders.size(); ++i) {
 			final String oldRowHeader = rowHeaders.get(i);
 			final String shortened = oldRowHeader.replaceFirst(SETTINGS_PREFIX, "");
 			final String newRowHeader;
-			switch (shortened) {
-				case "NONE.epf":
-					newRowHeader = "Standalone";
-					break;
-				case "NWA_COMBINATOR_MULTI_DEFAULT.epf":
-					newRowHeader = "Combination";
-					break;
-				default:
-					throw new IllegalArgumentException("Unknown setting: " + shortened);
+			if (replaceString == null) {
+				switch (shortened) {
+					case NONE:
+						newRowHeader = "Standalone";
+						break;
+					case COMBINATOR:
+						newRowHeader = "Combination";
+						break;
+					case COMBINATOR_ONLY:
+						continue;
+					default:
+						throw new IllegalArgumentException("Unknown setting: " + shortened);
+				}
+			} else {
+				newRowHeader = replaceString;
 			}
 			rowHeaders.set(i, newRowHeader);
 		}
@@ -242,7 +275,7 @@ public final class PrepareOnlineCsv {
 	}
 	
 	/**
-	 * Checks whether the CSV two rows.
+	 * Checks whether the CSV has two rows.
 	 * 
 	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 	 */
