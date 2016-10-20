@@ -412,7 +412,7 @@ public abstract class AbstractCegarLoop {
 			
 			final boolean newMaximumReached =
 					mCegarLoopBenchmark.reportAbstractionSize(mAbstraction.size(), mIteration);
-			if (DUMP_BIGGEST_AUTOMATON && newMaximumReached) {
+			if (DUMP_BIGGEST_AUTOMATON && mIteration > 4 && newMaximumReached) {
 				final String filename = mRootNode.getFilename();
 				writeAutomatonToFile(mAbstraction, filename);
 			}
