@@ -14,11 +14,10 @@ Require-Bundle: Library-UltimateCore,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
  de.uni_freiburg.informatik.ultimate.automata,
  JavaCup,
- de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer
+ de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer,
+ ACSLParser
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Export-Package: de.uni_freiburg.informatik.ultimate.ltl2aut.ast,
  de.uni_freiburg.informatik.ultimate.ltl2aut.never2nwa
-Import-Package: de.uni_freiburg.informatik.ultimate.acsl.parser,
- de.uni_freiburg.informatik.ultimate.model.acsl,
- org.apache.commons.io
+Import-Package: org.apache.commons.io

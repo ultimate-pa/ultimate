@@ -33,9 +33,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
+import java.util.List; 
 
-import de.uni_freiburg.informatik.ultimate.acsl.parser.Parser;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.ObjectContainer;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
@@ -220,7 +219,7 @@ public class LTL2aut implements IGenerator, ISource {
 		input.append("gstart");
 		input.append('\n');
 		input.append(ltlProperty.replaceFirst("//@", ""));
-		final ACSLNode node = Parser.parseComment(input.toString(), 0, 0);
+		final ACSLNode node = de.uni_freiburg.informatik.ultimate.acsl.parser.Parser.parseComment(input.toString(), 0, 0);
 		
 		return new ObjectContainer<ACSLNode>(node);
 	}
