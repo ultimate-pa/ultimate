@@ -33,7 +33,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.core.model.IGenerator;
@@ -43,7 +42,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
 
 /**
@@ -57,11 +55,10 @@ public class CACSL2BoogieTranslator implements IGenerator {
 	private static final String s_PLUGIN_ID = Activator.PLUGIN_ID;
 
 	private CACSL2BoogieTranslatorObserver mObserver;
-	private ACSLAnnotationContainerObserver mACSLContainerObserver;
+	private ACSLObjectContainerObserver mAdditionalAnnotationObserver;
 	private ModelType mInputDefinition;
 	private IUltimateServiceProvider mServices;
 	private IToolchainStorage mStorage;
-	private List<ACSLNode> mAdditionalAnnotations;
 
 	@Override
 	public String getPluginName() {
@@ -75,9 +72,9 @@ public class CACSL2BoogieTranslator implements IGenerator {
 
 	@Override
 	public void init() {
-		mAdditionalAnnotations = new ArrayList<ACSLNode>();
-		mObserver = new CACSL2BoogieTranslatorObserver(mServices, mStorage);
-		mACSLContainerObserver = new ACSLAnnotationContainerObserver();
+		mAdditionalAnnotationObserver = new ACSLObjectContainerObserver();
+		mObserver = new CACSL2BoogieTranslatorObserver(mServices, mStorage, mAdditionalAnnotationObserver);
+		
 	}
 
 	@Override
@@ -95,12 +92,14 @@ public class CACSL2BoogieTranslator implements IGenerator {
 		if (!(graphType.getCreator() == "de.uni_freiburg.informatik.ultimate.ltl2aut")){
 			mInputDefinition = graphType;
 		}
-		
 	}
 
 	@Override
 	public List<IObserver> getObservers() {
-		return Collections.singletonList((IObserver) mObserver);
+		ArrayList<IObserver> observer = new ArrayList<IObserver>();
+		observer.add(mObserver);
+		observer.add(mAdditionalAnnotationObserver);
+		return observer;
 	}
 
 	@Override

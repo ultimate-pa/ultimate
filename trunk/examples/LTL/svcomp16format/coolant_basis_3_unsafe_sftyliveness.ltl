@@ -1,0 +1,2 @@
+//#Unsafe
+//@ ltl invariant positive: []( ! AP(init == 3) || []<>AP(time > otime));

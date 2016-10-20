@@ -36,18 +36,12 @@ import java.util.Collection;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.acsl.parser.Parser;
-import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
-import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.ACSLAnnotationContainer;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.BasePayloadContainer;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.BaseSimpleAST;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.ObjectContainer;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
 import de.uni_freiburg.informatik.ultimate.core.model.IGenerator;
 import de.uni_freiburg.informatik.ultimate.core.model.ISource;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
@@ -202,11 +196,10 @@ public class LTL2aut implements IGenerator, ISource {
 
 
 	@Override
-	//TODO: nicen
+	//TODO: move to own class as formula format will change
 	public IElement parseAST(File file) throws Exception {
 		String line = null;
 		String ltlProperty = null;
-		int lineNumber = 0;
 		mUseful++;
 		try (BufferedReader br = new BufferedReader(new FileReader(file))) {
 			while ((line = br.readLine()) != null) {
@@ -214,14 +207,13 @@ public class LTL2aut implements IGenerator, ISource {
 					ltlProperty = line;
 					break;
 				}
-				lineNumber++;
 			}
 		} catch (final IOException e) {
 			line = null;
 			throw e;
 		}
-		if (line == null){
-			//TODO: fail
+		if (ltlProperty == null){
+			throw new RuntimeException("LTL invariant file supplied but no LTL invariant found!");
 		}
 		
 		final StringBuilder input = new StringBuilder();
@@ -230,7 +222,7 @@ public class LTL2aut implements IGenerator, ISource {
 		input.append(ltlProperty.replaceFirst("//@", ""));
 		final ACSLNode node = Parser.parseComment(input.toString(), 0, 0);
 		
-		return new ACSLAnnotationContainer(node);
+		return new ObjectContainer<ACSLNode>(node);
 	}
 
 	@Override

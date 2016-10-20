@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.cdt.CommentParser;
 import de.uni_freiburg.informatik.ultimate.cdt.FunctionLineVisitor;
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.ASTDecorator;
+import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratorNode;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.MainDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
@@ -101,14 +102,17 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 	private IASTTranslationUnit inputTU;
 	private boolean mLastModel;
 	private Map<IASTNode, ExtractedWitnessInvariant> mWitnessInvariants;
+	private ACSLObjectContainerObserver mAdditionalAnnotationObserver;
 
-	public CACSL2BoogieTranslatorObserver(final IUltimateServiceProvider services, final IToolchainStorage storage) {
+	public CACSL2BoogieTranslatorObserver(final IUltimateServiceProvider services, final IToolchainStorage storage,
+			final ACSLObjectContainerObserver additionalAnnotationObserver) {
 		assert storage != null;
 		assert services != null;
 		mStorage = storage;
 		mService = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mWitnessExtractor = new CorrectnessWitnessExtractor(mService);
+		mAdditionalAnnotationObserver = additionalAnnotationObserver;
 	}
 
 	@Override
@@ -232,11 +236,23 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 		inputTU.accept(visitor);
 		final CommentParser cparser = new CommentParser(inputTU.getComments(), visitor.getLineRange(), mLogger, main);
 		final List<ACSLNode> acslNodes = cparser.processComments();
+		
+
 		validateLTLProperty(acslNodes);
 		decorator.setAcslASTs(acslNodes);
-		// build decorator tree
+		// build decorator tree 
 		decorator.mapASTs(inputTU);
-
+		//if an additional Annotation was parsed put it into the root node
+		if (mAdditionalAnnotationObserver.getAnnotation() != null){
+			ACSLNode node = mAdditionalAnnotationObserver.getAnnotation();
+			node.setStartingLineNumber(1);
+			node.setEndingLineNumber(1);
+			decorator.getRootNode().getChildren().add(
+					0, 
+					new DecoratorNode(decorator.getRootNode(), node));
+		}
+	
+		
 		try {
 			BoogieASTNode outputTU = main.run(decorator.getRootNode()).node;
 			outputTU = (new BoogieAstCopier()).copy((Unit) outputTU);
