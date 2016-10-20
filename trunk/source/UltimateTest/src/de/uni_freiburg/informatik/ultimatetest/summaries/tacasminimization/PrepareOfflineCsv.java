@@ -41,7 +41,7 @@ public final class PrepareOfflineCsv {
 	private static final String OUTPUT_AGGREGATED_FILE_NAME = "AutomizerOfflineAggregated";
 	private static final String COUNT = "Count";
 	private static final int[] THRESHOLDS = new int[] { 100, 500, 2500 };
-	private static final boolean VERBOSE = true;
+	private static final boolean VERBOSE = false;
 	
 	private static final String TRANSITIONS_RETURN_OUTPUT = "TRANSITIONS_RETURN_OUTPUT";
 	private static final String TRANSITIONS_RETURN_INPUT = "TRANSITIONS_RETURN_INPUT";

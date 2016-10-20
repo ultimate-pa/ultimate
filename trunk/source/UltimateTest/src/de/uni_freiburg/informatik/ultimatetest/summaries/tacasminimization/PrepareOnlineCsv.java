@@ -54,7 +54,7 @@ public final class PrepareOnlineCsv {
 	private static final String OUTPUT_AGGREGATED_FILE_NAME = "AutomizerOnlineAggregated";
 	private static final String COUNT = "Count";
 	private static final Double SCALING = Double.valueOf(1_000_000.0);
-	private static final boolean VERBOSE = true;
+	private static final boolean VERBOSE = false;
 	
 	private PrepareOnlineCsv() {
 		// main class
