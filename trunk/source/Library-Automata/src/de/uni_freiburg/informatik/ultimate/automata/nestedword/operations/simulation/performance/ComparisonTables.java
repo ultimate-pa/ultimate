@@ -30,6 +30,7 @@ import java.io.File;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -258,12 +259,13 @@ public final class ComparisonTables {
 
 		// Header of table
 		String header = "TYPE" + separator + "USED_SCCS";
-		final SimulationPerformance headerCandidate = performanceEntries.get(0).get(0);
-		final Set<ETimeMeasure> timeMeasures = headerCandidate.getTimeMeasures().keySet();
+		Pair<Set<ETimeMeasure>, Set<ECountingMeasure>> headerMeasures = ComparisonTables
+				.getCompleteHeaderMeasures(performanceEntries);
+		final Set<ETimeMeasure> timeMeasures = headerMeasures.getFirst();
 		for (final ETimeMeasure measure : timeMeasures) {
 			header += separator + measure;
 		}
-		final Set<ECountingMeasure> countingMeasures = headerCandidate.getCountingMeasures().keySet();
+		final Set<ECountingMeasure> countingMeasures = headerMeasures.getSecond();
 		for (final ECountingMeasure measure : countingMeasures) {
 			header += separator + measure;
 		}
@@ -410,12 +412,13 @@ public final class ComparisonTables {
 
 		// Header of table
 		String header = "DIRECTORY" + separator + "TYPE" + separator + "USED_SCCS";
-		final SimulationPerformance headerCandidate = performanceEntries.get(0).get(0);
-		final Set<ETimeMeasure> timeMeasures = headerCandidate.getTimeMeasures().keySet();
+		Pair<Set<ETimeMeasure>, Set<ECountingMeasure>> headerMeasures = ComparisonTables
+				.getCompleteHeaderMeasures(performanceEntries);
+		final Set<ETimeMeasure> timeMeasures = headerMeasures.getFirst();
 		for (final ETimeMeasure measure : timeMeasures) {
 			header += separator + measure;
 		}
-		final Set<ECountingMeasure> countingMeasures = headerCandidate.getCountingMeasures().keySet();
+		final Set<ECountingMeasure> countingMeasures = headerMeasures.getSecond();
 		for (final ECountingMeasure measure : countingMeasures) {
 			header += separator + measure;
 		}
@@ -555,8 +558,9 @@ public final class ComparisonTables {
 		// Overall time first
 		header += separator + ETimeMeasure.OVERALL;
 		// Other time measures
-		final SimulationPerformance headerCandidate = performanceEntries.get(0).get(0);
-		final Set<ETimeMeasure> timeMeasures = headerCandidate.getTimeMeasures().keySet();
+		Pair<Set<ETimeMeasure>, Set<ECountingMeasure>> headerMeasures = ComparisonTables
+				.getCompleteHeaderMeasures(performanceEntries);
+		final Set<ETimeMeasure> timeMeasures = headerMeasures.getFirst();
 		for (final ETimeMeasure measure : timeMeasures) {
 			if (!measure.equals(ETimeMeasure.OVERALL)) {
 				header += separator + measure;
@@ -792,12 +796,13 @@ public final class ComparisonTables {
 		// Header of table
 		String header = "NAME" + separator + "TYPE" + separator + "USED_SCCS" + separator + "TIMED_OUT" + separator
 				+ "OOM";
-		final SimulationPerformance headerCandidate = performanceEntries.get(0).get(0);
-		final Set<ETimeMeasure> timeMeasures = headerCandidate.getTimeMeasures().keySet();
+		Pair<Set<ETimeMeasure>, Set<ECountingMeasure>> headerMeasures = ComparisonTables
+				.getCompleteHeaderMeasures(performanceEntries);
+		final Set<ETimeMeasure> timeMeasures = headerMeasures.getFirst();
 		for (final ETimeMeasure measure : timeMeasures) {
 			header += separator + measure;
 		}
-		final Set<ECountingMeasure> countingMeasures = headerCandidate.getCountingMeasures().keySet();
+		final Set<ECountingMeasure> countingMeasures = headerMeasures.getSecond();
 		for (final ECountingMeasure measure : countingMeasures) {
 			header += separator + measure;
 		}
@@ -905,8 +910,9 @@ public final class ComparisonTables {
 		// Overall time first
 		header += separator + ETimeMeasure.OVERALL;
 		// Other time measures
-		final SimulationPerformance headerCandidate = performanceEntries.get(0).get(0);
-		final Set<ETimeMeasure> timeMeasures = headerCandidate.getTimeMeasures().keySet();
+		Pair<Set<ETimeMeasure>, Set<ECountingMeasure>> headerMeasures = ComparisonTables
+				.getCompleteHeaderMeasures(performanceEntries);
+		final Set<ETimeMeasure> timeMeasures = headerMeasures.getFirst();
 		for (final ETimeMeasure measure : timeMeasures) {
 			if (!measure.equals(ETimeMeasure.OVERALL)) {
 				header += separator + measure + "(%)";
@@ -1304,6 +1310,31 @@ public final class ComparisonTables {
 		} else {
 			return null;
 		}
+	}
+
+	/**
+	 * Gets all time and counting measures where at least one performance entry
+	 * has a value for.
+	 * 
+	 * @param performanceEntries
+	 *            Data structure holding the performance entries
+	 * @return All time and counting measures where at least one performance
+	 *         entry has a value for
+	 */
+	private static Pair<Set<ETimeMeasure>, Set<ECountingMeasure>> getCompleteHeaderMeasures(
+			final LinkedList<LinkedList<SimulationPerformance>> performanceEntries) {
+		Set<ETimeMeasure> headerTimeMeasures = new HashSet<>();
+		Set<ECountingMeasure> headerCountingMeasures = new HashSet<>();
+
+		for (final LinkedList<SimulationPerformance> headerCandidateComparance : performanceEntries) {
+			for (final SimulationPerformance headerCandidate : headerCandidateComparance) {
+				final Set<ETimeMeasure> timeMeasures = headerCandidate.getTimeMeasures().keySet();
+				headerTimeMeasures.addAll(timeMeasures);
+				final Set<ECountingMeasure> countingMeasures = headerCandidate.getCountingMeasures().keySet();
+				headerCountingMeasures.addAll(countingMeasures);
+			}
+		}
+		return new Pair<>(headerTimeMeasures, headerCountingMeasures);
 	}
 
 	/**
