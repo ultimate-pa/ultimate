@@ -68,6 +68,8 @@ public final class PrepareOnlineCsv {
 		final CsvProviderPartition<String> partitionByExample = getExamplePartition(input);
 		final CsvProviderPartition<String> partitionByExampleCopy = partitionByExample.copy();
 		
+		System.out.println("A total of " + partitionByExample.size() + " programs were analyzed.");
+		
 		// filter examples with at least one timeout/nontermination
 		final ICsvProvider<String> bothFinished = getBothFinishedFilter(partitionByExample);
 		
