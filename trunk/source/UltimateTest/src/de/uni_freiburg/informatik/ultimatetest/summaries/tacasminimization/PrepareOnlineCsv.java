@@ -30,6 +30,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
 public final class PrepareOnlineCsv {
+	private static final String SETTINGS_PREFIX =
+			"/mnt/storage/ultimate/trunk/examples/settings/automizer/minimization/TreeInterpolants-";
 	private static final String MINIMIZATON_ATTEMPTS_RELATIVE = "MinimizatonAttemptsRelative";
 	private static final String MINIMIZATON_ATTEMPTS = "MinimizatonAttempts";
 	private static final String STATES_REMOVED_BY_MINIMIZATION = "StatesRemovedByMinimization";
@@ -84,6 +86,7 @@ public final class PrepareOnlineCsv {
 			final ICsvProvider<String> addedColumnCsv =
 					addRelativeColumn(roundedCsv, roundedCsv.getColumnTitles().indexOf(OVERALL_ITERATIONS),
 							roundedCsv.getColumnTitles().indexOf(MINIMIZATON_ATTEMPTS), MINIMIZATON_ATTEMPTS_RELATIVE);
+			renameRowHeaders(addedColumnCsv);
 			
 			writeCsvToFile(addedColumnCsv, OUTPUT_AGGREGATED_FILE_NAME + i);
 			
@@ -164,6 +167,26 @@ public final class PrepareOnlineCsv {
 			result.addRow(csv.getRowHeaders().get(i), newRow);
 		}
 		return result;
+	}
+	
+	private static void renameRowHeaders(final ICsvProvider<String> csv) {
+		final List<String> rowHeaders = csv.getRowHeaders();
+		for (int i = 0; i < rowHeaders.size(); ++i) {
+			final String oldRowHeader = rowHeaders.get(i);
+			final String shortened = oldRowHeader.replaceFirst(SETTINGS_PREFIX, "");
+			final String newRowHeader;
+			switch (shortened) {
+				case "NONE.epf":
+					newRowHeader = "Standalone";
+					break;
+				case "NWA_COMBINATOR_MULTI_DEFAULT.epf":
+					newRowHeader = "Combination";
+					break;
+				default:
+					throw new IllegalArgumentException("Unknown setting: " + shortened);
+			}
+			rowHeaders.set(i, newRowHeader);
+		}
 	}
 	
 	private static void writeCsvToFile(final ICsvProvider<String> csv, final String fileName) {
