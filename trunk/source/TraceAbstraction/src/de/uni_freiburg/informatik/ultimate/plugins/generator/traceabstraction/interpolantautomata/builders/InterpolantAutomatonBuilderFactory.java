@@ -61,12 +61,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerUtils;
 
 /**
- *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- *
  */
 public class InterpolantAutomatonBuilderFactory {
-
+	
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final SmtManager mSmtManager;
@@ -146,10 +144,13 @@ public class InterpolantAutomatonBuilderFactory {
 			final IAutomaton<CodeBlock, IPredicate> abstraction, final IInterpolantGenerator interpolGenerator,
 			final IRun<CodeBlock, IPredicate> counterexample) throws AutomataOperationCanceledException {
 		mBenchmark.start(CegarLoopStatisticsDefinitions.BasicInterpolantAutomatonTime.toString());
-		final IInterpolantAutomatonBuilder<CodeBlock, IPredicate> builder =
-				mBuilderFunction.create(abstraction, interpolGenerator, counterexample);
-		mBenchmark.stop(CegarLoopStatisticsDefinitions.BasicInterpolantAutomatonTime.toString());
-		return builder;
+		try {
+			final IInterpolantAutomatonBuilder<CodeBlock, IPredicate> builder =
+					mBuilderFunction.create(abstraction, interpolGenerator, counterexample);
+			return builder;
+		} finally {
+			mBenchmark.stop(CegarLoopStatisticsDefinitions.BasicInterpolantAutomatonTime.toString());
+		}
 	}
 
 	private IInterpolantAutomatonBuilder<CodeBlock, IPredicate> createBuilderAbstractInterpretation(
