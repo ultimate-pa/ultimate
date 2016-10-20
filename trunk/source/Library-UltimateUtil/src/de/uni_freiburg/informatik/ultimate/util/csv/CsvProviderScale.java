@@ -86,11 +86,17 @@ public class CsvProviderScale implements ICsvProviderTransformer<String> {
 		return csv;
 	}
 	
+	@SuppressWarnings("squid:S1698")
 	private static double computeScale(final BigDecimal oldVal, final Pair<Double, ScaleMode> scale) {
 		final double result;
 		switch (scale.getSecond()) {
 			case DIV_INT:
-				final BigDecimal divRes = oldVal.divide(BigDecimal.valueOf(scale.getFirst()), RoundingMode.HALF_UP);
+				final BigDecimal divisor = BigDecimal.valueOf(scale.getFirst());
+				if (divisor == BigDecimal.ZERO) {
+					result = Double.NaN;
+					break;
+				}
+				final BigDecimal divRes = oldVal.divide(divisor, RoundingMode.HALF_UP);
 				final BigDecimal asInt = divRes.setScale(0, RoundingMode.HALF_UP);
 				result = asInt.doubleValue();
 				break;
