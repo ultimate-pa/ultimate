@@ -67,9 +67,10 @@ public class CsvProviderScale implements ICsvProviderTransformer<String> {
 	
 	@Override
 	public ICsvProvider<String> transform(final ICsvProvider<String> csv) {
-		int col = 0;
+		int col = -1;
 		final int rows = csv.getRowHeaders().size();
 		for (final String columnTitle : csv.getColumnTitles()) {
+			++col;
 			final Pair<Double, ScaleMode> scale = mColumn2Scale.get(columnTitle);
 			if (scale == null) {
 				continue;
@@ -80,8 +81,6 @@ public class CsvProviderScale implements ICsvProviderTransformer<String> {
 				final double newVal = computeScale(oldVal, scale);
 				csv.getRow(i).set(col, Double.toString(newVal));
 			}
-			
-			++col;
 		}
 		return csv;
 	}
