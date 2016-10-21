@@ -45,6 +45,7 @@ public final class PrepareOnlineCsv {
 	private static final String MINIMIZATON_ATTEMPTS = "MinimizatonAttempts";
 	private static final String STATES_REMOVED_BY_MINIMIZATION = "StatesRemovedByMinimization";
 	private static final String OVERALL_ITERATIONS = "OverallIterations";
+	private static final String MINIMIZATON_TIME = "AutomataMinimizationTime";
 	private static final String OVERALL_TIME = "OverallTime";
 	private static final String SETTING = "Settings";
 	private static final String FILE = "File";
@@ -154,6 +155,7 @@ public final class PrepareOnlineCsv {
 		final Map<String, Pair<Double, ScaleMode>> column2Scale = new HashMap<>();
 		
 		column2Scale.put(OVERALL_TIME, new Pair<>(SCALING, CsvProviderScale.ScaleMode.DIV_INT));
+		column2Scale.put(MINIMIZATON_TIME, new Pair<>(SCALING, CsvProviderScale.ScaleMode.DIV_INT));
 		
 		return new CsvProviderScale(column2Scale);
 	}
@@ -162,6 +164,7 @@ public final class PrepareOnlineCsv {
 		final Map<String, CsvProviderAggregator.Aggregation> column2aggregation = new HashMap<>();
 		
 		column2aggregation.put(OVERALL_TIME, Aggregation.AVERAGE);
+		column2aggregation.put(MINIMIZATON_TIME, Aggregation.AVERAGE);
 		column2aggregation.put(OVERALL_ITERATIONS, Aggregation.AVERAGE);
 		column2aggregation.put(STATES_REMOVED_BY_MINIMIZATION, Aggregation.AVERAGE);
 		column2aggregation.put(MINIMIZATON_ATTEMPTS, Aggregation.AVERAGE);
