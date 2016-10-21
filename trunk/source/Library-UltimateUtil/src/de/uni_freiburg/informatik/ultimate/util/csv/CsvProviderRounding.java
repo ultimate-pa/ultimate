@@ -81,7 +81,15 @@ public class CsvProviderRounding<T> implements ICsvProviderTransformer<T> {
 	@SuppressWarnings("unchecked")
 	private void replaceString(final ListIterator<T> rowIt, final T entry) {
 		try {
-			rowIt.set((T) round(new BigDecimal((String) entry)).toString());
+			final String rounded = round(new BigDecimal((String) entry)).toString();
+			final String result;
+			if (mPlaces == 0) {
+				// remove trailing ".0"
+				result = rounded.substring(0, rounded.length() - 2);
+			} else {
+				result = rounded;
+			}
+			rowIt.set((T) result);
 		} catch (final NumberFormatException e) {
 			// no Double string, ignore
 		}
