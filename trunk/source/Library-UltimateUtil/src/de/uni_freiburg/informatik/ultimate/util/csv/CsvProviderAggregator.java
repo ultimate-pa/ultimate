@@ -54,6 +54,10 @@ public class CsvProviderAggregator<T> implements ICsvProviderTransformer<T> {
 		 */
 		AVERAGE,
 		/**
+		 * Sum of numeric columns.
+		 */
+		SUM,
+		/**
 		 * Ignored, i.e., removed from the CSV.
 		 */
 		IGNORE,
@@ -163,6 +167,9 @@ public class CsvProviderAggregator<T> implements ICsvProviderTransformer<T> {
 				case AVERAGE:
 					aggIt.set(getAverage(aggEntry, singleEntry, numberOfAggregationsSoFar));
 					break;
+				case SUM:
+					aggIt.set(getSum(aggEntry, singleEntry, numberOfAggregationsSoFar));
+					break;
 				case IGNORE:
 					assert false;
 					break;
@@ -171,7 +178,7 @@ public class CsvProviderAggregator<T> implements ICsvProviderTransformer<T> {
 			}
 		}
 	}
-	
+
 	private List<T> filter(final List<T> row, final boolean[] useColumn, final int length) {
 		int i = 0;
 		final List<T> result = new ArrayList<>(length);
@@ -193,6 +200,13 @@ public class CsvProviderAggregator<T> implements ICsvProviderTransformer<T> {
 		final double aggEntry = Double.parseDouble(aggEntryRaw.toString());
 		final double singleEntry = Double.parseDouble(singleEntryRaw.toString());
 		final double result = aggEntry + 1.0 / (numberOfSamples + 1) * (singleEntry - aggEntry);
+		return getTypeFromDouble(result, aggEntryRaw);
+	}
+	
+	private T getSum(final T aggEntryRaw, final T singleEntryRaw, final int numberOfSamples) {
+		final double aggEntry = Double.parseDouble(aggEntryRaw.toString());
+		final double singleEntry = Double.parseDouble(singleEntryRaw.toString());
+		final double result = aggEntry + singleEntry;
 		return getTypeFromDouble(result, aggEntryRaw);
 	}
 	
