@@ -65,12 +65,12 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.EqualityAnalysisResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
@@ -228,8 +228,8 @@ public class MapEliminator {
 	}
 
 	private void findIndicesArrayWrite(final ArrayWrite arrayWrite, final TransFormulaLR transformula) {
-		for (final MultiDimensionalStore store : arrayWrite.getStoreList()) {
-			addArrayAccessToRelation(arrayWrite.getOldArray(), store.getIndex(), transformula);
+		for (final Pair<ArrayIndex, Term> pair : arrayWrite.getIndexValuePairs()) {
+			addArrayAccessToRelation(arrayWrite.getOldArray(), pair.getFirst(), transformula);
 		}
 	}
 
@@ -617,13 +617,14 @@ public class MapEliminator {
 		final ArrayWrite arrayWrite = new ArrayWrite(multiDimensionalSelect.getArray());
 		final Set<ArrayIndex> processedIndices = new HashSet<>();
 		final TermVariable auxVar = getAndAddAuxVar(term);
-		for (final MultiDimensionalStore store : arrayWrite.getStoreList()) {
-			final ArrayIndex assignedIndex = store.getIndex();
+		for (final Pair<ArrayIndex, Term> pair : arrayWrite.getIndexValuePairs()) {
+			final ArrayIndex assignedIndex = pair.getFirst();
 			if (processedIndices.contains(assignedIndex)) {
 				continue;
 			}
+			final Term value = pair.getSecond();
 			final Term newTerm = indexEqualityInequalityImpliesValueEquality(index, assignedIndex, processedIndices,
-					auxVar, store.getValue(), invariants, transformula);
+					auxVar, value, invariants, transformula);
 			// If the implication is not trivial (no "or"-term) and onlyTrivialImplicationsArrayWrite is enabled,
 			// don't add the implication to the conjuncts
 			if (!SmtUtils.isFunctionApplication(newTerm, "or") || !mSettings.onlyTrivialImplicationsArrayWrite()) {
@@ -670,12 +671,12 @@ public class MapEliminator {
 		final ArrayTemplate oldTemplate = new ArrayTemplate(globalOldArray, mScript);
 		final ArrayTemplate newTemplate = new ArrayTemplate(globalNewArray, mScript);
 		final Set<ArrayIndex> processedIndices = new HashSet<>();
-		for (final MultiDimensionalStore store : arrayWrite.getStoreList()) {
-			final ArrayIndex assignedIndex = store.getIndex();
+		for (final Pair<ArrayIndex, Term> pair : arrayWrite.getIndexValuePairs()) {
+			final ArrayIndex assignedIndex = pair.getFirst();
 			if (processedIndices.contains(assignedIndex)) {
 				continue;
 			}
-			final Term value = store.getValue();
+			final Term value = pair.getSecond();
 			for (final ArrayIndex globalIndex : mMapsToIndices.getImage(newTemplate)) {
 				final ArrayIndex index = getLocalIndex(globalIndex, transformula, newIsInVar);
 				if (processedIndices.contains(index)) {
