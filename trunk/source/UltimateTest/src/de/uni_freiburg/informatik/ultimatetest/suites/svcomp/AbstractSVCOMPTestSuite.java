@@ -45,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.Buch
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.CodeCheckBenchmarks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker.TraceCheckerBenchmarkType;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateStarter;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
@@ -219,18 +218,18 @@ public abstract class AbstractSVCOMPTestSuite extends UltimateTestSuite {
 						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Sum, Aggregate.Average),
 				new ColumnDefinition(CegarLoopStatisticsDefinitions.OverallTime.toString(), "Trace Abstraction Time",
 						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Sum, Aggregate.Average),
-				new ColumnDefinition(TraceCheckerBenchmarkType.NUMBER_OF_CODEBLOCKS.toString(), null,
+				new ColumnDefinition("TraceCheckerStatistics_NumberOfCodeBlocks", null,
 						ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
-				new ColumnDefinition("Size of predicates FP", null, ConversionContext.BestFitNumber(), Aggregate.Ignore,
-						Aggregate.Average),
-				new ColumnDefinition("SizeOfPredicatesBP", null, ConversionContext.BestFitNumber(), Aggregate.Ignore,
-						Aggregate.Average),
-				new ColumnDefinition("Conjuncts in SSA", null, ConversionContext.BestFitNumber(), Aggregate.Ignore,
-						Aggregate.Average),
-				new ColumnDefinition("Conjuncts in UnsatCore", null, ConversionContext.BestFitNumber(),
+				new ColumnDefinition("TraceCheckerStatistics_SizeOfPredicatesFP", null,
+						ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
+				new ColumnDefinition("TraceCheckerStatistics_SizeOfPredicatesBP", null,
+						ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
+				new ColumnDefinition("TraceCheckerStatistics_Conjuncts in SSA", null, ConversionContext.BestFitNumber(),
 						Aggregate.Ignore, Aggregate.Average),
-				new ColumnDefinition("ICC %", "ICC", ConversionContext.Percent(true, 2), Aggregate.Ignore,
-						Aggregate.Average), };
+				new ColumnDefinition("TraceCheckerStatistics_Conjuncts in UnsatCore", null,
+						ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
+				new ColumnDefinition("InterpolantCoveringCapability", "ICC", ConversionContext.Percent(true, 2),
+						Aggregate.Ignore, Aggregate.Average), };
 
 		final List<ITestSummary> rtr = new ArrayList<>();
 		rtr.add(new SVCOMPTestSummary(getClass()));

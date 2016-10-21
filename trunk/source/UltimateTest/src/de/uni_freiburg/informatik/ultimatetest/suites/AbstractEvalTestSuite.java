@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimatetest.suites;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.benchmark.SizeBenchmark;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiAutomizerModuleDecompositionBenchmark;
@@ -36,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Tr
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.decider.SafetyCheckTestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.reporting.CsvConcatenator;
 import de.uni_freiburg.informatik.ultimate.test.reporting.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
@@ -70,8 +72,7 @@ public abstract class AbstractEvalTestSuite extends AbstractModelCheckerTestSuit
 
 	@Override
 	protected ITestSummary[] constructTestSummaries() {
-		final ArrayList<Class<? extends ICsvProviderProvider<? extends Object>>> benchmarks =
-				new ArrayList<Class<? extends ICsvProviderProvider<? extends Object>>>();
+		final ArrayList<Class<? extends ICsvProviderProvider<? extends Object>>> benchmarks = new ArrayList<>();
 		benchmarks.add(BuchiAutomizerTimingBenchmark.class);
 		benchmarks.add(Benchmark.class);
 		benchmarks.add(TraceAbstractionBenchmarks.class);
@@ -81,10 +82,16 @@ public abstract class AbstractEvalTestSuite extends AbstractModelCheckerTestSuit
 
 		final ColumnDefinition[] columnDef = getColumnDefinitions();
 
-		return new ITestSummary[] { new LatexOverviewSummary(getClass(), benchmarks, columnDef),
-				new LatexDetailedSummary(getClass(), benchmarks, columnDef),
-				new TraceAbstractionTestSummary(getClass()), new CsvSummary(getClass(), benchmarks, columnDef),
-				new HTMLSummary(getClass(), benchmarks, columnDef), new KingOfTheHillSummary(this.getClass()), };
+		final List<ITestSummary> rtr = new ArrayList<>();
+		rtr.add(new LatexOverviewSummary(getClass(), benchmarks, columnDef));
+		rtr.add(new LatexDetailedSummary(getClass(), benchmarks, columnDef));
+		rtr.add(new TraceAbstractionTestSummary(getClass()));
+		rtr.add(new CsvSummary(getClass(), benchmarks, columnDef));
+		rtr.add(new HTMLSummary(getClass(), benchmarks, columnDef));
+		rtr.add(new KingOfTheHillSummary(this.getClass()));
+		benchmarks.stream().forEach(a -> rtr.add(new CsvConcatenator(getClass(), a)));
+
+		return rtr.toArray(new ITestSummary[rtr.size()]);
 	}
 
 	/**
