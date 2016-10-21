@@ -8,95 +8,6 @@ import codecs
 import itertools
 from test.test_math import acc_check
 
-
-mLatexSettingsMappings = {
-'DerefFreeMemtrack-32bit-Z3-Sp-Integer.epf' :'\\sponly',
-'DerefFreeMemtrack-32bit-Z3-IcSp-Integer.epf' :'\\spic',
-'DerefFreeMemtrack-32bit-Z3-SpLv-Integer.epf' :'\\splv',
-'DerefFreeMemtrack-32bit-SMTInterpol-TreeInterpolation-Integer.epf' :'\\smtinterpolip',
-'DerefFreeMemtrack-32bit-Z3-NestedInterpolation-Integer.epf' :'\\zzzip',
-'DerefFreeMemtrack-32bit-Princess-TreeInterpolation-Integer.epf' :'\\princessip',
-'DerefFreeMemtrack-32bit-Z3-FPandBP-Integer.epf' :'FP+BP',
-'DerefFreeMemtrack-32bit-Z3-BP-Integer.epf' :'\\wpiclv',
-'DerefFreeMemtrack-32bit-Z3-IcSpLv-Integer.epf' : '\\spiclv',
-'Reach-32bit-Z3-BP-Bitvector.epf':'\\wpiclv',
-'Reach-32bit-Z3-FPandBP-Bitvector.epf':'FP+BP',
-'Reach-32bit-Z3-NestedInterpolation-Bitvector.epf':'\\zzzip',
-'Reach-32bit-Z3-FP-Bitvector.epf':'\\spiclv',
-'Reach-32bit-Princess-TreeInterpolation.epf':'\\princessip',
-'Reach-32bit-Z3-FP.epf':'\\spiclv',
-'Reach-32bit-SMTInterpol-TreeInterpolation.epf':'\\smtinterpolip',
-'Reach-32bit-Z3-BP.epf':'\\wpiclv',
-'Reach-32bit-Z3-NestedInterpolation.epf':'\\zzzip',
-'Reach-32bit-Z3-IcSp-Bitvector.epf':'\\spic',
-'Reach-32bit-Z3-IcSpLv-Bitvector.epf':'\\spiclv',
-'Reach-32bit-Z3-IcWp-Bitvector.epf':'\\wpic',
-'Reach-32bit-Z3-IcWpLv-Bitvector.epf':'\\wpiclv',
-'Reach-32bit-Z3-NestedInterpolation-Bitvector.epf':'\\zzzip',
-'Reach-32bit-Z3-Sp-Bitvector.epf':'\\sponly',
-'Reach-32bit-Z3-SpLv-Bitvector.epf':'\\splv',
-'Reach-32bit-Z3-Wp-Bitvector.epf':'\\wponly',
-'Reach-32bit-Z3-WpLv-Bitvector.epf':'\\wplv',
-'DerefFreeMemtrack-32bit-Z3-IcWp-Integer.epf':'\\wpic',
-'DerefFreeMemtrack-32bit-Z3-IcWpLv-Integer.epf':'\\wpiclv',
-'DerefFreeMemtrack-32bit-Z3-Wp-Integer.epf':'\\wponly',
-'DerefFreeMemtrack-32bit-Z3-WpLv-Integer.epf':'\\wplv',
-'Reach-32bit-Z3-IcSp.epf':'\\spic',
-'Reach-32bit-Z3-IcSpLv.epf':'\\spiclv',
-'Reach-32bit-Z3-IcWp.epf':'\\wpic',
-'Reach-32bit-Z3-IcWpLv.epf':'\\wpiclv',
-'Reach-32bit-Z3-Sp.epf':'\\sponly',
-'Reach-32bit-Z3-SpLv.epf':'\\splv',
-'Reach-32bit-Z3-Wp.epf':'\\wponly',
-'Reach-32bit-Z3-WpLv.epf':'\\wplv',
-'DerefFreeMemtrack-32bit-Z3-BP-UC-LV-Integer.epf': '\\wpiclv',
-'DerefFreeMemtrack-32bit-Z3-FP-UC-Integer.epf': '\\spic',
-'DerefFreeMemtrack-32bit-Z3-FP-Integer.epf': '\\sponly',
-'DerefFreeMemtrack-32bit-Z3-BP-LV-Integer.epf': '\\wplv',
-'DerefFreeMemtrack-32bit-iZ3-NestedInterpolation-Integer.epf': '\\zzzip',
-'DerefFreeMemtrack-32bit-Z3-FP-UC-LV-Integer.epf': '\\spiclv',
-'DerefFreeMemtrack-32bit-Z3-BP-UC-Integer.epf': '\\wpic',
-'DerefFreeMemtrack-32bit-Z3-FP-LV-Integer.epf': '\\splv',
-'Reach-32bit-Z3-BP-UC-Integer.epf': '\\wpic',
-'Reach-32bit-Z3-FP-LV-Integer.epf': '\\splv',
-'Reach-32bit-Z3-FP-Integer.epf': '\\sponly',
-'Reach-32bit-Princess-TreeInterpolation-Integer.epf': '\\princessip',
-'Reach-32bit-Z3-FP-UC-Integer.epf': '\\spic',
-'Reach-32bit-iZ3-NestedInterpolation-Integer.epf': '\\zzzip',
-'Reach-32bit-SMTInterpol-TreeInterpolation-Integer.epf': '\\smtinterpolip',
-'Reach-32bit-Z3-BP-LV-Integer.epf': '\\wplv',
-'Reach-32bit-Z3-BP-Integer.epf': '\\wponly',
-'Reach-32bit-Z3-FP-UC-LV-Integer.epf': '\\spiclv',
-'Reach-32bit-Z3-BP-UC-LV-Integer.epf': '\\wpiclv'
-}
-
-# Those are the dvips colors of xcolor 
-# mLatexColors = ['Apricot', 'Aquamarine', 'Bittersweet', 'Black', 'Blue', 'BlueGreen', 'BlueViolet',
-#                 'BrickRed', 'Brown', 'BurntOrange', 'CadetBlue', 'CarnationPink', 'Cerulean', 'CornflowerBlue',
-#                 'Cyan', 'Dandelion', 'DarkOrchid', 'Emerald', 'ForestGreen', 'Fuchsia', 'Goldenrod', 'Gray',
-#                 'Green', 'GreenYellow', 'JungleGreen', 'Lavender', 'LimeGreen', 'Magenta', 'Mahogany', 'Maroon',
-#                 'Melon', 'MidnightBlue', 'Mulberry', 'NavyBlue', 'OliveGreen', 'Orange', 'OrangeRed', 'Orchid',
-#                 'Peach', 'Periwinkle', 'PineGreen', 'Plum', 'ProcessBlue', 'Purple', 'RawSienna', 'Red',
-#                 'RedOrange', 'RedViolet', 'Rhodamine', 'RoyalBlue', 'RoyalPurple', 'RubineRed', 'Salmon',
-#                 'SeaGreen', 'Sepia', 'SkyBlue', 'SpringGreen', 'Tan', 'TealBlue', 'Thistle', 'Turquoise',
-#                 'Violet', 'VioletRed', 'White', 'WildStrawberry', 'Yellow', 'YellowGreen', 'YellowOrange' ]
-
-mLatexColors = ['s1', 's2', 's3', 's4', 's5', 's6', 's7', 's8', 's9', 'black', 'OliveGreen']
-
-mLatexPlotMarks = ['star', 'triangle', 'diamond', 'x', '|', '10-pointed-star', 'pentagon', 'o']
-mLatexPlotMarkRepeat = 10
-mLatexPlotLines = ['solid', 'dotted', 'dashed' ]
-
-mUltimateHeader = ['File',
-                   'Settings',
-                   'Toolchain',
-                   'Result',
-                   'Overall time',
-                   'Overall iterations',
-                   'TraceCheckerBenchmark_InterpolantComputationTime',
-                   'TraceCheckerBenchmark_Conjuncts in SSA',
-                   'TraceCheckerBenchmark_Conjuncts in UnsatCore']
-
 def toPercent(row, a, b):
     part = row[a]
     total = row[b]
@@ -126,12 +37,62 @@ def toFloat(row, a):
         return float(value)
     return None 
 
+mLatexSettingsMappings = {
+'svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Simple.epf' : '\\setComp',
+'svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Simple_total.epf' : '\\setCompT',
+'svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf' : '\\setInt',
+'svcomp-Reach-32bit-Automizer_Default+AIv2_INT_total.epf' : '\\setIntT',
+'svcomp-Reach-32bit-Automizer_Default+AIv2_OCT.epf' : '\\setOct',
+'svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_total.epf' : '\\setOctT',
+'svcomp-Reach-32bit-Automizer_Default.epf' : '\\setAuto',
+}
 
-mRowFuns = { 'Time' : lambda r : timeInNanosToSeconds(r, 'Overall time'),
-            'Iter' : lambda r : toInt(r, 'Overall iterations'),
-            'InterpolantTime' : lambda r : timeInNanosToSeconds(r, 'TraceCheckerBenchmark_InterpolantComputationTime'),
-            'SizeReduction':lambda r : toPercent(r, 'TraceCheckerBenchmark_Conjuncts in UnsatCore', 'TraceCheckerBenchmark_Conjuncts in SSA'),
-            'QuantPreds':lambda r : toPercent(r, 'TraceCheckerBenchmark_QuantifiedInterpolants', 'TraceCheckerBenchmark_ConstructedInterpolants'),
+# Those are the dvips colors of xcolor 
+# mLatexColors = ['Apricot', 'Aquamarine', 'Bittersweet', 'Black', 'Blue', 'BlueGreen', 'BlueViolet',
+#                 'BrickRed', 'Brown', 'BurntOrange', 'CadetBlue', 'CarnationPink', 'Cerulean', 'CornflowerBlue',
+#                 'Cyan', 'Dandelion', 'DarkOrchid', 'Emerald', 'ForestGreen', 'Fuchsia', 'Goldenrod', 'Gray',
+#                 'Green', 'GreenYellow', 'JungleGreen', 'Lavender', 'LimeGreen', 'Magenta', 'Mahogany', 'Maroon',
+#                 'Melon', 'MidnightBlue', 'Mulberry', 'NavyBlue', 'OliveGreen', 'Orange', 'OrangeRed', 'Orchid',
+#                 'Peach', 'Periwinkle', 'PineGreen', 'Plum', 'ProcessBlue', 'Purple', 'RawSienna', 'Red',
+#                 'RedOrange', 'RedViolet', 'Rhodamine', 'RoyalBlue', 'RoyalPurple', 'RubineRed', 'Salmon',
+#                 'SeaGreen', 'Sepia', 'SkyBlue', 'SpringGreen', 'Tan', 'TealBlue', 'Thistle', 'Turquoise',
+#                 'Violet', 'VioletRed', 'White', 'WildStrawberry', 'Yellow', 'YellowGreen', 'YellowOrange' ]
+
+mLatexColors = ['s1', 's2', 's3', 's4', 's5', 's6', 's7', 's8', 's9', 'black', 'OliveGreen']
+
+mLatexPlotMarks = ['star', 'triangle', 'diamond', 'x', '|', '10-pointed-star', 'pentagon', 'o']
+mLatexPlotMarkRepeat = 10
+mLatexPlotLines = ['solid', 'dotted', 'dashed' ]
+
+mUltimateHeader = ['Folder',
+                   'File',
+                   'Settings',
+                   'Toolchain',
+                   'Result',
+                   'Category',
+                   'Message',
+                   'Runtime (ns)',
+                   'Allocated memory end (bytes)'
+                   'Overall iterations',
+                   'Abstract Interpretation iterations',
+                   'Abstract Interpretation Time',
+                   'AbstractInterpretationStrong',
+                   'Overall time',
+                   'NumberOfCodeBlocks',
+                   'SizeOfPredicatesFP',
+                   'SizeOfPredicatesBP',
+                   'Conjuncts in SSA',
+                   'Conjuncts in UnsatCore',
+                   'ICC %'
+                   ]
+
+mRowFuns = { 
+#            'Time' : lambda r : timeInNanosToSeconds(r, 'Overall time'),
+            'Runtime' : lambda r : timeInNanosToSeconds(r, 'Runtime (ns)'),
+#            'Iter' : lambda r : toInt(r, 'Overall iterations'),
+#            'InterpolantTime' : lambda r : timeInNanosToSeconds(r, 'TraceCheckerBenchmark_InterpolantComputationTime'),
+#            'SizeReduction':lambda r : toPercent(r, 'TraceCheckerBenchmark_Conjuncts in UnsatCore', 'TraceCheckerBenchmark_Conjuncts in SSA'),
+#            'QuantPreds':lambda r : toPercent(r, 'TraceCheckerBenchmark_QuantifiedInterpolants', 'TraceCheckerBenchmark_ConstructedInterpolants'),
             }
 
 def parseArgs():
@@ -582,20 +543,14 @@ def main():
     # for s in uniqueSettings:
     #    print s, len(filter(lambda x : x['Settings'] == s, rows))
     
-    successResults = ['SAFE', 'UNSAFE', 'CORRECT', 'INCORRECT']
+    successResults = ['SUCCESS']
 
     renameSettings = lambda x : mLatexSettingsMappings[os.path.basename(x)] if os.path.basename(x) in mLatexSettingsMappings else getSuffix('settings/', x)
-    
-    solversOnlySettings = filter(lambda x: not re.match('.*Sp.*|.*Wp.*|.*FP.*|.*BP.*', os.path.basename(x)), uniqueSettings)
-    championsSettings = solversOnlySettings + filter(lambda x: re.match('.*IcSp.*|.*FP-UC.*', os.path.basename(x)) and not re.match('.*Lv.*', os.path.basename(x),re.IGNORECASE), uniqueSettings)
-    looserSettings = filter(lambda x: re.match('.*Sp.*|.*Wp.*|.*FP.*|.*BP.*', os.path.basename(x)) and not re.match('.*UC.*|.*Ic.*|.*LV.*|.*Lv.*', os.path.basename(x)), uniqueSettings)
     
     # # one line of unique settings: total success
     success = applyOnCsvFile(rows, lambda x, y : getResultCountPerSetting(successResults, x, y))
     exclusive = getExclusiveCountPerSetting(rows, successResults)
     allPortfolio = getResultCountPerPortfolio(rows, uniqueSettings, successResults)
-    otherPortfolio = getResultCountPerPortfolio(rows, solversOnlySettings, successResults)
-    championsPortfolio = getResultCountPerPortfolio(rows, championsSettings, successResults)
 
     mixed = getMixedInputs(rows, successResults)
 
@@ -610,10 +565,6 @@ def main():
     print 'Success:          ', remPathD(success)
     print 'Exclusive success:', remPathD(exclusive)
     print 'All Portfolio:        ', allPortfolio
-    print 'Craig Portfolio: ', otherPortfolio
-    print 'Craig Portfolio: ', remPathS(solversOnlySettings)
-    print 'Craig+IT-SP Portfolio: ', championsPortfolio
-    print 'Craig+IT-SP Portfolio: ', remPathS(championsSettings)
     # print 'Mixed:            ', mixed
     print 'Mixed Count:      ', len(mixed)
     
@@ -621,34 +572,27 @@ def main():
     for r in rows:
         add = True
         for o in rows:
-            if o['File'] == r['File'] and not o['Settings'] in looserSettings:
+            if o['File'] == r['File'] :
                 add = add and o['Result'] in successResults
             if not add:
                 break    
         if add:
             rowsEveryoneCouldSolve.append(r)
     
-    ecs = [i for i in uniqueSettings if not i in looserSettings]
+    ecs = [i for i in uniqueSettings ]
     print 'Everyone',remPathS(ecs)
     print 'Everyone could solve (ECS):', len(rowsEveryoneCouldSolve) / len(uniqueSettings)
-    for s in ecs:
-        print '## Setting',  renameSettings(s), '##'
-        printStats(rowsEveryoneCouldSolve, s, 'Overall iterations')
-        printStats(rowsEveryoneCouldSolve, s, 'Overall time')
+    # Use this if you want to print specific settings for the ECS set
+    #for s in ecs:
+        #print '## Setting',  renameSettings(s), '##'
+        #printStats(rowsEveryoneCouldSolve, s, 'Overall iterations')
+        #printStats(rowsEveryoneCouldSolve, s, 'Overall time')
 
     print 
     
     # # gnuplot and stuff 
     successrows = filter(lambda x : x['Result'] in successResults , rows)
     writePlots(successrows, uniqueSettings, output, name)
-            
-    # applyOnCsvFile(rows, printFields)
-    # applyOnCsvFile(rows, lambda x, y : printFields2('haha', x, y))
-#     dict = applyOnCsvFile(rows, getFolders)
-#     for setting, values in dict.items():
-#         print setting
-#         for folder in values:
-#             print '\t' + folder
     
     return
 
