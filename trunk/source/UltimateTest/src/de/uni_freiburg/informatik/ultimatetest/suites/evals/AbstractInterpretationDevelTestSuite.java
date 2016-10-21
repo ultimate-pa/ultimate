@@ -29,6 +29,8 @@ package de.uni_freiburg.informatik.ultimatetest.suites.evals;
 
 import java.util.Collection;
 
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker.TraceCheckerBenchmarkType;
 import de.uni_freiburg.informatik.ultimate.test.DirectoryFileEndingsPair;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
@@ -43,9 +45,8 @@ import de.uni_freiburg.informatik.ultimatetest.summaries.ConversionContext;
 /**
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-@SuppressWarnings("unused")
 public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite {
-	
+
 	private static final String[] C = new String[] { ".i", ".c" };
 	private static final String[] BPL = new String[] { ".bpl" };
 	private static final int DEFAULT_LIMIT = Integer.MAX_VALUE;
@@ -60,7 +61,7 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_total.epf"),
 			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_P1_Debug.epf"),
-//			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug_noPredAbs.epf"),
+			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug_noPredAbs.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug_refineAlways.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT.epf"),
 			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
@@ -72,12 +73,12 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 
 //			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf"),
 //			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_P1.epf"),
-			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
+//			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
 //			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_P1_Debug.epf"),
 //			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT.epf"),
-			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
+//			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
 //			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON.epf"),
-			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON_Debug.epf"),
+//			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON_Debug.epf"),
 //			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP.epf"),
 //			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Debug.epf"),
 //			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Simple.epf"),
@@ -95,7 +96,7 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 //			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default.epf"),
 //			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default_SMTInterpol.epf"),
 //			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf"),
-//			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
+			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
 //			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_total.epf"),
 //			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_total_Debug.epf"),
 //			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_SMTInterpol.epf"),
@@ -104,14 +105,15 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 //			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_total.epf"),
 //			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
 //			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON.epf"),
-			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Simple.epf"),
+//			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Simple.epf"),
+//			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug_noPredAbs.epf"),
 //			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Simple_total.epf"),
 
 //			new Triple<>("AbstractInterpretationC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf"),
 //			new Triple<>("AbstractInterpretationC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
 //			new Triple<>("AbstractInterpretationC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
 //			new Triple<>("AbstractInterpretationC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON_Debug.epf"),
-//			new Triple<>("AbstractInterpretationC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT.epf"),
+//			new Triple<>("AbstractInterpretationC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
 
 
 			//### C Inline
@@ -122,7 +124,26 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 
 	private static final String[] INPUT = new String[] {
 //			"examples/programs/abstractInterpretation/regression",
-			"examples/svcomp/ssh-simplified/s3_srvr_13_false-unreach-call.cil.c",
+//			"examples/svcomp/ssh-simplified/s3_srvr_13_false-unreach-call.cil.c",
+//			"examples/rers2016/Problem10.c",
+			"examples/programs/abstractInterpretation/CountTillBound-Loop-2.bpl",
+//			"examples/programs/toy/tooDifficultLoopInvariant/Luxembourg.bpl",
+
+			"examples/svcomp/loop-lit/mcmillan2006_true-unreach-call_true-termination.c.i",
+//			"examples/svcomp/bitvector-loops/verisec_sendmail__tTflag_arr_one_loop_false-unreach-call.i",
+//			"examples/svcomp/ssh-simplified/s3_clnt_1_true-unreach-call.cil.c",
+//			"examples/programs/abstractInterpretation/regression",
+
+//			"examples/svcomp/loops/n.c11_true-unreach-call.i",
+//			"examples/svcomp/recursive-simple/fibo_10_true-unreach-call.c",
+//			"examples/svcomp/recursive-simple/id2_i5_o5_false-unreach-call.c"
+
+//			"examples/programs/abstractInterpretation/regression/proc-summary-usage.bpl",
+//			"examples/programs/abstractInterpretation/regression/proc-summary-usage-2.bpl",
+//			"examples/programs/abstractInterpretation/regression/recursive-CallABAB_simple_incorrect.bpl",
+//			"examples/programs/abstractInterpretation/regression/recursive-easy-4.bpl",
+//			"examples/programs/abstractInterpretation/regression/recursive-Collatz.bpl",
+//			"examples/programs/abstractInterpretation/regression/proc-bool-ret-value.bpl",
 
 //			"examples/programs/abstractInterpretation/regression/inequalityTest_reals.bpl",
 //			"examples/programs/abstractInterpretation/regression/all/logicimplies-test.bpl",
@@ -130,9 +151,7 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 //			"examples/programs/abstractInterpretation/regression/all/procedure-statesplit-logiciff.bpl",
 //			"examples/programs/abstractInterpretation/regression/all/recursive-easy-3.bpl",
 //			"examples/programs/abstractInterpretation/regression/recursive-CallABAB_count.bpl",
-//			"examples/programs/abstractInterpretation/regression/recursive-CallABAB_simple_incorrect.bpl",
 //			"examples/programs/abstractInterpretation/regression/recursive-CallABAB_count_incorrect.bpl",
-
 
 //			"examples/programs/abstractInterpretation/regression/all/bool-assume.bpl",
 //			"examples/programs/abstractInterpretation/regression/varupdate-multiplication.bpl",
@@ -140,7 +159,7 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 //			"examples/programs/abstractInterpretation/regression/modulo-assume-bug-npe.bpl",
 //			"examples/programs/abstractInterpretation/regression/loop-CountTillBound-2.bpl",
 //			"examples/programs/abstractInterpretation/regression/recursive-wrong-prestate.bpl",
-//			"examples/programs/abstractInterpretation/regression/recursive-easy-4.bpl",
+
 //			"examples/programs/abstractInterpretation/regression/all/recursive-easy-2.bpl",
 //			"examples/programs/abstractInterpretation/regression/all/recursive-easy-1.bpl",
 //			"examples/programs/abstractInterpretation/regression/all/recursive-CallABAB_incorrect.bpl",
@@ -159,49 +178,33 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 
 	@Override
 	protected ColumnDefinition[] getColumnDefinitions() {
-		// @formatter:off
-		return new ColumnDefinition[]{
-			new ColumnDefinition(
-					"Runtime (ns)", "Avg. runtime",
-					ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Sum, Aggregate.Average),
-			new ColumnDefinition(
-					"Allocated memory end (bytes)", "Memory",
-					ConversionContext.Divide(1048576, 2, " MB"), Aggregate.Max, Aggregate.Average),
-			new ColumnDefinition(
-					"Overall iterations", "Iter{-}ations",
-					ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
-			new ColumnDefinition(
-					"Abstract Interpretation iterations", "AI Iter{-}ations",
-					ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
-			new ColumnDefinition(
-					"AbstractInterpretationStrong", "AI Strong",
-					ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
-			new ColumnDefinition(
-					"Abstract Interpretation Time", "AI Avg. Time",
-					ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Sum, Aggregate.Average),
-			new ColumnDefinition(
-					"Overall time", "Trace Abstraction Time",
-					ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Sum, Aggregate.Average),
-			new ColumnDefinition(
-					"NumberOfCodeBlocks", null,
-					ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
-			new ColumnDefinition(
-					"SizeOfPredicatesFP", null,
-					ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
-			new ColumnDefinition(
-					"SizeOfPredicatesBP", null,
-					ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
-			new ColumnDefinition(
-					"Conjuncts in SSA", null,
-					ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
-			new ColumnDefinition(
-					"Conjuncts in UnsatCore", null,
-					ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
-			new ColumnDefinition(
-					"ICC %", "ICC",
-					ConversionContext.Percent(true,2), Aggregate.Ignore, Aggregate.Average),
-		};
-		// @formatter:on
+		return new ColumnDefinition[] {
+				new ColumnDefinition("Runtime (ns)", "Avg. runtime", ConversionContext.Divide(1000000000, 2, " s"),
+						Aggregate.Sum, Aggregate.Average),
+				new ColumnDefinition("Allocated memory end (bytes)", "Memory",
+						ConversionContext.Divide(1048576, 2, " MB"), Aggregate.Max, Aggregate.Average),
+				new ColumnDefinition(CegarLoopStatisticsDefinitions.OverallIterations.toString(), "Iter{-}ations",
+						ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
+				new ColumnDefinition(CegarLoopStatisticsDefinitions.AbstIntIterations.toString(), "AI Iter{-}ations",
+						ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
+				new ColumnDefinition(CegarLoopStatisticsDefinitions.AbstIntStrong.toString(), "AI Strong",
+						ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
+				new ColumnDefinition(CegarLoopStatisticsDefinitions.AbstIntTime.toString(), "AI Avg. Time",
+						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Sum, Aggregate.Average),
+				new ColumnDefinition(CegarLoopStatisticsDefinitions.OverallTime.toString(), "Trace Abstraction Time",
+						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Sum, Aggregate.Average),
+				new ColumnDefinition(TraceCheckerBenchmarkType.NUMBER_OF_CODEBLOCKS.toString(), null,
+						ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
+				new ColumnDefinition("TraceCheckerStatistics_SizeOfPredicatesFP", null,
+						ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
+				new ColumnDefinition("SizeOfPredicatesBP", null, ConversionContext.BestFitNumber(), Aggregate.Ignore,
+						Aggregate.Average),
+				new ColumnDefinition("Conjuncts in SSA", null, ConversionContext.BestFitNumber(), Aggregate.Ignore,
+						Aggregate.Average),
+				new ColumnDefinition("Conjuncts in UnsatCore", null, ConversionContext.BestFitNumber(),
+						Aggregate.Ignore, Aggregate.Average),
+				new ColumnDefinition("ICC %", "ICC", ConversionContext.Percent(true, 2), Aggregate.Ignore,
+						Aggregate.Average), };
 	}
 
 	@Override

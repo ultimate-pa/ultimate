@@ -43,13 +43,16 @@ import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.benchmark.SizeBen
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiAutomizerModuleDecompositionBenchmark;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiAutomizerTimingBenchmark;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.CodeCheckBenchmarks;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker.TraceCheckerBenchmarkType;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateStarter;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.decider.SafetyCheckTestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.reporting.CsvConcatenator;
 import de.uni_freiburg.informatik.ultimate.test.reporting.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
@@ -146,7 +149,7 @@ public abstract class AbstractSVCOMPTestSuite extends UltimateTestSuite {
 
 	private Map<String, Collection<File>> getSetName2InputFiles(final Map<String, File> setName2File,
 			final Collection<File> allInputFiles) {
-		final Map<String, Collection<File>> rtr = new HashMap<String, Collection<File>>();
+		final Map<String, Collection<File>> rtr = new HashMap<>();
 		for (final Entry<String, File> entry : setName2File.entrySet()) {
 			rtr.put(entry.getKey(), getFilesForSetFile(allInputFiles, entry.getValue()));
 		}
@@ -154,7 +157,7 @@ public abstract class AbstractSVCOMPTestSuite extends UltimateTestSuite {
 	}
 
 	private Map<String, File> getName2File(final Collection<File> files) {
-		final Map<String, File> rtr = new HashMap<String, File>();
+		final Map<String, File> rtr = new HashMap<>();
 		for (final File file : files) {
 			final File old = rtr.put(file.getName(), file);
 			if (old != null) {
@@ -193,9 +196,7 @@ public abstract class AbstractSVCOMPTestSuite extends UltimateTestSuite {
 
 	@Override
 	protected ITestSummary[] constructTestSummaries() {
-		//@formatter:off
-		final ArrayList<Class<? extends ICsvProviderProvider<? extends Object>>> benchmarks
-			= new ArrayList<Class<? extends ICsvProviderProvider<? extends Object>>>();
+		final ArrayList<Class<? extends ICsvProviderProvider<? extends Object>>> benchmarks = new ArrayList<>();
 		benchmarks.add(BuchiAutomizerTimingBenchmark.class);
 		benchmarks.add(Benchmark.class);
 		benchmarks.add(TraceAbstractionBenchmarks.class);
@@ -203,58 +204,45 @@ public abstract class AbstractSVCOMPTestSuite extends UltimateTestSuite {
 		benchmarks.add(BuchiAutomizerModuleDecompositionBenchmark.class);
 		benchmarks.add(SizeBenchmark.class);
 
-		final ColumnDefinition[] columnDef =  new ColumnDefinition[]{
-				new ColumnDefinition(
-						"Runtime (ns)", "Avg. runtime",
-						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Sum, Aggregate.Average),
-				new ColumnDefinition(
-						"Allocated memory end (bytes)", "Memory",
+		final ColumnDefinition[] columnDef = new ColumnDefinition[] {
+				new ColumnDefinition("Runtime (ns)", "Avg. runtime", ConversionContext.Divide(1000000000, 2, " s"),
+						Aggregate.Sum, Aggregate.Average),
+				new ColumnDefinition("Allocated memory end (bytes)", "Memory",
 						ConversionContext.Divide(1048576, 2, " MB"), Aggregate.Max, Aggregate.Average),
-				new ColumnDefinition(
-						"Overall iterations", "Iter{-}ations",
+				new ColumnDefinition(CegarLoopStatisticsDefinitions.OverallIterations.toString(), "Iter{-}ations",
 						ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
-				new ColumnDefinition(
-						"Abstract Interpretation iterations", "AI Iter{-}ations",
+				new ColumnDefinition(CegarLoopStatisticsDefinitions.AbstIntIterations.toString(), "AI Iter{-}ations",
 						ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
-				new ColumnDefinition(
-						"Abstract Interpretation Time", "AI Avg. Time",
+				new ColumnDefinition(CegarLoopStatisticsDefinitions.AbstIntStrong.toString(), "AI Strong",
+						ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
+				new ColumnDefinition(CegarLoopStatisticsDefinitions.AbstIntTime.toString(), "AI Avg. Time",
 						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Sum, Aggregate.Average),
-				new ColumnDefinition(
-						"AbstractInterpretationStrong", "AI Strong",
-						ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
-				new ColumnDefinition(
-						"Overall time", "Trace Abstraction Time",
+				new ColumnDefinition(CegarLoopStatisticsDefinitions.OverallTime.toString(), "Trace Abstraction Time",
 						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Sum, Aggregate.Average),
-				new ColumnDefinition(
-						"NumberOfCodeBlocks", null,
+				new ColumnDefinition(TraceCheckerBenchmarkType.NUMBER_OF_CODEBLOCKS.toString(), null,
 						ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
-				new ColumnDefinition(
-						"SizeOfPredicatesFP", null,
-						ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
-				new ColumnDefinition(
-						"SizeOfPredicatesBP", null,
-						ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
-				new ColumnDefinition(
-						"Conjuncts in SSA", null,
-						ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
-				new ColumnDefinition(
-						"Conjuncts in UnsatCore", null,
-						ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
-				new ColumnDefinition(
-						"ICC %", "ICC",
-						ConversionContext.Percent(true,2), Aggregate.Ignore, Aggregate.Average),
-			};
+				new ColumnDefinition("Size of predicates FP", null, ConversionContext.BestFitNumber(), Aggregate.Ignore,
+						Aggregate.Average),
+				new ColumnDefinition("SizeOfPredicatesBP", null, ConversionContext.BestFitNumber(), Aggregate.Ignore,
+						Aggregate.Average),
+				new ColumnDefinition("Conjuncts in SSA", null, ConversionContext.BestFitNumber(), Aggregate.Ignore,
+						Aggregate.Average),
+				new ColumnDefinition("Conjuncts in UnsatCore", null, ConversionContext.BestFitNumber(),
+						Aggregate.Ignore, Aggregate.Average),
+				new ColumnDefinition("ICC %", "ICC", ConversionContext.Percent(true, 2), Aggregate.Ignore,
+						Aggregate.Average), };
 
-		return new ITestSummary[] {
-				new SVCOMPTestSummary(getClass()),
-				new TraceAbstractionTestSummary(getClass()),
-				new LatexOverviewSummary(getClass(), benchmarks, columnDef),
-				new LatexDetailedSummary(getClass(), benchmarks, columnDef),
-				new CsvSummary(getClass(), benchmarks, columnDef),
-				new HTMLSummary(getClass(), benchmarks, columnDef),
-				new KingOfTheHillSummary(this.getClass()),
-		};
-		//@formatter:on
+		final List<ITestSummary> rtr = new ArrayList<>();
+		rtr.add(new SVCOMPTestSummary(getClass()));
+		rtr.add(new LatexOverviewSummary(getClass(), benchmarks, columnDef));
+		rtr.add(new LatexDetailedSummary(getClass(), benchmarks, columnDef));
+		rtr.add(new TraceAbstractionTestSummary(getClass()));
+		rtr.add(new CsvSummary(getClass(), benchmarks, columnDef));
+		rtr.add(new HTMLSummary(getClass(), benchmarks, columnDef));
+		rtr.add(new KingOfTheHillSummary(this.getClass()));
+		benchmarks.stream().forEach(a -> rtr.add(new CsvConcatenator(getClass(), a)));
+
+		return rtr.toArray(new ITestSummary[rtr.size()]);
 	}
 
 	/**
@@ -307,7 +295,7 @@ public abstract class AbstractSVCOMPTestSuite extends UltimateTestSuite {
 			e.printStackTrace();
 		}
 
-		final List<File> currentFiles = new ArrayList<File>();
+		final List<File> currentFiles = new ArrayList<>();
 		for (final String regex : regexes) {
 			currentFiles.addAll(TestUtil.filterFiles(allFiles, regex));
 		}
