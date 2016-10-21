@@ -200,9 +200,10 @@ public class CsvProviderPartition<T> {
 					rowTitle = entry.toString();
 				} else {
 					bin2group.put(bin, group);
-					final String lower = bin == 0 ? "-\\infty" : Integer.toString(thresholds[bin - 1]);
-					final String upper = bin == thresholds.length ? "\\infty" : Integer.toString(thresholds[bin]);
-					rowTitle = "$n \\in [" + lower + "; " + upper + "]$";
+					final String lower = bin == 0 ? "(-\\infty" : "[" + Integer.toString(thresholds[bin - 1]);
+					final String upper =
+							bin == thresholds.length ? "\\infty)" : Integer.toString(thresholds[bin]) + "]";
+					rowTitle = "$n \\in " + lower + "; " + upper + "$";
 				}
 			} else {
 				final List<String> rowHeaders = group.getRowHeaders();
