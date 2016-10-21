@@ -41,7 +41,7 @@ public final class PrepareOfflineCsv {
 	private static final String OUTPUT_AGGREGATED_FILE_NAME = "AutomizerOfflineAggregated";
 	private static final String COUNT = "Count";
 	private static final String AGGREGATION = "Aggregation";
-	private static final int[] THRESHOLDS = new int[] { 100, 500, 2500 };
+	private static final int[] THRESHOLDS = new int[] { 200, 500, 1500, 5000, 15000 };
 	private static final boolean VERBOSE = false;
 	
 	private static final String TRANSITIONS_RETURN_OUTPUT = "TRANSITIONS_RETURN_OUTPUT";
@@ -85,6 +85,7 @@ public final class PrepareOfflineCsv {
 		transformers.add(getOperationFilter());
 		transformers.add(getInterestingColumnFilter());
 		transformers.add(getNonNullFilter());
+		transformers.add(getNondetTransformer());
 		
 		// full table
 		final ICsvProvider<String> fullTable = transformer.transform(input);
@@ -139,6 +140,10 @@ public final class PrepareOfflineCsv {
 		return new CsvProviderRowFilter<>(new CsvProviderRowFilter.AllEntriesNonNullFilter<>());
 	}
 	
+	private static ICsvProviderTransformer<String> getNondetTransformer() {
+		return new NondeterminismToBooleanTransformer();
+	}
+	
 	private static CsvProviderAggregator<String> getStatesAggregation() {
 		final Map<String, CsvProviderAggregator.Aggregation> column2aggregation = new HashMap<>();
 		
@@ -147,7 +152,7 @@ public final class PrepareOfflineCsv {
 		column2aggregation.put(ALPHABET_SIZE_INTERNAL, Aggregation.AVERAGE);
 		column2aggregation.put(ALPHABET_SIZE_CALL, Aggregation.AVERAGE);
 		column2aggregation.put(ALPHABET_SIZE_RETURN, Aggregation.AVERAGE);
-		column2aggregation.put(BUCHI_NONDETERMINISTIC_STATES, Aggregation.AVERAGE);
+		column2aggregation.put(BUCHI_NONDETERMINISTIC_STATES, Aggregation.SUM);
 		column2aggregation.put(BUCHI_TRANSITIONS, Aggregation.AVERAGE);
 		column2aggregation.put(NUMBER_OF_VARIABLES, Aggregation.AVERAGE);
 		column2aggregation.put(NUMBER_OF_CLAUSES, Aggregation.AVERAGE);
@@ -188,6 +193,32 @@ public final class PrepareOfflineCsv {
 		} catch (final IOException e) {
 			System.err.println("Writing file " + fileName + " failed.");
 			e.printStackTrace();
+		}
+	}
+	
+	/**
+	 * This transformer replaces non-zero values in a specific column by the value {@code 1} (one), i.e., making this
+	 * column of type Boolean.
+	 * 
+	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+	 */
+	private static class NondeterminismToBooleanTransformer implements ICsvProviderTransformer<String> {
+		public NondeterminismToBooleanTransformer() {
+			// nothing to do
+		}
+		
+		@Override
+		public ICsvProvider<String> transform(final ICsvProvider<String> csv) {
+			final int columnIndex = csv.getColumnTitles().indexOf(BUCHI_NONDETERMINISTIC_STATES);
+			final int rows = csv.getRowHeaders().size();
+			for (int i = 0; i < rows; ++i) {
+				final List<String> row = csv.getRow(i);
+				final String entry = row.get(columnIndex);
+				if (!"0".equals(entry)) {
+					row.set(columnIndex, "1");
+				}
+			}
+			return csv;
 		}
 	}
 }
