@@ -39,24 +39,24 @@ import de.uni_freiburg.informatik.ultimate.test.decider.SafetyCheckTestResultDec
  *
  */
 public class SVCOMP16TestSuite extends AbstractSVCOMPTestSuite {
-
+	
 	@Override
 	protected ITestResultDecider getTestResultDecider(final UltimateRunDefinition urd) {
 		return new SafetyCheckTestResultDecider(urd, false);
 	}
-
+	
 	@Override
 	protected long getTimeout() {
 		// Timeout for each test case in milliseconds
 		return 90 * 1000;
 	}
-
+	
 	@Override
 	protected int getFilesPerCategory() {
 		// -1 or value larger than 0
 		return -1;
 	}
-
+	
 	@Override
 	protected List<SVCOMPTestDefinition> getTestDefinitions() {
 		final List<SVCOMPTestDefinition> rtr = new ArrayList<>();
@@ -82,7 +82,7 @@ public class SVCOMP16TestSuite extends AbstractSVCOMPTestSuite {
 		//Termination-crafted.set
 		//Termination-ext.set
 		//@formatter:on
-
+		
 		rtr.addAll(getForAll("ControlFlow"));
 		rtr.addAll(getForAll("Simple"));
 		// rtr.addAll(getForAll("ECA", 10));
@@ -92,18 +92,18 @@ public class SVCOMP16TestSuite extends AbstractSVCOMPTestSuite {
 		// rtr.addAll(getForAll("ArraysReach"));
 		// rtr.addAll(getForAll("ProductLines", 10));
 		// rtr.addAll(getForAll("Sequentialized", 10));
-
+		
 		return rtr;
 	}
-
+	
 	private List<SVCOMPTestDefinition> getForAll(final String set, final int limit) {
 		return getForAll(set, getTimeout(), limit);
 	}
-
+	
 	private List<SVCOMPTestDefinition> getForAll(final String set) {
 		return getForAll(set, getTimeout(), getFilesPerCategory());
 	}
-
+	
 	private List<SVCOMPTestDefinition> getForAll(final String set, final long timeout, final int limit) {
 		final List<SVCOMPTestDefinition> rtr = new ArrayList<>();
 		// rtr.add(getTestDefinitionFromExamples(set, "AbstractInterpretationC.xml",
@@ -114,37 +114,45 @@ public class SVCOMP16TestSuite extends AbstractSVCOMPTestSuite {
 		// "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON.epf", timeout, limit));
 		// rtr.add(getTestDefinitionFromExamples(set, "AbstractInterpretationC.xml",
 		// "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP.epf", timeout, limit));
-
+		
 		// rtr.add(getTestDefinitionFromExamples(set, "AbstractInterpretationC.xml",
 		// "ai/svcomp-Reach-64bit-Automizer_Default+AIv2_INT.epf", timeout, limit));
 		// rtr.add(getTestDefinitionFromExamples(set, "AbstractInterpretationC.xml",
 		// "ai/svcomp-Reach-64bit-Automizer_Default+AIv2_OCT.epf", timeout, limit));
 		// rtr.add(getTestDefinitionFromExamples(set, "AbstractInterpretationC.xml",
 		// "ai/svcomp-Reach-64bit-Automizer_Default+AIv2_CON.epf", timeout, limit));
-
+		
 		rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml", "ai/svcomp-Reach-32bit-Automizer_Default.epf",
+				timeout, limit));
+		rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml", "ai/svcomp-Reach-32bit-Automizer_Default_NoE.epf",
 				timeout, limit));
 		rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml",
 				"ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf", timeout, limit));
 		rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml",
-				"ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT.epf", timeout, limit));
+				"ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_total_NoE.epf", timeout, limit));
+		// rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml",
+		// "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_total.epf", timeout, limit));
 		rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml",
 				"ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Simple.epf", timeout, limit));
 		rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml",
-				"ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_total.epf", timeout, limit));
-		rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml",
-				"ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_total.epf", timeout, limit));
-		rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml",
-				"ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Simple_total.epf", timeout, limit));
-		rtr.add(getTestDefinitionFromExamples(set, "AbstractInterpretationC.xml",
-				"ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf", timeout, limit));
-		rtr.add(getTestDefinitionFromExamples(set, "AbstractInterpretationC.xml",
-				"ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT.epf", timeout, limit));
+				"ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Simple_total_NoE.epf", timeout, limit));
+		// rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml",
+		// "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Simple_total.epf", timeout, limit));
+		
+		// rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml",
+		// "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT.epf", timeout, limit));
+		// rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml",
+		// "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_total.epf", timeout, limit));
+		// rtr.add(getTestDefinitionFromExamples(set, "AbstractInterpretationC.xml",
+		// "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf", timeout, limit));
+		// rtr.add(getTestDefinitionFromExamples(set, "AbstractInterpretationC.xml",
+		// "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT.epf", timeout, limit));
+		
 		// rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml",
 		// "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP.epf", timeout, limit));
 		// rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml",
 		// "AI/SVCOMP-REACH-32BIT-AUTOMIZER_DEFAULT+AIV2_CON.EPf", timeout, limit));
-
+		
 		// rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml", "ai/svcomp-Reach-64bit-Automizer_Default.epf",
 		// timeout, limit));
 		// rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml",
@@ -153,7 +161,7 @@ public class SVCOMP16TestSuite extends AbstractSVCOMPTestSuite {
 		// "ai/svcomp-Reach-64bit-Automizer_Default+AIv2_OCT.epf", timeout, limit));
 		// rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml",
 		// "ai/svcomp-Reach-64bit-Automizer_Default+AIv2_CON.epf", timeout, limit));
-
+		
 		// rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml",
 		// "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_SMTInterpol.epf", timeout, limit));
 		// rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml",
