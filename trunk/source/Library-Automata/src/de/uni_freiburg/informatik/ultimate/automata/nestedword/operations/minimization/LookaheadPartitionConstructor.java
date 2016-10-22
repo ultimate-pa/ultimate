@@ -78,7 +78,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class LookaheadPartitionConstructor<LETTER, STATE> {
 	// fast enable/disable for deterministic lookahead (<0 to deactivate)
 	// TODO activate this again after making benchmarks
-	private static final int LOOKAHEAD = 0;
+	private static final int LOOKAHEAD = Integer.MAX_VALUE;
 	
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
