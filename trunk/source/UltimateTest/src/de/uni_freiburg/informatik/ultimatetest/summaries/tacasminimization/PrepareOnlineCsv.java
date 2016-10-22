@@ -36,7 +36,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public final class PrepareOnlineCsv {
 	private static final String STANDALONE = "No minimization";
 	private static final String MINIMIZATION = "Minimization";
-	private static final String MINIMIZATION_ONLY = "Minimization exclusive";
 	private static final String COMBINATOR = "NWA_COMBINATOR_MULTI_DEFAULT.epf";
 	private static final String NONE = "NONE.epf";
 	private static final String SETTINGS_PREFIX =
@@ -57,6 +56,9 @@ public final class PrepareOnlineCsv {
 	private static final String OUTPUT_AGGREGATED_FILE_NAME = "AutomizerOnlineAggregated";
 	private static final String COUNT = "Count";
 	private static final String AGGREGATION = "Aggregation";
+	private static final String SET = "Set";
+	private static final String SET_BOTH = "both";
+	private static final String SET_EXCLUSIVE = "exclusive";
 	private static final Double SCALING = Double.valueOf(1_000_000.0);
 	private static final boolean VERBOSE = false;
 	
@@ -90,7 +92,7 @@ public final class PrepareOnlineCsv {
 		
 		// add row header for combination only data
 		final ICsvProvider<String> combinationOnly = partitionBySettingCombination.getCsvs().iterator().next();
-		renameRowHeaders(combinationOnly, MINIMIZATION_ONLY);
+		renameRowHeaders(combinationOnly, MINIMIZATION);
 		
 		final List<ICsvProvider<String>> csvs = new ArrayList<>(3);
 		for (final ICsvProvider<String> csv : partitionBySettingBoth.getCsvs()) {
@@ -108,17 +110,18 @@ public final class PrepareOnlineCsv {
 			final ICsvProvider<String> addedColumnCsv =
 					addRelativeColumn(roundedCsv, roundedCsv.getColumnTitles().indexOf(OVERALL_ITERATIONS),
 							roundedCsv.getColumnTitles().indexOf(MINIMIZATON_ATTEMPTS), MINIMIZATON_ATTEMPTS_RELATIVE);
-			renameRowHeaders(addedColumnCsv, null);
+			final ICsvProvider<String> addedColumn2Csv = addSetColumn(addedColumnCsv, i);
+			renameRowHeaders(addedColumn2Csv, null);
 			
-			writeCsvToFile(addedColumnCsv, OUTPUT_AGGREGATED_FILE_NAME + i, true);
+			writeCsvToFile(addedColumn2Csv, OUTPUT_AGGREGATED_FILE_NAME + i, true);
 			
-			aggregatedCsvs.add(addedColumnCsv);
+			aggregatedCsvs.add(addedColumn2Csv);
 			
 			++i;
 		}
 		writeCsvToFile(new CsvProviderPartition<>(aggregatedCsvs).toCsvProvider(), OUTPUT_AGGREGATED_FILE_NAME, true);
 	}
-	
+
 	private static CsvProviderPartition<String> getExamplePartition(final ICsvProvider<String> csv) {
 		final CsvProviderPartition<String> partitionByExample;
 		final String statesColumn = FILE;
@@ -204,6 +207,30 @@ public final class PrepareOnlineCsv {
 		return result;
 	}
 	
+	/**
+	 * NOTE: The CSV is modified.
+	 */
+	private static ICsvProvider<String> addSetColumn(final ICsvProvider<String> csv, final int rowIndex) {
+		csv.getColumnTitles().add(SET);
+		
+		final int rows = csv.getRowHeaders().size();
+		for (int i = 0; i < rows; ++i) {
+			final List<String> row = csv.getRow(i);
+			switch (rowIndex) {
+				case 0:
+				case 1:
+					row.add(SET_BOTH);
+					break;
+				case 2:
+					row.add(SET_EXCLUSIVE);
+					break;
+				default:
+					throw new IllegalArgumentException("We only handle a CSV with three rows.");
+			}
+		}
+		return csv;
+	}
+	
 	private static void renameRowHeaders(final ICsvProvider<String> csv, final String replaceString) {
 		final List<String> rowHeaders = csv.getRowHeaders();
 		for (int i = 0; i < rowHeaders.size(); ++i) {
@@ -218,7 +245,7 @@ public final class PrepareOnlineCsv {
 					case COMBINATOR:
 						newRowHeader = MINIMIZATION;
 						break;
-					case MINIMIZATION_ONLY:
+					case MINIMIZATION:
 						continue;
 					default:
 						throw new IllegalArgumentException("Unknown setting: " + shortened);
