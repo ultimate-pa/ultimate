@@ -22,6 +22,7 @@ import de.uni_freiburg.informatik.ultimate.util.csv.CsvProviderRowFilter;
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvProviderScale;
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvProviderScale.ScaleMode;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
+import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderTransformer;
 import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -47,6 +48,8 @@ public final class PrepareOnlineCsv {
 	private static final String MINIMIZATON_TIME = "AutomataMinimizationTime";
 	private static final String OVERALL_TIME = "OverallTime";
 	private static final String SETTING = "Settings";
+	private static final String RESULT = "Result";
+	private static final String TIMEOUT = "TIMEOUT";
 	private static final String FILE = "File";
 	
 	private static final double HUNDRED = 100.0;
@@ -80,18 +83,19 @@ public final class PrepareOnlineCsv {
 		final ICsvProvider<String> bothFinished = getBothFinishedFilter(partitionByExample);
 		
 		// filter examples for which the combinator finished
-		final ICsvProvider<String> combinationFinished = getCombinationFinishedFilter(partitionByExampleCopy);
+		final ICsvProvider<String> onlyCombinationFinished = getOnlyCombinationFinishedFilter(partitionByExampleCopy);
 		
 		// partition table by setting
 		final CsvProviderPartition<String> partitionBySettingBoth = getSettingsPartition(bothFinished);
-		final CsvProviderPartition<String> partitionBySettingCombination = getSettingsPartition(combinationFinished);
+		final CsvProviderPartition<String> partitionBySettingOnlyCombination =
+				getSettingsPartition(onlyCombinationFinished);
 		
 		// aggregate data settings runs
 		aggregate(partitionBySettingBoth);
-		aggregate(partitionBySettingCombination);
+		aggregate(partitionBySettingOnlyCombination);
 		
 		// add row header for combination only data
-		final ICsvProvider<String> combinationOnly = partitionBySettingCombination.getCsvs().iterator().next();
+		final ICsvProvider<String> combinationOnly = partitionBySettingOnlyCombination.getCsvs().iterator().next();
 		renameRowHeaders(combinationOnly, MINIMIZATION);
 		
 		final List<ICsvProvider<String>> csvs = new ArrayList<>(3);
@@ -121,7 +125,7 @@ public final class PrepareOnlineCsv {
 		}
 		writeCsvToFile(new CsvProviderPartition<>(aggregatedCsvs).toCsvProvider(), OUTPUT_AGGREGATED_FILE_NAME, true);
 	}
-
+	
 	private static CsvProviderPartition<String> getExamplePartition(final ICsvProvider<String> csv) {
 		final CsvProviderPartition<String> partitionByExample;
 		final String statesColumn = FILE;
@@ -132,6 +136,14 @@ public final class PrepareOnlineCsv {
 	private static ICsvProvider<String> getBothFinishedFilter(final CsvProviderPartition<String> partition) {
 		partition.filterGroups(new TimeOutFilter());
 		partition.filterGroups(new OnlyOneFilter());
+		return partition.toCsvProvider();
+	}
+	
+	private static ICsvProvider<String> getOnlyCombinationFinishedFilter(final CsvProviderPartition<String> partition) {
+		partition.filterGroups(new NoneBetterOrEqualFilter());
+		
+		partition.transform(new RemoveNone());
+		
 		return partition.toCsvProvider();
 	}
 	
@@ -327,6 +339,63 @@ public final class PrepareOnlineCsv {
 		@Override
 		public boolean test(final ICsvProvider<String> csv) {
 			return csv.getRowHeaders().size() == 2;
+		}
+	}
+	
+	/**
+	 * Checks whether the CSV has one row or only NONE has a timeout.
+	 * 
+	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+	 */
+	private static class NoneBetterOrEqualFilter implements Predicate<ICsvProvider<String>> {
+		public NoneBetterOrEqualFilter() {
+			// nothing to do
+		}
+		
+		@Override
+		public boolean test(final ICsvProvider<String> csv) {
+			final int settingsColumn = csv.getColumnTitles().indexOf(SETTING);
+			final int resultColumn = csv.getColumnTitles().indexOf(RESULT);
+			if (csv.getRowHeaders().size() == 1) {
+				if (!csv.getRow(0).get(settingsColumn).equals(SETTINGS_PREFIX + COMBINATOR)) {
+					if (!csv.getRow(0).get(resultColumn).equals(TIMEOUT)) {
+						System.err.println("NONE was better!");
+					}
+					return false;
+				}
+				return !csv.getRow(0).get(resultColumn).equals(TIMEOUT);
+			}
+			assert csv.getRowHeaders().size() == 2;
+			assert csv.getRow(0).get(settingsColumn).equals(SETTINGS_PREFIX + NONE) : "The NONE row should come first.";
+			assert csv.getRow(1).get(settingsColumn)
+					.equals(SETTINGS_PREFIX + COMBINATOR) : "The COMBINATOR row should come second.";
+			
+			if (!csv.getRow(0).get(resultColumn).equals(TIMEOUT)) {
+				return false;
+			}
+			if (!csv.getRow(1).get(resultColumn).equals(TIMEOUT)) {
+				return true;
+			}
+			return false;
+		}
+	}
+	
+	private static class RemoveNone implements ICsvProviderTransformer<String> {
+		public RemoveNone() {
+			// nothing to do
+		}
+
+		@Override
+		public ICsvProvider<String> transform(final ICsvProvider<String> csv) {
+			final ICsvProvider<String> result;
+			if (csv.getRowHeaders().size() == 2) {
+				result = new SimpleCsvProvider<>(csv.getColumnTitles());
+				result.addRow(csv.getRow(1));
+			} else {
+				assert (csv.getRowHeaders().size() == 1);
+				result = csv;
+			}
+			return result;
 		}
 	}
 }
