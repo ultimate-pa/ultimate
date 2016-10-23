@@ -107,7 +107,7 @@ public final class RemoveDeadEnds<LETTER, STATE> extends UnaryNwaOperation<LETTE
 	
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + " Reduced from " + mOperand.sizeInformation() + " to "
+		return "Finished " + operationName() + ". Reduced from " + mOperand.size() + " states to "
 				+ mResult.sizeInformation();
 	}
 	
