@@ -133,9 +133,9 @@ public class GetRandomNwaTv extends GeneralOperation<String, String> {
 	 * @param numberOfInternalLetters
 	 *            number of letters
 	 * @param transitionDensityPercent
-	 *            (internal) transition density (per mille)
+	 *            (internal) transition density (in percent)
 	 * @param acceptanceDensityPercent
-	 *            acceptance density (per mille)
+	 *            acceptance density (in percent)
 	 */
 	public GetRandomNwaTv(final AutomataLibraryServices services, final int numberOfStates,
 			final int numberOfInternalLetters, final int transitionDensityPercent, final int acceptanceDensityPercent) {
@@ -240,16 +240,16 @@ public class GetRandomNwaTv extends GeneralOperation<String, String> {
 	 * @param numberOfReturnLetters
 	 *            number of return letters
 	 * @param internalTransitionDensityPercent
-	 *            internal transition density (per mille)
+	 *            internal transition density (in percent)
 	 * @param callTransitionDensityPercent
-	 *            call transition density (per mille)
+	 *            call transition density (in percent)
 	 * @param returnTransitionDensityPercent
-	 *            return transition density (per mille)
+	 *            return transition density (in percent)
 	 * @param hierarchicalPredecessorDensityPercent
 	 *            hierarchical predecessor density for return transitions (per
 	 *            mille)
 	 * @param acceptanceDensityPercent
-	 *            acceptance density (per mille)
+	 *            acceptance density (in percent)
 	 */
 	public GetRandomNwaTv(final AutomataLibraryServices services, final int numberOfStates,
 			final int numberOfInternalLetters, final int numberOfCallLetters, final int numberOfReturnLetters,
