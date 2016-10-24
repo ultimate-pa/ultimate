@@ -27,7 +27,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal;
 
 import java.util.Collection;
+import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.ControlFlowGraph.Location;
 
@@ -56,7 +58,7 @@ public interface IInvariantPatternProcessor<IPT> {
 	 * 
 	 * @param round the round that is entered
 	 */
-	public void startRound(final int round);
+	public void startRound(final int round, boolean useLiveVariables, final Set<IProgramVar> liveVariables);
 
 	/**
 	 * Returns an invariant pattern for the given location.

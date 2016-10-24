@@ -30,11 +30,13 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.ControlFlowGraph.Location;
@@ -86,7 +88,7 @@ public final class CFGInvariantsGenerator {
 	 */
 	public <IPT> Map<Location, IPredicate> generateInvariantsFromCFG(final ControlFlowGraph cfg,
 			final IPredicate precondition, final IPredicate postcondition,
-			final IInvariantPatternProcessorFactory<IPT> invPatternProcFactory) {
+			final IInvariantPatternProcessorFactory<IPT> invPatternProcFactory, boolean useLiveVariables, final Set<IProgramVar> liveVariables) {
 		final IInvariantPatternProcessor<IPT> processor = invPatternProcFactory.produce(cfg, precondition,
 				postcondition);
 
@@ -104,7 +106,7 @@ public final class CFGInvariantsGenerator {
 			}
 
 			// Start round
-			processor.startRound(round);
+			processor.startRound(round, useLiveVariables, liveVariables);
 			logService.info("[CFGInvariants] Round " + round + " started");
 
 			// Build pattern map
