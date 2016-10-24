@@ -216,14 +216,27 @@ def getMixedInputs(rows, results):
     pure = shared.union(*exclusive)  
     return set.union(*matchingInputs.values()).difference(pure)
 
-def getResultCountPerPortfolio(rows, portfolio, results):
+def getResultPerPortfolioAny(rows, portfolio, results):
     successCounts = applyOnCsvFile(rows, lambda x, y : getResultInputPerSetting(results, x, y))
     goodResults = set()
     for key, value in successCounts.iteritems():
         if(key in portfolio):
             goodResults = goodResults.union(value)
         
-    return len(goodResults)
+    return goodResults
+
+def getResultPerPortfolioAll(rows, results):
+    rowsEveryoneCouldSolve = []
+    for r in rows:
+        add = True
+        for o in rows:
+            if o['File'] == r['File'] :
+                add = add and o['Result'] in results
+            if not add:
+                break    
+        if add:
+            rowsEveryoneCouldSolve.append(r)
+    return rowsEveryoneCouldSolve
 
 def getCrashedInputs(rows, uniqueSettings):
     acc = {}
@@ -517,13 +530,13 @@ def getStats(rows, title):
         iterMed = 'N/A'
     return avg, min, max, iterMed
 
-def printStats(rowsEveryoneCouldSolve, setting, column):
+def printStats(type, rowsEveryoneCouldSolve, setting, column):
     rowsEveryoneCouldSolve = filter(lambda x : x['Settings'] == setting, rowsEveryoneCouldSolve)
     iterAvg, iterMin, iterMax, iterMed = getStats(rowsEveryoneCouldSolve, column)
-    print 'ECS', column, 'Avg:', iterAvg
-    print 'ECS', column, 'Min:', iterMin
-    print 'ECS', column, 'Max:', iterMax
-    print 'ECS', column, 'Med:', iterMed
+    print type, column, 'Avg:', iterAvg
+    print type, column, 'Min:', iterMin
+    print type, column, 'Max:', iterMax
+    print type, column, 'Med:', iterMed
 
 def main():
     file, output, name = getArgs()
@@ -547,13 +560,19 @@ def main():
     #    print s, len(filter(lambda x : x['Settings'] == s, rows))
     
     successResults = ['SUCCESS']
+    timeoutResults = ['UNKNOWN']
+    failResults = ['FAIL']
 
     renameSettings = lambda x : mLatexSettingsMappings[os.path.basename(x)] if os.path.basename(x) in mLatexSettingsMappings else getSuffix('settings/', x)
     
     # # one line of unique settings: total success
     success = applyOnCsvFile(rows, lambda x, y : getResultCountPerSetting(successResults, x, y))
+    timeout = applyOnCsvFile(rows, lambda x, y : getResultCountPerSetting(timeoutResults, x, y))
+    fail = applyOnCsvFile(rows, lambda x, y : getResultCountPerSetting(failResults, x, y))
     exclusive = getExclusiveCountPerSetting(rows, successResults)
-    allPortfolio = getResultCountPerPortfolio(rows, uniqueSettings, successResults)
+    allPortfolio = getResultPerPortfolioAny(rows, uniqueSettings, successResults)
+    allTOPortfolio = getResultPerPortfolioAll(rows,  timeoutResults)
+    allFailPortfolio = getResultPerPortfolioAll(rows, failResults)
 
     mixed = getMixedInputs(rows, successResults)
 
@@ -563,38 +582,36 @@ def main():
 
     print 'Settings:         ', remPathS(uniqueSettings)
     print 'Total inputs:     ', len(uniqueFiles)
-    # print 'Crashed inputs #: ', len(crashed)
-    # print 'Crashed inputs:   ', crashed
+    print 'Crashed inputs #: ', len(crashed)
+    print 'Crashed inputs:   ', crashed
     print 'Success:          ', remPathD(success)
+    print 'Timeout:          ', remPathD(timeout)
+    print 'Error:             ', remPathD(fail)
     print 'Exclusive success:', remPathD(exclusive)
-    print 'All Portfolio:        ', allPortfolio
+    print 'All Portfolio:        ', len(allPortfolio)
+    print 'All Timeout:        ', len(allTOPortfolio) / len(uniqueSettings)
+    print 'All Error:        ', len(allFailPortfolio) / len(uniqueSettings)
     # print 'Mixed:            ', mixed
     print 'Mixed Count:      ', len(mixed)
     
-    rowsEveryoneCouldSolve = []
-    for r in rows:
-        add = True
-        for o in rows:
-            if o['File'] == r['File'] :
-                add = add and o['Result'] in successResults
-            if not add:
-                break    
-        if add:
-            rowsEveryoneCouldSolve.append(r)
+    rowsEveryoneCouldSolve = getResultPerPortfolioAll(rows,successResults)
     
+    successrows = filter(lambda x : x['Result'] in successResults , rows)
     ecs = [i for i in uniqueSettings ]
+    
     print 'Everyone',remPathS(ecs)
     print 'Everyone could solve (ECS):', len(rowsEveryoneCouldSolve) / len(uniqueSettings)
     # Use this if you want to print specific settings for the ECS set
-    #for s in ecs:
-        #print '## Setting',  renameSettings(s), '##'
-        #printStats(rowsEveryoneCouldSolve, s, 'Overall iterations')
+    for s in ecs:
+        print '## Setting',  renameSettings(s), '##'
+        printStats('ECS',rowsEveryoneCouldSolve, s, 'AbstIntIterations')
+        printStats('ECS',rowsEveryoneCouldSolve, s, 'AbstIntStrong')
+        printStats('ALL',successrows, s, 'AbstIntIterations')
+        printStats('ALL',successrows, s, 'AbstIntStrong')
         #printStats(rowsEveryoneCouldSolve, s, 'Overall time')
-
     print 
     
     # # gnuplot and stuff 
-    successrows = filter(lambda x : x['Result'] in successResults , rows)
     writePlots(successrows, uniqueSettings, output, name)
     
     return
