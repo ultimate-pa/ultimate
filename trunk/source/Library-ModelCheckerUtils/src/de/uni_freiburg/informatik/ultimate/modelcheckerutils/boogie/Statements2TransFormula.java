@@ -66,6 +66,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2T
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.MultiTermResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.SingleTermResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -198,11 +199,8 @@ public class Statements2TransFormula {
 			}
 		}
 		
-		for (final BoogieConst boogieConst : mConstOnlyIdentifierTranslator.getConsts()) {
-			if (!boogieConst.belongsToSmtTheory()) {
-				mTransFormulaBuilder.addProgramConst(boogieConst);
-			}
-		}
+		TransFormulaUtils.addConstantsIfInFormula(mTransFormulaBuilder, formula, 
+				mConstOnlyIdentifierTranslator.getNonTheoryConsts());
 		mTransFormulaBuilder.setFormula(formula);
 		mTransFormulaBuilder.setInfeasibility(infeasibility);
 		mTransFormulaBuilder.addAuxVarsButRenameToFreshCopies(auxVars, mMgdScript);

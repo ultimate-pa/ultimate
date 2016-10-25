@@ -872,8 +872,8 @@ public class TransFormulaUtils {
 	 * Add all elements of progConsts to tfb that occur in formula, ignore the
 	 * those that do not occur in the formula.
 	 */
-	public static void addConstantsIfInFormula(final TransFormulaBuilder tfb, final Term formula,
-			final Set<IProgramConst> progConsts) {
+	public static <T extends IProgramConst> void addConstantsIfInFormula(final TransFormulaBuilder tfb, final Term formula,
+			final Set<T> progConsts) {
 		final Set<ApplicationTerm> constsInFormula = new ConstantFinder().findConstants(formula);
 		for (final IProgramConst progConst : progConsts) {
 			if (constsInFormula.contains(progConst.getDefaultConstant())) {

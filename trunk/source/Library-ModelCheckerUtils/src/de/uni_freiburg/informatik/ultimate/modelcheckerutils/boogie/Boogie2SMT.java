@@ -187,7 +187,7 @@ public class Boogie2SMT {
 
 	public class ConstOnlyIdentifierTranslator implements IdentifierTranslator {
 		
-		private final Set<BoogieConst> mConsts = new HashSet<>();
+		private final Set<BoogieConst> mNonTheoryConsts = new HashSet<>();
 
 		public ConstOnlyIdentifierTranslator() {
 		}
@@ -199,15 +199,14 @@ public class Boogie2SMT {
 				throw new AssertionError();
 			}
 			final BoogieConst bc = mBoogie2SmtSymbolTable.getBoogieConst(id);
-			mConsts.add(bc);
+			if (!bc.belongsToSmtTheory()) {
+				mNonTheoryConsts.add(bc);
+			}
 			return bc.getDefaultConstant();
 		}
 
-		/**
-		 * @return the consts
-		 */
-		public Set<BoogieConst> getConsts() {
-			return mConsts;
+		public Set<BoogieConst> getNonTheoryConsts() {
+			return mNonTheoryConsts;
 		}
 		
 	}
