@@ -1,0 +1,199 @@
+syntax = "proto3";
+package de.uni_freiburg.informatik.ultimate.graphvr;
+
+option java_package = "de.uni_freiburg.informatik.ultimate.graphvr";
+option java_outer_classname = "TraceAbstractionProtos";
+
+message ToolchainInfo {
+	// ToDo: implement
+}
+
+message TAPreferences {
+	bool mInterprocedural = 1;
+	int32 mMaxIterations = 2;
+	int32 mWatchIteration = 3;
+	Artifact mArtifact = 4;
+	InterpolationTechnique mInterpolation = 5;
+	InterpolantAutomaton mInterpolantAutomaton = 6;
+	bool mDumpAutomata = 7;
+	Format mAutomataFormat = 8;
+	string mDumpPath = 9;
+	InterpolantAutomatonEnhancement mDeterminiation = 10;
+	Minimization mMinimize = 11;
+	bool mHoare = 12;
+	Concurrency mConcurrency = 13;
+	HoareTripleChecks mHoareTripleChecks = 14;
+	//IPreferenceProvider mPrefs = 15;
+	HoareAnnotationPositions mHoareAnnotationPositions = 16;
+
+	enum InterpolationTechnique {
+		Craig_NestedInterpolation = 0;
+		Craig_TreeInterpolation = 1;
+		ForwardPredicates = 2;
+		BackwardPredicates = 3;
+		FPandBP = 4;
+		PathInvariants = 5;
+	}
+
+	enum Minimization {
+		NONE = 0;
+		MINIMIZE_SEVPA = 1;
+		SHRINK_NWA = 2;
+		DFA_HOPCROFT_ARRAYS = 3;
+		DFA_HOPCROFT_LISTS = 4;
+		NWA_MAX_SAT = 5;
+		NWA_MAX_SAT2 = 6;
+		NWA_COMBINATOR_PATTERN = 7;
+		NWA_COMBINATOR_EVERY_KTH = 8;
+		RAQ_DIRECT_SIMULATION = 9;
+		RAQ_DIRECT_SIMULATION_B = 10;
+		NWA_OVERAPPROXIMATION = 11;
+		NWA_COMBINATOR_MULTI_DEFAULT = 12;
+		NWA_COMBINATOR_MULTI_SIMULATION = 13;
+	}
+
+	enum Artifact {
+		ABSTRACTION = 0;
+		INTERPOLANT_AUTOMATON = 1;
+		NEG_INTERPOLANT_AUTOMATON = 2;
+		RCFG = 3;
+	}
+
+	enum InterpolantAutomatonEnhancement {
+		NONE = 0;
+		BESTAPPROXIMATION_DEPRECATED = 1;
+		SELFLOOP = 2;
+		EAGER = 3;
+		EAGER_CONSERVATIVE = 4;
+		NO_SECOND_CHANCE = 5;
+		PREDICATE_ABSTRACTION = 6;
+		PREDICATE_ABSTRACTION_CONSERVATIVE = 7;
+		PREDICATE_ABSTRACTION_CANNIBALIZE = 8;
+	}
+
+	enum HoareTripleChecks {
+		MONOLITHIC = 0;
+		INCREMENTAL = 1;
+	}
+
+	enum Concurrency {
+		FINITE_AUTOMATA = 0;
+		 PETRI_NET = 1;
+	}
+
+	enum Format {
+		ATS = 0;
+		ATS_NUMERATE = 1;
+		ATS_QUOTED = 2;
+		BA = 3;
+		GFF = 4;
+		HOA = 5;
+	}
+
+	enum InterpolantAutomaton {
+		CANONICAL = 0;
+		TOTALINTERPOLATION = 1;
+		SINGLETRACE = 2;
+		TWOTRACK = 3;
+		TOTALINTERPOLATION2 = 4;
+	}
+
+	enum HoareAnnotationPositions {
+		All = 0;
+		LoopsAndPotentialCycles = 1;
+	}
+
+  //message PhoneNumber {
+  //  string number = 1;
+  //  PhoneType type = 2 [default = HOME];
+  //}
+
+  //repeated PhoneNumber phone = 4;
+}
+
+enum Result {
+	SAFE = 0;
+	UNSAFE = 1;
+	TIMEOUT = 2;
+	UNKNOWN = 3;
+}
+
+
+message NestedWordAutomaton {
+	Alphabet internal = 1;
+	Alphabet call = 2;
+	Alphabet return = 3;
+	Predicate emptyStack = 4;
+	StateSet initial = 5;
+	StateSet final = 6;
+	transition internalIn = 7;
+	transition internalOut = 8;
+	transition callIn = 9;
+	transition callOut = 10;
+	transition returnIn = 11;
+	transition returnOut = 12;
+
+	message transition {
+		// number of codeblock in alphabet
+		map<int32 , map2> relation = 1;
+
+		message map2 {
+			map<int32, int32> m = 1;
+		}
+	}
+}
+
+message IterationInfo {
+	NestedRun run = 1;
+	int32 iteration = 2;
+
+	message NestedRun {
+		repeated CodeBlock nestedWord = 1;
+		repeated Predicate stateSequence = 2;
+	}
+}
+
+message Alphabet {
+	repeated CodeBlock letter = 1;
+}
+
+message StateSet {
+	repeated Predicate state = 1;
+}
+
+message CodeBlock {
+
+}
+
+message Predicate {
+
+}
+
+
+// Notes:
+/*
+Data Needed:
+
+toolchain:
+??
+
+klar:
+TAPreferences (Insbesondere die Interaktiv-Einstellungen)
+
+initial abstraction, interpolant automata:
+INestedWordAutomaton
+NestedWordAutomaton<CodeBlock, IPredicate>
+
+Counterexample anzeigen:
+IRun<CodeBlock, IPredicate>
+
+forbiddenStates (StartStates und Goalstates auch möglich falls sinnvoll?)
+Set<IPredicate>
+
+Result
+AbstractCegarLoop.Result
+
+
+other CEGAR Loop iteration info:
+int mIteration
+*/
