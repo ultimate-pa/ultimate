@@ -68,9 +68,10 @@ public class EqNodeFinder extends NonRecursive {
 		}
 		@Override
 		public void walk(NonRecursive walker, ApplicationTerm term) {
-			if (term.getFunction().getName() == "select" 
-					|| term.getFunction().getName() == "store") {
-				mResultSet.add(term.getParameters());
+			if (term.getFunction().getName() == "select") {
+				mResultSet.add(new SelectArguments(term.getParameters()[0], term.getParameters()[1]));
+			} else if (term.getFunction().getName() == "store") {
+				mResultSet.add(new StoreArguments(term.getParameters()[0], term.getParameters()[1], term.getParameters()[2]));
 			}
 			for (final Term t : term.getParameters()) {
 				walker.enqueueWalker(new ArrayIndexFindWalker(t));
@@ -94,18 +95,41 @@ public class EqNodeFinder extends NonRecursive {
 		super();
 	}
 
-	private Set<Term[]> mResultSet;
+	private Set<SelectOrStoreArguments> mResultSet;
 	private Set<Term> mVisited;
 	
-	public Set<Term[]> findEqNode(Term term) {
+	public Set<SelectOrStoreArguments> findEqNode(Term term) {
 		if (term == null) {
 			throw new NullPointerException();
 		}
 		mVisited = new HashSet<>();
-		mResultSet = new HashSet<Term[]>();
+		mResultSet = new HashSet<SelectOrStoreArguments>();
 		run(new ArrayIndexFindWalker(term));
 		mVisited = null;
 
 		return mResultSet;
+	}
+	
+	static class SelectOrStoreArguments {
+		Term function;
+		Term arg;
+		SelectOrStoreArguments(Term function, Term arg) {
+			this.function = function;
+			this.arg = arg;
+		}
+	}
+
+	static class SelectArguments extends SelectOrStoreArguments {
+		SelectArguments(Term function, Term arg) {
+			super(function, arg);
+		}
+	}
+	
+	static class StoreArguments extends SelectOrStoreArguments{
+		Term arg2;
+		StoreArguments(Term function, Term arg, Term arg2) {
+			super(function, arg);
+			this.arg2 = arg2;
+		}
 	}
 }
