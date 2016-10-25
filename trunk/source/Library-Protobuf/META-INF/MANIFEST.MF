@@ -1,0 +1,8 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Library-Protobuf
+Bundle-SymbolicName: com.google.protobuf
+Bundle-Version: 3.0.0
+Bundle-Vendor: Google
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Export-Package: com.google.protobuf
