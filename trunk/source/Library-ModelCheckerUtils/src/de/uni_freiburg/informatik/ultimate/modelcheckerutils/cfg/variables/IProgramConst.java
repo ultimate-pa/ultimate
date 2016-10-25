@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables;
 
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+
 public interface IProgramConst {
 	
 	String getIdentifier();
@@ -34,6 +36,6 @@ public interface IProgramConst {
 		return getIdentifier();
 	};
 	
-
+	public ApplicationTerm getDefaultConstant();
 
 }

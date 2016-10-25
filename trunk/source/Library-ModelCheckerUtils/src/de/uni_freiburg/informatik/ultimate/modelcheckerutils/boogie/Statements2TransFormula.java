@@ -140,7 +140,7 @@ public class Statements2TransFormula {
 		
 		mOverapproximations = new HashMap<>();
 		mCurrentProcedure = procId;
-		mTransFormulaBuilder = new TransFormulaBuilder(null, null, true, null, false);
+		mTransFormulaBuilder = new TransFormulaBuilder(null, null, false, null, true, null, false);
 		mAuxVars = new HashSet<>();
 		mAssumes = mScript.term("true");
 		mConstOnlyIdentifierTranslator = mBoogie2SMT.new ConstOnlyIdentifierTranslator();
@@ -198,6 +198,11 @@ public class Statements2TransFormula {
 			}
 		}
 		
+		for (final BoogieConst boogieConst : mConstOnlyIdentifierTranslator.getConsts()) {
+			if (!boogieConst.belongsToSmtTheory()) {
+				mTransFormulaBuilder.addProgramConst(boogieConst);
+			}
+		}
 		mTransFormulaBuilder.setFormula(formula);
 		mTransFormulaBuilder.setInfeasibility(infeasibility);
 		mTransFormulaBuilder.addAuxVarsButRenameToFreshCopies(auxVars, mMgdScript);

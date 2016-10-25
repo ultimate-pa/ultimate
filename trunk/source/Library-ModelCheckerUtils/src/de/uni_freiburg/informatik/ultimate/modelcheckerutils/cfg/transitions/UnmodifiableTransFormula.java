@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ConstantFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
@@ -61,7 +62,6 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 	private final Set<TermVariable> mBranchEncoders;
 	private final Infeasibility mInfeasibility;
 	private final Term mClosedFormula;
-	private final Set<ApplicationTerm> mConstants;
 
 	/**
 	 * Was the solver able to prove infeasiblity of a TransFormula. UNPROVEABLE
@@ -75,12 +75,14 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 	/**
 	 * This constructor is package-private use {@link TransFormulaBuilder}
 	 * to construct TransFormulas.
+	 * @param nonTheoryConsts 
 	 */
 	UnmodifiableTransFormula(final Term formula,
-			final Map<IProgramVar, TermVariable> inVars, final Map<IProgramVar, TermVariable> outVars,
+			final Map<IProgramVar, TermVariable> inVars, final Map<IProgramVar, TermVariable> outVars, 
+			final Set<IProgramConst> nonTheoryConsts,
 			final Set<TermVariable> auxVars, final Set<TermVariable> branchEncoders,
 			final Infeasibility infeasibility, final ManagedScript script) {
-		super(inVars, outVars, auxVars);
+		super(inVars, outVars, auxVars, nonTheoryConsts);
 		mFormula = formula;
 		mBranchEncoders = branchEncoders;
 		mInfeasibility = infeasibility;
@@ -99,13 +101,33 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 		// TODO: The following line is a workaround, in the future the set of
 		// constants will be part of the input and we use findConstants only
 		// in the assertion
-		mConstants = (new ConstantFinder()).findConstants(mFormula);
+		assert doConstantConsistencyCheck() : "consts inconsistent";
 		// assert isSupersetOfOccurringConstants(mConstants, mFormula) :
 		// "forgotten constant";
 
 		// if (!eachInVarOccursAsOutVar()) {
 		// System.out.println("Fixietest failed");
 		// }
+	}
+	
+	private boolean doConstantConsistencyCheck() {
+		boolean consistent = true;
+		final Set<ApplicationTerm> constantsInFormula = (new ConstantFinder()).findConstants(mFormula);
+		final Set<ApplicationTerm> nonTheoryConstantTerms = new HashSet<>();
+		for (final IProgramConst programConsts : getNonTheoryConsts()) {
+			consistent &= !programConsts.getDefaultConstant().getFunction().isIntern();
+			assert consistent : "is theory symbol";
+			nonTheoryConstantTerms.add(programConsts.getDefaultConstant());
+			consistent &= constantsInFormula.contains(programConsts.getDefaultConstant()); 
+			assert consistent : "not in formula";
+		}
+		for (final ApplicationTerm constInFomula : constantsInFormula) {
+			if (!constInFomula.getFunction().isIntern()) {
+				consistent &= nonTheoryConstantTerms.contains(constInFomula); 
+				assert consistent : "not in const set";
+			}
+		}
+		return consistent;
 	}
 
 	/**
@@ -299,10 +321,6 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 
 	public Term getClosedFormula() {
 		return mClosedFormula;
-	}
-
-	public Set<ApplicationTerm> getConstants() {
-		return Collections.unmodifiableSet(mConstants);
 	}
 
 	/**

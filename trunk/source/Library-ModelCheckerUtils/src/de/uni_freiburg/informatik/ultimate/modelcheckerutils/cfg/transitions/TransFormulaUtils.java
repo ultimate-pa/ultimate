@@ -39,6 +39,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -51,8 +52,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSy
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.LocalBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ConstantFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.DagSizePrinter;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.MonolithicImplicationChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
@@ -90,7 +93,7 @@ public class TransFormulaUtils {
 		final Set<TermVariable> auxVars = new HashSet<TermVariable>();
 		Term formula = mgdScript.getScript().term("true");
 		
-		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, false, null, false);
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, false, null, false, null, false);
 
 		final Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
 		for (int i = transFormula.size() - 1; i >= 0; i--) {
@@ -155,6 +158,7 @@ public class TransFormulaUtils {
 			}
 			final Term originalFormula = transFormula.get(i).getFormula();
 			final Term updatedFormula = (new SubstitutionWithLocalSimplification(mgdScript, substitutionMapping)).transform(originalFormula);
+			TransFormulaUtils.addConstantsIfInFormula(tfb, updatedFormula, transFormula.get(i).getNonTheoryConsts());
 			formula = Util.and(script, formula, updatedFormula);
 		}
 
@@ -247,9 +251,9 @@ public class TransFormulaUtils {
 		final Term[] renamedFormulas = new Term[transFormulas.length];
 		final TransFormulaBuilder tfb;
 		if (useBranchEncoders) {
-			tfb = new TransFormulaBuilder(null, null, false, Arrays.asList(branchIndicators), false);
+			tfb = new TransFormulaBuilder(null, null, false, null, false, Arrays.asList(branchIndicators), false);
 		} else {
-			tfb = new TransFormulaBuilder(null, null, true, null, false);
+			tfb = new TransFormulaBuilder(null, null, false, null, true, null, false);
 		}
 
 		final Map<IProgramVar, Sort> assignedInSomeBranch = new HashMap<IProgramVar, Sort>();
@@ -283,6 +287,9 @@ public class TransFormulaUtils {
 				// auxilliary step, add all invars. Some will be overwritten by
 				// outvars
 				tfb.addOutVar(bv, tfb.getInVar(bv));
+			}
+			for (final IProgramConst progConst : tf.getNonTheoryConsts()) {
+				tfb.addProgramConst(progConst);
 			}
 		}
 
@@ -807,7 +814,6 @@ public class TransFormulaUtils {
 	
 	
 	private static UnmodifiableTransFormula computeGuard(final UnmodifiableTransFormula tf, final ManagedScript script) {
-		final TransFormulaBuilder tfb = new TransFormulaBuilder(tf.getInVars(), tf.getInVars(), true, null, false);
 		final Set<TermVariable> auxVars = new HashSet<>(tf.getAuxVars());
 		for (final IProgramVar bv : tf.getAssignedVars()) {
 			final TermVariable outVar = tf.getOutVars().get(bv);
@@ -820,6 +826,9 @@ public class TransFormulaUtils {
 		}
 		// yes! outVars of result are indeed the inVars of input
 
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(tf.getInVars(), tf.getInVars(),
+				tf.getNonTheoryConsts().isEmpty(), tf.getNonTheoryConsts().isEmpty() ? null : tf.getNonTheoryConsts(),
+				true, null, false);
 		tfb.setFormula(tf.getFormula());
 		tfb.setInfeasibility(tf.isInfeasible());
 		tfb.addAuxVarsButRenameToFreshCopies(auxVars, script);
@@ -843,6 +852,7 @@ public class TransFormulaUtils {
 		formula = SmtUtils.not(maScript.getScript(), formula);
 		
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(tf.getInVars(), tf.getOutVars(),
+				tf.getNonTheoryConsts().isEmpty(), tf.getNonTheoryConsts().isEmpty() ? null : tf.getNonTheoryConsts(),
 				false, tf.getBranchEncoders(), true);
 		tfb.setFormula(formula);
 		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
@@ -856,6 +866,20 @@ public class TransFormulaUtils {
 		final UnmodifiableTransFormula negGuard = negate(guard, maScript, services, logger, xnfConversionTechnique, simplificationTechnique);
 		final UnmodifiableTransFormula markhor = parallelComposition(logger, services, tf.hashCode(), maScript, null, false, xnfConversionTechnique, tf, negGuard);
 		return markhor;
+	}
+	
+	/**
+	 * Add all elements of progConsts to tfb that occur in formula, ignore the
+	 * those that do not occur in the formula.
+	 */
+	public static void addConstantsIfInFormula(final TransFormulaBuilder tfb, final Term formula,
+			final Set<IProgramConst> progConsts) {
+		final Set<ApplicationTerm> constsInFormula = new ConstantFinder().findConstants(formula);
+		for (final IProgramConst progConst : progConsts) {
+			if (constsInFormula.contains(progConst.getDefaultConstant())) {
+				tfb.addProgramConst(progConst);
+			}
+		}
 	}
 	
 }

@@ -34,10 +34,13 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ConstantFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -53,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 public class TransFormulaBuilder {
 	private final Map<IProgramVar, TermVariable> mInVars;
 	private final Map<IProgramVar, TermVariable> mOutVars;
+	private final Set<IProgramConst> mNonTheoryConsts;
 	private final Set<TermVariable> mAuxVars;
 	private final Set<TermVariable> mBranchEncoders;
 	private Infeasibility mInfeasibility = null;
@@ -71,6 +75,8 @@ public class TransFormulaBuilder {
 	 */
 	public TransFormulaBuilder(final Map<IProgramVar, TermVariable> inVars, 
 			final Map<IProgramVar, TermVariable> outVars,
+			final boolean emptyNonTheoryConsts,
+			final Set<IProgramConst> nonTheoryConsts,
 			final boolean emptyBranchEncoders, final Collection<TermVariable> branchEncoders,
 			final boolean emptyAuxVars) {
 		super();
@@ -83,6 +89,15 @@ public class TransFormulaBuilder {
 			mOutVars = new HashMap<>();
 		} else {
 			mOutVars = new HashMap<>(outVars);
+		}
+		if (emptyNonTheoryConsts) {
+			mNonTheoryConsts = Collections.emptySet();
+		} else {
+			if (nonTheoryConsts == null) {
+				mNonTheoryConsts = new HashSet<>();
+			} else {
+				mNonTheoryConsts = new HashSet<>(nonTheoryConsts);
+			}
 		}
 		if (emptyAuxVars) {
 			mAuxVars = Collections.emptySet();
@@ -230,6 +245,14 @@ public class TransFormulaBuilder {
 			mOutVars.clear();
 		}
 	}
+	
+	public boolean addProgramConst(final IProgramConst progConst) {
+		if (mConstructionFinished) {
+			throw new IllegalStateException("Construction finished, TransFormula must not be modified.");
+		} else {
+			return mNonTheoryConsts.add(progConst);
+		}
+	}
 
 	public void setInfeasibility(final Infeasibility infeasibility) {
 		if (mConstructionFinished) {
@@ -264,7 +287,7 @@ public class TransFormulaBuilder {
 		}
 		mConstructionFinished = true;
 		UnmodifiableTransFormula.removeSuperfluousVars(mFormula, mInVars, mOutVars, mAuxVars);
-		return new UnmodifiableTransFormula(mFormula, mInVars, mOutVars, mAuxVars, mBranchEncoders, mInfeasibility, script);
+		return new UnmodifiableTransFormula(mFormula, mInVars, mOutVars, mNonTheoryConsts, mAuxVars, mBranchEncoders, mInfeasibility, script);
 	}
 	
 	
@@ -272,7 +295,7 @@ public class TransFormulaBuilder {
 	 * Construct TransFormula with "true" formula and no variables.
 	 */
 	public static UnmodifiableTransFormula getTrivialTransFormula(final ManagedScript script) {
-		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, true, null, true);
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, true, null, true, null, true);
 		tfb.setFormula(script.getScript().term("true"));
 		tfb.setInfeasibility(Infeasibility.UNPROVEABLE);
 		return tfb.finishConstruction(script);
@@ -289,7 +312,11 @@ public class TransFormulaBuilder {
 	 * </ul>
 	 */
 	public static UnmodifiableTransFormula constructTransFormulaFromPredicate(final IPredicate pred, final ManagedScript script) {
-		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, true, null, true);
+		final Set<ApplicationTerm> consts = new ConstantFinder().findConstants(pred.getFormula());
+		if (!consts.isEmpty()) {
+			throw new UnsupportedOperationException("constants not yet supported");
+		}
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, true, null, true, null, true);
 		final Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
 		for (final IProgramVar bv : pred.getVars()) {
 			final TermVariable freshTv = script.constructFreshTermVariable(bv.getGloballyUniqueId(), bv.getTermVariable().getSort());
@@ -339,7 +366,8 @@ public class TransFormulaBuilder {
 		} else {
 			branchEncoders = Collections.emptySet();
 		}
-		final TransFormulaBuilder tfb = new TransFormulaBuilder(tf.getInVars(), tf.getOutVars(), 
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(tf.getInVars(), tf.getOutVars(),
+				tf.getNonTheoryConsts().isEmpty(), tf.getNonTheoryConsts().isEmpty() ? null : tf.getNonTheoryConsts(),
 				branchEncoders.isEmpty(), branchEncoders.isEmpty() ? null : branchEncoders, false);
 		final Set<TermVariable> auxVars = new HashSet<>(tf.getAuxVars());
 		for (final IProgramVar pv : inVarsToRemove) {

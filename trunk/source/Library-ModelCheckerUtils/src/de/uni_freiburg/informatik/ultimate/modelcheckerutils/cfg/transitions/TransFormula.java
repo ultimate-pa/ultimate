@@ -35,6 +35,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 /**
@@ -72,13 +73,15 @@ public abstract class TransFormula {
 	private final Map<IProgramVar, TermVariable> mInVars;
 	private final Map<IProgramVar, TermVariable> mOutVars;
 	private final Set<TermVariable> mAuxVars;
+	private final Set<IProgramConst> mNonTheoryConsts;
 
 	public TransFormula(final Map<IProgramVar, TermVariable> inVars, final Map<IProgramVar, TermVariable> outVars,
-			final Set<TermVariable> auxVars) {
+			final Set<TermVariable> auxVars, final Set<IProgramConst> nonTheoryConsts) {
 		super();
 		mInVars = inVars;
 		mOutVars = outVars;
 		mAuxVars = auxVars;
+		mNonTheoryConsts = nonTheoryConsts;
 	}
 
 	public abstract Set<IProgramVar> getAssignedVars();
@@ -108,6 +111,10 @@ public abstract class TransFormula {
 
 	public Map<IProgramVar, TermVariable> getOutVars() {
 		return Collections.unmodifiableMap(mOutVars);
+	}
+	
+	public Set<IProgramConst> getNonTheoryConsts() {
+		return Collections.unmodifiableSet(mNonTheoryConsts);
 	}
 
 	public Set<TermVariable> getAuxVars() {

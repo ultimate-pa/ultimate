@@ -121,7 +121,8 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 
 		final ArraySplitter as = new ArraySplitter(mScript.getScript(), moldArrayToPointerToNewArray, marrayToPartitions, tf.getInVars(), tf.getOutVars());
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(
-				as.getUpdatedInVars(), as.getUpdatedOutVars(), 
+				as.getUpdatedInVars(), as.getUpdatedOutVars(),
+				false, tf.getNonTheoryConsts(),
 				false, tf.getBranchEncoders(), false);
 		final Term newFormula = as.transform(tf.getFormula());
 		tfb.setFormula(newFormula);

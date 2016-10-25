@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -132,7 +133,8 @@ public class TransFormulaLR implements Serializable {
 		newTf.addAuxVars(auxVars);
 		
 		// Add constant variables as in- and outVars
-		for (final ApplicationTerm constVar : oldTf.getConstants()) {
+		for (final IProgramConst progConst : oldTf.getNonTheoryConsts()) {
+			final ApplicationTerm constVar = progConst.getDefaultConstant();
 			final ReplacementVar repVar =
 					replacementVarFactory.getOrConstuctReplacementVar(constVar);
 			newTf.addInVar(repVar, constVar);
