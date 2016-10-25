@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarU
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
+import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -66,7 +67,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.EqualityAnalysisResult;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.PrenexNormalForm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -325,13 +329,13 @@ public class MapEliminator {
 			final EqualityAnalysisResult equalityAnalysisBefore, final EqualityAnalysisResult equalityAnalysisAfter) {
 		assert mTransFormulasToLocalIndices.containsKey(transformula) : "This transformula wasn't preprocessed";
 		final TransFormulaLR newTF = new TransFormulaLR(transformula);
-		final Term originalTerm = newTF.getFormula();
+		final Term term = getQuantifierFreeTerm(newTF.getFormula());
 		final HashRelation<MapTemplate, ArrayIndex> localIndices = getLocalIndices(newTF,
 				mTransFormulasToLocalIndices.get(transformula));
-		final IndexAnalyzer indexAnalyzer = new IndexAnalyzer(originalTerm, computeDoubletons(localIndices),
-				mSymbolTable, newTF, equalityAnalysisBefore, equalityAnalysisAfter, mLogger, mReplacementVarFactory);
+		final IndexAnalyzer indexAnalyzer = new IndexAnalyzer(term, computeDoubletons(localIndices), mSymbolTable,
+				newTF, equalityAnalysisBefore, equalityAnalysisAfter, mLogger, mReplacementVarFactory);
 		final EqualityAnalysisResult invariants = indexAnalyzer.getResult();
-		final Term storeFreeTerm = replaceStoreTerms(originalTerm, newTF, invariants);
+		final Term storeFreeTerm = replaceStoreTerms(term, newTF, invariants);
 		assert !SmtUtils.containsFunctionApplication(storeFreeTerm, "store") : "The formula contains still store-terms";
 		final List<Term> conjuncts = new ArrayList<>();
 		conjuncts.addAll(Arrays.asList(SmtUtils.getConjuncts(storeFreeTerm)));
@@ -348,6 +352,24 @@ public class MapEliminator {
 		assert !SmtUtils.containsUninterpretedFunctioApplication(mapFreeTerm) : "The formula contains still UFs";
 		setFormulaAndSimplify(newTF, mapFreeTerm);
 		return newTF;
+	}
+
+	/**
+	 * Returns an overapproximation of {@code term} without quantifiers. The quantified variables are added to the
+	 * aux-var-set. So forall-terms implicitly overapproximated with exists-terms. Only this term is processed by the
+	 * map-elimination.
+	 */
+	private Term getQuantifierFreeTerm(final Term term) {
+		final Term nnf = new Nnf(mManagedScript, mServices, QuantifierHandling.KEEP).transform(term);
+		final Term pnf = new PrenexNormalForm(mManagedScript).transform(nnf);
+		Term newTerm = pnf;
+		while (newTerm instanceof QuantifiedFormula) {
+			final QuantifiedFormula quantifiedTerm = (QuantifiedFormula) newTerm;
+			mAuxVars.addAll(Arrays.asList(quantifiedTerm.getVariables()));
+			newTerm = quantifiedTerm.getSubformula();
+		}
+		return newTerm;
+
 	}
 
 	private HashRelation<MapTemplate, ArrayIndex> getLocalIndices(final TransFormulaLR transformula,
@@ -398,15 +420,16 @@ public class MapEliminator {
 				}
 			}
 			for (final ArrayIndex index1 : unionFind.getAllRepresentatives()) {
+				final Term term1 = template.getTerm(index1);
+				if (term1.getSort().isArraySort()) {
+					continue;
+				}
 				for (final ArrayIndex index2 : unionFind.getEquivalenceClassMembers(index1)) {
 					if (index1 == index2) {
 						continue;
 					}
-					final Term term1 = template.getTerm(index1);
 					final Term term2 = template.getTerm(index2);
-					if (!term1.getSort().isArraySort()) {
-						result.add(SmtUtils.binaryEquality(mScript, term1, term2));
-					}
+					result.add(SmtUtils.binaryEquality(mScript, term1, term2));
 				}
 			}
 		}
@@ -417,7 +440,7 @@ public class MapEliminator {
 	 * This methods eliminates aux-var from the term, sets it to the transformula and simplifies the transformula then.
 	 */
 	private void setFormulaAndSimplify(final TransFormulaLR transformula, final Term term) {
-		Term newTerm;
+		final Term newTerm;
 		if (mAuxVars.isEmpty()) {
 			newTerm = term;
 		} else {
@@ -595,7 +618,6 @@ public class MapEliminator {
 		final Map<Term, Term> substitutionMap = new HashMap<>();
 		for (final ApplicationTerm t : new ApplicationTermFinder("not", false).findMatchingSubterms(term)) {
 			final Term subterm = t.getParameters()[0];
-			assert SmtUtils.isAtomicFormula(subterm) : "The term is not in NNF";
 			if (SmtUtils.isFunctionApplication(subterm, "=")) {
 				final ApplicationTerm equality = (ApplicationTerm) subterm;
 				if (equality.getParameters()[0].getSort().isArraySort()) {
