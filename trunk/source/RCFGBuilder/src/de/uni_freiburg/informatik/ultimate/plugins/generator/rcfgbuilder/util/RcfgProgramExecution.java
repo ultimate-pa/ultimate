@@ -245,7 +245,7 @@ public class RcfgProgramExecution implements IProgramExecution<RCFGEdge, Term> {
 	public List<UnprovabilityReason> getUnprovabilityReasons() {
 		final List<UnprovabilityReason> unproabilityReasons = new ArrayList<>();
 		for (final Entry<String, ILocation> entry : mOverapproximations.entrySet()) {
-			unproabilityReasons.add(new UnprovabilityReason(entry.getKey(), entry.getValue()));
+			unproabilityReasons.add(new UnprovabilityReason("overapproximation of " + entry.getKey(), entry.getValue()));
 		}
 		return unproabilityReasons;
 	}

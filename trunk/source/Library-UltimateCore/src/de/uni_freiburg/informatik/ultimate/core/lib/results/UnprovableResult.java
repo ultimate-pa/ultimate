@@ -79,19 +79,19 @@ public class UnprovableResult<ELEM extends IElement, TE extends IElement, E> ext
 	private final List<UnprovabilityReason> mUnprovabilityReasons;
 	private String mProgramExecutionAsString;
 
-	public UnprovableResult(String plugin, ELEM position, IBacktranslationService translatorSequence,
-			IProgramExecution<TE, E> programExecution) {
+	public UnprovableResult(final String plugin, final ELEM position, final IBacktranslationService translatorSequence,
+			final IProgramExecution<TE, E> programExecution) {
 		this(plugin, position, translatorSequence, programExecution, new ArrayList<UnprovabilityReason>());
 	}
 
-	public UnprovableResult(String plugin, ELEM position, IBacktranslationService translatorSequence,
-			IProgramExecution<TE, E> programExecution, String unprovabilityReason) {
+	public UnprovableResult(final String plugin, final ELEM position, final IBacktranslationService translatorSequence,
+			final IProgramExecution<TE, E> programExecution, final String unprovabilityReason) {
 		this(plugin, position, translatorSequence, programExecution,
 				Collections.singletonList(new UnprovabilityReason(unprovabilityReason)));
 	}
 
-	public UnprovableResult(String plugin, ELEM position, IBacktranslationService translatorSequence,
-			IProgramExecution<TE, E> programExecution, List<UnprovabilityReason> unprovabilityReasons) {
+	public UnprovableResult(final String plugin, final ELEM position, final IBacktranslationService translatorSequence,
+			final IProgramExecution<TE, E> programExecution, final List<UnprovabilityReason> unprovabilityReasons) {
 		super(position, plugin, translatorSequence);
 		assert unprovabilityReasons != null;
 		assert programExecution != null;
@@ -157,7 +157,6 @@ public class UnprovableResult<ELEM extends IElement, TE extends IElement, E> ext
 		final StringBuilder sb = new StringBuilder();
 		sb.append(" Reason:");
 		for (int i = 0; i < mUnprovabilityReasons.size(); i++) {
-			sb.append(" overapproximation of ");
 			sb.append(mUnprovabilityReasons.get(i));
 			if (i == mUnprovabilityReasons.size() - 1) {
 				sb.append(". ");

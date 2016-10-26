@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainExceptionWrapper;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovabilityReason;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
@@ -169,6 +170,11 @@ public abstract class AbstractCegarLoop {
 	private IRunningTaskStackProvider mRunningTaskStackProvider;
 	
 	protected Dumper mDumper;
+	/**
+	 * only != null if analysis result is UNKNOWN
+	 * Textual explanation why result is unknown.
+	 */
+	private UnprovabilityReason mReasonUnknown = null;
 	private static final boolean DUMP_BIGGEST_AUTOMATON = false;
 	
 	public AbstractCegarLoop(final IUltimateServiceProvider services, final IToolchainStorage storage,
@@ -340,6 +346,7 @@ public abstract class AbstractCegarLoop {
 				}
 				if (isCounterexampleFeasible == Script.LBool.UNKNOWN) {
 					mCegarLoopBenchmark.setResult(Result.UNKNOWN);
+					mReasonUnknown = new UnprovabilityReason("unable to decide satisfiability of path constraint");
 					return Result.UNKNOWN;
 				}
 			} catch (final ToolchainCanceledException e) {
@@ -447,4 +454,10 @@ public abstract class AbstractCegarLoop {
 		sb.append(s);
 		return sb.toString();
 	}
+
+	public UnprovabilityReason getReasonUnknown() {
+		return mReasonUnknown;
+	}
+	
+	
 }

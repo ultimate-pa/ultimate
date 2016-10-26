@@ -302,7 +302,10 @@ public class TraceAbstractionStarter {
 			return mOverallResult != Result.UNSAFE ? result : mOverallResult;
 		case UNKNOWN:
 			final RcfgProgramExecution pe = basicCegarLoop.getRcfgProgramExecution();
-			reportUnproveableResult(pe, pe.getUnprovabilityReasons());
+			final List<UnprovabilityReason> unprovabilityReasons = new ArrayList<>();
+			unprovabilityReasons.add(basicCegarLoop.getReasonUnknown());
+			unprovabilityReasons.addAll(pe.getUnprovabilityReasons());
+			reportUnproveableResult(pe, unprovabilityReasons);
 			return mOverallResult != Result.UNSAFE ? result : mOverallResult;
 		default:
 			throw new IllegalArgumentException();
