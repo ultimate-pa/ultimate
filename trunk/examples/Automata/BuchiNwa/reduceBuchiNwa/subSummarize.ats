@@ -5,6 +5,7 @@
 
 //print(nwa);
 print(reduceNwaDirectSimulation(removeDeadEnds(nwa), false));
+print(reduceNwaDirectSimulationB(removeDeadEnds(nwa)));
 
 
 NestedWordAutomaton nwa = (
