@@ -36,6 +36,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
@@ -50,15 +51,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> {
 
 	private final Set<IProgramVar> mVars;
-	
+
 	private final Set<EqGraphNode> mEqGraphNodeSet;
 	private final Map<Term, EqBaseNode> mTermToBaseNodeMap;
 	private final Map<Term, Set<EqFunctionNode>> mTermToFnNodeMap;
 	private final Map<EqNode, EqGraphNode> mEqNodeToEqGraphNodeMap;
-	
-	private Map<Term, Set<Term>> mEqualityMap;
-	private Map<Term, Set<Term>> mDisEqualityMap;
-	
+
+	private Set<VPDomainSymmetricPair<EqNode>> mDisEqualitySet;
+
 	public Set<EqGraphNode> getEqGraphNodeSet() {
 		return mEqGraphNodeSet;
 	}
@@ -66,7 +66,7 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 	public Map<Term, EqBaseNode> getTermToBaseNodeMap() {
 		return mTermToBaseNodeMap;
 	}
-	
+
 	public Map<Term, Set<EqFunctionNode>> getTermToFnNodeMap() {
 		return mTermToFnNodeMap;
 	}
@@ -75,97 +75,305 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 		return mEqNodeToEqGraphNodeMap;
 	}
 
-	public Map<Term, Set<Term>> getmEqualityMap() {
-		return mEqualityMap;
+	public Set<VPDomainSymmetricPair<EqNode>> getDisEqualitySet() {
+		return mDisEqualitySet;
 	}
 
-	public void setmEqualityMap(Map<Term, Set<Term>> mEqualityMap) {
-		this.mEqualityMap = mEqualityMap;
+	public void setDisEqualitySet(Set<VPDomainSymmetricPair<EqNode>> disEqualitySet) {
+		this.mDisEqualitySet = disEqualitySet;
 	}
 
-	public Map<Term, Set<Term>> getmDisEqualityMap() {
-		return mDisEqualityMap;
-	}
-
-	public void setmDisEqualityMap(Map<Term, Set<Term>> mDisEqualityMap) {
-		this.mDisEqualityMap = mDisEqualityMap;
-	}
-
-	VPState(Set<EqGraphNode> eqGraphNodeSet, 
-			Map<Term, EqBaseNode> termToBaseNodeMap,
-			Map<Term, Set<EqFunctionNode>> termToFnNodeMap,
-			Map<EqNode, EqGraphNode> eqNodeToEqGraphNodeMap,
-			Map<Term, Set<Term>> equalityMap, 
-			Map<Term, Set<Term>> disEqualityMap) {
+	VPState(Set<EqGraphNode> eqGraphNodeSet, Map<Term, EqBaseNode> termToBaseNodeMap,
+			Map<Term, Set<EqFunctionNode>> termToFnNodeMap, Map<EqNode, EqGraphNode> eqNodeToEqGraphNodeMap,
+			Set<VPDomainSymmetricPair<EqNode>> disEqualitySet) {
 		mVars = new HashSet<IProgramVar>();
-		mEqGraphNodeSet = eqGraphNodeSet;
-		mTermToBaseNodeMap = termToBaseNodeMap;
-		mTermToFnNodeMap = termToFnNodeMap;
+		mEqGraphNodeSet = Collections.unmodifiableSet(eqGraphNodeSet);
+		mTermToBaseNodeMap = Collections.unmodifiableMap(termToBaseNodeMap);
+		mTermToFnNodeMap = Collections.unmodifiableMap(termToFnNodeMap);
 		mEqNodeToEqGraphNodeMap = eqNodeToEqGraphNodeMap;
-		mEqualityMap = equalityMap;
-		mDisEqualityMap = disEqualityMap;
-	}
-	
-	private VPState conjoin(VPState state1, VPState state2) {
-		
-		VPState conjoinedState = state1.copy();
-		
-		return null;
-		
+		mDisEqualitySet = disEqualitySet;
 	}
 
-	private VPState disjoin(VPState state1, VPState state2) {
-		return null;
+	/**
+	 * This is a pre-step before deriving a new @VPState with @CodeBlock
+	 * (transition) in order to handle assignment and assume in the same way. In
+	 * this method, the variables that are about to be assigned will be havoc
+	 * first. Then the graph will be change and return a new @VPState with the
+	 * new graph.
+	 * 
+	 * @param assignmentVars
+	 * @return a state that the assignment vars are being havoc.
+	 */
+	public VPState prepareState(Set<IProgramVar> assignmentVars) {
+
+		VPState preparedState = this.copy();
+		preparedState.havocBaseNode(assignmentVars);
+
+		return preparedState;
+	}
+
+	/**
+	 * To havoc @EqBaseNode, the steps are: 1) Set find to itself. 2) Reset ccpar and
+	 * ccchild to initial. 3) Find the node in disEqualitySet and remove all the
+	 * relation of that node.
+	 * 
+	 * The havoc of array, i.e., @EqFunctionNode will not be treated here.
+	 * 
+	 * @param assignmentVars
+	 */
+	private void havocBaseNode(Set<IProgramVar> assignmentVars) {
+
+		TermVariable tv;
+		EqGraphNode tvGraphNode = null;
+
+		for (IProgramVar var : assignmentVars) {
+
+			tv = var.getTermVariable();
+			if (isArray(tv)) {
+				continue;
+			}
+
+			if (mTermToBaseNodeMap.containsKey(tv)) {
+				if (mEqNodeToEqGraphNodeMap.containsKey(mTermToBaseNodeMap.get(tv))) {
+					tvGraphNode = mEqNodeToEqGraphNodeMap.get(mTermToBaseNodeMap.get(tv));
+					tvGraphNode.setNodeToInitial();
+				}
+			}
+
+			if (tvGraphNode == null) {
+				continue;
+			}
+
+			for (VPDomainSymmetricPair<EqNode> disEqPair : mDisEqualitySet) {
+				if (disEqPair.getFirst().equals(tvGraphNode.eqNode)) {
+					mDisEqualitySet.remove(disEqPair);
+				} else if (disEqPair.getSecond().equals(tvGraphNode.eqNode)) {
+					mDisEqualitySet.remove(disEqPair);
+				}
+			}
+		}
 	}
 	
-	private void addEquality(Term term1, Term term2) {
+	private void havocFnNode(Term term) {
 		
-	}
-	
-	private void addDisEquality(Term term1, Term term2) {
+		assert mTermToFnNodeMap.containsKey(term);
+		EqGraphNode tvGraphNode = null;
 		
+		for (EqFunctionNode fnNode : mTermToFnNodeMap.get(term)) {
+			assert mEqNodeToEqGraphNodeMap.containsKey(fnNode);
+			tvGraphNode = mEqNodeToEqGraphNodeMap.get(fnNode);
+			tvGraphNode.setNodeToInitial();
+		}
+
+		for (VPDomainSymmetricPair<EqNode> disEqPair : mDisEqualitySet) {
+			if (disEqPair.getFirst().equals(tvGraphNode.eqNode)) {
+				mDisEqualitySet.remove(disEqPair);
+			} else if (disEqPair.getSecond().equals(tvGraphNode.eqNode)) {
+				mDisEqualitySet.remove(disEqPair);
+			}
+		}
 	}
-	
+
+	/**
+	 * Join two @VPState. Two steps: 1) Create a new @VPState conjoinedState
+	 * based on @param state1, add all the edge(equality relation) from @param
+	 * state2 into @VPState conjoinedState. 2) Join the disEqualitySet.
+	 * 
+	 * @param state1
+	 * @param state2
+	 * @return conjoinedState
+	 */
+	public VPState conjoin(VPState state1, VPState state2) {
+
+		VPState conjoinedState = state1.copy();
+		EqGraphNode state1GraphNode;
+		EqGraphNode state1GraphNodeFind;
+		boolean isContradic = false;
+
+		for (EqGraphNode state2GraphNode : state2.getEqGraphNodeSet()) {
+			if (!state2GraphNode.find.equals(state2GraphNode.eqNode)) {
+				state1GraphNode = conjoinedState.getEqNodeToEqGraphNodeMap().get(state2GraphNode.eqNode);
+				state1GraphNodeFind = conjoinedState.getEqNodeToEqGraphNodeMap().get(state1GraphNode.find);
+				isContradic = conjoinedState.addEquality(state1GraphNode.eqNode, state1GraphNodeFind.eqNode);
+			}
+			if (isContradic) {
+				return new VPStateBottom(conjoinedState);
+			}
+		}
+
+		for (VPDomainSymmetricPair<EqNode> pair : state2.getDisEqualitySet()) {
+			conjoinedState.getDisEqualitySet().add(new VPDomainSymmetricPair<EqNode>(pair.getFirst(), pair.getSecond()));
+		}
+
+		return conjoinedState;
+	}
+
+	/**
+	 * Disjoin two @VPState. Two steps: 1) For the same node in two
+	 * state(graph), if the method find() is the same for both node, add
+	 * equality relation. 2) Add the @SymmetricPair that exist in both
+	 * disEqualitySet into new disEqualitySet of disjoinedState.
+	 * 
+	 * @param state1
+	 * @param state2
+	 * @return disjoinedState
+	 */
+	public VPState disjoin(VPState state1, VPState state2) {
+
+		VPState disjoinedState = state1.copy();
+		EqGraphNode state2GraphNode;
+		
+		EqGraphNode disjoinedStateGraphNode;
+		EqGraphNode disjoinedStateGraphNodeFind;
+		
+		boolean isContradic = false;
+		
+		disjoinedState.clearState();
+		
+		for (EqGraphNode state1GraphNode : state1.getEqGraphNodeSet()) {
+			state2GraphNode = state2.getEqNodeToEqGraphNodeMap().get(state1GraphNode.eqNode);
+			if ((state1.find(state1GraphNode.eqNode)).equals((state2.find(state2GraphNode.eqNode)))) {
+				disjoinedStateGraphNode = disjoinedState.getEqNodeToEqGraphNodeMap().get(state1GraphNode.eqNode);
+				disjoinedStateGraphNodeFind = disjoinedState.getEqNodeToEqGraphNodeMap().get(state1.find(state1GraphNode.eqNode));
+				isContradic = disjoinedState.addEquality(disjoinedStateGraphNode.eqNode, disjoinedStateGraphNodeFind.eqNode);
+			}
+			if (isContradic) {
+				return new VPStateBottom(disjoinedState);
+			}
+		}
+		
+		for (VPDomainSymmetricPair<EqNode> state1Pair : state1.getDisEqualitySet()) {
+			for (VPDomainSymmetricPair<EqNode> state2Pair : state2.getDisEqualitySet()) {
+				if (state1Pair.equals(state2Pair)) {
+					disjoinedState.getDisEqualitySet().add(new VPDomainSymmetricPair<EqNode>(state1Pair.getFirst(), state1Pair.getSecond()));
+				}
+			}
+		}
+		
+		// TODO: another way, check which one is better.
+//		Set<SymmetricPair<EqNode>> copyState2DisEqSet = new HashSet<SymmetricPair<EqNode>>(state2.getDisEqualitySet());
+//		int state2DisEqSetSize;
+//		for (SymmetricPair<EqNode> state1Pair : state1.getDisEqualitySet()) {
+//			state2DisEqSetSize = copyState2DisEqSet.size();
+//			copyState2DisEqSet.add(state1Pair);
+//			if (state2DisEqSetSize == copyState2DisEqSet.size()) {
+//				disjoinedState.getDisEqualitySet().add(new SymmetricPair<EqNode>(state1Pair.getFirst(), state1Pair.getSecond()));
+//			}
+//		}
+		
+		return disjoinedState;
+	}
+
+	/**
+	 * Three steps for adding equality relation into graph: 1) Union two nodes.
+	 * 2) Propagate (merge congruence class). 3) Check for contradiction.
+	 * 
+	 * @param node1
+	 * @param node2
+	 * @return true if contradiction is met.
+	 */
+	public boolean addEquality(EqNode node1, EqNode node2) {
+		union(node1, node2);
+		merge(node1, node2);
+		return checkContradiction();
+	}
+
+	/**
+	 * Three steps for adding disequality relation into graph: 1) Add relation
+	 * to disEqualitySet. 2) Propagate (use ccchild). 3) Check for
+	 * contradiction.
+	 * 
+	 * @param node1
+	 * @param node2
+	 * @return true if contradiction is met.
+	 */
+	public boolean addDisEquality(EqNode node1, EqNode node2) {
+
+		addToDisEqSet(node1, node2);
+
+		Set<EqNode> c1 = ccchild(node1);
+		Set<EqNode> c2 = ccchild(node2);
+
+		for (EqNode t1 : c1) {
+			for (EqNode t2 : c2) {
+				if ((find(t1) != find(t2))
+						&& (!congruent(t1, t2))) {
+					addDisEquality(t1, t2);
+				}
+			}
+		}
+
+		return checkContradiction();
+	}
+
+	private void addToDisEqSet(EqNode node1, EqNode node2) {
+		mDisEqualitySet.add(new VPDomainSymmetricPair<EqNode>(node1, node2));
+	}
+
+	private boolean checkContradiction() {
+
+//		EqGraphNode graphNode1;
+//		EqGraphNode graphNode2;
+
+		for (VPDomainSymmetricPair<EqNode> disEqPair : mDisEqualitySet) {
+
+//			graphNode1 = mEqNodeToEqGraphNodeMap.get(disEqPair.getFirst());
+//			graphNode2 = mEqNodeToEqGraphNodeMap.get(disEqPair.getSecond());
+
+			if (find(disEqPair.getFirst()).equals(find(disEqPair.getSecond()))) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	/**
 	 * Returns the representative of a @param node's equivalence class.
 	 * 
 	 * @param node
 	 * @return
 	 */
-	private EqGraphNode find(EqGraphNode node) {
-		if (node.getFind() == node.getEqNode()) {
+	private EqNode find(EqNode node) {
+		if (this.mEqNodeToEqGraphNodeMap.get(node).find.equals(node)) {
 			return node;
 		} else {
-			return find(node);
+			return find(this.mEqNodeToEqGraphNodeMap.get(node).find);
 		}
 	}
-	
+
 	/**
 	 * Union of two equivalence classes.
 	 * 
 	 * @param node1
 	 * @param node2
 	 */
-	private void union(EqGraphNode node1, EqGraphNode node2) {
-
-		EqGraphNode findNode1 = find(node1);
-		EqGraphNode findNode2 = find(node2);
+	private void union(EqNode node1, EqNode node2) {
 		
-		findNode1.setFind(findNode2.eqNode);
-		findNode2.ccpar.addAll(findNode1.ccpar);
-		findNode1.ccpar.clear();
+		EqGraphNode findNode1 = this.mEqNodeToEqGraphNodeMap.get(find(node1));
+		EqGraphNode findNode2 = this.mEqNodeToEqGraphNodeMap.get(find(node2));
+		
+		if (!findNode1.eqNode.equals(findNode2.eqNode)) {
+			findNode1.setFind(findNode2.eqNode);
+			findNode2.ccpar.addAll(findNode1.ccpar);
+			findNode1.ccpar.clear();
+		}
 	}
-	
+
 	/**
 	 * Returns the parents of all nodes in @param node's congruence class.
 	 * 
 	 * @param node
 	 * @return
 	 */
-	private Set<EqNode> ccpar(EqGraphNode node) {
-		return find(node).ccpar;
+	private Set<EqNode> ccpar(EqNode node) {
+		return this.mEqNodeToEqGraphNodeMap.get(find(node)).ccpar;
 	}
-	
+
+	private Set<EqNode> ccchild(EqNode node) {
+		return this.mEqNodeToEqGraphNodeMap.get(find(node)).ccchild;
+	}
+
 	/**
 	 * Test whether @param i1 and @param i2 are congruent.
 	 * 
@@ -173,14 +381,14 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 	 * @param i2
 	 * @return
 	 */
-	private boolean congruent(EqGraphNode node1, EqGraphNode node2) {
-		if (!(node1.eqNode instanceof EqFunctionNode) || !(node2.eqNode instanceof EqFunctionNode)) {
+	private boolean congruent(EqNode node1, EqNode node2) {
+		if (!(node1 instanceof EqFunctionNode) || !(node2 instanceof EqFunctionNode)) {
 			return false;
 		}
-		
-		EqFunctionNode fnNode1 = (EqFunctionNode)node1.eqNode;
-		EqFunctionNode fnNode2 = (EqFunctionNode)node2.eqNode;
-		
+
+		EqFunctionNode fnNode1 = (EqFunctionNode) node1;
+		EqFunctionNode fnNode2 = (EqFunctionNode) node2;
+
 		if (!(fnNode1.term.equals(fnNode2.term))) {
 			return false;
 		}
@@ -193,33 +401,57 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 		}
 		return true;
 	}
-	
+
 	/**
-	 * Merge two congruence class.
+	 * Merge two congruence class. propagation.
 	 * 
 	 * @param i1
 	 * @param i2
 	 */
-	private void merge(EqGraphNode i1, EqGraphNode i2) {
-		
-		if (find(i1) != find(i2)) {
-			
-			Set<EqNode> p1 = ccpar(i1);
-			Set<EqNode> p2 = ccpar(i2);
-			
-			union(i1, i2);
-			
+	private void merge(EqNode node1, EqNode node2) {
+
+		if (!find(node1).equals(find(node2))) {
+
+			Set<EqNode> p1 = ccpar(node1);
+			Set<EqNode> p2 = ccpar(node2);
+
+			union(node1, node2);
+
 			for (EqNode t1 : p1) {
 				for (EqNode t2 : p2) {
-					if ((find(mEqNodeToEqGraphNodeMap.get(t1)) != find(mEqNodeToEqGraphNodeMap.get(t2)))
-							&& congruent(mEqNodeToEqGraphNodeMap.get(t1), mEqNodeToEqGraphNodeMap.get(t2))) {
-						merge(mEqNodeToEqGraphNodeMap.get(t1), mEqNodeToEqGraphNodeMap.get(t2));
+					if (!(find(t1).equals(find(t2)))
+							&& congruent(t1, t2)) {
+						merge(t1, t2);
 					}
 				}
 			}
-			
 		}
+	}
+	
+	public void arrayAssignment(Term firstArray, Term secondArray) {
 		
+		havocFnNode(firstArray);
+		
+		for (EqFunctionNode fnNode : mTermToFnNodeMap.get(secondArray)) {
+			for (EqNode eqNode : mEqNodeToEqGraphNodeMap.get(find(fnNode.arg)).ccpar) {
+				if (eqNode instanceof EqFunctionNode) {
+					if (((EqFunctionNode)eqNode).term.equals(firstArray)) {
+						addEquality(eqNode, fnNode);
+					}
+				}
+			}
+		}
+	}
+	
+	private boolean isArray(TermVariable term) {
+		return mTermToFnNodeMap.containsKey(term);
+	}
+
+	private void clearState() {
+		this.getDisEqualitySet().clear();
+		for (EqGraphNode graphNode : this.getEqGraphNodeSet()) {
+			graphNode.setNodeToInitial();
+		}
 	}
 	
 	@Override
@@ -259,20 +491,14 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 		}
 		return this;
 	}
-	
+
 	public VPState copy() {
-		
-		final Set<EqGraphNode> newEqGraphNodeSet = new HashSet<EqGraphNode>();
-		for (EqGraphNode node : mEqGraphNodeSet) {
-			newEqGraphNodeSet.add(node.copy());
-			
-		}
-		
+
 		final Map<Term, EqBaseNode> newTermToBaseNodeMap = new HashMap<Term, EqBaseNode>();
 		for (final Entry<Term, EqBaseNode> entry : mTermToBaseNodeMap.entrySet()) {
 			newTermToBaseNodeMap.put(entry.getKey(), entry.getValue());
 		}
-		
+
 		final Map<Term, Set<EqFunctionNode>> newTermToFnNodeMap = new HashMap<Term, Set<EqFunctionNode>>();
 		for (final Entry<Term, Set<EqFunctionNode>> entry : mTermToFnNodeMap.entrySet()) {
 			Set<EqFunctionNode> fnNodeSet = new HashSet<EqFunctionNode>();
@@ -281,27 +507,19 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 			}
 			newTermToFnNodeMap.put(entry.getKey(), fnNodeSet);
 		}
-		
+
+		final Set<EqGraphNode> newEqGraphNodeSet = new HashSet<EqGraphNode>();
 		final Map<EqNode, EqGraphNode> newEqNodeToEqGraphNodeMap = new HashMap<EqNode, EqGraphNode>();
 		for (final Entry<EqNode, EqGraphNode> entry : mEqNodeToEqGraphNodeMap.entrySet()) {
-			newEqNodeToEqGraphNodeMap.put(entry.getKey(), entry.getValue().copy());
+			EqGraphNode graphNode = entry.getValue().copy();
+			newEqGraphNodeSet.add(graphNode);
+			newEqNodeToEqGraphNodeMap.put(entry.getKey(), graphNode);
 		}
-		
-		final Map<Term, Set<Term>> newEqualityMap = new HashMap<Term, Set<Term>>();
-		for (final Entry<Term, Set<Term>> entry : mEqualityMap.entrySet()) {
-			final Set<Term> newEqTermSet = new HashSet<Term>();
-			newEqTermSet.addAll(entry.getValue());
-			newEqualityMap.put(entry.getKey(), newEqTermSet);
-		}
-		
-		final Map<Term, Set<Term>> newDisEqualityMap = new HashMap<Term, Set<Term>>();
-		for (final Entry<Term, Set<Term>> entry : mDisEqualityMap.entrySet()) {
-			final Set<Term> newDisEqTermSet = new HashSet<Term>();
-			newDisEqTermSet.addAll(entry.getValue());
-			newDisEqualityMap.put(entry.getKey(), newDisEqTermSet);
-		}
-		
-		return new VPState(newEqGraphNodeSet, newTermToBaseNodeMap, newTermToFnNodeMap, newEqNodeToEqGraphNodeMap, newEqualityMap, newDisEqualityMap);		
+
+		final Set<VPDomainSymmetricPair<EqNode>> newDisEqualitySet = new HashSet<>(mDisEqualitySet);
+
+		return new VPState(newEqGraphNodeSet, newTermToBaseNodeMap, newTermToFnNodeMap, newEqNodeToEqGraphNodeMap,
+				newDisEqualitySet);
 	}
 
 	@Override
@@ -355,12 +573,24 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 
 	@Override
 	public String toLogString() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append('{');	
-		sb.append("->");
-		sb.append('}');
 		
-		// TODO
+		final StringBuilder sb = new StringBuilder();
+		
+		sb.append("Graph: \n");
+		for (EqGraphNode graphNode : mEqGraphNodeSet) {
+			sb.append(graphNode.toString());
+			sb.append('\n');
+		}
+		
+		sb.append("Disequality Set:  \n");
+		for (VPDomainSymmetricPair<EqNode> pair : mDisEqualitySet) {
+			sb.append(pair.getFirst().toString());
+			sb.append(", ");
+			sb.append(pair.getSecond().toString());
+			sb.append('\n');
+		}
+		
+		System.out.println(sb.toString());
 		
 		return sb.toString();
 	}
@@ -392,7 +622,7 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 		// TODO
 
 		return null;
-//		return new VPState(vars, def, use, reachdef, noWrite, mEqNodeSet);
+		// return new VPState(vars, def, use, reachdef, noWrite, mEqNodeSet);
 	}
 
 }

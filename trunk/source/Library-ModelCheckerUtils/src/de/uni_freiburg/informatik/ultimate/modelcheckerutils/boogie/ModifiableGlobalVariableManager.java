@@ -150,7 +150,7 @@ public class ModifiableGlobalVariableManager {
 			//no global var modified
 			vars = Collections.emptySet();
 		}
-		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, true, null, true);
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, true, null, true, null, true);
 		Term glob2oldFormula = mMgdScript.getScript().term("true");
 		final Map<String, IProgramNonOldVar> globals = mSymbolTable.getGlobals();
 		for (final String modVar : vars) {
@@ -181,7 +181,7 @@ public class ModifiableGlobalVariableManager {
 			//no global var modified
 			vars = Collections.emptySet();
 		}
-		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, true, null, true);
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, true, null, true, null, true);
 		Term old2globFormula = mMgdScript.getScript().term("true");
 		final Map<String, IProgramNonOldVar> globals = mSymbolTable.getGlobals();
 		for (final String modVar : vars) {

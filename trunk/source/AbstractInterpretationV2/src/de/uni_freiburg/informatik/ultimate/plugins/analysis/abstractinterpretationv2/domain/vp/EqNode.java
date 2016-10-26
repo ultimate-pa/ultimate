@@ -16,7 +16,14 @@ public class EqNode {
 	}
 	
 	public String toString() {
-		return term.toString();
-		
+		return term.toString();	
+	}
+	
+	@Override
+	public boolean equals(Object o) {
+		if (!(o instanceof EqNode)) {
+			return false;
+		}
+		return term.equals(((EqNode)o).term);
 	}
 }

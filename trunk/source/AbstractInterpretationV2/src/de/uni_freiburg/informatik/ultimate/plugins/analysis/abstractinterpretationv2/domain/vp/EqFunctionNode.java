@@ -28,4 +28,12 @@ public class EqFunctionNode extends EqNode {
 		return term.toString() + "[" + arg + "]";
 	}
 	
+	@Override
+	public boolean equals(Object o) {
+		if (!(o instanceof EqFunctionNode)) {
+			return false;
+		}
+		return term.equals(((EqFunctionNode)o).term) && arg.term.equals((((EqFunctionNode)o).arg).term);
+	}
+	
 }

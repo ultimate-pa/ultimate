@@ -13,4 +13,8 @@ public class EqBaseNode extends EqNode {
 		super(term);
 	}
 	
+	public String toString() {
+		return term.toString();
+	}
+	
 }

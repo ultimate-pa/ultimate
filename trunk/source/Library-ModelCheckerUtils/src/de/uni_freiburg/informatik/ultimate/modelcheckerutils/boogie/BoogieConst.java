@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 
 
 /**
@@ -35,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
  * @author heizmann@informatik.uni-freiburg.de
  *
  */
-public class BoogieConst implements IBoogieVar {
+public class BoogieConst implements IBoogieVar, IProgramConst {
 	private final String mIdentifier;
 	private final IBoogieType mIType;
 	private final boolean mBelongsToSmtTheory;
@@ -58,6 +59,7 @@ public class BoogieConst implements IBoogieVar {
 		mBelongsToSmtTheory = belongsToSmtTheory;
 	}
 	
+	@Override
 	public String getIdentifier() {
 		return mIdentifier;
 	}
@@ -75,6 +77,10 @@ public class BoogieConst implements IBoogieVar {
 	@Override
 	public ApplicationTerm getDefaultConstant() {
 		return mSmtConstant;
+	}
+	
+	public boolean belongsToSmtTheory() {
+		return mBelongsToSmtTheory;
 	}
 
 	@Override

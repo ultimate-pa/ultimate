@@ -76,6 +76,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	private final IPredicate[] mInterpolants;
 	private final PredicateUnifier mPredicateUnifier;
 	private final ILogger mLogger;
+	private static boolean sUseLiveVariables = false;
 
 	/**
 	 * Creates a default factory.
@@ -211,9 +212,15 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 
 		// Generate invariants
 		final CFGInvariantsGenerator generator = new CFGInvariantsGenerator(services, modGlobVarManager);
-		final Map<ControlFlowGraph.Location, IPredicate> invariants =
-				generator.generateInvariantsFromCFG(cfg, precondition, postcondition, invPatternProcFactory);
-		logService.info("[PathInvariants] Generated invariant map.");
+		final Map<ControlFlowGraph.Location, IPredicate> invariants;
+		
+		if (sUseLiveVariables) {
+			invariants = null;
+			// TODO: Compute the live variables and use them.
+		} else {
+			invariants = generator.generateInvariantsFromCFG(cfg, precondition, postcondition, invPatternProcFactory, false, null);
+			logService.info("[PathInvariants] Generated invariant map.");
+		}
 
 		// Populate resulting array
 		if (invariants != null) {

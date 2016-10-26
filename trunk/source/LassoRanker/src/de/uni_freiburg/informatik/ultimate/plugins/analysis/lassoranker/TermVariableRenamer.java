@@ -64,6 +64,7 @@ public class TermVariableRenamer {
 	 */
 	public UnmodifiableTransFormula renameVars(final UnmodifiableTransFormula tf, final String prefix) {
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, 
+				tf.getNonTheoryConsts().isEmpty(), tf.getNonTheoryConsts().isEmpty() ? null : tf.getNonTheoryConsts(),
 				false, tf.getBranchEncoders(), false);
 		final Map<IProgramVar, TermVariable> inVars = tf.getInVars();
 		final Map<IProgramVar, TermVariable> outVars = tf.getOutVars();

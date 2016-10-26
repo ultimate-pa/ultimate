@@ -241,7 +241,7 @@ public class BuchiCegarLoop {
 
 	private ToolchainCanceledException mToolchainCancelledException;
 	
-	private static final boolean DUMP_BIGGEST_AUTOMATON = false;
+	private static final boolean DUMP_BIGGEST_AUTOMATON = !false;
 
 	public ToolchainCanceledException getToolchainCancelledException() {
 		return mToolchainCancelledException;

@@ -184,7 +184,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	 * {@inheritDoc}
 	 */
 	@Override
-	public void startRound(final int round) {
+	public void startRound(final int round, boolean useLiveVariables, final Set<IProgramVar> liveVariables) {
 		reinitializeSolver();
 		patternVariables.clear();
 		entryInvariantPattern = null;
@@ -207,6 +207,9 @@ public final class LinearInequalityInvariantPatternProcessor
 			patternCoefficients.addAll(precondition.getOutVars().keySet());
 			patternCoefficients.addAll(postcondition.getInVars().keySet());
 			patternCoefficients.addAll(postcondition.getOutVars().keySet());
+			if (useLiveVariables) {
+				patternCoefficients.retainAll(liveVariables);
+			}
 			logger.info( "[LIIPP] Linearization complete.");
 		}
 	}

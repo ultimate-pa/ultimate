@@ -33,7 +33,6 @@ import java.util.Collection;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -70,7 +69,7 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 	private <T extends RCFGEdge> void process(final Collection<T> edges) {
 		final Deque<RCFGEdge> worklist = new ArrayDeque<RCFGEdge>();
 		final Set<RCFGEdge> finished = new HashSet<RCFGEdge>();
-
+		
 		worklist.addAll(edges);
 		while (!worklist.isEmpty()) {
 			final RCFGEdge current = worklist.removeFirst();
@@ -85,11 +84,8 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 	@Override
 	protected void visit(CodeBlock c) {
 		c.getPrettyPrintedStatements();
-
-		final Set<Term[]> argsSet = new EqNodeFinder().findEqNode(c.getTransitionFormula().getFormula());
-		final Iterator<Term[]> argsSetIter = argsSet.iterator();
-
-		Term[] args;
+		
+		final Set<EqNodeFinder.SelectOrStoreArguments> argsSet = new EqNodeFinder().findEqNode(c.getTransitionFormula().getFormula());
 
 		Map<Term, Term> substitionMap = new HashMap<Term, Term>();
 		for (Entry<IProgramVar, TermVariable> entry : c.getTransitionFormula().getInVars().entrySet()) {
@@ -102,17 +98,16 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 		Term subArg0, subArg1, subArg2;
 		EqNode subArg1Node;
 
-		while (argsSetIter.hasNext()) {
-			args = argsSetIter.next();
+		for (EqNodeFinder.SelectOrStoreArguments selOrStore : argsSet) {
 
-			subArg0 = new Substitution(mScript, substitionMap).transform(args[0]);
-			subArg1 = new Substitution(mScript, substitionMap).transform(args[1]);
+			subArg0 = new Substitution(mScript, substitionMap).transform(selOrStore.function);
+			subArg1 = new Substitution(mScript, substitionMap).transform(selOrStore.arg);
 
 			subArg1Node = createNodeAndConnection(subArg1, null);
 			createNodeAndConnection(subArg0, subArg1Node);
 
-			if (args.length == 3) {
-				subArg2 = new Substitution(mScript, substitionMap).transform(args[2]);
+			if (selOrStore instanceof EqNodeFinder.StoreArguments) {
+				subArg2 = new Substitution(mScript, substitionMap).transform(((EqNodeFinder.StoreArguments) selOrStore).arg2);
 
 				createNodeAndConnection(subArg2, null);
 			}
@@ -169,10 +164,18 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 	
 	private void putToEqGraphSet(EqNode node, EqNode arg) {
 		EqGraphNode graphNode = new EqGraphNode(node);
+		EqGraphNode argNode = null;
 		
 		if (arg != null) {
 			graphNode.setArg(arg);
-			eqNodeToEqGraphNodeMap.get(arg).getCcpar().add(node);
+			argNode = eqNodeToEqGraphNodeMap.get(arg);
+			argNode.addToInitCcpar(node);
+			argNode.getCcpar().add(node);
+		}
+		
+		if (argNode != null) {
+			graphNode.setInitCcchild(argNode.eqNode);
+			graphNode.getCcchild().add(argNode.eqNode);
 		}
 		
 		eqGraphNodeSet.add(graphNode);
