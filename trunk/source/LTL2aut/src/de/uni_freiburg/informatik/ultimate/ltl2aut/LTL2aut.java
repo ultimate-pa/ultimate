@@ -44,10 +44,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.GlobalLTLInvariant;
 
 public class LTL2aut implements IGenerator, ISource {
 
@@ -60,6 +62,7 @@ public class LTL2aut implements IGenerator, ISource {
 	private IUltimateServiceProvider mServices;
 	private IToolchainStorage mStorage;
 	private String[] mFileTypes;
+	private ILogger mLogger;
 
 	public LTL2aut() {
 		mFileNames = new ArrayList<String>();
@@ -155,6 +158,7 @@ public class LTL2aut implements IGenerator, ISource {
 		final Collection<CounterExampleResult> cex = ResultUtil.filterResults(services.getResultService().getResults(),
 				CounterExampleResult.class);
 		mSkip = !cex.isEmpty();
+		mLogger = mServices.getLoggingService().getLogger( Activator.PLUGIN_NAME);
 	}
 
 	@Override
@@ -197,6 +201,7 @@ public class LTL2aut implements IGenerator, ISource {
 	@Override
 	//TODO: move to own class as formula format will change
 	public IElement parseAST(File file) throws Exception {
+		mLogger.info("Seperate LTL file detected.");
 		String line = null;
 		String ltlProperty = null;
 		mUseful++;
@@ -220,7 +225,11 @@ public class LTL2aut implements IGenerator, ISource {
 		input.append('\n');
 		input.append(ltlProperty.replaceFirst("//@", ""));
 		final ACSLNode node = de.uni_freiburg.informatik.ultimate.acsl.parser.Parser.parseComment(input.toString(), 0, 0);
-		
+		if(! (node instanceof GlobalLTLInvariant)){
+			throw new RuntimeException("Some ACSL Annotation, but no LTL Invariant found!"); 
+		} else {
+			mLogger.info("LTLInvariant: " + ((GlobalLTLInvariant)node).getFormula().toString());
+		}
 		return new ObjectContainer<ACSLNode>(node);
 	}
 

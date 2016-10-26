@@ -97,8 +97,8 @@ public class CACSL2BoogieTranslator implements IGenerator {
 	@Override
 	public List<IObserver> getObservers() {
 		ArrayList<IObserver> observer = new ArrayList<IObserver>();
-		observer.add(mObserver);
 		observer.add(mAdditionalAnnotationObserver);
+		observer.add(mObserver);
 		return observer;
 	}
 

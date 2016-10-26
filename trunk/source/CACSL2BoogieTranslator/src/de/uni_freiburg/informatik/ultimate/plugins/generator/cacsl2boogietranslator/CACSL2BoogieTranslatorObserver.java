@@ -89,7 +89,7 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 	/**
 	 * The logger instance.
 	 */
-	private final ILogger mLogger;
+	private final ILogger mLogger; 
 	/**
 	 * A Wrapper holding the root node of the resulting Boogie AST.
 	 */

@@ -110,9 +110,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 /**
  * Translation from Boogie to C for traces and expressions.
  *
- * @author dietsch@informatik.uni-freiburg.de
+ * @author dietsch@informatik.uni-freiburg.de  
  */
-public class CACSL2BoogieBacktranslator
+public class CACSL2BoogieBacktranslator 
 		extends DefaultTranslator<BoogieASTNode, CACSLLocation, Expression, IASTExpression, String, String> {
 
 	private static final String UNFINISHED_BACKTRANSLATION = "Unfinished Backtranslation";
