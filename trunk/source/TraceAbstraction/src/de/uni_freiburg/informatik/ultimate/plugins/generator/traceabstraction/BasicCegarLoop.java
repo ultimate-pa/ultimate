@@ -72,6 +72,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.MonolithicHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -303,7 +304,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		final IPredicate falsePredicate = predicateUnifier.getFalsePredicate();
 		
 		InterpolatingTraceChecker interpolatingTraceChecker = null;
-		final SmtManager smtMangerTracechecks;
+		final ManagedScript mgdScriptTc;
 		if (mPref.useSeparateSolverForTracechecks()) {
 			final String filename = mRootNode.getFilename() + "_TraceCheck_Iteration" + mIteration;
 			final SolverMode solverMode = mPref.solverMode();
@@ -316,15 +317,13 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			final Script tcSolver = SolverBuilder.buildAndInitializeSolver(mServices, mToolchainStorage,
 					mPref.solverMode(), solverSettings, false, false, mPref.logicForExternalSolver(),
 					"TraceCheck_Iteration" + mIteration);
-			smtMangerTracechecks = new SmtManager(tcSolver, mRootNode.getRootAnnot().getBoogie2SMT(),
-					mRootNode.getRootAnnot().getModGlobVarManager(), mServices, false,
-					mRootNode.getRootAnnot().getManagedScript(), mSimplificationTechnique, mXnfConversionTechnique);
+			mgdScriptTc = new ManagedScript(mServices, tcSolver);
 			final TermTransferrer tt = new TermTransferrer(tcSolver);
 			for (final Term axiom : mRootNode.getRootAnnot().getBoogie2SMT().getAxioms()) {
 				tcSolver.assertTerm(tt.transform(axiom));
 			}
 		} else {
-			smtMangerTracechecks = mSmtManager;
+			mgdScriptTc = mSmtManager.getManagedScript();
 		}
 		
 		final LBool feasibility;
@@ -335,7 +334,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					new TreeMap<Integer, IPredicate>(), NestedWord.nestedWord(mCounterexample.getWord()),
 					mSmtManager.getManagedScript(), mRootNode.getRootAnnot().getModGlobVarManager(),
 					mAssertCodeBlocksIncrementally, mServices, true, predicateUnifier, mInterpolation,
-					smtMangerTracechecks.getManagedScript(), true, mXnfConversionTechnique, mSimplificationTechnique,
+					mgdScriptTc, true, mXnfConversionTechnique, mSimplificationTechnique,
 					mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
 		}
 			break;
@@ -346,7 +345,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					new TreeMap<Integer, IPredicate>(), NestedWord.nestedWord(mCounterexample.getWord()),
 					mSmtManager.getManagedScript(), mRootNode.getRootAnnot().getModGlobVarManager(),
 					mAssertCodeBlocksIncrementally, mUnsatCores, mUseLiveVariables, mServices, true, predicateUnifier,
-					mInterpolation, smtMangerTracechecks.getManagedScript(), mXnfConversionTechnique,
+					mInterpolation, mgdScriptTc, mXnfConversionTechnique,
 					mSimplificationTechnique, mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
 			
 			break;
@@ -383,7 +382,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		if (interpolatingTraceChecker.getToolchainCancelledExpection() != null) {
 			throw interpolatingTraceChecker.getToolchainCancelledExpection();
 		} else if (mPref.useSeparateSolverForTracechecks()) {
-			smtMangerTracechecks.getScript().exit();
+			mgdScriptTc.getScript().exit();
 		}
 		
 		feasibility = interpolatingTraceChecker.isCorrect();
