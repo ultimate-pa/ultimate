@@ -65,7 +65,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
@@ -74,7 +73,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.S
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.MonolithicHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
@@ -87,7 +85,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.in
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.SelfloopDeterminizer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.CachingHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.CachingHoareTripleChecker_Map;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EfficientHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
@@ -98,7 +95,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.CounterexampleSearchStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareAnnotationPositions;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareTripleChecks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
@@ -484,8 +480,9 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		if (mInterpolantGenerator instanceof InterpolantConsolidation) {
 			htc = ((InterpolantConsolidation) mInterpolantGenerator).getHoareTripleChecker();
 		} else {
-			final IHoareTripleChecker ehtc = getEfficientHoareTripleChecker(mServices, mPref.getHoareTripleChecks(),
-					mSmtManager, mModGlobVarManager, mInterpolantGenerator.getPredicateUnifier());
+			final IHoareTripleChecker ehtc = TraceAbstractionUtils.constructEfficientHoareTripleChecker(
+					mServices, mPref.getHoareTripleChecks(),
+					mSmtManager.getManagedScript(), mModGlobVarManager, mInterpolantGenerator.getPredicateUnifier());
 			htc = new CachingHoareTripleChecker_Map(mServices, ehtc, mInterpolantGenerator.getPredicateUnifier());
 		}
 		try {
@@ -738,25 +735,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		return !stillAccepted;
 	}
 	
-	public static IHoareTripleChecker getEfficientHoareTripleChecker(final IUltimateServiceProvider services,
-			final HoareTripleChecks hoareTripleChecks, final SmtManager smtManager,
-			final ModifiableGlobalVariableManager modGlobVarManager, final PredicateUnifier predicateUnifier)
-			throws AssertionError {
-		final IHoareTripleChecker solverHtc;
-		switch (hoareTripleChecks) {
-		case MONOLITHIC:
-			solverHtc = new MonolithicHoareTripleChecker(smtManager.getManagedScript(), modGlobVarManager);
-			break;
-		case INCREMENTAL:
-			solverHtc = new IncrementalHoareTripleChecker(smtManager.getManagedScript(), modGlobVarManager);
-			break;
-		default:
-			throw new AssertionError("unknown value");
-		}
-		final IHoareTripleChecker htc =
-				new EfficientHoareTripleChecker(solverHtc, modGlobVarManager, predicateUnifier, smtManager);
-		return htc;
-	}
+
 	
 	/**
 	 * Automata theoretic minimization of the automaton stored in mAbstraction. Expects that mAbstraction does not have

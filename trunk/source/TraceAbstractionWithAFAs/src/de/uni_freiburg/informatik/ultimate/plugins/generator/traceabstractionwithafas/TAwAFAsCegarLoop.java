@@ -491,7 +491,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 				determinized, false, mPredicateFactoryInterpolantAutomata);
 
 		if (mPref.differenceSenwa()) {
-			diff = new DifferenceSenwa<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), oldAbstraction, (INestedWordAutomaton<CodeBlock, IPredicate>) determinized, psd2, false);
+			diff = new DifferenceSenwa<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), oldAbstraction, determinized, psd2, false);
 		} else {
 			diff = new Difference<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), oldAbstraction, determinized, psd2,
 					mStateFactoryForRefinement, explointSigmaStarConcatOfIA);
@@ -557,7 +557,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 		}
 		final IHoareTripleChecker htc = new EfficientHoareTripleChecker(solverHtc, 
 				mRootNode.getRootAnnot().getModGlobVarManager(), 
-				mPredicateUnifier, mSmtManager); //only change to method in BasicCegarLoop
+				mPredicateUnifier, mSmtManager.getManagedScript()); //only change to method in BasicCegarLoop
 		return htc;
 	}
 	

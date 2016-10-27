@@ -32,6 +32,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInte
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.HoareTripleCheckerStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.MonolithicHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
@@ -47,20 +48,20 @@ public class EfficientHoareTripleChecker implements IHoareTripleChecker {
 	
 
 	public EfficientHoareTripleChecker(
-			IHoareTripleChecker smtBasedHoareTripleChecker, 
-			ModifiableGlobalVariableManager modGlobVarManager, 
-			PredicateUnifier predicateUnifier, 
-			SmtManager smtManager) {
+			final IHoareTripleChecker smtBasedHoareTripleChecker, 
+			final ModifiableGlobalVariableManager modGlobVarManager, 
+			final PredicateUnifier predicateUnifier, 
+			final ManagedScript mgdScript) {
 		super();
 		mSmtBasedHoareTripleChecker = new ProtectiveHoareTripleChecker(smtBasedHoareTripleChecker, predicateUnifier);
 		mSdHoareTripleChecker = new SdHoareTripleChecker(modGlobVarManager, 
 				predicateUnifier, mSmtBasedHoareTripleChecker.getEdgeCheckerBenchmark());
 		mhoareTripleCheckerForReview = new MonolithicHoareTripleChecker(
-				smtManager.getManagedScript(), smtManager.getModifiableGlobals());
+				mgdScript, modGlobVarManager);
 	}
 
 	@Override
-	public Validity checkInternal(IPredicate pre, IInternalAction act, IPredicate succ) {
+	public Validity checkInternal(final IPredicate pre, final IInternalAction act, final IPredicate succ) {
 		final Validity sdResult = mSdHoareTripleChecker.checkInternal(pre, act, succ);
 		if (sdResult != Validity.UNKNOWN) {
 			if (mReviewSdResultsIfAssertionsEnabled) {
@@ -77,7 +78,7 @@ public class EfficientHoareTripleChecker implements IHoareTripleChecker {
 	}
 
 	@Override
-	public Validity checkCall(IPredicate pre, ICallAction act, IPredicate succ) {
+	public Validity checkCall(final IPredicate pre, final ICallAction act, final IPredicate succ) {
 		final Validity sdResult = mSdHoareTripleChecker.checkCall(pre, act, succ);
 		if (sdResult != Validity.UNKNOWN) {
 			if (mReviewSdResultsIfAssertionsEnabled) {
@@ -94,8 +95,8 @@ public class EfficientHoareTripleChecker implements IHoareTripleChecker {
 	}
 
 	@Override
-	public Validity checkReturn(IPredicate preLin, IPredicate preHier,
-			IReturnAction act, IPredicate succ) {
+	public Validity checkReturn(final IPredicate preLin, final IPredicate preHier,
+			final IReturnAction act, final IPredicate succ) {
 		final Validity sdResult = mSdHoareTripleChecker.checkReturn(preLin, preHier, act, succ);
 		if (sdResult != Validity.UNKNOWN) {
 			if (mReviewSdResultsIfAssertionsEnabled) {
@@ -117,7 +118,7 @@ public class EfficientHoareTripleChecker implements IHoareTripleChecker {
 	}
 	
 	
-	private boolean reviewInductiveInternal(IPredicate state, IInternalAction act, IPredicate succ, Validity result) {
+	private boolean reviewInductiveInternal(final IPredicate state, final IInternalAction act, final IPredicate succ, final Validity result) {
 		releaseLock();
 		final Validity reviewResult = mhoareTripleCheckerForReview.checkInternal(state, act, succ);
 		if (resultCompatibleHelper(result, reviewResult)) {
@@ -128,7 +129,7 @@ public class EfficientHoareTripleChecker implements IHoareTripleChecker {
 		}
 	}
 	
-	private boolean reviewInductiveCall(IPredicate state, ICallAction act, IPredicate succ, Validity result) {
+	private boolean reviewInductiveCall(final IPredicate state, final ICallAction act, final IPredicate succ, final Validity result) {
 		releaseLock();
 		final Validity reviewResult = mhoareTripleCheckerForReview.checkCall(state, act, succ);
 		if (resultCompatibleHelper(result, reviewResult)) {
@@ -140,7 +141,7 @@ public class EfficientHoareTripleChecker implements IHoareTripleChecker {
 
 	}
 	
-	private boolean reviewInductiveReturn(IPredicate state, IPredicate hier, IReturnAction act, IPredicate succ, Validity result) {
+	private boolean reviewInductiveReturn(final IPredicate state, final IPredicate hier, final IReturnAction act, final IPredicate succ, final Validity result) {
 		releaseLock();
 		final Validity reviewResult = mhoareTripleCheckerForReview.checkReturn(state, hier, act, succ);
 		if (resultCompatibleHelper(result, reviewResult)) {
@@ -155,7 +156,7 @@ public class EfficientHoareTripleChecker implements IHoareTripleChecker {
 	/**
 	 * Return true if results are compatible or one is UNKNOWN
 	 */
-	private boolean resultCompatibleHelper(Validity validity1, Validity validity2) {
+	private boolean resultCompatibleHelper(final Validity validity1, final Validity validity2) {
 		switch (validity1) {
 		case VALID:
 			return (validity2 == Validity.VALID || validity2 == Validity.UNKNOWN);
