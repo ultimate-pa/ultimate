@@ -155,7 +155,7 @@ public class UnprovableResult<ELEM extends IElement, TE extends IElement, E> ext
 	 */
 	public String getReasons() {
 		final StringBuilder sb = new StringBuilder();
-		sb.append(" Reason:");
+		sb.append(" Reason: ");
 		for (int i = 0; i < mUnprovabilityReasons.size(); i++) {
 			sb.append(mUnprovabilityReasons.get(i));
 			if (i == mUnprovabilityReasons.size() - 1) {
