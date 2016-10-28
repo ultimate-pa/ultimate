@@ -44,10 +44,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 public class ReplacementVarFactory {
 	
 	private final ManagedScript mVariableManager;
-	private final Map<Term, ReplacementVar> mRepVarMapping = 
-			new HashMap<Term, ReplacementVar>();
-	private final Map<String, TermVariable> mAuxVarMapping = 
-			new HashMap<String, TermVariable>();
+	private final Map<Term, ReplacementVar> mRepVarMapping = new HashMap<>();
+	private final Map<String, TermVariable> mAuxVarMapping = new HashMap<>();
 
 	public ReplacementVarFactory(final ManagedScript variableManager) {
 		super();
@@ -61,7 +59,7 @@ public class ReplacementVarFactory {
 	public ReplacementVar getOrConstuctReplacementVar(final Term definition) {
 		ReplacementVar repVar = mRepVarMapping.get(definition);
 		if (repVar == null) {
-			final String name = definition.toString();
+			final String name = SmtUtils.removeSmtQuoteCharacters(definition.toString());
 			final TermVariable tv = mVariableManager.constructFreshTermVariable(name, definition.getSort());
 			repVar = new ReplacementVar(definition.toString(), definition, tv);
 			mRepVarMapping.put(definition, repVar);
