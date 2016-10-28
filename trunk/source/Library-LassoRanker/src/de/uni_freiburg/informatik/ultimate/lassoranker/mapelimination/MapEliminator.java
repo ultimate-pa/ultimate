@@ -51,7 +51,6 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarU
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
-import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -59,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ApplicationTermFinder;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ContainsQuantifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.NonTheorySymbol;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.NonTheorySymbolFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
@@ -67,10 +67,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.EqualityAnalysisResult;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.PrenexNormalForm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -298,12 +295,13 @@ public class MapEliminator {
 	 * Given a TransFormula with possibly array accesses or calls of uninterpreted functions, returns a new
 	 * TransFormula, where these are replaced. In general an overapproximation is returned.
 	 * <p>
-	 * The given TransFormula has to be in the collection given to the constructor and its formula has to be in NNF.
+	 * The given TransFormula has to be in the collection given to the constructor and it has to be in NNF and
+	 * quantifier-free.
 	 * <p>
 	 * This method ignores the index analysis
 	 *
 	 * @param transformula
-	 *            The old TransFormulaLR, which might contain maps
+	 *            The old TransFormulaLR (quantifier-free, in NNF), which might contain maps
 	 * @return A TransFormulaLR, where array accesses and calls of uninterpreted functions are replaced
 	 */
 	public TransFormulaLR getRewrittenTransFormula(final TransFormulaLR transformula) {
@@ -315,10 +313,11 @@ public class MapEliminator {
 	 * Given a TransFormula with possibly array accesses or calls of uninterpreted functions, returns a new
 	 * TransFormula, where these are replaced. In general an overapproximation is returned.
 	 * <p>
-	 * The given TransFormula has to be in the collection given to the constructor and its formula has to be in NNF.
+	 * The given TransFormula has to be in the collection given to the constructor and it has to be in NNF and
+	 * quantifier-free.
 	 *
 	 * @param transformula
-	 *            The old TransFormulaLR, which might contain maps
+	 *            The old TransFormulaLR (quantifier-free, in NNF), which might contain maps
 	 * @param equalityAnalysisBefore
 	 *            The invariants that are valid before the transformula
 	 * @param equalityAnalysisAfter
@@ -329,7 +328,13 @@ public class MapEliminator {
 			final EqualityAnalysisResult equalityAnalysisBefore, final EqualityAnalysisResult equalityAnalysisAfter) {
 		assert mTransFormulasToLocalIndices.containsKey(transformula) : "This transformula wasn't preprocessed";
 		final TransFormulaLR newTF = new TransFormulaLR(transformula);
-		final Term term = getQuantifierFreeTerm(newTF.getFormula());
+		final Term term = newTF.getFormula();
+		if (new ContainsQuantifier().containsQuantifier(term)) {
+			throw new UnsupportedOperationException("Quantifiers are not supported");
+		}
+		if (!SmtUtils.isNNF(term)) {
+			throw new UnsupportedOperationException("Only formulae in NNF are supported");
+		}
 		final HashRelation<MapTemplate, ArrayIndex> localIndices = getLocalIndices(newTF,
 				mTransFormulasToLocalIndices.get(transformula));
 		final IndexAnalyzer indexAnalyzer = new IndexAnalyzer(term, computeDoubletons(localIndices), mSymbolTable,
@@ -349,27 +354,9 @@ public class MapEliminator {
 		}
 		final Term mapFreeTerm = replaceMapReads(newTF, SmtUtils.and(mScript, conjuncts));
 		assert SmtUtils.isArrayFree(mapFreeTerm) : "The formula contains still arrays";
-		assert !SmtUtils.containsUninterpretedFunctioApplication(mapFreeTerm) : "The formula contains still UFs";
+		assert !SmtUtils.containsUninterpretedFunctionApplication(mapFreeTerm) : "The formula contains still UFs";
 		setFormulaAndSimplify(newTF, mapFreeTerm);
 		return newTF;
-	}
-
-	/**
-	 * Returns an overapproximation of {@code term} without quantifiers. The quantified variables are added to the
-	 * aux-var-set. So forall-terms implicitly overapproximated with exists-terms. Only this term is processed by the
-	 * map-elimination.
-	 */
-	private Term getQuantifierFreeTerm(final Term term) {
-		final Term nnf = new Nnf(mManagedScript, mServices, QuantifierHandling.KEEP).transform(term);
-		final Term pnf = new PrenexNormalForm(mManagedScript).transform(nnf);
-		Term newTerm = pnf;
-		while (newTerm instanceof QuantifiedFormula) {
-			final QuantifiedFormula quantifiedTerm = (QuantifiedFormula) newTerm;
-			mAuxVars.addAll(Arrays.asList(quantifiedTerm.getVariables()));
-			newTerm = quantifiedTerm.getSubformula();
-		}
-		return newTerm;
-
 	}
 
 	private HashRelation<MapTemplate, ArrayIndex> getLocalIndices(final TransFormulaLR transformula,

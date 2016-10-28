@@ -578,7 +578,7 @@ public final class SmtUtils {
 	/**
 	 * Returns true, iff the term contains an UF-application
 	 */
-	public static boolean containsUninterpretedFunctioApplication(final Term term) {
+	public static boolean containsUninterpretedFunctionApplication(final Term term) {
 		for (final NonTheorySymbol<?> s : new NonTheorySymbolFinder().findNonTheorySymbols(term)) {
 			if (s instanceof NonTheorySymbol.Function) {
 				return true;
@@ -631,6 +631,26 @@ public final class SmtUtils {
 			return !allParamsAreBool((ApplicationTerm) term);
 		}
 		return term instanceof TermVariable;
+	}
+
+	/**
+	 * Returns true iff the given term is in NNF (only {@code and}, {@code or} and {@code not} as logical operators,
+	 * where only atoms occurs after a {@code not}).
+	 */
+	public static boolean isNNF(final Term term) {
+		for (final String f : Arrays.asList("=", "=>", "xor", "distinct", "ite")) {
+			for (final ApplicationTerm a : new ApplicationTermFinder(f, true).findMatchingSubterms(term)) {
+				if (allParamsAreBool(a)) {
+					return false;
+				}
+			}
+		}
+		for (final ApplicationTerm a : new ApplicationTermFinder("not", true).findMatchingSubterms(term)) {
+			if (!isAtomicFormula(a.getParameters()[0])) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	/**
