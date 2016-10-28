@@ -41,16 +41,19 @@ public class ReplacementVar implements IProgramVar {
 
 	private final String mName;
 	private final Term mDefinition;
+	private final TermVariable mTermVariable;
 
 	/**
 	 * @param name
 	 *            a globally unique name
 	 * @param definition
 	 *            the definition of this replacement variable, i.e., the term it replaces
+	 * @param tv 
 	 */
-	public ReplacementVar(final String name, final Term definition) {
+	public ReplacementVar(final String name, final Term definition, final TermVariable tv) {
 		mName = name;
 		mDefinition = definition;
+		mTermVariable = tv;
 	}
 
 	/**
@@ -87,7 +90,7 @@ public class ReplacementVar implements IProgramVar {
 
 	@Override
 	public TermVariable getTermVariable() {
-		throw new UnsupportedOperationException("Matthias will implement this if you need it.");
+		return mTermVariable;
 	}
 
 	@Override

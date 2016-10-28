@@ -61,7 +61,9 @@ public class ReplacementVarFactory {
 	public ReplacementVar getOrConstuctReplacementVar(final Term definition) {
 		ReplacementVar repVar = mRepVarMapping.get(definition);
 		if (repVar == null) {
-			repVar = new ReplacementVar(definition.toString(), definition);
+			final String name = definition.toString();
+			final TermVariable tv = mVariableManager.constructFreshTermVariable(name, definition.getSort());
+			repVar = new ReplacementVar(definition.toString(), definition, tv);
 			mRepVarMapping.put(definition, repVar);
 		}
 		return repVar;
