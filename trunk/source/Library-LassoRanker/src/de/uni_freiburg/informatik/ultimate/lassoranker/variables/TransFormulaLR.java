@@ -137,8 +137,8 @@ public class TransFormulaLR implements Serializable {
 			final ApplicationTerm constVar = progConst.getDefaultConstant();
 			final ReplacementVar repVar =
 					replacementVarFactory.getOrConstuctReplacementVar(constVar);
-			newTf.addInVar(repVar, constVar);
-			newTf.addOutVar(repVar, constVar);
+			newTf.addInVar(repVar, repVar.getTermVariable());
+			newTf.addOutVar(repVar, repVar.getTermVariable());
 		}
 		return newTf;
 	}

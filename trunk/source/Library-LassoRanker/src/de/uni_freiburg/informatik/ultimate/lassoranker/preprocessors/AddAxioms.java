@@ -50,7 +50,7 @@ public class AddAxioms extends TransitionPreprocessor {
 	public static final String s_Description = "Add axioms to the transition";
 
 	
-	private final Term[] maxioms;
+	private final Term[] mAxioms;
 
 
 	private final Set<ApplicationTerm> mConstants = new HashSet<>();
@@ -61,29 +61,29 @@ public class AddAxioms extends TransitionPreprocessor {
 	/**
 	 * @param axioms the axioms that should be added to stem and loop
 	 */
-	public AddAxioms(ReplacementVarFactory replacementVarFactory, Term[] axioms) {
+	public AddAxioms(final ReplacementVarFactory replacementVarFactory, final Term[] axioms) {
 		mReplacementVarFactory = replacementVarFactory;
 		if (axioms == null) {
-			maxioms = new Term[0];
+			mAxioms = new Term[0];
 		} else {
-			maxioms = axioms;
+			mAxioms = axioms;
 		}
-		for (final Term axiom : maxioms) {
+		for (final Term axiom : mAxioms) {
 			mConstants.addAll((new ConstantFinder()).findConstants(axiom));
 		}
 	}
 	
 	@Override
-	public TransFormulaLR process(Script script, TransFormulaLR tf) throws TermException {
+	public TransFormulaLR process(final Script script, final TransFormulaLR tf) throws TermException {
 		// Add constant variables as in- and outVars
 		for (final ApplicationTerm constVar : mConstants) {
 			final ReplacementVar repVar = 
 					mReplacementVarFactory.getOrConstuctReplacementVar(constVar); 
-			tf.addInVar(repVar, constVar);
-			tf.addOutVar(repVar, constVar);
+			tf.addInVar(repVar, repVar.getTermVariable());
+			tf.addOutVar(repVar, repVar.getTermVariable());
 		}
 		Term formula = tf.getFormula();
-		final Term axioms = Util.and(script, maxioms);
+		final Term axioms = Util.and(script, mAxioms);
 		formula = Util.and(script, formula, axioms);
 		tf.setFormula(formula);
 		return tf;
