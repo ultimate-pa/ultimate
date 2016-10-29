@@ -230,12 +230,12 @@ public class LassoPartitioneer {
 	private void addInOuAuxVar(final Part part, final TransFormulaLR transformulaLR, final NonTheorySymbol<?> symbol) {
 		final TransFormulaLR original = mSymbol2OriginalTF.get(part, symbol);
 		boolean isConstant;
-		Term term;
+		TermVariable term;
 		if (symbol instanceof NonTheorySymbol.Variable) {
-			term = (Term) symbol.getSymbol();
+			term = (TermVariable) symbol.getSymbol();
 			isConstant = false;
 		} else if (symbol instanceof NonTheorySymbol.Constant) {
-			term = (Term) symbol.getSymbol();
+			term = (TermVariable) symbol.getSymbol();
 			isConstant = true;
 		} else {
 			throw new UnsupportedOperationException("function symbols not yet supported");
@@ -252,7 +252,7 @@ public class LassoPartitioneer {
 			transformulaLR.addOutVar(outVarRankVar, term);
 		}
 		if (isAuxVar) {
-			final TermVariable auxVarTv = (TermVariable) term;
+			final TermVariable auxVarTv = term;
 			transformulaLR.addAuxVars(Collections.singleton(auxVarTv));
 		}
 	}

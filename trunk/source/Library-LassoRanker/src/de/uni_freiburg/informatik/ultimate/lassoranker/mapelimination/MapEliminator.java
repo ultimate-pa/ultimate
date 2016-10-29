@@ -526,7 +526,7 @@ public class MapEliminator {
 						break;
 					}
 				}
-				final Term termVar = getFreshTermVar(term);
+				final TermVariable termVar = getFreshTermVar(term);
 				if (!transformula.getInVars().containsKey(var)) {
 					transformula.addInVar(var, termVar);
 				}

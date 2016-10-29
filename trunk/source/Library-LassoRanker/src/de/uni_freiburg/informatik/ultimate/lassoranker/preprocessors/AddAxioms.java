@@ -27,7 +27,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
@@ -39,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ConstantFinder;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 
 
 /**
@@ -75,15 +78,17 @@ public class AddAxioms extends TransitionPreprocessor {
 	
 	@Override
 	public TransFormulaLR process(final Script script, final TransFormulaLR tf) throws TermException {
+		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		// Add constant variables as in- and outVars
 		for (final ApplicationTerm constVar : mConstants) {
 			final ReplacementVar repVar = 
 					mReplacementVarFactory.getOrConstuctReplacementVar(constVar); 
 			tf.addInVar(repVar, repVar.getTermVariable());
 			tf.addOutVar(repVar, repVar.getTermVariable());
+			substitutionMapping.put(constVar, repVar.getTermVariable());
 		}
+		final Term axioms = new Substitution(script, substitutionMapping).transform(Util.and(script, mAxioms));
 		Term formula = tf.getFormula();
-		final Term axioms = Util.and(script, mAxioms);
 		formula = Util.and(script, formula, axioms);
 		tf.setFormula(formula);
 		return tf;
