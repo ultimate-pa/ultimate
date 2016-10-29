@@ -35,12 +35,12 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVar;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarFactory;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLRUtils;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ModifiableTransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -127,13 +127,13 @@ public abstract class RewriteTermVariables extends TransitionPreprocessor {
 	 * ReplacementVars and replacing Terms (and put them into the substitution
 	 * mapping).
 	 */
-	private final void generateRepAndAuxVars(final TransFormulaLR tf) {
+	private final void generateRepAndAuxVars(final ModifiableTransFormula tf) {
 		final ArrayList<IProgramVar> rankVarsWithDistinctInVar = new ArrayList<>();
 		final ArrayList<IProgramVar> rankVarsWithDistinctOutVar = new ArrayList<>();
 		final ArrayList<IProgramVar> rankVarsWithCommonInVarOutVar = new ArrayList<>();
 		for (final Map.Entry<IProgramVar, TermVariable> entry : tf.getInVars().entrySet()) {
 			if (hasToBeReplaced(entry.getValue())) {
-				if (TransFormulaLRUtils.inVarAndOutVarCoincide(entry.getKey(), tf)) {
+				if (ModifiableTransFormulaUtils.inVarAndOutVarCoincide(entry.getKey(), tf)) {
 					rankVarsWithCommonInVarOutVar.add(entry.getKey());
 				} else {
 					rankVarsWithDistinctInVar.add(entry.getKey());
@@ -142,7 +142,7 @@ public abstract class RewriteTermVariables extends TransitionPreprocessor {
 		}
 		for (final Map.Entry<IProgramVar, TermVariable> entry : tf.getOutVars().entrySet()) {
 			if (hasToBeReplaced(entry.getValue())) {
-				if (TransFormulaLRUtils.inVarAndOutVarCoincide(entry.getKey(), tf)) {
+				if (ModifiableTransFormulaUtils.inVarAndOutVarCoincide(entry.getKey(), tf)) {
 					// do nothing, was already added
 				} else {
 					rankVarsWithDistinctOutVar.add(entry.getKey());
@@ -216,9 +216,9 @@ public abstract class RewriteTermVariables extends TransitionPreprocessor {
 	}
 
 	@Override
-	public final TransFormulaLR process(final Script script, final TransFormulaLR tf) throws TermException {
+	public final ModifiableTransFormula process(final Script script, final ModifiableTransFormula tf) throws TermException {
 		generateRepAndAuxVars(tf);
-		final TransFormulaLR newTf = new TransFormulaLR(tf);
+		final ModifiableTransFormula newTf = new ModifiableTransFormula(tf);
 		final Term newFormula = (new SubstitutionWithLocalSimplification(
 				mScript, mSubstitutionMapping)).transform(tf.getFormula());
 		newTf.setFormula(newFormula);

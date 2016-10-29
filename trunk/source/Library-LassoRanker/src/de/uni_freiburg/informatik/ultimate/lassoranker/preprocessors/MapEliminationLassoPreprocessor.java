@@ -39,9 +39,9 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.mapelimination.MapElimina
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArrays.EqualitySupportingInvariantAnalysis;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.LassoUnderConstruction;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarFactory;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.EqualityAnalysisResult;
@@ -104,9 +104,9 @@ public class MapEliminationLassoPreprocessor extends LassoPreprocessor {
 				.addAll(equalityAnalysisLoop.constructListOfEqualities(mManagedScript.getScript()));
 		mArrayIndexSupportingInvariants
 				.addAll(equalityAnalysisLoop.constructListOfNotEquals(mManagedScript.getScript()));
-		final TransFormulaLR newStem = elim.getRewrittenTransFormula(lasso.getStem(), equalityAnalysisStem,
+		final ModifiableTransFormula newStem = elim.getRewrittenTransFormula(lasso.getStem(), equalityAnalysisStem,
 				equalityAnalysisLoop);
-		final TransFormulaLR newLoop = elim.getRewrittenTransFormula(lasso.getLoop(), equalityAnalysisLoop,
+		final ModifiableTransFormula newLoop = elim.getRewrittenTransFormula(lasso.getLoop(), equalityAnalysisLoop,
 				equalityAnalysisLoop);
 		final LassoUnderConstruction newLasso = new LassoUnderConstruction(newStem, newLoop);
 		assert RewriteArrays2.checkStemImplication(mServices,

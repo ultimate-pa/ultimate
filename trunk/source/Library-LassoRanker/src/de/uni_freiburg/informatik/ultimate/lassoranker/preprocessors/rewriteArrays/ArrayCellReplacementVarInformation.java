@@ -30,9 +30,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVar;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 
@@ -67,14 +67,14 @@ public class ArrayCellReplacementVarInformation {
 	/**
 	 * TransFormula in which arrayInstance and index occurred.
 	 */
-	private final TransFormulaLR mTransFormulaLR;
+	private final ModifiableTransFormula mTransFormulaLR;
 	
 	private ReplacementVar mReplacementVar;
 	
 	
 	public ArrayCellReplacementVarInformation(TermVariable arrayInstance,
 			TermVariable arrayRepresentative, ArrayIndex index,
-			ArrayIndex indexRepresentative, VarType varType, TransFormulaLR transFormulaLR) {
+			ArrayIndex indexRepresentative, VarType varType, ModifiableTransFormula transFormulaLR) {
 		super();
 		mArrayInstance = arrayInstance;
 		mArrayRepresentative = arrayRepresentative;

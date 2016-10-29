@@ -32,8 +32,8 @@ import java.util.Collection;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.LassoPartitioneer;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.LassoUnderConstruction;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 
 
 /**
@@ -75,8 +75,8 @@ public abstract class LassoPreprocessor {
 	 * @param newTF the new TransFormulaLR (after processing
 	 * @return whether the result is ok
 	 */
-	protected boolean checkSoundness(Script script, TransFormulaLR oldTF,
-			TransFormulaLR newTF) {
+	protected boolean checkSoundness(Script script, ModifiableTransFormula oldTF,
+			ModifiableTransFormula newTF) {
 		return true; // check nothing
 	}
 	

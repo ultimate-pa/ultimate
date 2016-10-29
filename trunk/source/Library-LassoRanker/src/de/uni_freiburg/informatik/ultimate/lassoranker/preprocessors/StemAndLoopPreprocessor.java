@@ -32,8 +32,8 @@ import java.util.Collections;
 
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.LassoUnderConstruction;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 
 
 /**
@@ -72,10 +72,10 @@ public class StemAndLoopPreprocessor extends LassoPreprocessor {
 	@Override
 	public Collection<LassoUnderConstruction> process(
 			final LassoUnderConstruction lasso) throws TermException {
-		final TransFormulaLR newStem = mTransitionPreprocessor.process(mScript, lasso.getStem());
+		final ModifiableTransFormula newStem = mTransitionPreprocessor.process(mScript, lasso.getStem());
 		assert mTransitionPreprocessor.checkSoundness(mScript, lasso.getStem(), newStem) :
 			"Soundness check failed for preprocessor " + this.getClass().getSimpleName();
-		final TransFormulaLR newLoop = mTransitionPreprocessor.process(mScript, lasso.getLoop());
+		final ModifiableTransFormula newLoop = mTransitionPreprocessor.process(mScript, lasso.getLoop());
 		final LassoUnderConstruction newLasso = new LassoUnderConstruction(newStem, newLoop);
 		assert mTransitionPreprocessor.checkSoundness(mScript, lasso.getLoop(), newLoop) :
 			"Soundness check failed for preprocessor " + this.getClass().getSimpleName();

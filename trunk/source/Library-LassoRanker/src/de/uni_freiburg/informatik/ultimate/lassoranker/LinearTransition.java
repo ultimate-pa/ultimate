@@ -39,11 +39,11 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.IntegralHul
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.InequalityConverter;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.InequalityConverter.NlaHandling;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarUtils;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 
@@ -202,7 +202,7 @@ public class LinearTransition implements Serializable {
 	 * @param nlaHandling 
 	 * @throws TermException if the supplied term does not have the correct form
 	 */
-	public static LinearTransition fromTransFormulaLR(final TransFormulaLR tf, 
+	public static LinearTransition fromTransFormulaLR(final ModifiableTransFormula tf, 
 			final NlaHandling nlaHandling)
 			throws TermException {
 		final List<List<LinearInequality>> polyhedra =

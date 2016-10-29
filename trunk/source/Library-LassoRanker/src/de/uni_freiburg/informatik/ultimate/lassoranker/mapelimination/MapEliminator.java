@@ -26,10 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.lassoranker.mapelimination;
 
-import static de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLRUtils.allVariablesAreInVars;
-import static de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLRUtils.allVariablesAreOutVars;
-import static de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLRUtils.allVariablesAreVisible;
-import static de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLRUtils.translateTermVariablesToDefinitions;
+import static de.uni_freiburg.informatik.ultimate.lassoranker.variables.ModifiableTransFormulaUtils.allVariablesAreInVars;
+import static de.uni_freiburg.informatik.ultimate.lassoranker.variables.ModifiableTransFormulaUtils.allVariablesAreOutVars;
+import static de.uni_freiburg.informatik.ultimate.lassoranker.variables.ModifiableTransFormulaUtils.allVariablesAreVisible;
+import static de.uni_freiburg.informatik.ultimate.lassoranker.variables.ModifiableTransFormulaUtils.translateTermVariablesToDefinitions;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -48,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.Activator;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArrays.IndexAnalyzer;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarUtils;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -56,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ApplicationTermFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ContainsQuantifier;
@@ -104,7 +104,7 @@ public class MapEliminator {
 	private final Set<String> mUninterpretedFunctions;
 
 	// Stores for each transformula, which arrays/uf-calls are accssed in it
-	private final Map<TransFormulaLR, HashRelation<MapTemplate, ArrayIndex>> mTransFormulasToLocalIndices;
+	private final Map<ModifiableTransFormula, HashRelation<MapTemplate, ArrayIndex>> mTransFormulasToLocalIndices;
 
 	private final MapEliminationSettings mSettings;
 
@@ -126,7 +126,7 @@ public class MapEliminator {
 	 */
 	public MapEliminator(final IUltimateServiceProvider services, final ManagedScript managedScript,
 			final Boogie2SmtSymbolTable symbolTable, final ReplacementVarFactory replacementVarFactory,
-			final Collection<TransFormulaLR> transformulas, final MapEliminationSettings settings) {
+			final Collection<ModifiableTransFormula> transformulas, final MapEliminationSettings settings) {
 		mSettings = settings;
 		mServices = services;
 		mScript = managedScript.getScript();
@@ -154,9 +154,9 @@ public class MapEliminator {
 	/**
 	 * Finds the array accesses in the transformulas and merges the indices if necessary.
 	 */
-	private void findAllIndices(final Collection<TransFormulaLR> transformulas) {
+	private void findAllIndices(final Collection<ModifiableTransFormula> transformulas) {
 		// Get all array indices from each transformula (only necessary, if it contains arrays)
-		for (final TransFormulaLR tf : transformulas) {
+		for (final ModifiableTransFormula tf : transformulas) {
 			mTransFormulasToLocalIndices.put(tf, new HashRelation<>());
 			findIndices(tf);
 		}
@@ -189,7 +189,7 @@ public class MapEliminator {
 	/**
 	 * A method that finds arrays and their indices in the given {@code transformula} and stores them in the maps.
 	 */
-	private void findIndices(final TransFormulaLR transformula) {
+	private void findIndices(final ModifiableTransFormula transformula) {
 		final Term term = transformula.getFormula();
 		for (final MultiDimensionalSelect select : MultiDimensionalSelect.extractSelectDeep(term, false)) {
 			final ArrayWrite arrayWrite = new ArrayWrite(select.getArray());
@@ -228,7 +228,7 @@ public class MapEliminator {
 		}
 	}
 
-	private void findIndicesArrayWrite(final ArrayWrite arrayWrite, final TransFormulaLR transformula) {
+	private void findIndicesArrayWrite(final ArrayWrite arrayWrite, final ModifiableTransFormula transformula) {
 		for (final Pair<ArrayIndex, Term> pair : arrayWrite.getIndexValuePairs()) {
 			addArrayAccessToRelation(arrayWrite.getOldArray(), pair.getFirst(), transformula);
 		}
@@ -237,7 +237,7 @@ public class MapEliminator {
 	/**
 	 * Adds the info, that {@code array} is accessed by {@code index} to the hash relations.
 	 */
-	private void addArrayAccessToRelation(final Term array, final ArrayIndex index, final TransFormulaLR transformula) {
+	private void addArrayAccessToRelation(final Term array, final ArrayIndex index, final ModifiableTransFormula transformula) {
 		if (!allVariablesAreVisible(array, transformula)) {
 			return;
 		}
@@ -268,7 +268,7 @@ public class MapEliminator {
 	 * relations.
 	 */
 	private void addCallToRelation(final String functionName, final ArrayIndex index,
-			final TransFormulaLR transformula) {
+			final ModifiableTransFormula transformula) {
 		if (index.isEmpty()) {
 			return;
 		}
@@ -304,7 +304,7 @@ public class MapEliminator {
 	 *            The old TransFormulaLR (quantifier-free, in NNF), which might contain maps
 	 * @return A TransFormulaLR, where array accesses and calls of uninterpreted functions are replaced
 	 */
-	public TransFormulaLR getRewrittenTransFormula(final TransFormulaLR transformula) {
+	public ModifiableTransFormula getRewrittenTransFormula(final ModifiableTransFormula transformula) {
 		final EqualityAnalysisResult emptyResult = new EqualityAnalysisResult(mDoubletons);
 		return getRewrittenTransFormula(transformula, emptyResult, emptyResult);
 	}
@@ -324,10 +324,10 @@ public class MapEliminator {
 	 *            The invariants that are valid after the transformula
 	 * @return A TransFormulaLR, where array accesses and calls of uninterpreted functions are replaced
 	 */
-	public TransFormulaLR getRewrittenTransFormula(final TransFormulaLR transformula,
+	public ModifiableTransFormula getRewrittenTransFormula(final ModifiableTransFormula transformula,
 			final EqualityAnalysisResult equalityAnalysisBefore, final EqualityAnalysisResult equalityAnalysisAfter) {
 		assert mTransFormulasToLocalIndices.containsKey(transformula) : "This transformula wasn't preprocessed";
-		final TransFormulaLR newTF = new TransFormulaLR(transformula);
+		final ModifiableTransFormula newTF = new ModifiableTransFormula(transformula);
 		final Term term = newTF.getFormula();
 		if (new ContainsQuantifier().containsQuantifier(term)) {
 			throw new UnsupportedOperationException("Quantifiers are not supported");
@@ -359,7 +359,7 @@ public class MapEliminator {
 		return newTF;
 	}
 
-	private HashRelation<MapTemplate, ArrayIndex> getLocalIndices(final TransFormulaLR transformula,
+	private HashRelation<MapTemplate, ArrayIndex> getLocalIndices(final ModifiableTransFormula transformula,
 			final HashRelation<MapTemplate, ArrayIndex> occurringIndices) {
 		final HashRelation<MapTemplate, ArrayIndex> result = new HashRelation<>();
 		result.addAll(occurringIndices);
@@ -426,7 +426,7 @@ public class MapEliminator {
 	/**
 	 * This methods eliminates aux-var from the term, sets it to the transformula and simplifies the transformula then.
 	 */
-	private void setFormulaAndSimplify(final TransFormulaLR transformula, final Term term) {
+	private void setFormulaAndSimplify(final ModifiableTransFormula transformula, final Term term) {
 		final Term newTerm;
 		if (mAuxVars.isEmpty()) {
 			newTerm = term;
@@ -446,7 +446,7 @@ public class MapEliminator {
 	/**
 	 * Removes unnecessary variables from the transformula.
 	 */
-	private static void clearTransFormula(final TransFormulaLR transformula) {
+	private static void clearTransFormula(final ModifiableTransFormula transformula) {
 		final List<IProgramVar> inVarsToRemove = new ArrayList<>();
 		final List<IProgramVar> outVarsToRemove = new ArrayList<>();
 		final List<TermVariable> auxVarsToRemove = new ArrayList<>();
@@ -494,7 +494,7 @@ public class MapEliminator {
 	 *            A store-free term
 	 * @return A new map-free term
 	 */
-	private Term replaceMapReads(final TransFormulaLR transformula, final Term term) {
+	private Term replaceMapReads(final ModifiableTransFormula transformula, final Term term) {
 		addReplacementVarsToTransFormula(transformula);
 		final Map<Term, Term> substitution = new HashMap<>();
 		for (final ApplicationTerm select : new ApplicationTermFinder("select", true).findMatchingSubterms(term)) {
@@ -513,7 +513,7 @@ public class MapEliminator {
 	/**
 	 * Adds all replacement-vars as in- and out-vars to the transformula.
 	 */
-	private void addReplacementVarsToTransFormula(final TransFormulaLR transformula) {
+	private void addReplacementVarsToTransFormula(final ModifiableTransFormula transformula) {
 		for (final MapTemplate template : mMapsToIndices.getDomain()) {
 			for (final ArrayIndex index : mMapsToIndices.getImage(template)) {
 				final Term term = template.getTerm(index);
@@ -546,7 +546,7 @@ public class MapEliminator {
 	 * Returns the corresponding replacementVar (or auxVar) for the given {@code term}. The replacementVars have to be
 	 * already to it added by calling {@code addReplacementVarsToTransFormula}.
 	 */
-	private Term getReplacementVar(final Term term, final TransFormulaLR transformula) {
+	private Term getReplacementVar(final Term term, final ModifiableTransFormula transformula) {
 		if (!allVariablesAreInVars(term, transformula) && !allVariablesAreOutVars(term, transformula)) {
 			return getAndAddAuxVar(term);
 		}
@@ -572,7 +572,7 @@ public class MapEliminator {
 	 *            The valid invariants
 	 * @return A term, that doen't contain store-terms
 	 */
-	private Term replaceStoreTerms(final Term term, final TransFormulaLR transformula,
+	private Term replaceStoreTerms(final Term term, final ModifiableTransFormula transformula,
 			final EqualityAnalysisResult invariants) {
 		final Map<Term, Term> substitutionMap = new HashMap<>();
 		final List<Term> auxVarEqualities = new ArrayList<>();
@@ -619,7 +619,7 @@ public class MapEliminator {
 	 * Replaces a select-store-term (e.g. (select (store a i x) j)) with an aux-var. For this aux-var additional
 	 * equalities are added to as conjuncts to {@code auxVarEqualities}.
 	 */
-	private TermVariable replaceSelectStoreTerm(final Term term, final TransFormulaLR transformula,
+	private TermVariable replaceSelectStoreTerm(final Term term, final ModifiableTransFormula transformula,
 			final EqualityAnalysisResult invariants, final List<Term> auxVarEqualities) {
 		final MultiDimensionalSelect multiDimensionalSelect = new MultiDimensionalSelect(term);
 		final ArrayIndex index = multiDimensionalSelect.getIndex();
@@ -661,7 +661,7 @@ public class MapEliminator {
 	 *            The valid invariants
 	 * @return A term store-free term
 	 */
-	private Term replaceArrayEquality(final Term term, final TransFormulaLR transformula,
+	private Term replaceArrayEquality(final Term term, final ModifiableTransFormula transformula,
 			final EqualityAnalysisResult invariants) {
 		final ArrayWrite arrayWrite = new ArrayWrite(term);
 		final Term oldArray = arrayWrite.getOldArray();
@@ -724,7 +724,7 @@ public class MapEliminator {
 	 * Returns for all assigned terms additional conjuncts. If an index i contains an assigned var and i and j are
 	 * indices of a, the implication: (i = j) => (a[i] = a[j]) is contained in the result
 	 */
-	private List<Term> getAllImplicationsForIndexAssignment(final TransFormulaLR transformula,
+	private List<Term> getAllImplicationsForIndexAssignment(final ModifiableTransFormula transformula,
 			final EqualityAnalysisResult invariants) {
 		final List<Term> result = new ArrayList<>();
 		for (final IProgramVar var : transformula.getAssignedVars()) {
@@ -774,7 +774,7 @@ public class MapEliminator {
 	 *            Switch to return only in- or out-vars
 	 * @return The local term (with in- or out-vars) for the given global term
 	 */
-	private Term getLocalTerm(final Term term, final TransFormulaLR transformula, final boolean returnInVar) {
+	private Term getLocalTerm(final Term term, final ModifiableTransFormula transformula, final boolean returnInVar) {
 		final Map<Term, Term> substitution = new HashMap<>();
 		for (final TermVariable var : term.getFreeVars()) {
 			final IProgramVar programVar = mSymbolTable.getBoogieVar(var);
@@ -808,7 +808,7 @@ public class MapEliminator {
 	 *            Switch to return only in- or out-vars
 	 * @return The local index (with in- or out-vars) for the given global index
 	 */
-	private ArrayIndex getLocalIndex(final ArrayIndex index, final TransFormulaLR transformula,
+	private ArrayIndex getLocalIndex(final ArrayIndex index, final ModifiableTransFormula transformula,
 			final boolean returnInVar) {
 		final List<Term> list = new ArrayList<>();
 		for (final Term t : index) {
@@ -820,7 +820,7 @@ public class MapEliminator {
 	/**
 	 * Return for a given set of global indices, all in- and out-var-versions of this index for the given transformula.
 	 */
-	private Set<ArrayIndex> getInAndOutVarIndices(final Set<ArrayIndex> indices, final TransFormulaLR transformula) {
+	private Set<ArrayIndex> getInAndOutVarIndices(final Set<ArrayIndex> indices, final ModifiableTransFormula transformula) {
 		final Set<ArrayIndex> result = new HashSet<>();
 		for (final ArrayIndex index : indices) {
 			result.add(getLocalIndex(index, transformula, true));
@@ -938,7 +938,7 @@ public class MapEliminator {
 
 	private Term indexEqualityInequalityImpliesValueEquality(final ArrayIndex index, final ArrayIndex equal,
 			final Collection<ArrayIndex> unequal, final Term value1, final Term value2,
-			final EqualityAnalysisResult invariants, final TransFormulaLR transformula) {
+			final EqualityAnalysisResult invariants, final ModifiableTransFormula transformula) {
 		final List<TermVariable> freeVarsFormula = Arrays.asList(transformula.getFormula().getFreeVars());
 		final Term inequality = Util.not(mScript, getEqualTerm(index, equal, invariants));
 		final List<TermVariable> freeVarsInequality = Arrays.asList(inequality.getFreeVars());
@@ -960,7 +960,7 @@ public class MapEliminator {
 	}
 
 	private Term indexEqualityImpliesValueEquality(final ArrayIndex index, final ArrayIndex equal, final Term value1,
-			final Term value2, final EqualityAnalysisResult invariants, final TransFormulaLR transformula) {
+			final Term value2, final EqualityAnalysisResult invariants, final ModifiableTransFormula transformula) {
 		final List<ArrayIndex> emptyList = Collections.emptyList();
 		return indexEqualityInequalityImpliesValueEquality(index, equal, emptyList, value1, value2, invariants,
 				transformula);

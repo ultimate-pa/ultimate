@@ -35,11 +35,11 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVar;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarFactory;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ConstantFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 
@@ -77,7 +77,7 @@ public class AddAxioms extends TransitionPreprocessor {
 	}
 	
 	@Override
-	public TransFormulaLR process(final Script script, final TransFormulaLR tf) throws TermException {
+	public ModifiableTransFormula process(final Script script, final ModifiableTransFormula tf) throws TermException {
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		// Add constant variables as in- and outVars
 		for (final ApplicationTerm constVar : mConstants) {

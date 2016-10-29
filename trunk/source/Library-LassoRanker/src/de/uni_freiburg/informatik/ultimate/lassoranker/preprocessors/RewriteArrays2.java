@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArra
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArrays.TransFormulaLRWithArrayInformation;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.LassoUnderConstruction;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarFactory;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLRUtils;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ModifiableTransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -271,7 +271,7 @@ public class RewriteArrays2 extends LassoPreprocessor {
 	public static boolean checkStemImplication(final IUltimateServiceProvider services, final ILogger logger,
 			final LassoUnderConstruction oldLasso, final LassoUnderConstruction newLasso, 
 			final Boogie2SmtSymbolTable boogie2smt, final ManagedScript script) {
-		final LBool implies = TransFormulaLRUtils.implies(services, logger, oldLasso.getStem(), newLasso.getStem(),
+		final LBool implies = ModifiableTransFormulaUtils.implies(services, logger, oldLasso.getStem(), newLasso.getStem(),
 				script.getScript(), boogie2smt);
 		if (implies != LBool.SAT && implies != LBool.UNSAT) {
 			logger.warn("result of RewriteArrays check is " + implies);

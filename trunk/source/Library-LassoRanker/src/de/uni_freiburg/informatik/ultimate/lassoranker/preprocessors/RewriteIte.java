@@ -28,11 +28,11 @@
 package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors;
 
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IteRemover;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
@@ -56,8 +56,8 @@ public class RewriteIte extends TransitionPreprocessor {
 	}
 	
 	@Override
-	protected boolean checkSoundness(final Script script, final TransFormulaLR oldTF,
-			final TransFormulaLR newTF) {
+	protected boolean checkSoundness(final Script script, final ModifiableTransFormula oldTF,
+			final ModifiableTransFormula newTF) {
 		final Term old_term = oldTF.getFormula();
 		final Term new_term = newTF.getFormula();
 		return LBool.SAT != Util.checkSat(script,
@@ -65,7 +65,7 @@ public class RewriteIte extends TransitionPreprocessor {
 	}
 	
 	@Override
-	public TransFormulaLR process(final Script script, final TransFormulaLR tf) throws TermException {
+	public ModifiableTransFormula process(final Script script, final ModifiableTransFormula tf) throws TermException {
 		final IteRemover iteRemover = new IteRemover(mMgdScript);
 		tf.setFormula(iteRemover.transform(tf.getFormula()));
 		return tf;

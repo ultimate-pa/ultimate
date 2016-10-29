@@ -35,10 +35,10 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarFactory;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -117,13 +117,13 @@ public class RewriteDivision extends TransformerPreprocessor {
 	}
 	
 	@Override
-	public TransFormulaLR process(final Script script, final TransFormulaLR tf) throws TermException {
+	public ModifiableTransFormula process(final Script script, final ModifiableTransFormula tf) throws TermException {
 		// Clear the data structures
 		mAuxVars.clear();
 		mAuxTerms.clear();
 		
 		// Call parent that applies the TermTransformer
-		final TransFormulaLR new_tf = super.process(script, tf);
+		final ModifiableTransFormula new_tf = super.process(script, tf);
 		
 		// Add auxTerms to the transition
 		final Term formula = new_tf.getFormula();
@@ -135,8 +135,8 @@ public class RewriteDivision extends TransformerPreprocessor {
 	}
 	
 	@Override
-	protected boolean checkSoundness(final Script script, final TransFormulaLR oldTF,
-			final TransFormulaLR newTF) {
+	protected boolean checkSoundness(final Script script, final ModifiableTransFormula oldTF,
+			final ModifiableTransFormula newTF) {
 		final Term old_term = oldTF.getFormula();
 		final Term old_termwith_def = Util.and(script, old_term,
 				Util.and(script, mAuxTerms.toArray(new Term[mAuxTerms.size()])));

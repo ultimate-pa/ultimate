@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.NonTheorySymbol;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
@@ -63,8 +64,8 @@ public class LassoPartitioneer {
 	
 	private enum Part { STEM, LOOP };
 	
-	private final NestedMap2<Part, NonTheorySymbol<?>, TransFormulaLR> mSymbol2OriginalTF = 
-			new NestedMap2<Part, NonTheorySymbol<?>, TransFormulaLR>();
+	private final NestedMap2<Part, NonTheorySymbol<?>, ModifiableTransFormula> mSymbol2OriginalTF = 
+			new NestedMap2<Part, NonTheorySymbol<?>, ModifiableTransFormula>();
 	private HashRelation<NonTheorySymbol<?>, Term> mSymbol2StemConjuncts;
 	/**
 	 * NonTheorySymbols of stem that do not occur in any conjunct (only occur as
@@ -165,8 +166,8 @@ public class LassoPartitioneer {
 					&& equivalentLoopConjuncts.isEmpty() && equivalentLoopSymbolsWithoutConjunct.isEmpty()) {
 				// do nothing
 			} else {
-				final TransFormulaLR stemTransformulaLR = constructTransFormulaLR(Part.STEM, equivalentStemConjuncts, equivalentStemSymbolsWithoutConjunct);
-				final TransFormulaLR loopTransformulaLR = constructTransFormulaLR(Part.LOOP, equivalentLoopConjuncts, equivalentLoopSymbolsWithoutConjunct);
+				final ModifiableTransFormula stemTransformulaLR = constructTransFormulaLR(Part.STEM, equivalentStemConjuncts, equivalentStemSymbolsWithoutConjunct);
+				final ModifiableTransFormula loopTransformulaLR = constructTransFormulaLR(Part.LOOP, equivalentLoopConjuncts, equivalentLoopSymbolsWithoutConjunct);
 				mNewLassos.add(new LassoUnderConstruction(stemTransformulaLR, loopTransformulaLR));
 			}
 		}
@@ -174,8 +175,8 @@ public class LassoPartitioneer {
 		if (emptyOrTrue(mStemConjunctsWithoutSymbols) && emptyOrTrue(mLoopConjunctsWithoutSymbols)) {
 			// do nothing
 		} else {
-			final TransFormulaLR stemTransformulaLR = constructTransFormulaLR(Part.STEM, mStemConjunctsWithoutSymbols);
-			final TransFormulaLR loopTransformulaLR = constructTransFormulaLR(Part.LOOP, mLoopConjunctsWithoutSymbols);
+			final ModifiableTransFormula stemTransformulaLR = constructTransFormulaLR(Part.STEM, mStemConjunctsWithoutSymbols);
+			final ModifiableTransFormula loopTransformulaLR = constructTransFormulaLR(Part.LOOP, mLoopConjunctsWithoutSymbols);
 			mNewLassos.add(new LassoUnderConstruction(stemTransformulaLR, loopTransformulaLR));
 		}
 	}
@@ -192,7 +193,7 @@ public class LassoPartitioneer {
 	}
 
 	private void extractInVarAndOutVarSymbols(final IProgramVar rv,
-			final Set<NonTheorySymbol<?>> symbols, final TransFormulaLR transFormulaLR) {
+			final Set<NonTheorySymbol<?>> symbols, final ModifiableTransFormula transFormulaLR) {
 		final Term inVar = transFormulaLR.getInVars().get(rv);
 		if (inVar != null) {
 			symbols.add(constructSymbol(inVar));
@@ -204,11 +205,11 @@ public class LassoPartitioneer {
 		assert (inVar == null) == (outVar == null) : "both or none";
 	}
 	
-	private TransFormulaLR constructTransFormulaLR(
+	private ModifiableTransFormula constructTransFormulaLR(
 			final Part part, final Set<Term> equivalentConjuncts, final Set<NonTheorySymbol<?>> equivalentVariablesWithoutConjunct) {
-		TransFormulaLR transformulaLR;
+		ModifiableTransFormula transformulaLR;
 		final Term formula = Util.and(mScript, equivalentConjuncts.toArray(new Term[equivalentConjuncts.size()]));
-		transformulaLR = new TransFormulaLR(formula);
+		transformulaLR = new ModifiableTransFormula(formula);
 		for (final NonTheorySymbol<?> symbol : NonTheorySymbol.extractNonTheorySymbols(formula)) {
 			addInOuAuxVar(part, transformulaLR, symbol);
 		}
@@ -218,17 +219,17 @@ public class LassoPartitioneer {
 		return transformulaLR;
 	}
 	
-	private TransFormulaLR constructTransFormulaLR(
+	private ModifiableTransFormula constructTransFormulaLR(
 			final Part part, final List<Term> conjunctsWithoutSymbols) {
-		TransFormulaLR transformulaLR;
+		ModifiableTransFormula transformulaLR;
 		final Term formula = Util.and(mScript, conjunctsWithoutSymbols.toArray(new Term[conjunctsWithoutSymbols.size()]));
-		transformulaLR = new TransFormulaLR(formula);
+		transformulaLR = new ModifiableTransFormula(formula);
 		return transformulaLR;
 	}
 
 
-	private void addInOuAuxVar(final Part part, final TransFormulaLR transformulaLR, final NonTheorySymbol<?> symbol) {
-		final TransFormulaLR original = mSymbol2OriginalTF.get(part, symbol);
+	private void addInOuAuxVar(final Part part, final ModifiableTransFormula transformulaLR, final NonTheorySymbol<?> symbol) {
+		final ModifiableTransFormula original = mSymbol2OriginalTF.get(part, symbol);
 		boolean isConstant;
 		TermVariable term;
 		if (symbol instanceof NonTheorySymbol.Variable) {
@@ -259,7 +260,7 @@ public class LassoPartitioneer {
 
 
 	private HashRelation<NonTheorySymbol<?>, Term> extractSymbols(
-			final Part part, final TransFormulaLR tf, 
+			final Part part, final ModifiableTransFormula tf, 
 			final HashRelation<NonTheorySymbol<?>, Term> symbol2Conjuncts, 
 			final HashSet<NonTheorySymbol<?>> symbolsWithoutConjuncts,
 			final List<Term> conjunctsWithoutSymbols) {
@@ -274,7 +275,7 @@ public class LassoPartitioneer {
 				conjunctsWithoutSymbols.add(conjunct);
 			} else {
 				for (final NonTheorySymbol<?> symbol : allSymbolsOfConjunct) {
-					final TransFormulaLR oldValue = mSymbol2OriginalTF.put(part, symbol, tf);
+					final ModifiableTransFormula oldValue = mSymbol2OriginalTF.put(part, symbol, tf);
 					assert oldValue == null || oldValue == tf : "may not be modified";
 					allSymbolsOfConjunct.add(symbol);
 					if (mEquivalentSymbols.find(symbol) == null) {
@@ -296,7 +297,7 @@ public class LassoPartitioneer {
 
 
 	private void addIfNotAlreadyAdded(
-			final Part part, final HashSet<NonTheorySymbol<?>> symbolsWithoutConjuncts, final TransFormulaLR tf,
+			final Part part, final HashSet<NonTheorySymbol<?>> symbolsWithoutConjuncts, final ModifiableTransFormula tf,
 			final Term tvOrConstant,
 			final HashRelation<NonTheorySymbol<?>, Term> symbol2Conjuncts) {
 		final NonTheorySymbol<?> symbol = constructSymbol(tvOrConstant);
@@ -306,7 +307,7 @@ public class LassoPartitioneer {
 				mEquivalentSymbols.makeEquivalenceClass(symbol);
 			}
 			symbolsWithoutConjuncts.add(symbol);
-			final TransFormulaLR oldValue = mSymbol2OriginalTF.put(part, symbol, tf);
+			final ModifiableTransFormula oldValue = mSymbol2OriginalTF.put(part, symbol, tf);
 			assert oldValue == null || oldValue == tf : "may not be modified";
 		}
 	}

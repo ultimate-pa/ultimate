@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.LassoPrepro
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.InequalityConverter.NlaHandling;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.RunningTaskInfo;
@@ -114,8 +115,8 @@ public class LassoBuilder {
 
 		mLassosUC = new ArrayList<>();
 		mLassosUC.add(
-				new LassoUnderConstruction(TransFormulaLR.buildTransFormula(stem, mReplacementVarFactory, mgdScript),
-						TransFormulaLR.buildTransFormula(loop, mReplacementVarFactory, mgdScript)));
+				new LassoUnderConstruction(ModifiableTransFormulaUtils.buildTransFormula(stem, mReplacementVarFactory, mgdScript),
+						ModifiableTransFormulaUtils.buildTransFormula(loop, mReplacementVarFactory, mgdScript)));
 	}
 
 	/**
@@ -207,8 +208,8 @@ public class LassoBuilder {
 		final int n = mLassosUC.size();
 		final List<Lasso> lassos = new ArrayList<>(n);
 		for (int i = 0; i < n; ++i) {
-			final TransFormulaLR stemTF = mLassosUC.get(i).getStem();
-			final TransFormulaLR loopTF = mLassosUC.get(i).getLoop();
+			final ModifiableTransFormula stemTF = mLassosUC.get(i).getStem();
+			final ModifiableTransFormula loopTF = mLassosUC.get(i).getLoop();
 			final LinearTransition stem = LinearTransition.fromTransFormulaLR(stemTF, mNlaHandling);
 			final LinearTransition loop = LinearTransition.fromTransFormulaLR(loopTF, mNlaHandling);
 			lassos.add(new Lasso(stem, loop));

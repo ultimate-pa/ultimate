@@ -42,14 +42,14 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lassoranker.Activator;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarUtils;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLRUtils;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ModifiableTransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ApplicationTermFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
@@ -94,7 +94,7 @@ public class TransFormulaLRWithArrayCells {
 	private final HashRelation<TermVariable, ArrayIndex> mForeignIndices = new HashRelation<>();
 	
 	private final TransFormulaLRWithArrayInformation tflrwai;
-	private final TransFormulaLR mResult;
+	private final ModifiableTransFormula mResult;
 	private final ReplacementVarFactory mReplacementVarFactory;
 	private final Map<TermVariable, Map<ArrayIndex, TermVariable>> mArrayInstance2Index2CellVariable;
 	private final EquivalentCells[] mEquivalentCells;
@@ -146,7 +146,7 @@ public class TransFormulaLRWithArrayCells {
 			mArrayCellInVars = null;
 			return;
 		}
-		mResult = new TransFormulaLR(tflrwai.getTransFormulaLR());
+		mResult = new ModifiableTransFormula(tflrwai.getTransFormulaLR());
 		mFirstGeneration2Indices = new HashRelation<>();
 		mFirstGeneration2Indices.addAll(tflrwai.getArrayFirstGeneration2Indices());
 		if (acrvc != null) {
@@ -274,7 +274,7 @@ public class TransFormulaLRWithArrayCells {
 	public ArrayIndex getOrConstructIndexRepresentative(final ArrayIndex indexInstance) {
 		ArrayIndex indexRepresentative = mIndexInstance2IndexRepresentative.get(indexInstance);
 		if (indexRepresentative == null) {
-			indexRepresentative = new ArrayIndex(TransFormulaLRUtils
+			indexRepresentative = new ArrayIndex(ModifiableTransFormulaUtils
 					.translateTermVariablesToDefinitions(mScript.getScript(), mResult, indexInstance));
 			mIndexInstance2IndexRepresentative.put(indexInstance, indexRepresentative);
 		}
@@ -366,7 +366,7 @@ public class TransFormulaLRWithArrayCells {
 	}
 	
 	private boolean rankVarOccursInThisTransformula(final IProgramVar rv,
-			final TransFormulaLR transFormulaLR) {
+			final ModifiableTransFormula transFormulaLR) {
 		final Term inVar = transFormulaLR.getInVars().get(rv);
 		final Term outVar = transFormulaLR.getOutVars().get(rv);
 		if (inVar == null && outVar == null) {
@@ -567,7 +567,7 @@ public class TransFormulaLRWithArrayCells {
 		return new Substitution(mScript.getScript(), substitutionMapping);
 	}
 	
-	public TransFormulaLR getResult() {
+	public ModifiableTransFormula getResult() {
 		return mResult;
 	}
 	

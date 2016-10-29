@@ -49,10 +49,11 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteUser
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.SimplifyPreprocessor;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.TransitionPreprocessor;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.InequalityConverter.NlaHandling;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ModifiableTransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVar;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarFactory;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -153,7 +154,7 @@ public class CachedTransFormulaLinearizer {
 	 * @return transformed transformula
 	 */
 	private LinearTransition makeLinear(final UnmodifiableTransFormula tf) {
-		TransFormulaLR tflr = TransFormulaLR.buildTransFormula(tf,
+		ModifiableTransFormula tflr = ModifiableTransFormulaUtils.buildTransFormula(tf,
 				mReplacementVarFactory, mPredicateScript);
 
 		for (final TransitionPreprocessor tpp : getPreprocessors()) {

@@ -28,8 +28,8 @@
 package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors;
 
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 
 
 /**
@@ -52,8 +52,8 @@ public abstract class TransitionPreprocessor {
 	 * @return a new (processed) transition formula
 	 * @throws TermException if processing fails
 	 */
-	public abstract TransFormulaLR process(
-			Script script, TransFormulaLR tf) throws TermException;
+	public abstract ModifiableTransFormula process(
+			Script script, ModifiableTransFormula tf) throws TermException;
 	
 	/**
 	 * Check if the processing was sound.
@@ -63,8 +63,8 @@ public abstract class TransitionPreprocessor {
 	 * @param newTF the new TransFormulaLR (after processing
 	 * @return whether the result is ok
 	 */
-	protected boolean checkSoundness(Script script, TransFormulaLR oldTF,
-			TransFormulaLR newTF) {
+	protected boolean checkSoundness(Script script, ModifiableTransFormula oldTF,
+			ModifiableTransFormula newTF) {
 		return true; // check nothing
 	}
 	

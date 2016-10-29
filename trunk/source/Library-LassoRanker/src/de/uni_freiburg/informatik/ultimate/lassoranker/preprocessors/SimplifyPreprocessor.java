@@ -29,10 +29,10 @@ package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
@@ -70,13 +70,13 @@ public class SimplifyPreprocessor extends TransitionPreprocessor {
 	}
 	
 	@Override
-	protected boolean checkSoundness(final Script script, final TransFormulaLR oldTF,
-			final TransFormulaLR newTF) {
+	protected boolean checkSoundness(final Script script, final ModifiableTransFormula oldTF,
+			final ModifiableTransFormula newTF) {
 		return true;
 	}
 	
 	@Override
-	public TransFormulaLR process(final Script script, final TransFormulaLR tf) throws TermException {
+	public ModifiableTransFormula process(final Script script, final ModifiableTransFormula tf) throws TermException {
 		final Term simplified;
 		if (mUseSMTInterpolForSimplification) {
 			final Settings settings = new SolverBuilder.Settings(false, false, "", 10 * 1000, null, false, null, null);

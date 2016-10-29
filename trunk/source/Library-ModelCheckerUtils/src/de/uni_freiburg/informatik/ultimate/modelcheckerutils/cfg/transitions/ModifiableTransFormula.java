@@ -3,63 +3,45 @@
  * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 University of Freiburg
  * 
- * This file is part of the ULTIMATE LassoRanker Library.
- * 
- * The ULTIMATE LassoRanker Library is free software: you can redistribute it and/or modify
+ * This file is part of the ULTIMATE ModelCheckerUtils Library.
+ *
+ * The ULTIMATE ModelCheckerUtils Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
- * The ULTIMATE LassoRanker Library is distributed in the hope that it will be useful,
+ *
+ * The ULTIMATE ModelCheckerUtils Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
- * along with the ULTIMATE LassoRanker Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ * along with the ULTIMATE ModelCheckerUtils Library. If not, see <http://www.gnu.org/licenses/>.
+ *
  * Additional permission under GNU GPL version 3 section 7:
- * If you modify the ULTIMATE LassoRanker Library, or any covered work, by linking
+ * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
  * containing parts covered by the terms of the Eclipse Public License, the
- * licensors of the ULTIMATE LassoRanker Library grant you additional permission
+ * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.lassoranker.variables;
+package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions;
 
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.lassoranker.SMTPrettyPrinter;
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SMTPrettyPrinter;
 
 
 /**
- * This class stores
- * <ul>
- * <li> a mapping between inVars and RankVars,
- * <li> a mapping between outVars and RankVars, and
- * <li> a set of auxiliary variables.
- * <li> a transition formula (Term)
- * </ul>
- * 
- * It is similar to TransFormula, and there are hopes that on some glorious
- * future day the two classes shall become one. LR stands for LassoRanker.
- * 
- * This object is *not* immutable.
+ * {@link TransFormula} that can be modified. Stores additionally a
+ * mapping from {@link TermVariable}s to {@link IProgramVar}s. 
  * 
  * @author Jan Leike
  * @author Matthias Heizmann
@@ -67,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
  * @see VarFactory
  * @see IProgramVar
  */
-public class TransFormulaLR extends TransFormula {
+public class ModifiableTransFormula extends TransFormula {
 	
 	private final Map<TermVariable, IProgramVar> mInVarsReverseMapping;
 	private final Map<TermVariable, IProgramVar> mOutVarsReverseMapping;
@@ -78,7 +60,7 @@ public class TransFormulaLR extends TransFormula {
 	 * Create a new TransformulaLR
 	 * @param formula the transition formula
 	 */
-	TransFormulaLR(final Term formula) {
+	public ModifiableTransFormula(final Term formula) {
 		super(new LinkedHashMap<>(), new LinkedHashMap<>(), new LinkedHashSet<>(), new LinkedHashSet<>());
 		mInVarsReverseMapping = new LinkedHashMap<>();
 		mOutVarsReverseMapping = new LinkedHashMap<>();
@@ -88,59 +70,17 @@ public class TransFormulaLR extends TransFormula {
 	/**
 	 * Copy constructor
 	 */
-	public TransFormulaLR(final TransFormulaLR other) {
+	public ModifiableTransFormula(final ModifiableTransFormula other) {
 		this(other.getFormula());
 		mInVars.putAll(other.mInVars);
 		mInVarsReverseMapping.putAll(other.mInVarsReverseMapping);
 		mOutVars.putAll(other.mOutVars);
 		mOutVarsReverseMapping.putAll(other.mOutVarsReverseMapping);
-		mAuxVars.addAll(other.getAuxVars());
+		mAuxVars.addAll(other.mAuxVars);
+		mNonTheoryConsts.addAll(other.mNonTheoryConsts);
 	}
 	
 	
-	/**
-	 * Construct a TransFormulaLR from a TransFormula, adding and translating
-	 * all existing in- and outVars in the process.
-	 * @param inputTf the TransFormula
-	 */
-	public static TransFormulaLR buildTransFormula(final TransFormula inputTf,
-			final ReplacementVarFactory replacementVarFactory, final ManagedScript mgdScript) {
-		final Map<Term, Term> substitutionMapping = new HashMap<>();
-		
-		// construct copies of auxVars
-		final Set<TermVariable> auxVars = new HashSet<>();
-		for (final TermVariable auxVar : inputTf.getAuxVars()) {
-			final TermVariable newAuxVar = mgdScript.constructFreshCopy(auxVar);
-			auxVars.add(newAuxVar);
-			substitutionMapping.put(auxVar, newAuxVar);
-		}
-		final TransFormulaLR newTf = new TransFormulaLR((Term) null);
-		// Add constant variables as in- and outVars
-		for (final IProgramConst progConst : inputTf.getNonTheoryConsts()) {
-			final ApplicationTerm constVar = progConst.getDefaultConstant();
-			final ReplacementVar repVar =
-					replacementVarFactory.getOrConstuctReplacementVar(constVar);
-			newTf.addInVar(repVar, repVar.getTermVariable());
-			newTf.addOutVar(repVar, repVar.getTermVariable());
-			substitutionMapping.put(constVar, repVar.getTermVariable());
-		}
-		
-		final Term formula = (new Substitution(mgdScript, substitutionMapping).transform(inputTf.getFormula()));
-		newTf.setFormula(formula);
-		
-		// Add existing in- and outVars
-		for (final Map.Entry<IProgramVar, TermVariable> entry
-				: inputTf.getInVars().entrySet()) {
-			newTf.addInVar(entry.getKey(), entry.getValue());
-		}
-		for (final Map.Entry<IProgramVar, TermVariable> entry
-				: inputTf.getOutVars().entrySet()) {
-			newTf.addOutVar(entry.getKey(), entry.getValue());
-		}
-		newTf.addAuxVars(auxVars);
-		
-		return newTf;
-	}
 	
 	/**
 	 * @return mapping from inVars to the RankVar that is represented by the
