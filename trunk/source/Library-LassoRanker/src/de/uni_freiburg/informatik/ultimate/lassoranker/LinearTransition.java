@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 
@@ -66,8 +67,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 public class LinearTransition implements Serializable {
 	private static final long serialVersionUID = 8925538198614759883L;
 	
-	private final Map<IProgramVar, Term> minVars;
-	private final Map<IProgramVar, Term> moutVars;
+	private final Map<IProgramVar, TermVariable> minVars;
+	private final Map<IProgramVar, TermVariable> moutVars;
 	
 	private final List<List<LinearInequality>> mpolyhedra;
 	private final boolean mcontains_integers;
@@ -79,7 +80,7 @@ public class LinearTransition implements Serializable {
 	 * @param outVars output variables
 	 */
 	public LinearTransition(final List<List<LinearInequality>> polyhedra,
-			final Map<IProgramVar, Term> inVars, final Map<IProgramVar, Term> outVars) {
+			final Map<IProgramVar, TermVariable> inVars, final Map<IProgramVar, TermVariable> outVars) {
 		assert(polyhedra != null);
 		assert(inVars != null);
 		assert(outVars != null);
@@ -148,8 +149,8 @@ public class LinearTransition implements Serializable {
 		final LinearInequality eqTrue = new LinearInequality();
 		return new LinearTransition(
 				Collections.singletonList(Collections.singletonList(eqTrue)),
-				Collections.<IProgramVar, Term> emptyMap(),
-				Collections.<IProgramVar, Term> emptyMap()
+				Collections.<IProgramVar, TermVariable> emptyMap(),
+				Collections.<IProgramVar, TermVariable> emptyMap()
 		);
 	}
 	
@@ -161,8 +162,8 @@ public class LinearTransition implements Serializable {
 		eqFalse.setStrict(true);
 		return new LinearTransition(
 				Collections.singletonList(Collections.singletonList(eqFalse)),
-				Collections.<IProgramVar, Term> emptyMap(),
-				Collections.<IProgramVar, Term> emptyMap()
+				Collections.<IProgramVar, TermVariable> emptyMap(),
+				Collections.<IProgramVar, TermVariable> emptyMap()
 		);
 	}
 	
@@ -216,7 +217,7 @@ public class LinearTransition implements Serializable {
 	 * @return the mapping between the trasition's input (unprimed) variables
 	 *         and their representation as a TermVariable
 	 */
-	public Map<IProgramVar, Term> getInVars() {
+	public Map<IProgramVar, TermVariable> getInVars() {
 		return minVars;
 	}
 	
@@ -224,7 +225,7 @@ public class LinearTransition implements Serializable {
 	 * @return the mapping between the trasition's output (primed) variables
 	 *         and their representation as a TermVariable
 	 */
-	public Map<IProgramVar, Term> getOutVars() {
+	public Map<IProgramVar, TermVariable> getOutVars() {
 		return moutVars;
 	}
 	

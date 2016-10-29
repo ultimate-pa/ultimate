@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfuncti
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 
@@ -80,7 +81,7 @@ public class ParallelTemplate extends RankingTemplate {
 	/**
 	 * @param numfunctions number of parallel ranking functions
 	 */
-	public ParallelTemplate(int numfunctions) {
+	public ParallelTemplate(final int numfunctions) {
 		assert(numfunctions > 1);
 		assert(numfunctions <= 30); // reasonable upper size bound
 		                             // until the singularity arrives
@@ -137,7 +138,7 @@ public class ParallelTemplate extends RankingTemplate {
 	
 	@Override
 	public List<List<LinearInequality>> getConstraints(
-			Map<IProgramVar, Term> inVars, Map<IProgramVar, Term> outVars) {
+			final Map<IProgramVar, TermVariable> inVars, final Map<IProgramVar, TermVariable> outVars) {
 		checkInitialized();
 		final List<List<LinearInequality>> conjunction =
 				new ArrayList<List<LinearInequality>>();
@@ -201,7 +202,7 @@ public class ParallelTemplate extends RankingTemplate {
 	}
 
 	@Override
-	public RankingFunction extractRankingFunction(Map<Term, Rational> val)
+	public RankingFunction extractRankingFunction(final Map<Term, Rational> val)
 			throws SMTLIBException {
 		final AffineFunction[] fs = new AffineFunction[size];
 		for (int i = 0; i < size; ++i) {

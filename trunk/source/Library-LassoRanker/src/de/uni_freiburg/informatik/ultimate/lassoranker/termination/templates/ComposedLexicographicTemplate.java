@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfuncti
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 
@@ -57,7 +58,7 @@ public class ComposedLexicographicTemplate extends ComposableTemplate {
 	 * 
 	 * @param parts the ranking templates that are used as lexicographic entries
 	 */
-	public ComposedLexicographicTemplate(ComposableTemplate[] parts) {
+	public ComposedLexicographicTemplate(final ComposableTemplate[] parts) {
 		assert(parts.length >= 1);
 		mParts = parts;
 	}
@@ -87,7 +88,7 @@ public class ComposedLexicographicTemplate extends ComposableTemplate {
 
 	@Override
 	public List<List<LinearInequality>> getConstraintsDec(
-			Map<IProgramVar, Term> inVars, Map<IProgramVar, Term> outVars) {
+			final Map<IProgramVar, TermVariable> inVars, final Map<IProgramVar, TermVariable> outVars) {
 		final List<List<List<List<LinearInequality>>>> constraints =
 				new ArrayList<List<List<List<LinearInequality>>>>();
 		
@@ -121,7 +122,7 @@ public class ComposedLexicographicTemplate extends ComposableTemplate {
 
 	@Override
 	public List<List<LinearInequality>> getConstraintsNonInc(
-			Map<IProgramVar, Term> inVars, Map<IProgramVar, Term> outVars) {
+			final Map<IProgramVar, TermVariable> inVars, final Map<IProgramVar, TermVariable> outVars) {
 		final List<List<List<List<LinearInequality>>>> constraints =
 				new ArrayList<List<List<List<LinearInequality>>>>();
 		// /\_i (T_i^≤ \/ \/_{j < i} T_j^<)
@@ -143,7 +144,7 @@ public class ComposedLexicographicTemplate extends ComposableTemplate {
 
 	@Override
 	public List<List<LinearInequality>> getConstraintsBounded(
-			Map<IProgramVar, Term> inVars, Map<IProgramVar, Term> outVars) {
+			final Map<IProgramVar, TermVariable> inVars, final Map<IProgramVar, TermVariable> outVars) {
 		final List<List<List<List<LinearInequality>>>> constraints =
 				new ArrayList<List<List<List<LinearInequality>>>>();
 		
@@ -159,7 +160,7 @@ public class ComposedLexicographicTemplate extends ComposableTemplate {
 		return cnf;
 	}
 
-	private List<String> blankAnnotations(int size) {
+	private List<String> blankAnnotations(final int size) {
 		final List<String> annotations = new ArrayList<String>(size);
 		for (int i = 0; i < size; ++i) {
 			annotations.add("");
@@ -170,7 +171,7 @@ public class ComposedLexicographicTemplate extends ComposableTemplate {
 	@Override
 	public List<String> getAnnotationsDec() {
 		// TODO
-		final Map<IProgramVar, Term> empty = Collections.emptyMap();
+		final Map<IProgramVar, TermVariable> empty = Collections.emptyMap();
 		return blankAnnotations(getConstraintsDec(empty, empty).size());
 	}
 
@@ -178,14 +179,14 @@ public class ComposedLexicographicTemplate extends ComposableTemplate {
 	@Override
 	public List<String> getAnnotationsNonInc() {
 		// TODO
-		final Map<IProgramVar, Term> empty = Collections.emptyMap();
+		final Map<IProgramVar, TermVariable> empty = Collections.emptyMap();
 		return blankAnnotations(getConstraintsNonInc(empty, empty).size());
 	}
 
 	@Override
 	public List<String> getAnnotationsBounded() {
 		// TODO
-		final Map<IProgramVar, Term> empty = Collections.emptyMap();
+		final Map<IProgramVar, TermVariable> empty = Collections.emptyMap();
 		return blankAnnotations(getConstraintsBounded(empty, empty).size());
 	}
 	
@@ -205,13 +206,13 @@ public class ComposedLexicographicTemplate extends ComposableTemplate {
 
 	@Override
 	public int getDegree() {
-		final Map<IProgramVar, Term> empty = Collections.emptyMap();
+		final Map<IProgramVar, TermVariable> empty = Collections.emptyMap();
 		return TemplateComposition.computeDegree(getConstraintsBounded(empty, empty))
 				+ TemplateComposition.computeDegree(getConstraintsDec(empty, empty));
 	}
 
 	@Override
-	public RankingFunction extractRankingFunction(Map<Term, Rational> val)
+	public RankingFunction extractRankingFunction(final Map<Term, Rational> val)
 			throws SMTLIBException {
 		final RankingFunction[] rfs = new RankingFunction[mParts.length];
 		for (int i = 0; i < mParts.length; ++i) {

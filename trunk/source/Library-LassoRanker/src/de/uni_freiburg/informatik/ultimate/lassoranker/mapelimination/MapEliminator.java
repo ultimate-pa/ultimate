@@ -451,7 +451,7 @@ public class MapEliminator {
 		final List<IProgramVar> outVarsToRemove = new ArrayList<>();
 		final List<TermVariable> auxVarsToRemove = new ArrayList<>();
 		final Set<TermVariable> freeVars = new HashSet<>(Arrays.asList(transformula.getFormula().getFreeVars()));
-		for (final Entry<IProgramVar, Term> entry : transformula.getInVars().entrySet()) {
+		for (final Entry<IProgramVar, TermVariable> entry : transformula.getInVars().entrySet()) {
 			final Term inVar = entry.getValue();
 			final IProgramVar var = entry.getKey();
 			if (inVar.getSort().isArraySort()) {
@@ -462,7 +462,7 @@ public class MapEliminator {
 				outVarsToRemove.add(var);
 			}
 		}
-		for (final Entry<IProgramVar, Term> entry : transformula.getOutVars().entrySet()) {
+		for (final Entry<IProgramVar, TermVariable> entry : transformula.getOutVars().entrySet()) {
 			final Term outVar = entry.getValue();
 			if (outVar.getSort().isArraySort()) {
 				outVarsToRemove.add(entry.getKey());

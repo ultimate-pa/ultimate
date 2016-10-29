@@ -131,7 +131,7 @@ public abstract class RewriteTermVariables extends TransitionPreprocessor {
 		final ArrayList<IProgramVar> rankVarsWithDistinctInVar = new ArrayList<>();
 		final ArrayList<IProgramVar> rankVarsWithDistinctOutVar = new ArrayList<>();
 		final ArrayList<IProgramVar> rankVarsWithCommonInVarOutVar = new ArrayList<>();
-		for (final Map.Entry<IProgramVar, Term> entry : tf.getInVars().entrySet()) {
+		for (final Map.Entry<IProgramVar, TermVariable> entry : tf.getInVars().entrySet()) {
 			if (hasToBeReplaced(entry.getValue())) {
 				if (TransFormulaLRUtils.inVarAndOutVarCoincide(entry.getKey(), tf)) {
 					rankVarsWithCommonInVarOutVar.add(entry.getKey());
@@ -140,7 +140,7 @@ public abstract class RewriteTermVariables extends TransitionPreprocessor {
 				}
 			}
 		}
-		for (final Map.Entry<IProgramVar, Term> entry : tf.getOutVars().entrySet()) {
+		for (final Map.Entry<IProgramVar, TermVariable> entry : tf.getOutVars().entrySet()) {
 			if (hasToBeReplaced(entry.getValue())) {
 				if (TransFormulaLRUtils.inVarAndOutVarCoincide(entry.getKey(), tf)) {
 					// do nothing, was already added

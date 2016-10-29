@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 
@@ -114,7 +115,7 @@ public abstract class RankingTemplate extends InstanceCounting {
 	 *          invariants.
 	 */
 	public abstract List<List<LinearInequality>> getConstraints(
-			Map<IProgramVar, Term> inVars, Map<IProgramVar, Term> outVars);
+			Map<IProgramVar, TermVariable> inVars, Map<IProgramVar, TermVariable> outVars);
 	
 	/**
 	 * Returns a string for every constraint conjunct for annotating

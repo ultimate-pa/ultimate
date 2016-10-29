@@ -150,7 +150,7 @@ public class TransFormulaLR implements Serializable {
 	/**
 	 * @return the collected inVars
 	 */
-	public Map<IProgramVar, Term> getInVars() {
+	public Map<IProgramVar, TermVariable> getInVars() {
 		return Collections.unmodifiableMap(minVars);
 	}
 	
@@ -165,7 +165,7 @@ public class TransFormulaLR implements Serializable {
 	/**
 	 * @return the collected outVars
 	 */
-	public Map<IProgramVar, Term> getOutVars() {
+	public Map<IProgramVar, TermVariable> getOutVars() {
 		return Collections.unmodifiableMap(moutVars);
 	}
 	

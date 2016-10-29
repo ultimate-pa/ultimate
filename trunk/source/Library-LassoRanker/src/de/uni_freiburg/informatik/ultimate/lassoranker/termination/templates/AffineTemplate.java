@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfuncti
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 
@@ -80,7 +81,7 @@ public class AffineTemplate extends ComposableTemplate {
 	
 	@Override
 	public List<List<LinearInequality>> getConstraintsDec(
-			final Map<IProgramVar, Term> inVars, final Map<IProgramVar, Term> outVars) {
+			final Map<IProgramVar, TermVariable> inVars, final Map<IProgramVar, TermVariable> outVars) {
 		// f(x') < f(x) - delta
 		final LinearInequality li = mfgen.generate(inVars);
 		final LinearInequality li2 = mfgen.generate(outVars);
@@ -98,7 +99,7 @@ public class AffineTemplate extends ComposableTemplate {
 
 	@Override
 	public List<List<LinearInequality>> getConstraintsNonInc(
-			final Map<IProgramVar, Term> inVars, final Map<IProgramVar, Term> outVars) {
+			final Map<IProgramVar, TermVariable> inVars, final Map<IProgramVar, TermVariable> outVars) {
 		// f(x') ≤ f(x)
 		final LinearInequality li = mfgen.generate(inVars);
 		final LinearInequality li2 = mfgen.generate(outVars);
@@ -112,7 +113,7 @@ public class AffineTemplate extends ComposableTemplate {
 
 	@Override
 	public List<List<LinearInequality>> getConstraintsBounded(
-			final Map<IProgramVar, Term> inVars, final Map<IProgramVar, Term> outVars) {
+			final Map<IProgramVar, TermVariable> inVars, final Map<IProgramVar, TermVariable> outVars) {
 		// f(x) > 0
 		final LinearInequality li = mfgen.generate(inVars);
 		li.setStrict(true);

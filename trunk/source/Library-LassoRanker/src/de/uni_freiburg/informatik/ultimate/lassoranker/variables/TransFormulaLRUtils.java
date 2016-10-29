@@ -191,7 +191,7 @@ public class TransFormulaLRUtils {
 			final Boogie2SmtSymbolTable symbTab, 
 			final TransFormulaLR tf) {
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
-		for (final Entry<IProgramVar, Term> entry : tf.getInVars().entrySet()) {
+		for (final Entry<IProgramVar, TermVariable> entry : tf.getInVars().entrySet()) {
 			if (entry.getKey() instanceof ReplacementVar) {
 				final Term definition = ReplacementVarUtils.getDefinition(entry.getKey());
 				final Term renamedDefinition = renameToDefaultConstants(script, symbTab, tf, definition);
@@ -201,7 +201,7 @@ public class TransFormulaLRUtils {
 				substitutionMapping.put(entry.getValue(), bv.getDefaultConstant());
 			} 
 		}
-		for (final Entry<IProgramVar, Term> entry : tf.getOutVars().entrySet()) {
+		for (final Entry<IProgramVar, TermVariable> entry : tf.getOutVars().entrySet()) {
 			if (entry.getKey() instanceof ReplacementVar) {
 				final Term definition = ReplacementVarUtils.getDefinition(entry.getKey());
 				final Term renamedDefinition = renameToPrimedConstants(script, symbTab, tf, definition);

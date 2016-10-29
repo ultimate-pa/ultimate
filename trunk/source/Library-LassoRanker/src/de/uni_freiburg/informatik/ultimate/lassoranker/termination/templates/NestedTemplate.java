@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfuncti
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 
@@ -75,7 +76,7 @@ public class NestedTemplate extends ComposableTemplate {
 	/**
 	 * @param functions number of linear functions in the nested template
 	 */
-	public NestedTemplate(int functions) {
+	public NestedTemplate(final int functions) {
 		assert(functions > 1);
 		mSize = functions;
 		mfgens = new AffineFunctionGenerator[mSize];
@@ -126,7 +127,7 @@ public class NestedTemplate extends ComposableTemplate {
 	}
 
 	@Override
-	public RankingFunction extractRankingFunction(Map<Term, Rational> val)
+	public RankingFunction extractRankingFunction(final Map<Term, Rational> val)
 			throws SMTLIBException {
 		// The affine-linear functions need a common gcd
 		Rational gcd = mfgens[0].getGcd(val);
@@ -148,7 +149,7 @@ public class NestedTemplate extends ComposableTemplate {
 
 	@Override
 	public List<List<LinearInequality>> getConstraintsDec(
-			Map<IProgramVar, Term> inVars, Map<IProgramVar, Term> outVars) {
+			final Map<IProgramVar, TermVariable> inVars, final Map<IProgramVar, TermVariable> outVars) {
 		final List<List<LinearInequality>> conjunction =
 				new ArrayList<List<LinearInequality>>();
 		// f_0(x') < f_0(x) - δ
@@ -187,7 +188,7 @@ public class NestedTemplate extends ComposableTemplate {
 
 	@Override
 	public List<List<LinearInequality>> getConstraintsNonInc(
-			Map<IProgramVar, Term> inVars, Map<IProgramVar, Term> outVars) {
+			final Map<IProgramVar, TermVariable> inVars, final Map<IProgramVar, TermVariable> outVars) {
 		final List<List<LinearInequality>> conjunction =
 				new ArrayList<List<LinearInequality>>();
 		// /\_i f_i(x') ≤ f_i(x)
@@ -207,7 +208,7 @@ public class NestedTemplate extends ComposableTemplate {
 
 	@Override
 	public List<List<LinearInequality>> getConstraintsBounded(
-			Map<IProgramVar, Term> inVars, Map<IProgramVar, Term> outVars) {
+			final Map<IProgramVar, TermVariable> inVars, final Map<IProgramVar, TermVariable> outVars) {
 		// f_n(x) > 0
 		final LinearInequality li = mfgens[mSize-1].generate(inVars);
 		li.setStrict(true);

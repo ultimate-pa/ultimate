@@ -57,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
@@ -447,7 +448,7 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			final Collection<Term> added_vars = new LinkedHashSet<>();
 
 			// outVars
-			for (final Map.Entry<IProgramVar, Term> entry : transition.getOutVars().entrySet()) {
+			for (final Map.Entry<IProgramVar, TermVariable> entry : transition.getOutVars().entrySet()) {
 				if (!varsOut.containsKey(entry.getKey())) {
 					continue;
 				}
@@ -458,7 +459,7 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			}
 
 			// inVars
-			for (final Map.Entry<IProgramVar, Term> entry : transition.getInVars().entrySet()) {
+			for (final Map.Entry<IProgramVar, TermVariable> entry : transition.getInVars().entrySet()) {
 				if (added_vars.contains(entry.getValue())) {
 					// the transition implicitly requires that
 					// entry.getKey() is constant

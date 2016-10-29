@@ -95,10 +95,10 @@ public class AffineFunctionGenerator implements Serializable {
 	 * @param vars a mapping from Boogie variables to TermVariables to be used
 	 * @return Linear inequality corresponding to si(x)
 	 */
-	public LinearInequality generate(final Map<IProgramVar, Term> vars) {
+	public LinearInequality generate(final Map<IProgramVar, ? extends Term> vars) {
 		final LinearInequality li = new LinearInequality();
 		li.add(new AffineTerm(mconstant, Rational.ONE));
-		for (final Map.Entry<IProgramVar, Term> entry : vars.entrySet()) {
+		for (final Map.Entry<IProgramVar,? extends Term> entry : vars.entrySet()) {
 			if (mcoefficients.containsKey(entry.getKey())) {
 				li.add(entry.getValue(),
 						new AffineTerm(mcoefficients.get(entry.getKey()),

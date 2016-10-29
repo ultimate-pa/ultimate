@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfuncti
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 
@@ -78,7 +79,7 @@ public class PiecewiseTemplate extends RankingTemplate {
 	/**
 	 * @param numfunctions number of pieces
 	 */
-	public PiecewiseTemplate(int numpieces) {
+	public PiecewiseTemplate(final int numpieces) {
 		assert(numpieces >= 2);
 		size = numpieces;
 		mfgens = new AffineFunctionGenerator[size];
@@ -130,7 +131,7 @@ public class PiecewiseTemplate extends RankingTemplate {
 	
 	@Override
 	public List<List<LinearInequality>> getConstraints(
-			Map<IProgramVar, Term> inVars, Map<IProgramVar, Term> outVars) {
+			final Map<IProgramVar, TermVariable> inVars, final Map<IProgramVar, TermVariable> outVars) {
 		checkInitialized();
 		final List<List<LinearInequality>> conjunction =
 				new ArrayList<List<LinearInequality>>();
@@ -207,7 +208,7 @@ public class PiecewiseTemplate extends RankingTemplate {
 	}
 
 	@Override
-	public RankingFunction extractRankingFunction(Map<Term, Rational> val)
+	public RankingFunction extractRankingFunction(final Map<Term, Rational> val)
 			throws SMTLIBException {
 		// The ranking pieces need a common gcd
 		Rational gcd_f = mfgens[0].getGcd(val);

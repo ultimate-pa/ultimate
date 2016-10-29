@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfuncti
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 
@@ -73,7 +74,7 @@ public class MultiphaseTemplate extends ComposableTemplate {
 	/**
 	 * @param numphases number of phases in the multiphase template
 	 */
-	public MultiphaseTemplate(int numphases) {
+	public MultiphaseTemplate(final int numphases) {
 		assert(numphases > 1);
 		size = numphases;
 		mdeltas = new Term[size];
@@ -133,7 +134,7 @@ public class MultiphaseTemplate extends ComposableTemplate {
 	}
 
 	@Override
-	public RankingFunction extractRankingFunction(Map<Term, Rational> val)
+	public RankingFunction extractRankingFunction(final Map<Term, Rational> val)
 			throws SMTLIBException {
 		final AffineFunction[] fs = new AffineFunction[size];
 		for (int i = 0; i < size; ++i) {
@@ -150,7 +151,7 @@ public class MultiphaseTemplate extends ComposableTemplate {
 
 	@Override
 	public List<List<LinearInequality>> getConstraintsDec(
-			Map<IProgramVar, Term> inVars, Map<IProgramVar, Term> outVars) {
+			final Map<IProgramVar, TermVariable> inVars, final Map<IProgramVar, TermVariable> outVars) {
 		final List<List<LinearInequality>> conjunction =
 				new ArrayList<List<LinearInequality>>();
 		// f_0(x') < f_0(x) - δ_0
@@ -185,7 +186,7 @@ public class MultiphaseTemplate extends ComposableTemplate {
 
 	@Override
 	public List<List<LinearInequality>> getConstraintsNonInc(
-			Map<IProgramVar, Term> inVars, Map<IProgramVar, Term> outVars) {
+			final Map<IProgramVar, TermVariable> inVars, final Map<IProgramVar, TermVariable> outVars) {
 		final List<List<LinearInequality>> conjunction =
 				new ArrayList<List<LinearInequality>>();
 		// f_0(x') ≤ f_0(x) /\ /\_{i>0} ( f_i(x') ≤ f_i(x) \/ f_{i-1}(x) > 0 )
@@ -215,7 +216,7 @@ public class MultiphaseTemplate extends ComposableTemplate {
 
 	@Override
 	public List<List<LinearInequality>> getConstraintsBounded(
-			Map<IProgramVar, Term> inVars, Map<IProgramVar, Term> outVars) {
+			final Map<IProgramVar, TermVariable> inVars, final Map<IProgramVar, TermVariable> outVars) {
 		// \/_i f_i(x) > 0
 		final List<LinearInequality> disjunction = new ArrayList<LinearInequality>();
 		for (int i = 0; i < size; ++i) {

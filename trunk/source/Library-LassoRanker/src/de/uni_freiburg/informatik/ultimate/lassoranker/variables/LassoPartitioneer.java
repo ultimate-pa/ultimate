@@ -285,10 +285,10 @@ public class LassoPartitioneer {
 				announceEquivalence(allSymbolsOfConjunct);
 			}
 		}
-		for (final Entry<IProgramVar, Term> entry : tf.getInVars().entrySet()) {
+		for (final Entry<IProgramVar, TermVariable> entry : tf.getInVars().entrySet()) {
 			addIfNotAlreadyAdded(part, symbolsWithoutConjuncts, tf, entry.getValue(), symbol2Conjuncts);
 		}
-		for (final Entry<IProgramVar, Term> entry : tf.getOutVars().entrySet()) {
+		for (final Entry<IProgramVar, TermVariable> entry : tf.getOutVars().entrySet()) {
 			addIfNotAlreadyAdded(part, symbolsWithoutConjuncts, tf, entry.getValue(), symbol2Conjuncts);
 		}
 		return symbol2Conjuncts;

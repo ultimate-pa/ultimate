@@ -184,7 +184,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	 * {@inheritDoc}
 	 */
 	@Override
-	public void startRound(final int round, boolean useLiveVariables, final Set<IProgramVar> liveVariables) {
+	public void startRound(final int round, final boolean useLiveVariables, final Set<IProgramVar> liveVariables) {
 		reinitializeSolver();
 		patternVariables.clear();
 		entryInvariantPattern = null;
