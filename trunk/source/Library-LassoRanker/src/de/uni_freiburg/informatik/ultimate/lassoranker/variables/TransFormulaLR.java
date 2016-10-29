@@ -27,11 +27,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.lassoranker.variables;
 
-import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -39,7 +39,8 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.SMTPrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
@@ -66,28 +67,22 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
  * @see VarFactory
  * @see IProgramVar
  */
-public class TransFormulaLR implements Serializable {
-	private static final long serialVersionUID = -1005909010259944923L;
+public class TransFormulaLR extends TransFormula {
 	
-	private final Map<IProgramVar, TermVariable> minVars;
-	private final Map<TermVariable, IProgramVar> minVarsReverseMapping;
-	private final Map<IProgramVar, TermVariable> moutVars;
-	private final Map<TermVariable, IProgramVar> moutVarsReverseMapping;
-	private final Set<TermVariable> mAuxVars;
+	private final Map<TermVariable, IProgramVar> mInVarsReverseMapping;
+	private final Map<TermVariable, IProgramVar> mOutVarsReverseMapping;
 	
-	private Term mformula;
+	private Term mFormula;
 	
 	/**
 	 * Create a new TransformulaLR
 	 * @param formula the transition formula
 	 */
 	TransFormulaLR(final Term formula) {
-		minVars = new LinkedHashMap<IProgramVar, TermVariable>();
-		minVarsReverseMapping = new LinkedHashMap<TermVariable, IProgramVar>();
-		moutVars = new LinkedHashMap<IProgramVar, TermVariable>();
-		moutVarsReverseMapping = new LinkedHashMap<TermVariable, IProgramVar>();
-		mAuxVars = new HashSet<TermVariable>();
-		mformula = formula;
+		super(new LinkedHashMap<>(), new LinkedHashMap<>(), new LinkedHashSet<>(), new LinkedHashSet<>());
+		mInVarsReverseMapping = new LinkedHashMap<>();
+		mOutVarsReverseMapping = new LinkedHashMap<>();
+		mFormula = formula;
 	}
 	
 	/**
@@ -95,10 +90,10 @@ public class TransFormulaLR implements Serializable {
 	 */
 	public TransFormulaLR(final TransFormulaLR other) {
 		this(other.getFormula());
-		minVars.putAll(other.minVars);
-		minVarsReverseMapping.putAll(other.minVarsReverseMapping);
-		moutVars.putAll(other.moutVars);
-		moutVarsReverseMapping.putAll(other.moutVarsReverseMapping);
+		mInVars.putAll(other.mInVars);
+		mInVarsReverseMapping.putAll(other.mInVarsReverseMapping);
+		mOutVars.putAll(other.mOutVars);
+		mOutVarsReverseMapping.putAll(other.mOutVarsReverseMapping);
 		mAuxVars.addAll(other.getAuxVars());
 	}
 	
@@ -106,22 +101,22 @@ public class TransFormulaLR implements Serializable {
 	/**
 	 * Construct a TransFormulaLR from a TransFormula, adding and translating
 	 * all existing in- and outVars in the process.
-	 * @param oldTf the TransFormula
+	 * @param inputTf the TransFormula
 	 */
-	public static TransFormulaLR buildTransFormula(final UnmodifiableTransFormula oldTf,
+	public static TransFormulaLR buildTransFormula(final TransFormula inputTf,
 			final ReplacementVarFactory replacementVarFactory, final ManagedScript mgdScript) {
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		
 		// construct copies of auxVars
 		final Set<TermVariable> auxVars = new HashSet<>();
-		for (final TermVariable auxVar : oldTf.getAuxVars()) {
+		for (final TermVariable auxVar : inputTf.getAuxVars()) {
 			final TermVariable newAuxVar = mgdScript.constructFreshCopy(auxVar);
 			auxVars.add(newAuxVar);
 			substitutionMapping.put(auxVar, newAuxVar);
 		}
 		final TransFormulaLR newTf = new TransFormulaLR((Term) null);
 		// Add constant variables as in- and outVars
-		for (final IProgramConst progConst : oldTf.getNonTheoryConsts()) {
+		for (final IProgramConst progConst : inputTf.getNonTheoryConsts()) {
 			final ApplicationTerm constVar = progConst.getDefaultConstant();
 			final ReplacementVar repVar =
 					replacementVarFactory.getOrConstuctReplacementVar(constVar);
@@ -130,16 +125,16 @@ public class TransFormulaLR implements Serializable {
 			substitutionMapping.put(constVar, repVar.getTermVariable());
 		}
 		
-		final Term formula = (new Substitution(mgdScript, substitutionMapping).transform(oldTf.getFormula()));
+		final Term formula = (new Substitution(mgdScript, substitutionMapping).transform(inputTf.getFormula()));
 		newTf.setFormula(formula);
 		
 		// Add existing in- and outVars
 		for (final Map.Entry<IProgramVar, TermVariable> entry
-				: oldTf.getInVars().entrySet()) {
+				: inputTf.getInVars().entrySet()) {
 			newTf.addInVar(entry.getKey(), entry.getValue());
 		}
 		for (final Map.Entry<IProgramVar, TermVariable> entry
-				: oldTf.getOutVars().entrySet()) {
+				: inputTf.getOutVars().entrySet()) {
 			newTf.addOutVar(entry.getKey(), entry.getValue());
 		}
 		newTf.addAuxVars(auxVars);
@@ -148,40 +143,19 @@ public class TransFormulaLR implements Serializable {
 	}
 	
 	/**
-	 * @return the collected inVars
-	 */
-	public Map<IProgramVar, TermVariable> getInVars() {
-		return Collections.unmodifiableMap(minVars);
-	}
-	
-	/**
 	 * @return mapping from inVars to the RankVar that is represented by the
 	 * inVar
 	 */
 	public Map<Term, IProgramVar> getInVarsReverseMapping() {
-		return Collections.unmodifiableMap(minVarsReverseMapping);
+		return Collections.unmodifiableMap(mInVarsReverseMapping);
 	}
 
-	/**
-	 * @return the collected outVars
-	 */
-	public Map<IProgramVar, TermVariable> getOutVars() {
-		return Collections.unmodifiableMap(moutVars);
-	}
-	
 	/**
 	 * @return mapping from outVars to the RankVar that is represented by the
 	 * outVar
 	 */
 	public Map<Term, IProgramVar> getOutVarsReverseMapping() {
-		return Collections.unmodifiableMap(moutVarsReverseMapping);
-	}
-	
-	/**
-	 * @return the collected auxVars
-	 */
-	public Set<TermVariable> getAuxVars() {
-		return Collections.unmodifiableSet(mAuxVars);
+		return Collections.unmodifiableMap(mOutVarsReverseMapping);
 	}
 	
 	/**
@@ -191,9 +165,9 @@ public class TransFormulaLR implements Serializable {
 	 *            (unprimed version)
 	 */
 	public void addInVar(final IProgramVar rkVar, final TermVariable var) {
-		final Term oldValue = minVars.put(rkVar, var);
+		final Term oldValue = mInVars.put(rkVar, var);
 		if (oldValue == null) {
-			minVarsReverseMapping.put(var, rkVar);
+			mInVarsReverseMapping.put(var, rkVar);
 		} else {
 			if (oldValue != var) {
 				throw new IllegalArgumentException(
@@ -206,12 +180,12 @@ public class TransFormulaLR implements Serializable {
 	 * Remove an inVar from the collection
 	 */
 	public void removeInVar(final IProgramVar rkVar) {
-		final Term tv = minVars.remove(rkVar);
+		final Term tv = mInVars.remove(rkVar);
 		if (tv == null) {
 			throw new AssertionError(
 					"cannot remove variable that is not contained");
 		} else {
-			minVarsReverseMapping.remove(tv);
+			mInVarsReverseMapping.remove(tv);
 		}
 	}
 	
@@ -222,9 +196,9 @@ public class TransFormulaLR implements Serializable {
 	 *            (primed version)
 	 */
 	public void addOutVar(final IProgramVar rkVar, final TermVariable var) {
-		final Term oldValue = moutVars.put(rkVar, var);
+		final Term oldValue = mOutVars.put(rkVar, var);
 		if (oldValue == null) {
-			moutVarsReverseMapping.put(var, rkVar);
+			mOutVarsReverseMapping.put(var, rkVar);
 		} else {
 			if (oldValue != var) {
 				throw new IllegalArgumentException(
@@ -237,12 +211,12 @@ public class TransFormulaLR implements Serializable {
 	 * Remove an outVar from the collection
 	 */
 	public void removeOutVar(final IProgramVar rkVar) {
-		final Term tv = moutVars.remove(rkVar);
+		final Term tv = mOutVars.remove(rkVar);
 		if (tv == null) {
 			throw new AssertionError(
 					"cannot remove variable that is not contained");
 		} else {
-			moutVarsReverseMapping.remove(tv);
+			mOutVarsReverseMapping.remove(tv);
 		}
 	}
 	
@@ -267,15 +241,16 @@ public class TransFormulaLR implements Serializable {
 	/**
 	 * @return the transition formula
 	 */
+	@Override
 	public Term getFormula() {
-		return mformula;
+		return mFormula;
 	}
 	
 	/**
 	 * @param term the new transition formula
 	 */
 	public void setFormula(final Term formula) {
-		mformula = formula;
+		mFormula = formula;
 	}
 	
 	/**
@@ -284,10 +259,10 @@ public class TransFormulaLR implements Serializable {
 	 */
 	public boolean auxVarsDisjointFromInOutVars() {
 		for (final Term auxVar : mAuxVars) {
-			if (minVarsReverseMapping.containsKey(auxVar)) {
+			if (mInVarsReverseMapping.containsKey(auxVar)) {
 				return false;
 			}
-			if (moutVarsReverseMapping.containsKey(auxVar)) {
+			if (mOutVarsReverseMapping.containsKey(auxVar)) {
 				return false;
 			}
 		}
@@ -311,37 +286,21 @@ public class TransFormulaLR implements Serializable {
 	}
 	
 	/**
-	 * compute the assigned/updated variables. A variable is updated by this
-     * transition if it occurs as outVar and
-     * - it does not occur as inVar
-	 * - or the inVar is represented by a different TermVariable
-	 */
-	private HashSet<IProgramVar> computeAssignedVars() {
-		final HashSet<IProgramVar> assignedVars = new HashSet<IProgramVar>();
-		for (final IProgramVar var : moutVars.keySet()) {
-			assert (moutVars.get(var) != null);
-			if (moutVars.get(var) != minVars.get(var)) {
-				assignedVars.add(var);
-			}
-		}
-		return assignedVars;
-	}
-	
-	/**
 	 * @return the set of assigned/updated variables. A variable is updated by
 	 * this transition if it occurs as outVar and
      * - it does not occur as inVar
 	 * - or the inVar is represented by a different TermVariable
 	 */
+	@Override
 	public Set<IProgramVar> getAssignedVars() {
-		return Collections.unmodifiableSet(computeAssignedVars());
+		return Collections.unmodifiableSet(TransFormulaUtils.computeAssignedVars(mInVars, mOutVars));
 	}
 	
 	/**
 	 * @return whether the TermVariable tv occurs as inVar, outVar, or auxVar.
 	 */
 	private boolean isInOurAux(final TermVariable tv) {
-		if (minVarsReverseMapping.containsKey(tv) || moutVarsReverseMapping.containsKey(tv)) {
+		if (mInVarsReverseMapping.containsKey(tv) || mOutVarsReverseMapping.containsKey(tv)) {
 			return true;
 		}
 		return mAuxVars.contains(tv);
@@ -351,13 +310,13 @@ public class TransFormulaLR implements Serializable {
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("InVars: ");
-		sb.append(minVars.toString());
+		sb.append(mInVars.toString());
 		sb.append("\nOutVars: ");
-		sb.append(moutVars.toString());
+		sb.append(mOutVars.toString());
 		sb.append("\nAuxVars: ");
 		sb.append(mAuxVars.toString());
 		sb.append("\nTransition formula: ");
-		sb.append(new SMTPrettyPrinter(mformula));
+		sb.append(new SMTPrettyPrinter(mFormula));
 		return sb.toString();
 	}
 }

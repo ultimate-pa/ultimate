@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -70,10 +69,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
  */
 public abstract class TransFormula {
 
-	private final Map<IProgramVar, TermVariable> mInVars;
-	private final Map<IProgramVar, TermVariable> mOutVars;
-	private final Set<TermVariable> mAuxVars;
-	private final Set<IProgramConst> mNonTheoryConsts;
+	protected final Map<IProgramVar, TermVariable> mInVars;
+	protected final Map<IProgramVar, TermVariable> mOutVars;
+	protected final Set<TermVariable> mAuxVars;
+	protected final Set<IProgramConst> mNonTheoryConsts;
 
 	public TransFormula(final Map<IProgramVar, TermVariable> inVars, final Map<IProgramVar, TermVariable> outVars,
 			final Set<TermVariable> auxVars, final Set<IProgramConst> nonTheoryConsts) {
@@ -88,22 +87,6 @@ public abstract class TransFormula {
 
 	public abstract Term getFormula();
 
-	/**
-	 * compute the assigned/updated variables. A variable is updated by this
-	 * transition if it occurs as outVar and
-	 * - it does not occur as inVar
-	 * - or the inVar is represented by a different TermVariable
-	 */
-	protected HashSet<IProgramVar> computeAssignedVars(final Map<IProgramVar, TermVariable> inVars, final Map<IProgramVar, TermVariable> outVars) {
-		final HashSet<IProgramVar> assignedVars = new HashSet<IProgramVar>();
-		for (final IProgramVar var : outVars.keySet()) {
-			assert (outVars.get(var) != null);
-			if (outVars.get(var) != inVars.get(var)) {
-				assignedVars.add(var);
-			}
-		}
-		return assignedVars;
-	}
 
 	public Map<IProgramVar, TermVariable> getInVars() {
 		return Collections.unmodifiableMap(mInVars);

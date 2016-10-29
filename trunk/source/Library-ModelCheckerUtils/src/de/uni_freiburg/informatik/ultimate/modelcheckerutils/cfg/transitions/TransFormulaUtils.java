@@ -78,7 +78,26 @@ import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
  * @author heizmann@informatik.uni-freiburg.de
  */
 public class TransFormulaUtils {
-
+	
+	
+	/**
+	 * compute the assigned/updated variables. A variable is updated by this
+	 * transition if it occurs as outVar and
+	 * - it does not occur as inVar
+	 * - or the inVar is represented by a different TermVariable
+	 */
+	public static HashSet<IProgramVar> computeAssignedVars(
+			final Map<IProgramVar, TermVariable> inVars, final Map<IProgramVar, TermVariable> outVars) {
+		final HashSet<IProgramVar> assignedVars = new HashSet<IProgramVar>();
+		for (final IProgramVar var : outVars.keySet()) {
+			assert (outVars.get(var) != null);
+			if (outVars.get(var) != inVars.get(var)) {
+				assignedVars.add(var);
+			}
+		}
+		return assignedVars;
+	}
+	
 	/**
 	 * @param services
 	 * @return the relational composition (concatenation) of transformula1 und

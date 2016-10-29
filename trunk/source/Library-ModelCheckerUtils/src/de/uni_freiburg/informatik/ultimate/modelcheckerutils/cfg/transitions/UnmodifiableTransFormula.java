@@ -97,7 +97,7 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 		// assert super.getOutVars().keySet().containsAll(super.getInVars().keySet()) :
 		// " strange inVar";
 
-		mAssignedVars = computeAssignedVars(inVars, outVars);
+		mAssignedVars = TransFormulaUtils.computeAssignedVars(inVars, outVars);
 		// TODO: The following line is a workaround, in the future the set of
 		// constants will be part of the input and we use findConstants only
 		// in the assertion
