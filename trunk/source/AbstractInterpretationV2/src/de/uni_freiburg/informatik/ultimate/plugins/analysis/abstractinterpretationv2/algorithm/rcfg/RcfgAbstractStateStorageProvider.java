@@ -504,7 +504,7 @@ public class RcfgAbstractStateStorageProvider<STATE extends IAbstractState<STATE
 				// no states for this location
 				terms.add(falseTerm);
 			} else {
-				terms.add(multiState.getTerm(script, bpl2smt));
+				terms.add(multiState.getTerm(script));
 			}
 		}
 		return terms;
@@ -587,7 +587,7 @@ public class RcfgAbstractStateStorageProvider<STATE extends IAbstractState<STATE
 			if (mState == null) {
 				return script.term("false");
 			}
-			return mState.getTerm(script, bpl2smt);
+			return mState.getTerm(script);
 		}
 
 		private StateDecorator merge(final StateDecorator other) {

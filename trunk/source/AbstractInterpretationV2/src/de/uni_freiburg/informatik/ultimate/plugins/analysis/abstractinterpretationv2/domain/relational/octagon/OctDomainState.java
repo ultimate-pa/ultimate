@@ -46,7 +46,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -588,19 +587,19 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 	}
 
 	@Override
-	public Term getTerm(final Script script, final Boogie2SMT bpl2smt) {
+	public Term getTerm(final Script script) {
 		if (isBottom()) {
 			return script.term("false");
 		}
 
 		final List<Term> terms = new ArrayList<>();
-		terms.addAll(getTermNumericAbstraction(script, bpl2smt));
-		terms.addAll(getTermBooleanAbstraction(script, bpl2smt));
+		terms.addAll(getTermNumericAbstraction(script));
+		terms.addAll(getTermBooleanAbstraction(script));
 		return Util.and(script, terms.toArray(new Term[terms.size()]));
 	}
 
-	/** For internal use in {@link #getTerm(Script, Boogie2SMT))}. */
-	private List<Term> getTermNumericAbstraction(final Script script, final Boogie2SMT bpl2smt) {
+	/** For internal use in {@link #getTerm(Script))}. */
+	private List<Term> getTermNumericAbstraction(final Script script) {
 		final Term[] mapIndexToTerm = new Term[mMapNumericVarToIndex.size()];
 		for (final Entry<IBoogieVar, Integer> entry : mMapNumericVarToIndex.entrySet()) {
 			final Term termVar = getTermVar(entry.getKey());
@@ -609,8 +608,8 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 		return cachedSelectiveClosure().getTerm(script, mapIndexToTerm);
 	}
 
-	/** For internal use in {@link #getTerm(Script, Boogie2SMT))}. */
-	private List<Term> getTermBooleanAbstraction(final Script script, final Boogie2SMT bpl2smt) {
+	/** For internal use in {@link #getTerm(Script))}. */
+	private List<Term> getTermBooleanAbstraction(final Script script) {
 		final List<Term> resultTerm = new ArrayList<>(mBooleanAbstraction.size());
 		for (final Entry<IBoogieVar, BoolValue> entry : mBooleanAbstraction.entrySet()) {
 			final Term termVar = getTermVar(entry.getKey());

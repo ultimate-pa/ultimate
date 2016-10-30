@@ -37,7 +37,6 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
@@ -181,8 +180,8 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, ACTION, VARD
 	}
 
 	@Override
-	public Term getTerm(final Script script, final Boogie2SMT bpl2smt) {
-		return SmtUtils.or(script, mStates.stream().map(a -> a.getTerm(script, bpl2smt)).collect(Collectors.toSet()));
+	public Term getTerm(final Script script) {
+		return SmtUtils.or(script, mStates.stream().map(a -> a.getTerm(script)).collect(Collectors.toSet()));
 	}
 
 	@Override

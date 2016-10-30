@@ -45,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.LoggingHelper;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
@@ -701,7 +700,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	}
 
 	@Override
-	public Term getTerm(final Script script, final Boogie2SMT bpl2smt) {
+	public Term getTerm(final Script script) {
 		if (isBottom()) {
 			return script.term("false");
 		}

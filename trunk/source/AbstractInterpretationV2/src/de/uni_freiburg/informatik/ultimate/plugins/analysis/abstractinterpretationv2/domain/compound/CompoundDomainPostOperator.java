@@ -169,7 +169,7 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 	 *         Boogie2SMT))} is satisfiable, <code>false</code> otherwise.
 	 */
 	private boolean checkSat(final CompoundDomainState state) {
-		final Term stateTerm = state.getTerm(mScript, mBoogie2Smt);
+		final Term stateTerm = state.getTerm(mScript);
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug(new StringBuilder().append("Checking state term for satisfiability: ").append(stateTerm)
 					.toString());
@@ -234,7 +234,7 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 			}
 			final IAbstractState<?, CodeBlock, IBoogieVar> state = states.get(i);
 
-			final Term stateTerm = state.getTerm(mScript, mBoogie2Smt);
+			final Term stateTerm = state.getTerm(mScript);
 			assumeTerm = assumeTerm == null ? stateTerm : mScript.term("and", assumeTerm, stateTerm);
 		}
 

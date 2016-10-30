@@ -5,7 +5,6 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 /**
@@ -123,9 +122,9 @@ public class VPStateTop extends VPState {
 	}
 
 	@Override
-	public Term getTerm(Script script, Boogie2SMT bpl2smt) {
+	public Term getTerm(Script script) {
 		// Auto-generated method stub
-		return super.getTerm(script, bpl2smt);
+		return super.getTerm(script);
 	}
 
 	@Override

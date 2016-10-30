@@ -34,7 +34,6 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.FixpointEngine;
 
@@ -172,11 +171,9 @@ public interface IAbstractState<STATE extends IAbstractState<STATE, ACTION, VARD
 	 *
 	 * @param script
 	 *            The {@link Script} instance of the current RCFG.
-	 * @param bpl2smt
-	 *            The {@link Boogie2SMT} instance of the current RCFG.
 	 * @return A {@link Term} instance representing this abstract state. Must be false if isBottom is true.
 	 */
-	Term getTerm(final Script script, final Boogie2SMT bpl2smt);
+	Term getTerm(final Script script);
 
 	/**
 	 * Is used for debug output.

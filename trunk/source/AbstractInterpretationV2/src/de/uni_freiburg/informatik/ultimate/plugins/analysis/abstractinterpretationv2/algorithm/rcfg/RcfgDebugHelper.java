@@ -127,7 +127,7 @@ public class RcfgDebugHelper<STATE extends IAbstractState<STATE, CodeBlock, VARD
 		Term acc = mScript.term("false");
 
 		for (final STATE state : states) {
-			acc = Util.or(mScript, acc, state.getTerm(mScript, mBoogie2Smt));
+			acc = Util.or(mScript, acc, state.getTerm(mScript));
 		}
 
 		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(acc, mScript, mBoogie2Smt.getBoogie2SmtSymbolTable());
@@ -136,7 +136,7 @@ public class RcfgDebugHelper<STATE extends IAbstractState<STATE, CodeBlock, VARD
 	}
 
 	private IPredicate createPredicateFromState(final AbstractMultiState<STATE, CodeBlock, VARDECL> state) {
-		final Term acc = state.getTerm(mScript, mBoogie2Smt);
+		final Term acc = state.getTerm(mScript);
 		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(acc, mScript, mBoogie2Smt.getBoogie2SmtSymbolTable());
 		return new BasicPredicate(getIllegalPredicateId(), tvp.getProcedures(), acc, tvp.getVars(),
 				tvp.getClosedFormula());
