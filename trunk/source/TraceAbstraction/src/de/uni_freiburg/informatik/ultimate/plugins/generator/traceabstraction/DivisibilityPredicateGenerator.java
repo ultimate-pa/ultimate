@@ -37,11 +37,10 @@ import java.util.Map.Entry;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 
 /**
@@ -55,14 +54,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 public class DivisibilityPredicateGenerator {
 	private final Script mScript;
 	private final PredicateUnifier mPredicateUnifier;
-	private final Boogie2SMT boogie2smt;
 
-	public DivisibilityPredicateGenerator(final SmtManager smtManger,
+	public DivisibilityPredicateGenerator(final ManagedScript mgdScript,
 			final PredicateUnifier predicateUnifier) {
 		super();
-		mScript = smtManger.getScript();
+		mScript = mgdScript.getScript();
 		mPredicateUnifier = predicateUnifier;
-		boogie2smt = smtManger.getBoogie2Smt();
 	}
 
 	public Collection<IPredicate> divisibilityPredicates(final Collection<IPredicate> preds) {

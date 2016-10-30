@@ -113,7 +113,7 @@ public class DeterministicInterpolantAutomaton extends BasicAbstractInterpolantA
 		}
 		if (mDivisibilityPredicates) {
 			allPredicates = new ArrayList<IPredicate>(allPredicates);
-			final DivisibilityPredicateGenerator dpg = new DivisibilityPredicateGenerator(mSmtManager, mPredicateUnifier);
+			final DivisibilityPredicateGenerator dpg = new DivisibilityPredicateGenerator(mSmtManager.getManagedScript(), mPredicateUnifier);
 			final Collection<IPredicate> divPreds = dpg.divisibilityPredicates(allPredicates);
 			allPredicates.addAll(divPreds);
 			for (final IPredicate pred : divPreds) {
