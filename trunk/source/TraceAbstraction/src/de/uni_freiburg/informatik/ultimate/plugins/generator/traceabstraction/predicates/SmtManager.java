@@ -34,7 +34,6 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
@@ -59,28 +58,9 @@ public class SmtManager {
 	private final SimplificationTechnique mSimplificationTechnique;
 	private final ManagedScript mManagedScript;
 	private final ModifiableGlobalVariableManager mModifiableGlobals;
-	Set<IProgramVar> mAssignedVars;
-
-	
-
-	long mSatCheckTime = 0;
-	private long mSatCheckSolverTime = 0;
-	private final long mInterpolQuriesTime = 0;
-	
 
 
 	private final IUltimateServiceProvider mServices;
-
-	/**
-	 * Switch to produce-interpolants mode before each trace check and leave the
-	 * produce-interpolants mode afterwards
-	 * (needed for princess it can only deal with quantifiers if not in
-	 * produce-interpolants mode)
-	 * 
-	 */
-	private final boolean mInterpolationModeSwitchNeeded;
-
-
 
 	private final PredicateFactory mPredicateFactory;
 
@@ -89,7 +69,6 @@ public class SmtManager {
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
 		mSimplificationTechnique = simplificationTechnique;
-		mInterpolationModeSwitchNeeded = interpolationModeSwitchNeeded;
 		mBoogie2Smt = boogie2smt;
 		mScript = script;
 		mManagedScript = managedScript;
@@ -142,15 +121,6 @@ public class SmtManager {
 
 
 
-	@Deprecated
-	public LBool assertTerm(final Term term) {
-		final long startTime = System.nanoTime();
-		LBool result = null;
-		result = mScript.assertTerm(term);
-		mSatCheckSolverTime += (System.nanoTime() - startTime);
-		return result;
-	}
-
 	/**
 	 * Construct Predicate which represents the same Predicate as ps, but where
 	 * all globalVars are renamed to oldGlobalVars.
@@ -179,11 +149,6 @@ public class SmtManager {
 		return mManagedScript;
 	}
 
-	@Deprecated
-	public boolean isLocked() {
-		return mManagedScript.isLocked();
-	}
-	
 	public ModifiableGlobalVariableManager getModifiableGlobals() {
 		return mModifiableGlobals;
 	}

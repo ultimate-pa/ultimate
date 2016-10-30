@@ -882,7 +882,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	
 	@Override
 	protected void computeCFGHoareAnnotation() {
-		if (mSmtManager.isLocked()) {
+		if (mSmtManager.getManagedScript().isLocked()) {
 			throw new AssertionError("SMTManager must not be locked at the beginning of Hoare annotation computation");
 		}
 		final INestedWordAutomaton<CodeBlock, IPredicate> abstraction =

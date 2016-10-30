@@ -153,7 +153,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 			final ArrayList<Term> termNames = new ArrayList<Term>();
 			for (int i = 0; i < termsFromDAG.size(); i++) {
 				final String termName = "afassa_" + i;
-				mSmtManager.assertTerm(mSmtManager.getScript().annotate(termsFromDAG.get(i),
+				mSmtManager.getManagedScript().getScript().assertTerm(mSmtManager.getScript().annotate(termsFromDAG.get(i),
 						new Annotation(":named", termName)));
 				termNames.add(mSmtManager.getScript().term(termName));
 			}
@@ -496,7 +496,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 			diff = new Difference<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), oldAbstraction, determinized, psd2,
 					mStateFactoryForRefinement, explointSigmaStarConcatOfIA);
 		}
-		assert !mSmtManager.isLocked();
+		assert !mSmtManager.getManagedScript().isLocked();
 		assert (new InductivityCheck(mServices, mInterpolAutomaton, false, true,
 				new IncrementalHoareTripleChecker(mRootNode.getRootAnnot().getManagedScript(), mModGlobVarManager)).getResult());
 		// do the following check only to obtain logger messages of

@@ -207,7 +207,7 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 					mStateFactoryForRefinement, explointSigmaStarConcatOfIA);
 		}
 		determinized.switchToReadonlyMode();
-		assert !mSmtManager.isLocked();
+		assert !mSmtManager.getManagedScript().isLocked();
 		assert new InductivityCheck(mServices, mInterpolAutomaton, false, true,
 				new IncrementalHoareTripleChecker(mRootNode.getRootAnnot().getManagedScript(), mModGlobVarManager))
 						.getResult();

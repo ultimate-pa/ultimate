@@ -739,7 +739,7 @@ public class LassoChecker {
 
 	private SynthesisResult synthesize(final boolean withStem, UnmodifiableTransFormula stemTF,
 			final UnmodifiableTransFormula loopTF, final boolean containsArrays) throws IOException {
-		if (mSmtManager.isLocked()) {
+		if (mSmtManager.getManagedScript().isLocked()) {
 			throw new AssertionError("SMTManager must not be locked at the beginning of synthesis");
 		}
 
