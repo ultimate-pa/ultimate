@@ -153,7 +153,7 @@ public class AbsIntTotalInterpolationAutomatonBuilder implements IInterpolantAut
 				}
 			} else {
 				target = predicateUnifier.getOrConstructPredicateForDisjunction(
-						nextStates.stream().map(s -> s.getTerm(mSmtManager.getScript(), mSmtManager.getBoogie2Smt()))
+						nextStates.stream().map(s -> s.getTerm(mSmtManager.getScript()))
 								.map(predicateUnifier::getOrConstructPredicate).collect(Collectors.toSet()));
 
 				// Add mapping from predicate -> Set<STATE> to be able to determine all STATES the predicate is

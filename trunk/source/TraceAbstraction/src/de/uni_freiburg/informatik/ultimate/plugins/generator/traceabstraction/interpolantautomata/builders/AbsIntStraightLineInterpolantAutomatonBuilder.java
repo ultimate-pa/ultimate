@@ -157,7 +157,7 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder
 				target = falsePredicate;
 			} else {
 				target = predicateUnifier.getOrConstructPredicateForDisjunction(
-						postStates.stream().map(s -> s.getTerm(mSmtManager.getScript(), mSmtManager.getBoogie2Smt()))
+						postStates.stream().map(s -> s.getTerm(mSmtManager.getScript()))
 								.map(predicateUnifier::getOrConstructPredicate).collect(Collectors.toSet()));
 			}
 
