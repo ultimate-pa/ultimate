@@ -6,10 +6,9 @@ import java.util.function.Supplier;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
@@ -19,6 +18,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareT
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
@@ -43,21 +43,21 @@ public class RcfgDebugHelper<STATE extends IAbstractState<STATE, CodeBlock, VARD
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final IHoareTripleChecker mHTC;
-	private final Script mScript;
-	private final Boogie2SMT mBoogie2Smt;
+	private final ManagedScript mMgdScript;
+	private final Boogie2SmtSymbolTable mSymbolTable;
 	private final SimplificationTechnique mSimplificationTechnique;
 
 	private static int sIllegalPredicates = Integer.MAX_VALUE;
 
-	public RcfgDebugHelper(final Boogie2SMT bpl2smt, final ModifiableGlobalVariableManager modGlobVarMan,
-			final IUltimateServiceProvider services) {
+	public RcfgDebugHelper(final ManagedScript mgdScript, final ModifiableGlobalVariableManager modGlobVarMan,
+			final IUltimateServiceProvider services, final Boogie2SmtSymbolTable symbolTable) {
 		mServices = services;
-		mBoogie2Smt = bpl2smt;
-		mScript = bpl2smt.getScript();
+		mSymbolTable = symbolTable;
+		mMgdScript = mgdScript;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		// TODO: Make parameter
 		mSimplificationTechnique = SimplificationTechnique.SIMPLIFY_DDA;
-		mHTC = new IncrementalHoareTripleChecker(bpl2smt.getManagedScript(), modGlobVarMan);
+		mHTC = new IncrementalHoareTripleChecker(mMgdScript, modGlobVarMan);
 	}
 
 	@Override
@@ -108,36 +108,36 @@ public class RcfgDebugHelper<STATE extends IAbstractState<STATE, CodeBlock, VARD
 			final IPredicate precondHier) {
 		mLogger.fatal("Soundness check failed for the following triple:");
 		final String simplePre = SmtUtils
-				.simplify(mBoogie2Smt.getManagedScript(), precond.getFormula(), mServices, mSimplificationTechnique)
+				.simplify(mMgdScript, precond.getFormula(), mServices, mSimplificationTechnique)
 				.toStringDirect();
 		if (precondHier == null) {
 			mLogger.fatal("Pre: {" + simplePre + "}");
 		} else {
 			mLogger.fatal("PreBefore: {" + simplePre + "}");
-			mLogger.fatal("PreAfter: {" + SmtUtils.simplify(mBoogie2Smt.getManagedScript(), precondHier.getFormula(),
+			mLogger.fatal("PreAfter: {" + SmtUtils.simplify(mMgdScript, precondHier.getFormula(),
 					mServices, mSimplificationTechnique).toStringDirect() + "}");
 		}
 		mLogger.fatal(transition.getTransitionFormula().getFormula().toStringDirect() + " (" + transition + ")");
 		mLogger.fatal("Post: {" + SmtUtils
-				.simplify(mBoogie2Smt.getManagedScript(), postcond.getFormula(), mServices, mSimplificationTechnique)
+				.simplify(mMgdScript, postcond.getFormula(), mServices, mSimplificationTechnique)
 				.toStringDirect() + "}");
 	}
 
 	private IPredicate createPredicateFromState(final Collection<STATE> states) {
-		Term acc = mScript.term("false");
+		Term acc = mMgdScript.getScript().term("false");
 
 		for (final STATE state : states) {
-			acc = Util.or(mScript, acc, state.getTerm(mScript));
+			acc = Util.or(mMgdScript.getScript(), acc, state.getTerm(mMgdScript.getScript()));
 		}
 
-		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(acc, mScript, mBoogie2Smt.getBoogie2SmtSymbolTable());
+		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(acc, mMgdScript.getScript(), mSymbolTable);
 		return new BasicPredicate(getIllegalPredicateId(), tvp.getProcedures(), acc, tvp.getVars(),
 				tvp.getClosedFormula());
 	}
 
 	private IPredicate createPredicateFromState(final AbstractMultiState<STATE, CodeBlock, VARDECL> state) {
-		final Term acc = state.getTerm(mScript);
-		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(acc, mScript, mBoogie2Smt.getBoogie2SmtSymbolTable());
+		final Term acc = state.getTerm(mMgdScript.getScript());
+		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(acc, mMgdScript.getScript(), mSymbolTable);
 		return new BasicPredicate(getIllegalPredicateId(), tvp.getProcedures(), acc, tvp.getVars(),
 				tvp.getClosedFormula());
 	}

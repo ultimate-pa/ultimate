@@ -80,7 +80,8 @@ public class FixpointEngineParameterFactory {
 				new DefaultSymbolTableAdapter(mSymbolTable, rootAnnot.getBoogie2SMT().getBoogie2SmtSymbolTable()),
 				mServices);
 		final IDebugHelper<STATE, CodeBlock, IBoogieVar, ProgramPoint> debugHelper =
-				new RcfgDebugHelper<>(rootAnnot.getBoogie2SMT(), rootAnnot.getModGlobVarManager(), mServices);
+				new RcfgDebugHelper<>(rootAnnot.getBoogie2SMT().getManagedScript(), rootAnnot.getModGlobVarManager(), mServices, 
+						mRoot.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable());
 		return new FixpointEngineParameters<STATE, CodeBlock, IBoogieVar, ProgramPoint, Expression>(mServices)
 				.setDomain(domain).setLoopDetector(loopDetector).setStorage(storageProvider)
 				.setTransitionProvider(transitionProvider).setVariableProvider(variableProvider)
@@ -102,7 +103,8 @@ public class FixpointEngineParameterFactory {
 				new DefaultSymbolTableAdapter(mSymbolTable, rootAnnot.getBoogie2SMT().getBoogie2SmtSymbolTable()),
 				mServices);
 		final IDebugHelper<STATE, CodeBlock, IBoogieVar, ProgramPoint> debugHelper =
-				new RcfgDebugHelper<>(rootAnnot.getBoogie2SMT(), rootAnnot.getModGlobVarManager(), mServices);
+				new RcfgDebugHelper<>(rootAnnot.getBoogie2SMT().getManagedScript(), rootAnnot.getModGlobVarManager(), mServices, 
+						mRoot.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable());
 		return new FixpointEngineParameters<STATE, CodeBlock, IBoogieVar, ProgramPoint, Expression>(mServices)
 				.setDomain(domain).setLoopDetector(loopDetector).setStorage(storageProvider)
 				.setTransitionProvider(transitionProvider).setVariableProvider(variableProvider)
@@ -124,7 +126,8 @@ public class FixpointEngineParameterFactory {
 		final IVariableProvider<STATE, CodeBlock, IProgramVar> variableProvider = new FutureRcfgVariableProvider<>(
 				mSymbolTable, rootAnnot.getBoogie2SMT().getBoogie2SmtSymbolTable(), mServices);
 		final IDebugHelper<STATE, CodeBlock, IProgramVar, ProgramPoint> debugHelper =
-				new RcfgDebugHelper<>(rootAnnot.getBoogie2SMT(), rootAnnot.getModGlobVarManager(), mServices);
+				new RcfgDebugHelper<>(rootAnnot.getBoogie2SMT().getManagedScript(), rootAnnot.getModGlobVarManager(), mServices, 
+						mRoot.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable());
 		
 		return new FixpointEngineParameters<STATE, CodeBlock, IProgramVar, ProgramPoint, Expression>(mServices)
 				.setDomain(domain).setLoopDetector(loopDetector).setStorage(storageProvider)

@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
@@ -77,6 +78,7 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder
 	private final NestedWordAutomaton<CodeBlock, IPredicate> mResult;
 	private final SmtManager mSmtManager;
 	private final IRun<CodeBlock, IPredicate> mCurrentCounterExample;
+	private final Boogie2SmtSymbolTable mSymbolTable;
 
 	public AbsIntStraightLineInterpolantAutomatonBuilder(final IUltimateServiceProvider services,
 			final INestedWordAutomatonSimple<CodeBlock, IPredicate> oldAbstraction,
@@ -84,10 +86,12 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder
 			final PredicateUnifier predUnifier, final SmtManager smtManager,
 			final IRun<CodeBlock, IPredicate> currentCounterExample,
 			final SimplificationTechnique simplificationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique) {
+			final XnfConversionTechnique xnfConversionTechnique, 
+			final Boogie2SmtSymbolTable symbolTable) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mSmtManager = smtManager;
+		mSymbolTable = symbolTable;
 		mCurrentCounterExample = currentCounterExample;
 		mResult = constructAutomaton(oldAbstraction, aiResult, predUnifier);
 	}
@@ -103,7 +107,7 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder
 					final PredicateUnifier predicateUnifier) {
 
 		final RcfgDebugHelper<STATE, IBoogieVar, ?> debugHelper =
-				new RcfgDebugHelper<>(mSmtManager.getBoogie2Smt(), mSmtManager.getModifiableGlobals(), mServices);
+				new RcfgDebugHelper<>(mSmtManager.getManagedScript(), mSmtManager.getModifiableGlobals(), mServices, mSymbolTable);
 		mLogger.info("Creating interpolant automaton from AI predicates (straight)");
 
 		final NestedWordAutomaton<CodeBlock, IPredicate> result = new NestedWordAutomaton<>(

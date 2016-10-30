@@ -82,6 +82,7 @@ public class AbsIntTotalInterpolationAutomatonBuilder implements IInterpolantAut
 	private final IRun<CodeBlock, IPredicate> mCurrentCounterExample;
 	private final RcfgStatementExtractor mStatementExtractor;
 	private final VariableCollector mVariableCollector;
+	private final Boogie2SmtSymbolTable mSymbolTable;
 
 	/**
 	 * Constructs a new AbsIntTotalInterpolationAutomatonBuilder which preforms total interpolation on a given counter
@@ -93,6 +94,7 @@ public class AbsIntTotalInterpolationAutomatonBuilder implements IInterpolantAut
 	 * @param predicateUnifier
 	 * @param smtManager
 	 * @param currentCounterExample
+	 * @param symbolTable 
 	 * @param simplificationTechnique
 	 * @param xnfConversionTechnique
 	 */
@@ -100,10 +102,11 @@ public class AbsIntTotalInterpolationAutomatonBuilder implements IInterpolantAut
 			final INestedWordAutomatonSimple<CodeBlock, IPredicate> oldAbstraction,
 			final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> aiResult,
 			final PredicateUnifier predicateUnifier, final SmtManager smtManager,
-			final IRun<CodeBlock, IPredicate> currentCounterExample) {
+			final IRun<CodeBlock, IPredicate> currentCounterExample, final Boogie2SmtSymbolTable symbolTable) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mSmtManager = smtManager;
+		mSymbolTable = symbolTable;
 		mCurrentCounterExample = currentCounterExample;
 		mVariableCollector = new VariableCollector();
 		mStatementExtractor = new RcfgStatementExtractor();
@@ -250,7 +253,7 @@ public class AbsIntTotalInterpolationAutomatonBuilder implements IInterpolantAut
 
 			// Collect all occurring variables in the current letter.
 			final Set<IBoogieVar> variableNames = mVariableCollector.collectVariableNames(currentLetter,
-					mStatementExtractor, mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
+					mStatementExtractor, mSymbolTable);
 
 			// Iterate over all predicates to find matching candidates for a transition.
 			for (final IPredicate currentPredeicate : allPredicates) {
