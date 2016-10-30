@@ -54,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.SummaryReturnTransition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
@@ -107,16 +108,19 @@ public class TotalInterpolationAutomatonBuilder implements IInterpolantAutomaton
 	private final IUltimateServiceProvider mServices;
 	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
+	private final Boogie2SmtSymbolTable mSymbolTable;
 
 	public TotalInterpolationAutomatonBuilder(final INestedWordAutomaton<CodeBlock, IPredicate> abstraction,
 			final ArrayList<IPredicate> stateSequence, final IInterpolantGenerator interpolantGenerator, final SmtManager smtManager,
 			final PredicateFactoryForInterpolantAutomata predicateFactory, final ModifiableGlobalVariableManager modifiableGlobals,
 			final InterpolationTechnique interpolation, final IUltimateServiceProvider services, final HoareTripleChecks hoareTripleChecks,
-			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) throws AutomataOperationCanceledException {
+			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique, 
+			final Boogie2SmtSymbolTable symbolTable) throws AutomataOperationCanceledException {
 		super();
 		mServices = services;
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
+		mSymbolTable = symbolTable;
 		mStateSequence = stateSequence;
 		// mTraceChecker = traceChecker;
 		mSmtManager = smtManager;
@@ -318,7 +322,7 @@ public class TotalInterpolationAutomatonBuilder implements IInterpolantAutomaton
 					pendingContexts, run.getWord(),
 					mSmtManager.getManagedScript(), mModifiedGlobals, AssertCodeBlockOrder.NOT_INCREMENTALLY,
 					mServices, true, mPredicateUnifier, mInterpolation, true, mXnfConversionTechnique, mSimplificationTechnique, 
-					mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
+					mSymbolTable);
 			break;
 		case ForwardPredicates:
 		case BackwardPredicates:
@@ -326,7 +330,7 @@ public class TotalInterpolationAutomatonBuilder implements IInterpolantAutomaton
 			tc = new TraceCheckerSpWp(precondition, postcondition, pendingContexts, run.getWord(), mSmtManager.getManagedScript(),
 					mModifiedGlobals, AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true,
 					mServices, true, mPredicateUnifier, mInterpolation, mSmtManager.getManagedScript(), 
-					mXnfConversionTechnique, mSimplificationTechnique, mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
+					mXnfConversionTechnique, mSimplificationTechnique, mSymbolTable);
 
 			break;
 		case PathInvariants:

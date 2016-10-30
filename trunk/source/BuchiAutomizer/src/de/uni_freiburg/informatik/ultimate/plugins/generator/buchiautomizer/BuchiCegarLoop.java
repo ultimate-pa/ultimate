@@ -425,6 +425,7 @@ public class BuchiCegarLoop {
 			try {
 				mBenchmarkGenerator.start(BuchiCegarLoopBenchmark.s_LassoAnalysisTime);
 				lassoChecker = new LassoChecker(mInterpolation, mSmtManager,
+						mRootNode.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable(),
 						mRootNode.getRootAnnot().getModGlobVarManager(),
 						mRootNode.getRootAnnot().getBoogie2SMT().getAxioms(), mBinaryStatePredicateManager,
 						mCounterexample, generateLassoCheckerIdentifier(), mServices, mStorage, mSimplificationTechnique, mXnfConversionTechnique);
@@ -437,6 +438,7 @@ public class BuchiCegarLoop {
 							.concatenate(mCounterexample.getLoop());
 					mCounterexample = new NestedLassoRun<>(newStem, mCounterexample.getLoop());
 					lassoChecker = new LassoChecker(mInterpolation, mSmtManager,
+							mRootNode.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable(), 
 							mRootNode.getRootAnnot().getModGlobVarManager(),
 							mRootNode.getRootAnnot().getBoogie2SMT().getAxioms(), mBinaryStatePredicateManager,
 							mCounterexample, generateLassoCheckerIdentifier(), mServices, mStorage, mSimplificationTechnique, mXnfConversionTechnique);

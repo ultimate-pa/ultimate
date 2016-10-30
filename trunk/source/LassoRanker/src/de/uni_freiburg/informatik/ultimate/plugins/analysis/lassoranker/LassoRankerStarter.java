@@ -175,7 +175,7 @@ public class LassoRankerStarter {
 		// Construct LassoAnalysis for nontermination
 		LassoAnalysis laNT = null;
 		try {
-			laNT = new LassoAnalysis(script.getScript(), mRootAnnot.getBoogie2SMT(), stemTF, loopTf,
+			laNT = new LassoAnalysis(script, mRootAnnot.getBoogie2SMT().getBoogie2SmtSymbolTable(), stemTF, loopTf,
 					modifiableGlobalsAtHonda, axioms, preferences, mServices, storage, mSimplificationTechnique,
 					mXnfConversionTechnique);
 		} catch (final TermException e) {
@@ -210,7 +210,7 @@ public class LassoRankerStarter {
 		// Construct LassoAnalysis for nontermination
 		LassoAnalysis laT = null;
 		try {
-			laT = new LassoAnalysis(script.getScript(), mRootAnnot.getBoogie2SMT(), stemTF, loopTf,
+			laT = new LassoAnalysis(script, mRootAnnot.getBoogie2SMT().getBoogie2SmtSymbolTable(), stemTF, loopTf,
 					modifiableGlobalsAtHonda, axioms, preferences, mServices, storage, mSimplificationTechnique,
 					mXnfConversionTechnique);
 		} catch (final TermException e) {

@@ -192,7 +192,7 @@ public class InterpolantAutomatonBuilderFactory {
 		final TotalInterpolationAutomatonBuilder iab = new TotalInterpolationAutomatonBuilder(castedAbstraction,
 				castedCex.getStateSequence(), interpolGenerator, mSmtManager, mPredicateFactory,
 				mRootNode.getRootAnnot().getModGlobVarManager(), mInterpolationTechnique, mServices, mHoareTripleChecks,
-				mSimplificationTechnique, mXnfConversionTechnique);
+				mSimplificationTechnique, mXnfConversionTechnique, mRootNode.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable());
 		mBenchmark.addTotalInterpolationData(iab.getTotalInterpolationBenchmark());
 		return iab;
 	}

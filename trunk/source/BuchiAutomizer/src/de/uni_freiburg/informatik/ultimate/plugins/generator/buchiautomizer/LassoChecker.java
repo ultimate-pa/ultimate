@@ -72,6 +72,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.variables.InequalityConve
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
@@ -194,6 +195,7 @@ public class LassoChecker {
 
 	private final List<TerminationAnalysisBenchmark> mTerminationAnalysisBenchmarks = new ArrayList<>();
 	private final List<NonterminationAnalysisBenchmark> mNonterminationAnalysisBenchmarks = new ArrayList<>();
+	private final Boogie2SmtSymbolTable mSymbolTable;
 
 	public LassoCheckResult getLassoCheckResult() {
 		return mLassoCheckResult;
@@ -237,7 +239,7 @@ public class LassoChecker {
 	}
 
 	public LassoChecker(final InterpolationTechnique interpolation, final SmtManager smtManager,
-			final ModifiableGlobalVariableManager modifiableGlobalVariableManager, final Collection<Term> axioms,
+			final Boogie2SmtSymbolTable symbolTable, final ModifiableGlobalVariableManager modifiableGlobalVariableManager, final Collection<Term> axioms,
 			final BinaryStatePredicateManager bspm, final NestedLassoRun<CodeBlock, IPredicate> counterexample,
 			final String lassoCheckerIdentifier, final IUltimateServiceProvider services,
 			final IToolchainStorage storage, final SimplificationTechnique simplificationTechnique,
@@ -247,6 +249,7 @@ public class LassoChecker {
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mSymbolTable = symbolTable;
 		final IPreferenceProvider baPref = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		mRankAnalysisType = baPref.getEnum(PreferenceInitializer.LABEL_ANALYSIS_TYPE_RANK, AnalysisType.class);
 		mGntaAnalysisType = baPref.getEnum(PreferenceInitializer.LABEL_ANALYSIS_TYPE_GNTA, AnalysisType.class);
@@ -262,7 +265,7 @@ public class LassoChecker {
 		mCounterexample = counterexample;
 		mLassoCheckerIdentifier = lassoCheckerIdentifier;
 		mPredicateUnifier = new PredicateUnifier(mServices, mSmtManager.getManagedScript(),
-				mSmtManager.getPredicateFactory(), mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable(),
+				mSmtManager.getPredicateFactory(), mSymbolTable,
 				simplificationTechnique, xnfConversionTechnique);
 		mTruePredicate = mPredicateUnifier.getTruePredicate();
 		mFalsePredicate = mPredicateUnifier.getFalsePredicate();
@@ -448,7 +451,7 @@ public class LassoChecker {
 						 * TODO: When Matthias introduced this parameter he set the argument to
 						 * AssertCodeBlockOrder.NOT_INCREMENTALLY. Check if you want to set this to a different value.
 						 */AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, mPredicateUnifier, mInterpolation,
-						true, mXnfConversionTechnique, mSimplificationTechnique, mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
+						true, mXnfConversionTechnique, mSimplificationTechnique, mSymbolTable);
 				break;
 			case ForwardPredicates:
 			case BackwardPredicates:
@@ -460,7 +463,7 @@ public class LassoChecker {
 						 * AssertCodeBlockOrder.NOT_INCREMENTALLY. Check if you want to set this to a different value.
 						 */AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true, mServices, false,
 						mPredicateUnifier, mInterpolation, mSmtManager.getManagedScript(), mXnfConversionTechnique,
-						mSimplificationTechnique, mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
+						mSimplificationTechnique, mSymbolTable);
 				break;
 			default:
 				throw new UnsupportedOperationException("unsupported interpolation");
@@ -560,10 +563,10 @@ public class LassoChecker {
 			final boolean extendedPartialQuantifierElimination, final boolean withBranchEncoders) {
 		final boolean toCNF = false;
 		final UnmodifiableTransFormula tf =
-				SequentialComposition.getInterproceduralTransFormula(mSmtManager.getBoogie2Smt().getManagedScript(),
+				SequentialComposition.getInterproceduralTransFormula(mSmtManager.getManagedScript(),
 						mModifiableGlobalVariableManager, simplify, extendedPartialQuantifierElimination, toCNF,
 						withBranchEncoders, mLogger, mServices, word.asList(), mXnfConversionTechnique,
-						mSimplificationTechnique, mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
+						mSimplificationTechnique, mSymbolTable);
 		return tf;
 	}
 
@@ -775,7 +778,7 @@ public class LassoChecker {
 			LassoAnalysis laNT = null;
 			try {
 				final boolean overapproximateArrayIndexConnection = false;
-				laNT = new LassoAnalysis(mSmtManager.getScript(), mSmtManager.getBoogie2Smt(), stemTF, loopTF,
+				laNT = new LassoAnalysis(mSmtManager.getManagedScript(), mSymbolTable, stemTF, loopTF,
 						modifiableGlobalsAtHonda, mAxioms.toArray(new Term[mAxioms.size()]),
 						constructLassoRankerPreferences(withStem, overapproximateArrayIndexConnection,
 								NlaHandling.UNDERAPPROXIMATE, AnalysisTechnique.GEOMETRIC_NONTERMINATION_ARGUMENTS),
@@ -808,7 +811,7 @@ public class LassoChecker {
 		LassoAnalysis laT = null;
 		try {
 			final boolean overapproximateArrayIndexConnection = true;
-			laT = new LassoAnalysis(mSmtManager.getScript(), mSmtManager.getBoogie2Smt(), stemTF, loopTF,
+			laT = new LassoAnalysis(mSmtManager.getManagedScript(), mSymbolTable, stemTF, loopTF,
 					modifiableGlobalsAtHonda, mAxioms.toArray(new Term[mAxioms.size()]),
 					constructLassoRankerPreferences(withStem, overapproximateArrayIndexConnection,
 							NlaHandling.OVERAPPROXIMATE, AnalysisTechnique.RANKING_FUNCTIONS_SUPPORTING_INVARIANTS),

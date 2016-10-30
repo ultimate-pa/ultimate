@@ -102,7 +102,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 			final IUltimateServiceProvider services, final IToolchainStorage storage) {
 		super(name, rootNode, smtManager, traceAbstractionBenchmarks, taPrefs, errorLocs, services, storage);
 		mPredicateUnifier = new PredicateUnifier(services, smtManager.getManagedScript(), smtManager.getPredicateFactory(), 
-				smtManager.getBoogie2Smt().getBoogie2SmtSymbolTable(), mSimplificationTechnique, mXnfConversionTechnique,
+				rootNode.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable(), mSimplificationTechnique, mXnfConversionTechnique,
 				smtManager.getPredicateFactory().newPredicate(smtManager.getScript().term("true")),
 				smtManager.getPredicateFactory().newPredicate(smtManager.getScript().term("false")));
 	}

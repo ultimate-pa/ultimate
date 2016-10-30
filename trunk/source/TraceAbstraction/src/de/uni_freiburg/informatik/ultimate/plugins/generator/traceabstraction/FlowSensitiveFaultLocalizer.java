@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.BasicInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
@@ -97,6 +98,7 @@ public class FlowSensitiveFaultLocalizer {
 	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
 	private final IRelevanceInformation[] mRelevanceOfTrace;
+	private final Boogie2SmtSymbolTable mSymbolTable;
 	/**
 	 * Apply quantifier elimination during the computation of pre and wp.
 	 * If set to true, there is a higher risk that we run into a timeout.
@@ -110,11 +112,13 @@ public class FlowSensitiveFaultLocalizer {
 			final SmtManager smtManager,
 			final ModifiableGlobalVariableManager modGlobVarManager, final PredicateUnifier predicateUnifier,
 			final boolean doNonFlowSensitiveAnalysis, final boolean doFlowSensitiveAnalysis,
-			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
+			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique, 
+			final Boogie2SmtSymbolTable symbolTable) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
+		mSymbolTable = symbolTable;
 		mRelevanceOfTrace = initializeRelevanceOfTrace(counterexample);
 
 		if (doNonFlowSensitiveAnalysis) {
@@ -332,7 +336,7 @@ public class FlowSensitiveFaultLocalizer {
 		mLogger.info("Starting non-flow-sensitive error relevancy analysis");
 		
 		final FaultLocalizationRelevanceChecker rc = new FaultLocalizationRelevanceChecker(
-				smtManager.getManagedScript(), modGlobVarManager, smtManager.getBoogie2Smt());
+				smtManager.getManagedScript(), modGlobVarManager);
 		// Non-Flow Sensitive INCREMENTAL ANALYSIS
 
 		// Calculating the WP-List
@@ -341,7 +345,7 @@ public class FlowSensitiveFaultLocalizer {
 				smtManager.getScript(), smtManager.getManagedScript(), modGlobVarManager,
 				mServices, counterexampleWord, null, falsePredicate, null,
 				smtManager.getPredicateFactory().newPredicate(smtManager.getPredicateFactory().not(falsePredicate)),
-				mSimplificationTechnique, mXnfConversionTechnique, smtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
+				mSimplificationTechnique, mXnfConversionTechnique, mSymbolTable);
 		
 		final DefaultTransFormulas dtf = new DefaultTransFormulas(counterexampleWord,
 				null, falsePredicate, Collections.emptySortedMap(), modGlobVarManager, false);
@@ -453,7 +457,7 @@ public class FlowSensitiveFaultLocalizer {
 			final SmtManager smtManager, final ModifiableGlobalVariableManager modGlobVarManager){
 
 		final FaultLocalizationRelevanceChecker rc = new FaultLocalizationRelevanceChecker(
-				smtManager.getManagedScript(), modGlobVarManager, smtManager.getBoogie2Smt());
+				smtManager.getManagedScript(), modGlobVarManager);
 		final IPredicate pre = smtManager.getPredicateFactory().newPredicate(
 				smtManager.getPredicateFactory().not(weakestPreconditionLeft));
 		final String preceeding = counterexampleWord.getSymbolAt(startPosition).getPrecedingProcedure();
@@ -635,7 +639,7 @@ public class FlowSensitiveFaultLocalizer {
 		final PredicateTransformer pt = new PredicateTransformer(mServices,
 				smtManager.getManagedScript(), mSimplificationTechnique, mXnfConversionTechnique);
 		final FaultLocalizationRelevanceChecker rc = new FaultLocalizationRelevanceChecker(
-				smtManager.getManagedScript(), modGlobVarManager, smtManager.getBoogie2Smt());
+				smtManager.getManagedScript(), modGlobVarManager);
 		final int startLocation = 0;
 		final int endLocation = counterexample.getWord().length()-1;
 		final IPredicate falsePredicate = smtManager.getPredicateFactory().newPredicate(

@@ -294,7 +294,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	@Override
 	protected LBool isCounterexampleFeasible() {
 		final PredicateUnifier predicateUnifier = new PredicateUnifier(mServices, mSmtManager.getManagedScript(),
-				mSmtManager.getPredicateFactory(), mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable(),
+				mSmtManager.getPredicateFactory(), mRootNode.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable(),
 				mSimplificationTechnique, mXnfConversionTechnique);
 		final IPredicate truePredicate = predicateUnifier.getTruePredicate();
 		final IPredicate falsePredicate = predicateUnifier.getFalsePredicate();
@@ -331,7 +331,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					mSmtManager.getManagedScript(), mRootNode.getRootAnnot().getModGlobVarManager(),
 					mAssertCodeBlocksIncrementally, mServices, true, predicateUnifier, mInterpolation,
 					mgdScriptTc, true, mXnfConversionTechnique, mSimplificationTechnique,
-					mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
+					mRootNode.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable());
 		}
 			break;
 		case ForwardPredicates:
@@ -342,7 +342,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					mSmtManager.getManagedScript(), mRootNode.getRootAnnot().getModGlobVarManager(),
 					mAssertCodeBlocksIncrementally, mUnsatCores, mUseLiveVariables, mServices, true, predicateUnifier,
 					mInterpolation, mgdScriptTc, mXnfConversionTechnique,
-					mSimplificationTechnique, mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
+					mSimplificationTechnique, mRootNode.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable());
 			
 			break;
 		case PathInvariants: {
@@ -367,8 +367,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 							new TreeMap<Integer, IPredicate>(), (NestedRun<CodeBlock, IPredicate>) mCounterexample,
 							mSmtManager.getManagedScript(), mModGlobVarManager, mAssertCodeBlocksIncrementally,
 							mServices, mToolchainStorage, true, predicateUnifier, useNonlinerConstraints, settings,
-							mXnfConversionTechnique, mSimplificationTechnique, mSmtManager.getBoogie2Smt().getAxioms(),
-							mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
+							mXnfConversionTechnique, mSimplificationTechnique, mRootNode.getRootAnnot().getBoogie2SMT().getAxioms(),
+							mRootNode.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable());
 		}
 			break;
 		default:
@@ -408,7 +408,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 						.getNestedWordAutomaton(super.mRootNode, mStateFactoryForRefinement, super.mErrorLocs);
 				final FlowSensitiveFaultLocalizer a = new FlowSensitiveFaultLocalizer(mCounterexample, cfg, mServices,
 						mSmtManager, mModGlobVarManager, predicateUnifier, mDoFaultLocalizationNonFlowSensitive,
-						mDoFaultLocalizationFlowSensitive, mSimplificationTechnique, mXnfConversionTechnique);
+						mDoFaultLocalizationFlowSensitive, mSimplificationTechnique, mXnfConversionTechnique,
+						mRootNode.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable());
 				mRcfgProgramExecution = mRcfgProgramExecution.addRelevanceInformation(a.getRelevanceInformation());
 			}
 			// s_Logger.info("Trace with values");

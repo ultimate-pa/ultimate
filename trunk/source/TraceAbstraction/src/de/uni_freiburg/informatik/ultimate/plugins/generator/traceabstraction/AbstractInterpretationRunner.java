@@ -202,7 +202,7 @@ public class AbstractInterpretationRunner {
 			case USE_PATH_PROGRAM:
 				aiInterpolAutomatonBuilder = new AbsIntNonSmtInterpolantAutomatonBuilder(mServices, abstraction,
 						interpolGenerator.getPredicateUnifier(), mSmtManager.getManagedScript(),
-						mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable(), currentCex, mSimplificationTechnique,
+						mRoot.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable(), currentCex, mSimplificationTechnique,
 						mXnfConversionTechnique);
 				break;
 			case USE_PREDICATES:

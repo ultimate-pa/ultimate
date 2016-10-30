@@ -28,7 +28,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
@@ -66,14 +65,13 @@ public class FaultLocalizationRelevanceChecker {
 	private class FaultLocalizationHoareTripleChecker
 			extends IncrementalHoareTripleChecker {
 		
-		public FaultLocalizationHoareTripleChecker(ManagedScript managedScript, 
-				ModifiableGlobalVariableManager modGlobVarManager,
-				Boogie2SMT boogie2smt) {
+		public FaultLocalizationHoareTripleChecker(final ManagedScript managedScript, 
+				final ModifiableGlobalVariableManager modGlobVarManager) {
 			super(managedScript, modGlobVarManager);
 		}
 		
 		@Override
-		public Validity checkInternal(IPredicate pre, IInternalAction act, IPredicate post) {
+		public Validity checkInternal(final IPredicate pre, final IInternalAction act, final IPredicate post) {
 			prepareAssertionStackAndAddTransition(act);
 			prepareAssertionStackAndAddPrecondition(pre);
 			prepareAssertionStackAndAddPostcond(post);
@@ -81,7 +79,7 @@ public class FaultLocalizationRelevanceChecker {
 		}
 		
 		@Override
-		public Validity checkCall(IPredicate pre, ICallAction act, IPredicate post) {
+		public Validity checkCall(final IPredicate pre, final ICallAction act, final IPredicate post) {
 			prepareAssertionStackAndAddTransition(act);
 			prepareAssertionStackAndAddPrecondition(pre);
 			prepareAssertionStackAndAddPostcond(post);
@@ -89,8 +87,8 @@ public class FaultLocalizationRelevanceChecker {
 		}
 		
 		@Override
-		public Validity checkReturn(IPredicate linPre, IPredicate hierPre,
-				IReturnAction act, IPredicate postcond) {
+		public Validity checkReturn(final IPredicate linPre, final IPredicate hierPre,
+				final IReturnAction act, final IPredicate postcond) {
 			prepareAssertionStackAndAddTransition(act);
 			prepareAssertionStackAndAddPrecondition(linPre);
 			prepareAssertionStackAndAddHierpred(hierPre);
@@ -113,11 +111,10 @@ public class FaultLocalizationRelevanceChecker {
 	
 	private final FaultLocalizationHoareTripleChecker mHoareTripleChecker;
 	
-	public FaultLocalizationRelevanceChecker(ManagedScript managedScript, 
-			ModifiableGlobalVariableManager modGlobVarManager,
-			Boogie2SMT boogie2smt) {
+	public FaultLocalizationRelevanceChecker(final ManagedScript managedScript, 
+			final ModifiableGlobalVariableManager modGlobVarManager) {
 		mHoareTripleChecker = new FaultLocalizationHoareTripleChecker(
-				managedScript, modGlobVarManager, boogie2smt);
+				managedScript, modGlobVarManager);
 	}
 	
 	public ERelevanceStatus relevanceInternal(final IPredicate pre,

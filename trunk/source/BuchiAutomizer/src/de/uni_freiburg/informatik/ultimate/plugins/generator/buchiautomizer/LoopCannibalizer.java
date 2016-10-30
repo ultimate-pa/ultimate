@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLasso
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -73,15 +74,17 @@ public class LoopCannibalizer {
 	private final IUltimateServiceProvider mServices;
 	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
+	private final Boogie2SmtSymbolTable mBoogie2SmtSymbolTable;
 
 	public LoopCannibalizer(final NestedLassoRun<CodeBlock, IPredicate> counterexample, final Set<IPredicate> loopInterpolants,
 			final BinaryStatePredicateManager bspm, final PredicateUnifier predicateUnifier, final SmtManager smtManager,
 			final BuchiModGlobalVarManager buchiModGlobalVarManager, final InterpolationTechnique interpolation,
-			final IUltimateServiceProvider services,
+			final Boogie2SmtSymbolTable boogie2SmtSymbolTable, final IUltimateServiceProvider services,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		super();
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mBoogie2SmtSymbolTable = boogie2SmtSymbolTable;
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
 		mCounterexample = counterexample;
@@ -154,7 +157,7 @@ public class LoopCannibalizer {
 					 * to a different value.
 					 */AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, mPredicateUnifier,
 						interpolation, true, mXnfConversionTechnique, mSimplificationTechnique, 
-						mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
+						mBoogie2SmtSymbolTable);
 			break;
 		case ForwardPredicates:
 		case BackwardPredicates:
@@ -170,7 +173,7 @@ public class LoopCannibalizer {
 					 */AssertCodeBlockOrder.NOT_INCREMENTALLY,
 					 UnsatCores.CONJUNCT_LEVEL, true, mServices, false, mPredicateUnifier,
 						interpolation, mSmtManager.getManagedScript(), mXnfConversionTechnique, mSimplificationTechnique, 
-						mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
+						mBoogie2SmtSymbolTable);
 			break;
 		default:
 			throw new UnsupportedOperationException("unsupported interpolation");

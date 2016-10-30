@@ -219,7 +219,8 @@ public class RefineBuchi {
 		assert !bspm.getStemPrecondition().getFormula().toString().equals("false");
 		assert !bspm.getHondaPredicate().getFormula().toString().equals("false");
 		assert !bspm.getRankEqAndSi().getFormula().toString().equals("false");
-		final PredicateUnifier pu = new PredicateUnifier(mServices, mSmtManager.getManagedScript(), mSmtManager.getPredicateFactory(), mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable(), mSimplificationTechnique, mXnfConversionTechnique, bspm.getStemPrecondition(),
+		final PredicateUnifier pu = new PredicateUnifier(mServices, mSmtManager.getManagedScript(), mSmtManager.getPredicateFactory(), 
+				mRootNode.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable(), mSimplificationTechnique, mXnfConversionTechnique, bspm.getStemPrecondition(),
 				bspm.getHondaPredicate(), bspm.getRankEqAndSi(), bspm.getStemPostcondition());
 		IPredicate[] stemInterpolants;
 		InterpolatingTraceChecker traceChecker;
@@ -297,7 +298,9 @@ public class RefineBuchi {
 					loopInterpolantsForRefinement.addAll(pu.cannibalize(false, bspm.getRankEqAndSi().getFormula()));
 
 					final LoopCannibalizer lc = new LoopCannibalizer(mCounterexample, loopInterpolantsForRefinement, bspm, pu,
-							mSmtManager, buchiModGlobalVarManager, interpolation, mServices, mSimplificationTechnique, mXnfConversionTechnique);
+							mSmtManager, buchiModGlobalVarManager, interpolation, 
+							mRootNode.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable(),
+							mServices, mSimplificationTechnique, mXnfConversionTechnique);
 					loopInterpolantsForRefinement = lc.getResult();
 				} catch (final ToolchainCanceledException tce) {
 					final String taskDescription = "loop cannibalization";
@@ -315,7 +318,8 @@ public class RefineBuchi {
 							: stem.getSymbol(stem.length() - 1), loop.getSymbol(loop.length() - 1), abstraction,
 					setting.isScroogeNondeterminismStem(), setting.isScroogeNondeterminismLoop(),
 					setting.isBouncerStem(), setting.isBouncerLoop(), mStateFactoryInterpolAutom, pu, pu,
-					pu.getFalsePredicate(), mServices, mSimplificationTechnique, mXnfConversionTechnique);
+					pu.getFalsePredicate(), mServices, mSimplificationTechnique, mXnfConversionTechnique,
+					mRootNode.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable());
 			break;
 		default:
 			throw new UnsupportedOperationException("unknown automaton");
@@ -497,7 +501,7 @@ public class RefineBuchi {
 					 * Check if you want to set this
 					 * to a different value.
 					 */AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, pu, interpolation, true, 
-					 mXnfConversionTechnique, mSimplificationTechnique, mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
+					 mXnfConversionTechnique, mSimplificationTechnique, mRootNode.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable());
 			break;
 		}
 		case ForwardPredicates:
@@ -513,7 +517,7 @@ public class RefineBuchi {
 					 * to a different value.
 					 */AssertCodeBlockOrder.NOT_INCREMENTALLY,
 					 UnsatCores.CONJUNCT_LEVEL, true, mServices, false, pu, interpolation, mSmtManager.getManagedScript(), 
-					 mXnfConversionTechnique, mSimplificationTechnique, mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
+					 mXnfConversionTechnique, mSimplificationTechnique, mRootNode.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable());
 			break;
 		}
 		default:

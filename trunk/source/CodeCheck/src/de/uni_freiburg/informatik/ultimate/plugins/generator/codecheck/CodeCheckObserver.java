@@ -179,7 +179,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 
 		mPredicateUnifier =
 				new PredicateUnifier(mServices, mSmtManager.getManagedScript(), 
-						mSmtManager.getPredicateFactory(), mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable(), 
+						mSmtManager.getPredicateFactory(), mOriginalRoot.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable(), 
 						mSimplificationTechnique, mXnfConversionTechnique);
 
 		mEdgeChecker =
@@ -420,7 +420,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 
 					if (GlobalSettings._instance._predicateUnification == PredicateUnification.PER_ITERATION) {
 						mPredicateUnifier = new PredicateUnifier(mServices, mSmtManager.getManagedScript(), 
-								mSmtManager.getPredicateFactory(), mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable(), 
+								mSmtManager.getPredicateFactory(), 
+								mOriginalRoot.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable(), 
 								mSimplificationTechnique,
 								mXnfConversionTechnique);
 					}
@@ -595,7 +596,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 						mSmtManager.getManagedScript(), mOriginalRoot.getRootAnnot().getModGlobVarManager(),
 						AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, true, mPredicateUnifier,
 						GlobalSettings._instance._interpolationMode, smtManagerTracechecks.getManagedScript(), true,
-						mXnfConversionTechnique, mSimplificationTechnique, mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
+						mXnfConversionTechnique, mSimplificationTechnique, mOriginalRoot.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable());
 			} catch (final Exception e) {
 				if (!GlobalSettings._instance.useFallbackForSeparateSolverForTracechecks) {
 					throw e;
@@ -611,7 +612,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 						mOriginalRoot.getRootAnnot().getModGlobVarManager(), AssertCodeBlockOrder.NOT_INCREMENTALLY,
 						UnsatCores.CONJUNCT_LEVEL, true, mServices, true, mPredicateUnifier,
 						InterpolationTechnique.ForwardPredicates, mSmtManager.getManagedScript(), mXnfConversionTechnique,
-						mSimplificationTechnique, mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
+						mSimplificationTechnique, mOriginalRoot.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable());
 			}
 		case ForwardPredicates:
 		case BackwardPredicates:
@@ -623,7 +624,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 						mOriginalRoot.getRootAnnot().getModGlobVarManager(), AssertCodeBlockOrder.NOT_INCREMENTALLY,
 						GlobalSettings._instance.useUnsatCores, GlobalSettings._instance.useLiveVariables, mServices,
 						true, mPredicateUnifier, GlobalSettings._instance._interpolationMode, smtManagerTracechecks.getManagedScript(),
-						mXnfConversionTechnique, mSimplificationTechnique, mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
+						mXnfConversionTechnique, mSimplificationTechnique, mOriginalRoot.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable());
 			} catch (final Exception e) {
 				if (!GlobalSettings._instance.useFallbackForSeparateSolverForTracechecks) {
 					throw e;
@@ -634,7 +635,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 						mOriginalRoot.getRootAnnot().getModGlobVarManager(), AssertCodeBlockOrder.NOT_INCREMENTALLY,
 						UnsatCores.CONJUNCT_LEVEL, true, mServices, true, mPredicateUnifier,
 						GlobalSettings._instance._interpolationMode, mSmtManager.getManagedScript(), mXnfConversionTechnique,
-						mSimplificationTechnique, mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
+						mSimplificationTechnique, mOriginalRoot.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable());
 			}
 		default:
 			throw new UnsupportedOperationException(

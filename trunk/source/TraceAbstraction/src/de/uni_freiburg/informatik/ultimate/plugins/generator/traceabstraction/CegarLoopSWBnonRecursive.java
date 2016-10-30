@@ -593,7 +593,7 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 				 * TODO: When Matthias introduced this parameter he set the argument to
 				 * AssertCodeBlockOrder.NOT_INCREMENTALLY. Check if you want to set this to another value.
 				 */AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, mPredicateUnifier, mPref.interpolation(),
-				true, mXnfConversionTechnique, mSimplificationTechnique, mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
+				true, mXnfConversionTechnique, mSimplificationTechnique, mRootNode.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable());
 
 		mInterpolantGenerator = traceChecker;
 		if (traceChecker.isCorrect() == LBool.UNSAT) {
