@@ -177,16 +177,6 @@ public class Boogie2SmtSymbolTable {
 		return impl.getBody() != null;
 	}
 
-	/**
-	 * 
-	 * @deprecated I don't think that a symbol table is the right facility to
-	 * pass the {@link ManagedScript}.
-	 */
-	@Deprecated
-	public ManagedScript getScript() {
-		return mScript;
-	}
-
 	public BoogieVar getBoogieVar(final String varId, final DeclarationInformation declarationInformation,
 			final boolean inOldContext) {
 		final BoogieVar result;

@@ -72,6 +72,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.BitvectorUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
 
 /**
@@ -96,10 +97,11 @@ public final class Term2Expression implements Serializable {
 
 	private final Set<IdentifierExpression> mFreeVariables;
 
-	public Term2Expression(final TypeSortTranslator tsTranslation, final Boogie2SmtSymbolTable boogie2SmtSymbolTable) {
+	public Term2Expression(final TypeSortTranslator tsTranslation, 
+			final Boogie2SmtSymbolTable boogie2SmtSymbolTable, final ManagedScript maScript) {
 		mTypeSortTranslator = tsTranslation;
 		mBoogie2SmtSymbolTable = boogie2SmtSymbolTable;
-		mScript = boogie2SmtSymbolTable.getScript().getScript();
+		mScript = maScript.getScript();
 		mFreeVariables = new HashSet<>();
 		mFreshIdentiferCounter = 0;
 		mQuantifiedVariables = new ScopedHashMap<>();

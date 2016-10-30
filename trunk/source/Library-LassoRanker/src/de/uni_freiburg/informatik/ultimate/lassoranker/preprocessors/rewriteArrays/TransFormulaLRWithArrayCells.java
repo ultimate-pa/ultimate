@@ -40,9 +40,9 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.Activator;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ModifiableTransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarUtils;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ModifiableTransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -173,7 +173,7 @@ public class TransFormulaLRWithArrayCells {
 		
 		final IndexAnalyzer ia = new IndexAnalyzer(mResult.getFormula(), mFirstGeneration2Indices,
 				boogie2smt, mResult, invariantEqualitiesBefore,
-				invariantEqualitiesAfter, mLogger, mReplacementVarFactory);
+				invariantEqualitiesAfter, mLogger, mReplacementVarFactory, script);
 		mIndexAnalysisResult = ia.getResult();
 		final CellVariableBuilder cvb = new CellVariableBuilder(mResult, this, replacementVarFactory, mLogger,
 				mFirstGeneration2Indices, mArrayCellInVars, mArrayCellOutVars);
@@ -328,7 +328,7 @@ public class TransFormulaLRWithArrayCells {
 				}
 			}
 			final TermVariable translatedArray =
-					(TermVariable) tflrwai.getTransFormulaLR().getInVars().get(acrvi.getArrayRankVar());
+					tflrwai.getTransFormulaLR().getInVars().get(acrvi.getArrayRankVar());
 			final ArrayIndex translatedIndex =
 					translateIndex(acrvi.getIndex(), acrvi.termVariableToRankVarMappingForIndex());
 			mFirstGeneration2Indices.addPair(translatedArray, translatedIndex);
@@ -350,7 +350,7 @@ public class TransFormulaLRWithArrayCells {
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		for (final TermVariable originalTv : entry.getFreeVars()) {
 			final IProgramVar rv = termVariableToRankVarMappingForIndex.get(originalTv);
-			final TermVariable newTv = (TermVariable) mResult.getInVars().get(rv);
+			final TermVariable newTv = mResult.getInVars().get(rv);
 			substitutionMapping.put(originalTv, newTv);
 		}
 		final Term renamedEntry = (new Substitution(mScript.getScript(), substitutionMapping)).transform(entry);

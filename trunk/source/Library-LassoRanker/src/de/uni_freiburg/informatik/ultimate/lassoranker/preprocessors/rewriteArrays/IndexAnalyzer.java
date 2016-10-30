@@ -34,8 +34,8 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ModifiableTransFormulaUtils;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.EqualityAnalysisResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.EqualityAnalysisResult.Equality;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.Utils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -86,13 +87,14 @@ public class IndexAnalyzer {
 			final Boogie2SmtSymbolTable symbolTable, final ModifiableTransFormula tf,
 			final EqualityAnalysisResult invariantEqualitiesBefore,
 			final EqualityAnalysisResult invariantEqualitiesAfter, final ILogger logger,
-			final ReplacementVarFactory replacementVarFactory) {
+			final ReplacementVarFactory replacementVarFactory,
+			final ManagedScript mgdScript) {
 		super();
 		mLogger = logger;
 		mTerm = term;
 		mSymbolTable = symbolTable;
 		mRepvarFactory = replacementVarFactory;
-		mScript = symbolTable.getScript().getScript();
+		mScript = mgdScript.getScript();
 		mTransFormula = tf;
 		mInvariantEqualitiesBefore = invariantEqualitiesBefore;
 		mInvariantEqualitiesAfter = invariantEqualitiesAfter;
@@ -126,9 +128,10 @@ public class IndexAnalyzer {
 			final Boogie2SmtSymbolTable boogie2SmtSymbolTable, final ModifiableTransFormula tf,
 			final EqualityAnalysisResult invariantEqualitiesBefore,
 			final EqualityAnalysisResult invariantEqualitiesAfter, final ILogger logger,
-			final ReplacementVarFactory replacementVarFactory) {
+			final ReplacementVarFactory replacementVarFactory,
+			final ManagedScript mgdScript) {
 		this(formula, extractDoubletons(arrays2Indices), boogie2SmtSymbolTable, tf, invariantEqualitiesBefore,
-				invariantEqualitiesAfter, logger, replacementVarFactory);
+				invariantEqualitiesAfter, logger, replacementVarFactory, mgdScript);
 	}
 
 	private Set<Doubleton<Term>> preprocessWithInvariants(final Set<Doubleton<Term>> allDoubletons) {

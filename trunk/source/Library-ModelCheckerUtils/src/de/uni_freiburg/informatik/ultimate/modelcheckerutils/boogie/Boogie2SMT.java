@@ -109,7 +109,7 @@ public class Boogie2SMT {
 			mAxioms.add(term);
 		}
 		mStatements2TransFormula = new Statements2TransFormula(this, mServices, mExpression2Term);
-		mTerm2Expression = new Term2Expression(mTypeSortTranslator, mBoogie2SmtSymbolTable);
+		mTerm2Expression = new Term2Expression(mTypeSortTranslator, mBoogie2SmtSymbolTable, maScript);
 
 	}
 
