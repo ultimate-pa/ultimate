@@ -27,28 +27,13 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 
 public class SmtManager {
 
@@ -95,52 +80,7 @@ public class SmtManager {
 
 
 
-	/**
-	 * Returns a predicate which states that old(g)=g for all global variables g
-	 * that are modifiable by procedure proc according to
-	 * ModifiableGlobalVariableManager modGlobVarManager.
-	 */
-	public static TermVarsProc getOldVarsEquality(final String proc, final ModifiableGlobalVariableManager modGlobVarManager, final Script script) {
-		final Set<IProgramVar> vars = new HashSet<IProgramVar>();
-		Term term = script.term("true");
-		for (final IProgramVar bv : modGlobVarManager.getGlobalVarsAssignment(proc).getAssignedVars()) {
-			vars.add(bv);
-			final IProgramVar bvOld = ((IProgramNonOldVar) bv).getOldVar();
-			vars.add(bvOld);
-			final TermVariable tv = bv.getTermVariable();
-			final TermVariable tvOld = bvOld.getTermVariable();
-			final Term equality = script.term("=", tv, tvOld);
-			term = Util.and(script, term, equality);
-		}
-		final String[] procs = new String[0];
-		final TermVarsProc result = new TermVarsProc(term, vars, procs, PredicateUtils.computeClosedFormula(term, vars,
-				script));
-		return result;
 
-	}
-
-
-
-	/**
-	 * Construct Predicate which represents the same Predicate as ps, but where
-	 * all globalVars are renamed to oldGlobalVars.
-	 */
-	public IPredicate renameGlobalsToOldGlobals(final IPredicate ps) {
-		if (getPredicateFactory().isDontCare(ps)) {
-			throw new UnsupportedOperationException("don't cat not expected");
-		}
-		final Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
-		for (final IProgramVar pv : ps.getVars()) {
-			if (pv instanceof IProgramNonOldVar) {
-				final IProgramVar oldVar = ((IProgramNonOldVar) pv).getOldVar();
-				substitutionMapping.put(pv.getTermVariable(), oldVar.getTermVariable());
-			}
-		}
-		Term renamedFormula = (new Substitution(getManagedScript(), substitutionMapping)).transform(ps.getFormula());
-		renamedFormula = SmtUtils.simplify(getManagedScript(), renamedFormula, mServices, mSimplificationTechnique);
-		final IPredicate result = getPredicateFactory().newPredicate(renamedFormula);
-		return result;
-	}
 
 
 

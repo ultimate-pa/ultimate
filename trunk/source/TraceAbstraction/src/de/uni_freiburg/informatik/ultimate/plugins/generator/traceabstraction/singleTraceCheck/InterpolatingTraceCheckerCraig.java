@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
@@ -244,7 +244,7 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 
 			final Call call = (Call) mTrace.getSymbol(nonPendingCall);
 			final String calledMethod = call.getCallStatement().getMethodName();
-			final TermVarsProc oldVarsEquality = SmtManager.getOldVarsEquality(calledMethod, mModifiedGlobals, mCfgManagedScript.getScript());
+			final TermVarsProc oldVarsEquality = TraceAbstractionUtils.getOldVarsEquality(calledMethod, mModifiedGlobals, mCfgManagedScript.getScript());
 
 			final IPredicate precondition = mPredicateUnifier.getOrConstructPredicate(oldVarsEquality.getFormula());
 

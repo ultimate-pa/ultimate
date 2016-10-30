@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  */
 public class HoareAnnotationWriter {
 
+	private final IUltimateServiceProvider mServices;
 	private final RootAnnot mrootAnnot;
 	private final SmtManager mSmtManager;
 	private final HoareAnnotationFragments mHoareAnnotationFragments;
@@ -64,6 +65,7 @@ public class HoareAnnotationWriter {
 	public HoareAnnotationWriter(final RootAnnot rootAnnot, final SmtManager smtManager,
 			final HoareAnnotationFragments hoareAnnotationFragments, final IUltimateServiceProvider services, 
 			final SimplificationTechnique simplicationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
+		mServices = services;
 		mrootAnnot = rootAnnot;
 		mSmtManager = smtManager;
 		mHoareAnnotationFragments = hoareAnnotationFragments;
@@ -83,7 +85,8 @@ public class HoareAnnotationWriter {
 			} else {
 				// compute SP
 			}
-			precondForContext = mSmtManager.renameGlobalsToOldGlobals(precondForContext);
+			precondForContext = TraceAbstractionUtils.renameGlobalsToOldGlobals(precondForContext, 
+					mServices, mSmtManager.getManagedScript(), mSmtManager.getPredicateFactory(), SimplificationTechnique.SIMPLIFY_DDA);
 			final HashRelation<ProgramPoint, IPredicate> pp2preds = mHoareAnnotationFragments
 					.getDeadContexts2ProgPoint2Preds().get(context);
 			addHoareAnnotationForContext(mSmtManager, precondForContext, pp2preds);
@@ -95,7 +98,8 @@ public class HoareAnnotationWriter {
 			} else {
 				// compute SP
 			}
-			precondForContext = mSmtManager.renameGlobalsToOldGlobals(precondForContext);
+			precondForContext = TraceAbstractionUtils.renameGlobalsToOldGlobals(precondForContext, 
+					mServices, mSmtManager.getManagedScript(), mSmtManager.getPredicateFactory(), SimplificationTechnique.SIMPLIFY_DDA);
 			final HashRelation<ProgramPoint, IPredicate> pp2preds = mHoareAnnotationFragments
 					.getLiveContexts2ProgPoint2Preds().get(context);
 			addHoareAnnotationForContext(mSmtManager, precondForContext, pp2preds);

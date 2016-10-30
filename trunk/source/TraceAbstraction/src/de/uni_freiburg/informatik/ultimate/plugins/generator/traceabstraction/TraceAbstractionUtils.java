@@ -28,19 +28,33 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.MonolithicHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EfficientHoareTripleChecker;
@@ -101,6 +115,60 @@ public class TraceAbstractionUtils {
 			throw new AssertionError("unknown value");
 		}
 		return new EfficientHoareTripleChecker(solverHtc, modGlobVarManager, predicateUnifier, mgdScript);
+	}
+	
+	
+	/**
+	 * Returns a predicate which states that old(g)=g for all global variables g
+	 * that are modifiable by procedure proc according to
+	 * ModifiableGlobalVariableManager modGlobVarManager.
+	 */
+	public static TermVarsProc getOldVarsEquality(final String proc, final ModifiableGlobalVariableManager modGlobVarManager, final Script script) {
+		final Set<IProgramVar> vars = new HashSet<IProgramVar>();
+		Term term = script.term("true");
+		for (final IProgramVar bv : modGlobVarManager.getGlobalVarsAssignment(proc).getAssignedVars()) {
+			vars.add(bv);
+			final IProgramVar bvOld = ((IProgramNonOldVar) bv).getOldVar();
+			vars.add(bvOld);
+			final TermVariable tv = bv.getTermVariable();
+			final TermVariable tvOld = bvOld.getTermVariable();
+			final Term equality = script.term("=", tv, tvOld);
+			term = Util.and(script, term, equality);
+		}
+		final String[] procs = new String[0];
+		final TermVarsProc result = new TermVarsProc(term, vars, procs, PredicateUtils.computeClosedFormula(term, vars,
+				script));
+		return result;
+
+	}
+
+
+
+	/**
+	 * Construct Predicate which represents the same Predicate as ps, but where
+	 * all globalVars are renamed to oldGlobalVars.
+	 * @param services 
+	 * @param mgdScript 
+	 * @param predicateFactory 
+	 * @param simplificationTechnique 
+	 */
+	public static IPredicate renameGlobalsToOldGlobals(final IPredicate ps, final IUltimateServiceProvider services, 
+			final ManagedScript mgdScript, final BasicPredicateFactory predicateFactory, 
+			final SimplificationTechnique simplificationTechnique) {
+		if (predicateFactory.isDontCare(ps)) {
+			throw new UnsupportedOperationException("don't cat not expected");
+		}
+		final Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
+		for (final IProgramVar pv : ps.getVars()) {
+			if (pv instanceof IProgramNonOldVar) {
+				final IProgramVar oldVar = ((IProgramNonOldVar) pv).getOldVar();
+				substitutionMapping.put(pv.getTermVariable(), oldVar.getTermVariable());
+			}
+		}
+		Term renamedFormula = (new Substitution(mgdScript, substitutionMapping)).transform(ps.getFormula());
+		renamedFormula = SmtUtils.simplify(mgdScript, renamedFormula, services, simplificationTechnique);
+		final IPredicate result = predicateFactory.newPredicate(renamedFormula);
+		return result;
 	}
 	
 
