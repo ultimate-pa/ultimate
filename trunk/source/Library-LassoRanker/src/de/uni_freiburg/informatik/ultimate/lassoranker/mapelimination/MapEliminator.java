@@ -237,7 +237,8 @@ public class MapEliminator {
 	/**
 	 * Adds the info, that {@code array} is accessed by {@code index} to the hash relations.
 	 */
-	private void addArrayAccessToRelation(final Term array, final ArrayIndex index, final ModifiableTransFormula transformula) {
+	private void addArrayAccessToRelation(final Term array, final ArrayIndex index,
+			final ModifiableTransFormula transformula) {
 		if (!allVariablesAreVisible(array, transformula)) {
 			return;
 		}
@@ -247,10 +248,7 @@ public class MapEliminator {
 			}
 		}
 		final Term globalArray = translateTermVariablesToDefinitions(mScript, transformula, array);
-		final Term inVarArray = getLocalTerm(globalArray, transformula, true);
-		final Term outVarArray = getLocalTerm(globalArray, transformula, false);
-		mTransFormulasToLocalIndices.get(transformula).addPair(new ArrayTemplate(inVarArray, mScript), index);
-		mTransFormulasToLocalIndices.get(transformula).addPair(new ArrayTemplate(outVarArray, mScript), index);
+		mTransFormulasToLocalIndices.get(transformula).addPair(new ArrayTemplate(globalArray, mScript), index);
 		if (allVariablesAreVisible(index, transformula)) {
 			final ArrayIndex globalIndex = new ArrayIndex(
 					translateTermVariablesToDefinitions(mScript, transformula, index));
@@ -362,23 +360,33 @@ public class MapEliminator {
 	private HashRelation<MapTemplate, ArrayIndex> getLocalIndices(final ModifiableTransFormula transformula,
 			final HashRelation<MapTemplate, ArrayIndex> occurringIndices) {
 		final HashRelation<MapTemplate, ArrayIndex> result = new HashRelation<>();
-		result.addAll(occurringIndices);
-		for (final MapTemplate template : mMapsToIndices.getDomain()) {
-			for (final ArrayIndex index : getInAndOutVarIndices(mMapsToIndices.getImage(template), transformula)) {
-				if (template instanceof ArrayTemplate) {
-					final Term array = (Term) template.getIdentifier();
-					final ArrayTemplate inVarTemplate = new ArrayTemplate(getLocalTerm(array, transformula, true),
-							mScript);
-					final ArrayTemplate outVarTemplate = new ArrayTemplate(getLocalTerm(array, transformula, false),
-							mScript);
-					result.addPair(inVarTemplate, index);
-					result.addPair(outVarTemplate, index);
-				} else {
+		for (final MapTemplate globalTemplate : occurringIndices.getDomain()) {
+			for (final MapTemplate template : getLocalTemplates(globalTemplate, transformula)) {
+				for (final ArrayIndex index : occurringIndices.getImage(globalTemplate)) {
+					result.addPair(template, index);
+				}
+			}
+		}
+		for (final MapTemplate globalTemplate : mMapsToIndices.getDomain()) {
+			for (final MapTemplate template : getLocalTemplates(globalTemplate, transformula)) {
+				for (final ArrayIndex index : getInAndOutVarIndices(mMapsToIndices.getImage(globalTemplate),
+						transformula)) {
 					result.addPair(template, index);
 				}
 			}
 		}
 		return result;
+	}
+
+	private Collection<MapTemplate> getLocalTemplates(final MapTemplate template,
+			final ModifiableTransFormula transformula) {
+		if (template instanceof ArrayTemplate) {
+			final Term array = (Term) template.getIdentifier();
+			final ArrayTemplate inVarTemplate = new ArrayTemplate(getLocalTerm(array, transformula, true), mScript);
+			final ArrayTemplate outVarTemplate = new ArrayTemplate(getLocalTerm(array, transformula, false), mScript);
+			return Arrays.asList(inVarTemplate, outVarTemplate);
+		}
+		return Arrays.asList(template);
 	}
 
 	/**
@@ -820,7 +828,8 @@ public class MapEliminator {
 	/**
 	 * Return for a given set of global indices, all in- and out-var-versions of this index for the given transformula.
 	 */
-	private Set<ArrayIndex> getInAndOutVarIndices(final Set<ArrayIndex> indices, final ModifiableTransFormula transformula) {
+	private Collection<ArrayIndex> getInAndOutVarIndices(final Set<ArrayIndex> indices,
+			final ModifiableTransFormula transformula) {
 		final Set<ArrayIndex> result = new HashSet<>();
 		for (final ArrayIndex index : indices) {
 			result.add(getLocalIndex(index, transformula, true));
