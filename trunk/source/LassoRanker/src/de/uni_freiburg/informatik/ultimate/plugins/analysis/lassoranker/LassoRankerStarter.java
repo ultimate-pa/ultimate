@@ -126,9 +126,8 @@ public class LassoRankerStarter {
 		// Omit check to enable Stefans BlockEncoding
 		// checkRCFGBuilderSettings();
 		final LassoRankerPreferences preferences = PreferencesInitializer.getLassoRankerPreferences(mServices);
-		mSmtManager = new SmtManager(mRootAnnot.getScript(), mRootAnnot.getBoogie2SMT(),
-				mRootAnnot.getModGlobVarManager(), mServices, false, mRootAnnot.getManagedScript(),
-				mSimplificationTechnique, mXnfConversionTechnique);
+		mSmtManager = new SmtManager(mRootAnnot.getBoogie2SMT(), mRootAnnot.getModGlobVarManager(),
+				mServices, mRootAnnot.getManagedScript(), mSimplificationTechnique, mXnfConversionTechnique);
 
 		AbstractLassoExtractor lassoExtractor;
 		final boolean useNewExtraction = true;

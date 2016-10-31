@@ -39,26 +39,22 @@ public class SmtManager {
 
 
 	private final Boogie2SMT mBoogie2Smt;
-	private final Script mScript;
-	private final SimplificationTechnique mSimplificationTechnique;
 	private final ManagedScript mManagedScript;
 	private final ModifiableGlobalVariableManager mModifiableGlobals;
 
 
-	private final IUltimateServiceProvider mServices;
 
 	private final PredicateFactory mPredicateFactory;
 
-	public SmtManager(final Script script, final Boogie2SMT boogie2smt, final ModifiableGlobalVariableManager modifiableGlobals,
-			final IUltimateServiceProvider services, final boolean interpolationModeSwitchNeeded, final ManagedScript managedScript,
-			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
-		mServices = services;
-		mSimplificationTechnique = simplificationTechnique;
+	public SmtManager(final Boogie2SMT boogie2smt, final ModifiableGlobalVariableManager modifiableGlobals, 
+			final IUltimateServiceProvider services,
+			final ManagedScript managedScript, final SimplificationTechnique simplificationTechnique, 
+			final XnfConversionTechnique xnfConversionTechnique) {
 		mBoogie2Smt = boogie2smt;
-		mScript = script;
 		mManagedScript = managedScript;
 		mModifiableGlobals = modifiableGlobals;
-		mPredicateFactory = new PredicateFactory(services, boogie2smt.getManagedScript(), boogie2smt.getBoogie2SmtSymbolTable(), simplificationTechnique, xnfConversionTechnique);
+		mPredicateFactory = new PredicateFactory(services, boogie2smt.getManagedScript(), 
+				boogie2smt.getBoogie2SmtSymbolTable(), simplificationTechnique, xnfConversionTechnique);
 	}
 
 
@@ -73,17 +69,8 @@ public class SmtManager {
 	}
 
 	public Script getScript() {
-		return mScript;
+		return mManagedScript.getScript();
 	}
-
-	
-
-
-
-
-
-
-
 
 	public ManagedScript getManagedScript() {
 		return mManagedScript;

@@ -113,9 +113,8 @@ public class TraceAbstractionStarter {
 		mLogger.info(settings);
 		
 		final SmtManager smtManager =
-				new SmtManager(rootAnnot.getScript(), rootAnnot.getBoogie2SMT(), rootAnnot.getModGlobVarManager(),
-						mServices, interpolationModeSwitchNeeded(), rootAnnot.getManagedScript(),
-						taPrefs.getSimplificationTechnique(), taPrefs.getXnfConversionTechnique());
+				new SmtManager(rootAnnot.getBoogie2SMT(), rootAnnot.getModGlobVarManager(), mServices,
+						rootAnnot.getManagedScript(), taPrefs.getSimplificationTechnique(), taPrefs.getXnfConversionTechnique());
 		final TraceAbstractionBenchmarks traceAbstractionBenchmark = new TraceAbstractionBenchmarks(rootAnnot);
 		
 		final Map<String, Collection<ProgramPoint>> proc2errNodes = rootAnnot.getErrorNodes();
