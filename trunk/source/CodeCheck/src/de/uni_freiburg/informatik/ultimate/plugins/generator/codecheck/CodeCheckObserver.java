@@ -74,6 +74,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.MonolithicHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AnnotatedProgramPoint;
@@ -174,8 +175,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		mOriginalRoot = (RootNode) root;
 		final RootAnnot rootAnnot = mOriginalRoot.getRootAnnot();
 
-		mSmtManager = new SmtManager(rootAnnot.getBoogie2SMT(), rootAnnot.getModGlobVarManager(), mServices,
-				rootAnnot.getManagedScript(), mSimplificationTechnique, mXnfConversionTechnique);
+		mSmtManager = new SmtManager(rootAnnot.getModGlobVarManager(), mServices, rootAnnot.getManagedScript(),
+				rootAnnot.getBoogie2SMT().getBoogie2SmtSymbolTable(), mSimplificationTechnique, mXnfConversionTechnique);
 
 		mPredicateUnifier =
 				new PredicateUnifier(mServices, mSmtManager.getManagedScript(), 
@@ -200,7 +201,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 			mUnsatQuadruples = new NestedMap4<IPredicate, IPredicate, CodeBlock, IPredicate, IsContained>();
 		}
 		mGraphWriter = new GraphWriter(GlobalSettings._instance._dotGraphPath, true, true, true, false,
-				mSmtManager.getScript());
+				mSmtManager.getManagedScript().getScript());
 
 		// DD: removed dependency to AIMK2, will be replaced by AIv2 soon
 		// boolean usePredicatesFromAbstractInterpretation = true; // TODO make a Pref
@@ -426,7 +427,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 								mXnfConversionTechnique);
 					}
 
-					SmtManager smtManagerTracechecks;
+					ManagedScript mgdScriptTracechecks;
 					// if (noArrayOrNIRAsofar && GlobalSettings._instance.useSeparateSolverForTracechecks) {
 					if (GlobalSettings._instance.useSeparateSolverForTracechecks) {
 						final String filename = mOriginalRoot.getFilename() + "_TraceCheck_Iteration" + iterationsCount;
@@ -444,21 +445,19 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 								false, GlobalSettings._instance.separateSolverForTracechecksTheory,
 								"TraceCheck_Iteration" + iterationsCount);
 
-						smtManagerTracechecks = new SmtManager(mOriginalRoot.getRootAnnot().getBoogie2SMT(), mOriginalRoot.getRootAnnot().getModGlobVarManager(),
-								mServices, mOriginalRoot.getRootAnnot().getManagedScript(), mSimplificationTechnique,
-								mXnfConversionTechnique);
+						mgdScriptTracechecks = new ManagedScript(mServices, tcSolver); 
 						final TermTransferrer tt = new TermTransferrer(tcSolver);
 						for (final Term axiom : mOriginalRoot.getRootAnnot().getBoogie2SMT().getAxioms()) {
 							tcSolver.assertTerm(tt.transform(axiom));
 						}
 					} else {
-						smtManagerTracechecks = mSmtManager;
+						mgdScriptTracechecks = mSmtManager.getManagedScript();
 					}
 
-					traceChecker = createTraceChecker(errorRun, smtManagerTracechecks);
+					traceChecker = createTraceChecker(errorRun, mgdScriptTracechecks);
 
 					if (GlobalSettings._instance.useSeparateSolverForTracechecks) {
-						smtManagerTracechecks.getScript().exit();
+						mgdScriptTracechecks.getScript().exit();
 					}
 
 					if (traceChecker.getToolchainCancelledExpection() != null) {
@@ -585,7 +584,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	}
 
 	private InterpolatingTraceChecker createTraceChecker(final NestedRun<CodeBlock, AnnotatedProgramPoint> errorRun,
-			final SmtManager smtManagerTracechecks) {
+			final ManagedScript mgdScriptTracechecks) {
 		switch (GlobalSettings._instance._interpolationMode) {
 		case Craig_TreeInterpolation:
 		case Craig_NestedInterpolation:
@@ -594,7 +593,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 						mPredicateUnifier.getFalsePredicate(), new TreeMap<Integer, IPredicate>(), errorRun.getWord(),
 						mSmtManager.getManagedScript(), mOriginalRoot.getRootAnnot().getModGlobVarManager(),
 						AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, true, mPredicateUnifier,
-						GlobalSettings._instance._interpolationMode, smtManagerTracechecks.getManagedScript(), true,
+						GlobalSettings._instance._interpolationMode, mgdScriptTracechecks, true,
 						mXnfConversionTechnique, mSimplificationTechnique, mOriginalRoot.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable());
 			} catch (final Exception e) {
 				if (!GlobalSettings._instance.useFallbackForSeparateSolverForTracechecks) {
@@ -622,7 +621,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 						new TreeMap<Integer, IPredicate>(), errorRun.getWord(), mSmtManager.getManagedScript(),
 						mOriginalRoot.getRootAnnot().getModGlobVarManager(), AssertCodeBlockOrder.NOT_INCREMENTALLY,
 						GlobalSettings._instance.useUnsatCores, GlobalSettings._instance.useLiveVariables, mServices,
-						true, mPredicateUnifier, GlobalSettings._instance._interpolationMode, smtManagerTracechecks.getManagedScript(),
+						true, mPredicateUnifier, GlobalSettings._instance._interpolationMode, mgdScriptTracechecks,
 						mXnfConversionTechnique, mSimplificationTechnique, mOriginalRoot.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable());
 			} catch (final Exception e) {
 				if (!GlobalSettings._instance.useFallbackForSeparateSolverForTracechecks) {
@@ -665,7 +664,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 
 		for (final Entry<ProgramPoint, HashSet<AnnotatedProgramPoint>> kvp : programPointToAnnotatedProgramPoints
 				.entrySet()) {
-			IPredicate annot = mSmtManager.getPredicateFactory().newPredicate(mSmtManager.getScript().term("false"));
+			IPredicate annot = mSmtManager.getPredicateFactory().newPredicate(mSmtManager.getManagedScript().getScript().term("false"));
 
 			for (final AnnotatedProgramPoint app : kvp.getValue()) {
 				final Term tvp = mSmtManager.getPredicateFactory().or(false, annot, app.getPredicate());

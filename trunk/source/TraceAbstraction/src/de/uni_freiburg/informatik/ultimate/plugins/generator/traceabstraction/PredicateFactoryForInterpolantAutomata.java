@@ -84,7 +84,7 @@ public class PredicateFactoryForInterpolantAutomata implements IStateFactory<IPr
 
 	@Override
 	public IPredicate createSinkStateContent() {
-		return mSmtManager.getPredicateFactory().newPredicate(mSmtManager.getScript().term("true"));
+		return mSmtManager.getPredicateFactory().newPredicate(mSmtManager.getManagedScript().getScript().term("true"));
 	}
 
 	@Override

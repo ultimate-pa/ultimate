@@ -103,8 +103,8 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 		super(name, rootNode, smtManager, traceAbstractionBenchmarks, taPrefs, errorLocs, services, storage);
 		mPredicateUnifier = new PredicateUnifier(services, smtManager.getManagedScript(), smtManager.getPredicateFactory(), 
 				rootNode.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable(), mSimplificationTechnique, mXnfConversionTechnique,
-				smtManager.getPredicateFactory().newPredicate(smtManager.getScript().term("true")),
-				smtManager.getPredicateFactory().newPredicate(smtManager.getScript().term("false")));
+				smtManager.getPredicateFactory().newPredicate(smtManager.getManagedScript().getScript().term("true")),
+				smtManager.getPredicateFactory().newPredicate(smtManager.getManagedScript().getScript().term("false")));
 	}
 
 	@Override
@@ -139,7 +139,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 			}		
 			final HashMap<Term, IProgramVar> constantsToBoogieVar = new HashMap<>();
 
-			mSmtManager.getScript().push(1); //push needs to be here, because getTermsFromDAG declares constants
+			mSmtManager.getManagedScript().getScript().push(1); //push needs to be here, because getTermsFromDAG declares constants
 
 			getTermsFromDAG(dag, termsFromDAG, startsOfSubtreesFromDAG, 0, varToSsaVar, constantsToBoogieVar);
 
@@ -153,17 +153,17 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 			final ArrayList<Term> termNames = new ArrayList<Term>();
 			for (int i = 0; i < termsFromDAG.size(); i++) {
 				final String termName = "afassa_" + i;
-				mSmtManager.getManagedScript().getScript().assertTerm(mSmtManager.getScript().annotate(termsFromDAG.get(i),
+				mSmtManager.getManagedScript().getScript().assertTerm(mSmtManager.getManagedScript().getScript().annotate(termsFromDAG.get(i),
 						new Annotation(":named", termName)));
-				termNames.add(mSmtManager.getScript().term(termName));
+				termNames.add(mSmtManager.getManagedScript().getScript().term(termName));
 			}
 
-			if (mSmtManager.getScript().checkSat() == LBool.UNSAT) {
+			if (mSmtManager.getManagedScript().getScript().checkSat() == LBool.UNSAT) {
 
-				final Term[] interpolants = mSmtManager.getScript().getInterpolants(
+				final Term[] interpolants = mSmtManager.getManagedScript().getScript().getInterpolants(
 						termNames.toArray(new Term[termNames.size()]), startsOfSubtreesAsInts);
 				
-				mSmtManager.getScript().pop(1);
+				mSmtManager.getManagedScript().getScript().pop(1);
 				
 				final IPredicate[] predicates = interpolantsToPredicates(interpolants,
 						constantsToBoogieVar);
@@ -191,7 +191,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 				}
 				assert alternatingAutomatonUnion.accepts(trace) : "interpolant afa does not accept the trace!";
 			} else {
-				mSmtManager.getScript().pop(1);
+				mSmtManager.getManagedScript().getScript().pop(1);
 			}
 		}
 		assert alternatingAutomatonUnion.accepts(trace) : "interpolant afa does not accept the trace!";
@@ -317,7 +317,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 			}
 		}
 		
-		final Term substitutedTerm = (new Substitution(mSmtManager.getScript(), substitutionMapping))
+		final Term substitutedTerm = (new Substitution(mSmtManager.getManagedScript().getScript(), substitutionMapping))
 				.transform(nodeLabel.getBlock().getTransitionFormula().getFormula());
 		return substitutedTerm;
 	}
@@ -328,7 +328,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 	 */
 	private Term buildVersion(final IProgramVar bv) {
 		final int index = ssaIndex++;
-		final Term constant = PredicateUtils.getIndexedConstant(bv, index, mIndexedConstants, mSmtManager.getScript());
+		final Term constant = PredicateUtils.getIndexedConstant(bv, index, mIndexedConstants, mSmtManager.getManagedScript().getScript());
 		return constant;
 	}
 
@@ -377,7 +377,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 			const2RepTv.put(entry.getKey(), entry.getValue().getTermVariable());
 		}
 
-		const2RepTvSubst = new Substitution(mSmtManager.getScript(), const2RepTv);
+		const2RepTvSubst = new Substitution(mSmtManager.getManagedScript().getScript(), const2RepTv);
 		final Map<Term, IPredicate> withIndices2Predicate = new HashMap<Term, IPredicate>();
 
 		int craigInterpolPos = 0;

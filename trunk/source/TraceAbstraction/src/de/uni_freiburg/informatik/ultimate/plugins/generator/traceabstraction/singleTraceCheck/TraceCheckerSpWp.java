@@ -253,8 +253,8 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 						mServices, mLogger, mCfgManagedScript, mPredicateFactory, mSimplificationTechnique, mXnfConversionTechnique));
 				postprocs.add(new UnifyPostprocessor());
 				final IterativePredicateTransformer spt = new IterativePredicateTransformer(
-						mPredicateFactory, mCfgManagedScript.getScript(), mCfgManagedScript, mModifiedGlobals, mServices, mTrace, 
-						mPrecondition, mPostcondition, mPendingContexts, null, mSimplificationTechnique, mXnfConversionTechnique, mBoogie2SmtSymbolTable);
+						mPredicateFactory, mCfgManagedScript, mModifiedGlobals, mServices, mTrace, mPrecondition, 
+						mPostcondition, mPendingContexts, null, mSimplificationTechnique, mXnfConversionTechnique, mBoogie2SmtSymbolTable);
 				mInterpolantsFp = spt.computeStrongestPostconditionSequence(rtf, postprocs).getInterpolants();
 			} catch (final ToolchainCanceledException tce) {
 				final String taskDescription = "constructing forward predicates";
@@ -281,8 +281,8 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 						mServices, mLogger, mCfgManagedScript, mPredicateFactory, mSimplificationTechnique, mXnfConversionTechnique));
 				postprocs.add(new UnifyPostprocessor());
 				final IterativePredicateTransformer spt = new IterativePredicateTransformer(
-						mPredicateFactory, mCfgManagedScript.getScript(), mCfgManagedScript, mModifiedGlobals, mServices, mTrace, 
-						mPrecondition, mPostcondition, mPendingContexts, null, mSimplificationTechnique, mXnfConversionTechnique, mBoogie2SmtSymbolTable);
+						mPredicateFactory, mCfgManagedScript, mModifiedGlobals, mServices, mTrace, mPrecondition, 
+						mPostcondition, mPendingContexts, null, mSimplificationTechnique, mXnfConversionTechnique, mBoogie2SmtSymbolTable);
 				mInterpolantsBp = spt.computeWeakestPreconditionSequence(rtf, postprocs, false).getInterpolants();
 			} catch (final ToolchainCanceledException tce) {
 				final String taskDescription = "constructing backward predicates";

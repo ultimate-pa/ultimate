@@ -111,8 +111,8 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		final TAPreferences taPrefs = new TAPreferences(mServices);
 		mGraphRoot = root;
 
-		mSmtManager = new SmtManager(mRootAnnot.getBoogie2SMT(), mRootAnnot.getModGlobVarManager(),
-				mServices, mRootAnnot.getManagedScript(), taPrefs.getSimplificationTechnique(), taPrefs.getXnfConversionTechnique());
+		mSmtManager = new SmtManager(mRootAnnot.getModGlobVarManager(), mServices,
+				mRootAnnot.getManagedScript(), mRootAnnot.getBoogie2SMT().getBoogie2SmtSymbolTable(), taPrefs.getSimplificationTechnique(), taPrefs.getXnfConversionTechnique());
 
 		mPref = taPrefs;
 

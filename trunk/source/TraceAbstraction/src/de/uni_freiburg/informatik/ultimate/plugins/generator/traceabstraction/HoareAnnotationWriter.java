@@ -75,7 +75,7 @@ public class HoareAnnotationWriter {
 	}
 
 	public void addHoareAnnotationToCFG() {
-		IPredicate precondForContext = mSmtManager.getPredicateFactory().newPredicate(mSmtManager.getScript().term("true"));
+		IPredicate precondForContext = mSmtManager.getPredicateFactory().newPredicate(mSmtManager.getManagedScript().getScript().term("true"));
 		addHoareAnnotationForContext(mSmtManager, precondForContext,
 				mHoareAnnotationFragments.getProgPoint2StatesWithEmptyContext());
 

@@ -39,7 +39,6 @@ import java.util.SortedMap;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
@@ -88,15 +87,14 @@ public class IterativePredicateTransformer {
 	private static final boolean s_TransformSummaryToCNF = true;
 
 	public IterativePredicateTransformer(final PredicateFactory predicateFactory,
-			final Script script,
 			final ManagedScript mgdScript,
 			final ModifiableGlobalVariableManager modifiableGlobalVariableManager,
-			final IUltimateServiceProvider services, final NestedWord<? extends IAction> trace,
-			final IPredicate precondition, final IPredicate postcondition,
-			final SortedMap<Integer, IPredicate> pendingContexts,
+			final IUltimateServiceProvider services,
+			final NestedWord<? extends IAction> trace, final IPredicate precondition,
+			final IPredicate postcondition, final SortedMap<Integer, IPredicate> pendingContexts,
 			final IPredicate falsePredicate,
-			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
-			final Boogie2SmtSymbolTable symbolTable) {
+			final SimplificationTechnique simplificationTechnique,
+			final XnfConversionTechnique xnfConversionTechnique, final Boogie2SmtSymbolTable symbolTable) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mSimplificationTechnique = simplificationTechnique;

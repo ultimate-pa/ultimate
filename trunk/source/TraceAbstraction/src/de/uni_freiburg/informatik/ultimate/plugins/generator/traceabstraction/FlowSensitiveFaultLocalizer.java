@@ -342,10 +342,10 @@ public class FlowSensitiveFaultLocalizer {
 		// Calculating the WP-List
 		final IterativePredicateTransformer ipt = new IterativePredicateTransformer(
 				smtManager.getPredicateFactory(),
-				smtManager.getScript(), smtManager.getManagedScript(), modGlobVarManager,
-				mServices, counterexampleWord, null, falsePredicate, null,
-				smtManager.getPredicateFactory().newPredicate(smtManager.getPredicateFactory().not(falsePredicate)),
-				mSimplificationTechnique, mXnfConversionTechnique, mSymbolTable);
+				smtManager.getManagedScript(), modGlobVarManager, mServices,
+				counterexampleWord, null, falsePredicate, null, smtManager.getPredicateFactory().newPredicate(smtManager.getPredicateFactory().not(falsePredicate)),
+				mSimplificationTechnique,
+				mXnfConversionTechnique, mSymbolTable);
 		
 		final DefaultTransFormulas dtf = new DefaultTransFormulas(counterexampleWord,
 				null, falsePredicate, Collections.emptySortedMap(), modGlobVarManager, false);
@@ -519,7 +519,7 @@ public class FlowSensitiveFaultLocalizer {
 				position = branchOutPosition;
 				final UnmodifiableTransFormula markhor = computeMarkhorFormula(branchOutPosition, positionBranchIn,
 						counterexampleWord,informationFromCFG, smtManager.getManagedScript());
-				final Term wpTerm = computeWp(weakestPreconditionRight, markhor, smtManager.getScript(),
+				final Term wpTerm = computeWp(weakestPreconditionRight, markhor, smtManager.getManagedScript().getScript(),
 						smtManager.getManagedScript(), pt, mApplyQuantifierElimination);
 				weakestPreconditionLeft = smtManager.getPredicateFactory().newPredicate(wpTerm);
 				// Check the relevance of the branch.
@@ -541,7 +541,7 @@ public class FlowSensitiveFaultLocalizer {
 				// The statement under consideration is NOT a BRANCH-IN Statement.
 				
 				final UnmodifiableTransFormula tf =  counterexampleWord.getSymbolAt(position).getTransitionFormula();
-				final Term wpTerm = computeWp(weakestPreconditionRight, tf, smtManager.getScript(),
+				final Term wpTerm = computeWp(weakestPreconditionRight, tf, smtManager.getManagedScript().getScript(),
 						smtManager.getManagedScript(), pt, mApplyQuantifierElimination);
 				weakestPreconditionLeft = smtManager.getPredicateFactory().newPredicate(wpTerm);
 				final IPredicate pre = smtManager.getPredicateFactory().newPredicate(
@@ -643,7 +643,7 @@ public class FlowSensitiveFaultLocalizer {
 		final int startLocation = 0;
 		final int endLocation = counterexample.getWord().length()-1;
 		final IPredicate falsePredicate = smtManager.getPredicateFactory().newPredicate(
-				smtManager.getScript().term("false"));
+				smtManager.getManagedScript().getScript().term("false"));
 
 		computeRelevantStatements_FlowSensitive(counterexample.getWord(),startLocation, endLocation,
 				falsePredicate, pt, rc, smtManager,modGlobVarManager, informationFromCFG);

@@ -92,7 +92,9 @@ public class TraceAbstractionWithAFAsObserver extends BaseObserver {
 		final RootNode rootNode = (RootNode) root;
 		final RootAnnot rootAnnot = rootNode.getRootAnnot();
 		final TAPreferences taPrefs = new TAPreferences(mServices);
-		final SmtManager smtManager = new SmtManager(rootAnnot.getBoogie2SMT(), rootAnnot.getModGlobVarManager(), mServices, rootAnnot.getManagedScript(), taPrefs.getSimplificationTechnique(), taPrefs.getXnfConversionTechnique());
+		final SmtManager smtManager = new SmtManager(rootAnnot.getModGlobVarManager(), mServices, rootAnnot.getManagedScript(), 
+				rootAnnot.getBoogie2SMT().getBoogie2SmtSymbolTable(),
+				taPrefs.getSimplificationTechnique(), taPrefs.getXnfConversionTechnique());
 		final TraceAbstractionBenchmarks taBenchmarks = new TraceAbstractionBenchmarks(rootAnnot);
 		
 

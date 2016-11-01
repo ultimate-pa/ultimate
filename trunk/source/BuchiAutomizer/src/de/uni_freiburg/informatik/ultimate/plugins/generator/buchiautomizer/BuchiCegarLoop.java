@@ -262,7 +262,8 @@ public class BuchiCegarLoop {
 		mName = "BuchiCegarLoop";
 		mRootNode = rootNode;
 		mSmtManager = smtManager;
-		mBinaryStatePredicateManager = new BinaryStatePredicateManager(mSmtManager, mServices, mSimplificationTechnique, mXnfConversionTechnique);
+		mBinaryStatePredicateManager = new BinaryStatePredicateManager(mSmtManager, rootNode.getRootAnnot().getBoogie2SMT(), 
+				mServices, mSimplificationTechnique, mXnfConversionTechnique);
 		mBenchmarkGenerator = new BuchiCegarLoopBenchmarkGenerator();
 		mBenchmarkGenerator.start(CegarLoopStatisticsDefinitions.OverallTime.toString());
 		// this.buchiModGlobalVarManager = new BuchiModGlobalVarManager(
@@ -932,12 +933,12 @@ public class BuchiCegarLoop {
 		final Term[] supporting_invariants = new Term[si_list.size()];
 		int i = 0;
 		for (final SupportingInvariant si : terminationArgument.getSupportingInvariants()) {
-			supporting_invariants[i] = si.asTerm(mSmtManager.getScript());
+			supporting_invariants[i] = si.asTerm(mSmtManager.getManagedScript().getScript());
 			++i;
 		}
 		final TerminationArgumentResult<RcfgElement, Term> result = new TerminationArgumentResult<>(
 				honda, Activator.PLUGIN_NAME,
-				rf.asLexTerm(mSmtManager.getScript()),
+				rf.asLexTerm(mSmtManager.getManagedScript().getScript()),
 				rf.getName(), supporting_invariants, mServices.getBacktranslationService(), Term.class);
 		return result;
 	}

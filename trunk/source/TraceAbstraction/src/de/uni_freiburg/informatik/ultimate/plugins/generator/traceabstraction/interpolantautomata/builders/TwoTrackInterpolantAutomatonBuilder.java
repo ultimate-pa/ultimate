@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
@@ -74,9 +75,9 @@ public class TwoTrackInterpolantAutomatonBuilder implements IInterpolantAutomato
 	 * @param abstraction
 	 * 
 	 */
-	public TwoTrackInterpolantAutomatonBuilder(IUltimateServiceProvider services, IRun<CodeBlock, IPredicate> nestedRun,
-			SmtManager smtManager, List<IPredicate> interpolantsFP, List<IPredicate> interpolantsBP,
-			IPredicate preCondition, IPredicate postCondition, IAutomaton<CodeBlock, IPredicate> abstraction) {
+	public TwoTrackInterpolantAutomatonBuilder(final IUltimateServiceProvider services, final IRun<CodeBlock, IPredicate> nestedRun,
+			final SmtManager smtManager, final List<IPredicate> interpolantsFP, final List<IPredicate> interpolantsBP,
+			final IPredicate preCondition, final IPredicate postCondition, final IAutomaton<CodeBlock, IPredicate> abstraction) {
 		mServices = services;
 		mPrecondition = preCondition;
 		mPostcondition = postCondition;
@@ -93,7 +94,7 @@ public class TwoTrackInterpolantAutomatonBuilder implements IInterpolantAutomato
 	}
 
 	private NestedWordAutomaton<CodeBlock, IPredicate> buildTwoTrackInterpolantAutomaton(
-			IAutomaton<CodeBlock, IPredicate> abstraction, IStateFactory<IPredicate> tAContentFactory) {
+			final IAutomaton<CodeBlock, IPredicate> abstraction, final IStateFactory<IPredicate> tAContentFactory) {
 		final Set<CodeBlock> internalAlphabet = abstraction.getAlphabet();
 		Set<CodeBlock> callAlphabet = new HashSet<CodeBlock>(0);
 		Set<CodeBlock> returnAlphabet = new HashSet<CodeBlock>(0);
@@ -122,7 +123,7 @@ public class TwoTrackInterpolantAutomatonBuilder implements IInterpolantAutomato
 	 * @param nwa
 	 *            - the automaton to which the states are added
 	 */
-	private void addStatesAccordingToPredicates(NestedWordAutomaton<CodeBlock, IPredicate> nwa) {
+	private void addStatesAccordingToPredicates(final NestedWordAutomaton<CodeBlock, IPredicate> nwa) {
 		// add initial state
 		nwa.addState(true, false, mInterpolantsFP.getInterpolant(0));
 
@@ -149,7 +150,7 @@ public class TwoTrackInterpolantAutomatonBuilder implements IInterpolantAutomato
 	 * @param nwa
 	 *            - the automaton to which the basic transition are added
 	 */
-	private void addBasicTransitions(NestedWordAutomaton<CodeBlock, IPredicate> nwa) {
+	private void addBasicTransitions(final NestedWordAutomaton<CodeBlock, IPredicate> nwa) {
 		for (int i = 0; i < mNestedWord.length(); i++) {
 			addTransition(nwa, i, Sequence.FORWARD);
 			addTransition(nwa, i, Sequence.BACKWARD);
@@ -222,17 +223,17 @@ public class TwoTrackInterpolantAutomatonBuilder implements IInterpolantAutomato
 	 * @param p
 	 * @return
 	 */
-	private boolean isFalsePredicate(IPredicate p) {
+	private boolean isFalsePredicate(final IPredicate p) {
 		if (p == mPostcondition) {
 			return true;
 		} else {
 			assert mSmtManager.getPredicateFactory().isDontCare(p)
-					|| p.getFormula() != mSmtManager.getScript().term("false");
+					|| !SmtUtils.isFalse(p.getFormula());
 			return false;
 		}
 	}
 
-	private void addTransition(NestedWordAutomaton<CodeBlock, IPredicate> nwa, int symbolPos, Sequence seq) {
+	private void addTransition(final NestedWordAutomaton<CodeBlock, IPredicate> nwa, final int symbolPos, final Sequence seq) {
 		final CodeBlock symbol = mNestedWord.getSymbol(symbolPos);
 		final IPredicate succ;
 		if (seq == Sequence.FORWARD) {

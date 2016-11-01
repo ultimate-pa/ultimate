@@ -189,7 +189,7 @@ public class CFG2NestedWordAutomaton {
 			final boolean isErrorLocation = errorLocs.contains(locNode);
 
 			IPredicate automatonState;
-			final Term trueTerm = mSmtManager.getScript().term("true");
+			final Term trueTerm = mSmtManager.getManagedScript().getScript().term("true");
 			if (mStoreHistory) {
 				automatonState = mSmtManager.getPredicateFactory().newPredicateWithHistory(locNode, trueTerm, new HashMap<Integer, Term>());
 			} else {

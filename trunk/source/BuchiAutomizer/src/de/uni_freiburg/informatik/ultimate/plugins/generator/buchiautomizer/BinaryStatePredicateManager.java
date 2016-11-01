@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
@@ -81,6 +82,7 @@ public class BinaryStatePredicateManager {
 	private final Script mScript;
 	private final ManagedScript mManagedScript;
 	private final SmtManager mSmtManager;
+	private final Boogie2SmtSymbolTable mSymbolTable;
 	private final PredicateFactory mPredicateFactory;
 	private final IProgramNonOldVar mUnseededVariable;
 	private final IProgramNonOldVar[] mOldRankVariables;
@@ -117,17 +119,17 @@ public class BinaryStatePredicateManager {
 	private final IUltimateServiceProvider mServices;
 	
 	public BinaryStatePredicateManager(final SmtManager smtManager,
-			final IUltimateServiceProvider services,
+			final Boogie2SMT boogie2Smt, final IUltimateServiceProvider services,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
-		mScript = smtManager.getScript();
+		mScript = smtManager.getManagedScript().getScript();
 		mPredicateFactory = smtManager.getPredicateFactory();
 		mManagedScript = smtManager.getManagedScript();
 		mSmtManager = smtManager;
-		final Boogie2SMT boogie2Smt = smtManager.getBoogie2Smt();
+		mSymbolTable = boogie2Smt.getBoogie2SmtSymbolTable();
 		
 		mManagedScript.lock(boogie2Smt.getBoogie2SmtSymbolTable());
 		mUnseededVariable = constructGlobalBoogieVar(UNSEEDED_IDENTIFIER, boogie2Smt, BoogieType.TYPE_BOOL);
@@ -570,14 +572,14 @@ public class BinaryStatePredicateManager {
 		}
 		traceChecker = new TraceChecker(truePredicate, siPredicate, new TreeMap<Integer, IPredicate>(), stem,
 				mSmtManager.getManagedScript(), modGlobVarManager, AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, 
-				mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
+				mSymbolTable);
 		final LBool stemCheck = traceChecker.isCorrect();
 		if (stemCheck != LBool.UNSAT) {
 			result = false;
 		}
 		traceChecker = new TraceChecker(siPredicate, siPredicate, new TreeMap<Integer, IPredicate>(), stem,
 				mSmtManager.getManagedScript(), modGlobVarManager, AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, 
-				mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
+				mSymbolTable);
 		final LBool loopCheck = traceChecker.isCorrect();
 		if (loopCheck != LBool.UNSAT) {
 			result = false;
@@ -589,7 +591,7 @@ public class BinaryStatePredicateManager {
 			final ModifiableGlobalVariableManager modGlobVarManager) {
 		final TraceChecker traceChecker = new TraceChecker(mRankEqualityAndSi, mRankDecreaseAndBound,
 				new TreeMap<Integer, IPredicate>(), loop, mSmtManager.getManagedScript(), modGlobVarManager,
-				AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable());
+				AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, mSymbolTable);
 		final LBool loopCheck = traceChecker.isCorrect();
 		return loopCheck == LBool.UNSAT;
 	}

@@ -102,7 +102,7 @@ public class PathProgramAutomatonConstructor {
 		tempProgramPoint = (ProgramPoint) path.getSymbol(0).getSource();
 		
 		// Add the initial state
-		final Term trueTerm = smtManager.getScript().term("true");
+		final Term trueTerm = smtManager.getManagedScript().getScript().term("true");
 		final SPredicate initialState = smtManager.getPredicateFactory().newSPredicate(tempProgramPoint, trueTerm);
 		pathPA.addState(true, false, initialState);
 		programPointToState.put(tempProgramPoint, initialState);

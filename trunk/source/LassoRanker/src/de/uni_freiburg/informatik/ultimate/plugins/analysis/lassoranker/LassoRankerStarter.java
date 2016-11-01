@@ -126,8 +126,8 @@ public class LassoRankerStarter {
 		// Omit check to enable Stefans BlockEncoding
 		// checkRCFGBuilderSettings();
 		final LassoRankerPreferences preferences = PreferencesInitializer.getLassoRankerPreferences(mServices);
-		mSmtManager = new SmtManager(mRootAnnot.getBoogie2SMT(), mRootAnnot.getModGlobVarManager(),
-				mServices, mRootAnnot.getManagedScript(), mSimplificationTechnique, mXnfConversionTechnique);
+		mSmtManager = new SmtManager(mRootAnnot.getModGlobVarManager(), mServices,
+				mRootAnnot.getManagedScript(), mRootAnnot.getBoogie2SMT().getBoogie2SmtSymbolTable(), mSimplificationTechnique, mXnfConversionTechnique);
 
 		AbstractLassoExtractor lassoExtractor;
 		final boolean useNewExtraction = true;
@@ -372,7 +372,8 @@ public class LassoRankerStarter {
 	private boolean isTerminationArgumentCorrect(final TerminationArgument arg, final UnmodifiableTransFormula stemTF,
 			final UnmodifiableTransFormula loopTf) {
 
-		final BinaryStatePredicateManager bspm = new BinaryStatePredicateManager(mSmtManager, mServices,
+		final BinaryStatePredicateManager bspm = new BinaryStatePredicateManager(mSmtManager,
+				mRootAnnot.getBoogie2SMT(), mServices,
 				mSimplificationTechnique, mXnfConversionTechnique);
 		final Set<IProgramVar> modifiableGlobals =
 				mRootAnnot.getModGlobVarManager().getModifiedBoogieVars(mHonda.getProcedure());

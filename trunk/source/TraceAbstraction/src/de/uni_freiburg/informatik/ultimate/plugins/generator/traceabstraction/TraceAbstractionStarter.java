@@ -113,8 +113,8 @@ public class TraceAbstractionStarter {
 		mLogger.info(settings);
 		
 		final SmtManager smtManager =
-				new SmtManager(rootAnnot.getBoogie2SMT(), rootAnnot.getModGlobVarManager(), mServices,
-						rootAnnot.getManagedScript(), taPrefs.getSimplificationTechnique(), taPrefs.getXnfConversionTechnique());
+				new SmtManager(rootAnnot.getModGlobVarManager(), mServices, rootAnnot.getManagedScript(),
+						rootAnnot.getBoogie2SMT().getBoogie2SmtSymbolTable(), taPrefs.getSimplificationTechnique(), taPrefs.getXnfConversionTechnique());
 		final TraceAbstractionBenchmarks traceAbstractionBenchmark = new TraceAbstractionBenchmarks(rootAnnot);
 		
 		final Map<String, Collection<ProgramPoint>> proc2errNodes = rootAnnot.getErrorNodes();
@@ -163,7 +163,7 @@ public class TraceAbstractionStarter {
 					.isInductive() : "incorrect Hoare annotation";
 			
 			final IBacktranslationService backTranslatorService = mServices.getBacktranslationService();
-			final Term trueterm = smtManager.getScript().term("true");
+			final Term trueterm = smtManager.getManagedScript().getScript().term("true");
 			
 			final Set<ProgramPoint> locsForLoopLocations = new HashSet<>();
 			locsForLoopLocations.addAll(rootAnnot.getPotentialCycleProgramPoints());

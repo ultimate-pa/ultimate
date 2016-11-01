@@ -28,8 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -38,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 public class SmtManager {
 
 
-	private final Boogie2SMT mBoogie2Smt;
 	private final ManagedScript mManagedScript;
 	private final ModifiableGlobalVariableManager mModifiableGlobals;
 
@@ -46,15 +44,14 @@ public class SmtManager {
 
 	private final PredicateFactory mPredicateFactory;
 
-	public SmtManager(final Boogie2SMT boogie2smt, final ModifiableGlobalVariableManager modifiableGlobals, 
-			final IUltimateServiceProvider services,
-			final ManagedScript managedScript, final SimplificationTechnique simplificationTechnique, 
-			final XnfConversionTechnique xnfConversionTechnique) {
-		mBoogie2Smt = boogie2smt;
+	public SmtManager(final ModifiableGlobalVariableManager modifiableGlobals, final IUltimateServiceProvider services, 
+			final ManagedScript managedScript,
+			final Boogie2SmtSymbolTable symbolTable,
+			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		mManagedScript = managedScript;
 		mModifiableGlobals = modifiableGlobals;
-		mPredicateFactory = new PredicateFactory(services, boogie2smt.getManagedScript(), 
-				boogie2smt.getBoogie2SmtSymbolTable(), simplificationTechnique, xnfConversionTechnique);
+		mPredicateFactory = new PredicateFactory(services, managedScript, 
+				symbolTable, simplificationTechnique, xnfConversionTechnique);
 	}
 
 
@@ -62,15 +59,6 @@ public class SmtManager {
 		return mPredicateFactory;
 	}
 
-
-
-	public Boogie2SMT getBoogie2Smt() {
-		return mBoogie2Smt;
-	}
-
-	public Script getScript() {
-		return mManagedScript.getScript();
-	}
 
 	public ManagedScript getManagedScript() {
 		return mManagedScript;

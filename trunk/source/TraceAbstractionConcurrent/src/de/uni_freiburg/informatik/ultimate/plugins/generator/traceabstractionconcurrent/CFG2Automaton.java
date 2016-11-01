@@ -213,7 +213,7 @@ public abstract class CFG2Automaton {
 		// add states
 		for (final ProgramPoint locNode : allNodes) {
 			final boolean isErrorLocation = locNode.isErrorLocation();
-			final Term trueTerm = mSmtManager.getScript().term("true");
+			final Term trueTerm = mSmtManager.getManagedScript().getScript().term("true");
 			final IPredicate automatonState = mSmtManager.getPredicateFactory().newSPredicate(locNode, trueTerm);
 			nwa.addState(false, isErrorLocation, automatonState);
 			nodes2States.put(locNode, automatonState);
@@ -244,7 +244,7 @@ public abstract class CFG2Automaton {
 
 		mLogger.debug("Step: SharedVarsInit part");
 		final ProgramPoint entryOfInitProc = (ProgramPoint) mSharedVarsInit.getSource();
-		final Term trueTerm = mSmtManager.getScript().term("true");
+		final Term trueTerm = mSmtManager.getManagedScript().getScript().term("true");
 		final IPredicate initialContent = mSmtManager.getPredicateFactory().newSPredicate(entryOfInitProc, trueTerm);
 		nwa.addState(true, false, initialContent);
 		IPredicate automatonSuccState;
