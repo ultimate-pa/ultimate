@@ -28,30 +28,17 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.s
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
 
-import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ParallelComposition;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker.TraceCheckerBenchmarkGenerator;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
@@ -167,79 +154,6 @@ public class AnnotateAndAsserter {
 
 	public LBool isInputSatisfiable() {
 		return mSatisfiable;
-	}
-
-
-
-
-	/**
-	 * Return a ParallelComposition-free trace of a trace.
-	 * While using large block encoding this sequence is not unique.
-	 * @param smtManager <ul>
-	 * <li> If smtManager is null some branch of a ParallelComposition is taken.
-	 * <li> If smtManager is not null, the smtManger has to be a state where a
-	 * valuation of this traces branch indicators is available. Then some branch
-	 * for which the branch indicator evaluates to true is taken.
-	 */
-	public static List<CodeBlock> constructFailureTrace(
-			final Word<CodeBlock> word, final SmtManager smtManager) {
-		final List<CodeBlock> failurePath = new ArrayList<CodeBlock>();
-		for (int i=0; i<word.length(); i++) {
-			final CodeBlock codeBlock = word.getSymbol(i);
-			addToFailureTrace(codeBlock, i , failurePath, smtManager);
-		}
-		return failurePath;
-	}
-
-	/**
-	 * Recursive method used by getFailurePath
-	 */
-	private static void addToFailureTrace(final CodeBlock codeBlock, final int pos, 
-			final List<CodeBlock> failureTrace, final SmtManager smtManager) {
-		if (codeBlock instanceof Call) {
-			failureTrace.add(codeBlock);
-		} else if (codeBlock instanceof Return) {
-			failureTrace.add(codeBlock);
-		} else if (codeBlock instanceof Summary) {
-			failureTrace.add(codeBlock);
-		} else if (codeBlock instanceof StatementSequence) {
-			failureTrace.add(codeBlock);
-		} else if (codeBlock instanceof SequentialComposition) {
-			final SequentialComposition seqComp = (SequentialComposition) codeBlock;
-			for (final CodeBlock elem : seqComp.getCodeBlocks()) {
-				addToFailureTrace(elem, pos, failureTrace, smtManager);
-			}
-		} else if (codeBlock instanceof ParallelComposition) {
-			final ParallelComposition parComp = (ParallelComposition) codeBlock;
-
-			final Set<TermVariable> branchIndicators = parComp.getBranchIndicator2CodeBlock().keySet();
-
-			TermVariable taken = null;
-
-			if (smtManager == null) {
-				// take some branch
-				taken = branchIndicators.iterator().next();
-			}
-			else {
-				// take some branch for which the branch indicator evaluates to
-				// true
-				for (final TermVariable tv : branchIndicators) {
-					final String constantName = tv.getName()+"_"+pos;
-					final Term constant = smtManager.getScript().term(constantName);
-					final Term[] terms = { constant };
-					final Map<Term, Term> valuation = smtManager.getScript().getValue(terms);
-					final Term value = valuation.get(constant);
-					if (value == smtManager.getScript().term("true")) {
-						taken = tv;
-					}
-				}
-			}
-			assert (taken != null);
-			final CodeBlock cb = parComp.getBranchIndicator2CodeBlock().get(taken); 
-			addToFailureTrace(cb, pos, failureTrace, smtManager);
-		} else {
-			throw new IllegalArgumentException("unkown code block");
-		}
 	}
 
 
