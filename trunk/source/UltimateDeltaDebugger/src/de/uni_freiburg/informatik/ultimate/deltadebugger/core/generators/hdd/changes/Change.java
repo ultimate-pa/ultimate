@@ -2,13 +2,13 @@ package de.uni_freiburg.informatik.ultimate.deltadebugger.core.generators.hdd.ch
 
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.deltadebugger.core.ChangeHandle;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.IChangeHandle;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTNode;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.util.RewriteUtils;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceRange;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.SourceRewriter;
 
-public abstract class Change implements ChangeHandle {
+public abstract class Change implements IChangeHandle {
 	static void deleteNodeText(final SourceRewriter rewriter, final IPSTNode node) {
 		rewriter.replace(node, RewriteUtils.getDeletionStringWithWhitespaces(node));
 	}

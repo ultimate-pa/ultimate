@@ -23,20 +23,29 @@
  * licensors of the Ultimate Delta Debugger plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.deltadebugger.core.exceptions;
+package de.uni_freiburg.informatik.ultimate.deltadebugger.core;
+
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.minimizers.HasSequenceIndex;
 
 /**
- * Wraps an {@link InterruptedException} in an unchecked exception at places where it is unexpected and just as useful
- * as an arbitrary {@link RuntimeException}.
+ * Represents a change instance that can be independently enabled and disabled by a {@link IVariantGenerator}.
  */
-public class UncheckedInterruptedException extends RuntimeException {
-	private static final long serialVersionUID = 1L;
+public interface IChangeHandle extends HasSequenceIndex {
+	/**
+	 * Returns the index of this change in the sequence of all changes.
+	 * <p>
+	 * This value can be used to memorize the test result for a certain subset active of changes in a more memory
+	 * efficient way than by storing the list itself. Besides that, it can be used to assert that a certain subset of
+	 * changes is actually a subsequence.
+	 *
+	 * @return index
+	 */
+	@Override
+	int getSequenceIndex();
 	
 	/**
-	 * @param cause
-	 *            Cause.
+	 * @return Informative string representation for debugging purposes.
 	 */
-	public UncheckedInterruptedException(final InterruptedException cause) {
-		super(cause);
-	}
+	@Override
+	String toString();
 }

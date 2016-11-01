@@ -23,20 +23,16 @@
  * licensors of the Ultimate Delta Debugger plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.deltadebugger.core.exceptions;
+package de.uni_freiburg.informatik.ultimate.deltadebugger.core;
 
 /**
- * Wraps an {@link InterruptedException} in an unchecked exception at places where it is unexpected and just as useful
- * as an arbitrary {@link RuntimeException}.
+ * A context factory for passes.
  */
-public class UncheckedInterruptedException extends RuntimeException {
-	private static final long serialVersionUID = 1L;
-	
+@FunctionalInterface
+public interface IPassContextFactory {
 	/**
-	 * @param cause
-	 *            Cause.
+	 * @param source Source string.
+	 * @return a pass context
 	 */
-	public UncheckedInterruptedException(final InterruptedException cause) {
-		super(cause);
-	}
+	IPassContext create(String source);
 }

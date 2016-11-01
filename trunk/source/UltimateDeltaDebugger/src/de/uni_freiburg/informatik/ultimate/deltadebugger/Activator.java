@@ -38,6 +38,6 @@ public final class Activator {
 	public static final String PLUGIN_NAME = "Ultimate DeltaDebugger";
 
 	private Activator() {
-		// this only stores ID and NAME and is not a RCP activator
+		// this only stores ID and NAME and is not an RCP activator
 	}
 }

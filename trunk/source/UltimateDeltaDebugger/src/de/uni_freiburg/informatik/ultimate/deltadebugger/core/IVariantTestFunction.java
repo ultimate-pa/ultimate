@@ -23,20 +23,37 @@
  * licensors of the Ultimate Delta Debugger plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.deltadebugger.core.exceptions;
+package de.uni_freiburg.informatik.ultimate.deltadebugger.core;
+
+import java.util.Optional;
+import java.util.function.BooleanSupplier;
 
 /**
- * Wraps an {@link InterruptedException} in an unchecked exception at places where it is unexpected and just as useful
- * as an arbitrary {@link RuntimeException}.
+ * Represents a test function that can optionally support to be canceled.
  */
-public class UncheckedInterruptedException extends RuntimeException {
-	private static final long serialVersionUID = 1L;
+@FunctionalInterface
+public interface IVariantTestFunction {
+	/**
+	 * Cancelable test function. The return value is only optional if the test is actually canceled, i.e. the isCanceled
+	 * predicate returns true. Otherwise a result has to be supplied.
+	 *
+	 * @param variant
+	 *            reduced source code variant to test
+	 * @param isCanceled
+	 *            function that can be polled to see if no result is required
+	 * @return valid test result indicating if the variant should be kept or not if not canceled, optional result
+	 *         otherwise
+	 */
+	default Optional<Boolean> cancelableTest(final String variant, final BooleanSupplier isCanceled) {
+		return Optional.of(test(variant));
+	}
 	
 	/**
-	 * @param cause
-	 *            Cause.
+	 * Non cancelable test function.
+	 *
+	 * @param variant
+	 *            reduced source code to test
+	 * @return test result indicating if the variant should be kept or not
 	 */
-	public UncheckedInterruptedException(final InterruptedException cause) {
-		super(cause);
-	}
+	boolean test(String variant);
 }

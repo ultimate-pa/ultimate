@@ -4,26 +4,26 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import de.uni_freiburg.informatik.ultimate.deltadebugger.core.ChangeHandle;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.IChangeHandle;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.minimizers.DuplicateVariantTracker;
 
-public class HitCountingDuplicateVariantTracker implements DuplicateVariantTracker<ChangeHandle> {
-	private final DuplicateVariantTracker<ChangeHandle> delegate;
+public class HitCountingDuplicateVariantTracker implements DuplicateVariantTracker<IChangeHandle> {
+	private final DuplicateVariantTracker<IChangeHandle> delegate;
 	private final AtomicInteger counter;
 
-	public HitCountingDuplicateVariantTracker(final DuplicateVariantTracker<ChangeHandle> delegate,
+	public HitCountingDuplicateVariantTracker(final DuplicateVariantTracker<IChangeHandle> delegate,
 			final AtomicInteger counter) {
 		this.delegate = Objects.requireNonNull(delegate);
 		this.counter = Objects.requireNonNull(counter);
 	}
 
 	@Override
-	public void add(final List<? extends ChangeHandle> variant) {
+	public void add(final List<? extends IChangeHandle> variant) {
 		delegate.add(variant);
 	}
 
 	@Override
-	public boolean contains(final List<? extends ChangeHandle> variant) {
+	public boolean contains(final List<? extends IChangeHandle> variant) {
 		final boolean result = delegate.contains(variant);
 		if (result) {
 			counter.incrementAndGet();

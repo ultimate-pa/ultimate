@@ -1,3 +1,28 @@
+/*
+ * Copyright (C) 2016 University of Freiburg
+ *
+ * This file is part of the Ultimate Delta Debugger plug-in.
+ *
+ * The Ultimate Delta Debugger plug-in is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The Ultimate Delta Debugger plug-in is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the Ultimate Delta Debugger plug-in. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the Ultimate Delta Debugger plug-in, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the Ultimate Delta Debugger plug-in grant you additional permission
+ * to convey the resulting work.
+ */
 package de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser;
 
 import java.util.Objects;
@@ -19,60 +44,87 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.PSTBuil
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTTranslationUnit;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceDocument;
 
-public class DefaultParser implements Parser {
-	static final int DEFAULT_OPTIONS = ILanguage.OPTION_NO_IMAGE_LOCATIONS | ILanguage.OPTION_IS_SOURCE_UNIT;
-
-	static final String DEFAULT_FILEPATH = "<input>";
-
-	final String dummySourceFilePath;
-	final ScannerInfo scannerInfo;
-	final IncludeFileContentProvider includeFileContentProvider;
-	final IParserLogService parserLogService;
-
+/**
+ * Default parser implementation.
+ */
+public class DefaultParser implements IParser {
+	private static final int DEFAULT_OPTIONS = ILanguage.OPTION_NO_IMAGE_LOCATIONS | ILanguage.OPTION_IS_SOURCE_UNIT;
+	
+	private static final String DEFAULT_FILEPATH = "<input>";
+	
+	private final String mDummySourceFilePath;
+	private final ScannerInfo mScannerInfo;
+	private final IncludeFileContentProvider mIncludeFileContentProvider;
+	private final IParserLogService mParserLogService;
+	
+	/**
+	 * Default constructor.
+	 */
 	public DefaultParser() {
 		this(DEFAULT_FILEPATH);
 	}
-
+	
+	/**
+	 * @param dummySourceFilePath
+	 *            Dummy source file path.
+	 */
 	public DefaultParser(final String dummySourceFilePath) {
 		this(dummySourceFilePath, new ScannerInfo(), IncludeFileContentProvider.getEmptyFilesProvider(),
 				new NullLogService());
 	}
-
+	
+	/**
+	 * @param dummySourceFilePath
+	 *            Dummy source file path.
+	 * @param scannerInfo
+	 *            scanner info
+	 * @param includeFileContentProvider
+	 *            include file content provider
+	 * @param parserLogService
+	 *            parser log service
+	 */
 	public DefaultParser(final String dummySourceFilePath, final ScannerInfo scannerInfo,
 			final IncludeFileContentProvider includeFileContentProvider, final IParserLogService parserLogService) {
-		this.dummySourceFilePath = Objects.requireNonNull(dummySourceFilePath);
-		this.scannerInfo = Objects.requireNonNull(scannerInfo);
-		this.includeFileContentProvider = Objects.requireNonNull(includeFileContentProvider);
-		this.parserLogService = Objects.requireNonNull(parserLogService);
+		mDummySourceFilePath = Objects.requireNonNull(dummySourceFilePath);
+		mScannerInfo = Objects.requireNonNull(scannerInfo);
+		mIncludeFileContentProvider = Objects.requireNonNull(includeFileContentProvider);
+		mParserLogService = Objects.requireNonNull(parserLogService);
 	}
-
+	
+	/**
+	 * @param dummySourceFilePath
+	 *            Dummy source file path.
+	 * @param includeFilePaths
+	 *            include file paths
+	 * @param localIncludePaths
+	 *            local include paths
+	 */
 	public DefaultParser(final String dummySourceFilePath, final String[] includeFilePaths,
 			final String[] localIncludePaths) {
 		this(dummySourceFilePath, new ExtendedScannerInfo(null, includeFilePaths, null, null, localIncludePaths),
 				new NoWorkspaceSavedFilesProvider(), new NullLogService());
 	}
-
+	
 	@Override
-	public IPSTTranslationUnit createPST(final IASTTranslationUnit ast, final ISourceDocument sourceDocument) {
+	public IPSTTranslationUnit createPst(final IASTTranslationUnit ast, final ISourceDocument sourceDocument) {
 		return new PSTBuilder(ast, sourceDocument).build();
 	}
-
+	
 	@Override
 	public IASTTranslationUnit parse(final String source) {
 		return parse(source, DEFAULT_OPTIONS);
 	}
-
+	
 	@Override
 	public IASTTranslationUnit parse(final String source, final int options) {
 		try {
 			return GCCLanguage.getDefault().getASTTranslationUnit(
-					FileContent.create(dummySourceFilePath, source.toCharArray()), scannerInfo,
-					includeFileContentProvider, null, options, parserLogService);
+					FileContent.create(mDummySourceFilePath, source.toCharArray()), mScannerInfo,
+					mIncludeFileContentProvider, null, options, mParserLogService);
 		} catch (final CoreException e) {
 			// No idea when and why this and why this would happen, so just wrap
 			// the checked exception
 			throw new ParserException(e);
 		}
 	}
-
 }

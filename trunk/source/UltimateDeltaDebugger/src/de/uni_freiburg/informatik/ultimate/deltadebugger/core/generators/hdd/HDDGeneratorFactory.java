@@ -14,9 +14,9 @@ import java.util.stream.Stream;
 
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 
-import de.uni_freiburg.informatik.ultimate.deltadebugger.core.ChangeHandle;
-import de.uni_freiburg.informatik.ultimate.deltadebugger.core.PassContext;
-import de.uni_freiburg.informatik.ultimate.deltadebugger.core.VariantGenerator;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.IChangeHandle;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.IPassContext;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.IVariantGenerator;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.generators.hdd.ChangeGenerator.ExpansionResult;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.generators.hdd.changes.Change;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTNode;
@@ -28,15 +28,15 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.StringSourceD
 
 public class HDDGeneratorFactory {
 
-	private class Generator implements VariantGenerator {
-		final PassContext context;
+	private class Generator implements IVariantGenerator {
+		final IPassContext context;
 		final int level;
 		final ISourceDocument source;
 		final List<IPSTNode> nodes;
 		final List<List<Change>> changeGroups;
 		final List<Change> persistentChanges;
 
-		Generator(final PassContext context, final int level, final ISourceDocument source, final List<IPSTNode> nodes,
+		Generator(final IPassContext context, final int level, final ISourceDocument source, final List<IPSTNode> nodes,
 				final List<List<Change>> changeGroups, final List<Change> persistentChanges) {
 			this.context = context;
 			this.level = level;
@@ -47,7 +47,7 @@ public class HDDGeneratorFactory {
 		}
 
 		@Override
-		public String apply(final List<ChangeHandle> activeChanges) {
+		public String apply(final List<IChangeHandle> activeChanges) {
 			final SourceRewriter rewriter = new SourceRewriter(source);
 			final Map<Class<?>, Map<IPSTNode, Change>> deferredChangeMap = new IdentityHashMap<>();
 			getStreamOfAllChanges(activeChanges).forEach(change -> {
@@ -70,11 +70,11 @@ public class HDDGeneratorFactory {
 		}
 
 		@Override
-		public List<ChangeHandle> getChanges() {
+		public List<IChangeHandle> getChanges() {
 			return Collections.unmodifiableList(changeGroups.get(0));
 		}
 
-		private List<Change> getMergedPersistentChanges(final List<ChangeHandle> activeChanges) {
+		private List<Change> getMergedPersistentChanges(final List<IChangeHandle> activeChanges) {
 			if (activeChanges.isEmpty()) {
 				return persistentChanges;
 			}
@@ -84,7 +84,7 @@ public class HDDGeneratorFactory {
 			return merged;
 		}
 
-		private List<IPSTNode> getRemainingNodes(final List<ChangeHandle> activeChanges) {
+		private List<IPSTNode> getRemainingNodes(final List<IChangeHandle> activeChanges) {
 			if (activeChanges.isEmpty()) {
 				return nodes;
 			}
@@ -95,12 +95,12 @@ public class HDDGeneratorFactory {
 			return nodes.stream().filter(n -> !removedNodes.contains(n)).collect(Collectors.toList());
 		}
 
-		private Stream<Change> getStreamOfAllChanges(final List<ChangeHandle> activeChanges) {
+		private Stream<Change> getStreamOfAllChanges(final List<IChangeHandle> activeChanges) {
 			return Stream.concat(persistentChanges.stream(), activeChanges.stream().map(c -> (Change) c));
 		}
 
 		@Override
-		public Optional<VariantGenerator> next(final List<ChangeHandle> activeChanges) {
+		public Optional<IVariantGenerator> next(final List<IChangeHandle> activeChanges) {
 			// Advance to the next group of changes on this level
 			if (changeGroups.size() > 1) {
 				return Optional.of(new Generator(context, level, source, getRemainingNodes(activeChanges),
@@ -121,7 +121,7 @@ public class HDDGeneratorFactory {
 			// Unparse, parse, and collect nodes on the current level
 			final ISourceDocument newSource = new StringSourceDocument(apply(activeChanges));
 			final IASTTranslationUnit ast = context.getParser().parse(newSource.getText());
-			final IPSTTranslationUnit tu = context.getParser().createPST(ast, newSource);
+			final IPSTTranslationUnit tu = context.getParser().createPst(ast, newSource);
 			final List<IPSTNode> remainingNodes = collectNodesOnLevel(tu, level);
 			return createGeneratorForNextLevel(context, level, newSource, remainingNodes, Collections.emptyList());
 		}
@@ -173,12 +173,12 @@ public class HDDGeneratorFactory {
 		this.reparseBetweenLevels = reparseBetweenLevels;
 	}
 
-	public Optional<VariantGenerator> analyze(final PassContext context) {
-		return createGeneratorForNextLevel(context, 0, context.getInput(), Arrays.asList(context.getSharedPST()),
+	public Optional<IVariantGenerator> analyze(final IPassContext context) {
+		return createGeneratorForNextLevel(context, 0, context.getInput(), Arrays.asList(context.getSharedPst()),
 				Collections.emptyList());
 	}
 
-	private Optional<VariantGenerator> createGeneratorForNextLevel(final PassContext context, final int currentLevel,
+	private Optional<IVariantGenerator> createGeneratorForNextLevel(final IPassContext context, final int currentLevel,
 			final ISourceDocument source, final List<IPSTNode> nodes, final List<Change> persistentChanges) {
 		final ChangeGenerator changeGenerator = new ChangeGenerator(strategy);
 		final ExpansionResult expansion = changeGenerator.generateNextLevelChanges(nodes);

@@ -54,25 +54,25 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.util.Rewrit
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.passes.HDDPass;
 
 /**
- * The delta debugger controller can repeat a defined toolchain until the specified input can not be reduced any
+ * The delta debugger controller can repeat a defined toolchain until the specified input cannot be reduced any
  * further.
- *
  * This is a quick and dirty implementation with some unfortunate limitations: Parallel testing is not possible, because
- * global state has to be used to associate the results/exception of a toolchain exceution. The test function which
- * defines the behaviour that has to be kept by the reduced variants is implemented right here in this class
- * isToolchainResultInteresting. No user interaction possible, final and intermediate output is written to the log.
+ * a global state has to be used to associate the results/exception of a toolchain execution. The test function which
+ * defines the behavior that has to be kept by the reduced variants is implemented right here in this class
+ * ({@link #isToolchainResultInteresting(ILogger)}). No user interaction is possible, final and intermediate output is
+ * written to the log.
  */
 public class DeltaDebuggerController extends CommandLineController {
-
+	
 	private Optional<ToolchainException> mException;
 	private Optional<Map<String, List<IResult>>> mResults;
-
+	
 	@Override
 	public void displayException(final IToolchainData<RunDefinition> toolchain, final String description,
 			final Throwable ex) {
 		mException = Optional.of(new ToolchainException(description, ex));
 	}
-
+	
 	@Override
 	public void displayToolchainResults(final IToolchainData<RunDefinition> toolchain,
 			final Map<String, List<IResult>> results) {
@@ -80,21 +80,20 @@ public class DeltaDebuggerController extends CommandLineController {
 		// executeToolchain returns?!?
 		mResults = Optional.of(new HashMap<>(results));
 	}
-
+	
 	@Override
 	public String getPluginID() {
 		return Activator.PLUGIN_ID;
 	}
-
+	
 	@Override
 	public String getPluginName() {
 		return Activator.PLUGIN_NAME;
 	}
-
+	
 	/**
 	 * Determines if the previous toolchain run showed the behavior of interest, i.e. the previous reduction was
-	 * successful.
-	 *
+	 * successful.<br>
 	 * Check the values stored in mException and mResults to access the previous results and/or exception.
 	 *
 	 * @return true iff the previous toolchain run showed the behavior of interest
@@ -107,7 +106,7 @@ public class DeltaDebuggerController extends CommandLineController {
 		return ResultUtil.filterResults(mResults.get(), ExceptionOrErrorResult.class).stream()
 				.anyMatch(a -> a.getShortDescription().startsWith("AssertionError: not outermost"));
 	}
-
+	
 	Optional<String> runDeltaDebuggerLoop(final ICore<RunDefinition> core, final ILogger logger,
 			final IToolchainData<RunDefinition> toolchain, final String inputSource)
 			throws ParseException, InvalidFileArgumentException, InterruptedException {
@@ -121,23 +120,22 @@ public class DeltaDebuggerController extends CommandLineController {
 				final File tempFile = File.createTempFile("ultimatedd-variant-", ".c");
 				tempFile.deleteOnExit();
 				Files.write(tempFile.toPath(), variant.getBytes(StandardCharsets.UTF_8));
-
+				
 				// Execute the toolchain and store the results in the global
 				// controller state
 				return runToolchainAndCheckResults(core, logger, toolchain, new File[] { tempFile });
-			} catch (final Exception e) {
+			} catch (final IOException | InterruptedException e) {
 				throw new CheckedExceptionWrapper(e);
 			}
-
 		});
-
+		
 		// TODO: Make this a setting
 		runner.setPasses(HDDPass.HDDSTAR);
-
+		
 		// No parallel testing is currently possible because global state is
 		// used to store toolchain results/exception.
 		// runner.enableParallelTesting(Executors.newFixedThreadPool(2), 2);
-
+		
 		// Run the delta debugger loop. Make sure to unwrap and rethrow
 		// unhandled checked exceptions.
 		try {
@@ -152,13 +150,13 @@ public class DeltaDebuggerController extends CommandLineController {
 			if (e.mCause instanceof InterruptedException) {
 				throw (InterruptedException) e.mCause;
 			}
-			throw new RuntimeException(e.mCause);
+			throw new AssertionError(e.mCause);
 		} catch (final UncheckedInterruptedException e) {
 			throw (InterruptedException) e.getCause();
 		}
-
+		
 	}
-
+	
 	private boolean runToolchainAndCheckResults(final ICore<RunDefinition> core, final ILogger logger,
 			final IToolchainData<RunDefinition> toolchain, final File[] inputFiles) throws InterruptedException {
 		mException = Optional.empty();
@@ -166,13 +164,13 @@ public class DeltaDebuggerController extends CommandLineController {
 		executeToolchain(core, inputFiles, logger, toolchain);
 		return isToolchainResultInteresting(logger);
 	}
-
+	
 	@Override
 	protected void startExecutingToolchain(final ICore<RunDefinition> core, final ParsedParameter cliParams,
 			final ILogger logger, final IToolchainData<RunDefinition> toolchain)
 			throws ParseException, InvalidFileArgumentException, InterruptedException {
 		final File[] initialInputFiles = cliParams.getInputFiles();
-
+		
 		// The Delta Debugger only reduces a single source string, so only a
 		// single input file is supported right now.
 		if (initialInputFiles.length != 1) {
@@ -180,28 +178,28 @@ public class DeltaDebuggerController extends CommandLineController {
 			// main source file to be reduced has to be selected in some way.
 			throw new InvalidFileArgumentException("only single input file supported by current implementation");
 		}
-
+		
 		String inputSource;
 		try {
 			inputSource = new String(Files.readAllBytes(initialInputFiles[0].toPath()), StandardCharsets.UTF_8);
 		} catch (final IOException e) {
 			throw new InvalidFileArgumentException("error reading input source file", e);
 		}
-
+		
 		// Optional: Verify that the unmodified input shows the behaviour of
 		// interest
 		if (!runToolchainAndCheckResults(core, logger, toolchain, initialInputFiles)) {
 			// TODO: replace by proper way to report this error to the user
 			throw new InvalidFileArgumentException("The initial input does not show the behaviour of interest");
 		}
-
+		
 		final Optional<String> reducedResult = runDeltaDebuggerLoop(core, logger, toolchain, inputSource);
-
+		
 		logger.warn("\n------------------------------------\n");
 		logger.warn(reducedResult.map(RewriteUtils::removeMultipleEmptyLines).orElse("[No reduction possible]"));
 		logger.warn("\n------------------------------------\n");
 	}
-
+	
 	/**
 	 * Temporarily wraps a checked exceptions in a runtime exception to propagate it from the test predicate back to the
 	 * delta debugger controller.
@@ -209,21 +207,20 @@ public class DeltaDebuggerController extends CommandLineController {
 	private static final class CheckedExceptionWrapper extends RuntimeException {
 		private static final long serialVersionUID = 1L;
 		private final Exception mCause;
-
-		private CheckedExceptionWrapper(final Exception cause) {
+		
+		public CheckedExceptionWrapper(final Exception cause) {
 			mCause = cause;
 		}
 	}
-
+	
 	/**
-	 * Stores arguments to displayException()
+	 * Stores arguments to displayException().
 	 */
 	private static final class ToolchainException {
 		private final String mDescription;
 		private final Throwable mException;
-
+		
 		public ToolchainException(final String description, final Throwable exception) {
-			super();
 			mDescription = description;
 			mException = exception;
 		}
