@@ -53,7 +53,7 @@ public class SdHoareTripleChecker implements IHoareTripleChecker {
 	private final IPredicateCoverageChecker mPredicateCoverageChecker;
 	private final IPredicate mTruePredicate;
 	private final IPredicate mFalsePredicate;
-	private final static boolean mLazyChecks = false;
+	private static final boolean mLazyChecks = false;
 	private final InternalCheckHelper mInternalCheckHelper = new InternalCheckHelper();
 	private final CallCheckHelper mCallCheckHelper = new CallCheckHelper();
 	private final ReturnCheckHelper mReturnCheckHelper = new ReturnCheckHelper();
