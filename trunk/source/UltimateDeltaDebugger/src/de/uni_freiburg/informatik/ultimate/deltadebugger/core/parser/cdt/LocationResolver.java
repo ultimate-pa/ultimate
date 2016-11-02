@@ -10,25 +10,45 @@ import org.eclipse.cdt.core.dom.ast.IASTPreprocessorStatement;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceDocument;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceRange;
 
+/**
+ * This class implements the computation of the source location of existing AST nodes. It is a facade to hide the
+ * complexity of the CDT API (IASTFileLocation) in favor of the delta debuggers simplified model that is limited to a
+ * single source file (ISourceDocument, ISourceRange). It is currently used to transparently optimize the computation of
+ * comment locations {@see CommentLocationHack}.
+ */
 public class LocationResolver {
-	static final CommentLocationHack commentHack = CommentLocationHack.getDefaultInstance();
-	final String translationUnitFilePath;
-	final ISourceDocument sourceDocument;
+	private final String mTranslationUnitFilePath;
+	private final ISourceDocument mSourceDocument;
+	private final CommentLocationHack mCommentHack;
 
+	/**
+	 * Default constructor uses a default constructed comment location hack instance.
+	 * 
+	 * @param translationUnitFilePath
+	 *            source file path
+	 * @param sourceDocument
+	 *            source file contents
+	 */
 	public LocationResolver(final String translationUnitFilePath, final ISourceDocument sourceDocument) {
-		this.translationUnitFilePath = translationUnitFilePath;
-		this.sourceDocument = sourceDocument;
+		this(translationUnitFilePath, sourceDocument, new CommentLocationHack());
+	}
+
+	public LocationResolver(final String translationUnitFilePath, final ISourceDocument sourceDocument,
+			CommentLocationHack commentHack) {
+		mTranslationUnitFilePath = translationUnitFilePath;
+		mSourceDocument = sourceDocument;
+		mCommentHack = commentHack;
 	}
 
 	public ISourceRange asSourceRange(final IASTFileLocation loc) {
 		final int offset = loc.getNodeOffset();
 		final int length = loc.getNodeLength();
-		return sourceDocument.newSourceRange(offset, offset + length);
+		return mSourceDocument.newSourceRange(offset, offset + length);
 	}
 
 	public IASTFileLocation getFileLocation(final IASTNode node) {
 		if (node instanceof IASTComment) {
-			return commentHack.getFileLocation((IASTComment) node, sourceDocument);
+			return mCommentHack.getFileLocation((IASTComment) node, mSourceDocument);
 		}
 		return node.getFileLocation();
 	}
@@ -108,13 +128,13 @@ public class LocationResolver {
 		// that cannot span over file boundaries, i.e. preprocessor nodes and check
 		// the filename of the computed file location otherwise.
 		if (node instanceof IASTComment) {
-			return commentHack.isPartOfTranslationUnitFile((IASTComment) node, translationUnitFilePath);
+			return mCommentHack.isPartOfTranslationUnitFile((IASTComment) node, mTranslationUnitFilePath);
 		}
 		if (node instanceof IASTPreprocessorStatement || node instanceof IASTPreprocessorMacroExpansion) {
 			return node.isPartOfTranslationUnitFile();
 		}
 		final IASTFileLocation loc = node.getFileLocation();
-		return loc != null && translationUnitFilePath.equals(loc.getFileName());
+		return loc != null && mTranslationUnitFilePath.equals(loc.getFileName());
 	}
 
 }

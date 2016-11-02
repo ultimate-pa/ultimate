@@ -13,9 +13,6 @@ import org.eclipse.cdt.internal.core.parser.scanner.InternalFileContentProvider;
 @SuppressWarnings("restriction")
 public class NoWorkspaceSavedFilesProvider extends InternalFileContentProvider {
 
-	public NoWorkspaceSavedFilesProvider() {
-	}
-
 	@Override
 	public InternalFileContent getContentForInclusion(final IIndexFileLocation ifl, final String astPath) {
 		return (InternalFileContent) FileContent.create(ifl);
