@@ -28,13 +28,12 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
@@ -65,9 +64,8 @@ public class FaultLocalizationRelevanceChecker {
 	private class FaultLocalizationHoareTripleChecker
 			extends IncrementalHoareTripleChecker {
 		
-		public FaultLocalizationHoareTripleChecker(final ManagedScript managedScript, 
-				final ModifiableGlobalVariableManager modGlobVarManager) {
-			super(managedScript, modGlobVarManager);
+		public FaultLocalizationHoareTripleChecker(final CfgSmtToolkit csToolkit) {
+			super(csToolkit);
 		}
 		
 		@Override
@@ -111,10 +109,9 @@ public class FaultLocalizationRelevanceChecker {
 	
 	private final FaultLocalizationHoareTripleChecker mHoareTripleChecker;
 	
-	public FaultLocalizationRelevanceChecker(final ManagedScript managedScript, 
-			final ModifiableGlobalVariableManager modGlobVarManager) {
+	public FaultLocalizationRelevanceChecker(final CfgSmtToolkit csToolkit) {
 		mHoareTripleChecker = new FaultLocalizationHoareTripleChecker(
-				managedScript, modGlobVarManager);
+				csToolkit);
 	}
 	
 	public ERelevanceStatus relevanceInternal(final IPredicate pre,

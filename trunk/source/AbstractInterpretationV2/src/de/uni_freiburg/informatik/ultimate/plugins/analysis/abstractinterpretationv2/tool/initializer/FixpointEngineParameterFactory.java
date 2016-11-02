@@ -80,7 +80,7 @@ public class FixpointEngineParameterFactory {
 				new DefaultSymbolTableAdapter(mSymbolTable, rootAnnot.getBoogie2SMT().getBoogie2SmtSymbolTable()),
 				mServices);
 		final IDebugHelper<STATE, CodeBlock, IBoogieVar, ProgramPoint> debugHelper =
-				new RcfgDebugHelper<>(rootAnnot.getBoogie2SMT().getManagedScript(), rootAnnot.getModGlobVarManager(), mServices, 
+				new RcfgDebugHelper<>(rootAnnot.getCfgSmtToolkit(), mServices, 
 						mRoot.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable());
 		return new FixpointEngineParameters<STATE, CodeBlock, IBoogieVar, ProgramPoint, Expression>(mServices)
 				.setDomain(domain).setLoopDetector(loopDetector).setStorage(storageProvider)
@@ -103,7 +103,7 @@ public class FixpointEngineParameterFactory {
 				new DefaultSymbolTableAdapter(mSymbolTable, rootAnnot.getBoogie2SMT().getBoogie2SmtSymbolTable()),
 				mServices);
 		final IDebugHelper<STATE, CodeBlock, IBoogieVar, ProgramPoint> debugHelper =
-				new RcfgDebugHelper<>(rootAnnot.getBoogie2SMT().getManagedScript(), rootAnnot.getModGlobVarManager(), mServices, 
+				new RcfgDebugHelper<>(rootAnnot.getCfgSmtToolkit(), mServices, 
 						mRoot.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable());
 		return new FixpointEngineParameters<STATE, CodeBlock, IBoogieVar, ProgramPoint, Expression>(mServices)
 				.setDomain(domain).setLoopDetector(loopDetector).setStorage(storageProvider)
@@ -126,7 +126,7 @@ public class FixpointEngineParameterFactory {
 		final IVariableProvider<STATE, CodeBlock, IProgramVar> variableProvider = new FutureRcfgVariableProvider<>(
 				mSymbolTable, rootAnnot.getBoogie2SMT().getBoogie2SmtSymbolTable(), mServices);
 		final IDebugHelper<STATE, CodeBlock, IProgramVar, ProgramPoint> debugHelper =
-				new RcfgDebugHelper<>(rootAnnot.getBoogie2SMT().getManagedScript(), rootAnnot.getModGlobVarManager(), mServices, 
+				new RcfgDebugHelper<>(rootAnnot.getCfgSmtToolkit(), mServices, 
 						mRoot.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable());
 		
 		return new FixpointEngineParameters<STATE, CodeBlock, IProgramVar, ProgramPoint, Expression>(mServices)
@@ -146,7 +146,7 @@ public class FixpointEngineParameterFactory {
 			return new DataflowDomain(logger);
 		} else if (VPDomain.class.getSimpleName().equals(selectedDomain)) {
 			final RCFGArrayIndexCollector arrayIndexCollector = new RCFGArrayIndexCollector(mRoot);
-			return new VPDomain(logger, mRoot.getRootAnnot().getManagedScript(), mServices,
+			return new VPDomain(logger, mRoot.getRootAnnot().getCfgSmtToolkit().getManagedScript(), mServices,
 					arrayIndexCollector.getEqGraphNodeSet(), arrayIndexCollector.getTermToBaseNodeMap(),
 					arrayIndexCollector.getTermToFnNodeMap(), arrayIndexCollector.getEqNodeToEqGraphNodeMap());
 		}

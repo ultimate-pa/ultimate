@@ -177,7 +177,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		mOriginalRoot = (RootNode) root;
 		final RootAnnot rootAnnot = mOriginalRoot.getRootAnnot();
 
-		mCsToolkit = new CfgSmtToolkit(rootAnnot.getModGlobVarManager(), rootAnnot.getManagedScript(), rootAnnot.getBoogie2SMT().getBoogie2SmtSymbolTable());
+		mCsToolkit = rootAnnot.getCfgSmtToolkit();
 		mPredicateFactory = new PredicateFactory(mServices, mCsToolkit.getManagedScript(), 
 				mCsToolkit.getSymbolTable(), mSimplificationTechnique, mXnfConversionTechnique);
 

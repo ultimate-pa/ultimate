@@ -448,7 +448,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		
 		assert accepts(mServices, mInterpolAutomaton, mCounterexample.getWord()) : "Interpolant automaton broken!";
 		assert new InductivityCheck(mServices, mInterpolAutomaton, false, true,
-				new IncrementalHoareTripleChecker(mRootNode.getRootAnnot().getManagedScript(), mModGlobVarManager))
+				new IncrementalHoareTripleChecker(super.mCsToolkit))
 						.getResult();
 	}
 	
@@ -484,7 +484,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		} else {
 			final IHoareTripleChecker ehtc = TraceAbstractionUtils.constructEfficientHoareTripleChecker(
 					mServices, mPref.getHoareTripleChecks(),
-					mCsToolkit.getManagedScript(), mModGlobVarManager, mInterpolantGenerator.getPredicateUnifier());
+					super.mCsToolkit, mInterpolantGenerator.getPredicateUnifier());
 			htc = new CachingHoareTripleChecker_Map(mServices, ehtc, mInterpolantGenerator.getPredicateUnifier());
 		}
 		try {
@@ -589,8 +589,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 							}
 						}
 						assert new InductivityCheck(mServices, completelyBuiltInterpolantAutomaton, false, true,
-								new IncrementalHoareTripleChecker(mRootNode.getRootAnnot().getManagedScript(),
-										mModGlobVarManager)).getResult();
+								new IncrementalHoareTripleChecker(super.mCsToolkit)).getResult();
 					}
 					break;
 				case EAGER:
@@ -627,7 +626,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 								+ " broken: counterexample of length " + mCounterexample.getLength() + " not accepted");
 					}
 					assert new InductivityCheck(mServices, test, false, true, new IncrementalHoareTripleChecker(
-							mRootNode.getRootAnnot().getManagedScript(), mModGlobVarManager)).getResult();
+							super.mCsToolkit)).getResult();
 				}
 					break;
 				default:
@@ -870,7 +869,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		
 		if (mComputeHoareAnnotation) {
 			assert new InductivityCheck(mServices, dia, false, true,
-					new IncrementalHoareTripleChecker(mRootNode.getRootAnnot().getManagedScript(), mModGlobVarManager))
+					new IncrementalHoareTripleChecker(super.mCsToolkit))
 							.getResult() : "Not inductive";
 		}
 		if (mPref.dumpAutomata()) {

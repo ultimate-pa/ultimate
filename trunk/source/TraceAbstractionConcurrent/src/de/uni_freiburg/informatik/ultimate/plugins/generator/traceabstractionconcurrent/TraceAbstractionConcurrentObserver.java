@@ -97,8 +97,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 
 		mLogger.warn(taPrefs.dumpPath());
 
-		final CfgSmtToolkit csToolkit = new CfgSmtToolkit(rootNode.getRootAnnot().getModGlobVarManager(),
-				rootNode.getRootAnnot().getManagedScript(), rootAnnot.getBoogie2SMT().getBoogie2SmtSymbolTable());
+		final CfgSmtToolkit csToolkit = rootAnnot.getCfgSmtToolkit();
 		final PredicateFactory predicateFactory = new PredicateFactory(mServices, csToolkit.getManagedScript(), 
 				csToolkit.getSymbolTable(), taPrefs.getSimplificationTechnique(), taPrefs.getXnfConversionTechnique());
 		final TraceAbstractionBenchmarks timingStatistics = new TraceAbstractionBenchmarks(rootNode.getRootAnnot());

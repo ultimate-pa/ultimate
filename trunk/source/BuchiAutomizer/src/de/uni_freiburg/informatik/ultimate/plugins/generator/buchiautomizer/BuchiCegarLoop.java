@@ -864,8 +864,7 @@ public class BuchiCegarLoop {
 
 		final ModifiableGlobalVariableManager modGlobVarManager = mRootNode.getRootAnnot().getModGlobVarManager();
 		final IHoareTripleChecker htc = TraceAbstractionUtils.constructEfficientHoareTripleChecker(
-				mServices, HoareTripleChecks.INCREMENTAL, mCsToolkit.getManagedScript(), 
-				modGlobVarManager, traceChecker.getPredicateUnifier());
+				mServices, HoareTripleChecks.INCREMENTAL, mCsToolkit, traceChecker.getPredicateUnifier());
 
 		final DeterministicInterpolantAutomaton determinized = new DeterministicInterpolantAutomaton(mServices,
 				mCsToolkit, modGlobVarManager, htc, mAbstraction, mInterpolAutomaton,
@@ -898,8 +897,7 @@ public class BuchiCegarLoop {
 		mMDBenchmark.reportTrivialModule(mIteration, mInterpolAutomaton.size());
 		assert (new InductivityCheck(mServices,
 				mInterpolAutomaton, false, true, new IncrementalHoareTripleChecker(
-						mRootNode.getRootAnnot().getManagedScript(), modGlobVarManager)))
-								.getResult();
+						mCsToolkit))).getResult();
 		mAbstraction = diff.getResult();
 		assert automatonUsesISLPredicates(mAbstraction) : "used wrong StateFactory";
 		mBenchmarkGenerator.addEdgeCheckerData(htc.getEdgeCheckerBenchmark());
@@ -924,8 +922,7 @@ public class BuchiCegarLoop {
 		// mCounterexample.getNestedLassoWord())).getResult()) :
 		// "Interpolant automaton broken!";
 		assert (new InductivityCheck(mServices, mInterpolAutomaton, false, true,
-				new IncrementalHoareTripleChecker(mRootNode.getRootAnnot().getManagedScript(),
-						mRootNode.getRootAnnot().getModGlobVarManager()))).getResult();
+				new IncrementalHoareTripleChecker(mCsToolkit))).getResult();
 	}
 
 	private TerminationArgumentResult<RcfgElement, Term> constructTAResult(

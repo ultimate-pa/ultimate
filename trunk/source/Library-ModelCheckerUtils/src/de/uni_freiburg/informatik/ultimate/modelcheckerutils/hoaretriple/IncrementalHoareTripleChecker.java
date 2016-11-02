@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.GlobalBoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
@@ -82,10 +83,9 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 	private static final String s_StartEdgeCheck = "starting to check validity of Hoare triples";
 	private static final String s_EndEdgeCheck = "finished to check validity of Hoare triples";
 	
-	public IncrementalHoareTripleChecker(final ManagedScript managedScript, 
-			final ModifiableGlobalVariableManager modGlobVarManager) {
-		mManagedScript = managedScript;
-		mModifiableGlobalVariableManager = modGlobVarManager;
+	public IncrementalHoareTripleChecker(final CfgSmtToolkit csToolkit) {
+		mManagedScript = csToolkit.getManagedScript();
+		mModifiableGlobalVariableManager = csToolkit.getModifiableGlobals();
 		mEdgeCheckerBenchmark = new HoareTripleCheckerStatisticsGenerator();
 	}
 	

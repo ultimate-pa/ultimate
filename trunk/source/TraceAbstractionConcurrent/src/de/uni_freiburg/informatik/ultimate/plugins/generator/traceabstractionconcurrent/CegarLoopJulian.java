@@ -109,7 +109,7 @@ public class CegarLoopJulian extends BasicCegarLoop {
 			mLogger.info("Interpolatants " + mInterpolAutomaton.getStates());
 			assert accepts(mServices, mInterpolAutomaton, mCounterexample.getWord()) : "Interpolant automaton broken!";
 			assert new InductivityCheck(mServices, mInterpolAutomaton, false, true,
-					new IncrementalHoareTripleChecker(mRootNode.getRootAnnot().getManagedScript(), mModGlobVarManager))
+					new IncrementalHoareTripleChecker(mCsToolkit))
 							.getResult() : "Not inductive";
 		} finally {
 			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.BasicInterpolantAutomatonTime.toString());

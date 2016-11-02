@@ -100,7 +100,7 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 			mLogger.info("Interpolatants " + mInterpolAutomaton.getStates());
 			assert accepts(mServices, mInterpolAutomaton, mCounterexample.getWord()) : "Interpolant automaton broken!";
 			assert new InductivityCheck(mServices, mInterpolAutomaton, false, true,
-					new IncrementalHoareTripleChecker(mRootNode.getRootAnnot().getManagedScript(), mModGlobVarManager))
+					new IncrementalHoareTripleChecker(mCsToolkit))
 							.getResult() : "Not inductive";
 		} finally {
 			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.BasicInterpolantAutomatonTime.toString());
@@ -186,7 +186,7 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 		final Map<IPredicate, Set<IPredicate>> removedDoubleDeckers = null;
 		final Map<IPredicate, IPredicate> context2entry = null;
 		final IHoareTripleChecker htc = TraceAbstractionUtils.constructEfficientHoareTripleChecker(mServices, mPref.getHoareTripleChecks(),
-				mCsToolkit.getManagedScript(), mModGlobVarManager, mInterpolantGenerator.getPredicateUnifier());
+				mCsToolkit, mInterpolantGenerator.getPredicateUnifier());
 		mLogger.debug("Start constructing difference");
 		// assert (oldAbstraction.getStateFactory() == mInterpolAutomaton.getStateFactory());
 		
@@ -210,7 +210,7 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 		determinized.switchToReadonlyMode();
 		assert !mCsToolkit.getManagedScript().isLocked();
 		assert new InductivityCheck(mServices, mInterpolAutomaton, false, true,
-				new IncrementalHoareTripleChecker(mRootNode.getRootAnnot().getManagedScript(), mModGlobVarManager))
+				new IncrementalHoareTripleChecker(mCsToolkit))
 						.getResult();
 		// do the following check only to obtain logger messages of
 		// checkInductivity

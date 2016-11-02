@@ -275,10 +275,6 @@ public abstract class AbstractCegarLoop {
 		return mRcfgProgramExecution;
 	}
 	
-	public CfgSmtToolkit getSmtManager() {
-		return mCsToolkit;
-	}
-	
 	public String errorLocs() {
 		return mErrorLocs.toString();
 	}
@@ -407,8 +403,7 @@ public abstract class AbstractCegarLoop {
 			
 			if (mPref.computeHoareAnnotation() && mPref.getHoareAnnotationPositions() == HoareAnnotationPositions.All) {
 				assert new InductivityCheck(mServices, (INestedWordAutomaton<CodeBlock, IPredicate>) mAbstraction,
-						false, true, new IncrementalHoareTripleChecker(mRootNode.getRootAnnot().getManagedScript(),
-								mModGlobVarManager)).getResult() : "Not inductive";
+						false, true, new IncrementalHoareTripleChecker(mCsToolkit)).getResult() : "Not inductive";
 			}
 			
 			if (mIteration <= mPref.watchIteration() && mPref.artifact() == Artifact.ABSTRACTION) {

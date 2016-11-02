@@ -304,7 +304,7 @@ public class AbstractInterpretationRunner {
 	}
 
 	private String simplify(final Term term) {
-		return SmtUtils.simplify(mRoot.getRootAnnot().getManagedScript(), term, mServices, mSimplificationTechnique)
+		return SmtUtils.simplify(mCsToolkit.getManagedScript(), term, mServices, mSimplificationTechnique)
 				.toStringDirect();
 	}
 

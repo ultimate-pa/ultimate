@@ -328,10 +328,8 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 		mLogger.debug("Epimorphism:");
 		mEpimorphism.print();
 
-		assert (new InductivityCheck(mServices,
-				mInterpolAutomaton, false, true, new IncrementalHoareTripleChecker(
-						mRootNode.getRootAnnot().getManagedScript(), mModGlobVarManager)))
-								.getResult() : "Not inductive";
+		assert (new InductivityCheck(mServices,	mInterpolAutomaton, false, true, 
+				new IncrementalHoareTripleChecker(mCsToolkit))).getResult() : "Not inductive";
 
 		mnofStates.add(mAbstraction.size());
 		int ii = 0;

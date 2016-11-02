@@ -131,7 +131,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 		mInterpolantConsolidationBenchmarkGenerator = new InterpolantConsolidationBenchmarkGenerator();
 		
 		final IHoareTripleChecker ehtc = TraceAbstractionUtils.constructEfficientHoareTripleChecker(services, TraceAbstractionPreferenceInitializer.HoareTripleChecks.INCREMENTAL,
-				mCsToolkit.getManagedScript(), mModifiedGlobals, mPredicateUnifier);
+				mCsToolkit, mPredicateUnifier);
 		mHoareTripleChecker = new CachingHoareTripleChecker_Map(services, ehtc, mPredicateUnifier);
 
 

@@ -226,8 +226,7 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 		final boolean explointSigmaStarConcatOfIA = !mComputeHoareAnnotation;
 
 		final IHoareTripleChecker edgeChecker = TraceAbstractionUtils.constructEfficientHoareTripleChecker(
-				mServices, HoareTripleChecks.MONOLITHIC, mCsToolkit.getManagedScript(), 
-				mModGlobVarManager, mInterpolantGenerator.getPredicateUnifier()); 
+				mServices, HoareTripleChecks.MONOLITHIC, mCsToolkit, mInterpolantGenerator.getPredicateUnifier()); 
 		
 		boolean progress;
 		try {
@@ -259,7 +258,7 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 				final INestedWordAutomaton<CodeBlock, IPredicate> test = (new RemoveUnreachable<>(new AutomataLibraryServices(mServices),
 						determinized)).getResult();
 				assert (new InductivityCheck(mServices, test, false, true,
-						new IncrementalHoareTripleChecker(mRootNode.getRootAnnot().getManagedScript(), mModGlobVarManager))).getResult();
+						new IncrementalHoareTripleChecker(mRootNode.getRootAnnot().getCfgSmtToolkit()))).getResult();
 				progress = true;
 				break;
 			}
@@ -281,7 +280,7 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 				final INestedWordAutomaton<CodeBlock, IPredicate> test = (new RemoveUnreachable<>(new AutomataLibraryServices(mServices),
 						nondet)).getResult();
 				assert (new InductivityCheck(mServices, test, false, true,
-						new IncrementalHoareTripleChecker(mRootNode.getRootAnnot().getManagedScript(), mModGlobVarManager))).getResult();
+						new IncrementalHoareTripleChecker(mRootNode.getRootAnnot().getCfgSmtToolkit()))).getResult();
 				progress = true;
 				break;
 			}

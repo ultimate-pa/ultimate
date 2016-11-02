@@ -9,7 +9,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
@@ -49,15 +49,15 @@ public class RcfgDebugHelper<STATE extends IAbstractState<STATE, CodeBlock, VARD
 
 	private static int sIllegalPredicates = Integer.MAX_VALUE;
 
-	public RcfgDebugHelper(final ManagedScript mgdScript, final ModifiableGlobalVariableManager modGlobVarMan,
+	public RcfgDebugHelper(final CfgSmtToolkit csToolkit,
 			final IUltimateServiceProvider services, final Boogie2SmtSymbolTable symbolTable) {
 		mServices = services;
 		mSymbolTable = symbolTable;
-		mMgdScript = mgdScript;
+		mMgdScript = csToolkit.getManagedScript();
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		// TODO: Make parameter
 		mSimplificationTechnique = SimplificationTechnique.SIMPLIFY_DDA;
-		mHTC = new IncrementalHoareTripleChecker(mMgdScript, modGlobVarMan);
+		mHTC = new IncrementalHoareTripleChecker(csToolkit);
 	}
 
 	@Override

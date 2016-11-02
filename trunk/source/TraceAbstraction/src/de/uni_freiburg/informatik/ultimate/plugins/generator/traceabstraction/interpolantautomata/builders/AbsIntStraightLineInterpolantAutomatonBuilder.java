@@ -107,7 +107,7 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder
 					final PredicateUnifier predicateUnifier) {
 
 		final RcfgDebugHelper<STATE, IBoogieVar, ?> debugHelper =
-				new RcfgDebugHelper<>(mCsToolkit.getManagedScript(), mCsToolkit.getModifiableGlobals(), mServices, mSymbolTable);
+				new RcfgDebugHelper<>(mCsToolkit, mServices, mSymbolTable);
 		mLogger.info("Creating interpolant automaton from AI predicates (straight)");
 
 		final NestedWordAutomaton<CodeBlock, IPredicate> result = new NestedWordAutomaton<>(

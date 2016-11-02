@@ -263,7 +263,7 @@ public class RefineBuchi {
 		}
 
 //		BuchiHoareTripleChecker bhtc = new BuchiHoareTripleChecker(new MonolithicHoareTripleChecker(mCsToolkit));
-		final BuchiHoareTripleChecker bhtc = new BuchiHoareTripleChecker(new IncrementalHoareTripleChecker(mCsToolkit.getManagedScript(), buchiModGlobalVarManager));
+		final BuchiHoareTripleChecker bhtc = new BuchiHoareTripleChecker(new IncrementalHoareTripleChecker(mCsToolkit));
 		bhtc.putDecreaseEqualPair(bspm.getHondaPredicate(), bspm.getRankEqAndSi());
 		assert (new InductivityCheck(mServices, mInterpolAutomaton, false, true, bhtc)).getResult();
 		assert (new BuchiAccepts<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), mInterpolAutomaton, mCounterexample.getNestedLassoWord()))

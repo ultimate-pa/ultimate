@@ -84,7 +84,7 @@ public class HeapSeparatorObserver implements IUnmanagedObserver {
 	@Override
 	public boolean process(final IElement root) throws Throwable {
 		
-		mScript = ((RootNode) root).getRootAnnot().getManagedScript();
+		mScript = ((RootNode) root).getRootAnnot().getCfgSmtToolkit().getManagedScript();
 //		testSetup(((RootNode) root).getOutgoingEdges().get(0).getTarget());
 		testSetup(((RootNode) root).getRootAnnot());
 		

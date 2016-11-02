@@ -146,8 +146,7 @@ public class TotalInterpolationAutomatonBuilder implements IInterpolantAutomaton
 			mAnnotated.add(lastAutomatonState);
 			mWorklist.add(lastAutomatonState);
 		}
-		mHtc = TraceAbstractionUtils.constructEfficientHoareTripleChecker(services, HoareTripleChecks.MONOLITHIC, mCsToolkit.getManagedScript(),
-				mModifiedGlobals, mPredicateUnifier);
+		mHtc = TraceAbstractionUtils.constructEfficientHoareTripleChecker(services, HoareTripleChecks.MONOLITHIC, mCsToolkit, mPredicateUnifier);
 		for (final IPredicate state : stateSequence) {
 			mWorklist.add(state);
 			mAnnotated.add(state);

@@ -128,8 +128,7 @@ public class LassoRankerStarter {
 		// Omit check to enable Stefans BlockEncoding
 		// checkRCFGBuilderSettings();
 		final LassoRankerPreferences preferences = PreferencesInitializer.getLassoRankerPreferences(mServices);
-		mCsToolkit = new CfgSmtToolkit(mRootAnnot.getModGlobVarManager(), mRootAnnot.getManagedScript(),
-				mRootAnnot.getBoogie2SMT().getBoogie2SmtSymbolTable());
+		mCsToolkit = mRootAnnot.getCfgSmtToolkit();
 		mPredicateFactory = new PredicateFactory(mServices, mCsToolkit.getManagedScript(), 
 				mCsToolkit.getSymbolTable(), mSimplificationTechnique, mXnfConversionTechnique);
 
@@ -158,7 +157,7 @@ public class LassoRankerStarter {
 		mLoop = lassoExtractor.getLoop();
 		mHonda = lassoExtractor.getHonda();
 
-		final ManagedScript script = mRootAnnot.getManagedScript();
+		final ManagedScript script = mCsToolkit.getManagedScript();
 
 		final TermVariableRenamer tvr = new TermVariableRenamer(script);
 		UnmodifiableTransFormula stemTF;

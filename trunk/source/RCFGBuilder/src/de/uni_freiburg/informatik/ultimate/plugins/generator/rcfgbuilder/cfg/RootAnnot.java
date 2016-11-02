@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieDeclarations;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBacktranslator;
@@ -110,6 +111,8 @@ public class RootAnnot extends AbstractAnnotations {
 	private final ModifiableGlobalVariableManager mModifiableGlobalVariableManager;
 	private final CodeBlockFactory mCodeBlockFactory;
 
+	private final CfgSmtToolkit mCfgSmtToolkit;
+
 	/**
 	 * The published attributes. Update this and getFieldValue() if you add new
 	 * attributes.
@@ -123,6 +126,7 @@ public class RootAnnot extends AbstractAnnotations {
 		mManagedScript = mBoogie2smt.getManagedScript();
 		mModifiableGlobalVariableManager = new ModifiableGlobalVariableManager(mBoogieDeclarations.getModifiedVars(),
 				mManagedScript, mBoogie2smt.getBoogie2SmtSymbolTable());
+		mCfgSmtToolkit = new CfgSmtToolkit(mModifiableGlobalVariableManager, mManagedScript, mBoogie2smt.getBoogie2SmtSymbolTable());
 		mCodeBlockFactory = new CodeBlockFactory(services, mManagedScript, mModifiableGlobalVariableManager, mBoogie2SMT.getBoogie2SmtSymbolTable());
 	}
 
@@ -182,10 +186,6 @@ public class RootAnnot extends AbstractAnnotations {
 		return mBoogie2SMT.getScript();
 	}
 	
-	public ManagedScript getManagedScript() {
-		return mManagedScript;
-	}
-
 	public Boogie2SMT getBoogie2SMT() {
 		return mBoogie2SMT;
 	}
@@ -211,5 +211,11 @@ public class RootAnnot extends AbstractAnnotations {
 				})).collect(Collectors.toSet());
 		return relevantLocs;
 	}
+
+	public CfgSmtToolkit getCfgSmtToolkit() {
+		return mCfgSmtToolkit;
+	}
+	
+	
 
 }

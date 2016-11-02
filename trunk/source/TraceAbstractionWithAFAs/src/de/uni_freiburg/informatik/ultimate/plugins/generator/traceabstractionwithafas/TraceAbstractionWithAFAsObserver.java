@@ -93,7 +93,7 @@ public class TraceAbstractionWithAFAsObserver extends BaseObserver {
 		final RootNode rootNode = (RootNode) root;
 		final RootAnnot rootAnnot = rootNode.getRootAnnot();
 		final TAPreferences taPrefs = new TAPreferences(mServices);
-		final CfgSmtToolkit csToolkit = new CfgSmtToolkit(rootAnnot.getModGlobVarManager(), rootAnnot.getManagedScript(), rootAnnot.getBoogie2SMT().getBoogie2SmtSymbolTable());
+		final CfgSmtToolkit csToolkit = rootAnnot.getCfgSmtToolkit();
 		final PredicateFactory predicateFactory = new PredicateFactory(mServices, csToolkit.getManagedScript(), 
 				csToolkit.getSymbolTable(), taPrefs.getSimplificationTechnique(), taPrefs.getXnfConversionTechnique());
 		final TraceAbstractionBenchmarks taBenchmarks = new TraceAbstractionBenchmarks(rootAnnot);

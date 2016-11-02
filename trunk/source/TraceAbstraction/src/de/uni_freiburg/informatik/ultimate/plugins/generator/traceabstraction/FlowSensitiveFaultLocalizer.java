@@ -339,7 +339,7 @@ public class FlowSensitiveFaultLocalizer {
 		mLogger.info("Starting non-flow-sensitive error relevancy analysis");
 		
 		final FaultLocalizationRelevanceChecker rc = new FaultLocalizationRelevanceChecker(
-				csToolkit.getManagedScript(), modGlobVarManager);
+				csToolkit);
 		// Non-Flow Sensitive INCREMENTAL ANALYSIS
 
 		// Calculating the WP-List
@@ -460,7 +460,7 @@ public class FlowSensitiveFaultLocalizer {
 			final CfgSmtToolkit csToolkit, final ModifiableGlobalVariableManager modGlobVarManager){
 
 		final FaultLocalizationRelevanceChecker rc = new FaultLocalizationRelevanceChecker(
-				csToolkit.getManagedScript(), modGlobVarManager);
+				csToolkit);
 		final IPredicate pre = mPredicateFactory.newPredicate(
 				mPredicateFactory.not(weakestPreconditionLeft));
 		final String preceeding = counterexampleWord.getSymbolAt(startPosition).getPrecedingProcedure();
@@ -642,7 +642,7 @@ public class FlowSensitiveFaultLocalizer {
 		final PredicateTransformer pt = new PredicateTransformer(mServices,
 				csToolkit.getManagedScript(), mSimplificationTechnique, mXnfConversionTechnique);
 		final FaultLocalizationRelevanceChecker rc = new FaultLocalizationRelevanceChecker(
-				csToolkit.getManagedScript(), modGlobVarManager);
+				csToolkit);
 		final int startLocation = 0;
 		final int endLocation = counterexample.getWord().length()-1;
 		final IPredicate falsePredicate = mPredicateFactory.newPredicate(

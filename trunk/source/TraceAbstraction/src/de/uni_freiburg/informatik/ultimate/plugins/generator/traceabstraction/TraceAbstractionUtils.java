@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -100,21 +101,20 @@ public class TraceAbstractionUtils {
 	
 	
 	public static IHoareTripleChecker constructEfficientHoareTripleChecker(final IUltimateServiceProvider services,
-			final HoareTripleChecks hoareTripleChecks, final ManagedScript mgdScript,
-			final ModifiableGlobalVariableManager modGlobVarManager, final PredicateUnifier predicateUnifier)
+			final HoareTripleChecks hoareTripleChecks, final CfgSmtToolkit csToolkit, final PredicateUnifier predicateUnifier)
 			throws AssertionError {
 		final IHoareTripleChecker solverHtc;
 		switch (hoareTripleChecks) {
 		case MONOLITHIC:
-			solverHtc = new MonolithicHoareTripleChecker(mgdScript, modGlobVarManager);
+			solverHtc = new MonolithicHoareTripleChecker(csToolkit.getManagedScript(), csToolkit.getModifiableGlobals());
 			break;
 		case INCREMENTAL:
-			solverHtc = new IncrementalHoareTripleChecker(mgdScript, modGlobVarManager);
+			solverHtc = new IncrementalHoareTripleChecker(csToolkit);
 			break;
 		default:
 			throw new AssertionError("unknown value");
 		}
-		return new EfficientHoareTripleChecker(solverHtc, modGlobVarManager, predicateUnifier, mgdScript);
+		return new EfficientHoareTripleChecker(solverHtc, csToolkit.getModifiableGlobals(), predicateUnifier, csToolkit.getManagedScript());
 	}
 	
 	
