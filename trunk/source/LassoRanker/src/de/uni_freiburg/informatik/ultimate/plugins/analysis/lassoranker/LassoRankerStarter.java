@@ -420,7 +420,7 @@ public class LassoRankerStarter {
 		final RankingFunction rf = arg.getRankingFunction();
 		final Collection<SupportingInvariant> suppInvs = arg.getSupportingInvariants();
 
-		final Script script = mRootAnnot.getScript();
+		final Script script = mCsToolkit.getManagedScript().getScript();
 
 		final Term[] suppInvArray = new Term[suppInvs.size()];
 		int i = 0;

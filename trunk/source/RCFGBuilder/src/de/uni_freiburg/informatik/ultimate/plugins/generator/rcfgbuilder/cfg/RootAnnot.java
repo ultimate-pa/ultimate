@@ -37,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryA
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation.LoopEntryType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieDeclarations;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -182,10 +181,6 @@ public class RootAnnot extends AbstractAnnotations {
 		return mModifiableGlobalVariableManager;
 	}
 
-	public Script getScript() {
-		return mBoogie2SMT.getScript();
-	}
-	
 	public Boogie2SMT getBoogie2SMT() {
 		return mBoogie2SMT;
 	}

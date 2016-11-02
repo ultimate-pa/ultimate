@@ -83,7 +83,7 @@ public class TreeAutomizerObserver implements IUnmanagedObserver {
 	public boolean process(final IElement root) throws Throwable {
 		
 		final RootNode rootNode = (RootNode) root;
-		rootNode.getRootAnnot().getScript();
+		rootNode.getRootAnnot().getCfgSmtToolkit().getManagedScript().getScript();
 		
 		final Map<String, IAnnotations> st = root.getPayload().getAnnotations();
 		final HornAnnot annot = (HornAnnot) st.get("HoRNClauses");

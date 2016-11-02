@@ -94,7 +94,7 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 	protected CompoundDomainPostOperator(final IUltimateServiceProvider services, final RootAnnot rootAnnotation) {
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mBoogie2Smt = rootAnnotation.getBoogie2SMT();
-		mScript = rootAnnotation.getScript();
+		mScript = rootAnnotation.getCfgSmtToolkit().getManagedScript().getScript();
 		mCodeBlockFactory = rootAnnotation.getCodeBlockFactory();
 		mStatementExtractor = new RcfgStatementExtractor();
 		mTransformulaBuilder = new TransFormulaAdder(mBoogie2Smt, services);

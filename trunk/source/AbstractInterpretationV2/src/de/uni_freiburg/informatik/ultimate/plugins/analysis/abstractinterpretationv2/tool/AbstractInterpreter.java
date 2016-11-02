@@ -125,7 +125,7 @@ public final class AbstractInterpreter {
 			final CodeBlock initial = counterexample.getSymbol(0);
 			final RootAnnot rootAnnot = root.getRootAnnot();
 			final Boogie2SMT bpl2smt = rootAnnot.getBoogie2SMT();
-			final Script script = rootAnnot.getScript();
+			final Script script = rootAnnot.getCfgSmtToolkit().getManagedScript().getScript();
 			final FixpointEngineParameterFactory domFac =
 					new FixpointEngineParameterFactory(root, () -> new RCFGLiteralCollector(root), services);
 			final FixpointEngineParameters<STATE, CodeBlock, IBoogieVar, ProgramPoint, Expression> params =
@@ -178,7 +178,7 @@ public final class AbstractInterpreter {
 		
 		final RootAnnot rootAnnot = root.getRootAnnot();
 		final Boogie2SMT bpl2smt = rootAnnot.getBoogie2SMT();
-		final Script script = rootAnnot.getScript();
+		final Script script = rootAnnot.getCfgSmtToolkit().getManagedScript().getScript();
 		final FixpointEngineParameterFactory domFac =
 				new FixpointEngineParameterFactory(root, () -> new RCFGLiteralCollector(root), services);
 		final boolean isLib = filteredInitialElements.size() > 1;
@@ -245,7 +245,7 @@ public final class AbstractInterpreter {
 		
 		final RootAnnot rootAnnot = root.getRootAnnot();
 		final Boogie2SMT bpl2smt = rootAnnot.getBoogie2SMT();
-		final Script script = rootAnnot.getScript();
+		final Script script = rootAnnot.getCfgSmtToolkit().getManagedScript().getScript();
 		final FixpointEngineParameterFactory domFac =
 				new FixpointEngineParameterFactory(root, () -> new RCFGLiteralCollector(root), services);
 		final boolean isLib = filteredInitialElements.size() > 1;
