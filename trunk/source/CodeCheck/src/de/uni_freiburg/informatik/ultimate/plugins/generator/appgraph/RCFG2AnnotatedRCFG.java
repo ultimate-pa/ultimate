@@ -35,6 +35,7 @@ import java.util.Map.Entry;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
@@ -44,20 +45,19 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Ret
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 
 public class RCFG2AnnotatedRCFG {
 
 
 	HashMap<ProgramPoint, AnnotatedProgramPoint> moldPpTonew;
 	private final ILogger mLogger;
-	private final SmtManager msmtManager;
+	private final CfgSmtToolkit msmtManager;
 	private final PredicateFactory mPredicateFactory;
 	private final IPredicate mtruePredicate;
 	private final Map<RCFGNode, Term> minitialPredicates;
 	private final boolean museInitialPredicates;
 
-	public RCFG2AnnotatedRCFG(final SmtManager smtMan, final PredicateFactory predicateFactory, final ILogger logger, final IPredicate truePredicate, final Map<RCFGNode, Term> initialPredicates) {
+	public RCFG2AnnotatedRCFG(final CfgSmtToolkit smtMan, final PredicateFactory predicateFactory, final ILogger logger, final IPredicate truePredicate, final Map<RCFGNode, Term> initialPredicates) {
 		mLogger = logger;
 		msmtManager = smtMan;
 		mPredicateFactory = predicateFactory;

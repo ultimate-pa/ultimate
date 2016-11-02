@@ -56,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Remove
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -70,7 +71,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.NondeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
@@ -91,7 +91,7 @@ public class RefineBuchi {
 	/**
 	 * Intermediate layer to encapsulate communication with SMT solvers.
 	 */
-	private final SmtManager mSmtManager;
+	private final CfgSmtToolkit mSmtManager;
 	private final PredicateFactory mPredicateFactory;
 	
 	private final RootNode mRootNode;
@@ -112,7 +112,7 @@ public class RefineBuchi {
 
 	private final IUltimateServiceProvider mServices;
 
-	public RefineBuchi(final RootNode rootNode, final SmtManager smtManager, final PredicateFactory predicateFactory, final boolean dumpAutomata, final boolean difference,
+	public RefineBuchi(final RootNode rootNode, final CfgSmtToolkit smtManager, final PredicateFactory predicateFactory, final boolean dumpAutomata, final boolean difference,
 			final PredicateFactoryForInterpolantAutomata stateFactoryInterpolAutom, final PredicateFactoryRefinement stateFactoryForRefinement,
 			final boolean useDoubleDeckers, final String dumpPath, final Format format, final InterpolationTechnique interpolation, final IUltimateServiceProvider services,
 			final ILogger logger, final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
@@ -489,7 +489,7 @@ public class RefineBuchi {
 	}
 
 	private InterpolatingTraceChecker constructTraceChecker(final IPredicate precond, final IPredicate postcond,
-			final NestedWord<CodeBlock> word, final SmtManager smtManager, final BuchiModGlobalVarManager buchiModGlobalVarManager,
+			final NestedWord<CodeBlock> word, final CfgSmtToolkit smtManager, final BuchiModGlobalVarManager buchiModGlobalVarManager,
 			final PredicateUnifier pu, final InterpolationTechnique interpolation) {
 		final InterpolatingTraceChecker itc;
 		switch (mInterpolation) {

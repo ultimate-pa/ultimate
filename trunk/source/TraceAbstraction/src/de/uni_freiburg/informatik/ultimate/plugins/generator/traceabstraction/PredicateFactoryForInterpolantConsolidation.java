@@ -34,11 +34,11 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 
 /**
  * 
@@ -50,7 +50,7 @@ public class PredicateFactoryForInterpolantConsolidation extends PredicateFactor
 	private final Map<IPredicate, Set<IPredicate>> mLocationsToSetOfPredicates;
 	private final Map<IPredicate, AbstractMap.SimpleEntry<IPredicate, IPredicate>> mIntersectedPredicateToArgumentPredicates;
 	private final Map<AbstractMap.SimpleEntry<IPredicate, IPredicate>, IPredicate> mArgumentPredicatesToIntersectedPredicate;
-	public PredicateFactoryForInterpolantConsolidation(final SmtManager smtManager,
+	public PredicateFactoryForInterpolantConsolidation(final CfgSmtToolkit smtManager,
 			final PredicateFactory predicateFactory,
 			final boolean taPrefs) {
 		super(smtManager, predicateFactory, taPrefs);

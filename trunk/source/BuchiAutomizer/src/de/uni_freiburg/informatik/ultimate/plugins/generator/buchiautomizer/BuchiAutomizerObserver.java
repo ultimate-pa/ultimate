@@ -65,6 +65,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTermina
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Term2Expression;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoop.Result;
@@ -79,7 +80,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.Rc
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
@@ -91,7 +91,7 @@ import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
 public class BuchiAutomizerObserver implements IUnmanagedObserver {
 
 	private IElement mGraphRoot;
-	private SmtManager mSmtManager;
+	private CfgSmtToolkit mSmtManager;
 	private TAPreferences mPref;
 
 	private RootAnnot mRootAnnot;
@@ -112,8 +112,8 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		final TAPreferences taPrefs = new TAPreferences(mServices);
 		mGraphRoot = root;
 
-		mSmtManager = new SmtManager(mRootAnnot.getModGlobVarManager(), mServices,
-				mRootAnnot.getManagedScript(), mRootAnnot.getBoogie2SMT().getBoogie2SmtSymbolTable(), taPrefs.getSimplificationTechnique(), taPrefs.getXnfConversionTechnique());
+		mSmtManager = new CfgSmtToolkit(mRootAnnot.getModGlobVarManager(), mRootAnnot.getManagedScript(),
+				mRootAnnot.getBoogie2SMT().getBoogie2SmtSymbolTable());
 		final PredicateFactory predicateFactory = new PredicateFactory(mServices, mSmtManager.getManagedScript(), 
 				mSmtManager.getSymbolTable(), taPrefs.getSimplificationTechnique(), taPrefs.getXnfConversionTechnique());
 

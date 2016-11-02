@@ -39,9 +39,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
 
 /**
@@ -55,7 +55,7 @@ public class TwoTrackInterpolantAutomatonBuilder implements IInterpolantAutomato
 
 	private final NestedWord<CodeBlock> mNestedWord;
 	private final NestedWordAutomaton<CodeBlock, IPredicate> mTTIA;
-	private final SmtManager mSmtManager;
+	private final CfgSmtToolkit mSmtManager;
 	private final InterpolantsPreconditionPostcondition mInterpolantsFP;
 	private final InterpolantsPreconditionPostcondition mInterpolantsBP;
 	private final IPredicate mPrecondition;
@@ -75,7 +75,7 @@ public class TwoTrackInterpolantAutomatonBuilder implements IInterpolantAutomato
 	 * 
 	 */
 	public TwoTrackInterpolantAutomatonBuilder(final IUltimateServiceProvider services, final IRun<CodeBlock, IPredicate> nestedRun,
-			final SmtManager smtManager, final List<IPredicate> interpolantsFP, final List<IPredicate> interpolantsBP,
+			final CfgSmtToolkit smtManager, final List<IPredicate> interpolantsFP, final List<IPredicate> interpolantsBP,
 			final IPredicate preCondition, final IPredicate postCondition, final IAutomaton<CodeBlock, IPredicate> abstraction) {
 		mServices = services;
 		mPrecondition = preCondition;

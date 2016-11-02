@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -51,12 +52,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Ret
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 
 public class CFG2NestedWordAutomaton {
 	private final IUltimateServiceProvider mServices;
 	
-	private final SmtManager mSmtManager;
+	private final CfgSmtToolkit mSmtManager;
 	private final PredicateFactory mPredicateFactory;
 	private static final boolean mStoreHistory = false;
 	private final boolean mInterprocedural;
@@ -66,7 +66,7 @@ public class CFG2NestedWordAutomaton {
 	private final ILogger mLogger;
 	
 	public CFG2NestedWordAutomaton(final IUltimateServiceProvider services, final boolean interprocedural, 
-			final SmtManager csToolkit, final PredicateFactory predicateFactory, final ILogger logger) {
+			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final ILogger logger) {
 		mServices = services;
 		mLogger = logger;
 		mSmtManager = csToolkit;

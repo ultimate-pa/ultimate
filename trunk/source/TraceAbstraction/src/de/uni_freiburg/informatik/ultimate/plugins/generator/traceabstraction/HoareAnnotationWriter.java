@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -40,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCF
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
@@ -53,7 +53,7 @@ public class HoareAnnotationWriter {
 
 	private final IUltimateServiceProvider mServices;
 	private final RootAnnot mrootAnnot;
-	private final SmtManager mSmtManager;
+	private final CfgSmtToolkit mSmtManager;
 	private final PredicateFactory mPredicateFactory;
 	private final HoareAnnotationFragments mHoareAnnotationFragments;
 
@@ -64,7 +64,7 @@ public class HoareAnnotationWriter {
 	private final boolean mUseEntry;
 	private final PredicateTransformer mPredicateTransformer;
 
-	public HoareAnnotationWriter(final RootAnnot rootAnnot, final SmtManager smtManager, final PredicateFactory predicateFactory,
+	public HoareAnnotationWriter(final RootAnnot rootAnnot, final CfgSmtToolkit smtManager, final PredicateFactory predicateFactory,
 			final HoareAnnotationFragments hoareAnnotationFragments, final IUltimateServiceProvider services, 
 			final SimplificationTechnique simplicationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
@@ -114,7 +114,7 @@ public class HoareAnnotationWriter {
 	 * @param precondForContext
 	 * @param pp2preds
 	 */
-	private void addHoareAnnotationForContext(final SmtManager smtManager, final IPredicate precondForContext,
+	private void addHoareAnnotationForContext(final CfgSmtToolkit smtManager, final IPredicate precondForContext,
 			final HashRelation<ProgramPoint, IPredicate> pp2preds) {
 		for (final ProgramPoint pp : pp2preds.getDomain()) {
 			final IPredicate[] preds = pp2preds.getImage(pp).toArray(new IPredicate[0]);

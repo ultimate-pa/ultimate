@@ -34,6 +34,7 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.Condition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop;
@@ -42,12 +43,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ProdState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 
 public class TaConcurContentFactory extends PredicateFactoryForInterpolantAutomata {
 
 	public TaConcurContentFactory(final Map<String, Map<String, ProgramPoint>> locNodes,
-			final AbstractCegarLoop abstractCegarLoop, final SmtManager theory, final PredicateFactory predicateFactory,
+			final AbstractCegarLoop abstractCegarLoop, final CfgSmtToolkit theory, final PredicateFactory predicateFactory,
 			final boolean taPrefs,
 			final boolean hoareAnnotation,
 			final boolean interprocedural) {

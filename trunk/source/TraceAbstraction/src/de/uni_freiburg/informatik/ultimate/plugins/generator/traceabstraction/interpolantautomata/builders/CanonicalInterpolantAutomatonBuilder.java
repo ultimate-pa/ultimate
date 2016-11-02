@@ -40,11 +40,11 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.IInterpolantGenerator;
 
 /**
@@ -61,13 +61,13 @@ public class CanonicalInterpolantAutomatonBuilder extends CoverageAnalysis
 	private final boolean mSelfloopAtInitial = false;
 	private final boolean mSelfloopAtFinal = true;
 
-	private final SmtManager mSmtManager;
+	private final CfgSmtToolkit mSmtManager;
 
 	private final Map<Integer, Set<IPredicate>> mAlternativeCallPredecessors = new HashMap<Integer, Set<IPredicate>>();
 
 	public CanonicalInterpolantAutomatonBuilder(IUltimateServiceProvider services,
 			IInterpolantGenerator interpolantGenerator, List<ProgramPoint> programPointSequence,
-			InCaReAlphabet<CodeBlock> alphabet, SmtManager smtManager, IStateFactory<IPredicate> predicateFactory,
+			InCaReAlphabet<CodeBlock> alphabet, CfgSmtToolkit smtManager, IStateFactory<IPredicate> predicateFactory,
 			ILogger logger) {
 		super(services, interpolantGenerator, programPointSequence, logger);
 		mIA = new NestedWordAutomaton<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),

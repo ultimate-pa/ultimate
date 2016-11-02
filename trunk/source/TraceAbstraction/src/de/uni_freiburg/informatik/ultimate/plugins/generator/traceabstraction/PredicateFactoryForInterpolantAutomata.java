@@ -36,22 +36,22 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.LevelRankingState;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 
 public class PredicateFactoryForInterpolantAutomata implements IStateFactory<IPredicate> {
 
 	final protected boolean mComputeHoareAnnotation;
 	private final IPredicate memtpyStack;
-	protected final SmtManager mSmtManager;
+	protected final CfgSmtToolkit mSmtManager;
 	protected final PredicateFactory mPredicateFactory;
 
-	public PredicateFactoryForInterpolantAutomata(final SmtManager smtManager, 
+	public PredicateFactoryForInterpolantAutomata(final CfgSmtToolkit smtManager, 
 			final PredicateFactory predicateFactory, final boolean computeHoareAnnotation) {
 		mComputeHoareAnnotation = computeHoareAnnotation;
 		mSmtManager = smtManager;

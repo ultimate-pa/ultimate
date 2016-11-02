@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLasso
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
@@ -56,7 +57,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CF
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryResultChecking;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 
 
 /**
@@ -77,11 +77,11 @@ public class LassoExtractorBuchi extends AbstractLassoExtractor {
 	private final INestedWordAutomatonSimple<CodeBlock, IPredicate> mCfgAutomaton;
 	private INestedWordAutomatonSimple<CodeBlock, IPredicate> mLassoAutomaton;
 	private final IStateFactory<IPredicate> mPredicateFactoryRc;
-	private final SmtManager mSmtManager;
+	private final CfgSmtToolkit mSmtManager;
 	private final PredicateFactory mPredicateFactory;
 	private final ILogger mLogger;
 	
-	public LassoExtractorBuchi(final IUltimateServiceProvider services, final RootNode rootNode, final SmtManager smtManager, final PredicateFactory predicateFactory, final ILogger logger)
+	public LassoExtractorBuchi(final IUltimateServiceProvider services, final RootNode rootNode, final CfgSmtToolkit smtManager, final PredicateFactory predicateFactory, final ILogger logger)
 			throws AutomataLibraryException {
 		mServices = services;
 		mLogger = logger;
@@ -128,7 +128,7 @@ public class LassoExtractorBuchi extends AbstractLassoExtractor {
 	
 
 	private INestedWordAutomatonSimple<CodeBlock, IPredicate> constructCfgAutomaton(
-			final RootNode rootNode, final SmtManager smtManager) {
+			final RootNode rootNode, final CfgSmtToolkit smtManager) {
 		final CFG2NestedWordAutomaton cFG2NestedWordAutomaton =
 				new CFG2NestedWordAutomaton(mServices, true ,smtManager, mPredicateFactory, mLogger);
 		final Collection<ProgramPoint> allNodes = new HashSet<ProgramPoint>();

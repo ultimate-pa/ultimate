@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
@@ -52,7 +53,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 
 /**
  * Superclass for interpolant automata that are build on-demand.
@@ -96,7 +96,7 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 	protected final IUltimateServiceProvider mServices;
 	protected final ILogger mLogger;
 
-	protected final SmtManager mSmtManager;
+	protected final CfgSmtToolkit mSmtManager;
 	protected final IHoareTripleChecker mIHoareTripleChecker;
 	protected final IPredicate mIaFalseState;
 	protected final NestedWordAutomatonCache<CodeBlock, IPredicate> mAlreadyConstrucedAutomaton;
@@ -116,7 +116,7 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 	 * already computed successors.
 	 */
 	public AbstractInterpolantAutomaton(final IUltimateServiceProvider services,
-			final SmtManager smtManager, final IHoareTripleChecker hoareTripleChecker,
+			final CfgSmtToolkit smtManager, final IHoareTripleChecker hoareTripleChecker,
 			final boolean useEfficientTotalAutomatonBookkeeping,
 			final INestedWordAutomatonSimple<CodeBlock, IPredicate> abstraction, final IPredicate falseState,
 			final NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton, final ILogger logger) {

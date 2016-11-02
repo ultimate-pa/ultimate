@@ -37,13 +37,13 @@ import de.uni_freiburg.informatik.ultimate.automata.alternating.AlternatingAutom
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 
 public class RAFA_Determination<LETTER> implements IOperation<LETTER, IPredicate>{
 
-	public RAFA_Determination(final IUltimateServiceProvider ultimateServiceProvider, final AlternatingAutomaton<LETTER, IPredicate> alternatingAutomaton, final SmtManager smtManager, final PredicateUnifier predicateUnifier){
+	public RAFA_Determination(final IUltimateServiceProvider ultimateServiceProvider, final AlternatingAutomaton<LETTER, IPredicate> alternatingAutomaton, final CfgSmtToolkit smtManager, final PredicateUnifier predicateUnifier){
 		assert alternatingAutomaton.isReversed();
 		this.alternatingAutomaton = alternatingAutomaton;
 		this.smtManager = smtManager;
@@ -76,7 +76,7 @@ public class RAFA_Determination<LETTER> implements IOperation<LETTER, IPredicate
 		}
 	}
 	private final AlternatingAutomaton<LETTER, IPredicate> alternatingAutomaton;
-	private final SmtManager smtManager;
+	private final CfgSmtToolkit smtManager;
 	private final PredicateUnifier predicateUnifier;
 	private final NestedWordAutomaton<LETTER, IPredicate> resultAutomaton;
 

@@ -25,16 +25,12 @@
  * to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates;
+package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg;
 
-import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
-public class SmtManager {
+public class CfgSmtToolkit {
 
 
 	private final ManagedScript mManagedScript;
@@ -44,10 +40,8 @@ public class SmtManager {
 
 
 
-	public SmtManager(final ModifiableGlobalVariableManager modifiableGlobals, final IUltimateServiceProvider services, 
-			final ManagedScript managedScript,
-			final Boogie2SmtSymbolTable symbolTable,
-			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
+	public CfgSmtToolkit(final ModifiableGlobalVariableManager modifiableGlobals, final ManagedScript managedScript, 
+			final Boogie2SmtSymbolTable symbolTable) {
 		mManagedScript = managedScript;
 		mSymbolTable = symbolTable;
 		mModifiableGlobals = modifiableGlobals;

@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -58,7 +59,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer.CodeBlockSize;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 
 public abstract class CFG2Automaton {
 
@@ -68,7 +68,7 @@ public abstract class CFG2Automaton {
 	private final XnfConversionTechnique mXnfConversionTechnique;
 
 	private final RootAnnot mRootAnnot;
-	private final SmtManager mSmtManager;
+	private final CfgSmtToolkit mSmtManager;
 	private final PredicateFactory mPredicateFactory;
 	private final IStateFactory<IPredicate> mContentFactory;
 	protected ArrayList<INestedWordAutomaton<CodeBlock, IPredicate>> mAutomata;
@@ -77,7 +77,7 @@ public abstract class CFG2Automaton {
 	private static final String mInitProcedure = "~init";
 
 	public CFG2Automaton(final RootNode rootNode, final IStateFactory<IPredicate> contentFactory, 
-			final SmtManager smtManager, final PredicateFactory predicateFactory, final IUltimateServiceProvider services, 
+			final CfgSmtToolkit smtManager, final PredicateFactory predicateFactory, final IUltimateServiceProvider services, 
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);

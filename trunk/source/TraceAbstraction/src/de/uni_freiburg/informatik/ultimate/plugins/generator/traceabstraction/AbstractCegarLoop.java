@@ -46,7 +46,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -57,7 +58,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareAnnotationPositions;
@@ -106,7 +106,7 @@ public abstract class AbstractCegarLoop {
 	/**
 	 * Intermediate layer to encapsulate communication with SMT solvers.
 	 */
-	protected final SmtManager mSmtManager;
+	protected final CfgSmtToolkit mSmtManager;
 	protected final PredicateFactory mPredicateFactory;
 	
 	protected final ModifiableGlobalVariableManager mModGlobVarManager;
@@ -180,7 +180,7 @@ public abstract class AbstractCegarLoop {
 	private static final boolean DUMP_BIGGEST_AUTOMATON = false;
 	
 	public AbstractCegarLoop(final IUltimateServiceProvider services, final IToolchainStorage storage,
-			final String name, final RootNode rootNode, final SmtManager smtManager, final PredicateFactory predicateFactory, final TAPreferences taPrefs,
+			final String name, final RootNode rootNode, final CfgSmtToolkit smtManager, final PredicateFactory predicateFactory, final TAPreferences taPrefs,
 			final Collection<ProgramPoint> errorLocs, final ILogger logger) {
 		mServices = services;
 		mLogger = logger;
@@ -275,7 +275,7 @@ public abstract class AbstractCegarLoop {
 		return mRcfgProgramExecution;
 	}
 	
-	public SmtManager getSmtManager() {
+	public CfgSmtToolkit getSmtManager() {
 		return mSmtManager;
 	}
 	

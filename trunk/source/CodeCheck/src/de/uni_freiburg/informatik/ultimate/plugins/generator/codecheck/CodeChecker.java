@@ -34,13 +34,13 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AnnotatedProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.ImpRootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.IsContained;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 public abstract class CodeChecker {
 
 	protected RootNode moriginalRoot;
-	protected SmtManager msmtManager;
+	protected CfgSmtToolkit msmtManager;
 	protected ImpRootNode mgraphRoot;
 
 
@@ -73,7 +73,7 @@ public abstract class CodeChecker {
 
 	protected GraphWriter _graphWriter;
 
-	public CodeChecker(final IElement root, final SmtManager smtManager, final RootNode originalRoot, final ImpRootNode graphRoot, final GraphWriter graphWriter,
+	public CodeChecker(final IElement root, final CfgSmtToolkit smtManager, final RootNode originalRoot, final ImpRootNode graphRoot, final GraphWriter graphWriter,
 			final IHoareTripleChecker edgeChecker, final PredicateUnifier predicateUnifier, final ILogger logger) {
 		mLogger = logger;
 		msmtManager = smtManager;

@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
@@ -46,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.Mono
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 
 public class BestApproximationDeterminizer implements IStateDeterminizer<CodeBlock, IPredicate> {
@@ -70,7 +70,7 @@ public class BestApproximationDeterminizer implements IStateDeterminizer<CodeBlo
 	
 	Map<IPredicate, Map<IPredicate, Map<CodeBlock, Set<IPredicate>>>> mInductiveReturnSuccsCache = new HashMap<>();
 	
-	public BestApproximationDeterminizer(final SmtManager mSmtManager, final TAPreferences taPreferences,
+	public BestApproximationDeterminizer(final CfgSmtToolkit mSmtManager, final TAPreferences taPreferences,
 			final NestedWordAutomaton<CodeBlock, IPredicate> nwa, final IStateFactory<IPredicate> stateFactory) {
 		mHoareTriplechecker =
 				new MonolithicHoareTripleChecker(mSmtManager.getManagedScript(), mSmtManager.getModifiableGlobals());

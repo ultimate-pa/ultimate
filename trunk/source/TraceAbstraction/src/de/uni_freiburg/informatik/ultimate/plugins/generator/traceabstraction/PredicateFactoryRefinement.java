@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IMLPredicate;
@@ -40,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateWithHistory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareAnnotationPositions;
 
 public class PredicateFactoryRefinement extends PredicateFactoryForInterpolantAutomata {
@@ -56,7 +56,7 @@ public class PredicateFactoryRefinement extends PredicateFactoryForInterpolantAu
 	
 	
 	public PredicateFactoryRefinement(final Map<String,Map<String,ProgramPoint>> locNodes,
-							final SmtManager smtManager, final PredicateFactory predicateFactory,
+							final CfgSmtToolkit smtManager, final PredicateFactory predicateFactory,
 							final boolean computeHoareAnnoation, 
 							final HoareAnnotationFragments haf, 
 							final HashSet<ProgramPoint> hoareAnnotationProgramPoints, 

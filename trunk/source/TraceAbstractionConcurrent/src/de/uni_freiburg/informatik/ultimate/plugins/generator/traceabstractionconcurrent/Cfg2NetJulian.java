@@ -32,19 +32,19 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJuli
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PrefixProduct;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 
 public final class Cfg2NetJulian extends CFG2Automaton {
 	private final PetriNetJulian<CodeBlock, IPredicate> mResult;
 	
 	public Cfg2NetJulian(final RootNode rootNode, final IStateFactory<IPredicate> contentFactory,
-			final SmtManager smtManager, final PredicateFactory predicateFactory, final IUltimateServiceProvider services,
+			final CfgSmtToolkit smtManager, final PredicateFactory predicateFactory, final IUltimateServiceProvider services,
 			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique)
 			throws AutomataLibraryException {
 		super(rootNode, contentFactory, smtManager, predicateFactory, services, simplificationTechnique, xnfConversionTechnique);

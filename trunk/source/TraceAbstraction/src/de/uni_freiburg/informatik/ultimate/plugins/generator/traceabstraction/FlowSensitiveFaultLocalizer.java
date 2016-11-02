@@ -49,7 +49,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.BasicInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
@@ -72,7 +73,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer.PredicatePostprocessor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer.QuantifierEliminationPostprocessor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.DefaultTransFormulas;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
@@ -111,7 +111,7 @@ public class FlowSensitiveFaultLocalizer {
 
 	public FlowSensitiveFaultLocalizer(final IRun<CodeBlock, IPredicate> counterexample,
 			final INestedWordAutomaton<CodeBlock, IPredicate> cfg, final IUltimateServiceProvider services,
-			final SmtManager smtManager, final PredicateFactory predicateFactory,
+			final CfgSmtToolkit smtManager, final PredicateFactory predicateFactory,
 			final ModifiableGlobalVariableManager modGlobVarManager, final PredicateUnifier predicateUnifier,
 			final boolean doNonFlowSensitiveAnalysis, final boolean doFlowSensitiveAnalysis,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique, 
@@ -335,7 +335,7 @@ public class FlowSensitiveFaultLocalizer {
 	
 	
 	private void doNonFlowSensitiveAnalysis(final NestedWord<CodeBlock> counterexampleWord,
-		final IPredicate falsePredicate, final ModifiableGlobalVariableManager modGlobVarManager, final SmtManager smtManager) {
+		final IPredicate falsePredicate, final ModifiableGlobalVariableManager modGlobVarManager, final CfgSmtToolkit smtManager) {
 		mLogger.info("Starting non-flow-sensitive error relevancy analysis");
 		
 		final FaultLocalizationRelevanceChecker rc = new FaultLocalizationRelevanceChecker(
@@ -457,7 +457,7 @@ public class FlowSensitiveFaultLocalizer {
 	private boolean checkBranchRelevance(final int startPosition, final int endPosition,
 			final UnmodifiableTransFormula markhor,final IPredicate weakestPreconditionLeft,
 			final IPredicate weakestPreconditionRight, final NestedWord<CodeBlock> counterexampleWord,
-			final SmtManager smtManager, final ModifiableGlobalVariableManager modGlobVarManager){
+			final CfgSmtToolkit smtManager, final ModifiableGlobalVariableManager modGlobVarManager){
 
 		final FaultLocalizationRelevanceChecker rc = new FaultLocalizationRelevanceChecker(
 				smtManager.getManagedScript(), modGlobVarManager);
@@ -501,7 +501,7 @@ public class FlowSensitiveFaultLocalizer {
 	private void computeRelevantStatements_FlowSensitive(final NestedWord<CodeBlock> counterexampleWord,
 			final int startLocation, final int endLocation, final IPredicate weakestPreconditionBranchEndlocation,
 			final PredicateTransformer pt, final FaultLocalizationRelevanceChecker rc,
-			final SmtManager smtManager, final ModifiableGlobalVariableManager modGlobVarManager,
+			final CfgSmtToolkit smtManager, final ModifiableGlobalVariableManager modGlobVarManager,
 			final Map<Integer, List<Integer>> informationFromCFG) {
 		IPredicate weakestPreconditionLeft = weakestPreconditionBranchEndlocation;
 		for (int position = endLocation; position >= startLocation; position--){
@@ -583,7 +583,7 @@ public class FlowSensitiveFaultLocalizer {
 			final IPredicate weakestPreconditionRight, final IPredicate weakestPreconditionLeft,
 			final InterpolantsPreconditionPostcondition weakestPreconditionSequence,
 			final NestedWord<CodeBlock> counterexampleWord,
-			final FaultLocalizationRelevanceChecker rc, final SmtManager smtManager){
+			final FaultLocalizationRelevanceChecker rc, final CfgSmtToolkit smtManager){
 		ERelevanceStatus relevance;
 		if(action instanceof IInternalAction){
 			final IInternalAction internal = (IInternalAction) counterexampleWord.getSymbolAt(position);
@@ -635,7 +635,7 @@ public class FlowSensitiveFaultLocalizer {
 	private void doFlowSensitiveAnalysis(final NestedRun<CodeBlock, IPredicate> counterexample,
 			final INestedWordAutomaton<CodeBlock, IPredicate> cfg,
 			final ModifiableGlobalVariableManager modGlobVarManager,
-			final SmtManager smtManager){
+			final CfgSmtToolkit smtManager){
 		mLogger.info("Starting flow-sensitive error relevancy analysis");
 		final Map<Integer, List<Integer>> informationFromCFG = computeInformationFromCFG(counterexample, cfg);
 		// You should send the counter example, the CFG information and the the start of the branch and the end of the branch.

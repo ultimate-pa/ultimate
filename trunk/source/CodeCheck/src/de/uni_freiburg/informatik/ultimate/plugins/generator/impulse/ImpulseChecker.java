@@ -34,6 +34,7 @@ import java.util.Queue;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
@@ -53,7 +54,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cal
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.IsContained;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
@@ -64,7 +64,7 @@ public class ImpulseChecker extends CodeChecker {
 	private final RedirectionFinder mCloneFinder;
 	private int mNodeId;
 	
-	public ImpulseChecker(final IElement root, final SmtManager msmtManager, final RootNode moriginalRoot,
+	public ImpulseChecker(final IElement root, final CfgSmtToolkit msmtManager, final RootNode moriginalRoot,
 			final ImpRootNode mgraphRoot, final GraphWriter mgraphWriter, final IHoareTripleChecker edgeChecker,
 			final PredicateUnifier predicateUnifier, final ILogger logger) {
 		super(root, msmtManager, moriginalRoot, mgraphRoot, mgraphWriter, edgeChecker, predicateUnifier, logger);

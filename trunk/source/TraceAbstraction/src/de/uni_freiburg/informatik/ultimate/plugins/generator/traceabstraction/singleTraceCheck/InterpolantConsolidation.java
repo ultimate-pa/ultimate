@@ -57,7 +57,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.HoareTripleCheckerStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -70,7 +71,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.in
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.CachingHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.CachingHoareTripleChecker_Map;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceChecker.AllIntegers;
@@ -94,7 +94,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 	private final TAPreferences mTaPrefs;
 	private final NestedWord<CodeBlock> mTrace;
 	private final IUltimateServiceProvider mServices;
-	private final SmtManager mSmtManager;
+	private final CfgSmtToolkit mSmtManager;
 	private final ModifiableGlobalVariableManager mModifiedGlobals;
 	private final PredicateUnifier mPredicateUnifier;
 	private final ILogger mLogger;
@@ -109,7 +109,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 	public InterpolantConsolidation(final IPredicate precondition,
 			final IPredicate postcondition,
 			final SortedMap<Integer, IPredicate> pendingContexts,
-			final NestedWord<CodeBlock> trace, final SmtManager smtManager,
+			final NestedWord<CodeBlock> trace, final CfgSmtToolkit smtManager,
 			final ModifiableGlobalVariableManager modifiedGlobals,
 			final IUltimateServiceProvider services,
 			final ILogger logger,
@@ -460,7 +460,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 	 * @param traceChecker - contains the Floyd-Hoare annotation (the interpolants) for which the automaton is constructed.
 	 * @return
 	 */
-	private NestedWordAutomaton<CodeBlock, IPredicate> constructInterpolantAutomaton(final NestedWord<CodeBlock> trace, final SmtManager smtManager, final PredicateFactory predicateFactor, final TAPreferences taPrefs,
+	private NestedWordAutomaton<CodeBlock, IPredicate> constructInterpolantAutomaton(final NestedWord<CodeBlock> trace, final CfgSmtToolkit smtManager, final PredicateFactory predicateFactor, final TAPreferences taPrefs,
 			final IUltimateServiceProvider services, final InterpolatingTraceChecker traceChecker) {
 		// Set the alphabet
 		final Set<CodeBlock> internalAlphabet = new HashSet<CodeBlock>();
