@@ -96,7 +96,7 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 	protected final IUltimateServiceProvider mServices;
 	protected final ILogger mLogger;
 
-	protected final CfgSmtToolkit mSmtManager;
+	protected final CfgSmtToolkit mCsToolkit;
 	protected final IHoareTripleChecker mIHoareTripleChecker;
 	protected final IPredicate mIaFalseState;
 	protected final NestedWordAutomatonCache<CodeBlock, IPredicate> mAlreadyConstrucedAutomaton;
@@ -116,14 +116,14 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 	 * already computed successors.
 	 */
 	public AbstractInterpolantAutomaton(final IUltimateServiceProvider services,
-			final CfgSmtToolkit smtManager, final IHoareTripleChecker hoareTripleChecker,
+			final CfgSmtToolkit csToolkit, final IHoareTripleChecker hoareTripleChecker,
 			final boolean useEfficientTotalAutomatonBookkeeping,
 			final INestedWordAutomatonSimple<CodeBlock, IPredicate> abstraction, final IPredicate falseState,
 			final NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton, final ILogger logger) {
 		super();
 		mServices = services;
 		mLogger = logger;
-		mSmtManager = smtManager;
+		mCsToolkit = csToolkit;
 		mIHoareTripleChecker = hoareTripleChecker;
 		mIaFalseState = falseState;
 		mInputInterpolantAutomaton = interpolantAutomaton;

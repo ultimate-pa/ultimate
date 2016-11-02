@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 public abstract class CodeChecker {
 
 	protected RootNode moriginalRoot;
-	protected CfgSmtToolkit msmtManager;
+	protected CfgSmtToolkit mcsToolkit;
 	protected ImpRootNode mgraphRoot;
 
 
@@ -73,10 +73,10 @@ public abstract class CodeChecker {
 
 	protected GraphWriter _graphWriter;
 
-	public CodeChecker(final IElement root, final CfgSmtToolkit smtManager, final RootNode originalRoot, final ImpRootNode graphRoot, final GraphWriter graphWriter,
+	public CodeChecker(final IElement root, final CfgSmtToolkit csToolkit, final RootNode originalRoot, final ImpRootNode graphRoot, final GraphWriter graphWriter,
 			final IHoareTripleChecker edgeChecker, final PredicateUnifier predicateUnifier, final ILogger logger) {
 		mLogger = logger;
-		msmtManager = smtManager;
+		mcsToolkit = csToolkit;
 		moriginalRoot = originalRoot;
 		mgraphRoot = graphRoot;
 

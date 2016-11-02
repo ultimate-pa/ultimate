@@ -87,13 +87,13 @@ public abstract class InterpolatingTraceChecker extends TraceChecker implements 
 	 * @param interpolation 
 	 */
 	public InterpolatingTraceChecker(final IPredicate precondition, final IPredicate postcondition,
-			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IAction> trace, final ManagedScript smtManager,
+			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IAction> trace, final ManagedScript csToolkit,
 			final ModifiableGlobalVariableManager modifiedGlobals, final AssertCodeBlockOrder assertCodeBlocksIncrementally,
 			final IUltimateServiceProvider services, final boolean computeRcfgProgramExecution, 
 			final PredicateUnifier predicateUnifier, final ManagedScript tcSmtManager, 
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique, 
 			final Boogie2SmtSymbolTable symbolTable) {
-		super(precondition, postcondition, pendingContexts, trace, smtManager, modifiedGlobals,
+		super(precondition, postcondition, pendingContexts, trace, csToolkit, modifiedGlobals,
 				new DefaultTransFormulas(trace, precondition, postcondition, pendingContexts, modifiedGlobals, false),
 				assertCodeBlocksIncrementally, services, computeRcfgProgramExecution, false, tcSmtManager, symbolTable);
 		mPredicateUnifier = predicateUnifier;

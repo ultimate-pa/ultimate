@@ -54,13 +54,13 @@ public abstract class BasicAbstractInterpolantAutomaton extends
 
 
 	public BasicAbstractInterpolantAutomaton(final IUltimateServiceProvider services,
-			final CfgSmtToolkit smtManager, final IHoareTripleChecker hoareTripleChecker,
+			final CfgSmtToolkit csToolkit, final IHoareTripleChecker hoareTripleChecker,
 			final boolean useEfficientTotalAutomatonBookkeeping,
 			final INestedWordAutomatonSimple<CodeBlock, IPredicate> abstraction,
 			final PredicateUnifier predicateUnifier,
 			final NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton,
 			final ILogger logger) {
-		super(services, smtManager, hoareTripleChecker, useEfficientTotalAutomatonBookkeeping, abstraction,
+		super(services, csToolkit, hoareTripleChecker, useEfficientTotalAutomatonBookkeeping, abstraction,
 				predicateUnifier.getFalsePredicate(), interpolantAutomaton, logger);
 		mPredicateUnifier = predicateUnifier;
 		mIaTrueState = predicateUnifier.getTruePredicate();

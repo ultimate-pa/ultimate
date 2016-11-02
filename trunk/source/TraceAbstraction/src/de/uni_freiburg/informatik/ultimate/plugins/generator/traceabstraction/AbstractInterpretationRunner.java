@@ -48,7 +48,7 @@ public class AbstractInterpretationRunner {
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 
-	private final CfgSmtToolkit mSmtManager;
+	private final CfgSmtToolkit mCsToolkit;
 	private final RootNode mRoot;
 
 	private final Set<Set<CodeBlock>> mKnownPathPrograms;
@@ -64,7 +64,7 @@ public class AbstractInterpretationRunner {
 	public AbstractInterpretationRunner(final IUltimateServiceProvider services,
 			final CegarLoopStatisticsGenerator benchmark, final RootNode root,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
-			final CfgSmtToolkit smtManager) {
+			final CfgSmtToolkit csToolkit) {
 		mCegarLoopBenchmark = benchmark;
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -74,7 +74,7 @@ public class AbstractInterpretationRunner {
 		mAbsIntResult = null;
 		mSkipIteration = false;
 		mKnownPathPrograms = new HashSet<Set<CodeBlock>>();
-		mSmtManager = smtManager;
+		mCsToolkit = csToolkit;
 
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		mAlwaysRefine = prefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_ABSINT_ALWAYS_REFINE);
@@ -201,13 +201,13 @@ public class AbstractInterpretationRunner {
 				throw new AssertionError("Mode should have been checked earlier");
 			case USE_PATH_PROGRAM:
 				aiInterpolAutomatonBuilder = new AbsIntNonSmtInterpolantAutomatonBuilder(mServices, abstraction,
-						interpolGenerator.getPredicateUnifier(), mSmtManager.getManagedScript(),
+						interpolGenerator.getPredicateUnifier(), mCsToolkit.getManagedScript(),
 						mRoot.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable(), currentCex, mSimplificationTechnique,
 						mXnfConversionTechnique);
 				break;
 			case USE_PREDICATES:
 				aiInterpolAutomatonBuilder = new AbsIntStraightLineInterpolantAutomatonBuilder(mServices, abstraction,
-						mAbsIntResult, interpolGenerator.getPredicateUnifier(), mSmtManager, currentCex,
+						mAbsIntResult, interpolGenerator.getPredicateUnifier(), mCsToolkit, currentCex,
 						mSimplificationTechnique, mXnfConversionTechnique, 
 						mRoot.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable());
 				break;
@@ -216,7 +216,7 @@ public class AbstractInterpretationRunner {
 						"Canonical interpolant automaton generation not yet implemented.");
 			case USE_TOTAL:
 				aiInterpolAutomatonBuilder = new AbsIntTotalInterpolationAutomatonBuilder(mServices, abstraction,
-						mAbsIntResult, interpolGenerator.getPredicateUnifier(), mSmtManager, currentCex, 
+						mAbsIntResult, interpolGenerator.getPredicateUnifier(), mCsToolkit, currentCex, 
 						mRoot.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable());
 				break;
 			default:

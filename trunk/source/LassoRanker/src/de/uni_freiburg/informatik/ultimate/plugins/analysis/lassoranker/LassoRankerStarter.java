@@ -112,7 +112,7 @@ public class LassoRankerStarter {
 	private final ProgramPoint mHonda;
 	private final NestedWord<CodeBlock> mStem;
 	private final NestedWord<CodeBlock> mLoop;
-	private final CfgSmtToolkit mSmtManager;
+	private final CfgSmtToolkit mCsToolkit;
 	private final PredicateFactory mPredicateFactory;
 	private final IUltimateServiceProvider mServices;
 	private final SimplificationTechnique mSimplificationTechnique = SimplificationTechnique.SIMPLIFY_DDA;
@@ -128,16 +128,16 @@ public class LassoRankerStarter {
 		// Omit check to enable Stefans BlockEncoding
 		// checkRCFGBuilderSettings();
 		final LassoRankerPreferences preferences = PreferencesInitializer.getLassoRankerPreferences(mServices);
-		mSmtManager = new CfgSmtToolkit(mRootAnnot.getModGlobVarManager(), mRootAnnot.getManagedScript(),
+		mCsToolkit = new CfgSmtToolkit(mRootAnnot.getModGlobVarManager(), mRootAnnot.getManagedScript(),
 				mRootAnnot.getBoogie2SMT().getBoogie2SmtSymbolTable());
-		mPredicateFactory = new PredicateFactory(mServices, mSmtManager.getManagedScript(), 
-				mSmtManager.getSymbolTable(), mSimplificationTechnique, mXnfConversionTechnique);
+		mPredicateFactory = new PredicateFactory(mServices, mCsToolkit.getManagedScript(), 
+				mCsToolkit.getSymbolTable(), mSimplificationTechnique, mXnfConversionTechnique);
 
 		AbstractLassoExtractor lassoExtractor;
 		final boolean useNewExtraction = true;
 		if (useNewExtraction) {
 			try {
-				lassoExtractor = new LassoExtractorBuchi(mServices, rootNode, mSmtManager, mPredicateFactory, mLogger);
+				lassoExtractor = new LassoExtractorBuchi(mServices, rootNode, mCsToolkit, mPredicateFactory, mLogger);
 			} catch (final AutomataOperationCanceledException oce) {
 				throw new AssertionError("timeout while searching lasso");
 				// throw new ToolchainCanceledException(this.getClass());
@@ -376,7 +376,7 @@ public class LassoRankerStarter {
 	private boolean isTerminationArgumentCorrect(final TerminationArgument arg, final UnmodifiableTransFormula stemTF,
 			final UnmodifiableTransFormula loopTf) {
 
-		final BinaryStatePredicateManager bspm = new BinaryStatePredicateManager(mSmtManager,
+		final BinaryStatePredicateManager bspm = new BinaryStatePredicateManager(mCsToolkit,
 				mPredicateFactory, mRootAnnot.getBoogie2SMT(), mServices,
 				mSimplificationTechnique, mXnfConversionTechnique);
 		final Set<IProgramVar> modifiableGlobals =

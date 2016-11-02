@@ -92,7 +92,7 @@ public class TotalInterpolationAutomatonBuilder implements IInterpolantAutomaton
 	// private final TraceChecker mTraceChecker;
 	private final INestedWordAutomaton<CodeBlock, IPredicate> mAbstraction;
 
-	private final CfgSmtToolkit mSmtManager;
+	private final CfgSmtToolkit mCsToolkit;
 
 	private final ArrayDeque<IPredicate> mWorklist = new ArrayDeque<IPredicate>();
 	private final Set<IPredicate> mAnnotated = new HashSet<IPredicate>();
@@ -111,7 +111,7 @@ public class TotalInterpolationAutomatonBuilder implements IInterpolantAutomaton
 	private final Boogie2SmtSymbolTable mSymbolTable;
 
 	public TotalInterpolationAutomatonBuilder(final INestedWordAutomaton<CodeBlock, IPredicate> abstraction,
-			final ArrayList<IPredicate> stateSequence, final IInterpolantGenerator interpolantGenerator, final CfgSmtToolkit smtManager,
+			final ArrayList<IPredicate> stateSequence, final IInterpolantGenerator interpolantGenerator, final CfgSmtToolkit csToolkit,
 			final PredicateFactoryForInterpolantAutomata predicateFactory, final ModifiableGlobalVariableManager modifiableGlobals,
 			final InterpolationTechnique interpolation, final IUltimateServiceProvider services, final HoareTripleChecks hoareTripleChecks,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique, 
@@ -123,7 +123,7 @@ public class TotalInterpolationAutomatonBuilder implements IInterpolantAutomaton
 		mSymbolTable = symbolTable;
 		mStateSequence = stateSequence;
 		// mTraceChecker = traceChecker;
-		mSmtManager = smtManager;
+		mCsToolkit = csToolkit;
 		// mInterpolants = traceChecker.getInterpolants();
 		mPredicateUnifier = interpolantGenerator.getPredicateUnifier();
 		mAbstraction = abstraction;
@@ -146,7 +146,7 @@ public class TotalInterpolationAutomatonBuilder implements IInterpolantAutomaton
 			mAnnotated.add(lastAutomatonState);
 			mWorklist.add(lastAutomatonState);
 		}
-		mHtc = TraceAbstractionUtils.constructEfficientHoareTripleChecker(services, HoareTripleChecks.MONOLITHIC, mSmtManager.getManagedScript(),
+		mHtc = TraceAbstractionUtils.constructEfficientHoareTripleChecker(services, HoareTripleChecks.MONOLITHIC, mCsToolkit.getManagedScript(),
 				mModifiedGlobals, mPredicateUnifier);
 		for (final IPredicate state : stateSequence) {
 			mWorklist.add(state);
@@ -320,16 +320,16 @@ public class TotalInterpolationAutomatonBuilder implements IInterpolantAutomaton
 		case Craig_TreeInterpolation:
 			tc = new InterpolatingTraceCheckerCraig(precondition, postcondition,
 					pendingContexts, run.getWord(),
-					mSmtManager.getManagedScript(), mModifiedGlobals, AssertCodeBlockOrder.NOT_INCREMENTALLY,
+					mCsToolkit.getManagedScript(), mModifiedGlobals, AssertCodeBlockOrder.NOT_INCREMENTALLY,
 					mServices, true, mPredicateUnifier, mInterpolation, true, mXnfConversionTechnique, mSimplificationTechnique, 
 					mSymbolTable);
 			break;
 		case ForwardPredicates:
 		case BackwardPredicates:
 		case FPandBP:
-			tc = new TraceCheckerSpWp(precondition, postcondition, pendingContexts, run.getWord(), mSmtManager.getManagedScript(),
+			tc = new TraceCheckerSpWp(precondition, postcondition, pendingContexts, run.getWord(), mCsToolkit.getManagedScript(),
 					mModifiedGlobals, AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true,
-					mServices, true, mPredicateUnifier, mInterpolation, mSmtManager.getManagedScript(), 
+					mServices, true, mPredicateUnifier, mInterpolation, mCsToolkit.getManagedScript(), 
 					mXnfConversionTechnique, mSimplificationTechnique, mSymbolTable);
 
 			break;

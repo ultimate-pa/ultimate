@@ -70,7 +70,7 @@ public class PathProgramAutomatonConstructor {
 	 * Construct a path automaton (finite) from the given path.
 	 */
 	public INestedWordAutomaton<CodeBlock, IPredicate> constructAutomatonFromGivenPath(final NestedWord<CodeBlock> path, 
-			final IUltimateServiceProvider services, final CfgSmtToolkit smtManager, final PredicateFactory predicateFactory,
+			final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final TAPreferences taPrefs) {
 		// Set the alphabet
 		final Set<CodeBlock> internalAlphabet = new HashSet<CodeBlock>();
@@ -88,7 +88,7 @@ public class PathProgramAutomatonConstructor {
 			}
 		}
 		
-		final IStateFactory<IPredicate> predicateFactoryFia = new PredicateFactoryForInterpolantAutomata(smtManager, predicateFactory, taPrefs.computeHoareAnnotation());
+		final IStateFactory<IPredicate> predicateFactoryFia = new PredicateFactoryForInterpolantAutomata(csToolkit, predicateFactory, taPrefs.computeHoareAnnotation());
 		// Create the automaton
 		final NestedWordAutomaton<CodeBlock, IPredicate> pathPA = new NestedWordAutomaton<CodeBlock, IPredicate>(new AutomataLibraryServices(services), internalAlphabet, callAlphabet, returnAlphabet, predicateFactoryFia);
 		
@@ -104,7 +104,7 @@ public class PathProgramAutomatonConstructor {
 		tempProgramPoint = (ProgramPoint) path.getSymbol(0).getSource();
 		
 		// Add the initial state
-		final Term trueTerm = smtManager.getManagedScript().getScript().term("true");
+		final Term trueTerm = csToolkit.getManagedScript().getScript().term("true");
 		final SPredicate initialState = predicateFactory.newSPredicate(tempProgramPoint, trueTerm);
 		pathPA.addState(true, false, initialState);
 		programPointToState.put(tempProgramPoint, initialState);

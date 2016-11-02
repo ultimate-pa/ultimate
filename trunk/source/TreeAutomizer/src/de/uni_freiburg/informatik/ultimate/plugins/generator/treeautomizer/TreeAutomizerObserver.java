@@ -102,7 +102,7 @@ public class TreeAutomizerObserver implements IUnmanagedObserver {
 		//tree.addFinalState(state);
 		//tree.addInitialState(state);
 //		TreeAutomizerCEGAR cegar = new TreeAutomizerCEGAR(mServices,
-//				mToolchainStorage, "name", rootNode, smtManager, taPrefs, errorLocs, mLogger, script);
+//				mToolchainStorage, "name", rootNode, csToolkit, taPrefs, errorLocs, mLogger, script);
 		return false;
 	}
 

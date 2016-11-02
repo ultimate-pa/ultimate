@@ -52,15 +52,15 @@ public class TraceCheckerWithAccessibleSSATerms extends TraceChecker {
 	public TraceCheckerWithAccessibleSSATerms(final IPredicate precondition,
 			final IPredicate postcondition,
 			final SortedMap<Integer, IPredicate> pendingContexts,
-			final NestedWord<CodeBlock> trace, final ManagedScript smtManager,
+			final NestedWord<CodeBlock> trace, final ManagedScript csToolkit,
 			final ModifiableGlobalVariableManager modifiedGlobals,
 			final AssertCodeBlockOrder assertCodeBlocksIncrementally,
 			final IUltimateServiceProvider services, final boolean computeRcfgProgramExecution, 
 			final PredicateUnifier predicateUnifier, final InterpolationTechnique interpolation, 
 			final Boogie2SmtSymbolTable symbolTable) {
-		super(precondition, postcondition, pendingContexts, trace, smtManager, modifiedGlobals, 
+		super(precondition, postcondition, pendingContexts, trace, csToolkit, modifiedGlobals, 
 				assertCodeBlocksIncrementally, services, computeRcfgProgramExecution, symbolTable);
-		mscript = smtManager.getScript();
+		mscript = csToolkit.getScript();
 	}
 	
 	public void traceCheckFinished() {

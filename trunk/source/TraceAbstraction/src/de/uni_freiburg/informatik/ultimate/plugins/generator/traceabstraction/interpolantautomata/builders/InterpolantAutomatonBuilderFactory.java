@@ -67,7 +67,7 @@ public class InterpolantAutomatonBuilderFactory {
 	
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
-	private final CfgSmtToolkit mSmtManager;
+	private final CfgSmtToolkit mCsToolkit;
 	private final PredicateFactoryForInterpolantAutomata mPredicateFactory;
 	private final RootNode mRootNode;
 	private final AbstractInterpretationRunner mAbsIntRunner;
@@ -81,7 +81,7 @@ public class InterpolantAutomatonBuilderFactory {
 
 	private final IBuilderFunction mBuilderFunction;
 
-	public InterpolantAutomatonBuilderFactory(final IUltimateServiceProvider services, final CfgSmtToolkit smtManager,
+	public InterpolantAutomatonBuilderFactory(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
 			final PredicateFactoryForInterpolantAutomata predFac, final RootNode rootNode,
 			final AbstractInterpretationRunner abstractInterpretationRunner, final TAPreferences taPrefs,
 			final InterpolationTechnique interpolation,
@@ -89,7 +89,7 @@ public class InterpolantAutomatonBuilderFactory {
 			final CegarLoopStatisticsGenerator benchmark) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		mSmtManager = smtManager;
+		mCsToolkit = csToolkit;
 		mPredicateFactory = predFac;
 		mRootNode = rootNode;
 		mAbsIntRunner = abstractInterpretationRunner;
@@ -166,7 +166,7 @@ public class InterpolantAutomatonBuilderFactory {
 		final List<ProgramPoint> programPoints = CoverageAnalysis.extractProgramPoints(counterexample);
 		final CanonicalInterpolantAutomatonBuilder iab =
 				new CanonicalInterpolantAutomatonBuilder(mServices, interpolGenerator, programPoints,
-						new InCaReAlphabet<CodeBlock>(abstraction), mSmtManager, mPredicateFactory, mLogger);
+						new InCaReAlphabet<CodeBlock>(abstraction), mCsToolkit, mPredicateFactory, mLogger);
 		iab.analyze();
 		mLogger.info("Interpolants " + iab.getResult().getStates());
 		final BackwardCoveringInformation bci =
@@ -190,7 +190,7 @@ public class InterpolantAutomatonBuilderFactory {
 				(INestedWordAutomaton<CodeBlock, IPredicate>) abstraction;
 		final NestedRun<CodeBlock, IPredicate> castedCex = (NestedRun<CodeBlock, IPredicate>) counterexample;
 		final TotalInterpolationAutomatonBuilder iab = new TotalInterpolationAutomatonBuilder(castedAbstraction,
-				castedCex.getStateSequence(), interpolGenerator, mSmtManager, mPredicateFactory,
+				castedCex.getStateSequence(), interpolGenerator, mCsToolkit, mPredicateFactory,
 				mRootNode.getRootAnnot().getModGlobVarManager(), mInterpolationTechnique, mServices, mHoareTripleChecks,
 				mSimplificationTechnique, mXnfConversionTechnique, mRootNode.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable());
 		mBenchmark.addTotalInterpolationData(iab.getTotalInterpolationBenchmark());
@@ -224,7 +224,7 @@ public class InterpolantAutomatonBuilderFactory {
 		}
 		if (build2TrackAutomaton) {
 			final TwoTrackInterpolantAutomatonBuilder ttiab = new TwoTrackInterpolantAutomatonBuilder(mServices,
-					counterexample, mSmtManager, predicatesA, predicatesB, interpolGenerator.getPrecondition(),
+					counterexample, mCsToolkit, predicatesA, predicatesB, interpolGenerator.getPrecondition(),
 					interpolGenerator.getPostcondition(), abstraction);
 			return ttiab;
 		} else {

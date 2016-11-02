@@ -81,7 +81,7 @@ public class BinaryStatePredicateManager {
 	
 	private final Script mScript;
 	private final ManagedScript mManagedScript;
-	private final CfgSmtToolkit mSmtManager;
+	private final CfgSmtToolkit mCsToolkit;
 	private final Boogie2SmtSymbolTable mSymbolTable;
 	private final PredicateFactory mPredicateFactory;
 	private final IProgramNonOldVar mUnseededVariable;
@@ -118,17 +118,17 @@ public class BinaryStatePredicateManager {
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	
-	public BinaryStatePredicateManager(final CfgSmtToolkit smtManager, final PredicateFactory predicateFactory,
+	public BinaryStatePredicateManager(final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final Boogie2SMT boogie2Smt, final IUltimateServiceProvider services,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
-		mScript = smtManager.getManagedScript().getScript();
+		mScript = csToolkit.getManagedScript().getScript();
 		mPredicateFactory = predicateFactory;
-		mManagedScript = smtManager.getManagedScript();
-		mSmtManager = smtManager;
+		mManagedScript = csToolkit.getManagedScript();
+		mCsToolkit = csToolkit;
 		mSymbolTable = boogie2Smt.getBoogie2SmtSymbolTable();
 		
 		mManagedScript.lock(boogie2Smt.getBoogie2SmtSymbolTable());
@@ -571,14 +571,14 @@ public class BinaryStatePredicateManager {
 			siPredicate = truePredicate;
 		}
 		traceChecker = new TraceChecker(truePredicate, siPredicate, new TreeMap<Integer, IPredicate>(), stem,
-				mSmtManager.getManagedScript(), modGlobVarManager, AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, 
+				mCsToolkit.getManagedScript(), modGlobVarManager, AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, 
 				mSymbolTable);
 		final LBool stemCheck = traceChecker.isCorrect();
 		if (stemCheck != LBool.UNSAT) {
 			result = false;
 		}
 		traceChecker = new TraceChecker(siPredicate, siPredicate, new TreeMap<Integer, IPredicate>(), stem,
-				mSmtManager.getManagedScript(), modGlobVarManager, AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, 
+				mCsToolkit.getManagedScript(), modGlobVarManager, AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, 
 				mSymbolTable);
 		final LBool loopCheck = traceChecker.isCorrect();
 		if (loopCheck != LBool.UNSAT) {
@@ -590,7 +590,7 @@ public class BinaryStatePredicateManager {
 	public boolean checkRankDecrease(final NestedWord<CodeBlock> loop,
 			final ModifiableGlobalVariableManager modGlobVarManager) {
 		final TraceChecker traceChecker = new TraceChecker(mRankEqualityAndSi, mRankDecreaseAndBound,
-				new TreeMap<Integer, IPredicate>(), loop, mSmtManager.getManagedScript(), modGlobVarManager,
+				new TreeMap<Integer, IPredicate>(), loop, mCsToolkit.getManagedScript(), modGlobVarManager,
 				AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, mSymbolTable);
 		final LBool loopCheck = traceChecker.isCorrect();
 		return loopCheck == LBool.UNSAT;

@@ -67,7 +67,7 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends
 	public InterpolatingTraceCheckerPathInvariantsWithFallback(
 			final IPredicate precondition, final IPredicate postcondition,
 			final SortedMap<Integer, IPredicate> pendingContexts,
-			final NestedRun<? extends IAction, IPredicate> run, final ManagedScript smtManager,
+			final NestedRun<? extends IAction, IPredicate> run, final ManagedScript csToolkit,
 			final ModifiableGlobalVariableManager modifiedGlobals,
 			final AssertCodeBlockOrder assertCodeBlocksIncrementally,
 			final IUltimateServiceProvider services,
@@ -76,9 +76,9 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends
 			final PredicateUnifier predicateUnifier, 
 			final boolean useNonlinerConstraints, final Settings solverSettings,
 			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique, final Collection<Term> axioms, final Boogie2SmtSymbolTable symbolTable) {
-		super(precondition, postcondition, pendingContexts, run.getWord(), smtManager,
+		super(precondition, postcondition, pendingContexts, run.getWord(), csToolkit,
 				modifiedGlobals, assertCodeBlocksIncrementally, services,
-				computeRcfgProgramExecution, predicateUnifier, smtManager, simplificationTechnique, xnfConversionTechnique, symbolTable);
+				computeRcfgProgramExecution, predicateUnifier, csToolkit, simplificationTechnique, xnfConversionTechnique, symbolTable);
 		mStorage = storage;
 		mNestedRun = run;
 		mUseNonlinerConstraints = useNonlinerConstraints;

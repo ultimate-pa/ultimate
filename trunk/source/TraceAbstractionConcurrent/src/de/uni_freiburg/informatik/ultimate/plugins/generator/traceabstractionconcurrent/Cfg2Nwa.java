@@ -41,10 +41,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 public final class Cfg2Nwa extends CFG2Automaton {
 	private final INestedWordAutomaton<CodeBlock, IPredicate> mResult;
 	
-	public Cfg2Nwa(final RootNode rootNode, final IStateFactory<IPredicate> contentFactory, final CfgSmtToolkit smtManager, final PredicateFactory predicateFactory,
+	public Cfg2Nwa(final RootNode rootNode, final IStateFactory<IPredicate> contentFactory, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final IUltimateServiceProvider services, final XnfConversionTechnique xnfConversionTechnique,
 			final SimplificationTechnique simplificationTechnique) {
-		super(rootNode, contentFactory, smtManager, predicateFactory, services, simplificationTechnique, xnfConversionTechnique);
+		super(rootNode, contentFactory, csToolkit, predicateFactory, services, simplificationTechnique, xnfConversionTechnique);
 		
 		constructProcedureAutomata();
 		INestedWordAutomaton<CodeBlock, IPredicate> result = mAutomata.get(0);

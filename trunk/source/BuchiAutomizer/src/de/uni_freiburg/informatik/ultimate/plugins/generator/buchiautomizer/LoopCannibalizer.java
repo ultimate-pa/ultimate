@@ -64,7 +64,7 @@ public class LoopCannibalizer {
 	private final NestedLassoRun<CodeBlock, IPredicate> mCounterexample;
 	private final BinaryStatePredicateManager mBspm;
 	private final PredicateUnifier mPredicateUnifier;
-	private final CfgSmtToolkit mSmtManager;
+	private final CfgSmtToolkit mCsToolkit;
 	private final BuchiModGlobalVarManager mbuchiModGlobalVarManager;
 	private final Set<IPredicate> mResultPredicates;
 	private final Set<IPredicate> mOriginalLoopInterpolants;
@@ -77,7 +77,7 @@ public class LoopCannibalizer {
 	private final Boogie2SmtSymbolTable mBoogie2SmtSymbolTable;
 
 	public LoopCannibalizer(final NestedLassoRun<CodeBlock, IPredicate> counterexample, final Set<IPredicate> loopInterpolants,
-			final BinaryStatePredicateManager bspm, final PredicateUnifier predicateUnifier, final CfgSmtToolkit smtManager,
+			final BinaryStatePredicateManager bspm, final PredicateUnifier predicateUnifier, final CfgSmtToolkit csToolkit,
 			final BuchiModGlobalVarManager buchiModGlobalVarManager, final InterpolationTechnique interpolation,
 			final Boogie2SmtSymbolTable boogie2SmtSymbolTable, final IUltimateServiceProvider services,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
@@ -90,7 +90,7 @@ public class LoopCannibalizer {
 		mCounterexample = counterexample;
 		mBspm = bspm;
 		mPredicateUnifier = predicateUnifier;
-		mSmtManager = smtManager;
+		mCsToolkit = csToolkit;
 		mbuchiModGlobalVarManager = buchiModGlobalVarManager;
 		mOriginalLoopInterpolants = loopInterpolants;
 		mResultPredicates = new HashSet<IPredicate>(loopInterpolants);
@@ -148,7 +148,7 @@ public class LoopCannibalizer {
 		case Craig_NestedInterpolation:
 		case Craig_TreeInterpolation:
 			traceChecker = new InterpolatingTraceCheckerCraig(mBspm.getRankEqAndSi(), mBspm.getHondaPredicate(),
-					new TreeMap<Integer, IPredicate>(), shifted, mSmtManager.getManagedScript(), mbuchiModGlobalVarManager,
+					new TreeMap<Integer, IPredicate>(), shifted, mCsToolkit.getManagedScript(), mbuchiModGlobalVarManager,
 					/*
 					 * TODO: When Matthias
 					 * introduced this parameter he
@@ -163,7 +163,7 @@ public class LoopCannibalizer {
 		case BackwardPredicates:
 		case FPandBP:
 			traceChecker = new TraceCheckerSpWp(mBspm.getRankEqAndSi(), mBspm.getHondaPredicate(),
-					new TreeMap<Integer, IPredicate>(), shifted, mSmtManager.getManagedScript(), mbuchiModGlobalVarManager,
+					new TreeMap<Integer, IPredicate>(), shifted, mCsToolkit.getManagedScript(), mbuchiModGlobalVarManager,
 					/*
 					 * TODO: When Matthias
 					 * introduced this parameter he
@@ -172,7 +172,7 @@ public class LoopCannibalizer {
 					 * to a different value.
 					 */AssertCodeBlockOrder.NOT_INCREMENTALLY,
 					 UnsatCores.CONJUNCT_LEVEL, true, mServices, false, mPredicateUnifier,
-						interpolation, mSmtManager.getManagedScript(), mXnfConversionTechnique, mSimplificationTechnique, 
+						interpolation, mCsToolkit.getManagedScript(), mXnfConversionTechnique, mSimplificationTechnique, 
 						mBoogie2SmtSymbolTable);
 			break;
 		default:

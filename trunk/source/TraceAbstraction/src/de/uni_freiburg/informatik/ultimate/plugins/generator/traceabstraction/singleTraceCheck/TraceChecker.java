@@ -593,7 +593,7 @@ public class TraceChecker {
 		return new AnnotateAndAssertCodeBlocks(mTcSmtManager, mTraceCheckerLock, ssa, mLogger);
 
 		// AnnotateAndAssertCodeBlocks aaacb =
-		// return new AnnotateAndAsserter(mSmtManager, ssa, aaacb);
+		// return new AnnotateAndAsserter(mCsToolkit, ssa, aaacb);
 	}
 
 	private Term getValue(final Term term) {

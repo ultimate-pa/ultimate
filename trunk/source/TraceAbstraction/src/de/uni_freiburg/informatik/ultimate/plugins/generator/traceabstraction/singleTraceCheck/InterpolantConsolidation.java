@@ -94,7 +94,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 	private final TAPreferences mTaPrefs;
 	private final NestedWord<CodeBlock> mTrace;
 	private final IUltimateServiceProvider mServices;
-	private final CfgSmtToolkit mSmtManager;
+	private final CfgSmtToolkit mCsToolkit;
 	private final ModifiableGlobalVariableManager mModifiedGlobals;
 	private final PredicateUnifier mPredicateUnifier;
 	private final ILogger mLogger;
@@ -109,7 +109,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 	public InterpolantConsolidation(final IPredicate precondition,
 			final IPredicate postcondition,
 			final SortedMap<Integer, IPredicate> pendingContexts,
-			final NestedWord<CodeBlock> trace, final CfgSmtToolkit smtManager,
+			final NestedWord<CodeBlock> trace, final CfgSmtToolkit csToolkit,
 			final ModifiableGlobalVariableManager modifiedGlobals,
 			final IUltimateServiceProvider services,
 			final ILogger logger,
@@ -120,7 +120,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 		mPostcondition = postcondition;
 		mPendingContexts = pendingContexts;
 		mTrace = trace;
-		mSmtManager = smtManager;
+		mCsToolkit = csToolkit;
 		mModifiedGlobals = modifiedGlobals;
 		mServices = services;
 		mLogger = logger;
@@ -131,7 +131,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 		mInterpolantConsolidationBenchmarkGenerator = new InterpolantConsolidationBenchmarkGenerator();
 		
 		final IHoareTripleChecker ehtc = TraceAbstractionUtils.constructEfficientHoareTripleChecker(services, TraceAbstractionPreferenceInitializer.HoareTripleChecks.INCREMENTAL,
-				mSmtManager.getManagedScript(), mModifiedGlobals, mPredicateUnifier);
+				mCsToolkit.getManagedScript(), mModifiedGlobals, mPredicateUnifier);
 		mHoareTripleChecker = new CachingHoareTripleChecker_Map(services, ehtc, mPredicateUnifier);
 
 
@@ -146,24 +146,24 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 
 		// 1. Build the path automaton for the given trace mTrace
 		final PathProgramAutomatonConstructor ppc = new PathProgramAutomatonConstructor();
-		final INestedWordAutomaton<CodeBlock, IPredicate> pathprogramautomaton = ppc.constructAutomatonFromGivenPath(mTrace, mServices, mSmtManager, mPredicateUnifier.getPredicateFactory(), mTaPrefs);
+		final INestedWordAutomaton<CodeBlock, IPredicate> pathprogramautomaton = ppc.constructAutomatonFromGivenPath(mTrace, mServices, mCsToolkit, mPredicateUnifier.getPredicateFactory(), mTaPrefs);
 
 
 
 
 		// 2. Build the finite automaton (former interpolant path automaton) for the given Floyd-Hoare annotation
-		final NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton = constructInterpolantAutomaton(mTrace, mSmtManager, mPredicateUnifier.getPredicateFactory(), mTaPrefs, mServices, mInterpolatingTraceChecker);
+		final NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton = constructInterpolantAutomaton(mTrace, mCsToolkit, mPredicateUnifier.getPredicateFactory(), mTaPrefs, mServices, mInterpolatingTraceChecker);
 		// 3. Determinize the finite automaton from step 2.
 		final DeterministicInterpolantAutomaton interpolantAutomatonDeterminized = new DeterministicInterpolantAutomaton(
-				mServices, mSmtManager, mModifiedGlobals, mHoareTripleChecker, pathprogramautomaton, interpolantAutomaton,
+				mServices, mCsToolkit, mModifiedGlobals, mHoareTripleChecker, pathprogramautomaton, interpolantAutomaton,
 				mPredicateUnifier, mLogger, false ,// PREDICATE_ABSTRACTION_CONSERVATIVE = false (default)
 				false //PREDICATE_ABSTRACTION_CANNIBALIZE = false  (default)
 				);
 
 
-		final PredicateFactoryForInterpolantConsolidation pfconsol = new PredicateFactoryForInterpolantConsolidation(mSmtManager, mPredicateUnifier.getPredicateFactory(), mTaPrefs.computeHoareAnnotation());
+		final PredicateFactoryForInterpolantConsolidation pfconsol = new PredicateFactoryForInterpolantConsolidation(mCsToolkit, mPredicateUnifier.getPredicateFactory(), mTaPrefs.computeHoareAnnotation());
 
-		final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata = new PredicateFactoryForInterpolantAutomata(mSmtManager, mPredicateUnifier.getPredicateFactory(), mTaPrefs.computeHoareAnnotation());
+		final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata = new PredicateFactoryForInterpolantAutomata(mCsToolkit, mPredicateUnifier.getPredicateFactory(), mTaPrefs.computeHoareAnnotation());
 
 		final PowersetDeterminizer<CodeBlock, IPredicate> psd2 = new PowersetDeterminizer<CodeBlock, IPredicate>(
 				interpolantAutomatonDeterminized, true, predicateFactoryInterpolantAutomata);
@@ -256,7 +256,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 
 		assert TraceCheckerUtils.checkInterpolantsInductivityBackward(Arrays.asList(mConsolidatedInterpolants),
 				mTrace, mPrecondition, mPostcondition, mPendingContexts, "CP",
-				mModifiedGlobals, mLogger, mSmtManager.getManagedScript()) : "invalid Hoare triple in consolidated interpolants";
+				mModifiedGlobals, mLogger, mCsToolkit.getManagedScript()) : "invalid Hoare triple in consolidated interpolants";
 		final int numOfDisjunctionsGreaterOne = (int) mInterpolantConsolidationBenchmarkGenerator.getValue(InterpolantConsolidationBenchmarkType.s_DisjunctionsGreaterOneCounter);
 		// InterpolantConsolidation was successful only if there was at least one consolidation with at least two predicates.
 		if (numOfDisjunctionsGreaterOne	> 0) {
@@ -382,7 +382,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 					// Update benchmarks
 					disjunctionsGreaterOneCounter++;
 
-//					TermVarsProc predicatesForThisLocationConsolidated = mSmtManager.getPredicateFactory().or(predicatesForThisLocationAsArray);
+//					TermVarsProc predicatesForThisLocationConsolidated = mCsToolkit.getPredicateFactory().or(predicatesForThisLocationAsArray);
 //					// Store the consolidated (the disjunction of the predicates for the current location)
 //					mConsolidatedInterpolants[i] = mPredicateUnifier.getOrConstructPredicate(predicatesForThisLocationConsolidated);
 					mConsolidatedInterpolants[i] = mPredicateUnifier.getOrConstructPredicateForDisjunction(predicatesForThisLocation);
@@ -460,7 +460,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 	 * @param traceChecker - contains the Floyd-Hoare annotation (the interpolants) for which the automaton is constructed.
 	 * @return
 	 */
-	private NestedWordAutomaton<CodeBlock, IPredicate> constructInterpolantAutomaton(final NestedWord<CodeBlock> trace, final CfgSmtToolkit smtManager, final PredicateFactory predicateFactor, final TAPreferences taPrefs,
+	private NestedWordAutomaton<CodeBlock, IPredicate> constructInterpolantAutomaton(final NestedWord<CodeBlock> trace, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactor, final TAPreferences taPrefs,
 			final IUltimateServiceProvider services, final InterpolatingTraceChecker traceChecker) {
 		// Set the alphabet
 		final Set<CodeBlock> internalAlphabet = new HashSet<CodeBlock>();
@@ -480,7 +480,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 
 
 
-		final IStateFactory<IPredicate> predicateFactoryFia = new PredicateFactoryForInterpolantAutomata(smtManager, predicateFactor, taPrefs.computeHoareAnnotation());
+		final IStateFactory<IPredicate> predicateFactoryFia = new PredicateFactoryForInterpolantAutomata(csToolkit, predicateFactor, taPrefs.computeHoareAnnotation());
 
 		final NestedWordAutomaton<CodeBlock, IPredicate> nwa  = new NestedWordAutomaton<CodeBlock, IPredicate>(   new AutomataLibraryServices(services),
 				internalAlphabet,

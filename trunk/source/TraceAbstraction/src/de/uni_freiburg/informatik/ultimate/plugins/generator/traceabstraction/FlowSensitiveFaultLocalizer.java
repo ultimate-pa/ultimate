@@ -111,7 +111,7 @@ public class FlowSensitiveFaultLocalizer {
 
 	public FlowSensitiveFaultLocalizer(final IRun<CodeBlock, IPredicate> counterexample,
 			final INestedWordAutomaton<CodeBlock, IPredicate> cfg, final IUltimateServiceProvider services,
-			final CfgSmtToolkit smtManager, final PredicateFactory predicateFactory,
+			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final ModifiableGlobalVariableManager modGlobVarManager, final PredicateUnifier predicateUnifier,
 			final boolean doNonFlowSensitiveAnalysis, final boolean doFlowSensitiveAnalysis,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique, 
@@ -126,12 +126,12 @@ public class FlowSensitiveFaultLocalizer {
 
 		if (doNonFlowSensitiveAnalysis) {
 			doNonFlowSensitiveAnalysis((NestedWord<CodeBlock>) counterexample.getWord(),
-					predicateUnifier.getFalsePredicate(), modGlobVarManager, smtManager);
+					predicateUnifier.getFalsePredicate(), modGlobVarManager, csToolkit);
 		}
 
 		if (doFlowSensitiveAnalysis) {
 			doFlowSensitiveAnalysis((NestedRun<CodeBlock, IPredicate>) counterexample, cfg,
-					modGlobVarManager, smtManager);
+					modGlobVarManager, csToolkit);
 		}
 	}
 	
@@ -335,17 +335,17 @@ public class FlowSensitiveFaultLocalizer {
 	
 	
 	private void doNonFlowSensitiveAnalysis(final NestedWord<CodeBlock> counterexampleWord,
-		final IPredicate falsePredicate, final ModifiableGlobalVariableManager modGlobVarManager, final CfgSmtToolkit smtManager) {
+		final IPredicate falsePredicate, final ModifiableGlobalVariableManager modGlobVarManager, final CfgSmtToolkit csToolkit) {
 		mLogger.info("Starting non-flow-sensitive error relevancy analysis");
 		
 		final FaultLocalizationRelevanceChecker rc = new FaultLocalizationRelevanceChecker(
-				smtManager.getManagedScript(), modGlobVarManager);
+				csToolkit.getManagedScript(), modGlobVarManager);
 		// Non-Flow Sensitive INCREMENTAL ANALYSIS
 
 		// Calculating the WP-List
 		final IterativePredicateTransformer ipt = new IterativePredicateTransformer(
 				mPredicateFactory,
-				smtManager.getManagedScript(), modGlobVarManager, mServices,
+				csToolkit.getManagedScript(), modGlobVarManager, mServices,
 				counterexampleWord, null, falsePredicate, null, mPredicateFactory.newPredicate(mPredicateFactory.not(falsePredicate)),
 				mSimplificationTechnique,
 				mXnfConversionTechnique, mSymbolTable);
@@ -359,7 +359,7 @@ public class FlowSensitiveFaultLocalizer {
 		if (mApplyQuantifierElimination) {
 			final QuantifierEliminationPostprocessor qePostproc =
 					new QuantifierEliminationPostprocessor(mServices, mLogger,
-							smtManager.getManagedScript(), mPredicateFactory, mSimplificationTechnique, mXnfConversionTechnique);
+							csToolkit.getManagedScript(), mPredicateFactory, mSimplificationTechnique, mXnfConversionTechnique);
 			postprocessors = Collections.singletonList(qePostproc);
 		} else {
 			postprocessors = Collections.emptyList();
@@ -378,7 +378,7 @@ public class FlowSensitiveFaultLocalizer {
 				// Figure out what is the type of the statement (internal, call or Return)
 				final ERelevanceStatus relevance;
 				relevance = computeRelevance(i, action, pre, wp, null, weakestPreconditionSequence,
-						counterexampleWord, rc, smtManager);
+						counterexampleWord, rc, csToolkit);
 				
 
 				final Boolean[] relevanceCriterionVariables = relevanceCriterionVariables(relevance);
@@ -414,7 +414,7 @@ public class FlowSensitiveFaultLocalizer {
 	 */
 	private UnmodifiableTransFormula computeMarkhorFormula(final int startPosition, final int endPosition,
 			final NestedWord<CodeBlock> counterexampleWord, final Map<Integer, List<Integer>> informationFromCFG,
-			final ManagedScript smtManager){
+			final ManagedScript csToolkit){
 		UnmodifiableTransFormula combinedTransitionFormula = counterexampleWord.getSymbolAt(startPosition).getTransitionFormula();
 		for(int i = startPosition+1; i<= endPosition; i++){
 			boolean subBranch=false;
@@ -433,21 +433,21 @@ public class FlowSensitiveFaultLocalizer {
 			if(subBranch){
 				 // The current statement is a branch out and it's branch-in is with in the current branch.
 				final UnmodifiableTransFormula subBranchMarkhorFormula = computeMarkhorFormula(branchOut,branchIn,counterexampleWord,
-						informationFromCFG,smtManager);
+						informationFromCFG,csToolkit);
 				combinedTransitionFormula = TransFormulaUtils.sequentialComposition(mLogger, mServices,
-						smtManager, false, false, false, mXnfConversionTechnique, mSimplificationTechnique,
+						csToolkit, false, false, false, mXnfConversionTechnique, mSimplificationTechnique,
 						Arrays.asList(new UnmodifiableTransFormula[] {combinedTransitionFormula,subBranchMarkhorFormula}));
 			} else{
 				// It is a normal statement.
 				final CodeBlock statement = counterexampleWord.getSymbol(i);
 				final UnmodifiableTransFormula transitionFormula = statement.getTransitionFormula();
 				combinedTransitionFormula = TransFormulaUtils.sequentialComposition(mLogger, mServices,
-						smtManager, false, false, false, mXnfConversionTechnique, mSimplificationTechnique,
+						csToolkit, false, false, false, mXnfConversionTechnique, mSimplificationTechnique,
 						Arrays.asList(new UnmodifiableTransFormula[] {combinedTransitionFormula,transitionFormula}));
 			}
 		}
 		final UnmodifiableTransFormula markhor = TransFormulaUtils.computeMarkhorTransFormula(combinedTransitionFormula,
-				smtManager, mServices, mLogger, mXnfConversionTechnique, mSimplificationTechnique);
+				csToolkit, mServices, mLogger, mXnfConversionTechnique, mSimplificationTechnique);
 		return markhor;
 	}
 	
@@ -457,10 +457,10 @@ public class FlowSensitiveFaultLocalizer {
 	private boolean checkBranchRelevance(final int startPosition, final int endPosition,
 			final UnmodifiableTransFormula markhor,final IPredicate weakestPreconditionLeft,
 			final IPredicate weakestPreconditionRight, final NestedWord<CodeBlock> counterexampleWord,
-			final CfgSmtToolkit smtManager, final ModifiableGlobalVariableManager modGlobVarManager){
+			final CfgSmtToolkit csToolkit, final ModifiableGlobalVariableManager modGlobVarManager){
 
 		final FaultLocalizationRelevanceChecker rc = new FaultLocalizationRelevanceChecker(
-				smtManager.getManagedScript(), modGlobVarManager);
+				csToolkit.getManagedScript(), modGlobVarManager);
 		final IPredicate pre = mPredicateFactory.newPredicate(
 				mPredicateFactory.not(weakestPreconditionLeft));
 		final String preceeding = counterexampleWord.getSymbolAt(startPosition).getPrecedingProcedure();
@@ -501,7 +501,7 @@ public class FlowSensitiveFaultLocalizer {
 	private void computeRelevantStatements_FlowSensitive(final NestedWord<CodeBlock> counterexampleWord,
 			final int startLocation, final int endLocation, final IPredicate weakestPreconditionBranchEndlocation,
 			final PredicateTransformer pt, final FaultLocalizationRelevanceChecker rc,
-			final CfgSmtToolkit smtManager, final ModifiableGlobalVariableManager modGlobVarManager,
+			final CfgSmtToolkit csToolkit, final ModifiableGlobalVariableManager modGlobVarManager,
 			final Map<Integer, List<Integer>> informationFromCFG) {
 		IPredicate weakestPreconditionLeft = weakestPreconditionBranchEndlocation;
 		for (int position = endLocation; position >= startLocation; position--){
@@ -521,20 +521,20 @@ public class FlowSensitiveFaultLocalizer {
 				final int positionBranchIn = position;
 				position = branchOutPosition;
 				final UnmodifiableTransFormula markhor = computeMarkhorFormula(branchOutPosition, positionBranchIn,
-						counterexampleWord,informationFromCFG, smtManager.getManagedScript());
-				final Term wpTerm = computeWp(weakestPreconditionRight, markhor, smtManager.getManagedScript().getScript(),
-						smtManager.getManagedScript(), pt, mApplyQuantifierElimination);
+						counterexampleWord,informationFromCFG, csToolkit.getManagedScript());
+				final Term wpTerm = computeWp(weakestPreconditionRight, markhor, csToolkit.getManagedScript().getScript(),
+						csToolkit.getManagedScript(), pt, mApplyQuantifierElimination);
 				weakestPreconditionLeft = mPredicateFactory.newPredicate(wpTerm);
 				// Check the relevance of the branch.
 				final boolean isRelevant =  checkBranchRelevance(
 						branchOutPosition,positionBranchIn,markhor,weakestPreconditionLeft,
 						weakestPreconditionRight,counterexampleWord,
-						smtManager,modGlobVarManager);
+						csToolkit,modGlobVarManager);
 				if(isRelevant){
 					// If the branch is Relevant. Recursion
 					computeRelevantStatements_FlowSensitive(
 							counterexampleWord, branchOutPosition,positionBranchIn,
-							weakestPreconditionRight,pt,rc,smtManager,modGlobVarManager,informationFromCFG);
+							weakestPreconditionRight,pt,rc,csToolkit,modGlobVarManager,informationFromCFG);
 				} else{
 					// Don't do anything.
 					mLogger.debug(" - - Irrelevant Branch - - - [MarkhorFormula:"+ markhor + " ]");
@@ -544,8 +544,8 @@ public class FlowSensitiveFaultLocalizer {
 				// The statement under consideration is NOT a BRANCH-IN Statement.
 				
 				final UnmodifiableTransFormula tf =  counterexampleWord.getSymbolAt(position).getTransitionFormula();
-				final Term wpTerm = computeWp(weakestPreconditionRight, tf, smtManager.getManagedScript().getScript(),
-						smtManager.getManagedScript(), pt, mApplyQuantifierElimination);
+				final Term wpTerm = computeWp(weakestPreconditionRight, tf, csToolkit.getManagedScript().getScript(),
+						csToolkit.getManagedScript(), pt, mApplyQuantifierElimination);
 				weakestPreconditionLeft = mPredicateFactory.newPredicate(wpTerm);
 				final IPredicate pre = mPredicateFactory.newPredicate(
 						mPredicateFactory.not(weakestPreconditionLeft));
@@ -559,7 +559,7 @@ public class FlowSensitiveFaultLocalizer {
 				final IAction action = counterexampleWord.getSymbolAt(position);
 				final ERelevanceStatus relevance = computeRelevance(position,action,pre,weakestPreconditionRight,
 						weakestPreconditionLeft,null,counterexampleWord,
-						rc,smtManager);
+						rc,csToolkit);
 				final Boolean[] relevanceCriterionVariables = relevanceCriterionVariables(relevance);
 				final boolean relevanceCriterion2uc = relevanceCriterionVariables[0];
 				final boolean relevanceCriterion2gf = relevanceCriterionVariables[1];
@@ -583,7 +583,7 @@ public class FlowSensitiveFaultLocalizer {
 			final IPredicate weakestPreconditionRight, final IPredicate weakestPreconditionLeft,
 			final InterpolantsPreconditionPostcondition weakestPreconditionSequence,
 			final NestedWord<CodeBlock> counterexampleWord,
-			final FaultLocalizationRelevanceChecker rc, final CfgSmtToolkit smtManager){
+			final FaultLocalizationRelevanceChecker rc, final CfgSmtToolkit csToolkit){
 		ERelevanceStatus relevance;
 		if(action instanceof IInternalAction){
 			final IInternalAction internal = (IInternalAction) counterexampleWord.getSymbolAt(position);
@@ -635,21 +635,21 @@ public class FlowSensitiveFaultLocalizer {
 	private void doFlowSensitiveAnalysis(final NestedRun<CodeBlock, IPredicate> counterexample,
 			final INestedWordAutomaton<CodeBlock, IPredicate> cfg,
 			final ModifiableGlobalVariableManager modGlobVarManager,
-			final CfgSmtToolkit smtManager){
+			final CfgSmtToolkit csToolkit){
 		mLogger.info("Starting flow-sensitive error relevancy analysis");
 		final Map<Integer, List<Integer>> informationFromCFG = computeInformationFromCFG(counterexample, cfg);
 		// You should send the counter example, the CFG information and the the start of the branch and the end of the branch.
 		final PredicateTransformer pt = new PredicateTransformer(mServices,
-				smtManager.getManagedScript(), mSimplificationTechnique, mXnfConversionTechnique);
+				csToolkit.getManagedScript(), mSimplificationTechnique, mXnfConversionTechnique);
 		final FaultLocalizationRelevanceChecker rc = new FaultLocalizationRelevanceChecker(
-				smtManager.getManagedScript(), modGlobVarManager);
+				csToolkit.getManagedScript(), modGlobVarManager);
 		final int startLocation = 0;
 		final int endLocation = counterexample.getWord().length()-1;
 		final IPredicate falsePredicate = mPredicateFactory.newPredicate(
-				smtManager.getManagedScript().getScript().term("false"));
+				csToolkit.getManagedScript().getScript().term("false"));
 
 		computeRelevantStatements_FlowSensitive(counterexample.getWord(),startLocation, endLocation,
-				falsePredicate, pt, rc, smtManager,modGlobVarManager, informationFromCFG);
+				falsePredicate, pt, rc, csToolkit,modGlobVarManager, informationFromCFG);
 	}
 
 

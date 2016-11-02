@@ -87,7 +87,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	 *            IToolchainstorage of the current Ultimate toolchain.
 	 * @param predicateUnifier
 	 *            the predicate unifier to unify final predicates with
-	 * @param smtManager
+	 * @param csToolkit
 	 *            the smt manager for constructing the default {@link IInvariantPatternProcessorFactory}
 	 * @param simplicationTechnique
 	 * @param xnfConversionTechnique
@@ -95,13 +95,13 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	 * @return a default invariant pattern processor factory
 	 */
 	private static IInvariantPatternProcessorFactory<?> createDefaultFactory(final IUltimateServiceProvider services,
-			final IToolchainStorage storage, final PredicateUnifier predicateUnifier, final ManagedScript smtManager,
+			final IToolchainStorage storage, final PredicateUnifier predicateUnifier, final ManagedScript csToolkit,
 			final boolean useNonlinerConstraints, final Settings solverSettings,
 			final SimplificationTechnique simplicationTechnique, final XnfConversionTechnique xnfConversionTechnique,
 			final Collection<Term> axioms) {
 		final ILinearInequalityInvariantPatternStrategy strategy =
 				new LocationIndependentLinearInequalityInvariantPatternStrategy(1, 1, 1, 1, 5);
-		return new LinearInequalityInvariantPatternProcessorFactory(services, storage, predicateUnifier, smtManager,
+		return new LinearInequalityInvariantPatternProcessorFactory(services, storage, predicateUnifier, csToolkit,
 				strategy, useNonlinerConstraints, solverSettings, simplicationTechnique, xnfConversionTechnique,
 				axioms);
 	}
@@ -122,7 +122,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	 *            the predicate to use for the last program point in the run
 	 * @param predicateUnifier
 	 *            the predicate unifier to unify final predicates with
-	 * @param smtManager
+	 * @param csToolkit
 	 *            the smt manager for constructing the default {@link IInvariantPatternProcessorFactory}
 	 * @param modGlobVarManager
 	 *            reserved for future use.
@@ -132,12 +132,12 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	 */
 	public PathInvariantsGenerator(final IUltimateServiceProvider services, final IToolchainStorage storage,
 			final NestedRun<? extends IAction, IPredicate> run, final IPredicate precondition,
-			final IPredicate postcondition, final PredicateUnifier predicateUnifier, final ManagedScript smtManager,
+			final IPredicate postcondition, final PredicateUnifier predicateUnifier, final ManagedScript csToolkit,
 			final ModifiableGlobalVariableManager modGlobVarManager, final boolean useNonlinerConstraints,
 			final Settings solverSettings, final SimplificationTechnique simplicationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique, final Collection<Term> axioms) {
 		this(services, run, precondition, postcondition, predicateUnifier, modGlobVarManager,
-				createDefaultFactory(services, storage, predicateUnifier, smtManager, useNonlinerConstraints,
+				createDefaultFactory(services, storage, predicateUnifier, csToolkit, useNonlinerConstraints,
 						solverSettings, simplicationTechnique, xnfConversionTechnique, axioms));
 	}
 

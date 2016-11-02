@@ -44,10 +44,10 @@ public final class Cfg2NetJulian extends CFG2Automaton {
 	private final PetriNetJulian<CodeBlock, IPredicate> mResult;
 	
 	public Cfg2NetJulian(final RootNode rootNode, final IStateFactory<IPredicate> contentFactory,
-			final CfgSmtToolkit smtManager, final PredicateFactory predicateFactory, final IUltimateServiceProvider services,
+			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final IUltimateServiceProvider services,
 			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique)
 			throws AutomataLibraryException {
-		super(rootNode, contentFactory, smtManager, predicateFactory, services, simplificationTechnique, xnfConversionTechnique);
+		super(rootNode, contentFactory, csToolkit, predicateFactory, services, simplificationTechnique, xnfConversionTechnique);
 		
 		constructProcedureAutomata();
 		PetriNetJulian<CodeBlock, IPredicate> result =

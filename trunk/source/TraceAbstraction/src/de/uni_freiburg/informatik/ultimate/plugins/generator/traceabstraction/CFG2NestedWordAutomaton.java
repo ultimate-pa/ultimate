@@ -56,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 public class CFG2NestedWordAutomaton {
 	private final IUltimateServiceProvider mServices;
 	
-	private final CfgSmtToolkit mSmtManager;
+	private final CfgSmtToolkit mCsToolkit;
 	private final PredicateFactory mPredicateFactory;
 	private static final boolean mStoreHistory = false;
 	private final boolean mInterprocedural;
@@ -69,7 +69,7 @@ public class CFG2NestedWordAutomaton {
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final ILogger logger) {
 		mServices = services;
 		mLogger = logger;
-		mSmtManager = csToolkit;
+		mCsToolkit = csToolkit;
 		mPredicateFactory = predicateFactory;
 		mInterprocedural = interprocedural;
 	}
@@ -193,7 +193,7 @@ public class CFG2NestedWordAutomaton {
 			final boolean isErrorLocation = errorLocs.contains(locNode);
 
 			IPredicate automatonState;
-			final Term trueTerm = mSmtManager.getManagedScript().getScript().term("true");
+			final Term trueTerm = mCsToolkit.getManagedScript().getScript().term("true");
 			if (mStoreHistory) {
 				automatonState = mPredicateFactory.newPredicateWithHistory(locNode, trueTerm, new HashMap<Integer, Term>());
 			} else {

@@ -43,10 +43,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 
 public class RAFA_Determination<LETTER> implements IOperation<LETTER, IPredicate>{
 
-	public RAFA_Determination(final IUltimateServiceProvider ultimateServiceProvider, final AlternatingAutomaton<LETTER, IPredicate> alternatingAutomaton, final CfgSmtToolkit smtManager, final PredicateUnifier predicateUnifier){
+	public RAFA_Determination(final IUltimateServiceProvider ultimateServiceProvider, final AlternatingAutomaton<LETTER, IPredicate> alternatingAutomaton, final CfgSmtToolkit csToolkit, final PredicateUnifier predicateUnifier){
 		assert alternatingAutomaton.isReversed();
 		this.alternatingAutomaton = alternatingAutomaton;
-		this.smtManager = smtManager;
+		this.csToolkit = csToolkit;
 		this.predicateUnifier = predicateUnifier;
 		resultAutomaton = new NestedWordAutomaton<LETTER, IPredicate>(
 				new AutomataLibraryServices(ultimateServiceProvider),
@@ -76,7 +76,7 @@ public class RAFA_Determination<LETTER> implements IOperation<LETTER, IPredicate
 		}
 	}
 	private final AlternatingAutomaton<LETTER, IPredicate> alternatingAutomaton;
-	private final CfgSmtToolkit smtManager;
+	private final CfgSmtToolkit csToolkit;
 	private final PredicateUnifier predicateUnifier;
 	private final NestedWordAutomaton<LETTER, IPredicate> resultAutomaton;
 

@@ -756,7 +756,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	}
 
 	/**
-	 * Takes a pattern and generates a term with the smtManager.getScript()
+	 * Takes a pattern and generates a term with the csToolkit.getScript()
 	 * script where the variables are valuated with the values in this.valuation
 	 * @param pattern the pattern for which the term is generated
 	 * @return a term corresponding to the cnf of LinearInequalites of

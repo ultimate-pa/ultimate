@@ -77,17 +77,17 @@ public class LassoExtractorBuchi extends AbstractLassoExtractor {
 	private final INestedWordAutomatonSimple<CodeBlock, IPredicate> mCfgAutomaton;
 	private INestedWordAutomatonSimple<CodeBlock, IPredicate> mLassoAutomaton;
 	private final IStateFactory<IPredicate> mPredicateFactoryRc;
-	private final CfgSmtToolkit mSmtManager;
+	private final CfgSmtToolkit mCsToolkit;
 	private final PredicateFactory mPredicateFactory;
 	private final ILogger mLogger;
 	
-	public LassoExtractorBuchi(final IUltimateServiceProvider services, final RootNode rootNode, final CfgSmtToolkit smtManager, final PredicateFactory predicateFactory, final ILogger logger)
+	public LassoExtractorBuchi(final IUltimateServiceProvider services, final RootNode rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final ILogger logger)
 			throws AutomataLibraryException {
 		mServices = services;
 		mLogger = logger;
 		mPredicateFactoryRc = new PredicateFactoryResultChecking(predicateFactory);
-		mCfgAutomaton = constructCfgAutomaton(rootNode, smtManager);
-		mSmtManager = smtManager;
+		mCfgAutomaton = constructCfgAutomaton(rootNode, csToolkit);
+		mCsToolkit = csToolkit;
 		mPredicateFactory = predicateFactory;
 		final NestedLassoRun<CodeBlock, IPredicate> run =
 				(new BuchiIsEmpty<>(new AutomataLibraryServices(mServices), mCfgAutomaton)).getAcceptingNestedLassoRun();
@@ -128,9 +128,9 @@ public class LassoExtractorBuchi extends AbstractLassoExtractor {
 	
 
 	private INestedWordAutomatonSimple<CodeBlock, IPredicate> constructCfgAutomaton(
-			final RootNode rootNode, final CfgSmtToolkit smtManager) {
+			final RootNode rootNode, final CfgSmtToolkit csToolkit) {
 		final CFG2NestedWordAutomaton cFG2NestedWordAutomaton =
-				new CFG2NestedWordAutomaton(mServices, true ,smtManager, mPredicateFactory, mLogger);
+				new CFG2NestedWordAutomaton(mServices, true ,csToolkit, mPredicateFactory, mLogger);
 		final Collection<ProgramPoint> allNodes = new HashSet<ProgramPoint>();
 		for (final Map<String, ProgramPoint> prog2pp :
 						rootNode.getRootAnnot().getProgramPoints().values()) {

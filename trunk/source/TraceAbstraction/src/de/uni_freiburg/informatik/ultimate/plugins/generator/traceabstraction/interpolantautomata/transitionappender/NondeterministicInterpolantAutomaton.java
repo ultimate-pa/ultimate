@@ -90,12 +90,12 @@ public class NondeterministicInterpolantAutomaton extends BasicAbstractInterpola
 	
 
 	public NondeterministicInterpolantAutomaton(final IUltimateServiceProvider services,
-			final CfgSmtToolkit smtManager, final ModifiableGlobalVariableManager modglobvarman, final IHoareTripleChecker hoareTripleChecker,
+			final CfgSmtToolkit csToolkit, final ModifiableGlobalVariableManager modglobvarman, final IHoareTripleChecker hoareTripleChecker,
 			final INestedWordAutomatonSimple<CodeBlock, IPredicate> abstraction,
 			final NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton,
 			final PredicateUnifier predicateUnifier, final ILogger  logger,
 			final boolean conservativeSuccessorCandidateSelection, final boolean secondChance) {
-		super(services, smtManager, hoareTripleChecker, true, abstraction,
+		super(services, csToolkit, hoareTripleChecker, true, abstraction,
 				predicateUnifier,
 				interpolantAutomaton, logger);
 		mConservativeSuccessorCandidateSelection = conservativeSuccessorCandidateSelection;

@@ -91,7 +91,7 @@ public class RefineBuchi {
 	/**
 	 * Intermediate layer to encapsulate communication with SMT solvers.
 	 */
-	private final CfgSmtToolkit mSmtManager;
+	private final CfgSmtToolkit mCsToolkit;
 	private final PredicateFactory mPredicateFactory;
 	
 	private final RootNode mRootNode;
@@ -112,7 +112,7 @@ public class RefineBuchi {
 
 	private final IUltimateServiceProvider mServices;
 
-	public RefineBuchi(final RootNode rootNode, final CfgSmtToolkit smtManager, final PredicateFactory predicateFactory, final boolean dumpAutomata, final boolean difference,
+	public RefineBuchi(final RootNode rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final boolean dumpAutomata, final boolean difference,
 			final PredicateFactoryForInterpolantAutomata stateFactoryInterpolAutom, final PredicateFactoryRefinement stateFactoryForRefinement,
 			final boolean useDoubleDeckers, final String dumpPath, final Format format, final InterpolationTechnique interpolation, final IUltimateServiceProvider services,
 			final ILogger logger, final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
@@ -120,7 +120,7 @@ public class RefineBuchi {
 		mServices = services;
 		mLogger = logger;
 		mRootNode = rootNode;
-		mSmtManager = smtManager;
+		mCsToolkit = csToolkit;
 		mPredicateFactory = predicateFactory;
 		mDumpAutomata = dumpAutomata;
 		mDifference = difference;
@@ -222,7 +222,7 @@ public class RefineBuchi {
 		assert !bspm.getStemPrecondition().getFormula().toString().equals("false");
 		assert !bspm.getHondaPredicate().getFormula().toString().equals("false");
 		assert !bspm.getRankEqAndSi().getFormula().toString().equals("false");
-		final PredicateUnifier pu = new PredicateUnifier(mServices, mSmtManager.getManagedScript(), mPredicateFactory, 
+		final PredicateUnifier pu = new PredicateUnifier(mServices, mCsToolkit.getManagedScript(), mPredicateFactory, 
 				mRootNode.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable(), mSimplificationTechnique, mXnfConversionTechnique, bspm.getStemPrecondition(),
 				bspm.getHondaPredicate(), bspm.getRankEqAndSi(), bspm.getStemPostcondition());
 		IPredicate[] stemInterpolants;
@@ -232,7 +232,7 @@ public class RefineBuchi {
 		} else {
 
 			traceChecker = constructTraceChecker(bspm.getStemPrecondition(), bspm.getStemPostcondition(), stem,
-					mSmtManager, buchiModGlobalVarManager, pu, mInterpolation);
+					mCsToolkit, buchiModGlobalVarManager, pu, mInterpolation);
 			final LBool stemCheck = traceChecker.isCorrect();
 			if (stemCheck == LBool.UNSAT) {
 				stemInterpolants = traceChecker.getInterpolants();
@@ -241,7 +241,7 @@ public class RefineBuchi {
 			}
 		}
 
-		traceChecker = constructTraceChecker(bspm.getRankEqAndSi(), bspm.getHondaPredicate(), loop, mSmtManager,
+		traceChecker = constructTraceChecker(bspm.getRankEqAndSi(), bspm.getHondaPredicate(), loop, mCsToolkit,
 				buchiModGlobalVarManager, pu, mInterpolation);
 		final LBool loopCheck = traceChecker.isCorrect();
 		IPredicate[] loopInterpolants;
@@ -262,8 +262,8 @@ public class RefineBuchi {
 			BuchiCegarLoop.writeAutomatonToFile(mServices, mInterpolAutomaton, mDumpPath, filename, mFormat, message);
 		}
 
-//		BuchiHoareTripleChecker bhtc = new BuchiHoareTripleChecker(new MonolithicHoareTripleChecker(mSmtManager));
-		final BuchiHoareTripleChecker bhtc = new BuchiHoareTripleChecker(new IncrementalHoareTripleChecker(mSmtManager.getManagedScript(), buchiModGlobalVarManager));
+//		BuchiHoareTripleChecker bhtc = new BuchiHoareTripleChecker(new MonolithicHoareTripleChecker(mCsToolkit));
+		final BuchiHoareTripleChecker bhtc = new BuchiHoareTripleChecker(new IncrementalHoareTripleChecker(mCsToolkit.getManagedScript(), buchiModGlobalVarManager));
 		bhtc.putDecreaseEqualPair(bspm.getHondaPredicate(), bspm.getRankEqAndSi());
 		assert (new InductivityCheck(mServices, mInterpolAutomaton, false, true, bhtc)).getResult();
 		assert (new BuchiAccepts<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), mInterpolAutomaton, mCounterexample.getNestedLassoWord()))
@@ -279,7 +279,7 @@ public class RefineBuchi {
 			if (!mInterpolAutomaton.getStates().contains(pu.getFalsePredicate())) {
 				mInterpolAutomaton.addState(false, true, pu.getFalsePredicate());
 			}
-			mInterpolAutomatonUsedInRefinement = new NondeterministicInterpolantAutomaton(mServices, mSmtManager,
+			mInterpolAutomatonUsedInRefinement = new NondeterministicInterpolantAutomaton(mServices, mCsToolkit,
 					buchiModGlobalVarManager, bhtc, abstraction, mInterpolAutomaton, pu, mLogger, false, true);
 			break;
 		case ScroogeNondeterminism:
@@ -301,7 +301,7 @@ public class RefineBuchi {
 					loopInterpolantsForRefinement.addAll(pu.cannibalize(false, bspm.getRankEqAndSi().getFormula()));
 
 					final LoopCannibalizer lc = new LoopCannibalizer(mCounterexample, loopInterpolantsForRefinement, bspm, pu,
-							mSmtManager, buchiModGlobalVarManager, interpolation, 
+							mCsToolkit, buchiModGlobalVarManager, interpolation, 
 							mRootNode.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable(),
 							mServices, mSimplificationTechnique, mXnfConversionTechnique);
 					loopInterpolantsForRefinement = lc.getResult();
@@ -315,7 +315,7 @@ public class RefineBuchi {
 				loopInterpolantsForRefinement.add(bspm.getRankEqAndSi());
 			}
 
-			mInterpolAutomatonUsedInRefinement = new BuchiInterpolantAutomatonBouncer(mSmtManager, mPredicateFactory, bspm, bhtc,
+			mInterpolAutomatonUsedInRefinement = new BuchiInterpolantAutomatonBouncer(mCsToolkit, mPredicateFactory, bspm, bhtc,
 					BuchiCegarLoop.emptyStem(mCounterexample), stemInterpolantsForRefinement,
 					loopInterpolantsForRefinement, BuchiCegarLoop.emptyStem(mCounterexample) ? null
 							: stem.getSymbol(stem.length() - 1), loop.getSymbol(loop.length() - 1), abstraction,
@@ -489,14 +489,14 @@ public class RefineBuchi {
 	}
 
 	private InterpolatingTraceChecker constructTraceChecker(final IPredicate precond, final IPredicate postcond,
-			final NestedWord<CodeBlock> word, final CfgSmtToolkit smtManager, final BuchiModGlobalVarManager buchiModGlobalVarManager,
+			final NestedWord<CodeBlock> word, final CfgSmtToolkit csToolkit, final BuchiModGlobalVarManager buchiModGlobalVarManager,
 			final PredicateUnifier pu, final InterpolationTechnique interpolation) {
 		final InterpolatingTraceChecker itc;
 		switch (mInterpolation) {
 		case Craig_NestedInterpolation:
 		case Craig_TreeInterpolation: {
 			itc = new InterpolatingTraceCheckerCraig(precond, postcond, new TreeMap<Integer, IPredicate>(), word,
-					mSmtManager.getManagedScript(), buchiModGlobalVarManager,
+					mCsToolkit.getManagedScript(), buchiModGlobalVarManager,
 					/*
 					 * TODO: When Matthias
 					 * introduced this parameter he
@@ -511,7 +511,7 @@ public class RefineBuchi {
 		case BackwardPredicates:
 		case FPandBP: {
 			itc = new TraceCheckerSpWp(precond, postcond, new TreeMap<Integer, IPredicate>(),
-					word, mSmtManager.getManagedScript(), buchiModGlobalVarManager,
+					word, mCsToolkit.getManagedScript(), buchiModGlobalVarManager,
 					/*
 					 * TODO: When Matthias
 					 * introduced this parameter he
@@ -519,7 +519,7 @@ public class RefineBuchi {
 					 * Check if you want to set this
 					 * to a different value.
 					 */AssertCodeBlockOrder.NOT_INCREMENTALLY,
-					 UnsatCores.CONJUNCT_LEVEL, true, mServices, false, pu, interpolation, mSmtManager.getManagedScript(), 
+					 UnsatCores.CONJUNCT_LEVEL, true, mServices, false, pu, interpolation, mCsToolkit.getManagedScript(), 
 					 mXnfConversionTechnique, mSimplificationTechnique, mRootNode.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable());
 			break;
 		}

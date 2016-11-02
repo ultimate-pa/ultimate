@@ -56,7 +56,7 @@ public class LinearInequalityInvariantPatternProcessorFactory
 	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
 	protected final PredicateUnifier predUnifier;
-	protected final ManagedScript smtManager;
+	protected final ManagedScript csToolkit;
 	protected final ILinearInequalityInvariantPatternStrategy strategy;
 	private final boolean mUseNonlinearConstraints;
 	private final Settings mSolverSettings;
@@ -72,7 +72,7 @@ public class LinearInequalityInvariantPatternProcessorFactory
 	 *            IToolchainstorage of the current Ultimate toolchain.
 	 * @param predUnifier
 	 *            the predicate unifier to unify final predicates with
-	 * @param smtManager
+	 * @param csToolkit
 	 *            the smt manager to use with the predicateUnifier
 	 * @param strategy
 	 *            the invariant strategy to pass to the produced processor
@@ -83,14 +83,14 @@ public class LinearInequalityInvariantPatternProcessorFactory
 	public LinearInequalityInvariantPatternProcessorFactory(
 			final IUltimateServiceProvider services,
 			final IToolchainStorage storage,
-			final PredicateUnifier predUnifier, final ManagedScript smtManager,
+			final PredicateUnifier predUnifier, final ManagedScript csToolkit,
 			final ILinearInequalityInvariantPatternStrategy strategy, final boolean useNonlinerConstraints, final Settings solverSettings, final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique, final Collection<Term> axioms) {
 		this.services = services;
 		this.storage = storage;
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
 		this.predUnifier = predUnifier;
-		this.smtManager = smtManager;
+		this.csToolkit = csToolkit;
 		mAxioms = axioms;
 		this.strategy = strategy;
 		mUseNonlinearConstraints = useNonlinerConstraints;
@@ -105,7 +105,7 @@ public class LinearInequalityInvariantPatternProcessorFactory
 			final ControlFlowGraph cfg, final IPredicate precondition,
 			final IPredicate postcondition) {
 		return new LinearInequalityInvariantPatternProcessor(services,
-				storage, predUnifier, smtManager, mAxioms, produceSmtSolver(), cfg, precondition,
+				storage, predUnifier, csToolkit, mAxioms, produceSmtSolver(), cfg, precondition,
 				postcondition, strategy, mUseNonlinearConstraints, mSimplificationTechnique, mXnfConversionTechnique);
 	}
 

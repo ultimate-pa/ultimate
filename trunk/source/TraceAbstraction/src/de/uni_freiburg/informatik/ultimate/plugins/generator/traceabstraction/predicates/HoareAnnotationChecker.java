@@ -68,13 +68,13 @@ public class HoareAnnotationChecker {
 	
 	
 
-	public HoareAnnotationChecker(IUltimateServiceProvider services, RootNode rootNode, CfgSmtToolkit smtManager) {
+	public HoareAnnotationChecker(IUltimateServiceProvider services, RootNode rootNode, CfgSmtToolkit csToolkit) {
 		super();
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mRootNode = rootNode;
-		mHoareTripleChecker = new MonolithicHoareTripleChecker(smtManager.getManagedScript(), 
-				smtManager.getModifiableGlobals());
+		mHoareTripleChecker = new MonolithicHoareTripleChecker(csToolkit.getManagedScript(), 
+				csToolkit.getModifiableGlobals());
 		mIsInductive = cfgInductive(mRootNode);
 	}
 

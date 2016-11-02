@@ -97,10 +97,10 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 
 		mLogger.warn(taPrefs.dumpPath());
 
-		final CfgSmtToolkit smtManager = new CfgSmtToolkit(rootNode.getRootAnnot().getModGlobVarManager(),
+		final CfgSmtToolkit csToolkit = new CfgSmtToolkit(rootNode.getRootAnnot().getModGlobVarManager(),
 				rootNode.getRootAnnot().getManagedScript(), rootAnnot.getBoogie2SMT().getBoogie2SmtSymbolTable());
-		final PredicateFactory predicateFactory = new PredicateFactory(mServices, smtManager.getManagedScript(), 
-				smtManager.getSymbolTable(), taPrefs.getSimplificationTechnique(), taPrefs.getXnfConversionTechnique());
+		final PredicateFactory predicateFactory = new PredicateFactory(mServices, csToolkit.getManagedScript(), 
+				csToolkit.getSymbolTable(), taPrefs.getSimplificationTechnique(), taPrefs.getXnfConversionTechnique());
 		final TraceAbstractionBenchmarks timingStatistics = new TraceAbstractionBenchmarks(rootNode.getRootAnnot());
 
 		final Map<String, Collection<ProgramPoint>> proc2errNodes = rootAnnot.getErrorNodes();
@@ -113,10 +113,10 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 
 		final String name = "AllErrorsAtOnce";
 		if (taPrefs.getConcurrency() == Concurrency.PETRI_NET) {
-			abstractCegarLoop = new CegarLoopJulian(name, rootNode, smtManager, predicateFactory, timingStatistics, taPrefs,
+			abstractCegarLoop = new CegarLoopJulian(name, rootNode, csToolkit, predicateFactory, timingStatistics, taPrefs,
 					errNodesOfAllProc, mServices, mToolchainStorage);
 		} else if (taPrefs.getConcurrency() == Concurrency.FINITE_AUTOMATA) {
-			abstractCegarLoop = new CegarLoopConcurrentAutomata(name, rootNode, smtManager, predicateFactory, timingStatistics, taPrefs,
+			abstractCegarLoop = new CegarLoopConcurrentAutomata(name, rootNode, csToolkit, predicateFactory, timingStatistics, taPrefs,
 					errNodesOfAllProc, mServices, mToolchainStorage);
 		} else {
 			throw new IllegalArgumentException();

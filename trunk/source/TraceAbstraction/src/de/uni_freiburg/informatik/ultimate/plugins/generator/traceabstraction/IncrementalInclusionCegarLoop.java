@@ -82,12 +82,12 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 	protected final List<IHoareTripleChecker> mHoareTripleChecker = new ArrayList<>();
 
 	public IncrementalInclusionCegarLoop(final String name, final RootNode rootNode,
-			final CfgSmtToolkit smtManager, final PredicateFactory predicateFactory, final TAPreferences taPrefs,
+			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final TAPreferences taPrefs,
 			final Collection<ProgramPoint> errorLocs, final InterpolationTechnique interpolation,
 			final boolean computeHoareAnnotation, final IUltimateServiceProvider services,
 			final IToolchainStorage storage,
 			final LanguageOperation languageOperation) {
-		super(name, rootNode, smtManager, predicateFactory, taPrefs, errorLocs, interpolation,
+		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation,
 				computeHoareAnnotation, services, storage);
 		mLanguageOperation = languageOperation;
 		if (mComputeHoareAnnotation) {
@@ -226,7 +226,7 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 		final boolean explointSigmaStarConcatOfIA = !mComputeHoareAnnotation;
 
 		final IHoareTripleChecker edgeChecker = TraceAbstractionUtils.constructEfficientHoareTripleChecker(
-				mServices, HoareTripleChecks.MONOLITHIC, mSmtManager.getManagedScript(), 
+				mServices, HoareTripleChecks.MONOLITHIC, mCsToolkit.getManagedScript(), 
 				mModGlobVarManager, mInterpolantGenerator.getPredicateUnifier()); 
 		
 		boolean progress;
@@ -247,7 +247,7 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 				final boolean cannibalize =
 						(mPref.interpolantAutomatonEnhancement() == InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION_CANNIBALIZE);
 				final DeterministicInterpolantAutomaton determinized = new DeterministicInterpolantAutomaton(mServices,
-						mSmtManager, mModGlobVarManager, edgeChecker,
+						mCsToolkit, mModGlobVarManager, edgeChecker,
 						(INestedWordAutomatonSimple<CodeBlock, IPredicate>) mAbstraction,
 						mInterpolAutomaton, mInterpolantGenerator.getPredicateUnifier(), mLogger,
 						conservativeSuccessorCandidateSelection, cannibalize);
@@ -270,7 +270,7 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 				final boolean conservativeSuccessorCandidateSelection = mPref.interpolantAutomatonEnhancement() == mPref.interpolantAutomatonEnhancement();
 				final boolean secondChance = (mPref.interpolantAutomatonEnhancement() != InterpolantAutomatonEnhancement.NO_SECOND_CHANCE);
 				final NondeterministicInterpolantAutomaton nondet = new NondeterministicInterpolantAutomaton(mServices,
-						mSmtManager, mModGlobVarManager, edgeChecker,
+						mCsToolkit, mModGlobVarManager, edgeChecker,
 						(INestedWordAutomatonSimple<CodeBlock, IPredicate>) mAbstraction,
 						mInterpolAutomaton, mInterpolantGenerator.getPredicateUnifier(), mLogger, conservativeSuccessorCandidateSelection, secondChance);
 				switchAllInterpolantAutomataToOnTheFlyConstructionMode();

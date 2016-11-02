@@ -111,7 +111,7 @@ public class BuchiInterpolantAutomatonBouncer extends AbstractInterpolantAutomat
 	
 	private final PredicateFactory mPredicateFactory;
 
-	public BuchiInterpolantAutomatonBouncer(final CfgSmtToolkit smtManager, final PredicateFactory predicateFactory, final BinaryStatePredicateManager bspm,
+	public BuchiInterpolantAutomatonBouncer(final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final BinaryStatePredicateManager bspm,
 			final BuchiHoareTripleChecker bhtc, final boolean emtpyStem, final Set<IPredicate> stemInterpolants,
 			final Set<IPredicate> loopInterpolants, final CodeBlock hondaEntererStem, final CodeBlock hondaEntererLoop,
 			final INestedWordAutomatonSimple<CodeBlock, IPredicate> abstraction, final boolean scroogeNondeterminismStem,
@@ -120,16 +120,16 @@ public class BuchiInterpolantAutomatonBouncer extends AbstractInterpolantAutomat
 			final IPredicate falsePredicate, final IUltimateServiceProvider services,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique, 
 			final Boogie2SmtSymbolTable symbolTable) {
-		super(services, smtManager, bhtc, false, abstraction, falsePredicate, null, services.getLoggingService().getLogger(
+		super(services, csToolkit, bhtc, false, abstraction, falsePredicate, null, services.getLoggingService().getLogger(
 				Activator.PLUGIN_ID));
 		mServices = services;
 		mPredicateFactory = predicateFactory;
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
 		mBspm = bspm;
-		mStemPU = new PredicateUnifier(mServices, mSmtManager.getManagedScript(), mPredicateFactory, symbolTable, mSimplificationTechnique, mXnfConversionTechnique, falsePredicate);
-		mLoopPU = new PredicateUnifier(mServices, mSmtManager.getManagedScript(), mPredicateFactory, symbolTable, mSimplificationTechnique, mXnfConversionTechnique, falsePredicate);
-		mAcceptingPU = new PredicateUnifier(mServices, mSmtManager.getManagedScript(), mPredicateFactory, symbolTable, mSimplificationTechnique, mXnfConversionTechnique, falsePredicate);
+		mStemPU = new PredicateUnifier(mServices, mCsToolkit.getManagedScript(), mPredicateFactory, symbolTable, mSimplificationTechnique, mXnfConversionTechnique, falsePredicate);
+		mLoopPU = new PredicateUnifier(mServices, mCsToolkit.getManagedScript(), mPredicateFactory, symbolTable, mSimplificationTechnique, mXnfConversionTechnique, falsePredicate);
+		mAcceptingPU = new PredicateUnifier(mServices, mCsToolkit.getManagedScript(), mPredicateFactory, symbolTable, mSimplificationTechnique, mXnfConversionTechnique, falsePredicate);
 		IPredicate initialPredicate;
 		if (emtpyStem) {
 			final Set<IPredicate> empty = Collections.emptySet();

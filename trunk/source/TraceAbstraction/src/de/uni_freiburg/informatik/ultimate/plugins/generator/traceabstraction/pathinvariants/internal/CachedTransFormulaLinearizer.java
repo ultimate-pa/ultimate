@@ -86,19 +86,19 @@ public class CachedTransFormulaLinearizer {
 	 *            Service provider to use
 	 * @param storage
 	 *            Toolchain storage, e.g., needed for construction of new solver. 
-	 * @param smtManager
+	 * @param csToolkit
 	 *            SMT manager
 	 * @author Matthias Heizmann
 	 */
 	public CachedTransFormulaLinearizer(final IUltimateServiceProvider services,
-			final ManagedScript smtManager, final Collection<Term> axioms, final IToolchainStorage storage, 
+			final ManagedScript csToolkit, final Collection<Term> axioms, final IToolchainStorage storage, 
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		super();
 		mServices = services;
 		mStorage = storage;
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
-		mPredicateScript = smtManager;
+		mPredicateScript = csToolkit;
 		mReplacementVarFactory = new ReplacementVarFactory(mPredicateScript);
 		mAxioms = axioms.toArray(new Term[axioms.size()]);
 

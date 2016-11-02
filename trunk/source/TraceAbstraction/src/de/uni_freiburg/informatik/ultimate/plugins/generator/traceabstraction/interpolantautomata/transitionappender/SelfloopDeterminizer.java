@@ -72,13 +72,13 @@ public class SelfloopDeterminizer
 	public int mReturnSelfloop = 0;
 	public int mReturnNonSelfloop = 0;
 	
-	public SelfloopDeterminizer(CfgSmtToolkit mSmtManager,
+	public SelfloopDeterminizer(CfgSmtToolkit mCsToolkit,
 			TAPreferences taPreferences,
 			INestedWordAutomaton<CodeBlock, IPredicate> interpolantAutom,
 			IStateFactory<IPredicate> stateFactory) {
 		super();
 		mHoareTriplechecker = new MonolithicHoareTripleChecker(
-				mSmtManager.getManagedScript(), mSmtManager.getModifiableGlobals());
+				mCsToolkit.getManagedScript(), mCsToolkit.getModifiableGlobals());
 		mInterpolantAutomaton = interpolantAutom;
 		mStateFactory = stateFactory;
 		mPowersetDeterminizer = 

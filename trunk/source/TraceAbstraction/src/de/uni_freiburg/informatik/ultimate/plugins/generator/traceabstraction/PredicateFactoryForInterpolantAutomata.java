@@ -48,13 +48,13 @@ public class PredicateFactoryForInterpolantAutomata implements IStateFactory<IPr
 
 	final protected boolean mComputeHoareAnnotation;
 	private final IPredicate memtpyStack;
-	protected final CfgSmtToolkit mSmtManager;
+	protected final CfgSmtToolkit mCsToolkit;
 	protected final PredicateFactory mPredicateFactory;
 
-	public PredicateFactoryForInterpolantAutomata(final CfgSmtToolkit smtManager, 
+	public PredicateFactoryForInterpolantAutomata(final CfgSmtToolkit csToolkit, 
 			final PredicateFactory predicateFactory, final boolean computeHoareAnnotation) {
 		mComputeHoareAnnotation = computeHoareAnnotation;
-		mSmtManager = smtManager;
+		mCsToolkit = csToolkit;
 		mPredicateFactory = predicateFactory;
 		memtpyStack = mPredicateFactory.newEmptyStackPredicate();
 	}
@@ -87,7 +87,7 @@ public class PredicateFactoryForInterpolantAutomata implements IStateFactory<IPr
 
 	@Override
 	public IPredicate createSinkStateContent() {
-		return mPredicateFactory.newPredicate(mSmtManager.getManagedScript().getScript().term("true"));
+		return mPredicateFactory.newPredicate(mCsToolkit.getManagedScript().getScript().term("true"));
 	}
 
 	@Override

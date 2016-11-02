@@ -78,7 +78,7 @@ public class AbsIntTotalInterpolationAutomatonBuilder implements IInterpolantAut
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final NestedWordAutomaton<CodeBlock, IPredicate> mResult;
-	private final CfgSmtToolkit mSmtManager;
+	private final CfgSmtToolkit mCsToolkit;
 	private final IRun<CodeBlock, IPredicate> mCurrentCounterExample;
 	private final RcfgStatementExtractor mStatementExtractor;
 	private final VariableCollector mVariableCollector;
@@ -92,7 +92,7 @@ public class AbsIntTotalInterpolationAutomatonBuilder implements IInterpolantAut
 	 * @param oldAbstraction
 	 * @param aiResult
 	 * @param predicateUnifier
-	 * @param smtManager
+	 * @param csToolkit
 	 * @param currentCounterExample
 	 * @param symbolTable 
 	 * @param simplificationTechnique
@@ -101,11 +101,11 @@ public class AbsIntTotalInterpolationAutomatonBuilder implements IInterpolantAut
 	public AbsIntTotalInterpolationAutomatonBuilder(final IUltimateServiceProvider services,
 			final INestedWordAutomatonSimple<CodeBlock, IPredicate> oldAbstraction,
 			final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> aiResult,
-			final PredicateUnifier predicateUnifier, final CfgSmtToolkit smtManager,
+			final PredicateUnifier predicateUnifier, final CfgSmtToolkit csToolkit,
 			final IRun<CodeBlock, IPredicate> currentCounterExample, final Boogie2SmtSymbolTable symbolTable) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		mSmtManager = smtManager;
+		mCsToolkit = csToolkit;
 		mSymbolTable = symbolTable;
 		mCurrentCounterExample = currentCounterExample;
 		mVariableCollector = new VariableCollector();
@@ -156,7 +156,7 @@ public class AbsIntTotalInterpolationAutomatonBuilder implements IInterpolantAut
 				}
 			} else {
 				target = predicateUnifier.getOrConstructPredicateForDisjunction(
-						nextStates.stream().map(s -> s.getTerm(mSmtManager.getManagedScript().getScript()))
+						nextStates.stream().map(s -> s.getTerm(mCsToolkit.getManagedScript().getScript()))
 								.map(predicateUnifier::getOrConstructPredicate).collect(Collectors.toSet()));
 
 				// Add mapping from predicate -> Set<STATE> to be able to determine all STATES the predicate is

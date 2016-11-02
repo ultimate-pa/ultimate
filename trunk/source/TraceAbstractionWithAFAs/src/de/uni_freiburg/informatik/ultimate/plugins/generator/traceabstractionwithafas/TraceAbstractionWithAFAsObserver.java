@@ -93,9 +93,9 @@ public class TraceAbstractionWithAFAsObserver extends BaseObserver {
 		final RootNode rootNode = (RootNode) root;
 		final RootAnnot rootAnnot = rootNode.getRootAnnot();
 		final TAPreferences taPrefs = new TAPreferences(mServices);
-		final CfgSmtToolkit smtManager = new CfgSmtToolkit(rootAnnot.getModGlobVarManager(), rootAnnot.getManagedScript(), rootAnnot.getBoogie2SMT().getBoogie2SmtSymbolTable());
-		final PredicateFactory predicateFactory = new PredicateFactory(mServices, smtManager.getManagedScript(), 
-				smtManager.getSymbolTable(), taPrefs.getSimplificationTechnique(), taPrefs.getXnfConversionTechnique());
+		final CfgSmtToolkit csToolkit = new CfgSmtToolkit(rootAnnot.getModGlobVarManager(), rootAnnot.getManagedScript(), rootAnnot.getBoogie2SMT().getBoogie2SmtSymbolTable());
+		final PredicateFactory predicateFactory = new PredicateFactory(mServices, csToolkit.getManagedScript(), 
+				csToolkit.getSymbolTable(), taPrefs.getSimplificationTechnique(), taPrefs.getXnfConversionTechnique());
 		final TraceAbstractionBenchmarks taBenchmarks = new TraceAbstractionBenchmarks(rootAnnot);
 		
 
@@ -105,7 +105,7 @@ public class TraceAbstractionWithAFAsObserver extends BaseObserver {
 			errNodesOfAllProc.addAll(errNodeOfProc);
 		}
 
-		final TAwAFAsCegarLoop cegarLoop = new TAwAFAsCegarLoop("bla", rootNode, smtManager, predicateFactory, taBenchmarks, taPrefs,
+		final TAwAFAsCegarLoop cegarLoop = new TAwAFAsCegarLoop("bla", rootNode, csToolkit, predicateFactory, taBenchmarks, taPrefs,
 				errNodesOfAllProc, taPrefs.interpolation(), taPrefs.computeHoareAnnotation(), mServices, mToolchainStorage);
 
 		final Result result = cegarLoop.iterate();

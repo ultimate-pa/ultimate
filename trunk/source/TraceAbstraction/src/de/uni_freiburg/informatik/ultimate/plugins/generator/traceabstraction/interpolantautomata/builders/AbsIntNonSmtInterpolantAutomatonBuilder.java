@@ -68,13 +68,13 @@ public class AbsIntNonSmtInterpolantAutomatonBuilder implements IInterpolantAuto
 
 	public AbsIntNonSmtInterpolantAutomatonBuilder(final IUltimateServiceProvider services,
 			final INestedWordAutomatonSimple<CodeBlock, IPredicate> oldAbstraction, final PredicateUnifier predUnifier,
-			final ManagedScript smtManager, final Boogie2SmtSymbolTable symbolTable,
+			final ManagedScript csToolkit, final Boogie2SmtSymbolTable symbolTable,
 			final IRun<CodeBlock, IPredicate> currentCounterexample,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mCurrentCounterExample = currentCounterexample;
-		mBoogie2Smt = smtManager;
+		mBoogie2Smt = csToolkit;
 		mPredicateFactory = new PredicateFactory(services, mBoogie2Smt, symbolTable, simplificationTechnique,
 				xnfConversionTechnique);
 

@@ -71,20 +71,20 @@ public class CegarLoopJulian extends BasicCegarLoop {
 	public int mCoRelationQueries = 0;
 	public int mBiggestAbstractionTransitions;
 
-	public CegarLoopJulian(final String name, final RootNode rootNode, final CfgSmtToolkit smtManager, final PredicateFactory predicateFactory,
+	public CegarLoopJulian(final String name, final RootNode rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final TraceAbstractionBenchmarks timingStatistics, final TAPreferences taPrefs,
 			final Collection<ProgramPoint> errorLocs, final IUltimateServiceProvider services,
 			final IToolchainStorage storage) {
-		super(name, rootNode, smtManager, predicateFactory, taPrefs, errorLocs, InterpolationTechnique.Craig_TreeInterpolation, false,
+		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, InterpolationTechnique.Craig_TreeInterpolation, false,
 				services, storage);
 	}
 
 	@Override
 	protected void getInitialAbstraction() throws AutomataLibraryException {
 		final TaConcurContentFactory contentFactory =
-				new TaConcurContentFactory(mRootNode.getRootAnnot().getProgramPoints(), this, super.mSmtManager,
+				new TaConcurContentFactory(mRootNode.getRootAnnot().getProgramPoints(), this, super.mCsToolkit,
 						mPredicateFactory, super.mPref.computeHoareAnnotation(), mPref.computeHoareAnnotation(), false);
-		final Cfg2NetJulian cFG2Automaton = new Cfg2NetJulian(mRootNode, contentFactory, mSmtManager, mPredicateFactory, mServices,
+		final Cfg2NetJulian cFG2Automaton = new Cfg2NetJulian(mRootNode, contentFactory, mCsToolkit, mPredicateFactory, mServices,
 				mXnfConversionTechnique, mSimplificationTechnique);
 		mAbstraction = cFG2Automaton.getResult();
 

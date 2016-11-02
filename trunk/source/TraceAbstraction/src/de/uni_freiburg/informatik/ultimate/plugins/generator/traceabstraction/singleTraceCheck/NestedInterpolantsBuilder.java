@@ -351,9 +351,9 @@ public class NestedInterpolantsBuilder {
 	// * to mCraigInterpolants.
 	// */
 	// private void computeCraigInterpolants() {
-	// // mCraigInterpolants[0] = mSmtManager.getScript().term("true");
+	// // mCraigInterpolants[0] = mCsToolkit.getScript().term("true");
 	// // mCraigInterpolants[mCraigInterpolants.length-1] =
-	// mSmtManager.getScript().term("false");
+	// mCsToolkit.getScript().term("false");
 	// List<Integer> interpolProbStartPositions =
 	// getInterpolProbStartPositions();
 	// for (Integer k: interpolProbStartPositions) {
@@ -417,7 +417,7 @@ public class NestedInterpolantsBuilder {
 	// ArrayList<Term> interpolProb = new ArrayList<Term>();
 	// ArrayList<Integer> indexTranslation = new ArrayList<Integer>();
 	// Term interproceduralLinkPendingCalls =
-	// mSmtManager.getScript().term("true");
+	// mCsToolkit.getScript().term("true");
 	// int j=0;
 	// interpolProb.add(j, getFormulaforPos(k));
 	// for (int i=k+1; i<= endPos; i++) {
@@ -477,7 +477,7 @@ public class NestedInterpolantsBuilder {
 	// }
 	// Term[] interpolOutput = null;
 	// if (interpolInput.length > 1) {
-	// interpolOutput = mSmtManager.computeInterpolants(interpolInput);
+	// interpolOutput = mCsToolkit.computeInterpolants(interpolInput);
 	// }
 	//
 	//
@@ -497,7 +497,7 @@ public class NestedInterpolantsBuilder {
 	// if (mTrace.isInternalPosition(i)) {
 	// iFormu = mAnnotSSA.getTerms()[i];
 	// } else if (mTrace.isCallPosition(i)) {
-	// iFormu = mSmtManager.getScript().term("true");
+	// iFormu = mCsToolkit.getScript().term("true");
 	// } else if (mTrace.isReturnPosition(i)) {
 	// iFormu = mAnnotSSA.getTerms()[i];
 	// int callPos = mTrace.getCallPosition(i);
@@ -600,7 +600,7 @@ public class NestedInterpolantsBuilder {
 		final Term nnf = (new Nnf(mMgdScriptCfg, 
 				mServices, QuantifierHandling.PULL)).transform(interpolantWithoutIndices);
 //		not needed, at the moment our NNF transformation also produces 		
-//		Term prenex = (new PrenexNormalForm(mSmtManagerPredicates.getScript(), mSmtManagerPredicates.getVariableManager())).transform(nnf);
+//		Term prenex = (new PrenexNormalForm(mCsToolkitPredicates.getScript(), mCsToolkitPredicates.getVariableManager())).transform(nnf);
 		final QuantifierSequence qs = new QuantifierSequence(mMgdScriptCfg.getScript(), nnf);
 //		The quantifier-free part of of formula in prenex normal form is called
 //		matrix
@@ -626,7 +626,7 @@ public class NestedInterpolantsBuilder {
 		result = Util.and(mMgdScriptCfg.getScript(), result, Util.and(mMgdScriptCfg.getScript(), implications));
 		result = mMgdScriptCfg.getScript().quantifier(QuantifiedFormula.EXISTS, replacingTermVariable, result);
 		result = QuantifierSequence.prependQuantifierSequence(mMgdScriptCfg.getScript(), qs.getQuantifierBlocks(), result);
-//		Term pushed = new QuantifierPusher(mSmtManagerPredicates.getScript(), mServices).transform(result);
+//		Term pushed = new QuantifierPusher(mCsToolkitPredicates.getScript(), mServices).transform(result);
 		return result;
 	}
 	

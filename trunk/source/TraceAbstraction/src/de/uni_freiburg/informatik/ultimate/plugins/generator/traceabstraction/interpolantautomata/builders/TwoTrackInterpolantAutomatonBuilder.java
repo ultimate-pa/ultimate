@@ -55,7 +55,7 @@ public class TwoTrackInterpolantAutomatonBuilder implements IInterpolantAutomato
 
 	private final NestedWord<CodeBlock> mNestedWord;
 	private final NestedWordAutomaton<CodeBlock, IPredicate> mTTIA;
-	private final CfgSmtToolkit mSmtManager;
+	private final CfgSmtToolkit mCsToolkit;
 	private final InterpolantsPreconditionPostcondition mInterpolantsFP;
 	private final InterpolantsPreconditionPostcondition mInterpolantsBP;
 	private final IPredicate mPrecondition;
@@ -69,13 +69,13 @@ public class TwoTrackInterpolantAutomatonBuilder implements IInterpolantAutomato
 	/**
 	 * 
 	 * @param nestedRun
-	 * @param smtManager
+	 * @param csToolkit
 	 * @param traceChecker
 	 * @param abstraction
 	 * 
 	 */
 	public TwoTrackInterpolantAutomatonBuilder(final IUltimateServiceProvider services, final IRun<CodeBlock, IPredicate> nestedRun,
-			final CfgSmtToolkit smtManager, final List<IPredicate> interpolantsFP, final List<IPredicate> interpolantsBP,
+			final CfgSmtToolkit csToolkit, final List<IPredicate> interpolantsFP, final List<IPredicate> interpolantsBP,
 			final IPredicate preCondition, final IPredicate postCondition, final IAutomaton<CodeBlock, IPredicate> abstraction) {
 		mServices = services;
 		mPrecondition = preCondition;
@@ -88,7 +88,7 @@ public class TwoTrackInterpolantAutomatonBuilder implements IInterpolantAutomato
 		mInterpolantsBP = new InterpolantsPreconditionPostcondition(preCondition, postCondition, interpolantsBP);
 
 		mNestedWord = NestedWord.nestedWord(nestedRun.getWord());
-		mSmtManager = smtManager;
+		mCsToolkit = csToolkit;
 		mTTIA = buildTwoTrackInterpolantAutomaton(abstraction, abstraction.getStateFactory());
 	}
 
@@ -207,12 +207,12 @@ public class TwoTrackInterpolantAutomatonBuilder implements IInterpolantAutomato
 	// IPredicate callerPred) {
 	// CodeBlock statement = mNestedWord.getSymbol(symbolPos);
 	// if (mNestedWord.isCallPosition(symbolPos)) {
-	// return (mSmtManager.isInductiveCall(p1, (Call) statement, p2) == LBool.UNSAT);
+	// return (mCsToolkit.isInductiveCall(p1, (Call) statement, p2) == LBool.UNSAT);
 	// } else if (mNestedWord.isReturnPosition(symbolPos)) {
 	// assert callerPred != null : "callerPred shouldn't be null for a Return statement.";
-	// return (mSmtManager.isInductiveReturn(p1, callerPred,(Return) statement, p2) == LBool.UNSAT);
+	// return (mCsToolkit.isInductiveReturn(p1, callerPred,(Return) statement, p2) == LBool.UNSAT);
 	// } else {
-	// return (mSmtManager.isInductive(p1, (IInternalAction) statement, p2) == LBool.UNSAT);
+	// return (mCsToolkit.isInductive(p1, (IInternalAction) statement, p2) == LBool.UNSAT);
 	// }
 	// }
 
@@ -226,7 +226,7 @@ public class TwoTrackInterpolantAutomatonBuilder implements IInterpolantAutomato
 		if (p == mPostcondition) {
 			return true;
 		} else {
-//			assert mSmtManager.getPredicateFactory().isDontCare(p)
+//			assert mCsToolkit.getPredicateFactory().isDontCare(p)
 //					|| !SmtUtils.isFalse(p.getFormula());
 			return false;
 		}

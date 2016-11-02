@@ -149,7 +149,7 @@ public class LassoChecker {
 	/**
 	 * Intermediate layer to encapsulate communication with SMT solvers.
 	 */
-	private final CfgSmtToolkit mSmtManager;
+	private final CfgSmtToolkit mCsToolkit;
 
 	private final ModifiableGlobalVariableManager mModifiableGlobalVariableManager;
 
@@ -239,7 +239,7 @@ public class LassoChecker {
 		return mNonterminationAnalysisBenchmarks;
 	}
 
-	public LassoChecker(final InterpolationTechnique interpolation, final CfgSmtToolkit smtManager, final PredicateFactory predicateFactory,
+	public LassoChecker(final InterpolationTechnique interpolation, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final Boogie2SmtSymbolTable symbolTable, final ModifiableGlobalVariableManager modifiableGlobalVariableManager, final Collection<Term> axioms,
 			final BinaryStatePredicateManager bspm, final NestedLassoRun<CodeBlock, IPredicate> counterexample,
 			final String lassoCheckerIdentifier, final IUltimateServiceProvider services,
@@ -260,12 +260,12 @@ public class LassoChecker {
 		mTrySimplificationTerminationArgument = baPref.getBoolean(PreferenceInitializer.LABEL_SIMPLIFY);
 		mTryTwofoldRefinement = baPref.getBoolean(PreferenceInitializer.LABEL_TRY_TWOFOLD_REFINEMENT);
 		mInterpolation = interpolation;
-		mSmtManager = smtManager;
+		mCsToolkit = csToolkit;
 		mModifiableGlobalVariableManager = modifiableGlobalVariableManager;
 		mBspm = bspm;
 		mCounterexample = counterexample;
 		mLassoCheckerIdentifier = lassoCheckerIdentifier;
-		mPredicateUnifier = new PredicateUnifier(mServices, mSmtManager.getManagedScript(),
+		mPredicateUnifier = new PredicateUnifier(mServices, mCsToolkit.getManagedScript(),
 				predicateFactory, mSymbolTable,
 				simplificationTechnique, xnfConversionTechnique);
 		mTruePredicate = mPredicateUnifier.getTruePredicate();
@@ -446,7 +446,7 @@ public class LassoChecker {
 			case Craig_NestedInterpolation:
 			case Craig_TreeInterpolation:
 				result = new InterpolatingTraceCheckerCraig(mTruePredicate, mFalsePredicate,
-						new TreeMap<Integer, IPredicate>(), run.getWord(), mSmtManager.getManagedScript(),
+						new TreeMap<Integer, IPredicate>(), run.getWord(), mCsToolkit.getManagedScript(),
 						mModifiableGlobalVariableManager,
 						/*
 						 * TODO: When Matthias introduced this parameter he set the argument to
@@ -458,12 +458,12 @@ public class LassoChecker {
 			case BackwardPredicates:
 			case FPandBP:
 				result = new TraceCheckerSpWp(mTruePredicate, mFalsePredicate, new TreeMap<Integer, IPredicate>(),
-						run.getWord(), mSmtManager.getManagedScript(), mModifiableGlobalVariableManager,
+						run.getWord(), mCsToolkit.getManagedScript(), mModifiableGlobalVariableManager,
 						/*
 						 * TODO: When Matthias introduced this parameter he set the argument to
 						 * AssertCodeBlockOrder.NOT_INCREMENTALLY. Check if you want to set this to a different value.
 						 */AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true, mServices, false,
-						mPredicateUnifier, mInterpolation, mSmtManager.getManagedScript(), mXnfConversionTechnique,
+						mPredicateUnifier, mInterpolation, mCsToolkit.getManagedScript(), mXnfConversionTechnique,
 						mSimplificationTechnique, mSymbolTable);
 				break;
 			default:
@@ -564,7 +564,7 @@ public class LassoChecker {
 			final boolean extendedPartialQuantifierElimination, final boolean withBranchEncoders) {
 		final boolean toCNF = false;
 		final UnmodifiableTransFormula tf =
-				SequentialComposition.getInterproceduralTransFormula(mSmtManager.getManagedScript(),
+				SequentialComposition.getInterproceduralTransFormula(mCsToolkit.getManagedScript(),
 						mModifiableGlobalVariableManager, simplify, extendedPartialQuantifierElimination, toCNF,
 						withBranchEncoders, mLogger, mServices, word.asList(), mXnfConversionTechnique,
 						mSimplificationTechnique, mSymbolTable);
@@ -743,7 +743,7 @@ public class LassoChecker {
 
 	private SynthesisResult synthesize(final boolean withStem, UnmodifiableTransFormula stemTF,
 			final UnmodifiableTransFormula loopTF, final boolean containsArrays) throws IOException {
-		if (mSmtManager.getManagedScript().isLocked()) {
+		if (mCsToolkit.getManagedScript().isLocked()) {
 			throw new AssertionError("SMTManager must not be locked at the beginning of synthesis");
 		}
 
@@ -751,7 +751,7 @@ public class LassoChecker {
 				((ISLPredicate) mCounterexample.getLoop().getStateAtPosition(0)).getProgramPoint().getProcedure());
 
 		if (!withStem) {
-			stemTF = TransFormulaBuilder.getTrivialTransFormula(mSmtManager.getManagedScript());
+			stemTF = TransFormulaBuilder.getTrivialTransFormula(mCsToolkit.getManagedScript());
 		}
 		// TODO: present this somewhere else
 		// int loopVars = loopTF.getFormula().getFreeVars().length;
@@ -763,7 +763,7 @@ public class LassoChecker {
 		// loopVars);
 		// }
 
-		final FixpointCheck fixpointCheck = new FixpointCheck(mServices, mLogger, mSmtManager.getManagedScript(),
+		final FixpointCheck fixpointCheck = new FixpointCheck(mServices, mLogger, mCsToolkit.getManagedScript(),
 				modifiableGlobalsAtHonda, stemTF, loopTF);
 		if (fixpointCheck.getResult() == HasFixpoint.YES) {
 			if (withStem) {
@@ -779,7 +779,7 @@ public class LassoChecker {
 			LassoAnalysis laNT = null;
 			try {
 				final boolean overapproximateArrayIndexConnection = false;
-				laNT = new LassoAnalysis(mSmtManager.getManagedScript(), mSymbolTable, stemTF, loopTF,
+				laNT = new LassoAnalysis(mCsToolkit.getManagedScript(), mSymbolTable, stemTF, loopTF,
 						modifiableGlobalsAtHonda, mAxioms.toArray(new Term[mAxioms.size()]),
 						constructLassoRankerPreferences(withStem, overapproximateArrayIndexConnection,
 								NlaHandling.UNDERAPPROXIMATE, AnalysisTechnique.GEOMETRIC_NONTERMINATION_ARGUMENTS),
@@ -812,7 +812,7 @@ public class LassoChecker {
 		LassoAnalysis laT = null;
 		try {
 			final boolean overapproximateArrayIndexConnection = true;
-			laT = new LassoAnalysis(mSmtManager.getManagedScript(), mSymbolTable, stemTF, loopTF,
+			laT = new LassoAnalysis(mCsToolkit.getManagedScript(), mSymbolTable, stemTF, loopTF,
 					modifiableGlobalsAtHonda, mAxioms.toArray(new Term[mAxioms.size()]),
 					constructLassoRankerPreferences(withStem, overapproximateArrayIndexConnection,
 							NlaHandling.OVERAPPROXIMATE, AnalysisTechnique.RANKING_FUNCTIONS_SUPPORTING_INVARIANTS),

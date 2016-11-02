@@ -114,10 +114,10 @@ public class TraceAbstractionStarter {
 		mLogger.info(settings);
 		
 		
-		final CfgSmtToolkit smtManager =
+		final CfgSmtToolkit csToolkit =
 				new CfgSmtToolkit(rootAnnot.getModGlobVarManager(), rootAnnot.getManagedScript(), rootAnnot.getBoogie2SMT().getBoogie2SmtSymbolTable());
-		final PredicateFactory predicateFactory = new PredicateFactory(mServices, smtManager.getManagedScript(), 
-				smtManager.getSymbolTable(), taPrefs.getSimplificationTechnique(), taPrefs.getXnfConversionTechnique());
+		final PredicateFactory predicateFactory = new PredicateFactory(mServices, csToolkit.getManagedScript(), 
+				csToolkit.getSymbolTable(), taPrefs.getSimplificationTechnique(), taPrefs.getXnfConversionTechnique());
 		final TraceAbstractionBenchmarks traceAbstractionBenchmark = new TraceAbstractionBenchmarks(rootAnnot);
 		
 		final Map<String, Collection<ProgramPoint>> proc2errNodes = rootAnnot.getErrorNodes();
@@ -131,7 +131,7 @@ public class TraceAbstractionStarter {
 		
 		if (taPrefs.allErrorLocsAtOnce()) {
 			final String name = "AllErrorsAtOnce";
-			iterate(name, rcfgRootNode, taPrefs, smtManager, predicateFactory, traceAbstractionBenchmark, errNodesOfAllProc,
+			iterate(name, rcfgRootNode, taPrefs, csToolkit, predicateFactory, traceAbstractionBenchmark, errNodesOfAllProc,
 					witnessAutomaton);
 		} else {
 			for (final ProgramPoint errorLoc : errNodesOfAllProc) {
@@ -139,7 +139,7 @@ public class TraceAbstractionStarter {
 				final ArrayList<ProgramPoint> errorLocs = new ArrayList<>(1);
 				errorLocs.add(errorLoc);
 				mServices.getProgressMonitorService().setSubtask(errorLoc.toString());
-				iterate(name, rcfgRootNode, taPrefs, smtManager, predicateFactory, traceAbstractionBenchmark, errorLocs,
+				iterate(name, rcfgRootNode, taPrefs, csToolkit, predicateFactory, traceAbstractionBenchmark, errorLocs,
 						witnessAutomaton);
 			}
 		}
@@ -162,11 +162,11 @@ public class TraceAbstractionStarter {
 		mLogger.debug("Continue processing: " + mServices.getProgressMonitorService().continueProcessing());
 		if (taPrefs.computeHoareAnnotation() && mOverallResult != Result.TIMEOUT
 				&& mServices.getProgressMonitorService().continueProcessing()) {
-			assert new HoareAnnotationChecker(mServices, rcfgRootNode, smtManager)
+			assert new HoareAnnotationChecker(mServices, rcfgRootNode, csToolkit)
 					.isInductive() : "incorrect Hoare annotation";
 			
 			final IBacktranslationService backTranslatorService = mServices.getBacktranslationService();
-			final Term trueterm = smtManager.getManagedScript().getScript().term("true");
+			final Term trueterm = csToolkit.getManagedScript().getScript().term("true");
 			
 			final Set<ProgramPoint> locsForLoopLocations = new HashSet<>();
 			locsForLoopLocations.addAll(rootAnnot.getPotentialCycleProgramPoints());
@@ -246,11 +246,11 @@ public class TraceAbstractionStarter {
 	}
 	
 	private void iterate(final String name, final RootNode root, final TAPreferences taPrefs,
-			final CfgSmtToolkit smtManager, final PredicateFactory predicateFactory, final TraceAbstractionBenchmarks taBenchmark,
+			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final TraceAbstractionBenchmarks taBenchmark,
 			final Collection<ProgramPoint> errorLocs,
 			final INestedWordAutomatonSimple<WitnessEdge, WitnessNode> witnessAutomaton) {
 		final BasicCegarLoop basicCegarLoop =
-				constructCegarLoop(name, root, taPrefs, smtManager, predicateFactory, taBenchmark, errorLocs);
+				constructCegarLoop(name, root, taPrefs, csToolkit, predicateFactory, taBenchmark, errorLocs);
 		basicCegarLoop.setWitnessAutomaton(witnessAutomaton);
 		
 		final Result result = basicCegarLoop.iterate();
@@ -274,19 +274,19 @@ public class TraceAbstractionStarter {
 	}
 	
 	private BasicCegarLoop constructCegarLoop(final String name, final RootNode root, final TAPreferences taPrefs,
-			final CfgSmtToolkit smtManager, final PredicateFactory predicateFactory, final TraceAbstractionBenchmarks taBenchmark,
+			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final TraceAbstractionBenchmarks taBenchmark,
 			final Collection<ProgramPoint> errorLocs) {
 		final LanguageOperation languageOperation = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getEnum(TraceAbstractionPreferenceInitializer.LABEL_LANGUAGE_OPERATION, LanguageOperation.class);
 		if (languageOperation == LanguageOperation.DIFFERENCE) {
 			if (taPrefs.interpolantAutomaton() == InterpolantAutomaton.TOTALINTERPOLATION) {
-				return new CegarLoopSWBnonRecursive(name, root, smtManager, predicateFactory, taBenchmark, taPrefs, errorLocs,
+				return new CegarLoopSWBnonRecursive(name, root, csToolkit, predicateFactory, taBenchmark, taPrefs, errorLocs,
 						taPrefs.interpolation(), taPrefs.computeHoareAnnotation(), mServices, mToolchainStorage);
 			}
-			return new BasicCegarLoop(name, root, smtManager, predicateFactory, taPrefs, errorLocs, taPrefs.interpolation(),
+			return new BasicCegarLoop(name, root, csToolkit, predicateFactory, taPrefs, errorLocs, taPrefs.interpolation(),
 					taPrefs.computeHoareAnnotation(), mServices, mToolchainStorage);
 		}
-		return new IncrementalInclusionCegarLoop(name, root, smtManager, predicateFactory, taPrefs, errorLocs, taPrefs.interpolation(),
+		return new IncrementalInclusionCegarLoop(name, root, csToolkit, predicateFactory, taPrefs, errorLocs, taPrefs.interpolation(),
 				taPrefs.computeHoareAnnotation(), mServices, mToolchainStorage, languageOperation);
 	}
 	

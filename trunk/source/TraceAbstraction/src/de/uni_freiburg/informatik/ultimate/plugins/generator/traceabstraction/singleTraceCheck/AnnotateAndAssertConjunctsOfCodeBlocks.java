@@ -60,7 +60,7 @@ public class AnnotateAndAssertConjunctsOfCodeBlocks extends AnnotateAndAssertCod
 	protected final NestedFormulas<UnmodifiableTransFormula, IPredicate> mNestedFormulas;
 	private final Map<Term,Term> mAnnotated2Original = new HashMap<>();
 	private final SplitEqualityMapping mSplitEqualityMapping = new SplitEqualityMapping();
-	private final ManagedScript mSmtManagerPredicates;
+	private final ManagedScript mCsToolkitPredicates;
 	
 	private final boolean mSplitEqualities = true;
 
@@ -76,7 +76,7 @@ public class AnnotateAndAssertConjunctsOfCodeBlocks extends AnnotateAndAssertCod
 			final ManagedScript mgdScriptCfg) {
 		super(mgdScriptTc, scriptLockOwner, nestedSSA,logger);
 		mNestedFormulas = nestedFormulas;
-		mSmtManagerPredicates = mgdScriptCfg;
+		mCsToolkitPredicates = mgdScriptCfg;
 	}
 	
 	
@@ -114,7 +114,7 @@ public class AnnotateAndAssertConjunctsOfCodeBlocks extends AnnotateAndAssertCod
 					final Term[] indexedConjunctAsInequalities =  
 							transformEqualityToInequalities(indexedConjunctBnr, mMgdScript.getScript());
 					final Term[] originalConjunctAsInequalities = 
-							transformEqualityToInequalities(originalConjunctBnr, mSmtManagerPredicates.getScript());
+							transformEqualityToInequalities(originalConjunctBnr, mCsToolkitPredicates.getScript());
 					// Annotate and store the first inequality
 					annotatedConjuncts.add(annotateAndAssertTerm(indexedConjunctAsInequalities[0], name, annotatedTermsCounter));
 					// Caution! The map mAnnotated2Original is only correct, if 

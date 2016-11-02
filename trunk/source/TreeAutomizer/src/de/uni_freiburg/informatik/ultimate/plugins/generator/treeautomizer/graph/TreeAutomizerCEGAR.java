@@ -47,9 +47,9 @@ public class TreeAutomizerCEGAR extends AbstractCegarLoop {
 	protected ITreeAutomaton<HCTransFormula, IPredicate> mInterpolAutomaton;
 
 	public TreeAutomizerCEGAR(final IUltimateServiceProvider services, final IToolchainStorage storage, final String name,
-			final RootNode rootNode, final CfgSmtToolkit smtManager, final PredicateFactory predicateFactory, final TAPreferences taPrefs, final Collection<ProgramPoint> errorLocs,
+			final RootNode rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final TAPreferences taPrefs, final Collection<ProgramPoint> errorLocs,
 			final ILogger logger, final Script script) {
-		super(services, storage, name, rootNode, smtManager, predicateFactory, taPrefs, errorLocs, logger);
+		super(services, storage, name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, logger);
 		predicateFactoryRc = new PredicateFactoryResultChecking(predicateFactory);
 		mBackendSmtSolverScript = script;
 

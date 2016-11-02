@@ -98,19 +98,19 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 	}
 
 	public InterpolatingTraceCheckerCraig(final IPredicate precondition, final IPredicate postcondition,
-			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IAction> trace, final ManagedScript smtManager,
+			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IAction> trace, final ManagedScript csToolkit,
 			final ModifiableGlobalVariableManager modifiedGlobals, final AssertCodeBlockOrder assertCodeBlocksIncrementally,
 			final IUltimateServiceProvider services, final boolean computeRcfgProgramExecution, 
 			final PredicateUnifier predicateUnifier, final InterpolationTechnique interpolation, final boolean instanticateArrayExt,
 			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique, final Boogie2SmtSymbolTable symbolTable) {
-		this(precondition, postcondition, pendingContexts, trace, smtManager, 
+		this(precondition, postcondition, pendingContexts, trace, csToolkit, 
 				modifiedGlobals, assertCodeBlocksIncrementally, services, computeRcfgProgramExecution, 
-				predicateUnifier, interpolation, smtManager, instanticateArrayExt, xnfConversionTechnique, simplificationTechnique, symbolTable);
+				predicateUnifier, interpolation, csToolkit, instanticateArrayExt, xnfConversionTechnique, simplificationTechnique, symbolTable);
 	}
 
 
 //	protected int[] getSizeOfPredicates(InterpolationTechnique interpolation) {
-//		return mSmtManager.computeDagSizeOfPredicates(mInterpolants);
+//		return mCsToolkit.computeDagSizeOfPredicates(mInterpolants);
 //	}
 
 	/**

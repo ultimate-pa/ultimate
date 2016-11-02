@@ -51,7 +51,7 @@ public class RCFG2AnnotatedRCFG {
 
 	HashMap<ProgramPoint, AnnotatedProgramPoint> moldPpTonew;
 	private final ILogger mLogger;
-	private final CfgSmtToolkit msmtManager;
+	private final CfgSmtToolkit mcsToolkit;
 	private final PredicateFactory mPredicateFactory;
 	private final IPredicate mtruePredicate;
 	private final Map<RCFGNode, Term> minitialPredicates;
@@ -59,7 +59,7 @@ public class RCFG2AnnotatedRCFG {
 
 	public RCFG2AnnotatedRCFG(final CfgSmtToolkit smtMan, final PredicateFactory predicateFactory, final ILogger logger, final IPredicate truePredicate, final Map<RCFGNode, Term> initialPredicates) {
 		mLogger = logger;
-		msmtManager = smtMan;
+		mcsToolkit = smtMan;
 		mPredicateFactory = predicateFactory;
 		mtruePredicate = truePredicate;
 		minitialPredicates = initialPredicates;

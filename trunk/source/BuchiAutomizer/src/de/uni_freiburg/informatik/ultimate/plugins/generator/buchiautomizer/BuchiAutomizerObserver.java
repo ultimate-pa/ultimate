@@ -91,7 +91,7 @@ import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
 public class BuchiAutomizerObserver implements IUnmanagedObserver {
 
 	private IElement mGraphRoot;
-	private CfgSmtToolkit mSmtManager;
+	private CfgSmtToolkit mCsToolkit;
 	private TAPreferences mPref;
 
 	private RootAnnot mRootAnnot;
@@ -112,14 +112,14 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		final TAPreferences taPrefs = new TAPreferences(mServices);
 		mGraphRoot = root;
 
-		mSmtManager = new CfgSmtToolkit(mRootAnnot.getModGlobVarManager(), mRootAnnot.getManagedScript(),
+		mCsToolkit = new CfgSmtToolkit(mRootAnnot.getModGlobVarManager(), mRootAnnot.getManagedScript(),
 				mRootAnnot.getBoogie2SMT().getBoogie2SmtSymbolTable());
-		final PredicateFactory predicateFactory = new PredicateFactory(mServices, mSmtManager.getManagedScript(), 
-				mSmtManager.getSymbolTable(), taPrefs.getSimplificationTechnique(), taPrefs.getXnfConversionTechnique());
+		final PredicateFactory predicateFactory = new PredicateFactory(mServices, mCsToolkit.getManagedScript(), 
+				mCsToolkit.getSymbolTable(), taPrefs.getSimplificationTechnique(), taPrefs.getXnfConversionTechnique());
 
 		mPref = taPrefs;
 
-		final BuchiCegarLoop bcl = new BuchiCegarLoop((RootNode) root, mSmtManager, predicateFactory, mPref, mServices, mStorage);
+		final BuchiCegarLoop bcl = new BuchiCegarLoop((RootNode) root, mCsToolkit, predicateFactory, mPref, mServices, mStorage);
 		final Result result = bcl.iterate();
 		final BuchiCegarLoopBenchmarkGenerator benchGen = bcl.getBenchmarkGenerator();
 		benchGen.stop(CegarLoopStatisticsDefinitions.OverallTime.toString());

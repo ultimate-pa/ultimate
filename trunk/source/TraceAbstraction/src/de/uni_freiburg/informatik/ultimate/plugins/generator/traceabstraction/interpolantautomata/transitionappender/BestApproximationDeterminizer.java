@@ -70,10 +70,10 @@ public class BestApproximationDeterminizer implements IStateDeterminizer<CodeBlo
 	
 	Map<IPredicate, Map<IPredicate, Map<CodeBlock, Set<IPredicate>>>> mInductiveReturnSuccsCache = new HashMap<>();
 	
-	public BestApproximationDeterminizer(final CfgSmtToolkit mSmtManager, final TAPreferences taPreferences,
+	public BestApproximationDeterminizer(final CfgSmtToolkit mCsToolkit, final TAPreferences taPreferences,
 			final NestedWordAutomaton<CodeBlock, IPredicate> nwa, final IStateFactory<IPredicate> stateFactory) {
 		mHoareTriplechecker =
-				new MonolithicHoareTripleChecker(mSmtManager.getManagedScript(), mSmtManager.getModifiableGlobals());
+				new MonolithicHoareTripleChecker(mCsToolkit.getManagedScript(), mCsToolkit.getModifiableGlobals());
 		mTaPreferences = taPreferences;
 		mStateFactory = stateFactory;
 		mNwa = nwa;

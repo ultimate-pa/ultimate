@@ -56,12 +56,12 @@ public class PredicateFactoryRefinement extends PredicateFactoryForInterpolantAu
 	
 	
 	public PredicateFactoryRefinement(final Map<String,Map<String,ProgramPoint>> locNodes,
-							final CfgSmtToolkit smtManager, final PredicateFactory predicateFactory,
+							final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 							final boolean computeHoareAnnoation, 
 							final HoareAnnotationFragments haf, 
 							final HashSet<ProgramPoint> hoareAnnotationProgramPoints, 
 							final HoareAnnotationPositions hoareAnnoationPositions) {
-		super(smtManager, predicateFactory, computeHoareAnnoation);
+		super(csToolkit, predicateFactory, computeHoareAnnoation);
 		mlocNodes = locNodes;
 //		mMaintainHoareAnnotationFragments = maintainHoareAnnotationFragments;
 		mHoareAnnotationFragments = haf;
@@ -73,7 +73,7 @@ public class PredicateFactoryRefinement extends PredicateFactoryForInterpolantAu
 	@Override
 	public IPredicate intersection(final IPredicate p1, final IPredicate p2) {
 		if (p1 instanceof IMLPredicate) {
-//			assert mSmtManager.isDontCare(p2);
+//			assert mCsToolkit.isDontCare(p2);
 			assert !mComputeHoareAnnotation;
 			return mPredicateFactory.newMLDontCarePredicate(((IMLPredicate) p1).getProgramPoints());
 		}

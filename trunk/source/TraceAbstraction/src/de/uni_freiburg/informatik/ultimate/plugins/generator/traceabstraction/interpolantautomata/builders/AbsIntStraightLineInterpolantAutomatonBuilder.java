@@ -76,21 +76,21 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final NestedWordAutomaton<CodeBlock, IPredicate> mResult;
-	private final CfgSmtToolkit mSmtManager;
+	private final CfgSmtToolkit mCsToolkit;
 	private final IRun<CodeBlock, IPredicate> mCurrentCounterExample;
 	private final Boogie2SmtSymbolTable mSymbolTable;
 
 	public AbsIntStraightLineInterpolantAutomatonBuilder(final IUltimateServiceProvider services,
 			final INestedWordAutomatonSimple<CodeBlock, IPredicate> oldAbstraction,
 			final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> aiResult,
-			final PredicateUnifier predUnifier, final CfgSmtToolkit smtManager,
+			final PredicateUnifier predUnifier, final CfgSmtToolkit csToolkit,
 			final IRun<CodeBlock, IPredicate> currentCounterExample,
 			final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique, 
 			final Boogie2SmtSymbolTable symbolTable) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		mSmtManager = smtManager;
+		mCsToolkit = csToolkit;
 		mSymbolTable = symbolTable;
 		mCurrentCounterExample = currentCounterExample;
 		mResult = constructAutomaton(oldAbstraction, aiResult, predUnifier);
@@ -107,7 +107,7 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder
 					final PredicateUnifier predicateUnifier) {
 
 		final RcfgDebugHelper<STATE, IBoogieVar, ?> debugHelper =
-				new RcfgDebugHelper<>(mSmtManager.getManagedScript(), mSmtManager.getModifiableGlobals(), mServices, mSymbolTable);
+				new RcfgDebugHelper<>(mCsToolkit.getManagedScript(), mCsToolkit.getModifiableGlobals(), mServices, mSymbolTable);
 		mLogger.info("Creating interpolant automaton from AI predicates (straight)");
 
 		final NestedWordAutomaton<CodeBlock, IPredicate> result = new NestedWordAutomaton<>(
@@ -161,7 +161,7 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder
 				target = falsePredicate;
 			} else {
 				target = predicateUnifier.getOrConstructPredicateForDisjunction(
-						postStates.stream().map(s -> s.getTerm(mSmtManager.getManagedScript().getScript()))
+						postStates.stream().map(s -> s.getTerm(mCsToolkit.getManagedScript().getScript()))
 								.map(predicateUnifier::getOrConstructPredicate).collect(Collectors.toSet()));
 			}
 
@@ -275,7 +275,7 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder
 			mLogger.debug("HierPre: " + hierarchicalPreState);
 		}
 		mLogger.debug("Post: " + target);
-		mLogger.debug("Post (S): " + SmtUtils.simplify(mSmtManager.getManagedScript(), target.getFormula(), mServices,
+		mLogger.debug("Post (S): " + SmtUtils.simplify(mCsToolkit.getManagedScript(), target.getFormula(), mServices,
 				SimplificationTechnique.SIMPLIFY_DDA));
 		mLogger.debug(divider);
 	}

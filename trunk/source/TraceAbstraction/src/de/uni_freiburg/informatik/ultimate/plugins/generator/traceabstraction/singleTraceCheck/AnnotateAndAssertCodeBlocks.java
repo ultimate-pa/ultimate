@@ -69,12 +69,12 @@ public class AnnotateAndAssertCodeBlocks {
 	protected static final String LOCVARASSIGN_PENDINGCONTEXT = "_LocVarAssignPendingContext";
 	protected static final String OLDVARASSIGN_PENDINGCONTEXT = "_OldVarAssignPendingContext";
 
-	public AnnotateAndAssertCodeBlocks(final ManagedScript smtManager, final TraceCheckerLock scriptLockOwner, 
+	public AnnotateAndAssertCodeBlocks(final ManagedScript csToolkit, final TraceCheckerLock scriptLockOwner, 
 			final NestedFormulas<Term, Term> nestedSSA, final ILogger logger) {
 		mLogger = logger;
-		mMgdScript = smtManager;
+		mMgdScript = csToolkit;
 		mScriptLockOwner = scriptLockOwner;
-		mScript = smtManager.getScript();
+		mScript = csToolkit.getScript();
 		mTrace = nestedSSA.getTrace();
 		mSSA = nestedSSA;
 	}

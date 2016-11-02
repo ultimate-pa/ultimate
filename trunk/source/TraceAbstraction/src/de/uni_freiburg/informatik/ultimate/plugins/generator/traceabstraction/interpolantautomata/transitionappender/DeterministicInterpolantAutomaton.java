@@ -86,13 +86,13 @@ public class DeterministicInterpolantAutomaton extends BasicAbstractInterpolantA
 	
 
 	public DeterministicInterpolantAutomaton(final IUltimateServiceProvider services,
-			final CfgSmtToolkit smtManager, final ModifiableGlobalVariableManager modglobvarman, final IHoareTripleChecker hoareTripleChecker,
+			final CfgSmtToolkit csToolkit, final ModifiableGlobalVariableManager modglobvarman, final IHoareTripleChecker hoareTripleChecker,
 			final INestedWordAutomatonSimple<CodeBlock, IPredicate> abstraction,
 			final NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton,
 			final PredicateUnifier predicateUnifier, final ILogger logger,
 			final boolean conservativeSuccessorCandidateSelection,
 			final boolean cannibalize) {
-		super(services, smtManager, hoareTripleChecker, true, abstraction,
+		super(services, csToolkit, hoareTripleChecker, true, abstraction,
 				predicateUnifier,
 				interpolantAutomaton, logger);
 		mCannibalize = cannibalize;
@@ -113,7 +113,7 @@ public class DeterministicInterpolantAutomaton extends BasicAbstractInterpolantA
 		}
 		if (mDivisibilityPredicates) {
 			allPredicates = new ArrayList<IPredicate>(allPredicates);
-			final DivisibilityPredicateGenerator dpg = new DivisibilityPredicateGenerator(mSmtManager.getManagedScript(), mPredicateUnifier);
+			final DivisibilityPredicateGenerator dpg = new DivisibilityPredicateGenerator(mCsToolkit.getManagedScript(), mPredicateUnifier);
 			final Collection<IPredicate> divPreds = dpg.divisibilityPredicates(allPredicates);
 			allPredicates.addAll(divPreds);
 			for (final IPredicate pred : divPreds) {

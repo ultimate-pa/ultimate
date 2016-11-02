@@ -64,10 +64,10 @@ public class ImpulseChecker extends CodeChecker {
 	private final RedirectionFinder mCloneFinder;
 	private int mNodeId;
 	
-	public ImpulseChecker(final IElement root, final CfgSmtToolkit msmtManager, final RootNode moriginalRoot,
+	public ImpulseChecker(final IElement root, final CfgSmtToolkit mcsToolkit, final RootNode moriginalRoot,
 			final ImpRootNode mgraphRoot, final GraphWriter mgraphWriter, final IHoareTripleChecker edgeChecker,
 			final PredicateUnifier predicateUnifier, final ILogger logger) {
-		super(root, msmtManager, moriginalRoot, mgraphRoot, mgraphWriter, edgeChecker, predicateUnifier, logger);
+		super(root, mcsToolkit, moriginalRoot, mgraphRoot, mgraphWriter, edgeChecker, predicateUnifier, logger);
 		mCloneFinder = new RedirectionFinder(this);
 		mNodeId = 0;
 	}

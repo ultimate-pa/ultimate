@@ -162,7 +162,7 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 	 * 
 	 * @param name
 	 * @param rootNode
-	 * @param smtManager
+	 * @param csToolkit
 	 * @param traceAbstractionBenchmarks
 	 * @param taPrefs
 	 * @param errorLocs
@@ -170,12 +170,12 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 	 * @param computeHoareAnnotation
 	 * @param services
 	 */
-	public CegarLoopSWBnonRecursive(final String name, final RootNode rootNode, final CfgSmtToolkit smtManager, final PredicateFactory predicateFactory,
+	public CegarLoopSWBnonRecursive(final String name, final RootNode rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final TraceAbstractionBenchmarks traceAbstractionBenchmarks, final TAPreferences taPrefs,
 			final Collection<ProgramPoint> errorLocs, final InterpolationTechnique interpolation,
 			final boolean computeHoareAnnotation, final IUltimateServiceProvider services,
 			final IToolchainStorage storage) {
-		super(name, rootNode, smtManager, predicateFactory, taPrefs, errorLocs, interpolation, computeHoareAnnotation, services, storage);
+		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, interpolation, computeHoareAnnotation, services, storage);
 		mErrorPathHistory = new ArrayList<>();
 		mnofStates = new ArrayList<>();
 	}
@@ -589,7 +589,7 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 		}
 		// test if we found a new path which can be added
 		final InterpolatingTraceCheckerCraig traceChecker = new InterpolatingTraceCheckerCraig(pre, post,
-				pendingContexts, word, mSmtManager.getManagedScript(), mRootNode.getRootAnnot().getModGlobVarManager(),
+				pendingContexts, word, mCsToolkit.getManagedScript(), mRootNode.getRootAnnot().getModGlobVarManager(),
 				/*
 				 * TODO: When Matthias introduced this parameter he set the argument to
 				 * AssertCodeBlockOrder.NOT_INCREMENTALLY. Check if you want to set this to another value.

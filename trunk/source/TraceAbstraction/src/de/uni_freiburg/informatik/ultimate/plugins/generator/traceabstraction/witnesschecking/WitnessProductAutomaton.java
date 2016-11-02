@@ -64,7 +64,7 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNodeAnnotation;
 
 public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeBlock, IPredicate> {
-	private final CfgSmtToolkit mSmtManager;
+	private final CfgSmtToolkit mCsToolkit;
 	private final PredicateFactory mPredicateFactory;
 	private final INestedWordAutomatonSimple<CodeBlock, IPredicate> mControlFlowAutomaton;
 	private final INestedWordAutomatonSimple<WitnessEdge, WitnessNode> mWitnessAutomaton;
@@ -122,11 +122,11 @@ public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeB
 			final IUltimateServiceProvider services,
 			final INestedWordAutomatonSimple<CodeBlock, IPredicate> controlFlowAutomaton,
 			final INestedWordAutomatonSimple<WitnessEdge, WitnessNode> witnessAutomaton,
-			final CfgSmtToolkit smtManager, final PredicateFactory predicateFactory) {
+			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory) {
 		mWitnessLocationMatcher = new WitnessLocationMatcher(services, controlFlowAutomaton, witnessAutomaton);
 		mControlFlowAutomaton = controlFlowAutomaton;
 		mWitnessAutomaton = witnessAutomaton;
-		mSmtManager = smtManager;
+		mCsToolkit = csToolkit;
 		mPredicateFactory = predicateFactory;
 		mInitialStates = constructInitialStates();
 		mFinalStates = new HashSet<>();

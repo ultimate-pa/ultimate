@@ -68,7 +68,7 @@ public abstract class CFG2Automaton {
 	private final XnfConversionTechnique mXnfConversionTechnique;
 
 	private final RootAnnot mRootAnnot;
-	private final CfgSmtToolkit mSmtManager;
+	private final CfgSmtToolkit mCsToolkit;
 	private final PredicateFactory mPredicateFactory;
 	private final IStateFactory<IPredicate> mContentFactory;
 	protected ArrayList<INestedWordAutomaton<CodeBlock, IPredicate>> mAutomata;
@@ -77,7 +77,7 @@ public abstract class CFG2Automaton {
 	private static final String mInitProcedure = "~init";
 
 	public CFG2Automaton(final RootNode rootNode, final IStateFactory<IPredicate> contentFactory, 
-			final CfgSmtToolkit smtManager, final PredicateFactory predicateFactory, final IUltimateServiceProvider services, 
+			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final IUltimateServiceProvider services, 
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -86,7 +86,7 @@ public abstract class CFG2Automaton {
 		// mRootNode = rootNode;
 		mRootAnnot = rootNode.getRootAnnot();
 		mContentFactory = contentFactory;
-		mSmtManager = smtManager;
+		mCsToolkit = csToolkit;
 		mPredicateFactory = predicateFactory;
 	}
 
@@ -217,7 +217,7 @@ public abstract class CFG2Automaton {
 		// add states
 		for (final ProgramPoint locNode : allNodes) {
 			final boolean isErrorLocation = locNode.isErrorLocation();
-			final Term trueTerm = mSmtManager.getManagedScript().getScript().term("true");
+			final Term trueTerm = mCsToolkit.getManagedScript().getScript().term("true");
 			final IPredicate automatonState = mPredicateFactory.newSPredicate(locNode, trueTerm);
 			nwa.addState(false, isErrorLocation, automatonState);
 			nodes2States.put(locNode, automatonState);
@@ -248,7 +248,7 @@ public abstract class CFG2Automaton {
 
 		mLogger.debug("Step: SharedVarsInit part");
 		final ProgramPoint entryOfInitProc = (ProgramPoint) mSharedVarsInit.getSource();
-		final Term trueTerm = mSmtManager.getManagedScript().getScript().term("true");
+		final Term trueTerm = mCsToolkit.getManagedScript().getScript().term("true");
 		final IPredicate initialContent = mPredicateFactory.newSPredicate(entryOfInitProc, trueTerm);
 		nwa.addState(true, false, initialContent);
 		IPredicate automatonSuccState;

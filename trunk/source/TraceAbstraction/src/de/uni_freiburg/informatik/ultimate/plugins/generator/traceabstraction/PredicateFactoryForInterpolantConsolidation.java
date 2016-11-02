@@ -50,10 +50,10 @@ public class PredicateFactoryForInterpolantConsolidation extends PredicateFactor
 	private final Map<IPredicate, Set<IPredicate>> mLocationsToSetOfPredicates;
 	private final Map<IPredicate, AbstractMap.SimpleEntry<IPredicate, IPredicate>> mIntersectedPredicateToArgumentPredicates;
 	private final Map<AbstractMap.SimpleEntry<IPredicate, IPredicate>, IPredicate> mArgumentPredicatesToIntersectedPredicate;
-	public PredicateFactoryForInterpolantConsolidation(final CfgSmtToolkit smtManager,
+	public PredicateFactoryForInterpolantConsolidation(final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory,
 			final boolean taPrefs) {
-		super(smtManager, predicateFactory, taPrefs);
+		super(csToolkit, predicateFactory, taPrefs);
 		mLocationsToSetOfPredicates = new HashMap<IPredicate, Set<IPredicate>>();
 		mIntersectedPredicateToArgumentPredicates = new HashMap<IPredicate, AbstractMap.SimpleEntry<IPredicate, IPredicate>>();
 		mArgumentPredicatesToIntersectedPredicate = new HashMap<AbstractMap.SimpleEntry<IPredicate, IPredicate>, IPredicate>();

@@ -106,7 +106,7 @@ public abstract class AbstractCegarLoop {
 	/**
 	 * Intermediate layer to encapsulate communication with SMT solvers.
 	 */
-	protected final CfgSmtToolkit mSmtManager;
+	protected final CfgSmtToolkit mCsToolkit;
 	protected final PredicateFactory mPredicateFactory;
 	
 	protected final ModifiableGlobalVariableManager mModGlobVarManager;
@@ -180,7 +180,7 @@ public abstract class AbstractCegarLoop {
 	private static final boolean DUMP_BIGGEST_AUTOMATON = false;
 	
 	public AbstractCegarLoop(final IUltimateServiceProvider services, final IToolchainStorage storage,
-			final String name, final RootNode rootNode, final CfgSmtToolkit smtManager, final PredicateFactory predicateFactory, final TAPreferences taPrefs,
+			final String name, final RootNode rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final TAPreferences taPrefs,
 			final Collection<ProgramPoint> errorLocs, final ILogger logger) {
 		mServices = services;
 		mLogger = logger;
@@ -190,7 +190,7 @@ public abstract class AbstractCegarLoop {
 		mModGlobVarManager = rootNode.getRootAnnot().getModGlobVarManager();
 		mName = name;
 		mRootNode = rootNode;
-		mSmtManager = smtManager;
+		mCsToolkit = csToolkit;
 		mPredicateFactory = predicateFactory;
 		mPref = taPrefs;
 		mErrorLocs = errorLocs;
@@ -276,7 +276,7 @@ public abstract class AbstractCegarLoop {
 	}
 	
 	public CfgSmtToolkit getSmtManager() {
-		return mSmtManager;
+		return mCsToolkit;
 	}
 	
 	public String errorLocs() {
