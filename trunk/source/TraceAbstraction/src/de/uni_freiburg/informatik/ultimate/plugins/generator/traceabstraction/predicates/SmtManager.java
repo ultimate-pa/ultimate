@@ -39,6 +39,7 @@ public class SmtManager {
 
 	private final ManagedScript mManagedScript;
 	private final ModifiableGlobalVariableManager mModifiableGlobals;
+	private final Boogie2SmtSymbolTable mSymbolTable;
 
 
 
@@ -49,6 +50,7 @@ public class SmtManager {
 			final Boogie2SmtSymbolTable symbolTable,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		mManagedScript = managedScript;
+		mSymbolTable = symbolTable;
 		mModifiableGlobals = modifiableGlobals;
 		mPredicateFactory = new PredicateFactory(services, managedScript, 
 				symbolTable, simplificationTechnique, xnfConversionTechnique);
@@ -67,6 +69,12 @@ public class SmtManager {
 	public ModifiableGlobalVariableManager getModifiableGlobals() {
 		return mModifiableGlobals;
 	}
+
+	public Boogie2SmtSymbolTable getSymbolTable() {
+		return mSymbolTable;
+	}
+	
+	
 	
 	
 
