@@ -3,9 +3,9 @@ package de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.speculatio
 import java.util.Optional;
 import java.util.function.BooleanSupplier;
 
-import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.SearchStep;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.ISearchStep;
 
 @FunctionalInterface
-public interface CancelableStepTest<T extends SearchStep<?, T>> {
+public interface CancelableStepTest<T extends ISearchStep<?, T>> {
 	Optional<Boolean> test(T step, BooleanSupplier isCanceled);
 }

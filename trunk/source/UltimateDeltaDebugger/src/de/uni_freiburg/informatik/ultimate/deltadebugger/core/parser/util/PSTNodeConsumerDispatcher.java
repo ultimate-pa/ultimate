@@ -16,63 +16,63 @@ public final class PSTNodeConsumerDispatcher {
 
 		@Override
 		public int defaultVisit(final IPSTNode node) {
-			consumer.on(node);
+			mConsumer.on(node);
 			return PROCESS_ABORT;
 		}
 
 		@Override
 		public int visit(final IPSTComment comment) {
-			consumer.on(comment);
+			mConsumer.on(comment);
 			return PROCESS_ABORT;
 		}
 
 		@Override
 		public int visit(final IPSTConditionalBlock conditionalBlock) {
-			consumer.on(conditionalBlock);
+			mConsumer.on(conditionalBlock);
 			return PROCESS_ABORT;
 		}
 
 		@Override
 		public int visit(final IPSTDirective directive) {
-			consumer.on(directive);
+			mConsumer.on(directive);
 			return PROCESS_ABORT;
 		}
 
 		@Override
 		public int visit(final IPSTIncludeDirective include) {
-			consumer.on(include);
+			mConsumer.on(include);
 			return PROCESS_ABORT;
 		}
 
 		@Override
 		public int visit(final IPSTLiteralRegion literalRegion) {
-			consumer.on(literalRegion);
+			mConsumer.on(literalRegion);
 			return PROCESS_ABORT;
 		}
 
 		@Override
 		public int visit(final IPSTMacroExpansion expansion) {
-			consumer.on(expansion);
+			mConsumer.on(expansion);
 			return PROCESS_ABORT;
 		}
 
 		@Override
 		public int visit(final IPSTRegularNode node) {
-			consumer.on(node);
+			mConsumer.on(node);
 			return PROCESS_ABORT;
 		}
 
 		@Override
 		public int visit(final IPSTTranslationUnit tu) {
-			consumer.on(tu);
+			mConsumer.on(tu);
 			return PROCESS_ABORT;
 		}
 	}
 
-	private final IPSTNodeConsumer consumer;
+	private final IPSTNodeConsumer mConsumer;
 
 	public PSTNodeConsumerDispatcher(final IPSTNodeConsumer consumer) {
-		this.consumer = consumer;
+		mConsumer = consumer;
 	}
 
 	public void dispatch(final IPSTNode node) {

@@ -10,74 +10,75 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.util.TokenC
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.SourceRewriter;
 
 public class DeleteConditionalExpressionChange extends Change {
+	private static final int NUM_OPERANDS = 3;
+	
 	class CombinedChange extends Change {
-		DeleteConditionalExpressionChange[] parts = new DeleteConditionalExpressionChange[3];
+		private DeleteConditionalExpressionChange[] mParts = new DeleteConditionalExpressionChange[NUM_OPERANDS];
 
 		CombinedChange(final IPSTNode node) {
 			super(node);
 		}
 
 		void addChange(final DeleteConditionalExpressionChange change) {
-			parts[change.position] = change;
+			mParts[change.mPosition] = change;
 		}
 
 		@Override
 		public void apply(final SourceRewriter rewriter) {
-			final long count = Arrays.stream(parts).filter(Objects::nonNull).count();
-			if (count == 3) {
+			final long count = Arrays.stream(mParts).filter(Objects::nonNull).count();
+			if (count == NUM_OPERANDS) {
 				// Replace whole expression by the replacement of the negative result
-				deleteNodeText(rewriter, parts[0].getNode());
-				replaceByWhitespace(rewriter, tCOLON);
-				deleteNodeText(rewriter, parts[1].getNode());
-				replaceByWhitespace(rewriter, tQUESTION);
-				rewriter.replace(parts[2].getNode(), parts[2].replacement);
-
+				deleteNodeText(rewriter, mParts[0].getNode());
+				replaceByWhitespace(rewriter, mTokCOLON);
+				deleteNodeText(rewriter, mParts[1].getNode());
+				replaceByWhitespace(rewriter, mTokQUESTION);
+				rewriter.replace(mParts[2].getNode(), mParts[2].mReplacement);
 			} else if (count == 2) {
-				if (parts[0] == null) {
+				if (mParts[0] == null) {
 					// replace both results (keep condition and ? : tokens)
-					rewriter.replace(parts[1].getNode(), parts[1].replacement);
-					rewriter.replace(parts[2].getNode(), parts[2].replacement);
+					rewriter.replace(mParts[1].getNode(), mParts[1].mReplacement);
+					rewriter.replace(mParts[2].getNode(), mParts[2].mReplacement);
 				} else {
 					// delete condition and tokens and one of the results
-					deleteNodeText(rewriter, parts[0].getNode());
-					replaceByWhitespace(rewriter, tQUESTION);
-					replaceByWhitespace(rewriter, tCOLON);
-					if (parts[1] != null) {
-						deleteNodeText(rewriter, parts[1].getNode());
+					deleteNodeText(rewriter, mParts[0].getNode());
+					replaceByWhitespace(rewriter, mTokQUESTION);
+					replaceByWhitespace(rewriter, mTokCOLON);
+					if (mParts[1] != null) {
+						deleteNodeText(rewriter, mParts[1].getNode());
 					} else {
-						deleteNodeText(rewriter, parts[2].getNode());
+						deleteNodeText(rewriter, mParts[2].getNode());
 					}
 				}
 			} else if (count == 1) {
 				// replace one of the three expressions
-				if (parts[0] != null) {
-					rewriter.replace(parts[0].getNode(), parts[0].replacement);
-				} else if (parts[1] != null) {
-					rewriter.replace(parts[1].getNode(), parts[1].replacement);
+				if (mParts[0] != null) {
+					rewriter.replace(mParts[0].getNode(), mParts[0].mReplacement);
+				} else if (mParts[1] != null) {
+					rewriter.replace(mParts[1].getNode(), mParts[1].mReplacement);
 				} else {
-					rewriter.replace(parts[2].getNode(), parts[2].replacement);
+					rewriter.replace(mParts[2].getNode(), mParts[2].mReplacement);
 				}
 			}
 		}
 
 	}
 
-	final IPSTRegularNode conditionalExpressionNode;
-	final int position;
-	final Token tQUESTION;
-	final Token tCOLON;
+	private final IPSTRegularNode mConditionalExpressionNode;
+	private final int mPosition;
+	private final Token mTokQUESTION;
+	private final Token mTokCOLON;
 
-	final String replacement;
+	private final String mReplacement;
 
 	public DeleteConditionalExpressionChange(final IPSTRegularNode node,
 			final IPSTRegularNode conditionalExpressionNode, final Token tQUESTION, final Token tCOLON,
 			final int position, final String replacement) {
 		super(node);
-		this.conditionalExpressionNode = Objects.requireNonNull(conditionalExpressionNode);
-		this.position = position;
-		this.tQUESTION = Objects.requireNonNull(tQUESTION);
-		this.tCOLON = Objects.requireNonNull(tCOLON);
-		this.replacement = Objects.requireNonNull(replacement);
+		this.mConditionalExpressionNode = Objects.requireNonNull(conditionalExpressionNode);
+		this.mPosition = position;
+		this.mTokQUESTION = Objects.requireNonNull(tQUESTION);
+		this.mTokCOLON = Objects.requireNonNull(tCOLON);
+		this.mReplacement = Objects.requireNonNull(replacement);
 		if (position < 0 || position > 2) {
 			throw new IllegalArgumentException();
 		}
@@ -95,13 +96,13 @@ public class DeleteConditionalExpressionChange extends Change {
 
 	@Override
 	public String toString() {
-		return "Delete/Replace conditional expression part " + getNode() + " by \"" + replacement + "\"" + "(from "
-				+ conditionalExpressionNode + ")";
+		return "Delete/Replace conditional expression part " + getNode() + " by \"" + mReplacement + "\"" + "(from "
+				+ mConditionalExpressionNode + ")";
 	}
 
 	@Override
 	public void updateDeferredChange(final Map<IPSTNode, Change> deferredChangeMap) {
-		((CombinedChange) deferredChangeMap.computeIfAbsent(conditionalExpressionNode, CombinedChange::new))
+		((CombinedChange) deferredChangeMap.computeIfAbsent(mConditionalExpressionNode, CombinedChange::new))
 				.addChange(this);
 	}
 }

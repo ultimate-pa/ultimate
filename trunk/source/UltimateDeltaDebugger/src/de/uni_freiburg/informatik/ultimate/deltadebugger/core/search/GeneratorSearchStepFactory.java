@@ -6,57 +6,69 @@ import java.util.Optional;
 
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.IChangeHandle;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.IVariantGenerator;
-import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.minimizers.DuplicateVariantTracker;
-import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.minimizers.Minimizer;
-import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.minimizers.MinimizerStep;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.minimizers.IDuplicateVariantTracker;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.minimizers.IMinimizer;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.minimizers.IMinimizerStep;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.util.ListUtils;
 
 /**
  * Creates a GeneratorSearchStep that uses a given minimizer and duplicate tracker to search for the best set of active
  * changes supported by a VariantGenerator. Also includes the iteration over multiple chained VariantGenerators.
  */
-public class GeneratorSearchStepFactory {
-	private class GeneratorSearchStepContext {
-		private abstract class BaseStep implements GeneratorSearchStep {
-			protected final MinimizerStep<IChangeHandle> minimizerStep;
-			protected final List<IChangeHandle> activeChanges;
+public final class GeneratorSearchStepFactory {
+	private final class GeneratorSearchStepContext {
+		private final IVariantGenerator mGenerator;
+		private final IDuplicateVariantTracker<IChangeHandle> mDuplicateTracker;
 
-			private BaseStep(final MinimizerStep<IChangeHandle> minimizerStep, final List<IChangeHandle> activeChanges) {
-				this.minimizerStep = minimizerStep;
-				this.activeChanges = activeChanges;
+		private GeneratorSearchStepContext(final IVariantGenerator generator) {
+			mGenerator = generator;
+			mDuplicateTracker = mDuplicateTrackerFactory.create(mMinimizer, generator.getChanges());
+		}
+
+		List<IChangeHandle> complementOf(final List<IChangeHandle> changes) {
+			return ListUtils.complementOfSubsequence(changes, mGenerator.getChanges());
+		}
+		
+		private abstract class BaseStep implements IGeneratorSearchStep {
+			protected final IMinimizerStep<IChangeHandle> mMinimizerStep;
+			protected final List<IChangeHandle> mActiveChanges;
+			
+			public BaseStep(final IMinimizerStep<IChangeHandle> minimizerStep, final List<IChangeHandle> activeChanges) {
+				mMinimizerStep = minimizerStep;
+				mActiveChanges = activeChanges;
 			}
 
 			@Override
 			public List<IChangeHandle> getActiveChanges() {
-				return activeChanges;
+				return mActiveChanges;
 			}
 
 			@Override
-			public DuplicateVariantTracker<IChangeHandle> getDuplicateTracker() {
-				return duplicateTracker;
+			public IDuplicateVariantTracker<IChangeHandle> getDuplicateTracker() {
+				return mDuplicateTracker;
 			}
 
 			@Override
-			public MinimizerStep<IChangeHandle> getMinimizerStep() {
-				return minimizerStep;
+			public IMinimizerStep<IChangeHandle> getMinimizerStep() {
+				return mMinimizerStep;
 			}
 
 			@Override
 			public IVariantGenerator getVariantGenerator() {
-				return generator;
+				return mGenerator;
 			}
 
 		}
 
-		private class CompletedStep extends BaseStep {
-			private CompletedStep(final MinimizerStep<IChangeHandle> minimizerStep,
+		private final class CompletedStep extends BaseStep {
+			private CompletedStep(final IMinimizerStep<IChangeHandle> minimizerStep,
 					final List<IChangeHandle> activeChanges) {
 				super(minimizerStep, activeChanges);
 			}
 
 			@Override
 			public String getResult() {
-				return generator.apply(activeChanges);
+				return mGenerator.apply(mActiveChanges);
 			}
 
 			@Override
@@ -70,25 +82,25 @@ public class GeneratorSearchStepFactory {
 			}
 
 			@Override
-			public GeneratorSearchStep next(final boolean keepVariant) {
+			public IGeneratorSearchStep next(final boolean keepVariant) {
 				throw new NoSuchElementException();
 			}
 		}
 
-		private class Step extends BaseStep {
+		private final class Step extends BaseStep {
 
-			private Step(final MinimizerStep<IChangeHandle> minimizerStep) {
+			private Step(final IMinimizerStep<IChangeHandle> minimizerStep) {
 				super(minimizerStep, complementOf(minimizerStep.getVariant()));
 			}
 
 			@Override
 			public String getResult() {
-				return generator.apply(complementOf(minimizerStep.getResult()));
+				return mGenerator.apply(complementOf(mMinimizerStep.getResult()));
 			}
 
 			@Override
 			public String getVariant() {
-				return generator.apply(activeChanges);
+				return mGenerator.apply(mActiveChanges);
 			}
 
 			@Override
@@ -97,15 +109,15 @@ public class GeneratorSearchStepFactory {
 			}
 
 			@Override
-			public GeneratorSearchStep next(final boolean keepVariant) {
-				final MinimizerStep<IChangeHandle> nextMinimizerStep =
-						skipDuplicateSteps(minimizerStep.next(keepVariant));
+			public IGeneratorSearchStep next(final boolean keepVariant) {
+				final IMinimizerStep<IChangeHandle> nextMinimizerStep =
+						skipDuplicateSteps(mMinimizerStep.next(keepVariant));
 				if (!nextMinimizerStep.isDone()) {
 					return new Step(nextMinimizerStep);
 				}
 
 				final List<IChangeHandle> nextActiveChanges = complementOf(nextMinimizerStep.getResult());
-				final Optional<IVariantGenerator> nextGenerator = generator.next(nextActiveChanges);
+				final Optional<IVariantGenerator> nextGenerator = mGenerator.next(nextActiveChanges);
 				if (nextGenerator.isPresent()) {
 					return create(nextGenerator.get());
 				}
@@ -113,32 +125,19 @@ public class GeneratorSearchStepFactory {
 				return new CompletedStep(nextMinimizerStep, nextActiveChanges);
 			}
 
-			private MinimizerStep<IChangeHandle> skipDuplicateSteps(final MinimizerStep<IChangeHandle> step) {
-				MinimizerStep<IChangeHandle> current = step;
-				while (!current.isDone() && duplicateTracker.contains(current.getVariant())) {
+			private IMinimizerStep<IChangeHandle> skipDuplicateSteps(final IMinimizerStep<IChangeHandle> step) {
+				IMinimizerStep<IChangeHandle> current = step;
+				while (!current.isDone() && mDuplicateTracker.contains(current.getVariant())) {
 					current = current.next(false);
 				}
 				return current;
 			}
 		}
-
-		private final IVariantGenerator generator;
-
-		private final DuplicateVariantTracker<IChangeHandle> duplicateTracker;
-
-		private GeneratorSearchStepContext(final IVariantGenerator generator) {
-			this.generator = generator;
-			duplicateTracker = duplicateTrackerFactory.create(minimizer, generator.getChanges());
-		}
-
-		private List<IChangeHandle> complementOf(final List<IChangeHandle> changes) {
-			return ListUtils.complementOfSubsequence(changes, generator.getChanges());
-		}
 	}
 
-	private final Minimizer minimizer;
+	private final IMinimizer mMinimizer;
 
-	private final DuplicateVariantTrackerFactory duplicateTrackerFactory;
+	private final IDuplicateVariantTrackerFactory mDuplicateTrackerFactory;
 
 	/**
 	 * Create a factory object that uses the specified minimizer and duplicate tracker.
@@ -148,10 +147,10 @@ public class GeneratorSearchStepFactory {
 	 * @param duplicateTrackerFactory
 	 *            function to create a duplicate tracker for a certain input
 	 */
-	public GeneratorSearchStepFactory(final Minimizer minimizer,
-			final DuplicateVariantTrackerFactory duplicateTrackerFactory) {
-		this.minimizer = minimizer;
-		this.duplicateTrackerFactory = duplicateTrackerFactory;
+	public GeneratorSearchStepFactory(final IMinimizer minimizer,
+			final IDuplicateVariantTrackerFactory duplicateTrackerFactory) {
+		this.mMinimizer = minimizer;
+		this.mDuplicateTrackerFactory = duplicateTrackerFactory;
 	}
 
 	/**
@@ -160,9 +159,9 @@ public class GeneratorSearchStepFactory {
 	 * @param generator
 	 * @return inital search step
 	 */
-	public GeneratorSearchStep create(final IVariantGenerator generator) {
+	public IGeneratorSearchStep create(final IVariantGenerator generator) {
 		final GeneratorSearchStepContext context = new GeneratorSearchStepContext(generator);
-		final MinimizerStep<IChangeHandle> minimizerStep = minimizer.create(generator.getChanges());
+		final IMinimizerStep<IChangeHandle> minimizerStep = mMinimizer.create(generator.getChanges());
 		if (!minimizerStep.isDone()) {
 			return context.new Step(minimizerStep);
 		}

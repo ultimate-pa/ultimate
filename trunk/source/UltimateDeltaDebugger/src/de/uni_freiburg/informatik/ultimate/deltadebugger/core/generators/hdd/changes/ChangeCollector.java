@@ -77,6 +77,7 @@ public class ChangeCollector {
 	 * @param operandNode
 	 * @param fullReplacement
 	 *            replacement to use in case changes that delete both operands are applied
+	 * @return true if a change has been added
 	 */
 	public boolean addDeleteBinaryExpressionOperandChange(final IPSTRegularNode operandNode,
 			final String fullReplacement) {

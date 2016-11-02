@@ -26,7 +26,7 @@ public class PSTIncludeDirective extends PSTDirective implements IPSTIncludeDire
 
 	@Override
 	public IASTPreprocessorIncludeStatement getASTNode() {
-		return (IASTPreprocessorIncludeStatement) astNode;
+		return (IASTPreprocessorIncludeStatement) mAstNode;
 	}
 
 }

@@ -110,8 +110,8 @@ import org.eclipse.cdt.core.dom.ast.gnu.c.IGCCASTArrayRangeDesignator;
 
 public final class ASTNodeFunctionDispatcher<T> {
 	private final class DispatchVisitor extends ASTVisitor {
-		final IASTNode expectedNode;
-		Optional<T> result = Optional.empty();
+		private final IASTNode mExpectedNode;
+		private Optional<T> mResult = Optional.empty();
 
 		DispatchVisitor(final IASTNode expectedNode) {
 			// Visit everything that can be visited to get exactly one call to
@@ -124,170 +124,170 @@ public final class ASTNodeFunctionDispatcher<T> {
 
 			// We need to make sure that the visit() overload is actually called
 			// for the node we want and not a child, though
-			this.expectedNode = expectedNode;
+			mExpectedNode = expectedNode;
 		}
 
 		public T dispatchByVisitor() {
-			expectedNode.accept(this);
-			return result.orElseGet(this::dispatchNonVisitedNode);
+			mExpectedNode.accept(this);
+			return mResult.orElseGet(this::dispatchNonVisitedNode);
 		}
 
 		private T dispatchNonVisitedNode() {
-			if (expectedNode instanceof IASTPreprocessorMacroExpansion) {
-				return func.on((IASTPreprocessorMacroExpansion) expectedNode);
-			} else if (expectedNode instanceof IASTComment) {
-				return func.on((IASTComment) expectedNode);
-			} else if (expectedNode instanceof IASTPreprocessorStatement) {
-				return dispatch((IASTPreprocessorStatement) expectedNode);
-			} else if (expectedNode instanceof IASTProblem) {
-				return func.on((IASTProblem) expectedNode);
-			} else if (expectedNode instanceof IASTAlignmentSpecifier) {
-				return func.on((IASTAlignmentSpecifier) expectedNode);
+			if (mExpectedNode instanceof IASTPreprocessorMacroExpansion) {
+				return mFunc.on((IASTPreprocessorMacroExpansion) mExpectedNode);
+			} else if (mExpectedNode instanceof IASTComment) {
+				return mFunc.on((IASTComment) mExpectedNode);
+			} else if (mExpectedNode instanceof IASTPreprocessorStatement) {
+				return dispatch((IASTPreprocessorStatement) mExpectedNode);
+			} else if (mExpectedNode instanceof IASTProblem) {
+				return mFunc.on((IASTProblem) mExpectedNode);
+			} else if (mExpectedNode instanceof IASTAlignmentSpecifier) {
+				return mFunc.on((IASTAlignmentSpecifier) mExpectedNode);
 			} else {
-				return func.on(expectedNode);
+				return mFunc.on(mExpectedNode);
 			}
 		}
 
 		@Override
 		public int visit(final IASTArrayModifier arrayModifier) {
-			if (expectedNode == arrayModifier) {
-				result = Optional.of(dispatch(arrayModifier));
+			if (mExpectedNode == arrayModifier) {
+				mResult = Optional.of(dispatch(arrayModifier));
 			}
 			return PROCESS_ABORT;
 		}
 
 		@Override
 		public int visit(final IASTAttribute attribute) {
-			if (expectedNode == attribute) {
-				result = Optional.of(func.on(attribute));
+			if (mExpectedNode == attribute) {
+				mResult = Optional.of(mFunc.on(attribute));
 			}
 			return PROCESS_ABORT;
 		}
 
 		@Override
 		public int visit(final IASTAttributeSpecifier attributeSpecifier) {
-			if (expectedNode == attributeSpecifier) {
-				result = Optional.of(dispatch(attributeSpecifier));
+			if (mExpectedNode == attributeSpecifier) {
+				mResult = Optional.of(dispatch(attributeSpecifier));
 			}
 			return PROCESS_ABORT;
 		}
 
 		@Override
 		public int visit(final IASTDeclaration declaration) {
-			if (expectedNode == declaration) {
-				result = Optional.of(dispatch(declaration));
+			if (mExpectedNode == declaration) {
+				mResult = Optional.of(dispatch(declaration));
 			}
 			return PROCESS_ABORT;
 		}
 
 		@Override
 		public int visit(final IASTDeclarator declarator) {
-			if (expectedNode == declarator) {
-				result = Optional.of(dispatch(declarator));
+			if (mExpectedNode == declarator) {
+				mResult = Optional.of(dispatch(declarator));
 			}
 			return PROCESS_ABORT;
 		}
 
 		@Override
 		public int visit(final IASTDeclSpecifier declSpecifier) {
-			if (expectedNode == declSpecifier) {
-				result = Optional.of(dispatch(declSpecifier));
+			if (mExpectedNode == declSpecifier) {
+				mResult = Optional.of(dispatch(declSpecifier));
 			}
 			return PROCESS_ABORT;
 		}
 
 		@Override
 		public int visit(final IASTEnumerator enumerator) {
-			if (expectedNode == enumerator) {
-				result = Optional.of(func.on(enumerator));
+			if (mExpectedNode == enumerator) {
+				mResult = Optional.of(mFunc.on(enumerator));
 			}
 			return PROCESS_ABORT;
 		}
 
 		@Override
 		public int visit(final IASTExpression expression) {
-			if (expectedNode == expression) {
-				result = Optional.of(dispatch(expression));
+			if (mExpectedNode == expression) {
+				mResult = Optional.of(dispatch(expression));
 			}
 			return PROCESS_ABORT;
 		}
 
 		@Override
 		public int visit(final IASTInitializer initializer) {
-			if (expectedNode == initializer) {
-				result = Optional.of(dispatch(initializer));
+			if (mExpectedNode == initializer) {
+				mResult = Optional.of(dispatch(initializer));
 			}
 			return PROCESS_ABORT;
 		}
 
 		@Override
 		public int visit(final IASTName name) {
-			if (expectedNode == name) {
-				result = Optional.of(dispatch(name));
+			if (mExpectedNode == name) {
+				mResult = Optional.of(dispatch(name));
 			}
 			return PROCESS_ABORT;
 		}
 
 		@Override
 		public int visit(final IASTParameterDeclaration parameterDeclaration) {
-			if (expectedNode == parameterDeclaration) {
-				result = Optional.of(func.on(parameterDeclaration));
+			if (mExpectedNode == parameterDeclaration) {
+				mResult = Optional.of(mFunc.on(parameterDeclaration));
 			}
 			return PROCESS_ABORT;
 		}
 
 		@Override
 		public int visit(final IASTPointerOperator pointerOperator) {
-			if (expectedNode == pointerOperator) {
-				result = Optional.of(dispatch(pointerOperator));
+			if (mExpectedNode == pointerOperator) {
+				mResult = Optional.of(dispatch(pointerOperator));
 			}
 			return PROCESS_ABORT;
 		}
 
 		@Override
 		public int visit(final IASTProblem problem) {
-			if (expectedNode == problem) {
-				result = Optional.of(func.on(problem));
+			if (mExpectedNode == problem) {
+				mResult = Optional.of(mFunc.on(problem));
 			}
 			return PROCESS_ABORT;
 		}
 
 		@Override
 		public int visit(final IASTStatement statement) {
-			if (expectedNode == statement) {
-				result = Optional.of(dispatch(statement));
+			if (mExpectedNode == statement) {
+				mResult = Optional.of(dispatch(statement));
 			}
 			return PROCESS_ABORT;
 		}
 
 		@Override
 		public int visit(final IASTToken token) {
-			if (expectedNode == token) {
-				result = Optional.of(dispatch(token));
+			if (mExpectedNode == token) {
+				mResult = Optional.of(dispatch(token));
 			}
 			return PROCESS_ABORT;
 		}
 
 		@Override
 		public int visit(final IASTTranslationUnit translationUnit) {
-			if (expectedNode == translationUnit) {
-				result = Optional.of(func.on(translationUnit));
+			if (mExpectedNode == translationUnit) {
+				mResult = Optional.of(mFunc.on(translationUnit));
 			}
 			return PROCESS_ABORT;
 		}
 
 		@Override
 		public int visit(final IASTTypeId typeId) {
-			if (expectedNode == typeId) {
-				result = Optional.of(dispatch(typeId));
+			if (mExpectedNode == typeId) {
+				mResult = Optional.of(dispatch(typeId));
 			}
 			return PROCESS_ABORT;
 		}
 
 		@Override
 		public int visit(final ICASTDesignator cDesignator) {
-			if (expectedNode == cDesignator) {
-				result = Optional.of(dispatch(cDesignator));
+			if (mExpectedNode == cDesignator) {
+				mResult = Optional.of(dispatch(cDesignator));
 			}
 			return PROCESS_ABORT;
 		}
@@ -329,133 +329,133 @@ public final class ASTNodeFunctionDispatcher<T> {
 
 	}
 
-	final IASTNodeFunction<T> func;
+	private final IASTNodeFunction<T> mFunc;
 
 	public ASTNodeFunctionDispatcher(final IASTNodeFunction<T> func) {
-		this.func = func;
+		mFunc = func;
 	}
 
 	public T dispatch(final IASTArrayModifier arrayModifier) {
 		if (arrayModifier instanceof ICASTArrayModifier) {
-			return func.on((ICASTArrayModifier) arrayModifier);
+			return mFunc.on((ICASTArrayModifier) arrayModifier);
 		} else {
-			return func.on(arrayModifier);
+			return mFunc.on(arrayModifier);
 		}
 	}
 
 	public T dispatch(final IASTAttributeSpecifier attributeSpecifier) {
 		if (attributeSpecifier instanceof IGCCASTAttributeSpecifier) {
-			return func.on((IGCCASTAttributeSpecifier) attributeSpecifier);
+			return mFunc.on((IGCCASTAttributeSpecifier) attributeSpecifier);
 		} else {
-			return func.on(attributeSpecifier);
+			return mFunc.on(attributeSpecifier);
 		}
 	}
 
 	public T dispatch(final IASTDeclaration declaration) {
 		if (declaration instanceof IASTSimpleDeclaration) {
-			return func.on((IASTSimpleDeclaration) declaration);
+			return mFunc.on((IASTSimpleDeclaration) declaration);
 		} else if (declaration instanceof IASTFunctionDefinition) {
-			return func.on((IASTFunctionDefinition) declaration);
+			return mFunc.on((IASTFunctionDefinition) declaration);
 		} else if (declaration instanceof IASTProblemDeclaration) {
-			return func.on((IASTProblemDeclaration) declaration);
+			return mFunc.on((IASTProblemDeclaration) declaration);
 		} else if (declaration instanceof IASTASMDeclaration) {
-			return func.on((IASTASMDeclaration) declaration);
+			return mFunc.on((IASTASMDeclaration) declaration);
 		} else {
-			return func.on(declaration);
+			return mFunc.on(declaration);
 		}
 	}
 
 	public T dispatch(final IASTDeclarator declarator) {
 		if (declarator instanceof IASTFunctionDeclarator) {
 			if (declarator instanceof IASTStandardFunctionDeclarator) {
-				return func.on((IASTStandardFunctionDeclarator) declarator);
+				return mFunc.on((IASTStandardFunctionDeclarator) declarator);
 			} else if (declarator instanceof ICASTKnRFunctionDeclarator) {
-				return func.on((ICASTKnRFunctionDeclarator) declarator);
+				return mFunc.on((ICASTKnRFunctionDeclarator) declarator);
 			} else {
-				return func.on((IASTFunctionDeclarator) declarator);
+				return mFunc.on((IASTFunctionDeclarator) declarator);
 			}
 		} else if (declarator instanceof IASTArrayDeclarator) {
-			return func.on((IASTArrayDeclarator) declarator);
+			return mFunc.on((IASTArrayDeclarator) declarator);
 		} else if (declarator instanceof IASTFieldDeclarator) {
-			return func.on((IASTFieldDeclarator) declarator);
+			return mFunc.on((IASTFieldDeclarator) declarator);
 		} else {
-			return func.on(declarator);
+			return mFunc.on(declarator);
 		}
 	}
 
 	public T dispatch(final IASTDeclSpecifier declSpecifier) {
 		if (declSpecifier instanceof IASTSimpleDeclSpecifier) {
-			return func.on((IASTSimpleDeclSpecifier) declSpecifier);
+			return mFunc.on((IASTSimpleDeclSpecifier) declSpecifier);
 		} else if (declSpecifier instanceof IASTNamedTypeSpecifier) {
-			return func.on((IASTNamedTypeSpecifier) declSpecifier);
+			return mFunc.on((IASTNamedTypeSpecifier) declSpecifier);
 		} else if (declSpecifier instanceof IASTElaboratedTypeSpecifier) {
-			return func.on((IASTElaboratedTypeSpecifier) declSpecifier);
+			return mFunc.on((IASTElaboratedTypeSpecifier) declSpecifier);
 		} else if (declSpecifier instanceof IASTCompositeTypeSpecifier) {
-			return func.on((IASTCompositeTypeSpecifier) declSpecifier);
+			return mFunc.on((IASTCompositeTypeSpecifier) declSpecifier);
 		} else if (declSpecifier instanceof IASTEnumerationSpecifier) {
-			return func.on((IASTEnumerationSpecifier) declSpecifier);
+			return mFunc.on((IASTEnumerationSpecifier) declSpecifier);
 		} else {
-			return func.on(declSpecifier);
+			return mFunc.on(declSpecifier);
 		}
 	}
 
 	public T dispatch(final IASTExpression expression) {
 		if (expression instanceof IASTIdExpression) {
-			return func.on((IASTIdExpression) expression);
+			return mFunc.on((IASTIdExpression) expression);
 		} else if (expression instanceof IASTUnaryExpression) {
-			return func.on((IASTUnaryExpression) expression);
+			return mFunc.on((IASTUnaryExpression) expression);
 		} else if (expression instanceof IASTLiteralExpression) {
-			return func.on((IASTLiteralExpression) expression);
+			return mFunc.on((IASTLiteralExpression) expression);
 		} else if (expression instanceof IASTBinaryExpression) {
-			return func.on((IASTBinaryExpression) expression);
+			return mFunc.on((IASTBinaryExpression) expression);
 		} else if (expression instanceof IASTFieldReference) {
-			return func.on((IASTFieldReference) expression);
+			return mFunc.on((IASTFieldReference) expression);
 		} else if (expression instanceof IASTArraySubscriptExpression) {
-			return func.on((IASTArraySubscriptExpression) expression);
+			return mFunc.on((IASTArraySubscriptExpression) expression);
 		} else if (expression instanceof IASTFunctionCallExpression) {
-			return func.on((IASTFunctionCallExpression) expression);
+			return mFunc.on((IASTFunctionCallExpression) expression);
 		} else if (expression instanceof IASTCastExpression) {
-			return func.on((IASTCastExpression) expression);
+			return mFunc.on((IASTCastExpression) expression);
 		} else if (expression instanceof IASTConditionalExpression) {
-			return func.on((IASTConditionalExpression) expression);
+			return mFunc.on((IASTConditionalExpression) expression);
 		} else if (expression instanceof IASTExpressionList) {
-			return func.on((IASTExpressionList) expression);
+			return mFunc.on((IASTExpressionList) expression);
 		} else if (expression instanceof IASTTypeIdExpression) {
-			return func.on((IASTTypeIdExpression) expression);
+			return mFunc.on((IASTTypeIdExpression) expression);
 		} else if (expression instanceof IASTProblemExpression) {
-			return func.on((IASTProblemExpression) expression);
+			return mFunc.on((IASTProblemExpression) expression);
 		} else if (expression instanceof IGNUASTCompoundStatementExpression) {
-			return func.on((IGNUASTCompoundStatementExpression) expression);
+			return mFunc.on((IGNUASTCompoundStatementExpression) expression);
 		} else if (expression instanceof IASTTypeIdInitializerExpression) {
-			return func.on((IASTTypeIdInitializerExpression) expression);
+			return mFunc.on((IASTTypeIdInitializerExpression) expression);
 		} else if (expression instanceof IASTBinaryTypeIdExpression) {
-			return func.on((IASTBinaryTypeIdExpression) expression);
+			return mFunc.on((IASTBinaryTypeIdExpression) expression);
 		} else {
-			return func.on(expression);
+			return mFunc.on(expression);
 		}
 	}
 
 	public T dispatch(final IASTInitializer initializer) {
 		if (initializer instanceof IASTEqualsInitializer) {
-			return func.on((IASTEqualsInitializer) initializer);
+			return mFunc.on((IASTEqualsInitializer) initializer);
 		} else if (initializer instanceof IASTInitializerList) {
-			return func.on((IASTInitializerList) initializer);
+			return mFunc.on((IASTInitializerList) initializer);
 		} else if (initializer instanceof ICASTDesignatedInitializer) {
-			return func.on((ICASTDesignatedInitializer) initializer);
+			return mFunc.on((ICASTDesignatedInitializer) initializer);
 		} else {
-			return func.on(initializer);
+			return mFunc.on(initializer);
 		}
 	}
 
 	public T dispatch(final IASTName name) {
 		if (name instanceof IASTImplicitName) {
 			if (name instanceof IASTImplicitDestructorName) {
-				return func.on((IASTImplicitDestructorName) name);
+				return mFunc.on((IASTImplicitDestructorName) name);
 			} else {
-				return func.on((IASTImplicitName) name);
+				return mFunc.on((IASTImplicitName) name);
 			}
 		} else {
-			return func.on(name);
+			return mFunc.on(name);
 		}
 	}
 
@@ -474,15 +474,15 @@ public final class ASTNodeFunctionDispatcher<T> {
 		} else if (node instanceof IASTDeclarator) {
 			return dispatch((IASTDeclarator) node);
 		} else if (node instanceof IASTPreprocessorMacroExpansion) {
-			return func.on((IASTPreprocessorMacroExpansion) node);
+			return mFunc.on((IASTPreprocessorMacroExpansion) node);
 		} else if (node instanceof IASTTypeId) {
 			return dispatch((IASTTypeId) node);
 		} else if (node instanceof IASTComment) {
-			return func.on((IASTComment) node);
+			return mFunc.on((IASTComment) node);
 		} else if (node instanceof IASTDeclaration) {
 			return dispatch((IASTDeclaration) node);
 		} else if (node instanceof IASTParameterDeclaration) {
-			return func.on((IASTParameterDeclaration) node);
+			return mFunc.on((IASTParameterDeclaration) node);
 		} else if (node instanceof IASTPointerOperator) {
 			return dispatch((IASTPointerOperator) node);
 		} else if (node instanceof IASTPreprocessorStatement) {
@@ -490,141 +490,141 @@ public final class ASTNodeFunctionDispatcher<T> {
 		} else if (node instanceof IASTInitializer) {
 			return dispatch((IASTInitializer) node);
 		} else if (node instanceof IASTEnumerator) {
-			return func.on((IASTEnumerator) node);
+			return mFunc.on((IASTEnumerator) node);
 		} else if (node instanceof IASTArrayModifier) {
 			return dispatch((IASTArrayModifier) node);
 		} else if (node instanceof ICASTDesignator) {
 			return dispatch((ICASTDesignator) node);
 		} else if (node instanceof IASTProblem) {
-			return func.on((IASTProblem) node);
+			return mFunc.on((IASTProblem) node);
 		} else if (node instanceof IASTTranslationUnit) {
-			return func.on((IASTTranslationUnit) node);
+			return mFunc.on((IASTTranslationUnit) node);
 		} else if (node instanceof IASTToken) {
 			return dispatch((IASTToken) node);
 		} else if (node instanceof IASTAttributeSpecifier) {
 			return dispatch((IASTAttributeSpecifier) node);
 		} else if (node instanceof IASTAlignmentSpecifier) {
-			return func.on((IASTAlignmentSpecifier) node);
+			return mFunc.on((IASTAlignmentSpecifier) node);
 		} else if (node instanceof IASTAttribute) {
-			return func.on((IASTAttribute) node);
+			return mFunc.on((IASTAttribute) node);
 		} else {
-			return func.on(node);
+			return mFunc.on(node);
 		}
 	}
 
 	public T dispatch(final IASTPointerOperator pointerOperator) {
 		if (pointerOperator instanceof IASTPointer) {
 			if (pointerOperator instanceof ICASTPointer) {
-				return func.on((ICASTPointer) pointerOperator);
+				return mFunc.on((ICASTPointer) pointerOperator);
 			} else {
-				return func.on((IASTPointer) pointerOperator);
+				return mFunc.on((IASTPointer) pointerOperator);
 			}
 		} else {
-			return func.on(pointerOperator);
+			return mFunc.on(pointerOperator);
 		}
 	}
 
 	public T dispatch(final IASTPreprocessorStatement preprocessorStatement) {
 		if (preprocessorStatement instanceof IASTPreprocessorEndifStatement) {
-			return func.on((IASTPreprocessorEndifStatement) preprocessorStatement);
+			return mFunc.on((IASTPreprocessorEndifStatement) preprocessorStatement);
 		} else if (preprocessorStatement instanceof IASTPreprocessorMacroDefinition) {
 			if (preprocessorStatement instanceof IASTPreprocessorObjectStyleMacroDefinition) {
-				return func.on((IASTPreprocessorObjectStyleMacroDefinition) preprocessorStatement);
+				return mFunc.on((IASTPreprocessorObjectStyleMacroDefinition) preprocessorStatement);
 			} else if (preprocessorStatement instanceof IASTPreprocessorFunctionStyleMacroDefinition) {
-				return func.on((IASTPreprocessorFunctionStyleMacroDefinition) preprocessorStatement);
+				return mFunc.on((IASTPreprocessorFunctionStyleMacroDefinition) preprocessorStatement);
 			} else {
-				return func.on((IASTPreprocessorMacroDefinition) preprocessorStatement);
+				return mFunc.on((IASTPreprocessorMacroDefinition) preprocessorStatement);
 			}
 		} else if (preprocessorStatement instanceof IASTPreprocessorIfStatement) {
-			return func.on((IASTPreprocessorIfStatement) preprocessorStatement);
+			return mFunc.on((IASTPreprocessorIfStatement) preprocessorStatement);
 		} else if (preprocessorStatement instanceof IASTPreprocessorElseStatement) {
-			return func.on((IASTPreprocessorElseStatement) preprocessorStatement);
+			return mFunc.on((IASTPreprocessorElseStatement) preprocessorStatement);
 		} else if (preprocessorStatement instanceof IASTPreprocessorIfdefStatement) {
-			return func.on((IASTPreprocessorIfdefStatement) preprocessorStatement);
+			return mFunc.on((IASTPreprocessorIfdefStatement) preprocessorStatement);
 		} else if (preprocessorStatement instanceof IASTPreprocessorIfndefStatement) {
-			return func.on((IASTPreprocessorIfndefStatement) preprocessorStatement);
+			return mFunc.on((IASTPreprocessorIfndefStatement) preprocessorStatement);
 		} else if (preprocessorStatement instanceof IASTPreprocessorIncludeStatement) {
-			return func.on((IASTPreprocessorIncludeStatement) preprocessorStatement);
+			return mFunc.on((IASTPreprocessorIncludeStatement) preprocessorStatement);
 		} else if (preprocessorStatement instanceof IASTPreprocessorUndefStatement) {
-			return func.on((IASTPreprocessorUndefStatement) preprocessorStatement);
+			return mFunc.on((IASTPreprocessorUndefStatement) preprocessorStatement);
 		} else if (preprocessorStatement instanceof IASTPreprocessorElifStatement) {
-			return func.on((IASTPreprocessorElifStatement) preprocessorStatement);
+			return mFunc.on((IASTPreprocessorElifStatement) preprocessorStatement);
 		} else if (preprocessorStatement instanceof IASTPreprocessorPragmaStatement) {
-			return func.on((IASTPreprocessorPragmaStatement) preprocessorStatement);
+			return mFunc.on((IASTPreprocessorPragmaStatement) preprocessorStatement);
 		} else if (preprocessorStatement instanceof IASTPreprocessorErrorStatement) {
-			return func.on((IASTPreprocessorErrorStatement) preprocessorStatement);
+			return mFunc.on((IASTPreprocessorErrorStatement) preprocessorStatement);
 		} else {
-			return func.on(preprocessorStatement);
+			return mFunc.on(preprocessorStatement);
 		}
 	}
 
 	public T dispatch(final IASTStatement statement) {
 		if (statement instanceof IASTExpressionStatement) {
-			return func.on((IASTExpressionStatement) statement);
+			return mFunc.on((IASTExpressionStatement) statement);
 		} else if (statement instanceof IASTIfStatement) {
-			return func.on((IASTIfStatement) statement);
+			return mFunc.on((IASTIfStatement) statement);
 		} else if (statement instanceof IASTCompoundStatement) {
-			return func.on((IASTCompoundStatement) statement);
+			return mFunc.on((IASTCompoundStatement) statement);
 		} else if (statement instanceof IASTDeclarationStatement) {
-			return func.on((IASTDeclarationStatement) statement);
+			return mFunc.on((IASTDeclarationStatement) statement);
 		} else if (statement instanceof IASTReturnStatement) {
-			return func.on((IASTReturnStatement) statement);
+			return mFunc.on((IASTReturnStatement) statement);
 		} else if (statement instanceof IASTCaseStatement) {
-			return func.on((IASTCaseStatement) statement);
+			return mFunc.on((IASTCaseStatement) statement);
 		} else if (statement instanceof IASTGotoStatement) {
-			return func.on((IASTGotoStatement) statement);
+			return mFunc.on((IASTGotoStatement) statement);
 		} else if (statement instanceof IASTLabelStatement) {
-			return func.on((IASTLabelStatement) statement);
+			return mFunc.on((IASTLabelStatement) statement);
 		} else if (statement instanceof IASTBreakStatement) {
-			return func.on((IASTBreakStatement) statement);
+			return mFunc.on((IASTBreakStatement) statement);
 		} else if (statement instanceof IASTForStatement) {
-			return func.on((IASTForStatement) statement);
+			return mFunc.on((IASTForStatement) statement);
 		} else if (statement instanceof IASTDoStatement) {
-			return func.on((IASTDoStatement) statement);
+			return mFunc.on((IASTDoStatement) statement);
 		} else if (statement instanceof IASTNullStatement) {
-			return func.on((IASTNullStatement) statement);
+			return mFunc.on((IASTNullStatement) statement);
 		} else if (statement instanceof IASTSwitchStatement) {
-			return func.on((IASTSwitchStatement) statement);
+			return mFunc.on((IASTSwitchStatement) statement);
 		} else if (statement instanceof IASTDefaultStatement) {
-			return func.on((IASTDefaultStatement) statement);
+			return mFunc.on((IASTDefaultStatement) statement);
 		} else if (statement instanceof IASTWhileStatement) {
-			return func.on((IASTWhileStatement) statement);
+			return mFunc.on((IASTWhileStatement) statement);
 		} else if (statement instanceof IASTContinueStatement) {
-			return func.on((IASTContinueStatement) statement);
+			return mFunc.on((IASTContinueStatement) statement);
 		} else if (statement instanceof IASTProblemStatement) {
-			return func.on((IASTProblemStatement) statement);
+			return mFunc.on((IASTProblemStatement) statement);
 		} else if (statement instanceof IGNUASTGotoStatement) {
-			return func.on((IGNUASTGotoStatement) statement);
+			return mFunc.on((IGNUASTGotoStatement) statement);
 		} else {
-			return func.on(statement);
+			return mFunc.on(statement);
 		}
 	}
 
 	public T dispatch(final IASTToken token) {
 		if (token instanceof IASTTokenList) {
-			return func.on((IASTTokenList) token);
+			return mFunc.on((IASTTokenList) token);
 		} else {
-			return func.on(token);
+			return mFunc.on(token);
 		}
 	}
 
 	public T dispatch(final IASTTypeId typeId) {
 		if (typeId instanceof IASTProblemTypeId) {
-			return func.on((IASTProblemTypeId) typeId);
+			return mFunc.on((IASTProblemTypeId) typeId);
 		} else {
-			return func.on(typeId);
+			return mFunc.on(typeId);
 		}
 	}
 
 	public T dispatch(final ICASTDesignator cDesignator) {
 		if (cDesignator instanceof ICASTFieldDesignator) {
-			return func.on((ICASTFieldDesignator) cDesignator);
+			return mFunc.on((ICASTFieldDesignator) cDesignator);
 		} else if (cDesignator instanceof ICASTArrayDesignator) {
-			return func.on((ICASTArrayDesignator) cDesignator);
+			return mFunc.on((ICASTArrayDesignator) cDesignator);
 		} else if (cDesignator instanceof IGCCASTArrayRangeDesignator) {
-			return func.on((IGCCASTArrayRangeDesignator) cDesignator);
+			return mFunc.on((IGCCASTArrayRangeDesignator) cDesignator);
 		} else {
-			return func.on(cDesignator);
+			return mFunc.on(cDesignator);
 		}
 	}
 

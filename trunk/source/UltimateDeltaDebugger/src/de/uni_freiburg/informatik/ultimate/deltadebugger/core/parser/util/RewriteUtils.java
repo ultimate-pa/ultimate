@@ -19,8 +19,12 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfa
  * Contains
  *
  */
-public class RewriteUtils {
+public final class RewriteUtils {
+	private static final int MAX_PRETTY_PRINTED_LENGTH = 10_000; 
 
+	private RewriteUtils() {
+	}
+	
 	/**
 	 * Pretty print source code using the CDT code formatter. Seems to work without workspace and/or OSGi, but can cause
 	 * extreme lags/freezes for larger inputs.
@@ -35,7 +39,7 @@ public class RewriteUtils {
 		// The formatter can be ridiculously slow for large inputs (possible
 		// related to deeply nested expressions).
 		// This is just a hack that reduces the chance to freeze.
-		if (input.length() > 10000) {
+		if (input.length() > MAX_PRETTY_PRINTED_LENGTH) {
 			return removeMultipleEmptyLines(input);
 		}
 
@@ -90,6 +94,4 @@ public class RewriteUtils {
 		return lhs.equals(rhs);
 	}
 
-	private RewriteUtils() {
-	}
 }

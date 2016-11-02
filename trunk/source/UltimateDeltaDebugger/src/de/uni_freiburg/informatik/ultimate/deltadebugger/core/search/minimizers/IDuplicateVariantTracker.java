@@ -3,9 +3,9 @@ package de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.minimizers
 import java.util.List;
 
 /**
- * Remembers and re-identifies (usually failed) variants, optionally in a memory efficet manner.
+ * Remembers and re-identifies (usually failed) variants, optionally in a memory efficient manner.
  *
- * It can be used to prevent duplicate tests with certain minimizers (esoecially ddmin). The idea is that the actual
+ * It can be used to prevent duplicate tests with certain minimizers (especially ddmin). The idea is that the actual
  * lists are not as in a real Set, because a retrieval of the stored lists is not required. This interface allows
  * implementations to be switched for a different memory footprint/lookup overhead ratio.
  *
@@ -13,7 +13,7 @@ import java.util.List;
  * @param <E>
  *            element type
  */
-public interface DuplicateVariantTracker<E> {
+public interface IDuplicateVariantTracker<E> {
 
 	/**
 	 * Remember the given variant subsequence
@@ -36,7 +36,7 @@ public interface DuplicateVariantTracker<E> {
 	 * Remove all stored variants that are not smaller than keptVariantSize.
 	 *
 	 * Optional method to reduce memory footprint even more by removing all larger variants each time a valid variant
-	 * has been found, because once that happens all subsqeuent variants should be subsequences of that.
+	 * has been found, because once that happens all subsequent variants should be subsequences of that.
 	 *
 	 * @param keptVariantSize
 	 */

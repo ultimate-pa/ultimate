@@ -26,7 +26,7 @@ public class PSTDirective extends PSTNode implements IPSTDirective {
 
 	@Override
 	public IASTPreprocessorStatement getASTNode() {
-		return (IASTPreprocessorStatement) astNode;
+		return (IASTPreprocessorStatement) mAstNode;
 	}
 
 }

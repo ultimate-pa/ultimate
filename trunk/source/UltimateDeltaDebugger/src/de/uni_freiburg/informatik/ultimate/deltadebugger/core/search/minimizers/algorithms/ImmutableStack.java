@@ -8,15 +8,28 @@ import java.util.EmptyStackException;
  * @param <E>
  *            element type
  */
-public class ImmutableStack<E> {
-	@SuppressWarnings("rawtypes")
+public final class ImmutableStack<E> {
+	
 	public static final ImmutableStack EMPTY_STACK = new ImmutableStack();
 
-	@SuppressWarnings("unchecked")
-	public static final <T> ImmutableStack<T> emptyStack() {
-		return EMPTY_STACK;
+	private final E mHead;
+	private final ImmutableStack<E> mTail;
+
+	private ImmutableStack() {
+		mHead = null;
+		mTail = this;
 	}
 
+	private ImmutableStack(final E head, final ImmutableStack<E> tail) {
+		mHead = head;
+		mTail = tail;
+	}
+	
+	
+	public static <T> ImmutableStack<T> emptyStack() {
+		return EMPTY_STACK;
+	}
+	
 	@SafeVarargs
 	public static <E> ImmutableStack<E> of(final E... fifoItems) {
 		ImmutableStack<E> stack = emptyStack();
@@ -26,36 +39,23 @@ public class ImmutableStack<E> {
 		return stack;
 	}
 
-	private final E head;
-
-	private final ImmutableStack<E> tail;
-
-	private ImmutableStack() {
-		this.head = null;
-		this.tail = this;
-	}
-
-	private ImmutableStack(final E head, final ImmutableStack<E> tail) {
-		this.head = head;
-		this.tail = tail;
-	}
 
 	public boolean empty() {
-		return tail == this;
+		return mTail.equals(this);
 	}
 
 	public E peek() {
 		if (empty()) {
 			throw new EmptyStackException();
 		}
-		return head;
+		return mHead;
 	}
 
 	public ImmutableStack<E> pop() {
 		if (empty()) {
 			throw new EmptyStackException();
 		}
-		return tail;
+		return mTail;
 	}
 
 	public ImmutableStack<E> push(final E item) {

@@ -25,12 +25,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.deltadebugger.core;
 
-import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.minimizers.HasSequenceIndex;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.minimizers.IHasSequenceIndex;
 
 /**
  * Represents a change instance that can be independently enabled and disabled by a {@link IVariantGenerator}.
  */
-public interface IChangeHandle extends HasSequenceIndex {
+public interface IChangeHandle extends IHasSequenceIndex {
 	/**
 	 * Returns the index of this change in the sequence of all changes.
 	 * <p>

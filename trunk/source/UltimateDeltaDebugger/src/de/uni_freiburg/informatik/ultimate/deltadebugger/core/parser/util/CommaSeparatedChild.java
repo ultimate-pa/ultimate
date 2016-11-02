@@ -12,9 +12,9 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceRange;
  */
 public class CommaSeparatedChild {
 
-	private final IASTNode astNode;
-	private final IPSTRegularNode node;
-	ISourceRange nextCommaLocation = null;
+	private final IASTNode mAstNode;
+	private final IPSTRegularNode mNode;
+	protected ISourceRange mNextCommaLocation;
 
 	/**
 	 * @param astNode
@@ -23,34 +23,34 @@ public class CommaSeparatedChild {
 	 *            the corresponding regular PST node if existing
 	 */
 	public CommaSeparatedChild(final IASTNode astNode, final IPSTRegularNode node) {
-		this.astNode = Objects.requireNonNull(astNode);
-		this.node = node;
+		this.mAstNode = Objects.requireNonNull(astNode);
+		this.mNode = node;
 	}
 
 	/**
 	 * @return IASTNode (not null)
 	 */
 	public IASTNode astNode() {
-		return astNode;
+		return mAstNode;
 	}
 
 	/**
-	 * @return location of the first comma encountered after the child node. null of co comma was found.
+	 * @return location of the first comma encountered after the child node. null if no comma was found.
 	 */
 	public ISourceRange nextCommaLocation() {
-		return nextCommaLocation;
+		return mNextCommaLocation;
 	}
 
 	/**
 	 * @return regular PST node corresponding to the IASTNode if it exists (null otherwise)
 	 */
 	public IPSTRegularNode node() {
-		return node;
+		return mNode;
 	}
 
 	@Override
 	public String toString() {
-		return "CommaSeparatedChild [astNode=" + astNode + ", node=" + node + ", nextCommaLocation=" + nextCommaLocation
+		return "CommaSeparatedChild [astNode=" + mAstNode + ", node=" + mNode + ", nextCommaLocation=" + mNextCommaLocation
 				+ "]";
 	}
 }

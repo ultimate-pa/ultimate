@@ -2,8 +2,8 @@ package de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.minimizers
 
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.minimizers.Minimizer;
-import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.minimizers.MinimizerStep;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.minimizers.IMinimizer;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.minimizers.IMinimizerStep;
 
 /**
  * A divide and conquer minimizer inspired similar to merge sort or binary search. Recursively splits the input in two
@@ -21,29 +21,29 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.minimizers.
  * removed before j, or the other way around. This option can have a significant impact if dependencies in a certain
  * direction are more likely.
  */
-public class BinarySearchMinimizer implements Minimizer {
-	final class BinarySearchStep<E> implements MinimizerStep<E> {
-		final List<E> result;
-		final List<E> variant;
-		final ImmutableStack<Part> stack;
-		final int delta;
+public class BinarySearchMinimizer implements IMinimizer {
+	final class BinarySearchStep<E> implements IMinimizerStep<E> {
+		private final List<E> mResult;
+		private final List<E> mVariant;
+		private final ImmutableStack<Part> mStack;
+		private final int mDelta;
 
 		BinarySearchStep(final List<E> result, final List<E> variant, final ImmutableStack<Part> stack,
 				final int delta) {
-			this.result = result;
-			this.variant = variant;
-			this.stack = stack;
-			this.delta = delta;
+			mResult = result;
+			mVariant = variant;
+			mStack = stack;
+			mDelta = delta;
 		}
 
 		@Override
 		public List<E> getResult() {
-			return result;
+			return mResult;
 		}
 
 		@Override
 		public List<E> getVariant() {
-			return variant;
+			return mVariant;
 		}
 
 		@Override
@@ -52,61 +52,59 @@ public class BinarySearchMinimizer implements Minimizer {
 		}
 
 		@Override
-		public MinimizerStep<E> next(final boolean keepVariant) {
+		public IMinimizerStep<E> next(final boolean keepVariant) {
 			return keepVariant ? reduceToCurrentVariant() : tryNextVariant();
 		}
 
-		MinimizerStep<E> reduceToCurrentVariant() {
-			final Part part = this.stack.peek();
-			ImmutableStack<Part> nextStack = this.stack.pop();
-			if (part.isFirstHalf) {
-				// Immediately split the first half, because removing the left
-				// and right half together has been tested in the last step,
-				// which
-				// was not successful (if it was, there would have been no split
+		IMinimizerStep<E> reduceToCurrentVariant() {
+			final Part part = this.mStack.peek();
+			ImmutableStack<Part> nextStack = this.mStack.pop();
+			if (part.mIsFirstHalf) {
+				// Immediately split the first half, because removing the left and right half together has been tested
+				// in the last step, which was not successful (if it was, there would have been no split
 				// resulting in these two halfs)
 				nextStack = split(nextStack);
 			}
-			return createNextStep(variant, nextStack, iterateFrontToBack ? delta - part.size() : delta);
+			return createNextStep(mVariant, nextStack, mIterateFrontToBack ? (mDelta - part.size()) : mDelta);
 		}
 
-		MinimizerStep<E> tryNextVariant() {
-			return createNextStep(result, split(stack), delta);
+		IMinimizerStep<E> tryNextVariant() {
+			return createNextStep(mResult, split(mStack), mDelta);
 		}
 	}
 
 	static class Part {
-		final int begin;
-		final int end;
-		final boolean isFirstHalf;
+		private final int mBegin;
+		private final int mEnd;
+		private final boolean mIsFirstHalf;
 
 		public Part(final int begin, final int end, final boolean isFirstHalf) {
-			this.begin = begin;
-			this.end = end;
-			this.isFirstHalf = isFirstHalf;
+			mBegin = begin;
+			mEnd = end;
+			mIsFirstHalf = isFirstHalf;
 		}
 
 		int size() {
-			return end - begin;
+			return mEnd - mBegin;
 		}
 	}
 
-	private final boolean iterateFrontToBack;
+	private final boolean mIterateFrontToBack;
 
 	/**
 	 * @param iterateFrontToBack
 	 *            remove elements at front first
 	 */
 	public BinarySearchMinimizer(final boolean iterateFrontToBack) {
-		this.iterateFrontToBack = iterateFrontToBack;
+		this.mIterateFrontToBack = iterateFrontToBack;
 	}
 
 	@Override
-	public <E> MinimizerStep<E> create(final List<E> input) {
+	public <E> IMinimizerStep<E> create(final List<E> input) {
 		return createNextStep(input, split(ImmutableStack.of(new Part(0, input.size(), false))), 0);
 	}
 
-	private <E> MinimizerStep<E> createNextStep(final List<E> result, final ImmutableStack<Part> stack,
+	private <E> IMinimizerStep<E> createNextStep(final List<E> result, final ImmutableStack<Part> stack,
 			final int delta) {
 		final int size = result.size();
 		if (size < 2 || stack.empty()) {
@@ -114,7 +112,7 @@ public class BinarySearchMinimizer implements Minimizer {
 		}
 
 		final Part part = stack.peek();
-		final List<E> variant = MinimizerListOps.subListComplement(result, part.begin + delta, part.end + delta);
+		final List<E> variant = MinimizerListOps.subListComplement(result, part.mBegin + delta, part.mEnd + delta);
 		return new BinarySearchStep<>(result, variant, stack, delta);
 	}
 
@@ -130,13 +128,13 @@ public class BinarySearchMinimizer implements Minimizer {
 
 	ImmutableStack<Part> split(final ImmutableStack<Part> stack) {
 		final Part part = stack.peek();
-		final int size = part.end - part.begin;
+		final int size = part.mEnd - part.mBegin;
 		ImmutableStack<Part> nextStack = stack.pop();
 		if (size >= 2) {
 			final int mid = size >>> 1;
-			final Part left = new Part(part.begin, part.begin + mid, iterateFrontToBack);
-			final Part right = new Part(part.begin + mid, part.end, !iterateFrontToBack);
-			nextStack = iterateFrontToBack ? nextStack.push(right).push(left) : nextStack.push(left).push(right);
+			final Part left = new Part(part.mBegin, part.mBegin + mid, mIterateFrontToBack);
+			final Part right = new Part(part.mBegin + mid, part.mEnd, !mIterateFrontToBack);
+			nextStack = mIterateFrontToBack ? nextStack.push(right).push(left) : nextStack.push(left).push(right);
 		}
 		return nextStack;
 	}

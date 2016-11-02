@@ -16,62 +16,62 @@ public final class PSTNodeFunctionDispatcher<T> {
 
 		@Override
 		public int visit(final IPSTComment comment) {
-			setResult(func.on(comment));
+			setResult(mFunc.on(comment));
 			return PROCESS_ABORT;
 		}
 
 		@Override
 		public int visit(final IPSTConditionalBlock conditionalBlock) {
-			setResult(func.on(conditionalBlock));
+			setResult(mFunc.on(conditionalBlock));
 			return PROCESS_ABORT;
 		}
 
 		@Override
 		public int visit(final IPSTDirective directive) {
-			setResult(func.on(directive));
+			setResult(mFunc.on(directive));
 			return PROCESS_ABORT;
 		}
 
 		@Override
 		public int visit(final IPSTIncludeDirective include) {
-			setResult(func.on(include));
+			setResult(mFunc.on(include));
 			return PROCESS_ABORT;
 		}
 
 		@Override
 		public int visit(final IPSTLiteralRegion literalRegion) {
-			setResult(func.on(literalRegion));
+			setResult(mFunc.on(literalRegion));
 			return PROCESS_ABORT;
 		}
 
 		@Override
 		public int visit(final IPSTMacroExpansion expansion) {
-			setResult(func.on(expansion));
+			setResult(mFunc.on(expansion));
 			return PROCESS_ABORT;
 		}
 
 		@Override
 		public int visit(final IPSTRegularNode node) {
-			setResult(func.on(node));
+			setResult(mFunc.on(node));
 			return PROCESS_ABORT;
 		}
 
 		@Override
 		public int visit(final IPSTTranslationUnit tu) {
-			setResult(func.on(tu));
+			setResult(mFunc.on(tu));
 			return PROCESS_ABORT;
 		}
 	}
 
-	private final IPSTNodeFunction<T> func;
+	private final IPSTNodeFunction<T> mFunc;
 
 	public PSTNodeFunctionDispatcher(final IPSTNodeFunction<T> func) {
-		this.func = func;
+		mFunc = func;
 	}
 
 	public T dispatch(final IPSTNode node) {
 		final DispatchVisitor action = new DispatchVisitor();
 		node.accept(action);
-		return action.getResult().orElseGet(() -> func.on(node));
+		return action.getResult().orElseGet(() -> mFunc.on(node));
 	}
 }

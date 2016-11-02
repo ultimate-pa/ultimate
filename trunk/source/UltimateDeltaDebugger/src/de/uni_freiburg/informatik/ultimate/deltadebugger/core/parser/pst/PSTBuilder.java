@@ -46,123 +46,164 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceRange;
  * Builder to create the PST from a given AST and source code.
  */
 public class PSTBuilder {
-	private static class ConditionalBlock implements ISourceRange {
-		final ConditionalBlock parent;
-		final List<ConditionalBlock> children = new ArrayList<>();
+	
+	private final ILogger mLogger;
+	private final IASTTranslationUnit mTranslationUnit;
+	private final ISourceDocument mSourceDocument;
 
-		IPSTConditionalBlock node = null;
+	private IPSTNodeFactory mNodeFactory;
+
+	private LocationResolver mLocationResolver;
+
+	private boolean mCreateComments = true;
+
+	private boolean mCreateMacroExpansions = true;
+
+	private boolean mExpandConditionalBlocks = true;
+
+	private ConditionalBlock mConditionalBlockRoot;
+
+	private List<IPSTMacroExpansion> mMacroExpansions;
+
+	private List<IPSTComment> mComments;
+	
+
+	/**
+	 * Create new builder instance.
+	 *
+	 * @param logger
+	 *            logger instance
+	 * @param ast
+	 *            AST instance
+	 * @param sourceDocument
+	 *            source document
+	 */
+	public PSTBuilder(final ILogger logger, final IASTTranslationUnit ast, final ISourceDocument sourceDocument) {
+		mLogger = Objects.requireNonNull(logger);
+		mTranslationUnit = Objects.requireNonNull(ast);
+		mSourceDocument = Objects.requireNonNull(sourceDocument);
+	}
+	
+	
+	
+	
+	private static class ConditionalBlock implements ISourceRange {
+		private final ConditionalBlock mParent;
+		private final List<ConditionalBlock> mChildren = new ArrayList<>();
+
+		private IPSTConditionalBlock mNode;
 
 		// List of contained nodes that still need to be inserted,
 		// these lists will be modified during tree creation
-		final List<ConditionalBlock> conditionalBlocks = new ArrayList<>();
-		final List<IPSTIncludeDirective> includeDirectives = new ArrayList<>();
-		final List<IPSTDirective> conditionalDirectives = new ArrayList<>();
-		final List<IPSTDirective> otherDirectives = new ArrayList<>();
+		private final List<ConditionalBlock> mConditionalBlocks = new ArrayList<>();
+		private final List<IPSTIncludeDirective> mIncludeDirectives = new ArrayList<>();
+		private final List<IPSTDirective> mConditionalDirectives = new ArrayList<>();
+		private final List<IPSTDirective> mOtherDirectives = new ArrayList<>();
 
 		ConditionalBlock(final ConditionalBlock parent) {
-			this.parent = parent;
+			mParent = parent;
 		}
 
 		@Override
 		public int endOffset() {
-			return node.endOffset();
+			return mNode.endOffset();
 		}
 
 		@Override
 		public int offset() {
-			return node.offset();
+			return mNode.offset();
 		}
 	}
 
-	static class CreateChildrenTask {
-		final IPSTNode node;
-		final List<IASTNode> children;
-		final ConditionalBlock context;
-		final CreateChildrenTask next;
+	private static class CreateChildrenTask {
+		private final IPSTNode mNode;
+		private final List<IASTNode> mChildren;
+		private final ConditionalBlock mContext;
+		private final CreateChildrenTask mNext;
 
 		CreateChildrenTask(final IPSTNode node, final List<IASTNode> children, final ConditionalBlock context,
 				final CreateChildrenTask next) {
-			this.node = node;
-			this.children = children;
-			this.context = context;
-			this.next = next;
+			mNode = node;
+			mChildren = children;
+			mContext = context;
+			mNext = next;
 		}
 	}
 
 	private static class IndexRange {
-		final int first; // inclusive
-		final int last; // inclusive
+		private final int mFirst; // inclusive
+		private final int mLast; // inclusive
 
 		public IndexRange(final int first, final int last) {
-			this.first = first;
-			this.last = last;
+			mFirst = first;
+			mLast = last;
 		}
 	}
 
 	private static class InsertTask {
-		static final int ENTER = 0;
-		static final int CHILDREN = 1;
-		static final int LEAVE = 2;
+		public static final int ENTER = 0;
+		public static final int CHILDREN = 1;
+		public static final int LEAVE = 2;
 
-		final IPSTNode node;
-		int state;
-		int nextChildIndex;
-		final InsertTask parentTask;
+		private final IPSTNode mNode;
+		private int mState;
+		private int mNextChildIndex;
+		private final InsertTask mParentTask;
 
 		InsertTask(final IPSTNode node, final int state, final InsertTask parentTask) {
-			this.node = node;
-			this.state = state;
-			nextChildIndex = 0;
-			this.parentTask = parentTask;
+			mNode = node;
+			mState = state;
+			mNextChildIndex = 0;
+			mParentTask = parentTask;
 		}
 	}
 
 	private static class OverlappingSiblingsGroup implements ISourceRange {
-		final List<IASTNode> nodes = new ArrayList<>();
-		int offset;
-		int endOffset;
-		int firstConditionalBlockIndex = -1;
+		private final List<IASTNode> mNodes = new ArrayList<>();
+		private int mOffset;
+		private int mEndOffset;
+		private int mFirstConditionalBlockIndex = -1;
 
 		OverlappingSiblingsGroup(final ISourceRange location) {
-			offset = location.offset();
-			endOffset = location.endOffset();
+			mOffset = location.offset();
+			mEndOffset = location.endOffset();
 		}
 
 		@Override
 		public int endOffset() {
-			return endOffset;
+			return mEndOffset;
 		}
 
 		@Override
 		public int offset() {
-			return offset;
+			return mOffset;
 		}
 	}
 
 	class TreeCreator {
-		CreateChildrenTask stack = null;
+		private CreateChildrenTask mStack;
 
 		void addConditionalBlock(final IPSTNode parent, final List<IASTNode> unexpandedChildren,
 				final ConditionalBlock block) {
-			parent.addChild(block.node);
-			if (expandConditionalBlocks) {
-				pushTask(block.node, unexpandedChildren, block);
+			parent.addChild(block.mNode);
+			if (mExpandConditionalBlocks) {
+				pushTask(block.mNode, unexpandedChildren, block);
 			} else {
-				block.node.setUnexpandedChildNodes(unexpandedChildren);
+				block.mNode.setUnexpandedChildNodes(unexpandedChildren);
 			}
 		}
 
 		void addMacroExpansionAsRegularNode(final IPSTNode parent, final IPSTMacroExpansion macroExpansion,
 				final IASTNode astNode) {
-			final IPSTRegularNode node = nodeFactory.createRegularNode(macroExpansion, astNode);
+			final IPSTRegularNode node = mNodeFactory.createRegularNode(macroExpansion, astNode);
 			parent.addChild(node);
 			macroExpansion.setUnexpandedChildNodes(Arrays.asList(astNode.getChildren()));
 			node.addChild(macroExpansion);
 		}
 
 		void addOverlappingNode(final IPSTNode parent, final OverlappingSiblingsGroup group) {
-			final IPSTOverlappingRegion node = nodeFactory.createOverlappingRegion(group);
-			node.setUnexpandedChildNodes(group.nodes);
+			final IPSTOverlappingRegion node = mNodeFactory.createOverlappingRegion(group);
+			node.setUnexpandedChildNodes(group.mNodes);
 			parent.addChild(node);
 		}
 
@@ -173,21 +214,21 @@ public class PSTBuilder {
 
 		void addRegularNode(final IPSTNode parent, final OverlappingSiblingsGroup group,
 				final ConditionalBlock context) {
-			final IASTNode astNode = group.nodes.get(0);
-			final IPSTRegularNode node = nodeFactory.createRegularNode(group, astNode);
+			final IASTNode astNode = group.mNodes.get(0);
+			final IPSTRegularNode node = mNodeFactory.createRegularNode(group, astNode);
 			parent.addChild(node);
 			pushTask(node, Arrays.asList(astNode.getChildren()), context);
 		}
 
 		IPSTTranslationUnit create() {
-			final IPSTTranslationUnit root = nodeFactory.createTranslationUnit(
-					locationResolver.getSourceRangeInTranslationUnitFile(translationUnit), translationUnit);
-			pushTask(root, Arrays.asList(translationUnit.getChildren()), conditionalBlockRoot);
-			while (stack != null) {
-				final CreateChildrenTask task = stack;
-				stack = stack.next;
-				groupOverlappingSiblings(task.children, task.context.conditionalBlocks,
-						group -> createChildForGroup(task.node, group, task.context));
+			final IPSTTranslationUnit root = mNodeFactory.createTranslationUnit(
+					mLocationResolver.getSourceRangeInTranslationUnitFile(mTranslationUnit), mTranslationUnit);
+			pushTask(root, Arrays.asList(mTranslationUnit.getChildren()), mConditionalBlockRoot);
+			while (mStack != null) {
+				final CreateChildrenTask task = mStack;
+				mStack = mStack.mNext;
+				groupOverlappingSiblings(task.mChildren, task.mContext.mConditionalBlocks,
+						group -> createChildForGroup(task.mNode, group, task.mContext));
 			}
 
 			return root;
@@ -196,14 +237,14 @@ public class PSTBuilder {
 		void createChildForGroup(final IPSTNode node, final OverlappingSiblingsGroup group,
 				final ConditionalBlock context) {
 			// Check if this is a conditional block
-			if (group.firstConditionalBlockIndex != -1) {
+			if (group.mFirstConditionalBlockIndex != -1) {
 				// There may be multiple expansions, check if the expanded location matches
 				// the block before creating a conditional block node for this group
 				// If it doesn't there are overlapping nodes and/or multiple blocks
-				final ConditionalBlock block = context.conditionalBlocks.get(group.firstConditionalBlockIndex);
-				if (group.equalsSourceRange(block.node)) {
-					context.conditionalBlocks.remove(group.firstConditionalBlockIndex);
-					addConditionalBlock(node, group.nodes, block);
+				final ConditionalBlock block = context.mConditionalBlocks.get(group.mFirstConditionalBlockIndex);
+				if (group.equalsSourceRange(block.mNode)) {
+					context.mConditionalBlocks.remove(group.mFirstConditionalBlockIndex);
+					addConditionalBlock(node, group.mNodes, block);
 				} else {
 					addOverlappingNode(node, group);
 				}
@@ -211,29 +252,29 @@ public class PSTBuilder {
 			}
 
 			// Check if it's an include
-			int index = findEqualRange(context.includeDirectives, group);
+			int index = findEqualRange(context.mIncludeDirectives, group);
 			if (index != -1) {
-				addPreprocessorNode(node, group.nodes, context.includeDirectives.remove(index));
+				addPreprocessorNode(node, group.mNodes, context.mIncludeDirectives.remove(index));
 				return;
 			}
 
 			// Check if it's a macro expansion
 			// Certain macro expansions that cleanly map to astnodes may be added as regular nodes
 			// with the macro expansion as only child
-			index = findEqualRange(macroExpansions, group);
+			index = findEqualRange(mMacroExpansions, group);
 			if (index != -1) {
-				final IPSTMacroExpansion macroExpansion = macroExpansions.remove(index);
-				if (group.nodes.size() == 1 && treatMacroExpansionAsRegularNode(macroExpansion, group.nodes.get(0))) {
-					addMacroExpansionAsRegularNode(node, macroExpansion, group.nodes.get(0));
+				final IPSTMacroExpansion macroExpansion = mMacroExpansions.remove(index);
+				if (group.mNodes.size() == 1 && treatMacroExpansionAsRegularNode(macroExpansion, group.mNodes.get(0))) {
+					addMacroExpansionAsRegularNode(node, macroExpansion, group.mNodes.get(0));
 					return;
 				}
 
-				addPreprocessorNode(node, group.nodes, macroExpansion);
+				addPreprocessorNode(node, group.mNodes, macroExpansion);
 				return;
 			}
 
 			// It's a regular node if there is only a single node at this location
-			if (group.nodes.size() == 1) {
+			if (group.mNodes.size() == 1) {
 				addRegularNode(node, group, context);
 				return;
 			}
@@ -244,7 +285,7 @@ public class PSTBuilder {
 		}
 
 		void pushTask(final IPSTNode node, final List<IASTNode> children, final ConditionalBlock context) {
-			stack = new CreateChildrenTask(node, children, context, stack);
+			mStack = new CreateChildrenTask(node, children, context, mStack);
 		}
 
 	}
@@ -263,7 +304,7 @@ public class PSTBuilder {
 		// all nodes before this one do not intersect
 		int index = Collections.binarySearch(ranges, null,
 				Comparator.comparingInt(o -> o == null ? location.offset() : o.endOffset()));
-		index = index < 0 ? -index - 1 : index + 1;
+		index = index < 0 ? (-index - 1) : (index + 1);
 
 		// Find the first node that starts after the location
 		int endIndex = index;
@@ -275,41 +316,7 @@ public class PSTBuilder {
 		return index != endIndex ? new IndexRange(index, endIndex - 1) : null;
 	}
 
-	private final ILogger mLogger;
-	private final IASTTranslationUnit translationUnit;
-	private final ISourceDocument sourceDocument;
 
-	private IPSTNodeFactory nodeFactory;
-
-	private LocationResolver locationResolver;
-
-	private boolean createComments = true;
-
-	private boolean createMacroExpansions = true;
-
-	private boolean expandConditionalBlocks = true;
-
-	private ConditionalBlock conditionalBlockRoot;
-
-	private List<IPSTMacroExpansion> macroExpansions;
-
-	private List<IPSTComment> comments;
-
-	/**
-	 * Create new builder instance.
-	 *
-	 * @param logger
-	 *            logger instance
-	 * @param ast
-	 *            AST instance
-	 * @param sourceDocument
-	 *            source document
-	 */
-	public PSTBuilder(final ILogger logger, final IASTTranslationUnit ast, final ISourceDocument sourceDocument) {
-		mLogger = Objects.requireNonNull(logger);
-		translationUnit = Objects.requireNonNull(ast);
-		this.sourceDocument = Objects.requireNonNull(sourceDocument);
-	}
 
 	/**
 	 * @return new IPSTTranslationUnit instance
@@ -317,15 +324,15 @@ public class PSTBuilder {
 	 *             on unbalanced #if/#else/#endif directives
 	 */
 	public IPSTTranslationUnit build() {
-		if (locationResolver == null) {
-			locationResolver = new LocationResolver(translationUnit.getContainingFilename(), sourceDocument, mLogger);
+		if (mLocationResolver == null) {
+			mLocationResolver = new LocationResolver(mTranslationUnit.getContainingFilename(), mSourceDocument, mLogger);
 		}
 
-		if (nodeFactory == null) {
-			nodeFactory = new DefaultNodeFactory();
+		if (mNodeFactory == null) {
+			mNodeFactory = new DefaultNodeFactory();
 		}
 
-		nodeFactory.setSourceDocument(sourceDocument);
+		mNodeFactory.setSourceDocument(mSourceDocument);
 
 		createPreprocessorNodes();
 		final IPSTTranslationUnit tu = createTree();
@@ -334,29 +341,29 @@ public class PSTBuilder {
 	}
 
 	private void collectRemainingPreprocessorNodes(final ConditionalBlock block, final List<IPSTNode> list) {
-		block.conditionalBlocks.stream().map(c -> c.node).forEachOrdered(list::add);
-		list.addAll(block.conditionalDirectives);
-		list.addAll(block.otherDirectives);
-		list.addAll(block.includeDirectives);
-		for (final ConditionalBlock child : block.children) {
+		block.mConditionalBlocks.stream().map(c -> c.mNode).forEachOrdered(list::add);
+		list.addAll(block.mConditionalDirectives);
+		list.addAll(block.mOtherDirectives);
+		list.addAll(block.mIncludeDirectives);
+		for (final ConditionalBlock child : block.mChildren) {
 			collectRemainingPreprocessorNodes(child, list);
 		}
 	}
 
 	private IPSTConditionalBlock createConditionalBlockNode(final List<IPSTDirective> conditionalDirectives) {
-		final ISourceRange location = sourceDocument.newSourceRange(conditionalDirectives.get(0).offset(),
+		final ISourceRange location = mSourceDocument.newSourceRange(conditionalDirectives.get(0).offset(),
 				conditionalDirectives.get(conditionalDirectives.size() - 1).endOffset());
 
 		ISourceRange activeBranchLocation = null;
 		for (int i = 0; i < conditionalDirectives.size() - 1; ++i) {
 			if (ASTNodeUtils.isConditionalPreprocessorStatementTaken(conditionalDirectives.get(i).getASTNode())) {
-				activeBranchLocation = sourceDocument.newSourceRange(conditionalDirectives.get(i).endOffset(),
+				activeBranchLocation = mSourceDocument.newSourceRange(conditionalDirectives.get(i).endOffset(),
 						conditionalDirectives.get(i + 1).offset());
 				break;
 			}
 		}
 
-		return nodeFactory.createConditionalBlock(location, conditionalDirectives, activeBranchLocation);
+		return mNodeFactory.createConditionalBlock(location, conditionalDirectives, activeBranchLocation);
 	}
 
 	/**
@@ -371,16 +378,16 @@ public class PSTBuilder {
 		final ConditionalBlock root = new ConditionalBlock(null);
 		ConditionalBlock head = root;
 
-		for (final IASTPreprocessorStatement statement : translationUnit.getAllPreprocessorStatements()) {
+		for (final IASTPreprocessorStatement statement : mTranslationUnit.getAllPreprocessorStatements()) {
 			// Skip all statements from included files
-			final ISourceRange location = locationResolver.getSourceRangeInTranslationUnitFile(statement);
+			final ISourceRange location = mLocationResolver.getSourceRangeInTranslationUnitFile(statement);
 			if (location == null) {
 				continue;
 			}
 
 			if (statement instanceof IASTPreprocessorIncludeStatement) {
-				head.includeDirectives.add(
-						nodeFactory.createIncludeDirective(location, (IASTPreprocessorIncludeStatement) statement));
+				head.mIncludeDirectives.add(
+						mNodeFactory.createIncludeDirective(location, (IASTPreprocessorIncludeStatement) statement));
 
 				// Note that head == root should not be possible for #else and #endif directives,
 				// because the parser seems to create problem nodes in these cases.
@@ -391,61 +398,61 @@ public class PSTBuilder {
 					|| statement instanceof IASTPreprocessorIfndefStatement) {
 				final ConditionalBlock newBlock = new ConditionalBlock(head);
 				head = newBlock;
-				head.conditionalDirectives.add(nodeFactory.createDirective(location, statement));
+				head.mConditionalDirectives.add(mNodeFactory.createDirective(location, statement));
 			} else if (statement instanceof IASTPreprocessorElseStatement
 					|| statement instanceof IASTPreprocessorElifStatement) {
-				if (head == root) {
+				if (head.equals(root)) {
 					// should not happen
 					throw new UnbalancedConditionalDirectiveException("freestanding " + statement + " at " + location);
 				}
-				head.conditionalDirectives.add(nodeFactory.createDirective(location, statement));
+				head.mConditionalDirectives.add(mNodeFactory.createDirective(location, statement));
 			} else if (statement instanceof IASTPreprocessorEndifStatement) {
-				if (head == root) {
+				if (head.equals(root)) {
 					// should not happen
 					throw new UnbalancedConditionalDirectiveException("freestanding " + statement + " at " + location);
 				}
-				head.conditionalDirectives.add(nodeFactory.createDirective(location, statement));
+				head.mConditionalDirectives.add(mNodeFactory.createDirective(location, statement));
 
 				// block is complete, create real node and pop it off the stack
-				head.node = createConditionalBlockNode(head.conditionalDirectives);
-				head.parent.conditionalBlocks.add(head);
+				head.mNode = createConditionalBlockNode(head.mConditionalDirectives);
+				head.mParent.mConditionalBlocks.add(head);
 
-				head.parent.children.add(head);
-				head = head.parent;
+				head.mParent.mChildren.add(head);
+				head = head.mParent;
 			} else {
-				head.otherDirectives.add(nodeFactory.createDirective(location, statement));
+				head.mOtherDirectives.add(mNodeFactory.createDirective(location, statement));
 			}
 		}
 
-		if (head != root) {
+		if (!head.equals(root)) {
 			// Does happen, but no compiler should accept this so a hard error
 			// seems reasonable
 			throw new UnbalancedConditionalDirectiveException("unterminated conditional directive "
-					+ head.conditionalDirectives.get(head.conditionalDirectives.size() - 1));
+					+ head.mConditionalDirectives.get(head.mConditionalDirectives.size() - 1));
 		}
 
 		return root;
 	}
 
 	private void createPreprocessorNodes() {
-		conditionalBlockRoot = createConditionalBlockTree();
+		mConditionalBlockRoot = createConditionalBlockTree();
 
-		macroExpansions = new ArrayList<>();
-		if (createMacroExpansions) {
-			for (final IASTPreprocessorMacroExpansion expansion : translationUnit.getMacroExpansions()) {
-				final ISourceRange location = locationResolver.getSourceRangeInTranslationUnitFile(expansion);
+		mMacroExpansions = new ArrayList<>();
+		if (mCreateMacroExpansions) {
+			for (final IASTPreprocessorMacroExpansion expansion : mTranslationUnit.getMacroExpansions()) {
+				final ISourceRange location = mLocationResolver.getSourceRangeInTranslationUnitFile(expansion);
 				if (location != null) {
-					macroExpansions.add(nodeFactory.createMacroExpansion(location, expansion));
+					mMacroExpansions.add(mNodeFactory.createMacroExpansion(location, expansion));
 				}
 			}
 		}
 
-		comments = new ArrayList<>();
-		if (createComments) {
-			for (final IASTComment comment : translationUnit.getComments()) {
-				final ISourceRange location = locationResolver.getSourceRangeInTranslationUnitFile(comment);
+		mComments = new ArrayList<>();
+		if (mCreateComments) {
+			for (final IASTComment comment : mTranslationUnit.getComments()) {
+				final ISourceRange location = mLocationResolver.getSourceRangeInTranslationUnitFile(comment);
 				if (location != null) {
-					comments.add(nodeFactory.createComment(location, comment));
+					mComments.add(mNodeFactory.createComment(location, comment));
 				}
 			}
 		}
@@ -475,14 +482,14 @@ public class PSTBuilder {
 		for (final IASTNode node : siblings) {
 			// Map the node location to the translation unit file and skip nodes that do not
 			// span any characters (e.g. implicit names)
-			ISourceRange location = locationResolver.getSourceRangeMappedToInclusionStatement(node);
+			ISourceRange location = mLocationResolver.getSourceRangeMappedToInclusionStatement(node);
 			if (location == null || location.length() == 0) {
 				continue;
 			}
 
 			// Immediately add node to current group if it fits inside
 			if (currentGroup != null && currentGroup.contains(location)) {
-				currentGroup.nodes.add(node);
+				currentGroup.mNodes.add(node);
 				continue;
 			}
 
@@ -492,17 +499,17 @@ public class PSTBuilder {
 			if (intersectedBlocks != null) {
 				// Expand the location to include all blocks that have been found,
 				// but ignore fully contained blocks
-				final ISourceRange expandedLocation = sourceDocument.newSourceRange(
-						Math.min(location.offset(), conditionalBlocks.get(intersectedBlocks.first).offset()),
-						Math.max(location.endOffset(), conditionalBlocks.get(intersectedBlocks.last).endOffset()));
+				final ISourceRange expandedLocation = mSourceDocument.newSourceRange(
+						Math.min(location.offset(), conditionalBlocks.get(intersectedBlocks.mFirst).offset()),
+						Math.max(location.endOffset(), conditionalBlocks.get(intersectedBlocks.mLast).endOffset()));
 				if (expandedLocation.offset() != location.offset()
 						|| expandedLocation.endOffset() != location.endOffset()) {
-					firstConditionalBlockIndex = intersectedBlocks.first;
+					firstConditionalBlockIndex = intersectedBlocks.mFirst;
 					location = expandedLocation;
 				}
 			}
 
-			if (currentGroup == null || location.offset() >= currentGroup.endOffset) {
+			if (currentGroup == null || location.offset() >= currentGroup.mEndOffset) {
 				// Complete the current group and create a new one for this location
 				if (currentGroup != null) {
 					consumer.accept(currentGroup);
@@ -510,12 +517,12 @@ public class PSTBuilder {
 				currentGroup = new OverlappingSiblingsGroup(location);
 			} else {
 				// Expand the current group
-				currentGroup.endOffset = location.endOffset();
+				currentGroup.mEndOffset = location.endOffset();
 			}
 
-			currentGroup.nodes.add(node);
-			if (firstConditionalBlockIndex != -1 && currentGroup.firstConditionalBlockIndex == -1) {
-				currentGroup.firstConditionalBlockIndex = firstConditionalBlockIndex;
+			currentGroup.mNodes.add(node);
+			if (firstConditionalBlockIndex != -1 && currentGroup.mFirstConditionalBlockIndex == -1) {
+				currentGroup.mFirstConditionalBlockIndex = firstConditionalBlockIndex;
 			}
 		}
 
@@ -543,39 +550,39 @@ public class PSTBuilder {
 
 			// Insert next node as left sibling if it starts before this node
 			// and immediately process it recursively before this node
-			if (task.state == InsertTask.ENTER) {
+			if (task.mState == InsertTask.ENTER) {
 				final IPSTNode nextToInsert = nodesToInsert.get(nextInsertIndex);
-				if (nextToInsert.offset() < task.node.offset()) {
-					if (!skipInsertion(task.node.getParent(), nextToInsert)) {
-						task.node.getParent().addChild(task.parentTask.nextChildIndex - 1, nextToInsert);
-						++task.parentTask.nextChildIndex;
-						stack.push(new InsertTask(nextToInsert, InsertTask.ENTER, task.parentTask));
+				if (nextToInsert.offset() < task.mNode.offset()) {
+					if (!skipInsertion(task.mNode.getParent(), nextToInsert)) {
+						task.mNode.getParent().addChild(task.mParentTask.mNextChildIndex - 1, nextToInsert);
+						++task.mParentTask.mNextChildIndex;
+						stack.push(new InsertTask(nextToInsert, InsertTask.ENTER, task.mParentTask));
 					}
 					++nextInsertIndex;
 					continue;
 				}
 
-				task.state = InsertTask.CHILDREN;
+				task.mState = InsertTask.CHILDREN;
 			}
 
 			// Enter next child of this node
-			if (task.state == InsertTask.CHILDREN) {
-				if (task.nextChildIndex < task.node.getChildren().size()) {
+			if (task.mState == InsertTask.CHILDREN) {
+				if (task.mNextChildIndex < task.mNode.getChildren().size()) {
 					stack.push(
-							new InsertTask(task.node.getChildren().get(task.nextChildIndex), InsertTask.ENTER, task));
-					++task.nextChildIndex;
+							new InsertTask(task.mNode.getChildren().get(task.mNextChildIndex), InsertTask.ENTER, task));
+					++task.mNextChildIndex;
 					continue;
 				}
 
-				task.state = InsertTask.LEAVE;
+				task.mState = InsertTask.LEAVE;
 			}
 
 			// Add everything that ends within as new child
-			if (task.state == InsertTask.LEAVE) {
+			if (task.mState == InsertTask.LEAVE) {
 				final IPSTNode nextToInsert = nodesToInsert.get(nextInsertIndex);
-				if (nextToInsert.endOffset() <= task.node.endOffset()) {
-					if (!skipInsertion(task.node, nextToInsert)) {
-						task.node.addChild(nextToInsert);
+				if (nextToInsert.endOffset() <= task.mNode.endOffset()) {
+					if (!skipInsertion(task.mNode, nextToInsert)) {
+						task.mNode.addChild(nextToInsert);
 						stack.push(new InsertTask(nextToInsert, InsertTask.ENTER, task));
 					}
 					++nextInsertIndex;
@@ -588,30 +595,30 @@ public class PSTBuilder {
 
 	private void insertRemainingPreprocessorNodes(final IPSTTranslationUnit root) {
 		final List<IPSTNode> nodesToInsert = new ArrayList<>();
-		collectRemainingPreprocessorNodes(conditionalBlockRoot, nodesToInsert);
-		nodesToInsert.addAll(macroExpansions);
-		nodesToInsert.addAll(comments);
+		collectRemainingPreprocessorNodes(mConditionalBlockRoot, nodesToInsert);
+		nodesToInsert.addAll(mMacroExpansions);
+		nodesToInsert.addAll(mComments);
 		nodesToInsert.sort(HierarchicalSourceRangeComparator.getInstance());
 		insertNodesNonRecursive(root, nodesToInsert);
 	}
 
 	public PSTBuilder setCreateComments(final boolean createComments) {
-		this.createComments = createComments;
+		this.mCreateComments = createComments;
 		return this;
 	}
 
 	public PSTBuilder setCreateMacroExpansions(final boolean createMacroExpansions) {
-		this.createMacroExpansions = createMacroExpansions;
+		this.mCreateMacroExpansions = createMacroExpansions;
 		return this;
 	}
 
 	public PSTBuilder setExpandConditionalBlocks(final boolean expandConditionalBlocks) {
-		this.expandConditionalBlocks = expandConditionalBlocks;
+		this.mExpandConditionalBlocks = expandConditionalBlocks;
 		return this;
 	}
 
 	public PSTBuilder setNodeFactory(final IPSTNodeFactory nodeFactory) {
-		this.nodeFactory = nodeFactory;
+		this.mNodeFactory = nodeFactory;
 		return this;
 	}
 

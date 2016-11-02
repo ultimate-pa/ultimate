@@ -26,7 +26,7 @@ public class PSTMacroExpansion extends PSTNode implements IPSTMacroExpansion {
 
 	@Override
 	public IASTPreprocessorMacroExpansion getASTNode() {
-		return (IASTPreprocessorMacroExpansion) astNode;
+		return (IASTPreprocessorMacroExpansion) mAstNode;
 	}
 
 }

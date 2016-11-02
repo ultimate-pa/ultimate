@@ -13,41 +13,41 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.SourceRewrite
 
 public class DeleteWithCommaChange extends Change {
 	class CombinedChange extends Change {
-		List<IPSTNode> childrenToDelete = new ArrayList<>();
+		private List<IPSTNode> mChildrenToDelete = new ArrayList<>();
 
 		CombinedChange(final IPSTNode node) {
 			super(node);
 		}
 
 		void addChild(final IPSTNode child) {
-			childrenToDelete.add(child);
+			mChildrenToDelete.add(child);
 		}
 
 		@Override
 		public void apply(final SourceRewriter rewriter) {
 			// Just sort the nodes instead of relying that they are already
 			// in order (which should be the case, though)
-			childrenToDelete.sort(HierarchicalSourceRangeComparator.getInstance());
+			mChildrenToDelete.sort(HierarchicalSourceRangeComparator.getInstance());
 
-			if (keepOne && commaPositions.size() - childrenToDelete.size() < 1) {
+			if (mKeepOne && mCommaPositions.size() - mChildrenToDelete.size() < 1) {
 				throw new ChangeConflictException("Applying this combination of changes would delete the last element");
 			}
 
-			CommaDeleter.deleteNodesWithComma(rewriter, childrenToDelete, commaPositions);
+			CommaDeleter.deleteNodesWithComma(rewriter, mChildrenToDelete, mCommaPositions);
 		}
 	}
 
-	IPSTNode parent;
-	List<CommaSeparatedChild> commaPositions;
+	private IPSTNode mParent;
+	private List<CommaSeparatedChild> mCommaPositions;
 
-	boolean keepOne;
+	private boolean mKeepOne;
 
 	public DeleteWithCommaChange(final IPSTRegularNode node, final IPSTRegularNode parent,
 			final List<CommaSeparatedChild> commaPositions, final boolean keepOne) {
 		super(node);
-		this.parent = parent;
-		this.commaPositions = commaPositions;
-		this.keepOne = keepOne;
+		mParent = parent;
+		mCommaPositions = commaPositions;
+		mKeepOne = keepOne;
 	}
 
 	@Override
@@ -64,11 +64,11 @@ public class DeleteWithCommaChange extends Change {
 
 	@Override
 	public String toString() {
-		return "Delete with comma " + getNode() + " (from " + parent + ")";
+		return "Delete with comma " + getNode() + " (from " + mParent + ")";
 	}
 
 	@Override
 	public void updateDeferredChange(final Map<IPSTNode, Change> deferredChangeMap) {
-		((CombinedChange) deferredChangeMap.computeIfAbsent(parent, CombinedChange::new)).addChild(getNode());
+		((CombinedChange) deferredChangeMap.computeIfAbsent(mParent, CombinedChange::new)).addChild(getNode());
 	}
 }

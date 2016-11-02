@@ -8,23 +8,23 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceRange;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.SourceRewriter;
 
 public class DeleteTokensChange extends Change {
-	private final List<Token> tokens;
+	private final List<Token> mTokens;
 
 	public DeleteTokensChange(final IPSTNode node, final List<Token> tokens) {
 		super(node);
-		this.tokens = tokens;
+		mTokens = tokens;
 	}
 
 	@Override
 	public void apply(final SourceRewriter rewriter) {
-		for (final ISourceRange location : tokens) {
+		for (final ISourceRange location : mTokens) {
 			replaceByWhitespace(rewriter, location);
 		}
 	}
 
 	@Override
 	public String toString() {
-		return "Delete tokens from " + getNode() + ": " + tokens;
+		return "Delete tokens from " + getNode() + ": " + mTokens;
 	}
 
 }

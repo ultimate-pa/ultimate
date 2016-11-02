@@ -3,8 +3,8 @@ package de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.minimizers
 import java.util.EnumSet;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.minimizers.Minimizer;
-import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.minimizers.MinimizerStep;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.minimizers.IMinimizer;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.minimizers.IMinimizerStep;
 
 /**
  * Minimizer based on the original ddmin algorithm. Several options have been added to adjust the order and overall
@@ -15,36 +15,36 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.minimizers.
  * <li>In contrast to the original algorithm subsets are removed back to front by default.
  * </ul>
  */
-public class DDMinMinimizer implements Minimizer {
+public class DDMinMinimizer implements IMinimizer {
 
 	/**
 	 * Default instances
 	 */
 
-	class DDMinStep<E> implements MinimizerStep<E> {
-		final List<E> minCircumstances;
-		final List<E> testInput;
-		final int granularity;
-		final boolean checkComplements;
-		final int iterationStep;
+	class DDMinStep<E> implements IMinimizerStep<E> {
+		private final List<E> mMinCircumstances;
+		private final List<E> mTestInput;
+		private final int mGranularity;
+		private final boolean mCheckComplements;
+		private final int mIterationStep;
 
 		DDMinStep(final List<E> minCircumstances, final List<E> testInput, final int granularity,
 				final boolean checkComplements, final int step) {
-			this.minCircumstances = minCircumstances;
-			this.testInput = testInput;
-			this.granularity = granularity;
-			this.checkComplements = checkComplements;
-			this.iterationStep = step;
+			mMinCircumstances = minCircumstances;
+			mTestInput = testInput;
+			mGranularity = granularity;
+			mCheckComplements = checkComplements;
+			mIterationStep = step;
 		}
 
 		@Override
 		public List<E> getResult() {
-			return minCircumstances;
+			return mMinCircumstances;
 		}
 
 		@Override
 		public List<E> getVariant() {
-			return testInput;
+			return mTestInput;
 		}
 
 		@Override
@@ -53,63 +53,63 @@ public class DDMinMinimizer implements Minimizer {
 		}
 
 		@Override
-		public MinimizerStep<E> next(final boolean keepVariant) {
+		public IMinimizerStep<E> next(final boolean keepVariant) {
 			return keepVariant ? reduceToCurrentTestInput() : tryNextTestInput();
 		}
 
-		private MinimizerStep<E> reduceToCurrentTestInput() {
-			final int size = testInput.size();
+		private IMinimizerStep<E> reduceToCurrentTestInput() {
+			final int size = mTestInput.size();
 			if (size < 2) {
-				return createFinalStep(testInput);
+				return createFinalStep(mTestInput);
 			}
 
 			// Optionally continue with checking the complement of the next
 			// subset instead of restarting a full iteration at the first
 			// subset
-			if (continueAfterReduceToComplement() && checkComplements) {
+			if (continueAfterReduceToComplement() && mCheckComplements) {
 				return reduceToCurrentTestInputContinueWithNextComplement();
 			}
 
-			return createNextStep(testInput, checkComplements ? Math.max(granularity - 1, 2) : initialGranularity(size),
+			return createNextStep(mTestInput, mCheckComplements ? Math.max(mGranularity - 1, 2) : initialGranularity(size),
 					skipSubsetTests(), 0);
 		}
 
-		private MinimizerStep<E> reduceToCurrentTestInputContinueWithNextComplement() {
-			if (iterationStep < granularity - 1 && granularity > 2) {
-				return createNextStep(testInput, granularity - 1, true, iterationStep);
+		private IMinimizerStep<E> reduceToCurrentTestInputContinueWithNextComplement() {
+			if (mIterationStep < mGranularity - 1 && mGranularity > 2) {
+				return createNextStep(mTestInput, mGranularity - 1, true, mIterationStep);
 			}
 
 			// increase granularity
-			final int size = testInput.size();
-			if (granularity - 1 < size) {
-				return createNextStep(testInput, Math.toIntExact(Math.min(2L * (granularity - 1), size)),
+			final int size = mTestInput.size();
+			if (mGranularity - 1 < size) {
+				return createNextStep(mTestInput, Math.toIntExact(Math.min(2L * (mGranularity - 1), size)),
 						skipSubsetTests(), 0);
 			}
 
-			return createFinalStep(testInput);
+			return createFinalStep(mTestInput);
 		}
 
-		private MinimizerStep<E> tryNextTestInput() {
+		private IMinimizerStep<E> tryNextTestInput() {
 			// Increment iteration step
-			if (iterationStep + 1 < granularity) {
-				return createNextStep(minCircumstances, granularity, checkComplements, iterationStep + 1);
+			if (mIterationStep + 1 < mGranularity) {
+				return createNextStep(mMinCircumstances, mGranularity, mCheckComplements, mIterationStep + 1);
 			}
 
 			// Toggle complement setting and iterate again (unless granularity
 			// is 2, in which case the two subsets are equal to their two
 			// complements and have already been checked)
-			if (!checkComplements && granularity != 2) {
-				return createNextStep(minCircumstances, granularity, true, 0);
+			if (!mCheckComplements && mGranularity != 2) {
+				return createNextStep(mMinCircumstances, mGranularity, true, 0);
 			}
 
 			// Increase the granularity if it is not at the maximum yet
-			final int size = minCircumstances.size();
-			if (granularity < size) {
-				return createNextStep(minCircumstances, Math.toIntExact(Math.min(2L * granularity, size)),
+			final int size = mMinCircumstances.size();
+			if (mGranularity < size) {
+				return createNextStep(mMinCircumstances, Math.toIntExact(Math.min(2L * mGranularity, size)),
 						skipSubsetTests(), 0);
 			}
 
-			return createFinalStep(minCircumstances);
+			return createFinalStep(mMinCircumstances);
 		}
 	}
 
@@ -180,7 +180,7 @@ public class DDMinMinimizer implements Minimizer {
 	public static final DDMinMinimizer REMOVE_SINGLE_ELEMENTS_NONMINIMAL = new DDMinMinimizer(Option.SKIP_SUBSET_TESTS,
 			Option.SKIP_TO_MAX_GRANULARITY, Option.CONTINUE_AFTER_REDUCE_TO_COMPLEMENT);
 
-	private final EnumSet<Option> options;
+	private final EnumSet<Option> mOptions;
 
 	/**
 	 * Create new minimizer with the specified options.
@@ -189,10 +189,10 @@ public class DDMinMinimizer implements Minimizer {
 	 *            combination of options
 	 */
 	public DDMinMinimizer(final Option... options) {
-		this.options = options.length > 0 ? EnumSet.of(options[0], options) : EnumSet.noneOf(Option.class);
+		this.mOptions = options.length > 0 ? EnumSet.of(options[0], options) : EnumSet.noneOf(Option.class);
 	}
 
-	private void checkInvariants(final int size, final int granularity, final int step) {
+	private static void checkInvariants(final int size, final int granularity, final int step) {
 		if (size < 2) {
 			throw new IllegalStateException(
 					"circumstances already at minimum (empty test inputs are assumed to PASS and are not tested by ddmin)");
@@ -206,11 +206,11 @@ public class DDMinMinimizer implements Minimizer {
 	}
 
 	final boolean continueAfterReduceToComplement() {
-		return options.contains(Option.CONTINUE_AFTER_REDUCE_TO_COMPLEMENT);
+		return mOptions.contains(Option.CONTINUE_AFTER_REDUCE_TO_COMPLEMENT);
 	}
 
 	@Override
-	public <E> MinimizerStep<E> create(final List<E> input) {
+	public <E> IMinimizerStep<E> create(final List<E> input) {
 		final int size = input.size();
 		if (size < 2) {
 			return createFinalStep(input);
@@ -218,16 +218,16 @@ public class DDMinMinimizer implements Minimizer {
 		return createNextStep(input, initialGranularity(size), skipSubsetTests(), 0);
 	}
 
-	private <E> MinimizerStep<E> createFinalStep(final List<E> minCircumstances) {
+	private <E> IMinimizerStep<E> createFinalStep(final List<E> minCircumstances) {
 		return new FinalMinimizerStep<>(minCircumstances);
 	}
 
-	private <E> MinimizerStep<E> createNextStep(final List<E> minCircumstances, final int granularity,
+	private <E> IMinimizerStep<E> createNextStep(final List<E> minCircumstances, final int granularity,
 			final boolean checkComplements, final int step) {
 		final int size = minCircumstances.size();
 		checkInvariants(size, granularity, step);
 
-		final int subsequenceIndex = iterateComplementsInReverse() && checkComplements ? granularity - step - 1 : step;
+		final int subsequenceIndex = iterateComplementsInReverse() && checkComplements ? (granularity - step - 1) : step;
 		final SequencePartitioner.SubsequenceBounds bounds =
 				new SequencePartitioner(size, granularity).get(subsequenceIndex);
 		final List<E> testInput = checkComplements
@@ -237,7 +237,7 @@ public class DDMinMinimizer implements Minimizer {
 	}
 
 	final int initialGranularity(final int size) {
-		return options.contains(Option.SKIP_TO_MAX_GRANULARITY) ? size : 2;
+		return mOptions.contains(Option.SKIP_TO_MAX_GRANULARITY) ? size : 2;
 	}
 
 	@Override
@@ -245,20 +245,20 @@ public class DDMinMinimizer implements Minimizer {
 		// Testing only complements at max granularity does not generate
 		// duplicate test inputs
 		// (while still ensuring one-minimalality).
-		return options.contains(Option.SKIP_SUBSET_TESTS) && options.contains(Option.SKIP_TO_MAX_GRANULARITY);
+		return mOptions.contains(Option.SKIP_SUBSET_TESTS) && mOptions.contains(Option.SKIP_TO_MAX_GRANULARITY);
 	}
 
 	@Override
 	public boolean isResultMinimal() {
-		return !options.contains(Option.CONTINUE_AFTER_REDUCE_TO_COMPLEMENT);
+		return !mOptions.contains(Option.CONTINUE_AFTER_REDUCE_TO_COMPLEMENT);
 	}
 
 	final boolean iterateComplementsInReverse() {
-		return !options.contains(Option.STRICT_COMPLEMENT_ORDER);
+		return !mOptions.contains(Option.STRICT_COMPLEMENT_ORDER);
 	}
 
 	final boolean skipSubsetTests() {
-		return options.contains(Option.SKIP_SUBSET_TESTS);
+		return mOptions.contains(Option.SKIP_SUBSET_TESTS);
 	}
 
 }

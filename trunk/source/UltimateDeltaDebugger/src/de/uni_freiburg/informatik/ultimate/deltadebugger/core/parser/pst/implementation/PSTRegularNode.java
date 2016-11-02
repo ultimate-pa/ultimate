@@ -28,7 +28,7 @@ public class PSTRegularNode extends PSTNode implements IPSTRegularNode {
 		final PSTVisitorWithResult<IPSTRegularNode> action = new PSTVisitorWithResult<IPSTRegularNode>() {
 			@Override
 			public int visit(final IPSTRegularNode node) {
-				if (PSTRegularNode.this == node) {
+				if (PSTRegularNode.this.equals(node)) {
 					return PROCESS_CONTINUE;
 				} else if (node.getASTNode() == astNode) {
 					setResult(node);

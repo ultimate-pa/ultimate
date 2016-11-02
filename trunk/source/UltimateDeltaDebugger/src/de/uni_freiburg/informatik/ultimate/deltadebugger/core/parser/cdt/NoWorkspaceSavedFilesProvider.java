@@ -10,7 +10,6 @@ import org.eclipse.cdt.internal.core.parser.scanner.InternalFileContentProvider;
  * The original SavedFilesProvider implementation accesses the current workspace to read included files, which may not
  * be initialized and so it crashes.
  */
-@SuppressWarnings("restriction")
 public class NoWorkspaceSavedFilesProvider extends InternalFileContentProvider {
 
 	@Override

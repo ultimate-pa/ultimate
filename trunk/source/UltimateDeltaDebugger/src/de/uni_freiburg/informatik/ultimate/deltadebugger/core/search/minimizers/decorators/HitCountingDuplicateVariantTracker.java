@@ -5,39 +5,39 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.IChangeHandle;
-import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.minimizers.DuplicateVariantTracker;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.minimizers.IDuplicateVariantTracker;
 
-public class HitCountingDuplicateVariantTracker implements DuplicateVariantTracker<IChangeHandle> {
-	private final DuplicateVariantTracker<IChangeHandle> delegate;
-	private final AtomicInteger counter;
+public class HitCountingDuplicateVariantTracker implements IDuplicateVariantTracker<IChangeHandle> {
+	private final IDuplicateVariantTracker<IChangeHandle> mDelegate;
+	private final AtomicInteger mCounter;
 
-	public HitCountingDuplicateVariantTracker(final DuplicateVariantTracker<IChangeHandle> delegate,
+	public HitCountingDuplicateVariantTracker(final IDuplicateVariantTracker<IChangeHandle> delegate,
 			final AtomicInteger counter) {
-		this.delegate = Objects.requireNonNull(delegate);
-		this.counter = Objects.requireNonNull(counter);
+		mDelegate = Objects.requireNonNull(delegate);
+		mCounter = Objects.requireNonNull(counter);
 	}
 
 	@Override
 	public void add(final List<? extends IChangeHandle> variant) {
-		delegate.add(variant);
+		mDelegate.add(variant);
 	}
 
 	@Override
 	public boolean contains(final List<? extends IChangeHandle> variant) {
-		final boolean result = delegate.contains(variant);
+		final boolean result = mDelegate.contains(variant);
 		if (result) {
-			counter.incrementAndGet();
+			mCounter.incrementAndGet();
 		}
 		return result;
 	}
 
 	public AtomicInteger getCounter() {
-		return counter;
+		return mCounter;
 	}
 
 	@Override
 	public void removeLargerVariants(final int keptVariantSize) {
-		delegate.removeLargerVariants(keptVariantSize);
+		mDelegate.removeLargerVariants(keptVariantSize);
 	}
 
 }

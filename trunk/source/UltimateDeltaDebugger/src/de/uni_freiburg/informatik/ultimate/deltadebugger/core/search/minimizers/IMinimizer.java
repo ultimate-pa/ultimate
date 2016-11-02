@@ -5,10 +5,10 @@ import java.util.List;
 /**
  * Represents an iterative minimization algorithm.
  *
- * @see MinimizerStep
+ * @see IMinimizerStep
  *
  */
-public interface Minimizer {
+public interface IMinimizer {
 	/**
 	 * Create the initial algorithm state to minimize the given input sequence.
 	 *
@@ -16,7 +16,7 @@ public interface Minimizer {
 	 *            input sequence
 	 * @return initial algorithm state
 	 */
-	<E> MinimizerStep<E> create(List<E> input);
+	<E> IMinimizerStep<E> create(List<E> input);
 
 	/**
 	 * @return whether duplicate variants may be generated or not

@@ -2,7 +2,7 @@ package de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.minimizers
 
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.SearchStep;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.ISearchStep;
 
 /**
  * Represents an individual step in an iterative minimization algorithm. Each non-final state has a variant, which is a
@@ -14,10 +14,10 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.SearchStep;
  * <li>
  * </ul>
  *
- * @see SearchStep
+ * @see ISearchStep
  * @param <E>
  *            element type
  */
-public interface MinimizerStep<E> extends SearchStep<List<E>, MinimizerStep<E>> {
+public interface IMinimizerStep<E> extends ISearchStep<List<E>, IMinimizerStep<E>> {
 
 }

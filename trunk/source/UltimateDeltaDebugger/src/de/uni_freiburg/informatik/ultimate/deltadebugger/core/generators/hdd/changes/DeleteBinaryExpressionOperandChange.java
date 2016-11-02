@@ -11,50 +11,52 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceRange;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.SourceRewriter;
 
 public class DeleteBinaryExpressionOperandChange extends Change {
+	private final IPSTRegularNode mBinaryExpressionNode;
+	private final ISourceRange mOperatorPosition;
+	private final String mFullReplacement;
+	
+	
 	class CombinedChange extends Change {
-		List<IPSTNode> operandsToDelete = new ArrayList<>();
+		private List<IPSTNode> mOperandsToDelete = new ArrayList<>();
 
 		CombinedChange(final IPSTNode node) {
 			super(node);
 		}
 
 		void addOperand(final IPSTNode child) {
-			operandsToDelete.add(child);
+			mOperandsToDelete.add(child);
 		}
 
 		@Override
 		public void apply(final SourceRewriter rewriter) {
-			if (operandsToDelete.size() == 1) {
-				deleteNodeText(rewriter, operandsToDelete.get(0));
-				replaceByWhitespace(rewriter, operatorPosition);
-			} else if (operandsToDelete.size() == 2) {
-				rewriter.replace(operandsToDelete.get(0), fullReplacement);
-				replaceByWhitespace(rewriter, operatorPosition);
-				deleteNodeText(rewriter, operandsToDelete.get(1));
+			if (mOperandsToDelete.size() == 1) {
+				deleteNodeText(rewriter, mOperandsToDelete.get(0));
+				replaceByWhitespace(rewriter, mOperatorPosition);
+			} else if (mOperandsToDelete.size() == 2) {
+				rewriter.replace(mOperandsToDelete.get(0), mFullReplacement);
+				replaceByWhitespace(rewriter, mOperatorPosition);
+				deleteNodeText(rewriter, mOperandsToDelete.get(1));
 			} else {
-				throw new IllegalStateException("invalid number of operands to delete: " + operandsToDelete.size());
+				throw new IllegalStateException("invalid number of operands to delete: " + mOperandsToDelete.size());
 			}
 		}
 
 	}
 
-	final IPSTRegularNode binaryExpressionNode;
-	final ISourceRange operatorPosition;
-
-	final String fullReplacement;
+	
 
 	public DeleteBinaryExpressionOperandChange(final IPSTRegularNode operandNode,
 			final IPSTRegularNode binaryExpressionNode, final ISourceRange operatorPosition,
 			final String fullReplacement) {
 		super(operandNode);
-		this.binaryExpressionNode = Objects.requireNonNull(binaryExpressionNode);
-		this.operatorPosition = Objects.requireNonNull(operatorPosition);
-		this.fullReplacement = Objects.requireNonNull(fullReplacement);
+		mBinaryExpressionNode = Objects.requireNonNull(binaryExpressionNode);
+		mOperatorPosition = Objects.requireNonNull(operatorPosition);
+		mFullReplacement = Objects.requireNonNull(fullReplacement);
 	}
 
 	@Override
 	public void apply(final SourceRewriter rewriter) {
-		// no immedate modifiation possible
+		// no immediate modification possible
 	}
 
 	@Override
@@ -64,12 +66,12 @@ public class DeleteBinaryExpressionOperandChange extends Change {
 
 	@Override
 	public String toString() {
-		return "Delete binary expression operand " + getNode() + " (from " + binaryExpressionNode + ")";
+		return "Delete binary expression operand " + getNode() + " (from " + mBinaryExpressionNode + ")";
 	}
 
 	@Override
 	public void updateDeferredChange(final Map<IPSTNode, Change> deferredChangeMap) {
-		((CombinedChange) deferredChangeMap.computeIfAbsent(binaryExpressionNode, CombinedChange::new))
+		((CombinedChange) deferredChangeMap.computeIfAbsent(mBinaryExpressionNode, CombinedChange::new))
 				.addOperand(getNode());
 	}
 }

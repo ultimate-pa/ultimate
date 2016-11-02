@@ -4,20 +4,20 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfa
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.SourceRewriter;
 
 public class ReplaceChange extends Change {
-	final String replacement;
+	private final String mReplacement;
 
 	ReplaceChange(final IPSTNode node, final String replacement) {
 		super(node);
-		this.replacement = replacement;
+		mReplacement = replacement;
 	}
 
 	@Override
 	public void apply(final SourceRewriter rewriter) {
-		rewriter.replace(getNode(), replacement);
+		rewriter.replace(getNode(), mReplacement);
 	}
 
 	@Override
 	public String toString() {
-		return "Replace " + getNode() + " (by \"" + replacement + "\")";
+		return "Replace " + getNode() + " (by \"" + mReplacement + "\")";
 	}
 }

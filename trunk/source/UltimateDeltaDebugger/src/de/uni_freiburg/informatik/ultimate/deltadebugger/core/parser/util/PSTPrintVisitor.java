@@ -1,35 +1,39 @@
 package de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.util;
 
+import java.util.function.Consumer;
+
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTLiteralRegion;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTNode;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTVisitor;
 
 public class PSTPrintVisitor implements IPSTVisitor {
-	final boolean visitLiteralRegions;
-	int depth = 0;
+	private final Consumer<String> mPrinter;
+	private final boolean mVisitLiteralRegions;
+	private int mDepth;
 
-	public PSTPrintVisitor() {
-		this(false);
+	public PSTPrintVisitor(final Consumer<String> printer) {
+		this(printer, false);
 	}
 
-	public PSTPrintVisitor(final boolean visitLiteralRegionContents) {
-		visitLiteralRegions = visitLiteralRegionContents;
+	public PSTPrintVisitor(final Consumer<String> printer, final boolean visitLiteralRegionContents) {
+		mPrinter = printer;
+		mVisitLiteralRegions = visitLiteralRegionContents;
 	}
 
 	@Override
 	public int defaultLeave(final IPSTNode node) {
-		--depth;
+		--mDepth;
 		return PROCESS_CONTINUE;
 	}
 
 	@Override
 	public int defaultVisit(final IPSTNode node) {
-		if (!visitLiteralRegions && node.getParent() instanceof IPSTLiteralRegion) {
+		if (!mVisitLiteralRegions && node.getParent() instanceof IPSTLiteralRegion) {
 			return PROCESS_SKIP;
 		}
 
 		printNode(node);
-		++depth;
+		++mDepth;
 		return PROCESS_CONTINUE;
 	}
 
@@ -39,10 +43,11 @@ public class PSTPrintVisitor implements IPSTVisitor {
 	}
 
 	void printNode(final IPSTNode node) {
-		for (int i = 0; i < depth; i++) {
-			System.out.print("|   ");
+		for (int i = 0; i < mDepth; i++) {
+			mPrinter.accept("|   ");
 		}
-		System.out.println(node);
+		mPrinter.accept(node.toString());
+		mPrinter.accept(System.lineSeparator());
 	}
 
 	@Override

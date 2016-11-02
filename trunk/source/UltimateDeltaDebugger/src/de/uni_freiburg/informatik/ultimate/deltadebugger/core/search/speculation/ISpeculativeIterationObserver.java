@@ -2,7 +2,7 @@ package de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.speculatio
 
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.SearchStep;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.ISearchStep;
 
 /**
  * Monitors events during the speculative iteration. Decouples speculative iteration from the main iteration over steps
@@ -10,7 +10,7 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.SearchStep;
  *
  * @param <T>
  */
-public interface SpeculativeIterationObserver<T extends SearchStep<?, T>> {
+public interface ISpeculativeIterationObserver<T extends ISearchStep<?, T>> {
 
 	/**
 	 * Called when a canceled speculative step, that turned out to be invalid is completed with a result.
@@ -54,7 +54,7 @@ public interface SpeculativeIterationObserver<T extends SearchStep<?, T>> {
 	 * @param tasks
 	 *            canceled tasks
 	 */
-	default void onTasksCanceled(final List<? extends SpeculativeTask<T>> tasks) {
+	default void onTasksCanceled(final List<? extends ISpeculativeTask<T>> tasks) {
 	}
 
 }

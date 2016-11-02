@@ -5,34 +5,16 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class StringSourceDocument implements ISourceDocument {
-	class SourceRange implements ISourceRange {
-		private final int begin;
-		private final int end;
 
-		SourceRange(final int offset, final int endOffset) {
-			begin = offset;
-			end = endOffset;
-		}
+	private static final int TAB_WIDTH = 4;
+	
+	private final String mText;
+	private final AtomicReference<int[]> mLazyNewLineOffsets = new AtomicReference<>(null);
 
-		@Override
-		public int endOffset() {
-			return end;
-		}
-
-		@Override
-		public int offset() {
-			return begin;
-		}
-
-		@Override
-		public String toString() {
-			final StringBuilder sb = new StringBuilder();
-			sb.append("[");
-			SourceDocumentLocationPrinter.appendTo(StringSourceDocument.this, this, sb);
-			sb.append("]");
-			return sb.toString();
-		}
+	public StringSourceDocument(final String text) {
+		this.mText = Objects.requireNonNull(text);
 	}
+
 
 	/**
 	 * @param text
@@ -64,21 +46,13 @@ public class StringSourceDocument implements ISourceDocument {
 		}
 	}
 
-	private final String text;
-
-	private final AtomicReference<int[]> lazyNewLineOffsets = new AtomicReference<>(null);
-
-	public StringSourceDocument(final String text) {
-		this.text = Objects.requireNonNull(text);
-	}
-
 	@Override
 	public int getColumnNumber(final int offset) {
 		final int startOffset = getLineOffset(getLineNumber(offset));
 		// count tabs as 4 chars, to show the same as eclipse and other IDE's
 		int result = 1;
 		for (int i = startOffset; i != offset; ++i) {
-			result += text.charAt(i) == '\t' ? 4 : 1;
+			result += mText.charAt(i) == '\t' ? TAB_WIDTH : 1;
 		}
 
 		return result;
@@ -86,7 +60,7 @@ public class StringSourceDocument implements ISourceDocument {
 
 	@Override
 	public int getLength() {
-		return text.length();
+		return mText.length();
 	}
 
 	@Override
@@ -104,14 +78,14 @@ public class StringSourceDocument implements ISourceDocument {
 		if (lineNumber < 1 || lineNumber - 2 >= newLineOffsets.length) {
 			throw new IndexOutOfBoundsException();
 		}
-		return lineNumber == 1 ? 0 : newLineOffsets[lineNumber - 2] + 1;
+		return lineNumber == 1 ? 0 : (newLineOffsets[lineNumber - 2] + 1);
 	}
 
 	protected int[] getNewLineOffsets() {
-		int[] newLineOffsets = lazyNewLineOffsets.get();
+		int[] newLineOffsets = mLazyNewLineOffsets.get();
 		if (newLineOffsets == null) {
-			lazyNewLineOffsets.compareAndSet(null, computeNewLineOffsets(text));
-			newLineOffsets = lazyNewLineOffsets.get();
+			mLazyNewLineOffsets.compareAndSet(null, computeNewLineOffsets(mText));
+			newLineOffsets = mLazyNewLineOffsets.get();
 		}
 		return newLineOffsets;
 	}
@@ -123,12 +97,12 @@ public class StringSourceDocument implements ISourceDocument {
 
 	@Override
 	public String getText() {
-		return text;
+		return mText;
 	}
 
 	@Override
 	public String getText(final int offset, final int endOffset) {
-		return text.substring(offset, endOffset);
+		return mText.substring(offset, endOffset);
 	}
 
 	@Override
@@ -138,12 +112,41 @@ public class StringSourceDocument implements ISourceDocument {
 
 	@Override
 	public ISourceRange newSourceRange(final int offset, final int endOffset) {
-		if (offset < 0 || offset > endOffset || endOffset > text.length()) {
+		if (offset < 0 || offset > endOffset || endOffset > mText.length()) {
 			throw new IndexOutOfBoundsException(
 					"offset = " + offset + ", endOffset = " + endOffset + ", getLength() = " + getLength());
 		}
 
 		// Create an object with a more useful toString() for easier debugging
 		return new SourceRange(offset, endOffset);
+	}
+
+	class SourceRange implements ISourceRange {
+		private final int mBegin;
+		private final int mEnd;
+
+		SourceRange(final int offset, final int endOffset) {
+			mBegin = offset;
+			mEnd = endOffset;
+		}
+
+		@Override
+		public int endOffset() {
+			return mEnd;
+		}
+
+		@Override
+		public int offset() {
+			return mBegin;
+		}
+
+		@Override
+		public String toString() {
+			final StringBuilder sb = new StringBuilder();
+			sb.append("[");
+			SourceDocumentLocationPrinter.appendTo(StringSourceDocument.this, this, sb);
+			sb.append("]");
+			return sb.toString();
+		}
 	}
 }

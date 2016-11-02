@@ -25,7 +25,7 @@ public class PSTTranslationUnit extends PSTRegularNode implements IPSTTranslatio
 
 	@Override
 	public IASTTranslationUnit getASTNode() {
-		return (IASTTranslationUnit) astNode;
+		return (IASTTranslationUnit) mAstNode;
 	}
 
 }

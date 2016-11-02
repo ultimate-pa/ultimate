@@ -5,5 +5,4 @@ import org.eclipse.cdt.core.dom.ast.IASTPreprocessorIncludeStatement;
 public interface IPSTIncludeDirective extends IPSTDirective {
 	@Override
 	IASTPreprocessorIncludeStatement getASTNode();
-
 }

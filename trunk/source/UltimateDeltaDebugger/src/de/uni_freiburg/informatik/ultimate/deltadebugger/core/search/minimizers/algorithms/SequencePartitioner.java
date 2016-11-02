@@ -13,12 +13,12 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.minimizers.
  */
 public class SequencePartitioner implements Iterable<SubsequenceBounds> {
 	public static final class SubsequenceBounds {
-		private final int begin;
-		private final int end;
+		private final int mBegin;
+		private final int mEnd;
 
 		public SubsequenceBounds(final int begin, final int end) {
-			this.begin = begin;
-			this.end = end;
+			mBegin = begin;
+			mEnd = end;
 		}
 
 		@Override
@@ -33,47 +33,47 @@ public class SequencePartitioner implements Iterable<SubsequenceBounds> {
 				return false;
 			}
 			final SubsequenceBounds other = (SubsequenceBounds) obj;
-			if (begin != other.begin) {
+			if (mBegin != other.mBegin) {
 				return false;
 			}
-			if (end != other.end) {
+			if (mEnd != other.mEnd) {
 				return false;
 			}
 			return true;
 		}
 
 		public int getBegin() {
-			return begin;
+			return mBegin;
 		}
 
 		public int getEnd() {
-			return end;
+			return mEnd;
 		}
 
 		public int getSize() {
-			return end - begin;
+			return mEnd - mBegin;
 		}
 
 		@Override
 		public int hashCode() {
 			final int prime = 31;
 			int result = 1;
-			result = prime * result + begin;
-			result = prime * result + end;
+			result = prime * result + mBegin;
+			result = prime * result + mEnd;
 			return result;
 		}
 
 		@Override
 		public String toString() {
-			return "[" + begin + ", " + end + ")";
+			return "[" + mBegin + ", " + mEnd + ")";
 		}
 	}
 
 	class SubsequenceIterator implements ListIterator<SubsequenceBounds> {
-		int cursor;
+		private int mCursor;
 
 		SubsequenceIterator(final int index) {
-			cursor = index;
+			mCursor = index;
 		}
 
 		@Override
@@ -83,42 +83,42 @@ public class SequencePartitioner implements Iterable<SubsequenceBounds> {
 
 		@Override
 		public boolean hasNext() {
-			return cursor != sequenceSize;
+			return mCursor != mSequenceSize;
 		}
 
 		@Override
 		public boolean hasPrevious() {
-			return cursor != 0;
+			return mCursor != 0;
 		}
 
 		@Override
 		public SubsequenceBounds next() {
-			final int i = cursor;
-			if (i >= numParts) {
+			final int i = mCursor;
+			if (i >= mNumParts) {
 				throw new NoSuchElementException();
 			}
-			cursor = i + 1;
+			mCursor = i + 1;
 			return get(i);
 		}
 
 		@Override
 		public int nextIndex() {
-			return cursor;
+			return mCursor;
 		}
 
 		@Override
 		public SubsequenceBounds previous() {
-			final int i = cursor - 1;
-			if (cursor < 0) {
+			if (mCursor < 0) {
 				throw new NoSuchElementException();
 			}
-			cursor = i;
+			final int i = mCursor - 1;
+			mCursor = i;
 			return get(i);
 		}
 
 		@Override
 		public int previousIndex() {
-			return cursor - 1;
+			return mCursor - 1;
 		}
 
 		@Override
@@ -132,9 +132,9 @@ public class SequencePartitioner implements Iterable<SubsequenceBounds> {
 		}
 	}
 
-	final int sequenceSize;
+	private final int mSequenceSize;
 
-	final int numParts;
+	private final int mNumParts;
 
 	/**
 	 * @param sequenceSize
@@ -150,20 +150,20 @@ public class SequencePartitioner implements Iterable<SubsequenceBounds> {
 			throw new IllegalArgumentException("cannot partition into less than one part");
 		}
 
-		this.numParts = numParts;
-		this.sequenceSize = sequenceSize;
+		this.mNumParts = numParts;
+		this.mSequenceSize = sequenceSize;
 	}
 
 	public SubsequenceBounds get(final int index) {
-		if (index < 0 || index >= numParts) {
+		if (index < 0 || index >= mNumParts) {
 			throw new IndexOutOfBoundsException();
 		}
 
-		int length = sequenceSize / numParts;
+		int length = mSequenceSize / mNumParts;
 		int offset = index * length;
 
-		final int remainder = sequenceSize % numParts;
-		final int shift = index - (numParts - remainder);
+		final int remainder = mSequenceSize % mNumParts;
+		final int shift = index - (mNumParts - remainder);
 		if (shift >= 0) {
 			length += 1;
 			offset += shift;
@@ -173,11 +173,11 @@ public class SequencePartitioner implements Iterable<SubsequenceBounds> {
 	}
 
 	public int getNumParts() {
-		return numParts;
+		return mNumParts;
 	}
 
 	public int getSequenceSize() {
-		return sequenceSize;
+		return mSequenceSize;
 	}
 
 	@Override

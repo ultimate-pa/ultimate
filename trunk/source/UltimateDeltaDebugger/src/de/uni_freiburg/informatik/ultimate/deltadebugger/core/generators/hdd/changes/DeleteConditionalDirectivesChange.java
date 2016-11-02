@@ -5,33 +5,33 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceRange;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.SourceRewriter;
 
 public class DeleteConditionalDirectivesChange extends Change {
-	private final ISourceRange[] deleteLocations;
+	private final ISourceRange[] mDeleteLocations;
 
 	public DeleteConditionalDirectivesChange(final IPSTConditionalBlock block) {
 		super(block);
 		if (!block.hasActiveBranch()) {
-			deleteLocations = null;
+			mDeleteLocations = null;
 			return;
 		}
-		deleteLocations = new ISourceRange[2];
+		mDeleteLocations = new ISourceRange[2];
 		final ISourceRange activeBranchLocation = block.getActiveBranchLocation();
-		deleteLocations[0] = block.getSource().newSourceRange(block.offset(), activeBranchLocation.offset());
-		deleteLocations[1] = block.getSource().newSourceRange(activeBranchLocation.endOffset(), block.endOffset());
+		mDeleteLocations[0] = block.getSource().newSourceRange(block.offset(), activeBranchLocation.offset());
+		mDeleteLocations[1] = block.getSource().newSourceRange(activeBranchLocation.endOffset(), block.endOffset());
 	}
 
 	@Override
 	public void apply(final SourceRewriter rewriter) {
-		if (deleteLocations == null) {
+		if (mDeleteLocations == null) {
 			rewriter.delete(getNode());
 		} else {
-			rewriter.delete(deleteLocations[0]);
-			rewriter.delete(deleteLocations[1]);
+			rewriter.delete(mDeleteLocations[0]);
+			rewriter.delete(mDeleteLocations[1]);
 		}
 	}
 
 	@Override
 	public String toString() {
-		return "Delete conditional directives " + getNode() + (deleteLocations != null
-				? " (deleting " + deleteLocations[0] + " and " + deleteLocations[1] + ")" : "");
+		return "Delete conditional directives " + getNode() + (mDeleteLocations != null
+				? (" (deleting " + mDeleteLocations[0] + " and " + mDeleteLocations[1] + ")") : "");
 	}
 }

@@ -10,7 +10,7 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.exceptions.Rewrite
  * @see de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.AbstractTextRewriter
  */
 public class SourceRewriter extends AbstractTextRewriter {
-	private final ISourceDocument document;
+	private final ISourceDocument mDocument;
 
 	/**
 	 * Creates a rewriter for the text in a source document
@@ -19,12 +19,12 @@ public class SourceRewriter extends AbstractTextRewriter {
 	 *            immutable original source document
 	 */
 	public SourceRewriter(final ISourceDocument document) {
-		this.document = document;
+		mDocument = document;
 	}
 
 	protected SourceRewriter(final ISourceDocument document, final List<Change> mergeChanges, final int mergedDelta) {
 		super(mergeChanges, mergedDelta);
-		this.document = document;
+		mDocument = document;
 	}
 
 	/**
@@ -35,7 +35,7 @@ public class SourceRewriter extends AbstractTextRewriter {
 	 */
 	public SourceRewriter(final SourceRewriter other) {
 		super(other);
-		document = other.document;
+		mDocument = other.mDocument;
 	}
 
 	/**
@@ -63,17 +63,17 @@ public class SourceRewriter extends AbstractTextRewriter {
 
 	@Override
 	protected String getExceptionText(final Change change) {
-		return document.newSourceRange(change.offset, change.endOffset).toString();
+		return mDocument.newSourceRange(change.mOffset, change.mEndOffset).toString();
 	}
 
 	@Override
 	protected final int getOriginalLength() {
-		return document.getLength();
+		return mDocument.getLength();
 	}
 
 	@Override
 	protected String getOriginalText() {
-		return document.getText();
+		return mDocument.getText();
 	}
 
 	/**
@@ -112,7 +112,7 @@ public class SourceRewriter extends AbstractTextRewriter {
 	}
 
 	public ISourceDocument getSourceDocument() {
-		return document;
+		return mDocument;
 	}
 
 	/**
@@ -191,7 +191,7 @@ public class SourceRewriter extends AbstractTextRewriter {
 		if (getOriginalLength() != other.getOriginalLength()) {
 			throw new IllegalArgumentException("length mismatch");
 		}
-		return new SourceRewriter(document, getMergedChanges(other), getDelta() + other.getDelta());
+		return new SourceRewriter(mDocument, getMergedChanges(other), getDelta() + other.getDelta());
 	}
 
 	/**
@@ -210,7 +210,7 @@ public class SourceRewriter extends AbstractTextRewriter {
 		if (offset > endOffset) {
 			throw new IndexOutOfBoundsException();
 		}
-		return document.newSourceRange(remapOffset(offset, false), remapOffset(endOffset, includeInsertionsAtEnd));
+		return mDocument.newSourceRange(remapOffset(offset, false), remapOffset(endOffset, includeInsertionsAtEnd));
 	}
 
 	/**

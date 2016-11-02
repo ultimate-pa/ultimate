@@ -3,7 +3,7 @@ package de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.minimizers
 import java.util.List;
 import java.util.NoSuchElementException;
 
-import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.minimizers.MinimizerStep;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.minimizers.IMinimizerStep;
 
 /**
  * Final minimizer state, only carries the result.
@@ -11,8 +11,8 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.minimizers.
  * @param <E>
  *            element type
  */
-public class FinalMinimizerStep<E> implements MinimizerStep<E> {
-	final List<E> result;
+public class FinalMinimizerStep<E> implements IMinimizerStep<E> {
+	private final List<E> mResult;
 
 	/**
 	 * The constructor.
@@ -20,12 +20,12 @@ public class FinalMinimizerStep<E> implements MinimizerStep<E> {
 	 * @param result
 	 */
 	public FinalMinimizerStep(final List<E> result) {
-		this.result = result;
+		this.mResult = result;
 	}
 
 	@Override
 	public List<E> getResult() {
-		return result;
+		return mResult;
 	}
 
 	@Override
@@ -39,7 +39,7 @@ public class FinalMinimizerStep<E> implements MinimizerStep<E> {
 	}
 
 	@Override
-	public MinimizerStep<E> next(final boolean keepVariant) {
+	public IMinimizerStep<E> next(final boolean keepVariant) {
 		throw new NoSuchElementException();
 	}
 }

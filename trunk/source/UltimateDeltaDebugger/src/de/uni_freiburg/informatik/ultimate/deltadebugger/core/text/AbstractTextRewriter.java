@@ -23,24 +23,24 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.exceptions.Rewrite
  */
 public abstract class AbstractTextRewriter {
 	protected static class Change {
-		protected final int offset;
-		protected final int endOffset;
-		protected final String replacement;
+		protected final int mOffset;
+		protected final int mEndOffset;
+		protected final String mReplacement;
 
 		protected Change(final int offset, final int endOffset, final String replacement) {
-			this.offset = offset;
-			this.endOffset = endOffset;
-			this.replacement = replacement;
+			mOffset = offset;
+			mEndOffset = endOffset;
+			mReplacement = replacement;
 		}
 
 		protected int length() {
-			return endOffset - offset;
+			return mEndOffset - mOffset;
 		}
 	}
 
-	private final List<Change> changes;
+	private final List<Change> mChanges;
 
-	private int delta;
+	private int mDelta;
 
 	/**
 	 * Creates a new rewriter instance for an arbitrary text of the specified length. The originalLength is used to
@@ -60,12 +60,12 @@ public abstract class AbstractTextRewriter {
 	 *            source rewriter to copy
 	 */
 	protected AbstractTextRewriter(final AbstractTextRewriter other) {
-		this(new ArrayList<>(other.changes), other.delta);
+		this(new ArrayList<>(other.mChanges), other.mDelta);
 	}
 
 	protected AbstractTextRewriter(final List<Change> changes, final int delta) {
-		this.changes = changes;
-		this.delta = delta;
+		this.mChanges = changes;
+		this.mDelta = delta;
 	}
 
 	private void addAllOrNone(final List<Change> source) {
@@ -75,18 +75,19 @@ public abstract class AbstractTextRewriter {
 			for (; nextSourceIndex != source.size(); ++nextSourceIndex) {
 				final Change newChange = source.get(nextSourceIndex);
 				lastDestIndex = findInsertionIndex(newChange, lastDestIndex + 1);
-				changes.add(lastDestIndex, newChange);
+				mChanges.add(lastDestIndex, newChange);
 			}
 		} catch (final RewriteConflictException e) {
 			// Rollback by removing all added Change instances backwards
 			while (nextSourceIndex > 0) {
-				final Change newChange = source.get(--nextSourceIndex);
+				--nextSourceIndex;
+				final Change newChange = source.get(nextSourceIndex);
 				while (true) {
 					if (lastDestIndex < 0) {
 						throw new IllegalStateException("rollback failed ffs");
 					}
-					if (changes.get(lastDestIndex) == newChange) {
-						changes.remove(lastDestIndex);
+					if (mChanges.get(lastDestIndex).equals(newChange)) {
+						mChanges.remove(lastDestIndex);
 						--lastDestIndex;
 						break;
 					}
@@ -107,8 +108,8 @@ public abstract class AbstractTextRewriter {
 			return;
 		}
 		final Change newChange = new Change(offset, endOffset, replacement);
-		changes.add(findInsertionIndex(newChange, 0), newChange);
-		delta += newChange.replacement.length() - newChange.length();
+		mChanges.add(findInsertionIndex(newChange, 0), newChange);
+		mDelta += newChange.mReplacement.length() - newChange.length();
 	}
 
 	/**
@@ -123,11 +124,11 @@ public abstract class AbstractTextRewriter {
 		if (isEmpty()) {
 			return originalText;
 		}
-		final StringBuilder sb = new StringBuilder(getOriginalLength() + delta);
+		final StringBuilder sb = new StringBuilder(getOriginalLength() + mDelta);
 		int cursor = 0;
-		for (final Change change : changes) {
-			sb.append(originalText, cursor, change.offset).append(change.replacement);
-			cursor = change.endOffset;
+		for (final Change change : mChanges) {
+			sb.append(originalText, cursor, change.mOffset).append(change.mReplacement);
+			cursor = change.mEndOffset;
 		}
 		sb.append(originalText, cursor, originalText.length());
 		return sb.toString();
@@ -151,18 +152,18 @@ public abstract class AbstractTextRewriter {
 	}
 
 	private int findInsertionIndex(final Change change, final int startIndex) {
-		if (startIndex > changes.size()) {
+		if (startIndex > mChanges.size()) {
 			throw new IllegalArgumentException();
 		}
 		// Shortcut for constant time insertion if changes are appended
-		if (!changes.isEmpty() && changes.get(changes.size() - 1).endOffset <= change.offset) {
-			return changes.size();
+		if (!mChanges.isEmpty() && mChanges.get(mChanges.size() - 1).mEndOffset <= change.mOffset) {
+			return mChanges.size();
 		}
 		int low = startIndex;
-		int high = changes.size() - 1;
+		int high = mChanges.size() - 1;
 		while (low <= high) {
-			final int mid = low + high >>> 1;
-			if (isInsertedAfter(change, changes.get(mid))) {
+			final int mid = (low + high) >>> 1;
+			if (isInsertedAfter(change, mChanges.get(mid))) {
 				low = mid + 1;
 			} else {
 				high = mid - 1;
@@ -175,15 +176,15 @@ public abstract class AbstractTextRewriter {
 	 * @return getRewrittenLength() - getOriginalLength()
 	 */
 	public int getDelta() {
-		return delta;
+		return mDelta;
 	}
 
 	protected String getExceptionText(final Change change) {
-		return "[" + change.offset + ", " + change.endOffset + "]";
+		return "[" + change.mOffset + ", " + change.mEndOffset + "]";
 	}
 
 	protected List<Change> getMergedChanges(final AbstractTextRewriter other) {
-		return mergeSortedLists(changes, other.changes);
+		return mergeSortedLists(mChanges, other.mChanges);
 	}
 
 	protected abstract int getOriginalLength();
@@ -191,7 +192,7 @@ public abstract class AbstractTextRewriter {
 	protected abstract String getOriginalText();
 
 	public int getRewrittenLength() {
-		return getOriginalLength() + delta;
+		return getOriginalLength() + mDelta;
 	}
 
 	/**
@@ -212,14 +213,14 @@ public abstract class AbstractTextRewriter {
 	}
 
 	public boolean isEmpty() {
-		return changes.isEmpty();
+		return mChanges.isEmpty();
 	}
 
 	private boolean isInsertedAfter(final Change newChange, final Change existing) {
 		// Keep order of multiple insertions at the same offset
-		if (newChange.offset >= existing.endOffset) {
+		if (newChange.mOffset >= existing.mEndOffset) {
 			return true;
-		} else if (newChange.endOffset <= existing.offset) {
+		} else if (newChange.mEndOffset <= existing.mOffset) {
 			return false;
 		}
 		throw new RewriteConflictException("New change " + getExceptionText(newChange)
@@ -242,8 +243,8 @@ public abstract class AbstractTextRewriter {
 		if (getOriginalLength() != other.getOriginalLength()) {
 			throw new IllegalArgumentException("length mismatch");
 		}
-		addAllOrNone(other.changes);
-		delta += other.delta;
+		addAllOrNone(other.mChanges);
+		mDelta += other.mDelta;
 		return this;
 	}
 
@@ -253,9 +254,11 @@ public abstract class AbstractTextRewriter {
 		int right = 0;
 		while (left != lhs.size() && right != rhs.size()) {
 			if (isInsertedAfter(rhs.get(right), lhs.get(left))) {
-				merged.add(lhs.get(left++));
+				merged.add(lhs.get(left));
+				++left;
 			} else {
-				merged.add(rhs.get(right++));
+				merged.add(rhs.get(right));
+				++right;
 			}
 		}
 		merged.addAll(lhs.subList(left, lhs.size()));
@@ -279,11 +282,11 @@ public abstract class AbstractTextRewriter {
 			throw new IndexOutOfBoundsException();
 		}
 		int result = offset;
-		for (final Change change : changes) {
-			if (change.offset < offset) {
-				result += change.replacement.length() - change.length();
-			} else if (includeInsertions && change.offset == offset && change.length() == 0) {
-				result += change.replacement.length();
+		for (final Change change : mChanges) {
+			if (change.mOffset < offset) {
+				result += change.mReplacement.length() - change.length();
+			} else if (includeInsertions && change.mOffset == offset && change.length() == 0) {
+				result += change.mReplacement.length();
 			} else {
 				break;
 			}

@@ -31,20 +31,20 @@ import java.util.function.BooleanSupplier;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.exceptions.ChangeConflictException;
-import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.GeneratorSearchStep;
-import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.speculation.SpeculativeIterationObserver;
-import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.speculation.SpeculativeTask;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.IGeneratorSearchStep;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.speculation.ISpeculativeIterationObserver;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.speculation.ISpeculativeTask;
 
 /**
- * Monitor for the search using a {@link GeneratorSearchStep}.
+ * Monitor for the search using a {@link IGeneratorSearchStep}.
  */
-class SearchObserver implements SpeculativeIterationObserver<GeneratorSearchStep> {
+class SearchObserver implements ISpeculativeIterationObserver<IGeneratorSearchStep> {
 	// k such that an info is printed in the debug logger for every k tests
 	private static final int DEBUG_TEST_COUNT = 100;
 	
 	private final IVariantTestFunction mTestFunction;
 	private final SearchStats mStats;
-	private GeneratorSearchStep mPreviousStep;
+	private IGeneratorSearchStep mPreviousStep;
 	
 	private final ILogger mLogger;
 	
@@ -87,9 +87,8 @@ class SearchObserver implements SpeculativeIterationObserver<GeneratorSearchStep
 		}
 	}
 	
-	@SuppressWarnings("squid:S1698")
 	@Override
-	public void onStepBegin(final GeneratorSearchStep step) {
+	public void onStepBegin(final IGeneratorSearchStep step) {
 		// inequality intended here
 		if (mPreviousStep == null || step.getVariantGenerator() != mPreviousStep.getVariantGenerator()) {
 			// Handle change of variant generator
@@ -110,7 +109,7 @@ class SearchObserver implements SpeculativeIterationObserver<GeneratorSearchStep
 	}
 	
 	@Override
-	public void onStepComplete(final GeneratorSearchStep step, final boolean keepVariant) {
+	public void onStepComplete(final IGeneratorSearchStep step, final boolean keepVariant) {
 		// Update the duplicate tracker with the result, now that we know
 		// that this step is valid
 		step.updateDuplicateTrackerWithTestResult(keepVariant);
@@ -128,7 +127,7 @@ class SearchObserver implements SpeculativeIterationObserver<GeneratorSearchStep
 	}
 	
 	@Override
-	public void onTasksCanceled(final List<? extends SpeculativeTask<GeneratorSearchStep>> tasks) {
+	public void onTasksCanceled(final List<? extends ISpeculativeTask<IGeneratorSearchStep>> tasks) {
 		mStats.addToCanceledSpeculativeSteps(tasks.size());
 	}
 	
@@ -142,7 +141,7 @@ class SearchObserver implements SpeculativeIterationObserver<GeneratorSearchStep
 	 *            {@code true} if the run is canceled
 	 * @return the result if not canceled
 	 */
-	Optional<Boolean> runTestForStep(final GeneratorSearchStep step, final BooleanSupplier isCanceled) {
+	Optional<Boolean> runTestForStep(final IGeneratorSearchStep step, final BooleanSupplier isCanceled) {
 		mStats.getOverallTestCount().incrementAndGet();
 		
 		String variant;

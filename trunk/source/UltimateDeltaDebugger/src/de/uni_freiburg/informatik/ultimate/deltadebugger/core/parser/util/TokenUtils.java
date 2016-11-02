@@ -9,7 +9,12 @@ import org.eclipse.cdt.core.parser.IToken;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTNode;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.util.TokenCollector.Token;
 
-public class TokenUtils {
+public final class TokenUtils {
+
+	private TokenUtils() {
+
+	}
+	
 	public static Token[] getExpectedTokenArray(final IPSTNode parentNode, final int... expectedTokenTypes) {
 		return TokenUtils.getExpectedTokenArray(TokenCollector.collect(parentNode), expectedTokenTypes);
 	}
@@ -52,7 +57,4 @@ public class TokenUtils {
 		return true;
 	}
 
-	private TokenUtils() {
-
-	}
 }

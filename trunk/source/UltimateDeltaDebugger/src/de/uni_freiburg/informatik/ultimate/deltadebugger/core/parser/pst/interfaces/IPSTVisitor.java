@@ -3,9 +3,9 @@ package de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interf
 import org.eclipse.cdt.core.dom.ast.ASTVisitor;
 
 public interface IPSTVisitor {
-	public static final int PROCESS_SKIP = ASTVisitor.PROCESS_SKIP;
-	public static final int PROCESS_ABORT = ASTVisitor.PROCESS_ABORT;
-	public static final int PROCESS_CONTINUE = ASTVisitor.PROCESS_CONTINUE;
+	int PROCESS_SKIP = ASTVisitor.PROCESS_SKIP;
+	int PROCESS_ABORT = ASTVisitor.PROCESS_ABORT;
+	int PROCESS_CONTINUE = ASTVisitor.PROCESS_CONTINUE;
 
 	default int defaultLeave(final IPSTNode node) {
 		return PROCESS_CONTINUE;

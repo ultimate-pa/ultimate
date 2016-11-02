@@ -7,7 +7,7 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.generators.hdd.HDD
 /**
  * HDD default Passes
  */
-public class HDDPass {
+public final class HDDPass {
 
 	/**
 	 * Single-Pass HDD algorithm (without reparsing between levels)

@@ -15,7 +15,7 @@ import java.util.NoSuchElementException;
  * @param <S>
  *            self type
  */
-public interface SearchStep<T, S extends SearchStep<T, S>> {
+public interface ISearchStep<T, S extends ISearchStep<T, S>> {
 
 	/**
 	 * Returns the best result so far, which is initially the input

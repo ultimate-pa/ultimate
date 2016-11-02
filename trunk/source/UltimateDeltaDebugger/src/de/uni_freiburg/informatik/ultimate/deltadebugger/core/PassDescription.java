@@ -27,7 +27,7 @@ package de.uni_freiburg.informatik.ultimate.deltadebugger.core;
 
 import java.util.Optional;
 
-import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.minimizers.Minimizer;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.minimizers.IMinimizer;
 
 /**
  * A pass is one concrete reduction operation that transforms the input source code string into a reduced source code
@@ -39,7 +39,7 @@ public final class PassDescription {
 	private final String mName;
 	private final String mDescription;
 	private final IVariantGeneratorFactory mVariantGeneratorFactory;
-	private final Minimizer mMinimizer;
+	private final IMinimizer mMinimizer;
 	
 	private final boolean mDisableSpeculativeTesting;
 	private final boolean mRepeatUntilReductionFails;
@@ -97,7 +97,7 @@ public final class PassDescription {
 	 *
 	 * @return the preferred minimizer to use
 	 */
-	public Optional<Minimizer> getMinimizer() {
+	public Optional<IMinimizer> getMinimizer() {
 		return Optional.ofNullable(mMinimizer);
 	}
 	
@@ -133,7 +133,7 @@ public final class PassDescription {
 		private String mNameInner = "<unnamed pass>";
 		private String mDescriptionInner = "<no description>";
 		private IVariantGeneratorFactory mVariantGeneratorFactoryInner;
-		private Minimizer mMinimizerInner;
+		private IMinimizer mMinimizerInner;
 		private boolean mDisableSpeculativeTestingInner;
 		private boolean mRepeatUntilReductionFailsInner;
 		
@@ -190,7 +190,7 @@ public final class PassDescription {
 		 *            Minimizer of the pass.
 		 * @return this builder
 		 */
-		public Builder minimizer(final Minimizer minimizer) {
+		public Builder minimizer(final IMinimizer minimizer) {
 			mMinimizerInner = minimizer;
 			return this;
 		}

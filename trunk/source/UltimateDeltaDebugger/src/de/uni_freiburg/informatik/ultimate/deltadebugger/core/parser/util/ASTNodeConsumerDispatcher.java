@@ -108,8 +108,8 @@ import org.eclipse.cdt.core.dom.ast.gnu.c.IGCCASTArrayRangeDesignator;
 
 public final class ASTNodeConsumerDispatcher {
 	private final class DispatchVisitor extends ASTVisitor {
-		final IASTNode expectedNode;
-		boolean dispatched = false;
+		private final IASTNode mExpectedNode;
+		private boolean mDispatched;
 
 		DispatchVisitor(final IASTNode expectedNode) {
 			// Visit everything that can be visited to get exactly one call to
@@ -122,190 +122,190 @@ public final class ASTNodeConsumerDispatcher {
 
 			// We need to make sure that the visit() overload is actually called
 			// for the node we want and not a child, though
-			this.expectedNode = expectedNode;
+			this.mExpectedNode = expectedNode;
 		}
 
 		public void dispatchByVisitor() {
-			expectedNode.accept(this);
-			if (!dispatched) {
+			mExpectedNode.accept(this);
+			if (!mDispatched) {
 				dispatchNonVisitedNode();
 			}
 		}
 
 		private void dispatchNonVisitedNode() {
-			if (expectedNode instanceof IASTPreprocessorMacroExpansion) {
-				consumer.on((IASTPreprocessorMacroExpansion) expectedNode);
-			} else if (expectedNode instanceof IASTComment) {
-				consumer.on((IASTComment) expectedNode);
-			} else if (expectedNode instanceof IASTPreprocessorStatement) {
-				dispatch((IASTPreprocessorStatement) expectedNode);
-			} else if (expectedNode instanceof IASTProblem) {
-				consumer.on((IASTProblem) expectedNode);
-			} else if (expectedNode instanceof IASTAlignmentSpecifier) {
-				consumer.on((IASTAlignmentSpecifier) expectedNode);
+			if (mExpectedNode instanceof IASTPreprocessorMacroExpansion) {
+				mConsumer.on((IASTPreprocessorMacroExpansion) mExpectedNode);
+			} else if (mExpectedNode instanceof IASTComment) {
+				mConsumer.on((IASTComment) mExpectedNode);
+			} else if (mExpectedNode instanceof IASTPreprocessorStatement) {
+				dispatch((IASTPreprocessorStatement) mExpectedNode);
+			} else if (mExpectedNode instanceof IASTProblem) {
+				mConsumer.on((IASTProblem) mExpectedNode);
+			} else if (mExpectedNode instanceof IASTAlignmentSpecifier) {
+				mConsumer.on((IASTAlignmentSpecifier) mExpectedNode);
 			} else {
-				consumer.on(expectedNode);
+				mConsumer.on(mExpectedNode);
 			}
 		}
 
 		@Override
 		public int visit(final IASTArrayModifier arrayModifier) {
-			if (expectedNode == arrayModifier) {
+			if (mExpectedNode == arrayModifier) {
 				dispatch(arrayModifier);
-				dispatched = true;
+				mDispatched = true;
 			}
 			return PROCESS_ABORT;
 		}
 
 		@Override
 		public int visit(final IASTAttribute attribute) {
-			if (expectedNode == attribute) {
-				consumer.on(attribute);
-				dispatched = true;
+			if (mExpectedNode == attribute) {
+				mConsumer.on(attribute);
+				mDispatched = true;
 			}
 			return PROCESS_ABORT;
 		}
 
 		@Override
 		public int visit(final IASTAttributeSpecifier attributeSpecifier) {
-			if (expectedNode == attributeSpecifier) {
+			if (mExpectedNode == attributeSpecifier) {
 				dispatch(attributeSpecifier);
-				dispatched = true;
+				mDispatched = true;
 			}
 			return PROCESS_ABORT;
 		}
 
 		@Override
 		public int visit(final IASTDeclaration declaration) {
-			if (expectedNode == declaration) {
+			if (mExpectedNode == declaration) {
 				dispatch(declaration);
-				dispatched = true;
+				mDispatched = true;
 			}
 			return PROCESS_ABORT;
 		}
 
 		@Override
 		public int visit(final IASTDeclarator declarator) {
-			if (expectedNode == declarator) {
+			if (mExpectedNode == declarator) {
 				dispatch(declarator);
-				dispatched = true;
+				mDispatched = true;
 			}
 			return PROCESS_ABORT;
 		}
 
 		@Override
 		public int visit(final IASTDeclSpecifier declSpecifier) {
-			if (expectedNode == declSpecifier) {
+			if (mExpectedNode == declSpecifier) {
 				dispatch(declSpecifier);
-				dispatched = true;
+				mDispatched = true;
 			}
 			return PROCESS_ABORT;
 		}
 
 		@Override
 		public int visit(final IASTEnumerator enumerator) {
-			if (expectedNode == enumerator) {
-				consumer.on(enumerator);
-				dispatched = true;
+			if (mExpectedNode == enumerator) {
+				mConsumer.on(enumerator);
+				mDispatched = true;
 			}
 			return PROCESS_ABORT;
 		}
 
 		@Override
 		public int visit(final IASTExpression expression) {
-			if (expectedNode == expression) {
+			if (mExpectedNode == expression) {
 				dispatch(expression);
-				dispatched = true;
+				mDispatched = true;
 			}
 			return PROCESS_ABORT;
 		}
 
 		@Override
 		public int visit(final IASTInitializer initializer) {
-			if (expectedNode == initializer) {
+			if (mExpectedNode == initializer) {
 				dispatch(initializer);
-				dispatched = true;
+				mDispatched = true;
 			}
 			return PROCESS_ABORT;
 		}
 
 		@Override
 		public int visit(final IASTName name) {
-			if (expectedNode == name) {
+			if (mExpectedNode == name) {
 				dispatch(name);
-				dispatched = true;
+				mDispatched = true;
 			}
 			return PROCESS_ABORT;
 		}
 
 		@Override
 		public int visit(final IASTParameterDeclaration parameterDeclaration) {
-			if (expectedNode == parameterDeclaration) {
-				consumer.on(parameterDeclaration);
-				dispatched = true;
+			if (mExpectedNode == parameterDeclaration) {
+				mConsumer.on(parameterDeclaration);
+				mDispatched = true;
 			}
 			return PROCESS_ABORT;
 		}
 
 		@Override
 		public int visit(final IASTPointerOperator pointerOperator) {
-			if (expectedNode == pointerOperator) {
+			if (mExpectedNode == pointerOperator) {
 				dispatch(pointerOperator);
-				dispatched = true;
+				mDispatched = true;
 			}
 			return PROCESS_ABORT;
 		}
 
 		@Override
 		public int visit(final IASTProblem problem) {
-			if (expectedNode == problem) {
-				consumer.on(problem);
-				dispatched = true;
+			if (mExpectedNode == problem) {
+				mConsumer.on(problem);
+				mDispatched = true;
 			}
 			return PROCESS_ABORT;
 		}
 
 		@Override
 		public int visit(final IASTStatement statement) {
-			if (expectedNode == statement) {
+			if (mExpectedNode == statement) {
 				dispatch(statement);
-				dispatched = true;
+				mDispatched = true;
 			}
 			return PROCESS_ABORT;
 		}
 
 		@Override
 		public int visit(final IASTToken token) {
-			if (expectedNode == token) {
+			if (mExpectedNode == token) {
 				dispatch(token);
-				dispatched = true;
+				mDispatched = true;
 			}
 			return PROCESS_ABORT;
 		}
 
 		@Override
 		public int visit(final IASTTranslationUnit translationUnit) {
-			if (expectedNode == translationUnit) {
-				consumer.on(translationUnit);
-				dispatched = true;
+			if (mExpectedNode == translationUnit) {
+				mConsumer.on(translationUnit);
+				mDispatched = true;
 			}
 			return PROCESS_ABORT;
 		}
 
 		@Override
 		public int visit(final IASTTypeId typeId) {
-			if (expectedNode == typeId) {
+			if (mExpectedNode == typeId) {
 				dispatch(typeId);
-				dispatched = true;
+				mDispatched = true;
 			}
 			return PROCESS_ABORT;
 		}
 
 		@Override
 		public int visit(final ICASTDesignator cDesignator) {
-			if (expectedNode == cDesignator) {
+			if (mExpectedNode == cDesignator) {
 				dispatch(cDesignator);
-				dispatched = true;
+				mDispatched = true;
 			}
 			return PROCESS_ABORT;
 		}
@@ -347,133 +347,133 @@ public final class ASTNodeConsumerDispatcher {
 
 	}
 
-	final IASTNodeConsumer consumer;
+	private final IASTNodeConsumer mConsumer;
 
 	public ASTNodeConsumerDispatcher(final IASTNodeConsumer consumer) {
-		this.consumer = consumer;
+		mConsumer = consumer;
 	}
 
 	public void dispatch(final IASTArrayModifier arrayModifier) {
 		if (arrayModifier instanceof ICASTArrayModifier) {
-			consumer.on((ICASTArrayModifier) arrayModifier);
+			mConsumer.on((ICASTArrayModifier) arrayModifier);
 		} else {
-			consumer.on(arrayModifier);
+			mConsumer.on(arrayModifier);
 		}
 	}
 
 	public void dispatch(final IASTAttributeSpecifier attributeSpecifier) {
 		if (attributeSpecifier instanceof IGCCASTAttributeSpecifier) {
-			consumer.on((IGCCASTAttributeSpecifier) attributeSpecifier);
+			mConsumer.on((IGCCASTAttributeSpecifier) attributeSpecifier);
 		} else {
-			consumer.on(attributeSpecifier);
+			mConsumer.on(attributeSpecifier);
 		}
 	}
 
 	public void dispatch(final IASTDeclaration declaration) {
 		if (declaration instanceof IASTSimpleDeclaration) {
-			consumer.on((IASTSimpleDeclaration) declaration);
+			mConsumer.on((IASTSimpleDeclaration) declaration);
 		} else if (declaration instanceof IASTFunctionDefinition) {
-			consumer.on((IASTFunctionDefinition) declaration);
+			mConsumer.on((IASTFunctionDefinition) declaration);
 		} else if (declaration instanceof IASTProblemDeclaration) {
-			consumer.on((IASTProblemDeclaration) declaration);
+			mConsumer.on((IASTProblemDeclaration) declaration);
 		} else if (declaration instanceof IASTASMDeclaration) {
-			consumer.on((IASTASMDeclaration) declaration);
+			mConsumer.on((IASTASMDeclaration) declaration);
 		} else {
-			consumer.on(declaration);
+			mConsumer.on(declaration);
 		}
 	}
 
 	public void dispatch(final IASTDeclarator declarator) {
 		if (declarator instanceof IASTFunctionDeclarator) {
 			if (declarator instanceof IASTStandardFunctionDeclarator) {
-				consumer.on((IASTStandardFunctionDeclarator) declarator);
+				mConsumer.on((IASTStandardFunctionDeclarator) declarator);
 			} else if (declarator instanceof ICASTKnRFunctionDeclarator) {
-				consumer.on((ICASTKnRFunctionDeclarator) declarator);
+				mConsumer.on((ICASTKnRFunctionDeclarator) declarator);
 			} else {
-				consumer.on((IASTFunctionDeclarator) declarator);
+				mConsumer.on((IASTFunctionDeclarator) declarator);
 			}
 		} else if (declarator instanceof IASTArrayDeclarator) {
-			consumer.on((IASTArrayDeclarator) declarator);
+			mConsumer.on((IASTArrayDeclarator) declarator);
 		} else if (declarator instanceof IASTFieldDeclarator) {
-			consumer.on((IASTFieldDeclarator) declarator);
+			mConsumer.on((IASTFieldDeclarator) declarator);
 		} else {
-			consumer.on(declarator);
+			mConsumer.on(declarator);
 		}
 	}
 
 	public void dispatch(final IASTDeclSpecifier declSpecifier) {
 		if (declSpecifier instanceof IASTSimpleDeclSpecifier) {
-			consumer.on((IASTSimpleDeclSpecifier) declSpecifier);
+			mConsumer.on((IASTSimpleDeclSpecifier) declSpecifier);
 		} else if (declSpecifier instanceof IASTNamedTypeSpecifier) {
-			consumer.on((IASTNamedTypeSpecifier) declSpecifier);
+			mConsumer.on((IASTNamedTypeSpecifier) declSpecifier);
 		} else if (declSpecifier instanceof IASTElaboratedTypeSpecifier) {
-			consumer.on((IASTElaboratedTypeSpecifier) declSpecifier);
+			mConsumer.on((IASTElaboratedTypeSpecifier) declSpecifier);
 		} else if (declSpecifier instanceof IASTCompositeTypeSpecifier) {
-			consumer.on((IASTCompositeTypeSpecifier) declSpecifier);
+			mConsumer.on((IASTCompositeTypeSpecifier) declSpecifier);
 		} else if (declSpecifier instanceof IASTEnumerationSpecifier) {
-			consumer.on((IASTEnumerationSpecifier) declSpecifier);
+			mConsumer.on((IASTEnumerationSpecifier) declSpecifier);
 		} else {
-			consumer.on(declSpecifier);
+			mConsumer.on(declSpecifier);
 		}
 	}
 
 	public void dispatch(final IASTExpression expression) {
 		if (expression instanceof IASTIdExpression) {
-			consumer.on((IASTIdExpression) expression);
+			mConsumer.on((IASTIdExpression) expression);
 		} else if (expression instanceof IASTUnaryExpression) {
-			consumer.on((IASTUnaryExpression) expression);
+			mConsumer.on((IASTUnaryExpression) expression);
 		} else if (expression instanceof IASTLiteralExpression) {
-			consumer.on((IASTLiteralExpression) expression);
+			mConsumer.on((IASTLiteralExpression) expression);
 		} else if (expression instanceof IASTBinaryExpression) {
-			consumer.on((IASTBinaryExpression) expression);
+			mConsumer.on((IASTBinaryExpression) expression);
 		} else if (expression instanceof IASTFieldReference) {
-			consumer.on((IASTFieldReference) expression);
+			mConsumer.on((IASTFieldReference) expression);
 		} else if (expression instanceof IASTArraySubscriptExpression) {
-			consumer.on((IASTArraySubscriptExpression) expression);
+			mConsumer.on((IASTArraySubscriptExpression) expression);
 		} else if (expression instanceof IASTFunctionCallExpression) {
-			consumer.on((IASTFunctionCallExpression) expression);
+			mConsumer.on((IASTFunctionCallExpression) expression);
 		} else if (expression instanceof IASTCastExpression) {
-			consumer.on((IASTCastExpression) expression);
+			mConsumer.on((IASTCastExpression) expression);
 		} else if (expression instanceof IASTConditionalExpression) {
-			consumer.on((IASTConditionalExpression) expression);
+			mConsumer.on((IASTConditionalExpression) expression);
 		} else if (expression instanceof IASTExpressionList) {
-			consumer.on((IASTExpressionList) expression);
+			mConsumer.on((IASTExpressionList) expression);
 		} else if (expression instanceof IASTTypeIdExpression) {
-			consumer.on((IASTTypeIdExpression) expression);
+			mConsumer.on((IASTTypeIdExpression) expression);
 		} else if (expression instanceof IASTProblemExpression) {
-			consumer.on((IASTProblemExpression) expression);
+			mConsumer.on((IASTProblemExpression) expression);
 		} else if (expression instanceof IGNUASTCompoundStatementExpression) {
-			consumer.on((IGNUASTCompoundStatementExpression) expression);
+			mConsumer.on((IGNUASTCompoundStatementExpression) expression);
 		} else if (expression instanceof IASTTypeIdInitializerExpression) {
-			consumer.on((IASTTypeIdInitializerExpression) expression);
+			mConsumer.on((IASTTypeIdInitializerExpression) expression);
 		} else if (expression instanceof IASTBinaryTypeIdExpression) {
-			consumer.on((IASTBinaryTypeIdExpression) expression);
+			mConsumer.on((IASTBinaryTypeIdExpression) expression);
 		} else {
-			consumer.on(expression);
+			mConsumer.on(expression);
 		}
 	}
 
 	public void dispatch(final IASTInitializer initializer) {
 		if (initializer instanceof IASTEqualsInitializer) {
-			consumer.on((IASTEqualsInitializer) initializer);
+			mConsumer.on((IASTEqualsInitializer) initializer);
 		} else if (initializer instanceof IASTInitializerList) {
-			consumer.on((IASTInitializerList) initializer);
+			mConsumer.on((IASTInitializerList) initializer);
 		} else if (initializer instanceof ICASTDesignatedInitializer) {
-			consumer.on((ICASTDesignatedInitializer) initializer);
+			mConsumer.on((ICASTDesignatedInitializer) initializer);
 		} else {
-			consumer.on(initializer);
+			mConsumer.on(initializer);
 		}
 	}
 
 	public void dispatch(final IASTName name) {
 		if (name instanceof IASTImplicitName) {
 			if (name instanceof IASTImplicitDestructorName) {
-				consumer.on((IASTImplicitDestructorName) name);
+				mConsumer.on((IASTImplicitDestructorName) name);
 			} else {
-				consumer.on((IASTImplicitName) name);
+				mConsumer.on((IASTImplicitName) name);
 			}
 		} else {
-			consumer.on(name);
+			mConsumer.on(name);
 		}
 	}
 
@@ -492,15 +492,15 @@ public final class ASTNodeConsumerDispatcher {
 		} else if (node instanceof IASTDeclarator) {
 			dispatch((IASTDeclarator) node);
 		} else if (node instanceof IASTPreprocessorMacroExpansion) {
-			consumer.on((IASTPreprocessorMacroExpansion) node);
+			mConsumer.on((IASTPreprocessorMacroExpansion) node);
 		} else if (node instanceof IASTTypeId) {
 			dispatch((IASTTypeId) node);
 		} else if (node instanceof IASTComment) {
-			consumer.on((IASTComment) node);
+			mConsumer.on((IASTComment) node);
 		} else if (node instanceof IASTDeclaration) {
 			dispatch((IASTDeclaration) node);
 		} else if (node instanceof IASTParameterDeclaration) {
-			consumer.on((IASTParameterDeclaration) node);
+			mConsumer.on((IASTParameterDeclaration) node);
 		} else if (node instanceof IASTPointerOperator) {
 			dispatch((IASTPointerOperator) node);
 		} else if (node instanceof IASTPreprocessorStatement) {
@@ -508,141 +508,141 @@ public final class ASTNodeConsumerDispatcher {
 		} else if (node instanceof IASTInitializer) {
 			dispatch((IASTInitializer) node);
 		} else if (node instanceof IASTEnumerator) {
-			consumer.on((IASTEnumerator) node);
+			mConsumer.on((IASTEnumerator) node);
 		} else if (node instanceof IASTArrayModifier) {
 			dispatch((IASTArrayModifier) node);
 		} else if (node instanceof ICASTDesignator) {
 			dispatch((ICASTDesignator) node);
 		} else if (node instanceof IASTProblem) {
-			consumer.on((IASTProblem) node);
+			mConsumer.on((IASTProblem) node);
 		} else if (node instanceof IASTTranslationUnit) {
-			consumer.on((IASTTranslationUnit) node);
+			mConsumer.on((IASTTranslationUnit) node);
 		} else if (node instanceof IASTToken) {
 			dispatch((IASTToken) node);
 		} else if (node instanceof IASTAttributeSpecifier) {
 			dispatch((IASTAttributeSpecifier) node);
 		} else if (node instanceof IASTAlignmentSpecifier) {
-			consumer.on((IASTAlignmentSpecifier) node);
+			mConsumer.on((IASTAlignmentSpecifier) node);
 		} else if (node instanceof IASTAttribute) {
-			consumer.on((IASTAttribute) node);
+			mConsumer.on((IASTAttribute) node);
 		} else {
-			consumer.on(node);
+			mConsumer.on(node);
 		}
 	}
 
 	public void dispatch(final IASTPointerOperator pointerOperator) {
 		if (pointerOperator instanceof IASTPointer) {
 			if (pointerOperator instanceof ICASTPointer) {
-				consumer.on((ICASTPointer) pointerOperator);
+				mConsumer.on((ICASTPointer) pointerOperator);
 			} else {
-				consumer.on((IASTPointer) pointerOperator);
+				mConsumer.on((IASTPointer) pointerOperator);
 			}
 		} else {
-			consumer.on(pointerOperator);
+			mConsumer.on(pointerOperator);
 		}
 	}
 
 	public void dispatch(final IASTPreprocessorStatement preprocessorStatement) {
 		if (preprocessorStatement instanceof IASTPreprocessorEndifStatement) {
-			consumer.on((IASTPreprocessorEndifStatement) preprocessorStatement);
+			mConsumer.on((IASTPreprocessorEndifStatement) preprocessorStatement);
 		} else if (preprocessorStatement instanceof IASTPreprocessorMacroDefinition) {
 			if (preprocessorStatement instanceof IASTPreprocessorObjectStyleMacroDefinition) {
-				consumer.on((IASTPreprocessorObjectStyleMacroDefinition) preprocessorStatement);
+				mConsumer.on((IASTPreprocessorObjectStyleMacroDefinition) preprocessorStatement);
 			} else if (preprocessorStatement instanceof IASTPreprocessorFunctionStyleMacroDefinition) {
-				consumer.on((IASTPreprocessorFunctionStyleMacroDefinition) preprocessorStatement);
+				mConsumer.on((IASTPreprocessorFunctionStyleMacroDefinition) preprocessorStatement);
 			} else {
-				consumer.on((IASTPreprocessorMacroDefinition) preprocessorStatement);
+				mConsumer.on((IASTPreprocessorMacroDefinition) preprocessorStatement);
 			}
 		} else if (preprocessorStatement instanceof IASTPreprocessorIfStatement) {
-			consumer.on((IASTPreprocessorIfStatement) preprocessorStatement);
+			mConsumer.on((IASTPreprocessorIfStatement) preprocessorStatement);
 		} else if (preprocessorStatement instanceof IASTPreprocessorElseStatement) {
-			consumer.on((IASTPreprocessorElseStatement) preprocessorStatement);
+			mConsumer.on((IASTPreprocessorElseStatement) preprocessorStatement);
 		} else if (preprocessorStatement instanceof IASTPreprocessorIfdefStatement) {
-			consumer.on((IASTPreprocessorIfdefStatement) preprocessorStatement);
+			mConsumer.on((IASTPreprocessorIfdefStatement) preprocessorStatement);
 		} else if (preprocessorStatement instanceof IASTPreprocessorIfndefStatement) {
-			consumer.on((IASTPreprocessorIfndefStatement) preprocessorStatement);
+			mConsumer.on((IASTPreprocessorIfndefStatement) preprocessorStatement);
 		} else if (preprocessorStatement instanceof IASTPreprocessorIncludeStatement) {
-			consumer.on((IASTPreprocessorIncludeStatement) preprocessorStatement);
+			mConsumer.on((IASTPreprocessorIncludeStatement) preprocessorStatement);
 		} else if (preprocessorStatement instanceof IASTPreprocessorUndefStatement) {
-			consumer.on((IASTPreprocessorUndefStatement) preprocessorStatement);
+			mConsumer.on((IASTPreprocessorUndefStatement) preprocessorStatement);
 		} else if (preprocessorStatement instanceof IASTPreprocessorElifStatement) {
-			consumer.on((IASTPreprocessorElifStatement) preprocessorStatement);
+			mConsumer.on((IASTPreprocessorElifStatement) preprocessorStatement);
 		} else if (preprocessorStatement instanceof IASTPreprocessorPragmaStatement) {
-			consumer.on((IASTPreprocessorPragmaStatement) preprocessorStatement);
+			mConsumer.on((IASTPreprocessorPragmaStatement) preprocessorStatement);
 		} else if (preprocessorStatement instanceof IASTPreprocessorErrorStatement) {
-			consumer.on((IASTPreprocessorErrorStatement) preprocessorStatement);
+			mConsumer.on((IASTPreprocessorErrorStatement) preprocessorStatement);
 		} else {
-			consumer.on(preprocessorStatement);
+			mConsumer.on(preprocessorStatement);
 		}
 	}
 
 	public void dispatch(final IASTStatement statement) {
 		if (statement instanceof IASTExpressionStatement) {
-			consumer.on((IASTExpressionStatement) statement);
+			mConsumer.on((IASTExpressionStatement) statement);
 		} else if (statement instanceof IASTIfStatement) {
-			consumer.on((IASTIfStatement) statement);
+			mConsumer.on((IASTIfStatement) statement);
 		} else if (statement instanceof IASTCompoundStatement) {
-			consumer.on((IASTCompoundStatement) statement);
+			mConsumer.on((IASTCompoundStatement) statement);
 		} else if (statement instanceof IASTDeclarationStatement) {
-			consumer.on((IASTDeclarationStatement) statement);
+			mConsumer.on((IASTDeclarationStatement) statement);
 		} else if (statement instanceof IASTReturnStatement) {
-			consumer.on((IASTReturnStatement) statement);
+			mConsumer.on((IASTReturnStatement) statement);
 		} else if (statement instanceof IASTCaseStatement) {
-			consumer.on((IASTCaseStatement) statement);
+			mConsumer.on((IASTCaseStatement) statement);
 		} else if (statement instanceof IASTGotoStatement) {
-			consumer.on((IASTGotoStatement) statement);
+			mConsumer.on((IASTGotoStatement) statement);
 		} else if (statement instanceof IASTLabelStatement) {
-			consumer.on((IASTLabelStatement) statement);
+			mConsumer.on((IASTLabelStatement) statement);
 		} else if (statement instanceof IASTBreakStatement) {
-			consumer.on((IASTBreakStatement) statement);
+			mConsumer.on((IASTBreakStatement) statement);
 		} else if (statement instanceof IASTForStatement) {
-			consumer.on((IASTForStatement) statement);
+			mConsumer.on((IASTForStatement) statement);
 		} else if (statement instanceof IASTDoStatement) {
-			consumer.on((IASTDoStatement) statement);
+			mConsumer.on((IASTDoStatement) statement);
 		} else if (statement instanceof IASTNullStatement) {
-			consumer.on((IASTNullStatement) statement);
+			mConsumer.on((IASTNullStatement) statement);
 		} else if (statement instanceof IASTSwitchStatement) {
-			consumer.on((IASTSwitchStatement) statement);
+			mConsumer.on((IASTSwitchStatement) statement);
 		} else if (statement instanceof IASTDefaultStatement) {
-			consumer.on((IASTDefaultStatement) statement);
+			mConsumer.on((IASTDefaultStatement) statement);
 		} else if (statement instanceof IASTWhileStatement) {
-			consumer.on((IASTWhileStatement) statement);
+			mConsumer.on((IASTWhileStatement) statement);
 		} else if (statement instanceof IASTContinueStatement) {
-			consumer.on((IASTContinueStatement) statement);
+			mConsumer.on((IASTContinueStatement) statement);
 		} else if (statement instanceof IASTProblemStatement) {
-			consumer.on((IASTProblemStatement) statement);
+			mConsumer.on((IASTProblemStatement) statement);
 		} else if (statement instanceof IGNUASTGotoStatement) {
-			consumer.on((IGNUASTGotoStatement) statement);
+			mConsumer.on((IGNUASTGotoStatement) statement);
 		} else {
-			consumer.on(statement);
+			mConsumer.on(statement);
 		}
 	}
 
 	public void dispatch(final IASTToken token) {
 		if (token instanceof IASTTokenList) {
-			consumer.on((IASTTokenList) token);
+			mConsumer.on((IASTTokenList) token);
 		} else {
-			consumer.on(token);
+			mConsumer.on(token);
 		}
 	}
 
 	public void dispatch(final IASTTypeId typeId) {
 		if (typeId instanceof IASTProblemTypeId) {
-			consumer.on((IASTProblemTypeId) typeId);
+			mConsumer.on((IASTProblemTypeId) typeId);
 		} else {
-			consumer.on(typeId);
+			mConsumer.on(typeId);
 		}
 	}
 
 	public void dispatch(final ICASTDesignator cDesignator) {
 		if (cDesignator instanceof ICASTFieldDesignator) {
-			consumer.on((ICASTFieldDesignator) cDesignator);
+			mConsumer.on((ICASTFieldDesignator) cDesignator);
 		} else if (cDesignator instanceof ICASTArrayDesignator) {
-			consumer.on((ICASTArrayDesignator) cDesignator);
+			mConsumer.on((ICASTArrayDesignator) cDesignator);
 		} else if (cDesignator instanceof IGCCASTArrayRangeDesignator) {
-			consumer.on((IGCCASTArrayRangeDesignator) cDesignator);
+			mConsumer.on((IGCCASTArrayRangeDesignator) cDesignator);
 		} else {
-			consumer.on(cDesignator);
+			mConsumer.on(cDesignator);
 		}
 	}
 

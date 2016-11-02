@@ -2,66 +2,24 @@ package de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.minimizers
 
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.minimizers.Minimizer;
-import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.minimizers.MinimizerStep;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.minimizers.IMinimizer;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.minimizers.IMinimizerStep;
 
 /**
  * Ensure local minimality by restarting on the result until the size stays the same.
  *
  */
-public class RepeatUntilMinimalDecorator implements Minimizer {
-	final class StepDecorator<E> implements MinimizerStep<E> {
-		final MinimizerStep<E> delegate;
-		final int initialSize;
+public class RepeatUntilMinimalDecorator implements IMinimizer {
 
-		private StepDecorator(final MinimizerStep<E> delegate, final int initialSize) {
-			this.delegate = delegate;
-			this.initialSize = initialSize;
-		}
+	private final IMinimizer mDelegateMinimizer;
 
-		@Override
-		public List<E> getResult() {
-			return delegate.getResult();
-		}
-
-		@Override
-		public List<E> getVariant() {
-			return delegate.getVariant();
-		}
-
-		@Override
-		public boolean isDone() {
-			return delegate.isDone();
-		}
-
-		@Override
-		public MinimizerStep<E> next(final boolean keepVariant) {
-			final MinimizerStep<E> nextStep = delegate.next(keepVariant);
-			if (nextStep.isDone()) {
-				// Restart if something was removed
-				final List<E> result = nextStep.getResult();
-				if (result.size() != initialSize) {
-					return create(result);
-				}
-			}
-
-			return new StepDecorator<>(nextStep, initialSize);
-		}
-	}
-
-	public static Minimizer decorate(final Minimizer minimizer) {
-		return minimizer.isResultMinimal() ? minimizer : new RepeatUntilMinimalDecorator(minimizer);
-	}
-
-	final Minimizer delegateMinimizer;
-
-	public RepeatUntilMinimalDecorator(final Minimizer delegate) {
-		delegateMinimizer = delegate;
+	public RepeatUntilMinimalDecorator(final IMinimizer delegate) {
+		mDelegateMinimizer = delegate;
 	}
 
 	@Override
-	public <E> MinimizerStep<E> create(final List<E> input) {
-		return new StepDecorator<>(delegateMinimizer.create(input), input.size());
+	public <E> IMinimizerStep<E> create(final List<E> input) {
+		return new StepDecorator<>(mDelegateMinimizer.create(input), input.size());
 	}
 
 	@Override
@@ -73,4 +31,49 @@ public class RepeatUntilMinimalDecorator implements Minimizer {
 	public boolean isResultMinimal() {
 		return true;
 	}
+	
+
+	final class StepDecorator<E> implements IMinimizerStep<E> {
+		private final IMinimizerStep<E> mDelegate;
+		private final int mInitialSize;
+
+		private StepDecorator(final IMinimizerStep<E> delegate, final int initialSize) {
+			mDelegate = delegate;
+			mInitialSize = initialSize;
+		}
+
+		@Override
+		public List<E> getResult() {
+			return mDelegate.getResult();
+		}
+
+		@Override
+		public List<E> getVariant() {
+			return mDelegate.getVariant();
+		}
+
+		@Override
+		public boolean isDone() {
+			return mDelegate.isDone();
+		}
+
+		@Override
+		public IMinimizerStep<E> next(final boolean keepVariant) {
+			final IMinimizerStep<E> nextStep = mDelegate.next(keepVariant);
+			if (nextStep.isDone()) {
+				// Restart if something was removed
+				final List<E> result = nextStep.getResult();
+				if (result.size() != mInitialSize) {
+					return create(result);
+				}
+			}
+
+			return new StepDecorator<>(nextStep, mInitialSize);
+		}
+	}
+
+	public static IMinimizer decorate(final IMinimizer minimizer) {
+		return minimizer.isResultMinimal() ? minimizer : new RepeatUntilMinimalDecorator(minimizer);
+	}
+
 }

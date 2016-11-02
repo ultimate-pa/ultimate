@@ -11,6 +11,28 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceRange;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.SourceRewriter;
 
 final class CommaDeleter extends CommaSeparatedChildDeleter {
+	private final SourceRewriter mRewriter;
+
+	private CommaDeleter(final List<IPSTNode> childrenToDelete, final List<CommaSeparatedChild> allChildren,
+			final SourceRewriter rewriter) {
+		super(childrenToDelete, allChildren);
+		this.mRewriter = rewriter;
+	}
+
+	@Override
+	protected void deleteComma(final ISourceRange location) {
+		if (mRewriter != null) {
+			Change.replaceByWhitespace(mRewriter, location);
+		}
+	}
+
+	@Override
+	protected void deleteNode(final IPSTNode node) {
+		if (mRewriter != null) {
+			Change.deleteNodeText(mRewriter, node);
+		}
+	}
+	
 	static void deleteNodesWithComma(final SourceRewriter rewriter, final List<IPSTNode> nodesToDelete,
 			final List<CommaSeparatedChild> commaPositions) {
 		try {
@@ -27,27 +49,5 @@ final class CommaDeleter extends CommaSeparatedChildDeleter {
 			return false;
 		}
 		return true;
-	}
-
-	private final SourceRewriter rewriter;
-
-	private CommaDeleter(final List<IPSTNode> childrenToDelete, final List<CommaSeparatedChild> allChildren,
-			final SourceRewriter rewriter) {
-		super(childrenToDelete, allChildren);
-		this.rewriter = rewriter;
-	}
-
-	@Override
-	protected void deleteComma(final ISourceRange location) {
-		if (rewriter != null) {
-			Change.replaceByWhitespace(rewriter, location);
-		}
-	}
-
-	@Override
-	protected void deleteNode(final IPSTNode node) {
-		if (rewriter != null) {
-			Change.deleteNodeText(rewriter, node);
-		}
 	}
 }

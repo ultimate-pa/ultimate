@@ -1,7 +1,10 @@
 package de.uni_freiburg.informatik.ultimate.deltadebugger.core.text;
 
-public class SourceDocumentLocationPrinter {
+public final class SourceDocumentLocationPrinter {
 
+	private SourceDocumentLocationPrinter() {
+	}
+	
 	public static StringBuilder appendTo(final ISourceDocument document, final int offset, final int endOffset,
 			final StringBuilder sb) {
 		final int startingLineNumber = document.getLineNumber(offset);
@@ -35,6 +38,4 @@ public class SourceDocumentLocationPrinter {
 		return makeString(document, range.offset(), range.endOffset());
 	}
 
-	private SourceDocumentLocationPrinter() {
-	}
 }

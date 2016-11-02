@@ -34,10 +34,10 @@ import java.util.concurrent.TimeUnit;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.exceptions.UncheckedInterruptedException;
-import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.GeneratorSearchStep;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.IGeneratorSearchStep;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.GeneratorSearchStepFactory;
-import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.minimizers.DuplicateVariantTracker;
-import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.minimizers.Minimizer;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.minimizers.IDuplicateVariantTracker;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.minimizers.IMinimizer;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.minimizers.algorithms.BinarySearchMinimizer;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.minimizers.decorators.HitCountingDuplicateVariantTracker;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.minimizers.decorators.IncludeEmptyVariantDecorator;
@@ -62,7 +62,7 @@ public class PassRunner {
 	
 	private List<PassDescription> mPasses;
 	private IPassContextFactory mContextFactory;
-	private Minimizer mDefaultMinimizer;
+	private IMinimizer mDefaultMinimizer;
 	private ExecutorService mExecutorService;
 	private int mWorkerCount;
 	private int mTimeLimitPerPassInSeconds;
@@ -83,17 +83,17 @@ public class PassRunner {
 		mDefaultMinimizer = IncludeEmptyVariantDecorator.decorate(new BinarySearchMinimizer(false));
 	}
 	
-	Optional<String> applyGenerators(final IVariantGenerator firstGenerator, final Minimizer minimizer,
+	Optional<String> applyGenerators(final IVariantGenerator firstGenerator, final IMinimizer minimizer,
 			final boolean useSpeculativeIteration) {
 		final SearchObserver observer = new SearchObserver(mTestFunction, mStats, mLogger);
 		final GeneratorSearchStepFactory searchStepFactory =
 				new GeneratorSearchStepFactory(minimizer, this::createDuplicateVariantTrackerLinkedToStats);
-		final SpeculativeSearchIterator<GeneratorSearchStep> stepIterator =
+		final SpeculativeSearchIterator<IGeneratorSearchStep> stepIterator =
 				new SpeculativeSearchIterator<>(searchStepFactory.create(firstGenerator), observer);
 		
 		final int successfulStepsBefore = mStats.getSuccessfulSteps();
 		
-		GeneratorSearchStep lastStep;
+		IGeneratorSearchStep lastStep;
 		if (useSpeculativeIteration) {
 			lastStep = iterateParallel(new ParallelSearchIteratorIterator<>(stepIterator, observer::runTestForStep));
 		} else {
@@ -109,13 +109,13 @@ public class PassRunner {
 			return Optional.empty();
 		}
 		
-		final Minimizer minmizer = pass.getMinimizer().orElse(mDefaultMinimizer);
+		final IMinimizer minmizer = pass.getMinimizer().orElse(mDefaultMinimizer);
 		final boolean useSpeculativeIteration = mExecutorService != null && !pass.disableSpeculativeTesting();
 		
 		return applyGenerators(generator.get(), minmizer, useSpeculativeIteration);
 	}
 	
-	static DuplicateVariantTracker<IChangeHandle> createDuplicateVariantTracker(final Minimizer minimizer,
+	static IDuplicateVariantTracker<IChangeHandle> createDuplicateVariantTracker(final IMinimizer minimizer,
 			final List<IChangeHandle> allChanges) {
 		if (minimizer.isEachVariantUnique()) {
 			return NullDuplicateTracker.getInstance();
@@ -128,7 +128,7 @@ public class PassRunner {
 		return new HashSetDuplicateTracker<>();
 	}
 	
-	DuplicateVariantTracker<IChangeHandle> createDuplicateVariantTrackerLinkedToStats(final Minimizer minimizer,
+	IDuplicateVariantTracker<IChangeHandle> createDuplicateVariantTrackerLinkedToStats(final IMinimizer minimizer,
 			final List<IChangeHandle> allChanges) {
 		return new HitCountingDuplicateVariantTracker(createDuplicateVariantTracker(minimizer, allChanges),
 				mStats.getSkippedDuplicateMinimizerSteps());
@@ -164,7 +164,7 @@ public class PassRunner {
 		return mContextFactory;
 	}
 	
-	public Minimizer getDefaultMinimizer() {
+	public IMinimizer getDefaultMinimizer() {
 		return mDefaultMinimizer;
 	}
 	
@@ -196,7 +196,7 @@ public class PassRunner {
 		return mExecutorService != null;
 	}
 	
-	GeneratorSearchStep iterateDirect(final DirectSearchIteratorIterator<GeneratorSearchStep> iterIterator) {
+	IGeneratorSearchStep iterateDirect(final DirectSearchIteratorIterator<IGeneratorSearchStep> iterIterator) {
 		if (mTimeLimitPerPassInSeconds > 0) {
 			if (!iterIterator.iterateFor(mTimeLimitPerPassInSeconds, TimeUnit.SECONDS) && mLogger.isWarnEnabled()) {
 				mLogger.warn("Stopping search after " + mTimeLimitPerPassInSeconds + " seconds...");
@@ -208,7 +208,7 @@ public class PassRunner {
 		return iterIterator.getCurrentStep();
 	}
 	
-	GeneratorSearchStep iterateParallel(final ParallelSearchIteratorIterator<GeneratorSearchStep> iterIterator) {
+	IGeneratorSearchStep iterateParallel(final ParallelSearchIteratorIterator<IGeneratorSearchStep> iterIterator) {
 		iterIterator.beginIteration(mExecutorService, mWorkerCount);
 		try {
 			if (mTimeLimitPerPassInSeconds > 0
@@ -286,7 +286,7 @@ public class PassRunner {
 		return this;
 	}
 	
-	public PassRunner setDefaultMinimizer(final Minimizer defaultMinimizer) {
+	public PassRunner setDefaultMinimizer(final IMinimizer defaultMinimizer) {
 		mDefaultMinimizer = defaultMinimizer;
 		return this;
 	}

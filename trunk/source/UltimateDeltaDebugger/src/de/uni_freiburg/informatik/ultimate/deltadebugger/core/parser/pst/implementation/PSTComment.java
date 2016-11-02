@@ -25,7 +25,7 @@ public class PSTComment extends PSTNode implements IPSTComment {
 
 	@Override
 	public IASTComment getASTNode() {
-		return (IASTComment) astNode;
+		return (IASTComment) mAstNode;
 	}
 
 }

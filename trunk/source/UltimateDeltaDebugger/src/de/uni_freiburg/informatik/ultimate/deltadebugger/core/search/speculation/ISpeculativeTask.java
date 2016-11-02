@@ -1,6 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.speculation;
 
-import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.SearchStep;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.ISearchStep;
 
 /**
  * Represents a task during a speculative search iteration, i.e. a search step that has to be tested and eventually to
@@ -17,7 +17,7 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.SearchStep;
  * @param <T>
  *            type of algorithm step
  */
-public interface SpeculativeTask<T extends SearchStep<?, T>> {
+public interface ISpeculativeTask<T extends ISearchStep<?, T>> {
 
 	/**
 	 * Completes the task with the given test result. Has to be called unless the step is canceled.

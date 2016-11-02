@@ -1,19 +1,19 @@
 package de.uni_freiburg.informatik.ultimate.deltadebugger.core.text;
 
 public class StringRewriter extends AbstractTextRewriter {
-	private final String text;
+	private final String mText;
 
 	public StringRewriter(final String text) {
-		this.text = text;
+		mText = text;
 	}
 
 	@Override
 	protected int getOriginalLength() {
-		return text.length();
+		return mText.length();
 	}
 
 	@Override
 	protected String getOriginalText() {
-		return text;
+		return mText;
 	}
 }

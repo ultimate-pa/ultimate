@@ -7,8 +7,11 @@ import java.util.List;
 /**
  * Provides basic list operators used by the minimizer implementations.
  */
-public class MinimizerListOps {
+public final class MinimizerListOps {
 
+	private MinimizerListOps() {
+	}
+	
 	/**
 	 * Allocate a new list of the requested capacity.
 	 *
@@ -70,6 +73,4 @@ public class MinimizerListOps {
 		return complement;
 	}
 
-	private MinimizerListOps() {
-	}
 }

@@ -4,7 +4,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.exceptions.MissingTestResultException;
-import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.SearchStep;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.ISearchStep;
 
 /**
  * Single threaded counterpart to the ParallelSearchIteratorIterator.
@@ -12,9 +12,9 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.SearchStep;
  * @param <T>
  *            search step type
  */
-public class DirectSearchIteratorIterator<T extends SearchStep<?, T>> {
-	private final SpeculativeSearchIterator<T> searchIterator;
-	private final CancelableStepTest<T> cancelableTest;
+public class DirectSearchIteratorIterator<T extends ISearchStep<?, T>> {
+	private final SpeculativeSearchIterator<T> mSearchIterator;
+	private final CancelableStepTest<T> mCancelableTest;
 
 	/**
 	 * Constructs a new instance that can be used for one iteration.
@@ -26,12 +26,12 @@ public class DirectSearchIteratorIterator<T extends SearchStep<?, T>> {
 	 */
 	public DirectSearchIteratorIterator(final SpeculativeSearchIterator<T> searchIterator,
 			final CancelableStepTest<T> cancelableTest) {
-		this.searchIterator = searchIterator;
-		this.cancelableTest = cancelableTest;
+		mSearchIterator = searchIterator;
+		mCancelableTest = cancelableTest;
 	}
 
 	public T getCurrentStep() {
-		return searchIterator.getCurrentStep();
+		return mSearchIterator.getCurrentStep();
 	}
 
 	/**
@@ -44,7 +44,7 @@ public class DirectSearchIteratorIterator<T extends SearchStep<?, T>> {
 	public boolean iterateFor(final long timeout, final TimeUnit unit) {
 		final long deadline = System.currentTimeMillis() + unit.toMillis(timeout);
 		do {
-			final SpeculativeTask<T> task = searchIterator.getNextTask();
+			final ISpeculativeTask<T> task = mSearchIterator.getNextTask();
 			if (task.isDone()) {
 				return true;
 			}
@@ -59,7 +59,7 @@ public class DirectSearchIteratorIterator<T extends SearchStep<?, T>> {
 	 */
 	public T iterateToEnd() {
 		while (true) {
-			final SpeculativeTask<T> task = searchIterator.getNextTask();
+			final ISpeculativeTask<T> task = mSearchIterator.getNextTask();
 			if (task.isDone()) {
 				return task.getStep();
 			}
@@ -67,8 +67,8 @@ public class DirectSearchIteratorIterator<T extends SearchStep<?, T>> {
 		}
 	}
 
-	private void runTestAndCompleteTask(final SpeculativeTask<T> task) {
-		final Optional<Boolean> result = cancelableTest.test(task.getStep(), task::isCanceled);
+	private void runTestAndCompleteTask(final ISpeculativeTask<T> task) {
+		final Optional<Boolean> result = mCancelableTest.test(task.getStep(), task::isCanceled);
 		if (!result.isPresent()) {
 			// A test is only allowed to return no result if cancelation
 			// was actually requested. To handle this case we could only

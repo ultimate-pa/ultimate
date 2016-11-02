@@ -10,14 +10,14 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceDocume
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceRange;
 
 public class PSTConditionalBlock extends PSTNode implements IPSTConditionalBlock {
-	protected final List<IPSTDirective> conditionalDirectives;
-	protected final ISourceRange activeBranchLocation;
+	protected final List<IPSTDirective> mConditionalDirectives;
+	protected final ISourceRange mActiveBranchLocation;
 
 	public PSTConditionalBlock(final ISourceDocument source, final ISourceRange location,
 			final List<IPSTDirective> conditionalDirectives, final ISourceRange activeBranchLocation) {
 		super(source, location, null);
-		this.conditionalDirectives = Objects.requireNonNull(conditionalDirectives);
-		this.activeBranchLocation = activeBranchLocation;
+		mConditionalDirectives = Objects.requireNonNull(conditionalDirectives);
+		mActiveBranchLocation = activeBranchLocation;
 	}
 
 	@Override
@@ -32,20 +32,20 @@ public class PSTConditionalBlock extends PSTNode implements IPSTConditionalBlock
 
 	@Override
 	public ISourceRange getActiveBranchLocation() {
-		if (activeBranchLocation != null) {
-			return activeBranchLocation;
+		if (mActiveBranchLocation != null) {
+			return mActiveBranchLocation;
 		}
-		return source.newSourceRange(offset(), offset());
+		return mSource.newSourceRange(offset(), offset());
 	}
 
 	@Override
 	public List<IPSTDirective> getConditionalDirectives() {
-		return conditionalDirectives;
+		return mConditionalDirectives;
 	}
 
 	@Override
 	public boolean hasActiveBranch() {
-		return activeBranchLocation != null;
+		return mActiveBranchLocation != null;
 	}
 
 }

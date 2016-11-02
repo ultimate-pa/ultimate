@@ -4,14 +4,14 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 
-import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.SearchStep;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.ISearchStep;
 
-public class SpeculativeSearchIterator<T extends SearchStep<?, T>> {
-	protected class ResultTask implements SpeculativeTask<T> {
-		private final T step;
+public class SpeculativeSearchIterator<T extends ISearchStep<?, T>> {
+	protected final class ResultTask implements ISpeculativeTask<T> {
+		private final T mStep;
 
 		private ResultTask(final T step) {
-			this.step = step;
+			mStep = step;
 		}
 
 		@Override
@@ -21,7 +21,7 @@ public class SpeculativeSearchIterator<T extends SearchStep<?, T>> {
 
 		@Override
 		public T getStep() {
-			return step;
+			return mStep;
 		}
 
 		@Override
@@ -35,17 +35,17 @@ public class SpeculativeSearchIterator<T extends SearchStep<?, T>> {
 		}
 	}
 
-	protected class Task implements SpeculativeTask<T> {
-		private final T step;
-		private Optional<Boolean> result = Optional.empty();
-		private volatile boolean canceled = false;
+	protected final class Task implements ISpeculativeTask<T> {
+		private final T mStep;
+		private Optional<Boolean> mResult = Optional.empty();
+		private volatile boolean mCanceled;
 
 		private Task(final T step) {
-			this.step = step;
+			mStep = step;
 		}
 
 		private void cancel() {
-			canceled = true;
+			mCanceled = true;
 		}
 
 		@Override
@@ -54,49 +54,49 @@ public class SpeculativeSearchIterator<T extends SearchStep<?, T>> {
 		}
 
 		private boolean getResult() {
-			return result.get();
+			return mResult.get();
 		}
 
 		@Override
 		public T getStep() {
-			return step;
+			return mStep;
 		}
 
 		@Override
 		public boolean isCanceled() {
-			return canceled;
+			return mCanceled;
 		}
 
 		@Override
 		public boolean isDone() {
-			return step.isDone();
+			return mStep.isDone();
 		}
 
 		private boolean isPending() {
-			return !result.isPresent();
+			return !mResult.isPresent();
 		}
 
 		private void setResult(final boolean keepVariant) {
-			result = Optional.of(keepVariant);
+			mResult = Optional.of(keepVariant);
 		}
 	}
 
-	private final SpeculativeIterationObserver<T> observer;
+	private final ISpeculativeIterationObserver<T> mObserver;
 
-	private final LinkedList<Task> pending = new LinkedList<>();
+	private final LinkedList<Task> mPending = new LinkedList<>();
 
-	private T currentStep;
+	private T mCurrentStep;
 
 	public SpeculativeSearchIterator(final T initialStep) {
-		this(initialStep, new SpeculativeIterationObserver<T>() {
+		this(initialStep, new ISpeculativeIterationObserver<T>() {
 		});
 	}
 
-	public SpeculativeSearchIterator(final T initialStep, final SpeculativeIterationObserver<T> observer) {
-		this.observer = observer;
-		currentStep = initialStep;
-		if (currentStep.isDone()) {
-			observer.onSearchComplete(currentStep);
+	public SpeculativeSearchIterator(final T initialStep, final ISpeculativeIterationObserver<T> observer) {
+		this.mObserver = observer;
+		mCurrentStep = initialStep;
+		if (mCurrentStep.isDone()) {
+			observer.onSearchComplete(mCurrentStep);
 		}
 	}
 
@@ -109,21 +109,21 @@ public class SpeculativeSearchIterator<T extends SearchStep<?, T>> {
 
 		// Result is for a canceled speculative step
 		if (task.isCanceled()) {
-			observer.onCanceledStepComplete(task.getStep(), keepVariant);
+			mObserver.onCanceledStepComplete(task.getStep(), keepVariant);
 			return;
 		}
 
-		final int index = pending.indexOf(task);
+		final int index = mPending.indexOf(task);
 		if (index == -1) {
 			throw new IllegalArgumentException();
 		}
 
 		// If the step is successful cancel all pending speculative tasks
 		// that depend on it's failure
-		if (keepVariant && index + 1 < pending.size()) {
-			final List<Task> invalidSpeculativeTasks = pending.subList(index + 1, pending.size());
+		if (keepVariant && index + 1 < mPending.size()) {
+			final List<Task> invalidSpeculativeTasks = mPending.subList(index + 1, mPending.size());
 			invalidSpeculativeTasks.forEach(t -> t.cancel());
-			observer.onTasksCanceled(invalidSpeculativeTasks);
+			mObserver.onTasksCanceled(invalidSpeculativeTasks);
 			invalidSpeculativeTasks.clear();
 		}
 
@@ -136,21 +136,21 @@ public class SpeculativeSearchIterator<T extends SearchStep<?, T>> {
 	}
 
 	public T getCurrentStep() {
-		return currentStep != null ? currentStep : pending.peekFirst().getStep();
+		return mCurrentStep != null ? mCurrentStep : mPending.peekFirst().getStep();
 	}
 
-	public SpeculativeTask<T> getNextTask() {
+	public ISpeculativeTask<T> getNextTask() {
 		// No speculation required
-		if (currentStep != null) {
+		if (mCurrentStep != null) {
 			// Search completed
-			if (currentStep.isDone()) {
-				return new ResultTask(currentStep);
+			if (mCurrentStep.isDone()) {
+				return new ResultTask(mCurrentStep);
 			}
 
-			observer.onStepBegin(currentStep);
-			final Task task = new Task(currentStep);
-			pending.add(task);
-			currentStep = null;
+			mObserver.onStepBegin(mCurrentStep);
+			final Task task = new Task(mCurrentStep);
+			mPending.add(task);
+			mCurrentStep = null;
 			return task;
 		}
 
@@ -159,9 +159,9 @@ public class SpeculativeSearchIterator<T extends SearchStep<?, T>> {
 		// Note that the latest speculative step may not have another variant to
 		// test, but we must not return a step that is done unless it is the
 		// final result.
-		if (!pending.peekLast().isDone()) {
-			final Task nextSpeculativeTask = new Task(pending.peekLast().getStep().next(false));
-			pending.addLast(nextSpeculativeTask);
+		if (!mPending.peekLast().isDone()) {
+			final Task nextSpeculativeTask = new Task(mPending.peekLast().getStep().next(false));
+			mPending.addLast(nextSpeculativeTask);
 			if (!nextSpeculativeTask.isDone()) {
 				return nextSpeculativeTask;
 			}
@@ -173,39 +173,39 @@ public class SpeculativeSearchIterator<T extends SearchStep<?, T>> {
 	}
 
 	public int getPendingTaskCount() {
-		return pending.size();
+		return mPending.size();
 	}
 
 	public boolean isDone() {
-		return currentStep != null && currentStep.isDone();
+		return mCurrentStep != null && mCurrentStep.isDone();
 	}
 
 	private void removeCompletedTasks() {
 		Task latestCompletedTask = null;
-		while (!pending.isEmpty()) {
-			final Task task = pending.peekFirst();
+		while (!mPending.isEmpty()) {
+			final Task task = mPending.peekFirst();
 			if (task.isDone()) {
 				// Search completed
-				pending.clear();
-				currentStep = task.getStep();
-				observer.onSearchComplete(currentStep);
+				mPending.clear();
+				mCurrentStep = task.getStep();
+				mObserver.onSearchComplete(mCurrentStep);
 				return;
 			}
 			if (task.isPending()) {
-				observer.onStepBegin(task.getStep());
+				mObserver.onStepBegin(task.getStep());
 				return;
 			}
 			if (latestCompletedTask != null) {
-				observer.onStepBegin(task.getStep());
+				mObserver.onStepBegin(task.getStep());
 			}
-			observer.onStepComplete(task.getStep(), task.getResult());
-			pending.removeFirst();
+			mObserver.onStepComplete(task.getStep(), task.getResult());
+			mPending.removeFirst();
 			latestCompletedTask = task;
 		}
 
 		// No pending tasks remain, compute the next step
 		if (latestCompletedTask != null) {
-			currentStep = latestCompletedTask.getStep().next(latestCompletedTask.getResult());
+			mCurrentStep = latestCompletedTask.getStep().next(latestCompletedTask.getResult());
 		}
 	}
 }

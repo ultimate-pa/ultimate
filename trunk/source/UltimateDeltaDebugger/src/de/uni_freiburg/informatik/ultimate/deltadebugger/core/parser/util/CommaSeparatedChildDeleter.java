@@ -41,11 +41,11 @@ public abstract class CommaSeparatedChildDeleter {
 		}
 	}
 
-	private final List<IPSTNode> childrenToDelete;
+	private final List<IPSTNode> mChildrenToDelete;
 
-	private final List<CommaSeparatedChild> allChildren;
+	private final List<CommaSeparatedChild> mAllChildren;
 
-	private ISourceRange leftComma = null;
+	private ISourceRange mLeftComma;
 
 	/**
 	 * @param childrenToDelete
@@ -56,8 +56,8 @@ public abstract class CommaSeparatedChildDeleter {
 	 */
 	public CommaSeparatedChildDeleter(final List<IPSTNode> childrenToDelete,
 			final List<CommaSeparatedChild> allChildren) {
-		this.childrenToDelete = childrenToDelete;
-		this.allChildren = allChildren;
+		this.mChildrenToDelete = childrenToDelete;
+		this.mAllChildren = allChildren;
 
 		if (childrenToDelete.size() > allChildren.size()) {
 			throw new MissingChildException("cannot delete more nodes than children exist");
@@ -68,14 +68,14 @@ public abstract class CommaSeparatedChildDeleter {
 			throws MissingCommaLocationException {
 		// Delete comma to the left if there still is one, so we don't get a
 		// problem if we delete all remaining elements
-		if (leftComma != null) {
-			deleteComma(leftComma);
+		if (mLeftComma != null) {
+			deleteComma(mLeftComma);
 			deleteNode(child);
-			leftComma = rightComma;
+			mLeftComma = rightComma;
 		} else if (rightComma != null) {
 			deleteNode(child);
 			deleteComma(rightComma);
-			leftComma = null;
+			mLeftComma = null;
 		} else {
 			throw new MissingCommaLocationException("Unable to delete child before last: " + child);
 		}
@@ -88,17 +88,17 @@ public abstract class CommaSeparatedChildDeleter {
 	 * @throws MissingChildException
 	 */
 	public void deleteChildren() throws MissingCommaLocationException {
-		final Iterator<IPSTNode> iter = childrenToDelete.iterator();
+		final Iterator<IPSTNode> iter = mChildrenToDelete.iterator();
 		if (!iter.hasNext()) {
 			return;
 		}
 
 		IPSTNode childToDelete = iter.next();
-		for (int i = 0; i < allChildren.size() - 1; ++i) {
+		for (int i = 0; i < mAllChildren.size() - 1; ++i) {
 			// Skip children that are not to be deleted and remember comma to the left
-			final CommaSeparatedChild pos = allChildren.get(i);
+			final CommaSeparatedChild pos = mAllChildren.get(i);
 			if (pos.node() != childToDelete) {
-				leftComma = pos.nextCommaLocation();
+				mLeftComma = pos.nextCommaLocation();
 				continue;
 			}
 
@@ -109,7 +109,7 @@ public abstract class CommaSeparatedChildDeleter {
 			childToDelete = iter.next();
 		}
 
-		final CommaSeparatedChild lastPos = allChildren.get(allChildren.size() - 1);
+		final CommaSeparatedChild lastPos = mAllChildren.get(mAllChildren.size() - 1);
 		if (childToDelete != lastPos.node() || iter.hasNext()) {
 			// This may happen if the list is not sorted or if the list contains
 			// unrelated (non-regular) nodes -> logic error
@@ -123,12 +123,12 @@ public abstract class CommaSeparatedChildDeleter {
 	private void deleteLastChild(final IPSTNode child, final ISourceRange rightComma)
 			throws MissingCommaLocationException {
 		// Delete the comma to the left if more than one child will be left
-		if (childrenToDelete.size() < allChildren.size() - 1) {
-			if (leftComma == null) {
+		if (mChildrenToDelete.size() < mAllChildren.size() - 1) {
+			if (mLeftComma == null) {
 				throw new MissingCommaLocationException("Unable to delete last child: " + child);
 			}
-			deleteComma(leftComma);
-			leftComma = null;
+			deleteComma(mLeftComma);
+			mLeftComma = null;
 		}
 
 		deleteNode(child);

@@ -69,9 +69,9 @@ public class CommaSeparatedChildFinder {
 			// element
 			if (!result.isEmpty()) {
 				final CommaSeparatedChild previousElement = result.get(result.size() - 1);
-				if (previousElement.nextCommaLocation == null) {
+				if (previousElement.mNextCommaLocation == null) {
 					final int commaOffset = offset + text.indexOf(',');
-					previousElement.nextCommaLocation =
+					previousElement.mNextCommaLocation =
 							parentNode.getSource().newSourceRange(commaOffset, commaOffset + 1);
 				}
 			}

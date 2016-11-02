@@ -23,66 +23,77 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceRange;
  * Implementation notes: By checking the "gaps" in the PST we can easily find tokens between nodes without preprocessing
  * the source text. Only requirement is that all preprocessor directives and comments actually exist in the PST.
  */
-@SuppressWarnings("restriction")
-public class TokenCollector {
+public final class TokenCollector {
+
+	private static final CharArrayIntMap keywords;
+
+	static {
+		keywords = new CharArrayIntMap(40, -1);
+		Keywords.addKeywordsC(keywords);
+	}
+
+	private TokenCollector() {
+	}
+	
+	
 	public static class Token implements ISourceRange {
-		final ISourceDocument source;
-		final IToken delegate;
+		private final ISourceDocument mSource;
+		private final IToken mDelegate;
 
 		public Token(final ISourceDocument source, final IToken token) {
-			this.source = source;
-			delegate = token;
+			this.mSource = source;
+			mDelegate = token;
 		}
 
 		@Override
 		public int endOffset() {
-			return delegate.getEndOffset();
+			return mDelegate.getEndOffset();
 		}
 
 		public char[] getCharImage() {
-			return delegate.getCharImage();
+			return mDelegate.getCharImage();
 		}
 
 		public String getImage() {
-			return delegate.getImage();
+			return mDelegate.getImage();
 		}
 
 		public ISourceDocument getSource() {
-			return source;
+			return mSource;
 		}
 
 		public int getType() {
-			return delegate.getType();
+			return mDelegate.getType();
 		}
 
 		@Override
 		public int offset() {
-			return delegate.getOffset();
+			return mDelegate.getOffset();
 		}
 
 		@Override
 		public String toString() {
 			final StringBuilder sb = new StringBuilder();
 			sb.append("Token (\"").append(getImage()).append("\") ")
-					.append(source.newSourceRange(offset(), endOffset()));
+					.append(mSource.newSourceRange(offset(), endOffset()));
 			return sb.toString();
 		}
 
 	}
 
-	private static class Visitor implements IPSTGapVisitor {
-		private final IPSTNode parentNode;
-		private final ISourceDocument source;
-		private final List<Token> result = new ArrayList<>();
-		private LexerOptions lexerOptions = null;
+	private static final class Visitor implements IPSTGapVisitor {
+		private final IPSTNode mParentNode;
+		private final ISourceDocument mSource;
+		private final List<Token> mResult = new ArrayList<>();
+		private LexerOptions mLexerOptions;
 
 		private Visitor(final IPSTNode parentNode) {
-			this.parentNode = parentNode;
-			source = parentNode.getSource();
+			this.mParentNode = parentNode;
+			mSource = parentNode.getSource();
 		}
 
 		private void addTokens(final int offset, final int endOffset) {
-			final String text = source.getText(offset, endOffset);
+			final String text = mSource.getText(offset, endOffset);
 			if (text.trim().isEmpty()) {
 				return;
 			}
@@ -95,17 +106,17 @@ public class TokenCollector {
 
 		@Override
 		public int defaultVisit(final IPSTNode node) {
-			if (node == parentNode || node instanceof IPSTConditionalBlock) {
+			if (node == mParentNode || node instanceof IPSTConditionalBlock) {
 				return PROCESS_CONTINUE;
 			}
 			return PROCESS_SKIP;
 		}
 
 		private LexerOptions getLexerOptions() {
-			if (lexerOptions == null) {
-				lexerOptions = parentNode.getTranslationUnit().getASTNode().getAdapter(LexerOptions.class);
+			if (mLexerOptions == null) {
+				mLexerOptions = mParentNode.getTranslationUnit().getASTNode().getAdapter(LexerOptions.class);
 			}
-			return lexerOptions;
+			return mLexerOptions;
 		}
 
 		private void runLexer(final String text, final int offset) throws OffsetLimitReachedException {
@@ -124,7 +135,7 @@ public class TokenCollector {
 					}
 				default:
 					token.setOffset(offset + token.getOffset(), offset + token.getEndOffset());
-					result.add(new Token(source, token));
+					mResult.add(new Token(mSource, token));
 					break;
 				}
 			}
@@ -135,13 +146,6 @@ public class TokenCollector {
 			addTokens(offset, endOffset);
 			return PROCESS_CONTINUE;
 		}
-	}
-
-	private static final CharArrayIntMap keywords;
-
-	static {
-		keywords = new CharArrayIntMap(40, -1);
-		Keywords.addKeywordsC(keywords);
 	}
 
 	/**
@@ -156,10 +160,7 @@ public class TokenCollector {
 	public static List<Token> collect(final IPSTNode parentNode) {
 		final Visitor instance = new Visitor(parentNode);
 		GapVisitor.invokeAccept(parentNode, instance);
-		return instance.result;
-	}
-
-	private TokenCollector() {
+		return instance.mResult;
 	}
 
 }

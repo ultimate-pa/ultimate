@@ -14,8 +14,11 @@ import org.eclipse.cdt.core.dom.ast.IASTPreprocessorIfdefStatement;
 import org.eclipse.cdt.core.dom.ast.IASTPreprocessorIfndefStatement;
 import org.eclipse.cdt.core.dom.ast.IASTStandardFunctionDeclarator;
 
-public class ASTNodeUtils {
+public final class ASTNodeUtils {
 
+	private ASTNodeUtils() {
+	}
+	
 	public static IASTNode[] getCommaSeparatedChildNodes(final IASTNode astNode) {
 		if (astNode instanceof IASTStandardFunctionDeclarator) {
 			return ((IASTStandardFunctionDeclarator) astNode).getParameters();
@@ -68,6 +71,4 @@ public class ASTNodeUtils {
 		return false;
 	}
 
-	private ASTNodeUtils() {
-	}
 }
