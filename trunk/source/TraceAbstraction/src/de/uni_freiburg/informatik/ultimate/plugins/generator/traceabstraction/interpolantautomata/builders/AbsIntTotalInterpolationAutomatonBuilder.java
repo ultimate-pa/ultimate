@@ -199,7 +199,6 @@ public class AbsIntTotalInterpolationAutomatonBuilder implements IInterpolantAut
 			}
 		}
 
-		// TODO maybe move this?
 		if (PRINT_PREDS_LIMIT < alreadyThereAsState.size()) {
 			mLogger.info("Using "
 					+ alreadyThereAsState.size() + " predicates from AI: " + String.join(",", alreadyThereAsState
@@ -256,9 +255,9 @@ public class AbsIntTotalInterpolationAutomatonBuilder implements IInterpolantAut
 					mStatementExtractor, mSymbolTable);
 
 			// Iterate over all predicates to find matching candidates for a transition.
-			for (final IPredicate currentPredeicate : allPredicates) {
+			for (final IPredicate currentPredicate : allPredicates) {
 				final Set<IAbstractState<?, CodeBlock, IBoogieVar>> currentGenerators =
-						predicateToStates.get(currentPredeicate);
+						predicateToStates.get(currentPredicate);
 
 				for (final IPredicate otherPredicate : allPredicates) {
 					final Set<IAbstractState<?, CodeBlock, IBoogieVar>> otherGenerators =
@@ -300,10 +299,10 @@ public class AbsIntTotalInterpolationAutomatonBuilder implements IInterpolantAut
 
 					// Add transition
 					if (mLogger.isDebugEnabled()) {
-						mLogger.debug("Adding new transition: PRE={" + currentPredeicate + "} -> " + currentLetter
-								+ " POST={" + otherPredicate + "}");
+						mLogger.debug("Adding new transition: [" + currentPredicate.hashCode() + "] -> " + currentLetter
+								+ " [" + otherPredicate.hashCode() + "]");
 					}
-					result.addInternalTransition(currentPredeicate, currentLetter, otherPredicate);
+					result.addInternalTransition(currentPredicate, currentLetter, otherPredicate);
 				}
 			}
 		}
