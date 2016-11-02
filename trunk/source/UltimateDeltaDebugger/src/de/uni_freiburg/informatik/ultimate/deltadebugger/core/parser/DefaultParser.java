@@ -38,6 +38,7 @@ import org.eclipse.cdt.core.parser.NullLogService;
 import org.eclipse.cdt.core.parser.ScannerInfo;
 import org.eclipse.core.runtime.CoreException;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.exceptions.ParserException;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.cdt.NoWorkspaceSavedFilesProvider;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.PSTBuilder;
@@ -52,6 +53,7 @@ public class DefaultParser implements IParser {
 	
 	private static final String DEFAULT_FILEPATH = "<input>";
 	
+	private final ILogger mLogger;
 	private final String mDummySourceFilePath;
 	private final ScannerInfo mScannerInfo;
 	private final IncludeFileContentProvider mIncludeFileContentProvider;
@@ -59,21 +61,28 @@ public class DefaultParser implements IParser {
 	
 	/**
 	 * Default constructor.
+	 *
+	 * @param logger
+	 *            logger instance
 	 */
-	public DefaultParser() {
-		this(DEFAULT_FILEPATH);
+	public DefaultParser(final ILogger logger) {
+		this(logger, DEFAULT_FILEPATH);
 	}
 	
 	/**
+	 * @param logger
+	 *            logger instance
 	 * @param dummySourceFilePath
 	 *            Dummy source file path.
 	 */
-	public DefaultParser(final String dummySourceFilePath) {
-		this(dummySourceFilePath, new ScannerInfo(), IncludeFileContentProvider.getEmptyFilesProvider(),
+	public DefaultParser(final ILogger logger, final String dummySourceFilePath) {
+		this(logger, dummySourceFilePath, new ScannerInfo(), IncludeFileContentProvider.getEmptyFilesProvider(),
 				new NullLogService());
 	}
 	
 	/**
+	 * @param logger
+	 *            logger instance
 	 * @param dummySourceFilePath
 	 *            Dummy source file path.
 	 * @param scannerInfo
@@ -83,8 +92,9 @@ public class DefaultParser implements IParser {
 	 * @param parserLogService
 	 *            parser log service
 	 */
-	public DefaultParser(final String dummySourceFilePath, final ScannerInfo scannerInfo,
+	public DefaultParser(final ILogger logger, final String dummySourceFilePath, final ScannerInfo scannerInfo,
 			final IncludeFileContentProvider includeFileContentProvider, final IParserLogService parserLogService) {
+		mLogger = Objects.requireNonNull(logger);
 		mDummySourceFilePath = Objects.requireNonNull(dummySourceFilePath);
 		mScannerInfo = Objects.requireNonNull(scannerInfo);
 		mIncludeFileContentProvider = Objects.requireNonNull(includeFileContentProvider);
@@ -92,6 +102,8 @@ public class DefaultParser implements IParser {
 	}
 	
 	/**
+	 * @param logger
+	 *            logger instance
 	 * @param dummySourceFilePath
 	 *            Dummy source file path.
 	 * @param includeFilePaths
@@ -99,15 +111,16 @@ public class DefaultParser implements IParser {
 	 * @param localIncludePaths
 	 *            local include paths
 	 */
-	public DefaultParser(final String dummySourceFilePath, final String[] includeFilePaths,
+	public DefaultParser(final ILogger logger, final String dummySourceFilePath, final String[] includeFilePaths,
 			final String[] localIncludePaths) {
-		this(dummySourceFilePath, new ExtendedScannerInfo(null, includeFilePaths, null, null, localIncludePaths),
+		this(logger, dummySourceFilePath,
+				new ExtendedScannerInfo(null, includeFilePaths, null, null, localIncludePaths),
 				new NoWorkspaceSavedFilesProvider(), new NullLogService());
 	}
 	
 	@Override
 	public IPSTTranslationUnit createPst(final IASTTranslationUnit ast, final ISourceDocument sourceDocument) {
-		return new PSTBuilder(ast, sourceDocument).build();
+		return new PSTBuilder(mLogger, ast, sourceDocument).build();
 	}
 	
 	@Override

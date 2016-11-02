@@ -46,7 +46,7 @@ public class HDDGeneratorFactory implements IVariantGeneratorFactory {
 
 	public Optional<IVariantGenerator> createGeneratorForNextLevel(final IPassContext context, final int currentLevel,
 			final ISourceDocument source, final List<IPSTNode> nodes, final List<Change> persistentChanges) {
-		final ChangeGenerator changeGenerator = new ChangeGenerator(mStrategy);
+		final ChangeGenerator changeGenerator = new ChangeGenerator(context.getLogger(), mStrategy);
 		final ExpansionResult expansion = changeGenerator.generateNextLevelChanges(nodes);
 		if (expansion.mChangeGroups.isEmpty()) {
 			return Optional.empty();

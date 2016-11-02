@@ -30,6 +30,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.deltadebugger.core.DefaultPassContext;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.PassRunner;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.exceptions.UncheckedInterruptedException;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.util.RewriteUtils;
@@ -111,7 +111,6 @@ public class DeltaDebuggerController extends CommandLineController {
 			final IToolchainData<RunDefinition> toolchain, final String inputSource)
 			throws ParseException, InvalidFileArgumentException, InterruptedException {
 		final PassRunner runner = new PassRunner(logger);
-		runner.setContextFactory(DefaultPassContext::new);
 		runner.setTestFunction(variant -> {
 			logger.debug("testing variant\n-----------------------\n" + variant + "\n----------------------------\n");
 			try {
@@ -130,7 +129,7 @@ public class DeltaDebuggerController extends CommandLineController {
 		});
 		
 		// TODO: Make this a setting
-		runner.setPasses(HDDPass.HDDSTAR);
+		runner.setPasses(Arrays.asList(HDDPass.HDDSTAR));
 		
 		// No parallel testing is currently possible because global state is
 		// used to store toolchain results/exception.

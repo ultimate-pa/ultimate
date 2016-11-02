@@ -7,6 +7,7 @@ import org.eclipse.cdt.core.dom.ast.IASTPreprocessorIncludeStatement;
 import org.eclipse.cdt.core.dom.ast.IASTPreprocessorMacroExpansion;
 import org.eclipse.cdt.core.dom.ast.IASTPreprocessorStatement;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceDocument;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceRange;
 
@@ -28,9 +29,12 @@ public class LocationResolver {
 	 *            source file path
 	 * @param sourceDocument
 	 *            source file contents
+	 * @param logger
+	 *            logger instance
 	 */
-	public LocationResolver(final String translationUnitFilePath, final ISourceDocument sourceDocument) {
-		this(translationUnitFilePath, sourceDocument, new CommentLocationHack());
+	public LocationResolver(final String translationUnitFilePath, final ISourceDocument sourceDocument,
+			final ILogger logger) {
+		this(translationUnitFilePath, sourceDocument, new CommentLocationHack(logger));
 	}
 
 	public LocationResolver(final String translationUnitFilePath, final ISourceDocument sourceDocument,

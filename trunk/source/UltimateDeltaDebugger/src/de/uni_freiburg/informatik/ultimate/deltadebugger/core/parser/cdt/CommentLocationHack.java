@@ -2,10 +2,10 @@ package de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.cdt;
 
 import java.lang.reflect.Field;
 
-import org.apache.log4j.Logger;
 import org.eclipse.cdt.core.dom.ast.IASTComment;
 import org.eclipse.cdt.core.dom.ast.IASTFileLocation;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceDocument;
 
 /**
@@ -17,7 +17,7 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceDocume
  * have negative side effects - but for now, it seems to work just fine.
  */
 public class CommentLocationHack {
-	private Logger mLogger = Logger.getLogger(CommentLocationHack.class);
+	private final ILogger mLogger;
 
 	private final boolean mEnabled;
 	private final boolean mEnableFallbackForUnsupportedMethods;
@@ -28,20 +28,27 @@ public class CommentLocationHack {
 	
 	/**
 	 * Create instance with default options
+	 *
+	 * @param logger
+	 *            logger instance
 	 */
-	public CommentLocationHack() {
-		this(true, true);
+	public CommentLocationHack(final ILogger logger) {
+		this(logger, true, true);
 	}
 
 	/**
-	 * @param enableHack Enable the hack
+	 * @param logger
+	 *            logger instance
+	 * @param enableHack
+	 *            Enable the hack
 	 * @param enableFallbackForUnsupportedMethods
-	 *            Call the original (potentially slow) getFileLocation() to
-	 *            properly implement getContextInclusionStatement() and
-	 *            getStartingLineNumber()/getEndingLineNumber() in
+	 *            Call the original (potentially slow) getFileLocation() to properly implement
+	 *            getContextInclusionStatement() and getStartingLineNumber()/getEndingLineNumber() in
 	 *            {@link CommentHackASTFileLocation} instances
 	 */
-	public CommentLocationHack(final boolean enableHack, final boolean enableFallbackForUnsupportedMethods) {
+	public CommentLocationHack(final ILogger logger, final boolean enableHack,
+			final boolean enableFallbackForUnsupportedMethods) {
+		mLogger = logger;
 		boolean enabled = enableHack;
 		if (enabled) {
 			try {
@@ -55,7 +62,7 @@ public class CommentLocationHack {
 				mASTNodeOffset.setAccessible(true);
 				mASTNodeLength.setAccessible(true);
 			} catch (ClassNotFoundException | NoSuchFieldException | SecurityException e) {
-				mLogger.warn("CommentLocationHack initialization exception", e);
+				mLogger.warn("CommentLocationHack initialization exception: " + e);
 				enabled = false;
 			}
 		}
@@ -78,7 +85,7 @@ public class CommentLocationHack {
 							mEnableFallbackForUnsupportedMethods ? node : null);
 				}
 			} catch (IllegalArgumentException | IllegalAccessException e) {
-				mLogger.warn("CommentLocationHack access exception", e);
+				mLogger.warn("CommentLocationHack access exception: " + e);
 			}
 		}
 
@@ -95,7 +102,7 @@ public class CommentLocationHack {
 					return translationUnitFilePath.equals(filePath);
 				}
 			} catch (IllegalArgumentException | IllegalAccessException e) {
-				mLogger.warn("CommentLocationHack access exception", e);
+				mLogger.warn("CommentLocationHack access exception: " + e);
 			}
 		}
 		return node.isPartOfTranslationUnitFile();

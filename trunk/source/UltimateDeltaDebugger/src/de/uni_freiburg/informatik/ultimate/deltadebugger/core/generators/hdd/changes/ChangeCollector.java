@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.Logger;
 import org.eclipse.cdt.core.dom.ast.ASTNodeProperty;
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTConditionalExpression;
@@ -13,6 +12,7 @@ import org.eclipse.cdt.core.dom.ast.IASTIfStatement;
 import org.eclipse.cdt.core.dom.ast.IASTWhileStatement;
 import org.eclipse.cdt.core.parser.IToken;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTConditionalBlock;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTNode;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTRegularNode;
@@ -26,11 +26,13 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.util.TokenU
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.SourceRewriter;
 
 public class ChangeCollector {
-	private final Logger mLogger = Logger.getLogger(ChangeCollector.class);
+	private final ILogger mLogger;
 	private final Map<IPSTRegularNode, List<CommaSeparatedChild>> mParentToCommaPositionMap;
 	private final List<Change> mChanges = new ArrayList<>();
 
-	public ChangeCollector(final Map<IPSTRegularNode, List<CommaSeparatedChild>> parentToCommaPositionMap) {
+	public ChangeCollector(final ILogger logger,
+			final Map<IPSTRegularNode, List<CommaSeparatedChild>> parentToCommaPositionMap) {
+		mLogger = logger;
 		mParentToCommaPositionMap = parentToCommaPositionMap;
 	}
 
@@ -60,7 +62,7 @@ public class ChangeCollector {
 		// However, at least ensure that parenthesis are always deleted in
 		// pairs.
 		if (!TokenUtils.isAllParenthesisBalanced(tokens)) {
-			mLogger.trace("DeleteTokensChange skipped because of unbalanced parenthesis in " + node);
+			mLogger.debug("DeleteTokensChange skipped because of unbalanced parenthesis in " + node);
 			return false;
 		}
 
@@ -90,7 +92,7 @@ public class ChangeCollector {
 		final IPSTRegularNode binaryExpressionNode = operandNode.getRegularParent();
 		final List<Token> tokens = TokenCollector.collect(binaryExpressionNode);
 		if (tokens.size() != 1) {
-			mLogger.trace(
+			mLogger.debug(
 					"DeleteBinaryExpressionOperand not supported because of missing operator token: " + operandNode);
 			return false;
 		}
@@ -117,8 +119,7 @@ public class ChangeCollector {
 		} else if (property == IASTConditionalExpression.NEGATIVE_RESULT) {
 			position = 2;
 		} else {
-			mLogger
-					.trace("DeleteConditionalExpression not supported because of invalid property: " + property);
+			mLogger.debug("DeleteConditionalExpression not supported because of invalid property: " + property);
 			return false;
 		}
 
@@ -126,9 +127,8 @@ public class ChangeCollector {
 		final Token[] tokens =
 				TokenUtils.getExpectedTokenArray(conditionalExpressionNode, IToken.tQUESTION, IToken.tCOLON);
 		if (tokens[0] == null || tokens[1] == null) {
-			mLogger
-					.trace("DeleteConditionalExpression not supported because of missing operator tokens: "
-							+ conditionalExpressionNode);
+			mLogger.debug("DeleteConditionalExpression not supported because of missing operator tokens: "
+					+ conditionalExpressionNode);
 			return false;
 		}
 
@@ -405,7 +405,7 @@ public class ChangeCollector {
 		}
 
 		if (!CommaDeleter.isDeletionWithCommaPossible(node, commaPositions)) {
-			mLogger.trace("DeleteWithCommaChange not supported because of missing comma: " + node);
+			mLogger.debug("DeleteWithCommaChange not supported because of missing comma: " + node);
 			return false;
 		}
 

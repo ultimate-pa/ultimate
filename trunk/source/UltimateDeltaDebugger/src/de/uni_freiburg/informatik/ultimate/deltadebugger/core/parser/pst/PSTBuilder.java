@@ -23,6 +23,7 @@ import org.eclipse.cdt.core.dom.ast.IASTPreprocessorMacroExpansion;
 import org.eclipse.cdt.core.dom.ast.IASTPreprocessorStatement;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.exceptions.UnbalancedConditionalDirectiveException;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.cdt.LocationResolver;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.implementation.DefaultNodeFactory;
@@ -274,6 +275,7 @@ public class PSTBuilder {
 		return index != endIndex ? new IndexRange(index, endIndex - 1) : null;
 	}
 
+	private final ILogger mLogger;
 	private final IASTTranslationUnit translationUnit;
 	private final ISourceDocument sourceDocument;
 
@@ -296,12 +298,15 @@ public class PSTBuilder {
 	/**
 	 * Create new builder instance.
 	 *
+	 * @param logger
+	 *            logger instance
 	 * @param ast
 	 *            AST instance
 	 * @param sourceDocument
 	 *            source document
 	 */
-	public PSTBuilder(final IASTTranslationUnit ast, final ISourceDocument sourceDocument) {
+	public PSTBuilder(final ILogger logger, final IASTTranslationUnit ast, final ISourceDocument sourceDocument) {
+		mLogger = Objects.requireNonNull(logger);
 		translationUnit = Objects.requireNonNull(ast);
 		this.sourceDocument = Objects.requireNonNull(sourceDocument);
 	}
@@ -313,7 +318,7 @@ public class PSTBuilder {
 	 */
 	public IPSTTranslationUnit build() {
 		if (locationResolver == null) {
-			locationResolver = new LocationResolver(translationUnit.getContainingFilename(), sourceDocument);
+			locationResolver = new LocationResolver(translationUnit.getContainingFilename(), sourceDocument, mLogger);
 		}
 
 		if (nodeFactory == null) {

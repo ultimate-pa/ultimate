@@ -6,6 +6,7 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.generators.hdd.changes.Change;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.generators.hdd.changes.ChangeCollector;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTNode;
@@ -26,23 +27,24 @@ class ChangeGenerator {
 			mRemainingNodes = remainingNodes;
 		}
 	}
-
+	private final ILogger mLogger;
 	private final IHDDStrategy mStrategy;
 
 	private final Map<IPSTRegularNode, List<CommaSeparatedChild>> mParentToCommaPositionMap = new IdentityHashMap<>();
 
-	public ChangeGenerator(final IHDDStrategy strategy) {
+	public ChangeGenerator(final ILogger logger, final IHDDStrategy strategy) {
+		mLogger = logger;
 		mStrategy = strategy;
 	}
 
-	List<List<Change>> expandCurrentLevel(final List<IPSTNode> remaingNodesOnCurrentLevel,
+	private List<List<Change>> expandCurrentLevel(final List<IPSTNode> remaingNodesOnCurrentLevel,
 			final List<IPSTNode> nextLevelNodes) {
 		final List<List<Change>> changeGroups = new ArrayList<>();
 
-		final ChangeCollector collector = new ChangeCollector(mParentToCommaPositionMap);
+		final ChangeCollector collector = new ChangeCollector(mLogger, mParentToCommaPositionMap);
 		for (final IPSTNode node : remaingNodesOnCurrentLevel) {
 			if (mStrategy.expandIntoOwnGroup(node)) {
-				final ChangeCollector subcollector = new ChangeCollector(mParentToCommaPositionMap);
+				final ChangeCollector subcollector = new ChangeCollector(mLogger, mParentToCommaPositionMap);
 				expandCurrentLevelNode(node, nextLevelNodes, subcollector);
 				if (!subcollector.getChanges().isEmpty()) {
 					changeGroups.add(subcollector.getChanges());

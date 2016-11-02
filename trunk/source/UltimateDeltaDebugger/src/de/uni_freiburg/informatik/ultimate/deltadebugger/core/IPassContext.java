@@ -27,6 +27,7 @@ package de.uni_freiburg.informatik.ultimate.deltadebugger.core;
 
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.IParser;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTTranslationUnit;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceDocument;
@@ -37,21 +38,22 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceDocume
  * Important: The observable state of the context and the returned objects must not be changed, because they may be
  * shared with other passes.
  * <p>
- * It exists mainly to prevent redundant parsing of the same input for multiple passes if there are no successful
- * modifications in between. Global options that affect the algorithm of a pass should eventually also go in here.
+ * A pass context instance holds a lazily computed AST and PST to prevent redundant parsing of the same input for
+ * subsequent passes if there are no successful modifications in between. Global options that affect the algorithm of a
+ * pass should eventually also go in here, e.g. predefined macros.
  */
 public interface IPassContext {
-	
+
 	/**
 	 * @return The input source code document.
 	 */
 	ISourceDocument getInput();
-	
+
 	/**
 	 * @return The parser to be used for manual parsing.
 	 */
 	IParser getParser();
-	
+
 	/**
 	 * Returns a lazily computed and internally cached AST instance for the input source code. This AST instance is
 	 * shared with subsequent passes if no change is possible.
@@ -59,7 +61,7 @@ public interface IPassContext {
 	 * @return the AST created with default options from the input source
 	 */
 	IASTTranslationUnit getSharedAst();
-	
+
 	/**
 	 * Returns a lazily computed and internally cached APT instance for the input source code and the shared AST. This
 	 * PST instance is shared with subsequent passes if no change is possible.
@@ -69,4 +71,9 @@ public interface IPassContext {
 	 * @return the PST created with default options from the shared AST
 	 */
 	IPSTTranslationUnit getSharedPst();
+
+	/**
+	 * @return the logger instance to use for debug output
+	 */
+	ILogger getLogger();
 }

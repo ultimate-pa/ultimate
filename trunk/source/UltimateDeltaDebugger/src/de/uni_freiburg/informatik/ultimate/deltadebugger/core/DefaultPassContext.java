@@ -27,6 +27,7 @@ package de.uni_freiburg.informatik.ultimate.deltadebugger.core;
 
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.DefaultParser;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.IParser;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.PSTBuilder;
@@ -42,13 +43,16 @@ public class DefaultPassContext implements IPassContext {
 	private final IParser mParser;
 	private volatile IASTTranslationUnit mAst;
 	private volatile IPSTTranslationUnit mPst;
+	private final ILogger mLogger;
 	
 	/**
 	 * @param input
 	 *            Input.
+	 * @param logger
+	 *            logger
 	 */
-	public DefaultPassContext(final ISourceDocument input) {
-		this(input, new DefaultParser());
+	public DefaultPassContext(final ISourceDocument input, final ILogger logger) {
+		this(input, new DefaultParser(logger), logger);
 	}
 	
 	/**
@@ -56,18 +60,23 @@ public class DefaultPassContext implements IPassContext {
 	 *            Input.
 	 * @param parser
 	 *            parser
+	 * @param logger
+	 *            logger
 	 */
-	public DefaultPassContext(final ISourceDocument input, final IParser parser) {
+	public DefaultPassContext(final ISourceDocument input, final IParser parser, final ILogger logger) {
 		mInput = input;
 		mParser = parser;
+		mLogger = logger;
 	}
 	
 	/**
 	 * @param input
 	 *            Input string.
+	 * @param logger
+	 *            logger
 	 */
-	public DefaultPassContext(final String input) {
-		this(new StringSourceDocument(input));
+	public DefaultPassContext(final String input, final ILogger logger) {
+		this(new StringSourceDocument(input), logger);
 	}
 	
 	/**
@@ -75,9 +84,11 @@ public class DefaultPassContext implements IPassContext {
 	 *            Input string.
 	 * @param parser
 	 *            parser
+	 * @param logger
+	 *            logger
 	 */
-	public DefaultPassContext(final String input, final IParser parser) {
-		this(new StringSourceDocument(input), parser);
+	public DefaultPassContext(final String input, final IParser parser, final ILogger logger) {
+		this(new StringSourceDocument(input), parser, logger);
 	}
 	
 	@Override
@@ -107,10 +118,15 @@ public class DefaultPassContext implements IPassContext {
 		if (mPst == null) {
 			synchronized (this) {
 				if (mPst == null) {
-					mPst = new PSTBuilder(getSharedAst(), mInput).build();
+					mPst = new PSTBuilder(mLogger, getSharedAst(), mInput).build();
 				}
 			}
 		}
 		return mPst;
+	}
+
+	@Override
+	public ILogger getLogger() {
+		return mLogger;
 	}
 }

@@ -25,7 +25,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.deltadebugger.core;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -77,7 +76,7 @@ public class PassRunner {
 	public PassRunner(final ILogger logger) {
 		mLogger = logger;
 		mPasses = Collections.emptyList();
-		mContextFactory = DefaultPassContext::new;
+		mContextFactory = source -> new DefaultPassContext(source, logger);
 		mWorkerCount = 1;
 		mTimeLimitPerPassInSeconds = 0;
 		mStats = new SearchStats();
@@ -294,11 +293,6 @@ public class PassRunner {
 	
 	public PassRunner setPasses(final List<PassDescription> passes) {
 		mPasses = Objects.requireNonNull(passes);
-		return this;
-	}
-	
-	public PassRunner setPasses(final PassDescription... passes) {
-		mPasses = Arrays.asList(passes);
 		return this;
 	}
 	
