@@ -95,6 +95,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Seq
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer.CodeBlockSize;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 
 /**
@@ -112,6 +113,7 @@ public class LassoRankerStarter {
 	private final NestedWord<CodeBlock> mStem;
 	private final NestedWord<CodeBlock> mLoop;
 	private final SmtManager mSmtManager;
+	private final PredicateFactory mPredicateFactory;
 	private final IUltimateServiceProvider mServices;
 	private final SimplificationTechnique mSimplificationTechnique = SimplificationTechnique.SIMPLIFY_DDA;
 	private final XnfConversionTechnique mXnfConversionTechnique =
@@ -128,12 +130,14 @@ public class LassoRankerStarter {
 		final LassoRankerPreferences preferences = PreferencesInitializer.getLassoRankerPreferences(mServices);
 		mSmtManager = new SmtManager(mRootAnnot.getModGlobVarManager(), mServices,
 				mRootAnnot.getManagedScript(), mRootAnnot.getBoogie2SMT().getBoogie2SmtSymbolTable(), mSimplificationTechnique, mXnfConversionTechnique);
+		mPredicateFactory = new PredicateFactory(mServices, mSmtManager.getManagedScript(), 
+				mSmtManager.getSymbolTable(), mSimplificationTechnique, mXnfConversionTechnique);
 
 		AbstractLassoExtractor lassoExtractor;
 		final boolean useNewExtraction = true;
 		if (useNewExtraction) {
 			try {
-				lassoExtractor = new LassoExtractorBuchi(mServices, rootNode, mSmtManager, mLogger);
+				lassoExtractor = new LassoExtractorBuchi(mServices, rootNode, mSmtManager, mPredicateFactory, mLogger);
 			} catch (final AutomataOperationCanceledException oce) {
 				throw new AssertionError("timeout while searching lasso");
 				// throw new ToolchainCanceledException(this.getClass());
@@ -373,7 +377,7 @@ public class LassoRankerStarter {
 			final UnmodifiableTransFormula loopTf) {
 
 		final BinaryStatePredicateManager bspm = new BinaryStatePredicateManager(mSmtManager,
-				mRootAnnot.getBoogie2SMT(), mServices,
+				mPredicateFactory, mRootAnnot.getBoogie2SMT(), mServices,
 				mSimplificationTechnique, mXnfConversionTechnique);
 		final Set<IProgramVar> modifiableGlobals =
 				mRootAnnot.getModGlobVarManager().getModifiedBoogieVars(mHonda.getProcedure());

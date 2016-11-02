@@ -67,6 +67,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.in
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
@@ -75,11 +76,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 
 public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 	
-	public CegarLoopConcurrentAutomata(final String name, final RootNode rootNode, final SmtManager smtManager,
+	public CegarLoopConcurrentAutomata(final String name, final RootNode rootNode, final SmtManager smtManager, final PredicateFactory predicateFactory,
 			final TraceAbstractionBenchmarks timingStatistics, final TAPreferences taPrefs,
 			final Collection<ProgramPoint> errorLocs, final IUltimateServiceProvider services,
 			final IToolchainStorage storage) {
-		super(name, rootNode, smtManager, taPrefs, errorLocs, InterpolationTechnique.Craig_TreeInterpolation, false,
+		super(name, rootNode, smtManager, predicateFactory, taPrefs, errorLocs, InterpolationTechnique.Craig_TreeInterpolation, false,
 				services, storage);
 		// mContentFactory = new TaConcurContentFactory(
 		// rootNode.getRootAnnot().getLocNodes(),
@@ -109,8 +110,8 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 	@Override
 	protected void getInitialAbstraction() {
 		final IStateFactory<IPredicate> predicateFactory =
-				new PredicateFactoryForInterpolantAutomata(super.mSmtManager, mPref.computeHoareAnnotation());
-		final CFG2Automaton cFG2NestedWordAutomaton = new Cfg2Nwa(mRootNode, predicateFactory, mSmtManager, mServices,
+				new PredicateFactoryForInterpolantAutomata(super.mSmtManager, mPredicateFactory, mPref.computeHoareAnnotation());
+		final CFG2Automaton cFG2NestedWordAutomaton = new Cfg2Nwa(mRootNode, predicateFactory, mSmtManager, mPredicateFactory, mServices,
 				mXnfConversionTechnique, mSimplificationTechnique);
 		mAbstraction = (INestedWordAutomatonSimple<CodeBlock, IPredicate>) cFG2NestedWordAutomaton.getResult();
 		

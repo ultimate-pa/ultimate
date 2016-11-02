@@ -21,6 +21,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Pro
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryResultChecking;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.hornutil.HCTransFormula;
@@ -31,7 +32,7 @@ public class TreeAutomizerCEGAR extends AbstractCegarLoop {
 	
 	protected ITreeRun<HCTransFormula, IPredicate> mCounterexample;
 	
-	private final PredicateFactoryResultChecking predicateFactory;
+	private final PredicateFactoryResultChecking predicateFactoryRc;
 	
 	private final Script mBackendSmtSolverScript;
 	
@@ -45,11 +46,11 @@ public class TreeAutomizerCEGAR extends AbstractCegarLoop {
 	 */
 	protected ITreeAutomaton<HCTransFormula, IPredicate> mInterpolAutomaton;
 
-	public TreeAutomizerCEGAR(IUltimateServiceProvider services, IToolchainStorage storage, String name,
-			RootNode rootNode, SmtManager smtManager, TAPreferences taPrefs, Collection<ProgramPoint> errorLocs,
-			ILogger logger, Script script) {
-		super(services, storage, name, rootNode, smtManager, taPrefs, errorLocs, logger);
-		predicateFactory = new PredicateFactoryResultChecking(smtManager);
+	public TreeAutomizerCEGAR(final IUltimateServiceProvider services, final IToolchainStorage storage, final String name,
+			final RootNode rootNode, final SmtManager smtManager, final PredicateFactory predicateFactory, final TAPreferences taPrefs, final Collection<ProgramPoint> errorLocs,
+			final ILogger logger, final Script script) {
+		super(services, storage, name, rootNode, smtManager, predicateFactory, taPrefs, errorLocs, logger);
+		predicateFactoryRc = new PredicateFactoryResultChecking(predicateFactory);
 		mBackendSmtSolverScript = script;
 
 	}
@@ -110,8 +111,8 @@ public class TreeAutomizerCEGAR extends AbstractCegarLoop {
 	@Override
 	protected boolean refineAbstraction() throws AutomataOperationCanceledException, AutomataLibraryException {	
 		generalizeCounterExample();
-		final ITreeAutomaton<HCTransFormula, IPredicate> cExample = (new Complement<HCTransFormula, IPredicate>(mCounterexample.getAutomaton(), predicateFactory)).getResult();
-		mAbstraction = (TreeAutomatonBU<HCTransFormula, IPredicate>) (new Intersect<HCTransFormula, IPredicate>(mAbstraction, cExample, predicateFactory)).getResult();
+		final ITreeAutomaton<HCTransFormula, IPredicate> cExample = (new Complement<HCTransFormula, IPredicate>(mCounterexample.getAutomaton(), predicateFactoryRc)).getResult();
+		mAbstraction = (TreeAutomatonBU<HCTransFormula, IPredicate>) (new Intersect<HCTransFormula, IPredicate>(mAbstraction, cExample, predicateFactoryRc)).getResult();
 		
 		++mIteration;
 		return false;

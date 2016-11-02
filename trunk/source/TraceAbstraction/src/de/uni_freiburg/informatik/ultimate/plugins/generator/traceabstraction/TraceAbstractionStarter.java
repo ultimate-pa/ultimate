@@ -68,6 +68,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.prefere
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.HoareAnnotationChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
@@ -112,9 +113,12 @@ public class TraceAbstractionStarter {
 		settings += " Determinization: " + taPrefs.interpolantAutomatonEnhancement();
 		mLogger.info(settings);
 		
+		
 		final SmtManager smtManager =
 				new SmtManager(rootAnnot.getModGlobVarManager(), mServices, rootAnnot.getManagedScript(),
 						rootAnnot.getBoogie2SMT().getBoogie2SmtSymbolTable(), taPrefs.getSimplificationTechnique(), taPrefs.getXnfConversionTechnique());
+		final PredicateFactory predicateFactory = new PredicateFactory(mServices, smtManager.getManagedScript(), 
+				smtManager.getSymbolTable(), taPrefs.getSimplificationTechnique(), taPrefs.getXnfConversionTechnique());
 		final TraceAbstractionBenchmarks traceAbstractionBenchmark = new TraceAbstractionBenchmarks(rootAnnot);
 		
 		final Map<String, Collection<ProgramPoint>> proc2errNodes = rootAnnot.getErrorNodes();
@@ -128,7 +132,7 @@ public class TraceAbstractionStarter {
 		
 		if (taPrefs.allErrorLocsAtOnce()) {
 			final String name = "AllErrorsAtOnce";
-			iterate(name, rcfgRootNode, taPrefs, smtManager, traceAbstractionBenchmark, errNodesOfAllProc,
+			iterate(name, rcfgRootNode, taPrefs, smtManager, predicateFactory, traceAbstractionBenchmark, errNodesOfAllProc,
 					witnessAutomaton);
 		} else {
 			for (final ProgramPoint errorLoc : errNodesOfAllProc) {
@@ -136,7 +140,7 @@ public class TraceAbstractionStarter {
 				final ArrayList<ProgramPoint> errorLocs = new ArrayList<>(1);
 				errorLocs.add(errorLoc);
 				mServices.getProgressMonitorService().setSubtask(errorLoc.toString());
-				iterate(name, rcfgRootNode, taPrefs, smtManager, traceAbstractionBenchmark, errorLocs,
+				iterate(name, rcfgRootNode, taPrefs, smtManager, predicateFactory, traceAbstractionBenchmark, errorLocs,
 						witnessAutomaton);
 			}
 		}
@@ -243,11 +247,11 @@ public class TraceAbstractionStarter {
 	}
 	
 	private void iterate(final String name, final RootNode root, final TAPreferences taPrefs,
-			final SmtManager smtManager, final TraceAbstractionBenchmarks taBenchmark,
+			final SmtManager smtManager, final PredicateFactory predicateFactory, final TraceAbstractionBenchmarks taBenchmark,
 			final Collection<ProgramPoint> errorLocs,
 			final INestedWordAutomatonSimple<WitnessEdge, WitnessNode> witnessAutomaton) {
 		final BasicCegarLoop basicCegarLoop =
-				constructCegarLoop(name, root, taPrefs, smtManager, taBenchmark, errorLocs);
+				constructCegarLoop(name, root, taPrefs, smtManager, predicateFactory, taBenchmark, errorLocs);
 		basicCegarLoop.setWitnessAutomaton(witnessAutomaton);
 		
 		final Result result = basicCegarLoop.iterate();
@@ -271,19 +275,19 @@ public class TraceAbstractionStarter {
 	}
 	
 	private BasicCegarLoop constructCegarLoop(final String name, final RootNode root, final TAPreferences taPrefs,
-			final SmtManager smtManager, final TraceAbstractionBenchmarks taBenchmark,
+			final SmtManager smtManager, final PredicateFactory predicateFactory, final TraceAbstractionBenchmarks taBenchmark,
 			final Collection<ProgramPoint> errorLocs) {
 		final LanguageOperation languageOperation = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getEnum(TraceAbstractionPreferenceInitializer.LABEL_LANGUAGE_OPERATION, LanguageOperation.class);
 		if (languageOperation == LanguageOperation.DIFFERENCE) {
 			if (taPrefs.interpolantAutomaton() == InterpolantAutomaton.TOTALINTERPOLATION) {
-				return new CegarLoopSWBnonRecursive(name, root, smtManager, taBenchmark, taPrefs, errorLocs,
+				return new CegarLoopSWBnonRecursive(name, root, smtManager, predicateFactory, taBenchmark, taPrefs, errorLocs,
 						taPrefs.interpolation(), taPrefs.computeHoareAnnotation(), mServices, mToolchainStorage);
 			}
-			return new BasicCegarLoop(name, root, smtManager, taPrefs, errorLocs, taPrefs.interpolation(),
+			return new BasicCegarLoop(name, root, smtManager, predicateFactory, taPrefs, errorLocs, taPrefs.interpolation(),
 					taPrefs.computeHoareAnnotation(), mServices, mToolchainStorage);
 		}
-		return new IncrementalInclusionCegarLoop(name, root, smtManager, taPrefs, errorLocs, taPrefs.interpolation(),
+		return new IncrementalInclusionCegarLoop(name, root, smtManager, predicateFactory, taPrefs, errorLocs, taPrefs.interpolation(),
 				taPrefs.computeHoareAnnotation(), mServices, mToolchainStorage, languageOperation);
 	}
 	

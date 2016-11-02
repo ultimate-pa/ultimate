@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CFG2NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryResultChecking;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 
 
@@ -75,17 +76,19 @@ public class LassoExtractorBuchi extends AbstractLassoExtractor {
 	private final IUltimateServiceProvider mServices;
 	private final INestedWordAutomatonSimple<CodeBlock, IPredicate> mCfgAutomaton;
 	private INestedWordAutomatonSimple<CodeBlock, IPredicate> mLassoAutomaton;
-	private final IStateFactory<IPredicate> mPredicateFactory;
+	private final IStateFactory<IPredicate> mPredicateFactoryRc;
 	private final SmtManager mSmtManager;
+	private final PredicateFactory mPredicateFactory;
 	private final ILogger mLogger;
 	
-	public LassoExtractorBuchi(final IUltimateServiceProvider services, final RootNode rootNode, final SmtManager smtManager, final ILogger logger)
+	public LassoExtractorBuchi(final IUltimateServiceProvider services, final RootNode rootNode, final SmtManager smtManager, final PredicateFactory predicateFactory, final ILogger logger)
 			throws AutomataLibraryException {
 		mServices = services;
 		mLogger = logger;
-		mPredicateFactory = new PredicateFactoryResultChecking(smtManager);
+		mPredicateFactoryRc = new PredicateFactoryResultChecking(predicateFactory);
 		mCfgAutomaton = constructCfgAutomaton(rootNode, smtManager);
 		mSmtManager = smtManager;
+		mPredicateFactory = predicateFactory;
 		final NestedLassoRun<CodeBlock, IPredicate> run =
 				(new BuchiIsEmpty<>(new AutomataLibraryServices(mServices), mCfgAutomaton)).getAcceptingNestedLassoRun();
 
@@ -96,9 +99,9 @@ public class LassoExtractorBuchi extends AbstractLassoExtractor {
 			final NestedLassoWord<CodeBlock> nlw = run.getNestedLassoWord();
 			final InCaReAlphabet<CodeBlock> alphabet = new InCaReAlphabet<>(mCfgAutomaton);
 			mLassoAutomaton = (new LassoAutomatonBuilder(alphabet,
-					mPredicateFactory, nlw.getStem(), nlw.getLoop())).getResult();
+					mPredicateFactoryRc, nlw.getStem(), nlw.getLoop())).getResult();
 			final INestedWordAutomatonSimple<CodeBlock, IPredicate> difference =
-					(new BuchiDifferenceFKV<>(new AutomataLibraryServices(mServices), mPredicateFactory,
+					(new BuchiDifferenceFKV<>(new AutomataLibraryServices(mServices), mPredicateFactoryRc,
 							mCfgAutomaton, mLassoAutomaton)).getResult();
 			final boolean isEmpty = (new BuchiIsEmpty<>(new AutomataLibraryServices(mServices), difference)).getResult();
 			if (isEmpty) {
@@ -127,14 +130,14 @@ public class LassoExtractorBuchi extends AbstractLassoExtractor {
 	private INestedWordAutomatonSimple<CodeBlock, IPredicate> constructCfgAutomaton(
 			final RootNode rootNode, final SmtManager smtManager) {
 		final CFG2NestedWordAutomaton cFG2NestedWordAutomaton =
-				new CFG2NestedWordAutomaton(mServices, true ,smtManager, mLogger);
+				new CFG2NestedWordAutomaton(mServices, true ,smtManager, mPredicateFactory, mLogger);
 		final Collection<ProgramPoint> allNodes = new HashSet<ProgramPoint>();
 		for (final Map<String, ProgramPoint> prog2pp :
 						rootNode.getRootAnnot().getProgramPoints().values()) {
 			allNodes.addAll(prog2pp.values());
 		}
 		return cFG2NestedWordAutomaton.getNestedWordAutomaton(
-				rootNode, mPredicateFactory, allNodes);
+				rootNode, mPredicateFactoryRc, allNodes);
 	}
 
 	
@@ -183,7 +186,7 @@ public class LassoExtractorBuchi extends AbstractLassoExtractor {
 		private List<IPredicate> constructListOfDontCarePredicates(final int length) {
 			final ArrayList<IPredicate> result = new ArrayList<IPredicate>(length);
 			for (int i=0; i<length; i++) {
-				result.add(mSmtManager.getPredicateFactory().newDontCarePredicate(null));
+				result.add(mPredicateFactory.newDontCarePredicate(null));
 			}
 			return result;
 		}

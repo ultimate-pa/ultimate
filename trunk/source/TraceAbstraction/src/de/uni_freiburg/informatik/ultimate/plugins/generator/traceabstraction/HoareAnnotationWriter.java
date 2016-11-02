@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Pro
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
@@ -53,6 +54,7 @@ public class HoareAnnotationWriter {
 	private final IUltimateServiceProvider mServices;
 	private final RootAnnot mrootAnnot;
 	private final SmtManager mSmtManager;
+	private final PredicateFactory mPredicateFactory;
 	private final HoareAnnotationFragments mHoareAnnotationFragments;
 
 	/**
@@ -62,12 +64,13 @@ public class HoareAnnotationWriter {
 	private final boolean mUseEntry;
 	private final PredicateTransformer mPredicateTransformer;
 
-	public HoareAnnotationWriter(final RootAnnot rootAnnot, final SmtManager smtManager,
+	public HoareAnnotationWriter(final RootAnnot rootAnnot, final SmtManager smtManager, final PredicateFactory predicateFactory,
 			final HoareAnnotationFragments hoareAnnotationFragments, final IUltimateServiceProvider services, 
 			final SimplificationTechnique simplicationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
 		mrootAnnot = rootAnnot;
 		mSmtManager = smtManager;
+		mPredicateFactory = predicateFactory;
 		mHoareAnnotationFragments = hoareAnnotationFragments;
 		mUseEntry = true;
 		mPredicateTransformer = new PredicateTransformer(services, 
@@ -75,7 +78,7 @@ public class HoareAnnotationWriter {
 	}
 
 	public void addHoareAnnotationToCFG() {
-		IPredicate precondForContext = mSmtManager.getPredicateFactory().newPredicate(mSmtManager.getManagedScript().getScript().term("true"));
+		IPredicate precondForContext = mPredicateFactory.newPredicate(mSmtManager.getManagedScript().getScript().term("true"));
 		addHoareAnnotationForContext(mSmtManager, precondForContext,
 				mHoareAnnotationFragments.getProgPoint2StatesWithEmptyContext());
 
@@ -86,7 +89,7 @@ public class HoareAnnotationWriter {
 				// compute SP
 			}
 			precondForContext = TraceAbstractionUtils.renameGlobalsToOldGlobals(precondForContext, 
-					mServices, mSmtManager.getManagedScript(), mSmtManager.getPredicateFactory(), SimplificationTechnique.SIMPLIFY_DDA);
+					mServices, mSmtManager.getManagedScript(), mPredicateFactory, SimplificationTechnique.SIMPLIFY_DDA);
 			final HashRelation<ProgramPoint, IPredicate> pp2preds = mHoareAnnotationFragments
 					.getDeadContexts2ProgPoint2Preds().get(context);
 			addHoareAnnotationForContext(mSmtManager, precondForContext, pp2preds);
@@ -99,7 +102,7 @@ public class HoareAnnotationWriter {
 				// compute SP
 			}
 			precondForContext = TraceAbstractionUtils.renameGlobalsToOldGlobals(precondForContext, 
-					mServices, mSmtManager.getManagedScript(), mSmtManager.getPredicateFactory(), SimplificationTechnique.SIMPLIFY_DDA);
+					mServices, mSmtManager.getManagedScript(), mPredicateFactory, SimplificationTechnique.SIMPLIFY_DDA);
 			final HashRelation<ProgramPoint, IPredicate> pp2preds = mHoareAnnotationFragments
 					.getLiveContexts2ProgPoint2Preds().get(context);
 			addHoareAnnotationForContext(mSmtManager, precondForContext, pp2preds);
@@ -115,8 +118,8 @@ public class HoareAnnotationWriter {
 			final HashRelation<ProgramPoint, IPredicate> pp2preds) {
 		for (final ProgramPoint pp : pp2preds.getDomain()) {
 			final IPredicate[] preds = pp2preds.getImage(pp).toArray(new IPredicate[0]);
-			final Term tvp = smtManager.getPredicateFactory().or(false, preds);
-			final IPredicate formulaForPP = mSmtManager.getPredicateFactory().newPredicate(tvp);
+			final Term tvp = mPredicateFactory.or(false, preds);
+			final IPredicate formulaForPP = mPredicateFactory.newPredicate(tvp);
 			addFormulasToLocNodes(pp, precondForContext, formulaForPP);
 		}
 	}
@@ -129,7 +132,7 @@ public class HoareAnnotationWriter {
 		
 		final HoareAnnotation taAnnot = HoareAnnotation.getAnnotation(locNode);
 		if (taAnnot == null) {
-			hoareAnnot = mSmtManager.getPredicateFactory().getNewHoareAnnotation(pp, mrootAnnot.getModGlobVarManager());
+			hoareAnnot = mPredicateFactory.getNewHoareAnnotation(pp, mrootAnnot.getModGlobVarManager());
 			hoareAnnot.annotate(locNode);
 		} else {
 			hoareAnnot = taAnnot;

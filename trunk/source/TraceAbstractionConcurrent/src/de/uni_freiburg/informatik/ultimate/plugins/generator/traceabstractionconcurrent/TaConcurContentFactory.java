@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Pro
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ProdState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
@@ -46,11 +47,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 public class TaConcurContentFactory extends PredicateFactoryForInterpolantAutomata {
 
 	public TaConcurContentFactory(final Map<String, Map<String, ProgramPoint>> locNodes,
-			final AbstractCegarLoop abstractCegarLoop, final SmtManager theory,
+			final AbstractCegarLoop abstractCegarLoop, final SmtManager theory, final PredicateFactory predicateFactory,
 			final boolean taPrefs,
 			final boolean hoareAnnotation,
 			final boolean interprocedural) {
-		super(theory, taPrefs);
+		super(theory, predicateFactory, taPrefs);
 		// TODO Auto-generated constructor stub
 	}
 	
@@ -60,7 +61,7 @@ public class TaConcurContentFactory extends PredicateFactoryForInterpolantAutoma
 			final IPredicate c2) {
 		
 		final List<IPredicate> programPoints = new ArrayList<IPredicate>();
-		final ProdState result = mSmtManager.getPredicateFactory().getNewProdState(programPoints);
+		final ProdState result = mPredicateFactory.getNewProdState(programPoints);
 		if (c1 instanceof ProdState) {
 			final ProdState ps1 = (ProdState) c1;
 			programPoints.addAll(ps1.getPredicates());
@@ -85,7 +86,7 @@ public class TaConcurContentFactory extends PredicateFactoryForInterpolantAutoma
 		for (final Place<?, IPredicate> place : marking) {
 			programPoints.add(place.getContent());
 		}
-		return mSmtManager.getPredicateFactory().getNewProdState(programPoints);
+		return mPredicateFactory.getNewProdState(programPoints);
 	}
 	
 
@@ -94,7 +95,7 @@ public class TaConcurContentFactory extends PredicateFactoryForInterpolantAutoma
 	@Override
 	public IPredicate finitePrefix2net(final Condition<?, IPredicate> c) {
 		final ProgramPoint pp = ((ISLPredicate) c.getPlace().getContent()).getProgramPoint();
-		return super.mSmtManager.getPredicateFactory().newDontCarePredicate(pp);
+		return super.mPredicateFactory.newDontCarePredicate(pp);
 	}
 	
 

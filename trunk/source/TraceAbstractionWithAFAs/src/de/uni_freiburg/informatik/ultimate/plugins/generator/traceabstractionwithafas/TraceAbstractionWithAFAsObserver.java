@@ -59,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ab
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
@@ -95,6 +96,8 @@ public class TraceAbstractionWithAFAsObserver extends BaseObserver {
 		final SmtManager smtManager = new SmtManager(rootAnnot.getModGlobVarManager(), mServices, rootAnnot.getManagedScript(), 
 				rootAnnot.getBoogie2SMT().getBoogie2SmtSymbolTable(),
 				taPrefs.getSimplificationTechnique(), taPrefs.getXnfConversionTechnique());
+		final PredicateFactory predicateFactory = new PredicateFactory(mServices, smtManager.getManagedScript(), 
+				smtManager.getSymbolTable(), taPrefs.getSimplificationTechnique(), taPrefs.getXnfConversionTechnique());
 		final TraceAbstractionBenchmarks taBenchmarks = new TraceAbstractionBenchmarks(rootAnnot);
 		
 
@@ -104,7 +107,7 @@ public class TraceAbstractionWithAFAsObserver extends BaseObserver {
 			errNodesOfAllProc.addAll(errNodeOfProc);
 		}
 
-		final TAwAFAsCegarLoop cegarLoop = new TAwAFAsCegarLoop("bla", rootNode, smtManager, taBenchmarks, taPrefs,
+		final TAwAFAsCegarLoop cegarLoop = new TAwAFAsCegarLoop("bla", rootNode, smtManager, predicateFactory, taBenchmarks, taPrefs,
 				errNodesOfAllProc, taPrefs.interpolation(), taPrefs.computeHoareAnnotation(), mServices, mToolchainStorage);
 
 		final Result result = cegarLoop.iterate();

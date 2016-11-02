@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCF
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 
 public class RCFG2AnnotatedRCFG {
@@ -51,19 +52,21 @@ public class RCFG2AnnotatedRCFG {
 	HashMap<ProgramPoint, AnnotatedProgramPoint> moldPpTonew;
 	private final ILogger mLogger;
 	private final SmtManager msmtManager;
+	private final PredicateFactory mPredicateFactory;
 	private final IPredicate mtruePredicate;
 	private final Map<RCFGNode, Term> minitialPredicates;
 	private final boolean museInitialPredicates;
 
-	public RCFG2AnnotatedRCFG(SmtManager smtMan, ILogger logger, IPredicate truePredicate, Map<RCFGNode, Term> initialPredicates) {
+	public RCFG2AnnotatedRCFG(final SmtManager smtMan, final PredicateFactory predicateFactory, final ILogger logger, final IPredicate truePredicate, final Map<RCFGNode, Term> initialPredicates) {
 		mLogger = logger;
 		msmtManager = smtMan;
+		mPredicateFactory = predicateFactory;
 		mtruePredicate = truePredicate;
 		minitialPredicates = initialPredicates;
 		museInitialPredicates = initialPredicates != null;
 	}
 
-	public ImpRootNode convert(IUltimateServiceProvider mServices, RootNode oldRoot) {
+	public ImpRootNode convert(final IUltimateServiceProvider mServices, final RootNode oldRoot) {
 		final RootAnnot ra = new RootAnnot(mServices, oldRoot.getRootAnnot().getBoogieDeclarations(),
 				oldRoot.getRootAnnot().getBoogie2SMT(), null);
 
@@ -129,12 +132,12 @@ public class RCFG2AnnotatedRCFG {
 	 * If we have a Term from AbstractInterpretation for that ProgramPoint, we annotate it
 	 * with the corresponding Predicate. Otherwise the annotation is "true".
 	 */
-	private AnnotatedProgramPoint createAnnotatedProgramPoint(ProgramPoint pp) {
+	private AnnotatedProgramPoint createAnnotatedProgramPoint(final ProgramPoint pp) {
 		if (museInitialPredicates) {
 			final Term aiTerm = minitialPredicates.get(pp);
 			IPredicate aiPredicate;
 			if (aiTerm != null) {
-				aiPredicate = msmtManager.getPredicateFactory().newPredicate(aiTerm);
+				aiPredicate = mPredicateFactory.newPredicate(aiTerm);
 			} else {
 				aiPredicate = mtruePredicate;
 			}

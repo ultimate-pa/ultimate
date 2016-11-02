@@ -71,6 +71,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer.PredicatePostprocessor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer.QuantifierEliminationPostprocessor;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.DefaultTransFormulas;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
@@ -99,6 +100,7 @@ public class FlowSensitiveFaultLocalizer {
 	private final XnfConversionTechnique mXnfConversionTechnique;
 	private final IRelevanceInformation[] mRelevanceOfTrace;
 	private final Boogie2SmtSymbolTable mSymbolTable;
+	private final PredicateFactory mPredicateFactory;
 	/**
 	 * Apply quantifier elimination during the computation of pre and wp.
 	 * If set to true, there is a higher risk that we run into a timeout.
@@ -109,7 +111,7 @@ public class FlowSensitiveFaultLocalizer {
 
 	public FlowSensitiveFaultLocalizer(final IRun<CodeBlock, IPredicate> counterexample,
 			final INestedWordAutomaton<CodeBlock, IPredicate> cfg, final IUltimateServiceProvider services,
-			final SmtManager smtManager,
+			final SmtManager smtManager, final PredicateFactory predicateFactory,
 			final ModifiableGlobalVariableManager modGlobVarManager, final PredicateUnifier predicateUnifier,
 			final boolean doNonFlowSensitiveAnalysis, final boolean doFlowSensitiveAnalysis,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique, 
@@ -119,6 +121,7 @@ public class FlowSensitiveFaultLocalizer {
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
 		mSymbolTable = symbolTable;
+		mPredicateFactory = predicateFactory;
 		mRelevanceOfTrace = initializeRelevanceOfTrace(counterexample);
 
 		if (doNonFlowSensitiveAnalysis) {
@@ -341,9 +344,9 @@ public class FlowSensitiveFaultLocalizer {
 
 		// Calculating the WP-List
 		final IterativePredicateTransformer ipt = new IterativePredicateTransformer(
-				smtManager.getPredicateFactory(),
+				mPredicateFactory,
 				smtManager.getManagedScript(), modGlobVarManager, mServices,
-				counterexampleWord, null, falsePredicate, null, smtManager.getPredicateFactory().newPredicate(smtManager.getPredicateFactory().not(falsePredicate)),
+				counterexampleWord, null, falsePredicate, null, mPredicateFactory.newPredicate(mPredicateFactory.not(falsePredicate)),
 				mSimplificationTechnique,
 				mXnfConversionTechnique, mSymbolTable);
 		
@@ -356,7 +359,7 @@ public class FlowSensitiveFaultLocalizer {
 		if (mApplyQuantifierElimination) {
 			final QuantifierEliminationPostprocessor qePostproc =
 					new QuantifierEliminationPostprocessor(mServices, mLogger,
-							smtManager.getManagedScript(), smtManager.getPredicateFactory(), mSimplificationTechnique, mXnfConversionTechnique);
+							smtManager.getManagedScript(), mPredicateFactory, mSimplificationTechnique, mXnfConversionTechnique);
 			postprocessors = Collections.singletonList(qePostproc);
 		} else {
 			postprocessors = Collections.emptyList();
@@ -369,8 +372,8 @@ public class FlowSensitiveFaultLocalizer {
 				final IAction action = counterexampleWord.getSymbolAt(i);
 				// Calculate WP and PRE
 				final IPredicate wp = weakestPreconditionSequence.getInterpolant(i+1);
-				final IPredicate pre = smtManager.getPredicateFactory().newPredicate(
-						smtManager.getPredicateFactory().not(weakestPreconditionSequence.getInterpolant(i)));
+				final IPredicate pre = mPredicateFactory.newPredicate(
+						mPredicateFactory.not(weakestPreconditionSequence.getInterpolant(i)));
 				
 				// Figure out what is the type of the statement (internal, call or Return)
 				final ERelevanceStatus relevance;
@@ -451,21 +454,21 @@ public class FlowSensitiveFaultLocalizer {
 	/**
 	 * Checks if subtrace from position "startPosition" to position "endPosition" is relevant.
 	 */
-	private static boolean checkBranchRelevance(final int startPosition, final int endPosition,
+	private boolean checkBranchRelevance(final int startPosition, final int endPosition,
 			final UnmodifiableTransFormula markhor,final IPredicate weakestPreconditionLeft,
 			final IPredicate weakestPreconditionRight, final NestedWord<CodeBlock> counterexampleWord,
 			final SmtManager smtManager, final ModifiableGlobalVariableManager modGlobVarManager){
 
 		final FaultLocalizationRelevanceChecker rc = new FaultLocalizationRelevanceChecker(
 				smtManager.getManagedScript(), modGlobVarManager);
-		final IPredicate pre = smtManager.getPredicateFactory().newPredicate(
-				smtManager.getPredicateFactory().not(weakestPreconditionLeft));
+		final IPredicate pre = mPredicateFactory.newPredicate(
+				mPredicateFactory.not(weakestPreconditionLeft));
 		final String preceeding = counterexampleWord.getSymbolAt(startPosition).getPrecedingProcedure();
 		final String succeeding = counterexampleWord.getSymbolAt(endPosition).getSucceedingProcedure();
 		final BasicInternalAction basic = new BasicInternalAction(preceeding, succeeding, markhor);
 		final ERelevanceStatus relevance = rc.relevanceInternal(pre, basic,
-				smtManager.getPredicateFactory().newPredicate(
-						smtManager.getPredicateFactory().not(weakestPreconditionRight)));
+				mPredicateFactory.newPredicate(
+						mPredicateFactory.not(weakestPreconditionRight)));
 		
 		return (relevance == ERelevanceStatus.InUnsatCore || relevance == ERelevanceStatus.Sat);
 	}
@@ -521,7 +524,7 @@ public class FlowSensitiveFaultLocalizer {
 						counterexampleWord,informationFromCFG, smtManager.getManagedScript());
 				final Term wpTerm = computeWp(weakestPreconditionRight, markhor, smtManager.getManagedScript().getScript(),
 						smtManager.getManagedScript(), pt, mApplyQuantifierElimination);
-				weakestPreconditionLeft = smtManager.getPredicateFactory().newPredicate(wpTerm);
+				weakestPreconditionLeft = mPredicateFactory.newPredicate(wpTerm);
 				// Check the relevance of the branch.
 				final boolean isRelevant =  checkBranchRelevance(
 						branchOutPosition,positionBranchIn,markhor,weakestPreconditionLeft,
@@ -543,9 +546,9 @@ public class FlowSensitiveFaultLocalizer {
 				final UnmodifiableTransFormula tf =  counterexampleWord.getSymbolAt(position).getTransitionFormula();
 				final Term wpTerm = computeWp(weakestPreconditionRight, tf, smtManager.getManagedScript().getScript(),
 						smtManager.getManagedScript(), pt, mApplyQuantifierElimination);
-				weakestPreconditionLeft = smtManager.getPredicateFactory().newPredicate(wpTerm);
-				final IPredicate pre = smtManager.getPredicateFactory().newPredicate(
-						smtManager.getPredicateFactory().not(weakestPreconditionLeft));
+				weakestPreconditionLeft = mPredicateFactory.newPredicate(wpTerm);
+				final IPredicate pre = mPredicateFactory.newPredicate(
+						mPredicateFactory.not(weakestPreconditionLeft));
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug(" ");
 					mLogger.debug("WP -- > " + weakestPreconditionRight);
@@ -576,7 +579,7 @@ public class FlowSensitiveFaultLocalizer {
 	 * 
 	 * @return Relevance Information of a position in the trace.
 	 */
-	private static ERelevanceStatus computeRelevance(final int position, final IAction action, final IPredicate pre,
+	private ERelevanceStatus computeRelevance(final int position, final IAction action, final IPredicate pre,
 			final IPredicate weakestPreconditionRight, final IPredicate weakestPreconditionLeft,
 			final InterpolantsPreconditionPostcondition weakestPreconditionSequence,
 			final NestedWord<CodeBlock> counterexampleWord,
@@ -585,11 +588,11 @@ public class FlowSensitiveFaultLocalizer {
 		if(action instanceof IInternalAction){
 			final IInternalAction internal = (IInternalAction) counterexampleWord.getSymbolAt(position);
 			relevance = rc.relevanceInternal(pre, internal,
-					smtManager.getPredicateFactory().newPredicate(smtManager.getPredicateFactory().not(weakestPreconditionRight)));
+					mPredicateFactory.newPredicate(mPredicateFactory.not(weakestPreconditionRight)));
 		}else if(action instanceof ICallAction){
 			final ICallAction call = (ICallAction) counterexampleWord.getSymbolAt(position);
 			relevance = rc.relevanceCall(pre, call,
-					smtManager.getPredicateFactory().newPredicate(smtManager.getPredicateFactory().not(weakestPreconditionRight)));
+					mPredicateFactory.newPredicate(mPredicateFactory.not(weakestPreconditionRight)));
 		}else if(action instanceof IReturnAction){
 			final IReturnAction ret = (IReturnAction) counterexampleWord.getSymbolAt(position);
 			assert counterexampleWord.isReturnPosition(position);
@@ -605,7 +608,7 @@ public class FlowSensitiveFaultLocalizer {
 			}
 			
 			relevance = rc.relevanceReturn(pre, callPredecessor, ret,
-					smtManager.getPredicateFactory().newPredicate(smtManager.getPredicateFactory().not(weakestPreconditionRight)));
+					mPredicateFactory.newPredicate(mPredicateFactory.not(weakestPreconditionRight)));
 		} else{
 			throw new AssertionError("Unknown Action " +
 					action.getClass().getSimpleName());
@@ -642,7 +645,7 @@ public class FlowSensitiveFaultLocalizer {
 				smtManager.getManagedScript(), modGlobVarManager);
 		final int startLocation = 0;
 		final int endLocation = counterexample.getWord().length()-1;
-		final IPredicate falsePredicate = smtManager.getPredicateFactory().newPredicate(
+		final IPredicate falsePredicate = mPredicateFactory.newPredicate(
 				smtManager.getManagedScript().getScript().term("false"));
 
 		computeRelevantStatements_FlowSensitive(counterexample.getWord(),startLocation, endLocation,

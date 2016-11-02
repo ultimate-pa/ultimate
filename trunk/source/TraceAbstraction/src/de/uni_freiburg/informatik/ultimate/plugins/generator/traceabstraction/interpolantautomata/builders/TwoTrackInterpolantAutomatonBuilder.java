@@ -39,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
@@ -227,8 +226,8 @@ public class TwoTrackInterpolantAutomatonBuilder implements IInterpolantAutomato
 		if (p == mPostcondition) {
 			return true;
 		} else {
-			assert mSmtManager.getPredicateFactory().isDontCare(p)
-					|| !SmtUtils.isFalse(p.getFormula());
+//			assert mSmtManager.getPredicateFactory().isDontCare(p)
+//					|| !SmtUtils.isFalse(p.getFormula());
 			return false;
 		}
 	}

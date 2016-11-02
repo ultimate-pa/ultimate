@@ -56,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Pro
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
@@ -106,6 +107,7 @@ public abstract class AbstractCegarLoop {
 	 * Intermediate layer to encapsulate communication with SMT solvers.
 	 */
 	protected final SmtManager mSmtManager;
+	protected final PredicateFactory mPredicateFactory;
 	
 	protected final ModifiableGlobalVariableManager mModGlobVarManager;
 	
@@ -178,7 +180,7 @@ public abstract class AbstractCegarLoop {
 	private static final boolean DUMP_BIGGEST_AUTOMATON = false;
 	
 	public AbstractCegarLoop(final IUltimateServiceProvider services, final IToolchainStorage storage,
-			final String name, final RootNode rootNode, final SmtManager smtManager, final TAPreferences taPrefs,
+			final String name, final RootNode rootNode, final SmtManager smtManager, final PredicateFactory predicateFactory, final TAPreferences taPrefs,
 			final Collection<ProgramPoint> errorLocs, final ILogger logger) {
 		mServices = services;
 		mLogger = logger;
@@ -189,6 +191,7 @@ public abstract class AbstractCegarLoop {
 		mName = name;
 		mRootNode = rootNode;
 		mSmtManager = smtManager;
+		mPredicateFactory = predicateFactory;
 		mPref = taPrefs;
 		mErrorLocs = errorLocs;
 		mToolchainStorage = storage;

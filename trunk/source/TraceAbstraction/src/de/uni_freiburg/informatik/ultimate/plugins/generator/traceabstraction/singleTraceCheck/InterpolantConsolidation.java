@@ -69,6 +69,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Tr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.CachingHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.CachingHoareTripleChecker_Map;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
@@ -145,13 +146,13 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 
 		// 1. Build the path automaton for the given trace mTrace
 		final PathProgramAutomatonConstructor ppc = new PathProgramAutomatonConstructor();
-		final INestedWordAutomaton<CodeBlock, IPredicate> pathprogramautomaton = ppc.constructAutomatonFromGivenPath(mTrace, mServices, mSmtManager, mTaPrefs);
+		final INestedWordAutomaton<CodeBlock, IPredicate> pathprogramautomaton = ppc.constructAutomatonFromGivenPath(mTrace, mServices, mSmtManager, mPredicateUnifier.getPredicateFactory(), mTaPrefs);
 
 
 
 
 		// 2. Build the finite automaton (former interpolant path automaton) for the given Floyd-Hoare annotation
-		final NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton = constructInterpolantAutomaton(mTrace, mSmtManager, mTaPrefs, mServices, mInterpolatingTraceChecker);
+		final NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton = constructInterpolantAutomaton(mTrace, mSmtManager, mPredicateUnifier.getPredicateFactory(), mTaPrefs, mServices, mInterpolatingTraceChecker);
 		// 3. Determinize the finite automaton from step 2.
 		final DeterministicInterpolantAutomaton interpolantAutomatonDeterminized = new DeterministicInterpolantAutomaton(
 				mServices, mSmtManager, mModifiedGlobals, mHoareTripleChecker, pathprogramautomaton, interpolantAutomaton,
@@ -160,9 +161,9 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 				);
 
 
-		final PredicateFactoryForInterpolantConsolidation pfconsol = new PredicateFactoryForInterpolantConsolidation(mSmtManager, mTaPrefs.computeHoareAnnotation());
+		final PredicateFactoryForInterpolantConsolidation pfconsol = new PredicateFactoryForInterpolantConsolidation(mSmtManager, mPredicateUnifier.getPredicateFactory(), mTaPrefs.computeHoareAnnotation());
 
-		final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata = new PredicateFactoryForInterpolantAutomata(mSmtManager, mTaPrefs.computeHoareAnnotation());
+		final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata = new PredicateFactoryForInterpolantAutomata(mSmtManager, mPredicateUnifier.getPredicateFactory(), mTaPrefs.computeHoareAnnotation());
 
 		final PowersetDeterminizer<CodeBlock, IPredicate> psd2 = new PowersetDeterminizer<CodeBlock, IPredicate>(
 				interpolantAutomatonDeterminized, true, predicateFactoryInterpolantAutomata);
@@ -459,7 +460,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 	 * @param traceChecker - contains the Floyd-Hoare annotation (the interpolants) for which the automaton is constructed.
 	 * @return
 	 */
-	private NestedWordAutomaton<CodeBlock, IPredicate> constructInterpolantAutomaton(final NestedWord<CodeBlock> trace, final SmtManager smtManager, final TAPreferences taPrefs,
+	private NestedWordAutomaton<CodeBlock, IPredicate> constructInterpolantAutomaton(final NestedWord<CodeBlock> trace, final SmtManager smtManager, final PredicateFactory predicateFactor, final TAPreferences taPrefs,
 			final IUltimateServiceProvider services, final InterpolatingTraceChecker traceChecker) {
 		// Set the alphabet
 		final Set<CodeBlock> internalAlphabet = new HashSet<CodeBlock>();
@@ -479,13 +480,13 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 
 
 
-		final IStateFactory<IPredicate> predicateFactory = new PredicateFactoryForInterpolantAutomata(smtManager, taPrefs.computeHoareAnnotation());
+		final IStateFactory<IPredicate> predicateFactoryFia = new PredicateFactoryForInterpolantAutomata(smtManager, predicateFactor, taPrefs.computeHoareAnnotation());
 
 		final NestedWordAutomaton<CodeBlock, IPredicate> nwa  = new NestedWordAutomaton<CodeBlock, IPredicate>(   new AutomataLibraryServices(services),
 				internalAlphabet,
 				callAlphabet,
 				returnAlphabet,
-				predicateFactory);
+				predicateFactoryFia);
 		// Set the initial and the final state of the automaton
 		nwa.addState(true, false, traceChecker.getPrecondition());
 		nwa.addState(false, true, traceChecker.getPostcondition());

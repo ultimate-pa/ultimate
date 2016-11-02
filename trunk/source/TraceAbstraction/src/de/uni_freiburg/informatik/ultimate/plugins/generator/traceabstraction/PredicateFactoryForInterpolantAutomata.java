@@ -40,20 +40,23 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 
 public class PredicateFactoryForInterpolantAutomata implements IStateFactory<IPredicate> {
 
 	final protected boolean mComputeHoareAnnotation;
-//	final protected TAPreferences mPref;
 	private final IPredicate memtpyStack;
 	protected final SmtManager mSmtManager;
+	protected final PredicateFactory mPredicateFactory;
 
-	public PredicateFactoryForInterpolantAutomata(final SmtManager smtManager, final boolean computeHoareAnnotation) {
+	public PredicateFactoryForInterpolantAutomata(final SmtManager smtManager, 
+			final PredicateFactory predicateFactory, final boolean computeHoareAnnotation) {
 		mComputeHoareAnnotation = computeHoareAnnotation;
 		mSmtManager = smtManager;
-		memtpyStack = mSmtManager.getPredicateFactory().newEmptyStackPredicate();
+		mPredicateFactory = predicateFactory;
+		memtpyStack = mPredicateFactory.newEmptyStackPredicate();
 	}
 
 	@Override
@@ -68,23 +71,23 @@ public class PredicateFactoryForInterpolantAutomata implements IStateFactory<IPr
 			final List<IPredicate> upPredicates = new ArrayList<IPredicate>();
 			for (final IPredicate caller : down2up.keySet()) {
 				for (final IPredicate current : down2up.get(caller)) {
-					if (mSmtManager.getPredicateFactory().isDontCare(current)) {
-						return mSmtManager.getPredicateFactory().newDontCarePredicate(null);
+					if (mPredicateFactory.isDontCare(current)) {
+						return mPredicateFactory.newDontCarePredicate(null);
 					}
 					upPredicates.add(current);
 				}
 			}
-			final Term conjunction = mSmtManager.getPredicateFactory().and(upPredicates);
-			final IPredicate result = mSmtManager.getPredicateFactory().newPredicate(conjunction);
+			final Term conjunction = mPredicateFactory.and(upPredicates);
+			final IPredicate result = mPredicateFactory.newPredicate(conjunction);
 			return result;
 		} else {
-			return mSmtManager.getPredicateFactory().newDontCarePredicate(null);
+			return mPredicateFactory.newDontCarePredicate(null);
 		}
 	}
 
 	@Override
 	public IPredicate createSinkStateContent() {
-		return mSmtManager.getPredicateFactory().newPredicate(mSmtManager.getManagedScript().getScript().term("true"));
+		return mPredicateFactory.newPredicate(mSmtManager.getManagedScript().getScript().term("true"));
 	}
 
 	@Override
@@ -99,20 +102,20 @@ public class PredicateFactoryForInterpolantAutomata implements IStateFactory<IPr
 
 	@Override
 	public IPredicate minimize(final Collection<IPredicate> states) {
-		final Term disjunction = mSmtManager.getPredicateFactory().or(false, states);
-		final IPredicate result = mSmtManager.getPredicateFactory().newPredicate(disjunction);
+		final Term disjunction = mPredicateFactory.or(false, states);
+		final IPredicate result = mPredicateFactory.newPredicate(disjunction);
 		return result;
 	}
 
 	@Override
 	public IPredicate senwa(final IPredicate entry, final IPredicate state) {
 		assert false : "still used?";
-		return mSmtManager.getPredicateFactory().newDontCarePredicate(((SPredicate) state).getProgramPoint());
+		return mPredicateFactory.newDontCarePredicate(((SPredicate) state).getProgramPoint());
 	}
 
 	@Override
 	public IPredicate buchiComplementFKV(final LevelRankingState<?, IPredicate> compl) {
-		return mSmtManager.getPredicateFactory().newDebugPredicate(compl.toString());
+		return mPredicateFactory.newDebugPredicate(compl.toString());
 	}
 
 	@Override
@@ -144,8 +147,8 @@ public class PredicateFactoryForInterpolantAutomata implements IStateFactory<IPr
 		}
 		final ProgramPoint c2PP = ((ISLPredicate) c2).getProgramPoint();
 		programPoints[programPoints.length - 1] = c2PP;
-		final Term conjunction = mSmtManager.getPredicateFactory().and(c1, c2);
-		final IMLPredicate result = mSmtManager.getPredicateFactory().newMLPredicate(programPoints, conjunction);
+		final Term conjunction = mPredicateFactory.and(c1, c2);
+		final IMLPredicate result = mPredicateFactory.newMLPredicate(programPoints, conjunction);
 		return result;
 	}
 

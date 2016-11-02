@@ -69,6 +69,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.NondeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
@@ -91,6 +92,7 @@ public class RefineBuchi {
 	 * Intermediate layer to encapsulate communication with SMT solvers.
 	 */
 	private final SmtManager mSmtManager;
+	private final PredicateFactory mPredicateFactory;
 	
 	private final RootNode mRootNode;
 
@@ -110,7 +112,7 @@ public class RefineBuchi {
 
 	private final IUltimateServiceProvider mServices;
 
-	public RefineBuchi(final RootNode rootNode, final SmtManager smtManager, final boolean dumpAutomata, final boolean difference,
+	public RefineBuchi(final RootNode rootNode, final SmtManager smtManager, final PredicateFactory predicateFactory, final boolean dumpAutomata, final boolean difference,
 			final PredicateFactoryForInterpolantAutomata stateFactoryInterpolAutom, final PredicateFactoryRefinement stateFactoryForRefinement,
 			final boolean useDoubleDeckers, final String dumpPath, final Format format, final InterpolationTechnique interpolation, final IUltimateServiceProvider services,
 			final ILogger logger, final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
@@ -119,6 +121,7 @@ public class RefineBuchi {
 		mLogger = logger;
 		mRootNode = rootNode;
 		mSmtManager = smtManager;
+		mPredicateFactory = predicateFactory;
 		mDumpAutomata = dumpAutomata;
 		mDifference = difference;
 		mStateFactoryInterpolAutom = stateFactoryInterpolAutom;
@@ -219,7 +222,7 @@ public class RefineBuchi {
 		assert !bspm.getStemPrecondition().getFormula().toString().equals("false");
 		assert !bspm.getHondaPredicate().getFormula().toString().equals("false");
 		assert !bspm.getRankEqAndSi().getFormula().toString().equals("false");
-		final PredicateUnifier pu = new PredicateUnifier(mServices, mSmtManager.getManagedScript(), mSmtManager.getPredicateFactory(), 
+		final PredicateUnifier pu = new PredicateUnifier(mServices, mSmtManager.getManagedScript(), mPredicateFactory, 
 				mRootNode.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable(), mSimplificationTechnique, mXnfConversionTechnique, bspm.getStemPrecondition(),
 				bspm.getHondaPredicate(), bspm.getRankEqAndSi(), bspm.getStemPostcondition());
 		IPredicate[] stemInterpolants;
@@ -312,7 +315,7 @@ public class RefineBuchi {
 				loopInterpolantsForRefinement.add(bspm.getRankEqAndSi());
 			}
 
-			mInterpolAutomatonUsedInRefinement = new BuchiInterpolantAutomatonBouncer(mSmtManager, bspm, bhtc,
+			mInterpolAutomatonUsedInRefinement = new BuchiInterpolantAutomatonBouncer(mSmtManager, mPredicateFactory, bspm, bhtc,
 					BuchiCegarLoop.emptyStem(mCounterexample), stemInterpolantsForRefinement,
 					loopInterpolantsForRefinement, BuchiCegarLoop.emptyStem(mCounterexample) ? null
 							: stem.getSymbol(stem.length() - 1), loop.getSymbol(loop.length() - 1), abstraction,

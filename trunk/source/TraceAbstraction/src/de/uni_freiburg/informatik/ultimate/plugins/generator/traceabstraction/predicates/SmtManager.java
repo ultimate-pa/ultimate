@@ -43,7 +43,6 @@ public class SmtManager {
 
 
 
-	private final PredicateFactory mPredicateFactory;
 
 	public SmtManager(final ModifiableGlobalVariableManager modifiableGlobals, final IUltimateServiceProvider services, 
 			final ManagedScript managedScript,
@@ -52,13 +51,6 @@ public class SmtManager {
 		mManagedScript = managedScript;
 		mSymbolTable = symbolTable;
 		mModifiableGlobals = modifiableGlobals;
-		mPredicateFactory = new PredicateFactory(services, managedScript, 
-				symbolTable, simplificationTechnique, xnfConversionTechnique);
-	}
-
-
-	public PredicateFactory getPredicateFactory() {
-		return mPredicateFactory;
 	}
 
 

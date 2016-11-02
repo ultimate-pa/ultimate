@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 
 /**
@@ -50,8 +51,9 @@ public class PredicateFactoryForInterpolantConsolidation extends PredicateFactor
 	private final Map<IPredicate, AbstractMap.SimpleEntry<IPredicate, IPredicate>> mIntersectedPredicateToArgumentPredicates;
 	private final Map<AbstractMap.SimpleEntry<IPredicate, IPredicate>, IPredicate> mArgumentPredicatesToIntersectedPredicate;
 	public PredicateFactoryForInterpolantConsolidation(final SmtManager smtManager,
+			final PredicateFactory predicateFactory,
 			final boolean taPrefs) {
-		super(smtManager, taPrefs);
+		super(smtManager, predicateFactory, taPrefs);
 		mLocationsToSetOfPredicates = new HashMap<IPredicate, Set<IPredicate>>();
 		mIntersectedPredicateToArgumentPredicates = new HashMap<IPredicate, AbstractMap.SimpleEntry<IPredicate, IPredicate>>();
 		mArgumentPredicatesToIntersectedPredicate = new HashMap<AbstractMap.SimpleEntry<IPredicate, IPredicate>, IPredicate>();
@@ -85,8 +87,8 @@ public class PredicateFactoryForInterpolantConsolidation extends PredicateFactor
 		
 		final ProgramPoint pp = ((ISLPredicate) p1).getProgramPoint();
 		
-		final Term conjunction = super.mSmtManager.getPredicateFactory().and(p1, p2);
-		final IPredicate result = super.mSmtManager.getPredicateFactory().newSPredicate(pp, conjunction);
+		final Term conjunction = super.mPredicateFactory.and(p1, p2);
+		final IPredicate result = super.mPredicateFactory.newSPredicate(pp, conjunction);
 		
 		if (mIntersectedPredicateToArgumentPredicates.containsKey(result)) {
 			throw new AssertionError("States of difference automaton are not unique!");

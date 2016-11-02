@@ -62,6 +62,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
@@ -169,12 +170,12 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 	 * @param computeHoareAnnotation
 	 * @param services
 	 */
-	public CegarLoopSWBnonRecursive(final String name, final RootNode rootNode, final SmtManager smtManager,
+	public CegarLoopSWBnonRecursive(final String name, final RootNode rootNode, final SmtManager smtManager, final PredicateFactory predicateFactory,
 			final TraceAbstractionBenchmarks traceAbstractionBenchmarks, final TAPreferences taPrefs,
 			final Collection<ProgramPoint> errorLocs, final InterpolationTechnique interpolation,
 			final boolean computeHoareAnnotation, final IUltimateServiceProvider services,
 			final IToolchainStorage storage) {
-		super(name, rootNode, smtManager, taPrefs, errorLocs, interpolation, computeHoareAnnotation, services, storage);
+		super(name, rootNode, smtManager, predicateFactory, taPrefs, errorLocs, interpolation, computeHoareAnnotation, services, storage);
 		mErrorPathHistory = new ArrayList<>();
 		mnofStates = new ArrayList<>();
 	}

@@ -66,6 +66,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.in
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.NondeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
@@ -81,12 +82,12 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 	protected final List<IHoareTripleChecker> mHoareTripleChecker = new ArrayList<>();
 
 	public IncrementalInclusionCegarLoop(final String name, final RootNode rootNode,
-			final SmtManager smtManager, final TAPreferences taPrefs,
+			final SmtManager smtManager, final PredicateFactory predicateFactory, final TAPreferences taPrefs,
 			final Collection<ProgramPoint> errorLocs, final InterpolationTechnique interpolation,
 			final boolean computeHoareAnnotation, final IUltimateServiceProvider services,
 			final IToolchainStorage storage,
 			final LanguageOperation languageOperation) {
-		super(name, rootNode, smtManager, taPrefs, errorLocs, interpolation,
+		super(name, rootNode, smtManager, predicateFactory, taPrefs, errorLocs, interpolation,
 				computeHoareAnnotation, services, storage);
 		mLanguageOperation = languageOperation;
 		if (mComputeHoareAnnotation) {

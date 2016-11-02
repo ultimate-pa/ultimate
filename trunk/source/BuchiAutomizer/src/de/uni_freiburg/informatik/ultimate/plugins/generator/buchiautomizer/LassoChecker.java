@@ -86,6 +86,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.pref
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
@@ -238,7 +239,7 @@ public class LassoChecker {
 		return mNonterminationAnalysisBenchmarks;
 	}
 
-	public LassoChecker(final InterpolationTechnique interpolation, final SmtManager smtManager,
+	public LassoChecker(final InterpolationTechnique interpolation, final SmtManager smtManager, final PredicateFactory predicateFactory,
 			final Boogie2SmtSymbolTable symbolTable, final ModifiableGlobalVariableManager modifiableGlobalVariableManager, final Collection<Term> axioms,
 			final BinaryStatePredicateManager bspm, final NestedLassoRun<CodeBlock, IPredicate> counterexample,
 			final String lassoCheckerIdentifier, final IUltimateServiceProvider services,
@@ -265,7 +266,7 @@ public class LassoChecker {
 		mCounterexample = counterexample;
 		mLassoCheckerIdentifier = lassoCheckerIdentifier;
 		mPredicateUnifier = new PredicateUnifier(mServices, mSmtManager.getManagedScript(),
-				mSmtManager.getPredicateFactory(), mSymbolTable,
+				predicateFactory, mSymbolTable,
 				simplificationTechnique, xnfConversionTechnique);
 		mTruePredicate = mPredicateUnifier.getTruePredicate();
 		mFalsePredicate = mPredicateUnifier.getFalsePredicate();

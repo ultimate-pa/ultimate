@@ -118,7 +118,7 @@ public class BinaryStatePredicateManager {
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	
-	public BinaryStatePredicateManager(final SmtManager smtManager,
+	public BinaryStatePredicateManager(final SmtManager smtManager, final PredicateFactory predicateFactory,
 			final Boogie2SMT boogie2Smt, final IUltimateServiceProvider services,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
@@ -126,7 +126,7 @@ public class BinaryStatePredicateManager {
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
 		mScript = smtManager.getManagedScript().getScript();
-		mPredicateFactory = smtManager.getPredicateFactory();
+		mPredicateFactory = predicateFactory;
 		mManagedScript = smtManager.getManagedScript();
 		mSmtManager = smtManager;
 		mSymbolTable = boogie2Smt.getBoogie2SmtSymbolTable();

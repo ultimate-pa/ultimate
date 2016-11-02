@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Seq
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
@@ -64,6 +65,7 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNodeAnnota
 
 public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeBlock, IPredicate> {
 	private final SmtManager mSmtManager;
+	private final PredicateFactory mPredicateFactory;
 	private final INestedWordAutomatonSimple<CodeBlock, IPredicate> mControlFlowAutomaton;
 	private final INestedWordAutomatonSimple<WitnessEdge, WitnessNode> mWitnessAutomaton;
 	
@@ -94,7 +96,7 @@ public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeB
 			mResultState = constructNewResultState(cfgAutomatonState, witnessAutomatonState, stutteringSteps);
 		}
 		private ISLPredicate constructNewResultState(final IPredicate cfgAutomatonState, final WitnessNode witnessNode, final Integer stutteringSteps) {
-			return mSmtManager.getPredicateFactory().newTrueSLPredicateWithWitnessNode(
+			return mPredicateFactory.newTrueSLPredicateWithWitnessNode(
 					((ISLPredicate) cfgAutomatonState).getProgramPoint(), witnessNode, stutteringSteps);
 		}
 		
@@ -120,11 +122,12 @@ public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeB
 			final IUltimateServiceProvider services,
 			final INestedWordAutomatonSimple<CodeBlock, IPredicate> controlFlowAutomaton,
 			final INestedWordAutomatonSimple<WitnessEdge, WitnessNode> witnessAutomaton,
-			final SmtManager smtManager) {
+			final SmtManager smtManager, final PredicateFactory predicateFactory) {
 		mWitnessLocationMatcher = new WitnessLocationMatcher(services, controlFlowAutomaton, witnessAutomaton);
 		mControlFlowAutomaton = controlFlowAutomaton;
 		mWitnessAutomaton = witnessAutomaton;
 		mSmtManager = smtManager;
+		mPredicateFactory = predicateFactory;
 		mInitialStates = constructInitialStates();
 		mFinalStates = new HashSet<>();
 		mEmptyStackState = mControlFlowAutomaton.getStateFactory().createEmptyStackState();

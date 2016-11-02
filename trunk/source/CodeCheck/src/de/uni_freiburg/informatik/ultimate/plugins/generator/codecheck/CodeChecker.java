@@ -73,8 +73,8 @@ public abstract class CodeChecker {
 
 	protected GraphWriter _graphWriter;
 
-	public CodeChecker(IElement root, SmtManager smtManager, RootNode originalRoot, ImpRootNode graphRoot, GraphWriter graphWriter,
-			IHoareTripleChecker edgeChecker, PredicateUnifier predicateUnifier, ILogger logger) {
+	public CodeChecker(final IElement root, final SmtManager smtManager, final RootNode originalRoot, final ImpRootNode graphRoot, final GraphWriter graphWriter,
+			final IHoareTripleChecker edgeChecker, final PredicateUnifier predicateUnifier, final ILogger logger) {
 		mLogger = logger;
 		msmtManager = smtManager;
 		moriginalRoot = originalRoot;
@@ -109,8 +109,8 @@ public abstract class CodeChecker {
 	 * @param b
 	 *            : The second Predicate.
 	 */
-	protected IPredicate conjugatePredicates(IPredicate a, IPredicate b) {
-		final Term tvp = msmtManager.getPredicateFactory().and(a, b);
+	protected IPredicate conjugatePredicates(final IPredicate a, final IPredicate b) {
+		final Term tvp = mpredicateUnifier.getPredicateFactory().and(a, b);
 		return mpredicateUnifier.getOrConstructPredicate(tvp);
 	}
 
@@ -120,8 +120,8 @@ public abstract class CodeChecker {
 	 * @param a
 	 *            : The Predicate.
 	 */
-	protected IPredicate negatePredicate(IPredicate a) {
-		final Term tvp = msmtManager.getPredicateFactory().not(a);
+	protected IPredicate negatePredicate(final IPredicate a) {
+		final Term tvp = mpredicateUnifier.getPredicateFactory().not(a);
 		return mpredicateUnifier.getOrConstructPredicate(tvp);
 	}
 
@@ -132,13 +132,13 @@ public abstract class CodeChecker {
 	 * @param a
 	 *            : The Predicate.
 	 */
-	protected IPredicate negatePredicateNoPU(IPredicate a) {
-		final Term negation = msmtManager.getPredicateFactory().not(a);
-		return msmtManager.getPredicateFactory().newPredicate(negation);
+	protected IPredicate negatePredicateNoPU(final IPredicate a) {
+		final Term negation = mpredicateUnifier.getPredicateFactory().not(a);
+		return mpredicateUnifier.getPredicateFactory().newPredicate(negation);
 	}
 
 
-	public static String objectReference(Object o) {
+	public static String objectReference(final Object o) {
 		return Integer.toHexString(System.identityHashCode(o));
 	}
 
@@ -153,7 +153,7 @@ public abstract class CodeChecker {
 		dfs(mgraphRoot);
 	}
 
-	protected boolean debugNode(AnnotatedProgramPoint node) {
+	protected boolean debugNode(final AnnotatedProgramPoint node) {
 		return debugNode(node, "");
 	}
 
@@ -165,7 +165,7 @@ public abstract class CodeChecker {
 	 * @param message
 	 * @return
 	 */
-	protected boolean debugNode(AnnotatedProgramPoint node, String message) {
+	protected boolean debugNode(final AnnotatedProgramPoint node, final String message) {
 		String display = "";
 		/*
 		 * display += String.format("connected To: %s\n",
@@ -196,7 +196,7 @@ public abstract class CodeChecker {
 	 *            : The current Node being explored in the DFS.
 	 * @return
 	 */
-	private boolean dfs(AnnotatedProgramPoint node) {
+	private boolean dfs(final AnnotatedProgramPoint node) {
 		if (!visited.contains(node)) {
 			visited.add(node);
 			debugNode(node);

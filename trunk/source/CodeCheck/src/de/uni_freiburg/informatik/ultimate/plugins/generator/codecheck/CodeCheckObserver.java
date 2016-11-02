@@ -103,6 +103,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
@@ -156,6 +157,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 
 	private boolean mLoopForever = true;
 	private int mIterationsLimit = -1;
+	private PredicateFactory mPredicateFactory;
 
 	CodeCheckObserver(final IUltimateServiceProvider services, final IToolchainStorage toolchainStorage) {
 		mServices = services;
@@ -177,10 +179,12 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 
 		mSmtManager = new SmtManager(rootAnnot.getModGlobVarManager(), mServices, rootAnnot.getManagedScript(),
 				rootAnnot.getBoogie2SMT().getBoogie2SmtSymbolTable(), mSimplificationTechnique, mXnfConversionTechnique);
+		mPredicateFactory = new PredicateFactory(mServices, mSmtManager.getManagedScript(), 
+				mSmtManager.getSymbolTable(), mSimplificationTechnique, mXnfConversionTechnique);
 
 		mPredicateUnifier =
 				new PredicateUnifier(mServices, mSmtManager.getManagedScript(), 
-						mSmtManager.getPredicateFactory(), mOriginalRoot.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable(), 
+						mPredicateFactory, mOriginalRoot.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable(), 
 						mSimplificationTechnique, mXnfConversionTechnique);
 
 		mEdgeChecker =
@@ -219,7 +223,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		// }
 		// end dependency removal
 		final RCFG2AnnotatedRCFG r2ar =
-				new RCFG2AnnotatedRCFG(mSmtManager, mLogger, mPredicateUnifier.getTruePredicate(), initialPredicates);
+				new RCFG2AnnotatedRCFG(mSmtManager, mPredicateFactory, mLogger, mPredicateUnifier.getTruePredicate(), initialPredicates);
 		mGraphRoot = r2ar.convert(mServices, mOriginalRoot);
 
 		mGraphWriter.writeGraphAsImage(mGraphRoot,
@@ -421,7 +425,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 
 					if (GlobalSettings._instance._predicateUnification == PredicateUnification.PER_ITERATION) {
 						mPredicateUnifier = new PredicateUnifier(mServices, mSmtManager.getManagedScript(), 
-								mSmtManager.getPredicateFactory(), 
+								mPredicateFactory, 
 								mOriginalRoot.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable(), 
 								mSimplificationTechnique,
 								mXnfConversionTechnique);
@@ -664,11 +668,11 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 
 		for (final Entry<ProgramPoint, HashSet<AnnotatedProgramPoint>> kvp : programPointToAnnotatedProgramPoints
 				.entrySet()) {
-			IPredicate annot = mSmtManager.getPredicateFactory().newPredicate(mSmtManager.getManagedScript().getScript().term("false"));
+			IPredicate annot = mPredicateFactory.newPredicate(mSmtManager.getManagedScript().getScript().term("false"));
 
 			for (final AnnotatedProgramPoint app : kvp.getValue()) {
-				final Term tvp = mSmtManager.getPredicateFactory().or(false, annot, app.getPredicate());
-				annot = mSmtManager.getPredicateFactory().newSPredicate(kvp.getKey(), tvp);
+				final Term tvp = mPredicateFactory.or(false, annot, app.getPredicate());
+				annot = mPredicateFactory.newSPredicate(kvp.getKey(), tvp);
 			}
 			// programPointToHoareAnnotation.put(kvp.getKey(), annot.getClosedFormula());
 			programPointToHoareAnnotation.put(kvp.getKey(), annot.getFormula());

@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -107,25 +108,28 @@ public class BuchiInterpolantAutomatonBouncer extends AbstractInterpolantAutomat
 	private final IUltimateServiceProvider mServices;
 	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
+	
+	private final PredicateFactory mPredicateFactory;
 
-	public BuchiInterpolantAutomatonBouncer(final SmtManager smtManager, final BinaryStatePredicateManager bspm,
+	public BuchiInterpolantAutomatonBouncer(final SmtManager smtManager, final PredicateFactory predicateFactory, final BinaryStatePredicateManager bspm,
 			final BuchiHoareTripleChecker bhtc, final boolean emtpyStem, final Set<IPredicate> stemInterpolants,
 			final Set<IPredicate> loopInterpolants, final CodeBlock hondaEntererStem, final CodeBlock hondaEntererLoop,
 			final INestedWordAutomatonSimple<CodeBlock, IPredicate> abstraction, final boolean scroogeNondeterminismStem,
 			final boolean scroogeNondeterminismLoop, final boolean hondaBouncerStem, final boolean hondaBouncerLoop,
-			final PredicateFactoryForInterpolantAutomata predicateFactory, final PredicateUnifier stemPU, final PredicateUnifier loopPU,
+			final PredicateFactoryForInterpolantAutomata predicateFactoryFia, final PredicateUnifier stemPU, final PredicateUnifier loopPU,
 			final IPredicate falsePredicate, final IUltimateServiceProvider services,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique, 
 			final Boogie2SmtSymbolTable symbolTable) {
 		super(services, smtManager, bhtc, false, abstraction, falsePredicate, null, services.getLoggingService().getLogger(
 				Activator.PLUGIN_ID));
 		mServices = services;
+		mPredicateFactory = predicateFactory;
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
 		mBspm = bspm;
-		mStemPU = new PredicateUnifier(mServices, mSmtManager.getManagedScript(), mSmtManager.getPredicateFactory(), symbolTable, mSimplificationTechnique, mXnfConversionTechnique, falsePredicate);
-		mLoopPU = new PredicateUnifier(mServices, mSmtManager.getManagedScript(), mSmtManager.getPredicateFactory(), symbolTable, mSimplificationTechnique, mXnfConversionTechnique, falsePredicate);
-		mAcceptingPU = new PredicateUnifier(mServices, mSmtManager.getManagedScript(), mSmtManager.getPredicateFactory(), symbolTable, mSimplificationTechnique, mXnfConversionTechnique, falsePredicate);
+		mStemPU = new PredicateUnifier(mServices, mSmtManager.getManagedScript(), mPredicateFactory, symbolTable, mSimplificationTechnique, mXnfConversionTechnique, falsePredicate);
+		mLoopPU = new PredicateUnifier(mServices, mSmtManager.getManagedScript(), mPredicateFactory, symbolTable, mSimplificationTechnique, mXnfConversionTechnique, falsePredicate);
+		mAcceptingPU = new PredicateUnifier(mServices, mSmtManager.getManagedScript(), mPredicateFactory, symbolTable, mSimplificationTechnique, mXnfConversionTechnique, falsePredicate);
 		IPredicate initialPredicate;
 		if (emtpyStem) {
 			final Set<IPredicate> empty = Collections.emptySet();
@@ -409,7 +413,7 @@ public class BuchiInterpolantAutomatonBouncer extends AbstractInterpolantAutomat
 			final HashRelation<IPredicate, IPredicate> resPred2InputPreds) {
 		IPredicate resSucc = inputPreds2ResultPreds.get(succs);
 		if (resSucc == null) {
-			final Term conjunction = mSmtManager.getPredicateFactory().and(succs);
+			final Term conjunction = mPredicateFactory.and(succs);
 			resSucc = predicateUnifier.getOrConstructPredicate(conjunction);
 			assert resSucc != mIaFalseState : "false should have been handeled before";
 			inputPreds2ResultPreds.put(succs, resSucc);

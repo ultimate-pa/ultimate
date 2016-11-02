@@ -78,6 +78,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
@@ -113,10 +114,12 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 
 		mSmtManager = new SmtManager(mRootAnnot.getModGlobVarManager(), mServices,
 				mRootAnnot.getManagedScript(), mRootAnnot.getBoogie2SMT().getBoogie2SmtSymbolTable(), taPrefs.getSimplificationTechnique(), taPrefs.getXnfConversionTechnique());
+		final PredicateFactory predicateFactory = new PredicateFactory(mServices, mSmtManager.getManagedScript(), 
+				mSmtManager.getSymbolTable(), taPrefs.getSimplificationTechnique(), taPrefs.getXnfConversionTechnique());
 
 		mPref = taPrefs;
 
-		final BuchiCegarLoop bcl = new BuchiCegarLoop((RootNode) root, mSmtManager, mPref, mServices, mStorage);
+		final BuchiCegarLoop bcl = new BuchiCegarLoop((RootNode) root, mSmtManager, predicateFactory, mPref, mServices, mStorage);
 		final Result result = bcl.iterate();
 		final BuchiCegarLoopBenchmarkGenerator benchGen = bcl.getBenchmarkGenerator();
 		benchGen.stop(CegarLoopStatisticsDefinitions.OverallTime.toString());

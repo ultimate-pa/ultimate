@@ -78,6 +78,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Tr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EfficientHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
@@ -96,15 +97,15 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 	
 	private final Map<String, Term> mIndexedConstants = new HashMap<String, Term>();
 
-	public TAwAFAsCegarLoop(final String name, final RootNode rootNode, final SmtManager smtManager,
+	public TAwAFAsCegarLoop(final String name, final RootNode rootNode, final SmtManager smtManager, final PredicateFactory predicateFactory,
 			final TraceAbstractionBenchmarks traceAbstractionBenchmarks, final TAPreferences taPrefs,
 			final Collection<ProgramPoint> errorLocs, final InterpolationTechnique interpolation, final boolean computeHoareAnnotation,
 			final IUltimateServiceProvider services, final IToolchainStorage storage) {
-		super(name, rootNode, smtManager, traceAbstractionBenchmarks, taPrefs, errorLocs, services, storage);
-		mPredicateUnifier = new PredicateUnifier(services, smtManager.getManagedScript(), smtManager.getPredicateFactory(), 
+		super(name, rootNode, smtManager, predicateFactory, traceAbstractionBenchmarks, taPrefs, errorLocs, services, storage);
+		mPredicateUnifier = new PredicateUnifier(services, smtManager.getManagedScript(), predicateFactory, 
 				rootNode.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable(), mSimplificationTechnique, mXnfConversionTechnique,
-				smtManager.getPredicateFactory().newPredicate(smtManager.getManagedScript().getScript().term("true")),
-				smtManager.getPredicateFactory().newPredicate(smtManager.getManagedScript().getScript().term("false")));
+				predicateFactory.newPredicate(smtManager.getManagedScript().getScript().term("true")),
+				predicateFactory.newPredicate(smtManager.getManagedScript().getScript().term("false")));
 	}
 
 	@Override
@@ -426,7 +427,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 					alternatingAutomaton.generateCube(targetStates.toArray(new IPredicate[targetStates.size()]), new IPredicate[0])
 				);
 				assert mhtc.checkInternal(
-						mSmtManager.getPredicateFactory().newPredicate(mSmtManager.getPredicateFactory().and(targetStates.toArray(new IPredicate[targetStates.size()]))),
+						mPredicateFactory.newPredicate(mPredicateFactory.and(targetStates.toArray(new IPredicate[targetStates.size()]))),
 						(IInternalAction) currentDag.getNodeLabel().getBlock(),
 						currentDag.getNodeLabel().getInterpolant()) == Validity.VALID;
 			}
@@ -437,7 +438,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 					alternatingAutomaton.generateCube(new IPredicate[]{finalState}, new IPredicate[0])
 				);
 				assert mhtc.checkInternal(
-						mSmtManager.getPredicateFactory().newPredicate(mSmtManager.getPredicateFactory().and(targetStates.toArray(new IPredicate[targetStates.size()]))),
+						mPredicateFactory.newPredicate(mPredicateFactory.and(targetStates.toArray(new IPredicate[targetStates.size()]))),
 						(IInternalAction) currentDag.getNodeLabel().getBlock(),
 						currentDag.getNodeLabel().getInterpolant()) == Validity.VALID;
 			}
@@ -598,15 +599,15 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 		IPredicate pred = mPredicateUnifier.getTruePredicate();
 		for(int i = 0; i < states.size(); i++){
 			if(bex.getAlpha().get(i)){
-				pred = mSmtManager.getPredicateFactory().newPredicate(
-						mSmtManager.getPredicateFactory().and(pred,
+				pred = mPredicateFactory.newPredicate(
+						mPredicateFactory.and(pred,
 								!bex.getBeta().get(i) ?
-									mSmtManager.getPredicateFactory().newPredicate(mSmtManager.getPredicateFactory().not(states.get(i))) :
+									mPredicateFactory.newPredicate(mPredicateFactory.not(states.get(i))) :
 										states.get(i)));
 			}
 		}
 		if(bex.getNextConjunctExpression() != null){
-			pred = mSmtManager.getPredicateFactory().newPredicate(mSmtManager.getPredicateFactory().or(false, pred, 
+			pred = mPredicateFactory.newPredicate(mPredicateFactory.or(false, pred, 
 					bexToPredicate(bex.getNextConjunctExpression(), states)));
 		}
 		return pred;

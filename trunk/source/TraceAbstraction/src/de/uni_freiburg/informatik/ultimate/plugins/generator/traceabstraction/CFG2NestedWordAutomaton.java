@@ -50,12 +50,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCF
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 
 public class CFG2NestedWordAutomaton {
 	private final IUltimateServiceProvider mServices;
 	
 	private final SmtManager mSmtManager;
+	private final PredicateFactory mPredicateFactory;
 	private static final boolean mStoreHistory = false;
 	private final boolean mInterprocedural;
 	private boolean mMainMode;
@@ -63,10 +65,12 @@ public class CFG2NestedWordAutomaton {
 	
 	private final ILogger mLogger;
 	
-	public CFG2NestedWordAutomaton(final IUltimateServiceProvider services, final boolean interprocedural, final SmtManager predicateFactory, final ILogger logger) {
+	public CFG2NestedWordAutomaton(final IUltimateServiceProvider services, final boolean interprocedural, 
+			final SmtManager csToolkit, final PredicateFactory predicateFactory, final ILogger logger) {
 		mServices = services;
 		mLogger = logger;
-		mSmtManager = predicateFactory;
+		mSmtManager = csToolkit;
+		mPredicateFactory = predicateFactory;
 		mInterprocedural = interprocedural;
 	}
 	
@@ -191,9 +195,9 @@ public class CFG2NestedWordAutomaton {
 			IPredicate automatonState;
 			final Term trueTerm = mSmtManager.getManagedScript().getScript().term("true");
 			if (mStoreHistory) {
-				automatonState = mSmtManager.getPredicateFactory().newPredicateWithHistory(locNode, trueTerm, new HashMap<Integer, Term>());
+				automatonState = mPredicateFactory.newPredicateWithHistory(locNode, trueTerm, new HashMap<Integer, Term>());
 			} else {
-				automatonState = mSmtManager.getPredicateFactory().newSPredicate(locNode, trueTerm); 
+				automatonState = mPredicateFactory.newSPredicate(locNode, trueTerm); 
 			}
 					
 			nwa.addState(isInitial, isErrorLocation, automatonState);

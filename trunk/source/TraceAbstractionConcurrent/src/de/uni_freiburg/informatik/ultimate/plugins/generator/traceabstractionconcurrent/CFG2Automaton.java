@@ -57,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sta
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer.CodeBlockSize;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 
 public abstract class CFG2Automaton {
@@ -68,14 +69,16 @@ public abstract class CFG2Automaton {
 
 	private final RootAnnot mRootAnnot;
 	private final SmtManager mSmtManager;
+	private final PredicateFactory mPredicateFactory;
 	private final IStateFactory<IPredicate> mContentFactory;
 	protected ArrayList<INestedWordAutomaton<CodeBlock, IPredicate>> mAutomata;
 
 	private CodeBlock mSharedVarsInit;
 	private static final String mInitProcedure = "~init";
 
-	public CFG2Automaton(final RootNode rootNode, final IStateFactory<IPredicate> contentFactory, final SmtManager smtManager,
-			final IUltimateServiceProvider services, final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
+	public CFG2Automaton(final RootNode rootNode, final IStateFactory<IPredicate> contentFactory, 
+			final SmtManager smtManager, final PredicateFactory predicateFactory, final IUltimateServiceProvider services, 
+			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mSimplificationTechnique = simplificationTechnique;
@@ -84,6 +87,7 @@ public abstract class CFG2Automaton {
 		mRootAnnot = rootNode.getRootAnnot();
 		mContentFactory = contentFactory;
 		mSmtManager = smtManager;
+		mPredicateFactory = predicateFactory;
 	}
 
 	public abstract Object getResult();
@@ -214,7 +218,7 @@ public abstract class CFG2Automaton {
 		for (final ProgramPoint locNode : allNodes) {
 			final boolean isErrorLocation = locNode.isErrorLocation();
 			final Term trueTerm = mSmtManager.getManagedScript().getScript().term("true");
-			final IPredicate automatonState = mSmtManager.getPredicateFactory().newSPredicate(locNode, trueTerm);
+			final IPredicate automatonState = mPredicateFactory.newSPredicate(locNode, trueTerm);
 			nwa.addState(false, isErrorLocation, automatonState);
 			nodes2States.put(locNode, automatonState);
 			if (locNode == initialNode) {
@@ -245,7 +249,7 @@ public abstract class CFG2Automaton {
 		mLogger.debug("Step: SharedVarsInit part");
 		final ProgramPoint entryOfInitProc = (ProgramPoint) mSharedVarsInit.getSource();
 		final Term trueTerm = mSmtManager.getManagedScript().getScript().term("true");
-		final IPredicate initialContent = mSmtManager.getPredicateFactory().newSPredicate(entryOfInitProc, trueTerm);
+		final IPredicate initialContent = mPredicateFactory.newSPredicate(entryOfInitProc, trueTerm);
 		nwa.addState(true, false, initialContent);
 		IPredicate automatonSuccState;
 		automatonSuccState = procedureInitialState;

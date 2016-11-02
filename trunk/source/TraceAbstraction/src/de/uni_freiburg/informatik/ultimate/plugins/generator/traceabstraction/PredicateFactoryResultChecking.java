@@ -33,8 +33,8 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.LevelRankingState;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 
 /**
  * StateFactory that should be used for result checking.
@@ -44,32 +44,32 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  */
 public class PredicateFactoryResultChecking implements IStateFactory<IPredicate> {
 	
-	protected final SmtManager mSmtManager;
+	protected final PredicateFactory mPredicateFactory;
 	private static final String STATE_LABEL =
 			"auxiliary predicate that should only be used while checking correctness of automata operations";
 	
-	public PredicateFactoryResultChecking(final SmtManager smtManager) {
-		mSmtManager = smtManager;
+	public PredicateFactoryResultChecking(final PredicateFactory smtManager) {
+		mPredicateFactory = smtManager;
 	}
 	
 	@Override
 	public IPredicate intersection(final IPredicate p1, final IPredicate p2) {
-		return mSmtManager.getPredicateFactory().newDebugPredicate(STATE_LABEL);
+		return mPredicateFactory.newDebugPredicate(STATE_LABEL);
 	}
 	
 	@Override
 	public IPredicate determinize(final Map<IPredicate, Set<IPredicate>> down2up) {
-		return mSmtManager.getPredicateFactory().newDebugPredicate(STATE_LABEL);
+		return mPredicateFactory.newDebugPredicate(STATE_LABEL);
 	}
 	
 	@Override
 	public IPredicate createSinkStateContent() {
-		return mSmtManager.getPredicateFactory().newDebugPredicate(STATE_LABEL);
+		return mPredicateFactory.newDebugPredicate(STATE_LABEL);
 	}
 
 	@Override
 	public IPredicate createEmptyStackState(){
-		return mSmtManager.getPredicateFactory().newDebugPredicate(STATE_LABEL);
+		return mPredicateFactory.newDebugPredicate(STATE_LABEL);
 	}
 
 	@Override
@@ -80,28 +80,28 @@ public class PredicateFactoryResultChecking implements IStateFactory<IPredicate>
 	
 	@Override
 	public IPredicate minimize(final Collection<IPredicate> states) {
-		return mSmtManager.getPredicateFactory().newDebugPredicate(STATE_LABEL);
+		return mPredicateFactory.newDebugPredicate(STATE_LABEL);
 	}
 	
 	@Override
 	public IPredicate senwa(final IPredicate entry, final IPredicate state) {
 		assert false : "still used?";
-		return mSmtManager.getPredicateFactory().newDontCarePredicate(((SPredicate) state).getProgramPoint());
+		return mPredicateFactory.newDontCarePredicate(((SPredicate) state).getProgramPoint());
 	}
 
 	@Override
 	public IPredicate buchiComplementFKV(final LevelRankingState compl) {
-		return mSmtManager.getPredicateFactory().newDebugPredicate(STATE_LABEL);
+		return mPredicateFactory.newDebugPredicate(STATE_LABEL);
 	}
 
 	@Override
 	public IPredicate intersectBuchi(final IPredicate s1, final IPredicate s2, final int track) {
-		return mSmtManager.getPredicateFactory().newDebugPredicate(STATE_LABEL);
+		return mPredicateFactory.newDebugPredicate(STATE_LABEL);
 	}
 	
 	@Override
 	public IPredicate getContentOnConcurrentProduct(final IPredicate c1,
 			final IPredicate c2) {
-		return mSmtManager.getPredicateFactory().newDebugPredicate(STATE_LABEL);
+		return mPredicateFactory.newDebugPredicate(STATE_LABEL);
 	}
 }

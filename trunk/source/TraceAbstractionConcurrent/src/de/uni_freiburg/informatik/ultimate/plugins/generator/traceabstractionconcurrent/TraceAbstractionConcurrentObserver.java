@@ -62,6 +62,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ba
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Concurrency;
@@ -100,6 +101,8 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 				mServices, rootNode.getRootAnnot().getManagedScript(), rootAnnot.getBoogie2SMT().getBoogie2SmtSymbolTable(), 
 				taPrefs.getSimplificationTechnique(),
 				taPrefs.getXnfConversionTechnique());
+		final PredicateFactory predicateFactory = new PredicateFactory(mServices, smtManager.getManagedScript(), 
+				smtManager.getSymbolTable(), taPrefs.getSimplificationTechnique(), taPrefs.getXnfConversionTechnique());
 		final TraceAbstractionBenchmarks timingStatistics = new TraceAbstractionBenchmarks(rootNode.getRootAnnot());
 
 		final Map<String, Collection<ProgramPoint>> proc2errNodes = rootAnnot.getErrorNodes();
@@ -112,10 +115,10 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 
 		final String name = "AllErrorsAtOnce";
 		if (taPrefs.getConcurrency() == Concurrency.PETRI_NET) {
-			abstractCegarLoop = new CegarLoopJulian(name, rootNode, smtManager, timingStatistics, taPrefs,
+			abstractCegarLoop = new CegarLoopJulian(name, rootNode, smtManager, predicateFactory, timingStatistics, taPrefs,
 					errNodesOfAllProc, mServices, mToolchainStorage);
 		} else if (taPrefs.getConcurrency() == Concurrency.FINITE_AUTOMATA) {
-			abstractCegarLoop = new CegarLoopConcurrentAutomata(name, rootNode, smtManager, timingStatistics, taPrefs,
+			abstractCegarLoop = new CegarLoopConcurrentAutomata(name, rootNode, smtManager, predicateFactory, timingStatistics, taPrefs,
 					errNodesOfAllProc, mServices, mToolchainStorage);
 		} else {
 			throw new IllegalArgumentException();
