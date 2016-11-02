@@ -15,34 +15,34 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.util.CommaS
 class ChangeGenerator {
 
 	static class ExpansionResult {
-		final int advancedLevels;
-		final List<List<Change>> changeGroups;
-		final List<IPSTNode> remainingNodes;
+		protected final int mAdvancedLevels;
+		protected final List<List<Change>> mChangeGroups;
+		protected final List<IPSTNode> mRemainingNodes;
 
 		public ExpansionResult(final int advancedLevels, final List<List<Change>> changeGroups,
 				final List<IPSTNode> remainingNodes) {
-			this.advancedLevels = advancedLevels;
-			this.changeGroups = changeGroups;
-			this.remainingNodes = remainingNodes;
+			mAdvancedLevels = advancedLevels;
+			mChangeGroups = changeGroups;
+			mRemainingNodes = remainingNodes;
 		}
 	}
 
-	protected final IHDDStrategy strategy;
+	private final IHDDStrategy mStrategy;
 
-	private final Map<IPSTRegularNode, List<CommaSeparatedChild>> parentToCommaPositionMap = new IdentityHashMap<>();
+	private final Map<IPSTRegularNode, List<CommaSeparatedChild>> mParentToCommaPositionMap = new IdentityHashMap<>();
 
 	public ChangeGenerator(final IHDDStrategy strategy) {
-		this.strategy = strategy;
+		mStrategy = strategy;
 	}
 
 	List<List<Change>> expandCurrentLevel(final List<IPSTNode> remaingNodesOnCurrentLevel,
 			final List<IPSTNode> nextLevelNodes) {
 		final List<List<Change>> changeGroups = new ArrayList<>();
 
-		final ChangeCollector collector = new ChangeCollector(parentToCommaPositionMap);
+		final ChangeCollector collector = new ChangeCollector(mParentToCommaPositionMap);
 		for (final IPSTNode node : remaingNodesOnCurrentLevel) {
-			if (strategy.expandIntoOwnGroup(node)) {
-				final ChangeCollector subcollector = new ChangeCollector(parentToCommaPositionMap);
+			if (mStrategy.expandIntoOwnGroup(node)) {
+				final ChangeCollector subcollector = new ChangeCollector(mParentToCommaPositionMap);
 				expandCurrentLevelNode(node, nextLevelNodes, subcollector);
 				if (!subcollector.getChanges().isEmpty()) {
 					changeGroups.add(subcollector.getChanges());
@@ -60,15 +60,15 @@ class ChangeGenerator {
 
 	private void expandCurrentLevelNode(final IPSTNode node, final List<IPSTNode> nextLevelNodes,
 			final ChangeCollector collector) {
-		strategy.createAdditionalChangesForExpandedNode(node, collector);
+		mStrategy.createAdditionalChangesForExpandedNode(node, collector);
 		for (final IPSTNode child : node.getChildren()) {
-			if (strategy.skipSubTree(child)) {
+			if (mStrategy.skipSubTree(child)) {
 				continue;
 			}
 			final int previousChangeCount = collector.getChanges().size();
-			strategy.createChangeForNode(child, collector);
+			mStrategy.createChangeForNode(child, collector);
 			if (previousChangeCount == collector.getChanges().size()
-					&& strategy.expandUnchangeableNodeImmediately(child) && !strategy.expandIntoOwnGroup(child)) {
+					&& mStrategy.expandUnchangeableNodeImmediately(child) && !mStrategy.expandIntoOwnGroup(child)) {
 				expandCurrentLevelNode(child, nextLevelNodes, collector);
 			} else {
 				nextLevelNodes.add(child);
