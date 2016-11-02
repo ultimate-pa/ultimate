@@ -199,38 +199,10 @@ public class LTL2aut implements IGenerator, ISource {
 
 
 	@Override
-	//TODO: move to own class as formula format will change
 	public IElement parseAST(File file) throws Exception {
-		mLogger.info("Seperate LTL file detected.");
-		String line = null;
-		String ltlProperty = null;
 		mUseful++;
-		try (BufferedReader br = new BufferedReader(new FileReader(file))) {
-			while ((line = br.readLine()) != null) {
-				if(line.startsWith("//@ ltl invariant")){
-					ltlProperty = line;
-					break;
-				}
-			}
-		} catch (final IOException e) {
-			line = null;
-			throw e;
-		}
-		if (ltlProperty == null){
-			throw new RuntimeException("LTL invariant file supplied but no LTL invariant found!");
-		}
-		
-		final StringBuilder input = new StringBuilder();
-		input.append("gstart");
-		input.append('\n');
-		input.append(ltlProperty.replaceFirst("//@", ""));
-		final ACSLNode node = de.uni_freiburg.informatik.ultimate.acsl.parser.Parser.parseComment(input.toString(), 0, 0);
-		if(! (node instanceof GlobalLTLInvariant)){
-			throw new RuntimeException("Some ACSL Annotation, but no LTL Invariant found!"); 
-		} else {
-			mLogger.info("LTLInvariant: " + ((GlobalLTLInvariant)node).getFormula().toString());
-		}
-		return new ObjectContainer<ACSLNode>(node);
+		LTLFileParser ltlFileParser = new LTLFileParser(mLogger);
+		return ltlFileParser.parse(file);
 	}
 
 	@Override

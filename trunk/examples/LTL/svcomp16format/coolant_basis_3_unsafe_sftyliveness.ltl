@@ -1,2 +1,2 @@
 //#Unsafe
-//@ ltl invariant positive: []( ! AP(init == 3) || []<>AP(time > otime));
+G( ! "init == 3" || GF"time > otime")

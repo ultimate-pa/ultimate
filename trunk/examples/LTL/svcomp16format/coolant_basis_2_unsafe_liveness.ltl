@@ -1,2 +1,2 @@
 //#Unsafe
-//@ ltl invariant positive: []<>AP(otime < time);
+GF("otime < time")
