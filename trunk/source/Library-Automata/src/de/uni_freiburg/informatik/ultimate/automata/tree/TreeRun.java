@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -38,6 +39,31 @@ public class TreeRun<LETTER, STATE> implements ITreeRun<LETTER, STATE> {
 		this.letter = letter;
 		this.children = children;
 	}
+	
+	public TreeRun<LETTER, STATE> reconstruct(final Map<STATE, STATE> stMap) {
+		List<TreeRun<LETTER, STATE>> child = new ArrayList<>();
+		for (final TreeRun<LETTER, STATE> c : children) {
+			child.add(c.reconstruct(stMap));
+		}
+		return new TreeRun<LETTER, STATE>(stMap.get(state), letter, child);
+	}
+	/*
+	public TreeRun(final STATE state, final LETTER letter, final TreeRun<LETTER, STATE>[] children) {
+		this.state = state;
+		this.letter = letter;
+		this.children = toArrayList(children);
+	}
+
+	private ArrayList<TreeRun<LETTER, STATE>> toArrayList(final TreeRun<LETTER, STATE>[] t) {
+		final ArrayList<TreeRun<LETTER, STATE>> ret = new ArrayList<>();
+		
+		for (TreeRun<LETTER, STATE> st : t) {
+			ret.add(st);
+		}
+		
+		return ret;
+	}
+	*/
 	
 	public Collection<TreeRun<LETTER, STATE>> getChildren() {
 		return children;
@@ -121,7 +147,7 @@ public class TreeRun<LETTER, STATE> implements ITreeRun<LETTER, STATE> {
 	@Override
 	public String toString() {
 		if (children.isEmpty()) {
-			return "";
+			return state.toString();
 		}
 		String res = "";
 		for (final TreeRun<LETTER, STATE> st : children) {
