@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.hornutil;
+package de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil;
 
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 

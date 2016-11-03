@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.hornutil;
+package de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil;
 
 /**
  * Represents an uninterpreted predicate symbol that appears in a set of Horn clauses.
@@ -24,6 +24,12 @@ public class HornClausePredicateSymbol {
 	public static class HornClauseFalsePredicateSymbol extends HornClausePredicateSymbol {
 		public HornClauseFalsePredicateSymbol() {
 			super("false", 0);
+		}
+	}
+	
+	public static class HornClauseTruePredicateSymbol  extends HornClausePredicateSymbol {
+		public HornClauseTruePredicateSymbol() {
+			super("true", 0);
 		}
 	}
 }
