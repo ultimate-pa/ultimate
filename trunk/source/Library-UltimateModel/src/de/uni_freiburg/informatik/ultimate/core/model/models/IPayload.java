@@ -51,6 +51,7 @@ public interface IPayload extends Serializable {
 	/**
 	 * @return an {@link ILocation} instance describing which part of the input is described by this {@link IPayload}.
 	 */
+	@Deprecated
 	ILocation getLocation();
 
 	/**
@@ -69,6 +70,7 @@ public interface IPayload extends Serializable {
 	 * 
 	 * @return true iff this {@link IPayload} has a {@link ILocation} instance, false otherwise.
 	 */
+	@Deprecated
 	boolean hasLocation();
 
 	/**
