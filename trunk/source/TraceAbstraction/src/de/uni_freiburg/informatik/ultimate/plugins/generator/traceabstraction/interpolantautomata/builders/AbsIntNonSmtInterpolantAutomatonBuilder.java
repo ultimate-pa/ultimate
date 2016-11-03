@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -68,7 +68,7 @@ public class AbsIntNonSmtInterpolantAutomatonBuilder implements IInterpolantAuto
 
 	public AbsIntNonSmtInterpolantAutomatonBuilder(final IUltimateServiceProvider services,
 			final INestedWordAutomatonSimple<CodeBlock, IPredicate> oldAbstraction, final PredicateUnifier predUnifier,
-			final ManagedScript csToolkit, final CfgSymbolTable symbolTable,
+			final ManagedScript csToolkit, final ICfgSymbolTable symbolTable,
 			final IRun<CodeBlock, IPredicate> currentCounterexample,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;

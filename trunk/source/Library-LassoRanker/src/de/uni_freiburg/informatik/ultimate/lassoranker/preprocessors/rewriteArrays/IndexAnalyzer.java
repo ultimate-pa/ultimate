@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
@@ -66,7 +66,7 @@ public class IndexAnalyzer {
 	private final ILogger mLogger;
 	private final Term mTerm;
 	private final Script mScript;
-	private final CfgSymbolTable mSymbolTable;
+	private final ICfgSymbolTable mSymbolTable;
 	private final ReplacementVarFactory mRepvarFactory;
 	private final ModifiableTransFormula mTransFormula;
 
@@ -84,7 +84,7 @@ public class IndexAnalyzer {
 	private final boolean mUseArrayIndexSupportingInvariants = true;
 
 	public IndexAnalyzer(final Term term, final Set<Doubleton<Term>> doubletons,
-			final CfgSymbolTable symbolTable, final ModifiableTransFormula tf,
+			final ICfgSymbolTable symbolTable, final ModifiableTransFormula tf,
 			final EqualityAnalysisResult invariantEqualitiesBefore,
 			final EqualityAnalysisResult invariantEqualitiesAfter, final ILogger logger,
 			final ReplacementVarFactory replacementVarFactory,
@@ -125,7 +125,7 @@ public class IndexAnalyzer {
 
 	// TODO: This constructor is only used by the old map-elimination!
 	public IndexAnalyzer(final Term formula, final HashRelation<Term, ArrayIndex> arrays2Indices,
-			final CfgSymbolTable boogie2SmtSymbolTable, final ModifiableTransFormula tf,
+			final ICfgSymbolTable boogie2SmtSymbolTable, final ModifiableTransFormula tf,
 			final EqualityAnalysisResult invariantEqualitiesBefore,
 			final EqualityAnalysisResult invariantEqualitiesAfter, final ILogger logger,
 			final ReplacementVarFactory replacementVarFactory,

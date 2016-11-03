@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -144,7 +144,7 @@ public class TraceChecker {
 	protected final TraceCheckerBenchmarkGenerator mTraceCheckerBenchmarkGenerator;
 	protected final AssertCodeBlockOrder massertCodeBlocksIncrementally;
 	protected ToolchainCanceledException mToolchainCanceledException;
-	protected final CfgSymbolTable mBoogie2SmtSymbolTable;
+	protected final ICfgSymbolTable mBoogie2SmtSymbolTable;
 
 	/**
 	 * Defines benchmark for measuring data about the usage of TraceCheckers. E.g., number and size of predicates

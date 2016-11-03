@@ -72,7 +72,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SMTPrettyPrinter;
@@ -145,7 +145,7 @@ public class LassoAnalysis {
 	 */
 	protected final Set<Term> mArrayIndexSupportingInvariants;
 
-	private final CfgSymbolTable mSymbolTable;
+	private final ICfgSymbolTable mSymbolTable;
 	private final ManagedScript mMgdScript;
 
 	private final IUltimateServiceProvider mServices;
@@ -195,7 +195,7 @@ public class LassoAnalysis {
 	 * @throws FileNotFoundException
 	 *             if the file for dumping the script cannot be opened
 	 */
-	public LassoAnalysis(final ManagedScript mgdScript, final CfgSymbolTable symbolTable,
+	public LassoAnalysis(final ManagedScript mgdScript, final ICfgSymbolTable symbolTable,
 			final UnmodifiableTransFormula stemTransition, final UnmodifiableTransFormula loopTransition,
 			final Set<IProgramVar> modifiableGlobalsAtHonda, final Term[] axioms,
 			final ILassoRankerPreferences preferences, final IUltimateServiceProvider services,
@@ -253,7 +253,7 @@ public class LassoAnalysis {
 	 * @throws FileNotFoundException
 	 *             if the file for dumping the script cannot be opened
 	 */
-	public LassoAnalysis(final ManagedScript mgdScript, final CfgSymbolTable symbolTable, final UnmodifiableTransFormula loop,
+	public LassoAnalysis(final ManagedScript mgdScript, final ICfgSymbolTable symbolTable, final UnmodifiableTransFormula loop,
 			final Set<IProgramVar> modifiableGlobalsAtHonda, final Term[] axioms,
 			final LassoRankerPreferences preferences, final IUltimateServiceProvider services,
 			final IToolchainStorage storage, final XnfConversionTechnique xnfConversionTechnique,

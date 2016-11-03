@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -57,10 +57,10 @@ public class RcfgProgramExecutionBuilder {
 	private final RelevantVariables mRelevantVariables;
 	private RcfgProgramExecution mRcfgProgramExecution;
 	private final Map<TermVariable, Boolean>[] mBranchEncoders;
-	private final CfgSymbolTable mSymbolTable;
+	private final ICfgSymbolTable mSymbolTable;
 
 	public RcfgProgramExecutionBuilder(final ModifiableGlobalVariableManager modifiableGlobalVariableManager,
-			final NestedWord<CodeBlock> trace, final RelevantVariables relevantVariables, final CfgSymbolTable symbolTable) {
+			final NestedWord<CodeBlock> trace, final RelevantVariables relevantVariables, final ICfgSymbolTable symbolTable) {
 		super();
 		mModifiableGlobalVariableManager = modifiableGlobalVariableManager;
 		mTrace = trace;

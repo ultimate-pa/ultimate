@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArra
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.LassoUnderConstruction;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -57,7 +57,7 @@ public class MapEliminationLassoPreprocessor extends LassoPreprocessor {
 
 	private final IUltimateServiceProvider mServices;
 	private final ManagedScript mManagedScript;
-	private final CfgSymbolTable mSymbolTable;
+	private final ICfgSymbolTable mSymbolTable;
 	private final ReplacementVarFactory mReplacementVarFactory;
 	private final UnmodifiableTransFormula mOriginalStem;
 	private final UnmodifiableTransFormula mOriginalLoop;
@@ -67,7 +67,7 @@ public class MapEliminationLassoPreprocessor extends LassoPreprocessor {
 	private final MapEliminationSettings mSettings;
 
 	public MapEliminationLassoPreprocessor(final IUltimateServiceProvider services, final ManagedScript managedScript,
-			final CfgSymbolTable symbolTable, final ReplacementVarFactory replacementVarFactory,
+			final ICfgSymbolTable symbolTable, final ReplacementVarFactory replacementVarFactory,
 			final UnmodifiableTransFormula originalStem, final UnmodifiableTransFormula originalLoop,
 			final Set<IProgramVar> modifiableGlobalsAtHonda, final Set<Term> arrayIndexSupportingInvariants,
 			final MapEliminationSettings settings) {
