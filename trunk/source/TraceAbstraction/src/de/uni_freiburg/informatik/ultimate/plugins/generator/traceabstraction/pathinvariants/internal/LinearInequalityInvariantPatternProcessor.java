@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.LinearTransition;
 import de.uni_freiburg.informatik.ultimate.lassoranker.ModelExtractionUtils;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.MotzkinTransformation;
+import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -84,6 +85,15 @@ public final class LinearInequalityInvariantPatternProcessor
 
 	private static final String PREFIX = "liipp_";
 	private static final String PREFIX_SEPARATOR = "_";
+	
+	private static final String Annot_Prefix = "LIIPP_Annot";
+	private int mAnnotTermCounter;
+	/**
+	 * Stores the mapping from annotation of a term to the original term. It is used to restore the original terms from the unsat core.
+	 */
+	private Map<String, Term> mAnnotTerm2OriginalTerm;
+	
+	private static final boolean USE_UNSAT_CORES = false;
 	
 	private final IUltimateServiceProvider services;
 	private final ILogger logger;
@@ -178,6 +188,8 @@ public final class LinearInequalityInvariantPatternProcessor
 		currentRound = -1;
 		maxRounds = strategy.getMaxRounds();
 		mUseNonlinearConstraints = useNonlinearConstraints;
+		mAnnotTermCounter = 0;
+		mAnnotTerm2OriginalTerm = new HashMap<>();
 	}
 
 	/**
@@ -185,7 +197,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	 */
 	@Override
 	public void startRound(final int round, final boolean useLiveVariables, final Set<IProgramVar> liveVariables) {
-		reinitializeSolver();
+		resetSettings();
 		patternVariables.clear();
 		entryInvariantPattern = null;
 		exitInvariantPattern = null;
@@ -212,6 +224,17 @@ public final class LinearInequalityInvariantPatternProcessor
 			}
 			logger.info( "[LIIPP] Linearization complete.");
 		}
+	}
+	
+	/**
+	 * Reset the solver and additionally reset the annotation term counter and the map mAnnotTerm2OriginalTerm
+	 */
+	private void resetSettings() {
+		reinitializeSolver();
+		// Reset annotation term counter
+		mAnnotTermCounter = 0;
+		// Reset map that stores the mapping from the annotated term to the original term.
+		mAnnotTerm2OriginalTerm = new HashMap<>();
 	}
 
 	/**
@@ -672,6 +695,46 @@ public final class LinearInequalityInvariantPatternProcessor
 		return transformNegatedConjunction(startInvariantDNF, endInvariantDNF,
 				transitionDNF);
 	}
+	
+	/**
+	 * Split the given term in its conjunctions, annotate and assert each conjunction one by one, 
+	 * and store the mapping annotated term -> original term in a map.
+	 * @param term - the Term to be annotated and asserted
+	 */
+	private void annotateAndAssertTermAndStoreMapping(final Term term) {
+		assert term.getFreeVars().length == 0 : "Term has free vars";
+		// Annotate and assert the conjuncts of the term one by one 
+		Term[] conjunctsOfTerm = SmtUtils.getConjuncts(term);
+		final String termAnnotName = Annot_Prefix + PREFIX_SEPARATOR + (mAnnotTermCounter++);
+		for (int conjunctCounter = 0; conjunctCounter < conjunctsOfTerm.length; conjunctCounter++) {
+			// Generate unique name for this term
+			String conjunctAnnotName = termAnnotName + PREFIX_SEPARATOR + (conjunctCounter); 
+			// Store mapping termAnnotName -> original term
+			mAnnotTerm2OriginalTerm.put(conjunctAnnotName, conjunctsOfTerm[conjunctCounter]);
+
+			final Annotation annot = new Annotation(":named", conjunctAnnotName);
+			final Term annotTerm = solver.annotate(conjunctsOfTerm[conjunctCounter], annot);
+			solver.assertTerm(annotTerm);
+		}
+	}
+	
+	/**
+	 * Generate constraints for invariant template as follows:
+	 * 1. Generate a constraint s.t. the precondition implies the invariant template.
+	 * 2. Generate for each predicate in predicates a constraint.
+	 * 3. Generate a constraint s.t. the invariant template implies the post-condition.
+	 * @param predicates - represent the intermediate transitions of the path program
+	 */
+	private void generateAndAssertTerms(final Collection<InvariantTransitionPredicate<Collection<Collection<LinearPatternBase>>>> predicates) {
+		// Generate and assert term for precondition
+		annotateAndAssertTermAndStoreMapping(buildImplicationTerm(precondition, entryInvariantPattern));
+		// Generate and assert term for post-condition
+		annotateAndAssertTermAndStoreMapping(buildBackwardImplicationTerm(postcondition, exitInvariantPattern));
+		// Generate and assert terms for intermediate transitions
+		for (final InvariantTransitionPredicate<Collection<Collection<LinearPatternBase>>> predicate : predicates) {
+			annotateAndAssertTermAndStoreMapping(buildPredicateTerm(predicate));
+		}
+	}
 
 	/**
 	 * {@inheritDoc}
@@ -681,12 +744,17 @@ public final class LinearInequalityInvariantPatternProcessor
 			final Collection<InvariantTransitionPredicate<Collection<Collection<LinearPatternBase>>>> predicates,
 			final int round) {
 		logger.info( "[LIIPP] Start generating terms.");
-		solver.assertTerm(buildImplicationTerm(precondition,
-				entryInvariantPattern));
-		solver.assertTerm(buildBackwardImplicationTerm(postcondition,
-				exitInvariantPattern));
-		for (final InvariantTransitionPredicate<Collection<Collection<LinearPatternBase>>> predicate : predicates) {
-			solver.assertTerm(buildPredicateTerm(predicate));
+		
+		if (!USE_UNSAT_CORES) {
+			solver.assertTerm(buildImplicationTerm(precondition,
+					entryInvariantPattern));
+			solver.assertTerm(buildBackwardImplicationTerm(postcondition,
+					exitInvariantPattern));
+			for (final InvariantTransitionPredicate<Collection<Collection<LinearPatternBase>>> predicate : predicates) {
+				solver.assertTerm(buildPredicateTerm(predicate));
+			}
+		} else {
+			generateAndAssertTerms(predicates);
 		}
 
 		logger.info( "[LIIPP] Terms generated, checking SAT.");
@@ -816,8 +884,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	private void reinitializeSolver() {
 		solver.reset();
 		solver.setOption(":produce-models", true);
-		final boolean someExtendedDebugging = false;
-		if (someExtendedDebugging) {
+		if (USE_UNSAT_CORES) {
 			solver.setOption(":produce-unsat-cores", true);
 		}
 		final Logics logic;
