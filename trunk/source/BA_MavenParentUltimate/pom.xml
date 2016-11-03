@@ -254,6 +254,7 @@
 		<module>../BA_FeatureUltimateReqAnalyzer</module>
 		<module>../CoreRCP</module>
 		<module>../GuiRCP</module>
+		<module>../BlockEncodingV2</module>
 		<module>../BoogieModSetAnnotator</module>
 		<module>../BoogiePLParser</module>
 		<module>../BoogiePreprocessor</module>

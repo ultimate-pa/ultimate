@@ -1,9 +1,9 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: BuchiProgramProduct
-Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.buchiprogramproduct;singleton:=true
+Bundle-Name: BlockEncodingV2
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.plugins.blockencoding;singleton:=true
 Bundle-Version: 0.0.1
-Bundle-Activator: de.uni_freiburg.informatik.ultimate.buchiprogramproduct.Activator
+Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.blockencoding.Activator
 Require-Bundle: Library-UltimateCore,
  Library-UltimateUtil,
  Library-BoogieAST,
@@ -11,11 +11,8 @@ Require-Bundle: Library-UltimateCore,
  Library-ModelCheckerUtils,
  BoogiePreprocessor,
  Library-SMTLIB,
- de.uni_freiburg.informatik.ultimate.ltl2aut,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
- JavaCup,
- de.uni_freiburg.informatik.ultimate.automata,
  de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
-Export-Package: de.uni_freiburg.informatik.ultimate.buchiprogramproduct.benchmark
+Export-Package: de.uni_freiburg.informatik.ultimate.plugins.blockencoding.benchmark
