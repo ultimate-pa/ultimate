@@ -172,7 +172,7 @@ public class LassoRankerStarter {
 
 		final Term[] axioms = mRootAnnot.getBoogie2SMT().getAxioms().toArray(new Term[0]);
 		final Set<IProgramVar> modifiableGlobalsAtHonda =
-				mRootAnnot.getModGlobVarManager().getModifiedBoogieVars(mHonda.getProcedure());
+				mCsToolkit.getModifiableGlobals().getModifiedBoogieVars(mHonda.getProcedure());
 
 		// Construct LassoAnalysis for nontermination
 		LassoAnalysis laNT = null;
@@ -270,7 +270,7 @@ public class LassoRankerStarter {
 
 	public UnmodifiableTransFormula constructTransformula(final NestedWord<CodeBlock> nw) {
 		final ManagedScript mgdScript = mRootAnnot.getBoogie2SMT().getManagedScript();
-		final ModifiableGlobalVariableManager modGlobVarManager = mRootAnnot.getModGlobVarManager();
+		final ModifiableGlobalVariableManager modGlobVarManager = mCsToolkit.getModifiableGlobals();
 		final boolean simplify = true;
 		final boolean extPqe = true;
 		final boolean tranformToCNF = false;
@@ -379,24 +379,24 @@ public class LassoRankerStarter {
 				mPredicateFactory, mRootAnnot.getBoogie2SMT(), mServices,
 				mSimplificationTechnique, mXnfConversionTechnique);
 		final Set<IProgramVar> modifiableGlobals =
-				mRootAnnot.getModGlobVarManager().getModifiedBoogieVars(mHonda.getProcedure());
+				mCsToolkit.getModifiableGlobals().getModifiedBoogieVars(mHonda.getProcedure());
 		bspm.computePredicates(false, arg, false, stemTF, loopTf, modifiableGlobals);
 
 		// check supporting invariants
 		boolean siCorrect = true;
 		for (final SupportingInvariant si : bspm.getTerminationArgument().getSupportingInvariants()) {
 			final IPredicate siPred = bspm.supportingInvariant2Predicate(si);
-			siCorrect &= bspm.checkSupportingInvariant(siPred, mStem, mLoop, mRootAnnot.getModGlobVarManager());
+			siCorrect &= bspm.checkSupportingInvariant(siPred, mStem, mLoop, mCsToolkit.getModifiableGlobals());
 		}
 
 		// check array index supporting invariants
 		for (final Term aisi : bspm.getTerminationArgument().getArrayIndexSupportingInvariants()) {
 			final IPredicate siPred = bspm.term2Predicate(aisi);
-			siCorrect &= bspm.checkSupportingInvariant(siPred, mStem, mLoop, mRootAnnot.getModGlobVarManager());
+			siCorrect &= bspm.checkSupportingInvariant(siPred, mStem, mLoop, mCsToolkit.getModifiableGlobals());
 		}
 
 		// check ranking function
-		final boolean rfCorrect = bspm.checkRankDecrease(mLoop, mRootAnnot.getModGlobVarManager());
+		final boolean rfCorrect = bspm.checkRankDecrease(mLoop, mCsToolkit.getModifiableGlobals());
 		if (siCorrect && rfCorrect) {
 			mLogger.info("Termination argument has been successfully verified.");
 		}

@@ -587,12 +587,12 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 		}
 		// test if we found a new path which can be added
 		final InterpolatingTraceCheckerCraig traceChecker = new InterpolatingTraceCheckerCraig(pre, post,
-				pendingContexts, word, mCsToolkit.getManagedScript(), mRootNode.getRootAnnot().getModGlobVarManager(),
-				/*
+				pendingContexts, word, mCsToolkit, /*
 				 * TODO: When Matthias introduced this parameter he set the argument to
 				 * AssertCodeBlockOrder.NOT_INCREMENTALLY. Check if you want to set this to another value.
-				 */AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, mPredicateUnifier, mPref.interpolation(),
-				true, mXnfConversionTechnique, mSimplificationTechnique, mRootNode.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable());
+				 */AssertCodeBlockOrder.NOT_INCREMENTALLY,
+				mServices, false, mPredicateUnifier, mPref.interpolation(), true,
+				mXnfConversionTechnique, mSimplificationTechnique);
 
 		mInterpolantGenerator = traceChecker;
 		if (traceChecker.isCorrect() == LBool.UNSAT) {

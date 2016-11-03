@@ -35,7 +35,7 @@ import java.util.SortedMap;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
@@ -170,9 +170,9 @@ public class TraceCheckerUtils {
 	public static boolean checkInterpolantsInductivityForward(final List<IPredicate> interpolants, final NestedWord<? extends IAction> trace, 
 			final IPredicate precondition, final IPredicate postcondition, 
 			final SortedMap<Integer, IPredicate> pendingContexts, final String computation, 
-			final ModifiableGlobalVariableManager mgvManager,
+			final CfgSmtToolkit csToolkit,
 			final ILogger logger, final ManagedScript managedScript) {
-		final IHoareTripleChecker htc = new MonolithicHoareTripleChecker(managedScript, mgvManager);
+		final IHoareTripleChecker htc = new MonolithicHoareTripleChecker(csToolkit);
 		final InterpolantsPreconditionPostcondition ipp = 
 				new InterpolantsPreconditionPostcondition(precondition, postcondition, interpolants);
 		Validity result;
@@ -198,9 +198,9 @@ public class TraceCheckerUtils {
 	public static boolean checkInterpolantsInductivityBackward(final List<IPredicate> interpolants, final NestedWord<? extends IAction> trace, 
 			final IPredicate precondition, final IPredicate postcondition, 
 			final SortedMap<Integer, IPredicate> pendingContexts, final String computation, 
-			final ModifiableGlobalVariableManager mgvManager,
+			final CfgSmtToolkit csToolkit,
 			final ILogger logger, final ManagedScript managedScript) {
-		final IHoareTripleChecker htc = new MonolithicHoareTripleChecker(managedScript, mgvManager);
+		final IHoareTripleChecker htc = new MonolithicHoareTripleChecker(csToolkit);
 		final InterpolantsPreconditionPostcondition ipp = 
 				new InterpolantsPreconditionPostcondition(precondition, postcondition, interpolants);
 		for (int i = interpolants.size(); i >= 0; i--) {

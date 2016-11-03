@@ -41,12 +41,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -115,18 +114,17 @@ public class TraceChecker {
 	 * 
 	 */
 	protected boolean mTraceCheckFinished;
+	protected final CfgSmtToolkit mCsToolkit;
 	/**
 	 * Interface for query the SMT solver.
 	 */
 	protected final ManagedScript mCfgManagedScript;
-	protected final Script mScript;
 	protected final ManagedScript mTcSmtManager;
 	protected final TraceCheckerLock mTraceCheckerLock = new TraceCheckerLock();
 	/**
 	 * Maps a procedure name to the set of global variables which may be modified by the procedure. The set of variables
 	 * is represented as a map where the identifier of the variable is mapped to the type of the variable.
 	 */
-	protected final ModifiableGlobalVariableManager mModifiedGlobals;
 	protected final NestedWord<? extends IAction> mTrace;
 	protected final IPredicate mPrecondition;
 	protected final IPredicate mPostcondition;
@@ -365,53 +363,47 @@ public class TraceChecker {
 	 * Check if trace fulfills specification given by precondition, postcondition and pending contexts. The
 	 * pendingContext maps the positions of pending returns to predicates which define possible variable valuations in
 	 * the context to which the return leads the trace.
-	 * 
 	 * @param assertCodeBlocksIncrementally
-	 *            If set to false, check-sat is called after all CodeBlocks are asserted. If set to true we use Betims
+	 *            If set to false, check-sat is called after all CodeBlocks are asserted. If set to true we use Betim's
 	 *            heuristic an incrementally assert CodeBlocks and do check-sat until all CodeBlocks are asserted or the
 	 *            result to a check-sat is UNSAT.
-	 * @param logger
 	 * @param services
-	 * @param symbolTable 
+	 * @param logger
 	 */
 	public TraceChecker(final IPredicate precondition, final IPredicate postcondition,
-			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IAction> trace, final ManagedScript managedScriptCfg,
-			final ModifiableGlobalVariableManager modifiedGlobals, final AssertCodeBlockOrder assertCodeBlocksIncrementally,
-			final IUltimateServiceProvider services, final boolean computeRcfgProgramExecution, final Boogie2SmtSymbolTable symbolTable) {
-		this(precondition, postcondition, pendingContexts, trace, managedScriptCfg, modifiedGlobals,
-				new DefaultTransFormulas(trace, precondition, postcondition, pendingContexts, modifiedGlobals, false),
-				assertCodeBlocksIncrementally, services, computeRcfgProgramExecution, true, symbolTable);
+			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IAction> trace, final CfgSmtToolkit csToolkit,
+			final AssertCodeBlockOrder assertCodeBlocksIncrementally, final IUltimateServiceProvider services,
+			final boolean computeRcfgProgramExecution) {
+		this(precondition, postcondition, pendingContexts, trace, csToolkit, new DefaultTransFormulas(trace, precondition, postcondition, pendingContexts, csToolkit.getModifiableGlobals(), false),
+				assertCodeBlocksIncrementally,
+				services, computeRcfgProgramExecution, true);
 	}
 
 	protected TraceChecker(final IPredicate precondition, final IPredicate postcondition,
-			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IAction> trace, final ManagedScript managedScriptCfg,
-			final ModifiableGlobalVariableManager modifiedGlobals, final NestedFormulas<UnmodifiableTransFormula, IPredicate> rv,
-			final AssertCodeBlockOrder assertCodeBlocksIncrementally, final IUltimateServiceProvider services,
-			final boolean computeRcfgProgramExecution, final boolean unlockSmtSolverAlsoIfUnsat, final Boogie2SmtSymbolTable symbolTable) {
-		this(precondition, postcondition, pendingContexts, trace, managedScriptCfg, modifiedGlobals, rv,
-				assertCodeBlocksIncrementally, services, computeRcfgProgramExecution, unlockSmtSolverAlsoIfUnsat,
-				managedScriptCfg, symbolTable);
+			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IAction> trace, final CfgSmtToolkit csToolkit,
+			final NestedFormulas<UnmodifiableTransFormula, IPredicate> rv, final AssertCodeBlockOrder assertCodeBlocksIncrementally,
+			final IUltimateServiceProvider services, final boolean computeRcfgProgramExecution,
+			final boolean unlockSmtSolverAlsoIfUnsat) {
+		this(precondition, postcondition, pendingContexts, trace, csToolkit, rv, assertCodeBlocksIncrementally,
+				services, computeRcfgProgramExecution, unlockSmtSolverAlsoIfUnsat, csToolkit.getManagedScript());
 	}
 
 	/**
 	 * Commit additionally the DefaultTransFormulas
-	 * 
 	 * @param services
-	 * @param symbolTable 
 	 * 
 	 */
 	protected TraceChecker(final IPredicate precondition, final IPredicate postcondition,
-			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IAction> trace, final ManagedScript managedScriptCfg,
-			final ModifiableGlobalVariableManager modifiedGlobals, final NestedFormulas<UnmodifiableTransFormula, IPredicate> rv,
-			final AssertCodeBlockOrder assertCodeBlocksIncrementally, final IUltimateServiceProvider services,
-			final boolean computeRcfgProgramExecution, final boolean unlockSmtSolverAlsoIfUnsat, final ManagedScript managedScriptTc, final Boogie2SmtSymbolTable symbolTable) {
+			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IAction> trace, final CfgSmtToolkit csToolkit,
+			final NestedFormulas<UnmodifiableTransFormula, IPredicate> rv, final AssertCodeBlockOrder assertCodeBlocksIncrementally,
+			final IUltimateServiceProvider services, final boolean computeRcfgProgramExecution,
+			final boolean unlockSmtSolverAlsoIfUnsat, final ManagedScript managedScriptTc) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		mCfgManagedScript = managedScriptCfg;
-		mScript = managedScriptCfg.getScript();
+		mCfgManagedScript = csToolkit.getManagedScript();
 		mTcSmtManager = managedScriptTc;
-		mModifiedGlobals = modifiedGlobals;
-		mBoogie2SmtSymbolTable = symbolTable;
+		mCsToolkit = csToolkit;
+		mBoogie2SmtSymbolTable = csToolkit.getSymbolTable();
 		mTrace = trace;
 		mPrecondition = precondition;
 		mPostcondition = postcondition;
@@ -456,7 +448,7 @@ public class TraceChecker {
 		startTraceCheck();
 		final boolean transferToDifferentScript = (mTcSmtManager != mCfgManagedScript);
 		mTraceCheckerBenchmarkGenerator.start(TraceCheckerBenchmarkType.s_SsaConstruction);
-		mNsb = new NestedSsaBuilder(mTrace, mTcSmtManager, mNestedFormulas, mModifiedGlobals, mLogger,
+		mNsb = new NestedSsaBuilder(mTrace, mTcSmtManager, mNestedFormulas, mCsToolkit.getModifiableGlobals(), mLogger,
 				transferToDifferentScript);
 		final NestedFormulas<Term, Term> ssa = mNsb.getSsa();
 		mTraceCheckerBenchmarkGenerator.stop(TraceCheckerBenchmarkType.s_SsaConstruction);
@@ -512,11 +504,11 @@ public class TraceChecker {
 				unlockSmtManager();
 				final DefaultTransFormulas withBE = new DefaultTransFormulas(mNestedFormulas.getTrace(),
 						mNestedFormulas.getPrecondition(), mNestedFormulas.getPostcondition(), mPendingContexts,
-						mModifiedGlobals, true);
+						mCsToolkit.getModifiableGlobals(), true);
 				final TraceChecker tc = new TraceChecker(mNestedFormulas.getPrecondition(),
 						mNestedFormulas.getPostcondition(), mPendingContexts, mNestedFormulas.getTrace(),
-						mCfgManagedScript, mModifiedGlobals, withBE, AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices,
-						true, true, mTcSmtManager, mBoogie2SmtSymbolTable);
+						mCsToolkit, withBE, AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, true,
+						true, mTcSmtManager);
 				if (tc.getToolchainCancelledExpection() != null) {
 					throw tc.getToolchainCancelledExpection();
 				}
@@ -555,8 +547,8 @@ public class TraceChecker {
 	 * Compute program execution in the case that the checked specification is violated (result of trace check is SAT).
 	 */
 	private RcfgProgramExecution computeRcfgProgramExecutionCaseSAT(final NestedSsaBuilder nsb) {
-		final RelevantVariables relVars = new RelevantVariables(mNestedFormulas, mModifiedGlobals);
-		final RcfgProgramExecutionBuilder rpeb = new RcfgProgramExecutionBuilder(mModifiedGlobals,
+		final RelevantVariables relVars = new RelevantVariables(mNestedFormulas, mCsToolkit.getModifiableGlobals());
+		final RcfgProgramExecutionBuilder rpeb = new RcfgProgramExecutionBuilder(mCsToolkit.getModifiableGlobals(),
 				(NestedWord<CodeBlock>) mTrace, relVars, mBoogie2SmtSymbolTable);
 		for (int i = 0; i < mTrace.length(); i++) {
 			final CodeBlock cb = (CodeBlock) mTrace.getSymbolAt(i);

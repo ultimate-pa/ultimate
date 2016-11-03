@@ -39,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -86,11 +85,10 @@ public class DeterministicInterpolantAutomaton extends BasicAbstractInterpolantA
 	
 
 	public DeterministicInterpolantAutomaton(final IUltimateServiceProvider services,
-			final CfgSmtToolkit csToolkit, final ModifiableGlobalVariableManager modglobvarman, final IHoareTripleChecker hoareTripleChecker,
-			final INestedWordAutomatonSimple<CodeBlock, IPredicate> abstraction,
+			final CfgSmtToolkit csToolkit, final IHoareTripleChecker hoareTripleChecker, final INestedWordAutomatonSimple<CodeBlock, IPredicate> abstraction,
 			final NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton,
-			final PredicateUnifier predicateUnifier, final ILogger logger,
-			final boolean conservativeSuccessorCandidateSelection,
+			final PredicateUnifier predicateUnifier,
+			final ILogger logger, final boolean conservativeSuccessorCandidateSelection,
 			final boolean cannibalize) {
 		super(services, csToolkit, hoareTripleChecker, true, abstraction,
 				predicateUnifier,

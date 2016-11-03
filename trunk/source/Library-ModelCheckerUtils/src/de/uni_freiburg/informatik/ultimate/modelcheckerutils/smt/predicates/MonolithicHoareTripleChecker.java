@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
@@ -50,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
 
 public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 	
+	private final CfgSmtToolkit mCsToolkit;
 	private final ManagedScript mManagedScript;
 	private final ModifiableGlobalVariableManager mModifiableGlobals;
 	
@@ -75,12 +77,11 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 	private final static boolean mTestDataflow = false;
 	
 	
-	public MonolithicHoareTripleChecker(
-			final ManagedScript managedScript, 
-			final ModifiableGlobalVariableManager modifiableGlobals) {
+	public MonolithicHoareTripleChecker(final CfgSmtToolkit csToolkit) {
 		super();
-		mManagedScript = managedScript;
-		mModifiableGlobals = modifiableGlobals;
+		mCsToolkit = csToolkit;
+		mManagedScript = csToolkit.getManagedScript();
+		mModifiableGlobals = csToolkit.getModifiableGlobals();
 		mHoareTripleCheckerStatistics = new HoareTripleCheckerStatisticsGenerator();
 	}
 
@@ -432,7 +433,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		if (ps2.getFormula() == mManagedScript.getScript().term("false")) {
 			return;
 		}
-		final SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(mModifiableGlobals, null);
+		final SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(mCsToolkit, null);
 		final Validity testRes = sdhtch.sdecReturn(ps1, psk, ta, ps2);
 		if (testRes != null) {
 			// assert testRes == result : "my return dataflow check failed";
@@ -447,7 +448,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		if (ps2.getFormula() == mManagedScript.getScript().term("false")) {
 			return;
 		}
-		final SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(mModifiableGlobals, null);
+		final SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(mCsToolkit, null);
 		final Validity testRes = sdhtch.sdecCall(ps1, ta, ps2);
 		if (testRes != null) {
 			assert testRes == IHoareTripleChecker.lbool2validity(result) : "my call dataflow check failed";
@@ -460,7 +461,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 	// FIXME: remove once enough tested
 	private void testMyInternalDataflowCheck(final IPredicate ps1, final IInternalAction ta, final IPredicate ps2, final LBool result) {
 		if (ps2.getFormula() == mManagedScript.getScript().term("false")) {
-			final SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(mModifiableGlobals, null);
+			final SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(mCsToolkit, null);
 			final Validity testRes = sdhtch.sdecInternalToFalse(ps1, ta);
 			if (testRes != null) {
 				assert testRes == IHoareTripleChecker.lbool2validity(result) || testRes == IHoareTripleChecker.lbool2validity(LBool.UNKNOWN) && result == LBool.SAT : "my internal dataflow check failed";
@@ -471,7 +472,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 			return;
 		}
 		if (ps1 == ps2) {
-			final SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(mModifiableGlobals, null);
+			final SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(mCsToolkit, null);
 			final Validity testRes = sdhtch.sdecInternalSelfloop(ps1, ta);
 			if (testRes != null) {
 				assert testRes == IHoareTripleChecker.lbool2validity(result) : "my internal dataflow check failed";
@@ -483,7 +484,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		if (ta.getTransformula().isInfeasible() == Infeasibility.INFEASIBLE) {
 			return;
 		}
-		final SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(mModifiableGlobals, null);
+		final SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(mCsToolkit, null);
 		final Validity testRes = sdhtch.sdecInteral(ps1, ta, ps2);
 		if (testRes != null) {
 			assert testRes == IHoareTripleChecker.lbool2validity(result) : "my internal dataflow check failed";

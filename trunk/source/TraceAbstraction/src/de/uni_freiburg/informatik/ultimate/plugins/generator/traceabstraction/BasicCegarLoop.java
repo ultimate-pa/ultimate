@@ -329,10 +329,9 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		case Craig_TreeInterpolation: {
 			interpolatingTraceChecker = new InterpolatingTraceCheckerCraig(truePredicate, falsePredicate,
 					new TreeMap<Integer, IPredicate>(), NestedWord.nestedWord(mCounterexample.getWord()),
-					mCsToolkit.getManagedScript(), mRootNode.getRootAnnot().getModGlobVarManager(),
-					mAssertCodeBlocksIncrementally, mServices, true, predicateUnifier, mInterpolation,
-					mgdScriptTc, true, mXnfConversionTechnique, mSimplificationTechnique,
-					mRootNode.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable());
+					mCsToolkit, mAssertCodeBlocksIncrementally,
+					mServices, true, predicateUnifier, mInterpolation, mgdScriptTc,
+					true, mXnfConversionTechnique, mSimplificationTechnique);
 		}
 			break;
 		case ForwardPredicates:
@@ -340,10 +339,9 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		case FPandBP:
 			interpolatingTraceChecker = new TraceCheckerSpWp(truePredicate, falsePredicate,
 					new TreeMap<Integer, IPredicate>(), NestedWord.nestedWord(mCounterexample.getWord()),
-					mCsToolkit.getManagedScript(), mRootNode.getRootAnnot().getModGlobVarManager(),
-					mAssertCodeBlocksIncrementally, mUnsatCores, mUseLiveVariables, mServices, true, predicateUnifier,
-					mInterpolation, mgdScriptTc, mXnfConversionTechnique,
-					mSimplificationTechnique, mRootNode.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable());
+					mCsToolkit, mAssertCodeBlocksIncrementally,
+					mUnsatCores, mUseLiveVariables, mServices, true, predicateUnifier, mInterpolation,
+					mgdScriptTc, mXnfConversionTechnique, mSimplificationTechnique);
 			
 			break;
 		case PathInvariants: {
@@ -366,10 +364,9 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			interpolatingTraceChecker =
 					new InterpolatingTraceCheckerPathInvariantsWithFallback(truePredicate, falsePredicate,
 							new TreeMap<Integer, IPredicate>(), (NestedRun<CodeBlock, IPredicate>) mCounterexample,
-							mCsToolkit.getManagedScript(), mModGlobVarManager, mAssertCodeBlocksIncrementally,
-							mServices, mToolchainStorage, true, predicateUnifier, useNonlinerConstraints, settings,
-							mXnfConversionTechnique, mSimplificationTechnique, mRootNode.getRootAnnot().getBoogie2SMT().getAxioms(),
-							mRootNode.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable());
+							mCsToolkit, mAssertCodeBlocksIncrementally, mServices,
+							mToolchainStorage, true, predicateUnifier, useNonlinerConstraints, settings, mXnfConversionTechnique,
+							mSimplificationTechnique, mRootNode.getRootAnnot().getBoogie2SMT().getAxioms());
 		}
 			break;
 		default:
@@ -408,7 +405,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				final INestedWordAutomaton<CodeBlock, IPredicate> cfg = cFG2NestedWordAutomaton
 						.getNestedWordAutomaton(super.mRootNode, mStateFactoryForRefinement, super.mErrorLocs);
 				final FlowSensitiveFaultLocalizer a = new FlowSensitiveFaultLocalizer(mCounterexample, cfg, mServices,
-						mCsToolkit, mPredicateFactory, mModGlobVarManager, predicateUnifier, mDoFaultLocalizationNonFlowSensitive,
+						mCsToolkit, mPredicateFactory, mCsToolkit.getModifiableGlobals(), predicateUnifier, mDoFaultLocalizationNonFlowSensitive,
 						mDoFaultLocalizationFlowSensitive, mSimplificationTechnique, mXnfConversionTechnique,
 						mRootNode.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable());
 				mRcfgProgramExecution = mRcfgProgramExecution.addRelevanceInformation(a.getRelevanceInformation());
@@ -424,7 +421,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				final InterpolantConsolidation interpConsoli =
 						new InterpolantConsolidation(truePredicate, falsePredicate, new TreeMap<Integer, IPredicate>(),
 								NestedWord.nestedWord(mCounterexample.getWord()), mCsToolkit,
-								mRootNode.getRootAnnot().getModGlobVarManager(), mServices, mLogger, predicateUnifier,
+								mCsToolkit.getModifiableGlobals(), mServices, mLogger, predicateUnifier,
 								interpolatingTraceChecker, mPref);
 				// Add benchmark data of interpolant consolidation
 				mCegarLoopBenchmark
@@ -550,9 +547,9 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 						final boolean cannibalize = mPref
 								.interpolantAutomatonEnhancement() == InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION_CANNIBALIZE;
 						final DeterministicInterpolantAutomaton determinized =
-								new DeterministicInterpolantAutomaton(mServices, mCsToolkit, mModGlobVarManager, htc,
-										oldAbstraction, interpolAutomaton, mInterpolantGenerator.getPredicateUnifier(),
-										mLogger, conservativeSuccessorCandidateSelection, cannibalize);
+								new DeterministicInterpolantAutomaton(mServices, mCsToolkit, htc, oldAbstraction,
+										interpolAutomaton, mInterpolantGenerator.getPredicateUnifier(), mLogger,
+										conservativeSuccessorCandidateSelection, cannibalize);
 						// NondeterministicInterpolantAutomaton determinized =
 						// new NondeterministicInterpolantAutomaton(
 						// mServices, mCsToolkit, mModGlobVarManager, htc,
@@ -600,9 +597,9 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					final boolean secondChance =
 							mPref.interpolantAutomatonEnhancement() != InterpolantAutomatonEnhancement.NO_SECOND_CHANCE;
 					final NondeterministicInterpolantAutomaton nondet =
-							new NondeterministicInterpolantAutomaton(mServices, mCsToolkit, mModGlobVarManager, htc,
-									(INestedWordAutomatonSimple<CodeBlock, IPredicate>) mAbstraction, interpolAutomaton,
-									predicateUnifier, mLogger, conservativeSuccessorCandidateSelection, secondChance);
+							new NondeterministicInterpolantAutomaton(mServices, mCsToolkit, htc, (INestedWordAutomatonSimple<CodeBlock, IPredicate>) mAbstraction,
+									interpolAutomaton, predicateUnifier,
+									mLogger, conservativeSuccessorCandidateSelection, secondChance);
 					final PowersetDeterminizer<CodeBlock, IPredicate> psd2 =
 							new PowersetDeterminizer<>(nondet, true, mPredicateFactoryInterpolantAutomata);
 					try {

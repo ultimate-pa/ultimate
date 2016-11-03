@@ -47,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -108,8 +107,6 @@ public abstract class AbstractCegarLoop {
 	 */
 	protected final CfgSmtToolkit mCsToolkit;
 	protected final PredicateFactory mPredicateFactory;
-	
-	protected final ModifiableGlobalVariableManager mModGlobVarManager;
 	
 	/**
 	 * Intermediate layer to encapsulate preferences.
@@ -187,7 +184,6 @@ public abstract class AbstractCegarLoop {
 		mSimplificationTechnique = taPrefs.getSimplificationTechnique();
 		mXnfConversionTechnique = taPrefs.getXnfConversionTechnique();
 		mPrintAutomataLabeling = taPrefs.getAutomataFormat();
-		mModGlobVarManager = rootNode.getRootAnnot().getModGlobVarManager();
 		mName = name;
 		mRootNode = rootNode;
 		mCsToolkit = csToolkit;

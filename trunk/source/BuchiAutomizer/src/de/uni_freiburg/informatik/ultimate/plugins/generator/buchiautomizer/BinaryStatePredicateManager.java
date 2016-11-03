@@ -571,15 +571,13 @@ public class BinaryStatePredicateManager {
 			siPredicate = truePredicate;
 		}
 		traceChecker = new TraceChecker(truePredicate, siPredicate, new TreeMap<Integer, IPredicate>(), stem,
-				mCsToolkit.getManagedScript(), modGlobVarManager, AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, 
-				mSymbolTable);
+				mCsToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false);
 		final LBool stemCheck = traceChecker.isCorrect();
 		if (stemCheck != LBool.UNSAT) {
 			result = false;
 		}
 		traceChecker = new TraceChecker(siPredicate, siPredicate, new TreeMap<Integer, IPredicate>(), stem,
-				mCsToolkit.getManagedScript(), modGlobVarManager, AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, 
-				mSymbolTable);
+				mCsToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false);
 		final LBool loopCheck = traceChecker.isCorrect();
 		if (loopCheck != LBool.UNSAT) {
 			result = false;
@@ -590,8 +588,8 @@ public class BinaryStatePredicateManager {
 	public boolean checkRankDecrease(final NestedWord<CodeBlock> loop,
 			final ModifiableGlobalVariableManager modGlobVarManager) {
 		final TraceChecker traceChecker = new TraceChecker(mRankEqualityAndSi, mRankDecreaseAndBound,
-				new TreeMap<Integer, IPredicate>(), loop, mCsToolkit.getManagedScript(), modGlobVarManager,
-				AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, mSymbolTable);
+				new TreeMap<Integer, IPredicate>(), loop, mCsToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY,
+				mServices, false);
 		final LBool loopCheck = traceChecker.isCorrect();
 		return loopCheck == LBool.UNSAT;
 	}

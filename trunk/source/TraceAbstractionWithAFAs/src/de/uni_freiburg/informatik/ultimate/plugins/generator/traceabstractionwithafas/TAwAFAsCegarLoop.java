@@ -406,7 +406,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 		alternatingAutomaton.setStateFinal(finalState);
 		alternatingAutomaton.addAcceptingConjunction(alternatingAutomaton.generateCube(new IPredicate[]{initialState}, new IPredicate[0]));
 
-		final IHoareTripleChecker mhtc = new MonolithicHoareTripleChecker(mCsToolkit.getManagedScript(), mModGlobVarManager);//TODO: switch to efficient htc later, perhaps
+		final IHoareTripleChecker mhtc = new MonolithicHoareTripleChecker(mCsToolkit);//TODO: switch to efficient htc later, perhaps
 
 		//Build the automaton according to the structure of the DAG
 		final Stack<DataflowDAG<TraceCodeBlock>> stack = new Stack<DataflowDAG<TraceCodeBlock>>();
@@ -484,8 +484,8 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 		IOpWithDelayedDeadEndRemoval<CodeBlock, IPredicate> diff;
 
 		final DeterministicInterpolantAutomaton determinized = new DeterministicInterpolantAutomaton(
-				mServices, mCsToolkit, mModGlobVarManager, htc, oldAbstraction, mInterpolAutomaton,
-				mPredicateUnifier, mLogger, false, false);//change to CegarLoopConcurrentAutomata
+				mServices, mCsToolkit, htc, oldAbstraction, mInterpolAutomaton, mPredicateUnifier,
+				mLogger, false, false);//change to CegarLoopConcurrentAutomata
 		// ComplementDeterministicNwa<CodeBlock, IPredicate>
 		// cdnwa = new ComplementDeterministicNwa<>(dia);
 		final PowersetDeterminizer<CodeBlock, IPredicate> psd2 = new PowersetDeterminizer<CodeBlock, IPredicate>(
@@ -548,7 +548,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 		final IHoareTripleChecker solverHtc;
 		switch (mPref.getHoareTripleChecks()) {
 		case MONOLITHIC:
-			solverHtc = new MonolithicHoareTripleChecker(mCsToolkit.getManagedScript(), mModGlobVarManager);
+			solverHtc = new MonolithicHoareTripleChecker(mCsToolkit);
 			break;
 		case INCREMENTAL:
 			solverHtc = new IncrementalHoareTripleChecker(mCsToolkit);
@@ -557,8 +557,8 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 			throw new AssertionError("unknown value");
 		}
 		final IHoareTripleChecker htc = new EfficientHoareTripleChecker(solverHtc, 
-				mRootNode.getRootAnnot().getModGlobVarManager(), 
-				mPredicateUnifier, mCsToolkit.getManagedScript()); //only change to method in BasicCegarLoop
+				mCsToolkit, 
+				mPredicateUnifier); //only change to method in BasicCegarLoop
 		return htc;
 	}
 	
@@ -568,7 +568,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 	 *  - the corresponding hoare triple of each transition is valid
 	 */
 	private boolean checkRAFA(final AlternatingAutomaton<CodeBlock, IPredicate> afa) {
-		final MonolithicHoareTripleChecker htc = new MonolithicHoareTripleChecker(mCsToolkit.getManagedScript(), mModGlobVarManager);
+		final MonolithicHoareTripleChecker htc = new MonolithicHoareTripleChecker(mCsToolkit);
 		boolean result = true;
 		for (final Entry<CodeBlock, BooleanExpression[]> entry : afa.getTransitionFunction().entrySet()) {
 			for(int i=0;i<afa.getStates().size();i++){

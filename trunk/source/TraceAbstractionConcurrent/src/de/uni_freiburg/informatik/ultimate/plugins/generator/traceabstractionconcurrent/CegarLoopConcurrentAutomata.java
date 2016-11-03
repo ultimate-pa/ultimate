@@ -193,8 +193,8 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 		IOpWithDelayedDeadEndRemoval<CodeBlock, IPredicate> diff;
 		
 		final DeterministicInterpolantAutomaton determinized =
-				new DeterministicInterpolantAutomaton(mServices, mCsToolkit, mModGlobVarManager, htc, oldAbstraction,
-						mInterpolAutomaton, mInterpolantGenerator.getPredicateUnifier(), mLogger, false, false);
+				new DeterministicInterpolantAutomaton(mServices, mCsToolkit, htc, oldAbstraction, mInterpolAutomaton,
+						mInterpolantGenerator.getPredicateUnifier(), mLogger, false, false);
 		// ComplementDeterministicNwa<CodeBlock, IPredicate>
 		// cdnwa = new ComplementDeterministicNwa<>(dia);
 		final PowersetDeterminizer<CodeBlock, IPredicate> psd2 =

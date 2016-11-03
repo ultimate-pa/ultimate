@@ -155,9 +155,8 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 		final NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton = constructInterpolantAutomaton(mTrace, mCsToolkit, mPredicateUnifier.getPredicateFactory(), mTaPrefs, mServices, mInterpolatingTraceChecker);
 		// 3. Determinize the finite automaton from step 2.
 		final DeterministicInterpolantAutomaton interpolantAutomatonDeterminized = new DeterministicInterpolantAutomaton(
-				mServices, mCsToolkit, mModifiedGlobals, mHoareTripleChecker, pathprogramautomaton, interpolantAutomaton,
-				mPredicateUnifier, mLogger, false ,// PREDICATE_ABSTRACTION_CONSERVATIVE = false (default)
-				false //PREDICATE_ABSTRACTION_CANNIBALIZE = false  (default)
+				mServices, mCsToolkit, mHoareTripleChecker, pathprogramautomaton, interpolantAutomaton, mPredicateUnifier,
+				mLogger, false, false //PREDICATE_ABSTRACTION_CANNIBALIZE = false  (default)
 				);
 
 
@@ -256,7 +255,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 
 		assert TraceCheckerUtils.checkInterpolantsInductivityBackward(Arrays.asList(mConsolidatedInterpolants),
 				mTrace, mPrecondition, mPostcondition, mPendingContexts, "CP",
-				mModifiedGlobals, mLogger, mCsToolkit.getManagedScript()) : "invalid Hoare triple in consolidated interpolants";
+				mCsToolkit, mLogger, mCsToolkit.getManagedScript()) : "invalid Hoare triple in consolidated interpolants";
 		final int numOfDisjunctionsGreaterOne = (int) mInterpolantConsolidationBenchmarkGenerator.getValue(InterpolantConsolidationBenchmarkType.s_DisjunctionsGreaterOneCounter);
 		// InterpolantConsolidation was successful only if there was at least one consolidation with at least two predicates.
 		if (numOfDisjunctionsGreaterOne	> 0) {

@@ -151,7 +151,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 		mBoogie2SMT = boogie2smt;
 		mCheckForMultipleFormula = new HashMap<IMinimizedEdge, Integer>();
 		mTransFormBuilder = new TransFormulaAdder(boogie2smt, mServices);
-		mModGlobalVarManager = root.getRootAnnot().getModGlobVarManager();
+		mModGlobalVarManager = root.getRootAnnot().getCfgSmtToolkit().getModifiableGlobals();
 		mCbf = root.getRootAnnot().getCodeBlockFactory();
 		mSeqComposedBlocks = new Stack<ArrayList<CodeBlock>>();
 		mHasConjunctionAsParent = new HashSet<IMinimizedEdge>();

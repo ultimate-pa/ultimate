@@ -68,17 +68,16 @@ public class HoareAnnotationChecker {
 	
 	
 
-	public HoareAnnotationChecker(IUltimateServiceProvider services, RootNode rootNode, CfgSmtToolkit csToolkit) {
+	public HoareAnnotationChecker(final IUltimateServiceProvider services, final RootNode rootNode, final CfgSmtToolkit csToolkit) {
 		super();
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mRootNode = rootNode;
-		mHoareTripleChecker = new MonolithicHoareTripleChecker(csToolkit.getManagedScript(), 
-				csToolkit.getModifiableGlobals());
+		mHoareTripleChecker = new MonolithicHoareTripleChecker(csToolkit);
 		mIsInductive = cfgInductive(mRootNode);
 	}
 
-	private boolean cfgInductive(RootNode rootNode) {
+	private boolean cfgInductive(final RootNode rootNode) {
 		boolean result = true;
 		// yield[0] is the number of edges whose inductiveness could be
 		// proven

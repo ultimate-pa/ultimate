@@ -177,9 +177,9 @@ public class RootAnnot extends AbstractAnnotations {
 		return result;
 	}
 
-	public ModifiableGlobalVariableManager getModGlobVarManager() {
-		return mModifiableGlobalVariableManager;
-	}
+//	public ModifiableGlobalVariableManager getModifiableGlobals() {
+//		return mModifiableGlobalVariableManager;
+//	}
 
 	public Boogie2SMT getBoogie2SMT() {
 		return mBoogie2SMT;

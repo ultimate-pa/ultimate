@@ -72,8 +72,7 @@ public class BestApproximationDeterminizer implements IStateDeterminizer<CodeBlo
 	
 	public BestApproximationDeterminizer(final CfgSmtToolkit mCsToolkit, final TAPreferences taPreferences,
 			final NestedWordAutomaton<CodeBlock, IPredicate> nwa, final IStateFactory<IPredicate> stateFactory) {
-		mHoareTriplechecker =
-				new MonolithicHoareTripleChecker(mCsToolkit.getManagedScript(), mCsToolkit.getModifiableGlobals());
+		mHoareTriplechecker = new MonolithicHoareTripleChecker(mCsToolkit);
 		mTaPreferences = taPreferences;
 		mStateFactory = stateFactory;
 		mNwa = nwa;

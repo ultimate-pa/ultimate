@@ -280,7 +280,7 @@ public class RefineBuchi {
 				mInterpolAutomaton.addState(false, true, pu.getFalsePredicate());
 			}
 			mInterpolAutomatonUsedInRefinement = new NondeterministicInterpolantAutomaton(mServices, mCsToolkit,
-					buchiModGlobalVarManager, bhtc, abstraction, mInterpolAutomaton, pu, mLogger, false, true);
+					bhtc, abstraction, mInterpolAutomaton, pu, mLogger, false, true);
 			break;
 		case ScroogeNondeterminism:
 		case Deterministic:
@@ -496,31 +496,31 @@ public class RefineBuchi {
 		case Craig_NestedInterpolation:
 		case Craig_TreeInterpolation: {
 			itc = new InterpolatingTraceCheckerCraig(precond, postcond, new TreeMap<Integer, IPredicate>(), word,
-					mCsToolkit.getManagedScript(), buchiModGlobalVarManager,
-					/*
-					 * TODO: When Matthias
-					 * introduced this parameter he
-					 * set the argument to AssertCodeBlockOrder.NOT_INCREMENTALLY.
-					 * Check if you want to set this
-					 * to a different value.
-					 */AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, pu, interpolation, true, 
-					 mXnfConversionTechnique, mSimplificationTechnique, mRootNode.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable());
-			break;
-		}
-		case ForwardPredicates:
-		case BackwardPredicates:
-		case FPandBP: {
-			itc = new TraceCheckerSpWp(precond, postcond, new TreeMap<Integer, IPredicate>(),
-					word, mCsToolkit.getManagedScript(), buchiModGlobalVarManager,
-					/*
+					mCsToolkit, /*
 					 * TODO: When Matthias
 					 * introduced this parameter he
 					 * set the argument to AssertCodeBlockOrder.NOT_INCREMENTALLY.
 					 * Check if you want to set this
 					 * to a different value.
 					 */AssertCodeBlockOrder.NOT_INCREMENTALLY,
-					 UnsatCores.CONJUNCT_LEVEL, true, mServices, false, pu, interpolation, mCsToolkit.getManagedScript(), 
-					 mXnfConversionTechnique, mSimplificationTechnique, mRootNode.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable());
+					mServices, false, pu, interpolation, true, mXnfConversionTechnique, 
+					 mSimplificationTechnique);
+			break;
+		}
+		case ForwardPredicates:
+		case BackwardPredicates:
+		case FPandBP: {
+			itc = new TraceCheckerSpWp(precond, postcond, new TreeMap<Integer, IPredicate>(),
+					word, mCsToolkit, /*
+					 * TODO: When Matthias
+					 * introduced this parameter he
+					 * set the argument to AssertCodeBlockOrder.NOT_INCREMENTALLY.
+					 * Check if you want to set this
+					 * to a different value.
+					 */AssertCodeBlockOrder.NOT_INCREMENTALLY,
+					UnsatCores.CONJUNCT_LEVEL,
+					 true, mServices, false, pu, interpolation, mCsToolkit.getManagedScript(), mXnfConversionTechnique, 
+					 mSimplificationTechnique);
 			break;
 		}
 		default:

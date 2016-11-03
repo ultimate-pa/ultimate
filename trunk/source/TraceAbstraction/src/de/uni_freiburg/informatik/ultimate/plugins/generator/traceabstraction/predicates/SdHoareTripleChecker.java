@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates;
 
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
@@ -58,13 +58,13 @@ public class SdHoareTripleChecker implements IHoareTripleChecker {
 	private final CallCheckHelper mCallCheckHelper = new CallCheckHelper();
 	private final ReturnCheckHelper mReturnCheckHelper = new ReturnCheckHelper();
 	
-	public SdHoareTripleChecker(final ModifiableGlobalVariableManager modGlobVarManager,
+	public SdHoareTripleChecker(final CfgSmtToolkit csToolkit,
 			final PredicateUnifier predicateUnifier,
 			final HoareTripleCheckerStatisticsGenerator edgeCheckerBenchmarkGenerator) {
 		mPredicateCoverageChecker = predicateUnifier.getCoverageRelation();
 		mTruePredicate = predicateUnifier.getTruePredicate();
 		mFalsePredicate = predicateUnifier.getFalsePredicate();
-		mSdHoareTripleChecker = new SdHoareTripleCheckerHelper(modGlobVarManager,
+		mSdHoareTripleChecker = new SdHoareTripleCheckerHelper(csToolkit,
 				mPredicateCoverageChecker, edgeCheckerBenchmarkGenerator);
 	}
 	

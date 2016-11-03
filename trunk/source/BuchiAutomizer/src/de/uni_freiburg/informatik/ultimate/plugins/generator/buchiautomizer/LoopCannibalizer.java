@@ -148,32 +148,30 @@ public class LoopCannibalizer {
 		case Craig_NestedInterpolation:
 		case Craig_TreeInterpolation:
 			traceChecker = new InterpolatingTraceCheckerCraig(mBspm.getRankEqAndSi(), mBspm.getHondaPredicate(),
-					new TreeMap<Integer, IPredicate>(), shifted, mCsToolkit.getManagedScript(), mbuchiModGlobalVarManager,
-					/*
-					 * TODO: When Matthias
-					 * introduced this parameter he
-					 * set the argument to AssertCodeBlockOrder.NOT_INCREMENTALLY.
-					 * Check if you want to set this
-					 * to a different value.
-					 */AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, mPredicateUnifier,
-						interpolation, true, mXnfConversionTechnique, mSimplificationTechnique, 
-						mBoogie2SmtSymbolTable);
-			break;
-		case ForwardPredicates:
-		case BackwardPredicates:
-		case FPandBP:
-			traceChecker = new TraceCheckerSpWp(mBspm.getRankEqAndSi(), mBspm.getHondaPredicate(),
-					new TreeMap<Integer, IPredicate>(), shifted, mCsToolkit.getManagedScript(), mbuchiModGlobalVarManager,
-					/*
+					new TreeMap<Integer, IPredicate>(), shifted, mCsToolkit, /*
 					 * TODO: When Matthias
 					 * introduced this parameter he
 					 * set the argument to AssertCodeBlockOrder.NOT_INCREMENTALLY.
 					 * Check if you want to set this
 					 * to a different value.
 					 */AssertCodeBlockOrder.NOT_INCREMENTALLY,
-					 UnsatCores.CONJUNCT_LEVEL, true, mServices, false, mPredicateUnifier,
-						interpolation, mCsToolkit.getManagedScript(), mXnfConversionTechnique, mSimplificationTechnique, 
-						mBoogie2SmtSymbolTable);
+					mServices, false, mPredicateUnifier, interpolation,
+						true, mXnfConversionTechnique, mSimplificationTechnique);
+			break;
+		case ForwardPredicates:
+		case BackwardPredicates:
+		case FPandBP:
+			traceChecker = new TraceCheckerSpWp(mBspm.getRankEqAndSi(), mBspm.getHondaPredicate(),
+					new TreeMap<Integer, IPredicate>(), shifted, mCsToolkit, /*
+					 * TODO: When Matthias
+					 * introduced this parameter he
+					 * set the argument to AssertCodeBlockOrder.NOT_INCREMENTALLY.
+					 * Check if you want to set this
+					 * to a different value.
+					 */AssertCodeBlockOrder.NOT_INCREMENTALLY,
+					UnsatCores.CONJUNCT_LEVEL,
+					 true, mServices, false, mPredicateUnifier, interpolation,
+						mCsToolkit.getManagedScript(), mXnfConversionTechnique, mSimplificationTechnique);
 			break;
 		default:
 			throw new UnsupportedOperationException("unsupported interpolation");

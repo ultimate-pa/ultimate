@@ -430,7 +430,7 @@ public class BuchiCegarLoop {
 				mBenchmarkGenerator.start(BuchiCegarLoopBenchmark.s_LassoAnalysisTime);
 				lassoChecker = new LassoChecker(mInterpolation, mCsToolkit,
 						mPredicateFactory, mRootNode.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable(),
-						mRootNode.getRootAnnot().getModGlobVarManager(),
+						mCsToolkit.getModifiableGlobals(),
 						mRootNode.getRootAnnot().getBoogie2SMT().getAxioms(), mBinaryStatePredicateManager,
 						mCounterexample, generateLassoCheckerIdentifier(), mServices, mStorage, mSimplificationTechnique, mXnfConversionTechnique);
 				if (lassoChecker.getLassoCheckResult().getContinueDirective() == ContinueDirective.REPORT_UNKNOWN) {
@@ -443,7 +443,7 @@ public class BuchiCegarLoop {
 					mCounterexample = new NestedLassoRun<>(newStem, mCounterexample.getLoop());
 					lassoChecker = new LassoChecker(mInterpolation, mCsToolkit,
 							mPredicateFactory, mRootNode.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable(), 
-							mRootNode.getRootAnnot().getModGlobVarManager(),
+							mCsToolkit.getModifiableGlobals(),
 							mRootNode.getRootAnnot().getBoogie2SMT().getAxioms(), mBinaryStatePredicateManager,
 							mCounterexample, generateLassoCheckerIdentifier(), mServices, mStorage, mSimplificationTechnique, mXnfConversionTechnique);
 				}
@@ -742,7 +742,7 @@ public class BuchiCegarLoop {
 		final BuchiModGlobalVarManager bmgvm = new BuchiModGlobalVarManager(
 				lassoChecker.getBinaryStatePredicateManager().getUnseededVariable(),
 				lassoChecker.getBinaryStatePredicateManager().getOldRankVariables(),
-				mRootNode.getRootAnnot().getModGlobVarManager(), mRootNode.getRootAnnot().getBoogie2SMT());
+				mRootNode.getRootAnnot().getCfgSmtToolkit().getModifiableGlobals(), mRootNode.getRootAnnot().getBoogie2SMT());
 		for (final RefinementSetting rs : mBuchiRefinementSettingSequence) {
 			assert automatonUsesISLPredicates(mAbstraction) : "used wrong StateFactory";
 			INestedWordAutomaton<CodeBlock, IPredicate> newAbstraction = null;
@@ -862,13 +862,13 @@ public class BuchiCegarLoop {
 		mBenchmarkGenerator.addBackwardCoveringInformationFinite(bci);
 		constructInterpolantAutomaton(traceChecker, run);
 
-		final ModifiableGlobalVariableManager modGlobVarManager = mRootNode.getRootAnnot().getModGlobVarManager();
+		final ModifiableGlobalVariableManager modGlobVarManager = mRootNode.getRootAnnot().getCfgSmtToolkit().getModifiableGlobals();
 		final IHoareTripleChecker htc = TraceAbstractionUtils.constructEfficientHoareTripleChecker(
 				mServices, HoareTripleChecks.INCREMENTAL, mCsToolkit, traceChecker.getPredicateUnifier());
 
 		final DeterministicInterpolantAutomaton determinized = new DeterministicInterpolantAutomaton(mServices,
-				mCsToolkit, modGlobVarManager, htc, mAbstraction, mInterpolAutomaton,
-				traceChecker.getPredicateUnifier(), mLogger, false, false);
+				mCsToolkit, htc, mAbstraction, mInterpolAutomaton, traceChecker.getPredicateUnifier(),
+				mLogger, false, false);
 		final PowersetDeterminizer<CodeBlock, IPredicate> psd = new PowersetDeterminizer<>(
 				determinized, true, mDefaultStateFactory);
 		Difference<CodeBlock, IPredicate> diff = null;

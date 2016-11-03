@@ -32,6 +32,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
@@ -51,10 +52,10 @@ public class SdHoareTripleCheckerHelper {
 	private final IPredicateCoverageChecker mPredicateCoverageChecker;
 	
 	
-	public SdHoareTripleCheckerHelper(final ModifiableGlobalVariableManager modGlobVarManager,
+	public SdHoareTripleCheckerHelper(final CfgSmtToolkit csToolkit,
 			final IPredicateCoverageChecker predicateCoverageChecker,
 			final HoareTripleCheckerStatisticsGenerator edgeCheckerBenchmarkGenerator) {
-		mModifiableGlobalVariableManager = modGlobVarManager;
+		mModifiableGlobalVariableManager = csToolkit.getModifiableGlobals();
 		mPredicateCoverageChecker = predicateCoverageChecker;
 		if (edgeCheckerBenchmarkGenerator == null) {
 			mHoareTripleCheckerStatistics = new HoareTripleCheckerStatisticsGenerator();
@@ -63,9 +64,9 @@ public class SdHoareTripleCheckerHelper {
 		}
 	}
 	
-	public SdHoareTripleCheckerHelper(final ModifiableGlobalVariableManager modGlobVarManager,
+	public SdHoareTripleCheckerHelper(final CfgSmtToolkit csToolkit,
 			final HoareTripleCheckerStatisticsGenerator edgeCheckerBenchmarkGenerator) {
-		this(modGlobVarManager, null, edgeCheckerBenchmarkGenerator);
+		this(csToolkit, null, edgeCheckerBenchmarkGenerator);
 	}
 	
 	

@@ -34,8 +34,7 @@ import java.util.SortedMap;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
@@ -72,30 +71,27 @@ public abstract class InterpolatingTraceChecker extends TraceChecker implements 
 	 * postcondition and pending contexts. The pendingContext maps the positions
 	 * of pending returns to predicates which define possible variable
 	 * valuations in the context to which the return leads the trace.
-	 * 
 	 * @param assertCodeBlocksIncrementally
 	 *            If set to false, check-sat is called after all CodeBlocks are
 	 *            asserted. If set to true we use Betims heuristic an
 	 *            incrementally assert CodeBlocks and do check-sat until all
 	 *            CodeBlocks are asserted or the result to a check-sat is UNSAT.
-	 * @param logger
 	 * @param services
 	 * @param predicateUnifier 
 	 * @param simplificationTechnique 
 	 * @param xnfConversionTechnique 
-	 * @param symbolTable 
+	 * @param logger
 	 * @param interpolation 
 	 */
 	public InterpolatingTraceChecker(final IPredicate precondition, final IPredicate postcondition,
-			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IAction> trace, final ManagedScript csToolkit,
-			final ModifiableGlobalVariableManager modifiedGlobals, final AssertCodeBlockOrder assertCodeBlocksIncrementally,
-			final IUltimateServiceProvider services, final boolean computeRcfgProgramExecution, 
-			final PredicateUnifier predicateUnifier, final ManagedScript tcSmtManager, 
-			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique, 
-			final Boogie2SmtSymbolTable symbolTable) {
-		super(precondition, postcondition, pendingContexts, trace, csToolkit, modifiedGlobals,
-				new DefaultTransFormulas(trace, precondition, postcondition, pendingContexts, modifiedGlobals, false),
-				assertCodeBlocksIncrementally, services, computeRcfgProgramExecution, false, tcSmtManager, symbolTable);
+			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IAction> trace, final CfgSmtToolkit csToolkit,
+			final AssertCodeBlockOrder assertCodeBlocksIncrementally, final IUltimateServiceProvider services,
+			final boolean computeRcfgProgramExecution, final PredicateUnifier predicateUnifier, 
+			final ManagedScript tcSmtManager, final SimplificationTechnique simplificationTechnique, 
+			final XnfConversionTechnique xnfConversionTechnique) {
+		super(precondition, postcondition, pendingContexts, trace, csToolkit, new DefaultTransFormulas(trace, precondition, postcondition, pendingContexts, csToolkit.getModifiableGlobals(), false),
+				assertCodeBlocksIncrementally,
+				services, computeRcfgProgramExecution, false, tcSmtManager);
 		mPredicateUnifier = predicateUnifier;
 		mPredicateFactory = predicateUnifier.getPredicateFactory();
 		mSimplificationTechnique = simplificationTechnique;
@@ -139,7 +135,7 @@ public abstract class InterpolatingTraceChecker extends TraceChecker implements 
 
 	private boolean testRelevantVars() {
 		boolean result = true;
-		final RelevantVariables rv = new RelevantVariables(mNestedFormulas, mModifiedGlobals);
+		final RelevantVariables rv = new RelevantVariables(mNestedFormulas, mCsToolkit.getModifiableGlobals());
 		for (int i = 0; i < mInterpolants.length; i++) {
 			final IPredicate itp = mInterpolants[i];
 			final Set<IProgramVar> vars = itp.getVars();

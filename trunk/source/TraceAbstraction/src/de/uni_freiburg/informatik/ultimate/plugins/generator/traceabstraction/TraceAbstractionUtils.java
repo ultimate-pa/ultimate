@@ -106,7 +106,7 @@ public class TraceAbstractionUtils {
 		final IHoareTripleChecker solverHtc;
 		switch (hoareTripleChecks) {
 		case MONOLITHIC:
-			solverHtc = new MonolithicHoareTripleChecker(csToolkit.getManagedScript(), csToolkit.getModifiableGlobals());
+			solverHtc = new MonolithicHoareTripleChecker(csToolkit);
 			break;
 		case INCREMENTAL:
 			solverHtc = new IncrementalHoareTripleChecker(csToolkit);
@@ -114,7 +114,7 @@ public class TraceAbstractionUtils {
 		default:
 			throw new AssertionError("unknown value");
 		}
-		return new EfficientHoareTripleChecker(solverHtc, csToolkit.getModifiableGlobals(), predicateUnifier, csToolkit.getManagedScript());
+		return new EfficientHoareTripleChecker(solverHtc, csToolkit, predicateUnifier);
 	}
 	
 	

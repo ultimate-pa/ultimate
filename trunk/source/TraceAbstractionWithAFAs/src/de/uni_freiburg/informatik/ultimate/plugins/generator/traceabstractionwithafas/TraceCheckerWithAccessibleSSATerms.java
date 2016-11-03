@@ -34,10 +34,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
@@ -52,15 +50,14 @@ public class TraceCheckerWithAccessibleSSATerms extends TraceChecker {
 	public TraceCheckerWithAccessibleSSATerms(final IPredicate precondition,
 			final IPredicate postcondition,
 			final SortedMap<Integer, IPredicate> pendingContexts,
-			final NestedWord<CodeBlock> trace, final ManagedScript csToolkit,
-			final ModifiableGlobalVariableManager modifiedGlobals,
+			final NestedWord<CodeBlock> trace, final CfgSmtToolkit csToolkit,
 			final AssertCodeBlockOrder assertCodeBlocksIncrementally,
-			final IUltimateServiceProvider services, final boolean computeRcfgProgramExecution, 
-			final PredicateUnifier predicateUnifier, final InterpolationTechnique interpolation, 
-			final Boogie2SmtSymbolTable symbolTable) {
-		super(precondition, postcondition, pendingContexts, trace, csToolkit, modifiedGlobals, 
-				assertCodeBlocksIncrementally, services, computeRcfgProgramExecution, symbolTable);
-		mscript = csToolkit.getScript();
+			final IUltimateServiceProvider services,
+			final boolean computeRcfgProgramExecution, final PredicateUnifier predicateUnifier, 
+			final InterpolationTechnique interpolation) {
+		super(precondition, postcondition, pendingContexts, trace, csToolkit, assertCodeBlocksIncrementally, 
+				services, computeRcfgProgramExecution);
+		mscript = csToolkit.getManagedScript().getScript();
 	}
 	
 	public void traceCheckFinished() {

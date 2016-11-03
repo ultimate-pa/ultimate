@@ -246,10 +246,10 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 				final boolean cannibalize =
 						(mPref.interpolantAutomatonEnhancement() == InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION_CANNIBALIZE);
 				final DeterministicInterpolantAutomaton determinized = new DeterministicInterpolantAutomaton(mServices,
-						mCsToolkit, mModGlobVarManager, edgeChecker,
-						(INestedWordAutomatonSimple<CodeBlock, IPredicate>) mAbstraction,
-						mInterpolAutomaton, mInterpolantGenerator.getPredicateUnifier(), mLogger,
-						conservativeSuccessorCandidateSelection, cannibalize);
+						mCsToolkit, edgeChecker, (INestedWordAutomatonSimple<CodeBlock, IPredicate>) mAbstraction,
+						mInterpolAutomaton,
+						mInterpolantGenerator.getPredicateUnifier(), mLogger, conservativeSuccessorCandidateSelection,
+						cannibalize);
 				switchAllInterpolantAutomataToOnTheFlyConstructionMode();
 				mInclusionCheck.addSubtrahend(determinized);
 				mInterpolantAutomata.add(determinized);
@@ -269,9 +269,9 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 				final boolean conservativeSuccessorCandidateSelection = mPref.interpolantAutomatonEnhancement() == mPref.interpolantAutomatonEnhancement();
 				final boolean secondChance = (mPref.interpolantAutomatonEnhancement() != InterpolantAutomatonEnhancement.NO_SECOND_CHANCE);
 				final NondeterministicInterpolantAutomaton nondet = new NondeterministicInterpolantAutomaton(mServices,
-						mCsToolkit, mModGlobVarManager, edgeChecker,
-						(INestedWordAutomatonSimple<CodeBlock, IPredicate>) mAbstraction,
-						mInterpolAutomaton, mInterpolantGenerator.getPredicateUnifier(), mLogger, conservativeSuccessorCandidateSelection, secondChance);
+						mCsToolkit, edgeChecker, (INestedWordAutomatonSimple<CodeBlock, IPredicate>) mAbstraction,
+						mInterpolAutomaton,
+						mInterpolantGenerator.getPredicateUnifier(), mLogger, conservativeSuccessorCandidateSelection, secondChance);
 				switchAllInterpolantAutomataToOnTheFlyConstructionMode();
 				mInclusionCheck.addSubtrahend(nondet);
 				mInterpolantAutomata.add(nondet);

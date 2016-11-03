@@ -319,17 +319,16 @@ public class TotalInterpolationAutomatonBuilder implements IInterpolantAutomaton
 		case Craig_TreeInterpolation:
 			tc = new InterpolatingTraceCheckerCraig(precondition, postcondition,
 					pendingContexts, run.getWord(),
-					mCsToolkit.getManagedScript(), mModifiedGlobals, AssertCodeBlockOrder.NOT_INCREMENTALLY,
-					mServices, true, mPredicateUnifier, mInterpolation, true, mXnfConversionTechnique, mSimplificationTechnique, 
-					mSymbolTable);
+					mCsToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices,
+					true, mPredicateUnifier, mInterpolation, true, mXnfConversionTechnique, mSimplificationTechnique);
 			break;
 		case ForwardPredicates:
 		case BackwardPredicates:
 		case FPandBP:
-			tc = new TraceCheckerSpWp(precondition, postcondition, pendingContexts, run.getWord(), mCsToolkit.getManagedScript(),
-					mModifiedGlobals, AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true,
-					mServices, true, mPredicateUnifier, mInterpolation, mCsToolkit.getManagedScript(), 
-					mXnfConversionTechnique, mSimplificationTechnique, mSymbolTable);
+			tc = new TraceCheckerSpWp(precondition, postcondition, pendingContexts, run.getWord(), mCsToolkit,
+					AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true, mServices,
+					true, mPredicateUnifier, mInterpolation, mCsToolkit.getManagedScript(), mXnfConversionTechnique, 
+					mSimplificationTechnique);
 
 			break;
 		case PathInvariants:

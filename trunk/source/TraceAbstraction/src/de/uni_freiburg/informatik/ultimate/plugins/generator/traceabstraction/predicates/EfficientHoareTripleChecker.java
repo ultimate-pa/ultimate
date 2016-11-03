@@ -26,13 +26,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates;
 
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.HoareTripleCheckerStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.MonolithicHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
@@ -48,16 +47,14 @@ public class EfficientHoareTripleChecker implements IHoareTripleChecker {
 	
 
 	public EfficientHoareTripleChecker(
-			final IHoareTripleChecker smtBasedHoareTripleChecker, 
-			final ModifiableGlobalVariableManager modGlobVarManager, 
-			final PredicateUnifier predicateUnifier, 
-			final ManagedScript mgdScript) {
+			final IHoareTripleChecker smtBasedHoareTripleChecker,
+			final CfgSmtToolkit csToolkit,
+			final PredicateUnifier predicateUnifier) {
 		super();
 		mSmtBasedHoareTripleChecker = new ProtectiveHoareTripleChecker(smtBasedHoareTripleChecker, predicateUnifier);
-		mSdHoareTripleChecker = new SdHoareTripleChecker(modGlobVarManager, 
+		mSdHoareTripleChecker = new SdHoareTripleChecker(csToolkit, 
 				predicateUnifier, mSmtBasedHoareTripleChecker.getEdgeCheckerBenchmark());
-		mhoareTripleCheckerForReview = new MonolithicHoareTripleChecker(
-				mgdScript, modGlobVarManager);
+		mhoareTripleCheckerForReview = new MonolithicHoareTripleChecker(csToolkit);
 	}
 
 	@Override
