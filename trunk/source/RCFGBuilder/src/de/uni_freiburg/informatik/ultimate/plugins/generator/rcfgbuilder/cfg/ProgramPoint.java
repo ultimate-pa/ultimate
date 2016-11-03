@@ -65,7 +65,7 @@ public class ProgramPoint extends RCFGNode {
 	@Visualizable
 	private final boolean mIsErrorLocation;
 
-	public ProgramPoint(String debugIdentifier, String procedure, boolean isErrorLoc, BoogieASTNode boogieASTNode) {
+	public ProgramPoint(final String debugIdentifier, final String procedure, final boolean isErrorLoc, final BoogieASTNode boogieASTNode) {
 		super(new Payload(getLocationFromASTNode(boogieASTNode)));
 		mProcedure = procedure;
 		mDebugIdentifier = debugIdentifier;
@@ -122,7 +122,7 @@ public class ProgramPoint extends RCFGNode {
 	}
 
 	@Override
-	public boolean addIncoming(RCFGEdge incoming) {
+	public boolean addIncoming(final RCFGEdge incoming) {
 		if (incoming instanceof CodeBlock || incoming instanceof RootEdge) {
 			return super.addIncoming(incoming);
 		} else {
@@ -131,7 +131,7 @@ public class ProgramPoint extends RCFGNode {
 	}
 
 	@Override
-	public boolean addOutgoing(RCFGEdge outgoing) {
+	public boolean addOutgoing(final RCFGEdge outgoing) {
 		if (outgoing instanceof CodeBlock || outgoing instanceof RootEdge) {
 			return super.addOutgoing(outgoing);
 		} else {
@@ -140,7 +140,7 @@ public class ProgramPoint extends RCFGNode {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (obj instanceof ProgramPoint) {
 			final ProgramPoint pp2 = (ProgramPoint) obj;
 			return mProcedure.equals(pp2.getProcedure()) && mDebugIdentifier.equals(pp2.getDebugIdentifier());
