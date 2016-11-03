@@ -61,14 +61,14 @@ public class ProgramPoint extends RCFGNode {
 	@Visualizable
 	private final String mProcedure;
 	@Visualizable
-	private final String mPosition;
+	private final String mDebugIdentifier;
 	@Visualizable
 	private final boolean mIsErrorLocation;
 
-	public ProgramPoint(String position, String procedure, boolean isErrorLoc, BoogieASTNode boogieASTNode) {
+	public ProgramPoint(String debugIdentifier, String procedure, boolean isErrorLoc, BoogieASTNode boogieASTNode) {
 		super(new Payload(getLocationFromASTNode(boogieASTNode)));
 		mProcedure = procedure;
-		mPosition = position;
+		mDebugIdentifier = debugIdentifier;
 		mIsErrorLocation = isErrorLoc;
 		mBoogieASTNode = boogieASTNode;
 	}
@@ -96,8 +96,8 @@ public class ProgramPoint extends RCFGNode {
 		return mProcedure;
 	}
 	
-	public String getPosition() {
-		return mPosition;
+	public String getDebugIdentifier() {
+		return mDebugIdentifier;
 	}
 
 	public boolean isErrorLocation() {
@@ -143,7 +143,7 @@ public class ProgramPoint extends RCFGNode {
 	public boolean equals(Object obj) {
 		if (obj instanceof ProgramPoint) {
 			final ProgramPoint pp2 = (ProgramPoint) obj;
-			return mProcedure.equals(pp2.getProcedure()) && mPosition.equals(pp2.getPosition());
+			return mProcedure.equals(pp2.getProcedure()) && mDebugIdentifier.equals(pp2.getDebugIdentifier());
 		} else {
 			return false;
 		}
@@ -151,11 +151,11 @@ public class ProgramPoint extends RCFGNode {
 
 	@Override
 	public int hashCode() {
-		return 3 * mPosition.hashCode() + 5 * mProcedure.hashCode();
+		return 3 * mDebugIdentifier.hashCode() + 5 * mProcedure.hashCode();
 	}
 
 	@Override
 	public String toString() {
-		return mPosition;
+		return mDebugIdentifier;
 	}
 }

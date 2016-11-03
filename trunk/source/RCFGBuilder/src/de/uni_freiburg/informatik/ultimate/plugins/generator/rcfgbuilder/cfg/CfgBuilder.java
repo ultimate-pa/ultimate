@@ -398,7 +398,7 @@ public class CfgBuilder {
 			{
 				// first LocNode is the entry node of the procedure
 				final ProgramPoint locNode = mRootAnnot.mentryNode.get(procName);
-				mlastLabelName = locNode.getPosition();
+				mlastLabelName = locNode.getDebugIdentifier();
 				// mlocSuffix = 0;
 				mprocLocNodes.put(mlastLabelName, locNode);
 				mcurrent = locNode;
@@ -695,7 +695,7 @@ public class CfgBuilder {
 				ensures = getDummyEnsuresSpecifications(proc.getLocation());
 			}
 			final ProgramPoint finalNode = mRootAnnot.mfinalNode.get(mcurrentProcedureName);
-			mlastLabelName = finalNode.getPosition();
+			mlastLabelName = finalNode.getDebugIdentifier();
 			mprocLocNodes.put(mlastLabelName, finalNode);
 			// mlocSuffix = 0;
 			mcurrent = finalNode;
@@ -708,7 +708,7 @@ public class CfgBuilder {
 				mLastSt = st;
 			}
 			final ProgramPoint exitNode = mRootAnnot.mexitNode.get(mcurrentProcedureName);
-			mlastLabelName = exitNode.getPosition();
+			mlastLabelName = exitNode.getDebugIdentifier();
 			mprocLocNodes.put(mlastLabelName, exitNode);
 			((CodeBlock) mcurrent).connectTarget(exitNode);
 
@@ -832,7 +832,7 @@ public class CfgBuilder {
 			if (mlabel2LocNodes.containsKey(labelName)) {
 				final ProgramPoint locNode = mlabel2LocNodes.get(labelName);
 				mLogger.debug("LocNode for " + labelName + " already" + " constructed, namely: " + locNode);
-				if (st instanceof Label && locNode.getPosition() == labelName) {
+				if (st instanceof Label && locNode.getDebugIdentifier() == labelName) {
 					final ILocation loc = st.getLocation();
 					locNode.getPayload().setLocation(loc);
 					if (st.getLocation().isLoop()) {
@@ -1124,13 +1124,13 @@ public class CfgBuilder {
 			}
 			oldLocNode.clearOutgoing();
 
-			mprocLocNodes.remove(oldLocNode.getPosition());
+			mprocLocNodes.remove(oldLocNode.getDebugIdentifier());
 
 			// If the LocNode that should be replaced was constructed for a
 			// label it is in mlocNodeOf and the representative for this label
 			// should be updated accordingly.
-			if (mlabel2LocNodes.containsKey(oldLocNode.getPosition())) {
-				mlabel2LocNodes.put(oldLocNode.getPosition(), newLocNode);
+			if (mlabel2LocNodes.containsKey(oldLocNode.getDebugIdentifier())) {
+				mlabel2LocNodes.put(oldLocNode.getDebugIdentifier(), newLocNode);
 			}
 			if (mRootAnnot.mLoopLocations.containsKey(oldLocNode)) {
 				final ILocation loopLoc = mRootAnnot.mLoopLocations.get(oldLocNode);

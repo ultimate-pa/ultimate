@@ -114,7 +114,7 @@ public abstract class BaseProductOptimizer {
 	protected void removeDisconnectedLocation(final RootNode root, final ProgramPoint toRemove) {
 		final RootAnnot rootAnnot = root.getRootAnnot();
 		final String procName = toRemove.getProcedure();
-		final String locName = toRemove.getPosition();
+		final String locName = toRemove.getDebugIdentifier();
 		final ProgramPoint removed = rootAnnot.getProgramPoints().get(procName).remove(locName);
 		assert toRemove.equals(removed);
 		mRemovedLocations++;

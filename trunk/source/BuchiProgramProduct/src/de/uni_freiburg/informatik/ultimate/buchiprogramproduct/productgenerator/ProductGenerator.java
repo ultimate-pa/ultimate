@@ -219,8 +219,8 @@ public final class ProductGenerator {
 	}
 
 	private void updateProductStates(final ProgramPoint newPP, final String statename) {
-		assert statename.equals(newPP.getPosition());
-		final ProgramPoint rtr = mProductLocations.put(newPP.getPosition(), newPP);
+		assert statename.equals(newPP.getDebugIdentifier());
+		final ProgramPoint rtr = mProductLocations.put(newPP.getDebugIdentifier(), newPP);
 		if (rtr != null) {
 			throw new AssertionError("The original RCFG had two locations with the same location name");
 		}
@@ -519,7 +519,7 @@ public final class ProductGenerator {
 			for (final String nwaState : mNWA.getStates()) {
 				for (final RCFGNode node : predecessors) {
 					final ProgramPoint predecessor = (ProgramPoint) node;
-				if (!predecessor.getPosition().endsWith(nwaState)) {
+				if (!predecessor.getDebugIdentifier().endsWith(nwaState)) {
 					continue;
 				}
 
@@ -595,7 +595,7 @@ public final class ProductGenerator {
 
 		final RootAnnot rootAnnot = mProductRoot.getRootAnnot();
 		for (final ProgramPoint current : toRemove) {
-			final String name = current.getPosition();
+			final String name = current.getDebugIdentifier();
 			// update annotations
 
 			final Map<String, ProgramPoint> prog2programPoints =
@@ -696,7 +696,7 @@ public final class ProductGenerator {
 		}
 
 		final ProgramPoint origRcfgTargetLoc = (ProgramPoint) returnEdge.getTarget();
-		final String helperName = mNameGenerator.generateHelperStateName(origRcfgTargetLoc.getPosition());
+		final String helperName = mNameGenerator.generateHelperStateName(origRcfgTargetLoc.getDebugIdentifier());
 		final ProgramPoint helper = createProductProgramPoint(helperName, origRcfgTargetLoc);
 
 		for (final Call call : mOrigRcfgCallLocs2CallEdges.get(caller)) {
@@ -762,7 +762,7 @@ public final class ProductGenerator {
 	private void handleEdgeCall(final ProgramPoint productSourceLoc, final String nwaSourceState,
 			final Call origRcfgEdge, final ProgramPoint origRcfgSourceLoc, final boolean isProgramStep) {
 
-		final String helperName = mNameGenerator.generateHelperStateName(productSourceLoc.getPosition());
+		final String helperName = mNameGenerator.generateHelperStateName(productSourceLoc.getDebugIdentifier());
 		final ProgramPoint origRcfgTargetLoc = (ProgramPoint) origRcfgEdge.getTarget();
 		final ProgramPoint helper = createProductProgramPoint(helperName, origRcfgTargetLoc);
 

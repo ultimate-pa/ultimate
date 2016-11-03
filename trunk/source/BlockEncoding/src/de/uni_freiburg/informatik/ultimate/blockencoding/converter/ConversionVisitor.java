@@ -330,7 +330,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 					}
 				}
 			}
-			final ProgramPoint newNode = new ProgramPoint(node.getOriginalNode().getPosition(),
+			final ProgramPoint newNode = new ProgramPoint(node.getOriginalNode().getDebugIdentifier(),
 					node.getOriginalNode().getProcedure(), node.getOriginalNode().isErrorLocation(), astNode);
 			// inserted by alex 1.11.2014: (don't forget the annotations.. (mb this would be nicer in the constructor
 			// TODO
@@ -346,10 +346,10 @@ public class ConversionVisitor implements IMinimizationVisitor {
 			// In addition we also have to fill the map which stores every
 			// ProgramPoint in relation to its name and the procedure name
 			if (mLocNodesForAnnot.containsKey(newNode.getProcedure())) {
-				mLocNodesForAnnot.get(newNode.getProcedure()).put(newNode.getPosition(), newNode);
+				mLocNodesForAnnot.get(newNode.getProcedure()).put(newNode.getDebugIdentifier(), newNode);
 			} else {
 				final HashMap<String, ProgramPoint> newMap = new HashMap<String, ProgramPoint>();
-				newMap.put(newNode.getPosition(), newNode);
+				newMap.put(newNode.getDebugIdentifier(), newNode);
 				mLocNodesForAnnot.put(newNode.getProcedure(), newMap);
 			}
 			return newNode;

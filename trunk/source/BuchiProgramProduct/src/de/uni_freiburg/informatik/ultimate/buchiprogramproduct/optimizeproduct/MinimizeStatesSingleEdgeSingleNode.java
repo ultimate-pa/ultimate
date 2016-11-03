@@ -92,7 +92,7 @@ public class MinimizeStatesSingleEdgeSingleNode extends BaseMinimizeStates {
 		// we delete e1 and e2 and q2 and add the new edge (q1,st1;st2,q3)
 
 		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("    will remove " + target.getPosition());
+			mLogger.debug("    will remove " + target.getDebugIdentifier());
 		}
 
 		predEdge.disconnectSource();

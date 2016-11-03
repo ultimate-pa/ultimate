@@ -55,7 +55,7 @@ public class SPredicateWithWitnessNode extends SPredicate {
 		String result = super.mSerialNumber + "#";
 		result += "(";
 //		if (mProgramPoint != null) {
-			result += mProgramPoint.getPosition();
+			result += mProgramPoint.getDebugIdentifier();
 //		}
 		result += ",";
 		result += mWitnessNode.getName();

@@ -62,7 +62,7 @@ public final class ProductLocationNameGenerator {
 	 * @return a String representing the name of this location in the product
 	 */
 	protected String generateStateName(final ProgramPoint loc, final String nwaName) {
-		return generateStateName(String.valueOf(loc.hashCode()) + '_' + loc.getPosition(), nwaName);
+		return generateStateName(String.valueOf(loc.hashCode()) + '_' + loc.getDebugIdentifier(), nwaName);
 	}
 
 	private String generateStateName(final String rcfgName, final String nwaName) {
@@ -85,7 +85,7 @@ public final class ProductLocationNameGenerator {
 		if (loc == null) {
 			return false;
 		}
-		return loc.getPosition().startsWith(HELPER_STATE_PREFIX);
+		return loc.getDebugIdentifier().startsWith(HELPER_STATE_PREFIX);
 	}
 
 }

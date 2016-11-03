@@ -74,7 +74,7 @@ public class UnknownState implements ISLPredicate {
 	public String toString() {
 		String result = mSerialNumber + "#";
 		if (mProgramPoint != null) {
-			result += mProgramPoint.getPosition();
+			result += mProgramPoint.getDebugIdentifier();
 		}
 		else {
 			result += "unknown";

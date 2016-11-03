@@ -95,7 +95,7 @@ public class SPredicate extends BasicPredicate implements ISLPredicate {
 	public String toString() {
 		String result = super.mSerialNumber + "#";
 		if (mProgramPoint != null) {
-			result += mProgramPoint.getPosition();
+			result += mProgramPoint.getDebugIdentifier();
 		}
 		result += mFormula.toString();
 		return result;

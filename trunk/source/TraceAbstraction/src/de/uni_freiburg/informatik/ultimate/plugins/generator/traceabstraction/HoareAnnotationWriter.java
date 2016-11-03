@@ -126,7 +126,7 @@ public class HoareAnnotationWriter {
 
 	private void addFormulasToLocNodes(final ProgramPoint pp, final IPredicate context, final IPredicate current) {
 		final String procName = pp.getProcedure();
-		final String locName = pp.getPosition();
+		final String locName = pp.getDebugIdentifier();
 		final ProgramPoint locNode = mrootAnnot.getProgramPoints().get(procName).get(locName);
 		HoareAnnotation hoareAnnot = null;
 		
