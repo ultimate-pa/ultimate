@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
@@ -149,7 +150,7 @@ public class ModifiableTransFormulaUtils {
 	 * @param tf {@link ModifiableTransFormula} whose mapping from {@link IProgramVar}s to
 	 * inVars is used.
 	 */
-	public static Term renameToDefaultConstants(final Script script, final Boogie2SmtSymbolTable symbTab, final ModifiableTransFormula tf, final Term term) {
+	public static Term renameToDefaultConstants(final Script script, final CfgSymbolTable symbTab, final ModifiableTransFormula tf, final Term term) {
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		for (final TermVariable tv : term.getFreeVars()) {
 			final IProgramVar bv = symbTab.getBoogieVar(tv);
@@ -161,7 +162,7 @@ public class ModifiableTransFormulaUtils {
 		final Term result = (new Substitution(script, substitutionMapping)).transform(term);
 		return result;
 	}
-	public static Term renameToPrimedConstants(final Script script, final Boogie2SmtSymbolTable symbTab, final ModifiableTransFormula tf, final Term term) {
+	public static Term renameToPrimedConstants(final Script script, final CfgSymbolTable symbTab, final ModifiableTransFormula tf, final Term term) {
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		for (final TermVariable tv : term.getFreeVars()) {
 			final IProgramVar bv = symbTab.getBoogieVar(tv);
@@ -176,7 +177,7 @@ public class ModifiableTransFormulaUtils {
 
 	public static LBool implies(final IUltimateServiceProvider services, final ILogger logger, 
 			final ModifiableTransFormula antecedent, final ModifiableTransFormula consequent, 
-			final Script script, final Boogie2SmtSymbolTable symbTab) {
+			final Script script, final CfgSymbolTable symbTab) {
 		final Term antecentTerm = renameToConstants(services, logger, script, symbTab, antecedent);
 		final Term consequentTerm = renameToConstants(services, logger, script, symbTab, consequent);
 		script.push(1);
@@ -195,7 +196,7 @@ public class ModifiableTransFormulaUtils {
 	 * @param logger 
 	 */
 	private static Term renameToConstants(final IUltimateServiceProvider services, final ILogger logger, final Script script,
-			final Boogie2SmtSymbolTable symbTab, 
+			final CfgSymbolTable symbTab, 
 			final ModifiableTransFormula tf) {
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		for (final Entry<IProgramVar, TermVariable> entry : tf.getInVars().entrySet()) {
@@ -277,7 +278,7 @@ public class ModifiableTransFormulaUtils {
 	
 	public static Term translateTermVariablesToInVars(final Script script, 
 			final ModifiableTransFormula tf, final Term term, 
-			final Boogie2SmtSymbolTable symbolTable, 
+			final CfgSymbolTable symbolTable, 
 			final ReplacementVarFactory repVarFac) {
 		final Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
 		for (final TermVariable tv : term.getFreeVars()) {

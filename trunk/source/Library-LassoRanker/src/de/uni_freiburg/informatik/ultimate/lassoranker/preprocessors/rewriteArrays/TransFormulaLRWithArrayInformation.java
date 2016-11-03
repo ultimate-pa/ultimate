@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
@@ -130,7 +130,7 @@ public class TransFormulaLRWithArrayInformation {
 			final IUltimateServiceProvider services, 
 			final ModifiableTransFormula transFormulaLR, 
 			final ReplacementVarFactory replacementVarFactory, final ManagedScript script, 
-			final Boogie2SmtSymbolTable boogie2smt, 
+			final CfgSymbolTable boogie2smt, 
 			final TransFormulaLRWithArrayInformation stem, 
 			final SimplificationTechnique simplificationTechnique, 
 			final XnfConversionTechnique xnfConversionTechnique) {
@@ -193,7 +193,7 @@ public class TransFormulaLRWithArrayInformation {
 	
 	private boolean checkSunftranformation(final IUltimateServiceProvider services, 
 			final ILogger logger, final ManagedScript ftvc, 
-			final Boogie2SmtSymbolTable boogie2smt, final List<List<ArrayEquality>> arrayEqualities, final SingleUpdateNormalFormTransformer[] sunfts) {
+			final CfgSymbolTable boogie2smt, final List<List<ArrayEquality>> arrayEqualities, final SingleUpdateNormalFormTransformer[] sunfts) {
 		final ModifiableTransFormula afterSunft = constructTransFormulaLRWInSunf(services, mXnfConversionTechnique, mSimplificationTechnique, logger, ftvc, mReplacementVarFactory, mScript.getScript(), mTransFormulaLR, arrayEqualities, sunfts);
 		final LBool notStronger = ModifiableTransFormulaUtils.implies(mServices, mLogger, mTransFormulaLR, afterSunft, mScript.getScript(), boogie2smt);
 		if (notStronger != LBool.SAT && notStronger != LBool.UNSAT) {

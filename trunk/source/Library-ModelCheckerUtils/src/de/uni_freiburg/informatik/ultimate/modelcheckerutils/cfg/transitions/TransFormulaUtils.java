@@ -48,8 +48,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.LocalBoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
@@ -445,7 +445,7 @@ public class TransFormulaUtils {
 			final IUltimateServiceProvider services,
 			final Set<IProgramVar> modifiableGlobalsOfEndProcedure,
 			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique,
-			final Boogie2SmtSymbolTable symbolTable,
+			final ICfgSymbolTable symbolTable,
 			final String procAtStart, final String procBeforeCall, final String procAfterCall, final String procAtEnd,
 			final ModifiableGlobalVariableManager modGlobVarManager) {
 		assert procAtStart != null : "proc at start must not be null";
@@ -639,7 +639,7 @@ public class TransFormulaUtils {
 			final UnmodifiableTransFormula callTf, final UnmodifiableTransFormula oldVarsAssignment,
 			final UnmodifiableTransFormula globalVarsAssignment, final UnmodifiableTransFormula afterCallTf,
 			final UnmodifiableTransFormula result,
-			final Boogie2SmtSymbolTable symbolTable, final Set<IProgramVar> modifiableGlobals) {
+			final ICfgSymbolTable symbolTable, final Set<IProgramVar> modifiableGlobals) {
 		assert result.getBranchEncoders().isEmpty() : "result check not applicable with branch encoders";
 		final PredicateTransformer pt = new PredicateTransformer(services, mgdScript, simplificationTechnique, xnfConversionTechnique);
 		final BasicPredicateFactory bpf = new BasicPredicateFactory(services, mgdScript, symbolTable, simplificationTechnique, xnfConversionTechnique);
@@ -687,7 +687,7 @@ public class TransFormulaUtils {
 			final UnmodifiableTransFormula oldVarsAssignment, final UnmodifiableTransFormula globalVarsAssignment,
 			final UnmodifiableTransFormula procedureTf, final UnmodifiableTransFormula returnTf, final ILogger logger,
 			final IUltimateServiceProvider services, final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique,
-			final Boogie2SmtSymbolTable symbolTable, final Set<IProgramVar> modifiableGlobalsOfCallee) {
+			final ICfgSymbolTable symbolTable, final Set<IProgramVar> modifiableGlobalsOfCallee) {
 		logger.debug("sequential composition (call/return) with" + (simplify ? "" : "out") + " formula simplification");
 		final UnmodifiableTransFormula composition = sequentialComposition(logger, services, mgdScript,
 				simplify, extPqe, transformToCNF, xnfConversionTechnique, simplificationTechnique,
@@ -789,7 +789,7 @@ public class TransFormulaUtils {
 			final UnmodifiableTransFormula callTf, final UnmodifiableTransFormula oldVarsAssignment,
 			final UnmodifiableTransFormula globalVarsAssignment, final UnmodifiableTransFormula procedureTf,
 			final UnmodifiableTransFormula returnTf, final UnmodifiableTransFormula result,
-			final Boogie2SmtSymbolTable symbolTable, final Set<IProgramVar> modifiableGlobals) {
+			final ICfgSymbolTable symbolTable, final Set<IProgramVar> modifiableGlobals) {
 		assert result.getBranchEncoders().isEmpty() : "result check not applicable with branch encoders";
 		final PredicateTransformer pt = new PredicateTransformer(services, mgdScript, simplificationTechnique, xnfConversionTechnique);
 		final BasicPredicateFactory bpf = new BasicPredicateFactory(services, mgdScript, symbolTable, simplificationTechnique, xnfConversionTechnique);

@@ -37,8 +37,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLasso
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -74,12 +74,12 @@ public class LoopCannibalizer {
 	private final IUltimateServiceProvider mServices;
 	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
-	private final Boogie2SmtSymbolTable mBoogie2SmtSymbolTable;
+	private final CfgSymbolTable mBoogie2SmtSymbolTable;
 
 	public LoopCannibalizer(final NestedLassoRun<CodeBlock, IPredicate> counterexample, final Set<IPredicate> loopInterpolants,
 			final BinaryStatePredicateManager bspm, final PredicateUnifier predicateUnifier, final CfgSmtToolkit csToolkit,
 			final BuchiModGlobalVarManager buchiModGlobalVarManager, final InterpolationTechnique interpolation,
-			final Boogie2SmtSymbolTable boogie2SmtSymbolTable, final IUltimateServiceProvider services,
+			final CfgSymbolTable boogie2SmtSymbolTable, final IUltimateServiceProvider services,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		super();
 		mServices = services;

@@ -38,9 +38,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -57,10 +57,10 @@ public class RcfgProgramExecutionBuilder {
 	private final RelevantVariables mRelevantVariables;
 	private RcfgProgramExecution mRcfgProgramExecution;
 	private final Map<TermVariable, Boolean>[] mBranchEncoders;
-	private final Boogie2SmtSymbolTable mSymbolTable;
+	private final CfgSymbolTable mSymbolTable;
 
 	public RcfgProgramExecutionBuilder(final ModifiableGlobalVariableManager modifiableGlobalVariableManager,
-			final NestedWord<CodeBlock> trace, final RelevantVariables relevantVariables, final Boogie2SmtSymbolTable symbolTable) {
+			final NestedWord<CodeBlock> trace, final RelevantVariables relevantVariables, final CfgSymbolTable symbolTable) {
 		super();
 		mModifiableGlobalVariableManager = modifiableGlobalVariableManager;
 		mTrace = trace;

@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ApplicationTermFinder;
@@ -125,7 +125,7 @@ public class TransFormulaLRWithArrayCells {
 			final ReplacementVarFactory replacementVarFactory, final ManagedScript script,
 			final TransFormulaLRWithArrayInformation tflrwai,
 			final EqualityAnalysisResult equalityAnalysisAtHonda,
-			final Boogie2SmtSymbolTable boogie2smt, final ArrayCellRepVarConstructor acrvc,
+			final CfgSymbolTable boogie2smt, final ArrayCellRepVarConstructor acrvc,
 			final boolean moverapproximateByOmmitingDisjointIndices, final boolean isStem,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;

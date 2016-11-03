@@ -43,9 +43,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -78,7 +78,7 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder
 	private final NestedWordAutomaton<CodeBlock, IPredicate> mResult;
 	private final CfgSmtToolkit mCsToolkit;
 	private final IRun<CodeBlock, IPredicate> mCurrentCounterExample;
-	private final Boogie2SmtSymbolTable mSymbolTable;
+	private final CfgSymbolTable mSymbolTable;
 
 	public AbsIntStraightLineInterpolantAutomatonBuilder(final IUltimateServiceProvider services,
 			final INestedWordAutomatonSimple<CodeBlock, IPredicate> oldAbstraction,
@@ -87,7 +87,7 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder
 			final IRun<CodeBlock, IPredicate> currentCounterExample,
 			final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique, 
-			final Boogie2SmtSymbolTable symbolTable) {
+			final CfgSymbolTable symbolTable) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mCsToolkit = csToolkit;

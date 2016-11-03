@@ -27,7 +27,6 @@
 
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg;
 
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 public class CfgSmtToolkit {
@@ -35,13 +34,13 @@ public class CfgSmtToolkit {
 
 	private final ManagedScript mManagedScript;
 	private final ModifiableGlobalVariableManager mModifiableGlobals;
-	private final Boogie2SmtSymbolTable mSymbolTable;
+	private final ICfgSymbolTable mSymbolTable;
 
 
 
 
 	public CfgSmtToolkit(final ModifiableGlobalVariableManager modifiableGlobals, final ManagedScript managedScript, 
-			final Boogie2SmtSymbolTable symbolTable) {
+			final ICfgSymbolTable symbolTable) {
 		mManagedScript = managedScript;
 		mSymbolTable = symbolTable;
 		mModifiableGlobals = modifiableGlobals;
@@ -56,7 +55,7 @@ public class CfgSmtToolkit {
 		return mModifiableGlobals;
 	}
 
-	public Boogie2SmtSymbolTable getSymbolTable() {
+	public ICfgSymbolTable getSymbolTable() {
 		return mSymbolTable;
 	}
 	

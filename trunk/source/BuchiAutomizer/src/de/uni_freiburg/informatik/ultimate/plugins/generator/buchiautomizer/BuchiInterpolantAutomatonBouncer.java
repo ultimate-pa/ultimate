@@ -36,8 +36,8 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
@@ -119,7 +119,7 @@ public class BuchiInterpolantAutomatonBouncer extends AbstractInterpolantAutomat
 			final PredicateFactoryForInterpolantAutomata predicateFactoryFia, final PredicateUnifier stemPU, final PredicateUnifier loopPU,
 			final IPredicate falsePredicate, final IUltimateServiceProvider services,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique, 
-			final Boogie2SmtSymbolTable symbolTable) {
+			final CfgSymbolTable symbolTable) {
 		super(services, csToolkit, bhtc, false, abstraction, falsePredicate, null, services.getLoggingService().getLogger(
 				Activator.PLUGIN_ID));
 		mServices = services;

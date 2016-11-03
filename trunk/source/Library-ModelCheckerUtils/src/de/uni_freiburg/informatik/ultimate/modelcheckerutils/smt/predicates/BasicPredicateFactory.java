@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
@@ -58,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
  */
 public class BasicPredicateFactory {
 
-	protected final Boogie2SmtSymbolTable mSymbolTable;
+	protected final ICfgSymbolTable mSymbolTable;
 	protected final Script mScript;
 	protected final SimplificationTechnique mSimplificationTechnique;
 	protected final XnfConversionTechnique mXnfConversionTechnique;
@@ -71,7 +71,7 @@ public class BasicPredicateFactory {
 	protected final Term mDontCareTerm;
 	protected final Term mEmptyStackTerm;
 
-	public BasicPredicateFactory(final IUltimateServiceProvider services, final ManagedScript mgdScript, final Boogie2SmtSymbolTable symbolTable, final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
+	public BasicPredicateFactory(final IUltimateServiceProvider services, final ManagedScript mgdScript, final ICfgSymbolTable symbolTable, final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 			mServices = services;
 			mLogger = mServices.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
 			mDontCareTerm = new AuxiliaryTerm("don't care");

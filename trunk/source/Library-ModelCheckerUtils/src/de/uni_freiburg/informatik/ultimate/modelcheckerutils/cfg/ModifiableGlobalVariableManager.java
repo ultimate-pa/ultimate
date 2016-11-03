@@ -36,7 +36,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
@@ -62,7 +61,7 @@ public class ModifiableGlobalVariableManager {
 	 */
 	private final Map<String,Set<String>> mModifiedVars;
 	protected final ManagedScript mMgdScript;
-	protected final Boogie2SmtSymbolTable mSymbolTable;
+	protected final ICfgSymbolTable mSymbolTable;
 	
 	private final Map<String, UnmodifiableTransFormula> mProc2OldVarsAssignment;
 	private final Map<String, UnmodifiableTransFormula> mProc2GlobalVarsAssignment;
@@ -72,7 +71,7 @@ public class ModifiableGlobalVariableManager {
 	
 	public ModifiableGlobalVariableManager(
 			final Map<String, Set<String>> modifiedVars,
-			final ManagedScript mgdScript, final Boogie2SmtSymbolTable symbolTable) {
+			final ManagedScript mgdScript, final ICfgSymbolTable symbolTable) {
 		mModifiedVars = modifiedVars;
 		mMgdScript = mgdScript;
 		mSymbolTable = symbolTable;

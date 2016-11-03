@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.EqualityAnalysisResult;
@@ -80,7 +80,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 public class EqualitySupportingInvariantAnalysis {
 	private final Set<Doubleton<Term>> mAllDoubletons;
 	private final Script mScript;
-	private final Boogie2SmtSymbolTable mSymbolTable;
+	private final CfgSymbolTable mSymbolTable;
 	
 	private final Set<Doubleton<Term>> mDistinctDoubletons = new HashSet<>();
 	private final Set<Doubleton<Term>> mEqualDoubletons = new HashSet<>();
@@ -103,7 +103,7 @@ public class EqualitySupportingInvariantAnalysis {
 	 * that are modifiable at the program point between stem and loop.
 	 */
 	public EqualitySupportingInvariantAnalysis(final Set<Doubleton<Term>> doubletons,
-			final Boogie2SmtSymbolTable symbolTable,
+			final CfgSymbolTable symbolTable,
 			final Script script,
 			final UnmodifiableTransFormula originalStem,
 			final UnmodifiableTransFormula originalLoop, final Set<IProgramVar> modifiableGlobalsAtHonda) {

@@ -54,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ApplicationTermFinder;
@@ -82,7 +82,7 @@ public class MapEliminator {
 	private final ManagedScript mManagedScript;
 	private final ReplacementVarFactory mReplacementVarFactory;
 	private final ILogger mLogger;
-	private final Boogie2SmtSymbolTable mSymbolTable;
+	private final CfgSymbolTable mSymbolTable;
 
 	// Stores for each variable, which indices contain it
 	private final HashRelation<Term, ArrayIndex> mVariablesToIndices;
@@ -125,7 +125,7 @@ public class MapEliminator {
 	 *            Settings for the map-elimination
 	 */
 	public MapEliminator(final IUltimateServiceProvider services, final ManagedScript managedScript,
-			final Boogie2SmtSymbolTable symbolTable, final ReplacementVarFactory replacementVarFactory,
+			final CfgSymbolTable symbolTable, final ReplacementVarFactory replacementVarFactory,
 			final Collection<ModifiableTransFormula> transformulas, final MapEliminationSettings settings) {
 		mSettings = settings;
 		mServices = services;

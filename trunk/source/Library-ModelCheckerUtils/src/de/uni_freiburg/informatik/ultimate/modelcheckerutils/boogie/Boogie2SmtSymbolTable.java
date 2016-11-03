@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -62,7 +63,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
  * @author Matthias Heizmann
  *
  */
-public class Boogie2SmtSymbolTable {
+public class Boogie2SmtSymbolTable implements ICfgSymbolTable {
 	/**
 	 * Identifier of attribute that we use to state that
 	 * <ul>
@@ -229,6 +230,7 @@ public class Boogie2SmtSymbolTable {
 		}
 	}
 
+	@Override
 	public IProgramVar getBoogieVar(final TermVariable tv) {
 		return mSmtVar2BoogieVar.get(tv);
 	}
@@ -282,6 +284,7 @@ public class Boogie2SmtSymbolTable {
 		return mConstants.get(constId);
 	}
 
+	@Override
 	public BoogieConst getBoogieConst(final ApplicationTerm smtConstant) {
 		return mSmtConst2BoogieConst.get(smtConstant);
 	}
@@ -410,6 +413,7 @@ public class Boogie2SmtSymbolTable {
 	 *
 	 * @return Map that assigns to each variable identifier the non-old global variable
 	 */
+	@Override
 	public Map<String, IProgramNonOldVar> getGlobals() {
 		return Collections.unmodifiableMap(mGlobals);
 	}
@@ -417,6 +421,7 @@ public class Boogie2SmtSymbolTable {
 	/**
 	 * Return old variables.
 	 */
+	@Override
 	public Map<String, IProgramVar> getOldVars() {
 		return Collections.unmodifiableMap(mOldGlobals);
 	}
@@ -424,6 +429,7 @@ public class Boogie2SmtSymbolTable {
 	/**
 	 * Return all local variables, input parameters and output parameters for a given procedure.
 	 */
+	@Override
 	public Map<String, LocalBoogieVar> getLocals(final String procedurename) {
 		final Map<String, LocalBoogieVar> rtr = new HashMap<>();
 		addLocals(rtr, mImplementationLocals, procedurename);
@@ -446,6 +452,7 @@ public class Boogie2SmtSymbolTable {
 	/**
 	 * Return global constants;
 	 */
+	@Override
 	public Map<String, BoogieConst> getConsts() {
 		return Collections.unmodifiableMap(mConstants);
 	}

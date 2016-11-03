@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ModifiableTrans
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
@@ -91,14 +91,14 @@ public class RewriteArrays2 extends LassoPreprocessor {
 
 	private final ReplacementVarFactory mReplacementVarFactory;
 	private final ManagedScript mFreshTermVariableConstructor;
-	private final Boogie2SmtSymbolTable mBoogie2Smt;
+	private final CfgSymbolTable mBoogie2Smt;
 
 	private final boolean mOverapproximateByOmmitingDisjointIndices;
 
 	public RewriteArrays2(final boolean overapproximateByOmmitingDisjointIndices, final UnmodifiableTransFormula originalStem,
 			final UnmodifiableTransFormula originalLoop, final Set<IProgramVar> modifiableGlobalsAtHonda,
 			final IUltimateServiceProvider services, final Set<Term> arrayIndexSupportingInvariants,
-			final Boogie2SmtSymbolTable boogie2smt, final ManagedScript mgdScript, final ReplacementVarFactory ReplacementVarFactory,
+			final CfgSymbolTable boogie2smt, final ManagedScript mgdScript, final ReplacementVarFactory ReplacementVarFactory,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
@@ -270,7 +270,7 @@ public class RewriteArrays2 extends LassoPreprocessor {
 
 	public static boolean checkStemImplication(final IUltimateServiceProvider services, final ILogger logger,
 			final LassoUnderConstruction oldLasso, final LassoUnderConstruction newLasso, 
-			final Boogie2SmtSymbolTable boogie2smt, final ManagedScript script) {
+			final CfgSymbolTable boogie2smt, final ManagedScript script) {
 		final LBool implies = ModifiableTransFormulaUtils.implies(services, logger, oldLasso.getStem(), newLasso.getStem(),
 				script.getScript(), boogie2smt);
 		if (implies != LBool.SAT && implies != LBool.UNSAT) {

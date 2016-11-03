@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -88,7 +88,7 @@ public class HoareAnnotation extends SPredicate {
 	private final XnfConversionTechnique mXnfConversionTechnique;
 
 	private final Script mScript;
-	private final Boogie2SmtSymbolTable mSymbolTable;
+	private final CfgSymbolTable mSymbolTable;
 	private final ManagedScript mMgdScript;
 	private final PredicateFactory mPredicateFactory;
 	private final ModifiableGlobalVariableManager mModifiableGlobals;
@@ -102,7 +102,7 @@ public class HoareAnnotation extends SPredicate {
 	
 
 	public HoareAnnotation(final ProgramPoint programPoint, final int serialNumber, 
-			final Boogie2SmtSymbolTable symbolTable, final PredicateFactory predicateFactory, 
+			final CfgSymbolTable symbolTable, final PredicateFactory predicateFactory, 
 			final ModifiableGlobalVariableManager modifiableGlobals,
 			final ManagedScript mgdScript,
 			final Script script,

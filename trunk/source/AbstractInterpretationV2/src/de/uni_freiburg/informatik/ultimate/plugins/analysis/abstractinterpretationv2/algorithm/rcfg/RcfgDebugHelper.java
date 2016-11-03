@@ -8,8 +8,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
@@ -44,13 +44,13 @@ public class RcfgDebugHelper<STATE extends IAbstractState<STATE, CodeBlock, VARD
 	private final IUltimateServiceProvider mServices;
 	private final IHoareTripleChecker mHTC;
 	private final ManagedScript mMgdScript;
-	private final Boogie2SmtSymbolTable mSymbolTable;
+	private final CfgSymbolTable mSymbolTable;
 	private final SimplificationTechnique mSimplificationTechnique;
 
 	private static int sIllegalPredicates = Integer.MAX_VALUE;
 
 	public RcfgDebugHelper(final CfgSmtToolkit csToolkit,
-			final IUltimateServiceProvider services, final Boogie2SmtSymbolTable symbolTable) {
+			final IUltimateServiceProvider services, final CfgSymbolTable symbolTable) {
 		mServices = services;
 		mSymbolTable = symbolTable;
 		mMgdScript = csToolkit.getManagedScript();
