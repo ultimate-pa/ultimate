@@ -12,6 +12,17 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfa
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTVisitor;
 
 public final class PSTNodeConsumerDispatcher {
+
+	private final IPSTNodeConsumer mConsumer;
+
+	public PSTNodeConsumerDispatcher(final IPSTNodeConsumer consumer) {
+		mConsumer = consumer;
+	}
+
+	public void dispatch(final IPSTNode node) {
+		node.accept(new DispatchVisitor());
+	}
+
 	private final class DispatchVisitor implements IPSTVisitor {
 
 		@Override
@@ -69,13 +80,4 @@ public final class PSTNodeConsumerDispatcher {
 		}
 	}
 
-	private final IPSTNodeConsumer mConsumer;
-
-	public PSTNodeConsumerDispatcher(final IPSTNodeConsumer consumer) {
-		mConsumer = consumer;
-	}
-
-	public void dispatch(final IPSTNode node) {
-		node.accept(new DispatchVisitor());
-	}
 }

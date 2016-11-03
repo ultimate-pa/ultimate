@@ -49,9 +49,9 @@ public final class TokenUtils {
 	public static boolean isAllParenthesisBalanced(final List<Token> tokens) {
 		final Map<Integer, Long> counts =
 				tokens.stream().collect(Collectors.groupingBy(Token::getType, Collectors.counting()));
-		if (counts.getOrDefault(IToken.tLPAREN, 0L) != counts.getOrDefault(IToken.tRPAREN, 0L)
-				|| counts.getOrDefault(IToken.tLBRACE, 0L) != counts.getOrDefault(IToken.tRBRACE, 0L)
-				|| counts.getOrDefault(IToken.tLBRACKET, 0L) != counts.getOrDefault(IToken.tRBRACKET, 0L)) {
+		if (!counts.getOrDefault(IToken.tLPAREN, 0L).equals(counts.getOrDefault(IToken.tRPAREN, 0L))
+				|| !counts.getOrDefault(IToken.tLBRACE, 0L).equals(counts.getOrDefault(IToken.tRBRACE, 0L))
+				|| !counts.getOrDefault(IToken.tLBRACKET, 0L).equals(counts.getOrDefault(IToken.tRBRACKET, 0L))) {
 			return false;
 		}
 		return true;

@@ -12,6 +12,19 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfa
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTTranslationUnit;
 
 public final class PSTNodeFunctionDispatcher<T> {
+
+	private final IPSTNodeFunction<T> mFunc;
+
+	public PSTNodeFunctionDispatcher(final IPSTNodeFunction<T> func) {
+		mFunc = func;
+	}
+
+	public T dispatch(final IPSTNode node) {
+		final DispatchVisitor action = new DispatchVisitor();
+		node.accept(action);
+		return action.getResult().orElseGet(() -> mFunc.on(node));
+	}
+
 	private final class DispatchVisitor extends PSTVisitorWithResult<T> {
 
 		@Override
@@ -63,15 +76,4 @@ public final class PSTNodeFunctionDispatcher<T> {
 		}
 	}
 
-	private final IPSTNodeFunction<T> mFunc;
-
-	public PSTNodeFunctionDispatcher(final IPSTNodeFunction<T> func) {
-		mFunc = func;
-	}
-
-	public T dispatch(final IPSTNode node) {
-		final DispatchVisitor action = new DispatchVisitor();
-		node.accept(action);
-		return action.getResult().orElseGet(() -> mFunc.on(node));
-	}
 }

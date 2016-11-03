@@ -81,8 +81,8 @@ public final class RewriteUtils {
 	/**
 	 * Checks if the given replacement string is the same as the existing source text and would not have any effect.
 	 *
-	 * @param node
-	 * @param replacement
+	 * @param node node
+	 * @param replacementString replacementString
 	 * @return if replacement by the given string should be skipped
 	 */
 	public static boolean skipEquivalentReplacement(final IPSTNode node, final String replacementString) {

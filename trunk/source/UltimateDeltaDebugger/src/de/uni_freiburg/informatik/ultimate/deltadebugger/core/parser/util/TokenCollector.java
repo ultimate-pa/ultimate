@@ -27,15 +27,31 @@ public final class TokenCollector {
 
 	private static final CharArrayIntMap keywords;
 
+	private static final int INITIAL_KEYWORD_MAP_SIZE = 40;
+
 	static {
-		keywords = new CharArrayIntMap(40, -1);
+		keywords = new CharArrayIntMap(INITIAL_KEYWORD_MAP_SIZE, -1);
 		Keywords.addKeywordsC(keywords);
 	}
 
 	private TokenCollector() {
 	}
-	
-	
+
+	/**
+	 * Note: Accesses IASTTranslationUnit to get the LexerOptions.
+	 *
+	 * @param parentNode
+	 *            parent node
+	 * @param childNode
+	 *            child node
+	 * @return source range of the token in front
+	 */
+	public static List<Token> collect(final IPSTNode parentNode) {
+		final Visitor instance = new Visitor(parentNode);
+		GapVisitor.invokeAccept(parentNode, instance);
+		return instance.mResult;
+	}
+
 	public static class Token implements ISourceRange {
 		private final ISourceDocument mSource;
 		private final IToken mDelegate;
@@ -106,7 +122,7 @@ public final class TokenCollector {
 
 		@Override
 		public int defaultVisit(final IPSTNode node) {
-			if (node == mParentNode || node instanceof IPSTConditionalBlock) {
+			if (node.equals(mParentNode) || node instanceof IPSTConditionalBlock) {
 				return PROCESS_CONTINUE;
 			}
 			return PROCESS_SKIP;
@@ -123,21 +139,21 @@ public final class TokenCollector {
 			final Lexer lexer = new Lexer(text.toCharArray(), getLexerOptions(), ILexerLog.NULL, null);
 			while (true) {
 				final org.eclipse.cdt.internal.core.parser.scanner.Token token = lexer.nextToken();
-				switch (token.getType()) {
-				case IToken.tEND_OF_INPUT:
+				final int kind = token.getType();
+				if (kind == IToken.tEND_OF_INPUT) {
 					return;
-				case Lexer.tNEWLINE:
-					break;
-				case IToken.tIDENTIFIER:
+				}
+				if (kind == Lexer.tNEWLINE) {
+					continue;
+				}
+				if (kind == IToken.tIDENTIFIER) {
 					final int tokenType = keywords.get(token.getCharImage());
 					if (tokenType != keywords.undefined) {
 						token.setType(tokenType);
 					}
-				default:
-					token.setOffset(offset + token.getOffset(), offset + token.getEndOffset());
-					mResult.add(new Token(mSource, token));
-					break;
 				}
+				token.setOffset(offset + token.getOffset(), offset + token.getEndOffset());
+				mResult.add(new Token(mSource, token));
 			}
 		}
 
@@ -146,21 +162,6 @@ public final class TokenCollector {
 			addTokens(offset, endOffset);
 			return PROCESS_CONTINUE;
 		}
-	}
-
-	/**
-	 * Note: Accesses IASTTranslationUnit to get the LexerOptions.
-	 *
-	 * @param parentNode
-	 *            parent node
-	 * @param childNode
-	 *            child node
-	 * @return source range of the token in front
-	 */
-	public static List<Token> collect(final IPSTNode parentNode) {
-		final Visitor instance = new Visitor(parentNode);
-		GapVisitor.invokeAccept(parentNode, instance);
-		return instance.mResult;
 	}
 
 }

@@ -15,6 +15,7 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfa
  * Simluate a double dispatch function for an IPSTNode argument. Analoguous to IASTNodeConsumer for consistency reasons.
  *
  */
+@FunctionalInterface
 public interface IPSTNodeConsumer {
 
 	default void on(final IPSTComment comment) {

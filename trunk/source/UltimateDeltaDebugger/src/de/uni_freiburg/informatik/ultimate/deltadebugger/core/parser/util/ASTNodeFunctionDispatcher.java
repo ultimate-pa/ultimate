@@ -108,226 +108,18 @@ import org.eclipse.cdt.core.dom.ast.gnu.IGNUASTGotoStatement;
 import org.eclipse.cdt.core.dom.ast.gnu.c.ICASTKnRFunctionDeclarator;
 import org.eclipse.cdt.core.dom.ast.gnu.c.IGCCASTArrayRangeDesignator;
 
+/**
+ * Contains the instanceof mess that is necessary to detect the actual runtime type of an IASTNode and call the correct
+ * overload of an IASTNodeFunction object.
+ *
+ * Note: The idea of this class is to move the complexity out of the rest of the code, that needs to detect the runtime
+ * type of an IASTNode. The Cyclomatic Complexity (and other complexity metrics) cannot be reduced without artificially
+ * obfuscating the code.
+ * 
+ * @param <T>
+ *            function return type
+ */
 public final class ASTNodeFunctionDispatcher<T> {
-	private final class DispatchVisitor extends ASTVisitor {
-		private final IASTNode mExpectedNode;
-		private Optional<T> mResult = Optional.empty();
-
-		DispatchVisitor(final IASTNode expectedNode) {
-			// Visit everything that can be visited to get exactly one call to
-			// visit whenever possible
-			super(true);
-			shouldVisitAmbiguousNodes = false;
-			includeInactiveNodes = true;
-			shouldVisitImplicitNames = true;
-			shouldVisitTokens = true;
-
-			// We need to make sure that the visit() overload is actually called
-			// for the node we want and not a child, though
-			mExpectedNode = expectedNode;
-		}
-
-		public T dispatchByVisitor() {
-			mExpectedNode.accept(this);
-			return mResult.orElseGet(this::dispatchNonVisitedNode);
-		}
-
-		private T dispatchNonVisitedNode() {
-			if (mExpectedNode instanceof IASTPreprocessorMacroExpansion) {
-				return mFunc.on((IASTPreprocessorMacroExpansion) mExpectedNode);
-			} else if (mExpectedNode instanceof IASTComment) {
-				return mFunc.on((IASTComment) mExpectedNode);
-			} else if (mExpectedNode instanceof IASTPreprocessorStatement) {
-				return dispatch((IASTPreprocessorStatement) mExpectedNode);
-			} else if (mExpectedNode instanceof IASTProblem) {
-				return mFunc.on((IASTProblem) mExpectedNode);
-			} else if (mExpectedNode instanceof IASTAlignmentSpecifier) {
-				return mFunc.on((IASTAlignmentSpecifier) mExpectedNode);
-			} else {
-				return mFunc.on(mExpectedNode);
-			}
-		}
-
-		@Override
-		public int visit(final IASTArrayModifier arrayModifier) {
-			if (mExpectedNode == arrayModifier) {
-				mResult = Optional.of(dispatch(arrayModifier));
-			}
-			return PROCESS_ABORT;
-		}
-
-		@Override
-		public int visit(final IASTAttribute attribute) {
-			if (mExpectedNode == attribute) {
-				mResult = Optional.of(mFunc.on(attribute));
-			}
-			return PROCESS_ABORT;
-		}
-
-		@Override
-		public int visit(final IASTAttributeSpecifier attributeSpecifier) {
-			if (mExpectedNode == attributeSpecifier) {
-				mResult = Optional.of(dispatch(attributeSpecifier));
-			}
-			return PROCESS_ABORT;
-		}
-
-		@Override
-		public int visit(final IASTDeclaration declaration) {
-			if (mExpectedNode == declaration) {
-				mResult = Optional.of(dispatch(declaration));
-			}
-			return PROCESS_ABORT;
-		}
-
-		@Override
-		public int visit(final IASTDeclarator declarator) {
-			if (mExpectedNode == declarator) {
-				mResult = Optional.of(dispatch(declarator));
-			}
-			return PROCESS_ABORT;
-		}
-
-		@Override
-		public int visit(final IASTDeclSpecifier declSpecifier) {
-			if (mExpectedNode == declSpecifier) {
-				mResult = Optional.of(dispatch(declSpecifier));
-			}
-			return PROCESS_ABORT;
-		}
-
-		@Override
-		public int visit(final IASTEnumerator enumerator) {
-			if (mExpectedNode == enumerator) {
-				mResult = Optional.of(mFunc.on(enumerator));
-			}
-			return PROCESS_ABORT;
-		}
-
-		@Override
-		public int visit(final IASTExpression expression) {
-			if (mExpectedNode == expression) {
-				mResult = Optional.of(dispatch(expression));
-			}
-			return PROCESS_ABORT;
-		}
-
-		@Override
-		public int visit(final IASTInitializer initializer) {
-			if (mExpectedNode == initializer) {
-				mResult = Optional.of(dispatch(initializer));
-			}
-			return PROCESS_ABORT;
-		}
-
-		@Override
-		public int visit(final IASTName name) {
-			if (mExpectedNode == name) {
-				mResult = Optional.of(dispatch(name));
-			}
-			return PROCESS_ABORT;
-		}
-
-		@Override
-		public int visit(final IASTParameterDeclaration parameterDeclaration) {
-			if (mExpectedNode == parameterDeclaration) {
-				mResult = Optional.of(mFunc.on(parameterDeclaration));
-			}
-			return PROCESS_ABORT;
-		}
-
-		@Override
-		public int visit(final IASTPointerOperator pointerOperator) {
-			if (mExpectedNode == pointerOperator) {
-				mResult = Optional.of(dispatch(pointerOperator));
-			}
-			return PROCESS_ABORT;
-		}
-
-		@Override
-		public int visit(final IASTProblem problem) {
-			if (mExpectedNode == problem) {
-				mResult = Optional.of(mFunc.on(problem));
-			}
-			return PROCESS_ABORT;
-		}
-
-		@Override
-		public int visit(final IASTStatement statement) {
-			if (mExpectedNode == statement) {
-				mResult = Optional.of(dispatch(statement));
-			}
-			return PROCESS_ABORT;
-		}
-
-		@Override
-		public int visit(final IASTToken token) {
-			if (mExpectedNode == token) {
-				mResult = Optional.of(dispatch(token));
-			}
-			return PROCESS_ABORT;
-		}
-
-		@Override
-		public int visit(final IASTTranslationUnit translationUnit) {
-			if (mExpectedNode == translationUnit) {
-				mResult = Optional.of(mFunc.on(translationUnit));
-			}
-			return PROCESS_ABORT;
-		}
-
-		@Override
-		public int visit(final IASTTypeId typeId) {
-			if (mExpectedNode == typeId) {
-				mResult = Optional.of(dispatch(typeId));
-			}
-			return PROCESS_ABORT;
-		}
-
-		@Override
-		public int visit(final ICASTDesignator cDesignator) {
-			if (mExpectedNode == cDesignator) {
-				mResult = Optional.of(dispatch(cDesignator));
-			}
-			return PROCESS_ABORT;
-		}
-
-		@Override
-		public int visit(final ICPPASTBaseSpecifier cppBaseSpecifier) {
-			return PROCESS_ABORT;
-		}
-
-		@Override
-		public int visit(final ICPPASTCapture cppCapture) {
-			return PROCESS_ABORT;
-		}
-
-		@Override
-		public int visit(final ICPPASTClassVirtSpecifier cppClassVirtSpecifier) {
-			return PROCESS_ABORT;
-		}
-
-		@Override
-		public int visit(final ICPPASTDecltypeSpecifier cppDecltypeSpecifier) {
-			return PROCESS_ABORT;
-		}
-
-		@Override
-		public int visit(final ICPPASTNamespaceDefinition cppNamespaceDefinition) {
-			return PROCESS_ABORT;
-		}
-
-		@Override
-		public int visit(final ICPPASTTemplateParameter cppTemplateParameter) {
-			return PROCESS_ABORT;
-		}
-
-		@Override
-		public int visit(final ICPPASTVirtSpecifier cppVirtSpecifier) {
-			return PROCESS_ABORT;
-		}
-
-	}
 
 	private final IASTNodeFunction<T> mFunc;
 
@@ -460,7 +252,10 @@ public final class ASTNodeFunctionDispatcher<T> {
 	}
 
 	/**
-	 * Invokes the function.
+	 * Invokes the function on the actual node type.
+	 *
+	 * @param node node to call the function for
+	 * @return the functions return value
 	 */
 	public T dispatch(final IASTNode node) {
 		if (node instanceof IASTExpression) {
@@ -634,8 +429,232 @@ public final class ASTNodeFunctionDispatcher<T> {
 	 *
 	 * Note that this is not the default implementation of dispatch(), because calling IASTNode.accept() is not
 	 * guaranteed to be concurency safe. The caller has to explicitly decide if calling IASTNode methods is safe.
+	 *
+	 * @param node node to call the function for
+	 * @return the functions return value
 	 */
 	public T dispatchByVisitor(final IASTNode node) {
 		return new DispatchVisitor(node).dispatchByVisitor();
 	}
+
+	private final class DispatchVisitor extends ASTVisitor {
+		private final IASTNode mExpectedNode;
+		private Optional<T> mResult = Optional.empty();
+
+		DispatchVisitor(final IASTNode expectedNode) {
+			// Visit everything that can be visited to get exactly one call to
+			// visit whenever possible
+			super(true);
+			shouldVisitAmbiguousNodes = false;
+			includeInactiveNodes = true;
+			shouldVisitImplicitNames = true;
+			shouldVisitTokens = true;
+
+			// We need to make sure that the visit() overload is actually called
+			// for the node we want and not a child, though
+			mExpectedNode = expectedNode;
+		}
+
+		public T dispatchByVisitor() {
+			mExpectedNode.accept(this);
+			return mResult.orElseGet(this::dispatchNonVisitedNode);
+		}
+
+		private T dispatchNonVisitedNode() {
+			if (mExpectedNode instanceof IASTPreprocessorMacroExpansion) {
+				return mFunc.on((IASTPreprocessorMacroExpansion) mExpectedNode);
+			} else if (mExpectedNode instanceof IASTComment) {
+				return mFunc.on((IASTComment) mExpectedNode);
+			} else if (mExpectedNode instanceof IASTPreprocessorStatement) {
+				return dispatch((IASTPreprocessorStatement) mExpectedNode);
+			} else if (mExpectedNode instanceof IASTProblem) {
+				return mFunc.on((IASTProblem) mExpectedNode);
+			} else if (mExpectedNode instanceof IASTAlignmentSpecifier) {
+				return mFunc.on((IASTAlignmentSpecifier) mExpectedNode);
+			} else {
+				return mFunc.on(mExpectedNode);
+			}
+		}
+
+		@Override
+		public int visit(final IASTArrayModifier arrayModifier) {
+			if (mExpectedNode.equals(arrayModifier)) {
+				mResult = Optional.of(dispatch(arrayModifier));
+			}
+			return PROCESS_ABORT;
+		}
+
+		@Override
+		public int visit(final IASTAttribute attribute) {
+			if (mExpectedNode.equals(attribute)) {
+				mResult = Optional.of(mFunc.on(attribute));
+			}
+			return PROCESS_ABORT;
+		}
+
+		@Override
+		public int visit(final IASTAttributeSpecifier attributeSpecifier) {
+			if (mExpectedNode.equals(attributeSpecifier)) {
+				mResult = Optional.of(dispatch(attributeSpecifier));
+			}
+			return PROCESS_ABORT;
+		}
+
+		@Override
+		public int visit(final IASTDeclaration declaration) {
+			if (mExpectedNode.equals(declaration)) {
+				mResult = Optional.of(dispatch(declaration));
+			}
+			return PROCESS_ABORT;
+		}
+
+		@Override
+		public int visit(final IASTDeclarator declarator) {
+			if (mExpectedNode.equals(declarator)) {
+				mResult = Optional.of(dispatch(declarator));
+			}
+			return PROCESS_ABORT;
+		}
+
+		@Override
+		public int visit(final IASTDeclSpecifier declSpecifier) {
+			if (mExpectedNode.equals(declSpecifier)) {
+				mResult = Optional.of(dispatch(declSpecifier));
+			}
+			return PROCESS_ABORT;
+		}
+
+		@Override
+		public int visit(final IASTEnumerator enumerator) {
+			if (mExpectedNode.equals(enumerator)) {
+				mResult = Optional.of(mFunc.on(enumerator));
+			}
+			return PROCESS_ABORT;
+		}
+
+		@Override
+		public int visit(final IASTExpression expression) {
+			if (mExpectedNode.equals(expression)) {
+				mResult = Optional.of(dispatch(expression));
+			}
+			return PROCESS_ABORT;
+		}
+
+		@Override
+		public int visit(final IASTInitializer initializer) {
+			if (mExpectedNode.equals(initializer)) {
+				mResult = Optional.of(dispatch(initializer));
+			}
+			return PROCESS_ABORT;
+		}
+
+		@Override
+		public int visit(final IASTName name) {
+			if (mExpectedNode.equals(name)) {
+				mResult = Optional.of(dispatch(name));
+			}
+			return PROCESS_ABORT;
+		}
+
+		@Override
+		public int visit(final IASTParameterDeclaration parameterDeclaration) {
+			if (mExpectedNode.equals(parameterDeclaration)) {
+				mResult = Optional.of(mFunc.on(parameterDeclaration));
+			}
+			return PROCESS_ABORT;
+		}
+
+		@Override
+		public int visit(final IASTPointerOperator pointerOperator) {
+			if (mExpectedNode.equals(pointerOperator)) {
+				mResult = Optional.of(dispatch(pointerOperator));
+			}
+			return PROCESS_ABORT;
+		}
+
+		@Override
+		public int visit(final IASTProblem problem) {
+			if (mExpectedNode.equals(problem)) {
+				mResult = Optional.of(mFunc.on(problem));
+			}
+			return PROCESS_ABORT;
+		}
+
+		@Override
+		public int visit(final IASTStatement statement) {
+			if (mExpectedNode.equals(statement)) {
+				mResult = Optional.of(dispatch(statement));
+			}
+			return PROCESS_ABORT;
+		}
+
+		@Override
+		public int visit(final IASTToken token) {
+			if (mExpectedNode.equals(token)) {
+				mResult = Optional.of(dispatch(token));
+			}
+			return PROCESS_ABORT;
+		}
+
+		@Override
+		public int visit(final IASTTranslationUnit translationUnit) {
+			if (mExpectedNode.equals(translationUnit)) {
+				mResult = Optional.of(mFunc.on(translationUnit));
+			}
+			return PROCESS_ABORT;
+		}
+
+		@Override
+		public int visit(final IASTTypeId typeId) {
+			if (mExpectedNode.equals(typeId)) {
+				mResult = Optional.of(dispatch(typeId));
+			}
+			return PROCESS_ABORT;
+		}
+
+		@Override
+		public int visit(final ICASTDesignator cDesignator) {
+			if (mExpectedNode.equals(cDesignator)) {
+				mResult = Optional.of(dispatch(cDesignator));
+			}
+			return PROCESS_ABORT;
+		}
+
+		@Override
+		public int visit(final ICPPASTBaseSpecifier cppBaseSpecifier) {
+			return PROCESS_ABORT;
+		}
+
+		@Override
+		public int visit(final ICPPASTCapture cppCapture) {
+			return PROCESS_ABORT;
+		}
+
+		@Override
+		public int visit(final ICPPASTClassVirtSpecifier cppClassVirtSpecifier) {
+			return PROCESS_ABORT;
+		}
+
+		@Override
+		public int visit(final ICPPASTDecltypeSpecifier cppDecltypeSpecifier) {
+			return PROCESS_ABORT;
+		}
+
+		@Override
+		public int visit(final ICPPASTNamespaceDefinition cppNamespaceDefinition) {
+			return PROCESS_ABORT;
+		}
+
+		@Override
+		public int visit(final ICPPASTTemplateParameter cppTemplateParameter) {
+			return PROCESS_ABORT;
+		}
+
+		@Override
+		public int visit(final ICPPASTVirtSpecifier cppVirtSpecifier) {
+			return PROCESS_ABORT;
+		}
+
+	}
+
 }

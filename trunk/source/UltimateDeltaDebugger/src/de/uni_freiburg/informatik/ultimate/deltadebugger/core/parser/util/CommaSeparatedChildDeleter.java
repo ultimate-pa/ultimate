@@ -12,52 +12,25 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceRange;
  *
  */
 public abstract class CommaSeparatedChildDeleter {
-	/**
-	 * Thrown if the deletion of a node is requested, which is not part of the comma separated children list. This is a
-	 * logic error in the calling code.
-	 */
-	public static class MissingChildException extends RuntimeException {
-		/**
-		 *
-		 */
-		private static final long serialVersionUID = 1L;
-
-		public MissingChildException(final String message) {
-			super(message);
-		}
-	}
-
-	/**
-	 * Thrown if the deletion of a node requires the deletion of a comma, of which no location is known.
-	 */
-	public static class MissingCommaLocationException extends Exception {
-		/**
-		 *
-		 */
-		private static final long serialVersionUID = 1L;
-
-		public MissingCommaLocationException(final String message) {
-			super(message);
-		}
-	}
 
 	private final List<IPSTNode> mChildrenToDelete;
-
 	private final List<CommaSeparatedChild> mAllChildren;
-
 	private ISourceRange mLeftComma;
 
 	/**
+	 * Constructor.
+	 *
 	 * @param childrenToDelete
 	 *            sorted sub-sequence of the nodes in allChildren
 	 * @param allChildren
 	 *            sorted list of all children (see {@link CommaSeparatedChildFinder})
 	 * @throws MissingChildException
+	 *             if more nodes are supposed to be deleted than children exist
 	 */
 	public CommaSeparatedChildDeleter(final List<IPSTNode> childrenToDelete,
 			final List<CommaSeparatedChild> allChildren) {
-		this.mChildrenToDelete = childrenToDelete;
-		this.mAllChildren = allChildren;
+		mChildrenToDelete = childrenToDelete;
+		mAllChildren = allChildren;
 
 		if (childrenToDelete.size() > allChildren.size()) {
 			throw new MissingChildException("cannot delete more nodes than children exist");
@@ -82,10 +55,10 @@ public abstract class CommaSeparatedChildDeleter {
 	}
 
 	/**
-	 * Delete the nodes and necessary commas
+	 * Delete the nodes and necessary commas.
 	 * 
-	 * @throws MissingCommaLocationException
-	 * @throws MissingChildException
+	 * @throws MissingCommaLocationException if a required comma location is unknown
+	 * @throws MissingChildException if child is missing
 	 */
 	public void deleteChildren() throws MissingCommaLocationException {
 		final Iterator<IPSTNode> iter = mChildrenToDelete.iterator();
@@ -97,7 +70,7 @@ public abstract class CommaSeparatedChildDeleter {
 		for (int i = 0; i < mAllChildren.size() - 1; ++i) {
 			// Skip children that are not to be deleted and remember comma to the left
 			final CommaSeparatedChild pos = mAllChildren.get(i);
-			if (pos.node() != childToDelete) {
+			if (!childToDelete.equals(pos.node())) {
 				mLeftComma = pos.nextCommaLocation();
 				continue;
 			}
@@ -110,7 +83,7 @@ public abstract class CommaSeparatedChildDeleter {
 		}
 
 		final CommaSeparatedChild lastPos = mAllChildren.get(mAllChildren.size() - 1);
-		if (childToDelete != lastPos.node() || iter.hasNext()) {
+		if (!childToDelete.equals(lastPos.node()) || iter.hasNext()) {
 			// This may happen if the list is not sorted or if the list contains
 			// unrelated (non-regular) nodes -> logic error
 			throw new MissingChildException("Invalid child to delete in list: " + childToDelete);
@@ -141,4 +114,26 @@ public abstract class CommaSeparatedChildDeleter {
 
 	protected abstract void deleteNode(IPSTNode node);
 
+	/**
+	 * Thrown if the deletion of a node is requested, which is not part of the comma separated children list. This is a
+	 * logic error in the calling code.
+	 */
+	public static class MissingChildException extends RuntimeException {
+		private static final long serialVersionUID = 1L;
+
+		public MissingChildException(final String message) {
+			super(message);
+		}
+	}
+
+	/**
+	 * Thrown if the deletion of a node requires the deletion of a comma, of which no location is known.
+	 */
+	public static class MissingCommaLocationException extends Exception {
+		private static final long serialVersionUID = 1L;
+
+		public MissingCommaLocationException(final String message) {
+			super(message);
+		}
+	}
 }

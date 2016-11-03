@@ -12,12 +12,12 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfa
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTTranslationUnit;
 
 /**
- * Simluate a double dispatch function for an IPSTNode argument. Analoguous to IASTNodeFunction<T> for consistency
- * reasons.
+ * Simluate a double dispatch function for an IPSTNode argument. Analoguous to IASTNodeFunction for consistency reasons.
  *
  * @param <T>
  *            returned type
  */
+@FunctionalInterface
 public interface IPSTNodeFunction<T> {
 
 	default T on(final IPSTComment comment) {
