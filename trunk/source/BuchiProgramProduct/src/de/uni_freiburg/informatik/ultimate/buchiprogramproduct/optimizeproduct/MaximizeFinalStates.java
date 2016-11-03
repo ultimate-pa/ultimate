@@ -34,9 +34,9 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.annot.BuchiProgramAcceptingStateAnnotation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 
 /**
@@ -67,16 +67,16 @@ public final class MaximizeFinalStates extends BaseProductOptimizer {
 	}
 
 	private int processInternal(final RootNode root) {
-		final Deque<ProgramPoint> nodes = new ArrayDeque<>();
-		final Set<ProgramPoint> closed = new HashSet<>();
+		final Deque<BoogieIcfgLocation> nodes = new ArrayDeque<>();
+		final Set<BoogieIcfgLocation> closed = new HashSet<>();
 		BuchiProgramAcceptingStateAnnotation annot = null;
 		int newAcceptingStates = 0;
-		for (final RCFGEdge edge : root.getOutgoingEdges()) {
-			nodes.add((ProgramPoint) edge.getTarget());
+		for (final IcfgEdge edge : root.getOutgoingEdges()) {
+			nodes.add((BoogieIcfgLocation) edge.getTarget());
 		}
 
 		while (!nodes.isEmpty()) {
-			final ProgramPoint current = nodes.removeFirst();
+			final BoogieIcfgLocation current = nodes.removeFirst();
 			if (closed.contains(current)) {
 				continue;
 			}
@@ -88,14 +88,14 @@ public final class MaximizeFinalStates extends BaseProductOptimizer {
 				continue;
 			}
 
-			final List<ProgramPoint> succs = getSuccessors(current);
+			final List<BoogieIcfgLocation> succs = getSuccessors(current);
 			if (succs.isEmpty()) {
 				// there are no successors
 				continue;
 			}
 
 			boolean allSuccessorsAreAccepting = true;
-			for (final ProgramPoint succ : succs) {
+			for (final BoogieIcfgLocation succ : succs) {
 				annot = BuchiProgramAcceptingStateAnnotation.getAnnotation(succ);
 				allSuccessorsAreAccepting = allSuccessorsAreAccepting && annot != null;
 				nodes.add(succ);

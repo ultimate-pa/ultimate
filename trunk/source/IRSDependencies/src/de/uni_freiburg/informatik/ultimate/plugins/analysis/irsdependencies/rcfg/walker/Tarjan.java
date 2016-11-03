@@ -32,29 +32,29 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Stack;
 
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 
 public class Tarjan {
-	private HashMap<RCFGNode, VerticeDecorator> mVerticeIndices;
-	private HashSet<RCFGNode> mUnfinishedVertices;
+	private HashMap<IcfgLocation, VerticeDecorator> mVerticeIndices;
+	private HashSet<IcfgLocation> mUnfinishedVertices;
 	private int mCurrentIndex;
-	private Stack<RCFGNode> mCurrentComponent;
+	private Stack<IcfgLocation> mCurrentComponent;
 	private LinkedList<SCC> mComponents;
-	private HashSet<RCFGEdge> mForbiddenEdges;
+	private HashSet<IcfgEdge> mForbiddenEdges;
 
 	public Tarjan() {
 		init();
 	}
 
-	public Tarjan(final List<RCFGEdge> forbiddenEdges) {
+	public Tarjan(final List<IcfgEdge> forbiddenEdges) {
 		init();
 		mForbiddenEdges.addAll(forbiddenEdges);
 	}
 
 	private void init() {
-		mVerticeIndices = new HashMap<RCFGNode, VerticeDecorator>();
+		mVerticeIndices = new HashMap<IcfgLocation, VerticeDecorator>();
 		mUnfinishedVertices = new HashSet<>();
 		mCurrentIndex = 0;
 		mCurrentComponent = new Stack<>();
@@ -62,14 +62,14 @@ public class Tarjan {
 		mForbiddenEdges = new HashSet<>();
 	}
 
-	public LinkedList<SCC> computeStronglyConnectedComponents(final RCFGNode node) {
+	public LinkedList<SCC> computeStronglyConnectedComponents(final IcfgLocation node) {
 		if (!mComponents.isEmpty()) {
 			init();
 		}
 
 		computeVertices(node);
 
-		for (final RCFGNode currentVertice : mUnfinishedVertices) {
+		for (final IcfgLocation currentVertice : mUnfinishedVertices) {
 			final VerticeDecorator currentVerticeDecorator = mVerticeIndices
 					.get(currentVertice);
 			if (currentVerticeDecorator.index == -1) {
@@ -88,7 +88,7 @@ public class Tarjan {
 	 * 
 	 * @param node
 	 */
-	private void computeVertices(final RCFGNode node) {
+	private void computeVertices(final IcfgLocation node) {
 		if (mUnfinishedVertices.contains(node)) {
 			return;
 		}
@@ -96,14 +96,14 @@ public class Tarjan {
 		mUnfinishedVertices.add(node);
 		mVerticeIndices.put(node, new VerticeDecorator());
 
-		for (final RCFGEdge edge : node.getOutgoingEdges()) {
+		for (final IcfgEdge edge : node.getOutgoingEdges()) {
 			if (!mForbiddenEdges.contains(edge)) {
 				computeVertices(edge.getTarget());
 			}
 		}
 	}
 
-	private void computeComponents(final RCFGNode currentVertice,
+	private void computeComponents(final IcfgLocation currentVertice,
 			final VerticeDecorator currentVerticeDecorator) {
 		// Set the depth index for currentVertice to the smallest unused index
 		currentVerticeDecorator.index = mCurrentIndex;
@@ -112,12 +112,12 @@ public class Tarjan {
 		mCurrentComponent.push(currentVertice);
 
 		// Consider successors of currentVertice
-		for (final RCFGEdge possibleSuccessorEdge : currentVertice.getOutgoingEdges()) {
+		for (final IcfgEdge possibleSuccessorEdge : currentVertice.getOutgoingEdges()) {
 			if (!isAdmissible(possibleSuccessorEdge)) {
 				continue;
 			}
 
-			final RCFGNode succesor = possibleSuccessorEdge.getTarget();
+			final IcfgLocation succesor = possibleSuccessorEdge.getTarget();
 			final VerticeDecorator succesorVerticeDecorator = mVerticeIndices
 					.get(succesor);
 			if (succesorVerticeDecorator.index == -1) {
@@ -139,7 +139,7 @@ public class Tarjan {
 		// If currentVertice is a root node, pop the stack and generate an SCC
 		if (currentVerticeDecorator.lowlink == currentVerticeDecorator.index) {
 			final SCC newComponent = new SCC();
-			RCFGNode member = null;
+			IcfgLocation member = null;
 			while (member != currentVertice) {
 				member = mCurrentComponent.pop();
 				newComponent.add(member);
@@ -148,7 +148,7 @@ public class Tarjan {
 		}
 	}
 
-	private boolean isAdmissible(final RCFGEdge possibleSuccessorEdge) {
+	private boolean isAdmissible(final IcfgEdge possibleSuccessorEdge) {
 		if (possibleSuccessorEdge instanceof Summary) {
 			return false;
 		}

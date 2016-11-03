@@ -37,8 +37,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.SummaryReturnTransition;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
@@ -76,14 +76,14 @@ public class SizeBenchmark implements ICsvProviderProvider<Integer> {
 	}
 
 	public SizeBenchmark(final RootNode root, final String label) {
-		final ArrayDeque<RCFGEdge> edges = new ArrayDeque<>();
-		final HashSet<RCFGEdge> closedE = new HashSet<>();
-		final HashSet<RCFGNode> closedV = new HashSet<>();
+		final ArrayDeque<IcfgEdge> edges = new ArrayDeque<>();
+		final HashSet<IcfgEdge> closedE = new HashSet<>();
+		final HashSet<IcfgLocation> closedV = new HashSet<>();
 
 		edges.addAll(root.getOutgoingEdges());
 
 		while (!edges.isEmpty()) {
-			final RCFGEdge current = edges.removeFirst();
+			final IcfgEdge current = edges.removeFirst();
 			if (closedE.contains(current)) {
 				continue;
 			}
@@ -94,7 +94,7 @@ public class SizeBenchmark implements ICsvProviderProvider<Integer> {
 			}
 			
 			closedV.add(current.getTarget());
-			for (final RCFGEdge next : current.getTarget().getOutgoingEdges()) {
+			for (final IcfgEdge next : current.getTarget().getOutgoingEdges()) {
 				edges.add(next);
 			}
 		}

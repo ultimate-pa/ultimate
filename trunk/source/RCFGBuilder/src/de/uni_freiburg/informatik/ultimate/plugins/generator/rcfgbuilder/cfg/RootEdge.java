@@ -28,6 +28,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 
 /**
  * Auxiliary edge from the Root node to the initial LocNodes of a program.
@@ -36,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
  * 
  */
 
-public class RootEdge extends RCFGEdge {
+public class RootEdge extends IcfgEdge {
 
 	/**
 	 * ID to distinguish different versions of this class. If the class gains
@@ -45,7 +47,7 @@ public class RootEdge extends RCFGEdge {
 	 */
 	private static final long serialVersionUID = 1L;
 
-	public RootEdge(RCFGNode source, RCFGNode target) {
+	public RootEdge(IcfgLocation source, IcfgLocation target) {
 		super(source, target, new Payload());
 		setSource(source);
 		source.addOutgoing(this);

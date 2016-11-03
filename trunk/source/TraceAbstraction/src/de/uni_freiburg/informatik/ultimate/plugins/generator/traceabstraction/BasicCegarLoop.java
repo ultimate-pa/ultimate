@@ -75,7 +75,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.LineCoverageCalculator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.IInterpolantAutomatonBuilder;
@@ -150,14 +150,14 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	
 	private final boolean mDoFaultLocalizationNonFlowSensitive;
 	private final boolean mDoFaultLocalizationFlowSensitive;
-	private HashSet<ProgramPoint> mHoareAnnotationPositions;
+	private HashSet<BoogieIcfgLocation> mHoareAnnotationPositions;
 	
 	protected final Collection<INestedWordAutomatonSimple<CodeBlock, IPredicate>> mStoredRawInterpolantAutomata;
 	
 	private final SearchStrategy mSearchStrategy;
 	
 	public BasicCegarLoop(final String name, final RootNode rootNode, final CfgSmtToolkit csToolkit,
-			final PredicateFactory predicateFactory, final TAPreferences taPrefs, final Collection<ProgramPoint> errorLocs,
+			final PredicateFactory predicateFactory, final TAPreferences taPrefs, final Collection<BoogieIcfgLocation> errorLocs,
 			final InterpolationTechnique interpolation, final boolean computeHoareAnnotation,
 			final IUltimateServiceProvider services, final IToolchainStorage storage) {
 		
@@ -753,9 +753,9 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			super.writeAutomatonToFile(mAbstraction, filename);
 		}
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AutomataMinimizationTime.toString());
-		final Function<ISLPredicate, ProgramPoint> lcsProvider = x -> x.getProgramPoint();
+		final Function<ISLPredicate, BoogieIcfgLocation> lcsProvider = x -> x.getProgramPoint();
 		try {
-			final AutomataMinimization<ProgramPoint, ISLPredicate> am = new AutomataMinimization<>(mServices,
+			final AutomataMinimization<BoogieIcfgLocation, ISLPredicate> am = new AutomataMinimization<>(mServices,
 					(INestedWordAutomaton<CodeBlock, IPredicate>) mAbstraction, minimization, mComputeHoareAnnotation,
 					mIteration, predicateFactoryRefinement, MINIMIZE_EVERY_KTH_ITERATION, mStoredRawInterpolantAutomata,
 					mInterpolAutomaton, MINIMIZATION_TIMEOUT, resultCheckPredFac, lcsProvider);

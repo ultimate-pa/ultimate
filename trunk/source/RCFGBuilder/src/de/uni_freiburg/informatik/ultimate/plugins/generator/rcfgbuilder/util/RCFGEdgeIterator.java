@@ -11,8 +11,8 @@ import java.util.Spliterators;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 
 /**
@@ -20,16 +20,16 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class RCFGEdgeIterator implements Iterator<RCFGEdge> {
+public class RCFGEdgeIterator implements Iterator<IcfgEdge> {
 
-	private final Deque<RCFGEdge> mWorklist;
-	private final Set<RCFGEdge> mFinished;
+	private final Deque<IcfgEdge> mWorklist;
+	private final Set<IcfgEdge> mFinished;
 
 	public RCFGEdgeIterator(final RootNode root) {
 		this(root.getOutgoingEdges());
 	}
 
-	public <T extends RCFGEdge> RCFGEdgeIterator(final Collection<T> edges) {
+	public <T extends IcfgEdge> RCFGEdgeIterator(final Collection<T> edges) {
 		mFinished = new HashSet<>();
 		mWorklist = new ArrayDeque<>();
 		mWorklist.addAll(edges);
@@ -41,9 +41,9 @@ public class RCFGEdgeIterator implements Iterator<RCFGEdge> {
 	}
 
 	@Override
-	public RCFGEdge next() {
-		final RCFGEdge current = mWorklist.removeFirst();
-		final RCFGNode target = current.getTarget();
+	public IcfgEdge next() {
+		final IcfgEdge current = mWorklist.removeFirst();
+		final IcfgLocation target = current.getTarget();
 		if (target == null) {
 			assert false : "Dangling edge";
 			return current;
@@ -52,7 +52,7 @@ public class RCFGEdgeIterator implements Iterator<RCFGEdge> {
 		return current;
 	}
 
-	public Stream<RCFGEdge> asStream() {
+	public Stream<IcfgEdge> asStream() {
 		return StreamSupport.stream(Spliterators.spliteratorUnknownSize(this, Spliterator.ORDERED), false);
 	}
 }

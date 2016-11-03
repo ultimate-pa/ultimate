@@ -41,8 +41,8 @@ public class InterproceduralSequentialComposition extends SequentialComposition 
 
 	private static final long serialVersionUID = -1637790156358220366L;
 
-	InterproceduralSequentialComposition(final int serialNumber, final ProgramPoint source,
-			final ProgramPoint target, final ManagedScript mgdScript, 
+	InterproceduralSequentialComposition(final int serialNumber, final BoogieIcfgLocation source,
+			final BoogieIcfgLocation target, final ManagedScript mgdScript, 
 			final ModifiableGlobalVariableManager modGlobVarManager, 
 			final boolean simplify, final boolean extPqe, final List<CodeBlock> codeBlocks, 
 			final ILogger logger, final IUltimateServiceProvider services,

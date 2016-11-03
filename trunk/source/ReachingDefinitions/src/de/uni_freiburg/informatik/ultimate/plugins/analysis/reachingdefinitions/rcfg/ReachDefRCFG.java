@@ -32,12 +32,12 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.PreprocessorAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.IAnnotationProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.ReachDefEdgeAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.ReachDefStatementAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.boogie.ScopedBoogieVarBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.util.Util;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 
 /**
@@ -90,9 +90,9 @@ public class ReachDefRCFG extends BaseObserver {
 		}
 		final ScopedBoogieVarBuilder builder = new ScopedBoogieVarBuilder(pa.getSymbolTable());
 
-		final LinkedHashSet<RCFGEdge> remaining = new LinkedHashSet<>();
+		final LinkedHashSet<IcfgEdge> remaining = new LinkedHashSet<>();
 
-		for (final RCFGEdge next : node.getOutgoingEdges()) {
+		for (final IcfgEdge next : node.getOutgoingEdges()) {
 			remaining.add(next);
 		}
 
@@ -100,9 +100,9 @@ public class ReachDefRCFG extends BaseObserver {
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug("");
 				mLogger.debug("                    Open: "
-						+ Util.prettyPrintIterable(remaining, Util.<RCFGEdge> createHashCodePrinter()));
+						+ Util.prettyPrintIterable(remaining, Util.<IcfgEdge> createHashCodePrinter()));
 			}
-			final RCFGEdge current = remaining.iterator().next();
+			final IcfgEdge current = remaining.iterator().next();
 			remaining.remove(current);
 			final ReachDefRCFGVisitor v = new ReachDefRCFGVisitor(mEdgeProvider, mStatementProvider, mLogger, builder);
 
@@ -111,7 +111,7 @@ public class ReachDefRCFG extends BaseObserver {
 				mLogger.debug("                    Fixpoint reached: " + fxpReached);
 			}
 			if (!fxpReached) {
-				for (final RCFGEdge next : current.getTarget().getOutgoingEdges()) {
+				for (final IcfgEdge next : current.getTarget().getOutgoingEdges()) {
 					remaining.add(next);
 				}
 			}

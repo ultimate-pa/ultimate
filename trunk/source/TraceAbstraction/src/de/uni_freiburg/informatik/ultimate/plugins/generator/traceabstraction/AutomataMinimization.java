@@ -60,7 +60,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
@@ -71,8 +71,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  * and provide the results of this operation.
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
- * @param <LCS> local control state, e.g., {@link ProgramPoint} for sequential
- * programs or a set of {@link ProgramPoint}s for parallel programs.
+ * @param <LCS> local control state, e.g., {@link BoogieIcfgLocation} for sequential
+ * programs or a set of {@link BoogieIcfgLocation}s for parallel programs.
  * @param <LCSP> local control state provider, e.g., {@link ISLPredicate}, or
  * {@link IMLPredicate}
  */

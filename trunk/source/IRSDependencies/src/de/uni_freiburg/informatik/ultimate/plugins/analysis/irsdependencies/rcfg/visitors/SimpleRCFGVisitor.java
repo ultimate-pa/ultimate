@@ -29,8 +29,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcf
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 
 /**
  * @author dietsch
@@ -47,22 +47,22 @@ public abstract class SimpleRCFGVisitor implements IObserver {
 	public void endOfTrace() {
 	}
 
-	public void pre(RCFGNode node) {
+	public void pre(IcfgLocation node) {
 	}
 
-	public void pre(RCFGEdge edge) {
+	public void pre(IcfgEdge edge) {
 	}
 
-	public void post(RCFGNode node) {
+	public void post(IcfgLocation node) {
 	}
 
-	public void post(RCFGEdge edge) {
+	public void post(IcfgEdge edge) {
 	}
 
-	public void level(RCFGNode node) {
+	public void level(IcfgLocation node) {
 	}
 
-	public void level(RCFGEdge edge) {
+	public void level(IcfgEdge edge) {
 	}
 
 	public abstract boolean abortCurrentBranch();

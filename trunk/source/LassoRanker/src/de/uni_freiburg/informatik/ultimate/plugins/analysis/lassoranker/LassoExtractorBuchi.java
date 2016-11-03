@@ -48,10 +48,10 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CFG2NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryResultChecking;
@@ -117,12 +117,12 @@ public class LassoExtractorBuchi extends AbstractLassoExtractor {
 	}
 
 	
-	private RCFGNode extractSomeNodeForErrorReport(final RootNode rootNode) {
+	private IcfgLocation extractSomeNodeForErrorReport(final RootNode rootNode) {
 		return rootNode.getOutgoingNodes().iterator().next();
 	}
 	
 	
-	private ProgramPoint extractHonda(final NestedLassoRun<CodeBlock, IPredicate> run) {
+	private BoogieIcfgLocation extractHonda(final NestedLassoRun<CodeBlock, IPredicate> run) {
 		return ((ISLPredicate) run.getLoop().getStateAtPosition(0)).getProgramPoint();
 	}
 	
@@ -131,8 +131,8 @@ public class LassoExtractorBuchi extends AbstractLassoExtractor {
 			final RootNode rootNode, final CfgSmtToolkit csToolkit) {
 		final CFG2NestedWordAutomaton cFG2NestedWordAutomaton =
 				new CFG2NestedWordAutomaton(mServices, true ,csToolkit, mPredicateFactory, mLogger);
-		final Collection<ProgramPoint> allNodes = new HashSet<ProgramPoint>();
-		for (final Map<String, ProgramPoint> prog2pp :
+		final Collection<BoogieIcfgLocation> allNodes = new HashSet<BoogieIcfgLocation>();
+		for (final Map<String, BoogieIcfgLocation> prog2pp :
 						rootNode.getRootAnnot().getProgramPoints().values()) {
 			allNodes.addAll(prog2pp.values());
 		}

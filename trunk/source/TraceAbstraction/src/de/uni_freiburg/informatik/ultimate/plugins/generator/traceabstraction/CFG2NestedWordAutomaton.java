@@ -42,12 +42,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
@@ -87,12 +87,12 @@ public class CFG2NestedWordAutomaton {
 	public INestedWordAutomaton<CodeBlock,IPredicate> getNestedWordAutomaton(
 							final RootNode rootNode,
 							final IStateFactory<IPredicate> tAContentFactory,
-							final Collection<ProgramPoint> errorLocs) {
-		final Set<ProgramPoint> initialNodes = new HashSet<ProgramPoint>();
-		final Set<ProgramPoint> allNodes = new HashSet<ProgramPoint>();
+							final Collection<BoogieIcfgLocation> errorLocs) {
+		final Set<BoogieIcfgLocation> initialNodes = new HashSet<BoogieIcfgLocation>();
+		final Set<BoogieIcfgLocation> allNodes = new HashSet<BoogieIcfgLocation>();
 		
-		final Map<ProgramPoint,IPredicate> nodes2States = 
-					new HashMap<ProgramPoint, IPredicate>();
+		final Map<BoogieIcfgLocation,IPredicate> nodes2States = 
+					new HashMap<BoogieIcfgLocation, IPredicate>();
 		
 		final Map<String, Procedure> implementations = 
 			rootNode.getRootAnnot().getBoogieDeclarations().getProcImplementation();
@@ -109,9 +109,9 @@ public class CFG2NestedWordAutomaton {
 		mLogger.debug("Step: put all LocationNodes into mNodes");
 		
 		// put all LocationNodes into mNodes
-		final LinkedList<ProgramPoint> queue = new LinkedList<ProgramPoint>();
-		for (final RCFGNode node : rootNode.getOutgoingNodes()) {
-			final ProgramPoint locNode = (ProgramPoint) node;
+		final LinkedList<BoogieIcfgLocation> queue = new LinkedList<BoogieIcfgLocation>();
+		for (final IcfgLocation node : rootNode.getOutgoingNodes()) {
+			final BoogieIcfgLocation locNode = (BoogieIcfgLocation) node;
 			// add only LocationNodes of implementations
 			final String procName = locNode.getProcedure();
 
@@ -124,10 +124,10 @@ public class CFG2NestedWordAutomaton {
 			}
 		}
 		while (!queue.isEmpty()) {
-			final ProgramPoint currentNode = queue.removeFirst();
+			final BoogieIcfgLocation currentNode = queue.removeFirst();
 			if (currentNode.getOutgoingNodes() != null) {
-				for (final RCFGNode node : currentNode.getOutgoingNodes()) {
-					final ProgramPoint nextNode = (ProgramPoint) node;
+				for (final IcfgLocation node : currentNode.getOutgoingNodes()) {
+					final BoogieIcfgLocation nextNode = (BoogieIcfgLocation) node;
 					if ( !allNodes.contains(nextNode)) {
 						allNodes.add(nextNode);
 						queue.add(nextNode);
@@ -143,9 +143,9 @@ public class CFG2NestedWordAutomaton {
 		final Set<CodeBlock> callAlphabet = new HashSet<CodeBlock>();
 		final Set<CodeBlock> returnAlphabet = new HashSet<CodeBlock>();
 		
-		for (final ProgramPoint locNode : allNodes) {
+		for (final BoogieIcfgLocation locNode : allNodes) {
 			if (locNode.getOutgoingNodes() != null) {
-				for (final RCFGEdge edge : locNode.getOutgoingEdges()) {
+				for (final IcfgEdge edge : locNode.getOutgoingEdges()) {
 					if (edge instanceof Call) {
 						if (mInterprocedural) {
 							callAlphabet.add( ((Call) edge));
@@ -188,7 +188,7 @@ public class CFG2NestedWordAutomaton {
 		
 		mLogger.debug("Step: add states");
 		// add states
-		for (final ProgramPoint locNode : allNodes) {
+		for (final BoogieIcfgLocation locNode : allNodes) {
 			final boolean isInitial = initialNodes.contains(locNode);
 			final boolean isErrorLocation = errorLocs.contains(locNode);
 
@@ -221,12 +221,12 @@ public class CFG2NestedWordAutomaton {
 		
 		mLogger.debug("Step: add transitions");
 		// add transitions
-		for (final ProgramPoint locNode : allNodes) {
+		for (final BoogieIcfgLocation locNode : allNodes) {
 			final IPredicate state = 
 				nodes2States.get(locNode);
 			if (locNode.getOutgoingNodes() != null) {
-				for (final RCFGEdge edge : locNode.getOutgoingEdges()) {
-					final ProgramPoint succLoc = (ProgramPoint) edge.getTarget();
+				for (final IcfgEdge edge : locNode.getOutgoingEdges()) {
+					final BoogieIcfgLocation succLoc = (BoogieIcfgLocation) edge.getTarget();
 					final IPredicate succState = 
 						nodes2States.get(succLoc); 
 					if (edge instanceof Call) {
@@ -239,7 +239,7 @@ public class CFG2NestedWordAutomaton {
 						if (mInterprocedural) {
 							final Return returnEdge = (Return) edge;
 							final CodeBlock symbol = returnEdge;
-							final ProgramPoint callerLocNode = returnEdge.getCallerProgramPoint();
+							final BoogieIcfgLocation callerLocNode = returnEdge.getCallerProgramPoint();
 							if (nodes2States.containsKey(callerLocNode)) {
 								nwa.addReturnTransition(state,
 									nodes2States.get(callerLocNode), symbol, succState);

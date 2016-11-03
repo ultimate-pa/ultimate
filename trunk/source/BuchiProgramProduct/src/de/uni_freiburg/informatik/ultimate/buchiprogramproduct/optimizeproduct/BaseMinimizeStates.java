@@ -37,12 +37,12 @@ import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.Activator;
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.annot.BuchiProgramAcceptingStateAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
@@ -62,15 +62,15 @@ public abstract class BaseMinimizeStates extends BaseProductOptimizer {
 
 	@Override
 	protected final RootNode createResult(final RootNode root) {
-		final Deque<RCFGNode> nodes = new ArrayDeque<>();
-		final Set<RCFGNode> closed = new HashSet<>();
+		final Deque<IcfgLocation> nodes = new ArrayDeque<>();
+		final Set<IcfgLocation> closed = new HashSet<>();
 
 		nodes.addAll(root.getOutgoingNodes());
 
 		while (!nodes.isEmpty()) {
 			checkForTimeoutOrCancellation();
 
-			final RCFGNode current = nodes.removeFirst();
+			final IcfgLocation current = nodes.removeFirst();
 			if (closed.contains(current)) {
 				continue;
 			}
@@ -81,7 +81,7 @@ public abstract class BaseMinimizeStates extends BaseProductOptimizer {
 			if (current.getIncomingEdges().size() == 1 && current.getIncomingEdges().get(0) instanceof RootEdge) {
 				nodes.addAll(current.getOutgoingNodes());
 			} else {
-				nodes.addAll(processCandidate(root, (ProgramPoint) current, closed));
+				nodes.addAll(processCandidate(root, (BoogieIcfgLocation) current, closed));
 			}
 		}
 		if (mRemovedEdges > 0) {
@@ -106,10 +106,10 @@ public abstract class BaseMinimizeStates extends BaseProductOptimizer {
 	 * @return A set of nodes that should be processed. May not be null. Nodes already in the closed set will not be
 	 *         processed again.
 	 */
-	protected abstract Collection<? extends RCFGNode> processCandidate(RootNode root, ProgramPoint target,
-			Set<RCFGNode> closed);
+	protected abstract Collection<? extends IcfgLocation> processCandidate(RootNode root, BoogieIcfgLocation target,
+			Set<IcfgLocation> closed);
 
-	protected boolean checkEdgePairs(final List<RCFGEdge> predEdges, final List<RCFGEdge> succEdges) {
+	protected boolean checkEdgePairs(final List<IcfgEdge> predEdges, final List<IcfgEdge> succEdges) {
 		if (!mIgnoreBlowup) {
 			if (predEdges.size() + succEdges.size() < predEdges.size() * succEdges.size()) {
 				// we would introduce more edges than we remove, we do not want
@@ -118,8 +118,8 @@ public abstract class BaseMinimizeStates extends BaseProductOptimizer {
 			}
 		}
 
-		for (final RCFGEdge predEdge : predEdges) {
-			for (final RCFGEdge succEdge : succEdges) {
+		for (final IcfgEdge predEdge : predEdges) {
+			for (final IcfgEdge succEdge : succEdges) {
 				if (!checkEdgePair(predEdge, succEdge)) {
 					return false;
 				}
@@ -128,7 +128,7 @@ public abstract class BaseMinimizeStates extends BaseProductOptimizer {
 		return true;
 	}
 
-	protected boolean checkEdgePair(final RCFGEdge predEdge, final RCFGEdge succEdge) {
+	protected boolean checkEdgePair(final IcfgEdge predEdge, final IcfgEdge succEdge) {
 		if (!(predEdge instanceof CodeBlock) || !(succEdge instanceof CodeBlock)) {
 			// if one of the edges is no codeblock, it is a root edge,
 			// and we cannot apply the rule
@@ -149,14 +149,14 @@ public abstract class BaseMinimizeStates extends BaseProductOptimizer {
 		return (predEdge.getTarget() != predEdge.getSource()) && (succEdge.getTarget() != succEdge.getSource());
 	}
 
-	protected boolean checkAllNodes(final List<RCFGNode> predNodes, final List<RCFGNode> succNodes) {
-		for (final RCFGNode predNode : predNodes) {
+	protected boolean checkAllNodes(final List<IcfgLocation> predNodes, final List<IcfgLocation> succNodes) {
+		for (final IcfgLocation predNode : predNodes) {
 			if (BuchiProgramAcceptingStateAnnotation.getAnnotation(predNode) == null) {
 				return false;
 			}
 		}
 
-		for (final RCFGNode succNode : succNodes) {
+		for (final IcfgLocation succNode : succNodes) {
 			if (BuchiProgramAcceptingStateAnnotation.getAnnotation(succNode) == null) {
 				return false;
 			}
@@ -164,11 +164,11 @@ public abstract class BaseMinimizeStates extends BaseProductOptimizer {
 		return true;
 	}
 
-	protected boolean checkTargetNode(final RCFGNode target) {
+	protected boolean checkTargetNode(final IcfgLocation target) {
 		return BuchiProgramAcceptingStateAnnotation.getAnnotation(target) == null;
 	}
 
-	protected boolean checkNodePair(final RCFGNode pred, final RCFGNode succ) {
+	protected boolean checkNodePair(final IcfgLocation pred, final IcfgLocation succ) {
 		return BuchiProgramAcceptingStateAnnotation.getAnnotation(pred) != null
 				|| BuchiProgramAcceptingStateAnnotation.getAnnotation(succ) != null;
 	}

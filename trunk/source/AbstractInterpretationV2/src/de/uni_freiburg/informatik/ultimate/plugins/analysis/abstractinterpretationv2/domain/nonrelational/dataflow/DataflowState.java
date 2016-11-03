@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 
 /**
  *
@@ -56,7 +56,7 @@ public class DataflowState implements IAbstractState<DataflowState, CodeBlock, I
 	private final Map<IProgramVar, Set<CodeBlock>> mDef;
 	private final Map<IProgramVar, Set<CodeBlock>> mUse;
 	private final Map<IProgramVar, Set<CodeBlock>> mReachDef;
-	private final Map<IProgramVar, Set<ProgramPoint>> mNoWrite;
+	private final Map<IProgramVar, Set<BoogieIcfgLocation>> mNoWrite;
 
 	DataflowState() {
 		this(new HashSet<>(), new HashMap<>(), new HashMap<>(), new HashMap<>(), new HashMap<>());
@@ -64,7 +64,7 @@ public class DataflowState implements IAbstractState<DataflowState, CodeBlock, I
 
 	DataflowState(final Set<IProgramVar> vars, final Map<IProgramVar, Set<CodeBlock>> def,
 			final Map<IProgramVar, Set<CodeBlock>> use, final Map<IProgramVar, Set<CodeBlock>> reachdef,
-			final Map<IProgramVar, Set<ProgramPoint>> noWrite) {
+			final Map<IProgramVar, Set<BoogieIcfgLocation>> noWrite) {
 		assert vars != null;
 		assert def != null;
 		assert use != null;
@@ -100,7 +100,7 @@ public class DataflowState implements IAbstractState<DataflowState, CodeBlock, I
 		use.remove(variable);
 		final Map<IProgramVar, Set<CodeBlock>> reachdef = AbsIntUtil.getFreshMap(mReachDef);
 		use.remove(variable);
-		final Map<IProgramVar, Set<ProgramPoint>> noWrite = AbsIntUtil.getFreshMap(mNoWrite);
+		final Map<IProgramVar, Set<BoogieIcfgLocation>> noWrite = AbsIntUtil.getFreshMap(mNoWrite);
 		use.remove(variable);
 		return new DataflowState(vars, def, use, reachdef, noWrite);
 	}
@@ -124,7 +124,7 @@ public class DataflowState implements IAbstractState<DataflowState, CodeBlock, I
 		final Map<IProgramVar, Set<CodeBlock>> def = AbsIntUtil.getFreshMap(mDef);
 		final Map<IProgramVar, Set<CodeBlock>> use = AbsIntUtil.getFreshMap(mUse);
 		final Map<IProgramVar, Set<CodeBlock>> reachdef = AbsIntUtil.getFreshMap(mReachDef);
-		final Map<IProgramVar, Set<ProgramPoint>> noWrite = AbsIntUtil.getFreshMap(mNoWrite);
+		final Map<IProgramVar, Set<BoogieIcfgLocation>> noWrite = AbsIntUtil.getFreshMap(mNoWrite);
 		variables.stream().forEach(a -> {
 			vars.remove(a);
 			def.remove(a);
@@ -256,7 +256,7 @@ public class DataflowState implements IAbstractState<DataflowState, CodeBlock, I
 		return Collections.unmodifiableMap(mReachDef);
 	}
 
-	Map<IProgramVar, Set<ProgramPoint>> getNoWrite() {
+	Map<IProgramVar, Set<BoogieIcfgLocation>> getNoWrite() {
 		return Collections.unmodifiableMap(mNoWrite);
 	}
 
@@ -273,7 +273,7 @@ public class DataflowState implements IAbstractState<DataflowState, CodeBlock, I
 		final Map<IProgramVar, Set<CodeBlock>> def = AbsIntUtil.getFreshMap(mDef);
 		final Map<IProgramVar, Set<CodeBlock>> use = AbsIntUtil.getFreshMap(mUse);
 		final Map<IProgramVar, Set<CodeBlock>> reachdef = AbsIntUtil.getFreshMap(mReachDef);
-		final Map<IProgramVar, Set<ProgramPoint>> noWrite = AbsIntUtil.getFreshMap(mNoWrite);
+		final Map<IProgramVar, Set<BoogieIcfgLocation>> noWrite = AbsIntUtil.getFreshMap(mNoWrite);
 
 		// TODO: What about def and use?
 
@@ -289,12 +289,12 @@ public class DataflowState implements IAbstractState<DataflowState, CodeBlock, I
 			}
 		}
 		
-		for (final Entry<IProgramVar, Set<ProgramPoint>> otherEntry : other.mNoWrite.entrySet()) {
-			final Set<ProgramPoint> set = noWrite.get(otherEntry.getKey());
+		for (final Entry<IProgramVar, Set<BoogieIcfgLocation>> otherEntry : other.mNoWrite.entrySet()) {
+			final Set<BoogieIcfgLocation> set = noWrite.get(otherEntry.getKey());
 			if (set == null) {
 				noWrite.put(otherEntry.getKey(), new HashSet<>(otherEntry.getValue()));
 			} else {
-				final Set<ProgramPoint> newset = new HashSet<>();
+				final Set<BoogieIcfgLocation> newset = new HashSet<>();
 				newset.addAll(otherEntry.getValue());
 				newset.addAll(set);
 				noWrite.put(otherEntry.getKey(), newset);
@@ -309,7 +309,7 @@ public class DataflowState implements IAbstractState<DataflowState, CodeBlock, I
 		return sId;
 	}
 
-	public Set<ProgramPoint> getNowriteLocations(final IProgramVar iProgramVar) {
+	public Set<BoogieIcfgLocation> getNowriteLocations(final IProgramVar iProgramVar) {
 		return mNoWrite.get(iProgramVar);
 	}
 	

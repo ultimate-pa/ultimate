@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AnnotatedP
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.DummyCodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
@@ -417,7 +417,7 @@ public class BFSEmptinessCheck implements IEmptinessCheck {
 		private static final long serialVersionUID = 1L;
 
 		public EmptyStackSymbol() {
-			super((IPredicate) null, (ProgramPoint) null);
+			super((IPredicate) null, (BoogieIcfgLocation) null);
 		}
 
 		@Override

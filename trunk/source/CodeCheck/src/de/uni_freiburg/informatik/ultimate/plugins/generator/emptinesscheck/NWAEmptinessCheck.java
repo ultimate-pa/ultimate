@@ -54,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AppEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AppHyperEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 
 public class NWAEmptinessCheck implements IEmptinessCheck {
@@ -468,7 +468,7 @@ public class NWAEmptinessCheck implements IEmptinessCheck {
 		private static final long serialVersionUID = 1L;
 
 		public EmptyStackSymbol() {
-			super((IPredicate) null, (ProgramPoint) null);
+			super((IPredicate) null, (BoogieIcfgLocation) null);
 		}
 
 		@Override

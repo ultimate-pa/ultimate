@@ -36,7 +36,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 
@@ -85,7 +85,7 @@ public class PredicateFactoryForInterpolantConsolidation extends PredicateFactor
 		// 1. Do the intersection
 		assert (p1 instanceof ISLPredicate);
 		
-		final ProgramPoint pp = ((ISLPredicate) p1).getProgramPoint();
+		final BoogieIcfgLocation pp = ((ISLPredicate) p1).getProgramPoint();
 		
 		final Term conjunction = super.mPredicateFactory.and(p1, p2);
 		final IPredicate result = super.mPredicateFactory.newSPredicate(pp, conjunction);

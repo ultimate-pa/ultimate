@@ -32,12 +32,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RCFGEdgeVisitor;
 
 /**
- * Extracts a List of {@link Statement}s from a {@link RCFGEdge}.
+ * Extracts a List of {@link Statement}s from a {@link IcfgEdge}.
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
@@ -47,7 +47,7 @@ public class RcfgStatementExtractor extends RCFGEdgeVisitor {
 
 	private List<Statement> mStatements;
 
-	public List<Statement> process(final RCFGEdge edge) {
+	public List<Statement> process(final IcfgEdge edge) {
 		mStatements = new ArrayList<>();
 		visit(edge);
 		return mStatements;

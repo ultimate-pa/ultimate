@@ -44,8 +44,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceEle
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
@@ -55,26 +55,26 @@ import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class RcfgProgramExecution implements IProgramExecution<RCFGEdge, Term> {
+public class RcfgProgramExecution implements IProgramExecution<IcfgEdge, Term> {
 
-	private final List<AtomicTraceElement<RCFGEdge>> mTrace;
+	private final List<AtomicTraceElement<IcfgEdge>> mTrace;
 	private final Map<Integer, ProgramState<Term>> mPartialProgramStateMapping;
 	private final Map<TermVariable, Boolean>[] mBranchEncoders;
 	private final Map<String, ILocation> mOverapproximations;
 
 	@SuppressWarnings("unchecked")
-	public RcfgProgramExecution(final List<? extends RCFGEdge> trace,
+	public RcfgProgramExecution(final List<? extends IcfgEdge> trace,
 			final Map<Integer, ProgramState<Term>> partialProgramStateMapping) {
 		this(trace, partialProgramStateMapping, new ArrayList<Map<TermVariable, Boolean>>().toArray(new Map[0]), null);
 	}
 	
-	public RcfgProgramExecution(final List<? extends RCFGEdge> trace,
+	public RcfgProgramExecution(final List<? extends IcfgEdge> trace,
 			final Map<Integer, ProgramState<Term>> partialProgramStateMapping,
 			final Map<TermVariable, Boolean>[] branchEncoders) {
 		this(trace, partialProgramStateMapping, branchEncoders, null);
 	}
 
-	public RcfgProgramExecution(final List<? extends RCFGEdge> trace,
+	public RcfgProgramExecution(final List<? extends IcfgEdge> trace,
 			final Map<Integer, ProgramState<Term>> partialProgramStateMapping,
 			final Map<TermVariable, Boolean>[] branchEncoders, 
 			final List<IRelevanceInformation> relevanceInformation) {
@@ -85,9 +85,9 @@ public class RcfgProgramExecution implements IProgramExecution<RCFGEdge, Term> {
 
 		// a list of boogieastnodes is a trace that consists of atomic
 		// statements.
-		final List<AtomicTraceElement<RCFGEdge>> atomictrace = new ArrayList<>();
+		final List<AtomicTraceElement<IcfgEdge>> atomictrace = new ArrayList<>();
 		for (int i = 0; i<trace.size(); i++) {
-			final RCFGEdge te = trace.get(i);
+			final IcfgEdge te = trace.get(i);
 			final IRelevanceInformation ri;
 			if (relevanceInformation == null) {
 				ri = null;
@@ -127,7 +127,7 @@ public class RcfgProgramExecution implements IProgramExecution<RCFGEdge, Term> {
 	}
 
 	@Override
-	public AtomicTraceElement<RCFGEdge> getTraceElement(final int i) {
+	public AtomicTraceElement<IcfgEdge> getTraceElement(final int i) {
 		return mTrace.get(i);
 	}
 
@@ -144,9 +144,9 @@ public class RcfgProgramExecution implements IProgramExecution<RCFGEdge, Term> {
 		return mPartialProgramStateMapping.get(-1);
 	}
 
-	public static Map<String, ILocation> getOverapproximations(final List<? extends RCFGEdge> trace) {
+	public static Map<String, ILocation> getOverapproximations(final List<? extends IcfgEdge> trace) {
 		final Map<String, ILocation> result = new HashMap<>();
-		for (final RCFGEdge cb : trace) {
+		for (final IcfgEdge cb : trace) {
 			if (cb.getPayload().hasAnnotation()) {
 				final Map<String, IAnnotations> annotations = cb.getPayload().getAnnotations();
 				if (annotations.containsKey(Overapprox.getIdentifier())) {
@@ -221,7 +221,7 @@ public class RcfgProgramExecution implements IProgramExecution<RCFGEdge, Term> {
 	@Deprecated
 	public List<ILocation> getLocationList() {
 		final List<ILocation> result = new ArrayList<>();
-		for (final AtomicTraceElement<RCFGEdge> cb : mTrace) {
+		for (final AtomicTraceElement<IcfgEdge> cb : mTrace) {
 			result.add(cb.getTraceElement().getPayload().getLocation());
 		}
 		return result;
@@ -233,8 +233,8 @@ public class RcfgProgramExecution implements IProgramExecution<RCFGEdge, Term> {
 	}
 
 	@Override
-	public Class<RCFGEdge> getTraceElementClass() {
-		return RCFGEdge.class;
+	public Class<IcfgEdge> getTraceElementClass() {
+		return IcfgEdge.class;
 	}
 
 	@Override
@@ -251,8 +251,8 @@ public class RcfgProgramExecution implements IProgramExecution<RCFGEdge, Term> {
 	}
 
 	public RcfgProgramExecution addRelevanceInformation(final List<IRelevanceInformation> relevanceInformation) {
-		final List<RCFGEdge> edgeSequence = new ArrayList<>();
-		for (final AtomicTraceElement<RCFGEdge> ate : mTrace) {
+		final List<IcfgEdge> edgeSequence = new ArrayList<>();
+		for (final AtomicTraceElement<IcfgEdge> ate : mTrace) {
 			edgeSequence.add(ate.getTraceElement());
 		}
 		return new RcfgProgramExecution(edgeSequence, 

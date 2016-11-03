@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.Condition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 
 public class TaConcurContentFactory extends PredicateFactoryForInterpolantAutomata {
 
-	public TaConcurContentFactory(final Map<String, Map<String, ProgramPoint>> locNodes,
+	public TaConcurContentFactory(final Map<String, Map<String, BoogieIcfgLocation>> locNodes,
 			final AbstractCegarLoop abstractCegarLoop, final CfgSmtToolkit theory, final PredicateFactory predicateFactory,
 			final boolean taPrefs,
 			final boolean hoareAnnotation,
@@ -94,7 +94,7 @@ public class TaConcurContentFactory extends PredicateFactoryForInterpolantAutoma
 
 	@Override
 	public IPredicate finitePrefix2net(final Condition<?, IPredicate> c) {
-		final ProgramPoint pp = ((ISLPredicate) c.getPlace().getContent()).getProgramPoint();
+		final BoogieIcfgLocation pp = ((ISLPredicate) c.getPlace().getContent()).getProgramPoint();
 		return super.mPredicateFactory.newDontCarePredicate(pp);
 	}
 	

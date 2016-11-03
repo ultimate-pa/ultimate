@@ -32,7 +32,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 
 /**
  * @author heizmann@informatik.uni-freiburg.de
@@ -40,9 +40,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Pro
  */
 public class SPredicate extends BasicPredicate implements ISLPredicate {
 	private static final long serialVersionUID = 1750137515726690834L;
-	protected final ProgramPoint mProgramPoint;
+	protected final BoogieIcfgLocation mProgramPoint;
 
-	protected SPredicate(ProgramPoint programPoint, int serialNumber, String[] procedures, Term term,
+	protected SPredicate(BoogieIcfgLocation programPoint, int serialNumber, String[] procedures, Term term,
 			Set<IProgramVar> vars, Term closedFormula) {
 		super(serialNumber, procedures, term, vars, closedFormula);
 		mProgramPoint = programPoint;
@@ -69,7 +69,7 @@ public class SPredicate extends BasicPredicate implements ISLPredicate {
 	}
 
 	@Override
-	public ProgramPoint getProgramPoint() {
+	public BoogieIcfgLocation getProgramPoint() {
 		return mProgramPoint;
 	}
 

@@ -42,11 +42,11 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression.Operator;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ILiteralCollector;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.generic.LiteralCollection;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RCFGEdgeVisitor;
 
@@ -62,7 +62,7 @@ public class RCFGLiteralCollector extends RCFGEdgeVisitor implements ILiteralCol
 	private final StatementLiteralCollector mStatementLiteralCollector;
 	private final LiteralCollection mLiteralCollection;
 
-	public RCFGLiteralCollector(final RCFGNode root) {
+	public RCFGLiteralCollector(final IcfgLocation root) {
 		mLiterals = new HashSet<>();
 		mNumberLiterals = new HashSet<>();
 		mStatementLiteralCollector = new StatementLiteralCollector();
@@ -88,13 +88,13 @@ public class RCFGLiteralCollector extends RCFGEdgeVisitor implements ILiteralCol
 	// numbers.addAll(adds);
 	// }
 
-	private <T extends RCFGEdge> void process(final Collection<T> edges) {
-		final Deque<RCFGEdge> worklist = new ArrayDeque<>();
-		final Set<RCFGEdge> finished = new HashSet<>();
+	private <T extends IcfgEdge> void process(final Collection<T> edges) {
+		final Deque<IcfgEdge> worklist = new ArrayDeque<>();
+		final Set<IcfgEdge> finished = new HashSet<>();
 
 		worklist.addAll(edges);
 		while (!worklist.isEmpty()) {
-			final RCFGEdge current = worklist.removeFirst();
+			final IcfgEdge current = worklist.removeFirst();
 			if (!finished.add(current)) {
 				continue;
 			}

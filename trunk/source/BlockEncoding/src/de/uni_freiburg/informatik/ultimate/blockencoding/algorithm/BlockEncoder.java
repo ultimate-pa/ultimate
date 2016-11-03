@@ -41,10 +41,10 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.rating.util.EncodingSta
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding.preferences.PreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 
@@ -105,11 +105,11 @@ public class BlockEncoder {
 
 		nonCallingFunctions = new ArrayList<MinimizedNode>();
 
-		for (final RCFGEdge edge : root.getOutgoingEdges()) {
+		for (final IcfgEdge edge : root.getOutgoingEdges()) {
 			if (edge instanceof RootEdge) {
 				final RootEdge rootEdge = (RootEdge) edge;
-				if (rootEdge.getTarget() instanceof ProgramPoint) {
-					processFunction((ProgramPoint) rootEdge.getTarget(), rootEdge);
+				if (rootEdge.getTarget() instanceof BoogieIcfgLocation) {
+					processFunction((BoogieIcfgLocation) rootEdge.getTarget(), rootEdge);
 				} else {
 					mLogger.warn("Minimization canceled, illegal RCFG!");
 					throw new IllegalArgumentException("Node is no ProgramPoint, illegal RCFG");
@@ -131,7 +131,7 @@ public class BlockEncoder {
 			// MinimizeCallReturnVisitor tells us which nodes we have to inspect
 			// again!
 			final ArrayList<MinimizedNode> methodNodes = new ArrayList<MinimizedNode>();
-			for (final RCFGEdge edge : root.getOutgoingEdges()) {
+			for (final IcfgEdge edge : root.getOutgoingEdges()) {
 				if (edge instanceof RootEdge) {
 					methodNodes.add(BlockEncodingAnnotation.getAnnotation(edge).getNode());
 				}
@@ -149,12 +149,12 @@ public class BlockEncoder {
 				mcrVisitor.getNodesForReVisit().clear();
 				// Here try to minimize the rest of the CFG, so that maybe a
 				// further minimization is possible in the next run
-				for (final RCFGEdge edge : root.getOutgoingEdges()) {
+				for (final IcfgEdge edge : root.getOutgoingEdges()) {
 					if (edge instanceof RootEdge) {
 						mbVisitor.visitNode(BlockEncodingAnnotation.getAnnotation(edge).getNode());
 					}
 				}
-				for (final RCFGEdge edge : root.getOutgoingEdges()) {
+				for (final IcfgEdge edge : root.getOutgoingEdges()) {
 					if (edge instanceof RootEdge) {
 						mlVisitor.visitNode(BlockEncodingAnnotation.getAnnotation(edge).getNode());
 						tmVisitor.visitNode(BlockEncodingAnnotation.getAnnotation(edge).getNode());
@@ -179,7 +179,7 @@ public class BlockEncoder {
 	 * @param methodEntryNode
 	 *            the entry point of a function
 	 */
-	private void processFunction(ProgramPoint methodEntryNode, RootEdge rootEdge) {
+	private void processFunction(BoogieIcfgLocation methodEntryNode, RootEdge rootEdge) {
 		mLogger.info("Start processing function: " + methodEntryNode.getProcedure());
 		// Remark: While doing the initialization of the min model, we probably
 		// create already a method entry node

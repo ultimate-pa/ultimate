@@ -51,9 +51,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RcfgElement;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgElement;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
@@ -102,9 +102,9 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 				csToolkit.getSymbolTable(), taPrefs.getSimplificationTechnique(), taPrefs.getXnfConversionTechnique());
 		final TraceAbstractionBenchmarks timingStatistics = new TraceAbstractionBenchmarks(rootNode.getRootAnnot());
 
-		final Map<String, Collection<ProgramPoint>> proc2errNodes = rootAnnot.getErrorNodes();
-		final Collection<ProgramPoint> errNodesOfAllProc = new ArrayList<>();
-		for (final Collection<ProgramPoint> errNodeOfProc : proc2errNodes.values()) {
+		final Map<String, Collection<BoogieIcfgLocation>> proc2errNodes = rootAnnot.getErrorNodes();
+		final Collection<BoogieIcfgLocation> errNodesOfAllProc = new ArrayList<>();
+		for (final Collection<BoogieIcfgLocation> errNodeOfProc : proc2errNodes.values()) {
 			errNodesOfAllProc.addAll(errNodeOfProc);
 		}
 
@@ -211,15 +211,15 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 		return false;
 	}
 
-	private void reportPositiveResults(final Collection<ProgramPoint> errorLocs) {
+	private void reportPositiveResults(final Collection<BoogieIcfgLocation> errorLocs) {
 		final String longDescription;
 		if (errorLocs.isEmpty()) {
 			longDescription = "We were not able to verify any"
 					+ " specifiation because the program does not contain any specification.";
 		} else {
 			longDescription = errorLocs.size() + " specifications checked. All of them hold";
-			for (final ProgramPoint errorLoc : errorLocs) {
-				final PositiveResult<RcfgElement> pResult = new PositiveResult<>(Activator.PLUGIN_NAME, errorLoc,
+			for (final BoogieIcfgLocation errorLoc : errorLocs) {
+				final PositiveResult<IcfgElement> pResult = new PositiveResult<>(Activator.PLUGIN_NAME, errorLoc,
 						mServices.getBacktranslationService());
 				reportResult(pResult);
 			}
@@ -234,18 +234,18 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 			reportUnproveableResult(pe, pe.getUnprovabilityReasons());
 			return;
 		}
-		reportResult(new CounterExampleResult<RcfgElement, RCFGEdge, Term>(getErrorPP(pe),
+		reportResult(new CounterExampleResult<IcfgElement, IcfgEdge, Term>(getErrorPP(pe),
 				Activator.PLUGIN_NAME, mServices.getBacktranslationService(), pe));
 	}
 
-	private void reportTimeoutResult(final Collection<ProgramPoint> errorLocs) {
-		for (final ProgramPoint errorIpp : errorLocs) {
-			final ProgramPoint errorLoc = errorIpp;
+	private void reportTimeoutResult(final Collection<BoogieIcfgLocation> errorLocs) {
+		for (final BoogieIcfgLocation errorIpp : errorLocs) {
+			final BoogieIcfgLocation errorLoc = errorIpp;
 			final ILocation origin = errorLoc.getBoogieASTNode().getLocation().getOrigin();
 			final Check check = ResultUtil.getCheckedSpecification(errorLoc.getBoogieASTNode());
 			String timeOutMessage = "Timeout! Unable to prove that " + check.getPositiveMessage();
 			timeOutMessage += " (line " + origin.getStartLine() + ")";
-			final TimeoutResultAtElement<RcfgElement> timeOutRes = new TimeoutResultAtElement<>(errorLoc,
+			final TimeoutResultAtElement<IcfgElement> timeOutRes = new TimeoutResultAtElement<>(errorLoc,
 					Activator.PLUGIN_NAME, mServices.getBacktranslationService(), timeOutMessage);
 			reportResult(timeOutRes);
 			mLogger.warn(timeOutMessage);
@@ -253,8 +253,8 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 	}
 
 	private void reportUnproveableResult(final RcfgProgramExecution pe, final List<UnprovabilityReason> unproabilityReasons) {
-		final ProgramPoint errorPP = getErrorPP(pe);
-		final UnprovableResult<RcfgElement, RCFGEdge, Term> uknRes = new UnprovableResult<>(
+		final BoogieIcfgLocation errorPP = getErrorPP(pe);
+		final UnprovableResult<IcfgElement, IcfgEdge, Term> uknRes = new UnprovableResult<>(
 				Activator.PLUGIN_NAME, errorPP, mServices.getBacktranslationService(), pe, unproabilityReasons);
 		reportResult(uknRes);
 	}
@@ -296,10 +296,10 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 		return false;
 	}
 
-	public static ProgramPoint getErrorPP(final RcfgProgramExecution rcfgProgramExecution) {
+	public static BoogieIcfgLocation getErrorPP(final RcfgProgramExecution rcfgProgramExecution) {
 		final int lastPosition = rcfgProgramExecution.getLength() - 1;
-		final RCFGEdge last = rcfgProgramExecution.getTraceElement(lastPosition).getTraceElement();
-		final ProgramPoint errorPP = (ProgramPoint) last.getTarget();
+		final IcfgEdge last = rcfgProgramExecution.getTraceElement(lastPosition).getTraceElement();
+		final BoogieIcfgLocation errorPP = (BoogieIcfgLocation) last.getTarget();
 		return errorPP;
 	}
 

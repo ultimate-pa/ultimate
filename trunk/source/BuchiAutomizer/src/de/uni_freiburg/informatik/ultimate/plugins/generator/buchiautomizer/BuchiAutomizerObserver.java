@@ -66,14 +66,14 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Term2Expression;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgElement;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RcfgElement;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
@@ -147,8 +147,8 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	/**
 	 * Report a nontermination argument back to Ultimate's toolchain
 	 */
-	private void reportNonTerminationResult(final ProgramPoint honda, final NonTerminationArgument nta) {
-		final NonTerminationArgumentResult<RcfgElement, Term> result;
+	private void reportNonTerminationResult(final BoogieIcfgLocation honda, final NonTerminationArgument nta) {
+		final NonTerminationArgumentResult<IcfgElement, Term> result;
 		if (nta instanceof GeometricNonTerminationArgument) {
 			final GeometricNonTerminationArgument gnta = (GeometricNonTerminationArgument) nta;
 			// TODO: translate also the rational coefficients to Expressions?
@@ -161,13 +161,13 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			states.addAll(gnta.getGEVs());
 			final List<Map<Term, Rational>> initHondaRays = BacktranslationUtil.rank2Rcfg(states);
 
-			result = new GeometricNonTerminationArgumentResult<RcfgElement, Term>(
+			result = new GeometricNonTerminationArgumentResult<IcfgElement, Term>(
 					honda, Activator.PLUGIN_NAME, initHondaRays.get(0), initHondaRays.get(1),
 					initHondaRays.subList(2, initHondaRays.size()), gnta.getLambdas(), gnta.getNus(),
 					getBacktranslationService(), Term.class);
 		} else if (nta instanceof InfiniteFixpointRepetition) {
 			final InfiniteFixpointRepetition ifr = (InfiniteFixpointRepetition) nta;
-			result = new FixpointNonTerminationResult<RcfgElement, Term>(
+			result = new FixpointNonTerminationResult<IcfgElement, Term>(
 					honda, Activator.PLUGIN_NAME, ifr.getValuesAtInit(), ifr.getValuesAtHonda(), 
 					getBacktranslationService(), Term.class);
 		} else {
@@ -219,10 +219,10 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 					longDescr.toString());
 			reportResult(reportRes);
 		} else if (result == Result.TIMEOUT) {
-			final ProgramPoint position = mRootAnnot.getEntryNodes().values().iterator().next();
+			final BoogieIcfgLocation position = mRootAnnot.getEntryNodes().values().iterator().next();
 			final String longDescr = "Timeout while trying to prove " + whatToProve + ". "
 					+ bcl.getToolchainCancelledException().printRunningTaskMessage();
-			final IResult reportRes = new TimeoutResultAtElement<RcfgElement>(position, Activator.PLUGIN_ID,
+			final IResult reportRes = new TimeoutResultAtElement<IcfgElement>(position, Activator.PLUGIN_ID,
 					mServices.getBacktranslationService(), longDescr);
 			reportResult(reportRes);
 		} else if (result == Result.NONTERMINATING) {
@@ -233,7 +233,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 
 			final NestedLassoRun<CodeBlock, IPredicate> counterexample = bcl.getCounterexample();
 			final IPredicate hondaPredicate = counterexample.getLoop().getStateAtPosition(0);
-			final ProgramPoint honda = ((ISLPredicate) hondaPredicate).getProgramPoint();
+			final BoogieIcfgLocation honda = ((ISLPredicate) hondaPredicate).getProgramPoint();
 			final NonTerminationArgument nta = bcl.getNonTerminationArgument();
 			reportNonTerminationResult(honda, nta);
 			reportResult(new BenchmarkResult<String>(Activator.PLUGIN_NAME, "NonterminationBenchmark",
@@ -248,7 +248,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			final
 			RcfgProgramExecution loopPE = new RcfgProgramExecution(counterexample.getLoop().getWord().asList(),
 					partialProgramStateMapping, new Map[counterexample.getLoop().getLength()]);
-			final IResult ntreportRes = new NonterminatingLassoResult<RcfgElement, RCFGEdge, Term>(honda,
+			final IResult ntreportRes = new NonterminatingLassoResult<IcfgElement, IcfgEdge, Term>(honda,
 					Activator.PLUGIN_ID, mServices.getBacktranslationService(), stemPE, loopPE,
 					honda.getPayload().getLocation());
 			reportResult(ntreportRes);
@@ -265,7 +265,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 
 	private void reportLTLPropertyIsViolated(final BuchiCegarLoop bcl, final LTLPropertyCheck ltlAnnot) {
 		final NestedLassoRun<CodeBlock, IPredicate> counterexample = bcl.getCounterexample();
-		final ProgramPoint position = ((ISLPredicate) counterexample.getLoop().getStateAtPosition(0)).getProgramPoint();
+		final BoogieIcfgLocation position = ((ISLPredicate) counterexample.getLoop().getStateAtPosition(0)).getProgramPoint();
 		// first, check if the counter example is really infinite or not
 
 		final List<CodeBlock> stem = counterexample.getStem().getWord().asList();
@@ -302,7 +302,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			final
 			RcfgProgramExecution loopPE = new RcfgProgramExecution(loop, partialProgramStateMapping,
 					new Map[loop.size()]);
-			reportResult(new LTLInfiniteCounterExampleResult<RcfgElement, RCFGEdge, Term>(position, Activator.PLUGIN_ID,
+			reportResult(new LTLInfiniteCounterExampleResult<IcfgElement, IcfgEdge, Term>(position, Activator.PLUGIN_ID,
 					mServices.getBacktranslationService(), stemPE, loopPE, position.getPayload().getLocation(),
 					ltlAnnot.getLTLProperty()));
 		}

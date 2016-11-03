@@ -30,10 +30,10 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 
 /**
@@ -45,13 +45,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 public class LassoExtractorNaive extends AbstractLassoExtractor {
 
 	public LassoExtractorNaive(RootNode rootNode) {
-		final List<RCFGNode> rootSucc = rootNode.getOutgoingNodes();
-		ProgramPoint firstNode = null;
+		final List<IcfgLocation> rootSucc = rootNode.getOutgoingNodes();
+		BoogieIcfgLocation firstNode = null;
 		boolean programStemsFromCacslTranslation = false;
 		boolean atLeastOneInappropriateSuccessor = false;
 		int i = 0;
-		for (final RCFGNode succ : rootSucc) {
-			final ProgramPoint pp = (ProgramPoint) succ;
+		for (final IcfgLocation succ : rootSucc) {
+			final BoogieIcfgLocation pp = (BoogieIcfgLocation) succ;
 			if (isProgramPointOfInitProcedure(pp)) {
 				programStemsFromCacslTranslation = true;
 			} else if (isProgramPointOfStartProcedure(pp)) {
@@ -80,11 +80,11 @@ public class LassoExtractorNaive extends AbstractLassoExtractor {
 			mSomeNoneForErrorReport = rootNode;
 			return;
 		}
-		final List<RCFGEdge> firstSucc = firstNode.getOutgoingEdges();
+		final List<IcfgEdge> firstSucc = firstNode.getOutgoingEdges();
 		if (firstSucc.size() == 1) {
 			// this edge be the stem, the next node must be the honda
 			final CodeBlock stemCodeBlock = (CodeBlock) firstSucc.get(0);
-			mHonda = (ProgramPoint) stemCodeBlock.getTarget();
+			mHonda = (BoogieIcfgLocation) stemCodeBlock.getTarget();
 			mStem = constructNestedWordOfLenthOne(stemCodeBlock);
 		} else if (firstSucc.size() == 2) {
 			// there is no stem, this must already be the honda
@@ -98,7 +98,7 @@ public class LassoExtractorNaive extends AbstractLassoExtractor {
 			mSomeNoneForErrorReport = firstNode;
 			return;
 		}
-		final List<RCFGEdge> hondaSuccs = mHonda.getOutgoingEdges();
+		final List<IcfgEdge> hondaSuccs = mHonda.getOutgoingEdges();
 		if (hondaSuccs.size() != 2) {
 			// honda has to have two outgoing edges (one where the while loop
 			// was taken, one where is is not taken)
@@ -156,7 +156,7 @@ public class LassoExtractorNaive extends AbstractLassoExtractor {
 	 * Check if the ProgramPoints procedure is "ULTIMATE.init" which is an
 	 * auxiliary procedure used in our CACSLTranslation.
 	 */
-	private boolean isProgramPointOfInitProcedure(ProgramPoint pp) {
+	private boolean isProgramPointOfInitProcedure(BoogieIcfgLocation pp) {
 		return pp.getProcedure().equals("ULTIMATE.init");
 	}
 
@@ -164,11 +164,11 @@ public class LassoExtractorNaive extends AbstractLassoExtractor {
 	 * Check if the ProgramPoints procedure is "ULTIMATE.start" which is an
 	 * auxiliary procedure used in our CACSLTranslation.
 	 */
-	private boolean isProgramPointOfStartProcedure(ProgramPoint pp) {
+	private boolean isProgramPointOfStartProcedure(BoogieIcfgLocation pp) {
 		return pp.getProcedure().equals("ULTIMATE.start");
 	}
 	
-	private CodeBlock checkForOneStepLoop(ProgramPoint honda, CodeBlock hondaSucc) {
+	private CodeBlock checkForOneStepLoop(BoogieIcfgLocation honda, CodeBlock hondaSucc) {
 		if (hondaSucc.getTarget() == honda) {
 			return hondaSucc;
 		} else {
@@ -181,10 +181,10 @@ public class LassoExtractorNaive extends AbstractLassoExtractor {
 	 * two successive edges. The first one has transition relation "true", the
 	 * second one is the one we use as loop edge.
 	 */
-	private CodeBlock checkForTwoStepLoop(ProgramPoint honda, CodeBlock hondaSucc) {
+	private CodeBlock checkForTwoStepLoop(BoogieIcfgLocation honda, CodeBlock hondaSucc) {
 		final CodeBlock loopEdge;
-		final ProgramPoint interposition = (ProgramPoint) hondaSucc.getTarget();
-		final List<RCFGEdge> interpositionSuccs = interposition.getOutgoingEdges();
+		final BoogieIcfgLocation interposition = (BoogieIcfgLocation) hondaSucc.getTarget();
+		final List<IcfgEdge> interpositionSuccs = interposition.getOutgoingEdges();
 		if (interpositionSuccs.size() != 2) {
 			loopEdge = null;
 		} else {

@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TerminationArgumentResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RcfgElement;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgElement;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
@@ -71,7 +71,7 @@ public class BuchiAutomizerModuleDecompositionBenchmark implements ICsvProviderP
 		mModuleSizeNondeterministic.put(iteration, size);
 	}
 
-	void reportRankingFunction(final Integer iteration, final TerminationArgumentResult<RcfgElement, Term> tar) {
+	void reportRankingFunction(final Integer iteration, final TerminationArgumentResult<IcfgElement, Term> tar) {
 		mRankingFunction.put(iteration, prettyPrintRankingFunction(tar));
 	}
 
@@ -87,7 +87,7 @@ public class BuchiAutomizerModuleDecompositionBenchmark implements ICsvProviderP
 		mHasRemainderModule = false;
 	}
 
-	private String prettyPrintRankingFunction(final TerminationArgumentResult<RcfgElement, Term> tar) {
+	private String prettyPrintRankingFunction(final TerminationArgumentResult<IcfgElement, Term> tar) {
 		return tar.getRankingFunctionDescription() + " ranking function " + ResultUtil
 				.translateExpressionToString(mBacktranslationService, Term.class, tar.getRankingFunction());
 	}

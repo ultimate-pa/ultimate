@@ -60,7 +60,7 @@ public class Call extends CodeBlock implements ICallAction {
 	private final static String[] s_AttribFields = { "CallStatement", "PrettyPrintedStatements", "TransitionFormula",
 			"OccurenceInCounterexamples" };
 
-	Call(int serialNumber, ProgramPoint source, ProgramPoint target, CallStatement st, ILogger logger) {
+	Call(int serialNumber, BoogieIcfgLocation source, BoogieIcfgLocation target, CallStatement st, ILogger logger) {
 		super(serialNumber, source, target, logger);
 		mCallStatement = st;
 		mPrettyPrintedStatements = BoogiePrettyPrinter.print(st);

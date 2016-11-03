@@ -12,7 +12,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 
@@ -39,7 +39,7 @@ public class NWAPathProgramTransitionProvider extends RcfgTransitionProvider imp
 	
 	@Override
 	public Collection<CodeBlock> getSuccessors(final CodeBlock elem, final CodeBlock scope) {
-		final ProgramPoint target = getTarget(elem);
+		final BoogieIcfgLocation target = getTarget(elem);
 		if (target == null) {
 			return Collections.emptyList();
 		}
@@ -59,7 +59,7 @@ public class NWAPathProgramTransitionProvider extends RcfgTransitionProvider imp
 	}
 	
 	@Override
-	public Collection<CodeBlock> getSuccessorActions(final ProgramPoint loc) {
+	public Collection<CodeBlock> getSuccessorActions(final BoogieIcfgLocation loc) {
 		return loc.getOutgoingEdges().stream().filter(a -> mLetter2Index.contains(a) || a instanceof Summary)
 				.map(a -> (CodeBlock) a).collect(Collectors.toList());
 	}

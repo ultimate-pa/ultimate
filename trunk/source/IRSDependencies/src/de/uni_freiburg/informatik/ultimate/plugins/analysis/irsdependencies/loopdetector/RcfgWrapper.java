@@ -28,9 +28,9 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.loo
 
 import java.util.Collection;
 
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 
 /**
@@ -40,30 +40,30 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Ret
  * @author dietsch@informatik.uni-freiburg.de
  *
  */
-public final class RcfgWrapper implements IGraph<RCFGNode, RCFGEdge> {
+public final class RcfgWrapper implements IGraph<IcfgLocation, IcfgEdge> {
 
 	@Override
-	public RCFGNode getTarget(final RCFGEdge edge) {
+	public IcfgLocation getTarget(final IcfgEdge edge) {
 		return edge.getTarget();
 	}
 
 	@Override
-	public RCFGNode getSource(final RCFGEdge edge) {
+	public IcfgLocation getSource(final IcfgEdge edge) {
 		return edge.getSource();
 	}
 
 	@Override
-	public Collection<RCFGEdge> getOutgoingEdges(final RCFGNode vertice) {
+	public Collection<IcfgEdge> getOutgoingEdges(final IcfgLocation vertice) {
 		return vertice.getOutgoingEdges();
 	}
 
 	@Override
-	public boolean beginScope(final RCFGEdge edge) {
+	public boolean beginScope(final IcfgEdge edge) {
 		return edge instanceof Call;
 	}
 
 	@Override
-	public boolean endScope(final RCFGEdge edge) {
+	public boolean endScope(final IcfgEdge edge) {
 		return edge instanceof Return;
 	}
 }

@@ -42,11 +42,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms.BoogieExpressionTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms.NormalFormTransformer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence.Origin;
@@ -79,13 +79,13 @@ public final class AssumeMerger extends BaseProductOptimizer {
 
 	@Override
 	protected RootNode createResult(final RootNode root) {
-		final ArrayDeque<RCFGEdge> edges = new ArrayDeque<>();
-		final HashSet<RCFGEdge> closed = new HashSet<>();
+		final ArrayDeque<IcfgEdge> edges = new ArrayDeque<>();
+		final HashSet<IcfgEdge> closed = new HashSet<>();
 
 		edges.addAll(root.getOutgoingEdges());
 
 		while (!edges.isEmpty()) {
-			final RCFGEdge current = edges.removeFirst();
+			final IcfgEdge current = edges.removeFirst();
 			if (closed.contains(current)) {
 				continue;
 			}
@@ -164,8 +164,8 @@ public final class AssumeMerger extends BaseProductOptimizer {
 			if (disjuncts.size() > 1) {
 				// yes we can
 				for (final Expression disjunct : disjuncts) {
-					final StatementSequence ss = mCbf.constructStatementSequence((ProgramPoint) current.getSource(),
-							(ProgramPoint) current.getTarget(), new AssumeStatement(stmt.getLocation(), disjunct),
+					final StatementSequence ss = mCbf.constructStatementSequence((BoogieIcfgLocation) current.getSource(),
+							(BoogieIcfgLocation) current.getTarget(), new AssumeStatement(stmt.getLocation(), disjunct),
 							Origin.IMPLEMENTATION);
 
 					mTransFormulaBuilder.addTransFormula(ss);
@@ -175,8 +175,8 @@ public final class AssumeMerger extends BaseProductOptimizer {
 			}
 			// no, we cannot, just make a normal edge
 		}
-		final StatementSequence ss = mCbf.constructStatementSequence((ProgramPoint) current.getSource(),
-				(ProgramPoint) current.getTarget(), newStmts, Origin.IMPLEMENTATION);
+		final StatementSequence ss = mCbf.constructStatementSequence((BoogieIcfgLocation) current.getSource(),
+				(BoogieIcfgLocation) current.getTarget(), newStmts, Origin.IMPLEMENTATION);
 		mTransFormulaBuilder.addTransFormula(ss);
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Replacing first with second:");

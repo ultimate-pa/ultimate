@@ -29,8 +29,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.uti
 import java.util.HashSet;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 
 public class Utils {
 	public static String insertLineBreaks(final int chopSize, String s) {
@@ -62,16 +62,16 @@ public class Utils {
 
 	}
 
-	public static String traceToString(final List<RCFGEdge> trace) {
+	public static String traceToString(final List<IcfgEdge> trace) {
 		final StringBuilder sb = new StringBuilder();
-		for (final RCFGEdge edge : trace) {
+		for (final IcfgEdge edge : trace) {
 			sb.append(edgeToString(edge));
 			sb.append(" ");
 		}
 		return sb.toString();
 	}
 
-	public static String edgeToString(final RCFGEdge edge) {
+	public static String edgeToString(final IcfgEdge edge) {
 		if (edge instanceof CodeBlock) {
 			return ((CodeBlock) edge).getPrettyPrintedStatements();
 		} else {

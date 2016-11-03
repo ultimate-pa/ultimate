@@ -55,7 +55,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareT
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AutomataMinimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
@@ -78,7 +78,7 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 	
 	public CegarLoopConcurrentAutomata(final String name, final RootNode rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final TraceAbstractionBenchmarks timingStatistics, final TAPreferences taPrefs,
-			final Collection<ProgramPoint> errorLocs, final IUltimateServiceProvider services,
+			final Collection<BoogieIcfgLocation> errorLocs, final IUltimateServiceProvider services,
 			final IToolchainStorage storage) {
 		super(name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, InterpolationTechnique.Craig_TreeInterpolation, false,
 				services, storage);
@@ -134,9 +134,9 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 			super.writeAutomatonToFile(mAbstraction, filename);
 		}
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AutomataMinimizationTime.toString());
-		final Function<IMLPredicate, Set<ProgramPoint>> lcsProvider = x -> asHashSet(x.getProgramPoints());
+		final Function<IMLPredicate, Set<BoogieIcfgLocation>> lcsProvider = x -> asHashSet(x.getProgramPoints());
 		try {
-			final AutomataMinimization<Set<ProgramPoint>, IMLPredicate> am = new AutomataMinimization<>(mServices,
+			final AutomataMinimization<Set<BoogieIcfgLocation>, IMLPredicate> am = new AutomataMinimization<>(mServices,
 					(INestedWordAutomaton<CodeBlock, IPredicate>) mAbstraction, minimization, mComputeHoareAnnotation,
 					mIteration, predicateFactoryRefinement, MINIMIZE_EVERY_KTH_ITERATION, mStoredRawInterpolantAutomata,
 					mInterpolAutomaton, MINIMIZATION_TIMEOUT, resultCheckPredFac, lcsProvider);

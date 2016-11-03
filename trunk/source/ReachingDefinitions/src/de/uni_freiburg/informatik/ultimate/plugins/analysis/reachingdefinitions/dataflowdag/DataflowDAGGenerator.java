@@ -40,12 +40,12 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.IAnnotationProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.IndexedStatement;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.ReachDefEdgeAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.ReachDefStatementAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.boogie.ScopedBoogieVar;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 
 /**
@@ -56,13 +56,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 public class DataflowDAGGenerator extends BaseObserver {
 	private final ILogger mLogger;
 	private final IAnnotationProvider<ReachDefStatementAnnotation> mStatementProvider;
-	private final LinkedHashMap<RCFGEdge, List<AssumeStatement>> mEdgesWithAssumes;
+	private final LinkedHashMap<IcfgEdge, List<AssumeStatement>> mEdgesWithAssumes;
 	private List<DataflowDAG<Statement>> mForest;
 
 	public DataflowDAGGenerator(final ILogger logger,
 			final IAnnotationProvider<ReachDefStatementAnnotation> stmtProvider,
 			final IAnnotationProvider<ReachDefEdgeAnnotation> edgeProvider,
-			final LinkedHashMap<RCFGEdge, List<AssumeStatement>> edgesWithAssumes) {
+			final LinkedHashMap<IcfgEdge, List<AssumeStatement>> edgesWithAssumes) {
 		mLogger = logger;
 		mStatementProvider = stmtProvider;
 		mEdgesWithAssumes = edgesWithAssumes;
@@ -93,7 +93,7 @@ public class DataflowDAGGenerator extends BaseObserver {
 
 	private List<DataflowDAG<Statement>> process(final RootNode node) {
 		final List<DataflowDAG<Statement>> forest = new ArrayList<>();
-		for (final Entry<RCFGEdge, List<AssumeStatement>> entry : mEdgesWithAssumes.entrySet()) {
+		for (final Entry<IcfgEdge, List<AssumeStatement>> entry : mEdgesWithAssumes.entrySet()) {
 			for (final AssumeStatement assm : entry.getValue()) {
 				forest.add(buildDAG(entry.getKey(), assm));
 			}
@@ -101,7 +101,7 @@ public class DataflowDAGGenerator extends BaseObserver {
 		return forest;
 	}
 
-	private DataflowDAG<Statement> buildDAG(final RCFGEdge edge, final AssumeStatement assm) {
+	private DataflowDAG<Statement> buildDAG(final IcfgEdge edge, final AssumeStatement assm) {
 		final LinkedList<DataflowDAG<Statement>> store = new LinkedList<>();
 
 		DataflowDAG<Statement> current = new DataflowDAG<>(assm);

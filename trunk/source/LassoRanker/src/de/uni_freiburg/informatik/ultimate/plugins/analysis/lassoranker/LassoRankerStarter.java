@@ -80,6 +80,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Term2Expression;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgElement;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
@@ -88,8 +89,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BinaryStatePredicateManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RcfgElement;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
@@ -109,7 +109,7 @@ public class LassoRankerStarter {
 			+ "consisting of a stem and a loop transition)";
 
 	private final RootAnnot mRootAnnot;
-	private final ProgramPoint mHonda;
+	private final BoogieIcfgLocation mHonda;
 	private final NestedWord<CodeBlock> mStem;
 	private final NestedWord<CodeBlock> mLoop;
 	private final CfgSmtToolkit mCsToolkit;
@@ -429,7 +429,7 @@ public class LassoRankerStarter {
 			++i;
 		}
 
-		final TerminationArgumentResult<RcfgElement, Term> result =
+		final TerminationArgumentResult<IcfgElement, Term> result =
 				new TerminationArgumentResult<>(mHonda, Activator.PLUGIN_NAME, rf.asLexTerm(script), rf.getName(),
 						suppInvArray, getTranslatorSequence(), Term.class);
 		reportResult(result);
@@ -451,7 +451,7 @@ public class LassoRankerStarter {
 		states.addAll(nta.getGEVs());
 		final List<Map<Term, Rational>> initHondaRays = BacktranslationUtil.rank2Rcfg(states);
 
-		final NonTerminationArgumentResult<RcfgElement, Term> result =
+		final NonTerminationArgumentResult<IcfgElement, Term> result =
 				new GeometricNonTerminationArgumentResult<>(mHonda, Activator.PLUGIN_NAME, initHondaRays.get(0),
 						initHondaRays.get(1), initHondaRays.subList(2, initHondaRays.size()), nta.getLambdas(),
 						nta.getNus(), getTranslatorSequence(), Term.class);
@@ -465,7 +465,7 @@ public class LassoRankerStarter {
 	 *            the current preferences
 	 */
 	private void reportNoResult(final RankingTemplate[] templates) {
-		final NoResult<RcfgElement> result = new NoResult<>(mHonda, Activator.PLUGIN_NAME, getTranslatorSequence());
+		final NoResult<IcfgElement> result = new NoResult<>(mHonda, Activator.PLUGIN_NAME, getTranslatorSequence());
 		result.setShortDescription("LassoRanker could not prove termination");
 		final StringBuilder sb = new StringBuilder();
 		sb.append(
@@ -487,7 +487,7 @@ public class LassoRankerStarter {
 	 *            the current preferences
 	 */
 	private void reportFailBecauseOfOverapproximationResult() {
-		final NoResult<RcfgElement> result = new NoResult<>(mHonda, Activator.PLUGIN_NAME, getTranslatorSequence());
+		final NoResult<IcfgElement> result = new NoResult<>(mHonda, Activator.PLUGIN_NAME, getTranslatorSequence());
 		result.setShortDescription("LassoRanker could not prove termination");
 		final StringBuilder sb = new StringBuilder();
 		sb.append(
@@ -511,7 +511,7 @@ public class LassoRankerStarter {
 			sb.append(" ");
 			sb.append(template.getClass().getSimpleName());
 		}
-		final TimeoutResultAtElement<RcfgElement> result =
+		final TimeoutResultAtElement<IcfgElement> result =
 				new TimeoutResultAtElement<>(mHonda, Activator.PLUGIN_NAME, getTranslatorSequence(), sb.toString());
 		mLogger.info(sb.toString());
 		reportResult(result);
@@ -525,9 +525,9 @@ public class LassoRankerStarter {
 	 * @param message
 	 *            an error message explaining the problem
 	 */
-	private void reportUnuspportedSyntax(final RcfgElement position, final String message) {
+	private void reportUnuspportedSyntax(final IcfgElement position, final String message) {
 		mLogger.error(message);
-		final UnsupportedSyntaxResult<RcfgElement> result =
+		final UnsupportedSyntaxResult<IcfgElement> result =
 				new UnsupportedSyntaxResult<>(position, Activator.PLUGIN_NAME, getTranslatorSequence(), message);
 		reportResult(result);
 	}

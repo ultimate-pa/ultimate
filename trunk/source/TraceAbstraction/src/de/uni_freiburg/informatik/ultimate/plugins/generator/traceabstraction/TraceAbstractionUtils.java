@@ -57,7 +57,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.Mono
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EfficientHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
@@ -75,8 +75,8 @@ public class TraceAbstractionUtils {
 	
 	
 	/**
-	 * @param <LCS> local control state, e.g., {@link ProgramPoint} for sequential
-	 * programs or a set of {@link ProgramPoint}s for parallel programs.
+	 * @param <LCS> local control state, e.g., {@link BoogieIcfgLocation} for sequential
+	 * programs or a set of {@link BoogieIcfgLocation}s for parallel programs.
 	 * @param <LCSP> local control state provider, e.g., {@link ISLPredicate}, or
 	 * {@link IMLPredicate}
 	 */

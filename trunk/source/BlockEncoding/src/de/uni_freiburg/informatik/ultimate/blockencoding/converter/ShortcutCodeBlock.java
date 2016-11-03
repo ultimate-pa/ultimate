@@ -28,7 +28,7 @@ package de.uni_freiburg.informatik.ultimate.blockencoding.converter;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 
 /**
  * This is basically a dummy code block, which we need while converting a
@@ -50,7 +50,7 @@ public class ShortcutCodeBlock extends CodeBlock {
 	 * @param codeBlocks
 	 * @param logger 
 	 */
-	public ShortcutCodeBlock(ProgramPoint source, ProgramPoint target,
+	public ShortcutCodeBlock(BoogieIcfgLocation source, BoogieIcfgLocation target,
 			CodeBlock[] codeBlocks, ILogger logger) {
 		super(source, target, logger);
 		this.codeBlocks = codeBlocks;

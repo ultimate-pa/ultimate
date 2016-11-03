@@ -27,18 +27,19 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.AbstractAnnotations;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 
 public abstract class RCFGEdgeAnnotation extends AbstractAnnotations{
 
 	private static final long serialVersionUID = 1L;
 	
-	protected RCFGEdge mBackingEdge;
+	protected IcfgEdge mBackingEdge;
 
-	protected RCFGEdgeAnnotation(RCFGEdge backingEdge){
+	protected RCFGEdgeAnnotation(IcfgEdge backingEdge){
 		mBackingEdge = backingEdge;
 	}
 	
-	public RCFGEdge getBackingEdge() {
+	public IcfgEdge getBackingEdge() {
 		return mBackingEdge;
 	}
 	
@@ -46,7 +47,7 @@ public abstract class RCFGEdgeAnnotation extends AbstractAnnotations{
 	public boolean equals(Object obj) {
 		if(obj instanceof RCFGEdgeAnnotation){
 			return mBackingEdge.equals(((RCFGEdgeAnnotation)obj).mBackingEdge);
-		} else if (obj instanceof RCFGEdge){
+		} else if (obj instanceof IcfgEdge){
 			return mBackingEdge.equals(obj);
 		}
 		return super.equals(obj);

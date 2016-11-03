@@ -37,11 +37,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferencePro
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractInterpreter;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 
 /**
@@ -91,12 +91,12 @@ public class AbstractInterpretationRcfgObserver extends BaseObserver {
 	}
 
 	private List<CodeBlock> getInitialEdges(final RootNode root) {
-		for (final RCFGEdge initialEdge : root.getOutgoingEdges()) {
-			final ProgramPoint initialNode = (ProgramPoint) initialEdge.getTarget();
+		for (final IcfgEdge initialEdge : root.getOutgoingEdges()) {
+			final BoogieIcfgLocation initialNode = (BoogieIcfgLocation) initialEdge.getTarget();
 			if (initialNode.getProcedure().equals(ULTIMATE_START)) {
-				final List<RCFGEdge> edges = initialNode.getOutgoingEdges();
+				final List<IcfgEdge> edges = initialNode.getOutgoingEdges();
 				final List<CodeBlock> codeblocks = new ArrayList<CodeBlock>(edges.size());
-				for (final RCFGEdge edge : edges) {
+				for (final IcfgEdge edge : edges) {
 					codeblocks.add((CodeBlock) edge);
 				}
 				mLogger.info("Found entry method " + ULTIMATE_START);
@@ -105,10 +105,10 @@ public class AbstractInterpretationRcfgObserver extends BaseObserver {
 		}
 		mLogger.info("Did not find entry method " + ULTIMATE_START + ", using library mode");
 		final List<CodeBlock> codeblocks = new ArrayList<CodeBlock>();
-		for (final RCFGEdge initialEdge : root.getOutgoingEdges()) {
-			final ProgramPoint initialNode = (ProgramPoint) initialEdge.getTarget();
-			final List<RCFGEdge> edges = initialNode.getOutgoingEdges();
-			for (final RCFGEdge edge : edges) {
+		for (final IcfgEdge initialEdge : root.getOutgoingEdges()) {
+			final BoogieIcfgLocation initialNode = (BoogieIcfgLocation) initialEdge.getTarget();
+			final List<IcfgEdge> edges = initialNode.getOutgoingEdges();
+			for (final IcfgEdge edge : edges) {
 				codeblocks.add((CodeBlock) edge);
 			}
 		}

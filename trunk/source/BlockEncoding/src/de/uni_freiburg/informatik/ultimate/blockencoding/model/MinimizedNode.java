@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IModifiableExplicit
 import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IWalkable;
 import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 
 /**
  * This is a node in our model to store all steps of the minimization. Basically we store here all steps, hence all
@@ -62,7 +62,7 @@ public class MinimizedNode implements
 	/**
 	 * the reference for the underlying node in the original RCFG
 	 */
-	private final ProgramPoint mOriginalNode;
+	private final BoogieIcfgLocation mOriginalNode;
 
 	/**
 	 * Because we want to store all levels of the minimization, we keep in track all created edges. We store each level
@@ -82,7 +82,7 @@ public class MinimizedNode implements
 	 * @param originalNode
 	 *            the underlying original node (should be a ProgramPoint, since we rely on the RCFG model)
 	 */
-	public MinimizedNode(final ProgramPoint originalNode) {
+	public MinimizedNode(final BoogieIcfgLocation originalNode) {
 		mOriginalNode = originalNode;
 		mPayload = new Payload();
 	}
@@ -92,7 +92,7 @@ public class MinimizedNode implements
 	 * 
 	 * @return the original node (ProgramPoint)
 	 */
-	public ProgramPoint getOriginalNode() {
+	public BoogieIcfgLocation getOriginalNode() {
 		return mOriginalNode;
 	}
 

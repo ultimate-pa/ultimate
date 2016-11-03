@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
@@ -134,9 +134,9 @@ public class PredicateFactoryForInterpolantAutomata implements IStateFactory<IPr
 		if (!(c2 instanceof ISLPredicate)) {
 			throw new IllegalArgumentException("has to be predicate with single location");
 		}
-		ProgramPoint[] programPoints;
+		BoogieIcfgLocation[] programPoints;
 		if (c1 instanceof ISLPredicate) {
-			programPoints = new ProgramPoint[2];
+			programPoints = new BoogieIcfgLocation[2];
 			programPoints[0] = ((ISLPredicate) c1).getProgramPoint();
 		} else if (c1 instanceof IMLPredicate) {
 			final IMLPredicate mlpred = (IMLPredicate) c1;
@@ -145,7 +145,7 @@ public class PredicateFactoryForInterpolantAutomata implements IStateFactory<IPr
 		} else {
 			throw new UnsupportedOperationException();
 		}
-		final ProgramPoint c2PP = ((ISLPredicate) c2).getProgramPoint();
+		final BoogieIcfgLocation c2PP = ((ISLPredicate) c2).getProgramPoint();
 		programPoints[programPoints.length - 1] = c2PP;
 		final Term conjunction = mPredicateFactory.and(c1, c2);
 		final IMLPredicate result = mPredicateFactory.newMLPredicate(programPoints, conjunction);

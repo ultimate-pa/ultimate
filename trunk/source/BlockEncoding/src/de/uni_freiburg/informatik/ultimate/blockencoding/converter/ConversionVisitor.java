@@ -73,7 +73,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cal
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.GotoEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
@@ -92,13 +92,13 @@ public class ConversionVisitor implements IMinimizationVisitor {
 
 	private final ILogger mLogger;
 
-	private ProgramPoint mStartNode;
+	private BoogieIcfgLocation mStartNode;
 
-	private final HashMap<MinimizedNode, ProgramPoint> mRefNodeMap;
+	private final HashMap<MinimizedNode, BoogieIcfgLocation> mRefNodeMap;
 
-	private final HashMap<ProgramPoint, ProgramPoint> mOrigToNewMap;
+	private final HashMap<BoogieIcfgLocation, BoogieIcfgLocation> mOrigToNewMap;
 
-	private final HashMap<String, HashMap<String, ProgramPoint>> mLocNodesForAnnot;
+	private final HashMap<String, HashMap<String, BoogieIcfgLocation>> mLocNodesForAnnot;
 
 	private final HashSet<IMinimizedEdge> mVisitedEdges;
 
@@ -144,9 +144,9 @@ public class ConversionVisitor implements IMinimizationVisitor {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mSimplify = simplify;
-		mRefNodeMap = new HashMap<MinimizedNode, ProgramPoint>();
-		mOrigToNewMap = new HashMap<ProgramPoint, ProgramPoint>();
-		mLocNodesForAnnot = new HashMap<String, HashMap<String, ProgramPoint>>();
+		mRefNodeMap = new HashMap<MinimizedNode, BoogieIcfgLocation>();
+		mOrigToNewMap = new HashMap<BoogieIcfgLocation, BoogieIcfgLocation>();
+		mLocNodesForAnnot = new HashMap<String, HashMap<String, BoogieIcfgLocation>>();
 		mVisitedEdges = new HashSet<IMinimizedEdge>();
 		mBoogie2SMT = boogie2smt;
 		mCheckForMultipleFormula = new HashMap<IMinimizedEdge, Integer>();
@@ -169,7 +169,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 	 * @param startNode
 	 *            initial start point for the conversion
 	 */
-	public void init(final ProgramPoint startNode) {
+	public void init(final BoogieIcfgLocation startNode) {
 		mStartNode = startNode;
 	}
 
@@ -314,7 +314,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 	 *            the minimized Node to convert
 	 * @return the created ProgramPoint
 	 */
-	public ProgramPoint getReferencedNode(final MinimizedNode node) {
+	public BoogieIcfgLocation getReferencedNode(final MinimizedNode node) {
 		if (mRefNodeMap.containsKey(node)) {
 			return mRefNodeMap.get(node);
 		} else {
@@ -330,7 +330,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 					}
 				}
 			}
-			final ProgramPoint newNode = new ProgramPoint(node.getOriginalNode().getDebugIdentifier(),
+			final BoogieIcfgLocation newNode = new BoogieIcfgLocation(node.getOriginalNode().getDebugIdentifier(),
 					node.getOriginalNode().getProcedure(), node.getOriginalNode().isErrorLocation(), astNode);
 			// inserted by alex 1.11.2014: (don't forget the annotations.. (mb this would be nicer in the constructor
 			// TODO
@@ -348,7 +348,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 			if (mLocNodesForAnnot.containsKey(newNode.getProcedure())) {
 				mLocNodesForAnnot.get(newNode.getProcedure()).put(newNode.getDebugIdentifier(), newNode);
 			} else {
-				final HashMap<String, ProgramPoint> newMap = new HashMap<String, ProgramPoint>();
+				final HashMap<String, BoogieIcfgLocation> newMap = new HashMap<String, BoogieIcfgLocation>();
 				newMap.put(newNode.getDebugIdentifier(), newNode);
 				mLocNodesForAnnot.put(newNode.getProcedure(), newMap);
 			}
@@ -574,14 +574,14 @@ public class ConversionVisitor implements IMinimizationVisitor {
 	/**
 	 * @return the origToNewMap
 	 */
-	public HashMap<ProgramPoint, ProgramPoint> getOrigToNewMap() {
+	public HashMap<BoogieIcfgLocation, BoogieIcfgLocation> getOrigToNewMap() {
 		return mOrigToNewMap;
 	}
 
 	/**
 	 * @return the locNodesForAnnot
 	 */
-	public HashMap<String, HashMap<String, ProgramPoint>> getLocNodesForAnnot() {
+	public HashMap<String, HashMap<String, BoogieIcfgLocation>> getLocNodesForAnnot() {
 		return mLocNodesForAnnot;
 	}
 }

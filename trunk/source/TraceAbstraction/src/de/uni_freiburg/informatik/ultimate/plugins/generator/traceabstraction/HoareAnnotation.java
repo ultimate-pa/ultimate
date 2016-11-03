@@ -60,7 +60,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
 
@@ -101,7 +101,7 @@ public class HoareAnnotation extends SPredicate {
 	private static final boolean s_AvoidImplications = true;
 	
 
-	public HoareAnnotation(final ProgramPoint programPoint, final int serialNumber, 
+	public HoareAnnotation(final BoogieIcfgLocation programPoint, final int serialNumber, 
 			final ICfgSymbolTable symbolTable, final PredicateFactory predicateFactory, 
 			final ModifiableGlobalVariableManager modifiableGlobals,
 			final ManagedScript mgdScript,
@@ -276,23 +276,23 @@ public class HoareAnnotation extends SPredicate {
 	}
 	
 	public void annotate(final IElement node) {
-		if (node instanceof ProgramPoint) {
-			annotate((ProgramPoint) node);
+		if (node instanceof BoogieIcfgLocation) {
+			annotate((BoogieIcfgLocation) node);
 		}
 	}
 
-	public void annotate(final ProgramPoint node) {
+	public void annotate(final BoogieIcfgLocation node) {
 		node.getPayload().getAnnotations().put(KEY, this);
 	}
 
 	public static HoareAnnotation getAnnotation(final IElement node) {
-		if (node instanceof ProgramPoint) {
-			return getAnnotation((ProgramPoint) node);
+		if (node instanceof BoogieIcfgLocation) {
+			return getAnnotation((BoogieIcfgLocation) node);
 		}
 		return null;
 	}
 
-	public static HoareAnnotation getAnnotation(final ProgramPoint node) {
+	public static HoareAnnotation getAnnotation(final BoogieIcfgLocation node) {
 		if (node.hasPayload()) {
 			final IPayload payload = node.getPayload();
 			if (payload.hasAnnotation()) {

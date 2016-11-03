@@ -28,7 +28,7 @@ package de.uni_freiburg.informatik.ultimate.buchiprogramproduct.productgenerator
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 
 /**
  *
@@ -48,7 +48,7 @@ public final class ProductLocationNameGenerator {
 		mNWA = nwa;
 	}
 
-	protected String generateStateName(final ProgramPoint loc) {
+	protected String generateStateName(final BoogieIcfgLocation loc) {
 		return generateStateName(loc, null);
 	}
 
@@ -61,7 +61,7 @@ public final class ProductLocationNameGenerator {
 	 *            Name of the state in the BA / NWA
 	 * @return a String representing the name of this location in the product
 	 */
-	protected String generateStateName(final ProgramPoint loc, final String nwaName) {
+	protected String generateStateName(final BoogieIcfgLocation loc, final String nwaName) {
 		return generateStateName(String.valueOf(loc.hashCode()) + '_' + loc.getDebugIdentifier(), nwaName);
 	}
 
@@ -81,7 +81,7 @@ public final class ProductLocationNameGenerator {
 		return HELPER_STATE_PREFIX + Integer.toString(mHelperUnifique) + "__" + location;
 	}
 
-	protected static boolean isHelperState(final ProgramPoint loc) {
+	protected static boolean isHelperState(final BoogieIcfgLocation loc) {
 		if (loc == null) {
 			return false;
 		}

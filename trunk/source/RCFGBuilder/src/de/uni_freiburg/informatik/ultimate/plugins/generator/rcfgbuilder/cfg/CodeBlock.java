@@ -30,6 +30,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 
@@ -63,7 +65,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activat
  * @author heizmann@informatik.uni-freiburg.de
  * 
  */
-public abstract class CodeBlock extends RCFGEdge implements IAction {
+public abstract class CodeBlock extends IcfgEdge implements IAction {
 
 	/**
 	 * ID to distinguish different versions of this class. If the class gains additional fields, this constant should be
@@ -85,7 +87,7 @@ public abstract class CodeBlock extends RCFGEdge implements IAction {
 
 	int mOccurenceInCounterexamples = 0;
 
-	CodeBlock(final int serialNumber, final ProgramPoint source, final ProgramPoint target, final ILogger logger) {
+	CodeBlock(final int serialNumber, final BoogieIcfgLocation source, final BoogieIcfgLocation target, final ILogger logger) {
 		super(source, target, (source == null ? new Payload() : new Payload(source.getPayload().getLocation())));
 		mSerialnumber = serialNumber;
 		mLogger = logger;
@@ -115,7 +117,7 @@ public abstract class CodeBlock extends RCFGEdge implements IAction {
 	 * have serial number "-1" and hence they will have the same hash code.
 	 */
 	@Deprecated
-	public CodeBlock(final ProgramPoint source, final ProgramPoint target, final ILogger logger) {
+	public CodeBlock(final BoogieIcfgLocation source, final BoogieIcfgLocation target, final ILogger logger) {
 		super(source, target, (source == null ? new Payload() : new Payload(source.getPayload().getLocation())));
 		mSerialnumber = -1;
 		mLogger = logger;
@@ -185,9 +187,9 @@ public abstract class CodeBlock extends RCFGEdge implements IAction {
 		return getSerialNumber();
 	}
 	
-	private void setPreceedingProcedure(final RCFGNode source) {
-		if (source instanceof ProgramPoint) {
-			final String name = ((ProgramPoint) source).getProcedure();
+	private void setPreceedingProcedure(final IcfgLocation source) {
+		if (source instanceof BoogieIcfgLocation) {
+			final String name = ((BoogieIcfgLocation) source).getProcedure();
 			if (mPrecedingProcedure == null) {
 				mPrecedingProcedure = name;
 			} else {
@@ -200,9 +202,9 @@ public abstract class CodeBlock extends RCFGEdge implements IAction {
 		}
 	}
 	
-	private void setSucceedingProcedure(final RCFGNode source) {
-		if (source instanceof ProgramPoint) {
-			final String name = ((ProgramPoint) source).getProcedure();
+	private void setSucceedingProcedure(final IcfgLocation source) {
+		if (source instanceof BoogieIcfgLocation) {
+			final String name = ((BoogieIcfgLocation) source).getProcedure();
 			if (mSucceedingProcedure == null) {
 				mSucceedingProcedure = name;
 			} else {
@@ -215,7 +217,7 @@ public abstract class CodeBlock extends RCFGEdge implements IAction {
 		}
 	}
 
-	public final void connectSource(final RCFGNode source) {
+	public final void connectSource(final IcfgLocation source) {
 		if (source != null) {
 			setSource(source);
 			source.addOutgoing(this);
@@ -224,7 +226,7 @@ public abstract class CodeBlock extends RCFGEdge implements IAction {
 		}
 	}
 
-	public final void connectTarget(final RCFGNode target) {
+	public final void connectTarget(final IcfgLocation target) {
 		if (target != null) {
 			setTarget(target);
 			target.addIncoming(this);
@@ -264,7 +266,7 @@ public abstract class CodeBlock extends RCFGEdge implements IAction {
 	 * @see de.uni_freiburg.informatik.ultimate.core.lib.models.ModifiableMultigraphEdge#setTarget(de.uni_freiburg.informatik.ultimate.core.model.models.IModifiableExplicitEdgesMultigraph)
 	 */
 	@Override
-	public void setTarget(final RCFGNode target) {
+	public void setTarget(final IcfgLocation target) {
 		setSucceedingProcedure(target);
 		super.setTarget(target);
 	}
@@ -273,7 +275,7 @@ public abstract class CodeBlock extends RCFGEdge implements IAction {
 	 * @see de.uni_freiburg.informatik.ultimate.core.lib.models.ModifiableMultigraphEdge#setSource(de.uni_freiburg.informatik.ultimate.core.model.models.IModifiableExplicitEdgesMultigraph)
 	 */
 	@Override
-	public void setSource(final RCFGNode source) {
+	public void setSource(final IcfgLocation source) {
 		setPreceedingProcedure(source);
 		super.setSource(source);
 	}

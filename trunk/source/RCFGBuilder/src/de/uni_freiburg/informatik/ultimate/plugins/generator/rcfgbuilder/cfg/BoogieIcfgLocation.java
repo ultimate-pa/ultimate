@@ -37,18 +37,16 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 
 /**
- * Node of a recursive control flow graph. This can be seen as
- * <ul>
- * <li>A Location of size zero.
- * <li>The startpoint of a location.
- * <li>A position in the program.
- * 
+ * {@link IcfgLocation} of an ICFG that was obtained directly from a 
+ * Boogie program 
  * @author heizmann@informatik.uni-freiburg.
  */
 
-public class ProgramPoint extends RCFGNode {
+public class BoogieIcfgLocation extends IcfgLocation {
 
 	/**
 	 * ID to distinguish different versions of this class. If the class gains additional fields, this constant should be
@@ -59,16 +57,10 @@ public class ProgramPoint extends RCFGNode {
 	private final BoogieASTNode mBoogieASTNode;
 
 	@Visualizable
-	private final String mProcedure;
-	@Visualizable
-	private final String mDebugIdentifier;
-	@Visualizable
 	private final boolean mIsErrorLocation;
 
-	public ProgramPoint(final String debugIdentifier, final String procedure, final boolean isErrorLoc, final BoogieASTNode boogieASTNode) {
-		super(new Payload(getLocationFromASTNode(boogieASTNode)));
-		mProcedure = procedure;
-		mDebugIdentifier = debugIdentifier;
+	public BoogieIcfgLocation(final String debugIdentifier, final String procedure, final boolean isErrorLoc, final BoogieASTNode boogieASTNode) {
+		super(debugIdentifier, procedure, new Payload(getLocationFromASTNode(boogieASTNode)));
 		mIsErrorLocation = isErrorLoc;
 		mBoogieASTNode = boogieASTNode;
 	}
@@ -89,16 +81,6 @@ public class ProgramPoint extends RCFGNode {
 		return loc;
 	}
 
-	/**
-	 * @return the procedure
-	 */
-	public String getProcedure() {
-		return mProcedure;
-	}
-	
-	public String getDebugIdentifier() {
-		return mDebugIdentifier;
-	}
 
 	public boolean isErrorLocation() {
 		return mIsErrorLocation;
@@ -122,7 +104,7 @@ public class ProgramPoint extends RCFGNode {
 	}
 
 	@Override
-	public boolean addIncoming(final RCFGEdge incoming) {
+	public boolean addIncoming(final IcfgEdge incoming) {
 		if (incoming instanceof CodeBlock || incoming instanceof RootEdge) {
 			return super.addIncoming(incoming);
 		} else {
@@ -131,7 +113,7 @@ public class ProgramPoint extends RCFGNode {
 	}
 
 	@Override
-	public boolean addOutgoing(final RCFGEdge outgoing) {
+	public boolean addOutgoing(final IcfgEdge outgoing) {
 		if (outgoing instanceof CodeBlock || outgoing instanceof RootEdge) {
 			return super.addOutgoing(outgoing);
 		} else {
@@ -139,23 +121,5 @@ public class ProgramPoint extends RCFGNode {
 		}
 	}
 
-	@Override
-	public boolean equals(final Object obj) {
-		if (obj instanceof ProgramPoint) {
-			final ProgramPoint pp2 = (ProgramPoint) obj;
-			return mProcedure.equals(pp2.getProcedure()) && mDebugIdentifier.equals(pp2.getDebugIdentifier());
-		} else {
-			return false;
-		}
-	}
 
-	@Override
-	public int hashCode() {
-		return 3 * mDebugIdentifier.hashCode() + 5 * mProcedure.hashCode();
-	}
-
-	@Override
-	public String toString() {
-		return mDebugIdentifier;
-	}
 }

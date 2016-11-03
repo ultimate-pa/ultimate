@@ -33,12 +33,12 @@ import java.util.List;
 import java.util.Stack;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.annotations.IRSDependenciesAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.annotations.RCFGUnrollWalkerAnnotation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
@@ -47,15 +47,15 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 
 	protected static final String MAIN_PROCEDURE_NAME = "main";
 	protected int mUnrollings;
-	protected HashMap<RCFGEdge, ARTEdge> mGraph;
+	protected HashMap<IcfgEdge, ARTEdge> mGraph;
 	protected List<List<ARTEdge>> mPaths;
-	protected Stack<RCFGEdge> mCalls;
-	protected Stack<RCFGEdge> mNestedLoops;
-	protected Stack<HashMap<RCFGEdge, ARTEdge>> mGraphs;
+	protected Stack<IcfgEdge> mCalls;
+	protected Stack<IcfgEdge> mNestedLoops;
+	protected Stack<HashMap<IcfgEdge, ARTEdge>> mGraphs;
 
-	protected List<List<RCFGEdge>> mFinalPaths;
+	protected List<List<IcfgEdge>> mFinalPaths;
 
-	protected List<RCFGEdge> mCurrentPath;
+	protected List<IcfgEdge> mCurrentPath;
 
 	public RCFGWalkerUnroller(final ObserverDispatcher dispatcher, final ILogger logger, final int unrollings) {
 		super(dispatcher, logger);
@@ -65,7 +65,7 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 	@Override
 	public void startFrom(final RootNode node) {
 		init();
-		final RCFGEdge start = searchMainEdge(node);
+		final IcfgEdge start = searchMainEdge(node);
 		if (start == null) {
 			mLogger.error("No main procedure found");
 			return;
@@ -74,11 +74,11 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 		finish();
 	}
 
-	public List<List<RCFGEdge>> getPaths() {
+	public List<List<IcfgEdge>> getPaths() {
 		return mFinalPaths;
 	}
 
-	public List<RCFGEdge> getCurrentPrefix() {
+	public List<IcfgEdge> getCurrentPrefix() {
 		return mCurrentPath;
 	}
 
@@ -96,7 +96,7 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 		mFinalPaths = new ArrayList<>();
 
 		for (final List<ARTEdge> path : mPaths) {
-			final List<RCFGEdge> newPath = new ArrayList<>();
+			final List<IcfgEdge> newPath = new ArrayList<>();
 			for (final ARTEdge edge : path) {
 				newPath.add(edge.mBacking);
 			}
@@ -120,10 +120,10 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 		}
 	}
 
-	protected RCFGEdge searchMainEdge(final RootNode node) {
+	protected IcfgEdge searchMainEdge(final RootNode node) {
 		mLogger.debug("Searching for procedure \"" + MAIN_PROCEDURE_NAME + "\"");
-		for (final RCFGEdge edge : node.getOutgoingEdges()) {
-			final ProgramPoint possibleMain = (ProgramPoint) edge.getTarget();
+		for (final IcfgEdge edge : node.getOutgoingEdges()) {
+			final BoogieIcfgLocation possibleMain = (BoogieIcfgLocation) edge.getTarget();
 			mLogger.debug("Candidate: \"" + possibleMain.getProcedure() + "\"");
 			if (possibleMain.getProcedure()
 					.equalsIgnoreCase(MAIN_PROCEDURE_NAME)) {
@@ -134,7 +134,7 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 		return null;
 	}
 
-	public void process(final RCFGEdge currentEdge, final List<ARTEdge> processed) {
+	public void process(final IcfgEdge currentEdge, final List<ARTEdge> processed) {
 		final ARTEdge current = createEdge(currentEdge);
 		if (current.getAnnotation() == null) {
 			findLoopEntryExit(currentEdge.getTarget());
@@ -217,7 +217,7 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 			return;
 		}
 
-		for (final RCFGEdge next : current.getTarget().getOutgoingEdges()) {
+		for (final IcfgEdge next : current.getTarget().getOutgoingEdges()) {
 			if (isFeasible(next)) {
 				process(next, processed);
 				post(current.mBacking);
@@ -295,18 +295,18 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 		mLogger.debug("");
 	}
 
-	protected void findLoopEntryExit(final RCFGNode loopNode) {
+	protected void findLoopEntryExit(final IcfgLocation loopNode) {
 		if (loopNode.getPayload().getLocation().isLoop()) {
-			for (final RCFGEdge potentialSelfLoop : loopNode.getOutgoingEdges()) {
+			for (final IcfgEdge potentialSelfLoop : loopNode.getOutgoingEdges()) {
 				if (potentialSelfLoop.getTarget().equals(loopNode)) {
 					addAnnotation(potentialSelfLoop, loopNode, true, true);
 					return;
 				}
 			}
 
-			for (final RCFGEdge potentialEntryEdge : loopNode.getOutgoingEdges()) {
-				final RCFGEdge potentialBackEdge = findBackedge(potentialEntryEdge,
-						loopNode, new HashSet<RCFGEdge>());
+			for (final IcfgEdge potentialEntryEdge : loopNode.getOutgoingEdges()) {
+				final IcfgEdge potentialBackEdge = findBackedge(potentialEntryEdge,
+						loopNode, new HashSet<IcfgEdge>());
 				if (potentialBackEdge != null) {
 					addAnnotation(potentialEntryEdge, loopNode, true, false);
 					addAnnotation(potentialBackEdge, loopNode, false, true);
@@ -315,21 +315,21 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 		}
 	}
 
-	protected void addAnnotation(final RCFGEdge edge, final RCFGNode honda,
+	protected void addAnnotation(final IcfgEdge edge, final IcfgLocation honda,
 			final boolean isEntry, final boolean isExit) {
 		new RCFGUnrollWalkerAnnotation(honda, isEntry, isExit)
 				.addAnnotation(edge);
 	}
 
-	protected RCFGEdge findBackedge(final RCFGEdge current, final RCFGNode target,
-			final HashSet<RCFGEdge> visited) {
+	protected IcfgEdge findBackedge(final IcfgEdge current, final IcfgLocation target,
+			final HashSet<IcfgEdge> visited) {
 		if (current.getTarget().equals(target)) {
 			return current;
 		} else {
 			visited.add(current);
-			for (final RCFGEdge succ : current.getTarget().getOutgoingEdges()) {
+			for (final IcfgEdge succ : current.getTarget().getOutgoingEdges()) {
 				if (!visited.contains(succ)) {
-					final RCFGEdge potential = findBackedge(succ, target, visited);
+					final IcfgEdge potential = findBackedge(succ, target, visited);
 					if (potential != null
 							&& potential.getTarget().equals(target)) {
 						return potential;
@@ -340,9 +340,9 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 		}
 	}
 
-	protected boolean isMaxCallDepth(final RCFGEdge c) {
+	protected boolean isMaxCallDepth(final IcfgEdge c) {
 		int i = 0;
-		for (final RCFGEdge call : mCalls) {
+		for (final IcfgEdge call : mCalls) {
 			if (c.equals(call)) {
 				++i;
 			}
@@ -353,7 +353,7 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 	protected boolean isMaxLoopDepth(final ARTEdge c) {
 		// c is nestedLoopEntry
 		int i = 0;
-		for (final RCFGEdge loopEntries : mNestedLoops) {
+		for (final IcfgEdge loopEntries : mNestedLoops) {
 			if (c.mBacking.equals(loopEntries)) {
 				++i;
 			}
@@ -361,7 +361,7 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 		return i > mUnrollings;
 	}
 
-	protected boolean isFeasible(final RCFGEdge next) {
+	protected boolean isFeasible(final IcfgEdge next) {
 		if (next instanceof Summary) {
 			return false;
 		} else if (next instanceof Return) {
@@ -385,7 +385,7 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 		return sb.toString();
 	}
 
-	protected ARTEdge createEdge(final RCFGEdge edge) {
+	protected ARTEdge createEdge(final IcfgEdge edge) {
 		ARTEdge currentNode;
 		if (mGraph.containsKey(edge)) {
 			currentNode = mGraph.get(edge);
@@ -397,11 +397,11 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 	}
 
 	private class ARTEdge {
-		private final RCFGEdge mBacking;
+		private final IcfgEdge mBacking;
 		private int mVisited;
-		private HashMap<RCFGEdge, ARTEdge> mLastGraphState;
+		private HashMap<IcfgEdge, ARTEdge> mLastGraphState;
 
-		public ARTEdge(final RCFGEdge backing) {
+		public ARTEdge(final IcfgEdge backing) {
 			mBacking = backing;
 			mVisited = 1;
 		}
@@ -414,11 +414,11 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 			return mVisited > unrolling;
 		}
 
-		public RCFGNode getTarget() {
+		public IcfgLocation getTarget() {
 			return mBacking.getTarget();
 		}
 
-		public RCFGNode getSource() {
+		public IcfgLocation getSource() {
 			return mBacking.getSource();
 		}
 
@@ -479,7 +479,7 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 			}
 		}
 
-		private RCFGNode getLoopHead() {
+		private IcfgLocation getLoopHead() {
 			final RCFGUnrollWalkerAnnotation annot = getAnnotation();
 			if (annot != null) {
 				return annot.getHonda();

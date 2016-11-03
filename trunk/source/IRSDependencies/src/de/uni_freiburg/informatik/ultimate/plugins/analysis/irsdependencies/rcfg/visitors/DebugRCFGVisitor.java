@@ -28,9 +28,9 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcf
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootEdge;
 
 public class DebugRCFGVisitor extends SimpleRCFGVisitor {
@@ -73,7 +73,7 @@ public class DebugRCFGVisitor extends SimpleRCFGVisitor {
 	}
 
 	@Override
-	public void pre(RCFGEdge edge) {
+	public void pre(IcfgEdge edge) {
 		++mEdgeCount;
 		if (edge instanceof RootEdge) {
 			mStringBuilder.append("RootEdge");
@@ -83,7 +83,7 @@ public class DebugRCFGVisitor extends SimpleRCFGVisitor {
 	}
 
 	@Override
-	public void pre(RCFGNode node) {
+	public void pre(IcfgLocation node) {
 		++mNodeCount;
 		mStringBuilder.append(" --> ");
 		mStringBuilder.append(node.toString());

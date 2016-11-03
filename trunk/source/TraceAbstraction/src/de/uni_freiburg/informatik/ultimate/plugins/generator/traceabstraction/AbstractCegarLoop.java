@@ -52,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.Simpli
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
@@ -116,7 +116,7 @@ public abstract class AbstractCegarLoop {
 	/**
 	 * Set of error location whose reachability is analyzed by this CEGAR loop.
 	 */
-	protected final Collection<ProgramPoint> mErrorLocs;
+	protected final Collection<BoogieIcfgLocation> mErrorLocs;
 	
 	/**
 	 * Current Iteration of this CEGAR loop.
@@ -178,7 +178,7 @@ public abstract class AbstractCegarLoop {
 	
 	public AbstractCegarLoop(final IUltimateServiceProvider services, final IToolchainStorage storage,
 			final String name, final RootNode rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final TAPreferences taPrefs,
-			final Collection<ProgramPoint> errorLocs, final ILogger logger) {
+			final Collection<BoogieIcfgLocation> errorLocs, final ILogger logger) {
 		mServices = services;
 		mLogger = logger;
 		mSimplificationTechnique = taPrefs.getSimplificationTechnique();

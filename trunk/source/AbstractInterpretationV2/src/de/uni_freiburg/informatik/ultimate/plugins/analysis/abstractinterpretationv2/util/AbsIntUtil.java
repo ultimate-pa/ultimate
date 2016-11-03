@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 
 /**
  *
@@ -57,14 +57,14 @@ public final class AbsIntUtil {
 	 * @param preds
 	 * @param filePath
 	 */
-	public static void dumpToFile(final Map<CodeBlock, Map<ProgramPoint, Term>> preds, final String filePath) {
+	public static void dumpToFile(final Map<CodeBlock, Map<BoogieIcfgLocation, Term>> preds, final String filePath) {
 		final StringBuilder sb = new StringBuilder();
-		for (final Entry<CodeBlock, Map<ProgramPoint, Term>> entry : preds.entrySet()) {
+		for (final Entry<CodeBlock, Map<BoogieIcfgLocation, Term>> entry : preds.entrySet()) {
 			if (entry.getValue().isEmpty()) {
 				continue;
 			}
 			sb.append(entry.getKey().toString()).append("\n");
-			for (final Entry<ProgramPoint, Term> runPreds : entry.getValue().entrySet()) {
+			for (final Entry<BoogieIcfgLocation, Term> runPreds : entry.getValue().entrySet()) {
 				sb.append(" * ").append(runPreds.getValue()).append("\n");
 			}
 		}

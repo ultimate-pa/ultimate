@@ -36,11 +36,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
@@ -49,15 +49,15 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 public class RCFG2AnnotatedRCFG {
 
 
-	HashMap<ProgramPoint, AnnotatedProgramPoint> moldPpTonew;
+	HashMap<BoogieIcfgLocation, AnnotatedProgramPoint> moldPpTonew;
 	private final ILogger mLogger;
 	private final CfgSmtToolkit mcsToolkit;
 	private final PredicateFactory mPredicateFactory;
 	private final IPredicate mtruePredicate;
-	private final Map<RCFGNode, Term> minitialPredicates;
+	private final Map<IcfgLocation, Term> minitialPredicates;
 	private final boolean museInitialPredicates;
 
-	public RCFG2AnnotatedRCFG(final CfgSmtToolkit smtMan, final PredicateFactory predicateFactory, final ILogger logger, final IPredicate truePredicate, final Map<RCFGNode, Term> initialPredicates) {
+	public RCFG2AnnotatedRCFG(final CfgSmtToolkit smtMan, final PredicateFactory predicateFactory, final ILogger logger, final IPredicate truePredicate, final Map<IcfgLocation, Term> initialPredicates) {
 		mLogger = logger;
 		mcsToolkit = smtMan;
 		mPredicateFactory = predicateFactory;
@@ -72,11 +72,11 @@ public class RCFG2AnnotatedRCFG {
 
 		final ImpRootNode newRoot = new ImpRootNode(ra);
 
-		final ArrayDeque<ProgramPoint> openNodes = new ArrayDeque<ProgramPoint>();
-		moldPpTonew = new HashMap<ProgramPoint, AnnotatedProgramPoint>();
+		final ArrayDeque<BoogieIcfgLocation> openNodes = new ArrayDeque<BoogieIcfgLocation>();
+		moldPpTonew = new HashMap<BoogieIcfgLocation, AnnotatedProgramPoint>();
 
-		for (final RCFGEdge rootEdge : oldRoot.getOutgoingEdges()) {
-			final ProgramPoint oldNode = (ProgramPoint) rootEdge.getTarget();
+		for (final IcfgEdge rootEdge : oldRoot.getOutgoingEdges()) {
+			final BoogieIcfgLocation oldNode = (BoogieIcfgLocation) rootEdge.getTarget();
 			final AnnotatedProgramPoint newNode = createAnnotatedProgramPoint(oldNode);
 
 			newRoot.connectOutgoing(new DummyCodeBlock(mLogger), newNode);
@@ -88,17 +88,17 @@ public class RCFG2AnnotatedRCFG {
 		 * collect all Nodes and create AnnotatedProgramPoints
 		 */
 		while (!openNodes.isEmpty()) {
-			final ProgramPoint currentNode = openNodes.pollFirst();
+			final BoogieIcfgLocation currentNode = openNodes.pollFirst();
 
-			for (final RCFGEdge outEdge : currentNode.getOutgoingEdges()) {
-				final ProgramPoint newNode = (ProgramPoint) outEdge.getTarget();
+			for (final IcfgEdge outEdge : currentNode.getOutgoingEdges()) {
+				final BoogieIcfgLocation newNode = (BoogieIcfgLocation) outEdge.getTarget();
 				if (moldPpTonew.containsKey(newNode)) {
 					continue;
 				}
 				moldPpTonew.put(newNode, createAnnotatedProgramPoint(newNode));
 				openNodes.add(newNode);
 				if (outEdge instanceof Return) {
-					final ProgramPoint hier = ((Return) outEdge).getCallerProgramPoint();
+					final BoogieIcfgLocation hier = ((Return) outEdge).getCallerProgramPoint();
 					if (moldPpTonew.containsKey(hier)) {
 						continue;
 					}
@@ -111,8 +111,8 @@ public class RCFG2AnnotatedRCFG {
 		/*
 		 * put edges into annotated program points
 		 */
-		for (final Entry<ProgramPoint, AnnotatedProgramPoint> entry : moldPpTonew.entrySet()) {
-			for (final RCFGEdge outEdge : entry.getKey().getOutgoingEdges()) {
+		for (final Entry<BoogieIcfgLocation, AnnotatedProgramPoint> entry : moldPpTonew.entrySet()) {
+			for (final IcfgEdge outEdge : entry.getKey().getOutgoingEdges()) {
 				final AnnotatedProgramPoint annotatedTarget = moldPpTonew.get(outEdge.getTarget());
 
 				if (outEdge instanceof Return) {
@@ -132,7 +132,7 @@ public class RCFG2AnnotatedRCFG {
 	 * If we have a Term from AbstractInterpretation for that ProgramPoint, we annotate it
 	 * with the corresponding Predicate. Otherwise the annotation is "true".
 	 */
-	private AnnotatedProgramPoint createAnnotatedProgramPoint(final ProgramPoint pp) {
+	private AnnotatedProgramPoint createAnnotatedProgramPoint(final BoogieIcfgLocation pp) {
 		if (museInitialPredicates) {
 			final Term aiTerm = minitialPredicates.get(pp);
 			IPredicate aiPredicate;
@@ -147,7 +147,7 @@ public class RCFG2AnnotatedRCFG {
 		}
 	}
 
-	public HashMap<ProgramPoint, AnnotatedProgramPoint> getOldPpTonew() {
+	public HashMap<BoogieIcfgLocation, AnnotatedProgramPoint> getOldPpTonew() {
 		return moldPpTonew;
 	}
 }

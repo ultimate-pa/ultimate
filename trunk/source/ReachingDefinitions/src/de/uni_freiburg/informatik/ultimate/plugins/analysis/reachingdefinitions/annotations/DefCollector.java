@@ -31,9 +31,9 @@ import java.util.HashSet;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.boogie.ScopedBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RCFGEdgeVisitor;
@@ -49,7 +49,7 @@ class DefCollector extends RCFGEdgeVisitor {
 		mKey = key;
 	}
 
-	HashMap<ScopedBoogieVar, HashSet<IndexedStatement>> collect(final RCFGEdge edge) {
+	HashMap<ScopedBoogieVar, HashSet<IndexedStatement>> collect(final IcfgEdge edge) {
 		if (mDefs == null) {
 			mDefs = new HashMap<>();
 			visit(edge);

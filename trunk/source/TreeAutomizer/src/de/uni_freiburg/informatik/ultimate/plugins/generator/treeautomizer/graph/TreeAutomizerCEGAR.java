@@ -18,7 +18,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryResultChecking;
@@ -47,7 +47,7 @@ public class TreeAutomizerCEGAR extends AbstractCegarLoop {
 	protected ITreeAutomaton<HCTransFormula, IPredicate> mInterpolAutomaton;
 
 	public TreeAutomizerCEGAR(final IUltimateServiceProvider services, final IToolchainStorage storage, final String name,
-			final RootNode rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final TAPreferences taPrefs, final Collection<ProgramPoint> errorLocs,
+			final RootNode rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final TAPreferences taPrefs, final Collection<BoogieIcfgLocation> errorLocs,
 			final ILogger logger, final Script script) {
 		super(services, storage, name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs, logger);
 		predicateFactoryRc = new PredicateFactoryResultChecking(predicateFactory);

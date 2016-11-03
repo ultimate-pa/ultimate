@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.HoareAnnotation;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
@@ -52,42 +52,42 @@ public class PredicateFactory extends BasicPredicateFactory {
 		super(services, mgdScript, symbolTable, simplificationTechnique, xnfConversionTechnique);
 	}
 	
-	public static HoareAnnotation getHoareAnnotation(final ProgramPoint programPoint) {
+	public static HoareAnnotation getHoareAnnotation(final BoogieIcfgLocation programPoint) {
 		return HoareAnnotation.getAnnotation(programPoint);
 	}
 
-	public PredicateWithHistory newPredicateWithHistory(final ProgramPoint pp, final Term term, final Map<Integer, Term> history) {
+	public PredicateWithHistory newPredicateWithHistory(final BoogieIcfgLocation pp, final Term term, final Map<Integer, Term> history) {
 		final TermVarsProc tvp = constructTermVarsProc(term);
 		final PredicateWithHistory pred = new PredicateWithHistory(pp, constructFreshSerialNumber(), tvp.getProcedures(), tvp.getFormula(), tvp.getVars(),
 				tvp.getClosedFormula(), history);
 		return pred;
 	}
 
-	public SPredicate newSPredicate(final ProgramPoint pp, final Term term) {
+	public SPredicate newSPredicate(final BoogieIcfgLocation pp, final Term term) {
 		final TermVarsProc termVarsProc = constructTermVarsProc(term);
 		return newSPredicate(pp, termVarsProc);
 	}
 	
-	SPredicate newSPredicate(final ProgramPoint pp, final TermVarsProc termVarsProc) {
+	SPredicate newSPredicate(final BoogieIcfgLocation pp, final TermVarsProc termVarsProc) {
 		final SPredicate pred = new SPredicate(pp, constructFreshSerialNumber(), termVarsProc.getProcedures(), termVarsProc.getFormula(),
 				termVarsProc.getVars(), termVarsProc.getClosedFormula());
 		return pred;
 	}
 	
 	public ISLPredicate newEmptyStackPredicate() {
-		final ProgramPoint pp = new ProgramPoint("noCaller", "noCaller", false, null);
+		final BoogieIcfgLocation pp = new BoogieIcfgLocation("noCaller", "noCaller", false, null);
 		return newSPredicate(pp, new TermVarsProc(mEmptyStackTerm, EMPTY_VARS, NO_PROCEDURE, mEmptyStackTerm));
 	
 	}
 
-	public MLPredicate newMLPredicate(final ProgramPoint[] programPoints, final Term term) {
+	public MLPredicate newMLPredicate(final BoogieIcfgLocation[] programPoints, final Term term) {
 		final TermVarsProc termVarsProc = constructTermVarsProc(term);
 		final MLPredicate predicate = new MLPredicate(programPoints, constructFreshSerialNumber(), termVarsProc.getProcedures(),
 				termVarsProc.getFormula(), termVarsProc.getVars(), termVarsProc.getClosedFormula());
 		return predicate;
 	}
 	
-	public MLPredicate newMLDontCarePredicate(final ProgramPoint[] programPoints) {
+	public MLPredicate newMLDontCarePredicate(final BoogieIcfgLocation[] programPoints) {
 		final TermVarsProc termVarsProc = constructTermVarsProc(mDontCareTerm);
 		final MLPredicate predicate = new MLPredicate(programPoints, constructFreshSerialNumber(), termVarsProc.getProcedures(),
 				termVarsProc.getFormula(), termVarsProc.getVars(), termVarsProc.getClosedFormula());
@@ -98,18 +98,18 @@ public class PredicateFactory extends BasicPredicateFactory {
 		return new ProdState(constructFreshSerialNumber(), programPoints, mScript.term("true"),new HashSet<IProgramVar>(0));
 	}
 	
-	public UnknownState newDontCarePredicate(final ProgramPoint pp) {
+	public UnknownState newDontCarePredicate(final BoogieIcfgLocation pp) {
 		final UnknownState pred = new UnknownState(pp, constructFreshSerialNumber(), mDontCareTerm);
 		return pred;
 	}
 
-	public SPredicate newTrueSLPredicateWithWitnessNode(final ProgramPoint pp, final WitnessNode witnessNode, final Integer stutteringSteps) {
+	public SPredicate newTrueSLPredicateWithWitnessNode(final BoogieIcfgLocation pp, final WitnessNode witnessNode, final Integer stutteringSteps) {
 		final SPredicate pred = new SPredicateWithWitnessNode(pp, constructFreshSerialNumber(), NO_PROCEDURE, mScript.term("true"), EMPTY_VARS,
 				mScript.term("true"), witnessNode, stutteringSteps);
 		return pred;
 	}
 
-	public HoareAnnotation getNewHoareAnnotation(final ProgramPoint pp, final ModifiableGlobalVariableManager modifiableGlobals) {
+	public HoareAnnotation getNewHoareAnnotation(final BoogieIcfgLocation pp, final ModifiableGlobalVariableManager modifiableGlobals) {
 		return new HoareAnnotation(pp, constructFreshSerialNumber(), mSymbolTable, this, modifiableGlobals, mMgdScript, mScript, mServices, mSimplificationTechnique, mXnfConversionTechnique);
 	}
 

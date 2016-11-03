@@ -5,9 +5,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 
@@ -33,7 +33,7 @@ public final class RcfgUtils {
 		return false;
 	}
 
-	public static boolean isValidSuccessor(final RCFGEdge successor, final CodeBlock lastCall) {
+	public static boolean isValidSuccessor(final IcfgEdge successor, final CodeBlock lastCall) {
 		if (!(successor instanceof CodeBlock)) {
 			return false;
 		}
@@ -41,13 +41,13 @@ public final class RcfgUtils {
 		return !(cbSucc instanceof Return) || RcfgUtils.isAllowedReturn(cbSucc, lastCall);
 	}
 
-	public static <E extends RCFGEdge> Collection<CodeBlock> getValidCodeBlocks(final Collection<E> candidates,
+	public static <E extends IcfgEdge> Collection<CodeBlock> getValidCodeBlocks(final Collection<E> candidates,
 			final CodeBlock lastCall) {
 		if (candidates == null) {
 			return Collections.emptyList();
 		}
 		final List<CodeBlock> rtr = new ArrayList<>(candidates.size());
-		for (final RCFGEdge successor : candidates) {
+		for (final IcfgEdge successor : candidates) {
 			if (!RcfgUtils.isValidSuccessor(successor, lastCall)) {
 				continue;
 			}
@@ -56,7 +56,7 @@ public final class RcfgUtils {
 		return rtr;
 	}
 
-	public static boolean isSummaryWithImplementation(final RCFGEdge edge) {
+	public static boolean isSummaryWithImplementation(final IcfgEdge edge) {
 		if (edge instanceof Summary) {
 			final Summary sum = (Summary) edge;
 			return sum.calledProcedureHasImplementation();

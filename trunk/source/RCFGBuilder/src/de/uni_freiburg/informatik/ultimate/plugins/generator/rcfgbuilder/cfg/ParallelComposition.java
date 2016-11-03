@@ -84,7 +84,7 @@ public class ParallelComposition extends CodeBlock implements IInternalAction {
 		}
 	}
 
-	ParallelComposition(final int serialNumber, final ProgramPoint source, final ProgramPoint target, final ManagedScript mgdScript,
+	ParallelComposition(final int serialNumber, final BoogieIcfgLocation source, final BoogieIcfgLocation target, final ManagedScript mgdScript,
 			final IUltimateServiceProvider services, final List<CodeBlock> codeBlocks, final XnfConversionTechnique xnfConversionTechnique) {
 		super(serialNumber, source, target, services.getLoggingService().getLogger(Activator.PLUGIN_ID));
 		mServices = services;

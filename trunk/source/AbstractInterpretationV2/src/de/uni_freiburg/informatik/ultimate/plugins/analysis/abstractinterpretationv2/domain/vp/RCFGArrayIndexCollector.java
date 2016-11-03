@@ -40,10 +40,10 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RCFGEdgeVisitor;
 
@@ -66,13 +66,13 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 		process(root.getOutgoingEdges());
 	}
 
-	private <T extends RCFGEdge> void process(final Collection<T> edges) {
-		final Deque<RCFGEdge> worklist = new ArrayDeque<RCFGEdge>();
-		final Set<RCFGEdge> finished = new HashSet<RCFGEdge>();
+	private <T extends IcfgEdge> void process(final Collection<T> edges) {
+		final Deque<IcfgEdge> worklist = new ArrayDeque<IcfgEdge>();
+		final Set<IcfgEdge> finished = new HashSet<IcfgEdge>();
 		
 		worklist.addAll(edges);
 		while (!worklist.isEmpty()) {
-			final RCFGEdge current = worklist.removeFirst();
+			final IcfgEdge current = worklist.removeFirst();
 			if (!finished.add(current)) {
 				continue;
 			}

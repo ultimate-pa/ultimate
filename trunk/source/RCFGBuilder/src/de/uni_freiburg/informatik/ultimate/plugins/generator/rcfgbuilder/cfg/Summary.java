@@ -78,7 +78,7 @@ public class Summary extends CodeBlock implements IInternalAction {
 		}
 	}
 
-	Summary(int serialNumber, ProgramPoint source, ProgramPoint target, CallStatement st,
+	Summary(int serialNumber, BoogieIcfgLocation source, BoogieIcfgLocation target, CallStatement st,
 			boolean calledProcedureHasImplementation, ILogger logger) {
 		super(serialNumber, source, target, logger);
 		mCallStatement = st;

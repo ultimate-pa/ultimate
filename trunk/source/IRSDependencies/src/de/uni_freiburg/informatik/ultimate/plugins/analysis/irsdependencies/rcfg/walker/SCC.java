@@ -30,26 +30,26 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 
-public class SCC implements Iterable<RCFGNode> {
-	private final HashSet<RCFGNode> mVertices;
+public class SCC implements Iterable<IcfgLocation> {
+	private final HashSet<IcfgLocation> mVertices;
 
 	public SCC() {
 		mVertices = new HashSet<>();
 	}
 
-	public <T extends RCFGNode> SCC(Collection<T> all) {
-		mVertices = new HashSet<RCFGNode>(all);
+	public <T extends IcfgLocation> SCC(Collection<T> all) {
+		mVertices = new HashSet<IcfgLocation>(all);
 
 	}
 
-	void add(RCFGNode member) {
+	void add(IcfgLocation member) {
 		mVertices.add(member);
 	}
 
 	@Override
-	public Iterator<RCFGNode> iterator() {
+	public Iterator<IcfgLocation> iterator() {
 		return mVertices.iterator();
 	}
 
@@ -65,7 +65,7 @@ public class SCC implements Iterable<RCFGNode> {
 		return mVertices.isEmpty();
 	}
 
-	public boolean contains(RCFGNode node) {
+	public boolean contains(IcfgLocation node) {
 		return mVertices.contains(node);
 	}
 
@@ -73,7 +73,7 @@ public class SCC implements Iterable<RCFGNode> {
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("(");
-		for (final RCFGNode node : mVertices) {
+		for (final IcfgLocation node : mVertices) {
 			sb.append(node).append(" ");
 		}
 		if (!isEmpty()) {

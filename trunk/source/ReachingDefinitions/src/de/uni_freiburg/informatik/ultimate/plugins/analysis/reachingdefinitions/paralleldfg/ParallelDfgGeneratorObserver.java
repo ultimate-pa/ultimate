@@ -13,26 +13,26 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.dataflow.DataflowState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractInterpreter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.IAbstractInterpretationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 
 public class ParallelDfgGeneratorObserver extends BaseObserver {
 	
 	final private ILogger mLogger;
 	final private IUltimateServiceProvider mServices;
-	IAbstractInterpretationResult<DataflowState, CodeBlock, IProgramVar, ProgramPoint> mDataflowAnalysisResult;
+	IAbstractInterpretationResult<DataflowState, CodeBlock, IProgramVar, BoogieIcfgLocation> mDataflowAnalysisResult;
 	private Integer mEdgeCount;
 	private Integer mNodeCount;
 	private Integer mCFGEdgeCount;
 	private Integer mCFGNodeCount;
-	private ParallelDataflowgraph<RCFGEdge> mInitNode;
+	private ParallelDataflowgraph<IcfgEdge> mInitNode;
 	private final Map<String, Integer> mStmtsPerThread;
 	private final Map<String, Integer> mLocsPerThread;
 	
@@ -60,23 +60,23 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 		
 		computeInitNode(rootNode);
 		// look for asserts in the RCFG
-		final List<RCFGNode> nodes = new ArrayList<>();
+		final List<IcfgLocation> nodes = new ArrayList<>();
 		// ignore the first edge from the dummy root to the function entry
-		for (final RCFGEdge e : rootNode.getOutgoingEdges()) {
-			final Set<RCFGNode> a = nodesInGraph(e.getTarget());
+		for (final IcfgEdge e : rootNode.getOutgoingEdges()) {
+			final Set<IcfgLocation> a = nodesInGraph(e.getTarget());
 			nodes.addAll(a);
 		}
 		// compute end and error locations
-		final List<List<RCFGNode>> endError = getEndErrorLocations(nodes);
-		final List<RCFGNode> assertLocs = endError.get(0);
-		final List<RCFGNode> endLocs = endError.get(1);
+		final List<List<IcfgLocation>> endError = getEndErrorLocations(nodes);
+		final List<IcfgLocation> assertLocs = endError.get(0);
+		final List<IcfgLocation> endLocs = endError.get(1);
 		
 		if (assertLocs.isEmpty()) {
 			// no asserts,  nothing to check
 			return false;
 		}
 		// compute Start Locations
-		final List<ParallelDataflowgraph<RCFGEdge>> starts = computeStartLocs(assertLocs, endLocs);
+		final List<ParallelDataflowgraph<IcfgEdge>> starts = computeStartLocs(assertLocs, endLocs);
 		mNodeCount += starts.size();
 		
 		// Debug info before computation of DFG
@@ -90,7 +90,7 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 		}
 		mLogger.debug("Number of start nodes: " + starts.size());
 		mLogger.debug("Start node(s):  ");
-		for (final ParallelDataflowgraph<RCFGEdge> s : starts) {
+		for (final ParallelDataflowgraph<IcfgEdge> s : starts) {
 			mLogger.debug("  " + s.toString());
 		}
 		
@@ -110,11 +110,11 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 		return false;
 	}
 	
-	private IAbstractInterpretationResult<DataflowState, CodeBlock, IProgramVar, ProgramPoint>
+	private IAbstractInterpretationResult<DataflowState, CodeBlock, IProgramVar, BoogieIcfgLocation>
 			obtainDataflowAnalysisResult(final RootNode r) {
 		final List<CodeBlock> edges = new ArrayList<>();
 		r.getRootAnnot().getEntryNodes();
-		for (final Entry<String, ProgramPoint> en : r.getRootAnnot().getEntryNodes().entrySet()) {
+		for (final Entry<String, BoogieIcfgLocation> en : r.getRootAnnot().getEntryNodes().entrySet()) {
 			edges.add((CodeBlock) en.getValue().getOutgoingEdges().get(0));
 		}
 		
@@ -123,13 +123,13 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 	}
 	
 	// Algorithm
-	private void collectDFGEdges(final List<ParallelDataflowgraph<RCFGEdge>> starts) {
+	private void collectDFGEdges(final List<ParallelDataflowgraph<IcfgEdge>> starts) {
 		// compute the edges
-		final List<ParallelDataflowgraph<RCFGEdge>> Q = starts;
-		final Set<ParallelDataflowgraph<RCFGEdge>> visited = new HashSet<>();
-		final Set<RCFGEdge> visitedStmts = new HashSet<>();
+		final List<ParallelDataflowgraph<IcfgEdge>> Q = starts;
+		final Set<ParallelDataflowgraph<IcfgEdge>> visited = new HashSet<>();
+		final Set<IcfgEdge> visitedStmts = new HashSet<>();
 		while (!Q.isEmpty()) {
-			final ParallelDataflowgraph<RCFGEdge> node = Q.get(0);
+			final ParallelDataflowgraph<IcfgEdge> node = Q.get(0);
 			Q.remove(0);
 			// get the use of the Reaching Definition
 			final CodeBlock cb = (CodeBlock) node.getNodeLabel();
@@ -138,15 +138,15 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 			mLogger.debug("Explain " + use.size() + " variable(s) for the statement " + cb.toString());
 			for (final IProgramVar x : use) {
 				mLogger.debug("   explain the variable " + x.toString());
-				final List<ParallelDataflowgraph<RCFGEdge>> sources = explain(x, node);
-				for (ParallelDataflowgraph<RCFGEdge> s : sources) {
+				final List<ParallelDataflowgraph<IcfgEdge>> sources = explain(x, node);
+				for (ParallelDataflowgraph<IcfgEdge> s : sources) {
 					mLogger.debug("      by the statement " + s.getNodeLabel().toString());
 					Boolean sourceInGraph = false;
 					if (mInitNode.compare(s)) {
 						// s is the init node
 						sourceInGraph = true;
 					} else if (visitedStmts.contains(s.getNodeLabel())) {
-						for (final ParallelDataflowgraph<RCFGEdge> n : visited) {
+						for (final ParallelDataflowgraph<IcfgEdge> n : visited) {
 							// is it already in the graph?
 							if (n.compare(s)) {
 								// the node is already there
@@ -174,24 +174,24 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 		}
 	}
 	
-	private List<ParallelDataflowgraph<RCFGEdge>> explain(final IProgramVar var,
-			final ParallelDataflowgraph<RCFGEdge> node) {
+	private List<ParallelDataflowgraph<IcfgEdge>> explain(final IProgramVar var,
+			final ParallelDataflowgraph<IcfgEdge> node) {
 		// TODO handle the special case init in the Reaching Definition
 		// init is only inserted as an edge, if init is in all the Reaching Definitions of threads
 		// otherwise there is a thread which overwrites the variable and init does not reach this point.
 		// idea: init is not in the RD, but can be determined by nowrites
 		// make a special init node a member var of this class and check in
-		final List<ParallelDataflowgraph<RCFGEdge>> sources = new ArrayList<>();
-		final Map<String, Set<ProgramPoint>> nowriteLocs = computeLocationSets(var, node.getLocations());
+		final List<ParallelDataflowgraph<IcfgEdge>> sources = new ArrayList<>();
+		final Map<String, Set<BoogieIcfgLocation>> nowriteLocs = computeLocationSets(var, node.getLocations());
 		Boolean initInRD = true;
-		for (final Entry<String, Set<ProgramPoint>> entry : node.getLocations().entrySet()) {
+		for (final Entry<String, Set<BoogieIcfgLocation>> entry : node.getLocations().entrySet()) {
 			// check for every Procedure if there exists a pp which has init in nowrtie(x,pp)
 			Boolean initInRDProc = false;
 			if (!var.isGlobal() && var.getProcedure() != entry.getKey()) {
 				// if var is local and not in the procedure, continue to the next procedure
 				continue;
 			}
-			for (final ProgramPoint pp : entry.getValue()) {
+			for (final BoogieIcfgLocation pp : entry.getValue()) {
 				// get the RD
 				final DataflowState dfs = mDataflowAnalysisResult.getLoc2SingleStates().get(pp);
 				if (pp.toString().contains("ENTRY")) {
@@ -200,10 +200,10 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 				}
 				
 				// this pp has init in nowrite(x,pp)
-				final Set<ProgramPoint> nwls = dfs.getNowriteLocations(var);
-				final Set<ProgramPoint> entryPoint = mInitNode.getLocations(entry.getKey());
-				ProgramPoint en = null;
-				for (final ProgramPoint e : entryPoint) {
+				final Set<BoogieIcfgLocation> nwls = dfs.getNowriteLocations(var);
+				final Set<BoogieIcfgLocation> entryPoint = mInitNode.getLocations(entry.getKey());
+				BoogieIcfgLocation en = null;
+				for (final BoogieIcfgLocation e : entryPoint) {
 					en = e;
 				}
 				if (nwls.contains(en)) {
@@ -212,15 +212,15 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 				
 				// Reaching Definition
 				final Set<CodeBlock> rd = dfs.getReachingDefinitions(var);
-				for (final RCFGEdge s : rd) {
+				for (final IcfgEdge s : rd) {
 					// mLogger.debug("      by the statement(explain) " + s.toString());
 					// construct a new node
-					final Map<String, Set<ProgramPoint>> loc = new HashMap<>(nowriteLocs);
-					final Set<ProgramPoint> srcSet = new HashSet<>();
-					final ProgramPoint sourceLoc = (ProgramPoint) s.getSource();
+					final Map<String, Set<BoogieIcfgLocation>> loc = new HashMap<>(nowriteLocs);
+					final Set<BoogieIcfgLocation> srcSet = new HashSet<>();
+					final BoogieIcfgLocation sourceLoc = (BoogieIcfgLocation) s.getSource();
 					srcSet.add(sourceLoc);
 					loc.put(entry.getKey(), srcSet);
-					final ParallelDataflowgraph<RCFGEdge> sourceNode = new ParallelDataflowgraph<>(s, loc);
+					final ParallelDataflowgraph<IcfgEdge> sourceNode = new ParallelDataflowgraph<>(s, loc);
 					sources.add(sourceNode);
 				}
 			}
@@ -238,11 +238,11 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 		return sources;
 	}
 	
-	private Map<String, Set<ProgramPoint>> computeLocationSets(final IProgramVar var,
-			final Map<String, Set<ProgramPoint>> locations) {
-		final Map<String, Set<ProgramPoint>> nowriteLocs = new HashMap<>();
-		for (final Entry<String, Set<ProgramPoint>> entry : locations.entrySet()) {
-			final Set<ProgramPoint> L = new HashSet<>();
+	private Map<String, Set<BoogieIcfgLocation>> computeLocationSets(final IProgramVar var,
+			final Map<String, Set<BoogieIcfgLocation>> locations) {
+		final Map<String, Set<BoogieIcfgLocation>> nowriteLocs = new HashMap<>();
+		for (final Entry<String, Set<BoogieIcfgLocation>> entry : locations.entrySet()) {
+			final Set<BoogieIcfgLocation> L = new HashSet<>();
 			// L always includes the old L set.
 			L.addAll(entry.getValue());
 			// compute with nowrites
@@ -250,10 +250,10 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 				// if var is local and not in the procedure, continue to the next procedure
 				continue;
 			}
-			for (final ProgramPoint pp : entry.getValue()) {
+			for (final BoogieIcfgLocation pp : entry.getValue()) {
 				if (!pp.toString().contains("ENTRY")) {
 					final DataflowState dfs = mDataflowAnalysisResult.getLoc2SingleStates().get(pp);
-					final Set<ProgramPoint> nwls = dfs.getNowriteLocations(var);
+					final Set<BoogieIcfgLocation> nwls = dfs.getNowriteLocations(var);
 					L.addAll(nwls);
 				} else {
 					// mLogger.debug("Do not compute nowrite for "+pp.toString() );
@@ -267,26 +267,26 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 	
 	// Functions for the procedure
 	
-	private Set<RCFGNode> nodesInGraph(final RCFGNode root) {
+	private Set<IcfgLocation> nodesInGraph(final IcfgLocation root) {
 		// Called for every Thread, where root is the entry point of the thread.
 		// Returns a list of all the nodes in the graph
 		// memorize, which elements have been visited
 		Integer countEdges = 0;
-		final Set<RCFGNode> visited = new HashSet<>();
-		final List<RCFGNode> tovisit = new ArrayList<>();
+		final Set<IcfgLocation> visited = new HashSet<>();
+		final List<IcfgLocation> tovisit = new ArrayList<>();
 		tovisit.add(root);
 		// iterate over tovisit node list
 		while (!tovisit.isEmpty()) {
 			// get the first element and insert in visited
-			final RCFGNode node = tovisit.get(0);
+			final IcfgLocation node = tovisit.get(0);
 			visited.add(node);
 			tovisit.remove(0);
 			// for all outgoing edges of node
-			final List<RCFGEdge> out1 = node.getOutgoingEdges();
-			for (final RCFGEdge e : out1) {
+			final List<IcfgEdge> out1 = node.getOutgoingEdges();
+			for (final IcfgEdge e : out1) {
 				countEdges++;
 				// check it target node is already in visited/tovisit
-				final RCFGNode trgNode = e.getTarget();
+				final IcfgLocation trgNode = e.getTarget();
 				if ((!visited.contains(trgNode)) && (!tovisit.contains(trgNode))) {
 					tovisit.add(trgNode);
 				}
@@ -294,22 +294,22 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 		}
 		mCFGEdgeCount += countEdges;
 		mCFGNodeCount += visited.size();
-		final ProgramPoint pp = (ProgramPoint) root;
+		final BoogieIcfgLocation pp = (BoogieIcfgLocation) root;
 		mStmtsPerThread.put(pp.getProcedure(), visited.size());
 		mLocsPerThread.put(pp.getProcedure(), countEdges);
 		return visited;
 	}
 	
-	private static List<List<RCFGNode>> getEndErrorLocations(final List<RCFGNode> nodes) {
+	private static List<List<IcfgLocation>> getEndErrorLocations(final List<IcfgLocation> nodes) {
 		// getAsserts and getEndLocations in one function
 		// first return: asserts, second return: end locations
 		// given a list of nodes, all asserts and errors are returned
-		final List<RCFGNode> asserts = new ArrayList<>();
+		final List<IcfgLocation> asserts = new ArrayList<>();
 		// given a list of nodes, all end locations are returned
-		final List<RCFGNode> endLocations = new ArrayList<>();
-		for (final RCFGNode node : nodes) {
+		final List<IcfgLocation> endLocations = new ArrayList<>();
+		for (final IcfgLocation node : nodes) {
 			// CHeck if the node has outgoing edges and is no Error location
-			final ProgramPoint pp = (ProgramPoint) node;
+			final BoogieIcfgLocation pp = (BoogieIcfgLocation) node;
 			if (pp.isErrorLocation()) {
 				asserts.add(node);
 			}
@@ -317,54 +317,54 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 				endLocations.add(node);
 			}
 		}
-		final List<List<RCFGNode>> list = new ArrayList<>();
+		final List<List<IcfgLocation>> list = new ArrayList<>();
 		list.add(asserts);
 		list.add(endLocations);
 		return list;
 	}
 	
-	private static List<ParallelDataflowgraph<RCFGEdge>> computeStartLocs(final List<RCFGNode> assertLocs,
-			final List<RCFGNode> endLocs) {
-		final List<ParallelDataflowgraph<RCFGEdge>> starts = new ArrayList<>();
-		final Map<String, Set<ProgramPoint>> locations = new HashMap<>();
+	private static List<ParallelDataflowgraph<IcfgEdge>> computeStartLocs(final List<IcfgLocation> assertLocs,
+			final List<IcfgLocation> endLocs) {
+		final List<ParallelDataflowgraph<IcfgEdge>> starts = new ArrayList<>();
+		final Map<String, Set<BoogieIcfgLocation>> locations = new HashMap<>();
 		// compute all mappings procedure -> set of all end locations
-		for (final RCFGNode node : endLocs) {
-			final ProgramPoint pp = (ProgramPoint) node;
+		for (final IcfgLocation node : endLocs) {
+			final BoogieIcfgLocation pp = (BoogieIcfgLocation) node;
 			// if the procedure is already in the map
 			if (locations.containsKey(pp.getProcedure())) {
 				// add the found end Location to the set in the mapping
 				locations.get(pp.getProcedure()).add(pp);
 			} else if (pp.getProcedure() != "~init") {
 				// the init procedure is ignored
-				final Set<ProgramPoint> loc = new HashSet<>();
+				final Set<BoogieIcfgLocation> loc = new HashSet<>();
 				loc.add(pp);
 				locations.put(pp.getProcedure(), loc);
 			}
 		}
 		// compute the start nodes
-		for (final RCFGNode error : assertLocs) {
-			final ProgramPoint pp = (ProgramPoint) error;
+		for (final IcfgLocation error : assertLocs) {
+			final BoogieIcfgLocation pp = (BoogieIcfgLocation) error;
 			// assume each error location has exactly one incoming edge
 			assert error.getIncomingEdges().size() == 1;
-			final RCFGEdge stmt = error.getIncomingEdges().get(0);
-			final Map<String, Set<ProgramPoint>> locMap = new HashMap<>(locations);
+			final IcfgEdge stmt = error.getIncomingEdges().get(0);
+			final Map<String, Set<BoogieIcfgLocation>> locMap = new HashMap<>(locations);
 			// construct a set with only the error location
-			final Set<ProgramPoint> value = new HashSet<>();
-			value.add((ProgramPoint) stmt.getSource());
+			final Set<BoogieIcfgLocation> value = new HashSet<>();
+			value.add((BoogieIcfgLocation) stmt.getSource());
 			// overwrite the end location set with the set of the error location
 			locMap.put(pp.getProcedure(), value);
-			final ParallelDataflowgraph<RCFGEdge> newNode = new ParallelDataflowgraph<>(stmt, locMap);
+			final ParallelDataflowgraph<IcfgEdge> newNode = new ParallelDataflowgraph<>(stmt, locMap);
 			starts.add(newNode);
 		}
 		return starts;
 	}
 	
 	private void computeInitNode(final RootNode r) {
-		final Map<String, Set<ProgramPoint>> locations = new HashMap<>();
-		RCFGEdge stmt = null;
-		for (final RCFGEdge n : r.getOutgoingEdges()) {
-			final RCFGNode s = n.getTarget();
-			final ProgramPoint pp = (ProgramPoint) s;
+		final Map<String, Set<BoogieIcfgLocation>> locations = new HashMap<>();
+		IcfgEdge stmt = null;
+		for (final IcfgEdge n : r.getOutgoingEdges()) {
+			final IcfgLocation s = n.getTarget();
+			final BoogieIcfgLocation pp = (BoogieIcfgLocation) s;
 			if (pp.getProcedure() == "~init") {
 				// walk to the last statement?
 				stmt = n;
@@ -372,7 +372,7 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 					stmt = stmt.getTarget().getOutgoingEdges().get(0);
 				}
 			} else {
-				final Set<ProgramPoint> set = new HashSet<>();
+				final Set<BoogieIcfgLocation> set = new HashSet<>();
 				set.add(pp);
 				locations.put(pp.getProcedure(), set);
 			}

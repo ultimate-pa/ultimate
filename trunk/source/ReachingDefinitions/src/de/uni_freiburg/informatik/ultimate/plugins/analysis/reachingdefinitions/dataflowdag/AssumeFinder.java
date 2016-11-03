@@ -39,8 +39,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RCFGEdgeVisitor;
@@ -53,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RC
 public class AssumeFinder extends BaseObserver {
 
 	private final ILogger mLogger;
-	private final LinkedHashMap<RCFGEdge, List<AssumeStatement>> mEdgesWithAssumes;
+	private final LinkedHashMap<IcfgEdge, List<AssumeStatement>> mEdgesWithAssumes;
 
 	public AssumeFinder(final ILogger logger) {
 		mLogger = logger;
@@ -68,7 +68,7 @@ public class AssumeFinder extends BaseObserver {
 			process(rootNode);
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug("AssumeFinder result (edge.hashCode(), pretty-printed assume statement):");
-				for (final RCFGEdge e : mEdgesWithAssumes.keySet()) {
+				for (final IcfgEdge e : mEdgesWithAssumes.keySet()) {
 					for (final AssumeStatement ass : mEdgesWithAssumes.get(e)) {
 						mLogger.debug(e.hashCode() + " " + BoogiePrettyPrinter.print(ass));
 					}
@@ -78,30 +78,30 @@ public class AssumeFinder extends BaseObserver {
 		return false;
 	}
 
-	public LinkedHashMap<RCFGEdge, List<AssumeStatement>> getEdgesWithAssumes() {
+	public LinkedHashMap<IcfgEdge, List<AssumeStatement>> getEdgesWithAssumes() {
 		return mEdgesWithAssumes;
 	}
 
-	private void process(final RCFGNode node) {
-		final Queue<RCFGEdge> openEdges = new LinkedList<>();
-		final HashSet<RCFGEdge> completed = new HashSet<>();
+	private void process(final IcfgLocation node) {
+		final Queue<IcfgEdge> openEdges = new LinkedList<>();
+		final HashSet<IcfgEdge> completed = new HashSet<>();
 		final AssumeFinderVisitor visitor = new AssumeFinderVisitor();
 
 		openEdges.addAll(node.getOutgoingEdges());
 
 		while (!openEdges.isEmpty()) {
-			final RCFGEdge current = openEdges.poll();
+			final IcfgEdge current = openEdges.poll();
 
 			visitor.start(current);
 			completed.add(current);
 
-			final RCFGNode target = current.getTarget();
+			final IcfgLocation target = current.getTarget();
 			if (target == null) {
 				mLogger.warn("Empty target for edge " + current.hashCode());
 				continue;
 			}
 
-			for (final RCFGEdge next : target.getOutgoingEdges()) {
+			for (final IcfgEdge next : target.getOutgoingEdges()) {
 				if (!completed.contains(next)) {
 					openEdges.add(next);
 				}
@@ -109,7 +109,7 @@ public class AssumeFinder extends BaseObserver {
 		}
 	}
 
-	private List<AssumeStatement> getAssumeList(final RCFGEdge edge) {
+	private List<AssumeStatement> getAssumeList(final IcfgEdge edge) {
 		List<AssumeStatement> rtr = mEdgesWithAssumes.get(edge);
 		if (rtr == null) {
 			rtr = new ArrayList<>();
@@ -120,9 +120,9 @@ public class AssumeFinder extends BaseObserver {
 
 	private class AssumeFinderVisitor extends RCFGEdgeVisitor {
 
-		private RCFGEdge mMotherEdge;
+		private IcfgEdge mMotherEdge;
 
-		public void start(final RCFGEdge edge) {
+		public void start(final IcfgEdge edge) {
 			mMotherEdge = edge;
 			visit(edge);
 		}

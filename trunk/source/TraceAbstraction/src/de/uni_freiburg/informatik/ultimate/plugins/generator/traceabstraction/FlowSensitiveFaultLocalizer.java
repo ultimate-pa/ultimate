@@ -65,7 +65,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.FaultLocalizationRelevanceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.FaultLocalizationRelevanceChecker.ERelevanceStatus;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
@@ -174,10 +174,10 @@ public class FlowSensitiveFaultLocalizer {
 
 		
 		// Create a Map of Programpoints in the CFG to States of the CFG.
-		final Map <ProgramPoint,IPredicate> programPoint_StateMap = new HashMap<>();
+		final Map <BoogieIcfgLocation,IPredicate> programPoint_StateMap = new HashMap<>();
 		for (final IPredicate cfgState : cfg.getStates()) {
 			final ISLPredicate islState  = (ISLPredicate) cfgState;
-			final ProgramPoint programPoint = islState.getProgramPoint();
+			final BoogieIcfgLocation programPoint = islState.getProgramPoint();
 			programPoint_StateMap.put(programPoint, cfgState);
 		}
 		
@@ -191,7 +191,7 @@ public class FlowSensitiveFaultLocalizer {
 			// State in consideration at the moment.
 			final IPredicate startStateInTrace = counterexample.getStateAtPosition(posOfStartState);
 			// Program point of the state under consideration.final
-			final ProgramPoint programpointOfStartStateInTrace =
+			final BoogieIcfgLocation programpointOfStartStateInTrace =
 					((ISLPredicate) startStateInTrace).getProgramPoint();
 			
 			// the startStateInCfg will be forbidden in the alternative path (FORBIDDEN STATE BUG)
@@ -200,14 +200,14 @@ public class FlowSensitiveFaultLocalizer {
 			final Set<IPredicate> possibleEndPoints = computePossibleEndpoints(
 					counterexample, programPoint_StateMap, posOfStartState);
 
-			final ProgramPoint programPointOfSuccInCounterexample =
+			final BoogieIcfgLocation programPointOfSuccInCounterexample =
 					((ISLPredicate)counterexample.getStateAtPosition(posOfStartState+1)).getProgramPoint();
 			//Immediate successors of of the state in CFG
 			final Iterable<OutgoingInternalTransition<CodeBlock, IPredicate>> immediateSuccesors =
 					cfg.internalSuccessors(startStateInCfg);
 			for(final OutgoingInternalTransition<CodeBlock, IPredicate> transition : immediateSuccesors) {
 				final IPredicate immediateSuccesor = transition.getSucc();
-				final ProgramPoint programPointOfImmediateSucc =
+				final BoogieIcfgLocation programPointOfImmediateSucc =
 						((ISLPredicate)immediateSuccesor).getProgramPoint();
 				if (programPointOfImmediateSucc == programPointOfSuccInCounterexample) {
 					// do nothing, because we want to find an alternative path
@@ -275,8 +275,8 @@ public class FlowSensitiveFaultLocalizer {
 		final List<Integer>  endPoints = new ArrayList<>();
 		for(int j = counterexample.getLength() - 1; j > posOfStartState; j--) {
 			final IPredicate stateAtPosJ = counterexample.getStateAtPosition(j);
-			final ProgramPoint programpointAtPosJ = ((ISLPredicate) stateAtPosJ).getProgramPoint();
-			final ProgramPoint programpointOfLastState = ((ISLPredicate)lastStateOfAlternativePath).getProgramPoint();
+			final BoogieIcfgLocation programpointAtPosJ = ((ISLPredicate) stateAtPosJ).getProgramPoint();
+			final BoogieIcfgLocation programpointOfLastState = ((ISLPredicate)lastStateOfAlternativePath).getProgramPoint();
 			if(programpointOfLastState.equals(programpointAtPosJ)) {
 				// position of state in the counter example where the branch ends
 				endPoints.add(j);
@@ -296,7 +296,7 @@ public class FlowSensitiveFaultLocalizer {
 	 * @param programPoint_StateMap map from program points to states in cfg
 	 */
 	private static Set<IPredicate> computePossibleEndpoints(final NestedRun<CodeBlock, IPredicate> counterexample,
-			final Map<ProgramPoint, IPredicate> programPoint_StateMap, final int currentPosition) {
+			final Map<BoogieIcfgLocation, IPredicate> programPoint_StateMap, final int currentPosition) {
 		final Set<IPredicate> possibleEndPoints = new HashSet<>();
 		for(int j=currentPosition+1; j< counterexample.getStateSequence().size()-1; j++) {
 			//runs only up to size-1 because we do not include the last state (2 Assertion Bug)

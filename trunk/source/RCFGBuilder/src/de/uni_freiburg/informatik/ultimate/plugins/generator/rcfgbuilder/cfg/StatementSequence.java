@@ -77,19 +77,19 @@ public class StatementSequence extends CodeBlock implements IInternalAction {
 	private final static String[] s_AttribFields = { "Statements", "PrettyPrintedStatements", "TransitionFormula",
 			"OccurenceInCounterexamples" };
 
-	StatementSequence(int serialNumber, ProgramPoint source, ProgramPoint target, Statement st, ILogger logger) {
+	StatementSequence(int serialNumber, BoogieIcfgLocation source, BoogieIcfgLocation target, Statement st, ILogger logger) {
 		super(serialNumber, source, target, logger);
 		mOrigin = Origin.IMPLEMENTATION;
 		addStatement(st);
 	}
 
-	StatementSequence(int serialNumber, ProgramPoint source, ProgramPoint target, Statement st, Origin origin, ILogger logger) {
+	StatementSequence(int serialNumber, BoogieIcfgLocation source, BoogieIcfgLocation target, Statement st, Origin origin, ILogger logger) {
 		super(serialNumber, source, target, logger);
 		mOrigin = origin;
 		addStatement(st);
 	}
 
-	StatementSequence(int serialNumber, ProgramPoint source, ProgramPoint target, List<Statement> stmts, Origin origin,
+	StatementSequence(int serialNumber, BoogieIcfgLocation source, BoogieIcfgLocation target, List<Statement> stmts, Origin origin,
 			ILogger logger) {
 		super(serialNumber, source, target, logger);
 		mStatements.addAll(stmts);

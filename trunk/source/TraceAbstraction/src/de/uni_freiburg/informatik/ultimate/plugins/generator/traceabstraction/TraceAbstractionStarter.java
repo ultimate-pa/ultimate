@@ -59,10 +59,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgElement;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RcfgElement;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
@@ -119,9 +119,9 @@ public class TraceAbstractionStarter {
 				csToolkit.getSymbolTable(), taPrefs.getSimplificationTechnique(), taPrefs.getXnfConversionTechnique());
 		final TraceAbstractionBenchmarks traceAbstractionBenchmark = new TraceAbstractionBenchmarks(rootAnnot);
 		
-		final Map<String, Collection<ProgramPoint>> proc2errNodes = rootAnnot.getErrorNodes();
-		final Collection<ProgramPoint> errNodesOfAllProc = new ArrayList<>();
-		for (final Collection<ProgramPoint> errNodeOfProc : proc2errNodes.values()) {
+		final Map<String, Collection<BoogieIcfgLocation>> proc2errNodes = rootAnnot.getErrorNodes();
+		final Collection<BoogieIcfgLocation> errNodesOfAllProc = new ArrayList<>();
+		for (final Collection<BoogieIcfgLocation> errNodeOfProc : proc2errNodes.values()) {
 			errNodesOfAllProc.addAll(errNodeOfProc);
 		}
 		
@@ -133,9 +133,9 @@ public class TraceAbstractionStarter {
 			iterate(name, rcfgRootNode, taPrefs, csToolkit, predicateFactory, traceAbstractionBenchmark, errNodesOfAllProc,
 					witnessAutomaton);
 		} else {
-			for (final ProgramPoint errorLoc : errNodesOfAllProc) {
+			for (final BoogieIcfgLocation errorLoc : errNodesOfAllProc) {
 				final String name = errorLoc.getDebugIdentifier();
-				final ArrayList<ProgramPoint> errorLocs = new ArrayList<>(1);
+				final ArrayList<BoogieIcfgLocation> errorLocs = new ArrayList<>(1);
 				errorLocs.add(errorLoc);
 				mServices.getProgressMonitorService().setSubtask(errorLoc.toString());
 				iterate(name, rcfgRootNode, taPrefs, csToolkit, predicateFactory, traceAbstractionBenchmark, errorLocs,
@@ -167,18 +167,18 @@ public class TraceAbstractionStarter {
 			final IBacktranslationService backTranslatorService = mServices.getBacktranslationService();
 			final Term trueterm = csToolkit.getManagedScript().getScript().term("true");
 			
-			final Set<ProgramPoint> locsForLoopLocations = new HashSet<>();
+			final Set<BoogieIcfgLocation> locsForLoopLocations = new HashSet<>();
 			locsForLoopLocations.addAll(rootAnnot.getPotentialCycleProgramPoints());
 			locsForLoopLocations.addAll(rootAnnot.getLoopLocations().keySet());
 			// find all locations that have outgoing edges which are annotated with LoopEntry, i.e., all loop candidates
 			
-			for (final ProgramPoint locNode : locsForLoopLocations) {
+			for (final BoogieIcfgLocation locNode : locsForLoopLocations) {
 				final HoareAnnotation hoare = getHoareAnnotation(locNode);
 				if (hoare == null) {
 					continue;
 				}
 				final Term formula = hoare.getFormula();
-				final InvariantResult<RcfgElement, Term> invResult =
+				final InvariantResult<IcfgElement, Term> invResult =
 						new InvariantResult<>(Activator.PLUGIN_NAME, locNode, backTranslatorService, formula);
 				reportResult(invResult);
 				
@@ -190,17 +190,17 @@ public class TraceAbstractionStarter {
 				
 			}
 			
-			final Map<String, ProgramPoint> finalNodes = rootAnnot.getExitNodes();
-			for (final Entry<String, ProgramPoint> proc : finalNodes.entrySet()) {
+			final Map<String, BoogieIcfgLocation> finalNodes = rootAnnot.getExitNodes();
+			for (final Entry<String, BoogieIcfgLocation> proc : finalNodes.entrySet()) {
 				final String procName = proc.getKey();
 				if (isAuxilliaryProcedure(procName)) {
 					continue;
 				}
-				final ProgramPoint finalNode = proc.getValue();
+				final BoogieIcfgLocation finalNode = proc.getValue();
 				final HoareAnnotation hoare = getHoareAnnotation(finalNode);
 				if (hoare != null) {
 					final Term formula = hoare.getFormula();
-					final ProcedureContractResult<RcfgElement, Term> result = new ProcedureContractResult<>(
+					final ProcedureContractResult<IcfgElement, Term> result = new ProcedureContractResult<>(
 							Activator.PLUGIN_NAME, finalNode, backTranslatorService, procName, formula);
 					
 					reportResult(result);
@@ -226,9 +226,9 @@ public class TraceAbstractionStarter {
 		mRootOfNewModel = mArtifact;
 	}
 	
-	private void logNumberOfWitnessInvariants(final Collection<ProgramPoint> errNodesOfAllProc) {
+	private void logNumberOfWitnessInvariants(final Collection<BoogieIcfgLocation> errNodesOfAllProc) {
 		int numberOfCheckedInvariants = 0;
-		for (final ProgramPoint err : errNodesOfAllProc) {
+		for (final BoogieIcfgLocation err : errNodesOfAllProc) {
 			final BoogieASTNode boogieASTNode = err.getBoogieASTNode();
 			final IAnnotations annot = boogieASTNode.getPayload().getAnnotations().get(Check.class.getName());
 			if (annot != null) {
@@ -246,7 +246,7 @@ public class TraceAbstractionStarter {
 	
 	private void iterate(final String name, final RootNode root, final TAPreferences taPrefs,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final TraceAbstractionBenchmarks taBenchmark,
-			final Collection<ProgramPoint> errorLocs,
+			final Collection<BoogieIcfgLocation> errorLocs,
 			final INestedWordAutomatonSimple<WitnessEdge, WitnessNode> witnessAutomaton) {
 		final BasicCegarLoop basicCegarLoop =
 				constructCegarLoop(name, root, taPrefs, csToolkit, predicateFactory, taBenchmark, errorLocs);
@@ -274,7 +274,7 @@ public class TraceAbstractionStarter {
 	
 	private BasicCegarLoop constructCegarLoop(final String name, final RootNode root, final TAPreferences taPrefs,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final TraceAbstractionBenchmarks taBenchmark,
-			final Collection<ProgramPoint> errorLocs) {
+			final Collection<BoogieIcfgLocation> errorLocs) {
 		final LanguageOperation languageOperation = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getEnum(TraceAbstractionPreferenceInitializer.LABEL_LANGUAGE_OPERATION, LanguageOperation.class);
 		if (languageOperation == LanguageOperation.DIFFERENCE) {
@@ -289,7 +289,7 @@ public class TraceAbstractionStarter {
 				taPrefs.computeHoareAnnotation(), mServices, mToolchainStorage, languageOperation);
 	}
 	
-	private Result computeOverallResult(final Collection<ProgramPoint> errorLocs, final BasicCegarLoop basicCegarLoop,
+	private Result computeOverallResult(final Collection<BoogieIcfgLocation> errorLocs, final BasicCegarLoop basicCegarLoop,
 			final Result result) {
 		switch (result) {
 		case SAFE:
@@ -314,9 +314,9 @@ public class TraceAbstractionStarter {
 	}
 	
 	private void writeHoareAnnotationToLogger(final RootNode root) {
-		for (final Entry<String, Map<String, ProgramPoint>> proc2label2pp : root.getRootAnnot().getProgramPoints()
+		for (final Entry<String, Map<String, BoogieIcfgLocation>> proc2label2pp : root.getRootAnnot().getProgramPoints()
 				.entrySet()) {
-			for (final ProgramPoint pp : proc2label2pp.getValue().values()) {
+			for (final BoogieIcfgLocation pp : proc2label2pp.getValue().values()) {
 				final HoareAnnotation hoare = getHoareAnnotation(pp);
 				if (hoare == null) {
 					mLogger.info("For program point  " + prettyPrintProgramPoint(pp)
@@ -329,7 +329,7 @@ public class TraceAbstractionStarter {
 		}
 	}
 	
-	private static String prettyPrintProgramPoint(final ProgramPoint pp) {
+	private static String prettyPrintProgramPoint(final BoogieIcfgLocation pp) {
 		final int startLine = pp.getPayload().getLocation().getStartLine();
 		final int endLine = pp.getPayload().getLocation().getStartLine();
 		final StringBuilder sb = new StringBuilder();
@@ -342,9 +342,9 @@ public class TraceAbstractionStarter {
 		return sb.toString();
 	}
 	
-	private void reportPositiveResults(final Collection<ProgramPoint> errorLocs) {
-		for (final ProgramPoint errorLoc : errorLocs) {
-			final PositiveResult<RcfgElement> pResult =
+	private void reportPositiveResults(final Collection<BoogieIcfgLocation> errorLocs) {
+		for (final BoogieIcfgLocation errorLoc : errorLocs) {
+			final PositiveResult<IcfgElement> pResult =
 					new PositiveResult<>(Activator.PLUGIN_NAME, errorLoc, mServices.getBacktranslationService());
 			reportResult(pResult);
 		}
@@ -355,13 +355,13 @@ public class TraceAbstractionStarter {
 			reportUnproveableResult(pe, pe.getUnprovabilityReasons());
 			return;
 		}
-		reportResult(new CounterExampleResult<RcfgElement, RCFGEdge, Term>(getErrorPP(pe), Activator.PLUGIN_NAME,
+		reportResult(new CounterExampleResult<IcfgElement, IcfgEdge, Term>(getErrorPP(pe), Activator.PLUGIN_NAME,
 				mServices.getBacktranslationService(), pe));
 	}
 	
-	private void reportTimeoutResult(final Collection<ProgramPoint> errorLocs, final IRunningTaskStackProvider rtsp) {
-		for (final ProgramPoint errorIpp : errorLocs) {
-			final ProgramPoint errorLoc = errorIpp;
+	private void reportTimeoutResult(final Collection<BoogieIcfgLocation> errorLocs, final IRunningTaskStackProvider rtsp) {
+		for (final BoogieIcfgLocation errorIpp : errorLocs) {
+			final BoogieIcfgLocation errorLoc = errorIpp;
 			final ILocation origin = errorLoc.getBoogieASTNode().getLocation().getOrigin();
 			String timeOutMessage = "Unable to prove that ";
 			timeOutMessage += ResultUtil.getCheckedSpecification(errorLoc).getPositiveMessage();
@@ -369,7 +369,7 @@ public class TraceAbstractionStarter {
 			if (rtsp != null) {
 				timeOutMessage += " Cancelled " + rtsp.printRunningTaskMessage();
 			}
-			final TimeoutResultAtElement<RcfgElement> timeOutRes = new TimeoutResultAtElement<>(errorLoc,
+			final TimeoutResultAtElement<IcfgElement> timeOutRes = new TimeoutResultAtElement<>(errorLoc,
 					Activator.PLUGIN_NAME, mServices.getBacktranslationService(), timeOutMessage);
 			reportResult(timeOutRes);
 		}
@@ -377,8 +377,8 @@ public class TraceAbstractionStarter {
 	
 	private void reportUnproveableResult(final RcfgProgramExecution pe,
 			final List<UnprovabilityReason> unproabilityReasons) {
-		final ProgramPoint errorPP = getErrorPP(pe);
-		final UnprovableResult<RcfgElement, RCFGEdge, Term> uknRes = new UnprovableResult<>(Activator.PLUGIN_NAME,
+		final BoogieIcfgLocation errorPP = getErrorPP(pe);
+		final UnprovableResult<IcfgElement, IcfgEdge, Term> uknRes = new UnprovableResult<>(Activator.PLUGIN_NAME,
 				errorPP, mServices.getBacktranslationService(), pe, unproabilityReasons);
 		reportResult(uknRes);
 	}
@@ -404,14 +404,14 @@ public class TraceAbstractionStarter {
 		return mRootOfNewModel;
 	}
 	
-	public static HoareAnnotation getHoareAnnotation(final ProgramPoint programPoint) {
+	public static HoareAnnotation getHoareAnnotation(final BoogieIcfgLocation programPoint) {
 		return HoareAnnotation.getAnnotation(programPoint);
 	}
 	
-	public static ProgramPoint getErrorPP(final RcfgProgramExecution rcfgProgramExecution) {
+	public static BoogieIcfgLocation getErrorPP(final RcfgProgramExecution rcfgProgramExecution) {
 		final int lastPosition = rcfgProgramExecution.getLength() - 1;
-		final RCFGEdge last = rcfgProgramExecution.getTraceElement(lastPosition).getTraceElement();
-		return (ProgramPoint) last.getTarget();
+		final IcfgEdge last = rcfgProgramExecution.getTraceElement(lastPosition).getTraceElement();
+		return (BoogieIcfgLocation) last.getTarget();
 	}
 	
 	private boolean interpolationModeSwitchNeeded() {

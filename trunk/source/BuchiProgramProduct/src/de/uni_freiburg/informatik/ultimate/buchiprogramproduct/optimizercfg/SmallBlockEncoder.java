@@ -41,9 +41,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms.BoogieExpressionTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms.NormalFormTransformer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 
@@ -84,15 +84,15 @@ public class SmallBlockEncoder extends BaseObserver {
 			int countDisjunctiveAssumes = 0;
 			int countNewEdges = 0;
 
-			final ArrayDeque<RCFGEdge> edges = new ArrayDeque<>();
-			final HashSet<RCFGEdge> closed = new HashSet<>();
+			final ArrayDeque<IcfgEdge> edges = new ArrayDeque<>();
+			final HashSet<IcfgEdge> closed = new HashSet<>();
 
 			final NormalFormTransformer<Expression> ct = new NormalFormTransformer<>(new BoogieExpressionTransformer());
 
 			edges.addAll(root.getOutgoingEdges());
 
 			while (!edges.isEmpty()) {
-				final RCFGEdge current = edges.removeFirst();
+				final IcfgEdge current = edges.removeFirst();
 				if (closed.contains(current)) {
 					continue;
 				}
@@ -142,7 +142,7 @@ public class SmallBlockEncoder extends BaseObserver {
 							countDisjunctiveAssumes++;
 							for (final Expression disjunct : disjuncts) {
 								final StatementSequence newss = mCbf.constructStatementSequence(
-										(ProgramPoint) current.getSource(), (ProgramPoint) current.getTarget(),
+										(BoogieIcfgLocation) current.getSource(), (BoogieIcfgLocation) current.getTarget(),
 										new AssumeStatement(assume.getLocation(), disjunct));
 								closed.add(newss);
 								countNewEdges++;

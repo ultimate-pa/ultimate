@@ -40,19 +40,19 @@ import java.util.TreeSet;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IWalkable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootEdge;
 
 public class DebugFileWriterNutz {
 
 	private final ILogger mLogger;
-	private final List<List<RCFGEdge>> mPaths;
+	private final List<List<IcfgEdge>> mPaths;
 	private final int mUnrollingDepth;
 	private final static String sFolderPath = "F:\\repos\\ultimate fresher co\\trunk\\examples\\unrolling-tests\\";
 
-	public DebugFileWriterNutz(final List<List<RCFGEdge>> paths, final ILogger logger, final int unrollingDepth) {
+	public DebugFileWriterNutz(final List<List<IcfgEdge>> paths, final ILogger logger, final int unrollingDepth) {
 		mLogger = logger;
 		if (paths == null) {
 			throw new IllegalArgumentException("Parameter may not be null");
@@ -64,7 +64,7 @@ public class DebugFileWriterNutz {
 	public void run() {
 		final HashMap<RootEdge, ArrayList<ArrayList<CodeBlock>>> tmp = new HashMap<>();
 
-		for (final List<RCFGEdge> path : mPaths) {
+		for (final List<IcfgEdge> path : mPaths) {
 			if (!path.isEmpty()) {
 				final IWalkable first = path.get(0);
 				if (first instanceof RootEdge) {
@@ -99,9 +99,9 @@ public class DebugFileWriterNutz {
 		try {
 			for (final Entry<RootEdge, TreeSet<String>> en : procToTraceStrings.entrySet()) {
 				final String currentFileName = Paths
-						.get(((ProgramPoint) en.getKey().getTarget()).getPayload().getLocation().getFileName())
+						.get(((BoogieIcfgLocation) en.getKey().getTarget()).getPayload().getLocation().getFileName())
 						.getFileName().toString();
-				final String currentMethodName = ((ProgramPoint) en.getKey().getTarget()).getProcedure();
+				final String currentMethodName = ((BoogieIcfgLocation) en.getKey().getTarget()).getProcedure();
 				final String filename = "dd_rcfgTraces_" + currentFileName + "_" + currentMethodName + "__dfs_" + "_n_is_"
 						+ unrollingDepth + "_" + ".txt";
 

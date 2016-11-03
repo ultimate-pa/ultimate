@@ -32,12 +32,12 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 
 /**
@@ -61,8 +61,8 @@ public class MinimizeStatesSingleEdgeSingleNode extends BaseMinimizeStates {
 	}
 
 	@Override
-	protected Collection<? extends RCFGNode> processCandidate(final RootNode root, final ProgramPoint target,
-			final Set<RCFGNode> closed) {
+	protected Collection<? extends IcfgLocation> processCandidate(final RootNode root, final BoogieIcfgLocation target,
+			final Set<IcfgLocation> closed) {
 
 		if (target.getIncomingEdges().size() != 1 || target.getOutgoingEdges().size() != 1) {
 			return target.getOutgoingNodes();
@@ -72,11 +72,11 @@ public class MinimizeStatesSingleEdgeSingleNode extends BaseMinimizeStates {
 		// so we have the two edges
 		// e1 = (q1,st1,q2)
 		// e2 = (q2,st2,q3)
-		final RCFGEdge predEdge = target.getIncomingEdges().get(0);
-		final RCFGEdge succEdge = target.getOutgoingEdges().get(0);
+		final IcfgEdge predEdge = target.getIncomingEdges().get(0);
+		final IcfgEdge succEdge = target.getOutgoingEdges().get(0);
 
-		final ProgramPoint pred = (ProgramPoint) predEdge.getSource();
-		final ProgramPoint succ = (ProgramPoint) succEdge.getTarget();
+		final BoogieIcfgLocation pred = (BoogieIcfgLocation) predEdge.getSource();
+		final BoogieIcfgLocation succ = (BoogieIcfgLocation) succEdge.getTarget();
 
 		if (!checkTargetNode(target) && !checkNodePair(pred, succ)) {
 			// the nodes do not fulfill the conditions, return

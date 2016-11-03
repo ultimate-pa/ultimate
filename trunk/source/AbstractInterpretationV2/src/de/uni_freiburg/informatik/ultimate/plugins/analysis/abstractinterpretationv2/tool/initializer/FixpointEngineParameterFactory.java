@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.vp.VPDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 
@@ -66,23 +66,23 @@ public class FixpointEngineParameterFactory {
 	
 	@SuppressWarnings("unchecked")
 	public <STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>>
-			FixpointEngineParameters<STATE, CodeBlock, IBoogieVar, ProgramPoint, Expression>
+			FixpointEngineParameters<STATE, CodeBlock, IBoogieVar, BoogieIcfgLocation, Expression>
 			createParams(final IProgressAwareTimer timer,
-					final ITransitionProvider<CodeBlock, ProgramPoint> transitionProvider,
+					final ITransitionProvider<CodeBlock, BoogieIcfgLocation> transitionProvider,
 					final ILoopDetector<CodeBlock> loopDetector) {
 		final RootAnnot rootAnnot = mRoot.getRootAnnot();
 		final IAbstractDomain<STATE, CodeBlock, IBoogieVar> domain =
 				(IAbstractDomain<STATE, CodeBlock, IBoogieVar>) selectDomain();
-		final IAbstractStateStorage<STATE, CodeBlock, IBoogieVar, ProgramPoint> storageProvider =
+		final IAbstractStateStorage<STATE, CodeBlock, IBoogieVar, BoogieIcfgLocation> storageProvider =
 				new RcfgAbstractStateStorageProvider<>(domain.getMergeOperator(), mServices, transitionProvider);
 		
 		final IVariableProvider<STATE, CodeBlock, IBoogieVar> variableProvider = new RcfgVariableProvider<>(
 				new DefaultSymbolTableAdapter(mSymbolTable, rootAnnot.getBoogie2SMT().getBoogie2SmtSymbolTable()),
 				mServices);
-		final IDebugHelper<STATE, CodeBlock, IBoogieVar, ProgramPoint> debugHelper =
+		final IDebugHelper<STATE, CodeBlock, IBoogieVar, BoogieIcfgLocation> debugHelper =
 				new RcfgDebugHelper<>(rootAnnot.getCfgSmtToolkit(), mServices, 
 						mRoot.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable());
-		return new FixpointEngineParameters<STATE, CodeBlock, IBoogieVar, ProgramPoint, Expression>(mServices)
+		return new FixpointEngineParameters<STATE, CodeBlock, IBoogieVar, BoogieIcfgLocation, Expression>(mServices)
 				.setDomain(domain).setLoopDetector(loopDetector).setStorage(storageProvider)
 				.setTransitionProvider(transitionProvider).setVariableProvider(variableProvider)
 				.setDebugHelper(debugHelper).setTimer(timer);
@@ -90,22 +90,22 @@ public class FixpointEngineParameterFactory {
 	
 	@SuppressWarnings("unchecked")
 	public <STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>>
-			FixpointEngineParameters<STATE, CodeBlock, IBoogieVar, ProgramPoint, Expression>
+			FixpointEngineParameters<STATE, CodeBlock, IBoogieVar, BoogieIcfgLocation, Expression>
 			createParamsPathProgram(final IProgressAwareTimer timer,
-					final ITransitionProvider<CodeBlock, ProgramPoint> transitionProvider,
+					final ITransitionProvider<CodeBlock, BoogieIcfgLocation> transitionProvider,
 					final ILoopDetector<CodeBlock> loopDetector) {
 		final RootAnnot rootAnnot = mRoot.getRootAnnot();
 		final IAbstractDomain<STATE, CodeBlock, IBoogieVar> domain =
 				(IAbstractDomain<STATE, CodeBlock, IBoogieVar>) selectDomain();
-		final IAbstractStateStorage<STATE, CodeBlock, IBoogieVar, ProgramPoint> storageProvider =
+		final IAbstractStateStorage<STATE, CodeBlock, IBoogieVar, BoogieIcfgLocation> storageProvider =
 				new RcfgAbstractStateStorageProvider<>(domain.getMergeOperator(), mServices, transitionProvider);
 		final IVariableProvider<STATE, CodeBlock, IBoogieVar> variableProvider = new PathProgramVariableProvider<>(
 				new DefaultSymbolTableAdapter(mSymbolTable, rootAnnot.getBoogie2SMT().getBoogie2SmtSymbolTable()),
 				mServices);
-		final IDebugHelper<STATE, CodeBlock, IBoogieVar, ProgramPoint> debugHelper =
+		final IDebugHelper<STATE, CodeBlock, IBoogieVar, BoogieIcfgLocation> debugHelper =
 				new RcfgDebugHelper<>(rootAnnot.getCfgSmtToolkit(), mServices, 
 						mRoot.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable());
-		return new FixpointEngineParameters<STATE, CodeBlock, IBoogieVar, ProgramPoint, Expression>(mServices)
+		return new FixpointEngineParameters<STATE, CodeBlock, IBoogieVar, BoogieIcfgLocation, Expression>(mServices)
 				.setDomain(domain).setLoopDetector(loopDetector).setStorage(storageProvider)
 				.setTransitionProvider(transitionProvider).setVariableProvider(variableProvider)
 				.setDebugHelper(debugHelper).setTimer(timer);
@@ -113,23 +113,23 @@ public class FixpointEngineParameterFactory {
 	
 	@SuppressWarnings("unchecked")
 	public <STATE extends IAbstractState<STATE, CodeBlock, IProgramVar>>
-			FixpointEngineParameters<STATE, CodeBlock, IProgramVar, ProgramPoint, Expression>
+			FixpointEngineParameters<STATE, CodeBlock, IProgramVar, BoogieIcfgLocation, Expression>
 			createParamsFuture(final IProgressAwareTimer timer,
-					final ITransitionProvider<CodeBlock, ProgramPoint> transitionProvider,
+					final ITransitionProvider<CodeBlock, BoogieIcfgLocation> transitionProvider,
 					final ILoopDetector<CodeBlock> loopDetector) {
 		final RootAnnot rootAnnot = mRoot.getRootAnnot();
 		
 		final IAbstractDomain<STATE, CodeBlock, IProgramVar> domain =
 				(IAbstractDomain<STATE, CodeBlock, IProgramVar>) selectDomainFutureCfg();
-		final IAbstractStateStorage<STATE, CodeBlock, IProgramVar, ProgramPoint> storageProvider =
+		final IAbstractStateStorage<STATE, CodeBlock, IProgramVar, BoogieIcfgLocation> storageProvider =
 				new RcfgAbstractStateStorageProvider<>(domain.getMergeOperator(), mServices, transitionProvider);
 		final IVariableProvider<STATE, CodeBlock, IProgramVar> variableProvider = new FutureRcfgVariableProvider<>(
 				mSymbolTable, rootAnnot.getBoogie2SMT().getBoogie2SmtSymbolTable(), mServices);
-		final IDebugHelper<STATE, CodeBlock, IProgramVar, ProgramPoint> debugHelper =
+		final IDebugHelper<STATE, CodeBlock, IProgramVar, BoogieIcfgLocation> debugHelper =
 				new RcfgDebugHelper<>(rootAnnot.getCfgSmtToolkit(), mServices, 
 						mRoot.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable());
 		
-		return new FixpointEngineParameters<STATE, CodeBlock, IProgramVar, ProgramPoint, Expression>(mServices)
+		return new FixpointEngineParameters<STATE, CodeBlock, IProgramVar, BoogieIcfgLocation, Expression>(mServices)
 				.setDomain(domain).setLoopDetector(loopDetector).setStorage(storageProvider)
 				.setTransitionProvider(transitionProvider).setVariableProvider(variableProvider)
 				.setDebugHelper(debugHelper).setTimer(timer);

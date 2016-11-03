@@ -30,14 +30,14 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
@@ -90,7 +90,7 @@ public class HoareAnnotationWriter {
 			}
 			precondForContext = TraceAbstractionUtils.renameGlobalsToOldGlobals(precondForContext, 
 					mServices, mCsToolkit.getManagedScript(), mPredicateFactory, SimplificationTechnique.SIMPLIFY_DDA);
-			final HashRelation<ProgramPoint, IPredicate> pp2preds = mHoareAnnotationFragments
+			final HashRelation<BoogieIcfgLocation, IPredicate> pp2preds = mHoareAnnotationFragments
 					.getDeadContexts2ProgPoint2Preds().get(context);
 			addHoareAnnotationForContext(mCsToolkit, precondForContext, pp2preds);
 		}
@@ -103,7 +103,7 @@ public class HoareAnnotationWriter {
 			}
 			precondForContext = TraceAbstractionUtils.renameGlobalsToOldGlobals(precondForContext, 
 					mServices, mCsToolkit.getManagedScript(), mPredicateFactory, SimplificationTechnique.SIMPLIFY_DDA);
-			final HashRelation<ProgramPoint, IPredicate> pp2preds = mHoareAnnotationFragments
+			final HashRelation<BoogieIcfgLocation, IPredicate> pp2preds = mHoareAnnotationFragments
 					.getLiveContexts2ProgPoint2Preds().get(context);
 			addHoareAnnotationForContext(mCsToolkit, precondForContext, pp2preds);
 		}
@@ -115,8 +115,8 @@ public class HoareAnnotationWriter {
 	 * @param pp2preds
 	 */
 	private void addHoareAnnotationForContext(final CfgSmtToolkit csToolkit, final IPredicate precondForContext,
-			final HashRelation<ProgramPoint, IPredicate> pp2preds) {
-		for (final ProgramPoint pp : pp2preds.getDomain()) {
+			final HashRelation<BoogieIcfgLocation, IPredicate> pp2preds) {
+		for (final BoogieIcfgLocation pp : pp2preds.getDomain()) {
 			final IPredicate[] preds = pp2preds.getImage(pp).toArray(new IPredicate[0]);
 			final Term tvp = mPredicateFactory.or(false, preds);
 			final IPredicate formulaForPP = mPredicateFactory.newPredicate(tvp);
@@ -124,10 +124,10 @@ public class HoareAnnotationWriter {
 		}
 	}
 
-	private void addFormulasToLocNodes(final ProgramPoint pp, final IPredicate context, final IPredicate current) {
+	private void addFormulasToLocNodes(final BoogieIcfgLocation pp, final IPredicate context, final IPredicate current) {
 		final String procName = pp.getProcedure();
 		final String locName = pp.getDebugIdentifier();
-		final ProgramPoint locNode = mrootAnnot.getProgramPoints().get(procName).get(locName);
+		final BoogieIcfgLocation locNode = mrootAnnot.getProgramPoints().get(procName).get(locName);
 		HoareAnnotation hoareAnnot = null;
 		
 		final HoareAnnotation taAnnot = HoareAnnotation.getAnnotation(locNode);
@@ -141,9 +141,9 @@ public class HoareAnnotationWriter {
 	}
 
 	private Call getCall(final ISLPredicate pred) {
-		final ProgramPoint pp = pred.getProgramPoint();
+		final BoogieIcfgLocation pp = pred.getProgramPoint();
 		Call result = null;
-		for (final RCFGEdge edge : pp.getOutgoingEdges()) {
+		for (final IcfgEdge edge : pp.getOutgoingEdges()) {
 			if (edge instanceof Call) {
 				if (result == null) {
 					result = (Call) edge;

@@ -38,11 +38,11 @@ import java.util.Stack;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
@@ -78,7 +78,7 @@ public class RCFGLoopDetector {
 
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
-	private final Map<ProgramPoint, Map<RCFGEdge, RCFGEdge>> mLoopEntryExit;
+	private final Map<BoogieIcfgLocation, Map<IcfgEdge, IcfgEdge>> mLoopEntryExit;
 
 	public RCFGLoopDetector(final IUltimateServiceProvider services) {
 		mServices = services;
@@ -86,7 +86,7 @@ public class RCFGLoopDetector {
 		mLoopEntryExit = new HashMap<>();
 	}
 
-	public Map<ProgramPoint, Map<RCFGEdge, RCFGEdge>> getResult() {
+	public Map<BoogieIcfgLocation, Map<IcfgEdge, IcfgEdge>> getResult() {
 		return mLoopEntryExit;
 	}
 
@@ -94,16 +94,16 @@ public class RCFGLoopDetector {
 		final RootAnnot annot = rootNode.getRootAnnot();
 
 		// get a hashset of all loop heads
-		final Set<ProgramPoint> loopHeadsSet = new HashSet<>(annot.getLoopLocations().keySet());
+		final Set<BoogieIcfgLocation> loopHeadsSet = new HashSet<>(annot.getLoopLocations().keySet());
 
 		// order the loopheads after their occurance in the program
-		final List<ProgramPoint> loopHeads = orderLoopHeads(loopHeadsSet, rootNode);
+		final List<BoogieIcfgLocation> loopHeads = orderLoopHeads(loopHeadsSet, rootNode);
 
 		// compute the edges that constitute the loop for one loophead while
 		// ignoring loops that result from nesting
-		List<RCFGEdge> forbiddenEdges = new ArrayList<>();
-		for (final ProgramPoint p : loopHeads) {
-			final Map<RCFGEdge, RCFGEdge> map = new HashMap<>();
+		List<IcfgEdge> forbiddenEdges = new ArrayList<>();
+		for (final BoogieIcfgLocation p : loopHeads) {
+			final Map<IcfgEdge, IcfgEdge> map = new HashMap<>();
 			mLoopEntryExit.put(p, map);
 			process(p, map, forbiddenEdges);
 			forbiddenEdges = new ArrayList<>();
@@ -113,35 +113,35 @@ public class RCFGLoopDetector {
 		printResult(mLoopEntryExit);
 	}
 
-	private List<ProgramPoint> orderLoopHeads(final Set<ProgramPoint> loopHeads, final RootNode programStart) {
-		final List<ProgramPoint> rtr = new ArrayList<>();
+	private List<BoogieIcfgLocation> orderLoopHeads(final Set<BoogieIcfgLocation> loopHeads, final RootNode programStart) {
+		final List<BoogieIcfgLocation> rtr = new ArrayList<>();
 
-		final Stack<RCFGNode> open = new Stack<>();
-		final HashSet<RCFGNode> closed = new HashSet<>();
+		final Stack<IcfgLocation> open = new Stack<>();
+		final HashSet<IcfgLocation> closed = new HashSet<>();
 
 		open.push(programStart);
 		while (!open.isEmpty()) {
-			final RCFGNode current = open.pop();
+			final IcfgLocation current = open.pop();
 			if (closed.contains(current)) {
 				continue;
 			}
 			closed.add(current);
-			for (final RCFGEdge edge : current.getOutgoingEdges()) {
+			for (final IcfgEdge edge : current.getOutgoingEdges()) {
 				open.push(edge.getTarget());
 			}
 			if (loopHeads.contains(current)) {
-				rtr.add((ProgramPoint) current);
+				rtr.add((BoogieIcfgLocation) current);
 			}
 		}
 
 		return rtr;
 	}
 
-	private void process(final ProgramPoint loopHead, final Map<RCFGEdge, RCFGEdge> map, final List<RCFGEdge> forbiddenEdges) {
-		AStar<RCFGNode, RCFGEdge> walker = new AStar<>(mLogger, loopHead, loopHead, new ZeroHeuristic(),
+	private void process(final BoogieIcfgLocation loopHead, final Map<IcfgEdge, IcfgEdge> map, final List<IcfgEdge> forbiddenEdges) {
+		AStar<IcfgLocation, IcfgEdge> walker = new AStar<>(mLogger, loopHead, loopHead, new ZeroHeuristic(),
 				new RcfgWrapper(), forbiddenEdges, mServices.getProgressMonitorService());
 
-		List<RCFGEdge> path = walker.findPath();
+		List<IcfgEdge> path = walker.findPath();
 		if (forbiddenEdges.isEmpty() && (path == null || path.isEmpty())) {
 			mLogger.warn(
 					"RCFGNode " + loopHead + " is not a valid loop head, because there is no cycle leading back to it");
@@ -150,48 +150,48 @@ public class RCFGLoopDetector {
 		// got first path, add it to the results and get the edge starting this
 		// path to find different entry/exits for this loop
 		while (path != null) {
-			final RCFGEdge forbiddenEdge = addToResult(path, map);
+			final IcfgEdge forbiddenEdge = addToResult(path, map);
 			forbiddenEdges.add(forbiddenEdge);
 
-			walker = new AStar<RCFGNode, RCFGEdge>(mLogger, loopHead, loopHead, new ZeroHeuristic(), new RcfgWrapper(),
+			walker = new AStar<IcfgLocation, IcfgEdge>(mLogger, loopHead, loopHead, new ZeroHeuristic(), new RcfgWrapper(),
 					createDenier(forbiddenEdges), mServices.getProgressMonitorService());
 			path = walker.findPath();
 		}
 	}
 
-	private IEdgeDenier<RCFGEdge> createDenier(final List<RCFGEdge> forbiddenEdges) {
-		final List<IEdgeDenier<RCFGEdge>> rtr = new ArrayList<>();
-		rtr.add(new CollectionEdgeDenier<RCFGEdge>(forbiddenEdges));
+	private IEdgeDenier<IcfgEdge> createDenier(final List<IcfgEdge> forbiddenEdges) {
+		final List<IEdgeDenier<IcfgEdge>> rtr = new ArrayList<>();
+		rtr.add(new CollectionEdgeDenier<IcfgEdge>(forbiddenEdges));
 		rtr.add(new RcfgCallReturnDenier());
 		return new CompositEdgeDenier<>(rtr);
 	}
 
-	private RCFGEdge addToResult(final List<RCFGEdge> path, final Map<RCFGEdge, RCFGEdge> map) {
-		final RCFGEdge first = path.get(0);
-		final RCFGEdge last = path.get(path.size() - 1);
+	private IcfgEdge addToResult(final List<IcfgEdge> path, final Map<IcfgEdge, IcfgEdge> map) {
+		final IcfgEdge first = path.get(0);
+		final IcfgEdge last = path.get(path.size() - 1);
 		assert first.getSource().equals(last.getTarget());
 		map.put(first, last);
 		return first;
 	}
 
-	private void printResult(final Map<ProgramPoint, Map<RCFGEdge, RCFGEdge>> result) {
+	private void printResult(final Map<BoogieIcfgLocation, Map<IcfgEdge, IcfgEdge>> result) {
 		if (!mLogger.isDebugEnabled()) {
 			return;
 		}
 		mLogger.debug("---------------");
-		for (final ProgramPoint p : result.keySet()) {
+		for (final BoogieIcfgLocation p : result.keySet()) {
 			mLogger.debug("Loophead " + p);
-			final Map<RCFGEdge, RCFGEdge> map = result.get(p);
-			for (final Entry<RCFGEdge, RCFGEdge> entry : map.entrySet()) {
+			final Map<IcfgEdge, IcfgEdge> map = result.get(p);
+			for (final Entry<IcfgEdge, IcfgEdge> entry : map.entrySet()) {
 				mLogger.debug("* " + entry.getKey().hashCode() + " >< " + entry.getValue().hashCode());
 			}
 		}
 		mLogger.debug("---------------");
 	}
 
-	private static final class RcfgCallReturnDenier implements IEdgeDenier<RCFGEdge> {
+	private static final class RcfgCallReturnDenier implements IEdgeDenier<IcfgEdge> {
 		@Override
-		public boolean isForbidden(final RCFGEdge edge, final Iterator<RCFGEdge> backpointers) {
+		public boolean isForbidden(final IcfgEdge edge, final Iterator<IcfgEdge> backpointers) {
 			if (edge instanceof Return) {
 				// check if the first call on the path spanned by the
 				// backpointers is the call matching this return

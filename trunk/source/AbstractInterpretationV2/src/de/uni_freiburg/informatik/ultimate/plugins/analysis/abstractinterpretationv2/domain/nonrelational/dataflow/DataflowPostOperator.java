@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Unm
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 
 /**
  *
@@ -54,7 +54,7 @@ public class DataflowPostOperator implements IAbstractPostOperator<DataflowState
 		}
 
 		final Map<IProgramVar, Set<CodeBlock>> reach = new HashMap<>(oldstate.getReachingDefinitions());
-		final Map<IProgramVar, Set<ProgramPoint>> noWrite = new HashMap<>(oldstate.getNoWrite());
+		final Map<IProgramVar, Set<BoogieIcfgLocation>> noWrite = new HashMap<>(oldstate.getNoWrite());
 
 		// for (final Entry<IProgramVar, TermVariable> entry : tf.getOutVars().entrySet()) {
 		// reach.put(entry.getKey(), Collections.singleton(transition));
@@ -68,12 +68,12 @@ public class DataflowPostOperator implements IAbstractPostOperator<DataflowState
 			noWrite.put(pv, new HashSet<>());
 		}
 		for (final IProgramVar pv : nonDefSet) {
-			Set<ProgramPoint> programPoints = noWrite.get(pv);
+			Set<BoogieIcfgLocation> programPoints = noWrite.get(pv);
 			if (programPoints == null) {
 				programPoints = new HashSet<>();
 				noWrite.put(pv, programPoints);
 			}
-			programPoints.add((ProgramPoint) transition.getSource());
+			programPoints.add((BoogieIcfgLocation) transition.getSource());
 		}
 
 		return Collections.singletonList(

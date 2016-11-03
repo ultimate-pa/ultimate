@@ -66,7 +66,7 @@ public class SequentialComposition extends CodeBlock implements IInternalAction 
 	private final List<CodeBlock> mCodeBlocks;
 	private final String mPrettyPrinted;
 
-	SequentialComposition(final int serialNumber, final ProgramPoint source, final ProgramPoint target, final ManagedScript mgdScript,
+	SequentialComposition(final int serialNumber, final BoogieIcfgLocation source, final BoogieIcfgLocation target, final ManagedScript mgdScript,
 			final ModifiableGlobalVariableManager modGlobVarManager, final boolean simplify, final boolean extPqe,
 			final IUltimateServiceProvider services, final List<CodeBlock> codeBlocks, 
 			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique, final ICfgSymbolTable symbolTable) {

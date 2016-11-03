@@ -30,11 +30,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ITransitionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 
@@ -43,11 +43,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
  * @author dietsch@informatik.uni-freiburg.de
  *
  */
-public class RcfgTransitionProvider implements ITransitionProvider<CodeBlock, ProgramPoint> {
+public class RcfgTransitionProvider implements ITransitionProvider<CodeBlock, BoogieIcfgLocation> {
 
 	@Override
 	public Collection<CodeBlock> getSuccessors(final CodeBlock elem, final CodeBlock scope) {
-		final RCFGNode target = elem.getTarget();
+		final IcfgLocation target = elem.getTarget();
 		if (target == null) {
 			return Collections.emptyList();
 		}
@@ -64,9 +64,9 @@ public class RcfgTransitionProvider implements ITransitionProvider<CodeBlock, Pr
 			}
 		}
 
-		final RCFGNode target = elem.getTarget();
-		if (target instanceof ProgramPoint) {
-			final ProgramPoint progPoint = (ProgramPoint) target;
+		final IcfgLocation target = elem.getTarget();
+		if (target instanceof BoogieIcfgLocation) {
+			final BoogieIcfgLocation progPoint = (BoogieIcfgLocation) target;
 			return progPoint.isErrorLocation();
 		}
 		return false;
@@ -97,17 +97,17 @@ public class RcfgTransitionProvider implements ITransitionProvider<CodeBlock, Pr
 	}
 
 	@Override
-	public ProgramPoint getSource(final CodeBlock current) {
-		return (ProgramPoint) current.getSource();
+	public BoogieIcfgLocation getSource(final CodeBlock current) {
+		return (BoogieIcfgLocation) current.getSource();
 	}
 
 	@Override
-	public ProgramPoint getTarget(final CodeBlock current) {
-		return (ProgramPoint) current.getTarget();
+	public BoogieIcfgLocation getTarget(final CodeBlock current) {
+		return (BoogieIcfgLocation) current.getTarget();
 	}
 
 	@Override
-	public Collection<CodeBlock> getSuccessorActions(final ProgramPoint loc) {
+	public Collection<CodeBlock> getSuccessorActions(final BoogieIcfgLocation loc) {
 		return loc.getOutgoingEdges().stream().map(e -> (CodeBlock) e).collect(Collectors.toList());
 	}
 

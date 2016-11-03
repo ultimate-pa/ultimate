@@ -72,7 +72,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.dataflowdag.DataflowDAG;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.dataflowdag.TraceCodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
@@ -99,7 +99,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 
 	public TAwAFAsCegarLoop(final String name, final RootNode rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final TraceAbstractionBenchmarks traceAbstractionBenchmarks, final TAPreferences taPrefs,
-			final Collection<ProgramPoint> errorLocs, final InterpolationTechnique interpolation, final boolean computeHoareAnnotation,
+			final Collection<BoogieIcfgLocation> errorLocs, final InterpolationTechnique interpolation, final boolean computeHoareAnnotation,
 			final IUltimateServiceProvider services, final IToolchainStorage storage) {
 		super(name, rootNode, csToolkit, predicateFactory, traceAbstractionBenchmarks, taPrefs, errorLocs, services, storage);
 		mPredicateUnifier = new PredicateUnifier(services, csToolkit.getManagedScript(), predicateFactory, 

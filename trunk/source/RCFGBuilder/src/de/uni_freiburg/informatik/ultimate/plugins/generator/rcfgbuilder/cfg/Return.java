@@ -48,7 +48,7 @@ public class Return extends CodeBlock implements IReturnAction {
 
 	private final Call mCorrespondingCall;
 
-	Return(int serialNumber, ProgramPoint source, ProgramPoint target, Call correspondingCall, ILogger logger) {
+	Return(int serialNumber, BoogieIcfgLocation source, BoogieIcfgLocation target, Call correspondingCall, ILogger logger) {
 		super(serialNumber, source, target, logger);
 		mCorrespondingCall = correspondingCall;
 	}
@@ -57,8 +57,8 @@ public class Return extends CodeBlock implements IReturnAction {
 		return mCorrespondingCall;
 	}
 
-	public ProgramPoint getCallerProgramPoint() {
-		return (ProgramPoint) getCorrespondingCall().getSource();
+	public BoogieIcfgLocation getCallerProgramPoint() {
+		return (BoogieIcfgLocation) getCorrespondingCall().getSource();
 	}
 
 	/**

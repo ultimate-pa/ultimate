@@ -41,8 +41,8 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IBasic
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IMinimizedEdge;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
@@ -187,7 +187,7 @@ public class MinimizeLoopVisitor extends MinimizeBranchVisitor {
 		if (node.getIncomingEdges().size() == 1
 				&& node.getOutgoingEdges().size() >= 2) {
 			// Maybe we have an incoming RootEdge, then we want not to minimize
-			for (final RCFGEdge edge : node.getOriginalNode().getIncomingEdges()) {
+			for (final IcfgEdge edge : node.getOriginalNode().getIncomingEdges()) {
 				if (edge instanceof RootEdge) {
 					return false;
 				}

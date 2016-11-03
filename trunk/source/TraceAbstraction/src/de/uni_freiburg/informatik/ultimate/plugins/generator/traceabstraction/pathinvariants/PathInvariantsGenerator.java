@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfCon
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.CFGInvariantsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.ControlFlowGraph;
@@ -180,12 +180,12 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		// Project path to CFG
 		final int len = mRun.getLength();
 		final List<Location> locations = new ArrayList<>(len);
-		final Map<ProgramPoint, Location> locationsForProgramPoint = new HashMap<ProgramPoint, Location>(len);
+		final Map<BoogieIcfgLocation, Location> locationsForProgramPoint = new HashMap<BoogieIcfgLocation, Location>(len);
 		final Collection<Transition> transitions = new ArrayList<>(len - 1);
 
 		for (int i = 0; i < len; i++) {
 			final ISLPredicate pred = (ISLPredicate) mRun.getStateAtPosition(i);
-			final ProgramPoint programPoint = pred.getProgramPoint();
+			final BoogieIcfgLocation programPoint = pred.getProgramPoint();
 
 			Location location = locationsForProgramPoint.get(programPoint);
 			if (location == null) {

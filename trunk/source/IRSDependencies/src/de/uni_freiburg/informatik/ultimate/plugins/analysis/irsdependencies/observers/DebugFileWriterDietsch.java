@@ -40,19 +40,19 @@ import java.util.Map.Entry;
 import java.util.TreeSet;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootEdge;
 
 public class DebugFileWriterDietsch {
 	
 	private final ILogger mLogger;
-	private final List<List<RCFGEdge>> mPaths;
+	private final List<List<IcfgEdge>> mPaths;
 	private final int mUnrollingDepth;
 	private static final String FOLDER_PATH = "F:\\repos\\ultimate fresher co\\trunk\\examples\\unrolling-tests\\";
 	
-	public DebugFileWriterDietsch(final List<List<RCFGEdge>> list, final ILogger logger, final int unrollingDepth) {
+	public DebugFileWriterDietsch(final List<List<IcfgEdge>> list, final ILogger logger, final int unrollingDepth) {
 		mLogger = logger;
 		if (list == null) {
 			throw new IllegalArgumentException("Parameter may not be null");
@@ -69,11 +69,11 @@ public class DebugFileWriterDietsch {
 		
 		final Map<RootEdge, List<List<CodeBlock>>> tmp = new HashMap<>();
 		
-		for (final List<RCFGEdge> path : mPaths) {
+		for (final List<IcfgEdge> path : mPaths) {
 			if (path.isEmpty()) {
 				continue;
 			}
-			final RCFGEdge first = path.get(0);
+			final IcfgEdge first = path.get(0);
 			if (first instanceof RootEdge) {
 				final RootEdge r = (RootEdge) first;
 				if (!tmp.containsKey(r)) {
@@ -105,7 +105,7 @@ public class DebugFileWriterDietsch {
 		
 		sb.append("\nNumber of traces in mPaths: ").append(mPaths.size());
 		
-		final ProgramPoint r = (ProgramPoint) tmp.keySet().iterator().next().getTarget();
+		final BoogieIcfgLocation r = (BoogieIcfgLocation) tmp.keySet().iterator().next().getTarget();
 		final String currentFileName = Paths.get(r.getPayload().getLocation().getFileName()).getFileName().toString();
 		final String currentMethodName = (r).getProcedure();
 		final String filename =
@@ -182,7 +182,7 @@ public class DebugFileWriterDietsch {
 		}
 		
 		// build renaming table for middle part
-		final HashMap<RCFGEdge, Integer> renaming = new HashMap<>();
+		final HashMap<IcfgEdge, Integer> renaming = new HashMap<>();
 		int maxSymbols = 0;
 		for (final Entry<RootEdge, List<List<CodeBlock>>> en : procToTraces.entrySet()) {
 			for (int i = prefixPos; i < maxTraceLength; ++i) {
@@ -223,7 +223,7 @@ public class DebugFileWriterDietsch {
 			set.add(sb.toString());
 			sb = new StringBuilder();
 		}
-		for (final Entry<RCFGEdge, Integer> entry : renaming.entrySet()) {
+		for (final Entry<IcfgEdge, Integer> entry : renaming.entrySet()) {
 			sb.append(getLetter(entry.getValue()));
 			sb.append(" := ");
 			sb.append(((CodeBlock) entry.getKey()).getPrettyPrintedStatements());

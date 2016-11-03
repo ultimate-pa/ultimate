@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.IInterpolantGenerator;
 
@@ -66,7 +66,7 @@ public class CanonicalInterpolantAutomatonBuilder extends CoverageAnalysis
 	private final Map<Integer, Set<IPredicate>> mAlternativeCallPredecessors = new HashMap<Integer, Set<IPredicate>>();
 
 	public CanonicalInterpolantAutomatonBuilder(IUltimateServiceProvider services,
-			IInterpolantGenerator interpolantGenerator, List<ProgramPoint> programPointSequence,
+			IInterpolantGenerator interpolantGenerator, List<BoogieIcfgLocation> programPointSequence,
 			InCaReAlphabet<CodeBlock> alphabet, CfgSmtToolkit csToolkit, IStateFactory<IPredicate> predicateFactory,
 			ILogger logger) {
 		super(services, interpolantGenerator, programPointSequence, logger);

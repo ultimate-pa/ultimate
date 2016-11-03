@@ -44,10 +44,10 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.test.ExecuteUnitTestObs
 import de.uni_freiburg.informatik.ultimate.blockencoding.test.util.RCFGStore;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
@@ -72,7 +72,7 @@ public class TestMinimizeLoopVisitor extends TestCase {
 
 	private MinimizeBranchVisitor mbv;
 
-	private RCFGNode rcfgNode;
+	private IcfgLocation rcfgNode;
 
 	private ILogger logger;
 
@@ -104,14 +104,14 @@ public class TestMinimizeLoopVisitor extends TestCase {
 		// first over the RootEdges
 		assertTrue(rcfgNode instanceof RootNode);
 		assertNotNull(rcfgNode.getOutgoingEdges());
-		for (final RCFGEdge edge : rcfgNode.getOutgoingEdges()) {
+		for (final IcfgEdge edge : rcfgNode.getOutgoingEdges()) {
 			assertTrue(edge instanceof RootEdge);
-			assertTrue(edge.getTarget() instanceof ProgramPoint);
-			testMinimizationOfFunction((ProgramPoint) edge.getTarget());
+			assertTrue(edge.getTarget() instanceof BoogieIcfgLocation);
+			testMinimizationOfFunction((BoogieIcfgLocation) edge.getTarget());
 		}
 	}
 
-	private void testMinimizationOfFunction(final ProgramPoint entryPoint) {
+	private void testMinimizationOfFunction(final BoogieIcfgLocation entryPoint) {
 		assertNotNull(entryPoint.getIncomingEdges());
 		// It can happen that while minimizing we already created an Min.Node we
 		// have to use here
@@ -198,7 +198,7 @@ public class TestMinimizeLoopVisitor extends TestCase {
 		if (node.getIncomingEdges().size() == 1
 				&& node.getOutgoingEdges().size() >= 2) {
 			// Maybe we have an incoming RootEdge, then we want not to minimize
-			for (final RCFGEdge edge : node.getOriginalNode().getIncomingEdges()) {
+			for (final IcfgEdge edge : node.getOriginalNode().getIncomingEdges()) {
 				if (edge instanceof RootEdge) {
 					return false;
 				}

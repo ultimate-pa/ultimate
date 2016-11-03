@@ -33,8 +33,8 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 
 /**
@@ -51,7 +51,7 @@ public final class RemoveSinkStates extends BaseProductOptimizer {
 
 	@Override
 	protected RootNode createResult(final RootNode root) {
-		final List<RCFGNode> sinks = collectSinks(root);
+		final List<IcfgLocation> sinks = collectSinks(root);
 		if (mLogger.isDebugEnabled()) {
 			mLogger.info("Collected " + sinks.size() + " initial sink states");
 		}
@@ -62,13 +62,13 @@ public final class RemoveSinkStates extends BaseProductOptimizer {
 		return root;
 	}
 
-	private static List<RCFGNode> collectSinks(final RootNode root) {
-		final ArrayList<RCFGNode> rtr = new ArrayList<>();
-		final ArrayDeque<RCFGNode> nodes = new ArrayDeque<>();
-		final HashSet<RCFGNode> closed = new HashSet<>();
+	private static List<IcfgLocation> collectSinks(final RootNode root) {
+		final ArrayList<IcfgLocation> rtr = new ArrayList<>();
+		final ArrayDeque<IcfgLocation> nodes = new ArrayDeque<>();
+		final HashSet<IcfgLocation> closed = new HashSet<>();
 		nodes.addAll(root.getOutgoingNodes());
 		while (!nodes.isEmpty()) {
-			final RCFGNode current = nodes.removeFirst();
+			final IcfgLocation current = nodes.removeFirst();
 			if (closed.contains(current)) {
 				continue;
 			}
@@ -83,15 +83,15 @@ public final class RemoveSinkStates extends BaseProductOptimizer {
 		return rtr;
 	}
 
-	private void removeSinks(final List<RCFGNode> sinks) {
-		final ArrayDeque<RCFGNode> nodes = new ArrayDeque<>();
+	private void removeSinks(final List<IcfgLocation> sinks) {
+		final ArrayDeque<IcfgLocation> nodes = new ArrayDeque<>();
 		nodes.addAll(sinks);
 		while (!nodes.isEmpty()) {
-			final RCFGNode current = nodes.removeFirst();
+			final IcfgLocation current = nodes.removeFirst();
 
 			if (current.getOutgoingEdges().size() == 0) {
-				final ArrayList<RCFGEdge> incoming = new ArrayList<>(current.getIncomingEdges());
-				for (final RCFGEdge edge : incoming) {
+				final ArrayList<IcfgEdge> incoming = new ArrayList<>(current.getIncomingEdges());
+				for (final IcfgEdge edge : incoming) {
 					nodes.add(edge.getSource());
 					edge.disconnectSource();
 					edge.disconnectTarget();

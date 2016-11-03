@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker.TraceCheckerBenchmarkGenerator;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.RelationWithTreeSet;
@@ -138,8 +138,8 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 	 */
 	private void dfsPartitionStatementsAccordingToDepth(final Integer lowerIndex,
 			final Integer upperIndex, final int depth,
-			final RelationWithTreeSet<ProgramPoint, Integer> rwt,
-			final Map<Integer, Set<Integer>> depth2Statements, final List<ProgramPoint> pps) {
+			final RelationWithTreeSet<BoogieIcfgLocation, Integer> rwt,
+			final Map<Integer, Set<Integer>> depth2Statements, final List<BoogieIcfgLocation> pps) {
 		int i = lowerIndex;
 		while (i < upperIndex) {
 			// Is the current statement a loop entry?
@@ -183,8 +183,8 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 	 * 
 	 * Partition the statements of the given trace according to their depth.
 	 */
-	private Map<Integer, Set<Integer>> partitionStatementsAccordingDepth(final NestedWord<? extends IAction> trace, final RelationWithTreeSet<ProgramPoint, Integer> rwt,
-			final List<ProgramPoint> pps) {
+	private Map<Integer, Set<Integer>> partitionStatementsAccordingDepth(final NestedWord<? extends IAction> trace, final RelationWithTreeSet<BoogieIcfgLocation, Integer> rwt,
+			final List<BoogieIcfgLocation> pps) {
 		final Map<Integer, Set<Integer>> depth2Statements = new HashMap<Integer, Set<Integer>>();
 		
 		dfsPartitionStatementsAccordingToDepth(0, trace.length(), 0, rwt, depth2Statements, pps);
@@ -194,8 +194,8 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 	
 	@Override
 	public void buildAnnotatedSsaAndAssertTerms() {
-		final List<ProgramPoint> pps = TraceCheckerUtils.getSequenceOfProgramPoints((NestedWord<CodeBlock>) mTrace);
-		final RelationWithTreeSet<ProgramPoint, Integer> rwt = computeRelationWithTreeSetForTrace(0, mTrace.length(), pps);
+		final List<BoogieIcfgLocation> pps = TraceCheckerUtils.getSequenceOfProgramPoints((NestedWord<CodeBlock>) mTrace);
+		final RelationWithTreeSet<BoogieIcfgLocation, Integer> rwt = computeRelationWithTreeSetForTrace(0, mTrace.length(), pps);
 		
 		final Set<Integer> integersFromTrace = getSetOfIntegerForGivenInterval(0, mTrace.length());
 		mAnnotSSA = new ModifiableNestedFormulas<Term, Term>(mTrace, new TreeMap<Integer, Term>());
@@ -415,10 +415,10 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 	/**
 	 * TODO(Betim): DOcumentation!
 	 */
-	private RelationWithTreeSet<ProgramPoint, Integer> computeRelationWithTreeSetForTrace(
+	private RelationWithTreeSet<BoogieIcfgLocation, Integer> computeRelationWithTreeSetForTrace(
 			final int lowerIndex, final int upperIndex,
-			final List<ProgramPoint> pps) {
-		final RelationWithTreeSet<ProgramPoint, Integer> rwt = new RelationWithTreeSet<ProgramPoint, Integer>();
+			final List<BoogieIcfgLocation> pps) {
+		final RelationWithTreeSet<BoogieIcfgLocation, Integer> rwt = new RelationWithTreeSet<BoogieIcfgLocation, Integer>();
 		for (int i = lowerIndex; i <= upperIndex; i++) {
 			rwt.addPair(pps.get(i), i);
 		}

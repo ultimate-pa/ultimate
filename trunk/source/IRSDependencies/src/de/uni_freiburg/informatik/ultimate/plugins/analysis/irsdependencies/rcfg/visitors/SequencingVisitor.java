@@ -35,12 +35,12 @@ import java.util.Map.Entry;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.annotations.IRSDependenciesAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.annotations.UseDefSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.walker.RCFGWalkerUnroller;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.utils.Utils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 
 public class SequencingVisitor extends SimpleRCFGVisitor {
@@ -49,7 +49,7 @@ public class SequencingVisitor extends SimpleRCFGVisitor {
 
 	private final HashSet<String> mInputs;
 	private final HashSet<String> mOutputs;
-	private final HashMap<List<RCFGEdge>, List<Tuple<Tuple<Integer>>>> mDebugZoneMap;
+	private final HashMap<List<IcfgEdge>, List<Tuple<Tuple<Integer>>>> mDebugZoneMap;
 
 	public SequencingVisitor(final RCFGWalkerUnroller w, final ILogger logger) {
 		super(logger);
@@ -63,7 +63,7 @@ public class SequencingVisitor extends SimpleRCFGVisitor {
 		mDebugZoneMap = new HashMap<>();
 	}
 
-	protected List<RCFGEdge> getCurrentPrefix() {
+	protected List<IcfgEdge> getCurrentPrefix() {
 		return mWalker.getCurrentPrefix();
 	}
 
@@ -97,7 +97,7 @@ public class SequencingVisitor extends SimpleRCFGVisitor {
 	}
 
 	private void RealSequencingEOT() {
-		final List<RCFGEdge> trace = getCurrentPrefix();
+		final List<IcfgEdge> trace = getCurrentPrefix();
 
 		HashSet<String> remainingInputs = new HashSet<>(mInputs);
 		HashSet<String> remainingOutputs = new HashSet<>(mOutputs);
@@ -109,7 +109,7 @@ public class SequencingVisitor extends SimpleRCFGVisitor {
 		boolean zoneShift = true;
 		boolean isStable = true;
 
-		for (final RCFGEdge currentEdge : trace) {
+		for (final IcfgEdge currentEdge : trace) {
 			final UseDefSequence ud = UseDefSequence.getAnnotation(currentEdge,
 					UseDefSequence.class);
 			if (ud != null) {
@@ -161,7 +161,7 @@ public class SequencingVisitor extends SimpleRCFGVisitor {
 		}
 	}
 
-	private List<Statement> extractStatements(final RCFGEdge e) {
+	private List<Statement> extractStatements(final IcfgEdge e) {
 		if (e instanceof StatementSequence) {
 			return ((StatementSequence) e).getStatements();
 		} else if (e instanceof Call) {
@@ -174,7 +174,7 @@ public class SequencingVisitor extends SimpleRCFGVisitor {
 	}
 
 	private void DebugSequencingEOT() {
-		final List<RCFGEdge> trace = getCurrentPrefix();
+		final List<IcfgEdge> trace = getCurrentPrefix();
 
 		final List<Tuple<Tuple<Integer>>> zones = new ArrayList<>();
 
@@ -244,11 +244,11 @@ public class SequencingVisitor extends SimpleRCFGVisitor {
 		final StringBuilder outer = new StringBuilder();
 
 		outer.append("List of zones:\n");
-		for (final Entry<List<RCFGEdge>, List<Tuple<Tuple<Integer>>>> e : mDebugZoneMap
+		for (final Entry<List<IcfgEdge>, List<Tuple<Tuple<Integer>>>> e : mDebugZoneMap
 				.entrySet()) {
 			int i = 0;
 			final StringBuilder inner = new StringBuilder();
-			for (final RCFGEdge edge : e.getKey()) {
+			for (final IcfgEdge edge : e.getKey()) {
 				final ZoneAnnotation za = IRSDependenciesAnnotation.getAnnotation(
 						edge, ZoneAnnotation.class);
 				if (za != null) {
@@ -281,10 +281,10 @@ public class SequencingVisitor extends SimpleRCFGVisitor {
 	private class ZoneAnnotation extends IRSDependenciesAnnotation {
 
 		private static final long serialVersionUID = 1L;
-		private RCFGEdge StartEdge;
+		private IcfgEdge StartEdge;
 		private Statement StartStatement;
 
-		private RCFGEdge EndEdge;
+		private IcfgEdge EndEdge;
 		private Statement EndStatement;
 
 		private boolean IsStable;

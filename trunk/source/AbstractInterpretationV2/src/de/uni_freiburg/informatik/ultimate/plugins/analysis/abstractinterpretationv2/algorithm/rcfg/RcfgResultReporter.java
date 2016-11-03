@@ -39,14 +39,14 @@ import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.AbstractMultiState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IResultReporter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractCounterexample;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
@@ -56,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  *
  */
 public class RcfgResultReporter<STATE extends IAbstractState<STATE, CodeBlock, VARDECL>, VARDECL>
-		implements IResultReporter<STATE, CodeBlock, VARDECL, ProgramPoint> {
+		implements IResultReporter<STATE, CodeBlock, VARDECL, BoogieIcfgLocation> {
 
 	protected final IUltimateServiceProvider mServices;
 
@@ -66,14 +66,14 @@ public class RcfgResultReporter<STATE extends IAbstractState<STATE, CodeBlock, V
 
 	@Override
 	public void reportPossibleError(
-			final AbstractCounterexample<AbstractMultiState<STATE, CodeBlock, VARDECL>, CodeBlock, ?, ProgramPoint> cex) {
+			final AbstractCounterexample<AbstractMultiState<STATE, CodeBlock, VARDECL>, CodeBlock, ?, BoogieIcfgLocation> cex) {
 		final Map<Integer, ProgramState<Term>> programStates = new HashMap<>();
-		final List<RCFGEdge> trace = new ArrayList<>();
+		final List<IcfgEdge> trace = new ArrayList<>();
 
 		programStates.put(-1, computeProgramState(cex.getInitialState()));
 
 		int i = 0;
-		for (final Triple<AbstractMultiState<STATE, CodeBlock, VARDECL>, ProgramPoint, CodeBlock> elem : cex
+		for (final Triple<AbstractMultiState<STATE, CodeBlock, VARDECL>, BoogieIcfgLocation, CodeBlock> elem : cex
 				.getAbstractExecution()) {
 			trace.add(elem.getThird());
 			programStates.put(i, computeProgramState(elem.getFirst()));
@@ -93,8 +93,8 @@ public class RcfgResultReporter<STATE extends IAbstractState<STATE, CodeBlock, V
 		return new ProgramState<>(Collections.emptyMap());
 	}
 
-	private ProgramPoint getLast(
-			final AbstractCounterexample<AbstractMultiState<STATE, CodeBlock, VARDECL>, CodeBlock, ?, ProgramPoint> cex) {
+	private BoogieIcfgLocation getLast(
+			final AbstractCounterexample<AbstractMultiState<STATE, CodeBlock, VARDECL>, CodeBlock, ?, BoogieIcfgLocation> cex) {
 		final int size = cex.getAbstractExecution().size();
 		return cex.getAbstractExecution().get(size - 1).getSecond();
 	}

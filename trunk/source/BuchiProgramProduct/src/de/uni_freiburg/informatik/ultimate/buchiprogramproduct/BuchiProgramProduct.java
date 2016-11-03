@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 
 /**
  * This plugin implements the product algorithm described in the Masterthesis
@@ -177,7 +177,7 @@ public class BuchiProgramProduct implements IGenerator {
 		final Collection<CounterExampleResult> cex =
 				ResultUtil.filterResults(services.getResultService().getResults(), CounterExampleResult.class);
 		mPreviousToolFoundErrors = !cex.isEmpty();
-		mBacktranslator = new ProductBacktranslator(RCFGEdge.class, Term.class);
+		mBacktranslator = new ProductBacktranslator(IcfgEdge.class, Term.class);
 		if (!mPreviousToolFoundErrors) {
 			mServices.getBacktranslationService().addTranslator(mBacktranslator);
 		}

@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.MonolithicHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
@@ -67,15 +67,15 @@ public class TraceCheckerUtils {
 	 * <li> pp_{i+1} is the ProgramPoint after CodeBlock cb_i.
 	 * </ul>  
 	 */
-	public static List<ProgramPoint> getSequenceOfProgramPoints(
+	public static List<BoogieIcfgLocation> getSequenceOfProgramPoints(
 											final NestedWord<CodeBlock> trace) {
-		final List<ProgramPoint> result = new ArrayList<ProgramPoint>();
+		final List<BoogieIcfgLocation> result = new ArrayList<BoogieIcfgLocation>();
 		for (final CodeBlock cb : trace) {
-			final ProgramPoint pp = (ProgramPoint) cb.getSource();
+			final BoogieIcfgLocation pp = (BoogieIcfgLocation) cb.getSource();
 			result.add(pp);
 		}
 		final CodeBlock cb = trace.getSymbol(trace.length()-1);
-		final ProgramPoint pp = (ProgramPoint) cb.getTarget();
+		final BoogieIcfgLocation pp = (BoogieIcfgLocation) cb.getTarget();
 		result.add(pp);
 		return result;
 	}
@@ -89,13 +89,13 @@ public class TraceCheckerUtils {
 			final IUltimateServiceProvider services, 
 			final IInterpolantGenerator traceChecker, final ILogger logger) {
 		final NestedWord<CodeBlock> trace = (NestedWord<CodeBlock>) NestedWord.nestedWord(traceChecker.getTrace());
-		final List<ProgramPoint> programPoints = getSequenceOfProgramPoints(trace);
+		final List<BoogieIcfgLocation> programPoints = getSequenceOfProgramPoints(trace);
 		return computeCoverageCapability(services, traceChecker, programPoints, logger);
 	}
 	
 	public static BackwardCoveringInformation computeCoverageCapability(
 			final IUltimateServiceProvider services, 
-			final IInterpolantGenerator interpolantGenerator, final List<ProgramPoint> programPoints, final ILogger logger) {
+			final IInterpolantGenerator interpolantGenerator, final List<BoogieIcfgLocation> programPoints, final ILogger logger) {
 		if (interpolantGenerator.getInterpolants() == null) {
 			throw new AssertionError("We can only build an interpolant "
 					+ "automaton for which interpolants were computed");

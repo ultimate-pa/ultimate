@@ -83,6 +83,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfuncti
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgElement;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
@@ -98,8 +99,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.pref
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer.BuchiComplementationConstruction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer.BuchiInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RcfgElement;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CFG2NestedWordAutomaton;
@@ -467,8 +467,8 @@ public class BuchiCegarLoop {
 						mRankWithSi++;
 					}
 					final ISLPredicate hondaISLP = (ISLPredicate) mCounterexample.getLoop().getStateAtPosition(0);
-					final ProgramPoint hondaPP = hondaISLP.getProgramPoint();
-					final TerminationArgumentResult<RcfgElement, Term> tar = constructTAResult(
+					final BoogieIcfgLocation hondaPP = hondaISLP.getProgramPoint();
+					final TerminationArgumentResult<IcfgElement, Term> tar = constructTAResult(
 							bspm.getTerminationArgument(), hondaPP, mCounterexample.getStem().getWord(),
 							mCounterexample.getLoop().getWord());
 					mMDBenchmark.reportRankingFunction(mIteration, tar);
@@ -498,8 +498,8 @@ public class BuchiCegarLoop {
 						mRankWithSi++;
 					}
 					final ISLPredicate hondaISLP = (ISLPredicate) mCounterexample.getLoop().getStateAtPosition(0);
-					final ProgramPoint hondaPP = hondaISLP.getProgramPoint();
-					final TerminationArgumentResult<RcfgElement, Term> tar = constructTAResult(
+					final BoogieIcfgLocation hondaPP = hondaISLP.getProgramPoint();
+					final TerminationArgumentResult<IcfgElement, Term> tar = constructTAResult(
 							bspm.getTerminationArgument(), hondaPP, mCounterexample.getStem().getWord(),
 							mCounterexample.getLoop().getWord());
 					mMDBenchmark.reportRankingFunction(mIteration, tar);
@@ -810,9 +810,9 @@ public class BuchiCegarLoop {
 	private void getInitialAbstraction() {
 		final CFG2NestedWordAutomaton cFG2NestedWordAutomaton = new CFG2NestedWordAutomaton(mServices,
 				mPref.interprocedural(), mCsToolkit, mPredicateFactory, mLogger);
-		Collection<ProgramPoint> acceptingNodes;
-		final Collection<ProgramPoint> allNodes = new HashSet<>();
-		for (final Map<String, ProgramPoint> prog2pp : mRootNode.getRootAnnot().getProgramPoints().values()) {
+		Collection<BoogieIcfgLocation> acceptingNodes;
+		final Collection<BoogieIcfgLocation> allNodes = new HashSet<>();
+		for (final Map<String, BoogieIcfgLocation> prog2pp : mRootNode.getRootAnnot().getProgramPoints().values()) {
 			allNodes.addAll(prog2pp.values());
 		}
 
@@ -820,7 +820,7 @@ public class BuchiCegarLoop {
 		if (LTLPropertyCheck.getAnnotation(mRootNode) != null) {
 			mLTLMode = true;
 			acceptingNodes = new HashSet<>();
-			for (final ProgramPoint pp : allNodes) {
+			for (final BoogieIcfgLocation pp : allNodes) {
 				if (BuchiProgramAcceptingStateAnnotation.getAnnotation(pp) != null) {
 					acceptingNodes.add(pp);
 				}
@@ -925,8 +925,8 @@ public class BuchiCegarLoop {
 				new IncrementalHoareTripleChecker(mCsToolkit))).getResult();
 	}
 
-	private TerminationArgumentResult<RcfgElement, Term> constructTAResult(
-			final TerminationArgument terminationArgument, final ProgramPoint honda, final NestedWord<CodeBlock> stem,
+	private TerminationArgumentResult<IcfgElement, Term> constructTAResult(
+			final TerminationArgument terminationArgument, final BoogieIcfgLocation honda, final NestedWord<CodeBlock> stem,
 			final NestedWord<CodeBlock> loop) {
 		final RankingFunction rf = terminationArgument.getRankingFunction();
 		final Collection<SupportingInvariant> si_list = terminationArgument.getSupportingInvariants();
@@ -936,7 +936,7 @@ public class BuchiCegarLoop {
 			supporting_invariants[i] = si.asTerm(mCsToolkit.getManagedScript().getScript());
 			++i;
 		}
-		final TerminationArgumentResult<RcfgElement, Term> result = new TerminationArgumentResult<>(
+		final TerminationArgumentResult<IcfgElement, Term> result = new TerminationArgumentResult<>(
 				honda, Activator.PLUGIN_NAME,
 				rf.asLexTerm(mCsToolkit.getManagedScript().getScript()),
 				rf.getName(), supporting_invariants, mServices.getBacktranslationService(), Term.class);
@@ -944,7 +944,7 @@ public class BuchiCegarLoop {
 	}
 
 	public Collection<Set<IPredicate>> computePartition(final INestedWordAutomaton<CodeBlock, IPredicate> automaton, final ILogger logger) {
-		final Function<ISLPredicate, ProgramPoint> locProvider = (x -> x.getProgramPoint());
+		final Function<ISLPredicate, BoogieIcfgLocation> locProvider = (x -> x.getProgramPoint());
 		return TraceAbstractionUtils.computePartition(automaton, logger, locProvider );
 	}
 
