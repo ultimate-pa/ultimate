@@ -421,7 +421,6 @@ public class Boogie2SmtSymbolTable implements ICfgSymbolTable {
 	/**
 	 * Return old variables.
 	 */
-	@Override
 	public Map<String, IProgramVar> getOldVars() {
 		return Collections.unmodifiableMap(mOldGlobals);
 	}

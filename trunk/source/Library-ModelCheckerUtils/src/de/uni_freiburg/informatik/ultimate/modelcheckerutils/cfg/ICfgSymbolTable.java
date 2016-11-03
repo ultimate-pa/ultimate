@@ -48,11 +48,6 @@ public interface ICfgSymbolTable {
 	Map<String, IProgramNonOldVar> getGlobals();
 
 	/**
-	 * Return old variables.
-	 */
-	Map<String, IProgramVar> getOldVars();
-
-	/**
 	 * Return all local variables, input parameters and output parameters for a given procedure.
 	 */
 	Map<String, LocalBoogieVar> getLocals(String procedurename);
