@@ -33,6 +33,7 @@ import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.ConstructedType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
@@ -42,20 +43,31 @@ public class TypeUtils {
 	        final Consumer<IBoogieVar> arrayConsumer, final IBoogieVar variable) {
 		assert arrayConsumer == null;
 
-		if (variable.getIType() instanceof PrimitiveType) {
-			final PrimitiveType primitiveType = (PrimitiveType) variable.getIType();
+		consumeVariablePerType(varConsumer, boolConsumer, arrayConsumer, variable, variable.getIType());
+	}
+
+	private static void consumeVariablePerType(final Consumer<IBoogieVar> varConsumer,
+	        final Consumer<IBoogieVar> boolConsumer, final Consumer<IBoogieVar> arrayConsumer,
+	        final IBoogieVar variable, final IBoogieType type) {
+		if (type instanceof PrimitiveType) {
+			final PrimitiveType primitiveType = (PrimitiveType) type;
 
 			if (primitiveType.getTypeCode() == PrimitiveType.BOOL) {
 				boolConsumer.accept(variable);
 			} else {
 				varConsumer.accept(variable);
 			}
-		} else if (variable.getIType() instanceof ArrayType) {
+		} else if (type instanceof ArrayType) {
 			// TODO: Insert arrayConsumer as soon as array support is implemented.
 			varConsumer.accept(variable);
+		} else if (type instanceof ConstructedType) {
+			final ConstructedType ctype = (ConstructedType) type;
+			if (ctype.getUnderlyingType() instanceof ConstructedType) {
+				throw new UnsupportedOperationException("Nested constructed type found. No idea how to solve this.");
+			}
+			consumeVariablePerType(varConsumer, boolConsumer, arrayConsumer, variable, ctype.getUnderlyingType());
 		} else {
-			throw new UnsupportedOperationException(
-			        "Not implemented: " + variable.getIType().getClass().getSimpleName());
+			throw new UnsupportedOperationException("Not implemented: " + type.getClass().getSimpleName());
 		}
 	}
 
@@ -64,20 +76,32 @@ public class TypeUtils {
 	        final IBoogieVar variable) {
 		assert arrayFunction == null;
 
-		if (variable.getIType() instanceof PrimitiveType) {
-			final PrimitiveType primitiveType = (PrimitiveType) variable.getIType();
+		return applyVariableFunctionPerType(varFunction, boolFunction, arrayFunction, variable, variable.getIType());
+	}
+
+	private static <R> R applyVariableFunctionPerType(final Function<IBoogieVar, R> varFunction,
+	        final Function<IBoogieVar, R> boolFunction, final Function<IBoogieVar, R> arrayFunction,
+	        final IBoogieVar variable, final IBoogieType type) {
+		if (type instanceof PrimitiveType) {
+			final PrimitiveType primitiveType = (PrimitiveType) type;
 
 			if (primitiveType.getTypeCode() == PrimitiveType.BOOL) {
 				return boolFunction.apply(variable);
 			} else {
 				return varFunction.apply(variable);
 			}
-		} else if (variable.getIType() instanceof ArrayType) {
+		} else if (type instanceof ArrayType) {
 			// TODO: Insert arrayFunction as soon as array support is implemented.
 			return varFunction.apply(variable);
+		} else if (type instanceof ConstructedType) {
+			final ConstructedType ctype = (ConstructedType) type;
+			if (ctype.getUnderlyingType() instanceof ConstructedType) {
+				throw new UnsupportedOperationException("Nested constructed type found. No idea how to solve this.");
+			}
+			return applyVariableFunctionPerType(varFunction, boolFunction, arrayFunction, variable,
+			        ctype.getUnderlyingType());
 		} else {
-			throw new UnsupportedOperationException(
-			        "Not implemented: " + variable.getIType().getClass().getSimpleName());
+			throw new UnsupportedOperationException("Not implemented: " + type.getClass().getSimpleName());
 		}
 	}
 
@@ -98,6 +122,13 @@ public class TypeUtils {
 				return realFunction.apply(type);
 			}
 			throw new IllegalArgumentException("Type error: " + prim.getClass().getSimpleName());
+		} else if (type instanceof ConstructedType) {
+			final ConstructedType ctype = (ConstructedType) type;
+
+			if (ctype.getUnderlyingType() instanceof ConstructedType) {
+				throw new UnsupportedOperationException("Nested constructed type found. No idea how to solve this.");
+			}
+			return applyTypeFunction(intFunction, realFunction, boolFunction, arrayFunction, ctype.getUnderlyingType());
 		} else if (type instanceof ArrayType) {
 			assert arrayFunction != null;
 			return arrayFunction.apply(type);
