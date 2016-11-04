@@ -114,6 +114,9 @@ useLV = '''/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codec
 useUC = ''''''
 dontUseUC = '''/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck//Use\ unsat\ cores\ in\ FP/BP\ interpolation=IGNORE'''
 
+useKojakAlgorithm = ''''''
+useImpulseAlgorithm = '''/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/the\ checking\ algorithm\ to\ use=IMPULSE'''
+
 for root, dirs, files in os.walk("."):
  for fn in files:
   if fn[-4:] == '.epf':
@@ -187,6 +190,12 @@ for root, dirs, files in os.walk("."):
     print(dontUseUC, file=f)
    elif 'UC' in fn:
     print(useUC, file=f)
+
+   #codecheck set algorithm
+   if 'Impulse' not in fn:
+    print(useKojakAlgorithm, file=f)
+   elif 'Impulse' in fn:
+    print(useImpulseAlgorithm, file=f)
 
     
     
