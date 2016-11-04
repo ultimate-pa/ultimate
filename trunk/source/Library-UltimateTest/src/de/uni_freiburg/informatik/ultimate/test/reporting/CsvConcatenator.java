@@ -29,7 +29,6 @@
 package de.uni_freiburg.informatik.ultimate.test.reporting;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -83,10 +82,21 @@ public class CsvConcatenator implements ITestSummary {
 	 */
 	public CsvConcatenator(final Class<? extends UltimateTestSuite> ultimateTestSuite,
 			final Class<? extends ICsvProviderProvider<?>> benchmark,
-			final ICsvProviderTransformer<Object>... transformer) {
+			final ICsvProviderTransformer<Object> transformer) {
+		this(ultimateTestSuite, benchmark, Collections.singletonList(transformer));
+	}
+
+	public CsvConcatenator(final Class<? extends UltimateTestSuite> ultimateTestSuite,
+			final Class<? extends ICsvProviderProvider<?>> benchmark) {
+		this(ultimateTestSuite, benchmark, Collections.emptyList());
+	}
+
+	public CsvConcatenator(final Class<? extends UltimateTestSuite> ultimateTestSuite,
+			final Class<? extends ICsvProviderProvider<?>> benchmark,
+			final List<ICsvProviderTransformer<Object>> transformers) {
 		mUltimateTestSuite = ultimateTestSuite;
 		mBenchmark = benchmark;
-		mTransformer = new CsvProviderTransformerCombinator<>(Arrays.asList(transformer));
+		mTransformer = new CsvProviderTransformerCombinator<>(transformers);
 		final List<String> emtpyList = Collections.emptyList();
 		mCsvProvider = new SimpleCsvProvider<>(emtpyList);
 	}
@@ -105,7 +115,13 @@ public class CsvConcatenator implements ITestSummary {
 
 	@Override
 	public String getDescriptiveLogName() {
-		return "Csv" + mBenchmark.getSimpleName();
+		return "Csv" + mBenchmark.getSimpleName() + getTransformerId();
+	}
+
+	private String getTransformerId() {
+		// to be able to distinguish two CsvConcatenator instances with different transformers, we have to create a hash
+		// over the transformers here
+		return String.valueOf(mTransformer.hashCode());
 	}
 
 	@Override
