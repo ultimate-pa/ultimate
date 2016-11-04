@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE UnitTest Library.
- * 
+ *
  * The ULTIMATE UnitTest Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE UnitTest Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE UnitTest Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE UnitTest Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -40,9 +40,9 @@ import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider.TestResult;
 
 /**
- * 
+ *
  * @author dietsch@informatik.uni-freiburg.de
- * 
+ *
  */
 public abstract class NewTestSummary implements ITestSummary {
 
@@ -70,9 +70,72 @@ public abstract class NewTestSummary implements ITestSummary {
 	}
 
 	@Override
-	public void addResult(final UltimateRunDefinition ultimateRunDefinition, final TestResult threeValuedResult, final String category,
-			final String message, final String testname, final IResultService resultService) {
+	public void addResult(final UltimateRunDefinition ultimateRunDefinition, final TestResult threeValuedResult,
+			final String category, final String message, final String testname, final IResultService resultService) {
 		mResults.put(ultimateRunDefinition, new ExtendedResult(threeValuedResult, message, category, testname));
+	}
+
+	protected PartitionedResults getAllResultsPartitioned() {
+		return partitionResults(mResults.entrySet());
+	}
+
+	protected PartitionedResults partitionResults(final Collection<Entry<UltimateRunDefinition, ExtendedResult>> all) {
+
+		final Set<Entry<UltimateRunDefinition, ExtendedResult>> goodResults =
+				all.stream().sequential().filter(a -> a.getValue().getResult() == TestResult.SUCCESS)
+						.collect(Collectors.toCollection(() -> new LinkedHashSet<>()));
+
+		final Set<Entry<UltimateRunDefinition, ExtendedResult>> unknownResults =
+				all.stream().sequential().filter(a -> a.getValue().getResult() == TestResult.UNKNOWN)
+						.collect(Collectors.toCollection(() -> new LinkedHashSet<>()));
+
+		final Set<Entry<UltimateRunDefinition, ExtendedResult>> failResults =
+				all.stream().sequential().filter(a -> a.getValue().getResult() == TestResult.FAIL)
+						.collect(Collectors.toCollection(() -> new LinkedHashSet<>()));
+
+		final Set<Entry<UltimateRunDefinition, ExtendedResult>> timeoutResults = unknownResults.stream().sequential()
+				.filter(a -> a.getValue().getMessage().toLowerCase().contains("timeout"))
+				.collect(Collectors.toCollection(() -> new LinkedHashSet<>()));
+
+		final Set<Entry<UltimateRunDefinition, ExtendedResult>> errorResults =
+				all.stream().sequential().filter(a -> !goodResults.contains(a) && !timeoutResults.contains(a))
+						.collect(Collectors.toCollection(() -> new LinkedHashSet<>()));
+
+		final Set<Entry<UltimateRunDefinition, ExtendedResult>> unsafeResults =
+				goodResults.stream().sequential().filter(a -> a.getValue().getMessage().contains("UNSAFE"))
+						.collect(Collectors.toCollection(() -> new LinkedHashSet<>()));
+
+		final Set<Entry<UltimateRunDefinition, ExtendedResult>> safeResults = goodResults.stream().sequential()
+				.filter(a -> !unsafeResults.contains(a)).collect(Collectors.toCollection(() -> new LinkedHashSet<>()));
+
+		final PartitionedResults rtr = new PartitionedResults();
+
+		int expectedSafe = 0;
+		int expectedUnsafe = 0;
+		for (final Entry<UltimateRunDefinition, ExtendedResult> entry : all) {
+			if (entry.getValue().getMessage().contains("ExpectedResult: UNSAFE")) {
+				expectedUnsafe++;
+			}
+			if (entry.getValue().getMessage().contains("ExpectedResult: SAFE")) {
+				expectedSafe++;
+			}
+		}
+
+		rtr.All = all;
+
+		rtr.Timeout = timeoutResults;
+		rtr.Error = errorResults;
+		rtr.Unsafe = unsafeResults;
+		rtr.Safe = safeResults;
+
+		rtr.Success = goodResults;
+		rtr.Unknown = unknownResults;
+		rtr.Failure = failResults;
+
+		rtr.ExpectedSafe = expectedSafe;
+		rtr.ExpectedUnsafe = expectedUnsafe;
+
+		return rtr;
 	}
 
 	protected class TCS {
@@ -135,70 +198,6 @@ public abstract class NewTestSummary implements ITestSummary {
 			return "Toolchain" + Toolchain + ", Setting" + Setting;
 		}
 
-	}
-
-	protected PartitionedResults getAllResultsPartitioned() {
-		return partitionResults(mResults.entrySet());
-	}
-
-	protected PartitionedResults partitionResults(final Collection<Entry<UltimateRunDefinition, ExtendedResult>> all) {
-
-		final Set<Entry<UltimateRunDefinition, ExtendedResult>> goodResults = all.stream().sequential()
-				.filter(a -> a.getValue().getResult() == TestResult.SUCCESS)
-				.collect(Collectors.toCollection(() -> new LinkedHashSet<>()));
-
-		final Set<Entry<UltimateRunDefinition, ExtendedResult>> unknownResults = all.stream().sequential()
-				.filter(a -> a.getValue().getResult() == TestResult.UNKNOWN)
-				.collect(Collectors.toCollection(() -> new LinkedHashSet<>()));
-
-		final Set<Entry<UltimateRunDefinition, ExtendedResult>> failResults = all.stream().sequential()
-				.filter(a -> a.getValue().getResult() == TestResult.FAIL)
-				.collect(Collectors.toCollection(() -> new LinkedHashSet<>()));
-		
-		final Set<Entry<UltimateRunDefinition, ExtendedResult>> timeoutResults = unknownResults.stream().sequential()
-				.filter(a -> a.getValue().getMessage().toLowerCase().contains("timeout"))
-				.collect(Collectors.toCollection(() -> new LinkedHashSet<>()));
-
-		final Set<Entry<UltimateRunDefinition, ExtendedResult>> errorResults = all.stream().sequential()
-				.filter(a -> !goodResults.contains(a) && !timeoutResults.contains(a))
-				.collect(Collectors.toCollection(() -> new LinkedHashSet<>()));
-
-		final Set<Entry<UltimateRunDefinition, ExtendedResult>> unsafeResults = goodResults.stream().sequential()
-				.filter(a -> a.getValue().getMessage().contains("UNSAFE"))
-				.collect(Collectors.toCollection(() -> new LinkedHashSet<>()));
-
-		final Set<Entry<UltimateRunDefinition, ExtendedResult>> safeResults = goodResults.stream().sequential()
-				.filter(a -> !unsafeResults.contains(a))
-				.collect(Collectors.toCollection(() -> new LinkedHashSet<>()));
-
-		final PartitionedResults rtr = new PartitionedResults();
-
-		int expectedSafe = 0;
-		int expectedUnsafe = 0;
-		for (final Entry<UltimateRunDefinition, ExtendedResult> entry : all) {
-			if (entry.getValue().getMessage().contains("ExpectedResult: UNSAFE")) {
-				expectedUnsafe++;
-			}
-			if (entry.getValue().getMessage().contains("ExpectedResult: SAFE")) {
-				expectedSafe++;
-			}
-		}
-
-		rtr.All = all;
-		
-		rtr.Timeout = timeoutResults;
-		rtr.Error = errorResults;
-		rtr.Unsafe = unsafeResults;
-		rtr.Safe = safeResults;
-		
-		rtr.Success = goodResults;
-		rtr.Unknown = unknownResults;
-		rtr.Failure = failResults;
-		
-		rtr.ExpectedSafe = expectedSafe;
-		rtr.ExpectedUnsafe = expectedUnsafe;
-
-		return rtr;
 	}
 
 	protected static final class PartitionedResults {

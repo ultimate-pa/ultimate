@@ -63,8 +63,7 @@ public abstract class AbstractTraceAbstractionTestSuite extends AbstractModelChe
 
 	@Override
 	protected ITestSummary[] constructTestSummaries() {
-		final ArrayList<Class<? extends ICsvProviderProvider<? extends Object>>> benchmarks =
-				new ArrayList<Class<? extends ICsvProviderProvider<? extends Object>>>();
+		final ArrayList<Class<? extends ICsvProviderProvider<? extends Object>>> benchmarks = new ArrayList<>();
 		benchmarks.add(TraceAbstractionBenchmarks.class);
 		benchmarks.add(CodeCheckBenchmarks.class);
 		benchmarks.add(Benchmark.class);

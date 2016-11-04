@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE ModelCheckerUtils Library.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE ModelCheckerUtils Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
@@ -50,78 +50,59 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
- * Objects that stores all global declarations and procedure contracts and makes
- * them available as Collections, Sets, and Maps.
+ * Objects that stores all global declarations and procedure contracts and makes them available as Collections, Sets,
+ * and Maps.
+ *
  * @author heizmann@informatik.uni-freiburg.de
  */
 public class BoogieDeclarations {
-	
-	private final ILogger mLogger; 
 
-	private final List<Axiom> mAxioms = 
-			new ArrayList<Axiom>();
-	private final List<TypeDeclaration> mTypeDeclarations = 
-			new ArrayList<TypeDeclaration>();
-	private final List<ConstDeclaration> mConstDeclarations = 
-			new ArrayList<ConstDeclaration>();
-	private final List<FunctionDeclaration> mFunctionDeclarations = 
-			new ArrayList<FunctionDeclaration>();
-	private final List<VariableDeclaration> mGlobalVarDeclarations = 
-			new ArrayList<VariableDeclaration>();
-	
-	
+	private final ILogger mLogger;
+
+	private final List<Axiom> mAxioms = new ArrayList<>();
+	private final List<TypeDeclaration> mTypeDeclarations = new ArrayList<>();
+	private final List<ConstDeclaration> mConstDeclarations = new ArrayList<>();
+	private final List<FunctionDeclaration> mFunctionDeclarations = new ArrayList<>();
+	private final List<VariableDeclaration> mGlobalVarDeclarations = new ArrayList<>();
+
 	/**
-	 * Maps a procedure name to the Procedure object that contains the
-	 * specification of the procedure. 
+	 * Maps a procedure name to the Procedure object that contains the specification of the procedure.
 	 */
-	private final Map<String,Procedure> mProcSpecification = 
-								new HashMap<String,Procedure>();
-	
+	private final Map<String, Procedure> mProcSpecification = new HashMap<>();
+
 	/**
-	 * Maps a procedure name to the Procedure object that contains the
-	 * implementation of the procedure. 
-	 */	
-	private final Map<String,Procedure> mProcImplementation = 
-								new HashMap<String,Procedure>();
-	
+	 * Maps a procedure name to the Procedure object that contains the implementation of the procedure.
+	 */
+	private final Map<String, Procedure> mProcImplementation = new HashMap<>();
+
 	/**
 	 * Maps a procedure name to the requires clauses of the procedure
 	 */
-	private final Map<String,List<RequiresSpecification>> mRequires = 
-								new HashMap<String,List<RequiresSpecification>>();
+	private final Map<String, List<RequiresSpecification>> mRequires = new HashMap<>();
 
 	/**
-	 * Maps a procedure name to the requires clauses of the procedure which are
-	 * not free. (A requires clause is not free if we have to proof that it
-	 * holds.)
+	 * Maps a procedure name to the requires clauses of the procedure which are not free. (A requires clause is not free
+	 * if we have to proof that it holds.)
 	 */
-	private final Map<String,List<RequiresSpecification>> mRequiresNonFree = 
-								new HashMap<String,List<RequiresSpecification>>();
+	private final Map<String, List<RequiresSpecification>> mRequiresNonFree = new HashMap<>();
 
 	/**
 	 * Maps a procedure name to the ensures clauses of the procedure
 	 */
-	private final Map<String,List<EnsuresSpecification>> mEnsures = 
-								new HashMap<String,List<EnsuresSpecification>>();
-	
+	private final Map<String, List<EnsuresSpecification>> mEnsures = new HashMap<>();
+
 	/**
-	 * Maps a procedure name to the ensures clauses of the procedure which are
-	 * not free. (A ensures clause is not free if we have to proof that it 
-	 * holds.)
+	 * Maps a procedure name to the ensures clauses of the procedure which are not free. (A ensures clause is not free
+	 * if we have to proof that it holds.)
 	 */
-	private final Map<String,List<EnsuresSpecification>> mEnsuresNonFree = 
-								new HashMap<String,List<EnsuresSpecification>>();
-	
+	private final Map<String, List<EnsuresSpecification>> mEnsuresNonFree = new HashMap<>();
+
 	/**
-	 * Maps a procedure name to the set of global variables which may be
-	 * modified by the procedure. The set of variables is represented as a map
-	 * where the identifier of the variable is mapped to the type of the
-	 * variable. 
+	 * Maps a procedure name to the set of global variables which may be modified by the procedure. The set of variables
+	 * is represented as a map where the identifier of the variable is mapped to the type of the variable.
 	 */
-	private final Map<String,Set<String>> mModifiedVars = 
-								new HashMap<String,Set<String>>();
-	
-	
+	private final Map<String, Set<String>> mModifiedVars = new HashMap<>();
+
 	public BoogieDeclarations(final Unit unit, final ILogger logger) {
 		mLogger = logger;
 		for (final Declaration decl : unit.getDeclarations()) {
@@ -146,19 +127,18 @@ public class BoogieDeclarations {
 				if (proc.getSpecification() != null) {
 					mLogger.info("Found specification of procedure " + proc.getIdentifier());
 					if (mProcSpecification.containsKey(proc.getIdentifier())) {
-						throw new UnsupportedOperationException("Procedure" + proc.getIdentifier() + "declarated twice");
-					} else {
-						mProcSpecification.put(proc.getIdentifier(), proc);
+						throw new UnsupportedOperationException(
+								"Procedure" + proc.getIdentifier() + "declarated twice");
 					}
+					mProcSpecification.put(proc.getIdentifier(), proc);
 				}
 				if (proc.getBody() != null) {
 					mLogger.info("Found implementation of procedure " + proc.getIdentifier());
 					if (mProcImplementation.containsKey(proc.getIdentifier())) {
-						throw new UnsupportedOperationException("File " + "contains two implementations of procedure"
-								+ proc.getIdentifier());
-					} else {
-						mProcImplementation.put(proc.getIdentifier(), proc);
+						throw new UnsupportedOperationException(
+								"File " + "contains two implementations of procedure" + proc.getIdentifier());
 					}
+					mProcImplementation.put(proc.getIdentifier(), proc);
 				}
 			} else {
 				throw new AssertionError("Unknown Declaration" + decl);
@@ -170,20 +150,19 @@ public class BoogieDeclarations {
 	}
 
 	/**
-	 * Get the contract (requires, ensures, modified variables) of a procedure
-	 * specification. Write it to mEnsures, mEnsuresNonFree, mRequires,
-	 * mRequiresNonFree and mModifiedVars.
+	 * Get the contract (requires, ensures, modified variables) of a procedure specification. Write it to mEnsures,
+	 * mEnsuresNonFree, mRequires, mRequiresNonFree and mModifiedVars.
 	 */
 	private void extractContract(final String procId) {
 		final Procedure procSpec = mProcSpecification.get(procId);
 		final Procedure procImpl = mProcImplementation.get(procId);
-		
+
 		Specification[] specifications;
 		if (procSpec != procImpl && procImpl != null) {
-			/* Special case where specification and implementation are given by
-			 * different procedure objects. In this case we rename the contracts
-			 * of the specification to make them compatible with the variables
-			 * of the implementation.
+			/*
+			 * Special case where specification and implementation are given by different procedure objects. In this
+			 * case we rename the contracts of the specification to make them compatible with the variables of the
+			 * implementation.
 			 */
 			final RenameProcedureSpec renamer = new RenameProcedureSpec();
 			specifications = renamer.renameSpecs(procSpec, procImpl);
@@ -191,15 +170,11 @@ public class BoogieDeclarations {
 			specifications = procSpec.getSpecification();
 		}
 
-		final List<EnsuresSpecification> ensures = 
-				new ArrayList<EnsuresSpecification>();
-		final List<EnsuresSpecification> ensuresNonFree = 
-				new ArrayList<EnsuresSpecification>();
-		final List<RequiresSpecification> requires = 
-				new ArrayList<RequiresSpecification>();
-		final List<RequiresSpecification> requiresNonFree = 
-				new ArrayList<RequiresSpecification>();
-		final Set<String> modifiedVars = new HashSet<String>();
+		final List<EnsuresSpecification> ensures = new ArrayList<>();
+		final List<EnsuresSpecification> ensuresNonFree = new ArrayList<>();
+		final List<RequiresSpecification> requires = new ArrayList<>();
+		final List<RequiresSpecification> requiresNonFree = new ArrayList<>();
+		final Set<String> modifiedVars = new HashSet<>();
 		for (final Specification spec : specifications) {
 			if (spec instanceof EnsuresSpecification) {
 				final EnsuresSpecification ensSpec = (EnsuresSpecification) spec;
@@ -214,10 +189,9 @@ public class BoogieDeclarations {
 					requiresNonFree.add(recSpec);
 				}
 			} else if (spec instanceof LoopInvariantSpecification) {
-				mLogger.debug("Found LoopInvariantSpecification" + spec
-						+ "but this plugin does not use loop invariants.");
-				throw new IllegalArgumentException(
-						"LoopInvariantSpecification may not occur in procedure constract");
+				mLogger.debug(
+						"Found LoopInvariantSpecification" + spec + "but this plugin does not use loop invariants.");
+				throw new IllegalArgumentException("LoopInvariantSpecification may not occur in procedure constract");
 			} else if (spec instanceof ModifiesSpecification) {
 				final ModifiesSpecification modSpec = (ModifiesSpecification) spec;
 				for (final VariableLHS var : modSpec.getIdentifiers()) {
@@ -225,8 +199,7 @@ public class BoogieDeclarations {
 					modifiedVars.add(ident);
 				}
 			} else {
-				throw new UnsupportedOperationException(
-						"Unknown type of specification)");
+				throw new UnsupportedOperationException("Unknown type of specification)");
 			}
 			mEnsures.put(procId, ensures);
 			mEnsuresNonFree.put(procId, ensuresNonFree);
@@ -283,6 +256,5 @@ public class BoogieDeclarations {
 	public Map<String, Set<String>> getModifiedVars() {
 		return mModifiedVars;
 	}
-	
-	
+
 }

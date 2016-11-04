@@ -79,30 +79,23 @@ public class Boogie2SmtSymbolTable implements ICfgSymbolTable {
 	private final BoogieDeclarations mBoogieDeclarations;
 	private final ManagedScript mScript;
 	private final TypeSortTranslator mTypeSortTranslator;
-	private final Map<String, BoogieNonOldVar> mGlobals = new HashMap<String, BoogieNonOldVar>();
-	private final Map<String, BoogieOldVar> mOldGlobals = new HashMap<String, BoogieOldVar>();
-	private final Map<String, Map<String, BoogieVar>> mSpecificationInParam =
-			new HashMap<String, Map<String, BoogieVar>>();
-	private final Map<String, Map<String, BoogieVar>> mSpecificationOutParam =
-			new HashMap<String, Map<String, BoogieVar>>();
-	private final Map<String, Map<String, BoogieVar>> mImplementationInParam =
-			new HashMap<String, Map<String, BoogieVar>>();
-	private final Map<String, Map<String, BoogieVar>> mImplementationOutParam =
-			new HashMap<String, Map<String, BoogieVar>>();
-	private final Map<String, Map<String, LocalBoogieVar>> mImplementationLocals =
-			new HashMap<String, Map<String, LocalBoogieVar>>();
-	private final Map<String, BoogieConst> mConstants = new HashMap<String, BoogieConst>();
+	private final Map<String, BoogieNonOldVar> mGlobals = new HashMap<>();
+	private final Map<String, BoogieOldVar> mOldGlobals = new HashMap<>();
+	private final Map<String, Map<String, BoogieVar>> mSpecificationInParam = new HashMap<>();
+	private final Map<String, Map<String, BoogieVar>> mSpecificationOutParam = new HashMap<>();
+	private final Map<String, Map<String, BoogieVar>> mImplementationInParam = new HashMap<>();
+	private final Map<String, Map<String, BoogieVar>> mImplementationOutParam = new HashMap<>();
+	private final Map<String, Map<String, LocalBoogieVar>> mImplementationLocals = new HashMap<>();
+	private final Map<String, BoogieConst> mConstants = new HashMap<>();
 
-	private final Map<TermVariable, IProgramVar> mSmtVar2BoogieVar = new HashMap<TermVariable, IProgramVar>();
-	private final Map<IProgramVar, DeclarationInformation> mBoogieVar2DeclarationInformation =
-			new HashMap<IProgramVar, DeclarationInformation>();
-	private final Map<IProgramVar, BoogieASTNode> mBoogieVar2AstNode = new HashMap<IProgramVar, BoogieASTNode>();
-	private final Map<ApplicationTerm, BoogieConst> mSmtConst2BoogieConst = new HashMap<ApplicationTerm, BoogieConst>();
+	private final Map<TermVariable, IProgramVar> mSmtVar2BoogieVar = new HashMap<>();
+	private final Map<IProgramVar, DeclarationInformation> mBoogieVar2DeclarationInformation = new HashMap<>();
+	private final Map<IProgramVar, BoogieASTNode> mBoogieVar2AstNode = new HashMap<>();
+	private final Map<ApplicationTerm, BoogieConst> mSmtConst2BoogieConst = new HashMap<>();
 
-	final Map<String, String> mBoogieFunction2SmtFunction = new HashMap<String, String>();
-	final Map<String, String> mSmtFunction2BoogieFunction = new HashMap<String, String>();
-	final Map<String, Map<String, Expression[]>> mBoogieFunction2Attributes =
-			new HashMap<String, Map<String, Expression[]>>();
+	final Map<String, String> mBoogieFunction2SmtFunction = new HashMap<>();
+	final Map<String, String> mSmtFunction2BoogieFunction = new HashMap<>();
+	final Map<String, Map<String, Expression[]>> mBoogieFunction2Attributes = new HashMap<>();
 
 	public Boogie2SmtSymbolTable(final BoogieDeclarations boogieDeclarations, final ManagedScript script,
 			final TypeSortTranslator typeSortTranslator) {
@@ -144,30 +137,29 @@ public class Boogie2SmtSymbolTable implements ICfgSymbolTable {
 		mScript.unlock(this);
 	}
 
-	private <T extends BoogieVar> void putNew(final String procId, final String varId, final T bv,
+	private static <T extends BoogieVar> void putNew(final String procId, final String varId, final T bv,
 			final Map<String, Map<String, T>> map) {
 		Map<String, T> varId2BoogieVar = map.get(procId);
 		if (varId2BoogieVar == null) {
-			varId2BoogieVar = new HashMap<String, T>();
+			varId2BoogieVar = new HashMap<>();
 			map.put(procId, varId2BoogieVar);
 		}
 		final BoogieVar previousValue = varId2BoogieVar.put(varId, bv);
 		assert previousValue == null : "variable already contained";
 	}
 
-	private <VALUE> void putNew(final String varId, final VALUE value, final Map<String, VALUE> map) {
+	private static <VALUE> void putNew(final String varId, final VALUE value, final Map<String, VALUE> map) {
 		final VALUE previousValue = map.put(varId, value);
 		assert previousValue == null : "variable already contained";
 	}
 
-	private <T extends BoogieVar> T get(final String varId, final String procId,
+	private static <T extends BoogieVar> T get(final String varId, final String procId,
 			final Map<String, Map<String, T>> map) {
 		final Map<String, T> varId2BoogieVar = map.get(procId);
 		if (varId2BoogieVar == null) {
 			return null;
-		} else {
-			return varId2BoogieVar.get(varId);
 		}
+		return varId2BoogieVar.get(varId);
 	}
 
 	public static boolean isSpecification(final Procedure spec) {
@@ -225,9 +217,8 @@ public class Boogie2SmtSymbolTable implements ICfgSymbolTable {
 	public BoogieVar getBoogieVar(final String varId, final String procedure, final boolean isInParam) {
 		if (isInParam) {
 			return get(varId, procedure, mImplementationInParam);
-		} else {
-			return get(varId, procedure, mImplementationOutParam);
 		}
+		return get(varId, procedure, mImplementationOutParam);
 	}
 
 	@Override
@@ -249,7 +240,6 @@ public class Boogie2SmtSymbolTable implements ICfgSymbolTable {
 		final IBoogieType iType = varlist.getType().getBoogieType();
 		final Sort sort = mTypeSortTranslator.getSort(iType, varlist);
 
-		final DeclarationInformation declarationInformation = new DeclarationInformation(StorageClass.GLOBAL, null);
 		final Map<String, Expression[]> attributes = extractAttributes(constdecl);
 		if (attributes != null) {
 			final String attributeDefinedIdentifier =
@@ -344,14 +334,12 @@ public class Boogie2SmtSymbolTable implements ICfgSymbolTable {
 		if (values == null) {
 			// no such name
 			return null;
-		} else {
-			if (values.length == 1 && values[0] instanceof StringLiteral) {
-				final StringLiteral sl = (StringLiteral) values[0];
-				return sl.getValue();
-			} else {
-				throw new IllegalArgumentException("no single value attribute");
-			}
 		}
+		if (values.length == 1 && values[0] instanceof StringLiteral) {
+			final StringLiteral sl = (StringLiteral) values[0];
+			return sl.getValue();
+		}
+		throw new IllegalArgumentException("no single value attribute");
 	}
 
 	/**
@@ -364,21 +352,20 @@ public class Boogie2SmtSymbolTable implements ICfgSymbolTable {
 		if (values == null) {
 			// no such name
 			return null;
-		} else {
-			final BigInteger[] result = new BigInteger[values.length];
-			for (int i = 0; i < values.length; i++) {
-				if (values[i] instanceof IntegerLiteral) {
-					result[i] = new BigInteger(((IntegerLiteral) values[i]).getValue());
-				} else {
-					throw new IllegalArgumentException("no single value attribute");
-				}
-			}
-			return result;
 		}
+		final BigInteger[] result = new BigInteger[values.length];
+		for (int i = 0; i < values.length; i++) {
+			if (values[i] instanceof IntegerLiteral) {
+				result[i] = new BigInteger(((IntegerLiteral) values[i]).getValue());
+			} else {
+				throw new IllegalArgumentException("no single value attribute");
+			}
+		}
+		return result;
 	}
 
 	public static Map<String, Expression[]> extractAttributes(final Declaration decl) {
-		final Map<String, Expression[]> result = new HashMap<String, Expression[]>();
+		final Map<String, Expression[]> result = new HashMap<>();
 		for (final Attribute attr : decl.getAttributes()) {
 			if (attr instanceof NamedAttribute) {
 				final NamedAttribute nattr = (NamedAttribute) attr;
@@ -437,7 +424,7 @@ public class Boogie2SmtSymbolTable implements ICfgSymbolTable {
 		return rtr;
 	}
 
-	private <T extends BoogieVar> void addLocals(final Map<String, LocalBoogieVar> current,
+	private static <T extends BoogieVar> void addLocals(final Map<String, LocalBoogieVar> current,
 			final Map<String, Map<String, T>> toAdd, final String procedurename) {
 		final Map<String, T> map = toAdd.get(procedurename);
 		if (map == null) {
@@ -484,7 +471,7 @@ public class Boogie2SmtSymbolTable implements ICfgSymbolTable {
 	/**
 	 * Returns true if spec contains only a specification or impl contains only an implementation.
 	 */
-	private boolean isSpecAndImpl(final Procedure spec, final Procedure impl) {
+	private static boolean isSpecAndImpl(final Procedure spec, final Procedure impl) {
 		return isSpecification(spec) && !isImplementation(spec) && isImplementation(impl) && !isSpecification(impl);
 
 	}
@@ -578,8 +565,8 @@ public class Boogie2SmtSymbolTable implements ICfgSymbolTable {
 	 *            BoogieASTNode for which errors (e.g., unsupported syntax) are reported
 	 * @param declarationInformation
 	 */
-	private LocalBoogieVar constructLocalBoogieVar(final String identifier, final String procedure, final IBoogieType iType,
-			final VarList varList, final DeclarationInformation declarationInformation) {
+	private LocalBoogieVar constructLocalBoogieVar(final String identifier, final String procedure,
+			final IBoogieType iType, final VarList varList, final DeclarationInformation declarationInformation) {
 		final Sort sort = mTypeSortTranslator.getSort(iType, varList);
 
 		final String name = constructBoogieVarName(identifier, procedure, false, false);
@@ -661,8 +648,8 @@ public class Boogie2SmtSymbolTable implements ICfgSymbolTable {
 		return defaultConstant;
 	}
 
-	private String constructBoogieVarName(final String identifier, final String procedure, final boolean isGlobal,
-			final boolean isOldvar) {
+	private static String constructBoogieVarName(final String identifier, final String procedure,
+			final boolean isGlobal, final boolean isOldvar) {
 		String name;
 		if (isGlobal) {
 			assert procedure == null;
