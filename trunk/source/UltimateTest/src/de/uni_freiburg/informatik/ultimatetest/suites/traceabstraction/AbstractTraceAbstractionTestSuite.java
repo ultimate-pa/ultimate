@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimatetest.suites.AbstractModelCheckerTestSu
 import de.uni_freiburg.informatik.ultimatetest.summaries.ColumnDefinition;
 import de.uni_freiburg.informatik.ultimatetest.summaries.ColumnDefinition.Aggregate;
 import de.uni_freiburg.informatik.ultimatetest.summaries.ConversionContext;
+import de.uni_freiburg.informatik.ultimatetest.summaries.CsvSummary;
 import de.uni_freiburg.informatik.ultimatetest.summaries.KingOfTheHillSummary;
 import de.uni_freiburg.informatik.ultimatetest.summaries.LatexOverviewSummary;
 import de.uni_freiburg.informatik.ultimatetest.summaries.StandingsSummary;
@@ -138,7 +139,7 @@ public abstract class AbstractTraceAbstractionTestSuite extends AbstractModelChe
 				new CsvConcatenator(this.getClass(), CodeCheckBenchmarks.class),
 				new LatexOverviewSummary(getClass(), benchmarks, columnDef),
 				// new LatexDetailedSummary(getClass(), benchmarks, columnDef),
-				// new CsvSummary(getClass(), benchmarks, columnDef),
+				 new CsvSummary(getClass(), benchmarks, columnDef),
 				// new HTMLSummary(getClass(), benchmarks, columnDef),
 				new KingOfTheHillSummary(this.getClass()), new StandingsSummary(this.getClass()), };
 	}
