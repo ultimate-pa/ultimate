@@ -114,11 +114,12 @@ useLV = '''/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codec
 useUC = ''''''
 dontUseUC = '''/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck//Use\ unsat\ cores\ in\ FP/BP\ interpolation=IGNORE'''
 
-for a, b, c in os.walk("."):
- for fn in c:
+for root, dirs, files in os.walk("."):
+ for fn in files:
   if fn[-4:] == '.epf':
-   print(fn)
-   f = open(fn, 'w')
+   fnWPath = os.path.join(root, fn)
+   print(fnWPath)
+   f = open(fnWPath, 'w')
 
    #common -- BlockEncoding
    print(standards_for_all, file=f)
