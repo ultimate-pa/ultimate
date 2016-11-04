@@ -52,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.rcfg.ReachDefRCFG;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.trace.ReachDefTrace;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 
 public class ReachingDefinitions implements IAnalysis {
 
@@ -80,7 +80,7 @@ public class ReachingDefinitions implements IAnalysis {
 	}
 
 	@Override
-	public void setInputDefinition(ModelType graphType) {
+	public void setInputDefinition(final ModelType graphType) {
 		mCurrentGraphType = graphType;
 	}
 
@@ -129,13 +129,13 @@ public class ReachingDefinitions implements IAnalysis {
 		return new ReachingDefinitionsPreferenceInitializer();
 	}
 
-	public static List<DataflowDAG<TraceCodeBlock>> computeRDForTrace(List<CodeBlock> trace, ILogger logger,
-			RootNode rootNode) throws Throwable {
+	public static List<DataflowDAG<TraceCodeBlock>> computeRDForTrace(final List<CodeBlock> trace, final ILogger logger,
+			final RootAnnot rootNode) throws Throwable {
 		return computeRDForTrace(trace, logger, PreprocessorAnnotation.getAnnotation(rootNode).getSymbolTable());
 	}
 
-	public static List<DataflowDAG<TraceCodeBlock>> computeRDForTrace(List<CodeBlock> trace, ILogger logger,
-			BoogieSymbolTable symbolTable) throws Throwable {
+	public static List<DataflowDAG<TraceCodeBlock>> computeRDForTrace(final List<CodeBlock> trace, final ILogger logger,
+			final BoogieSymbolTable symbolTable) throws Throwable {
 		final IAnnotationProvider<ReachDefEdgeAnnotation> edgeProvider = new ReachDefMapAnnotationProvider<>();
 		final IAnnotationProvider<ReachDefStatementAnnotation> stmtProvider = new ReachDefMapAnnotationProvider<>();
 		final ReachDefTrace rdt = new ReachDefTrace(edgeProvider, stmtProvider, logger, symbolTable);
@@ -143,12 +143,12 @@ public class ReachingDefinitions implements IAnalysis {
 	}
 
 	@Override
-	public void setToolchainStorage(IToolchainStorage storage) {
+	public void setToolchainStorage(final IToolchainStorage storage) {
 
 	}
 
 	@Override
-	public void setServices(IUltimateServiceProvider services) {
+	public void setServices(final IUltimateServiceProvider services) {
 		mServices = services;
 	}
 

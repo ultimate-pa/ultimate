@@ -41,9 +41,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractInterpretationRunner;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
@@ -69,7 +69,7 @@ public class InterpolantAutomatonBuilderFactory {
 	private final ILogger mLogger;
 	private final CfgSmtToolkit mCsToolkit;
 	private final PredicateFactoryForInterpolantAutomata mPredicateFactory;
-	private final RootNode mRootNode;
+	private final RootAnnot mRootAnnot;
 	private final AbstractInterpretationRunner mAbsIntRunner;
 	private final CegarLoopStatisticsGenerator mBenchmark;
 
@@ -82,7 +82,7 @@ public class InterpolantAutomatonBuilderFactory {
 	private final IBuilderFunction mBuilderFunction;
 
 	public InterpolantAutomatonBuilderFactory(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
-			final PredicateFactoryForInterpolantAutomata predFac, final RootNode rootNode,
+			final PredicateFactoryForInterpolantAutomata predFac, final RootAnnot RootAnnot,
 			final AbstractInterpretationRunner abstractInterpretationRunner, final TAPreferences taPrefs,
 			final InterpolationTechnique interpolation,
 			final InterpolantAutomaton interpolantAutomatonConstructionProcedure,
@@ -91,7 +91,7 @@ public class InterpolantAutomatonBuilderFactory {
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mCsToolkit = csToolkit;
 		mPredicateFactory = predFac;
-		mRootNode = rootNode;
+		mRootAnnot = RootAnnot;
 		mAbsIntRunner = abstractInterpretationRunner;
 		mBenchmark = benchmark;
 
@@ -192,7 +192,7 @@ public class InterpolantAutomatonBuilderFactory {
 		final TotalInterpolationAutomatonBuilder iab = new TotalInterpolationAutomatonBuilder(castedAbstraction,
 				castedCex.getStateSequence(), interpolGenerator, mCsToolkit, mPredicateFactory,
 				mCsToolkit.getModifiableGlobals(), mInterpolationTechnique, mServices, mHoareTripleChecks,
-				mSimplificationTechnique, mXnfConversionTechnique, mRootNode.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable());
+				mSimplificationTechnique, mXnfConversionTechnique, mRootAnnot.getBoogie2SMT().getBoogie2SmtSymbolTable());
 		mBenchmark.addTotalInterpolationData(iab.getTotalInterpolationBenchmark());
 		return iab;
 	}

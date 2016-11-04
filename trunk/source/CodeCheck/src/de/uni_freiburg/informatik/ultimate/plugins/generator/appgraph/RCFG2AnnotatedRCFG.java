@@ -39,8 +39,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
@@ -68,7 +68,7 @@ public class RCFG2AnnotatedRCFG {
 
 	public ImpRootNode convert(final IUltimateServiceProvider mServices, final RootNode oldRoot) {
 		final RootAnnot ra = new RootAnnot(mServices, oldRoot.getRootAnnot().getBoogieDeclarations(),
-				oldRoot.getRootAnnot().getBoogie2SMT(), null);
+				oldRoot.getRootAnnot().getBoogie2SMT(), null, oldRoot.getPayload().getLocation());
 
 		final ImpRootNode newRoot = new ImpRootNode(ra);
 

@@ -60,8 +60,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
@@ -258,7 +258,7 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 				final INestedWordAutomaton<CodeBlock, IPredicate> test = (new RemoveUnreachable<>(new AutomataLibraryServices(mServices),
 						determinized)).getResult();
 				assert (new InductivityCheck(mServices, test, false, true,
-						new IncrementalHoareTripleChecker(mRootNode.getRootAnnot().getCfgSmtToolkit()))).getResult();
+						new IncrementalHoareTripleChecker(mIcfgContainer.getCfgSmtToolkit()))).getResult();
 				progress = true;
 				break;
 			}
@@ -280,7 +280,7 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 				final INestedWordAutomaton<CodeBlock, IPredicate> test = (new RemoveUnreachable<>(new AutomataLibraryServices(mServices),
 						nondet)).getResult();
 				assert (new InductivityCheck(mServices, test, false, true,
-						new IncrementalHoareTripleChecker(mRootNode.getRootAnnot().getCfgSmtToolkit()))).getResult();
+						new IncrementalHoareTripleChecker(mIcfgContainer.getCfgSmtToolkit()))).getResult();
 				progress = true;
 				break;
 			}

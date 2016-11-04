@@ -95,8 +95,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.emptinesscheck.IEmp
 import de.uni_freiburg.informatik.ultimate.plugins.generator.emptinesscheck.NWAEmptinessCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.impulse.ImpulseChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.kojak.UltimateChecker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
@@ -432,7 +432,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 					ManagedScript mgdScriptTracechecks;
 					// if (noArrayOrNIRAsofar && GlobalSettings._instance.useSeparateSolverForTracechecks) {
 					if (GlobalSettings._instance.useSeparateSolverForTracechecks) {
-						final String filename = mOriginalRoot.getFilename() + "_TraceCheck_Iteration" + iterationsCount;
+						final String filename = mOriginalRoot.getRootAnnot().getFilename() + "_TraceCheck_Iteration" + iterationsCount;
 						final SolverMode solverMode = GlobalSettings._instance.chooseSeparateSolverForTracechecks;
 						final String commandExternalSolver =
 								GlobalSettings._instance.separateSolverForTracechecksCommand;

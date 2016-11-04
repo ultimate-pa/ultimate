@@ -111,7 +111,7 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 	protected void getInitialAbstraction() {
 		final IStateFactory<IPredicate> predicateFactory =
 				new PredicateFactoryForInterpolantAutomata(super.mCsToolkit, mPredicateFactory, mPref.computeHoareAnnotation());
-		final CFG2Automaton cFG2NestedWordAutomaton = new Cfg2Nwa(mRootNode, predicateFactory, mCsToolkit, mPredicateFactory, mServices,
+		final CFG2Automaton cFG2NestedWordAutomaton = new Cfg2Nwa(mIcfgContainer, predicateFactory, mCsToolkit, mPredicateFactory, mServices,
 				mXnfConversionTechnique, mSimplificationTechnique);
 		mAbstraction = (INestedWordAutomatonSimple<CodeBlock, IPredicate>) cFG2NestedWordAutomaton.getResult();
 		
@@ -130,7 +130,7 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 			final PredicateFactoryResultChecking resultCheckPredFac, final Minimization minimization)
 			throws AutomataOperationCanceledException, AutomataLibraryException, AssertionError {
 		if (mPref.dumpAutomata()) {
-			final String filename = mRootNode.getFilename() + "_DiffAutomatonBeforeMinimization_Iteration" + mIteration;
+			final String filename = mIcfgContainer.getFilename() + "_DiffAutomatonBeforeMinimization_Iteration" + mIteration;
 			super.writeAutomatonToFile(mAbstraction, filename);
 		}
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AutomataMinimizationTime.toString());

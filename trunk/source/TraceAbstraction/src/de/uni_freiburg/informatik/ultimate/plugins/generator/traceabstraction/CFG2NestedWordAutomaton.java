@@ -45,11 +45,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 
@@ -85,7 +85,7 @@ public class CFG2NestedWordAutomaton {
 	 * state corresponding to errorLoc will be accepting.
 	 */
 	public INestedWordAutomaton<CodeBlock,IPredicate> getNestedWordAutomaton(
-							final RootNode rootNode,
+							final RootAnnot rootAnnot,
 							final IStateFactory<IPredicate> tAContentFactory,
 							final Collection<BoogieIcfgLocation> errorLocs) {
 		final Set<BoogieIcfgLocation> initialNodes = new HashSet<BoogieIcfgLocation>();
@@ -95,7 +95,7 @@ public class CFG2NestedWordAutomaton {
 					new HashMap<BoogieIcfgLocation, IPredicate>();
 		
 		final Map<String, Procedure> implementations = 
-			rootNode.getRootAnnot().getBoogieDeclarations().getProcImplementation();
+			rootAnnot.getBoogieDeclarations().getProcImplementation();
 		
 		if (implementations.containsKey(mStartProcedure)) {
 			mMainMode = true;
@@ -110,7 +110,7 @@ public class CFG2NestedWordAutomaton {
 		
 		// put all LocationNodes into mNodes
 		final LinkedList<BoogieIcfgLocation> queue = new LinkedList<BoogieIcfgLocation>();
-		for (final IcfgLocation node : rootNode.getOutgoingNodes()) {
+		for (final IcfgLocation node : rootAnnot.getEntryNodes().values()) {
 			final BoogieIcfgLocation locNode = (BoogieIcfgLocation) node;
 			// add only LocationNodes of implementations
 			final String procName = locNode.getProcedure();

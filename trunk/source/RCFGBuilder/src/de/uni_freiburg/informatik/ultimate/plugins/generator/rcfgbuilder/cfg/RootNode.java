@@ -27,8 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 
-import java.io.File;
-
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
@@ -76,15 +74,4 @@ public class RootNode extends IcfgLocation {
 		return "RootNode";
 	}
 	
-	
-	/**
-	 * Returns the name of the file that is analyzed.
-	 * The result is the name without the full path.
-	 * 
-	 */
-	public String getFilename() {
-		final String pathAndFilename = getPayload().getLocation().getFileName();
-		final String pureFilename = (new File(pathAndFilename)).getName();
-		return pureFilename;
-	}
 }

@@ -216,7 +216,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 				sb.append("[").append(letter).append("] ");
 			}
 			mLogger.debug("Calculating RD DAGs for " + sb);
-			final List<DataflowDAG<TraceCodeBlock>> dags = ReachingDefinitions.computeRDForTrace(word, mLogger, mRootNode);
+			final List<DataflowDAG<TraceCodeBlock>> dags = ReachingDefinitions.computeRDForTrace(word, mLogger, mIcfgContainer);
 			return dags;
 		} catch (final Throwable e) {
 			mLogger.fatal("DataflowDAG generation threw an exception.", e);

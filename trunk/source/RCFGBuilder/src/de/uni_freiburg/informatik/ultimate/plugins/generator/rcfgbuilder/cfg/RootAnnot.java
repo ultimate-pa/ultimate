@@ -26,8 +26,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 
+import java.io.File;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -36,12 +39,16 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.AbstractAn
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation.LoopEntryType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IWalkable;
+import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieDeclarations;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBacktranslator;
 
 /**
@@ -52,7 +59,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBac
  *
  */
 
-public class RootAnnot extends AbstractAnnotations {
+public class RootAnnot extends AbstractAnnotations implements IWalkable {
 	/**
 	 * The serial version UID. Change only if serial representation changes.
 	 */
@@ -111,6 +118,8 @@ public class RootAnnot extends AbstractAnnotations {
 	private final CodeBlockFactory mCodeBlockFactory;
 
 	private final CfgSmtToolkit mCfgSmtToolkit;
+	
+	private final IPayload mPayload;
 
 	/**
 	 * The published attributes. Update this and getFieldValue() if you add new
@@ -119,7 +128,8 @@ public class RootAnnot extends AbstractAnnotations {
 	private final static String[] s_AttribFields = { "locNodes", "loopEntry" };
 
 	public RootAnnot(final IUltimateServiceProvider services, final BoogieDeclarations boogieDeclarations, final Boogie2SMT mBoogie2smt,
-			final RCFGBacktranslator backtranslator) {
+			final RCFGBacktranslator backtranslator, final ILocation loc) {
+		
 		mBoogieDeclarations = boogieDeclarations;
 		mBoogie2SMT = mBoogie2smt;
 		mManagedScript = mBoogie2smt.getManagedScript();
@@ -127,6 +137,9 @@ public class RootAnnot extends AbstractAnnotations {
 				mManagedScript, mBoogie2smt.getBoogie2SmtSymbolTable());
 		mCfgSmtToolkit = new CfgSmtToolkit(mModifiableGlobalVariableManager, mManagedScript, mBoogie2smt.getBoogie2SmtSymbolTable());
 		mCodeBlockFactory = new CodeBlockFactory(services, mManagedScript, mModifiableGlobalVariableManager, mBoogie2SMT.getBoogie2SmtSymbolTable());
+		mPayload = new Payload(loc);
+		mPayload.getAnnotations().put(Activator.PLUGIN_ID, this);
+		
 	}
 
 	@Override
@@ -210,7 +223,34 @@ public class RootAnnot extends AbstractAnnotations {
 	public CfgSmtToolkit getCfgSmtToolkit() {
 		return mCfgSmtToolkit;
 	}
+
+	@Override
+	public IPayload getPayload() {
+		return mPayload;
+	}
+
+	@Override
+	public boolean hasPayload() {
+		return true;
+	}
+
+	@Override
+	public List<IWalkable> getSuccessors() {
+		final List<IWalkable> result = new ArrayList<>();
+		result.addAll(mentryNode.values());
+		return result;
+	}
 	
+	/**
+	 * Returns the name of the file that is analyzed.
+	 * The result is the name without the full path.
+	 * 
+	 */
+	public String getFilename() {
+		final String pathAndFilename = getPayload().getLocation().getFileName();
+		final String pureFilename = (new File(pathAndFilename)).getName();
+		return pureFilename;
+	}
 	
 
 }

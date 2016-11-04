@@ -64,7 +64,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer.BuchiComplementationConstruction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer.BuchiInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
@@ -94,7 +94,7 @@ public class RefineBuchi {
 	private final CfgSmtToolkit mCsToolkit;
 	private final PredicateFactory mPredicateFactory;
 	
-	private final RootNode mRootNode;
+	private final RootAnnot mICfgContainer;
 
 	private final boolean mDumpAutomata;
 	private final boolean mDifference;
@@ -112,14 +112,14 @@ public class RefineBuchi {
 
 	private final IUltimateServiceProvider mServices;
 
-	public RefineBuchi(final RootNode rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final boolean dumpAutomata, final boolean difference,
+	public RefineBuchi(final RootAnnot icfgContainer, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final boolean dumpAutomata, final boolean difference,
 			final PredicateFactoryForInterpolantAutomata stateFactoryInterpolAutom, final PredicateFactoryRefinement stateFactoryForRefinement,
 			final boolean useDoubleDeckers, final String dumpPath, final Format format, final InterpolationTechnique interpolation, final IUltimateServiceProvider services,
 			final ILogger logger, final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		super();
 		mServices = services;
 		mLogger = logger;
-		mRootNode = rootNode;
+		mICfgContainer = icfgContainer;
 		mCsToolkit = csToolkit;
 		mPredicateFactory = predicateFactory;
 		mDumpAutomata = dumpAutomata;
@@ -223,7 +223,7 @@ public class RefineBuchi {
 		assert !bspm.getHondaPredicate().getFormula().toString().equals("false");
 		assert !bspm.getRankEqAndSi().getFormula().toString().equals("false");
 		final PredicateUnifier pu = new PredicateUnifier(mServices, mCsToolkit.getManagedScript(), mPredicateFactory, 
-				mRootNode.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable(), mSimplificationTechnique, mXnfConversionTechnique, bspm.getStemPrecondition(),
+				mICfgContainer.getBoogie2SMT().getBoogie2SmtSymbolTable(), mSimplificationTechnique, mXnfConversionTechnique, bspm.getStemPrecondition(),
 				bspm.getHondaPredicate(), bspm.getRankEqAndSi(), bspm.getStemPostcondition());
 		IPredicate[] stemInterpolants;
 		InterpolatingTraceChecker traceChecker;
@@ -257,7 +257,7 @@ public class RefineBuchi {
 				abstraction);
 		if (mDumpAutomata) {
 			
-			final String filename = mRootNode.getFilename() + "_" + "InterpolantAutomatonBuchi" + mIteration;
+			final String filename = mICfgContainer.getFilename() + "_" + "InterpolantAutomatonBuchi" + mIteration;
 			final String message = setting.toString();
 			BuchiCegarLoop.writeAutomatonToFile(mServices, mInterpolAutomaton, mDumpPath, filename, mFormat, message);
 		}
@@ -302,7 +302,7 @@ public class RefineBuchi {
 
 					final LoopCannibalizer lc = new LoopCannibalizer(mCounterexample, loopInterpolantsForRefinement, bspm, pu,
 							mCsToolkit, buchiModGlobalVarManager, interpolation, 
-							mRootNode.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable(),
+							mICfgContainer.getBoogie2SMT().getBoogie2SmtSymbolTable(),
 							mServices, mSimplificationTechnique, mXnfConversionTechnique);
 					loopInterpolantsForRefinement = lc.getResult();
 				} catch (final ToolchainCanceledException tce) {
@@ -322,7 +322,7 @@ public class RefineBuchi {
 					setting.isScroogeNondeterminismStem(), setting.isScroogeNondeterminismLoop(),
 					setting.isBouncerStem(), setting.isBouncerLoop(), mStateFactoryInterpolAutom, pu, pu,
 					pu.getFalsePredicate(), mServices, mSimplificationTechnique, mXnfConversionTechnique,
-					mRootNode.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable());
+					mICfgContainer.getBoogie2SMT().getBoogie2SmtSymbolTable());
 			break;
 		default:
 			throw new UnsupportedOperationException("unknown automaton");
@@ -427,7 +427,7 @@ public class RefineBuchi {
 			} else {
 				automatonString = "interpolBuchiNestedWordAutomatonUsedInRefinement";
 			}
-			final String filename = mRootNode.getFilename() + "_" + automatonString + mIteration + "after";
+			final String filename = mICfgContainer.getFilename() + "_" + automatonString + mIteration + "after";
 			final String message = setting.toString();
 			BuchiCegarLoop.writeAutomatonToFile(mServices, mInterpolAutomatonUsedInRefinement, mDumpPath, filename, mFormat, message);
 		}
@@ -450,7 +450,7 @@ public class RefineBuchi {
 			} else {
 				automatonString = "interpolBuchiNestedWordAutomatonUsedInRefinement";
 			}
-			final String filename = mRootNode.getFilename() + "_" + determinicity + automatonString + mIteration + "after";
+			final String filename = mICfgContainer.getFilename() + "_" + determinicity + automatonString + mIteration + "after";
 			final String message = setting.toString();
 			BuchiCegarLoop.writeAutomatonToFile(mServices, mInterpolAutomatonUsedInRefinement, mDumpPath, filename, mFormat, message);
 

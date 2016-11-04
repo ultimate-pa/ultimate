@@ -37,13 +37,13 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.Simpli
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 
 public final class Cfg2NetJulian extends CFG2Automaton {
 	private final PetriNetJulian<CodeBlock, IPredicate> mResult;
 	
-	public Cfg2NetJulian(final RootNode rootNode, final IStateFactory<IPredicate> contentFactory,
+	public Cfg2NetJulian(final RootAnnot rootNode, final IStateFactory<IPredicate> contentFactory,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final IUltimateServiceProvider services,
 			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique)
 			throws AutomataLibraryException {

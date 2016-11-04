@@ -51,8 +51,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.Increme
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
@@ -100,7 +101,7 @@ public abstract class AbstractCegarLoop {
 	/**
 	 * Node of a recursive control flow graph which stores additional information about the program.
 	 */
-	protected final RootNode mRootNode;
+	protected final RootAnnot mIcfgContainer;
 	
 	/**
 	 * Intermediate layer to encapsulate communication with SMT solvers.
@@ -185,7 +186,7 @@ public abstract class AbstractCegarLoop {
 		mXnfConversionTechnique = taPrefs.getXnfConversionTechnique();
 		mPrintAutomataLabeling = taPrefs.getAutomataFormat();
 		mName = name;
-		mRootNode = rootNode;
+		mIcfgContainer = rootNode.getRootAnnot();
 		mCsToolkit = csToolkit;
 		mPredicateFactory = predicateFactory;
 		mPref = taPrefs;
@@ -414,7 +415,7 @@ public abstract class AbstractCegarLoop {
 			final boolean newMaximumReached =
 					mCegarLoopBenchmark.reportAbstractionSize(mAbstraction.size(), mIteration);
 			if (DUMP_BIGGEST_AUTOMATON && mIteration > 4 && newMaximumReached) {
-				final String filename = mRootNode.getFilename();
+				final String filename = mIcfgContainer.getFilename();
 				writeAutomatonToFile(mAbstraction, filename);
 			}
 			

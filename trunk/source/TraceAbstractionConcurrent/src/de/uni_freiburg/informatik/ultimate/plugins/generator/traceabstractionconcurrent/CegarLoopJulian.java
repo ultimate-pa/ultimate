@@ -52,8 +52,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
@@ -82,9 +82,9 @@ public class CegarLoopJulian extends BasicCegarLoop {
 	@Override
 	protected void getInitialAbstraction() throws AutomataLibraryException {
 		final TaConcurContentFactory contentFactory =
-				new TaConcurContentFactory(mRootNode.getRootAnnot().getProgramPoints(), this, super.mCsToolkit,
+				new TaConcurContentFactory(mIcfgContainer.getProgramPoints(), this, super.mCsToolkit,
 						mPredicateFactory, super.mPref.computeHoareAnnotation(), mPref.computeHoareAnnotation(), false);
-		final Cfg2NetJulian cFG2Automaton = new Cfg2NetJulian(mRootNode, contentFactory, mCsToolkit, mPredicateFactory, mServices,
+		final Cfg2NetJulian cFG2Automaton = new Cfg2NetJulian(mIcfgContainer, contentFactory, mCsToolkit, mPredicateFactory, mServices,
 				mXnfConversionTechnique, mSimplificationTechnique);
 		mAbstraction = cFG2Automaton.getResult();
 

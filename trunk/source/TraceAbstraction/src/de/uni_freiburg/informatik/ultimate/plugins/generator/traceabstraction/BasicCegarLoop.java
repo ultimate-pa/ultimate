@@ -74,8 +74,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.S
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.LineCoverageCalculator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.IInterpolantAutomatonBuilder;
@@ -190,7 +190,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			mHoareAnnotationPositions.addAll(rootNode.getRootAnnot().getPotentialCycleProgramPoints());
 		}
 		mHaf = new HoareAnnotationFragments(mLogger, mHoareAnnotationPositions, mPref.getHoareAnnotationPositions());
-		mStateFactoryForRefinement = new PredicateFactoryRefinement(mRootNode.getRootAnnot().getProgramPoints(),
+		mStateFactoryForRefinement = new PredicateFactoryRefinement(mIcfgContainer.getProgramPoints(),
 				super.mCsToolkit, predicateFactory, mPref.computeHoareAnnotation(), mHaf, mHoareAnnotationPositions,
 				mPref.getHoareAnnotationPositions());
 		mPredicateFactoryInterpolantAutomata =
@@ -216,7 +216,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		mAbsIntRunner = new AbstractInterpretationRunner(services, mCegarLoopBenchmark, rootNode,
 				mSimplificationTechnique, mXnfConversionTechnique, mCsToolkit);
 		mInterpolantAutomatonBuilderFactory = new InterpolantAutomatonBuilderFactory(mServices, mCsToolkit,
-				mPredicateFactoryInterpolantAutomata, mRootNode, mAbsIntRunner, taPrefs, mInterpolation,
+				mPredicateFactoryInterpolantAutomata, mIcfgContainer, mAbsIntRunner, taPrefs, mInterpolation,
 				mInterpolantAutomatonConstructionProcedure, mCegarLoopBenchmark);
 		
 		mSearchStrategy = getSearchStrategy(prefs);
@@ -229,7 +229,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		final CFG2NestedWordAutomaton cFG2NestedWordAutomaton =
 				new CFG2NestedWordAutomaton(mServices, mPref.interprocedural(), super.mCsToolkit, super.mPredicateFactory, mLogger);
 		
-		mAbstraction = cFG2NestedWordAutomaton.getNestedWordAutomaton(super.mRootNode, mStateFactoryForRefinement,
+		mAbstraction = cFG2NestedWordAutomaton.getNestedWordAutomaton(super.mIcfgContainer, mStateFactoryForRefinement,
 				super.mErrorLocs);
 		if (mPref.getHoareAnnotationPositions() == HoareAnnotationPositions.LoopsAndPotentialCycles) {
 			final INestedWordAutomaton<CodeBlock, IPredicate> nwa =
@@ -295,7 +295,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	@Override
 	protected LBool isCounterexampleFeasible() {
 		final PredicateUnifier predicateUnifier = new PredicateUnifier(mServices, mCsToolkit.getManagedScript(),
-				mPredicateFactory, mRootNode.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable(),
+				mPredicateFactory, mIcfgContainer.getBoogie2SMT().getBoogie2SmtSymbolTable(),
 				mSimplificationTechnique, mXnfConversionTechnique);
 		final IPredicate truePredicate = predicateUnifier.getTruePredicate();
 		final IPredicate falsePredicate = predicateUnifier.getFalsePredicate();
@@ -303,7 +303,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		InterpolatingTraceChecker interpolatingTraceChecker = null;
 		final ManagedScript mgdScriptTc;
 		if (mPref.useSeparateSolverForTracechecks()) {
-			final String filename = mRootNode.getFilename() + "_TraceCheck_Iteration" + mIteration;
+			final String filename = mIcfgContainer.getFilename() + "_TraceCheck_Iteration" + mIteration;
 			final SolverMode solverMode = mPref.solverMode();
 			final boolean fakeNonIncrementalSolver = mPref.fakeNonIncrementalSolver();
 			final String commandExternalSolver = mPref.commandExternalSolver();
@@ -316,7 +316,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					"TraceCheck_Iteration" + mIteration);
 			mgdScriptTc = new ManagedScript(mServices, tcSolver);
 			final TermTransferrer tt = new TermTransferrer(tcSolver);
-			for (final Term axiom : mRootNode.getRootAnnot().getBoogie2SMT().getAxioms()) {
+			for (final Term axiom : mIcfgContainer.getBoogie2SMT().getAxioms()) {
 				tcSolver.assertTerm(tt.transform(axiom));
 			}
 		} else {
@@ -348,7 +348,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			final boolean useNonlinerConstraints = true;
 			final boolean dumpSmtScriptToFile = mPref.dumpSmtScriptToFile();
 			final String pathOfDumpedScript = mPref.pathOfDumpedScript();
-			final String baseNameOfDumpedScript = "InVarSynth_" + mRootNode.getFilename() + "_Iteration" + mIteration;
+			final String baseNameOfDumpedScript = "InVarSynth_" + mIcfgContainer.getFilename() + "_Iteration" + mIteration;
 			final String solverCommand;
 			if (useNonlinerConstraints) {
 				// solverCommand = "yices-smt2 --incremental";
@@ -366,7 +366,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 							new TreeMap<Integer, IPredicate>(), (NestedRun<CodeBlock, IPredicate>) mCounterexample,
 							mCsToolkit, mAssertCodeBlocksIncrementally, mServices,
 							mToolchainStorage, true, predicateUnifier, useNonlinerConstraints, settings, mXnfConversionTechnique,
-							mSimplificationTechnique, mRootNode.getRootAnnot().getBoogie2SMT().getAxioms());
+							mSimplificationTechnique, mIcfgContainer.getBoogie2SMT().getAxioms());
 		}
 			break;
 		default:
@@ -403,11 +403,11 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				final CFG2NestedWordAutomaton cFG2NestedWordAutomaton =
 						new CFG2NestedWordAutomaton(mServices, mPref.interprocedural(), super.mCsToolkit, mPredicateFactory, mLogger);
 				final INestedWordAutomaton<CodeBlock, IPredicate> cfg = cFG2NestedWordAutomaton
-						.getNestedWordAutomaton(super.mRootNode, mStateFactoryForRefinement, super.mErrorLocs);
+						.getNestedWordAutomaton(super.mIcfgContainer, mStateFactoryForRefinement, super.mErrorLocs);
 				final FlowSensitiveFaultLocalizer a = new FlowSensitiveFaultLocalizer(mCounterexample, cfg, mServices,
 						mCsToolkit, mPredicateFactory, mCsToolkit.getModifiableGlobals(), predicateUnifier, mDoFaultLocalizationNonFlowSensitive,
 						mDoFaultLocalizationFlowSensitive, mSimplificationTechnique, mXnfConversionTechnique,
-						mRootNode.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable());
+						mIcfgContainer.getBoogie2SMT().getBoogie2SmtSymbolTable());
 				mRcfgProgramExecution = mRcfgProgramExecution.addRelevanceInformation(a.getRelevanceInformation());
 			}
 			// s_Logger.info("Trace with values");
@@ -749,7 +749,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			final PredicateFactoryResultChecking resultCheckPredFac, final Minimization minimization)
 			throws AutomataOperationCanceledException, AutomataLibraryException, AssertionError {
 		if (mPref.dumpAutomata()) {
-			final String filename = mRootNode.getFilename() + "_DiffAutomatonBeforeMinimization_Iteration" + mIteration;
+			final String filename = mIcfgContainer.getFilename() + "_DiffAutomatonBeforeMinimization_Iteration" + mIteration;
 			super.writeAutomatonToFile(mAbstraction, filename);
 		}
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AutomataMinimizationTime.toString());
@@ -886,7 +886,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		final INestedWordAutomaton<CodeBlock, IPredicate> abstraction =
 				(INestedWordAutomaton<CodeBlock, IPredicate>) mAbstraction;
 		new HoareAnnotationExtractor(mServices, abstraction, mHaf);
-		new HoareAnnotationWriter(mRootNode.getRootAnnot(), mCsToolkit, mPredicateFactory, mHaf, mServices, mSimplificationTechnique,
+		new HoareAnnotationWriter(mIcfgContainer, mCsToolkit, mPredicateFactory, mHaf, mServices, mSimplificationTechnique,
 				mXnfConversionTechnique).addHoareAnnotationToCFG();
 	}
 	
@@ -897,7 +897,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			
 			if (mArtifactAutomaton == null) {
 				mLogger.warn("Preferred Artifact not available," + " visualizing the RCFG instead");
-				return mRootNode;
+				return mIcfgContainer;
 			}
 			try {
 				return Automaton2UltimateModel.ultimateModel(new AutomataLibraryServices(mServices),
@@ -906,7 +906,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				return null;
 			}
 		} else if (mPref.artifact() == Artifact.RCFG) {
-			return mRootNode;
+			return mIcfgContainer;
 		} else {
 			throw new IllegalArgumentException();
 		}
