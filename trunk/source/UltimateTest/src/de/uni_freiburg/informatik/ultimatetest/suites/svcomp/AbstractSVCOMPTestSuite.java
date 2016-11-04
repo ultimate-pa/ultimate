@@ -68,6 +68,7 @@ import de.uni_freiburg.informatik.ultimatetest.summaries.KingOfTheHillSummary;
 import de.uni_freiburg.informatik.ultimatetest.summaries.LatexDetailedSummary;
 import de.uni_freiburg.informatik.ultimatetest.summaries.LatexOverviewSummary;
 import de.uni_freiburg.informatik.ultimatetest.summaries.SVCOMPTestSummary;
+import de.uni_freiburg.informatik.ultimatetest.summaries.StandingsSummary;
 import de.uni_freiburg.informatik.ultimatetest.summaries.TraceAbstractionTestSummary;
 
 /**
@@ -155,7 +156,7 @@ public abstract class AbstractSVCOMPTestSuite extends UltimateTestSuite {
 		return rtr;
 	}
 
-	private Map<String, File> getName2File(final Collection<File> files) {
+	private static Map<String, File> getName2File(final Collection<File> files) {
 		final Map<String, File> rtr = new HashMap<>();
 		for (final File file : files) {
 			final File old = rtr.put(file.getName(), file);
@@ -166,7 +167,8 @@ public abstract class AbstractSVCOMPTestSuite extends UltimateTestSuite {
 		return rtr;
 	}
 
-	private String createTestCaseName(final File svcompRootDir, final File input, final SVCOMPTestDefinition def) {
+	private static String createTestCaseName(final File svcompRootDir, final File input,
+			final SVCOMPTestDefinition def) {
 		// note: do not change the name without also checking
 		// SVCOMP15TestSummary
 		final StringBuilder sb = new StringBuilder();
@@ -239,6 +241,7 @@ public abstract class AbstractSVCOMPTestSuite extends UltimateTestSuite {
 		rtr.add(new CsvSummary(getClass(), benchmarks, columnDef));
 		rtr.add(new HTMLSummary(getClass(), benchmarks, columnDef));
 		rtr.add(new KingOfTheHillSummary(this.getClass()));
+		rtr.add(new StandingsSummary(getClass()));
 		benchmarks.stream().forEach(a -> rtr.add(new CsvConcatenator(getClass(), a)));
 
 		return rtr.toArray(new ITestSummary[rtr.size()]);

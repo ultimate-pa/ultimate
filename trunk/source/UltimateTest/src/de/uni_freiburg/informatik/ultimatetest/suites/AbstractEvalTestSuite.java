@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimatetest.summaries.HTMLSummary;
 import de.uni_freiburg.informatik.ultimatetest.summaries.KingOfTheHillSummary;
 import de.uni_freiburg.informatik.ultimatetest.summaries.LatexDetailedSummary;
 import de.uni_freiburg.informatik.ultimatetest.summaries.LatexOverviewSummary;
+import de.uni_freiburg.informatik.ultimatetest.summaries.StandingsSummary;
 import de.uni_freiburg.informatik.ultimatetest.summaries.TraceAbstractionTestSummary;
 
 /**
@@ -89,6 +90,7 @@ public abstract class AbstractEvalTestSuite extends AbstractModelCheckerTestSuit
 		rtr.add(new CsvSummary(getClass(), benchmarks, columnDef));
 		rtr.add(new HTMLSummary(getClass(), benchmarks, columnDef));
 		rtr.add(new KingOfTheHillSummary(this.getClass()));
+		rtr.add(new StandingsSummary(this.getClass()));
 		benchmarks.stream().forEach(a -> rtr.add(new CsvConcatenator(getClass(), a)));
 
 		return rtr.toArray(new ITestSummary[rtr.size()]);
