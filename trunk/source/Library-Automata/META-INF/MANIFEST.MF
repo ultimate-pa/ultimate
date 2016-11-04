@@ -5,8 +5,9 @@ Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.automata
 Bundle-Version: 0.0.1
 Require-Bundle: Library-UltimateCore,
  UltimateCore,
+ SMTInterpol,
  Library-SMTLIB,
- Library-UltimateUtil
+ Library-UltimateUtil 
 Export-Package: de.uni_freiburg.informatik.ultimate.automata,
  de.uni_freiburg.informatik.ultimate.automata.alternating,
  de.uni_freiburg.informatik.ultimate.automata.alternating.visualization,
@@ -48,5 +49,3 @@ Export-Package: de.uni_freiburg.informatik.ultimate.automata,
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ClassPath: src/de/uni_freiburg/informatik/ultimate/automata/petrinet/julian/petruchio/petruchio.jar,
  .
-Import-Package: de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates,
- de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2
