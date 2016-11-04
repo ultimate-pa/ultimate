@@ -44,12 +44,12 @@ import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider.TestR
  * @author dietsch@informatik.uni-freiburg.de
  *
  */
-public abstract class NewTestSummary implements ITestSummary {
+public abstract class BaseTestSummary implements ITestSummary {
 
 	protected LinkedHashMap<UltimateRunDefinition, ExtendedResult> mResults;
 	private final Class<? extends UltimateTestSuite> mUltimateTestSuite;
 
-	public NewTestSummary(final Class<? extends UltimateTestSuite> ultimateTestSuite) {
+	public BaseTestSummary(final Class<? extends UltimateTestSuite> ultimateTestSuite) {
 		mResults = new LinkedHashMap<>();
 		mUltimateTestSuite = ultimateTestSuite;
 	}
@@ -189,8 +189,8 @@ public abstract class NewTestSummary implements ITestSummary {
 			return true;
 		}
 
-		private NewTestSummary getOuterType() {
-			return NewTestSummary.this;
+		private BaseTestSummary getOuterType() {
+			return BaseTestSummary.this;
 		}
 
 		@Override

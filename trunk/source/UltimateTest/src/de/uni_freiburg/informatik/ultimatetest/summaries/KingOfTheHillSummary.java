@@ -36,7 +36,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimate.test.reporting.ExtendedResult;
-import de.uni_freiburg.informatik.ultimate.test.reporting.NewTestSummary;
+import de.uni_freiburg.informatik.ultimate.test.reporting.BaseTestSummary;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  * @author Matthias Heizmann
  *
  */
-public class KingOfTheHillSummary extends NewTestSummary {
+public class KingOfTheHillSummary extends BaseTestSummary {
 
 	public KingOfTheHillSummary(
 			Class<? extends UltimateTestSuite> ultimateTestSuite) {

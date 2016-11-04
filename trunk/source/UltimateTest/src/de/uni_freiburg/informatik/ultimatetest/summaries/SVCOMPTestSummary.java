@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider.TestResult;
 import de.uni_freiburg.informatik.ultimate.test.reporting.ExtendedResult;
-import de.uni_freiburg.informatik.ultimate.test.reporting.NewTestSummary;
+import de.uni_freiburg.informatik.ultimate.test.reporting.BaseTestSummary;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimatetest.suites.svcomp.SVCOMP15TestSuite;
 
@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimatetest.suites.svcomp.SVCOMP15TestSuite;
  * @author dietsch@informatik.uni-freiburg.de
  * 
  */
-public class SVCOMPTestSummary extends NewTestSummary {
+public class SVCOMPTestSummary extends BaseTestSummary {
 
 	public SVCOMPTestSummary(Class<? extends UltimateTestSuite> ultimateTestSuite) {
 		super(ultimateTestSuite);

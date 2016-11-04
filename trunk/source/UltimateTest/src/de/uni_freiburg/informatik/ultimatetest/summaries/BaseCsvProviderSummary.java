@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider.TestResult;
 import de.uni_freiburg.informatik.ultimate.test.reporting.ExtendedResult;
-import de.uni_freiburg.informatik.ultimate.test.reporting.NewTestSummary;
+import de.uni_freiburg.informatik.ultimate.test.reporting.BaseTestSummary;
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvUtils;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
  * @author dietsch@informatik.uni-freiburg.de
  *
  */
-public abstract class BaseCsvProviderSummary extends NewTestSummary {
+public abstract class BaseCsvProviderSummary extends BaseTestSummary {
 
 	protected final Collection<Class<? extends ICsvProviderProvider<? extends Object>>> mBenchmarks;
 	protected final LinkedHashMap<UltimateRunDefinition, ICsvProvider<?>> mCsvProvider;
