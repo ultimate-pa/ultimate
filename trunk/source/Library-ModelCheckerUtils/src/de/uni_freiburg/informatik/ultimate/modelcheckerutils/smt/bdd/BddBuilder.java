@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.bdd;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -15,153 +16,127 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import net.sf.javabdd.BDD;
 import net.sf.javabdd.BDDFactory;
 
-public class BddBuilder extends NonRecursive{
-		
-	private BDDFactory mFactory;
-	private List<Term> mAtoms;
-	private Queue<BDD> mValues;
-	
-	public BddBuilder(){
+public class BddBuilder extends NonRecursive {
+
+	private BDD mResult;
+
+	public BddBuilder() {
 		super();
 	}
-	
-	public BDDFactory getFactory(){
-		return mFactory;
-	}
-	
-	public List<Term> getAtoms(){
-		return mAtoms;
-	}
-	
-	public BDD buildBDD(Term in, List<Term> atoms){
-		mAtoms = atoms;
-		mValues = new LinkedList<BDD>();
-		mFactory = BDDFactory.init("java", atoms.size()+2, atoms.size()+2, false);
-		mFactory.setVarNum(atoms.size());
-		run(new DownWalker(in));
-		return mValues.poll();
-	}
-	
-	private static class DownWalker extends TermWalker{
 
-		public DownWalker(Term term) {
-			super(term);
+	public BDD buildBDD(Term in, List<Term> atoms) {
+		BDDFactory factory = BDDFactory.init("java", atoms.size() + 2, atoms.size() + 2, false);
+		factory.setVarNum(atoms.size());
+		this.run(new Walker(in, factory, atoms, null));
+		return mResult;
+	}
+
+	private class Walker implements NonRecursive.Walker {
+
+		private Term mTerm;
+		private BDDFactory mFactory;
+		private List<Term> mAtoms;
+		private Walker mParent;
+		private List<BDD> mParams;
+		private int mCall;
+
+		public Walker(Term t, BDDFactory factory, List<Term> atoms, Walker parent) {
+			mTerm = t;
+			mFactory = factory;
+			mAtoms = atoms;
+			mParent = parent;
+			mCall = 0;
+			mParams = new ArrayList<BDD>();
 		}
 		
-		@Override
-		public void walk(NonRecursive walker, ConstantTerm term) {
-			BddBuilder bb = (BddBuilder)walker;
-			bb.mValues.add(bb.getFactory().ithVar(bb.getAtoms().indexOf(term)));
-		}
-
-		@Override
-		public void walk(NonRecursive walker, AnnotatedTerm term) {
-			BddBuilder bb = (BddBuilder)walker;
-			walker.enqueueWalker(new DownWalker(term.getSubterm()));
-		}
-
-		@Override
-		public void walk(NonRecursive walker, ApplicationTerm term) {
-			BddBuilder bb = (BddBuilder)walker;
-			String fName = term.getFunction().getName();
-			if(fName.equals("and") || fName.equals("or") || fName.equals("xor") || fName.equals("not") || fName.equals("=>")){
-				bb.enqueueWalker(new UpWalker(term));
-				for(Term t:term.getParameters()){
-					walker.enqueueWalker(new DownWalker(t));
-				}
-			}else if(fName.equals("true")){
-				bb.mValues.add(bb.getFactory().one());
-				
-			}else if(fName.equals("false")){
-				bb.mValues.add(bb.getFactory().zero());
-				
-			}else{
-				bb.mValues.add(bb.getFactory().ithVar(bb.getAtoms().indexOf(term)));
+		public void ret(BDD bdd){
+			if (mParent != null) {
+				mParent.mParams.add(bdd);
+			} else {
+				mResult = bdd;
 			}
 		}
 
 		@Override
-		public void walk(NonRecursive walker, LetTerm term) {
-			BddBuilder bb = (BddBuilder)walker;
-			bb.mValues.add(bb.getFactory().ithVar(bb.getAtoms().indexOf(term)));
-		}
+		public void walk(NonRecursive engine) {
+			if (mTerm instanceof ApplicationTerm) {
+				ApplicationTerm term = (ApplicationTerm) mTerm;
+				String fName = term.getFunction().getName();
+				if (fName.equals("and") || fName.equals("or") || fName.equals("xor") || fName.equals("not") || fName.equals("=>")){
+					if (mCall == 0) {
+						engine.enqueueWalker(this);
+						for (Term th : term.getParameters()) {
+							Walker w = new Walker(th, mFactory, mAtoms, this);
+							engine.enqueueWalker(w);
+						}
+						mCall++;
+						return;
+					} else if (mCall == 1) {
+						if (fName.equals("and")) {
+							BDD result = mParams.remove(0);
+							for (BDD bdd : mParams) {
+								result = result.and(bdd);
+							}
+							ret(result);
+							
+						} else if (fName.equals("or")) {
+							BDD result = mParams.remove(0);
+							for (BDD bdd : mParams) {
+								result = result.or(bdd);
+							}
+							
+							ret(result);
+						} else if (fName.equals("xor")) {
+							BDD result = mParams.remove(0);
+							for (BDD bdd : mParams) {
+								result = result.xor(bdd);
+							}
+							ret(result);
+							
+						} else if (fName.equals("=>")) {
+							BDD result = mParams.remove(0);
+							for (BDD bdd : mParams) {
+								result = result.imp(bdd);
+							}
+							ret(result);
+							
+						} else if (fName.equals("not")) {
+							BDD bdd = mParams.remove(0).not();
+							ret(bdd);
+							
+						}
+					}
+				} else if (fName.equals("true")) {
+					BDD bdd = mFactory.one();
+					ret(bdd);
 
-		@Override
-		public void walk(NonRecursive walker, QuantifiedFormula term) {
-			BddBuilder bb = (BddBuilder)walker;
-			bb.mValues.add(bb.getFactory().ithVar(bb.getAtoms().indexOf(term)));
-		}
+				} else if (fName.equals("false")) {
+					BDD bdd = mFactory.zero();
+					ret(bdd);
 
-		@Override
-		public void walk(NonRecursive walker, TermVariable term) {
-			BddBuilder bb = (BddBuilder)walker;
-			bb.mValues.add(bb.getFactory().ithVar(bb.getAtoms().indexOf(term)));
-		}
-	}
-	
-	private static class UpWalker extends TermWalker{
-
-		public UpWalker(Term term) {
-			super(term);
-		}
-
-		@Override
-		public void walk(NonRecursive walker, ConstantTerm term) {
-			//should not happen
-		}
-
-		@Override
-		public void walk(NonRecursive walker, AnnotatedTerm term) {
-			//should not happen
-		}
-
-		@Override
-		public void walk(NonRecursive walker, ApplicationTerm term) {
-			BddBuilder bb = (BddBuilder)walker;
-			String fName = term.getFunction().getName();
-			if(fName.equals("and")){
-				BDD b = bb.mValues.poll();
-				for(int i = 0; i < term.getParameters().length-1; i++){
-					b = b.and(bb.mValues.poll());
+				} else {
+					BDD bdd = mFactory.ithVar(mAtoms.indexOf(mTerm));
+					ret(bdd);
+					
 				}
-				bb.mValues.add(b);
-			}else if(fName.equals("or")){
-				BDD b = bb.mValues.poll();
-				for(int i = 0; i < term.getParameters().length-1; i++){
-					b = b.or(bb.mValues.poll());
+			} else if (mTerm instanceof AnnotatedTerm) {
+				if (mCall == 0) {
+					engine.enqueueWalker(this);
+					Walker w = new Walker(((AnnotatedTerm) mTerm).getSubterm(), mFactory, mAtoms, this);
+					engine.enqueueWalker(w);
+					mCall++;
+					return;
+					
+				} else if (mCall == 1) {
+					BDD bdd = mParams.get(0);
+					ret(bdd);
 				}
-				bb.mValues.add(b);
-			}else if(fName.equals("xor")){
-				BDD b = bb.mValues.poll();
-				for(int i = 0; i < term.getParameters().length-1; i++){
-					b = b.xor(bb.mValues.poll());
-				}
-				bb.mValues.add(b);
-			}else if(fName.equals("=>")){
-				BDD b = bb.mValues.poll();
-				for(int i = 0; i < term.getParameters().length-1; i++){
-					b = b.imp(bb.mValues.poll());
-				}
-				bb.mValues.add(b);
-			}else if(fName.equals("not")){
-				BDD b = bb.mValues.poll();
-				bb.mValues.add(b.not());
+
+			} else {
+				BDD bdd = mFactory.ithVar(mAtoms.indexOf(mTerm));
+				ret(bdd);
+				
 			}
-		}
-
-		@Override
-		public void walk(NonRecursive walker, LetTerm term) {
-			//should not happen
-		}
-
-		@Override
-		public void walk(NonRecursive walker, QuantifiedFormula term) {
-			//should not happen
-		}
-
-		@Override
-		public void walk(NonRecursive walker, TermVariable term) {
-			//should not happen
 		}
 	}
 }

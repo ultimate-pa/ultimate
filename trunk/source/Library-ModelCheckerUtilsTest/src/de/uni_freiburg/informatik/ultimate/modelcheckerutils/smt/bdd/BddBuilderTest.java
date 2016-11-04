@@ -69,6 +69,20 @@ public class BddBuilderTest {
 	}
 	
 	@Test
+	public void testNot(){
+		final Term x1 = script.variable("x1", bool);
+		final Term t = SmtUtils.not(script, x1);
+		final CollectAtoms ca = new CollectAtoms();
+		final List<Term> atoms = ca.getTerms(t);
+		final BddBuilder bb = new BddBuilder();
+		final BDD d = bb.buildBDD(t, atoms);
+		
+		final BDDFactory factory = BDDFactory.init("java", atoms.size()+2, atoms.size()+2, false);
+		factory.setVarNum(atoms.size());
+		Assert.assertEquals(factory.ithVar(0).not(), d);
+	}
+	
+	@Test
 	public void testImp(){
 		final Term x1 = script.variable("x1", bool);
 		final Term x2 = script.variable("x2", bool);

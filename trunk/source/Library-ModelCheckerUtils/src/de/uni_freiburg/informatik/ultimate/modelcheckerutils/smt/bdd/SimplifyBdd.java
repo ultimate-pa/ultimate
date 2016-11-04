@@ -123,6 +123,7 @@ public class SimplifyBdd {
 		assert atoms.size()!=0 : "How did I not find any atoms? " + input;
 		
 		final BddBuilder bb = new BddBuilder();
+		//final BDD d = bb.buildBDD(input, atoms);
 		final BDD d = bb.buildBDD(input, atoms);
 		
 		final List<Term> con = new ArrayList<Term>();
@@ -146,8 +147,10 @@ public class SimplifyBdd {
 	public Term transformToCNF(final Term input) {
 		final CollectAtoms ca = new CollectAtoms();
 		final List<Term> atoms = ca.getTerms(input);
+
 		
 		final BddBuilder bb = new BddBuilder();
+		//final BDD d = bb.buildBDD(input, atoms).not();
 		final BDD d = bb.buildBDD(input, atoms).not();
 		
 		final List<Term> dis = new ArrayList<Term>();
@@ -183,7 +186,7 @@ public class SimplifyBdd {
 		for (int i = 0; i < in.size(); i++) {
 			mScript.push(1);
 			mScript.assertTerm(in.get(i));
-			for (final int j = 0; i < in.size(); i++) {
+			for (int j = 0; j < in.size(); j++) {
 				mScript.push(1);
 				mScript.assertTerm(SmtUtils.not(mScript, in.get(j)));
 				final LBool result = mScript.checkSat();

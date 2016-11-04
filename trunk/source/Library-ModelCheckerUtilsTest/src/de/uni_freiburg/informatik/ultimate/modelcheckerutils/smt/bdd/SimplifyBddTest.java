@@ -133,12 +133,46 @@ public class SimplifyBddTest {
 		Assert.assertEquals(out2, out1);
 		Assert.assertNotEquals(out3, out1);
 	}
+
 	
 	@Test
 	public void testPairImp(){
 		final Term t1 = script.term("<", script.numeral("1"), script.numeral("2"));
 		final Term t2 = script.term("<", script.numeral("1"), script.numeral("3"));
 		simplifyBdd.impliesPairwise(Arrays.asList(t1,t2));	
+	}
+	
+	@Test
+	public void testWithImplications(){
+		script.declareFun("noMemleak_a", new Sort[]{}, ints);
+		script.declareFun("noMemleak_b", new Sort[]{}, ints);
+		script.declareFun("v_noMemleak_a_3", new Sort[]{}, ints);
+		script.declareFun("select", new Sort[]{ints, ints}, bool);
+		script.declareFun("store", new Sort[]{ints, ints, bool}, ints);
+		
+		Term a = script.term("noMemleak_a");
+		Term b = script.term("noMemleak_b");
+		Term a_3 = script.term("v_noMemleak_a_3");
+		Term v7 = script.numeral("7");
+		Term vTrue = script.term("true");
+		Term vFalse = script.term("false");
+		
+		
+
+		Term s1 = script.term("store", a_3, v7, vTrue);
+		Term s2 = script.term("store", s1, v7, vFalse);
+		Term e1 = script.term("=", a, s2);
+		
+		Term s3 = script.term("select", a_3, v7);
+		
+		//Term e2 = SmtUtils.not(script, script.term("=", b, a_3));
+		Term e2 = script.term("=", b, a_3);
+		
+		Term and = script.term("and", e2, s3, e1);
+		
+		final Term out = simplifyBdd.transformWithImplications(and);
+		System.out.println(out + "\n" + and);
+		
 	}
 	
 	@Test
@@ -162,9 +196,10 @@ public class SimplifyBddTest {
 		Term s2 = script.term("store", s1, v7, vFalse);
 		Term e1 = script.term("=", a, s2);
 		
-		Term s3 = script.term("=", a_3, v7);
+		Term s3 = script.term("select", a_3, v7);
 		
-		Term e2 = SmtUtils.not(script, script.term("=", b, a_3));
+		//Term e2 = SmtUtils.not(script, script.term("=", b, a_3));
+		Term e2 = script.term("=", b, a_3);
 		
 		Term and = script.term("and", e2, s3, e1);
 		
