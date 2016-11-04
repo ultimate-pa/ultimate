@@ -41,14 +41,14 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms.BoogieExpressionTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms.NormalFormTransformer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.BlockEncodingBacktranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.preferences.PreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 
@@ -75,20 +75,19 @@ public final class AssumeMerger extends BaseBlockEncoder {
 				.getBoolean(PreferenceInitializer.OPTIMIZE_SIMPLIFY_ASSUMES_REWRITENOTEQUALS);
 		mUseSBE = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getBoolean(PreferenceInitializer.OPTIMIZE_SIMPLIFY_ASSUMES_SBE);
-		mEdgeBuilder =
-				new RcfgEdgeBuilder(product, services, storage, simplificationTechnique, xnfConversionTechnique);
+		mEdgeBuilder = new RcfgEdgeBuilder(product, services, storage, simplificationTechnique, xnfConversionTechnique);
 		mBacktranslator = backtranslator;
 	}
 
 	@Override
 	protected RootNode createResult(final RootNode root) {
-		final ArrayDeque<RCFGEdge> edges = new ArrayDeque<>();
-		final HashSet<RCFGEdge> closed = new HashSet<>();
+		final ArrayDeque<IcfgEdge> edges = new ArrayDeque<>();
+		final HashSet<IcfgEdge> closed = new HashSet<>();
 
 		edges.addAll(root.getOutgoingEdges());
 
 		while (!edges.isEmpty()) {
-			final RCFGEdge current = edges.removeFirst();
+			final IcfgEdge current = edges.removeFirst();
 			if (closed.contains(current)) {
 				continue;
 			}
@@ -167,16 +166,16 @@ public final class AssumeMerger extends BaseBlockEncoder {
 			if (disjuncts.size() > 1) {
 				// yes we can
 				for (final Expression disjunct : disjuncts) {
-					mEdgeBuilder.constructStatementSequence((ProgramPoint) current.getSource(),
-							(ProgramPoint) current.getTarget(),
+					mEdgeBuilder.constructStatementSequence((BoogieIcfgLocation) current.getSource(),
+							(BoogieIcfgLocation) current.getTarget(),
 							Collections.singletonList(new AssumeStatement(stmt.getLocation(), disjunct)));
 				}
 				return;
 			}
 			// no, we cannot, just make a normal edge
 		}
-		final StatementSequence ss = mEdgeBuilder.constructStatementSequence((ProgramPoint) current.getSource(),
-				(ProgramPoint) current.getTarget(), newStmts);
+		final StatementSequence ss = mEdgeBuilder.constructStatementSequence((BoogieIcfgLocation) current.getSource(),
+				(BoogieIcfgLocation) current.getTarget(), newStmts);
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Replacing first with second:");
 			mLogger.debug(current);

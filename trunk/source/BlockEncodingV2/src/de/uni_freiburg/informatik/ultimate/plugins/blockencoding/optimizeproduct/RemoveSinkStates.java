@@ -35,8 +35,8 @@ import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 
 /**
@@ -46,17 +46,17 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
  */
 public final class RemoveSinkStates extends BaseBlockEncoder {
 
-	private final Predicate<RCFGNode> mFunHasToBePreserved;
+	private final Predicate<IcfgLocation> mFunHasToBePreserved;
 
 	public RemoveSinkStates(final RootNode product, final IUltimateServiceProvider services,
-			final IToolchainStorage storage, final Predicate<RCFGNode> funHasToBePreserved) {
+			final IToolchainStorage storage, final Predicate<IcfgLocation> funHasToBePreserved) {
 		super(product, services, storage);
 		mFunHasToBePreserved = funHasToBePreserved;
 	}
 
 	@Override
 	protected RootNode createResult(final RootNode root) {
-		final List<RCFGNode> sinks = collectSinks(root);
+		final List<IcfgLocation> sinks = collectSinks(root);
 		if (mLogger.isDebugEnabled()) {
 			mLogger.info("Collected " + sinks.size() + " initial sink states");
 		}
@@ -67,13 +67,13 @@ public final class RemoveSinkStates extends BaseBlockEncoder {
 		return root;
 	}
 
-	private List<RCFGNode> collectSinks(final RootNode root) {
-		final ArrayList<RCFGNode> rtr = new ArrayList<>();
-		final ArrayDeque<RCFGNode> nodes = new ArrayDeque<>();
-		final HashSet<RCFGNode> closed = new HashSet<>();
+	private List<IcfgLocation> collectSinks(final RootNode root) {
+		final ArrayList<IcfgLocation> rtr = new ArrayList<>();
+		final ArrayDeque<IcfgLocation> nodes = new ArrayDeque<>();
+		final HashSet<IcfgLocation> closed = new HashSet<>();
 		nodes.addAll(root.getOutgoingNodes());
 		while (!nodes.isEmpty()) {
-			final RCFGNode current = nodes.removeFirst();
+			final IcfgLocation current = nodes.removeFirst();
 			if (closed.contains(current)) {
 				continue;
 			}
@@ -90,25 +90,25 @@ public final class RemoveSinkStates extends BaseBlockEncoder {
 		return rtr;
 	}
 
-	private void removeSinks(final List<RCFGNode> sinks) {
-		final Deque<RCFGNode> nodes = new ArrayDeque<>();
+	private void removeSinks(final List<IcfgLocation> sinks) {
+		final Deque<IcfgLocation> nodes = new ArrayDeque<>();
 		nodes.addAll(sinks);
 		while (!nodes.isEmpty()) {
-			final RCFGNode current = nodes.removeFirst();
+			final IcfgLocation current = nodes.removeFirst();
 
 			if (!current.getOutgoingEdges().isEmpty() || mFunHasToBePreserved.test(current)) {
 				continue;
 			}
 
-			final List<RCFGNode> newSinkCanidates = deleteSink(current);
+			final List<IcfgLocation> newSinkCanidates = deleteSink(current);
 			nodes.addAll(newSinkCanidates);
 		}
 	}
 
-	private List<RCFGNode> deleteSink(final RCFGNode current) {
-		final List<RCFGEdge> incoming = new ArrayList<>(current.getIncomingEdges());
-		final List<RCFGNode> sinkCanidates = new ArrayList<>();
-		for (final RCFGEdge edge : incoming) {
+	private List<IcfgLocation> deleteSink(final IcfgLocation current) {
+		final List<IcfgEdge> incoming = new ArrayList<>(current.getIncomingEdges());
+		final List<IcfgLocation> sinkCanidates = new ArrayList<>();
+		for (final IcfgEdge edge : incoming) {
 			sinkCanidates.add(edge.getSource());
 			edge.disconnectSource();
 			edge.disconnectTarget();

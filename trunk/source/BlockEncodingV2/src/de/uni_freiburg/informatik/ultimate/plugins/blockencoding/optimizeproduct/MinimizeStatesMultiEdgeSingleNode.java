@@ -35,14 +35,14 @@ import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.BlockEncodingBacktranslator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 
 /**
@@ -57,14 +57,14 @@ public class MinimizeStatesMultiEdgeSingleNode extends BaseMinimizeStates {
 	public MinimizeStatesMultiEdgeSingleNode(final RootNode product, final IUltimateServiceProvider services,
 			final IToolchainStorage storage, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique, final BlockEncodingBacktranslator backtranslator,
-			final Predicate<RCFGNode> funIsAccepting) {
+			final Predicate<IcfgLocation> funIsAccepting) {
 		super(product, services, storage, backtranslator, simplificationTechnique, xnfConversionTechnique,
 				funIsAccepting);
 	}
 
 	@Override
-	protected Collection<? extends RCFGNode> processCandidate(final RootNode root, final ProgramPoint target,
-			final Set<RCFGNode> closed) {
+	protected Collection<? extends IcfgLocation> processCandidate(final RootNode root, final IcfgLocation target,
+			final Set<IcfgLocation> closed) {
 
 		if (new HashSet<>(target.getIncomingNodes()).size() != 1
 				|| new HashSet<>(target.getOutgoingNodes()).size() != 1) {
@@ -81,8 +81,8 @@ public class MinimizeStatesMultiEdgeSingleNode extends BaseMinimizeStates {
 
 		// a precondition is that there is only one predecessor and one
 		// successor, so this is enough to get it
-		final ProgramPoint pred = (ProgramPoint) target.getIncomingEdges().get(0).getSource();
-		final ProgramPoint succ = (ProgramPoint) target.getOutgoingEdges().get(0).getTarget();
+		final BoogieIcfgLocation pred = (BoogieIcfgLocation) target.getIncomingEdges().get(0).getSource();
+		final BoogieIcfgLocation succ = (BoogieIcfgLocation) target.getOutgoingEdges().get(0).getTarget();
 
 		if (!isNotNecessary(target) && !isOneNecessary(pred, succ)) {
 			// the nodes do not fulfill the conditions, return
@@ -99,24 +99,24 @@ public class MinimizeStatesMultiEdgeSingleNode extends BaseMinimizeStates {
 		// (q1,st1;st2,q3)
 
 		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("    will remove " + target.getPosition());
+			mLogger.debug("    will remove " + target.getDebugIdentifier());
 		}
 
-		final List<RCFGEdge> predEdges = new ArrayList<>(target.getIncomingEdges());
-		final List<RCFGEdge> succEdges = new ArrayList<>(target.getOutgoingEdges());
+		final List<IcfgEdge> predEdges = new ArrayList<>(target.getIncomingEdges());
+		final List<IcfgEdge> succEdges = new ArrayList<>(target.getOutgoingEdges());
 
-		for (final RCFGEdge predEdge : predEdges) {
+		for (final IcfgEdge predEdge : predEdges) {
 			predEdge.disconnectSource();
 			predEdge.disconnectTarget();
 		}
 
-		for (final RCFGEdge succEdge : succEdges) {
+		for (final IcfgEdge succEdge : succEdges) {
 			succEdge.disconnectSource();
 			succEdge.disconnectTarget();
 		}
 
 		int newEdges = 0;
-		for (final RCFGEdge predEdge : predEdges) {
+		for (final IcfgEdge predEdge : predEdges) {
 			final CodeBlock predCB = (CodeBlock) predEdge;
 			if (predCB.getTransitionFormula().isInfeasible() == Infeasibility.INFEASIBLE) {
 				if (mLogger.isDebugEnabled()) {
@@ -124,7 +124,7 @@ public class MinimizeStatesMultiEdgeSingleNode extends BaseMinimizeStates {
 				}
 				continue;
 			}
-			for (final RCFGEdge succEdge : succEdges) {
+			for (final IcfgEdge succEdge : succEdges) {
 				final CodeBlock succCB = (CodeBlock) succEdge;
 
 				if (succCB.getTransitionFormula().isInfeasible() == Infeasibility.INFEASIBLE) {

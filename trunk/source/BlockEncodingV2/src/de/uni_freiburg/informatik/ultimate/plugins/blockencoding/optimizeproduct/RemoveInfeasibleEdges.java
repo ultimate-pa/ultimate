@@ -27,14 +27,16 @@
 package de.uni_freiburg.informatik.ultimate.plugins.blockencoding.optimizeproduct;
 
 import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.HashSet;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 
@@ -48,13 +50,13 @@ public class RemoveInfeasibleEdges extends BaseBlockEncoder {
 
 	@Override
 	protected RootNode createResult(final RootNode root) {
-		final ArrayDeque<RCFGEdge> edges = new ArrayDeque<>();
-		final HashSet<RCFGEdge> closed = new HashSet<>();
+		final Deque<IcfgEdge> edges = new ArrayDeque<>();
+		final Set<IcfgEdge> closed = new HashSet<>();
 
 		edges.addAll(root.getOutgoingEdges());
 
 		while (!edges.isEmpty()) {
-			final RCFGEdge current = edges.removeFirst();
+			final IcfgEdge current = edges.removeFirst();
 			if (closed.contains(current)) {
 				continue;
 			}

@@ -36,10 +36,11 @@ import java.util.Map.Entry;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 
@@ -77,20 +78,20 @@ public abstract class BaseBlockEncoder implements IEncoder {
 
 	protected abstract RootNode createResult(RootNode product);
 
-	protected List<ProgramPoint> getSuccessors(final ProgramPoint point) {
-		final List<ProgramPoint> rtr = new ArrayList<>();
-		for (final RCFGEdge edge : point.getOutgoingEdges()) {
-			rtr.add((ProgramPoint) edge.getTarget());
+	protected List<IcfgLocation> getSuccessors(final IcfgLocation point) {
+		final List<IcfgLocation> rtr = new ArrayList<>();
+		for (final IcfgEdge edge : point.getOutgoingEdges()) {
+			rtr.add(edge.getTarget());
 		}
 		return rtr;
 	}
 
 	protected void removeDisconnectedLocations(final RootNode root) {
-		final Deque<ProgramPoint> toRemove = new ArrayDeque<>();
+		final Deque<IcfgLocation> toRemove = new ArrayDeque<>();
 
-		for (final Entry<String, Map<String, ProgramPoint>> procPair : root.getRootAnnot().getProgramPoints()
+		for (final Entry<String, Map<String, BoogieIcfgLocation>> procPair : root.getRootAnnot().getProgramPoints()
 				.entrySet()) {
-			for (final Entry<String, ProgramPoint> pointPair : procPair.getValue().entrySet()) {
+			for (final Entry<String, BoogieIcfgLocation> pointPair : procPair.getValue().entrySet()) {
 				if (pointPair.getValue().getIncomingEdges().isEmpty()) {
 					toRemove.add(pointPair.getValue());
 				}
@@ -98,10 +99,10 @@ public abstract class BaseBlockEncoder implements IEncoder {
 		}
 
 		while (!toRemove.isEmpty()) {
-			final ProgramPoint current = toRemove.removeFirst();
-			final List<RCFGEdge> outEdges = new ArrayList<>(current.getOutgoingEdges());
-			for (final RCFGEdge out : outEdges) {
-				final ProgramPoint target = (ProgramPoint) out.getTarget();
+			final IcfgLocation current = toRemove.removeFirst();
+			final List<IcfgEdge> outEdges = new ArrayList<>(current.getOutgoingEdges());
+			for (final IcfgEdge out : outEdges) {
+				final IcfgLocation target = out.getTarget();
 				if (target.getIncomingEdges().size() == 1) {
 					toRemove.addLast(target);
 				}
@@ -113,11 +114,12 @@ public abstract class BaseBlockEncoder implements IEncoder {
 		}
 	}
 
-	protected void removeDisconnectedLocation(final RootNode root, final ProgramPoint toRemove) {
+	protected void removeDisconnectedLocation(final RootNode root, final IcfgLocation toRemove) {
 		final RootAnnot rootAnnot = root.getRootAnnot();
 		final String procName = toRemove.getProcedure();
-		final String locName = toRemove.getPosition();
-		final ProgramPoint removed = rootAnnot.getProgramPoints().get(procName).remove(locName);
+		final String debugIdentifier = toRemove.getDebugIdentifier();
+		// TODO: This seems wrong!
+		final IcfgLocation removed = rootAnnot.getProgramPoints().get(procName).remove(debugIdentifier);
 		assert toRemove.equals(removed);
 		mRemovedLocations++;
 	}

@@ -43,12 +43,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms.BoogieExpressionTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms.NormalFormTransformer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.BlockEncodingBacktranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.optimizeproduct.RcfgEdgeBuilder;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 
@@ -95,8 +95,8 @@ public class SmallBlockEncoder extends BaseObserver {
 		}
 
 		final RootNode root = (RootNode) elem;
-		final Deque<RCFGEdge> edges = new ArrayDeque<>();
-		final Set<RCFGEdge> closed = new HashSet<>();
+		final Deque<IcfgEdge> edges = new ArrayDeque<>();
+		final Set<IcfgEdge> closed = new HashSet<>();
 		final NormalFormTransformer<Expression> ct = new NormalFormTransformer<>(new BoogieExpressionTransformer());
 		final RcfgEdgeBuilder edgeBuilder =
 				new RcfgEdgeBuilder(root, mServices, mStorage, mSimplificationTechnique, mXnfConversionTechnique);
@@ -106,7 +106,7 @@ public class SmallBlockEncoder extends BaseObserver {
 		edges.addAll(root.getOutgoingEdges());
 
 		while (!edges.isEmpty()) {
-			final RCFGEdge current = edges.removeFirst();
+			final IcfgEdge current = edges.removeFirst();
 			if (closed.contains(current)) {
 				continue;
 			}
@@ -141,7 +141,7 @@ public class SmallBlockEncoder extends BaseObserver {
 						countDisjunctiveAssumes++;
 						for (final Expression disjunct : disjuncts) {
 							final StatementSequence newss = edgeBuilder.constructStatementSequence(
-									(ProgramPoint) current.getSource(), (ProgramPoint) current.getTarget(),
+									(BoogieIcfgLocation) current.getSource(), (BoogieIcfgLocation) current.getTarget(),
 									new AssumeStatement(assume.getLocation(), disjunct));
 							closed.add(newss);
 							countNewEdges++;
@@ -158,7 +158,7 @@ public class SmallBlockEncoder extends BaseObserver {
 		return false;
 	}
 
-	private void printDebugLogCurrentEdge(final RCFGEdge current) {
+	private void printDebugLogCurrentEdge(final IcfgEdge current) {
 		mLogger.debug("Processing edge " + current.hashCode() + ":");
 		mLogger.debug("    " + current);
 	}

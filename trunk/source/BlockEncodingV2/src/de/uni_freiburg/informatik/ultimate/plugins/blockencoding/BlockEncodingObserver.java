@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferencePro
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.benchmark.SizeBenchmark;
@@ -53,8 +54,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.optimizeproduct
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.preferences.PreferenceInitializer.MinimizeStates;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.annot.BuchiProgramAcceptingStateAnnotation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 
 /**
@@ -225,19 +225,19 @@ public class BlockEncodingObserver implements IUnmanagedObserver {
 				new BenchmarkResult<>(Activator.PLUGIN_ID, message, bench));
 	}
 
-	private static boolean hasToBePreserved(final RCFGNode node) {
-		if (node instanceof ProgramPoint) {
-			final ProgramPoint pp = (ProgramPoint) node;
+	private static boolean hasToBePreserved(final IcfgLocation node) {
+		if (node instanceof BoogieIcfgLocation) {
+			final BoogieIcfgLocation pp = (BoogieIcfgLocation) node;
 			return pp.isErrorLocation();
 		}
 		return false;
 	}
 
-	private static boolean isBuchiProgramAccepting(final RCFGNode node) {
+	private static boolean isBuchiProgramAccepting(final IcfgLocation node) {
 		return BuchiProgramAcceptingStateAnnotation.getAnnotation(node) != null;
 	}
 
-	private static void markBuchiProgramAccepting(final RCFGNode node) {
+	private static void markBuchiProgramAccepting(final IcfgLocation node) {
 		BUCHI_PROGRAM_ACCEPTING_STATE_ANNOTATION.annotate(node);
 	}
 

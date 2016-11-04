@@ -35,9 +35,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
@@ -73,8 +73,8 @@ public class RcfgEdgeBuilder {
 		mTransForumlaAdder.addTransitionFormulas(cb, procId, mXnfConversionTechnique, mSimplificationTechnique);
 	}
 
-	public SequentialComposition constructSequentialComposition(final ProgramPoint source, final ProgramPoint target,
-			final CodeBlock first, final CodeBlock second) {
+	public SequentialComposition constructSequentialComposition(final BoogieIcfgLocation source,
+			final BoogieIcfgLocation target, final CodeBlock first, final CodeBlock second) {
 		final SequentialComposition sc = mCbf.constructSequentialComposition(source, target, false, false,
 				Arrays.asList(new CodeBlock[] { first, second }), mXnfConversionTechnique, mSimplificationTechnique);
 		assert sc.getTransformula() != null : "Transformula was not added although it should have been";
@@ -84,8 +84,8 @@ public class RcfgEdgeBuilder {
 		return sc;
 	}
 
-	public StatementSequence constructStatementSequence(final ProgramPoint source, final ProgramPoint target,
-			final List<Statement> statements) {
+	public StatementSequence constructStatementSequence(final BoogieIcfgLocation source,
+			final BoogieIcfgLocation target, final List<Statement> statements) {
 		final StatementSequence ss = mCbf.constructStatementSequence(source, target, statements, Origin.IMPLEMENTATION);
 		addTransFormula(ss);
 		assert ss.getTransformula() != null : "Transformula was not added although it should have been";
@@ -93,8 +93,8 @@ public class RcfgEdgeBuilder {
 		return ss;
 	}
 
-	public StatementSequence constructStatementSequence(final ProgramPoint source, final ProgramPoint target,
-			final Statement stmt) {
+	public StatementSequence constructStatementSequence(final BoogieIcfgLocation source,
+			final BoogieIcfgLocation target, final Statement stmt) {
 		return constructStatementSequence(source, target, Collections.singletonList(stmt));
 	}
 }

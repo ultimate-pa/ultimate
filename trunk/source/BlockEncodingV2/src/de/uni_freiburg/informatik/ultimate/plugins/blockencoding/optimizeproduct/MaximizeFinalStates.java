@@ -36,9 +36,8 @@ import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 
 /**
@@ -49,12 +48,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 public final class MaximizeFinalStates extends BaseBlockEncoder {
 
 	private int mNewAcceptingStates;
-	private final Consumer<RCFGNode> mFunMarkAsAccepting;
-	private final Predicate<RCFGNode> mFunIsAccepting;
+	private final Consumer<IcfgLocation> mFunMarkAsAccepting;
+	private final Predicate<IcfgLocation> mFunIsAccepting;
 
 	public MaximizeFinalStates(final RootNode product, final IUltimateServiceProvider services,
-			final IToolchainStorage storage, final Consumer<RCFGNode> funMarkAsAccepting,
-			final Predicate<RCFGNode> funIsAccepting) {
+			final IToolchainStorage storage, final Consumer<IcfgLocation> funMarkAsAccepting,
+			final Predicate<IcfgLocation> funIsAccepting) {
 		super(product, services, storage);
 		mNewAcceptingStates = 0;
 		mFunMarkAsAccepting = funMarkAsAccepting;
@@ -74,15 +73,15 @@ public final class MaximizeFinalStates extends BaseBlockEncoder {
 	}
 
 	private int processInternal(final RootNode root) {
-		final Deque<ProgramPoint> nodes = new ArrayDeque<>();
-		final Set<ProgramPoint> closed = new HashSet<>();
+		final Deque<IcfgLocation> nodes = new ArrayDeque<>();
+		final Set<IcfgLocation> closed = new HashSet<>();
 		int newAcceptingStates = 0;
-		for (final RCFGEdge edge : root.getOutgoingEdges()) {
-			nodes.add((ProgramPoint) edge.getTarget());
+		for (final IcfgEdge edge : root.getOutgoingEdges()) {
+			nodes.add(edge.getTarget());
 		}
 
 		while (!nodes.isEmpty()) {
-			final ProgramPoint current = nodes.removeFirst();
+			final IcfgLocation current = nodes.removeFirst();
 			if (closed.contains(current)) {
 				continue;
 			}
@@ -93,14 +92,14 @@ public final class MaximizeFinalStates extends BaseBlockEncoder {
 				continue;
 			}
 
-			final List<ProgramPoint> succs = getSuccessors(current);
+			final List<IcfgLocation> succs = getSuccessors(current);
 			if (succs.isEmpty()) {
 				// there are no successors
 				continue;
 			}
 
 			boolean allSuccessorsAreAccepting = true;
-			for (final ProgramPoint succ : succs) {
+			for (final IcfgLocation succ : succs) {
 				allSuccessorsAreAccepting = allSuccessorsAreAccepting && mFunIsAccepting.test(succ);
 				nodes.add(succ);
 			}

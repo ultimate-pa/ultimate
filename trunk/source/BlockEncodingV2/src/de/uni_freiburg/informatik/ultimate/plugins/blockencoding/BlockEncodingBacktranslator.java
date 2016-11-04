@@ -37,8 +37,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecut
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
 
 /**
@@ -46,34 +46,34 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.Rc
  * @author dietsch@informatik.uni-freiburg.de
  *
  */
-public class BlockEncodingBacktranslator extends DefaultTranslator<RCFGEdge, RCFGEdge, Term, Term, String, String> {
+public class BlockEncodingBacktranslator extends DefaultTranslator<IcfgEdge, IcfgEdge, Term, Term, String, String> {
 
-	private final HashMap<RCFGEdge, RCFGEdge> mEdgeMapping;
+	private final HashMap<IcfgEdge, IcfgEdge> mEdgeMapping;
 
-	public BlockEncodingBacktranslator(final Class<RCFGEdge> traceElementType, final Class<Term> expressionType) {
+	public BlockEncodingBacktranslator(final Class<IcfgEdge> traceElementType, final Class<Term> expressionType) {
 		super(traceElementType, traceElementType, expressionType, expressionType);
 		mEdgeMapping = new HashMap<>();
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public IProgramExecution<RCFGEdge, Term>
-			translateProgramExecution(final IProgramExecution<RCFGEdge, Term> programExecution) {
+	public IProgramExecution<IcfgEdge, Term>
+			translateProgramExecution(final IProgramExecution<IcfgEdge, Term> programExecution) {
 
 		Map<TermVariable, Boolean>[] oldBranchEncoders = null;
 		if (programExecution instanceof RcfgProgramExecution) {
 			oldBranchEncoders = ((RcfgProgramExecution) programExecution).getBranchEncoders();
 		}
 
-		final ArrayList<RCFGEdge> newTrace = new ArrayList<>();
+		final ArrayList<IcfgEdge> newTrace = new ArrayList<>();
 		final Map<Integer, ProgramState<Term>> newValues = new HashMap<>();
 		final ArrayList<Map<TermVariable, Boolean>> newBranchEncoders = new ArrayList<>();
 
 		addProgramState(-1, newValues, programExecution.getInitialProgramState());
 
 		for (int i = 0; i < programExecution.getLength(); ++i) {
-			final AtomicTraceElement<RCFGEdge> currentATE = programExecution.getTraceElement(i);
-			final RCFGEdge mappedEdge = mEdgeMapping.get(currentATE.getTraceElement());
+			final AtomicTraceElement<IcfgEdge> currentATE = programExecution.getTraceElement(i);
+			final IcfgEdge mappedEdge = mEdgeMapping.get(currentATE.getTraceElement());
 			if (mappedEdge == null || !(mappedEdge instanceof CodeBlock)) {
 				// skip this, its not worth it.
 				continue;
@@ -95,7 +95,7 @@ public class BlockEncodingBacktranslator extends DefaultTranslator<RCFGEdge, RCF
 	}
 
 	@Override
-	public List<RCFGEdge> translateTrace(final List<RCFGEdge> trace) {
+	public List<IcfgEdge> translateTrace(final List<IcfgEdge> trace) {
 		return super.translateTrace(trace);
 	}
 
@@ -104,8 +104,8 @@ public class BlockEncodingBacktranslator extends DefaultTranslator<RCFGEdge, RCF
 		return super.translateExpression(expression);
 	}
 
-	public void mapEdges(final RCFGEdge newEdge, final RCFGEdge originalEdge) {
-		final RCFGEdge realOriginalEdge = mEdgeMapping.get(originalEdge);
+	public void mapEdges(final IcfgEdge newEdge, final IcfgEdge originalEdge) {
+		final IcfgEdge realOriginalEdge = mEdgeMapping.get(originalEdge);
 		if (realOriginalEdge != null) {
 			// this means we replaced an edge which we already replaced again
 			// with something new, we have to map this to the real original

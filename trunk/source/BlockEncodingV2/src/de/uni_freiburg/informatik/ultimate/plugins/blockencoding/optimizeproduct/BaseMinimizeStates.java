@@ -36,6 +36,8 @@ import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.Activator;
@@ -43,9 +45,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.BlockEncodingBa
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
@@ -60,14 +59,14 @@ import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 public abstract class BaseMinimizeStates extends BaseBlockEncoder {
 
 	private final boolean mIgnoreBlowup;
-	private final Predicate<RCFGNode> mFunHasToBePreserved;
+	private final Predicate<IcfgLocation> mFunHasToBePreserved;
 	private final RcfgEdgeBuilder mTransFormulaBuilder;
 	private final BlockEncodingBacktranslator mBacktranslator;
 
 	public BaseMinimizeStates(final RootNode initialNode, final IUltimateServiceProvider services,
 			final IToolchainStorage storage, final BlockEncodingBacktranslator backtranslator,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
-			final Predicate<RCFGNode> funHasToBePreserved) {
+			final Predicate<IcfgLocation> funHasToBePreserved) {
 		super(initialNode, services, storage);
 		mIgnoreBlowup = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getBoolean(PreferenceInitializer.OPTIMIZE_MINIMIZE_STATES_IGNORE_BLOWUP);
@@ -79,15 +78,15 @@ public abstract class BaseMinimizeStates extends BaseBlockEncoder {
 
 	@Override
 	protected final RootNode createResult(final RootNode root) {
-		final Deque<RCFGNode> nodes = new ArrayDeque<>();
-		final Set<RCFGNode> closed = new HashSet<>();
+		final Deque<IcfgLocation> nodes = new ArrayDeque<>();
+		final Set<IcfgLocation> closed = new HashSet<>();
 
 		nodes.addAll(root.getOutgoingNodes());
 
 		while (!nodes.isEmpty()) {
 			checkForTimeoutOrCancellation();
 
-			final RCFGNode current = nodes.removeFirst();
+			final IcfgLocation current = nodes.removeFirst();
 			if (closed.contains(current)) {
 				continue;
 			}
@@ -98,7 +97,7 @@ public abstract class BaseMinimizeStates extends BaseBlockEncoder {
 			if (current.getIncomingEdges().size() == 1 && current.getIncomingEdges().get(0) instanceof RootEdge) {
 				nodes.addAll(current.getOutgoingNodes());
 			} else {
-				nodes.addAll(processCandidate(root, (ProgramPoint) current, closed));
+				nodes.addAll(processCandidate(root, current, closed));
 			}
 		}
 		if (mRemovedEdges > 0) {
@@ -123,17 +122,17 @@ public abstract class BaseMinimizeStates extends BaseBlockEncoder {
 	 * @return A set of nodes that should be processed. May not be null. Nodes already in the closed set will not be
 	 *         processed again.
 	 */
-	protected abstract Collection<? extends RCFGNode> processCandidate(RootNode root, ProgramPoint target,
-			Set<RCFGNode> closed);
+	protected abstract Collection<? extends IcfgLocation> processCandidate(RootNode root, IcfgLocation target,
+			Set<IcfgLocation> closed);
 
-	protected boolean areCombinableEdgePairs(final List<RCFGEdge> predEdges, final List<RCFGEdge> succEdges) {
+	protected boolean areCombinableEdgePairs(final List<IcfgEdge> predEdges, final List<IcfgEdge> succEdges) {
 		if (!mIgnoreBlowup && isLarge(predEdges, succEdges)) {
 			// we would introduce more edges than we remove, we do not want
 			// that
 			return false;
 		}
 
-		final boolean rtr = predEdges.stream().map(pred -> (Predicate<RCFGEdge>) (a -> isCombinableEdgePair(pred, a)))
+		final boolean rtr = predEdges.stream().map(pred -> (Predicate<IcfgEdge>) (a -> isCombinableEdgePair(pred, a)))
 				.allMatch(a -> succEdges.stream().allMatch(a));
 		assert rtr == neverTrustMyLambda(predEdges,
 				succEdges) : "I am not sure that this does what it should, so I build this assert";
@@ -143,15 +142,15 @@ public abstract class BaseMinimizeStates extends BaseBlockEncoder {
 	/**
 	 * @return true iff the cross-product is larger than the sum of elements.
 	 */
-	private static boolean isLarge(final List<RCFGEdge> predEdges, final List<RCFGEdge> succEdges) {
+	private static boolean isLarge(final List<IcfgEdge> predEdges, final List<IcfgEdge> succEdges) {
 		final int predEdgesSize = predEdges.size();
 		final int succEdgesSize = succEdges.size();
 		return (predEdgesSize + succEdgesSize < predEdgesSize * succEdgesSize);
 	}
 
-	private boolean neverTrustMyLambda(final List<RCFGEdge> predEdges, final List<RCFGEdge> succEdges) {
-		for (final RCFGEdge predEdge : predEdges) {
-			final Predicate<RCFGEdge> predicate = a -> isCombinableEdgePair(predEdge, a);
+	private boolean neverTrustMyLambda(final List<IcfgEdge> predEdges, final List<IcfgEdge> succEdges) {
+		for (final IcfgEdge predEdge : predEdges) {
+			final Predicate<IcfgEdge> predicate = a -> isCombinableEdgePair(predEdge, a);
 			if (!succEdges.stream().allMatch(predicate)) {
 				return false;
 			}
@@ -159,7 +158,7 @@ public abstract class BaseMinimizeStates extends BaseBlockEncoder {
 		return true;
 	}
 
-	protected boolean isCombinableEdgePair(final RCFGEdge predEdge, final RCFGEdge succEdge) {
+	protected boolean isCombinableEdgePair(final IcfgEdge predEdge, final IcfgEdge succEdge) {
 		if (!(predEdge instanceof CodeBlock) || !(succEdge instanceof CodeBlock)) {
 			// if one of the edges is no codeblock, it is a root edge,
 			// and we cannot apply the rule
@@ -180,15 +179,15 @@ public abstract class BaseMinimizeStates extends BaseBlockEncoder {
 		return (predEdge.getTarget() != predEdge.getSource()) && (succEdge.getTarget() != succEdge.getSource());
 	}
 
-	protected boolean areAllNecessary(final List<RCFGNode> nodes) {
+	protected boolean areAllNecessary(final List<IcfgLocation> nodes) {
 		return nodes.stream().allMatch(mFunHasToBePreserved);
 	}
 
-	protected boolean isNotNecessary(final RCFGNode target) {
+	protected boolean isNotNecessary(final IcfgLocation target) {
 		return mFunHasToBePreserved.negate().test(target);
 	}
 
-	protected boolean isOneNecessary(final RCFGNode pred, final RCFGNode succ) {
+	protected boolean isOneNecessary(final IcfgLocation pred, final IcfgLocation succ) {
 		return mFunHasToBePreserved.test(pred) || mFunHasToBePreserved.test(succ);
 	}
 

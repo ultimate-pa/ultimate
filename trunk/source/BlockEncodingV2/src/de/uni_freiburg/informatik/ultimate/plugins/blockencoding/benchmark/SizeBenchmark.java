@@ -28,11 +28,13 @@ package de.uni_freiburg.informatik.ultimate.plugins.blockencoding.benchmark;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
@@ -45,14 +47,14 @@ public class SizeBenchmark implements ICsvProviderProvider<Integer> {
 	private final String mLabel;
 
 	public SizeBenchmark(final RootNode root, final String label) {
-		final ArrayDeque<RCFGEdge> edges = new ArrayDeque<>();
-		final HashSet<RCFGEdge> closedE = new HashSet<>();
-		final HashSet<RCFGNode> closedV = new HashSet<>();
+		final Deque<IcfgEdge> edges = new ArrayDeque<>();
+		final Set<IcfgEdge> closedE = new HashSet<>();
+		final Set<IcfgLocation> closedV = new HashSet<>();
 
 		edges.addAll(root.getOutgoingEdges());
 
 		while (!edges.isEmpty()) {
-			final RCFGEdge current = edges.removeFirst();
+			final IcfgEdge current = edges.removeFirst();
 			if (closedE.contains(current)) {
 				continue;
 			}
@@ -63,7 +65,7 @@ public class SizeBenchmark implements ICsvProviderProvider<Integer> {
 			}
 
 			closedV.add(current.getTarget());
-			for (final RCFGEdge next : current.getTarget().getOutgoingEdges()) {
+			for (final IcfgEdge next : current.getTarget().getOutgoingEdges()) {
 				edges.add(next);
 			}
 		}

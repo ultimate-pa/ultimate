@@ -35,17 +35,16 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.BaseMultigraphEdge;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.BlockEncodingBacktranslator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 
@@ -60,22 +59,22 @@ public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
 	public MinimizeStatesMultiEdgeMultiNode(final RootNode product, final IUltimateServiceProvider services,
 			final IToolchainStorage storage, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique, final BlockEncodingBacktranslator backtranslator,
-			final Predicate<RCFGNode> funIsAccepting) {
+			final Predicate<IcfgLocation> funIsAccepting) {
 		super(product, services, storage, backtranslator, simplificationTechnique, xnfConversionTechnique,
 				funIsAccepting);
 	}
 
 	@Override
-	protected Collection<? extends RCFGNode> processCandidate(final RootNode root, final ProgramPoint target,
-			final Set<RCFGNode> closed) {
+	protected Collection<? extends IcfgLocation> processCandidate(final RootNode root, final IcfgLocation target,
+			final Set<IcfgLocation> closed) {
 		// we have the incoming edges
 		// ei = (qi,sti,q) in EI
 		// and the outgoing edges
 		// ej = (q,stj,qj) in EO
 		// and we will try to replace them by |EI| * |EO| edges
 
-		final List<RCFGNode> incomingNodes = target.getIncomingNodes();
-		final List<RCFGNode> outgoingNodes = target.getOutgoingNodes();
+		final List<IcfgLocation> incomingNodes = target.getIncomingNodes();
+		final List<IcfgLocation> outgoingNodes = target.getOutgoingNodes();
 
 		if (!incomingNodes.isEmpty() && !outgoingNodes.isEmpty() && !isNotNecessary(target)
 				&& !(areAllNecessary(incomingNodes) && areAllNecessary(outgoingNodes))) {
@@ -94,11 +93,11 @@ public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
 		// we add a new edge (qi,sti;stj,qj)
 
 		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("    will try to remove " + target.getPosition());
+			mLogger.debug("    will try to remove " + target.getDebugIdentifier());
 		}
 
-		final List<RCFGEdge> predEdges = new ArrayList<>(target.getIncomingEdges());
-		final List<RCFGEdge> succEdges = new ArrayList<>(target.getOutgoingEdges());
+		final List<IcfgEdge> predEdges = new ArrayList<>(target.getIncomingEdges());
+		final List<IcfgEdge> succEdges = new ArrayList<>(target.getOutgoingEdges());
 
 		// collect information for new edges beforehand (because
 		// SequentialComposition disconnects the edges and we wont get their
@@ -106,11 +105,11 @@ public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
 		final List<EdgeConstructionInfo> infos = new ArrayList<>();
 		final StatementExtractor extractor = new StatementExtractor(mLogger);
 
-		final Iterator<RCFGEdge> predIter = predEdges.iterator();
+		final Iterator<IcfgEdge> predIter = predEdges.iterator();
 		boolean canRemoveSuccEdges = true;
 		boolean canRemovePredEdges = true;
 		while (predIter.hasNext()) {
-			final RCFGEdge predEdge = predIter.next();
+			final IcfgEdge predEdge = predIter.next();
 
 			final CodeBlock predCB = (CodeBlock) predEdge;
 			if (predCB.getTransitionFormula().isInfeasible() == Infeasibility.INFEASIBLE) {
@@ -147,7 +146,7 @@ public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
 			removedEdges += disconnectEdges(succEdges);
 		}
 
-		final Set<RCFGNode> rtr = new HashSet<>();
+		final Set<IcfgLocation> rtr = new HashSet<>();
 
 		// add new edges
 		for (final EdgeConstructionInfo info : infos) {
@@ -163,8 +162,8 @@ public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
 			// successors of the node we wanted to remove
 			rtr.addAll(target.getOutgoingNodes());
 			if (mLogger.isDebugEnabled()) {
-				mLogger.debug(
-						"    could not remove " + target.getPosition() + ", because some incoming edges are left");
+				mLogger.debug("    could not remove " + target.getDebugIdentifier()
+						+ ", because some incoming edges are left");
 			}
 		}
 
@@ -180,13 +179,12 @@ public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
 		return getEdgeBuilder().constructStatementSequence(info.getSource(), info.getTarget(), info.getStatements());
 	}
 
-	private boolean processSuccessorEdges(final Collection<RCFGEdge> succEdges, final StatementExtractor extractor,
-			final Collection<EdgeConstructionInfo> infos,
-			final BaseMultigraphEdge<RCFGNode, RCFGEdge, RCFGNode, RCFGEdge> predEdge, final List<Statement> first) {
-		final Iterator<RCFGEdge> succIter = succEdges.iterator();
+	private boolean processSuccessorEdges(final Collection<IcfgEdge> succEdges, final StatementExtractor extractor,
+			final Collection<EdgeConstructionInfo> infos, final IcfgEdge predEdge, final List<Statement> first) {
+		final Iterator<IcfgEdge> succIter = succEdges.iterator();
 		boolean canRemovePredEdges = true;
 		while (succIter.hasNext()) {
-			final RCFGEdge succEdge = succIter.next();
+			final IcfgEdge succEdge = succIter.next();
 			final CodeBlock succCB = (CodeBlock) succEdge;
 
 			if (succCB.getTransitionFormula().isInfeasible() == Infeasibility.INFEASIBLE) {
@@ -213,16 +211,16 @@ public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
 			// predecessor edge to the target of the successor edge and being
 			// labeled with the statements of the first edge followed by the
 			// statements of the second edge.
-			infos.add(new EdgeConstructionInfo((ProgramPoint) predEdge.getSource(), (ProgramPoint) succEdge.getTarget(),
-					first, second));
+			infos.add(new EdgeConstructionInfo((BoogieIcfgLocation) predEdge.getSource(),
+					(BoogieIcfgLocation) succEdge.getTarget(), first, second));
 
 		}
 		return canRemovePredEdges;
 	}
 
-	private static int disconnectEdges(final Collection<RCFGEdge> edges) {
+	private static int disconnectEdges(final Collection<IcfgEdge> edges) {
 		int removedEdges = 0;
-		for (final RCFGEdge succEdge : edges) {
+		for (final IcfgEdge succEdge : edges) {
 			succEdge.disconnectSource();
 			succEdge.disconnectTarget();
 			removedEdges++;
@@ -231,24 +229,24 @@ public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
 	}
 
 	private static final class EdgeConstructionInfo {
-		private final ProgramPoint mSource;
-		private final ProgramPoint mTarget;
+		private final BoogieIcfgLocation mSource;
+		private final BoogieIcfgLocation mTarget;
 		private final List<Statement> mFirst;
 		private final List<Statement> mSecond;
 
-		private EdgeConstructionInfo(final ProgramPoint source, final ProgramPoint target, final List<Statement> first,
-				final List<Statement> second) {
+		private EdgeConstructionInfo(final BoogieIcfgLocation source, final BoogieIcfgLocation target,
+				final List<Statement> first, final List<Statement> second) {
 			mSource = source;
 			mTarget = target;
 			mFirst = first;
 			mSecond = second;
 		}
 
-		private ProgramPoint getSource() {
+		private BoogieIcfgLocation getSource() {
 			return mSource;
 		}
 
-		private ProgramPoint getTarget() {
+		private BoogieIcfgLocation getTarget() {
 			return mTarget;
 		}
 
