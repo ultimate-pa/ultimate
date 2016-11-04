@@ -32,13 +32,13 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
-import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType;
-import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.generic.LiteralCollection;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.TypeUtils.TypeUtils;
 
 /**
  * Implementation of a widening operator in the interval domain which widens according to number literals occurring in
@@ -67,51 +67,32 @@ public class IntervalLiteralWideningOperator implements IAbstractStateBinaryOper
 		final List<IBoogieVar> arraysToWiden = new ArrayList<>();
 		final List<IntervalDomainValue> arrayValues = new ArrayList<>();
 
-		for (final IBoogieVar var : first.getVariables()) {
-			final IBoogieVar type = var;
+		// TODO: Add array support.
+		final Consumer<IBoogieVar> varConsumer = var -> {
+			final IntervalDomainValue firstValue = first.getValue(var);
+			final IntervalDomainValue secondValue = second.getValue(var);
 
-			if (type.getIType() instanceof PrimitiveType) {
-				final PrimitiveType primitiveType = (PrimitiveType) type.getIType();
-
-				if (primitiveType.getTypeCode() == PrimitiveType.BOOL) {
-					final BooleanValue firstValue = first.getBooleanValue(var);
-					final BooleanValue secondValue = second.getBooleanValue(var);
-
-					if (!firstValue.isEqualTo(secondValue)) {
-						boolsToWiden.add(var);
-						// Bools are always set to top.
-						boolValues.add(BooleanValue.TOP);
-					}
-				} else {
-					final IntervalDomainValue firstValue = first.getValue(var);
-					final IntervalDomainValue secondValue = second.getValue(var);
-
-					if (secondValue.isContainedIn(firstValue)) {
-						varsToWiden.add(var);
-						varValues.add(firstValue);
-					} else if (!firstValue.isEqualTo(secondValue)) {
-						varsToWiden.add(var);
-						varValues.add(determineNextValue(firstValue, secondValue));
-					}
-				}
-			} else if (type.getIType() instanceof ArrayType) {
-				// TODO: We treat arrays as normal variables for the time being.
-				final IntervalDomainValue firstValue = first.getValue(var);
-				final IntervalDomainValue secondValue = second.getValue(var);
-
-				if (!firstValue.isEqualTo(secondValue)) {
-					arraysToWiden.add(var);
-					arrayValues.add(determineNextValue(firstValue, secondValue));
-				}
-			} else {
-				final IntervalDomainValue firstValue = first.getValue(var);
-				final IntervalDomainValue secondValue = second.getValue(var);
-
-				if (!firstValue.isEqualTo(secondValue)) {
-					varsToWiden.add(var);
-					varValues.add(determineNextValue(firstValue, secondValue));
-				}
+			if (secondValue.isContainedIn(firstValue)) {
+				varsToWiden.add(var);
+				varValues.add(firstValue);
+			} else if (!firstValue.isEqualTo(secondValue)) {
+				varsToWiden.add(var);
+				varValues.add(determineNextValue(firstValue, secondValue));
 			}
+		};
+		final Consumer<IBoogieVar> boolConsumer = var -> {
+			final BooleanValue firstValue = first.getBooleanValue(var);
+			final BooleanValue secondValue = second.getBooleanValue(var);
+
+			if (!firstValue.isEqualTo(secondValue)) {
+				boolsToWiden.add(var);
+				// Bools are always widened to top.
+				boolValues.add(BooleanValue.TOP);
+			}
+		};
+
+		for (final IBoogieVar var : first.getVariables()) {
+			TypeUtils.consumeVariable(varConsumer, boolConsumer, null, var);
 		}
 
 		final IBoogieVar[] vars = varsToWiden.toArray(new IBoogieVar[varsToWiden.size()]);
@@ -146,7 +127,7 @@ public class IntervalLiteralWideningOperator implements IAbstractStateBinaryOper
 		// [.......]
 		// @formatter:on
 		if (firstLower.isInfinity()
-				|| (!firstLower.isInfinity() && !secondLower.isInfinity() && firstLower.compareTo(secondLower) <= 0)) {
+		        || (!firstLower.isInfinity() && !secondLower.isInfinity() && firstLower.compareTo(secondLower) <= 0)) {
 			return new IntervalDomainValue(firstLower, widenUpper(firstUpper, secondUpper));
 		}
 

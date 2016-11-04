@@ -36,6 +36,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieVisitor;
@@ -60,8 +61,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
-import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType;
-import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
@@ -72,6 +71,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluatorFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.INAryEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainState;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.TypeUtils.TypeUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Permutation;
@@ -83,7 +83,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.Permutation;
  *
  */
 public abstract class NonrelationalStatementProcessor<STATE extends NonrelationalState<STATE, V>, V extends INonrelationalValue<V>>
-		extends BoogieVisitor {
+        extends BoogieVisitor {
 
 	private final Boogie2SmtSymbolTable mBoogie2SmtSymbolTable;
 	private final BoogieSymbolTable mSymbolTable;
@@ -97,7 +97,7 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 	private Map<LeftHandSide, IBoogieVar> mTemporaryVars;
 
 	protected NonrelationalStatementProcessor(final ILogger logger, final BoogieSymbolTable boogieSymbolTable,
-			final Boogie2SmtSymbolTable bpl2SmtTable, final int maxParallelStates) {
+	        final Boogie2SmtSymbolTable bpl2SmtTable, final int maxParallelStates) {
 		mBoogie2SmtSymbolTable = bpl2SmtTable;
 		mSymbolTable = boogieSymbolTable;
 		mLogger = logger;
@@ -111,7 +111,7 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 	}
 
 	public List<STATE> process(final STATE oldState, final Statement statement,
-			final Map<LeftHandSide, IBoogieVar> tmpVars) {
+	        final Map<LeftHandSide, IBoogieVar> tmpVars) {
 		assert oldState != null;
 		assert statement != null;
 		assert tmpVars != null;
@@ -153,7 +153,7 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 		// TODO: implement proper array handling. Currently, TOP is returned for all array accesses.
 		if (expr instanceof ArrayStoreExpression || expr instanceof ArrayAccessExpression) {
 			mExpressionEvaluator.addEvaluator(mEvaluatorFactory
-					.createSingletonValueTopEvaluator(EvaluatorUtils.getEvaluatorType(expr.getType())));
+			        .createSingletonValueTopEvaluator(EvaluatorUtils.getEvaluatorType(expr.getType())));
 			return expr;
 		}
 		Expression oldExpr = expr;
@@ -167,8 +167,8 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 
 		if (mLogger.isDebugEnabled() && expr != newExpr) {
 			mLogger.debug(new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Expression ")
-					.append(BoogiePrettyPrinter.print(expr)).append(" rewritten to: ")
-					.append(BoogiePrettyPrinter.print(newExpr)).toString());
+			        .append(BoogiePrettyPrinter.print(expr)).append(" rewritten to: ")
+			        .append(BoogiePrettyPrinter.print(newExpr)).toString());
 		}
 		return super.processExpression(newExpr);
 	}
@@ -186,7 +186,7 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 	 *            The preprocessed expression.
 	 */
 	protected void addEvaluators(final ExpressionEvaluator<V, STATE, CodeBlock> evaluator,
-			final IEvaluatorFactory<V, STATE, CodeBlock> evaluatorFactory, final Expression expr) {
+	        final IEvaluatorFactory<V, STATE, CodeBlock> evaluatorFactory, final Expression expr) {
 		// not necessary for non-relational statement processor
 	}
 
@@ -233,7 +233,7 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 		// each of the lists contains the result of one assignment; the end result has to be the cartesian product
 		final List<List<STATE>> stateList = Permutation.crossProduct(multiAssignmentResults);
 		stateList.stream().map(stateAsList -> stateAsList.stream().reduce((a, b) -> a.patch(b)))
-				.forEach(a -> mReturnState.add(mOldState.patch(a.get())));
+		        .forEach(a -> mReturnState.add(mOldState.patch(a.get())));
 	}
 
 	/**
@@ -275,29 +275,16 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 
 		if (results.isEmpty()) {
 			throw new UnsupportedOperationException(
-					"There is supposed to be at least on evaluation result for assignment expressions.");
+			        "There is supposed to be at least on evaluation result for assignment expressions.");
 		}
 
 		final List<STATE> newStates = new ArrayList<>();
 		for (final IEvaluationResult<V> res : results) {
-			final STATE newState;
+			final Function<IBoogieVar, STATE> varFunction = var -> oldstate.setValue(var, res.getValue());
+			final Function<IBoogieVar, STATE> boolFunction = var -> oldstate.setBooleanValue(var,
+			        res.getBooleanValue());
 
-			if (lhsVar.getIType() instanceof PrimitiveType) {
-				final PrimitiveType primitiveType = (PrimitiveType) lhsVar.getIType();
-
-				if (primitiveType.getTypeCode() == PrimitiveType.BOOL) {
-					newState = oldstate.setBooleanValue(lhsVar, res.getBooleanValue());
-				} else {
-					newState = oldstate.setValue(lhsVar, res.getValue());
-				}
-			} else if (lhsVar.getIType() instanceof ArrayType) {
-				// TODO: treat array correctly
-				// We treat Arrays as normal variables for the time being.
-				newState = oldstate.setValue(lhsVar, res.getValue());
-			} else {
-				// just assume that the domain value handles those
-				newState = oldstate.setValue(lhsVar, res.getValue());
-			}
+			final STATE newState = TypeUtils.applyVariableFunction(varFunction, boolFunction, null, lhsVar);
 
 			newStates.add(newState);
 		}
@@ -336,13 +323,13 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 
 		for (final IEvaluationResult<V> res : result) {
 			if (res.getValue().isBottom() || res.getBooleanValue() == BooleanValue.BOTTOM
-					|| res.getBooleanValue() == BooleanValue.FALSE) {
+			        || res.getBooleanValue() == BooleanValue.FALSE) {
 				if (!mOldState.getVariables().isEmpty()) {
 					mReturnState.add(mOldState.bottomState());
 				}
 			} else {
-				final List<STATE> resultStates =
-						mExpressionEvaluator.getRootEvaluator().inverseEvaluate(res, mOldState);
+				final List<STATE> resultStates = mExpressionEvaluator.getRootEvaluator().inverseEvaluate(res,
+				        mOldState);
 				mReturnState.addAll(resultStates);
 			}
 		}
@@ -354,20 +341,14 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 		for (final VariableLHS var : statement.getIdentifiers()) {
 			final IBoogieVar type = getBoogieVar(var);
 
-			if (type.getIType() instanceof PrimitiveType) {
-				final PrimitiveType primitiveType = (PrimitiveType) type.getIType();
+			// TODO: Add array support.
+			final STATE finalCurrentNewState = currentNewState;
+			final Function<IBoogieVar, STATE> varFunction = variable -> finalCurrentNewState.setValue(variable,
+			        finalCurrentNewState.createTopValue());
+			final Function<IBoogieVar, STATE> boolFunction = variable -> finalCurrentNewState.setBooleanValue(variable,
+			        BooleanValue.TOP);
 
-				if (primitiveType.getTypeCode() == PrimitiveType.BOOL) {
-					currentNewState = currentNewState.setBooleanValue(type, BooleanValue.TOP);
-				} else {
-					currentNewState = currentNewState.setValue(type, currentNewState.createTopValue());
-				}
-			} else if (type.getIType() instanceof ArrayType) {
-				// TODO: Implement better handling of arrays.
-				currentNewState = currentNewState.setValue(type, currentNewState.createTopValue());
-			} else {
-				currentNewState = currentNewState.setValue(type, currentNewState.createTopValue());
-			}
+			currentNewState = TypeUtils.applyVariableFunction(varFunction, boolFunction, null, type);
 		}
 
 		mReturnState.add(currentNewState);
@@ -380,22 +361,22 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 
 	@Override
 	protected void visit(final IntegerLiteral expr) {
-		final IEvaluator<V, STATE, CodeBlock> evaluator =
-				mEvaluatorFactory.createSingletonValueExpressionEvaluator(expr.getValue(), BigInteger.class);
+		final IEvaluator<V, STATE, CodeBlock> evaluator = mEvaluatorFactory
+		        .createSingletonValueExpressionEvaluator(expr.getValue(), BigInteger.class);
 		mExpressionEvaluator.addEvaluator(evaluator);
 	}
 
 	@Override
 	protected void visit(final RealLiteral expr) {
-		final IEvaluator<V, STATE, CodeBlock> evaluator =
-				mEvaluatorFactory.createSingletonValueExpressionEvaluator(expr.getValue(), BigDecimal.class);
+		final IEvaluator<V, STATE, CodeBlock> evaluator = mEvaluatorFactory
+		        .createSingletonValueExpressionEvaluator(expr.getValue(), BigDecimal.class);
 		mExpressionEvaluator.addEvaluator(evaluator);
 	}
 
 	@Override
 	protected void visit(final BinaryExpression expr) {
-		final INAryEvaluator<V, STATE, CodeBlock> evaluator =
-				mEvaluatorFactory.createNAryExpressionEvaluator(2, EvaluatorUtils.getEvaluatorType(expr.getType()));
+		final INAryEvaluator<V, STATE, CodeBlock> evaluator = mEvaluatorFactory.createNAryExpressionEvaluator(2,
+		        EvaluatorUtils.getEvaluatorType(expr.getType()));
 		evaluator.setOperator(expr.getOperator());
 		mExpressionEvaluator.addEvaluator(evaluator);
 	}
@@ -407,8 +388,8 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 
 		// If we don't have a specification for the function, we return top.
 		if (decls == null || decls.isEmpty()) {
-			evaluator =
-					mEvaluatorFactory.createSingletonValueTopEvaluator(EvaluatorUtils.getEvaluatorType(expr.getType()));
+			evaluator = mEvaluatorFactory
+			        .createSingletonValueTopEvaluator(EvaluatorUtils.getEvaluatorType(expr.getType()));
 		} else {
 
 			assert decls.get(0) instanceof FunctionDeclaration;
@@ -418,11 +399,11 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 			// If the body is empty (as in undefined), we return top.
 			if (fun.getBody() == null) {
 				evaluator = mEvaluatorFactory.createFunctionEvaluator(fun.getIdentifier(), fun.getInParams().length,
-						EvaluatorUtils.getEvaluatorType(expr.getType()));
+				        EvaluatorUtils.getEvaluatorType(expr.getType()));
 			} else {
 				// TODO Handle bitshifts, bitwise and, bitwise or, etc.
 				throw new UnsupportedOperationException(
-						"The function application for not inlined functions is not yet supported.");
+				        "The function application for not inlined functions is not yet supported.");
 			}
 		}
 
@@ -431,16 +412,16 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 
 	@Override
 	protected void visit(final IdentifierExpression expr) {
-		final IEvaluator<V, STATE, CodeBlock> evaluator =
-				mEvaluatorFactory.createSingletonVariableExpressionEvaluator(getBoogieVar(expr));
+		final IEvaluator<V, STATE, CodeBlock> evaluator = mEvaluatorFactory
+		        .createSingletonVariableExpressionEvaluator(getBoogieVar(expr));
 		mExpressionEvaluator.addEvaluator(evaluator);
 		super.visit(expr);
 	}
 
 	@Override
 	protected void visit(final UnaryExpression expr) {
-		final INAryEvaluator<V, STATE, CodeBlock> evaluator =
-				mEvaluatorFactory.createNAryExpressionEvaluator(1, EvaluatorUtils.getEvaluatorType(expr.getType()));
+		final INAryEvaluator<V, STATE, CodeBlock> evaluator = mEvaluatorFactory.createNAryExpressionEvaluator(1,
+		        EvaluatorUtils.getEvaluatorType(expr.getType()));
 		evaluator.setOperator(expr.getOperator());
 		mExpressionEvaluator.addEvaluator(evaluator);
 		super.visit(expr);
@@ -449,7 +430,7 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 	@Override
 	protected void visit(final BooleanLiteral expr) {
 		final IEvaluator<V, STATE, CodeBlock> evaluator = mEvaluatorFactory
-				.createSingletonLogicalValueExpressionEvaluator(BooleanValue.getBooleanValue(expr.getValue()));
+		        .createSingletonLogicalValueExpressionEvaluator(BooleanValue.getBooleanValue(expr.getValue()));
 		mExpressionEvaluator.addEvaluator(evaluator);
 	}
 
@@ -469,8 +450,8 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 		mExpressionEvaluator.addEvaluator(evaluator);
 
 		// Create a new expression for the negative case
-		final UnaryExpression newUnary =
-				new UnaryExpression(expr.getLocation(), UnaryExpression.Operator.LOGICNEG, expr.getCondition());
+		final UnaryExpression newUnary = new UnaryExpression(expr.getLocation(), UnaryExpression.Operator.LOGICNEG,
+		        expr.getCondition());
 
 		// This expression should be added first to the evaluator inside the handling of processExpression.
 		processExpression(newUnary);

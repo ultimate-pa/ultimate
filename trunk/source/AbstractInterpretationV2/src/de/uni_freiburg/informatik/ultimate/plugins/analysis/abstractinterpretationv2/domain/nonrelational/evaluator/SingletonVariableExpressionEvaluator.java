@@ -32,9 +32,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 
-import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType;
-import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValue;
@@ -42,7 +41,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.TypeUtils.TypeUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * Evaluator for singleton varaible expressions in nonrelational abstract domains.
@@ -55,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  *            The type of abstract domain states.
  */
 public class SingletonVariableExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends NonrelationalState<STATE, VALUE>>
-		implements IEvaluator<VALUE, STATE, CodeBlock> {
+        implements IEvaluator<VALUE, STATE, CodeBlock> {
 
 	private final Set<IBoogieVar> mVariableSet;
 	private final IBoogieVar mVar;
@@ -65,7 +66,7 @@ public class SingletonVariableExpressionEvaluator<VALUE extends INonrelationalVa
 	private final EvaluatorType mType;
 
 	public SingletonVariableExpressionEvaluator(final IBoogieVar var,
-			final INonrelationalValueFactory<VALUE> nonrelationalValueFactory) {
+	        final INonrelationalValueFactory<VALUE> nonrelationalValueFactory) {
 		mVar = var;
 		mVariableSet = Collections.singleton(var);
 		mNonrelationalValueFactory = nonrelationalValueFactory;
@@ -81,29 +82,24 @@ public class SingletonVariableExpressionEvaluator<VALUE extends INonrelationalVa
 		VALUE val;
 		BooleanValue returnBool = BooleanValue.TOP;
 
-		if (mVar.getIType() instanceof PrimitiveType) {
-			final PrimitiveType primitiveType = (PrimitiveType) mVar.getIType();
+		// TODO: Add array support.
+		final Function<IBoogieVar, Triple<VALUE, BooleanValue, Boolean>> varFunction = var -> new Triple<>(
+		        currentState.getValue(var), BooleanValue.TOP, false);
+		final Function<IBoogieVar, Triple<VALUE, BooleanValue, Boolean>> boolFunction = var -> new Triple<>(
+		        mNonrelationalValueFactory.createTopValue(), currentState.getBooleanValue(var), true);
 
-			if (primitiveType.getTypeCode() == PrimitiveType.BOOL) {
-				val = mNonrelationalValueFactory.createTopValue();
-				returnBool = currentState.getBooleanValue(mVar);
-				mContainsBoolean = true;
-			} else {
-				val = currentState.getValue(mVar);
+		final Triple<VALUE, BooleanValue, Boolean> valueTriple = TypeUtils.applyVariableFunction(varFunction,
+		        boolFunction, null, mVar);
 
-				assert val != null : "The variable with name " + mVar
-						+ " has not been found in the current abstract state.";
-			}
-		} else if (mVar.getIType() instanceof ArrayType) {
-			// TODO: Implement better handling of arrays.
-			val = currentState.getValue(mVar);
-		} else {
-			val = currentState.getValue(mVar);
+		val = valueTriple.getFirst();
+		if (valueTriple.getThird()) {
+			returnBool = valueTriple.getSecond();
+			mContainsBoolean = true;
 		}
 
 		if (val.isBottom() || returnBool.isBottom()) {
 			returnList.add(new NonrelationalEvaluationResult<>(mNonrelationalValueFactory.createBottomValue(),
-					BooleanValue.BOTTOM));
+			        BooleanValue.BOTTOM));
 		} else {
 			returnList.add(new NonrelationalEvaluationResult<>(val, returnBool));
 		}
@@ -131,7 +127,7 @@ public class SingletonVariableExpressionEvaluator<VALUE extends INonrelationalVa
 	@Override
 	public void addSubEvaluator(final IEvaluator<VALUE, STATE, CodeBlock> evaluator) {
 		throw new UnsupportedOperationException(
-				"Cannot add a subevaluator to singleton variable expression evaluators.");
+		        "Cannot add a subevaluator to singleton variable expression evaluators.");
 	}
 
 	@Override

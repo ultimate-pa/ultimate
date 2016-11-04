@@ -37,9 +37,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Consumer;
 
-import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType;
-import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -49,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.LoggingHelper;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainValue;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.TypeUtils.TypeUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
@@ -371,23 +371,11 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 			        "Variable names must be disjoint. Variable " + variable + " is already present.");
 		}
 
-		if (variable.getIType() instanceof PrimitiveType) {
-			final PrimitiveType primitiveType = (PrimitiveType) variable.getIType();
+		// TODO: Add array support.
+		final Consumer<IBoogieVar> varConsumer = var -> state.getVar2ValueNonrelational().put(var, createTopValue());
+		final Consumer<IBoogieVar> boolConsumer = var -> state.getVar2ValueBoolean().put(var, BooleanValue.TOP);
 
-			if (primitiveType.getTypeCode() == PrimitiveType.BOOL) {
-				state.getVar2ValueBoolean().put(variable, BooleanValue.TRUE);
-			} else {
-				state.getVar2ValueNonrelational().put(variable, createTopValue());
-			}
-		} else if (variable.getIType() instanceof ArrayType) {
-			// TODO:
-			// We treat Arrays as normal variables for the time being.
-			state.getVar2ValueNonrelational().put(variable, createTopValue());
-		} else {
-			state.mLogger.warn("The IBoogieVar type " + variable.getIType().getClass().toString() + " of variable "
-			        + variable + " is not implemented. Assuming top.");
-			state.getVar2ValueNonrelational().put(variable, createTopValue());
-		}
+		TypeUtils.consumeVariable(varConsumer, boolConsumer, null, variable);
 	}
 
 	@Override
@@ -396,25 +384,18 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 
 		final STATE returnState = createCopy();
 
+		// TODO: Add array support.
+		final Consumer<IBoogieVar> varConsumer = var -> setValueInternally(returnState, var,
+		        dominator.getVar2ValueNonrelational().get(var));
+		final Consumer<IBoogieVar> boolConsumer = var -> setValueInternally(returnState, var,
+		        dominator.getVar2ValueBoolean().get(var));
+
 		for (final IBoogieVar var : dominator.getVariables()) {
 			if (!returnState.containsVariable(var)) {
 				addVariableInternally(returnState, var);
 			}
 
-			if (var.getIType() instanceof PrimitiveType) {
-				final PrimitiveType primitiveType = (PrimitiveType) var.getIType();
-
-				if (primitiveType.getTypeCode() == PrimitiveType.BOOL) {
-					setValueInternally(returnState, var, dominator.getVar2ValueBoolean().get(var));
-				} else if (var.getIType() instanceof ArrayType) {
-					// TODO:
-					// We treat Arrays as normal variables for the time being.
-					setValueInternally(returnState, var, dominator.getVar2ValueNonrelational().get(var));
-				} else {
-					setValueInternally(returnState, var, dominator.getVar2ValueNonrelational().get(var));
-				}
-			}
-
+			TypeUtils.consumeVariable(varConsumer, boolConsumer, null, var);
 		}
 
 		return returnState;
@@ -488,29 +469,17 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 		final Map<IBoogieVar, V> newValMap = new HashMap<>(getVar2ValueNonrelational());
 		final Map<IBoogieVar, BooleanValue> newBooleanValMap = new HashMap<>(getVar2ValueBoolean());
 
+		// TODO: Add array support.
+		final Consumer<IBoogieVar> varConsumer = var -> newValMap.put(var, createTopValue());
+		final Consumer<IBoogieVar> boolConsumer = var -> newBooleanValMap.put(var, BooleanValue.TOP);
+
 		for (final IBoogieVar var : variables) {
 			if (!newVars.add(var)) {
 				throw new UnsupportedOperationException(
 				        "Variable names must be disjoint. The variable " + var + " is already present.");
 			}
-			if (var.getIType() instanceof PrimitiveType) {
-				final PrimitiveType primitiveType = (PrimitiveType) var.getIType();
 
-				if (primitiveType.getTypeCode() == PrimitiveType.BOOL) {
-					newBooleanValMap.put(var, BooleanValue.TOP);
-				} else {
-					newValMap.put(var, createTopValue());
-				}
-
-			} else if (var.getIType() instanceof ArrayType) {
-				// TODO:
-				// We treat Arrays as normal variables for the time being.
-				newValMap.put(var, createTopValue());
-			} else {
-				mLogger.warn("The IBoogieVar type " + var.getIType().getClass().toString() + " of variable " + var
-				        + " is not implemented. Assuming top.");
-				newValMap.put(var, createTopValue());
-			}
+			TypeUtils.consumeVariable(varConsumer, boolConsumer, null, var);
 		}
 
 		return createState(mLogger, newVars, newValMap, newBooleanValMap);
@@ -825,27 +794,14 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 
 		final STATE returnState = createCopy();
 
+		// TODO: Add array support.
+		final Consumer<IBoogieVar> varConsumer = var -> setValueInternally(returnState, var,
+		        getVar2ValueNonrelational().get(var).merge(other.getVar2ValueNonrelational().get(var)));
+		final Consumer<IBoogieVar> boolConsumer = var -> setValueInternally(returnState, var,
+		        getVar2ValueBoolean().get(var).merge(other.getVar2ValueBoolean().get(var)));
+
 		for (final IBoogieVar var : mVariables) {
-
-			if (var.getIType() instanceof PrimitiveType) {
-				final PrimitiveType primitiveType = (PrimitiveType) var.getIType();
-
-				if (primitiveType.getTypeCode() == PrimitiveType.BOOL) {
-					setValueInternally(returnState, var,
-					        getVar2ValueBoolean().get(var).merge(other.getVar2ValueBoolean().get(var)));
-				} else {
-					setValueInternally(returnState, var,
-					        getVar2ValueNonrelational().get(var).merge(other.getVar2ValueNonrelational().get(var)));
-				}
-			} else if (var.getIType() instanceof ArrayType) {
-				// TODO:
-				// Implement better handling of arrays.
-				setValueInternally(returnState, var,
-				        getVar2ValueNonrelational().get(var).merge(other.getVar2ValueNonrelational().get(var)));
-			} else {
-				setValueInternally(returnState, var,
-				        getVar2ValueNonrelational().get(var).merge(other.getVar2ValueNonrelational().get(var)));
-			}
+			TypeUtils.consumeVariable(varConsumer, boolConsumer, null, var);
 		}
 		return returnState;
 	}

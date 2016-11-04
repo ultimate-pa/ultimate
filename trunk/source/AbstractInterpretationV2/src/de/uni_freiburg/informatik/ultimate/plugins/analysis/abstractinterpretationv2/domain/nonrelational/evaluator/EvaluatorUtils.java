@@ -28,11 +28,13 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator;
 
+import java.util.function.Function;
+
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType;
-import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.TypeUtils.TypeUtils;
 
 /**
  * Evaluator utilities.
@@ -61,22 +63,14 @@ public class EvaluatorUtils {
 	 * @return The corresponding {@link EvaluatorType}.
 	 */
 	public static EvaluatorType getEvaluatorType(final IBoogieType type) {
-		if (type instanceof PrimitiveType) {
-			final PrimitiveType primitiveType = (PrimitiveType) type;
-			if (primitiveType == BoogieType.TYPE_BOOL) {
-				return EvaluatorType.BOOL;
-			}
-			if (primitiveType == BoogieType.TYPE_INT) {
-				return EvaluatorType.INTEGER;
-			}
-			if (primitiveType == BoogieType.TYPE_REAL) {
-				return EvaluatorType.REAL;
-			}
-			throw new IllegalArgumentException("Type error");
-		} else if (type instanceof ArrayType) {
-			final ArrayType atype = (ArrayType) type;
-			return getEvaluatorType(atype.getValueType());
-		}
-		throw new IllegalArgumentException("Unhandled type " + type);
+		final Function<IBoogieType, EvaluatorType> intFunction = t -> EvaluatorType.INTEGER;
+		final Function<IBoogieType, EvaluatorType> realFunction = t -> EvaluatorType.REAL;
+		final Function<IBoogieType, EvaluatorType> boolFunction = t -> EvaluatorType.BOOL;
+		final Function<IBoogieType, EvaluatorType> arrayFunction = t -> {
+			final ArrayType arrType = (ArrayType) type;
+			return TypeUtils.applyTypeFunction(intFunction, realFunction, boolFunction, null, arrType.getValueType());
+		};
+
+		return TypeUtils.applyTypeFunction(intFunction, realFunction, boolFunction, arrayFunction, type);
 	}
 }
