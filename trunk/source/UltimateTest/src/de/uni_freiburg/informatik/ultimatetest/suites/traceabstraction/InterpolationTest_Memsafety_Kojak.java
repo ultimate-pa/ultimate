@@ -41,8 +41,8 @@ import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 public class InterpolationTest_Memsafety_Kojak extends AbstractTraceAbstractionTestSuite {
 
 	/** Limit the number of files per directory. */
-	private static int mFilesPerDirectoryLimit = Integer.MAX_VALUE;
-//	private static int mFilesPerDirectoryLimit = 5;
+//	private static int mFilesPerDirectoryLimit = Integer.MAX_VALUE;
+	private static int mFilesPerDirectoryLimit = 1;
 	
 	private static final DirectoryFileEndingsPair[] mDirectoryFileEndingsPairs_Deref = {
 		/*** Category 1. Arrays ***/
