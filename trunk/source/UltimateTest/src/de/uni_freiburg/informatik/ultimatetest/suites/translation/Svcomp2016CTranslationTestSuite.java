@@ -55,6 +55,7 @@ public class Svcomp2016CTranslationTestSuite extends AbstractEvalTestSuite {
 	@SuppressWarnings("unchecked")
 	private static final Triple<String, String[], String>[] TOOLCHAINS = new Triple[] {
 			new Triple<>("CTranslationTest.xml", ALL_C, "svcomp2016/svcomp-Reach-64bit-Automizer_Default.epf"),
+			new Triple<>("CTranslationBETest.xml", ALL_C, "svcomp2016/svcomp-Reach-64bit-Automizer_Default.epf"),
 	};
 
 	private static final String[] INPUT = new String[] {
