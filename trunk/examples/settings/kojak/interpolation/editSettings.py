@@ -14,7 +14,7 @@ file_export_version=3.0
 @de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=0.0.1
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Convert\ code\ blocks\ to\ CNF=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Size\ of\ a\ code\ block=SequenceOfStatements
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Command\ for\ external\ solver=/home/nutz/z3/z3 SMTLIB2_COMPLIANT\=true -memory\:2024 -smt2 -in -t\:2000
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Command\ for\ external\ solver=z3 SMTLIB2_COMPLIANT\=true -memory\:2024 -smt2 -in -t\:2000
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Logic\ for\ external\ solver=AUFBV
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Dump\ SMT\ script\ to\ file=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/To\ the\ following\ directory=./dump/
@@ -26,7 +26,7 @@ file_export_version=3.0
 @de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=0.0.1
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Convert\ code\ blocks\ to\ CNF=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Size\ of\ a\ code\ block=SequenceOfStatements
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Command\ for\ external\ solver=/home/nutz/z3/z3 SMTLIB2_COMPLIANT\=true -memory\:2024 -smt2 -in -t\:2000
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Command\ for\ external\ solver=z3 SMTLIB2_COMPLIANT\=true -memory\:2024 -smt2 -in -t\:2000
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Dump\ SMT\ script\ to\ file=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/To\ the\ following\ directory=./dump/
  '''
@@ -89,24 +89,24 @@ nestedItp = '''/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.c
 fpItp = '''/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/interpolation\ mode=ForwardPredicates'''
 bpItp = '''/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/interpolation\ mode=BackwardPredicates'''
 
-chooseExternalDefault = '''/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Choose\ which\ separate\ solver\ to\ use\ for\ tracechecks=External_DefaultMode
+chooseExternalDefault = '''/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Choose\ which\ separate\ solver\ to\ use\ for\ tracechecks=External_ModelsAndUnsatCoreMode
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Theory\ for\ external\ solver=AUFNIRA
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Command\ for\ calling\ external\ solver=/home/nutz/z3/z3 SMTLIB2_COMPLIANT\=true -memory\:2024 -smt2 -in -t\:12000'''
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Command\ for\ calling\ external\ solver=z3 SMTLIB2_COMPLIANT\=true -memory\:2024 -smt2 -in -t\:12000'''
 
 chooseIZ3 = '''/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/interpolation\ mode=Craig_NestedInterpolation
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Choose\ which\ separate\ solver\ to\ use\ for\ tracechecks=External_Z3InterpolationMode
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Theory\ for\ external\ solver=AUFNIRA
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Command\ for\ calling\ external\ solver=/home/nutz/z3/z3 SMTLIB2_COMPLIANT\=true -memory\:2024 -smt2 -in -t\:12000'''
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Command\ for\ calling\ external\ solver=z3 SMTLIB2_COMPLIANT\=true -memory\:2024 -smt2 -in -t\:12000'''
 
 chooseSMTInterpol = '''/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/interpolation\ mode=Craig_TreeInterpolation
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Choose\ which\ separate\ solver\ to\ use\ for\ tracechecks=External_SMTInterpolInterpolationMode
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Theory\ for\ external\ solver=QF_AUFLIRA
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Command\ for\ calling\ external\ solver=java -jar /home/nutz/smtinterpol/smtinterpol.jar -q -t 12000'''
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Command\ for\ calling\ external\ solver=smtinterpol -q -t 12000'''
 
 choosePrincess = '''/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/interpolation\ mode=Craig_TreeInterpolation
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Choose\ which\ separate\ solver\ to\ use\ for\ tracechecks=External_PrincessInterpolationMode
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Theory\ for\ external\ solver=AUFNIRA
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Command\ for\ calling\ external\ solver=/home/nutz/princess/princess +incremental +stdin -timeout=12000'''
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Command\ for\ calling\ external\ solver=princess +incremental +stdin -timeout=12000'''
 
 dontUseLV = '''/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck//Use\ live\ variables\ in\ FP/BP\ interpolation=false'''
 useLV = '''/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck//Use\ live\ variables\ in\ FP/BP\ interpolation=true'''
