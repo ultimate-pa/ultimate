@@ -36,9 +36,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgE
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
  * Least aggressive minimization (besides no attempt). Tries to remove states that have only one incoming and one
@@ -52,7 +52,7 @@ public class MinimizeStatesSingleEdgeSingleNode extends BaseMinimizeStates {
 	private final XnfConversionTechnique mXnfConversionTechnique;
 	private final SimplificationTechnique mSimplificationTechnique;
 
-	public MinimizeStatesSingleEdgeSingleNode(final RootNode product, final IUltimateServiceProvider services,
+	public MinimizeStatesSingleEdgeSingleNode(final BoogieIcfgContainer product, final IUltimateServiceProvider services,
 			final IToolchainStorage storage, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique) {
 		super(product, services, storage);
@@ -61,7 +61,7 @@ public class MinimizeStatesSingleEdgeSingleNode extends BaseMinimizeStates {
 	}
 
 	@Override
-	protected Collection<? extends IcfgLocation> processCandidate(final RootNode root, final BoogieIcfgLocation target,
+	protected Collection<? extends IcfgLocation> processCandidate(final BoogieIcfgContainer root, final BoogieIcfgLocation target,
 			final Set<IcfgLocation> closed) {
 
 		if (target.getIncomingEdges().size() != 1 || target.getOutgoingEdges().size() != 1) {

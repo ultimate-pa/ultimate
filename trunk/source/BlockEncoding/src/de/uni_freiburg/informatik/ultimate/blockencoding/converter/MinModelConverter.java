@@ -50,8 +50,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding.preferences.PreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
@@ -76,7 +76,7 @@ public class MinModelConverter {
 	/**
 	 * Public Constructor.
 	 */
-	public MinModelConverter(IUltimateServiceProvider services) {
+	public MinModelConverter(final IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
@@ -89,7 +89,7 @@ public class MinModelConverter {
 	 *            the rootNode to convert
 	 * @return the converted rootNode
 	 */
-	public RootNode startConversion(RootNode root) {
+	public RootNode startConversion(final RootNode root) {
 		final RootNode newRoot = new RootNode(root.getPayload().getLocation(), root.getRootAnnot());
 		ModelUtils.copyAnnotations(root, newRoot);
 		mBoogie2SMT = root.getRootAnnot().getBoogie2SMT();
@@ -164,7 +164,7 @@ public class MinModelConverter {
 	 *            function head
 	 * @return converted ProgramPoint
 	 */
-	private BoogieIcfgLocation convertFunction(MinimizedNode node) {
+	private BoogieIcfgLocation convertFunction(final MinimizedNode node) {
 		final BoogieIcfgLocation newNode = mConvertVisitor.getReferencedNode(node);
 		// To do the conversion, we need to run over the minimized graph,
 		// and convert every edge into an regular RCFG edge
@@ -183,7 +183,7 @@ public class MinModelConverter {
 	 * 
 	 * @param rootAnnot
 	 */
-	private void updateRootAnnot(RootAnnot rootAnnot) {
+	private void updateRootAnnot(final BoogieIcfgContainer rootAnnot) {
 		final HashMap<BoogieIcfgLocation, BoogieIcfgLocation> progPointMap = mConvertVisitor.getOrigToNewMap();
 		// Update the Entry-Nodes
 		final HashMap<String, BoogieIcfgLocation> entryNodes = new HashMap<String, BoogieIcfgLocation>(rootAnnot.getEntryNodes());

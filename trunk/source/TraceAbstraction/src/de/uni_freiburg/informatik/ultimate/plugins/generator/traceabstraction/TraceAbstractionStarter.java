@@ -63,8 +63,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgE
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgElement;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
@@ -94,16 +93,16 @@ public class TraceAbstractionStarter {
 	private IElement mArtifact;
 	
 	public TraceAbstractionStarter(final IUltimateServiceProvider services, final IToolchainStorage storage,
-			final RootNode rcfgRootNode, final INestedWordAutomatonSimple<WitnessEdge, WitnessNode> witnessAutomaton) {
+			final BoogieIcfgContainer rcfgRootNode, final INestedWordAutomatonSimple<WitnessEdge, WitnessNode> witnessAutomaton) {
 		mServices = services;
 		mToolchainStorage = storage;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		runCegarLoops(rcfgRootNode, witnessAutomaton);
 	}
 	
-	private void runCegarLoops(final RootNode rcfgRootNode,
+	private void runCegarLoops(final BoogieIcfgContainer rcfgRootNode,
 			final INestedWordAutomatonSimple<WitnessEdge, WitnessNode> witnessAutomaton) {
-		final RootAnnot rootAnnot = rcfgRootNode.getRootAnnot();
+		final BoogieIcfgContainer rootAnnot = rcfgRootNode;
 		final TAPreferences taPrefs = new TAPreferences(mServices);
 		
 		String settings = "Automizer settings:";
@@ -244,7 +243,7 @@ public class TraceAbstractionStarter {
 		}
 	}
 	
-	private void iterate(final String name, final RootNode root, final TAPreferences taPrefs,
+	private void iterate(final String name, final BoogieIcfgContainer root, final TAPreferences taPrefs,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final TraceAbstractionBenchmarks taBenchmark,
 			final Collection<BoogieIcfgLocation> errorLocs,
 			final INestedWordAutomatonSimple<WitnessEdge, WitnessNode> witnessAutomaton) {
@@ -272,7 +271,7 @@ public class TraceAbstractionStarter {
 		mArtifact = basicCegarLoop.getArtifact();
 	}
 	
-	private BasicCegarLoop constructCegarLoop(final String name, final RootNode root, final TAPreferences taPrefs,
+	private BasicCegarLoop constructCegarLoop(final String name, final BoogieIcfgContainer root, final TAPreferences taPrefs,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final TraceAbstractionBenchmarks taBenchmark,
 			final Collection<BoogieIcfgLocation> errorLocs) {
 		final LanguageOperation languageOperation = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
@@ -313,8 +312,8 @@ public class TraceAbstractionStarter {
 		}
 	}
 	
-	private void writeHoareAnnotationToLogger(final RootNode root) {
-		for (final Entry<String, Map<String, BoogieIcfgLocation>> proc2label2pp : root.getRootAnnot().getProgramPoints()
+	private void writeHoareAnnotationToLogger(final BoogieIcfgContainer root) {
+		for (final Entry<String, Map<String, BoogieIcfgLocation>> proc2label2pp : root.getProgramPoints()
 				.entrySet()) {
 			for (final BoogieIcfgLocation pp : proc2label2pp.getValue().values()) {
 				final HoareAnnotation hoare = getHoareAnnotation(pp);

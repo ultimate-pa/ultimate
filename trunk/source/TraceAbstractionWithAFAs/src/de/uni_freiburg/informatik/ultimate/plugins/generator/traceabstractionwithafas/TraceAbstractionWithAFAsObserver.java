@@ -53,8 +53,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
@@ -90,8 +89,7 @@ public class TraceAbstractionWithAFAsObserver extends BaseObserver {
 	@Override
 	public boolean process(final IElement root) {
 
-		final RootNode rootNode = (RootNode) root;
-		final RootAnnot rootAnnot = rootNode.getRootAnnot();
+		final BoogieIcfgContainer rootAnnot = (BoogieIcfgContainer) root;
 		final TAPreferences taPrefs = new TAPreferences(mServices);
 		final CfgSmtToolkit csToolkit = rootAnnot.getCfgSmtToolkit();
 		final PredicateFactory predicateFactory = new PredicateFactory(mServices, csToolkit.getManagedScript(), 
@@ -105,7 +103,7 @@ public class TraceAbstractionWithAFAsObserver extends BaseObserver {
 			errNodesOfAllProc.addAll(errNodeOfProc);
 		}
 
-		final TAwAFAsCegarLoop cegarLoop = new TAwAFAsCegarLoop("bla", rootNode, csToolkit, predicateFactory, taBenchmarks, taPrefs,
+		final TAwAFAsCegarLoop cegarLoop = new TAwAFAsCegarLoop("bla", rootAnnot, csToolkit, predicateFactory, taBenchmarks, taPrefs,
 				errNodesOfAllProc, taPrefs.interpolation(), taPrefs.computeHoareAnnotation(), mServices, mToolchainStorage);
 
 		final Result result = cegarLoop.iterate();

@@ -72,10 +72,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
@@ -94,7 +93,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	private CfgSmtToolkit mCsToolkit;
 	private TAPreferences mPref;
 
-	private RootAnnot mRootAnnot;
+	private BoogieIcfgContainer mRootAnnot;
 	private final IUltimateServiceProvider mServices;
 	private final IToolchainStorage mStorage;
 
@@ -105,10 +104,10 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 
 	@Override
 	public boolean process(final IElement root) throws IOException {
-		if (!(root instanceof RootNode)) {
+		if (!(root instanceof BoogieIcfgContainer)) {
 			return false;
 		}
-		mRootAnnot = ((RootNode) root).getRootAnnot();
+		mRootAnnot = ((BoogieIcfgContainer) root);
 		final TAPreferences taPrefs = new TAPreferences(mServices);
 		mGraphRoot = root;
 
@@ -119,7 +118,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 
 		mPref = taPrefs;
 
-		final BuchiCegarLoop bcl = new BuchiCegarLoop((RootNode) root, mCsToolkit, predicateFactory, mPref, mServices, mStorage);
+		final BuchiCegarLoop bcl = new BuchiCegarLoop(mRootAnnot, mCsToolkit, predicateFactory, mPref, mServices, mStorage);
 		final Result result = bcl.iterate();
 		final BuchiCegarLoopBenchmarkGenerator benchGen = bcl.getBenchmarkGenerator();
 		benchGen.stop(CegarLoopStatisticsDefinitions.OverallTime.toString());

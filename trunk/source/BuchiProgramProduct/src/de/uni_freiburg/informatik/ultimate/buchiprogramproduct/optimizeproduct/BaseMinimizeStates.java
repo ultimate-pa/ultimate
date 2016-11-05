@@ -40,19 +40,19 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.annot.BuchiProgramAcceptingStateAnnotation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 public abstract class BaseMinimizeStates extends BaseProductOptimizer {
 
 	private final boolean mIgnoreBlowup;
 
-	public BaseMinimizeStates(final RootNode product, final IUltimateServiceProvider services,
+	public BaseMinimizeStates(final BoogieIcfgContainer product, final IUltimateServiceProvider services,
 			final IToolchainStorage storage) {
 		super(product, services, storage);
 		mIgnoreBlowup = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
@@ -61,11 +61,11 @@ public abstract class BaseMinimizeStates extends BaseProductOptimizer {
 	}
 
 	@Override
-	protected final RootNode createResult(final RootNode root) {
+	protected final BoogieIcfgContainer createResult(final BoogieIcfgContainer root) {
 		final Deque<IcfgLocation> nodes = new ArrayDeque<>();
 		final Set<IcfgLocation> closed = new HashSet<>();
 
-		nodes.addAll(root.getOutgoingNodes());
+		nodes.addAll(root.getEntryNodes().values());
 
 		while (!nodes.isEmpty()) {
 			checkForTimeoutOrCancellation();
@@ -106,7 +106,7 @@ public abstract class BaseMinimizeStates extends BaseProductOptimizer {
 	 * @return A set of nodes that should be processed. May not be null. Nodes already in the closed set will not be
 	 *         processed again.
 	 */
-	protected abstract Collection<? extends IcfgLocation> processCandidate(RootNode root, BoogieIcfgLocation target,
+	protected abstract Collection<? extends IcfgLocation> processCandidate(BoogieIcfgContainer root, BoogieIcfgLocation target,
 			Set<IcfgLocation> closed);
 
 	protected boolean checkEdgePairs(final List<IcfgEdge> predEdges, final List<IcfgEdge> succEdges) {

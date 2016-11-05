@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -52,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 public class HoareAnnotationWriter {
 
 	private final IUltimateServiceProvider mServices;
-	private final RootAnnot mrootAnnot;
+	private final BoogieIcfgContainer mrootAnnot;
 	private final CfgSmtToolkit mCsToolkit;
 	private final PredicateFactory mPredicateFactory;
 	private final HoareAnnotationFragments mHoareAnnotationFragments;
@@ -64,7 +64,7 @@ public class HoareAnnotationWriter {
 	private final boolean mUseEntry;
 	private final PredicateTransformer mPredicateTransformer;
 
-	public HoareAnnotationWriter(final RootAnnot rootAnnot, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
+	public HoareAnnotationWriter(final BoogieIcfgContainer rootAnnot, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final HoareAnnotationFragments hoareAnnotationFragments, final IUltimateServiceProvider services, 
 			final SimplificationTechnique simplicationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;

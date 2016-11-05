@@ -38,10 +38,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
 
 public abstract class BaseProductOptimizer {
 	protected final IUltimateServiceProvider mServices;
@@ -50,9 +49,9 @@ public abstract class BaseProductOptimizer {
 	protected int mRemovedEdges;
 	protected int mRemovedLocations;
 	protected final CodeBlockFactory mCbf;
-	private RootNode mResult;
+	private BoogieIcfgContainer mResult;
 
-	public BaseProductOptimizer(final RootNode product, final IUltimateServiceProvider services,
+	public BaseProductOptimizer(final BoogieIcfgContainer product, final IUltimateServiceProvider services,
 			final IToolchainStorage storage) {
 		assert services != null;
 		assert product != null;
@@ -65,7 +64,7 @@ public abstract class BaseProductOptimizer {
 
 	public abstract boolean isGraphChanged();
 
-	public RootNode getResult(final RootNode product) {
+	public BoogieIcfgContainer getResult(final BoogieIcfgContainer product) {
 		if (mResult == null) {
 			mResult = createResult(product);
 			assert mResult != null;
@@ -73,7 +72,7 @@ public abstract class BaseProductOptimizer {
 		return mResult;
 	}
 
-	protected abstract RootNode createResult(RootNode product);
+	protected abstract BoogieIcfgContainer createResult(BoogieIcfgContainer product);
 
 	protected List<BoogieIcfgLocation> getSuccessors(final BoogieIcfgLocation point) {
 		final List<BoogieIcfgLocation> rtr = new ArrayList<>();
@@ -83,10 +82,10 @@ public abstract class BaseProductOptimizer {
 		return rtr;
 	}
 
-	protected void removeDisconnectedLocations(final RootNode root) {
+	protected void removeDisconnectedLocations(final BoogieIcfgContainer root) {
 		final Deque<BoogieIcfgLocation> toRemove = new ArrayDeque<>();
 
-		for (final Entry<String, Map<String, BoogieIcfgLocation>> procPair : root.getRootAnnot().getProgramPoints()
+		for (final Entry<String, Map<String, BoogieIcfgLocation>> procPair : root.getProgramPoints()
 				.entrySet()) {
 			for (final Entry<String, BoogieIcfgLocation> pointPair : procPair.getValue().entrySet()) {
 				if (pointPair.getValue().getIncomingEdges().isEmpty()) {
@@ -111,8 +110,8 @@ public abstract class BaseProductOptimizer {
 		}
 	}
 
-	protected void removeDisconnectedLocation(final RootNode root, final BoogieIcfgLocation toRemove) {
-		final RootAnnot rootAnnot = root.getRootAnnot();
+	protected void removeDisconnectedLocation(final BoogieIcfgContainer root, final BoogieIcfgLocation toRemove) {
+		final BoogieIcfgContainer rootAnnot = root;
 		final String procName = toRemove.getProcedure();
 		final String locName = toRemove.getDebugIdentifier();
 		final BoogieIcfgLocation removed = rootAnnot.getProgramPoints().get(procName).remove(locName);

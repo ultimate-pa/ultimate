@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.SummaryReturnTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
@@ -75,12 +75,13 @@ public class SizeBenchmark implements ICsvProviderProvider<Integer> {
 		mLabel = label;
 	}
 
-	public SizeBenchmark(final RootNode root, final String label) {
+	public SizeBenchmark(final BoogieIcfgContainer root, final String label) {
 		final ArrayDeque<IcfgEdge> edges = new ArrayDeque<>();
 		final HashSet<IcfgEdge> closedE = new HashSet<>();
 		final HashSet<IcfgLocation> closedV = new HashSet<>();
 
-		edges.addAll(root.getOutgoingEdges());
+
+		edges.addAll(BoogieIcfgContainer.extractStartEdges(root));
 
 		while (!edges.isEmpty()) {
 			final IcfgEdge current = edges.removeFirst();

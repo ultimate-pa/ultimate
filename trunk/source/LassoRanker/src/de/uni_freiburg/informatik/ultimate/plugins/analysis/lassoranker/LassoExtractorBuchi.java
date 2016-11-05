@@ -50,9 +50,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CFG2NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryResultChecking;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
@@ -81,7 +81,7 @@ public class LassoExtractorBuchi extends AbstractLassoExtractor {
 	private final PredicateFactory mPredicateFactory;
 	private final ILogger mLogger;
 	
-	public LassoExtractorBuchi(final IUltimateServiceProvider services, final RootNode rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final ILogger logger)
+	public LassoExtractorBuchi(final IUltimateServiceProvider services, final BoogieIcfgContainer rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final ILogger logger)
 			throws AutomataLibraryException {
 		mServices = services;
 		mLogger = logger;
@@ -117,8 +117,8 @@ public class LassoExtractorBuchi extends AbstractLassoExtractor {
 	}
 
 	
-	private IcfgLocation extractSomeNodeForErrorReport(final RootNode rootNode) {
-		return rootNode.getOutgoingNodes().iterator().next();
+	private IcfgLocation extractSomeNodeForErrorReport(final BoogieIcfgContainer rootNode) {
+		return rootNode.getEntryNodes().entrySet().iterator().next().getValue();
 	}
 	
 	
@@ -128,16 +128,16 @@ public class LassoExtractorBuchi extends AbstractLassoExtractor {
 	
 
 	private INestedWordAutomatonSimple<CodeBlock, IPredicate> constructCfgAutomaton(
-			final RootNode rootNode, final CfgSmtToolkit csToolkit) {
+			final BoogieIcfgContainer rootNode, final CfgSmtToolkit csToolkit) {
 		final CFG2NestedWordAutomaton cFG2NestedWordAutomaton =
 				new CFG2NestedWordAutomaton(mServices, true ,csToolkit, mPredicateFactory, mLogger);
 		final Collection<BoogieIcfgLocation> allNodes = new HashSet<BoogieIcfgLocation>();
 		for (final Map<String, BoogieIcfgLocation> prog2pp :
-						rootNode.getRootAnnot().getProgramPoints().values()) {
+						rootNode.getProgramPoints().values()) {
 			allNodes.addAll(prog2pp.values());
 		}
 		return cFG2NestedWordAutomaton.getNestedWordAutomaton(
-				rootNode.getRootAnnot(), mPredicateFactoryRc, allNodes);
+				rootNode, mPredicateFactoryRc, allNodes);
 	}
 
 	

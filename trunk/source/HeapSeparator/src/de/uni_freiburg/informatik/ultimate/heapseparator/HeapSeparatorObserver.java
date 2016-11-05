@@ -43,8 +43,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.walker.ObserverDispatcher;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.walker.ObserverDispatcherSequential;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.walker.RCFGWalkerBreadthFirst;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 
 public class HeapSeparatorObserver implements IUnmanagedObserver {
 
@@ -84,9 +83,9 @@ public class HeapSeparatorObserver implements IUnmanagedObserver {
 	@Override
 	public boolean process(final IElement root) throws Throwable {
 		
-		mScript = ((RootNode) root).getRootAnnot().getCfgSmtToolkit().getManagedScript();
+		mScript = ((BoogieIcfgContainer) root).getCfgSmtToolkit().getManagedScript();
 //		testSetup(((RootNode) root).getOutgoingEdges().get(0).getTarget());
-		testSetup(((RootNode) root).getRootAnnot());
+		testSetup(((BoogieIcfgContainer) root));
 		
 		
 		final ObserverDispatcher od = new ObserverDispatcherSequential(mLogger);
@@ -101,7 +100,7 @@ public class HeapSeparatorObserver implements IUnmanagedObserver {
 	}
 	
 	
-	void testSetup(final RootAnnot ra) {
+	void testSetup(final BoogieIcfgContainer ra) {
 		
 		final IProgramVar m = ra.getBoogie2SMT().getBoogie2SmtSymbolTable().getBoogieVar(
 				"m",

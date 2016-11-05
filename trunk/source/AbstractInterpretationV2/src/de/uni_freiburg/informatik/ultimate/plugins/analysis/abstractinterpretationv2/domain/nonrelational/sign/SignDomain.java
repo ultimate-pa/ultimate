@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 
 /**
  * This abstract domain keeps track of the sign of each variable during abstract interpretation. Variables can either be
@@ -50,13 +50,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 public class SignDomain implements IAbstractDomain<SignDomainState, CodeBlock, IBoogieVar> {
 
 	private final IUltimateServiceProvider mServices;
-	private final RootAnnot mRootAnnotation;
+	private final BoogieIcfgContainer mRootAnnotation;
 	private final ILogger mLogger;
 
 	private IAbstractPostOperator<SignDomainState, CodeBlock, IBoogieVar> mPostOperator;
 	private final BoogieSymbolTable mSymbolTable;
 
-	public SignDomain(final IUltimateServiceProvider services, final RootAnnot rootAnnotation,
+	public SignDomain(final IUltimateServiceProvider services, final BoogieIcfgContainer rootAnnotation,
 			final BoogieSymbolTable symbolTable) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);

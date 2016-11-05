@@ -72,7 +72,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence.Origin;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -93,12 +93,12 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 	private final int mParallelStates;
 	private final Boogie2SmtSymbolTable mBoogie2SmtSymbolTable;
 	private final Boogie2SMT mBoogie2Smt;
-	private final RootAnnot mRootAnnotation;
+	private final BoogieIcfgContainer mRootAnnotation;
 
 	protected NonrelationalPostOperator(final ILogger logger, final BoogieSymbolTable symbolTable,
 	        final Boogie2SmtSymbolTable bpl2smtSymbolTable,
 	        final NonrelationalStatementProcessor<STATE, V> statementProcessor, final int parallelStates,
-	        final Boogie2SMT boogie2Smt, final RootAnnot rootAnnotation) {
+	        final Boogie2SMT boogie2Smt, final BoogieIcfgContainer rootAnnotation) {
 		mLogger = logger;
 		mStatementExtractor = new RcfgStatementExtractor();
 		mBoogie2SmtSymbolTable = bpl2smtSymbolTable;

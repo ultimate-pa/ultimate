@@ -60,14 +60,12 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.annot.BuchiProgramAcceptingStateAnnotation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence.Origin;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
@@ -88,8 +86,8 @@ public final class ProductGenerator {
 	private final IUltimateServiceProvider mServices;
 	private final ProductBacktranslator mBacktranslator;
 	private final BuchiProgramAcceptingStateAnnotation mAcceptingNodeAnnotation;
-	private final RootNode mRcfgRoot;
-	private final RootNode mProductRoot;
+	private final BoogieIcfgContainer mRcfgRoot;
+	private final BoogieIcfgContainer mProductRoot;
 	private final INestedWordAutomaton<CodeBlock, String> mNWA;
 	private final CodeBlockFactory mCodeblockFactory;
 	private final ProductLocationNameGenerator mNameGenerator;
@@ -104,7 +102,7 @@ public final class ProductGenerator {
 	private final XnfConversionTechnique mXnfConversionTechnique;
 	private final boolean mEverythingIsAStep;
 
-	public ProductGenerator(final INestedWordAutomaton<CodeBlock, String> nwa, final RootNode rcfg,
+	public ProductGenerator(final INestedWordAutomaton<CodeBlock, String> nwa, final BoogieIcfgContainer rcfg,
 			final LTLPropertyCheck ltlAnnot, final IUltimateServiceProvider services,
 			final ProductBacktranslator backtrans, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique) {
@@ -115,7 +113,7 @@ public final class ProductGenerator {
 		// save parameters
 		mNWA = nwa;
 		mRcfgRoot = rcfg;
-		mCodeblockFactory = mRcfgRoot.getRootAnnot().getCodeBlockFactory();
+		mCodeblockFactory = mRcfgRoot.getCodeBlockFactory();
 		mBacktranslator = backtrans;
 		mXnfConversionTechnique = xnfConversionTechnique;
 		mSimplificationTechnique = simplificationTechnique;
@@ -131,17 +129,17 @@ public final class ProductGenerator {
 		mNameGenerator = new ProductLocationNameGenerator(nwa);
 
 		mEverythingIsAStep =
-				new RCFGEdgeIterator(mRcfgRoot).asStream().allMatch(a -> LTLStepAnnotation.getAnnotation(a) == null);
+				new RCFGEdgeIterator(BoogieIcfgContainer.extractStartEdges(mRcfgRoot)).asStream().allMatch(a -> LTLStepAnnotation.getAnnotation(a) == null);
 		if (mEverythingIsAStep) {
 			mLogger.info("The program has no step specification, so we assume maximum atomicity");
 		}
 
 		// create the new root node
-		mProductRoot = new RootNode(mRcfgRoot.getPayload().getLocation(), mRcfgRoot.getRootAnnot());
+		mProductRoot = mRcfgRoot;
 		// the root annotation has to be updated to be accurate in the new RCFG
 		// * getProgramPoints() will be refilled during calls to
 		// createProgramPoint()
-		mProductRoot.getRootAnnot().getProgramPoints().clear();
+		mProductRoot.getProgramPoints().clear();
 		// * getLoopLocations(), getEntryNodes() and getExitNodes() will be
 		// replaced during calls to
 		// createProgramPoint(), so we just let it be
@@ -160,7 +158,7 @@ public final class ProductGenerator {
 		generateTransFormulas();
 	}
 
-	public RootNode getProductRcfg() {
+	public BoogieIcfgContainer getProductRcfg() {
 		return mProductRoot;
 	}
 
@@ -170,8 +168,8 @@ public final class ProductGenerator {
 	private void collectRcfgLocations() {
 		final Set<BoogieIcfgLocation> unhandledLocations = new LinkedHashSet<>();
 
-		for (final IcfgEdge p : mRcfgRoot.getOutgoingEdges()) {
-			unhandledLocations.add((BoogieIcfgLocation) p.getTarget());
+		for (final Entry<String, BoogieIcfgLocation> entry : mRcfgRoot.getEntryNodes().entrySet()) {
+			unhandledLocations.add(entry.getValue());
 		}
 
 		// collect all Nodes in the RCFG for the product
@@ -361,7 +359,6 @@ public final class ProductGenerator {
 			final BoogieIcfgLocation productSourceLoc =
 					mProductLocations.get(mNameGenerator.generateStateName(origRcfgSourceLoc, nwaLoc));
 			
-			addRootEdgeIfNecessary(origRcfgSourceLoc, nwaLoc, productSourceLoc);
 			if (rcfgEdge instanceof StatementSequence) {
 				handleEdgeStatementSequence(productSourceLoc, nwaLoc, (StatementSequence) rcfgEdge, isProgramStep);
 			} else if (rcfgEdge instanceof Call) {
@@ -390,7 +387,6 @@ public final class ProductGenerator {
 			final BoogieIcfgLocation productTargetLoc =
 					mProductLocations.get(mNameGenerator.generateStateName(origRcfgTargetLoc));
 
-			addRootEdgeIfNecessary(origRcfgSourceLoc, nwaLoc, productSourceLoc);
 
 			assert productSourceLoc != null;
 			assert productTargetLoc != null;
@@ -420,7 +416,6 @@ public final class ProductGenerator {
 
 		final BoogieIcfgLocation productSourceLoc =
 				mProductLocations.get(mNameGenerator.generateStateName(origRcfgSourceLoc));
-		addRootEdgeIfNecessary(origRcfgSourceLoc, null, productSourceLoc);
 		if (rcfgEdge instanceof Call) {
 			handleEdgeCallFromNonProduct(productSourceLoc, (Call) rcfgEdge, origRcfgSourceLoc);
 		} else if (rcfgEdge instanceof Summary) {
@@ -442,7 +437,6 @@ public final class ProductGenerator {
 		assert productSourceLoc != null;
 		assert productTargetLoc != null;
 
-		addRootEdgeIfNecessary(origRcfgSourceLoc, null, productSourceLoc);
 
 		if (rcfgEdge instanceof StatementSequence) {
 			createNewStatementSequence(productSourceLoc, (StatementSequence) rcfgEdge, productTargetLoc, null, false);
@@ -453,25 +447,6 @@ public final class ProductGenerator {
 		} else {
 			throw new AssertionError("Did not expect edge of type " + rcfgEdge.getClass().getSimpleName());
 		}
-	}
-
-	private boolean addRootEdgeIfNecessary(final BoogieIcfgLocation origRcfgSourceLoc, final String nwaState,
-			final BoogieIcfgLocation productTargetLoc) {
-		if (origRcfgSourceLoc.getIncomingEdges().size() == 1
-				&& origRcfgSourceLoc.getIncomingEdges().get(0) instanceof RootEdge
-				&& (nwaState == null || mNWA.isInitial(nwaState))) {
-			assert productTargetLoc != null;
-			if (!mRootSuccessorProgramPoints.contains(productTargetLoc)) {
-				final RootEdge edge = new RootEdge(mProductRoot, productTargetLoc);
-				if (mLogger.isDebugEnabled()) {
-					mLogger.debug("Created RootEdge (" + mProductRoot + ", " + productTargetLoc + ")");
-				}
-				mapNewEdge2OldEdge(edge, null);
-				mRootSuccessorProgramPoints.add(productTargetLoc);
-			}
-			return true;
-		}
-		return false;
 	}
 
 	private void pruneNonProductSinks() {
@@ -593,7 +568,7 @@ public final class ProductGenerator {
 			}
 		}
 
-		final RootAnnot rootAnnot = mProductRoot.getRootAnnot();
+		final BoogieIcfgContainer rootAnnot = mProductRoot;
 		for (final BoogieIcfgLocation current : toRemove) {
 			final String name = current.getDebugIdentifier();
 			// update annotations
@@ -627,7 +602,7 @@ public final class ProductGenerator {
 				new TransFormulaBuilder(mProductRoot, mServices, mSimplificationTechnique, mXnfConversionTechnique);
 
 		final Set<Entry<String, Map<String, BoogieIcfgLocation>>> programPoints =
-				mProductRoot.getRootAnnot().getProgramPoints().entrySet();
+				mProductRoot.getProgramPoints().entrySet();
 		for (final Entry<String, Map<String, BoogieIcfgLocation>> pairs : programPoints) {
 			for (final Entry<String, BoogieIcfgLocation> loc : pairs.getValue().entrySet()) {
 				for (final IcfgEdge edge : loc.getValue().getOutgoingEdges()) {
@@ -854,7 +829,7 @@ public final class ProductGenerator {
 				new BoogieIcfgLocation(stateName, originalState.getProcedure(), false, originalState.getBoogieASTNode());
 
 		// update annotations
-		final RootAnnot rootAnnot = mProductRoot.getRootAnnot();
+		final BoogieIcfgContainer rootAnnot = mProductRoot;
 		Map<String, BoogieIcfgLocation> prog2programPoints = rootAnnot.getProgramPoints().get(originalState.getProcedure());
 		if (prog2programPoints == null) {
 			prog2programPoints = new HashMap<>();
@@ -862,7 +837,7 @@ public final class ProductGenerator {
 		}
 		prog2programPoints.put(stateName, rtr);
 
-		final ILocation currentLoopLoc = mProductRoot.getRootAnnot().getLoopLocations().remove(originalState);
+		final ILocation currentLoopLoc = mProductRoot.getLoopLocations().remove(originalState);
 		if (currentLoopLoc != null) {
 			rootAnnot.getLoopLocations().put(rtr, currentLoopLoc);
 		}

@@ -50,10 +50,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.CodeCheck
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.GlobalSettings;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.GraphWriter;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.CodeCheckPreferenceInitializer.RedirectionStrategy;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.IsContained;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
@@ -64,7 +64,7 @@ public class ImpulseChecker extends CodeChecker {
 	private final RedirectionFinder mCloneFinder;
 	private int mNodeId;
 	
-	public ImpulseChecker(final IElement root, final CfgSmtToolkit mcsToolkit, final RootNode moriginalRoot,
+	public ImpulseChecker(final IElement root, final CfgSmtToolkit mcsToolkit, final BoogieIcfgContainer moriginalRoot,
 			final ImpRootNode mgraphRoot, final GraphWriter mgraphWriter, final IHoareTripleChecker edgeChecker,
 			final PredicateUnifier predicateUnifier, final ILogger logger) {
 		super(root, mcsToolkit, moriginalRoot, mgraphRoot, mgraphWriter, edgeChecker, predicateUnifier, logger);

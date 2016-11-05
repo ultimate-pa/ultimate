@@ -42,9 +42,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms.BoogieExpressionTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms.NormalFormTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 
 /**
@@ -78,8 +78,8 @@ public class SmallBlockEncoder extends BaseObserver {
 
 	@Override
 	public boolean process(final IElement elem) throws Throwable {
-		if (elem instanceof RootNode) {
-			final RootNode root = (RootNode) elem;
+		if (elem instanceof BoogieIcfgContainer) {
+			final BoogieIcfgContainer root = (BoogieIcfgContainer) elem;
 
 			int countDisjunctiveAssumes = 0;
 			int countNewEdges = 0;
@@ -89,7 +89,7 @@ public class SmallBlockEncoder extends BaseObserver {
 
 			final NormalFormTransformer<Expression> ct = new NormalFormTransformer<>(new BoogieExpressionTransformer());
 
-			edges.addAll(root.getOutgoingEdges());
+			edges.addAll(BoogieIcfgContainer.extractStartEdges(root));
 
 			while (!edges.isEmpty()) {
 				final IcfgEdge current = edges.removeFirst();

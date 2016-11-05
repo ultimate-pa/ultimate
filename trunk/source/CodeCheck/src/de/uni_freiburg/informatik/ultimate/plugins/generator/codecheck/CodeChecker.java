@@ -39,8 +39,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareT
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AnnotatedProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.ImpRootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.IsContained;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 
 public abstract class CodeChecker {
 
-	protected RootNode moriginalRoot;
+	protected BoogieIcfgContainer moriginalRoot;
 	protected CfgSmtToolkit mcsToolkit;
 	protected ImpRootNode mgraphRoot;
 
@@ -73,7 +73,7 @@ public abstract class CodeChecker {
 
 	protected GraphWriter _graphWriter;
 
-	public CodeChecker(final IElement root, final CfgSmtToolkit csToolkit, final RootNode originalRoot, final ImpRootNode graphRoot, final GraphWriter graphWriter,
+	public CodeChecker(final IElement root, final CfgSmtToolkit csToolkit, final BoogieIcfgContainer originalRoot, final ImpRootNode graphRoot, final GraphWriter graphWriter,
 			final IHoareTripleChecker edgeChecker, final PredicateUnifier predicateUnifier, final ILogger logger) {
 		mLogger = logger;
 		mcsToolkit = csToolkit;

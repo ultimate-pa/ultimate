@@ -40,9 +40,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 
 /**
@@ -57,7 +57,7 @@ public class MinimizeStatesMultiEdgeSingleNode extends BaseMinimizeStates {
 	private final XnfConversionTechnique mXnfConversionTechnique;
 	private final SimplificationTechnique mSimplificationTechnique;
 
-	public MinimizeStatesMultiEdgeSingleNode(final RootNode product, final IUltimateServiceProvider services,
+	public MinimizeStatesMultiEdgeSingleNode(final BoogieIcfgContainer product, final IUltimateServiceProvider services,
 			final IToolchainStorage storage, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique) {
 		super(product, services, storage);
@@ -66,7 +66,7 @@ public class MinimizeStatesMultiEdgeSingleNode extends BaseMinimizeStates {
 	}
 
 	@Override
-	protected Collection<? extends IcfgLocation> processCandidate(final RootNode root, final BoogieIcfgLocation target,
+	protected Collection<? extends IcfgLocation> processCandidate(final BoogieIcfgContainer root, final BoogieIcfgLocation target,
 			final Set<IcfgLocation> closed) {
 
 		if (new HashSet<>(target.getIncomingNodes()).size() != 1

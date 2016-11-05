@@ -2,21 +2,21 @@ package de.uni_freiburg.informatik.ultimate.witnessprinter;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 
 public class RCFGCatcher extends BaseObserver{
 
-	private RootNode mRoot;
+	private BoogieIcfgContainer mRoot;
 	
 	@Override
-	public boolean process(IElement root) throws Throwable {
-		if(root instanceof RootNode){
-			mRoot = (RootNode) root;	
+	public boolean process(final IElement root) throws Throwable {
+		if(root instanceof BoogieIcfgContainer){
+			mRoot = (BoogieIcfgContainer) root;	
 		}
 		return false;
 	}
 	
-	RootNode getModel(){
+	BoogieIcfgContainer getModel(){
 		return mRoot;
 	}
 }

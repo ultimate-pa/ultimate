@@ -13,7 +13,6 @@ import java.util.stream.StreamSupport;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 
 /**
  *
@@ -25,9 +24,9 @@ public class RCFGEdgeIterator implements Iterator<IcfgEdge> {
 	private final Deque<IcfgEdge> mWorklist;
 	private final Set<IcfgEdge> mFinished;
 
-	public RCFGEdgeIterator(final RootNode root) {
-		this(root.getOutgoingEdges());
-	}
+//	public RCFGEdgeIterator(final RootNode root) {
+//		this(root.getOutgoingEdges());
+//	}
 
 	public <T extends IcfgEdge> RCFGEdgeIterator(final Collection<T> edges) {
 		mFinished = new HashSet<>();

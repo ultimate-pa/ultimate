@@ -33,25 +33,25 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 
 public class RemoveInfeasibleEdges extends BaseProductOptimizer {
 
-	public RemoveInfeasibleEdges(final RootNode product, final IUltimateServiceProvider services,
+	public RemoveInfeasibleEdges(final BoogieIcfgContainer product, final IUltimateServiceProvider services,
 			final IToolchainStorage storage) {
 		super(product, services, storage);
 
 	}
 
 	@Override
-	protected RootNode createResult(final RootNode root) {
+	protected BoogieIcfgContainer createResult(final BoogieIcfgContainer root) {
 		final ArrayDeque<IcfgEdge> edges = new ArrayDeque<>();
 		final HashSet<IcfgEdge> closed = new HashSet<>();
 
-		edges.addAll(root.getOutgoingEdges());
+		edges.addAll(BoogieIcfgContainer.extractStartEdges(root));
 
 		while (!edges.isEmpty()) {
 			final IcfgEdge current = edges.removeFirst();

@@ -33,7 +33,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalPostOperator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 
 /**
  * The post operator of the interval domain.
@@ -44,7 +44,7 @@ public class IntervalPostOperator extends NonrelationalPostOperator<IntervalDoma
 
 	public IntervalPostOperator(final ILogger logger, final BoogieSymbolTable symbolTable,
 	        final Boogie2SmtSymbolTable bpl2smtSymbolTable, final int maxParallelStates, final Boogie2SMT boogie2Smt,
-	        final RootAnnot rootAnnotation) {
+	        final BoogieIcfgContainer rootAnnotation) {
 		super(logger, symbolTable, bpl2smtSymbolTable,
 		        new IntervalDomainStatementProcessor(logger, symbolTable, bpl2smtSymbolTable, maxParallelStates),
 		        maxParallelStates, boogie2Smt, rootAnnotation);

@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 
 /**
  * This abstract domain stores intervals for all variable valuations. Intervals can be of the form [num; num], where num
@@ -58,7 +58,7 @@ public class IntervalDomain implements IAbstractDomain<IntervalDomainState, Code
 	private final ILogger mLogger;
 	private final LiteralCollection mLiteralCollection;
 	private final IUltimateServiceProvider mServices;
-	private final RootAnnot mRootAnnotation;
+	private final BoogieIcfgContainer mRootAnnotation;
 	private final BoogieSymbolTable mSymbolTable;
 
 	private IAbstractStateBinaryOperator<IntervalDomainState> mWideningOperator;
@@ -67,7 +67,7 @@ public class IntervalDomain implements IAbstractDomain<IntervalDomainState, Code
 
 	public IntervalDomain(final ILogger logger, final BoogieSymbolTable symbolTable,
 	        final LiteralCollection literalCollector, final IUltimateServiceProvider services,
-	        final RootAnnot rootAnnotation) {
+	        final BoogieIcfgContainer rootAnnotation) {
 		mLogger = logger;
 		mLiteralCollection = literalCollector;
 		mServices = services;

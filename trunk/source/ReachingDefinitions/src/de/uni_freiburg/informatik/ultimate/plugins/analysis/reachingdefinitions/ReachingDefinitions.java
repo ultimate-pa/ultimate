@@ -52,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.rcfg.ReachDefRCFG;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.trace.ReachDefTrace;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 
 public class ReachingDefinitions implements IAnalysis {
 
@@ -130,7 +130,7 @@ public class ReachingDefinitions implements IAnalysis {
 	}
 
 	public static List<DataflowDAG<TraceCodeBlock>> computeRDForTrace(final List<CodeBlock> trace, final ILogger logger,
-			final RootAnnot rootNode) throws Throwable {
+			final BoogieIcfgContainer rootNode) throws Throwable {
 		return computeRDForTrace(trace, logger, PreprocessorAnnotation.getAnnotation(rootNode).getSymbolTable());
 	}
 

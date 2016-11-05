@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RCFGEdgeVisitor;
 
@@ -62,8 +62,8 @@ public class AssumeFinder extends BaseObserver {
 
 	@Override
 	public boolean process(final IElement root) throws Throwable {
-		if (root instanceof RootNode) {
-			final RootNode rootNode = (RootNode) root;
+		if (root instanceof BoogieIcfgContainer) {
+			final BoogieIcfgContainer rootNode = (BoogieIcfgContainer) root;
 
 			process(rootNode);
 			if (mLogger.isDebugEnabled()) {

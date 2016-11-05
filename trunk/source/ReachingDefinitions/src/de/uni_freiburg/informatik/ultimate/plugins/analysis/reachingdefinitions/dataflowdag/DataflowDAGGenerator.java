@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.ReachDefEdgeAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.ReachDefStatementAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.boogie.ScopedBoogieVar;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 
 /**
  *
@@ -74,8 +74,8 @@ public class DataflowDAGGenerator extends BaseObserver {
 			return false;
 		}
 
-		if (root instanceof RootNode) {
-			final RootNode rootNode = (RootNode) root;
+		if (root instanceof BoogieIcfgContainer) {
+			final BoogieIcfgContainer rootNode = (BoogieIcfgContainer) root;
 			mForest = process(rootNode);
 
 			if (mLogger.isDebugEnabled()) {
@@ -91,7 +91,7 @@ public class DataflowDAGGenerator extends BaseObserver {
 		return mForest;
 	}
 
-	private List<DataflowDAG<Statement>> process(final RootNode node) {
+	private List<DataflowDAG<Statement>> process(final BoogieIcfgContainer node) {
 		final List<DataflowDAG<Statement>> forest = new ArrayList<>();
 		for (final Entry<IcfgEdge, List<AssumeStatement>> entry : mEdgesWithAssumes.entrySet()) {
 			for (final AssumeStatement assm : entry.getValue()) {

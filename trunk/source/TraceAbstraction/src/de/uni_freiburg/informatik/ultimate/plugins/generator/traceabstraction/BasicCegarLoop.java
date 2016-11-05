@@ -76,7 +76,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.LineCoverageCalculator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.IInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.InterpolantAutomatonBuilderFactory;
@@ -156,7 +156,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	
 	private final SearchStrategy mSearchStrategy;
 	
-	public BasicCegarLoop(final String name, final RootNode rootNode, final CfgSmtToolkit csToolkit,
+	public BasicCegarLoop(final String name, final BoogieIcfgContainer rootNode, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs, final Collection<BoogieIcfgLocation> errorLocs,
 			final InterpolationTechnique interpolation, final boolean computeHoareAnnotation,
 			final IUltimateServiceProvider services, final IToolchainStorage storage) {
@@ -165,7 +165,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				services.getLoggingService().getLogger(Activator.PLUGIN_ID));
 		mUseInterpolantConsolidation = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_INTERPOLANTS_CONSOLIDATION);
-		if (mFallbackToFpIfInterprocedural && rootNode.getRootAnnot().getEntryNodes().size() > 1) {
+		if (mFallbackToFpIfInterprocedural && rootNode.getEntryNodes().size() > 1) {
 			if (interpolation == InterpolationTechnique.FPandBP) {
 				mLogger.info("fallback from FPandBP to FP because CFG is interprocedural");
 				mInterpolation = InterpolationTechnique.ForwardPredicates;
@@ -185,9 +185,9 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		mComputeHoareAnnotation = computeHoareAnnotation;
 		if (mPref.getHoareAnnotationPositions() == HoareAnnotationPositions.LoopsAndPotentialCycles) {
 			mHoareAnnotationPositions = new HashSet<>();
-			mHoareAnnotationPositions.addAll(rootNode.getRootAnnot().getLoopLocations().keySet());
+			mHoareAnnotationPositions.addAll(rootNode.getLoopLocations().keySet());
 			// mHoareAnnotationPositions.addAll(rootNode.getRootAnnot().getExitNodes().values());
-			mHoareAnnotationPositions.addAll(rootNode.getRootAnnot().getPotentialCycleProgramPoints());
+			mHoareAnnotationPositions.addAll(rootNode.getPotentialCycleProgramPoints());
 		}
 		mHaf = new HoareAnnotationFragments(mLogger, mHoareAnnotationPositions, mPref.getHoareAnnotationPositions());
 		mStateFactoryForRefinement = new PredicateFactoryRefinement(mIcfgContainer.getProgramPoints(),

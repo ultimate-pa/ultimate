@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.ReachDefStatementAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.boogie.ScopedBoogieVarBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.util.Util;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 
 /**
  * 
@@ -59,20 +59,20 @@ public class ReachDefRCFG extends BaseObserver {
 	private final IAnnotationProvider<ReachDefStatementAnnotation> mStatementProvider;
 	private final IAnnotationProvider<ReachDefEdgeAnnotation> mEdgeProvider;
 
-	public ReachDefRCFG(ILogger logger, IAnnotationProvider<ReachDefStatementAnnotation> stmtProvider,
-			IAnnotationProvider<ReachDefEdgeAnnotation> edgeProvider) {
+	public ReachDefRCFG(final ILogger logger, final IAnnotationProvider<ReachDefStatementAnnotation> stmtProvider,
+			final IAnnotationProvider<ReachDefEdgeAnnotation> edgeProvider) {
 		mLogger = logger;
 		mStatementProvider = stmtProvider;
 		mEdgeProvider = edgeProvider;
 	}
 
 	@Override
-	public boolean process(IElement root) throws Throwable {
-		if (root instanceof RootNode) {
-			final RootNode rootNode = (RootNode) root;
+	public boolean process(final IElement root) throws Throwable {
+		if (root instanceof BoogieIcfgContainer) {
+			final BoogieIcfgContainer rootNode = (BoogieIcfgContainer) root;
 
 			if (mLogger.isDebugEnabled()) {
-				mLogger.debug("Loops: " + rootNode.getRootAnnot().getLoopLocations().size());
+				mLogger.debug("Loops: " + rootNode.getLoopLocations().size());
 			}
 
 			process(rootNode);
@@ -80,7 +80,7 @@ public class ReachDefRCFG extends BaseObserver {
 		return false;
 	}
 
-	private void process(RootNode node) throws Throwable {
+	private void process(final BoogieIcfgContainer node) throws Throwable {
 
 		final PreprocessorAnnotation pa = PreprocessorAnnotation.getAnnotation(node);
 		if (pa == null || pa.getSymbolTable() == null) {
@@ -92,7 +92,7 @@ public class ReachDefRCFG extends BaseObserver {
 
 		final LinkedHashSet<IcfgEdge> remaining = new LinkedHashSet<>();
 
-		for (final IcfgEdge next : node.getOutgoingEdges()) {
+		for (final IcfgEdge next : BoogieIcfgContainer.extractStartEdges(node)) {
 			remaining.add(next);
 		}
 

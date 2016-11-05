@@ -53,8 +53,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.ltl2aut.never2nwa.NWAContainer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 
 /**
  *
@@ -68,9 +68,9 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 
 	private final ILogger mLogger;
-	private RootNode mRcfg;
+	private BoogieIcfgContainer mRcfg;
 	private NWAContainer mNeverClaimNWAContainer;
-	private RootNode mProduct;
+	private BoogieIcfgContainer mProduct;
 	private final IUltimateServiceProvider mServices;
 	private final ProductBacktranslator mBacktranslator;
 	private final IToolchainStorage mStorage;
@@ -222,7 +222,7 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 		reportSizeBenchmark(message, new SizeBenchmark(nwa, message));
 	}
 
-	private void reportSizeBenchmark(final String message, final RootNode root) {
+	private void reportSizeBenchmark(final String message, final BoogieIcfgContainer root) {
 		reportSizeBenchmark(message, new SizeBenchmark(root, message));
 	}
 
@@ -255,9 +255,9 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 		}
 
 		// collect root node of program's RCFG
-		if (root instanceof RootNode) {
+		if (root instanceof BoogieIcfgContainer) {
 			mLogger.debug("Collecting RCFG RootNode");
-			mRcfg = (RootNode) root;
+			mRcfg = (BoogieIcfgContainer) root;
 			return false;
 		}
 

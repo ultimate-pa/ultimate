@@ -26,7 +26,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractInterpreter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.IAbstractInterpretationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.AbsIntNonSmtInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.AbsIntStraightLineInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.AbsIntTotalInterpolationAutomatonBuilder;
@@ -49,7 +49,7 @@ public class AbstractInterpretationRunner {
 	private final ILogger mLogger;
 
 	private final CfgSmtToolkit mCsToolkit;
-	private final RootNode mRoot;
+	private final BoogieIcfgContainer mRoot;
 
 	private final Set<Set<CodeBlock>> mKnownPathPrograms;
 	private IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> mAbsIntResult;
@@ -62,7 +62,7 @@ public class AbstractInterpretationRunner {
 	private boolean mSkipIteration;
 
 	public AbstractInterpretationRunner(final IUltimateServiceProvider services,
-			final CegarLoopStatisticsGenerator benchmark, final RootNode root,
+			final CegarLoopStatisticsGenerator benchmark, final BoogieIcfgContainer root,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
 			final CfgSmtToolkit csToolkit) {
 		mCegarLoopBenchmark = benchmark;
@@ -202,14 +202,14 @@ public class AbstractInterpretationRunner {
 			case USE_PATH_PROGRAM:
 				aiInterpolAutomatonBuilder = new AbsIntNonSmtInterpolantAutomatonBuilder(mServices, abstraction,
 						interpolGenerator.getPredicateUnifier(), mCsToolkit.getManagedScript(),
-						mRoot.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable(), currentCex, mSimplificationTechnique,
+						mRoot.getBoogie2SMT().getBoogie2SmtSymbolTable(), currentCex, mSimplificationTechnique,
 						mXnfConversionTechnique);
 				break;
 			case USE_PREDICATES:
 				aiInterpolAutomatonBuilder = new AbsIntStraightLineInterpolantAutomatonBuilder(mServices, abstraction,
 						mAbsIntResult, interpolGenerator.getPredicateUnifier(), mCsToolkit, currentCex,
 						mSimplificationTechnique, mXnfConversionTechnique, 
-						mRoot.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable());
+						mRoot.getBoogie2SMT().getBoogie2SmtSymbolTable());
 				break;
 			case USE_CANONICAL:
 				throw new UnsupportedOperationException(
@@ -217,7 +217,7 @@ public class AbstractInterpretationRunner {
 			case USE_TOTAL:
 				aiInterpolAutomatonBuilder = new AbsIntTotalInterpolationAutomatonBuilder(mServices, abstraction,
 						mAbsIntResult, interpolGenerator.getPredicateUnifier(), mCsToolkit, currentCex, 
-						mRoot.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable());
+						mRoot.getBoogie2SMT().getBoogie2SmtSymbolTable());
 				break;
 			default:
 				throw new UnsupportedOperationException("AI mode " + mMode + " not yet implemented");

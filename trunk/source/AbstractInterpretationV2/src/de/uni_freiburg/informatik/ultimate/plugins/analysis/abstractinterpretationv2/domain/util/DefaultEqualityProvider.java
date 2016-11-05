@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IEqualityProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence.Origin;
 
 /**
@@ -68,7 +68,7 @@ public class DefaultEqualityProvider<STATE extends IAbstractState<STATE, CodeBlo
 	 *            The root annotation of the program.
 	 */
 	public DefaultEqualityProvider(final IAbstractPostOperator<STATE, CodeBlock, IBoogieVar> postOperator,
-	        final RootAnnot rootAnnotation) {
+	        final BoogieIcfgContainer rootAnnotation) {
 		mPostOperator = postOperator;
 		mCodeBlockFactory = rootAnnotation.getCodeBlockFactory();
 	}

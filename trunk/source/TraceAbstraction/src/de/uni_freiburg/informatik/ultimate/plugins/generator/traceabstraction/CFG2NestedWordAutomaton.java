@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Boo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 
@@ -85,7 +85,7 @@ public class CFG2NestedWordAutomaton {
 	 * state corresponding to errorLoc will be accepting.
 	 */
 	public INestedWordAutomaton<CodeBlock,IPredicate> getNestedWordAutomaton(
-							final RootAnnot rootAnnot,
+							final BoogieIcfgContainer rootAnnot,
 							final IStateFactory<IPredicate> tAContentFactory,
 							final Collection<BoogieIcfgLocation> errorLocs) {
 		final Set<BoogieIcfgLocation> initialNodes = new HashSet<BoogieIcfgLocation>();

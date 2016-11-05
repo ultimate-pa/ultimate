@@ -28,20 +28,20 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph;
 
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 
 public class ImpRootNode extends AnnotatedProgramPoint {
 	
 	private static final long serialVersionUID = 1L;
 
-	public ImpRootNode(RootAnnot rootAnnot) {
+	public ImpRootNode(BoogieIcfgContainer rootAnnot) {
 		super(null,new BoogieIcfgLocation("root", "", false, null));
 		getPayload().getAnnotations().put(Activator.PLUGIN_ID, rootAnnot);
 		
 	}
 
-	public RootAnnot getRootAnnot() {
-		return ((RootAnnot) getPayload().getAnnotations().get(
+	public BoogieIcfgContainer getRootAnnot() {
+		return ((BoogieIcfgContainer) getPayload().getAnnotations().get(
 				Activator.PLUGIN_ID));
 	}
 	

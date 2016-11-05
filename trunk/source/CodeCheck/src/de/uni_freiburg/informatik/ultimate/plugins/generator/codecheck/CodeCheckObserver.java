@@ -95,11 +95,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.emptinesscheck.IEmp
 import de.uni_freiburg.informatik.ultimate.plugins.generator.emptinesscheck.NWAEmptinessCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.impulse.ImpulseChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.kojak.UltimateChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
@@ -139,7 +138,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 
 	private CodeChecker mCodeChecker;
 
-	private RootNode mOriginalRoot;
+	private BoogieIcfgContainer mOriginalRoot;
 	private ImpRootNode mGraphRoot;
 
 	private CfgSmtToolkit mCsToolkit;
@@ -174,8 +173,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	private boolean initialize(final IElement root) {
 		readPreferencePage();
 
-		mOriginalRoot = (RootNode) root;
-		final RootAnnot rootAnnot = mOriginalRoot.getRootAnnot();
+		mOriginalRoot = (BoogieIcfgContainer) root;
+		final BoogieIcfgContainer rootAnnot = mOriginalRoot;
 
 		mCsToolkit = rootAnnot.getCfgSmtToolkit();
 		mPredicateFactory = new PredicateFactory(mServices, mCsToolkit.getManagedScript(), 
@@ -183,7 +182,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 
 		mPredicateUnifier =
 				new PredicateUnifier(mServices, mCsToolkit.getManagedScript(), 
-						mPredicateFactory, mOriginalRoot.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable(), 
+						mPredicateFactory, mOriginalRoot.getBoogie2SMT().getBoogie2SmtSymbolTable(), 
 						mSimplificationTechnique, mXnfConversionTechnique);
 
 		mEdgeChecker = new MonolithicHoareTripleChecker(mCsToolkit);
@@ -424,7 +423,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 					if (GlobalSettings._instance._predicateUnification == PredicateUnification.PER_ITERATION) {
 						mPredicateUnifier = new PredicateUnifier(mServices, mCsToolkit.getManagedScript(), 
 								mPredicateFactory, 
-								mOriginalRoot.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable(), 
+								mOriginalRoot.getBoogie2SMT().getBoogie2SmtSymbolTable(), 
 								mSimplificationTechnique,
 								mXnfConversionTechnique);
 					}
@@ -432,7 +431,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 					ManagedScript mgdScriptTracechecks;
 					// if (noArrayOrNIRAsofar && GlobalSettings._instance.useSeparateSolverForTracechecks) {
 					if (GlobalSettings._instance.useSeparateSolverForTracechecks) {
-						final String filename = mOriginalRoot.getRootAnnot().getFilename() + "_TraceCheck_Iteration" + iterationsCount;
+						final String filename = mOriginalRoot.getFilename() + "_TraceCheck_Iteration" + iterationsCount;
 						final SolverMode solverMode = GlobalSettings._instance.chooseSeparateSolverForTracechecks;
 						final String commandExternalSolver =
 								GlobalSettings._instance.separateSolverForTracechecksCommand;
@@ -449,7 +448,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 
 						mgdScriptTracechecks = new ManagedScript(mServices, tcSolver); 
 						final TermTransferrer tt = new TermTransferrer(tcSolver);
-						for (final Term axiom : mOriginalRoot.getRootAnnot().getBoogie2SMT().getAxioms()) {
+						for (final Term axiom : mOriginalRoot.getBoogie2SMT().getAxioms()) {
 							tcSolver.assertTerm(tt.transform(axiom));
 						}
 					} else {
@@ -554,7 +553,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		benchmarkGenerator.setResult(overallResult);
 		benchmarkGenerator.stop(CegarLoopStatisticsDefinitions.OverallTime.toString());
 
-		final CodeCheckBenchmarks ccb = new CodeCheckBenchmarks(mOriginalRoot.getRootAnnot());
+		final CodeCheckBenchmarks ccb = new CodeCheckBenchmarks(mOriginalRoot);
 		ccb.aggregateBenchmarkData(benchmarkGenerator);
 
 		reportBenchmark(ccb);
@@ -719,7 +718,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	public ImpRootNode copyGraph(final ImpRootNode root) {
 		final HashMap<AnnotatedProgramPoint, AnnotatedProgramPoint> copy =
 				new HashMap<AnnotatedProgramPoint, AnnotatedProgramPoint>();
-		final ImpRootNode newRoot = new ImpRootNode(root.getRootAnnot());
+		// FIXME: 2016-11-05 Matthias: I cannot solve this, passing null.
+		final ImpRootNode newRoot = new ImpRootNode(null);
 		copy.put(root, newRoot);
 		final Stack<AnnotatedProgramPoint> stack = new Stack<AnnotatedProgramPoint>();
 		for (final AnnotatedProgramPoint child : root.getOutgoingNodes()) {

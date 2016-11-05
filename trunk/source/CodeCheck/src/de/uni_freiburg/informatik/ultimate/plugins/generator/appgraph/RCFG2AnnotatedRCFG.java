@@ -39,11 +39,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 
 public class RCFG2AnnotatedRCFG {
@@ -66,17 +65,17 @@ public class RCFG2AnnotatedRCFG {
 		museInitialPredicates = initialPredicates != null;
 	}
 
-	public ImpRootNode convert(final IUltimateServiceProvider mServices, final RootNode oldRoot) {
-		final RootAnnot ra = new RootAnnot(mServices, oldRoot.getRootAnnot().getBoogieDeclarations(),
-				oldRoot.getRootAnnot().getBoogie2SMT(), null, oldRoot.getPayload().getLocation());
+	public ImpRootNode convert(final IUltimateServiceProvider mServices, final BoogieIcfgContainer oldRoot) {
+		final BoogieIcfgContainer ra = new BoogieIcfgContainer(mServices, oldRoot.getBoogieDeclarations(),
+				oldRoot.getBoogie2SMT(), null, oldRoot.getPayload().getLocation());
 
 		final ImpRootNode newRoot = new ImpRootNode(ra);
 
 		final ArrayDeque<BoogieIcfgLocation> openNodes = new ArrayDeque<BoogieIcfgLocation>();
 		moldPpTonew = new HashMap<BoogieIcfgLocation, AnnotatedProgramPoint>();
 
-		for (final IcfgEdge rootEdge : oldRoot.getOutgoingEdges()) {
-			final BoogieIcfgLocation oldNode = (BoogieIcfgLocation) rootEdge.getTarget();
+		for (final Entry<String, BoogieIcfgLocation> entry : oldRoot.getEntryNodes().entrySet()) {
+			final BoogieIcfgLocation oldNode = entry.getValue();
 			final AnnotatedProgramPoint newNode = createAnnotatedProgramPoint(oldNode);
 
 			newRoot.connectOutgoing(new DummyCodeBlock(mLogger), newNode);

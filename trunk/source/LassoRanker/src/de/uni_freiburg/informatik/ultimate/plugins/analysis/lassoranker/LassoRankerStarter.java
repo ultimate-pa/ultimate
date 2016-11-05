@@ -88,10 +88,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfCon
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BinaryStatePredicateManager;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer.CodeBlockSize;
@@ -108,7 +107,7 @@ public class LassoRankerStarter {
 	private static final String LASSO_ERROR_MSG = "This is not a lasso program (a lasso program is a program "
 			+ "consisting of a stem and a loop transition)";
 
-	private final RootAnnot mRootAnnot;
+	private final BoogieIcfgContainer mRootAnnot;
 	private final BoogieIcfgLocation mHonda;
 	private final NestedWord<CodeBlock> mStem;
 	private final NestedWord<CodeBlock> mLoop;
@@ -119,12 +118,12 @@ public class LassoRankerStarter {
 	private final XnfConversionTechnique mXnfConversionTechnique =
 			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 
-	public LassoRankerStarter(final RootNode rootNode, final IUltimateServiceProvider services,
+	public LassoRankerStarter(final BoogieIcfgContainer rootNode, final IUltimateServiceProvider services,
 			final IToolchainStorage storage) throws IOException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 
-		mRootAnnot = rootNode.getRootAnnot();
+		mRootAnnot = rootNode;
 		// Omit check to enable Stefans BlockEncoding
 		// checkRCFGBuilderSettings();
 		final LassoRankerPreferences preferences = PreferencesInitializer.getLassoRankerPreferences(mServices);
@@ -133,18 +132,13 @@ public class LassoRankerStarter {
 				mCsToolkit.getSymbolTable(), mSimplificationTechnique, mXnfConversionTechnique);
 
 		AbstractLassoExtractor lassoExtractor;
-		final boolean useNewExtraction = true;
-		if (useNewExtraction) {
-			try {
-				lassoExtractor = new LassoExtractorBuchi(mServices, rootNode, mCsToolkit, mPredicateFactory, mLogger);
-			} catch (final AutomataOperationCanceledException oce) {
-				throw new AssertionError("timeout while searching lasso");
-				// throw new ToolchainCanceledException(this.getClass());
-			} catch (final AutomataLibraryException e) {
-				throw new AssertionError(e.toString());
-			}
-		} else {
-			lassoExtractor = new LassoExtractorNaive(rootNode);
+		try {
+			lassoExtractor = new LassoExtractorBuchi(mServices, rootNode, mCsToolkit, mPredicateFactory, mLogger);
+		} catch (final AutomataOperationCanceledException oce) {
+			throw new AssertionError("timeout while searching lasso");
+			// throw new ToolchainCanceledException(this.getClass());
+		} catch (final AutomataLibraryException e) {
+			throw new AssertionError(e.toString());
 		}
 		if (!lassoExtractor.wasLassoFound()) {
 			reportUnuspportedSyntax(lassoExtractor.getSomeNoneForErrorReport(), LASSO_ERROR_MSG);

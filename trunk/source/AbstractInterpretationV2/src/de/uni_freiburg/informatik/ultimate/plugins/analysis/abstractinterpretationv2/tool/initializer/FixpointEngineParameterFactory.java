@@ -39,19 +39,18 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.vp.RCFGArrayIndexCollector;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.vp.VPDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 
 public class FixpointEngineParameterFactory {
 	
 	private final BoogieSymbolTable mSymbolTable;
-	private final RootNode mRoot;
+	private final BoogieIcfgContainer mRoot;
 	private final IUltimateServiceProvider mServices;
 	private final LiteralCollectorFactory mLiteralCollector;
 	
-	public FixpointEngineParameterFactory(final RootNode root, final LiteralCollectorFactory literalCollector,
+	public FixpointEngineParameterFactory(final BoogieIcfgContainer root, final LiteralCollectorFactory literalCollector,
 			final IUltimateServiceProvider services) {
 		mRoot = root;
 		mServices = services;
@@ -70,7 +69,7 @@ public class FixpointEngineParameterFactory {
 			createParams(final IProgressAwareTimer timer,
 					final ITransitionProvider<CodeBlock, BoogieIcfgLocation> transitionProvider,
 					final ILoopDetector<CodeBlock> loopDetector) {
-		final RootAnnot rootAnnot = mRoot.getRootAnnot();
+		final BoogieIcfgContainer rootAnnot = mRoot;
 		final IAbstractDomain<STATE, CodeBlock, IBoogieVar> domain =
 				(IAbstractDomain<STATE, CodeBlock, IBoogieVar>) selectDomain();
 		final IAbstractStateStorage<STATE, CodeBlock, IBoogieVar, BoogieIcfgLocation> storageProvider =
@@ -81,7 +80,7 @@ public class FixpointEngineParameterFactory {
 				mServices);
 		final IDebugHelper<STATE, CodeBlock, IBoogieVar, BoogieIcfgLocation> debugHelper =
 				new RcfgDebugHelper<>(rootAnnot.getCfgSmtToolkit(), mServices, 
-						mRoot.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable());
+						mRoot.getBoogie2SMT().getBoogie2SmtSymbolTable());
 		return new FixpointEngineParameters<STATE, CodeBlock, IBoogieVar, BoogieIcfgLocation, Expression>(mServices)
 				.setDomain(domain).setLoopDetector(loopDetector).setStorage(storageProvider)
 				.setTransitionProvider(transitionProvider).setVariableProvider(variableProvider)
@@ -94,7 +93,7 @@ public class FixpointEngineParameterFactory {
 			createParamsPathProgram(final IProgressAwareTimer timer,
 					final ITransitionProvider<CodeBlock, BoogieIcfgLocation> transitionProvider,
 					final ILoopDetector<CodeBlock> loopDetector) {
-		final RootAnnot rootAnnot = mRoot.getRootAnnot();
+		final BoogieIcfgContainer rootAnnot = mRoot;
 		final IAbstractDomain<STATE, CodeBlock, IBoogieVar> domain =
 				(IAbstractDomain<STATE, CodeBlock, IBoogieVar>) selectDomain();
 		final IAbstractStateStorage<STATE, CodeBlock, IBoogieVar, BoogieIcfgLocation> storageProvider =
@@ -104,7 +103,7 @@ public class FixpointEngineParameterFactory {
 				mServices);
 		final IDebugHelper<STATE, CodeBlock, IBoogieVar, BoogieIcfgLocation> debugHelper =
 				new RcfgDebugHelper<>(rootAnnot.getCfgSmtToolkit(), mServices, 
-						mRoot.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable());
+						mRoot.getBoogie2SMT().getBoogie2SmtSymbolTable());
 		return new FixpointEngineParameters<STATE, CodeBlock, IBoogieVar, BoogieIcfgLocation, Expression>(mServices)
 				.setDomain(domain).setLoopDetector(loopDetector).setStorage(storageProvider)
 				.setTransitionProvider(transitionProvider).setVariableProvider(variableProvider)
@@ -117,7 +116,7 @@ public class FixpointEngineParameterFactory {
 			createParamsFuture(final IProgressAwareTimer timer,
 					final ITransitionProvider<CodeBlock, BoogieIcfgLocation> transitionProvider,
 					final ILoopDetector<CodeBlock> loopDetector) {
-		final RootAnnot rootAnnot = mRoot.getRootAnnot();
+		final BoogieIcfgContainer rootAnnot = mRoot;
 		
 		final IAbstractDomain<STATE, CodeBlock, IProgramVar> domain =
 				(IAbstractDomain<STATE, CodeBlock, IProgramVar>) selectDomainFutureCfg();
@@ -127,7 +126,7 @@ public class FixpointEngineParameterFactory {
 				mSymbolTable, rootAnnot.getBoogie2SMT().getBoogie2SmtSymbolTable(), mServices);
 		final IDebugHelper<STATE, CodeBlock, IProgramVar, BoogieIcfgLocation> debugHelper =
 				new RcfgDebugHelper<>(rootAnnot.getCfgSmtToolkit(), mServices, 
-						mRoot.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable());
+						mRoot.getBoogie2SMT().getBoogie2SmtSymbolTable());
 		
 		return new FixpointEngineParameters<STATE, CodeBlock, IProgramVar, BoogieIcfgLocation, Expression>(mServices)
 				.setDomain(domain).setLoopDetector(loopDetector).setStorage(storageProvider)
@@ -146,7 +145,7 @@ public class FixpointEngineParameterFactory {
 			return new DataflowDomain(logger);
 		} else if (VPDomain.class.getSimpleName().equals(selectedDomain)) {
 			final RCFGArrayIndexCollector arrayIndexCollector = new RCFGArrayIndexCollector(mRoot);
-			return new VPDomain(logger, mRoot.getRootAnnot().getCfgSmtToolkit().getManagedScript(), mServices,
+			return new VPDomain(logger, mRoot.getCfgSmtToolkit().getManagedScript(), mServices,
 					arrayIndexCollector.getEqGraphNodeSet(), arrayIndexCollector.getTermToBaseNodeMap(),
 					arrayIndexCollector.getTermToFnNodeMap(), arrayIndexCollector.getEqNodeToEqGraphNodeMap());
 		}
@@ -161,14 +160,14 @@ public class FixpointEngineParameterFactory {
 		if (EmptyDomain.class.getSimpleName().equals(selectedDomain)) {
 			return new EmptyDomain<>();
 		} else if (SignDomain.class.getSimpleName().equals(selectedDomain)) {
-			return new SignDomain(mServices, mRoot.getRootAnnot(), mSymbolTable);
+			return new SignDomain(mServices, mRoot, mSymbolTable);
 		} else if (IntervalDomain.class.getSimpleName().equals(selectedDomain)) {
 			return new IntervalDomain(logger, mSymbolTable, mLiteralCollector.create().getLiteralCollection(),
-					mServices, mRoot.getRootAnnot());
+					mServices, mRoot);
 		} else if (OctagonDomain.class.getSimpleName().equals(selectedDomain)) {
-			return new OctagonDomain(logger, mSymbolTable, mLiteralCollector, mServices, mRoot.getRootAnnot());
+			return new OctagonDomain(logger, mSymbolTable, mLiteralCollector, mServices, mRoot);
 		} else if (CongruenceDomain.class.getSimpleName().equals(selectedDomain)) {
-			return new CongruenceDomain(logger, mServices, mSymbolTable, mRoot.getRootAnnot());
+			return new CongruenceDomain(logger, mServices, mSymbolTable, mRoot);
 		} else if (CompoundDomain.class.getSimpleName().equals(selectedDomain)) {
 			@SuppressWarnings("rawtypes")
 			final List<IAbstractDomain> domainList = new ArrayList<>();
@@ -176,20 +175,20 @@ public class FixpointEngineParameterFactory {
 				domainList.add(new EmptyDomain<>());
 			}
 			if (prefs.getBoolean(CompoundDomainPreferences.LABEL_USE_SIGN_DOMAIN)) {
-				domainList.add(new SignDomain(mServices, mRoot.getRootAnnot(), mSymbolTable));
+				domainList.add(new SignDomain(mServices, mRoot, mSymbolTable));
 			}
 			if (prefs.getBoolean(CompoundDomainPreferences.LABEL_USE_CONGRUENCE_DOMAIN)) {
-				domainList.add(new CongruenceDomain(logger, mServices, mSymbolTable, mRoot.getRootAnnot()));
+				domainList.add(new CongruenceDomain(logger, mServices, mSymbolTable, mRoot));
 			}
 			if (prefs.getBoolean(CompoundDomainPreferences.LABEL_USE_INTERVAL_DOMAIN)) {
 				domainList.add(new IntervalDomain(logger, mSymbolTable,
-						mLiteralCollector.create().getLiteralCollection(), mServices, mRoot.getRootAnnot()));
+						mLiteralCollector.create().getLiteralCollection(), mServices, mRoot));
 			}
 			if (prefs.getBoolean(CompoundDomainPreferences.LABEL_USE_OCTAGON_DOMAIN)) {
 				domainList.add(
-						new OctagonDomain(logger, mSymbolTable, mLiteralCollector, mServices, mRoot.getRootAnnot()));
+						new OctagonDomain(logger, mSymbolTable, mLiteralCollector, mServices, mRoot));
 			}
-			return new CompoundDomain(mServices, domainList, mRoot.getRootAnnot());
+			return new CompoundDomain(mServices, domainList, mRoot);
 		}
 		throw new UnsupportedOperationException(getFailureString(selectedDomain));
 	}

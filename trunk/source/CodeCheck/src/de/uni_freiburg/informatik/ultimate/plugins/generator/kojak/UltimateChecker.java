@@ -50,10 +50,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.ImpRootNod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.CodeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.GlobalSettings;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.GraphWriter;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.IsContained;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
@@ -70,8 +70,8 @@ public class UltimateChecker extends CodeChecker {
 	HashMap<AnnotatedProgramPoint, HashMap<CodeBlock, AnnotatedProgramPoint>> _pre2stm2post_toConnectIfSat;
 	HashMap<AnnotatedProgramPoint, HashMap<AnnotatedProgramPoint, HashMap<Return, AnnotatedProgramPoint>>> _pre2hier2stm2post_toConnectIfSat;
 
-	public UltimateChecker(IElement root, CfgSmtToolkit mcsToolkit, RootNode moriginalRoot, ImpRootNode mgraphRoot,
-			GraphWriter mgraphWriter, IHoareTripleChecker edgeChecker, PredicateUnifier predicateUnifier, ILogger logger) {
+	public UltimateChecker(final IElement root, final CfgSmtToolkit mcsToolkit, final BoogieIcfgContainer moriginalRoot, final ImpRootNode mgraphRoot,
+			final GraphWriter mgraphWriter, final IHoareTripleChecker edgeChecker, final PredicateUnifier predicateUnifier, final ILogger logger) {
 		super(root, mcsToolkit, moriginalRoot, mgraphRoot,
 				mgraphWriter, edgeChecker, predicateUnifier, logger);
 	}
@@ -81,8 +81,8 @@ public class UltimateChecker extends CodeChecker {
 	 * modifies the graph accordingly.
 	 */
 	@Override
-	public boolean codeCheck(NestedRun<CodeBlock, AnnotatedProgramPoint> errorRun, IPredicate[] interpolants,
-			AnnotatedProgramPoint procedureRoot) {
+	public boolean codeCheck(final NestedRun<CodeBlock, AnnotatedProgramPoint> errorRun, final IPredicate[] interpolants,
+			final AnnotatedProgramPoint procedureRoot) {
 
 		// Debug The Error Trace and the corresponding list of interpolants.
 		final AnnotatedProgramPoint[] nodes = errorRun.getStateSequence().toArray(new AnnotatedProgramPoint[0]);
@@ -103,8 +103,8 @@ public class UltimateChecker extends CodeChecker {
 		return true;
 	}
 
-	private void splitNode(AnnotatedProgramPoint oldNode,
-			IPredicate predicate) {
+	private void splitNode(final AnnotatedProgramPoint oldNode,
+			final IPredicate predicate) {
 		// make two new nodes
 		final AnnotatedProgramPoint newNode1 = new AnnotatedProgramPoint(oldNode, conjugatePredicates(oldNode.getPredicate(),
 				predicate));
@@ -200,22 +200,22 @@ public class UltimateChecker extends CodeChecker {
 	}
 
 	@Override
-	public boolean codeCheck(NestedRun<CodeBlock, AnnotatedProgramPoint> errorRun, IPredicate[] interpolants,
-			AnnotatedProgramPoint procedureRoot,
-			NestedMap3<IPredicate, CodeBlock, IPredicate, IsContained> satTriples,
-			NestedMap3<IPredicate, CodeBlock, IPredicate, IsContained> unsatTriples) {
+	public boolean codeCheck(final NestedRun<CodeBlock, AnnotatedProgramPoint> errorRun, final IPredicate[] interpolants,
+			final AnnotatedProgramPoint procedureRoot,
+			final NestedMap3<IPredicate, CodeBlock, IPredicate, IsContained> satTriples,
+			final NestedMap3<IPredicate, CodeBlock, IPredicate, IsContained> unsatTriples) {
 		_satTriples = satTriples;
 		_unsatTriples = unsatTriples;
 		return this.codeCheck(errorRun, interpolants, procedureRoot);
 	}
 
 	@Override
-	public boolean codeCheck(NestedRun<CodeBlock, AnnotatedProgramPoint> errorRun, IPredicate[] interpolants,
-			AnnotatedProgramPoint procedureRoot,
-			NestedMap3<IPredicate, CodeBlock, IPredicate, IsContained> satTriples,
-			NestedMap3<IPredicate, CodeBlock, IPredicate, IsContained> unsatTriples,
-			NestedMap4<IPredicate, IPredicate, CodeBlock, IPredicate, IsContained> satQuadruples,
-			NestedMap4<IPredicate, IPredicate, CodeBlock, IPredicate, IsContained> unsatQuadruples) {
+	public boolean codeCheck(final NestedRun<CodeBlock, AnnotatedProgramPoint> errorRun, final IPredicate[] interpolants,
+			final AnnotatedProgramPoint procedureRoot,
+			final NestedMap3<IPredicate, CodeBlock, IPredicate, IsContained> satTriples,
+			final NestedMap3<IPredicate, CodeBlock, IPredicate, IsContained> unsatTriples,
+			final NestedMap4<IPredicate, IPredicate, CodeBlock, IPredicate, IsContained> satQuadruples,
+			final NestedMap4<IPredicate, IPredicate, CodeBlock, IPredicate, IsContained> unsatQuadruples) {
 		_satQuadruples = satQuadruples;
 		_unsatQuadruples = unsatQuadruples;
 		return this.codeCheck(errorRun, interpolants, procedureRoot, satTriples, unsatTriples);
@@ -245,7 +245,7 @@ public class UltimateChecker extends CodeChecker {
 		}
 	}
 
-	protected boolean connectOutgoingIfSat(AnnotatedProgramPoint source, CodeBlock statement, AnnotatedProgramPoint target) {
+	protected boolean connectOutgoingIfSat(final AnnotatedProgramPoint source, final CodeBlock statement, final AnnotatedProgramPoint target) {
 		if (isSatEdge(source.getPredicate(), statement, target.getPredicate())) {
 			source.connectOutgoing(statement, target);
 			return true;
@@ -254,8 +254,8 @@ public class UltimateChecker extends CodeChecker {
 		}
 	}
 
-	protected boolean connectOutgoingReturnIfSat(AnnotatedProgramPoint source, AnnotatedProgramPoint hier,
-			Return statement, AnnotatedProgramPoint target) {
+	protected boolean connectOutgoingReturnIfSat(final AnnotatedProgramPoint source, final AnnotatedProgramPoint hier,
+			final Return statement, final AnnotatedProgramPoint target) {
 		if (isSatRetEdge(source.getPredicate(), hier.getPredicate(), statement, target.getPredicate())) {
 			source.connectOutgoingReturn(hier, statement, target);
 			return true;
@@ -274,7 +274,7 @@ public class UltimateChecker extends CodeChecker {
 	 * @param postCondition
 	 * @return
 	 */
-	protected boolean isSatEdge(IPredicate preCondition, CodeBlock statement, IPredicate postCondition) {
+	protected boolean isSatEdge(final IPredicate preCondition, final CodeBlock statement, final IPredicate postCondition) {
 		if (statement instanceof DummyCodeBlock) {
 			return false;
 		}
@@ -319,7 +319,7 @@ public class UltimateChecker extends CodeChecker {
 	 * @param hier
 	 * @return
 	 */
-	protected boolean isSatRetEdge(IPredicate preCondition, IPredicate hier, Return statement, IPredicate postCondition) {
+	protected boolean isSatRetEdge(final IPredicate preCondition, final IPredicate hier, final Return statement, final IPredicate postCondition) {
 		if (GlobalSettings._instance._memoizeReturnEdgeChecks) {
 			if (_satQuadruples.get(preCondition, hier, statement, postCondition) == IsContained.IsContained) {
 				memoizationReturnHitsSat++;

@@ -36,8 +36,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.annot.BuchiProgramAcceptingStateAnnotation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 
 /**
  *
@@ -48,14 +48,14 @@ public final class MaximizeFinalStates extends BaseProductOptimizer {
 
 	private int mNewAcceptingStates;
 
-	public MaximizeFinalStates(final RootNode product, final IUltimateServiceProvider services,
+	public MaximizeFinalStates(final BoogieIcfgContainer product, final IUltimateServiceProvider services,
 			final IToolchainStorage storage) {
 		super(product, services, storage);
 		mNewAcceptingStates = 0;
 	}
 
 	@Override
-	protected RootNode createResult(final RootNode root) {
+	protected BoogieIcfgContainer createResult(final BoogieIcfgContainer root) {
 		int lastRun = processInternal(root);
 		mNewAcceptingStates += lastRun;
 		while (lastRun > 0) {
@@ -66,12 +66,12 @@ public final class MaximizeFinalStates extends BaseProductOptimizer {
 		return root;
 	}
 
-	private int processInternal(final RootNode root) {
+	private int processInternal(final BoogieIcfgContainer root) {
 		final Deque<BoogieIcfgLocation> nodes = new ArrayDeque<>();
 		final Set<BoogieIcfgLocation> closed = new HashSet<>();
 		BuchiProgramAcceptingStateAnnotation annot = null;
 		int newAcceptingStates = 0;
-		for (final IcfgEdge edge : root.getOutgoingEdges()) {
+		for (final IcfgEdge edge : BoogieIcfgContainer.extractStartEdges(root)) {
 			nodes.add((BoogieIcfgLocation) edge.getTarget());
 		}
 

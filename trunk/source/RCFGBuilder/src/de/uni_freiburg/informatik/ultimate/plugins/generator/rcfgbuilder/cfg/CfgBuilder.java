@@ -111,9 +111,9 @@ public class CfgBuilder {
 	 * Root Node of this Ultimate model. I use this to store information that should be passed to the next plugin. The
 	 * Successors of this node are exactly the entry nodes of procedures.
 	 */
-	private RootNode mGraphroot;
+	private BoogieIcfgContainer mGraphroot;
 
-	private final RootAnnot mRootAnnot;
+	private final BoogieIcfgContainer mRootAnnot;
 
 	private final Boogie2SMT mBoogie2smt;
 	private final BoogieDeclarations mBoogieDeclarations;
@@ -156,7 +156,7 @@ public class CfgBuilder {
 		final boolean bitvectorInsteadInt = (mServices.getPreferenceProvider(Activator.PLUGIN_ID))
 				.getBoolean(RcfgPreferenceInitializer.LABEL_BitvectorWorkaround);
 		mBoogie2smt = new Boogie2SMT(maScript, mBoogieDeclarations, blackHolesArrays, bitvectorInsteadInt, mServices);
-		mRootAnnot = new RootAnnot(mServices, mBoogieDeclarations, mBoogie2smt, mBacktranslator, unit.getLocation());
+		mRootAnnot = new BoogieIcfgContainer(mServices, mBoogieDeclarations, mBoogie2smt, mBacktranslator, unit.getLocation());
 		mCbf = mRootAnnot.getCodeBlockFactory();
 		mCbf.storeFactory(storage);
 	}
@@ -205,12 +205,12 @@ public class CfgBuilder {
 	 *            that encodes a program.
 	 * @return RootNode of a recursive control flow graph.
 	 */
-	public RootNode getRootNode(final Unit unit) {
+	public BoogieIcfgContainer getRootNode(final Unit unit) {
 
 		tfb = new TransFormulaAdder(mBoogie2smt, mServices);
 
 		// Initialize the root node.
-		mGraphroot = new RootNode(unit.getLocation(), mRootAnnot);
+		mGraphroot = mRootAnnot;  //new RootNode(unit.getLocation(), mRootAnnot);
 
 		// Build entry, final and exit node for all procedures that have an
 		// implementation
@@ -227,7 +227,7 @@ public class CfgBuilder {
 			final BoogieIcfgLocation exitNode = new BoogieIcfgLocation(procName + "EXIT", procName, false, impl);
 			mRootAnnot.mexitNode.put(procName, exitNode);
 
-			new RootEdge(mGraphroot, mRootAnnot.mentryNode.get(procName));
+//			new RootEdge(mGraphroot, mRootAnnot.mentryNode.get(procName));
 		}
 
 		// Build a control flow graph for each procedure

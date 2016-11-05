@@ -41,10 +41,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 
 /**
@@ -90,8 +90,8 @@ public class RCFGLoopDetector {
 		return mLoopEntryExit;
 	}
 
-	public void process(final RootNode rootNode) throws Throwable {
-		final RootAnnot annot = rootNode.getRootAnnot();
+	public void process(final BoogieIcfgContainer annot) throws Throwable {
+		final RootNode rootNode = annot.constructRootNode();
 
 		// get a hashset of all loop heads
 		final Set<BoogieIcfgLocation> loopHeadsSet = new HashSet<>(annot.getLoopLocations().keySet());

@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 
 /**
  *
@@ -44,13 +44,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
  */
 public final class RemoveSinkStates extends BaseProductOptimizer {
 
-	public RemoveSinkStates(final RootNode product, final IUltimateServiceProvider services,
+	public RemoveSinkStates(final BoogieIcfgContainer product, final IUltimateServiceProvider services,
 			final IToolchainStorage storage) {
 		super(product, services, storage);
 	}
 
 	@Override
-	protected RootNode createResult(final RootNode root) {
+	protected BoogieIcfgContainer createResult(final BoogieIcfgContainer root) {
 		final List<IcfgLocation> sinks = collectSinks(root);
 		if (mLogger.isDebugEnabled()) {
 			mLogger.info("Collected " + sinks.size() + " initial sink states");
@@ -62,11 +62,11 @@ public final class RemoveSinkStates extends BaseProductOptimizer {
 		return root;
 	}
 
-	private static List<IcfgLocation> collectSinks(final RootNode root) {
+	private static List<IcfgLocation> collectSinks(final BoogieIcfgContainer root) {
 		final ArrayList<IcfgLocation> rtr = new ArrayList<>();
 		final ArrayDeque<IcfgLocation> nodes = new ArrayDeque<>();
 		final HashSet<IcfgLocation> closed = new HashSet<>();
-		nodes.addAll(root.getOutgoingNodes());
+		nodes.addAll(root.getEntryNodes().values());
 		while (!nodes.isEmpty()) {
 			final IcfgLocation current = nodes.removeFirst();
 			if (closed.contains(current)) {

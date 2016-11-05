@@ -43,9 +43,9 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ILiteralCollector;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.generic.LiteralCollection;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RCFGEdgeVisitor;
@@ -62,11 +62,11 @@ public class RCFGLiteralCollector extends RCFGEdgeVisitor implements ILiteralCol
 	private final StatementLiteralCollector mStatementLiteralCollector;
 	private final LiteralCollection mLiteralCollection;
 
-	public RCFGLiteralCollector(final IcfgLocation root) {
+	public RCFGLiteralCollector(final BoogieIcfgContainer root) {
 		mLiterals = new HashSet<>();
 		mNumberLiterals = new HashSet<>();
 		mStatementLiteralCollector = new StatementLiteralCollector();
-		process(root.getOutgoingEdges());
+		process(BoogieIcfgContainer.extractStartEdges(root));
 		mLiteralCollection = new LiteralCollection(mNumberLiterals);
 	}
 

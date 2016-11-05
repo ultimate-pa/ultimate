@@ -32,34 +32,43 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.AbstractAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation.LoopEntryType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IWalkable;
 import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieDeclarations;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBacktranslator;
 
 /**
- * Stores information about about a program that is not represented by the
- * recursive control flow graph.
+ * Stores references to all objects that represent an interprocedural 
+ * control-flow graph (ICFG) that was directly constructed from a Boogie 
+ * program.
+ * The object is an {@link IAnnotations} but also an {@link IElement}
+ * whose {@link IPayload} contains this object. (This is a workaround for
+ * getting information in the visualization). 
+ * 
  * 
  * @author heizmann@informatik.uni-freiburg.de
  *
  */
 
-public class RootAnnot extends AbstractAnnotations implements IWalkable {
+public class BoogieIcfgContainer extends AbstractAnnotations implements IWalkable {
 	/**
 	 * The serial version UID. Change only if serial representation changes.
 	 */
@@ -127,7 +136,7 @@ public class RootAnnot extends AbstractAnnotations implements IWalkable {
 	 */
 	private final static String[] s_AttribFields = { "locNodes", "loopEntry" };
 
-	public RootAnnot(final IUltimateServiceProvider services, final BoogieDeclarations boogieDeclarations, final Boogie2SMT mBoogie2smt,
+	public BoogieIcfgContainer(final IUltimateServiceProvider services, final BoogieDeclarations boogieDeclarations, final Boogie2SMT mBoogie2smt,
 			final RCFGBacktranslator backtranslator, final ILocation loc) {
 		
 		mBoogieDeclarations = boogieDeclarations;
@@ -252,5 +261,26 @@ public class RootAnnot extends AbstractAnnotations implements IWalkable {
 		return pureFilename;
 	}
 	
+	/**
+	 * @return Collection that contains all edges that are predecessor of
+	 * the initial location of some procedure. 
+	 */
+	public static Collection<IcfgEdge> extractStartEdges(final BoogieIcfgContainer root) {
+		final Collection<IcfgEdge> startEdges = new ArrayList<>();
+		for (final Entry<String, BoogieIcfgLocation> entry : root.getEntryNodes().entrySet()) {
+			for (final IcfgEdge edge : entry.getValue().getOutgoingEdges()) {
+				startEdges.add(edge);
+			}
+		}
+		return startEdges;
+	}
+	
+	public RootNode constructRootNode() {
+		final RootNode rootNode = new RootNode(this.getPayload().getLocation(), this);
+		for (final Entry<String, BoogieIcfgLocation> entry : this.getEntryNodes().entrySet()) {
+			new RootEdge(rootNode, entry.getValue());
+		}
+		return rootNode;
+	}
 
 }

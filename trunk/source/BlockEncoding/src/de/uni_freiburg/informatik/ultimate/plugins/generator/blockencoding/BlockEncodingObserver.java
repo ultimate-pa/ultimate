@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 
 /**
  * Auto-Generated Stub for the plug-in's Observer
@@ -45,21 +45,21 @@ public class BlockEncodingObserver implements IUnmanagedObserver {
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 
-	public BlockEncodingObserver(ILogger logger, IUltimateServiceProvider services) {
+	public BlockEncodingObserver(final ILogger logger, final IUltimateServiceProvider services) {
 		mLogger = logger;
 		mServices = services;
 	}
 
 	@Override
-	public boolean process(IElement root) {
-		final RootNode rootNode = (RootNode) root;
-		new BlockEncoder(mLogger, mServices).startMinimization(rootNode);
+	public boolean process(final IElement root) {
+		final BoogieIcfgContainer icfgContainer = (BoogieIcfgContainer) root;
+		new BlockEncoder(mLogger, mServices).startMinimization(icfgContainer.constructRootNode());
 		mRoot = root;
 		return false;
 	}
 
 	@Override
-	public void init(ModelType modelType, int currentModelIndex, int numberOfModels) {
+	public void init(final ModelType modelType, final int currentModelIndex, final int numberOfModels) {
 		// not required
 	}
 

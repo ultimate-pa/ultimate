@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserv
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.hornutil.HCTransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.hornutil.HornClause;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.hornutil.HornClausePredicateSymbol;
@@ -82,8 +82,8 @@ public class TreeAutomizerObserver implements IUnmanagedObserver {
 	@Override
 	public boolean process(final IElement root) throws Throwable {
 		
-		final RootNode rootNode = (RootNode) root;
-		rootNode.getRootAnnot().getCfgSmtToolkit().getManagedScript().getScript();
+		final BoogieIcfgContainer rootNode = (BoogieIcfgContainer) root;
+		rootNode.getCfgSmtToolkit().getManagedScript().getScript();
 		
 		final Map<String, IAnnotations> st = root.getPayload().getAnnotations();
 		final HornAnnot annot = (HornAnnot) st.get("HoRNClauses");

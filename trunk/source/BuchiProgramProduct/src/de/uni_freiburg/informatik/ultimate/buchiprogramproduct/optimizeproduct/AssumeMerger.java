@@ -45,9 +45,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms.
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence.Origin;
 
@@ -64,7 +64,7 @@ public final class AssumeMerger extends BaseProductOptimizer {
 
 	private final TransFormulaBuilder mTransFormulaBuilder;
 
-	public AssumeMerger(final RootNode product, final IUltimateServiceProvider services,
+	public AssumeMerger(final BoogieIcfgContainer product, final IUltimateServiceProvider services,
 			final IToolchainStorage storage, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique) {
 		super(product, services, storage);
@@ -78,11 +78,11 @@ public final class AssumeMerger extends BaseProductOptimizer {
 	}
 
 	@Override
-	protected RootNode createResult(final RootNode root) {
+	protected BoogieIcfgContainer createResult(final BoogieIcfgContainer root) {
 		final ArrayDeque<IcfgEdge> edges = new ArrayDeque<>();
 		final HashSet<IcfgEdge> closed = new HashSet<>();
 
-		edges.addAll(root.getOutgoingEdges());
+		edges.addAll(BoogieIcfgContainer.extractStartEdges(root));
 
 		while (!edges.isEmpty()) {
 			final IcfgEdge current = edges.removeFirst();
@@ -100,7 +100,7 @@ public final class AssumeMerger extends BaseProductOptimizer {
 		return root;
 	}
 
-	private void mergeEdge(final RootNode root, final CodeBlock current) {
+	private void mergeEdge(final BoogieIcfgContainer root, final CodeBlock current) {
 		final List<Statement> stmts = new StatementExtractor(mLogger).process(current);
 		if (stmts.size() < 2) {
 			// there is nothing to merge here
@@ -141,7 +141,7 @@ public final class AssumeMerger extends BaseProductOptimizer {
 
 	}
 
-	private void createNewEdges(final RootNode root, final CodeBlock current, final List<Statement> newStmts) {
+	private void createNewEdges(final BoogieIcfgContainer root, final CodeBlock current, final List<Statement> newStmts) {
 		boolean allAssumes = true;
 		for (final Statement stmt : newStmts) {
 			if (!(stmt instanceof AssumeStatement)) {

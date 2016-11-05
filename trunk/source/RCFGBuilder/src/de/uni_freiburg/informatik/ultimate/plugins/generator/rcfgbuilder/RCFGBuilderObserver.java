@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CfgBuilder;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 
 /**
  * Auto-Generated Stub for the plug-in's Observer
@@ -50,7 +50,7 @@ public class RCFGBuilderObserver implements IUnmanagedObserver {
 	 * Root Node of this Ultimate model. I use this to store information that should be passed to the next plugin. The
 	 * Sucessors of this node exactly the initial nodes of procedures.
 	 */
-	private RootNode mGraphroot;
+	private BoogieIcfgContainer mGraphroot;
 
 	/**
 	 * ILogger for this plugin.
@@ -71,7 +71,7 @@ public class RCFGBuilderObserver implements IUnmanagedObserver {
 	 * 
 	 * @return the root of the CFG.
 	 */
-	public RootNode getRoot() {
+	public BoogieIcfgContainer getRoot() {
 		return mGraphroot;
 	}
 
@@ -96,7 +96,7 @@ public class RCFGBuilderObserver implements IUnmanagedObserver {
 			final CfgBuilder recCFGBuilder = new CfgBuilder(unit, translator, mServices, mStorage);
 			try {
 				mGraphroot = recCFGBuilder.getRootNode(unit);
-				translator.setTerm2Expression(mGraphroot.getRootAnnot().getBoogie2SMT().getTerm2Expression());				
+				translator.setTerm2Expression(mGraphroot.getBoogie2SMT().getTerm2Expression());				
 				ModelUtils.copyAnnotations(unit, mGraphroot);
 				mServices.getBacktranslationService().addTranslator(translator);
 			} catch (final SMTLIBException e) {

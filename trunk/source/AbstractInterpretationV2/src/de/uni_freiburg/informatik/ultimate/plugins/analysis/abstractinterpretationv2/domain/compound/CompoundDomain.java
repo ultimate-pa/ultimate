@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 
 /**
  * Implementation of the compound domain for abstract interpretation.
@@ -48,14 +48,14 @@ public class CompoundDomain implements IAbstractDomain<CompoundDomainState, Code
 
 	private final IUltimateServiceProvider mServices;
 	private final List<IAbstractDomain> mDomainList;
-	private final RootAnnot mRootAnnotation;
+	private final BoogieIcfgContainer mRootAnnotation;
 
 	private IAbstractStateBinaryOperator<CompoundDomainState> mMergeOperator;
 	private IAbstractStateBinaryOperator<CompoundDomainState> mWideningOperator;
 	private IAbstractPostOperator<CompoundDomainState, CodeBlock, IBoogieVar> mPostOperator;
 
 	public CompoundDomain(final IUltimateServiceProvider serviceProvider, final List<IAbstractDomain> domainList,
-			final RootAnnot rootAnnotation) {
+			final BoogieIcfgContainer rootAnnotation) {
 		mServices = serviceProvider;
 		mDomainList = domainList;
 		mRootAnnotation = rootAnnotation;

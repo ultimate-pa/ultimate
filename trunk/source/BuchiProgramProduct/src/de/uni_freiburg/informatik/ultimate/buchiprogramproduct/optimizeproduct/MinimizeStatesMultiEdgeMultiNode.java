@@ -42,9 +42,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence.Origin;
 
@@ -58,7 +58,7 @@ public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
 
 	private final TransFormulaBuilder mTransFormulaBuilder;
 
-	public MinimizeStatesMultiEdgeMultiNode(final RootNode product, final IUltimateServiceProvider services,
+	public MinimizeStatesMultiEdgeMultiNode(final BoogieIcfgContainer product, final IUltimateServiceProvider services,
 			final IToolchainStorage storage, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique) {
 		super(product, services, storage);
@@ -67,7 +67,7 @@ public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
 	}
 
 	@Override
-	protected Collection<? extends IcfgLocation> processCandidate(final RootNode root, final BoogieIcfgLocation target,
+	protected Collection<? extends IcfgLocation> processCandidate(final BoogieIcfgContainer root, final BoogieIcfgLocation target,
 			final Set<IcfgLocation> closed) {
 		// we have the incoming edges
 		// ei = (qi,sti,q) in EI

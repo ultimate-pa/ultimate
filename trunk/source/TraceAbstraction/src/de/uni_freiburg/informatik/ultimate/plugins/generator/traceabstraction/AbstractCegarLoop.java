@@ -53,8 +53,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfCon
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
@@ -101,7 +100,7 @@ public abstract class AbstractCegarLoop {
 	/**
 	 * Node of a recursive control flow graph which stores additional information about the program.
 	 */
-	protected final RootAnnot mIcfgContainer;
+	protected final BoogieIcfgContainer mIcfgContainer;
 	
 	/**
 	 * Intermediate layer to encapsulate communication with SMT solvers.
@@ -178,7 +177,7 @@ public abstract class AbstractCegarLoop {
 	private static final boolean DUMP_BIGGEST_AUTOMATON = false;
 	
 	public AbstractCegarLoop(final IUltimateServiceProvider services, final IToolchainStorage storage,
-			final String name, final RootNode rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final TAPreferences taPrefs,
+			final String name, final BoogieIcfgContainer rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final TAPreferences taPrefs,
 			final Collection<BoogieIcfgLocation> errorLocs, final ILogger logger) {
 		mServices = services;
 		mLogger = logger;
@@ -186,7 +185,7 @@ public abstract class AbstractCegarLoop {
 		mXnfConversionTechnique = taPrefs.getXnfConversionTechnique();
 		mPrintAutomataLabeling = taPrefs.getAutomataFormat();
 		mName = name;
-		mIcfgContainer = rootNode.getRootAnnot();
+		mIcfgContainer = rootNode;
 		mCsToolkit = csToolkit;
 		mPredicateFactory = predicateFactory;
 		mPref = taPrefs;

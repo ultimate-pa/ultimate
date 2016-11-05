@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfCon
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractInterpretationRunner;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
@@ -69,7 +69,7 @@ public class InterpolantAutomatonBuilderFactory {
 	private final ILogger mLogger;
 	private final CfgSmtToolkit mCsToolkit;
 	private final PredicateFactoryForInterpolantAutomata mPredicateFactory;
-	private final RootAnnot mRootAnnot;
+	private final BoogieIcfgContainer mRootAnnot;
 	private final AbstractInterpretationRunner mAbsIntRunner;
 	private final CegarLoopStatisticsGenerator mBenchmark;
 
@@ -82,7 +82,7 @@ public class InterpolantAutomatonBuilderFactory {
 	private final IBuilderFunction mBuilderFunction;
 
 	public InterpolantAutomatonBuilderFactory(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
-			final PredicateFactoryForInterpolantAutomata predFac, final RootAnnot RootAnnot,
+			final PredicateFactoryForInterpolantAutomata predFac, final BoogieIcfgContainer RootAnnot,
 			final AbstractInterpretationRunner abstractInterpretationRunner, final TAPreferences taPrefs,
 			final InterpolationTechnique interpolation,
 			final InterpolantAutomaton interpolantAutomatonConstructionProcedure,

@@ -56,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractInterpreter;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence.Origin;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.TransFormulaAdder;
 
@@ -89,9 +89,9 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 	 * @param logger
 	 *            The logger.
 	 * @param rootAnnotation
-	 *            The {@link RootAnnot} node from the {@link AbstractInterpreter}.
+	 *            The {@link BoogieIcfgContainer} node from the {@link AbstractInterpreter}.
 	 */
-	protected CompoundDomainPostOperator(final IUltimateServiceProvider services, final RootAnnot rootAnnotation) {
+	protected CompoundDomainPostOperator(final IUltimateServiceProvider services, final BoogieIcfgContainer rootAnnotation) {
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mBoogie2Smt = rootAnnotation.getBoogie2SMT();
 		mScript = rootAnnotation.getCfgSmtToolkit().getManagedScript().getScript();

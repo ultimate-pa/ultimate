@@ -27,6 +27,7 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -45,10 +46,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareT
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.MonolithicHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.HoareAnnotation;
@@ -63,12 +64,12 @@ public class HoareAnnotationChecker {
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final IHoareTripleChecker mHoareTripleChecker;
-	private final RootNode mRootNode;
+	private final BoogieIcfgContainer mRootNode;
 	private final boolean mIsInductive;
 	
 	
 
-	public HoareAnnotationChecker(final IUltimateServiceProvider services, final RootNode rootNode, final CfgSmtToolkit csToolkit) {
+	public HoareAnnotationChecker(final IUltimateServiceProvider services, final BoogieIcfgContainer rootNode, final CfgSmtToolkit csToolkit) {
 		super();
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -77,7 +78,7 @@ public class HoareAnnotationChecker {
 		mIsInductive = cfgInductive(mRootNode);
 	}
 
-	private boolean cfgInductive(final RootNode rootNode) {
+	private boolean cfgInductive(final BoogieIcfgContainer rootNode) {
 		boolean result = true;
 		// yield[0] is the number of edges whose inductiveness could be
 		// proven
@@ -89,7 +90,7 @@ public class HoareAnnotationChecker {
 		// neither proven nor refuted because there were no interpolants
 		final int[] yield = new int[4];
 
-		final List<IcfgLocation> initialNodes = rootNode.getOutgoingNodes();
+		final List<IcfgLocation> initialNodes = new ArrayList<>(rootNode.getEntryNodes().values());
 		final Set<BoogieIcfgLocation> visited = new HashSet<BoogieIcfgLocation>();
 		final List<BoogieIcfgLocation> worklist = new LinkedList<BoogieIcfgLocation>();
 

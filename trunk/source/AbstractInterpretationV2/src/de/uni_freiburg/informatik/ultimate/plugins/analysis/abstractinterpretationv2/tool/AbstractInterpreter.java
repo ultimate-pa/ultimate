@@ -60,10 +60,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.initializer.FixpointEngineParameterFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 /**
@@ -81,7 +80,7 @@ public final class AbstractInterpreter {
 	 *
 	 */
 	public static <STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>>
-			IAbstractInterpretationResult<STATE, CodeBlock, IBoogieVar, BoogieIcfgLocation> runSilently(final RootNode root,
+			IAbstractInterpretationResult<STATE, CodeBlock, IBoogieVar, BoogieIcfgLocation> runSilently(final BoogieIcfgContainer root,
 					final Collection<CodeBlock> initials, final IProgressAwareTimer timer,
 					final IUltimateServiceProvider services) {
 		final ILogger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -95,7 +94,7 @@ public final class AbstractInterpreter {
 	 *
 	 */
 	public static <STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>>
-			IAbstractInterpretationResult<STATE, CodeBlock, IBoogieVar, BoogieIcfgLocation> run(final RootNode root,
+			IAbstractInterpretationResult<STATE, CodeBlock, IBoogieVar, BoogieIcfgLocation> run(final BoogieIcfgContainer root,
 					final Collection<CodeBlock> initials, final IProgressAwareTimer timer,
 					final IUltimateServiceProvider services) {
 		return run(root, initials, timer, services, false);
@@ -109,7 +108,7 @@ public final class AbstractInterpreter {
 	 */
 	public static <STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>>
 			IAbstractInterpretationResult<STATE, CodeBlock, IBoogieVar, BoogieIcfgLocation>
-			runOnPathProgram(final RootNode root, final INestedWordAutomatonSimple<CodeBlock, ?> abstraction,
+			runOnPathProgram(final BoogieIcfgContainer root, final INestedWordAutomatonSimple<CodeBlock, ?> abstraction,
 					final NestedRun<CodeBlock, ?> counterexample, final Set<CodeBlock> pathProgramProjection,
 					final IProgressAwareTimer timer, final IUltimateServiceProvider services) {
 		assert counterexample != null && counterexample.getLength() > 0 : "Invalid counterexample";
@@ -121,9 +120,9 @@ public final class AbstractInterpreter {
 		final ILogger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		try {
 			final NWAPathProgramTransitionProvider transProvider = new NWAPathProgramTransitionProvider(counterexample,
-					pathProgramProjection, services, root.getRootAnnot());
+					pathProgramProjection, services, root);
 			final CodeBlock initial = counterexample.getSymbol(0);
-			final RootAnnot rootAnnot = root.getRootAnnot();
+			final BoogieIcfgContainer rootAnnot = root;
 			final Boogie2SMT bpl2smt = rootAnnot.getBoogie2SMT();
 			final Script script = rootAnnot.getCfgSmtToolkit().getManagedScript().getScript();
 			final FixpointEngineParameterFactory domFac =
@@ -154,7 +153,7 @@ public final class AbstractInterpreter {
 	}
 	
 	private static <STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>>
-			IAbstractInterpretationResult<STATE, CodeBlock, IBoogieVar, BoogieIcfgLocation> run(final RootNode root,
+			IAbstractInterpretationResult<STATE, CodeBlock, IBoogieVar, BoogieIcfgLocation> run(final BoogieIcfgContainer root,
 					final Collection<CodeBlock> initials, final IProgressAwareTimer timer,
 					final IUltimateServiceProvider services, final boolean isSilent) {
 		if (initials == null) {
@@ -172,15 +171,14 @@ public final class AbstractInterpreter {
 			return null;
 		}
 		
-		final RootAnnot rootAnnot = root.getRootAnnot();
-		final Boogie2SMT bpl2smt = rootAnnot.getBoogie2SMT();
-		final Script script = rootAnnot.getCfgSmtToolkit().getManagedScript().getScript();
+		final Boogie2SMT bpl2smt = root.getBoogie2SMT();
+		final Script script = root.getCfgSmtToolkit().getManagedScript().getScript();
 		final FixpointEngineParameterFactory domFac =
 				new FixpointEngineParameterFactory(root, () -> new RCFGLiteralCollector(root), services);
 		final boolean isLib = filteredInitialElements.size() > 1;
 		final Iterator<CodeBlock> iter = filteredInitialElements.iterator();
 		final ILoopDetector<CodeBlock> loopDetector =
-				new RcfgLoopDetector<>(rootAnnot.getLoopLocations().keySet(), transProvider);
+				new RcfgLoopDetector<>(root.getLoopLocations().keySet(), transProvider);
 		
 		AbstractInterpretationResult<STATE, CodeBlock, IBoogieVar, BoogieIcfgLocation> result = null;
 		
@@ -221,7 +219,7 @@ public final class AbstractInterpreter {
 	 *
 	 */
 	public static <STATE extends IAbstractState<STATE, CodeBlock, IProgramVar>>
-			IAbstractInterpretationResult<STATE, CodeBlock, IProgramVar, BoogieIcfgLocation> runFuture(final RootNode root,
+			IAbstractInterpretationResult<STATE, CodeBlock, IProgramVar, BoogieIcfgLocation> runFuture(final BoogieIcfgContainer root,
 					final Collection<CodeBlock> initials, final IProgressAwareTimer timer,
 					final IUltimateServiceProvider services, final boolean isSilent) {
 		if (initials == null) {
@@ -239,15 +237,14 @@ public final class AbstractInterpreter {
 			return null;
 		}
 		
-		final RootAnnot rootAnnot = root.getRootAnnot();
-		final Boogie2SMT bpl2smt = rootAnnot.getBoogie2SMT();
-		final Script script = rootAnnot.getCfgSmtToolkit().getManagedScript().getScript();
+		final Boogie2SMT bpl2smt = root.getBoogie2SMT();
+		final Script script = root.getCfgSmtToolkit().getManagedScript().getScript();
 		final FixpointEngineParameterFactory domFac =
 				new FixpointEngineParameterFactory(root, () -> new RCFGLiteralCollector(root), services);
 		final boolean isLib = filteredInitialElements.size() > 1;
 		final Iterator<CodeBlock> iter = filteredInitialElements.iterator();
 		final ILoopDetector<CodeBlock> loopDetector =
-				new RcfgLoopDetector<>(rootAnnot.getLoopLocations().keySet(), transProvider);
+				new RcfgLoopDetector<>(root.getLoopLocations().keySet(), transProvider);
 		
 		AbstractInterpretationResult<STATE, CodeBlock, IProgramVar, BoogieIcfgLocation> result = null;
 		

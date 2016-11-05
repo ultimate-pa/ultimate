@@ -39,9 +39,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 
 public abstract class BaseBlockEncoder implements IEncoder {
@@ -115,7 +115,7 @@ public abstract class BaseBlockEncoder implements IEncoder {
 	}
 
 	protected void removeDisconnectedLocation(final RootNode root, final IcfgLocation toRemove) {
-		final RootAnnot rootAnnot = root.getRootAnnot();
+		final BoogieIcfgContainer rootAnnot = root.getRootAnnot();
 		final String procName = toRemove.getProcedure();
 		final String debugIdentifier = toRemove.getDebugIdentifier();
 		// TODO: This seems wrong!

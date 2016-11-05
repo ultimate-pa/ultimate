@@ -43,8 +43,8 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RCFGEdgeVisitor;
 
 /**
@@ -61,10 +61,11 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 
 	private final Script mScript;
 
-	public RCFGArrayIndexCollector(final RootNode root) {
-		mScript = root.getRootAnnot().getCfgSmtToolkit().getManagedScript().getScript();
-		process(root.getOutgoingEdges());
+	public RCFGArrayIndexCollector(final BoogieIcfgContainer root) {
+		mScript = root.getCfgSmtToolkit().getManagedScript().getScript();
+		process(BoogieIcfgContainer.extractStartEdges(root));
 	}
+
 
 	private <T extends IcfgEdge> void process(final Collection<T> edges) {
 		final Deque<IcfgEdge> worklist = new ArrayDeque<IcfgEdge>();

@@ -53,13 +53,13 @@ public class RootNode extends IcfgLocation {
 	 */
 	private static final long serialVersionUID = 1L;
 
-	public RootNode(final ILocation location, final RootAnnot rootAnnot) {
+	public RootNode(final ILocation location, final BoogieIcfgContainer rootAnnot) {
 		super("rootNode", "rootNode", new Payload(location));
 		getPayload().getAnnotations().put(Activator.PLUGIN_ID, rootAnnot);
 	}
 
-	public RootAnnot getRootAnnot() {
-		return ((RootAnnot) getPayload().getAnnotations().get(
+	public BoogieIcfgContainer getRootAnnot() {
+		return ((BoogieIcfgContainer) getPayload().getAnnotations().get(
 				Activator.PLUGIN_ID));
 	}
 

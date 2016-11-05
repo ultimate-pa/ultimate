@@ -12,7 +12,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 
 /**
  *
@@ -26,14 +26,14 @@ public class CongruenceDomain implements IAbstractDomain<CongruenceDomainState, 
 	private final BoogieSymbolTable mSymbolTable;
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
-	private final RootAnnot mRootAnnotation;
+	private final BoogieIcfgContainer mRootAnnotation;
 
 	private IAbstractStateBinaryOperator<CongruenceDomainState> mWideningOperator;
 	private IAbstractStateBinaryOperator<CongruenceDomainState> mMergeOperator;
 	private IAbstractPostOperator<CongruenceDomainState, CodeBlock, IBoogieVar> mPostOperator;
 
 	public CongruenceDomain(final ILogger logger, final IUltimateServiceProvider services,
-	        final BoogieSymbolTable symbolTable, final RootAnnot rootAnnotation) {
+	        final BoogieSymbolTable symbolTable, final BoogieIcfgContainer rootAnnotation) {
 		mLogger = logger;
 		mSymbolTable = symbolTable;
 		mServices = services;
