@@ -132,24 +132,20 @@ public final class AbstractInterpreter {
 					domFac.createParamsPathProgram(timer, transProvider, transProvider);
 			final FixpointEngine<STATE, CodeBlock, IBoogieVar, BoogieIcfgLocation, Expression> fxpe =
 					new FixpointEngine<>(params);
-			try {
 				final AbstractInterpretationResult<STATE, CodeBlock, IBoogieVar, BoogieIcfgLocation> result =
-						fxpe.run(initial, script, bpl2smt);
-				if (!result.hasReachedError()) {
-					logger.info("NWA was safe (error state unreachable)");
-				} else {
-					logger.info("Could not show that NWA was safe (error state reachable)");
-				}
-				if (logger.isDebugEnabled()) {
-					logger.debug("Found the following predicates:");
-					AbsIntUtil.logPredicates(Collections.singletonMap(initial, result.getLoc2Term()), script,
-							logger::debug);
-				}
-				logger.info(result.getBenchmark());
-				return result;
-			} catch (final ToolchainCanceledException c) {
-				throw c;
+					fxpe.run(initial, script, bpl2smt);
+			if (!result.hasReachedError()) {
+				logger.info("NWA was safe (error state unreachable)");
+			} else {
+				logger.info("Could not show that NWA was safe (error state reachable)");
 			}
+			if (logger.isDebugEnabled()) {
+				logger.debug("Found the following predicates:");
+				AbsIntUtil.logPredicates(Collections.singletonMap(initial, result.getLoc2Term()), script,
+						logger::debug);
+			}
+			logger.info(result.getBenchmark());
+			return result;
 		} catch (final ToolchainCanceledException tce) {
 			// suppress timeout results / timeouts
 			logger.warn("Abstract interpretation run out of time");
