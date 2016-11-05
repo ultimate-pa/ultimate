@@ -25,7 +25,7 @@
  * licensors of the ULTIMATE Test Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimatetest.summaries.tacasminimization;
+package de.uni_freiburg.informatik.ultimatetest.suites.tacasminimization;
 
 import java.io.File;
 import java.util.ArrayList;

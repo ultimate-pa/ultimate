@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimatetest.summaries.tacasminimization;
+package de.uni_freiburg.informatik.ultimatetest.suites.tacasminimization;
 
 import java.io.File;
 
