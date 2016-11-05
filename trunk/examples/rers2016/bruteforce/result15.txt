@@ -1,4 +1,4 @@
-# input length = 18, runtime* = 01:22:59
+# input length = 18, runtime = 01:22:59
 error_3 -> 4: 4 10 8 4
 error_10 -> 4: 4 5 14 11
 error_15 -> 9: 4 16 16 16 19 16 19 20 1
