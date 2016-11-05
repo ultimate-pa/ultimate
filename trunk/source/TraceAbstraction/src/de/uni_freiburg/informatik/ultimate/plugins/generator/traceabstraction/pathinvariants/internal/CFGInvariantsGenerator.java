@@ -29,12 +29,14 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -51,6 +53,7 @@ public final class CFGInvariantsGenerator {
 
 	private final ILogger logService;
 	private final IProgressMonitorService pmService;
+	
 
 	/**
 	 * Create a generator for invariant maps on {@link ControlFlowGraph}s.
@@ -88,7 +91,8 @@ public final class CFGInvariantsGenerator {
 	 */
 	public <IPT> Map<Location, IPredicate> generateInvariantsFromCFG(final ControlFlowGraph cfg,
 			final IPredicate precondition, final IPredicate postcondition,
-			final IInvariantPatternProcessorFactory<IPT> invPatternProcFactory, boolean useLiveVariables, final Set<IProgramVar> liveVariables) {
+			final IInvariantPatternProcessorFactory<IPT> invPatternProcFactory, final boolean useVariablesFromUnsatCore, 
+			final boolean useLiveVariables, final Set<IProgramVar> liveVariables) {
 		final IInvariantPatternProcessor<IPT> processor = invPatternProcFactory.produce(cfg, precondition,
 				postcondition);
 
@@ -98,6 +102,23 @@ public final class CFGInvariantsGenerator {
 		final Collection<Transition> transitions = cfg.getTransitions();
 		final Collection<InvariantTransitionPredicate<IPT>> predicates = new ArrayList<InvariantTransitionPredicate<IPT>>(
 				transitions.size() + 2);
+		
+		Map<TermVariable, IProgramVar> smtVars2ProgramVars = new HashMap<>();
+		if (useVariablesFromUnsatCore) {
+			// Compute map smt-variables to program variables
+			for (Transition t : transitions) {
+				// Add value-key-pairs from transitions invars to smtVars2ProgramVars
+				for (Map.Entry<IProgramVar, TermVariable> entry : t.getTransFormula().getInVars().entrySet()) {
+					smtVars2ProgramVars.put(entry.getValue(), entry.getKey());
+				}
+				// Add value-key-pairs from transitions outvars to smtVars2ProgramVars
+				for (Map.Entry<IProgramVar, TermVariable> entry : t.getTransFormula().getOutVars().entrySet()) {
+					smtVars2ProgramVars.put(entry.getValue(), entry.getKey());
+				}
+			}
+		}
+		
+		Set<IProgramVar> varsFromUnsatCore = null;
 
 		for (int round = 0; round < processor.getMaxRounds(); round++) {
 			// Die if we run into timeouts or are otherwise requested to cancel.
@@ -106,7 +127,7 @@ public final class CFGInvariantsGenerator {
 			}
 
 			// Start round
-			processor.startRound(round, useLiveVariables, liveVariables);
+			processor.startRound(round, useLiveVariables, liveVariables, useVariablesFromUnsatCore, varsFromUnsatCore);
 			logService.info("[CFGInvariants] Round " + round + " started");
 
 			// Build pattern map
@@ -135,6 +156,21 @@ public final class CFGInvariantsGenerator {
 					result.put(location, processor.applyConfiguration(patterns.get(location)));
 				}
 				return result;
+			} else {
+				// If no configuration could have been found, the constraints may be unsatisfiable
+				if (useVariablesFromUnsatCore) {
+					Collection<TermVariable> smtVarsFromUnsatCore = ((LinearInequalityInvariantPatternProcessor)processor).getVarsFromUnsatCore();
+					if (smtVarsFromUnsatCore != null) {
+						// The result in pattern processor was 'unsat'
+						varsFromUnsatCore = new HashSet<>(smtVarsFromUnsatCore.size());
+						for (TermVariable smtVar : smtVarsFromUnsatCore) {
+							varsFromUnsatCore.add(smtVars2ProgramVars.get(smtVar));
+						}
+					} else {
+						// The result in pattern processor was 'unknown', so reset varsFromUnsatCore to null
+						varsFromUnsatCore = null;
+					}
+				}
 			}
 		}
 

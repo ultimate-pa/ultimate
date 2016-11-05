@@ -49,7 +49,10 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.LinearTransition;
 import de.uni_freiburg.informatik.ultimate.lassoranker.ModelExtractionUtils;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.MotzkinTransformation;
+import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.LetTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -57,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -78,6 +82,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * disjunction, the inner one a conjunction. Within the inner conjunction, there
  * are strict and non-strict inequalities. These collections are generated
  * according to a {@link ILinearInequalityInvariantPatternStrategy}.
+ * @author David Zschocke, Dirk Steinmetz, Matthias Heizmann, Betim Musa
  */
 public final class LinearInequalityInvariantPatternProcessor
 		extends
@@ -92,8 +97,13 @@ public final class LinearInequalityInvariantPatternProcessor
 	 * Stores the mapping from annotation of a term to the original term. It is used to restore the original terms from the unsat core.
 	 */
 	private Map<String, Term> mAnnotTerm2OriginalTerm;
+	/**
+	 * @see {@link MotzkinTransformation}.mMotzkinCoeffiecients2LinearInequalities
+	 */
+	private Map<String, LinearInequality> mMotzkinCoeffiecients2LinearInequalities;
 	
 	private static final boolean USE_UNSAT_CORES = false;
+
 	
 	private final IUltimateServiceProvider services;
 	private final ILogger logger;
@@ -127,6 +137,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	 * If set to false we use only one non-strict inequality.
 	 */
 	private final boolean mAlwaysStrictAndNonStrictCopies = false;
+	private Collection<TermVariable> mVarsFromUnsatCore;
 
 	/**
 	 * Creates a pattern processor using linear inequalities as patterns.
@@ -190,13 +201,16 @@ public final class LinearInequalityInvariantPatternProcessor
 		mUseNonlinearConstraints = useNonlinearConstraints;
 		mAnnotTermCounter = 0;
 		mAnnotTerm2OriginalTerm = new HashMap<>();
+		mMotzkinCoeffiecients2LinearInequalities = new HashMap<>();
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
 	@Override
-	public void startRound(final int round, final boolean useLiveVariables, final Set<IProgramVar> liveVariables) {
+	public void startRound(final int round, final boolean useLiveVariables, final Set<IProgramVar> liveVariables, 
+			final boolean useVarsFromUnsatCore, final Set<IProgramVar> varsFromUnsatCore) {
+	
 		resetSettings();
 		patternVariables.clear();
 		entryInvariantPattern = null;
@@ -223,6 +237,9 @@ public final class LinearInequalityInvariantPatternProcessor
 				patternCoefficients.retainAll(liveVariables);
 			}
 			logger.info( "[LIIPP] Linearization complete.");
+		}
+		if (useVarsFromUnsatCore && varsFromUnsatCore != null) {
+			patternCoefficients.retainAll(varsFromUnsatCore);
 		}
 	}
 	
@@ -255,7 +272,6 @@ public final class LinearInequalityInvariantPatternProcessor
 	public Collection<Collection<LinearPatternBase>> getInvariantPatternForLocation(
 			final Location location, final int round) {
 		// Build invariant pattern
-		
 		final Collection<Collection<LinearPatternBase>> disjunction;
 		if (cfg.getEntry().equals(location)) {
 			// entry pattern is equivalent to true
@@ -516,6 +532,7 @@ public final class LinearInequalityInvariantPatternProcessor
 					solver, analysisType, false);
 			transformation.add_inequalities(conjunct);
 			resultTerms.add(transformation.transform(new Rational[0]));
+			mMotzkinCoeffiecients2LinearInequalities.putAll(transformation.getMotzkinCoeffiecients2LinearInequalities());
 		}
 		return SmtUtils.and(solver, resultTerms);
 	}
@@ -700,6 +717,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	 * Split the given term in its conjunctions, annotate and assert each conjunction one by one, 
 	 * and store the mapping annotated term -> original term in a map.
 	 * @param term - the Term to be annotated and asserted
+	 * @author Betim Musa (musab@informaitk.uni-freiburg.de)
 	 */
 	private void annotateAndAssertTermAndStoreMapping(final Term term) {
 		assert term.getFreeVars().length == 0 : "Term has free vars";
@@ -724,6 +742,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	 * 2. Generate for each predicate in predicates a constraint.
 	 * 3. Generate a constraint s.t. the invariant template implies the post-condition.
 	 * @param predicates - represent the intermediate transitions of the path program
+	 * @author Betim Musa (musab@informaitk.uni-freiburg.de)
 	 */
 	private void generateAndAssertTerms(final Collection<InvariantTransitionPredicate<Collection<Collection<LinearPatternBase>>>> predicates) {
 		// Generate and assert term for precondition
@@ -734,6 +753,43 @@ public final class LinearInequalityInvariantPatternProcessor
 		for (final InvariantTransitionPredicate<Collection<Collection<LinearPatternBase>>> predicate : predicates) {
 			annotateAndAssertTermAndStoreMapping(buildPredicateTerm(predicate));
 		}
+	}
+	/**
+	 * Extract the Motzkin coefficients from the given term.
+	 * @param t - term the Motzkin coefficients to be extracted from
+	 * @return
+	 * @author Betim Musa (musab@informaitk.uni-freiburg.de)
+	 */
+	private Set<String> getTermVariablesFromTerm(Term t) {
+		HashSet<String> result = new HashSet<>();
+		if (t instanceof ApplicationTerm) {
+			if (((ApplicationTerm)t).getFunction().getName().startsWith("motzkin_")) {
+				result.add(((ApplicationTerm)t).getFunction().getName());
+				return result;
+			} else {
+				Term[] subterms = ((ApplicationTerm)t).getParameters();
+				for (Term st : subterms) {
+					result.addAll(getTermVariablesFromTerm(st));
+				}
+			}
+		} else if (t instanceof AnnotatedTerm) {
+			Term subterm = ((AnnotatedTerm)t).getSubterm();
+			result.addAll(getTermVariablesFromTerm(subterm));
+		} else if (t instanceof LetTerm) {
+			Term subterm = ((LetTerm)t).getSubTerm();
+			result.addAll(getTermVariablesFromTerm(subterm));
+		} else if (t instanceof TermVariable) {
+//			result.add((TermVariable)t);
+		}
+		return result;
+	}
+	
+	/**
+	 * @author Betim Musa (musab@informaitk.uni-freiburg.de)
+	 * @return
+	 */
+	public Collection<TermVariable> getVarsFromUnsatCore() {
+		return mVarsFromUnsatCore;
 	}
 
 	/**
@@ -765,6 +821,29 @@ public final class LinearInequalityInvariantPatternProcessor
 		}
 		if (result != LBool.SAT) {
 			// No configuration found
+			if (result == LBool.UNSAT) {
+				// Extract the variables from the unsatisfiable core by 
+				// first extracting the motzkin variables and then using them
+				// to get the corresponding program variables 
+				Term[] unsatCoreAnnots = solver.getUnsatCore();
+				Set<String> motzkinVariables = new HashSet<>();
+				for (Term t : unsatCoreAnnots) {
+					Term origTerm = mAnnotTerm2OriginalTerm.get(t.toStringDirect());
+					motzkinVariables.addAll(getTermVariablesFromTerm(origTerm));
+				}
+				mVarsFromUnsatCore = new HashSet<>();
+				for (String motzkinVar : motzkinVariables) {
+					LinearInequality linq = mMotzkinCoeffiecients2LinearInequalities.get(motzkinVar);
+					for (Term varInLinq : linq.getVariables()) {
+						if (varInLinq instanceof TermVariable) {
+							mVarsFromUnsatCore.add((TermVariable)varInLinq);
+						} else {
+							throw new UnsupportedOperationException("Var in linear inequality is not a TermVariable.");
+						}
+						
+					}
+				}
+			}
 			logger.info( "[LIIPP] No solution found.");
 			return false;
 		}

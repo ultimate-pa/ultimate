@@ -67,6 +67,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 /**
  * Represents a map of invariants to a run, that has been generated using a {@link IInvariantPatternProcessor} on the
  * run-projected CFG.
+ * @author Dirk Steinmetz, Matthias Heizmann, Betim Musa
  */
 public final class PathInvariantsGenerator implements IInterpolantGenerator {
 
@@ -77,6 +78,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	private final PredicateUnifier mPredicateUnifier;
 	private final ILogger mLogger;
 	private static boolean sUseLiveVariables = false;
+	private static boolean sUseVarsFromUnsatCore = false;
 
 	/**
 	 * Creates a default factory.
@@ -218,7 +220,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 			invariants = null;
 			// TODO: Compute the live variables and use them.
 		} else {
-			invariants = generator.generateInvariantsFromCFG(cfg, precondition, postcondition, invPatternProcFactory, false, null);
+			invariants = generator.generateInvariantsFromCFG(cfg, precondition, postcondition, invPatternProcFactory, sUseVarsFromUnsatCore, false, null);
 			logService.info("[PathInvariants] Generated invariant map.");
 		}
 

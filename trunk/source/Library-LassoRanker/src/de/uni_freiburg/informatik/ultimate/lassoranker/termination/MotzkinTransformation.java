@@ -29,8 +29,10 @@ package de.uni_freiburg.informatik.ultimate.lassoranker.termination;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.lassoranker.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.lassoranker.AnalysisType;
@@ -126,6 +128,11 @@ public class MotzkinTransformation extends InstanceCounting {
 	private Term[] mcoefficients = null;
 	
 	/**
+	 * For each new linear inequality there is a new unique Motzkin coefficient introduced, this map stores this relationship.
+	 */
+	private Map<String, LinearInequality> mMotzkinCoeffiecients2LinearInequalities;
+	
+	/**
 	 * Construct the MotzkinApplication object with a script instance.
 	 * 
 	 * After filling all the public attributes, transform() can be called,
@@ -144,6 +151,7 @@ public class MotzkinTransformation extends InstanceCounting {
 		minequalities = new ArrayList<LinearInequality>();
 		mannotate_terms = annotate;
 		manalysis_type = termination_analysis;
+		mMotzkinCoeffiecients2LinearInequalities = new HashMap<>();
 	}
 	
 	/**
@@ -208,16 +216,24 @@ public class MotzkinTransformation extends InstanceCounting {
 		for (int i = 0; i < numcoefficients; ++i) {
 			final LinearInequality li = minequalities.get(i);
 			if (needsMotzkinCoefficient(li)) {
-				final Term coefficient = SmtUtils.buildNewConstant(mscript,
-						s_motzkin_prefix + getInstanceNumber() + "_" + i,
-						"Real");
+				String motzkinCoefficientName = s_motzkin_prefix + getInstanceNumber() + "_" + i;
+				final Term coefficient = SmtUtils.buildNewConstant(mscript, motzkinCoefficientName, "Real");
 				mcoefficients[i] = coefficient;
+				mMotzkinCoeffiecients2LinearInequalities.put(motzkinCoefficientName, li);
 			} else {
 				mcoefficients[i] = mscript.numeral(BigInteger.ONE);
 			}
 		}
 	}
 	
+	/**
+	 * Returns map from Motzkin coefficients to linear inequality.
+	 * @return
+	 */
+	public Map<String, LinearInequality> getMotzkinCoeffiecients2LinearInequalities() {
+		return mMotzkinCoeffiecients2LinearInequalities;
+	}
+
 	/**
 	 * Build the term corresponding to the product of the two parameters
 	 * The term is build in minimalistic form for better readability.
