@@ -59,18 +59,18 @@ import de.uni_freiburg.informatik.ultimatetest.summaries.TraceAbstractionTestSum
  *
  */
 public abstract class AbstractEvalTestSuite extends AbstractModelCheckerTestSuiteWithIncrementalLog {
-
+	
 	@Override
 	protected ITestResultDecider constructITestResultDecider(final UltimateRunDefinition ultimateRunDefinition) {
 		return new SafetyCheckTestResultDecider(ultimateRunDefinition, false);
 	}
-
+	
 	@Override
 	protected IIncrementalLog[] constructIncrementalLog() {
 		return new IIncrementalLog[] { getIncrementalLogWithVMParameters(),
 				new IncrementalLogWithBenchmarkResults(this.getClass()) };
 	}
-
+	
 	@Override
 	protected ITestSummary[] constructTestSummaries() {
 		final ArrayList<Class<? extends ICsvProviderProvider<? extends Object>>> benchmarks = new ArrayList<>();
@@ -80,9 +80,10 @@ public abstract class AbstractEvalTestSuite extends AbstractModelCheckerTestSuit
 		benchmarks.add(CodeCheckBenchmarks.class);
 		benchmarks.add(BuchiAutomizerModuleDecompositionBenchmark.class);
 		benchmarks.add(SizeBenchmark.class);
-
+		benchmarks.add(de.uni_freiburg.informatik.ultimate.plugins.blockencoding.benchmark.SizeBenchmark.class);
+		
 		final ColumnDefinition[] columnDef = getColumnDefinitions();
-
+		
 		final List<ITestSummary> rtr = new ArrayList<>();
 		rtr.add(new LatexOverviewSummary(getClass(), benchmarks, columnDef));
 		rtr.add(new LatexDetailedSummary(getClass(), benchmarks, columnDef));
@@ -92,14 +93,14 @@ public abstract class AbstractEvalTestSuite extends AbstractModelCheckerTestSuit
 		rtr.add(new KingOfTheHillSummary(this.getClass()));
 		rtr.add(new StandingsSummary(this.getClass()));
 		benchmarks.stream().forEach(a -> rtr.add(new CsvConcatenator(getClass(), a)));
-
+		
 		return rtr.toArray(new ITestSummary[rtr.size()]);
 	}
-
+	
 	/**
 	 * Describe which columns should be present in the generated LaTeX table, based on the available
 	 * {@link ICsvProviderProvider} instances during the test. Look in {@link TACAS2015} for an example.
 	 */
 	protected abstract ColumnDefinition[] getColumnDefinitions();
-
+	
 }
