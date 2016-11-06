@@ -94,8 +94,14 @@ public class PartialQuantifierElimination {
 		for (int i = qvs.size() - 1; i >= 0; i--) {
 			final QuantifiedVariables qv = qvs.get(i);
 			final Set<TermVariable> eliminatees = new HashSet<>(qv.getVariables());
-			result = elim(mgdScript, qv.getQuantifier(), eliminatees, result, services, logger,
+			try {
+				result = elim(mgdScript, qv.getQuantifier(), eliminatees, result, services, logger,
 					simplificationTechnique, xnfConversionTechnique);
+			} catch (final ToolchainCanceledException tce) {
+				final RunningTaskInfo rti = new RunningTaskInfo(PartialQuantifierElimination.class, 
+						"eliminating quantifiers from formula with " + (qvs.size()-1) + " quantifier alternations");
+				tce.addRunningTaskInfo(rti);
+			}
 			result = SmtUtils.quantifier(mgdScript.getScript(), qv.getQuantifier(), eliminatees, result);
 			result = new QuantifierPusher(mgdScript, services).transform(result);
 		}
