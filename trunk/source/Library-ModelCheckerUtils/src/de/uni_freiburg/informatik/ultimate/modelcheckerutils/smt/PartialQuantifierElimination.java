@@ -101,6 +101,7 @@ public class PartialQuantifierElimination {
 				final RunningTaskInfo rti = new RunningTaskInfo(PartialQuantifierElimination.class, 
 						"eliminating quantifiers from formula with " + (qvs.size()-1) + " quantifier alternations");
 				tce.addRunningTaskInfo(rti);
+				throw tce;
 			}
 			result = SmtUtils.quantifier(mgdScript.getScript(), qv.getQuantifier(), eliminatees, result);
 			result = new QuantifierPusher(mgdScript, services).transform(result);
