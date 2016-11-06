@@ -39,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker.TraceCheckerBenchmarkGenerator;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 
@@ -63,12 +62,12 @@ public class AnnotateAndAsserter {
 
 	protected final AnnotateAndAssertCodeBlocks mAnnotateAndAssertCodeBlocks;
 
-	protected final TraceCheckerBenchmarkGenerator mTcbg;
+	protected final TraceCheckerStatisticsGenerator mTcbg;
 
 	public AnnotateAndAsserter(final ManagedScript mgdScriptTc,
 			final NestedFormulas<Term, Term> nestedSSA, 
 			final AnnotateAndAssertCodeBlocks aaacb, 
-			final TraceCheckerBenchmarkGenerator tcbg, final IUltimateServiceProvider services) {
+			final TraceCheckerStatisticsGenerator tcbg, final IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mMgdScriptTc = mgdScriptTc;

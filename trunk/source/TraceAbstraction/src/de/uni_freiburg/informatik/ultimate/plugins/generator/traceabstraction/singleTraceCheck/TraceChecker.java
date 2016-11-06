@@ -27,8 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck;
 
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -50,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IActi
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ContainsQuantifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -58,12 +55,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
-import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
-import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
-import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsGeneratorWithStopwatches;
 
 /**
  * Check if a trace fulfills a specification. Provides an execution (that violates the specification) if the check was
@@ -141,210 +134,15 @@ public class TraceChecker {
 	protected RcfgProgramExecution mRcfgProgramExecution;
 	protected final NestedFormulas<UnmodifiableTransFormula, IPredicate> mNestedFormulas;
 	protected NestedSsaBuilder mNsb;
-	protected final TraceCheckerBenchmarkGenerator mTraceCheckerBenchmarkGenerator;
+	protected final TraceCheckerStatisticsGenerator mTraceCheckerBenchmarkGenerator = new TraceCheckerStatisticsGenerator();
 	protected final AssertCodeBlockOrder massertCodeBlocksIncrementally;
 	protected ToolchainCanceledException mToolchainCanceledException;
 	protected final ICfgSymbolTable mBoogie2SmtSymbolTable;
 
-	/**
-	 * Defines benchmark for measuring data about the usage of TraceCheckers. E.g., number and size of predicates
-	 * obtained via interpolation.
-	 * 
-	 * @author Matthias Heizmann
-	 * 
-	 */
-	public static class TraceCheckerBenchmarkType implements IStatisticsType {
 
-		private static TraceCheckerBenchmarkType s_Instance = new TraceCheckerBenchmarkType();
 
-		protected final static String s_SsaConstruction = "SsaConstructionTime";
-		protected final static String s_SatisfiabilityAnalysis = "SatisfiabilityAnalysisTime";
-		protected final static String s_InterpolantComputation = "InterpolantComputationTime";
-
-		protected final static String s_NumberOfCodeBlocks = "NumberOfCodeBlocks";
-		protected final static String s_NumberOfCodeBlocksAsserted = "NumberOfCodeBlocksAsserted";
-		protected final static String s_NumberOfCheckSat = "NumberOfCheckSat";
-		protected final static String s_ConstructedInterpolants = "ConstructedInterpolants";
-		protected final static String s_QuantifiedInterpolants = "QuantifiedInterpolants";
-
-		public static TraceCheckerBenchmarkType getInstance() {
-			return s_Instance;
-		}
-
-		@Override
-		public Collection<String> getKeys() {
-			return Arrays.asList(new String[] { s_SsaConstruction, s_SatisfiabilityAnalysis, s_InterpolantComputation,
-					s_NumberOfCodeBlocks, s_NumberOfCodeBlocksAsserted, s_NumberOfCheckSat, s_ConstructedInterpolants,
-					s_QuantifiedInterpolants});
-		}
-
-		@Override
-		public Object aggregate(final String key, final Object value1, final Object value2) {
-			switch (key) {
-			case s_SsaConstruction:
-			case s_SatisfiabilityAnalysis:
-			case s_InterpolantComputation:
-				final Long time1 = (Long) value1;
-				final Long time2 = (Long) value2;
-				return time1 + time2;
-			case s_NumberOfCodeBlocks:
-			case s_NumberOfCodeBlocksAsserted:
-			case s_NumberOfCheckSat:
-			case s_ConstructedInterpolants:
-			case s_QuantifiedInterpolants:
-				final Integer number1 = (Integer) value1;
-				final Integer number2 = (Integer) value2;
-				return number1 + number2;
-			default:
-				throw new AssertionError("unknown key");
-			}
-		}
-
-		@Override
-		public String prettyprintBenchmarkData(final IStatisticsDataProvider benchmarkData) {
-			final StringBuilder sb = new StringBuilder();
-			addTimedStatistic(benchmarkData, sb,s_SsaConstruction);
-			addTimedStatistic(benchmarkData, sb,s_SatisfiabilityAnalysis);
-			addTimedStatistic(benchmarkData, sb,s_InterpolantComputation);
-			sb.append(s_NumberOfCodeBlocks);
-			sb.append(": ");
-			sb.append(benchmarkData.getValue(s_NumberOfCodeBlocks));
-			sb.append(" ");
-			sb.append(s_NumberOfCodeBlocksAsserted);
-			sb.append(": ");
-			sb.append(benchmarkData.getValue(s_NumberOfCodeBlocksAsserted));
-			sb.append(" ");
-			sb.append(s_NumberOfCheckSat);
-			sb.append(": ");
-			sb.append(benchmarkData.getValue(s_NumberOfCheckSat));
-			sb.append(" ");
-			final Integer quantifiedInterpolants = (Integer) benchmarkData.getValue(s_QuantifiedInterpolants);
-			final Integer constructedInterpolants = (Integer) benchmarkData.getValue(s_ConstructedInterpolants);
-			sb.append(s_QuantifiedInterpolants);
-			sb.append(": ");
-			sb.append(benchmarkData.getValue(s_QuantifiedInterpolants));
-			sb.append("/");
-			sb.append(benchmarkData.getValue(s_ConstructedInterpolants));
-			sb.append("=");
-			final double percent;
-			if (constructedInterpolants == 0) {
-				percent = 0;
-			} else {
-				percent = (((double) quantifiedInterpolants) / ((double) constructedInterpolants)) * 100;
-			}
-			sb.append(percent);
-			sb.append("%");
-			return sb.toString();
-		}
-
-		private static StringBuilder addTimedStatistic(final IStatisticsDataProvider benchmarkData,
-				final StringBuilder sb, final String key) {
-			sb.append(key);
-			sb.append(": ");
-			final Long time = (Long) benchmarkData.getValue(key);
-			sb.append(TraceAbstractionBenchmarks.prettyprintNanoseconds(time));
-			sb.append(" ");
-			return sb;
-		}
-	}
-
-	/**
-	 * Stores benchmark data about the usage of TraceCheckers. E.g., number and size of predicates obtained via
-	 * interpolation.
-	 * 
-	 * @author Matthias Heizmann
-	 */
-	public class TraceCheckerBenchmarkGenerator extends StatisticsGeneratorWithStopwatches
-			implements IStatisticsDataProvider {
-
-		int mNumberOfCodeBlocks = 0;
-		int mNumberOfCodeBlocksAsserted = 0;
-		int mNumberOfCheckSat = 0;
-		int mConstructedInterpolants = 0;
-		int mQuantifiedInterpolants = 0;
-
-		@Override
-		public String[] getStopwatches() {
-			return new String[] { TraceCheckerBenchmarkType.s_SsaConstruction,
-					TraceCheckerBenchmarkType.s_SatisfiabilityAnalysis,
-					TraceCheckerBenchmarkType.s_InterpolantComputation };
-		}
-
-		@Override
-		public Collection<String> getKeys() {
-			return TraceCheckerBenchmarkType.getInstance().getKeys();
-		}
-
-		@Override
-		public Object getValue(final String key) {
-			switch (key) {
-			case TraceCheckerBenchmarkType.s_SsaConstruction:
-			case TraceCheckerBenchmarkType.s_SatisfiabilityAnalysis:
-			case TraceCheckerBenchmarkType.s_InterpolantComputation:
-				try {
-					return getElapsedTime(key);
-				} catch (final StopwatchStillRunningException e) {
-					throw new AssertionError("clock still running: " + key);
-				}
-			case TraceCheckerBenchmarkType.s_NumberOfCodeBlocks:
-				return mNumberOfCodeBlocks;
-			case TraceCheckerBenchmarkType.s_NumberOfCodeBlocksAsserted:
-				return mNumberOfCodeBlocksAsserted;
-			case TraceCheckerBenchmarkType.s_NumberOfCheckSat:
-				return mNumberOfCheckSat;
-			case TraceCheckerBenchmarkType.s_ConstructedInterpolants:
-				return mConstructedInterpolants;
-			case TraceCheckerBenchmarkType.s_QuantifiedInterpolants:
-				return mQuantifiedInterpolants;
-			default:
-				throw new AssertionError("unknown data");
-			}
-		}
-
-		@Override
-		public IStatisticsType getBenchmarkType() {
-			return TraceCheckerBenchmarkType.getInstance();
-		}
-
-		/**
-		 * Tell the Benchmark that the checked trace has n CodeBlocks
-		 */
-		public void reportnewCodeBlocks(final int n) {
-			mNumberOfCodeBlocks = mNumberOfCodeBlocks + n;
-		}
-
-		/**
-		 * Tell the Benchmark that n CodeBlocks have been asserted additionally
-		 */
-		public void reportnewAssertedCodeBlocks(final int n) {
-			mNumberOfCodeBlocksAsserted = mNumberOfCodeBlocksAsserted + n;
-		}
-
-		/**
-		 * Tell the Benchmark we did another check sat
-		 */
-		public void reportnewCheckSat() {
-			mNumberOfCheckSat++;
-		}
-
-		public void reportNewInterpolant(final boolean isQuantified) {
-			mConstructedInterpolants++;
-			if (isQuantified) {
-				mQuantifiedInterpolants++;
-			}
-		}
-
-		public void reportSequenceOfInterpolants(final List<IPredicate> interpolants) {
-			for (final IPredicate pred : interpolants) {
-				final boolean isQuantified = new ContainsQuantifier().containsQuantifier(pred.getFormula());
-				mTraceCheckerBenchmarkGenerator.reportNewInterpolant(isQuantified);
-			}
-		}
-
-	}
-
-	protected TraceCheckerBenchmarkGenerator getBenchmarkGenerator() {
-		return new TraceCheckerBenchmarkGenerator();
+	protected TraceCheckerStatisticsGenerator getBenchmarkGenerator() {
+		return new TraceCheckerStatisticsGenerator();
 	}
 
 	/**
@@ -413,7 +211,6 @@ public class TraceChecker {
 		}
 		mPendingContexts = pendingContexts;
 		mNestedFormulas = rv;
-		mTraceCheckerBenchmarkGenerator = getBenchmarkGenerator();
 		massertCodeBlocksIncrementally = assertCodeBlocksIncrementally;
 		LBool isSafe = null;
 		try {
@@ -447,13 +244,13 @@ public class TraceChecker {
 		LBool isSafe;
 		startTraceCheck();
 		final boolean transferToDifferentScript = (mTcSmtManager != mCfgManagedScript);
-		mTraceCheckerBenchmarkGenerator.start(TraceCheckerBenchmarkType.s_SsaConstruction);
+		mTraceCheckerBenchmarkGenerator.start(TraceCheckerStatisticsDefinitions.SsaConstructionTime.toString());
 		mNsb = new NestedSsaBuilder(mTrace, mTcSmtManager, mNestedFormulas, mCsToolkit.getModifiableGlobals(), mLogger,
 				transferToDifferentScript);
 		final NestedFormulas<Term, Term> ssa = mNsb.getSsa();
-		mTraceCheckerBenchmarkGenerator.stop(TraceCheckerBenchmarkType.s_SsaConstruction);
+		mTraceCheckerBenchmarkGenerator.stop(TraceCheckerStatisticsDefinitions.SsaConstructionTime.toString());
 
-		mTraceCheckerBenchmarkGenerator.start(TraceCheckerBenchmarkType.s_SatisfiabilityAnalysis);
+		mTraceCheckerBenchmarkGenerator.start(TraceCheckerStatisticsDefinitions.SatisfiabilityAnalysisTime.toString());
 		if (massertCodeBlocksIncrementally != AssertCodeBlockOrder.NOT_INCREMENTALLY) {
 			mAAA = new AnnotateAndAsserterWithStmtOrderPrioritization(mTcSmtManager, ssa,
 					getAnnotateAndAsserterCodeBlocks(ssa), mTraceCheckerBenchmarkGenerator,
@@ -474,7 +271,7 @@ public class TraceChecker {
 				throw e;
 			}
 		} finally {
-			mTraceCheckerBenchmarkGenerator.stop(TraceCheckerBenchmarkType.s_SatisfiabilityAnalysis);
+			mTraceCheckerBenchmarkGenerator.stop(TraceCheckerStatisticsDefinitions.SatisfiabilityAnalysisTime.toString());
 		}
 		return isSafe;
 	}
@@ -636,7 +433,7 @@ public class TraceChecker {
 		endTraceCheck();
 	}
 
-	public TraceCheckerBenchmarkGenerator getTraceCheckerBenchmark() {
+	public TraceCheckerStatisticsGenerator getTraceCheckerBenchmark() {
 		if (mTraceCheckFinished || mToolchainCanceledException != null) {
 			return mTraceCheckerBenchmarkGenerator;
 		}

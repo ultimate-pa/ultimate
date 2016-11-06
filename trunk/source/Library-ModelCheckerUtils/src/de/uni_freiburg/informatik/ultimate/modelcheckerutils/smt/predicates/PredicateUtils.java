@@ -51,21 +51,30 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 
 public class PredicateUtils {
 	
+	public enum FormulaSize { TREESIZE, DAGSIZE }; 
+	
 	/**
 	 * Returns the DAG size of the predicate's formula. 
 	 * (DAG size means that similar sub-formulas are counted only once.)
 	 */
-	public static int computeDagSizeOfPredicate(final IPredicate p) {
-		return (new DAGSize()).size(p.getFormula());
+	public static int computeDagSizeOfPredicate(final IPredicate p, final FormulaSize size) {
+		switch (size) {
+		case DAGSIZE:
+			return (new DAGSize()).size(p.getFormula());
+		case TREESIZE:
+			return (new DAGSize()).treesize(p.getFormula());
+		default:
+			throw new AssertionError("unknown " + size);
+		}
 	}
 	
 	/**
 	 * Computes DAG size for an array of predicates.
 	 */
-	public static int[] computeDagSizeOfPredicates(final List<IPredicate> predicates) {
+	public static int[] computeDagSizeOfPredicates(final List<IPredicate> predicates, final FormulaSize size) {
 		final int[] sizeOfPredicates = new int[predicates.size()];
 		for (int i = 0; i < predicates.size(); i++) {
-			sizeOfPredicates[i] = computeDagSizeOfPredicate(predicates.get(i));
+			sizeOfPredicates[i] = computeDagSizeOfPredicate(predicates.get(i), size);
 		}
 		return sizeOfPredicates;
 	}
