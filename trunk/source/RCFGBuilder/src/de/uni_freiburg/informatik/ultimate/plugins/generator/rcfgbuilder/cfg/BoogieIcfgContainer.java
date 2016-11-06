@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE RCFGBuilder plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE RCFGBuilder plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE RCFGBuilder plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
@@ -56,12 +56,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activat
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBacktranslator;
 
 /**
- * Stores references to all objects that represent an interprocedural 
- * control-flow graph (ICFG) that was directly constructed from a Boogie 
- * program.
- * The object is an {@link IAnnotations} but also an {@link IElement}
- * whose {@link IPayload} contains this object. (This is a workaround for
- * getting information in the visualization). 
+ * Stores references to all objects that represent an interprocedural control-flow graph (ICFG) that was directly
+ * constructed from a Boogie program. The object is an {@link IAnnotations} but also an {@link IElement} whose
+ * {@link IPayload} contains this object. (This is a workaround for getting information in the visualization).
  * 
  * 
  * @author heizmann@informatik.uni-freiburg.de
@@ -73,89 +70,86 @@ public class BoogieIcfgContainer extends AbstractAnnotations implements IWalkabl
 	 * The serial version UID. Change only if serial representation changes.
 	 */
 	private static final long serialVersionUID = -221145005712480077L;
-
+	
 	private final BoogieDeclarations mBoogieDeclarations;
-
+	
 	/**
-	 * Maps a procedure name to the entry node of that procedure. The entry node
-	 * of a procedure represents an auxiliary location that is reached after
-	 * calling the procedure. Afterwards we assume that the global variables and
-	 * corresponding and oldvars have the same values, we assume the requires
-	 * clause and reach the initial node.
+	 * Maps a procedure name to the entry node of that procedure. The entry node of a procedure represents an auxiliary
+	 * location that is reached after calling the procedure. Afterwards we assume that the global variables and
+	 * corresponding and oldvars have the same values, we assume the requires clause and reach the initial node.
 	 * 
 	 */
 	final Map<String, BoogieIcfgLocation> mentryNode = new HashMap<String, BoogieIcfgLocation>();
-
+	
 	/**
-	 * Maps a procedure name to the final node of that procedure. The final node
-	 * of a procedure represents the location that is reached after executing
-	 * the last statement of the procedure or after executing a return
-	 * statement. At this node the ensures part of the specification is asserted
-	 * (has to be checked to prove correctness of the procedure). A sequence of
-	 * edges that assumes the ensures part of the specification leads to the
-	 * exit node of the procedure.
+	 * Maps a procedure name to the final node of that procedure. The final node of a procedure represents the location
+	 * that is reached after executing the last statement of the procedure or after executing a return statement. At
+	 * this node the ensures part of the specification is asserted (has to be checked to prove correctness of the
+	 * procedure). A sequence of edges that assumes the ensures part of the specification leads to the exit node of the
+	 * procedure.
 	 * 
 	 */
 	final Map<String, BoogieIcfgLocation> mfinalNode = new HashMap<String, BoogieIcfgLocation>();
-
+	
 	/**
-	 * Maps a procedure name to the the exit node of that procedure. The exit
-	 * node of a procedure represents an auxiliary location that is reached
-	 * after assuming the ensures part of the specification. This locNode is the
+	 * Maps a procedure name to the the exit node of that procedure. The exit node of a procedure represents an
+	 * auxiliary location that is reached after assuming the ensures part of the specification. This locNode is the
 	 * source of ReturnEdges which lead to the callers of this procecure.
 	 */
 	final Map<String, BoogieIcfgLocation> mexitNode = new HashMap<String, BoogieIcfgLocation>();
-
+	
 	/**
-	 * Maps the pair of procedure name location name to the LocNode that
-	 * represents this location.
+	 * Maps the pair of procedure name location name to the LocNode that represents this location.
 	 */
-	final Map<String, Map<String, BoogieIcfgLocation>> mLocNodes = new HashMap<String, Map<String, BoogieIcfgLocation>>();
-
+	final Map<String, Map<String, BoogieIcfgLocation>> mLocNodes =
+			new HashMap<String, Map<String, BoogieIcfgLocation>>();
+	
 	/**
 	 * Maps a procedure name to error locations generated for this procedure.
 	 */
-	final Map<String, Collection<BoogieIcfgLocation>> mErrorNodes = new HashMap<String, Collection<BoogieIcfgLocation>>();
+	final Map<String, Collection<BoogieIcfgLocation>> mErrorNodes =
+			new HashMap<String, Collection<BoogieIcfgLocation>>();
 	/**
 	 * Maps a {@code LocNode}s to the while loop that it represents
 	 */
 	final HashMap<BoogieIcfgLocation, ILocation> mLoopLocations = new HashMap<BoogieIcfgLocation, ILocation>();
-
+	
 	private final Boogie2SMT mBoogie2SMT;
 	private final ManagedScript mManagedScript;
 	private final ModifiableGlobalVariableManager mModifiableGlobalVariableManager;
 	private final CodeBlockFactory mCodeBlockFactory;
-
+	
 	private final CfgSmtToolkit mCfgSmtToolkit;
 	
 	private final IPayload mPayload;
-
+	
 	/**
-	 * The published attributes. Update this and getFieldValue() if you add new
-	 * attributes.
+	 * The published attributes. Update this and getFieldValue() if you add new attributes.
 	 */
 	private final static String[] s_AttribFields = { "locNodes", "loopEntry" };
-
-	public BoogieIcfgContainer(final IUltimateServiceProvider services, final BoogieDeclarations boogieDeclarations, final Boogie2SMT mBoogie2smt,
-			final RCFGBacktranslator backtranslator, final ILocation loc) {
+	
+	public BoogieIcfgContainer(final IUltimateServiceProvider services, final BoogieDeclarations boogieDeclarations,
+			final Boogie2SMT mBoogie2smt, final RCFGBacktranslator backtranslator, final ILocation loc) {
 		
 		mBoogieDeclarations = boogieDeclarations;
 		mBoogie2SMT = mBoogie2smt;
 		mManagedScript = mBoogie2smt.getManagedScript();
 		mModifiableGlobalVariableManager = new ModifiableGlobalVariableManager(mBoogieDeclarations.getModifiedVars(),
 				mManagedScript, mBoogie2smt.getBoogie2SmtSymbolTable());
-		mCfgSmtToolkit = new CfgSmtToolkit(mModifiableGlobalVariableManager, mManagedScript, mBoogie2smt.getBoogie2SmtSymbolTable());
-		mCodeBlockFactory = new CodeBlockFactory(services, mManagedScript, mModifiableGlobalVariableManager, mBoogie2SMT.getBoogie2SmtSymbolTable());
+		mCfgSmtToolkit = new CfgSmtToolkit(mModifiableGlobalVariableManager, mManagedScript,
+				mBoogie2smt.getBoogie2SmtSymbolTable());
+		mCodeBlockFactory = new CodeBlockFactory(services, mManagedScript, mModifiableGlobalVariableManager,
+				mBoogie2SMT.getBoogie2SmtSymbolTable());
 		mPayload = new Payload(loc);
 		mPayload.getAnnotations().put(Activator.PLUGIN_ID, this);
 		
 	}
-
+	
 	@Override
 	protected String[] getFieldNames() {
 		return s_AttribFields;
 	}
-
+	
 	@Override
 	protected Object getFieldValue(final String field) {
 		if (field == "locNodes") {
@@ -166,11 +160,11 @@ public class BoogieIcfgContainer extends AbstractAnnotations implements IWalkabl
 			throw new UnsupportedOperationException("Unknown field " + field);
 		}
 	}
-
+	
 	public Map<String, Map<String, BoogieIcfgLocation>> getProgramPoints() {
 		return mLocNodes;
 	}
-
+	
 	public int getNumberOfProgramPoints() {
 		int result = 0;
 		for (final String proc : getProgramPoints().keySet()) {
@@ -178,19 +172,19 @@ public class BoogieIcfgContainer extends AbstractAnnotations implements IWalkabl
 		}
 		return result;
 	}
-
+	
 	public Map<String, BoogieIcfgLocation> getEntryNodes() {
 		return mentryNode;
 	}
-
+	
 	public Map<String, BoogieIcfgLocation> getExitNodes() {
 		return mexitNode;
 	}
-
+	
 	public Map<String, Collection<BoogieIcfgLocation>> getErrorNodes() {
 		return mErrorNodes;
 	}
-
+	
 	public int getNumberOfErrorNodes() {
 		int result = 0;
 		for (final String proc : getErrorNodes().keySet()) {
@@ -198,51 +192,51 @@ public class BoogieIcfgContainer extends AbstractAnnotations implements IWalkabl
 		}
 		return result;
 	}
-
-//	public ModifiableGlobalVariableManager getModifiableGlobals() {
-//		return mModifiableGlobalVariableManager;
-//	}
-
+	
+	// public ModifiableGlobalVariableManager getModifiableGlobals() {
+	// return mModifiableGlobalVariableManager;
+	// }
+	
 	public Boogie2SMT getBoogie2SMT() {
 		return mBoogie2SMT;
 	}
-
+	
 	public Map<BoogieIcfgLocation, ILocation> getLoopLocations() {
 		return mLoopLocations;
 	}
-
+	
 	public BoogieDeclarations getBoogieDeclarations() {
 		return mBoogieDeclarations;
 	}
-
+	
 	public CodeBlockFactory getCodeBlockFactory() {
 		return mCodeBlockFactory;
 	}
-
+	
 	public Set<BoogieIcfgLocation> getPotentialCycleProgramPoints() {
-		final Set<BoogieIcfgLocation> relevantLocs = mLocNodes.entrySet().stream()
-				.flatMap(a -> a.getValue().entrySet().stream()).map(a -> a.getValue())
-				.filter(a -> a.getOutgoingEdges().stream().anyMatch(b -> {
-					final LoopEntryAnnotation loa = LoopEntryAnnotation.getAnnotation(b);
-					return loa != null && loa.getLoopEntryType() == LoopEntryType.GOTO;
-				})).collect(Collectors.toSet());
+		final Set<BoogieIcfgLocation> relevantLocs =
+				mLocNodes.entrySet().stream().flatMap(a -> a.getValue().entrySet().stream()).map(a -> a.getValue())
+						.filter(a -> a.getOutgoingEdges().stream().anyMatch(b -> {
+							final LoopEntryAnnotation loa = LoopEntryAnnotation.getAnnotation(b);
+							return loa != null && loa.getLoopEntryType() == LoopEntryType.GOTO;
+						})).collect(Collectors.toSet());
 		return relevantLocs;
 	}
-
+	
 	public CfgSmtToolkit getCfgSmtToolkit() {
 		return mCfgSmtToolkit;
 	}
-
+	
 	@Override
 	public IPayload getPayload() {
 		return mPayload;
 	}
-
+	
 	@Override
 	public boolean hasPayload() {
 		return true;
 	}
-
+	
 	@Override
 	public List<IWalkable> getSuccessors() {
 		final List<IWalkable> result = new ArrayList<>();
@@ -251,36 +245,32 @@ public class BoogieIcfgContainer extends AbstractAnnotations implements IWalkabl
 	}
 	
 	/**
-	 * Returns the name of the file that is analyzed.
-	 * The result is the name without the full path.
+	 * Returns the name of the file that is analyzed. The result is the name without the full path.
 	 * 
 	 */
 	public String getFilename() {
 		final String pathAndFilename = getPayload().getLocation().getFileName();
-		final String pureFilename = (new File(pathAndFilename)).getName();
+		final String pureFilename = new File(pathAndFilename).getName();
 		return pureFilename;
 	}
 	
 	/**
-	 * @return Collection that contains all edges that are predecessor of
-	 * the initial location of some procedure. 
+	 * @return Collection that contains all edges that are predecessor of the initial location of some procedure.
 	 */
 	public static Collection<IcfgEdge> extractStartEdges(final BoogieIcfgContainer root) {
-		final Collection<IcfgEdge> startEdges = new ArrayList<>();
+		final List<IcfgEdge> startEdges = new ArrayList<>();
 		for (final Entry<String, BoogieIcfgLocation> entry : root.getEntryNodes().entrySet()) {
-			for (final IcfgEdge edge : entry.getValue().getOutgoingEdges()) {
-				startEdges.add(edge);
-			}
+			startEdges.addAll(entry.getValue().getOutgoingEdges());
 		}
 		return startEdges;
 	}
 	
 	public RootNode constructRootNode() {
-		final RootNode rootNode = new RootNode(this.getPayload().getLocation(), this);
-		for (final Entry<String, BoogieIcfgLocation> entry : this.getEntryNodes().entrySet()) {
+		final RootNode rootNode = new RootNode(getPayload().getLocation(), this);
+		for (final Entry<String, BoogieIcfgLocation> entry : getEntryNodes().entrySet()) {
 			new RootEdge(rootNode, entry.getValue());
 		}
 		return rootNode;
 	}
-
+	
 }
