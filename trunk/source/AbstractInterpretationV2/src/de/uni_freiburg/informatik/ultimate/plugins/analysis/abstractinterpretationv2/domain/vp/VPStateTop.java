@@ -1,9 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.vp;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
@@ -14,9 +14,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 */
 public class VPStateTop extends VPState {
 	
-	VPStateTop(VPState state) {
-		super(state.getEqGraphNodeSet(), state.getTermToBaseNodeMap(), state.getTermToFnNodeMap(),
-				state.getEqNodeToEqGraphNodeMap(), state.getDisEqualitySet());
+	VPStateTop(Set<EqGraphNode> eqGraphNodeSet, Map<Term, EqBaseNode> termToBaseNodeMap,
+			Map<Term, Set<EqFunctionNode>> termToFnNodeMap, Map<EqNode, EqGraphNode> eqNodeToEqGraphNodeMap,
+			Set<VPDomainSymmetricPair<EqNode>> disEqualitySet, VPStateBottom bottomState) {
+		super(eqGraphNodeSet, termToBaseNodeMap, termToFnNodeMap, eqNodeToEqGraphNodeMap, disEqualitySet, bottomState);
+		this.clearState();
 	}
 	
 	@Override
@@ -122,15 +124,9 @@ public class VPStateTop extends VPState {
 	}
 
 	@Override
-	public Term getTerm(Script script) {
-		// Auto-generated method stub
-		return super.getTerm(script);
-	}
-
-	@Override
 	public String toLogString() {
-		// Auto-generated method stub
-		return super.toLogString();
+		
+		return "Top state.";
 	}
 
 	@Override

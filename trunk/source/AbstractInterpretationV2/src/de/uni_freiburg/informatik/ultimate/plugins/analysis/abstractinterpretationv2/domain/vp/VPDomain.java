@@ -57,8 +57,10 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 	private final Map<Term, EqBaseNode> mTermToBaseNodeMap;
 	private final Map<Term, Set<EqFunctionNode>> mTermToFnNodeMap;
 	private final Map<EqNode, EqGraphNode> mEqNodeToEqGraphNodeMap;
+	private Set<VPDomainSymmetricPair<EqNode>> mDisEqualityMap;
 	
-	private Set<VPDomainSymmetricPair<EqNode>> mDisEqualityMap = new HashSet<VPDomainSymmetricPair<EqNode>>();
+	private final VPStateTop mTopState;
+	private final VPStateBottom mBottomState;
 	
 	public VPDomain(final ILogger logger, ManagedScript script, 
 			IUltimateServiceProvider services,
@@ -66,18 +68,21 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 			final Map<Term, EqBaseNode> termToBaseNodeMap,
 			final Map<Term, Set<EqFunctionNode>> termToFnNodeMap,
 			final Map<EqNode, EqGraphNode> eqNodeToEqGraphNodeMap) {
-		mPost = new VPPostOperator(script, services);
-		mMerge = new VPMergeOperator();
-		mLogger = logger;
 		mEqGraphNodeSet = eqGraphNodeSet;
 		mTermToBaseNodeMap = termToBaseNodeMap;
 		mTermToFnNodeMap = termToFnNodeMap;
 		mEqNodeToEqGraphNodeMap = eqNodeToEqGraphNodeMap;
+		mDisEqualityMap = new HashSet<VPDomainSymmetricPair<EqNode>>();
+		mBottomState = new VPStateBottom();
+		mTopState = new VPStateTop(mEqGraphNodeSet, mTermToBaseNodeMap, mTermToFnNodeMap, mEqNodeToEqGraphNodeMap, mDisEqualityMap, mBottomState);
+		mPost = new VPPostOperator(script, services, mTopState, mBottomState);
+		mMerge = new VPMergeOperator();
+		mLogger = logger;
 	}
 
 	@Override
 	public VPState createFreshState() {
-		return new VPState(mEqGraphNodeSet, mTermToBaseNodeMap, mTermToFnNodeMap, mEqNodeToEqGraphNodeMap, mDisEqualityMap);
+		return new VPState(mEqGraphNodeSet, mTermToBaseNodeMap, mTermToFnNodeMap, mEqNodeToEqGraphNodeMap, mDisEqualityMap, mBottomState);
 	}
 
 	@Override

@@ -66,7 +66,6 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 		process(BoogieIcfgContainer.extractStartEdges(root));
 	}
 
-
 	private <T extends IcfgEdge> void process(final Collection<T> edges) {
 		final Deque<IcfgEdge> worklist = new ArrayDeque<IcfgEdge>();
 		final Set<IcfgEdge> finished = new HashSet<IcfgEdge>();
@@ -171,7 +170,7 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 			graphNode.setArg(arg);
 			argNode = eqNodeToEqGraphNodeMap.get(arg);
 			argNode.addToInitCcpar(node);
-			argNode.getCcpar().add(node);
+			argNode.addToCcpar(node);
 		}
 		
 		if (argNode != null) {

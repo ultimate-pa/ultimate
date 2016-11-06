@@ -62,14 +62,14 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 	private final IUltimateServiceProvider mServices;
 	
 	private VPState preparedState;
-
-	// private Set<EqGraphNode> mEqGraphNodeSet;
-	// private Map<Term, EqNode> mTermToEqNodeMap;
-	// private Map<EqNode, EqGraphNode> mEqNodeToEqGraphNodeMap;
-
-	public VPPostOperator(ManagedScript script, IUltimateServiceProvider services) {
+	private final VPStateTop mTopState;
+	private final VPStateBottom mBottomState;
+	
+	public VPPostOperator(ManagedScript script, IUltimateServiceProvider services, VPStateTop topState, VPStateBottom bottomState) {
 		mScript = script;
 		mServices = services;
+		mTopState = topState;
+		mBottomState = bottomState;
 	}
 
 	@Override
@@ -79,7 +79,11 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 		if (tf.getOutVars().isEmpty()) {
 			return Collections.singletonList(oldstate);
 		}
-
+		
+		if (oldstate instanceof VPStateBottom) {
+			return Collections.singletonList(mBottomState);
+		}
+		
 		preparedState = oldstate.prepareState(tf.getAssignedVars());
 		Term nnfTerm = new Nnf(mScript, mServices, QuantifierHandling.CRASH)
 				.transform(transition.getTransitionFormula().getFormula());
@@ -102,12 +106,17 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 		
 		System.out.println(resultState.toLogString());
 		
+		if (resultState instanceof VPStateBottom) {
+			return Collections.singletonList(mBottomState);
+		}
+		
 		return Collections.singletonList(
 				new VPState(resultState.getEqGraphNodeSet(), 
 						resultState.getTermToBaseNodeMap(),
 						resultState.getTermToFnNodeMap(),
 						resultState.getEqNodeToEqGraphNodeMap(),  
-						resultState.getDisEqualitySet()));
+						resultState.getDisEqualitySet(),
+						mBottomState));
 	}
 	
 	private VPState handleTransition(Term term) {
@@ -129,6 +138,11 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 				for (int i = 1; i < andList.size(); i++) {
 					state = state.conjoin(state, andList.get(i));	
 				}
+//				if (state.checkContradiction()) {
+//					return mBottomState;
+//				} else {
+//					return state;
+//				}
 				return state;
 				
 			} else if (applicationName == "or") {
@@ -141,6 +155,11 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 				for (int i = 1; i < orList.size(); i++) {
 					state = state.disjoin(state, orList.get(i));	
 				}
+//				if (state.checkContradiction()) {
+//					return mBottomState;
+//				} else {
+//					return state;
+//				}
 				return state;
 				
 			} else if (applicationName == "=") {
@@ -161,6 +180,7 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 								MultiDimensionalStore mulStore = new MultiDimensionalStore(param1);
 								if (mulStore.getArray().equals(appTerm.getParameters()[0])) {
 									node1 = getNodeFromTerm(param1, resultState);
+									resultState.havoc(node1);
 									resultState.getEqNodeToEqGraphNodeMap().get(node1).setNodeToInitial();
 									node2 = getNodeFromTerm(param1.getParameters()[2], resultState);
 								}
@@ -175,13 +195,13 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 				}
 							
 				if (node1 == null || node2 == null) {
-					return new VPStateBottom(resultState);
+					return resultState;
 				}
 				
 				boolean isContradic = resultState.addEquality(node1, node2);
 				
 				if (isContradic) {
-					return new VPStateBottom(resultState);
+					return mBottomState;
 				}
 				
 				return resultState;
@@ -191,20 +211,20 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 				
 				ApplicationTerm equalTerm = (ApplicationTerm)appTerm.getParameters()[0];
 				if (!(equalTerm.getFunction().getName() == "=")) {
-					// TODO: 再 check 一次，這裡回傳 bottom 是對的嗎? 還是要回傳 top?
-					return new VPStateBottom(resultState);
+					// TODO: check: is it correct here to return bottom?
+					return mBottomState;
 				} else {
 					EqNode node1 = getNodeFromTerm(equalTerm.getParameters()[0], resultState);
 					EqNode node2 = getNodeFromTerm(equalTerm.getParameters()[1], resultState);
 					
 					if (node1 == null || node2 == null) {
-						return new VPStateBottom(resultState);
+						return resultState;
 					}
 					
 					boolean isContradic = resultState.addDisEquality(node1, node2);
 					
 					if (isContradic) {
-						return new VPStateBottom(resultState);
+						return mBottomState;
 					}
 					
 					return resultState;
@@ -216,13 +236,13 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 				EqNode node2 = getNodeFromTerm(appTerm.getParameters()[1], resultState);
 				
 				if (node1 == null || node2 == null) {
-					return new VPStateBottom(resultState);
+					return mBottomState;
 				}
 				
 				boolean isContradic = resultState.addDisEquality(node1, node2);
 				
 				if (isContradic) {
-					return new VPStateBottom(resultState);
+					return mBottomState;
 				}
 				
 				return resultState;
@@ -240,7 +260,7 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 			graphNode.setNodeToInitial();
 		}
 		resultState.getDisEqualitySet().clear();
-		return new VPStateTop(resultState);
+		return mTopState;
 	}
 	
 	private EqNode getNodeFromTerm (Term term, VPState state) {
