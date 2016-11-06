@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
 import de.uni_freiburg.informatik.ultimatetest.logs.IncrementalLogWithBenchmarkResults;
-import de.uni_freiburg.informatik.ultimatetest.suites.evals.TACAS2015;
+import de.uni_freiburg.informatik.ultimatetest.suites.evals.InterpolationTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.summaries.ColumnDefinition;
 import de.uni_freiburg.informatik.ultimatetest.summaries.CsvSummary;
 import de.uni_freiburg.informatik.ultimatetest.summaries.HTMLSummary;
@@ -99,7 +99,7 @@ public abstract class AbstractEvalTestSuite extends AbstractModelCheckerTestSuit
 	
 	/**
 	 * Describe which columns should be present in the generated LaTeX table, based on the available
-	 * {@link ICsvProviderProvider} instances during the test. Look in {@link TACAS2015} for an example.
+	 * {@link ICsvProviderProvider} instances during the test. Look in {@link InterpolationTestSuite} for an example.
 	 */
 	protected abstract ColumnDefinition[] getColumnDefinitions();
 	
