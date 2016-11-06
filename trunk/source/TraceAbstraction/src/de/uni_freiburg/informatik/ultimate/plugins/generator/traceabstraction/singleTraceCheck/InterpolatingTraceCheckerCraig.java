@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Tr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerStatisticsGenerator.InterpolantType;
+import de.uni_freiburg.informatik.ultimate.util.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 /**
@@ -131,20 +132,26 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 		for (final IPredicate pred : mPendingContexts.values()) {
 			assert mPredicateUnifier.isRepresentative(pred);
 		}
-		switch (interpolation) {
-		case Craig_NestedInterpolation:
-			computeInterpolants_Recursive(interpolatedPositions);
-			break;
-		case Craig_TreeInterpolation:
-			computeInterpolants_Tree(interpolatedPositions);
-			break;
-		default:
-			throw new UnsupportedOperationException("unsupportedInterpolation");
+		try {
+			switch (interpolation) {
+			case Craig_NestedInterpolation:
+				computeInterpolants_Recursive(interpolatedPositions);
+				break;
+			case Craig_TreeInterpolation:
+				computeInterpolants_Tree(interpolatedPositions);
+				break;
+			default:
+				throw new UnsupportedOperationException("unsupportedInterpolation");
+			}
+			mTraceCheckerBenchmarkGenerator.reportSequenceOfInterpolants(Arrays.asList(mInterpolants), InterpolantType.Craig);
+			mTraceCheckFinished = true;
+		} catch (final ToolchainCanceledException tce) {
+			final String taskDescription = "constructing Craig interpolants";
+			tce.addRunningTaskInfo(new RunningTaskInfo(getClass(), taskDescription));
+			throw tce;
+		} finally {
+			mTraceCheckerBenchmarkGenerator.stop(TraceCheckerStatisticsDefinitions.InterpolantComputationTime.toString());
 		}
-		mTraceCheckerBenchmarkGenerator.reportSequenceOfInterpolants(Arrays.asList(mInterpolants), InterpolantType.Craig);
-		mTraceCheckFinished = true;
-
-		mTraceCheckerBenchmarkGenerator.stop(TraceCheckerStatisticsDefinitions.InterpolantComputationTime.toString());
 		// TODO: remove this if relevant variables are definitely correct.
 		// assert testRelevantVars() : "bug in relevant variables";
 	}
