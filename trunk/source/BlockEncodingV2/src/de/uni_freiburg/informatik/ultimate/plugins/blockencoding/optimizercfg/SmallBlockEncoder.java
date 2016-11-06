@@ -39,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms.BoogieExpressionTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms.NormalFormTransformer;
@@ -48,8 +47,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.Simpli
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.BlockEncodingBacktranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.optimizeproduct.RcfgEdgeBuilder;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 
 /**
@@ -67,44 +66,42 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sta
  *
  */
 public class SmallBlockEncoder extends BaseObserver {
-
+	
 	private final ILogger mLogger;
 	private final BlockEncodingBacktranslator mBacktranslator;
 	private final boolean mRewriteAssumes;
 	private final IUltimateServiceProvider mServices;
-	private final IToolchainStorage mStorage;
 	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
-
+	
 	public SmallBlockEncoder(final ILogger logger, final BlockEncodingBacktranslator backtranslator,
-			final IToolchainStorage storage, final boolean rewriteAssumes, final IUltimateServiceProvider services,
+			final boolean rewriteAssumes, final IUltimateServiceProvider services,
 			final SimplificationTechnique simplTech, final XnfConversionTechnique xnfConfTech) {
 		mLogger = logger;
 		mBacktranslator = backtranslator;
 		mRewriteAssumes = rewriteAssumes;
 		mServices = services;
-		mStorage = storage;
 		mSimplificationTechnique = simplTech;
 		mXnfConversionTechnique = xnfConfTech;
 	}
-
+	
 	@Override
 	public boolean process(final IElement elem) throws Throwable {
-		if (!(elem instanceof RootNode)) {
+		if (!(elem instanceof BoogieIcfgContainer)) {
 			return true;
 		}
-
-		final RootNode root = (RootNode) elem;
+		
+		final BoogieIcfgContainer icfg = (BoogieIcfgContainer) elem;
 		final Deque<IcfgEdge> edges = new ArrayDeque<>();
 		final Set<IcfgEdge> closed = new HashSet<>();
 		final NormalFormTransformer<Expression> ct = new NormalFormTransformer<>(new BoogieExpressionTransformer());
 		final RcfgEdgeBuilder edgeBuilder =
-				new RcfgEdgeBuilder(root, mServices, mStorage, mSimplificationTechnique, mXnfConversionTechnique);
-
+				new RcfgEdgeBuilder(icfg, mServices, mSimplificationTechnique, mXnfConversionTechnique);
+		
 		int countDisjunctiveAssumes = 0;
 		int countNewEdges = 0;
-		edges.addAll(root.getOutgoingEdges());
-
+		edges.addAll(BoogieIcfgContainer.extractStartEdges(icfg));
+		
 		while (!edges.isEmpty()) {
 			final IcfgEdge current = edges.removeFirst();
 			if (closed.contains(current)) {
@@ -115,7 +112,7 @@ public class SmallBlockEncoder extends BaseObserver {
 			if (mLogger.isDebugEnabled()) {
 				printDebugLogCurrentEdge(current);
 			}
-
+			
 			if (current instanceof StatementSequence) {
 				final StatementSequence ss = (StatementSequence) current;
 				if (ss.getStatements().size() != 1) {
@@ -129,7 +126,7 @@ public class SmallBlockEncoder extends BaseObserver {
 					if (mRewriteAssumes) {
 						expr = ct.rewriteNotEquals(expr);
 					}
-
+					
 					if (mLogger.isDebugEnabled()) {
 						printDebugLogAssume(assume, expr);
 					}
@@ -157,19 +154,19 @@ public class SmallBlockEncoder extends BaseObserver {
 				+ " new edges with only one disjunct");
 		return false;
 	}
-
+	
 	private void printDebugLogCurrentEdge(final IcfgEdge current) {
 		mLogger.debug("Processing edge " + current.hashCode() + ":");
 		mLogger.debug("    " + current);
 	}
-
+	
 	private void printDebugLogAssume(final AssumeStatement assume, final Expression expr) {
 		mLogger.debug("    has assume " + BoogiePrettyPrinter.print(assume.getFormula()));
 		if (mRewriteAssumes) {
 			mLogger.debug("    after rewrite " + BoogiePrettyPrinter.print(expr));
 		}
 	}
-
+	
 	private void printDebugLogDisjuncts(final Collection<Expression> disjuncts) {
 		if (disjuncts.size() > 1) {
 			final StringBuilder sb = new StringBuilder();

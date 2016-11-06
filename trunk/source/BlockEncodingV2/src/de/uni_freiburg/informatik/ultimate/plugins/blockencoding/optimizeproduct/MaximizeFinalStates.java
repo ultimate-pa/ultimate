@@ -34,11 +34,9 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 
 /**
  *
@@ -46,40 +44,38 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
  *
  */
 public final class MaximizeFinalStates extends BaseBlockEncoder {
-
+	
 	private int mNewAcceptingStates;
 	private final Consumer<IcfgLocation> mFunMarkAsAccepting;
 	private final Predicate<IcfgLocation> mFunIsAccepting;
-
-	public MaximizeFinalStates(final RootNode product, final IUltimateServiceProvider services,
-			final IToolchainStorage storage, final Consumer<IcfgLocation> funMarkAsAccepting,
-			final Predicate<IcfgLocation> funIsAccepting) {
-		super(product, services, storage);
+	
+	public MaximizeFinalStates(final BoogieIcfgContainer product, final IUltimateServiceProvider services,
+			final Consumer<IcfgLocation> funMarkAsAccepting, final Predicate<IcfgLocation> funIsAccepting) {
+		super(product, services);
 		mNewAcceptingStates = 0;
 		mFunMarkAsAccepting = funMarkAsAccepting;
 		mFunIsAccepting = funIsAccepting;
 	}
-
+	
 	@Override
-	protected RootNode createResult(final RootNode root) {
-		int lastRun = processInternal(root);
+	protected BoogieIcfgContainer createResult(final BoogieIcfgContainer icfg) {
+		int lastRun = processInternal(icfg);
 		mNewAcceptingStates += lastRun;
 		while (lastRun > 0) {
-			lastRun = processInternal(root);
+			lastRun = processInternal(icfg);
 			mNewAcceptingStates += lastRun;
 		}
 		mLogger.info(mNewAcceptingStates + " new accepting states");
-		return root;
+		return icfg;
 	}
-
-	private int processInternal(final RootNode root) {
+	
+	private int processInternal(final BoogieIcfgContainer icfg) {
 		final Deque<IcfgLocation> nodes = new ArrayDeque<>();
 		final Set<IcfgLocation> closed = new HashSet<>();
 		int newAcceptingStates = 0;
-		for (final IcfgEdge edge : root.getOutgoingEdges()) {
-			nodes.add(edge.getTarget());
-		}
-
+		
+		nodes.addAll(icfg.getEntryNodes().values());
+		
 		while (!nodes.isEmpty()) {
 			final IcfgLocation current = nodes.removeFirst();
 			if (closed.contains(current)) {
@@ -91,19 +87,19 @@ public final class MaximizeFinalStates extends BaseBlockEncoder {
 				nodes.addAll(getSuccessors(current));
 				continue;
 			}
-
+			
 			final List<IcfgLocation> succs = getSuccessors(current);
 			if (succs.isEmpty()) {
 				// there are no successors
 				continue;
 			}
-
+			
 			boolean allSuccessorsAreAccepting = true;
 			for (final IcfgLocation succ : succs) {
 				allSuccessorsAreAccepting = allSuccessorsAreAccepting && mFunIsAccepting.test(succ);
 				nodes.add(succ);
 			}
-
+			
 			if (allSuccessorsAreAccepting) {
 				// all successors are accepting, make this one also accepting
 				mFunMarkAsAccepting.accept(current);
@@ -112,11 +108,11 @@ public final class MaximizeFinalStates extends BaseBlockEncoder {
 		}
 		return newAcceptingStates;
 	}
-
+	
 	public int getNewAcceptingStates() {
 		return mNewAcceptingStates;
 	}
-
+	
 	@Override
 	public boolean isGraphChanged() {
 		return mNewAcceptingStates > 0;

@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.blockencoding.optimizeproduct;
 
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 
 /**
  *
@@ -34,8 +34,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
  *
  */
 public interface IEncoder {
-
+	
 	boolean isGraphChanged();
-
-	RootNode getResult(final RootNode node);
+	
+	BoogieIcfgContainer getResult(final BoogieIcfgContainer boogieIcfgContainer);
 }

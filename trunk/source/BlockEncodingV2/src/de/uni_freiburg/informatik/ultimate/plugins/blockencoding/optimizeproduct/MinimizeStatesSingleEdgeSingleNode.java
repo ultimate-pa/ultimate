@@ -30,16 +30,15 @@ import java.util.Collection;
 import java.util.Set;
 import java.util.function.Predicate;
 
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.BlockEncodingBacktranslator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 
 /**
  * Least aggressive minimization (besides no attempt). Tries to remove states that have only one incoming and one
@@ -49,63 +48,62 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
  *
  */
 public class MinimizeStatesSingleEdgeSingleNode extends BaseMinimizeStates {
-
-	public MinimizeStatesSingleEdgeSingleNode(final RootNode product, final IUltimateServiceProvider services,
-			final IToolchainStorage storage, final SimplificationTechnique simplificationTechnique,
+	
+	public MinimizeStatesSingleEdgeSingleNode(final BoogieIcfgContainer icfg,
+			final IUltimateServiceProvider services, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique, final BlockEncodingBacktranslator backtranslator,
 			final Predicate<IcfgLocation> funIsAccepting) {
-		super(product, services, storage, backtranslator, simplificationTechnique, xnfConversionTechnique,
-				funIsAccepting);
+		super(icfg, services, backtranslator, simplificationTechnique, xnfConversionTechnique, funIsAccepting);
 	}
-
+	
 	@Override
-	protected Collection<? extends IcfgLocation> processCandidate(final RootNode root, final IcfgLocation target,
-			final Set<IcfgLocation> closed) {
-
+	protected Collection<? extends IcfgLocation> processCandidate(final BoogieIcfgContainer icfg,
+			final IcfgLocation target, final Set<IcfgLocation> closed) {
+		
 		if (target.getIncomingEdges().size() != 1 || target.getOutgoingEdges().size() != 1) {
 			return target.getOutgoingNodes();
 		}
-
+		
 		// this node has exactly one incoming and one outgoing edge,
 		// so we have the two edges
 		// e1 = (q1,st1,q2)
 		// e2 = (q2,st2,q3)
 		final IcfgEdge predEdge = target.getIncomingEdges().get(0);
 		final IcfgEdge succEdge = target.getOutgoingEdges().get(0);
-
+		
 		final BoogieIcfgLocation pred = (BoogieIcfgLocation) predEdge.getSource();
 		final BoogieIcfgLocation succ = (BoogieIcfgLocation) succEdge.getTarget();
-
+		
 		if (!isNotNecessary(target) && !isOneNecessary(pred, succ)) {
 			// the nodes do not fulfill the conditions, return
 			return target.getOutgoingNodes();
 		}
-
+		
 		if (!isCombinableEdgePair(predEdge, succEdge)) {
 			// the edges do not fulfill the conditions, return
 			return target.getOutgoingNodes();
 		}
-
+		
 		// all conditions are met so we can start with creating new edges
 		// we delete e1 and e2 and q2 and add the new edge (q1,st1;st2,q3)
-
+		
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("    will remove " + target.getDebugIdentifier());
 		}
-
+		
 		predEdge.disconnectSource();
 		predEdge.disconnectTarget();
 		succEdge.disconnectSource();
 		succEdge.disconnectTarget();
 		mRemovedEdges += 2;
-
+		
 		getEdgeBuilder().constructSequentialComposition(pred, succ, (CodeBlock) predEdge, (CodeBlock) succEdge);
-
+		
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("    removed 2, added 2 edges");
 		}
 		// we added new edges to pred, we have to recheck them now
 		return pred.getOutgoingNodes();
-
+		
 	}
 }

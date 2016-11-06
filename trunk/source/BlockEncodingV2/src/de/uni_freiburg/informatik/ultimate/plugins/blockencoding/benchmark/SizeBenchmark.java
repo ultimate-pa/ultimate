@@ -35,64 +35,70 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
 
+/**
+ * 
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ */
 public class SizeBenchmark implements ICsvProviderProvider<Integer> {
-
+	
 	private final int mEdges;
 	private final int mLocations;
 	private final String mLabel;
-
-	public SizeBenchmark(final RootNode root, final String label) {
+	
+	public SizeBenchmark(final BoogieIcfgContainer root, final String label) {
 		final Deque<IcfgEdge> edges = new ArrayDeque<>();
 		final Set<IcfgEdge> closedE = new HashSet<>();
 		final Set<IcfgLocation> closedV = new HashSet<>();
-
-		edges.addAll(root.getOutgoingEdges());
-
+		
+		edges.addAll(BoogieIcfgContainer.extractStartEdges(root));
+		edges.stream().forEach(e -> closedV.add(e.getSource()));
+		
 		while (!edges.isEmpty()) {
 			final IcfgEdge current = edges.removeFirst();
 			if (closedE.contains(current)) {
 				continue;
 			}
 			closedE.add(current);
-
+			
 			if (current.getTarget() == null) {
 				throw new AssertionError("Target may not be null");
 			}
-
+			
 			closedV.add(current.getTarget());
 			for (final IcfgEdge next : current.getTarget().getOutgoingEdges()) {
 				edges.add(next);
 			}
 		}
-
+		
 		mEdges = closedE.size();
 		mLocations = closedV.size();
 		mLabel = label;
 	}
-
+	
 	@Override
 	public ICsvProvider<Integer> createCvsProvider() {
 		final List<String> columnTitles = new ArrayList<>();
 		columnTitles.add(mLabel + " Locations");
 		columnTitles.add(mLabel + " Edges");
-
+		
 		final List<Integer> row = new ArrayList<>();
 		row.add(mLocations);
 		row.add(mEdges);
-
+		
 		final SimpleCsvProvider<Integer> rtr = new SimpleCsvProvider<>(columnTitles);
 		rtr.addRow(row);
 		return rtr;
 	}
-
+	
 	@Override
 	public String toString() {
-		return "Locations: " + mLocations + " Edges: " + mEdges;
+		return String.valueOf(mLocations) + " locations, " + String.valueOf(mEdges) + " edges";
 	}
-
+	
 }

@@ -31,14 +31,13 @@ import java.util.Collections;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence.Origin;
@@ -50,29 +49,29 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.Tr
  *
  */
 public class RcfgEdgeBuilder {
-
+	
 	private final TransFormulaAdder mTransForumlaAdder;
 	private final XnfConversionTechnique mXnfConversionTechnique;
 	private final SimplificationTechnique mSimplificationTechnique;
 	private final CodeBlockFactory mCbf;
-
-	public RcfgEdgeBuilder(final RootNode node, final IUltimateServiceProvider services,
-			final IToolchainStorage storage, final SimplificationTechnique simplificationTechnique,
+	
+	public RcfgEdgeBuilder(final BoogieIcfgContainer icfg, final IUltimateServiceProvider services,
+			final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique) {
-		mTransForumlaAdder = new TransFormulaAdder(node.getRootAnnot().getBoogie2SMT(), services);
-		mCbf = CodeBlockFactory.getFactory(storage);
+		mTransForumlaAdder = new TransFormulaAdder(icfg.getBoogie2SMT(), services);
+		mCbf = icfg.getCodeBlockFactory();
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
 	}
-
+	
 	private void addTransFormula(final StatementSequence ss) {
 		addTransFormula(ss, ss.getPrecedingProcedure());
 	}
-
+	
 	private void addTransFormula(final CodeBlock cb, final String procId) {
 		mTransForumlaAdder.addTransitionFormulas(cb, procId, mXnfConversionTechnique, mSimplificationTechnique);
 	}
-
+	
 	public SequentialComposition constructSequentialComposition(final BoogieIcfgLocation source,
 			final BoogieIcfgLocation target, final CodeBlock first, final CodeBlock second) {
 		final SequentialComposition sc = mCbf.constructSequentialComposition(source, target, false, false,
@@ -83,7 +82,7 @@ public class RcfgEdgeBuilder {
 		assert sc.getSource() != null;
 		return sc;
 	}
-
+	
 	public StatementSequence constructStatementSequence(final BoogieIcfgLocation source,
 			final BoogieIcfgLocation target, final List<Statement> statements) {
 		final StatementSequence ss = mCbf.constructStatementSequence(source, target, statements, Origin.IMPLEMENTATION);
@@ -92,7 +91,7 @@ public class RcfgEdgeBuilder {
 		assert ss.getTransitionFormula() != null;
 		return ss;
 	}
-
+	
 	public StatementSequence constructStatementSequence(final BoogieIcfgLocation source,
 			final BoogieIcfgLocation target, final Statement stmt) {
 		return constructStatementSequence(source, target, Collections.singletonList(stmt));

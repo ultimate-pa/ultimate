@@ -31,13 +31,13 @@ import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Predicate;
 
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 
 /**
  *
@@ -45,33 +45,34 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
  *
  */
 public final class RemoveSinkStates extends BaseBlockEncoder {
-
+	
 	private final Predicate<IcfgLocation> mFunHasToBePreserved;
-
-	public RemoveSinkStates(final RootNode product, final IUltimateServiceProvider services,
-			final IToolchainStorage storage, final Predicate<IcfgLocation> funHasToBePreserved) {
-		super(product, services, storage);
+	
+	public RemoveSinkStates(final BoogieIcfgContainer icfg, final IUltimateServiceProvider services,
+			final Predicate<IcfgLocation> funHasToBePreserved) {
+		super(icfg, services);
 		mFunHasToBePreserved = funHasToBePreserved;
 	}
-
+	
 	@Override
-	protected RootNode createResult(final RootNode root) {
-		final List<IcfgLocation> sinks = collectSinks(root);
+	protected BoogieIcfgContainer createResult(final BoogieIcfgContainer icfg) {
+		final List<IcfgLocation> sinks = collectSinks(icfg);
 		if (mLogger.isDebugEnabled()) {
 			mLogger.info("Collected " + sinks.size() + " initial sink states");
 		}
 		removeSinks(sinks);
-		removeDisconnectedLocations(root);
+		removeDisconnectedLocations(icfg);
 		mLogger.info(
 				"Removed " + mRemovedEdges + " edges and " + mRemovedLocations + " locations by removing sink states");
-		return root;
+		return icfg;
 	}
-
-	private List<IcfgLocation> collectSinks(final RootNode root) {
-		final ArrayList<IcfgLocation> rtr = new ArrayList<>();
-		final ArrayDeque<IcfgLocation> nodes = new ArrayDeque<>();
-		final HashSet<IcfgLocation> closed = new HashSet<>();
-		nodes.addAll(root.getOutgoingNodes());
+	
+	private List<IcfgLocation> collectSinks(final BoogieIcfgContainer icfg) {
+		final List<IcfgLocation> rtr = new ArrayList<>();
+		final Deque<IcfgLocation> nodes = new ArrayDeque<>();
+		final Set<IcfgLocation> closed = new HashSet<>();
+		
+		nodes.addAll(icfg.getEntryNodes().values());
 		while (!nodes.isEmpty()) {
 			final IcfgLocation current = nodes.removeFirst();
 			if (closed.contains(current)) {
@@ -85,26 +86,26 @@ public final class RemoveSinkStates extends BaseBlockEncoder {
 			} else {
 				nodes.addAll(current.getOutgoingNodes());
 			}
-
+			
 		}
 		return rtr;
 	}
-
+	
 	private void removeSinks(final List<IcfgLocation> sinks) {
 		final Deque<IcfgLocation> nodes = new ArrayDeque<>();
 		nodes.addAll(sinks);
 		while (!nodes.isEmpty()) {
 			final IcfgLocation current = nodes.removeFirst();
-
+			
 			if (!current.getOutgoingEdges().isEmpty() || mFunHasToBePreserved.test(current)) {
 				continue;
 			}
-
+			
 			final List<IcfgLocation> newSinkCanidates = deleteSink(current);
 			nodes.addAll(newSinkCanidates);
 		}
 	}
-
+	
 	private List<IcfgLocation> deleteSink(final IcfgLocation current) {
 		final List<IcfgEdge> incoming = new ArrayList<>(current.getIncomingEdges());
 		final List<IcfgLocation> sinkCanidates = new ArrayList<>();
@@ -116,7 +117,7 @@ public final class RemoveSinkStates extends BaseBlockEncoder {
 		}
 		return sinkCanidates;
 	}
-
+	
 	@Override
 	public boolean isGraphChanged() {
 		return mRemovedEdges > 0 || mRemovedLocations > 0;
