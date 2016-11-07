@@ -350,8 +350,6 @@ public class CommandLineController implements IController<RunDefinition> {
 			}
 			final IProgressMonitorService progressMonitor = services.getProgressMonitorService();
 			if (progressMonitor == null) {
-				mLogger.fatal(
-						"Cannot interrupt operation gracefully because progress monitor is already gone. Forcing shutdown");
 				return;
 			}
 
