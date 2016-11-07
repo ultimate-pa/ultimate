@@ -345,7 +345,10 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			
 			break;
 		case PathInvariants: {
-			final boolean useNonlinerConstraints = true;
+			final boolean useNonlinerConstraints = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
+					.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_NONLINEAR_CONSTRAINTS_IN_PATHINVARIANTS);
+			final boolean useVarsFromUnsatCore = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
+					.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_UNSAT_CORES_IN_PATHINVARIANTS);
 			final boolean dumpSmtScriptToFile = mPref.dumpSmtScriptToFile();
 			final String pathOfDumpedScript = mPref.pathOfDumpedScript();
 			final String baseNameOfDumpedScript = "InVarSynth_" + mIcfgContainer.getFilename() + "_Iteration" + mIteration;
@@ -356,7 +359,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				solverCommand = "z3 -smt2 -in SMTLIB2_COMPLIANT=true -t:42000";
 				// solverCommand = "z3 -smt2 -in SMTLIB2_COMPLIANT=true -t:1000";
 			} else {
-				solverCommand = "yices-smt2 --incremental";
+//				solverCommand = "yices-smt2 --incremental";
+				solverCommand = "z3 -smt2 -in SMTLIB2_COMPLIANT=true -t:42000";
 			}
 			final boolean fakeNonIncrementalSolver = false;
 			final Settings settings = new Settings(fakeNonIncrementalSolver, true, solverCommand, -1, null,
@@ -365,7 +369,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					new InterpolatingTraceCheckerPathInvariantsWithFallback(truePredicate, falsePredicate,
 							new TreeMap<Integer, IPredicate>(), (NestedRun<CodeBlock, IPredicate>) mCounterexample,
 							mCsToolkit, mAssertCodeBlocksIncrementally, mServices,
-							mToolchainStorage, true, predicateUnifier, useNonlinerConstraints, settings, mXnfConversionTechnique,
+							mToolchainStorage, true, predicateUnifier, useNonlinerConstraints, useVarsFromUnsatCore, settings, mXnfConversionTechnique,
 							mSimplificationTechnique, mIcfgContainer.getBoogie2SMT().getAxioms());
 		}
 			break;

@@ -102,7 +102,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	 */
 	private Map<String, LinearInequality> mMotzkinCoeffiecients2LinearInequalities;
 	
-	private static final boolean USE_UNSAT_CORES = false;
+	private final boolean mUseVarsFromUnsatCore;
 
 	
 	private final IUltimateServiceProvider services;
@@ -175,7 +175,8 @@ public final class LinearInequalityInvariantPatternProcessor
 			final ControlFlowGraph cfg, final IPredicate precondition,
 			final IPredicate postcondition,
 			final ILinearInequalityInvariantPatternStrategy strategy,
-			final boolean useNonlinearConstraints, 
+			final boolean useNonlinearConstraints,
+			final boolean useVarsFromUnsatCore,
 			final SimplificationTechnique simplicationTechnique, 
 			final XnfConversionTechnique xnfConversionTechnique) {
 		super(predicateUnifier, predicateScript);
@@ -199,6 +200,7 @@ public final class LinearInequalityInvariantPatternProcessor
 		currentRound = -1;
 		maxRounds = strategy.getMaxRounds();
 		mUseNonlinearConstraints = useNonlinearConstraints;
+		mUseVarsFromUnsatCore = useVarsFromUnsatCore;
 		mAnnotTermCounter = 0;
 		mAnnotTerm2OriginalTerm = new HashMap<>();
 		mMotzkinCoeffiecients2LinearInequalities = new HashMap<>();
@@ -801,7 +803,7 @@ public final class LinearInequalityInvariantPatternProcessor
 			final int round) {
 		logger.info( "[LIIPP] Start generating terms.");
 		
-		if (!USE_UNSAT_CORES) {
+		if (!mUseVarsFromUnsatCore) {
 			solver.assertTerm(buildImplicationTerm(precondition,
 					entryInvariantPattern));
 			solver.assertTerm(buildBackwardImplicationTerm(postcondition,
@@ -821,7 +823,7 @@ public final class LinearInequalityInvariantPatternProcessor
 		}
 		if (result != LBool.SAT) {
 			// No configuration found
-			if (result == LBool.UNSAT) {
+			if (result == LBool.UNSAT && mUseVarsFromUnsatCore) {
 				// Extract the variables from the unsatisfiable core by 
 				// first extracting the motzkin variables and then using them
 				// to get the corresponding program variables 
@@ -963,7 +965,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	private void reinitializeSolver() {
 		solver.reset();
 		solver.setOption(":produce-models", true);
-		if (USE_UNSAT_CORES) {
+		if (mUseVarsFromUnsatCore) {
 			solver.setOption(":produce-unsat-cores", true);
 		}
 		final Logics logic;

@@ -78,6 +78,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				
 				new UltimatePreferenceItem<>(LABEL_INTERPOLATED_LOCS, DEF_INTERPOLANTS,
 						PreferenceType.Combo, InterpolationTechnique.values()),
+				new UltimatePreferenceItem<>(LABEL_NONLINEAR_CONSTRAINTS_IN_PATHINVARIANTS, false, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_UNSAT_CORES_IN_PATHINVARIANTS, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_INTERPOLANTS_CONSOLIDATION, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_UNSAT_CORES, UnsatCores.CONJUNCT_LEVEL,
 						PreferenceType.Combo, UnsatCores.values()),
@@ -136,6 +138,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_HOARE_Positions = "Positions where we compute the Hoare Annotation";
 	public static final String LABEL_SEPARATE_SOLVER = "Use separate solver for trace checks";
 	public static final String LABEL_INTERPOLATED_LOCS = "Compute Interpolants along a Counterexample";
+	public static final String LABEL_NONLINEAR_CONSTRAINTS_IN_PATHINVARIANTS = "Use nonlinear constraints in PathInvariants";
+	public static final String LABEL_UNSAT_CORES_IN_PATHINVARIANTS = "Use unsat cores in PathInvariants";
 	public static final String LABEL_INTERPOLANTS_CONSOLIDATION = "Interpolants consolidation";
 	public static final String LABEL_INTERPOLANT_AUTOMATON = "Interpolant automaton";
 	public static final String LABEL_DUMPAUTOMATA = "Dump automata to files";

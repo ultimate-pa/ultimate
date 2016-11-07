@@ -59,6 +59,7 @@ public class LinearInequalityInvariantPatternProcessorFactory
 	protected final ManagedScript csToolkit;
 	protected final ILinearInequalityInvariantPatternStrategy strategy;
 	private final boolean mUseNonlinearConstraints;
+	private final boolean mUseVarsFromUnsatCore;
 	private final Settings mSolverSettings;
 	private final Collection<Term> mAxioms;
 
@@ -84,7 +85,8 @@ public class LinearInequalityInvariantPatternProcessorFactory
 			final IUltimateServiceProvider services,
 			final IToolchainStorage storage,
 			final PredicateUnifier predUnifier, final ManagedScript csToolkit,
-			final ILinearInequalityInvariantPatternStrategy strategy, final boolean useNonlinerConstraints, final Settings solverSettings, final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique, final Collection<Term> axioms) {
+			final ILinearInequalityInvariantPatternStrategy strategy, final boolean useNonlinerConstraints, final boolean useVarsFromUnsatCore,
+			final Settings solverSettings, final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique, final Collection<Term> axioms) {
 		this.services = services;
 		this.storage = storage;
 		mSimplificationTechnique = simplificationTechnique;
@@ -94,6 +96,7 @@ public class LinearInequalityInvariantPatternProcessorFactory
 		mAxioms = axioms;
 		this.strategy = strategy;
 		mUseNonlinearConstraints = useNonlinerConstraints;
+		mUseVarsFromUnsatCore = useVarsFromUnsatCore;
 		mSolverSettings = solverSettings;
 	}
 
@@ -106,7 +109,7 @@ public class LinearInequalityInvariantPatternProcessorFactory
 			final IPredicate postcondition) {
 		return new LinearInequalityInvariantPatternProcessor(services,
 				storage, predUnifier, csToolkit, mAxioms, produceSmtSolver(), cfg, precondition,
-				postcondition, strategy, mUseNonlinearConstraints, mSimplificationTechnique, mXnfConversionTechnique);
+				postcondition, strategy, mUseNonlinearConstraints, mUseVarsFromUnsatCore, mSimplificationTechnique, mXnfConversionTechnique);
 	}
 
 	/**

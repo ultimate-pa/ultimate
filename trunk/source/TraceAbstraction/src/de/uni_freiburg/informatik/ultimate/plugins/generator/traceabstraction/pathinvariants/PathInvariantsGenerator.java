@@ -77,8 +77,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	private final IPredicate[] mInterpolants;
 	private final PredicateUnifier mPredicateUnifier;
 	private final ILogger mLogger;
-	private static boolean sUseLiveVariables = false;
-	private static boolean sUseVarsFromUnsatCore = false;
+	private static boolean USE_LIVE_VARIABLES = false;
 
 	/**
 	 * Creates a default factory.
@@ -98,13 +97,13 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	 */
 	private static IInvariantPatternProcessorFactory<?> createDefaultFactory(final IUltimateServiceProvider services,
 			final IToolchainStorage storage, final PredicateUnifier predicateUnifier, final ManagedScript csToolkit,
-			final boolean useNonlinerConstraints, final Settings solverSettings,
+			final boolean useNonlinerConstraints, final boolean useVarsFromUnsatCore, final Settings solverSettings,
 			final SimplificationTechnique simplicationTechnique, final XnfConversionTechnique xnfConversionTechnique,
 			final Collection<Term> axioms) {
 		final ILinearInequalityInvariantPatternStrategy strategy =
 				new LocationIndependentLinearInequalityInvariantPatternStrategy(1, 1, 1, 1, 5);
 		return new LinearInequalityInvariantPatternProcessorFactory(services, storage, predicateUnifier, csToolkit,
-				strategy, useNonlinerConstraints, solverSettings, simplicationTechnique, xnfConversionTechnique,
+				strategy, useNonlinerConstraints, useVarsFromUnsatCore, solverSettings, simplicationTechnique, xnfConversionTechnique,
 				axioms);
 	}
 
@@ -135,12 +134,12 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	public PathInvariantsGenerator(final IUltimateServiceProvider services, final IToolchainStorage storage,
 			final NestedRun<? extends IAction, IPredicate> run, final IPredicate precondition,
 			final IPredicate postcondition, final PredicateUnifier predicateUnifier, final ManagedScript csToolkit,
-			final ModifiableGlobalVariableManager modGlobVarManager, final boolean useNonlinerConstraints,
-			final Settings solverSettings, final SimplificationTechnique simplicationTechnique,
+			final ModifiableGlobalVariableManager modGlobVarManager, final boolean useNonlinerConstraints, 
+			final boolean useVarsFromUnsatCore, final Settings solverSettings, final SimplificationTechnique simplicationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique, final Collection<Term> axioms) {
-		this(services, run, precondition, postcondition, predicateUnifier, modGlobVarManager,
-				createDefaultFactory(services, storage, predicateUnifier, csToolkit, useNonlinerConstraints,
-						solverSettings, simplicationTechnique, xnfConversionTechnique, axioms));
+		this(services, run, precondition, postcondition, predicateUnifier, useVarsFromUnsatCore, modGlobVarManager,
+				createDefaultFactory(services, storage, predicateUnifier, csToolkit, useNonlinerConstraints, 
+						useVarsFromUnsatCore, solverSettings, simplicationTechnique, xnfConversionTechnique, axioms));
 	}
 
 	/**
@@ -165,6 +164,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	public PathInvariantsGenerator(final IUltimateServiceProvider services,
 			final NestedRun<? extends IAction, IPredicate> run, final IPredicate precondition,
 			final IPredicate postcondition, final PredicateUnifier predicateUnifier,
+			final boolean useVarsFromUnsatCore,
 			final ModifiableGlobalVariableManager modGlobVarManager,
 			final IInvariantPatternProcessorFactory<?> invPatternProcFactory) {
 		super();
@@ -173,11 +173,9 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		mPostcondition = postcondition;
 		mPredicateUnifier = predicateUnifier;
 
-		final ILogger logService = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);;
 
-		mLogger = logService;
-
-		logService.info("Started with a run of length " + mRun.getLength());
+		mLogger.info("Started with a run of length " + mRun.getLength());
 
 		// Project path to CFG
 		final int len = mRun.getLength();
@@ -209,19 +207,19 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 
 		final ControlFlowGraph cfg =
 				new ControlFlowGraph(locations.get(0), locations.get(len - 1), locations, transitions);
-		logService.info("[PathInvariants] Built projected CFG, " + locations.size() + " states and "
+		mLogger.info("[PathInvariants] Built projected CFG, " + locations.size() + " states and "
 				+ transitions.size() + " transitions.");
 
 		// Generate invariants
 		final CFGInvariantsGenerator generator = new CFGInvariantsGenerator(services, modGlobVarManager);
 		final Map<ControlFlowGraph.Location, IPredicate> invariants;
 		
-		if (sUseLiveVariables) {
+		if (USE_LIVE_VARIABLES) {
 			invariants = null;
 			// TODO: Compute the live variables and use them.
 		} else {
-			invariants = generator.generateInvariantsFromCFG(cfg, precondition, postcondition, invPatternProcFactory, sUseVarsFromUnsatCore, false, null);
-			logService.info("[PathInvariants] Generated invariant map.");
+			invariants = generator.generateInvariantsFromCFG(cfg, precondition, postcondition, invPatternProcFactory, useVarsFromUnsatCore, false, null);
+			mLogger.info("[PathInvariants] Generated invariant map.");
 		}
 
 		// Populate resulting array
@@ -229,13 +227,13 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 			mInterpolants = new IPredicate[len];
 			for (int i = 0; i < len; i++) {
 				mInterpolants[i] = invariants.get(locations.get(i));
-				logService.info("[PathInvariants] Interpolant no " + i + " " + mInterpolants[i].toString());
+				mLogger.info("[PathInvariants] Interpolant no " + i + " " + mInterpolants[i].toString());
 			}
-			logService.info("[PathInvariants] Invariants found and " + "processed.");
-			logService.info("Got a Invariant map of length " + mInterpolants.length);
+			mLogger.info("[PathInvariants] Invariants found and " + "processed.");
+			mLogger.info("Got a Invariant map of length " + mInterpolants.length);
 		} else {
 			mInterpolants = null;
-			logService.info("[PathInvariants] No invariants found.");
+			mLogger.info("[PathInvariants] No invariants found.");
 		}
 	}
 

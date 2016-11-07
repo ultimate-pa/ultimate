@@ -59,6 +59,7 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends
 	private final IToolchainStorage mStorage;
 	private final NestedRun<? extends IAction, IPredicate> mNestedRun;
 	private final boolean mUseNonlinerConstraints;
+	private final boolean mUseVarsFromUnsatCore;
 	private final Settings mSolverSettings;
 	private final Collection<Term> mAxioms;
 	
@@ -71,7 +72,8 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends
 			final IToolchainStorage storage,
 			final boolean computeRcfgProgramExecution,
 			final PredicateUnifier predicateUnifier,
-			final boolean useNonlinerConstraints, 
+			final boolean useNonlinerConstraints,
+			final boolean useVarsFromUnsatCore,
 			final Settings solverSettings, final XnfConversionTechnique xnfConversionTechnique,
 			final SimplificationTechnique simplificationTechnique, final Collection<Term> axioms) {
 		super(precondition, postcondition, pendingContexts, run.getWord(), csToolkit,
@@ -80,6 +82,7 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends
 		mStorage = storage;
 		mNestedRun = run;
 		mUseNonlinerConstraints = useNonlinerConstraints;
+		mUseVarsFromUnsatCore = useVarsFromUnsatCore;
 		mSolverSettings = solverSettings;
 		mAxioms = axioms;
 		if (super.isCorrect() == LBool.UNSAT) {
@@ -95,7 +98,7 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends
 		final PathInvariantsGenerator pathInvariantsGenerator = new PathInvariantsGenerator(
 				super.mServices, mStorage, mNestedRun, super.getPrecondition(), 
 				super.getPostcondition(), mPredicateUnifier, super.mCfgManagedScript,
-				mCsToolkit.getModifiableGlobals(), mUseNonlinerConstraints, mSolverSettings, mSimplificationTechnique, mXnfConversionTechnique, mAxioms);
+				mCsToolkit.getModifiableGlobals(), mUseNonlinerConstraints, mUseVarsFromUnsatCore, mSolverSettings, mSimplificationTechnique, mXnfConversionTechnique, mAxioms);
 		IPredicate[] interpolants = pathInvariantsGenerator.getInterpolants();
 		if (interpolants == null) {
 			interpolants = fallbackInterpolantComputation();
