@@ -3,7 +3,7 @@
 <benchmark tool="ultimateautomizer"
            timelimit="60"
            hardtimelimit="75"
-           memlimit="8000"
+           memlimit="8GB"
            cpuCores="4">
 
   <rundefinition name="Test">
@@ -17,8 +17,6 @@
     <propertyfile>${inputfile_path}/ALL.prp</propertyfile>
 	<option name="32bit"></option>
 	<option name="precise"></option>
-	<option name="--full-output"></option>
-
   </tasks>
 
   <tasks name="Memsafety DerefFreeMemtrack">
@@ -31,8 +29,6 @@
     <propertyfile>${inputfile_path}/ALL.prp</propertyfile>
 	<option name="32bit"></option>
 	<option name="precise"></option>
-	<option name="--full-output"></option>
-
   </tasks>
 
   <tasks name="Overflow">
@@ -41,8 +37,6 @@
     <propertyfile>${inputfile_path}/ALL.prp</propertyfile>
 	<option name="64bit"></option>
 	<option name="precise"></option>
-
-	<option name="--full-output"></option>
   </tasks>
   
   <tasks name="CFI">
@@ -55,8 +49,6 @@
     <propertyfile>${inputfile_path}/ALL.prp</propertyfile>
 	<option name="32bit"></option>
 	<option name="precise"></option>
-
-	<option name="--full-output"></option>
   </tasks>
 
   <tasks name="Bitvectors">
@@ -76,8 +68,6 @@
 	<propertyfile>${inputfile_path}/ALL.prp</propertyfile>
 	<option name="32bit"></option>
 	<option name="precise"></option>
-	<option name="--full-output"></option>
-
   </tasks>
 
   <tasks name="Recursive">
@@ -86,8 +76,6 @@
     <propertyfile>${inputfile_path}/ALL.prp</propertyfile>
 	<option name="32bit"></option>
 	<option name="precise"></option>
-	<option name="--full-output"></option>
-
   </tasks>
 
   <tasks name="Termination">
@@ -113,8 +101,6 @@
     <propertyfile>${inputfile_path}/ALL.prp</propertyfile>
 	<option name="64bit"></option>
 	<option name="precise"></option>
-	<option name="--full-output"></option>
-
   </tasks>
 <columns>
   <column title="WitnessExtracted">Number of extracted candidates</column>    

@@ -18,8 +18,6 @@
     <propertyfile>${inputfile_path}/ALL.prp</propertyfile>
 	<option name="32bit"></option>
 	<option name="precise"></option>
-
-	<option name="--full-output"></option>
   </tasks>
 
 </benchmark>

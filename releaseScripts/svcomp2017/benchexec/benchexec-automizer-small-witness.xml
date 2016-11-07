@@ -3,7 +3,7 @@
 <benchmark tool="ultimateautomizer"
            timelimit="60"
            hardtimelimit="75"
-           memlimit="8000"
+           memlimit="8GB"
            cpuCores="4">
 
   <rundefinition name="Test">
@@ -20,7 +20,6 @@
     <propertyfile>${inputfile_path}/ALL.prp</propertyfile>
 	<option name="32bit"></option>
 	<option name="precise"></option>
-	<option name="--full-output"></option>
   </tasks>
 
 <columns>
