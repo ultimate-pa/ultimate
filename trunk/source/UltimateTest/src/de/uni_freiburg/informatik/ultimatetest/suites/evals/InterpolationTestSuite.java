@@ -111,151 +111,151 @@ public abstract class InterpolationTestSuite extends AbstractEvalTestSuite {
 	// @formatter:off
 	public static List<Pair<String, String>> getReachIntegerImpulse() {
 		final List<Pair<String, String>> rtr = new ArrayList<Pair<String, String>>();
-		rtr.add(new Pair<>("KojakC.xml", "kojak/interpolation/Reach-32bit-iZ3-NestedInterpolation-Integer-Impulse.epf"));
-		rtr.add(new Pair<>("KojakC.xml", "kojak/interpolation/Reach-32bit-Princess-TreeInterpolation-Integer-Impulse.epf"));
-		rtr.add(new Pair<>("KojakC.xml", "kojak/interpolation/Reach-32bit-SMTInterpol-TreeInterpolation-Integer-Impulse.epf"));
-		rtr.add(new Pair<>("KojakC.xml", "kojak/interpolation/Reach-32bit-Z3-BP-Integer-Impulse.epf"));
-		rtr.add(new Pair<>("KojakC.xml", "kojak/interpolation/Reach-32bit-Z3-BP-LV-Integer-Impulse.epf"));
-		rtr.add(new Pair<>("KojakC.xml", "kojak/interpolation/Reach-32bit-Z3-BP-UC-Integer-Impulse.epf"));
-		rtr.add(new Pair<>("KojakC.xml", "kojak/interpolation/Reach-32bit-Z3-BP-UC-LV-Integer-Impulse.epf"));
-		rtr.add(new Pair<>("KojakC.xml", "kojak/interpolation/Reach-32bit-Z3-FP-Integer-Impulse.epf"));
-		rtr.add(new Pair<>("KojakC.xml", "kojak/interpolation/Reach-32bit-Z3-FP-LV-Integer-Impulse.epf"));
-		rtr.add(new Pair<>("KojakC.xml", "kojak/interpolation/Reach-32bit-Z3-FP-UC-Integer-Impulse.epf"));
-		rtr.add(new Pair<>("KojakC.xml", "kojak/interpolation/Reach-32bit-Z3-FP-UC-LV-Integer-Impulse.epf"));
+		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/Reach-32bit-iZ3-NestedInterpolation-Integer-Impulse.epf"));
+		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/Reach-32bit-Princess-TreeInterpolation-Integer-Impulse.epf"));
+		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/Reach-32bit-SMTInterpol-TreeInterpolation-Integer-Impulse.epf"));
+		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/Reach-32bit-Z3-BP-Integer-Impulse.epf"));
+		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/Reach-32bit-Z3-BP-LV-Integer-Impulse.epf"));
+		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/Reach-32bit-Z3-BP-UC-Integer-Impulse.epf"));
+		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/Reach-32bit-Z3-BP-UC-LV-Integer-Impulse.epf"));
+		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/Reach-32bit-Z3-FP-Integer-Impulse.epf"));
+		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/Reach-32bit-Z3-FP-LV-Integer-Impulse.epf"));
+		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/Reach-32bit-Z3-FP-UC-Integer-Impulse.epf"));
+		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/Reach-32bit-Z3-FP-UC-LV-Integer-Impulse.epf"));
 		return rtr;
 	}
 	
 	public static List<Pair<String, String>> getReachBitvectorImpulse() {
 		final List<Pair<String, String>> rtr = new ArrayList<Pair<String, String>>();
-		rtr.add(new Pair<>("KojakC.xml", "kojak/interpolation/bitvector/Reach-32bit-iZ3-NestedInterpolation-Bitvector-Impulse.epf"));
-		rtr.add(new Pair<>("KojakC.xml", "kojak/interpolation/bitvector/Reach-32bit-Z3-BP-UC-LV-Bitvector-Impulse.epf"));
-		rtr.add(new Pair<>("KojakC.xml", "kojak/interpolation/bitvector/Reach-32bit-Z3-FP-UC-LV-Bitvector-Impulse.epf"));
+		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/bitvector/Reach-32bit-iZ3-NestedInterpolation-Bitvector-Impulse.epf"));
+		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/bitvector/Reach-32bit-Z3-BP-UC-LV-Bitvector-Impulse.epf"));
+		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/bitvector/Reach-32bit-Z3-FP-UC-LV-Bitvector-Impulse.epf"));
 		return rtr;
 	}
 	
 	public static List<Pair<String, String>> getMemsafetyImpulse() {
 		final List<Pair<String, String>> rtr = new ArrayList<Pair<String, String>>();
-		rtr.add(new Pair<>("KojakC.xml", "kojak/interpolation/memsafety/DerefFreeMemtrack-32bit-iZ3-NestedInterpolation-Integer-Impulse.epf"));
-		rtr.add(new Pair<>("KojakC.xml", "kojak/interpolation/memsafety/DerefFreeMemtrack-32bit-Princess-TreeInterpolation-Integer-Impulse.epf"));
-		rtr.add(new Pair<>("KojakC.xml", "kojak/interpolation/memsafety/DerefFreeMemtrack-32bit-SMTInterpol-TreeInterpolation-Integer-Impulse.epf"));
-		rtr.add(new Pair<>("KojakC.xml", "kojak/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-BP-Integer-Impulse.epf"));
-		rtr.add(new Pair<>("KojakC.xml", "kojak/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-BP-LV-Integer-Impulse.epf"));
-		rtr.add(new Pair<>("KojakC.xml", "kojak/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-BP-UC-Integer-Impulse.epf"));
-		rtr.add(new Pair<>("KojakC.xml", "kojak/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-BP-UC-LV-Integer-Impulse.epf"));
-		rtr.add(new Pair<>("KojakC.xml", "kojak/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-FP-Integer-Impulse.epf"));
-		rtr.add(new Pair<>("KojakC.xml", "kojak/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-FP-LV-Integer-Impulse.epf"));
-		rtr.add(new Pair<>("KojakC.xml", "kojak/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-FP-UC-Integer-Impulse.epf"));
-		rtr.add(new Pair<>("KojakC.xml", "kojak/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-FP-UC-LV-Integer-Impulse.epf"));
+		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/memsafety/DerefFreeMemtrack-32bit-iZ3-NestedInterpolation-Integer-Impulse.epf"));
+		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/memsafety/DerefFreeMemtrack-32bit-Princess-TreeInterpolation-Integer-Impulse.epf"));
+		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/memsafety/DerefFreeMemtrack-32bit-SMTInterpol-TreeInterpolation-Integer-Impulse.epf"));
+		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-BP-Integer-Impulse.epf"));
+		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-BP-LV-Integer-Impulse.epf"));
+		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-BP-UC-Integer-Impulse.epf"));
+		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-BP-UC-LV-Integer-Impulse.epf"));
+		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-FP-Integer-Impulse.epf"));
+		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-FP-LV-Integer-Impulse.epf"));
+		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-FP-UC-Integer-Impulse.epf"));
+		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-FP-UC-LV-Integer-Impulse.epf"));
 		return rtr;
 	}
 	
 	public static List<Pair<String, String>> getReachIntegerKojak() {
 		final List<Pair<String, String>> rtr = new ArrayList<Pair<String, String>>();
-		rtr.add(new Pair<>("KojakC.xml", "kojak/interpolation/Reach-32bit-iZ3-NestedInterpolation-Integer.epf"));
-		rtr.add(new Pair<>("KojakC.xml", "kojak/interpolation/Reach-32bit-Princess-TreeInterpolation-Integer.epf"));
-		rtr.add(new Pair<>("KojakC.xml", "kojak/interpolation/Reach-32bit-SMTInterpol-TreeInterpolation-Integer.epf"));
-		rtr.add(new Pair<>("KojakC.xml", "kojak/interpolation/Reach-32bit-Z3-BP-Integer.epf"));
-		rtr.add(new Pair<>("KojakC.xml", "kojak/interpolation/Reach-32bit-Z3-BP-LV-Integer.epf"));
-		rtr.add(new Pair<>("KojakC.xml", "kojak/interpolation/Reach-32bit-Z3-BP-UC-Integer.epf"));
-		rtr.add(new Pair<>("KojakC.xml", "kojak/interpolation/Reach-32bit-Z3-BP-UC-LV-Integer.epf"));
-		rtr.add(new Pair<>("KojakC.xml", "kojak/interpolation/Reach-32bit-Z3-FP-Integer.epf"));
-		rtr.add(new Pair<>("KojakC.xml", "kojak/interpolation/Reach-32bit-Z3-FP-LV-Integer.epf"));
-		rtr.add(new Pair<>("KojakC.xml", "kojak/interpolation/Reach-32bit-Z3-FP-UC-Integer.epf"));
-		rtr.add(new Pair<>("KojakC.xml", "kojak/interpolation/Reach-32bit-Z3-FP-UC-LV-Integer.epf"));
+		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/Reach-32bit-iZ3-NestedInterpolation-Integer.epf"));
+		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/Reach-32bit-Princess-TreeInterpolation-Integer.epf"));
+		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/Reach-32bit-SMTInterpol-TreeInterpolation-Integer.epf"));
+		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/Reach-32bit-Z3-BP-Integer.epf"));
+		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/Reach-32bit-Z3-BP-LV-Integer.epf"));
+		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/Reach-32bit-Z3-BP-UC-Integer.epf"));
+		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/Reach-32bit-Z3-BP-UC-LV-Integer.epf"));
+		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/Reach-32bit-Z3-FP-Integer.epf"));
+		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/Reach-32bit-Z3-FP-LV-Integer.epf"));
+		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/Reach-32bit-Z3-FP-UC-Integer.epf"));
+		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/Reach-32bit-Z3-FP-UC-LV-Integer.epf"));
 		return rtr;
 	}
 	
 	public static List<Pair<String, String>> getReachBitvectorKojak() {
 		final List<Pair<String, String>> rtr = new ArrayList<Pair<String, String>>();
-		rtr.add(new Pair<>("KojakC.xml", "kojak/interpolation/bitvector/Reach-32bit-iZ3-NestedInterpolation-Bitvector.epf"));
-		rtr.add(new Pair<>("KojakC.xml", "kojak/interpolation/bitvector/Reach-32bit-Z3-BP-UC-LV-Bitvector.epf"));
-		rtr.add(new Pair<>("KojakC.xml", "kojak/interpolation/bitvector/Reach-32bit-Z3-FP-UC-LV-Bitvector.epf"));
+		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/bitvector/Reach-32bit-iZ3-NestedInterpolation-Bitvector.epf"));
+		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/bitvector/Reach-32bit-Z3-BP-UC-LV-Bitvector.epf"));
+		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/bitvector/Reach-32bit-Z3-FP-UC-LV-Bitvector.epf"));
 		return rtr;
 	}
 	
 	public static List<Pair<String, String>> getMemsafetyKojak() {
 		final List<Pair<String, String>> rtr = new ArrayList<Pair<String, String>>();
-		rtr.add(new Pair<>("KojakC.xml", "kojak/interpolation/memsafety/DerefFreeMemtrack-32bit-iZ3-NestedInterpolation-Integer.epf"));
-		rtr.add(new Pair<>("KojakC.xml", "kojak/interpolation/memsafety/DerefFreeMemtrack-32bit-Princess-TreeInterpolation-Integer.epf"));
-		rtr.add(new Pair<>("KojakC.xml", "kojak/interpolation/memsafety/DerefFreeMemtrack-32bit-SMTInterpol-TreeInterpolation-Integer.epf"));
-		rtr.add(new Pair<>("KojakC.xml", "kojak/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-BP-Integer.epf"));
-		rtr.add(new Pair<>("KojakC.xml", "kojak/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-BP-LV-Integer.epf"));
-		rtr.add(new Pair<>("KojakC.xml", "kojak/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-BP-UC-Integer.epf"));
-		rtr.add(new Pair<>("KojakC.xml", "kojak/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-BP-UC-LV-Integer.epf"));
-		rtr.add(new Pair<>("KojakC.xml", "kojak/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-FP-Integer.epf"));
-		rtr.add(new Pair<>("KojakC.xml", "kojak/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-FP-LV-Integer.epf"));
-		rtr.add(new Pair<>("KojakC.xml", "kojak/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-FP-UC-Integer.epf"));
-		rtr.add(new Pair<>("KojakC.xml", "kojak/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-FP-UC-LV-Integer.epf"));
+		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/memsafety/DerefFreeMemtrack-32bit-iZ3-NestedInterpolation-Integer.epf"));
+		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/memsafety/DerefFreeMemtrack-32bit-Princess-TreeInterpolation-Integer.epf"));
+		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/memsafety/DerefFreeMemtrack-32bit-SMTInterpol-TreeInterpolation-Integer.epf"));
+		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-BP-Integer.epf"));
+		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-BP-LV-Integer.epf"));
+		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-BP-UC-Integer.epf"));
+		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-BP-UC-LV-Integer.epf"));
+		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-FP-Integer.epf"));
+		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-FP-LV-Integer.epf"));
+		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-FP-UC-Integer.epf"));
+		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-FP-UC-LV-Integer.epf"));
 		return rtr;
 	}
 	
 	public static List<Pair<String, String>> getReachIntegerAutomizer() {
 		final List<Pair<String, String>> rtr = new ArrayList<Pair<String, String>>();
-		rtr.add(new Pair<>("AutomizerC.xml", "automizer/interpolation/Reach-32bit-CVC4-IcSpLv.epf"));
-		rtr.add(new Pair<>("AutomizerC.xml", "automizer/interpolation/Reach-32bit-MathSAT-IcSpLv.epf"));
-		rtr.add(new Pair<>("AutomizerC.xml", "automizer/interpolation/Reach-32bit-Princess-TreeInterpolation.epf"));
-		rtr.add(new Pair<>("AutomizerC.xml", "automizer/interpolation/Reach-32bit-SMTInterpol-FPandBP-cannibalize.epf"));
-		rtr.add(new Pair<>("AutomizerC.xml", "automizer/interpolation/Reach-32bit-SMTInterpol-FPandBP.epf"));
-		rtr.add(new Pair<>("AutomizerC.xml", "automizer/interpolation/Reach-32bit-SMTInterpol-IcSpLv.epf"));
-		rtr.add(new Pair<>("AutomizerC.xml", "automizer/interpolation/Reach-32bit-SMTInterpol-TreeInterpolation.epf"));
-		rtr.add(new Pair<>("AutomizerC.xml", "automizer/interpolation/Reach-32bit-Z3-FPandBP.epf"));
-		rtr.add(new Pair<>("AutomizerC.xml", "automizer/interpolation/Reach-32bit-Z3-IcSp.epf"));
-		rtr.add(new Pair<>("AutomizerC.xml", "automizer/interpolation/Reach-32bit-Z3-IcSpLv.epf"));
-		rtr.add(new Pair<>("AutomizerC.xml", "automizer/interpolation/Reach-32bit-Z3-IcWp.epf"));
-		rtr.add(new Pair<>("AutomizerC.xml", "automizer/interpolation/Reach-32bit-Z3-IcWpLv.epf"));
-		rtr.add(new Pair<>("AutomizerC.xml", "automizer/interpolation/Reach-32bit-Z3-NestedInterpolation.epf"));
-		rtr.add(new Pair<>("AutomizerC.xml", "automizer/interpolation/Reach-32bit-Z3-Sp.epf"));
-		rtr.add(new Pair<>("AutomizerC.xml", "automizer/interpolation/Reach-32bit-Z3-SpLv.epf"));
-		rtr.add(new Pair<>("AutomizerC.xml", "automizer/interpolation/Reach-32bit-Z3-Wp.epf"));
-		rtr.add(new Pair<>("AutomizerC.xml", "automizer/interpolation/Reach-32bit-Z3-WpLv.epf"));
+		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/Reach-32bit-CVC4-IcSpLv.epf"));
+		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/Reach-32bit-MathSAT-IcSpLv.epf"));
+		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/Reach-32bit-Princess-TreeInterpolation.epf"));
+		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/Reach-32bit-SMTInterpol-FPandBP-cannibalize.epf"));
+		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/Reach-32bit-SMTInterpol-FPandBP.epf"));
+		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/Reach-32bit-SMTInterpol-IcSpLv.epf"));
+		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/Reach-32bit-SMTInterpol-TreeInterpolation.epf"));
+		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/Reach-32bit-Z3-FPandBP.epf"));
+		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/Reach-32bit-Z3-IcSp.epf"));
+		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/Reach-32bit-Z3-IcSpLv.epf"));
+		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/Reach-32bit-Z3-IcWp.epf"));
+		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/Reach-32bit-Z3-IcWpLv.epf"));
+		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/Reach-32bit-Z3-NestedInterpolation.epf"));
+		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/Reach-32bit-Z3-Sp.epf"));
+		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/Reach-32bit-Z3-SpLv.epf"));
+		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/Reach-32bit-Z3-Wp.epf"));
+		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/Reach-32bit-Z3-WpLv.epf"));
 
 		return rtr;
 	}
 	
 	public static List<Pair<String, String>> getReachBitvectorAutomizer() {
 		final List<Pair<String, String>> rtr = new ArrayList<Pair<String, String>>();
-		rtr.add(new Pair<>("AutomizerC.xml", "automizer/interpolation/bitvector/Reach-32bit-CVC4-FPandBP-Bitvector.epf"));
-		rtr.add(new Pair<>("AutomizerC.xml", "automizer/interpolation/bitvector/Reach-32bit-CVC4-IcSpLv-Bitvector.epf"));
-		rtr.add(new Pair<>("AutomizerC.xml", "automizer/interpolation/bitvector/Reach-32bit-CVC4-IcWpLv-Bitvector.epf"));
-		rtr.add(new Pair<>("AutomizerC.xml", "automizer/interpolation/bitvector/Reach-32bit-MathSAT-IcSpLv-Bitvector.epf"));
-		rtr.add(new Pair<>("AutomizerC.xml", "automizer/interpolation/bitvector/Reach-32bit-Z3-FPandBP-Bitvector.epf"));
-		rtr.add(new Pair<>("AutomizerC.xml", "automizer/interpolation/bitvector/Reach-32bit-Z3-IcSp-Bitvector.epf"));
-		rtr.add(new Pair<>("AutomizerC.xml", "automizer/interpolation/bitvector/Reach-32bit-Z3-IcSpLv-Bitvector.epf"));
-		rtr.add(new Pair<>("AutomizerC.xml", "automizer/interpolation/bitvector/Reach-32bit-Z3-IcWp-Bitvector.epf"));
-		rtr.add(new Pair<>("AutomizerC.xml", "automizer/interpolation/bitvector/Reach-32bit-Z3-IcWpLv-Bitvector.epf"));
-		rtr.add(new Pair<>("AutomizerC.xml", "automizer/interpolation/bitvector/Reach-32bit-Z3-NestedInterpolation-Bitvector.epf"));
-		rtr.add(new Pair<>("AutomizerC.xml", "automizer/interpolation/bitvector/Reach-32bit-Z3-Sp-Bitvector.epf"));
-		rtr.add(new Pair<>("AutomizerC.xml", "automizer/interpolation/bitvector/Reach-32bit-Z3-SpLv-Bitvector.epf"));
-		rtr.add(new Pair<>("AutomizerC.xml", "automizer/interpolation/bitvector/Reach-32bit-Z3-Wp-Bitvector.epf"));
-		rtr.add(new Pair<>("AutomizerC.xml", "automizer/interpolation/bitvector/Reach-32bit-Z3-WpLv-Bitvector.epf"));
+		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/bitvector/Reach-32bit-CVC4-FPandBP-Bitvector.epf"));
+		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/bitvector/Reach-32bit-CVC4-IcSpLv-Bitvector.epf"));
+		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/bitvector/Reach-32bit-CVC4-IcWpLv-Bitvector.epf"));
+		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/bitvector/Reach-32bit-MathSAT-IcSpLv-Bitvector.epf"));
+		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/bitvector/Reach-32bit-Z3-FPandBP-Bitvector.epf"));
+		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/bitvector/Reach-32bit-Z3-IcSp-Bitvector.epf"));
+		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/bitvector/Reach-32bit-Z3-IcSpLv-Bitvector.epf"));
+		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/bitvector/Reach-32bit-Z3-IcWp-Bitvector.epf"));
+		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/bitvector/Reach-32bit-Z3-IcWpLv-Bitvector.epf"));
+		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/bitvector/Reach-32bit-Z3-NestedInterpolation-Bitvector.epf"));
+		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/bitvector/Reach-32bit-Z3-Sp-Bitvector.epf"));
+		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/bitvector/Reach-32bit-Z3-SpLv-Bitvector.epf"));
+		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/bitvector/Reach-32bit-Z3-Wp-Bitvector.epf"));
+		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/bitvector/Reach-32bit-Z3-WpLv-Bitvector.epf"));
 		return rtr;
 	}
 	
 	public static List<Pair<String, String>> getReachFloatAutomizer() {
 		final List<Pair<String, String>> rtr = new ArrayList<Pair<String, String>>();
-		rtr.add(new Pair<>("AutomizerC.xml", "automizer/interpolation/float/Reach-32bit-MathSAT-IcSpLv-Float.epf"));
-		rtr.add(new Pair<>("AutomizerC.xml", "automizer/interpolation/float/Reach-32bit-MathSAT-IcWpLv-Float.epf"));
-		rtr.add(new Pair<>("AutomizerC.xml", "automizer/interpolation/float/Reach-32bit-Z3-IcSpLv-Float.epf"));
-		rtr.add(new Pair<>("AutomizerC.xml", "automizer/interpolation/float/Reach-32bit-Z3-IcWpLv-Float.epf"));
+		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/float/Reach-32bit-MathSAT-IcSpLv-Float.epf"));
+		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/float/Reach-32bit-MathSAT-IcWpLv-Float.epf"));
+		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/float/Reach-32bit-Z3-IcSpLv-Float.epf"));
+		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/float/Reach-32bit-Z3-IcWpLv-Float.epf"));
 		return rtr;
 	}
 	
 	public static List<Pair<String, String>> getMemsafetyAutomizer() {
 		final List<Pair<String, String>> rtr = new ArrayList<Pair<String, String>>();
-		rtr.add(new Pair<>("AutomizerC.xml", "automizer/interpolation/memsafety/DerefFreeMemtrack-32bit-Princess-TreeInterpolation-Integer.epf"));
-		rtr.add(new Pair<>("AutomizerC.xml", "automizer/interpolation/memsafety/DerefFreeMemtrack-32bit-SMTInterpol-TreeInterpolation-Integer.epf"));
-		rtr.add(new Pair<>("AutomizerC.xml", "automizer/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-NestedInterpolation-Integer.epf"));
-		rtr.add(new Pair<>("AutomizerC.xml", "automizer/interpolation/memsafety/DerefFreeMemtrack-32bit-SMTInterpol-FPandBP-Integer.epf"));
-		rtr.add(new Pair<>("AutomizerC.xml", "automizer/interpolation/memsafety/DerefFreeMemtrack-32bit-CVC4-IcWpLv-Integer.epf"));
-		rtr.add(new Pair<>("AutomizerC.xml", "automizer/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-FPandBP-Integer.epf"));
-		rtr.add(new Pair<>("AutomizerC.xml", "automizer/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-IcSp-Integer.epf"));
-		rtr.add(new Pair<>("AutomizerC.xml", "automizer/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-IcSpLv-Integer.epf"));
-		rtr.add(new Pair<>("AutomizerC.xml", "automizer/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-IcWp-Integer.epf"));
-		rtr.add(new Pair<>("AutomizerC.xml", "automizer/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-IcWpLv-Integer.epf"));
-		rtr.add(new Pair<>("AutomizerC.xml", "automizer/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-Sp-Integer.epf"));
-		rtr.add(new Pair<>("AutomizerC.xml", "automizer/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-SpLv-Integer.epf"));
-		rtr.add(new Pair<>("AutomizerC.xml", "automizer/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-Wp-Integer.epf"));
-		rtr.add(new Pair<>("AutomizerC.xml", "automizer/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-WpLv-Integer.epf"));
+		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/memsafety/DerefFreeMemtrack-32bit-Princess-TreeInterpolation-Integer.epf"));
+		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/memsafety/DerefFreeMemtrack-32bit-SMTInterpol-TreeInterpolation-Integer.epf"));
+		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-NestedInterpolation-Integer.epf"));
+		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/memsafety/DerefFreeMemtrack-32bit-SMTInterpol-FPandBP-Integer.epf"));
+		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/memsafety/DerefFreeMemtrack-32bit-CVC4-IcWpLv-Integer.epf"));
+		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-FPandBP-Integer.epf"));
+		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-IcSp-Integer.epf"));
+		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-IcSpLv-Integer.epf"));
+		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-IcWp-Integer.epf"));
+		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-IcWpLv-Integer.epf"));
+		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-Sp-Integer.epf"));
+		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-SpLv-Integer.epf"));
+		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-Wp-Integer.epf"));
+		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-WpLv-Integer.epf"));
 		return rtr;
 	}
 	
