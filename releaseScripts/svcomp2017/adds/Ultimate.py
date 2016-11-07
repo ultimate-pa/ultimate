@@ -70,7 +70,14 @@ def searchCurrentDir(searchstring):
 
 
 def containsOverapproximationResult(line):
-    triggers = ['Reason: overapproximation of bitwiseAnd', 'Reason: overapproximation of bitwiseOr', 'Reason: overapproximation of bitwiseXor', 'Reason: overapproximation of shiftLeft', 'Reason: overapproximation of shiftRight', 'Reason: overapproximation of bitwiseComplement']
+    triggers = [
+                'Reason: overapproximation of bitwiseAnd', 
+                'Reason: overapproximation of bitwiseOr', 
+                'Reason: overapproximation of bitwiseXor', 
+                'Reason: overapproximation of shiftLeft', 
+                'Reason: overapproximation of shiftRight', 
+                'Reason: overapproximation of bitwiseComplement'
+                ]
     
     for trigger in triggers:
         if line.find(trigger) != -1:
@@ -91,6 +98,7 @@ def runUltimate(ultimateCall, terminationMode):
     
     safetyResult = 'UNKNOWN'
     memResult = 'NONE'
+    overflow = False
     readingErrorPath = False
     overapprox = False
     
@@ -112,7 +120,7 @@ def runUltimate(ultimateCall, terminationMode):
         elif (line.find(typeErrorString) != -1):
             safetyResult = 'ERROR: TYPE ERROR'
         elif (line.find(exceptionErrorString) != -1):
-            safetyResult = 'ERROR: ' + line            
+            safetyResult = 'ERROR: ' + line[line.find(exceptionErrorString):]           
         if (not overapprox and containsOverapproximationResult(line)):
             overapprox = True
         if (terminationMode):
@@ -137,7 +145,8 @@ def runUltimate(ultimateCall, terminationMode):
             if (line.find(memMemtrackFalseString) != -1):
                 memResult = 'valid-memtrack'
             if(line.find(overflowFalseString) != -1):
-                safetyResult = 'FALSE(OVERFLOW)'
+                overflow = True
+                safetyResult = 'FALSE'
             if (line.find(errorPathBeginString) != -1):
                 readingErrorPath = True
             if (readingErrorPath and line.strip() == ''):
@@ -151,7 +160,7 @@ def runUltimate(ultimateCall, terminationMode):
                 print('\nExecution finished with exit code ' + str(ultimateProcess.returncode)) 
             break
     
-    return safetyResult, memResult, overapprox, ultimateOutput, errorPath
+    return safetyResult, memResult, overflow, overapprox, ultimateOutput, errorPath
 
 
 def createUltimateCall(call, arguments):
@@ -315,14 +324,14 @@ def main():
  
 
     # actually run Ultimate 
-    safetyResult, memResult, overaprox, ultimateOutput, errorPath = runUltimate(ultimateCall, terminationMode)
+    safetyResult, memResult, overflow, overapprox, ultimateOutput, errorPath = runUltimate(ultimateCall, terminationMode)
     
-    if(overaprox):
+    if(overapprox):
         # we did fail because we had to overaproximate. Lets rerun with bit-precision 
         print('Retrying with bit-precise analysis')
         settingsArgument = getSettingsFile(True, settingsSearchString)
         ultimateCall = createUltimateCall(ultimateBin, ['-tc',toolchain, '-i', cFile, '-s', settingsArgument])
-        safetyResult, memResult, overaprox, ultimate2Output, errorPath = runUltimate(ultimateCall, terminationMode)
+        safetyResult, memResult, overflow, overapprox, ultimate2Output, errorPath = runUltimate(ultimateCall, terminationMode)
         ultimateOutput = ultimateOutput + '\n### Bit-precise run ###\n' + ultimate2Output
     
     # summarize results
@@ -336,8 +345,13 @@ def main():
         errOutputFile = open(errorPathFileName, 'wb')
         errOutputFile.write(errorPath.encode('utf-8'))
     
-    if memDeref and safetyResult.startswith('FALSE'):
-        result = 'FALSE({})'.format(memResult)
+    if safetyResult.startswith('FALSE'):
+        if memDeref:
+            result = 'FALSE({})'.format(memResult)
+        elif overflow: 
+            result = 'FALSE(OVERFLOW)'
+        else: 
+            result = safetyResult
     else:
         result = safetyResult
         
