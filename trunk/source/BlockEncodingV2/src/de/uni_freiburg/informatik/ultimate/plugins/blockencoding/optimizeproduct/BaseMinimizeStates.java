@@ -202,6 +202,8 @@ public abstract class BaseMinimizeStates extends BaseBlockEncoder {
 	
 	private void checkForTimeoutOrCancellation() {
 		if (!mServices.getProgressMonitorService().continueProcessing()) {
+			mLogger.info("Stopping block encoding due to timeout after removing " + mRemovedEdges + " edges and "
+					+ mRemovedLocations + " locations (locations are removed at the end)");
 			throw new ToolchainCanceledException(getClass());
 		}
 	}
