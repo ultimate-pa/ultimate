@@ -148,7 +148,7 @@ def runUltimate(ultimateCall, terminationMode):
             if (ultimateProcess.returncode == 0):
                 print('\nExecution finished normally')
             else: 
-                print('\nExecution finished with exitcode ' + str(ultimateProcess.returncode)) 
+                print('\nExecution finished with exit code ' + str(ultimateProcess.returncode)) 
             break
     
     return safetyResult, memResult, overapprox, ultimateOutput, errorPath
