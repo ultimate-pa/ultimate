@@ -346,8 +346,6 @@ public class CommandLineController implements IController<RunDefinition> {
 			mLogger.warn("Received shutdown request...");
 			final IUltimateServiceProvider services = mCurrentToolchain.getServices();
 			if (services == null) {
-				mLogger.fatal(
-						"Cannot interrupt operation gracefully because services are already gone. Forcing shutdown.");
 				return;
 			}
 			final IProgressMonitorService progressMonitor = services.getProgressMonitorService();
