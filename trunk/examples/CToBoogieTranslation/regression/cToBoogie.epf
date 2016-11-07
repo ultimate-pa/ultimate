@@ -1,17 +1,15 @@
+#Mon Nov 07 09:34:15 CET 2016
+file_export_version=3.0
+@de.uni_freiburg.informatik.ultimate.boogie.printer=0.0.1
+\!/instance/de.uni_freiburg.informatik.ultimate.boogie.printer=
+/instance/de.uni_freiburg.informatik.ultimate.boogie.printer/Use\ automatic\ naming?=true
+/instance/de.uni_freiburg.informatik.ultimate.boogie.printer/Save\ file\ in\ source\ directory?=true
+
+
 #Tue Feb 18 11:27:46 CET 2014
 file_export_version=3.0
-@de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding=0.0.1
-\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding=
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockendcoding/Choose\ the\ strategy\ for\ the\ edge\ rating\:=LARGE_BLOCK
-#Tue Feb 18 11:27:46 CET 2014
-/instance/BoogiePrinter/Dump-Path=C\:\\data\\bin\\svcompC
-\!/instance/BoogiePrinter=
-file_export_version=3.0
-/instance/BoogiePrinter/Dump\ path\:=C\:\\
-/instance/BoogiePrinter/Save\ file\ in\ source\ directory?=true
-/instance/BoogiePrinter/Use\ automatic\ naming?=true
-@BoogiePrinter=0.0.1
-#Tue Feb 18 11:27:46 CET 2014
+@de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=0.0.1
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Pointer\ base\ address\ is\ valid\ at\ dereference=IGNORE
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Checked\ method.\ Library\ mode\ if\ empty.=main
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Check\ if\ pointer\ is\ valid\ before\ each\ access=true
@@ -21,55 +19,3 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Pointer\ to\ allocated\ memory\ at\ dereference=IGNORE
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Check\ if\ the\ input\ of\ malloc\ is\ non-negative=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Translation-Mode=SV_COMP14
-file_export_version=3.0
-\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=
-@de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=0.0.1
-#Tue Feb 18 11:27:46 CET 2014
-file_export_version=3.0
-/instance/CodeCheck/SolverAndInterpolator=Z3SPWP
-@CodeCheck=0.0.1
-/instance/CodeCheck/write\ dot\ graph\ files\ here\ (empty\ for\ don't\ write)=C\:\\Users\\alex\\Desktop\\graphs
-/instance/CodeCheck/Interpolating\ solver=SMTINTERPOL
-\!/instance/CodeCheck=
-#Tue Feb 18 11:27:46 CET 2014
-\!/instance/JungVisualization=
-file_export_version=3.0
-/instance/JungVisualization/shapeForNodePreference=RoundRectangle
-@JungVisualization=0.0.1
-#Tue Feb 18 11:27:46 CET 2014
-@LTL2aut=0.0.1
-\!/instance/LTL2aut=
-file_export_version=3.0
-/instance/LTL2aut/Property\ to\ check\:=[] a \r\n a\: x > 42
-#Tue Feb 18 11:27:46 CET 2014
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Interpolants=ForwardPredicates
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/BlockSize=single program statement
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/What\ is\ a\ letter\ in\ the\ trace\ abstraction\ alpabet=STATEMENT
-\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Solver=Z3
-@de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=0.0.1
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Convert\ code\ blocks\ to\ CNF=false
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Command\ for\ external\ solver=z3 SMTLIB2_COMPLIANT\=true -memory\:4096 -smt2 -in
-file_export_version=3.0
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Compute\ Interpolants\ along\ a\ Counterexample=ForwardPredicates
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Use\ external\ solver\ instead\ of\ SMTInterpol=false
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/PreserveGotoEdges=true
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/AllErrorsAtOnce=false
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Interpolating\ solver=Z3
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Preserve\ Goto-Edges\ in\ RCFG=true
-#Tue Feb 18 11:27:46 CET 2014
-file_export_version=3.0
-@de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=0.0.1
-\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Compute\ Interpolants\ along\ a\ Counterexample=Craig_TreeInterpolation
-#Tue Feb 18 11:27:46 CET 2014
-file_export_version=3.0
-\!/instance/UltimateCore=
-/instance/UltimateCore/Show\ usable\ parsers=false
-@UltimateCore=0.0.1
-#Tue Feb 18 11:27:46 CET 2014
-file_export_version=3.0
-\!/instance/UltimateGui=
-/instance/UltimateGui/LASTTOOLCHAINPATH=F\:\\repos\\ultimate fresher co\\trunk\\examples\\CToBoogieTranslation\\regression\\cToBoogie.xml
-/instance/UltimateGui/LASTPATH=F\:\\repos\\ultimate fresher co\\trunk\\examples\\CToBoogieTranslation\\regression\\globalStructType.c
-@UltimateGui=0.0.1
