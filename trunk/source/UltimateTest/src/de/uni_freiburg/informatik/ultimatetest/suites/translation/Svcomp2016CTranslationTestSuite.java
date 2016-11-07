@@ -48,14 +48,21 @@ import de.uni_freiburg.informatik.ultimatetest.summaries.ConversionContext;
 public class Svcomp2016CTranslationTestSuite extends AbstractEvalTestSuite {
 
 	private static final String[] ALL_C = new String[] { ".c", ".i" };
-	private static final int DEFAULT_LIMIT = Integer.MAX_VALUE;
+	private static final int DEFAULT_LIMIT = 100;
 
 	// @formatter:off
 
 	@SuppressWarnings("unchecked")
 	private static final Triple<String, String[], String>[] TOOLCHAINS = new Triple[] {
-			new Triple<>("CTranslationTest.xml", ALL_C, "svcomp2016/svcomp-Reach-64bit-Automizer_Default.epf"),
-			new Triple<>("CTranslationBETest.xml", ALL_C, "svcomp2016/svcomp-Reach-64bit-Automizer_Default.epf"),
+			new Triple<>("CTranslationTest.xml", ALL_C, "translation/Bitvector.epf"),
+			new Triple<>("CTranslationTest.xml", ALL_C, "translation/DerefFreeMemtrackInteger.epf"),
+			new Triple<>("CTranslationTest.xml", ALL_C, "translation/Float.epf"),
+			new Triple<>("CTranslationTest.xml", ALL_C, "translation/Integer.epf"),
+
+			new Triple<>("CTranslationBETest.xml", ALL_C, "translation/Bitvector.epf"),
+			new Triple<>("CTranslationBETest.xml", ALL_C, "translation/DerefFreeMemtrackInteger.epf"),
+			new Triple<>("CTranslationBETest.xml", ALL_C, "translation/Float.epf"),
+			new Triple<>("CTranslationBETest.xml", ALL_C, "translation/Integer.epf"),
 	};
 
 	private static final String[] INPUT = new String[] {
