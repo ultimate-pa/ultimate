@@ -24,17 +24,18 @@
  * licensors of the ULTIMATE BlockEncodingV2 plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.blockencoding.optimizeproduct;
+package de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 
@@ -43,78 +44,82 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Boo
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public final class MaximizeFinalStates extends BaseBlockEncoder {
+public final class RemoveSinkStates extends BaseBlockEncoder {
 	
-	private int mNewAcceptingStates;
-	private final Consumer<IcfgLocation> mFunMarkAsAccepting;
-	private final Predicate<IcfgLocation> mFunIsAccepting;
+	private final Predicate<IcfgLocation> mFunHasToBePreserved;
 	
-	public MaximizeFinalStates(final BoogieIcfgContainer product, final IUltimateServiceProvider services,
-			final Consumer<IcfgLocation> funMarkAsAccepting, final Predicate<IcfgLocation> funIsAccepting) {
-		super(product, services);
-		mNewAcceptingStates = 0;
-		mFunMarkAsAccepting = funMarkAsAccepting;
-		mFunIsAccepting = funIsAccepting;
+	public RemoveSinkStates(final BoogieIcfgContainer icfg, final IUltimateServiceProvider services,
+			final Predicate<IcfgLocation> funHasToBePreserved) {
+		super(icfg, services);
+		mFunHasToBePreserved = funHasToBePreserved;
 	}
 	
 	@Override
 	protected BoogieIcfgContainer createResult(final BoogieIcfgContainer icfg) {
-		int lastRun = processInternal(icfg);
-		mNewAcceptingStates += lastRun;
-		while (lastRun > 0) {
-			lastRun = processInternal(icfg);
-			mNewAcceptingStates += lastRun;
+		final List<IcfgLocation> sinks = collectSinks(icfg);
+		if (mLogger.isDebugEnabled()) {
+			mLogger.info("Collected " + sinks.size() + " initial sink states");
 		}
-		mLogger.info(mNewAcceptingStates + " new accepting states");
+		removeSinks(sinks);
+		removeDisconnectedLocations(icfg);
+		mLogger.info(
+				"Removed " + mRemovedEdges + " edges and " + mRemovedLocations + " locations by removing sink states");
 		return icfg;
 	}
 	
-	private int processInternal(final BoogieIcfgContainer icfg) {
+	private List<IcfgLocation> collectSinks(final BoogieIcfgContainer icfg) {
+		final List<IcfgLocation> rtr = new ArrayList<>();
 		final Deque<IcfgLocation> nodes = new ArrayDeque<>();
 		final Set<IcfgLocation> closed = new HashSet<>();
-		int newAcceptingStates = 0;
 		
 		nodes.addAll(icfg.getEntryNodes().values());
-		
 		while (!nodes.isEmpty()) {
 			final IcfgLocation current = nodes.removeFirst();
 			if (closed.contains(current)) {
 				continue;
 			}
 			closed.add(current);
-			if (mFunIsAccepting.test(current)) {
-				// this state is already accepting
-				nodes.addAll(getSuccessors(current));
-				continue;
+			if (current.getOutgoingEdges().isEmpty()) {
+				if (!mFunHasToBePreserved.test(current)) {
+					rtr.add(current);
+				}
+			} else {
+				nodes.addAll(current.getOutgoingNodes());
 			}
 			
-			final List<IcfgLocation> succs = getSuccessors(current);
-			if (succs.isEmpty()) {
-				// there are no successors
-				continue;
-			}
-			
-			boolean allSuccessorsAreAccepting = true;
-			for (final IcfgLocation succ : succs) {
-				allSuccessorsAreAccepting = allSuccessorsAreAccepting && mFunIsAccepting.test(succ);
-				nodes.add(succ);
-			}
-			
-			if (allSuccessorsAreAccepting) {
-				// all successors are accepting, make this one also accepting
-				mFunMarkAsAccepting.accept(current);
-				newAcceptingStates++;
-			}
 		}
-		return newAcceptingStates;
+		return rtr;
 	}
 	
-	public int getNewAcceptingStates() {
-		return mNewAcceptingStates;
+	private void removeSinks(final List<IcfgLocation> sinks) {
+		final Deque<IcfgLocation> nodes = new ArrayDeque<>();
+		nodes.addAll(sinks);
+		while (!nodes.isEmpty()) {
+			final IcfgLocation current = nodes.removeFirst();
+			
+			if (!current.getOutgoingEdges().isEmpty() || mFunHasToBePreserved.test(current)) {
+				continue;
+			}
+			
+			final List<IcfgLocation> newSinkCanidates = deleteSink(current);
+			nodes.addAll(newSinkCanidates);
+		}
+	}
+	
+	private List<IcfgLocation> deleteSink(final IcfgLocation current) {
+		final List<IcfgEdge> incoming = new ArrayList<>(current.getIncomingEdges());
+		final List<IcfgLocation> sinkCanidates = new ArrayList<>();
+		for (final IcfgEdge edge : incoming) {
+			sinkCanidates.add(edge.getSource());
+			edge.disconnectSource();
+			edge.disconnectTarget();
+			mRemovedEdges++;
+		}
+		return sinkCanidates;
 	}
 	
 	@Override
 	public boolean isGraphChanged() {
-		return mNewAcceptingStates > 0;
+		return mRemovedEdges > 0 || mRemovedLocations > 0;
 	}
 }

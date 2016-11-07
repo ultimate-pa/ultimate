@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE BlockEncodingV2 plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.blockencoding.optimizercfg;
+package de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding;
 
 import java.util.ArrayDeque;
 import java.util.Collection;
@@ -46,7 +46,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgE
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.BlockEncodingBacktranslator;
-import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.optimizeproduct.RcfgEdgeBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;

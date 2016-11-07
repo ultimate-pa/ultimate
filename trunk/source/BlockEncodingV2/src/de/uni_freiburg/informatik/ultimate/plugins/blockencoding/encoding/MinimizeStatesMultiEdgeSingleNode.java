@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE BlockEncodingV2 plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.blockencoding.optimizeproduct;
+package de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding;
 
 import java.util.ArrayList;
 import java.util.Collection;
