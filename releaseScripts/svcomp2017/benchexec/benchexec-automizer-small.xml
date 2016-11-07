@@ -3,7 +3,7 @@
 <benchmark tool="ultimateautomizer"
            timelimit="60"
            hardtimelimit="75"
-           memlimit="8000"
+           memlimit="8GB"
            cpuCores="4">
 
   <rundefinition name="Test">
@@ -14,7 +14,7 @@
     <include>../../trunk/examples/svcomp/ssh-simplified/s3_clnt_1_false-unreach-call.cil.c</include>
     <include>../../trunk/examples/svcomp/loop-acceleration/array_true-unreach-call3.i</include>
     <include>../../trunk/examples/svcomp/loop-acceleration/simple_false-unreach-call2.i</include>-->
-    <include>../../trunk/examples/svcomp/loop-acceleration/multivar_true-unreach-call1.i</include>
+    <include>../../../trunk/examples/svcomp/loop-acceleration/multivar_true-unreach-call1_true-termination.i</include>
     <propertyfile>${inputfile_path}/ALL.prp</propertyfile>
 	<option name="32bit"></option>
 	<option name="precise"></option>
