@@ -42,34 +42,35 @@ import de.uni_freiburg.informatik.ultimatetest.summaries.ConversionContext;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public class BlockEncodingDevelTestSuite extends AbstractEvalTestSuite {
-	
+
 	private static final String[] C = new String[] { ".i", ".c" };
 	private static final String[] BPL = new String[] { ".bpl" };
 	private static final int DEFAULT_LIMIT = 5;
-	
+
 	// @formatter:off
 	@SuppressWarnings("unchecked")
 	private static final Triple<String, String[], String>[] TOOLCHAINS = new Triple[] {
 			//### C
-			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default.epf"),
+//			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default.epf"),
 			new Triple<>("AutomizerCWithBlockEncodingV2.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default.epf"),
-			new Triple<>("AutomizerCWithBlockEncoding.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default.epf"),
+//			new Triple<>("AutomizerCWithBlockEncoding.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default.epf"),
 	};
 
 	private static final String[] INPUT = new String[] {
 //			"examples/programs/abstractInterpretation/regression",
 //			"examples/svcomp/ssh-simplified/s3_srvr_13_false-unreach-call.cil.c",
 //			"examples/svcomp/",
-			"examples/svcomp/ldv-linux-3.4-simple/32_1_cilled_true-unreach-call_ok_nondet_linux-3.4-32_1-drivers--media--rc--keymaps--rc-snapstream-firefly.ko-ldv_main0_sequence_infinite_withcheck_stateful.cil.out.c",
+//			"examples/svcomp/ldv-linux-3.4-simple/32_1_cilled_true-unreach-call_ok_nondet_linux-3.4-32_1-drivers--media--rc--keymaps--rc-snapstream-firefly.ko-ldv_main0_sequence_infinite_withcheck_stateful.cil.out.c",
+			"examples/svcomp/regression/drivers--block--drbd--drbd.ko_343.90ab5ee.32_7a.cil_true-unreach-call.i"
 
 	};
 	// @formatter:on
-	
+
 	@Override
 	protected long getTimeout() {
-		return 90 * 1000;
+		return 900 * 1000;
 	}
-	
+
 	@Override
 	protected ColumnDefinition[] getColumnDefinitions() {
 		return new ColumnDefinition[] {
@@ -90,7 +91,7 @@ public class BlockEncodingDevelTestSuite extends AbstractEvalTestSuite {
 				new ColumnDefinition("InterpolantCoveringCapability", "ICC", ConversionContext.Percent(true, 2),
 						Aggregate.Ignore, Aggregate.Average), };
 	}
-	
+
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
 		for (final Triple<String, String[], String> triple : TOOLCHAINS) {
