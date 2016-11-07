@@ -70,7 +70,7 @@ public class IntervalProjection {
 	 * @return Updated states in the same list.
 	 */
 	public List<OctDomainState> assignNumericVarWithoutIfs(final IBoogieVar var, final Expression rhs,
-			List<OctDomainState> oldStates) {
+	        List<OctDomainState> oldStates) {
 
 		oldStates = OctPostOperator.removeBottomStates(oldStates);
 		for (final OctDomainState state : oldStates) {
@@ -92,7 +92,7 @@ public class IntervalProjection {
 	 * @return Updated states in the same list.
 	 */
 	public List<OctDomainState> assignNumericVarAffine(final IBoogieVar var, final AffineExpression rhs,
-			List<OctDomainState> oldStates) {
+	        List<OctDomainState> oldStates) {
 
 		oldStates = OctPostOperator.removeBottomStates(oldStates);
 		for (final OctDomainState state : oldStates) {
@@ -124,8 +124,9 @@ public class IntervalProjection {
 
 		} else if (expr instanceof IdentifierExpression) {
 			final IdentifierExpression iexpr = ((IdentifierExpression) expr);
-			final BoogieVar var =
-					mBpl2smtSymbolTable.getBoogieVar(iexpr.getIdentifier(), iexpr.getDeclarationInformation(), false);
+			final BoogieVar var = mBpl2smtSymbolTable.getBoogieVar(iexpr.getIdentifier(),
+			        iexpr.getDeclarationInformation(), false);
+			assert var != null;
 			final OctInterval octInterval = state.projectToInterval(var);
 			return octInterval.toIvlInterval();
 

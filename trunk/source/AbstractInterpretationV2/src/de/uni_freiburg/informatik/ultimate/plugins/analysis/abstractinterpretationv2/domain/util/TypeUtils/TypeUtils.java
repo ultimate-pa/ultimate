@@ -42,6 +42,7 @@ public class TypeUtils {
 	public static void consumeVariable(final Consumer<IBoogieVar> varConsumer, final Consumer<IBoogieVar> boolConsumer,
 	        final Consumer<IBoogieVar> arrayConsumer, final IBoogieVar variable) {
 		assert arrayConsumer == null;
+		assert variable != null;
 
 		consumeVariablePerType(varConsumer, boolConsumer, arrayConsumer, variable, variable.getIType());
 	}
@@ -75,6 +76,7 @@ public class TypeUtils {
 	        final Function<IBoogieVar, R> boolFunction, final Function<IBoogieVar, R> arrayFunction,
 	        final IBoogieVar variable) {
 		assert arrayFunction == null;
+		assert variable != null;
 
 		return applyVariableFunctionPerType(varFunction, boolFunction, arrayFunction, variable, variable.getIType());
 	}
@@ -108,6 +110,7 @@ public class TypeUtils {
 	public static <R> R applyTypeFunction(final Function<IBoogieType, R> intFunction,
 	        final Function<IBoogieType, R> realFunction, final Function<IBoogieType, R> boolFunction,
 	        final Function<IBoogieType, R> arrayFunction, final IBoogieType type) {
+		assert type != null;
 
 		if (type instanceof PrimitiveType) {
 			final PrimitiveType prim = (PrimitiveType) type;

@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 /**
  * Methods to transform Boogie expressions into {@link AffineExpression}s {@link IfThenElseExpression}-free expressions
  * and logic negations. Transformations are cached.
- * 
+ *
  * @author schaetzc@informatik.uni-freiburg.de
  */
 public class ExpressionTransformer {
@@ -85,7 +85,7 @@ public class ExpressionTransformer {
 	 * <p>
 	 * The result of the transformation is cached -- subsequent calls with the same parameter will return the very same
 	 * object.
-	 * 
+	 *
 	 * @param expr
 	 *            Expression to be transformed.
 	 * @return {@link AffineExpression} or {@code null}
@@ -110,7 +110,7 @@ public class ExpressionTransformer {
 	 * <p>
 	 * The result of the transformation is cached -- subsequent calls with the same parameter will return the very same
 	 * object.
-	 * 
+	 *
 	 * @param expr
 	 *            Expression to be transformed.
 	 * @return Logical negation
@@ -131,11 +131,11 @@ public class ExpressionTransformer {
 	 * <p>
 	 * The result of the transformation is cached -- subsequent calls with the same parameter will return the very same
 	 * object.
-	 * 
+	 *
 	 * @param expr
 	 *            Expression to be transformed.
 	 * @return Expression without {@code if}s
-	 * 
+	 *
 	 * @see IfExpressionTree
 	 */
 	public IfExpressionTree removeIfExprsCached(final Expression expr) {
@@ -153,7 +153,7 @@ public class ExpressionTransformer {
 	/** Internal, non-cached version of {@link #affineExprCached(Expression)}. */
 	private AffineExpression toAffineExpr(final Expression expr) {
 		assert TypeUtil.isNumeric(expr.getType()) : "Cannot transform non-numeric expression to affine expression: "
-				+ expr;
+		        + expr;
 		if (expr instanceof IntegerLiteral) {
 			final String value = ((IntegerLiteral) expr).getValue();
 			return new AffineExpression(new BigDecimal(value));
@@ -162,7 +162,12 @@ public class ExpressionTransformer {
 			return new AffineExpression(new BigDecimal(value));
 		} else if (expr instanceof IdentifierExpression) {
 			final IdentifierExpression ie = ((IdentifierExpression) expr);
-			final IBoogieVar var = mBpl2SmtSymbolTable.getBoogieVar(ie.getIdentifier(), ie.getDeclarationInformation(), false);
+			IBoogieVar var = mBpl2SmtSymbolTable.getBoogieVar(ie.getIdentifier(), ie.getDeclarationInformation(),
+			        false);
+			if (var == null) {
+				var = mBpl2SmtSymbolTable.getBoogieConst(ie.getIdentifier());
+			}
+			assert var != null;
 			final Map<IBoogieVar, BigDecimal> coefficients = Collections.singletonMap(var, BigDecimal.ONE);
 			return new AffineExpression(coefficients, BigDecimal.ZERO);
 		} else if (expr instanceof UnaryExpression) {

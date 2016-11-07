@@ -69,10 +69,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.BoogieUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.TypeUtils.TypeUtils;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence.Origin;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -204,7 +204,9 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 
 		for (final VarList varlist : inParams) {
 			for (final String var : varlist.getIdentifiers()) {
-				realParamVars.add(mBoogie2SmtSymbolTable.getBoogieVar(var, callStatement.getMethodName(), true));
+				final IBoogieVar bVar = mBoogie2SmtSymbolTable.getBoogieVar(var, callStatement.getMethodName(), true);
+				assert bVar != null;
+				realParamVars.add(bVar);
 			}
 		}
 
@@ -278,6 +280,7 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 		for (final VariableLHS varLhs : lhs) {
 			final BoogieVar boogieVar = mBoogie2SmtSymbolTable.getBoogieVar(varLhs.getIdentifier(),
 			        varLhs.getDeclarationInformation(), false);
+			assert boogieVar != null;
 			updateVarNames.add(boogieVar);
 		}
 
@@ -444,6 +447,7 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 		for (final VarList list : procedure.getOutParams()) {
 			for (final String s : list.getIdentifiers()) {
 				final IBoogieVar boogieVar = mBoogie2SmtSymbolTable.getBoogieVar(s, procedure.getIdentifier(), false);
+				assert boogieVar != null;
 				TypeUtils.consumeVariable(varConsumer, boolConsumer, null, boogieVar);
 			}
 		}
@@ -462,7 +466,7 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 			for (final String s : list.getIdentifiers()) {
 				final IBoogieVar boogieVar = mBoogie2SmtSymbolTable.getBoogieVar(s,
 				        new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procedure.getIdentifier()), false);
-
+				assert boogieVar != null;
 				TypeUtils.consumeVariable(varConsumer, boolConsumer, null, boogieVar);
 			}
 		}
@@ -474,7 +478,9 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 		@Override
 		public Term getSmtIdentifier(final String id, final DeclarationInformation declInfo, final boolean isOldContext,
 		        final BoogieASTNode boogieASTNode) {
-			return mBoogie2SmtSymbolTable.getBoogieVar(id, declInfo, isOldContext).getTermVariable();
+			final BoogieVar boogieVar = mBoogie2SmtSymbolTable.getBoogieVar(id, declInfo, isOldContext);
+			assert boogieVar != null;
+			return boogieVar.getTermVariable();
 		}
 	}
 }

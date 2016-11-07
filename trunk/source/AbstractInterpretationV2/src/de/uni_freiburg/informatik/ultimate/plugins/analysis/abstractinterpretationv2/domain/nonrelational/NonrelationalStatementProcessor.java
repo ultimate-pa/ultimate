@@ -458,14 +458,23 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 	}
 
 	private IBoogieVar getBoogieVar(final VariableLHS expr) {
-		final IBoogieVar rtr = mTemporaryVars.get(expr);
+		IBoogieVar rtr = mTemporaryVars.get(expr);
 		if (rtr == null) {
-			return mBoogie2SmtSymbolTable.getBoogieVar(expr.getIdentifier(), expr.getDeclarationInformation(), false);
+			rtr = mBoogie2SmtSymbolTable.getBoogieVar(expr.getIdentifier(), expr.getDeclarationInformation(), false);
 		}
+		assert rtr != null;
 		return rtr;
 	}
 
 	private IBoogieVar getBoogieVar(final IdentifierExpression expr) {
-		return mBoogie2SmtSymbolTable.getBoogieVar(expr.getIdentifier(), expr.getDeclarationInformation(), false);
+		IBoogieVar returnVar = mBoogie2SmtSymbolTable.getBoogieVar(expr.getIdentifier(),
+		        expr.getDeclarationInformation(), false);
+		if (returnVar != null) {
+			return returnVar;
+		}
+
+		returnVar = mBoogie2SmtSymbolTable.getBoogieConst(expr.getIdentifier());
+		assert returnVar != null;
+		return returnVar;
 	}
 }

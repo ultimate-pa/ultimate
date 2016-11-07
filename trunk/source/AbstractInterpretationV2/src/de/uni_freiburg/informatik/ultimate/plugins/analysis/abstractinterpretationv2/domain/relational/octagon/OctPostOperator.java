@@ -73,7 +73,7 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 	private final Boogie2SmtSymbolTable mBpl2SmtTable;
 
 	public OctPostOperator(final ILogger logger, final BoogieSymbolTable symbolTable, final int maxParallelStates,
-			final boolean fallbackAssignIntervalProjection, final Boogie2SmtSymbolTable bpl2smtTable) {
+	        final boolean fallbackAssignIntervalProjection, final Boogie2SmtSymbolTable bpl2smtTable) {
 
 		if (maxParallelStates < 1) {
 			throw new IllegalArgumentException("MaxParallelStates needs to be > 0, was " + maxParallelStates);
@@ -114,8 +114,8 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 	}
 
 	public List<OctDomainState> splitF(final List<OctDomainState> oldStates,
-			final Function<List<OctDomainState>, List<OctDomainState>> op1,
-			final Function<List<OctDomainState>, List<OctDomainState>> op2) {
+	        final Function<List<OctDomainState>, List<OctDomainState>> op1,
+	        final Function<List<OctDomainState>, List<OctDomainState>> op2) {
 
 		final List<OctDomainState> newStates = op1.apply(deepCopy(oldStates));
 		newStates.addAll(op2.apply(oldStates));
@@ -123,7 +123,7 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 	}
 
 	public List<OctDomainState> splitC(final List<OctDomainState> oldStates, final Consumer<OctDomainState> op1,
-			final Consumer<OctDomainState> op2) {
+	        final Consumer<OctDomainState> op2) {
 
 		final List<OctDomainState> copiedOldStates = deepCopy(oldStates);
 		oldStates.forEach(op1);
@@ -189,7 +189,7 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 
 	@Override
 	public List<OctDomainState> apply(final OctDomainState stateBeforeTransition,
-			final OctDomainState stateAfterTransition, final CodeBlock transition) {
+	        final OctDomainState stateAfterTransition, final CodeBlock transition) {
 
 		List<OctDomainState> result;
 		if (transition instanceof Call) {
@@ -198,7 +198,7 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 			result = applyReturn(stateBeforeTransition, stateAfterTransition, ((Return) transition).getCallStatement());
 		} else if (transition instanceof Summary) {
 			result = applyReturn(stateBeforeTransition, stateAfterTransition,
-					((Summary) transition).getCallStatement());
+			        ((Summary) transition).getCallStatement());
 		} else {
 			throw new UnsupportedOperationException("Unsupported transition: " + transition);
 		}
@@ -206,7 +206,7 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 	}
 
 	private List<OctDomainState> applyCall(final OctDomainState stateBeforeCall, final OctDomainState stateAfterCall,
-			final Call callTransition) {
+	        final Call callTransition) {
 
 		if (stateAfterCall.isBottom()) {
 			return new ArrayList<>();
@@ -230,6 +230,7 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 				// unique (inParams are all unique + brackets are forbidden)
 				final String tmpVarName = "octTmp(" + inParam + ")";
 				final BoogieVar realBoogieVar = mBpl2SmtTable.getBoogieVar(inParam, call.getMethodName(), true);
+				assert realBoogieVar != null;
 				final IBoogieVar tmpBoogieVar = BoogieUtil.createTemporaryIBoogieVar(tmpVarName, type);
 				final Expression arg = call.getArguments()[paramNumber];
 				++paramNumber;
@@ -259,13 +260,13 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 	}
 
 	private List<OctDomainState> applyReturn(final OctDomainState stateBeforeReturn, OctDomainState stateAfterReturn,
-			final CallStatement correspondingCall) {
+	        final CallStatement correspondingCall) {
 
 		final ArrayList<OctDomainState> result = new ArrayList<>();
 		if (!stateAfterReturn.isBottom()) {
 			final Procedure procedure = calledProcedure(correspondingCall);
-			final List<Pair<IBoogieVar, IBoogieVar>> mapLhsToOut =
-					generateMapCallLhsToOutParams(correspondingCall.getLhs(), procedure);
+			final List<Pair<IBoogieVar, IBoogieVar>> mapLhsToOut = generateMapCallLhsToOutParams(
+			        correspondingCall.getLhs(), procedure);
 			stateAfterReturn = stateAfterReturn.copyValuesOnScopeChange(stateBeforeReturn, mapLhsToOut);
 			result.add(stateAfterReturn);
 		}
@@ -273,8 +274,8 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 	}
 
 	private Procedure calledProcedure(final CallStatement call) {
-		final List<Declaration> procedureDeclarations =
-				mSymbolTable.getFunctionOrProcedureDeclaration(call.getMethodName());
+		final List<Declaration> procedureDeclarations = mSymbolTable
+		        .getFunctionOrProcedureDeclaration(call.getMethodName());
 		Procedure implementation = null;
 		for (final Declaration d : procedureDeclarations) {
 			assert d instanceof Procedure : "call/return of non-procedure " + call.getMethodName() + ": " + d;
@@ -293,7 +294,7 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 	}
 
 	private List<Pair<IBoogieVar, IBoogieVar>> generateMapCallLhsToOutParams(final VariableLHS[] callLhs,
-			final Procedure calledProcedure) {
+	        final Procedure calledProcedure) {
 		final List<Pair<IBoogieVar, IBoogieVar>> mapLhsToOut = new ArrayList<>(callLhs.length);
 		int i = 0;
 		for (final VarList outParamList : calledProcedure.getOutParams()) {
@@ -301,9 +302,11 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 				assert i < callLhs.length : "missing left hand side for out-parameter";
 				final VariableLHS currentLhs = callLhs[i];
 				final BoogieVar lhsBoogieVar = mBpl2SmtTable.getBoogieVar(currentLhs.getIdentifier(),
-						currentLhs.getDeclarationInformation(), false);
-				final BoogieVar outParamBoogieVar =
-						mBpl2SmtTable.getBoogieVar(outParam, calledProcedure.getIdentifier(), false);
+				        currentLhs.getDeclarationInformation(), false);
+				assert lhsBoogieVar != null;
+				final BoogieVar outParamBoogieVar = mBpl2SmtTable.getBoogieVar(outParam,
+				        calledProcedure.getIdentifier(), false);
+				assert outParamBoogieVar != null;
 				mapLhsToOut.add(new Pair<>(lhsBoogieVar, outParamBoogieVar));
 				++i;
 			}
@@ -313,11 +316,22 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 	}
 
 	IBoogieVar getBoogieVar(final VariableLHS vLhs) {
-		return getBoogie2SmtSymbolTable().getBoogieVar(vLhs.getIdentifier(), vLhs.getDeclarationInformation(), false);
+		final IBoogieVar returnVar = getBoogie2SmtSymbolTable().getBoogieVar(vLhs.getIdentifier(),
+		        vLhs.getDeclarationInformation(), false);
+		assert returnVar != null;
+		return returnVar;
 	}
 
 	IBoogieVar getBoogieVar(final IdentifierExpression ie) {
-		return getBoogie2SmtSymbolTable().getBoogieVar(ie.getIdentifier(), ie.getDeclarationInformation(), false);
+		IBoogieVar returnVar = getBoogie2SmtSymbolTable().getBoogieVar(ie.getIdentifier(),
+		        ie.getDeclarationInformation(), false);
+		if (returnVar != null) {
+			return returnVar;
+		}
+
+		returnVar = getBoogie2SmtSymbolTable().getBoogieConst(ie.getIdentifier());
+		assert returnVar != null;
+		return returnVar;
 	}
 
 }
