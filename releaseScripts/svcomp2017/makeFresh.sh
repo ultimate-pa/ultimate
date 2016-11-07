@@ -12,8 +12,9 @@ mvn clean install -Pmaterialize
 popd
 
 ./createZipAutomizer.sh linux
-./createZipAutomizer.sh win32
-#./createZipCodeCheck.sh
+./createZipAbsult.sh linux
+#./createZipAutomizer.sh win32
+./createZipCodeCheck.sh
 
 #scp -oHostKeyAlgorithms=+ssh-dss *.zip $CURRENTUSER@sotec.informatik.uni-freiburg.de:/export/server/httpd/ultimate/downloads/svcomp2016/.
 #rm *.zip 

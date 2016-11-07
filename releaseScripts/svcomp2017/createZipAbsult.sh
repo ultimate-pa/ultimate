@@ -38,13 +38,13 @@ fi
 # set version 
 VERSION=`git rev-parse HEAD | cut -c1-8`
 echo "Version is "$VERSION
-TOOLNAME=Automizer
+TOOLNAME=Absult
 TARGETDIR=U${TOOLNAME}-${ARCH}
 ZIPFILE=Ultimate${TOOLNAME}-${ARCH}.zip
 TOOLCHAIN=../../trunk/examples/toolchains/AutomizerC_WitnessPrinter.xml
 TERMTOOLCHAIN=../../trunk/examples/toolchains/BuchiAutomizerCWithBlockEncoding.xml
 VALTOOLCHAIN=../../trunk/examples/toolchains/AutomizerC.xml
-SETTINGS=../../trunk/examples/settings/svcomp2017/automizer/*${TOOLNAME}*
+SETTINGS=../../trunk/examples/settings/svcomp2017/absult/*${TOOLNAME}*
 
 if [ -d "$TARGETDIR" ]; then
 	echo "Removing old ""$TARGETDIR"
@@ -59,7 +59,6 @@ echo "Copying files"
 mkdir "$TARGETDIR"
 test cp -a ../../trunk/source/BA_SiteRepository/target/${ARCHPATH}/* "$TARGETDIR"/
 test cp "$TOOLCHAIN" "$TARGETDIR"/"$TOOLNAME".xml
-test cp "$TERMTOOLCHAIN" "$TARGETDIR"/"$TOOLNAME"Termination.xml
 test cp "$VALTOOLCHAIN" "$TARGETDIR"/"$TOOLNAME"WitnessValidation.xml
 test cp adds/LICENSE* "$TARGETDIR"/
 test cp ${SETTINGS} "$TARGETDIR"/.
