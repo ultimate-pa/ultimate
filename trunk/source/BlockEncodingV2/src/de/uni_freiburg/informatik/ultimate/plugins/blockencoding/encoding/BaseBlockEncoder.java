@@ -29,8 +29,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Deque;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.BiConsumer;
@@ -71,9 +71,6 @@ public abstract class BaseBlockEncoder implements IEncoder {
 	}
 
 	@Override
-	public abstract boolean isGraphChanged();
-
-	@Override
 	public BoogieIcfgContainer getResult(final BoogieIcfgContainer icfg) {
 		if (mResult == null) {
 			mResult = createResult(icfg);
@@ -106,7 +103,7 @@ public abstract class BaseBlockEncoder implements IEncoder {
 			final List<IcfgEdge> outEdges = new ArrayList<>(current.getOutgoingEdges());
 			for (final IcfgEdge out : outEdges) {
 				final BoogieIcfgLocation target = (BoogieIcfgLocation) out.getTarget();
-				if (target.getIncomingEdges().size() == 1 && !initial.contains(target)) {
+				if (target.getIncomingEdges().size() == 1) {
 					// we will remove the only inEdge of target
 					locationsWithoutInEdge.addLast(target);
 				}
@@ -147,12 +144,12 @@ public abstract class BaseBlockEncoder implements IEncoder {
 
 	private static class DequeCollector<T> implements Collector<T, Deque<T>, Deque<T>> {
 
-		private static final Set<java.util.stream.Collector.Characteristics> CHARACTERISTICS =
-				Collections.singleton(Characteristics.IDENTITY_FINISH);
+		private static final Set<Collector.Characteristics> CHARACTERISTICS =
+				EnumSet.of(Characteristics.IDENTITY_FINISH);
 
 		@Override
 		public Supplier<Deque<T>> supplier() {
-			return () -> new ArrayDeque<>();
+			return ArrayDeque::new;
 		}
 
 		@Override
@@ -171,7 +168,7 @@ public abstract class BaseBlockEncoder implements IEncoder {
 		}
 
 		@Override
-		public Set<java.util.stream.Collector.Characteristics> characteristics() {
+		public Set<Collector.Characteristics> characteristics() {
 			return CHARACTERISTICS;
 		}
 
