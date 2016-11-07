@@ -30,7 +30,8 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.LocalBoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ILocalProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
@@ -50,11 +51,11 @@ public interface ICfgSymbolTable {
 	/**
 	 * Return all local variables, input parameters and output parameters for a given procedure.
 	 */
-	Map<String, LocalBoogieVar> getLocals(String procedurename);
+	Map<String, ? extends ILocalProgramVar> getLocals(String procedurename);
 
 	/**
 	 * Return global constants;
 	 */
-	Map<String, BoogieConst> getConsts();
+	Map<String, ? extends IProgramConst> getConsts();
 
 }

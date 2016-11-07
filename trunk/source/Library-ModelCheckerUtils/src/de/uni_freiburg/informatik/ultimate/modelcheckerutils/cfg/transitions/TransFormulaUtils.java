@@ -48,10 +48,10 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.LocalBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ILocalProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
@@ -490,9 +490,9 @@ public class TransFormulaUtils {
 			}
 			
 			// we havoc all local variables of the caller (unless they are inparams of callee)
-			final Map<String, LocalBoogieVar> locals = symbolTable.getLocals(procBeforeCall);
-			for (final Entry<String, LocalBoogieVar> entry : locals.entrySet()) {
-				final LocalBoogieVar localVar = entry.getValue();
+			final Map<String, ? extends ILocalProgramVar> locals = symbolTable.getLocals(procBeforeCall);
+			for (final Entry<String, ? extends ILocalProgramVar> entry : locals.entrySet()) {
+				final ILocalProgramVar localVar = entry.getValue();
 				final boolean isInParamOfCallee = callTf.getAssignedVars().contains(localVar);
 				if (!isInParamOfCallee) {
 					varsToHavoc.put(localVar, mgdScript.constructFreshCopy(localVar.getTermVariable()));
