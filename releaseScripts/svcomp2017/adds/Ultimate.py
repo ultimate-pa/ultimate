@@ -44,23 +44,19 @@ terminationPathEnd = 'End of lasso representation.'
 overflowFalseString = 'overflow possible'
 
 
-def setBinary():
+def getBinary():
     currentPlatform = platform.system()
     
     if currentPlatform == 'Windows':
-        ultimateBin = 'eclipsec.exe'
+        ultimateBin = ['java', '-Xmx12G', '-Xms1G', '-jar' ,'plugins/org.eclipse.equinox.launcher_1.3.100.v20150511-1540.jar', '-data', '@user.home/.ultimate']
     else:
-        ultimateBin = "Ultimate"
+        ultimateBin = ['java', '-Xmx12G', '-Xms1G', '-jar' ,'plugins/org.eclipse.equinox.launcher_1.3.100.v20150511-1540.jar', '-data', '@user.home/.ultimate']
     
     # check if ultimate bin is there 
-    if not os.path.isfile(ultimateBin):
-        print("Ultimate binary not found, expected " + ultimateBin)
-        sys.exit(1)
+    #if not os.path.isfile(ultimateBin):
+    #    print("Ultimate binary not found, expected " + ultimateBin)
+    #    sys.exit(1)
     
-    if not currentPlatform == 'Windows':
-        ultimateBin = './' + ultimateBin
-    
-    ultimateBin = ultimateBin + ' --console'
     return ultimateBin
 
 
@@ -84,10 +80,10 @@ def containsOverapproximationResult(line):
 
 
 def runUltimate(ultimateCall, terminationMode):
-    print('Calling Ultimate with: ' + ultimateCall)
+    print('Calling Ultimate with: ' + " ".join(ultimateCall))
     
     try:
-        ultimateProcess = subprocess.Popen(ultimateCall, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+        ultimateProcess = subprocess.Popen(ultimateCall, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
     except:
         print('Error trying to open subprocess')
         sys.exit(1)
@@ -117,7 +113,7 @@ def runUltimate(ultimateCall, terminationMode):
             safetyResult = 'ERROR: TYPE ERROR'
         elif (line.find(exceptionErrorString) != -1):
             safetyResult = 'ERROR: ' + line            
-        if(not overapprox and containsOverapproximationResult(line)):
+        if (not overapprox and containsOverapproximationResult(line)):
             overapprox = True
         if (terminationMode):
             if (line.find(terminationTrueString) != -1):
@@ -147,12 +143,12 @@ def runUltimate(ultimateCall, terminationMode):
             if (readingErrorPath and line.strip() == ''):
                 readingErrorPath = False
     
-        if (not readingErrorPath and line == ''):
-            print('\nDid read empty line, but expected closing message. Wrong executable or arguments?')
-            break
-        
-        if (line.find('Preparing to exit Ultimate with return code 0') != -1):
-            print('\nExecution finished normally') 
+        ultimateProcess.poll()
+        if (ultimateProcess.returncode != None):
+            if (ultimateProcess.returncode == 0):
+                print('\nExecution finished normally')
+            else: 
+                print('\nExecution finished with exitcode ' + str(ultimateProcess.returncode)) 
             break
     
     return safetyResult, memResult, overapprox, ultimateOutput, errorPath
@@ -162,9 +158,9 @@ def createUltimateCall(call, arguments):
     for arg in arguments:
         if(isinstance (arg, list)):
             for subarg in arg:
-                call = call + ' "' + subarg + '"'
+                call = call + [subarg]
         else:
-            call = call + ' "' + arg + '"'
+            call = call + [arg]
     return call    
     
 
@@ -291,7 +287,7 @@ def main():
     witnessMode = False
     overflowMode = False
     
-    ultimateBin = setBinary()
+    ultimateBin = getBinary()
     
     propertyFileName, architecture, cFile, verbose = parseArgs()
     
@@ -315,7 +311,7 @@ def main():
 
     # execute ultimate
     print('Version ' + version)
-    ultimateCall = createUltimateCall(ultimateBin, [toolchain, cFile, "--settings", settingsArgument])
+    ultimateCall = createUltimateCall(ultimateBin, ['-tc', toolchain, '-i', cFile, '-s', settingsArgument])
  
 
     # actually run Ultimate 
@@ -325,7 +321,7 @@ def main():
         # we did fail because we had to overaproximate. Lets rerun with bit-precision 
         print('Retrying with bit-precise analysis')
         settingsArgument = getSettingsFile(True, settingsSearchString)
-        ultimateCall = createUltimateCall(ultimateBin, [toolchain, cFile, '--settings', settingsArgument])
+        ultimateCall = createUltimateCall(ultimateBin, ['-tc',toolchain, '-i', cFile, '-s', settingsArgument])
         safetyResult, memResult, overaprox, ultimate2Output, errorPath = runUltimate(ultimateCall, terminationMode)
         ultimateOutput = ultimateOutput + '\n### Bit-precise run ###\n' + ultimate2Output
     
