@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<!DOCTYPE benchmark PUBLIC "+//IDN sosy-lab.org//DTD BenchExec benchmark 1.0//EN" "http://www.sosy-lab.org/benchexec/benchmark-1.0.dtd">
+<benchmark tool="ultimateautomizer"
+           timelimit="60"
+           hardtimelimit="75"
+           memlimit="8000"
+           cpuCores="4">
+
+  <rundefinition name="Test">
+  </rundefinition>
+
+  <tasks name="CFI">
+<!--    <include>../../trunk/examples/svcomp/ssh-simplified/s3_clnt_1_true-unreach-call.cil.c</include>
+    <include>../../trunk/examples/svcomp/ssh-simplified/s3_clnt_1_false-unreach-call.cil.c</include>
+    <include>../../trunk/examples/svcomp/loop-acceleration/array_true-unreach-call3.i</include>
+    <include>../../trunk/examples/svcomp/loop-acceleration/simple_false-unreach-call2.i</include>-->
+    <include>../../trunk/examples/svcomp/loop-acceleration/multivar_true-unreach-call1.i</include>
+    <propertyfile>${inputfile_path}/ALL.prp</propertyfile>
+	<option name="32bit"></option>
+	<option name="precise"></option>
+
+	<option name="--full-output"></option>
+  </tasks>
+
+</benchmark>
