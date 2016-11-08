@@ -7,9 +7,10 @@ Fragment-Host: Library-ModelCheckerUtils;bundle-version="0.0.1"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Require-Bundle: Library-UltimateCore,
  Library-UltimateTest,
- org.junit
-Import-Package: org.junit,
+ org.junit,
+ Library-SMTLIB
+Import-Package: junit.framework,
+ org.junit,
  org.junit.runner,
- org.junit.runners,
- junit.framework,
- org.junit.runner.notification
+ org.junit.runner.notification,
+ org.junit.runners
