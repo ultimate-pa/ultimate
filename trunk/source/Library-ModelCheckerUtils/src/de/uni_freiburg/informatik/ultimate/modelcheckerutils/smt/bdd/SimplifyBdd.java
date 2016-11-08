@@ -123,7 +123,6 @@ public class SimplifyBdd {
 		assert atoms.size()!=0 : "How did I not find any atoms? " + input;
 		
 		final BddBuilder bb = new BddBuilder();
-		//final BDD d = bb.buildBDD(input, atoms);
 		final BDD d = bb.buildBDD(input, atoms);
 		
 		final List<Term> con = new ArrayList<Term>();
@@ -150,7 +149,6 @@ public class SimplifyBdd {
 
 		
 		final BddBuilder bb = new BddBuilder();
-		//final BDD d = bb.buildBDD(input, atoms).not();
 		final BDD d = bb.buildBDD(input, atoms).not();
 		
 		final List<Term> dis = new ArrayList<Term>();
