@@ -37,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 
 /**
@@ -47,25 +46,25 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
  */
 
 public class BoogieIcfgLocation extends IcfgLocation {
-
+	
 	/**
 	 * ID to distinguish different versions of this class. If the class gains additional fields, this constant should be
 	 * incremented. This field may not be renamed.
 	 */
 	private static final long serialVersionUID = 1L;
-
+	
 	private final BoogieASTNode mBoogieASTNode;
-
+	
 	@Visualizable
 	private final boolean mIsErrorLocation;
-
+	
 	public BoogieIcfgLocation(final String debugIdentifier, final String procedure, final boolean isErrorLoc,
 			final BoogieASTNode boogieASTNode) {
 		super(debugIdentifier, procedure, new Payload(getLocationFromASTNode(boogieASTNode)));
 		mIsErrorLocation = isErrorLoc;
 		mBoogieASTNode = boogieASTNode;
 	}
-
+	
 	private static ILocation getLocationFromASTNode(final BoogieASTNode node) {
 		final ILocation loc;
 		if (node instanceof Statement) {
@@ -81,15 +80,15 @@ public class BoogieIcfgLocation extends IcfgLocation {
 		}
 		return loc;
 	}
-
+	
 	public boolean isErrorLocation() {
 		return mIsErrorLocation;
 	}
-
+	
 	public BoogieASTNode getBoogieASTNode() {
 		return mBoogieASTNode;
 	}
-
+	
 	public String BoogieASTNodeType() {
 		if (mBoogieASTNode instanceof AssertStatement) {
 			return "AssertStatement";
@@ -101,21 +100,4 @@ public class BoogieIcfgLocation extends IcfgLocation {
 			throw new UnsupportedOperationException();
 		}
 	}
-
-	@Override
-	public boolean addIncoming(final IcfgEdge incoming) {
-		if (incoming instanceof CodeBlock || incoming instanceof RootEdge) {
-			return super.addIncoming(incoming);
-		}
-		throw new IllegalArgumentException("predecessor has to be CodeBlock or RootEdge");
-	}
-
-	@Override
-	public boolean addOutgoing(final IcfgEdge outgoing) {
-		if (outgoing instanceof CodeBlock || outgoing instanceof RootEdge) {
-			return super.addOutgoing(outgoing);
-		}
-		throw new IllegalArgumentException("successor has to be CodeBlock");
-	}
-
 }

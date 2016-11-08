@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Core, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Core grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Core grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.core.lib.models;
@@ -64,15 +64,15 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IWalkable;
  */
 public final class VisualizationNode implements
 		IExplicitEdgesMultigraph<VisualizationNode, VisualizationEdge, VisualizationNode, VisualizationEdge, VisualizationNode> {
-
+	
 	private static final long serialVersionUID = 1L;
-
+	
 	private final VisualizationWrapperNode mBacking;
 	private List<VisualizationNode> mOutgoing;
-
+	
 	public VisualizationNode(final IExplicitEdgesMultigraph<?, ?, ?, ?, VisualizationNode> node) {
 		mBacking = new VisualizationWrapperNode(node) {
-
+			
 			@Override
 			protected void createIncoming() {
 				for (final IMultigraphEdge<?, ?, ?, ?, VisualizationNode> e : node.getIncomingEdges()) {
@@ -89,7 +89,7 @@ public final class VisualizationNode implements
 					}
 				}
 			}
-
+			
 			@Override
 			protected void createOutgoing() {
 				for (final IMultigraphEdge<?, ?, ?, ?, VisualizationNode> e : node.getOutgoingEdges()) {
@@ -105,44 +105,44 @@ public final class VisualizationNode implements
 						mOutgoing.add(ve);
 					}
 				}
-
+				
 			}
-
+			
 			@SuppressWarnings({ "unchecked", "rawtypes" })
 			@Override
 			protected List<IWalkable> getSuccessors() {
 				return (List) getOutgoingEdges();
 			}
 		};
-
+		
 	}
-
+	
+	private static IPayload extractPayload(final Object label) {
+		IPayload pay = null;
+		if (label instanceof IPayload) {
+			pay = (IPayload) label;
+		} else if (label instanceof IElement) {
+			final IElement ele = (IElement) label;
+			if (ele.hasPayload()) {
+				pay = ele.getPayload();
+			}
+		}
+		return pay;
+	}
+	
 	public <T extends ILabeledEdgesMultigraph<T, L, VisualizationNode>, L> VisualizationNode(
 			final ILabeledEdgesMultigraph<T, L, VisualizationNode> node) {
 		// TODO: We need to handle the case where L is an instance of an
 		// collection (i.e. multigraph)
 		mBacking = new VisualizationWrapperNode(node) {
-
-			private IPayload extractPayload(L label) {
-				IPayload pay = null;
-				if (label instanceof IPayload) {
-					pay = (IPayload) label;
-				} else if (label instanceof IElement) {
-					final IElement ele = (IElement) label;
-					if (ele.hasPayload()) {
-						pay = ele.getPayload();
-					}
-				}
-				return pay;
-			}
-
+			
 			@SuppressWarnings("unchecked")
 			@Override
 			protected void createIncoming() {
 				for (final ILabeledEdgesMultigraph<T, L, VisualizationNode> pred : node.getIncomingNodes()) {
 					VisualizationEdge ve;
 					final IPayload pay = extractPayload(node.getIncomingEdgeLabel((T) pred));
-
+					
 					if (pay != null) {
 						ve = new VisualizationEdge(pred.getVisualizationGraph(), VisualizationNode.this, pay, null);
 					} else {
@@ -150,75 +150,55 @@ public final class VisualizationNode implements
 					}
 					mIncoming.add(ve);
 				}
-
+				
 			}
-
+			
 			@SuppressWarnings("unchecked")
 			@Override
 			protected void createOutgoing() {
 				for (final ILabeledEdgesMultigraph<T, L, VisualizationNode> succ : node.getOutgoingNodes()) {
 					VisualizationEdge ve;
 					final IPayload pay = extractPayload(node.getOutgoingEdgeLabel((T) succ));
-
+					
 					if (pay != null) {
 						ve = new VisualizationEdge(VisualizationNode.this, succ.getVisualizationGraph(), pay, null);
 					} else {
 						ve = new VisualizationEdge(
-
+								
 								VisualizationNode.this, succ.getVisualizationGraph(), null);
 					}
 					mOutgoing.add(ve);
 				}
-
+				
 			}
-
+			
 			@Override
 			protected List<IWalkable> getSuccessors() {
-				final ArrayList<IWalkable> rtr = new ArrayList<IWalkable>();
+				final ArrayList<IWalkable> rtr = new ArrayList<>();
 				for (final ILabeledEdgesMultigraph<T, L, VisualizationNode> succ : node.getOutgoingNodes()) {
 					final ILabeledEdgesMultigraph<T, L, VisualizationNode> child = succ;
-					rtr.add(new IWalkable() {
-
-						private static final long serialVersionUID = 1L;
-
-						@SuppressWarnings("unchecked")
-						@Override
-						public boolean hasPayload() {
-							return extractPayload(node.getOutgoingEdgeLabel((T) child)) != null;
-						}
-
-						@SuppressWarnings("unchecked")
-						@Override
-						public IPayload getPayload() {
-							return extractPayload(node.getOutgoingEdgeLabel((T) child));
-						}
-
-						@Override
-						public List<IWalkable> getSuccessors() {
-							return Collections.singletonList((IWalkable) child);
-						}
-					});
+					rtr.add(new IWalkableImplementation(node, child));
 				}
 				return rtr;
 			}
 		};
 	}
-
+	
 	public VisualizationNode(final ISimpleAST<?, VisualizationNode> node) {
 		mBacking = new VisualizationWrapperNode(node) {
-
+			
 			@SuppressWarnings({ "unchecked", "rawtypes" })
 			@Override
 			protected List<IWalkable> getSuccessors() {
 				return (List) getOutgoingEdges();
 			}
-
+			
 			@Override
 			protected void createOutgoing() {
 				// we also create the incoming edge for this tree if we traverse
 				// in the right order
-				mIncoming = new ArrayList<VisualizationEdge>();
-
+				mIncoming = new ArrayList<>();
+				
 				for (final ISimpleAST<?, VisualizationNode> succ : node.getOutgoingNodes()) {
 					if (succ == null) {
 						continue;
@@ -231,37 +211,35 @@ public final class VisualizationNode implements
 						ve = new VisualizationEdge(VisualizationNode.this, succ.getVisualizationGraph(), succ);
 					}
 					mOutgoing.add(ve);
-					// succ.getVisualizationGraph().getIncomingEdges().add(ve);
 				}
 			}
-
+			
 			@Override
 			protected void createIncoming() {
 				// we only warn here, because after a call to getOutgoingEdges
 				// the incomingEdges should be initialized
-				// mLogger.warn("ISimpleAST does not support parent pointer -- try calling getOutgoingEdges() first");
 			}
 		};
 	}
-
+	
 	public VisualizationNode(final IDirectedGraph<?, VisualizationNode> node) {
 		this(node, new HashMap<IElement, VisualizationWrapperNode>());
 	}
-
+	
 	private VisualizationNode(final IDirectedGraph<?, VisualizationNode> node,
 			final HashMap<IElement, VisualizationWrapperNode> backingDirectory) {
 		if (backingDirectory.containsKey(node)) {
 			mBacking = backingDirectory.get(node);
 		} else {
-
+			
 			mBacking = new VisualizationWrapperNode(node) {
-
+				
 				@SuppressWarnings({ "unchecked", "rawtypes" })
 				@Override
 				protected List<IWalkable> getSuccessors() {
 					return (List) getOutgoingEdges();
 				}
-
+				
 				@Override
 				protected void createOutgoing() {
 					for (final IDirectedGraph<?, VisualizationNode> succ : node.getOutgoingNodes()) {
@@ -269,7 +247,7 @@ public final class VisualizationNode implements
 								new VisualizationNode(succ, backingDirectory), null));
 					}
 				}
-
+				
 				@Override
 				protected void createIncoming() {
 					for (final IDirectedGraph<?, VisualizationNode> pred : node.getOutgoingNodes()) {
@@ -281,7 +259,7 @@ public final class VisualizationNode implements
 			backingDirectory.put(node, mBacking);
 		}
 	}
-
+	
 	/**
 	 * Create a list of successor nodes based on the outgoing edges.
 	 * 
@@ -289,66 +267,66 @@ public final class VisualizationNode implements
 	 */
 	public List<VisualizationNode> getOutgoingNodes() {
 		if (mOutgoing == null) {
-			mOutgoing = new ArrayList<VisualizationNode>();
+			mOutgoing = new ArrayList<>();
 			for (final VisualizationEdge e : getOutgoingEdges()) {
 				mOutgoing.add(e.getTarget());
 			}
 		}
 		return mOutgoing;
 	}
-
+	
 	public Object getBacking() {
 		if (mBacking == null) {
 			return null;
 		}
 		return mBacking.mBackingNode;
 	}
-
+	
 	/* --------- IExplicitEdgesMultigraph implementation --------- */
-
+	
 	@Override
 	public IPayload getPayload() {
 		return mBacking.getPayload();
 	}
-
+	
 	@Override
 	public boolean hasPayload() {
 		return mBacking.hasPayload();
 	}
-
+	
 	@Override
 	public VisualizationNode getVisualizationGraph() {
 		return mBacking.getVisualizationGraph();
 	}
-
+	
 	@Override
 	public List<IWalkable> getSuccessors() {
 		return mBacking.getSuccessors();
 	}
-
+	
 	@Override
 	public List<VisualizationEdge> getIncomingEdges() {
 		return mBacking.getIncomingEdges();
 	}
-
+	
 	@Override
 	public List<VisualizationEdge> getOutgoingEdges() {
 		return mBacking.getOutgoingEdges();
 	}
-
+	
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (obj instanceof VisualizationNode) {
 			return mBacking.equals(((VisualizationNode) obj).mBacking);
 		}
 		return super.equals(obj);
 	}
-
+	
 	@Override
 	public int hashCode() {
 		return mBacking.hashCode();
 	}
-
+	
 	@Override
 	public String toString() {
 		String s = mBacking.toString();
@@ -357,76 +335,102 @@ public final class VisualizationNode implements
 		}
 		return s;
 	}
-
+	
+	@Override
+	public VisualizationNode getLabel() {
+		return this;
+	}
+	
 	/* ------------------- WrapperNode ------------------ */
-
+	
+	private final class IWalkableImplementation<T extends ILabeledEdgesMultigraph<T, L, VisualizationNode>, L>
+			implements IWalkable {
+		private final T mNode;
+		private final T mChild;
+		private static final long serialVersionUID = 1L;
+		
+		private IWalkableImplementation(final T node, final T child) {
+			mNode = node;
+			mChild = child;
+		}
+		
+		@Override
+		public boolean hasPayload() {
+			return extractPayload(mNode.getOutgoingEdgeLabel(mChild)) != null;
+		}
+		
+		@Override
+		public IPayload getPayload() {
+			return extractPayload(mNode.getOutgoingEdgeLabel(mChild));
+		}
+		
+		@Override
+		public List<IWalkable> getSuccessors() {
+			return Collections.singletonList((IWalkable) mChild);
+		}
+	}
+	
 	private abstract class VisualizationWrapperNode {
-
+		
 		private final IElement mBackingNode;
-
+		
 		protected List<VisualizationEdge> mOutgoing;
 		protected List<VisualizationEdge> mIncoming;
-
-		protected VisualizationWrapperNode(IElement backing) {
+		
+		protected VisualizationWrapperNode(final IElement backing) {
 			mBackingNode = backing;
 		}
-
+		
 		protected IPayload getPayload() {
 			return mBackingNode.getPayload();
 		}
-
+		
 		protected boolean hasPayload() {
 			return mBackingNode.hasPayload();
 		}
-
+		
 		protected VisualizationNode getVisualizationGraph() {
 			return VisualizationNode.this;
 		}
-
+		
 		protected List<VisualizationEdge> getOutgoingEdges() {
 			if (mOutgoing == null) {
-				mOutgoing = new ArrayList<VisualizationEdge>();
+				mOutgoing = new ArrayList<>();
 				createOutgoing();
 			}
 			return mOutgoing;
 		}
-
+		
 		protected List<VisualizationEdge> getIncomingEdges() {
 			if (mIncoming == null) {
-				mIncoming = new ArrayList<VisualizationEdge>();
+				mIncoming = new ArrayList<>();
 				createIncoming();
 			}
 			return mIncoming;
 		}
-
+		
 		protected abstract void createIncoming();
-
+		
 		protected abstract void createOutgoing();
-
+		
 		protected abstract List<IWalkable> getSuccessors();
-
+		
 		@Override
-		public boolean equals(Object obj) {
+		public boolean equals(final Object obj) {
 			if (obj instanceof VisualizationWrapperNode) {
 				return mBackingNode.equals(((VisualizationWrapperNode) obj).mBackingNode);
 			}
 			return super.equals(obj);
 		}
-
+		
 		@Override
 		public int hashCode() {
 			return mBackingNode.hashCode();
 		}
-
+		
 		@Override
 		public String toString() {
 			return mBackingNode.toString();
 		}
 	}
-
-	@Override
-	public VisualizationNode getLabel() {
-		return this;
-	}
-
 }
