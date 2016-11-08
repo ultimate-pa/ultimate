@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -150,25 +151,25 @@ public class SimplifyBddTest {
 		script.declareFun("select", new Sort[]{ints, ints}, bool);
 		script.declareFun("store", new Sort[]{ints, ints, bool}, ints);
 		
-		Term a = script.term("noMemleak_a");
-		Term b = script.term("noMemleak_b");
-		Term a_3 = script.term("v_noMemleak_a_3");
-		Term v7 = script.numeral("7");
-		Term vTrue = script.term("true");
-		Term vFalse = script.term("false");
+		final Term a = script.term("noMemleak_a");
+		final Term b = script.term("noMemleak_b");
+		final Term a_3 = script.term("v_noMemleak_a_3");
+		final Term v7 = script.numeral("7");
+		final Term vTrue = script.term("true");
+		final Term vFalse = script.term("false");
 		
 		
 
-		Term s1 = script.term("store", a_3, v7, vTrue);
-		Term s2 = script.term("store", s1, v7, vFalse);
-		Term e1 = script.term("=", a, s2);
+		final Term s1 = script.term("store", a_3, v7, vTrue);
+		final Term s2 = script.term("store", s1, v7, vFalse);
+		final Term e1 = script.term("=", a, s2);
 		
-		Term s3 = script.term("select", a_3, v7);
+		final Term s3 = script.term("select", a_3, v7);
 		
 		//Term e2 = SmtUtils.not(script, script.term("=", b, a_3));
-		Term e2 = script.term("=", b, a_3);
+		final Term e2 = script.term("=", b, a_3);
 		
-		Term and = script.term("and", e2, s3, e1);
+		final Term and = script.term("and", e2, s3, e1);
 		
 		final Term out = simplifyBdd.transformWithImplications(and);
 		System.out.println(out + "\n" + and);
@@ -183,25 +184,25 @@ public class SimplifyBddTest {
 		script.declareFun("select", new Sort[]{ints, ints}, bool);
 		script.declareFun("store", new Sort[]{ints, ints, bool}, ints);
 		
-		Term a = script.term("noMemleak_a");
-		Term b = script.term("noMemleak_b");
-		Term a_3 = script.term("v_noMemleak_a_3");
-		Term v7 = script.numeral("7");
-		Term vTrue = script.term("true");
-		Term vFalse = script.term("false");
+		final Term a = script.term("noMemleak_a");
+		final Term b = script.term("noMemleak_b");
+		final Term a_3 = script.term("v_noMemleak_a_3");
+		final Term v7 = script.numeral("7");
+		final Term vTrue = script.term("true");
+		final Term vFalse = script.term("false");
 		
 		
 
-		Term s1 = script.term("store", a_3, v7, vTrue);
-		Term s2 = script.term("store", s1, v7, vFalse);
-		Term e1 = script.term("=", a, s2);
+		final Term s1 = script.term("store", a_3, v7, vTrue);
+		final Term s2 = script.term("store", s1, v7, vFalse);
+		final Term e1 = script.term("=", a, s2);
 		
-		Term s3 = script.term("select", a_3, v7);
+		final Term s3 = script.term("select", a_3, v7);
 		
 		//Term e2 = SmtUtils.not(script, script.term("=", b, a_3));
-		Term e2 = script.term("=", b, a_3);
+		final Term e2 = script.term("=", b, a_3);
 		
-		Term and = script.term("and", e2, s3, e1);
+		final Term and = script.term("and", e2, s3, e1);
 		
 		final Term out = simplifyBdd.transformToDNF(and);
 		Assert.assertTrue(and + " got in and that got out " + out , Util.checkSat(script, script.term("distinct", and, out)) != LBool.SAT);
@@ -214,6 +215,20 @@ public class SimplifyBddTest {
 				(= noMemleak_a (store (store v_noMemleak_a_3 7 true) 7 false))
 		)*/
 		
+	}
+	
+	
+	@Test
+	public void bugSimplification20161108(){
+		//Sorts
+		final Sort sort_Bool = script.sort("Bool");
+		//Vars
+		final TermVariable t = script.variable("main_#t~switch0", sort_Bool);
+		//term
+		final Term term = script.term("not", t);
+		final Term out = simplifyBdd.transform(term); 
+		
+		Assert.assertTrue("simplification unsound. Input: " + term, Util.checkSat(script, script.term("distinct", term, out)) != LBool.SAT);
 	}
 	
 }
