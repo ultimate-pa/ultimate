@@ -15,7 +15,7 @@
     <include>../../../trunk/examples/svcomp/ldv-consumption/32_7a_cilled_false-unreach-call_linux-3.8-rc1-drivers--media--rc--rc-core.ko-main.cil.out.c</include>
     <include>../../../trunk/examples/svcomp/ldv-linux-3.12-rc1/linux-3.12-rc1.tar.xz-144_2a-drivers--staging--media--lirc--lirc_sasem.ko-entry_point_false-unreach-call.cil.out.c</include>
     <include>../../../trunk/examples/svcomp/ldv-regression/mutex_lock_int.c_false-unreach-call.cil.c</include>
-    <propertyfile>${inputfile_path}/ALL.prp</propertyfile>
+    <propertyfile>../../../trunk/examples/svcomp/PropertyUnreachCall.prp</propertyfile>
 	<option name="32bit"></option>
 	<option name="precise"></option>
   </tasks>
@@ -23,7 +23,7 @@
   <tasks name="Memsafety Deref">
     <include>../../../trunk/examples/svcomp/array-memsafety/diff_usafe_false-valid-deref.i</include>
     <include>../../../trunk/examples/svcomp/array-memsafety/array02-alloca_true-valid-memsafety.i</include>
-    <propertyfile>${inputfile_path}/ALL.prp</propertyfile>
+    <propertyfile>../../../trunk/examples/svcomp/PropertyMemSafety.prp</propertyfile>
 	<option name="32bit"></option>
 	<option name="precise"></option>
   </tasks>
@@ -35,7 +35,7 @@
 	<include>../../../trunk/examples/svcomp/ldv-memsafety/ArraysOfVariableLength_false-valid-deref-read.c</include>
 	<include>../../../trunk/examples/svcomp/ldv-memsafety/memset2_false-valid-deref-write.c</include>
 	<include>../../../trunk/examples/svcomp/ldv-memsafety/memset_false-valid-deref-write.c</include>
-    <propertyfile>${inputfile_path}/ALL.prp</propertyfile>
+    <propertyfile>../../../trunk/examples/svcomp/PropertyMemSafety.prp</propertyfile>
 	<option name="32bit"></option>
 	<option name="precise"></option>
   </tasks>
@@ -43,7 +43,7 @@
   <tasks name="Overflow">
     <include>../../../trunk/examples/svcomp/signedintegeroverflow-regression/ConversionToSignedInt_true-no-overflow.c.i</include>
     <include>../../../trunk/examples/svcomp/signedintegeroverflow-regression/AdditionIntMin_false-no-overflow.c.i</include>
-    <propertyfile>${inputfile_path}/ALL.prp</propertyfile>
+    <propertyfile>../../../trunk/examples/svcomp/PropertyOverflow.prp</propertyfile>
 	<option name="64bit"></option>
 	<option name="precise"></option>
   </tasks>
@@ -51,10 +51,10 @@
   <tasks name="CFI">
     <include>../../../trunk/examples/svcomp/ssh-simplified/s3_clnt_1_true-unreach-call.cil.c</include>
     <include>../../../trunk/examples/svcomp/ssh-simplified/s3_clnt_1_false-unreach-call.cil.c</include>
-    <include>../../../trunk/examples/svcomp/loop-acceleration/array_true-unreach-call3.i</include>
-    <include>../../../trunk/examples/svcomp/loop-acceleration/simple_false-unreach-call2.i</include>
+    <include>../../../trunk/examples/svcomp/loop-acceleration/array_true-unreach-call3_true-termination.i</include>
+    <include>../../../trunk/examples/svcomp/loop-acceleration/simple_false-unreach-call2_true-termination.i</include>
 	<include>../../../trunk/examples/svcomp/seq-pthread/cs_dekker_true-unreach-call.i</include>
-    <propertyfile>${inputfile_path}/ALL.prp</propertyfile>
+    <propertyfile>../../../trunk/examples/svcomp/PropertyUnreachCall.prp</propertyfile>
 	<option name="32bit"></option>
 	<option name="precise"></option>
   </tasks>
@@ -73,7 +73,7 @@
 	<include>../../../trunk/examples/svcomp/bitvector/num_conversion_1_true-unreach-call.i</include>
 	<include>../../../trunk/examples/svcomp/bitvector/s3_clnt_1_false-unreach-call.BV.c.cil.c</include>
 	<include>../../../trunk/examples/svcomp/bitvector/soft_float_2_true-unreach-call.c.cil.c</include>
-	<propertyfile>${inputfile_path}/ALL.prp</propertyfile>
+	<propertyfile>../../../trunk/examples/svcomp/PropertyUnreachCall.prp</propertyfile>
 	<option name="32bit"></option>
 	<option name="precise"></option>
   </tasks>
@@ -81,7 +81,7 @@
   <tasks name="Recursive">
     <include>../../../trunk/examples/svcomp/recursive/recHanoi02_true-unreach-call_true-termination.c</include>
     <include>../../../trunk/examples/svcomp/recursive/McCarthy91_false-unreach-call_false-termination.c</include>
-    <propertyfile>${inputfile_path}/ALL.prp</propertyfile>
+    <propertyfile>../../../trunk/examples/svcomp/PropertyUnreachCall.prp</propertyfile>
 	<option name="32bit"></option>
 	<option name="precise"></option>
   </tasks>
@@ -106,7 +106,7 @@
     <include>../../../trunk/examples/svcomp/termination-restricted-15/ConvLower_false-termination.c</include>
     <include>../../../trunk/examples/svcomp/termination-crafted/Collatz_unknown-termination.c</include>
 	<include>../../../trunk/examples/svcomp/termination-libowfat/dirname_true-termination.c.i</include>
-    <propertyfile>${inputfile_path}/ALL.prp</propertyfile>
+    <propertyfile>../../../trunk/examples/svcomp/Termination.prp</propertyfile>
 	<option name="64bit"></option>
 	<option name="precise"></option>
   </tasks>

@@ -11,10 +11,9 @@ pushd ../../trunk/source/BA_MavenParentUltimate/
 mvn clean install -Pmaterialize
 popd
 
-./createZipAutomizer.sh linux
-./createZipAbsult.sh linux
-#./createZipAutomizer.sh win32
-./createZipCodeCheck.sh
+./createZip.sh Taipan linux AutomizerC_WitnessPrinter.xml
+./createZip.sh Automizer linux AutomizerC_WitnessPrinter.xml BuchiAutomizerCWithBlockEncoding.xml AutomizerC.xml
+./createZip.sh Kojak KojakC.xml linux 
 
 #scp -oHostKeyAlgorithms=+ssh-dss *.zip $CURRENTUSER@sotec.informatik.uni-freiburg.de:/export/server/httpd/ultimate/downloads/svcomp2016/.
 #rm *.zip 
