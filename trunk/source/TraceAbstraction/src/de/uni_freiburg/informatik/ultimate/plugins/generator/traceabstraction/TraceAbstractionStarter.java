@@ -118,7 +118,7 @@ public class TraceAbstractionStarter {
 				csToolkit.getSymbolTable(), taPrefs.getSimplificationTechnique(), taPrefs.getXnfConversionTechnique());
 		final TraceAbstractionBenchmarks traceAbstractionBenchmark = new TraceAbstractionBenchmarks(rootAnnot);
 		
-		final Map<String, Collection<BoogieIcfgLocation>> proc2errNodes = rootAnnot.getErrorNodes();
+		final Map<String, Collection<BoogieIcfgLocation>> proc2errNodes = rootAnnot.getProcedureErrorNodes();
 		final Collection<BoogieIcfgLocation> errNodesOfAllProc = new ArrayList<>();
 		for (final Collection<BoogieIcfgLocation> errNodeOfProc : proc2errNodes.values()) {
 			errNodesOfAllProc.addAll(errNodeOfProc);
@@ -189,7 +189,7 @@ public class TraceAbstractionStarter {
 				
 			}
 			
-			final Map<String, BoogieIcfgLocation> finalNodes = rootAnnot.getExitNodes();
+			final Map<String, BoogieIcfgLocation> finalNodes = rootAnnot.getProcedureExitNodes();
 			for (final Entry<String, BoogieIcfgLocation> proc : finalNodes.entrySet()) {
 				final String procName = proc.getKey();
 				if (isAuxilliaryProcedure(procName)) {

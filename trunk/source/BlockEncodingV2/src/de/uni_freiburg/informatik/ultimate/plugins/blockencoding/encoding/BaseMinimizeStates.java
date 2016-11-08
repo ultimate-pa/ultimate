@@ -78,7 +78,7 @@ public abstract class BaseMinimizeStates extends BaseBlockEncoder {
 		final Deque<IcfgLocation> nodes = new ArrayDeque<>();
 		final Set<IcfgLocation> closed = new HashSet<>();
 		
-		nodes.addAll(icfg.getEntryNodes().values());
+		nodes.addAll(icfg.getProcedureEntryNodes().values());
 		
 		while (!nodes.isEmpty()) {
 			checkForTimeoutOrCancellation();

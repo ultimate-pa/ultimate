@@ -110,7 +110,7 @@ public class CFG2NestedWordAutomaton {
 		
 		// put all LocationNodes into mNodes
 		final LinkedList<BoogieIcfgLocation> queue = new LinkedList<BoogieIcfgLocation>();
-		for (final IcfgLocation node : rootAnnot.getEntryNodes().values()) {
+		for (final IcfgLocation node : rootAnnot.getProcedureEntryNodes().values()) {
 			final BoogieIcfgLocation locNode = (BoogieIcfgLocation) node;
 			// add only LocationNodes of implementations
 			final String procName = locNode.getProcedure();

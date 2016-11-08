@@ -187,7 +187,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 
 		mEdgeChecker = new MonolithicHoareTripleChecker(mCsToolkit);
 
-		final Map<String, Collection<BoogieIcfgLocation>> proc2errNodes = rootAnnot.getErrorNodes();
+		final Map<String, Collection<BoogieIcfgLocation>> proc2errNodes = rootAnnot.getProcedureErrorNodes();
 		mErrNodesOfAllProc = new ArrayList<BoogieIcfgLocation>();
 		for (final Collection<BoogieIcfgLocation> errNodeOfProc : proc2errNodes.values()) {
 			mErrNodesOfAllProc.addAll(errNodeOfProc);

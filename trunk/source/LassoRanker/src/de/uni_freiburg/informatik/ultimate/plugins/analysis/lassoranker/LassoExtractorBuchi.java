@@ -118,7 +118,7 @@ public class LassoExtractorBuchi extends AbstractLassoExtractor {
 
 	
 	private IcfgLocation extractSomeNodeForErrorReport(final BoogieIcfgContainer rootNode) {
-		return rootNode.getEntryNodes().entrySet().iterator().next().getValue();
+		return rootNode.getProcedureEntryNodes().entrySet().iterator().next().getValue();
 	}
 	
 	

@@ -89,9 +89,9 @@ public class TestAbstractMinimizationVisitor extends TestCase {
 		// output the start node
 		final RootNode rootNode = (RootNode) mRcfgNode;
 		String fileName = "";
-		for (final String key : rootNode.getRootAnnot().getEntryNodes().keySet()) {
+		for (final String key : rootNode.getRootAnnot().getProcedureEntryNodes().keySet()) {
 			if (!key.equals("ULTIMATE.init") && !key.equals("ULTIMATE.start")) {
-				fileName = rootNode.getRootAnnot().getEntryNodes().get(key)
+				fileName = rootNode.getRootAnnot().getProcedureEntryNodes().get(key)
 						.getPayload().getLocation().getFileName();
 				break;
 			}

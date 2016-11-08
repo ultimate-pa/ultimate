@@ -186,27 +186,27 @@ public class MinModelConverter {
 	private void updateRootAnnot(final BoogieIcfgContainer rootAnnot) {
 		final HashMap<BoogieIcfgLocation, BoogieIcfgLocation> progPointMap = mConvertVisitor.getOrigToNewMap();
 		// Update the Entry-Nodes
-		final HashMap<String, BoogieIcfgLocation> entryNodes = new HashMap<String, BoogieIcfgLocation>(rootAnnot.getEntryNodes());
-		rootAnnot.getEntryNodes().clear();
+		final HashMap<String, BoogieIcfgLocation> entryNodes = new HashMap<String, BoogieIcfgLocation>(rootAnnot.getProcedureEntryNodes());
+		rootAnnot.getProcedureEntryNodes().clear();
 		for (final String key : entryNodes.keySet()) {
 			final BoogieIcfgLocation oldVal = entryNodes.get(key);
 			if (progPointMap.containsKey(oldVal)) {
-				rootAnnot.getEntryNodes().put(key, progPointMap.get(oldVal));
+				rootAnnot.getProcedureEntryNodes().put(key, progPointMap.get(oldVal));
 			}
 		}
 		// Update the Exit-Nodes
-		final HashMap<String, BoogieIcfgLocation> exitNodes = new HashMap<String, BoogieIcfgLocation>(rootAnnot.getExitNodes());
-		rootAnnot.getExitNodes().clear();
+		final HashMap<String, BoogieIcfgLocation> exitNodes = new HashMap<String, BoogieIcfgLocation>(rootAnnot.getProcedureExitNodes());
+		rootAnnot.getProcedureExitNodes().clear();
 		for (final String key : exitNodes.keySet()) {
 			final BoogieIcfgLocation oldVal = exitNodes.get(key);
 			if (progPointMap.containsKey(oldVal)) {
-				rootAnnot.getExitNodes().put(key, progPointMap.get(oldVal));
+				rootAnnot.getProcedureExitNodes().put(key, progPointMap.get(oldVal));
 			}
 		}
 		// Update the Error-Nodes
-		for (final String key : rootAnnot.getErrorNodes().keySet()) {
+		for (final String key : rootAnnot.getProcedureErrorNodes().keySet()) {
 			final ArrayList<BoogieIcfgLocation> newReferences = new ArrayList<BoogieIcfgLocation>();
-			for (final BoogieIcfgLocation oldVal : rootAnnot.getErrorNodes().get(key)) {
+			for (final BoogieIcfgLocation oldVal : rootAnnot.getProcedureErrorNodes().get(key)) {
 				if (progPointMap.containsKey(oldVal)) {
 					newReferences.add(progPointMap.get(oldVal));
 				} else {
@@ -214,7 +214,7 @@ public class MinModelConverter {
 							"There is no correspondent node in the" + " new graph for the error location " + oldVal);
 				}
 			}
-			rootAnnot.getErrorNodes().put(key, newReferences);
+			rootAnnot.getProcedureErrorNodes().put(key, newReferences);
 		}
 		// Update the LoopLocations
 		// Attention: ProgramPoint implements equals, we have to care for that!

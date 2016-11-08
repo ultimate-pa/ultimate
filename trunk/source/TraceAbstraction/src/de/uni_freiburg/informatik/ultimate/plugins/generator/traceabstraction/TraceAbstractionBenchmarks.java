@@ -41,7 +41,7 @@ public class TraceAbstractionBenchmarks implements ICsvProviderProvider<Object> 
 	private final int mErrorLocations;
 
 	public TraceAbstractionBenchmarks(BoogieIcfgContainer rootAnnot) {
-		mProcedures = rootAnnot.getEntryNodes().size();
+		mProcedures = rootAnnot.getProcedureEntryNodes().size();
 		mLocations = rootAnnot.getNumberOfProgramPoints();
 		mErrorLocations = rootAnnot.getNumberOfErrorNodes();
 		mCegarLoopBenchmarkData = new StatisticsData();

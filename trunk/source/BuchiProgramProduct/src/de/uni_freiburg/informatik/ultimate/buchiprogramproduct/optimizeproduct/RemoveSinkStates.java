@@ -66,7 +66,7 @@ public final class RemoveSinkStates extends BaseProductOptimizer {
 		final ArrayList<IcfgLocation> rtr = new ArrayList<>();
 		final ArrayDeque<IcfgLocation> nodes = new ArrayDeque<>();
 		final HashSet<IcfgLocation> closed = new HashSet<>();
-		nodes.addAll(root.getEntryNodes().values());
+		nodes.addAll(root.getProcedureEntryNodes().values());
 		while (!nodes.isEmpty()) {
 			final IcfgLocation current = nodes.removeFirst();
 			if (closed.contains(current)) {

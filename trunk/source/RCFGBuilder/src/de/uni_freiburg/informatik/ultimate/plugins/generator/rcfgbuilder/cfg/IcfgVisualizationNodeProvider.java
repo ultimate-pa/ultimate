@@ -42,7 +42,7 @@ public final class IcfgVisualizationNodeProvider {
 	public static VisualizationNode getVisualizationGraph(final BoogieIcfgContainer cont) {
 		final IcfgVisualizationRoot artificialRoot = new IcfgVisualizationRoot();
 		artificialRoot.getPayload().getAnnotations().put(cont.getClass().getSimpleName(), cont);
-		for (final Entry<String, BoogieIcfgLocation> entry : cont.getEntryNodes().entrySet()) {
+		for (final Entry<String, BoogieIcfgLocation> entry : cont.getProcedureEntryNodes().entrySet()) {
 			final IcfgVisualizationEdge edge = new IcfgVisualizationEdge(artificialRoot, entry.getValue());
 			edge.redirectSource(artificialRoot);
 			edge.redirectTarget(entry.getValue());

@@ -144,7 +144,7 @@ public class BoogieIcfgContainer extends ModernAnnotations implements IElement, 
 	 * corresponding and oldvars have the same values, we assume the requires clause and reach the initial node.
 	 *
 	 */
-	public Map<String, BoogieIcfgLocation> getEntryNodes() {
+	public Map<String, BoogieIcfgLocation> getProcedureEntryNodes() {
 		return mEntryNodes;
 	}
 
@@ -153,21 +153,21 @@ public class BoogieIcfgContainer extends ModernAnnotations implements IElement, 
 	 * auxiliary location that is reached after assuming the ensures part of the specification. This locNode is the
 	 * source of ReturnEdges which lead to the callers of this procecure.
 	 */
-	public Map<String, BoogieIcfgLocation> getExitNodes() {
+	public Map<String, BoogieIcfgLocation> getProcedureExitNodes() {
 		return mExitNode;
 	}
 
 	/**
 	 * Maps a procedure name to error locations generated for this procedure.
 	 */
-	public Map<String, Collection<BoogieIcfgLocation>> getErrorNodes() {
+	public Map<String, Collection<BoogieIcfgLocation>> getProcedureErrorNodes() {
 		return mErrorNodes;
 	}
 
 	public int getNumberOfErrorNodes() {
 		int result = 0;
-		for (final String proc : getErrorNodes().keySet()) {
-			result += getErrorNodes().get(proc).size();
+		for (final String proc : getProcedureErrorNodes().keySet()) {
+			result += getProcedureErrorNodes().get(proc).size();
 		}
 		return result;
 	}
@@ -237,7 +237,7 @@ public class BoogieIcfgContainer extends ModernAnnotations implements IElement, 
 	 */
 	public static Collection<IcfgEdge> extractStartEdges(final BoogieIcfgContainer root) {
 		final List<IcfgEdge> startEdges = new ArrayList<>();
-		for (final Entry<String, BoogieIcfgLocation> entry : root.getEntryNodes().entrySet()) {
+		for (final Entry<String, BoogieIcfgLocation> entry : root.getProcedureEntryNodes().entrySet()) {
 			startEdges.addAll(entry.getValue().getOutgoingEdges());
 		}
 		return startEdges;
@@ -245,7 +245,7 @@ public class BoogieIcfgContainer extends ModernAnnotations implements IElement, 
 
 	public RootNode constructRootNode() {
 		final RootNode rootNode = new RootNode(getPayload().getLocation(), this);
-		for (final Entry<String, BoogieIcfgLocation> entry : getEntryNodes().entrySet()) {
+		for (final Entry<String, BoogieIcfgLocation> entry : getProcedureEntryNodes().entrySet()) {
 			new RootEdge(rootNode, entry.getValue());
 		}
 		return rootNode;

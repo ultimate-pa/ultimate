@@ -62,7 +62,7 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 		// look for asserts in the RCFG
 		final List<IcfgLocation> nodes = new ArrayList<>();
 		// add entry nodes of all procedures to nodes
-		for (final Entry<String, BoogieIcfgLocation> entry : rootNode.getEntryNodes().entrySet()) {
+		for (final Entry<String, BoogieIcfgLocation> entry : rootNode.getProcedureEntryNodes().entrySet()) {
 			final Set<IcfgLocation> a = nodesInGraph(entry.getValue());
 			nodes.addAll(a);
 		}
@@ -113,8 +113,8 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 	private IAbstractInterpretationResult<DataflowState, CodeBlock, IProgramVar, BoogieIcfgLocation>
 			obtainDataflowAnalysisResult(final BoogieIcfgContainer r) {
 		final List<CodeBlock> edges = new ArrayList<>();
-		r.getEntryNodes();
-		for (final Entry<String, BoogieIcfgLocation> en : r.getEntryNodes().entrySet()) {
+		r.getProcedureEntryNodes();
+		for (final Entry<String, BoogieIcfgLocation> en : r.getProcedureEntryNodes().entrySet()) {
 			edges.add((CodeBlock) en.getValue().getOutgoingEdges().get(0));
 		}
 		
@@ -362,7 +362,7 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 	private void computeInitNode(final BoogieIcfgContainer r) {
 		final Map<String, Set<BoogieIcfgLocation>> locations = new HashMap<>();
 		IcfgEdge stmt = null;
-		for (final Entry<String, BoogieIcfgLocation> entry : r.getEntryNodes().entrySet()) {
+		for (final Entry<String, BoogieIcfgLocation> entry : r.getProcedureEntryNodes().entrySet()) {
 			final IcfgLocation s = entry.getValue();
 			final BoogieIcfgLocation pp = (BoogieIcfgLocation) s;
 			if (pp.getProcedure() == "~init") {

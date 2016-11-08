@@ -90,7 +90,7 @@ public class HoareAnnotationChecker {
 		// neither proven nor refuted because there were no interpolants
 		final int[] yield = new int[4];
 
-		final List<IcfgLocation> initialNodes = new ArrayList<>(rootNode.getEntryNodes().values());
+		final List<IcfgLocation> initialNodes = new ArrayList<>(rootNode.getProcedureEntryNodes().values());
 		final Set<BoogieIcfgLocation> visited = new HashSet<BoogieIcfgLocation>();
 		final List<BoogieIcfgLocation> worklist = new LinkedList<BoogieIcfgLocation>();
 

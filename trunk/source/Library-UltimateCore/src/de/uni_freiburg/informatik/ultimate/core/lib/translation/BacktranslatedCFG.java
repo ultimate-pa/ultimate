@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2016 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Core.
- * 
+ *
  * The ULTIMATE Core is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Core is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Core. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Core, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Core grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Core grant you additional permission
  * to convey the resulting work.
  */
 
@@ -35,23 +35,23 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IExplicitEdgesMulti
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslatedCFG;
 
 /**
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
 public class BacktranslatedCFG<VL, TE> implements IBacktranslatedCFG<VL, TE> {
 
-	private final List<IExplicitEdgesMultigraph<?, ?, VL, TE,?>> mCFGs;
+	private final List<IExplicitEdgesMultigraph<?, ?, VL, TE, ?>> mCFGs;
 	private final String mFilename;
 	private final Class<TE> mTraceElementClass;
 
-	public BacktranslatedCFG(final String filename, final IExplicitEdgesMultigraph<?, ?, VL, TE,?> cfg,
+	public BacktranslatedCFG(final String filename, final IExplicitEdgesMultigraph<?, ?, VL, TE, ?> cfg,
 			final Class<TE> clazz) {
 		this(filename, Collections.singletonList(cfg), clazz);
 	}
 
-	public BacktranslatedCFG(final String filename, final List<? extends IExplicitEdgesMultigraph<?, ?, VL, TE,?>> cfgs,
-			final Class<TE> clazz) {
+	public BacktranslatedCFG(final String filename,
+			final List<? extends IExplicitEdgesMultigraph<?, ?, VL, TE, ?>> cfgs, final Class<TE> clazz) {
 		assert filename != null;
 		assert cfgs != null && !cfgs.isEmpty();
 		assert clazz != null;
@@ -61,7 +61,7 @@ public class BacktranslatedCFG<VL, TE> implements IBacktranslatedCFG<VL, TE> {
 	}
 
 	@Override
-	public List<IExplicitEdgesMultigraph<?, ?, VL, TE,?>> getCFGs() {
+	public List<IExplicitEdgesMultigraph<?, ?, VL, TE, ?>> getCFGs() {
 		return mCFGs;
 	}
 

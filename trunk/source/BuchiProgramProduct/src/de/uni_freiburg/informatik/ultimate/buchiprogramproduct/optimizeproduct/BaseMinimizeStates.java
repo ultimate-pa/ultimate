@@ -65,7 +65,7 @@ public abstract class BaseMinimizeStates extends BaseProductOptimizer {
 		final Deque<IcfgLocation> nodes = new ArrayDeque<>();
 		final Set<IcfgLocation> closed = new HashSet<>();
 
-		nodes.addAll(root.getEntryNodes().values());
+		nodes.addAll(root.getProcedureEntryNodes().values());
 
 		while (!nodes.isEmpty()) {
 			checkForTimeoutOrCancellation();

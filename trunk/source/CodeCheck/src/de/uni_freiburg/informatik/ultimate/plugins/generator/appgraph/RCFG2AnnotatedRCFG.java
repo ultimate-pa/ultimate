@@ -74,7 +74,7 @@ public class RCFG2AnnotatedRCFG {
 		final ArrayDeque<BoogieIcfgLocation> openNodes = new ArrayDeque<BoogieIcfgLocation>();
 		moldPpTonew = new HashMap<BoogieIcfgLocation, AnnotatedProgramPoint>();
 
-		for (final Entry<String, BoogieIcfgLocation> entry : oldRoot.getEntryNodes().entrySet()) {
+		for (final Entry<String, BoogieIcfgLocation> entry : oldRoot.getProcedureEntryNodes().entrySet()) {
 			final BoogieIcfgLocation oldNode = entry.getValue();
 			final AnnotatedProgramPoint newNode = createAnnotatedProgramPoint(oldNode);
 

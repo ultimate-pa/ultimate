@@ -168,7 +168,7 @@ public final class ProductGenerator {
 	private void collectRcfgLocations() {
 		final Set<BoogieIcfgLocation> unhandledLocations = new LinkedHashSet<>();
 
-		for (final Entry<String, BoogieIcfgLocation> entry : mRcfgRoot.getEntryNodes().entrySet()) {
+		for (final Entry<String, BoogieIcfgLocation> entry : mRcfgRoot.getProcedureEntryNodes().entrySet()) {
 			unhandledLocations.add(entry.getValue());
 		}
 
@@ -581,14 +581,14 @@ public final class ProductGenerator {
 
 			rootAnnot.getLoopLocations().remove(current);
 
-			final BoogieIcfgLocation entry = rootAnnot.getEntryNodes().get(current.getProcedure());
+			final BoogieIcfgLocation entry = rootAnnot.getProcedureEntryNodes().get(current.getProcedure());
 			if (current.equals(entry)) {
-				rootAnnot.getEntryNodes().remove(current.getProcedure());
+				rootAnnot.getProcedureEntryNodes().remove(current.getProcedure());
 			}
 
-			final BoogieIcfgLocation exit = rootAnnot.getExitNodes().get(current.getProcedure());
+			final BoogieIcfgLocation exit = rootAnnot.getProcedureExitNodes().get(current.getProcedure());
 			if (current.equals(exit)) {
-				rootAnnot.getExitNodes().remove(current);
+				rootAnnot.getProcedureExitNodes().remove(current);
 			}
 
 			if (ProductLocationNameGenerator.isHelperState(current)) {
@@ -846,14 +846,14 @@ public final class ProductGenerator {
 		// products; but we can currently only represent one. Do we need to do
 		// something about that?
 
-		final BoogieIcfgLocation entry = rootAnnot.getEntryNodes().get(originalState.getProcedure());
+		final BoogieIcfgLocation entry = rootAnnot.getProcedureEntryNodes().get(originalState.getProcedure());
 		if (entry != null) {
-			rootAnnot.getEntryNodes().put(originalState.getProcedure(), rtr);
+			rootAnnot.getProcedureEntryNodes().put(originalState.getProcedure(), rtr);
 		}
 
-		final BoogieIcfgLocation exit = rootAnnot.getExitNodes().get(originalState.getProcedure());
+		final BoogieIcfgLocation exit = rootAnnot.getProcedureExitNodes().get(originalState.getProcedure());
 		if (exit != null) {
-			rootAnnot.getExitNodes().put(originalState.getProcedure(), rtr);
+			rootAnnot.getProcedureExitNodes().put(originalState.getProcedure(), rtr);
 		}
 
 		if (ProductLocationNameGenerator.isHelperState(rtr)) {

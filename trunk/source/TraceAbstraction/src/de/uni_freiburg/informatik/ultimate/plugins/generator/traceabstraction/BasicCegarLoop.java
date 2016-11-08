@@ -165,7 +165,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				services.getLoggingService().getLogger(Activator.PLUGIN_ID));
 		mUseInterpolantConsolidation = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_INTERPOLANTS_CONSOLIDATION);
-		if (mFallbackToFpIfInterprocedural && rootNode.getEntryNodes().size() > 1) {
+		if (mFallbackToFpIfInterprocedural && rootNode.getProcedureEntryNodes().size() > 1) {
 			if (interpolation == InterpolationTechnique.FPandBP) {
 				mLogger.info("fallback from FPandBP to FP because CFG is interprocedural");
 				mInterpolation = InterpolationTechnique.ForwardPredicates;

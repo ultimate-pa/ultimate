@@ -120,7 +120,7 @@ public abstract class CFG2Automaton {
 			if (proc.equals(mInitProcedure)) {
 				continue;
 			}
-			final BoogieIcfgLocation entry = mRootAnnot.getEntryNodes().get(proc);
+			final BoogieIcfgLocation entry = mRootAnnot.getProcedureEntryNodes().get(proc);
 			mAutomata.add(getNestedWordAutomaton(entry));
 		}
 		assert (mAutomata.size() == numberOfProcedures);
@@ -129,8 +129,8 @@ public abstract class CFG2Automaton {
 
 	private CodeBlock extractPrecondition() {
 		assert (mRootAnnot.getBoogieDeclarations().getProcImplementation().containsKey(mInitProcedure));
-		final BoogieIcfgLocation entry = mRootAnnot.getEntryNodes().get(mInitProcedure);
-		final BoogieIcfgLocation exit = mRootAnnot.getExitNodes().get(mInitProcedure);
+		final BoogieIcfgLocation entry = mRootAnnot.getProcedureEntryNodes().get(mInitProcedure);
+		final BoogieIcfgLocation exit = mRootAnnot.getProcedureExitNodes().get(mInitProcedure);
 		final List<CodeBlock> codeBlocks = new ArrayList<CodeBlock>();
 
 		BoogieIcfgLocation current = entry;

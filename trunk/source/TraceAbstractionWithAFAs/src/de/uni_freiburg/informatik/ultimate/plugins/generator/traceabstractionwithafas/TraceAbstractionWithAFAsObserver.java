@@ -97,7 +97,7 @@ public class TraceAbstractionWithAFAsObserver extends BaseObserver {
 		final TraceAbstractionBenchmarks taBenchmarks = new TraceAbstractionBenchmarks(rootAnnot);
 		
 
-		final Map<String, Collection<BoogieIcfgLocation>> proc2errNodes = rootAnnot.getErrorNodes();
+		final Map<String, Collection<BoogieIcfgLocation>> proc2errNodes = rootAnnot.getProcedureErrorNodes();
 		final Collection<BoogieIcfgLocation> errNodesOfAllProc = new ArrayList<BoogieIcfgLocation>();
 		for (final Collection<BoogieIcfgLocation> errNodeOfProc : proc2errNodes.values()) {
 			errNodesOfAllProc.addAll(errNodeOfProc);

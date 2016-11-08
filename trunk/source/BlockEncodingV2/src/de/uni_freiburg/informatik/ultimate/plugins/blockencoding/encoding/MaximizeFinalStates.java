@@ -74,7 +74,7 @@ public final class MaximizeFinalStates extends BaseBlockEncoder {
 		final Set<IcfgLocation> closed = new HashSet<>();
 		int newAcceptingStates = 0;
 		
-		nodes.addAll(icfg.getEntryNodes().values());
+		nodes.addAll(icfg.getProcedureEntryNodes().values());
 		
 		while (!nodes.isEmpty()) {
 			final IcfgLocation current = nodes.removeFirst();

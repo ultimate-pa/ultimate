@@ -218,7 +218,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 					longDescr.toString());
 			reportResult(reportRes);
 		} else if (result == Result.TIMEOUT) {
-			final BoogieIcfgLocation position = mRootAnnot.getEntryNodes().values().iterator().next();
+			final BoogieIcfgLocation position = mRootAnnot.getProcedureEntryNodes().values().iterator().next();
 			final String longDescr = "Timeout while trying to prove " + whatToProve + ". "
 					+ bcl.getToolchainCancelledException().printRunningTaskMessage();
 			final IResult reportRes = new TimeoutResultAtElement<IcfgElement>(position, Activator.PLUGIN_ID,

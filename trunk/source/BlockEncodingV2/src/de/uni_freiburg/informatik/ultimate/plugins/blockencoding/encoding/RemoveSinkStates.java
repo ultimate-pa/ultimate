@@ -72,7 +72,7 @@ public final class RemoveSinkStates extends BaseBlockEncoder {
 		final Deque<IcfgLocation> nodes = new ArrayDeque<>();
 		final Set<IcfgLocation> closed = new HashSet<>();
 		
-		nodes.addAll(icfg.getEntryNodes().values());
+		nodes.addAll(icfg.getProcedureEntryNodes().values());
 		while (!nodes.isEmpty()) {
 			final IcfgLocation current = nodes.removeFirst();
 			if (closed.contains(current)) {

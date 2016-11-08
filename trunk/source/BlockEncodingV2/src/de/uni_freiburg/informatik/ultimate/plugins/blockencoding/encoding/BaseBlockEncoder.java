@@ -91,7 +91,7 @@ public abstract class BaseBlockEncoder implements IEncoder {
 
 	protected void removeDisconnectedLocations(final BoogieIcfgContainer root) {
 		final Set<BoogieIcfgLocation> initial =
-				root.getEntryNodes().entrySet().stream().map(a -> a.getValue()).collect(Collectors.toSet());
+				root.getProcedureEntryNodes().entrySet().stream().map(a -> a.getValue()).collect(Collectors.toSet());
 
 		// get all locations without incoming edges that are not initial
 		final Deque<BoogieIcfgLocation> locationsWithoutInEdge = root.getProgramPoints().entrySet().stream()
@@ -121,19 +121,19 @@ public abstract class BaseBlockEncoder implements IEncoder {
 
 		final IcfgLocation removedPP = root.getProgramPoints().get(procName).remove(debugIdentifier);
 
-		final BoogieIcfgLocation procExit = root.getExitNodes().get(procName);
+		final BoogieIcfgLocation procExit = root.getProcedureExitNodes().get(procName);
 		if (toRemove.equals(procExit)) {
-			root.getExitNodes().remove(procName);
+			root.getProcedureExitNodes().remove(procName);
 		}
 
-		final BoogieIcfgLocation procEntry = root.getEntryNodes().get(procName);
+		final BoogieIcfgLocation procEntry = root.getProcedureEntryNodes().get(procName);
 		if (toRemove.equals(procEntry)) {
-			root.getEntryNodes().remove(procName);
+			root.getProcedureEntryNodes().remove(procName);
 		}
 
 		root.getLoopLocations().remove(toRemove);
 		root.getPotentialCycleProgramPoints().remove(toRemove);
-		final Collection<BoogieIcfgLocation> errorsInProc = root.getErrorNodes().get(procName);
+		final Collection<BoogieIcfgLocation> errorsInProc = root.getProcedureErrorNodes().get(procName);
 		if (errorsInProc != null) {
 			errorsInProc.remove(toRemove);
 		}

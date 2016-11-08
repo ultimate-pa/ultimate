@@ -101,7 +101,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 				csToolkit.getSymbolTable(), taPrefs.getSimplificationTechnique(), taPrefs.getXnfConversionTechnique());
 		final TraceAbstractionBenchmarks timingStatistics = new TraceAbstractionBenchmarks(rootNode);
 
-		final Map<String, Collection<BoogieIcfgLocation>> proc2errNodes = rootAnnot.getErrorNodes();
+		final Map<String, Collection<BoogieIcfgLocation>> proc2errNodes = rootAnnot.getProcedureErrorNodes();
 		final Collection<BoogieIcfgLocation> errNodesOfAllProc = new ArrayList<>();
 		for (final Collection<BoogieIcfgLocation> errNodeOfProc : proc2errNodes.values()) {
 			errNodesOfAllProc.addAll(errNodeOfProc);
