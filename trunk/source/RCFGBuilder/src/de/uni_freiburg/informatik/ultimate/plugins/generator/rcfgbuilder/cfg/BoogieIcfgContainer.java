@@ -37,15 +37,16 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.VisualizationNode;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.AbstractAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation.LoopEntryType;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.ModernAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IVisualizable;
 import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieDeclarations;
@@ -64,24 +65,19 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBac
  * @author heizmann@informatik.uni-freiburg.de
  *
  */
-public class BoogieIcfgContainer extends AbstractAnnotations implements IElement, IVisualizable<VisualizationNode> {
+public class BoogieIcfgContainer extends ModernAnnotations implements IElement, IVisualizable<VisualizationNode> {
 	/**
 	 * The serial version UID. Change only if serial representation changes.
 	 */
 	private static final long serialVersionUID = -221145005712480077L;
-	
-	/**
-	 * The published attributes. Update this and getFieldValue() if you add new attributes.
-	 */
-	private static final String[] ATTRIB_FIELDS = { "locNodes", "loopEntry" };
-	
+
 	private final BoogieDeclarations mBoogieDeclarations;
 	private final Map<String, BoogieIcfgLocation> mEntryNodes;
 	private final Map<String, BoogieIcfgLocation> mExitNode;
 	private final Map<BoogieIcfgLocation, ILocation> mLoopLocations;
 	private final Map<String, Collection<BoogieIcfgLocation>> mErrorNodes;
 	private final Map<String, Map<String, BoogieIcfgLocation>> mLocNodes;
-	
+
 	/**
 	 * Maps a procedure name to the final node of that procedure. The final node of a procedure represents the location
 	 * that is reached after executing the last statement of the procedure or after executing a return statement. At
@@ -93,26 +89,26 @@ public class BoogieIcfgContainer extends AbstractAnnotations implements IElement
 	 *
 	 */
 	final Map<String, BoogieIcfgLocation> mFinalNode;
-	
+
 	private final Boogie2SMT mBoogie2SMT;
 	private final ManagedScript mManagedScript;
 	private final ModifiableGlobalVariableManager mModifiableGlobalVariableManager;
 	private final CodeBlockFactory mCodeBlockFactory;
 	private final CfgSmtToolkit mCfgSmtToolkit;
 	private final IPayload mPayload;
-	
+
 	private Set<BoogieIcfgLocation> mPotentialCycleProgramPoints;
-	
+
 	public BoogieIcfgContainer(final IUltimateServiceProvider services, final BoogieDeclarations boogieDeclarations,
 			final Boogie2SMT mBoogie2smt, final RCFGBacktranslator backtranslator, final ILocation loc) {
-		
+
 		mEntryNodes = new HashMap<>();
 		mExitNode = new HashMap<>();
 		mFinalNode = new HashMap<>();
 		mLocNodes = new HashMap<>();
 		mErrorNodes = new HashMap<>();
 		mLoopLocations = new HashMap<>();
-		
+
 		mBoogieDeclarations = boogieDeclarations;
 		mBoogie2SMT = mBoogie2smt;
 		mManagedScript = mBoogie2smt.getManagedScript();
@@ -124,32 +120,16 @@ public class BoogieIcfgContainer extends AbstractAnnotations implements IElement
 				mBoogie2SMT.getBoogie2SmtSymbolTable());
 		mPayload = new Payload(loc);
 		mPayload.getAnnotations().put(Activator.PLUGIN_ID, this);
-		
 	}
-	
-	@Override
-	protected String[] getFieldNames() {
-		return ATTRIB_FIELDS;
-	}
-	
-	@Override
-	protected Object getFieldValue(final String field) {
-		if ("locNodes".equals(field)) {
-			return getProgramPoints();
-		} else if ("loopEntry".equals(field)) {
-			return getLoopLocations();
-		} else {
-			throw new UnsupportedOperationException("Unknown field " + field);
-		}
-	}
-	
+
 	/**
 	 * Maps the pair of procedure name location name to the LocNode that represents this location.
 	 */
+	@Visualizable
 	public Map<String, Map<String, BoogieIcfgLocation>> getProgramPoints() {
 		return mLocNodes;
 	}
-	
+
 	public int getNumberOfProgramPoints() {
 		int result = 0;
 		for (final String proc : getProgramPoints().keySet()) {
@@ -157,7 +137,7 @@ public class BoogieIcfgContainer extends AbstractAnnotations implements IElement
 		}
 		return result;
 	}
-	
+
 	/**
 	 * Maps a procedure name to the entry node of that procedure. The entry node of a procedure represents an auxiliary
 	 * location that is reached after calling the procedure. Afterwards we assume that the global variables and
@@ -167,7 +147,7 @@ public class BoogieIcfgContainer extends AbstractAnnotations implements IElement
 	public Map<String, BoogieIcfgLocation> getEntryNodes() {
 		return mEntryNodes;
 	}
-	
+
 	/**
 	 * Maps a procedure name to the the exit node of that procedure. The exit node of a procedure represents an
 	 * auxiliary location that is reached after assuming the ensures part of the specification. This locNode is the
@@ -176,14 +156,14 @@ public class BoogieIcfgContainer extends AbstractAnnotations implements IElement
 	public Map<String, BoogieIcfgLocation> getExitNodes() {
 		return mExitNode;
 	}
-	
+
 	/**
 	 * Maps a procedure name to error locations generated for this procedure.
 	 */
 	public Map<String, Collection<BoogieIcfgLocation>> getErrorNodes() {
 		return mErrorNodes;
 	}
-	
+
 	public int getNumberOfErrorNodes() {
 		int result = 0;
 		for (final String proc : getErrorNodes().keySet()) {
@@ -191,30 +171,31 @@ public class BoogieIcfgContainer extends AbstractAnnotations implements IElement
 		}
 		return result;
 	}
-	
+
 	// public ModifiableGlobalVariableManager getModifiableGlobals() {
 	// return mModifiableGlobalVariableManager;
 	// }
-	
+
 	public Boogie2SMT getBoogie2SMT() {
 		return mBoogie2SMT;
 	}
-	
+
 	/**
 	 * Maps a {@code LocNode}s to the while loop that it represents
 	 */
+	@Visualizable
 	public Map<BoogieIcfgLocation, ILocation> getLoopLocations() {
 		return mLoopLocations;
 	}
-	
+
 	public BoogieDeclarations getBoogieDeclarations() {
 		return mBoogieDeclarations;
 	}
-	
+
 	public CodeBlockFactory getCodeBlockFactory() {
 		return mCodeBlockFactory;
 	}
-	
+
 	public Set<BoogieIcfgLocation> getPotentialCycleProgramPoints() {
 		if (mPotentialCycleProgramPoints == null) {
 			mPotentialCycleProgramPoints =
@@ -226,21 +207,21 @@ public class BoogieIcfgContainer extends AbstractAnnotations implements IElement
 		}
 		return mPotentialCycleProgramPoints;
 	}
-	
+
 	public CfgSmtToolkit getCfgSmtToolkit() {
 		return mCfgSmtToolkit;
 	}
-	
+
 	@Override
 	public IPayload getPayload() {
 		return mPayload;
 	}
-	
+
 	@Override
 	public boolean hasPayload() {
 		return true;
 	}
-	
+
 	/**
 	 * Returns the name of the file that is analyzed. The result is the name without the full path.
 	 *
@@ -250,7 +231,7 @@ public class BoogieIcfgContainer extends AbstractAnnotations implements IElement
 		final String pureFilename = new File(pathAndFilename).getName();
 		return pureFilename;
 	}
-	
+
 	/**
 	 * @return Collection that contains all edges that are predecessor of the initial location of some procedure.
 	 */
@@ -261,7 +242,7 @@ public class BoogieIcfgContainer extends AbstractAnnotations implements IElement
 		}
 		return startEdges;
 	}
-	
+
 	public RootNode constructRootNode() {
 		final RootNode rootNode = new RootNode(getPayload().getLocation(), this);
 		for (final Entry<String, BoogieIcfgLocation> entry : getEntryNodes().entrySet()) {
@@ -269,7 +250,7 @@ public class BoogieIcfgContainer extends AbstractAnnotations implements IElement
 		}
 		return rootNode;
 	}
-	
+
 	@Override
 	public VisualizationNode getVisualizationGraph() {
 		return IcfgVisualizationNodeProvider.getVisualizationGraph(this);

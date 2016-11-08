@@ -33,14 +33,15 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgE
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 
 /**
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
 public final class IcfgVisualizationNodeProvider {
-	
+
 	public static VisualizationNode getVisualizationGraph(final BoogieIcfgContainer cont) {
 		final IcfgVisualizationRoot artificialRoot = new IcfgVisualizationRoot();
+		artificialRoot.getPayload().getAnnotations().put(cont.getClass().getSimpleName(), cont);
 		for (final Entry<String, BoogieIcfgLocation> entry : cont.getEntryNodes().entrySet()) {
 			final IcfgVisualizationEdge edge = new IcfgVisualizationEdge(artificialRoot, entry.getValue());
 			edge.redirectSource(artificialRoot);
@@ -48,21 +49,20 @@ public final class IcfgVisualizationNodeProvider {
 		}
 		return new VisualizationNode(artificialRoot);
 	}
-	
+
 	private static final class IcfgVisualizationRoot extends IcfgLocation {
-		
+
 		private static final long serialVersionUID = 7322581913329216222L;
-		
+
 		protected IcfgVisualizationRoot() {
 			super("ARTIFICIAL-ROOT", "");
 		}
-		
 	}
-	
+
 	private static final class IcfgVisualizationEdge extends IcfgEdge {
-		
+
 		private static final long serialVersionUID = 7322581913329216222L;
-		
+
 		protected IcfgVisualizationEdge(final IcfgLocation source, final IcfgLocation target) {
 			super(source, target, null);
 		}

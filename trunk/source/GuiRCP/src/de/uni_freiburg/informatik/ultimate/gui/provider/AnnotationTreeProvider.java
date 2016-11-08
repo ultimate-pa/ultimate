@@ -2,22 +2,22 @@
  * Copyright (C) 2008-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2008-2015 Jochen Hoenicke (hoenicke@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE DebugGUI plug-in.
- * 
+ *
  * The ULTIMATE DebugGUI plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE DebugGUI plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE DebugGUI plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE DebugGUI plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -61,9 +61,9 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public class AnnotationTreeProvider implements ITreeContentProvider {
-	
+
 	private Map<IElement, Object[]> mBuffer;
-	
+
 	@Override
 	public Object[] getChildren(final Object parentElement) {
 		if (parentElement instanceof IElement) {
@@ -77,7 +77,7 @@ public class AnnotationTreeProvider implements ITreeContentProvider {
 		}
 		return null;
 	}
-	
+
 	@Override
 	public Object getParent(final Object element) {
 		if (element instanceof IPayload) {
@@ -91,7 +91,7 @@ public class AnnotationTreeProvider implements ITreeContentProvider {
 		}
 		return null;
 	}
-	
+
 	@Override
 	public boolean hasChildren(final Object element) {
 		if (element instanceof IElement) {
@@ -102,48 +102,48 @@ public class AnnotationTreeProvider implements ITreeContentProvider {
 		}
 		return false;
 	}
-	
+
 	@Override
 	public Object[] getElements(final Object inputElement) {
 		return getChildren(inputElement);
 	}
-	
+
 	@Override
 	public void dispose() {
 		// nothing to dispose
 	}
-	
+
 	@Override
 	public void inputChanged(final Viewer viewer, final Object oldInput, final Object newInput) {
 		// nothing to do when input changes
 	}
-	
+
 	private Object[] generateChildren(final IElement elem) {
 		if (mBuffer == null) {
 			mBuffer = new HashMap<>();
 		}
 		Object[] currentBuffer = mBuffer.get(elem);
-		
+
 		if (currentBuffer == null) {
 			currentBuffer = generateTree(elem);
 			mBuffer.put(elem, currentBuffer);
 		}
 		return currentBuffer;
 	}
-	
+
 	private Object[] generateTree(final IElement elem) {
-		
+
 		final List<Object> rtr = new ArrayList<>();
-		
+
 		final GroupEntry elementGroup = createIElementGroup(elem);
 		rtr.add(elementGroup);
-		
+
 		if (elem.hasPayload()) {
 			final IPayload payload = elem.getPayload();
-			
+
 			final GroupEntry payloadGroup = new GroupEntry("IPayload", null);
 			rtr.add(payloadGroup);
-			
+
 			final ILocation loc = payload.getLocation();
 			if (loc != null) {
 				final GroupEntry location = new GroupEntry("IPayload.Location", elementGroup);
@@ -163,9 +163,9 @@ public class AnnotationTreeProvider implements ITreeContentProvider {
 			rtr.add(annotationGroup);
 			for (final Map.Entry<String, IAnnotations> outer : payload.getAnnotations().entrySet()) {
 				final GroupEntry group = new GroupEntry(outer.getKey(), annotationGroup);
-				
+
 				final Map<String, Object> innerMap = outer.getValue().getAnnotationsAsMap();
-				
+
 				// add traditional annotations to view
 				for (final Map.Entry<String, Object> inner : innerMap.entrySet()) {
 					final TreeViewEntry innerEntry = convertEntry(inner.getKey(), inner.getValue(), group);
@@ -181,11 +181,11 @@ public class AnnotationTreeProvider implements ITreeContentProvider {
 		}
 		return rtr.toArray();
 	}
-	
+
 	private static GroupEntry createIElementGroup(final IElement elem) {
 		final GroupEntry elementGroup = new GroupEntry("IElement", null);
 		elementGroup.addEntry(new Entry("HashCode", String.valueOf(elem.hashCode()), elementGroup));
-		
+
 		final Object inspectionTarget;
 		if (elem instanceof VisualizationNode) {
 			inspectionTarget = ((VisualizationNode) elem).getBacking();
@@ -194,11 +194,11 @@ public class AnnotationTreeProvider implements ITreeContentProvider {
 		} else {
 			inspectionTarget = elem;
 		}
-		
+
 		addVisualizableFields(elementGroup, inspectionTarget);
 		return elementGroup;
 	}
-	
+
 	private static void addVisualizableFields(final GroupEntry elementGroup, final Object inspectionTarget) {
 		final Field[] fields = getFields(inspectionTarget);
 		for (final Field field : fields) {
@@ -208,12 +208,12 @@ public class AnnotationTreeProvider implements ITreeContentProvider {
 			try {
 				field.setAccessible(true);
 				final Object value = field.get(inspectionTarget);
-				elementGroup.addEntry(new Entry(field.getName(), String.valueOf(value), elementGroup));
+				elementGroup.addEntry(convertEntry(field.getName(), value, elementGroup));
 			} catch (final Exception ex) {
 				// we ignore all exceptions during retrieval
 			}
 		}
-		
+
 		final Method[] methods = getMethods(inspectionTarget);
 		for (final Method method : methods) {
 			if (!method.isAnnotationPresent(Visualizable.class)) {
@@ -222,39 +222,39 @@ public class AnnotationTreeProvider implements ITreeContentProvider {
 			try {
 				method.setAccessible(true);
 				final Object value = method.invoke(inspectionTarget);
-				elementGroup.addEntry(new Entry(method.getName(), String.valueOf(value), elementGroup));
+				elementGroup.addEntry(convertEntry(method.getName(), value, elementGroup));
 			} catch (final Exception ex) {
 				// we ignore all exceptions during retrieval
 			}
 		}
 	}
-	
+
 	private static Field[] getFields(final Object inspectionTarget) {
 		final List<Field> rtr = new ArrayList<>();
-		
+
 		Class<?> clazz = inspectionTarget.getClass();
 		while (clazz != null) {
 			rtr.addAll(Arrays.asList(clazz.getDeclaredFields()));
 			clazz = clazz.getSuperclass();
 		}
-		
+
 		return rtr.toArray(new Field[rtr.size()]);
 	}
-	
+
 	private static Method[] getMethods(final Object inspectionTarget) {
 		final List<Method> rtr = new ArrayList<>();
-		
+
 		Class<?> clazz = inspectionTarget.getClass();
 		while (clazz != null) {
 			rtr.addAll(Arrays.asList(clazz.getDeclaredMethods()));
 			clazz = clazz.getSuperclass();
 		}
-		
+
 		return rtr.toArray(new Method[rtr.size()]);
 	}
-	
+
 	@SuppressWarnings("unchecked")
-	private TreeViewEntry convertEntry(final String name, final Object value, final GroupEntry parent) {
+	private static TreeViewEntry convertEntry(final String name, final Object value, final GroupEntry parent) {
 		if (value instanceof AnnotatedTerm) {
 			final AnnotatedTerm form = (AnnotatedTerm) value;
 			final GroupEntry group = new GroupEntry(name + " - annotation", parent);
@@ -300,7 +300,7 @@ public class AnnotationTreeProvider implements ITreeContentProvider {
 			}
 			return group;
 		}
-		
+
 		if (value instanceof Map) {
 			final GroupEntry group = new GroupEntry(name, parent);
 			for (final Map.Entry<Object, Object> e : ((Map<Object, Object>) value).entrySet()) {
@@ -325,11 +325,11 @@ public class AnnotationTreeProvider implements ITreeContentProvider {
 			}
 			return group;
 		}
-		
+
 		return new Entry(name, String.valueOf(value), parent);
 	}
-	
-	private TreeViewEntry convertITreeEntry(final String name, final ITree value, final GroupEntry parent) {
+
+	private static TreeViewEntry convertITreeEntry(final String name, final ITree value, final GroupEntry parent) {
 		final List<IWalkable> children = value.getSuccessors();
 		if (children != null && !children.isEmpty()) {
 			final GroupEntry group = new GroupEntry(name, parent);
