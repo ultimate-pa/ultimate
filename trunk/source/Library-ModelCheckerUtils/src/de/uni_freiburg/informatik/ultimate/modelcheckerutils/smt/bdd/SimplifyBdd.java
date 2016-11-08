@@ -31,7 +31,6 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.Activator;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -74,7 +73,10 @@ public class SimplifyBdd {
 		final BddBuilder bb = new BddBuilder();
 		final BDD d = bb.buildBDD(input, atoms);
 		
-		return bddToTerm(d, atoms);
+		final Term result =  bddToTerm(d, atoms);
+		assert (Util.checkSat(mScript, mScript.term("distinct", input, result)) != LBool.SAT) :
+			"simplification unsound. Input: " + input;
+		return result;
 	}
 	
 	public Term transformWithImplications(final Term input) {
@@ -87,33 +89,32 @@ public class SimplifyBdd {
 		return bddToTerm(d, atoms);
 	}
 	
-	private Term bddToTerm(final BDD d, final List<Term> atoms){
-		if(d.isOne()){
+	private Term bddToTerm(final BDD d, final List<Term> atoms) {
+		if (d.isOne()) {
 			return mScript.term("true");
-		}else if(d.isZero()){
+		} else if (d.isZero()) {
 			return mScript.term("false");
 		}
-		
+
 		final Term low = bddToTerm(d.low(), atoms);
 		final Term high = bddToTerm(d.high(), atoms);
-		if(low instanceof ApplicationTerm && high instanceof ApplicationTerm && ((ApplicationTerm)low).getFunction().getName().equals("false") && ((ApplicationTerm)high).getFunction().getName().equals("false")){
+		if (SmtUtils.isFalse(low) && SmtUtils.isFalse(high)) {
 			return low;
-		}else if(high instanceof ApplicationTerm && ((ApplicationTerm)high).getFunction().getName().equals("false")){
-			if(low instanceof ApplicationTerm && ((ApplicationTerm)low).getFunction().getName().equals("true")){
-				return atoms.get(d.var());
-			}else{
-				return mScript.term("and", atoms.get(d.var()), mScript.term("not", low));
+		} else if (SmtUtils.isFalse(high)) {
+			if (SmtUtils.isTrue(low)) {
+				return mScript.term("not", atoms.get(d.var()));
+			} else {
+				return mScript.term("and", mScript.term("not", atoms.get(d.var())), low);
 			}
-		}else if(low instanceof ApplicationTerm && ((ApplicationTerm)low).getFunction().getName().equals("false")){
-			if(high instanceof ApplicationTerm && ((ApplicationTerm)high).getFunction().getName().equals("true")){
+		} else if (SmtUtils.isFalse(low)) {
+			if (SmtUtils.isTrue(high)) {
 				return atoms.get(d.var());
-			}else{
+			} else {
 				return mScript.term("and", atoms.get(d.var()), high);
 			}
 		}
-		return mScript.term("or",
-			mScript.term("and", atoms.get(d.var()), high),
-			mScript.term("and", atoms.get(d.var()), mScript.term("not", low)));
+		return mScript.term("or", mScript.term("and", atoms.get(d.var()), high),
+				mScript.term("and", mScript.term("not", atoms.get(d.var())), low));
 	}
 	
 	
@@ -163,7 +164,10 @@ public class SimplifyBdd {
 			}
 			dis.add(SmtUtils.or(mScript, lit));
 		}
-		return SmtUtils.and(mScript, dis);
+		final Term result =  SmtUtils.and(mScript, dis);
+		assert (Util.checkSat(mScript, mScript.term("distinct", input, result)) != LBool.SAT) :
+			"CNF transformation unsound. Input: " + input;
+		return result;
 	}
 	
 	/**
