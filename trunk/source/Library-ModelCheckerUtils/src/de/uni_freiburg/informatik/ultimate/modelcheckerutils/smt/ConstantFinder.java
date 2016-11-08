@@ -46,10 +46,13 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  * @author Matthias Heizmann
  */
 public class ConstantFinder extends NonRecursive {
+	private boolean mRestrictToNonTheoryConstants; 
 	protected Set<ApplicationTerm> mResult;
 	protected Set<Term> mVisited;
 	
-	public Set<ApplicationTerm> findConstants(final Term term) {
+	public Set<ApplicationTerm> findConstants(final Term term, 
+			final boolean restrictToNonTheoryConstants) {
+		mRestrictToNonTheoryConstants = restrictToNonTheoryConstants;
 		if (term == null) {
 			throw new IllegalArgumentException();
 		}
@@ -88,7 +91,11 @@ public class ConstantFinder extends NonRecursive {
 		@Override
 		public void walk(final NonRecursive walker, final ApplicationTerm term) {
 			if (SmtUtils.isConstant(term)) {
-				mResult.add(term);
+				if (mRestrictToNonTheoryConstants && term.getFunction().isIntern()) {
+					// do nothing
+				} else {
+					mResult.add(term);
+				}
 			}
 			for (final Term t : term.getParameters()) {
 				walker.enqueueWalker(new ConstantFindWalker(t));

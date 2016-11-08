@@ -312,7 +312,7 @@ public class TransFormulaBuilder {
 	 * </ul>
 	 */
 	public static UnmodifiableTransFormula constructTransFormulaFromPredicate(final IPredicate pred, final ManagedScript script) {
-		final Set<ApplicationTerm> consts = new ConstantFinder().findConstants(pred.getFormula());
+		final Set<ApplicationTerm> consts = new ConstantFinder().findConstants(pred.getFormula(), false);
 		if (!consts.isEmpty()) {
 			throw new UnsupportedOperationException("constants not yet supported");
 		}

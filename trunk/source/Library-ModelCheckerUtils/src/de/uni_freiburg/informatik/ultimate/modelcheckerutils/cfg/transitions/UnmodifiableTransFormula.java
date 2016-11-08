@@ -112,7 +112,7 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 	
 	private boolean doConstantConsistencyCheck() {
 		boolean consistent = true;
-		final Set<ApplicationTerm> constantsInFormula = (new ConstantFinder()).findConstants(mFormula);
+		final Set<ApplicationTerm> constantsInFormula = (new ConstantFinder()).findConstants(mFormula, false);
 		final Set<ApplicationTerm> nonTheoryConstantTerms = new HashSet<>();
 		for (final IProgramConst programConsts : getNonTheoryConsts()) {
 			consistent &= !programConsts.getDefaultConstant().getFunction().isIntern();
@@ -236,7 +236,7 @@ public class UnmodifiableTransFormula extends TransFormula implements Serializab
 	 * that occur in term are contained in the set setOfConstants.
 	 */
 	private static boolean isSupersetOfOccurringConstants(final Set<ApplicationTerm> setOfConstants, final Term term) {
-		final Set<ApplicationTerm> constantsInTerm = (new ConstantFinder()).findConstants(term);
+		final Set<ApplicationTerm> constantsInTerm = (new ConstantFinder()).findConstants(term, false);
 		return setOfConstants.containsAll(constantsInTerm);
 	}
 

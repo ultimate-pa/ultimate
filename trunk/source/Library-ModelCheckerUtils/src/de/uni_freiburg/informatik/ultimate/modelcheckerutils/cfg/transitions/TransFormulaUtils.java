@@ -112,6 +112,7 @@ public class TransFormulaUtils {
 		Term formula = mgdScript.getScript().term("true");
 
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, false, null, false, null, false);
+		final Set<IProgramConst> nonTheoryConsts = new HashSet<>();
 
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		for (int i = transFormula.size() - 1; i >= 0; i--) {
@@ -180,7 +181,7 @@ public class TransFormulaUtils {
 			final Term originalFormula = transFormula.get(i).getFormula();
 			final Term updatedFormula = (new SubstitutionWithLocalSimplification(mgdScript, substitutionMapping))
 					.transform(originalFormula);
-			TransFormulaUtils.addConstantsIfInFormula(tfb, updatedFormula, transFormula.get(i).getNonTheoryConsts());
+			nonTheoryConsts.addAll(transFormula.get(i).getNonTheoryConsts());
 			formula = Util.and(script, formula, updatedFormula);
 		}
 
@@ -232,6 +233,7 @@ public class TransFormulaUtils {
 			formula = cnf;
 		}
 
+		TransFormulaUtils.addConstantsIfInFormula(tfb, formula, nonTheoryConsts);
 		tfb.setFormula(formula);
 		tfb.setInfeasibility(infeasibility);
 		for (final TermVariable auxVar : auxVars) {
@@ -277,6 +279,7 @@ public class TransFormulaUtils {
 		} else {
 			tfb = new TransFormulaBuilder(null, null, false, null, true, null, false);
 		}
+		final Set<IProgramConst> nonTheoryConsts = new HashSet<>();
 
 		final Map<IProgramVar, Sort> assignedInSomeBranch = new HashMap<>();
 		for (final UnmodifiableTransFormula tf : transFormulas) {
@@ -310,9 +313,7 @@ public class TransFormulaUtils {
 				// outvars
 				tfb.addOutVar(bv, tfb.getInVar(bv));
 			}
-			for (final IProgramConst progConst : tf.getNonTheoryConsts()) {
-				tfb.addProgramConst(progConst);
-			}
+			nonTheoryConsts.addAll(tf.getNonTheoryConsts());
 		}
 
 		// overwrite (see comment above) the outvars if the outvar does not
@@ -394,6 +395,7 @@ public class TransFormulaUtils {
 			resultFormula = SmtUtils.toCnf(services, mgdScript, resultFormula, xnfConversionTechnique);
 		}
 
+		TransFormulaUtils.addConstantsIfInFormula(tfb, resultFormula, nonTheoryConsts);
 		tfb.setFormula(resultFormula);
 		tfb.setInfeasibility(inFeasibility);
 		for (final TermVariable auxVar : auxVars) {
@@ -890,7 +892,7 @@ public class TransFormulaUtils {
 	 */
 	public static <T extends IProgramConst> void addConstantsIfInFormula(final TransFormulaBuilder tfb,
 			final Term formula, final Set<T> progConsts) {
-		final Set<ApplicationTerm> constsInFormula = new ConstantFinder().findConstants(formula);
+		final Set<ApplicationTerm> constsInFormula = new ConstantFinder().findConstants(formula, false);
 		for (final IProgramConst progConst : progConsts) {
 			if (constsInFormula.contains(progConst.getDefaultConstant())) {
 				tfb.addProgramConst(progConst);
