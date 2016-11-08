@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE RCFGBuilder plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE RCFGBuilder plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE RCFGBuilder plug-in grant you additional permission
  * to convey the resulting work.
  */
 
@@ -56,12 +56,12 @@ import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
  *
  */
 public class RcfgProgramExecution implements IProgramExecution<IcfgEdge, Term> {
-
+	
 	private final List<AtomicTraceElement<IcfgEdge>> mTrace;
 	private final Map<Integer, ProgramState<Term>> mPartialProgramStateMapping;
 	private final Map<TermVariable, Boolean>[] mBranchEncoders;
 	private final Map<String, ILocation> mOverapproximations;
-
+	
 	@SuppressWarnings("unchecked")
 	public RcfgProgramExecution(final List<? extends IcfgEdge> trace,
 			final Map<Integer, ProgramState<Term>> partialProgramStateMapping) {
@@ -73,20 +73,19 @@ public class RcfgProgramExecution implements IProgramExecution<IcfgEdge, Term> {
 			final Map<TermVariable, Boolean>[] branchEncoders) {
 		this(trace, partialProgramStateMapping, branchEncoders, null);
 	}
-
+	
 	public RcfgProgramExecution(final List<? extends IcfgEdge> trace,
 			final Map<Integer, ProgramState<Term>> partialProgramStateMapping,
-			final Map<TermVariable, Boolean>[] branchEncoders, 
-			final List<IRelevanceInformation> relevanceInformation) {
+			final Map<TermVariable, Boolean>[] branchEncoders, final List<IRelevanceInformation> relevanceInformation) {
 		assert trace != null;
 		assert partialProgramStateMapping != null;
 		assert branchEncoders != null;
 		assert relevanceInformation == null || trace.size() == relevanceInformation.size() : "incompatible sizes";
-
+		
 		// a list of boogieastnodes is a trace that consists of atomic
 		// statements.
 		final List<AtomicTraceElement<IcfgEdge>> atomictrace = new ArrayList<>();
-		for (int i = 0; i<trace.size(); i++) {
+		for (int i = 0; i < trace.size(); i++) {
 			final IcfgEdge te = trace.get(i);
 			final IRelevanceInformation ri;
 			if (relevanceInformation == null) {
@@ -102,35 +101,35 @@ public class RcfgProgramExecution implements IProgramExecution<IcfgEdge, Term> {
 				atomictrace.add(new AtomicTraceElement<>(te, ri));
 			}
 		}
-
+		
 		mTrace = atomictrace;
-
+		
 		mPartialProgramStateMapping = partialProgramStateMapping;
 		mBranchEncoders = branchEncoders;
 		mOverapproximations = getOverapproximations(trace);
 	}
-
+	
 	/**
 	 * Returns all overapproximations that were done on this trace.
 	 */
 	public Map<String, ILocation> getOverapproximations() {
 		return mOverapproximations;
 	}
-
+	
 	public Map<TermVariable, Boolean>[] getBranchEncoders() {
 		return mBranchEncoders;
 	}
-
+	
 	@Override
 	public int getLength() {
 		return mTrace.size();
 	}
-
+	
 	@Override
 	public AtomicTraceElement<IcfgEdge> getTraceElement(final int i) {
 		return mTrace.get(i);
 	}
-
+	
 	@Override
 	public ProgramState<Term> getProgramState(final int i) {
 		if (i < 0 || i >= mTrace.size()) {
@@ -138,12 +137,12 @@ public class RcfgProgramExecution implements IProgramExecution<IcfgEdge, Term> {
 		}
 		return mPartialProgramStateMapping.get(i);
 	}
-
+	
 	@Override
 	public ProgramState<Term> getInitialProgramState() {
 		return mPartialProgramStateMapping.get(-1);
 	}
-
+	
 	public static Map<String, ILocation> getOverapproximations(final List<? extends IcfgEdge> trace) {
 		final Map<String, ILocation> result = new HashMap<>();
 		for (final IcfgEdge cb : trace) {
@@ -151,10 +150,7 @@ public class RcfgProgramExecution implements IProgramExecution<IcfgEdge, Term> {
 				final Map<String, IAnnotations> annotations = cb.getPayload().getAnnotations();
 				if (annotations.containsKey(Overapprox.getIdentifier())) {
 					final Overapprox overapprox = (Overapprox) annotations.get(Overapprox.getIdentifier());
-					@SuppressWarnings("unchecked")
-					final
-					Map<String, ILocation> reason2Location = (Map<String, ILocation>) overapprox.getAnnotationsAsMap()
-							.get(Overapprox.s_LOCATION_MAPPING);
+					final Map<String, ILocation> reason2Location = overapprox.getOverapproximatedLocations();
 					for (final Entry<String, ILocation> entry : reason2Location.entrySet()) {
 						result.put(entry.getKey(), entry.getValue());
 					}
@@ -163,7 +159,7 @@ public class RcfgProgramExecution implements IProgramExecution<IcfgEdge, Term> {
 		}
 		return result;
 	}
-
+	
 	private String ppstoString(final ProgramState<Term> pps) {
 		String result;
 		if (pps == null) {
@@ -181,13 +177,13 @@ public class RcfgProgramExecution implements IProgramExecution<IcfgEdge, Term> {
 		}
 		return result;
 	}
-
+	
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
 		String valuation = ppstoString(getInitialProgramState());
 		final String lineSeparator = CoreUtil.getPlatformLineSeparator();
-
+		
 		sb.append("=== Start of program execution ===").append(lineSeparator);
 		if (valuation != null) {
 			sb.append("initial values:");
@@ -212,7 +208,7 @@ public class RcfgProgramExecution implements IProgramExecution<IcfgEdge, Term> {
 		sb.append("=== End of program execution");
 		return sb.toString();
 	}
-
+	
 	/**
 	 * Workaround to satisfy the parameters of results.
 	 * 
@@ -226,38 +222,38 @@ public class RcfgProgramExecution implements IProgramExecution<IcfgEdge, Term> {
 		}
 		return result;
 	}
-
+	
 	@Override
 	public Class<Term> getExpressionClass() {
 		return Term.class;
 	}
-
+	
 	@Override
 	public Class<IcfgEdge> getTraceElementClass() {
 		return IcfgEdge.class;
 	}
-
+	
 	@Override
 	public String getSVCOMPWitnessString() {
 		return null;
 	}
-
+	
 	public List<UnprovabilityReason> getUnprovabilityReasons() {
 		final List<UnprovabilityReason> unproabilityReasons = new ArrayList<>();
 		for (final Entry<String, ILocation> entry : mOverapproximations.entrySet()) {
-			unproabilityReasons.add(new UnprovabilityReason("overapproximation of " + entry.getKey(), entry.getValue()));
+			unproabilityReasons
+					.add(new UnprovabilityReason("overapproximation of " + entry.getKey(), entry.getValue()));
 		}
 		return unproabilityReasons;
 	}
-
+	
 	public RcfgProgramExecution addRelevanceInformation(final List<IRelevanceInformation> relevanceInformation) {
 		final List<IcfgEdge> edgeSequence = new ArrayList<>();
 		for (final AtomicTraceElement<IcfgEdge> ate : mTrace) {
 			edgeSequence.add(ate.getTraceElement());
 		}
-		return new RcfgProgramExecution(edgeSequence, 
-				mPartialProgramStateMapping, mBranchEncoders, relevanceInformation);
+		return new RcfgProgramExecution(edgeSequence, mPartialProgramStateMapping, mBranchEncoders,
+				relevanceInformation);
 	}
 	
-
 }

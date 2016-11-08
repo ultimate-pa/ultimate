@@ -20,71 +20,55 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Core, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Core grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Core grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.core.lib.models.annotation;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 
 /**
- * Annotation for transition (e.g., CodeBlock) that indicates that it was not
- * build by a semantics preserving translation but by an overapproximation.
- * This allows model checkers to report <i>unknown</i> instead of <i>unsafe</i>
+ * Annotation for transition (e.g., CodeBlock) that indicates that it was not build by a semantics preserving
+ * translation but by an overapproximation. This allows model checkers to report <i>unknown</i> instead of <i>unsafe</i>
  * for traces that contain elements with this annotation.
+ * 
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
-public class Overapprox extends AbstractAnnotations {
+public class Overapprox extends ModernAnnotations {
 	
-	public static final String s_REASON_FOR_OVERAPPROXIMATION = "Reason for overapproximation";
-	public static final String s_LOCATION_MAPPING = "Location mapping";
-	
+	private static final long serialVersionUID = -575969312624287029L;
 	public static final String BITVEC = "bitvector operation";
 	public static final String FUNC_POINTER = "call of function pointer";
 	
+	@Visualizable
+	private final Map<String, ILocation> mReason2Loc;
+	
+	public Overapprox(final Map<String, ILocation> reason2Loc) {
+		mReason2Loc = reason2Loc;
+	}
+	
+	public Overapprox(final String reason, final ILocation loc) {
+		this(Collections.singletonMap(reason, loc));
+	}
 	
 	public static final String getIdentifier() {
 		return Overapprox.class.getName();
 	}
 	
-	private final Map<String, ILocation> mReason2Loc;
-	
-	public Overapprox(Map<String, ILocation> reason2Loc) {
-		mReason2Loc = reason2Loc;
+	@Visualizable
+	private Set<String> getReasonForOverapproximation() {
+		return mReason2Loc.keySet();
 	}
 	
-	public Overapprox(String reason, ILocation loc) {
-        mReason2Loc = Collections.singletonMap(reason, loc);
-    }
-
-	private static final long serialVersionUID = -575969312624287029L;
-
-	/**
-	 * The published attributes.  Update this and getFieldValue()
-	 * if you add new attributes.
-	 */
-	private final static String[] s_AttribFields = {
-		s_REASON_FOR_OVERAPPROXIMATION, s_LOCATION_MAPPING
-	};
-	
-	@Override
-	protected String[] getFieldNames() {
-		return s_AttribFields;
+	public Map<String, ILocation> getOverapproximatedLocations() {
+		return mReason2Loc;
 	}
-
-	@Override
-	protected Object getFieldValue(String field) {
-		if (field.equals(s_REASON_FOR_OVERAPPROXIMATION)) {
-			return mReason2Loc.keySet();
-		} else if (field.equals(s_LOCATION_MAPPING)) {
-			return mReason2Loc;
-		} else {
-			throw new UnsupportedOperationException("Unknown field "+field);
-		}
-	}
-
 }
