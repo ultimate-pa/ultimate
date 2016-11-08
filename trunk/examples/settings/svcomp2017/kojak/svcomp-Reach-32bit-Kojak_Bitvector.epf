@@ -3,23 +3,7 @@ file_export_version=3.0
 @de.uni_freiburg.informatik.ultimate.boogie.procedureinliner=0.0.1
 \!/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner=
 /instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/to\ procedures,\ called\ more\ than\ once=true
-#Sun Nov 08 00:49:53 CET 2015
-/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2/Parallel\ states\ before\ merging=4
-/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2/Use\ source\ directory\ for\ state\ change\ logs=false
-/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2/Postpone\ execution\ of\ widened\ states=false
-file_export_version=3.0
-/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2/Set\ of\ numbers\ for\ widening\ (comma-separated\ list)=0, 1, -128, 127
-\!/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2=
-/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2/Names\ of\ the\ program's\ main\ method\ (cs)=ULTIMATE.start
-@de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2=0.0.1
-/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2/INTERVAL\ -\ Widening\ operator=Nearest In Set
-/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2/Collect\ literals\ from\ the\ RCFG's\ expressions=true
-#Sun Nov 08 00:49:53 CET 2015
-\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding=
-file_export_version=3.0
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding/Rating-Boundary\ (empty\ for\ LBE)=4
-@de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding=0.0.1
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding/Strategy\ for\ the\ edge\ rating=DISJUNCTIVE_RATING
+
 #Sun Nov 08 00:49:53 CET 2015
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=
 file_export_version=3.0
@@ -27,6 +11,7 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Interpolants\ consolidation=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Interpolant\ automaton=TWOTRACK
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Compute\ Interpolants\ along\ a\ Counterexample=FPandBP
+
 #Sun Nov 08 00:49:53 CET 2015
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Dump\ SMT\ script\ to\ file=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Logic\ for\ external\ solver=AUFBV
@@ -37,11 +22,7 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Convert\ code\ blocks\ to\ CNF=false
 @de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=0.0.1
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Size\ of\ a\ code\ block=SequenceOfStatements
-#Sun Nov 08 00:49:53 CET 2015
-file_export_version=3.0
-@de.uni_freiburg.informatik.ultimate.ltl2aut=0.0.1
-/instance/de.uni_freiburg.informatik.ultimate.ltl2aut/Property\ to\ check=[] a \r\n a\: x > 42
-\!/instance/de.uni_freiburg.informatik.ultimate.ltl2aut=
+
 #Sun Nov 08 00:49:53 CET 2015
 file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/tree\ interpolation\ mode\ for\ smtinterpol\ \n\ (internal\:\ tree,\ a\ la\ matthias\:\ nested)=ForwardPredicates
@@ -49,6 +30,7 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Use\ separate\ solver\ for\ tracechecks\ (currently\ hardcoded\ to\ be\ SMTInterpol)=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Timeout\ in\ seconds=1000000
 @de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck=0.0.1
+
 #Sun Nov 08 00:49:53 CET 2015
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Check\ if\ freed\ pointer\ was\ valid=false
@@ -63,11 +45,7 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/sizeof\ POINTER=4
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/sizeof\ long=4
 @de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=0.0.1
-#Sun Nov 08 00:49:53 CET 2015
-\!/instance/de.uni_freiburg.informatik.ultimate.boogie.printer=
-file_export_version=3.0
-@de.uni_freiburg.informatik.ultimate.boogie.printer=0.0.1
-/instance/de.uni_freiburg.informatik.ultimate.boogie.printer/Dump\ path\:=C\:\\data\\bin\\svcompC
+
 #Sun Nov 08 00:49:53 CET 2015
 file_export_version=3.0
 /instance/UltimateCore/Log\ level\ for\ plugins=INFO
@@ -75,9 +53,3 @@ file_export_version=3.0
 \!/instance/UltimateCore=
 @UltimateCore=0.0.1
 /instance/UltimateCore/Generate\ witness\ from\ each\ counter\ example\ result=true
-#Sun Nov 08 00:49:53 CET 2015
-file_export_version=3.0
-\!/instance/de.uni_freiburg.informatik.ultimate.gui=
-@de.uni_freiburg.informatik.ultimate.gui=0.0.1
-/instance/de.uni_freiburg.informatik.ultimate.gui/LASTPATH=C\:\\data\\sv-benchmarks\\c\\loops\\array_true-unreach-call.i
-/instance/de.uni_freiburg.informatik.ultimate.gui/LASTTOOLCHAINPATH=C\:\\data\\ultimate-pa\\trunk\\examples\\toolchains\\KojakC.xml
