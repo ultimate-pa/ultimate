@@ -37,20 +37,8 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/To\ the\ following\ directory=dump/
 
 
-
-
 #Thu Oct 29 23:01:13 CET 2015
 file_export_version=3.0
 @de.uni_freiburg.informatik.ultimate.boogie.procedureinliner=0.0.1
 \!/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner=
 /instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/to\ procedures,\ called\ more\ than\ once=true
-
-
-
-
-#Mon Feb 15 04:02:15 CET 2016
-@de.uni_freiburg.informatik.ultimate.witnessprinter=0.0.1
-file_export_version=3.0
-/instance/de.uni_freiburg.informatik.ultimate.witnessprinter/Generate\ witness(es)=true
-/instance/de.uni_freiburg.informatik.ultimate.witnessprinter/Write\ witness\ as\ "witness.graphml"\ to\ working\ directory=true
-\!/instance/de.uni_freiburg.informatik.ultimate.witnessprinter=

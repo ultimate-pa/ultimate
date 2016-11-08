@@ -40,11 +40,3 @@ file_export_version=3.0
 file_export_version=3.0
 @de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=0.0.1
 
-#Sun Nov 08 00:44:45 CET 2015
-file_export_version=3.0
-/instance/UltimateCore/Log\ level\ for\ plugins=INFO
-/instance/UltimateCore/Write\ witness\ as\ "witness.graphml"\ to\ working\ directory=true
-\!/instance/UltimateCore=
-@UltimateCore=0.0.1
-/instance/UltimateCore/Generate\ witness\ from\ each\ counter\ example\ result=true
-
