@@ -50,7 +50,7 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	private static final String LABEL_WITNESS = "Witness generation";
 
 	public static final String LABEL_WITNESS_GEN = "Generate witnesses";
-	private static final boolean VALUE_WITNESS_GEN = false;
+	private static final boolean VALUE_WITNESS_GEN = true;
 
 	public static final String LABEL_WITNESS_LOG = "Log witness to console";
 	private static final boolean VALUE_WITNESS_LOG = false;
@@ -61,7 +61,7 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 			"Write witness as \"<inputfilename>-witness.graphml\" " + "in the same directory as the input file.";
 
 	public static final String LABEL_WITNESS_WRITE_WORKINGDIR = "Write witness to working directory";
-	private static final boolean VALUE_WITNESS_WRITE_WORKINGDIR = false;
+	private static final boolean VALUE_WITNESS_WRITE_WORKINGDIR = true;
 	private static final String DESC_WITNESS_WRITE_WORKINGDIR =
 			"Write witness as \"witness.graphml\" " + "to working directory.";
 
@@ -100,25 +100,25 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 		return new UltimatePreferenceItem<?>[] {
 				// Witness generation
 				new UltimatePreferenceItem<String>(LABEL_WITNESS, null, PreferenceType.Label),
-				new UltimatePreferenceItem<Boolean>(LABEL_WITNESS_GEN, VALUE_WITNESS_GEN, PreferenceType.Boolean),
-				new UltimatePreferenceItem<Boolean>(LABEL_WITNESS_LOG, VALUE_WITNESS_LOG, PreferenceType.Boolean),
-				new UltimatePreferenceItem<Boolean>(LABEL_WITNESS_WRITE, VALUE_WITNESS_WRITE, DESC_WITNESS_WRITE,
+				new UltimatePreferenceItem<>(LABEL_WITNESS_GEN, VALUE_WITNESS_GEN, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_WITNESS_LOG, VALUE_WITNESS_LOG, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_WITNESS_WRITE, VALUE_WITNESS_WRITE, DESC_WITNESS_WRITE,
 						PreferenceType.Boolean),
-				new UltimatePreferenceItem<Boolean>(LABEL_WITNESS_WRITE_WORKINGDIR, VALUE_WITNESS_WRITE_WORKINGDIR,
+				new UltimatePreferenceItem<>(LABEL_WITNESS_WRITE_WORKINGDIR, VALUE_WITNESS_WRITE_WORKINGDIR,
 						DESC_WITNESS_WRITE_WORKINGDIR, PreferenceType.Boolean),
-				new UltimatePreferenceItem<Boolean>(LABEL_WITNESS_VERIFY, VALUE_WITNESS_VERIFY, PreferenceType.Boolean,
+				new UltimatePreferenceItem<>(LABEL_WITNESS_VERIFY, VALUE_WITNESS_VERIFY, PreferenceType.Boolean,
 						new WitnessVerifierValidator()),
-				new UltimatePreferenceItem<WitnessVerifierType>(LABEL_WITNESS_VERIFIER, VALUE_WITNESS_VERIFIER,
-						PreferenceType.Combo, WitnessVerifierType.values()),
-				new UltimatePreferenceItem<String>(LABEL_WITNESS_VERIFIER_COMMAND, VALUE_WITNESS_VERIFIER_COMMAND,
+				new UltimatePreferenceItem<>(LABEL_WITNESS_VERIFIER, VALUE_WITNESS_VERIFIER, PreferenceType.Combo,
+						WitnessVerifierType.values()),
+				new UltimatePreferenceItem<>(LABEL_WITNESS_VERIFIER_COMMAND, VALUE_WITNESS_VERIFIER_COMMAND,
 						DESC_WITNESS_VERIFIER_COMMAND, PreferenceType.String),
-				new UltimatePreferenceItem<Integer>(LABEL_WITNESS_VERIFIER_TIMEOUT, VALUE_WITNESS_VERIFIER_TIMEOUT,
+				new UltimatePreferenceItem<>(LABEL_WITNESS_VERIFIER_TIMEOUT, VALUE_WITNESS_VERIFIER_TIMEOUT,
 						PreferenceType.Integer, new IUltimatePreferenceItemValidator.IntegerValidator(1, 1000000)),
-				new UltimatePreferenceItem<String>(LABEL_WITNESS_CPACHECKER_PROPERTY, VALUE_WITNESS_CPACHECKER_PROPERTY,
+				new UltimatePreferenceItem<>(LABEL_WITNESS_CPACHECKER_PROPERTY, VALUE_WITNESS_CPACHECKER_PROPERTY,
 						DESC_WITNESS_CPACHECKER_PROPERTY, PreferenceType.String),
-				new UltimatePreferenceItem<Boolean>(LABEL_WITNESS_DELETE_GRAPHML, VALUE_WITNESS_DELETE_GRAPHML,
+				new UltimatePreferenceItem<>(LABEL_WITNESS_DELETE_GRAPHML, VALUE_WITNESS_DELETE_GRAPHML,
 						PreferenceType.Boolean, new WitnessVerifierValidator()),
-				new UltimatePreferenceItem<Boolean>(LABEL_DO_NOT_USE_ACSL, VALUE_DO_NOT_USE_ACSL, DESC_DO_NOT_USE_ACSL,
+				new UltimatePreferenceItem<>(LABEL_DO_NOT_USE_ACSL, VALUE_DO_NOT_USE_ACSL, DESC_DO_NOT_USE_ACSL,
 						PreferenceType.Boolean),
 
 		};
@@ -135,9 +135,8 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 			if (value) {
 				final RcpPreferenceProvider ups = new RcpPreferenceProvider(Activator.PLUGIN_ID);
 				return ups.getBoolean(LABEL_WITNESS_GEN) && ups.getBoolean(LABEL_WITNESS_WRITE);
-			} else {
-				return true;
 			}
+			return true;
 		}
 
 		@Override
