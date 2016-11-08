@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryA
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation.LoopEntryType;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.ModernAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IExplicitEdgesMultigraph;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IVisualizable;
@@ -53,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieDeclar
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBacktranslator;
@@ -253,6 +255,10 @@ public class BoogieIcfgContainer extends ModernAnnotations implements IElement, 
 
 	@Override
 	public VisualizationNode getVisualizationGraph() {
-		return IcfgVisualizationNodeProvider.getVisualizationGraph(this);
+		return IcfgGraphProvider.getVisualizationGraph(this);
+	}
+
+	public IExplicitEdgesMultigraph<IcfgLocation, IcfgEdge, IcfgLocation, IcfgEdge, ?> getVirtualRoot() {
+		return IcfgGraphProvider.getVirtualRoot(this);
 	}
 }

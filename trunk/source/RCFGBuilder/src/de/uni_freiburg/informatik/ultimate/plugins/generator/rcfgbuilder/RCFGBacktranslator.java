@@ -59,20 +59,19 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Term2Expression;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.GotoEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ParallelComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
 
-public class RCFGBacktranslator extends DefaultTranslator<IcfgEdge, BoogieASTNode, Term, Expression, IcfgLocation, String> {
+public class RCFGBacktranslator
+		extends DefaultTranslator<IcfgEdge, BoogieASTNode, Term, Expression, IcfgLocation, String> {
 
 	private final ILogger mLogger;
 	private Term2Expression mTerm2Expression;
@@ -95,7 +94,7 @@ public class RCFGBacktranslator extends DefaultTranslator<IcfgEdge, BoogieASTNod
 	 * procedure, and ensures the result is a singleton. For the assert requires before the call the result contains two
 	 * elements: First, the call, afterwards the requires.
 	 */
-	private final Map<Statement, BoogieASTNode[]> mCodeBlock2Statement = new HashMap<Statement, BoogieASTNode[]>();
+	private final Map<Statement, BoogieASTNode[]> mCodeBlock2Statement = new HashMap<>();
 
 	public BoogieASTNode[] putAux(final Statement aux, final BoogieASTNode[] source) {
 		return mCodeBlock2Statement.put(aux, source);
@@ -104,7 +103,7 @@ public class RCFGBacktranslator extends DefaultTranslator<IcfgEdge, BoogieASTNod
 	@Override
 	public List<BoogieASTNode> translateTrace(final List<IcfgEdge> trace) {
 		final List<IcfgEdge> cbTrace = trace;
-		final List<AtomicTraceElement<BoogieASTNode>> atomicTeList = new ArrayList<AtomicTraceElement<BoogieASTNode>>();
+		final List<AtomicTraceElement<BoogieASTNode>> atomicTeList = new ArrayList<>();
 		for (final IcfgEdge elem : cbTrace) {
 			if (elem instanceof CodeBlock) {
 				addCodeBlock(elem, atomicTeList, null, null);
@@ -112,7 +111,7 @@ public class RCFGBacktranslator extends DefaultTranslator<IcfgEdge, BoogieASTNod
 				throw new AssertionError("unknown rcfg element");
 			}
 		}
-		final List<BoogieASTNode> result = new ArrayList<BoogieASTNode>();
+		final List<BoogieASTNode> result = new ArrayList<>();
 		for (final AtomicTraceElement<BoogieASTNode> ate : atomicTeList) {
 			result.add(ate.getTraceElement());
 		}
@@ -138,27 +137,24 @@ public class RCFGBacktranslator extends DefaultTranslator<IcfgEdge, BoogieASTNod
 		final IToString<BoogieASTNode> stringProvider = BoogiePrettyPrinter.getBoogieToStringprovider();
 		if (cb instanceof Call) {
 			final Statement st = ((Call) cb).getCallStatement();
-			trace.add(new AtomicTraceElement<BoogieASTNode>(st, st, StepInfo.PROC_CALL, stringProvider,
-					relevanceInformation));
+			trace.add(new AtomicTraceElement<>(st, st, StepInfo.PROC_CALL, stringProvider, relevanceInformation));
 		} else if (cb instanceof Return) {
 			final Statement st = ((Return) cb).getCallStatement();
-			trace.add(new AtomicTraceElement<BoogieASTNode>(st, st, StepInfo.PROC_RETURN, stringProvider,
-					relevanceInformation));
+			trace.add(new AtomicTraceElement<>(st, st, StepInfo.PROC_RETURN, stringProvider, relevanceInformation));
 		} else if (cb instanceof Summary) {
 			final Statement st = ((Summary) cb).getCallStatement();
 			// FIXME: Is summary call, return or something new?
-			trace.add(
-					new AtomicTraceElement<BoogieASTNode>(st, st, StepInfo.NONE, stringProvider, relevanceInformation));
+			trace.add(new AtomicTraceElement<>(st, st, StepInfo.NONE, stringProvider, relevanceInformation));
 		} else if (cb instanceof StatementSequence) {
 			final StatementSequence ss = (StatementSequence) cb;
 			for (final Statement statement : ss.getStatements()) {
 				if (mCodeBlock2Statement.containsKey(statement)) {
 					final BoogieASTNode[] sources = mCodeBlock2Statement.get(statement);
 					for (final BoogieASTNode source : sources) {
-						trace.add(new AtomicTraceElement<BoogieASTNode>(source, stringProvider, relevanceInformation));
+						trace.add(new AtomicTraceElement<>(source, stringProvider, relevanceInformation));
 					}
 				} else {
-					trace.add(new AtomicTraceElement<BoogieASTNode>(statement, stringProvider, relevanceInformation));
+					trace.add(new AtomicTraceElement<>(statement, stringProvider, relevanceInformation));
 				}
 			}
 		} else if (cb instanceof SequentialComposition) {
@@ -184,13 +180,12 @@ public class RCFGBacktranslator extends DefaultTranslator<IcfgEdge, BoogieASTNod
 					mLogger.warn("unable to determine which branch was taken at " + p.getLocation());
 				}
 				return;
-			} else {
-				for (final Entry<TermVariable, CodeBlock> entry : bi2cb.entrySet()) {
-					final boolean taken = branchEncoders.get(entry.getKey());
-					if (taken) {
-						addCodeBlock(entry.getValue(), trace, branchEncoders, relevanceInformation);
-						return;
-					}
+			}
+			for (final Entry<TermVariable, CodeBlock> entry : bi2cb.entrySet()) {
+				final boolean taken = branchEncoders.get(entry.getKey());
+				if (taken) {
+					addCodeBlock(entry.getValue(), trace, branchEncoders, relevanceInformation);
+					return;
 				}
 			}
 			throw new AssertionError("no branch was taken");
@@ -209,9 +204,8 @@ public class RCFGBacktranslator extends DefaultTranslator<IcfgEdge, BoogieASTNod
 		}
 		final RcfgProgramExecution rcfgProgramExecution = (RcfgProgramExecution) programExecution;
 
-		final List<AtomicTraceElement<BoogieASTNode>> trace = new ArrayList<AtomicTraceElement<BoogieASTNode>>();
-		final Map<Integer, ProgramState<Expression>> programStateMapping =
-				new HashMap<Integer, ProgramState<Expression>>();
+		final List<AtomicTraceElement<BoogieASTNode>> trace = new ArrayList<>();
+		final Map<Integer, ProgramState<Expression>> programStateMapping = new HashMap<>();
 
 		if (rcfgProgramExecution.getInitialProgramState() != null) {
 			programStateMapping.put(-1, translateProgramState(rcfgProgramExecution.getInitialProgramState()));
@@ -233,10 +227,8 @@ public class RCFGBacktranslator extends DefaultTranslator<IcfgEdge, BoogieASTNod
 	}
 
 	@Override
-	public IBacktranslatedCFG<String, BoogieASTNode> translateCFG(final IBacktranslatedCFG<IcfgLocation, IcfgEdge> cfg) {
-		if (!(cfg.getCFGs().stream().allMatch(a -> a instanceof BoogieIcfgContainer))) {
-			throw new UnsupportedOperationException("Cannot translate cfg that is not an RCFG");
-		}
+	public IBacktranslatedCFG<String, BoogieASTNode>
+			translateCFG(final IBacktranslatedCFG<IcfgLocation, IcfgEdge> cfg) {
 		final IBacktranslatedCFG<String, BoogieASTNode> translatedCfg =
 				translateCFG(cfg, (a, b, c) -> translateCFGEdge(a, (IcfgEdge) b, c));
 		// mLogger.info(getClass().getSimpleName());
@@ -302,7 +294,8 @@ public class RCFGBacktranslator extends DefaultTranslator<IcfgEdge, BoogieASTNod
 		} else if (oldEdge instanceof GotoEdge) {
 			// we represent goto with an edge without label
 			createNewEdge(newSourceNode, newTarget, null);
-		} else if (oldEdge instanceof RootEdge) {
+		} else {
+			// we assume that all other edges are "virtual" edges (i.e., root edges).
 			// a root edge is either a goto or null, i.e., we separate the rcfg
 			final BoogieIcfgLocation pp = (BoogieIcfgLocation) oldEdge.getTarget();
 			if (!pp.getProcedure().equals("ULTIMATE.start")) {
@@ -310,8 +303,6 @@ public class RCFGBacktranslator extends DefaultTranslator<IcfgEdge, BoogieASTNod
 				return null;
 			}
 			createNewEdge(newSourceNode, newTarget, null);
-		} else {
-			throw new UnsupportedOperationException("Unsupported CodeBlock" + oldEdge.getClass().getCanonicalName());
 		}
 		return newTarget;
 	}
@@ -334,15 +325,14 @@ public class RCFGBacktranslator extends DefaultTranslator<IcfgEdge, BoogieASTNod
 		}
 	}
 
-	private void createNewEdge(final Multigraph<String, BoogieASTNode> source,
+	private static void createNewEdge(final Multigraph<String, BoogieASTNode> source,
 			final Multigraph<String, BoogieASTNode> target, final BoogieASTNode label) {
 		new MultigraphEdge<>(source, label, target);
 	}
 
-	private Multigraph<String, BoogieASTNode> createWitnessNode(final IcfgLocation old) {
+	private static Multigraph<String, BoogieASTNode> createWitnessNode(final IcfgLocation old) {
 		final WitnessInvariant inv = WitnessInvariant.getAnnotation(old);
-		final Multigraph<String, BoogieASTNode> rtr =
-				new Multigraph<String, BoogieASTNode>(inv == null ? null : inv.getInvariant());
+		final Multigraph<String, BoogieASTNode> rtr = new Multigraph<>(inv == null ? null : inv.getInvariant());
 		ModelUtils.copyAnnotations(old, rtr);
 		return rtr;
 	}

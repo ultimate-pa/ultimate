@@ -40,7 +40,6 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
 import de.uni_freiburg.informatik.ultimate.core.lib.translation.BacktranslatedCFG;
 import de.uni_freiburg.informatik.ultimate.core.model.IOutput;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IExplicitEdgesMultigraph;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
@@ -167,11 +166,12 @@ public class WitnessPrinter implements IOutput {
 				ResultUtil.filterResults(mServices.getResultService().getResults(), AllSpecificationsHoldResult.class);
 
 		// we take only one AllSpecificationsHold result
-		final AllSpecificationsHoldResult result = validResults.stream().findFirst().get();
+		final AllSpecificationsHoldResult result = validResults.stream().findFirst().orElse(null);
 		final IBacktranslationService backtrans = mServices.getBacktranslationService();
 		final BoogieIcfgContainer root = mRCFGCatcher.getModel();
 		final String filename = root.getPayload().getLocation().getFileName();
-		final BacktranslatedCFG<?, IcfgEdge> origCfg = new BacktranslatedCFG<>(filename, (IExplicitEdgesMultigraph) root, IcfgEdge.class);
+		final BacktranslatedCFG<?, IcfgEdge> origCfg =
+				new BacktranslatedCFG<>(filename, root.getVirtualRoot(), IcfgEdge.class);
 		final IBacktranslatedCFG<?, ?> translatedCFG = backtrans.translateCFG(origCfg);
 
 		return Collections.singleton(() -> new Triple<>(result, filename, translatedCFG.getSVCOMPWitnessString()));

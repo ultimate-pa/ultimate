@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.VisualizationNode;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IExplicitEdgesMultigraph;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 
@@ -37,33 +38,39 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public final class IcfgVisualizationNodeProvider {
+public final class IcfgGraphProvider {
 
 	public static VisualizationNode getVisualizationGraph(final BoogieIcfgContainer cont) {
-		final IcfgVisualizationRoot artificialRoot = new IcfgVisualizationRoot();
-		artificialRoot.getPayload().getAnnotations().put(cont.getClass().getSimpleName(), cont);
-		for (final Entry<String, BoogieIcfgLocation> entry : cont.getProcedureEntryNodes().entrySet()) {
-			final IcfgVisualizationEdge edge = new IcfgVisualizationEdge(artificialRoot, entry.getValue());
-			edge.redirectSource(artificialRoot);
-			edge.redirectTarget(entry.getValue());
-		}
+		final IExplicitEdgesMultigraph<?, ?, ?, ?, VisualizationNode> artificialRoot = getVisualizationGraph(cont);
 		return new VisualizationNode(artificialRoot);
 	}
 
-	private static final class IcfgVisualizationRoot extends IcfgLocation {
+	public static IExplicitEdgesMultigraph<IcfgLocation, IcfgEdge, IcfgLocation, IcfgEdge, ?>
+			getVirtualRoot(final BoogieIcfgContainer cont) {
+		final IcfgVirtualRoot artificialRoot = new IcfgVirtualRoot();
+		artificialRoot.getPayload().getAnnotations().put(cont.getClass().getSimpleName(), cont);
+		for (final Entry<String, BoogieIcfgLocation> entry : cont.getProcedureEntryNodes().entrySet()) {
+			final IcfgVirtualRootEdge edge = new IcfgVirtualRootEdge(artificialRoot, entry.getValue());
+			edge.redirectSource(artificialRoot);
+			edge.redirectTarget(entry.getValue());
+		}
+		return artificialRoot;
+	}
+
+	private static final class IcfgVirtualRoot extends IcfgLocation {
 
 		private static final long serialVersionUID = 7322581913329216222L;
 
-		protected IcfgVisualizationRoot() {
+		protected IcfgVirtualRoot() {
 			super("ARTIFICIAL-ROOT", "");
 		}
 	}
 
-	private static final class IcfgVisualizationEdge extends IcfgEdge {
+	private static final class IcfgVirtualRootEdge extends IcfgEdge {
 
 		private static final long serialVersionUID = 7322581913329216222L;
 
-		protected IcfgVisualizationEdge(final IcfgLocation source, final IcfgLocation target) {
+		protected IcfgVirtualRootEdge(final IcfgLocation source, final IcfgLocation target) {
 			super(source, target, null);
 		}
 	}
