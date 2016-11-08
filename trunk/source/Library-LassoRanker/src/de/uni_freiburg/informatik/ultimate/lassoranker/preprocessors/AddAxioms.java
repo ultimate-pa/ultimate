@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE LassoRanker Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE LassoRanker Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE LassoRanker Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors;
@@ -43,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Mod
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ConstantFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 
-
 /**
  * Adds axioms to the stem and loop transition
  * 
@@ -51,18 +50,16 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
  */
 public class AddAxioms extends TransitionPreprocessor {
 	public static final String s_Description = "Add axioms to the transition";
-
 	
 	private final Term[] mAxioms;
-
-
+	
 	private final Set<ApplicationTerm> mConstants = new HashSet<>();
-
-
+	
 	private final ReplacementVarFactory mReplacementVarFactory;
 	
 	/**
-	 * @param axioms the axioms that should be added to stem and loop
+	 * @param axioms
+	 *            the axioms that should be added to stem and loop
 	 */
 	public AddAxioms(final ReplacementVarFactory replacementVarFactory, final Term[] axioms) {
 		mReplacementVarFactory = replacementVarFactory;
@@ -72,7 +69,8 @@ public class AddAxioms extends TransitionPreprocessor {
 			mAxioms = axioms;
 		}
 		for (final Term axiom : mAxioms) {
-			mConstants.addAll((new ConstantFinder()).findConstants(axiom));
+			// TODO: Check if the boolean parameter is correct; it was necessary to restore the build
+			mConstants.addAll(new ConstantFinder().findConstants(axiom, false));
 		}
 	}
 	
@@ -81,8 +79,7 @@ public class AddAxioms extends TransitionPreprocessor {
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		// Add constant variables as in- and outVars
 		for (final ApplicationTerm constVar : mConstants) {
-			final ReplacementVar repVar = 
-					mReplacementVarFactory.getOrConstuctReplacementVar(constVar); 
+			final ReplacementVar repVar = mReplacementVarFactory.getOrConstuctReplacementVar(constVar);
 			tf.addInVar(repVar, repVar.getTermVariable());
 			tf.addOutVar(repVar, repVar.getTermVariable());
 			substitutionMapping.put(constVar, repVar.getTermVariable());
