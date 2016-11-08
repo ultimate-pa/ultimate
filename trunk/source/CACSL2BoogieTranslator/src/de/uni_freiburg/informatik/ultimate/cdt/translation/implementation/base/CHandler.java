@@ -3487,9 +3487,10 @@ public class CHandler implements ICHandler {
 				throw new UnsupportedSyntaxException(loc, msg);
 			}
 		}
+		// add the loop label (continue statements become a jump to the loop label)
+		bodyBlock.add(new Label(loc, loopLabel));
 
 		if (node instanceof IASTForStatement && iterator != null) {
-			bodyBlock.add(new Label(loc, loopLabel));
 			// add iterator statements of this for loop
 			if (iterator instanceof ExpressionListResult) {
 				for (final ExpressionResult el : ((ExpressionListResult) iterator).list) {
