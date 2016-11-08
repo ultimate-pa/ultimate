@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE JungVisualization plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE JungVisualization plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE JungVisualization plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization;
@@ -41,77 +41,81 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.preferences.JungPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.preferences.JungPreferenceValues;
 
+/**
+ * 
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ */
 public class JungVisualization implements IOutput {
-
-	public final static String PLUGIN_ID = Activator.PLUGIN_ID;
-
+	
+	public static final String PLUGIN_ID = Activator.PLUGIN_ID;
+	
 	private ILogger mLogger;
-
+	
 	private ModelType mGraphType;
-
+	
 	private IUltimateServiceProvider mServices;
-
+	
 	@Override
 	public List<String> getDesiredToolID() {
-		// Never called
-		return null;
+		return Collections.emptyList();
 	}
-
+	
 	@Override
 	public List<IObserver> getObservers() {
 		return Collections.singletonList((IObserver) new JungVisualizationObserver(mLogger, mGraphType, mServices));
 	}
-
+	
 	@Override
 	public ModelQuery getModelQuery() {
 		final IPreferenceProvider ups = mServices.getPreferenceProvider(getPluginID());
 		return ups.getEnum(JungPreferenceValues.LABEL_WHICH_MODEL, ModelQuery.class);
 	}
-
+	
 	@Override
-	public void setInputDefinition(ModelType graphType) {
+	public void setInputDefinition(final ModelType graphType) {
 		mGraphType = graphType;
 	}
-
+	
 	@Override
 	public String getPluginName() {
 		return Activator.PLUGIN_NAME;
 	}
-
+	
 	@Override
 	public String getPluginID() {
 		return PLUGIN_ID;
 	}
-
+	
 	@Override
 	public void init() {
+		// not needed
 	}
-
+	
 	@Override
 	public boolean isGuiRequired() {
 		return true;
 	}
-
+	
 	@Override
 	public IPreferenceInitializer getPreferences() {
 		return new JungPreferenceInitializer();
 	}
-
+	
 	@Override
-	public void setToolchainStorage(IToolchainStorage storage) {
-
+	public void setToolchainStorage(final IToolchainStorage storage) {
+		// not needed
 	}
-
+	
 	@Override
-	public void setServices(IUltimateServiceProvider services) {
+	public void setServices(final IUltimateServiceProvider services) {
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mServices = services;
 	}
-
+	
 	@Override
 	public void finish() {
-		// TODO Auto-generated method stub
-
+		// not needed
 	}
-
+	
 }

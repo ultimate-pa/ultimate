@@ -32,13 +32,14 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualiz
 
 /**
  * Node of an interprocedureal control flow graph.
+ * 
  * @author heizmann@informatik.uni-freiburg.
  */
-public class IcfgLocation
-		extends ModifiableExplicitEdgesMultigraph<IcfgLocation, IcfgEdge, IcfgLocation, IcfgEdge> implements IcfgElement {
-
+public class IcfgLocation extends ModifiableExplicitEdgesMultigraph<IcfgLocation, IcfgEdge, IcfgLocation, IcfgEdge>
+		implements IcfgElement {
+	
 	private static final long serialVersionUID = -7381268073266733825L;
-
+	
 	/**
 	 * Procedure to which this location belongs to.
 	 */
@@ -55,7 +56,7 @@ public class IcfgLocation
 		mProcedure = procedure;
 		mDebugIdentifier = debugIdentifier;
 	}
-
+	
 	protected IcfgLocation(final String debugIdentifier, final String procedure) {
 		super();
 		mProcedure = procedure;
@@ -76,13 +77,41 @@ public class IcfgLocation
 	}
 	
 	@Override
-	public int hashCode() {
-		return 3 * mDebugIdentifier.hashCode() + 5 * mProcedure.hashCode();
-	}
-
-	@Override
 	public String toString() {
 		return mDebugIdentifier;
 	}
-
+	
+	@Override
+	public int hashCode() {
+		return 3 * mDebugIdentifier.hashCode() + 5 * mProcedure.hashCode();
+	}
+	
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		final IcfgLocation other = (IcfgLocation) obj;
+		if (mDebugIdentifier == null) {
+			if (other.mDebugIdentifier != null) {
+				return false;
+			}
+		} else if (!mDebugIdentifier.equals(other.mDebugIdentifier)) {
+			return false;
+		}
+		if (mProcedure == null) {
+			if (other.mProcedure != null) {
+				return false;
+			}
+		} else if (!mProcedure.equals(other.mProcedure)) {
+			return false;
+		}
+		return true;
+	}
 }
