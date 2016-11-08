@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.julian;
@@ -36,53 +36,68 @@ import java.util.PriorityQueue;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 
+/**
+ * Implementation of a possible extension.
+ * 
+ * @author Julian Jarecki (jareckij@informatik.uni-freiburg.de)
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <S>
+ *            symbol type
+ * @param <C>
+ *            place content type
+ */
 public class PossibleExtensions<S, C> implements IPossibleExtensions<S, C> {
-
+	private static final int INITIAL_CAPACITY = 1000;
+	
 	private final PriorityQueue<Event<S, C>> mPe;
 	private final BranchingProcess<S, C> mBranchingProcess;
-
-	public PossibleExtensions(BranchingProcess<S, C> branchingProcess,
-			Comparator<Event<S, C>> order) {
-		this.mBranchingProcess = branchingProcess;
-
-		// anonymous implementation of the Order corresponding to McMillans
-		// Algorithm
-
+	
+	/**
+	 * Constructor.
+	 * 
+	 * @param branchingProcess
+	 *            branching process
+	 * @param order
+	 *            order
+	 */
+	public PossibleExtensions(final BranchingProcess<S, C> branchingProcess,
+			final Comparator<Event<S, C>> order) {
+		mBranchingProcess = branchingProcess;
+		
+		// anonymous implementation of the Order corresponding to McMillan's Algorithm
+		
 		// TODO find an appropriate initial Capacity
-		this.mPe = new PriorityQueue<Event<S, C>>(1000, order);
+		mPe = new PriorityQueue<>(INITIAL_CAPACITY, order);
 	}
-
+	
 	@Override
 	public Event<S, C> remove() {
 		return mPe.remove();
 	}
-
+	
 	@Override
-	public void update(Event<S, C> e) {
-		final Collection<Candidate<S, C>> candidates = computeCandidates(e);
+	public void update(final Event<S, C> event) {
+		final Collection<Candidate<S, C>> candidates = computeCandidates(event);
 		for (final Candidate<S, C> candidate : candidates) {
 			evolveCandidate(candidate);
 		}
 	}
-
-
+	
 	/**
 	 * Evolves a {@code Candidate} for a new possible Event in all possible ways
 	 * and, as a side-effect, adds valid extensions (ones whose predecessors are
 	 * a co-set) to he possible extension set.
-	 * 
-	 * @param mt
-	 * @param mChosen
-	 * @param mPlaces
 	 */
-	private void evolveCandidate(Candidate<S, C> cand) {
+	@SuppressWarnings("squid:S1698")
+	private void evolveCandidate(final Candidate<S, C> cand) {
 		if (cand.mPlaces.isEmpty()) {
-			mPe.add(new Event<S, C>(cand.mChosen, cand.mt));
+			mPe.add(new Event<>(cand.mChosen, cand.mT));
 			return;
 		}
 		final Place<S, C> p = cand.mPlaces.remove(cand.mPlaces.size() - 1);
 		for (final Condition<S, C> c : mBranchingProcess.place2cond(p)) {
-			assert cand.mt.getPredecessors().contains(c.getPlace());
+			assert cand.mT.getPredecessors().contains(c.getPlace());
+			// equality intended here
 			assert c.getPlace() == p;
 			assert !cand.mChosen.contains(c);
 			if (mBranchingProcess.isCoset(cand.mChosen, c)) {
@@ -93,47 +108,42 @@ public class PossibleExtensions<S, C> implements IPossibleExtensions<S, C> {
 		}
 		cand.mPlaces.add(p);
 	}
-
-	// private void evolveCandidate(Transition<S, C> t,
-	// Set<Condition<S, C>> chosen, Collection<Place<S, C>> places) {
-
+	
+	// private void evolveCandidate(Transition<S, C> t, Set<Condition<S, C>> chosen, Collection<Place<S, C>> places) {
+	
 	/**
-	 * computes all {@code Candidate}s for possible extensions that are
-	 * successors of {@code Event} e
+	 * @param event
+	 *            An event.
+	 * @return All {@code Candidate}s for possible extensions that are successors of the {@code Event}.
 	 */
-	private Collection<Candidate<S, C>> computeCandidates(Event<S, C> e) {
-		final int initCapacity = 2 
-				* e.getSuccessorConditions().size()
-				* e.getSuccessorConditions().iterator().next()
-						.getPlace().getSuccessors().size();
-		final Map<ITransition<S, C>, Candidate<S, C>> candidates = 
-				new HashMap<ITransition<S, C>, Candidate<S, C>>(initCapacity);
-		for (final Condition<S, C> c0 : e.getSuccessorConditions()) {
-			for (final ITransition<S, C> t : c0.getPlace().getSuccessors()) {
+	private Collection<Candidate<S, C>> computeCandidates(final Event<S, C> event) {
+		final int initCapacity = 2 * event.getSuccessorConditions().size()
+				* event.getSuccessorConditions().iterator().next().getPlace().getSuccessors().size();
+		final Map<ITransition<S, C>, Candidate<S, C>> candidates = new HashMap<>(initCapacity);
+		for (final Condition<S, C> cond0 : event.getSuccessorConditions()) {
+			for (final ITransition<S, C> t : cond0.getPlace().getSuccessors()) {
 				Candidate<S, C> current;
 				if (!candidates.containsKey(t)) {
-					current = new Candidate<S, C>((Transition<S, C>)t);
+					current = new Candidate<>((Transition<S, C>) t);
 					candidates.put(t, current);
 				} else {
 					current = candidates.get(t);
 				}
-				current.mChosen.add(c0);
-				current.mPlaces.remove(c0.getPlace());
+				current.mChosen.add(cond0);
+				current.mPlaces.remove(cond0.getPlace());
 				assert current.mPlaces.size() + current.mChosen.size() == t.getPredecessors().size();
 			}
 		}
 		return candidates.values();
 	}
-
-
+	
 	@Override
 	public boolean isEmpy() {
 		return mPe.isEmpty();
 	}
-
+	
 	@Override
 	public int size() {
 		return mPe.size();
 	}
-
 }

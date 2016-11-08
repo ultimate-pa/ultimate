@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination;
@@ -59,7 +59,7 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 	
 	private final XnfConversionTechnique mXnfConversionTechnique;
 
-	public XnfTir(final ManagedScript script, final IUltimateServiceProvider services, 
+	public XnfTir(final ManagedScript script, final IUltimateServiceProvider services,
 			final XnfConversionTechnique XnfConversionTechnique) {
 		super(script, services);
 		mXnfConversionTechnique = XnfConversionTechnique;
@@ -78,7 +78,7 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 	@Override
 	public boolean resultIsXjunction() {
 		return false;
-	};
+	}
 
 	
 	public enum BoundType { UPPER, LOWER }
@@ -128,7 +128,7 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 //		Term term = SmtUtils.or(mScript, (Collection<Term>) result);
 //		term = SmtUtils.simplify(mScript, term, mServices);
 //		result = Arrays.asList(PartialQuantifierElimination.getXjunctsOuter(quantifier, term));
-//		
+//
 		return result;
 	}
 	
@@ -216,9 +216,9 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 		}
 		final BuildingInstructions bi = new BuildingInstructions(quantifier,
 				eliminatee.getSort(),
-				termsWithoutEliminatee, 
-				upperBounds, 
-				lowerBounds, 
+				termsWithoutEliminatee,
+				upperBounds,
+				lowerBounds,
 				antiDer);
 		final List<Term> resultAtoms = new ArrayList<Term>();
 		for (final Bound lowerBound : lowerBounds) {
@@ -251,7 +251,7 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 	}
 
 	/**
-	 * 	@return true iff tv is subterm of some select term in term. 
+	 * 	@return true iff tv is subterm of some select term in term.
 	 */
 	private boolean occursInsideSelectTerm(final Term term, final TermVariable tv) {
 		final List<MultiDimensionalSelect> selectTerms = MultiDimensionalSelect.extractSelectShallow(term, true);
@@ -286,11 +286,11 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 		final boolean isStrict;
 		if (quantifier == QuantifiedFormula.EXISTS) {
 			isStrict = lowerBound.isIsStrict() || upperBound.isIsStrict();
-			assert !(lowerBound.isIsStrict() && upperBound.isIsStrict()) || 
+			assert !(lowerBound.isIsStrict() && upperBound.isIsStrict()) ||
 			!lowerBound.getTerm().getSort().getName().equals("Int") : "unsound if int and both are strict";
 		} else if (quantifier == QuantifiedFormula.FORALL) {
 			isStrict = lowerBound.isIsStrict() && upperBound.isIsStrict();
-			assert !(!lowerBound.isIsStrict() && !upperBound.isIsStrict()) || 
+			assert !(!lowerBound.isIsStrict() && !upperBound.isIsStrict()) ||
 			!lowerBound.getTerm().getSort().getName().equals("Int") : "unsound if int and both are non-strict";
 		} else {
 			throw new AssertionError("unknown quantifier");
@@ -336,11 +336,11 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 				for (int k=0; k<mantiDer.size(); k++) {
 					// zero means lower -  one means upper
 					if (BigInteger.valueOf(i).testBit(k)) {
-						final Bound upperBound = computeBound(mantiDer.get(k), 
+						final Bound upperBound = computeBound(mantiDer.get(k),
 								mquantifier, BoundType.UPPER);
 						adUpperBounds.add(upperBound);
 					} else {
-						final Bound lowerBound = computeBound(mantiDer.get(k), 
+						final Bound lowerBound = computeBound(mantiDer.get(k),
 								mquantifier, BoundType.LOWER);
 						adLowerBounds.add(lowerBound);
 
@@ -363,7 +363,7 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 				resultXJuncts.add(PartialQuantifierElimination.composeXjunctsInner(mScript, mquantifier, resultAtoms.toArray(new Term[resultAtoms.size()])));
 				if (!mServices.getProgressMonitorService().continueProcessing()) {
 					throw new ToolchainCanceledException(this.getClass(),
-							"TIR is building " + Math.pow(2,mantiDer.size()) + " xjuncts");
+							"building " + Math.pow(2,mantiDer.size()) + " xjuncts");
 				}
 			}
 			return PartialQuantifierElimination.composeXjunctsOuter(mScript, mquantifier, resultXJuncts.toArray(new Term[resultXJuncts.size()]));
@@ -374,7 +374,7 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 			final Bound result;
 			if (term.getSort().getName().equals("Real")) {
 				if (quantifier == QuantifiedFormula.EXISTS) {
-					return new Bound(true, term); 
+					return new Bound(true, term);
 				} else if (quantifier == QuantifiedFormula.FORALL) {
 					return new Bound(false, term);
 				} else {
@@ -433,7 +433,7 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 
 
 		/**
-		 * Add Term summand2 
+		 * Add Term summand2
 		 * @param adUpperBounds
 		 * @param term
 		 * @return

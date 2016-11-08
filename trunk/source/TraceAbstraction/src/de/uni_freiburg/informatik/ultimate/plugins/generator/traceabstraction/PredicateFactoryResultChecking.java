@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
@@ -30,78 +30,78 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.LevelRankingState;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.LevelRankingState;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 
 /**
- * StateFactory that should be used for result checking. 
+ * StateFactory that should be used for result checking.
  * Supports most operations but constructs always only an auxiliary predicate.
  * @author Matthias Heizmann
  *
  */
-public class PredicateFactoryResultChecking extends StateFactory<IPredicate> {
+public class PredicateFactoryResultChecking implements IStateFactory<IPredicate> {
 	
-	protected final SmtManager mSmtManager;
-	private final String s_StateLabel = 
+	protected final PredicateFactory mPredicateFactory;
+	private static final String STATE_LABEL =
 			"auxiliary predicate that should only be used while checking correctness of automata operations";
 	
-	public PredicateFactoryResultChecking(SmtManager smtManager) {
-		mSmtManager = smtManager;
+	public PredicateFactoryResultChecking(final PredicateFactory csToolkit) {
+		mPredicateFactory = csToolkit;
 	}
 	
 	@Override
-	public IPredicate intersection(IPredicate p1, IPredicate p2) {
-		return mSmtManager.getPredicateFactory().newDebugPredicate(s_StateLabel);
+	public IPredicate intersection(final IPredicate p1, final IPredicate p2) {
+		return mPredicateFactory.newDebugPredicate(STATE_LABEL);
 	}
 	
 	@Override
-	public IPredicate determinize(Map<IPredicate, Set<IPredicate>> down2up) {
-		return mSmtManager.getPredicateFactory().newDebugPredicate(s_StateLabel);
+	public IPredicate determinize(final Map<IPredicate, Set<IPredicate>> down2up) {
+		return mPredicateFactory.newDebugPredicate(STATE_LABEL);
 	}
 	
 	@Override
 	public IPredicate createSinkStateContent() {
-		return mSmtManager.getPredicateFactory().newDebugPredicate(s_StateLabel);
+		return mPredicateFactory.newDebugPredicate(STATE_LABEL);
 	}
 
 	@Override
 	public IPredicate createEmptyStackState(){
-		return mSmtManager.getPredicateFactory().newDebugPredicate(s_StateLabel);
+		return mPredicateFactory.newDebugPredicate(STATE_LABEL);
 	}
 
 	@Override
-	public IPredicate createDoubleDeckerContent(IPredicate down,
-			IPredicate up) {
+	public IPredicate createDoubleDeckerContent(final IPredicate down,
+			final IPredicate up) {
 		throw new UnsupportedOperationException();
 	}
 	
 	@Override
-	public IPredicate minimize(Collection<IPredicate> states) {
-		return mSmtManager.getPredicateFactory().newDebugPredicate(s_StateLabel);
+	public IPredicate minimize(final Collection<IPredicate> states) {
+		return mPredicateFactory.newDebugPredicate(STATE_LABEL);
 	}
 	
 	@Override
-	public IPredicate senwa(IPredicate entry, IPredicate state) {
+	public IPredicate senwa(final IPredicate entry, final IPredicate state) {
 		assert false : "still used?";
-		return mSmtManager.getPredicateFactory().newDontCarePredicate(((SPredicate) state).getProgramPoint());
+		return mPredicateFactory.newDontCarePredicate(((SPredicate) state).getProgramPoint());
 	}
 
 	@Override
-	public IPredicate buchiComplementFKV(LevelRankingState compl) {
-		return mSmtManager.getPredicateFactory().newDebugPredicate(s_StateLabel);
+	public IPredicate buchiComplementFKV(final LevelRankingState compl) {
+		return mPredicateFactory.newDebugPredicate(STATE_LABEL);
 	}
 
 	@Override
-	public IPredicate intersectBuchi(IPredicate s1, IPredicate s2, int track) {
-		return mSmtManager.getPredicateFactory().newDebugPredicate(s_StateLabel);
+	public IPredicate intersectBuchi(final IPredicate s1, final IPredicate s2, final int track) {
+		return mPredicateFactory.newDebugPredicate(STATE_LABEL);
 	}
 	
 	@Override
-	public IPredicate getContentOnConcurrentProduct(IPredicate c1,
-			IPredicate c2) {
-		return mSmtManager.getPredicateFactory().newDebugPredicate(s_StateLabel);
+	public IPredicate getContentOnConcurrentProduct(final IPredicate c1,
+			final IPredicate c2) {
+		return mPredicateFactory.newDebugPredicate(STATE_LABEL);
 	}
 }

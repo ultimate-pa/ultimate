@@ -2,27 +2,27 @@
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE CACSL2BoogieTranslator plug-in.
- * 
+ *
  * The ULTIMATE CACSL2BoogieTranslator plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE CACSL2BoogieTranslator plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE CACSL2BoogieTranslator plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CACSL2BoogieTranslator plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator;
@@ -109,11 +109,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Translation from Boogie to C for traces and expressions.
- * 
- * @author dietsch@informatik.uni-freiburg.de
+ *
+ * @author dietsch@informatik.uni-freiburg.de  
  */
-public class CACSL2BoogieBacktranslator
-		extends DefaultTranslator<BoogieASTNode, CACSLLocation, Expression, IASTExpression> {
+public class CACSL2BoogieBacktranslator 
+		extends DefaultTranslator<BoogieASTNode, CACSLLocation, Expression, IASTExpression, String, String> {
 
 	private static final String UNFINISHED_BACKTRANSLATION = "Unfinished Backtranslation";
 
@@ -123,7 +123,7 @@ public class CACSL2BoogieBacktranslator
 	private AExpressionTranslation mExpressionTranslation;
 	private boolean mGenerateBacktranslationWarnings;
 
-	public CACSL2BoogieBacktranslator(IUltimateServiceProvider services) {
+	public CACSL2BoogieBacktranslator(final IUltimateServiceProvider services) {
 		super(BoogieASTNode.class, CACSLLocation.class, Expression.class, IASTExpression.class);
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -131,12 +131,12 @@ public class CACSL2BoogieBacktranslator
 		mGenerateBacktranslationWarnings = true;
 	}
 
-	public void setExpressionTranslation(AExpressionTranslation expressionTranslation) {
+	public void setExpressionTranslation(final AExpressionTranslation expressionTranslation) {
 		mExpressionTranslation = expressionTranslation;
 	}
 
 	@Override
-	public List<CACSLLocation> translateTrace(List<BoogieASTNode> trace) {
+	public List<CACSLLocation> translateTrace(final List<BoogieASTNode> trace) {
 		// dirty but quick: convert trace to program execution
 		// TODO: set the correct step info (but how?)
 		final List<AtomicTraceElement<BoogieASTNode>> ateTrace = trace.stream()
@@ -285,11 +285,11 @@ public class CACSL2BoogieBacktranslator
 	 * This method converts condition eval false to condition eval true and vice versa. It is used because we translate
 	 * C loop conditions to if(!cond) break; in Boogie, i.e., while in Boogie, the condition was true, in C it is false
 	 * and vice versa.
-	 * 
+	 *
 	 * @param oldSiSet
 	 * @return
 	 */
-	private EnumSet<StepInfo> invertConditionInStepInfo(EnumSet<StepInfo> oldSiSet) {
+	private EnumSet<StepInfo> invertConditionInStepInfo(final EnumSet<StepInfo> oldSiSet) {
 		if (!oldSiSet.contains(StepInfo.CONDITION_EVAL_FALSE) && !oldSiSet.contains(StepInfo.CONDITION_EVAL_TRUE)) {
 			reportUnfinishedBacktranslation(UNFINISHED_BACKTRANSLATION
 					+ ": Expected StepInfo for loop construct to contain Condition, but it did not");
@@ -356,9 +356,9 @@ public class CACSL2BoogieBacktranslator
 	/**
 	 * Starts from some point in the programExecution i and finds a j >= i && j < programExecution.length s.t. all
 	 * elements [i..j] have the same location.
-	 * 
+	 *
 	 * If i is invalid (outside of [0..programExecution.length-1]), this method throws an IllegalArgumentException.
-	 * 
+	 *
 	 * @param programExecution
 	 * @param i
 	 * @param loc
@@ -386,7 +386,8 @@ public class CACSL2BoogieBacktranslator
 		}
 	}
 
-	private ProgramState<IASTExpression> translateProgramState(final ProgramState<Expression> programState) {
+	@Override
+	public ProgramState<IASTExpression> translateProgramState(final ProgramState<Expression> programState) {
 		if (programState == null) {
 			// cannot translate nothin'
 			return null;
@@ -404,8 +405,9 @@ public class CACSL2BoogieBacktranslator
 
 	}
 
-	private void translateProgramStateEntry(Expression varName, ProgramState<Expression> compressedProgramState,
-			Map<IASTExpression, Collection<IASTExpression>> translatedStateMap) {
+	private void translateProgramStateEntry(final Expression varName,
+			final ProgramState<Expression> compressedProgramState,
+			final Map<IASTExpression, Collection<IASTExpression>> translatedStateMap) {
 		// first, translate name
 		final IASTExpression newVarName = translateExpression(varName);
 		if (newVarName == null) {
@@ -439,11 +441,11 @@ public class CACSL2BoogieBacktranslator
 
 	/**
 	 * Replace base and offset with one {@link TemporaryPointerExpression}
-	 * 
+	 *
 	 * @param programState
 	 *            May not be null
 	 */
-	private ProgramState<Expression> compressProgramState(ProgramState<Expression> programState) {
+	private ProgramState<Expression> compressProgramState(final ProgramState<Expression> programState) {
 		final List<Entry<Expression, Collection<Expression>>> oldEntries = new ArrayList<>();
 		final List<Entry<Expression, Collection<Expression>>> newEntries = new ArrayList<>();
 
@@ -476,8 +478,8 @@ public class CACSL2BoogieBacktranslator
 		return new ProgramState<>(map);
 	}
 
-	private void extractTemporaryPointerExpression(List<Entry<Expression, Collection<Expression>>> oldEntries,
-			List<Entry<Expression, Collection<Expression>>> newEntries) {
+	private void extractTemporaryPointerExpression(final List<Entry<Expression, Collection<Expression>>> oldEntries,
+			final List<Entry<Expression, Collection<Expression>>> newEntries) {
 		for (int i = oldEntries.size() - 1; i >= 0; i--) {
 			final Entry<Expression, Collection<Expression>> entry = oldEntries.get(i);
 			final String str = BoogiePrettyPrinter.print(entry.getKey());
@@ -519,13 +521,13 @@ public class CACSL2BoogieBacktranslator
 	}
 
 	@Override
-	public IBacktranslatedCFG<String, CACSLLocation> translateCFG(IBacktranslatedCFG<?, BoogieASTNode> cfg) {
+	public IBacktranslatedCFG<String, CACSLLocation> translateCFG(final IBacktranslatedCFG<String, BoogieASTNode> cfg) {
 		// mLogger.info("################# Input: " + cfg.getClass().getSimpleName());
 		// printHondas(cfg, mLogger::info);
 		// printCFG(cfg, mLogger::info);
 		mGenerateBacktranslationWarnings = false;
 		IBacktranslatedCFG<String, CACSLLocation> translated = translateCFG(cfg, (a, b, c) -> translateCFGEdge(a, b, c),
-				(a, b, c) -> new CACSLBacktranslatedCFG(a, b, c, mLogger));
+				(a, b, c) -> new CACSLBacktranslatedCFG(a, b, c, mLogger, mServices));
 		translated = reduceCFGs(translated);
 		// mLogger.info("################# Output: " + translated.getClass().getSimpleName());
 		// printHondas(translated, mLogger::info);
@@ -561,8 +563,8 @@ public class CACSL2BoogieBacktranslator
 		return lastTarget;
 	}
 
-	private <TVL, SVL> void createCFGMultigraphEdge(Multigraph<TVL, CACSLLocation> currentSource, ILocation loc,
-			Multigraph<TVL, CACSLLocation> lastTarget, boolean isNegated) {
+	private <TVL, SVL> void createCFGMultigraphEdge(final Multigraph<TVL, CACSLLocation> currentSource,
+			final ILocation loc, final Multigraph<TVL, CACSLLocation> lastTarget, final boolean isNegated) {
 		final MultigraphEdge<TVL, CACSLLocation> edge;
 		if (loc instanceof CLocation) {
 			final CLocation cloc = (CLocation) loc;
@@ -619,11 +621,12 @@ public class CACSL2BoogieBacktranslator
 		}
 	}
 
-	private CLocation getConditionLoc(boolean isNegated, final IASTExpression condExpr) {
+	private CLocation getConditionLoc(final boolean isNegated, final IASTExpression condExpr) {
 		return (CLocation) LocationFactory.createCLocation(condExpr);
 	}
 
-	private IBacktranslatedCFG<String, CACSLLocation> reduceCFGs(IBacktranslatedCFG<String, CACSLLocation> translated) {
+	private IBacktranslatedCFG<String, CACSLLocation>
+			reduceCFGs(final IBacktranslatedCFG<String, CACSLLocation> translated) {
 		for (final IExplicitEdgesMultigraph<?, ?, String, CACSLLocation, ?> root : translated.getCFGs()) {
 			reduceCFG(root);
 		}
@@ -681,7 +684,7 @@ public class CACSL2BoogieBacktranslator
 	}
 
 	@Override
-	public IASTExpression translateExpression(Expression expression) {
+	public IASTExpression translateExpression(final Expression expression) {
 		return translateExpression(expression, null);
 	}
 
@@ -758,7 +761,7 @@ public class CACSL2BoogieBacktranslator
 				// - #res is the return value of the function
 
 				if (expression instanceof IdentifierExpression) {
-					IdentifierExpression iexpr = (IdentifierExpression) expression;
+					final IdentifierExpression iexpr = (IdentifierExpression) expression;
 					final Pair<String, CType> origName = translateIdentifierExpression(iexpr);
 					if (origName != null) {
 						return new FakeExpression(cnode, origName.getFirst(), origName.getSecond());
@@ -792,8 +795,10 @@ public class CACSL2BoogieBacktranslator
 				String translatedString = BoogiePrettyPrinter.print(translated);
 				// its ugly, but the easiest way to backtranslate a synthesized boogie expression
 				// we just replace operators that "look" different in C
-				translatedString =
-						translatedString.replaceAll("old\\(", "\\\\old\\(").replaceAll("(\\\\)*old", "\\\\old");
+				// TODO: We need a new BoogiePrettyPrinter for "FakeC" that takes care of quantifiers and such things
+				// (using ACSL).
+				translatedString = translatedString.replaceAll("old\\(", "\\\\old\\(")
+						.replaceAll("(\\\\)*old", "\\\\old").replaceAll("exists", "\\\\exists");
 
 				return new FakeExpression(translatedString);
 			}
@@ -900,20 +905,24 @@ public class CACSL2BoogieBacktranslator
 	}
 
 	private static BigDecimal getDecimalFromBinaryString(final String binary) {
-		int len = binary.length();
+		final int len = binary.length();
 		if (len == 32) {
-			int intBits = Integer.parseUnsignedInt(binary, 2);
-			float floatValue = Float.intBitsToFloat(intBits);
+			final int intBits = Integer.parseUnsignedInt(binary, 2);
+			final float floatValue = Float.intBitsToFloat(intBits);
 			return new BigDecimal(floatValue);
+		} else if (len == 64) {
+			final long longBits = Long.parseUnsignedLong(binary, 2);
+			final double doubleValue = Double.longBitsToDouble(longBits);
+			return new BigDecimal(doubleValue);
 		} else {
 			throw new IllegalArgumentException("Unsupported length: " + len);
 		}
 	}
 
 	private static String bitvecToString(final BitvecLiteral lit) {
-		final String binStr = Integer.toBinaryString(Integer.valueOf(lit.getValue()));
+		final String binStr = new BigInteger(lit.getValue()).toString(2);
 		assert binStr.length() <= lit.getLength() : "Binary string cannot be longer than bitvector literal length";
-		int missingZeros = lit.getLength() - binStr.length();
+		final int missingZeros = lit.getLength() - binStr.length();
 		if (missingZeros > 0) {
 			final String formatStr = "%" + lit.getLength() + "s";
 			return String.format(formatStr, binStr).replace(' ', '0');
@@ -935,7 +944,7 @@ public class CACSL2BoogieBacktranslator
 			final BigInteger extractedValue = mExpressionTranslation.extractIntegerValue(lit, cType);
 			value = String.valueOf(extractedValue);
 		}
-		checkLiteral(lit, value);
+		checkLiteral(cType, lit, value);
 		return new FakeExpression(value);
 	}
 
@@ -953,7 +962,7 @@ public class CACSL2BoogieBacktranslator
 		} else if (cType instanceof CPrimitive) {
 			// literal C primitives that are represented as bitvectors have to be converted back according to their
 			// translation, but it seems that AExpression is incomplete
-			CPrimitive primitive = (CPrimitive) cType.getUnderlyingType();
+			final CPrimitive primitive = (CPrimitive) cType.getUnderlyingType();
 			if (primitive.isIntegerType()) {
 				value = String.valueOf(mExpressionTranslation.extractIntegerValue(lit, cType));
 			} else if (primitive.isFloatingType()) {
@@ -970,30 +979,36 @@ public class CACSL2BoogieBacktranslator
 			final BigInteger extractedValue = mExpressionTranslation.extractIntegerValue(lit, cType);
 			value = String.valueOf(extractedValue);
 		}
-		checkLiteral(lit, value);
+		checkLiteral(cType, lit, value);
 		return new FakeExpression(value);
 	}
 
 	private IASTExpression translateRealLiteral(final RealLiteral lit) {
-		checkLiteral(lit, lit.getValue());
+		checkLiteral(null, lit, lit.getValue());
 		return new FakeExpression(lit.getValue());
 	}
 
 	private IASTExpression translateBooleanLiteral(final BooleanLiteral lit) {
 		final String value = (lit.getValue() ? "1" : "0");
-		checkLiteral(lit, value);
+		checkLiteral(null, lit, value);
 		return new FakeExpression(value);
 	}
 
-	private void checkLiteral(final Expression expr, final String value) {
+	private void checkLiteral(final CType cType, final Expression expr, final String value) {
 		if (value.contains("~fp~LONGDOUBLE")) {
 			reportUnfinishedBacktranslation(UNFINISHED_BACKTRANSLATION + ": " + expr.getClass().getSimpleName() + " "
 					+ BoogiePrettyPrinter.print(expr) + " could not be translated");
 
 		}
 		if (value == null || "null".equals(value)) {
-			reportUnfinishedBacktranslation(UNFINISHED_BACKTRANSLATION + ": " + expr.getClass().getSimpleName() + " "
-					+ BoogiePrettyPrinter.print(expr) + " could not be translated");
+			if (cType == null) {
+				reportUnfinishedBacktranslation(UNFINISHED_BACKTRANSLATION + ": " + expr.getClass().getSimpleName()
+						+ " " + BoogiePrettyPrinter.print(expr) + " could not be translated");
+			} else {
+				reportUnfinishedBacktranslation(UNFINISHED_BACKTRANSLATION + ": " + expr.getClass().getSimpleName()
+						+ " " + BoogiePrettyPrinter.print(expr) + " could not be translated for associated CType "
+						+ cType);
+			}
 		}
 	}
 
@@ -1010,7 +1025,8 @@ public class CACSL2BoogieBacktranslator
 		return String.valueOf(decimalValue);
 	}
 
-	private IASTExpression handleExpressionCASTSimpleDeclaration(Expression expression, CASTSimpleDeclaration decls) {
+	private IASTExpression handleExpressionCASTSimpleDeclaration(final Expression expression,
+			final CASTSimpleDeclaration decls) {
 		// this should only happen for IdentifierExpressions
 		if (!(expression instanceof IdentifierExpression)) {
 			reportUnfinishedBacktranslation(
@@ -1057,7 +1073,7 @@ public class CACSL2BoogieBacktranslator
 		return null;
 	}
 
-	private void reportUnfinishedBacktranslation(String message) {
+	private void reportUnfinishedBacktranslation(final String message) {
 		mLogger.warn(message);
 		if (mGenerateBacktranslationWarnings) {
 			mServices.getResultService().reportResult(Activator.PLUGIN_ID,
@@ -1065,11 +1081,11 @@ public class CACSL2BoogieBacktranslator
 		}
 	}
 
-	private Pair<String, CType> translateIdentifierExpression(IdentifierExpression expr) {
+	private Pair<String, CType> translateIdentifierExpression(final IdentifierExpression expr) {
 		return translateBoogieIdentifier(expr.getIdentifier());
 	}
 
-	private Pair<String, CType> translateBoogieIdentifier(String boogieId) {
+	private Pair<String, CType> translateBoogieIdentifier(final String boogieId) {
 		final Pair<String, CType> result;
 		if (boogieId.equals(SFO.RES)) {
 			result = new Pair<String, CType>("\\result", null);
@@ -1100,23 +1116,23 @@ public class CACSL2BoogieBacktranslator
 		return result;
 	}
 
-	void putFunction(String boogieId, String cId) {
+	void putFunction(final String boogieId, final String cId) {
 		mBoogie2C.putFunction(boogieId, cId);
 	}
 
-	public void putVar(String boogieId, String cId, CType cType) {
+	public void putVar(final String boogieId, final String cId, final CType cType) {
 		mBoogie2C.putVar(boogieId, cId, cType);
 	}
 
-	public void putInVar(String boogieId, String cId, CType cType) {
+	public void putInVar(final String boogieId, final String cId, final CType cType) {
 		mBoogie2C.putInVar(boogieId, cId, cType);
 	}
 
-	public void putTempVar(String boogieId, SFO.AUXVAR purpose, CType cType) {
+	public void putTempVar(final String boogieId, final SFO.AUXVAR purpose, final CType cType) {
 		mBoogie2C.putTempVar(boogieId, purpose, cType);
 	}
 
-	public boolean isTempVar(String boogieId) {
+	public boolean isTempVar(final String boogieId) {
 		return mBoogie2C.getTempVar2Obj().containsKey(boogieId);
 	}
 
@@ -1132,19 +1148,19 @@ public class CACSL2BoogieBacktranslator
 
 	/**
 	 * A subtree check that sacrifices memory consumption for speed. It is about 20x faster, but uses a lookup table.
-	 * 
+	 *
 	 * A subtree check is used to determine if a trace element is actually a nesting of some later trace element in the
 	 * error path (like in x = x++ + ++x, were x++ and ++x are nestings of +, and + is a nesting of the assignment).
-	 * 
+	 *
 	 * There may be a better solution to this (its rather expensive).
-	 * 
+	 *
 	 * @author dietsch@informatik.uni-freiburg.de
-	 * 
+	 *
 	 */
 	private class CheckForSubtreeInclusion {
 
 		protected List<AtomicTraceElement<CACSLLocation>>
-				check(List<AtomicTraceElement<CACSLLocation>> translatedAtomicTraceElements) {
+				check(final List<AtomicTraceElement<CACSLLocation>> translatedAtomicTraceElements) {
 
 			// first, compute lookup data structure
 			final Map<AtomicTraceElement<CACSLLocation>, Set<IASTNode>> ateToParents = new HashMap<>();
@@ -1222,7 +1238,7 @@ public class CACSL2BoogieBacktranslator
 	private class SynthesizedExpressionTransformer extends BoogieTransformer {
 
 		@Override
-		protected Expression processExpression(Expression expr) {
+		protected Expression processExpression(final Expression expr) {
 			if (expr instanceof IdentifierExpression) {
 				final IdentifierExpression ident = (IdentifierExpression) expr;
 				final ILocation loc = ident.getLocation();
@@ -1248,12 +1264,12 @@ public class CACSL2BoogieBacktranslator
 		}
 
 		@Override
-		protected Statement processStatement(Statement statement) {
+		protected Statement processStatement(final Statement statement) {
 			return super.processStatement(statement);
 		}
 
 		@Override
-		protected LeftHandSide processLeftHandSide(LeftHandSide lhs) {
+		protected LeftHandSide processLeftHandSide(final LeftHandSide lhs) {
 			if (lhs instanceof VariableLHS) {
 				mAllAreTemp = mAllAreTemp && isTempVar(((VariableLHS) lhs).getIdentifier());
 			}
@@ -1261,7 +1277,7 @@ public class CACSL2BoogieBacktranslator
 		}
 
 		@Override
-		protected Expression processExpression(Expression expr) {
+		protected Expression processExpression(final Expression expr) {
 			if (expr instanceof IdentifierExpression) {
 				mAllAreTemp = mAllAreTemp && isTempVar(((IdentifierExpression) expr).getIdentifier());
 			}
@@ -1271,11 +1287,11 @@ public class CACSL2BoogieBacktranslator
 
 	/**
 	 * Translates Boogie identifiers of variables and functions back to the identifiers of variables and operators in C.
-	 * 
+	 *
 	 * This class is in an immature state and translates Strings to Strings.
-	 * 
+	 *
 	 * @author heizmann@informatik.uni-freiburg.de
-	 * 
+	 *
 	 */
 	private static final class Boogie2C {
 
@@ -1303,19 +1319,19 @@ public class CACSL2BoogieBacktranslator
 			return mTempVar2Obj;
 		}
 
-		private void putFunction(String boogieId, String cId) {
+		private void putFunction(final String boogieId, final String cId) {
 			mFunctionId2Operator.put(boogieId, cId);
 		}
 
-		private void putVar(String boogieId, String cId, CType cType) {
+		private void putVar(final String boogieId, final String cId, final CType cType) {
 			mVar2CVar.put(boogieId, new Pair<String, CType>(cId, cType));
 		}
 
-		private void putInVar(String boogieId, String cId, CType cType) {
+		private void putInVar(final String boogieId, final String cId, final CType cType) {
 			mInVar2CVar.put(boogieId, new Pair<String, CType>(cId, cType));
 		}
 
-		private void putTempVar(String boogieId, SFO.AUXVAR purpose, CType cType) {
+		private void putTempVar(final String boogieId, final SFO.AUXVAR purpose, final CType cType) {
 			mTempVar2Obj.put(boogieId, purpose);
 		}
 	}
@@ -1326,7 +1342,7 @@ public class CACSL2BoogieBacktranslator
 		private Expression mBase;
 		private Expression mOffset;
 
-		public TemporaryPointerExpression(ILocation loc) {
+		public TemporaryPointerExpression(final ILocation loc) {
 			super(loc);
 		}
 
@@ -1343,11 +1359,11 @@ public class CACSL2BoogieBacktranslator
 			}
 		}
 
-		public void setBase(Expression expr) {
+		public void setBase(final Expression expr) {
 			mBase = expr;
 		}
 
-		public void setOffset(Expression expr) {
+		public void setOffset(final Expression expr) {
 			mOffset = expr;
 		}
 
@@ -1373,7 +1389,7 @@ public class CACSL2BoogieBacktranslator
 		}
 
 		@Override
-		public T setValue(T value) {
+		public T setValue(final T value) {
 			final T oldValue = mValue;
 			mValue = value;
 			return oldValue;

@@ -29,11 +29,11 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.obs
 import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.visitors.DebugRCFGVisitor;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.walker.ObserverDispatcher;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.walker.ObserverDispatcherSequential;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.walker.RCFGWalkerUnroller;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 
 /**
  * 
@@ -72,7 +72,7 @@ public class DependencyFinder extends BaseObserver {
 		walker.addObserver(new DebugRCFGVisitor(mLogger, 500));
 		// walker.addObserver(new UseDefVisitor());
 		// walker.addObserver(new SequencingVisitor(walker));
-		walker.run((RCFGNode) root);
+		walker.run((IcfgLocation) root);
 
 		final DebugFileWriterDietsch dfw = new DebugFileWriterDietsch(walker.getPaths(), mLogger, unrollings);
 		dfw.run();

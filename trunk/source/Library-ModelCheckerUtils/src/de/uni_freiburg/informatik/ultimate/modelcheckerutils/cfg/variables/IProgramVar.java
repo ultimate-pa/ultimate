@@ -30,8 +30,14 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 public interface IProgramVar {
+	
+	/**
+	 * Returns an identifier that is globally unique. If this is global non-old 
+	 * we return the identifier, if this is global oldvar we add old(.), if 
+	 * this is local we add the procedure name as prefix.
+	 */
+	String getGloballyUniqueId();
 
-	String getIdentifier();
 
 	/**
 	 * Returns the procedure in which this variable was declared. If this a global variable, then null is returned.
@@ -48,10 +54,6 @@ public interface IProgramVar {
 
 	ApplicationTerm getPrimedConstant();
 
-	/**
-	 * Returns an identifier that is globally unique. If this is global non-old we return the identifier, if this is
-	 * global oldvar we add old(.), if this is local we add the procedure name as prefix.
-	 */
-	String getGloballyUniqueId();
+
 
 }

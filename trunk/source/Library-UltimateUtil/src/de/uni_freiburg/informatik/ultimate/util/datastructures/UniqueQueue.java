@@ -39,7 +39,7 @@ import java.util.Set;
  * strengths of {@link Queue} and {@link Set}. The disadvantage is that the
  * queue must also maintain a set, thus time and space complexity increases.
  * 
- * @author Daniel Tischner
+ * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  *
  * @param <T>
  *            Class of objects the queue should contain

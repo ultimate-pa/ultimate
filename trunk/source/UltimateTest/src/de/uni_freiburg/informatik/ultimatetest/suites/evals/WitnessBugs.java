@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimatetest.suites.evals;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinitionGenerator;
@@ -47,15 +48,32 @@ import de.uni_freiburg.informatik.ultimatetest.summaries.ConversionContext;
  */
 public class WitnessBugs extends AbstractEvalTestSuite {
 	private static final String[] ALL_C = new String[] { ".c", ".i" };
-	private static final String[] BPL = new String[] { ".bpl" };
 
 	private static Collection<UltimateRunDefinition> createDefs() {
 		final Collection<UltimateRunDefinition> rtr = new ArrayList<>();
 		// rtr.addAll(produceWitnessSV("locks"));
 		// rtr.addAll(produceWitnessSV("loops/veris.c_NetBSD-libc__loop_true-unreach-call.c"));
 		// rtr.addAll(verifyWitnessSV("loops/veris.c_NetBSD-libc__loop_true-unreach-call.c"));
+		// rtr.addAll(produceWitnessSV("locks/test_locks_5_true-unreach-call_false-termination.c"));
+		// rtr.addAll(verifyWitnessSV("locks/test_locks_5_true-unreach-call_false-termination.c"));
+
+		rtr.addAll(produceAndVerifyWitnessSV(
+				"ldv-linux-4.2-rc1/linux-4.2-rc1.tar.xz-43_2a-drivers--net--appletalk--ipddp.ko-entry_point_true-unreach-call.cil.out.c"));
+		rtr.addAll(produceAndVerifyWitnessSV("ldv-regression/ex3_forlist.c_true-unreach-call.i"));
+		rtr.addAll(produceAndVerifyWitnessSV("ssh-simplified/s3_clnt_1_true-unreach-call.cil.c"));
+		rtr.addAll(produceAndVerifyWitnessSV("locks/test_locks_7_true-unreach-call_false-termination.c"));
+		rtr.addAll(produceAndVerifyWitnessSV("product-lines/minepump_spec5_product01_true-unreach-call.cil.c"));
+		rtr.addAll(produceAndVerifyWitnessSV("loop-invgen/nested6_true-unreach-call.i"));
+		rtr.addAll(produceAndVerifyWitnessSV("floats-cbmc-regression/float11_true-unreach-call.i"));
+		rtr.addAll(produceAndVerifyWitnessSV(
+				"ldv-linux-3.4-simple/32_1_cilled_true-unreach-call_ok_nondet_linux-3.4-32_1-drivers--staging--serqt_usb2--serqt_usb2.ko-ldv_main0_sequence_infinite_withcheck_stateful.cil.out.c"));
+		rtr.addAll(produceAndVerifyWitnessSV(
+				"ldv-linux-3.4-simple/32_1_cilled_true-unreach-call_ok_nondet_linux-3.4-32_1-drivers--staging--serqt_usb2--serqt_usb2.ko-ldv_main0_sequence_infinite_withcheck_stateful.cil.out.c"));
+		rtr.addAll(produceAndVerifyWitnessSV(
+				"ldv-linux-3.4-simple/32_1_cilled_true-unreach-call_ok_nondet_linux-3.4-32_1-drivers--leds--ledtrig-default-on.ko-ldv_main0_sequence_infinite_withcheck_stateful.cil.out.c"));
+
 		// rtr.addAll(produceWitnessSV("loop-acceleration/multivar_true-unreach-call1.i"));
-		rtr.addAll(verifyWitnessSV("loop-acceleration/multivar_true-unreach-call1.i"));
+		// rtr.addAll(verifyWitnessSV("loop-acceleration/multivar_true-unreach-call1.i"));
 		// rtr.addAll(produceWitnessSV("loop-acceleration"));
 		// rtr.addAll(verifyWitnessSV("product-lines"));
 		// rtr.addAll(verifyWitnessSV("loops/array_true-unreach-call.i"));
@@ -68,7 +86,7 @@ public class WitnessBugs extends AbstractEvalTestSuite {
 
 	@Override
 	protected long getTimeout() {
-		return 60 * 1000 * 1000;
+		return 90 * 1000 * 1000;
 	}
 
 	@Override
@@ -100,6 +118,13 @@ public class WitnessBugs extends AbstractEvalTestSuite {
 
 	private static String sv(final String path) {
 		return "examples/svcomp/" + path;
+	}
+
+	private static Collection<UltimateRunDefinition> produceAndVerifyWitnessSV(final String example) {
+		final List<UltimateRunDefinition> rtr = new ArrayList<>();
+		rtr.addAll(produceWitnessSV(example));
+		rtr.addAll(verifyWitnessSV(example));
+		return rtr;
 	}
 
 	private static Collection<UltimateRunDefinition> produceWitnessSV(final String example) {

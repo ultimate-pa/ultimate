@@ -30,15 +30,14 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionwi
 import java.util.Map;
 import java.util.SortedMap;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
@@ -48,28 +47,28 @@ public class TraceCheckerWithAccessibleSSATerms extends TraceChecker {
 	
 	Script mscript;
 
-	public TraceCheckerWithAccessibleSSATerms(IPredicate precondition,
-			IPredicate postcondition,
-			SortedMap<Integer, IPredicate> pendingContexts,
-			NestedWord<CodeBlock> trace, SmtManager smtManager,
-			ModifiableGlobalVariableManager modifiedGlobals,
-			AssertCodeBlockOrder assertCodeBlocksIncrementally,
-			IUltimateServiceProvider services, boolean computeRcfgProgramExecution, 
-			PredicateUnifier predicateUnifier, InterpolationTechnique interpolation) {
-		super(precondition, postcondition, pendingContexts, trace, smtManager, modifiedGlobals, 
-				assertCodeBlocksIncrementally, services, computeRcfgProgramExecution);
-		mscript = smtManager.getScript();
+	public TraceCheckerWithAccessibleSSATerms(final IPredicate precondition,
+			final IPredicate postcondition,
+			final SortedMap<Integer, IPredicate> pendingContexts,
+			final NestedWord<CodeBlock> trace, final CfgSmtToolkit csToolkit,
+			final AssertCodeBlockOrder assertCodeBlocksIncrementally,
+			final IUltimateServiceProvider services,
+			final boolean computeRcfgProgramExecution, final PredicateUnifier predicateUnifier, 
+			final InterpolationTechnique interpolation) {
+		super(precondition, postcondition, pendingContexts, trace, csToolkit, assertCodeBlocksIncrementally, 
+				services, computeRcfgProgramExecution);
+		mscript = csToolkit.getManagedScript().getScript();
 	}
 	
 	public void traceCheckFinished() {
 		mTraceCheckFinished = true;
 	}
 	
-	public Term getAnnotatedSSATerm(int position) {
+	public Term getAnnotatedSSATerm(final int position) {
 		return mAAA.getAnnotatedSsa().getFormulaFromNonCallPos(position);
 	}
 	
-	public Term getSSATerm(int position) {
+	public Term getSSATerm(final int position) {
 		return mNsb.getSsa().getFormulaFromNonCallPos(position);
 	}
 	

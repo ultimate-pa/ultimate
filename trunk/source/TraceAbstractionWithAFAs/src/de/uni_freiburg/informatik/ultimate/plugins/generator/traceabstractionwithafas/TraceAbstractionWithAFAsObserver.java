@@ -31,7 +31,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.BenchmarkResult;
@@ -49,17 +48,18 @@ import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverit
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RcfgElement;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgElement;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 
@@ -89,20 +89,21 @@ public class TraceAbstractionWithAFAsObserver extends BaseObserver {
 	@Override
 	public boolean process(final IElement root) {
 
-		final RootNode rootNode = (RootNode) root;
-		final RootAnnot rootAnnot = rootNode.getRootAnnot();
+		final BoogieIcfgContainer rootAnnot = (BoogieIcfgContainer) root;
 		final TAPreferences taPrefs = new TAPreferences(mServices);
-		final SmtManager smtManager = new SmtManager(rootAnnot.getScript(), rootAnnot.getBoogie2SMT(), rootAnnot.getModGlobVarManager(), mServices, false, rootAnnot.getManagedScript(), taPrefs.getSimplificationTechnique(), taPrefs.getXnfConversionTechnique());
+		final CfgSmtToolkit csToolkit = rootAnnot.getCfgSmtToolkit();
+		final PredicateFactory predicateFactory = new PredicateFactory(mServices, csToolkit.getManagedScript(), 
+				csToolkit.getSymbolTable(), taPrefs.getSimplificationTechnique(), taPrefs.getXnfConversionTechnique());
 		final TraceAbstractionBenchmarks taBenchmarks = new TraceAbstractionBenchmarks(rootAnnot);
 		
 
-		final Map<String, Collection<ProgramPoint>> proc2errNodes = rootAnnot.getErrorNodes();
-		final Collection<ProgramPoint> errNodesOfAllProc = new ArrayList<ProgramPoint>();
-		for (final Collection<ProgramPoint> errNodeOfProc : proc2errNodes.values()) {
+		final Map<String, Collection<BoogieIcfgLocation>> proc2errNodes = rootAnnot.getErrorNodes();
+		final Collection<BoogieIcfgLocation> errNodesOfAllProc = new ArrayList<BoogieIcfgLocation>();
+		for (final Collection<BoogieIcfgLocation> errNodeOfProc : proc2errNodes.values()) {
 			errNodesOfAllProc.addAll(errNodeOfProc);
 		}
 
-		final TAwAFAsCegarLoop cegarLoop = new TAwAFAsCegarLoop("bla", rootNode, smtManager, taBenchmarks, taPrefs,
+		final TAwAFAsCegarLoop cegarLoop = new TAwAFAsCegarLoop("bla", rootAnnot, csToolkit, predicateFactory, taBenchmarks, taPrefs,
 				errNodesOfAllProc, taPrefs.interpolation(), taPrefs.computeHoareAnnotation(), mServices, mToolchainStorage);
 
 		final Result result = cegarLoop.iterate();
@@ -138,15 +139,15 @@ public class TraceAbstractionWithAFAsObserver extends BaseObserver {
 		reportResult(res);
 	}
 
-	private void reportPositiveResults(final Collection<ProgramPoint> errorLocs) {
+	private void reportPositiveResults(final Collection<BoogieIcfgLocation> errorLocs) {
 		final String longDescription;
 		if (errorLocs.isEmpty()) {
 			longDescription = "We were not able to verify any"
 					+ " specifiation because the program does not contain any specification.";
 		} else {
 			longDescription = errorLocs.size() + " specifications checked. All of them hold";
-			for (final ProgramPoint errorLoc : errorLocs) {
-				final PositiveResult<RcfgElement> pResult = new PositiveResult<RcfgElement>(Activator.s_PLUGIN_NAME,
+			for (final BoogieIcfgLocation errorLoc : errorLocs) {
+				final PositiveResult<IcfgElement> pResult = new PositiveResult<IcfgElement>(Activator.s_PLUGIN_NAME,
 						errorLoc, mServices.getBacktranslationService());
 				reportResult(pResult);
 			}
@@ -162,32 +163,32 @@ public class TraceAbstractionWithAFAsObserver extends BaseObserver {
 			return;
 		}
 
-		reportResult(new CounterExampleResult<RcfgElement,RCFGEdge, Expression>(getErrorPP(pe), Activator.s_PLUGIN_NAME,
+		reportResult(new CounterExampleResult<IcfgElement,IcfgEdge, Term>(getErrorPP(pe), Activator.s_PLUGIN_NAME,
 				mServices.getBacktranslationService(), pe));
 	}
 
 	private void reportUnproveableResult(final RcfgProgramExecution pe, final List<UnprovabilityReason> unproabilityReasons) {
-		final ProgramPoint errorPP = getErrorPP(pe);
-		final UnprovableResult<RcfgElement, RCFGEdge, Expression> uknRes = new UnprovableResult<RcfgElement, RCFGEdge, Expression>(
+		final BoogieIcfgLocation errorPP = getErrorPP(pe);
+		final UnprovableResult<IcfgElement, IcfgEdge, Term> uknRes = new UnprovableResult<IcfgElement, IcfgEdge, Term>(
 				Activator.s_PLUGIN_NAME, errorPP, mServices.getBacktranslationService(), pe, unproabilityReasons);
 		reportResult(uknRes);
 	}
 
-	public ProgramPoint getErrorPP(final RcfgProgramExecution rcfgProgramExecution) {
+	public BoogieIcfgLocation getErrorPP(final RcfgProgramExecution rcfgProgramExecution) {
 		final int lastPosition = rcfgProgramExecution.getLength() - 1;
-		final RCFGEdge last = rcfgProgramExecution.getTraceElement(lastPosition).getTraceElement();
-		final ProgramPoint errorPP = (ProgramPoint) last.getTarget();
+		final IcfgEdge last = rcfgProgramExecution.getTraceElement(lastPosition).getTraceElement();
+		final BoogieIcfgLocation errorPP = (BoogieIcfgLocation) last.getTarget();
 		return errorPP;
 	}
 	
-	private void reportTimeoutResult(final Collection<ProgramPoint> errorLocs) {
-		for (final ProgramPoint errorIpp : errorLocs) {
-			final ProgramPoint errorLoc = errorIpp;
+	private void reportTimeoutResult(final Collection<BoogieIcfgLocation> errorLocs) {
+		for (final BoogieIcfgLocation errorIpp : errorLocs) {
+			final BoogieIcfgLocation errorLoc = errorIpp;
 			final ILocation origin = errorLoc.getBoogieASTNode().getLocation().getOrigin();
 			String timeOutMessage = "Unable to prove that "
 					+ ResultUtil.getCheckedSpecification(errorLoc).getPositiveMessage();
 			timeOutMessage += " (line " + origin.getStartLine() + ")";
-			final TimeoutResultAtElement<RcfgElement> timeOutRes = new TimeoutResultAtElement<RcfgElement>(errorLoc,
+			final TimeoutResultAtElement<IcfgElement> timeOutRes = new TimeoutResultAtElement<IcfgElement>(errorLoc,
 					Activator.s_PLUGIN_NAME, mServices.getBacktranslationService(),
 					timeOutMessage);
 			reportResult(timeOutRes);

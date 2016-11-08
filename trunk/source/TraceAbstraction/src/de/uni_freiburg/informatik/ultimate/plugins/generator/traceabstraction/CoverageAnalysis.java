@@ -34,15 +34,15 @@ import java.util.Map.Entry;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
@@ -64,12 +64,12 @@ public class CoverageAnalysis {
 	protected final ILogger mLogger ;
 	
 	protected final NestedWord<? extends IAction> mNestedWord;
-	private final List<ProgramPoint> mProgramPointSequence;
+	private final List<BoogieIcfgLocation> mProgramPointSequence;
 	private final IPredicate[] mInterpolants;
 	private final PredicateUnifier mPredicateUnifier;
 	
-	private final Map<ProgramPoint, List<Integer>> mProgramPoint2Occurence = 
-		new HashMap<ProgramPoint, List<Integer>>();
+	private final Map<BoogieIcfgLocation, List<Integer>> mProgramPoint2Occurence = 
+		new HashMap<BoogieIcfgLocation, List<Integer>>();
 	
 	private int mUnsat;
 	private int mSat;
@@ -82,7 +82,7 @@ public class CoverageAnalysis {
 
 	public CoverageAnalysis(IUltimateServiceProvider services, 
 			IInterpolantGenerator interpolantGenerator,
-			List<ProgramPoint> programPointSequence, ILogger logger) {
+			List<BoogieIcfgLocation> programPointSequence, ILogger logger) {
 		mServices = services;
 		mLogger = logger;
 		mInterpolants = interpolantGenerator.getInterpolants();
@@ -101,7 +101,7 @@ public class CoverageAnalysis {
 
 			processCodeBlock(i);
 
-			final ProgramPoint pp = mProgramPointSequence.get(i);
+			final BoogieIcfgLocation pp = mProgramPointSequence.get(i);
 			List<Integer> previousOccurrences = mProgramPoint2Occurence.get(pp);
 			if (previousOccurrences == null) {
 				previousOccurrences = new ArrayList<Integer>();
@@ -155,7 +155,7 @@ public class CoverageAnalysis {
 
 	private int sumCountedOccurrences() {
 		int occurrenceSum = 0;
-		for (final Entry<ProgramPoint, List<Integer>> entry : mProgramPoint2Occurence.entrySet()) {
+		for (final Entry<BoogieIcfgLocation, List<Integer>> entry : mProgramPoint2Occurence.entrySet()) {
 			occurrenceSum += entry.getValue().size();
 		}
 		return occurrenceSum;
@@ -179,10 +179,10 @@ public class CoverageAnalysis {
 	}
 	
 	
-	public static List<ProgramPoint> extractProgramPoints(IRun<CodeBlock, IPredicate> irun) {
+	public static List<BoogieIcfgLocation> extractProgramPoints(IRun<CodeBlock, IPredicate> irun) {
 		final ArrayList<IPredicate> predicateSequence = 
 				((NestedRun<CodeBlock, IPredicate>) irun).getStateSequence();
-		final ArrayList<ProgramPoint> result = new ArrayList<>();
+		final ArrayList<BoogieIcfgLocation> result = new ArrayList<>();
 		for (final IPredicate p : predicateSequence) {
 			result.add(((ISLPredicate) p).getProgramPoint());
 		}

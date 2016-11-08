@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CDTPlugin plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE CDTPlugin plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE CDTPlugin plug-in grant you additional permission
  * to convey the resulting work.
  */
 /**
@@ -83,7 +83,7 @@ public class LocationTrace extends ViewPart implements ISelectionListener {
 	/**
 	 * The Id of this View
 	 */
-	public static String ID = "de.uni_freiburg.informatik.ultimate.cdt.LocationTrace";
+	public static final String ID = "de.uni_freiburg.informatik.ultimate.cdt.LocationTrace";
 
 	/**
 	 * The underlying JFace Component.
@@ -115,7 +115,7 @@ public class LocationTrace extends ViewPart implements ISelectionListener {
 	 * .Composite)
 	 */
 	@Override
-	public void createPartControl(Composite parent) {
+	public void createPartControl(final Composite parent) {
 		final Tree variableTree = new Tree(parent, SWT.BORDER | SWT.H_SCROLL
 				| SWT.V_SCROLL | SWT.FULL_SELECTION);
 		variableTree.setHeaderVisible(true);
@@ -159,7 +159,7 @@ public class LocationTrace extends ViewPart implements ISelectionListener {
 	}
 
 	@Override
-	public void selectionChanged(IWorkbenchPart part, ISelection selection) {
+	public void selectionChanged(final IWorkbenchPart part, final ISelection selection) {
 		if (selection instanceof ITreeSelection && part instanceof ResultList) {
 			final Object first = ((ITreeSelection) selection).getFirstElement();
 			if (first instanceof IResult) {
@@ -218,7 +218,7 @@ public class LocationTrace extends ViewPart implements ISelectionListener {
 	 * @param lineNumber
 	 *            the current line number
 	 */
-	private void markLine(IEditorPart editorPart, IRegion lineInfo) {
+	private void markLine(final IEditorPart editorPart, final IRegion lineInfo) {
 		if (!(editorPart instanceof ITextEditor)) {
 			return;
 		}
@@ -240,8 +240,8 @@ public class LocationTrace extends ViewPart implements ISelectionListener {
 	 * @param editorPart
 	 *            the active editor
 	 */
-	private void markLocationsInEditor(IResult res, IEditorInput input,
-			IEditorPart editorPart) {
+	private void markLocationsInEditor(final IResult res, final IEditorInput input,
+			final IEditorPart editorPart) {
 		if (res instanceof CounterExampleResult
 				&& input instanceof IFileEditorInput) {
 			for (final ILocation loc : ((CounterExampleResult<?,?,?>) res).getFailurePath()) {
@@ -294,7 +294,7 @@ public class LocationTrace extends ViewPart implements ISelectionListener {
 	 *            the current line number
 	 * @return line information containing the offset
 	 */
-	private IRegion getLineInformation(IEditorPart editorPart, int lineNumber) {
+	private IRegion getLineInformation(final IEditorPart editorPart, final int lineNumber) {
 		if (!(editorPart instanceof ITextEditor) || lineNumber <= 0) {
 			return null;
 		}
@@ -347,7 +347,7 @@ public class LocationTrace extends ViewPart implements ISelectionListener {
 	 * @param back
 	 *            decides if we go back or for
 	 */
-	private void moveSelection(boolean back) {
+	private void moveSelection(final boolean back) {
 		final ITreeSelection selection = (ITreeSelection) viewer.getSelection();
 		final Object[] items = contProv.getElements(selection.getFirstElement());
 		Object forward = null;
@@ -390,7 +390,7 @@ public class LocationTrace extends ViewPart implements ISelectionListener {
 	/**
 	 * Returns the image descriptor with the given relative path.
 	 */
-	private ImageDescriptor getImageDescriptor(String relativePath) {
+	private ImageDescriptor getImageDescriptor(final String relativePath) {
 		final String iconPath = "icons/";
 		final Bundle bundle = Platform.getBundle(Activator.PLUGIN_ID);
 		final URL url = FileLocator.find(bundle, new Path(iconPath + relativePath),

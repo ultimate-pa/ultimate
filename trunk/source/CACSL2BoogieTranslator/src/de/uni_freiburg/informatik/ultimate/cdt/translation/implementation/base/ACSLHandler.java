@@ -23,9 +23,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CACSL2BoogieTranslator plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission
  * to convey the resulting work.
  */
 /**
@@ -67,8 +67,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.StructHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.StructHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.AExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
@@ -91,8 +91,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IACSLHandler;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLResultExpression;
@@ -100,6 +100,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Assertion;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Assigns;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.BooleanLiteral;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.CastExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.CodeAnnot;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.CodeAnnotStmt;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Contract;
@@ -107,6 +108,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ContractStatement;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Ensures;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.FieldAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.FreeableExpression;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopAnnot;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopAssigns;
@@ -185,7 +187,7 @@ public class ACSLHandler implements IACSLHandler {
     		final ExpressionResult inner = (ExpressionResult) main.dispatch(ove.getFormula());
     		inner.switchToRValueIfNecessary(main, ((CHandler) main.mCHandler).getMemoryHandler(), ((CHandler) main.mCHandler).mStructHandler, loc);
     		inner.lrVal = new RValue(
-    				ExpressionFactory.newUnaryExpression(loc, UnaryExpression.Operator.OLD, inner.lrVal.getValue()), 
+    				ExpressionFactory.newUnaryExpression(loc, UnaryExpression.Operator.OLD, inner.lrVal.getValue()),
     				inner.lrVal.getCType());
     		return inner;
     	} else {
@@ -207,7 +209,7 @@ public class ACSLHandler implements IACSLHandler {
             check.addToNodeAnnot(assertStmt);
             return new Result(assertStmt);
             */
-            final Check check; 
+            final Check check;
             if (mWitnessInvariantMode) {
             	check = new Check(Check.Spec.WITNESS_INVARIANT);
             } else {
@@ -385,7 +387,7 @@ public class ACSLHandler implements IACSLHandler {
         left = left.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
         right = right.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
         
-        final AExpressionTranslation expressionTranslation = 
+        final AExpressionTranslation expressionTranslation =
      		   ((CHandler) main.mCHandler).getExpressionTranslation();
         
         final ArrayList<Declaration> decl = new ArrayList<Declaration>();
@@ -406,7 +408,7 @@ public class ACSLHandler implements IACSLHandler {
        auxVars.putAll(right.auxVars);
        overappr.addAll(right.overappr);
 
-//        if (left.getType() != null && //FIXME: (alex:) commenting this out bc of removal of InferredType -- replace with sth? 
+//        if (left.getType() != null && //FIXME: (alex:) commenting this out bc of removal of InferredType -- replace with sth?
 //        		left.getType().equals(new InferredType(InferredType.Type.Boolean))) {
 //        	//convert to boolean if neccessary
 //            right = ConvExpr.toBoolean(loc, right);
@@ -533,7 +535,7 @@ public class ACSLHandler implements IACSLHandler {
                 new de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral(
                         LocationFactory.createACSLLocation(node), node.getValue()));
         */
-    	final AExpressionTranslation expressionTranslation = 
+    	final AExpressionTranslation expressionTranslation =
     			((CHandler) main.mCHandler).getExpressionTranslation();
     	final ILocation loc = LocationFactory.createACSLLocation(node);
     	final String val = node.getValue();
@@ -555,7 +557,7 @@ public class ACSLHandler implements IACSLHandler {
 
     @Override
     public Result visit(final Dispatcher main, final RealLiteral node) {
-    	final AExpressionTranslation expressionTranslation = 
+    	final AExpressionTranslation expressionTranslation =
     			((CHandler) main.mCHandler).getExpressionTranslation();
      	final RValue rValue = expressionTranslation.translateFloatingLiteral(
      			LocationFactory.createACSLLocation(node), node.getValue());
@@ -611,7 +613,7 @@ public class ACSLHandler implements IACSLHandler {
         }
         
         
-        IType type = new InferredType(InferredType.Type.Unknown);
+        IBoogieType type = new InferredType(InferredType.Type.Unknown);
         final String cId = main.mCHandler.getSymbolTable()
                     .getCID4BoogieID(id, loc);
         final CType cType;
@@ -640,7 +642,7 @@ public class ACSLHandler implements IACSLHandler {
         			+ "unable to determine CType for variable " + id);
         }
         
-        //FIXME: dereferencing does not work for ACSL yet, because we cannot pass 
+        //FIXME: dereferencing does not work for ACSL yet, because we cannot pass
         // the necessary auxiliary statements on.
         LRValue lrVal;
         if (((CHandler) main.mCHandler).isHeapVar(id)) {
@@ -678,7 +680,7 @@ public class ACSLHandler implements IACSLHandler {
         }
         // TODO : node.getCompleteness();
         specType = ACSLHandler.SPEC_TYPE.NOT;
-        return new ContractResult(spec.toArray(new Specification[0]));
+        return new ContractResult(spec.toArray(new Specification[spec.size()]));
     }
 
     @Override
@@ -742,7 +744,7 @@ public class ACSLHandler implements IACSLHandler {
 
     @Override
     public Result visit(final Dispatcher main, final ACSLResultExpression node) {
-    	return new ExpressionResult(new RValue(new IdentifierExpression(LocationFactory.createACSLLocation(node), "#res"), new CPrimitive(CPrimitives.INT)));     
+    	return new ExpressionResult(new RValue(new IdentifierExpression(LocationFactory.createACSLLocation(node), "#res"), new CPrimitive(CPrimitives.INT)));
         //return new Result(new IdentifierExpression(LocationFactory.createACSLLocation(node), "#res"));
     }
 
@@ -761,7 +763,7 @@ public class ACSLHandler implements IACSLHandler {
             assert res.node instanceof Specification;
             specs.add((Specification) res.node);
         }
-        return new ContractResult(specs.toArray(new Specification[0]));
+        return new ContractResult(specs.toArray(new Specification[specs.size()]));
     }
 
     @Override
@@ -854,7 +856,7 @@ public class ACSLHandler implements IACSLHandler {
 //        CArray arrayType = new CArray(dimensions, idExprRes.lrVal.cType); --> wrong, i think (alex)
 //        arrayType.getDimensions().length == args.size()
             
-        de.uni_freiburg.informatik.ultimate.boogie.ast.Expression expr;
+        Expression expr;
         if (subExpr instanceof IdentifierExpression) {
             final IdentifierExpression idEx = (IdentifierExpression) subExpr;
             final String bId = idEx.getIdentifier();
@@ -911,7 +913,7 @@ public class ACSLHandler implements IACSLHandler {
     @Override
     public Result visit(final Dispatcher main, final FreeableExpression node) {
         final ILocation loc = LocationFactory.createACSLLocation(node);
-        final IType it = new InferredType(InferredType.Type.Boolean);
+        final IBoogieType it = new InferredType(InferredType.Type.Boolean);
 
         final ArrayList<Declaration> decl = new ArrayList<Declaration>();
         final ArrayList<Statement> stmt = new ArrayList<Statement>();
@@ -939,7 +941,7 @@ public class ACSLHandler implements IACSLHandler {
     @Override
     public Result visit(final Dispatcher main, final MallocableExpression node) {
         final ILocation loc = LocationFactory.createACSLLocation(node);
-        final IType it = new InferredType(InferredType.Type.Boolean);
+        final IBoogieType it = new InferredType(InferredType.Type.Boolean);
 
         final ArrayList<Declaration> decl = new ArrayList<Declaration>();
         final ArrayList<Statement> stmt = new ArrayList<Statement>();
@@ -973,7 +975,7 @@ public class ACSLHandler implements IACSLHandler {
     @Override
     public Result visit(final Dispatcher main, final ValidExpression node) {
         final ILocation loc = LocationFactory.createACSLLocation(node);
-        final IType it = new InferredType(InferredType.Type.Boolean);
+        final IBoogieType it = new InferredType(InferredType.Type.Boolean);
 
         final ArrayList<Declaration> decl = new ArrayList<Declaration>();
         final ArrayList<Statement> stmt = new ArrayList<Statement>();
@@ -998,4 +1000,36 @@ public class ACSLHandler implements IACSLHandler {
         return new ExpressionResult(stmt, new RValue(e, new CPrimitive(CPrimitives.INT)), decl, auxVars, overappr);
         //return new Result(e);
     }
+
+	@Override
+	public Result visit(final Dispatcher main, final CastExpression node) {
+		final ILocation loc = LocationFactory.createACSLLocation(node);
+		final CPrimitive resultType = AcslTypeUtils.translateAcslTypeToCType(node.getCastedType());
+		ExpressionResult expr = (ExpressionResult) main.dispatch(node.getExpression());
+        final MemoryHandler memoryHandler = ((CHandler) main.mCHandler).getMemoryHandler();
+        final StructHandler structHandler = ((CHandler) main.mCHandler).mStructHandler;
+		expr = expr.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
+    	final AExpressionTranslation expressionTranslation =
+    			((CHandler) main.mCHandler).getExpressionTranslation();
+    	expressionTranslation.convertIfNecessary(loc, expr, resultType);
+		return expr;
+	}
+
+	@Override
+	public Result visit(final Dispatcher main, final IfThenElseExpression node) {
+		final ILocation loc = LocationFactory.createACSLLocation(node);
+		assert node.getChildren().size() == 4;
+		
+        final MemoryHandler memoryHandler = ((CHandler) main.mCHandler).getMemoryHandler();
+        final StructHandler structHandler = ((CHandler) main.mCHandler).mStructHandler;
+		
+		ExpressionResult opCondition = (ExpressionResult) main.dispatch(node.getCondition());
+		opCondition = opCondition.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
+		ExpressionResult opPositive = (ExpressionResult) main.dispatch(node.getThenPart());
+		opPositive = opPositive.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
+		ExpressionResult opNegative = (ExpressionResult) main.dispatch(node.getElsePart());
+		opNegative = opNegative.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
+		return ((CHandler) main.mCHandler).handleConditionalOperator(loc, opCondition, opPositive, opNegative);
+	}
+
 }

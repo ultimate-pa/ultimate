@@ -21,9 +21,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BlockEncoding plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE BlockEncoding plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE BlockEncoding plug-in grant you additional permission
  * to convey the resulting work.
  */
 /**
@@ -65,15 +65,15 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotat
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.GotoEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
@@ -92,13 +92,13 @@ public class ConversionVisitor implements IMinimizationVisitor {
 
 	private final ILogger mLogger;
 
-	private ProgramPoint mStartNode;
+	private BoogieIcfgLocation mStartNode;
 
-	private final HashMap<MinimizedNode, ProgramPoint> mRefNodeMap;
+	private final HashMap<MinimizedNode, BoogieIcfgLocation> mRefNodeMap;
 
-	private final HashMap<ProgramPoint, ProgramPoint> mOrigToNewMap;
+	private final HashMap<BoogieIcfgLocation, BoogieIcfgLocation> mOrigToNewMap;
 
-	private final HashMap<String, HashMap<String, ProgramPoint>> mLocNodesForAnnot;
+	private final HashMap<String, HashMap<String, BoogieIcfgLocation>> mLocNodesForAnnot;
 
 	private final HashSet<IMinimizedEdge> mVisitedEdges;
 
@@ -122,7 +122,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 
 	private final CodeBlockFactory mCbf;
 	
-	private final SimplicationTechnique mSimplificationTechnique = SimplicationTechnique.SIMPLIFY_DDA;
+	private final SimplificationTechnique mSimplificationTechnique = SimplificationTechnique.SIMPLIFY_DDA;
 	private final XnfConversionTechnique mXnfConversionTechnique = XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 
 	/**
@@ -144,14 +144,14 @@ public class ConversionVisitor implements IMinimizationVisitor {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mSimplify = simplify;
-		mRefNodeMap = new HashMap<MinimizedNode, ProgramPoint>();
-		mOrigToNewMap = new HashMap<ProgramPoint, ProgramPoint>();
-		mLocNodesForAnnot = new HashMap<String, HashMap<String, ProgramPoint>>();
+		mRefNodeMap = new HashMap<MinimizedNode, BoogieIcfgLocation>();
+		mOrigToNewMap = new HashMap<BoogieIcfgLocation, BoogieIcfgLocation>();
+		mLocNodesForAnnot = new HashMap<String, HashMap<String, BoogieIcfgLocation>>();
 		mVisitedEdges = new HashSet<IMinimizedEdge>();
 		mBoogie2SMT = boogie2smt;
 		mCheckForMultipleFormula = new HashMap<IMinimizedEdge, Integer>();
 		mTransFormBuilder = new TransFormulaAdder(boogie2smt, mServices);
-		mModGlobalVarManager = root.getRootAnnot().getModGlobVarManager();
+		mModGlobalVarManager = root.getRootAnnot().getCfgSmtToolkit().getModifiableGlobals();
 		mCbf = root.getRootAnnot().getCodeBlockFactory();
 		mSeqComposedBlocks = new Stack<ArrayList<CodeBlock>>();
 		mHasConjunctionAsParent = new HashSet<IMinimizedEdge>();
@@ -169,7 +169,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 	 * @param startNode
 	 *            initial start point for the conversion
 	 */
-	public void init(final ProgramPoint startNode) {
+	public void init(final BoogieIcfgLocation startNode) {
 		mStartNode = startNode;
 	}
 
@@ -314,7 +314,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 	 *            the minimized Node to convert
 	 * @return the created ProgramPoint
 	 */
-	public ProgramPoint getReferencedNode(final MinimizedNode node) {
+	public BoogieIcfgLocation getReferencedNode(final MinimizedNode node) {
 		if (mRefNodeMap.containsKey(node)) {
 			return mRefNodeMap.get(node);
 		} else {
@@ -330,7 +330,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 					}
 				}
 			}
-			final ProgramPoint newNode = new ProgramPoint(node.getOriginalNode().getPosition(),
+			final BoogieIcfgLocation newNode = new BoogieIcfgLocation(node.getOriginalNode().getDebugIdentifier(),
 					node.getOriginalNode().getProcedure(), node.getOriginalNode().isErrorLocation(), astNode);
 			// inserted by alex 1.11.2014: (don't forget the annotations.. (mb this would be nicer in the constructor
 			// TODO
@@ -346,10 +346,10 @@ public class ConversionVisitor implements IMinimizationVisitor {
 			// In addition we also have to fill the map which stores every
 			// ProgramPoint in relation to its name and the procedure name
 			if (mLocNodesForAnnot.containsKey(newNode.getProcedure())) {
-				mLocNodesForAnnot.get(newNode.getProcedure()).put(newNode.getPosition(), newNode);
+				mLocNodesForAnnot.get(newNode.getProcedure()).put(newNode.getDebugIdentifier(), newNode);
 			} else {
-				final HashMap<String, ProgramPoint> newMap = new HashMap<String, ProgramPoint>();
-				newMap.put(newNode.getPosition(), newNode);
+				final HashMap<String, BoogieIcfgLocation> newMap = new HashMap<String, BoogieIcfgLocation>();
+				newMap.put(newNode.getDebugIdentifier(), newNode);
 				mLocNodesForAnnot.put(newNode.getProcedure(), newMap);
 			}
 			return newNode;
@@ -455,7 +455,8 @@ public class ConversionVisitor implements IMinimizationVisitor {
 							Collections.singletonList(replaceGotoEdge(gotoEdges.get(0), gotoEdges.get(1))), mXnfConversionTechnique, mSimplificationTechnique);
 				}
 				if (edge instanceof ShortcutErrEdge) {
-					return new ShortcutCodeBlock(null, null, composeEdges.toArray(new CodeBlock[0]), mLogger);
+					return new ShortcutCodeBlock(null, null, composeEdges.toArray(new CodeBlock[composeEdges.size()]),
+							mLogger);
 				}
 				return mCbf.constructSequentialComposition(null, null, simplify, extPqe,
 						Collections.unmodifiableList(composeEdges), mXnfConversionTechnique, mSimplificationTechnique);
@@ -565,7 +566,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 			ModelUtils.copyAnnotations(gotoEdge, replacement);
 			ModelUtils.copyAnnotations(secondGotoEdge, replacement);
 		}
-		final String procId = gotoEdge.getPreceedingProcedure();
+		final String procId = gotoEdge.getPrecedingProcedure();
 		mTransFormBuilder.addTransitionFormulas(replacement, procId, mXnfConversionTechnique, mSimplificationTechnique);
 		return replacement;
 	}
@@ -573,14 +574,14 @@ public class ConversionVisitor implements IMinimizationVisitor {
 	/**
 	 * @return the origToNewMap
 	 */
-	public HashMap<ProgramPoint, ProgramPoint> getOrigToNewMap() {
+	public HashMap<BoogieIcfgLocation, BoogieIcfgLocation> getOrigToNewMap() {
 		return mOrigToNewMap;
 	}
 
 	/**
 	 * @return the locNodesForAnnot
 	 */
-	public HashMap<String, HashMap<String, ProgramPoint>> getLocNodesForAnnot() {
+	public HashMap<String, HashMap<String, BoogieIcfgLocation>> getLocNodesForAnnot() {
 		return mLocNodesForAnnot;
 	}
 }

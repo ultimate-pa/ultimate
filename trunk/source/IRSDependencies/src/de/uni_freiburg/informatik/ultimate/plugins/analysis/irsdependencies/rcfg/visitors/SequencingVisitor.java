@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE IRSDependencies plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE IRSDependencies plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE IRSDependencies plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.visitors;
@@ -35,12 +35,12 @@ import java.util.Map.Entry;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.annotations.IRSDependenciesAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.annotations.UseDefSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.walker.RCFGWalkerUnroller;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.utils.Utils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 
 public class SequencingVisitor extends SimpleRCFGVisitor {
@@ -49,9 +49,9 @@ public class SequencingVisitor extends SimpleRCFGVisitor {
 
 	private final HashSet<String> mInputs;
 	private final HashSet<String> mOutputs;
-	private final HashMap<List<RCFGEdge>, List<Tuple<Tuple<Integer>>>> mDebugZoneMap;
+	private final HashMap<List<IcfgEdge>, List<Tuple<Tuple<Integer>>>> mDebugZoneMap;
 
-	public SequencingVisitor(RCFGWalkerUnroller w, ILogger logger) {
+	public SequencingVisitor(final RCFGWalkerUnroller w, final ILogger logger) {
 		super(logger);
 		mWalker = w;
 		mInputs = new HashSet<>();
@@ -63,7 +63,7 @@ public class SequencingVisitor extends SimpleRCFGVisitor {
 		mDebugZoneMap = new HashMap<>();
 	}
 
-	protected List<RCFGEdge> getCurrentPrefix() {
+	protected List<IcfgEdge> getCurrentPrefix() {
 		return mWalker.getCurrentPrefix();
 	}
 
@@ -97,7 +97,7 @@ public class SequencingVisitor extends SimpleRCFGVisitor {
 	}
 
 	private void RealSequencingEOT() {
-		final List<RCFGEdge> trace = getCurrentPrefix();
+		final List<IcfgEdge> trace = getCurrentPrefix();
 
 		HashSet<String> remainingInputs = new HashSet<>(mInputs);
 		HashSet<String> remainingOutputs = new HashSet<>(mOutputs);
@@ -109,7 +109,7 @@ public class SequencingVisitor extends SimpleRCFGVisitor {
 		boolean zoneShift = true;
 		boolean isStable = true;
 
-		for (final RCFGEdge currentEdge : trace) {
+		for (final IcfgEdge currentEdge : trace) {
 			final UseDefSequence ud = UseDefSequence.getAnnotation(currentEdge,
 					UseDefSequence.class);
 			if (ud != null) {
@@ -161,7 +161,7 @@ public class SequencingVisitor extends SimpleRCFGVisitor {
 		}
 	}
 
-	private List<Statement> extractStatements(RCFGEdge e) {
+	private List<Statement> extractStatements(final IcfgEdge e) {
 		if (e instanceof StatementSequence) {
 			return ((StatementSequence) e).getStatements();
 		} else if (e instanceof Call) {
@@ -174,7 +174,7 @@ public class SequencingVisitor extends SimpleRCFGVisitor {
 	}
 
 	private void DebugSequencingEOT() {
-		final List<RCFGEdge> trace = getCurrentPrefix();
+		final List<IcfgEdge> trace = getCurrentPrefix();
 
 		final List<Tuple<Tuple<Integer>>> zones = new ArrayList<>();
 
@@ -244,11 +244,11 @@ public class SequencingVisitor extends SimpleRCFGVisitor {
 		final StringBuilder outer = new StringBuilder();
 
 		outer.append("List of zones:\n");
-		for (final Entry<List<RCFGEdge>, List<Tuple<Tuple<Integer>>>> e : mDebugZoneMap
+		for (final Entry<List<IcfgEdge>, List<Tuple<Tuple<Integer>>>> e : mDebugZoneMap
 				.entrySet()) {
 			int i = 0;
 			final StringBuilder inner = new StringBuilder();
-			for (final RCFGEdge edge : e.getKey()) {
+			for (final IcfgEdge edge : e.getKey()) {
 				final ZoneAnnotation za = IRSDependenciesAnnotation.getAnnotation(
 						edge, ZoneAnnotation.class);
 				if (za != null) {
@@ -281,10 +281,10 @@ public class SequencingVisitor extends SimpleRCFGVisitor {
 	private class ZoneAnnotation extends IRSDependenciesAnnotation {
 
 		private static final long serialVersionUID = 1L;
-		private RCFGEdge StartEdge;
+		private IcfgEdge StartEdge;
 		private Statement StartStatement;
 
-		private RCFGEdge EndEdge;
+		private IcfgEdge EndEdge;
 		private Statement EndStatement;
 
 		private boolean IsStable;
@@ -295,12 +295,12 @@ public class SequencingVisitor extends SimpleRCFGVisitor {
 		}
 
 		@Override
-		protected Object getFieldValue(String field) {
+		protected Object getFieldValue(final String field) {
 			// TODO Auto-generated method stub
 			return null;
 		}
 
-		private void addOrMergeAnnotation(IElement e) {
+		private void addOrMergeAnnotation(final IElement e) {
 			final ZoneAnnotation za = getAnnotation(e, this.getClass());
 			if (za != null) {
 				if (!za.equals(this)) {
@@ -332,26 +332,26 @@ public class SequencingVisitor extends SimpleRCFGVisitor {
 
 	}
 
-	private class Tuple<T extends Comparable<T>> implements
+	private final class Tuple<T extends Comparable<T>> implements
 			Comparable<Tuple<T>> {
 		T First;
 		T Last;
 
-		private Tuple(T first, T last) {
+		Tuple(final T first, final T last) {
 			set(first, last);
 		}
 
-		private Tuple(Tuple<T> tuple) {
+		Tuple(final Tuple<T> tuple) {
 			set(tuple.First, tuple.Last);
 		}
 
-		private void set(T first, T last) {
+		private void set(final T first, final T last) {
 			First = first;
 			Last = last;
 		}
 
 		@Override
-		public boolean equals(Object arg0) {
+		public boolean equals(final Object arg0) {
 			if (arg0 instanceof Tuple<?>) {
 				return First.equals(((Tuple<?>) arg0).First)
 						&& Last.equals(((Tuple<?>) arg0).Last);
@@ -360,7 +360,7 @@ public class SequencingVisitor extends SimpleRCFGVisitor {
 		}
 
 		@Override
-		public int compareTo(Tuple<T> t) {
+		public int compareTo(final Tuple<T> t) {
 			if (First.compareTo(t.First) == 0) {
 				return Last.compareTo(t.Last);
 			} else {

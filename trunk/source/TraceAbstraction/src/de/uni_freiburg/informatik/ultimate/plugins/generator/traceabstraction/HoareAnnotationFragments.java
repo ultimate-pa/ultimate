@@ -37,15 +37,15 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IntersectNwa;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IOpWithDelayedDeadEndRemoval;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IOpWithDelayedDeadEndRemoval.UpDownEntry;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IntersectNwa;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IOpWithDelayedDeadEndRemoval;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IOpWithDelayedDeadEndRemoval.UpDownEntry;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.UnknownState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareAnnotationPositions;
@@ -68,16 +68,16 @@ public class HoareAnnotationFragments {
 	 * States for contexts were the context was already removed (because it was
 	 * a dead end) from the abstraction.
 	 */
-	private final Map<IPredicate, HashRelation<ProgramPoint, IPredicate>> mDeadContexts2ProgPoint2Preds = new HashMap<IPredicate, HashRelation<ProgramPoint, IPredicate>>();
+	private final Map<IPredicate, HashRelation<BoogieIcfgLocation, IPredicate>> mDeadContexts2ProgPoint2Preds = new HashMap<IPredicate, HashRelation<BoogieIcfgLocation, IPredicate>>();
 	/**
 	 * States for contexts were the are still in the current abstraction.
 	 */
-	private Map<IPredicate, HashRelation<ProgramPoint, IPredicate>> mLiveContexts2ProgPoint2Preds = new HashMap<IPredicate, HashRelation<ProgramPoint, IPredicate>>();
+	private Map<IPredicate, HashRelation<BoogieIcfgLocation, IPredicate>> mLiveContexts2ProgPoint2Preds = new HashMap<IPredicate, HashRelation<BoogieIcfgLocation, IPredicate>>();
 	private final HashMap<IPredicate, IPredicate> mContext2Entry = new HashMap<IPredicate, IPredicate>();
 
-	private final HashRelation<ProgramPoint, IPredicate> mProgPoint2StatesWithEmptyContext = new HashRelation<ProgramPoint, IPredicate>();
+	private final HashRelation<BoogieIcfgLocation, IPredicate> mProgPoint2StatesWithEmptyContext = new HashRelation<BoogieIcfgLocation, IPredicate>();
 
-	private final HashSet<ProgramPoint> mHoareAnnotationPositions;
+	private final HashSet<BoogieIcfgLocation> mHoareAnnotationPositions;
 
 	private final HoareAnnotationPositions mHoareAnnotationPos;
 
@@ -87,15 +87,15 @@ public class HoareAnnotationFragments {
 	 */
 	private final static boolean mUseEntry = true;
 
-	Map<IPredicate, HashRelation<ProgramPoint, IPredicate>> getDeadContexts2ProgPoint2Preds() {
+	Map<IPredicate, HashRelation<BoogieIcfgLocation, IPredicate>> getDeadContexts2ProgPoint2Preds() {
 		return mDeadContexts2ProgPoint2Preds;
 	}
 
-	Map<IPredicate, HashRelation<ProgramPoint, IPredicate>> getLiveContexts2ProgPoint2Preds() {
+	Map<IPredicate, HashRelation<BoogieIcfgLocation, IPredicate>> getLiveContexts2ProgPoint2Preds() {
 		return mLiveContexts2ProgPoint2Preds;
 	}
 
-	HashRelation<ProgramPoint, IPredicate> getProgPoint2StatesWithEmptyContext() {
+	HashRelation<BoogieIcfgLocation, IPredicate> getProgPoint2StatesWithEmptyContext() {
 		return mProgPoint2StatesWithEmptyContext;
 	}
 
@@ -103,7 +103,7 @@ public class HoareAnnotationFragments {
 		return mContext2Entry;
 	}
 
-	public HoareAnnotationFragments(ILogger logger, HashSet<ProgramPoint> hoareAnnotationPositions, 
+	public HoareAnnotationFragments(ILogger logger, HashSet<BoogieIcfgLocation> hoareAnnotationPositions, 
 			HoareAnnotationPositions hoareAnnotationPos){
 		mLogger = logger;
 		mHoareAnnotationPositions = hoareAnnotationPositions;
@@ -140,9 +140,9 @@ public class HoareAnnotationFragments {
 	 * deckers that have been removed by a dead end removal.
 	 */
 	private void update(Update update, INestedWordAutomatonSimple<CodeBlock, IPredicate> newAbstraction) {
-		final Map<IPredicate, HashRelation<ProgramPoint, IPredicate>> oldLiveContexts2ProgPoint2Preds = mLiveContexts2ProgPoint2Preds;
-		mLiveContexts2ProgPoint2Preds = new HashMap<IPredicate, HashRelation<ProgramPoint, IPredicate>>();
-		for (final Entry<IPredicate, HashRelation<ProgramPoint, IPredicate>> contextHrPair : oldLiveContexts2ProgPoint2Preds
+		final Map<IPredicate, HashRelation<BoogieIcfgLocation, IPredicate>> oldLiveContexts2ProgPoint2Preds = mLiveContexts2ProgPoint2Preds;
+		mLiveContexts2ProgPoint2Preds = new HashMap<IPredicate, HashRelation<BoogieIcfgLocation, IPredicate>>();
+		for (final Entry<IPredicate, HashRelation<BoogieIcfgLocation, IPredicate>> contextHrPair : oldLiveContexts2ProgPoint2Preds
 				.entrySet()) {
 			final IPredicate oldContext = contextHrPair.getKey();
 			final List<IPredicate> newContexts = update.getNewPredicates(oldContext);
@@ -153,13 +153,13 @@ public class HoareAnnotationFragments {
 				final IPredicate oldEntry = mContext2Entry.get(oldContext);
 				mContext2Entry.remove(oldContext);
 				for (int i = 0; i < newContexts.size(); i++) {
-					final HashRelation<ProgramPoint, IPredicate> hr;
+					final HashRelation<BoogieIcfgLocation, IPredicate> hr;
 					if (i == newContexts.size() - 1) {
 						// last iteration, we can use the original hr instead of
 						// copy
 						hr = contextHrPair.getValue();
 					} else {
-						hr = new HashRelation<ProgramPoint, IPredicate>();
+						hr = new HashRelation<BoogieIcfgLocation, IPredicate>();
 						hr.addAll(contextHrPair.getValue());
 					}
 					mLiveContexts2ProgPoint2Preds.put(newContexts.get(i), hr);
@@ -251,7 +251,7 @@ public class HoareAnnotationFragments {
 	}
 
 	void addDoubleDecker(IPredicate down, IPredicate up, IPredicate emtpy) {
-		final ProgramPoint pp = getProgramPoint(up);
+		final BoogieIcfgLocation pp = getProgramPoint(up);
 		if (mHoareAnnotationPos == HoareAnnotationPositions.LoopsAndPotentialCycles && 
 				!mHoareAnnotationPositions.contains(pp)) {
 			// do not compute Hoare annotation for this program point
@@ -260,17 +260,17 @@ public class HoareAnnotationFragments {
 		if (down == emtpy) {
 			mProgPoint2StatesWithEmptyContext.addPair(pp, up);
 		} else {
-			HashRelation<ProgramPoint, IPredicate> pp2preds = mLiveContexts2ProgPoint2Preds.get(down);
+			HashRelation<BoogieIcfgLocation, IPredicate> pp2preds = mLiveContexts2ProgPoint2Preds.get(down);
 			if (pp2preds == null) {
-				pp2preds = new HashRelation<ProgramPoint, IPredicate>();
+				pp2preds = new HashRelation<BoogieIcfgLocation, IPredicate>();
 				mLiveContexts2ProgPoint2Preds.put(down, pp2preds);
 			}
 			pp2preds.addPair(pp, up);
 		}
 	}
 	
-	private ProgramPoint getProgramPoint(IPredicate pred) {
-		final ProgramPoint pp;
+	private BoogieIcfgLocation getProgramPoint(IPredicate pred) {
+		final BoogieIcfgLocation pp;
 		if (pred instanceof SPredicate) {
 			pp = ((SPredicate) pred).getProgramPoint();
 		} else if (pred instanceof UnknownState) {

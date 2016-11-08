@@ -2,27 +2,27 @@
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Core.
- * 
+ *
  * The ULTIMATE Core is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Core is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Core. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Core, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Core grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Core grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.boogie;
@@ -34,31 +34,33 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.core.lib.translation.DefaultTranslator;
 import de.uni_freiburg.informatik.ultimate.core.lib.translation.ProgramExecutionFormatter;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.ITranslator;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IValuation;
+import de.uni_freiburg.informatik.ultimate.core.model.translation.VariableValuesMap;
 
 /**
- * 
+ *
  * @author dietsch@informatik.uni-freiburg.de
  * @author heizmann@informatik.uni-freiburg.de
- * 
+ *
  */
 public class BoogieProgramExecution implements IProgramExecution<BoogieASTNode, Expression> {
 
 	private final List<AtomicTraceElement<BoogieASTNode>> mTrace;
 	private final Map<Integer, ProgramState<Expression>> mPartialProgramStateMapping;
 
-	public BoogieProgramExecution(Map<Integer, ProgramState<Expression>> partialProgramStateMapping,
-			List<AtomicTraceElement<BoogieASTNode>> trace) {
+	public BoogieProgramExecution(final Map<Integer, ProgramState<Expression>> partialProgramStateMapping,
+	        final List<AtomicTraceElement<BoogieASTNode>> trace) {
 		mTrace = trace;
 		mPartialProgramStateMapping = partialProgramStateMapping;
 	}
@@ -69,12 +71,12 @@ public class BoogieProgramExecution implements IProgramExecution<BoogieASTNode, 
 	}
 
 	@Override
-	public AtomicTraceElement<BoogieASTNode> getTraceElement(int i) {
+	public AtomicTraceElement<BoogieASTNode> getTraceElement(final int i) {
 		return mTrace.get(i);
 	}
 
 	@Override
-	public ProgramState<Expression> getProgramState(int i) {
+	public ProgramState<Expression> getProgramState(final int i) {
 		if (i < 0 || i >= mTrace.size()) {
 			throw new IllegalArgumentException("out of range");
 		}
@@ -89,37 +91,38 @@ public class BoogieProgramExecution implements IProgramExecution<BoogieASTNode, 
 	@Override
 	public String toString() {
 		final ProgramExecutionFormatter<BoogieASTNode, Expression> pef = new ProgramExecutionFormatter<>(
-				new BoogieBacktranslationValueProvider());
+		        new BoogieBacktranslationValueProvider());
 		return pef.formatProgramExecution(this);
 	}
 
-	public IValuation getValuation(final List<ITranslator<?, ?, ?, ?>> translatorSequence) {
+	public IValuation getValuation(final List<ITranslator<?, ?, ?, ?, ?, ?>> translatorSequence) {
 		return new IValuation() {
 			@Override
-			public Map<String, SimpleEntry<IType, List<String>>> getValuesForFailurePathIndex(int index) {
+			public VariableValuesMap getValuesForFailurePathIndex(final int index) {
 				final ProgramState<Expression> ps = getProgramState(index);
 				if (ps == null) {
-					return getEmtpyProgramState();
+					return new VariableValuesMap(getEmtpyProgramState());
 				} else {
-					return translateProgramState(ps);
+					return new VariableValuesMap(translateProgramState(ps));
 				}
 			}
 
-			public Map<String, SimpleEntry<IType, List<String>>> getEmtpyProgramState() {
+			public Map<String, Entry<IBoogieType, List<String>>> getEmtpyProgramState() {
 				return Collections.emptyMap();
 			}
 
-			public Map<String, SimpleEntry<IType, List<String>>> translateProgramState(ProgramState<Expression> ps) {
-				final Map<String, SimpleEntry<IType, List<String>>> result = new HashMap<String, SimpleEntry<IType, List<String>>>();
+			public Map<String, Entry<IBoogieType, List<String>>> translateProgramState(
+		            final ProgramState<Expression> ps) {
+				final Map<String, Entry<IBoogieType, List<String>>> result = new HashMap<>();
 				for (final Expression var : ps.getVariables()) {
 					final String varString = backtranslationWorkaround(translatorSequence, var);
 					final List<String> valuesString = exprSet2StringList(ps.getValues(var));
-					result.put(varString, new SimpleEntry<IType, List<String>>(var.getType(), valuesString));
+					result.put(varString, new SimpleEntry<IBoogieType, List<String>>(var.getType(), valuesString));
 				}
 				return result;
 			}
 
-			private List<String> exprSet2StringList(Collection<Expression> expressions) {
+			private List<String> exprSet2StringList(final Collection<Expression> expressions) {
 				final List<String> result = new ArrayList<String>(expressions.size());
 				for (final Expression expr : expressions) {
 					result.add(backtranslationWorkaround(translatorSequence, expr));
@@ -131,14 +134,15 @@ public class BoogieProgramExecution implements IProgramExecution<BoogieASTNode, 
 
 	/**
 	 * Use Ultimate's translator sequence do translate a result expression back through the toolchain.
-	 * 
+	 *
 	 * @param expr
 	 *            the resulting expression
 	 * @return a string corresponding to the backtranslated expression
 	 */
-	private static <SE> String backtranslationWorkaround(List<ITranslator<?, ?, ?, ?>> translatorSequence, SE expr) {
+	private static <SE> String backtranslationWorkaround(final List<ITranslator<?, ?, ?, ?, ?, ?>> translatorSequence,
+	        final SE expr) {
 		final Object backExpr = DefaultTranslator.translateExpressionIteratively(expr,
-				translatorSequence.toArray(new ITranslator[0]));
+		        translatorSequence.toArray(new ITranslator[translatorSequence.size()]));
 
 		// If the result is a Boogie expression, we use the Boogie pretty
 		// printer

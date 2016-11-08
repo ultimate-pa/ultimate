@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Test Library.
- * 
+ *
  * The ULTIMATE Test Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Test Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Test Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Test Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Test Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Test Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimatetest.summaries;
@@ -43,20 +43,21 @@ import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 
 /**
- * 
+ *
  * @author dietsch@informatik.uni-freiburg.de
- * 
+ *
  */
 public class LatexOverviewSummary extends LatexSummary {
 
+	private static final String NO_SETTINGS_NAME = "No settings";
 	private final int mLatexTableHeaderCount;
 
 	/**
 	 * Create a summary that prints a file containing LaTex table for each toolchain. The table groups test runs by
 	 * folder name and compares them against different setting files.
-	 * 
+	 *
 	 * The values result from benchmark providers collected during the Ultimate runs.
-	 * 
+	 *
 	 * @param ultimateTestSuite
 	 *            To which testsuite belongs this summary?
 	 * @param benchmarks
@@ -65,9 +66,9 @@ public class LatexOverviewSummary extends LatexSummary {
 	 *            An array of column definitions that specify how the benchmark results should be processed (values as
 	 *            well as strings)
 	 */
-	public LatexOverviewSummary(Class<? extends UltimateTestSuite> ultimateTestSuite,
-			Collection<Class<? extends ICsvProviderProvider<? extends Object>>> benchmarks,
-			ColumnDefinition[] columnDefinitions) {
+	public LatexOverviewSummary(final Class<? extends UltimateTestSuite> ultimateTestSuite,
+			final Collection<Class<? extends ICsvProviderProvider<? extends Object>>> benchmarks,
+			final ColumnDefinition[] columnDefinitions) {
 		super(ultimateTestSuite, benchmarks, columnDefinitions);
 		mLatexTableHeaderCount = (int) mColumnDefinitions.stream().filter(a -> a.getLatexTableTitle() != null).count();
 	}
@@ -85,9 +86,9 @@ public class LatexOverviewSummary extends LatexSummary {
 		return ".tex";
 	}
 
-	private void makeTables(StringBuilder sb, PartitionedResults results) {
-		final Set<String> tools = results.All.stream().map(a -> a.getKey().getToolchain().getName())
-				.collect(Collectors.toSet());
+	private void makeTables(final StringBuilder sb, final PartitionedResults results) {
+		final Set<String> tools =
+				results.All.stream().map(a -> a.getKey().getToolchain().getName()).collect(Collectors.toSet());
 		final String br = CoreUtil.getPlatformLineSeparator();
 
 		appendPreamble(sb, br);
@@ -141,11 +142,11 @@ public class LatexOverviewSummary extends LatexSummary {
 		appendEnd(sb, br);
 	}
 
-	private void appendEnd(StringBuilder sb, String br) {
+	private void appendEnd(final StringBuilder sb, final String br) {
 		sb.append("\\end{document}").append(br);
 	}
 
-	private void appendPreamble(StringBuilder sb, String br) {
+	private void appendPreamble(final StringBuilder sb, final String br) {
 		// append preamble
 		sb.append("\\documentclass[a3paper]{article}").append(br);
 		sb.append("\\usepackage[a3paper, margin=1.5cm, top=1.1cm]{geometry}").append(br);
@@ -168,25 +169,29 @@ public class LatexOverviewSummary extends LatexSummary {
 		sb.append("\\newcommand{\\folder}[1]{\\parbox{5em}{#1}}").append(br);
 	}
 
-	private void makeTableBody(StringBuilder sb, PartitionedResults results, String toolname) {
+	private void makeTableBody(final StringBuilder sb, final PartitionedResults results, final String toolname) {
 		// make header
 		final Set<String> distinctSuffixes = getDistinctFolderSuffixes(results);
 
 		int i = 0;
 		for (final String suffix : distinctSuffixes) {
-			final PartitionedResults resultsPerFolder = partitionResults(results.All.stream().filter(
-					entry -> Arrays.stream(entry.getKey().getInput()).anyMatch(a -> a.getParent().endsWith(suffix)))
-					.collect(Collectors.toList()));
+			final PartitionedResults resultsPerFolder =
+					partitionResults(
+							results.All.stream()
+									.filter(entry -> Arrays.stream(entry.getKey().getInput())
+											.anyMatch(a -> a.getParent().endsWith(suffix)))
+									.collect(Collectors.toList()));
 			i++;
 			makeFolderRow(sb, resultsPerFolder, suffix, i >= distinctSuffixes.size());
 		}
 	}
 
-	private void makeFolderRow(StringBuilder sb, PartitionedResults results, String folder, boolean last) {
+	private void makeFolderRow(final StringBuilder sb, final PartitionedResults results, final String folder,
+			final boolean last) {
 		final String br = CoreUtil.getPlatformLineSeparator();
 		final int resultRows = 4;
-		final List<String> variants = results.All.stream().map(a -> a.getKey().getSettings().getName()).distinct()
-				.collect(Collectors.toList());
+		final List<String> variants =
+				results.All.stream().map(a -> a.getKey().getSettingsName()).distinct().collect(Collectors.toList());
 
 		// folder name
 		sb.append("\\multirow{");
@@ -271,11 +276,12 @@ public class LatexOverviewSummary extends LatexSummary {
 		}
 	}
 
-	private void makeVariantEntry(StringBuilder sb, Collection<Entry<UltimateRunDefinition, ExtendedResult>> current,
-			final String variant, boolean isFirst) {
+	private void makeVariantEntry(final StringBuilder sb,
+			final Collection<Entry<UltimateRunDefinition, ExtendedResult>> current, final String variant,
+			final boolean isFirst) {
 
-		final Collection<Entry<UltimateRunDefinition, ExtendedResult>> results = current.stream()
-				.filter(a -> a.getKey().getSettings().getName().equals(variant)).collect(Collectors.toList());
+		final Collection<Entry<UltimateRunDefinition, ExtendedResult>> results =
+				current.stream().filter(a -> a.getKey().getSettingsName().equals(variant)).collect(Collectors.toList());
 
 		final String br = CoreUtil.getPlatformLineSeparator();
 		final String sep = " & ";
@@ -318,7 +324,7 @@ public class LatexOverviewSummary extends LatexSummary {
 		final int length = mLatexTableHeaderCount + 1;
 		int i = 0;
 		final List<String> row = csv.getRow(0);
-		if (row == null || row.size() == 0) {
+		if (row == null || row.isEmpty()) {
 			// no results in this category, just fill with empty fields
 			for (; i < length; ++i) {
 				sb.append(sep);

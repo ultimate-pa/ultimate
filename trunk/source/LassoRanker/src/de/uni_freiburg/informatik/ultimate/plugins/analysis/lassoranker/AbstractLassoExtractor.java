@@ -26,10 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 
 /**
  * Abstract Superclass for lasso extraction. Can be removed if there is only
@@ -39,9 +39,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCF
 public abstract class AbstractLassoExtractor {
 	protected NestedWord<CodeBlock> mStem;
 	protected NestedWord<CodeBlock> mLoop;
-	protected ProgramPoint mHonda;
+	protected BoogieIcfgLocation mHonda;
 	protected boolean mLassoFound;
-	protected RCFGNode mSomeNoneForErrorReport;
+	protected IcfgLocation mSomeNoneForErrorReport;
 	
 	public NestedWord<CodeBlock> getStem() {
 		if (!mLassoFound) {
@@ -58,7 +58,7 @@ public abstract class AbstractLassoExtractor {
 		return mLoop;
 	}
 
-	public ProgramPoint getHonda() {
+	public BoogieIcfgLocation getHonda() {
 		if (!mLassoFound) {
 			throw new UnsupportedOperationException("no lasso was found");
 		}
@@ -70,7 +70,7 @@ public abstract class AbstractLassoExtractor {
 		return mLassoFound;
 	}
 
-	public RCFGNode getSomeNoneForErrorReport() {
+	public IcfgLocation getSomeNoneForErrorReport() {
 		if (mLassoFound) {
 			throw new UnsupportedOperationException(
 					"lasso was found, there was no error");

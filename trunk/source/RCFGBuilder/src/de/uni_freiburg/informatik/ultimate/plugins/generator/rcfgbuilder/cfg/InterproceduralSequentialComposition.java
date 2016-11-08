@@ -30,9 +30,10 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
@@ -40,13 +41,15 @@ public class InterproceduralSequentialComposition extends SequentialComposition 
 
 	private static final long serialVersionUID = -1637790156358220366L;
 
-	InterproceduralSequentialComposition(final int serialNumber, final ProgramPoint source,
-			final ProgramPoint target, final ManagedScript mgdScript, 
+	InterproceduralSequentialComposition(final int serialNumber, final BoogieIcfgLocation source,
+			final BoogieIcfgLocation target, final ManagedScript mgdScript, 
 			final ModifiableGlobalVariableManager modGlobVarManager, 
 			final boolean simplify, final boolean extPqe, final List<CodeBlock> codeBlocks, 
 			final ILogger logger, final IUltimateServiceProvider services,
-			final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique) {
-		super(serialNumber, source, target, mgdScript, modGlobVarManager, simplify, extPqe, services, codeBlocks, xnfConversionTechnique, simplificationTechnique);
+			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique, 
+			final ICfgSymbolTable symbolTable) {
+		super(serialNumber, source, target, mgdScript, modGlobVarManager, simplify, extPqe, services, codeBlocks, 
+				xnfConversionTechnique, simplificationTechnique, symbolTable);
 	}
 
 	@Override

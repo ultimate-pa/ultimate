@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE LassoRanker Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE LassoRanker Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE LassoRanker Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfunctions;
@@ -49,7 +49,7 @@ import java.util.List;
  * @see http://www.volny.cz/behounek/logic/papers/ordcalc/index.html
  *
  */
-public class Ordinal implements Comparable<Ordinal> {
+public final class Ordinal implements Comparable<Ordinal> {
 	
 	/**
 	 * Corresponds to one term of the form
@@ -61,7 +61,7 @@ public class Ordinal implements Comparable<Ordinal> {
 		final BigInteger base;
 		final Ordinal exponent;
 		
-		Component(BigInteger base, Ordinal exponent) {
+		Component(final BigInteger base, final Ordinal exponent) {
 			assert(base.compareTo(BigInteger.ZERO) > 0);
 			this.base = base;
 			this.exponent = exponent;
@@ -110,7 +110,7 @@ public class Ordinal implements Comparable<Ordinal> {
 	
 	private final List<Component> mcomponents;
 	
-	public static Ordinal fromInteger(BigInteger i) {
+	public static Ordinal fromInteger(final BigInteger i) {
 		if (!i.abs().equals(i)) {
 			throw new IllegalArgumentException(
 					"There are no negative ordinals.");
@@ -125,7 +125,7 @@ public class Ordinal implements Comparable<Ordinal> {
 	/**
 	 * Construct an ordinal from a non-negative integer
 	 */
-	private Ordinal(BigInteger i) {
+	private Ordinal(final BigInteger i) {
 		assert(i.abs().equals(i)); // i is non-negative
 		if (i.equals(BigInteger.ZERO)) {
 			mcomponents = Collections.emptyList();
@@ -138,7 +138,7 @@ public class Ordinal implements Comparable<Ordinal> {
 	 * Construct an ordinal of the form ω^α
 	 * @param exponent the exponent α
 	 */
-	private Ordinal(Ordinal exponent) {
+	private Ordinal(final Ordinal exponent) {
 		mcomponents = Collections.singletonList(
 				new Component(BigInteger.ONE, exponent));
 	}
@@ -146,7 +146,7 @@ public class Ordinal implements Comparable<Ordinal> {
 	/**
 	 * Construct an ordinal from a component list
 	 */
-	private Ordinal(List<Component> components) {
+	private Ordinal(final List<Component> components) {
 		mcomponents = Collections.unmodifiableList(components);
 	}
 	
@@ -154,7 +154,7 @@ public class Ordinal implements Comparable<Ordinal> {
 	 * Compare two ordinals for equality
 	 */
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (obj instanceof Ordinal) {
 			final Ordinal o = (Ordinal) obj;
 			return compareTo(o) == 0;
@@ -163,7 +163,7 @@ public class Ordinal implements Comparable<Ordinal> {
 	}
 	
 	@Override
-	public int compareTo(Ordinal o) {
+	public int compareTo(final Ordinal o) {
 		if (o.isZero()) {
 			if (isZero()) {
 				return 0;
@@ -245,7 +245,7 @@ public class Ordinal implements Comparable<Ordinal> {
 	 * Computes the sum of this with another ordinal
 	 * Warning: this operation is *not* commutative.
 	 */
-	public Ordinal add(Ordinal o) {
+	public Ordinal add(final Ordinal o) {
 		/*
 		 * Let
 		 *    a = sum{i=1..k} omega^{ai} * ni,
@@ -295,7 +295,7 @@ public class Ordinal implements Comparable<Ordinal> {
 	 * Computes the product of this with another ordinal
 	 * Warning: this operation is *not* commutative.
 	 */
-	public Ordinal mult(Ordinal o) {
+	public Ordinal mult(final Ordinal o) {
 		/*
 		 * Let
 		 *    a = sum{i=1..k} omega^{ai}*ni,

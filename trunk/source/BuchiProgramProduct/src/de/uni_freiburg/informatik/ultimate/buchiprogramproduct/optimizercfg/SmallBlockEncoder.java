@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE BuchiProgramProduct plug-in.
- * 
+ *
  * The ULTIMATE BuchiProgramProduct plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE BuchiProgramProduct plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE BuchiProgramProduct plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BuchiProgramProduct plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE BuchiProgramProduct plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE BuchiProgramProduct plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizercfg;
@@ -41,15 +41,15 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms.BoogieExpressionTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms.NormalFormTransformer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 
 /**
  * Observer that performs small block encoding of a single statement RCFG.
- * 
+ *
  * The small block encoding works like this:
  * <ul>
  * <li>For each edge e := (loc,assume expr,loc') in RCFG
@@ -57,9 +57,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sta
  * <li>If n>1 then for each disjunct di insert new edge (loc,assume di,loc')
  * <li>If n>1 then remove e
  * </ul>
- * 
+ *
  * @author dietsch@informatik.uni-freiburg.de
- * 
+ *
  */
 public class SmallBlockEncoder extends BaseObserver {
 
@@ -68,31 +68,31 @@ public class SmallBlockEncoder extends BaseObserver {
 	private final boolean mRewriteAssumes;
 	private final CodeBlockFactory mCbf;
 
-	public SmallBlockEncoder(final ILogger logger, ProductBacktranslator backtranslator,
+	public SmallBlockEncoder(final ILogger logger, final ProductBacktranslator backtranslator,
 			final IToolchainStorage storage, final boolean rewriteAssumes) {
 		mLogger = logger;
-		mCbf = (CodeBlockFactory) storage.getStorable(CodeBlockFactory.s_CodeBlockFactoryKeyInToolchainStorage);
+		mCbf = CodeBlockFactory.getFactory(storage);
 		mBacktranslator = backtranslator;
 		mRewriteAssumes = rewriteAssumes;
 	}
 
 	@Override
-	public boolean process(IElement elem) throws Throwable {
-		if (elem instanceof RootNode) {
-			final RootNode root = (RootNode) elem;
+	public boolean process(final IElement elem) throws Throwable {
+		if (elem instanceof BoogieIcfgContainer) {
+			final BoogieIcfgContainer root = (BoogieIcfgContainer) elem;
 
 			int countDisjunctiveAssumes = 0;
 			int countNewEdges = 0;
 
-			final ArrayDeque<RCFGEdge> edges = new ArrayDeque<>();
-			final HashSet<RCFGEdge> closed = new HashSet<>();
+			final ArrayDeque<IcfgEdge> edges = new ArrayDeque<>();
+			final HashSet<IcfgEdge> closed = new HashSet<>();
 
 			final NormalFormTransformer<Expression> ct = new NormalFormTransformer<>(new BoogieExpressionTransformer());
 
-			edges.addAll(root.getOutgoingEdges());
+			edges.addAll(BoogieIcfgContainer.extractStartEdges(root));
 
 			while (!edges.isEmpty()) {
-				final RCFGEdge current = edges.removeFirst();
+				final IcfgEdge current = edges.removeFirst();
 				if (closed.contains(current)) {
 					continue;
 				}
@@ -142,9 +142,8 @@ public class SmallBlockEncoder extends BaseObserver {
 							countDisjunctiveAssumes++;
 							for (final Expression disjunct : disjuncts) {
 								final StatementSequence newss = mCbf.constructStatementSequence(
-										(ProgramPoint) current.getSource(),
-										(ProgramPoint) current.getTarget(), new AssumeStatement(assume.getLocation(),
-												disjunct));
+										(BoogieIcfgLocation) current.getSource(), (BoogieIcfgLocation) current.getTarget(),
+										new AssumeStatement(assume.getLocation(), disjunct));
 								closed.add(newss);
 								countNewEdges++;
 								mBacktranslator.mapEdges(newss, current);

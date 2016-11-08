@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms;
@@ -42,10 +42,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 /**
  * Represents a set of literals {@see Literal} as a map that assigns to each
- * atom its polarity. This can be used to represent conjunctions and 
+ * atom its polarity. This can be used to represent conjunctions and
  * disjunctions.
  * This data structure is unable to represent sets where a literal occurs
- * positive and negative. Instead this data structure throws an 
+ * positive and negative. Instead this data structure throws an
  * AtomAndNegationException whenever a modification would result in a set where
  * a literal occurs positive an negative.
  * 
@@ -62,10 +62,10 @@ public class XJunction {
 	
 	/**
 	 * Construct an XJunction that represents a set of terms.
-	 * @throws AtomAndNegationException if a literal occurs positive and 
+	 * @throws AtomAndNegationException if a literal occurs positive and
 	 * negative in terms.
 	 */
-	public XJunction(Term[] terms) throws AtomAndNegationException {
+	public XJunction(final Term[] terms) throws AtomAndNegationException {
 		mPolarityMap = new HashMap<Term, Polarity>(terms.length);
 		for (final Term term : terms) {
 			addTermWithUnknownPolarity(term);
@@ -75,7 +75,7 @@ public class XJunction {
 	/**
 	 * Copy constructor
 	 */
-	public XJunction(XJunction xJunction) {
+	public XJunction(final XJunction xJunction) {
 		mPolarityMap = new HashMap<Term, Polarity>(xJunction.mPolarityMap);
 	}
 
@@ -90,7 +90,7 @@ public class XJunction {
 	 * Constructs an XJunction hat contains a single literal given by the pair
 	 * (atom, polarity).
 	 */
-	public XJunction(Term atom, Polarity polarity) {
+	public XJunction(final Term atom, final Polarity polarity) {
 		mPolarityMap = new HashMap<Term, Polarity>();
 		mPolarityMap.put(atom, polarity);
 	}
@@ -102,18 +102,18 @@ public class XJunction {
 	 * @throws AtomAndNegationException If the literal with the opposite
 	 * polarity is already contained in this xjunction.
 	 */
-	public boolean addTermWithUnknownPolarity(Term term) throws AtomAndNegationException {
+	public boolean addTermWithUnknownPolarity(final Term term) throws AtomAndNegationException {
 		final Literal literal = new Literal(term);
 		return add(literal.getAtom(), literal.getPolarity());
 	}
 	
 	
 	/**
-	 * Adds a literal given as (atom, polarity) pair to this XJunction. 
+	 * Adds a literal given as (atom, polarity) pair to this XJunction.
 	 * @return true iff XJunction was modified (i.e. was not already contained)
 	 * @throws AtomAndNegationException
 	 */
-	boolean add(Term atom, Polarity polarity) throws AtomAndNegationException {
+	boolean add(final Term atom, final Polarity polarity) throws AtomAndNegationException {
 		final boolean containsNegation = containsNegation(atom, polarity);
 		if (containsNegation) {
 			// param contained φ as well as (not φ), we return null
@@ -127,22 +127,18 @@ public class XJunction {
 	 * @return true iff this XJunction contains the literal given by the pair
 	 * (atom, polarity).
 	 */
-	public boolean contains(Term atom, Polarity polarity) {
+	public boolean contains(final Term atom, final Polarity polarity) {
 		return mPolarityMap.get(atom) == polarity;
 	}
 
 	/**
-	 * @return true iff this XJunction contains the negation of the literal 
+	 * @return true iff this XJunction contains the negation of the literal
 	 * given by the pair (atom, polarity).
 	 */
-	public boolean containsNegation(Term term, Polarity polarity) {
+	public boolean containsNegation(final Term term, final Polarity polarity) {
 		final Polarity existing = mPolarityMap.get(term);
 		if (existing != null) {
-			if (existing == polarity) {
-				return false;
-			} else {
-				return true;
-			}
+			return existing != polarity;
 		} else {
 			return false;
 		}
@@ -155,7 +151,7 @@ public class XJunction {
 	 * @return a list of terms such that each term represents one literal of
 	 * this XJunction.
 	 */
-	public List<Term> toTermList(Script script) {
+	public List<Term> toTermList(final Script script) {
 		final List<Term> result = new ArrayList<Term>(mPolarityMap.size());
 		for (final Entry<Term, Polarity> entry : mPolarityMap.entrySet()) {
 			if (entry.getValue() == Polarity.POSITIVE) {
@@ -169,10 +165,10 @@ public class XJunction {
 	
 	
 	/**
-	 * Two XJunctions are equivalent if they contain the same literals. 
+	 * Two XJunctions are equivalent if they contain the same literals.
 	 */
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		}
@@ -222,17 +218,17 @@ public class XJunction {
 	 * @return the polarity of a given atom and null if no literal with that
 	 * atom is contained.
 	 */
-	public Polarity getPolarity(Term atom) {
+	public Polarity getPolarity(final Term atom) {
 		return mPolarityMap.get(atom);
 	}
 
 
 	/**
-	 * Returns the literal (atom, polarity) for the given atom. 
+	 * Returns the literal (atom, polarity) for the given atom.
 	 * @return The polarity of the removed literal and null if no literal with
 	 * this atom was contained.
 	 */
-	public Polarity remove(Term atom) {
+	public Polarity remove(final Term atom) {
 		return mPolarityMap.remove(atom);
 	}
 
@@ -246,7 +242,7 @@ public class XJunction {
 	 * @return true iff all literals of this XJunction are a subset of the
 	 * given XJunction.
 	 */
-	public boolean isSubset(XJunction xjunction) {
+	public boolean isSubset(final XJunction xjunction) {
 		if (xjunction.size() < size()) {
 			return false;
 		} else {
@@ -273,12 +269,12 @@ public class XJunction {
 	 * positive and a negative literal for the same atom.
 	 * @throws IllegalArgumentException if both XJunctions are not disjoint.
 	 */
-	public static XJunction disjointUnion(XJunction xjunction1, 
-						XJunction xjunction2) throws AtomAndNegationException {
+	public static XJunction disjointUnion(final XJunction xjunction1,
+						final XJunction xjunction2) throws AtomAndNegationException {
 		final XJunction result = new XJunction(xjunction1);
 		for (final Entry<Term, Polarity> atom : xjunction2.entrySet()) {
 			final boolean modified = result.add(atom.getKey(), atom.getValue());
-			if (modified == false) {
+			if (!modified) {
 				throw new IllegalArgumentException("inputs were not disjoint");
 			}
 		}

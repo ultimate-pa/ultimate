@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.IndexedStatement;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.ReachDefStatementAnnotation;
 
@@ -42,7 +42,7 @@ public class ReachDefBoogieVisitor extends BoogieVisitor {
 
 	private final ReachDefStatementAnnotation mCurrentRD;
 	private Statement mCurrentStatement;
-	private TransFormula mCurrentTransFormula;
+	private UnmodifiableTransFormula mCurrentTransFormula;
 
 	private boolean mIsLHS;
 	private boolean mIsAssume;
@@ -61,7 +61,7 @@ public class ReachDefBoogieVisitor extends BoogieVisitor {
 		mKey = key;
 	}
 
-	public void process(Statement node, TransFormula transFormula) throws Throwable {
+	public void process(Statement node, UnmodifiableTransFormula transFormula) throws Throwable {
 		assert node != null;
 		assert mCurrentRD != null;
 		mCurrentStatement = node;

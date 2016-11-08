@@ -1,3 +1,30 @@
+/*
+ * Copyright (C) 2016 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2016 Marius Greitschus (greitsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2016 University of Freiburg
+ *
+ * This file is part of the ULTIMATE TraceAbstraction plug-in.
+ *
+ * The ULTIMATE TraceAbstraction plug-in is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE TraceAbstraction plug-in is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE TraceAbstraction plug-in. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
+ * to convey the resulting work.
+ */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders;
 
 import java.util.ArrayList;
@@ -7,13 +34,13 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -24,6 +51,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ac
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 
+/**
+ *
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
+ *
+ */
 public class AbsIntNonSmtInterpolantAutomatonBuilder implements IInterpolantAutomatonBuilder<CodeBlock, IPredicate> {
 
 	private final IUltimateServiceProvider mServices;
@@ -34,15 +67,16 @@ public class AbsIntNonSmtInterpolantAutomatonBuilder implements IInterpolantAuto
 	private final ManagedScript mBoogie2Smt;
 
 	public AbsIntNonSmtInterpolantAutomatonBuilder(final IUltimateServiceProvider services,
-			final INestedWordAutomaton<CodeBlock, IPredicate> oldAbstraction, final PredicateUnifier predUnifier,
-			final ManagedScript smtManager, final Boogie2SmtSymbolTable symbolTable, final IRun<CodeBlock, IPredicate> currentCounterexample,
-			final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
+			final INestedWordAutomatonSimple<CodeBlock, IPredicate> oldAbstraction, final PredicateUnifier predUnifier,
+			final ManagedScript csToolkit, final ICfgSymbolTable symbolTable,
+			final IRun<CodeBlock, IPredicate> currentCounterexample,
+			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mCurrentCounterExample = currentCounterexample;
-		mBoogie2Smt = smtManager;
-		mPredicateFactory =
-				new PredicateFactory(services, mBoogie2Smt, symbolTable, simplificationTechnique, xnfConversionTechnique);
+		mBoogie2Smt = csToolkit;
+		mPredicateFactory = new PredicateFactory(services, mBoogie2Smt, symbolTable, simplificationTechnique,
+				xnfConversionTechnique);
 
 		mResult = getPathProgramAutomaton(oldAbstraction, predUnifier);
 	}
@@ -53,82 +87,26 @@ public class AbsIntNonSmtInterpolantAutomatonBuilder implements IInterpolantAuto
 	}
 
 	private NestedWordAutomaton<CodeBlock, IPredicate> getPathProgramAutomaton(
-			final INestedWordAutomaton<CodeBlock, IPredicate> oldAbstraction, final PredicateUnifier predicateUnifier) {
+			final INestedWordAutomatonSimple<CodeBlock, IPredicate> oldAbstraction,
+			final PredicateUnifier predicateUnifier) {
 		return getPathProgramAutomatonNew(oldAbstraction, predicateUnifier);
-		// return getPathProgramAutomatonOld(oldAbstraction, predicateUnifier);
-	}
-
-	private NestedWordAutomaton<CodeBlock, IPredicate> getPathProgramAutomatonOld(
-			final INestedWordAutomaton<CodeBlock, IPredicate> oldAbstraction, final PredicateUnifier predicateUnifier) {
-
-		mLogger.info("Creating interpolant automaton from AI using only explored space.");
-
-		final NestedWordAutomaton<CodeBlock, IPredicate> result = new NestedWordAutomaton<>(
-				new AutomataLibraryServices(mServices), oldAbstraction.getInternalAlphabet(),
-				oldAbstraction.getCallAlphabet(), oldAbstraction.getReturnAlphabet(), oldAbstraction.getStateFactory());
-		IPredicate currentState = predicateUnifier.getTruePredicate();
-		result.addState(true, false, currentState);
-
-		final IPredicate falsePred = predicateUnifier.getFalsePredicate();
-
-		// TODO: is it correct to go to length - 1 here? I assume that the last state is the error location and we don't
-		// want anything to to with that as we are introducing this location in the end.
-		for (int cexI = 0; cexI < mCurrentCounterExample.getLength() - 1; cexI++) {
-			final IPredicate prevState = currentState;
-
-			// Add state
-			currentState = mPredicateFactory.newPredicate(mBoogie2Smt.getScript().term("true"));
-			result.addState(false, false, currentState);
-
-			// Add transition
-			final CodeBlock currentSymbol = mCurrentCounterExample.getSymbol(cexI);
-			if (currentSymbol instanceof Call) {
-				result.addCallTransition(prevState, currentSymbol, currentState);
-			} else if (currentSymbol instanceof Return) {
-				final IPredicate heirState = mPredicateFactory.newPredicate(mBoogie2Smt.getScript().term("true"));
-				result.addState(false, false, heirState);
-				result.addReturnTransition(prevState, heirState, currentSymbol, currentState);
-			} else {
-				result.addInternalTransition(prevState, currentSymbol, currentState);
-			}
-		}
-
-		// Add final state
-		if (result.getFinalStates().isEmpty()) {
-			final Word<CodeBlock> word = mCurrentCounterExample.getWord();
-			final IPredicate finalState = predicateUnifier.getFalsePredicate();
-			result.addState(false, true, finalState);
-			// HERE GOES SOMETHING WRONG! length is strangely enough not equal to the counter example length?!
-			result.addInternalTransition(currentState, word.getSymbol(word.length() - 1), finalState);
-			// Add self-loop to the final state, annotated with the alphabet of the counterexample.
-			oldAbstraction.getAlphabet().forEach(l -> result.addInternalTransition(finalState, l, finalState));
-		}
-
-		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("Resulting abstract interpretation automaton: " + result);
-		}
-
-		// TODO remove next line; debugging only!
-		mLogger.info("Current abstraction: " + oldAbstraction);
-		mLogger.info("AI interpolation automaton: " + result);
-
-		return result;
 	}
 
 	private NestedWordAutomaton<CodeBlock, IPredicate> getPathProgramAutomatonNew(
-			final INestedWordAutomaton<CodeBlock, IPredicate> oldAbstraction, final PredicateUnifier predicateUnifier) {
-		mLogger.info("Creating interpolant automaton from AI using only explored space.");
-
-		final NestedWordAutomaton<CodeBlock, IPredicate> result = new NestedWordAutomaton<>(
-				new AutomataLibraryServices(mServices), oldAbstraction.getInternalAlphabet(),
-				oldAbstraction.getCallAlphabet(), oldAbstraction.getReturnAlphabet(), oldAbstraction.getStateFactory());
+			final INestedWordAutomatonSimple<CodeBlock, IPredicate> oldAbstraction,
+			final PredicateUnifier predicateUnifier) {
+		mLogger.info("Creating interpolant automaton from AI using abstract post for generalization");
 
 		final NestedRun<CodeBlock, IPredicate> cex = (NestedRun<CodeBlock, IPredicate>) mCurrentCounterExample;
 		final ArrayList<IPredicate> stateSequence = cex.getStateSequence();
 
 		if (stateSequence.size() <= 1) {
-			throw new AssertionError("Unexpected");
+			throw new AssertionError("Unexpected: state sequence size <= 1");
 		}
+
+		final NestedWordAutomaton<CodeBlock, IPredicate> result = new NestedWordAutomaton<>(
+				new AutomataLibraryServices(mServices), oldAbstraction.getInternalAlphabet(),
+				oldAbstraction.getCallAlphabet(), oldAbstraction.getReturnAlphabet(), oldAbstraction.getStateFactory());
 
 		final Map<IPredicate, IPredicate> newStates = new HashMap<>();
 		final Map<Call, IPredicate> callHierPreds = new HashMap<>();

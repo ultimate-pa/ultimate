@@ -26,8 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.loopdetector;
 
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 
 /**
  * Simple zero heuristic for {@link AStar}.
@@ -35,14 +35,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCF
  * @author dietsch@informatik.uni-freiburg.de
  *
  */
-public final class ZeroHeuristic implements IHeuristic<RCFGNode, RCFGEdge> {
+public final class ZeroHeuristic implements IHeuristic<IcfgLocation, IcfgEdge> {
 	@Override
-	public int getHeuristicValue(RCFGNode from, RCFGEdge over, RCFGNode to) {
+	public int getHeuristicValue(IcfgLocation from, IcfgEdge over, IcfgLocation to) {
 		return 0;
 	}
 
 	@Override
-	public int getConcreteCost(RCFGEdge e) {
+	public int getConcreteCost(IcfgEdge e) {
 		return 1;
 	}
 }

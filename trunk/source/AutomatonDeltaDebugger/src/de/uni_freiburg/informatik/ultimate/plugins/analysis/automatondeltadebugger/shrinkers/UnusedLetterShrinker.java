@@ -33,33 +33,36 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.utils.ELetterType;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.utils.LetterType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.utils.TypedLetter;
 
 /**
  * Removes unused letters.
- * 
+ * <p>
  * This shrinker removes only letters which do not occur on any transition.
  * 
- * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
+ * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
  */
-public class UnusedLetterShrinker<LETTER, STATE>
-		extends AShrinker<TypedLetter<LETTER>, LETTER, STATE> {
+public class UnusedLetterShrinker<LETTER, STATE> extends AbstractShrinker<TypedLetter<LETTER>, LETTER, STATE> {
 	@Override
 	public INestedWordAutomaton<LETTER, STATE>
-			createAutomaton(List<TypedLetter<LETTER>> list) {
+			createAutomaton(final List<TypedLetter<LETTER>> list) {
 		// create alphabets
 		final ListIterator<TypedLetter<LETTER>> it = list.listIterator();
 		final Set<LETTER> internalAlphabet = unwrapLetters(it,
-				mAutomaton.getAlphabet(), ELetterType.INTERNAL);
+				mAutomaton.getInternalAlphabet(), LetterType.INTERNAL);
 		final Set<LETTER> callAlphabet = unwrapLetters(it,
-				mAutomaton.getCallAlphabet(), ELetterType.CALL);
+				mAutomaton.getCallAlphabet(), LetterType.CALL);
 		final Set<LETTER> returnAlphabet = unwrapLetters(it,
-				mAutomaton.getReturnAlphabet(), ELetterType.RETURN);
+				mAutomaton.getReturnAlphabet(), LetterType.RETURN);
 		
 		// create fresh automaton
 		final INestedWordAutomaton<LETTER, STATE> automaton =
@@ -76,43 +79,38 @@ public class UnusedLetterShrinker<LETTER, STATE>
 	
 	@Override
 	public List<TypedLetter<LETTER>> extractList() {
-		final HashSet<LETTER> internalsUsed = new HashSet<LETTER>();
-		final HashSet<LETTER> callsUsed = new HashSet<LETTER>();
-		final HashSet<LETTER> returnsUsed = new HashSet<LETTER>();
+		final HashSet<LETTER> internalsUsed = new HashSet<>();
+		final HashSet<LETTER> callsUsed = new HashSet<>();
+		final HashSet<LETTER> returnsUsed = new HashSet<>();
 		
 		// find used letters
 		for (final STATE state : mAutomaton.getStates()) {
-			for (final OutgoingInternalTransition<LETTER, STATE> trans : mAutomaton
-					.internalSuccessors(state)) {
+			for (final OutgoingInternalTransition<LETTER, STATE> trans : mAutomaton.internalSuccessors(state)) {
 				internalsUsed.add(trans.getLetter());
 			}
-			for (final OutgoingCallTransition<LETTER, STATE> trans : mAutomaton
-					.callSuccessors(state)) {
+			for (final OutgoingCallTransition<LETTER, STATE> trans : mAutomaton.callSuccessors(state)) {
 				callsUsed.add(trans.getLetter());
 			}
-			for (final OutgoingReturnTransition<LETTER, STATE> trans : mAutomaton
-					.returnSuccessors(state)) {
+			for (final OutgoingReturnTransition<LETTER, STATE> trans : mAutomaton.returnSuccessors(state)) {
 				returnsUsed.add(trans.getLetter());
 			}
 		}
 		
 		// wrap complement of present letters to include type information
-		final ArrayList<TypedLetter<LETTER>> unused =
-				new ArrayList<TypedLetter<LETTER>>();
-		for (final LETTER letter : mAutomaton.getAlphabet()) {
+		final ArrayList<TypedLetter<LETTER>> unused = new ArrayList<>();
+		for (final LETTER letter : mAutomaton.getInternalAlphabet()) {
 			if (!internalsUsed.contains(letter)) {
-				unused.add(
-						new TypedLetter<LETTER>(letter, ELetterType.INTERNAL));
+				unused.add(new TypedLetter<>(letter, LetterType.INTERNAL));
 			}
 		}
 		for (final LETTER letter : mAutomaton.getCallAlphabet()) {
 			if (!callsUsed.contains(letter)) {
-				unused.add(new TypedLetter<LETTER>(letter, ELetterType.CALL));
+				unused.add(new TypedLetter<>(letter, LetterType.CALL));
 			}
 		}
 		for (final LETTER letter : mAutomaton.getReturnAlphabet()) {
 			if (!returnsUsed.contains(letter)) {
-				unused.add(new TypedLetter<LETTER>(letter, ELetterType.RETURN));
+				unused.add(new TypedLetter<>(letter, LetterType.RETURN));
 			}
 		}
 		
@@ -120,26 +118,28 @@ public class UnusedLetterShrinker<LETTER, STATE>
 	}
 	
 	/**
-	 * Unwraps letters from the type wrapper list and creates the respective
-	 * alphabet.
+	 * Unwraps letters from the type wrapper list and creates the respective alphabet.
 	 * 
-	 * @param it iterator of type wrapper list
-	 * @param originalAlphabet alphabet of original automaton
-	 * @param letterType type of letter
+	 * @param iterator
+	 *            iterator of type wrapper list
+	 * @param originalAlphabet
+	 *            alphabet of original automaton
+	 * @param letterType
+	 *            type of letter
 	 * @return set of complementary letters
 	 */
 	private Set<LETTER> unwrapLetters(
-			final ListIterator<TypedLetter<LETTER>> it,
-			final Set<LETTER> originalAlphabet, final ELetterType letterType) {
+			final ListIterator<TypedLetter<LETTER>> iterator, final Set<LETTER> originalAlphabet,
+			final LetterType letterType) {
 		// find all letters which should be filtered
-		final HashSet<LETTER> alphabetFilter = new HashSet<LETTER>();
+		final HashSet<LETTER> alphabetFilter = new HashSet<>();
 		TypedLetter<LETTER> nextLetter;
 		while (true) {
-			if (it.hasNext()) {
-				nextLetter = it.next();
+			if (iterator.hasNext()) {
+				nextLetter = iterator.next();
 				if (nextLetter.getType() != letterType) {
 					// revert iterator
-					it.previous();
+					iterator.previous();
 					break;
 				}
 			} else {
@@ -153,7 +153,7 @@ public class UnusedLetterShrinker<LETTER, STATE>
 		}
 		
 		// create the complement of the filtered letters
-		final HashSet<LETTER> result = new HashSet<LETTER>();
+		final HashSet<LETTER> result = new HashSet<>();
 		for (final LETTER letter : originalAlphabet) {
 			if (!alphabetFilter.contains(letter)) {
 				result.add(letter);

@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CodeCheck plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE CodeCheck plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE CodeCheck plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.emptinesscheck;
@@ -38,14 +38,15 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.DummyStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AnnotatedProgramPoint;
@@ -53,21 +54,21 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AppEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AppHyperEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 
 public class NWAEmptinessCheck implements IEmptinessCheck {
 	private final IUltimateServiceProvider mServices;
 
-	public NWAEmptinessCheck(IUltimateServiceProvider services) {
+	public NWAEmptinessCheck(final IUltimateServiceProvider services) {
 		mServices = services;
 	}
 
 	@Override
-	public NestedRun<CodeBlock, AnnotatedProgramPoint> checkForEmptiness(AnnotatedProgramPoint root) {
+	public NestedRun<CodeBlock, AnnotatedProgramPoint> checkForEmptiness(final AnnotatedProgramPoint root) {
 		final INestedWordAutomatonSimple<CodeBlock, AnnotatedProgramPoint> converted = new MyNWA(root);
 		try {
-			return new IsEmpty<CodeBlock, AnnotatedProgramPoint>(new AutomataLibraryServices(mServices), 
+			return new IsEmpty<CodeBlock, AnnotatedProgramPoint>(new AutomataLibraryServices(mServices),
 					(new RemoveUnreachable<CodeBlock, AnnotatedProgramPoint>(new AutomataLibraryServices(mServices), converted)).getResult()).getNestedRun();
 		} catch (final AutomataOperationCanceledException e) {
 			e.printStackTrace();
@@ -82,7 +83,7 @@ public class NWAEmptinessCheck implements IEmptinessCheck {
 		private final Set<CodeBlock> _callAlphabet = new HashSet<CodeBlock>();
 		private final Set<CodeBlock> _returnAlphabet = new HashSet<CodeBlock>();
 
-		private final StateFactory<AnnotatedProgramPoint> _stateFactory = new MyStateFactory<AnnotatedProgramPoint>();
+		private final IStateFactory<AnnotatedProgramPoint> _stateFactory = new DummyStateFactory<AnnotatedProgramPoint>();
 
 		private final Map<AnnotatedProgramPoint, HashSet<CodeBlock>> _stateToLettersInternal = new HashMap<AnnotatedProgramPoint, HashSet<CodeBlock>>();
 		private final Map<AnnotatedProgramPoint, HashSet<CodeBlock>> _stateToLettersCall = new HashMap<AnnotatedProgramPoint, HashSet<CodeBlock>>();
@@ -99,12 +100,12 @@ public class NWAEmptinessCheck implements IEmptinessCheck {
 		/**
 		 * create an NWA from a AnnotatedProgramPoint-graph given its root
 		 */
-		public MyNWA(AnnotatedProgramPoint root) {
+		public MyNWA(final AnnotatedProgramPoint root) {
 			_initialStates = Collections.singletonList(root);
 			exploreGraph(root);
 		}
 
-		void exploreGraph(AnnotatedProgramPoint root) {
+		void exploreGraph(final AnnotatedProgramPoint root) {
 			final HashSet<AnnotatedProgramPoint> visitedNodes = new HashSet<AnnotatedProgramPoint>();
 			// HashSet<CodeBlock> visitedEdges = new HashSet<CodeBlock>();
 			final ArrayDeque<AnnotatedProgramPoint> openNodes = new ArrayDeque<AnnotatedProgramPoint>();
@@ -260,8 +261,8 @@ public class NWAEmptinessCheck implements IEmptinessCheck {
 			_alphabet.addAll(_internalAlphabet);
 		}
 
-		private boolean isOutReturnTransitionNotContained(AnnotatedProgramPoint currentNode,
-				AnnotatedProgramPoint hier, CodeBlock edge, AnnotatedProgramPoint targetNode) {
+		private boolean isOutReturnTransitionNotContained(final AnnotatedProgramPoint currentNode,
+				final AnnotatedProgramPoint hier, final CodeBlock edge, final AnnotatedProgramPoint targetNode) {
 			boolean result = true;
 			for (final OutgoingReturnTransition<CodeBlock, AnnotatedProgramPoint> ort : _stateToHierToLetterToOutgoingReturnTransitions
 					.get(currentNode).get(hier).get(edge)) {
@@ -302,7 +303,7 @@ public class NWAEmptinessCheck implements IEmptinessCheck {
 		}
 
 		@Override
-		public StateFactory<AnnotatedProgramPoint> getStateFactory() {
+		public IStateFactory<AnnotatedProgramPoint> getStateFactory() {
 			return _stateFactory;
 		}
 
@@ -317,17 +318,17 @@ public class NWAEmptinessCheck implements IEmptinessCheck {
 		}
 
 		@Override
-		public boolean isInitial(AnnotatedProgramPoint state) {
+		public boolean isInitial(final AnnotatedProgramPoint state) {
 			return _initialStates.contains(state);
 		}
 
 		@Override
-		public boolean isFinal(AnnotatedProgramPoint state) {
+		public boolean isFinal(final AnnotatedProgramPoint state) {
 			return state.isErrorLocation();
 		}
 
 		@Override
-		public Set<CodeBlock> lettersInternal(AnnotatedProgramPoint state) {
+		public Set<CodeBlock> lettersInternal(final AnnotatedProgramPoint state) {
 			final HashMap<CodeBlock, ArrayList<OutgoingInternalTransition<CodeBlock, AnnotatedProgramPoint>>> letter2 = _stateToLetterToOutgoingInternalTransitions
 					.get(state);
 			if (letter2 == null) {
@@ -338,7 +339,7 @@ public class NWAEmptinessCheck implements IEmptinessCheck {
 		}
 
 		@Override
-		public Set<CodeBlock> lettersCall(AnnotatedProgramPoint state) {
+		public Set<CodeBlock> lettersCall(final AnnotatedProgramPoint state) {
 			final HashMap<CodeBlock, ArrayList<OutgoingCallTransition<CodeBlock, AnnotatedProgramPoint>>> letter2 = _stateToLetterToOutgoingCallTransitions
 					.get(state);
 			if (letter2 == null) {
@@ -349,7 +350,7 @@ public class NWAEmptinessCheck implements IEmptinessCheck {
 		}
 
 		@Override
-		public Set<CodeBlock> lettersReturn(AnnotatedProgramPoint state) {
+		public Set<CodeBlock> lettersReturn(final AnnotatedProgramPoint state) {
 			final HashMap<AnnotatedProgramPoint, HashMap<CodeBlock, ArrayList<OutgoingReturnTransition<CodeBlock, AnnotatedProgramPoint>>>> hier2 = _stateToHierToLetterToOutgoingReturnTransitions
 					.get(state);
 			if (hier2 == null) {
@@ -366,7 +367,7 @@ public class NWAEmptinessCheck implements IEmptinessCheck {
 
 		@Override
 		public Iterable<OutgoingInternalTransition<CodeBlock, AnnotatedProgramPoint>> internalSuccessors(
-				AnnotatedProgramPoint state, CodeBlock letter) {
+				final AnnotatedProgramPoint state, final CodeBlock letter) {
 			final HashMap<CodeBlock, ArrayList<OutgoingInternalTransition<CodeBlock, AnnotatedProgramPoint>>> letter2 = _stateToLetterToOutgoingInternalTransitions
 					.get(state);
 			if (letter2 == null) {
@@ -378,7 +379,7 @@ public class NWAEmptinessCheck implements IEmptinessCheck {
 
 		@Override
 		public Iterable<OutgoingInternalTransition<CodeBlock, AnnotatedProgramPoint>> internalSuccessors(
-				AnnotatedProgramPoint state) {
+				final AnnotatedProgramPoint state) {
 			final HashMap<CodeBlock, ArrayList<OutgoingInternalTransition<CodeBlock, AnnotatedProgramPoint>>> letter2 = _stateToLetterToOutgoingInternalTransitions
 					.get(state);
 			if (letter2 == null) {
@@ -394,7 +395,7 @@ public class NWAEmptinessCheck implements IEmptinessCheck {
 
 		@Override
 		public Iterable<OutgoingCallTransition<CodeBlock, AnnotatedProgramPoint>> callSuccessors(
-				AnnotatedProgramPoint state, CodeBlock letter) {
+				final AnnotatedProgramPoint state, final CodeBlock letter) {
 			final HashMap<CodeBlock, ArrayList<OutgoingCallTransition<CodeBlock, AnnotatedProgramPoint>>> letter2 = _stateToLetterToOutgoingCallTransitions
 					.get(state);
 			if (letter2 == null) {
@@ -406,7 +407,7 @@ public class NWAEmptinessCheck implements IEmptinessCheck {
 
 		@Override
 		public Iterable<OutgoingCallTransition<CodeBlock, AnnotatedProgramPoint>> callSuccessors(
-				AnnotatedProgramPoint state) {
+				final AnnotatedProgramPoint state) {
 			final HashMap<CodeBlock, ArrayList<OutgoingCallTransition<CodeBlock, AnnotatedProgramPoint>>> letter2 = _stateToLetterToOutgoingCallTransitions
 					.get(state);
 			if (letter2 == null) {
@@ -423,7 +424,7 @@ public class NWAEmptinessCheck implements IEmptinessCheck {
 
 		@Override
 		public Iterable<OutgoingReturnTransition<CodeBlock, AnnotatedProgramPoint>> returnSuccessors(
-				AnnotatedProgramPoint state, AnnotatedProgramPoint hier, CodeBlock letter) {
+				final AnnotatedProgramPoint state, final AnnotatedProgramPoint hier, final CodeBlock letter) {
 			final HashMap<AnnotatedProgramPoint, HashMap<CodeBlock, ArrayList<OutgoingReturnTransition<CodeBlock, AnnotatedProgramPoint>>>> hier2letter2 = _stateToHierToLetterToOutgoingReturnTransitions
 					.get(state);
 			if (hier2letter2 == null) {
@@ -440,7 +441,7 @@ public class NWAEmptinessCheck implements IEmptinessCheck {
 
 		@Override
 		public Iterable<OutgoingReturnTransition<CodeBlock, AnnotatedProgramPoint>> returnSuccessorsGivenHier(
-				AnnotatedProgramPoint state, AnnotatedProgramPoint hier) {
+				final AnnotatedProgramPoint state, final AnnotatedProgramPoint hier) {
 			final HashMap<AnnotatedProgramPoint, HashMap<CodeBlock, ArrayList<OutgoingReturnTransition<CodeBlock, AnnotatedProgramPoint>>>> hier2letter2 = _stateToHierToLetterToOutgoingReturnTransitions
 					.get(state);
 			if (hier2letter2 == null) {
@@ -462,25 +463,17 @@ public class NWAEmptinessCheck implements IEmptinessCheck {
 
 	}
 
-	class MyStateFactory<STATE> extends StateFactory<STATE> {
-
-	}
-
 	class EmptyStackSymbol extends AnnotatedProgramPoint {
 
 		private static final long serialVersionUID = 1L;
 
 		public EmptyStackSymbol() {
-			super((IPredicate) null, (ProgramPoint) null);
+			super((IPredicate) null, (BoogieIcfgLocation) null);
 		}
 
 		@Override
-		public boolean equals(Object o) {
-			if (o instanceof EmptyStackSymbol) {
-				return true;
-			} else {
-				return false;
-			}
+		public boolean equals(final Object o) {
+			return o instanceof EmptyStackSymbol;
 		}
 
 		@Override

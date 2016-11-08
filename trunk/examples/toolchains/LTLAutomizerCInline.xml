@@ -1,4 +1,7 @@
-<toolchain>
+<rundefinition>
+	<name>Ultimate Toolchain</name>
+	<toolchain>
+		
 	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator" />
 	<plugin id="de.uni_freiburg.informatik.ultimate.boogie.procedureinliner"/>
 	<plugin id="de.uni_freiburg.informatik.ultimate.boogie.preprocessor" />
@@ -9,4 +12,6 @@
 	<plugin id="de.uni_freiburg.informatik.ultimate.buchiprogramproduct" /> 
 	<!--<plugin id="de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization" /> -->
 	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer" /> 
-</toolchain>
+
+	</toolchain>
+</rundefinition>

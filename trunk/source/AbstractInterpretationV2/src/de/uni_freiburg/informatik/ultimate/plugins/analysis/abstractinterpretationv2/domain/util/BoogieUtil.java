@@ -3,7 +3,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
@@ -24,19 +24,19 @@ public class BoogieUtil {
 	 *            the identifier of the variable
 	 * @param type
 	 *            the type of the variable
-	 * @return {@link IBoogieVar} according to the given identifier and {@link IType}
+	 * @return {@link IBoogieVar} according to the given identifier and {@link IBoogieType}
 	 *
 	 * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
 	 */
-	public static IBoogieVar createTemporaryIBoogieVar(String identifier, IType type) {
+	public static IBoogieVar createTemporaryIBoogieVar(final String identifier, final IBoogieType type) {
 		return new IBoogieVar() {
 			@Override
-			public String getIdentifier() {
+			public String getGloballyUniqueId() {
 				return identifier;
 			}
 
 			@Override
-			public IType getIType() {
+			public IBoogieType getIType() {
 				return type;
 			}
 
@@ -60,7 +60,7 @@ public class BoogieUtil {
 	 *            {@link IdentifierExpression}
 	 * @return expression references a variable or constant
 	 */
-	public static boolean isVariable(IdentifierExpression ie) {
+	public static boolean isVariable(final IdentifierExpression ie) {
 		final DeclarationInformation di = ie.getDeclarationInformation();
 		switch (di.getStorageClass()) {
 		case PROC_FUNC:
@@ -79,7 +79,7 @@ public class BoogieUtil {
 		}
 	}
 
-	public static boolean isGlobal(IBoogieVar ibv) {
+	public static boolean isGlobal(final IBoogieVar ibv) {
 		if (ibv instanceof IProgramVar) {
 			return ((IProgramVar) ibv).isGlobal();
 		} else if (ibv instanceof BoogieConst) {
@@ -89,7 +89,7 @@ public class BoogieUtil {
 		}
 	}
 
-	public static Operator negateRelOp(Operator relOp) {
+	public static Operator negateRelOp(final Operator relOp) {
 		switch (relOp) {
 		case COMPEQ:
 			return Operator.COMPNEQ;

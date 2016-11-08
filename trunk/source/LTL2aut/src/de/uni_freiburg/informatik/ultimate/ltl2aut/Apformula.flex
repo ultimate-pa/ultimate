@@ -1,14 +1,14 @@
 package de.uni_freiburg.informatik.ultimate.ltl2aut;
 
-import java_cup.runtime.*;
+import com.github.jhoenicke.javacup.runtime.*;
 
 %%
 
-%cupsym SymbolsAP
 %class LexerAP
 %unicode
-%cup
-%cupdebug
+%implements com.github.jhoenicke.javacup.runtime.Scanner
+%type com.github.jhoenicke.javacup.runtime.Symbol
+%function next_token
 %line
 %column
 %public
@@ -70,18 +70,5 @@ Int = [0-9]+
 	
 
  }
-
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
+<<EOF>>                          { return symbol(SymbolsAP.EOF); }
  

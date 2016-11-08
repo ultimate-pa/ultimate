@@ -1,0 +1,2 @@
+//#Unsafe
+!G(!"chainBroken == 1" || G"chainBroken == 1")

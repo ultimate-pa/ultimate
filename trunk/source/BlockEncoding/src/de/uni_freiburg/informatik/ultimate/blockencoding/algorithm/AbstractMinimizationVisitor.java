@@ -40,10 +40,10 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.model.MinimizedNode;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IBasicEdge;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IMinimizedEdge;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootEdge;
 
@@ -67,7 +67,7 @@ public abstract class AbstractMinimizationVisitor implements IMinimizationVisito
 
 	protected final ILogger mLogger;
 
-	private final HashMap<ProgramPoint, MinimizedNode> referenceNodeMap;
+	private final HashMap<BoogieIcfgLocation, MinimizedNode> referenceNodeMap;
 
 	private final HashMap<CodeBlock, IMinimizedEdge> referenceEdgeMap;
 
@@ -83,7 +83,7 @@ public abstract class AbstractMinimizationVisitor implements IMinimizationVisito
 		mLogger = logger;
 		mVisitedEdges = new HashSet<IMinimizedEdge>();
 		notReachableNodes = new HashSet<MinimizedNode>();
-		referenceNodeMap = new HashMap<ProgramPoint, MinimizedNode>();
+		referenceNodeMap = new HashMap<BoogieIcfgLocation, MinimizedNode>();
 		referenceEdgeMap = new HashMap<CodeBlock, IMinimizedEdge>();
 		referenceToMethodEntry = new HashMap<String, MinimizedNode>();
 	}
@@ -191,9 +191,9 @@ public abstract class AbstractMinimizationVisitor implements IMinimizationVisito
 	protected void initializeOutgoingEdges(MinimizedNode node) {
 		// OutgoingEdges of MinimizedNode are not initialized
 		final ArrayList<IMinimizedEdge> outEdges = new ArrayList<IMinimizedEdge>();
-		for (final RCFGEdge edge : node.getOriginalNode().getOutgoingEdges()) {
+		for (final IcfgEdge edge : node.getOriginalNode().getOutgoingEdges()) {
 			outEdges.add(getReferencedMinEdge((CodeBlock) edge, node,
-					getReferencedMinNode((ProgramPoint) edge.getTarget(), edge, false)));
+					getReferencedMinNode((BoogieIcfgLocation) edge.getTarget(), edge, false)));
 		}
 		node.addNewOutgoingEdgeLevel(outEdges, null);
 	}
@@ -204,12 +204,12 @@ public abstract class AbstractMinimizationVisitor implements IMinimizationVisito
 	protected void initializeIncomingEdges(MinimizedNode node) {
 		// IncomingEdges of MinimizedNode are not initialized
 		final ArrayList<IMinimizedEdge> inEdges = new ArrayList<IMinimizedEdge>();
-		for (final RCFGEdge edge : node.getOriginalNode().getIncomingEdges()) {
+		for (final IcfgEdge edge : node.getOriginalNode().getIncomingEdges()) {
 			if (edge instanceof RootEdge) {
 				continue;
 			}
 			inEdges.add(getReferencedMinEdge((CodeBlock) edge,
-					getReferencedMinNode((ProgramPoint) edge.getSource(), edge, true), node));
+					getReferencedMinNode((BoogieIcfgLocation) edge.getSource(), edge, true), node));
 		}
 		node.addNewIncomingEdgeLevel(inEdges);
 	}
@@ -231,7 +231,7 @@ public abstract class AbstractMinimizationVisitor implements IMinimizationVisito
 	 * @param originalNode
 	 * @return
 	 */
-	private MinimizedNode getReferencedMinNode(ProgramPoint originalNode, RCFGEdge edge, boolean incoming) {
+	private MinimizedNode getReferencedMinNode(BoogieIcfgLocation originalNode, IcfgEdge edge, boolean incoming) {
 		if (!referenceNodeMap.containsKey(originalNode)) {
 			final MinimizedNode minNode = new MinimizedNode(originalNode);
 			referenceNodeMap.put(originalNode, minNode);
@@ -247,7 +247,7 @@ public abstract class AbstractMinimizationVisitor implements IMinimizationVisito
 	 * @param methodEntry
 	 * @return null if there is no referenced node.
 	 */
-	public MinimizedNode getReferencedMethodEntryNode(ProgramPoint methodEntry) {
+	public MinimizedNode getReferencedMethodEntryNode(BoogieIcfgLocation methodEntry) {
 		if (referenceNodeMap.containsKey(methodEntry)) {
 			return referenceNodeMap.get(methodEntry);
 		}

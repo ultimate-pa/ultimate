@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.julian;
@@ -33,7 +33,7 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 
 /**
- * represents an incomplete Event.
+ * Represents an incomplete Event.
  * A <i>Candidate</i> consists of
  * <ul>
  * <li>the transition which belongs to the event</li>
@@ -41,47 +41,67 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
  * <li>the set of predecessor-places of the transition minus the places that
  * correspond with the conditions in the given condition-set.</li>
  * </ul>
+ * 
+ * @author Julian Jarecki (jareckij@informatik.uni-freiburg.de)
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <S>
+ *            symbol type
+ * @param <C>
+ *            place content type
  **/
 public class Candidate<S, C> {
-	final public Transition<S, C> mt;
-	final public ArrayList<Condition<S, C>> mChosen;
-	final public ArrayList<Place<S, C>> mPlaces;
+	/**
+	 * A transition.
+	 */
+	public final Transition<S, C> mT;
+	/**
+	 * Chosen conditions.
+	 */
+	public final ArrayList<Condition<S, C>> mChosen;
+	/**
+	 * Places.
+	 */
+	public final ArrayList<Place<S, C>> mPlaces;
 	
-	public Candidate(
-			Map.Entry<Transition<S, C>, Map<Place<S, C>, Condition<S, C>>> candidate) {
-		this.mt = candidate.getKey();
-		this.mChosen = new ArrayList<Condition<S, C>>(candidate.getValue()
-				.values());
-		this.mPlaces = new ArrayList<Place<S, C>>(candidate.getValue().keySet());
+	/**
+	 * Constructor from another candidate.
+	 * 
+	 * @param candidate
+	 *            candidate
+	 */
+	public Candidate(final Map.Entry<Transition<S, C>, Map<Place<S, C>, Condition<S, C>>> candidate) {
+		mT = candidate.getKey();
+		mChosen = new ArrayList<>(candidate.getValue().values());
+		mPlaces = new ArrayList<>(candidate.getValue().keySet());
 	}
-
-	public Candidate(Transition<S, C> t2) {
-		this.mt = t2;
-		this.mChosen = new ArrayList<Condition<S, C>>(mt.getPredecessors().size());
-		this.mPlaces = new ArrayList<Place<S, C>>(mt.getPredecessors());
+	
+	/**
+	 * Constructor with transition.
+	 * 
+	 * @param transition
+	 *            transition
+	 */
+	public Candidate(final Transition<S, C> transition) {
+		mT = transition;
+		mChosen = new ArrayList<>(mT.getPredecessors().size());
+		mPlaces = new ArrayList<>(mT.getPredecessors());
 	}
-
-
 	
 	@Override
 	public int hashCode() {
 		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((mChosen == null) ? 0 : mChosen.hashCode());
+		int result = prime + ((mChosen == null) ? 0 : mChosen.hashCode());
 		result = prime * result + ((mPlaces == null) ? 0 : mPlaces.hashCode());
-		result = prime * result + ((mt == null) ? 0 : mt.hashCode());
+		result = prime * result + ((mT == null) ? 0 : mT.hashCode());
 		return result;
 	}
-
+	
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		}
-		if (obj == null) {
-			return false;
-		}
-		if (getClass() != obj.getClass()) {
+		if (obj == null || getClass() != obj.getClass()) {
 			return false;
 		}
 		final Candidate<?, ?> other = (Candidate<?, ?>) obj;
@@ -99,16 +119,13 @@ public class Candidate<S, C> {
 		} else if (!mPlaces.equals(other.mPlaces)) {
 			return false;
 		}
-		if (mt == null) {
-			if (other.mt != null) {
+		if (mT == null) {
+			if (other.mT != null) {
 				return false;
 			}
-		} else if (!mt.equals(other.mt)) {
+		} else if (!mT.equals(other.mT)) {
 			return false;
 		}
 		return true;
-	}	
-	
-	
-	
+	}
 }

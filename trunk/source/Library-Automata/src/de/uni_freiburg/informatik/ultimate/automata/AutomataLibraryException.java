@@ -19,25 +19,35 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata;
 
+/**
+ * Exception for the automata library.
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ */
 public class AutomataLibraryException extends Exception {
-
-	/**
-	 * 
-	 */
+	
 	private static final long serialVersionUID = 1643349110083991967L;
 	
 	private final String mMessage;
-
-	protected final Class<?> mClassOfThrower;
 	
-	public AutomataLibraryException(Class<?> thrower, String message) {
+	private final Class<?> mClassOfThrower;
+	
+	/**
+	 * Constructor.
+	 * 
+	 * @param thrower
+	 *            thrower
+	 * @param message
+	 *            message
+	 */
+	public AutomataLibraryException(final Class<?> thrower, final String message) {
 		mMessage = message;
 		mClassOfThrower = thrower;
 	}
@@ -46,10 +56,11 @@ public class AutomataLibraryException extends Exception {
 	public String getMessage() {
 		return mMessage;
 	}
-
+	
 	/**
-	 * Get the class of the object that has thrown this Exception.
-	 * @return
+	 * Returns the class of the object that has thrown this exception.
+	 * 
+	 * @return throws class
 	 */
 	public Class<?> getClassOfThrower() {
 		return mClassOfThrower;

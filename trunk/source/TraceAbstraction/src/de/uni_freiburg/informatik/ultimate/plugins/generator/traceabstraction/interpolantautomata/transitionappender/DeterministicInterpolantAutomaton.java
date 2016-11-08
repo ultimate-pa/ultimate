@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender;
@@ -34,23 +34,23 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.DivisibilityPredicateGenerator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier.CoverageRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  * Deterministic interpolant automaton with on-demand construction.
- * The successor state for a given state ψ and a CodeBlock cb are is 
+ * The successor state for a given state ψ and a CodeBlock cb are is
  * constructed as follows.
  * First we construct a set S of successors very similar to the construction
  * in {@see NondeterministicInterpolantAutomaton}. However, since this automaton
@@ -63,16 +63,16 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  */
 public class DeterministicInterpolantAutomaton extends BasicAbstractInterpolantAutomaton {
 	
-	private final Map<Set<IPredicate>, IPredicate> mInputPreds2ResultPreds = 
+	private final Map<Set<IPredicate>, IPredicate> mInputPreds2ResultPreds =
 			new HashMap<Set<IPredicate>, IPredicate>();
-	private final HashRelation<IPredicate, IPredicate> mResPred2InputPreds = 
+	private final HashRelation<IPredicate, IPredicate> mResPred2InputPreds =
 			new HashRelation<IPredicate, IPredicate>();
 
 
 	protected final Set<IPredicate> mNonTrivialPredicates;
 	
 	/**
-	 * Split up predicates in their conjuncts. 
+	 * Split up predicates in their conjuncts.
 	 * First experiments on few examples showed that this is decreasing the
 	 * performance.
 	 */
@@ -84,15 +84,14 @@ public class DeterministicInterpolantAutomaton extends BasicAbstractInterpolantA
 
 	
 
-	public DeterministicInterpolantAutomaton(IUltimateServiceProvider services, 
-			SmtManager smtManager, ModifiableGlobalVariableManager modglobvarman, IHoareTripleChecker hoareTripleChecker,
-			INestedWordAutomaton<CodeBlock, IPredicate> abstraction, 
-			NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton, 
-			PredicateUnifier predicateUnifier, ILogger logger, 
-			boolean conservativeSuccessorCandidateSelection,
-			boolean cannibalize) {
-		super(services, smtManager, hoareTripleChecker, true, abstraction, 
-				predicateUnifier, 
+	public DeterministicInterpolantAutomaton(final IUltimateServiceProvider services,
+			final CfgSmtToolkit csToolkit, final IHoareTripleChecker hoareTripleChecker, final INestedWordAutomatonSimple<CodeBlock, IPredicate> abstraction,
+			final NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton,
+			final PredicateUnifier predicateUnifier,
+			final ILogger logger, final boolean conservativeSuccessorCandidateSelection,
+			final boolean cannibalize) {
+		super(services, csToolkit, hoareTripleChecker, true, abstraction,
+				predicateUnifier,
 				interpolantAutomaton, logger);
 		mCannibalize = cannibalize;
 		mConservativeSuccessorCandidateSelection = conservativeSuccessorCandidateSelection;
@@ -108,11 +107,11 @@ public class DeterministicInterpolantAutomaton extends BasicAbstractInterpolantA
 				}
 			}
 		} else {
-			allPredicates = interpolantAutomaton.getStates(); 
+			allPredicates = interpolantAutomaton.getStates();
 		}
 		if (mDivisibilityPredicates) {
 			allPredicates = new ArrayList<IPredicate>(allPredicates);
-			final DivisibilityPredicateGenerator dpg = new DivisibilityPredicateGenerator(mSmtManager, mPredicateUnifier);
+			final DivisibilityPredicateGenerator dpg = new DivisibilityPredicateGenerator(mCsToolkit.getManagedScript(), mPredicateUnifier);
 			final Collection<IPredicate> divPreds = dpg.divisibilityPredicates(allPredicates);
 			allPredicates.addAll(divPreds);
 			for (final IPredicate pred : divPreds) {
@@ -140,17 +139,18 @@ public class DeterministicInterpolantAutomaton extends BasicAbstractInterpolantA
 		}
 
 		mLogger.info(startMessage());
+		mLogger.info(((CoverageRelation) mPredicateUnifier.getCoverageRelation()).getCoverageRelationStatistics());
 	}
 
 	/**
-	 * Add add input states that are 
+	 * Add add input states that are
 	 * 1. implied by resPred
 	 * 2. contained in mInterpolantAutomaton
 	 * 3. different from "true"
 	 * to the  mResPred2InputPreds Map
 	 */
-	private void processResPredInputPredsMapping(IPredicate resPred) {
-		final Set<IPredicate> impliedPredicates = 
+	private void processResPredInputPredsMapping(final IPredicate resPred) {
+		final Set<IPredicate> impliedPredicates =
 				mPredicateUnifier.getCoverageRelation().getCoveringPredicates(resPred);
 		for (final IPredicate impliedPredicate : impliedPredicates) {
 			if (impliedPredicate != mIaTrueState && mInputInterpolantAutomaton.getStates().contains(impliedPredicate)) {
@@ -187,8 +187,8 @@ public class DeterministicInterpolantAutomaton extends BasicAbstractInterpolantA
 
 
 	@Override
-	protected void addOtherSuccessors(IPredicate resPred, IPredicate resHier,
-			CodeBlock letter, SuccessorComputationHelper sch,
+	protected void addOtherSuccessors(final IPredicate resPred, final IPredicate resHier,
+			final CodeBlock letter, final SuccessorComputationHelper sch,
 			final Set<IPredicate> inputSuccs) {
 		for (final IPredicate succCand : selectSuccessorCandidates(resPred, resHier)) {
 			if (!inputSuccs.contains(succCand)) {
@@ -200,7 +200,7 @@ public class DeterministicInterpolantAutomaton extends BasicAbstractInterpolantA
 		}
 	}
 	
-	private Set<IPredicate> selectSuccessorCandidates(IPredicate resPred, IPredicate resHier) {
+	private Set<IPredicate> selectSuccessorCandidates(final IPredicate resPred, final IPredicate resHier) {
 		if (mConservativeSuccessorCandidateSelection ) {
 			return selectSuccessorCandidates_TryConservative(resPred, resHier);
 		} else {
@@ -208,7 +208,7 @@ public class DeterministicInterpolantAutomaton extends BasicAbstractInterpolantA
 		}
 	}
 	
-	private Set<IPredicate> selectSuccessorCandidates_TryConservative(IPredicate resPred, IPredicate resHier) {
+	private Set<IPredicate> selectSuccessorCandidates_TryConservative(final IPredicate resPred, final IPredicate resHier) {
 		Set<IPredicate> succCands;
 		if (resHier != null) {
 			succCands = new HashSet<IPredicate>();
@@ -221,26 +221,26 @@ public class DeterministicInterpolantAutomaton extends BasicAbstractInterpolantA
 	}
 	
 	private Set<IPredicate> selectSuccessorCandidates_TryAll() {
-		return mNonTrivialPredicates;		
+		return mNonTrivialPredicates;
 	}
 
 
 	/**
 	 * Add all successors of resPred, resHier, and letter in automaton.
-	 * If resPred and resHier were constructed as a conjunction of 
+	 * If resPred and resHier were constructed as a conjunction of
 	 * inputPredicates, we also take the conjuncts.
-	 * @param inputSuccs 
+	 * @param inputSuccs
 	 */
 	@Override
 	protected void addInputAutomatonSuccs(
-			IPredicate resPred, IPredicate resHier, CodeBlock letter,
-			SuccessorComputationHelper sch, Set<IPredicate> inputSuccs) {
+			final IPredicate resPred, final IPredicate resHier, final CodeBlock letter,
+			final SuccessorComputationHelper sch, final Set<IPredicate> inputSuccs) {
 		Set<IPredicate> resPredConjuncts = mResPred2InputPreds.getImage(resPred);
 		assert mCannibalize || resPredConjuncts != null;
 		if (resPredConjuncts == null) {
 			resPredConjuncts = Collections.emptySet();
 		}
-		final IterableWithAdditionalElement<IPredicate> resPredConjunctsWithTrue = 
+		final IterableWithAdditionalElement<IPredicate> resPredConjunctsWithTrue =
 				new IterableWithAdditionalElement<IPredicate>(resPredConjuncts, mIaTrueState);
 		final IterableWithAdditionalElement<IPredicate> resHierConjunctsWithTrue;
 		if (resHier == null) {
@@ -266,7 +266,7 @@ public class DeterministicInterpolantAutomaton extends BasicAbstractInterpolantA
 
 
 
-	private IPredicate getOrConstructPredicate(Set<IPredicate> succs) {
+	private IPredicate getOrConstructPredicate(final Set<IPredicate> succs) {
 //		assert mInterpolantAutomaton.getStates().containsAll(succs);
 		final IPredicate result;
 		if (succs.isEmpty()) {
@@ -282,8 +282,8 @@ public class DeterministicInterpolantAutomaton extends BasicAbstractInterpolantA
 				resSucc = mPredicateUnifier.getOrConstructPredicateForConjunction(succs);
 				mInputPreds2ResultPreds.put(succs, resSucc);
 				for (final IPredicate succ : succs) {
-					assert mAlreadyConstrucedAutomaton.contains(succ) || 
-						mInputInterpolantAutomaton.getStates().contains(succ) : "unknown state " + succ; 
+					assert mAlreadyConstrucedAutomaton.contains(succ) ||
+						mInputInterpolantAutomaton.getStates().contains(succ) : "unknown state " + succ;
 					if (mNonTrivialPredicates.contains(succ)) {
 						mResPred2InputPreds.addPair(resSucc, succ);
 					}
@@ -292,16 +292,16 @@ public class DeterministicInterpolantAutomaton extends BasicAbstractInterpolantA
 					processResPredInputPredsMapping(resSucc);
 					mAlreadyConstrucedAutomaton.addState(false, false, resSucc);
 				}
-			} 
+			}
 			result = resSucc;
 		}
 		return result;
 	}
 
 	@Override
-	protected void constructSuccessorsAndTransitions(IPredicate resPred,
-			IPredicate resHier, CodeBlock letter, 
-			SuccessorComputationHelper sch, Set<IPredicate> inputSuccs) {
+	protected void constructSuccessorsAndTransitions(final IPredicate resPred,
+			final IPredicate resHier, final CodeBlock letter,
+			final SuccessorComputationHelper sch, final Set<IPredicate> inputSuccs) {
 		final IPredicate resSucc = getOrConstructPredicate(inputSuccs);
 		sch.addTransition(resPred, resHier, letter, resSucc);
 		sch.reportSuccsComputed(resPred, resHier, letter);

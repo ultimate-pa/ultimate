@@ -39,10 +39,11 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.termination.AffineFunctio
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.AffineFunctionGenerator;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfunctions.MultiphaseRankingFunction;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfunctions.RankingFunction;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 
 /**
@@ -73,7 +74,7 @@ public class MultiphaseTemplate extends ComposableTemplate {
 	/**
 	 * @param numphases number of phases in the multiphase template
 	 */
-	public MultiphaseTemplate(int numphases) {
+	public MultiphaseTemplate(final int numphases) {
 		assert(numphases > 1);
 		size = numphases;
 		mdeltas = new Term[size];
@@ -133,7 +134,7 @@ public class MultiphaseTemplate extends ComposableTemplate {
 	}
 
 	@Override
-	public RankingFunction extractRankingFunction(Map<Term, Rational> val)
+	public RankingFunction extractRankingFunction(final Map<Term, Rational> val)
 			throws SMTLIBException {
 		final AffineFunction[] fs = new AffineFunction[size];
 		for (int i = 0; i < size; ++i) {
@@ -150,7 +151,7 @@ public class MultiphaseTemplate extends ComposableTemplate {
 
 	@Override
 	public List<List<LinearInequality>> getConstraintsDec(
-			Map<RankVar, Term> inVars, Map<RankVar, Term> outVars) {
+			final Map<IProgramVar, TermVariable> inVars, final Map<IProgramVar, TermVariable> outVars) {
 		final List<List<LinearInequality>> conjunction =
 				new ArrayList<List<LinearInequality>>();
 		// f_0(x') < f_0(x) - δ_0
@@ -164,14 +165,14 @@ public class MultiphaseTemplate extends ComposableTemplate {
 			final AffineTerm a = new AffineTerm(mdeltas[i], Rational.MONE);
 			li.add(a);
 			li.setStrict(true);
-			li.motzkin_coefficient = sRedAtoms ?
+			li.mMotzkinCoefficient = sRedAtoms ?
 					PossibleMotzkinCoefficients.ZERO_AND_ONE
 					: PossibleMotzkinCoefficients.ANYTHING;
 			disjunction.add(li);
 			if (i > 0) {
 				final LinearInequality li3 = mfgens[i - 1].generate(inVars);
 				li3.setStrict(true);
-				li3.motzkin_coefficient = sBlueAtoms ?
+				li3.mMotzkinCoefficient = sBlueAtoms ?
 						PossibleMotzkinCoefficients.ZERO_AND_ONE
 						: PossibleMotzkinCoefficients.ANYTHING;
 				disjunction.add(li3);
@@ -185,7 +186,7 @@ public class MultiphaseTemplate extends ComposableTemplate {
 
 	@Override
 	public List<List<LinearInequality>> getConstraintsNonInc(
-			Map<RankVar, Term> inVars, Map<RankVar, Term> outVars) {
+			final Map<IProgramVar, TermVariable> inVars, final Map<IProgramVar, TermVariable> outVars) {
 		final List<List<LinearInequality>> conjunction =
 				new ArrayList<List<LinearInequality>>();
 		// f_0(x') ≤ f_0(x) /\ /\_{i>0} ( f_i(x') ≤ f_i(x) \/ f_{i-1}(x) > 0 )
@@ -196,14 +197,14 @@ public class MultiphaseTemplate extends ComposableTemplate {
 			li2.negate();
 			li.add(li2);
 			li.setStrict(false);
-			li.motzkin_coefficient = sRedAtoms ?
+			li.mMotzkinCoefficient = sRedAtoms ?
 					PossibleMotzkinCoefficients.ZERO_AND_ONE
 					: PossibleMotzkinCoefficients.ANYTHING;
 			disjunction.add(li);
 			if (i > 0) {
 				final LinearInequality li3 = mfgens[i - 1].generate(inVars);
 				li3.setStrict(true);
-				li3.motzkin_coefficient = sBlueAtoms ?
+				li3.mMotzkinCoefficient = sBlueAtoms ?
 						PossibleMotzkinCoefficients.ZERO_AND_ONE
 						: PossibleMotzkinCoefficients.ANYTHING;
 				disjunction.add(li3);
@@ -215,13 +216,13 @@ public class MultiphaseTemplate extends ComposableTemplate {
 
 	@Override
 	public List<List<LinearInequality>> getConstraintsBounded(
-			Map<RankVar, Term> inVars, Map<RankVar, Term> outVars) {
+			final Map<IProgramVar, TermVariable> inVars, final Map<IProgramVar, TermVariable> outVars) {
 		// \/_i f_i(x) > 0
 		final List<LinearInequality> disjunction = new ArrayList<LinearInequality>();
 		for (int i = 0; i < size; ++i) {
 			final LinearInequality li = mfgens[i].generate(inVars);
 			li.setStrict(true);
-			li.motzkin_coefficient = (i == 0 && sRedAtoms) || (i > 0 && sBlueAtoms) ?
+			li.mMotzkinCoefficient = (i == 0 && sRedAtoms) || (i > 0 && sBlueAtoms) ?
 					PossibleMotzkinCoefficients.ZERO_AND_ONE
 					: PossibleMotzkinCoefficients.ANYTHING;
 			disjunction.add(li);

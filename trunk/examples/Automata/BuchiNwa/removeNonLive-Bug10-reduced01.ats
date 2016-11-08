@@ -1,0 +1,34 @@
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: 2016-09-08
+
+NestedWordAutomaton result = removeNonLiveStates(nwa);
+print(numberOfStates(result));
+//assert(numberOfStates(result) == 4);
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {"call res := ackermann(m - 1, tmp);" "call tmp := ackermann(m, n - 1);" "call res := ackermann(m - 1, 1);" },
+	internalAlphabet = {"assume m >= 0;assume n >= 0;" },
+	returnAlphabet = {"return;" },
+	states = {"q_1" "qF_1" "q_3" "q_2" "qI_3" "qI_4" "qI_5" "qF_2" "qF_3" "qI_1" "qI_2" },
+	initialStates = {"qI_3" "qI_4" "qI_5" "qI_1" "qI_2" },
+	finalStates = {"qF_1" "qI_3" "qI_5" "qF_2" "qF_3" "qI_2" },
+	callTransitions = {
+		("q_3" "call res := ackermann(m - 1, 1);" "qI_5")
+		("q_2" "call tmp := ackermann(m, n - 1);" "qI_1")
+		("qI_3" "call res := ackermann(m - 1, tmp);" "qF_2")
+		("qI_4" "call tmp := ackermann(m, n - 1);" "q_3")
+		("qI_1" "call res := ackermann(m - 1, 1);" "q_1")
+	},
+	internalTransitions = {
+		("q_1" "assume m >= 0;assume n >= 0;" "qI_4")
+		("q_1" "assume m >= 0;assume n >= 0;" "qI_2")
+	},
+	returnTransitions = {
+		("qF_1" "q_2" "return;" "qI_3")
+		("qF_1" "qI_4" "return;" "qI_3")
+		("qI_5" "q_3" "return;" "qF_1")
+		("qF_2" "qI_3" "return;" "qF_3")
+		("qF_3" "qI_1" "return;" "q_2")
+		("qI_2" "qI_1" "return;" "qF_1")
+	}
+);

@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE IRSDependencies plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE IRSDependencies plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE IRSDependencies plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.utils;
@@ -29,11 +29,11 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.uti
 import java.util.HashSet;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 
 public class Utils {
-	public static String insertLineBreaks(int chopSize, String s) {
+	public static String insertLineBreaks(final int chopSize, String s) {
 		if (s.length() < chopSize) {
 			return s;
 		} else {
@@ -43,7 +43,7 @@ public class Utils {
 			int oldPossibleChopPoint = 0;
 			while (chops > 0) {
 
-				possibleChopPoint = s.indexOf(";", oldPossibleChopPoint);
+				possibleChopPoint = s.indexOf(';', oldPossibleChopPoint);
 				if (possibleChopPoint > currentChopSize) {
 					s = s.substring(0, oldPossibleChopPoint).concat("\n")
 							.concat(s.substring(oldPossibleChopPoint));
@@ -62,16 +62,16 @@ public class Utils {
 
 	}
 
-	public static String traceToString(List<RCFGEdge> trace) {
+	public static String traceToString(final List<IcfgEdge> trace) {
 		final StringBuilder sb = new StringBuilder();
-		for (final RCFGEdge edge : trace) {
+		for (final IcfgEdge edge : trace) {
 			sb.append(edgeToString(edge));
 			sb.append(" ");
 		}
 		return sb.toString();
 	}
 
-	public static String edgeToString(RCFGEdge edge) {
+	public static String edgeToString(final IcfgEdge edge) {
 		if (edge instanceof CodeBlock) {
 			return ((CodeBlock) edge).getPrettyPrintedStatements();
 		} else {
@@ -79,7 +79,7 @@ public class Utils {
 		}
 	}
 
-	public static <T> HashSet<T> intersect(HashSet<T> a, HashSet<T> b) {
+	public static <T> HashSet<T> intersect(final HashSet<T> a, final HashSet<T> b) {
 		final HashSet<T> rtr = new HashSet<>();
 		for (final T element : a) {
 			if (b.contains(element)) {

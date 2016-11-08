@@ -19,38 +19,59 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet;
 
 import java.util.Collection;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 
-public interface IPetriNet<S,C> extends IAutomaton<S,C> {
+/**
+ * General Petri net interface.
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <S>
+ *            symbols type
+ * @param <C>
+ *            place content type
+ */
+public interface IPetriNet<S, C> extends IAutomaton<S, C> {
+	/**
+	 * @return The places.
+	 */
+	Collection<Place<S, C>> getPlaces();
 	
-	@Override
-	public Set<S> getAlphabet(); 
-	@Override
-	public StateFactory<C> getStateFactory();
+	/**
+	 * @return The transitions.
+	 */
+	Collection<ITransition<S, C>> getTransitions();
 	
-	public Collection<Place<S,C>> getPlaces();
-	public Collection<ITransition<S,C>> getTransitions();
+	/**
+	 * @return The initial marking.
+	 */
+	Marking<S, C> getInitialMarking();
 	
-	public Marking<S,C> getInitialMarking();
-	public Collection<Collection<Place<S,C>>> getAcceptingMarkings();
+	/**
+	 * @return The accepting markings.
+	 */
+	Collection<Collection<Place<S, C>>> getAcceptingMarkings();
 	
-	public boolean isAccepting(Marking<S,C> marking);
+	/**
+	 * @param marking
+	 *            A marking.
+	 * @return {@code true} iff the marking is accepting.
+	 */
+	boolean isAccepting(Marking<S, C> marking);
 	
-	public boolean accepts(Word<S> word);
-	
-	@Override
-	public String sizeInformation();
-
+	/**
+	 * @param word
+	 *            A word.
+	 * @return {@code true} iff the word is accepted.
+	 */
+	boolean accepts(Word<S> word);
 }

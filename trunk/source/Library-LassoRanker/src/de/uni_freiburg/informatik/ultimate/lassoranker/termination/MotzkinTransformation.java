@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE LassoRanker Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE LassoRanker Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE LassoRanker Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.lassoranker.termination;
@@ -29,21 +29,23 @@ package de.uni_freiburg.informatik.ultimate.lassoranker.termination;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.lassoranker.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.lassoranker.AnalysisType;
 import de.uni_freiburg.informatik.ultimate.lassoranker.InstanceCounting;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LinearInequality;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LinearInequality.PossibleMotzkinCoefficients;
-import de.uni_freiburg.informatik.ultimate.lassoranker.SMTPrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SMTPrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 
@@ -126,6 +128,11 @@ public class MotzkinTransformation extends InstanceCounting {
 	private Term[] mcoefficients = null;
 	
 	/**
+	 * For each new linear inequality there is a new unique Motzkin coefficient introduced, this map stores this relationship.
+	 */
+	private Map<String, LinearInequality> mMotzkinCoeffiecients2LinearInequalities;
+	
+	/**
 	 * Construct the MotzkinApplication object with a script instance.
 	 * 
 	 * After filling all the public attributes, transform() can be called,
@@ -134,16 +141,17 @@ public class MotzkinTransformation extends InstanceCounting {
 	 * 
 	 * @param script The SMTLib script
 	 * @param linear should the transformed formula be linear?
-	 * @param annotate annotate the transformed term? (This can be helpful if 
+	 * @param annotate annotate the transformed term? (This can be helpful if
 	 * you read the SMT script while debugging.)
-	 * 		
+	 * 
 	 */
-	public MotzkinTransformation(Script script,
-			AnalysisType termination_analysis, boolean annotate) {
+	public MotzkinTransformation(final Script script,
+			final AnalysisType termination_analysis, final boolean annotate) {
 		mscript = script;
 		minequalities = new ArrayList<LinearInequality>();
 		mannotate_terms = annotate;
 		manalysis_type = termination_analysis;
+		mMotzkinCoeffiecients2LinearInequalities = new HashMap<>();
 	}
 	
 	/**
@@ -159,7 +167,7 @@ public class MotzkinTransformation extends InstanceCounting {
 	 * system of inequalities by the supporting invariant generator.
 	 * @param i number of supporting invariants (>= 0)
 	 */
-	public void set_number_SI_needed(int i) {
+	public void set_number_SI_needed(final int i) {
 		assert(i >= 0);
 		mnumberSIneeded = i;
 	}
@@ -168,7 +176,7 @@ public class MotzkinTransformation extends InstanceCounting {
 	 * Add a linear inequality
 	 * @param li linear inequality to be added to the system
 	 */
-	public void add_inequality(LinearInequality li) {
+	public void add_inequality(final LinearInequality li) {
 		minequalities.add(li);
 	}
 	
@@ -176,18 +184,18 @@ public class MotzkinTransformation extends InstanceCounting {
 	 * Add a list of linear inequalities
 	 * @param l list of linear inequalities to be added to the system
 	 */
-	public void add_inequalities(Collection<LinearInequality> l) {
+	public void add_inequalities(final Collection<LinearInequality> l) {
 		minequalities.addAll(l);
 	}
 	
 	/**
 	 * Will the given inequality need a variable for its Motzkin coefficient?
 	 */
-	private boolean needsMotzkinCoefficient(LinearInequality li) {
+	private boolean needsMotzkinCoefficient(final LinearInequality li) {
 		if (manalysis_type.isLinear()) {
 			return li.allAffineTermsAreConstant();
-		} else if (manalysis_type == AnalysisType.Nonlinear) {
-			return li.motzkin_coefficient != PossibleMotzkinCoefficients.ONE;
+		} else if (manalysis_type == AnalysisType.NONLINEAR) {
+			return li.mMotzkinCoefficient != PossibleMotzkinCoefficients.ONE;
 		} else {
 			assert false;
 		}
@@ -208,10 +216,10 @@ public class MotzkinTransformation extends InstanceCounting {
 		for (int i = 0; i < numcoefficients; ++i) {
 			final LinearInequality li = minequalities.get(i);
 			if (needsMotzkinCoefficient(li)) {
-				final Term coefficient = SmtUtils.buildNewConstant(mscript,
-						s_motzkin_prefix + getInstanceNumber() + "_" + i,
-						"Real");
+				String motzkinCoefficientName = s_motzkin_prefix + getInstanceNumber() + "_" + i;
+				final Term coefficient = SmtUtils.buildNewConstant(mscript, motzkinCoefficientName, "Real");
 				mcoefficients[i] = coefficient;
+				mMotzkinCoeffiecients2LinearInequalities.put(motzkinCoefficientName, li);
 			} else {
 				mcoefficients[i] = mscript.numeral(BigInteger.ONE);
 			}
@@ -219,13 +227,21 @@ public class MotzkinTransformation extends InstanceCounting {
 	}
 	
 	/**
+	 * Returns map from Motzkin coefficients to linear inequality.
+	 * @return
+	 */
+	public Map<String, LinearInequality> getMotzkinCoeffiecients2LinearInequalities() {
+		return mMotzkinCoeffiecients2LinearInequalities;
+	}
+
+	/**
 	 * Build the term corresponding to the product of the two parameters
 	 * The term is build in minimalistic form for better readability.
 	 * @param p the first factor
 	 * @param t the second factor
 	 * @return p*t as a term
 	 */
-	private Term product(AffineTerm a, Term t) {
+	private Term product(final AffineTerm a, final Term t) {
 		if (a.isConstant() && a.getConstant().equals(Rational.ONE)) {
 			return t;
 		}
@@ -235,7 +251,7 @@ public class MotzkinTransformation extends InstanceCounting {
 		return null;
 	}
 	
-	private Term doTransform(Term[] coefficients, Collection<Term> vars)
+	private Term doTransform(final Term[] coefficients, final Collection<Term> vars)
 			throws SMTLIBException {
 		final int numcoefficients = coefficients.length;
 		assert(numcoefficients == minequalities.size());
@@ -254,7 +270,7 @@ public class MotzkinTransformation extends InstanceCounting {
 				}
 			}
 			final Term sum = SmtUtils.sum(mscript, mscript.sort("Real"),
-					summands.toArray(new Term[0]));
+					summands.toArray(new Term[summands.size()]));
 			conjunction.add(mscript.term("=", sum, mscript.decimal("0")));
 		}
 		
@@ -269,7 +285,7 @@ public class MotzkinTransformation extends InstanceCounting {
 				}
 			}
 			final Term sum = SmtUtils.sum(mscript, mscript.sort("Real"),
-					summands.toArray(new Term[0]));
+					summands.toArray(new Term[summands.size()]));
 			conjunction.add(mscript.term("<=", sum, mscript.decimal("0")));
 		}
 		
@@ -285,7 +301,7 @@ public class MotzkinTransformation extends InstanceCounting {
 				}
 			}
 			final Term sum = SmtUtils.sum(mscript, mscript.sort("Real"),
-					summands.toArray(new Term[0]));
+					summands.toArray(new Term[summands.size()]));
 			final Term classical = mscript.term("<", sum, mscript.decimal("0"));
 			
 			// μ ≠ 0   -- strict inequalities
@@ -300,11 +316,11 @@ public class MotzkinTransformation extends InstanceCounting {
 			}
 			final Term non_classical = mscript.term(">",
 					SmtUtils.sum(mscript, mscript.sort("Real"),
-							summands.toArray(new Term[0])),
+							summands.toArray(new Term[summands.size()])),
 					mscript.decimal("0"));
 			
 			conjunction.add(Util.or(mscript, classical, non_classical));
-			return Util.and(mscript, conjunction.toArray(new Term[0]));
+			return Util.and(mscript, conjunction.toArray(new Term[conjunction.size()]));
 		}
 	}
 	
@@ -315,7 +331,7 @@ public class MotzkinTransformation extends InstanceCounting {
 	 * @return a formula equivalent to the negated conjunction of the
 	 *         inequalities
 	 */
-	public Term transform(Rational[] motzkin_guesses) throws SMTLIBException {
+	public Term transform(final Rational[] motzkin_guesses) throws SMTLIBException {
 		mtransformed = true;
 		registerMotzkinCoefficients();
 		
@@ -350,7 +366,7 @@ public class MotzkinTransformation extends InstanceCounting {
 				// This array is way to big, but I don't care
 			for (int i = 0; i < minequalities.size(); ++i) {
 				final LinearInequality li = minequalities.get(i);
-				if (!needsMotzkinCoefficient(li) && li.motzkin_coefficient
+				if (!needsMotzkinCoefficient(li) && li.mMotzkinCoefficient
 						!= PossibleMotzkinCoefficients.ONE) {
 					fixed_indeces[numfixed_coeffs] = i;
 					++numfixed_coeffs;
@@ -360,9 +376,7 @@ public class MotzkinTransformation extends InstanceCounting {
 			
 			// Create a new coefficients array so that we can edit it
 			final Term[] fixed_coefficients = new Term[mcoefficients.length];
-			for (int i = 0; i < mcoefficients.length; ++i) {
-				fixed_coefficients[i] = mcoefficients[i];
-			}
+			System.arraycopy(mcoefficients, 0, fixed_coefficients, 0, mcoefficients.length);
 			
 			if (manalysis_type.wantsGuesses() && motzkin_guesses.length > 0) {
 				// Convert Motzkin coefficients from Rationals into Terms
@@ -397,7 +411,7 @@ public class MotzkinTransformation extends InstanceCounting {
 					}
 				}
 				conjunction.add(
-						Util.or(mscript, disjunction.toArray(new Term[0])));
+						Util.or(mscript, disjunction.toArray(new Term[disjunction.size()])));
 			} else {
 				// Fixed values
 				final Term zero = mscript.decimal("0");
@@ -413,15 +427,15 @@ public class MotzkinTransformation extends InstanceCounting {
 					disjunction.add(doTransform(fixed_coefficients, vars));
 				}
 				conjunction.add(
-						Util.or(mscript, disjunction.toArray(new Term[0])));
+						Util.or(mscript, disjunction.toArray(new Term[disjunction.size()])));
 			}
-		} else if (manalysis_type == AnalysisType.Nonlinear) {
+		} else if (manalysis_type == AnalysisType.NONLINEAR) {
 			conjunction.add(doTransform(mcoefficients, vars));
 			
 			// Fixed Motzkin coefficients
 			for (int i = 0; i < minequalities.size(); ++i) {
 				final LinearInequality li = minequalities.get(i);
-				if (li.motzkin_coefficient
+				if (li.mMotzkinCoefficient
 						== PossibleMotzkinCoefficients.ZERO_AND_ONE) {
 					// Fixing Motzkin coefficient to { 0, 1 }
 					conjunction.add(Util.or(mscript,
@@ -435,7 +449,7 @@ public class MotzkinTransformation extends InstanceCounting {
 		} else {
 			assert false;
 		}
-		Term t = Util.and(mscript, conjunction.toArray(new Term[0]));
+		Term t = Util.and(mscript, conjunction.toArray(new Term[conjunction.size()]));
 		
 		// Possibly annotate the term
 		if (mannotate_terms && annotation != null) {

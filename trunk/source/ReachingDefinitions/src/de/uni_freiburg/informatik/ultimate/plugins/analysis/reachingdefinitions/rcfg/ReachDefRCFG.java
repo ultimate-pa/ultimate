@@ -32,13 +32,13 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.PreprocessorAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.IAnnotationProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.ReachDefEdgeAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.ReachDefStatementAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.boogie.ScopedBoogieVarBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.util.Util;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 
 /**
  * 
@@ -59,20 +59,20 @@ public class ReachDefRCFG extends BaseObserver {
 	private final IAnnotationProvider<ReachDefStatementAnnotation> mStatementProvider;
 	private final IAnnotationProvider<ReachDefEdgeAnnotation> mEdgeProvider;
 
-	public ReachDefRCFG(ILogger logger, IAnnotationProvider<ReachDefStatementAnnotation> stmtProvider,
-			IAnnotationProvider<ReachDefEdgeAnnotation> edgeProvider) {
+	public ReachDefRCFG(final ILogger logger, final IAnnotationProvider<ReachDefStatementAnnotation> stmtProvider,
+			final IAnnotationProvider<ReachDefEdgeAnnotation> edgeProvider) {
 		mLogger = logger;
 		mStatementProvider = stmtProvider;
 		mEdgeProvider = edgeProvider;
 	}
 
 	@Override
-	public boolean process(IElement root) throws Throwable {
-		if (root instanceof RootNode) {
-			final RootNode rootNode = (RootNode) root;
+	public boolean process(final IElement root) throws Throwable {
+		if (root instanceof BoogieIcfgContainer) {
+			final BoogieIcfgContainer rootNode = (BoogieIcfgContainer) root;
 
 			if (mLogger.isDebugEnabled()) {
-				mLogger.debug("Loops: " + rootNode.getRootAnnot().getLoopLocations().size());
+				mLogger.debug("Loops: " + rootNode.getLoopLocations().size());
 			}
 
 			process(rootNode);
@@ -80,7 +80,7 @@ public class ReachDefRCFG extends BaseObserver {
 		return false;
 	}
 
-	private void process(RootNode node) throws Throwable {
+	private void process(final BoogieIcfgContainer node) throws Throwable {
 
 		final PreprocessorAnnotation pa = PreprocessorAnnotation.getAnnotation(node);
 		if (pa == null || pa.getSymbolTable() == null) {
@@ -90,9 +90,9 @@ public class ReachDefRCFG extends BaseObserver {
 		}
 		final ScopedBoogieVarBuilder builder = new ScopedBoogieVarBuilder(pa.getSymbolTable());
 
-		final LinkedHashSet<RCFGEdge> remaining = new LinkedHashSet<>();
+		final LinkedHashSet<IcfgEdge> remaining = new LinkedHashSet<>();
 
-		for (final RCFGEdge next : node.getOutgoingEdges()) {
+		for (final IcfgEdge next : BoogieIcfgContainer.extractStartEdges(node)) {
 			remaining.add(next);
 		}
 
@@ -100,9 +100,9 @@ public class ReachDefRCFG extends BaseObserver {
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug("");
 				mLogger.debug("                    Open: "
-						+ Util.prettyPrintIterable(remaining, Util.<RCFGEdge> createHashCodePrinter()));
+						+ Util.prettyPrintIterable(remaining, Util.<IcfgEdge> createHashCodePrinter()));
 			}
-			final RCFGEdge current = remaining.iterator().next();
+			final IcfgEdge current = remaining.iterator().next();
 			remaining.remove(current);
 			final ReachDefRCFGVisitor v = new ReachDefRCFGVisitor(mEdgeProvider, mStatementProvider, mLogger, builder);
 
@@ -111,7 +111,7 @@ public class ReachDefRCFG extends BaseObserver {
 				mLogger.debug("                    Fixpoint reached: " + fxpReached);
 			}
 			if (!fxpReached) {
-				for (final RCFGEdge next : current.getTarget().getOutgoingEdges()) {
+				for (final IcfgEdge next : current.getTarget().getOutgoingEdges()) {
 					remaining.add(next);
 				}
 			}

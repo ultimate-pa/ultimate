@@ -35,12 +35,13 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula.Infeasibility;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.HoareTripleCheckerStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
@@ -50,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
 
 public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 	
+	private final CfgSmtToolkit mCsToolkit;
 	private final ManagedScript mManagedScript;
 	private final ModifiableGlobalVariableManager mModifiableGlobals;
 	
@@ -75,17 +77,16 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 	private final static boolean mTestDataflow = false;
 	
 	
-	public MonolithicHoareTripleChecker(
-			final ManagedScript managedScript, 
-			final ModifiableGlobalVariableManager modifiableGlobals) {
+	public MonolithicHoareTripleChecker(final CfgSmtToolkit csToolkit) {
 		super();
-		mManagedScript = managedScript;
-		mModifiableGlobals = modifiableGlobals;
+		mCsToolkit = csToolkit;
+		mManagedScript = csToolkit.getManagedScript();
+		mModifiableGlobals = csToolkit.getModifiableGlobals();
 		mHoareTripleCheckerStatistics = new HoareTripleCheckerStatisticsGenerator();
 	}
 
 	@Override
-	public Validity checkInternal(IPredicate pre, IInternalAction act, IPredicate succ) {
+	public Validity checkInternal(final IPredicate pre, final IInternalAction act, final IPredicate succ) {
 		mHoareTripleCheckerStatistics.continueEdgeCheckerTime();
 		final Validity result = IHoareTripleChecker.lbool2validity(isInductive(pre, act, succ));
 		mHoareTripleCheckerStatistics.stopEdgeCheckerTime();
@@ -106,7 +107,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 	}
 
 	@Override
-	public Validity checkCall(IPredicate pre, ICallAction act, IPredicate succ) {
+	public Validity checkCall(final IPredicate pre, final ICallAction act, final IPredicate succ) {
 		mHoareTripleCheckerStatistics.continueEdgeCheckerTime();
 		final Validity result =  IHoareTripleChecker.lbool2validity(isInductiveCall(pre, act, succ));
 		mHoareTripleCheckerStatistics.stopEdgeCheckerTime();
@@ -127,8 +128,8 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 	}
 
 	@Override
-	public Validity checkReturn(IPredicate preLin, IPredicate preHier,
-			IReturnAction act, IPredicate succ) {
+	public Validity checkReturn(final IPredicate preLin, final IPredicate preHier,
+			final IReturnAction act, final IPredicate succ) {
 		mHoareTripleCheckerStatistics.continueEdgeCheckerTime();
 		final Validity result =  IHoareTripleChecker.lbool2validity(isInductiveReturn(preLin, preHier, act, succ));
 		mHoareTripleCheckerStatistics.stopEdgeCheckerTime();
@@ -163,7 +164,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 	
 	
 	
-	public LBool isInductive(IPredicate ps1, IInternalAction ta, IPredicate ps2) {
+	public LBool isInductive(final IPredicate ps1, final IInternalAction ta, final IPredicate ps2) {
 		return isInductive(ps1, ta, ps2, false);
 	}
 
@@ -182,7 +183,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 	 *         means that the theorem prover was not able give an answer to our
 	 *         question.
 	 */
-	public LBool isInductive(IPredicate ps1, IInternalAction ta, IPredicate ps2, boolean expectUnsat) {
+	public LBool isInductive(final IPredicate ps1, final IInternalAction ta, final IPredicate ps2, final boolean expectUnsat) {
 		mManagedScript.lock(this);
 		final long startTime = System.nanoTime();
 
@@ -203,8 +204,8 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		// return Script.LBool.UNSAT;
 		// }
 
-		final TransFormula tf = ta.getTransformula();
-		final String procPred = ta.getPreceedingProcedure();
+		final UnmodifiableTransFormula tf = ta.getTransformula();
+		final String procPred = ta.getPrecedingProcedure();
 		final String procSucc = ta.getSucceedingProcedure();
 //		assert proc.equals(ta.getSucceedingProcedure()) : "different procedure before and after";
 		final Set<IProgramVar> modifiableGlobalsPred = mModifiableGlobals.getModifiedBoogieVars(procPred);
@@ -228,11 +229,11 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		return result;
 	}
 
-	public LBool isInductiveCall(IPredicate ps1, ICallAction ta, IPredicate ps2) {
+	public LBool isInductiveCall(final IPredicate ps1, final ICallAction ta, final IPredicate ps2) {
 		return isInductiveCall(ps1, ta, ps2, false);
 	}
 
-	public LBool isInductiveCall(IPredicate ps1, ICallAction ta, IPredicate ps2, boolean expectUnsat) {
+	public LBool isInductiveCall(final IPredicate ps1, final ICallAction ta, final IPredicate ps2, final boolean expectUnsat) {
 		mManagedScript.lock(this);
 		final long startTime = System.nanoTime();
 
@@ -252,12 +253,12 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		mIndexedConstants = new ScopedHashMap<String, Term>();
 		// OldVars not renamed if modifiable.
 		// All variables get index 0.
-		final String caller = ta.getPreceedingProcedure();
+		final String caller = ta.getPrecedingProcedure();
 		final Set<IProgramVar> modifiableGlobalsCaller = mModifiableGlobals.getModifiedBoogieVars(caller);
 		final Term ps1renamed = PredicateUtils.formulaWithIndexedVars(ps1, new HashSet<IProgramVar>(0), 4, 0,
 				Integer.MIN_VALUE, null, -5, 0, mIndexedConstants, mManagedScript.getScript(), modifiableGlobalsCaller);
 
-		final TransFormula tf = ta.getLocalVarsAssignment();
+		final UnmodifiableTransFormula tf = ta.getLocalVarsAssignment();
 		final Set<IProgramVar> assignedVars = new HashSet<IProgramVar>();
 		final Term fTrans = PredicateUtils.formulaWithIndexedVars(tf, 0, 1, assignedVars, mIndexedConstants, mManagedScript.getScript());
 
@@ -289,11 +290,11 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		return result;
 	}
 
-	public LBool isInductiveReturn(IPredicate ps1, IPredicate psk, IReturnAction ta, IPredicate ps2) {
+	public LBool isInductiveReturn(final IPredicate ps1, final IPredicate psk, final IReturnAction ta, final IPredicate ps2) {
 		return isInductiveReturn(ps1, psk, ta, ps2, false);
 	}
 
-	public LBool isInductiveReturn(IPredicate ps1, IPredicate psk, IReturnAction ta, IPredicate ps2, boolean expectUnsat) {
+	public LBool isInductiveReturn(final IPredicate ps1, final IPredicate psk, final IReturnAction ta, final IPredicate ps2, final boolean expectUnsat) {
 		mManagedScript.lock(this);
 		final long startTime = System.nanoTime();
 
@@ -312,19 +313,19 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		mManagedScript.getScript().push(1);
 		mIndexedConstants = new ScopedHashMap<String, Term>();
 
-		final TransFormula tfReturn = ta.getAssignmentOfReturn();
+		final UnmodifiableTransFormula tfReturn = ta.getAssignmentOfReturn();
 		final Set<IProgramVar> assignedVarsOnReturn = new HashSet<IProgramVar>();
 		final Term fReturn = PredicateUtils.formulaWithIndexedVars(tfReturn, 1, 2, assignedVarsOnReturn, mIndexedConstants,
 				mManagedScript.getScript());
 		// fReturn = (new FormulaUnLet()).unlet(fReturn);
 
-		final TransFormula tfCall = ta.getLocalVarsAssignmentOfCall();
+		final UnmodifiableTransFormula tfCall = ta.getLocalVarsAssignmentOfCall();
 		final Set<IProgramVar> assignedVarsOnCall = new HashSet<IProgramVar>();
 		final Term fCall = PredicateUtils.formulaWithIndexedVars(tfCall, 0, 1, assignedVarsOnCall, mIndexedConstants,
 				mManagedScript.getScript());
 		// fCall = (new FormulaUnLet()).unlet(fCall);
 
-		final String callee = ta.getPreceedingProcedure();
+		final String callee = ta.getPrecedingProcedure();
 		final Set<IProgramVar> modifiableGlobalsCallee = mModifiableGlobals.getModifiedBoogieVars(callee);
 
 		final String caller = ta.getSucceedingProcedure();
@@ -379,7 +380,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		return result;
 	}
 	
-	public LBool assertTerm(Term term) {
+	public LBool assertTerm(final Term term) {
 		final long startTime = System.nanoTime();
 		LBool result = null;
 		result = mManagedScript.getScript().assertTerm(term);
@@ -388,7 +389,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 	}
 	
 	
-	LBool checkSatisfiable(Term f) {
+	LBool checkSatisfiable(final Term f) {
 		final long startTime = System.nanoTime();
 		LBool result = null;
 		try {
@@ -409,7 +410,6 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 				mManagedScript.getScript().getInfo(":reason-unknown");
 			}
 			final ReasonUnknown reason = (ReasonUnknown) info;
-			final Object test = mManagedScript.getScript().getInfo(":reason-unknown");
 			switch (reason) {
 			case CRASHED:
 				throw new AssertionError("Solver crashed");
@@ -422,18 +422,18 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		return result;
 	}
 	
-	private boolean isDontCare(IPredicate ps2) {
+	private boolean isDontCare(final IPredicate ps2) {
 		// yet I don't know how to check for don't care
 		// avoid proper implementation if not needed
 		return false;
 	}
 
 	// FIXME: remove once enough tested
-	private void testMyReturnDataflowCheck(IPredicate ps1, IPredicate psk, IReturnAction ta, IPredicate ps2, LBool result) {
+	private void testMyReturnDataflowCheck(final IPredicate ps1, final IPredicate psk, final IReturnAction ta, final IPredicate ps2, final LBool result) {
 		if (ps2.getFormula() == mManagedScript.getScript().term("false")) {
 			return;
 		}
-		final SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(mModifiableGlobals, null);
+		final SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(mCsToolkit, null);
 		final Validity testRes = sdhtch.sdecReturn(ps1, psk, ta, ps2);
 		if (testRes != null) {
 			// assert testRes == result : "my return dataflow check failed";
@@ -444,11 +444,11 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 	}
 
 	// FIXME: remove once enough tested
-	private void testMyCallDataflowCheck(IPredicate ps1, ICallAction ta, IPredicate ps2, LBool result) {
+	private void testMyCallDataflowCheck(final IPredicate ps1, final ICallAction ta, final IPredicate ps2, final LBool result) {
 		if (ps2.getFormula() == mManagedScript.getScript().term("false")) {
 			return;
 		}
-		final SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(mModifiableGlobals, null);
+		final SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(mCsToolkit, null);
 		final Validity testRes = sdhtch.sdecCall(ps1, ta, ps2);
 		if (testRes != null) {
 			assert testRes == IHoareTripleChecker.lbool2validity(result) : "my call dataflow check failed";
@@ -459,9 +459,9 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 	}
 
 	// FIXME: remove once enough tested
-	private void testMyInternalDataflowCheck(IPredicate ps1, IInternalAction ta, IPredicate ps2, LBool result) {
+	private void testMyInternalDataflowCheck(final IPredicate ps1, final IInternalAction ta, final IPredicate ps2, final LBool result) {
 		if (ps2.getFormula() == mManagedScript.getScript().term("false")) {
-			final SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(mModifiableGlobals, null);
+			final SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(mCsToolkit, null);
 			final Validity testRes = sdhtch.sdecInternalToFalse(ps1, ta);
 			if (testRes != null) {
 				assert testRes == IHoareTripleChecker.lbool2validity(result) || testRes == IHoareTripleChecker.lbool2validity(LBool.UNKNOWN) && result == LBool.SAT : "my internal dataflow check failed";
@@ -472,7 +472,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 			return;
 		}
 		if (ps1 == ps2) {
-			final SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(mModifiableGlobals, null);
+			final SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(mCsToolkit, null);
 			final Validity testRes = sdhtch.sdecInternalSelfloop(ps1, ta);
 			if (testRes != null) {
 				assert testRes == IHoareTripleChecker.lbool2validity(result) : "my internal dataflow check failed";
@@ -484,7 +484,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		if (ta.getTransformula().isInfeasible() == Infeasibility.INFEASIBLE) {
 			return;
 		}
-		final SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(mModifiableGlobals, null);
+		final SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(mCsToolkit, null);
 		final Validity testRes = sdhtch.sdecInteral(ps1, ta, ps2);
 		if (testRes != null) {
 			assert testRes == IHoareTripleChecker.lbool2validity(result) : "my internal dataflow check failed";

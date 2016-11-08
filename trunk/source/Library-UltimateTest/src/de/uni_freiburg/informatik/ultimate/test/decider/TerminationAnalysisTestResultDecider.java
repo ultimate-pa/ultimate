@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE UnitTest Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE UnitTest Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE UnitTest Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.test.decider;
@@ -46,15 +46,15 @@ public class TerminationAnalysisTestResultDecider extends
 		ThreeTierTestResultDecider<TerminationAnalysisOverallResult> {
 
 	public TerminationAnalysisTestResultDecider(
-			UltimateRunDefinition ultimateRunDefinition, boolean unknownIsJUnitSuccess) {
+			final UltimateRunDefinition ultimateRunDefinition, final boolean unknownIsJUnitSuccess) {
 		super(ultimateRunDefinition, unknownIsJUnitSuccess);
 	}
 
 	@Override
 	public IExpectedResultFinder<TerminationAnalysisOverallResult> constructExpectedResultFinder() {
-		return new KeywordBasedExpectedResultFinder<TerminationAnalysisOverallResult>(
-				TestUtil.constructFilenameKeywordMap_TerminationAnalysis(), 
-				TestUtil.constructPathKeywordMap_TerminationAnalysis(), 
+		return new KeywordBasedExpectedResultFinder<>(
+				TestUtil.constructFilenameKeywordMap_TerminationAnalysis(),
+				TestUtil.constructPathKeywordMap_TerminationAnalysis(),
 				TestUtil.constructFirstlineKeywordMap_TerminationAnalysis());
 	}
 
@@ -77,8 +77,8 @@ public class TerminationAnalysisTestResultDecider extends
 
 		@Override
 		public void evaluateTestResult(
-				IExpectedResultFinder<TerminationAnalysisOverallResult> expectedResultFinder,
-				IOverallResultEvaluator<TerminationAnalysisOverallResult> overallResultDeterminer) {
+				final IExpectedResultFinder<TerminationAnalysisOverallResult> expectedResultFinder,
+				final IOverallResultEvaluator<TerminationAnalysisOverallResult> overallResultDeterminer) {
 			evaluateExpectedResult(expectedResultFinder);
 			switch (expectedResultFinder.getExpectedResultFinderStatus()) {
 			case ERROR:
@@ -90,11 +90,13 @@ public class TerminationAnalysisTestResultDecider extends
 			case NO_EXPECTED_RESULT_FOUND:
 				evaluateOverallResultWithoutExpectedResult(overallResultDeterminer);
 				return;
+			default:
+				throw new IllegalArgumentException();
 			}
 		}
 		
 		private void evaluateOverallResultWithoutExpectedResult(
-				IOverallResultEvaluator<TerminationAnalysisOverallResult> overallResultDeterminer) {
+				final IOverallResultEvaluator<TerminationAnalysisOverallResult> overallResultDeterminer) {
 			mCategory = overallResultDeterminer.getOverallResult() + "(Expected:UNKNOWN)";
 			mMessage += " UltimateResult: " + overallResultDeterminer.generateOverallResultMessage();
 			switch (overallResultDeterminer.getOverallResult()) {
@@ -110,14 +112,16 @@ public class TerminationAnalysisTestResultDecider extends
 			case TIMEOUT:
 				mTestResult = TestResult.UNKNOWN;
 				break;
+			default:
+				throw new IllegalArgumentException();
 			}
 		}
 
 		private void compareToOverallResult(
-				TerminationAnalysisOverallResult expectedResult,
-				IOverallResultEvaluator<TerminationAnalysisOverallResult> overallResultDeterminer) {
+				final TerminationAnalysisOverallResult expectedResult,
+				final IOverallResultEvaluator<TerminationAnalysisOverallResult> overallResultDeterminer) {
 			mCategory = overallResultDeterminer.getOverallResult() + "(Expected:" + expectedResult + ")";
-			mMessage += " UltimateResult: " + overallResultDeterminer.getOverallResult() 
+			mMessage += " UltimateResult: " + overallResultDeterminer.getOverallResult()
 					+ "   " + overallResultDeterminer.generateOverallResultMessage();
 				switch (overallResultDeterminer.getOverallResult()) {
 				case EXCEPTION_OR_ERROR:
@@ -172,7 +176,7 @@ public class TerminationAnalysisTestResultDecider extends
 		}
 
 		private void evaluateExpectedResult(
-				IExpectedResultFinder<TerminationAnalysisOverallResult> expectedResultFinder)
+				final IExpectedResultFinder<TerminationAnalysisOverallResult> expectedResultFinder)
 				throws AssertionError {
 			switch (expectedResultFinder.getExpectedResultFinderStatus()) {
 			case ERROR:
@@ -193,8 +197,8 @@ public class TerminationAnalysisTestResultDecider extends
 
 		@Override
 		public void evaluateTestResult(
-				IExpectedResultFinder<TerminationAnalysisOverallResult> expectedResultFinder,
-				Throwable e) {
+				final IExpectedResultFinder<TerminationAnalysisOverallResult> expectedResultFinder,
+				final Throwable e) {
 			evaluateExpectedResult(expectedResultFinder);
 			switch (expectedResultFinder.getExpectedResultFinderStatus()) {
 			case ERROR:
@@ -204,6 +208,7 @@ public class TerminationAnalysisTestResultDecider extends
 			case NO_EXPECTED_RESULT_FOUND:
 				mCategory += "/UltimateResult:" + TerminationAnalysisOverallResult.EXCEPTION_OR_ERROR;
 				mMessage += " UltimateResult: " + e.getMessage();
+				break;
 			default:
 				break;
 			}

@@ -6,8 +6,8 @@ File-History:
 
 package de.uni_freiburg.informatik.ultimate.acsl.parser;
 
-import java_cup.runtime.*;
-import java_cup.runtime.ComplexSymbolFactory.ComplexSymbol;
+import com.github.jhoenicke.javacup.runtime.*;
+import com.github.jhoenicke.javacup.runtime.ComplexSymbolFactory.ComplexSymbol;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -51,7 +51,7 @@ parser code {:
 	 * @param sf the SymbolFactory object.
 	 * @param ILogger the ILogger object to be used.
 	 */
-	public Parser(java_cup.runtime.Scanner s, java_cup.runtime.SymbolFactory sf, ILogger ILogger) {
+	public Parser(com.github.jhoenicke.javacup.runtime.Scanner s, com.github.jhoenicke.javacup.runtime.SymbolFactory sf, ILogger ILogger) {
 		this(s, sf);
 		mILogger = ILogger;
 	}
@@ -275,11 +275,12 @@ non terminal PolyIdentifier poly_id;
 non terminal List<Case> indcases;
 non terminal LogicStatement logic_def, logic_decl;
 non terminal List<LogicStatement> logic_decls;
+non terminal ACSLType type_spec_cv, cast_logic_type;
 non terminal lexpr_list, lexpr_option, rel_list, lexpr_binder, bounded_var, binders,
-			 range, cast_logic_type,
+			 range,
 			 field_init, array_init, update, field_path_elt, field_init_elt, array_path_elt, array_init_elt,
 			 update_elt, path, path_elt, binders_reentrance, decl_spec, 
-			 abs_spec_option, type_spec_cv, abs_spec,
+			 abs_spec_option, abs_spec,
 			 tabs, abs_spec_bis, ne_logic_type_list,
 			 decl, annotation, post_cond_kind, post_cond, decl_list, beg_code_annotation, 
 			 poly_id_type_add_typename, typedef,
@@ -386,9 +387,9 @@ lexpr::=
 | lexpr:e1 HAT lexpr:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.BITXOR, e1, e2); setLineNumber(e1$,e2$,RESULT);:}
 | lexpr:e1 BIMPLIES lexpr:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.BITIMPLIES, e1, e2); setLineNumber(e1$,e2$,RESULT);:}
 | lexpr:e1 BIFF lexpr:e2 {: RESULT = new BinaryExpression(BinaryExpression.Operator.BITIFF, e1, e2); setLineNumber(e1$,e2$,RESULT);:}
-| lexpr QUESTION lexpr:e1 COLON2 lexpr:e2 {: RESULT = new NotDefinedExpression(); setLineNumber(e1$,e2$,RESULT);:}  %prec prec_question 
+| lexpr:e1 QUESTION lexpr:e2 COLON lexpr:e3 {: RESULT = new IfThenElseExpression(e1, e2, e3); setLineNumber(e1$,e2$,RESULT);:}  %prec prec_question 
 /* both terms and predicates */
-| any_identifier:id COLON lexpr:expr {: RESULT = new SyntacticNamingExpression(id, expr); :} %prec prec_named 
+| any_identifier:id COLON2 lexpr:expr {: RESULT = new SyntacticNamingExpression(id, expr); :} %prec prec_named 
 | lexpr_rel:expr {: RESULT = expr; setLineNumber(expr$,expr$,RESULT);:} %prec prec_rel_list 
 ;
 
@@ -526,7 +527,7 @@ lexpr_inner::=
 | lexpr_inner:e1 LTLT lexpr_inner:e2 {: RESULT = new NotDefinedExpression(); setLineNumber(e1$,e2$,RESULT);:}
 | LPAR lexpr:e RPAR {: RESULT = e; setLineNumber(e$,e$,RESULT);:} %prec prec_par 
 | LPAR range:e RPAR {: RESULT = new NotDefinedExpression(); setLineNumber(e$,e$,RESULT);:}
-| LPAR cast_logic_type:e1 RPAR lexpr_inner:e2 {: RESULT = new NotDefinedExpression(); setLineNumber(e1$,e2$,RESULT);:} %prec prec_cast 
+| LPAR cast_logic_type:e1 RPAR lexpr_inner:e2 {: RESULT = new CastExpression(e1, e2); setLineNumber(e1$,e2$,RESULT);:} %prec prec_cast 
 | lexpr_inner:e1 LTCOLON lexpr_inner:e2 {: RESULT = new NotDefinedExpression(); setLineNumber(e1$,e2$,RESULT);:} %prec prec_cast 
 | lexpr_inner:e1 COLONGT logic_type:e2 {: RESULT = new NotDefinedExpression(); setLineNumber(e1$,e2$,RESULT);:} %prec prec_cast 
 | lexpr_inner:e1 COLONGT lexpr_inner:e2 {: RESULT = new NotDefinedExpression(); setLineNumber(e1$,e2$,RESULT);:} %prec prec_cast 
@@ -721,14 +722,19 @@ logic_type::=
 
 
 type_spec_cv::=
-     type_spec 
-|    CONST type_spec 
-|    type_spec CONST 
+     type_spec:t
+ {: RESULT = new ACSLType(t); setLineNumber(t$,t$,RESULT); :}
+|    CONST type_spec:t
+ {: RESULT = new ACSLType(t); setLineNumber(t$,t$,RESULT); :}
+|    type_spec:t CONST 
+ {: RESULT = new ACSLType(t); setLineNumber(t$,t$,RESULT); :}
 ;
 
 cast_logic_type::=
- type_spec_cv abs_spec_option 
- | type_spec_cv abs_spec CONST 
+ type_spec_cv:tcs abs_spec_option 
+{: RESULT = tcs; setLineNumber(tcs$,tcs$,RESULT); :}
+ | type_spec_cv:tcs abs_spec CONST
+ {: RESULT = tcs; setLineNumber(tcs$,tcs$,RESULT); :} 
 ;
 
 logic_rt_type::=

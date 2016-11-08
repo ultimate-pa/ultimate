@@ -28,7 +28,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
@@ -40,7 +40,7 @@ public class TraceAbstractionBenchmarks implements ICsvProviderProvider<Object> 
 	private final int mLocations;
 	private final int mErrorLocations;
 
-	public TraceAbstractionBenchmarks(RootAnnot rootAnnot) {
+	public TraceAbstractionBenchmarks(BoogieIcfgContainer rootAnnot) {
 		mProcedures = rootAnnot.getEntryNodes().size();
 		mLocations = rootAnnot.getNumberOfProgramPoints();
 		mErrorLocations = rootAnnot.getNumberOfErrorNodes();

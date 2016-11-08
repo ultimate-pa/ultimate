@@ -33,8 +33,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 
 /**
  * Class representing a control flow graph. A control flow graph consists of
@@ -54,7 +54,7 @@ public final class ControlFlowGraph {
 	 * A node in the control flow graph.
 	 */
 	public static final class Location {
-		private final ProgramPoint programPoint;
+		private final BoogieIcfgLocation programPoint;
 
 		/**
 		 * Creates a new location on a given program point.
@@ -62,7 +62,7 @@ public final class ControlFlowGraph {
 		 * @param programPoint
 		 *            the program point the locations is at
 		 */
-		public Location(final ProgramPoint programPoint) {
+		public Location(final BoogieIcfgLocation programPoint) {
 			this.programPoint = programPoint;
 		}
 
@@ -71,7 +71,7 @@ public final class ControlFlowGraph {
 		 * 
 		 * @return program point associated with this location
 		 */
-		public ProgramPoint getProgramPoint() {
+		public BoogieIcfgLocation getProgramPoint() {
 			return programPoint;
 		}
 
@@ -87,7 +87,7 @@ public final class ControlFlowGraph {
 	 * An edge in the control flow graph.
 	 */
 	public static final class Transition {
-		private final TransFormula transFormula;
+		private final UnmodifiableTransFormula transFormula;
 		private final Location start;
 		private final Location end;
 
@@ -101,7 +101,7 @@ public final class ControlFlowGraph {
 		 * @param end
 		 *            the location the transition finishes at
 		 */
-		public Transition(final TransFormula transFormula,
+		public Transition(final UnmodifiableTransFormula transFormula,
 				final Location start, final Location end) {
 			this.transFormula = transFormula;
 			this.start = start;
@@ -109,12 +109,12 @@ public final class ControlFlowGraph {
 		}
 
 		/**
-		 * Returns the {@link TransFormula} defining the behavior of the
+		 * Returns the {@link UnmodifiableTransFormula} defining the behavior of the
 		 * transition.
 		 * 
 		 * @return TransFormula defining the behvaiour of the transition
 		 */
-		public TransFormula getTransFormula() {
+		public UnmodifiableTransFormula getTransFormula() {
 			return transFormula;
 		}
 

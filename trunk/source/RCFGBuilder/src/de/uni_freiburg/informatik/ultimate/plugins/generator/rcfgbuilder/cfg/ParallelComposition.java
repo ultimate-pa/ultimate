@@ -38,7 +38,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
@@ -83,7 +84,7 @@ public class ParallelComposition extends CodeBlock implements IInternalAction {
 		}
 	}
 
-	ParallelComposition(final int serialNumber, final ProgramPoint source, final ProgramPoint target, final ManagedScript mgdScript,
+	ParallelComposition(final int serialNumber, final BoogieIcfgLocation source, final BoogieIcfgLocation target, final ManagedScript mgdScript,
 			final IUltimateServiceProvider services, final List<CodeBlock> codeBlocks, final XnfConversionTechnique xnfConversionTechnique) {
 		super(serialNumber, source, target, services.getLoggingService().getLogger(Activator.PLUGIN_ID));
 		mServices = services;
@@ -92,8 +93,8 @@ public class ParallelComposition extends CodeBlock implements IInternalAction {
 
 		String prettyPrinted = "";
 
-		final TransFormula[] transFormulas = new TransFormula[codeBlocks.size()];
-		final TransFormula[] transFormulasWithBranchEncoders = new TransFormula[codeBlocks.size()];
+		final UnmodifiableTransFormula[] transFormulas = new UnmodifiableTransFormula[codeBlocks.size()];
+		final UnmodifiableTransFormula[] transFormulasWithBranchEncoders = new UnmodifiableTransFormula[codeBlocks.size()];
 		final TermVariable[] branchIndicator = new TermVariable[codeBlocks.size()];
 		for (int i = 0; i < codeBlocks.size(); i++) {
 			if (!(codeBlocks.get(i) instanceof StatementSequence || codeBlocks.get(i) instanceof SequentialComposition || 
@@ -106,7 +107,7 @@ public class ParallelComposition extends CodeBlock implements IInternalAction {
 			prettyPrinted += "PARALLEL" + codeBlocks.get(i).getPrettyPrintedStatements();
 			transFormulas[i] = codeBlocks.get(i).getTransitionFormula();
 			transFormulasWithBranchEncoders[i] = codeBlocks.get(i).getTransitionFormulaWithBranchEncoders();
-			final String varname = "LBE" + codeBlocks.get(i).getSerialNumer();
+			final String varname = "LBE" + codeBlocks.get(i).getSerialNumber();
 			final Sort boolSort = script.sort("Bool");
 			final TermVariable tv = script.variable(varname, boolSort);
 			branchIndicator[i] = tv;
@@ -121,10 +122,10 @@ public class ParallelComposition extends CodeBlock implements IInternalAction {
 		final boolean s_TransformToCNF = (mServices.getPreferenceProvider(Activator.PLUGIN_ID))
 				.getBoolean(RcfgPreferenceInitializer.LABEL_CNF);
 
-		mTransitionFormula = TransFormula.parallelComposition(mLogger, mServices, getSerialNumer(), mgdScript,
+		mTransitionFormula = TransFormulaUtils.parallelComposition(mLogger, mServices, getSerialNumber(), mgdScript,
 				null, s_TransformToCNF, xnfConversionTechnique, transFormulas);
-		mTransitionFormulaWithBranchEncoders = TransFormula.parallelComposition(mLogger, mServices,
-				getSerialNumer(), mgdScript, branchIndicator, s_TransformToCNF, xnfConversionTechnique, transFormulasWithBranchEncoders);
+		mTransitionFormulaWithBranchEncoders = TransFormulaUtils.parallelComposition(mLogger, mServices,
+				getSerialNumber(), mgdScript, branchIndicator, s_TransformToCNF, xnfConversionTechnique, transFormulasWithBranchEncoders);
 	}
 
 	@Override
@@ -137,7 +138,7 @@ public class ParallelComposition extends CodeBlock implements IInternalAction {
 	}
 
 	@Override
-	public void setTransitionFormula(final TransFormula transFormula) {
+	public void setTransitionFormula(final UnmodifiableTransFormula transFormula) {
 		throw new UnsupportedOperationException("transition formula is computed in constructor");
 	}
 
@@ -158,7 +159,7 @@ public class ParallelComposition extends CodeBlock implements IInternalAction {
 	}
 
 	@Override
-	public TransFormula getTransformula() {
+	public UnmodifiableTransFormula getTransformula() {
 		return getTransitionFormula();
 	}
 

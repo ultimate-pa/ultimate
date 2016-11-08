@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ReachingDefinitions plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ReachingDefinitions plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ReachingDefinitions plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations;
@@ -29,10 +29,11 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.boogie.ScopedBoogieVar;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RCFGEdgeVisitor;
 
@@ -41,12 +42,12 @@ class UseCollector extends RCFGEdgeVisitor {
 	private final IAnnotationProvider<ReachDefStatementAnnotation> mAnnotationProvider;
 	private final String mKey;
 
-	UseCollector(IAnnotationProvider<ReachDefStatementAnnotation> provider, String key) {
+	UseCollector(final IAnnotationProvider<ReachDefStatementAnnotation> provider, final String key) {
 		mAnnotationProvider = provider;
 		mKey = key;
 	}
 
-	HashMap<ScopedBoogieVar, HashSet<IndexedStatement>> collect(RCFGEdge edge) {
+	HashMap<ScopedBoogieVar, HashSet<IndexedStatement>> collect(final IcfgEdge edge) {
 		if (mUse == null) {
 			mUse = new HashMap<>();
 			visit(edge);
@@ -55,12 +56,12 @@ class UseCollector extends RCFGEdgeVisitor {
 	}
 
 	@Override
-	protected void visit(StatementSequence c) {
+	protected void visit(final StatementSequence c) {
 		super.visit(c);
 
 		final List<Statement> stmts = c.getStatements();
 
-		if (stmts == null || stmts.size() == 0) {
+		if (stmts == null || stmts.isEmpty()) {
 			return;
 		}
 
@@ -72,15 +73,14 @@ class UseCollector extends RCFGEdgeVisitor {
 		}
 	}
 
-	private ReachDefBaseAnnotation getAnnotation(Statement stmt) {
+	private ReachDefBaseAnnotation getAnnotation(final Statement stmt) {
 		if (mKey == null) {
 			return mAnnotationProvider.getAnnotation(stmt);
-		} else {
-			return mAnnotationProvider.getAnnotation(stmt, mKey);
 		}
+		return mAnnotationProvider.getAnnotation(stmt, mKey);
 	}
 
-	private void unionUse(ReachDefBaseAnnotation other) {
+	private void unionUse(final ReachDefBaseAnnotation other) {
 		if (other == null) {
 			return;
 		}
@@ -91,20 +91,18 @@ class UseCollector extends RCFGEdgeVisitor {
 			return;
 		}
 
-		for (final ScopedBoogieVar key : otheruse.keySet()) {
-			for (final IndexedStatement stmt : otheruse.get(key)) {
-				addUse(key, stmt.getStatement(), stmt.getKey());
+		for (final Entry<ScopedBoogieVar, HashSet<IndexedStatement>> entry : otheruse.entrySet()) {
+			for (final IndexedStatement stmt : entry.getValue()) {
+				addUse(entry.getKey(), stmt.getStatement(), stmt.getKey());
 			}
 		}
-
 	}
 
-	private void addUse(ScopedBoogieVar variable, Statement stmt, String key) {
+	private void addUse(final ScopedBoogieVar variable, final Statement stmt, final String key) {
 		HashSet<IndexedStatement> rtr = mUse.get(variable);
 		if (rtr == null) {
 			rtr = new HashSet<>();
 			mUse.put(variable, rtr);
-
 		}
 		rtr.add(new IndexedStatement(stmt, key));
 	}

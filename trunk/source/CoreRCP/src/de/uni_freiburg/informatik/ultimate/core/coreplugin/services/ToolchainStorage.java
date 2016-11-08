@@ -2,27 +2,27 @@
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Core.
- * 
+ *
  * The ULTIMATE Core is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Core is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Core. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Core, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Core grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Core grant you additional permission
  * to convey the resulting work.
  */
 
@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.IServiceFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILoggingService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IService;
@@ -49,9 +50,9 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.RcpPreferenceProvide
 
 /**
  * Simple implementation of {@link IToolchainStorage} and {@link IUltimateServiceProvider}
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * 
+ *
  */
 public class ToolchainStorage implements IToolchainStorage, IUltimateServiceProvider {
 
@@ -62,17 +63,17 @@ public class ToolchainStorage implements IToolchainStorage, IUltimateServiceProv
 	}
 
 	@Override
-	public IStorable getStorable(String key) {
+	public IStorable getStorable(final String key) {
 		return mToolchainStorage.get(key);
 	}
 
 	@Override
-	public IStorable putStorable(String key, IStorable value) {
+	public IStorable putStorable(final String key, final IStorable value) {
 		return mToolchainStorage.put(key, value);
 	}
 
 	@Override
-	public IStorable removeStorable(String key) {
+	public IStorable removeStorable(final String key) {
 		return mToolchainStorage.remove(key);
 	}
 
@@ -100,14 +101,14 @@ public class ToolchainStorage implements IToolchainStorage, IUltimateServiceProv
 					continue;
 				}
 				coreLogger.fatal("There was an exception during clearing of toolchain storage while destroying "
-						+ storable.getClass().toString() + ": " + t.getMessage());
+				        + storable.getClass().toString() + ": " + t.getMessage());
 			}
 		}
 		mToolchainStorage.clear();
 	}
 
 	@Override
-	public void destroyStorable(String key) {
+	public void destroyStorable(final String key) {
 		final IStorable storable = mToolchainStorage.remove(key);
 		if (storable != null) {
 			storable.destroy();
@@ -125,8 +126,9 @@ public class ToolchainStorage implements IToolchainStorage, IUltimateServiceProv
 	}
 
 	@Override
-	public Log4JLoggingService getLoggingService() {
+	public ILoggingService getLoggingService() {
 		return Log4JLoggingService.getService(this);
+		// return Log4J2LoggingService.getService(this);
 	}
 
 	@Override
@@ -140,12 +142,12 @@ public class ToolchainStorage implements IToolchainStorage, IUltimateServiceProv
 	}
 
 	@Override
-	public <T extends IService, K extends IServiceFactory<T>> T getServiceInstance(Class<K> serviceType) {
+	public <T extends IService, K extends IServiceFactory<T>> T getServiceInstance(final Class<K> serviceType) {
 		return GenericServiceProvider.getServiceInstance(this, serviceType);
 	}
 
 	@Override
-	public IPreferenceProvider getPreferenceProvider(String pluginId) {
+	public IPreferenceProvider getPreferenceProvider(final String pluginId) {
 		return new RcpPreferenceProvider(pluginId);
 	}
 }

@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.julian;
@@ -36,11 +36,21 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 
-public class Event<S, C> implements Serializable {
+/**
+ * Event.
+ * 
+ * @author Julian Jarecki (jareckij@informatik.uni-freiburg.de)
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <S>
+ *            symbol type
+ * @param <C>
+ *            place content type
+ */
+public final class Event<S, C> implements Serializable {
 	private static final long serialVersionUID = 7162664880110047121L;
-
+	
 	private final int mHashCode;
-
+	
 	private final Set<Condition<S, C>> mPredecessors;
 	private final Set<Condition<S, C>> mSuccessors;
 	private final Configuration<S, C> mLocalConfiguration;
@@ -48,10 +58,10 @@ public class Event<S, C> implements Serializable {
 	// private final ArrayList<Event<S, C>> mLocalConfiguration;
 	private final Marking<S, C> mMark;
 	private final ConditionMarking<S, C> mConditionMark;
-
+	
 	private Event<S, C> mCompanion;
 	private final Transition<S, C> mTransition;
-
+	
 	/**
 	 * Creates an Event from its predecessor conditions and the transition from
 	 * the net system it is mapped to by the homomorphism. Its successor
@@ -59,26 +69,23 @@ public class Event<S, C> implements Serializable {
 	 * directly, but copied.
 	 * 
 	 * @param predecessors
+	 *            predecessor conditions
 	 * @param transition
+	 *            homomorphism transition
 	 */
-	public Event(Collection<Condition<S, C>> predecessors,
-			Transition<S, C> transition) {
-		assert conditionToPlaceEqual(predecessors, transition.getPredecessors()) : "An event was created with inappropriate predecessors.\n  "
-				+ "transition: "
-				+ transition.toString()
-				+ "\n  events predecessors: "
-				+ predecessors.toString()
-				+ "\n  "
-				+ "transitions predecessors:"
-				+ transition.getPredecessors();
-		this.mPredecessors = new HashSet<Condition<S, C>>(predecessors);
+	public Event(final Collection<Condition<S, C>> predecessors, final Transition<S, C> transition) {
+		assert conditionToPlaceEqual(predecessors,
+				transition.getPredecessors()) : "An event was created with inappropriate predecessors.\n  "
+						+ "transition: " + transition.toString() + "\n  events predecessors: " + predecessors.toString()
+						+ "\n  " + "transitions predecessors:" + transition.getPredecessors();
+		mPredecessors = new HashSet<>(predecessors);
 		// HashSet<Event<S, C>> localConfiguration = new HashSet<Event<S, C>>();
-		this.mLocalConfiguration = new Configuration<S, C>(
+		mLocalConfiguration = new Configuration<>(
 				new HashSet<Event<S, C>>());
-		this.mTransition = transition;
-		final Set<Condition<S, C>> conditionMarkSet = new HashSet<Condition<S, C>>();
-
-		final Set<Event<S, C>> predecessorEvents = new HashSet<Event<S, C>>();
+		mTransition = transition;
+		final Set<Condition<S, C>> conditionMarkSet = new HashSet<>();
+		
+		final Set<Event<S, C>> predecessorEvents = new HashSet<>();
 		for (final Condition<S, C> c : predecessors) {
 			final Event<S, C> e = c.getPredecessorEvent();
 			if (predecessorEvents.contains(e)) {
@@ -89,105 +96,125 @@ public class Event<S, C> implements Serializable {
 			mLocalConfiguration.addAll(e.mLocalConfiguration);
 			e.mConditionMark.addTo(conditionMarkSet);
 		}
-
+		
 		mLocalConfiguration.add(this);
-
-		this.mSuccessors = new HashSet<Condition<S, C>>();
+		
+		mSuccessors = new HashSet<>();
 		for (final Place<S, C> p : transition.getSuccessors()) {
-			this.mSuccessors.add(new Condition<S, C>(this, p));
+			mSuccessors.add(new Condition<>(this, p));
 		}
 		for (final Event<S, C> a : mLocalConfiguration) {
 			conditionMarkSet.removeAll(a.getPredecessorConditions());
 		}
 		conditionMarkSet.addAll(mSuccessors);
-		this.mConditionMark = new ConditionMarking<S, C>(conditionMarkSet);
-		this.mMark = mConditionMark.getMarking();
+		mConditionMark = new ConditionMarking<>(conditionMarkSet);
+		mMark = mConditionMark.getMarking();
 		mHashCode = computeHashCode();
 	}
-
+	
 	/**
-	 * returns the Set of all successor conditions of {@code events}
+	 * Creates a dummy event. Used as the root of a {@link BranchingProcess}.
 	 * 
-	 * @param events
-	 * @return
+	 * @param net
+	 *            Petri net
 	 */
-	public static <S, C> Set<Condition<S, C>> getDot(Set<Event<S, C>> events) {
-		final HashSet<Condition<S, C>> result = new HashSet<Condition<S, C>>();
+	public Event(final PetriNetJulian<S, C> net) {
+		mTransition = null;
+		mLocalConfiguration = new Configuration<>(new HashSet<Event<S, C>>());
+		mMark = net.getInitialMarking();
+		final Set<Condition<S, C>> conditionMarkSet = new HashSet<>();
+		mConditionMark = new ConditionMarking<>(conditionMarkSet);
+		mPredecessors = new HashSet<>();
+		mSuccessors = new HashSet<>();
+		for (final Place<S, C> p : mMark) {
+			final Condition<S, C> c = new Condition<>(this, p);
+			mSuccessors.add(c);
+			conditionMarkSet.add(c);
+		}
+		mHashCode = computeHashCode();
+	}
+	
+	/**
+	 * @param events
+	 *            A set of events.
+	 * @param <S>
+	 *            symbol type
+	 * @param <C>
+	 *            place content type
+	 * @return The Set of all successor conditions of {@code events}.
+	 */
+	public static <S, C> Set<Condition<S, C>> getDot(final Set<Event<S, C>> events) {
+		final HashSet<Condition<S, C>> result = new HashSet<>();
 		for (final Event<S, C> e : events) {
 			result.addAll(e.getSuccessorConditions());
 		}
 		return result;
 	}
-
+	
 	/**
-	 * returns the Set of all successor events of all successor conditions of
-	 * the event
+	 * @return The Set of all successor events of all successor conditions of the event.
 	 */
 	public Set<Event<S, C>> getSuccessorEvents() {
-		final HashSet<Event<S, C>> result = new HashSet<Event<S, C>>();
-		for (final Condition<S, C> c : this.getSuccessorConditions()) {
+		final HashSet<Event<S, C>> result = new HashSet<>();
+		for (final Condition<S, C> c : getSuccessorConditions()) {
 			result.addAll(c.getSuccessorEvents());
 		}
 		return result;
 	}
-
+	
 	/**
-	 * returns the Set of all successor events of all successor conditions of
-	 * {@code events}
-	 * 
 	 * @param events
-	 * @return
+	 *            A set of events.
+	 * @param <S>
+	 *            symbol type
+	 * @param <C>
+	 *            place content type
+	 * @return The Set of all successor events of all successor conditions of {@code events}.
 	 */
-	public static <S, C> Set<Event<S, C>> getSuccessorEvents(
-			Set<Event<S, C>> events) {
-		final HashSet<Event<S, C>> result = new HashSet<Event<S, C>>();
+	public static <S, C> Set<Event<S, C>> getSuccessorEvents(final Set<Event<S, C>> events) {
+		final HashSet<Event<S, C>> result = new HashSet<>();
 		for (final Event<S, C> e : events) {
 			result.addAll(e.getSuccessorEvents());
 		}
 		return result;
 	}
-
+	
 	/**
-	 * returns the Set of all predecessor events of all predecessor conditions
-	 * of {@code events}
-	 * 
 	 * @param events
-	 * @return
+	 *            A set of events.
+	 * @param <S>
+	 *            symbol type
+	 * @param <C>
+	 *            place content type
+	 * @return The Set of all predecessor events of all predecessor conditions of {@code events}.
 	 */
-	public static <S, C> Set<Event<S, C>> getPredecessorEvents(
-			Set<Event<S, C>> events) {
-		final HashSet<Event<S, C>> result = new HashSet<Event<S, C>>();
+	public static <S, C> Set<Event<S, C>> getPredecessorEvents(final Set<Event<S, C>> events) {
+		final HashSet<Event<S, C>> result = new HashSet<>();
 		for (final Event<S, C> e : events) {
 			result.addAll(e.getPredecessorEvents());
 		}
 		return result;
 	}
-
+	
 	/**
-	 * returns the Set of all predecessor events of all predecessor conditions
-	 * of the event
+	 * @return The Set of all predecessor events of all predecessor conditions of the event.
 	 */
 	public Set<Event<S, C>> getPredecessorEvents() {
-		final HashSet<Event<S, C>> result = new HashSet<Event<S, C>>();
-		for (final Condition<S, C> c : this.getPredecessorConditions()) {
+		final HashSet<Event<S, C>> result = new HashSet<>();
+		for (final Condition<S, C> c : getPredecessorConditions()) {
 			result.add(c.getPredecessorEvent());
 		}
 		return result;
 	}
-
+	
 	/**
 	 * returns true, if the homomorphism h of the corresponding branching
 	 * process reduced to conditions and places is a well defined isomorphism.
 	 * this is a helper method used only for assertions.
-	 * 
-	 * @param conditions
-	 * @param places
-	 * @return
 	 */
-	private boolean conditionToPlaceEqual(
-			Collection<Condition<S, C>> conditions,
-			Collection<Place<S, C>> places) {
-		places = new HashSet<Place<S, C>>(places);
+	private boolean conditionToPlaceEqual(final Collection<Condition<S, C>> conditions,
+			final Collection<Place<S, C>> placesIn) {
+		final Collection<Place<S, C>> places = new HashSet<>(placesIn);
 		for (final Condition<S, C> c : conditions) {
 			if (!places.remove(c.getPlace())) {
 				return false;
@@ -195,151 +222,123 @@ public class Event<S, C> implements Serializable {
 		}
 		return places.isEmpty();
 	}
-
-	/**
-	 * Creates a dummy event. Used as the root of a branchingprocess.
-	 * 
-	 * @param mSuccessors
-	 */
-	public Event(PetriNetJulian<S, C> net) {
-		this.mTransition = null;
-		this.mLocalConfiguration = new Configuration<S, C>(
-				new HashSet<Event<S, C>>());
-		this.mMark = net.getInitialMarking();
-		final Set<Condition<S, C>> conditionMarkSet = new HashSet<Condition<S, C>>();
-		this.mConditionMark = new ConditionMarking<S, C>(conditionMarkSet);
-		this.mPredecessors = new HashSet<Condition<S, C>>();
-		this.mSuccessors = new HashSet<Condition<S, C>>();
-		for (final Place<S, C> p : mMark) {
-			final Condition<S, C> c = new Condition<S, C>(this, p);
-			this.mSuccessors.add(c);
-			conditionMarkSet.add(c);
-		}
-		mHashCode = computeHashCode();
-	}
-
+	
 	public ConditionMarking<S, C> getConditionMark() {
 		return mConditionMark;
 	}
-
+	
 	public Set<Condition<S, C>> getSuccessorConditions() {
 		return mSuccessors;
 	}
-
+	
 	public Set<Condition<S, C>> getPredecessorConditions() {
 		return mPredecessors;
 	}
-
+	
 	/**
 	 * @return marking of the local configuration of this.
 	 */
 	public Marking<S, C> getMark() {
 		return mMark;
 	}
-
+	
 	/**
-	 * if e is a companion of this
-	 * <ul>
-	 * <li>return true and calls {@link Event#setCompanion(Event)}.</li>
-	 * <li>otherwise return false.</li>
-	 * </ul>
-	 * 
-	 * <b>Definition:</b> e is a companion of e' iff
-	 * <ul>
-	 * <li>e < e' with respect to order</li>
-	 * <li>Mark([e]) == Mark([e'])</li>
-	 * </ul>
-	 * So far this definition corresponds to cut-off events as defined in the
-	 * 1996 TACAS Paper.
+	 * @param event
+	 *            event
+	 * @param order
+	 *            order
 	 * @param sameTransitionCutOff
-	 * If true, additionally we require
-	 * <ul>
-	 * <li>e and e' belong to the same transition</li>
-	 * </ul>
-	 * which will produce fewer cut-off events and a bigger prefix hence.
-	 * However, we assume the blowup is not so big TODO: check this claim.
-	 * (maybe linear? with respect to what?)
-	 * 
-	 * @return
+	 *            If true, additionally we require
+	 *            <ul>
+	 *            <li>e and e' belong to the same transition</li>
+	 *            </ul>
+	 *            which will produce fewer cut-off events and a bigger prefix hence.
+	 *            However, we assume the blowup is not so big TODO: check this claim.
+	 *            (maybe linear? with respect to what?)
+	 * @return If the event is a companion of this
+	 *         <ul>
+	 *         <li>return true and calls {@link Event#setCompanion(Event)}.</li>
+	 *         <li>otherwise return false.</li>
+	 *         </ul>
+	 *         <b>Definition:</b> e is a companion of e' iff
+	 *         <ul>
+	 *         <li>e < e' with respect to order</li>
+	 *         <li>Mark([e]) == Mark([e'])</li>
+	 *         </ul>
+	 *         So far this definition corresponds to cut-off events as defined in the
+	 *         1996 TACAS Paper.
 	 */
-	public boolean checkCutOffSetCompanion(Event<S, C> e,
-			Comparator<Event<S, C>> order, boolean sameTransitionCutOff) {
+	public boolean checkCutOffSetCompanion(final Event<S, C> event, final Comparator<Event<S, C>> order,
+			final boolean sameTransitionCutOff) {
 		if (sameTransitionCutOff) {
 			// additional requirement for cut-off events.
 			// TODO: tests to compare prefix sizes.
-			if (!this.getTransition().equals(e.getTransition())) {
+			if (!getTransition().equals(event.getTransition())) {
 				return false;
 			}
 		}
-		if (!getMark().equals(e.getMark())) {
+		if (!getMark().equals(event.getMark())) {
 			return false;
 		}
-		if (!(order.compare(e, this) < 0)) {
+		if (order.compare(event, this) >= 0) {
 			return false;
 		}
-		setCompanion(e);
+		setCompanion(event);
 		return true;
 	}
-
+	
 	/**
 	 * set this.companion to e, or, if e is a cut-off event itself to the
 	 * companion of e.
-	 * 
-	 * @param e
 	 */
-	private void setCompanion(Event<S, C> e) {
-		assert this.mCompanion == null;
-		if (e.getCompanion() == null) {
-			this.mCompanion = e;
+	private void setCompanion(final Event<S, C> event) {
+		assert mCompanion == null;
+		if (event.getCompanion() == null) {
+			mCompanion = event;
 		} else {
-			setCompanion(e.getCompanion());
+			setCompanion(event.getCompanion());
 		}
 	}
-
+	
 	/**
-	 * true, if the event is a cutoff event. requires, that
-	 * {@link #checkCutOffSetCompanion(Event, Comparator)} was called.
-	 * <p>
-	 * In the implementation of the construction of the unfolding, it is called
-	 * after being added to a the Branchinprocess.
-	 * </p>
-	 * 
+	 * @return {@code true} iff the event is a cutoff event. requires, that
+	 *         {@link #checkCutOffSetCompanion(Event, Comparator)} was called.
+	 *         <p>
+	 *         In the implementation of the construction of the unfolding, it is called
+	 *         after being added to a the Branchinprocess.
 	 * @see BranchingProcess#isCutoffEvent(Event, Comparator)
-	 * @return
 	 */
 	public boolean isCutoffEvent() {
-		return this.mCompanion != null;
+		return mCompanion != null;
 	}
-
+	
 	/**
-	 * returns the size of the local configuration, that is the number of
-	 * ancestor events.
-	 * 
-	 * @return
+	 * @return The size of the local configuration, that is the number of
+	 *         ancestor events.
 	 */
 	public int getAncestors() {
 		return mLocalConfiguration.size();
 	}
-
+	
 	public Configuration<S, C> getLocalConfiguration() {
 		return mLocalConfiguration;
 	}
-
+	
 	public Event<S, C> getCompanion() {
 		return mCompanion;
 	}
-
+	
 	public Transition<S, C> getTransition() {
 		return mTransition;
 	}
-
+	
 	@Override
 	public String toString() {
 		return mHashCode + ":" + getTransition() + ","
 				+ mLocalConfiguration.size() + "A";
 	}
-
-	public int computeHashCode() {
+	
+	private int computeHashCode() {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result
@@ -351,10 +350,9 @@ public class Event<S, C> implements Serializable {
 				+ ((mTransition == null) ? 0 : mTransition.hashCode());
 		return result;
 	}
-
+	
 	@Override
 	public int hashCode() {
 		return mHashCode;
 	}
-
 }

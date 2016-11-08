@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE UnitTest Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE UnitTest Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE UnitTest Library grant you additional permission
  * to convey the resulting work.
  */
 
@@ -55,13 +55,13 @@ public class SafetyCheckTestResultDecider extends ThreeTierTestResultDecider<Saf
 	 *            if true the TestResult UNKNOWN is a success for JUnit, if
 	 *            false, the TestResult UNKNOWN is a failure for JUnit.
 	 */
-	public SafetyCheckTestResultDecider(UltimateRunDefinition ultimateRunDefinition, boolean unknownIsJUnitSuccess) {
+	public SafetyCheckTestResultDecider(final UltimateRunDefinition ultimateRunDefinition, final boolean unknownIsJUnitSuccess) {
 		super(ultimateRunDefinition, unknownIsJUnitSuccess);
 	}
 
 	@Override
 	public IExpectedResultFinder<SafetyCheckerOverallResult> constructExpectedResultFinder() {
-		return new KeywordBasedExpectedResultFinder<SafetyCheckerOverallResult>(
+		return new KeywordBasedExpectedResultFinder<>(
 				TestUtil.constructFilenameKeywordMap_SafetyChecker(), null,
 				TestUtil.constructFirstlineKeywordMap_SafetyChecker());
 	}
@@ -95,6 +95,8 @@ public class SafetyCheckTestResultDecider extends ThreeTierTestResultDecider<Saf
 			case NO_EXPECTED_RESULT_FOUND:
 				evaluateOverallResultWithoutExpectedResult(overallResultDeterminer);
 				return;
+			default:
+				throw new IllegalArgumentException();
 			}
 		}
 
@@ -166,7 +168,7 @@ public class SafetyCheckTestResultDecider extends ThreeTierTestResultDecider<Saf
 				} else {
 					mTestResult = TestResult.UNKNOWN;
 				}
-				break;	
+				break;
 			case UNKNOWN:
 				// syntax error should always have been found
 				if (expectedResult == SafetyCheckerOverallResult.SYNTAX_ERROR) {

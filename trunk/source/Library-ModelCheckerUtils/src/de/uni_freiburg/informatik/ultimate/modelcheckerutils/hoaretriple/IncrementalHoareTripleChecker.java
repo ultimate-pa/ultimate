@@ -40,12 +40,13 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.GlobalBoogieVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -82,10 +83,9 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 	private static final String s_StartEdgeCheck = "starting to check validity of Hoare triples";
 	private static final String s_EndEdgeCheck = "finished to check validity of Hoare triples";
 	
-	public IncrementalHoareTripleChecker(final ManagedScript managedScript, 
-			final ModifiableGlobalVariableManager modGlobVarManager) {
-		mManagedScript = managedScript;
-		mModifiableGlobalVariableManager = modGlobVarManager;
+	public IncrementalHoareTripleChecker(final CfgSmtToolkit csToolkit) {
+		mManagedScript = csToolkit.getManagedScript();
+		mModifiableGlobalVariableManager = csToolkit.getModifiableGlobals();
 		mEdgeCheckerBenchmark = new HoareTripleCheckerStatisticsGenerator();
 	}
 	
@@ -109,7 +109,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		if (quickCheck_Postcond == LBool.UNSAT) {
 			return Validity.VALID;
 		}
-		assert quickCheck_Postcond == LBool.UNKNOWN : "unexpected quickcheck result";
+		assert quickCheck_Postcond == LBool.UNKNOWN || quickCheck_Postcond == null : "unexpected quickcheck result";
 		assert mAssertedPrecond == pre && mAssertedHier == null && 
 				mAssertedAction == act && mAssertedPostcond == post;
 		return checkValidity();
@@ -130,7 +130,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		if (quickCheck_Postcond == LBool.UNSAT) {
 			return Validity.VALID;
 		}
-		assert quickCheck_Postcond == LBool.UNKNOWN : "unexpected quickcheck result";
+		assert quickCheck_Postcond == LBool.UNKNOWN || quickCheck_Postcond == null : "unexpected quickcheck result";
 		assert mAssertedPrecond == pre && mAssertedHier == null && 
 				mAssertedAction == act && mAssertedPostcond == post;
 		return checkValidity();
@@ -156,7 +156,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		if (quickCheck_Postcond == LBool.UNSAT) {
 			return Validity.VALID;
 		}
-		assert quickCheck_Postcond == LBool.UNKNOWN : "unexpected quickcheck result";
+		assert quickCheck_Postcond == LBool.UNKNOWN || quickCheck_Postcond == null : "unexpected quickcheck result";
 		assert mAssertedPrecond == linPre && mAssertedHier == hierPre && 
 				mAssertedAction == act && mAssertedPostcond == postcond;
 		return checkValidity();
@@ -280,7 +280,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 			predcondition = mManagedScript.annotate(this, predcondition, annot);
 		}
 		LBool quickCheck = mManagedScript.assertTerm(this, predcondition);
-		final String predProc = mAssertedAction.getPreceedingProcedure();
+		final String predProc = mAssertedAction.getPrecedingProcedure();
 		final Set<IProgramVar> oldVarsOfModifiable = mModifiableGlobalVariableManager.
 				getOldVarsAssignment(predProc).getAssignedVars();
 		final Collection<Term> oldVarEqualities = constructNonModOldVarsEquality(p.getVars(), oldVarsOfModifiable);
@@ -367,8 +367,8 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		if (act instanceof IReturnAction) {
 			mHierConstants = new ScopedHashMap<IProgramVar,Term>();
 			final IReturnAction ret = (IReturnAction) act;
-			final String proc = ret.getPreceedingProcedure();
-			final TransFormula ovaTF = mModifiableGlobalVariableManager.
+			final String proc = ret.getPrecedingProcedure();
+			final UnmodifiableTransFormula ovaTF = mModifiableGlobalVariableManager.
 					getOldVarsAssignment(proc);
 			Term ovaFormula = ovaTF.getFormula();
 
@@ -387,7 +387,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 			quickCheck = mManagedScript.assertTerm(this, ovaFormula);
 			
 			final Set<IProgramVar> modifiableGlobals = ovaTF.getInVars().keySet();
-			final TransFormula callTf = ret.getLocalVarsAssignmentOfCall();
+			final UnmodifiableTransFormula callTf = ret.getLocalVarsAssignmentOfCall();
 			Term locVarAssign = callTf.getFormula();
 			//TODO: rename non-modifiable globals to DefaultConstants
 			locVarAssign = renameNonModifiableGlobalsToDefaultConstants(
@@ -442,7 +442,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		Term hierFormula = p.getFormula();
 		
 		// rename globals that are not modifiable by callee to default constants
-		final String callee = mAssertedAction.getPreceedingProcedure();
+		final String callee = mAssertedAction.getPrecedingProcedure();
 		final Set<IProgramVar> modifiableGlobalsCallee = mModifiableGlobalVariableManager.
 				getModifiedBoogieVars(callee);
 		hierFormula = renameNonModifiableNonOldGlobalsToDefaultConstants(
@@ -607,7 +607,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		final Set<IProgramVar> assignedVars = ((IReturnAction) mAssertedAction).getAssignmentOfReturn().getAssignedVars();
 		Term renamedFormula = renameVarsToPrimedConstants(assignedVars, p.getFormula());
 		
-		final String callee = mAssertedAction.getPreceedingProcedure();
+		final String callee = mAssertedAction.getPrecedingProcedure();
 		final Set<IProgramVar> modifiableGlobalsCallee = mModifiableGlobalVariableManager.
 				getModifiedBoogieVars(callee);
 		

@@ -175,8 +175,8 @@ public class CDTParser implements ISource {
 		// cprep.addMacroDefinition(key.toCharArray(), value.toCharArray());
 		// }
 
-		final GCCParserExtensionConfiguration p_config = GCCParserExtensionConfiguration.getInstance();
-		final GNUCSourceParser parser = new GNUCSourceParser(cprep, ParserMode.COMPLETE_PARSE, log, p_config);
+		final GCCParserExtensionConfiguration parserConfig = GCCParserExtensionConfiguration.getInstance();
+		final GNUCSourceParser parser = new GNUCSourceParser(cprep, ParserMode.COMPLETE_PARSE, log, parserConfig);
 
 		// The following methods was introduced in CDT8. Before there was the
 		// following method that took a boolean parameter

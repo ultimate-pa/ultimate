@@ -32,7 +32,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.core.model.IGenerator;
@@ -55,6 +55,7 @@ public class CACSL2BoogieTranslator implements IGenerator {
 	private static final String s_PLUGIN_ID = Activator.PLUGIN_ID;
 
 	private CACSL2BoogieTranslatorObserver mObserver;
+	private ACSLObjectContainerObserver mAdditionalAnnotationObserver;
 	private ModelType mInputDefinition;
 	private IUltimateServiceProvider mServices;
 	private IToolchainStorage mStorage;
@@ -71,7 +72,9 @@ public class CACSL2BoogieTranslator implements IGenerator {
 
 	@Override
 	public void init() {
-		mObserver = new CACSL2BoogieTranslatorObserver(mServices, mStorage);
+		mAdditionalAnnotationObserver = new ACSLObjectContainerObserver();
+		mObserver = new CACSL2BoogieTranslatorObserver(mServices, mStorage, mAdditionalAnnotationObserver);
+		
 	}
 
 	@Override
@@ -85,13 +88,18 @@ public class CACSL2BoogieTranslator implements IGenerator {
 	}
 
 	@Override
-	public void setInputDefinition(ModelType graphType) {
-		mInputDefinition = graphType;
+	public void setInputDefinition(final ModelType graphType) {
+		if (!(graphType.getCreator() == "de.uni_freiburg.informatik.ultimate.ltl2aut")){
+			mInputDefinition = graphType;
+		}
 	}
 
 	@Override
 	public List<IObserver> getObservers() {
-		return Collections.singletonList((IObserver) mObserver);
+		ArrayList<IObserver> observer = new ArrayList<IObserver>();
+		observer.add(mAdditionalAnnotationObserver);
+		observer.add(mObserver);
+		return observer;
 	}
 
 	@Override
@@ -116,12 +124,12 @@ public class CACSL2BoogieTranslator implements IGenerator {
 	}
 
 	@Override
-	public void setToolchainStorage(IToolchainStorage storage) {
+	public void setToolchainStorage(final IToolchainStorage storage) {
 		mStorage = storage;
 	}
 
 	@Override
-	public void setServices(IUltimateServiceProvider services) {
+	public void setServices(final IUltimateServiceProvider services) {
 		mServices = services;
 	}
 

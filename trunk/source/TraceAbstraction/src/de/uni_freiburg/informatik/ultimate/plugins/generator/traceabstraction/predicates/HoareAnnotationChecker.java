@@ -27,6 +27,7 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -34,20 +35,21 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.MonolithicHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.HoareAnnotation;
@@ -62,22 +64,21 @@ public class HoareAnnotationChecker {
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final IHoareTripleChecker mHoareTripleChecker;
-	private final RootNode mRootNode;
+	private final BoogieIcfgContainer mRootNode;
 	private final boolean mIsInductive;
 	
 	
 
-	public HoareAnnotationChecker(IUltimateServiceProvider services, RootNode rootNode, SmtManager smtManager) {
+	public HoareAnnotationChecker(final IUltimateServiceProvider services, final BoogieIcfgContainer rootNode, final CfgSmtToolkit csToolkit) {
 		super();
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mRootNode = rootNode;
-		mHoareTripleChecker = new MonolithicHoareTripleChecker(smtManager.getManagedScript(), 
-				smtManager.getModifiableGlobals());
+		mHoareTripleChecker = new MonolithicHoareTripleChecker(csToolkit);
 		mIsInductive = cfgInductive(mRootNode);
 	}
 
-	private boolean cfgInductive(RootNode rootNode) {
+	private boolean cfgInductive(final BoogieIcfgContainer rootNode) {
 		boolean result = true;
 		// yield[0] is the number of edges whose inductiveness could be
 		// proven
@@ -89,13 +90,13 @@ public class HoareAnnotationChecker {
 		// neither proven nor refuted because there were no interpolants
 		final int[] yield = new int[4];
 
-		final List<RCFGNode> initialNodes = rootNode.getOutgoingNodes();
-		final Set<ProgramPoint> visited = new HashSet<ProgramPoint>();
-		final List<ProgramPoint> worklist = new LinkedList<ProgramPoint>();
+		final List<IcfgLocation> initialNodes = new ArrayList<>(rootNode.getEntryNodes().values());
+		final Set<BoogieIcfgLocation> visited = new HashSet<BoogieIcfgLocation>();
+		final List<BoogieIcfgLocation> worklist = new LinkedList<BoogieIcfgLocation>();
 
 		if (initialNodes != null) {
-			for (final RCFGNode initINode : initialNodes) {
-				final ProgramPoint initNode = (ProgramPoint) initINode;
+			for (final IcfgLocation initINode : initialNodes) {
+				final BoogieIcfgLocation initNode = (BoogieIcfgLocation) initINode;
 				visited.add(initNode);
 				worklist.add(initNode);
 			}
@@ -103,11 +104,11 @@ public class HoareAnnotationChecker {
 			mLogger.warn("There was no procedure with an implementation");
 		}
 		while (!worklist.isEmpty()) {
-			final ProgramPoint locNode = worklist.remove(0);
-			for (final RCFGEdge iEdge : locNode.getOutgoingEdges()) {
+			final BoogieIcfgLocation locNode = worklist.remove(0);
+			for (final IcfgEdge iEdge : locNode.getOutgoingEdges()) {
 
-				final RCFGNode iSuccLoc = iEdge.getTarget();
-				final ProgramPoint succLoc = (ProgramPoint) iSuccLoc;
+				final IcfgLocation iSuccLoc = iEdge.getTarget();
+				final BoogieIcfgLocation succLoc = (BoogieIcfgLocation) iSuccLoc;
 				if (!visited.contains(succLoc)) {
 					visited.add(succLoc);
 					worklist.add(succLoc);
@@ -131,7 +132,7 @@ public class HoareAnnotationChecker {
 					action = ((ICallAction) iEdge);
 					inductivity = mHoareTripleChecker.checkCall(sf1, (ICallAction) action, sf2);
 				} else if (iEdge instanceof Return) {
-					final ProgramPoint callerNode = ((Return) iEdge).getCallerProgramPoint();
+					final BoogieIcfgLocation callerNode = ((Return) iEdge).getCallerProgramPoint();
 					final IPredicate sfk = HoareAnnotation.getAnnotation(callerNode);
 					if (sfk == null) {
 						mLogger.warn(callerNode + " has no Hoare annotation");

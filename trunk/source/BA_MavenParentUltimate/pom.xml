@@ -1,10 +1,12 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>Ultimate</groupId>
-	<artifactId>MavenParentUltimate</artifactId>
+	<groupId>de.uni_freiburg.informatik.ultimate</groupId>
+	<artifactId>mavenparent</artifactId>
 	<version>0.0.1</version>
 	<packaging>pom</packaging>
+
+	<name>Ultimate</name>
 	<url>https://ultimate.informatik.uni-freiburg.de</url>
 	<scm>
 		<connection>scm:git:https://github.com/ultimate-pa/ultimate.git</connection>
@@ -14,12 +16,11 @@
 
 	<properties>
 		<!-- maven plugin versions -->
-		<tycho-version>0.24.0</tycho-version>
-		<sonar-version>2.7.1</sonar-version>
-		<jacoco-version>0.7.5.201505241946</jacoco-version>
+		<tycho-version>0.26.0</tycho-version>
+		<sonar-version>3.0.2</sonar-version>
+		<jacoco-version>0.7.7.201606060606</jacoco-version>
 		<m2e-version>1.0.0</m2e-version>
-		<maven-antrun-plugin-version>1.8</maven-antrun-plugin-version>
-		<coveralls-version>4.0.0</coveralls-version>
+		<coveralls-version>4.2.0</coveralls-version>
 
 		<!-- reference to workspace root -->
 		<workspaceDir>${basedir}/..</workspaceDir>
@@ -55,6 +56,7 @@
 		<sonar.java.source>1.8</sonar.java.source>
 		<sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
 		<sonar.jacoco.reportPath>${jacoco.reportDir}/jacoco.exec</sonar.jacoco.reportPath>
+		<sonar.showProfiling>true</sonar.showProfiling>
 		<!-- we currently do not use integration tests -->
 		<!-- <sonar.jacoco.itReportPath>${jacoco.reportDir}/jacoco-it.exec</sonar.jacoco.itReportPath> -->
 
@@ -62,7 +64,8 @@
 		<sonar.exclusions>
 			src/jdd/**,
 			src/net/sf/javabdd/**,
-			src/java_cup/**,
+			src/com/github/jhoenicke/javacup/**,
+			src/org/apache/commons/cli/**,
 			src/srParse/ReqLexer.java,
 			src/srParse/ReqParser.java,
 			src/srParse/ReqSymbols.java,
@@ -109,7 +112,9 @@
 			src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain/SerializeType.java,
 			src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain/SubchainType.java,
 			src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain/ToolchainListType.java,
-			src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain/ToolchainModelType.java
+			src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain/ToolchainModelType.java,
+			src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain/OptionType.java,
+			src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain/RunDefinition.java
 		</sonar.exclusions>
 
 		<!-- Exclude from sonar duplication analysis -->
@@ -189,7 +194,7 @@
 			</plugin>
 
 			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
+				<groupId>org.sonarsource.scanner.maven</groupId>
 				<artifactId>sonar-maven-plugin</artifactId>
 				<version>${sonar-version}</version>
 			</plugin>
@@ -249,6 +254,7 @@
 		<module>../BA_FeatureUltimateReqAnalyzer</module>
 		<module>../CoreRCP</module>
 		<module>../GuiRCP</module>
+		<module>../BlockEncodingV2</module>
 		<module>../BoogieModSetAnnotator</module>
 		<module>../BoogiePLParser</module>
 		<module>../BoogiePreprocessor</module>
@@ -260,11 +266,8 @@
 		<module>../JavaCup</module>
 		<module>../RCFGBuilder</module>
 		<module>../CodeCheck</module>
-		<module>../Library-log4j</module>
 		<module>../ACSLParser</module>
 		<module>../SMTSolverBridge</module>
-		<module>../Library-Batik</module>
-		<module>../Library-Jung</module>
 		<module>../CDTParser</module>
 		<module>../CDTPlugin</module>
 		<module>../CACSL2BoogieTranslator</module>
@@ -281,6 +284,11 @@
 		<module>../BlockEncoding</module>
 		<module>../BuchiAutomizer</module>
 		<module>../PEAtoBoogie</module>
+		<module>../Library-log4j</module>
+		<module>../Library-Log4j2</module>
+		<module>../Library-Disruptor</module>
+		<module>../Library-Batik</module>
+		<module>../Library-Jung</module>
 		<module>../Library-xerces</module>
 		<module>../Library-srParse</module>
 		<module>../Library-PEA</module>
@@ -290,6 +298,11 @@
 		<module>../Library-SMTLIB</module>
 		<module>../Library-LassoRanker</module>
 		<module>../Library-Automata</module>
+		<module>../Library-BoogieAST</module>
+		<module>../Library-JavaBDD</module>
+		<module>../Library-UltimateCore</module>
+		<module>../Library-UltimateModel</module>
+		<module>../Library-ApacheCommonsCLI</module>
 		<module>../BuchiProgramProduct</module>
 		<module>../LTL2aut</module>
 		<module>../ReachingDefinitions</module>
@@ -302,15 +315,11 @@
 		<module>../AbstractInterpretationV2</module>
 		<module>../AutomatonDeltaDebugger</module>
 		<module>../WitnessPrinter</module>
-		<module>../Library-BoogieAST</module>
-		<module>../Library-JavaBDD</module>
-		<module>../Library-UltimateCore</module>
-		<module>../Library-UltimateModel</module>
 		<module>../SmtParser</module>
 		<module>../SyntaxChecker</module>
 		<module>../HeapSeparator</module>
-		
 		<module>../TreeAutomizer</module>
+		<module>../UltimateDeltaDebugger</module>
 	</modules>
 
 	<profiles>
@@ -351,6 +360,9 @@
 							<includes>
 								<include>**/*.java</include>
 							</includes>
+							<excludes>
+								<exclude>**/ultimatetest/suites/**/*.java</exclude>
+							</excludes>
 						</configuration>
 					</plugin>
 
@@ -378,13 +390,22 @@
 				<!-- modules containing test utilities -->
 				<module>../Library-UltimateTest</module>
 
-				<!-- modules containing actual tests -->
+				<!-- modules containing unit tests -->
 				<module>../AbstractInterpretationV2Test</module>
 				<module>../CoreRCPTest</module>
 				<module>../Library-ModelCheckerUtilsTest</module>
 				<module>../Library-UltimateUtilTest</module>
 				<module>../Library-UltimateTestTest</module>
+				<module>../Library-SMTLIBTest</module>
+				<module>../SMTInterpolTest</module>
+				<module>../BoogiePreprocessorTest</module>
+
+				<!-- UltimateRegressionTest contains system tests that are relatively fast -->
 				<module>../UltimateRegressionTest</module>
+
+				<!-- UltimateTest contains system tests, but should not be run. It is 
+					excluded in surefire. -->
+				<module>../UltimateTest</module>
 			</modules>
 		</profile>
 
@@ -458,98 +479,15 @@
 				<!-- modules containing test utilities -->
 				<module>../Library-UltimateTest</module>
 
-				<!-- modules containing actual tests -->
+				<!-- modules containing unit tests -->
 				<module>../AbstractInterpretationV2Test</module>
 				<module>../CoreRCPTest</module>
 				<module>../Library-ModelCheckerUtilsTest</module>
 				<module>../Library-UltimateUtilTest</module>
 				<module>../Library-UltimateTestTest</module>
-				<module>../UltimateRegressionTest</module>
-			</modules>
-		</profile>
-
-		<profile>
-			<!-- The profile coveragemanual can be used to generate jacoco reports 
-				for your local machine. It is mostly used for debug purposes. -->
-			<id>coveragemanual</id>
-			<build>
-				<plugins>
-					<plugin>
-						<groupId>org.eclipse.tycho</groupId>
-						<artifactId>tycho-surefire-plugin</artifactId>
-						<version>${tycho-version}</version>
-						<configuration>
-							<providerHint>junit47</providerHint>
-							<useUIHarness>false</useUIHarness>
-							<useUIThread>false</useUIThread>
-							<reuseForks>false</reuseForks>
-							<showEclipseLog>true</showEclipseLog>
-							<threadCount>1</threadCount>
-							<failIfNoTests>false</failIfNoTests>
-							<trimStackTrace>false</trimStackTrace>
-							<!-- redirectTestOutputToFile=false is the default, but to debug strange 
-								maven/junit bugs, you may want to set it to true to have all the test output 
-								written to file -->
-							<redirectTestOutputToFile>false</redirectTestOutputToFile>
-							<!-- if you want to change the argLine, use the global property -->
-							<argLine>${tycho.testArgLine} ${coverage-argline}</argLine>
-
-							<systemProperties>
-								<svcompdir>../svcomp</svcompdir>
-							</systemProperties>
-
-							<!-- Use this for global timeouts per class -->
-							<!-- <forkedProcessTimeoutInSeconds>28800</forkedProcessTimeoutInSeconds> -->
-
-							<includes>
-								<include>**/*.java</include>
-							</includes>
-						</configuration>
-					</plugin>
-
-					<!-- Code Coverage Analysis -->
-					<plugin>
-						<groupId>org.jacoco</groupId>
-						<artifactId>jacoco-maven-plugin</artifactId>
-						<version>${jacoco-version}</version>
-						<executions>
-							<execution>
-								<goals>
-									<goal>prepare-agent</goal>
-								</goals>
-								<configuration>
-									<destFile>${sonar.jacoco.reportPath}</destFile>
-									<append>true</append>
-									<classDumpDir>${jacoco.reportDir}/classes</classDumpDir>
-									<dumpOnExit>true</dumpOnExit>
-								</configuration>
-							</execution>
-							<execution>
-								<id>default-report</id>
-								<goals>
-									<goal>report</goal>
-								</goals>
-								<configuration>
-									<dataFile>${sonar.jacoco.reportPath}</dataFile>
-									<outputDirectory>${jacoco.reportDir}/report</outputDirectory>
-								</configuration>
-							</execution>
-						</executions>
-					</plugin>
-				</plugins>
-			</build>
-
-			<modules>
-				<!-- modules containing test utilities -->
-				<module>../Library-UltimateTest</module>
-
-				<!-- modules containing actual tests -->
-				<module>../AbstractInterpretationV2Test</module>
-				<module>../CoreRCPTest</module>
-				<module>../Library-ModelCheckerUtilsTest</module>
-				<module>../Library-UltimateUtilTest</module>
-				<module>../Library-UltimateTestTest</module>
-				<module>../UltimateRegressionTest</module>
+				<module>../Library-SMTLIBTest</module>
+				<module>../SMTInterpolTest</module>
+				<module>../BoogiePreprocessorTest</module>
 			</modules>
 		</profile>
 
@@ -606,16 +544,24 @@
 			</build>
 
 			<modules>
-				<!-- modules containing test utilities -->
+			<!-- modules containing test utilities -->
 				<module>../Library-UltimateTest</module>
 
-				<!-- modules containing actual tests -->
+				<!-- modules containing unit tests -->
 				<module>../AbstractInterpretationV2Test</module>
 				<module>../CoreRCPTest</module>
 				<module>../Library-ModelCheckerUtilsTest</module>
 				<module>../Library-UltimateUtilTest</module>
 				<module>../Library-UltimateTestTest</module>
+				<module>../Library-SMTLIBTest</module>
+				<module>../SMTInterpolTest</module>
+				<module>../BoogiePreprocessorTest</module>
+
+				<!-- UltimateRegressionTest contains system tests that are relatively fast -->
 				<module>../UltimateRegressionTest</module>
+
+				<!-- UltimateTest contains system tests, but should not be run. It is 
+					excluded in surefire. -->
 				<module>../UltimateTest</module>
 			</modules>
 		</profile>

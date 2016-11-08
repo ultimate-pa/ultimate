@@ -22,9 +22,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE JungVisualization plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE JungVisualization plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE JungVisualization plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.graph;
@@ -94,7 +94,7 @@ public class GraphProperties {
 	 */
 	@SuppressWarnings("unchecked")
 	public static void setGraphProperties(final VisualizationViewer<VisualizationNode, VisualizationEdge> vv,
-			Graph<VisualizationNode, VisualizationEdge> graph, VisualizationNode rootNode,
+			final Graph<VisualizationNode, VisualizationEdge> graph, final VisualizationNode rootNode,
 			final ArrayList<LinkedHashSet<Object>> errorTraces) {
 		final RcpPreferenceProvider store = new RcpPreferenceProvider(Activator.PLUGIN_ID);
 		final Font font = vv.getFont();
@@ -110,7 +110,7 @@ public class GraphProperties {
 			if (vertexShapePreference.equalsIgnoreCase("RoundRectangle")) {
 				vertexShapeTransformer = new Transformer<VisualizationNode, Shape>() {
 					@Override
-					public Shape transform(VisualizationNode n) {
+					public Shape transform(final VisualizationNode n) {
 						final Rectangle2D bounds = font.getStringBounds(n.toString(), frc);
 						final int vertexShapeLength = (int) bounds.getWidth() + 2;
 						final Shape vertexShape = new RoundRectangle2D.Float(-vertexShapeLength / 2, -10, vertexShapeLength,
@@ -121,7 +121,7 @@ public class GraphProperties {
 			} else if (vertexShapePreference.equalsIgnoreCase("Rectangle")) {
 				vertexShapeTransformer = new Transformer<VisualizationNode, Shape>() {
 					@Override
-					public Shape transform(VisualizationNode n) {
+					public Shape transform(final VisualizationNode n) {
 						final Rectangle2D bounds = font.getStringBounds(n.toString(), frc);
 						final int vertexShapeLength = (int) bounds.getWidth() + 2;
 						final Shape vertexShape = new Rectangle(-vertexShapeLength / 2, -10, vertexShapeLength, 20);
@@ -131,7 +131,7 @@ public class GraphProperties {
 			} else {
 				vertexShapeTransformer = new EllipseVertexShapeTransformer<VisualizationNode>() {
 					@Override
-					public Shape transform(VisualizationNode n) {
+					public Shape transform(final VisualizationNode n) {
 						final Rectangle2D bounds = font.getStringBounds(n.toString(), frc);
 						final int vertexShapeLength = (int) bounds.getWidth() + 2;
 						final Shape vertexShape = new Ellipse2D.Float(-vertexShapeLength / 2, -10, vertexShapeLength + 3, 24);
@@ -143,7 +143,6 @@ public class GraphProperties {
 			vv.getRenderContext().setVertexShapeTransformer(vertexShapeTransformer);
 			vv.getRenderer().getVertexLabelRenderer().setPosition(Renderer.VertexLabel.Position.CNTR);
 		}
-		;
 
 		// set node coloring
 		RGB rgb = StringConverter.asRGB(store.getString(JungPreferenceValues.LABEL_COLOR_NODE));
@@ -159,7 +158,7 @@ public class GraphProperties {
 		vv.getRenderContext().setVertexFillPaintTransformer(new Transformer<VisualizationNode, Paint>() {
 
 			@Override
-			public Paint transform(VisualizationNode arg0) {
+			public Paint transform(final VisualizationNode arg0) {
 				if (vv.getPickedVertexState().isPicked(arg0)) {
 					return nodeFillColor;
 				} else {
@@ -172,7 +171,7 @@ public class GraphProperties {
 		vv.getRenderContext().setEdgeDrawPaintTransformer(new Transformer<VisualizationEdge, Paint>() {
 
 			@Override
-			public Paint transform(VisualizationEdge arg0) {
+			public Paint transform(final VisualizationEdge arg0) {
 				if (vv.getPickedEdgeState().isPicked(arg0)) {
 					return Color.ORANGE;
 				} else if (isPartOfCex(arg0.getBacking())) {
@@ -182,7 +181,7 @@ public class GraphProperties {
 				}
 			}
 
-			private boolean isPartOfCex(Object backing) {
+			private boolean isPartOfCex(final Object backing) {
 				for (final LinkedHashSet<Object> trace : errorTraces) {
 					if (trace.contains(backing)) {
 						return true;
@@ -199,7 +198,7 @@ public class GraphProperties {
 		case Text:
 			vv.getRenderContext().setEdgeLabelTransformer(new ToStringLabeller<VisualizationEdge>() {
 				@Override
-				public String transform(VisualizationEdge edge) {
+				public String transform(final VisualizationEdge edge) {
 					return edge.toString();
 				}
 			});
@@ -207,7 +206,7 @@ public class GraphProperties {
 		case Hashcode:
 			vv.getRenderContext().setEdgeLabelTransformer(new ToStringLabeller<VisualizationEdge>() {
 				@Override
-				public String transform(VisualizationEdge edge) {
+				public String transform(final VisualizationEdge edge) {
 					return Integer.toString(edge.hashCode());
 				}
 			});

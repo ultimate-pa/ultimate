@@ -55,7 +55,7 @@ public class QuotedObject {
 		return mValue;
 	}
 
-	private static String quoteString(String str) {
+	private static String quoteString20(String str) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append('\"');
 		for (int i = 0; i < str.length(); i++) {
@@ -74,14 +74,33 @@ public class QuotedObject {
 		}
 		return sb.append('\"').toString();
 	}
+	
+	private static String quoteString25(String str) {
+		final StringBuilder sb = new StringBuilder();
+		sb.append('\"');
+		for (int i = 0; i < str.length(); i++) {
+			final char c = str.charAt(i);
+			if (c == '\"') {
+				sb.append("\"\"");
+			} else {
+				sb.append(c);
+			}
+		}
+		return sb.append('\"').toString();
+	}
 
 	/**
-	 * Returns the SMTLIB 2 representation of the string.  This adds the
+	 * Returns the SMTLIB 2.5 representation of the string.  This adds the
 	 * quotes and converts escape sequences appropriately.
-	 * @return the SMTLIB 2 compatible string representation.
+	 * @return the SMTLIB 2.5 compatible string representation.
 	 */
 	@Override
 	public String toString() {
-		return quoteString(mValue.toString());
+		return toString(true);
+	}
+	
+	public String toString(boolean version25) {
+		return version25 ? quoteString25(mValue.toString())
+				: quoteString20(mValue.toString());
 	}
 }

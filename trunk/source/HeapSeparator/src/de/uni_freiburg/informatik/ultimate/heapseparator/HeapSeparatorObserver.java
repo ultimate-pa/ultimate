@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BuchiProgramProduct plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE BuchiProgramProduct plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE BuchiProgramProduct plug-in grant you additional permission
  * to convey the resulting work.
  */
 
@@ -37,14 +37,13 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.walker.ObserverDispatcher;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.walker.ObserverDispatcherSequential;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.walker.RCFGWalkerBreadthFirst;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 
 public class HeapSeparatorObserver implements IUnmanagedObserver {
 
@@ -63,7 +62,7 @@ public class HeapSeparatorObserver implements IUnmanagedObserver {
 
 	@Override
 	public void finish() throws Throwable {
-		return;
+		// do nothing
 	}
 
 	@Override
@@ -84,9 +83,9 @@ public class HeapSeparatorObserver implements IUnmanagedObserver {
 	@Override
 	public boolean process(final IElement root) throws Throwable {
 		
-		mScript = ((RootNode) root).getRootAnnot().getManagedScript();
+		mScript = ((BoogieIcfgContainer) root).getCfgSmtToolkit().getManagedScript();
 //		testSetup(((RootNode) root).getOutgoingEdges().get(0).getTarget());
-		testSetup(((RootNode) root).getRootAnnot());
+		testSetup(((BoogieIcfgContainer) root));
 		
 		
 		final ObserverDispatcher od = new ObserverDispatcherSequential(mLogger);
@@ -95,61 +94,61 @@ public class HeapSeparatorObserver implements IUnmanagedObserver {
 
 		final HeapSepRcfgVisitor hsv = new HeapSepRcfgVisitor(mLogger, mOldArrayToPointerToNewArray, mScript);
 		walker.addObserver(hsv);
-		walker.run((RCFGNode) root);
+		walker.run((IcfgLocation) root);
 		
 		return false;
 	}
 	
 	
-	void testSetup(final RootAnnot ra) {
+	void testSetup(final BoogieIcfgContainer ra) {
 		
 		final IProgramVar m = ra.getBoogie2SMT().getBoogie2SmtSymbolTable().getBoogieVar(
-				"m", 
-				new DeclarationInformation(StorageClass.LOCAL, "p"), 
+				"m",
+				new DeclarationInformation(StorageClass.LOCAL, "p"),
 				false);
 		
 		final IProgramVar p = ra.getBoogie2SMT().getBoogie2SmtSymbolTable().getBoogieVar(
-				"p", 
-				new DeclarationInformation(StorageClass.LOCAL, "p"), 
+				"p",
+				new DeclarationInformation(StorageClass.LOCAL, "p"),
 				false);
 
 		final IProgramVar q = ra.getBoogie2SMT().getBoogie2SmtSymbolTable().getBoogieVar(
-				"q", 
-				new DeclarationInformation(StorageClass.LOCAL, "p"), 
+				"q",
+				new DeclarationInformation(StorageClass.LOCAL, "p"),
 				false);
 
 		final IProgramVar i = ra.getBoogie2SMT().getBoogie2SmtSymbolTable().getBoogieVar(
-				"#i", 
-				new DeclarationInformation(StorageClass.LOCAL, "p"), 
+				"#i",
+				new DeclarationInformation(StorageClass.LOCAL, "p"),
 				false);
 
 		final IProgramVar j = ra.getBoogie2SMT().getBoogie2SmtSymbolTable().getBoogieVar(
-				"#j", 
-				new DeclarationInformation(StorageClass.LOCAL, "p"), 
+				"#j",
+				new DeclarationInformation(StorageClass.LOCAL, "p"),
 				false);
 		
 		final IProgramVar m1 = ra.getBoogie2SMT().getBoogie2SmtSymbolTable().getBoogieVar(
-				"m1", 
-				new DeclarationInformation(StorageClass.LOCAL, "p"), 
+				"m1",
+				new DeclarationInformation(StorageClass.LOCAL, "p"),
 				false);
 
 		final IProgramVar m2 = ra.getBoogie2SMT().getBoogie2SmtSymbolTable().getBoogieVar(
-				"m2", 
-				new DeclarationInformation(StorageClass.LOCAL, "p"), 
+				"m2",
+				new DeclarationInformation(StorageClass.LOCAL, "p"),
 				false);
 	
 		
-//		BoogieVar m1 = new LocalBoogieVar("m1", "p", 
-//				//m.getIType(), 
+//		BoogieVar m1 = new LocalBoogieVar("m1", "p",
+//				//m.getIType(),
 //				null,
 //				mscript.variable("m1_tv", m.getTermVariable().getSort()),
 //				null,null
 ////				(ApplicationTerm) mscript.term("m1_dc"),
 ////				(ApplicationTerm) mscript.term("m1_pc")
 //				);
-//		
-//		BoogieVar m2 = new LocalBoogieVar("m2", "p", 
-//				//m.getIType(), 
+//
+//		BoogieVar m2 = new LocalBoogieVar("m2", "p",
+//				//m.getIType(),
 //				null,
 //				mscript.variable("m2_tv", m.getTermVariable().getSort()),
 //				null,null

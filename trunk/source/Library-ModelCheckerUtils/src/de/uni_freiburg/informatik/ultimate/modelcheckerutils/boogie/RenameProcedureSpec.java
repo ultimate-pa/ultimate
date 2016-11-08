@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
@@ -51,12 +51,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
  * {@code procedure foo(x:int) returns (y:bool);}
  */
 public class RenameProcedureSpec extends BoogieTransformer {
-	HashMap<String, String> renaming;
+	HashMap<String, String> mRenaming;
 	
-	public RenameProcedureSpec() {
-	}
-	
-	public void buildRenaming(VarList[] specVars, VarList[] implVars) {
+	public void buildRenaming(final VarList[] specVars, final VarList[] implVars) {
 		int j1 = 0, j2 = 0;
 		String[] implIds = new String[0];
 
@@ -74,23 +71,22 @@ public class RenameProcedureSpec extends BoogieTransformer {
 				assert specVars[i1].getType().getBoogieType()
 					.equals(implVars[j1-1].getType().getBoogieType());
 				if (!specIds[i2].equals(implIds[j2])) {
-					renaming.put(specIds[i2], implIds[j2]);
+					mRenaming.put(specIds[i2], implIds[j2]);
 				}
 				j2++;
 			}
 		}
-		return;
-	}		
+	}
 	
-	public Specification[] renameSpecs(Procedure proc, Procedure impl) {
+	public Specification[] renameSpecs(final Procedure proc, final Procedure impl) {
 		final Specification[] oldSpecs = proc.getSpecification();
 		final Specification[] specs = oldSpecs.clone();
 		boolean changed = false;
 
 		/* Put the input variables into renaming */
-		renaming = new HashMap<String,String>();
+		mRenaming = new HashMap<>();
 		buildRenaming(proc.getInParams(), impl.getInParams());
-		if (renaming.size() > 0) {
+		if (!mRenaming.isEmpty()) {
 			/* Process the requires specifications only on in variables */
 			for (int i = 0; i < specs.length; i++) {
 				if (specs[i] instanceof RequiresSpecification) {
@@ -104,7 +100,7 @@ public class RenameProcedureSpec extends BoogieTransformer {
 
 		/* Now add the output variables to renaming */
 		buildRenaming(proc.getOutParams(), impl.getOutParams());
-		if (renaming.size() > 0) {
+		if (!mRenaming.isEmpty()) {
 			/* Process the ensures specifications only on in and out variables */
 			for (int i = 0; i < specs.length; i++) {
 				if (specs[i] instanceof EnsuresSpecification) {
@@ -115,26 +111,25 @@ public class RenameProcedureSpec extends BoogieTransformer {
 				}
 			}
 		}
-		renaming = null;
+		mRenaming = null;
 		return changed ? specs : oldSpecs;
 	}
 	
 	@Override
-	public Expression processExpression(Expression expr) {
+	public Expression processExpression(final Expression expr) {
 		/* TODO: handle name conflicts in quantifiers */
 		if (expr instanceof IdentifierExpression) {
 			final IdentifierExpression id = (IdentifierExpression) expr;
-			final String newName = renaming.get(id.getIdentifier());
+			final String newName = mRenaming.get(id.getIdentifier());
 			if (newName != null) {
 			    final IdentifierExpression newExpr = new IdentifierExpression(
-			    		expr.getLocation(), expr.getType(), newName, 
+			    		expr.getLocation(), expr.getType(), newName,
 			    		id.getDeclarationInformation());
 			    ModelUtils.copyAnnotations(expr, newExpr);
 			    return newExpr;
 			}
 			return expr;
-		} else {
-			return super.processExpression(expr);
 		}
+		return super.processExpression(expr);
 	}
 }

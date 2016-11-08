@@ -31,8 +31,8 @@ import java.util.LinkedList;
 import java.util.Queue;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 
 /**
@@ -45,8 +45,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
  */
 public class RCFGWalkerBreadthFirst extends RCFGWalker
 {
-	protected Queue<RCFGEdge> mRemainingEdges;
-	protected HashSet<RCFGEdge> mProcessedEdges;
+	protected Queue<IcfgEdge> mRemainingEdges;
+	protected HashSet<IcfgEdge> mProcessedEdges;
 
 	public RCFGWalkerBreadthFirst(ObserverDispatcher dispatcher, ILogger logger)
 	{
@@ -59,7 +59,7 @@ public class RCFGWalkerBreadthFirst extends RCFGWalker
 	public void startFrom(RootNode node)
 	{
 		level(node);
-		for (final RCFGEdge edge : node.getOutgoingEdges()) {
+		for (final IcfgEdge edge : node.getOutgoingEdges()) {
 			mRemainingEdges.add(edge);
 		}
 		processMethods();
@@ -72,18 +72,18 @@ public class RCFGWalkerBreadthFirst extends RCFGWalker
 				return;
 			}
 			
-			final RCFGEdge currentEdge = mRemainingEdges.poll();
+			final IcfgEdge currentEdge = mRemainingEdges.poll();
 			level(currentEdge);
 			mProcessedEdges.add(currentEdge);
 
-			final RCFGNode currentNode = currentEdge.getTarget();
+			final IcfgLocation currentNode = currentEdge.getTarget();
 			level(currentNode);
 			
 			if(mDispatcher.abortCurrentBranch()){
 				continue;
 			}
 
-			for (final RCFGEdge nextEdge : currentNode.getOutgoingEdges()) {
+			for (final IcfgEdge nextEdge : currentNode.getOutgoingEdges()) {
 				if (!mProcessedEdges.contains(nextEdge)) {
 					mRemainingEdges.add(nextEdge);
 				}

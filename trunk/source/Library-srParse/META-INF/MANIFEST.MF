@@ -4,7 +4,7 @@ Bundle-Name: Library-srParse
 Bundle-SymbolicName: Library-srParse
 Bundle-Version: 1.0.0
 Export-Package: srParse;
-  uses:="java_cup.runtime,
+  uses:="com.github.jhoenicke.javacup.runtime,
    org.antlr.runtime.debug,
    pea,
    pea.reqCheck,

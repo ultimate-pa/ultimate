@@ -27,7 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.annotations;
 
 
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 
 public class RCFGUnrollWalkerAnnotation extends IRSDependenciesAnnotation {
 
@@ -37,9 +37,9 @@ public class RCFGUnrollWalkerAnnotation extends IRSDependenciesAnnotation {
 	
 	private boolean mIsLoopEntry;
 	private boolean mIsLoopExit;
-	private RCFGNode mHonda;
+	private IcfgLocation mHonda;
 
-	public RCFGUnrollWalkerAnnotation(RCFGNode honda, boolean isEntry,
+	public RCFGUnrollWalkerAnnotation(IcfgLocation honda, boolean isEntry,
 			boolean isExit) {
 		setLoopEntry(isEntry);
 		setIsLoopExit(isExit);
@@ -67,12 +67,12 @@ public class RCFGUnrollWalkerAnnotation extends IRSDependenciesAnnotation {
 	}
 
 
-	public RCFGNode getHonda() {
+	public IcfgLocation getHonda() {
 		return mHonda;
 	}
 
 
-	public void setHonda(RCFGNode mHonda) {
+	public void setHonda(IcfgLocation mHonda) {
 		this.mHonda = mHonda;
 	}
 

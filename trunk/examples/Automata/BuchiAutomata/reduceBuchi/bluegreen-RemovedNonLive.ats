@@ -16,7 +16,7 @@ assert(!buchiAccepts(buchiReduce(bluegreen_RemovedNonLive4), [,]));
 // Finished reduceBuchi Result  has 38 states, 115 internal transitions
 
 
-//assert(!buchiAccepts(minimizeDFA(bluegreen_RemovedNonLive4), [,]));
+//assert(!buchiAccepts(minimizeDfaTable(bluegreen_RemovedNonLive4), [,]));
 
 NestedWordAutomaton bluegreen_RemovedNonLive1 = (
 	callAlphabet = {},

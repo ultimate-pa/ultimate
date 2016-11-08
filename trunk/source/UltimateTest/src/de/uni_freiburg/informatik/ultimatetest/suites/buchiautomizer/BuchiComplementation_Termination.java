@@ -130,7 +130,7 @@ public class BuchiComplementation_Termination extends AbstractBuchiAutomizerTest
 //			"examples/lassos/arrays",
 //			"examples/termination/svcomp-sorted/success/",
 //			"examples/programs/quantifier",
-//			"examples/programs/recursivePrograms",
+//			"examples/programs/recursive/regression",
 //			"examples/programs/toy"
 //			"examples/programs/termination/toPLDI",
 //			"examples/programs/termination/",

@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Core, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Core grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Core grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.core.coreplugin.services;
@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage
  * @author dietsch@informatik.uni-freiburg.de
  *
  */
-public class ResultService implements IStorable, IResultService {
+public final class ResultService implements IStorable, IResultService {
 
 	private final HashMap<String, List<IResult>> mResults;
 	private static final String sKey = "ResultService";
@@ -62,7 +62,7 @@ public class ResultService implements IStorable, IResultService {
 	}
 
 	@Override
-	public void reportResult(String id, IResult result) {
+	public void reportResult(final String id, final IResult result) {
 		if (result instanceof IResultWithLocation) {
 			if (((IResultWithLocation) result).getLocation() == null) {
 				throw new IllegalArgumentException("Location is null");
@@ -82,7 +82,7 @@ public class ResultService implements IStorable, IResultService {
 		mResults.put(id, list);
 	}
 
-	static IResultService getService(IToolchainStorage storage) {
+	static IResultService getService(final IToolchainStorage storage) {
 		assert storage != null;
 		IStorable rtr = storage.getStorable(sKey);
 		if (rtr == null) {
@@ -94,7 +94,7 @@ public class ResultService implements IStorable, IResultService {
 	
 	@Override
 	public String toString() {
-		if(mResults.size() == 0){
+		if (mResults.isEmpty()){
 			return "No Results";
 		}
 		return mResults.toString();

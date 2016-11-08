@@ -143,7 +143,7 @@ public abstract class Xnf extends Nnf {
 				}
 				if (!mServices.getProgressMonitorService().continueProcessing()) {
 					throw new ToolchainCanceledException(this.getClass(),
-							"XNF transformer was applied to  " + inputSize + " " + innerJunctionName());
+							"transforming " + inputSize + " " + innerJunctionName());
 				}
 			}
 			

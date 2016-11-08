@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
 /**
  * Edge in a recursive control flow graph that represents a sequence of
@@ -77,19 +77,19 @@ public class StatementSequence extends CodeBlock implements IInternalAction {
 	private final static String[] s_AttribFields = { "Statements", "PrettyPrintedStatements", "TransitionFormula",
 			"OccurenceInCounterexamples" };
 
-	StatementSequence(int serialNumber, ProgramPoint source, ProgramPoint target, Statement st, ILogger logger) {
+	StatementSequence(int serialNumber, BoogieIcfgLocation source, BoogieIcfgLocation target, Statement st, ILogger logger) {
 		super(serialNumber, source, target, logger);
 		mOrigin = Origin.IMPLEMENTATION;
 		addStatement(st);
 	}
 
-	StatementSequence(int serialNumber, ProgramPoint source, ProgramPoint target, Statement st, Origin origin, ILogger logger) {
+	StatementSequence(int serialNumber, BoogieIcfgLocation source, BoogieIcfgLocation target, Statement st, Origin origin, ILogger logger) {
 		super(serialNumber, source, target, logger);
 		mOrigin = origin;
 		addStatement(st);
 	}
 
-	StatementSequence(int serialNumber, ProgramPoint source, ProgramPoint target, List<Statement> stmts, Origin origin,
+	StatementSequence(int serialNumber, BoogieIcfgLocation source, BoogieIcfgLocation target, List<Statement> stmts, Origin origin,
 			ILogger logger) {
 		super(serialNumber, source, target, logger);
 		mStatements.addAll(stmts);
@@ -153,7 +153,7 @@ public class StatementSequence extends CodeBlock implements IInternalAction {
 	}
 
 	@Override
-	public TransFormula getTransformula() {
+	public UnmodifiableTransFormula getTransformula() {
 		return getTransitionFormula();
 	}
 

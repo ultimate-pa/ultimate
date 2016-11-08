@@ -41,8 +41,8 @@ import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 public class InterpolationTest_Memsafety_Kojak extends AbstractTraceAbstractionTestSuite {
 
 	/** Limit the number of files per directory. */
-	private static int mFilesPerDirectoryLimit = Integer.MAX_VALUE;
-//	private static int mFilesPerDirectoryLimit = 5;
+//	private static int mFilesPerDirectoryLimit = Integer.MAX_VALUE;
+	private static int mFilesPerDirectoryLimit = 1;
 	
 	private static final DirectoryFileEndingsPair[] mDirectoryFileEndingsPairs_Deref = {
 		/*** Category 1. Arrays ***/
@@ -85,17 +85,17 @@ public class InterpolationTest_Memsafety_Kojak extends AbstractTraceAbstractionT
 //		"automizer/interpolation/DerefFreeMemtrack-32bit-Z3-FPandBP-Integer.epf",
 //		"automizer/interpolation/DerefFreeMemtrack-32bit-Z3-NestedInterpolation-Integer.epf",
 		
-		"kojak/interpolation/DerefFreeMemtrack-32bit-iZ3-NestedInterpolation-Integer.epf",
-		"kojak/interpolation/DerefFreeMemtrack-32bit-Princess-TreeInterpolation-Integer.epf",
-		"kojak/interpolation/DerefFreeMemtrack-32bit-SMTInterpol-TreeInterpolation-Integer.epf",
-		"kojak/interpolation/DerefFreeMemtrack-32bit-Z3-FP-Integer.epf",
-		"kojak/interpolation/DerefFreeMemtrack-32bit-Z3-FP-LV-Integer.epf",
-		"kojak/interpolation/DerefFreeMemtrack-32bit-Z3-FP-UC-Integer.epf",
-		"kojak/interpolation/DerefFreeMemtrack-32bit-Z3-FP-UC-LV-Integer.epf",
-		"kojak/interpolation/DerefFreeMemtrack-32bit-Z3-BP-Integer.epf",
-		"kojak/interpolation/DerefFreeMemtrack-32bit-Z3-BP-LV-Integer.epf",
-		"kojak/interpolation/DerefFreeMemtrack-32bit-Z3-BP-UC-Integer.epf",
-		"kojak/interpolation/DerefFreeMemtrack-32bit-Z3-BP-UC-LV-Integer.epf",
+		"kojak/interpolation/memsafety/DerefFreeMemtrack-32bit-iZ3-NestedInterpolation-Integer.epf",
+		"kojak/interpolation/memsafety/DerefFreeMemtrack-32bit-Princess-TreeInterpolation-Integer.epf",
+		"kojak/interpolation/memsafety/DerefFreeMemtrack-32bit-SMTInterpol-TreeInterpolation-Integer.epf",
+		"kojak/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-FP-Integer.epf",
+		"kojak/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-FP-LV-Integer.epf",
+		"kojak/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-FP-UC-Integer.epf",
+		"kojak/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-FP-UC-LV-Integer.epf",
+		"kojak/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-BP-Integer.epf",
+		"kojak/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-BP-LV-Integer.epf",
+		"kojak/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-BP-UC-Integer.epf",
+		"kojak/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-BP-UC-LV-Integer.epf",
 	};
 	
 	

@@ -34,11 +34,12 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.InstanceCounting;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LinearInequality;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationArgumentSynthesizer;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfunctions.RankingFunction;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 
 /**
@@ -60,7 +61,7 @@ public abstract class RankingTemplate extends InstanceCounting {
 	
 	protected Script mscript = null;
 	protected TerminationArgumentSynthesizer mtas = null;
-	protected Collection<RankVar> mvariables = null;
+	protected Collection<IProgramVar> mvariables = null;
 	
 	private boolean minitialized = false;
 	
@@ -114,7 +115,7 @@ public abstract class RankingTemplate extends InstanceCounting {
 	 *          invariants.
 	 */
 	public abstract List<List<LinearInequality>> getConstraints(
-			Map<RankVar, Term> inVars, Map<RankVar, Term> outVars);
+			Map<IProgramVar, TermVariable> inVars, Map<IProgramVar, TermVariable> outVars);
 	
 	/**
 	 * Returns a string for every constraint conjunct for annotating

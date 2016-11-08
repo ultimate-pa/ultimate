@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE AbstractInterpretationV2 plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission
  * to convey the resulting work.
  */
 
@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgStatementExtractor;
@@ -56,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractInterpreter;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence.Origin;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.TransFormulaAdder;
 
@@ -75,7 +75,7 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 
 	private final ILogger mLogger;
 	private final Boogie2SMT mBoogie2Smt;
-	private final SimplicationTechnique mSimplificationTechnique = SimplicationTechnique.SIMPLIFY_DDA;
+	private final SimplificationTechnique mSimplificationTechnique = SimplificationTechnique.SIMPLIFY_DDA;
 	private final XnfConversionTechnique mXnfConversionTechnique = XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 	private final Script mScript;
 	private final CodeBlockFactory mCodeBlockFactory;
@@ -89,12 +89,12 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 	 * @param logger
 	 *            The logger.
 	 * @param rootAnnotation
-	 *            The {@link RootAnnot} node from the {@link AbstractInterpreter}.
+	 *            The {@link BoogieIcfgContainer} node from the {@link AbstractInterpreter}.
 	 */
-	protected CompoundDomainPostOperator(final IUltimateServiceProvider services, final RootAnnot rootAnnotation) {
+	protected CompoundDomainPostOperator(final IUltimateServiceProvider services, final BoogieIcfgContainer rootAnnotation) {
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mBoogie2Smt = rootAnnotation.getBoogie2SMT();
-		mScript = rootAnnotation.getScript();
+		mScript = rootAnnotation.getCfgSmtToolkit().getManagedScript().getScript();
 		mCodeBlockFactory = rootAnnotation.getCodeBlockFactory();
 		mStatementExtractor = new RcfgStatementExtractor();
 		mTransformulaBuilder = new TransFormulaAdder(mBoogie2Smt, services);
@@ -110,18 +110,18 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 	public List<CompoundDomainState> apply(final CompoundDomainState oldstate, final CodeBlock transition) {
 		final List<CompoundDomainState> returnStates = new ArrayList<>();
 
-		final List<IAbstractState<?, CodeBlock>> states = oldstate.getAbstractStatesList();
+		final List<IAbstractState<?, CodeBlock, IBoogieVar>> states = oldstate.getAbstractStatesList();
 		final List<IAbstractDomain> domains = oldstate.getDomainList();
 		assert domains.size() == states.size();
 
 		final List<CodeBlock> transitionList = createTransitionList(transition, states);
 		assert transitionList.size() == domains.size();
 
-		final List<IAbstractState<?, CodeBlock>> resultingStates = new ArrayList<>();
+		final List<IAbstractState<?, CodeBlock, IBoogieVar>> resultingStates = new ArrayList<>();
 
 		for (int i = 0; i < domains.size(); i++) {
 			final IAbstractDomain currentDomain = domains.get(i);
-			final IAbstractState<?, CodeBlock> currentPreState = states.get(i);
+			final IAbstractState<?, CodeBlock, IBoogieVar> currentPreState = states.get(i);
 			final CodeBlock currentTrans = transitionList.get(i);
 
 			final List<IAbstractState> result =
@@ -169,7 +169,7 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 	 *         Boogie2SMT))} is satisfiable, <code>false</code> otherwise.
 	 */
 	private boolean checkSat(final CompoundDomainState state) {
-		final Term stateTerm = state.getTerm(mScript, mBoogie2Smt);
+		final Term stateTerm = state.getTerm(mScript);
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug(new StringBuilder().append("Checking state term for satisfiability: ").append(stateTerm)
 					.toString());
@@ -178,11 +178,7 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug(new StringBuilder().append("Result of satisfiability check is: ").append(result).toString());
 		}
-		if (result == LBool.UNSAT) {
-			return false;
-		}
-
-		return true;
+		return result != LBool.UNSAT;
 	}
 
 	/**
@@ -195,7 +191,7 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 	 * @return
 	 */
 	private List<CodeBlock> createTransitionList(final CodeBlock transition,
-			final List<IAbstractState<?, CodeBlock>> states) {
+			final List<IAbstractState<?, CodeBlock, IBoogieVar>> states) {
 
 		final List<CodeBlock> returnList = new ArrayList<>();
 
@@ -226,7 +222,7 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 	 * @param transition
 	 * @return
 	 */
-	private CodeBlock createBlockWithoutState(final List<IAbstractState<?, CodeBlock>> states,
+	private CodeBlock createBlockWithoutState(final List<IAbstractState<?, CodeBlock, IBoogieVar>> states,
 			final int index, final CodeBlock transition) {
 
 		assert !states.isEmpty();
@@ -236,9 +232,9 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 			if (i == index) {
 				continue;
 			}
-			final IAbstractState<?, CodeBlock> state = states.get(i);
+			final IAbstractState<?, CodeBlock, IBoogieVar> state = states.get(i);
 
-			final Term stateTerm = state.getTerm(mScript, mBoogie2Smt);
+			final Term stateTerm = state.getTerm(mScript);
 			assumeTerm = assumeTerm == null ? stateTerm : mScript.term("and", assumeTerm, stateTerm);
 		}
 
@@ -253,7 +249,7 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 		stmtLists.addAll(mStatementExtractor.process(transition));
 		final CodeBlock result =
 				mCodeBlockFactory.constructStatementSequence(null, null, stmtLists, Origin.IMPLEMENTATION);
-		mTransformulaBuilder.addTransitionFormulas(result, transition.getPreceedingProcedure(), mXnfConversionTechnique, mSimplificationTechnique);
+		mTransformulaBuilder.addTransitionFormulas(result, transition.getPrecedingProcedure(), mXnfConversionTechnique, mSimplificationTechnique);
 
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug(AbsIntPrefInitializer.INDENT + " Created new transition for domain " + index);
@@ -269,8 +265,8 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 			final CompoundDomainState stateAfterLeaving, final CodeBlock transition) {
 		final List<CompoundDomainState> returnStates = new ArrayList<>();
 
-		final List<IAbstractState<?, CodeBlock>> beforeStates = stateBeforeLeaving.getAbstractStatesList();
-		final List<IAbstractState<?, CodeBlock>> afterStates = stateAfterLeaving.getAbstractStatesList();
+		final List<IAbstractState<?, CodeBlock, IBoogieVar>> beforeStates = stateBeforeLeaving.getAbstractStatesList();
+		final List<IAbstractState<?, CodeBlock, IBoogieVar>> afterStates = stateAfterLeaving.getAbstractStatesList();
 		final List<IAbstractDomain> domainsBefore = stateBeforeLeaving.getDomainList();
 		final List<IAbstractDomain> domainsAfter = stateAfterLeaving.getDomainList();
 
@@ -278,7 +274,7 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 		assert beforeStates.size() == afterStates.size();
 		assert domainsBefore.size() == beforeStates.size();
 
-		final List<IAbstractState<?, CodeBlock>> resultingStates = new ArrayList<>();
+		final List<IAbstractState<?, CodeBlock, IBoogieVar>> resultingStates = new ArrayList<>();
 
 		for (int i = 0; i < domainsBefore.size(); i++) {
 			final List<IAbstractState> result = applyInternally(beforeStates.get(i), afterStates.get(i),
@@ -305,13 +301,13 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 		return returnStates;
 	}
 
-	private static List<IAbstractState> applyInternally(final IAbstractState<?, CodeBlock> currentState,
+	private static List<IAbstractState> applyInternally(final IAbstractState<?, CodeBlock, IBoogieVar> currentState,
 			final IAbstractPostOperator postOperator, final CodeBlock transition) {
 		return postOperator.apply(currentState, transition);
 	}
 
-	private List<IAbstractState> applyInternally(final IAbstractState<?, CodeBlock> first,
-			final IAbstractState<?, CodeBlock> second, final IAbstractPostOperator postOperator,
+	private List<IAbstractState> applyInternally(final IAbstractState<?, CodeBlock, IBoogieVar> first,
+			final IAbstractState<?, CodeBlock, IBoogieVar> second, final IAbstractPostOperator postOperator,
 			final CodeBlock transition) {
 		return postOperator.apply(first, second, transition);
 	}

@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE SpaceExParser plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE SpaceExParser plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE SpaceExParser plug-in grant you additional permission
  * to convey the resulting work.
  */
 
@@ -43,10 +43,10 @@ public class SystemBind {
 	private final Map<String, String> mVariableMap;
 	private final Map<String, Double> mConstantMap;
 	
-	private double mXPosition;
-	private double mYPosition;
+	private final double mXPosition;
+	private final double mYPosition;
 
-	protected SystemBind(BindType bind, ILogger logger) {
+	protected SystemBind(final BindType bind, final ILogger logger) {
 		mBind = bind;
 		mBindName = bind.getAs();
 		mLogger = logger;
@@ -57,8 +57,7 @@ public class SystemBind {
 		mXPosition = bind.getX();
 		mYPosition = bind.getY();
 
-		for (final de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.BindType.Map map : bind
-		        .getMap()) {
+		for (final BindType.Map map : bind.getMap()) {
 
 			final String key = map.getKey();
 			final String value = map.getValue();

@@ -2,7 +2,7 @@ package srParse;
 
 import java.io.StringReader;
 
-import java_cup.runtime.Symbol;
+import com.github.jhoenicke.javacup.runtime.Symbol;
 
 public class ParserTest {
 	static String scopes[] = {

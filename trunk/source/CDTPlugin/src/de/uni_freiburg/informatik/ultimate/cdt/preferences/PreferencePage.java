@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CDTPlugin plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE CDTPlugin plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE CDTPlugin plug-in grant you additional permission
  * to convey the resulting work.
  */
 /**
@@ -58,9 +58,9 @@ import de.uni_freiburg.informatik.ultimate.cdt.Activator;
  */
 public class PreferencePage extends FieldEditorPreferencePage implements IWorkbenchPreferencePage {
 
-	public static String TOOLCHAIN_SELECTION_TEXT = "ToolchainSelection";
+	public static final String TOOLCHAIN_SELECTION_TEXT = "ToolchainSelection";
 
-	public static String TOOLCHAIN_SELECTION_LABEL = "Please select your Toolchain: ";
+	public static final String TOOLCHAIN_SELECTION_LABEL = "Please select your Toolchain: ";
 
 	/**
 	 * Holds the preference object.
@@ -116,7 +116,7 @@ public class PreferencePage extends FieldEditorPreferencePage implements IWorkbe
 	}
 
 	@Override
-	public void init(IWorkbench workbench) {
+	public void init(final IWorkbench workbench) {
 		
 	}
 

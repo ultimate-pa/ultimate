@@ -33,13 +33,13 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaUtils;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ModifiableTransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayEquality;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
@@ -52,14 +52,14 @@ public class EquivalentCells {
 	private final UnionFind<TermVariable> mUnionFind;
 	private final Map<TermVariable, TermVariable> mRepresentative;
 	private final Term mInOutEqauality;
-	private final TransFormulaLR mTransFormula;
+	private final ModifiableTransFormula mTransFormula;
 	private final Map<TermVariable, Map<ArrayIndex, TermVariable>> mArrayInstance2Index2CellVariable;
 	private final IndexAnalysisResult mIndexAnalyzer;
 
-	public EquivalentCells(Script script, TransFormulaLR tf, 
-			List<ArrayEquality> arrayEqualities, 
-			List<ArrayUpdate> arrayUpdates, IndexAnalysisResult indexAnalyzer, 
-			Map<TermVariable, 
+	public EquivalentCells(final Script script, final ModifiableTransFormula tf, 
+			final List<ArrayEquality> arrayEqualities, 
+			final List<ArrayUpdate> arrayUpdates, final IndexAnalysisResult indexAnalyzer, 
+			final Map<TermVariable, 
 			Map<ArrayIndex, TermVariable>> arrayInstance2Index2CellVariable) {
 		mScript = script;
 		mTransFormula = tf;
@@ -73,7 +73,7 @@ public class EquivalentCells {
 		mInOutEqauality = computeInOutEqualities(mUnionFind);
 	}
 	
-	private void addArrayUpdateConstraints(UnionFind<TermVariable> uf, List<ArrayUpdate> arrayUpdates) {
+	private void addArrayUpdateConstraints(final UnionFind<TermVariable> uf, final List<ArrayUpdate> arrayUpdates) {
 		for (final ArrayUpdate au : arrayUpdates) {
 			final List<Term> updateIndex = au.getIndex();
 			final Map<ArrayIndex, TermVariable> newInstance2Index2CellVariable = mArrayInstance2Index2CellVariable.get(au
@@ -100,7 +100,7 @@ public class EquivalentCells {
 		}
 	}
 
-	private void addArrayIndexConstraints(UnionFind<TermVariable> uf) {
+	private void addArrayIndexConstraints(final UnionFind<TermVariable> uf) {
 		for (final Entry<TermVariable, Map<ArrayIndex, TermVariable>> entry : mArrayInstance2Index2CellVariable.entrySet()) {
 			final Map<ArrayIndex, TermVariable> indices2values = entry.getValue();
 			final List<Term>[] indices = new List[indices2values.size()];
@@ -128,7 +128,7 @@ public class EquivalentCells {
 
 	}
 
-	private void addArrayEqualityConstraints(UnionFind<TermVariable> uf, List<ArrayEquality> arrayEqualities) {
+	private void addArrayEqualityConstraints(final UnionFind<TermVariable> uf, final List<ArrayEquality> arrayEqualities) {
 		for (final ArrayEquality ae : arrayEqualities) {
 			final Map<ArrayIndex, TermVariable> lhsInstance2Index2CellVariable = mArrayInstance2Index2CellVariable.get(ae
 					.getLhs());
@@ -139,18 +139,20 @@ public class EquivalentCells {
 			}
 			for (final List<Term> index : lhsInstance2Index2CellVariable.keySet()) {
 				final TermVariable lhsCellVariable = lhsInstance2Index2CellVariable.get(index);
+				assert lhsCellVariable != null : "no cell variable for " + index;
 				final TermVariable rhsCellVariable = rhsInstance2Index2CellVariable.get(index);
+				assert rhsCellVariable != null : "no cell variable for " + index;
 				uf.union(lhsCellVariable, rhsCellVariable);
 			}
 		}
 	}
 
-	private Term computeInOutEqualities(UnionFind<TermVariable> unionFind) {
+	private Term computeInOutEqualities(final UnionFind<TermVariable> unionFind) {
 		final List<Term> conjuncts = new ArrayList<Term>();
 		for (final TermVariable representative : unionFind.getAllRepresentatives()) {
 			final List<TermVariable> equalInOutVars = new ArrayList<TermVariable>();
 			for (final TermVariable member : unionFind.getEquivalenceClassMembers(representative)) {
-				if (TransFormulaUtils.isInvar(member, mTransFormula) || TransFormulaUtils.isOutvar(member, mTransFormula)) {
+				if (ModifiableTransFormulaUtils.isInvar(member, mTransFormula) || ModifiableTransFormulaUtils.isOutvar(member, mTransFormula)) {
 					equalInOutVars.add(member);
 				}
 			}
@@ -163,7 +165,7 @@ public class EquivalentCells {
 		return Util.and(mScript, conjuncts.toArray(new Term[conjuncts.size()]));
 	}
 
-	private Map<TermVariable, TermVariable> computeRepresentatives(UnionFind<TermVariable> uf) {
+	private Map<TermVariable, TermVariable> computeRepresentatives(final UnionFind<TermVariable> uf) {
 		final Map<TermVariable, TermVariable> result = new HashMap<TermVariable, TermVariable>();
 		for (final TermVariable ufRepresentative : uf.getAllRepresentatives()) {
 			final TermVariable inoutRepresentative = computeInOutRepresentative(uf, ufRepresentative);
@@ -172,10 +174,10 @@ public class EquivalentCells {
 		return result;
 	}
 
-	private TermVariable computeInOutRepresentative(UnionFind<TermVariable> uf, TermVariable ufRepresentative) {
+	private TermVariable computeInOutRepresentative(final UnionFind<TermVariable> uf, final TermVariable ufRepresentative) {
 		final Set<TermVariable> eq = uf.getEquivalenceClassMembers(ufRepresentative);
 		for (final TermVariable member : eq) {
-			if (TransFormulaUtils.isInvar(member, mTransFormula) || TransFormulaUtils.isOutvar(member, mTransFormula)) {
+			if (ModifiableTransFormulaUtils.isInvar(member, mTransFormula) || ModifiableTransFormulaUtils.isOutvar(member, mTransFormula)) {
 				return member;
 			}
 		}
@@ -186,7 +188,7 @@ public class EquivalentCells {
 		return mInOutEqauality;
 	}
 
-	public TermVariable getInOutRepresentative(TermVariable arrayCell) {
+	public TermVariable getInOutRepresentative(final TermVariable arrayCell) {
 		final TermVariable ufRepresentative = mUnionFind.find(arrayCell);
 		return mRepresentative.get(ufRepresentative);
 	}

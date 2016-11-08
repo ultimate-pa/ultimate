@@ -19,100 +19,108 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ConstraintParser plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ConstraintParser plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ConstraintParser plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.constraintparser;
 
-import java_cup.runtime.Symbol;
-import java_cup.runtime.SymbolFactory;
+import com.github.jhoenicke.javacup.runtime.Symbol;
+import com.github.jhoenicke.javacup.runtime.SymbolFactory;
 
 public class MySymbolFactory implements SymbolFactory {
+	// Factory methods
+	public Symbol newSymbol(final String name, final int id, final int lline, final int lcol, final int rline,
+			final int rcol, final Object value) {
+		return new LineColumnSymbol(name, id, lline, lcol, rline, rcol, value);
+	}
+	
+	public Symbol newSymbol(final String name, final int id, final int lline, final int lcol, final int rline,
+			final int rcol) {
+		return new LineColumnSymbol(name, id, lline, lcol, rline, rcol, null);
+	}
+	
+	@Override
+	public Symbol newSymbol(final String name, final int id, final Symbol left, final Symbol right,
+			final Object value) {
+		return new LineColumnSymbol(name, id, left, right, value);
+	}
+	
+	@Override
+	public Symbol newSymbol(final String name, final int id, final Symbol left, final Symbol right) {
+		return new LineColumnSymbol(name, id, left, right, null);
+	}
+	
+	@Override
+	public Symbol newSymbol(final String name, final int id) {
+		return new LineColumnSymbol(name, id, -1, -1, -1, -1, null);
+	}
+	
+	@Override
+	public Symbol newSymbol(final String name, final int id, final Object value) {
+		return new LineColumnSymbol(name, id, -1, -1, -1, -1, value);
+	}
+	
+	@Override
+	public Symbol startSymbol(final String name, final int id, final int state) {
+		return new LineColumnSymbol(name, id, state);
+	}
+	
 	class LineColumnSymbol extends Symbol {
-		private final String name;
-		private final int lcolumn;
-		private final int rcolumn;
- 
- 		public LineColumnSymbol(String name, int id, int state) {
- 			// Grrr, the constructor is protected, but 
- 			// at least the field is writeable...
- 			super(id);
- 			parse_state = state;
- 			this.name = name;
- 			lcolumn = -1;
- 			rcolumn = -1;
- 		}
- 		
- 		public LineColumnSymbol(String name, int id, 
-	            int left, int lcolumn, int right, int rcolumn, 
-	            Object o) {
- 			super(id, left, right, o);
- 			this.name = name;
- 			this.lcolumn = lcolumn;
- 			this.rcolumn = rcolumn;
- 		}
+		private final String mName;
+		private final int mLcolumn;
+		private final int mRcolumn;
 		
-		public LineColumnSymbol(String name, int id, Symbol left, Symbol right, Object o) {
+		public LineColumnSymbol(final String name, final int id, final int state) {
+			// Grrr, the constructor is protected, but
+			// at least the field is writeable...
+			super(id);
+			parse_state = state;
+			mName = name;
+			mLcolumn = -1;
+			mRcolumn = -1;
+		}
+		
+		public LineColumnSymbol(final String name, final int id,
+				final int left, final int lcolumn, final int right, final int rcolumn,
+				final Object o) {
 			super(id, left, right, o);
-			this.name = name;
+			mName = name;
+			mLcolumn = lcolumn;
+			mRcolumn = rcolumn;
+		}
+		
+		public LineColumnSymbol(final String name, final int id, final Symbol left, final Symbol right,
+				final Object o) {
+			super(id, left, right, o);
+			mName = name;
 			if (left instanceof LineColumnSymbol) {
-				lcolumn = ((LineColumnSymbol) left).lcolumn;
+				mLcolumn = ((LineColumnSymbol) left).mLcolumn;
 			} else {
-				lcolumn = 0;
+				mLcolumn = 0;
 			}
 			if (right instanceof LineColumnSymbol) {
-				rcolumn = ((LineColumnSymbol) left).rcolumn;
+				mRcolumn = ((LineColumnSymbol) left).mRcolumn;
 			} else {
-				rcolumn = 0;
+				mRcolumn = 0;
 			}
 		}
 		
 		public String getLocation() {
-			if (lcolumn >= 0) {
-				return ""+left+":"+lcolumn;
-			} else {
-				return ""+left;
+			if (mLcolumn >= 0) {
+				return left + ":" + mLcolumn;
 			}
+			return Integer.toString(left);
 		}
-
+		
 		public String getName() {
-			return name;
+			return mName;
 		}
 		
 		@Override
 		public String toString() {
-			return "("+name+" "+left+":"+lcolumn+"-"+right+":"+rcolumn+")";
+			return "(" + mName + " " + left + ":" + mLcolumn + "-" + right + ":" + mRcolumn + ")";
 		}
 	}
-	
-    // Factory methods
-    public Symbol newSymbol(String name, int id, int lline, int lcol, int rline, int rcol, Object value){
-        return new LineColumnSymbol(name,id,lline,lcol,rline,rcol,value);
-    }
-    public Symbol newSymbol(String name, int id, int lline, int lcol, int rline, int rcol){
-        return new LineColumnSymbol(name,id,lline,lcol,rline,rcol, null);
-    }
-    @Override
-	public Symbol newSymbol(String name, int id, Symbol left, Symbol right, Object value){
-        return new LineColumnSymbol(name,id,left,right,value);
-    }
-    @Override
-	public Symbol newSymbol(String name, int id, Symbol left, Symbol right){
-        return new LineColumnSymbol(name,id,left,right,null);
-    }
-    @Override
-	public Symbol newSymbol(String name, int id){
-        return new LineColumnSymbol(name,id,-1,-1,-1,-1,null);
-    }
-    @Override
-	public Symbol newSymbol(String name, int id, Object value){
-        return new LineColumnSymbol(name,id,-1,-1,-1,-1,value);
-    }
-    @Override
-	public Symbol startSymbol(String name, int id, int state){
-        final LineColumnSymbol s = new LineColumnSymbol(name,id, state);
-        return s;
-    }
 }

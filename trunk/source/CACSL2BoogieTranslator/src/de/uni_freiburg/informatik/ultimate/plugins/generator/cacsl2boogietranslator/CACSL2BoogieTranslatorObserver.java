@@ -4,27 +4,27 @@
  * Copyright (C) 2015 Oleksii Saukh (saukho@informatik.uni-freiburg.de)
  * Copyright (C) 2015 Stefan Wissert
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE CACSL2BoogieTranslator plug-in.
- * 
+ *
  * The ULTIMATE CACSL2BoogieTranslator plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE CACSL2BoogieTranslator plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE CACSL2BoogieTranslator plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CACSL2BoogieTranslator plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission
  * to convey the resulting work.
  */
 /**
@@ -48,10 +48,11 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.cdt.CommentParser;
 import de.uni_freiburg.informatik.ultimate.cdt.FunctionLineVisitor;
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.ASTDecorator;
+import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratorNode;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.MainDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svComp.SvComp14MainDispatcher;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svcomp.SvComp14MainDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.WrapperNode;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxErrorResult;
@@ -69,6 +70,8 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.LTLPrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.GlobalLTLInvariant;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.CorrectnessWitnessExtractor;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.ExtractedWitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessGraphAnnotation;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
@@ -86,7 +89,7 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 	/**
 	 * The logger instance.
 	 */
-	private final ILogger mLogger;
+	private final ILogger mLogger; 
 	/**
 	 * A Wrapper holding the root node of the resulting Boogie AST.
 	 */
@@ -98,15 +101,18 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 	private final CorrectnessWitnessExtractor mWitnessExtractor;
 	private IASTTranslationUnit inputTU;
 	private boolean mLastModel;
-	private BeforeAfterWitnessInvariantsMapping mWitnessInvariants;
+	private Map<IASTNode, ExtractedWitnessInvariant> mWitnessInvariants;
+	private ACSLObjectContainerObserver mAdditionalAnnotationObserver;
 
-	public CACSL2BoogieTranslatorObserver(IUltimateServiceProvider services, IToolchainStorage storage) {
+	public CACSL2BoogieTranslatorObserver(final IUltimateServiceProvider services, final IToolchainStorage storage,
+			final ACSLObjectContainerObserver additionalAnnotationObserver) {
 		assert storage != null;
 		assert services != null;
 		mStorage = storage;
 		mService = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mWitnessExtractor = new CorrectnessWitnessExtractor(mService);
+		mAdditionalAnnotationObserver = additionalAnnotationObserver;
 	}
 
 	@Override
@@ -187,13 +193,9 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 	@Override
 	public void finish() {
 		if (mWitnessExtractor.isReady()) {
-
-			final Map<IASTNode, WitnessInvariant> bInvariants = mWitnessExtractor.getBeforeAST2Invariants();
-			final Map<IASTNode, WitnessInvariant> aInvariants = mWitnessExtractor.getAfterAST2Invariants();
-			mWitnessInvariants = new BeforeAfterWitnessInvariantsMapping(bInvariants, aInvariants);
-
+			mWitnessInvariants = mWitnessExtractor.getCorrectnessWitnessInvariants();
 			// clear witness extractor to make him loose unused references
-			//mWitnessExtractor.clear();
+			// mWitnessExtractor.clear();
 		}
 		if (mLastModel) {
 			doTranslation();
@@ -234,11 +236,23 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 		inputTU.accept(visitor);
 		final CommentParser cparser = new CommentParser(inputTU.getComments(), visitor.getLineRange(), mLogger, main);
 		final List<ACSLNode> acslNodes = cparser.processComments();
+		
+
 		validateLTLProperty(acslNodes);
 		decorator.setAcslASTs(acslNodes);
-		// build decorator tree
+		// build decorator tree 
 		decorator.mapASTs(inputTU);
-
+		//if an additional Annotation was parsed put it into the root node
+		if (mAdditionalAnnotationObserver.getAnnotation() != null){
+			ACSLNode node = mAdditionalAnnotationObserver.getAnnotation();
+			node.setStartingLineNumber(1);
+			node.setEndingLineNumber(1);
+			decorator.getRootNode().getChildren().add(
+					0, 
+					new DecoratorNode(decorator.getRootNode(), node));
+		}
+	
+		
 		try {
 			BoogieASTNode outputTU = main.run(decorator.getRootNode()).node;
 			outputTU = (new BoogieAstCopier()).copy((Unit) outputTU);
@@ -247,30 +261,26 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 			map.setMap(main.getIdentifierMapping());
 			mStorage.putStorable(IdentifierMapping.getStorageKey(), map);
 			mService.getBacktranslationService().addTranslator(backtranslator);
-		} catch (final Exception t) {
-			final IResult result;
-			// String message =
-			// "There was an error during the translation process! [" +
-			// t.getClass() + ", "
-			// + t.getMessage() + "]";
-			if (t instanceof IncorrectSyntaxException) {
-				result = new SyntaxErrorResult(Activator.PLUGIN_NAME, ((IncorrectSyntaxException) t).getLocation(),
-						t.getLocalizedMessage());
-			} else if (t instanceof UnsupportedSyntaxException) {
-				result = new UnsupportedSyntaxResult<IElement>(Activator.PLUGIN_NAME,
-						((UnsupportedSyntaxException) t).getLocation(), t.getLocalizedMessage());
-			} else {
-				throw t;
-			}
-			mService.getResultService().reportResult(Activator.PLUGIN_ID, result);
-			mLogger.warn(result.getShortDescription() + " " + result.getLongDescription());
-			mService.getProgressMonitorService().cancelToolchain();
+		} catch (final IncorrectSyntaxException e) {
+			final IResult result = new SyntaxErrorResult(Activator.PLUGIN_NAME,
+					e.getLocation(), e.getLocalizedMessage());
+			commonDoTranslationExceptionHandling(result);
+		} catch (final UnsupportedSyntaxException e) {
+			final IResult result = new UnsupportedSyntaxResult<IElement>(Activator.PLUGIN_NAME,
+					e.getLocation(), e.getLocalizedMessage());
+			commonDoTranslationExceptionHandling(result);
 		}
 	}
 
+	private void commonDoTranslationExceptionHandling(final IResult result) {
+		mService.getResultService().reportResult(Activator.PLUGIN_ID, result);
+		mLogger.warn(result.getShortDescription() + ' ' + result.getLongDescription());
+		mService.getProgressMonitorService().cancelToolchain();
+	}
+
 	@Override
-	public void init(ModelType modelType, int currentModelIndex, int numberOfModels) {
-		if (currentModelIndex == numberOfModels -1) {
+	public void init(final ModelType modelType, final int currentModelIndex, final int numberOfModels) {
+		if (currentModelIndex == numberOfModels - 1) {
 			mLastModel = true;
 		}
 	}
@@ -282,7 +292,7 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 
 	/**
 	 * Getter for the root node.
-	 * 
+	 *
 	 * @return the root node of the translated Boogie tree
 	 */
 	public IElement getRoot() {

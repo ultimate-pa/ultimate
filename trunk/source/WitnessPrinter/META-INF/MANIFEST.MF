@@ -4,8 +4,7 @@ Bundle-Name: BuchiProgramProduct
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.witnessprinter;singleton:=true
 Bundle-Version: 0.0.1
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.witnessprinter.Activator
-Require-Bundle: Library-log4j,
- Library-UltimateCore,
+Require-Bundle: Library-UltimateCore,
  Library-SMTLIB,
  Library-UltimateUtil,
  Library-ModelCheckerUtils,

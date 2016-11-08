@@ -4,5 +4,5 @@ Bundle-Name: BoogiePreprocessorTest
 Bundle-SymbolicName: BoogiePreprocessorTest
 Bundle-Version: 0.0.1
 Fragment-Host: BoogiePreprocessor
-Bundle-RequiredExecutionEnvironment: JavaSE-1.6
-Import-Package: org.junit
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Require-Bundle: org.junit

@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.ModifiableExplicitEdg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.CodeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 
 /**
@@ -51,7 +51,7 @@ public class AnnotatedProgramPoint extends ModifiableExplicitEdgesMultigraph<Ann
 	private static final long serialVersionUID = -4398335480646555023L;
 
 	private final IPredicate _predicate;
-	private final ProgramPoint _programPoint;
+	private final BoogieIcfgLocation _programPoint;
 
 	private final HashSet<AppHyperEdge> _outgoingHyperEdges = new HashSet<AppHyperEdge>();
 
@@ -69,7 +69,7 @@ public class AnnotatedProgramPoint extends ModifiableExplicitEdgesMultigraph<Ann
 
 	public int _nodeID;
 
-	public AnnotatedProgramPoint(IPredicate predicate, ProgramPoint programPoint) {
+	public AnnotatedProgramPoint(IPredicate predicate, BoogieIcfgLocation programPoint) {
 		_predicate = predicate;
 		_programPoint = programPoint;
 		_copies = new HashSet<AnnotatedProgramPoint>();
@@ -144,7 +144,7 @@ public class AnnotatedProgramPoint extends ModifiableExplicitEdgesMultigraph<Ann
 		return _programPoint.isErrorLocation();
 	}
 
-	public ProgramPoint getProgramPoint() {
+	public BoogieIcfgLocation getProgramPoint() {
 		return _programPoint;
 	}
 

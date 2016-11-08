@@ -36,10 +36,10 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.lassoranker.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LinearInequality;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 
@@ -56,7 +56,7 @@ public class AffineFunctionGenerator implements Serializable {
 	private static final long serialVersionUID = 4376363192635730213L;
 	
 	private final Term mconstant;
-	private final Map<RankVar, Term> mcoefficients;
+	private final Map<IProgramVar, Term> mcoefficients;
 	
 	/**
 	 * Name of the variable for the affine function's affine constant
@@ -68,7 +68,7 @@ public class AffineFunctionGenerator implements Serializable {
 	/**
 	 * Name of the variable for the affine function's coefficients
 	 */
-	private static String coeffName(final String prefix, final RankVar var) {
+	private static String coeffName(final String prefix, final IProgramVar var) {
 		return prefix + "_" + SmtUtils.removeSmtQuoteCharacters(
 													var.getGloballyUniqueId());
 	}
@@ -78,13 +78,13 @@ public class AffineFunctionGenerator implements Serializable {
 	 * @param variables the set of variables that need coefficients
 	 * @param prefix new variables' name prefix
 	 */
-	public AffineFunctionGenerator(final Script script, final Collection<RankVar> variables,
+	public AffineFunctionGenerator(final Script script, final Collection<IProgramVar> variables,
 			final String prefix) {
 		// Create variables
 		mconstant = SmtUtils.buildNewConstant(script, constName(prefix), 
 				"Real");
-		mcoefficients = new LinkedHashMap<RankVar, Term>();
-		for (final RankVar var : variables) {
+		mcoefficients = new LinkedHashMap<IProgramVar, Term>();
+		for (final IProgramVar var : variables) {
 			mcoefficients.put(var, SmtUtils.buildNewConstant(script,
 					coeffName(prefix, var), "Real"));
 		}
@@ -95,10 +95,10 @@ public class AffineFunctionGenerator implements Serializable {
 	 * @param vars a mapping from Boogie variables to TermVariables to be used
 	 * @return Linear inequality corresponding to si(x)
 	 */
-	public LinearInequality generate(final Map<RankVar, Term> vars) {
+	public LinearInequality generate(final Map<IProgramVar, ? extends Term> vars) {
 		final LinearInequality li = new LinearInequality();
 		li.add(new AffineTerm(mconstant, Rational.ONE));
-		for (final Map.Entry<RankVar, Term> entry : vars.entrySet()) {
+		for (final Map.Entry<IProgramVar,? extends Term> entry : vars.entrySet()) {
 			if (mcoefficients.containsKey(entry.getKey())) {
 				li.add(entry.getValue(),
 						new AffineTerm(mcoefficients.get(entry.getKey()),
@@ -126,7 +126,7 @@ public class AffineFunctionGenerator implements Serializable {
 	 */
 	public Rational getGcd(final Map<Term, Rational> assignment) {
 		Rational gcd = assignment.get(mconstant);
-		for (final Map.Entry<RankVar, Term> entry : mcoefficients.entrySet()) {
+		for (final Map.Entry<IProgramVar, Term> entry : mcoefficients.entrySet()) {
 			gcd = gcd.gcd(assignment.get(entry.getValue()));
 		}
 		// use the absolute value of the GCD obtained from Rational.gcd
@@ -169,7 +169,7 @@ public class AffineFunctionGenerator implements Serializable {
 			// coefficients are zero.
 			Rational c = assignment.get(mconstant);
 			assert (c.equals(Rational.ZERO));
-			for (final Map.Entry<RankVar, Term> entry : mcoefficients.entrySet()) {
+			for (final Map.Entry<IProgramVar, Term> entry : mcoefficients.entrySet()) {
 				c = assignment.get(entry.getValue());
 				assert (c.equals(Rational.ZERO));
 				f.put(entry.getKey(), c.numerator());
@@ -179,7 +179,7 @@ public class AffineFunctionGenerator implements Serializable {
 			Rational c = assignment.get(mconstant).div(gcd);
 			assert(c.denominator().equals(BigInteger.ONE));
 			f.setConstant(c.numerator());
-			for (final Map.Entry<RankVar, Term> entry : mcoefficients.entrySet()) {
+			for (final Map.Entry<IProgramVar, Term> entry : mcoefficients.entrySet()) {
 				c = assignment.get(entry.getValue()).div(gcd);
 				assert(c.denominator().equals(BigInteger.ONE));
 				f.put(entry.getKey(), c.numerator());

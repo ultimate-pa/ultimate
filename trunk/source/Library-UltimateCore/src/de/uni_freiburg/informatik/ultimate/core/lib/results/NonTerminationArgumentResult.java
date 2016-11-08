@@ -1,8 +1,6 @@
 /*
- * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * Copyright (C) 2013-2015 Jan Leike (leike@informatik.uni-freiburg.de)
- * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2016 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Copyright (C) 2016 University of Freiburg
  * 
  * This file is part of the ULTIMATE Core.
  * 
@@ -28,85 +26,37 @@
  */
 package de.uni_freiburg.informatik.ultimate.core.lib.results;
 
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
-import de.uni_freiburg.informatik.ultimate.logic.Rational;
 
 /**
- * Nontermination argument in form of an infinite program execution.
+ * Abstract superclass for Nontermination Arguments
  * 
- * It is composed of
- * <ul>
- * <li>an initial state at the begin of the lasso,
- * <li>a state at first visit of the honda,
- * <li>a list of rays of the loop's transition polyhedron, and
- * <li>a list of discount factors lambda and mu.
- * </ul>
- * 
- * The infinite execution described by this nontermination argument is
- * 
- * <pre>
- * state_init,
- * state_honda,
- * state_honda + ray_1 + ... + ray_n,
- * state_honda + (1 + lambda_1) ray_1 + (1 + lambda_2 + mu_1) ray_2 + ... + (1 + lambda_n + nu_(n-1)) ray_n,
- * ...
- * </pre>
- * 
- * The general form is x + Y*(sumi J^i)*1 where
- * <ul>
- * <li>x is the initial state state_init
- * <li>Y is a matrix with the rays as columns
- * <li>J is a matrix with lamnbda_i on the diagonal and mu_i on the upper subdiagonal
- * <li>1 is a column vector of ones
- * </ul>
- * 
- * This implementation nontermination argument is highly tailored to the nontermination arguments that the LassoRanker
- * plugin discovers and is unlikely to be useful anywhere else.
- * 
- * @author Jan Leike
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <P>
  *            program position class
  */
-public class NonTerminationArgumentResult<P extends IElement, E> extends AbstractResultAtElement<P> implements IResult {
-	/**
-	 * How many steps the infinite execution should be schematically unwinded
-	 */
-	private final static int SCHEMATIC_EXECUTION_LENGTH = 3;
-	private final static boolean ALTERNATIVE_LONG_DESCRIPTION = !false;
+public abstract class NonTerminationArgumentResult<P extends IElement, E> extends AbstractResultAtElement<P> implements IResult {
 
-	private final Map<E, Rational> mStateInit;
-	private final Map<E, Rational> mStateHonda;
-	private final List<Map<E, Rational>> mRays;
-	private final List<Rational> mLambdas;
-	private final List<Rational> mNus;
+
 	private final Class<E> mExprClazz;
-
-	public NonTerminationArgumentResult(P position, String plugin, Map<E, Rational> stateInit,
-			Map<E, Rational> stateHonda, List<Map<E, Rational>> rays, List<Rational> lambdas, List<Rational> nus,
-			IBacktranslationService translatorSequence, Class<E> exprClazz) {
-		super(position, plugin, translatorSequence);
-		mStateInit = stateInit;
-		mStateHonda = stateHonda;
-		mRays = rays;
-		mLambdas = lambdas;
-		mNus = nus;
-		mExprClazz = exprClazz;
-		assert mRays.size() == mLambdas.size();
+	
+	public NonTerminationArgumentResult(final P element, final String plugin, final IBacktranslationService translatorSequence, final Class<E> exprClass) {
+		super(element, plugin, translatorSequence);
+		mExprClazz = exprClass;
 	}
+
 
 	@Override
 	public String getShortDescription() {
 		return "Nontermination argument in form of an infinite " + "program execution.";
 	}
 
-	private String printState(Map<E, String> state) {
+	protected String printState(final Map<E, String> state) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("{");
 		boolean first = true;
@@ -131,123 +81,25 @@ public class NonTerminationArgumentResult<P extends IElement, E> extends Abstrac
 		sb.append("}");
 		return sb.toString();
 	}
-
-	@Override
-	public String getLongDescription() {
-		if (ALTERNATIVE_LONG_DESCRIPTION) {
-			return alternativeLongDesciption();
-		} else {
-			return defaultLongDescription();
-		}
-	}
-
-	public String defaultLongDescription() {
+	
+	protected String printState2(final Map<E, E> state) {
 		final StringBuilder sb = new StringBuilder();
-		sb.append("Nontermination argument in form of an infinite execution\n");
-		sb.append(mStateInit);
-		assert (SCHEMATIC_EXECUTION_LENGTH > 0);
-		final Rational[] geometric_sum = new Rational[mLambdas.size()]; // 1 + lambda_i + mu_(i-1) + ...
-		for (int i = 0; i < mLambdas.size(); ++i) {
-			geometric_sum[i] = Rational.ZERO;
-		}
-		for (int j = 0; j < SCHEMATIC_EXECUTION_LENGTH; ++j) {
-			final Map<E, String> state = new HashMap<E, String>();
-			for (final E var : mStateHonda.keySet()) {
-				Rational x = mStateHonda.get(var);
-				for (int i = 0; i < mRays.size(); ++i) {
-					final Rational y = mRays.get(i).get(var);
-					if (y != null) {
-						x = x.add(y.mul(geometric_sum[i]));
-					}
-				}
-				state.put(var, x.toString());
+		sb.append("{");
+		boolean first = true;
+		for (final Entry<E, E> entry : state.entrySet()) {
+			final String var = mTranslatorSequence.translateExpressionToString(entry.getKey(), mExprClazz);
+			if (!first) {
+				sb.append(", ");
+			} else {
+				first = false;
 			}
-			for (int i = mRays.size() - 1; i >= 0; --i) {
-				geometric_sum[i] = geometric_sum[i].mul(mLambdas.get(i)).add(Rational.ONE);
-				if (i > 0) {
-					geometric_sum[i] = geometric_sum[i].add(geometric_sum[i - 1].mul(mNus.get(i - 1)));
-				}
-			}
-			sb.append("\n");
-			sb.append(printState(state));
+			sb.append(var);
+			sb.append("=");
+			final String value = mTranslatorSequence.translateExpressionToString(entry.getValue(), mExprClazz);
+			sb.append(value);
 		}
+		sb.append("}");
 		return sb.toString();
 	}
 
-	private String alternativeLongDesciption() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append("Nontermination argument in form of an infinite execution\n");
-
-		// State 1 (before the honda)
-		sb.append("State at position 0 is\n");
-		final Map<E, String> statePos0 = new HashMap<E, String>();
-		for (final Entry<E, Rational> entry : mStateHonda.entrySet()) {
-			final E var = entry.getKey();
-			final Rational x0 = mStateInit.get(var);
-			statePos0.put(var, x0.toString());
-		}
-		sb.append(printState(statePos0));
-
-		// State 2 (at the honda)
-		sb.append("\nState at position 1 is\n");
-		final Map<E, String> statePos1 = new HashMap<E, String>();
-		for (final Entry<E, Rational> entry : mStateHonda.entrySet()) {
-			final E var = entry.getKey();
-			final Rational x = mStateHonda.get(var);
-			statePos1.put(var, x.toString());
-		}
-		sb.append(printState(statePos1));
-
-		// Schematic execution afterwards
-		sb.append("\nFor i>1, the state at position i is\n");
-		final Map<E, String> statePosI = new HashMap<E, String>();
-		for (final E var : mStateHonda.keySet()) {
-			final StringBuilder sb2 = new StringBuilder();
-			final Rational x = mStateHonda.get(var);
-			for (int i = 0; i < mRays.size(); ++i) {
-				final Rational y = mRays.get(i).get(var);
-				if (y != null && !y.equals(Rational.ZERO)) {
-					if (sb2.length() > 0) {
-						sb2.append(" + ");
-					}
-					for (int j = 0; j <= i && j < mRays.size(); ++j) {
-						boolean ok = true;
-						for (int s = i - j; s < i; ++s) {
-							if (mNus.get(s).equals(Rational.ZERO)) {
-								ok = false;
-							}
-						}
-						if (!ok) {
-							continue; // \prod_{s=i-j}^{i-1} mu_s == 0
-										// => skip summand
-						}
-						if (j > 0) {
-							sb2.append(" + ");
-						}
-						final Rational lambda = mLambdas.get(i - j);
-						sb2.append(y);
-
-						if (j == 1) {
-							sb2.append("*k");
-						} else if (j > 1) {
-							sb2.append("*binomial(k, " + j + ")");
-						}
-						if (!lambda.equals(Rational.ONE)) {
-							if (j == 0) {
-								sb2.append("*" + lambda + "^k");
-							} else {
-								sb2.append("*" + lambda + "^(k-" + j + ")");
-							}
-						}
-					}
-				}
-			}
-			if (sb2.length() == 0) {
-				sb2.append("0");
-			}
-			statePosI.put(var, x.toString() + " + sum_{k=0}^i " + sb2.toString());
-		}
-		sb.append(printState(statePosI));
-		return sb.toString();
-	}
 }

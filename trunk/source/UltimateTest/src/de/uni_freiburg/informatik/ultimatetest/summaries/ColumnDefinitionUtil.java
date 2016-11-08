@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Test Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Test Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Test Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimatetest.summaries;
@@ -49,20 +49,20 @@ import de.uni_freiburg.informatik.ultimatetest.summaries.ColumnDefinition.Aggreg
  */
 public class ColumnDefinitionUtil {
 
-	public static ICsvProvider<String> makeHumanReadable(ICsvProvider<String> csv,
-			List<ColumnDefinition> columnDefinitions) {
+	public static ICsvProvider<String> makeHumanReadable(final ICsvProvider<String> csv,
+			final List<ColumnDefinition> columnDefinitions) {
 		return makeHumanReadable(csv, columnDefinitions, 0);
 	}
 
-	public static ICsvProvider<String> makeHumanReadable(ICsvProvider<String> csv,
-			List<ColumnDefinition> columnDefinitions, int ignoreFirstNCells) {
+	public static ICsvProvider<String> makeHumanReadable(final ICsvProvider<String> csv,
+			final List<ColumnDefinition> columnDefinitions, final int ignoreFirstNCells) {
 
 		final ICsvProvider<String> newProvider = new SimpleCsvProvider<>(csv.getColumnTitles());
 
 		final List<ConversionContext> conversionInfo = new ArrayList<>(
 				CoreUtil.select(columnDefinitions, new CoreUtil.IReduce<ConversionContext, ColumnDefinition>() {
 					@Override
-					public ConversionContext reduce(ColumnDefinition entry) {
+					public ConversionContext reduce(final ColumnDefinition entry) {
 						return entry.getConversionContext();
 					}
 				}));
@@ -89,8 +89,8 @@ public class ColumnDefinitionUtil {
 		return newProvider;
 	}
 
-	public static ICsvProvider<String> reduceProvider(ICsvProvider<?> provider,
-			Collection<ColumnDefinition.Aggregate> aggregates, List<ColumnDefinition> columnDefinitions) {
+	public static ICsvProvider<String> reduceProvider(final ICsvProvider<?> provider,
+			final Collection<ColumnDefinition.Aggregate> aggregates, final List<ColumnDefinition> columnDefinitions) {
 
 		final HashSet<String> sum = new HashSet<>();
 		final HashSet<String> max = new HashSet<>();
@@ -99,7 +99,7 @@ public class ColumnDefinitionUtil {
 		final List<String> columnsToKeep = new ArrayList<>(
 				CoreUtil.select(columnDefinitions, new CoreUtil.IReduce<String, ColumnDefinition>() {
 					@Override
-					public String reduce(ColumnDefinition entry) {
+					public String reduce(final ColumnDefinition entry) {
 						return entry.getColumnToKeep();
 					}
 				}));
@@ -125,7 +125,7 @@ public class ColumnDefinitionUtil {
 		final ICsvProvider<String> newProvider = CsvUtils.convertComplete(provider,
 				new IExplicitConverter<ICsvProvider<?>, ICsvProvider<String>>() {
 					@Override
-					public ICsvProvider<String> convert(ICsvProvider<?> input) {
+					public ICsvProvider<String> convert(final ICsvProvider<?> input) {
 						final ICsvProvider<String> rtr = new SimpleCsvProvider<>(input.getColumnTitles());
 						final List<String> newRow = new ArrayList<>();
 
@@ -152,7 +152,7 @@ public class ColumnDefinitionUtil {
 										numberValue = numberValue.add(new BigDecimal(cell));
 										finalValue = numberValue.toString();
 									} catch (final Exception ex) {
-										finalValue = cell.toString();
+										finalValue = cell;
 									}
 								}
 							} else if (max.contains(columnTitle)) {
@@ -161,7 +161,7 @@ public class ColumnDefinitionUtil {
 										numberValue = numberValue.max(new BigDecimal(cell));
 										finalValue = numberValue.toString();
 									} catch (final Exception ex) {
-										finalValue = cell.toString();
+										finalValue = cell;
 									}
 								}
 							} else if (avg.contains(columnTitle)) {
@@ -172,7 +172,7 @@ public class ColumnDefinitionUtil {
 										finalValue = numberValue.divide(new BigDecimal(size), 5, RoundingMode.HALF_UP)
 												.toString();
 									} catch (final Exception ex) {
-										finalValue = cell.toString();
+										finalValue = cell;
 									}
 								}
 							} else {
@@ -210,7 +210,7 @@ public class ColumnDefinitionUtil {
 		provider = CsvUtils.projectColumn(provider,
 				CoreUtil.select(columnDefinitions, new CoreUtil.IReduce<String, ColumnDefinition>() {
 					@Override
-					public String reduce(ColumnDefinition entry) {
+					public String reduce(final ColumnDefinition entry) {
 						return entry.getColumnToKeep();
 					}
 				}));
@@ -220,7 +220,7 @@ public class ColumnDefinitionUtil {
 		ICsvProvider<String> newProvider = reduceProvider(provider, CoreUtil.select(columnDefinitions,
 				new CoreUtil.IReduce<ColumnDefinition.Aggregate, ColumnDefinition>() {
 					@Override
-					public ColumnDefinition.Aggregate reduce(ColumnDefinition entry) {
+					public ColumnDefinition.Aggregate reduce(final ColumnDefinition entry) {
 						return entry.getSingleRunToOneRow();
 					}
 				}), columnDefinitions);
@@ -256,7 +256,7 @@ public class ColumnDefinitionUtil {
 			final List<String> resultRow = new ArrayList<>();
 			resultRow.add(urd.getInputFileFolders());
 			resultRow.add(urd.getInputFileNames());
-			resultRow.add(urd.getSettings().getName());
+			resultRow.add(urd.getSettingsName());
 			resultRow.add(urd.getToolchain().getName());
 			resultRow.add(extendedResult.getResult().toString());
 			resultRow.add(extendedResult.getCategory());
@@ -288,7 +288,7 @@ public class ColumnDefinitionUtil {
 		return rtr;
 	}
 
-	static void renameHeadersToLatexTitles(ICsvProvider<String> csvTotal, List<ColumnDefinition> columnDefinitions) {
+	static void renameHeadersToLatexTitles(final ICsvProvider<String> csvTotal, final List<ColumnDefinition> columnDefinitions) {
 		int i = 0;
 		for (final String oldTitle : csvTotal.getColumnTitles()) {
 			final String newTitle = columnDefinitions.get(i).getLatexTableTitle();

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009-2012 University of Freiburg
+ * Copyright (C) 2009-2016 University of Freiburg
  *
  * This file is part of SMTInterpol.
  *
@@ -28,8 +28,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Stack;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -37,11 +35,11 @@ import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
-import de.uni_freiburg.informatik.ultimate.logic.PrintTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.LogProxy;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.convert.SMTAffineTerm;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.SymmetricPair;
 
@@ -49,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.util.SymmetricPair;
  * This proof checker checks compliance of SMTInterpol proofs with
  * its documented format. 
  * 
- * @author Pascal Raiola, Jochen Hoenicke
+ * @author Pascal Raiola, Jochen Hoenicke, Tanja Schindler
  */
 public class ProofChecker extends NonRecursive {
 
@@ -209,7 +207,7 @@ public class ProofChecker extends NonRecursive {
 
 	HashSet<Term> mAssertions;
 	Script mSkript;
-	Logger mLogger;
+	LogProxy mLogger;
 	int mError;
 	
 	HashSet<String> mDebug = new HashSet<String>(); // Just for debugging
@@ -222,7 +220,7 @@ public class ProofChecker extends NonRecursive {
 	Stack<Annotation[]> mStackAnnots = new Stack<Annotation[]>();
 	SMTAffineTermTransformer mAffineConverter = new SMTAffineTermTransformer();
 	
-	public ProofChecker(Script script, Logger logger) {
+	public ProofChecker(Script script, LogProxy logger) {
 		mSkript = script;
 		final Term[] assertions = script.getAssertions();
 		final FormulaUnLet unletter = new FormulaUnLet();
@@ -405,10 +403,7 @@ public class ProofChecker extends NonRecursive {
 			checkStore(termToClause(lemma), (ApplicationTerm) lemmaAnnotation);
 		} else {
 			reportError("Cannot deal with lemma " + lemmaType);
-			mLogger.error(lemma.toStringDirect());
-			final StringBuilder sb = new StringBuilder();
-			new PrintTerm().append(sb, (Object[])lemmaAnnotation);
-			mLogger.error(sb);
+			mLogger.error(annTerm);
 		}
 		
 		stackPush(lemma, lemmaApp);
@@ -572,15 +567,20 @@ public class ProofChecker extends NonRecursive {
 	}
 
 	/**
-	 * Check if there is an equality path from termStart to termEnd.
+	 * Check if each step in a CC or array path is valid.
+	 * This means, for each pair of consecutive terms, either there is a strong
+	 * path between the two, or there exists a select path explaining element
+	 * equality of array terms at the weak path index, or it is a weak store
+	 * step, or a congruence.
 	 * This reports errors using reportError.
 	 * 
-	 * @param subpaths the subpaths from the CC-lemma annotations.  To ensure
-	 * 	termination, currently investigated subpaths are removed.
-	 * @param premises the already proven equalities.  This is initialized to 
-	 *  the equalities occurring in the conflict. 
-	 * @param termStart one side of the equality.
-	 * @param termEnd the other side of the equality.
+	 * @param weakIdx the weak path index or null for subpaths.
+	 * @param path the path to check.
+	 * @param strongPaths the equality literals and subpaths from the CC- and
+	 * array lemma annotations.
+	 * @param weakPaths the weak paths (given by their weak index) needed for
+	 * the main path in array lemmas, null if path is not the main path.
+	 * @param indexDiseqs the index disequality literals.
 	 */
 	void checkArrayPath(Term weakIdx, Term[] path,
 			HashSet<SymmetricPair<Term>> strongPaths,
@@ -599,11 +599,9 @@ public class ProofChecker extends NonRecursive {
 			}
 			/* check for select path (only for weakeq-ext) */
 			if (weakIdx != null) {
-				final Term sel1 = mSkript.term("select", path[i], weakIdx);
-				final Term sel2 = mSkript.term("select", path[i + 1], weakIdx);
-				final SymmetricPair<Term> selPair = 
-						new SymmetricPair<Term>(sel1, sel2);
-				if (strongPaths.contains(selPair)) {
+				/* check for select path with select indices equal to weakIdx,
+				 * both trivially equal and proven equal by a strong path */
+				if (checkSelectPath(pair, weakIdx, strongPaths)){
 					continue;
 				}
 			}
@@ -625,7 +623,7 @@ public class ProofChecker extends NonRecursive {
 			if (path[i] instanceof ApplicationTerm
 				&& path[i + 1] instanceof ApplicationTerm) {
 				final ApplicationTerm app1 = (ApplicationTerm) path[i];
-				final ApplicationTerm app2 = (ApplicationTerm) path[i];
+				final ApplicationTerm app2 = (ApplicationTerm) path[i + 1];
 				if (app1.getFunction() == app2.getFunction()) {
 					final Term[] p1 = app1.getParameters();
 					final Term[] p2 = app2.getParameters();
@@ -646,18 +644,49 @@ public class ProofChecker extends NonRecursive {
 		}
 	}
 
-
+	private boolean checkSelectPath(SymmetricPair<Term> termPair, Term weakIdx,
+					HashSet<SymmetricPair<Term>> strongPaths){
+		for (final SymmetricPair<Term> strongPath : strongPaths){
+			/* check for select terms */
+			if (! (isApplication("select", strongPath.getFirst())
+							&& isApplication("select", strongPath.getSecond()))){
+				continue;
+			}
+			/* check select arrays */
+			final Term array1 = ((ApplicationTerm) strongPath.getFirst()).getParameters()[0];
+			final Term array2 = ((ApplicationTerm) strongPath.getSecond()).getParameters()[0];
+			final SymmetricPair<Term> arrayPair =
+							new SymmetricPair<Term>(array1,array2);
+			if (!arrayPair.equals(termPair)){
+				continue;
+			}
+			/* check index paths */
+			final Term idx1 = ((ApplicationTerm) strongPath.getFirst()).getParameters()[1];
+			final Term idx2 = ((ApplicationTerm) strongPath.getSecond()).getParameters()[1];
+			if (idx1 != weakIdx
+				&& !strongPaths.contains(new SymmetricPair<Term>(idx1,weakIdx))){
+				continue;
+			}
+			if (idx2 != weakIdx
+				&& !strongPaths.contains(new SymmetricPair<Term>(idx2,weakIdx))){
+				continue;
+			}
+			return true;
+		}
+		return false;
+	}
+	
 	private Term checkStoreIndex(Term term1, Term term2) {
 		if (isApplication("store", term1)) {
 			final Term[] storeArgs = ((ApplicationTerm) term1).getParameters();
-			if (storeArgs[1] == term2) {
-				return storeArgs[2];
+			if (storeArgs[0] == term2) {
+				return storeArgs[1];
 			}
 		}
 		if (isApplication("store", term2)) {
 			final Term[] storeArgs = ((ApplicationTerm) term2).getParameters();
-			if (storeArgs[1] == term1) {
-				return storeArgs[2];
+			if (storeArgs[0] == term1) {
+				return storeArgs[1];
 			}
 		}
 		return null;

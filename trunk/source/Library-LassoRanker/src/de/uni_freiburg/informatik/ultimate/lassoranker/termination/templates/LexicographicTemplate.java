@@ -40,10 +40,11 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.termination.AffineFunctio
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfunctions.LexicographicRankingFunction;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfunctions.LinearRankingFunction;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfunctions.RankingFunction;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 
 /**
@@ -73,7 +74,7 @@ public class LexicographicTemplate extends RankingTemplate {
 	/**
 	 * @param numfunctions number of lexicographic components
 	 */
-	public LexicographicTemplate(int numlex) {
+	public LexicographicTemplate(final int numlex) {
 		assert(numlex > 1);
 		size = numlex;
 		mdeltas = new Term[size];
@@ -125,7 +126,7 @@ public class LexicographicTemplate extends RankingTemplate {
 	
 	@Override
 	public List<List<LinearInequality>> getConstraints(
-			Map<RankVar, Term> inVars, Map<RankVar, Term> outVars) {
+			final Map<IProgramVar, TermVariable> inVars, final Map<IProgramVar, TermVariable> outVars) {
 		checkInitialized();
 		final List<List<LinearInequality>> conjunction =
 				new ArrayList<List<LinearInequality>>();
@@ -134,7 +135,7 @@ public class LexicographicTemplate extends RankingTemplate {
 		for (int i = 0; i < size; ++i) {
 			final LinearInequality li = mfgens[i].generate(inVars);
 			li.setStrict(true);
-			li.motzkin_coefficient = sRedAtoms ? PossibleMotzkinCoefficients.ONE
+			li.mMotzkinCoefficient = sRedAtoms ? PossibleMotzkinCoefficients.ONE
 					: PossibleMotzkinCoefficients.ANYTHING;
 			conjunction.add(Collections.singletonList(li));
 		}
@@ -148,7 +149,7 @@ public class LexicographicTemplate extends RankingTemplate {
 			li2.negate();
 			li.add(li2);
 			li.setStrict(false);
-			li.motzkin_coefficient = sBlueAtoms ?
+			li.mMotzkinCoefficient = sBlueAtoms ?
 					PossibleMotzkinCoefficients.ZERO_AND_ONE
 					: PossibleMotzkinCoefficients.ANYTHING;
 			disjunction.add(li);
@@ -161,7 +162,7 @@ public class LexicographicTemplate extends RankingTemplate {
 				final AffineTerm a = new AffineTerm(mdeltas[j], Rational.MONE);
 				li.add(a);
 				li.setStrict(true);
-				li.motzkin_coefficient = sRedAtoms && j == 0 ?
+				li.mMotzkinCoefficient = sRedAtoms && j == 0 ?
 						PossibleMotzkinCoefficients.ZERO_AND_ONE
 						: PossibleMotzkinCoefficients.ANYTHING;
 				disjunction.add(li);
@@ -179,7 +180,7 @@ public class LexicographicTemplate extends RankingTemplate {
 			final AffineTerm a = new AffineTerm(mdeltas[i], Rational.MONE);
 			li.add(a);
 			li.setStrict(true);
-			li.motzkin_coefficient = (sRedAtoms && i == 0) || (sBlueAtoms && i == size - 1) ?
+			li.mMotzkinCoefficient = (sRedAtoms && i == 0) || (sBlueAtoms && i == size - 1) ?
 					PossibleMotzkinCoefficients.ZERO_AND_ONE
 					: PossibleMotzkinCoefficients.ANYTHING;
 			disjunction.add(li);
@@ -201,7 +202,7 @@ public class LexicographicTemplate extends RankingTemplate {
 	}
 
 	@Override
-	public RankingFunction extractRankingFunction(Map<Term, Rational> val)
+	public RankingFunction extractRankingFunction(final Map<Term, Rational> val)
 			throws SMTLIBException {
 		final RankingFunction[] rfs = new RankingFunction[size];
 		for (int i = 0; i < size; ++i) {

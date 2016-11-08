@@ -30,12 +30,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.IAnnotationProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.ReachDefStatementAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.util.Util;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RCFGEdgeVisitor;
@@ -58,19 +58,19 @@ public class ReachDefRCFGPredecessorGenerator extends RCFGEdgeVisitor {
 	 * @param e
 	 * @return
 	 */
-	public List<ReachDefStatementAnnotation> process(RCFGNode currentNode) {
+	public List<ReachDefStatementAnnotation> process(IcfgLocation currentNode) {
 		rtr = new ArrayList<ReachDefStatementAnnotation>();
 		if (currentNode == null) {
 			return rtr;
 		}
 
-		for (final RCFGEdge pre : currentNode.getIncomingEdges()) {
+		for (final IcfgEdge pre : currentNode.getIncomingEdges()) {
 			visit(pre);
 		}
 
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Predecessors: "
-					+ Util.prettyPrintIterable(currentNode.getIncomingEdges(), Util.<RCFGEdge> createHashCodePrinter()));
+					+ Util.prettyPrintIterable(currentNode.getIncomingEdges(), Util.<IcfgEdge> createHashCodePrinter()));
 		}
 
 		return rtr;

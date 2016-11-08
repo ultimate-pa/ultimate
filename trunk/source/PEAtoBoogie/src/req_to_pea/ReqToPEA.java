@@ -30,7 +30,9 @@ package req_to_pea;
 import java.util.ArrayList;
 import java.util.List;
 
-import java_cup.runtime.Symbol;
+import com.github.jhoenicke.javacup.runtime.Symbol;
+
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import pea.PhaseEventAutomata;
 import pea.modelchecking.J2UPPAALConverter;
 import pea.reqCheck.PatternToPEA;
@@ -38,6 +40,12 @@ import srParse.ReqParser;
 import srParse.srParsePattern;
 
 public class ReqToPEA {
+	private ILogger mLogger = null;
+	
+	public ReqToPEA(ILogger logger){
+		mLogger = logger;
+	}
+	
     public srParsePattern[] genPatterns(String reqFileName) {
     	try {
     		final ReqParser parser = new ReqParser(reqFileName);
@@ -53,7 +61,7 @@ public class ReqToPEA {
 	public PhaseEventAutomata[] genPEA(srParsePattern[] patterns){
 		final List<PhaseEventAutomata> peaList = new ArrayList<PhaseEventAutomata>();
 			
-		final PatternToPEA peaTrans=new PatternToPEA();
+		final PatternToPEA peaTrans=new PatternToPEA(mLogger);
 		for(final srParsePattern pat : patterns)
 		{
 			// ignore patterns with syntax errors
@@ -73,7 +81,7 @@ public class ReqToPEA {
 
 		PhaseEventAutomata pea=null;				
 		
-		final PatternToPEA peaTrans=new PatternToPEA();
+		final PatternToPEA peaTrans=new PatternToPEA(mLogger);
 		
 		for(final srParsePattern pat : patterns)
 		{

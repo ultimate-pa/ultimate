@@ -11,9 +11,11 @@ Require-Bundle: org.eclipse.core.runtime;visibility:=reexport,
  Library-SMTLIB,
  Library-UltimateUtil,
  Library-log4j,
+ Library-Log4j2,
  Library-ApacheCommonsLang
 Bundle-ActivationPolicy: lazy
 Export-Package: de.uni_freiburg.informatik.ultimate.core.coreplugin,
+ de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions,
  de.uni_freiburg.informatik.ultimate.core.coreplugin.external,
  de.uni_freiburg.informatik.ultimate.core.coreplugin.modelrepository,
  de.uni_freiburg.informatik.ultimate.core.coreplugin.modelwalker,

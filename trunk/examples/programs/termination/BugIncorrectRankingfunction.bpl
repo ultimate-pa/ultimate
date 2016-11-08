@@ -1,3 +1,4 @@
+//#Terminating
 /* Example where we obtain an incorrect ranking function in 12732.
  * Example was obtained from a modified version of joey_false-termination.c
  * 

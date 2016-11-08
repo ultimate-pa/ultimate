@@ -31,12 +31,12 @@ import java.math.BigInteger;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.CommuhashNormalForm;
 
 
@@ -61,13 +61,13 @@ public class CommuHashPreprocessor extends TransitionPreprocessor {
 	}
 	
 	@Override
-	protected boolean checkSoundness(Script script, TransFormulaLR oldTF,
-			TransFormulaLR newTF) {
+	protected boolean checkSoundness(Script script, ModifiableTransFormula oldTF,
+			ModifiableTransFormula newTF) {
 		return true;
 	}
 	
 	@Override
-	public TransFormulaLR process(Script script, TransFormulaLR tf) throws TermException {
+	public ModifiableTransFormula process(Script script, ModifiableTransFormula tf) throws TermException {
 		final Term normalized1 = (new ConstantTermNormalizer2()).transform(tf.getFormula());
 		final Term normalized2 = (new CommuhashNormalForm(mServices, script)).transform(normalized1);
 		tf.setFormula(normalized2);

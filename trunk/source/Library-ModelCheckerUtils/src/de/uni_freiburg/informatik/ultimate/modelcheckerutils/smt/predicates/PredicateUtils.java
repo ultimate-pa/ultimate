@@ -40,32 +40,41 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 
 public class PredicateUtils {
+	
+	public enum FormulaSize { TREESIZE, DAGSIZE }; 
 	
 	/**
 	 * Returns the DAG size of the predicate's formula. 
 	 * (DAG size means that similar sub-formulas are counted only once.)
 	 */
-	public static int computeDagSizeOfPredicate(final IPredicate p) {
-		return (new DAGSize()).size(p.getFormula());
+	public static int computeDagSizeOfPredicate(final IPredicate p, final FormulaSize size) {
+		switch (size) {
+		case DAGSIZE:
+			return (new DAGSize()).size(p.getFormula());
+		case TREESIZE:
+			return (new DAGSize()).treesize(p.getFormula());
+		default:
+			throw new AssertionError("unknown " + size);
+		}
 	}
 	
 	/**
 	 * Computes DAG size for an array of predicates.
 	 */
-	public static int[] computeDagSizeOfPredicates(final List<IPredicate> predicates) {
+	public static int[] computeDagSizeOfPredicates(final List<IPredicate> predicates, final FormulaSize size) {
 		final int[] sizeOfPredicates = new int[predicates.size()];
 		for (int i = 0; i < predicates.size(); i++) {
-			sizeOfPredicates[i] = computeDagSizeOfPredicate(predicates.get(i));
+			sizeOfPredicates[i] = computeDagSizeOfPredicate(predicates.get(i), size);
 		}
 		return sizeOfPredicates;
 	}
@@ -196,7 +205,7 @@ public class PredicateUtils {
 	 * <li>Each oldVar v is renamed to v_OLD.
 	 * </ul>
 	 */
-	public static Term formulaWithIndexedVars(final TransFormula tf, final int idxInVar, final int idxOutVar, final Set<IProgramVar> assignedVars,
+	public static Term formulaWithIndexedVars(final UnmodifiableTransFormula tf, final int idxInVar, final int idxOutVar, final Set<IProgramVar> assignedVars,
 			final Map<String, Term> indexedConstants, final Script script) {
 		assert (assignedVars != null && assignedVars.isEmpty());
 		final Set<TermVariable> notYetSubst = new HashSet<TermVariable>();
@@ -269,58 +278,66 @@ public class PredicateUtils {
 	}
 
 	public static LBool isInductiveHelper(final Script script, final IPredicate precond, final IPredicate postcond,
-			final TransFormula tf, final Set<IProgramVar> modifiableGlobalsBefore, final Set<IProgramVar> modifiableGlobalsAfter) {
+			final UnmodifiableTransFormula tf, final Set<IProgramVar> modifiableGlobalsBefore, final Set<IProgramVar> modifiableGlobalsAfter) {
 		script.push(1);
 
-		final Set<IProgramVar> empty = Collections.emptySet();
+		final List<Term> conjuncts = new ArrayList<Term>();
 		{
+			// add oldvar equalities for precond and tf
 			final Set<IProgramNonOldVar> unprimedOldVarEqualities = new HashSet<>();
 			final Set<IProgramNonOldVar> primedOldVarEqualities = new HashSet<>();
 
-			findNonModifiablesGlobals(precond.getVars(), modifiableGlobalsBefore, empty, unprimedOldVarEqualities,
+			findNonModifiablesGlobals(precond.getVars(), modifiableGlobalsBefore, Collections.emptySet(), unprimedOldVarEqualities,
 					primedOldVarEqualities);
-			findNonModifiablesGlobals(tf.getInVars().keySet(), modifiableGlobalsBefore, empty, unprimedOldVarEqualities,
+			findNonModifiablesGlobals(tf.getInVars().keySet(), modifiableGlobalsBefore, Collections.emptySet(), unprimedOldVarEqualities,
 					primedOldVarEqualities);
 			findNonModifiablesGlobals(tf.getOutVars().keySet(), modifiableGlobalsAfter, tf.getAssignedVars(),
 					unprimedOldVarEqualities, primedOldVarEqualities);
 
-			final List<Term> positiveConjuncts = new ArrayList<Term>();
+			
 			for (final IProgramNonOldVar bv : unprimedOldVarEqualities) {
-				positiveConjuncts.add(ModifiableGlobalVariableManager.constructConstantOldVarEquality(bv, false,
+				conjuncts.add(ModifiableGlobalVariableManager.constructConstantOldVarEquality(bv, false,
 						script));
 			}
 			for (final IProgramNonOldVar bv : primedOldVarEqualities) {
-				positiveConjuncts.add(ModifiableGlobalVariableManager.constructConstantOldVarEquality(bv, true,
+				conjuncts.add(ModifiableGlobalVariableManager.constructConstantOldVarEquality(bv, true,
 						script));
 			}
-			final Term tfRenamed = tf.getClosedFormula();
-			assert tfRenamed != null;
-			final Term precondRenamed = precond.getClosedFormula();
-			assert precondRenamed != null;
-			positiveConjuncts.add(precondRenamed);
-			positiveConjuncts.add(tfRenamed);
-			final Term positive = SmtUtils.and(script, positiveConjuncts);
-			script.assertTerm(positive);
 		}
 		{
+			// add precond
+			final Term precondRenamed = precond.getClosedFormula();
+			assert precondRenamed != null;
+			conjuncts.add(precondRenamed);
+		}
+		{
+			//add tf
+			final Term tfRenamed = tf.getClosedFormula();
+			assert tfRenamed != null;
+			conjuncts.add(tfRenamed);
+
+		}
+		{
+			// add oldvar equalities for postcond
 			final Set<IProgramNonOldVar> unprimedOldVarEqualities = new HashSet<>();
 			final Set<IProgramNonOldVar> primedOldVarEqualities = new HashSet<>();
-			final List<Term> negativeConjuncts = new ArrayList<Term>();
+		
 			findNonModifiablesGlobals(postcond.getVars(), modifiableGlobalsAfter, tf.getAssignedVars(),
 					unprimedOldVarEqualities, primedOldVarEqualities);
 			for (final IProgramNonOldVar bv : unprimedOldVarEqualities) {
-				negativeConjuncts.add(ModifiableGlobalVariableManager.constructConstantOldVarEquality(bv, false,
+				conjuncts.add(ModifiableGlobalVariableManager.constructConstantOldVarEquality(bv, false,
 						script));
 			}
 			for (final IProgramNonOldVar bv : primedOldVarEqualities) {
-				negativeConjuncts.add(ModifiableGlobalVariableManager.constructConstantOldVarEquality(bv, true,
+				conjuncts.add(ModifiableGlobalVariableManager.constructConstantOldVarEquality(bv, true,
 						script));
 			}
-			final Term postcondRenamed = rename(script, postcond, tf.getAssignedVars());
-			negativeConjuncts.add(postcondRenamed);
-			final Term negative = SmtUtils.and(script, negativeConjuncts);
-			script.assertTerm(SmtUtils.not(script, negative));
 		}
+		{
+			final Term postcondRenamed = rename(script, postcond, tf.getAssignedVars());
+			conjuncts.add(SmtUtils.not(script, postcondRenamed));
+		}
+		script.assertTerm(SmtUtils.and(script, conjuncts));
 		final LBool result = script.checkSat();
 
 		script.pop(1);

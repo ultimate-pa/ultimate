@@ -27,22 +27,31 @@
  */
 package de.uni_freiburg.informatik.ultimate.ltl2aut;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
+import java.util.List; 
 
+import de.uni_freiburg.informatik.ultimate.core.lib.models.ObjectContainer;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
 import de.uni_freiburg.informatik.ultimate.core.model.IGenerator;
+import de.uni_freiburg.informatik.ultimate.core.model.ISource;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.preferences.PreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.GlobalLTLInvariant;
 
-public class LTL2aut implements IGenerator {
+public class LTL2aut implements IGenerator, ISource {
 
 	protected List<String> mFileNames;
 	private boolean mProcess;
@@ -52,15 +61,19 @@ public class LTL2aut implements IGenerator {
 	private LTL2autObserver mObserver;
 	private IUltimateServiceProvider mServices;
 	private IToolchainStorage mStorage;
+	private String[] mFileTypes;
+	private ILogger mLogger;
 
 	public LTL2aut() {
 		mFileNames = new ArrayList<String>();
+		mFileTypes = new String[] { "ltl" };
 	}
 
 	@Override
 	public void init() {
 		mProcess = false;
 		mUseful = 0;
+		
 	}
 
 	@Override
@@ -145,6 +158,7 @@ public class LTL2aut implements IGenerator {
 		final Collection<CounterExampleResult> cex = ResultUtil.filterResults(services.getResultService().getResults(),
 				CounterExampleResult.class);
 		mSkip = !cex.isEmpty();
+		mLogger = mServices.getLoggingService().getLogger( Activator.PLUGIN_NAME);
 	}
 
 	@Override
@@ -156,6 +170,49 @@ public class LTL2aut implements IGenerator {
 			mServices.getLoggingService().getLogger(getPluginID())
 					.info("Another plugin discovered errors, skipping...");
 		}
+	}
+
+	@Override
+	public boolean parseable(File[] files) {
+		for (final File f : files) {
+			if (!parseable(f)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	@Override
+	public boolean parseable(File file) {
+		for (final String s : getFileTypes()) {
+			if (file.getName().endsWith(s)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	@Override
+	public IElement parseAST(File[] files) throws Exception {
+		return null;
+	}
+
+
+	@Override
+	public IElement parseAST(File file) throws Exception {
+		mUseful++;
+		LTLFileParser ltlFileParser = new LTLFileParser(mLogger);
+		return ltlFileParser.parse(file);
+	}
+
+	@Override
+	public String[] getFileTypes() {
+		return mFileTypes;
+	}
+
+	@Override
+	public void setPreludeFile(File prelude) {
+		// TODO Auto-generated method stub
 	}
 
 }

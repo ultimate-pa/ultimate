@@ -31,11 +31,11 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.lassoranker.InstanceCounting;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LinearInequality;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 
 /**
@@ -61,8 +61,8 @@ class SupportingInvariantGenerator extends AffineFunctionGenerator {
 	 *                   the supporting invariant
 	 * @param strict is this invariant a strict inequality?
 	 */
-	SupportingInvariantGenerator(Script script,
-			Collection<RankVar> variables, boolean strict) {
+	SupportingInvariantGenerator(final Script script,
+			final Collection<IProgramVar> variables, final boolean strict) {
 		super(script, variables, s_prefix
 				+ (new InstanceCounting()).getInstanceNumber());
 		this.strict = strict;
@@ -74,7 +74,7 @@ class SupportingInvariantGenerator extends AffineFunctionGenerator {
 	 * @return Linear inequality corresponding to si(x)
 	 */
 	@Override
-	public LinearInequality generate(Map<RankVar, Term> vars) {
+	public LinearInequality generate(final Map<IProgramVar, ? extends Term> vars) {
 		final LinearInequality li = super.generate(vars);
 		li.setStrict(strict);
 		return li;
@@ -85,7 +85,7 @@ class SupportingInvariantGenerator extends AffineFunctionGenerator {
 	 * @return supporting invariant
 	 * @throws SMTLIBException
 	 */
-	public SupportingInvariant extractSupportingInvariant(Map<Term, Rational> val)
+	public SupportingInvariant extractSupportingInvariant(final Map<Term, Rational> val)
 			throws SMTLIBException {
 		final AffineFunction f = super.extractAffineFunction(val);
 		final SupportingInvariant si = new SupportingInvariant(f);

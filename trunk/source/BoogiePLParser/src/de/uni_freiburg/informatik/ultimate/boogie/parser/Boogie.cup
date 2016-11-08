@@ -5,7 +5,7 @@ package de.uni_freiburg.informatik.ultimate.boogie.parser;
 import java.util.Collections;
 import java.util.List;
 import java.util.ArrayList;
-import java_cup.runtime.Symbol;
+import com.github.jhoenicke.javacup.runtime.Symbol;
 
 import de.uni_freiburg.informatik.ultimate.boogie.parser.BoogieSymbolFactory.BoogieSymbol;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.*;
@@ -25,7 +25,7 @@ parser code {:
 	String mFilename;
 	private IUltimateServiceProvider mServices;	
 	
-	public Parser(java_cup.runtime.Scanner s, java_cup.runtime.SymbolFactory sf, IUltimateServiceProvider services){
+	public Parser(com.github.jhoenicke.javacup.runtime.Scanner s, com.github.jhoenicke.javacup.runtime.SymbolFactory sf, IUltimateServiceProvider services){
 		super(s,sf);
 		mServices = services;
 	}

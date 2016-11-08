@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE AbstractInterpretationV2 plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission
  * to convey the resulting work.
  */
 
@@ -80,7 +80,7 @@ public class IntervalDomainArithmeticDivisionTest {
 
 		final IntervalDomainValue interval2 = HelperFunctions.createInterval(2, 2);
 
-		final IntervalDomainValue expectedResult = new IntervalDomainValue(new IntervalValue(new BigDecimal(0.5)),
+		final IntervalDomainValue expectedResult = new IntervalDomainValue(new IntervalValue(new BigDecimal("0.5")),
 		        new IntervalValue(new BigDecimal(5)));
 
 		assertTrue(HelperFunctions.computeDivisionResultReal(interval1, interval2, expectedResult));
@@ -92,7 +92,7 @@ public class IntervalDomainArithmeticDivisionTest {
 
 		final IntervalDomainValue interval2 = HelperFunctions.createInterval(-2, -2);
 
-		final IntervalDomainValue expectedResult = new IntervalDomainValue(new IntervalValue(new BigDecimal(0.5)),
+		final IntervalDomainValue expectedResult = new IntervalDomainValue(new IntervalValue(new BigDecimal("0.5")),
 		        new IntervalValue(new BigDecimal(5)));
 
 		assertTrue(HelperFunctions.computeDivisionResultReal(interval1, interval2, expectedResult));

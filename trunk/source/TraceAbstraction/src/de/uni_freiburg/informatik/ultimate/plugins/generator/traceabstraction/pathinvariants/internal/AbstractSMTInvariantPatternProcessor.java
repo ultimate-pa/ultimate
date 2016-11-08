@@ -107,6 +107,6 @@ public abstract class AbstractSMTInvariantPatternProcessor<IPT> implements
 //		final TermTransformer transformer = getConfigurationTransformer();
 //		final Term term = transformer.transform(getTermForPattern(pattern));
 //		return predicateUnifier.getOrConstructPredicate(TermVarsProc
-//				.computeTermVarsProc(term, smtManager.getBoogie2Smt()));
+//				.computeTermVarsProc(term, csToolkit.getBoogie2Smt()));
 //	}
 }

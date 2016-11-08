@@ -47,11 +47,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferencePro
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding.preferences.PreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
@@ -76,7 +76,7 @@ public class MinModelConverter {
 	/**
 	 * Public Constructor.
 	 */
-	public MinModelConverter(IUltimateServiceProvider services) {
+	public MinModelConverter(final IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
@@ -89,14 +89,14 @@ public class MinModelConverter {
 	 *            the rootNode to convert
 	 * @return the converted rootNode
 	 */
-	public RootNode startConversion(RootNode root) {
+	public RootNode startConversion(final RootNode root) {
 		final RootNode newRoot = new RootNode(root.getPayload().getLocation(), root.getRootAnnot());
 		ModelUtils.copyAnnotations(root, newRoot);
 		mBoogie2SMT = root.getRootAnnot().getBoogie2SMT();
 		final boolean simplify = (mServices.getPreferenceProvider(Activator.PLUGIN_ID))
 				.getBoolean(RcfgPreferenceInitializer.LABEL_Simplify);
 		mConvertVisitor = new ConversionVisitor(mBoogie2SMT, root, getRatingHeuristic(), mServices, simplify);
-		for (final RCFGEdge edge : root.getOutgoingEdges()) {
+		for (final IcfgEdge edge : root.getOutgoingEdges()) {
 			if (edge instanceof RootEdge) {
 				final BlockEncodingAnnotation annot = BlockEncodingAnnotation.getAnnotation(edge);
 				if (annot != null) {
@@ -164,8 +164,8 @@ public class MinModelConverter {
 	 *            function head
 	 * @return converted ProgramPoint
 	 */
-	private ProgramPoint convertFunction(MinimizedNode node) {
-		final ProgramPoint newNode = mConvertVisitor.getReferencedNode(node);
+	private BoogieIcfgLocation convertFunction(final MinimizedNode node) {
+		final BoogieIcfgLocation newNode = mConvertVisitor.getReferencedNode(node);
 		// To do the conversion, we need to run over the minimized graph,
 		// and convert every edge into an regular RCFG edge
 		// ---> to do this we need some special Visitor which does the
@@ -183,30 +183,30 @@ public class MinModelConverter {
 	 * 
 	 * @param rootAnnot
 	 */
-	private void updateRootAnnot(RootAnnot rootAnnot) {
-		final HashMap<ProgramPoint, ProgramPoint> progPointMap = mConvertVisitor.getOrigToNewMap();
+	private void updateRootAnnot(final BoogieIcfgContainer rootAnnot) {
+		final HashMap<BoogieIcfgLocation, BoogieIcfgLocation> progPointMap = mConvertVisitor.getOrigToNewMap();
 		// Update the Entry-Nodes
-		final HashMap<String, ProgramPoint> entryNodes = new HashMap<String, ProgramPoint>(rootAnnot.getEntryNodes());
+		final HashMap<String, BoogieIcfgLocation> entryNodes = new HashMap<String, BoogieIcfgLocation>(rootAnnot.getEntryNodes());
 		rootAnnot.getEntryNodes().clear();
 		for (final String key : entryNodes.keySet()) {
-			final ProgramPoint oldVal = entryNodes.get(key);
+			final BoogieIcfgLocation oldVal = entryNodes.get(key);
 			if (progPointMap.containsKey(oldVal)) {
 				rootAnnot.getEntryNodes().put(key, progPointMap.get(oldVal));
 			}
 		}
 		// Update the Exit-Nodes
-		final HashMap<String, ProgramPoint> exitNodes = new HashMap<String, ProgramPoint>(rootAnnot.getExitNodes());
+		final HashMap<String, BoogieIcfgLocation> exitNodes = new HashMap<String, BoogieIcfgLocation>(rootAnnot.getExitNodes());
 		rootAnnot.getExitNodes().clear();
 		for (final String key : exitNodes.keySet()) {
-			final ProgramPoint oldVal = exitNodes.get(key);
+			final BoogieIcfgLocation oldVal = exitNodes.get(key);
 			if (progPointMap.containsKey(oldVal)) {
 				rootAnnot.getExitNodes().put(key, progPointMap.get(oldVal));
 			}
 		}
 		// Update the Error-Nodes
 		for (final String key : rootAnnot.getErrorNodes().keySet()) {
-			final ArrayList<ProgramPoint> newReferences = new ArrayList<ProgramPoint>();
-			for (final ProgramPoint oldVal : rootAnnot.getErrorNodes().get(key)) {
+			final ArrayList<BoogieIcfgLocation> newReferences = new ArrayList<BoogieIcfgLocation>();
+			for (final BoogieIcfgLocation oldVal : rootAnnot.getErrorNodes().get(key)) {
 				if (progPointMap.containsKey(oldVal)) {
 					newReferences.add(progPointMap.get(oldVal));
 				} else {
@@ -218,11 +218,11 @@ public class MinModelConverter {
 		}
 		// Update the LoopLocations
 		// Attention: ProgramPoint implements equals, we have to care for that!
-		final HashSet<ProgramPoint> keySet = new HashSet<ProgramPoint>(rootAnnot.getLoopLocations().keySet());
+		final HashSet<BoogieIcfgLocation> keySet = new HashSet<BoogieIcfgLocation>(rootAnnot.getLoopLocations().keySet());
 		rootAnnot.getLoopLocations().clear();
-		for (final ProgramPoint oldVal : keySet) {
+		for (final BoogieIcfgLocation oldVal : keySet) {
 			if (progPointMap.containsKey(oldVal)) {
-				final ProgramPoint newVal = progPointMap.get(oldVal);
+				final BoogieIcfgLocation newVal = progPointMap.get(oldVal);
 				if (newVal.getBoogieASTNode() != null) {
 					// Since hashCode(oldVal) == hashCode(newVal), this line
 					// overwrites the old entry, so that we do not remove it in

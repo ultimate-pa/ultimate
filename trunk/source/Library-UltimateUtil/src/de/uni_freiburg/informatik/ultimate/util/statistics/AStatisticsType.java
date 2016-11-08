@@ -9,20 +9,22 @@ import de.uni_freiburg.informatik.ultimate.util.InCaReCounter;
 
 public abstract class AStatisticsType<T extends Enum<T> & IStatisticsElement> implements IStatisticsType {
 	
-	public static Function<Object, Function<Object,Object>> s_IntegerAddition = 
+	public static Function<Object, Function<Object,Object>> s_IntegerAddition =
 			x -> y -> (Integer) x + (Integer) y;
-	public static Function<Object, Function<Object,Object>> s_LongAddition = 
+	public static Function<Object, Function<Object,Object>> s_LongAddition =
 			x -> y -> (Long) x + (Long) y;
-	public static Function<Object, Function<Object,Object>> s_IncareAddition = 
+	public static Function<Object, Function<Object,Object>> s_IncareAddition =
 			x -> y -> { ((InCaReCounter) x).add((InCaReCounter) y); return x;};
-	public static Function<Object, Function<Object,Object>> s_StatisticsDataAggregation = 
+	public static Function<Object, Function<Object,Object>> s_StatisticsDataAggregation =
 			x -> y -> { ((StatisticsData) x).aggregateBenchmarkData((StatisticsData) y); return x;};
-	public static Function<String, Function<Object,String>> s_KeyBeforeData = 
-			key -> data -> key + ": " + String.valueOf(data);
-	public static Function<String, Function<Object,String>> s_DataBeforeKey = 
-			key -> data -> String.valueOf(data) + " " + key;
-	public static Function<String, Function<Object,String>> s_TimeBeforeKey = 
+	public static Function<String, Function<Object,String>> s_KeyBeforeData =
+			key -> data -> key + ": " + data;
+	public static Function<String, Function<Object,String>> s_DataBeforeKey =
+			key -> data -> String.valueOf(data) + ' ' + key;
+	public static Function<String, Function<Object,String>> s_TimeBeforeKey =
 			key -> time -> prettyprintNanoseconds( (Long) time) + " " + key;
+	public static Function<Object, Function<Object,Object>> s_IntegerMaximum =
+			x -> y -> Math.max((Integer) x, (Integer) y);
 
 	
 	private final Class<T> mKeys;

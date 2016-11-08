@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Util Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Util Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Util Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.util.csv;
@@ -31,28 +31,31 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 
- * @author dietsch
- * 
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <T>
+ *            CSV provider type
  */
 public class SimpleCsvProvider<T> implements ICsvProvider<T> {
-
 	private List<String> mColumnTitles;
 	private final List<String> mRowTitles;
 	private final List<List<T>> mTable;
-
-	public SimpleCsvProvider(List<String> columnTitles) {
+	
+	/**
+	 * @param columnTitles
+	 *            The column titles.
+	 */
+	public SimpleCsvProvider(final List<String> columnTitles) {
 		mColumnTitles = columnTitles;
 		mTable = new ArrayList<>();
 		mRowTitles = new ArrayList<>();
 	}
-
+	
 	@Override
 	public List<String> getColumnTitles() {
 		return mColumnTitles;
 	}
-
+	
 	@Override
 	public List<List<T>> getTable() {
 		final List<List<T>> rtr = new ArrayList<>();
@@ -61,14 +64,14 @@ public class SimpleCsvProvider<T> implements ICsvProvider<T> {
 		}
 		return rtr;
 	}
-
+	
 	@Override
 	public List<String> getRowHeaders() {
 		return mRowTitles;
 	}
-
+	
 	@Override
-	public void addRow(String rowName, List<T> values) {
+	public void addRow(final String rowName, final List<T> values) {
 		if (values == null || values.size() != mColumnTitles.size()) {
 			throw new IllegalArgumentException(
 					"values are invalid (either null or not the same length as the number of columns of this CsvProvider");
@@ -76,13 +79,13 @@ public class SimpleCsvProvider<T> implements ICsvProvider<T> {
 		mRowTitles.add(rowName);
 		mTable.add(values);
 	}
-
+	
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
 		final String separator = ",";
 		final String lineSeparator = System.getProperty("line.separator");
-
+		
 		// get longest string
 		int maxLength = 0;
 		for (final String rowTitle : mRowTitles) {
@@ -96,78 +99,97 @@ public class SimpleCsvProvider<T> implements ICsvProvider<T> {
 		for (int i = 0; i < maxLength + 1; i++) {
 			sb.append(" ");
 		}
-
+		
 		for (final String s : mColumnTitles) {
 			sb.append(s).append(separator);
 		}
-		sb.replace(sb.length() - 2, sb.length(), "").append(lineSeparator);
-
+		if (sb.length() >= 2) {
+			sb.replace(sb.length() - 2, sb.length(), "");
+		}
+		sb.append(lineSeparator);
+		
 		for (int i = 0; i < mTable.size(); ++i) {
 			final List<T> row = mTable.get(i);
 			String rowTitle = mRowTitles.get(i);
-
+			
 			if (rowTitle == null) {
 				rowTitle = "";
 			}
-
+			
 			checkForSeparators(rowTitle, separator, lineSeparator);
-			sb.append(rowTitle).append(separator);
+			sb.append(rowTitle);
 			for (int j = 0; j < maxLength + 1 - rowTitle.length(); j++) {
 				sb.append(" ");
 			}
-			sb.append(rowTitle).append(separator);
 			for (final T value : row) {
 				final String cellString = String.valueOf(value);
 				checkForSeparators(cellString, separator, lineSeparator);
 				sb.append(cellString).append(", ");
 			}
-			sb.replace(sb.length() - 2, sb.length(), "").append(lineSeparator);
+			if (sb.length() >= 2) {
+				sb.replace(sb.length() - 2, sb.length(), "");
+			}
+			sb.append(lineSeparator);
 		}
-
+		
 		return sb.toString();
 	}
-
+	
 	@Override
-	public StringBuilder toCsv(StringBuilder sb, String cellSeparator) {
+	public StringBuilder toCsv(StringBuilder sb, final String cellSeparator) {
 		if (sb == null) {
 			sb = new StringBuilder();
 		}
-
+		
+		// only output an extra column for row headers if there is the need for it
+		final boolean printRowHeaderColumn = hasRowHeaders();
+		
 		final String lineSeparator = System.getProperty("line.separator");
 		String separator = ",";
 		if (cellSeparator != null && !cellSeparator.isEmpty()) {
 			separator = cellSeparator;
 		}
-
-		sb.append(separator);
+		
+		if (printRowHeaderColumn) {
+			sb.append(separator);
+		}
 		for (final String s : mColumnTitles) {
 			sb.append(s).append(separator);
 		}
-		sb.replace(sb.length() - separator.length(), sb.length(), "").append(lineSeparator);
-
+		if (sb.length() >= separator.length()) {
+			sb.replace(sb.length() - separator.length(), sb.length(), "");
+		}
+		sb.append(lineSeparator);
+		
 		for (int i = 0; i < mTable.size(); ++i) {
 			final List<T> row = mTable.get(i);
 			String rowTitle = mRowTitles.get(i);
-
-			if (rowTitle == null) {
-				rowTitle = "";
+			
+			if (printRowHeaderColumn) {
+				if (rowTitle == null) {
+					rowTitle = "";
+				}
+				
+				checkForSeparators(rowTitle, separator, lineSeparator);
+				sb.append(rowTitle).append(separator);
 			}
-
-			checkForSeparators(rowTitle, separator, lineSeparator);
-			sb.append(rowTitle).append(separator);
 			for (final T value : row) {
 				String cellString = String.valueOf(value);
 				cellString = cellString.replace(lineSeparator, "").replace(separator, "");
 				checkForSeparators(cellString, separator, lineSeparator);
 				sb.append(cellString).append(separator);
 			}
-			sb.replace(sb.length() - separator.length(), sb.length(), "").append(lineSeparator);
+			if (sb.length() >= separator.length()) {
+				sb.replace(sb.length() - separator.length(), sb.length(), "");
+			}
+			sb.append(lineSeparator);
 		}
-
+		
 		return sb;
 	}
-
-	private void checkForSeparators(String cellString, String cellSeparator, String lineSeparator) {
+	
+	private static void checkForSeparators(final String cellString, final String cellSeparator,
+			final String lineSeparator) {
 		if (cellString.contains(cellSeparator)) {
 			throw new IllegalArgumentException(
 					"The following cell contains the character that is used to separate cells: " + cellString);
@@ -177,27 +199,27 @@ public class SimpleCsvProvider<T> implements ICsvProvider<T> {
 					"The following cell contains the character that is used to separate lines: " + cellString);
 		}
 	}
-
+	
 	@Override
 	public boolean isEmpty() {
 		return mTable.isEmpty();
 	}
-
+	
 	@Override
-	public void addRow(List<T> values) {
+	public void addRow(final List<T> values) {
 		addRow(null, values);
 	}
-
+	
 	@Override
-	public List<T> getRow(int index) {
+	public List<T> getRow(final int index) {
 		if (index < 0 || index >= mTable.size()) {
 			return null;
 		}
 		return mTable.get(index);
 	}
-
+	
 	@Override
-	public void renameColumnTitle(String oldName, String newName) {
+	public void renameColumnTitle(final String oldName, final String newName) {
 		final ArrayList<String> names = new ArrayList<>();
 		for (final String title : getColumnTitles()) {
 			if (title.equals(oldName)) {
@@ -208,5 +230,16 @@ public class SimpleCsvProvider<T> implements ICsvProvider<T> {
 		}
 		mColumnTitles = names;
 	}
-
+	
+	/**
+	 * @return {@code true} iff there is at least one non-null row header.
+	 */
+	private boolean hasRowHeaders() {
+		for (final String rowTitle : mRowTitles) {
+			if (rowTitle != null) {
+				return true;
+			}
+		}
+		return false;
+	}
 }

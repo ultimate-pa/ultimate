@@ -2,27 +2,27 @@
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE UnitTest Library.
- * 
+ *
  * The ULTIMATE UnitTest Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE UnitTest Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE UnitTest Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE UnitTest Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE UnitTest Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE UnitTest Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.test;
@@ -42,14 +42,15 @@ import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
  * <li>a settings file, and
  * <li>a toolchain file.
  * </ul>
- * 
+ *
  * @author heizmann@informatik.uni-freiburg.de
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * 
+ *
  */
 public final class UltimateRunDefinition implements Comparable<UltimateRunDefinition> {
 	private static final String[] PRIMARY_ENDINGS = new String[] { ".i", ".c", ".bpl", ".ats" };
 	private static final String PATH_SEPARATOR = ";";
+	private static final String NO_SETTINGS_NAME = "Default Settings";
 
 	private final File[] mInput;
 	private final File mSettings;
@@ -82,6 +83,15 @@ public final class UltimateRunDefinition implements Comparable<UltimateRunDefini
 	public File getToolchain() {
 		return mToolchain;
 	}
+
+	public String getSettingsName() {
+		return getSettings() == null ? NO_SETTINGS_NAME : getSettings().getName();
+	}
+	
+	public String getSettingsAbsolutePath() {
+		return getSettings() == null ? NO_SETTINGS_NAME : getSettings().getAbsolutePath();
+	}
+
 
 	/**
 	 * This method tries to find the "primary" input file. This method is a hack to retain compatibility with the times
@@ -125,7 +135,7 @@ public final class UltimateRunDefinition implements Comparable<UltimateRunDefini
 
 	/**
 	 * Returns a string describing the folders from which the input files come.
-	 * 
+	 *
 	 * @return
 	 */
 	public String getInputFileFolders() {

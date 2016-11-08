@@ -1,4 +1,4 @@
-/* $Id$ 
+/* $Id$
  *
  * This file is part of the PEA tool set
  * 
@@ -41,7 +41,7 @@ import net.sourceforge.czt.session.SectionManager;
  */
 public class ZWrapper {
     
-    protected String DEFAULT_SECTIONNAME = null;
+    protected final String DEFAULT_SECTIONNAME = null;
     
     public static ZWrapper INSTANCE=new ZWrapper();
 
@@ -59,9 +59,9 @@ public class ZWrapper {
      * @param predicate
      * @return
      */
-    public String predicateToZml(String predicate) throws ParseException, 
+    public String predicateToZml(final String predicate) throws ParseException,
         InstantiationException {
-        throw new InstantiationException("ZWrapper cannot be used directly. Use a derived class.");        
+        throw new InstantiationException("ZWrapper cannot be used directly. Use a derived class.");
     }
     
     /**
@@ -70,9 +70,9 @@ public class ZWrapper {
      * @param predicate
      * @return
      */
-    public ZTerm predicateToTerm(String predicate) throws ParseException, 
+    public ZTerm predicateToTerm(final String predicate) throws ParseException,
         InstantiationException {
-        throw new InstantiationException("ZWrapper cannot be used directly. Use a derived class.");        
+        throw new InstantiationException("ZWrapper cannot be used directly. Use a derived class.");
     }
     
     /**
@@ -80,7 +80,7 @@ public class ZWrapper {
      * @param term
      * @return
      */
-    public String declToZml(String term)  throws ParseException, 
+    public String declToZml(final String term)  throws ParseException,
     InstantiationException {
         throw new InstantiationException("ZWrapper cannot be used directly. Use a derived class.");
     }
@@ -90,7 +90,7 @@ public class ZWrapper {
      * @param term
      * @return
      */
-    public String declToZml(ZTerm term) {
+    public String declToZml(final ZTerm term) {
         final StringWriter sw = new StringWriter();
         final JaxbXmlWriter ozWriter = new JaxbXmlWriter();
         ozWriter.write(term.getTerm(), sw);
@@ -99,7 +99,7 @@ public class ZWrapper {
 //        throw new InstantiationException("ZWrapper cannot be used directly. Use a derived class.");
     }
 
-    public String termToUnicode(ZTerm term) {
+    public String termToUnicode(final ZTerm term) {
         final StringWriter sw = new StringWriter();
         PrintUtils.print(term.term, sw, (SectionManager) term.sectionInfo,
                 DEFAULT_SECTIONNAME, Markup.UNICODE);
@@ -116,12 +116,12 @@ public class ZWrapper {
      *          unicode representation of a Z type definition
      * @return
      *          ZTerm representing the type definition
-     * @throws ParseException 
+     * @throws ParseException
      *          Occurs when parsing the Z string.
-     * @throws InstantiationException 
-     *          Occurs when calling this method directly. Use subclass instead. 
+     * @throws InstantiationException
+     *          Occurs when calling this method directly. Use subclass instead.
      */
-    public ZTerm declToTerm(String decl) throws ParseException, InstantiationException {
+    public ZTerm declToTerm(final String decl) throws ParseException, InstantiationException {
         throw new InstantiationException("ZWrapper cannot be used directly. Use a derived class.");
     }
     

@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE RCFGBuilder plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE RCFGBuilder plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE RCFGBuilder plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
@@ -30,7 +30,9 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 
 /**
@@ -63,7 +65,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activat
  * @author heizmann@informatik.uni-freiburg.de
  * 
  */
-public abstract class CodeBlock extends RCFGEdge implements IAction {
+public abstract class CodeBlock extends IcfgEdge implements IAction {
 
 	/**
 	 * ID to distinguish different versions of this class. If the class gains additional fields, this constant should be
@@ -75,14 +77,17 @@ public abstract class CodeBlock extends RCFGEdge implements IAction {
 
 	private final int mSerialnumber;
 
-	protected TransFormula mTransitionFormula;
-	protected TransFormula mTransitionFormulaWithBranchEncoders;
+	protected UnmodifiableTransFormula mTransitionFormula;
+	protected UnmodifiableTransFormula mTransitionFormulaWithBranchEncoders;
+	
+	private String mPrecedingProcedure;
+	private String mSucceedingProcedure;
 
 	protected RCFGEdgeAnnotation mAnnotation;
 
 	int mOccurenceInCounterexamples = 0;
 
-	CodeBlock(int serialNumber, ProgramPoint source, ProgramPoint target, ILogger logger) {
+	CodeBlock(final int serialNumber, final BoogieIcfgLocation source, final BoogieIcfgLocation target, final ILogger logger) {
 		super(source, target, (source == null ? new Payload() : new Payload(source.getPayload().getLocation())));
 		mSerialnumber = serialNumber;
 		mLogger = logger;
@@ -91,7 +96,7 @@ public abstract class CodeBlock extends RCFGEdge implements IAction {
 			private static final long serialVersionUID = 1L;
 
 			@Override
-			protected Object getFieldValue(String field) {
+			protected Object getFieldValue(final String field) {
 				return CodeBlock.this.getFieldValue(field);
 			}
 
@@ -103,6 +108,8 @@ public abstract class CodeBlock extends RCFGEdge implements IAction {
 		getPayload().getAnnotations().put(Activator.PLUGIN_ID, mAnnotation);
 		connectSource(source);
 		connectTarget(target);
+		setPreceedingProcedure(source);
+		setSucceedingProcedure(target);
 	}
 
 	/**
@@ -110,7 +117,7 @@ public abstract class CodeBlock extends RCFGEdge implements IAction {
 	 * have serial number "-1" and hence they will have the same hash code.
 	 */
 	@Deprecated
-	public CodeBlock(ProgramPoint source, ProgramPoint target, ILogger logger) {
+	public CodeBlock(final BoogieIcfgLocation source, final BoogieIcfgLocation target, final ILogger logger) {
 		super(source, target, (source == null ? new Payload() : new Payload(source.getPayload().getLocation())));
 		mSerialnumber = -1;
 		mLogger = logger;
@@ -119,7 +126,7 @@ public abstract class CodeBlock extends RCFGEdge implements IAction {
 			private static final long serialVersionUID = 1L;
 
 			@Override
-			protected Object getFieldValue(String field) {
+			protected Object getFieldValue(final String field) {
 				return CodeBlock.this.getFieldValue(field);
 			}
 
@@ -133,7 +140,7 @@ public abstract class CodeBlock extends RCFGEdge implements IAction {
 		connectTarget(target);
 	}
 
-	protected Object getFieldValue(String field) {
+	protected Object getFieldValue(final String field) {
 		if (field == "TransitionFormula") {
 			return mTransitionFormula;
 		} else if (field == "OccurenceInCounterexamples") {
@@ -150,15 +157,15 @@ public abstract class CodeBlock extends RCFGEdge implements IAction {
 	/**
 	 * @return an SMT-LIB based representation of this CodeBlock's transition relation
 	 */
-	public TransFormula getTransitionFormula() {
+	public UnmodifiableTransFormula getTransitionFormula() {
 		return mTransitionFormula;
 	}
 
-	public TransFormula getTransitionFormulaWithBranchEncoders() {
+	public UnmodifiableTransFormula getTransitionFormulaWithBranchEncoders() {
 		return mTransitionFormulaWithBranchEncoders;
 	}
 
-	public void setTransitionFormula(TransFormula transFormula) {
+	public void setTransitionFormula(final UnmodifiableTransFormula transFormula) {
 		mTransitionFormula = transFormula;
 		mTransitionFormulaWithBranchEncoders = transFormula;
 	}
@@ -171,16 +178,46 @@ public abstract class CodeBlock extends RCFGEdge implements IAction {
 		mOccurenceInCounterexamples++;
 	}
 
-	public int getSerialNumer() {
+	public int getSerialNumber() {
 		return mSerialnumber;
 	}
 
 	@Override
 	public int hashCode() {
-		return getSerialNumer();
+		return getSerialNumber();
+	}
+	
+	private void setPreceedingProcedure(final IcfgLocation source) {
+		if (source instanceof BoogieIcfgLocation) {
+			final String name = ((BoogieIcfgLocation) source).getProcedure();
+			if (mPrecedingProcedure == null) {
+				mPrecedingProcedure = name;
+			} else {
+				if (mPrecedingProcedure.equals(name)) {
+					// do nothing
+				} else {
+					throw new AssertionError("proc must not change");
+				}
+			}
+		}
+	}
+	
+	private void setSucceedingProcedure(final IcfgLocation source) {
+		if (source instanceof BoogieIcfgLocation) {
+			final String name = ((BoogieIcfgLocation) source).getProcedure();
+			if (mSucceedingProcedure == null) {
+				mSucceedingProcedure = name;
+			} else {
+				if (mSucceedingProcedure.equals(name)) {
+					// do nothing
+				} else {
+					throw new AssertionError("proc must not change");
+				}
+			}
+		}
 	}
 
-	public final void connectSource(RCFGNode source) {
+	public final void connectSource(final IcfgLocation source) {
 		if (source != null) {
 			setSource(source);
 			source.addOutgoing(this);
@@ -189,7 +226,7 @@ public abstract class CodeBlock extends RCFGEdge implements IAction {
 		}
 	}
 
-	public final void connectTarget(RCFGNode target) {
+	public final void connectTarget(final IcfgLocation target) {
 		if (target != null) {
 			setTarget(target);
 			target.addIncoming(this);
@@ -203,9 +240,11 @@ public abstract class CodeBlock extends RCFGEdge implements IAction {
 	 * result is the name of the caller, if CodeBlock is a return the result is the callee (from which we return).
 	 */
 	@Override
-	public String getPreceedingProcedure() {
-		final ProgramPoint pp = (ProgramPoint) getSource();
-		return pp.getProcedure();
+	public String getPrecedingProcedure() {
+		if (mPrecedingProcedure == null) {
+			throw new IllegalArgumentException("Preceding procedure has not yet been determined.");
+		}
+		return mPrecedingProcedure;
 	}
 
 	/**
@@ -214,11 +253,33 @@ public abstract class CodeBlock extends RCFGEdge implements IAction {
 	 */
 	@Override
 	public String getSucceedingProcedure() {
-		final ProgramPoint pp = (ProgramPoint) getTarget();
-		return pp.getProcedure();
+		if (mSucceedingProcedure == null) {
+			throw new IllegalArgumentException("Succeeding procedure has not yet been determined.");
+		}
+		return mSucceedingProcedure;
 	}
 
 	@Override
 	public abstract String toString();
+
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.core.lib.models.ModifiableMultigraphEdge#setTarget(de.uni_freiburg.informatik.ultimate.core.model.models.IModifiableExplicitEdgesMultigraph)
+	 */
+	@Override
+	public void setTarget(final IcfgLocation target) {
+		setSucceedingProcedure(target);
+		super.setTarget(target);
+	}
+
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.core.lib.models.ModifiableMultigraphEdge#setSource(de.uni_freiburg.informatik.ultimate.core.model.models.IModifiableExplicitEdgesMultigraph)
+	 */
+	@Override
+	public void setSource(final IcfgLocation source) {
+		setPreceedingProcedure(source);
+		super.setSource(source);
+	}
+	
+	
 
 }

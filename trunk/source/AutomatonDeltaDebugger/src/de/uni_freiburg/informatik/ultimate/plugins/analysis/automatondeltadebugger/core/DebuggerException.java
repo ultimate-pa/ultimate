@@ -29,17 +29,15 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebug
 
 /**
  * Fresh exception type for the debugger.
- * 
  * In order to prevent several causes for the designated error, this exception
  * can be thrown at the respective position to make sure the debugger looks for
  * the correct error position. Of course, a user can specify new types of
  * exceptions as well.
- * 
  * NOTE: After debugging the exception should be removed again, so that the
  * invariant that this exception is thrown at most once in the whole library
  * holds.
  * 
- * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
+ * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
 public class DebuggerException extends Exception {
 	private static final long serialVersionUID = 1L;
@@ -48,8 +46,12 @@ public class DebuggerException extends Exception {
 	private final String mMessage;
 	
 	/**
-	 * @param thrower class of the thrower (for better identification)
-	 * @param message message to print when throwing
+	 * Constructor with throwable and message.
+	 * 
+	 * @param thrower
+	 *            class of the thrower (for better identification)
+	 * @param message
+	 *            message to print when throwing
 	 */
 	public DebuggerException(final Class<?> thrower, final String message) {
 		mClassOfThrower = thrower;
@@ -57,7 +59,10 @@ public class DebuggerException extends Exception {
 	}
 	
 	/**
-	 * @param message message to print when throwing
+	 * Constructor with message.
+	 * 
+	 * @param message
+	 *            message to print when throwing
 	 */
 	public DebuggerException(final String message) {
 		mClassOfThrower = null;
@@ -66,13 +71,15 @@ public class DebuggerException extends Exception {
 	
 	@Override
 	public String toString() {
-		final StringBuilder b = new StringBuilder();
-		b.append(this.getClass().getSimpleName());
-		b.append("(");
-		b.append(mClassOfThrower == null ? "null" : mClassOfThrower.toString());
-		b.append(" : ");
-		b.append(mMessage);
-		b.append(")");
-		return b.toString();
+		final StringBuilder builder = new StringBuilder();
+		// @formatter:off
+		builder.append(this.getClass().getSimpleName())
+				.append('(')
+				.append(mClassOfThrower == null ? "null" : mClassOfThrower.toString())
+				.append(" : ")
+				.append(mMessage)
+				.append(')');
+		// @formatter:on
+		return builder.toString();
 	}
 }

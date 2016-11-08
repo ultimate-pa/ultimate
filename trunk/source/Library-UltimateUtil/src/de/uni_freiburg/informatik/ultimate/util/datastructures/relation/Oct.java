@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.util.datastructures.relation;
 /**
  * Generic Octuple that stores 8 different values.
  * 
- * @author Daniel Tischner
+ * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  *
  * @param <E1>
  *            Type of the first element
@@ -131,7 +131,7 @@ public final class Oct<E1, E2, E3, E4, E5, E6, E7, E8> {
 		if (!(obj instanceof Oct)) {
 			return false;
 		}
-		Oct<?, ?, ?, ?, ?, ?, ?, ?> other = (Oct<?, ?, ?, ?, ?, ?, ?, ?>) obj;
+		final Oct<?, ?, ?, ?, ?, ?, ?, ?> other = (Oct<?, ?, ?, ?, ?, ?, ?, ?>) obj;
 		if (mEighth == null) {
 			if (other.mEighth != null) {
 				return false;

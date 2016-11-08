@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE UnitTest Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE UnitTest Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE UnitTest Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.test.decider;
@@ -32,58 +32,76 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 
-import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.IPath;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ExceptionOrErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TypeErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
+import de.uni_freiburg.informatik.ultimate.core.model.results.ITimeoutResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 /**
  * 
- * @author dietsch
+ * The {@link TranslationTestResultDecider} is a {@link TestResultDecider} that checks whether a translating toolchain
+ * fails or not.
+ * 
+ * The decider will fail if the results contain a {@link TypeErrorResult}, {@link SyntaxErrorResult},
+ * {@link ExceptionOrErrorResult}, or a {@link ITimeoutResult}.
+ * 
+ * Additionally, the decider can check whether the output of the BoogiePrinter plugin is as expected. This is done only
+ * if there is a desired translation file and an appropriately configured BoogiePrinter plugin that generates a
+ * BoogieFile.
+ * 
+ * If there is a .bpl file besides the input file that is named like the input file but with the .bpl extension (e.g.,
+ * foo.c and foo.bpl), this file is used as desired translation. This decider then finds the auto-generated format of
+ * BoogiePrinter (i.e., BoogiePrinter_inputfilename_UID...) besides the input and compares it line by line with the
+ * desired translation. If they do not match, the test fails.
+ * 
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * 
  */
 public class TranslationTestResultDecider extends TestResultDecider {
-
+	
 	private final String mInputFile;
-
-	public TranslationTestResultDecider(String inputFile) {
+	
+	public TranslationTestResultDecider(final String inputFile) {
 		mInputFile = inputFile;
 	}
-
-	public TranslationTestResultDecider(File inputFile) {
+	
+	public TranslationTestResultDecider(final File inputFile) {
 		mInputFile = inputFile.getAbsolutePath();
 	}
-
+	
 	@Override
-	public TestResult getTestResult(IUltimateServiceProvider services) {
-
+	public TestResult getTestResult(final IUltimateServiceProvider services) {
+		
 		setResultCategory("");
 		setResultMessage("");
-
+		
 		final IResultService resultService = services.getResultService();
 		final ILogger log = services.getLoggingService().getLogger(TranslationTestResultDecider.class);
-		final Collection<String> customMessages = new LinkedList<String>();
+		final Collection<String> customMessages = new LinkedList<>();
 		customMessages.add("Expecting results to have a counterexample that matches the .bpl file, "
 				+ "and no generic result \"Unhandled Backtranslation\"");
 		boolean fail = false;
-
+		
 		final Set<Entry<String, List<IResult>>> resultSet = resultService.getResults().entrySet();
-		if (resultSet.size() == 0) {
+		if (resultSet.isEmpty()) {
 			setResultCategory("No results");
 			customMessages.add("There were no results (this is good for this test)");
 		} else {
 			for (final Entry<String, List<IResult>> x : resultSet) {
 				for (final IResult result : x.getValue()) {
 					if (result instanceof TypeErrorResult || result instanceof SyntaxErrorResult
-							|| result instanceof ExceptionOrErrorResult) {
+							|| result instanceof ExceptionOrErrorResult || result instanceof ITimeoutResult) {
 						setResultCategory(result.getShortDescription());
 						setResultMessage(result.getShortDescription());
 						fail = true;
@@ -92,46 +110,42 @@ public class TranslationTestResultDecider extends TestResultDecider {
 				}
 			}
 		}
-
+		
 		if (!fail) {
 			// There were no exceptions.
 			// We need to compare the existing .bpl file against the one
 			// generated by Boogie Printer.
 			// If there are no existing files, we just assume it was only a test
 			// against syntax errors.
-
+			
 			final File inputFile = new File(mInputFile);
 			final String inputFileNameWithoutEnding = inputFile.getName().replaceAll("\\.c", "");
 			final File desiredBplFile = new File(String.format("%s%s%s%s", inputFile.getParentFile().getAbsolutePath(),
-					Path.SEPARATOR, inputFileNameWithoutEnding, ".bpl"));
-			final File actualBplFile = TestUtil
-					.getFilesRegex(inputFile.getParentFile(),
-							new String[] { String.format(".*%s\\.bpl", inputFileNameWithoutEnding) })
-					.toArray(new File[1])[0];
-			if (actualBplFile != null) {
-
+					IPath.SEPARATOR, inputFileNameWithoutEnding, ".bpl"));
+			
+			final String actualFileRegex = String.format(".*BoogiePrinter_%s.*\\.bpl", inputFileNameWithoutEnding);
+			final Optional<File> actualBplFile = TestUtil
+					.getFilesRegex(inputFile.getParentFile(), new String[] { actualFileRegex }).stream().findFirst();
+			if (actualBplFile.isPresent() && desiredBplFile.exists()) {
+				
 				try {
-					final String desiredContent = de.uni_freiburg.informatik.ultimate.util.CoreUtil.readFile(desiredBplFile);
-					final String actualContent = de.uni_freiburg.informatik.ultimate.util.CoreUtil.readFile(actualBplFile);
-
+					final String desiredContent = CoreUtil.readFile(desiredBplFile);
+					final String actualContent = CoreUtil.readFile(actualBplFile.get());
+					
 					if (!desiredContent.equals(actualContent)) {
 						final String message = "Desired content does not match actual content.";
 						setResultCategory("Mismatch between .bpl and .c");
 						setResultMessage(message);
 						customMessages.add(message);
-						customMessages.add("Desired content:");
-						for (final String s : desiredContent.split("\n")) {
-							customMessages.add(s);
-						}
-						customMessages.add("Actual content:");
-						for (final String s : actualContent.split("\n")) {
-							customMessages.add(s);
-						}
+						customMessages.add("--- Desired content ---");
+						addMultilineString(customMessages, desiredContent);
+						customMessages.add("--- Actual content ---");
+						addMultilineString(customMessages, actualContent);
 						fail = true;
 					} else {
 						setResultCategory(".bpl file equals expected .bpl file");
 					}
-
+					
 				} catch (final IOException e) {
 					setResultCategory(e.getMessage());
 					setResultMessage(e.toString());
@@ -144,16 +158,22 @@ public class TranslationTestResultDecider extends TestResultDecider {
 				}
 				customMessages.add(String.format("There is no .bpl file for %s!", mInputFile));
 			}
-
+			
 		}
-
+		
 		TestUtil.logResults(log, mInputFile, fail, customMessages, resultService);
 		return fail ? TestResult.FAIL : TestResult.SUCCESS;
 	}
-
+	
+	private void addMultilineString(final Collection<String> customMessages, final String actualContent) {
+		for (final String s : actualContent.split(CoreUtil.getPlatformLineSeparator())) {
+			customMessages.add(s);
+		}
+	}
+	
 	@Override
-	public TestResult getTestResult(IUltimateServiceProvider services, Throwable e) {
+	public TestResult getTestResult(final IUltimateServiceProvider services, final Throwable e) {
 		return TestResult.FAIL;
 	}
-
+	
 }

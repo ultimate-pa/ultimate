@@ -30,7 +30,7 @@ import java.util.Map;
  * Following table summarizes the standard options that should be understood by
  * every implementation and gives their types.
  * 
- * <table>
+ * <table summary="Standard Options">
  * <tr><th>Option</th><th>Type</th></tr>
  * <tr><td>:print-success</td><td>Boolean</td></tr>
  * <tr><td>:produce-proofs</td><td>Boolean</td></tr>
@@ -47,6 +47,8 @@ import java.util.Map;
  * @author Jochen Hoenicke, Juergen Christ
  */
 public interface Script {
+	public static final Sort[] EMPTY_SORT_ARRAY = new Sort[0];
+	public static final Term[] EMPTY_TERM_ARRAY = new Term[0];
 	/**
 	 * A lifted three valued Boolean datatype.  Convenience operators for the
 	 * interaction with SMT-solvers written in C are given.
@@ -185,6 +187,18 @@ public interface Script {
 	 */
 	public LBool checkSat() throws SMTLIBException;
 	/**
+	 * Check for satisfiability of the current context under additional
+	 * assumptions.
+	 * 
+	 * Note that this function should return {@link LBool#UNKNOWN} in case of
+	 * errors.
+	 * @param assumptions Additional assumptions as Boolean constants (nullary
+	 *                    ApplicationTerms of sort Bool or their negations).
+	 * @return The result of the check as a lifted Boolean.
+	 * @throws SMTLIBException If the logic is not set.
+	 */
+	public LBool checkSatAssuming(Term... assumptions) throws SMTLIBException;
+	/**
 	 * Get all assertions contained in the assertion stack.  Note that this
 	 * command is only available in interactive mode.  To enable interactive
 	 * mode, call
@@ -198,6 +212,8 @@ public interface Script {
 	 * available if proof production is enabled and the last {@link #checkSat()}
 	 *  returned {@link LBool#UNSAT}.  To enable proof production, call
 	 * {@link #setOption(String, Object) setOption}(":produce-proofs", true).
+	 * @return the proof.  This is given as a big smtlib term of the internal
+	 * type {@literal @proof}.
 	 * @throws SMTLIBException If proof production is not enabled or the solver
 	 *                         did not detect unsatisfiability.
 	 * @throws UnsupportedOperationException If proof generation is unsupported.
@@ -219,11 +235,29 @@ public interface Script {
 	public Term[] getUnsatCore()
 		throws SMTLIBException, UnsupportedOperationException;
 	/**
+	 * Get the unsatisfiable assumptions.  Note that this command is only
+	 * available if unsat assumption production is enabled and the last
+	 * {@link #checkSatAssuming(Term...)} returned
+	 * {@link LBool#UNSAT}.  To enable unsat assumption production, call
+	 * {@link #setOption(String, Object) setOption}
+	 * (":produce-unsat-assumptions", true).
+	 * @return An array of terms that correspond to an unsatisfiable subset of
+	 *         last assumptions.
+	 * @throws SMTLIBException If unsat assumption production is not enabled or
+	 *                         the solver did not detect unsatisfiability.
+	 * @throws UnsupportedOperationException If unsat assumption computation is
+	 *                                       unsupported.
+	 */
+	public Term[] getUnsatAssumptions()
+		throws SMTLIBException, UnsupportedOperationException;
+	/**
 	 * Get values for some terms in the model.  Note that this command is only
 	 * available if model production is enabled and the last {@link #checkSat()}
 	 * did not return {@link LBool#UNSAT}.  To enable model production, call
 	 * {@link #setOption(String, Object) setOption}(":produce-models", true).
-	 * @return A valuation.
+	 * @param terms an array of terms whose value should be computed.
+	 * @return A valuation (mapping from term to value (which is again 
+	 * represented by a term) where the keys are the given terms.
 	 * @throws SMTLIBException If model production is not enabled or the solver
 	 *                         detected unsatisfiability.
 	 * @throws UnsupportedOperationException If model computation is
@@ -310,7 +344,7 @@ public interface Script {
 	public Sort[] sortVariables(String... names) throws SMTLIBException;
 	/**
 	 * Create an n-ary term by name.  This function should also be used to
-	 * construct Boolean terms. I.e., the function names "and", "or", "=>",
+	 * construct Boolean terms. I.e., the function names "and", "or", "=&gt;",
 	 * "ite", "=", "distinct", or "not" might be used to create formulas. 
 	 * @param funcname Name of the function.
 	 * @param params   The parameters of the function application.
@@ -442,6 +476,11 @@ public interface Script {
 	 * previously returned and unsets the logic.
 	 */
 	public void reset();
+	/**
+	 * Resets the assertion stack.  This option will keep the logic and all
+	 * globally defined symbols.
+	 */
+	public void resetAssertions();
 	/**
 	 * Get interpolants for the partitions.  Note that the arguments to this
 	 * call must either be the names of Boolean top-level assertions, or the

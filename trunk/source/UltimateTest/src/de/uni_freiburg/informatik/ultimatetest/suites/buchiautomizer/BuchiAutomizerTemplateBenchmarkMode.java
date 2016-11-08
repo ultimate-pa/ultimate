@@ -52,7 +52,7 @@ public class BuchiAutomizerTemplateBenchmarkMode extends
 //		"examples/termination/TermCompOfficialBenchmarkSet",
 		"examples/termination/TermCompOfficialBenchmarkSet/ultimate",
 //		"examples/programs/quantifier",
-//		"examples/programs/recursivePrograms",
+//		"examples/programs/recursive/regression",
 //		"examples/programs/toy"
 //		"examples/termination/AProVE"
 	};

@@ -32,7 +32,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
 /**
  * Edge in a recursive control flow graph that represents the call of a
@@ -78,7 +78,7 @@ public class Summary extends CodeBlock implements IInternalAction {
 		}
 	}
 
-	Summary(int serialNumber, ProgramPoint source, ProgramPoint target, CallStatement st,
+	Summary(int serialNumber, BoogieIcfgLocation source, BoogieIcfgLocation target, CallStatement st,
 			boolean calledProcedureHasImplementation, ILogger logger) {
 		super(serialNumber, source, target, logger);
 		mCallStatement = st;
@@ -105,7 +105,7 @@ public class Summary extends CodeBlock implements IInternalAction {
 	}
 
 	@Override
-	public TransFormula getTransformula() {
+	public UnmodifiableTransFormula getTransformula() {
 		return getTransitionFormula();
 	}
 

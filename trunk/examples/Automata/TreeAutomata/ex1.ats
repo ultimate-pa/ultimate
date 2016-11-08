@@ -1,0 +1,11 @@
+TreeAutomaton ta730845 = (
+	alphabet = {nil "0" cons},
+	states = {"[NAT, Bool]" "[_, _]" "[NatList, BoolList]"},
+	initialStates = {"[_, _]"},
+	finalStates = {"[NatList, BoolList]"},
+	transitionTable = {
+		(("[_, _]") "0" "[NAT, Bool]")
+		(("[_, _]") nil "[NatList, BoolList]")
+		(("[NAT, Bool]" "[NatList, BoolList]") cons "[NatList, BoolList]")
+	}
+);

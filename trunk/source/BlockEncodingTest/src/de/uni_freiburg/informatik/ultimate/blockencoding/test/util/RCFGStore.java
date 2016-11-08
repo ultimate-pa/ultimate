@@ -30,7 +30,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.blockencoding.test.util;
 
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 
 /**
  * This is a static store, to share the generated RCFG with all test classes.
@@ -40,19 +40,19 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCF
  */
 public class RCFGStore {
 
-	private static RCFGNode rcfgNode;
+	private static IcfgLocation rcfgNode;
 
 	/**
 	 * @param node
 	 */
-	public static void setRCFG(RCFGNode node) {
+	public static void setRCFG(IcfgLocation node) {
 		rcfgNode = node;
 	}
 
 	/**
 	 * @return
 	 */
-	public static RCFGNode getRCFG() {
+	public static IcfgLocation getRCFG() {
 		if (rcfgNode == null) {
 			throw new IllegalArgumentException(
 					"There is no RCFG-Node present (which is set by the Observer)"

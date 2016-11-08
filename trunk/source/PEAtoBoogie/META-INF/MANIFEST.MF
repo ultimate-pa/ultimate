@@ -6,10 +6,10 @@ Bundle-Version: 0.0.1
 Bundle-Activator: pea_to_boogie.Activator
 Require-Bundle: Library-UltimateCore,
  UltimateCore,
- Library-log4j,
  Library-BoogieAST,
  Library-PEA,
  Library-srParse,
- JavaCup
+ JavaCup,
+ Library-UltimateUtil
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8

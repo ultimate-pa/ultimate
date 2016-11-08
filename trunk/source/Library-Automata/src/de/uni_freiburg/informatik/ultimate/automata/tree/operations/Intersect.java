@@ -4,31 +4,54 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
+/**
+ * Intersect 2 tree automatons. 
+ * @author mostafa (mostafa.amin93@gmail.com)
+ *
+ * @param <LETTER> letter of the tree automatons.
+ * @param <STATE> state of the tree automatons.
+ */
 public class Intersect<LETTER, STATE> implements IOperation<LETTER, STATE> {
+	
+	private final ITreeAutomaton<LETTER, STATE> treeA;
+	private final ITreeAutomaton<LETTER, STATE> treeB;
+	protected final ITreeAutomaton<LETTER, STATE> result;
+	
+	private final IStateFactory<STATE> stateFactory;
+	private final Map<STATE, Map<STATE, Pair<STATE, STATE>>> pairsMap;
+	private final Map<Pair<STATE, STATE>, STATE> reducedStates;
 
-	private final ITreeAutomaton<LETTER, STATE> treeA, treeB;
+	public Intersect(final ITreeAutomaton<LETTER, STATE> t1, final ITreeAutomaton<LETTER, STATE> t2, final IStateFactory<STATE> factory) {
+		reducedStates = new HashMap<>();
+		pairsMap = new HashMap<>();
+		
+		stateFactory = factory;
+		treeA = t1;
+		treeB = t2;
+		result = computeResult();
+	}
 	
-	protected final TreeAutomatonBU<LETTER, Pair<STATE, STATE>> res;
-	
-	private Map<STATE, Map<STATE, Pair<STATE, STATE>>> pairsMap;
-	
-	private Pair<STATE, STATE> getPair(STATE q1, STATE q2) {
-		if (pairsMap == null) {
-			pairsMap = new HashMap<>();
+	private STATE reduceState(final Pair<STATE, STATE> key) {
+		if (!reducedStates.containsKey(key)) {
+			reducedStates.put(key, stateFactory.intersection(key.getFirst(), key.getSecond()));
 		}
+		return reducedStates.get(key);
+	}
+	
+	private Pair<STATE, STATE> getPair(final STATE q1, final STATE q2) {
 		if (!pairsMap.containsKey(q1)) {
 			pairsMap.put(q1, new HashMap<>());
 		}
@@ -36,13 +59,6 @@ public class Intersect<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			pairsMap.get(q1).put(q2, new Pair<STATE, STATE>(q1, q2));
 		}
 		return pairsMap.get(q1).get(q2);
-	}
-	
-	public Intersect(ITreeAutomaton<LETTER, STATE> t1, ITreeAutomaton<LETTER, STATE> t2) {
-		treeA = t1;
-		treeB = t2;
-		
-		res = computeResult();
 	}
 	@Override
 	public String operationName() {
@@ -59,57 +75,54 @@ public class Intersect<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		return "Exit intersection tree automatons";
 	}
 	
-	private TreeAutomatonBU<LETTER, Pair<STATE, STATE>> computeResult() {
+	private TreeAutomatonBU<LETTER, STATE> computeResult() {
 		// Minimal states intersection.
-		TreeAutomatonBU<LETTER, Pair<STATE, STATE>> res = new TreeAutomatonBU<>();
+		final TreeAutomatonBU<LETTER, Pair<STATE, STATE>> res = new TreeAutomatonBU<>();
 		
-		Map<LETTER, Collection<TreeAutomatonRule<LETTER, STATE>>> symbolToRuleA = new HashMap<LETTER, Collection<TreeAutomatonRule<LETTER, STATE>>>();
-		Map<LETTER, Collection<TreeAutomatonRule<LETTER, STATE>>> symbolToRuleB = new HashMap<LETTER, Collection<TreeAutomatonRule<LETTER, STATE>>>();
+		final Map<LETTER, Collection<TreeAutomatonRule<LETTER, STATE>>> symbolToRuleA = new HashMap<>();
+		final Map<LETTER, Collection<TreeAutomatonRule<LETTER, STATE>>> symbolToRuleB = new HashMap<>();
 		
-		for (TreeAutomatonRule<LETTER, STATE> ruleA : treeA.getRules()) {
+		for (final TreeAutomatonRule<LETTER, STATE> ruleA : treeA.getRules()) {
 			Collection<TreeAutomatonRule<LETTER, STATE>> rules;
 			if (symbolToRuleA.containsKey(ruleA.getLetter())) {
 				rules = symbolToRuleA.get(ruleA.getLetter());
 			} else {
-				rules = new LinkedList<TreeAutomatonRule<LETTER, STATE>>();
+				rules = new LinkedList<>();
 				symbolToRuleA.put(ruleA.getLetter(), rules);
 			}
 			rules.add(ruleA);
 		}
-		for (TreeAutomatonRule<LETTER, STATE> ruleB : treeB.getRules()) {
+		for (final TreeAutomatonRule<LETTER, STATE> ruleB : treeB.getRules()) {
 			Collection<TreeAutomatonRule<LETTER, STATE>> rules;
 			if (symbolToRuleB.containsKey(ruleB.getLetter())) {
 				rules = symbolToRuleB.get(ruleB.getLetter());
 			} else {
-				rules = new LinkedList<TreeAutomatonRule<LETTER, STATE>>();
+				rules = new LinkedList<>();
 				symbolToRuleB.put(ruleB.getLetter(), rules);
 			}
 			rules.add(ruleB);
 		}
 		
-		for (LETTER letter : symbolToRuleA.keySet()) {
+		for (final LETTER letter : symbolToRuleA.keySet()) {
 			if (symbolToRuleB.containsKey(letter)) {
-				for (TreeAutomatonRule<LETTER, STATE> ruleA : symbolToRuleA.get(letter)) {
-					for (TreeAutomatonRule<LETTER, STATE> ruleB : symbolToRuleB.get(letter)) {
+				for (final TreeAutomatonRule<LETTER, STATE> ruleA : symbolToRuleA.get(letter)) {
+					for (final TreeAutomatonRule<LETTER, STATE> ruleB : symbolToRuleB.get(letter)) {
 						if (ruleA.getArity() == ruleB.getArity()) {
-							List<Pair<STATE, STATE>> source = new ArrayList<>();
-							int ar = ruleA.getArity();
+							final List<Pair<STATE, STATE>> source = new ArrayList<>();
+							final int ar = ruleA.getArity();
 							for (int i = 0; i < ar; ++i) {
 								source.add(getPair(ruleA.getSource().get(i), ruleB.getSource().get(i)));
 							}
-							Pair<STATE, STATE> dest = getPair(ruleA.getDest(), ruleB.getDest());
+							final Pair<STATE, STATE> dest = getPair(ruleA.getDest(), ruleB.getDest());
 							res.addRule(letter, source, dest);
 						}
 					}
 				}
 			}
 		}
-		if (pairsMap == null) {
-			pairsMap = new HashMap<>();
-		}
-		for (STATE q1 : pairsMap.keySet()) {
-			for (STATE q2 : pairsMap.get(q1).keySet()) {
-				Pair<STATE, STATE> st = getPair(q1, q2);
+		for (final STATE q1 : pairsMap.keySet()) {
+			for (final STATE q2 : pairsMap.get(q1).keySet()) {
+				final Pair<STATE, STATE> st = getPair(q1, q2);
 				
 				if (treeA.isInitialState(q1) && treeB.isInitialState(q2)) {
 					res.addInitialState(st);
@@ -121,44 +134,64 @@ public class Intersect<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			}
 		}
 		
-		return res;
+		final TreeAutomatonBU<LETTER, STATE> reducedResult = new TreeAutomatonBU<>();
+		
+		for (final TreeAutomatonRule<LETTER, Pair<STATE, STATE>> rule : res.getRules()) {
+			final List<STATE> src = new ArrayList<>();
+			for (final Pair<STATE, STATE> pr : rule.getSource()) {
+				src.add(reduceState(pr));
+			}
+			reducedResult.addRule(rule.getLetter(), src, reduceState(rule.getDest()));
+		}
+		
+		for (final Pair<STATE, STATE> state : res.getStates()) {
+			reducedResult.addState(reduceState(state));
+			if (res.isInitialState(state)) {
+				reducedResult.addInitialState(reduceState(state));
+			}
+			if (res.isFinalState(state)) {
+				reducedResult.addFinalState(reduceState(state));
+			}
+		}
+		
+		return reducedResult;
 	}
 	@Override
-	public TreeAutomatonBU getResult() throws AutomataLibraryException {
-		return res;
+	public ITreeAutomaton<LETTER, STATE> getResult() {
+		return result;
 	}
 
 	@Override
-	public boolean checkResult(StateFactory<STATE> stateFactory) throws AutomataLibraryException {
-		// TODO Auto-generated method stub
+	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		return false;
 	}
 	
 	public static void main(String[] args) throws AutomataLibraryException {
-		TreeAutomatonBU<String, Integer> treeA = new TreeAutomatonBU<>();
-		TreeAutomatonBU<String, Integer> treeB = new TreeAutomatonBU<>();
+		final TreeAutomatonBU<String, String> treeA = new TreeAutomatonBU<>();
+		final TreeAutomatonBU<String, String> treeB = new TreeAutomatonBU<>();
 		
-		final int NAT = 0, NatList = 1, Bool = 2, BoolList = 3;
-		String[] rep = {"Nat", "NatList", "Bool", "BoolList"};
-		treeA.addInitialState(NAT);
+		final String NAT = "NAT", NatList = "NatList", Bool = "Bool", BoolList = "BoolList", initA = "_", initB = "_";
+		treeA.addInitialState(initA);
 		treeA.addFinalState(NatList);
-		treeA.addRule("0", new ArrayList<>(), NAT);
-		treeA.addRule("s", new ArrayList<>(Arrays.asList(new Integer[]{NAT})), NAT);
-		treeA.addRule("nil", new ArrayList<>(), NatList);
-		treeA.addRule("cons", new ArrayList<>(Arrays.asList(new Integer[]{NAT, NatList})), NatList);
+		treeA.addRule("0", new ArrayList<>(Arrays.asList(new String[]{initA})), NAT);
+		treeA.addRule("s", new ArrayList<>(Arrays.asList(new String[]{NAT})), NAT);
+		treeA.addRule("nil", new ArrayList<>(Arrays.asList(new String[]{initA})), NatList);
+		treeA.addRule("cons", new ArrayList<>(Arrays.asList(new String[]{NAT, NatList})), NatList);
 		
-		treeB.addInitialState(Bool);
+		treeB.addInitialState(initB);
 		treeB.addFinalState(BoolList);
-		treeB.addRule("0", new ArrayList<>(), Bool);
-		treeB.addRule("1", new ArrayList<>(), Bool);
-		treeB.addRule("nil", new ArrayList<>(), BoolList);
-		treeB.addRule("cons", new ArrayList<>(Arrays.asList(new Integer[]{Bool, BoolList})), BoolList);
-		
-		Intersect<String, Integer> op = new Intersect<>(treeA, treeB);
-		TreeAutomatonBU<String, Integer> res = (TreeAutomatonBU<String, Integer>) op.getResult();
+		treeB.addRule("0", new ArrayList<>(Arrays.asList(new String[]{initB})), Bool);
+		treeB.addRule("1", new ArrayList<>(Arrays.asList(new String[]{initB})), Bool);
+		treeB.addRule("nil", new ArrayList<>(Arrays.asList(new String[]{initB})), BoolList);
+		treeB.addRule("cons", new ArrayList<>(Arrays.asList(new String[]{Bool, BoolList})), BoolList);
+
+		final StringFactory fac = new StringFactory();
+		final Intersect<String, String> op = new Intersect<>(treeA, treeB, fac);
+		final ITreeAutomaton<String, String> res = op.getResult();
 		
 		System.out.println(treeA.toString() + "\n");
 		System.out.println(treeB.toString() + "\n");
-		System.out.println(res.toString() + "\n");
+		System.out.println(res + "\n");
+		System.out.println(((TreeAutomatonBU<String, String>) res).DebugString() + "\n");
 	}
 }

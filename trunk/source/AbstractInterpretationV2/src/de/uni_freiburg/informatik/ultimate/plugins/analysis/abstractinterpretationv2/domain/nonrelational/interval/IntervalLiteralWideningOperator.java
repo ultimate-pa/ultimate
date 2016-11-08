@@ -2,27 +2,27 @@
  * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE AbstractInterpretationV2 plug-in.
- * 
+ *
  * The ULTIMATE AbstractInterpretationV2 plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE AbstractInterpretationV2 plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE AbstractInterpretationV2 plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE AbstractInterpretationV2 plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission
  * to convey the resulting work.
  */
 
@@ -32,19 +32,18 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
-import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType;
-import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.generic.LiteralCollection;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue.Value;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.TypeUtils.TypeUtils;
 
 /**
  * Implementation of a widening operator in the interval domain which widens according to number literals occurring in
  * the program.
- * 
+ *
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
@@ -62,63 +61,44 @@ public class IntervalLiteralWideningOperator implements IAbstractStateBinaryOper
 		assert !first.isBottom() && !second.isBottom();
 
 		final List<IBoogieVar> boolsToWiden = new ArrayList<>();
-		final List<BooleanValue.Value> boolValues = new ArrayList<>();
+		final List<BooleanValue> boolValues = new ArrayList<>();
 		final List<IBoogieVar> varsToWiden = new ArrayList<>();
 		final List<IntervalDomainValue> varValues = new ArrayList<>();
 		final List<IBoogieVar> arraysToWiden = new ArrayList<>();
 		final List<IntervalDomainValue> arrayValues = new ArrayList<>();
 
-		for (final IBoogieVar var : first.getVariables()) {
-			final IBoogieVar type = var;
+		// TODO: Add array support.
+		final Consumer<IBoogieVar> varConsumer = var -> {
+			final IntervalDomainValue firstValue = first.getValue(var);
+			final IntervalDomainValue secondValue = second.getValue(var);
 
-			if (type.getIType() instanceof PrimitiveType) {
-				final PrimitiveType primitiveType = (PrimitiveType) type.getIType();
-
-				if (primitiveType.getTypeCode() == PrimitiveType.BOOL) {
-					final BooleanValue firstValue = first.getBooleanValue(var);
-					final BooleanValue secondValue = second.getBooleanValue(var);
-
-					if (!firstValue.isEqualTo(secondValue)) {
-						boolsToWiden.add(var);
-						// Bools are always set to top.
-						boolValues.add(Value.TOP);
-					}
-				} else {
-					final IntervalDomainValue firstValue = first.getValue(var);
-					final IntervalDomainValue secondValue = second.getValue(var);
-
-					if (secondValue.isContainedIn(firstValue)) {
-						varsToWiden.add(var);
-						varValues.add(firstValue);
-					} else if (!firstValue.isEqualTo(secondValue)) {
-						varsToWiden.add(var);
-						varValues.add(determineNextValue(firstValue, secondValue));
-					}
-				}
-			} else if (type.getIType() instanceof ArrayType) {
-				// TODO: We treat arrays as normal variables for the time being.
-				final IntervalDomainValue firstValue = first.getValue(var);
-				final IntervalDomainValue secondValue = second.getValue(var);
-
-				if (!firstValue.isEqualTo(secondValue)) {
-					arraysToWiden.add(var);
-					arrayValues.add(determineNextValue(firstValue, secondValue));
-				}
-			} else {
-				final IntervalDomainValue firstValue = first.getValue(var);
-				final IntervalDomainValue secondValue = second.getValue(var);
-
-				if (!firstValue.isEqualTo(secondValue)) {
-					varsToWiden.add(var);
-					varValues.add(determineNextValue(firstValue, secondValue));
-				}
+			if (secondValue.isContainedIn(firstValue)) {
+				varsToWiden.add(var);
+				varValues.add(firstValue);
+			} else if (!firstValue.isEqualTo(secondValue)) {
+				varsToWiden.add(var);
+				varValues.add(determineNextValue(firstValue, secondValue));
 			}
+		};
+		final Consumer<IBoogieVar> boolConsumer = var -> {
+			final BooleanValue firstValue = first.getBooleanValue(var);
+			final BooleanValue secondValue = second.getBooleanValue(var);
+
+			if (!firstValue.isEqualTo(secondValue)) {
+				boolsToWiden.add(var);
+				// Bools are always widened to top.
+				boolValues.add(BooleanValue.TOP);
+			}
+		};
+
+		for (final IBoogieVar var : first.getVariables()) {
+			TypeUtils.consumeVariable(varConsumer, boolConsumer, null, var);
 		}
 
 		final IBoogieVar[] vars = varsToWiden.toArray(new IBoogieVar[varsToWiden.size()]);
 		final IntervalDomainValue[] vals = varValues.toArray(new IntervalDomainValue[varValues.size()]);
 		final IBoogieVar[] bools = boolsToWiden.toArray(new IBoogieVar[boolsToWiden.size()]);
-		final BooleanValue.Value[] boolVals = boolValues.toArray(new BooleanValue.Value[boolValues.size()]);
+		final BooleanValue[] boolVals = boolValues.toArray(new BooleanValue[boolValues.size()]);
 		final IBoogieVar[] arrays = arraysToWiden.toArray(new IBoogieVar[arraysToWiden.size()]);
 		final IntervalDomainValue[] arrayVals = arrayValues.toArray(new IntervalDomainValue[arrayValues.size()]);
 
@@ -170,30 +150,28 @@ public class IntervalLiteralWideningOperator implements IAbstractStateBinaryOper
 	private IntervalValue widenLower(final IntervalValue firstLower, final IntervalValue secondLower) {
 		if (firstLower.isInfinity() || secondLower.isInfinity()) {
 			return new IntervalValue();
-		} else {
-			BigDecimal working;
-
-			final int compResult = firstLower.compareTo(secondLower);
-			if (compResult < 0) {
-				working = mLiteralCollection.getNextRealNegative(firstLower.getValue());
-			} else if (compResult > 0) {
-				working = mLiteralCollection.getNextRealNegative(secondLower.getValue());
-			} else {
-				working = firstLower.getValue();
-			}
-
-			if (working == null) {
-				return new IntervalValue();
-			} else {
-				if (compResult != 0) {
-					working = working.setScale(0, RoundingMode.FLOOR);
-				}
-				return new IntervalValue(working);
-			}
 		}
+		BigDecimal working;
+
+		final int compResult = firstLower.compareTo(secondLower);
+		if (compResult < 0) {
+			working = mLiteralCollection.getNextRealNegative(firstLower.getValue());
+		} else if (compResult > 0) {
+			working = mLiteralCollection.getNextRealNegative(secondLower.getValue());
+		} else {
+			working = firstLower.getValue();
+		}
+
+		if (working == null) {
+			return new IntervalValue();
+		}
+		if (compResult != 0) {
+			working = working.setScale(0, RoundingMode.FLOOR);
+		}
+		return new IntervalValue(working);
 	}
 
-	private IntervalValue widenUpper(IntervalValue firstUpper, IntervalValue secondUpper) {
+	private IntervalValue widenUpper(final IntervalValue firstUpper, final IntervalValue secondUpper) {
 		if (firstUpper.isInfinity() || secondUpper.isInfinity()) {
 			return new IntervalValue();
 		}
@@ -212,11 +190,10 @@ public class IntervalLiteralWideningOperator implements IAbstractStateBinaryOper
 
 		if (working == null) {
 			return new IntervalValue();
-		} else {
-			if (compResult != 0) {
-				working = working.setScale(0, RoundingMode.CEILING);
-			}
-			return new IntervalValue(working);
 		}
+		if (compResult != 0) {
+			working = working.setScale(0, RoundingMode.CEILING);
+		}
+		return new IntervalValue(working);
 	}
 }

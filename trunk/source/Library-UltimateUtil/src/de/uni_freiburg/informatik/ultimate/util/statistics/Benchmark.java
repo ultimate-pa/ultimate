@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Util Library.
- * 
+ *
  * The ULTIMATE Util Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Util Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Util Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Util Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Util Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Util Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.util.statistics;
@@ -44,15 +44,15 @@ import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
 
 /**
  * This class provides functions to measure runtime and memory consumption
- * 
+ *
  * @author dietsch@informatik.uni-freiburg.de
- * 
+ *
  */
 public class Benchmark implements ICsvProviderProvider<Double> {
 
 	// Get maximum size of heap in bytes. The heap cannot grow beyond this
 	// size. Any attempt will result in an OutOfMemoryException.
-	private long mMaxMemorySizeBytes;
+	protected long mMaxMemorySizeBytes;
 
 	private int mCurrentIndex;
 	private HashMap<String, Watch> mWatches;
@@ -64,15 +64,13 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 	}
 
 	/**
-	 * Register a new watch, but do not start it. Useful for starting many
-	 * watches at the same time with {@link #startAll()}, and then stopping them
-	 * separately.
-	 * 
+	 * Register a new watch, but do not start it. Useful for starting many watches at the same time with
+	 * {@link #startAll()}, and then stopping them separately.
+	 *
 	 * @param title
-	 *            The title of the watch to register. Titles have to be unique
-	 *            and non-null.
+	 *            The title of the watch to register. Titles have to be unique and non-null.
 	 */
-	public void register(String title) {
+	public void register(final String title) {
 		if (!mWatches.containsKey(title)) {
 			mWatches.put(title, new Watch(title, mCurrentIndex++));
 		}
@@ -80,26 +78,23 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 
 	/**
 	 * Unregisters a specific watch.
-	 * 
+	 *
 	 * @param title
-	 *            The title of the watch to unregister. If the watch does not
-	 *            exist, this method will do nothing.
+	 *            The title of the watch to unregister. If the watch does not exist, this method will do nothing.
 	 */
-	public void unregister(String title) {
+	public void unregister(final String title) {
 		mWatches.remove(title);
 	}
 
 	/**
-	 * Starts a specific watch. Starting means taking the starting time and the
-	 * various heap sizes. If the watch is not already registered, it will be
-	 * afterwards.
-	 * 
+	 * Starts a specific watch. Starting means taking the starting time and the various heap sizes. If the watch is not
+	 * already registered, it will be afterwards.
+	 *
 	 * @param title
-	 *            The title of the watch to register. Titles have to be unique
-	 *            and non-null. If the watch did not exists previously, it will
-	 *            be registered automatically.
+	 *            The title of the watch to register. Titles have to be unique and non-null. If the watch did not exists
+	 *            previously, it will be registered automatically.
 	 */
-	public void start(String title) {
+	public void start(final String title) {
 		Watch watch = mWatches.get(title);
 		if (watch == null) {
 			watch = new Watch(title, mCurrentIndex++);
@@ -114,7 +109,7 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 		mGlobalWatch.start();
 	}
 
-	public void stop(String title) {
+	public void stop(final String title) {
 		stopInternal(title, System.nanoTime());
 	}
 
@@ -126,7 +121,7 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 		}
 	}
 
-	private void stopInternal(String title, long stopTime) {
+	private void stopInternal(final String title, final long stopTime) {
 		final Watch watch = mWatches.get(title);
 		if (watch == null) {
 			return;
@@ -146,11 +141,11 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 		watch.stop(stopTime);
 	}
 
-	public void pause(String title) {
+	public void pause(final String title) {
 		stop(title);
 	}
 
-	public void unpause(String title) {
+	public void unpause(final String title) {
 		final Watch watch = mWatches.get(title);
 		if (watch == null) {
 			return;
@@ -165,10 +160,10 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 		mCurrentIndex = 1;
 		mGlobalWatch = new Watch("Global", 0);
 		mMaxMemorySizeBytes = Runtime.getRuntime().maxMemory();
-		mWatches = new HashMap<String, Watch>();
+		mWatches = new HashMap<>();
 	}
 
-	public void printResult(ILogger logger) {
+	public void printResult(final ILogger logger) {
 		for (final Watch s : getSortedWatches()) {
 			logger.info(s);
 		}
@@ -187,17 +182,17 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 	}
 
 	private Collection<Watch> getSortedWatches() {
-		final ArrayList<Watch> sortedWatches = new ArrayList<Watch>(mWatches.values());
+		final ArrayList<Watch> sortedWatches = new ArrayList<>(mWatches.values());
 		Collections.sort(sortedWatches, new Comparator<Watch>() {
 			@Override
-			public int compare(Watch o1, Watch o2) {
+			public int compare(final Watch o1, final Watch o2) {
 				return Integer.compare(o1.mIndex, o2.mIndex);
 			}
 		});
 		return sortedWatches;
 	}
 
-	public String getReportString(String title) {
+	public String getReportString(final String title) {
 		final Watch watch = mWatches.get(title);
 		if (watch == null) {
 			return "";
@@ -205,73 +200,67 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 		return watch.toString();
 	}
 
-	public double getElapsedTime(String title, TimeUnit unit) {
+	public double getElapsedTime(final String title, final TimeUnit unit) {
 		final Watch watch = mWatches.get(title);
 		if (watch == null) {
 			return -1;
-		} else {
-			return getNanosecondsToUnit(watch.mElapsedTimeNs, unit);
 		}
+		return getNanosecondsToUnit(watch.mElapsedTimeNs, unit);
 	}
 
-	public long getStartHeapSize(String title) {
+	public long getStartHeapSize(final String title) {
 		final Watch watch = mWatches.get(title);
 		if (watch == null) {
 			return -1;
-		} else {
-			return watch.mStartMemorySizeBytes;
 		}
+		return watch.mStartMemorySizeBytes;
 	}
 
-	public long getStopHeapSize(String title) {
+	public long getStopHeapSize(final String title) {
 		final Watch watch = mWatches.get(title);
 		if (watch == null) {
 			return -1;
-		} else {
-			return watch.mStopMemorySizeBytes;
 		}
+		return watch.mStopMemorySizeBytes;
 	}
 
-	public long getStartMemoryFreeSize(String title) {
+	public long getStartMemoryFreeSize(final String title) {
 		final Watch watch = mWatches.get(title);
 		if (watch == null) {
 			return -1;
-		} else {
-			return watch.mStartMemoryFreeSizeBytes;
 		}
+		return watch.mStartMemoryFreeSizeBytes;
 	}
 
-	public long getStopMemoryFreeSize(String title) {
+	public long getStopMemoryFreeSize(final String title) {
 		final Watch watch = mWatches.get(title);
 		if (watch == null) {
 			return -1;
-		} else {
-			return watch.mStopMemoryFreeSizeBytes;
 		}
+		return watch.mStopMemoryFreeSizeBytes;
 	}
 
-	public long getPeakMemoryConsumed(String title) {
+	public long getPeakMemoryConsumed(final String title) {
 		final Watch watch = mWatches.get(title);
 		if (watch == null) {
 			return -1;
-		} else {
-			return watch.mPeakMemorySizeBytes - watch.mStartPeakMemorySizeBytes;
 		}
+		return watch.mPeakMemorySizeBytes - watch.mStartPeakMemorySizeBytes;
 	}
 
-	public long getMaxHeapSize(String title) {
+	public long getMaxHeapSize(final String title) {
 		return mMaxMemorySizeBytes;
 	}
 
 	public List<String> getTitles() {
-		final ArrayList<String> rtr = new ArrayList<String>();
+		final ArrayList<String> rtr = new ArrayList<>();
 		for (final Watch w : mWatches.values()) {
 			rtr.add(w.mTitle);
 		}
 		return rtr;
 	}
 
-	private String getUnitString(TimeUnit unit) {
+	static String getUnitString(final TimeUnit unit) {
 		switch (unit) {
 		case NANOSECONDS:
 			return "ns";
@@ -292,7 +281,7 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 		}
 	}
 
-	private double getNanosecondsToUnit(long nanoseconds, TimeUnit unit) {
+	static double getNanosecondsToUnit(final long nanoseconds, final TimeUnit unit) {
 		switch (unit) {
 		case NANOSECONDS:
 			return nanoseconds;
@@ -313,7 +302,7 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 		}
 	}
 
-	private boolean isHeap(String memoryPoolName) {
+	static boolean isHeap(final String memoryPoolName) {
 		switch (memoryPoolName) {
 		case "Code Cache":
 		case "Perm Gen":
@@ -330,37 +319,38 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 		case "PS Old Gen":
 		case "Tenured Gen":
 			return true;
+		default:
+			throw new IllegalArgumentException("Unknown memory pool name " + memoryPoolName);
 		}
-		throw new IllegalArgumentException("Unknown memory pool name " + memoryPoolName);
 	}
 
-	private class Watch {
+	private final class Watch {
 
-		private final String mTitle;
-		private final int mIndex;
+		final String mTitle;
+		final int mIndex;
 
-		private long mStartTime;
-		private long mElapsedTimeNs;
+		long mStartTime;
+		long mElapsedTimeNs;
 
-		private long mStartMemorySizeBytes;
-		private long mStopMemorySizeBytes;
+		long mStartMemorySizeBytes;
+		long mStopMemorySizeBytes;
 
-		private long mStartMemoryFreeSizeBytes;
-		private long mStopMemoryFreeSizeBytes;
+		long mStartMemoryFreeSizeBytes;
+		long mStopMemoryFreeSizeBytes;
 
-		private long mStartPeakMemorySizeBytes;
-		private long mPeakMemorySizeBytes;
+		long mStartPeakMemorySizeBytes;
+		long mPeakMemorySizeBytes;
 
 		private final List<MemoryPoolMXBean> mMemoryPoolBeans;
 
-		private Watch(String title, int index) {
+		Watch(final String title, final int index) {
 			mTitle = title;
 			mIndex = index;
 			mMemoryPoolBeans = ManagementFactory.getMemoryPoolMXBeans();
 			reset();
 		}
 
-		private void start() {
+		void start() {
 			mStartMemorySizeBytes = Runtime.getRuntime().totalMemory();
 			mStartMemoryFreeSizeBytes = Runtime.getRuntime().freeMemory();
 			long startMemoryUsageBytes = 0;
@@ -374,7 +364,7 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 			mStartTime = System.nanoTime();
 		}
 
-		private void stop(long stopTime) {
+		void stop(final long stopTime) {
 			mElapsedTimeNs = stopTime - mStartTime + mElapsedTimeNs;
 			mStopMemorySizeBytes = Runtime.getRuntime().totalMemory();
 			mStopMemoryFreeSizeBytes = Runtime.getRuntime().freeMemory();
@@ -386,10 +376,10 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 				}
 			}
 			mPeakMemorySizeBytes = Math.max(mPeakMemorySizeBytes, Math.max(stopMemoryUsage, mStartPeakMemorySizeBytes));
-//			Runtime.getRuntime().gc();
+			// Runtime.getRuntime().gc();
 		}
 
-		private void reset() {
+		void reset() {
 			mStartTime = -1;
 			mElapsedTimeNs = 0;
 
@@ -408,7 +398,7 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 			return toString(TimeUnit.MILLISECONDS, 2);
 		}
 
-		public String toString(TimeUnit timeUnit, int decimals) {
+		public String toString(final TimeUnit timeUnit, final int decimals) {
 			if (mStartTime == -1) {
 				return String.format("%s was not measured", mTitle);
 			}
@@ -456,7 +446,7 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 				sb.append(" There was no memory consumed.");
 			}
 
-			sb.append(String.format(" Max. memory is %s", Utils.humanReadableByteCount(mMaxMemorySizeBytes, true)));
+			sb.append(String.format(" Max. memory is %s.", Utils.humanReadableByteCount(mMaxMemorySizeBytes, true)));
 			return sb.toString();
 
 		}

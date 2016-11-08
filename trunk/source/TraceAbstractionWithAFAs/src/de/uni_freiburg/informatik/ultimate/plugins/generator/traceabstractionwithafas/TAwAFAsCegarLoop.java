@@ -39,17 +39,17 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating.AA_MergedUnion;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating.AlternatingAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating.BooleanExpression;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Accepts;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Difference;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IOpWithDelayedDeadEndRemoval;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.senwa.DifferenceSenwa;
+import de.uni_freiburg.informatik.ultimate.automata.alternating.AA_MergedUnion;
+import de.uni_freiburg.informatik.ultimate.automata.alternating.AlternatingAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.alternating.BooleanExpression;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Accepts;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Difference;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IOpWithDelayedDeadEndRemoval;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.senwa.DifferenceSenwa;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
@@ -57,8 +57,9 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
@@ -70,14 +71,15 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.Pred
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.ReachingDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.dataflowdag.DataflowDAG;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.dataflowdag.TraceCodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EfficientHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
@@ -95,14 +97,15 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 	
 	private final Map<String, Term> mIndexedConstants = new HashMap<String, Term>();
 
-	public TAwAFAsCegarLoop(final String name, final RootNode rootNode, final SmtManager smtManager,
+	public TAwAFAsCegarLoop(final String name, final BoogieIcfgContainer rootNode, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final TraceAbstractionBenchmarks traceAbstractionBenchmarks, final TAPreferences taPrefs,
-			final Collection<ProgramPoint> errorLocs, final InterpolationTechnique interpolation, final boolean computeHoareAnnotation,
+			final Collection<BoogieIcfgLocation> errorLocs, final InterpolationTechnique interpolation, final boolean computeHoareAnnotation,
 			final IUltimateServiceProvider services, final IToolchainStorage storage) {
-		super(name, rootNode, smtManager, traceAbstractionBenchmarks, taPrefs, errorLocs, services, storage);
-		mPredicateUnifier = new PredicateUnifier(services, smtManager,mSimplificationTechnique, mXnfConversionTechnique,
-				smtManager.getPredicateFactory().newPredicate(smtManager.getScript().term("true")),
-				smtManager.getPredicateFactory().newPredicate(smtManager.getScript().term("false")));
+		super(name, rootNode, csToolkit, predicateFactory, traceAbstractionBenchmarks, taPrefs, errorLocs, services, storage);
+		mPredicateUnifier = new PredicateUnifier(services, csToolkit.getManagedScript(), predicateFactory, 
+				rootNode.getBoogie2SMT().getBoogie2SmtSymbolTable(), mSimplificationTechnique, mXnfConversionTechnique,
+				predicateFactory.newPredicate(csToolkit.getManagedScript().getScript().term("true")),
+				predicateFactory.newPredicate(csToolkit.getManagedScript().getScript().term("false")));
 	}
 
 	@Override
@@ -137,7 +140,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 			}		
 			final HashMap<Term, IProgramVar> constantsToBoogieVar = new HashMap<>();
 
-			mSmtManager.getScript().push(1); //push needs to be here, because getTermsFromDAG declares constants
+			mCsToolkit.getManagedScript().getScript().push(1); //push needs to be here, because getTermsFromDAG declares constants
 
 			getTermsFromDAG(dag, termsFromDAG, startsOfSubtreesFromDAG, 0, varToSsaVar, constantsToBoogieVar);
 
@@ -151,17 +154,17 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 			final ArrayList<Term> termNames = new ArrayList<Term>();
 			for (int i = 0; i < termsFromDAG.size(); i++) {
 				final String termName = "afassa_" + i;
-				mSmtManager.assertTerm(mSmtManager.getScript().annotate(termsFromDAG.get(i),
+				mCsToolkit.getManagedScript().getScript().assertTerm(mCsToolkit.getManagedScript().getScript().annotate(termsFromDAG.get(i),
 						new Annotation(":named", termName)));
-				termNames.add(mSmtManager.getScript().term(termName));
+				termNames.add(mCsToolkit.getManagedScript().getScript().term(termName));
 			}
 
-			if (mSmtManager.getScript().checkSat() == LBool.UNSAT) {
+			if (mCsToolkit.getManagedScript().getScript().checkSat() == LBool.UNSAT) {
 
-				final Term[] interpolants = mSmtManager.getScript().getInterpolants(
+				final Term[] interpolants = mCsToolkit.getManagedScript().getScript().getInterpolants(
 						termNames.toArray(new Term[termNames.size()]), startsOfSubtreesAsInts);
 				
-				mSmtManager.getScript().pop(1);
+				mCsToolkit.getManagedScript().getScript().pop(1);
 				
 				final IPredicate[] predicates = interpolantsToPredicates(interpolants,
 						constantsToBoogieVar);
@@ -189,12 +192,12 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 				}
 				assert alternatingAutomatonUnion.accepts(trace) : "interpolant afa does not accept the trace!";
 			} else {
-				mSmtManager.getScript().pop(1);
+				mCsToolkit.getManagedScript().getScript().pop(1);
 			}
 		}
 		assert alternatingAutomatonUnion.accepts(trace) : "interpolant afa does not accept the trace!";
 
-		final RAFA_Determination<CodeBlock> determination = new RAFA_Determination<CodeBlock>(mServices, alternatingAutomatonUnion, mSmtManager, mPredicateUnifier);
+		final RAFA_Determination<CodeBlock> determination = new RAFA_Determination<CodeBlock>(mServices, alternatingAutomatonUnion, mCsToolkit, mPredicateUnifier);
 		mInterpolAutomaton = determination.getResult();
 		try {
 			assert new Accepts<CodeBlock,IPredicate>(new AutomataLibraryServices(mServices), mInterpolAutomaton, (NestedWord<CodeBlock>) trace).getResult() 
@@ -213,7 +216,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 				sb.append("[").append(letter).append("] ");
 			}
 			mLogger.debug("Calculating RD DAGs for " + sb);
-			final List<DataflowDAG<TraceCodeBlock>> dags = ReachingDefinitions.computeRDForTrace(word, mLogger, mRootNode);
+			final List<DataflowDAG<TraceCodeBlock>> dags = ReachingDefinitions.computeRDForTrace(word, mLogger, mIcfgContainer);
 			return dags;
 		} catch (final Throwable e) {
 			mLogger.fatal("DataflowDAG generation threw an exception.", e);
@@ -280,7 +283,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 			final IProgramVar writtenVar, final Term writtenVarSsa,
 			final HashMap<IProgramVar,Term> varToSsaVarNew, 
 			final HashMap<Term,IProgramVar> constantsToBoogieVar) {
-		final TransFormula transFormula = nodeLabel.getBlock().getTransitionFormula();
+		final UnmodifiableTransFormula transFormula = nodeLabel.getBlock().getTransitionFormula();
 	
 		final Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
 
@@ -315,7 +318,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 			}
 		}
 		
-		final Term substitutedTerm = (new Substitution(mSmtManager.getScript(), substitutionMapping))
+		final Term substitutedTerm = (new Substitution(mCsToolkit.getManagedScript().getScript(), substitutionMapping))
 				.transform(nodeLabel.getBlock().getTransitionFormula().getFormula());
 		return substitutedTerm;
 	}
@@ -326,7 +329,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 	 */
 	private Term buildVersion(final IProgramVar bv) {
 		final int index = ssaIndex++;
-		final Term constant = PredicateUtils.getIndexedConstant(bv, index, mIndexedConstants, mSmtManager.getScript());
+		final Term constant = PredicateUtils.getIndexedConstant(bv, index, mIndexedConstants, mCsToolkit.getManagedScript().getScript());
 		return constant;
 	}
 
@@ -375,7 +378,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 			const2RepTv.put(entry.getKey(), entry.getValue().getTermVariable());
 		}
 
-		const2RepTvSubst = new Substitution(mSmtManager.getScript(), const2RepTv);
+		const2RepTvSubst = new Substitution(mCsToolkit.getManagedScript().getScript(), const2RepTv);
 		final Map<Term, IPredicate> withIndices2Predicate = new HashMap<Term, IPredicate>();
 
 		int craigInterpolPos = 0;
@@ -403,7 +406,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 		alternatingAutomaton.setStateFinal(finalState);
 		alternatingAutomaton.addAcceptingConjunction(alternatingAutomaton.generateCube(new IPredicate[]{initialState}, new IPredicate[0]));
 
-		final IHoareTripleChecker mhtc = new MonolithicHoareTripleChecker(mSmtManager.getManagedScript(), mModGlobVarManager);//TODO: switch to efficient htc later, perhaps
+		final IHoareTripleChecker mhtc = new MonolithicHoareTripleChecker(mCsToolkit);//TODO: switch to efficient htc later, perhaps
 
 		//Build the automaton according to the structure of the DAG
 		final Stack<DataflowDAG<TraceCodeBlock>> stack = new Stack<DataflowDAG<TraceCodeBlock>>();
@@ -424,7 +427,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 					alternatingAutomaton.generateCube(targetStates.toArray(new IPredicate[targetStates.size()]), new IPredicate[0])
 				);
 				assert mhtc.checkInternal(
-						mSmtManager.getPredicateFactory().newPredicate(mSmtManager.getPredicateFactory().and(targetStates.toArray(new IPredicate[targetStates.size()]))),
+						mPredicateFactory.newPredicate(mPredicateFactory.and(targetStates.toArray(new IPredicate[targetStates.size()]))),
 						(IInternalAction) currentDag.getNodeLabel().getBlock(),
 						currentDag.getNodeLabel().getInterpolant()) == Validity.VALID;
 			}
@@ -435,7 +438,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 					alternatingAutomaton.generateCube(new IPredicate[]{finalState}, new IPredicate[0])
 				);
 				assert mhtc.checkInternal(
-						mSmtManager.getPredicateFactory().newPredicate(mSmtManager.getPredicateFactory().and(targetStates.toArray(new IPredicate[targetStates.size()]))),
+						mPredicateFactory.newPredicate(mPredicateFactory.and(targetStates.toArray(new IPredicate[targetStates.size()]))),
 						(IInternalAction) currentDag.getNodeLabel().getBlock(),
 						currentDag.getNodeLabel().getInterpolant()) == Validity.VALID;
 			}
@@ -481,22 +484,22 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 		IOpWithDelayedDeadEndRemoval<CodeBlock, IPredicate> diff;
 
 		final DeterministicInterpolantAutomaton determinized = new DeterministicInterpolantAutomaton(
-				mServices, mSmtManager, mModGlobVarManager, htc, oldAbstraction, mInterpolAutomaton,
-				mPredicateUnifier, mLogger, false, false);//change to CegarLoopConcurrentAutomata
+				mServices, mCsToolkit, htc, oldAbstraction, mInterpolAutomaton, mPredicateUnifier,
+				mLogger, false, false);//change to CegarLoopConcurrentAutomata
 		// ComplementDeterministicNwa<CodeBlock, IPredicate>
 		// cdnwa = new ComplementDeterministicNwa<>(dia);
 		final PowersetDeterminizer<CodeBlock, IPredicate> psd2 = new PowersetDeterminizer<CodeBlock, IPredicate>(
 				determinized, false, mPredicateFactoryInterpolantAutomata);
 
 		if (mPref.differenceSenwa()) {
-			diff = new DifferenceSenwa<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), oldAbstraction, (INestedWordAutomaton<CodeBlock, IPredicate>) determinized, psd2, false);
+			diff = new DifferenceSenwa<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), oldAbstraction, determinized, psd2, false);
 		} else {
 			diff = new Difference<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), oldAbstraction, determinized, psd2,
 					mStateFactoryForRefinement, explointSigmaStarConcatOfIA);
 		}
-		assert !mSmtManager.isLocked();
+		assert !mCsToolkit.getManagedScript().isLocked();
 		assert (new InductivityCheck(mServices, mInterpolAutomaton, false, true,
-				new IncrementalHoareTripleChecker(mRootNode.getRootAnnot().getManagedScript(), mModGlobVarManager)).getResult());
+				new IncrementalHoareTripleChecker(mCsToolkit)).getResult());
 		// do the following check only to obtain logger messages of
 		// checkInductivity
 
@@ -545,17 +548,17 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 		final IHoareTripleChecker solverHtc;
 		switch (mPref.getHoareTripleChecks()) {
 		case MONOLITHIC:
-			solverHtc = new MonolithicHoareTripleChecker(mSmtManager.getManagedScript(), mModGlobVarManager);
+			solverHtc = new MonolithicHoareTripleChecker(mCsToolkit);
 			break;
 		case INCREMENTAL:
-			solverHtc = new IncrementalHoareTripleChecker(mRootNode.getRootAnnot().getManagedScript(), mModGlobVarManager);
+			solverHtc = new IncrementalHoareTripleChecker(mCsToolkit);
 			break;
 		default:
 			throw new AssertionError("unknown value");
 		}
 		final IHoareTripleChecker htc = new EfficientHoareTripleChecker(solverHtc, 
-				mRootNode.getRootAnnot().getModGlobVarManager(), 
-				mPredicateUnifier, mSmtManager); //only change to method in BasicCegarLoop
+				mCsToolkit, 
+				mPredicateUnifier); //only change to method in BasicCegarLoop
 		return htc;
 	}
 	
@@ -565,7 +568,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 	 *  - the corresponding hoare triple of each transition is valid
 	 */
 	private boolean checkRAFA(final AlternatingAutomaton<CodeBlock, IPredicate> afa) {
-		final MonolithicHoareTripleChecker htc = new MonolithicHoareTripleChecker(mSmtManager.getManagedScript(), mModGlobVarManager);
+		final MonolithicHoareTripleChecker htc = new MonolithicHoareTripleChecker(mCsToolkit);
 		boolean result = true;
 		for (final Entry<CodeBlock, BooleanExpression[]> entry : afa.getTransitionFunction().entrySet()) {
 			for(int i=0;i<afa.getStates().size();i++){
@@ -596,15 +599,15 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 		IPredicate pred = mPredicateUnifier.getTruePredicate();
 		for(int i = 0; i < states.size(); i++){
 			if(bex.getAlpha().get(i)){
-				pred = mSmtManager.getPredicateFactory().newPredicate(
-						mSmtManager.getPredicateFactory().and(pred,
+				pred = mPredicateFactory.newPredicate(
+						mPredicateFactory.and(pred,
 								!bex.getBeta().get(i) ?
-									mSmtManager.getPredicateFactory().newPredicate(mSmtManager.getPredicateFactory().not(states.get(i))) :
+									mPredicateFactory.newPredicate(mPredicateFactory.not(states.get(i))) :
 										states.get(i)));
 			}
 		}
 		if(bex.getNextConjunctExpression() != null){
-			pred = mSmtManager.getPredicateFactory().newPredicate(mSmtManager.getPredicateFactory().or(false, pred, 
+			pred = mPredicateFactory.newPredicate(mPredicateFactory.or(false, pred, 
 					bexToPredicate(bex.getNextConjunctExpression(), states)));
 		}
 		return pred;

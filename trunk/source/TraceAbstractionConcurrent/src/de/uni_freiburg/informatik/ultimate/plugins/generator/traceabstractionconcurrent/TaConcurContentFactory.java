@@ -34,34 +34,34 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.Condition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ProdState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 
 public class TaConcurContentFactory extends PredicateFactoryForInterpolantAutomata {
 
-	public TaConcurContentFactory(Map<String, Map<String, ProgramPoint>> locNodes,
-			AbstractCegarLoop abstractCegarLoop, SmtManager theory,
-			TAPreferences taPrefs,
-			boolean hoareAnnotation,
-			boolean interprocedural) {
-		super(theory, taPrefs);
+	public TaConcurContentFactory(final Map<String, Map<String, BoogieIcfgLocation>> locNodes,
+			final AbstractCegarLoop abstractCegarLoop, final CfgSmtToolkit theory, final PredicateFactory predicateFactory,
+			final boolean taPrefs,
+			final boolean hoareAnnotation,
+			final boolean interprocedural) {
+		super(theory, predicateFactory, taPrefs);
 		// TODO Auto-generated constructor stub
 	}
 	
 	
 	@Override
-	public IPredicate getContentOnConcurrentProduct(IPredicate c1,
-			IPredicate c2) {
+	public IPredicate getContentOnConcurrentProduct(final IPredicate c1,
+			final IPredicate c2) {
 		
 		final List<IPredicate> programPoints = new ArrayList<IPredicate>();
-		final ProdState result = mSmtManager.getPredicateFactory().getNewProdState(programPoints);
+		final ProdState result = mPredicateFactory.getNewProdState(programPoints);
 		if (c1 instanceof ProdState) {
 			final ProdState ps1 = (ProdState) c1;
 			programPoints.addAll(ps1.getPredicates());
@@ -81,21 +81,21 @@ public class TaConcurContentFactory extends PredicateFactoryForInterpolantAutoma
 
 	@Override
 	public IPredicate getContentOnPetriNet2FiniteAutomaton(
-			Marking<?, IPredicate> marking) {
+			final Marking<?, IPredicate> marking) {
 		final LinkedList<IPredicate> programPoints = new LinkedList<IPredicate>();
 		for (final Place<?, IPredicate> place : marking) {
 			programPoints.add(place.getContent());
 		}
-		return mSmtManager.getPredicateFactory().getNewProdState(programPoints);
+		return mPredicateFactory.getNewProdState(programPoints);
 	}
 	
 
 
 
 	@Override
-	public IPredicate finitePrefix2net(Condition<?, IPredicate> c) {
-		final ProgramPoint pp = ((ISLPredicate) c.getPlace().getContent()).getProgramPoint();
-		return super.mSmtManager.getPredicateFactory().newDontCarePredicate(pp);
+	public IPredicate finitePrefix2net(final Condition<?, IPredicate> c) {
+		final BoogieIcfgLocation pp = ((ISLPredicate) c.getPlace().getContent()).getProgramPoint();
+		return super.mPredicateFactory.newDontCarePredicate(pp);
 	}
 	
 

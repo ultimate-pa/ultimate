@@ -26,11 +26,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IStateDeterminizer;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DeterminizedState;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IStateDeterminizer;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DeterminizedState;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
@@ -39,7 +40,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.Mono
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 
 
@@ -58,7 +58,7 @@ public class SelfloopDeterminizer
 	PowersetDeterminizer<CodeBlock, IPredicate> mPowersetDeterminizer;
 	
 	INestedWordAutomaton<CodeBlock, IPredicate> mInterpolantAutomaton;
-	private final StateFactory<IPredicate> mStateFactory;
+	private final IStateFactory<IPredicate> mStateFactory;
 	IPredicate mInterpolantAutomatonFinalState;
 	
 	DeterminizedState<CodeBlock, IPredicate> mResultFinalState;
@@ -72,13 +72,12 @@ public class SelfloopDeterminizer
 	public int mReturnSelfloop = 0;
 	public int mReturnNonSelfloop = 0;
 	
-	public SelfloopDeterminizer(SmtManager mSmtManager,
-			TAPreferences taPreferences,
-			INestedWordAutomaton<CodeBlock, IPredicate> interpolantAutom,
-			StateFactory<IPredicate> stateFactory) {
+	public SelfloopDeterminizer(final CfgSmtToolkit mCsToolkit,
+			final TAPreferences taPreferences,
+			final INestedWordAutomaton<CodeBlock, IPredicate> interpolantAutom,
+			final IStateFactory<IPredicate> stateFactory) {
 		super();
-		mHoareTriplechecker = new MonolithicHoareTripleChecker(
-				mSmtManager.getManagedScript(), mSmtManager.getModifiableGlobals());
+		mHoareTriplechecker = new MonolithicHoareTripleChecker(mCsToolkit);
 		mInterpolantAutomaton = interpolantAutom;
 		mStateFactory = stateFactory;
 		mPowersetDeterminizer = 
@@ -108,8 +107,8 @@ public class SelfloopDeterminizer
 
 	@Override
 	public DeterminizedState<CodeBlock, IPredicate> internalSuccessor(
-						DeterminizedState<CodeBlock, IPredicate> detState,
-						CodeBlock symbol) {
+						final DeterminizedState<CodeBlock, IPredicate> detState,
+						final CodeBlock symbol) {
 		if (detState == mResultFinalState) {
 			mInternalSelfloop++;
 			return mResultFinalState;
@@ -136,8 +135,8 @@ public class SelfloopDeterminizer
 
 	@Override
 	public DeterminizedState<CodeBlock, IPredicate> callSuccessor(
-						DeterminizedState<CodeBlock, IPredicate> detState,
-						CodeBlock symbol) {
+						final DeterminizedState<CodeBlock, IPredicate> detState,
+						final CodeBlock symbol) {
 		if (detState == mResultFinalState) {
 			mCallSelfloop++;
 			return mResultFinalState;
@@ -164,9 +163,9 @@ public class SelfloopDeterminizer
 
 	@Override
 	public DeterminizedState<CodeBlock, IPredicate> returnSuccessor(
-			DeterminizedState<CodeBlock, IPredicate> detState,
-			DeterminizedState<CodeBlock, IPredicate> derHier,
-			CodeBlock symbol) {
+			final DeterminizedState<CodeBlock, IPredicate> detState,
+			final DeterminizedState<CodeBlock, IPredicate> derHier,
+			final CodeBlock symbol) {
 		if (detState == mResultFinalState) {
 			mReturnSelfloop++;
 			return mResultFinalState;
@@ -198,7 +197,7 @@ public class SelfloopDeterminizer
 	
 	
 	private boolean containsFinal(
-						DeterminizedState<CodeBlock, IPredicate> detState) {
+						final DeterminizedState<CodeBlock, IPredicate> detState) {
 		for (final IPredicate down : detState.getDownStates()) {
 			for (final IPredicate up : detState.getUpStates(down)) {
 				if (up == mInterpolantAutomatonFinalState) {
@@ -222,7 +221,7 @@ public class SelfloopDeterminizer
 	
 	@Override
 	public IPredicate getState(
-			DeterminizedState<CodeBlock, IPredicate> determinizedState) {
+			final DeterminizedState<CodeBlock, IPredicate> determinizedState) {
 		return determinizedState.getContent(mStateFactory);
 	}
 

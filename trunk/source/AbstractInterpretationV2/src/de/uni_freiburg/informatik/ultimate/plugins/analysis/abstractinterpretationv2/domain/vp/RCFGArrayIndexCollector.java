@@ -33,45 +33,46 @@ import java.util.Collection;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RCFGEdgeVisitor;
 
 /**
- * Collects literals of type int or real found in an RCFG. Some widening
- * operators can use these.
+ * Create and collects @EqNode from ApplicationTerm (store and select)
  * 
- * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * @author Yu-Wen Chen (yuwenchen1105@gmail.com)
  */
 public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 
-	private final Set<ApplicationTerm> termSet = new HashSet<>();
-	private final Map<IProgramVar, Set<PointerExpression>> pointerMap = new HashMap<IProgramVar, Set<PointerExpression>>();
-	private final Map<IProgramVar, Set<IProgramVar>> indexToArraysMap = new HashMap<IProgramVar, Set<IProgramVar>>();
-	private Map<TermVariable, IProgramVar> termVarToBooVarMap;
+	private final Set<EqGraphNode> eqGraphNodeSet = new HashSet<EqGraphNode>();
+	private final Map<Term, EqBaseNode> termToBaseNodeMap = new HashMap<>();
+	private final Map<Term, Set<EqFunctionNode>> termToFnNodeMap = new HashMap<>();
+	private final Map<EqNode, EqGraphNode> eqNodeToEqGraphNodeMap = new HashMap<>();
 
-	public RCFGArrayIndexCollector(final RCFGNode root) {
-		process(root.getOutgoingEdges());
+	private final Script mScript;
+
+	public RCFGArrayIndexCollector(final BoogieIcfgContainer root) {
+		mScript = root.getCfgSmtToolkit().getManagedScript().getScript();
+		process(BoogieIcfgContainer.extractStartEdges(root));
 	}
 
-	private <T extends RCFGEdge> void process(final Collection<T> edges) {
-		final Deque<RCFGEdge> worklist = new ArrayDeque<RCFGEdge>();
-		final Set<RCFGEdge> finished = new HashSet<RCFGEdge>();
-
+	private <T extends IcfgEdge> void process(final Collection<T> edges) {
+		final Deque<IcfgEdge> worklist = new ArrayDeque<IcfgEdge>();
+		final Set<IcfgEdge> finished = new HashSet<IcfgEdge>();
+		
 		worklist.addAll(edges);
 		while (!worklist.isEmpty()) {
-			final RCFGEdge current = worklist.removeFirst();
+			final IcfgEdge current = worklist.removeFirst();
 			if (!finished.add(current)) {
 				continue;
 			}
@@ -81,105 +82,127 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 	}
 
 	@Override
-	protected void visit(CodeBlock c) {
+	protected void visit(final CodeBlock c) {
 		c.getPrettyPrintedStatements();
-		termSet.addAll(new ArrayIndexFinder().findArrayIndex(c.getTransitionFormula().getFormula()));
+		
+		final Set<EqNodeFinder.SelectOrStoreArguments> argsSet = new EqNodeFinder().findEqNode(c.getTransitionFormula().getFormula());
 
-		final Iterator<ApplicationTerm> termSetIter = termSet.iterator();
-		ApplicationTerm term;
-		Term[] terms;
-		TermVariable[] termVariableArray;
-		final Set<PointerExpression> ptrExprSet = new HashSet<PointerExpression>();
-		PointerExpression ptrExpr;
-		Map<TermVariable, IProgramVar> ptrExprTermMap;
+		final Map<Term, Term> substitionMap = new HashMap<Term, Term>();
+		for (final Entry<IProgramVar, TermVariable> entry : c.getTransitionFormula().getInVars().entrySet()) {
+			substitionMap.put(entry.getValue(), entry.getKey().getTermVariable());
+		}
+		for (final Entry<IProgramVar, TermVariable> entry : c.getTransitionFormula().getOutVars().entrySet()) {
+			substitionMap.put(entry.getValue(), entry.getKey().getTermVariable());
+		}
 
-		termVarToBooVarMap = getTermVarToBooVar(c.getTransitionFormula().getInVars());
+		Term subArg0, subArg1, subArg2;
+		EqNode subArg1Node;
 
-		while (termSetIter.hasNext()) {
-			term = termSetIter.next();
-			terms = term.getParameters();
+		for (final EqNodeFinder.SelectOrStoreArguments selOrStore : argsSet) {
 
-			if (terms.length >= 2) {
+			subArg0 = new Substitution(mScript, substitionMap).transform(selOrStore.function);
+			subArg1 = new Substitution(mScript, substitionMap).transform(selOrStore.arg);
 
-				termVariableArray = term.getFreeVars();
-				ptrExprTermMap = new HashMap<TermVariable, IProgramVar>();
-				final TermVariable[] termVar = terms[1].getFreeVars();
-				final IProgramVar pointerMapKey = termVarToBooVarMap.get(termVariableArray[0]);
+			subArg1Node = createNodeAndConnection(subArg1, null);
+			createNodeAndConnection(subArg0, subArg1Node);
 
-				for (final TermVariable tv : termVar) {
-					final IProgramVar indexTermVar = termVarToBooVarMap.get(tv);
-					if (indexTermVar != null) {
-						ptrExprTermMap.put(tv, indexTermVar);
+			if (selOrStore instanceof EqNodeFinder.StoreArguments) {
+				subArg2 = new Substitution(mScript, substitionMap).transform(((EqNodeFinder.StoreArguments) selOrStore).arg2);
 
-						if (!indexToArraysMap.containsKey(indexTermVar)) {
-							final Set<IProgramVar> indexToArraySet = new HashSet<IProgramVar>();
-							indexToArraySet.add(pointerMapKey);
-							indexToArraysMap.put(indexTermVar, indexToArraySet);
-						} else {
-							indexToArraysMap.get(indexTermVar).add(pointerMapKey);
-						}
-					}
-				}
-
-				if (terms[0].getSort().isArraySort() && pointerMapKey != null) {
-
-					ptrExpr = new PointerExpression(terms[1], ptrExprTermMap);
-
-					ptrExprSet.add(ptrExpr);
-
-					// BoogieVar key =
-					// isContainBoogieVarKey(termVarToBooVarMap.get(termVariableArray[0]));
-					// if (key != null) {
-					// pointerMap.get(key).add(ptrExpr);
-					// } else {
-					// pointerMap.put(termVarToBooVarMap.get(termVariableArray[0]),
-					// ptrExprSet);
-					// }
-
-					if (pointerMap.containsKey(pointerMapKey)) {
-						pointerMap.get(pointerMapKey).add(ptrExpr);
-					} else {
-						pointerMap.put(pointerMapKey, ptrExprSet);
-					}
-
-				}
+				createNodeAndConnection(subArg2, null);
 			}
 		}
 	}
 
-//	private BoogieVar isContainBoogieVarKey(BoogieVar boogieVar) {
-//
-//		for (BoogieVar bv : pointerMap.keySet()) {
-//			if (boogieVar.equals(bv)) {
-//				return bv;
-//			}
-//		}
-//		return null;
-//
-//	}
+	private EqNode createNodeAndConnection(final Term term, final EqNode arg) {
+		
+		if (arg == null) {
+			return getEqBaseNode(term);
+		} else {
+			return getEqFnNode(term, arg);
+		}			
+	}
 
-	private Map<TermVariable, IProgramVar> getTermVarToBooVar(Map<IProgramVar, TermVariable> map) {
-
-		final Map<TermVariable, IProgramVar> result = new HashMap<TermVariable, IProgramVar>();
-
-		for (final Entry<IProgramVar, TermVariable> entry : map.entrySet()) {
-			result.put(entry.getValue(), entry.getKey());
+	/**
+	 * 
+	 * @param term
+	 * @return
+	 */
+	private EqBaseNode getEqBaseNode(final Term term) {
+		
+		if (termToBaseNodeMap.containsKey(term)) {
+			return termToBaseNodeMap.get(term);
 		}
+		
+		final EqBaseNode baseNode = new EqBaseNode(term);
+		termToBaseNodeMap.put(term, baseNode);
+		
+		putToEqGraphSet(baseNode, null);		
+		return baseNode;
+	}
+	
+	private EqFunctionNode getEqFnNode(final Term term, final EqNode arg) {
+		
+		if (termToFnNodeMap.containsKey(term)) {
+			for (final EqFunctionNode fnNode : termToFnNodeMap.get(term)) {
+				if (fnNode.getArg().term.equals(arg.term)) {
+					return fnNode;
+				}
+			}			
+		}
+			
+		final EqFunctionNode fnNode = new EqFunctionNode(term, arg);
+		if (termToFnNodeMap.get(term) == null) {
+			termToFnNodeMap.put(term, new HashSet<EqFunctionNode>());
+		}
+		termToFnNodeMap.get(term).add(fnNode);
+		putToEqGraphSet(fnNode, arg);
+			
+		return fnNode;
+		
+	}
+	
+	private void putToEqGraphSet(final EqNode node, final EqNode arg) {
+		final EqGraphNode graphNode = new EqGraphNode(node);
+		EqGraphNode argNode = null;
+		
+		if (arg != null) {
+			graphNode.setArg(arg);
+			argNode = eqNodeToEqGraphNodeMap.get(arg);
+			argNode.addToInitCcpar(node);
+			argNode.addToCcpar(node);
+		}
+		
+		if (argNode != null) {
+			graphNode.setInitCcchild(argNode.eqNode);
+			graphNode.getCcchild().add(argNode.eqNode);
+		}
+		
+		eqGraphNodeSet.add(graphNode);
+		eqNodeToEqGraphNodeMap.put(node, graphNode);
+		
+	}
 
-		return result;
+	public Set<EqGraphNode> getEqGraphNodeSet() {
+		return eqGraphNodeSet;
+	}
+
+	public Map<Term, EqBaseNode> getTermToBaseNodeMap() {
+		return termToBaseNodeMap;
+	}
+
+	public Map<Term, Set<EqFunctionNode>> getTermToFnNodeMap() {
+		return termToFnNodeMap;
+	}
+
+	public Map<EqNode, EqGraphNode> getEqNodeToEqGraphNodeMap() {
+		return eqNodeToEqGraphNodeMap;
 	}
 
 	@Override
 	public String toString() {
 		return "";
 	}
-	
-	public Map<IProgramVar, Set<PointerExpression>> getPointerMap () {
-		return pointerMap;
-	}
-	
-	public Map<IProgramVar, Set<IProgramVar>> getIndexToArraysMap () {
-		return indexToArraysMap;
-	}
+
 
 }

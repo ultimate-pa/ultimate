@@ -30,11 +30,10 @@ package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
@@ -68,15 +67,15 @@ public class MatchInOutVars extends TransitionPreprocessor {
 	}
 	
 	@Override
-	public TransFormulaLR process(final Script script, final TransFormulaLR tf) throws TermException {
+	public ModifiableTransFormula process(final Script script, final ModifiableTransFormula tf) throws TermException {
 		addMissingInVars(tf);
 		addMissingOutVars(tf);
 //		assert eachInVarHasOutVar(tf) : "some inVars do not have outVars";
 		return tf;
 	}
 
-	private void addMissingInVars(final TransFormulaLR tf) {
-		for (final Map.Entry<RankVar, Term> entry : tf.getOutVars().entrySet()) {
+	private void addMissingInVars(final ModifiableTransFormula tf) {
+		for (final Map.Entry<IProgramVar, TermVariable> entry : tf.getOutVars().entrySet()) {
 			if (!tf.getInVars().containsKey(entry.getKey())) {
 				final String id = SmtUtils.removeSmtQuoteCharacters(
 						entry.getKey().getGloballyUniqueId());
@@ -88,12 +87,13 @@ public class MatchInOutVars extends TransitionPreprocessor {
 		}
 	}
 	
-	private void addMissingOutVars(final TransFormulaLR tf) {
-		for (final Map.Entry<RankVar, Term> entry : tf.getInVars().entrySet()) {
+	private void addMissingOutVars(final ModifiableTransFormula tf) {
+		for (final Map.Entry<IProgramVar, TermVariable> entry : tf.getInVars().entrySet()) {
 			if (!tf.getOutVars().containsKey(entry.getKey())) {
+				final String id = SmtUtils.removeSmtQuoteCharacters(
+						entry.getKey().getGloballyUniqueId());
 				final TermVariable inVar = mVariableManager.constructFreshTermVariable(
-						entry.getKey().getGloballyUniqueId(),
-						entry.getValue().getSort()
+						id, entry.getValue().getSort()
 				);
 				tf.addOutVar(entry.getKey(), inVar);
 			}
@@ -108,8 +108,8 @@ public class MatchInOutVars extends TransitionPreprocessor {
 	 * TODO: Maybe we want to use this method as a check after all 
 	 * preprocessing steps.
 	 */
-	private boolean eachInVarHasOutVar(final TransFormulaLR tf) {
-		for (final Map.Entry<RankVar, Term> entry : tf.getInVars().entrySet()) {
+	private boolean eachInVarHasOutVar(final ModifiableTransFormula tf) {
+		for (final Map.Entry<IProgramVar, TermVariable> entry : tf.getInVars().entrySet()) {
 			if (!tf.getOutVars().containsKey(entry.getKey())) {
 				assert false : "no outVar for inVar " + entry.getKey();
 				return false;

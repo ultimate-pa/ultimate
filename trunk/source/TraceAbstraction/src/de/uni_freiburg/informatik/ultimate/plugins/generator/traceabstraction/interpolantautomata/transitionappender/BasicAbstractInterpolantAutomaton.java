@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender;
@@ -29,16 +29,16 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.i
 import java.util.HashSet;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula.Infeasibility;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 
 /**
@@ -53,22 +53,22 @@ public abstract class BasicAbstractInterpolantAutomaton extends
 	protected final PredicateUnifier mPredicateUnifier;
 
 
-	public BasicAbstractInterpolantAutomaton(IUltimateServiceProvider services,
-			SmtManager smtManager, IHoareTripleChecker hoareTripleChecker,
-			boolean useEfficientTotalAutomatonBookkeeping,
-			INestedWordAutomaton<CodeBlock, IPredicate> abstraction,
-			PredicateUnifier predicateUnifier,
-			NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton,
-			ILogger logger) {
-		super(services, smtManager, hoareTripleChecker, useEfficientTotalAutomatonBookkeeping, abstraction,
+	public BasicAbstractInterpolantAutomaton(final IUltimateServiceProvider services,
+			final CfgSmtToolkit csToolkit, final IHoareTripleChecker hoareTripleChecker,
+			final boolean useEfficientTotalAutomatonBookkeeping,
+			final INestedWordAutomatonSimple<CodeBlock, IPredicate> abstraction,
+			final PredicateUnifier predicateUnifier,
+			final NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton,
+			final ILogger logger) {
+		super(services, csToolkit, hoareTripleChecker, useEfficientTotalAutomatonBookkeeping, abstraction,
 				predicateUnifier.getFalsePredicate(), interpolantAutomaton, logger);
 		mPredicateUnifier = predicateUnifier;
 		mIaTrueState = predicateUnifier.getTruePredicate();
 	}
 
 	@Override
-	protected void computeSuccs(IPredicate resPred, IPredicate resHier, CodeBlock letter,
-			SuccessorComputationHelper sch) {
+	protected void computeSuccs(final IPredicate resPred, final IPredicate resHier, final CodeBlock letter,
+			final SuccessorComputationHelper sch) {
 		// if (linear) predecessor is false, the successor is false
 		if (sch.isLinearPredecessorFalse(resPred)) {
 			sch.addTransition(resPred, resHier, letter, mIaFalseState);
@@ -80,7 +80,7 @@ public abstract class BasicAbstractInterpolantAutomaton extends
 			sch.addTransition(resPred, resHier, letter, mIaFalseState);
 			sch.reportSuccsComputed(resPred, resHier, letter);
 			return;
-		} 
+		}
 		// if the letter is already infeasible, the successor is false
 		if (letter.getTransitionFormula().isInfeasible() == Infeasibility.INFEASIBLE) {
 			sch.addTransition(resPred, resHier, letter, mIaFalseState);

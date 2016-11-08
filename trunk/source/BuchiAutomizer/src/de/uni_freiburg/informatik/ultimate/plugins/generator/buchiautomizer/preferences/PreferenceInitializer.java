@@ -37,6 +37,94 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 
 public class PreferenceInitializer extends UltimatePreferenceInitializer {
 
+	public enum BuchiInterpolantAutomaton {
+		LassoAutomaton, EagerNondeterminism, ScroogeNondeterminism, Deterministic, Staged, TwoStage
+	}
+
+	public enum BuchiComplementationConstruction {
+		Ncsb, Elastic, HeiMat2, TightRO, TightBasic, TightHighEven
+	}
+
+	public enum AutomataMinimization {
+		None,
+
+		MinimizeSevpa,
+
+		ShrinkNwa,
+
+		DelayedSimulation,
+
+		FairSimulation_WithSCC,
+
+		FairSimulation_WithoutSCC,
+
+		FairDirectSimulation,
+
+		MinimizeNwaMaxSat2,
+
+		MinimizeNwaMaxSat,
+
+		RaqDirectSimulation,
+
+		RaqDelayedSimulation,
+
+		MultiDefault,
+
+		MultiSimulation
+	}
+
+	public static final String LABEL_IGNORE_DOWN_STATES = "Ignore down states";
+	public static final String LABEL_DETERMINIZATION_ON_DEMAND = "Determinization on demand";
+	public static final String LABEL_BUCHI_INTERPOLANT_AUTOMATON = "Buchi interpolant automaton";
+	public static final String LABEL_BUCHI_COMPLEMENTATION_CONSTRUCTION = "Buchi complementation construction";
+	public static final String LABEL_BOUNCER_STEM = "Bouncer stem";
+	public static final String LABEL_BOUNCER_LOOP = "Bouncer loop";
+	public static final String LABEL_SCROOGE_NONDETERMINISM_STEM = "ScroogeNondeterminism stem";
+	public static final String LABEL_SCROOGE_NONDETERMINISM_LOOP = "ScroogeNondeterminism loop";
+	public static final String LABEL_CANNIBALIZE_LOOP = "Cannibalize loop";
+	public static final String LABEL_LOOP_UNWINDINGS = "Max number of loop unwindings";
+	public static final String LABEL_USE_EXTERNAL_SOLVER_RANK = "Use external solver (rank synthesis)";
+	public static final String LABEL_EXTERNAL_SOLVER_COMMAND_RANK = "Command for external solver (rank synthesis)";
+	private static final String DEF_EXTERNAL_SOLVER_COMMAND_RANK =
+			"z3 SMTLIB2_COMPLIANT=true -memory:1024 -smt2 -in -t:12000";
+	public static final String LABEL_ANALYSIS_TYPE_RANK = "Rank analysis";
+	public static final String LABEL_USE_EXTERNAL_SOLVER_GNTA = "Use external solver (GNTA synthesis)";
+	public static final String LABEL_EXTERNAL_SOLVER_COMMAND_GNTA = "Command for external solver (GNTA synthesis)";
+	private static final String DEF_EXTERNAL_SOLVER_COMMAND_GNTA =
+			"z3 SMTLIB2_COMPLIANT=true -memory:1024 -smt2 -in -t:12000";
+	public static final String LABEL_ANALYSIS_TYPE_GNTA = "GNTA analysis";
+	public static final String LABEL_GNTA_DIRECTIONS = "Number of GNTA directions";
+	private static final int DEF_GNTA_DIRECTIONS = 3;
+	public static final String LABEL_TEMPLATE_BENCHMARK_MODE = "Template benchmark mode";
+	public static final String LABEL_DUMP_SCRIPT_TO_FILE = "Dump SMT script to file";
+	public static final String LABEL_DUMP_SCRIPT_PATH = "To the following directory";
+	private static final String DEF_DUMP_SCRIPT_PATH = "";
+	public static final String LABEL_CONSTRUCT_TERMCOMP_PROOF = "Construct termination proof for TermComp";
+	public static final String LABEL_SIMPLIFY = "Try to simplify termination arguments";
+	public static final String LABEL_AUTOMATA_MINIMIZATION = "Automata minimization";
+	private static final AutomataMinimization DEF_AUTOMATA_MINIMIZATION = AutomataMinimization.None;
+	/**
+	 * If true we check if the loop is terminating even if the stem or the concatenation of stem and loop are already
+	 * infeasible. This allows us to use refineFinite and refineBuchi in the same iteration.
+	 */
+	public static final String LABEL_TRY_TWOFOLD_REFINEMENT = "Try twofold refinement";
+
+	public static final String LABEL_USE_OLD_MAP_ELIMINATION = "Use old map elimination";
+	private static final boolean DEF_USE_OLD_MAP_ELIMINATION = true;
+
+	public static final String LABEL_MAP_ELIMINATION_ADD_INEQUALITIES =
+			"Add inequalities as additional conjuncts to the transformula";
+	private static final boolean DEF_MAP_ELIMINATION_ADD_INEQUALITIES = false;
+	public static final String LABEL_MAP_ELIMINATION_ONLY_TRIVIAL_IMPLICATIONS_INDEX_ASSIGNMENT =
+			"Use only trivial implications for index assignments";
+	private static final boolean DEF_MAP_ELIMINATION_ONLY_TRIVIAL_IMPLICATIONS_INDEX_ASSIGNMENT = true;
+	public static final String LABEL_MAP_ELIMINATION_ONLY_TRIVIAL_IMPLICATIONS_ARRAY_WRITE =
+			"Use only trivial implications for array writes";
+	private static final boolean DEF_MAP_ELIMINATION_ONLY_TRIVIAL_IMPLICATIONS_ARRAY_WRITE = false;
+	public static final String LABEL_MAP_ELIMINATION_ONLY_INDICES_IN_FORMULAS =
+			"Add implications only for indices occuring in the current formula";
+	private static final boolean DEF_MAP_ELIMINATION_ONLY_INDICES_IN_FORMULAS = true;
+
 	public PreferenceInitializer() {
 		super(Activator.PLUGIN_ID, "Buchi Automizer (Termination Analysis)");
 	}
@@ -44,93 +132,51 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
 		return new UltimatePreferenceItem<?>[] {
-				new UltimatePreferenceItem<Boolean>(LABEL_IgnoreDownStates, false, PreferenceType.Boolean),
-				new UltimatePreferenceItem<Boolean>(LABEL_DeterminizationOnDemand, true, PreferenceType.Boolean),
-				new UltimatePreferenceItem<BComplementationConstruction>(LABEL_BuchiComplementationConstruction,
-						BComplementationConstruction.Ncsb, PreferenceType.Combo, BComplementationConstruction.values()),
-				new UltimatePreferenceItem<BInterpolantAutomaton>(LABEL_BuchiInterpolantAutomaton,
-						BInterpolantAutomaton.Staged, PreferenceType.Combo, BInterpolantAutomaton.values()),
-				new UltimatePreferenceItem<Boolean>(LABEL_BouncerStem, true, PreferenceType.Boolean),
-				new UltimatePreferenceItem<Boolean>(LABEL_BouncerLoop, false, PreferenceType.Boolean),
-				new UltimatePreferenceItem<Boolean>(LABEL_ScroogeNondeterminismStem, false, PreferenceType.Boolean),
-				new UltimatePreferenceItem<Boolean>(LABEL_ScroogeNondeterminismLoop, false, PreferenceType.Boolean),
-				new UltimatePreferenceItem<Boolean>(LABEL_CannibalizeLoop, false, PreferenceType.Boolean),
-				new UltimatePreferenceItem<Integer>(LABEL_LoopUnwindings, 2, PreferenceType.Integer,
-						new IUltimatePreferenceItemValidator.IntegerValidator(0, 1000000)),
-				new UltimatePreferenceItem<InterpolationTechnique>(
-						TraceAbstractionPreferenceInitializer.LABEL_INTERPOLATED_LOCS,
+				new UltimatePreferenceItem<>(LABEL_IGNORE_DOWN_STATES, false, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_DETERMINIZATION_ON_DEMAND, true, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_BUCHI_COMPLEMENTATION_CONSTRUCTION,
+						BuchiComplementationConstruction.Ncsb, PreferenceType.Combo, BuchiComplementationConstruction.values()),
+				new UltimatePreferenceItem<>(LABEL_BUCHI_INTERPOLANT_AUTOMATON, BuchiInterpolantAutomaton.Staged,
+						PreferenceType.Combo, BuchiInterpolantAutomaton.values()),
+				new UltimatePreferenceItem<>(LABEL_BOUNCER_STEM, true, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_BOUNCER_LOOP, false, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_SCROOGE_NONDETERMINISM_STEM, false, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_SCROOGE_NONDETERMINISM_LOOP, false, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_CANNIBALIZE_LOOP, false, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_LOOP_UNWINDINGS, 2, PreferenceType.Integer,
+						new IUltimatePreferenceItemValidator.IntegerValidator(0, 1_000_000)),
+				new UltimatePreferenceItem<>(TraceAbstractionPreferenceInitializer.LABEL_INTERPOLATED_LOCS,
 						InterpolationTechnique.ForwardPredicates, PreferenceType.Combo,
 						TraceAbstractionPreferenceInitializer.InterpolationTechnique.values()),
-				new UltimatePreferenceItem<Boolean>(LABEL_ExtSolverRank, true, PreferenceType.Boolean),
-				new UltimatePreferenceItem<String>(LABEL_ExtSolverCommandRank, DEF_ExtSolverCommandRank,
+				new UltimatePreferenceItem<>(LABEL_USE_EXTERNAL_SOLVER_RANK, true, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_EXTERNAL_SOLVER_COMMAND_RANK, DEF_EXTERNAL_SOLVER_COMMAND_RANK,
 						PreferenceType.String),
-				new UltimatePreferenceItem<AnalysisType>(LABEL_AnalysisTypeRank, AnalysisType.Nonlinear,
-						PreferenceType.Combo, AnalysisType.values()),
-				new UltimatePreferenceItem<Boolean>(LABEL_ExtSolverGNTA, true, PreferenceType.Boolean),
-				new UltimatePreferenceItem<String>(LABEL_ExtSolverCommandGNTA, DEF_ExtSolverCommandGNTA,
+				new UltimatePreferenceItem<>(LABEL_ANALYSIS_TYPE_RANK, AnalysisType.NONLINEAR, PreferenceType.Combo,
+						AnalysisType.values()),
+				new UltimatePreferenceItem<>(LABEL_USE_EXTERNAL_SOLVER_GNTA, true, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_EXTERNAL_SOLVER_COMMAND_GNTA, DEF_EXTERNAL_SOLVER_COMMAND_GNTA,
 						PreferenceType.String),
-				new UltimatePreferenceItem<AnalysisType>(LABEL_AnalysisTypeGNTA, AnalysisType.Nonlinear,
-						PreferenceType.Combo, AnalysisType.values()),
-				new UltimatePreferenceItem<Integer>(LABEL_GntaDirections, DEF_GntaDirections, PreferenceType.Integer),
-				new UltimatePreferenceItem<Boolean>(LABEL_TemplateBenchmarkMode, false, PreferenceType.Boolean),
-				new UltimatePreferenceItem<Boolean>(LABEL_DumpToFile, false, PreferenceType.Boolean),
-				new UltimatePreferenceItem<String>(LABEL_DumpPath, DEF_DumpPath, PreferenceType.Directory),
-				new UltimatePreferenceItem<Boolean>(LABEL_TermcompProof, false, PreferenceType.Boolean),
-				new UltimatePreferenceItem<Boolean>(LABEL_Simplify, true, PreferenceType.Boolean),
-				new UltimatePreferenceItem<Boolean>(LABEL_TryTwofoldRefinement, true, PreferenceType.Boolean),
-				new UltimatePreferenceItem<AutomataMinimization>(LABEL_AutomataMinimization, DEF_AutomataMinimization,
+				new UltimatePreferenceItem<>(LABEL_ANALYSIS_TYPE_GNTA, AnalysisType.NONLINEAR, PreferenceType.Combo,
+						AnalysisType.values()),
+				new UltimatePreferenceItem<>(LABEL_GNTA_DIRECTIONS, DEF_GNTA_DIRECTIONS, PreferenceType.Integer),
+				new UltimatePreferenceItem<>(LABEL_TEMPLATE_BENCHMARK_MODE, false, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_DUMP_SCRIPT_TO_FILE, false, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_DUMP_SCRIPT_PATH, DEF_DUMP_SCRIPT_PATH, PreferenceType.Directory),
+				new UltimatePreferenceItem<>(LABEL_CONSTRUCT_TERMCOMP_PROOF, false, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_SIMPLIFY, true, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_TRY_TWOFOLD_REFINEMENT, true, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_AUTOMATA_MINIMIZATION, DEF_AUTOMATA_MINIMIZATION,
 						PreferenceType.Combo, AutomataMinimization.values()),
-				new UltimatePreferenceItem<Boolean>(LABEL_USE_OLD_MAP_ELIMINATION, DEF_USE_OLD_MAP_ELIMINATION,
+				new UltimatePreferenceItem<>(LABEL_USE_OLD_MAP_ELIMINATION, DEF_USE_OLD_MAP_ELIMINATION,
 						"Use either Matthias' (old) or Frank's (new) implementation of a map elimination algorithm",
-						PreferenceType.Boolean), };
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_MAP_ELIMINATION_ADD_INEQUALITIES,
+						DEF_MAP_ELIMINATION_ADD_INEQUALITIES, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_MAP_ELIMINATION_ONLY_TRIVIAL_IMPLICATIONS_INDEX_ASSIGNMENT,
+						DEF_MAP_ELIMINATION_ONLY_TRIVIAL_IMPLICATIONS_INDEX_ASSIGNMENT, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_MAP_ELIMINATION_ONLY_TRIVIAL_IMPLICATIONS_ARRAY_WRITE,
+						DEF_MAP_ELIMINATION_ONLY_TRIVIAL_IMPLICATIONS_ARRAY_WRITE, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_MAP_ELIMINATION_ONLY_INDICES_IN_FORMULAS,
+						DEF_MAP_ELIMINATION_ONLY_INDICES_IN_FORMULAS, PreferenceType.Boolean), };
 	}
-
-	public static final String LABEL_IgnoreDownStates = "Ignore down states";
-	public static final String LABEL_DeterminizationOnDemand = "Determinization on demand";
-	public static final String LABEL_BuchiInterpolantAutomaton = "Buchi interpolant automaton";
-	public static final String LABEL_BuchiComplementationConstruction = "Buchi complementation construction";
-	public static final String LABEL_BouncerStem = "Bouncer stem";
-	public static final String LABEL_BouncerLoop = "Bouncer loop";
-	public static final String LABEL_ScroogeNondeterminismStem = "ScroogeNondeterminism stem";
-	public static final String LABEL_ScroogeNondeterminismLoop = "ScroogeNondeterminism loop";
-	public static final String LABEL_CannibalizeLoop = "Cannibalize loop";
-	public static final String LABEL_LoopUnwindings = "Max number of loop unwindings";
-	public static final String LABEL_ExtSolverRank = "Use external solver (rank synthesis)";
-	public static final String LABEL_ExtSolverCommandRank = "Command for external solver (rank synthesis)";
-	public static final String DEF_ExtSolverCommandRank = "z3 SMTLIB2_COMPLIANT=true -memory:1024 -smt2 -in -t:12000";
-	public static final String LABEL_AnalysisTypeRank = "Rank analysis";
-	public static final String LABEL_ExtSolverGNTA = "Use external solver (GNTA synthesis)";
-	public static final String LABEL_ExtSolverCommandGNTA = "Command for external solver (GNTA synthesis)";
-	public static final String DEF_ExtSolverCommandGNTA = "z3 SMTLIB2_COMPLIANT=true -memory:1024 -smt2 -in -t:12000";
-	public static final String LABEL_AnalysisTypeGNTA = "GNTA analysis";
-	public static final String LABEL_GntaDirections = "Number of GNTA directions";
-	private static final int DEF_GntaDirections = 3;
-	public static final String LABEL_TemplateBenchmarkMode = "Template benchmark mode";
-	public static final String LABEL_DumpToFile = "Dump SMT script to file";
-	public static final String LABEL_DumpPath = "To the following directory";
-	public static final String DEF_DumpPath = "";
-	public static final String LABEL_TermcompProof = "Construct termination proof for TermComp";
-	public static final String LABEL_Simplify = "Try to simplify termination arguments";
-	public static final String LABEL_AutomataMinimization = "Automata minimization";
-	private static final AutomataMinimization DEF_AutomataMinimization = AutomataMinimization.None;
-	/**
-	 * If true we check if the loop is terminating even if the stem or the concatenation of stem and loop are already
-	 * infeasible. This allows us to use refineFinite and refineBuchi in the same iteration.
-	 */
-	public static final String LABEL_TryTwofoldRefinement = "Try twofold refinement";
-	public static final String LABEL_USE_OLD_MAP_ELIMINATION = "Use old map elimination";
-	private static final boolean DEF_USE_OLD_MAP_ELIMINATION = false;
-
-	public enum BInterpolantAutomaton {
-		LassoAutomaton, EagerNondeterminism, ScroogeNondeterminism, Deterministic, Staged, TwoStage
-	};
-
-	public enum BComplementationConstruction {
-		Ncsb, Elastic, HeiMat2, TightRO, TightBasic, TightHighEven
-	};
-
-	public enum AutomataMinimization {
-		None, MinimizeSevpa, ShrinkNwa, DelayedSimulation, FairSimulation_WithSCC, FairSimulation_WithoutSCC, FairDirectSimulation, MinimizeNwaMaxSat2, MinimizeNwaMaxSat
-	};
-
 }

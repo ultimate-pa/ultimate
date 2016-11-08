@@ -6,7 +6,7 @@
     </description>
 
     <target name="build_parser">
-        <java classname="java_cup.Main" classpath="${cupDir}" fork="true" failonerror="true">
+        <java classname="com.github.jhoenicke.javacup.Main" classpath="${cupDir}" fork="true" failonerror="true">
         <arg line="-parser Parser"/>
             <arg value="AutomataTestFileGrammar.cup" />
         </java>

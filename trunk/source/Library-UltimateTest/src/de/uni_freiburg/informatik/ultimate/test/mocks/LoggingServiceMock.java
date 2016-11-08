@@ -1,58 +1,58 @@
 /*
  * Copyright (C) 2016 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE JUnit Helper Library.
- * 
+ *
  * The ULTIMATE JUnit Helper Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE JUnit Helper Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE JUnit Helper Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE JUnit Helper Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE JUnit Helper Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE JUnit Helper Library grant you additional permission
  * to convey the resulting work.
  */
 
 package de.uni_freiburg.informatik.ultimate.test.mocks;
 
-import java.io.IOException;
 import java.io.Writer;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILoggingService;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.test.ConsoleLogger;
 
 /**
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
 final class LoggingServiceMock implements ILoggingService {
 
 	@Override
-	public ILogger getLogger(String pluginId) {
+	public ILogger getLogger(final String pluginId) {
 		return new ConsoleLogger();
 	}
 
 	@Override
-	public ILogger getLogger(Class<?> clazz) {
+	public ILogger getLogger(final Class<?> clazz) {
 		return new ConsoleLogger();
 	}
 
 	@Override
-	public ILogger getLoggerForExternalTool(String id) {
+	public ILogger getLoggerForExternalTool(final String id) {
 		return new ConsoleLogger();
 	}
 
@@ -62,27 +62,35 @@ final class LoggingServiceMock implements ILoggingService {
 	}
 
 	@Override
-	public Object getBacking(ILogger logger, Class<?> backingType) {
+	public Object getBacking(final ILogger logger, final Class<?> backingType) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public void addLogfile(String logPattern, String absolutePath, boolean append) throws IOException {
+	public void addWriter(final Writer writer, final String logPattern) {
 
 	}
 
 	@Override
-	public void removeLogFile(String absolutePath) {
+	public void removeWriter(final Writer writer) {
 
 	}
 
 	@Override
-	public void addWriter(Writer writer, String logPattern) {
+	public void reloadLoggers() {
+		// TODO Auto-generated method stub
 
 	}
 
 	@Override
-	public void removeWriter(Writer writer) {
+	public void setCurrentControllerID(final String name) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void store(final IToolchainStorage storage) {
+		// TODO Auto-generated method stub
 
 	}
 }

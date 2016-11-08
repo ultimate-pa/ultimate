@@ -34,8 +34,8 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -62,8 +62,9 @@ public class TermVariableRenamer {
 	 * </ul>
 	 * Otherwise x_n is not replaced.
 	 */
-	public TransFormula renameVars(final TransFormula tf, final String prefix) {
+	public UnmodifiableTransFormula renameVars(final UnmodifiableTransFormula tf, final String prefix) {
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(null, null, 
+				tf.getNonTheoryConsts().isEmpty(), tf.getNonTheoryConsts().isEmpty() ? null : tf.getNonTheoryConsts(),
 				false, tf.getBranchEncoders(), false);
 		final Map<IProgramVar, TermVariable> inVars = tf.getInVars();
 		final Map<IProgramVar, TermVariable> outVars = tf.getOutVars();
@@ -130,7 +131,8 @@ public class TermVariableRenamer {
 	
 	
 	private TermVariable getNewTermVariable(final IProgramVar var, final TermVariable tv, final String prefix) {
-		final TermVariable result = mScript.getScript().variable(prefix +"_" +var.getIdentifier(), tv.getSort());
+		// TODO: if this fails because old var and non-oldvar get same variable use getGloballyUniqueId()
+		final TermVariable result = mScript.variable(prefix +"_" +var.getGloballyUniqueId(), tv.getSort());
 		return result;
 	}
 	

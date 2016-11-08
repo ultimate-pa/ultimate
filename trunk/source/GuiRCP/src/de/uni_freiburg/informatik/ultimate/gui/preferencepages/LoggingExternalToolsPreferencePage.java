@@ -52,7 +52,7 @@ public class LoggingExternalToolsPreferencePage extends AbstractDetailsPreferenc
 
 	@Override
 	protected String[] getDefaults() {
-		return convert(mPreferenceStore.getDefaultString(CorePreferenceInitializer.PREFID_TOOLDETAILS));
+		return convert(mPreferenceStore.getDefaultString(CorePreferenceInitializer.LABEL_LOGLEVEL_EXTERNAL_TOOL_SPECIFIC));
 	}
 
 	@Override
@@ -62,7 +62,7 @@ public class LoggingExternalToolsPreferencePage extends AbstractDetailsPreferenc
 
 	@Override
 	protected String[] getPreferenceAsStringArray() {
-		return convert(mPreferenceStore.getString(CorePreferenceInitializer.PREFID_TOOLDETAILS));
+		return convert(mPreferenceStore.getString(CorePreferenceInitializer.LABEL_LOGLEVEL_EXTERNAL_TOOL_SPECIFIC));
 	}
 
 	@Override
@@ -72,7 +72,7 @@ public class LoggingExternalToolsPreferencePage extends AbstractDetailsPreferenc
 			buffer.append(items[i]);
 			buffer.append(CorePreferenceInitializer.VALUE_DELIMITER_LOGGING_PREF);
 		}
-		mPreferenceStore.setValue(CorePreferenceInitializer.PREFID_TOOLDETAILS, buffer.toString());
+		mPreferenceStore.setValue(CorePreferenceInitializer.LABEL_LOGLEVEL_EXTERNAL_TOOL_SPECIFIC, buffer.toString());
 	}
 
 	@Override

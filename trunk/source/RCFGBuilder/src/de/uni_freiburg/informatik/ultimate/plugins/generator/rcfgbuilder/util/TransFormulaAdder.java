@@ -27,6 +27,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
@@ -38,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Statements2TransFormula.TranslationResult;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -83,14 +85,14 @@ public class TransFormulaAdder {
 	 *            GotoEdge or SummaryEdge.
 	 */
 	public void addTransitionFormulas(final CodeBlock cb, final String procId, 
-			final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique) {
-		Statement[] statements;
+			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique) {
+		List<Statement> statements;
 		if (cb instanceof StatementSequence) {
-			statements = ((StatementSequence) cb).getStatements().toArray(new Statement[0]);
+			statements = ((StatementSequence) cb).getStatements();
 		} else if (cb instanceof Summary) {
-			statements = new Statement[] { ((Summary) cb).getCallStatement() };
+			statements = Collections.singletonList(((Summary) cb).getCallStatement());
 		} else if (cb instanceof GotoEdge) {
-			statements = new Statement[0];
+			statements = Collections.emptyList();
 		} else {
 			throw new AssertionError();
 		}

@@ -62,7 +62,7 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_CHECK_SIGNED_INTEGER_BOUNDS = "Check absence of signed integer overflows";
 	public static final String LABEL_ASSUME_NONDET_VALUES_IN_RANGE = "Assume nondeterminstic values are in range";
 	public static final String LABEL_BITVECTOR_TRANSLATION = "Use bitvectors instead of ints";
-	public static final String LABEL_OVERAPPROXIMATE_FLOATS = "Overapproximate operations of floating types";
+	public static final String LABEL_OVERAPPROXIMATE_FLOATS = "Overapproximate operations on floating types";
 	public static final String LABEL_SMT_BOOL_ARRAYS_WORKAROUND = "SMT bool arrays workaround";
 
 	// typesize stuff
@@ -87,7 +87,7 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 	}
 
 	public enum UnsignedTreatment {
-		IGNORE, ASSUME_SOME, ASSUME_ALL, WRAPAROUND
+		IGNORE, ASSERT, WRAPAROUND
 	}
 
 	public enum Signedness {

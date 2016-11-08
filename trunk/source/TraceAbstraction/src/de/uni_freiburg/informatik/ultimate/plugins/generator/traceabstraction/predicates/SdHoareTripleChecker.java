@@ -19,19 +19,19 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates;
 
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula.Infeasibility;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.HoareTripleCheckerStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
@@ -42,70 +42,79 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cal
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 
 /**
- * Hoare triple checker that uses only simple dataflow analysis to check 
+ * Hoare triple checker that uses only simple dataflow analysis to check
  * triples. If this simple analysis is not able to determine the result
  * UNKNOWN is returned.
+ * 
  * @author Matthias Heizmann
- *
  */
 public class SdHoareTripleChecker implements IHoareTripleChecker {
-	
 	private final SdHoareTripleCheckerHelper mSdHoareTripleChecker;
 	private final IPredicateCoverageChecker mPredicateCoverageChecker;
 	private final IPredicate mTruePredicate;
 	private final IPredicate mFalsePredicate;
-	private final static boolean mLazyChecks = false;
+	private static final boolean mLazyChecks = false;
 	private final InternalCheckHelper mInternalCheckHelper = new InternalCheckHelper();
 	private final CallCheckHelper mCallCheckHelper = new CallCheckHelper();
 	private final ReturnCheckHelper mReturnCheckHelper = new ReturnCheckHelper();
-
 	
-	public SdHoareTripleChecker(ModifiableGlobalVariableManager modGlobVarManager, 
-			PredicateUnifier predicateUnifier, 
-			HoareTripleCheckerStatisticsGenerator edgeCheckerBenchmarkGenerator) {
+	public SdHoareTripleChecker(final CfgSmtToolkit csToolkit,
+			final PredicateUnifier predicateUnifier,
+			final HoareTripleCheckerStatisticsGenerator edgeCheckerBenchmarkGenerator) {
 		mPredicateCoverageChecker = predicateUnifier.getCoverageRelation();
 		mTruePredicate = predicateUnifier.getTruePredicate();
 		mFalsePredicate = predicateUnifier.getFalsePredicate();
-		mSdHoareTripleChecker = new SdHoareTripleCheckerHelper(modGlobVarManager, 
+		mSdHoareTripleChecker = new SdHoareTripleCheckerHelper(csToolkit,
 				mPredicateCoverageChecker, edgeCheckerBenchmarkGenerator);
-		
 	}
 	
-	
 	@Override
-	public Validity checkInternal(IPredicate pre, IInternalAction act, IPredicate succ) {
+	public Validity checkInternal(final IPredicate pre, final IInternalAction act, final IPredicate succ) {
 		return mInternalCheckHelper.check(pre, null, act, succ);
-
 	}
-
+	
 	@Override
-	public Validity checkCall(IPredicate pre, ICallAction act, IPredicate succ) {
+	public Validity checkCall(final IPredicate pre, final ICallAction act, final IPredicate succ) {
 		return mCallCheckHelper.check(pre, null, act, succ);
 	}
-
+	
 	@Override
-	public Validity checkReturn(IPredicate preLin, IPredicate preHier, IReturnAction act, IPredicate succ) {
+	public Validity checkReturn(final IPredicate preLin, final IPredicate preHier, final IReturnAction act,
+			final IPredicate succ) {
 		return mReturnCheckHelper.check(preLin, preHier, act, succ);
 	}
-
+	
 	@Override
 	public HoareTripleCheckerStatisticsGenerator getEdgeCheckerBenchmark() {
 		return mSdHoareTripleChecker.getEdgeCheckerBenchmark();
 	}
 	
+	protected SdHoareTripleCheckerHelper getSdHoareTripleChecker() {
+		return mSdHoareTripleChecker;
+	}
 	
+	protected IPredicateCoverageChecker getPredicateCoverageChecker() {
+		return mPredicateCoverageChecker;
+	}
 	
+	protected IPredicate getFalsePredicate() {
+		return mFalsePredicate;
+	}
+	
+	protected IPredicate getTruePredicate() {
+		return mTruePredicate;
+	}
 	
 	/**
 	 * Abstract class for data-flow based Hoare triple checks.
-	 * Subclasses are checks for internal, call, and return. 
-	 * Because we can only override methods with the same signature (in Java) 
-	 * we use the 3-parameter-signature for return (with hierarchical state) 
+	 * Subclasses are checks for internal, call, and return.
+	 * Because we can only override methods with the same signature (in Java)
+	 * we use the 3-parameter-signature for return (with hierarchical state)
 	 * and use null as hierarchical state for call and internal.
 	 */
 	public abstract class CheckHelper {
-
-		public Validity check(IPredicate preLin, IPredicate preHier, IAction act, IPredicate succ) {
+		public Validity check(final IPredicate preLin, final IPredicate preHier, final IAction act,
+				final IPredicate succ) {
 			if (act instanceof IInternalAction) {
 				if (((IInternalAction) act).getTransformula().isInfeasible() == Infeasibility.INFEASIBLE) {
 					return Validity.VALID;
@@ -114,23 +123,7 @@ public class SdHoareTripleChecker implements IHoareTripleChecker {
 			
 			boolean unknownCoverage = false;
 			// check if preLin is equivalent to false
-			switch (mPredicateCoverageChecker.isCovered(preLin, mFalsePredicate)) {
-			case INVALID:
-				break;
-			case NOT_CHECKED:
-				throw new AssertionError("unchecked predicate");
-			case UNKNOWN:
-				unknownCoverage = true;
-				break;
-			case VALID:
-				return Validity.VALID;
-			default:
-				throw new AssertionError("unknown case");
-			}
-			
-			// check if preHier is equivalent to false
-			if (preHier != null) {
-				switch (mPredicateCoverageChecker.isCovered(preHier, mFalsePredicate)) {
+			switch (getPredicateCoverageChecker().isCovered(preLin, getFalsePredicate())) {
 				case INVALID:
 					break;
 				case NOT_CHECKED:
@@ -142,22 +135,38 @@ public class SdHoareTripleChecker implements IHoareTripleChecker {
 					return Validity.VALID;
 				default:
 					throw new AssertionError("unknown case");
+			}
+			
+			// check if preHier is equivalent to false
+			if (preHier != null) {
+				switch (getPredicateCoverageChecker().isCovered(preHier, getFalsePredicate())) {
+					case INVALID:
+						break;
+					case NOT_CHECKED:
+						throw new AssertionError("unchecked predicate");
+					case UNKNOWN:
+						unknownCoverage = true;
+						break;
+					case VALID:
+						return Validity.VALID;
+					default:
+						throw new AssertionError("unknown case");
 				}
 			}
 			
 			// check if succ is equivalent to true
-			switch (mPredicateCoverageChecker.isCovered(mTruePredicate, succ)) {
-			case INVALID:
-				break;
-			case NOT_CHECKED:
-				throw new AssertionError("unchecked predicate");
-			case UNKNOWN:
-				unknownCoverage = true;
-				break;
-			case VALID:
-				return Validity.VALID;
-			default:
-				throw new AssertionError("unknown case");
+			switch (getPredicateCoverageChecker().isCovered(getTruePredicate(), succ)) {
+				case INVALID:
+					break;
+				case NOT_CHECKED:
+					throw new AssertionError("unchecked predicate");
+				case UNKNOWN:
+					unknownCoverage = true;
+					break;
+				case VALID:
+					return Validity.VALID;
+				default:
+					throw new AssertionError("unknown case");
 			}
 			if (unknownCoverage) {
 				return Validity.UNKNOWN;
@@ -172,6 +181,27 @@ public class SdHoareTripleChecker implements IHoareTripleChecker {
 					// do nothing an continue with other checks
 				} else {
 					switch (toFalse) {
+						case INVALID:
+							return Validity.INVALID;
+						case NOT_CHECKED:
+							throw new AssertionError("unchecked predicate");
+						case UNKNOWN:
+							throw new AssertionError("this case should have been filtered out before");
+						case VALID:
+							throw new AssertionError("this case should have been filtered out before");
+						default:
+							throw new AssertionError("unknown case");
+					}
+				}
+			}
+			final Validity general;
+			if (mLazyChecks) {
+				general = sdLazyEc(preLin, preHier, act, succ);
+			} else {
+				general = sdec(preLin, preHier, act, succ);
+			}
+			if (general != null) {
+				switch (general) {
 					case INVALID:
 						return Validity.INVALID;
 					case NOT_CHECKED:
@@ -179,144 +209,120 @@ public class SdHoareTripleChecker implements IHoareTripleChecker {
 					case UNKNOWN:
 						throw new AssertionError("this case should have been filtered out before");
 					case VALID:
-						throw new AssertionError("this case should have been filtered out before");
+						return Validity.VALID;
 					default:
 						throw new AssertionError("unknown case");
-					}
-				}
-			}
-			final Validity general;
-			if (mLazyChecks) {
-				general = sdLazyEc(preLin, preHier, act, succ);
-			} else {			
-				general = sdec(preLin, preHier, act, succ);
-			}
-			if (general != null) {
-				switch (general) {
-				case INVALID:
-					return Validity.INVALID;
-				case NOT_CHECKED:
-					throw new AssertionError("unchecked predicate");
-				case UNKNOWN:
-					throw new AssertionError("this case should have been filtered out before");
-				case VALID:
-					return Validity.VALID;
-				default:
-					throw new AssertionError("unknown case");
 				}
 			}
 			return Validity.UNKNOWN;
 		}
-
+		
 		public abstract Validity sdecToFalse(IPredicate preLin, IPredicate preHier, IAction act);
-
+		
 		public abstract boolean isInductiveSefloop(IPredicate preLin, IPredicate preHier, IAction act, IPredicate succ);
-
+		
 		public abstract Validity sdec(IPredicate preLin, IPredicate preHier, IAction act, IPredicate succ);
-
+		
 		public abstract Validity sdLazyEc(IPredicate preLin, IPredicate preHier, IAction act, IPredicate succ);
-
+		
 	}
-
+	
 	protected class InternalCheckHelper extends CheckHelper {
-
 		@Override
-		public Validity sdecToFalse(IPredicate preLin, IPredicate preHier, IAction act) {
+		public Validity sdecToFalse(final IPredicate preLin, final IPredicate preHier, final IAction act) {
 			assert preHier == null;
-			return mSdHoareTripleChecker.sdecInternalToFalse(preLin, (IInternalAction) act);
+			return getSdHoareTripleChecker().sdecInternalToFalse(preLin, (IInternalAction) act);
 		}
-
+		
 		@Override
-		public boolean isInductiveSefloop(IPredicate preLin, IPredicate preHier, IAction act, IPredicate succ) {
+		public boolean isInductiveSefloop(final IPredicate preLin, final IPredicate preHier, final IAction act,
+				final IPredicate succ) {
 			assert preHier == null;
-			if ((preLin == succ) && (mSdHoareTripleChecker.sdecInternalSelfloop(preLin, (IInternalAction) act) == Validity.VALID)) {
-				return true;
-			} else {
-				return false;
-			}
+			return (preLin == succ) && (getSdHoareTripleChecker().sdecInternalSelfloop(preLin,
+					(IInternalAction) act) == Validity.VALID);
 		}
-
+		
 		@Override
-		public Validity sdec(IPredicate preLin, IPredicate preHier, IAction act, IPredicate succ) {
+		public Validity sdec(final IPredicate preLin, final IPredicate preHier, final IAction act,
+				final IPredicate succ) {
 			assert preHier == null;
-			return mSdHoareTripleChecker.sdecInteral(preLin, (IInternalAction) act, succ);
+			return getSdHoareTripleChecker().sdecInteral(preLin, (IInternalAction) act, succ);
 		}
-
+		
 		@Override
-		public Validity sdLazyEc(IPredicate preLin, IPredicate preHier, IAction act, IPredicate succ) {
+		public Validity sdLazyEc(final IPredicate preLin, final IPredicate preHier, final IAction act,
+				final IPredicate succ) {
 			assert preHier == null;
-			return mSdHoareTripleChecker.sdLazyEcInteral(preLin, (IInternalAction) act, succ);
+			return getSdHoareTripleChecker().sdLazyEcInteral(preLin, (IInternalAction) act, succ);
 		}
 	}
-
+	
 	protected class CallCheckHelper extends CheckHelper {
-
 		@Override
-		public Validity sdecToFalse(IPredicate preLin, IPredicate preHier, IAction act) {
+		public Validity sdecToFalse(final IPredicate preLin, final IPredicate preHier, final IAction act) {
 			assert preHier == null;
-			return mSdHoareTripleChecker.sdecCallToFalse(preLin, (ICallAction) act);
+			return getSdHoareTripleChecker().sdecCallToFalse(preLin, (ICallAction) act);
 		}
-
+		
 		@Override
-		public boolean isInductiveSefloop(IPredicate preLin, IPredicate preHier, IAction act, IPredicate succ) {
+		public boolean isInductiveSefloop(final IPredicate preLin, final IPredicate preHier, final IAction act,
+				final IPredicate succ) {
 			assert preHier == null;
-			if ((preLin == succ) && (mSdHoareTripleChecker.sdecCallSelfloop(preLin, (ICallAction) act) == Validity.VALID)) {
-				return true;
-			} else {
-				return false;
-			}
+			return (preLin == succ)
+					&& (getSdHoareTripleChecker().sdecCallSelfloop(preLin, (ICallAction) act) == Validity.VALID);
 		}
-
+		
 		@Override
-		public Validity sdec(IPredicate preLin, IPredicate preHier, IAction act, IPredicate succ) {
+		public Validity sdec(final IPredicate preLin, final IPredicate preHier, final IAction act,
+				final IPredicate succ) {
 			assert preHier == null;
-			return mSdHoareTripleChecker.sdecCall(preLin, (ICallAction) act, succ);
+			return getSdHoareTripleChecker().sdecCall(preLin, (ICallAction) act, succ);
 		}
-
+		
 		@Override
-		public Validity sdLazyEc(IPredicate preLin, IPredicate preHier, IAction act, IPredicate succ) {
+		public Validity sdLazyEc(final IPredicate preLin, final IPredicate preHier, final IAction act,
+				final IPredicate succ) {
 			assert preHier == null;
-			return mSdHoareTripleChecker.sdLazyEcCall(preLin, (Call) act, succ);
+			return getSdHoareTripleChecker().sdLazyEcCall(preLin, (Call) act, succ);
 		}
-
+		
 	}
-
+	
 	public class ReturnCheckHelper extends CheckHelper {
-
 		@Override
-		public Validity sdecToFalse(IPredicate preLin, IPredicate preHier, IAction act) {
+		public Validity sdecToFalse(final IPredicate preLin, final IPredicate preHier, final IAction act) {
 			// sat if (not only if!) preLin and preHier are independent,
 			// hence we can use the "normal" sdec method
-			return mSdHoareTripleChecker.sdecReturn(preLin, preHier, (IReturnAction) act, mFalsePredicate);
+			return getSdHoareTripleChecker().sdecReturn(preLin, preHier, (IReturnAction) act, getFalsePredicate());
 		}
-
+		
 		@Override
-		public boolean isInductiveSefloop(IPredicate preLin, IPredicate preHier, IAction act, IPredicate succ) {
-			if ((preLin == succ) && (mSdHoareTripleChecker.sdecReturnSelfloopPre(preLin, (IReturnAction) act) == Validity.VALID)) {
+		public boolean isInductiveSefloop(final IPredicate preLin, final IPredicate preHier, final IAction act,
+				final IPredicate succ) {
+			if ((preLin == succ) && (getSdHoareTripleChecker().sdecReturnSelfloopPre(preLin,
+					(IReturnAction) act) == Validity.VALID)) {
 				return true;
-			} else if ((preHier == succ)
-					&& (mSdHoareTripleChecker.sdecReturnSelfloopHier(preHier, (IReturnAction) act) == Validity.VALID)) {
-				return true;
-			} else {
-				return false;
 			}
+			return (preHier == succ) && (getSdHoareTripleChecker().sdecReturnSelfloopHier(preHier,
+					(IReturnAction) act) == Validity.VALID);
 		}
-
+		
 		@Override
-		public Validity sdec(IPredicate preLin, IPredicate preHier, IAction act, IPredicate succ) {
-			return mSdHoareTripleChecker.sdecReturn(preLin, preHier, (IReturnAction) act, succ);
+		public Validity sdec(final IPredicate preLin, final IPredicate preHier, final IAction act,
+				final IPredicate succ) {
+			return getSdHoareTripleChecker().sdecReturn(preLin, preHier, (IReturnAction) act, succ);
 		}
-
+		
 		@Override
-		public Validity sdLazyEc(IPredicate preLin, IPredicate preHier, IAction act, IPredicate succ) {
-			return mSdHoareTripleChecker.sdLazyEcReturn(preLin, preHier, (IReturnAction) act, succ);
+		public Validity sdLazyEc(final IPredicate preLin, final IPredicate preHier, final IAction act,
+				final IPredicate succ) {
+			return getSdHoareTripleChecker().sdLazyEcReturn(preLin, preHier, (IReturnAction) act, succ);
 		}
-
+		
 	}
-
+	
 	@Override
 	public void releaseLock() {
 		// do nothing, since objects of this class do not lock the solver
 	}
-
 }

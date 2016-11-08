@@ -2,27 +2,27 @@
  * Copyright (C) 2013-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 Oday Jubran
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE SMTSolverBridge.
- * 
+ *
  * The ULTIMATE SMTSolverBridge is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE SMTSolverBridge is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE SMTSolverBridge. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE SMTSolverBridge, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE SMTSolverBridge grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE SMTSolverBridge grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.smtsolver.external;
@@ -47,16 +47,15 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
-import java_cup.runtime.Symbol;
+import com.github.jhoenicke.javacup.runtime.Symbol;
 
 /**
  * This class runs an external SMT solver. The main methods are <code>input</code>, which gives an input to the SMT
  * solver, and the <code>parse...</code> methods, which parse the output from the SMT solver.
- * 
+ *
  * @author Oday Jubran
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * @author Matthias Heizmann
- * 
  */
 class Executor {
 
@@ -87,7 +86,7 @@ class Executor {
 	}
 
 	private void createProcess() throws IOException {
-		mProcess = MonitoredProcess.exec(mSolverCmd, "(exit)", mServices, mStorage);
+		mProcess = MonitoredProcess.exec(mSolverCmd, "(exit)", mServices, mStorage, mLogger);
 		mProcess.setTerminationAfterToolchainTimeout(20 * 1000);
 
 		if (mProcess == null) {
@@ -111,7 +110,7 @@ class Executor {
 		parseSuccess();
 	}
 
-	public void input(String in) {
+	public void input(final String in) {
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug(getLogStringPrefix() + " " + in);
 		}
@@ -138,7 +137,7 @@ class Executor {
 
 	}
 
-	private List<Symbol> parseSexpr(Lexer lexer) throws IOException {
+	private List<Symbol> parseSexpr(final Lexer lexer) throws IOException {
 		final ArrayList<Symbol> result = new ArrayList<Symbol>();
 		int parenLevel = 0;
 		do {
@@ -159,7 +158,7 @@ class Executor {
 			final List<Symbol> result = parseSexpr(mLexer);
 			if (mLogger.isDebugEnabled()) {
 				for (final Symbol s : result) {
-					mLogger.debug(s.toString() + "\n");
+					mLogger.debug(s.toString());
 				}
 			}
 			return result;
@@ -179,7 +178,7 @@ class Executor {
 		createProcess();
 	}
 
-	public Symbol parse(int what) {
+	public Symbol parse(final int what) {
 		final List<Symbol> answer = readAnswer();
 		String stderr = "";
 
@@ -261,7 +260,7 @@ class Executor {
 		return mName + " (" + mSolverCmd + ")";
 	}
 
-	private static String generateStderrMessage(String stderr) {
+	private static String generateStderrMessage(final String stderr) {
 		if (stderr.isEmpty()) {
 			return "No stderr output.";
 		} else {

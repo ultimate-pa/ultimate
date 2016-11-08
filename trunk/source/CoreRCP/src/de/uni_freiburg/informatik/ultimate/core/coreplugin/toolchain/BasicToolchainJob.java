@@ -26,9 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain;
 
-import java.util.List;
-import java.util.Map.Entry;
-
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -36,15 +33,12 @@ import org.eclipse.core.runtime.jobs.Job;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainListType;
+import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.RunDefinition;
 import de.uni_freiburg.informatik.ultimate.core.model.IController;
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchain.ReturnCode;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
-import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
-import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
-import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithLocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
@@ -73,15 +67,15 @@ public abstract class BasicToolchainJob extends Job {
 	}
 
 	protected ChainMode mJobMode;
-	protected ICore<ToolchainListType> mCore;
-	protected IController<ToolchainListType> mController;
+	protected ICore<RunDefinition> mCore;
+	protected IController<RunDefinition> mController;
 	protected ILogger mLogger;
-	protected IToolchainData<ToolchainListType> mChain;
+	protected IToolchainData<RunDefinition> mChain;
 	protected IUltimateServiceProvider mServices;
 	private long mDeadline;
 
-	public BasicToolchainJob(final String name, final ICore<ToolchainListType> core,
-			final IController<ToolchainListType> controller, final ILogger logger) {
+	public BasicToolchainJob(final String name, final ICore<RunDefinition> core,
+			final IController<RunDefinition> controller, final ILogger logger) {
 		super(name);
 		assert logger != null;
 		mCore = core;
@@ -89,50 +83,6 @@ public abstract class BasicToolchainJob extends Job {
 		mJobMode = ChainMode.DEFAULT;
 		mLogger = logger;
 		mDeadline = -1;
-	}
-
-	/**
-	 * Write all IResults produced by the toolchain to the logger.
-	 */
-	protected void logResults() {
-		if (mServices == null) {
-			return;
-		}
-		mLogger.info(" --- Results ---");
-		for (final Entry<String, List<IResult>> entry : mServices.getResultService().getResults().entrySet()) {
-			mLogger.info(String.format(" * Results from %s:", entry.getKey()));
-
-			for (final IResult result : entry.getValue()) {
-				final StringBuilder sb = new StringBuilder();
-
-				sb.append("  - ");
-				sb.append(result.getClass().getSimpleName());
-				if (result instanceof IResultWithLocation) {
-					final ILocation loc = ((IResultWithLocation) result).getLocation();
-					if (loc.getStartLine() != 0) {
-						sb.append(" [Line: ");
-						sb.append(loc.getStartLine()).append("]");
-					} else {
-						sb.append(" [UNKNOWN] ");
-					}
-				}
-				sb.append(": ");
-				sb.append(result.getShortDescription());
-				mLogger.info(sb.toString());
-
-				final boolean appendCompleteLongDescription = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
-						.getBoolean(CorePreferenceInitializer.LABEL_LONG_RESULT);
-				final String[] s = result.getLongDescription().split("\n");
-				if (appendCompleteLongDescription) {
-					mLogger.info(String.format("    %s", result.getLongDescription()));
-				} else {
-					mLogger.info(String.format("    %s", s[0].replaceAll("\\n|\\r", "")));
-					if (s.length > 1) {
-						mLogger.info("    [...]");
-					}
-				}
-			}
-		}
 	}
 
 	private void setTimeout() {
@@ -206,7 +156,8 @@ public abstract class BasicToolchainJob extends Job {
 			return Status.CANCEL_STATUS;
 		case Error:
 		default:
-			return new Status(IStatus.ERROR, Activator.PLUGIN_ID, IStatus.ERROR, result.toString(), null);
+			// TODO: we use IStatus.Cancel to prevent RCP error messages; but better return status would be nice
+			return new Status(IStatus.CANCEL, Activator.PLUGIN_ID, IStatus.ERROR, result.toString(), null);
 		}
 	}
 }

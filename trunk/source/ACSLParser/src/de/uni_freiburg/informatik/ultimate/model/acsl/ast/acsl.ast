@@ -179,6 +179,9 @@ Expression ::=
 		end     : int
 		/** The start index of this bit-vector access */
 		start   : int
+	| { CastExpression }
+		castedType   : ACSLType 
+		expression : Expression
 	| { BooleanLiteral }
 		value   : boolean
 	| { IntegerLiteral }

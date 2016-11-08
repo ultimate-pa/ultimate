@@ -41,10 +41,10 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.model.MinimizedNode;
 import de.uni_freiburg.informatik.ultimate.blockencoding.test.ExecuteUnitTestObserver;
 import de.uni_freiburg.informatik.ultimate.blockencoding.test.util.RCFGStore;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
@@ -73,11 +73,11 @@ public class TestMinModelConversion extends TestCase {
 	 */
 	private PrintEdgeVisitor printEdgeVisitor;
 
-	private RCFGNode rcfgNode;
+	private IcfgLocation rcfgNode;
 
 	private ILogger logger;
 	
-	private HashSet<RCFGEdge> visitedEdges;
+	private HashSet<IcfgEdge> visitedEdges;
 
 	/*
 	 * (non-Javadoc)
@@ -89,7 +89,7 @@ public class TestMinModelConversion extends TestCase {
 		rcfgNode = RCFGStore.getRCFG();
 		minModelConverter = new MinModelConverter(ExecuteUnitTestObserver.getServices());
 		printEdgeVisitor = new PrintEdgeVisitor(ExecuteUnitTestObserver.getLogger());
-		visitedEdges = new HashSet<RCFGEdge>();
+		visitedEdges = new HashSet<IcfgEdge>();
 	}
 
 	@Test
@@ -99,10 +99,10 @@ public class TestMinModelConversion extends TestCase {
 		// model
 		assertTrue(rcfgNode instanceof RootNode);
 		assertNotNull(rcfgNode.getOutgoingEdges());
-		for (final RCFGEdge edge : rcfgNode.getOutgoingEdges()) {
+		for (final IcfgEdge edge : rcfgNode.getOutgoingEdges()) {
 			assertTrue(edge instanceof RootEdge);
-			assertTrue(edge.getTarget() instanceof ProgramPoint);
-			final ProgramPoint methodEntryPoint = (ProgramPoint) edge.getTarget();
+			assertTrue(edge.getTarget() instanceof BoogieIcfgLocation);
+			final BoogieIcfgLocation methodEntryPoint = (BoogieIcfgLocation) edge.getTarget();
 			assertNotNull(methodEntryPoint.getIncomingEdges());
 			// It can happen that while minimizing we already created an
 			// Min.Node we have to use here
@@ -141,11 +141,11 @@ public class TestMinModelConversion extends TestCase {
 				.getOutgoingEdges().size());
 		// We iterate over the outgoing edges of the corresponding root nodes
 		for (int i = 0; i < origRoot.getOutgoingEdges().size(); i++) {
-			assertTrue(origRoot.getOutgoingEdges().get(i).getTarget() instanceof ProgramPoint);
-			final ProgramPoint oFuncEntry = (ProgramPoint) origRoot
+			assertTrue(origRoot.getOutgoingEdges().get(i).getTarget() instanceof BoogieIcfgLocation);
+			final BoogieIcfgLocation oFuncEntry = (BoogieIcfgLocation) origRoot
 					.getOutgoingEdges().get(i).getTarget();
-			assertTrue(convRoot.getOutgoingEdges().get(i).getTarget() instanceof ProgramPoint);
-			final ProgramPoint cFuncEntry = (ProgramPoint) convRoot
+			assertTrue(convRoot.getOutgoingEdges().get(i).getTarget() instanceof BoogieIcfgLocation);
+			final BoogieIcfgLocation cFuncEntry = (BoogieIcfgLocation) convRoot
 					.getOutgoingEdges().get(i).getTarget();
 			// we can do a check with equals, since this is overwritten
 			assertEquals(oFuncEntry, cFuncEntry);
@@ -159,7 +159,7 @@ public class TestMinModelConversion extends TestCase {
 	 * @param cNode
 	 *            the converted Node
 	 */
-	private void visitRCFGFunction(ProgramPoint oNode, ProgramPoint cNode) {
+	private void visitRCFGFunction(BoogieIcfgLocation oNode, BoogieIcfgLocation cNode) {
 		assertEquals(oNode, cNode);
 		logger.debug("UNIT-TEST: " + oNode + " - " + cNode);
 		logger.debug("OUT-Edges O: " + oNode.getOutgoingEdges());
@@ -171,8 +171,8 @@ public class TestMinModelConversion extends TestCase {
 			return;
 		}
 		for (int i = 0; i < oNode.getOutgoingEdges().size(); i++) {
-			final RCFGEdge oEdge = oNode.getOutgoingEdges().get(i);
-			final RCFGEdge cEdge = cNode.getOutgoingEdges().get(i);
+			final IcfgEdge oEdge = oNode.getOutgoingEdges().get(i);
+			final IcfgEdge cEdge = cNode.getOutgoingEdges().get(i);
 			// if already visited the edges, we stop...
 			if (visitedEdges.contains(oEdge)) {
 				assertTrue(visitedEdges.contains(cEdge));
@@ -190,10 +190,10 @@ public class TestMinModelConversion extends TestCase {
 				assertTrue(oEdge instanceof Return);
 				continue;
 			}
-			assertTrue(oEdge.getTarget() instanceof ProgramPoint);
-			assertTrue(cEdge.getTarget() instanceof ProgramPoint);
-			visitRCFGFunction((ProgramPoint) oEdge.getTarget(),
-					(ProgramPoint) cEdge.getTarget());
+			assertTrue(oEdge.getTarget() instanceof BoogieIcfgLocation);
+			assertTrue(cEdge.getTarget() instanceof BoogieIcfgLocation);
+			visitRCFGFunction((BoogieIcfgLocation) oEdge.getTarget(),
+					(BoogieIcfgLocation) cEdge.getTarget());
 		}
 	}
 

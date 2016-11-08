@@ -13,7 +13,7 @@
 		</java>
 		
 		<echo>AutPromela.cup</echo>
-		<java classname="java_cup.Main" classpath="${cupDir}" fork="true" failonerror="true">
+		<java classname="com.github.jhoenicke.javacup.Main" classpath="${cupDir}" fork="true" failonerror="true">
 		<arg line="-parser Parser"/>
 			<arg value="AutPromela.cup" />
 		</java>
@@ -24,7 +24,7 @@
 		</java>
 		
 		<echo>Apformula.cup</echo>
-		<java classname="java_cup.Main" classpath="${cupDir}" fork="true" failonerror="true">
+		<java classname="com.github.jhoenicke.javacup.Main" classpath="${cupDir}" fork="true" failonerror="true">
 		<arg line="-parser Parser"/>
 			<arg value="Apformula.cup" />
 		</java>

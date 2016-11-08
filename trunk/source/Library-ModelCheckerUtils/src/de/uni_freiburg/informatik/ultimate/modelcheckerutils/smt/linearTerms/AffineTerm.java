@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms;
@@ -78,9 +78,9 @@ public class AffineTerm extends Term {
 	private final Sort mSort;
 	
 	/**
-	 * AffineTerm that represents the Rational r of sort sort. 
+	 * AffineTerm that represents the Rational r of sort sort.
 	 */
-	public AffineTerm(Sort s, Rational r) {
+	public AffineTerm(final Sort s, final Rational r) {
 		super(0);
 		mSort = s;
 		mConstant = r;
@@ -90,33 +90,33 @@ public class AffineTerm extends Term {
 	/**
 	 * AffineTerm that consists of the single variable tv.
 	 */
-	public AffineTerm(TermVariable tv) {
+	public AffineTerm(final TermVariable tv) {
 		super(0);
 		mSort = tv.getSort();
 		mConstant = Rational.ZERO;
-		mVariable2Coefficient = 
+		mVariable2Coefficient =
 				Collections.singletonMap((Term) tv, Rational.ONE);
 	}
 	
 	/**
-	 * AffineTerm that consists of the single variable which is an application 
-	 * term. 
+	 * AffineTerm that consists of the single variable which is an application
+	 * term.
 	 */
-	public AffineTerm(ApplicationTerm appTerm) {
+	public AffineTerm(final ApplicationTerm appTerm) {
 		super(0);
 		mSort = appTerm.getSort();
 		mConstant = Rational.ZERO;
-		mVariable2Coefficient = 
+		mVariable2Coefficient =
 				Collections.singletonMap((Term) appTerm, Rational.ONE);
 
 	}
 	
 	/**
-	 * AffineTerm whose variables are given by an array of terms, whose 
+	 * AffineTerm whose variables are given by an array of terms, whose
 	 * corresponding coefficients are given by the array coefficients, and
 	 * whose constant term is given by the Rational constant.
 	 */
-	public AffineTerm(Sort s, Term[] terms, Rational[] coefficients, Rational constant) {
+	public AffineTerm(final Sort s, final Term[] terms, final Rational[] coefficients, final Rational constant) {
 		super(0);
 		mSort = s;
 		mConstant = constant;
@@ -134,7 +134,7 @@ public class AffineTerm extends Term {
 			if (coefficients[0].equals(Rational.ZERO)) {
 				mVariable2Coefficient = Collections.emptyMap();
 			} else {
-				mVariable2Coefficient = 
+				mVariable2Coefficient =
 						Collections.singletonMap(variable, coefficients[0]);
 			}
 			break;
@@ -146,13 +146,14 @@ public class AffineTerm extends Term {
 					mVariable2Coefficient.put(terms[i], coefficients[i]);
 				}
 			}
+			break;
 		}
 	}
 	
 	/**
 	 * Check if term is of a type that may be a variable of an AffineTerm.
 	 */
-	public void checkIfTermIsLegalVariable(Term term) {
+	public void checkIfTermIsLegalVariable(final Term term) {
 		if (term instanceof TermVariable || term instanceof ApplicationTerm) {
 			// term is ok
 		} else {
@@ -165,7 +166,7 @@ public class AffineTerm extends Term {
 	/**
 	 * AffineTerm that represents the sum of affineTerms.
 	 */
-	public AffineTerm(AffineTerm... affineTerms) {
+	public AffineTerm(final AffineTerm... affineTerms) {
 		super(0);
 		mSort = affineTerms[0].getSort();
 		mVariable2Coefficient = new HashMap<Term, Rational>();
@@ -173,7 +174,7 @@ public class AffineTerm extends Term {
 		for (final AffineTerm affineTerm : affineTerms) {
 			for (final Map.Entry<Term, Rational> summand :
 					affineTerm.mVariable2Coefficient.entrySet()) {
-				assert summand.getKey().getSort() == mSort : 
+				assert summand.getKey().getSort() == mSort :
 					"Sort mismatch: " + summand.getKey().getSort() + " vs. " + mSort;
 				final Rational coeff = mVariable2Coefficient.get(summand.getKey());
 				if (coeff == null) {
@@ -204,7 +205,7 @@ public class AffineTerm extends Term {
 	/**
 	 * AffineTerm that represents the product of affineTerm and multiplier.
 	 */
-	public AffineTerm(AffineTerm affineTerm, Rational multiplier) {
+	public AffineTerm(final AffineTerm affineTerm, final Rational multiplier) {
 		super(0);
 		if (multiplier.equals(Rational.ZERO)) {
 			mSort = affineTerm.getSort();
@@ -233,7 +234,7 @@ public class AffineTerm extends Term {
 	 * @param sort bitvector sort
 	 * @return bv % 2^sort.getIndices[0]
 	 */
-	private static Rational bringValueInRange(Rational bv, Sort sort) {
+	private static Rational bringValueInRange(final Rational bv, final Sort sort) {
 		assert BitvectorUtils.isBitvectorSort(sort);
 		assert sort.getIndices().length == 1;
 		assert bv.isIntegral();
@@ -256,7 +257,7 @@ public class AffineTerm extends Term {
 	}
 	
 	/**
-	 * True if this represents not an affine term but an error during the 
+	 * True if this represents not an affine term but an error during the
 	 * translation process, e.g., if original term was not linear.
 	 */
 	public boolean isErrorTerm() {
@@ -295,7 +296,7 @@ public class AffineTerm extends Term {
 	}
 	
 	/**
-	 * @return unmodifiable map where each variable is mapped to its coefficient. 
+	 * @return unmodifiable map where each variable is mapped to its coefficient.
 	 */
 	public Map<Term, Rational> getVariable2Coefficient() {
 		return Collections.unmodifiableMap(mVariable2Coefficient);
@@ -305,7 +306,7 @@ public class AffineTerm extends Term {
 	 * Transforms this AffineTerm into a Term that is supported by the solver.
 	 * @param script Script for that this term is constructed.
 	 */
-	public Term toTerm(Script script) {
+	public Term toTerm(final Script script) {
 		Term[] summands;
 		if (mConstant.equals(Rational.ZERO)) {
 			summands = new Term[mVariable2Coefficient.size()];
@@ -315,13 +316,13 @@ public class AffineTerm extends Term {
 		int i = 0;
 		for (final Map.Entry<Term, Rational> entry :
 				mVariable2Coefficient.entrySet()) {
-			assert !entry.getValue().equals(Rational.ZERO) : 
+			assert !entry.getValue().equals(Rational.ZERO) :
 								"zero is no legal coefficient in AffineTerm";
 			if (entry.getValue().equals(Rational.ONE)) {
 				summands[i] = entry.getKey();
 			} else {
 				final Term coeff = SmtUtils.rational2Term(script, entry.getValue(), mSort);
-				summands[i] = SmtUtils.mul(script, mSort, coeff, entry.getKey()); 
+				summands[i] = SmtUtils.mul(script, mSort, coeff, entry.getKey());
 			}
 			++i;
 		}
@@ -364,12 +365,12 @@ public class AffineTerm extends Term {
 	}
 	
 	@Override
-	public void toStringHelper(ArrayDeque<Object> mTodo) {
+	public void toStringHelper(final ArrayDeque<Object> mTodo) {
 		throw new UnsupportedOperationException(
 				"This is an auxilliary Term and not supported by the solver");
 	}
 	
-	public static AffineTerm applyModuloToAllCoefficients(Script script, AffineTerm affineTerm, BigInteger divident) {
+	public static AffineTerm applyModuloToAllCoefficients(final Script script, final AffineTerm affineTerm, final BigInteger divident) {
 		assert affineTerm.getSort().getName().equals("Int");
 		final Map<Term, Rational> map = affineTerm.getVariable2Coefficient();
 		final Term[] terms = new Term[map.size()];

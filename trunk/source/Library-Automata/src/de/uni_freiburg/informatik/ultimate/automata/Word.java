@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata;
@@ -30,84 +30,95 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
-
-	public class Word<Symbol> implements Iterable<Symbol> {
-
-		protected Symbol[] mWord;
-		
+/**
+ * A finite word, i.e., a finite sequence of symbols.
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            symbol type
+ */
+public class Word<LETTER> implements Iterable<LETTER> {
+	/**
+	 * The word.
+	 */
+	protected LETTER[] mWord;
 	
-		/**
-		 * Construct Word consisting of a sequence of symbols
-		 */
-		@SafeVarargs
-		public Word(Symbol... symbols) {
-			this.mWord = symbols;
-		}
-		
-		
-		/**
-		 * @return The length of the Word is 0 for the empty word, 1 for the
-		 * word that consists of one symbol, etc.
-		 */
-		public int length() {
-			return mWord.length;
-		}
-		
-		public List<Symbol> asList() {
-			return Arrays.asList(mWord);
-		}
-		
-		
-		/**
-		 * 
-		 * @param position
-		 * @return Symbol at position;
-		 */
-		public Symbol getSymbol(int position) 
-		{
-			if (position < 0 || position >= mWord.length) {
-				throw new IllegalArgumentException("index out of range");
-			}
-			return mWord[position];
-		}
-		
-		
-		@SuppressWarnings("unchecked")
-		public Word<Symbol> concatenate(Word<Symbol> nestedWord2) {
-			final int lengthWord1 = this.length();
-			final int lengthWord2 = nestedWord2.length();
-			final Symbol[] concatenationSymbols = 
-				(Symbol[]) new Object[lengthWord1 + lengthWord2];
-			
-			for (int i=0; i<lengthWord1; i++) {
-				concatenationSymbols[i] = this.getSymbol(i);
-			}
-			for (int i=0; i<lengthWord2; i++) {
-				concatenationSymbols[lengthWord1+i] = nestedWord2.getSymbol(i);
-			}
-			return new Word<Symbol>(concatenationSymbols);
-		}		
-		
-		
-		public List<Symbol> lettersAsList() {
-			return Arrays.asList(mWord);
-		}
-		
-
-		@Override
-		public String toString() {
-			//return mWord.toString();
-			String s = "[";
-			for (int i = 0; i < mWord.length; i++) {
-				s += mWord[i];
-			}
-			s += "]";
-			return s;
-		}
-
-
-		@Override
-		public Iterator<Symbol> iterator() {
-			return Arrays.asList(mWord).iterator();
-		}
+	/**
+	 * Construct word consisting of a sequence of symbols.
+	 * 
+	 * @param symbols
+	 *            sequence of symbols
+	 */
+	@SafeVarargs
+	public Word(final LETTER... symbols) {
+		mWord = symbols;
 	}
+	
+	/**
+	 * @return The length of the word is 0 for the empty word, 1 for the
+	 *         word that consists of one symbol, etc.
+	 */
+	public int length() {
+		return mWord.length;
+	}
+	
+	/**
+	 * A list view of the symbols.
+	 * 
+	 * @return list of symbols
+	 */
+	public List<LETTER> asList() {
+		return Arrays.asList(mWord);
+	}
+	
+	/**
+	 * The symbol at the given position.
+	 * 
+	 * @param position
+	 *            position in word
+	 * @return symbol at the given position
+	 */
+	public LETTER getSymbol(final int position) {
+		if (position < 0 || position >= length()) {
+			throw new IllegalArgumentException("index out of range");
+		}
+		return mWord[position];
+	}
+	
+	/**
+	 * @param otherWord
+	 *            other word
+	 * @return concatenation 'this.otherWord'
+	 */
+	public Word<LETTER> concatenate(final Word<LETTER> otherWord) {
+		final int lengthWord1 = this.length();
+		final int lengthWord2 = otherWord.length();
+		@SuppressWarnings("unchecked")
+		final LETTER[] concatenationSymbols = (LETTER[]) new Object[lengthWord1 + lengthWord2];
+		
+		for (int i = 0; i < lengthWord1; i++) {
+			concatenationSymbols[i] = this.getSymbol(i);
+		}
+		for (int i = 0; i < lengthWord2; i++) {
+			concatenationSymbols[lengthWord1 + i] = otherWord.getSymbol(i);
+		}
+		return new Word<>(concatenationSymbols);
+	}
+	
+	@Override
+	public String toString() {
+		final StringBuilder builder = new StringBuilder();
+		builder.append('[');
+		for (int i = 0; i < length(); i++) {
+			builder.append(getSymbol(i));
+		}
+		builder.append(']');
+		return builder.toString();
+	}
+	
+	@Override
+	public Iterator<LETTER> iterator() {
+		return asList().iterator();
+	}
+}

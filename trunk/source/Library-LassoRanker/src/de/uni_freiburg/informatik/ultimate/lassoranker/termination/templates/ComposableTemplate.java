@@ -31,8 +31,8 @@ import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.lassoranker.LinearInequality;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 /**
  * Superclass for ranking templates that can be composed into larger templates
@@ -51,7 +51,7 @@ public abstract class ComposableTemplate extends RankingTemplate {
 	 * @param outVars Output variables for the loop transition
 	 */
 	public abstract List<List<LinearInequality>> getConstraintsDec(
-			Map<RankVar, Term> inVars, Map<RankVar, Term> outVars);
+			Map<IProgramVar, TermVariable> inVars, Map<IProgramVar, TermVariable> outVars);
 	
 	/**
 	 * Generate the constraints in form of linear inequalities in CNF
@@ -63,7 +63,7 @@ public abstract class ComposableTemplate extends RankingTemplate {
 	 * @param outVars Output variables for the loop transition
 	 */
 	public abstract List<List<LinearInequality>> getConstraintsNonInc(
-			Map<RankVar, Term> inVars, Map<RankVar, Term> outVars);
+			Map<IProgramVar, TermVariable> inVars, Map<IProgramVar, TermVariable> outVars);
 	
 	/**
 	 * Generate the constraints in form of linear inequalities in CNF
@@ -75,7 +75,7 @@ public abstract class ComposableTemplate extends RankingTemplate {
 	 * @param outVars Output variables for the loop transition
 	 */
 	public abstract List<List<LinearInequality>> getConstraintsBounded(
-			Map<RankVar, Term> inVars, Map<RankVar, Term> outVars);
+			Map<IProgramVar, TermVariable> inVars, Map<IProgramVar, TermVariable> outVars);
 	
 	/**
 	 * @return the annotations for getConstraintsDec()
@@ -94,7 +94,7 @@ public abstract class ComposableTemplate extends RankingTemplate {
 	
 	@Override
 	public List<List<LinearInequality>> getConstraints(
-			Map<RankVar, Term> inVars, Map<RankVar, Term> outVars) {
+			final Map<IProgramVar, TermVariable> inVars, final Map<IProgramVar, TermVariable> outVars) {
 		checkInitialized();
 		// The ranking function decreases and is bounded from below
 		final List<List<LinearInequality>> constraints

@@ -1,11 +1,13 @@
 package de.uni_freiburg.informatik.ultimate.acsl.parser;
 
-import java_cup.runtime.ComplexSymbolFactory;
-import java_cup.runtime.Symbol;
+import com.github.jhoenicke.javacup.runtime.ComplexSymbolFactory;
+import com.github.jhoenicke.javacup.runtime.Symbol;
 %%
 %class Scanner
 %unicode
-%cup
+%implements com.github.jhoenicke.javacup.runtime.Scanner
+%type com.github.jhoenicke.javacup.runtime.Symbol
+%function next_token
 %line
 %column
 
@@ -28,9 +30,6 @@ import java_cup.runtime.Symbol;
     	return sf.newSymbol(text, type, left, right, value);
     }
 %}
-%eofval{
-    return sf.newSymbol("EOF",sym.EOF);
-%eofval}
 
 space = [\032 \t \012 \r @ ]
 rD = [0-9]
@@ -75,20 +74,20 @@ WhiteSpace     = {LineTerminator}* | {space}*
     "behaviors"		{ return symbol("behaviors",sym.BEHAVIORS); }
     "breaks"		{ return symbol("breaks",sym.BREAKS); }
 	"case"			{ return symbol("case",sym.CASE); }
-    "char"			{ return symbol("char",sym.CHAR); }
+    "char"			{ return symbol("char",sym.CHAR, yytext()); }
     "complete"		{ return symbol("complete",sym.COMPLETE); }
     "const"         { return symbol("const",sym.CONST); }
     "continues"		{ return symbol("continues",sym.CONTINUES); }
     "contract"		{ return symbol("contract",sym.CONTRACT); }
     "decreases"		{ return symbol("decreases",sym.DECREASES); }
     "disjoint"		{ return symbol("disjoint",sym.DISJOINT); }
-    "double"		{ return symbol("double",sym.DOUBLE); }
+    "double"		{ return symbol("double",sym.DOUBLE, yytext()); }
     "else"          { return symbol("else",sym.ELSE); }
     "ensures"       { return symbol("ensures",sym.ENSURES); }
     "enum"			{ return symbol("enum",sym.ENUM); }
     "exists"        { return symbol("exists",sym.EXISTS); }
   	"function"      { return symbol("function",sym.FUNCTION); }
-    "float"			{ return symbol("float",sym.FLOAT); }
+    "float"			{ return symbol("float",sym.FLOAT, yytext()); }
     "for"			{ return symbol("for",sym.FOR); }
     "global"		{ return symbol("global",sym.GLOBAL); } 
     "ltl"			{ return symbol("global",sym.LTL); }
@@ -96,13 +95,13 @@ WhiteSpace     = {LineTerminator}* | {space}*
 	"impact"		{ return symbol("impact",sym.IMPACT); }
 	"inductive"		{ return symbol("inductive",sym.INDUCTIVE); }
 	"include"		{ return symbol("include",sym.INCLUDE); }
-	"int"           { return symbol("int",sym.INT); }
+	"int"           { return symbol("int",sym.INT, yytext()); }
     "invariant"		{ return symbol("invariant",sym.INVARIANT); }
     "label"			{ return symbol("label",sym.LABEL); }
     "lemma"			{ return symbol("lemma",sym.LEMMA); }
     "let"			{ return symbol("let",sym.EXT_LET); }
     "logic"			{ return symbol("logic",sym.LOGIC); }
-    "long"			{ return symbol("long",sym.LONG); }
+    "long"			{ return symbol("long",sym.LONG, yytext()); }
     "loop"			{ return symbol("loop",sym.LOOP); }
     "modelfield"	{ return symbol("modelfield",sym.MODEL); }
     "module"		{ return symbol("module",sym.MODULE); }
@@ -111,20 +110,20 @@ WhiteSpace     = {LineTerminator}* | {space}*
     "reads"			{ return symbol("reads",sym.READS); }
     "requires"		{ return symbol("requires",sym.REQUIRES); }
     "returns"		{ return symbol("returns",sym.RETURNS); }
-    "short"			{ return symbol("short",sym.SHORT); }
-    "signed"		{ return symbol("signed",sym.SIGNED); }
+    "short"			{ return symbol("short",sym.SHORT, yytext()); }
+    "signed"		{ return symbol("signed",sym.SIGNED, yytext()); }
     "sizeof"		{ return symbol("sizeof",sym.SIZEOF); }
     "slice"			{ return symbol("slice",sym.SLICE); }
     "struct"		{ return symbol("struct",sym.STRUCT); }
    	"terminates"	{ return symbol("terminates",sym.TERMINATES); }
     "type"			{ return symbol("type",sym.TYPE); }
-	"unsigned"		{ return symbol("unsigned",sym.UNSIGNED); }
+	"unsigned"		{ return symbol("unsigned",sym.UNSIGNED, yytext()); }
     "variant"		{ return symbol("variant",sym.VARIANT); }
     "void"			{ return symbol("void",sym.VOID); }
     "writes"		{ return symbol("writes",sym.WRITES); }
-    "integer"		{ return symbol("integer",sym.INTEGER); } 
-    "real"			{ return symbol("real",sym.REAL); }
-    "boolean"		{ return symbol("boolean",sym.BOOLEAN); }
+    "integer"		{ return symbol("integer",sym.INTEGER, yytext()); } 
+    "real"			{ return symbol("real",sym.REAL, yytext()); }
+    "boolean"		{ return symbol("boolean",sym.BOOLEAN, yytext()); }
     "\\at"			{ return symbol("at",sym.AT); }
     "\\base_addr"	{ return symbol("base_addr",sym.BASE_ADDR); }
     "\\block_length"	{ return symbol("block_length",sym.BLOCK_LENGTH); }
@@ -228,3 +227,4 @@ WhiteSpace     = {LineTerminator}* | {space}*
 	{WhiteSpace}	{ /* ignore */ }
 /* error fallback */
 .|\n		        { return symbol("error",sym.error, yytext()); }
+<<EOF>>             { return symbol("eof",sym.EOF); }

@@ -33,13 +33,13 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVar;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarFactory;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaUtils;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ModifiableTransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSort;
@@ -50,7 +50,7 @@ public class CellVariableBuilder {
 	private final Map<TermVariable, Map<ArrayIndex, TermVariable>> mArrayInstance2Index2CellVariable;
 	private final Map<Term, Map<ArrayIndex, ReplacementVar>> mArray2Index2RepVar;
 	private final Set<TermVariable> mAuxVars = new HashSet<TermVariable>();
-	private final TransFormulaLR mTransFormula;
+	private final ModifiableTransFormula mTransFormula;
 	private final TransFormulaLRWithArrayInformation tflrwai;
 	private final TransFormulaLRWithArrayCells tflrwac;
 	private final ReplacementVarFactory mReplacementVarFactory;
@@ -60,7 +60,7 @@ public class CellVariableBuilder {
 	private final NestedMap2<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation> mArrayCellOutVars;
 
 
-	public CellVariableBuilder(final TransFormulaLR tf, 
+	public CellVariableBuilder(final ModifiableTransFormula tf, 
 			final TransFormulaLRWithArrayCells tflrwac, 
 			final ReplacementVarFactory replacementVarFactory, 
 			final ILogger logger, 
@@ -112,7 +112,7 @@ public class CellVariableBuilder {
 					final boolean isInVarCell = isInVarCell(instance, index);
 					final boolean isOutVarCell = isOutVarCell(instance, index);
 					if (isInVarCell || isOutVarCell) {
-						final TermVariable arrayRepresentative = (TermVariable) TransFormulaUtils.getDefinition(mTransFormula, instance);
+						final TermVariable arrayRepresentative = (TermVariable) ModifiableTransFormulaUtils.getDefinition(mTransFormula, instance);
 						final ArrayIndex indexRepresentative = tflrwac.getOrConstructIndexRepresentative(index);
 						if (isInVarCell) {
 							final ReplacementVar rv = mArrayCellInVars.get(arrayRepresentative, indexRepresentative).getReplacementVar();
@@ -172,16 +172,16 @@ public class CellVariableBuilder {
 	 * index is an inVar.
 	 */
 	private boolean isInVarCell(final TermVariable arrayInstance, final List<Term> index) {
-		if (TransFormulaUtils.isInvar(arrayInstance, mTransFormula)) {
-			return TransFormulaUtils.allVariablesAreInVars(index, mTransFormula);
+		if (ModifiableTransFormulaUtils.isInvar(arrayInstance, mTransFormula)) {
+			return ModifiableTransFormulaUtils.allVariablesAreInVars(index, mTransFormula);
 		} else {
 			return false;
 		}
 	}
 
 	private boolean isOutVarCell(final TermVariable arrayInstance, final List<Term> index) {
-		if (TransFormulaUtils.isOutvar(arrayInstance, mTransFormula)) {
-			return TransFormulaUtils.allVariablesAreOutVars(index, mTransFormula);
+		if (ModifiableTransFormulaUtils.isOutvar(arrayInstance, mTransFormula)) {
+			return ModifiableTransFormulaUtils.allVariablesAreOutVars(index, mTransFormula);
 		} else {
 			return false;
 		}

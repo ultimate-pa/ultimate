@@ -42,55 +42,59 @@ import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 public class BuchiAutomizerLassoRankerTests extends AbstractBuchiAutomizerTestSuite {
 
 	private static final int FILES_PER_DIR_LIMIT = Integer.MAX_VALUE;
+//	 private static final int FILES_PER_DIR_LIMIT = 5;
 
 	//@formatter:off
 	private static final DirectoryFileEndingsPair[] SVCOMP_EXAMPLES = {
 //		/*** Category 1. Arrays ***/
-//		new DirectoryFileEndingsPair("examples/svcomp/array-examples/", new String[]{ ".i" }, mFilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/array-examples/", new String[]{ ".i" }, FILES_PER_DIR_LIMIT) ,
 //
 //		/*** Category 2. Bit Vectors ***/
-//		new DirectoryFileEndingsPair("examples/svcomp/bitvector/", new String[]{ ".i", ".c" }, mFilesPerDirectoryLimit) ,
-//		new DirectoryFileEndingsPair("examples/svcomp/bitvector-regression/", new String[]{ ".i", ".c" }, mFilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/bitvector/", new String[]{ ".i", ".c" }, FILES_PER_DIR_LIMIT) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/bitvector-regression/", new String[]{ ".i", ".c" }, FILES_PER_DIR_LIMIT) ,
 //
 //		/*** Category 4. Control Flow and Integer Variables ***/
-//		new DirectoryFileEndingsPair("examples/svcomp/ntdrivers-simplified/", new String[]{".c" }, mFilesPerDirectoryLimit) ,
-//		new DirectoryFileEndingsPair("examples/svcomp/ssh-simplified/", new String[]{".c" }, mFilesPerDirectoryLimit) ,
-//		new DirectoryFileEndingsPair("examples/svcomp/locks/", new String[]{".c" }, mFilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/ntdrivers-simplified/", new String[]{".c" }, FILES_PER_DIR_LIMIT) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/ssh-simplified/", new String[]{".c" }, FILES_PER_DIR_LIMIT) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/locks/", new String[]{".c" }, FILES_PER_DIR_LIMIT) ,
 //
 //		new DirectoryFileEndingsPair("examples/svcomp/loops/", new String[]{".i"}) ,
-//		new DirectoryFileEndingsPair("examples/svcomp/loop-acceleration/", new String[]{".c" }, mFilesPerDirectoryLimit) ,
-//		new DirectoryFileEndingsPair("examples/svcomp/loop-invgen/", new String[]{".i"}, mFilesPerDirectoryLimit) ,
-//		new DirectoryFileEndingsPair("examples/svcomp/loop-lit/", new String[]{ ".i", ".c" }, mFilesPerDirectoryLimit) ,
-//		new DirectoryFileEndingsPair("examples/svcomp/loop-new/", new String[]{".i"}, mFilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/loop-acceleration/", new String[]{".c" }, FILES_PER_DIR_LIMIT) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/loop-invgen/", new String[]{".i"}, FILES_PER_DIR_LIMIT) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/loop-lit/", new String[]{ ".i", ".c" }, FILES_PER_DIR_LIMIT) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/loop-new/", new String[]{".i"}, FILES_PER_DIR_LIMIT) ,
 //
-//		new DirectoryFileEndingsPair("examples/svcomp/eca-rers2012/", new String[]{".c" }, mFilesPerDirectoryLimit) ,
-//		new DirectoryFileEndingsPair("examples/svcomp/product-lines/", new String[]{".c" }, mFilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/eca-rers2012/", new String[]{".c" }, FILES_PER_DIR_LIMIT) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/product-lines/", new String[]{".c" }, FILES_PER_DIR_LIMIT) ,
 //
 //		/*** Category 6. Heap Manipulation / Dynamic Data Structures ***/
-//		new DirectoryFileEndingsPair("examples/svcomp/heap-manipulation/", new String[]{ ".i" }, mFilesPerDirectoryLimit) ,
-//		new DirectoryFileEndingsPair("examples/svcomp/list-properties/", new String[]{ ".i" }, mFilesPerDirectoryLimit) ,
-//		new DirectoryFileEndingsPair("examples/svcomp/ldv-regression/", new String[]{ ".i" }, mFilesPerDirectoryLimit) ,
-//		new DirectoryFileEndingsPair("examples/svcomp/ddv-machzwd/", new String[]{ ".i" }, mFilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/heap-manipulation/", new String[]{ ".i" }, FILES_PER_DIR_LIMIT) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/list-properties/", new String[]{ ".i" }, FILES_PER_DIR_LIMIT) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/ldv-regression/", new String[]{ ".i" }, FILES_PER_DIR_LIMIT) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/ddv-machzwd/", new String[]{ ".i" }, FILES_PER_DIR_LIMIT) ,
 //
 //		/*** Category 7. Memory Safety ***/
-//		new DirectoryFileEndingsPair("examples/svcomp/memsafety/", new String[]{ ".i" }, mFilesPerDirectoryLimit) ,
-//		new DirectoryFileEndingsPair("examples/svcomp/list-ext-properties/", new String[]{ ".i" }, mFilesPerDirectoryLimit) ,
-//		new DirectoryFileEndingsPair("examples/svcomp/memory-alloca/", new String[]{ ".i" }, mFilesPerDirectoryLimit) ,
-//		new DirectoryFileEndingsPair("examples/svcomp/memory-unsafe/", new String[]{ ".i" }, mFilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/memsafety/", new String[]{ ".i" }, FILES_PER_DIR_LIMIT) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/list-ext-properties/", new String[]{ ".i" }, FILES_PER_DIR_LIMIT) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/memory-alloca/", new String[]{ ".i" }, FILES_PER_DIR_LIMIT) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/memory-unsafe/", new String[]{ ".i" }, FILES_PER_DIR_LIMIT) ,
 //
 //		/*** Category 8. Recursive ***/
-//		new DirectoryFileEndingsPair("examples/svcomp/recursive/", new String[]{ ".c" }, mFilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/recursive/", new String[]{ ".c" }, FILES_PER_DIR_LIMIT) ,
 //
 //		/*** Category 9. Sequentialized Concurrent Programs ***/
-//		new DirectoryFileEndingsPair("examples/svcomp/systemc/", new String[]{ ".c" }, mFilesPerDirectoryLimit) ,
-//		new DirectoryFileEndingsPair("examples/svcomp/seq-mthreaded/", new String[]{ ".c" }, mFilesPerDirectoryLimit) ,
-//		new DirectoryFileEndingsPair("examples/svcomp/seq-pthread/", new String[]{ ".i" }, mFilesPerDirectoryLimit) ,
-
+//		new DirectoryFileEndingsPair("examples/svcomp/systemc/", new String[]{ ".c" }, FILES_PER_DIR_LIMIT) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/seq-mthreaded/", new String[]{ ".c" }, FILES_PER_DIR_LIMIT) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/seq-pthread/", new String[]{ ".i" }, FILES_PER_DIR_LIMIT) ,
+//
 		/*** Category 12. Termination ***/
 		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted/", new String[]{ ".c" }, FILES_PER_DIR_LIMIT) ,
 		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted-lit/", new String[]{ ".c" }, FILES_PER_DIR_LIMIT) ,
+		new DirectoryFileEndingsPair("examples/svcomp/termination-libowfat/", new String[]{ ".i" }, FILES_PER_DIR_LIMIT) ,
 		new DirectoryFileEndingsPair("examples/svcomp/termination-memory-alloca/", new String[]{ ".i" }, FILES_PER_DIR_LIMIT) ,
 		new DirectoryFileEndingsPair("examples/svcomp/termination-numeric/", new String[]{ ".c" }, FILES_PER_DIR_LIMIT) ,
+		new DirectoryFileEndingsPair("examples/svcomp/termination-restricted-15/", new String[]{ ".c" }, FILES_PER_DIR_LIMIT) ,
+		new DirectoryFileEndingsPair("examples/svcomp/termination-15/", new String[]{ ".i" }, FILES_PER_DIR_LIMIT) ,
 	};
 
 
@@ -100,7 +104,7 @@ public class BuchiAutomizerLassoRankerTests extends AbstractBuchiAutomizerTestSu
 //		"examples/lassos/arrays",
 //		"examples/termination/svcomp-sorted/success/",
 //		"examples/programs/quantifier",
-//		"examples/programs/recursivePrograms",
+//		"examples/programs/recursive/regression",
 //		"examples/programs/toy"
 		"examples/programs/termination/",
 //		"examples/termination/cooperatingT2/difficult/solved",
@@ -118,17 +122,22 @@ public class BuchiAutomizerLassoRankerTests extends AbstractBuchiAutomizerTestSu
 	 */
 	private static final String[] SETTINGS = {
 		"buchiAutomizer/ForwardPredicatesNonlinearLbeNotasimpOldMapElim.epf",
-		"buchiAutomizer/ForwardPredicatesNonlinearLbeNotasimpNewMapElim.epf",
+		"buchiAutomizer/ForwardPredicatesNonlinearLbeNotasimpNewMapElim-1.epf",
+		"buchiAutomizer/ForwardPredicatesNonlinearLbeNotasimpNewMapElim-2.epf",
+		"buchiAutomizer/ForwardPredicatesNonlinearLbeNotasimpNewMapElim-3.epf",
+		"buchiAutomizer/ForwardPredicatesNonlinearLbeNotasimpNewMapElim-4.epf",
 	};
 
 
 	private static final String[] BPL_TOOLCHAINS = {
-		"BuchiAutomizerBplWithBlockEncoding.xml",
+		"BuchiAutomizerBpl.xml",
+//		"BuchiAutomizerBplWithBlockEncoding.xml",
 //		"BuchiAutomizerBplInlineWithBlockEncoding.xml",
 	};
 
 	private static final String[] C_TOOLCHAINS = {
-		"BuchiAutomizerCWithBlockEncoding.xml",
+		"BuchiAutomizerC.xml",
+//		"BuchiAutomizerCWithBlockEncoding.xml",
 //		"BuchiAutomizerCInlineWithBlockEncoding.xml",
 	};
 
@@ -136,7 +145,7 @@ public class BuchiAutomizerLassoRankerTests extends AbstractBuchiAutomizerTestSu
 
 	@Override
 	public long getTimeout() {
-		return 120 * 1000;
+		return 60 * 1000;
 	}
 
 	@Override

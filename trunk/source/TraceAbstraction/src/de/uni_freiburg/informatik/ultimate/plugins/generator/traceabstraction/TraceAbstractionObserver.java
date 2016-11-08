@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType.Type;
@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserv
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessModelToAutomatonTransformer;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
@@ -47,8 +47,8 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	
-	private RootNode mRcfgRootNode;
-	private RootNode mBlockEncodedRcfgRootNode;
+	private BoogieIcfgContainer mRcfgRootNode;
+	private BoogieIcfgContainer mBlockEncodedRcfgRootNode;
 	private IElement mRootOfNewModel;
 	private WitnessNode mWitnessNode;
 	private boolean mLastModel = false;
@@ -64,17 +64,17 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 
 	@Override
 	public boolean process(final IElement root) {
-		if (root instanceof RootNode) {
+		if (root instanceof BoogieIcfgContainer) {
 			if (isOriginalRcfg(mCurrentGraphType)) {
 				if (mRcfgRootNode == null) {
-					mRcfgRootNode = (RootNode) root;
+					mRcfgRootNode = (BoogieIcfgContainer) root;
 				} else {
 					throw new UnsupportedOperationException("two RCFG models form same source");
 				}
 			} 
 			if (isBlockEncodingRcfg(mCurrentGraphType)) {
 				if (mBlockEncodedRcfgRootNode == null) {
-					mBlockEncodedRcfgRootNode = (RootNode) root;
+					mBlockEncodedRcfgRootNode = (BoogieIcfgContainer) root;
 				} else {
 					throw new UnsupportedOperationException("two RCFG models form same source");
 				}
@@ -101,7 +101,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 	@Override
 	public void finish() {
 		if (mLastModel) {
-			final RootNode rcfgRootNode;
+			final BoogieIcfgContainer rcfgRootNode;
 			if (mBlockEncodedRcfgRootNode != null) {
 				rcfgRootNode = mBlockEncodedRcfgRootNode;
 			} else {

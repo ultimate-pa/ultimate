@@ -4,11 +4,13 @@
 **/.settings/*
 **/target/*
 **/bin/*
+**.swp
 **/.recommenders/*
 
 /trunk/source/Servers
 /trunk/source/.sonarlint/*
 /trunk/source/*.log
+hs_err_pid*
 
 /trunk/source/Website/WebContent/WEB-INF/classes
 /trunk/source/Website/WebContent/json/*.json
@@ -41,6 +43,7 @@
 /trunk/source/ACSLParser/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast/BlockLengthExpression.java
 /trunk/source/ACSLParser/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast/BooleanLiteral.java
 /trunk/source/ACSLParser/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast/Case.java
+/trunk/source/ACSLParser/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast/CastExpression.java
 /trunk/source/ACSLParser/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast/CodeAnnot.java
 /trunk/source/ACSLParser/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast/CodeAnnotBehavior.java
 /trunk/source/ACSLParser/src/de/uni_freiburg/informatik/ultimate/model/acsl/ast/CodeAnnotStmt.java
@@ -164,6 +167,8 @@
 /trunk/source/Library-UltimateCore/src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain/DropmodelType.java
 /trunk/source/Library-UltimateCore/src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain/ModelIdOnlyType.java
 /trunk/source/Library-UltimateCore/src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain/ToolchainModelType.java
+/trunk/source/Library-UltimateCore/src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain/OptionType.java
+/trunk/source/Library-UltimateCore/src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain/RunDefinition.java
 
 
 /trunk/source/ACSLParser/src/de/uni_freiburg/informatik/ultimate/acsl/parser/Parser.java

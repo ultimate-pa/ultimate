@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserv
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LassoAnalysis;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 
 
 /**
@@ -60,20 +60,20 @@ public class LassoRankerObserver implements IUnmanagedObserver {
 	private final IUltimateServiceProvider mServices;
 	private final IToolchainStorage mStorage;
 	
-	public LassoRankerObserver(IUltimateServiceProvider services, IToolchainStorage storage){
+	public LassoRankerObserver(final IUltimateServiceProvider services, final IToolchainStorage storage){
 		mServices = services;
 		mStorage = storage;
 	}
 
 	@Override
-	public boolean process(IElement root) throws IOException {
+	public boolean process(final IElement root) throws IOException {
 		
-		if (!(root instanceof RootNode)) {
+		if (!(root instanceof BoogieIcfgContainer)) {
 			throw new UnsupportedOperationException(
 					"LassoRanker can only be applied to models constructed" +
 					" by the RCFGBuilder");
 		}
-		new LassoRankerStarter((RootNode) root, mServices, mStorage);
+		new LassoRankerStarter((BoogieIcfgContainer) root, mServices, mStorage);
 		return false;
 	}
 	
@@ -85,7 +85,7 @@ public class LassoRankerObserver implements IUnmanagedObserver {
 	}
 	
 	@Override
-	public void init(ModelType modelType, int currentModelIndex, int numberOfModels) {
+	public void init(final ModelType modelType, final int currentModelIndex, final int numberOfModels) {
 //		Ordinal.testcases();
 	}
 

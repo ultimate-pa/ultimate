@@ -14,13 +14,13 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.visitors.SimpleRCFGVisitor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 
 public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 	
@@ -81,13 +81,13 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 	}
 
 	@Override
-	public void level(final RCFGEdge edge) {
+	public void level(final IcfgEdge edge) {
 		if (!(edge instanceof CodeBlock)) {
 			return;
 		}
-		final TransFormula tf = ((CodeBlock) edge).getTransitionFormula();
+		final UnmodifiableTransFormula tf = ((CodeBlock) edge).getTransitionFormula();
 		
-		final TransFormula newTf = splitArraysInTransFormula(tf);
+		final UnmodifiableTransFormula newTf = splitArraysInTransFormula(tf);
 		
 		((CodeBlock) edge).setTransitionFormula(newTf);
 		
@@ -95,7 +95,7 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 	}
 
 	
-	private TransFormula splitArraysInTransFormula(final TransFormula tf) {
+	private UnmodifiableTransFormula splitArraysInTransFormula(final UnmodifiableTransFormula tf) {
 
 	
 		
@@ -121,7 +121,8 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 
 		final ArraySplitter as = new ArraySplitter(mScript.getScript(), moldArrayToPointerToNewArray, marrayToPartitions, tf.getInVars(), tf.getOutVars());
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(
-				as.getUpdatedInVars(), as.getUpdatedOutVars(), 
+				as.getUpdatedInVars(), as.getUpdatedOutVars(),
+				false, tf.getNonTheoryConsts(),
 				false, tf.getBranchEncoders(), false);
 		final Term newFormula = as.transform(tf.getFormula());
 		tfb.setFormula(newFormula);

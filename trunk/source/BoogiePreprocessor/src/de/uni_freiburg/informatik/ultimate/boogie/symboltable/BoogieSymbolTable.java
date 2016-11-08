@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BoogiePreprocessor plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE BoogiePreprocessor plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE BoogiePreprocessor plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.boogie.symboltable;
@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 
 /**
  * BoogieSymbolTable is a symbol table for all scopes of a Boogie program.
@@ -69,17 +69,17 @@ public class BoogieSymbolTable {
 	 * @param symbolName
 	 * @param decl
 	 */
-	protected void addProcedureOrFunction(String symbolName, Procedure decl) {
+	protected void addProcedureOrFunction(final String symbolName, final Procedure decl) {
 		final Map<String, Declaration> procMap = getProcedureMap(decl);
 		assert !procMap.containsKey(symbolName);
 		procMap.put(symbolName, decl);
 	}
 
-	protected void addProcedureOrFunction(String symbolName, FunctionDeclaration decl) {
+	protected void addProcedureOrFunction(final String symbolName, final FunctionDeclaration decl) {
 		addSymbol(StorageClass.PROC_FUNC, null, symbolName, decl);
 	}
 
-	protected void addInParams(String procedureOrFunctionName, String paramName, Procedure decl) {
+	protected void addInParams(final String procedureOrFunctionName, final String paramName, final Procedure decl) {
 		if (isImplementation(decl)) {
 			addSymbol(StorageClass.IMPLEMENTATION_INPARAM, procedureOrFunctionName, paramName, decl);
 		} else {
@@ -87,11 +87,11 @@ public class BoogieSymbolTable {
 		}
 	}
 
-	protected void addInParams(String procedureOrFunctionName, String paramName, FunctionDeclaration decl) {
+	protected void addInParams(final String procedureOrFunctionName, final String paramName, final FunctionDeclaration decl) {
 		addSymbol(StorageClass.PROC_FUNC_INPARAM, procedureOrFunctionName, paramName, decl);
 	}
 
-	protected void addOutParams(String procedureOrFunctionName, String paramName, Procedure decl) {
+	protected void addOutParams(final String procedureOrFunctionName, final String paramName, final Procedure decl) {
 		if (isImplementation(decl)) {
 			addSymbol(StorageClass.IMPLEMENTATION_OUTPARAM, procedureOrFunctionName, paramName, decl);
 		} else {
@@ -99,19 +99,19 @@ public class BoogieSymbolTable {
 		}
 	}
 
-	protected void addOutParams(String procedureOrFunctionName, String paramName, FunctionDeclaration decl) {
+	protected void addOutParams(final String procedureOrFunctionName, final String paramName, final FunctionDeclaration decl) {
 		addSymbol(StorageClass.PROC_FUNC_OUTPARAM, procedureOrFunctionName, paramName, decl);
 	}
 
-	protected void addLocalVariable(String procedureName, String variableName, Declaration decl) {
+	protected void addLocalVariable(final String procedureName, final String variableName, final Declaration decl) {
 		addSymbol(StorageClass.LOCAL, procedureName, variableName, decl);
 	}
 
-	protected void addGlobalVariable(String variableName, Declaration decl) {
+	protected void addGlobalVariable(final String variableName, final Declaration decl) {
 		addSymbol(StorageClass.GLOBAL, null, variableName, decl);
 	}
 
-	private Map<String, Declaration> getProcedureMap(Procedure decl) {
+	private Map<String, Declaration> getProcedureMap(final Procedure decl) {
 		if (isImplementation(decl)) {
 			return getMap(StorageClass.IMPLEMENTATION, StorageClass.IMPLEMENTATION.toString());
 		} else {
@@ -119,11 +119,11 @@ public class BoogieSymbolTable {
 		}
 	}
 
-	private boolean isImplementation(Procedure decl) {
+	private boolean isImplementation(final Procedure decl) {
 		return decl.getSpecification() == null;
 	}
 
-	private void addSymbol(StorageClass sc, String scopeName, String symbolName, Declaration decl) {
+	private void addSymbol(final StorageClass sc, String scopeName, final String symbolName, final Declaration decl) {
 		if (scopeName == null) {
 			scopeName = sc.toString();
 		}
@@ -131,11 +131,11 @@ public class BoogieSymbolTable {
 		getMap(sc, scopeName).put(symbolName, decl);
 	}
 
-	private void AssertIsEmpty(StorageClass sc, String scopeName, String symbolName) {
+	private void AssertIsEmpty(final StorageClass sc, final String scopeName, final String symbolName) {
 		assert (!getMap(sc, scopeName).containsKey(symbolName)) : "duplicate symbol " + symbolName;
 	}
 
-	private Map<String, Declaration> getMap(StorageClass sc, String scopeName) {
+	private Map<String, Declaration> getMap(final StorageClass sc, String scopeName) {
 		scopeName = checkScopeName(sc, scopeName);
 
 		switch (sc) {
@@ -171,7 +171,7 @@ public class BoogieSymbolTable {
 		}
 	}
 
-	private Collection<String> getSymbolNames(StorageClass scope, String scopeName) {
+	private Collection<String> getSymbolNames(final StorageClass scope, String scopeName) {
 		scopeName = checkScopeName(scope, scopeName);
 
 		if (!mSymbolTable.containsKey(scope)) {
@@ -186,7 +186,7 @@ public class BoogieSymbolTable {
 		return rtr;
 	}
 
-	private String checkScopeName(StorageClass scope, String scopeName) {
+	private String checkScopeName(final StorageClass scope, final String scopeName) {
 		switch (scope) {
 		case IMPLEMENTATION:
 		case GLOBAL:
@@ -214,7 +214,7 @@ public class BoogieSymbolTable {
 	 * @param symbolname
 	 * @return
 	 */
-	public List<Declaration> getFunctionOrProcedureDeclaration(String symbolname) {
+	public List<Declaration> getFunctionOrProcedureDeclaration(final String symbolname) {
 		final StorageClass[] procedures = new StorageClass[] { StorageClass.IMPLEMENTATION, StorageClass.PROC_FUNC };
 		final ArrayList<Declaration> rtr = new ArrayList<>();
 		for (final StorageClass sc : procedures) {
@@ -230,7 +230,7 @@ public class BoogieSymbolTable {
 		return new HashMap<>(getMap(StorageClass.GLOBAL, null));
 	}
 
-	public Map<String, Declaration> getLocalVariables(String procedureName) {
+	public Map<String, Declaration> getLocalVariables(final String procedureName) {
 		assert procedureName != null;
 		final Map<String, Declaration> rtr = new HashMap<String, Declaration>();
 		rtr.putAll(getMap(StorageClass.LOCAL, procedureName));
@@ -248,16 +248,16 @@ public class BoogieSymbolTable {
 	 * @param scopeName
 	 * @return
 	 */
-	public Declaration getDeclaration(String symbolname, StorageClass scope, String scopeName) {
+	public Declaration getDeclaration(final String symbolname, final StorageClass scope, final String scopeName) {
 		return getMap(scope, scopeName).get(symbolname);
 	}
 
-	public Declaration getDeclaration(IdentifierExpression exp) {
+	public Declaration getDeclaration(final IdentifierExpression exp) {
 		return getDeclaration(exp.getIdentifier(), exp.getDeclarationInformation().getStorageClass(),
 				exp.getDeclarationInformation().getProcedure());
 	}
 
-	public IType getTypeForVariableSymbol(String symbolname, StorageClass scope, String scopeName) {
+	public IBoogieType getTypeForVariableSymbol(final String symbolname, final StorageClass scope, final String scopeName) {
 		final Declaration decl = getDeclaration(symbolname, scope, scopeName);
 		if (decl == null) {
 			return null;
@@ -265,12 +265,12 @@ public class BoogieSymbolTable {
 		return findType(decl, symbolname);
 	}
 
-	private IType findType(Declaration decl, String symbolname) {
+	private IBoogieType findType(final Declaration decl, final String symbolname) {
 		if (decl instanceof VariableDeclaration) {
 			return findType(((VariableDeclaration) decl).getVariables(), symbolname);
 		} else if (decl instanceof Procedure) {
 			final Procedure proc = (Procedure) decl;
-			IType type = findType(proc.getInParams(), symbolname);
+			IBoogieType type = findType(proc.getInParams(), symbolname);
 			if (type != null) {
 				return type;
 			}
@@ -282,7 +282,7 @@ public class BoogieSymbolTable {
 		return null;
 	}
 
-	private IType findType(VarList[] vlists, String symbolname) {
+	private IBoogieType findType(final VarList[] vlists, final String symbolname) {
 		for (final VarList vl : vlists) {
 			for (final String s : vl.getIdentifiers()) {
 				if (s.equals(symbolname)) {
@@ -377,7 +377,7 @@ public class BoogieSymbolTable {
 
 	}
 
-	private void appendLocals(StringBuilder builder, String currentFunctionSymbol) {
+	private void appendLocals(final StringBuilder builder, final String currentFunctionSymbol) {
 		appendLocals(StorageClass.PROC_FUNC_INPARAM, builder, currentFunctionSymbol);
 		appendLocals(StorageClass.PROC_FUNC_OUTPARAM, builder, currentFunctionSymbol);
 		appendLocals(StorageClass.IMPLEMENTATION_INPARAM, builder, currentFunctionSymbol);
@@ -385,13 +385,13 @@ public class BoogieSymbolTable {
 		appendLocals(StorageClass.LOCAL, builder, currentFunctionSymbol);
 	}
 
-	private void appendLocals(StorageClass scClass, StringBuilder builder, String currentFunctionSymbol) {
+	private void appendLocals(final StorageClass scClass, final StringBuilder builder, final String currentFunctionSymbol) {
 		final Collection<String> localSymbols = getSymbolNames(scClass, currentFunctionSymbol);
-		if (localSymbols.size() == 0) {
+		if (localSymbols.isEmpty()) {
 			return;
 		}
 		for (final String symbol : localSymbols) {
-			final IType type = getTypeForVariableSymbol(symbol, scClass, currentFunctionSymbol);
+			final IBoogieType type = getTypeForVariableSymbol(symbol, scClass, currentFunctionSymbol);
 			builder.append("  * ").append(shorten(scClass)).append(" ").append(symbol).append(" : ").append(type)
 					.append("\n");
 		}
@@ -422,7 +422,7 @@ public class BoogieSymbolTable {
 		}
 	}
 
-	private String prettyPrintProcedureSignature(Declaration decl) {
+	private String prettyPrintProcedureSignature(final Declaration decl) {
 		final PrettyPrinter signatureBuilder = new PrettyPrinter();
 		try {
 			return signatureBuilder.process(decl).toString();
@@ -435,7 +435,7 @@ public class BoogieSymbolTable {
 	private static final class PrettyPrinter extends BoogieVisitor {
 		private StringBuilder mBuilder;
 
-		public StringBuilder process(Declaration node) {
+		public StringBuilder process(final Declaration node) {
 			mBuilder = new StringBuilder();
 			processDeclaration(node);
 			// replace the superfluous " returns " at the end (from
@@ -445,17 +445,17 @@ public class BoogieSymbolTable {
 		}
 
 		@Override
-		protected void visit(Procedure decl) {
+		protected void visit(final Procedure decl) {
 			mBuilder.append(decl.getIdentifier());
 		}
 
 		@Override
-		protected void visit(FunctionDeclaration decl) {
+		protected void visit(final FunctionDeclaration decl) {
 			mBuilder.append(decl.getIdentifier());
 		}
 
 		@Override
-		protected VarList[] processVarLists(VarList[] vls) {
+		protected VarList[] processVarLists(final VarList[] vls) {
 			mBuilder.append("(");
 			final VarList[] rtr = super.processVarLists(vls);
 			if (vls.length > 0) {
@@ -467,7 +467,7 @@ public class BoogieSymbolTable {
 		}
 
 		@Override
-		protected VarList processVarList(VarList vl) {
+		protected VarList processVarList(final VarList vl) {
 			final String[] identifiers = vl.getIdentifiers();
 			if (identifiers.length > 0) {
 				for (final String name : identifiers) {
@@ -479,12 +479,12 @@ public class BoogieSymbolTable {
 
 		// prevent traversing the whole ast with the following overrides
 		@Override
-		protected Body processBody(Body body) {
+		protected Body processBody(final Body body) {
 			return body;
 		}
 
 		@Override
-		protected Expression processExpression(Expression expr) {
+		protected Expression processExpression(final Expression expr) {
 			return expr;
 		}
 	}

@@ -29,26 +29,26 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions
 import java.util.HashMap;
 import java.util.HashSet;
 
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.boogie.ScopedBoogieVar;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 
 public class ReachDefEdgeAnnotation extends ReachDefBaseAnnotation {
 
 	private static final long serialVersionUID = 1L;
 
-	private final RCFGEdge mEdge;
+	private final IcfgEdge mEdge;
 	private DefCollector mDefCollector;
 	private UseCollector mUseCollector;
 	private final IAnnotationProvider<ReachDefStatementAnnotation> mProvider;
 	private final String mKey;
 
-	public ReachDefEdgeAnnotation(RCFGEdge e, IAnnotationProvider<ReachDefStatementAnnotation> provider, String key) {
+	public ReachDefEdgeAnnotation(IcfgEdge e, IAnnotationProvider<ReachDefStatementAnnotation> provider, String key) {
 		mEdge = e;
 		mProvider = provider;
 		mKey = key;
 	}
 
-	public ReachDefEdgeAnnotation(RCFGEdge e, IAnnotationProvider<ReachDefStatementAnnotation> provider) {
+	public ReachDefEdgeAnnotation(IcfgEdge e, IAnnotationProvider<ReachDefStatementAnnotation> provider) {
 		this(e, provider, null);
 	}
 

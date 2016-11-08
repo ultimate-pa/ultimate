@@ -38,10 +38,11 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.termination.AffineFunctio
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.AffineFunctionGenerator;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfunctions.LinearRankingFunction;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfunctions.RankingFunction;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 
 /**
@@ -80,7 +81,7 @@ public class AffineTemplate extends ComposableTemplate {
 	
 	@Override
 	public List<List<LinearInequality>> getConstraintsDec(
-			Map<RankVar, Term> inVars, Map<RankVar, Term> outVars) {
+			final Map<IProgramVar, TermVariable> inVars, final Map<IProgramVar, TermVariable> outVars) {
 		// f(x') < f(x) - delta
 		final LinearInequality li = mfgen.generate(inVars);
 		final LinearInequality li2 = mfgen.generate(outVars);
@@ -89,7 +90,7 @@ public class AffineTemplate extends ComposableTemplate {
 		final AffineTerm a = new AffineTerm(mdelta, Rational.MONE);
 		li.add(a);
 		li.setStrict(true);
-		li.motzkin_coefficient = sRedAtoms ? PossibleMotzkinCoefficients.ONE
+		li.mMotzkinCoefficient = sRedAtoms ? PossibleMotzkinCoefficients.ONE
 				: PossibleMotzkinCoefficients.ANYTHING;
 		
 		// delta > 0 is assured by RankingFunctionTemplate.newDelta
@@ -98,25 +99,25 @@ public class AffineTemplate extends ComposableTemplate {
 
 	@Override
 	public List<List<LinearInequality>> getConstraintsNonInc(
-			Map<RankVar, Term> inVars, Map<RankVar, Term> outVars) {
+			final Map<IProgramVar, TermVariable> inVars, final Map<IProgramVar, TermVariable> outVars) {
 		// f(x') ≤ f(x)
 		final LinearInequality li = mfgen.generate(inVars);
 		final LinearInequality li2 = mfgen.generate(outVars);
 		li2.negate();
 		li.add(li2);
 		li.setStrict(false);
-		li.motzkin_coefficient = sRedAtoms ? PossibleMotzkinCoefficients.ONE
+		li.mMotzkinCoefficient = sRedAtoms ? PossibleMotzkinCoefficients.ONE
 				: PossibleMotzkinCoefficients.ANYTHING;
 		return Collections.singletonList(Collections.singletonList(li));
 	}
 
 	@Override
 	public List<List<LinearInequality>> getConstraintsBounded(
-			Map<RankVar, Term> inVars, Map<RankVar, Term> outVars) {
+			final Map<IProgramVar, TermVariable> inVars, final Map<IProgramVar, TermVariable> outVars) {
 		// f(x) > 0
 		final LinearInequality li = mfgen.generate(inVars);
 		li.setStrict(true);
-		li.motzkin_coefficient = sRedAtoms ?
+		li.mMotzkinCoefficient = sRedAtoms ?
 				PossibleMotzkinCoefficients.ONE
 				: PossibleMotzkinCoefficients.ANYTHING;
 		return Collections.singletonList(Collections.singletonList(li));
@@ -145,7 +146,7 @@ public class AffineTemplate extends ComposableTemplate {
 	}
 
 	@Override
-	public RankingFunction extractRankingFunction(Map<Term, Rational> val)
+	public RankingFunction extractRankingFunction(final Map<Term, Rational> val)
 			throws SMTLIBException {
 		final AffineFunction f = mfgen.extractAffineFunction(val);
 		return new LinearRankingFunction(f);

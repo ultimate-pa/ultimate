@@ -41,14 +41,14 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecut
  * @author dietsch@informatik.uni-freiburg.de
  * 
  */
-public class NonterminatingLassoResult<ELEM extends IElement, TE extends IElement, EXP extends IElement> extends
+public class NonterminatingLassoResult<ELEM extends IElement, TE extends IElement, EXP> extends
 		AbstractResultAtElement<ELEM> implements IResultWithInfiniteLassoTrace<TE, EXP> {
 
 	protected final IProgramExecution<TE, EXP> mStem;
 	protected final IProgramExecution<TE, EXP> mLoop;
 
-	public NonterminatingLassoResult(ELEM position, String plugin, IBacktranslationService translatorSequence,
-			IProgramExecution<TE, EXP> stem, IProgramExecution<TE, EXP> loop, ILocation location) {
+	public NonterminatingLassoResult(final ELEM position, final String plugin, final IBacktranslationService translatorSequence,
+			final IProgramExecution<TE, EXP> stem, final IProgramExecution<TE, EXP> loop, final ILocation location) {
 		super(position, plugin, translatorSequence);
 		mStem = stem;
 		mLoop = loop;

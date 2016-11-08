@@ -37,14 +37,15 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.BitvectorUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.BinaryNumericRelation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.BinaryRelation.NoRelationOfThisKindException;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.BinaryRelation.RelationSymbol;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker.TraceCheckerLock;
 
 
 /**
@@ -56,20 +57,26 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  */
 public class AnnotateAndAssertConjunctsOfCodeBlocks extends AnnotateAndAssertCodeBlocks {
 	
-	protected final NestedFormulas<TransFormula, IPredicate> mNestedFormulas;
-	private final Map<Term,Term> mAnnotated2Original = new HashMap<Term,Term>();
+	protected final NestedFormulas<UnmodifiableTransFormula, IPredicate> mNestedFormulas;
+	private final Map<Term,Term> mAnnotated2Original = new HashMap<>();
 	private final SplitEqualityMapping mSplitEqualityMapping = new SplitEqualityMapping();
-	private final SmtManager mSmtManagerPredicates;
+	private final ManagedScript mCsToolkitPredicates;
 	
-	private final static boolean mSplitEqualities = true;
+	private final boolean mSplitEqualities = true;
 
-	public AnnotateAndAssertConjunctsOfCodeBlocks(SmtManager smtManager, 
-			NestedFormulas<Term, Term> nestedSSA, 
-			NestedFormulas<TransFormula, IPredicate> nestedFormulas, ILogger logger,
-			SmtManager smtManagerPredicates) {
-		super(smtManager, nestedSSA,logger);
+	/**
+	 * @param mgdScriptTc Script that is used for trace check
+	 * @param scriptLockOwner Object that was used to lock the trace check script
+	 * @param mgdScriptCfg Script that was used for building the CFG
+	 */
+	public AnnotateAndAssertConjunctsOfCodeBlocks(final ManagedScript mgdScriptTc,
+			final TraceCheckerLock scriptLockOwner,
+			final NestedFormulas<Term, Term> nestedSSA, 
+			final NestedFormulas<UnmodifiableTransFormula, IPredicate> nestedFormulas, final ILogger logger,
+			final ManagedScript mgdScriptCfg) {
+		super(mgdScriptTc, scriptLockOwner, nestedSSA,logger);
 		mNestedFormulas = nestedFormulas;
-		mSmtManagerPredicates = smtManagerPredicates;
+		mCsToolkitPredicates = mgdScriptCfg;
 	}
 	
 	
@@ -88,35 +95,40 @@ public class AnnotateAndAssertConjunctsOfCodeBlocks extends AnnotateAndAssertCod
 	 * assignment form.
 	 * @return conjunction of annotated terms
 	 */
-	private Term annotateAndAssertConjuncts(String name, Term original,	Term indexed) {
+	private Term annotateAndAssertConjuncts(final String name, final Term original,	final Term indexed) {
 		final Term[] originalConjuncts = SmtUtils.getConjuncts(original);
 		final Term[] indexedConjuncts = SmtUtils.getConjuncts(indexed);
 		assert originalConjuncts.length == indexedConjuncts.length : 
 			"number of original and indexed conjuncts differ";
 		
-		final List<Term> annotatedConjuncts = new LinkedList<Term>();
+		final List<Term> annotatedConjuncts = new LinkedList<>();
 		int annotatedTermsCounter = 0;
 		
 		for (int i=0; i<originalConjuncts.length; i++) {
 			final Term originalConjunct = originalConjuncts[i];
 			final Term indexedConjunct = indexedConjuncts[i];
 			if (mSplitEqualities) {
-				final BinaryNumericRelation bnr_originalConjunct = convertToBinaryNumericEquality(originalConjunct);
-				if (bnr_originalConjunct != null) {
-					final BinaryNumericRelation bnr_indexedConjunct = convertToBinaryNumericEquality(indexedConjunct);
-					final Term[] conjunctAsInequalities_indexed =  transformEqualityToInequalities(bnr_indexedConjunct, mSmtManager.getScript());
-					final Term[] conjunctAsInequalities_original = transformEqualityToInequalities(bnr_originalConjunct, mSmtManagerPredicates.getScript());
+				final BinaryNumericRelation originalConjunctBnr = convertToBinaryNumericEquality(originalConjunct);
+				if (originalConjunctBnr != null) {
+					final BinaryNumericRelation indexedConjunctBnr = convertToBinaryNumericEquality(indexedConjunct);
+					final Term[] indexedConjunctAsInequalities =  
+							transformEqualityToInequalities(indexedConjunctBnr, mMgdScript.getScript());
+					final Term[] originalConjunctAsInequalities = 
+							transformEqualityToInequalities(originalConjunctBnr, mCsToolkitPredicates.getScript());
 					// Annotate and store the first inequality
-					annotatedConjuncts.add(annotateAndAssertTerm(conjunctAsInequalities_indexed[0], name, annotatedTermsCounter));
-					// Caution! The map mAnnotated2Original is only correct, if BinaryNumericRelation splits the original_conjunct and the indexed_conjunct, such
-					// that the getLhs() and getRhs() methods return the same terms.
-					mAnnotated2Original.put(annotatedConjuncts.get(annotatedTermsCounter), conjunctAsInequalities_original[0]);
+					annotatedConjuncts.add(annotateAndAssertTerm(indexedConjunctAsInequalities[0], name, annotatedTermsCounter));
+					// Caution! The map mAnnotated2Original is only correct, if 
+					// BinaryNumericRelation splits the original_conjunct and 
+					// the indexed_conjunct, such that the getLhs() and getRhs() 
+					// methods return the same terms.
+					mAnnotated2Original.put(annotatedConjuncts.get(annotatedTermsCounter), originalConjunctAsInequalities[0]);
 					// Annotate and store the second inequality
-					annotatedConjuncts.add(annotateAndAssertTerm(conjunctAsInequalities_indexed[1], name, annotatedTermsCounter + 1));
-					mAnnotated2Original.put(annotatedConjuncts.get(annotatedTermsCounter + 1), conjunctAsInequalities_original[1]);
+					annotatedConjuncts.add(annotateAndAssertTerm(indexedConjunctAsInequalities[1], name, annotatedTermsCounter + 1));
+					mAnnotated2Original.put(annotatedConjuncts.get(annotatedTermsCounter + 1), originalConjunctAsInequalities[1]);
 
 					// Put the first annotated inequality and the second annotated inequality into mSplitEqualityMapping
-					mSplitEqualityMapping.add(annotatedConjuncts.get(annotatedTermsCounter), annotatedConjuncts.get(annotatedTermsCounter+1), originalConjunct);
+					mSplitEqualityMapping.add(annotatedConjuncts.get(annotatedTermsCounter), 
+							annotatedConjuncts.get(annotatedTermsCounter+1), originalConjunct);
 					annotatedTermsCounter = annotatedTermsCounter + 2;
 				} else {
 					annotatedConjuncts.add(annotateAndAssertTerm(indexedConjunct, name, annotatedTermsCounter));
@@ -137,7 +149,7 @@ public class AnnotateAndAssertConjunctsOfCodeBlocks extends AnnotateAndAssertCod
 	 * Do the same as annotateAndAssertConjuncts() but do not split the term
 	 * into conjuncts.
 	 */
-	private Term annotateAndAssertConjunction(String name, Term original, Term indexed) {
+	private Term annotateAndAssertConjunction(final String name, final Term original, final Term indexed) {
 		final Term annotated = super.annotateAndAssertTerm(indexed, name);
 		mAnnotated2Original.put(annotated, original);
 		return annotated;
@@ -162,7 +174,7 @@ public class AnnotateAndAssertConjunctsOfCodeBlocks extends AnnotateAndAssertCod
 	}
 
 	@Override
-	protected Term annotateAndAssertNonCall(int position) {
+	protected Term annotateAndAssertNonCall(final int position) {
 		String name;
 		if (mTrace.isReturnPosition(position)) {
 			name = returnAnnotation(position);
@@ -172,12 +184,11 @@ public class AnnotateAndAssertConjunctsOfCodeBlocks extends AnnotateAndAssertCod
 		
 		final Term original = mNestedFormulas.getFormulaFromNonCallPos(position).getFormula();
 		final Term indexed = mSSA.getFormulaFromNonCallPos(position);
-		final Term annotated = annotateAndAssertConjuncts(name, original, indexed);
-		return annotated;
+		return annotateAndAssertConjuncts(name, original, indexed);
 	}
 
 	@Override
-	protected Term annotateAndAssertLocalVarAssignemntCall(int position) {
+	protected Term annotateAndAssertLocalVarAssignemntCall(final int position) {
 		final String name = super.localVarAssignemntCallAnnotation(position);
 		final Term original = mNestedFormulas.getLocalVarAssignment(position).getFormula();
 		final Term indexed = mSSA.getLocalVarAssignment(position);
@@ -185,7 +196,7 @@ public class AnnotateAndAssertConjunctsOfCodeBlocks extends AnnotateAndAssertCod
 	}
 
 	@Override
-	protected Term annotateAndAssertGlobalVarAssignemntCall(int position) {
+	protected Term annotateAndAssertGlobalVarAssignemntCall(final int position) {
 		final String name = super.globalVarAssignemntAnnotation(position);
 		final Term original = mNestedFormulas.getGlobalVarAssignment(position).getFormula();
 		final Term indexed = mSSA.getGlobalVarAssignment(position);
@@ -193,7 +204,7 @@ public class AnnotateAndAssertConjunctsOfCodeBlocks extends AnnotateAndAssertCod
 	}
 
 	@Override
-	protected Term annotateAndAssertOldVarAssignemntCall(int position) {
+	protected Term annotateAndAssertOldVarAssignemntCall(final int position) {
 		final String name = super.oldVarAssignemntCallAnnotation(position);
 		final Term original = mNestedFormulas.getOldVarAssignment(position).getFormula();
 		final Term indexed = mSSA.getOldVarAssignment(position);
@@ -202,7 +213,7 @@ public class AnnotateAndAssertConjunctsOfCodeBlocks extends AnnotateAndAssertCod
 
 	@Override
 	protected Term annotateAndAssertPendingContext(
-			int positionOfPendingContext, int pendingContextCode) {
+			final int positionOfPendingContext, final int pendingContextCode) {
 		final String name = super.pendingContextAnnotation(pendingContextCode);
 		final Term original = mNestedFormulas.getPendingContext(positionOfPendingContext).getFormula();
 		final Term indexed = mSSA.getPendingContext(positionOfPendingContext);
@@ -212,7 +223,7 @@ public class AnnotateAndAssertConjunctsOfCodeBlocks extends AnnotateAndAssertCod
 
 	@Override
 	protected Term annotateAndAssertLocalVarAssignemntPendingContext(
-			int positionOfPendingReturn, int pendingContextCode) {
+			final int positionOfPendingReturn, final int pendingContextCode) {
 		final String name = super.localVarAssignemntPendingReturnAnnotation(pendingContextCode);
 		final Term original = mNestedFormulas.getLocalVarAssignment(positionOfPendingReturn).getFormula();
 		final Term indexed = mSSA.getLocalVarAssignment(positionOfPendingReturn);
@@ -222,7 +233,7 @@ public class AnnotateAndAssertConjunctsOfCodeBlocks extends AnnotateAndAssertCod
 
 	@Override
 	protected Term annotateAndAssertOldVarAssignemntPendingContext(
-			int positionOfPendingReturn, int pendingContextCode) {
+			final int positionOfPendingReturn, final int pendingContextCode) {
 		final String name = super.oldVarAssignemntPendingReturnAnnotation(pendingContextCode);
 		final Term original = mNestedFormulas.getOldVarAssignment(positionOfPendingReturn).getFormula();
 		final Term indexed = mSSA.getOldVarAssignment(positionOfPendingReturn);
@@ -230,17 +241,15 @@ public class AnnotateAndAssertConjunctsOfCodeBlocks extends AnnotateAndAssertCod
 	}
 
 	
-	protected Term annotateAndAssertTerm(Term term, String name, int conjunct) {
-		name += "_conjunct" + conjunct;
-		
-		return super.annotateAndAssertTerm(term, name);
+	protected Term annotateAndAssertTerm(final Term term, final String name, final int conjunct) {
+		return super.annotateAndAssertTerm(term, name + "_conjunct" + conjunct);
 	}
 	
 	/**
 	 * Returns a representation of Term as BinaryNumericRelation if term is
 	 * a binary equality whose parameters have a Sort that is numeric.
 	 */
-	private BinaryNumericRelation convertToBinaryNumericEquality(Term term) {
+	private BinaryNumericRelation convertToBinaryNumericEquality(final Term term) {
 		BinaryNumericRelation result;
 		try {
 			result = new BinaryNumericRelation(term);
@@ -259,7 +268,7 @@ public class AnnotateAndAssertConjunctsOfCodeBlocks extends AnnotateAndAssertCod
 	}
 
 
-	private Term[] transformEqualityToInequalities(BinaryNumericRelation bnr, Script script) {
+	private Term[] transformEqualityToInequalities(final BinaryNumericRelation bnr, final Script script) {
 		final Term firstConjunct = script.term("<=", bnr.getLhs(), bnr.getRhs());
 		final Term secondConjunct = script.term(">=", bnr.getLhs(), bnr.getRhs());
 		return new Term[] {firstConjunct, secondConjunct};
@@ -291,11 +300,11 @@ public class AnnotateAndAssertConjunctsOfCodeBlocks extends AnnotateAndAssertCod
 	 * (a>=b, a=b) (a<=b, a=b)
 	 *
 	 */
-	public class SplitEqualityMapping {
+	public static class SplitEqualityMapping {
 		private final Map<Term, Term> mInequality2CorrespondingInequality = new HashMap<>();
 		private final Map<Term, Term> mInequality2OriginalEquality = new HashMap<>();
 		
-		void add(Term firstInequality, Term secondInequality, Term orginalEquality) {
+		void add(final Term firstInequality, final Term secondInequality, final Term orginalEquality) {
 			mInequality2CorrespondingInequality.put(firstInequality, secondInequality);
 			mInequality2CorrespondingInequality.put(secondInequality, firstInequality);
 			mInequality2OriginalEquality.put(firstInequality, orginalEquality);

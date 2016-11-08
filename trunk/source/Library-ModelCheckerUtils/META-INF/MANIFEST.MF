@@ -6,7 +6,9 @@ Bundle-Version: 0.0.1
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Export-Package: de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie,
  de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms,
+ de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg,
  de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure,
+ de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations,
  de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions,
  de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables,
  de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple,
@@ -20,7 +22,6 @@ Export-Package: de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie,
  de.uni_freiburg.informatik.ultimate.modelcheckerutils.transfomers
 Require-Bundle: Library-UltimateCore,
  UltimateCore,
- Library-log4j,
  Library-SMTLIB,
  Library-UltimateUtil,
  Library-BoogieAST,

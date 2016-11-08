@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization;
@@ -37,44 +37,49 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotat
 
 /**
  * Ultimate model of a OccurenceNet condition.
- * @author heizmann@informatik.uni-freiburg.de 
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <S>
+ *            symbol type
+ * @param <C>
+ *            place content type
  */
-
-public class ConditionNode<S,C> extends PetriNetVisualizationNode {
-	/**
-	 * 
-	 */
+public final class ConditionNode<S, C> extends PetriNetVisualizationNode {
 	private static final long serialVersionUID = 264254789648279608L;
 	
-	public ConditionNode(Condition<S,C> condition, BranchingProcess<S,C> bc) {
+	/**
+	 * @param condition
+	 *            Condition.
+	 * @param branchingProcess
+	 *            branching process
+	 */
+	public ConditionNode(final Condition<S, C> condition, final BranchingProcess<S, C> branchingProcess) {
 		super(condition.toString());
 		
 		final DefaultAnnotations annot = new DefaultAnnotations();
-		annot.put("Condition",condition.toString());
-		annot.put("CorrespondingPlace",condition.getPlace());
+		annot.put("Condition", condition.toString());
+		annot.put("CorrespondingPlace", condition.getPlace());
 		annot.put("NumberSuccesorEvents", condition.getSuccessorEvents().size());
-		annot.put("AllConditionsInCoRelation", allConditionsInCoRelation(condition,bc));
-		final Map<String,IAnnotations> annotations = getPayload().getAnnotations();
+		annot.put("AllConditionsInCoRelation", allConditionsInCoRelation(condition, branchingProcess));
+		final Map<String, IAnnotations> annotations = getPayload().getAnnotations();
 		annotations.put(LibraryIdentifiers.PLUGIN_ID, annot);
 		
 		final C content = condition.getPlace().getContent();
 		if (content instanceof IAnnotations) {
 			annot.put("Content", content);
-
+			
 		}
-//		super.setPayload(payload);
+		// super.setPayload(payload);
 	}
 	
-	private ArrayList<Condition<S,C>> allConditionsInCoRelation(Condition<S,C> condition, BranchingProcess<S,C> bc) {
-		final ArrayList<Condition<S,C>> conditionsInCoRelation = new ArrayList<Condition<S,C>>();
-		for (final Condition<S,C> c : bc.getConditions()) {
+	private ArrayList<Condition<S, C>> allConditionsInCoRelation(final Condition<S, C> condition,
+			final BranchingProcess<S, C> bc) {
+		final ArrayList<Condition<S, C>> conditionsInCoRelation = new ArrayList<>();
+		for (final Condition<S, C> c : bc.getConditions()) {
 			if (bc.isInCoRelation(condition, c)) {
 				conditionsInCoRelation.add(c);
 			}
 		}
 		return conditionsInCoRelation;
 	}
-	
-	
-
 }

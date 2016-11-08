@@ -32,7 +32,7 @@ import java.util.Collection;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -52,7 +52,7 @@ public class TypeSortTranslatorBitvectorWorkaround extends TypeSortTranslator {
 	}
 
 	@Override
-	protected Sort constructSort(IType boogieType, BoogieASTNode BoogieASTNode) {
+	protected Sort constructSort(IBoogieType boogieType, BoogieASTNode BoogieASTNode) {
 		if (boogieType.equals(PrimitiveType.TYPE_INT)) {
 			final BigInteger[] sortIndices = { BigInteger.valueOf(32) };
 			return mScript.sort("BitVec", sortIndices);

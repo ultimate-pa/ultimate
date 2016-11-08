@@ -45,10 +45,10 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.test.ExecuteUnitTestObs
 import de.uni_freiburg.informatik.ultimate.blockencoding.test.util.RCFGStore;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
@@ -73,7 +73,7 @@ public class TestMinimizeCallReturnVisitor extends TestCase {
 
 	private MinimizeLoopVisitor mlv;
 
-	private RCFGNode rcfgNode;
+	private IcfgLocation rcfgNode;
 
 	private ILogger logger;
 	
@@ -100,10 +100,10 @@ public class TestMinimizeCallReturnVisitor extends TestCase {
 		assertTrue(rcfgNode instanceof RootNode);
 		assertNotNull(rcfgNode.getOutgoingEdges());
 		final ArrayList<MinimizedNode> functionHeader = new ArrayList<MinimizedNode>();
-		for (final RCFGEdge edge : rcfgNode.getOutgoingEdges()) {
+		for (final IcfgEdge edge : rcfgNode.getOutgoingEdges()) {
 			assertTrue(edge instanceof RootEdge);
-			assertTrue(edge.getTarget() instanceof ProgramPoint);
-			functionHeader.add(minimizeSingleFunction((ProgramPoint) edge
+			assertTrue(edge.getTarget() instanceof BoogieIcfgLocation);
+			functionHeader.add(minimizeSingleFunction((BoogieIcfgLocation) edge
 					.getTarget()));
 		}
 		// now the basic RCFG is minimized, but Call- and Return-Edges are still
@@ -151,7 +151,7 @@ public class TestMinimizeCallReturnVisitor extends TestCase {
 	 * 
 	 * @param target
 	 */
-	private MinimizedNode minimizeSingleFunction(ProgramPoint methodEntryPoint) {
+	private MinimizedNode minimizeSingleFunction(BoogieIcfgLocation methodEntryPoint) {
 		assertNotNull(methodEntryPoint.getIncomingEdges());
 		// It can happen that while minimizing we already created an Min.Node we
 		// have to use here

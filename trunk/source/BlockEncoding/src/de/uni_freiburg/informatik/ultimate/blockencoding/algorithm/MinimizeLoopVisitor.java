@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BlockEncoding plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE BlockEncoding plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE BlockEncoding plug-in grant you additional permission
  * to convey the resulting work.
  */
 /**
@@ -41,8 +41,8 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IBasic
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IMinimizedEdge;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
@@ -62,15 +62,15 @@ public class MinimizeLoopVisitor extends MinimizeBranchVisitor {
 
 	/**
 	 * @param logger
-	 * @param services 
+	 * @param services
 	 */
-	public MinimizeLoopVisitor(ILogger logger, IUltimateServiceProvider services) {
+	public MinimizeLoopVisitor(final ILogger logger, final IUltimateServiceProvider services) {
 		super(logger);
 		mServices = services;
 	}
 
 	@Override
-	protected MinimizedNode[] applyMinimizationRules(MinimizedNode node) {
+	protected MinimizedNode[] applyMinimizationRules(final MinimizedNode node) {
 		// if this node is not reachable anymore (since we cut it off, by
 		// merging sequentially) we do not apply our minimization rules
 		// ---> the node is not part of the graph anymore
@@ -84,14 +84,14 @@ public class MinimizeLoopVisitor extends MinimizeBranchVisitor {
 			reVisitNodes.addAll(Arrays.asList(super
 					.applyMinimizationRules(node)));
 		}
-		return reVisitNodes.toArray(new MinimizedNode[0]);
+		return reVisitNodes.toArray(new MinimizedNode[reVisitNodes.size()]);
 	}
 
 	/**
 	 * @param node
 	 * @return
 	 */
-	private List<MinimizedNode> recursiveLoopMerge(MinimizedNode node) {
+	private List<MinimizedNode> recursiveLoopMerge(final MinimizedNode node) {
 		if (!mServices.getProgressMonitorService().continueProcessing()) {
 			throw new ToolchainCanceledException(this.getClass());
 		}
@@ -133,8 +133,8 @@ public class MinimizeLoopVisitor extends MinimizeBranchVisitor {
 	 * @param outgoing
 	 * @return
 	 */
-	private List<MinimizedNode> mergeSequential(IMinimizedEdge incoming,
-			List<IMinimizedEdge> outgoing) {
+	private List<MinimizedNode> mergeSequential(final IMinimizedEdge incoming,
+			final List<IMinimizedEdge> outgoing) {
 		// We have to compute the new outgoing edge level list
 		final ArrayList<IMinimizedEdge> outgoingList = new ArrayList<IMinimizedEdge>();
 		final ArrayList<MinimizedNode> reVisitNodes = new ArrayList<MinimizedNode>();
@@ -181,13 +181,13 @@ public class MinimizeLoopVisitor extends MinimizeBranchVisitor {
 	 * @param node
 	 * @return
 	 */
-	private boolean checkForSequentialMerge(MinimizedNode node) {
+	private boolean checkForSequentialMerge(final MinimizedNode node) {
 		// In this run there can be nodes with one incoming and two outgoing
 		// edges, which we also want to merge
 		if (node.getIncomingEdges().size() == 1
 				&& node.getOutgoingEdges().size() >= 2) {
 			// Maybe we have an incoming RootEdge, then we want not to minimize
-			for (final RCFGEdge edge : node.getOriginalNode().getIncomingEdges()) {
+			for (final IcfgEdge edge : node.getOriginalNode().getIncomingEdges()) {
 				if (edge instanceof RootEdge) {
 					return false;
 				}

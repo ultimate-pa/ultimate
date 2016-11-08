@@ -34,18 +34,19 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 
 
@@ -68,8 +69,9 @@ public class PathProgramAutomatonConstructor {
 	/**
 	 * Construct a path automaton (finite) from the given path.
 	 */
-	public INestedWordAutomaton<CodeBlock, IPredicate> constructAutomatonFromGivenPath(NestedWord<CodeBlock> path, IUltimateServiceProvider services, SmtManager smtManager,
-			TAPreferences taPrefs) {
+	public INestedWordAutomaton<CodeBlock, IPredicate> constructAutomatonFromGivenPath(final NestedWord<CodeBlock> path, 
+			final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
+			final TAPreferences taPrefs) {
 		// Set the alphabet
 		final Set<CodeBlock> internalAlphabet = new HashSet<CodeBlock>();
 		final Set<CodeBlock> callAlphabet = new HashSet<CodeBlock>();
@@ -86,35 +88,35 @@ public class PathProgramAutomatonConstructor {
 			}
 		}
 		
-		final StateFactory<IPredicate> predicateFactory = new PredicateFactoryForInterpolantAutomata(smtManager, taPrefs);
+		final IStateFactory<IPredicate> predicateFactoryFia = new PredicateFactoryForInterpolantAutomata(csToolkit, predicateFactory, taPrefs.computeHoareAnnotation());
 		// Create the automaton
-		final NestedWordAutomaton<CodeBlock, IPredicate> pathPA = new NestedWordAutomaton<CodeBlock, IPredicate>(new AutomataLibraryServices(services), internalAlphabet, callAlphabet, returnAlphabet, predicateFactory);
+		final NestedWordAutomaton<CodeBlock, IPredicate> pathPA = new NestedWordAutomaton<CodeBlock, IPredicate>(new AutomataLibraryServices(services), internalAlphabet, callAlphabet, returnAlphabet, predicateFactoryFia);
 		
 		// We need this list to create the transitions of the automaton.
 		mPositionsToStates = new ArrayList<IPredicate>(path.length() + 1);
 		
-		final ProgramPoint[] arrOfProgPoints = new ProgramPoint[path.length()];
+		final BoogieIcfgLocation[] arrOfProgPoints = new BoogieIcfgLocation[path.length()];
 		// We use this map to keep track of the predicates we've created so far. We don't want to create a new predicate
 		// for the same program point, therefore we use the map to get the predicate we've constructed before.
-		final Map<ProgramPoint, SPredicate> programPointToState = new HashMap<>();
+		final Map<BoogieIcfgLocation, SPredicate> programPointToState = new HashMap<>();
 		
-		ProgramPoint tempProgramPoint = null;
-		tempProgramPoint = (ProgramPoint) path.getSymbol(0).getSource();
+		BoogieIcfgLocation tempProgramPoint = null;
+		tempProgramPoint = (BoogieIcfgLocation) path.getSymbol(0).getSource();
 		
 		// Add the initial state
-		final Term trueTerm = smtManager.getScript().term("true");
-		final SPredicate initialState = smtManager.getPredicateFactory().newSPredicate(tempProgramPoint, trueTerm);
+		final Term trueTerm = csToolkit.getManagedScript().getScript().term("true");
+		final SPredicate initialState = predicateFactory.newSPredicate(tempProgramPoint, trueTerm);
 		pathPA.addState(true, false, initialState);
 		programPointToState.put(tempProgramPoint, initialState);
 		mPositionsToStates.add(0, initialState);
 		
 		// Add the other states
 		for (int i = 0; i < path.length(); i++) {
-			tempProgramPoint = (ProgramPoint) path.getSymbol(i).getTarget();
+			tempProgramPoint = (BoogieIcfgLocation) path.getSymbol(i).getTarget();
 			if (!programPointToState.containsKey(tempProgramPoint)) {
-				final SPredicate newState = smtManager.getPredicateFactory().newSPredicate(tempProgramPoint, trueTerm);
+				final SPredicate newState = predicateFactory.newSPredicate(tempProgramPoint, trueTerm);
 				programPointToState.put(tempProgramPoint, newState);
-				arrOfProgPoints[i] = (ProgramPoint) path.getSymbol(i).getTarget();
+				arrOfProgPoints[i] = (BoogieIcfgLocation) path.getSymbol(i).getTarget();
 				if (i + 1 == path.length()) {
 					// this is the last (accepting) state (the error location)
 					pathPA.addState(false, true, newState);

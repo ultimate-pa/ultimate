@@ -34,9 +34,8 @@ import java.util.Set;
 import java.util.TreeMap;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashSet;
 
 /**
@@ -76,7 +75,7 @@ public class LiveVariables {
 			Map<Term,Term>> traceWithConstants,
 			final Map<Term,IProgramVar> constants2BoogieVar,
 			final Map<IProgramVar, TreeMap<Integer, Term>> indexedVarRepresentative,
-			final SmtManager smtManager, final ModifiableGlobalVariableManager modifiedGlobals) {
+			final ModifiableGlobalVariableManager modifiedGlobals) {
 		mConstants2BoogieVar = constants2BoogieVar;
 		mTraceWithConstants = traceWithConstants;
 		mIndexedVarRepresentative = indexedVarRepresentative;
@@ -205,7 +204,7 @@ public class LiveVariables {
 		for (int i = result.length - 2; i >= 0; i--) {
 			final HashSet<Term> liveConstants = new HashSet<Term>();
 			if (mTraceWithConstants.getTrace().isCallPosition(i)) {
-				final String caller = mTraceWithConstants.getTrace().getSymbol(i).getPreceedingProcedure();
+				final String caller = mTraceWithConstants.getTrace().getSymbol(i).getPrecedingProcedure();
 				if (mTraceWithConstants.getTrace().isPendingCall(i)) {
 					addGlobals(liveConstants, result[i+1]);
 					addGlobals(liveConstants, mConstantsForEachPosition[i+1]);
@@ -220,7 +219,7 @@ public class LiveVariables {
 
 				}
 			} else if (mTraceWithConstants.getTrace().isReturnPosition(i)) {
-				final String callee = mTraceWithConstants.getTrace().getSymbol(i).getPreceedingProcedure();
+				final String callee = mTraceWithConstants.getTrace().getSymbol(i).getPrecedingProcedure();
 				addGlobals(liveConstants, result[i+1]);
 				addGlobals(liveConstants, mConstantsForEachPosition[i+1]);
 				addLocals(callee, liveConstants, mConstantsForEachPosition[i+1]);

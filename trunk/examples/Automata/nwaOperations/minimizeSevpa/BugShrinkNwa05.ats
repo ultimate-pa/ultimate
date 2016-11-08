@@ -1,0 +1,25 @@
+// Simple example which shows nondeterministic automata need extra handling,
+// namely that both blocks need to be added to the work list after splitting.
+//
+// author: Christian Schilling (schillic@informatik.uni-freiburg.de)
+// date: 2016-08-29
+
+shrinkNwa(removeDeadEnds(nwa));
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {"c" },
+	internalAlphabet = {},
+	returnAlphabet = {},
+	states = {"q0" "q1" "q2"},
+	initialStates = {"q0"},
+	finalStates = {"q0" "q1" "q2"},
+	callTransitions = {
+		("q0" "c" "q1")
+		("q0" "c" "q2")
+		("q2" "c" "q1")
+	},
+	internalTransitions = {
+	},
+	returnTransitions = {
+	}
+);

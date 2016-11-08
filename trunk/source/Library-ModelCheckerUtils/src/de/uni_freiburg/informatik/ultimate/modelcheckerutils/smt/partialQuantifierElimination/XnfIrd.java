@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination;
@@ -110,8 +110,8 @@ public class XnfIrd extends XjunctPartialQuantifierElimination {
 	public static Term[] irdSimple(final Script script, final int quantifier, final Term[] oldParams, final TermVariable tv, final ILogger logger) {
 		assert tv.getSort().isNumericSort() : "only applicable for numeric sorts";
 
-		final ArrayList<Term> paramsWithoutTv = new ArrayList<Term>();
-		short inequalitiesWithTv = 0;
+		final ArrayList<Term> paramsWithoutTv = new ArrayList<>();
+		int inequalitiesWithTv = 0;
 		for (final Term oldParam : oldParams) {
 			if (!Arrays.asList(oldParam.getFreeVars()).contains(tv)) {
 				paramsWithoutTv.add(oldParam);

@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.julian;
@@ -47,122 +47,133 @@ import java.util.Set;
  * The intersection of C and E is empty</li>
  * </ul>
  * 
+ * @author Julian Jarecki (jareckij@informatik.uni-freiburg.de)
  * @param <S>
+ *            symbol type
  * @param <C>
+ *            place content type
  */
-public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements
-		Comparable<Configuration<S, C>> {
-
+public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements Comparable<Configuration<S, C>> {
 	private final Set<Event<S, C>> mEvents;
 	private Set<Event<S, C>> mMin;
-	private ArrayList<Transition<S, C>> mPhi = null;
-
+	private ArrayList<Transition<S, C>> mPhi;
+	
 	/**
-	 * constructs a Configuration (Not a Suffix). The set given as parameter has
+	 * Constructs a Configuration (Not a Suffix). The set given as parameter has
 	 * to be causally closed and conflict-free.
 	 * 
 	 * @param events
+	 *            set of events
 	 */
-	public Configuration(Set<Event<S, C>> events) {
-		// this.mEvents = new HashSet<Event<S, C>>(events);
-		this.mEvents = events;
+	public Configuration(final Set<Event<S, C>> events) {
+		this(events, null);
 	}
-
-	private Configuration(Set<Event<S, C>> events, Set<Event<S, C>> min) {
-		// this.mEvents = new HashSet<Event<S, C>>(events);
-		this.mEvents = events;
-		this.mMin = min;
+	
+	/**
+	 * Constructor with a minimum set of events.
+	 * 
+	 * @param events
+	 *            set of events
+	 * @param min
+	 *            minimum set of events
+	 */
+	private Configuration(final Set<Event<S, C>> events, final Set<Event<S, C>> min) {
+		// mEvents = new HashSet<Event<S, C>>(events);
+		mEvents = events;
+		mMin = min;
 	}
-
+	
 	private List<Transition<S, C>> getPhi() {
-
 		if (mPhi == null) {
-			mPhi = new ArrayList<Transition<S, C>>(mEvents.size());
+			mPhi = new ArrayList<>(mEvents.size());
 			for (final Event<S, C> e : mEvents) {
 				mPhi.add(e.getTransition());
 			}
 			Collections.sort(mPhi);
-//			mLogger.debug("PhiSorted: " + mPhi);
+			// mLogger.debug("PhiSorted: " + mPhi);
 		}
 		// return Collections.unmodifiableList(mPhi);
 		return mPhi;
 	}
-
+	
 	/*
 	 * public Configuration<S, C> getMin() { Set<Event<S, C>> result = new
 	 * HashSet<Event<S, C>>();
 	 * 
 	 * return new Configuration<S, C>(result); }
 	 */
-
+	
 	/**
-	 * returns the minimum of the Set of Events regarding the causal relation.
-	 * 
+	 * Returns the minimum of the Set of Events regarding the causal relation.
+	 * <p>
 	 * only yields the correct result, if it either has been precomputed when
 	 * the Object was constructed, or this is a proper Configuration (not a
 	 * suffix.)
 	 * 
 	 * @param unf
-	 * @return
+	 *            TODO Christian 2016-09-25: undocumented
+	 * @return the minimum of the Set of Events regarding the causal relation
 	 */
-	public Configuration<S, C> getMin(BranchingProcess<S, C> unf) {
+	public Configuration<S, C> getMin(final BranchingProcess<S, C> unf) {
 		Set<Event<S, C>> result;
 		if (mMin != null) {
 			result = mMin;
 		} else {
-			result = new HashSet<Event<S, C>>(unf.getMinEvents());
+			result = new HashSet<>(unf.getMinEvents());
 			result.retainAll(mEvents);
+			
 			/*
-			 * for (Event<S, C> event : unf.getMinDot()) { if
-			 * (mEvents.contains(event)) result.add(event); }
-			 */
+			for (Event<S, C> event : unf.getMinDot()) {
+				if (mEvents.contains(event))
+					result.add(event);
+			}
+			*/
 			mMin = result;
 		}
-		return new Configuration<S, C>(result);
+		return new Configuration<>(result);
 	}
-
+	
 	@Override
 	public Iterator<Event<S, C>> iterator() {
 		return mEvents.iterator();
 	}
-
+	
 	@Override
 	public int size() {
 		return mEvents.size();
 	}
-
+	
 	@Override
-	public boolean add(Event<S, C> arg0) {
+	public boolean add(final Event<S, C> arg0) {
 		return mEvents.add(arg0);
 	}
-
+	
 	@Override
-	public boolean addAll(Collection<? extends Event<S, C>> arg0) {
+	public boolean addAll(final Collection<? extends Event<S, C>> arg0) {
 		return mEvents.addAll(arg0);
 	}
-
+	
 	@Override
 	public void clear() {
 		mEvents.clear();
 	}
-
+	
 	@Override
-	public boolean contains(Object arg0) {
+	public boolean contains(final Object arg0) {
 		return mEvents.contains(arg0);
 	}
-
+	
 	@Override
-	public boolean containsAll(Collection<?> arg0) {
+	public boolean containsAll(final Collection<?> arg0) {
 		return mEvents.containsAll(arg0);
 	}
-
+	
 	/**
-	 * returns true, if the configuration contains any of the specified events.
-	 * 
 	 * @param events
-	 * @return
+	 *            Some events.
+	 * @return {@code true} iff the configuration contains any of the specified events
 	 */
-	public boolean containsAny(Collection<Event<S, C>> events) {
+	public boolean containsAny(final Collection<Event<S, C>> events) {
 		for (final Event<S, C> place : events) {
 			if (mEvents.contains(place)) {
 				return true;
@@ -170,34 +181,31 @@ public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements
 		}
 		return false;
 	}
-
+	
 	@Override
 	public boolean isEmpty() {
 		return mEvents.isEmpty();
 	}
-
+	
 	@Override
-	public boolean remove(Object arg0) {
+	public boolean remove(final Object arg0) {
 		return mEvents.remove(arg0);
 	}
-
+	
 	/**
-	 * returns a new Configuration that contains the set difference between the
-	 * original configuration and its minimum regarding the casual relation.
-	 * 
-	 * requires, that getMin() has been called.
-	 * 
-	 * @param min
-	 * @return
+	 * @return A new Configuration that contains the set difference between the
+	 *         original configuration and its minimum regarding the casual relation.
+	 *         <p>
+	 *         requires, that getMin() has been called.
 	 */
 	public Configuration<S, C> removeMin() {
 		assert mMin != null : "getMin() must have been called before removeMin()";
 		assert !mMin.isEmpty() : "The minimum of a configuration must not be empty.";
-		final HashSet<Event<S, C>> events = new HashSet<Event<S, C>>(mEvents);
+		final HashSet<Event<S, C>> events = new HashSet<>(mEvents);
 		events.removeAll(mMin);
 		final Set<Event<S, C>> min = Event.getSuccessorEvents(mMin);
 		min.retainAll(events);
-		final HashSet<Event<S, C>> newmin = new HashSet<Event<S, C>>();
+		final HashSet<Event<S, C>> newmin = new HashSet<>();
 		for (final Event<S, C> e : min) {
 			final Set<Event<S, C>> predEventsOfE = e.getPredecessorEvents();
 			predEventsOfE.retainAll(mEvents);
@@ -205,84 +213,91 @@ public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements
 				newmin.add(e);
 			}
 		}
-		final Configuration<S, C> result = new Configuration<S, C>(events, newmin);
-		return result;
+		return new Configuration<>(events, newmin);
 	}
-
+	
 	@Override
-	public boolean removeAll(Collection<?> arg0) {
+	public boolean removeAll(final Collection<?> arg0) {
 		return mEvents.removeAll(arg0);
 	}
-
+	
 	@Override
-	public boolean retainAll(Collection<?> arg0) {
+	public boolean retainAll(final Collection<?> arg0) {
 		return mEvents.retainAll(arg0);
 	}
-
+	
 	@Override
 	public Object[] toArray() {
 		return mEvents.toArray();
 	}
-
+	
 	@Override
-	public <T> T[] toArray(T[] arg0) {
+	public <T> T[] toArray(final T[] arg0) {
 		return mEvents.toArray(arg0);
 	}
-
+	
 	/**
 	 * Compares configurations initially based on size. In case of equal size,
 	 * lexically compares the ordered sequences of events with respect to the
 	 * the total order on their transitions.
 	 */
 	@Override
-	public int compareTo(Configuration<S, C> o) {
-		if (size() != o.size()) {
-			return size() - o.size();
+	public int compareTo(final Configuration<S, C> other) {
+		if (size() != other.size()) {
+			return size() - other.size();
 		}
 		final List<Transition<S, C>> phi1 = getPhi();
-		final List<Transition<S, C>> phi2 = o.getPhi();
+		final List<Transition<S, C>> phi2 = other.getPhi();
 		for (int i = 0; i < phi1.size(); i++) {
 			final Transition<S, C> t1 = phi1.get(i);
 			final Transition<S, C> t2 = phi2.get(i);
-			final int result = t1.getTotalOrderID() - t2.getTotalOrderID();
+			final int result = t1.getTotalOrderId() - t2.getTotalOrderId();
 			if (result != 0) {
-//				mLogger.debug(phi1.toString() + (result < 0 ? "<" : ">")
-//						+ phi2.toString());
+				// mLogger.debug(phi1.toString() + (result < 0 ? "<" : ">") + phi2.toString());
 				return result;
 			}
 		}
-		assert (phi1.equals(phi2));
+		assert phi1.equals(phi2);
 		return 0;
 	}
-
-	public boolean equals(Configuration<S, C> other) {
+	
+	/**
+	 * TODO Christian 2016-08-16: This does not override the Object.equals()
+	 * method. It may be confusing when using in Collections.
+	 * 
+	 * @param other
+	 *            another configuration
+	 * @return {@code true} iff two given configurations have the same events.
+	 */
+	public boolean equals(final Configuration<S, C> other) {
 		return containsAll(other) && other.containsAll(this);
 	}
-
-	// @Override
-	// public int hashCode() {
-	// final int prime = 31;
-	// int result = super.hashCode();
-	// result = prime * result
-	// + ((mEvents == null) ? 0 : mEvents.hashCode());
-	// return result;
-	// }
-	//
-	// @Override
-	// public boolean equals(Object obj) {
-	// if (this == obj)
-	// return true;
-	// if (!super.equals(obj))
-	// return false;
-	// if (getClass() != obj.getClass())
-	// return false;
-	// Configuration<S, C> other = (Configuration) obj;
-	// if (mEvents == null) {
-	// if (other.mEvents != null)
-	// return false;
-	// } else if (!mEvents.equals(other.mEvents))
-	// return false;
-	// return true;
-	// }
-
+	
+	/*
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result
+				+ ((mEvents == null) ? 0 : mEvents.hashCode());
+		return result;
+	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (!super.equals(obj))
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Configuration<S, C> other = (Configuration) obj;
+		if (mEvents == null) {
+			if (other.mEvents != null)
+				return false;
+		} else if (!mEvents.equals(other.mEvents))
+			return false;
+		return true;
+	}
+	*/
 }

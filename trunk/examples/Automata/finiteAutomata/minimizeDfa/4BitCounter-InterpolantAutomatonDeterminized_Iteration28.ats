@@ -1,7 +1,7 @@
 // Testfile dumped by Ultimate at 2011/12/14 15:24:37
 
 print(numberOfStates(removeDeadEnds(nwa)));
-int minimizeDFASize = numberOfStates(minimizeDFA(removeDeadEnds(nwa)));
+int minimizeDFASize = numberOfStates(minimizeDfaTable(removeDeadEnds(nwa)));
 print(minimizeDFASize);
 int minimizeDfaSimulationSize = numberOfStates(minimizeDFASimulation(removeDeadEnds(nwa)));
 print(minimizeDfaSimulationSize);

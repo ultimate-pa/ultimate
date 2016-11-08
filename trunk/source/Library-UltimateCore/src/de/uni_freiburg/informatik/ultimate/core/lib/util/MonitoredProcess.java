@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Core.
- * 
+ *
  * The ULTIMATE Core is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Core is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Core. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Core, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Core grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Core grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.core.lib.util;
@@ -57,9 +57,8 @@ import de.uni_freiburg.informatik.ultimate.util.ExceptionUtils;
 /**
  * A MonitoredProcess is a {@link Process} that will be terminated at the end of the toolchain from which it was
  * created.
- * 
+ *
  * @author dietsch@informatik.uni-freiburg.de
- * 
  */
 public final class MonitoredProcess implements IStorable {
 
@@ -102,8 +101,8 @@ public final class MonitoredProcess implements IStorable {
 	private volatile boolean mProcessCompleted;
 	private volatile int mReturnCode;
 
-	private MonitoredProcess(Process process, String command, String exitCommand, IUltimateServiceProvider services,
-			IToolchainStorage storage) {
+	private MonitoredProcess(final Process process, final String command, final String exitCommand,
+			final IUltimateServiceProvider services, final IToolchainStorage storage) {
 		assert storage != null;
 		assert services != null;
 		mStorage = storage;
@@ -123,13 +122,12 @@ public final class MonitoredProcess implements IStorable {
 	}
 
 	/**
-	 * Start a new monitored process. The process will be terminated at the end of the toolchain.
-	 * 
-	 * Note that you should not start an external process through some wrapper script, because Java will have trouble
-	 * terminating this processes due to bug
-	 * <a href="http://bugs.java.com/bugdatabase/view_bug.do?bug_id=4770092">JDK-4770092</a>. If this occurs, Ultimate
-	 * may deadlock because it cannot close input and output streams of the unresponsive process reliably.
-	 * 
+	 * Start a new monitored process. The process will be terminated at the end of the toolchain. Note that you should
+	 * not start an external process through some wrapper script, because Java will have trouble terminating this
+	 * processes due to bug <a href="http://bugs.java.com/bugdatabase/view_bug.do?bug_id=4770092">JDK-4770092</a>. If
+	 * this occurs, Ultimate may deadlock because it cannot close input and output streams of the unresponsive process
+	 * reliably.
+	 *
 	 * @param command
 	 *            A string array containing the command and its possible arguments that will be used to start a new
 	 *            process.
@@ -148,8 +146,9 @@ public final class MonitoredProcess implements IStorable {
 	 * @throws IOException
 	 *             If the command cannot be executed because there is no executable, this exception is thrown.
 	 */
-	public static MonitoredProcess exec(String[] command, String workingDir, String exitCommand,
-			IUltimateServiceProvider services, IToolchainStorage storage) throws IOException {
+	public static MonitoredProcess exec(final String[] command, final String workingDir, final String exitCommand,
+			final IUltimateServiceProvider services, final IToolchainStorage storage, final ILogger logger)
+			throws IOException {
 		final MonitoredProcess newMonitoredProcess;
 		final String oneLineCmd = Arrays.stream(command).reduce((a, b) -> a + " " + b).get();
 
@@ -165,7 +164,6 @@ public final class MonitoredProcess implements IStorable {
 					command[0] = f.getAbsolutePath();
 				}
 			}
-			final ILogger logger = services.getLoggingService().getControllerLogger();
 			logger.info("No working directory specified, using " + System.getProperty("user.dir"));
 			newMonitoredProcess = new MonitoredProcess(Runtime.getRuntime().exec(command), oneLineCmd, exitCommand,
 					services, storage);
@@ -179,13 +177,12 @@ public final class MonitoredProcess implements IStorable {
 	}
 
 	/**
-	 * Start a new monitored process. The process will be terminated at the end of the toolchain.
-	 * 
-	 * Note that you should not start an external process through some wrapper script, because Java will have trouble
-	 * terminating this processes due to bug
-	 * <a href="http://bugs.java.com/bugdatabase/view_bug.do?bug_id=4770092">JDK-4770092</a>. If this occurs, Ultimate
-	 * may deadlock because it cannot close input and output streams of the unresponsive process reliably.
-	 * 
+	 * Start a new monitored process. The process will be terminated at the end of the toolchain. Note that you should
+	 * not start an external process through some wrapper script, because Java will have trouble terminating this
+	 * processes due to bug <a href="http://bugs.java.com/bugdatabase/view_bug.do?bug_id=4770092">JDK-4770092</a>. If
+	 * this occurs, Ultimate may deadlock because it cannot close input and output streams of the unresponsive process
+	 * reliably.
+	 *
 	 * @param command
 	 *            A command without arguments that will be used to start a new process.
 	 * @param exitCommand
@@ -200,12 +197,13 @@ public final class MonitoredProcess implements IStorable {
 	 * @throws IOException
 	 *             If the command cannot be executed because there is no executable, this exception is thrown.
 	 */
-	public static MonitoredProcess exec(String command, String exitCommand, IUltimateServiceProvider services,
-			IToolchainStorage storage) throws IOException {
-		return exec(command.split(" "), null, exitCommand, services, storage);
+	public static MonitoredProcess exec(final String command, final String exitCommand,
+			final IUltimateServiceProvider services, final IToolchainStorage storage, final ILogger logger)
+			throws IOException {
+		return exec(command.split(" "), null, exitCommand, services, storage, logger);
 	}
 
-	private void start(String workingDir, IToolchainStorage storage, String oneLineCmd) {
+	private void start(final String workingDir, final IToolchainStorage storage, final String oneLineCmd) {
 		mID = sInstanceCounter.incrementAndGet();
 		storage.putStorable(getKey(mID, oneLineCmd), this);
 
@@ -218,7 +216,7 @@ public final class MonitoredProcess implements IStorable {
 
 	/**
 	 * Wait forever until the {@link MonitoredProcess} terminates.
-	 * 
+	 *
 	 * @return A {@link MonitoredProcessState} instance indicating whether the process is still running or not and if
 	 *         not, what the return code is.
 	 * @throws InterruptedException
@@ -232,14 +230,13 @@ public final class MonitoredProcess implements IStorable {
 		mMonitor.join();
 		if (mMonitor.getState() == State.TERMINATED) {
 			return new MonitoredProcessState(false, false, mReturnCode);
-		} else {
-			return new MonitoredProcessState(true, false, mReturnCode);
 		}
+		return new MonitoredProcessState(true, false, mReturnCode);
 	}
 
 	/**
 	 * Wait and block for some time for the normal termination of the process.
-	 * 
+	 *
 	 * @param millis
 	 *            The time to wait in milliseconds.
 	 * @return A {@link MonitoredProcessState} instance indicating whether the process is still running or not and if
@@ -248,28 +245,27 @@ public final class MonitoredProcess implements IStorable {
 	 *             If any thread has interrupted the monitor thread. The interrupted status of the monitor thread is
 	 *             cleared when this exception is thrown.
 	 */
-	public MonitoredProcessState waitfor(long millis) throws InterruptedException {
+	public MonitoredProcessState waitfor(final long millis) throws InterruptedException {
 		if (mMonitor.getState() == State.TERMINATED) {
 			return new MonitoredProcessState(false, false, mReturnCode);
 		}
 		mMonitor.join(millis);
 		if (mMonitor.getState() == State.TERMINATED) {
 			return new MonitoredProcessState(false, false, mReturnCode);
-		} else {
-			return new MonitoredProcessState(true, false, mReturnCode);
 		}
+		return new MonitoredProcessState(true, false, mReturnCode);
 	}
 
 	/**
 	 * Wait and block for some time for the normal termination of the process. If it did not occur, terminate the
 	 * process abnormally.
-	 * 
+	 *
 	 * @param millis
 	 *            The time in milliseconds for which the method waits for the normal termination of the process. Must be
 	 *            non-negative. A value of 0 means waiting forever.
 	 * @return A {@link MonitoredProcessState} instance containing the return code of the process or -1
 	 */
-	public MonitoredProcessState impatientWaitUntilTime(long millis) {
+	public MonitoredProcessState impatientWaitUntilTime(final long millis) {
 		if (millis < 0) {
 			throw new IllegalArgumentException("millis has to be non-negative but was " + millis);
 		}
@@ -293,13 +289,13 @@ public final class MonitoredProcess implements IStorable {
 	/**
 	 * Wait until the toolchain is cancelled for the termination of the process. If it did not occur, terminate the
 	 * process abnormally.
-	 * 
+	 *
 	 * @param gracePeriod
 	 *            A time period in milliseconds that this method will wait after a toolchain cancellation request was
 	 *            received before terminating the process. Must be non-negative. 0 means no grace-period.
 	 * @return A {@link MonitoredProcessState} instance containing the return code of the process or -1
 	 */
-	public MonitoredProcessState impatientWaitUntilToolchainTimeout(long gracePeriod) {
+	public MonitoredProcessState impatientWaitUntilToolchainTimeout(final long gracePeriod) {
 		if (gracePeriod < 0) {
 			throw new IllegalArgumentException("gracePeriod must be non-negative");
 		}
@@ -335,7 +331,7 @@ public final class MonitoredProcess implements IStorable {
 	/**
 	 * Start a timeout for this process. After the set time is over, the process will be terminated forcefully. This
 	 * method is non-blocking. You may only call this method once!
-	 * 
+	 *
 	 * @param millis
 	 *            A time period in milliseconds after which the process should terminate. Must be larger than zero.
 	 */
@@ -363,7 +359,7 @@ public final class MonitoredProcess implements IStorable {
 	/**
 	 * Calling this method will force the process to terminate if the toolchain terminates, possibly after a grace
 	 * period. This method is non-blocking. You may only call this method once!
-	 * 
+	 *
 	 * @param gracePeriod
 	 *            A time period in milliseconds that we will wait after a toolchain cancellation request was received
 	 *            before terminating the process. Must be non-negative. 0 means no grace-period.
@@ -456,7 +452,7 @@ public final class MonitoredProcess implements IStorable {
 		}
 	}
 
-	private void close(Closeable pipe) {
+	private void close(final Closeable pipe) {
 		try {
 			pipe.close();
 		} catch (final IOException e) {
@@ -501,7 +497,7 @@ public final class MonitoredProcess implements IStorable {
 		super.finalize();
 	}
 
-	private static String getKey(int processId, String command) {
+	private static String getKey(final int processId, final String command) {
 		return processId + " " + command;
 	}
 
@@ -559,16 +555,14 @@ public final class MonitoredProcess implements IStorable {
 	}
 
 	/**
-	 * 
 	 * @author dietsch@informatik.uni-freiburg.de
-	 * 
 	 */
 	public static final class MonitoredProcessState {
 		private final boolean mIsRunning;
 		private final int mReturnCode;
 		private final boolean mIsKilled;
 
-		private MonitoredProcessState(boolean isRunning, boolean isKilled, int returnCode) {
+		private MonitoredProcessState(final boolean isRunning, final boolean isKilled, final int returnCode) {
 			mIsRunning = isRunning;
 			mReturnCode = returnCode;
 			mIsKilled = isKilled;
@@ -588,15 +582,13 @@ public final class MonitoredProcess implements IStorable {
 	}
 
 	/**
-	 * 
 	 * @author dietsch@informatik.uni-freiburg.de
-	 * 
 	 */
 	private final class ProcessRunner implements Runnable {
 
 		private final MonitoredProcess mMonitoredProcess;
 
-		private ProcessRunner(MonitoredProcess monitoredProcess) {
+		private ProcessRunner(final MonitoredProcess monitoredProcess) {
 			mMonitoredProcess = monitoredProcess;
 		}
 
@@ -648,9 +640,7 @@ public final class MonitoredProcess implements IStorable {
 	}
 
 	/**
-	 * 
 	 * @author dietsch@informatik.uni-freiburg.de
-	 * 
 	 */
 	private final class PipePump implements Runnable {
 		private final OutputStream mOutputStream;

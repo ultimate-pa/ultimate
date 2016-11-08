@@ -37,8 +37,8 @@ import java.util.Set;
 import java.util.Stack;
 
 import de.uni_freiburg.informatik.ultimate.automata.Word;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -53,32 +53,34 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IActi
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ApplicationTermFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierSequence;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker.TraceCheckerLock;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 public class NestedInterpolantsBuilder {
 
-	private final  IUltimateServiceProvider mServices;
+	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
-	private final SimplicationTechnique mSimplificationTechnique;
+	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
 
-	final Script mScriptTc;
-	final SmtManager mSmtManagerTc;
-	final SmtManager mSmtManagerPredicates;
+	private final ManagedScript mMgdScriptTc;
+	private final TraceCheckerLock mScriptLockOwner;
+	private final ManagedScript mMgdScriptCfg;
 
 	Term[] mCraigInterpolants;
 	final PrintWriter mIterationPW = null;
@@ -91,7 +93,8 @@ public class NestedInterpolantsBuilder {
 
 	private final NestedFormulas<Term, Term> mAnnotSSA;
 
-	private final PredicateUnifier mPredicateBuilder;
+	private final PredicateUnifier mPredicateUnifier;
+	private final PredicateFactory mPredicateFactory;
 
 	private final Set<Integer> mInterpolatedPositions;
 
@@ -115,23 +118,27 @@ public class NestedInterpolantsBuilder {
 
 	private final boolean mInstantiateArrayExt;
 
+	
 
 
-	public NestedInterpolantsBuilder(final SmtManager smtManagerTc, final NestedFormulas<Term, Term> annotatdSsa,
-			final Map<Term, IProgramVar> mconstants2BoogieVar, final PredicateUnifier predicateBuilder,
+
+	public NestedInterpolantsBuilder(final ManagedScript mgdScriptTc, final TraceCheckerLock scriptLockOwner, 
+			final NestedFormulas<Term, Term> annotatdSsa, final Map<Term, IProgramVar> mconstants2BoogieVar, 
+			final PredicateUnifier predicateBuilder, final PredicateFactory predicateFactory,
 			final Set<Integer> interpolatedPositions, final boolean treeInterpolation,
 			final IUltimateServiceProvider services,
-			final TraceChecker traceChecker, final SmtManager smtManagerPredicates, final boolean instantiateArrayExt, 
-			final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
+			final TraceChecker traceChecker, final ManagedScript mgdScriptCfg, final boolean instantiateArrayExt, 
+			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
 		mTreeInterpolation = treeInterpolation;
-		mScriptTc = smtManagerTc.getScript();
-		mSmtManagerTc = smtManagerTc;
-		mSmtManagerPredicates = smtManagerPredicates;
-		mPredicateBuilder = predicateBuilder;
+		mMgdScriptTc = mgdScriptTc;
+		mScriptLockOwner = scriptLockOwner;
+		mMgdScriptCfg = mgdScriptCfg;
+		mPredicateUnifier = predicateBuilder;
+		mPredicateFactory = predicateFactory;
 		mAnnotSSA = annotatdSsa;
 		mCraigInterpolants = new Term[mAnnotSSA.getTrace().length() - 1];
 		mInterpolatedPositions = interpolatedPositions;
@@ -141,10 +148,10 @@ public class NestedInterpolantsBuilder {
 		for (final Entry<Term, IProgramVar> entry : mconstants2BoogieVar.entrySet()) {
 			const2RepTv.put(entry.getKey(), entry.getValue().getTermVariable());
 		}
-		if (mSmtManagerTc != smtManagerPredicates) {
-			mConst2RepTvSubst = new TermTransferrer(mSmtManagerPredicates.getScript(), const2RepTv);
+		if (mMgdScriptTc != mgdScriptCfg) {
+			mConst2RepTvSubst = new TermTransferrer(mMgdScriptCfg.getScript(), const2RepTv);
 		} else {
-			mConst2RepTvSubst = new Substitution(mSmtManagerPredicates.getScript(), const2RepTv);
+			mConst2RepTvSubst = new Substitution(mMgdScriptCfg.getScript(), const2RepTv);
 		}
 
 		computeCraigInterpolants();
@@ -253,20 +260,20 @@ public class NestedInterpolantsBuilder {
 					interpolInputPositionOfReturn++;
 				}
 			}
-			interpolInput[interpolInputPositionOfReturn] = Util.and(mScriptTc,
+			interpolInput[interpolInputPositionOfReturn] = Util.and(mMgdScriptTc.getScript(),
 					interpolInput[interpolInputPositionOfReturn], mAnnotSSA.getPrecondition());
 		} else {
-			interpolInput[0] = Util.and(mScriptTc, interpolInput[0], mAnnotSSA.getPrecondition());
+			interpolInput[0] = Util.and(mMgdScriptTc.getScript(), interpolInput[0], mAnnotSSA.getPrecondition());
 		}
 		// add negated postcondition to last term
-		interpolInput[interpolInput.length - 1] = Util.and(mScriptTc, interpolInput[interpolInput.length - 1],
+		interpolInput[interpolInput.length - 1] = Util.and(mMgdScriptTc.getScript(), interpolInput[interpolInput.length - 1],
 				mAnnotSSA.getPostcondition());
 
 		final int[] startOfSubtree = integerListToIntArray(treeStructure);
 		if (mTreeInterpolation) {
-			mCraigInterpolants = mSmtManagerTc.computeInterpolants(interpolInput, startOfSubtree);
+			mCraigInterpolants = mMgdScriptTc.getInterpolants(mScriptLockOwner, interpolInput, startOfSubtree);
 		} else {
-			mCraigInterpolants = mSmtManagerTc.computeInterpolants(interpolInput);
+			mCraigInterpolants = mMgdScriptTc.getInterpolants(mScriptLockOwner, interpolInput);
 		}
 
 	}
@@ -312,7 +319,7 @@ public class NestedInterpolantsBuilder {
 
 	private void addToLastInterpolInputFormula(final Term term) {
 		final int lastPosition = interpolInput.size() - 1;
-		final Term newFormula = Util.and(mScriptTc, interpolInput.get(lastPosition), term);
+		final Term newFormula = Util.and(mMgdScriptTc.getScript(), interpolInput.get(lastPosition), term);
 		assert newFormula != null : "newFormula must be != null";
 		interpolInput.set(lastPosition, newFormula);
 	}
@@ -344,9 +351,9 @@ public class NestedInterpolantsBuilder {
 	// * to mCraigInterpolants.
 	// */
 	// private void computeCraigInterpolants() {
-	// // mCraigInterpolants[0] = mSmtManager.getScript().term("true");
+	// // mCraigInterpolants[0] = mCsToolkit.getScript().term("true");
 	// // mCraigInterpolants[mCraigInterpolants.length-1] =
-	// mSmtManager.getScript().term("false");
+	// mCsToolkit.getScript().term("false");
 	// List<Integer> interpolProbStartPositions =
 	// getInterpolProbStartPositions();
 	// for (Integer k: interpolProbStartPositions) {
@@ -410,7 +417,7 @@ public class NestedInterpolantsBuilder {
 	// ArrayList<Term> interpolProb = new ArrayList<Term>();
 	// ArrayList<Integer> indexTranslation = new ArrayList<Integer>();
 	// Term interproceduralLinkPendingCalls =
-	// mSmtManager.getScript().term("true");
+	// mCsToolkit.getScript().term("true");
 	// int j=0;
 	// interpolProb.add(j, getFormulaforPos(k));
 	// for (int i=k+1; i<= endPos; i++) {
@@ -470,7 +477,7 @@ public class NestedInterpolantsBuilder {
 	// }
 	// Term[] interpolOutput = null;
 	// if (interpolInput.length > 1) {
-	// interpolOutput = mSmtManager.computeInterpolants(interpolInput);
+	// interpolOutput = mCsToolkit.computeInterpolants(interpolInput);
 	// }
 	//
 	//
@@ -490,7 +497,7 @@ public class NestedInterpolantsBuilder {
 	// if (mTrace.isInternalPosition(i)) {
 	// iFormu = mAnnotSSA.getTerms()[i];
 	// } else if (mTrace.isCallPosition(i)) {
-	// iFormu = mSmtManager.getScript().term("true");
+	// iFormu = mCsToolkit.getScript().term("true");
 	// } else if (mTrace.isReturnPosition(i)) {
 	// iFormu = mAnnotSSA.getTerms()[i];
 	// int callPos = mTrace.getCallPosition(i);
@@ -560,14 +567,14 @@ public class NestedInterpolantsBuilder {
 						withoutIndices = instantiateArrayExt(withoutIndices);
 					}
 					final Term lessQuantifiers = PartialQuantifierElimination.tryToEliminate(
-							mServices, mLogger, mSmtManagerPredicates.getManagedScript(), 
+							mServices, mLogger, mMgdScriptCfg, 
 							withoutIndices,
 							mSimplificationTechnique, mXnfConversionTechnique);
-					result[resultPos] = mPredicateBuilder.getOrConstructPredicate(lessQuantifiers);
+					result[resultPos] = mPredicateUnifier.getOrConstructPredicate(lessQuantifiers);
 					withIndices2Predicate.put(withIndices, result[resultPos]);
 				}
 			} else {
-				result[resultPos] = mSmtManagerPredicates.getPredicateFactory().newDontCarePredicate(null);
+				result[resultPos] = mPredicateFactory.newDontCarePredicate(null);
 			}
 		}
 		assert craigInterpolPos == mCraigInterpolants.length;
@@ -590,11 +597,11 @@ public class NestedInterpolantsBuilder {
 	 * it for each occurrence.
 	 */
 	private Term instantiateArrayExt(final Term interpolantWithoutIndices) {
-		final Term nnf = (new Nnf(mSmtManagerPredicates.getManagedScript(), 
+		final Term nnf = (new Nnf(mMgdScriptCfg, 
 				mServices, QuantifierHandling.PULL)).transform(interpolantWithoutIndices);
 //		not needed, at the moment our NNF transformation also produces 		
-//		Term prenex = (new PrenexNormalForm(mSmtManagerPredicates.getScript(), mSmtManagerPredicates.getVariableManager())).transform(nnf);
-		final QuantifierSequence qs = new QuantifierSequence(mSmtManagerPredicates.getScript(), nnf);
+//		Term prenex = (new PrenexNormalForm(mCsToolkitPredicates.getScript(), mCsToolkitPredicates.getVariableManager())).transform(nnf);
+		final QuantifierSequence qs = new QuantifierSequence(mMgdScriptCfg.getScript(), nnf);
 //		The quantifier-free part of of formula in prenex normal form is called
 //		matrix
 		final Term matrix = qs.getInnerTerm();
@@ -615,11 +622,11 @@ public class NestedInterpolantsBuilder {
 			substitutionMapping.put(aet.getArrayExtTerm(), aet.getReplacementTermVariable());
 			offset++;
 		}
-		Term result = (new Substitution(mSmtManagerPredicates.getScript(), substitutionMapping)).transform(matrix);
-		result = Util.and(mSmtManagerPredicates.getScript(), result, Util.and(mSmtManagerPredicates.getScript(), implications));
-		result = mSmtManagerPredicates.getScript().quantifier(QuantifiedFormula.EXISTS, replacingTermVariable, result);
-		result = QuantifierSequence.prependQuantifierSequence(mSmtManagerPredicates.getScript(), qs.getQuantifierBlocks(), result);
-//		Term pushed = new QuantifierPusher(mSmtManagerPredicates.getScript(), mServices).transform(result);
+		Term result = (new Substitution(mMgdScriptCfg.getScript(), substitutionMapping)).transform(matrix);
+		result = Util.and(mMgdScriptCfg.getScript(), result, Util.and(mMgdScriptCfg.getScript(), implications));
+		result = mMgdScriptCfg.getScript().quantifier(QuantifiedFormula.EXISTS, replacingTermVariable, result);
+		result = QuantifierSequence.prependQuantifierSequence(mMgdScriptCfg.getScript(), qs.getQuantifierBlocks(), result);
+//		Term pushed = new QuantifierPusher(mCsToolkitPredicates.getScript(), mServices).transform(result);
 		return result;
 	}
 	
@@ -645,11 +652,11 @@ public class NestedInterpolantsBuilder {
 		}
 
 		private Term constructImplication() {
-			final Term arraysDistinct = mSmtManagerPredicates.getScript().term("distinct", mFirstArray, mSecondArray);
-			final Term firstSelect = mSmtManagerPredicates.getScript().term("select", mFirstArray, mReplacementTermVariable);
-			final Term secondSelect = mSmtManagerPredicates.getScript().term("select", mSecondArray, mReplacementTermVariable);
-			final Term selectDistinct = mSmtManagerPredicates.getScript().term("distinct", firstSelect, secondSelect);
-			final Term implication = Util.implies(mSmtManagerPredicates.getScript(), arraysDistinct, selectDistinct);
+			final Term arraysDistinct = mMgdScriptCfg.getScript().term("distinct", mFirstArray, mSecondArray);
+			final Term firstSelect = mMgdScriptCfg.getScript().term("select", mFirstArray, mReplacementTermVariable);
+			final Term secondSelect = mMgdScriptCfg.getScript().term("select", mSecondArray, mReplacementTermVariable);
+			final Term selectDistinct = mMgdScriptCfg.getScript().term("distinct", firstSelect, secondSelect);
+			final Term implication = Util.implies(mMgdScriptCfg.getScript(), arraysDistinct, selectDistinct);
 			return implication;
 		}
 

@@ -27,10 +27,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 
-import java.io.File;
-
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 
 /**
@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activat
  * @author heizmann@informatik.uni-freiburg.de
  * 
  */
-public class RootNode extends RCFGNode {
+public class RootNode extends IcfgLocation {
 
 	/**
 	 * ID to distinguish different versions of this class. If the class gains
@@ -53,18 +53,18 @@ public class RootNode extends RCFGNode {
 	 */
 	private static final long serialVersionUID = 1L;
 
-	public RootNode(ILocation location, RootAnnot rootAnnot) {
-		super(new Payload(location));
+	public RootNode(final ILocation location, final BoogieIcfgContainer rootAnnot) {
+		super("rootNode", "rootNode", new Payload(location));
 		getPayload().getAnnotations().put(Activator.PLUGIN_ID, rootAnnot);
 	}
 
-	public RootAnnot getRootAnnot() {
-		return ((RootAnnot) getPayload().getAnnotations().get(
+	public BoogieIcfgContainer getRootAnnot() {
+		return ((BoogieIcfgContainer) getPayload().getAnnotations().get(
 				Activator.PLUGIN_ID));
 	}
 
 	@Override
-	public boolean addIncoming(RCFGEdge incoming) {
+	public boolean addIncoming(final IcfgEdge incoming) {
 		throw new UnsupportedOperationException(
 				"RootNode has no incoming edges");
 	}
@@ -74,15 +74,4 @@ public class RootNode extends RCFGNode {
 		return "RootNode";
 	}
 	
-	
-	/**
-	 * Returns the name of the file that is analyzed.
-	 * The result is the name without the full path.
-	 * 
-	 */
-	public String getFilename() {
-		final String pathAndFilename = getPayload().getLocation().getFileName();
-		final String pureFilename = (new File(pathAndFilename)).getName();
-		return pureFilename;
-	}
 }

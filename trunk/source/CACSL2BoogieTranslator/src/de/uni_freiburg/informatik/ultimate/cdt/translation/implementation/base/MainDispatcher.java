@@ -41,6 +41,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -133,18 +134,22 @@ import org.eclipse.cdt.internal.core.dom.parser.IASTAmbiguousExpression;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTDesignatedInitializer;
 import org.eclipse.cdt.internal.core.dom.parser.cpp.IASTAmbiguousCondition;
 
+import de.uni_freiburg.informatik.ultimate.acsl.parser.ACSLSyntaxErrorException;
 import de.uni_freiburg.informatik.ultimate.acsl.parser.Parser;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratorNode;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionListResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -166,6 +171,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.BitVectorAccessExpress
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.BlockLengthExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Case;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.CastExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.CodeAnnot;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.CodeForBehavior;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.CodeInvariant;
@@ -214,10 +220,9 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.TypeInvariant;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ValidExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.WildcardExpression;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.BeforeAfterWitnessInvariantsMapping;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.CACSL2BoogieBacktranslator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.WitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.witness.ExtractedWitnessInvariant;
 
 /**
  * @author Markus Lindenmann
@@ -259,10 +264,10 @@ public class MainDispatcher extends Dispatcher {
 
 	protected boolean mBitvectorTranslation;
 	protected boolean mOverapproximateFloatingPointOperations;
-	protected BeforeAfterWitnessInvariantsMapping mWitnessInvariants;
+	protected Map<IASTNode, ExtractedWitnessInvariant> mWitnessInvariants;
 
 	public MainDispatcher(final CACSL2BoogieBacktranslator backtranslator,
-			final BeforeAfterWitnessInvariantsMapping witnessInvariants, final IUltimateServiceProvider services,
+			final Map<IASTNode, ExtractedWitnessInvariant> witnessInvariants, final IUltimateServiceProvider services,
 			final ILogger logger) {
 		super(backtranslator, services, logger);
 		mBitvectorTranslation = getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_BITVECTOR_TRANSLATION);
@@ -379,10 +384,11 @@ public class MainDispatcher extends Dispatcher {
 	@Override
 	public Result dispatch(final IASTNode n) {
 		final List<AssertStatement> witnessInvariantsBefore;
-		WitnessInvariant invariantBefore;
+		ExtractedWitnessInvariant invariantBefore;
 		if (mWitnessInvariants != null) {
-			invariantBefore = mWitnessInvariants.getInvariantsBefore().get(n);
-			witnessInvariantsBefore = translateWitnessInvariant(invariantBefore);
+			invariantBefore = mWitnessInvariants.get(n);
+			final ILocation loc = LocationFactory.createCLocation(n);
+			witnessInvariantsBefore = translateWitnessInvariant(loc, invariantBefore, a -> a.isBefore());
 		} else {
 			invariantBefore = null;
 			witnessInvariantsBefore = Collections.emptyList();
@@ -537,11 +543,12 @@ public class MainDispatcher extends Dispatcher {
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
 		final List<AssertStatement> witnessInvariantsAfter;
-		WitnessInvariant invariantAfter;
+		ExtractedWitnessInvariant invariantAfter;
 		if (mWitnessInvariants != null) {
 			// TODO: Use the new information as you see fit
-			invariantAfter = mWitnessInvariants.getInvariantsAfter().get(n);
-			witnessInvariantsAfter = translateWitnessInvariant(invariantAfter);
+			invariantAfter = mWitnessInvariants.get(n);
+			final ILocation loc = LocationFactory.createCLocation(n);
+			witnessInvariantsAfter = translateWitnessInvariant(loc, invariantAfter, a -> a.isAfter());
 		} else {
 			invariantAfter = null;
 			witnessInvariantsAfter = Collections.emptyList();
@@ -551,7 +558,7 @@ public class MainDispatcher extends Dispatcher {
 			final ILocation loc = LocationFactory.createCLocation(n);
 			if (result instanceof ExpressionResult) {
 				final ExpressionResult exprResult = (ExpressionResult) result;
-				final ArrayList<Statement> stmt = exprResult.stmt;
+				final List<Statement> stmt = exprResult.stmt;
 				if (invariantBefore != null && !mNodeLabelsOfAddedWitnesses.contains(invariantBefore.getNodeLabels())) {
 					stmt.addAll(0, witnessInvariantsBefore);
 					mNodeLabelsOfAddedWitnesses.add(invariantBefore.getNodeLabels());
@@ -567,14 +574,14 @@ public class MainDispatcher extends Dispatcher {
 			} else if (result instanceof ExpressionListResult) {
 				final ExpressionListResult exlire = (ExpressionListResult) result;
 				if (invariantBefore != null && !mNodeLabelsOfAddedWitnesses.contains(invariantBefore.getNodeLabels())) {
-					final ArrayList<Statement> stmt = exlire.list.get(0).stmt;
+					final List<Statement> stmt = exlire.list.get(0).stmt;
 					stmt.addAll(0, witnessInvariantsBefore);
 					mNodeLabelsOfAddedWitnesses.add(invariantBefore.getNodeLabels());
 					mLogger.warn("Checking witness invariant " + invariantBefore
 							+ " directly before the following code " + loc);
 				}
 				if (invariantAfter != null && !mNodeLabelsOfAddedWitnesses.contains(invariantAfter.getNodeLabels())) {
-					final ArrayList<Statement> stmt = exlire.list.get(exlire.list.size() - 1).stmt;
+					final List<Statement> stmt = exlire.list.get(exlire.list.size() - 1).stmt;
 					stmt.addAll(witnessInvariantsAfter);
 					mNodeLabelsOfAddedWitnesses.add(invariantAfter.getNodeLabels());
 					mLogger.warn("Checking witness invariant " + invariantAfter + " directly after the following code "
@@ -596,32 +603,42 @@ public class MainDispatcher extends Dispatcher {
 		return result;
 	}
 
-	private List<AssertStatement> translateWitnessInvariant(final WitnessInvariant invariant)
-			throws AssertionError {
+	private List<AssertStatement> translateWitnessInvariant(final ILocation loc,
+			final ExtractedWitnessInvariant invariant,
+			final java.util.function.Predicate<ExtractedWitnessInvariant> funHasCorrectPosition) throws AssertionError {
 		if (invariant != null) {
+			if (!funHasCorrectPosition.test(invariant)) {
+				return Collections.emptyList();
+			}
 			ACSLNode acslNode = null;
 			try {
 				checkForQuantifiers(invariant.getInvariant());
 				acslNode = Parser.parseComment("lstart\n assert " + invariant.getInvariant() + ";",
 						invariant.getStartline(), invariant.getEndline(), mLogger);
+			} catch (final ACSLSyntaxErrorException e) {
+				throw new UnsupportedSyntaxException(loc, e.getMessage());
 			} catch (final Exception e) {
-				throw new IllegalArgumentException(e);
+				throw new AssertionError(e);
 			}
 			final Result translationResult = dispatch(acslNode);
 			final List<AssertStatement> invariants = new ArrayList<>();
 			if (translationResult instanceof ExpressionResult) {
 				final ExpressionResult exprResult = (ExpressionResult) translationResult;
 				if (!exprResult.auxVars.isEmpty()) {
-					throw new AssertionError("must be translatable without auxvars");
+					throw new UnsupportedSyntaxException(loc,
+							"must be translatable without auxvars " + exprResult.auxVars.toString());
 				}
 				if (!exprResult.decl.isEmpty()) {
-					throw new AssertionError("must be translatable without new declarations");
+					throw new UnsupportedSyntaxException(loc,
+							"must be translatable without new declarations" + exprResult.decl.toString());
 				}
 				if (!exprResult.overappr.isEmpty()) {
-					throw new AssertionError("must be translatable without new overapproximations");
+					throw new UnsupportedSyntaxException(loc,
+							"must be translatable without new overapproximations" + exprResult.overappr.toString());
 				}
 				if (exprResult.stmt.size() > 1) {
-					throw new AssertionError("must be translatable without additional statements");
+					throw new UnsupportedSyntaxException(loc,
+							"must be translatable without additional statements" + exprResult.stmt.toString());
 				}
 				final Statement stmt = exprResult.stmt.get(0);
 				if (stmt instanceof AssertStatement) {
@@ -637,16 +654,15 @@ public class MainDispatcher extends Dispatcher {
 	}
 
 	/**
-	 * Throw Exception if invariant contains quantifiers.
-	 * It seems like our parser does not support quantifiers yet,
-	 * For the moment it seems to be better to crash here in order to get
-	 * a meaningful error message.
+	 * Throw Exception if invariant contains quantifiers. It seems like our parser does not support quantifiers yet, For
+	 * the moment it seems to be better to crash here in order to get a meaningful error message.
 	 */
 	private void checkForQuantifiers(final String invariant) {
 		if (invariant.contains("exists") || invariant.contains("forall")) {
-			throw new UnsupportedSyntaxException(LocationFactory.createIgnoreCLocation(), "invariant contains quantifiers");
+			throw new UnsupportedSyntaxException(LocationFactory.createIgnoreCLocation(),
+					"invariant contains quantifiers");
 		}
-		
+
 	}
 
 	@Override
@@ -675,6 +691,9 @@ public class MainDispatcher extends Dispatcher {
 			}
 			if (n instanceof BooleanLiteral) {
 				return mAcslHandler.visit(this, (BooleanLiteral) n);
+			}
+			if (n instanceof CastExpression) {
+				return mAcslHandler.visit(this, (CastExpression) n);
 			}
 			if (n instanceof IntegerLiteral) {
 				return mAcslHandler.visit(this, (IntegerLiteral) n);
@@ -728,7 +747,7 @@ public class MainDispatcher extends Dispatcher {
 				return mAcslHandler.visit(this, n);
 			}
 			if (n instanceof IfThenElseExpression) {
-				return mAcslHandler.visit(this, n);
+				return mAcslHandler.visit(this, (IfThenElseExpression) n);
 			}
 			if (n instanceof QuantifierExpression) {
 				return mAcslHandler.visit(this, n);
@@ -1013,4 +1032,60 @@ public class MainDispatcher extends Dispatcher {
 		}
 		return mPreprocessorHandler.visit(this, n);
 	}
+
+	/**
+	 * @return the witnessInvariants
+	 */
+	public Map<IASTNode, ExtractedWitnessInvariant> getWitnessInvariants() {
+		return mWitnessInvariants;
+	}
+
+	public LoopInvariantSpecification fetchInvariantAtLoop(final IASTNode node) {
+		final AssertStatement as = fetchInvariantAt(node);
+		LoopInvariantSpecification result;
+		if (as == null) {
+			result = null;
+		} else {
+			final ILocation loc = LocationFactory.createCLocation(node);
+			result = new LoopInvariantSpecification(loc, false, as.getFormula());
+			final Check check = new Check(Check.Spec.WITNESS_INVARIANT);
+			check.addToNodeAnnot(result);
+		}
+		return result;
+	}
+
+	public AssertStatement fetchInvariantAtGoto(final IASTGotoStatement node) {
+		return fetchInvariantAt(node);
+	}
+
+	private AssertStatement fetchInvariantAt(final IASTNode node) {
+		AssertStatement result;
+		if (mWitnessInvariants == null) {
+			result = null;
+		} else {
+			final ExtractedWitnessInvariant invariants = mWitnessInvariants.get(node);
+			try {
+				final ILocation loc = LocationFactory.createCLocation(node);
+				final List<AssertStatement> list = translateWitnessInvariant(loc, invariants, (x -> x.isAt()));
+				if (list.isEmpty()) {
+					result = null;
+				} else {
+					assert list.size() == 1;
+					result = list.get(0);
+				}
+			} catch (final IncorrectSyntaxException ise) {
+				mLogger.error("The following invariant contains an incorrect syntax and was ignored. Reason: "
+						+ ise.getMessage());
+				mLogger.error(invariants);
+				result = null;
+			} catch (final UnsupportedSyntaxException use) {
+				mLogger.warn("The following invariant contains an usupported syntax and was ignored. Reason: "
+						+ use.getMessage());
+				mLogger.warn(invariants);
+				result = null;
+			}
+		}
+		return result;
+	}
+
 }

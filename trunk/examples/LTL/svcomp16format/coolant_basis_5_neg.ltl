@@ -1,0 +1,2 @@
+//#Unsafe
+!("init == 0" U( ("init == 1" U G "init == 3") || G "init == 1"))

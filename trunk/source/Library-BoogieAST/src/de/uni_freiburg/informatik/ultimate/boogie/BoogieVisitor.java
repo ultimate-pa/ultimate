@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Core.
- * 
+ *
  * The ULTIMATE Core is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Core is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Core. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Core, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Core grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Core grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.boogie;
@@ -82,20 +82,25 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
 
 /**
- * 
- * This class extends the original BoogieTransformer by providing simple visit
- * functions to all missing leaf types of BoogieTransformer.
- * 
- * It does NOT support transforming in those visit functions; if you want to do
- * this, you are better of with the original BoogieTransformer.
- * @param <RTR> Used to describe the return type of {@link #process(T)}.
- * @param <T> Used to describe the parameter type of {@link #process(T)}.
+ *
+ * This class extends the original BoogieTransformer by providing simple visit functions to all missing leaf types of
+ * BoogieTransformer.
+ *
+ * It does NOT support transforming in those visit functions; if you want to do this, you are better of with the
+ * original BoogieTransformer.
+ *
+ * @param <RTR>
+ *            Used to describe the return type of {@link #process(T)}.
+ * @param <T>
+ *            Used to describe the parameter type of {@link #process(T)}.
  * @author dietsch
  */
 public abstract class BoogieVisitor extends BoogieTransformer {
 
+	private static final String MSG_EXTEND_THIS_WITH_NEW_TYPE = "Extend this with new type %s";
+
 	@Override
-	protected Declaration processDeclaration(Declaration decl) {
+	protected Declaration processDeclaration(final Declaration decl) {
 		if (decl instanceof Axiom) {
 			visit((Axiom) decl);
 		} else if (decl instanceof ConstDeclaration) {
@@ -109,34 +114,34 @@ public abstract class BoogieVisitor extends BoogieTransformer {
 		} else if (decl instanceof VariableDeclaration) {
 			// this case is already handled by processVariableDeclaration
 		} else {
-			throw new UnsupportedOperationException(String.format("Extend this with new type %s", decl.getClass()));
+			throw new UnsupportedOperationException(String.format(MSG_EXTEND_THIS_WITH_NEW_TYPE, decl.getClass()));
 		}
 
 		return super.processDeclaration(decl);
 	}
 
-	protected void visit(Axiom decl) {
-
+	protected void visit(final Axiom decl) {
+		// empty because it may be overridden (but does not have to)
 	}
 
-	protected void visit(ConstDeclaration decl) {
-
+	protected void visit(final ConstDeclaration decl) {
+		// empty because it may be overridden (but does not have to)
 	}
 
-	protected void visit(FunctionDeclaration decl) {
-
+	protected void visit(final FunctionDeclaration decl) {
+		// empty because it may be overridden (but does not have to)
 	}
 
-	protected void visit(Procedure decl) {
-
+	protected void visit(final Procedure decl) {
+		// empty because it may be overridden (but does not have to)
 	}
 
-	protected void visit(TypeDeclaration decl) {
-
+	protected void visit(final TypeDeclaration decl) {
+		// empty because it may be overridden (but does not have to)
 	}
 
 	@Override
-	protected ASTType processType(ASTType type) {
+	protected ASTType processType(final ASTType type) {
 		if (type instanceof ArrayType) {
 			visit((ArrayType) type);
 		} else if (type instanceof NamedType) {
@@ -146,29 +151,29 @@ public abstract class BoogieVisitor extends BoogieTransformer {
 		} else if (type instanceof StructType) {
 			visit((StructType) type);
 		} else {
-			throw new UnsupportedOperationException(String.format("Extend this with new type %s", type.getClass()));
+			throw new UnsupportedOperationException(String.format(MSG_EXTEND_THIS_WITH_NEW_TYPE, type.getClass()));
 		}
 		return super.processType(type);
 	}
 
-	protected void visit(ArrayType type) {
-
+	protected void visit(final ArrayType type) {
+		// empty because it may be overridden (but does not have to)
 	}
 
-	protected void visit(NamedType type) {
-
+	protected void visit(final NamedType type) {
+		// empty because it may be overridden (but does not have to)
 	}
 
-	protected void visit(PrimitiveType type) {
-
+	protected void visit(final PrimitiveType type) {
+		// empty because it may be overridden (but does not have to)
 	}
 
-	protected void visit(StructType type) {
-
+	protected void visit(final StructType type) {
+		// empty because it may be overridden (but does not have to)
 	}
 
 	@Override
-	protected Statement processStatement(Statement statement) {
+	protected Statement processStatement(final Statement statement) {
 		if (statement instanceof AssertStatement) {
 			visit((AssertStatement) statement);
 		} else if (statement instanceof AssignmentStatement) {
@@ -192,50 +197,59 @@ public abstract class BoogieVisitor extends BoogieTransformer {
 		} else if (statement instanceof WhileStatement) {
 			visit((WhileStatement) statement);
 		} else {
-			throw new UnsupportedOperationException(String.format("Extend this with new type %s", statement.getClass()));
+			throw new UnsupportedOperationException(
+					String.format(MSG_EXTEND_THIS_WITH_NEW_TYPE, statement.getClass()));
 		}
 
 		return super.processStatement(statement);
 	}
 
-	protected void visit(WhileStatement statement) {
+	protected void visit(final WhileStatement statement) {
+		// empty because it may be overridden (but does not have to)
 	}
 
-	protected void visit(ReturnStatement statement) {
+	protected void visit(final ReturnStatement statement) {
+		// empty because it may be overridden (but does not have to)
 	}
 
-	protected void visit(Label statement) {
+	protected void visit(final Label statement) {
+		// empty because it may be overridden (but does not have to)
 	}
 
-	protected void visit(IfStatement statement) {
+	protected void visit(final IfStatement statement) {
+		// empty because it may be overridden (but does not have to)
 	}
 
-	protected void visit(HavocStatement statement) {
+	protected void visit(final HavocStatement statement) {
+		// empty because it may be overridden (but does not have to)
 	}
 
-	protected void visit(GotoStatement statement) {
+	protected void visit(final GotoStatement statement) {
+		// empty because it may be overridden (but does not have to)
 	}
 
-	protected void visit(CallStatement statement) {
+	protected void visit(final CallStatement statement) {
+		// empty because it may be overridden (but does not have to)
 	}
 
-	protected void visit(BreakStatement statement) {
+	protected void visit(final BreakStatement statement) {
+		// empty because it may be overridden (but does not have to)
 	}
 
-	protected void visit(AssignmentStatement statement) {
-
+	protected void visit(final AssignmentStatement statement) {
+		// empty because it may be overridden (but does not have to)
 	}
 
-	protected void visit(AssumeStatement statement) {
-
+	protected void visit(final AssumeStatement statement) {
+		// empty because it may be overridden (but does not have to)
 	}
 
-	protected void visit(AssertStatement statement) {
-
+	protected void visit(final AssertStatement statement) {
+		// empty because it may be overridden (but does not have to)
 	}
 
 	@Override
-	protected LeftHandSide processLeftHandSide(LeftHandSide lhs) {
+	protected LeftHandSide processLeftHandSide(final LeftHandSide lhs) {
 		if (lhs instanceof ArrayLHS) {
 			visit((ArrayLHS) lhs);
 		} else if (lhs instanceof StructLHS) {
@@ -243,22 +257,25 @@ public abstract class BoogieVisitor extends BoogieTransformer {
 		} else if (lhs instanceof VariableLHS) {
 			visit((VariableLHS) lhs);
 		} else {
-			throw new UnsupportedOperationException(String.format("Extend this with new type %s", lhs.getClass()));
+			throw new UnsupportedOperationException(String.format(MSG_EXTEND_THIS_WITH_NEW_TYPE, lhs.getClass()));
 		}
 		return super.processLeftHandSide(lhs);
 	}
 
-	protected void visit(VariableLHS lhs) {
+	protected void visit(final VariableLHS lhs) {
+		// empty because it may be overridden (but does not have to)
 	}
 
-	protected void visit(StructLHS lhs) {
+	protected void visit(final StructLHS lhs) {
+		// empty because it may be overridden (but does not have to)
 	}
 
-	protected void visit(ArrayLHS lhs) {
+	protected void visit(final ArrayLHS lhs) {
+		// empty because it may be overridden (but does not have to)
 	}
 
 	@Override
-	protected Specification processSpecification(Specification spec) {
+	protected Specification processSpecification(final Specification spec) {
 		if (spec instanceof EnsuresSpecification) {
 			visit((EnsuresSpecification) spec);
 		} else if (spec instanceof LoopInvariantSpecification) {
@@ -268,46 +285,50 @@ public abstract class BoogieVisitor extends BoogieTransformer {
 		} else if (spec instanceof RequiresSpecification) {
 			visit((RequiresSpecification) spec);
 		} else {
-			throw new UnsupportedOperationException(String.format("Extend this with new type %s", spec.getClass()));
+			throw new UnsupportedOperationException(String.format(MSG_EXTEND_THIS_WITH_NEW_TYPE, spec.getClass()));
 		}
 		return super.processSpecification(spec);
 	}
 
-	protected void visit(RequiresSpecification spec) {
+	protected void visit(final RequiresSpecification spec) {
+		// empty because it may be overridden (but does not have to)
 	}
 
-	protected void visit(ModifiesSpecification spec) {
+	protected void visit(final ModifiesSpecification spec) {
+		// empty because it may be overridden (but does not have to)
 	}
 
-	protected void visit(LoopInvariantSpecification spec) {
+	protected void visit(final LoopInvariantSpecification spec) {
+		// empty because it may be overridden (but does not have to)
 	}
 
-	protected void visit(EnsuresSpecification spec) {
+	protected void visit(final EnsuresSpecification spec) {
+		// empty because it may be overridden (but does not have to)
 	}
 
 	@Override
-	protected Attribute processAttribute(Attribute attr) {
+	protected Attribute processAttribute(final Attribute attr) {
 		if (attr instanceof NamedAttribute) {
 			visit((NamedAttribute) attr);
 		} else if (attr instanceof Trigger) {
 			visit((Trigger) attr);
 		} else {
-			throw new UnsupportedOperationException(String.format("Extend this with new type %s", attr.getClass()));
+			throw new UnsupportedOperationException(String.format(MSG_EXTEND_THIS_WITH_NEW_TYPE, attr.getClass()));
 		}
 
 		return super.processAttribute(attr);
 	}
 
-	protected void visit(NamedAttribute attr) {
-
+	protected void visit(final NamedAttribute attr) {
+		// empty because it may be overridden (but does not have to)
 	}
 
-	protected void visit(Trigger attr) {
-
+	protected void visit(final Trigger attr) {
+		// empty because it may be overridden (but does not have to)
 	}
 
 	@Override
-	protected Expression processExpression(Expression expr) {
+	protected Expression processExpression(final Expression expr) {
 		if (expr instanceof ArrayAccessExpression) {
 			visit((ArrayAccessExpression) expr);
 		} else if (expr instanceof ArrayStoreExpression) {
@@ -343,60 +364,77 @@ public abstract class BoogieVisitor extends BoogieTransformer {
 		} else if (expr instanceof WildcardExpression) {
 			visit((WildcardExpression) expr);
 		} else {
-			throw new UnsupportedOperationException(String.format("Extend this with new type %s", expr.getClass()));
+			throw new UnsupportedOperationException(String.format(MSG_EXTEND_THIS_WITH_NEW_TYPE, expr.getClass()));
 		}
 		return super.processExpression(expr);
 	}
 
-	protected void visit(WildcardExpression expr) {
+	protected void visit(final WildcardExpression expr) {
+		// empty because it may be overridden (but does not have to)
 	}
 
-	protected void visit(UnaryExpression expr) {
+	protected void visit(final UnaryExpression expr) {
+		// empty because it may be overridden (but does not have to)
 	}
 
-	protected void visit(StructConstructor expr) {
+	protected void visit(final StructConstructor expr) {
+		// empty because it may be overridden (but does not have to)
 	}
 
-	protected void visit(StructAccessExpression expr) {
+	protected void visit(final StructAccessExpression expr) {
+		// empty because it may be overridden (but does not have to)
 	}
 
-	protected void visit(StringLiteral expr) {
+	protected void visit(final StringLiteral expr) {
+		// empty because it may be overridden (but does not have to)
 	}
 
-	protected void visit(RealLiteral expr) {
+	protected void visit(final RealLiteral expr) {
+		// empty because it may be overridden (but does not have to)
 	}
 
-	protected void visit(QuantifierExpression expr) {
+	protected void visit(final QuantifierExpression expr) {
+		// empty because it may be overridden (but does not have to)
 	}
 
-	protected void visit(IntegerLiteral expr) {
+	protected void visit(final IntegerLiteral expr) {
+		// empty because it may be overridden (but does not have to)
 	}
 
-	protected void visit(IfThenElseExpression expr) {
+	protected void visit(final IfThenElseExpression expr) {
+		// empty because it may be overridden (but does not have to)
 	}
 
-	protected void visit(IdentifierExpression expr) {
+	protected void visit(final IdentifierExpression expr) {
+		// empty because it may be overridden (but does not have to)
 	}
 
-	protected void visit(FunctionApplication expr) {
+	protected void visit(final FunctionApplication expr) {
+		// empty because it may be overridden (but does not have to)
 	}
 
-	protected void visit(BooleanLiteral expr) {
+	protected void visit(final BooleanLiteral expr) {
+		// empty because it may be overridden (but does not have to)
 	}
 
-	protected void visit(BitVectorAccessExpression expr) {
+	protected void visit(final BitVectorAccessExpression expr) {
+		// empty because it may be overridden (but does not have to)
 	}
 
-	protected void visit(BitvecLiteral expr) {
+	protected void visit(final BitvecLiteral expr) {
+		// empty because it may be overridden (but does not have to)
 	}
 
-	protected void visit(BinaryExpression expr) {
+	protected void visit(final BinaryExpression expr) {
+		// empty because it may be overridden (but does not have to)
 	}
 
-	protected void visit(ArrayStoreExpression expr) {
+	protected void visit(final ArrayStoreExpression expr) {
+		// empty because it may be overridden (but does not have to)
 	}
 
-	protected void visit(ArrayAccessExpression expr) {
+	protected void visit(final ArrayAccessExpression expr) {
+		// empty because it may be overridden (but does not have to)
 	}
 
 }

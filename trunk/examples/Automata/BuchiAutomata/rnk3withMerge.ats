@@ -8,7 +8,7 @@
 
 print(numberOfStates(nwa));
 print(isSemiDeterministic(nwa));
-print(buchiComplementFKV(nwa,"Elastic", 777));
+print(buchiComplementFKV(nwa,"ELASTIC", 777));
 
 
 NestedWordAutomaton nwa = (

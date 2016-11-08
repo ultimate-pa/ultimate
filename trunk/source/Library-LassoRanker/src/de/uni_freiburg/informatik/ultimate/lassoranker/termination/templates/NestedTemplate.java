@@ -40,10 +40,11 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.termination.AffineFunctio
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.AffineFunctionGenerator;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfunctions.NestedRankingFunction;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfunctions.RankingFunction;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 
 /**
@@ -75,7 +76,7 @@ public class NestedTemplate extends ComposableTemplate {
 	/**
 	 * @param functions number of linear functions in the nested template
 	 */
-	public NestedTemplate(int functions) {
+	public NestedTemplate(final int functions) {
 		assert(functions > 1);
 		mSize = functions;
 		mfgens = new AffineFunctionGenerator[mSize];
@@ -126,7 +127,7 @@ public class NestedTemplate extends ComposableTemplate {
 	}
 
 	@Override
-	public RankingFunction extractRankingFunction(Map<Term, Rational> val)
+	public RankingFunction extractRankingFunction(final Map<Term, Rational> val)
 			throws SMTLIBException {
 		// The affine-linear functions need a common gcd
 		Rational gcd = mfgens[0].getGcd(val);
@@ -148,7 +149,7 @@ public class NestedTemplate extends ComposableTemplate {
 
 	@Override
 	public List<List<LinearInequality>> getConstraintsDec(
-			Map<RankVar, Term> inVars, Map<RankVar, Term> outVars) {
+			final Map<IProgramVar, TermVariable> inVars, final Map<IProgramVar, TermVariable> outVars) {
 		final List<List<LinearInequality>> conjunction =
 				new ArrayList<List<LinearInequality>>();
 		// f_0(x') < f_0(x) - δ
@@ -160,7 +161,7 @@ public class NestedTemplate extends ComposableTemplate {
 			final AffineTerm a = new AffineTerm(mdelta, Rational.MONE);
 			li.add(a);
 			li.setStrict(true);
-			li.motzkin_coefficient = sRedAtoms ?
+			li.mMotzkinCoefficient = sRedAtoms ?
 					PossibleMotzkinCoefficients.ONE
 					: PossibleMotzkinCoefficients.ANYTHING;
 			conjunction.add(Collections.singletonList(li));
@@ -175,7 +176,7 @@ public class NestedTemplate extends ComposableTemplate {
 			final LinearInequality li3 = mfgens[i-1].generate(inVars);
 			li.add(li3);
 			li.setStrict(true);
-			li.motzkin_coefficient = sRedAtoms ?
+			li.mMotzkinCoefficient = sRedAtoms ?
 					PossibleMotzkinCoefficients.ONE
 					: PossibleMotzkinCoefficients.ANYTHING;
 			conjunction.add(Collections.singletonList(li));
@@ -187,7 +188,7 @@ public class NestedTemplate extends ComposableTemplate {
 
 	@Override
 	public List<List<LinearInequality>> getConstraintsNonInc(
-			Map<RankVar, Term> inVars, Map<RankVar, Term> outVars) {
+			final Map<IProgramVar, TermVariable> inVars, final Map<IProgramVar, TermVariable> outVars) {
 		final List<List<LinearInequality>> conjunction =
 				new ArrayList<List<LinearInequality>>();
 		// /\_i f_i(x') ≤ f_i(x)
@@ -197,7 +198,7 @@ public class NestedTemplate extends ComposableTemplate {
 			li2.negate();
 			li.add(li2);
 			li.setStrict(false);
-			li.motzkin_coefficient = sRedAtoms ?
+			li.mMotzkinCoefficient = sRedAtoms ?
 					PossibleMotzkinCoefficients.ONE
 					: PossibleMotzkinCoefficients.ANYTHING;
 			conjunction.add(Collections.singletonList(li));
@@ -207,11 +208,11 @@ public class NestedTemplate extends ComposableTemplate {
 
 	@Override
 	public List<List<LinearInequality>> getConstraintsBounded(
-			Map<RankVar, Term> inVars, Map<RankVar, Term> outVars) {
+			final Map<IProgramVar, TermVariable> inVars, final Map<IProgramVar, TermVariable> outVars) {
 		// f_n(x) > 0
 		final LinearInequality li = mfgens[mSize-1].generate(inVars);
 		li.setStrict(true);
-		li.motzkin_coefficient = sRedAtoms ?
+		li.mMotzkinCoefficient = sRedAtoms ?
 				PossibleMotzkinCoefficients.ONE
 				: PossibleMotzkinCoefficients.ANYTHING;
 		return Collections.singletonList(Collections.singletonList(li));

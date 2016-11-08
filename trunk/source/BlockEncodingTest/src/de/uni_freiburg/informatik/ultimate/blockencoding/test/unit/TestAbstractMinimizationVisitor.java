@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BlockEncoding plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE BlockEncoding plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE BlockEncoding plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.blockencoding.test.unit;
@@ -40,10 +40,10 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.model.interfaces.IMinim
 import de.uni_freiburg.informatik.ultimate.blockencoding.test.ExecuteUnitTestObserver;
 import de.uni_freiburg.informatik.ultimate.blockencoding.test.util.RCFGStore;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
@@ -69,11 +69,11 @@ public class TestAbstractMinimizationVisitor extends TestCase {
 	/**
 	 * Base node of the RCFG to test.
 	 */
-	private RCFGNode mRcfgNode;
+	private IcfgLocation mRcfgNode;
 
 	private ILogger mLogger;
 
-	private HashSet<RCFGNode> mVisitedOrigNodes;
+	private HashSet<IcfgLocation> mVisitedOrigNodes;
 
 	private HashSet<MinimizedNode> mVisitedMinNodes;
 
@@ -84,18 +84,17 @@ public class TestAbstractMinimizationVisitor extends TestCase {
 		mRcfgNode = RCFGStore.getRCFG();
 		mLogger = ExecuteUnitTestObserver.getLogger();
 		mRcfgVisitor = new PrintEdgeVisitor(mLogger);
-		mVisitedOrigNodes = new HashSet<RCFGNode>();
+		mVisitedOrigNodes = new HashSet<IcfgLocation>();
 		mVisitedMinNodes = new HashSet<MinimizedNode>();
 		// output the start node
 		final RootNode rootNode = (RootNode) mRcfgNode;
 		String fileName = "";
 		for (final String key : rootNode.getRootAnnot().getEntryNodes().keySet()) {
-			if (key.equals("ULTIMATE.init") || key.equals("ULTIMATE.start")) {
-				continue;
+			if (!key.equals("ULTIMATE.init") && !key.equals("ULTIMATE.start")) {
+				fileName = rootNode.getRootAnnot().getEntryNodes().get(key)
+						.getPayload().getLocation().getFileName();
+				break;
 			}
-			fileName = rootNode.getRootAnnot().getEntryNodes().get(key)
-					.getPayload().getLocation().getFileName();
-			break;
 		}
 		mLogger.error("Start Test on File: " + fileName);
 	}
@@ -104,10 +103,10 @@ public class TestAbstractMinimizationVisitor extends TestCase {
 	public void testInitializationForGivenRCFG() {
 		mLogger.info("Start Testing the intialization of MinModel");
 		assertTrue(mRcfgNode instanceof RootNode);
-		for (final RCFGEdge edge : mRcfgNode.getOutgoingEdges()) {
+		for (final IcfgEdge edge : mRcfgNode.getOutgoingEdges()) {
 			assertTrue(edge instanceof RootEdge);
-			assertTrue(edge.getTarget() instanceof ProgramPoint);
-			final ProgramPoint methodEntryNode = (ProgramPoint) edge.getTarget();
+			assertTrue(edge.getTarget() instanceof BoogieIcfgLocation);
+			final BoogieIcfgLocation methodEntryNode = (BoogieIcfgLocation) edge.getTarget();
 			final MinimizedNode minEntryNode = new MinimizedNode(methodEntryNode);
 			assertEquals(minEntryNode.getOriginalNode(), methodEntryNode);
 			assertNull(minEntryNode.getOutgoingEdges());
@@ -121,24 +120,24 @@ public class TestAbstractMinimizationVisitor extends TestCase {
 		}
 	}
 
-	private void compareOriginalAndMinimizedGraph(ProgramPoint originalNode,
-			MinimizedNode minNode) {
+	private void compareOriginalAndMinimizedGraph(final BoogieIcfgLocation originalNode,
+			final MinimizedNode minNode) {
 		if (mVisitedMinNodes.contains(minNode)
 				&& mVisitedOrigNodes.contains(originalNode)) {
 			return;
 		}
 		assertEquals(minNode.getOriginalNode(), originalNode);
 		final ArrayList<MinimizedNode> minNodeList = new ArrayList<MinimizedNode>();
-		final ArrayList<ProgramPoint> origNodeList = new ArrayList<ProgramPoint>();
+		final ArrayList<BoogieIcfgLocation> origNodeList = new ArrayList<BoogieIcfgLocation>();
 		for (int i = 0; i < minNode.getOutgoingEdges().size(); i++) {
 			final IMinimizedEdge minEdge = minNode.getOutgoingEdges().get(i);
 			assertTrue(minEdge.isBasicEdge());
-			final RCFGEdge originalEdge = originalNode.getOutgoingEdges().get(i);
+			final IcfgEdge originalEdge = originalNode.getOutgoingEdges().get(i);
 			assertEquals(((BasicEdge) minEdge).getOriginalEdge(), originalEdge);
-			assertTrue(originalEdge.getTarget() instanceof ProgramPoint);
+			assertTrue(originalEdge.getTarget() instanceof BoogieIcfgLocation);
 			if (originalEdge instanceof Call || originalEdge instanceof Return) {
 				minNodeList.add(minEdge.getTarget());
-				origNodeList.add((ProgramPoint) originalEdge.getTarget());
+				origNodeList.add((BoogieIcfgLocation) originalEdge.getTarget());
 			}
 		}
 		for (int i = 0; i < minNodeList.size(); i++) {

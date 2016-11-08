@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
 
 import java.io.Serializable;
 
-import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
@@ -48,7 +48,7 @@ public class BoogieNonOldVar extends GlobalBoogieVar implements Serializable, IP
 	private final BoogieOldVar mOldVar;
 
 	
-	public BoogieNonOldVar(final String identifier, final IType iType,
+	public BoogieNonOldVar(final String identifier, final IBoogieType iType,
 			final TermVariable tv,
 			final ApplicationTerm defaultConstant,
 	        final ApplicationTerm primedConstant, final BoogieOldVar oldVar) {
@@ -57,24 +57,16 @@ public class BoogieNonOldVar extends GlobalBoogieVar implements Serializable, IP
 		mHashCode = computeHashCode();
 	}
 	
-	/**
-	 * Returns the procedure in which this variable was declared. If this a 
-	 * global variable, then null is returned.
-	 */
 	@Override
-	public String getProcedure() {
-		return null;
-	}
-
+	public String getGloballyUniqueId() {
+		return IProgramNonOldVar.super.getGloballyUniqueId();
+	};
+	
 	@Override
-	public boolean isGlobal() {
-		return true;
+	public String getIdentifier() {
+		return mIdentifier;
 	}
-	@Override
-	public boolean isOldvar() {
-		return false;
-	}
-
+	
 	
 	/* (non-Javadoc)
 	 * @see de.uni_freiburg.informatik.ultimate.boogie.INonOldProgramVariable_Backup#getOldVar()

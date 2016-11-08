@@ -1,3 +1,5 @@
+<rundefinition>
+<name>Automizer for C (with Inlining and Witnessprinting)</name>
 <toolchain>
 	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator"/>
 	<plugin id="de.uni_freiburg.informatik.ultimate.boogie.procedureinliner"/>
@@ -5,4 +7,4 @@
 	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder"/>
 	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction"/>
 	<plugin id="de.uni_freiburg.informatik.ultimate.witnessprinter"/>
-</toolchain>
+</toolchain></rundefinition>

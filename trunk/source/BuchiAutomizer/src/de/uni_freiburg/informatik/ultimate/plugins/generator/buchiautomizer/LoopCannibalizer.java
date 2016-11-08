@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BuchiAutomizer plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE BuchiAutomizer plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE BuchiAutomizer plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
@@ -32,17 +32,18 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeMap;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
@@ -63,7 +64,7 @@ public class LoopCannibalizer {
 	private final NestedLassoRun<CodeBlock, IPredicate> mCounterexample;
 	private final BinaryStatePredicateManager mBspm;
 	private final PredicateUnifier mPredicateUnifier;
-	private final SmtManager mSmtManager;
+	private final CfgSmtToolkit mCsToolkit;
 	private final BuchiModGlobalVarManager mbuchiModGlobalVarManager;
 	private final Set<IPredicate> mResultPredicates;
 	private final Set<IPredicate> mOriginalLoopInterpolants;
@@ -71,23 +72,25 @@ public class LoopCannibalizer {
 
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
-	private final SimplicationTechnique mSimplificationTechnique;
+	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
+	private final ICfgSymbolTable mBoogie2SmtSymbolTable;
 
 	public LoopCannibalizer(final NestedLassoRun<CodeBlock, IPredicate> counterexample, final Set<IPredicate> loopInterpolants,
-			final BinaryStatePredicateManager bspm, final PredicateUnifier predicateUnifier, final SmtManager smtManager,
+			final BinaryStatePredicateManager bspm, final PredicateUnifier predicateUnifier, final CfgSmtToolkit csToolkit,
 			final BuchiModGlobalVarManager buchiModGlobalVarManager, final InterpolationTechnique interpolation,
-			final IUltimateServiceProvider services, 
-			final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
+			final ICfgSymbolTable boogie2SmtSymbolTable, final IUltimateServiceProvider services,
+			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		super();
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mBoogie2SmtSymbolTable = boogie2SmtSymbolTable;
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
 		mCounterexample = counterexample;
 		mBspm = bspm;
 		mPredicateUnifier = predicateUnifier;
-		mSmtManager = smtManager;
+		mCsToolkit = csToolkit;
 		mbuchiModGlobalVarManager = buchiModGlobalVarManager;
 		mOriginalLoopInterpolants = loopInterpolants;
 		mResultPredicates = new HashSet<IPredicate>(loopInterpolants);
@@ -120,8 +123,8 @@ public class LoopCannibalizer {
 				i = correspondingReturn;
 			} else {
 				if (checkForNewPredicates(i)) {
-					final NestedWord<CodeBlock> before = mLoop.subWord(0, i);
-					final NestedWord<CodeBlock> after = mLoop.subWord(i + 1, mLoop.length() - 1);
+					final NestedWord<CodeBlock> before = mLoop.getSubWord(0, i);
+					final NestedWord<CodeBlock> after = mLoop.getSubWord(i + 1, mLoop.length() - 1);
 					final NestedWord<CodeBlock> shifted = after.concatenate(before);
 					final InterpolatingTraceChecker traceChecker = getTraceChecker(shifted, interpolation);
 					final LBool loopCheck = traceChecker.isCorrect();
@@ -145,30 +148,30 @@ public class LoopCannibalizer {
 		case Craig_NestedInterpolation:
 		case Craig_TreeInterpolation:
 			traceChecker = new InterpolatingTraceCheckerCraig(mBspm.getRankEqAndSi(), mBspm.getHondaPredicate(),
-					new TreeMap<Integer, IPredicate>(), shifted, mSmtManager, mbuchiModGlobalVarManager,
-					/*
-					 * TODO: When Matthias
-					 * introduced this parameter he
-					 * set the argument to AssertCodeBlockOrder.NOT_INCREMENTALLY.
-					 * Check if you want to set this
-					 * to a different value.
-					 */AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, mPredicateUnifier,
-						interpolation, true, mXnfConversionTechnique, mSimplificationTechnique);
-			break;
-		case ForwardPredicates:
-		case BackwardPredicates:
-		case FPandBP:
-			traceChecker = new TraceCheckerSpWp(mBspm.getRankEqAndSi(), mBspm.getHondaPredicate(),
-					new TreeMap<Integer, IPredicate>(), shifted, mSmtManager, mbuchiModGlobalVarManager,
-					/*
+					new TreeMap<Integer, IPredicate>(), shifted, mCsToolkit, /*
 					 * TODO: When Matthias
 					 * introduced this parameter he
 					 * set the argument to AssertCodeBlockOrder.NOT_INCREMENTALLY.
 					 * Check if you want to set this
 					 * to a different value.
 					 */AssertCodeBlockOrder.NOT_INCREMENTALLY,
-					 UnsatCores.CONJUNCT_LEVEL, true, mServices, false, mPredicateUnifier,
-						interpolation, mSmtManager, mXnfConversionTechnique, mSimplificationTechnique);
+					mServices, false, mPredicateUnifier, interpolation,
+						true, mXnfConversionTechnique, mSimplificationTechnique);
+			break;
+		case ForwardPredicates:
+		case BackwardPredicates:
+		case FPandBP:
+			traceChecker = new TraceCheckerSpWp(mBspm.getRankEqAndSi(), mBspm.getHondaPredicate(),
+					new TreeMap<Integer, IPredicate>(), shifted, mCsToolkit, /*
+					 * TODO: When Matthias
+					 * introduced this parameter he
+					 * set the argument to AssertCodeBlockOrder.NOT_INCREMENTALLY.
+					 * Check if you want to set this
+					 * to a different value.
+					 */AssertCodeBlockOrder.NOT_INCREMENTALLY,
+					UnsatCores.CONJUNCT_LEVEL,
+					 true, mServices, false, mPredicateUnifier, interpolation,
+						mCsToolkit.getManagedScript(), mXnfConversionTechnique, mSimplificationTechnique);
 			break;
 		default:
 			throw new UnsupportedOperationException("unsupported interpolation");
@@ -207,10 +210,7 @@ public class LoopCannibalizer {
 			return true;
 		}
 		final Set<IProgramVar> outVars = cb.getTransitionFormula().getOutVars().keySet();
-		if (!Collections.disjoint(hondaVars, outVars)) {
-			return true;
-		}
-		return false;
+		return !Collections.disjoint(hondaVars, outVars);
 	}
 
 	public Set<IPredicate> getResult() {

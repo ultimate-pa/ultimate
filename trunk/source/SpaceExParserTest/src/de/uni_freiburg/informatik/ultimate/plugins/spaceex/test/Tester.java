@@ -84,7 +84,7 @@ public class Tester {
 
 		final HybridModel hs = new HybridModel(sx, new ConsoleLogger());
 		
-		SpaceExModelBuilder modelBuilder = new SpaceExModelBuilder(hs, new ConsoleLogger());
+		final SpaceExModelBuilder modelBuilder = new SpaceExModelBuilder(hs, new ConsoleLogger());
 		
 		final Marshaller marshaller = jc.createMarshaller();
 

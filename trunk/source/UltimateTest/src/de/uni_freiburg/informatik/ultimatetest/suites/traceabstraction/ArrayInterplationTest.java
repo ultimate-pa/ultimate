@@ -46,7 +46,7 @@ public class ArrayInterplationTest extends
 //		"examples/programs/regression",
 //		"examples/programs/quantifier/",
 //		"examples/programs/quantifier/regression",
-//		"examples/programs/recursivePrograms",
+//		"examples/programs/recursive/regression",
 //		"examples/programs/toy"
 		"examples/svcomp/ldv-regression/"
 	};

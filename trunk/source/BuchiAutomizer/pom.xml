@@ -31,8 +31,8 @@
   <version>0.0.1</version>
   <packaging>eclipse-plugin</packaging>
   <parent>
-  	<groupId>Ultimate</groupId>
-  	<artifactId>MavenParentUltimate</artifactId>
+  	<groupId>de.uni_freiburg.informatik.ultimate</groupId>
+  	<artifactId>mavenparent</artifactId>
   	<version>0.0.1</version>
   	<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
   </parent>

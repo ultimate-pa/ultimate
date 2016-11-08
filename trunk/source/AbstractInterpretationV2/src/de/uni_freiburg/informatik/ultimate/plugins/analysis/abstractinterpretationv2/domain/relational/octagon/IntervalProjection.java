@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 /**
  * Utilities to project octagons to intervals, calculated expression using intervals, and assigning the resulting
  * intervals to octagons.
- * 
+ *
  * @author schaetzc@informatik.uni-freiburg.de
  */
 public class IntervalProjection {
@@ -60,7 +60,7 @@ public class IntervalProjection {
 
 	/**
 	 * Processes an assignment by projection to intervals.
-	 * 
+	 *
 	 * @param var
 	 *            Variable to be assigned.
 	 * @param rhs
@@ -70,7 +70,7 @@ public class IntervalProjection {
 	 * @return Updated states in the same list.
 	 */
 	public List<OctDomainState> assignNumericVarWithoutIfs(final IBoogieVar var, final Expression rhs,
-			List<OctDomainState> oldStates) {
+	        List<OctDomainState> oldStates) {
 
 		oldStates = OctPostOperator.removeBottomStates(oldStates);
 		for (final OctDomainState state : oldStates) {
@@ -82,7 +82,7 @@ public class IntervalProjection {
 
 	/**
 	 * Processes an assignment by projection to intervals.
-	 * 
+	 *
 	 * @param var
 	 *            Variable to be assigned.
 	 * @param rhs
@@ -92,7 +92,7 @@ public class IntervalProjection {
 	 * @return Updated states in the same list.
 	 */
 	public List<OctDomainState> assignNumericVarAffine(final IBoogieVar var, final AffineExpression rhs,
-			List<OctDomainState> oldStates) {
+	        List<OctDomainState> oldStates) {
 
 		oldStates = OctPostOperator.removeBottomStates(oldStates);
 		for (final OctDomainState state : oldStates) {
@@ -104,7 +104,7 @@ public class IntervalProjection {
 
 	/**
 	 * Project an octagon to intervals and calculate the abstract result (interval) of an expression.
-	 * 
+	 *
 	 * @param expr
 	 *            Expression to be evaluated.
 	 * @param state
@@ -124,8 +124,9 @@ public class IntervalProjection {
 
 		} else if (expr instanceof IdentifierExpression) {
 			final IdentifierExpression iexpr = ((IdentifierExpression) expr);
-			final BoogieVar var =
-					mBpl2smtSymbolTable.getBoogieVar(iexpr.getIdentifier(), iexpr.getDeclarationInformation(), false);
+			final BoogieVar var = mBpl2smtSymbolTable.getBoogieVar(iexpr.getIdentifier(),
+			        iexpr.getDeclarationInformation(), false);
+			assert var != null;
 			final OctInterval octInterval = state.projectToInterval(var);
 			return octInterval.toIvlInterval();
 
@@ -151,12 +152,12 @@ public class IntervalProjection {
 				return left.multiply(right);
 			case ARITHDIV:
 				if (TypeUtil.isNumericInt(binExpr.getType())) {
-					return left.integerDivide(right);
-				} else {
-					return left.divide(right);
+					return left.divideInteger(right);
 				}
+				return left.divide(right);
 			case ARITHMOD:
-				return left.modulo(right, TypeUtil.isNumericInt(binExpr.getType()));
+				assert TypeUtil.isNumericInt(binExpr.getType());
+				return left.modulo(right);
 			default:
 				// see end of this method
 			}
@@ -167,7 +168,7 @@ public class IntervalProjection {
 
 	/**
 	 * Project an octagon to intervals and calculate the abstract result (interval) of an affine expression.
-	 * 
+	 *
 	 * @param expr
 	 *            Affine expression to be evaluated.
 	 * @param state

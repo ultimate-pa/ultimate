@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ReachingDefinitions plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ReachingDefinitions plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ReachingDefinitions plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations;
@@ -31,9 +31,9 @@ import java.util.HashSet;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.boogie.ScopedBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RCFGEdgeVisitor;
@@ -44,12 +44,12 @@ class DefCollector extends RCFGEdgeVisitor {
 	private final IAnnotationProvider<ReachDefStatementAnnotation> mAnnotationProvider;
 	private final String mKey;
 
-	DefCollector(IAnnotationProvider<ReachDefStatementAnnotation> provider, String key) {
+	DefCollector(final IAnnotationProvider<ReachDefStatementAnnotation> provider, final String key) {
 		mAnnotationProvider = provider;
 		mKey = key;
 	}
 
-	HashMap<ScopedBoogieVar, HashSet<IndexedStatement>> collect(RCFGEdge edge) {
+	HashMap<ScopedBoogieVar, HashSet<IndexedStatement>> collect(final IcfgEdge edge) {
 		if (mDefs == null) {
 			mDefs = new HashMap<>();
 			visit(edge);
@@ -58,7 +58,7 @@ class DefCollector extends RCFGEdgeVisitor {
 	}
 
 	@Override
-	protected void visit(SequentialComposition c) {
+	protected void visit(final SequentialComposition c) {
 		final List<CodeBlock> blck = c.getCodeBlocks();
 		if (blck == null || blck.isEmpty()) {
 			return;
@@ -67,12 +67,12 @@ class DefCollector extends RCFGEdgeVisitor {
 	}
 
 	@Override
-	protected void visit(StatementSequence c) {
+	protected void visit(final StatementSequence c) {
 		super.visit(c);
 
 		final List<Statement> stmts = c.getStatements();
 
-		if (stmts == null || stmts.size() == 0) {
+		if (stmts == null || stmts.isEmpty()) {
 			return;
 		}
 
@@ -82,12 +82,11 @@ class DefCollector extends RCFGEdgeVisitor {
 		}
 	}
 
-	private ReachDefBaseAnnotation getAnnotation(List<Statement> stmts) {
+	private ReachDefBaseAnnotation getAnnotation(final List<Statement> stmts) {
 		if (mKey == null) {
 			return mAnnotationProvider.getAnnotation(stmts.get(stmts.size() - 1));
-		} else {
-			return mAnnotationProvider.getAnnotation(stmts.get(stmts.size() - 1), mKey);
 		}
+		return mAnnotationProvider.getAnnotation(stmts.get(stmts.size() - 1), mKey);
 	}
 
 }

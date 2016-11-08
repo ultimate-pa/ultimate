@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BlockEncoding plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE BlockEncoding plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE BlockEncoding plug-in grant you additional permission
  * to convey the resulting work.
  */
 /**
@@ -41,8 +41,7 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.rating.util.EncodingSta
  * @author Stefan Wissert
  * 
  */
-public class RatingFactory {
-
+public final class RatingFactory {
 	/**
 	 * This enumeration specifies the RatingStrategy. It can be set in the
 	 * preferences. Every new strategy has to be declared here.
@@ -117,7 +116,7 @@ public class RatingFactory {
 	 * @param value
 	 *            the preference value
 	 */
-	public void setRatingStrategy(String value) {
+	public void setRatingStrategy(final String value) {
 		try {
 			strategy = RatingStrategy.values()[Integer.parseInt(value)];
 		} catch (final NumberFormatException e) {
@@ -126,7 +125,7 @@ public class RatingFactory {
 		}
 	}
 	
-	public void setRatingStrategy(RatingStrategy strat){
+	public void setRatingStrategy(final RatingStrategy strat){
 		strategy = strat;
 	}
 
@@ -138,7 +137,7 @@ public class RatingFactory {
 	 *            the minimized edge, which we want to rate
 	 * @return the created rating for the minimized edge
 	 */
-	public IRating createRating(IMinimizedEdge edge) {
+	public IRating createRating(final IMinimizedEdge edge) {
 		IRating computedRating = null;
 		switch (strategy) {
 		case LARGE_BLOCK:

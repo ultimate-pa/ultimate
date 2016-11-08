@@ -5,27 +5,27 @@
  * Copyright (C) 2015 Oleksii Saukh (saukho@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 Stefan Wissert
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE CDTPlugin plug-in.
- * 
+ *
  * The ULTIMATE CDTPlugin plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE CDTPlugin plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE CDTPlugin plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CDTPlugin plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE CDTPlugin plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE CDTPlugin plug-in grant you additional permission
  * to convey the resulting work.
  */
 /**
@@ -94,7 +94,7 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 	/**
 	 * The identifier.
 	 */
-	public static String ID = "de.uni_freiburg.informatik.ultimate.cdt." + "codan.UltimateCChecker";
+	public static final String ID = "de.uni_freiburg.informatik.ultimate.cdt." + "codan.UltimateCChecker";
 
 	/**
 	 * In this map we store the listed files out of the directory.
@@ -109,7 +109,7 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 
 	/**
 	 * The Constructor of this Checker
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	public UltimateCChecker() throws Throwable {
@@ -120,12 +120,12 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 
 	@Override
 	protected void finalize() throws Throwable {
-		super.finalize();
 		mController.close();
+		super.finalize();
 	}
 
 	@Override
-	public void processAst(IASTTranslationUnit ast) {
+	public void processAst(final IASTTranslationUnit ast) {
 		// first, clear all old results
 		CDTResultStore.clearHackyResults();
 		CDTResultStore.clearResults();
@@ -153,8 +153,8 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 
 	private String getToolchainPath() {
 		// obtain selected toolchain from preferences
-		final String selectedToolchain = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
-				.getString(PreferencePage.TOOLCHAIN_SELECTION_TEXT);
+		final String selectedToolchain =
+				mServices.getPreferenceProvider(Activator.PLUGIN_ID).getString(PreferencePage.TOOLCHAIN_SELECTION_TEXT);
 
 		final File tc = mToolchainFiles.get(selectedToolchain);
 		String path = null;
@@ -172,8 +172,8 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 			@Override
 			public void run() {
 				// Present results of the actual run!
-				final IViewPart vpart = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage()
-						.findView(ResultList.ID);
+				final IViewPart vpart =
+						PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().findView(ResultList.ID);
 				if (vpart instanceof ResultList) {
 					((ResultList) vpart).setViewerInput(completePath);
 				}
@@ -195,11 +195,11 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 
 	/**
 	 * Method for reporting Problems to Eclipse
-	 * 
+	 *
 	 * @param fileName
 	 *            the FileName
 	 */
-	private void reportProblems(String fileName) {
+	private void reportProblems(final String fileName) {
 		final ILogger log = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		// we obtain the results by UltimateServices
 		final Set<String> tools = mServices.getResultService().getResults().keySet();
@@ -223,7 +223,7 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 		}
 	}
 
-	private void reportProblemWithoutLocation(IResult result, ILogger log) {
+	private void reportProblemWithoutLocation(final IResult result, final ILogger log) {
 		if (result instanceof ExceptionOrErrorResult) {
 			reportProblem(CCheckerDescriptor.GENERIC_ERROR_RESULT_ID, getFile(), 0, result.getShortDescription(),
 					CDTResultStore.addHackyResult(result));
@@ -233,7 +233,7 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 		}
 	}
 
-	private void reportProblemWithLocation(IResultWithLocation result, ILogger log) {
+	private void reportProblemWithLocation(final IResultWithLocation result, final ILogger log) {
 		if (result.getLocation() == null) {
 			log.warn("Result type should have location, but has none: " + result.getShortDescription() + " ("
 					+ result.getClass() + ")");
@@ -282,7 +282,7 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 		}
 	}
 
-	private void reportProblem(String descriptorId, IResult result, CACSLLocation loc) {
+	private void reportProblem(final String descriptorId, final IResult result, final CACSLLocation loc) {
 		if (loc instanceof CLocation) {
 			final IASTNode node = ((CLocation) loc).getNode();
 			if (node != null) {
@@ -294,7 +294,7 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 				CDTResultStore.addHackyResult(result));
 	}
 
-	private String severityToCheckerDescriptor(Severity severity) {
+	private String severityToCheckerDescriptor(final Severity severity) {
 		if (severity.equals(Severity.INFO)) {
 			return CCheckerDescriptor.GENERIC_INFO_RESULT_ID;
 		} else if (severity.equals(Severity.WARNING)) {
@@ -307,7 +307,7 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 	}
 
 	@Override
-	public void initPreferences(IProblemWorkingCopy problem) {
+	public void initPreferences(final IProblemWorkingCopy problem) {
 		super.initPreferences(problem);
 		// per default we set the Launch Mode to "on demand"
 		getLaunchModePreference(problem).setRunningMode(CheckerLaunchMode.RUN_AS_YOU_TYPE, false);
@@ -340,12 +340,12 @@ public class UltimateCChecker extends AbstractFullAstChecker {
 		}
 	}
 
-	public void setServices(IUltimateServiceProvider services) {
+	public void setServices(final IUltimateServiceProvider services) {
 		assert services != null;
 		mServices = services;
 	}
 
-	public void setStorage(IToolchainStorage storage) {
+	public void setStorage(final IToolchainStorage storage) {
 		sStorage = storage;
 	}
 

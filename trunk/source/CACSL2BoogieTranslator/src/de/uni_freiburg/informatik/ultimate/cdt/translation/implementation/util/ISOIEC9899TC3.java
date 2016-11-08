@@ -22,9 +22,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CACSL2BoogieTranslator plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission
  * to convey the resulting work.
  */
 /**
@@ -38,7 +38,7 @@ import java.math.BigInteger;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.TypeSizes;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
@@ -81,11 +81,12 @@ public final class ISOIEC9899TC3 {
 			"ul", "uL", "Ul", "UL", "lu", "lU", "Lu", "LU", "ll", "LL", "u", "U", "l", "L" };
 	
 	public enum IntegerConstantType {
-		OCTAL(8), 
-		DECIMAL(10), 
+		OCTAL(8),
+		DECIMAL(10),
 		HEXADECIMAL(16);
 		
 		private final int mBase;
+		
 		IntegerConstantType(final int base) {
 			mBase = base;
 		}
@@ -94,7 +95,7 @@ public final class ISOIEC9899TC3 {
 			return mBase;
 		}
 	}
-
+	
 	/**
 	 * Parses Integer constants according to <a
 	 * href="www.open-std.org/jtc1/sc22/WG14/www/docs/n1256.pdf">ISO/IEC
@@ -106,7 +107,7 @@ public final class ISOIEC9899TC3 {
 	 *            the location
 	 * @return the parsed value
 	 */
-	public static final String handleCharConstant(String val, final ILocation loc, final Dispatcher dispatch) {
+	public static String handleCharConstant(String val, final ILocation loc, final Dispatcher dispatch) {
 		int value;
 		if (val.startsWith("L")) {
 			// ignore wide character prefix
@@ -117,51 +118,51 @@ public final class ISOIEC9899TC3 {
 		if (!val.startsWith("'") || !val.endsWith("'")) {
 			throw new UnsupportedOperationException();
 		}
-
+		
 		if (val.charAt(1) == '\\') {
 			switch (val.charAt(2)) {
-			case '\'':
-			case '\"':
-			case '?':
-			case '\\':
-				value = val.charAt(2);
-				break;
-			case 'a':
-				value = 7;
-				break;
-			case 'b':
-				value = 8;
-				break;
-			case 'f':
-				value = 12;
-				break;
-			case 'n':
-				value = 10;
-				break;
-			case 'r':
-				value = 13;
-				break;
-			case 't':
-				value = 9;
-				break;
-			case 'v':
-				value = 11;
-				break;
-			case '0':
-			case '1':
-			case '2':
-			case '3':
-			case '4':
-			case '5':
-			case '6':
-			case '7':
-				value = Integer.valueOf(val.substring(2, val.length() - 1), 8);
-				break;
-			case 'x':
-				value = Integer.valueOf(val.substring(3, val.length() - 1), 16);
-				break;
-			default:
-				throw new UnsupportedOperationException();
+				case '\'':
+				case '\"':
+				case '?':
+				case '\\':
+					value = val.charAt(2);
+					break;
+				case 'a':
+					value = 7;
+					break;
+				case 'b':
+					value = 8;
+					break;
+				case 'f':
+					value = 12;
+					break;
+				case 'n':
+					value = 10;
+					break;
+				case 'r':
+					value = 13;
+					break;
+				case 't':
+					value = 9;
+					break;
+				case 'v':
+					value = 11;
+					break;
+				case '0':
+				case '1':
+				case '2':
+				case '3':
+				case '4':
+				case '5':
+				case '6':
+				case '7':
+					value = Integer.valueOf(val.substring(2, val.length() - 1), 8);
+					break;
+				case 'x':
+					value = Integer.valueOf(val.substring(3, val.length() - 1), 16);
+					break;
+				default:
+					throw new UnsupportedOperationException();
 			}
 		} else if (val.length() == 3) {
 			value = val.charAt(1);
@@ -170,19 +171,19 @@ public final class ISOIEC9899TC3 {
 		}
 		return String.valueOf(value);
 	}
-
+	
 	/**
 	 * Parses FloatingPoint constants according to <a
 	 * href="www.open-std.org/jtc1/sc22/WG14/www/docs/n1256.pdf">ISO/IEC
 	 * 9899:TC3</a>, chapter 6.4.4.2.
+	 * 
 	 * @param loc
 	 *            the location
 	 * @param val
 	 *            the value to parse (as it occurs in the C program)
-	 * 
 	 * @return Our representation of a floating point literal
 	 */
-	public static final FloatingPointLiteral handleFloatConstant(final String value, final ILocation loc) {
+	public static FloatingPointLiteral handleFloatConstant(final String value, final ILocation loc) {
 		final String floatSuffix;
 		String suffixFreeValue;
 		{
@@ -195,8 +196,7 @@ public final class ISOIEC9899TC3 {
 		final FloatingPointLiteral result = new FloatingPointLiteral(resultValue, resultType);
 		return result;
 	}
-
-
+	
 	/**
 	 * Given a suffix-free decimal value, compute a BigDecimal representation of
 	 * this value.
@@ -207,23 +207,24 @@ public final class ISOIEC9899TC3 {
 			suffixFreeValue = suffixFreeValue.substring(2);
 			int suffixLength = -1;
 			String hexExponentValue = null;
-
+			
 			// extract exponent value of the hex literal
 			if (suffixFreeValue.contains("p")) {
-				hexExponentValue = suffixFreeValue.substring(suffixFreeValue.indexOf("p") + 1);
-				suffixFreeValue = suffixFreeValue.substring(0, suffixFreeValue.indexOf("p"));
+				hexExponentValue = suffixFreeValue.substring(suffixFreeValue.indexOf('p') + 1);
+				suffixFreeValue = suffixFreeValue.substring(0, suffixFreeValue.indexOf('p'));
 			}
-
+			
 			if (suffixFreeValue.contains(".")) {
-				final int dotPosition = suffixFreeValue.indexOf(".");
+				final int dotPosition = suffixFreeValue.indexOf('.');
 				suffixLength = suffixFreeValue.substring(dotPosition + 1).length();
-				suffixFreeValue = suffixFreeValue.substring(0, dotPosition) + suffixFreeValue.substring(dotPosition + 1);
+				suffixFreeValue =
+						suffixFreeValue.substring(0, dotPosition) + suffixFreeValue.substring(dotPosition + 1);
 			}
 			final BigInteger hexValueToDecimalValue = new BigInteger(suffixFreeValue, 16);
 			BigDecimal hexValueBigDecimal = new BigDecimal(hexValueToDecimalValue.toString());
-
+			
 			if (hexExponentValue != null) {
-				final int hexExponent = Integer.valueOf(hexExponentValue);
+				final int hexExponent = Integer.parseInt(hexExponentValue);
 				if (hexExponent > 0) {
 					for (int i = 0; i < hexExponent; i++) {
 						hexValueBigDecimal = hexValueBigDecimal.multiply(new BigDecimal("2"));
@@ -234,30 +235,31 @@ public final class ISOIEC9899TC3 {
 					}
 				}
 			}
-
+			
 			if (suffixLength != -1) {
-				hexValueBigDecimal = hexValueBigDecimal.divide(new BigDecimal(Math.pow(16, suffixLength)));
+				hexValueBigDecimal = hexValueBigDecimal.divide(BigDecimal.valueOf(Math.pow(16, suffixLength)));
 			}
 			suffixFreeValue = hexValueBigDecimal.toString();
-		} else if (suffixFreeValue.contains("e")) {				
+		} else if (suffixFreeValue.contains("e")) {
 			// if value contains e calculate the number according to it
-			final int eLocatation = suffixFreeValue.indexOf("e");
+			final int eLocatation = suffixFreeValue.indexOf('e');
 			final String floatString = suffixFreeValue.substring(0, eLocatation);
 			String exponentString = suffixFreeValue.substring(eLocatation + 1, suffixFreeValue.length());
 			BigDecimal base = new BigDecimal(floatString);
 			if (exponentString.startsWith("0")) {
 				while (exponentString.startsWith("0")) {
 					exponentString = exponentString.substring(1);
-				}	
+				}
 			} else if (exponentString.startsWith("+") || exponentString.startsWith("-")) {
 				if (exponentString.substring(1, 2).equals("0")) {
 					while (exponentString.substring(1, 2).equals("0")) {
-						exponentString = exponentString.substring(0,1) + exponentString.substring(2, exponentString.length());
+						exponentString =
+								exponentString.substring(0, 1) + exponentString.substring(2, exponentString.length());
 					}
 				}
 			}
-
-			int exponentValue = Integer.valueOf(exponentString);
+			
+			int exponentValue = Integer.parseInt(exponentString);
 			if (exponentValue < 0) {
 				while (exponentValue < 0) {
 					base = base.multiply(new BigDecimal("0.1"));
@@ -265,20 +267,22 @@ public final class ISOIEC9899TC3 {
 				}
 			} else {
 				while (exponentValue > 0) {
-					base = base.multiply(new BigDecimal("10"));
-					exponentValue--;						
+					base = base.multiply(BigDecimal.TEN);
+					exponentValue--;
 				}
 			}
 			suffixFreeValue = base.toString();
 		}
-
+		
 		final BigDecimal floatVal = new BigDecimal(suffixFreeValue);
 		return floatVal;
 	}
-
+	
 	/**
 	 * Determine the type of a real floating type from the given float suffix.
-	 * @param floatSuffix either "d", "D", "f", "F", "l", "L"
+	 * 
+	 * @param floatSuffix
+	 *            either "d", "D", "f", "F", "l", "L"
 	 */
 	private static CPrimitive determineTypeFromSuffix(final String floatSuffix) {
 		// Set floatIndices depending on the value of the val
@@ -298,7 +302,7 @@ public final class ISOIEC9899TC3 {
 	/**
 	 * Check if value has float suffix.
 	 * Return Pair whose first entry is a suffix-free float value and whose
-	 * second entry is the float suffix. Use null as second if floatSuffix is 
+	 * second entry is the float suffix. Use null as second if floatSuffix is
 	 * null.
 	 */
 	private static Pair<String, String> checkForFloatSuffix(final String floatValue) {
@@ -307,14 +311,14 @@ public final class ISOIEC9899TC3 {
 			if (floatValue.endsWith(s)) {
 				final String suffixFreeValue = floatValue.substring(0, floatValue.length() - s.length());
 				final String floatSuffix = s;
-				return new Pair<String, String>(suffixFreeValue, floatSuffix);
+				return new Pair<>(suffixFreeValue, floatSuffix);
 			}
 		}
 		final String suffixFreeValue = floatValue;
 		final String floatSuffix = null;
-		return new Pair<String, String>(suffixFreeValue, floatSuffix);
+		return new Pair<>(suffixFreeValue, floatSuffix);
 	}
-
+	
 	/**
 	 * Parses Integer constants according to <a
 	 * href="www.open-std.org/jtc1/sc22/WG14/www/docs/n1256.pdf">ISO/IEC
@@ -328,12 +332,12 @@ public final class ISOIEC9899TC3 {
 	 *            if true the Expression of the resulting RValue is a bitvecor
 	 *            if false the Expression is an int.
 	 * @param typeSizeConstants
-	 * 			  object that contains information about the size of
-	 *  		  primitive types.
+	 *            object that contains information about the size of
+	 *            primitive types.
 	 * @return the parsed value
 	 */
-	public static final RValue handleIntegerConstant(final String valueWithPrefixAndSuffix, final ILocation loc, 
-			final boolean bitvectorTranslation, 
+	public static RValue handleIntegerConstant(final String valueWithPrefixAndSuffix, final ILocation loc,
+			final boolean bitvectorTranslation,
 			final TypeSizes typeSizeConstants) {
 		try {
 			final IntegerConstant ic = new IntegerConstant(valueWithPrefixAndSuffix);
@@ -347,7 +351,7 @@ public final class ISOIEC9899TC3 {
 			throw new IncorrectSyntaxException(loc, msg);
 		}
 	}
-
+	
 	public static Expression constructLiteralForCIntegerLiteral(
 			final ILocation loc, final boolean bitvectorTranslation,
 			final TypeSizes typeSizeConstants, final CPrimitive cType,
@@ -379,12 +383,14 @@ public final class ISOIEC9899TC3 {
 		private final IntegerConstantType mIntegerConstantType;
 		private final String mSuffix;
 		private final BigInteger mValue;
+		
 		public IntegerConstant(final String valueWithPrefixAndSuffix) {
 			String valueWithPrefix = valueWithPrefixAndSuffix;
 			String suffix = "";
 			for (final String s : SUFFIXES_INT) {
 				if (valueWithPrefixAndSuffix.endsWith(s)) {
-					valueWithPrefix = valueWithPrefixAndSuffix.substring(0, valueWithPrefixAndSuffix.length() - s.length());
+					valueWithPrefix =
+							valueWithPrefixAndSuffix.substring(0, valueWithPrefixAndSuffix.length() - s.length());
 					suffix = s;
 					break;
 				}
@@ -408,23 +414,27 @@ public final class ISOIEC9899TC3 {
 		public BigInteger getValue() {
 			return mValue;
 		}
+		
 		public IntegerConstantType getIntegerConstantType() {
 			return mIntegerConstantType;
 		}
+		
 		public boolean hasUnsignedSuffix() {
-			return mSuffix.contains("u") || mSuffix.contains("U"); 
+			return mSuffix.contains("u") || mSuffix.contains("U");
 		}
+		
 		public boolean hasLongLongSuffix() {
-			return mSuffix.contains("ll") || mSuffix.contains("LL"); 
+			return mSuffix.contains("ll") || mSuffix.contains("LL");
 		}
+		
 		public boolean hasLongSuffix() {
-			return !hasLongLongSuffix() && (mSuffix.contains("l") || mSuffix.contains("L")); 
+			return !hasLongLongSuffix() && (mSuffix.contains("l") || mSuffix.contains("L"));
 		}
 	}
 	
 	/**
 	 * Get the types that a given integer type can have.
-	 * Returns the types in the correct order according to 6.4.4.1.5 of the 
+	 * Returns the types in the correct order according to 6.4.4.1.5 of the
 	 * C11 standard.
 	 */
 	private static CPrimitives[] getPossibleTypes(final IntegerConstant ic) {
@@ -447,13 +457,15 @@ public final class ISOIEC9899TC3 {
 				if (ic.getIntegerConstantType() == IntegerConstantType.DECIMAL) {
 					return new CPrimitives[] { CPrimitives.LONG, CPrimitives.LONGLONG };
 				} else {
-					return new CPrimitives[] { CPrimitives.LONG, CPrimitives.ULONG, CPrimitives.LONGLONG, CPrimitives.ULONGLONG };
+					return new CPrimitives[] { CPrimitives.LONG, CPrimitives.ULONG, CPrimitives.LONGLONG,
+							CPrimitives.ULONGLONG };
 				}
 			} else {
 				if (ic.getIntegerConstantType() == IntegerConstantType.DECIMAL) {
 					return new CPrimitives[] { CPrimitives.INT, CPrimitives.LONG, CPrimitives.LONGLONG };
 				} else {
-					return new CPrimitives[] { CPrimitives.INT, CPrimitives.UINT, CPrimitives.LONG, CPrimitives.ULONG, CPrimitives.LONGLONG, CPrimitives.ULONGLONG };
+					return new CPrimitives[] { CPrimitives.INT, CPrimitives.UINT, CPrimitives.LONG, CPrimitives.ULONG,
+							CPrimitives.LONGLONG, CPrimitives.ULONGLONG };
 				}
 			}
 		}
@@ -468,27 +480,28 @@ public final class ISOIEC9899TC3 {
 				return cPrimitive;
 			}
 		}
-		throw new IllegalArgumentException("Unable to represent " + ic.getValue() 
-			+ " using any of the given types. This is probably undefined"
-			+ " or we need extended integer types. See 6.4.4.1 in the C standard");
+		throw new IllegalArgumentException("Unable to represent " + ic.getValue()
+				+ " using any of the given types. This is probably undefined"
+				+ " or we need extended integer types. See 6.4.4.1 in the C standard");
 	}
-	
 	
 	public static class FloatingPointLiteral {
 		private final BigDecimal mDecimalRepresenation;
 		private final CPrimitive mCPrimitive;
+		
 		public FloatingPointLiteral(final BigDecimal decimalRepresenation, final CPrimitive cPrimitive) {
 			super();
 			mDecimalRepresenation = decimalRepresenation;
 			mCPrimitive = cPrimitive;
 		}
+		
 		public BigDecimal getDecimalRepresenation() {
 			return mDecimalRepresenation;
 		}
+		
 		public CPrimitive getCPrimitive() {
 			return mCPrimitive;
 		}
-		
 		
 	}
 }

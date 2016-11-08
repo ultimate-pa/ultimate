@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.BoogieUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.TypeUtil;
@@ -136,7 +136,7 @@ public class OctStatementProcessor {
 
 	public List<OctDomainState> processSingleAssignment(IBoogieVar targetVar, Expression rhs,
 			List<OctDomainState> oldStates) {
-		final IType type = rhs.getType();
+		final IBoogieType type = rhs.getType();
 		if (TypeUtil.isBoolean(type)) {
 			return processBooleanAssign(targetVar, rhs, oldStates);
 		} else if (TypeUtil.isNumeric(type)) {

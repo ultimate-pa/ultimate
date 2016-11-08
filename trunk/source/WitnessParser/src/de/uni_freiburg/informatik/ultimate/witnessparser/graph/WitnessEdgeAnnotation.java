@@ -113,10 +113,10 @@ public class WitnessEdgeAnnotation extends ModernAnnotations {
 			return null;
 		}
 		if ("true".equalsIgnoreCase(boolStr)) {
-			return true;
+			return Boolean.TRUE;
 		}
 		if ("false".equalsIgnoreCase(boolStr)) {
-			return false;
+			return Boolean.FALSE;
 		}
 		throw new IllegalArgumentException("A boolean attribute has to be true or false");
 	}

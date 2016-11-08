@@ -39,10 +39,11 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.termination.AffineFunctio
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.AffineFunctionGenerator;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfunctions.PiecewiseRankingFunction;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfunctions.RankingFunction;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 
 /**
@@ -78,7 +79,7 @@ public class PiecewiseTemplate extends RankingTemplate {
 	/**
 	 * @param numfunctions number of pieces
 	 */
-	public PiecewiseTemplate(int numpieces) {
+	public PiecewiseTemplate(final int numpieces) {
 		assert(numpieces >= 2);
 		size = numpieces;
 		mfgens = new AffineFunctionGenerator[size];
@@ -130,7 +131,7 @@ public class PiecewiseTemplate extends RankingTemplate {
 	
 	@Override
 	public List<List<LinearInequality>> getConstraints(
-			Map<RankVar, Term> inVars, Map<RankVar, Term> outVars) {
+			final Map<IProgramVar, TermVariable> inVars, final Map<IProgramVar, TermVariable> outVars) {
 		checkInitialized();
 		final List<List<LinearInequality>> conjunction =
 				new ArrayList<List<LinearInequality>>();
@@ -144,7 +145,7 @@ public class PiecewiseTemplate extends RankingTemplate {
 				final LinearInequality li1 = mpgens[i].generate(inVars);
 				li1.negate();
 				li1.setStrict(true);
-				li1.motzkin_coefficient = sBlueAtoms && i == j ?
+				li1.mMotzkinCoefficient = sBlueAtoms && i == j ?
 						PossibleMotzkinCoefficients.ZERO_AND_ONE
 						: PossibleMotzkinCoefficients.ANYTHING;
 				disjunction.add(li1);
@@ -152,7 +153,7 @@ public class PiecewiseTemplate extends RankingTemplate {
 				final LinearInequality li2 = mpgens[j].generate(outVars);
 				li2.negate();
 				li2.setStrict(true);
-				li2.motzkin_coefficient = PossibleMotzkinCoefficients.ANYTHING;
+				li2.mMotzkinCoefficient = PossibleMotzkinCoefficients.ANYTHING;
 				disjunction.add(li2);
 				
 				final LinearInequality li3 = mfgens[i].generate(inVars);
@@ -162,7 +163,7 @@ public class PiecewiseTemplate extends RankingTemplate {
 				final AffineTerm a = new AffineTerm(mdelta, Rational.MONE);
 				li3.add(a);
 				li3.setStrict(true);
-				li3.motzkin_coefficient = sRedAtoms ?
+				li3.mMotzkinCoefficient = sRedAtoms ?
 						PossibleMotzkinCoefficients.ZERO_AND_ONE
 						: PossibleMotzkinCoefficients.ANYTHING;
 				disjunction.add(li3);
@@ -174,7 +175,7 @@ public class PiecewiseTemplate extends RankingTemplate {
 		for (int i = 0; i < size; ++i) {
 			final LinearInequality li = mfgens[i].generate(inVars);
 			li.setStrict(true);
-			li.motzkin_coefficient = sRedAtoms ? PossibleMotzkinCoefficients.ONE
+			li.mMotzkinCoefficient = sRedAtoms ? PossibleMotzkinCoefficients.ONE
 					: PossibleMotzkinCoefficients.ANYTHING;
 			conjunction.add(Collections.singletonList(li));
 		}
@@ -184,7 +185,7 @@ public class PiecewiseTemplate extends RankingTemplate {
 		for (int i = 0; i < size; ++i) {
 			final LinearInequality li = mpgens[i].generate(inVars);
 			li.setStrict(false);
-			li.motzkin_coefficient = sRedAtoms && i == 0 ?
+			li.mMotzkinCoefficient = sRedAtoms && i == 0 ?
 					PossibleMotzkinCoefficients.ZERO_AND_ONE
 					: PossibleMotzkinCoefficients.ANYTHING;
 			disjunction.add(li);
@@ -207,7 +208,7 @@ public class PiecewiseTemplate extends RankingTemplate {
 	}
 
 	@Override
-	public RankingFunction extractRankingFunction(Map<Term, Rational> val)
+	public RankingFunction extractRankingFunction(final Map<Term, Rational> val)
 			throws SMTLIBException {
 		// The ranking pieces need a common gcd
 		Rational gcd_f = mfgens[0].getGcd(val);

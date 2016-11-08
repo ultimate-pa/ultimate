@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CDTPlugin plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE CDTPlugin plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE CDTPlugin plug-in grant you additional permission
  * to convey the resulting work.
  */
 /**
@@ -59,7 +59,7 @@ import org.eclipse.ui.part.ViewPart;
  */
 public class ResultList extends ViewPart implements ISelectionListener {
 
-	public static String ID = "de.uni_freiburg.informatik.ultimate.cdt.ResultList";
+	public static final String ID = "de.uni_freiburg.informatik.ultimate.cdt.ResultList";
 
 	/**
 	 * The underlying JFace Component
@@ -74,7 +74,7 @@ public class ResultList extends ViewPart implements ISelectionListener {
 	 * .Composite)
 	 */
 	@Override
-	public void createPartControl(Composite parent) {
+	public void createPartControl(final Composite parent) {
 		final Tree variableTree = new Tree(parent, SWT.BORDER | SWT.H_SCROLL
 				| SWT.V_SCROLL | SWT.FULL_SELECTION);
 		variableTree.setHeaderVisible(true);
@@ -116,7 +116,7 @@ public class ResultList extends ViewPart implements ISelectionListener {
 	}
 
 	@Override
-	public void selectionChanged(IWorkbenchPart part, ISelection selection) {
+	public void selectionChanged(final IWorkbenchPart part, final ISelection selection) {
 		// First we check the Selection of the Editor
 		// Second is the Selection of the ProjectExplorer
 		if (selection instanceof ITextSelection && part instanceof EditorPart) {
@@ -179,7 +179,7 @@ public class ResultList extends ViewPart implements ISelectionListener {
 	/**
 	 * @param filename
 	 */
-	public void setViewerInput(String filename) {
+	public void setViewerInput(final String filename) {
 		viewer.setInput(filename);
 	}
 }

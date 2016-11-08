@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Core.
- * 
+ *
  * The ULTIMATE Core is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Core is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Core. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Core, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Core grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Core grant you additional permission
  * to convey the resulting work.
  */
 
@@ -45,7 +45,7 @@ import org.eclipse.core.runtime.preferences.IEclipsePreferences.PreferenceChange
 import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.osgi.service.prefs.BackingStoreException;
 
-import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainListType;
+import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.RunDefinition;
 import de.uni_freiburg.informatik.ultimate.core.model.ICore;
 import de.uni_freiburg.informatik.ultimate.core.model.IUltimatePlugin;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
@@ -56,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.util.RcpPreferenceBi
 /**
  * The SettingsManager initializes the default settings of all plugins as well as loading and saving settings of an
  * Ultimate instance.
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
@@ -77,7 +77,7 @@ final class SettingsManager {
 		if (plugin == null) {
 			return;
 		}
-		
+
 		final String pluginName = plugin.getPluginName();
 		final IPreferenceInitializer prefs = plugin.getPreferences();
 		if (prefs == null) {
@@ -92,7 +92,7 @@ final class SettingsManager {
 		logDefaultPreferences(pluginId, pluginName);
 	}
 
-	void loadPreferencesFromFile(ICore<ToolchainListType> core, String filename) {
+	void loadPreferencesFromFile(final ICore<RunDefinition> core, final String filename) {
 		if (filename != null && !filename.isEmpty()) {
 			mLogger.debug("--------------------------------------------------------------------------------");
 			mLogger.info("Beginning loading settings from " + filename);
@@ -106,15 +106,13 @@ final class SettingsManager {
 				final IStatus status = RcpPreferenceProvider.importPreferences(fis);
 				if (!status.isOK()) {
 					mLogger.warn("Failed to load preferences. Status is: " + status);
-					mLogger.warn("Did not attach debug property logger");
 				} else {
 					mLogger.info("Loading preferences was successful");
 				}
 				mLogger.info("Preferences different from defaults after loading the file:");
 				logPreferencesDifferentFromDefaults(core);
 			} catch (IOException | CoreException e) {
-				mLogger.error("Could not load preferences because of exception: ", e);
-				mLogger.warn("Did not attach debug property logger");
+				mLogger.error("Could not load preferences: " + e.getMessage());
 			} finally {
 				mLogger.debug("--------------------------------------------------------------------------------");
 			}
@@ -123,7 +121,7 @@ final class SettingsManager {
 		}
 	}
 
-	private void logPreferencesDifferentFromDefaults(ICore<ToolchainListType> core) {
+	private void logPreferencesDifferentFromDefaults(final ICore<RunDefinition> core) {
 		boolean isSomePluginDifferent = false;
 		for (final IUltimatePlugin plugin : core.getRegisteredUltimatePlugins()) {
 			final String pluginId = plugin.getPluginID();
@@ -141,7 +139,7 @@ final class SettingsManager {
 		}
 	}
 
-	void savePreferences(ICore<ToolchainListType> core, String filename) {
+	void savePreferences(final ICore<RunDefinition> core, final String filename) {
 		if (filename == null || filename.isEmpty()) {
 			return;
 		}
@@ -168,7 +166,7 @@ final class SettingsManager {
 		}
 	}
 
-	void resetPreferences(final ICore<ToolchainListType> core) {
+	void resetPreferences(final ICore<RunDefinition> core) {
 		mLogger.info("Resetting all preferences to default values...");
 		for (final IUltimatePlugin plugin : core.getRegisteredUltimatePlugins()) {
 			final IPreferenceInitializer preferences = plugin.getPreferences();
@@ -202,10 +200,10 @@ final class SettingsManager {
 	/**
 	 * Attaches Listener to all preferences and all scopes of all plugins to notify developers about changing
 	 * preferences
-	 * 
+	 *
 	 * @param pluginId
 	 */
-	private void attachLogPreferenceChangeListenerToPlugin(String pluginId, String pluginName) {
+	private void attachLogPreferenceChangeListenerToPlugin(final String pluginId, final String pluginName) {
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Attaching preference change listener for plugin " + pluginName);
 		}
@@ -223,7 +221,8 @@ final class SettingsManager {
 		DefaultScope.INSTANCE.getNode(pluginId).addPreferenceChangeListener(defaultListener);
 	}
 
-	private LogPreferenceChangeListener retrieveListener(String pluginID, String pluginName, String scope) {
+	private LogPreferenceChangeListener retrieveListener(final String pluginID, final String pluginName,
+			final String scope) {
 		final String listenerID = pluginID + scope;
 		if (mActivePreferenceListener.containsKey(listenerID)) {
 			return mActivePreferenceListener.get(listenerID);
@@ -240,14 +239,14 @@ final class SettingsManager {
 		private final RcpPreferenceProvider mPreferences;
 		private final String mPrefix;
 
-		public LogPreferenceChangeListener(String scope, String pluginID, String pluginName) {
+		public LogPreferenceChangeListener(final String scope, final String pluginID, final String pluginName) {
 			mScope = scope;
 			mPreferences = new RcpPreferenceProvider(pluginID);
 			mPrefix = "[" + pluginName + " (" + mScope + ")] Preference \"";
 		}
 
 		@Override
-		public void preferenceChange(PreferenceChangeEvent event) {
+		public void preferenceChange(final PreferenceChangeEvent event) {
 			mLogger.debug(mPrefix + event.getKey() + "\" changed: " + event.getOldValue() + " -> " + event.getNewValue()
 					+ " (actual value in store: " + mPreferences.getString(event.getKey()) + ")");
 		}

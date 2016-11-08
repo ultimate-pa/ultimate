@@ -30,7 +30,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
 public class SPredicateWithWitnessNode extends SPredicate {
@@ -42,7 +42,7 @@ public class SPredicateWithWitnessNode extends SPredicate {
 	private final WitnessNode mWitnessNode;
 	private final Integer mStutteringSteps;
 	
-	protected SPredicateWithWitnessNode(ProgramPoint programPoint,
+	protected SPredicateWithWitnessNode(BoogieIcfgLocation programPoint,
 			int serialNumber, String[] procedures, Term term,
 			Set<IProgramVar> vars, Term closedFormula, WitnessNode witnessNode, Integer stutteringSteps) {
 		super(programPoint, serialNumber, procedures, term, vars, closedFormula);
@@ -55,7 +55,7 @@ public class SPredicateWithWitnessNode extends SPredicate {
 		String result = super.mSerialNumber + "#";
 		result += "(";
 //		if (mProgramPoint != null) {
-			result += mProgramPoint.getPosition();
+			result += mProgramPoint.getDebugIdentifier();
 //		}
 		result += ",";
 		result += mWitnessNode.getName();

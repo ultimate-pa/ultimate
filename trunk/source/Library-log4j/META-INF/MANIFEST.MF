@@ -57,4 +57,4 @@ Export-Package: org.apache.log4j;uses:="org.apache.log4j.helpers,org.apache.log4
    org.apache.log4j.spi,
    org.w3c.dom,
    org.xml.sax"
-Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8

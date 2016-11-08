@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Util Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Util Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Util Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.util.scc;
@@ -41,10 +41,6 @@ public class StronglyConnectedComponent<NODE> {
 	protected NODE mRootNode;
 	protected final Set<NODE> mNodes = new HashSet<NODE>();
 
-	public StronglyConnectedComponent() {
-		super();
-	}
-
 	public int getNumberOfStates() {
 		return mNodes.size();
 	}
@@ -54,14 +50,14 @@ public class StronglyConnectedComponent<NODE> {
 	}
 
 	/**
-	 * @return The {@link StateContainer}s of all states that are 
+	 * @return The {@link StateContainer}s of all states that are
 	 * contained in this SCC.
 	 */
 	public Set<NODE> getNodes() {
 		return Collections.unmodifiableSet(mNodes);
 	}
 	
-	public void addNode(NODE node) {
+	public void addNode(final NODE node) {
 		if (mRootNode != null) {
 			throw new UnsupportedOperationException("If root node is set SCC may not be modified");
 		}
@@ -69,7 +65,7 @@ public class StronglyConnectedComponent<NODE> {
 		assert notAlreadyContained : "nodes must not be added twice";
 	}
 	
-	public void setRootNode(NODE rootNode) {
+	public void setRootNode(final NODE rootNode) {
 		if (mRootNode != null) {
 			throw new UnsupportedOperationException("If root node is set SCC may not be modified");
 		}

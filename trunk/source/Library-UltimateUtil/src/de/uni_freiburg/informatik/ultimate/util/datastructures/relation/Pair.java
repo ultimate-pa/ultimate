@@ -52,15 +52,21 @@ public class Pair<E1, E2> {
 		return mSecondElement;
 	}
 
+	/* (non-Javadoc)
+	 * @see java.lang.Object#hashCode()
+	 */
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + mFirstElement.hashCode();
-		result = prime * result + mSecondElement.hashCode();
+		result = prime * result + ((mFirstElement == null) ? 0 : mFirstElement.hashCode());
+		result = prime * result + ((mSecondElement == null) ? 0 : mSecondElement.hashCode());
 		return result;
 	}
 
+	/* (non-Javadoc)
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj) {
@@ -69,7 +75,7 @@ public class Pair<E1, E2> {
 		if (obj == null) {
 			return false;
 		}
-		if (getClass() != obj.getClass()) {
+		if (!(obj instanceof Pair)) {
 			return false;
 		}
 		final Pair<?, ?> other = (Pair<?, ?>) obj;

@@ -30,8 +30,8 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
-		<artifactId>MavenParentUltimate</artifactId>
-		<groupId>Ultimate</groupId>
+		<artifactId>mavenparent</artifactId>
+		<groupId>de.uni_freiburg.informatik.ultimate</groupId>
 		<version>0.0.1</version>
 		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
 	</parent>
@@ -59,7 +59,7 @@
 									${automatascriptparserDir}</echo>
 								<echo>AutomataScriptParser: flexBinary is ${flexBinary}</echo>
 
-								<java classname="java_cup.Main" classpath="${cupDir}" fork="true"
+								<java classname="com.github.jhoenicke.javacup.Main" classpath="${cupDir}" fork="true"
 									dir="${ltl2autParserDir}" failonerror="true">
 									<arg line="-parser Parser" />
 									<arg value="AutPromela.cup" />
@@ -68,7 +68,7 @@
 									<arg value="AutPromela.flex" />
 								</java>
 
-								<java classname="java_cup.Main" classpath="${cupDir}" fork="true"
+								<java classname="com.github.jhoenicke.javacup.Main" classpath="${cupDir}" fork="true"
 									dir="${ltl2autParserDir}" failonerror="true">
 									<arg line="-parser Parser" />
 									<arg value="Apformula.cup" />

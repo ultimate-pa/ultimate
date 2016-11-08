@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
 /**
  * Edge in a recursive control flow graph that represents the return from a
@@ -48,7 +48,7 @@ public class Return extends CodeBlock implements IReturnAction {
 
 	private final Call mCorrespondingCall;
 
-	Return(int serialNumber, ProgramPoint source, ProgramPoint target, Call correspondingCall, ILogger logger) {
+	Return(int serialNumber, BoogieIcfgLocation source, BoogieIcfgLocation target, Call correspondingCall, ILogger logger) {
 		super(serialNumber, source, target, logger);
 		mCorrespondingCall = correspondingCall;
 	}
@@ -57,8 +57,8 @@ public class Return extends CodeBlock implements IReturnAction {
 		return mCorrespondingCall;
 	}
 
-	public ProgramPoint getCallerProgramPoint() {
-		return (ProgramPoint) getCorrespondingCall().getSource();
+	public BoogieIcfgLocation getCallerProgramPoint() {
+		return (BoogieIcfgLocation) getCorrespondingCall().getSource();
 	}
 
 	/**
@@ -99,12 +99,12 @@ public class Return extends CodeBlock implements IReturnAction {
 	}
 
 	@Override
-	public TransFormula getAssignmentOfReturn() {
+	public UnmodifiableTransFormula getAssignmentOfReturn() {
 		return getTransitionFormula();
 	}
 
 	@Override
-	public TransFormula getLocalVarsAssignmentOfCall() {
+	public UnmodifiableTransFormula getLocalVarsAssignmentOfCall() {
 		return getCorrespondingCall().getLocalVarsAssignment();
 	}
 

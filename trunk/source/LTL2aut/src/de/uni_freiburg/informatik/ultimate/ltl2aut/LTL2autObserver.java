@@ -2,27 +2,27 @@
  * Copyright (C) 2013-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
  * Copyright (C) 2015 Vincent Langenfeld (langenfv@informatik.uni-freiburg.de)
- * 
+ *
  * This file is part of the ULTIMATE LTL2Aut plug-in.
- * 
+ *
  * The ULTIMATE LTL2Aut plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE LTL2Aut plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE LTL2Aut plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE LTL2Aut plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE LTL2Aut plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE LTL2Aut plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.ltl2aut;
@@ -36,7 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck;
 import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck.CheckableExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
@@ -59,10 +59,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 /**
  * This class reads a definition of a property in LTL and returns the AST of the description of the LTL formula as a
  * Buchi automaton.
- * 
+ *
  * @author Langenfeld
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * 
  */
 public class LTL2autObserver implements IUnmanagedObserver {
 
@@ -120,8 +119,7 @@ public class LTL2autObserver implements IUnmanagedObserver {
 
 		final String ltl2baProperty = getLTL2BAProperty(ltlProperty);
 		final AstNode node = getNeverClaim(ltl2baProperty);
-		final CodeBlockFactory cbf =
-				(CodeBlockFactory) mStorage.getStorable(CodeBlockFactory.s_CodeBlockFactoryKeyInToolchainStorage);
+		final CodeBlockFactory cbf = CodeBlockFactory.getFactory(mStorage);
 		final INestedWordAutomaton<CodeBlock, String> nwa = createNWAFromNeverClaim(node, irs, mSymbolTable, cbf);
 		mLogger.info("LTL Property is: " + prettyPrintProperty(irs, ltlProperty));
 
@@ -131,13 +129,14 @@ public class LTL2autObserver implements IUnmanagedObserver {
 
 	private String getLTL2BAProperty(final String ltlProperty) {
 		String rtr = ltlProperty.toLowerCase();
-		rtr = rtr.replaceAll("f", "<>");
-		rtr = rtr.replaceAll("g", "[]");
-		rtr = rtr.replaceAll("x", "X");
-		rtr = rtr.replaceAll("u", "U");
-		rtr = rtr.replaceAll("r", "\\/");
+		rtr = rtr.replaceAll("\\bf\\b", " <> ");
+		rtr = rtr.replaceAll("\\bg\\b", " [] ");
+		rtr = rtr.replaceAll("\\bx\\b", " X ");
+		rtr = rtr.replaceAll("\\bu\\b", " U ");
+		rtr = rtr.replaceAll("\\br\\b", " V ");
 		rtr = rtr.replaceAll("<==>", "<->");
 		rtr = rtr.replaceAll("==>", "->");
+		rtr = rtr.replaceAll("\\s+", " ");
 		return rtr;
 	}
 

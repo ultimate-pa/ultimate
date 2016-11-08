@@ -36,54 +36,56 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer.CodeBlockSize;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 
 public abstract class CFG2Automaton {
 
 	protected final ILogger mLogger;
 	protected final IUltimateServiceProvider mServices;
-	private final SimplicationTechnique mSimplificationTechnique;
+	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
 
-	private final RootAnnot mRootAnnot;
-	private final SmtManager mSmtManager;
-	private final StateFactory<IPredicate> mContentFactory;
+	private final BoogieIcfgContainer mRootAnnot;
+	private final CfgSmtToolkit mCsToolkit;
+	private final PredicateFactory mPredicateFactory;
+	private final IStateFactory<IPredicate> mContentFactory;
 	protected ArrayList<INestedWordAutomaton<CodeBlock, IPredicate>> mAutomata;
 
 	private CodeBlock mSharedVarsInit;
 	private static final String mInitProcedure = "~init";
 
-	public CFG2Automaton(final RootNode rootNode, final StateFactory<IPredicate> contentFactory, final SmtManager smtManager,
-			final IUltimateServiceProvider services, final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
+	public CFG2Automaton(final BoogieIcfgContainer rootAnnot, final IStateFactory<IPredicate> contentFactory, 
+			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory, final IUltimateServiceProvider services, 
+			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
-		// mRootNode = rootNode;
-		mRootAnnot = rootNode.getRootAnnot();
+		mRootAnnot = rootAnnot;
 		mContentFactory = contentFactory;
-		mSmtManager = smtManager;
+		mCsToolkit = csToolkit;
+		mPredicateFactory = predicateFactory;
 	}
 
 	public abstract Object getResult();
@@ -118,7 +120,7 @@ public abstract class CFG2Automaton {
 			if (proc.equals(mInitProcedure)) {
 				continue;
 			}
-			final ProgramPoint entry = mRootAnnot.getEntryNodes().get(proc);
+			final BoogieIcfgLocation entry = mRootAnnot.getEntryNodes().get(proc);
 			mAutomata.add(getNestedWordAutomaton(entry));
 		}
 		assert (mAutomata.size() == numberOfProcedures);
@@ -127,18 +129,18 @@ public abstract class CFG2Automaton {
 
 	private CodeBlock extractPrecondition() {
 		assert (mRootAnnot.getBoogieDeclarations().getProcImplementation().containsKey(mInitProcedure));
-		final ProgramPoint entry = mRootAnnot.getEntryNodes().get(mInitProcedure);
-		final ProgramPoint exit = mRootAnnot.getExitNodes().get(mInitProcedure);
+		final BoogieIcfgLocation entry = mRootAnnot.getEntryNodes().get(mInitProcedure);
+		final BoogieIcfgLocation exit = mRootAnnot.getExitNodes().get(mInitProcedure);
 		final List<CodeBlock> codeBlocks = new ArrayList<CodeBlock>();
 
-		ProgramPoint current = entry;
+		BoogieIcfgLocation current = entry;
 		while (current != exit) {
 			assert current.getOutgoingEdges().size() == 1;
 			assert current.getOutgoingEdges().get(0) instanceof StatementSequence;
 			final StatementSequence succSS = (StatementSequence) current.getOutgoingEdges().get(0);
 			assert succSS.getStatements().size() == 1;
 			codeBlocks.add(succSS);
-			current = (ProgramPoint) succSS.getTarget();
+			current = (BoogieIcfgLocation) succSS.getTarget();
 		}
 		return mRootAnnot.getCodeBlockFactory().constructSequentialComposition(entry, exit, true, false, codeBlocks, mXnfConversionTechnique, mSimplificationTechnique);
 	}
@@ -147,21 +149,21 @@ public abstract class CFG2Automaton {
 	 * Build NestedWordAutomaton for all code reachable from initial Node which is in the same procedure as initial
 	 * Node. Initial Node does not have to be the enty Node of a procedure.
 	 */
-	private INestedWordAutomaton<CodeBlock, IPredicate> getNestedWordAutomaton(final ProgramPoint initialNode) {
+	private INestedWordAutomaton<CodeBlock, IPredicate> getNestedWordAutomaton(final BoogieIcfgLocation initialNode) {
 
 		mLogger.debug("Step: Collect all LocNodes corresponding to" + " this procedure");
 
-		final LinkedList<ProgramPoint> queue = new LinkedList<ProgramPoint>();
-		final Set<ProgramPoint> allNodes = new HashSet<ProgramPoint>();
+		final LinkedList<BoogieIcfgLocation> queue = new LinkedList<BoogieIcfgLocation>();
+		final Set<BoogieIcfgLocation> allNodes = new HashSet<BoogieIcfgLocation>();
 		queue.add(initialNode);
 		allNodes.add(initialNode);
 
 		while (!queue.isEmpty()) {
-			final ProgramPoint currentNode = queue.removeFirst();
+			final BoogieIcfgLocation currentNode = queue.removeFirst();
 
 			if (currentNode.getOutgoingNodes() != null) {
-				for (final RCFGNode node : currentNode.getOutgoingNodes()) {
-					final ProgramPoint nextNode = (ProgramPoint) node;
+				for (final IcfgLocation node : currentNode.getOutgoingNodes()) {
+					final BoogieIcfgLocation nextNode = (BoogieIcfgLocation) node;
 					if (!allNodes.contains(nextNode)) {
 						allNodes.add(nextNode);
 						queue.add(nextNode);
@@ -179,9 +181,9 @@ public abstract class CFG2Automaton {
 		// add transAnnot from sharedVars initialization
 		internalAlphabet.add(mSharedVarsInit);
 
-		for (final ProgramPoint locNode : allNodes) {
+		for (final BoogieIcfgLocation locNode : allNodes) {
 			if (locNode.getOutgoingNodes() != null) {
-				for (final RCFGEdge edge : locNode.getOutgoingEdges()) {
+				for (final IcfgEdge edge : locNode.getOutgoingEdges()) {
 					if (edge instanceof Summary) {
 						throw new IllegalArgumentException(
 								"Procedure calls not" + " supported by concurrent trace abstraction");
@@ -209,12 +211,12 @@ public abstract class CFG2Automaton {
 		IPredicate procedureInitialState = null;
 
 		mLogger.debug("Step: add states");
-		final Map<ProgramPoint, IPredicate> nodes2States = new HashMap<ProgramPoint, IPredicate>();
+		final Map<BoogieIcfgLocation, IPredicate> nodes2States = new HashMap<BoogieIcfgLocation, IPredicate>();
 		// add states
-		for (final ProgramPoint locNode : allNodes) {
+		for (final BoogieIcfgLocation locNode : allNodes) {
 			final boolean isErrorLocation = locNode.isErrorLocation();
-			final Term trueTerm = mSmtManager.getScript().term("true");
-			final IPredicate automatonState = mSmtManager.getPredicateFactory().newSPredicate(locNode, trueTerm);
+			final Term trueTerm = mCsToolkit.getManagedScript().getScript().term("true");
+			final IPredicate automatonState = mPredicateFactory.newSPredicate(locNode, trueTerm);
 			nwa.addState(false, isErrorLocation, automatonState);
 			nodes2States.put(locNode, automatonState);
 			if (locNode == initialNode) {
@@ -226,11 +228,11 @@ public abstract class CFG2Automaton {
 
 		mLogger.debug("Step: add transitions");
 		// add transitions
-		for (final ProgramPoint locNode : allNodes) {
+		for (final BoogieIcfgLocation locNode : allNodes) {
 			final IPredicate state = nodes2States.get(locNode);
 			if (locNode.getOutgoingNodes() != null) {
-				for (final RCFGEdge edge : locNode.getOutgoingEdges()) {
-					final ProgramPoint succLoc = (ProgramPoint) edge.getTarget();
+				for (final IcfgEdge edge : locNode.getOutgoingEdges()) {
+					final BoogieIcfgLocation succLoc = (BoogieIcfgLocation) edge.getTarget();
 					final IPredicate succState = nodes2States.get(succLoc);
 					if (edge instanceof CodeBlock) {
 						final CodeBlock symbol = (CodeBlock) edge;
@@ -243,9 +245,9 @@ public abstract class CFG2Automaton {
 		}
 
 		mLogger.debug("Step: SharedVarsInit part");
-		final ProgramPoint entryOfInitProc = (ProgramPoint) mSharedVarsInit.getSource();
-		final Term trueTerm = mSmtManager.getScript().term("true");
-		final IPredicate initialContent = mSmtManager.getPredicateFactory().newSPredicate(entryOfInitProc, trueTerm);
+		final BoogieIcfgLocation entryOfInitProc = (BoogieIcfgLocation) mSharedVarsInit.getSource();
+		final Term trueTerm = mCsToolkit.getManagedScript().getScript().term("true");
+		final IPredicate initialContent = mPredicateFactory.newSPredicate(entryOfInitProc, trueTerm);
 		nwa.addState(true, false, initialContent);
 		IPredicate automatonSuccState;
 		automatonSuccState = procedureInitialState;

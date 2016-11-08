@@ -15,7 +15,6 @@ Export-Package: de.uni_freiburg.informatik.ultimate.test,
 Require-Bundle: Library-UltimateCore,
  UltimateCore,
  Library-UltimateUtil,
- Library-log4j,
  org.junit
 Import-Package: org.junit,
  org.junit.experimental.categories,

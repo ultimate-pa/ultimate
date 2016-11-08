@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Test Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Test Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Test Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimatetest.logs;
@@ -50,18 +50,18 @@ import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
  */
 public class IncrementalLogWithBenchmarkResults extends DefaultIncrementalLogfile {
 
-	public IncrementalLogWithBenchmarkResults(Class<? extends UltimateTestSuite> ultimateTestSuite) {
+	public IncrementalLogWithBenchmarkResults(final Class<? extends UltimateTestSuite> ultimateTestSuite) {
 		super(ultimateTestSuite);
 	}
 
 	@Override
-	public void addEntryPreStart(UltimateRunDefinition runDef, ILogger testLogger) {
+	public void addEntryPreStart(final UltimateRunDefinition runDef, final ILogger testLogger) {
 		writeToFile(runDef.getInputFileNames() + CoreUtil.getPlatformLineSeparator(), testLogger);
 	}
 
 	@Override
-	public void addEntryPostCompletion(UltimateRunDefinition runDef, TestResult result, String resultCategory,
-			String resultMessage, IUltimateServiceProvider services, ILogger testLogger) {
+	public void addEntryPostCompletion(final UltimateRunDefinition runDef, final TestResult result, final String resultCategory,
+			final String resultMessage, final IUltimateServiceProvider services, final ILogger testLogger) {
 		final String indent = "\t";
 		final String lineSeparator = System.getProperty("line.separator");
 		Entry sum = null;
@@ -82,8 +82,8 @@ public class IncrementalLogWithBenchmarkResults extends DefaultIncrementalLogfil
 		private final UltimateRunDefinition mUltimateRunDefinition;
 		private final List<String> mFlattenedBenchmarkResults;
 
-		public Entry(TestResult threeValuedResult, String message, UltimateRunDefinition ultimateRunDefinition,
-				IResultService resultService) {
+		public Entry(final TestResult threeValuedResult, final String message, final UltimateRunDefinition ultimateRunDefinition,
+				final IResultService resultService) {
 			super();
 			mThreeValuedResult = threeValuedResult;
 			mMessage = message;
@@ -94,26 +94,24 @@ public class IncrementalLogWithBenchmarkResults extends DefaultIncrementalLogfil
 			}
 		}
 
-		private void interpretUltimateResults(IResultService resultService) {
+		private void interpretUltimateResults(final IResultService resultService) {
 
 			for (final IResult result : ResultUtil.filterResults(resultService.getResults(), BenchmarkResult.class)) {
 				final StringBuilder sb = new StringBuilder();
 				sb.append(result.getPlugin()).append(": ").append(result.getShortDescription()).append(": ").append(
-						de.uni_freiburg.informatik.ultimate.util.CoreUtil.flatten(result.getLongDescription(), " # "));
+						CoreUtil.flatten(result.getLongDescription(), " # "));
 				mFlattenedBenchmarkResults.add(sb.toString());
 			}
 		}
 
-		public StringBuilder toLogString(String indent, String lineSeparator) {
+		public StringBuilder toLogString(final String indent, final String lineSeparator) {
 			final StringBuilder sb = new StringBuilder();
 
 			sb.append(indent).append(mUltimateRunDefinition.getSettings()).append(",")
 					.append(mUltimateRunDefinition.getToolchain()).append(lineSeparator);
 			sb.append(indent).append("Test result: ").append(mThreeValuedResult).append(lineSeparator);
-			sb.append(indent).append("Message:     ")
-					.append(de.uni_freiburg.informatik.ultimate.util.CoreUtil.flatten(mMessage, " # "))
-					.append(lineSeparator);
-			if (mFlattenedBenchmarkResults.size() > 0) {
+			sb.append(indent).append("Message:     ").append(CoreUtil.flatten(mMessage, " # ")).append(lineSeparator);
+			if (!mFlattenedBenchmarkResults.isEmpty()) {
 				sb.append(indent).append("Benchmarks:").append(lineSeparator);
 				for (final String s : mFlattenedBenchmarkResults) {
 					sb.append(indent).append(indent).append(s).append(lineSeparator);

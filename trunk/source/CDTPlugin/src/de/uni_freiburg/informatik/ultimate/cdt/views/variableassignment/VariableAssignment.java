@@ -1,31 +1,31 @@
 /*
  * Copyright (C) 2012-2015 Stefan Wissert
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE CDTPlugin plug-in.
- * 
+ *
  * The ULTIMATE CDTPlugin plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE CDTPlugin plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE CDTPlugin plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CDTPlugin plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE CDTPlugin plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE CDTPlugin plug-in grant you additional permission
  * to convey the resulting work.
  */
 /**
- * 
+ *
  */
 package de.uni_freiburg.informatik.ultimate.cdt.views.variableassignment;
 
@@ -52,11 +52,11 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult
 
 /**
  * @author Stefan Wissert
- * 
+ *
  */
 public class VariableAssignment extends ViewPart implements ISelectionListener {
 
-	public static String ID = "de.uni_freiburg.informatik.ultimate.cdt.VariableAssignment";
+	public static final String ID = "de.uni_freiburg.informatik.ultimate.cdt.VariableAssignment";
 
 	/**
 	 * The underlying JFace component
@@ -69,13 +69,11 @@ public class VariableAssignment extends ViewPart implements ISelectionListener {
 
 	/*
 	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.eclipse.ui.part.WorkbenchPart#createPartControl(org.eclipse.swt.widgets
-	 * .Composite)
+	 *
+	 * @see org.eclipse.ui.part.WorkbenchPart#createPartControl(org.eclipse.swt.widgets .Composite)
 	 */
 	@Override
-	public void createPartControl(Composite parent) {
+	public void createPartControl(final Composite parent) {
 		final Tree variableTree = new Tree(parent, SWT.BORDER | SWT.H_SCROLL | SWT.V_SCROLL);
 		variableTree.setHeaderVisible(true);
 		viewer = new TreeViewer(variableTree);
@@ -102,7 +100,7 @@ public class VariableAssignment extends ViewPart implements ISelectionListener {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see org.eclipse.ui.part.WorkbenchPart#setFocus()
 	 */
 	@Override
@@ -111,16 +109,16 @@ public class VariableAssignment extends ViewPart implements ISelectionListener {
 	}
 
 	@Override
-	public void selectionChanged(IWorkbenchPart part, ISelection selection) {
+	public void selectionChanged(final IWorkbenchPart part, final ISelection selection) {
 		if (selection instanceof ITreeSelection && part instanceof ResultList) {
 			final Object first = ((ITreeSelection) selection).getFirstElement();
 			if (first instanceof CounterExampleResult) {
 				final IEditorPart edPart = getSite().getPage().getActiveEditor();
 				actualAllowedInput = edPart.getTitle();
-				final CounterExampleResult res = (CounterExampleResult) first;
+				final CounterExampleResult<?, ?, ?> res = (CounterExampleResult<?, ?, ?>) first;
 
 				if (res.getProgramExecution() != null) {
-					// TODO: Implement this right with IProgramExecution and known values for generic 
+					// TODO: Implement this right with IProgramExecution and known values for generic
 					// contProv.setValuation(res.getValuation());
 				} else {
 					contProv.setValuation(new TestValuation());

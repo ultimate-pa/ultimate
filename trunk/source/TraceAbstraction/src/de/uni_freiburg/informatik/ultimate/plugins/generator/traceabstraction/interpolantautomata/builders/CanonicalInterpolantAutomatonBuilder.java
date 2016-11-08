@@ -34,17 +34,17 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.InCaReAlphabet;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.InCaReAlphabet;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.IInterpolantGenerator;
 
 /**
@@ -61,19 +61,19 @@ public class CanonicalInterpolantAutomatonBuilder extends CoverageAnalysis
 	private final boolean mSelfloopAtInitial = false;
 	private final boolean mSelfloopAtFinal = true;
 
-	private final SmtManager mSmtManager;
+	private final CfgSmtToolkit mCsToolkit;
 
 	private final Map<Integer, Set<IPredicate>> mAlternativeCallPredecessors = new HashMap<Integer, Set<IPredicate>>();
 
 	public CanonicalInterpolantAutomatonBuilder(IUltimateServiceProvider services,
-			IInterpolantGenerator interpolantGenerator, List<ProgramPoint> programPointSequence,
-			InCaReAlphabet<CodeBlock> alphabet, SmtManager smtManager, StateFactory<IPredicate> predicateFactory,
+			IInterpolantGenerator interpolantGenerator, List<BoogieIcfgLocation> programPointSequence,
+			InCaReAlphabet<CodeBlock> alphabet, CfgSmtToolkit csToolkit, IStateFactory<IPredicate> predicateFactory,
 			ILogger logger) {
 		super(services, interpolantGenerator, programPointSequence, logger);
 		mIA = new NestedWordAutomaton<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
 				alphabet.getInternalAlphabet(), alphabet.getCallAlphabet(), alphabet.getReturnAlphabet(),
 				predicateFactory);
-		mSmtManager = smtManager;
+		mCsToolkit = csToolkit;
 	}
 
 	@Override
@@ -188,7 +188,7 @@ public class CanonicalInterpolantAutomatonBuilder extends CoverageAnalysis
 		// 2016-05-18 Matthias: Do not add alternative returns, this seems to be expensive
 		// and I am too lazy to construct another IHoaretripleChecker for these few checks.
 		// for (IPredicate hier : mAlternativeCallPredecessors.get(callPos)) {
-		// LBool isInductive = mSmtManager.isInductiveReturn(pred, hier, (Return) symbol, succ);
+		// LBool isInductive = mCsToolkit.isInductiveReturn(pred, hier, (Return) symbol, succ);
 		// mLogger.debug("Trying to add alternative call Predecessor");
 		// if (isInductive == Script.LBool.UNSAT) {
 		// mIA.addReturnTransition(pred, hier, symbol, succ);

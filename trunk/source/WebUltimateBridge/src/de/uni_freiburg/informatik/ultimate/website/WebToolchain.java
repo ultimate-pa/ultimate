@@ -52,7 +52,7 @@ public abstract class WebToolchain {
 
 	private static final String sEOL = System.getProperty("line.separator");
 
-	private static final Set<String> sIds = new HashSet<String>();
+	private static final Set<String> sIds = new HashSet<>();
 
 	private String mName;
 	private String mId;
@@ -78,7 +78,7 @@ public abstract class WebToolchain {
 		setUserInfo(defineUserInfo());
 		setTools(defineTools());
 
-		mSettings = new ArrayList<Setting>();
+		mSettings = new ArrayList<>();
 		createSettingsFromSettingsFile(defineToolchainSettingsFile());
 		setAdditionalSettings(defineAdditionalSettings());
 
@@ -305,7 +305,7 @@ public abstract class WebToolchain {
 	 * @param name
 	 *            the name to set
 	 */
-	protected final void setName(String name) {
+	protected final void setName(final String name) {
 		if (name == null || name.equals("")) {
 			throw new IllegalArgumentException("Name cannot be empty!");
 		}
@@ -322,7 +322,7 @@ public abstract class WebToolchain {
 	 * @param id
 	 *            the id to set
 	 */
-	protected final void setId(String id) {
+	protected final void setId(final String id) {
 		if (id == null || id.equals("")) {
 			throw new IllegalArgumentException("ID cannot be empty!");
 		}
@@ -345,7 +345,7 @@ public abstract class WebToolchain {
 	 * @param taskName
 	 *            the taskname to set
 	 */
-	protected final void setTaskName(Tasks.TaskNames[] taskName) {
+	protected final void setTaskName(final Tasks.TaskNames[] taskName) {
 		mTaskName = taskName;
 	}
 
@@ -355,7 +355,7 @@ public abstract class WebToolchain {
 	 * @param language
 	 *            the language string to set
 	 */
-	protected final void setLanguage(String language) {
+	protected final void setLanguage(final String language) {
 		mLanguage = language;
 	}
 
@@ -365,7 +365,7 @@ public abstract class WebToolchain {
 	 * @param mLanguage
 	 *            the fontsize string to set
 	 */
-	protected final void setInterfaceLayoutFontsize(String fontsize) {
+	protected final void setInterfaceLayoutFontsize(final String fontsize) {
 		mLayoutFontsize = fontsize;
 	}
 
@@ -375,7 +375,7 @@ public abstract class WebToolchain {
 	 * @param mLanguage
 	 *            the orientation string to set
 	 */
-	protected final void setInterfaceLayoutOrientation(String orientation) {
+	protected final void setInterfaceLayoutOrientation(final String orientation) {
 		mLayoutOrientation = orientation;
 	}
 
@@ -385,7 +385,7 @@ public abstract class WebToolchain {
 	 * @param mLanguage
 	 *            the transitions preset string to set
 	 */
-	protected final void setInterfaceLayoutTransitions(String transition) {
+	protected final void setInterfaceLayoutTransitions(final String transition) {
 		mLayoutTransitions = transition;
 	}
 
@@ -394,7 +394,7 @@ public abstract class WebToolchain {
 	 * 
 	 * @return
 	 */
-	protected final void setUserInfo(String userInfo) {
+	protected final void setUserInfo(final String userInfo) {
 		mUserInfo = userInfo;
 	}
 
@@ -404,7 +404,7 @@ public abstract class WebToolchain {
 	 * @param tools
 	 *            the tools
 	 */
-	private final void setTools(List<Tool> tools) {
+	private final void setTools(final List<Tool> tools) {
 		if (tools == null) {
 			throw new IllegalArgumentException("NULL is not a valid toolchain!");
 		}
@@ -414,7 +414,7 @@ public abstract class WebToolchain {
 		mTools = tools;
 	}
 
-	private void createSettingsFromSettingsFile(String defineToolchainSettingsFile) {
+	private void createSettingsFromSettingsFile(final String defineToolchainSettingsFile) {
 		if (defineToolchainSettingsFile == null) {
 			return;
 		}
@@ -429,14 +429,14 @@ public abstract class WebToolchain {
 
 	}
 
-	private List<Setting> readSettingsFromResource(String resourceName) throws IOException {
+	private List<Setting> readSettingsFromResource(final String resourceName) throws IOException {
 		SimpleLogger.log("Loading settings file from " + getClass().getResource(resourceName));
 		final InputStream stream = getClass().getResourceAsStream(resourceName);
 		final BufferedReader buff = new BufferedReader(new InputStreamReader(stream));
 
-		final List<Setting> rtr = new ArrayList<Setting>();
+		final List<Setting> rtr = new ArrayList<>();
 
-		String line = new String();
+		String line = "";
 		while (true) {
 			line = buff.readLine();
 			if (line == null) {
@@ -479,7 +479,7 @@ public abstract class WebToolchain {
 		return rtr;
 	}
 
-	private List<String> splitAtEqualsSign(String line) {
+	private List<String> splitAtEqualsSign(final String line) {
 		final List<String> rtr = new ArrayList<>();
 		for (int i = 0; i < line.length(); ++i) {
 			final char current = line.charAt(i);
@@ -493,7 +493,7 @@ public abstract class WebToolchain {
 		return rtr;
 	}
 
-	private void setAdditionalSettings(List<Setting> additionalSettings) {
+	private void setAdditionalSettings(final List<Setting> additionalSettings) {
 		if (additionalSettings == null) {
 			return;
 		}

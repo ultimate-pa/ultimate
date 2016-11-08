@@ -27,7 +27,31 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables;
 
 public interface IProgramNonOldVar extends IProgramVar {
+	
+	String getIdentifier();
 
 	IProgramOldVar getOldVar();
+	
+	@Override
+	default public String getGloballyUniqueId() {
+		return getIdentifier();
+	};
+	
+	@Override
+	default boolean isGlobal() {
+		return true;
+	}
+	
+	@Override
+	default boolean isOldvar() {
+		return false;
+	}
+	
+	@Override
+	default String getProcedure() {
+		return null;
+	}
+	
+	
 
 }

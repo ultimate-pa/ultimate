@@ -35,8 +35,8 @@ import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingTransitionlet;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IOutgoingTransitionlet;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
@@ -45,11 +45,11 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ParallelComposition;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RCFGEdgeVisitor;
@@ -121,7 +121,7 @@ public class LineCoverageCalculator {
 		final Set<CodeBlock> edges = getCodeblocks(automaton);
 
 		for (final CodeBlock edge : edges) {
-			if ("ULTIMATE.start".equals(edge.getPreceedingProcedure())) {
+			if ("ULTIMATE.start".equals(edge.getPrecedingProcedure())) {
 				continue;
 			}
 			final List<Statement> statements = getStatements(edge);
@@ -174,15 +174,15 @@ public class LineCoverageCalculator {
 				addCodeblock(rtr, open, nwa.callSuccessors(current));
 				addCodeblock(rtr, open, nwa.internalSuccessors(current));
 				addCodeblock(rtr, open, nwa.returnSuccessors(current));
-				addCodeblock(rtr, open, nwa.returnSummarySuccessor(current));
+				addCodeblock(rtr, open, nwa.summarySuccessors(current));
 			}
 		}
 		return rtr;
 	}
 
-	private <T extends OutgoingTransitionlet<CodeBlock, IPredicate>> void addCodeblock(Set<CodeBlock> rtr,
+	private <T extends IOutgoingTransitionlet<CodeBlock, IPredicate>> void addCodeblock(Set<CodeBlock> rtr,
 			Deque<IPredicate> open, Iterable<T> iter) {
-		for (final OutgoingTransitionlet<CodeBlock, IPredicate> trans : iter) {
+		for (final IOutgoingTransitionlet<CodeBlock, IPredicate> trans : iter) {
 			if (rtr.add(trans.getLetter())) {
 				open.addFirst(trans.getSucc());
 			}
@@ -196,7 +196,7 @@ public class LineCoverageCalculator {
 		private StatementExtractor() {
 		}
 
-		public List<Statement> process(RCFGEdge edge) {
+		public List<Statement> process(IcfgEdge edge) {
 			mStatements = new ArrayList<>();
 			visit(edge);
 			return mStatements;

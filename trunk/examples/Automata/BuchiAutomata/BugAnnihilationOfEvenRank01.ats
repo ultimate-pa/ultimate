@@ -9,7 +9,7 @@ print(numberOfStates(complementNCSB));
 assert(numberOfStates(removeDeadEnds(complementNCSB)) == 10);
 
 //print(complementNCSB);
-NestedWordAutomaton complementFKV = buchiComplementFKV(nwa, "HeiMat2", 77);
+NestedWordAutomaton complementFKV = buchiComplementFKV(nwa, "HEIMAT2", 77);
 print(numberOfStates(complementFKV));
 assert(numberOfStates(removeDeadEnds(complementFKV)) == 14);
 

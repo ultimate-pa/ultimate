@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE LassoRanker Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE LassoRanker Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE LassoRanker Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.lassoranker.termination;
@@ -34,13 +34,13 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Term2Expression;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 
@@ -65,11 +65,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 public class AffineFunction implements Serializable {
 	private static final long serialVersionUID = -3142354398708751882L;
 	
-	protected final Map<RankVar, BigInteger> mcoefficients;
+	protected final Map<IProgramVar, BigInteger> mcoefficients;
 	protected BigInteger mconstant;
 	
 	public AffineFunction() {
-		mcoefficients = new LinkedHashMap<RankVar, BigInteger>();
+		mcoefficients = new LinkedHashMap<IProgramVar, BigInteger>();
 		mconstant = BigInteger.ZERO;
 	}
 	
@@ -97,7 +97,7 @@ public class AffineFunction implements Serializable {
 	/**
 	 * @return the set of RankVar's that occur in this function
 	 */
-	public Set<RankVar> getVariables() {
+	public Set<IProgramVar> getVariables() {
 		return mcoefficients.keySet();
 	}
 	
@@ -119,7 +119,7 @@ public class AffineFunction implements Serializable {
 	 * @param var a RankVar variable
 	 * @return the coefficient of to this variable
 	 */
-	public BigInteger get(final RankVar var) {
+	public BigInteger get(final IProgramVar var) {
 		return mcoefficients.get(var);
 	}
 	
@@ -128,7 +128,7 @@ public class AffineFunction implements Serializable {
 	 * @param var a Boogie variable
 	 * @param coeff the coefficient of this variable
 	 */
-	public void put(final RankVar var, final BigInteger coeff) {
+	public void put(final IProgramVar var, final BigInteger coeff) {
 		if (coeff.equals(BigInteger.ZERO)) {
 			mcoefficients.remove(var);
 		} else {
@@ -140,7 +140,7 @@ public class AffineFunction implements Serializable {
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
 		boolean first = true;
-		for (final Map.Entry<RankVar, BigInteger> entry : mcoefficients.entrySet()) {
+		for (final Map.Entry<IProgramVar, BigInteger> entry : mcoefficients.entrySet()) {
 			if (!first) {
 				sb.append(entry.getValue().compareTo(BigInteger.ZERO) < 0
 						? " - " : " + ");
@@ -169,7 +169,7 @@ public class AffineFunction implements Serializable {
 	private static Term constructSummand(final Script script, final Term t,
 			final BigInteger coefficient) {
 		if (coefficient.equals(BigInteger.ONE)) {
-			return t; 
+			return t;
 		} else {
 			return script.term("*", script.numeral(coefficient), t);
 		}
@@ -183,13 +183,13 @@ public class AffineFunction implements Serializable {
 	 */
 	public Term asTerm(final Script script) throws SMTLIBException {
 		final ArrayList<Term> summands = new ArrayList<Term>();
-		for (final Map.Entry<RankVar, BigInteger> entry : mcoefficients.entrySet()) {
+		for (final Map.Entry<IProgramVar, BigInteger> entry : mcoefficients.entrySet()) {
 			final Term definition = ReplacementVarUtils.getDefinition(entry.getKey());
 			summands.add(constructSummand(script, definition, entry.getValue()));
 		}
 		summands.add(script.numeral(mconstant));
 		return SmtUtils.sum(script, script.sort("Real"),
-				summands.toArray(new Term[0]));
+				summands.toArray(new Term[summands.size()]));
 	}
 	
 	/**
@@ -208,9 +208,9 @@ public class AffineFunction implements Serializable {
 	 * @param assignment the assignment to the variables
 	 * @return the value of the function
 	 */
-	public Rational evaluate(final Map<RankVar, Rational> assignment) {
+	public Rational evaluate(final Map<IProgramVar, Rational> assignment) {
 		final Rational r = Rational.ZERO;
-		for (final Map.Entry<RankVar, BigInteger> entry
+		for (final Map.Entry<IProgramVar, BigInteger> entry
 				: mcoefficients.entrySet()) {
 			Rational val = assignment.get(entry.getKey());
 			if (val == null) {

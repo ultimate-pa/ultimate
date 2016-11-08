@@ -26,8 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
 
-import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 
 
 /**
@@ -35,9 +36,10 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
  * @author heizmann@informatik.uni-freiburg.de
  *
  */
-public class BoogieConst implements IBoogieVar {
+public class BoogieConst implements IBoogieVar, IProgramConst {
 	private final String mIdentifier;
-	private final IType mIType;
+	private final IBoogieType mIType;
+	private final boolean mBelongsToSmtTheory;
 	
 	/**
 	 * Constant (0-ary ApplicationTerm) which represents this BoogieVar in
@@ -45,26 +47,40 @@ public class BoogieConst implements IBoogieVar {
 	 */
 	private final ApplicationTerm mSmtConstant;
 
-	public BoogieConst(String identifier, IType iType,
-			ApplicationTerm smtConstant) {
+	/**
+	 * 
+	 * @param null iff constant belongs to SMT theory
+	 */
+	public BoogieConst(final String identifier, final IBoogieType iType,
+			final ApplicationTerm smtConstant, final boolean belongsToSmtTheory) {
 		mIdentifier = identifier;
 		mIType = iType;
 		mSmtConstant = smtConstant;
+		mBelongsToSmtTheory = belongsToSmtTheory;
 	}
 	
 	@Override
 	public String getIdentifier() {
 		return mIdentifier;
 	}
-
+	
 	@Override
-	public IType getIType() {
-		return mIType;
+	public String getGloballyUniqueId() {
+		return getIdentifier();
 	}
 
 	@Override
+	public IBoogieType getIType() {
+		return mIType;
+	}
+	
+	@Override
 	public ApplicationTerm getDefaultConstant() {
 		return mSmtConstant;
+	}
+	
+	public boolean belongsToSmtTheory() {
+		return mBelongsToSmtTheory;
 	}
 
 	@Override
@@ -73,7 +89,7 @@ public class BoogieConst implements IBoogieVar {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		}
@@ -107,4 +123,12 @@ public class BoogieConst implements IBoogieVar {
 		}
 		return true;
 	}
+
+	@Override
+	public String toString() {
+		return mIdentifier;
+	}
+	
+	
+
 }

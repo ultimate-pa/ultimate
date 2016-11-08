@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2008-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Core.
- * 
+ *
  * The ULTIMATE Core is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Core is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Core. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Core, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Core grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Core grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.core.coreplugin;
@@ -29,11 +29,12 @@ package de.uni_freiburg.informatik.ultimate.core.coreplugin;
 import java.util.ArrayList;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions.GraphNotFoundException;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.modelwalker.CFGWalker;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.modelwalker.DFSTreeWalker;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.modelwalker.IWalker;
+import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.RunDefinition;
 import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainData;
-import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ToolchainListType;
 import de.uni_freiburg.informatik.ultimate.core.model.IController;
 import de.uni_freiburg.informatik.ultimate.core.model.IGenerator;
 import de.uni_freiburg.informatik.ultimate.core.model.ITool;
@@ -67,7 +68,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
  * </ul>
  * </ul>
  * </ul>
- * 
+ *
  * @author dietsch
  */
 // @formatter:on
@@ -76,7 +77,7 @@ public class PluginConnector {
 	private final ILogger mLogger;
 
 	private final IModelManager mModelManager;
-	private final IController<ToolchainListType> mController;
+	private final IController<RunDefinition> mController;
 	private final ITool mTool;
 
 	private boolean mHasPerformedChanges;
@@ -87,8 +88,8 @@ public class PluginConnector {
 	private final IToolchainStorage mStorage;
 	private final IUltimateServiceProvider mServices;
 
-	public PluginConnector(IModelManager modelmanager, ITool tool, IController<ToolchainListType> control,
-			IToolchainStorage storage, IUltimateServiceProvider services) {
+	public PluginConnector(final IModelManager modelmanager, final ITool tool, final IController<RunDefinition> control,
+			final IToolchainStorage storage, final IUltimateServiceProvider services) {
 		assert storage != null;
 		assert control != null;
 		assert modelmanager != null;
@@ -142,8 +143,8 @@ public class PluginConnector {
 		return mTool.getPluginName();
 	}
 
-	private void runTool(List<IObserver> observers, ModelType currentModel, int currentModelIndex, int numberOfModels)
-			throws Throwable {
+	private void runTool(final List<IObserver> observers, final ModelType currentModel, final int currentModelIndex,
+			final int numberOfModels) throws Throwable {
 		final IElement entryNode = getEntryPoint(currentModel);
 
 		if (mTool instanceof IGenerator) {
@@ -159,8 +160,8 @@ public class PluginConnector {
 		}
 	}
 
-	private void runObserver(IObserver observer, ModelType currentModel, IElement entryNode, int currentModelIndex,
-			int numberOfModels) throws Throwable {
+	private void runObserver(final IObserver observer, final ModelType currentModel, final IElement entryNode,
+			final int currentModelIndex, final int numberOfModels) throws Throwable {
 		logObserverRun(observer, currentModel);
 		final IWalker walker = selectWalker(currentModel);
 		walker.addObserver(observer);
@@ -170,7 +171,7 @@ public class PluginConnector {
 		mHasPerformedChanges = mHasPerformedChanges || observer.performedChanges();
 	}
 
-	private void logObserverRun(IObserver observer, ModelType model) {
+	private void logObserverRun(final IObserver observer, final ModelType model) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("Executing the observer ");
 		sb.append(observer.getClass().getSimpleName());
@@ -186,7 +187,7 @@ public class PluginConnector {
 		mLogger.info(sb.toString());
 	}
 
-	private IElement getEntryPoint(ModelType definition) {
+	private IElement getEntryPoint(final ModelType definition) {
 		IElement n = null;
 		try {
 			n = mModelManager.getRootNode(definition);
@@ -196,7 +197,7 @@ public class PluginConnector {
 		return n;
 	}
 
-	private void retrieveModel(IGenerator tool, String observer) {
+	private void retrieveModel(final IGenerator tool, final String observer) {
 		final IElement element = tool.getModel();
 		final ModelType type = tool.getOutputDefinition();
 		if (element != null && type != null) {
@@ -240,7 +241,7 @@ public class PluginConnector {
 			break;
 		case TOOL:
 			final List<String> desiredToolIDs = mTool.getDesiredToolID();
-			if (desiredToolIDs == null || desiredToolIDs.size() == 0) {
+			if (desiredToolIDs == null || desiredToolIDs.isEmpty()) {
 				break;
 			} else {
 				models.addAll(mModelManager.getItemKeys());
@@ -264,15 +265,15 @@ public class PluginConnector {
 		return models;
 	}
 
-	private IWalker selectWalker(ModelType currentModel) {
+	private IWalker selectWalker(final ModelType currentModel) {
 		if (currentModel.getType().name().equals("CFG")) {
 			return new CFGWalker(mLogger);
 		}
 		return new DFSTreeWalker(mLogger);
 	}
 
-	static void initializePlugin(ILogger logger, IToolchainPlugin plugin, IUltimateServiceProvider services,
-			IToolchainStorage storage) {
+	static void initializePlugin(final ILogger logger, final IToolchainPlugin plugin,
+			final IUltimateServiceProvider services, final IToolchainStorage storage) {
 		logger.info("Initializing " + plugin.getPluginName() + "...");
 		try {
 			plugin.setServices(services);

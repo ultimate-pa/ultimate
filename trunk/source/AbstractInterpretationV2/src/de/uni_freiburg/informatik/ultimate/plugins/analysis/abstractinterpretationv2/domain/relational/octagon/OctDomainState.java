@@ -41,12 +41,11 @@ import java.util.TreeMap;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -68,10 +67,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * {@linkplain OctDomainState}s appear to be immutable from the {@link FixpointEngine}'s point of view, but are mutable
  * for a better performance of the {@link OctPostOperator}. Do not modify any state that the {@linkplain FixpointEngine}
  * stores!
- * 
+ *
  * @author schaetzc@informatik.uni-freiburg.de
  */
-public final class OctDomainState implements IAbstractState<OctDomainState, CodeBlock> {
+public final class OctDomainState implements IAbstractState<OctDomainState, CodeBlock, IBoogieVar> {
 
 	/** Counter for created objects. Used to set {@link #mId}. */
 	private static int sId;
@@ -108,7 +107,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 	 * should not happen (even though it is a safe over-approximation).
 	 * <p>
 	 * This method does not assert, but should be used inside an assertion.
-	 * 
+	 *
 	 * @return This abstract state was not bottom
 	 */
 	private boolean assertNotBottomBeforeAssign() {
@@ -117,7 +116,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 
 	/**
 	 * Creates a new, un-initialized abstract state. <b>Most attributes are not initialized and must be set by hand.</b>
-	 * 
+	 *
 	 * @param logStringFunction
 	 *            Function to be used for creating log strings of this abstract state.
 	 */
@@ -128,7 +127,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 
 	/**
 	 * Creates a new abstract state without any variables.
-	 * 
+	 *
 	 * @param logStringFunction
 	 *            Function to be used for creating log strings of this abstract state.
 	 * @return Empty octagon abstract state
@@ -179,7 +178,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 	/**
 	 * Deep-copy {@link #mMapVarToBoogieVar} to {@code other} state iff this and {@code other} share the same object.
 	 * This state remains unchanged.
-	 * 
+	 *
 	 * @param other
 	 *            State to be unreferenced from this state.
 	 * @see shallowCopy()
@@ -193,7 +192,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 	/**
 	 * Deep-copy {@link #mMapNumericVarToIndex} to {@code other} state iff this and {@code other} share the same object.
 	 * This state remains unchanged.
-	 * 
+	 *
 	 * @param other
 	 *            State to be unreferenced from this state.
 	 * @see shallowCopy()
@@ -207,7 +206,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 	/**
 	 * Deep-copy {@link #mNumericNonIntVars} to {@code other} state iff this and {@code other} share the same object.
 	 * This state remains unchanged.
-	 * 
+	 *
 	 * @param other
 	 *            State to be unreferenced from this state.
 	 * @see shallowCopy()
@@ -221,7 +220,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 	/**
 	 * Deep-copy {@link #mBooleanAbstraction} to {@code other} state iff this and {@code other} share the same object.
 	 * This state remains unchanged.
-	 * 
+	 *
 	 * @param other
 	 *            State to be unreferenced from this state.
 	 * @see shallowCopy()
@@ -274,7 +273,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 			if (!newState.mMapVarToBoogieVar.add(newBoogieVar)) {
 				throw new IllegalArgumentException("Variable already present: " + newBoogieVar);
 			}
-			final IType type = newBoogieVar.getIType();
+			final IBoogieType type = newBoogieVar.getIType();
 			if (TypeUtil.isNumeric(type)) {
 				unrefOtherMapNumericVarToIndex(newState);
 				newState.mMapNumericVarToIndex.put(newBoogieVar, newState.mMapNumericVarToIndex.size());
@@ -333,12 +332,12 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 	 * Defragments a map with {@code n} entries so that the resulting map's domain are the {@code n} first natural
 	 * numbers <code>{0, 1, 2, ..., n-1}</code>. The order of the old map remains the same, meaning that the map key
 	 * with the smallest value will have the defragmented value {@code 0}.
-	 * 
+	 *
 	 * @param map
 	 *            Arbitrary map with integer values
 	 */
 	private static <T> void defragmentMap(final Map<T, Integer> map) {
-		final TreeMap<Integer, T> reversedMapSortedAscending = new TreeMap<Integer, T>();
+		final TreeMap<Integer, T> reversedMapSortedAscending = new TreeMap<>();
 		for (final Map.Entry<T, Integer> entry : map.entrySet()) {
 			reversedMapSortedAscending.put(entry.getValue(), entry.getKey());
 		}
@@ -381,15 +380,14 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 	 * <p>
 	 * The closure is cached after the first computation. The original cache is returned. Modifications of returned
 	 * octagon may also effect other {@linkplain OctDomainState}!
-	 * 
+	 *
 	 * @return Strong or tight closure of the octagon, depending on the types of numerical variables in this state
 	 */
 	private OctMatrix cachedSelectiveClosure() {
 		if (isNumericAbstractionIntegral()) {
 			return mNumericAbstraction.cachedTightClosure();
-		} else {
-			return mNumericAbstraction.cachedStrongClosure();
 		}
+		return mNumericAbstraction.cachedStrongClosure();
 	}
 
 	/**
@@ -401,7 +399,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 	 * <p>
 	 * The original cache is returned. Modifications of returned octagon may also effect other
 	 * {@linkplain OctDomainState}!
-	 * 
+	 *
 	 * @return Best available/cached closure
 	 */
 	private OctMatrix bestAvailableClosure() {
@@ -419,7 +417,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 	}
 
 	@Override
-	public boolean isEqualTo(OctDomainState other) {
+	public boolean isEqualTo(final OctDomainState other) {
 		if (other == null) {
 			return false;
 		} else if (other == this) {
@@ -434,6 +432,17 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 	@Override
 	public SubsetResult isSubsetOf(final OctDomainState other) {
 		assert mMapVarToBoogieVar.equals(other.mMapVarToBoogieVar);
+
+		if (isBottom() && other.isBottom()) {
+			return SubsetResult.EQUAL;
+		}
+		if (isBottom()) {
+			return SubsetResult.STRICT;
+		}
+		if (other.isBottom()) {
+			return SubsetResult.NONE;
+		}
+
 		for (final Entry<IBoogieVar, BoolValue> thisEntry : mBooleanAbstraction.entrySet()) {
 			final BoolValue thisVal = thisEntry.getValue();
 			final BoolValue otherVal = other.mBooleanAbstraction.get(thisEntry.getKey());
@@ -456,7 +465,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		}
@@ -466,7 +475,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		OctDomainState other = (OctDomainState) obj;
+		final OctDomainState other = (OctDomainState) obj;
 		return mId == other.mId;
 	}
 
@@ -503,7 +512,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 	 * Creates an over-approximation of the intersection of this and another abstract state.
 	 * <p>
 	 * The returned state may contain shallow copies of this state's attributes. Do not modify!
-	 * 
+	 *
 	 * @param other
 	 *            Abstract state with same variables as this one
 	 * @return Over-approximated intersection
@@ -517,7 +526,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 	 * Creates an over-approximation of the union of this and another abstract state.
 	 * <p>
 	 * The returned state may contain shallow copies of this state's attributes. Do not modify!
-	 * 
+	 *
 	 * @param other
 	 *            Abstract state with same variables as this one
 	 * @return Over-approximated union
@@ -532,7 +541,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 	 * octagons.
 	 * <p>
 	 * The returned state may contain shallow copies of this state's attributes. Do not modify!
-	 * 
+	 *
 	 * @param other
 	 *            Abstract state with same variables as this one
 	 * @param widenOp
@@ -551,7 +560,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 	 * state. The octagon (numerical abstraction) of the resulting abstract state is given as an argument.
 	 * <p>
 	 * The returned state may contain shallow copies of this state's attributes. Do not modify!
-	 * 
+	 *
 	 * @param other
 	 *            Abstract state with same variables as this one
 	 * @param booleanOperation
@@ -578,19 +587,19 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 	}
 
 	@Override
-	public Term getTerm(final Script script, final Boogie2SMT bpl2smt) {
+	public Term getTerm(final Script script) {
 		if (isBottom()) {
 			return script.term("false");
 		}
 
-		final List<Term> terms = new ArrayList<Term>();
-		terms.addAll(getTermNumericAbstraction(script, bpl2smt));
-		terms.addAll(getTermBooleanAbstraction(script, bpl2smt));
+		final List<Term> terms = new ArrayList<>();
+		terms.addAll(getTermNumericAbstraction(script));
+		terms.addAll(getTermBooleanAbstraction(script));
 		return Util.and(script, terms.toArray(new Term[terms.size()]));
 	}
 
-	/** For internal use in {@link #getTerm(Script, Boogie2SMT))}. */
-	private List<Term> getTermNumericAbstraction(final Script script, final Boogie2SMT bpl2smt) {
+	/** For internal use in {@link #getTerm(Script))}. */
+	private List<Term> getTermNumericAbstraction(final Script script) {
 		final Term[] mapIndexToTerm = new Term[mMapNumericVarToIndex.size()];
 		for (final Entry<IBoogieVar, Integer> entry : mMapNumericVarToIndex.entrySet()) {
 			final Term termVar = getTermVar(entry.getKey());
@@ -599,9 +608,9 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 		return cachedSelectiveClosure().getTerm(script, mapIndexToTerm);
 	}
 
-	/** For internal use in {@link #getTerm(Script, Boogie2SMT))}. */
-	private List<Term> getTermBooleanAbstraction(final Script script, final Boogie2SMT bpl2smt) {
-		final List<Term> resultTerm = new ArrayList<Term>(mBooleanAbstraction.size());
+	/** For internal use in {@link #getTerm(Script))}. */
+	private List<Term> getTermBooleanAbstraction(final Script script) {
+		final List<Term> resultTerm = new ArrayList<>(mBooleanAbstraction.size());
 		for (final Entry<IBoogieVar, BoolValue> entry : mBooleanAbstraction.entrySet()) {
 			final Term termVar = getTermVar(entry.getKey());
 			final Sort sort = termVar.getSort().getRealSort();
@@ -613,12 +622,12 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 
 	/**
 	 * Finds the SMT term variable for a given variable name.
-	 * 
+	 *
 	 * @param varName
 	 *            Name of a variable from this abstract state
 	 * @return SMT term variable corresponding to the given variable name
 	 */
-	private Term getTermVar(final IBoogieVar var) {
+	private static Term getTermVar(final IBoogieVar var) {
 		if (var instanceof IProgramVar) {
 			return ((IProgramVar) var).getTermVariable();
 		} else if (var instanceof BoogieConst) {
@@ -645,7 +654,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 			unrefOtherMapVarToBoogieVar(patchedState);
 			final boolean varIsNew = patchedState.mMapVarToBoogieVar.add(newBoogieVar);
 			assert varIsNew || mMapVarToBoogieVar.contains(newBoogieVar);
-			final IType type = newBoogieVar.getIType();
+			final IBoogieType type = newBoogieVar.getIType();
 			if (TypeUtil.isNumeric(type)) {
 				final int sourceVar = dominator.mMapNumericVarToIndex.get(newBoogieVar);
 				if (varIsNew) {
@@ -681,7 +690,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 	 * effect of calling procedures or returning from them.
 	 * <p>
 	 * The returned state may contain shallow copies of this state's attributes. Do not modify!
-	 * 
+	 *
 	 * @param source
 	 *            State to copies values from.
 	 * @param mapTargetToSource
@@ -746,7 +755,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 
 	/**
 	 * Finds global variables and constants that are both present in this and another abstract state.
-	 * 
+	 *
 	 * @param other
 	 *            Other abstract state.
 	 * @return Names of global variables and constants, shared by both states
@@ -766,7 +775,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 	 * Removes all constraints for a variable.
 	 * <p>
 	 * Modifies this state in-place.
-	 * 
+	 *
 	 * @param var
 	 *            Name of a variable.
 	 */
@@ -778,7 +787,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 	 * Removes all constrains for a set of variables.
 	 * <p>
 	 * Modifies this state in-place.
-	 * 
+	 *
 	 * @param vars
 	 *            Names of variables.
 	 */
@@ -807,7 +816,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 	 * constant {@code c}.
 	 * <p>
 	 * Modifies this state in-place.
-	 * 
+	 *
 	 * @param targetVar
 	 *            Variable to be incremented
 	 * @param addConstant
@@ -822,7 +831,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 	 * Updates this abstract state according to the assignment {@code v := -v}.
 	 * <p>
 	 * Modifies this state in-place.
-	 * 
+	 *
 	 * @param targetVar
 	 *            Variable to be negated
 	 */
@@ -836,7 +845,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 	 * {@code c}.
 	 * <p>
 	 * Modifies this state in-place.
-	 * 
+	 *
 	 * @param targetVar
 	 *            Variable to be assigned
 	 * @param constant
@@ -853,7 +862,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 	 * and an interval {@code [min, max]}.
 	 * <p>
 	 * Modifies this state in-place.
-	 * 
+	 *
 	 * @param targetVar
 	 *            Variable to be assigned
 	 * @param interval
@@ -870,7 +879,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 	 * .
 	 * <p>
 	 * Modifies this state in-place.
-	 * 
+	 *
 	 * @param targetVar
 	 *            Variable to be assumed
 	 * @param constant
@@ -885,7 +894,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 	 * interval {@code [min, max]}.
 	 * <p>
 	 * Modifies this state in-place.
-	 * 
+	 *
 	 * @param targetVar
 	 *            Variable to be assumed
 	 * @param constant
@@ -900,7 +909,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 	 * {@code var2} and a constant {@code c}.
 	 * <p>
 	 * Modifies this state in-place.
-	 * 
+	 *
 	 * @param var1
 	 *            First variable
 	 * @param var1Negate
@@ -912,15 +921,15 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 	 * @param constant
 	 *            Constant upper bound
 	 */
-	protected void assumeNumericVarRelationLeConstant(final IBoogieVar var1, final boolean var1Negate, final IBoogieVar var2,
-			final boolean var2Negate, final OctValue constant) {
+	protected void assumeNumericVarRelationLeConstant(final IBoogieVar var1, final boolean var1Negate,
+			final IBoogieVar var2, final boolean var2Negate, final OctValue constant) {
 		mNumericAbstraction.assumeVarRelationLeConstant(numVarIndex(var1), var1Negate, numVarIndex(var2), var2Negate,
 				constant);
 	}
 
 	/**
 	 * Projects a variable of this abstract state to an interval.
-	 * 
+	 *
 	 * @param numericVar
 	 *            Variable to be projected
 	 * @return Valid values the variable as an interval
@@ -932,7 +941,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 	/**
 	 * Projects an expression of the form {@code assume ± var1 ± var2} (for variables {@code var1} and {@code var2} and
 	 * a constant {@code c}) to an interval.
-	 * 
+	 *
 	 * @param tvf
 	 *            Affine expression in "two variable form"
 	 * @return Valid values of the expression as an interval
@@ -963,7 +972,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 	/**
 	 * Returns the index of an numerical variable of this abstract state for the octagon. A variable with index i
 	 * corresponds to the octagon columns/rows 2i and 2i+1.
-	 * 
+	 *
 	 * @param var
 	 *            Variable
 	 * @return Index of the variable for the octagon
@@ -979,7 +988,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 	 * {@code x}, {@code y}. The assignments are sequential in the iteration order of the given map.
 	 * <p>
 	 * Modifies this state in-place.
-	 * 
+	 *
 	 * @param mapTargetVarToSourceVar
 	 */
 	protected void copyVars(final List<Pair<IBoogieVar, IBoogieVar>> mapTargetVarToSourceVar) {
@@ -1010,8 +1019,8 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 			}
 			// else: variables of unsupported types are assumed to be \top all the time
 			assert mMapVarToBoogieVar.contains(targetVar)
-					&& mMapVarToBoogieVar.contains(sourceVar) : "unknown variable in assignment: " + targetVar
-							+ " := " + sourceVar;
+					&& mMapVarToBoogieVar.contains(sourceVar) : "unknown variable in assignment: " + targetVar + " := "
+							+ sourceVar;
 		}
 	}
 
@@ -1019,7 +1028,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 	 ** Updates this abstract state according to {@code targetVar := sourceVar}.
 	 * <p>
 	 * Modifies this state in-place.
-	 * 
+	 *
 	 * @param targetVar
 	 *            Variable to be updated
 	 * @param sourceVar
@@ -1031,7 +1040,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 
 	/**
 	 * Assigns a boolean variable a value.
-	 * 
+	 *
 	 * @param var
 	 *            Variable to be updated
 	 * @param value
@@ -1046,7 +1055,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 	/**
 	 * Assumes a boolean variable to have a certain value. The resulting value is the intersection of the old and the
 	 * assumed value.
-	 * 
+	 *
 	 * @param var
 	 *            Variable to be updated
 	 * @param value
@@ -1068,7 +1077,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 
 	/**
 	 * Creates a log string, representing this abstract state by printing the full octagon matrix.
-	 * 
+	 *
 	 * @return Log string with full octagon matrix
 	 */
 	public String logStringFullMatrix() {
@@ -1078,7 +1087,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 	/**
 	 * Creates a multi-line log string, representing this abstract state by printing only the block lower triangular
 	 * octagon matrix.
-	 * 
+	 *
 	 * @return Log string with half octagon matrix
 	 */
 	public String logStringHalfMatrix() {
@@ -1088,12 +1097,12 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 	/**
 	 * Creates a multi-line log string, representing this abstract state by printing the octagon matrix (already given
 	 * as a log string) and the boolean abstraction.
-	 * 
+	 *
 	 * @param logStringNumericAbstration
 	 *            Log string representation of the octagon matrix
 	 * @return Log string (octagon matrix log string + boolean abstraction log string)
 	 */
-	private String logStringMatrix(String logStringNumericAbstration) {
+	private String logStringMatrix(final String logStringNumericAbstration) {
 		final StringBuilder log = new StringBuilder();
 		log.append("\n");
 		log.append(logStringNumericAbstration);
@@ -1109,7 +1118,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 	/**
 	 * Creates a one-line log string, representing this abstract state by printing interval ranges for all variables and
 	 * sums or differences of variables (for instance {@code x-y \in [-5; 3]}).
-	 * 
+	 *
 	 * @return Log string
 	 */
 	public String logStringTerm() {

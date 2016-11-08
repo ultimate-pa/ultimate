@@ -20,140 +20,151 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.julian;
-
-//package de.uni_freiburg.informatik.ultimate.automata.petrinet;
 
 import java.util.HashSet;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.automata.petrinet.UnaryNetOperation;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
-public class Accepts<S, C> implements IOperation<S, C> {
+/**
+ * Acceptance test for Petri nets.
+ * 
+ * @author Julian Jarecki (jareckij@informatik.uni-freiburg.de)
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <S>
+ *            symbol type
+ * @param <C>
+ *            place content type
+ */
+public final class Accepts<S, C> extends UnaryNetOperation<S, C> {
+	private final IPetriNet<S, C> mOperand;
+	private final Word<S> mWord;
+	private final boolean mResult;
 	
-	private final AutomataLibraryServices mServices;
-	private final ILogger mLogger;
+	/**
+	 * Constructor.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param operand
+	 *            Petri net
+	 * @param word
+	 *            word
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled
+	 */
+	public Accepts(final AutomataLibraryServices services, final IPetriNet<S, C> operand, final Word<S> word)
+			throws AutomataOperationCanceledException {
+		super(services);
+		mOperand = operand;
+		mWord = word;
 		
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(startMessage());
+		}
+		
+		// this.marking = new HashSet<Place<S, C>>(net.getInitialMarking());
+		// this.position = 0;
+		mResult = getResultHelper(0, operand.getInitialMarking());
+		
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info(exitMessage());
+		}
+	}
+	
 	@Override
 	public String operationName() {
 		return "acceptsJulian";
 	}
 	
-	private final PetriNetJulian<S, C> net;
-	private final Word<S> nWord;
-	private final Boolean mResult;
-
 	// private Collection<Place<S, C>> marking;
 	// private int position;
 	
-	
 	@Override
 	public String startMessage() {
-		return "Start " + operationName() +
-			"Operand " + net.sizeInformation();
+		return "Start " + operationName() + ". Operand " + mOperand.sizeInformation();
 	}
 	
 	@Override
-	public String exitMessage() {
-		return "Finished " + operationName();
+	protected IPetriNet<S, C> getOperand() {
+		return mOperand;
 	}
-
 	
-	
-
-	public Accepts(AutomataLibraryServices services, 
-			PetriNetJulian<S, C> net, Word<S> nWord) throws AutomataLibraryException {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		this.net = net;
-		this.nWord = nWord;
-		mLogger.info(startMessage());
-		// this.marking = new HashSet<Place<S, C>>(net.getInitialMarking());
-		// this.position = 0;
-		mResult = getResultHelper(0,net.getInitialMarking());
-		mLogger.info(exitMessage());
-	}
-
 	@Override
-	public Boolean getResult() throws AutomataLibraryException {
+	public Boolean getResult() {
 		return mResult;
 	}
-
-	private boolean getResultHelper(int position,
-	        Marking<S, C> marking) throws AutomataLibraryException {
-		if (position >= nWord.length()) {
-			return net.isAccepting(marking);
+	
+	private boolean getResultHelper(final int position, final Marking<S, C> marking)
+			throws AutomataOperationCanceledException {
+		if (position >= mWord.length()) {
+			return mOperand.isAccepting(marking);
 		}
 		
-		
-		if (!mServices.getProgressMonitorService().continueProcessing()) {
+		if (isCancellationRequested()) {
 			throw new AutomataOperationCanceledException(this.getClass());
 		}
-
-		final S symbol = nWord.getSymbol(position);
-		if (!net.getAlphabet().contains(symbol)) {
-			throw new IllegalArgumentException("Symbol "+symbol
-					+" not in alphabet"); 
+		
+		final S symbol = mWord.getSymbol(position);
+		if (!mOperand.getAlphabet().contains(symbol)) {
+			throw new IllegalArgumentException("Symbol " + symbol + " not in alphabet");
 		}
-
-		final HashSet<ITransition<S, C>> activeTransitionsWithTheSymbol = 
-											new HashSet<ITransition<S, C>>();
-
+		
+		final HashSet<ITransition<S, C>> activeTransitionsWithTheSymbol = new HashSet<>();
+		
 		// get all active transitions which are labeled with the next symbol
 		for (final Place<S, C> place : marking) {
 			for (final ITransition<S, C> transition : place.getSuccessors()) {
-				if (marking.isTransitionEnabled(transition)
-				        && transition.getSymbol().equals(symbol)) {
+				if (marking.isTransitionEnabled(transition) && transition.getSymbol().equals(symbol)) {
 					activeTransitionsWithTheSymbol.add(transition);
 				}
 			}
 		}
 		// marking = new HashSet<Place<S,C>>();
-		position++;
+		final int nextPosition = position + 1;
 		boolean result = false;
 		Marking<S, C> nextMarking;
 		for (final ITransition<S, C> transition : activeTransitionsWithTheSymbol) {
 			nextMarking = marking.fireTransition(transition);
-			if (getResultHelper(position, nextMarking)) {
+			if (getResultHelper(nextPosition, nextMarking)) {
 				result = true;
 			}
 		}
 		return result;
 	}
-
+	
 	@Override
-	public boolean checkResult(StateFactory<C> stateFactory)
-			throws AutomataLibraryException {
-
-		mLogger.info("Testing correctness of accepts");
-
-		final NestedWord<S> nw = NestedWord.nestedWord(nWord);
-		final boolean resultAutomata = (new de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Accepts(mServices, 
-				(new PetriNet2FiniteAutomaton<S, C>(mServices, net)).getResult(), nw))
-				.getResult();
-		final boolean correct = (mResult == resultAutomata);
-
-		mLogger.info("Finished testing correctness of accepts");
-
+	public boolean checkResult(final IStateFactory<C> stateFactory) throws AutomataLibraryException {
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info("Testing correctness of accepts");
+		}
+		
+		final NestedWord<S> nw = NestedWord.nestedWord(mWord);
+		final boolean resultAutomata =
+				(new de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Accepts<>(mServices,
+						(new PetriNet2FiniteAutomaton<>(mServices, mOperand)).getResult(), nw)).getResult();
+		final boolean correct = mResult == resultAutomata;
+		
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info("Finished testing correctness of accepts");
+		}
+		
 		return correct;
-
 	}
-
-
 }

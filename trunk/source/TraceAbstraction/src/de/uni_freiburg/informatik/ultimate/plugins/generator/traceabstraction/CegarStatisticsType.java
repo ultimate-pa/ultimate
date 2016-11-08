@@ -28,13 +28,12 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.function.Function;
 
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.util.statistics.AStatisticsType;
 
 public class CegarStatisticsType extends AStatisticsType<CegarLoopStatisticsDefinitions> {
 	
 	public static Function<Object, Function<Object,Object>> s_SizeIterationPairDataAggregation = 
-			x -> y -> { return new SizeIterationPair(-1, -1); };
+			x -> y -> { return ((SizeIterationPair) x).getSize() >= ((SizeIterationPair) y).getSize() ? x : y; };
 	
 	public CegarStatisticsType() {
 		super(CegarLoopStatisticsDefinitions.class);

@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck;
@@ -33,27 +33,28 @@ import java.util.Set;
 import java.util.Stack;
 import java.util.TreeMap;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.MultiElementCounter;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 
 /**
  * A trace has single static assignment form (SSA) is each variable is assigned
@@ -96,10 +97,7 @@ public class NestedSsaBuilder {
 
 	private final ILogger mLogger;
 
-	private final static String s_GotosUnsupportedMessage = "TraceChecker is only applicable to RCFGs whose auxilliary goto edges have been removed";
-
 	private final Script mScript;
-	private final SmtManager mSmtManager;
 
 	/**
 	 * Map global BoogieVar bv to the constant bv_j that represents bv at the
@@ -133,7 +131,7 @@ public class NestedSsaBuilder {
 		return mConstants2BoogieVar;
 	}
 
-	protected final NestedFormulas<TransFormula, IPredicate> mFormulas;
+	protected final NestedFormulas<UnmodifiableTransFormula, IPredicate> mFormulas;
 
 	protected final ModifiableNestedFormulas<Term, Term> mSsa;
 	protected final ModifiableNestedFormulas<Map<Term, Term>, Map<Term, Term>> mVariable2Constant;
@@ -160,7 +158,7 @@ public class NestedSsaBuilder {
 	
 	/**
 	 * True iff the NestedSsaBuilder has to use a different Script than the
-	 * Script that was used to construct the Term that occur in the 
+	 * Script that was used to construct the Term that occur in the
 	 * NestedFormulas that are the input for the SSA construction.
 	 */
 	private final boolean mTransferToScriptNeeded;
@@ -168,19 +166,18 @@ public class NestedSsaBuilder {
 	
 	/**
 	 * Counter that helps us to ensure that we construct a fresh constant
-	 * for each occurrence of an aux var. 
+	 * for each occurrence of an aux var.
 	 */
-	private final MultiElementCounter<TermVariable> mConstForTvCounter = 
+	private final MultiElementCounter<TermVariable> mConstForTvCounter =
 			new MultiElementCounter<TermVariable>();
 	
 
-	public NestedSsaBuilder(final NestedWord<? extends IAction> trace, final SmtManager smtManager,
-			final NestedFormulas<TransFormula, IPredicate> nestedTransFormulas, 
+	public NestedSsaBuilder(final NestedWord<? extends IAction> trace, final ManagedScript csToolkit,
+			final NestedFormulas<UnmodifiableTransFormula, IPredicate> nestedTransFormulas,
 			final ModifiableGlobalVariableManager globModVarManager, final ILogger logger,
 			final boolean transferToScriptNeeded) {
 		mLogger = logger;
-		mScript = smtManager.getScript();
-		mSmtManager = smtManager;
+		mScript = csToolkit.getScript();
 		mFormulas = nestedTransFormulas;
 		mModGlobVarManager = globModVarManager;
 		mSsa = new ModifiableNestedFormulas<Term, Term>(trace, new TreeMap<Integer, Term>());
@@ -202,7 +199,8 @@ public class NestedSsaBuilder {
 		 * we need the oldVarAssignment and the globalVarAssignment they will
 		 * link the pending context with the pending return.
 		 */
-		final Integer[] pendingReturns = mFormulas.getTrace().getPendingReturns().keySet().toArray(new Integer[0]);
+		final Set<Integer> pendingReturnsRaw = mFormulas.getTrace().getPendingReturns().keySet();
+		final Integer[] pendingReturns = pendingReturnsRaw.toArray(new Integer[pendingReturnsRaw.size()]);
 		final int numberPendingContexts = pendingReturns.length;
 
 		startOfCallingContext = -1 - numberPendingContexts;
@@ -213,7 +211,7 @@ public class NestedSsaBuilder {
 			mPendingContext2PendingReturn.put(startOfCallingContext, pendingReturnPosition);
 			final Return ret = (Return) mFormulas.getTrace().getSymbol(pendingReturnPosition);
 			final Call correspondingCall = ret.getCorrespondingCall();
-			mcurrentProcedure = correspondingCall.getPreceedingProcedure();
+			mcurrentProcedure = correspondingCall.getPrecedingProcedure();
 
 			reVersionModifiableGlobals();
 			if (i == numberPendingContexts - 1) {
@@ -228,12 +226,12 @@ public class NestedSsaBuilder {
 			mSsa.setPendingContext(pendingReturnPosition, pendingContextVV.getVersioneeredTerm());
 			mVariable2Constant.setPendingContext(pendingReturnPosition, pendingContextVV.getSubstitutionMapping());
 
-			final TransFormula localVarAssignment = correspondingCall.getTransitionFormula();
+			final UnmodifiableTransFormula localVarAssignment = correspondingCall.getTransitionFormula();
 			final VariableVersioneer initLocalVarsVV = new VariableVersioneer(localVarAssignment);
 			initLocalVarsVV.versionInVars();
 
 			final String calledProcedure = correspondingCall.getCallStatement().getMethodName();
-			final TransFormula oldVarAssignment = mFormulas.getOldVarAssignment(pendingReturnPosition);
+			final UnmodifiableTransFormula oldVarAssignment = mFormulas.getOldVarAssignment(pendingReturnPosition);
 			final VariableVersioneer initOldVarsVV = new VariableVersioneer(oldVarAssignment);
 			initOldVarsVV.versionInVars();
 
@@ -266,7 +264,7 @@ public class NestedSsaBuilder {
 		if (mcurrentProcedure == null) {
 			assert numberPendingContexts == 0;
 			final IAction firstCodeBlock = mFormulas.getTrace().getSymbolAt(0);
-			mcurrentProcedure = firstCodeBlock.getPreceedingProcedure();
+			mcurrentProcedure = firstCodeBlock.getPrecedingProcedure();
 		}
 		reVersionModifiableGlobals();
 		if (pendingReturns.length == 0) {
@@ -289,7 +287,7 @@ public class NestedSsaBuilder {
 //				throw new IllegalArgumentException(s_GotosUnsupportedMessage);
 //			}
 
-			TransFormula tf;
+			UnmodifiableTransFormula tf;
 			if (mFormulas.getTrace().isCallPosition(i)) {
 				tf = mFormulas.getLocalVarAssignment(i);
 			} else {
@@ -307,7 +305,7 @@ public class NestedSsaBuilder {
 				final Call call = (Call) symbol;
 				final String calledProcedure = call.getCallStatement().getMethodName();
 				mcurrentProcedure = calledProcedure;
-				final TransFormula oldVarAssignment = mFormulas.getOldVarAssignment(i);
+				final UnmodifiableTransFormula oldVarAssignment = mFormulas.getOldVarAssignment(i);
 				final VariableVersioneer initOldVarsVV = new VariableVersioneer(oldVarAssignment);
 				initOldVarsVV.versionInVars();
 				startOfCallingContextStack.push(startOfCallingContext);
@@ -320,7 +318,7 @@ public class NestedSsaBuilder {
 				mSsa.setOldVarAssignmentAtPos(i, initOldVarsVV.getVersioneeredTerm());
 				mVariable2Constant.setOldVarAssignmentAtPos(i, initOldVarsVV.getSubstitutionMapping());
 
-				final TransFormula globalVarAssignment = mFormulas.getGlobalVarAssignment(i);
+				final UnmodifiableTransFormula globalVarAssignment = mFormulas.getGlobalVarAssignment(i);
 				final VariableVersioneer initGlobalVarsVV = new VariableVersioneer(globalVarAssignment);
 				initGlobalVarsVV.versionInVars();
 				initGlobalVarsVV.versionAssignedVars(i);
@@ -392,12 +390,12 @@ public class NestedSsaBuilder {
 	}
 
 	class VariableVersioneer {
-		private final TransFormula mTF;
+		private final UnmodifiableTransFormula mTF;
 		private final IPredicate mPred;
 		private final Map<Term, Term> mSubstitutionMapping = new HashMap<>();
 		private final Term mformula;
 
-		public VariableVersioneer(final TransFormula tf) {
+		public VariableVersioneer(final UnmodifiableTransFormula tf) {
 			mTF = tf;
 			mPred = null;
 			mformula = transferToCurrentScriptIfNecessary(tf.getFormula());
@@ -467,7 +465,7 @@ public class NestedSsaBuilder {
 		public Term getVersioneeredTerm() {
 			final Substitution subst = new Substitution(mScript, mSubstitutionMapping);
 			final Term result = subst.transform(mformula);
-			assert result.getFreeVars().length == 0 : "free vars in versioneered term: " + String.valueOf(result.getFreeVars());
+			assert result.getFreeVars().length == 0 : "free vars in versioneered term: " + result.getFreeVars();
 			return result;
 		}
 
@@ -496,9 +494,13 @@ public class NestedSsaBuilder {
 					// we use current var version of non-oldvar
 					result = getOrSetCurrentGlobalVarVersion(oldVar.getNonOldVar());
 				}
-			} else {
+			} else if (bv instanceof IProgramNonOldVar) {
 				final IProgramNonOldVar bnov = (IProgramNonOldVar) bv;
 				result = getOrSetCurrentGlobalVarVersion(bnov);
+			} else if (bv instanceof IProgramConst) {
+				result = getOrSetCurrentGlobalVarVersion(bv);
+			} else {
+				throw new AssertionError("unknown kind of IProgramVar " + bv.getClass().getSimpleName());
 			}
 		} else {
 			result = currentLocalAndOldVarVersion.get(bv);
@@ -514,7 +516,8 @@ public class NestedSsaBuilder {
 	 * Get current version for global variable. Set current var version if it
 	 * has not yet been set.
 	 */
-	private Term getOrSetCurrentGlobalVarVersion(final IProgramNonOldVar bv) {
+	private Term getOrSetCurrentGlobalVarVersion(final IProgramVar bv) {
+		assert (bv instanceof IProgramNonOldVar) || (bv instanceof IProgramConst) : "not global";
 		Term result;
 		result = currentGlobalVarVersion.get(bv);
 		if (result == null) {
@@ -558,9 +561,14 @@ public class NestedSsaBuilder {
 			mIndexedVarRepresentative.put(bv, index2constant);
 		}
 		assert !index2constant.containsKey(index) : "version was already constructed";
-		final Sort sort = transferToCurrentScriptIfNecessary(bv.getTermVariable()).getSort();
-		final Term constant = PredicateUtils.getIndexedConstant(bv.getGloballyUniqueId(), 
-				sort, index, mIndexedConstants, mScript);
+		final Term constant;
+		if (bv instanceof IProgramConst) {
+			constant = transferToCurrentScriptIfNecessary(bv.getDefaultConstant());
+		} else {
+			final Sort sort = transferToCurrentScriptIfNecessary(bv.getTermVariable()).getSort();
+			constant = PredicateUtils.getIndexedConstant(bv.getGloballyUniqueId(),
+					sort, index, mIndexedConstants, mScript);
+		}
 		index2constant.put(index, constant);
 		return constant;
 	}
@@ -573,7 +581,7 @@ public class NestedSsaBuilder {
 		if (!bv.isGlobal()) {
 			throw new IllegalArgumentException(bv + " no global var");
 		}
-		TransFormula oldVarAssignment;
+		UnmodifiableTransFormula oldVarAssignment;
 		if (startOfCallingContext >= 0) {
 			oldVarAssignment = mFormulas.getOldVarAssignment(startOfCallingContext);
 		} else if (startOfCallingContext == -1) {

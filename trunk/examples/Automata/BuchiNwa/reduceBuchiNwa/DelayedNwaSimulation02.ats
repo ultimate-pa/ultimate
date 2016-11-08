@@ -1,0 +1,47 @@
+// Automaton consists of two circles (s-circle and p-circle)
+// that each use one call and one return.
+// In the s-circle the accepting state occurs after the return (in state sf).
+// In the p-circle the accepting state occurs after the call (in state pe).
+//
+// I would presume that each s state can be merged with the corresponding 
+// p state. However, the current implementation merges only {s2,p2} 
+// and {sx,px}.
+//
+// Author: Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+// Date: 2016-09-26
+
+
+
+// print(nwa);
+print(reduceNwaDelayedSimulation(removeDeadEnds(nwa), false));
+
+
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {"c"},
+	internalAlphabet = {"a"},
+	returnAlphabet = {"r"},
+	states = {
+		"s0" "se" "s2" "sx" "sf"
+		"p0" "pe" "p2" "px" "pf"
+	},
+	initialStates = {"s0" "p0" },
+	finalStates = {"sf" "pe" },
+	callTransitions = {
+		 ("s0" "c" "se")
+		 ("p0" "c" "pe")
+	},
+	internalTransitions = {
+		("se" "a" "s2")
+		("s2" "a" "sx")
+		("pe" "a" "p2")
+		("p2" "a" "px")
+         
+		("sf" "a" "s0")
+		("pf" "a" "p0")
+	},
+	returnTransitions = {
+		 ("sx" "s0" "r" "sf")
+		 ("px" "p0" "r" "pf")
+	}
+);

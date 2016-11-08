@@ -32,14 +32,14 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.SummaryReturnTransition;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.SummaryReturnTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
@@ -66,7 +66,7 @@ public class SizeBenchmark implements ICsvProviderProvider<Integer> {
 			for (final OutgoingReturnTransition<E, V> out : nwa.returnSuccessors(state)) {
 				++edges;
 			}
-			for (final SummaryReturnTransition<E, V> out : nwa.returnSummarySuccessor(state)) {
+			for (final SummaryReturnTransition<E, V> out : nwa.summarySuccessors(state)) {
 				++edges;
 			}
 		}
@@ -75,15 +75,16 @@ public class SizeBenchmark implements ICsvProviderProvider<Integer> {
 		mLabel = label;
 	}
 
-	public SizeBenchmark(final RootNode root, final String label) {
-		final ArrayDeque<RCFGEdge> edges = new ArrayDeque<>();
-		final HashSet<RCFGEdge> closedE = new HashSet<>();
-		final HashSet<RCFGNode> closedV = new HashSet<>();
+	public SizeBenchmark(final BoogieIcfgContainer root, final String label) {
+		final ArrayDeque<IcfgEdge> edges = new ArrayDeque<>();
+		final HashSet<IcfgEdge> closedE = new HashSet<>();
+		final HashSet<IcfgLocation> closedV = new HashSet<>();
 
-		edges.addAll(root.getOutgoingEdges());
+
+		edges.addAll(BoogieIcfgContainer.extractStartEdges(root));
 
 		while (!edges.isEmpty()) {
-			final RCFGEdge current = edges.removeFirst();
+			final IcfgEdge current = edges.removeFirst();
 			if (closedE.contains(current)) {
 				continue;
 			}
@@ -94,7 +95,7 @@ public class SizeBenchmark implements ICsvProviderProvider<Integer> {
 			}
 			
 			closedV.add(current.getTarget());
-			for (final RCFGEdge next : current.getTarget().getOutgoingEdges()) {
+			for (final IcfgEdge next : current.getTarget().getOutgoingEdges()) {
 				edges.add(next);
 			}
 		}

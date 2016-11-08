@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Util Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Util Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Util Library grant you additional permission
  * to convey the resulting work.
  */
 
@@ -59,7 +59,7 @@ public class ScopedHashMap<K, V> extends AbstractMap<K, V> implements IScopedMap
 
 	private final HashMap<K, V> mMap;
 	private HashMap<K, V>[] mHistory;
-	int mCurScope = -1;
+	private int mCurScope = -1;
 	private final boolean mShrink;
 	
 	public ScopedHashMap() {
@@ -67,17 +67,21 @@ public class ScopedHashMap<K, V> extends AbstractMap<K, V> implements IScopedMap
 	}
 	
 	@SuppressWarnings("unchecked")
-	public ScopedHashMap(boolean shrink) {
-		mMap = new HashMap<K, V>();
+	public ScopedHashMap(final boolean shrink) {
+		mMap = new HashMap<>();
 		mHistory = new HashMap[ScopeUtils.NUM_INITIAL_SCOPES];
 		mShrink = shrink;
 	}
 	
-	private HashMap<K, V> undoMap() {
+	HashMap<K, V> getMap() {
+		return mMap;
+	}
+	
+	HashMap<K, V> undoMap() {
 		return mHistory[mCurScope];
 	}
 	
-	private void recordUndo(K key, V value) {
+	void recordUndo(final K key, final V value) {
 		if (mCurScope != -1) {
 			final Map<K, V> old = undoMap();
 			if (!old.containsKey(key)) {
@@ -86,7 +90,7 @@ public class ScopedHashMap<K, V> extends AbstractMap<K, V> implements IScopedMap
 		}
 	}
 
-	private void undoEntry(Entry<K,V> old) {
+	void undoEntry(final Entry<K,V> old) {
 		if (old.getValue() == null) {
 			mMap.remove(old.getKey());
 		} else {
@@ -99,7 +103,7 @@ public class ScopedHashMap<K, V> extends AbstractMap<K, V> implements IScopedMap
 		if (mCurScope == mHistory.length - 1) {
 			mHistory = ScopeUtils.grow(mHistory);
 		}
-		mHistory[++mCurScope] = new HashMap<K, V>();
+		mHistory[++mCurScope] = new HashMap<>();
 	}
 	
 	@Override
@@ -121,9 +125,8 @@ public class ScopedHashMap<K, V> extends AbstractMap<K, V> implements IScopedMap
 			@Override
 			public Iterator<Map.Entry<K, V>> iterator() {
 				return new Iterator<Map.Entry<K, V>>() {
-					Iterator<Entry<K, V>> mBacking = 
-							undoMap().entrySet().iterator();
-					Entry<K, V> mLast;
+					private final Iterator<Entry<K, V>> mBacking = undoMap().entrySet().iterator();
+					private Entry<K, V> mLast;
 					
 					@Override
 					public boolean hasNext() {
@@ -141,12 +144,12 @@ public class ScopedHashMap<K, V> extends AbstractMap<K, V> implements IScopedMap
 
 							@Override
 							public V getValue() {
-								return mMap.get(key);
+								return getMap().get(key);
 							}
 
 							@Override
-							public V setValue(V value) {
-								return mMap.put(key, value);
+							public V setValue(final V value) {
+								return getMap().put(key, value);
 							}
 						};
 					}
@@ -175,10 +178,8 @@ public class ScopedHashMap<K, V> extends AbstractMap<K, V> implements IScopedMap
 			@Override
 			public Iterator<K> iterator() {
 				return new Iterator<K>() {
-					
-					Iterator<Entry<K, V>> mBacking =
-							undoMap().entrySet().iterator();
-					Entry<K, V> mLast;
+					private final Iterator<Entry<K, V>> mBacking = undoMap().entrySet().iterator();
+					private Entry<K, V> mLast;
 					
 					@Override
 					public boolean hasNext() {
@@ -213,10 +214,8 @@ public class ScopedHashMap<K, V> extends AbstractMap<K, V> implements IScopedMap
 			@Override
 			public Iterator<V> iterator() {
 				return new Iterator<V>() {
-					
-					Iterator<Entry<K, V>> mBacking =
-							undoMap().entrySet().iterator();
-					Entry<K, V> mLast;
+					private final Iterator<Entry<K, V>> mBacking = undoMap().entrySet().iterator();
+					private Entry<K, V> mLast;
 					
 					@Override
 					public boolean hasNext() {
@@ -225,7 +224,7 @@ public class ScopedHashMap<K, V> extends AbstractMap<K, V> implements IScopedMap
 
 					@Override
 					public V next() {
-						return mMap.get((mLast = mBacking.next()).getKey());
+						return getMap().get((mLast = mBacking.next()).getKey());
 					}
 
 					@Override
@@ -251,17 +250,17 @@ public class ScopedHashMap<K, V> extends AbstractMap<K, V> implements IScopedMap
 	}
 
 	@Override
-	public boolean containsKey(Object key) {
+	public boolean containsKey(final Object key) {
 		return mMap.containsKey(key);
 	}
 
 	@Override
-	public boolean containsValue(Object value) {
+	public boolean containsValue(final Object value) {
 		return mMap.containsValue(value);
 	}
 
 	@Override
-	public V get(Object key) {
+	public V get(final Object key) {
 		return mMap.get(key);
 	}
 
@@ -282,9 +281,8 @@ public class ScopedHashMap<K, V> extends AbstractMap<K, V> implements IScopedMap
 			@Override
 			public Iterator<Entry<K,V>> iterator() {
 				return new Iterator<Entry<K,V>>() {
-
-					Iterator<Entry<K,V>> mBacking = mMap.entrySet().iterator();
-					Entry<K,V> mLast;
+					private final Iterator<Entry<K,V>> mBacking = getMap().entrySet().iterator();
+					private Entry<K,V> mLast;
 					
 					@Override
 					public boolean hasNext() {
@@ -306,15 +304,15 @@ public class ScopedHashMap<K, V> extends AbstractMap<K, V> implements IScopedMap
 
 			@Override
 			public int size() {
-				return mMap.size();
+				return getMap().size();
 			}
 		};
 	}
 
 	@Override
-	public V put(K key, V value) {
+	public V put(final K key, final V value) {
 		if (value == null) {
-			throw new NullPointerException();
+			throw new IllegalArgumentException();
 		}
 		final V oldval = mMap.put(key, value);
 		recordUndo(key, oldval);
@@ -323,7 +321,7 @@ public class ScopedHashMap<K, V> extends AbstractMap<K, V> implements IScopedMap
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public V remove(Object key) {
+	public V remove(final Object key) {
 		final V oldval = mMap.remove(key);
 		recordUndo((K) key, oldval);
 		return oldval;
@@ -344,9 +342,8 @@ public class ScopedHashMap<K, V> extends AbstractMap<K, V> implements IScopedMap
 	 * @param scope the scope number; must not be 0 for the outer most scope.
 	 * @return true if the key was overwritten in the given scope.
 	 */
-	public boolean overwritesKeyInScope(Object key, int scope) {
-		assert(scope != 0);
+	public boolean overwritesKeyInScope(final Object key, final int scope) {
+		assert scope != 0;
 		return mHistory[scope - 1].containsKey(key);
 	}
-
 }

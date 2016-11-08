@@ -1,6 +1,10 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.congruence;
 
 import java.math.BigInteger;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.function.BiPredicate;
+import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -10,13 +14,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 
 /**
  * Representation of a congruence value in the congruence domain
- * 
+ *
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  *
  */
 
 public final class CongruenceDomainValue
-        implements Comparable<CongruenceDomainValue>, INonrelationalValue<CongruenceDomainValue> {
+		implements Comparable<CongruenceDomainValue>, INonrelationalValue<CongruenceDomainValue> {
 
 	private BigInteger mValue;
 	private boolean mIsBottom;
@@ -81,7 +85,7 @@ public final class CongruenceDomainValue
 	@Override
 	public int compareTo(final CongruenceDomainValue other) {
 		throw new UnsupportedOperationException(
-		        "The compareTo operation is not defined on congruence clases and can therefore not be used.");
+				"The compareTo operation is not defined on congruence clases and can therefore not be used.");
 	}
 
 	@Override
@@ -111,9 +115,8 @@ public final class CongruenceDomainValue
 		if (mIsConstant && other.mIsConstant) {
 			if (mValue.equals(other.mValue)) {
 				return copy();
-			} else {
-				return createBottom();
 			}
+			return createBottom();
 		}
 		// If one is constant, return the value if it's inside the other, bottom otherwise
 		if (mIsConstant) {
@@ -122,9 +125,8 @@ public final class CongruenceDomainValue
 			}
 			if (mValue.mod(other.mValue.abs()).signum() == 0) {
 				return copy();
-			} else {
-				return createBottom();
 			}
+			return createBottom();
 		}
 		if (other.mIsConstant) {
 			if (mNonZero && other.mValue.signum() == 0) {
@@ -132,14 +134,13 @@ public final class CongruenceDomainValue
 			}
 			if (other.mValue.mod(mValue.abs()).signum() == 0) {
 				return other.copy();
-			} else {
-				return createBottom();
 			}
+			return createBottom();
 		}
 		// Return the LCM as new value
 		// LCM(a, b) = abs(a * b) / GCD(a, b)
 		return createNonConstant(mValue.multiply(other.mValue).divide(mValue.gcd(other.mValue)),
-		        mNonZero || other.mNonZero);
+				mNonZero || other.mNonZero);
 	}
 
 	@Override
@@ -284,9 +285,8 @@ public final class CongruenceDomainValue
 		}
 		if (mNonZero) {
 			return mValue.toString() + "Z \\ {0}";
-		} else {
-			return mValue.toString() + "Z";
 		}
+		return mValue.toString() + "Z";
 
 	}
 
@@ -306,8 +306,8 @@ public final class CongruenceDomainValue
 			}
 			return script.term("true");
 		}
-		final Term modTerm = script.term("=", script.term("mod", var, script.numeral(mValue)),
-		        script.numeral(BigInteger.ZERO));
+		final Term modTerm =
+				script.term("=", script.term("mod", var, script.numeral(mValue)), script.numeral(BigInteger.ZERO));
 		if (mNonZero) {
 			return script.term("and", modTerm, nonZeroTerm);
 		}
@@ -362,9 +362,8 @@ public final class CongruenceDomainValue
 		if (mIsConstant && rest.mValue.compareTo(mValue.abs()) >= 0) {
 			if (rest.mNonZero) {
 				return createBottom();
-			} else {
-				return createNonConstant(mValue);
 			}
+			return createNonConstant(mValue);
 		}
 		// Otherwise return the GCD (=non-constant merge)
 		return createNonConstant(mValue.gcd(rest.mValue), rest.mNonZero);
@@ -372,7 +371,7 @@ public final class CongruenceDomainValue
 
 	/**
 	 * Returns <code>true</code> if this is contained in other.
-	 * 
+	 *
 	 * @param other
 	 *            The other value to check against.
 	 * @return <code>true</code> if and only if the value of this is contained in the value of other, <code>false</code>
@@ -405,127 +404,120 @@ public final class CongruenceDomainValue
 	}
 
 	@Override
-	public CongruenceDomainValue integerDivide(CongruenceDomainValue other) {
+	public CongruenceDomainValue divideInteger(final CongruenceDomainValue other) {
 		return divide(other);
 	}
 
 	@Override
-	public CongruenceDomainValue modulo(CongruenceDomainValue other, boolean isInteger) {
+	public CongruenceDomainValue modulo(final CongruenceDomainValue other) {
 		return mod(other);
 	}
 
 	@Override
-	public CongruenceDomainValue greaterThan(CongruenceDomainValue other) {
+	public CongruenceDomainValue greaterThan(final CongruenceDomainValue other) {
 		return createTop();
 	}
 
 	@Override
-	public BooleanValue isGreaterThan(CongruenceDomainValue other) {
-		if (isConstant() && other.isConstant()) {
-			return new BooleanValue(value().compareTo(other.value()) > 0);
-		}
-		return new BooleanValue();
+	public BooleanValue isGreaterThan(final CongruenceDomainValue other) {
+		return keepZeroInverseBooleanAssociative(other, (a, b) -> a.compareTo(b) > 0);
 	}
 
 	@Override
-	public CongruenceDomainValue greaterOrEqual(CongruenceDomainValue other) {
+	public CongruenceDomainValue greaterOrEqual(final CongruenceDomainValue other) {
 		return createTop();
 	}
 
 	@Override
-	public BooleanValue isGreaterOrEqual(CongruenceDomainValue other) {
-		if (isConstant() && other.isConstant()) {
-			return new BooleanValue(value().compareTo(other.value()) >= 0);
-		}
-		return new BooleanValue();
+	public BooleanValue isGreaterOrEqual(final CongruenceDomainValue other) {
+		return keepZeroInverseBooleanAssociative(other, (a, b) -> a.compareTo(b) >= 0);
 	}
 
 	@Override
-	public CongruenceDomainValue lessThan(CongruenceDomainValue other) {
+	public CongruenceDomainValue lessThan(final CongruenceDomainValue other) {
 		return createTop();
 	}
 
 	@Override
-	public BooleanValue isLessThan(CongruenceDomainValue other) {
-		if (isConstant() && other.isConstant()) {
-			return new BooleanValue(value().compareTo(other.value()) < 0);
-		}
-		return new BooleanValue();
+	public BooleanValue isLessThan(final CongruenceDomainValue other) {
+		return keepZeroInverseBooleanAssociative(other, (a, b) -> a.compareTo(b) < 0);
 	}
 
 	@Override
-	public CongruenceDomainValue lessOrEqual(CongruenceDomainValue other) {
+	public CongruenceDomainValue lessOrEqual(final CongruenceDomainValue other) {
 		return createTop();
 	}
 
 	@Override
-	public BooleanValue isLessOrEqual(CongruenceDomainValue other) {
-		if (isConstant() && other.isConstant()) {
-			return new BooleanValue(value().compareTo(other.value()) <= 0);
-		}
-		return new BooleanValue();
+	public BooleanValue isLessOrEqual(final CongruenceDomainValue other) {
+		return keepZeroInverseBooleanAssociative(other, (a, b) -> a.compareTo(b) <= 0);
 	}
 
 	@Override
-	public CongruenceDomainValue inverseModulo(CongruenceDomainValue referenceValue, CongruenceDomainValue oldValue,
-	        boolean isLeft) {
+	public CongruenceDomainValue inverseModulo(final CongruenceDomainValue referenceValue,
+			final CongruenceDomainValue oldValue, final boolean isLeft) {
 		// If mod is at one side of an equality, the left side of the mod expression
 		// changes according to the other side of the equality
 		if (isLeft) {
 			return oldValue.intersect(modEquals(referenceValue));
-		} else {
-			return oldValue;
 		}
+		return oldValue;
 	}
 
 	@Override
-	public CongruenceDomainValue inverseEquality(CongruenceDomainValue oldValue, CongruenceDomainValue referenceValue) {
+	public CongruenceDomainValue inverseEquality(final CongruenceDomainValue oldValue,
+			final CongruenceDomainValue referenceValue) {
 		return oldValue.intersect(this);
 	}
 
 	@Override
-	public CongruenceDomainValue inverseLessOrEqual(CongruenceDomainValue oldValue, boolean isLeft) {
-		if (isConstant() && value().signum() < 0) {
-			return oldValue.getNonZeroValue();
-		} else {
-			return oldValue;
-		}
+	public CongruenceDomainValue inverseLessOrEqual(final CongruenceDomainValue oldValue, final boolean isLeft) {
+		return keepZeroInverseNonAssociative(oldValue, isLeft, a -> a.signum() < 0);
 	}
 
 	@Override
-	public CongruenceDomainValue inverseLessThan(CongruenceDomainValue oldValue, boolean isLeft) {
-		if (isConstant() && value().signum() <= 0) {
-			return oldValue.getNonZeroValue();
-		} else {
-			return oldValue;
-		}
+	public CongruenceDomainValue inverseLessThan(final CongruenceDomainValue oldValue, final boolean isLeft) {
+		return keepZeroInverseNonAssociative(oldValue, isLeft, a -> a.signum() <= 0);
 	}
 
 	@Override
-	public CongruenceDomainValue inverseGreaterOrEqual(CongruenceDomainValue oldValue, boolean isLeft) {
-		if (isConstant() && value().signum() > 0) {
-			return oldValue.getNonZeroValue();
-		} else {
-			return oldValue;
-		}
+	public CongruenceDomainValue inverseGreaterOrEqual(final CongruenceDomainValue oldValue, final boolean isLeft) {
+		return keepZeroInverseNonAssociative(oldValue, isLeft, a -> a.signum() > 0);
 	}
 
 	@Override
-	public CongruenceDomainValue inverseGreaterThan(CongruenceDomainValue oldValue, boolean isLeft) {
-		if (isConstant() && value().signum() >= 0) {
-			return oldValue.getNonZeroValue();
-		} else {
-			return oldValue;
-		}
+	public CongruenceDomainValue inverseGreaterThan(final CongruenceDomainValue oldValue, final boolean isLeft) {
+		return keepZeroInverseNonAssociative(oldValue, isLeft, a -> a.signum() >= 0);
 	}
 
 	@Override
-	public CongruenceDomainValue inverseNotEqual(CongruenceDomainValue oldValue, CongruenceDomainValue referenceValue) {
-		if (isConstant() && value().signum() == 0) {
+	public CongruenceDomainValue inverseNotEqual(final CongruenceDomainValue oldValue,
+			final CongruenceDomainValue referenceValue) {
+		return keepZeroInverseAssociative(oldValue, a -> a.signum() == 0);
+	}
+
+	private CongruenceDomainValue keepZeroInverseNonAssociative(final CongruenceDomainValue oldValue,
+			final boolean isLeft, final Predicate<BigInteger> signumCheck) {
+		if (isLeft && isConstant() && signumCheck.test(value())) {
 			return oldValue.getNonZeroValue();
-		} else {
-			return oldValue;
 		}
+		return oldValue;
+	}
+
+	private CongruenceDomainValue keepZeroInverseAssociative(final CongruenceDomainValue oldValue,
+			final Predicate<BigInteger> signumCheck) {
+		if (isConstant() && signumCheck.test(value())) {
+			return oldValue.getNonZeroValue();
+		}
+		return oldValue;
+	}
+
+	private BooleanValue keepZeroInverseBooleanAssociative(final CongruenceDomainValue oldValue,
+			final BiPredicate<BigInteger, BigInteger> comparison) {
+		if (isConstant() && oldValue.isConstant()) {
+			return BooleanValue.getBooleanValue(comparison.test(value(), oldValue.value()));
+		}
+		return BooleanValue.TOP;
 	}
 
 	@Override
@@ -539,18 +531,34 @@ public final class CongruenceDomainValue
 	}
 
 	@Override
-	public BooleanValue compareEquality(CongruenceDomainValue firstOther, CongruenceDomainValue secondOther) {
-		if (firstOther.isConstant() && secondOther.isConstant()) {
-			return new BooleanValue(firstOther.value().equals(secondOther.value()));
+	public BooleanValue compareEquality(final CongruenceDomainValue secondOther) {
+		if (isConstant() && secondOther.isConstant()) {
+			return BooleanValue.getBooleanValue(value().equals(secondOther.value()));
 		}
-		return new BooleanValue();
+		return BooleanValue.TOP;
 	}
 
 	@Override
-	public BooleanValue compareInequality(CongruenceDomainValue firstOther, CongruenceDomainValue secondOther) {
-		if (firstOther.isConstant() && secondOther.isConstant()) {
-			return new BooleanValue(!firstOther.value().equals(secondOther.value()));
+	public BooleanValue compareInequality(final CongruenceDomainValue secondOther) {
+		if (isConstant() && secondOther.isConstant()) {
+			return BooleanValue.getBooleanValue(!value().equals(secondOther.value()));
 		}
-		return new BooleanValue();
+		return BooleanValue.TOP;
+	}
+
+	@Override
+	public Collection<CongruenceDomainValue> complement() {
+		if (!isConstant() && mValue == BigInteger.ONE) {
+			// its top
+			return Collections.singleton(createBottom());
+		}
+		// all other cases are top
+		return Collections.singleton(createTop());
+	}
+
+	@Override
+	public Collection<CongruenceDomainValue> complementInteger() {
+		// no difference
+		return complement();
 	}
 }

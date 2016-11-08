@@ -10,6 +10,11 @@
   <property name="flex"      location="flex"      />
   <property name="cup"       location="cup"       />
 
+  <property name="package"    value="com/github/jhoenicke/javacup" />
+  <property name="version"    value="1.0"/>
+  <property name="jar"        value="jh-javacup-${version}"/>
+  <property name="runtimejar" value="${jar}-runtime"/>
+
   <!-- initialize the workspace -->
   <target name="init">
     <tstamp />
@@ -44,19 +49,19 @@
   <target name="bootstrap" depends="init">
     <mkdir dir="${bootstrap}" />
     <javac includeantruntime="false" srcdir="${src}" destdir="${bootstrap}" source="1.5" target="1.5">
-      <exclude name="java_cup/anttask/**"/>
+      <exclude name="${package}/anttask/**"/>
     </javac>
     <mkdir dir="${java}" />
     <copy todir="${java}">
       <fileset dir="${src}">
-        <exclude name="java_cup/Parser.java"/>
-        <exclude name="java_cup/Lexer.java"/>
-        <exclude name="java_cup/sym.java"/>
+        <exclude name="${package}/Parser.java"/>
+        <exclude name="${package}/Lexer.java"/>
+        <exclude name="${package}/sym.java"/>
       </fileset>
     </copy>
-    <java fork="true" classpath="${bootstrap}" classname="java_cup.Main">
+    <java fork="true" classpath="${bootstrap}" classname="com.github.jhoenicke.javacup.Main">
       <arg value="-destdir"/>
-      <arg value="${java}/java_cup"/>
+      <arg value="${java}/${package}"/>
       <arg value="${cup}/parser.cup"/>
     </java>
     <jflex file="${flex}/Lexer.jflex" destdir="${java}" />
@@ -67,20 +72,18 @@
   </target>
 
   <target name="dist" depends="compile">
-   <jar jarfile="${dist}/java-cup-12joho.jar" basedir="${classes}"
-        excludes="java_cup/runtime/lr_parser.class">
+   <jar jarfile="${dist}/${jar}.jar" basedir="${classes}">
       <manifest>
-        <attribute name="Main-Class" value="java_cup/Main" />
+        <attribute name="Main-Class" value="${package}/Main" />
       </manifest>
     </jar>
-    <jar jarfile="${dist}/java-cup-12joho-runtime.jar" basedir="${classes}" 
-        includes="java_cup/runtime/*"
-        excludes="java_cup/runtime/lr_parser.class">
+    <jar jarfile="${dist}/${runtimejar}.jar" basedir="${classes}" 
+        includes="${package}/runtime/*">
     </jar>
   </target>
 
   <target name="test" depends="dist">
-    <java jar="${dist}/java-cup-12joho.jar" fork="true">
+    <java jar="${dist}/${jar}.jar" fork="true">
         <arg value="${cup}/parser.cup" />
     </java>  
     

@@ -42,15 +42,15 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArra
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArrays.TransFormulaLRWithArrayCells;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArrays.TransFormulaLRWithArrayInformation;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.LassoUnderConstruction;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarFactory;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaUtils;
+import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ModifiableTransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.EqualityAnalysisResult;
@@ -69,7 +69,7 @@ public class RewriteArrays2 extends LassoPreprocessor {
 
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
-	private final SimplicationTechnique mSimplificationTechnique;
+	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
 
 	public static final boolean ADDITIONAL_CHECKS_IF_ASSERTIONS_ENABLED = !false;
@@ -84,22 +84,22 @@ public class RewriteArrays2 extends LassoPreprocessor {
 	private final ManagedScript mScript;
 
 	// private final boolean mSearchAdditionalSupportingInvariants;
-	private final TransFormula mOriginalStem;
-	private final TransFormula mOriginalLoop;
+	private final UnmodifiableTransFormula mOriginalStem;
+	private final UnmodifiableTransFormula mOriginalLoop;
 	private final Set<Term> mArrayIndexSupportingInvariants;
 	private final Set<IProgramVar> mModifiableGlobalsAtHonda;
 
 	private final ReplacementVarFactory mReplacementVarFactory;
 	private final ManagedScript mFreshTermVariableConstructor;
-	private final Boogie2SmtSymbolTable mBoogie2Smt;
+	private final ICfgSymbolTable mBoogie2Smt;
 
 	private final boolean mOverapproximateByOmmitingDisjointIndices;
 
-	public RewriteArrays2(final boolean overapproximateByOmmitingDisjointIndices, final TransFormula originalStem,
-			final TransFormula originalLoop, final Set<IProgramVar> modifiableGlobalsAtHonda,
+	public RewriteArrays2(final boolean overapproximateByOmmitingDisjointIndices, final UnmodifiableTransFormula originalStem,
+			final UnmodifiableTransFormula originalLoop, final Set<IProgramVar> modifiableGlobalsAtHonda,
 			final IUltimateServiceProvider services, final Set<Term> arrayIndexSupportingInvariants,
-			final Boogie2SmtSymbolTable boogie2smt, final ManagedScript mgdScript, final ReplacementVarFactory ReplacementVarFactory,
-			final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
+			final ICfgSymbolTable boogie2smt, final ManagedScript mgdScript, final ReplacementVarFactory ReplacementVarFactory,
+			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
 		mSimplificationTechnique = simplificationTechnique;
@@ -242,7 +242,7 @@ public class RewriteArrays2 extends LassoPreprocessor {
 				mSimplificationTechnique, mXnfConversionTechnique);
 		final LassoUnderConstruction newLasso = new LassoUnderConstruction(stem.getResult(), loop.getResult());
 		assert !ADDITIONAL_CHECKS_IF_ASSERTIONS_ENABLED || checkStemImplication(mServices, mLogger, lasso, newLasso,
-				mBoogie2Smt) : "result of RewriteArrays too strong";
+				mBoogie2Smt, mScript) : "result of RewriteArrays too strong";
 		return Collections.singleton(newLasso);
 	}
 
@@ -268,10 +268,11 @@ public class RewriteArrays2 extends LassoPreprocessor {
 		return result;
 	}
 
-	private boolean checkStemImplication(final IUltimateServiceProvider services, final ILogger logger,
-			final LassoUnderConstruction oldLasso, final LassoUnderConstruction newLasso, final Boogie2SmtSymbolTable boogie2smt) {
-		final LBool implies = TransFormulaUtils.implies(mServices, mLogger, oldLasso.getStem(), newLasso.getStem(),
-				mScript.getScript(), boogie2smt);
+	public static boolean checkStemImplication(final IUltimateServiceProvider services, final ILogger logger,
+			final LassoUnderConstruction oldLasso, final LassoUnderConstruction newLasso, 
+			final ICfgSymbolTable boogie2smt, final ManagedScript script) {
+		final LBool implies = ModifiableTransFormulaUtils.implies(services, logger, oldLasso.getStem(), newLasso.getStem(),
+				script.getScript(), boogie2smt);
 		if (implies != LBool.SAT && implies != LBool.UNSAT) {
 			logger.warn("result of RewriteArrays check is " + implies);
 		}

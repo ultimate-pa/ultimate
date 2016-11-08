@@ -1,0 +1,11 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Library-Disruptor
+Bundle-SymbolicName: Library-Disruptor
+Bundle-Version: 3.3.5
+Bundle-Vendor: https://github.com/LMAX-Exchange/disruptor
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Export-Package: com.lmax.disruptor,
+ com.lmax.disruptor.collections,
+ com.lmax.disruptor.dsl,
+ com.lmax.disruptor.util

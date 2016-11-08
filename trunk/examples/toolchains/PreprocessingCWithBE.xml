@@ -1,6 +1,8 @@
+<rundefinition>
+<name>C to RCFG Translation (with Blockencoding)</name>
 <toolchain>
 	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator"/>
 	<plugin id="de.uni_freiburg.informatik.ultimate.boogie.preprocessor"/>
 	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder"/>
 	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding" />
-</toolchain>
+</toolchain></rundefinition>

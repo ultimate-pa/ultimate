@@ -4,10 +4,10 @@ Bundle-Name: AutomataScriptInterpreter
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter;singleton:=true
 Bundle-Version: 0.0.1
 Require-Bundle: UltimateCore,
- Library-UltimateCore, 
- Library-log4j,
+ Library-UltimateCore,
  de.uni_freiburg.informatik.ultimate.automata,
- AutomataScriptParser
+ AutomataScriptParser,
+ Library-UltimateUtil
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Export-Package: de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter

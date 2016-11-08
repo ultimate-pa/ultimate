@@ -7,8 +7,8 @@
 	<packaging>eclipse-test-plugin</packaging>
 
 	<parent>
-		<artifactId>MavenParentUltimate</artifactId>
-		<groupId>Ultimate</groupId>
+		<artifactId>mavenparent</artifactId>
+		<groupId>de.uni_freiburg.informatik.ultimate</groupId>
 		<version>0.0.1</version>
 		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
 	</parent>

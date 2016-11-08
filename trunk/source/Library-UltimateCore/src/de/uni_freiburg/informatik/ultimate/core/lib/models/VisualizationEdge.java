@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Core, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Core grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Core grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.core.lib.models;
@@ -42,14 +42,14 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 public final class VisualizationEdge
 		extends BaseMultigraphEdge<VisualizationNode, VisualizationEdge, VisualizationNode, VisualizationEdge> {
 
-	protected Object mBacking;
+	private final Object mBacking;
 
-	protected VisualizationEdge(VisualizationNode source, VisualizationNode target, IPayload payload, Object backing) {
+	protected VisualizationEdge(final VisualizationNode source, final VisualizationNode target, final IPayload payload, final Object backing) {
 		super(source, target, payload);
 		mBacking = backing;
 	}
 
-	protected VisualizationEdge(VisualizationNode source, VisualizationNode target, Object backing) {
+	protected VisualizationEdge(final VisualizationNode source, final VisualizationNode target, final Object backing) {
 		super(source, target);
 		mBacking = backing;
 	}
@@ -71,7 +71,7 @@ public final class VisualizationEdge
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (obj instanceof VisualizationEdge) {
 			final VisualizationEdge other = (VisualizationEdge) obj;
 			if (mBacking == null && other.mBacking == null) {

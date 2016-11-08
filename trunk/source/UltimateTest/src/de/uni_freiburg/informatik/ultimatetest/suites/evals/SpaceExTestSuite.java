@@ -37,8 +37,8 @@ import de.uni_freiburg.informatik.ultimate.test.decider.SafetyCheckTestResultDec
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 import de.uni_freiburg.informatik.ultimatetest.suites.AbstractEvalTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.summaries.ColumnDefinition;
-import de.uni_freiburg.informatik.ultimatetest.summaries.ConversionContext;
 import de.uni_freiburg.informatik.ultimatetest.summaries.ColumnDefinition.Aggregate;
+import de.uni_freiburg.informatik.ultimatetest.summaries.ConversionContext;
 
 /**
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)

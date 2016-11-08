@@ -347,17 +347,16 @@ public class AffineExpression {
 				quotient = mConstant.divide(divisor);
 			}
 			return new AffineExpression(quotient);
-		} else {
-			final BiFunction<BigDecimal, BigDecimal, BigDecimal> divOp =
-					integerDivison ? NumUtil::exactDivison : BigDecimal::divide;
-			final AffineExpression quotient = new AffineExpression();
-			quotient.mConstant = divOp.apply(mConstant, divisor);
-			for (final Entry<IBoogieVar, BigDecimal> entry : mCoefficients.entrySet()) {
-				final BigDecimal newCoefficent = divOp.apply(entry.getValue(), divisor);
-				quotient.mCoefficients.put(entry.getKey(), newCoefficent);
-			}
-			return quotient;
 		}
+		final BiFunction<BigDecimal, BigDecimal, BigDecimal> divOp =
+				integerDivison ? NumUtil::exactDivison : BigDecimal::divide;
+		final AffineExpression quotient = new AffineExpression();
+		quotient.mConstant = divOp.apply(mConstant, divisor);
+		for (final Entry<IBoogieVar, BigDecimal> entry : mCoefficients.entrySet()) {
+			final BigDecimal newCoefficent = divOp.apply(entry.getValue(), divisor);
+			quotient.mCoefficients.put(entry.getKey(), newCoefficent);
+		}
+		return quotient;
 	}
 
 	/**
@@ -413,7 +412,8 @@ public class AffineExpression {
 		final StringBuilder strBuilder = new StringBuilder();
 		for (final Entry<IBoogieVar, BigDecimal> entry : mCoefficients.entrySet()) {
 			strBuilder.append(entry.getValue());
-			strBuilder.append('\u22C5'); // multiplication dot
+			// multiplication dot
+			strBuilder.append('\u22C5');
 			strBuilder.append(entry.getKey());
 			strBuilder.append(" + ");
 		}

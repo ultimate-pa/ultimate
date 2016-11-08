@@ -31,28 +31,36 @@ import java.util.Collections;
 import java.util.List;
 import java.util.ListIterator;
 
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers.AShrinker;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers.AbstractShrinker;
 
 /**
  * Reduces a list of objects in a binary search manner until a local minimum is
  * found.
- * 
  * Note that the local minimum is only according to the current shrinker, i.e.,
  * the respective shrinker cannot be applied to a subinterval of objects anymore
  * while still producing the error. However, removing, say, objects 1 and 3
  * might still work.
  * 
- * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
+ * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * @param <T>
+ *            shrinker type
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
  */
-public class SingleDebug<T, LETTER, STATE> extends ADebug<T, LETTER, STATE> {
+public class SingleDebug<T, LETTER, STATE> extends AbstractDebug<T, LETTER, STATE> {
 	private ListIterator<T> mIterator;
 	
 	/**
-	 * @param tester tester
-	 * @param shrinker shrinker
+	 * Constructor.
+	 * 
+	 * @param tester
+	 *            tester
+	 * @param shrinker
+	 *            shrinker
 	 */
-	public SingleDebug(final ATester<LETTER, STATE> tester,
-			final AShrinker<T, LETTER, STATE> shrinker) {
+	public SingleDebug(final AbstractTester<LETTER, STATE> tester, final AbstractShrinker<T, LETTER, STATE> shrinker) {
 		super(tester, shrinker);
 		mIterator = null;
 	}
@@ -71,6 +79,10 @@ public class SingleDebug<T, LETTER, STATE> extends ADebug<T, LETTER, STATE> {
 			
 			// run test
 			result |= super.test(sublist);
+			
+			if (mShrinker.isCancelRequested()) {
+				break;
+			}
 		}
 		return result;
 	}

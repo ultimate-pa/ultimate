@@ -4,7 +4,6 @@ Bundle-Name: AbstractInterpretation
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2;singleton:=true
 Bundle-Version: 0.0.1
 Require-Bundle: Library-UltimateCore,
- Library-log4j,
  Library-SMTLIB,
  Library-ModelCheckerUtils,
  Library-UltimateUtil,
@@ -18,4 +17,7 @@ Require-Bundle: Library-UltimateCore,
  de.uni_freiburg.informatik.ultimate.automata
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ActivationPolicy: lazy
-Export-Package: de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool
+Export-Package: de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg,
+ de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model,
+ de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.dataflow,
+ de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool

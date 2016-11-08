@@ -29,12 +29,12 @@ package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
@@ -51,12 +51,12 @@ public class SimplifyPreprocessor extends TransitionPreprocessor {
 	private final IToolchainStorage mStorage;
 	private final boolean mUseSMTInterpolForSimplification = !true;
 	private final ManagedScript mMgdScript;
-	private final SimplicationTechnique mXnfConversionTechnique;
+	private final SimplificationTechnique mXnfConversionTechnique;
 	
 	public static final String s_Description = "Simplify formula using SimplifyDDA";
 	
 	public SimplifyPreprocessor(final IUltimateServiceProvider services, final IToolchainStorage storage, 
-			final ManagedScript mgdScript, final SimplicationTechnique xnfConversionTechnique) {
+			final ManagedScript mgdScript, final SimplificationTechnique xnfConversionTechnique) {
 		super();
 		mServices = services;
 		mStorage = storage;
@@ -70,16 +70,16 @@ public class SimplifyPreprocessor extends TransitionPreprocessor {
 	}
 	
 	@Override
-	protected boolean checkSoundness(final Script script, final TransFormulaLR oldTF,
-			final TransFormulaLR newTF) {
+	protected boolean checkSoundness(final Script script, final ModifiableTransFormula oldTF,
+			final ModifiableTransFormula newTF) {
 		return true;
 	}
 	
 	@Override
-	public TransFormulaLR process(final Script script, final TransFormulaLR tf) throws TermException {
+	public ModifiableTransFormula process(final Script script, final ModifiableTransFormula tf) throws TermException {
 		final Term simplified;
 		if (mUseSMTInterpolForSimplification) {
-			final Settings settings = new SolverBuilder.Settings(false, "", 10 * 1000, null, false, null, null);
+			final Settings settings = new SolverBuilder.Settings(false, false, "", 10 * 1000, null, false, null, null);
 			final Script simplificationScript = SolverBuilder.buildScript(mServices, mStorage, settings);
 			simplificationScript.setLogic(Logics.QF_UFLIRA);
 			final TermTransferrer towards = new TermTransferrer(simplificationScript);

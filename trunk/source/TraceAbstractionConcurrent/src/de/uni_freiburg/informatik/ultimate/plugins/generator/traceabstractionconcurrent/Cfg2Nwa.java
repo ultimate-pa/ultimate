@@ -19,45 +19,43 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstractionConcurrent plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE TraceAbstractionConcurrent plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE TraceAbstractionConcurrent plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 
-public class Cfg2Nwa extends CFG2Automaton {
+public final class Cfg2Nwa extends CFG2Automaton {
+	private final INestedWordAutomaton<CodeBlock, IPredicate> mResult;
 	
-	private INestedWordAutomaton<CodeBlock,IPredicate> mResult;
-
-	public Cfg2Nwa(final RootNode rootNode,
-			final StateFactory<IPredicate> contentFactory, final SmtManager smtManager, final IUltimateServiceProvider services,final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique) {
-		super(rootNode, contentFactory, smtManager, services, simplificationTechnique, xnfConversionTechnique);
+	public Cfg2Nwa(final BoogieIcfgContainer rootNode, final IStateFactory<IPredicate> contentFactory, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
+			final IUltimateServiceProvider services, final XnfConversionTechnique xnfConversionTechnique,
+			final SimplificationTechnique simplificationTechnique) {
+		super(rootNode, contentFactory, csToolkit, predicateFactory, services, simplificationTechnique, xnfConversionTechnique);
 		
 		constructProcedureAutomata();
-		mResult = mAutomata.get(0);
-		for (int i=1; i<mAutomata.size(); i++) {
-			mResult = ((NestedWordAutomaton<CodeBlock,IPredicate>)
-					mResult).concurrentPrefixProduct(mAutomata.get(i));
+		INestedWordAutomaton<CodeBlock, IPredicate> result = mAutomata.get(0);
+		for (int i = 1; i < mAutomata.size(); i++) {
+			result = ((NestedWordAutomaton<CodeBlock, IPredicate>) result).concurrentPrefixProduct(mAutomata.get(i));
 		}
-		
+		mResult = result;
 	}
 	
 	@Override
-	public INestedWordAutomaton<CodeBlock,IPredicate> getResult() {
+	public INestedWordAutomaton<CodeBlock, IPredicate> getResult() {
 		return mResult;
 	}
-	
-
 }

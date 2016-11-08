@@ -18,8 +18,8 @@
     Package and import declarations
       These serve the same purpose as in a normal Java source file
       (and will appear in the generated code for the parser). In this 
-      case we are part of the java_cup package and we import both the
-      java_cup runtime system and Hashtable from the standard Java
+      case we are part of the javacup package and we import both the
+      javacup runtime system and Hashtable from the standard Java
       utilities package.
 
     Action code
@@ -90,8 +90,8 @@
 */
 /*================================================================*/ 
 
-package java_cup;
-import java_cup.runtime.*;
+package com.github.jhoenicke.javacup;
+import com.github.jhoenicke.javacup.runtime.*;
 import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -504,7 +504,7 @@ wild_symbol_id ::=
 	   if (symb == null)
 	     {
 	       if (ErrorManager.getManager().getErrorCount() == 0)
-	         ErrorManager.getManager().emit_error("java_cup.runtime.Symbol \"" + symid + 
+	         ErrorManager.getManager().emit_error("Symbol \"" + symid + 
 			        "\" has not been declared");
 	       RESULT = null;
 	     }

@@ -29,11 +29,11 @@ package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArr
 import java.util.HashMap;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVar;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 
 /**
@@ -67,14 +67,14 @@ public class ArrayCellReplacementVarInformation {
 	/**
 	 * TransFormula in which arrayInstance and index occurred.
 	 */
-	private final TransFormulaLR mTransFormulaLR;
+	private final ModifiableTransFormula mTransFormulaLR;
 	
 	private ReplacementVar mReplacementVar;
 	
 	
 	public ArrayCellReplacementVarInformation(TermVariable arrayInstance,
 			TermVariable arrayRepresentative, ArrayIndex index,
-			ArrayIndex indexRepresentative, VarType varType, TransFormulaLR transFormulaLR) {
+			ArrayIndex indexRepresentative, VarType varType, ModifiableTransFormula transFormulaLR) {
 		super();
 		mArrayInstance = arrayInstance;
 		mArrayRepresentative = arrayRepresentative;
@@ -120,15 +120,15 @@ public class ArrayCellReplacementVarInformation {
 	}
 	
 	
-	public Map<TermVariable, RankVar> termVariableToRankVarMappingForIndex() {
-		final Map<TermVariable, RankVar> result = new HashMap<TermVariable, RankVar>();
+	public Map<TermVariable, IProgramVar> termVariableToRankVarMappingForIndex() {
+		final Map<TermVariable, IProgramVar> result = new HashMap<TermVariable, IProgramVar>();
 		for (final Term entry : mIndex) {
 			for (final TermVariable tv : entry.getFreeVars()) {
-				final RankVar inVar = mTransFormulaLR.getInVarsReverseMapping().get(tv);
+				final IProgramVar inVar = mTransFormulaLR.getInVarsReverseMapping().get(tv);
 				if (inVar != null) {
 					result.put(tv, inVar);
 				} else {
-					final RankVar outVar = mTransFormulaLR.getOutVarsReverseMapping().get(tv);
+					final IProgramVar outVar = mTransFormulaLR.getOutVarsReverseMapping().get(tv);
 					if (outVar != null) {
 						result.put(tv, outVar);
 					} else {
@@ -140,8 +140,8 @@ public class ArrayCellReplacementVarInformation {
 		return result;
 	}
 	
-	public RankVar getArrayRankVar() {
-		RankVar result = mTransFormulaLR.getInVarsReverseMapping().get(mArrayInstance);
+	public IProgramVar getArrayRankVar() {
+		IProgramVar result = mTransFormulaLR.getInVarsReverseMapping().get(mArrayInstance);
 		if (result == null) {
 			result = mTransFormulaLR.getOutVarsReverseMapping().get(mArrayInstance);
 		}

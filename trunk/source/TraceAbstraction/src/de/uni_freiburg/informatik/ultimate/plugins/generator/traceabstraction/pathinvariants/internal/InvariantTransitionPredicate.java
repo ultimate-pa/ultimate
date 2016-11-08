@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal;
 
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
 /**
  * A predicate formula representing a transition between two program points with
@@ -43,11 +43,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Tra
 public class InvariantTransitionPredicate<IPT> {
 	private final IPT invStart;
 	private final IPT invEnd;
-	private final TransFormula transition;
+	private final UnmodifiableTransFormula transition;
 
 	/**
 	 * Creates a invariant transition predicate from two given invariant
-	 * patterns and a connecting {@link TransFormula}.
+	 * patterns and a connecting {@link UnmodifiableTransFormula}.
 	 * 
 	 * @param invStart
 	 *            the invariant at the transition's start location
@@ -57,7 +57,7 @@ public class InvariantTransitionPredicate<IPT> {
 	 *            the TransFormula describing the transition's behavior
 	 */
 	public InvariantTransitionPredicate(final IPT invStart, final IPT invEnd,
-			final TransFormula transition) {
+			final UnmodifiableTransFormula transition) {
 		this.invStart = invStart;
 		this.invEnd = invEnd;
 		this.transition = transition;
@@ -82,11 +82,11 @@ public class InvariantTransitionPredicate<IPT> {
 	}
 
 	/**
-	 * Returns the {@link TransFormula} describing the transition's behavior.
+	 * Returns the {@link UnmodifiableTransFormula} describing the transition's behavior.
 	 * 
 	 * @return TransFormula describing the transition's behavior
 	 */
-	public final TransFormula getTransition() {
+	public final UnmodifiableTransFormula getTransition() {
 		return transition;
 	}
 }

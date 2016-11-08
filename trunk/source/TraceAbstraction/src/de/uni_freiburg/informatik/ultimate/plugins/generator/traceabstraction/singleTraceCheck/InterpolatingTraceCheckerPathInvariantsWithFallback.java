@@ -27,21 +27,22 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Set;
 import java.util.SortedMap;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.PathInvariantsGenerator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 
@@ -58,27 +59,32 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends
 	private final IToolchainStorage mStorage;
 	private final NestedRun<? extends IAction, IPredicate> mNestedRun;
 	private final boolean mUseNonlinerConstraints;
+	private final boolean mUseVarsFromUnsatCore;
 	private final Settings mSolverSettings;
+	private final Collection<Term> mAxioms;
 	
 	public InterpolatingTraceCheckerPathInvariantsWithFallback(
 			final IPredicate precondition, final IPredicate postcondition,
 			final SortedMap<Integer, IPredicate> pendingContexts,
-			final NestedRun<? extends IAction, IPredicate> run, final SmtManager smtManager,
-			final ModifiableGlobalVariableManager modifiedGlobals,
+			final NestedRun<? extends IAction, IPredicate> run, final CfgSmtToolkit csToolkit,
 			final AssertCodeBlockOrder assertCodeBlocksIncrementally,
 			final IUltimateServiceProvider services,
 			final IToolchainStorage storage,
 			final boolean computeRcfgProgramExecution,
-			final PredicateUnifier predicateUnifier, 
-			final boolean useNonlinerConstraints, final Settings solverSettings,
-			final XnfConversionTechnique xnfConversionTechnique, final SimplicationTechnique simplificationTechnique) {
-		super(precondition, postcondition, pendingContexts, run.getWord(), smtManager,
-				modifiedGlobals, assertCodeBlocksIncrementally, services,
-				computeRcfgProgramExecution, predicateUnifier, smtManager, simplificationTechnique, xnfConversionTechnique);
+			final PredicateUnifier predicateUnifier,
+			final boolean useNonlinerConstraints,
+			final boolean useVarsFromUnsatCore,
+			final Settings solverSettings, final XnfConversionTechnique xnfConversionTechnique,
+			final SimplificationTechnique simplificationTechnique, final Collection<Term> axioms) {
+		super(precondition, postcondition, pendingContexts, run.getWord(), csToolkit,
+				assertCodeBlocksIncrementally, services, computeRcfgProgramExecution,
+				predicateUnifier, csToolkit.getManagedScript(), simplificationTechnique, xnfConversionTechnique);
 		mStorage = storage;
 		mNestedRun = run;
 		mUseNonlinerConstraints = useNonlinerConstraints;
+		mUseVarsFromUnsatCore = useVarsFromUnsatCore;
 		mSolverSettings = solverSettings;
+		mAxioms = axioms;
 		if (super.isCorrect() == LBool.UNSAT) {
 			mTraceCheckFinished = true;
 			super.unlockSmtManager();
@@ -91,8 +97,8 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends
 			final InterpolationTechnique interpolation) {
 		final PathInvariantsGenerator pathInvariantsGenerator = new PathInvariantsGenerator(
 				super.mServices, mStorage, mNestedRun, super.getPrecondition(), 
-				super.getPostcondition(), mPredicateUnifier, super.mSmtManager,
-				mModifiedGlobals, mUseNonlinerConstraints, mSolverSettings, mSimplificationTechnique, mXnfConversionTechnique);
+				super.getPostcondition(), mPredicateUnifier, super.mCfgManagedScript,
+				mCsToolkit.getModifiableGlobals(), mUseNonlinerConstraints, mUseVarsFromUnsatCore, mSolverSettings, mSimplificationTechnique, mXnfConversionTechnique, mAxioms);
 		IPredicate[] interpolants = pathInvariantsGenerator.getInterpolants();
 		if (interpolants == null) {
 			interpolants = fallbackInterpolantComputation();
@@ -104,7 +110,7 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends
 		}
 		assert TraceCheckerUtils.checkInterpolantsInductivityForward(Arrays.asList(interpolants), 
 				mTrace, mPrecondition, mPostcondition, mPendingContexts, "invariant map", 
-				mModifiedGlobals, mLogger, mManagedScript)
+				mCsToolkit, mLogger, mCfgManagedScript)
 			: "invalid Hoare triple in invariant map";
 		mInterpolants = interpolants;
 	}

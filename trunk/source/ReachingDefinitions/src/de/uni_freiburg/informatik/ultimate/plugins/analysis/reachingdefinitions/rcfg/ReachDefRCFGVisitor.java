@@ -34,6 +34,8 @@ import java.util.HashSet;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.IAnnotationProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.ReachDefEdgeAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.annotations.ReachDefStatementAnnotation;
@@ -41,8 +43,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.boogie.ScopedBoogieVarBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.util.Util;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
@@ -60,7 +60,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RC
 public class ReachDefRCFGVisitor extends RCFGEdgeVisitor {
 
 	private boolean mFixpointReached;
-	private RCFGNode mCurrentSourceNode;
+	private IcfgLocation mCurrentSourceNode;
 	private final ILogger mLogger;
 	private final IAnnotationProvider<ReachDefEdgeAnnotation> mEdgeProvider;
 	private final IAnnotationProvider<ReachDefStatementAnnotation> mStatementProvider;
@@ -79,7 +79,7 @@ public class ReachDefRCFGVisitor extends RCFGEdgeVisitor {
 	 * @param e
 	 * @return true iff a fixpoint was reached
 	 */
-	public boolean process(RCFGEdge e) {
+	public boolean process(IcfgEdge e) {
 		mFixpointReached = true;
 		visit(e);
 		return mFixpointReached;
@@ -201,6 +201,6 @@ public class ReachDefRCFGVisitor extends RCFGEdgeVisitor {
 		return new ReachDefBoogieAnnotator(predecessors, stmtAnnotation, mLogger, mVarBuilder);
 	}
 
-	private HashMap<RCFGEdge, HashSet<ReachDefStatementAnnotation>> mPreMap;
+	private HashMap<IcfgEdge, HashSet<ReachDefStatementAnnotation>> mPreMap;
 
 }

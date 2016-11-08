@@ -31,7 +31,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map.Entry;
 
-import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 
 public class SymbolTable
 {
@@ -43,7 +43,7 @@ public class SymbolTable
 		mScopes = new HashMap<String, HashMap<String, CompleteBoogieVar>>();
 	}
 
-	void addLocalVariable(String identifier, String procedure, IType type)
+	void addLocalVariable(String identifier, String procedure, IBoogieType type)
 	{
 		if (procedure.equals(sGlobalScopeIdentifier)) {
 			throw new IllegalArgumentException(
@@ -63,7 +63,7 @@ public class SymbolTable
 		scope.put(identifier, var);
 	}
 
-	void addGlobalVariable(String identifier, IType type)
+	void addGlobalVariable(String identifier, IBoogieType type)
 	{
 		final CompleteBoogieVar var = new CompleteBoogieVar(identifier, null, type);
 		HashMap<String, CompleteBoogieVar> scope;

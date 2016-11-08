@@ -21,6 +21,7 @@ package de.uni_freiburg.informatik.ultimate.smtinterpol;
 import java.io.FileNotFoundException;
 
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.option.OptionMap;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.ParseEnvironment;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 
@@ -38,8 +39,11 @@ public final class InputTruncation {
 		final String infile = args[0];
 		final String outfile = args[1];
 		try {
+			final DefaultLogger logger = new DefaultLogger();
+			final OptionMap options = new OptionMap(logger, true);
 			final ParseEnvironment pe = new ParseEnvironment(
-					new LoggingScript(new SMTInterpol(), outfile, true));
+					new LoggingScript(new SMTInterpol(logger), outfile, true),
+					options);
 			pe.parseScript(infile);
 		} catch (final FileNotFoundException e) {
 			e.printStackTrace();

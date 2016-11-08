@@ -7,29 +7,30 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractInterpreter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.IAbstractInterpretationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.CegarLoopStatisticsDefinitions;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.AbsIntCanonicalInterpolantAutomatonBuilder;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.AbsIntNonSmtInterpolantAutomatonBuilder;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.AbsIntStraightLineInterpolantAutomatonBuilder;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.AbsIntTotalInterpolationAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.IInterpolantAutomatonBuilder;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AbstractInterpretationMode;
@@ -37,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 
 /**
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
@@ -47,23 +48,23 @@ public class AbstractInterpretationRunner {
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 
-	private final SmtManager mSmtManager;
-	private final RootNode mRoot;
+	private final CfgSmtToolkit mCsToolkit;
+	private final BoogieIcfgContainer mRoot;
 
 	private final Set<Set<CodeBlock>> mKnownPathPrograms;
 	private IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> mAbsIntResult;
 
 	private final AbstractInterpretationMode mMode;
 	private final boolean mAlwaysRefine;
-	private final SimplicationTechnique mSimplificationTechnique;
+	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
 
 	private boolean mSkipIteration;
 
 	public AbstractInterpretationRunner(final IUltimateServiceProvider services,
-			final CegarLoopStatisticsGenerator benchmark, final RootNode root,
-			final SimplicationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
-			final SmtManager smtManager) {
+			final CegarLoopStatisticsGenerator benchmark, final BoogieIcfgContainer root,
+			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
+			final CfgSmtToolkit csToolkit) {
 		mCegarLoopBenchmark = benchmark;
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -73,7 +74,7 @@ public class AbstractInterpretationRunner {
 		mAbsIntResult = null;
 		mSkipIteration = false;
 		mKnownPathPrograms = new HashSet<Set<CodeBlock>>();
-		mSmtManager = smtManager;
+		mCsToolkit = csToolkit;
 
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		mAlwaysRefine = prefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_ABSINT_ALWAYS_REFINE);
@@ -101,7 +102,7 @@ public class AbstractInterpretationRunner {
 	/**
 	 * Generate fixpoints for each program location of a path program represented by the current counterexample in the
 	 * current abstraction.
-	 * 
+	 *
 	 * Do not run if
 	 * <ul>
 	 * <li>We have already analyzed the exact same path program.
@@ -109,7 +110,7 @@ public class AbstractInterpretationRunner {
 	 * </ul>
 	 */
 	public void generateFixpoints(final IRun<CodeBlock, IPredicate> currentCex,
-			final INestedWordAutomaton<CodeBlock, IPredicate> currentAbstraction) {
+			final INestedWordAutomatonSimple<CodeBlock, IPredicate> currentAbstraction) {
 		assert currentCex != null : "Cannot run AI on empty counterexample";
 		assert currentAbstraction != null : "Cannot run AI on empty abstraction";
 		if (mMode == AbstractInterpretationMode.NONE) {
@@ -141,15 +142,15 @@ public class AbstractInterpretationRunner {
 			mLogger.info("Running AI on error trace of length " + currentCex.getLength()
 					+ " with the following transitions: ");
 			mLogger.info(String.join(", ", pathProgramSet.stream().map(a -> a.hashCode()).sorted()
-					.map(a -> "[" + String.valueOf(a) + "]").collect(Collectors.toList())));
+					.map(a -> '[' + String.valueOf(a) + ']').collect(Collectors.toList())));
 			if (mLogger.isDebugEnabled()) {
 				for (final CodeBlock trans : pathProgramSet) {
 					mLogger.debug("[" + trans.hashCode() + "] " + trans);
 				}
 			}
 			final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> result =
-					AbstractInterpreter.runOnPathProgram((NestedRun<CodeBlock, IPredicate>) currentCex,
-							currentAbstraction, mRoot, timer, mServices);
+					AbstractInterpreter.runOnPathProgram(mRoot, currentAbstraction,
+							(NestedRun<CodeBlock, IPredicate>) currentCex, pathProgramSet, timer, mServices);
 			mAbsIntResult = result;
 			if (hasShownInfeasibility()) {
 				mCegarLoopBenchmark.announceStrongAbsInt();
@@ -160,12 +161,12 @@ public class AbstractInterpretationRunner {
 	}
 
 	private boolean containsLoop(final Set<CodeBlock> pathProgramSet) {
-		final Set<RCFGNode> programPoints = new HashSet<>();
+		final Set<IcfgLocation> programPoints = new HashSet<>();
 		return pathProgramSet.stream().anyMatch(a -> !programPoints.add(a.getTarget()));
 	}
 
 	/**
-	 * 
+	 *
 	 * @return true iff abstract interpretation was strong enough to prove infeasibility of the current counterexample.
 	 */
 	public boolean hasShownInfeasibility() {
@@ -200,13 +201,23 @@ public class AbstractInterpretationRunner {
 				throw new AssertionError("Mode should have been checked earlier");
 			case USE_PATH_PROGRAM:
 				aiInterpolAutomatonBuilder = new AbsIntNonSmtInterpolantAutomatonBuilder(mServices, abstraction,
-						interpolGenerator.getPredicateUnifier(), mSmtManager.getManagedScript(), 
-						mSmtManager.getBoogie2Smt().getBoogie2SmtSymbolTable(), currentCex, mSimplificationTechnique,
+						interpolGenerator.getPredicateUnifier(), mCsToolkit.getManagedScript(),
+						mRoot.getBoogie2SMT().getBoogie2SmtSymbolTable(), currentCex, mSimplificationTechnique,
 						mXnfConversionTechnique);
 				break;
 			case USE_PREDICATES:
-				aiInterpolAutomatonBuilder = new AbsIntCanonicalInterpolantAutomatonBuilder(mServices, abstraction,
-						mAbsIntResult, interpolGenerator.getPredicateUnifier(), mSmtManager);
+				aiInterpolAutomatonBuilder = new AbsIntStraightLineInterpolantAutomatonBuilder(mServices, abstraction,
+						mAbsIntResult, interpolGenerator.getPredicateUnifier(), mCsToolkit, currentCex,
+						mSimplificationTechnique, mXnfConversionTechnique, 
+						mRoot.getBoogie2SMT().getBoogie2SmtSymbolTable());
+				break;
+			case USE_CANONICAL:
+				throw new UnsupportedOperationException(
+						"Canonical interpolant automaton generation not yet implemented.");
+			case USE_TOTAL:
+				aiInterpolAutomatonBuilder = new AbsIntTotalInterpolationAutomatonBuilder(mServices, abstraction,
+						mAbsIntResult, interpolGenerator.getPredicateUnifier(), mCsToolkit, currentCex, 
+						mRoot.getBoogie2SMT().getBoogie2SmtSymbolTable());
 				break;
 			default:
 				throw new UnsupportedOperationException("AI mode " + mMode + " not yet implemented");
@@ -230,7 +241,7 @@ public class AbstractInterpretationRunner {
 	}
 
 	/**
-	 * 
+	 *
 	 * @return true iff abstract interpretation was strong enough to prove infeasibility of the current counterexample.
 	 */
 	public boolean refine(final PredicateUnifier predUnifier,
@@ -274,7 +285,7 @@ public class AbstractInterpretationRunner {
 	}
 
 	private boolean hasAiProgress(final boolean result,
-			final NestedWordAutomaton<CodeBlock, IPredicate> aiInterpolAutomaton,
+			final INestedWordAutomaton<CodeBlock, IPredicate> aiInterpolAutomaton,
 			final IRun<CodeBlock, IPredicate> cex) {
 		if (result) {
 			return result;
@@ -293,7 +304,8 @@ public class AbstractInterpretationRunner {
 	}
 
 	private String simplify(final Term term) {
-		return SmtUtils.simplify(mRoot.getRootAnnot().getManagedScript(), term, mServices, mSimplificationTechnique).toStringDirect();
+		return SmtUtils.simplify(mCsToolkit.getManagedScript(), term, mServices, mSimplificationTechnique)
+				.toStringDirect();
 	}
 
 	@FunctionalInterface

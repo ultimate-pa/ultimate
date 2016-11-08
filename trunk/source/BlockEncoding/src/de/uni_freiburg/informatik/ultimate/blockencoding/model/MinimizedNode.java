@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BlockEncoding plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE BlockEncoding plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE BlockEncoding plug-in grant you additional permission
  * to convey the resulting work.
  */
 /**
@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IModifiableExplicit
 import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IWalkable;
 import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 
 /**
  * This is a node in our model to store all steps of the minimization. Basically we store here all steps, hence all
@@ -62,7 +62,7 @@ public class MinimizedNode implements
 	/**
 	 * the reference for the underlying node in the original RCFG
 	 */
-	private final ProgramPoint mOriginalNode;
+	private final BoogieIcfgLocation mOriginalNode;
 
 	/**
 	 * Because we want to store all levels of the minimization, we keep in track all created edges. We store each level
@@ -82,7 +82,7 @@ public class MinimizedNode implements
 	 * @param originalNode
 	 *            the underlying original node (should be a ProgramPoint, since we rely on the RCFG model)
 	 */
-	public MinimizedNode(ProgramPoint originalNode) {
+	public MinimizedNode(final BoogieIcfgLocation originalNode) {
 		mOriginalNode = originalNode;
 		mPayload = new Payload();
 	}
@@ -92,14 +92,14 @@ public class MinimizedNode implements
 	 * 
 	 * @return the original node (ProgramPoint)
 	 */
-	public ProgramPoint getOriginalNode() {
+	public BoogieIcfgLocation getOriginalNode() {
 		return mOriginalNode;
 	}
 
 	/**
 	 * @param edges
 	 */
-	public void addNewOutgoingEdgeLevel(List<IMinimizedEdge> edges, IMinimizedEdge edgeToRate) {
+	public void addNewOutgoingEdgeLevel(final List<IMinimizedEdge> edges, final IMinimizedEdge edgeToRate) {
 		// we have to determine the maximum Rating of all edges in the list
 		IRating maxRating = null;
 		if (edgeToRate != null) {
@@ -128,7 +128,7 @@ public class MinimizedNode implements
 		if (outgoingEdges == null) {
 			return null;
 		}
-		if (outgoingEdges.size() > 0) {
+		if (!outgoingEdges.isEmpty()) {
 			return outgoingEdges.get(outgoingEdges.size() - 1).getValue();
 		}
 		return new ArrayList<IMinimizedEdge>();
@@ -137,7 +137,7 @@ public class MinimizedNode implements
 	/**
 	 * @param edges
 	 */
-	public void addNewIncomingEdgeLevel(List<IMinimizedEdge> edges) {
+	public void addNewIncomingEdgeLevel(final List<IMinimizedEdge> edges) {
 		// TODO: We need here the same, as for outgoing edge level?
 		// we have to determine the maximum Rating of all edges in the list
 		IRating maxRating = null;
@@ -163,7 +163,7 @@ public class MinimizedNode implements
 		if (incomingEdges == null) {
 			return null;
 		}
-		if (incomingEdges.size() > 0) {
+		if (!incomingEdges.isEmpty()) {
 			return incomingEdges.get(incomingEdges.size() - 1).getValue();
 		}
 		return new ArrayList<IMinimizedEdge>();
@@ -231,22 +231,22 @@ public class MinimizedNode implements
 	}
 
 	@Override
-	public boolean addIncoming(IMinimizedEdge incoming) {
+	public boolean addIncoming(final IMinimizedEdge incoming) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public boolean addIncoming(int index, IMinimizedEdge incoming) {
+	public boolean addIncoming(final int index, final IMinimizedEdge incoming) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public boolean addAllIncoming(Collection<? extends IMinimizedEdge> c) {
+	public boolean addAllIncoming(final Collection<? extends IMinimizedEdge> c) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public boolean addAllIncoming(int index, Collection<? extends IMinimizedEdge> c) {
+	public boolean addAllIncoming(final int index, final Collection<? extends IMinimizedEdge> c) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -256,37 +256,37 @@ public class MinimizedNode implements
 	}
 
 	@Override
-	public IMinimizedEdge removeIncoming(int index) {
+	public IMinimizedEdge removeIncoming(final int index) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public boolean removeIncoming(Object o) {
+	public boolean removeIncoming(final Object o) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public boolean removeAllIncoming(Collection<?> c) {
+	public boolean removeAllIncoming(final Collection<?> c) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public boolean addOutgoing(IMinimizedEdge outgoing) {
+	public boolean addOutgoing(final IMinimizedEdge outgoing) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public boolean addOutgoing(int index, IMinimizedEdge outgoing) {
+	public boolean addOutgoing(final int index, final IMinimizedEdge outgoing) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public boolean addAllOutgoing(Collection<? extends IMinimizedEdge> c) {
+	public boolean addAllOutgoing(final Collection<? extends IMinimizedEdge> c) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public boolean addAllOutgoing(int index, Collection<? extends IMinimizedEdge> c) {
+	public boolean addAllOutgoing(final int index, final Collection<? extends IMinimizedEdge> c) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -296,17 +296,17 @@ public class MinimizedNode implements
 	}
 
 	@Override
-	public IMinimizedEdge removeOutgoing(int index) {
+	public IMinimizedEdge removeOutgoing(final int index) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public boolean removeOutgoing(Object o) {
+	public boolean removeOutgoing(final Object o) {
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public boolean removeAllOutgoing(Collection<?> c) {
+	public boolean removeAllOutgoing(final Collection<?> c) {
 		throw new UnsupportedOperationException();
 	}
 

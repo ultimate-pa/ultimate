@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ReachingDefinitions plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ReachingDefinitions plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ReachingDefinitions plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.reachingdefinitions.dataflowdag;
@@ -44,7 +44,7 @@ public class TraceCodeBlock {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		}
@@ -62,10 +62,7 @@ public class TraceCodeBlock {
 		} else if (!mBlock.equals(other.mBlock)) {
 			return false;
 		}
-		if (mIndex != other.mIndex) {
-			return false;
-		}
-		return true;
+		return mIndex == other.mIndex;
 	}
 
 	private final List<CodeBlock> mTrace;
@@ -74,7 +71,7 @@ public class TraceCodeBlock {
 	
 	private IPredicate mInterpolant;
 
-	public TraceCodeBlock(List<CodeBlock> trace, CodeBlock block, int index) {
+	public TraceCodeBlock(final List<CodeBlock> trace, final CodeBlock block, final int index) {
 		mTrace = trace;
 		mBlock = block;
 		mIndex = index;
@@ -92,7 +89,7 @@ public class TraceCodeBlock {
 		return mIndex;
 	}
 	
-	public void addInterpolant(IPredicate interpolant) {
+	public void addInterpolant(final IPredicate interpolant) {
 		mInterpolant = interpolant;
 	}
 	
@@ -102,7 +99,7 @@ public class TraceCodeBlock {
 
 	@Override
 	public String toString() {
-		return "[" + mIndex + "] " + mBlock.toString() 
+		return "[" + mIndex + "] " + mBlock.toString()
 				+ (mInterpolant == null ? "" : " itp: " + mInterpolant);
 	}
 }

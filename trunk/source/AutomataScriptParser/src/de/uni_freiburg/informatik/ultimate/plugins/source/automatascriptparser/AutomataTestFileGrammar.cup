@@ -5,14 +5,14 @@
 package de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.*;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AutomataScriptLocation; 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating.AlternatingAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.alternating.AlternatingAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJulian;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import java.util.*;
-import java_cup.runtime.*;
+import com.github.jhoenicke.javacup.runtime.*;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 action code {:
@@ -91,7 +91,7 @@ parser code {:
 		return mLogger;
 	}
     
-	public Parser(java_cup.runtime.Scanner s, ILogger logger) {
+	public Parser(com.github.jhoenicke.javacup.runtime.Scanner s, ILogger logger) {
 		super(s);
 		mLogger = logger;
 	}
@@ -100,7 +100,7 @@ parser code {:
     public void syntax_error(Symbol cur_token)
     {
     	m_errorMessageShort = "Syntax error";
-        java_cup.runtime.Scanner s = getScanner();
+        com.github.jhoenicke.javacup.runtime.Scanner s = getScanner();
         m_errorMessageLong = "";
         if (s instanceof Lexer) {
           Lexer lex = (Lexer) s;
@@ -129,7 +129,7 @@ parser code {:
         }
 
         if (info != null) {
-            java_cup.runtime.Scanner s = getScanner();
+            com.github.jhoenicke.javacup.runtime.Scanner s = getScanner();
     		if (s instanceof Lexer) {
     			m.append(" on token \"" + ((Lexer) s).getCurrentToken() + "\"");
     		}
@@ -343,7 +343,7 @@ word_literal ::= LBRACK:l nested_word:nw RBRACK:r /* Parse a nested word */
 
 nested_word ::= nested_word_symbols_opt:nw {: RESULT = nw; :};
 
-nested_word_symbols_opt ::= nested_word_symbols:nw {: RESULT = nw; :} | {: java_cup.runtime.Symbol symb = ((java_cup.runtime.Symbol) CUP$stack.get(CUP$size - 1)); RESULT = new NestedwordAST(getLocation(symb,symb)); :};
+nested_word_symbols_opt ::= nested_word_symbols:nw {: RESULT = nw; :} | {: com.github.jhoenicke.javacup.runtime.Symbol symb = ((com.github.jhoenicke.javacup.runtime.Symbol) CUP$stack.get(CUP$size - 1)); RESULT = new NestedwordAST(getLocation(symb,symb)); :};
 
 nested_word_symbols ::= nested_word_symbol:sym
 						{: NestedwordAST nw = new NestedwordAST(getLocation(sym$, sym$));
@@ -382,9 +382,9 @@ type	::=     INT
         |       STRING
                 {: RESULT = String.class; :}
         |       NESTED_WORD
-        		{: RESULT = de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord.class; :}
+        		{: RESULT = de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord.class; :}
         |       NESTED_LASSO_WORD
-        		{: RESULT = de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoWord.class; :}
+        		{: RESULT = de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord.class; :}
         |       NESTEDWORD_AUTOMATA
                 {: RESULT = INestedWordAutomaton.class; :}
         |       PETRINET_AUTOMATA         
@@ -867,7 +867,7 @@ primary ::=
 	|	operation_invocation:oi {: RESULT = oi; :}
 	;
 
-argument_list_opt ::= argument_list:args {: RESULT = args; :} | {:java_cup.runtime.Symbol symb = ((java_cup.runtime.Symbol) CUP$stack.get(CUP$size - 1)); RESULT = new ArgumentListAST(getLocation(symb,symb)); :} ;
+argument_list_opt ::= argument_list:args {: RESULT = args; :} | {:com.github.jhoenicke.javacup.runtime.Symbol symb = ((com.github.jhoenicke.javacup.runtime.Symbol) CUP$stack.get(CUP$size - 1)); RESULT = new ArgumentListAST(getLocation(symb,symb)); :} ;
 
 argument_list ::=
 		expression:e
@@ -1018,7 +1018,7 @@ call_alphabet ::=  CALL_ALPHABET EQ LBRACE:l identifier_list_opt:idList  RBRACE:
 				   {:RESULT = idList; :} ;
 
 identifier_list_opt ::= identifier_list:idList {:RESULT = idList; :} 
-                     | {:java_cup.runtime.Symbol symb = ((java_cup.runtime.Symbol) CUP$stack.get(CUP$size - 1)); 
+                     | {:com.github.jhoenicke.javacup.runtime.Symbol symb = ((com.github.jhoenicke.javacup.runtime.Symbol) CUP$stack.get(CUP$size - 1)); 
                          RESULT = new IdentifierListAST(getLocation(symb,symb)); :};
 
 identifier_list ::= identifier:id
@@ -1054,7 +1054,7 @@ internal_transitions ::= INTERNAL_TRANSITIONS EQ LBRACE:l transition_list_opt:tL
 return_transitions ::= RETURN_TRANSITIONS EQ LBRACE:l transition_list_opt:tList RBRACE:r
 						{:RESULT = tList; :};
 						  
-transition_list_opt ::= transition_list:tList {: RESULT = tList; :} | {:java_cup.runtime.Symbol symb = ((java_cup.runtime.Symbol) CUP$stack.get(CUP$size - 1)); RESULT = new TransitionListAST(getLocation(symb,symb)); :} ;						  
+transition_list_opt ::= transition_list:tList {: RESULT = tList; :} | {:com.github.jhoenicke.javacup.runtime.Symbol symb = ((com.github.jhoenicke.javacup.runtime.Symbol) CUP$stack.get(CUP$size - 1)); RESULT = new TransitionListAST(getLocation(symb,symb)); :} ;						  
 
 transition_list ::= transition:idList 
 					{:TransitionListAST tList = new TransitionListAST(getLocation(idList$,idList$));
@@ -1100,7 +1100,7 @@ places ::= PLACES EQ LBRACE:l  identifier_list_opt:idList RBRACE:r
 net_transitions ::= NET_TRANSITIONS EQ LBRACE net_transition_list_opt:net_trans RBRACE
                     {: RESULT = net_trans; :} ;
 
-net_transition_list_opt ::= net_transition_list:trans {: RESULT = trans; :}  | {:java_cup.runtime.Symbol symb = ((java_cup.runtime.Symbol) CUP$stack.get(CUP$size - 1));  RESULT = new TransitionListAST(getLocation(symb,symb)); :} ;
+net_transition_list_opt ::= net_transition_list:trans {: RESULT = trans; :}  | {:com.github.jhoenicke.javacup.runtime.Symbol symb = ((com.github.jhoenicke.javacup.runtime.Symbol) CUP$stack.get(CUP$size - 1));  RESULT = new TransitionListAST(getLocation(symb,symb)); :} ;
 
 net_transition_list ::= net_transition:net_trans 
 			{: TransitionListAST tList = new TransitionListAST(getLocation(net_trans$,net_trans$));
@@ -1151,7 +1151,7 @@ aa_transition_table ::= TRANSITION_TABLE EQ LBRACE:l aa_transition_table_list_op
 
 aa_transition_table_list_opt ::= 
                      aa_transition_table_list:tList {: RESULT = tList; :} 
-                   | {:java_cup.runtime.Symbol symb = ((java_cup.runtime.Symbol) CUP$stack.get(CUP$size - 1)); 
+                   | {:com.github.jhoenicke.javacup.runtime.Symbol symb = ((com.github.jhoenicke.javacup.runtime.Symbol) CUP$stack.get(CUP$size - 1)); 
                        RESULT = new TransitionListAST(getLocation(symb,symb)); 
                       :} ;						  
 
@@ -1255,7 +1255,7 @@ ta_ranked_alphabet ::= RANKED_ALPHABET EQ
 ta_ranked_alphabet_entry_list_opt ::=
                        ta_ranked_alphabet_entry_list: aeList
                        {: RESULT = aeList; :}
-                     | {:java_cup.runtime.Symbol symb = ((java_cup.runtime.Symbol) CUP$stack.get(CUP$size - 1)); 
+                     | {:com.github.jhoenicke.javacup.runtime.Symbol symb = ((com.github.jhoenicke.javacup.runtime.Symbol) CUP$stack.get(CUP$size - 1)); 
                         RESULT = new RankedAlphabetEntryListAST(getLocation(symb,symb)); 
                         :} ; 
 
@@ -1287,13 +1287,13 @@ ta_transition_list_opt ::=
                     ta_transition_list:tatList
                     {: RESULT = tatList;
                      :}
-                  | {: java_cup.runtime.Symbol symb = ((java_cup.runtime.Symbol) CUP$stack.get(CUP$size - 1)); 
+                  | {: com.github.jhoenicke.javacup.runtime.Symbol symb = ((com.github.jhoenicke.javacup.runtime.Symbol) CUP$stack.get(CUP$size - 1)); 
                        RESULT = new TreeAutomatonTransitionListAST(getLocation(symb,symb));
                      :} ;
 
 ta_transition_list ::=
                     ta_transition:tat
-                    {: //java_cup.runtime.Symbol symb = ((java_cup.runtime.Symbol) CUP$stack.get(CUP$size - 1)); 
+                    {: //com.github.jhoenicke.javacup.runtime.Symbol symb = ((com.github.jhoenicke.javacup.runtime.Symbol) CUP$stack.get(CUP$size - 1)); 
                        TreeAutomatonTransitionListAST tatList = 
                               new TreeAutomatonTransitionListAST(getLocation(tat$,tat$));
                        tatList.addTransition(tat);

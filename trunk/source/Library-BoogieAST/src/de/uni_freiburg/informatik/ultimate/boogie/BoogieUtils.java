@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Core, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Core grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Core grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.boogie;
@@ -33,17 +33,17 @@ import java.math.BigInteger;
  * @author heizmann@informatik.uni-freiburg.de
  *
  */
-public abstract class BoogieUtils {
+public final class BoogieUtils {
 
-	private BoogieUtils() { 
+	private BoogieUtils() {
+		// do not instantiate this utility class
 	}
 	
-	public static BigInteger euclideanMod(BigInteger dividend, BigInteger divisor) {
-		final BigInteger result = dividend.mod(divisor.abs());
-		return result;
+	public static BigInteger euclideanMod(final BigInteger dividend, final BigInteger divisor) {
+		return dividend.mod(divisor.abs());
 	}
 	
-	public static BigInteger euclideanDiv(BigInteger dividend, BigInteger divisor) {
+	public static BigInteger euclideanDiv(final BigInteger dividend, final BigInteger divisor) {
 		final BigInteger nonEuclideanQuotient = dividend.divide(divisor);
 		final BigInteger nonEuclideanRemainder = dividend.remainder(divisor);
 		final BigInteger result;
@@ -56,11 +56,8 @@ public abstract class BoogieUtils {
 		} else {
 			result = nonEuclideanQuotient;
 		}
-		assert (result.multiply(divisor).add(euclideanMod(dividend, divisor)).equals(dividend)) 
+		assert result.multiply(divisor).add(euclideanMod(dividend, divisor)).equals(dividend)
 				: "incorrect euclidean division";
 		return result;
 	}
-
-	
-	
 }

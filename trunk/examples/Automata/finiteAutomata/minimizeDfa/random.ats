@@ -11,7 +11,7 @@ while (i<=2) {
     NestedWordAutomaton deterministicWithoutDeadEnds = removeDeadEnds(deterministic);
     NestedWordAutomaton totalized = totalize(deterministicWithoutDeadEnds);
     print(totalized);
-    int n1 = numberOfStates(minimizeDFA(totalized));
+    int n1 = numberOfStates(minimizeDfaTable(totalized));
     int n2 = numberOfStates(minimizeSevpa(totalized));
     int n3 = numberOfStates(minimizeDFASimulation(totalized));
     print(numberOfStates(totalized));

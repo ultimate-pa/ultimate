@@ -96,7 +96,7 @@ public final class TemplateComposition {
 	static void resetMotzkin(List<List<LinearInequality>> constraints) {
 		for (final List<LinearInequality> disjunction : constraints) {
 			for (final LinearInequality li : disjunction) {
-				li.motzkin_coefficient = PossibleMotzkinCoefficients.ANYTHING;
+				li.mMotzkinCoefficient = PossibleMotzkinCoefficients.ANYTHING;
 			}
 //			if (sRedAtoms && disjunction.size() > 0) {
 //				disjunction.get(0).motzkin_coefficient =
@@ -112,7 +112,7 @@ public final class TemplateComposition {
 		int degree = 0;
 		for (final List<LinearInequality> disjunction : constraints) {
 			for (final LinearInequality li : disjunction) {
-				if (!li.motzkin_coefficient.isFixed()) {
+				if (!li.mMotzkinCoefficient.isFixed()) {
 					++degree;
 				}
 			}

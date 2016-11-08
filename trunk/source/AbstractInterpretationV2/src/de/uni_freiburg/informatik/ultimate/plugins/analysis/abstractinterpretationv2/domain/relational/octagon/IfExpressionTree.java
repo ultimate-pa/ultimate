@@ -39,8 +39,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WildcardExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.CollectionUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -112,7 +112,7 @@ public final class IfExpressionTree {
 		final IfExpressionTree rightTree = buildTree(binExpr.getRight(), exprTransformer);
 
 		final ILocation location = binExpr.getLocation();
-		final IType type = binExpr.getType();
+		final IBoogieType type = binExpr.getType();
 		final BinaryExpression.Operator operator = binExpr.getOperator();
 
 		leftTree.append(rightTree, (left, right) -> new BinaryExpression(location, type, operator, left, right));
@@ -125,7 +125,7 @@ public final class IfExpressionTree {
 		final IfExpressionTree subTree = buildTree(unExpr.getExpr(), exprTransformer);
 
 		final ILocation location = unExpr.getLocation();
-		final IType type = unExpr.getType();
+		final IBoogieType type = unExpr.getType();
 		final UnaryExpression.Operator operator = unExpr.getOperator();
 
 		subTree.mapLeafExprs(leafExpr -> new UnaryExpression(location, type, operator, leafExpr));

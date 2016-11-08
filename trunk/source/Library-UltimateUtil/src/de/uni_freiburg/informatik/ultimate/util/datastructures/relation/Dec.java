@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.util.datastructures.relation;
 /**
  * Generic Decuple that stores 10 different values.
  * 
- * @author Daniel Tischner
+ * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  *
  * @param <E1>
  *            Type of the first element
@@ -149,7 +149,7 @@ public final class Dec<E1, E2, E3, E4, E5, E6, E7, E8, E9, E10> {
 		if (!(obj instanceof Dec)) {
 			return false;
 		}
-		Dec<?, ?, ?, ?, ?, ?, ?, ?, ?, ?> other = (Dec<?, ?, ?, ?, ?, ?, ?, ?, ?, ?>) obj;
+		final Dec<?, ?, ?, ?, ?, ?, ?, ?, ?, ?> other = (Dec<?, ?, ?, ?, ?, ?, ?, ?, ?, ?>) obj;
 		if (mEighth == null) {
 			if (other.mEighth != null) {
 				return false;

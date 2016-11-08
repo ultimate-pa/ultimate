@@ -51,7 +51,7 @@ public class GeneratedWitnessEdge<TE, E> {
 			final long currentEdgeId) {
 		assert stringProvider != null;
 		mStringProvider = stringProvider;
-		mId = "E" + String.valueOf(currentEdgeId);
+		mId = 'E' + String.valueOf(currentEdgeId);
 		mATE = traceElement;
 		mState = state;
 		mIsEnteringLoopHead = isEnteringLoopHead;

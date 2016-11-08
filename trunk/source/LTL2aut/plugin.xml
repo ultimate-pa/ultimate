@@ -4,4 +4,7 @@
    <extension point="de.uni_freiburg.informatik.ultimate.ep.generator">
       <impl class="de.uni_freiburg.informatik.ultimate.ltl2aut.LTL2aut"/>
    </extension>
+    <extension point="de.uni_freiburg.informatik.ultimate.ep.source">
+      <impl class="de.uni_freiburg.informatik.ultimate.ltl2aut.LTL2aut"/>
+   </extension>
 </plugin>

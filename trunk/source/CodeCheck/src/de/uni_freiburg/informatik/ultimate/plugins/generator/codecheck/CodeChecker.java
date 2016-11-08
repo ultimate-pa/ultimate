@@ -30,17 +30,17 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck;
 
 import java.util.HashSet;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AnnotatedProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.ImpRootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.IsContained;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
@@ -48,8 +48,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 
 public abstract class CodeChecker {
 
-	protected RootNode moriginalRoot;
-	protected SmtManager msmtManager;
+	protected BoogieIcfgContainer moriginalRoot;
+	protected CfgSmtToolkit mcsToolkit;
 	protected ImpRootNode mgraphRoot;
 
 
@@ -73,10 +73,10 @@ public abstract class CodeChecker {
 
 	protected GraphWriter _graphWriter;
 
-	public CodeChecker(IElement root, SmtManager smtManager, RootNode originalRoot, ImpRootNode graphRoot, GraphWriter graphWriter,
-			IHoareTripleChecker edgeChecker, PredicateUnifier predicateUnifier, ILogger logger) {
+	public CodeChecker(final IElement root, final CfgSmtToolkit csToolkit, final BoogieIcfgContainer originalRoot, final ImpRootNode graphRoot, final GraphWriter graphWriter,
+			final IHoareTripleChecker edgeChecker, final PredicateUnifier predicateUnifier, final ILogger logger) {
 		mLogger = logger;
-		msmtManager = smtManager;
+		mcsToolkit = csToolkit;
 		moriginalRoot = originalRoot;
 		mgraphRoot = graphRoot;
 
@@ -109,8 +109,8 @@ public abstract class CodeChecker {
 	 * @param b
 	 *            : The second Predicate.
 	 */
-	protected IPredicate conjugatePredicates(IPredicate a, IPredicate b) {
-		final Term tvp = msmtManager.getPredicateFactory().and(a, b);
+	protected IPredicate conjugatePredicates(final IPredicate a, final IPredicate b) {
+		final Term tvp = mpredicateUnifier.getPredicateFactory().and(a, b);
 		return mpredicateUnifier.getOrConstructPredicate(tvp);
 	}
 
@@ -120,8 +120,8 @@ public abstract class CodeChecker {
 	 * @param a
 	 *            : The Predicate.
 	 */
-	protected IPredicate negatePredicate(IPredicate a) {
-		final Term tvp = msmtManager.getPredicateFactory().not(a);
+	protected IPredicate negatePredicate(final IPredicate a) {
+		final Term tvp = mpredicateUnifier.getPredicateFactory().not(a);
 		return mpredicateUnifier.getOrConstructPredicate(tvp);
 	}
 
@@ -132,13 +132,13 @@ public abstract class CodeChecker {
 	 * @param a
 	 *            : The Predicate.
 	 */
-	protected IPredicate negatePredicateNoPU(IPredicate a) {
-		final Term negation = msmtManager.getPredicateFactory().not(a);
-		return msmtManager.getPredicateFactory().newPredicate(negation);
+	protected IPredicate negatePredicateNoPU(final IPredicate a) {
+		final Term negation = mpredicateUnifier.getPredicateFactory().not(a);
+		return mpredicateUnifier.getPredicateFactory().newPredicate(negation);
 	}
 
 
-	public static String objectReference(Object o) {
+	public static String objectReference(final Object o) {
 		return Integer.toHexString(System.identityHashCode(o));
 	}
 
@@ -153,7 +153,7 @@ public abstract class CodeChecker {
 		dfs(mgraphRoot);
 	}
 
-	protected boolean debugNode(AnnotatedProgramPoint node) {
+	protected boolean debugNode(final AnnotatedProgramPoint node) {
 		return debugNode(node, "");
 	}
 
@@ -165,7 +165,7 @@ public abstract class CodeChecker {
 	 * @param message
 	 * @return
 	 */
-	protected boolean debugNode(AnnotatedProgramPoint node, String message) {
+	protected boolean debugNode(final AnnotatedProgramPoint node, final String message) {
 		String display = "";
 		/*
 		 * display += String.format("connected To: %s\n",
@@ -196,7 +196,7 @@ public abstract class CodeChecker {
 	 *            : The current Node being explored in the DFS.
 	 * @return
 	 */
-	private boolean dfs(AnnotatedProgramPoint node) {
+	private boolean dfs(final AnnotatedProgramPoint node) {
 		if (!visited.contains(node)) {
 			visited.add(node);
 			debugNode(node);

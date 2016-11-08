@@ -215,8 +215,8 @@ public class CallGraphBuilder {
 		return false;
 	}
 	
-	private LinkedHashMap<String, LinkedHashSet<String>> buildSimpleGraphRepresentation() {
-		final LinkedHashMap<String, LinkedHashSet<String>> simpleGraphRepresentation = new LinkedHashMap<>();
+	private Map<String, Set<String>> buildSimpleGraphRepresentation() {
+		final Map<String, Set<String>> simpleGraphRepresentation = new LinkedHashMap<>();
 		for (final CallGraphNode node : mCallGraphNodes.values()) {
 			final String simpleNodeRepresentation = node.getId();
 			final LinkedHashSet<String> simpleOutgoingNodesRepresentation = new LinkedHashSet<>();

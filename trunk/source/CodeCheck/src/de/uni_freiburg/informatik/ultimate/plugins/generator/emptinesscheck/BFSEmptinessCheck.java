@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CodeCheck plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE CodeCheck plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE CodeCheck plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.emptinesscheck;
@@ -36,15 +36,15 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Stack;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AnnotatedProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.DummyCodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
@@ -60,7 +60,7 @@ public class BFSEmptinessCheck implements IEmptinessCheck {
 	private final ILogger mLogger;
 
 	
-	public BFSEmptinessCheck(ILogger logger){
+	public BFSEmptinessCheck(final ILogger logger){
 		mLogger = logger;
 	}
 	
@@ -71,18 +71,18 @@ public class BFSEmptinessCheck implements IEmptinessCheck {
 	 * @return
 	 */
 	@Override
-	public NestedRun<CodeBlock, AnnotatedProgramPoint> checkForEmptiness(AnnotatedProgramPoint root) {
+	public NestedRun<CodeBlock, AnnotatedProgramPoint> checkForEmptiness(final AnnotatedProgramPoint root) {
 		openNodes = new ArrayDeque<BFSEmptinessCheck.AppDoubleDecker>();
 		visitedNodes = new HashSet<BFSEmptinessCheck.AppDoubleDecker>();
 
-		summaryEdges = 
+		summaryEdges =
 				new HashMap<AnnotatedProgramPoint, HashSet<AnnotatedProgramPoint>>();
 		summaryEdgeToReturnSucc =
 				new HashMap<Pair<AnnotatedProgramPoint,AnnotatedProgramPoint>, AppDoubleDecker>();
 
 		final EmptyStackSymbol emptyStackSymbol = new EmptyStackSymbol();
 
-		openNodes.add(new AppDoubleDecker(root, emptyStackSymbol, 
+		openNodes.add(new AppDoubleDecker(root, emptyStackSymbol,
 				new Stack<Call>(), new Stack<AnnotatedProgramPoint>()));
 		Pair<AnnotatedProgramPoint[],NestedWord<CodeBlock>> returnedPath = null;
 
@@ -111,7 +111,7 @@ public class BFSEmptinessCheck implements IEmptinessCheck {
 
 				} else if (edge instanceof Call) {
 
-					newAdd = new AppDoubleDecker(app, currentAdd.top, 
+					newAdd = new AppDoubleDecker(app, currentAdd.top,
 							(Stack<Call>) currentAdd.callStack.clone(),
 							(Stack<AnnotatedProgramPoint>) currentAdd.callPredStack.clone());
 					newAdd.callStack.add((Call) edge);
@@ -141,7 +141,7 @@ public class BFSEmptinessCheck implements IEmptinessCheck {
 					newAdd = new AppDoubleDecker(app, callPredPred, currentCallStack, currentCpStack);
 
 					addSummaryEdge(currentAdd.bot, app);
-					final Pair<AnnotatedProgramPoint, AnnotatedProgramPoint> pairToAdd = 
+					final Pair<AnnotatedProgramPoint, AnnotatedProgramPoint> pairToAdd =
 							new Pair<AnnotatedProgramPoint, AnnotatedProgramPoint>(currentAdd.bot, app); //rausgezogen fuer debugging
 					summaryEdgeToReturnSucc.put(pairToAdd, newAdd);
 //					System.out.println("--------------- " + pairToAdd + " --> " + pairToAdd.hashCode());
@@ -156,7 +156,7 @@ public class BFSEmptinessCheck implements IEmptinessCheck {
 			if (targets != null) {
 				for (final AnnotatedProgramPoint target : targets) {
 					final AppDoubleDecker	newAdd = new AppDoubleDecker(
-							target, currentAdd.bot, 
+							target, currentAdd.bot,
 							(Stack<Call>) currentAdd.callStack.clone(),
 							(Stack<AnnotatedProgramPoint>) currentAdd.callPredStack.clone());
 					if (returnedPath == null)
@@ -166,15 +166,15 @@ public class BFSEmptinessCheck implements IEmptinessCheck {
 				}
 			}
 		}
-		return returnedPath == null ? 
+		return returnedPath == null ?
 				null :
-			new NestedRun<CodeBlock, AnnotatedProgramPoint>(returnedPath.getSecond(), 
+			new NestedRun<CodeBlock, AnnotatedProgramPoint>(returnedPath.getSecond(),
 				new ArrayList<AnnotatedProgramPoint>(Arrays.asList(returnedPath.getFirst())));
 	}
 
 
-	private void addSummaryEdge(AnnotatedProgramPoint bot,
-			AnnotatedProgramPoint app) {
+	private void addSummaryEdge(final AnnotatedProgramPoint bot,
+			final AnnotatedProgramPoint app) {
 		HashSet<AnnotatedProgramPoint> targets = summaryEdges.get(bot);
 		if (targets == null) {
 			targets = new HashSet<AnnotatedProgramPoint>();
@@ -185,8 +185,8 @@ public class BFSEmptinessCheck implements IEmptinessCheck {
 
 
 	private Pair<AnnotatedProgramPoint[],NestedWord<CodeBlock>> openNewNode(
-			AppDoubleDecker currentAdd, AnnotatedProgramPoint app,
-			CodeBlock edge, AppDoubleDecker newAdd) {
+			final AppDoubleDecker currentAdd, final AnnotatedProgramPoint app,
+			final CodeBlock edge, final AppDoubleDecker newAdd) {
 		if (!visitedNodes.contains(newAdd)){
 			final AddEdge newAddEdge = new AddEdge(currentAdd, newAdd, edge);
 			newAdd.inEdge = newAddEdge;
@@ -203,7 +203,7 @@ public class BFSEmptinessCheck implements IEmptinessCheck {
 	}
 
 	private Pair<AnnotatedProgramPoint[], NestedWord<CodeBlock>> reconstructPath(
-			AppDoubleDecker errorAdd) {
+			final AppDoubleDecker errorAdd) {
 		ArrayDeque<AnnotatedProgramPoint> errorPath = new ArrayDeque<AnnotatedProgramPoint>();
 		ArrayDeque<CodeBlock> errorTrace = new ArrayDeque<CodeBlock>();
 
@@ -219,7 +219,7 @@ public class BFSEmptinessCheck implements IEmptinessCheck {
 		}
 		errorPath.addFirst(currentAdd.top);
 
-		final Pair<ArrayDeque<AnnotatedProgramPoint>, ArrayDeque<CodeBlock>> newErrorPathAndTrace = 
+		final Pair<ArrayDeque<AnnotatedProgramPoint>, ArrayDeque<CodeBlock>> newErrorPathAndTrace =
 				expandSummaries(errorTrace, errorPath);
 
 		errorPath = newErrorPathAndTrace.getFirst();
@@ -236,8 +236,8 @@ public class BFSEmptinessCheck implements IEmptinessCheck {
 		return new Pair<AnnotatedProgramPoint[], NestedWord<CodeBlock>>(errorPathArray, errorNW);
 	}
 
-	private Pair<ArrayDeque<AnnotatedProgramPoint>, ArrayDeque<CodeBlock>> expandSummaries(ArrayDeque<CodeBlock> errorTrace,
-			ArrayDeque<AnnotatedProgramPoint> errorPath) {
+	private Pair<ArrayDeque<AnnotatedProgramPoint>, ArrayDeque<CodeBlock>> expandSummaries(final ArrayDeque<CodeBlock> errorTrace,
+			final ArrayDeque<AnnotatedProgramPoint> errorPath) {
 		ArrayDeque<CodeBlock> oldErrorTrace = errorTrace;
 		ArrayDeque<AnnotatedProgramPoint> oldErrorPath = errorPath;
 
@@ -251,7 +251,7 @@ public class BFSEmptinessCheck implements IEmptinessCheck {
 			final Iterator<AnnotatedProgramPoint> pathIt = oldErrorPath.iterator();
 			final Iterator<CodeBlock> traceIt = oldErrorTrace.iterator();
 
-			AnnotatedProgramPoint nextApp = pathIt.next();			
+			AnnotatedProgramPoint nextApp = pathIt.next();
 
 			while (traceIt.hasNext()) {
 				final CodeBlock currentCodeBlock = traceIt.next();
@@ -267,7 +267,7 @@ public class BFSEmptinessCheck implements IEmptinessCheck {
 					
 					newErrorTrace.removeLast();
 
-					final Pair<AnnotatedProgramPoint, AnnotatedProgramPoint> sourceAndTarget = 
+					final Pair<AnnotatedProgramPoint, AnnotatedProgramPoint> sourceAndTarget =
 							new Pair<AnnotatedProgramPoint, AnnotatedProgramPoint>(previousApp, nextApp);
 
 					AppDoubleDecker toInsertAdd = summaryEdgeToReturnSucc.get(sourceAndTarget);
@@ -275,10 +275,10 @@ public class BFSEmptinessCheck implements IEmptinessCheck {
 					final LinkedList<CodeBlock> traceToInsert = new LinkedList<CodeBlock>();
 					final LinkedList<AnnotatedProgramPoint> pathToInsert = new LinkedList<AnnotatedProgramPoint>();
 
-					while (!(toInsertAdd.inEdge.label instanceof Call)) { //is this exit condition adequate? -- mb via source and target? 
+					while (!(toInsertAdd.inEdge.label instanceof Call)) { //is this exit condition adequate? -- mb via source and target?
 						if (toInsertAdd.inEdge.label instanceof DummyCodeBlock)
 						 {
-							repeat = true;// this happens, we have a nested summary --> we need to expand the result again 
+							repeat = true;// this happens, we have a nested summary --> we need to expand the result again
 						}
 						traceToInsert.add(toInsertAdd.inEdge.label);
 						pathToInsert.add(toInsertAdd.inEdge.source.top);
@@ -293,7 +293,7 @@ public class BFSEmptinessCheck implements IEmptinessCheck {
 					Collections.reverse(traceToInsert);
 					newErrorPath.addAll(pathToInsert);
 					newErrorTrace.addAll(traceToInsert);
-				}				
+				}
 			}
 			newErrorPath.add(nextApp);
 			
@@ -311,7 +311,7 @@ public class BFSEmptinessCheck implements IEmptinessCheck {
 	 * special array is returned. This Array is of the form {special constant, first non-matching-
 	 * return-index, non-matching-call index}
 	 */
-	private static int[] computeNestingRelation(CodeBlock[] errorPath) {
+	private static int[] computeNestingRelation(final CodeBlock[] errorPath) {
 		final int [] nr = new int[errorPath.length];
 		final Stack<Call> callStack = new Stack<Call>();
 		final Stack<Integer> callStackIndizes = new Stack<Integer>();
@@ -328,7 +328,7 @@ public class BFSEmptinessCheck implements IEmptinessCheck {
 				final Call matchingCall = callStack.pop();
 				if (((Return) errorPath[i]).getCorrespondingCall().equals(matchingCall)) {
 					nr[i] = callStackIndizes.pop();
-					nr[nr[i]] = i;	
+					nr[nr[i]] = i;
 				} else {
 					return new int[] {c_badNestingRelationInit , i, callStackIndizes.pop()};
 				}
@@ -355,8 +355,8 @@ public class BFSEmptinessCheck implements IEmptinessCheck {
 		AddEdge inEdge;
 		ArrayList<AddEdge> outEdges = new ArrayList<AddEdge>();
 
-		AppDoubleDecker(AnnotatedProgramPoint top, AnnotatedProgramPoint bot, 
-				Stack<Call> callStack, Stack<AnnotatedProgramPoint> callPredStack) {
+		AppDoubleDecker(final AnnotatedProgramPoint top, final AnnotatedProgramPoint bot,
+				final Stack<Call> callStack, final Stack<AnnotatedProgramPoint> callPredStack) {
 			this.top = top;
 			this.bot = bot;
 			this.callPredStack = callPredStack;
@@ -377,9 +377,9 @@ public class BFSEmptinessCheck implements IEmptinessCheck {
 		}
 
 		@Override
-		public boolean equals(Object add) {
+		public boolean equals(final Object add) {
 			if (add instanceof AppDoubleDecker) {
-				return top.equals(((AppDoubleDecker)add).top) && 
+				return top.equals(((AppDoubleDecker)add).top) &&
 						bot.equals(((AppDoubleDecker)add).bot);
 			} else {
 				return false;
@@ -397,8 +397,8 @@ public class BFSEmptinessCheck implements IEmptinessCheck {
 		AppDoubleDecker target;
 		CodeBlock label;
 
-		public AddEdge(AppDoubleDecker source, AppDoubleDecker target,
-				CodeBlock label) {
+		public AddEdge(final AppDoubleDecker source, final AppDoubleDecker target,
+				final CodeBlock label) {
 			super();
 			assert (label != null);
 			this.source = source;
@@ -417,16 +417,12 @@ public class BFSEmptinessCheck implements IEmptinessCheck {
 		private static final long serialVersionUID = 1L;
 
 		public EmptyStackSymbol() {
-			super((IPredicate) null, (ProgramPoint) null);
+			super((IPredicate) null, (BoogieIcfgLocation) null);
 		}
 
 		@Override
-		public boolean equals(Object o) {
-			if (o instanceof EmptyStackSymbol) {
-				return true;
-			} else {
-				return false;
-			}
+		public boolean equals(final Object o) {
+			return o instanceof EmptyStackSymbol;
 		}
 
 		@Override

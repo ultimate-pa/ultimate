@@ -29,12 +29,11 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
 
 import java.io.Serializable;
 
-import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 /**
  * See comment in GlobalBoogieVar.
@@ -49,15 +48,20 @@ public class BoogieOldVar extends GlobalBoogieVar implements Serializable, IProg
 	private IProgramNonOldVar mNonOldVar;
 	private final int mHashCode;
 
-	public BoogieOldVar(final String identifier, final IType iType, final boolean oldvar, final TermVariable tv,
+	public BoogieOldVar(final String identifier, final IBoogieType iType, final boolean oldvar, final TermVariable tv,
 			final ApplicationTerm defaultConstant, final ApplicationTerm primedContant) {
 		super(identifier, iType, tv, defaultConstant, primedContant);
 		mHashCode = computeHashCode();
 	}
-
+	
 	@Override
-	public boolean isOldvar() {
-		return true;
+	public String getGloballyUniqueId() {
+		return  IProgramOldVar.super.getGloballyUniqueId();
+	};
+	
+	@Override
+	public String getIdentifierOfNonOldVar() {
+		return mIdentifier;
 	}
 
 	/* (non-Javadoc)
@@ -75,7 +79,7 @@ public class BoogieOldVar extends GlobalBoogieVar implements Serializable, IProg
 	private int computeHashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((getIdentifier() == null) ? 0 : getIdentifier().hashCode());
+		result = prime * result + ((getIdentifierOfNonOldVar() == null) ? 0 : getIdentifierOfNonOldVar().hashCode());
 		result = prime * result + (isOldvar() ? 1231 : 1237);
 		result = prime * result + ((getProcedure() == null) ? 0 : getProcedure().hashCode());
 		return result;
@@ -97,12 +101,12 @@ public class BoogieOldVar extends GlobalBoogieVar implements Serializable, IProg
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		final IProgramVar other = (IProgramVar) obj;
-		if (getIdentifier() == null) {
-			if (other.getIdentifier() != null) {
+		final BoogieOldVar other = (BoogieOldVar) obj;
+		if (getIdentifierOfNonOldVar() == null) {
+			if (other.getIdentifierOfNonOldVar() != null) {
 				return false;
 			}
-		} else if (!getIdentifier().equals(other.getIdentifier())) {
+		} else if (!getIdentifierOfNonOldVar().equals(other.getIdentifierOfNonOldVar())) {
 			return false;
 		}
 		if (isOldvar() != other.isOldvar()) {
@@ -117,4 +121,6 @@ public class BoogieOldVar extends GlobalBoogieVar implements Serializable, IProg
 		}
 		return true;
 	}
+
+
 }

@@ -49,8 +49,10 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.LinearTransition;
 import de.uni_freiburg.informatik.ultimate.lassoranker.ModelExtractionUtils;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.MotzkinTransformation;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ReplacementVarUtils;
+import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
+import de.uni_freiburg.informatik.ultimate.logic.Annotation;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.LetTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -58,9 +60,12 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -77,6 +82,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * disjunction, the inner one a conjunction. Within the inner conjunction, there
  * are strict and non-strict inequalities. These collections are generated
  * according to a {@link ILinearInequalityInvariantPatternStrategy}.
+ * @author David Zschocke, Dirk Steinmetz, Matthias Heizmann, Betim Musa
  */
 public final class LinearInequalityInvariantPatternProcessor
 		extends
@@ -84,6 +90,20 @@ public final class LinearInequalityInvariantPatternProcessor
 
 	private static final String PREFIX = "liipp_";
 	private static final String PREFIX_SEPARATOR = "_";
+	
+	private static final String Annot_Prefix = "LIIPP_Annot";
+	private int mAnnotTermCounter;
+	/**
+	 * Stores the mapping from annotation of a term to the original term. It is used to restore the original terms from the unsat core.
+	 */
+	private Map<String, Term> mAnnotTerm2OriginalTerm;
+	/**
+	 * @see {@link MotzkinTransformation}.mMotzkinCoeffiecients2LinearInequalities
+	 */
+	private Map<String, LinearInequality> mMotzkinCoeffiecients2LinearInequalities;
+	
+	private final boolean mUseVarsFromUnsatCore;
+
 	
 	private final IUltimateServiceProvider services;
 	private final ILogger logger;
@@ -102,7 +122,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	/**
 	 * The pattern coefficients, that is the program- and helper variables.
 	 */
-	private final Set<RankVar> patternCoefficients;
+	private final Set<IProgramVar> patternCoefficients;
 	private Map<Term, Rational> valuation;
 	private Collection<Collection<LinearPatternBase>> entryInvariantPattern;
 	private Collection<Collection<LinearPatternBase>> exitInvariantPattern;
@@ -117,6 +137,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	 * If set to false we use only one non-strict inequality.
 	 */
 	private final boolean mAlwaysStrictAndNonStrictCopies = false;
+	private Collection<TermVariable> mVarsFromUnsatCore;
 
 	/**
 	 * Creates a pattern processor using linear inequalities as patterns.
@@ -154,8 +175,9 @@ public final class LinearInequalityInvariantPatternProcessor
 			final ControlFlowGraph cfg, final IPredicate precondition,
 			final IPredicate postcondition,
 			final ILinearInequalityInvariantPatternStrategy strategy,
-			final boolean useNonlinearConstraints, 
-			final SimplicationTechnique simplicationTechnique, 
+			final boolean useNonlinearConstraints,
+			final boolean useVarsFromUnsatCore,
+			final SimplificationTechnique simplicationTechnique, 
 			final XnfConversionTechnique xnfConversionTechnique) {
 		super(predicateUnifier, predicateScript);
 		this.services = services;
@@ -178,14 +200,20 @@ public final class LinearInequalityInvariantPatternProcessor
 		currentRound = -1;
 		maxRounds = strategy.getMaxRounds();
 		mUseNonlinearConstraints = useNonlinearConstraints;
+		mUseVarsFromUnsatCore = useVarsFromUnsatCore;
+		mAnnotTermCounter = 0;
+		mAnnotTerm2OriginalTerm = new HashMap<>();
+		mMotzkinCoeffiecients2LinearInequalities = new HashMap<>();
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
 	@Override
-	public void startRound(final int round) {
-		reinitializeSolver();
+	public void startRound(final int round, final boolean useLiveVariables, final Set<IProgramVar> liveVariables, 
+			final boolean useVarsFromUnsatCore, final Set<IProgramVar> varsFromUnsatCore) {
+	
+		resetSettings();
 		patternVariables.clear();
 		entryInvariantPattern = null;
 		exitInvariantPattern = null;
@@ -207,8 +235,25 @@ public final class LinearInequalityInvariantPatternProcessor
 			patternCoefficients.addAll(precondition.getOutVars().keySet());
 			patternCoefficients.addAll(postcondition.getInVars().keySet());
 			patternCoefficients.addAll(postcondition.getOutVars().keySet());
+			if (useLiveVariables) {
+				patternCoefficients.retainAll(liveVariables);
+			}
 			logger.info( "[LIIPP] Linearization complete.");
 		}
+		if (useVarsFromUnsatCore && varsFromUnsatCore != null) {
+			patternCoefficients.retainAll(varsFromUnsatCore);
+		}
+	}
+	
+	/**
+	 * Reset the solver and additionally reset the annotation term counter and the map mAnnotTerm2OriginalTerm
+	 */
+	private void resetSettings() {
+		reinitializeSolver();
+		// Reset annotation term counter
+		mAnnotTermCounter = 0;
+		// Reset map that stores the mapping from the annotated term to the original term.
+		mAnnotTerm2OriginalTerm = new HashMap<>();
 	}
 
 	/**
@@ -229,7 +274,6 @@ public final class LinearInequalityInvariantPatternProcessor
 	public Collection<Collection<LinearPatternBase>> getInvariantPatternForLocation(
 			final Location location, final int round) {
 		// Build invariant pattern
-		
 		final Collection<Collection<LinearPatternBase>> disjunction;
 		if (cfg.getEntry().equals(location)) {
 			// entry pattern is equivalent to true
@@ -275,7 +319,7 @@ public final class LinearInequalityInvariantPatternProcessor
 
 	/**
 	 * Transforms a pattern into a DNF of linear inequalities relative to a
-	 * given mapping of {@link RankVar}s involved.
+	 * given mapping of {@link IProgramVar}s involved.
 	 * 
 	 * @param pattern
 	 *            the pattern to transform
@@ -285,7 +329,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	 */
 	private static Collection<Collection<LinearInequality>> mapPattern(
 			final Collection<Collection<LinearPatternBase>> pattern,
-			final Map<RankVar, Term> mapping) {
+			final Map<IProgramVar, Term> mapping) {
 		final Collection<Collection<LinearInequality>> result = new ArrayList<>(
 				pattern.size());
 		for (final Collection<LinearPatternBase> conjunct : pattern) {
@@ -302,7 +346,7 @@ public final class LinearInequalityInvariantPatternProcessor
 
 	/**
 	 * Transforms and negates a pattern into a DNF of linear inequalities
-	 * relative to a given mapping of {@link RankVar}s involved.
+	 * relative to a given mapping of {@link IProgramVar}s involved.
 	 * 
 	 * @param pattern
 	 *            the pattern to transform
@@ -313,7 +357,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	 */
 	private static Collection<Collection<LinearInequality>> mapAndNegatePattern(
 			final Collection<Collection<LinearPatternBase>> pattern,
-			final Map<RankVar, Term> mapping) {
+			final Map<IProgramVar, Term> mapping) {
 		// This is the trivial algorithm (expanding). Feel free to optimize ;)
 		// 1. map Pattern, result is dnf
 		final Collection<Collection<LinearInequality>> mappedPattern = mapPattern(
@@ -482,7 +526,7 @@ public final class LinearInequalityInvariantPatternProcessor
 		final Collection<Term> resultTerms = new ArrayList<Term>(
 				conjunctionDNF.size());
 		final AnalysisType analysisType = mUseNonlinearConstraints ? 
-				AnalysisType.Nonlinear : AnalysisType.Linear;
+				AnalysisType.NONLINEAR : AnalysisType.LINEAR;
 		for (final Collection<LinearInequality> conjunct : conjunctionDNF) {
 			logger.info( "[LIIPP] Transforming conjunct "
 					+ conjunct);
@@ -490,6 +534,7 @@ public final class LinearInequalityInvariantPatternProcessor
 					solver, analysisType, false);
 			transformation.add_inequalities(conjunct);
 			resultTerms.add(transformation.transform(new Rational[0]));
+			mMotzkinCoeffiecients2LinearInequalities.putAll(transformation.getMotzkinCoeffiecients2LinearInequalities());
 		}
 		return SmtUtils.and(solver, resultTerms);
 	}
@@ -505,10 +550,10 @@ public final class LinearInequalityInvariantPatternProcessor
 	 * @param mapping
 	 *            mapping to add auxiliary terms to
 	 */
-	protected void completeMapping(final Map<RankVar, Term> mapping) {
+	protected void completeMapping(final Map<IProgramVar, Term> mapping) {
 		final String prefix = newPrefix() + "replace_";
 		int index = 0;
-		for (final RankVar coefficient : patternCoefficients) {
+		for (final IProgramVar coefficient : patternCoefficients) {
 			if (mapping.containsKey(coefficient)) {
 				continue;
 			}
@@ -532,9 +577,9 @@ public final class LinearInequalityInvariantPatternProcessor
 	 *            mapping to get auxiliary terms from, must contain one entry
 	 *            for each coefficient
 	 */
-	protected void completeMapping(final Map<RankVar, Term> mapping,
-			final Map<RankVar, Term> source) {
-		for (final RankVar coefficient : patternCoefficients) {
+	protected void completeMapping(final Map<IProgramVar, Term> mapping,
+			final Map<IProgramVar, Term> source) {
+		for (final IProgramVar coefficient : patternCoefficients) {
 			if (mapping.containsKey(coefficient)) {
 				continue;
 			}
@@ -558,7 +603,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	 */
 	private Term buildImplicationTerm(final LinearTransition condition,
 			final Collection<Collection<LinearPatternBase>> pattern) {
-		final Map<RankVar, Term> primedMapping = new HashMap<RankVar, Term>(
+		final Map<IProgramVar, Term> primedMapping = new HashMap<IProgramVar, Term>(
 				condition.getOutVars());
 		completeMapping(primedMapping);
 
@@ -598,7 +643,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	 */
 	private Term buildBackwardImplicationTerm(final LinearTransition condition,
 			final Collection<Collection<LinearPatternBase>> pattern) {
-		final Map<RankVar, Term> primedMapping = new HashMap<RankVar, Term>(
+		final Map<IProgramVar, Term> primedMapping = new HashMap<IProgramVar, Term>(
 				condition.getOutVars());
 		completeMapping(primedMapping);
 
@@ -640,10 +685,10 @@ public final class LinearInequalityInvariantPatternProcessor
 			final InvariantTransitionPredicate<Collection<Collection<LinearPatternBase>>> predicate) {
 		final LinearTransition transition = linearizer.linearize(predicate
 				.getTransition());
-		final Map<RankVar, Term> unprimedMapping = new HashMap<RankVar, Term>(
+		final Map<IProgramVar, Term> unprimedMapping = new HashMap<IProgramVar, Term>(
 				transition.getInVars());
 		completeMapping(unprimedMapping);
-		final Map<RankVar, Term> primedMapping = new HashMap<RankVar, Term>(
+		final Map<IProgramVar, Term> primedMapping = new HashMap<IProgramVar, Term>(
 				transition.getOutVars());
 		completeMapping(primedMapping, unprimedMapping);
 
@@ -669,6 +714,85 @@ public final class LinearInequalityInvariantPatternProcessor
 		return transformNegatedConjunction(startInvariantDNF, endInvariantDNF,
 				transitionDNF);
 	}
+	
+	/**
+	 * Split the given term in its conjunctions, annotate and assert each conjunction one by one, 
+	 * and store the mapping annotated term -> original term in a map.
+	 * @param term - the Term to be annotated and asserted
+	 * @author Betim Musa (musab@informaitk.uni-freiburg.de)
+	 */
+	private void annotateAndAssertTermAndStoreMapping(final Term term) {
+		assert term.getFreeVars().length == 0 : "Term has free vars";
+		// Annotate and assert the conjuncts of the term one by one 
+		Term[] conjunctsOfTerm = SmtUtils.getConjuncts(term);
+		final String termAnnotName = Annot_Prefix + PREFIX_SEPARATOR + (mAnnotTermCounter++);
+		for (int conjunctCounter = 0; conjunctCounter < conjunctsOfTerm.length; conjunctCounter++) {
+			// Generate unique name for this term
+			String conjunctAnnotName = termAnnotName + PREFIX_SEPARATOR + (conjunctCounter); 
+			// Store mapping termAnnotName -> original term
+			mAnnotTerm2OriginalTerm.put(conjunctAnnotName, conjunctsOfTerm[conjunctCounter]);
+
+			final Annotation annot = new Annotation(":named", conjunctAnnotName);
+			final Term annotTerm = solver.annotate(conjunctsOfTerm[conjunctCounter], annot);
+			solver.assertTerm(annotTerm);
+		}
+	}
+	
+	/**
+	 * Generate constraints for invariant template as follows:
+	 * 1. Generate a constraint s.t. the precondition implies the invariant template.
+	 * 2. Generate for each predicate in predicates a constraint.
+	 * 3. Generate a constraint s.t. the invariant template implies the post-condition.
+	 * @param predicates - represent the intermediate transitions of the path program
+	 * @author Betim Musa (musab@informaitk.uni-freiburg.de)
+	 */
+	private void generateAndAssertTerms(final Collection<InvariantTransitionPredicate<Collection<Collection<LinearPatternBase>>>> predicates) {
+		// Generate and assert term for precondition
+		annotateAndAssertTermAndStoreMapping(buildImplicationTerm(precondition, entryInvariantPattern));
+		// Generate and assert term for post-condition
+		annotateAndAssertTermAndStoreMapping(buildBackwardImplicationTerm(postcondition, exitInvariantPattern));
+		// Generate and assert terms for intermediate transitions
+		for (final InvariantTransitionPredicate<Collection<Collection<LinearPatternBase>>> predicate : predicates) {
+			annotateAndAssertTermAndStoreMapping(buildPredicateTerm(predicate));
+		}
+	}
+	/**
+	 * Extract the Motzkin coefficients from the given term.
+	 * @param t - term the Motzkin coefficients to be extracted from
+	 * @return
+	 * @author Betim Musa (musab@informaitk.uni-freiburg.de)
+	 */
+	private Set<String> getTermVariablesFromTerm(Term t) {
+		HashSet<String> result = new HashSet<>();
+		if (t instanceof ApplicationTerm) {
+			if (((ApplicationTerm)t).getFunction().getName().startsWith("motzkin_")) {
+				result.add(((ApplicationTerm)t).getFunction().getName());
+				return result;
+			} else {
+				Term[] subterms = ((ApplicationTerm)t).getParameters();
+				for (Term st : subterms) {
+					result.addAll(getTermVariablesFromTerm(st));
+				}
+			}
+		} else if (t instanceof AnnotatedTerm) {
+			Term subterm = ((AnnotatedTerm)t).getSubterm();
+			result.addAll(getTermVariablesFromTerm(subterm));
+		} else if (t instanceof LetTerm) {
+			Term subterm = ((LetTerm)t).getSubTerm();
+			result.addAll(getTermVariablesFromTerm(subterm));
+		} else if (t instanceof TermVariable) {
+//			result.add((TermVariable)t);
+		}
+		return result;
+	}
+	
+	/**
+	 * @author Betim Musa (musab@informaitk.uni-freiburg.de)
+	 * @return
+	 */
+	public Collection<TermVariable> getVarsFromUnsatCore() {
+		return mVarsFromUnsatCore;
+	}
 
 	/**
 	 * {@inheritDoc}
@@ -678,12 +802,17 @@ public final class LinearInequalityInvariantPatternProcessor
 			final Collection<InvariantTransitionPredicate<Collection<Collection<LinearPatternBase>>>> predicates,
 			final int round) {
 		logger.info( "[LIIPP] Start generating terms.");
-		solver.assertTerm(buildImplicationTerm(precondition,
-				entryInvariantPattern));
-		solver.assertTerm(buildBackwardImplicationTerm(postcondition,
-				exitInvariantPattern));
-		for (final InvariantTransitionPredicate<Collection<Collection<LinearPatternBase>>> predicate : predicates) {
-			solver.assertTerm(buildPredicateTerm(predicate));
+		
+		if (!mUseVarsFromUnsatCore) {
+			solver.assertTerm(buildImplicationTerm(precondition,
+					entryInvariantPattern));
+			solver.assertTerm(buildBackwardImplicationTerm(postcondition,
+					exitInvariantPattern));
+			for (final InvariantTransitionPredicate<Collection<Collection<LinearPatternBase>>> predicate : predicates) {
+				solver.assertTerm(buildPredicateTerm(predicate));
+			}
+		} else {
+			generateAndAssertTerms(predicates);
 		}
 
 		logger.info( "[LIIPP] Terms generated, checking SAT.");
@@ -694,6 +823,29 @@ public final class LinearInequalityInvariantPatternProcessor
 		}
 		if (result != LBool.SAT) {
 			// No configuration found
+			if (result == LBool.UNSAT && mUseVarsFromUnsatCore) {
+				// Extract the variables from the unsatisfiable core by 
+				// first extracting the motzkin variables and then using them
+				// to get the corresponding program variables 
+				Term[] unsatCoreAnnots = solver.getUnsatCore();
+				Set<String> motzkinVariables = new HashSet<>();
+				for (Term t : unsatCoreAnnots) {
+					Term origTerm = mAnnotTerm2OriginalTerm.get(t.toStringDirect());
+					motzkinVariables.addAll(getTermVariablesFromTerm(origTerm));
+				}
+				mVarsFromUnsatCore = new HashSet<>();
+				for (String motzkinVar : motzkinVariables) {
+					LinearInequality linq = mMotzkinCoeffiecients2LinearInequalities.get(motzkinVar);
+					for (Term varInLinq : linq.getVariables()) {
+						if (varInLinq instanceof TermVariable) {
+							mVarsFromUnsatCore.add((TermVariable)varInLinq);
+						} else {
+							throw new UnsupportedOperationException("Var in linear inequality is not a TermVariable.");
+						}
+						
+					}
+				}
+			}
 			logger.info( "[LIIPP] No solution found.");
 			return false;
 		}
@@ -731,9 +883,9 @@ public final class LinearInequalityInvariantPatternProcessor
 	@Override
 	protected Term getTermForPattern(
 			final Collection<Collection<LinearPatternBase>> pattern) {
-		final Map<RankVar, Term> definitionMap = new HashMap<RankVar, Term>(
+		final Map<IProgramVar, Term> definitionMap = new HashMap<IProgramVar, Term>(
 				patternCoefficients.size());
-		for (final RankVar coefficient : patternCoefficients) {
+		for (final IProgramVar coefficient : patternCoefficients) {
 			final Term definition = ReplacementVarUtils.getDefinition(coefficient);
 			definitionMap.put(coefficient, definition);
 		}
@@ -753,7 +905,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	}
 
 	/**
-	 * Takes a pattern and generates a term with the smtManager.getScript()
+	 * Takes a pattern and generates a term with the csToolkit.getScript()
 	 * script where the variables are valuated with the values in this.valuation
 	 * @param pattern the pattern for which the term is generated
 	 * @return a term corresponding to the cnf of LinearInequalites of
@@ -813,8 +965,7 @@ public final class LinearInequalityInvariantPatternProcessor
 	private void reinitializeSolver() {
 		solver.reset();
 		solver.setOption(":produce-models", true);
-		final boolean someExtendedDebugging = false;
-		if (someExtendedDebugging) {
+		if (mUseVarsFromUnsatCore) {
 			solver.setOption(":produce-unsat-cores", true);
 		}
 		final Logics logic;

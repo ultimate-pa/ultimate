@@ -19,20 +19,47 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata;
 
-
-public interface IRun<LETTER,STATE> {
+/**
+ * Interface for automata runs.<br>
+ * A run is a sequence of states corresponding to a word, i.e., a sequence of symbols.
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
+ */
+public interface IRun<LETTER, STATE> {
+	/**
+	 * The word corresponding to the run.
+	 * 
+	 * @return corresponding word
+	 */
+	Word<LETTER> getWord();
 	
-	public Word<LETTER> getWord();
+	/**
+	 * The symbol of the corresponding word at the given position.<br>
+	 * The result is identical to {@link #getWord()}.{@link Word#getSymbol(int) getSymbol(position)}.
+	 * 
+	 * @param position
+	 *            position in run/word
+	 * @return symbol at the given position
+	 */
+	LETTER getSymbol(int position);
 	
-	public LETTER getSymbol(int i);
-	
-	public int getLength();
-
+	/**
+	 * The length of the run.<br>
+	 * The result is identical to {@link #getWord()}.{@link Word#length() length()}.
+	 * 
+	 * @return length of the run
+	 */
+	int getLength();
 }

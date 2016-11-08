@@ -5,7 +5,6 @@ Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.buchiprogramproduct;sin
 Bundle-Version: 0.0.1
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.buchiprogramproduct.Activator
 Require-Bundle: Library-UltimateCore,
- Library-log4j,
  Library-UltimateUtil,
  Library-BoogieAST,
  UltimateCore,
@@ -19,9 +18,4 @@ Require-Bundle: Library-UltimateCore,
  de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
-Import-Package: junit.framework,
- org.apache.commons.io,
- org.junit,
- org.junit.runner,
- org.junit.runners
 Export-Package: de.uni_freiburg.informatik.ultimate.buchiprogramproduct.benchmark

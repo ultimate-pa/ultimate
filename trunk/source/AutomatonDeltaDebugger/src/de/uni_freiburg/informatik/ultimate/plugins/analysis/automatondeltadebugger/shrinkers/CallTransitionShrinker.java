@@ -31,22 +31,25 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.utils.TypedTransition;
 
 /**
  * Removes call transitions.
  * 
- * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
+ * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            letter type
+ * @param <STATE>
+ *            state type
  */
 public class CallTransitionShrinker<LETTER, STATE>
-		extends AShrinker<TypedTransition<LETTER, STATE>, LETTER, STATE> {
+		extends AbstractShrinker<TypedTransition<LETTER, STATE>, LETTER, STATE> {
 	@Override
 	public INestedWordAutomaton<LETTER, STATE>
 			createAutomaton(final List<TypedTransition<LETTER, STATE>> list) {
 		// create fresh automaton
-		final INestedWordAutomaton<LETTER, STATE> automaton =
-				mFactory.create(mAutomaton);
+		final INestedWordAutomaton<LETTER, STATE> automaton = mFactory.create(mAutomaton);
 		
 		// add all states
 		mFactory.addStates(automaton, mAutomaton.getStates());
@@ -55,8 +58,7 @@ public class CallTransitionShrinker<LETTER, STATE>
 		mFactory.addFilteredInternalTransitions(automaton, mAutomaton);
 		
 		// add the complement of the passed call transitions
-		final Set<TypedTransition<LETTER, STATE>> oldTransitions =
-				mFactory.getCallTransitions(mAutomaton);
+		final Set<TypedTransition<LETTER, STATE>> oldTransitions = mFactory.getCallTransitions(mAutomaton);
 		oldTransitions.removeAll(list);
 		mFactory.addCallTransitions(automaton, oldTransitions);
 		
@@ -68,7 +70,6 @@ public class CallTransitionShrinker<LETTER, STATE>
 	
 	@Override
 	public List<TypedTransition<LETTER, STATE>> extractList() {
-		return new ArrayList<TypedTransition<LETTER, STATE>>(
-				mFactory.getCallTransitions(mAutomaton));
+		return new ArrayList<>(mFactory.getCallTransitions(mAutomaton));
 	}
 }

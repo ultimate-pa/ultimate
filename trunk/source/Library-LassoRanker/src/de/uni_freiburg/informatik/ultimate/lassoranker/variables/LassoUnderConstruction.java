@@ -30,6 +30,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 
 /**
@@ -42,21 +43,21 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
  *
  */
 public class LassoUnderConstruction {
-	private final TransFormulaLR mStem;
-	private final TransFormulaLR mLoop;
+	private final ModifiableTransFormula mStem;
+	private final ModifiableTransFormula mLoop;
 	private final int mStemSize;
 	private final int mLoopSize;
-	public LassoUnderConstruction(TransFormulaLR stem, TransFormulaLR loop) {
+	public LassoUnderConstruction(ModifiableTransFormula stem, ModifiableTransFormula loop) {
 		super();
 		mStem = stem;
 		mLoop = loop;
 		mStemSize = (new DAGSize()).treesize(mStem.getFormula());
 		mLoopSize = (new DAGSize()).treesize(mLoop.getFormula());
 	}
-	public TransFormulaLR getStem() {
+	public ModifiableTransFormula getStem() {
 		return mStem;
 	}
-	public TransFormulaLR getLoop() {
+	public ModifiableTransFormula getLoop() {
 		return mLoop;
 	}
 //	public int getStemSize() {

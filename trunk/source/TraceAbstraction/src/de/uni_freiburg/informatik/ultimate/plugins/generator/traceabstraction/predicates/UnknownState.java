@@ -30,16 +30,16 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 
 public class UnknownState implements ISLPredicate {
 
 //	private static final long serialVersionUID = 9190582215913478152L;
-	private final ProgramPoint mProgramPoint;
+	private final BoogieIcfgLocation mProgramPoint;
 	private final int mSerialNumber;
 	private final Term mTerm;
 	
-	protected UnknownState(ProgramPoint programPoint, int serialNumber, Term term) {
+	protected UnknownState(BoogieIcfgLocation programPoint, int serialNumber, Term term) {
 		mProgramPoint = programPoint;
 		mSerialNumber = serialNumber;
 		mTerm = term;
@@ -74,7 +74,7 @@ public class UnknownState implements ISLPredicate {
 	public String toString() {
 		String result = mSerialNumber + "#";
 		if (mProgramPoint != null) {
-			result += mProgramPoint.getPosition();
+			result += mProgramPoint.getDebugIdentifier();
 		}
 		else {
 			result += "unknown";
@@ -89,7 +89,7 @@ public class UnknownState implements ISLPredicate {
 	
 	
 	@Override
-	public ProgramPoint getProgramPoint() {
+	public BoogieIcfgLocation getProgramPoint() {
 		return mProgramPoint;
 	}
 	

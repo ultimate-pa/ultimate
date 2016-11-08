@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms;
@@ -45,8 +45,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 
@@ -66,7 +66,7 @@ public class Nnf {
 	public enum QuantifierHandling { CRASH, PULL, KEEP, IS_ATOM }
 	protected final QuantifierHandling mQuantifierHandling;
 	
-	public Nnf(final ManagedScript mgdScript, final IUltimateServiceProvider services, 
+	public Nnf(final ManagedScript mgdScript, final IUltimateServiceProvider services,
 			final QuantifierHandling quantifierHandling) {
 		super();
 		mQuantifierHandling = quantifierHandling;
@@ -116,14 +116,14 @@ public class Nnf {
 		protected void convert(final Term term) {
 			assert term.getSort().getName().equals("Bool") : "Input is not Bool";
 			if (term instanceof ApplicationTerm) {
-				final ApplicationTerm appTerm = (ApplicationTerm) term; 
+				final ApplicationTerm appTerm = (ApplicationTerm) term;
 				final String functionName = appTerm.getFunction().getName();
 				if (functionName.equals("and")) {
 					final Term flattened = Util.and(mScript, appTerm.getParameters());
 					if (SmtUtils.isFunctionApplication(flattened, "and")) {
 						super.convert(flattened);
 					} else {
-						// term was simplified by flattening, top function 
+						// term was simplified by flattening, top function
 						// symbol changed, call convert again
 						convert(flattened);
 					}
@@ -133,7 +133,7 @@ public class Nnf {
 					if (SmtUtils.isFunctionApplication(flattened, "or")) {
 						super.convert(flattened);
 					} else {
-						// term was simplified by flattening, top function 
+						// term was simplified by flattening, top function
 						// symbol changed, call convert again
 						convert(flattened);
 					}
@@ -150,7 +150,7 @@ public class Nnf {
 					// to a term whose function symbol is neither "and" nor "or"
 					convert(Util.or(mScript, negateAllButLast(params)));
 					return;
-				} else if (functionName.equals("=") && 
+				} else if (functionName.equals("=") &&
 						SmtUtils.firstParamIsBool(appTerm)) {
 					final Term[] params = appTerm.getParameters();
 					if (params.length > 2) {
@@ -235,7 +235,7 @@ public class Nnf {
 					final Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
 					for (final TermVariable oldTv : qf.getVariables()) {
 						final TermVariable freshTv = mMgdScript.
-								constructFreshTermVariable(s_FreshVariableString, oldTv.getSort()); 
+								constructFreshTermVariable(s_FreshVariableString, oldTv.getSort());
 						substitutionMapping.put(oldTv, freshTv);
 						variables.add(freshTv);
 					}
@@ -250,7 +250,7 @@ public class Nnf {
 					throw new AssertionError("unknown case");
 				}
 			} else if (term instanceof AnnotatedTerm) {
-				mLogger.warn("thrown away annotations " + 
+				mLogger.warn("thrown away annotations " +
 						Arrays.toString(((AnnotatedTerm) term).getAnnotations()));
 				convert(((AnnotatedTerm) term).getSubterm());
 			}
@@ -266,13 +266,13 @@ public class Nnf {
 		/**
 		 * A function is an xor if one of the following applies.
 		 * <ul>
-		 * <li> its functionName is <b>xor</b> 
+		 * <li> its functionName is <b>xor</b>
 		 * <li> its functionName is <b>distinct</b> and its parameters have
 		 * Sort Bool.
 		 * </ul>
 		 */
 		private boolean isXor(final ApplicationTerm appTerm, final String functionName) {
-			return functionName.equals("xor") || 
+			return functionName.equals("xor") ||
 					(functionName.equals("distinct") && SmtUtils.firstParamIsBool(appTerm));
 		}
 		
@@ -280,7 +280,7 @@ public class Nnf {
 		private void convertNot(final Term notParam, final Term notTerm) {
 			assert notParam.getSort().getName().equals("Bool") : "Input is not Bool";
 			if (notParam instanceof ApplicationTerm) {
-				final ApplicationTerm appTerm = (ApplicationTerm) notParam; 
+				final ApplicationTerm appTerm = (ApplicationTerm) notParam;
 				final String functionName = appTerm.getFunction().getName();
 				final Term[] params = appTerm.getParameters();
 				if (functionName.equals("and")) {
@@ -309,7 +309,7 @@ public class Nnf {
 					// to a term whose function symbol is neither "and" nor "or"
 					convert(Util.and(mScript, negateLast(params)));
 					return;
-				} else if (functionName.equals("=") && 
+				} else if (functionName.equals("=") &&
 						SmtUtils.firstParamIsBool(appTerm)) {
 					final Term[] notParams = appTerm.getParameters();
 					if (notParams.length > 2) {
@@ -403,9 +403,7 @@ public class Nnf {
 		
 		private Term[] negateLast(final Term[] terms) {
 			final Term[] newTerms = new Term[terms.length];
-			for (int i=0; i<terms.length-1; i++) {
-				newTerms[i] = terms[i];
-			}
+			System.arraycopy(terms, 0, newTerms, 0, terms.length - 1);
 			newTerms[terms.length-1] = SmtUtils.not(mScript, terms[terms.length-1]);
 			return newTerms;
 		}
@@ -422,8 +420,8 @@ public class Nnf {
 		
 		@Override
 		public void convertApplicationTerm(final ApplicationTerm appTerm, final Term[] newArgs) {
-			final Term simplified = SmtUtils.termWithLocalSimplification(mScript, 
-					appTerm.getFunction().getName(), 
+			final Term simplified = SmtUtils.termWithLocalSimplification(mScript,
+					appTerm.getFunction().getName(),
 					appTerm.getFunction().getIndices(), newArgs);
 			setResult(simplified);
 		}

@@ -12,17 +12,17 @@ import org.junit.Before;
 import org.junit.Test;
 
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.BoogieUtil;
 
 public class AffineExpressionTest {
 
-	private Map<IType, Map<String, IBoogieVar>> mVarCache;
+	private Map<IBoogieType, Map<String, IBoogieVar>> mVarCache;
 
 	@Before
-	public void setup() {
-		mVarCache = new HashMap<IType, Map<String, IBoogieVar>>();
+	public void setUp() {
+		mVarCache = new HashMap<>();
 		mVarCache.put(BoogieType.TYPE_INT, new HashMap<>());
 		mVarCache.put(BoogieType.TYPE_REAL, new HashMap<>());
 	}
@@ -63,9 +63,17 @@ public class AffineExpressionTest {
 
 		final String a = "3x + 9y + 6";
 		final String b = "0.5";
-		final String expected = "1.5x + 4.5y + 3.0";
-		Assert.assertEquals(ae(expected).toString(), ae(a).multiply(ae(b)).toString());
-		Assert.assertEquals(ae(expected).toString(), ae(b).multiply(ae(a)).toString());
+		final String expectedA = "1.5\u22C5x + 4.5\u22C5y + 3.0";
+		final String expectedB = "4.5\u22C5y + 1.5\u22C5x + 3.0";
+
+		final String resultA = ae(a).multiply(ae(b)).toString();
+		final String resultB = ae(b).multiply(ae(a)).toString();
+
+		Assert.assertTrue("Result was " + resultA + " but should be " + expectedA,
+				resultA.equals(expectedA) || resultA.equals(expectedB));
+		Assert.assertTrue("Result was " + resultB + " but should be " + expectedA,
+				resultB.equals(expectedA) || resultB.equals(expectedB));
+
 	}
 
 	@Test
@@ -161,15 +169,15 @@ public class AffineExpressionTest {
 		Assert.assertNull(ae("x + 2y").getTwoVarForm());
 	}
 
-	private void assertDivReal(String a, String b, String expected) {
+	private void assertDivReal(final String a, final String b, final String expected) {
 		Assert.assertEquals(ae(expected), ae(a).divide(ae(b), false));
 	}
 
-	private void assertDivInt(String a, String b, String expected) {
+	private void assertDivInt(final String a, final String b, final String expected) {
 		Assert.assertEquals(ae(expected), ae(a).divide(ae(b), true));
 	}
 
-	private void assertMod(String a, String b, String rExpected) {
+	private void assertMod(final String a, final String b, final String rExpected) {
 		Assert.assertEquals(ae(rExpected), ae(a).modulo(ae(b)));
 	}
 
@@ -186,7 +194,7 @@ public class AffineExpressionTest {
 		while (m.find()) {
 			final String coeffStr = m.group(sNumGroup);
 			final BigDecimal coeff = (coeffStr == null) ? BigDecimal.ONE : new BigDecimal(coeffStr);
-			final IType type = isInteger(coeff) ? BoogieType.TYPE_INT : BoogieType.TYPE_REAL;
+			final IBoogieType type = isInteger(coeff) ? BoogieType.TYPE_INT : BoogieType.TYPE_REAL;
 			final IBoogieVar var = getVar(m.group(sVarGroup), type);
 			final BigDecimal old = coefficients.put(var, coeff);
 			if (old != null) {
@@ -208,12 +216,12 @@ public class AffineExpressionTest {
 		try {
 			value.toBigIntegerExact();
 			return true;
-		} catch (ArithmeticException ex) {
+		} catch (final ArithmeticException ex) {
 			return false;
 		}
 	}
 
-	private IBoogieVar getVar(final String name, final IType type) {
+	private IBoogieVar getVar(final String name, final IBoogieType type) {
 		final Map<String, IBoogieVar> cache = mVarCache.get(type);
 		if (cache == null) {
 			throw new UnsupportedOperationException("cache not available for type " + type);

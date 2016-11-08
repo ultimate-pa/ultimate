@@ -37,6 +37,7 @@ import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
@@ -52,8 +53,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.TypeSizes;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
@@ -67,6 +68,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.I
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerIntegerConversion;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.UnsignedTreatment;
@@ -477,18 +480,22 @@ public class IntegerTranslation extends AExpressionTranslation {
 				} else {
 					oldWrappedIfNeeded = operand.lrVal.getValue();
 				}
-				if (mUnsignedTreatment == UnsignedTreatment.ASSUME_ALL) {
+				if (mUnsignedTreatment == UnsignedTreatment.ASSERT) {
 					final BigInteger maxValuePlusOne =
 							mTypeSizes.getMaxValueOfPrimitiveType(resultType).add(BigInteger.ONE);
-					final AssumeStatement assumeGeq0 = new AssumeStatement(loc,
+					final AssertStatement assertGeq0 = new AssertStatement(loc,
 							ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPGEQ,
 									oldWrappedIfNeeded, new IntegerLiteral(loc, SFO.NR0)));
-					operand.stmt.add(assumeGeq0);
+					final Check chk1 = new Check(Spec.UINT_OVERFLOW);
+					chk1.addToNodeAnnot(assertGeq0);
+					operand.stmt.add(assertGeq0);
 
-					final AssumeStatement assumeLtMax = new AssumeStatement(loc,
+					final AssertStatement assertLtMax = new AssertStatement(loc,
 							ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPLT,
 									oldWrappedIfNeeded, new IntegerLiteral(loc, maxValuePlusOne.toString())));
-					operand.stmt.add(assumeLtMax);
+					final Check chk2 = new Check(Spec.UINT_OVERFLOW);
+					chk2.addToNodeAnnot(assertLtMax);
+					operand.stmt.add(assertLtMax);
 				} else {
 					// do nothing
 				}
@@ -848,9 +855,9 @@ public class IntegerTranslation extends AExpressionTranslation {
 			final Attribute[] attributes;
 			final ASTType paramASTType = mTypeHandler.ctype2asttype(loc, oldType);
 			if (newType.isFloatingType()) {
-				attributes = generateAttributes(loc, "to_real", null);
+				attributes = generateAttributes(loc, mOverapproximateFloatingPointOperations, "to_real", null);
 			} else if (newType.isIntegerType()) {
-				attributes = generateAttributes(loc, "to_int", null);
+				attributes = generateAttributes(loc, mOverapproximateFloatingPointOperations, "to_int", null);
 			} else {
 				throw new AssertionError("unhandled case");
 			}

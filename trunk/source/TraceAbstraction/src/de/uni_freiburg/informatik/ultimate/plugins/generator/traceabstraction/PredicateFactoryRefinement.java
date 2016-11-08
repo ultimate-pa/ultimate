@@ -33,68 +33,69 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateWithHistory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareAnnotationPositions;
 
 public class PredicateFactoryRefinement extends PredicateFactoryForInterpolantAutomata {
 	
 	private static final boolean s_DebugComputeHistory = false;
 	
-	protected final Map<String,Map<String,ProgramPoint>> mlocNodes;
+	protected final Map<String,Map<String,BoogieIcfgLocation>> mlocNodes;
 	protected int mIteration;
 	protected final HoareAnnotationFragments mHoareAnnotationFragments;
 	private final boolean mMaintainHoareAnnotationFragments = false;
-	private final HashSet<ProgramPoint> mHoareAnnotationPositions;
+	private final HashSet<BoogieIcfgLocation> mHoareAnnotationProgramPoints;
+	private final HoareAnnotationPositions mHoareAnnotationPositions;
 	
 	
-	public PredicateFactoryRefinement(Map<String,Map<String,ProgramPoint>> locNodes,
-							SmtManager smtManager,
-							TAPreferences taPrefs, 
-							boolean maintainHoareAnnotationFragments, 
-							HoareAnnotationFragments haf, 
-							HashSet<ProgramPoint> hoareAnnotationPositions) {
-		super(smtManager, taPrefs);
+	public PredicateFactoryRefinement(final Map<String,Map<String,BoogieIcfgLocation>> locNodes,
+							final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
+							final boolean computeHoareAnnoation, 
+							final HoareAnnotationFragments haf, 
+							final HashSet<BoogieIcfgLocation> hoareAnnotationProgramPoints, 
+							final HoareAnnotationPositions hoareAnnoationPositions) {
+		super(csToolkit, predicateFactory, computeHoareAnnoation);
 		mlocNodes = locNodes;
 //		mMaintainHoareAnnotationFragments = maintainHoareAnnotationFragments;
 		mHoareAnnotationFragments = haf;
-		mHoareAnnotationPositions = hoareAnnotationPositions;
+		mHoareAnnotationProgramPoints = hoareAnnotationProgramPoints;
+		mHoareAnnotationPositions = hoareAnnoationPositions;
 	}
 
 	
 	@Override
-	public IPredicate intersection(IPredicate p1, IPredicate p2) {
+	public IPredicate intersection(final IPredicate p1, final IPredicate p2) {
 		if (p1 instanceof IMLPredicate) {
-//			assert mSmtManager.isDontCare(p2);
-			assert !mPref.computeHoareAnnotation();
-			final Term dontcare = mSmtManager.getPredicateFactory().getDontCareTerm();
-			return mSmtManager.getPredicateFactory().newMLPredicate(((IMLPredicate) p1).getProgramPoints(), dontcare);
+//			assert mCsToolkit.isDontCare(p2);
+			assert !mComputeHoareAnnotation;
+			return mPredicateFactory.newMLDontCarePredicate(((IMLPredicate) p1).getProgramPoints());
 		}
 		
 		assert (p1 instanceof ISLPredicate);
 
-		final ProgramPoint pp = ((ISLPredicate) p1).getProgramPoint();
+		final BoogieIcfgLocation pp = ((ISLPredicate) p1).getProgramPoint();
 
 		if (omitComputationOfHoareAnnotation(pp, p1, p2)) {
-			return mSmtManager.getPredicateFactory().newDontCarePredicate(pp);
+			return mPredicateFactory.newDontCarePredicate(pp);
 		}
-		final Term conjunction = mSmtManager.getPredicateFactory().and(p1, p2);
+		final Term conjunction = mPredicateFactory.and(p1, p2);
 		IPredicate result;
 		if (s_DebugComputeHistory) {
 			assert (p1 instanceof PredicateWithHistory);
 			final Map<Integer, Term> history = 
 					((PredicateWithHistory) p1).getCopyOfHistory();
 				history.put(mIteration,p2.getFormula());
-			result = mSmtManager.getPredicateFactory().newPredicateWithHistory(
+			result = mPredicateFactory.newPredicateWithHistory(
 					pp, conjunction, history);
 		} else {
-			result = mSmtManager.getPredicateFactory().newSPredicate(pp, conjunction);
+			result = mPredicateFactory.newSPredicate(pp, conjunction);
 		}
 		
 		if (mMaintainHoareAnnotationFragments) {
@@ -103,13 +104,13 @@ public class PredicateFactoryRefinement extends PredicateFactoryForInterpolantAu
 		return result;
 	}
 	
-	private boolean omitComputationOfHoareAnnotation(ProgramPoint pp, IPredicate p1, IPredicate p2) {
-		if (!mPref.computeHoareAnnotation() || mSmtManager.getPredicateFactory().isDontCare(p1) || mSmtManager.getPredicateFactory().isDontCare(p2)) {
+	private boolean omitComputationOfHoareAnnotation(final BoogieIcfgLocation pp, final IPredicate p1, final IPredicate p2) {
+		if (!mComputeHoareAnnotation || mPredicateFactory.isDontCare(p1) || mPredicateFactory.isDontCare(p2)) {
 			return true;
 		}
-		if (mPref.getHoareAnnotationPositions() == HoareAnnotationPositions.LoopsAndPotentialCycles) {
-			assert mHoareAnnotationPositions != null : "we need this for HoareAnnotationPositions.LoopInvariantsAndEnsures";
-			return !mHoareAnnotationPositions.contains(pp);
+		if (mHoareAnnotationPositions == HoareAnnotationPositions.LoopsAndPotentialCycles) {
+			assert mHoareAnnotationProgramPoints != null : "we need this for HoareAnnotationPositions.LoopInvariantsAndEnsures";
+			return !mHoareAnnotationProgramPoints.contains(pp);
 		} else {
 			return false;
 		}
@@ -118,49 +119,48 @@ public class PredicateFactoryRefinement extends PredicateFactoryForInterpolantAu
 
 
 	@Override
-	public IPredicate determinize(Map<IPredicate, Set<IPredicate>> down2up) {
+	public IPredicate determinize(final Map<IPredicate, Set<IPredicate>> down2up) {
 		throw new AssertionError(
 				"determinize is only required for construction of interpolant automaton, not for refinement");
 	}
 
 	@Override
-	public IPredicate minimize(Collection<IPredicate> states) {
+	public IPredicate minimize(final Collection<IPredicate> states) {
 		assert sameProgramPoints(states);
 		final IPredicate someElement = states.iterator().next();
 		if (someElement instanceof ISLPredicate) {
-			final ProgramPoint pp = ((ISLPredicate) someElement).getProgramPoint();
+			final BoogieIcfgLocation pp = ((ISLPredicate) someElement).getProgramPoint();
 			if (states.isEmpty()) {
 				assert false : "minimize empty set???";
-			return mSmtManager.getPredicateFactory().newDontCarePredicate(pp);
+			return mPredicateFactory.newDontCarePredicate(pp);
 			}
-			final Term disjuntion = mSmtManager.getPredicateFactory().or(false, states);
-			if (mSmtManager.getPredicateFactory().isDontCare(disjuntion)) {
-				return mSmtManager.getPredicateFactory().newDontCarePredicate(pp);
+			final Term disjuntion = mPredicateFactory.or(false, states);
+			if (mPredicateFactory.isDontCare(disjuntion)) {
+				return mPredicateFactory.newDontCarePredicate(pp);
 			} else {
-				return mSmtManager.getPredicateFactory().newSPredicate(pp, disjuntion);
+				return mPredicateFactory.newSPredicate(pp, disjuntion);
 			}
 		} else if (someElement instanceof IMLPredicate) {
-			final ProgramPoint[] pps = ((IMLPredicate) someElement).getProgramPoints();
+			final BoogieIcfgLocation[] pps = ((IMLPredicate) someElement).getProgramPoints();
 			if (states.isEmpty()) {
 				assert false : "minimize empty set???";
-				final Term dontcareTerm = mSmtManager.getPredicateFactory().getDontCareTerm();
-				return mSmtManager.getPredicateFactory().newMLPredicate(pps, dontcareTerm);
+				return mPredicateFactory.newMLDontCarePredicate(pps);
 			}
-			final Term disjunction = mSmtManager.getPredicateFactory().or(false, states);
-			return mSmtManager.getPredicateFactory().newMLPredicate(pps, disjunction);
+			final Term disjunction = mPredicateFactory.or(false, states);
+			return mPredicateFactory.newMLPredicate(pps, disjunction);
 		} else {
 			throw new AssertionError("unknown predicate");
 		}
 	}
 	
 	
-	private static boolean sameProgramPoints(Collection<IPredicate> states) {
+	private static boolean sameProgramPoints(final Collection<IPredicate> states) {
 		final Iterator<IPredicate> it = states.iterator();
 		final IPredicate firstPredicate = it.next();
 		if (firstPredicate instanceof ISLPredicate) {
-			final ProgramPoint firstProgramPoint = ((ISLPredicate) firstPredicate).getProgramPoint();
+			final BoogieIcfgLocation firstProgramPoint = ((ISLPredicate) firstPredicate).getProgramPoint();
 			while (it.hasNext()) {
-				final ProgramPoint pp = ((ISLPredicate) it.next()).getProgramPoint();
+				final BoogieIcfgLocation pp = ((ISLPredicate) it.next()).getProgramPoint();
 				if (pp != firstProgramPoint) {
 					return false;
 				}
@@ -175,17 +175,17 @@ public class PredicateFactoryRefinement extends PredicateFactoryForInterpolantAu
 	
 
 	@Override
-	public IPredicate senwa(IPredicate entry, IPredicate state) {
-		return mSmtManager.getPredicateFactory().newDontCarePredicate(((SPredicate) state).getProgramPoint());
+	public IPredicate senwa(final IPredicate entry, final IPredicate state) {
+		return mPredicateFactory.newDontCarePredicate(((SPredicate) state).getProgramPoint());
 	}
 	
 	@Override
-	public IPredicate intersectBuchi(IPredicate s1, IPredicate s2, int track) {
+	public IPredicate intersectBuchi(final IPredicate s1, final IPredicate s2, final int track) {
 		return intersection(s1, s2);
 	}
 
 
-	public void setIteration(int i) {
+	public void setIteration(final int i) {
 		mIteration = i;
 	}
 	

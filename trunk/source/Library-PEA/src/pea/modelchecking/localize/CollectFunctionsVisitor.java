@@ -1,4 +1,4 @@
-/* $Id$ 
+/* $Id$
  *
  * This file is part of the PEA tool set
  * 
@@ -41,19 +41,19 @@ import net.sourceforge.czt.z.visitor.ApplExprVisitor;
 import net.sourceforge.czt.z.visitor.ZNameVisitor;
 
 /**
- * CollectFunctionsVisitor is a visitor class for Z terms that collects all functions 
- * used in the term and allowed in Localize export. 
+ * CollectFunctionsVisitor is a visitor class for Z terms that collects all functions
+ * used in the term and allowed in Localize export.
  * In particular, it collects all extension functions, base functions, relations,
  * and the cardinalities of extension functions in Maps containing function names and types or in sets.
  * It only allows extension functions previously declared in a given map of function names and types.
  *
  * The generated collections can be accessed via getter methods after processing a number
- * of term objects. 
+ * of term objects.
  *
  * @author jfaber
  *
  */
-public class CollectFunctionsVisitor implements 
+public class CollectFunctionsVisitor implements
     ZNameVisitor,
     TermVisitor,
     ApplExprVisitor {
@@ -70,13 +70,13 @@ public class CollectFunctionsVisitor implements
     private static final Set<String> ALL_RELATIONS;
     
     static {
-        ALL_BASE_FUNCTIONS = new HashSet<String>();
+        ALL_BASE_FUNCTIONS = new HashSet<>();
         ALL_BASE_FUNCTIONS.add(ZString.PLUS);
         ALL_BASE_FUNCTIONS.add(ZString.MINUS);
         ALL_BASE_FUNCTIONS.add(ZString.MULT);
         ALL_BASE_FUNCTIONS.add(LocalizeWriter.Z_DIV);
 
-        ALL_RELATIONS= new HashSet<String>();
+        ALL_RELATIONS= new HashSet<>();
         ALL_RELATIONS.add(ZString.LEQ);
         ALL_RELATIONS.add(ZString.LESS);
         ALL_RELATIONS.add(ZString.GEQ);
@@ -89,28 +89,28 @@ public class CollectFunctionsVisitor implements
     
     /**
      * Map containing type declarations for extension functions that are given in the constructor
-     * of this visitor. 
+     * of this visitor.
      */
-    private Map<String,String> declarations = new HashMap<String,String>();
+    private final Map<String,String> declarations;
     
     
     /**
-     * A map containing names and types of extension functions collected in several applications of 
+     * A map containing names and types of extension functions collected in several applications of
      * this visitor.
      */
-    private final Map<String,String> extFunctions = new HashMap<String,String>();
+    private final Map<String,String> extFunctions = new HashMap<>();
 
     /**
-     * A set containing names of base functions collected in several applications of 
+     * A set containing names of base functions collected in several applications of
      * this visitor.
      */
-    private final Set<String> baseFunctions = new HashSet<String>();
+    private final Set<String> baseFunctions = new HashSet<>();
     
     /**
-     * A set containing names relations collected in several applications of 
+     * A set containing names relations collected in several applications of
      * this visitor.
      */
-    private final Set<String> relations = new HashSet<String>();
+    private final Set<String> relations = new HashSet<>();
 
 
     /**
@@ -118,7 +118,7 @@ public class CollectFunctionsVisitor implements
      * @param variables
      *          a given map of variables to types
      */
-    public CollectFunctionsVisitor(Map<String, String> variables) {
+    public CollectFunctionsVisitor(final Map<String, String> variables) {
         declarations = variables;
     }
 
@@ -129,7 +129,7 @@ public class CollectFunctionsVisitor implements
      */
     @Override
 	@SuppressWarnings("unchecked")
-    public Object visitTerm(Term zedObject) {
+    public Object visitTerm(final Term zedObject) {
 /*        StringWriter sw = new StringWriter();
         PrintUtils.printUnicode(zedObject, sw, sectionInfo, ZWrapper.getSectionName());
         if(sw.toString().contains("dctag")) {
@@ -155,8 +155,8 @@ public class CollectFunctionsVisitor implements
      * @see net.sourceforge.czt.z.visitor.ZNameVisitor#visitZName(net.sourceforge.czt.z.ast.ZName)
      */
     @Override
-    public Object visitZName(ZName zname) {
-/*       
+    public Object visitZName(final ZName zname) {
+/*
         StringWriter sw = new StringWriter();
         PrintUtils.printUnicode(zname, sw, sectionInfo, ZWrapper.getSectionName());
         if(sw.toString().contains("dctag")) {
@@ -175,7 +175,7 @@ public class CollectFunctionsVisitor implements
             if(ALL_RELATIONS.contains(name)){
 //                if(name.equals(ZString.NEQ))
 //                    relations.add(LocalizeString.EQUALS);
-//                else        
+//                else
                 relations.add(LocalizeWriter.operatorFor(name));
             }
             //            Functions.put(name + strokes,declarations.get(name));
@@ -183,7 +183,7 @@ public class CollectFunctionsVisitor implements
             final String nameWithoutStrokes = zname.getWord();
             if(declarations.containsKey(nameWithoutStrokes) && !extFunctions.containsKey(zname.toString())){
                 extFunctions.put(zname.toString(),declarations.get(nameWithoutStrokes));
-            } 
+            }
         }
         
         return null;
@@ -194,7 +194,7 @@ public class CollectFunctionsVisitor implements
      */
     @SuppressWarnings("unchecked")
     @Override
-    public Object visitApplExpr(ApplExpr expr) {
+    public Object visitApplExpr(final ApplExpr expr) {
 /*
         StringWriter sw = new StringWriter();
         PrintUtils.printUnicode(expr, sw, sectionInfo, ZWrapper.getSectionName());

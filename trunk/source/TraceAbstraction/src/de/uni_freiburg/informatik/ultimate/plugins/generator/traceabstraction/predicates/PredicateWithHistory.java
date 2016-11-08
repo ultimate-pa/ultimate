@@ -32,7 +32,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 
 public class PredicateWithHistory extends SPredicate {
 	
@@ -43,7 +43,7 @@ public class PredicateWithHistory extends SPredicate {
 	private final Map<Integer,Term> mHistory;
 	
 
-	protected PredicateWithHistory(ProgramPoint programPoint, int serialNumber, 
+	protected PredicateWithHistory(BoogieIcfgLocation programPoint, int serialNumber, 
 			String[] procedures, Term formula,
 			Set<IProgramVar> vars, Term closedFormula, Map<Integer,Term> history) {
 		super(programPoint, serialNumber, procedures, formula, vars, closedFormula);

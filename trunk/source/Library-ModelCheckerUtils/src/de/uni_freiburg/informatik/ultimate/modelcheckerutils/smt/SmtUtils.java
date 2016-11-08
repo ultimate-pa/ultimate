@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2013-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE ModelCheckerUtils Library.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE ModelCheckerUtils Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
@@ -68,24 +68,27 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Cnf
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Dnf;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
-public class SmtUtils {
-	
-	public enum XnfConversionTechnique {BDD_BASED, BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION };
-	
-	public enum SimplicationTechnique {SIMPLIFY_BDD_PROP, SIMPLIFY_BDD_FIRST_ORDER, SIMPLIFY_QUICK, SIMPLIFY_DDA };
+public final class SmtUtils {
+
+	public enum XnfConversionTechnique {
+		BDD_BASED, BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION
+	};
+
+	public enum SimplificationTechnique {
+		SIMPLIFY_BDD_PROP, SIMPLIFY_BDD_FIRST_ORDER, SIMPLIFY_QUICK, SIMPLIFY_DDA
+	};
 
 	private SmtUtils() {
 		// Prevent instantiation of this utility class
 	}
-	
+
 	/**
-	 * Avoid the construction of "bvadd" with more than two arguments and
-	 * use nested "bvadd" terms instead.
+	 * Avoid the construction of "bvadd" with more than two arguments and use nested "bvadd" terms instead.
 	 */
 	private static final boolean BINARY_BITVECTOR_SUM_WORKAROUND = false;
 
 	public static Term simplify(final ManagedScript script, final Term formula, final IUltimateServiceProvider services,
-			final SimplicationTechnique simplificationTechnique) {
+			final SimplificationTechnique simplificationTechnique) {
 		final ILogger logger = services.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
 		if (logger.isDebugEnabled()) {
 			logger.debug(new DebugMessage("simplifying formula of DAG size {0}", new DagSizePrinter(formula)));
@@ -210,8 +213,8 @@ public class SmtUtils {
 	}
 
 	/**
-	 * Given a list of Terms term1, ... ,termn returns a new list that contains (not term1), ... ,(not termn) in
-	 * this order.
+	 * Given a list of Terms term1, ... ,termn returns a new list that contains (not term1), ... ,(not termn) in this
+	 * order.
 	 */
 	public static List<Term> negateElementwise(final Script script, final List<Term> terms) {
 		final List<Term> result = new ArrayList<>(terms.size());
@@ -239,7 +242,8 @@ public class SmtUtils {
 	 * has Sort (Int -> Int -> Int) and we store the value val at index [23, 42], this method returns the term (store a
 	 * 23 (store (select a 23) 42 val)).
 	 */
-	public static Term multiDimensionalStore(final Script script, final Term a, final ArrayIndex index, final Term value) {
+	public static Term multiDimensionalStore(final Script script, final Term a, final ArrayIndex index,
+			final Term value) {
 		assert index.size() > 0;
 		assert a.getSort().isArraySort();
 		Term result = value;
@@ -279,29 +283,13 @@ public class SmtUtils {
 
 	/**
 	 * Construct the following term. (index1 == index2) ==> (value1 == value2)
-	 * 
 	 */
-	public static Term indexEqualityImpliesValueEquality(final Script script, final ArrayIndex index1, final ArrayIndex index2,
-			final Term value1, final Term value2) {
-		return indexEqualityInequalityImpliesValueEquality(script, index1, index2, Collections.emptyList(), value1, value2);
-	}
-
-	/**
-	 * Construct the following term. (index == equal) & (index != i) & ... (for all i in unequal) ==> (value1 == value2)
-	 *
-	 */
-	public static Term indexEqualityInequalityImpliesValueEquality(final Script script, final ArrayIndex index, final ArrayIndex equal,
-			final Collection<ArrayIndex> unequal, final Term value1, final Term value2) {
-		assert index.size() == equal.size();
-		Term lhs = Util.and(script, SmtUtils.pairwiseEquality(script, index, equal));
-		for (final ArrayIndex i : unequal) {
-			assert index.size() == i.size();
-			final Term eq = Util.and(script, SmtUtils.pairwiseEquality(script, index, i));
-			lhs = Util.and(script, lhs, Util.not(script, eq));
-		}
-		final Term rhs = SmtUtils.binaryEquality(script, value1, value2);
-		final Term result = Util.or(script, SmtUtils.not(script, lhs), rhs);
-		return result;
+	public static Term indexEqualityImpliesValueEquality(final Script script, final ArrayIndex index1,
+			final ArrayIndex index2, final Term value1, final Term value2) {
+		assert index1.size() == index2.size();
+		final Term lhs = pairwiseEquality(script, index1, index2);
+		final Term rhs = binaryEquality(script, value1, value2);
+		return Util.or(script, not(script, lhs), rhs);
 	}
 
 	/**
@@ -336,11 +324,14 @@ public class SmtUtils {
 			}
 		}
 	}
-	
+
 	/**
-	 * Construct nested binary "bvadd" terms.  
-	 * @param sort bitvector sort of the arguments (required if summands is empty)
-	 * @param summands bitvector terms that each have the same sort
+	 * Construct nested binary "bvadd" terms.
+	 *
+	 * @param sort
+	 *            bitvector sort of the arguments (required if summands is empty)
+	 * @param summands
+	 *            bitvector terms that each have the same sort
 	 */
 	public static Term binaryBitvectorSum(final Script script, final Sort sort, final Term... summands) {
 		if (summands.length == 0) {
@@ -349,7 +340,7 @@ public class SmtUtils {
 			return summands[0];
 		} else {
 			Term result = script.term("bvadd", summands[0], summands[1]);
-			for (int i=2; i<summands.length; i++) {
+			for (int i = 2; i < summands.length; i++) {
 				result = script.term("bvadd", result, summands[i]);
 			}
 			return result;
@@ -387,7 +378,7 @@ public class SmtUtils {
 
 	/**
 	 * Return sum, in affine representation if possible.
-	 * 
+	 *
 	 * @param funcname
 	 *            either "+" or "bvadd".
 	 */
@@ -415,17 +406,15 @@ public class SmtUtils {
 			throw new UnsupportedOperationException("unkown sort " + sort);
 		}
 	}
-	
+
 	/**
 	 * Return term that represents negation of boolean term.
 	 */
 	public static Term not(final Script script, final Term term) {
 		if (term instanceof ApplicationTerm) {
 			final ApplicationTerm appTerm = (ApplicationTerm) term;
-			if (appTerm.getFunction().getName().equals("distinct") && 
-					appTerm.getParameters().length == 2) {
-				return SmtUtils.binaryEquality(script, 
-						appTerm.getParameters()[0], appTerm.getParameters()[1]);
+			if (appTerm.getFunction().getName().equals("distinct") && appTerm.getParameters().length == 2) {
+				return SmtUtils.binaryEquality(script, appTerm.getParameters()[0], appTerm.getParameters()[1]);
 			} else {
 				return Util.not(script, term);
 			}
@@ -471,7 +460,7 @@ public class SmtUtils {
 
 	/**
 	 * Returns true iff. fst and snd are different literals of the same numeric sort ("Int" or "Real").
-	 * 
+	 *
 	 * @exception Throws
 	 *                UnsupportedOperationException if both arguments do not have the same Sort.
 	 */
@@ -505,9 +494,8 @@ public class SmtUtils {
 			sndValue = Rational.valueOf((BigInteger) sndValue, BigInteger.ONE);
 		}
 		if (fstValue.getClass() != sndValue.getClass()) {
-			throw new UnsupportedOperationException(
-					"First value is " + fstValue.getClass().getSimpleName() + 
-					" second value is " + sndValue.getClass().getSimpleName());
+			throw new UnsupportedOperationException("First value is " + fstValue.getClass().getSimpleName()
+					+ " second value is " + sndValue.getClass().getSimpleName());
 		}
 		return !fstValue.equals(sndValue);
 	}
@@ -530,8 +518,7 @@ public class SmtUtils {
 	}
 
 	public static Map<Term, Term> termVariables2Constants(final Script script,
-			final Collection<TermVariable> termVariables,
-			final boolean declareConstants) {
+			final Collection<TermVariable> termVariables, final boolean declareConstants) {
 		final Map<Term, Term> mapping = new HashMap<Term, Term>();
 		for (final TermVariable tv : termVariables) {
 			final Term constant = termVariable2constant(script, tv, declareConstants);
@@ -540,14 +527,33 @@ public class SmtUtils {
 		return mapping;
 	}
 
-	public static Term termVariable2constant(
-			final Script script, final TermVariable tv, final boolean declareConstant) {
+	public static Term termVariable2constant(final Script script, final TermVariable tv,
+			final boolean declareConstant) {
 		final String name = removeSmtQuoteCharacters(tv.getName());
 		if (declareConstant) {
 			final Sort resultSort = tv.getSort();
 			script.declareFun(name, new Sort[0], resultSort);
 		}
 		return script.term(name);
+	}
+
+	/**
+	 * Returns true, iff the term contains an application of the given functionName
+	 */
+	public static boolean containsFunctionApplication(final Term term, final String functionName) {
+		return containsFunctionApplication(term, Arrays.asList(functionName));
+	}
+
+	/**
+	 * Returns true, iff the term contains an application of at least one of the the given functionNames
+	 */
+	public static boolean containsFunctionApplication(final Term term, final Iterable<String> functionNames) {
+		for (final String f : functionNames) {
+			if (!new ApplicationTermFinder(f, true).findMatchingSubterms(term).isEmpty()) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public static boolean containsArrayVariables(final Term... terms) {
@@ -561,13 +567,24 @@ public class SmtUtils {
 		return false;
 	}
 
+	/**
+	 * Returns true, iff the term is array-free. This is the case, if no array variables, no select- and no
+	 * store-expressions are found in it.
+	 */
 	public static boolean isArrayFree(final Term term) {
-		boolean result = !containsArrayVariables(term);
-		final Set<ApplicationTerm> selectTerms = (new ApplicationTermFinder("select", true)).findMatchingSubterms(term);
-		result = result && selectTerms.isEmpty();
-		final Set<ApplicationTerm> storeTerms = (new ApplicationTermFinder("store", true)).findMatchingSubterms(term);
-		result = result && storeTerms.isEmpty();
-		return result;
+		return !containsArrayVariables(term) && !containsFunctionApplication(term, Arrays.asList("select", "store"));
+	}
+
+	/**
+	 * Returns true, iff the term contains an UF-application
+	 */
+	public static boolean containsUninterpretedFunctionApplication(final Term term) {
+		for (final NonTheorySymbol<?> s : new NonTheorySymbolFinder().findNonTheorySymbols(term)) {
+			if (s instanceof NonTheorySymbol.Function) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public static boolean isFalse(final Term term) {
@@ -603,6 +620,40 @@ public class SmtUtils {
 	}
 
 	/**
+	 * Returns true iff the given term is an atomic formula, which means it does not contain any logical symbols (and,
+	 * or, not, quantifiers)
+	 */
+	public static boolean isAtomicFormula(final Term term) {
+		if (isTrue(term) || isFalse(term) || isConstant(term)) {
+			return true;
+		}
+		if (term instanceof ApplicationTerm) {
+			return !allParamsAreBool((ApplicationTerm) term);
+		}
+		return term instanceof TermVariable;
+	}
+
+	/**
+	 * Returns true iff the given term is in NNF (only {@code and}, {@code or} and {@code not} as logical operators,
+	 * where only atoms occurs after a {@code not}).
+	 */
+	public static boolean isNNF(final Term term) {
+		for (final String f : Arrays.asList("=", "=>", "xor", "distinct", "ite")) {
+			for (final ApplicationTerm a : new ApplicationTermFinder(f, true).findMatchingSubterms(term)) {
+				if (allParamsAreBool(a)) {
+					return false;
+				}
+			}
+		}
+		for (final ApplicationTerm a : new ApplicationTermFinder("not", true).findMatchingSubterms(term)) {
+			if (!isAtomicFormula(a.getParameters()[0])) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
 	 * Return all free TermVariables that occur in a set of Terms.
 	 */
 	public static Set<TermVariable> getFreeVars(final Collection<Term> terms) {
@@ -627,7 +678,7 @@ public class SmtUtils {
 	public static Term leq(final Script script, final Term lhs, final Term rhs) {
 		return comparison(script, "<=", lhs, rhs);
 	}
-	
+
 	/**
 	 * @return term that is equivalent to lhs >= rhs
 	 */
@@ -641,7 +692,7 @@ public class SmtUtils {
 	public static Term less(final Script script, final Term lhs, final Term rhs) {
 		return comparison(script, "<", lhs, rhs);
 	}
-	
+
 	/**
 	 * @return term that is equivalent to lhs > rhs
 	 */
@@ -650,8 +701,7 @@ public class SmtUtils {
 	}
 
 	/**
-	 * @return term that is equivalent to lhs X rhs
-	 * where X is either leq, less, geq, or greater.
+	 * @return term that is equivalent to lhs X rhs where X is either leq, less, geq, or greater.
 	 */
 	private static Term comparison(final Script script, final String functionSymbol, final Term lhs, final Term rhs) {
 		final Term rawTerm = script.term(functionSymbol, lhs, rhs);
@@ -665,7 +715,7 @@ public class SmtUtils {
 
 	/**
 	 * Declare and return a new constant. A constant is a 0-ary application term.
-	 * 
+	 *
 	 * @param name
 	 *            name of the resulting constant
 	 * @param sort
@@ -674,7 +724,8 @@ public class SmtUtils {
 	 * @throws SMTLIBException
 	 *             if declaration of constant fails, e.g. the name is already defined
 	 */
-	public static ApplicationTerm buildNewConstant(final Script script, final String name, final String sortname) throws SMTLIBException {
+	public static ApplicationTerm buildNewConstant(final Script script, final String name, final String sortname)
+			throws SMTLIBException {
 		script.declareFun(name, new Sort[0], script.sort(sortname));
 		return (ApplicationTerm) script.term(name);
 	}
@@ -698,7 +749,7 @@ public class SmtUtils {
 
 	/**
 	 * Convert a constant term to Rational.
-	 * 
+	 *
 	 * @param ct
 	 *            constant term that represents a Rational
 	 * @return Rational from the value of ct
@@ -729,8 +780,8 @@ public class SmtUtils {
 	/**
 	 * Construct term but simplify it using lightweight simplification techniques if applicable.
 	 */
-	public static Term termWithLocalSimplification(final Script script, final String funcname, final BigInteger[] indices,
-			final Term... params) {
+	public static Term termWithLocalSimplification(final Script script, final String funcname,
+			final BigInteger[] indices, final Term... params) {
 		final Term result;
 		switch (funcname) {
 		case "and":
@@ -923,7 +974,7 @@ public class SmtUtils {
 	 * Check if {@link Term} which may contain free {@link TermVariable}s is satisfiable with respect to the current
 	 * assertion stack of {@link Script}. Compute unsat core if unsatisfiable. Use {@link LoggingScript} to see the
 	 * input. TODO: Show values of satisfying assignment (including array access) if satisfiable.
-	 * 
+	 *
 	 * @param term
 	 *            may contain free variables
 	 */
@@ -932,9 +983,9 @@ public class SmtUtils {
 		try {
 			final TermVariable[] vars = term.getFreeVars();
 			final Map<Term, Term> substitutionMapping = new HashMap<>();
-			for (int i = 0; i < vars.length; i++) {
-				final Term substituent = termVariable2PseudofreshConstant(script, vars[i]);
-				substitutionMapping.put(vars[i], substituent);
+			for (final TermVariable var : vars) {
+				final Term substituent = termVariable2PseudofreshConstant(script, var);
+				substitutionMapping.put(var, substituent);
 			}
 			final Map<Term, Term> ucMapping = new HashMap<>();
 			final Term[] conjuncts = getConjuncts(term);
@@ -974,7 +1025,7 @@ public class SmtUtils {
 
 	/**
 	 * Convert a {@link ConstantTerm} which has numeric {@link Sort} into a {@literal Rational}.
-	 * 
+	 *
 	 * @return a Rational which represents the input constTerm
 	 * @throws UnsupportedOperationException
 	 *             if ConstantTerm cannot converted to Rational
@@ -1027,42 +1078,36 @@ public class SmtUtils {
 	}
 
 	/**
-	 * Returns quantified formula. 
-	 * Drops quantifiers for variables that do not occur in formula.
-	 * If subformula is quantified formula with same quantifier both are
-	 * merged.
+	 * Returns quantified formula. Drops quantifiers for variables that do not occur in formula. If subformula is
+	 * quantified formula with same quantifier both are merged.
 	 */
-	public static Term quantifier(final Script script, final int quantifier, 
-			final Collection<TermVariable> vars, final Term body) {
-		if (vars.size() == 0) {
+	public static Term quantifier(final Script script, final int quantifier, final Collection<TermVariable> vars,
+			final Term body) {
+		if (vars.isEmpty()) {
 			return body;
 		}
 		final Collection<TermVariable> resultVars = filterToVarsThatOccurFreelyInTerm(vars, body);
 		if (resultVars.isEmpty()) {
 			return body;
 		} else {
-			final QuantifiedFormula innerQuantifiedFormula = 
-					isQuantifiedFormulaWithSameQuantifier(quantifier, body);
+			final QuantifiedFormula innerQuantifiedFormula = isQuantifiedFormulaWithSameQuantifier(quantifier, body);
 			if (innerQuantifiedFormula == null) {
-				return script.quantifier(quantifier, resultVars.toArray(
-						new TermVariable[resultVars.size()]), body);
+				return script.quantifier(quantifier, resultVars.toArray(new TermVariable[resultVars.size()]), body);
 			} else {
-				final Set<TermVariable> resultQuantifiedVars = 
-						new HashSet<>(Arrays.asList(innerQuantifiedFormula.getVariables()));
+				final Set<TermVariable> resultQuantifiedVars = new HashSet<>(
+						Arrays.asList(innerQuantifiedFormula.getVariables()));
 				resultQuantifiedVars.addAll(vars);
-				return script.quantifier(quantifier, resultQuantifiedVars.toArray(
-						new TermVariable[resultQuantifiedVars.size()]), innerQuantifiedFormula.getSubformula());
+				return script.quantifier(quantifier,
+						resultQuantifiedVars.toArray(new TermVariable[resultQuantifiedVars.size()]),
+						innerQuantifiedFormula.getSubformula());
 			}
 		}
 	}
 
-	
 	/**
-	 * Returns a new HashSet that contains all variables that are contained
-	 * in vars and occur freely in term.
+	 * Returns a new HashSet that contains all variables that are contained in vars and occur freely in term.
 	 */
-	public static HashSet<TermVariable> filterToVarsThatOccurFreelyInTerm(
-			final Collection<TermVariable> vars,
+	public static HashSet<TermVariable> filterToVarsThatOccurFreelyInTerm(final Collection<TermVariable> vars,
 			final Term term) {
 		final HashSet<TermVariable> result = new HashSet<>();
 		for (final TermVariable tv : Arrays.asList(term.getFreeVars())) {
@@ -1072,13 +1117,12 @@ public class SmtUtils {
 		}
 		return result;
 	}
-	
+
 	/**
-	 * If term is QuantifiedFormula whose quantifier is quant we return term as
-	 * QuantifiedFormula otherwise we return null;
+	 * If term is QuantifiedFormula whose quantifier is quant we return term as QuantifiedFormula otherwise we return
+	 * null;
 	 */
-	public static QuantifiedFormula isQuantifiedFormulaWithSameQuantifier(
-			final int quant, final Term term) {
+	public static QuantifiedFormula isQuantifiedFormulaWithSameQuantifier(final int quant, final Term term) {
 		if (term instanceof QuantifiedFormula) {
 			final QuantifiedFormula quantifiedFormula = (QuantifiedFormula) term;
 			if (quant == quantifiedFormula.getQuantifier()) {
@@ -1087,27 +1131,25 @@ public class SmtUtils {
 		}
 		return null;
 	}
-	
-	
+
 	/**
-	 * Given a quantified formula, rename all variables that are bound by
-	 * the quantifier and occur in the set toRename to fresh variables.
-	 * @param freshVarPrefix prefix of the fresh variables
+	 * Given a quantified formula, rename all variables that are bound by the quantifier and occur in the set toRename
+	 * to fresh variables.
+	 *
+	 * @param freshVarPrefix
+	 *            prefix of the fresh variables
 	 */
-	public static Term renameQuantifiedVariables(final ManagedScript mgdScript, 
-			final QuantifiedFormula qFormula, 
+	public static Term renameQuantifiedVariables(final ManagedScript mgdScript, final QuantifiedFormula qFormula,
 			final Set<TermVariable> toRename, final String freshVarPrefix) {
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		for (final TermVariable var : toRename) {
-			final TermVariable freshVariable = mgdScript.
-					constructFreshTermVariable(freshVarPrefix, var.getSort());
+			final TermVariable freshVariable = mgdScript.constructFreshTermVariable(freshVarPrefix, var.getSort());
 			substitutionMapping.put(var, freshVariable);
 		}
-		final Term newBody = (new Substitution(mgdScript, 
-					substitutionMapping)).transform(qFormula.getSubformula());
-		
+		final Term newBody = (new Substitution(mgdScript, substitutionMapping)).transform(qFormula.getSubformula());
+
 		final TermVariable[] vars = new TermVariable[qFormula.getVariables().length];
-		for (int i=0; i<vars.length; i++) {
+		for (int i = 0; i < vars.length; i++) {
 			final TermVariable renamed = (TermVariable) substitutionMapping.get(qFormula.getVariables()[i]);
 			if (renamed != null) {
 				vars[i] = renamed;
@@ -1118,8 +1160,7 @@ public class SmtUtils {
 		final Term result = mgdScript.getScript().quantifier(qFormula.getQuantifier(), vars, newBody);
 		return result;
 	}
-	
-	
+
 	/**
 	 * @return true iff term is {@link ApplicationTerm} with functionName.
 	 */
@@ -1132,13 +1173,11 @@ public class SmtUtils {
 		}
 		return false;
 	}
-	
 
 	/**
 	 * @return logically equivalent term in disjunctive normal form (DNF)
 	 */
-	public static Term toDnf(final IUltimateServiceProvider services,
-			final ManagedScript mgdScript, final Term term,
+	public static Term toDnf(final IUltimateServiceProvider services, final ManagedScript mgdScript, final Term term,
 			final XnfConversionTechnique xnfConversionTechnique) {
 		final Term result;
 		switch (xnfConversionTechnique) {
@@ -1153,12 +1192,11 @@ public class SmtUtils {
 		}
 		return result;
 	}
-	
+
 	/**
 	 * @return logically equivalent term in conjunctive normal form (CNF)
 	 */
-	public static Term toCnf(final IUltimateServiceProvider services, 
-			final ManagedScript mgdScript, final Term term,
+	public static Term toCnf(final IUltimateServiceProvider services, final ManagedScript mgdScript, final Term term,
 			final XnfConversionTechnique xnfConversionTechnique) {
 		final Term result;
 		switch (xnfConversionTechnique) {
@@ -1173,6 +1211,53 @@ public class SmtUtils {
 		}
 		return result;
 	}
-	
 
+	/**
+	 * Returns true for {@link Sorts} for which we can obtain values. E.g. for arrays we cannot get values that our
+	 * analysis can process, since arrays are infinite in general. However, if the range Sort of an array is bitvector
+	 * sort we can get values for array cells (resp. the corresponding select term).
+	 */
+	public static boolean isSortForWhichWeCanGetValues(final Sort sort) {
+		return sort.isNumericSort() || sort.getRealSort().getName().equals("Bool")
+				|| sort.getRealSort().getName().equals("BitVec")
+				|| sort.getRealSort().getName().equals("FloatingPoint");
+	}
+
+	/**
+	 * Get values from script and transform them try to simplify them.
+	 *
+	 * @param script
+	 *            Script that is in a state where it can provide values, e.g., after a check-sat where the response was
+	 *            sat.
+	 * @param terms
+	 *            Collection of term for which we want to have possible values in the current satisfying model
+	 * @return Mapping that maps to each term for which we want a value a possible value in the current satisfying
+	 *         model.
+	 */
+	public static Map<Term, Term> getValues(final Script script, final Collection<Term> terms) {
+		if (terms.isEmpty()) {
+			return Collections.emptyMap();
+		} else {
+			final Term[] asArray = terms.toArray(new Term[terms.size()]);
+			final Map<Term, Term> mapFromSolver = script.getValue(asArray);
+			/*
+			 * Some solvers, e.g., Z3 return -1 not as a literal but as a unary minus of a positive literal. We use our
+			 * affine term to obtain the negative literal.
+			 */
+			final Map<Term, Term> copyWithNiceValues = new HashMap<Term, Term>();
+			for (final Entry<Term, Term> entry : mapFromSolver.entrySet()) {
+				copyWithNiceValues.put(entry.getKey(), makeAffineIfPossible(script, entry.getValue()));
+			}
+			return Collections.unmodifiableMap(copyWithNiceValues);
+		}
+	}
+
+	private static Term makeAffineIfPossible(final Script script, final Term term) {
+		final AffineTerm affineTerm = (AffineTerm) (new AffineTermTransformer(script)).transform(term);
+		if (affineTerm.isErrorTerm()) {
+			return term;
+		} else {
+			return affineTerm.toTerm(script);
+		}
+	}
 }

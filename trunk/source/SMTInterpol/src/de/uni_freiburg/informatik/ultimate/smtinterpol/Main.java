@@ -20,14 +20,13 @@ package de.uni_freiburg.informatik.ultimate.smtinterpol;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Properties;
 
-import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.aiger.AIGERFrontEnd;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.dimacs.DIMACSParser;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.option.OptionMap;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib.SMTLIBParser;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTLIB2Parser;
@@ -69,7 +68,6 @@ public final class Main {
 	private static void usage() {
 		System.err.println("USAGE: smtinterpol [OPTION]... [INPUTFILE]");
 		System.err.println("If no INPUTFILE is given, stdin is used.");
-		System.err.println("  -transform <output>  Transform the input to SMTLIB 2 and write into output.");// NOCHECKSTYLE
 		System.err.println("  -script <class>      Send the input to another Java class implementing Script.");// NOCHECKSTYLE
 		System.err.println("  -no-success          Don't print success messages.");// NOCHECKSTYLE
 		System.err.println("  -o <opt>=<value>     Set option :opt to value. The default value is true.");// NOCHECKSTYLE
@@ -96,44 +94,58 @@ public final class Main {
 	 * @param param Command line arguments.
 	 */
 	public static void main(String[] param) throws Exception {
+		final DefaultLogger logger = new DefaultLogger();
+		final OptionMap options = new OptionMap(logger, true);
 		IParser parser = new SMTLIB2Parser();
 		Script solver = null;
-		final ArrayList<String> options = new ArrayList<String>();
 		int paramctr = 0;
 		while (paramctr < param.length
 				&& param[paramctr].startsWith("-")) {
 			if (param[paramctr].equals("--")) {
 				paramctr++;
 				break;
-			} else if (param[paramctr].equals("-transform")
-					&& paramctr + 1 < param.length) {
-				paramctr++;
-				solver = new LoggingScript(param[paramctr], true);
 			} else if (param[paramctr].equals("-script")
 					&& paramctr + 1 < param.length) {
 				paramctr++;
 				final Class<?> scriptClass = Class.forName(param[paramctr]);
 				solver = (Script) scriptClass.newInstance();
 			} else if (param[paramctr].equals("-no-success")) {
-				options.add("print-success=false");
+				options.set(":print-success", false);
+			} else if (param[paramctr].equals("-v")) {
+				options.set(":verbosity", LogProxy.LOGLEVEL_DEBUG);
+			} else if (param[paramctr].equals("-w")) {
+				options.set(":verbosity", LogProxy.LOGLEVEL_WARN);
+			} else if (param[paramctr].equals("-q")) {
+				options.set(":verbosity", LogProxy.LOGLEVEL_ERROR);
+			} else if (param[paramctr].equals("-t")
+					&& ++paramctr < param.length) {
+				options.set(":timeout", param[paramctr]);
+			} else if (param[paramctr].equals("-r")
+					&& ++paramctr < param.length) {
+				options.set(":random-seed", param[paramctr]);
 			} else if (param[paramctr].equals("-o")
 					&& paramctr + 1 < param.length) {
 				paramctr++;
-				options.add(param[paramctr]);
-			} else if (param[paramctr].equals("-v")) {
-				options.add("verbosity=5");
-			} else if (param[paramctr].equals("-w")) {
-				options.add("verbosity=3");
-			} else if (param[paramctr].equals("-q")) {
-				options.add("verbosity=2");
-			} else if (param[paramctr].equals("-t")
-					&& paramctr + 1 < param.length) {
-				paramctr++;
-				options.add("timeout=" + param[paramctr]);
-			} else if (param[paramctr].equals("-r")
-					&& paramctr + 1 < param.length) {
-				paramctr++;
-				options.add("random-seed=" + param[paramctr]);
+				final String opt = param[paramctr];
+				final int eq = opt.indexOf('=');
+				String name;
+				Object value;
+				if (eq == -1) {
+					name = opt;
+					value = Boolean.TRUE;
+				} else {
+					name = opt.substring(0, eq);
+					value = opt.substring(eq + 1);
+				}
+				try {
+					options.set(":" + name, value);
+				} catch (final UnsupportedOperationException ex) {
+					System.err.println("Unknown option :" + name + ".");
+					return;
+				} catch (final SMTLIBException ex) {
+					System.err.println(ex.getMessage());
+					return;
+				}
 			} else if (param[paramctr].equals("-smt2")) {
 				parser = new SMTLIB2Parser();
 			} else if (param[paramctr].equals("-smt")) {
@@ -143,7 +155,7 @@ public final class Main {
 			} else if (param[paramctr].equals("-a")) {
 				parser = new AIGERFrontEnd();
 			} else if (param[paramctr].equals("-trace")) {
-				options.add("verbosity=-1");
+				options.set(":verbosity", LogProxy.LOGLEVEL_TRACE);
 			} else if (param[paramctr].equals("-version")) {
 				version();
 				return;
@@ -161,31 +173,11 @@ public final class Main {
 			usage();
 			return;
 		}
+		options.started();
 		if (solver == null) {
-			solver = new SMTInterpol();
+			solver = new SMTInterpol(null, options);
 		}
-		for (final String opt : options) {
-			final int eq = opt.indexOf('=');
-			String name;
-			Object value;
-			if (eq == -1) {
-				name = opt;
-				value = Boolean.TRUE;
-			} else {
-				name = opt.substring(0, eq);
-				value = opt.substring(eq + 1);
-			}
-			try {
-				solver.setOption(":" + name, value);
-			} catch (final UnsupportedOperationException ex) {
-				System.err.println("Unknown option :" + name + ".");
-				return;
-			} catch (final SMTLIBException ex) {
-				System.err.println(ex.getMessage());
-				return;
-			}
-		}
-		final int exitCode = parser.run(solver, filename);
+		final int exitCode = parser.run(solver, filename, options);
 		System.exit(exitCode);
 	}
 

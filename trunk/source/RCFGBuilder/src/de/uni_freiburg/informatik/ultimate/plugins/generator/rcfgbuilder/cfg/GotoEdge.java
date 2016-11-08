@@ -28,7 +28,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
 /**
  * Represents an edge without any effect to the programs variables. While
@@ -42,7 +42,7 @@ public class GotoEdge extends CodeBlock implements IInternalAction {
 
 	private static final long serialVersionUID = -2923506946454722306L;
 
-	GotoEdge(int serialNumber, ProgramPoint source, ProgramPoint target, ILogger logger) {
+	GotoEdge(int serialNumber, BoogieIcfgLocation source, BoogieIcfgLocation target, ILogger logger) {
 		super(serialNumber, source, target, logger);
 		assert (target != null);
 	}
@@ -67,7 +67,7 @@ public class GotoEdge extends CodeBlock implements IInternalAction {
 	}
 
 	@Override
-	public TransFormula getTransformula() {
+	public UnmodifiableTransFormula getTransformula() {
 		return getTransitionFormula();
 	}
 

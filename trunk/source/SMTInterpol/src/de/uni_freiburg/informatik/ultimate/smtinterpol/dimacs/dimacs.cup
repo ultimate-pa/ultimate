@@ -21,8 +21,7 @@
 package de.uni_freiburg.informatik.ultimate.smtinterpol.dimacs;
 import de.uni_freiburg.informatik.ultimate.logic.*;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
-import org.apache.log4j.Logger;
-import java_cup.runtime.Symbol;
+import com.github.jhoenicke.javacup.runtime.Symbol;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.MySymbolFactory;
 
 parser Parser;
@@ -54,7 +53,7 @@ parser code {:
 	    } else
 	        location = "UNKNOWN";
 	    
-		Logger.getRootLogger().error(filename+":"+location+": "+s);
+		System.err.println("Error: " + filename+":"+location+": "+s);
 	}
 
 	public void report_error(String s) {	

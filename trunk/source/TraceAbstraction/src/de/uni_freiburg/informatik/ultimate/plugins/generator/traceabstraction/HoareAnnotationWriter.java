@@ -29,17 +29,18 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateTransformer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
@@ -50,8 +51,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  */
 public class HoareAnnotationWriter {
 
-	private final RootAnnot mrootAnnot;
-	private final SmtManager mSmtManager;
+	private final IUltimateServiceProvider mServices;
+	private final BoogieIcfgContainer mrootAnnot;
+	private final CfgSmtToolkit mCsToolkit;
+	private final PredicateFactory mPredicateFactory;
 	private final HoareAnnotationFragments mHoareAnnotationFragments;
 
 	/**
@@ -61,75 +64,75 @@ public class HoareAnnotationWriter {
 	private final boolean mUseEntry;
 	private final PredicateTransformer mPredicateTransformer;
 
-	public HoareAnnotationWriter(final RootAnnot rootAnnot, final SmtManager smtManager,
+	public HoareAnnotationWriter(final BoogieIcfgContainer rootAnnot, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final HoareAnnotationFragments hoareAnnotationFragments, final IUltimateServiceProvider services, 
-			final SimplicationTechnique simplicationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
+			final SimplificationTechnique simplicationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
+		mServices = services;
 		mrootAnnot = rootAnnot;
-		mSmtManager = smtManager;
+		mCsToolkit = csToolkit;
+		mPredicateFactory = predicateFactory;
 		mHoareAnnotationFragments = hoareAnnotationFragments;
 		mUseEntry = true;
-		mPredicateTransformer = new PredicateTransformer(smtManager.getManagedScript(), 
-				smtManager.getScript(), null, services, simplicationTechnique, xnfConversionTechnique);
+		mPredicateTransformer = new PredicateTransformer(services, 
+				csToolkit.getManagedScript(), simplicationTechnique, xnfConversionTechnique);
 	}
 
 	public void addHoareAnnotationToCFG() {
-		IPredicate precondForContext = mSmtManager.getPredicateFactory().newPredicate(mSmtManager.getScript().term("true"));
-		addHoareAnnotationForContext(mSmtManager, precondForContext,
+		IPredicate precondForContext = mPredicateFactory.newPredicate(mCsToolkit.getManagedScript().getScript().term("true"));
+		addHoareAnnotationForContext(mCsToolkit, precondForContext,
 				mHoareAnnotationFragments.getProgPoint2StatesWithEmptyContext());
 
 		for (final IPredicate context : mHoareAnnotationFragments.getDeadContexts2ProgPoint2Preds().keySet()) {
-			if (true || mUseEntry || containsAnOldVar(context)) {
+			if (mUseEntry || containsAnOldVar(context)) {
 				precondForContext = mHoareAnnotationFragments.getContext2Entry().get(context);
 			} else {
-				final Term spTerm = mPredicateTransformer.strongestPostcondition(context,
-						getCall((ISLPredicate) context), true);
-				precondForContext = mSmtManager.getPredicateFactory().newPredicate(spTerm);
+				// compute SP
 			}
-			precondForContext = mSmtManager.renameGlobalsToOldGlobals(precondForContext);
-			final HashRelation<ProgramPoint, IPredicate> pp2preds = mHoareAnnotationFragments
+			precondForContext = TraceAbstractionUtils.renameGlobalsToOldGlobals(precondForContext, 
+					mServices, mCsToolkit.getManagedScript(), mPredicateFactory, SimplificationTechnique.SIMPLIFY_DDA);
+			final HashRelation<BoogieIcfgLocation, IPredicate> pp2preds = mHoareAnnotationFragments
 					.getDeadContexts2ProgPoint2Preds().get(context);
-			addHoareAnnotationForContext(mSmtManager, precondForContext, pp2preds);
+			addHoareAnnotationForContext(mCsToolkit, precondForContext, pp2preds);
 		}
 
 		for (final IPredicate context : mHoareAnnotationFragments.getLiveContexts2ProgPoint2Preds().keySet()) {
-			if (true || mUseEntry || containsAnOldVar(context)) {
+			if (mUseEntry || containsAnOldVar(context)) {
 				precondForContext = mHoareAnnotationFragments.getContext2Entry().get(context);
 			} else {
-				final Term spTerm = mPredicateTransformer.strongestPostcondition(context,
-						getCall((ISLPredicate) context), true);
-				precondForContext = mSmtManager.getPredicateFactory().newPredicate(spTerm);
+				// compute SP
 			}
-			precondForContext = mSmtManager.renameGlobalsToOldGlobals(precondForContext);
-			final HashRelation<ProgramPoint, IPredicate> pp2preds = mHoareAnnotationFragments
+			precondForContext = TraceAbstractionUtils.renameGlobalsToOldGlobals(precondForContext, 
+					mServices, mCsToolkit.getManagedScript(), mPredicateFactory, SimplificationTechnique.SIMPLIFY_DDA);
+			final HashRelation<BoogieIcfgLocation, IPredicate> pp2preds = mHoareAnnotationFragments
 					.getLiveContexts2ProgPoint2Preds().get(context);
-			addHoareAnnotationForContext(mSmtManager, precondForContext, pp2preds);
+			addHoareAnnotationForContext(mCsToolkit, precondForContext, pp2preds);
 		}
 	}
 
 	/**
-	 * @param smtManager
+	 * @param csToolkit
 	 * @param precondForContext
 	 * @param pp2preds
 	 */
-	private void addHoareAnnotationForContext(final SmtManager smtManager, final IPredicate precondForContext,
-			final HashRelation<ProgramPoint, IPredicate> pp2preds) {
-		for (final ProgramPoint pp : pp2preds.getDomain()) {
+	private void addHoareAnnotationForContext(final CfgSmtToolkit csToolkit, final IPredicate precondForContext,
+			final HashRelation<BoogieIcfgLocation, IPredicate> pp2preds) {
+		for (final BoogieIcfgLocation pp : pp2preds.getDomain()) {
 			final IPredicate[] preds = pp2preds.getImage(pp).toArray(new IPredicate[0]);
-			final Term tvp = smtManager.getPredicateFactory().or(false, preds);
-			final IPredicate formulaForPP = mSmtManager.getPredicateFactory().newPredicate(tvp);
+			final Term tvp = mPredicateFactory.or(false, preds);
+			final IPredicate formulaForPP = mPredicateFactory.newPredicate(tvp);
 			addFormulasToLocNodes(pp, precondForContext, formulaForPP);
 		}
 	}
 
-	private void addFormulasToLocNodes(final ProgramPoint pp, final IPredicate context, final IPredicate current) {
+	private void addFormulasToLocNodes(final BoogieIcfgLocation pp, final IPredicate context, final IPredicate current) {
 		final String procName = pp.getProcedure();
-		final String locName = pp.getPosition();
-		final ProgramPoint locNode = mrootAnnot.getProgramPoints().get(procName).get(locName);
+		final String locName = pp.getDebugIdentifier();
+		final BoogieIcfgLocation locNode = mrootAnnot.getProgramPoints().get(procName).get(locName);
 		HoareAnnotation hoareAnnot = null;
 		
 		final HoareAnnotation taAnnot = HoareAnnotation.getAnnotation(locNode);
 		if (taAnnot == null) {
-			hoareAnnot = mSmtManager.getPredicateFactory().getNewHoareAnnotation(pp, mrootAnnot.getModGlobVarManager());
+			hoareAnnot = mPredicateFactory.getNewHoareAnnotation(pp, mCsToolkit.getModifiableGlobals());
 			hoareAnnot.annotate(locNode);
 		} else {
 			hoareAnnot = taAnnot;
@@ -138,9 +141,9 @@ public class HoareAnnotationWriter {
 	}
 
 	private Call getCall(final ISLPredicate pred) {
-		final ProgramPoint pp = pred.getProgramPoint();
+		final BoogieIcfgLocation pp = pred.getProgramPoint();
 		Call result = null;
-		for (final RCFGEdge edge : pp.getOutgoingEdges()) {
+		for (final IcfgEdge edge : pp.getOutgoingEdges()) {
 			if (edge instanceof Call) {
 				if (result == null) {
 					result = (Call) edge;

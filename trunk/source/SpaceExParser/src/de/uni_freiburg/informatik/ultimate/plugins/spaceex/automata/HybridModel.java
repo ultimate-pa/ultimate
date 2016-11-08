@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE SpaceExParser plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE SpaceExParser plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE SpaceExParser plug-in grant you additional permission
  * to convey the resulting work.
  */
 
@@ -56,7 +56,7 @@ public class HybridModel {
 	private final HybridAutomatonFactory mHybridAutomatonFactory;
 	private final HybridSystem mRootSystem;
 
-	public HybridModel(Sspaceex root, ILogger logger) {
+	public HybridModel(final Sspaceex root, final ILogger logger) {
 		mLogger = logger;
 
 		mHybridSystemFactory = new HybridSystemFactory(mLogger);
@@ -76,12 +76,12 @@ public class HybridModel {
 			        return newEntry;
 		        }));
 
-		if (systems.size() == 0 && automata.size() > 1) {
+		if (systems.isEmpty() && automata.size() > 1) {
 			throw new UnsupportedOperationException(
 			        "If no hybrid system is specified, only one automaton is allowed to exist in the model.");
 		}
 
-		if (systems.size() == 0) {
+		if (systems.isEmpty()) {
 			mRootSystem = createDefaultSystem(automata);
 		} else {
 			// TODO for the time being, we use the first defined system as default system. Read system name from config
@@ -94,7 +94,7 @@ public class HybridModel {
 		}
 	}
 
-	private HybridSystem createDefaultSystem(Map<String, ComponentType> automata) {
+	private HybridSystem createDefaultSystem(final Map<String, ComponentType> automata) {
 		assert automata.size() == 1 : "Only one hybrid automaton is possible if no system was defined.";
 
 		final ComponentType automatonComponent = automata.entrySet().iterator().next().getValue();
@@ -103,11 +103,11 @@ public class HybridModel {
 		        .createHybridAutomatonFromComponent(automatonComponent);
 
 		final Set<String> globalParams = automaton.getGlobalParameters().stream()
-		        .map(g -> (new StringBuilder().append("system_").append(g).toString())).collect(Collectors.toSet());
+		        .map(g -> new StringBuilder().append("system_").append(g).toString()).collect(Collectors.toSet());
 		final Set<String> globalConstants = automaton.getGlobalConstants().stream()
-		        .map(gc -> (new StringBuilder().append("system_").append(gc).toString())).collect(Collectors.toSet());
+		        .map(gc -> new StringBuilder().append("system_").append(gc).toString()).collect(Collectors.toSet());
 		final Set<String> labels = automaton.getLabels().stream()
-		        .map(l -> (new StringBuilder().append("system_").append(l).toString())).collect(Collectors.toSet());
+		        .map(l -> new StringBuilder().append("system_").append(l).toString()).collect(Collectors.toSet());
 
 		final Map<String, HybridAutomaton> autMap = new HashMap<>();
 		autMap.put(automaton.getName(), automaton);

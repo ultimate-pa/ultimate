@@ -39,10 +39,11 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.termination.AffineFunctio
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.AffineFunctionGenerator;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfunctions.ParallelRankingFunction;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfunctions.RankingFunction;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 
 /**
@@ -80,7 +81,7 @@ public class ParallelTemplate extends RankingTemplate {
 	/**
 	 * @param numfunctions number of parallel ranking functions
 	 */
-	public ParallelTemplate(int numfunctions) {
+	public ParallelTemplate(final int numfunctions) {
 		assert(numfunctions > 1);
 		assert(numfunctions <= 30); // reasonable upper size bound
 		                             // until the singularity arrives
@@ -137,7 +138,7 @@ public class ParallelTemplate extends RankingTemplate {
 	
 	@Override
 	public List<List<LinearInequality>> getConstraints(
-			Map<RankVar, Term> inVars, Map<RankVar, Term> outVars) {
+			final Map<IProgramVar, TermVariable> inVars, final Map<IProgramVar, TermVariable> outVars) {
 		checkInitialized();
 		final List<List<LinearInequality>> conjunction =
 				new ArrayList<List<LinearInequality>>();
@@ -148,7 +149,7 @@ public class ParallelTemplate extends RankingTemplate {
 			final LinearInequality li2 = mfgens[i].generate(outVars);
 			li2.negate();
 			li.add(li2);
-			li.motzkin_coefficient = sRedAtoms ?
+			li.mMotzkinCoefficient = sRedAtoms ?
 					PossibleMotzkinCoefficients.ONE
 					: PossibleMotzkinCoefficients.ANYTHING;
 			conjunction.add(Collections.singletonList(li));
@@ -164,7 +165,7 @@ public class ParallelTemplate extends RankingTemplate {
 					// f_i(x) > 0
 					final LinearInequality li = mfgens[i].generate(inVars);
 					li.setStrict(true);
-					li.motzkin_coefficient = sRedAtoms && i == 0 ?
+					li.mMotzkinCoefficient = sRedAtoms && i == 0 ?
 							PossibleMotzkinCoefficients.ZERO_AND_ONE
 							: PossibleMotzkinCoefficients.ANYTHING;
 					disjunction.add(li);
@@ -177,7 +178,7 @@ public class ParallelTemplate extends RankingTemplate {
 					final AffineTerm a = new AffineTerm(mdeltas[i], Rational.MONE);
 					li.add(a);
 					li.setStrict(true);
-					li.motzkin_coefficient = sRedAtoms && i == 0 ?
+					li.mMotzkinCoefficient = sRedAtoms && i == 0 ?
 							PossibleMotzkinCoefficients.ZERO_AND_ONE
 							: PossibleMotzkinCoefficients.ANYTHING;
 					disjunction.add(li);
@@ -201,7 +202,7 @@ public class ParallelTemplate extends RankingTemplate {
 	}
 
 	@Override
-	public RankingFunction extractRankingFunction(Map<Term, Rational> val)
+	public RankingFunction extractRankingFunction(final Map<Term, Rational> val)
 			throws SMTLIBException {
 		final AffineFunction[] fs = new AffineFunction[size];
 		for (int i = 0; i < size; ++i) {

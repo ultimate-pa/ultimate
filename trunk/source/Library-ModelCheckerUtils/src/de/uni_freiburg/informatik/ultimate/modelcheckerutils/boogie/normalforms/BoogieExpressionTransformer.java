@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE ModelCheckerUtils Library.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE ModelCheckerUtils Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms;
@@ -37,13 +37,14 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.QuantifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 
 /**
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
@@ -92,7 +93,7 @@ public class BoogieExpressionTransformer implements INormalFormable<Expression> 
 		return makeBoolBinop(Operator.LOGICAND, operands);
 	}
 
-	private Expression makeBoolBinop(final Operator op, final Iterator<Expression> operands) {
+	private static Expression makeBoolBinop(final Operator op, final Iterator<Expression> operands) {
 		Expression left = null;
 		Expression right = null;
 		final Iterator<Expression> unifiedOperandsIterator = unifyOperands(op, operands);
@@ -120,7 +121,7 @@ public class BoogieExpressionTransformer implements INormalFormable<Expression> 
 		return left;
 	}
 
-	private Iterator<Expression> unifyOperands(final Operator op, final Iterator<Expression> operands) {
+	private static Iterator<Expression> unifyOperands(final Operator op, final Iterator<Expression> operands) {
 		final LinkedHashSet<Expression> unifiedOperands = new LinkedHashSet<>();
 		while (operands.hasNext()) {
 			final Expression operand = operands.next();
@@ -175,7 +176,7 @@ public class BoogieExpressionTransformer implements INormalFormable<Expression> 
 		throw new UnsupportedOperationException();
 	}
 
-	private Collection<Expression> getOperands(final BinaryExpression expr) {
+	private static Collection<Expression> getOperands(final BinaryExpression expr) {
 		final ArrayDeque<Expression> open = new ArrayDeque<>();
 		final LinkedHashSet<Expression> closed = new LinkedHashSet<>();
 		open.add(expr.getLeft());
@@ -240,7 +241,7 @@ public class BoogieExpressionTransformer implements INormalFormable<Expression> 
 	}
 
 	@Override
-	public Expression changeForall(final Expression oldForAll, Expression operand) {
+	public Expression changeForall(final Expression oldForAll, final Expression operand) {
 		final QuantifierExpression old = (QuantifierExpression) oldForAll;
 		return new QuantifierExpression(operand.getLocation(), true, old.getTypeParams(), old.getParameters(),
 				old.getAttributes(), operand);
@@ -346,5 +347,17 @@ public class BoogieExpressionTransformer implements INormalFormable<Expression> 
 		}
 		// cannot negate anything else
 		throw new UnsupportedOperationException("Cannot negate " + BoogiePrettyPrinter.print(atom));
+	}
+
+	@Override
+	public boolean isLiteral(final Expression formula) {
+		if (formula instanceof IdentifierExpression) {
+			return true;
+		}
+		if (formula instanceof UnaryExpression) {
+			final UnaryExpression uform = (UnaryExpression) formula;
+			return uform.getExpr() instanceof IdentifierExpression;
+		}
+		return false;
 	}
 }

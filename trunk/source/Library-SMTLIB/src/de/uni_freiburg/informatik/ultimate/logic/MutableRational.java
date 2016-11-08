@@ -37,17 +37,31 @@ public class MutableRational implements Comparable<MutableRational> {
 	int mDenom;
 	BigInteger mBignum;
 	BigInteger mBigdenom;
-	
+
+	/**
+	 * Create a new rational representing num/denom.
+	 * @param num the numerator.
+	 * @param denom the denominator.
+	 */
 	public MutableRational(int num, int denom) {
 		setValue(num, denom);
 	}
-	
+
+	/**
+	 * Create a new rational representing num/denom.
+	 * @param num the numerator.
+	 * @param denom the denominator.
+	 */
 	public MutableRational(BigInteger num, BigInteger denom) {
 		mBignum = num;
 		mBigdenom = denom;
 		normalize();
 	}
-	
+
+	/**
+	 * Create a new mutable rational from a rational.
+	 * @param r the rational.
+	 */
 	public MutableRational(Rational r) {
 		mNum = r.mNum;
 		mDenom = r.mDenom;
@@ -56,7 +70,11 @@ public class MutableRational implements Comparable<MutableRational> {
 			mBigdenom = r.denominator();
 		}
 	}
-	
+
+	/**
+	 * Create a new copy of a mutable rational.
+	 * @param r the original rational.
+	 */
 	public MutableRational(MutableRational r) {
 		mNum = r.mNum;
 		mDenom = r.mDenom;
@@ -64,6 +82,10 @@ public class MutableRational implements Comparable<MutableRational> {
 		mBigdenom = r.mBigdenom;
 	}
 
+	/**
+	 * Set the value of this rational to value.
+	 * @param value the value to set to.
+	 */
 	public void setValue(Rational value) {
 		mNum = value.mNum;
 		mDenom = value.mDenom;
@@ -74,7 +96,12 @@ public class MutableRational implements Comparable<MutableRational> {
 			mBignum = mBigdenom = null;
 		}
 	}
-	
+
+	/**
+	 * Set the value of this rational to newnum/newdenom.
+	 * @param newnum the new numerator.
+	 * @param newdenom the new denominator.
+	 */
 	public void setValue(long newnum, long newdenom) {
 		long gcd2 = Rational.gcd(Math.abs(newnum), Math.abs(newdenom));
 		if (newdenom < 0) {
@@ -84,7 +111,7 @@ public class MutableRational implements Comparable<MutableRational> {
 			newnum /= gcd2;
 			newdenom /= gcd2;
 		}
-		
+
 		if (Integer.MIN_VALUE <= newnum && newnum <= Integer.MAX_VALUE
 			&& newdenom <= Integer.MAX_VALUE) {
 			mNum = (int) newnum;
@@ -95,7 +122,11 @@ public class MutableRational implements Comparable<MutableRational> {
 			mBigdenom = BigInteger.valueOf(newdenom);
 		}
 	}
-	
+
+	/**
+	 * Normalize the rational by dividing through the gcd.  This is
+	 * called after every operation.
+	 */
 	private void normalize() {
 		if (mBignum == null) {
 			final int norm = Rational.gcd(mNum, mDenom);
@@ -127,6 +158,11 @@ public class MutableRational implements Comparable<MutableRational> {
 		}
 	}
 
+	/**
+	 * Add the rational other to this rational.
+	 * @param other the rational to add.
+	 * @return this mutable rational.
+	 */
 	public MutableRational add(Rational other) {
 		/* fast path */
 		if (other == Rational.ZERO) {
@@ -163,7 +199,7 @@ public class MutableRational implements Comparable<MutableRational> {
 			mBigdenom = other.denominator();
 			return this;
 		}
-		
+
 		final BigInteger tdenom = denominator();
 		final BigInteger odenom = other.denominator();
 		if (tdenom.equals(odenom)) {
@@ -180,7 +216,11 @@ public class MutableRational implements Comparable<MutableRational> {
 		normalize();
 		return this;
 	}
-	
+
+	/**
+	 * Negate this rational, i.e., this = -this.
+	 * @return this mutable rational.
+	 */
 	public MutableRational negate() {
 		if (mBignum == null) {
 			if (mNum == Integer.MIN_VALUE) {
@@ -193,11 +233,21 @@ public class MutableRational implements Comparable<MutableRational> {
 		}
 		return this;
 	}
-	
+
+	/**
+	 * Subtract the other rational from this.
+	 * @param other the rational to subtract.
+	 * @return this mutable rational.
+	 */
 	public MutableRational sub(Rational other) {
 		return add(other.negate());
 	}
-	
+
+	/**
+	 * Multiply this rational with other and store the result in this.
+	 * @param other the rational to multiply with.
+	 * @return this mutable rational.
+	 */
 	public MutableRational mul(Rational other) {
 		/* fast path */
 		if (other == Rational.ONE) {
@@ -212,13 +262,18 @@ public class MutableRational implements Comparable<MutableRational> {
 			setValue(newnum, newdenom);
 			return this;
 		}
-		
+
 		mBignum = numerator().multiply(other.numerator());
 		mBigdenom = denominator().multiply(other.denominator());
 		normalize();
 		return this;
 	}
-	
+
+	/**
+	 * Divide this rational by the other and store the result in this.
+	 * @param other the divisor.
+	 * @return this mutable rational.
+	 */
 	public MutableRational div(Rational other) {
 		/* fast path */
 		if (other == Rational.ZERO) {
@@ -253,7 +308,12 @@ public class MutableRational implements Comparable<MutableRational> {
 		normalize();
 		return this;
 	}
-	
+
+	/**
+	 * Compute the multiplicative inverse of this rational and store
+	 * it in this.
+	 * @return this mutable rational.
+	 */
 	public MutableRational inverse() {
 		if (mBignum == null) {
 			setValue(mDenom, mNum);
@@ -269,30 +329,51 @@ public class MutableRational implements Comparable<MutableRational> {
 		}
 		return this;
 	}
-	
+
+	/**
+	 * Check if this rational is negative.
+	 * @return true iff {@code this < 0}.
+	 */
 	public boolean isNegative() {
 		return numerator().signum() < 0;
 	}
+
 	/**
-	 * Returns <code>this+(fac1*fac2)</code>
+	 * Computes {@code this += (fac1*fac2)}.
+	 * @param fac1 one of the factors.
+	 * @param fac2 the other factor.
+	 * @return this mutable rational.
 	 */
 	public MutableRational addmul(Rational fac1,Rational fac2) {
 		return add(fac1.mul(fac2));
 	}
+
 	/**
-	 * Returns <code>this+(fac1*fac2)</code>
+	 * Computes {@code this += (fac1*fac2)}.
+	 * @param fac1 one of the factors.
+	 * @param fac2 the other factor.
+	 * @return this mutable rational.
 	 */
 	public MutableRational addmul(Rational fac1,BigInteger fac2) {
 		return add(fac1.mul(fac2));
 	}
+
 	/**
-	 * Returns <code>(this-s)/d</code>
+	 * Computes {@code this = (this - s) / d}.
+	 * @param s the rational to subtract.
+	 * @param d the divisor.
+	 * @return this mutable rational.
 	 */
 	public MutableRational subdiv(Rational s,Rational d) {
 		return sub(s).div(d);
 	}
 
 	@Override
+	/**
+	 * Compares this mutable rational with the other.
+	 * @param o the other mutable rational.
+	 * @return -1, if this &lt; o; 1, if this &gt; o; 0 if they are equal.
+	 */
 	public int compareTo(MutableRational o) {
 		/* fast path */
 		if (mBignum == null && o.mBignum == null) {
@@ -308,6 +389,12 @@ public class MutableRational implements Comparable<MutableRational> {
 		final BigInteger valo = o.numerator().multiply(denominator());
 		return valthis.compareTo(valo);
 	}
+
+	/**
+	 * Compares this mutable rational with the other.
+	 * @param o the other rational.
+	 * @return -1, if this &lt; o; 1, if this &gt; o; 0 if they are equal.
+	 */
 	public int compareTo(Rational o) {
 		/* fast path */
 		if (mBignum == null && !(o instanceof BigRational)) {
@@ -324,6 +411,12 @@ public class MutableRational implements Comparable<MutableRational> {
 		return valthis.compareTo(valo);
 	}
 
+	/**
+	 * Compares this mutable rational with the other.  This works with
+	 * MutableRational and Rational.
+	 * @param o the other rational.
+	 * @return true if this equals o, false otherwise.
+	 */
 	@Override
 	public boolean equals(Object o) {
 		if (o instanceof Rational) {
@@ -344,14 +437,30 @@ public class MutableRational implements Comparable<MutableRational> {
 		}
 		return false;
 	}
-	
+
+	/**
+	 * Get the numerator of this rational.
+	 * @return the numerator.
+	 */
 	public BigInteger numerator() {
 		return mBignum == null ? BigInteger.valueOf(mNum) : mBignum;
 	}
+
+	/**
+	 * Get the denominator of this rational.
+	 * @return the denominator.
+	 */
 	public BigInteger denominator() {
 		return mBigdenom == null ? BigInteger.valueOf(mDenom) : mBigdenom;
 	}
-	
+
+	/**
+	 * Computes a hashcode.  The hashcode is computed as 
+	 * {@code 257 * numerator + denominator} if both fit into an integer and
+	 * {@code 257 * numerator().hashCode() + denominator().hashCode()} if big
+	 * integers are necessary.
+	 * @return the hashcode.
+	 */
 	@Override
 	public int hashCode() {
 		if (mBignum == null) {
@@ -360,7 +469,14 @@ public class MutableRational implements Comparable<MutableRational> {
 			return mBignum.hashCode() * 257 + mBigdenom.hashCode();
 		}
 	}
-	
+
+	/**
+	 * Get a string representation of this number.  This is
+	 * {@code numerator()+ "/" + denominator()} except for
+	 * infinity ({@code "inf"}), nan ({@code "nan"}), or minus 
+	 * infinity ({@code "-inf"}).
+	 * @return the string representation.
+	 */
 	@Override
 	public String toString() {
 		/* fast path */
@@ -379,16 +495,21 @@ public class MutableRational implements Comparable<MutableRational> {
 			return mBignum + "/" + mBigdenom;
 		}
 	}
-	
+
 	/**
 	 * Check whether this rational represents an integral value. Both infinity
 	 * values are treated as integral.
-	 * @return <code>true</code> iff value is integral.
+	 * @return {@code true} iff value is integral.
 	 */
 	public boolean isIntegral() {
 		return (mBignum == null)
 				? mDenom <= 1 : mBigdenom.equals(BigInteger.ONE);
 	}
+
+	/**
+	 * Convert this mutable rational into a immutable rational.
+	 * @return the rational.
+	 */
 	public Rational toRational() {
 		if (mBignum == null) {
 			return Rational.valueOf(mNum, mDenom);
@@ -396,6 +517,12 @@ public class MutableRational implements Comparable<MutableRational> {
 		return Rational.valueOf(numerator(), denominator());
 	}
 
+	/**
+	 * Compute sign of this rational.  This is equivalent to
+	 * {@code compare(Rational.ZERO)}.
+	 * @return the sign of the rational, +1 for positive, 0 for 0 and
+	 * -1 for negative.
+	 */
 	public int signum() {
 		if (mBignum == null) {
 			return mNum < 0 ? -1 : mNum == 0 ? 0 : 1;

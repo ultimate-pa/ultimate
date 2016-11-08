@@ -30,13 +30,13 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebug
 import org.eclipse.core.runtime.Plugin;
 
 /**
- * The activator class controls the plug-in life cycle
+ * The activator class controls the plug-in life cycle.
  * 
  * @author Daniel Dietsch
  */
 public class Activator extends Plugin {
 	public static final String PLUGIN_ID =
 			AutomatonDeltaDebugger.class.getPackage().getName();
-			
+	
 	public static final String PLUGIN_NAME = "AutomatonDeltaDebugger";
 }

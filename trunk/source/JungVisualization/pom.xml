@@ -32,8 +32,8 @@
   
   
   <parent>
-  	<groupId>Ultimate</groupId>
-  	<artifactId>MavenParentUltimate</artifactId>
+  	<groupId>de.uni_freiburg.informatik.ultimate</groupId>
+  	<artifactId>mavenparent</artifactId>
   	<version>0.0.1</version>
   	<relativePath>../BA_MavenParentUltimate</relativePath>
   </parent>

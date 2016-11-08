@@ -1,0 +1,17 @@
+#! /bin/bash
+
+# Convert all outputs (result??.txt) of the bruteforcer into the
+# csv overview format.
+
+for p in {10..18}; do
+	for err in {0..99}; do
+		printf "%s,%s," "$p" "error_$err" 
+		if grep -qF "error_$err " "result$p.txt"; then
+			printf "yes,b,%s,%s\n" \
+				"$(grep -Po "error_$err"' -> \K[0-9]+' "result$p.txt" | sed 's/ /,/g')" \
+				"$(grep -Po "error_$err"' .*: \K.*' "result$p.txt" | sed 's/ /,/g')"
+		else
+			echo "unknown,,,"
+		fi
+	done
+done

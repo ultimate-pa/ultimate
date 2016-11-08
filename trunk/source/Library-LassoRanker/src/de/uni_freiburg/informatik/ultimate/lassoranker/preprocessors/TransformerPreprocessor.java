@@ -27,9 +27,9 @@
 package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors;
 
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
-import de.uni_freiburg.informatik.ultimate.lassoranker.variables.TransFormulaLR;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 
 
 /**
@@ -51,9 +51,9 @@ public abstract class TransformerPreprocessor extends TransitionPreprocessor {
 	protected abstract TermTransformer getTransformer(Script script);
 	
 	@Override
-	public TransFormulaLR process(Script script, TransFormulaLR tf) throws TermException {
+	public ModifiableTransFormula process(Script script, ModifiableTransFormula tf) throws TermException {
 		final TermTransformer transformer = getTransformer(script);
-		final TransFormulaLR new_tf = new TransFormulaLR(tf);
+		final ModifiableTransFormula new_tf = new ModifiableTransFormula(tf);
 		new_tf.setFormula(transformer.transform(tf.getFormula()));
 		return new_tf;
 	}

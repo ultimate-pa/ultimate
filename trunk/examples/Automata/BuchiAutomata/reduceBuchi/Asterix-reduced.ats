@@ -1,0 +1,44 @@
+// author: Christian Schilling
+// Date: 2016-08-20
+// Simplified version of Asterix.
+// BuchiReduce fails.
+
+NestedWordAutomaton reduced = buchiReduce(removeDeadends(nwa));
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {},
+	internalAlphabet = {"b" "a" },
+	returnAlphabet = {},
+	states = {"q_1" "qF_1" "qF_2" "qI_1" },
+	initialStates = {"qI_1" },
+	finalStates = {"qF_1" "qF_2" "qI_1" },
+	callTransitions = {
+	},
+	internalTransitions = {
+		 ("q_1" "b" "q_1")
+		 ("q_1" "a" "qF_2")
+		 ("qF_1" "b" "q_1")
+		 ("qF_1" "a" "qF_2")
+		 ("qI_1" "b" "qF_1")
+	},
+	returnTransitions = {
+	}
+);
+
+// BuchiReduce fails here as well, but there are dead ends.
+NestedWordAutomaton nwaWithDeadEnds = (
+	callAlphabet = {},
+	internalAlphabet = {"a" },
+	returnAlphabet = {},
+	states = {"q_1" "q_0" },
+	initialStates = {"q_0" },
+	finalStates = {"q_0" },
+	callTransitions = {
+	},
+	internalTransitions = {
+		 ("q_1" "a" "q_1")
+		 ("q_0" "a" "q_1")
+	},
+	returnTransitions = {
+	}
+);

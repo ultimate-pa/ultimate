@@ -34,9 +34,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeMap;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainExceptionWrapper;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
@@ -44,13 +45,18 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.AnalysisType;
+import de.uni_freiburg.informatik.ultimate.lassoranker.DefaultLassoRankerPreferences;
+import de.uni_freiburg.informatik.ultimate.lassoranker.ILassoRankerPreferences;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LassoAnalysis;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LassoAnalysis.AnalysisTechnique;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LassoAnalysis.PreprocessingBenchmark;
-import de.uni_freiburg.informatik.ultimate.lassoranker.LassoRankerPreferences;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
+import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.DefaultNonTerminationAnalysisSettings;
+import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.FixpointCheck;
+import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.FixpointCheck.HasFixpoint;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationAnalysisSettings;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationArgument;
+import de.uni_freiburg.informatik.ultimate.lassoranker.termination.DefaultTerminationAnalysisSettings;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.NonterminationAnalysisBenchmark;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.SupportingInvariant;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationAnalysisBenchmark;
@@ -66,19 +72,22 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.variables.InequalityConve
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.DagSizePrinter;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplicationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
@@ -86,12 +95,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceCheckerCraig;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerSpWp;
+import de.uni_freiburg.informatik.ultimate.util.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 public class LassoChecker {
 
 	private final ILogger mLogger;
-	private final SimplicationTechnique mSimplificationTechnique;
+	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
 
 	enum ContinueDirective {
@@ -125,23 +135,6 @@ public class LassoChecker {
 
 	private final InterpolationTechnique mInterpolation;
 
-	/**
-	 * Use an external solver. If false, we use SMTInterpol.
-	 */
-	private final boolean mExternalSolver_RankSynthesis;
-	/**
-	 * Command of external solver.
-	 */
-	private final String mExternalSolverCommand_RankSynthesis;
-	/**
-	 * Use an external solver. If false, we use SMTInterpol.
-	 */
-	private final boolean mExternalSolver_GntaSynthesis;
-	/**
-	 * Command of external solver.
-	 */
-	private final String mExternalSolverCommand_GntaSynthesis;
-
 	private final AnalysisType mRankAnalysisType;
 	private final AnalysisType mGntaAnalysisType;
 	private final int mGntaDirections;
@@ -156,7 +149,7 @@ public class LassoChecker {
 	/**
 	 * Intermediate layer to encapsulate communication with SMT solvers.
 	 */
-	private final SmtManager mSmtManager;
+	private final CfgSmtToolkit mCsToolkit;
 
 	private final ModifiableGlobalVariableManager mModifiableGlobalVariableManager;
 
@@ -199,12 +192,11 @@ public class LassoChecker {
 
 	private final LassoCheckResult mLassoCheckResult;
 
-	private final List<PreprocessingBenchmark> mpreprocessingBenchmarks = new ArrayList<PreprocessingBenchmark>();
+	private final List<PreprocessingBenchmark> mpreprocessingBenchmarks = new ArrayList<>();
 
-	private final List<TerminationAnalysisBenchmark> mTerminationAnalysisBenchmarks =
-			new ArrayList<TerminationAnalysisBenchmark>();
-	private final List<NonterminationAnalysisBenchmark> mNonterminationAnalysisBenchmarks =
-			new ArrayList<NonterminationAnalysisBenchmark>();
+	private final List<TerminationAnalysisBenchmark> mTerminationAnalysisBenchmarks = new ArrayList<>();
+	private final List<NonterminationAnalysisBenchmark> mNonterminationAnalysisBenchmarks = new ArrayList<>();
+	private final ICfgSymbolTable mSymbolTable;
 
 	public LassoCheckResult getLassoCheckResult() {
 		return mLassoCheckResult;
@@ -247,37 +239,35 @@ public class LassoChecker {
 		return mNonterminationAnalysisBenchmarks;
 	}
 
-	public LassoChecker(final InterpolationTechnique interpolation, final SmtManager smtManager,
-			final ModifiableGlobalVariableManager modifiableGlobalVariableManager, final Collection<Term> axioms,
+	public LassoChecker(final InterpolationTechnique interpolation, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
+			final ICfgSymbolTable symbolTable, final ModifiableGlobalVariableManager modifiableGlobalVariableManager, final Collection<Term> axioms,
 			final BinaryStatePredicateManager bspm, final NestedLassoRun<CodeBlock, IPredicate> counterexample,
 			final String lassoCheckerIdentifier, final IUltimateServiceProvider services,
-			final IToolchainStorage storage, final SimplicationTechnique simplificationTechnique,
+			final IToolchainStorage storage, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique) throws IOException {
 		mServices = services;
 		mStorage = storage;
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mSymbolTable = symbolTable;
 		final IPreferenceProvider baPref = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
-		mExternalSolver_RankSynthesis = baPref.getBoolean(PreferenceInitializer.LABEL_ExtSolverRank);
-		mExternalSolverCommand_RankSynthesis = baPref.getString(PreferenceInitializer.LABEL_ExtSolverCommandRank);
-		mExternalSolver_GntaSynthesis = baPref.getBoolean(PreferenceInitializer.LABEL_ExtSolverGNTA);
-		mExternalSolverCommand_GntaSynthesis = baPref.getString(PreferenceInitializer.LABEL_ExtSolverCommandGNTA);
-		mRankAnalysisType = baPref.getEnum(PreferenceInitializer.LABEL_AnalysisTypeRank, AnalysisType.class);
-		mGntaAnalysisType = baPref.getEnum(PreferenceInitializer.LABEL_AnalysisTypeGNTA, AnalysisType.class);
-		mGntaDirections = baPref.getInt(PreferenceInitializer.LABEL_GntaDirections);
+		mRankAnalysisType = baPref.getEnum(PreferenceInitializer.LABEL_ANALYSIS_TYPE_RANK, AnalysisType.class);
+		mGntaAnalysisType = baPref.getEnum(PreferenceInitializer.LABEL_ANALYSIS_TYPE_GNTA, AnalysisType.class);
+		mGntaDirections = baPref.getInt(PreferenceInitializer.LABEL_GNTA_DIRECTIONS);
 
-		mTemplateBenchmarkMode = baPref.getBoolean(PreferenceInitializer.LABEL_TemplateBenchmarkMode);
-		mTrySimplificationTerminationArgument = baPref.getBoolean(PreferenceInitializer.LABEL_Simplify);
-		mTryTwofoldRefinement = baPref.getBoolean(PreferenceInitializer.LABEL_TryTwofoldRefinement);
+		mTemplateBenchmarkMode = baPref.getBoolean(PreferenceInitializer.LABEL_TEMPLATE_BENCHMARK_MODE);
+		mTrySimplificationTerminationArgument = baPref.getBoolean(PreferenceInitializer.LABEL_SIMPLIFY);
+		mTryTwofoldRefinement = baPref.getBoolean(PreferenceInitializer.LABEL_TRY_TWOFOLD_REFINEMENT);
 		mInterpolation = interpolation;
-		mSmtManager = smtManager;
+		mCsToolkit = csToolkit;
 		mModifiableGlobalVariableManager = modifiableGlobalVariableManager;
 		mBspm = bspm;
 		mCounterexample = counterexample;
 		mLassoCheckerIdentifier = lassoCheckerIdentifier;
-		mPredicateUnifier =
-				new PredicateUnifier(mServices, mSmtManager, simplificationTechnique, xnfConversionTechnique);
+		mPredicateUnifier = new PredicateUnifier(mServices, mCsToolkit.getManagedScript(),
+				predicateFactory, mSymbolTable,
+				simplificationTechnique, xnfConversionTechnique);
 		mTruePredicate = mPredicateUnifier.getTruePredicate();
 		mFalsePredicate = mPredicateUnifier.getFalsePredicate();
 		mAxioms = axioms;
@@ -349,71 +339,64 @@ public class LassoChecker {
 				mLassoTermination = SynthesisResult.UNCHECKED;
 				mContinueDirective = ContinueDirective.REFINE_FINITE;
 				return;
-			} else {
-				if (mStemFeasibility == TraceCheckResult.INFEASIBLE) {
-					assert (mTryTwofoldRefinement);
-					final TransFormula loopTF = computeLoopTF();
+			}
+			if (mStemFeasibility == TraceCheckResult.INFEASIBLE) {
+				assert (mTryTwofoldRefinement);
+				final UnmodifiableTransFormula loopTF = computeLoopTF();
+				mLoopTermination = checkLoopTermination(loopTF);
+				mConcatFeasibility = TraceCheckResult.UNCHECKED;
+				mLassoTermination = SynthesisResult.UNCHECKED;
+				if (mLoopTermination == SynthesisResult.TERMINATING) {
+					mContinueDirective = ContinueDirective.REFINE_BOTH;
+					return;
+				}
+				mContinueDirective = ContinueDirective.REFINE_FINITE;
+				return;
+			}
+			// stem feasible
+			mConcatFeasibility = checkConcatFeasibility();
+			if (mConcatFeasibility == TraceCheckResult.INFEASIBLE) {
+				mLassoTermination = SynthesisResult.UNCHECKED;
+				if (mTryTwofoldRefinement) {
+					final UnmodifiableTransFormula loopTF = computeLoopTF();
 					mLoopTermination = checkLoopTermination(loopTF);
-					mConcatFeasibility = TraceCheckResult.UNCHECKED;
-					mLassoTermination = SynthesisResult.UNCHECKED;
 					if (mLoopTermination == SynthesisResult.TERMINATING) {
 						mContinueDirective = ContinueDirective.REFINE_BOTH;
 						return;
-					} else {
-						mContinueDirective = ContinueDirective.REFINE_FINITE;
-						return;
 					}
-				} else {
-					// stem feasible
-					mConcatFeasibility = checkConcatFeasibility();
-					if (mConcatFeasibility == TraceCheckResult.INFEASIBLE) {
-						mLassoTermination = SynthesisResult.UNCHECKED;
-						if (mTryTwofoldRefinement) {
-							final TransFormula loopTF = computeLoopTF();
-							mLoopTermination = checkLoopTermination(loopTF);
-							if (mLoopTermination == SynthesisResult.TERMINATING) {
-								mContinueDirective = ContinueDirective.REFINE_BOTH;
-								return;
-							} else {
-								mContinueDirective = ContinueDirective.REFINE_FINITE;
-								return;
-							}
-						} else {
-							mLoopTermination = SynthesisResult.UNCHECKED;
-							mContinueDirective = ContinueDirective.REFINE_FINITE;
-							return;
-						}
-					} else {
-						// concat feasible
-						final TransFormula loopTF = computeLoopTF();
-						// checking loop termination before we check lasso
-						// termination is a workaround.
-						// We want to avoid supporting invariants in possible
-						// yet the termination argument simplification of the
-						// LassoChecker is not optimal. Hence we first check
-						// only the loop, which guarantees that there are no
-						// supporting invariants.
-						mLoopTermination = checkLoopTermination(loopTF);
-						if (mLoopTermination == SynthesisResult.TERMINATING) {
-							mLassoTermination = SynthesisResult.UNCHECKED;
-							mContinueDirective = ContinueDirective.REFINE_BUCHI;
-							return;
-						} else {
-							final TransFormula stemTF = computeStemTF();
-							mLassoTermination = checkLassoTermination(stemTF, loopTF);
-							if (mLassoTermination == SynthesisResult.TERMINATING) {
-								mContinueDirective = ContinueDirective.REFINE_BUCHI;
-								return;
-							} else if (mLassoTermination == SynthesisResult.NONTERMINATING) {
-								mContinueDirective = ContinueDirective.REPORT_NONTERMINATION;
-								return;
-							} else {
-								mContinueDirective = ContinueDirective.REPORT_UNKNOWN;
-								return;
-							}
-						}
-					}
+					mContinueDirective = ContinueDirective.REFINE_FINITE;
+					return;
 				}
+				mLoopTermination = SynthesisResult.UNCHECKED;
+				mContinueDirective = ContinueDirective.REFINE_FINITE;
+				return;
+			}
+			// concat feasible
+			final UnmodifiableTransFormula loopTF = computeLoopTF();
+			// checking loop termination before we check lasso
+			// termination is a workaround.
+			// We want to avoid supporting invariants in possible
+			// yet the termination argument simplification of the
+			// LassoChecker is not optimal. Hence we first check
+			// only the loop, which guarantees that there are no
+			// supporting invariants.
+			mLoopTermination = checkLoopTermination(loopTF);
+			if (mLoopTermination == SynthesisResult.TERMINATING) {
+				mLassoTermination = SynthesisResult.UNCHECKED;
+				mContinueDirective = ContinueDirective.REFINE_BUCHI;
+				return;
+			}
+			final UnmodifiableTransFormula stemTF = computeStemTF();
+			mLassoTermination = checkLassoTermination(stemTF, loopTF);
+			if (mLassoTermination == SynthesisResult.TERMINATING) {
+				mContinueDirective = ContinueDirective.REFINE_BUCHI;
+				return;
+			} else if (mLassoTermination == SynthesisResult.NONTERMINATING) {
+				mContinueDirective = ContinueDirective.REPORT_NONTERMINATION;
+				return;
+			} else {
+				mContinueDirective = ContinueDirective.REPORT_UNKNOWN;
+				return;
 			}
 		}
 
@@ -421,10 +404,9 @@ public class LassoChecker {
 			final NestedRun<CodeBlock, IPredicate> stem = mCounterexample.getStem();
 			if (BuchiCegarLoop.emptyStem(mCounterexample)) {
 				return TraceCheckResult.FEASIBLE;
-			} else {
-				mStemCheck = checkFeasibilityAndComputeInterpolants(stem);
-				return translateSatisfiabilityToFeasibility(mStemCheck.isCorrect());
 			}
+			mStemCheck = checkFeasibilityAndComputeInterpolants(stem);
+			return translateSatisfiabilityToFeasibility(mStemCheck.isCorrect());
 		}
 
 		private TraceCheckResult checkLoopFeasibility() {
@@ -464,25 +446,24 @@ public class LassoChecker {
 			case Craig_NestedInterpolation:
 			case Craig_TreeInterpolation:
 				result = new InterpolatingTraceCheckerCraig(mTruePredicate, mFalsePredicate,
-						new TreeMap<Integer, IPredicate>(), run.getWord(), mSmtManager,
-						mModifiableGlobalVariableManager,
+						new TreeMap<Integer, IPredicate>(), run.getWord(), mCsToolkit,
 						/*
 						 * TODO: When Matthias introduced this parameter he set the argument to
 						 * AssertCodeBlockOrder.NOT_INCREMENTALLY. Check if you want to set this to a different value.
-						 */AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, mPredicateUnifier, mInterpolation,
-						true, mXnfConversionTechnique, mSimplificationTechnique);
+						 */AssertCodeBlockOrder.NOT_INCREMENTALLY,
+						mServices, false, mPredicateUnifier, mInterpolation, true,
+						mXnfConversionTechnique, mSimplificationTechnique);
 				break;
 			case ForwardPredicates:
 			case BackwardPredicates:
 			case FPandBP:
 				result = new TraceCheckerSpWp(mTruePredicate, mFalsePredicate, new TreeMap<Integer, IPredicate>(),
-						run.getWord(), mSmtManager, mModifiableGlobalVariableManager,
-						/*
+						run.getWord(), mCsToolkit, /*
 						 * TODO: When Matthias introduced this parameter he set the argument to
 						 * AssertCodeBlockOrder.NOT_INCREMENTALLY. Check if you want to set this to a different value.
-						 */AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true, mServices, false,
-						mPredicateUnifier, mInterpolation, mSmtManager, mXnfConversionTechnique,
-						mSimplificationTechnique);
+						 */AssertCodeBlockOrder.NOT_INCREMENTALLY,
+						UnsatCores.CONJUNCT_LEVEL, true, mServices, false, mPredicateUnifier,
+						mInterpolation, mCsToolkit.getManagedScript(), mXnfConversionTechnique, mSimplificationTechnique);
 				break;
 			default:
 				throw new UnsupportedOperationException("unsupported interpolation");
@@ -493,20 +474,19 @@ public class LassoChecker {
 			return result;
 		}
 
-		private SynthesisResult checkLoopTermination(final TransFormula loopTF) throws IOException {
+		private SynthesisResult checkLoopTermination(final UnmodifiableTransFormula loopTF) throws IOException {
 			assert !mBspm.providesPredicates() : "termination already checked";
 			final boolean containsArrays = SmtUtils.containsArrayVariables(loopTF.getFormula());
 			if (containsArrays) {
 				// if there are array variables we will probably run in a huge
 				// DNF, so as a precaution we do not check and say unknown
 				return SynthesisResult.UNKNOWN;
-			} else {
-				return synthesize(false, null, loopTF, containsArrays);
 			}
+			return synthesize(false, null, loopTF, containsArrays);
 		}
 
-		private SynthesisResult checkLassoTermination(final TransFormula stemTF, final TransFormula loopTF)
-				throws IOException {
+		private SynthesisResult checkLassoTermination(final UnmodifiableTransFormula stemTF,
+				final UnmodifiableTransFormula loopTF) throws IOException {
 			assert !mBspm.providesPredicates() : "termination already checked";
 			assert loopTF != null;
 			final boolean containsArrays = SmtUtils.containsArrayVariables(stemTF.getFormula())
@@ -543,41 +523,50 @@ public class LassoChecker {
 	/**
 	 * Compute TransFormula that represents the stem.
 	 */
-	protected TransFormula computeStemTF() {
+	protected UnmodifiableTransFormula computeStemTF() {
 		final NestedWord<CodeBlock> stem = mCounterexample.getStem().getWord();
 		try {
-			final TransFormula stemTF = computeTF(stem, mSimplifyStemAndLoop, true, false);
+			final UnmodifiableTransFormula stemTF = computeTF(stem, mSimplifyStemAndLoop, true, false);
+			if (SmtUtils.isFalse(stemTF.getFormula())) {
+				throw new AssertionError("stemTF is false but stem analysis said: feasible");
+			}
 			return stemTF;
 		} catch (final ToolchainCanceledException tce) {
-			throw new ToolchainCanceledException(getClass(),
-					tce.getRunningTaskInfo() + " while constructing stem TransFormula");
+			final String taskDescription = "constructing stem TransFormula";
+			tce.addRunningTaskInfo(new RunningTaskInfo(getClass(), taskDescription));
+			throw tce;
 		}
 	}
 
 	/**
 	 * Compute TransFormula that represents the loop.
 	 */
-	protected TransFormula computeLoopTF() {
+	protected UnmodifiableTransFormula computeLoopTF() {
 		final NestedWord<CodeBlock> loop = mCounterexample.getLoop().getWord();
 		try {
-			final TransFormula loopTF = computeTF(loop, mSimplifyStemAndLoop, true, false);
+			final UnmodifiableTransFormula loopTF = computeTF(loop, mSimplifyStemAndLoop, true, false);
+			if (SmtUtils.isFalse(loopTF.getFormula())) {
+				throw new AssertionError("loopTF is false but loop analysis said: feasible");
+			}
 			return loopTF;
 		} catch (final ToolchainCanceledException tce) {
-			throw new ToolchainCanceledException(getClass(),
-					tce.getRunningTaskInfo() + " while constructing loop TransFormula");
+			final String taskDescription = "constructing loop TransFormula";
+			tce.addRunningTaskInfo(new RunningTaskInfo(getClass(), taskDescription));
+			throw tce;
 		}
 	}
 
 	/**
 	 * Compute TransFormula that represents the NestedWord word.
 	 */
-	private TransFormula computeTF(final NestedWord<CodeBlock> word, final boolean simplify,
+	private UnmodifiableTransFormula computeTF(final NestedWord<CodeBlock> word, final boolean simplify,
 			final boolean extendedPartialQuantifierElimination, final boolean withBranchEncoders) {
 		final boolean toCNF = false;
-		final TransFormula tf = SequentialComposition.getInterproceduralTransFormula(mSmtManager.getBoogie2Smt().getManagedScript(),
-				mModifiableGlobalVariableManager, simplify, extendedPartialQuantifierElimination, toCNF,
-				withBranchEncoders, mLogger, mServices, word.asList(), mXnfConversionTechnique,
-				mSimplificationTechnique);
+		final UnmodifiableTransFormula tf =
+				SequentialComposition.getInterproceduralTransFormula(mCsToolkit.getManagedScript(),
+						mModifiableGlobalVariableManager, simplify, extendedPartialQuantifierElimination, toCNF,
+						withBranchEncoders, mLogger, mServices, word.asList(), mXnfConversionTechnique,
+						mSimplificationTechnique, mSymbolTable);
 		return tf;
 	}
 
@@ -615,55 +604,145 @@ public class LassoChecker {
 		return mLassoCheckerIdentifier + "_" + (withStem ? "Lasso" : "Loop");
 	}
 
-	private LassoRankerPreferences constructLassoRankerPreferences(final boolean withStem,
+	private ILassoRankerPreferences constructLassoRankerPreferences(final boolean withStem,
 			final boolean overapproximateArrayIndexConnection, final NlaHandling nlaHandling,
 			final AnalysisTechnique analysis) {
-		final LassoRankerPreferences pref = new LassoRankerPreferences();
-		switch (analysis) {
-		case GEOMETRIC_NONTERMINATION_ARGUMENTS: {
-			pref.externalSolver = mExternalSolver_GntaSynthesis;
-			pref.smt_solver_command = mExternalSolverCommand_GntaSynthesis;
-			break;
-		}
-		case RANKING_FUNCTIONS_SUPPORTING_INVARIANTS: {
-			pref.externalSolver = mExternalSolver_RankSynthesis;
-			pref.smt_solver_command = mExternalSolverCommand_RankSynthesis;
-			break;
-		}
-		default:
-			throw new AssertionError();
-		}
 		final IPreferenceProvider baPref = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
-		pref.dumpSmtSolverScript = baPref.getBoolean(PreferenceInitializer.LABEL_DumpToFile);
-		pref.path_of_dumped_script = baPref.getString(PreferenceInitializer.LABEL_DumpPath);
-		pref.baseNameOfDumpedScript = generateFileBasenamePrefix(withStem);
-		pref.overapproximateArrayIndexConnection = overapproximateArrayIndexConnection;
-		pref.nlaHandling = nlaHandling;
-		pref.useOldMapElimination = baPref.getBoolean(PreferenceInitializer.LABEL_USE_OLD_MAP_ELIMINATION);
+		final ILassoRankerPreferences pref = new DefaultLassoRankerPreferences() {
+			@Override
+			public boolean isDumpSmtSolverScript() {
+				return baPref.getBoolean(PreferenceInitializer.LABEL_DUMP_SCRIPT_TO_FILE);
+			}
+
+			@Override
+			public String getPathOfDumpedScript() {
+				return baPref.getString(PreferenceInitializer.LABEL_DUMP_SCRIPT_PATH);
+			}
+
+			@Override
+			public String getBaseNameOfDumpedScript() {
+				return generateFileBasenamePrefix(withStem);
+			}
+
+			@Override
+			public boolean isOverapproximateArrayIndexConnection() {
+				return overapproximateArrayIndexConnection;
+			}
+
+			@Override
+			public NlaHandling getNlaHandling() {
+				return nlaHandling;
+			}
+
+			@Override
+			public boolean isUseOldMapElimination() {
+				return baPref.getBoolean(PreferenceInitializer.LABEL_USE_OLD_MAP_ELIMINATION);
+			}
+
+			@Override
+			public boolean isMapElimAddInequalities() {
+				return baPref.getBoolean(PreferenceInitializer.LABEL_MAP_ELIMINATION_ADD_INEQUALITIES);
+			}
+
+			@Override
+			public boolean isMapElimOnlyTrivialImplicationsArrayWrite() {
+				return baPref
+						.getBoolean(PreferenceInitializer.LABEL_MAP_ELIMINATION_ONLY_TRIVIAL_IMPLICATIONS_ARRAY_WRITE);
+			}
+
+			@Override
+			public boolean isMapElimOnlyTrivialImplicationsIndexAssignment() {
+				return baPref.getBoolean(
+						PreferenceInitializer.LABEL_MAP_ELIMINATION_ONLY_TRIVIAL_IMPLICATIONS_INDEX_ASSIGNMENT);
+			}
+
+			@Override
+			public boolean isMapElimOnlyIndicesInFormula() {
+				return baPref.getBoolean(PreferenceInitializer.LABEL_MAP_ELIMINATION_ONLY_INDICES_IN_FORMULAS);
+			}
+
+			@Override
+			public boolean isExternalSolver() {
+				switch (analysis) {
+				case GEOMETRIC_NONTERMINATION_ARGUMENTS: {
+					return baPref.getBoolean(PreferenceInitializer.LABEL_USE_EXTERNAL_SOLVER_GNTA);
+				}
+				case RANKING_FUNCTIONS_SUPPORTING_INVARIANTS: {
+					return baPref.getBoolean(PreferenceInitializer.LABEL_USE_EXTERNAL_SOLVER_RANK);
+				}
+				default:
+					throw new UnsupportedOperationException("Analysis type " + analysis + " unknown");
+				}
+			}
+
+			@Override
+			public String getExternalSolverCommand() {
+				switch (analysis) {
+				case GEOMETRIC_NONTERMINATION_ARGUMENTS: {
+					return baPref.getString(PreferenceInitializer.LABEL_EXTERNAL_SOLVER_COMMAND_GNTA);
+				}
+				case RANKING_FUNCTIONS_SUPPORTING_INVARIANTS: {
+					return baPref.getString(PreferenceInitializer.LABEL_EXTERNAL_SOLVER_COMMAND_RANK);
+				}
+				default:
+					throw new UnsupportedOperationException("Analysis type " + analysis + " unknown");
+				}
+			}
+		};
 		return pref;
 	}
 
 	private TerminationAnalysisSettings constructTASettings() {
-		final TerminationAnalysisSettings settings = new TerminationAnalysisSettings();
-		settings.analysis = mRankAnalysisType;
-		settings.numnon_strict_invariants = 1;
-		settings.numstrict_invariants = 0;
-		settings.nondecreasing_invariants = true;
-		settings.simplify_termination_argument = mTrySimplificationTerminationArgument;
-		settings.simplify_supporting_invariants = mTrySimplificationTerminationArgument;
-		return settings;
+		return new TerminationAnalysisSettings(new DefaultTerminationAnalysisSettings() {
+			@Override
+			public AnalysisType getAnalysis() {
+				return mRankAnalysisType;
+			}
+
+			@Override
+			public int getNumNonStrictInvariants() {
+				return 1;
+			}
+
+			@Override
+			public int getNumStrictInvariants() {
+				return 0;
+			}
+
+			@Override
+			public boolean isNonDecreasingInvariants() {
+				return true;
+			}
+
+			@Override
+			public boolean isSimplifySupportingInvariants() {
+				return mTrySimplificationTerminationArgument;
+			}
+
+			@Override
+			public boolean isSimplifyTerminationArgument() {
+				return mTrySimplificationTerminationArgument;
+			}
+		});
 	}
 
 	private NonTerminationAnalysisSettings constructNTASettings() {
-		final NonTerminationAnalysisSettings settings = new NonTerminationAnalysisSettings();
-		settings.analysis = mGntaAnalysisType;
-		settings.number_of_gevs = mGntaDirections;
-		return settings;
+		return new NonTerminationAnalysisSettings(new DefaultNonTerminationAnalysisSettings() {
+			@Override
+			public AnalysisType getAnalysis() {
+				return mGntaAnalysisType;
+			}
+
+			@Override
+			public int getNumberOfGevs() {
+				return mGntaDirections;
+			}
+		});
 	}
 
-	private SynthesisResult synthesize(final boolean withStem, TransFormula stemTF, final TransFormula loopTF,
-			final boolean containsArrays) throws IOException {
-		if (mSmtManager.isLocked()) {
+	private SynthesisResult synthesize(final boolean withStem, UnmodifiableTransFormula stemTF,
+			final UnmodifiableTransFormula loopTF, final boolean containsArrays) throws IOException {
+		if (mCsToolkit.getManagedScript().isLocked()) {
 			throw new AssertionError("SMTManager must not be locked at the beginning of synthesis");
 		}
 
@@ -671,7 +750,7 @@ public class LassoChecker {
 				((ISLPredicate) mCounterexample.getLoop().getStateAtPosition(0)).getProgramPoint().getProcedure());
 
 		if (!withStem) {
-			stemTF = TransFormulaBuilder.getTrivialTransFormula(mSmtManager.getManagedScript());
+			stemTF = TransFormulaBuilder.getTrivialTransFormula(mCsToolkit.getManagedScript());
 		}
 		// TODO: present this somewhere else
 		// int loopVars = loopTF.getFormula().getFreeVars().length;
@@ -683,6 +762,15 @@ public class LassoChecker {
 		// loopVars);
 		// }
 
+		final FixpointCheck fixpointCheck = new FixpointCheck(mServices, mLogger, mCsToolkit.getManagedScript(),
+				modifiableGlobalsAtHonda, stemTF, loopTF);
+		if (fixpointCheck.getResult() == HasFixpoint.YES) {
+			if (withStem) {
+				mNonterminationArgument = fixpointCheck.getTerminationArgument();
+			}
+			return SynthesisResult.NONTERMINATING;
+		}
+
 		final boolean doNonterminationAnalysis = !(s_AvoidNonterminationCheckIfArraysAreContained && containsArrays);
 
 		NonTerminationArgument nonTermArgument = null;
@@ -690,7 +778,7 @@ public class LassoChecker {
 			LassoAnalysis laNT = null;
 			try {
 				final boolean overapproximateArrayIndexConnection = false;
-				laNT = new LassoAnalysis(mSmtManager.getScript(), mSmtManager.getBoogie2Smt(), stemTF, loopTF,
+				laNT = new LassoAnalysis(mCsToolkit.getManagedScript(), mSymbolTable, stemTF, loopTF,
 						modifiableGlobalsAtHonda, mAxioms.toArray(new Term[mAxioms.size()]),
 						constructLassoRankerPreferences(withStem, overapproximateArrayIndexConnection,
 								NlaHandling.UNDERAPPROXIMATE, AnalysisTechnique.GEOMETRIC_NONTERMINATION_ARGUMENTS),
@@ -723,7 +811,7 @@ public class LassoChecker {
 		LassoAnalysis laT = null;
 		try {
 			final boolean overapproximateArrayIndexConnection = true;
-			laT = new LassoAnalysis(mSmtManager.getScript(), mSmtManager.getBoogie2Smt(), stemTF, loopTF,
+			laT = new LassoAnalysis(mCsToolkit.getManagedScript(), mSymbolTable, stemTF, loopTF,
 					modifiableGlobalsAtHonda, mAxioms.toArray(new Term[mAxioms.size()]),
 					constructLassoRankerPreferences(withStem, overapproximateArrayIndexConnection,
 							NlaHandling.OVERAPPROXIMATE, AnalysisTechnique.RANKING_FUNCTIONS_SUPPORTING_INVARIANTS),
@@ -734,7 +822,7 @@ public class LassoChecker {
 			throw new AssertionError("TermException " + e);
 		}
 
-		final List<RankingTemplate> rankingFunctionTemplates = new ArrayList<RankingTemplate>();
+		final List<RankingTemplate> rankingFunctionTemplates = new ArrayList<>();
 		rankingFunctionTemplates.add(new AffineTemplate());
 
 		// if (mAllowNonLinearConstraints) {
@@ -795,8 +883,8 @@ public class LassoChecker {
 	 * @throws IOException
 	 */
 	private TerminationArgument tryTemplatesAndComputePredicates(final boolean withStem, final LassoAnalysis la,
-			final List<RankingTemplate> rankingFunctionTemplates, final TransFormula stemTF, final TransFormula loopTF)
-			throws AssertionError, IOException {
+			final List<RankingTemplate> rankingFunctionTemplates, final UnmodifiableTransFormula stemTF,
+			final UnmodifiableTransFormula loopTF) throws AssertionError, IOException {
 		final String hondaProcedure =
 				((ISLPredicate) mCounterexample.getLoop().getStateAtPosition(0)).getProgramPoint().getProcedure();
 		final Set<IProgramVar> modifiableGlobals =
@@ -804,13 +892,14 @@ public class LassoChecker {
 
 		TerminationArgument firstTerminationArgument = null;
 		for (final RankingTemplate rft : rankingFunctionTemplates) {
-			if (!mServices.getProgressMonitorService().continueProcessing()) {
-				throw new ToolchainCanceledException(this.getClass());
-			}
 			TerminationArgument termArg;
 			try {
 				final TerminationAnalysisSettings settings = constructTASettings();
 				termArg = la.tryTemplate(rft, settings);
+				if (!mServices.getProgressMonitorService().continueProcessing()) {
+					throw new ToolchainCanceledException(this.getClass(),
+							generateRunningTaskInfo(stemTF, loopTF, withStem, rft));
+				}
 				final List<TerminationAnalysisBenchmark> benchs = la.getTerminationAnalysisBenchmarks();
 				mTerminationAnalysisBenchmarks.addAll(benchs);
 				if (mTemplateBenchmarkMode) {
@@ -821,13 +910,9 @@ public class LassoChecker {
 					}
 				}
 			} catch (final SMTLIBException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-				throw new AssertionError("SMTLIBException " + e);
+				throw new ToolchainExceptionWrapper(Activator.PLUGIN_ID, e);
 			} catch (final TermException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-				throw new AssertionError("TermException " + e);
+				throw new ToolchainExceptionWrapper(Activator.PLUGIN_ID, e);
 			}
 			if (termArg != null) {
 				assert termArg.getRankingFunction() != null;
@@ -840,10 +925,9 @@ public class LassoChecker {
 				assert isRankingFunctionCorrect() : "incorrect ranking function with" + rft.getClass().getSimpleName();
 				if (!mTemplateBenchmarkMode) {
 					return termArg;
-				} else {
-					if (firstTerminationArgument == null) {
-						firstTerminationArgument = termArg;
-					}
+				}
+				if (firstTerminationArgument == null) {
+					firstTerminationArgument = termArg;
 				}
 				mBspm.clearPredicates();
 			}
@@ -855,9 +939,14 @@ public class LassoChecker {
 					loopTF, modifiableGlobals);
 			assert mBspm.providesPredicates();
 			return firstTerminationArgument;
-		} else {
-			return null;
 		}
+		return null;
+	}
+
+	private static String generateRunningTaskInfo(final UnmodifiableTransFormula stemTF,
+			final UnmodifiableTransFormula loopTF, final boolean withStem, final RankingTemplate rft) {
+		return "applying " + rft.getName() + " template (degree " + rft.getDegree() + "), stem dagsize "
+				+ new DagSizePrinter(stemTF.getFormula()) + ", loop dagsize " + new DagSizePrinter(loopTF.getFormula());
 	}
 
 	// private List<LassoRankerParam> getLassoRankerParameters() {
@@ -870,8 +959,6 @@ public class LassoChecker {
 	// lassoRankerParams.add(new LassoRankerParam(new AffineTemplate(), pref));
 	// return lassoRankerParams;
 	// }
-
-
 
 	// private class LassoRankerParam {
 	// private final RankingFunctionTemplate mRankingFunctionTemplate;

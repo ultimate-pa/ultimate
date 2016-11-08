@@ -1,176 +1,155 @@
 /*
- * Copyright (C) 2009-2015 Christian Simon
- * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
- * 
- * This file is part of the ULTIMATE Core.
- * 
- * The ULTIMATE Core is free software: you can redistribute it and/or modify
+ * Copyright (C) 2016 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2016 University of Freiburg
+ *
+ * This file is part of the ULTIMATE CLI plug-in.
+ *
+ * The ULTIMATE CLI plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
- * The ULTIMATE Core is distributed in the hope that it will be useful,
+ *
+ * The ULTIMATE CLI plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
- * along with the ULTIMATE Core. If not, see <http://www.gnu.org/licenses/>.
- * 
+ * along with the ULTIMATE CLI plug-in. If not, see <http://www.gnu.org/licenses/>.
+ *
  * Additional permission under GNU GPL version 3 section 7:
- * If you modify the ULTIMATE Core, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Core grant you additional permission 
+ * If you modify the ULTIMATE CLI plug-in, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE CLI plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.cli;
 
-import java.util.ArrayList;
+import java.io.PrintWriter;
+import java.util.function.Predicate;
+
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
+
+import de.uni_freiburg.informatik.ultimate.cli.options.OptionBuilder;
+import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.RunDefinition;
+import de.uni_freiburg.informatik.ultimate.core.lib.util.LoggerOutputStream;
+import de.uni_freiburg.informatik.ultimate.core.model.ICore;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
- * A rudimentary parser for the Ultimate command-line.
- * 
- * @author Christian Simon
- * 
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public class CommandLineParser {
-
-	private boolean mInteractiveMode = false;
-	private boolean mConsoleMode = false;
-	private boolean mExit = false;
-	private String mPreludeFile = null;
-	private String mToolchainFile;
-	private String[] mInputFiles;
-	private String mSettingsFile;
-
-	private static final String s_PLUGIN_NAME = "Command Line Parser";
-	private static final String s_PLUGIN_ID = "de.uni_freiburg.informatik.ultimate.core.model.coreplugin.CommandLineParser";
-
-	public CommandLineParser() {
-
+public final class CommandLineParser {
+	
+	private static final int DESC_PADDING = 6;
+	private static final String USAGE = "Ultimate [OPTIONS] -tc <FILE> -i <FILE> [<FILE> ...]";
+	private static final String HEADER = null;
+	private static final String FOOTER = null;
+	
+	private final ILogger mLogger;
+	private final Options mOptionsForParser;
+	private final Options mOptionsForHelp;
+	private final OptionBuilder mOptionBuilder;
+	private final DefaultParser mParser;
+	private final ICore<RunDefinition> mCore;
+	
+	private CommandLineParser(final ICore<RunDefinition> core, final Predicate<String> pluginNameFilter,
+			final boolean requireToolchain, final boolean requireInputFiles) {
+		if (pluginNameFilter == null) {
+			throw new IllegalArgumentException("pluginNameFilter");
+		}
+		if (core == null) {
+			throw new IllegalArgumentException("core");
+		}
+		mCore = core;
+		mLogger = core.getCoreLoggingService().getControllerLogger();
+		mParser = new DefaultParser();
+		mOptionBuilder = new OptionBuilder(core, mLogger, requireToolchain, requireInputFiles);
+		mOptionsForParser = mOptionBuilder.getParserOptions(pluginNameFilter);
+		mOptionsForHelp = mOptionBuilder.getHelpOptions(pluginNameFilter);
 	}
-
-	public void printUsage() {
-		System.err.println("Ultimate Command Line Usage:");
-		System.err
-				.println("./Ultimate --help | --console [<toolchain file> <input file>+ [--prelude <file>] [--settings <file>]] ");
-		System.err.println("No argument will run Ultimate in GUI mode.");
-		System.err.println("Only the --console argument will run Ultimate in interactive command-line mode.");
-		System.err.println("Your parsed arguments were:");
-		System.err.println("Prelude File:" + mPreludeFile);
-		System.err.println("Tool File:" + mToolchainFile);
-		System.err.println("Input File:" + mInputFiles);
-		System.err.println("Settings file:" + mSettingsFile);
-		System.err.println("Console mode:" + String.valueOf(mConsoleMode));
-		System.err.println("Interactive mode:" + String.valueOf(mInteractiveMode));
-		System.err.println("Exit Switch:" + String.valueOf(mExit));
+	
+	public static CommandLineParser createCliOnlyParser(final ICore<RunDefinition> core) {
+		return new CommandLineParser(core, a -> false, false, false);
 	}
-
-	public void parse(String[] args) {
-		final int argc = args.length;
-
-		// iterate over command lines
-		for (int i = 0; i < argc; i++) {
-
-			if (args[i].compareTo("--help") == 0) {
-				mExit = true;
-				return;
+	
+	public static CommandLineParser createCompleteNoReqsParser(final ICore<RunDefinition> core) {
+		return new CommandLineParser(core, a -> true, false, false);
+	}
+	
+	public static CommandLineParser createCompleteParser(final ICore<RunDefinition> core,
+			final Predicate<String> pluginNameFilter) {
+		return new CommandLineParser(core, pluginNameFilter, true, false);
+	}
+	
+	public void printHelp() {
+		printHelp(mLogger, mOptionBuilder.filterExperimentalOptions(mOptionsForHelp), USAGE, HEADER, FOOTER);
+	}
+	
+	public void printHelpWithExperimentals() {
+		printHelp(mLogger, mOptionsForHelp, USAGE, HEADER, FOOTER);
+	}
+	
+	public ParsedParameter parse(final String[] args) throws ParseException {
+		final CommandLine cli = mParser.parse(mOptionsForParser, args);
+		validateParsedOptionsWithValidators(cli);
+		validateParsedOptionsByConversion(cli);
+		return new ParsedParameter(mCore, cli, mOptionBuilder);
+	}
+	
+	private void printHelp(final ILogger logger, final Options options, final String usage, final String header,
+			final String footer) {
+		final HelpFormatter formatter = new HelpFormatter();
+		final PrintWriter logPrintWriter = new PrintWriter(new LoggerOutputStream(logger::info));
+		formatter.setLeftPadding(0);
+		formatter.setDescPadding(DESC_PADDING);
+		formatter.setWidth(OptionBuilder.calculateMaxWidth(options));
+		// keep the options in the order they were declared
+		formatter.setOptionComparator(null);
+		formatter.printHelp(logPrintWriter, formatter.getWidth(), usage, header, options, formatter.getLeftPadding(),
+				formatter.getDescPadding(), footer, false);
+		logPrintWriter.flush();
+		logPrintWriter.close();
+	}
+	
+	private void validateParsedOptionsByConversion(final CommandLine cli) throws ParseException {
+		for (final Option option : cli.getOptions()) {
+			String optName = option.getOpt();
+			if (optName == null) {
+				optName = option.getLongOpt();
 			}
-
-			if (args[i].compareTo("--console") == 0) {
-				mConsoleMode = true;
-				mInteractiveMode = true;
-				continue;
-			}
-
-			if (mConsoleMode == true && mToolchainFile == null && mPreludeFile == null) {
-				mInteractiveMode = false;
-				// Now get the two remaining files
-				try {
-					mToolchainFile = new String(args[i]);
-					++i;
-					final ArrayList<String> inputFiles = new ArrayList<>();
-					while (i < args.length) {
-						final String current = args[i];
-						if (current.startsWith("--")) {
-							--i;
-							break;
-						}
-						inputFiles.add(current);
-						++i;
-					}
-					if (inputFiles.isEmpty()) {
-						mExit = true;
-						return;
-					} else {
-						mInputFiles = inputFiles.toArray(new String[0]);
-					}
-					continue;
-				} catch (final Exception e) {
-					mExit = true;
-					return;
-				}
-			}
-			// parse the optional prelude file
-			if (mConsoleMode == true && mToolchainFile != null && mInputFiles != null) {
-
-				if (args[i].compareTo("--prelude") == 0) {
-					try {
-						mPreludeFile = args[++i];
-						return;
-					} catch (final Exception e) {
-						mExit = true;
-						return;
-					}
-				}
-				if (args[i].compareTo("--settings") == 0) {
-					try {
-						mSettingsFile = args[++i];
-					} catch (final Exception e) {
-						mExit = true;
-						return;
-					}
-				}
+			final Object parsedValue = cli.getParsedOptionValue(optName);
+			if (mLogger.isDebugEnabled() && parsedValue != null) {
+				mLogger.debug("Option " + optName + " has value of type " + parsedValue.getClass().getCanonicalName()
+						+ ": " + parsedValue);
 			}
 		}
 	}
-
-	public String getToolFile() {
-		return mToolchainFile;
+	
+	private void validateParsedOptionsWithValidators(final CommandLine cli) throws ParseException {
+		for (final Option option : cli.getOptions()) {
+			final String cliName = option.getLongOpt();
+			if (cliName == null) {
+				continue;
+			}
+			final IUltimatePreferenceItemValidator<Object> validator = mOptionBuilder.getValidator(cliName);
+			if (validator == null) {
+				continue;
+			}
+			final Object value = cli.getParsedOptionValue(cliName);
+			if (value == null) {
+				throw new ParseException("Invalid option value for " + cliName + ": " + value);
+			}
+			if (!validator.isValid(value)) {
+				throw new ParseException("Invalid option value for " + cliName + ": " + value);
+			}
+		}
 	}
-
-	public String[] getInputFile() {
-		return mInputFiles;
-	}
-
-	public String getPreludeFile() {
-		return mPreludeFile;
-	}
-
-	public boolean getExitSwitch() {
-		return mExit;
-	}
-
-	public boolean getConsoleSwitch() {
-		return mConsoleMode;
-	}
-
-	public boolean getInteractiveSwitch() {
-		return mInteractiveMode;
-	}
-
-	public String getName() {
-		return s_PLUGIN_NAME;
-	}
-
-	public String getPluginID() {
-		return s_PLUGIN_ID;
-	}
-
-	public String getSettings() {
-		return mSettingsFile;
-	}
-
 }

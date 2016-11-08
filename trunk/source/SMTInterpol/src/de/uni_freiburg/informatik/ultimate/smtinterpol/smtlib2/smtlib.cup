@@ -24,7 +24,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
 import java.math.BigInteger;
 import java.math.BigDecimal;
 import java.util.Arrays;
-import java_cup.runtime.Symbol;
+import com.github.jhoenicke.javacup.runtime.Symbol;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.MySymbolFactory;
 import java.util.Map;
 
@@ -36,109 +36,111 @@ parser code {:
 	String filename;
 	ParseEnvironment env;
 
+	public static final Sort[] EMPTY_SORT_ARRAY = {};
+
 	public void report_error(String s, Object sym) {
 		String location;
 		if (sym instanceof MySymbolFactory.LineColumnSymbol) {
 			MySymbolFactory.LineColumnSymbol bsym = (MySymbolFactory.LineColumnSymbol) sym;
 			location = bsym.getLocation();
-	    } else if ((sym instanceof Symbol) 
-	    	       && ((Symbol)sym).sym == LexerSymbols.EOF) {
-	    	location = "EOF";
-	    } else
-	        location = "UNKNOWN";
-	    
-	    action_obj.setError(filename+":"+location+": "+s);
+		} else if ((sym instanceof Symbol)
+				   && ((Symbol)sym).sym == LexerSymbols.EOF) {
+			location = "EOF";
+		} else
+			location = "UNKNOWN";
+
+		action_obj.setError(filename+":"+location+": "+s);
 	}
 
-	public void report_error(String s) {	
+	public void report_error(String s) {
 		report_error(s, cur_token);
 	}
-	
+
 	public void syntax_error(Symbol sym) {
-	    report_error("Syntax Error", sym);
+		report_error("Syntax Error", sym);
 		env.printError(action_obj.getError());
 	}
 
 	public void setFileName(String filename) {
 		this.filename = filename;
 	}
-	
+
 	public void setParseEnvironment(ParseEnvironment env) {
 		this.env = env;
-	}	
+	}
 :}
 
 action code {:
-	ScopedHashMap<String,TermVariable> localVars = 
-		new ScopedHashMap<String, TermVariable>(false); 
+	ScopedHashMap<String,TermVariable> localVars =
+		new ScopedHashMap<String, TermVariable>(false);
 	Sort[] sortParams = null;
 	static Sort[] emptySortArray = new Sort[0];
-	
+
 	static class Binding {
-	    TermVariable mVar;
-	    Term mTerm;
-	    public Binding(TermVariable var, Term term) {
-	        mVar = var;
-	        mTerm = term;
-	    }
-	    TermVariable getVar() {
-	        return mVar;
-	    }
-	    Term getTerm() {
-	        return mTerm;
-	    }
+		TermVariable mVar;
+		Term mTerm;
+		public Binding(TermVariable var, Term term) {
+			mVar = var;
+			mTerm = term;
+		}
+		TermVariable getVar() {
+			return mVar;
+		}
+		Term getTerm() {
+			return mTerm;
+		}
 	}
-	
+
 	static class IndexedIdentifier {
-	    String mName;
-	    BigInteger[] mIndices;
-	    public IndexedIdentifier(String name, BigInteger[] indices) {
-	        mName = name;
-	        mIndices = indices;
-	    }
-	    public String getName() {
-	        return mName;
-	    }
-	    public BigInteger[] getIndices() {
-	        return mIndices;
-	    }
-	    
-	    public String toString() {
-	    	if (mIndices == null)
-	    		return mName;
-	    	return "(_ "+mName+" "+Arrays.toString(mIndices)+")";
-	    }
+		String mName;
+		BigInteger[] mIndices;
+		public IndexedIdentifier(String name, BigInteger[] indices) {
+			mName = name;
+			mIndices = indices;
+		}
+		public String getName() {
+			return mName;
+		}
+		public BigInteger[] getIndices() {
+			return mIndices;
+		}
+
+		public String toString() {
+			if (mIndices == null)
+				return mName;
+			return "(_ "+mName+" "+Arrays.toString(mIndices)+")";
+		}
 	}
 
 	static class QualIdentifier {
-	    String mName;
-	    BigInteger[] mIndices;
-	    Sort mSort;
-	    public QualIdentifier(IndexedIdentifier id, Sort sort) {
-	        mName = id.getName();
-	        mIndices = id.getIndices();
-	        mSort = sort;
-	    }
-	    public String getIdentifier() {
-	        return mName;
-	    }
-	    public BigInteger[] getIndices() {
-	        return mIndices;
-	    }
-	    public Sort getSort() {
-	        return mSort;
-	    }
+		String mName;
+		BigInteger[] mIndices;
+		Sort mSort;
+		public QualIdentifier(IndexedIdentifier id, Sort sort) {
+			mName = id.getName();
+			mIndices = id.getIndices();
+			mSort = sort;
+		}
+		public String getIdentifier() {
+			return mName;
+		}
+		public BigInteger[] getIndices() {
+			return mIndices;
+		}
+		public Sort getSort() {
+			return mSort;
+		}
 
-	    public String toString() {
-	    	String indexedId;
-	    	if (mIndices == null)
-	    		indexedId = mName;
-	    	else
-	    		indexedId = "(_ "+mName+" "+Arrays.toString(mIndices)+")";
-	    	if (mSort == null)
-	    		return indexedId;
-	    	return "(as " + indexedId + " " + mSort + ")";
-	    }
+		public String toString() {
+			String indexedId;
+			if (mIndices == null)
+				indexedId = mName;
+			else
+				indexedId = "(_ "+mName+" "+Arrays.toString(mIndices)+")";
+			if (mSort == null)
+				return indexedId;
+			return "(as " + indexedId + " " + mSort + ")";
+		}
 	}
 
 	String errorMessage;
@@ -154,17 +156,17 @@ action code {:
 		errorMessage = null;
 		return result;
 	}
-	
+
 	public Sort lookupSort(Symbol sym, IndexedIdentifier id, Sort[] args) {
-	    for (Sort s: args) {
-	        if (s == null) return null;
-	    }
+		for (Sort s: args) {
+			if (s == null) return null;
+		}
 		String name = id.getName();
 		if (args.length == 0 && id.getIndices() == null && sortParams != null) {
-		    for (Sort s: sortParams) {
-		        if (s.getName().equals(name))
-		            return s;
-		    }
+			for (Sort s: sortParams) {
+				if (s.getName().equals(name))
+					return s;
+			}
 		}
 		try {
 			return parser.env.getScript().sort(name, id.getIndices(), args);
@@ -173,7 +175,7 @@ action code {:
 		}
 		return null;
 	}
-	
+
 	public Term createTerm(Symbol fsym, String name, BigInteger[] indices, Sort resultSort, Term[] param) {
 		// check if there was an error when creating the child term.
 		for (Term p : param) {
@@ -189,32 +191,31 @@ action code {:
 	}
 
 	public TermVariable createTermVariable(String name, Sort sort) {
-  	    if (sort == null)
-  	        return null;
-  	    try {
-	    	TermVariable tv = parser.env.getScript().variable(name, sort);
-	    	localVars.put(tv.getName(), tv);
-	    	return tv;
-	    } catch (SMTLIBException cannotHappen) {}
-	    // Actually unreachable
-	    throw new AssertionError();
+		if (sort == null)
+			return null;
+		try {
+			TermVariable tv = parser.env.getScript().variable(name, sort);
+			localVars.put(tv.getName(), tv);
+			return tv;
+		} catch (SMTLIBException cannotHappen) {}
+		// Actually unreachable
+		throw new AssertionError();
 	}
-	
+
 	private Term getTermVariable(String name) {
 		return localVars.get(name);
-	}	
-	
-  	public Term annotateTerm(Term term, Annotation[] annots) {
-  	    if (term == null)
-  	        return null;
-  	    try {
-  			return parser.env.getScript().annotate(term, annots);
-  		} catch (SMTLIBException se) {
-  			parser.report_error(se.getMessage());
-  		}
-  		return null;
-  	}
+	}
 
+	public Term annotateTerm(Term term, Annotation[] annots) {
+		if (term == null)
+			return null;
+		try {
+			return parser.env.getScript().annotate(term, annots);
+		} catch (SMTLIBException se) {
+			parser.report_error(se.getMessage());
+		}
+		return null;
+	}
 :}
 
 /*init with {: getScanner().init(); :} */
@@ -223,15 +224,16 @@ scan with {: return getScanner().next_token(); :}
 
 /* Predefined Symbols */
 terminal String UNDERSCORE, BANG,
-         AS, ASSERT, CHECKSAT, CONTINUEDEXECUTION, 
-         DECLARESORT, DECLAREFUN, DEFINESORT, DEFINEFUN, ERRORSYM,
+         AS, ASSERT, CHECKSAT, CONTINUEDEXECUTION,
+         DECLARESORT, DECLAREFUN, DECLARECONST, DEFINESORT, DEFINEFUN, ERRORSYM,
          EXISTS, EXIT, FALSE, FORALL, GETASSERTIONS, GETASSIGNMENT, GETINFO,
          GETINTERPOLANTS,
          GETMODEL, GETOPTION, GETPROOF, GETUNSATCORE, GETVALUE, IMMEDIATEEXIT,
          INCOMPLETE, LET, LOGIC, NONE, NUMERALSYM, MEMOUT, PAR, POP, PUSH,
          DECIMALSYM, SAT, SUCCESS, SETLOGIC, SETINFO, SETOPTION, STRINGSYM,
          THEORY, TRUE, UNKNOWN, UNSUPPORTED, UNSAT,
-         INCLUDE, RESET, SIMPLIFY, TIMED, ALLSAT, ECHO, FINDIMPLIEDEQUALITY;
+         INCLUDE, RESET, RESETASSERTIONS, SIMPLIFY, TIMED, ALLSAT, ECHO,
+         FINDIMPLIEDEQUALITY, CHECKSATASSUMING, GETUNSATASSUMPTIONS;
 
 /* Predefined Keywords */
 terminal String /* attribute */
@@ -244,10 +246,10 @@ terminal String /* attribute */
          CNOTES, CVALUES,
          /* options */
          CDIAGNOSTICOUTPUTCHANNEL, CREGULAROUTPUTCHANNEL,
-         CEXPANDDEFINITIONS, CINTERACTIVEMODE, CPRINTSUCCESS, CVERBOSITY,     
-	     CPRODUCEASSIGNMENTS, CPRODUCEMODELS, CPRODUCEPROOFS, CPRODUCEUNSATCORES, 
-	     CRANDOMSEED, CINTERPOLANTCHECKMODE, CSTRONGSIMPLIFIER,
-	     CTIMEOUT;
+         CEXPANDDEFINITIONS, CINTERACTIVEMODE, CPRINTSUCCESS, CVERBOSITY,
+         CPRODUCEASSIGNMENTS, CPRODUCEMODELS, CPRODUCEPROOFS, CPRODUCEUNSATCORES,
+         CRANDOMSEED, CINTERPOLANTCHECKMODE, CSTRONGSIMPLIFIER,
+         CTIMEOUT, CPRODUCEUNSATASSUMPTIONS;
 terminal String SYMBOL, KEYWORD;
 terminal BigInteger NUMERAL;
 terminal BigDecimal DECIMAL;
@@ -296,7 +298,7 @@ sExpr ::= specConstant
         | KEYWORD
         | LPAR sExpr*:s RPAR {: RESULT = s; :};
 
-constantTerm ::= NUMERAL:n 
+constantTerm ::= NUMERAL:n
 				{: try {
 					RESULT = parser.env.getScript().numeral(n);
 					} catch (SMTLIBException se) {
@@ -333,7 +335,7 @@ identifierIndexed ::= LPAR UNDERSCORE symbol:id NUMERAL+:indices RPAR
 identifier ::= symbol:s {: RESULT = new IndexedIdentifier(s, null); :}
            | identifierIndexed;
 
-sort ::= identifier:id {: RESULT = lookupSort(id$, id, emptySortArray); :} 
+sort ::= identifier:id {: RESULT = lookupSort(id$, id, emptySortArray); :}
        | LPAR identifier:id sort+:sorts RPAR
          {: RESULT = lookupSort(id$, id, sorts); :};
 attribute ::= keywordNoAttr:k attributeValue?:v {: RESULT = new Annotation(k, v); :}
@@ -347,9 +349,9 @@ attributeLogic  ::= keywordNoLogic:k  attributeValue?:v
 attributeTheory ::= keywordNoTheory:k attributeValue?:v
                     {: RESULT = new Annotation(k, v); :};
 
-qualIdentifier ::= identifier:i 
+qualIdentifier ::= identifier:i
          {: RESULT = new QualIdentifier(i, null); :}
-       | LPAR AS identifier:i sort:s RPAR 
+       | LPAR AS identifier:i sort:s RPAR
          {: RESULT = new QualIdentifier(i, s); :};
 varBinding ::= LPAR symbol:sym term:t RPAR
          {: if (hasError()) {
@@ -413,7 +415,7 @@ funSymbolDecl ::= LPAR specConstant sort attribute* RPAR
                 | LPAR identifier sort+ attribute* RPAR;
 
 parFunSymbolDecl ::= funSymbolDecl
-       | LPAR PAR LPAR symbol+ RPAR 
+       | LPAR PAR LPAR symbol+ RPAR
                   LPAR identifier sort+ attribute* RPAR RPAR;
 theoryAttribute ::= CSORTS LPAR sortSymbolDecl+ RPAR
                   | CFUNS  LPAR parFunSymbolDecl+ RPAR
@@ -435,15 +437,15 @@ logic ::= LPAR LOGIC symbol logicAttribute+ RPAR;
 
 bValue ::= TRUE {: RESULT = true; :} | FALSE {: RESULT = false; :};
 
-booleanOption ::= CPRINTSUCCESS | CEXPANDDEFINITIONS | CINTERACTIVEMODE 
+booleanOption ::= CPRINTSUCCESS | CEXPANDDEFINITIONS | CINTERACTIVEMODE
                 | CPRODUCEPROOFS | CPRODUCEUNSATCORES | CPRODUCEMODELS
                 | CPRODUCEASSIGNMENTS | CINTERPOLANTCHECKMODE
-                | CSTRONGSIMPLIFIER;
+                | CSTRONGSIMPLIFIER | CPRODUCEUNSATASSUMPTIONS;
 stringOption ::= CREGULAROUTPUTCHANNEL | CDIAGNOSTICOUTPUTCHANNEL;
 numeralOption ::= CRANDOMSEED | CVERBOSITY | CTIMEOUT;
 option ::= booleanOption:o bValue:b
-           {: try { 
-           		parser.env.setOption(o, b);
+           {: try {
+           		parser.env.getScript().setOption(o, b);
            		parser.env.printSuccess();
            	} catch (UnsupportedOperationException uoe) {
            		parser.env.printResponse("unsupported");
@@ -452,8 +454,8 @@ option ::= booleanOption:o bValue:b
            	} :}
          | stringOption:o STRING:s
            {: try {
-           		parser.env.setOption(o, s);
-           		parser.env.printSuccess(); 
+           		parser.env.getScript().setOption(o, s);
+           		parser.env.printSuccess();
            	} catch (UnsupportedOperationException uoe) {
            		parser.env.printResponse("unsupported");
            	} catch (SMTLIBException se) {
@@ -461,7 +463,7 @@ option ::= booleanOption:o bValue:b
            	}:}
          | numeralOption:o NUMERAL:n
            {: try {
-           		parser.env.setOption(o, n);
+           		parser.env.getScript().setOption(o, n);
            		parser.env.printSuccess();
            	} catch (UnsupportedOperationException uoe) {
            		parser.env.printResponse("unsupported");
@@ -470,7 +472,7 @@ option ::= booleanOption:o bValue:b
            	}:}
          | keywordNoOption:k attributeValue?:v
            {: try {
-           		parser.env.setOption(k, v);
+           		parser.env.getScript().setOption(k, v);
            		parser.env.printSuccess();
            	} catch (UnsupportedOperationException uoe) {
            		parser.env.printResponse("unsupported");
@@ -479,15 +481,15 @@ option ::= booleanOption:o bValue:b
            	} :};
 infoFlag ::= keyword;
 
-interpolantpartition 
-         ::= interpolantpartition:child SYMBOL:symb 
+interpolantpartition
+         ::= interpolantpartition:child SYMBOL:symb
              {: if (child.isEmpty() && symb.equals("and"))
                    child.makeAndTerm();
                 else
-                   child.addParent(createTerm(symb$, symb, null, null, new Term[0])); 
+                   child.addParent(createTerm(symb$, symb, null, null, new Term[0]));
                 RESULT = child;:}
            | interpolantpartition:child LPAR interpolantpartition:sibling RPAR
-             {: if (sibling.isAndTerm() && !hasError()) { 
+             {: if (sibling.isAndTerm() && !hasError()) {
              	    child.addParent(parser.env.getScript()
              	    				.term("and", sibling.getPartition()));
                 } else if (child.isClosedTree()) {
@@ -532,7 +534,7 @@ command ::= SETLOGIC symbol:logic
 				}
 			:}
           | DEFINESORT symbol:sort LPAR symbol*:sortVars
-            {: sortParams = parser.env.getScript().sortVariables(sortVars); :} 
+            {: sortParams = parser.env.getScript().sortVariables(sortVars); :}
             RPAR sort:def
             {: if (hasError())
             	   parser.env.printError(getError());
@@ -557,6 +559,19 @@ command ::= SETLOGIC symbol:logic
                    		parser.report_error(se.getMessage(), fun$);
                    		parser.env.printError(getError());
                    }
+               }
+            :}
+          | DECLARECONST symbol:fun sort:result
+            {:  if (hasError())
+                    parser.env.printError(getError());
+                else {
+                    try {
+                        parser.env.getScript().declareFun(fun, Script.EMPTY_SORT_ARRAY, result);
+                        parser.env.printSuccess();
+                    } catch(SMTLIBException se) {
+                        parser.report_error(se.getMessage(), fun$);
+                        parser.env.printError(getError());
+                    }
                }
             :}
           | DEFINEFUN {: localVars.beginScope(); :} symbol:fun
@@ -634,6 +649,13 @@ command ::= SETLOGIC symbol:logic
             } catch(SMTLIBException se) {
             	parser.env.printError(se.getMessage());
             } :}
+          | CHECKSATASSUMING LPAR term+:t RPAR
+            {: try {
+                Script.LBool res = parser.env.getScript().checkSatAssuming(t);
+                parser.env.printResponse(res);
+            } catch(SMTLIBException se) {
+            	parser.env.printError(se.getMessage());
+            } :}
           | GETASSERTIONS
             {: try {
             	Term[] res = parser.env.getScript().getAssertions();
@@ -669,6 +691,15 @@ command ::= SETLOGIC symbol:logic
           | GETUNSATCORE
             {: try {
             	Term[] res = parser.env.getScript().getUnsatCore();
+            	parser.env.printResponse(res);
+            } catch (SMTLIBException se) {
+            	parser.env.printError(se.getMessage());
+            } catch (UnsupportedOperationException uoe) {
+            	parser.env.printResponse("unsupported");
+            } :}
+          | GETUNSATASSUMPTIONS
+            {: try {
+            	Term[] res = parser.env.getScript().getUnsatAssumptions();
             	parser.env.printResponse(res);
             } catch (SMTLIBException se) {
             	parser.env.printError(se.getMessage());
@@ -731,6 +762,8 @@ command ::= SETLOGIC symbol:logic
             :}
           | RESET
             {: parser.env.getScript().reset(); parser.env.printSuccess(); :}
+          | RESETASSERTIONS
+            {: parser.env.getScript().resetAssertions(); parser.env.printSuccess(); :}
           | EXIT
             {: parser.env.getScript().exit(); parser.done_parsing(); :}
           | TIMED
@@ -768,27 +801,29 @@ script ::= commandPar*;
 
 symbol ::= SYMBOL | CONTINUEDEXECUTION | ERRORSYM | FALSE | IMMEDIATEEXIT |
            INCOMPLETE | LOGIC | NONE | MEMOUT | SAT | SUCCESS | THEORY | TRUE |
-           UNKNOWN | UNSUPPORTED | UNSAT | INCLUDE | RESET |
-           SIMPLIFY;
-         
+           UNKNOWN | UNSUPPORTED | UNSAT | INCLUDE | SIMPLIFY |
+           TIMED | GETINTERPOLANTS | FINDIMPLIEDEQUALITY | ALLSAT;
+
 /* The following are reserved words
          PAR | NUMERALSYM | DECIMALSYM | STRINGSYM |
          UNDERSCORE | AS | BANG | LET | FORALL | EXISTS |
-         ASSERT | CHECKSAT |  
-         DECLARESORT | DECLAREFUN | DEFINESORT | DEFINEFUN | 
-         EXIT | GETASSERTIONS | GETASSIGNMENT | GETINFO |
-         GETMODEL | GETOPTION | GETPROOF | GETUNSATCORE | GETVALUE |
-         POP | PUSH | SETLOGIC | SETINFO | SETOPTION; */
+         ASSERT | CHECKSAT | CHECKSATASSUMING |
+         DECLARESORT | DECLAREFUN | DECLARECONST | DEFINESORT | DEFINEFUN |
+         ECHO | EXIT | GETASSERTIONS | GETASSIGNMENT | GETINFO |
+         GETMODEL | GETOPTION | GETPROOF | GETUNSATASSUMPTIONS |
+         GETUNSATCORE | GETVALUE |
+         POP | PUSH | RESET | RESETASSERTIONS |
+         SETLOGIC | SETINFO | SETOPTION; */
 
 keywordAttr   ::= CPATTERN | CNAMED;
-keywordTheory ::= CSORTSDESCRIPTION | CSORTS | 
+keywordTheory ::= CSORTSDESCRIPTION | CSORTS |
                   CFUNS | CFUNSDESCRIPTION | CDEFINITION;
 keywordLogic ::= CEXTENSIONS | CLANGUAGE | CTHEORIES;
 keywordTheoryLogic ::= keywordTheory | keywordLogic | CNOTES | CVALUES;
 keywordOption ::= CDIAGNOSTICOUTPUTCHANNEL | CREGULAROUTPUTCHANNEL |
-         CEXPANDDEFINITIONS | CINTERACTIVEMODE | CPRINTSUCCESS | CVERBOSITY |     
-	     CPRODUCEASSIGNMENTS | CPRODUCEMODELS | CPRODUCEPROOFS | CPRODUCEUNSATCORES | 
-	     CRANDOMSEED | CTIMEOUT | CINTERPOLANTCHECKMODE | CSTRONGSIMPLIFIER;
+         CEXPANDDEFINITIONS | CINTERACTIVEMODE | CPRINTSUCCESS | CVERBOSITY |
+         CPRODUCEASSIGNMENTS | CPRODUCEMODELS | CPRODUCEPROOFS | CPRODUCEUNSATCORES |
+         CRANDOMSEED | CTIMEOUT | CINTERPOLANTCHECKMODE | CSTRONGSIMPLIFIER;
 
 keywordNoAttr ::= KEYWORD | keywordTheoryLogic | keywordOption;
 keywordNoTheory ::= KEYWORD | keywordAttr | keywordLogic | keywordOption;

@@ -22,9 +22,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE JungVisualization plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE JungVisualization plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE JungVisualization plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization.graph;
@@ -65,14 +65,14 @@ public class GraphListener implements MouseListener, GraphMousePlugin, MouseMoti
 	private final JungSelectionProvider mSelectionProvider;
 	private final JungEditorInput mEditorInput;
 
-	public GraphListener(JungSelectionProvider jsp, JungEditorInput ei) {
+	public GraphListener(final JungSelectionProvider jsp, final JungEditorInput ei) {
 		mSelectionProvider = jsp;
 		mEditorInput = ei;
 		mSelectedElements = new HashSet<IElement>();
 	}
 
 	@Override
-	public void mouseClicked(MouseEvent e) {
+	public void mouseClicked(final MouseEvent e) {
 		if (e.getButton() == MouseEvent.BUTTON3) {
 			final JVContextMenu menu = new JVContextMenu(mEditorInput);
 			menu.show(e.getComponent(), e.getX(), e.getY());
@@ -80,16 +80,16 @@ public class GraphListener implements MouseListener, GraphMousePlugin, MouseMoti
 	}
 
 	@Override
-	public void mouseEntered(MouseEvent e) {
+	public void mouseEntered(final MouseEvent e) {
 		e.getComponent().getParent().requestFocus();
 	}
 
 	@Override
-	public void mouseExited(MouseEvent e) {
+	public void mouseExited(final MouseEvent e) {
 	}
 
 	@Override
-	public void mousePressed(MouseEvent e) {
+	public void mousePressed(final MouseEvent e) {
 		// If the middle mouse button is pressed, remember the current position of the mouse as a point of reference for
 		// panning.
 		if (e.getButton() == MouseEvent.BUTTON2) {
@@ -114,7 +114,7 @@ public class GraphListener implements MouseListener, GraphMousePlugin, MouseMoti
 	}
 
 	@Override
-	public void mouseReleased(MouseEvent e) {
+	public void mouseReleased(final MouseEvent e) {
 		// Delete the point of reference for panning when the middle mouse button is released.
 		if (e.getButton() == MouseEvent.BUTTON2) {
 			mDragpoint = null;
@@ -145,7 +145,7 @@ public class GraphListener implements MouseListener, GraphMousePlugin, MouseMoti
 
 		final JungSelection sel = new JungSelection();
 
-		if (selectedNodes.size() > 0) {
+		if (!selectedNodes.isEmpty()) {
 			// clears the Node View, if more than one node selected
 
 			if (selectedNodes.size() > 1) {
@@ -174,7 +174,7 @@ public class GraphListener implements MouseListener, GraphMousePlugin, MouseMoti
 	}
 
 	@Override
-	public boolean checkModifiers(MouseEvent e) {
+	public boolean checkModifiers(final MouseEvent e) {
 		return false;
 	}
 
@@ -184,7 +184,7 @@ public class GraphListener implements MouseListener, GraphMousePlugin, MouseMoti
 	}
 
 	@Override
-	public void setModifiers(int modifiers) {
+	public void setModifiers(final int modifiers) {
 	}
 
 	/**
@@ -200,7 +200,7 @@ public class GraphListener implements MouseListener, GraphMousePlugin, MouseMoti
 	/**
 	 * Pans the view when the middle mouse button is pressed.
 	 */
-	public void mouseDragged(MouseEvent event) {
+	public void mouseDragged(final MouseEvent event) {
 		if (mDragpoint != null) {
 			final MultiLayerTransformer transformer = mEditorInput.getViewer().getRenderContext()
 			        .getMultiLayerTransformer();
@@ -220,6 +220,6 @@ public class GraphListener implements MouseListener, GraphMousePlugin, MouseMoti
 	}
 
 	@Override
-	public void mouseMoved(MouseEvent event) {
+	public void mouseMoved(final MouseEvent event) {
 	}
 }

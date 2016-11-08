@@ -15,7 +15,7 @@ public class TransformPEAStateNames {
 	
 	
 	
-	public Vector<String[]> buildTable(PhaseEventAutomata pea){
+	public Vector<String[]> buildTable(final PhaseEventAutomata pea){
 		final Vector<String[]> nameTable = new Vector();
 		final Phase[] phases = pea.getPhases();
 		for (int i=0; i<phases.length;i++){
@@ -23,13 +23,13 @@ public class TransformPEAStateNames {
 			final String oldName = phase.getName();
 			final String newName = "st"+i;
 			final String[] nameAssignment = addNameAssignment(oldName, newName);
-			nameTable.add(nameAssignment);	
+			nameTable.add(nameAssignment);
 			
 		}
 		return nameTable;
 	}
 	
-	public void transform(Vector<String[]> nameTable, String fileInput, String fileOutput){
+	public void transform(final Vector<String[]> nameTable, final String fileInput, final String fileOutput){
 		    
 		    try {
 		      //use buffering, reading one line at a time
@@ -47,11 +47,11 @@ public class TransformPEAStateNames {
 		        * it returns an empty String if two newlines appear in a row.
 		        */
 		        while (( line = input.readLine()) != null){
-		        	String lineString = line.toString();
+		        	String lineString = line;
 		        	for (int i=0; i<nameTable.size(); i++){
 		    			final String[] nameAssignment = nameTable.elementAt(i);
 		    			final String oldName = getOldName(nameAssignment);
-		    			final String newName = getNewName(nameAssignment);    			
+		    			final String newName = getNewName(nameAssignment);
 		    			
 		    			if ((lineString.contains("\""+oldName+"\"")) || (lineString.contains(">"+oldName+"<"))){
 		    				lineString = lineString.replace(oldName, newName);
@@ -77,24 +77,24 @@ public class TransformPEAStateNames {
 		
 	}
 	
-	private String[] addNameAssignment(String oldName, String newName){
+	private String[] addNameAssignment(final String oldName, final String newName){
 		final String[] nameAssignment = new String[2];
 		nameAssignment[0] = oldName;
 		nameAssignment[1] = newName;
 		return nameAssignment;
 	}
 	
-	private String getOldName(String[] nameAssignment){
+	private String getOldName(final String[] nameAssignment){
 		final String oldName = nameAssignment[0];
 		return oldName;
 	}
 	
-	private String getNewName(String[] nameAssignment){
+	private String getNewName(final String[] nameAssignment){
 		final String newName = nameAssignment[1];
 		return newName;
 	}
 	
-	public static void main(String[] args) {
+	public static void main(final String[] args) {
 		// TODO Auto-generated method stub
 		final TestPatternToPEA patternToPEA = new TestPatternToPEA();
 		

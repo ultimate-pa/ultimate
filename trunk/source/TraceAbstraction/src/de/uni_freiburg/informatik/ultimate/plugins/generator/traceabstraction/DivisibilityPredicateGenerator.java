@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
@@ -37,11 +37,10 @@ import java.util.Map.Entry;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 
 /**
@@ -55,17 +54,15 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 public class DivisibilityPredicateGenerator {
 	private final Script mScript;
 	private final PredicateUnifier mPredicateUnifier;
-	private final Boogie2SMT boogie2smt;
 
-	public DivisibilityPredicateGenerator(SmtManager smtManger,
-			PredicateUnifier predicateUnifier) {
+	public DivisibilityPredicateGenerator(final ManagedScript mgdScript,
+			final PredicateUnifier predicateUnifier) {
 		super();
-		mScript = smtManger.getScript();
+		mScript = mgdScript.getScript();
 		mPredicateUnifier = predicateUnifier;
-		boogie2smt = smtManger.getBoogie2Smt();
 	}
 
-	public Collection<IPredicate> divisibilityPredicates(Collection<IPredicate> preds) {
+	public Collection<IPredicate> divisibilityPredicates(final Collection<IPredicate> preds) {
 		final Map<IProgramVar, Integer> offsetVar2size = new HashMap<>();
 		final List<IPredicate> result = new ArrayList<IPredicate>();
 		for (final IPredicate pred : preds) {
@@ -94,35 +91,31 @@ public class DivisibilityPredicateGenerator {
 		return result;
 	}
 
-	private int getSize(IProgramVar bv) {
+	private int getSize(final IProgramVar bv) {
 		return 4;
 	}
 
-	private boolean isOffsetVar(IProgramVar bv) {
+	private boolean isOffsetVar(final IProgramVar bv) {
 		if (bv.getTermVariable().getSort().getName().equals("Int")) {
-			return bv.getIdentifier().contains("offset");
+			return bv.getGloballyUniqueId().contains("offset");
 		} else {
 			return false;
 		}
 	}
 	
-	private boolean isLengthArray(Term term) {
+	private boolean isLengthArray(final Term term) {
 		if (term instanceof TermVariable) {
 			final TermVariable tv = (TermVariable) term;
-			if (tv.toString().contains("#length")) {
-				return true;
-			} else {
-				return false;
-			}
+			return tv.toString().contains("#length");
 		} else {
 			return false;
 		}
 	}
 
-	private Term getDivisibilityTerm(Term term, Integer value) {
+	private Term getDivisibilityTerm(final Term term, final Integer value) {
 		final Term divisor = mScript.numeral(BigInteger.valueOf(value));
 		final Term zero = mScript.numeral(BigInteger.ZERO);
-		final Term divisible = mScript.term("=", mScript.term("mod", term, divisor), zero); 
+		final Term divisible = mScript.term("=", mScript.term("mod", term, divisor), zero);
 		return divisible;
 	}
 

@@ -121,21 +121,21 @@ public class InterpolationTest_Reach_Bitvector_Kojak extends AbstractTraceAbstra
 	}
 
 	private static final String[] mSettings = {
-//		"automizer/interpolation/Reach-32bit-Z3-NestedInterpolation-Bitvector.epf",
-//		"automizer/interpolation/Reach-32bit-Z3-FPandBP-Bitvector.epf",
-//		"automizer/interpolation/Reach-32bit-Z3-FP-Bitvector.epf",
-//		"automizer/interpolation/Reach-32bit-Z3-BP-Bitvector.epf",
+//		"automizer/interpolation/bitvector/Reach-32bit-Z3-NestedInterpolation-Bitvector.epf",
+//		"automizer/interpolation/bitvector/Reach-32bit-Z3-FPandBP-Bitvector.epf",
+//		"automizer/interpolation/bitvector/Reach-32bit-Z3-FP-Bitvector.epf",
+//		"automizer/interpolation/bitvector/Reach-32bit-Z3-BP-Bitvector.epf",
 		
-		"kojak/interpolation/Reach-32bit-iZ3-NestedInterpolation-Bitvector.epf",
+		"kojak/interpolation/bitvector/Reach-32bit-iZ3-NestedInterpolation-Bitvector.epf",
 
-//		"kojak/interpolation/Reach-32bit-Z3-FP-Bitvector.epf",
-//		"kojak/interpolation/Reach-32bit-Z3-FP-LV-Bitvector.epf",
-//		"kojak/interpolation/Reach-32bit-Z3-FP-UC-Bitvector.epf",
-		"kojak/interpolation/Reach-32bit-Z3-FP-UC-LV-Bitvector.epf",
-//		"kojak/interpolation/Reach-32bit-Z3-BP-Bitvector.epf",
-//		"kojak/interpolation/Reach-32bit-Z3-BP-LV-Bitvector.epf",
-//		"kojak/interpolation/Reach-32bit-Z3-BP-UC-Bitvector.epf",
-		"kojak/interpolation/Reach-32bit-Z3-BP-UC-LV-Bitvector.epf",
+//		"kojak/interpolation/bitvector/Reach-32bit-Z3-FP-Bitvector.epf",
+//		"kojak/interpolation/bitvector/Reach-32bit-Z3-FP-LV-Bitvector.epf",
+//		"kojak/interpolation/bitvector/Reach-32bit-Z3-FP-UC-Bitvector.epf",
+		"kojak/interpolation/bitvector/Reach-32bit-Z3-FP-UC-LV-Bitvector.epf",
+//		"kojak/interpolation/bitvector/Reach-32bit-Z3-BP-Bitvector.epf",
+//		"kojak/interpolation/bitvector/Reach-32bit-Z3-BP-LV-Bitvector.epf",
+//		"kojak/interpolation/bitvector/Reach-32bit-Z3-BP-UC-Bitvector.epf",
+		"kojak/interpolation/bitvector/Reach-32bit-Z3-BP-UC-LV-Bitvector.epf",
 	};
 	
 	private static final String[] mCToolchains = {

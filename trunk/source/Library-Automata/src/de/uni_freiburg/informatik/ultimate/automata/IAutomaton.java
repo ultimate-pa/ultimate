@@ -19,47 +19,75 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata;
 
-
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
- * All automata have to implement this interface. 
- *
- * @param <LETTER> Type of objects that are contained in the alphabet.
- * @param <STATE> Type of objects that are used to label states (resp. places
- * for PetriNet)
+ * All automata have to implement this interface.
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <LETTER>
+ *            Type of objects that are contained in the alphabet.
+ * @param <STATE>
+ *            Type of objects that are used to label states (resp. places
+ *            for {@link de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet IPetriNet})
  */
-public interface IAutomaton<LETTER,STATE> {
-	
-
+public interface IAutomaton<LETTER, STATE> {
 	/**
-	 * Alphabet of this automaton. 
+	 * @return Alphabet of this automaton.
 	 */
-	public Set<LETTER> getAlphabet();
+	Set<LETTER> getAlphabet();
 	
 	/**
-	 * StateFactory that was used to construct this automaton. This method 
-	 * become deprecated.
+	 * Can the alphabet still change after the automaton was constructed?
+	 * Note that the correctness of this property is not checked and the user
+	 * of the library has to use this with caution. (There is no simple check
+	 * for this property since the automata usually take user provided Set 
+	 * objects as alphabet and for performance reasons we do not want to change
+	 * this.)  
+	 * @return true iff the automaton's alphabet may be modified after the
+	 * automaton was constructed
 	 */
-	public StateFactory<STATE> getStateFactory();
-
-
-	/**
-	 * Size of the automaton. E.g., the number of states.
-	 */
-	public int size();
+	default boolean hasModifiableAlphabet() {
+		return false;
+	}
 	
 	/**
-	 * Provide some human readable information about the size of the automaton. 
+	 * @return StateFactory that was used to construct this automaton.
+	 * @deprecated Automata should not provide their state factory anymore.
 	 */
-	public String sizeInformation();
+	@Deprecated
+	IStateFactory<STATE> getStateFactory();
+	
+	/**
+	 * @return Size of the automaton. E.g., the number of states.
+	 */
+	int size();
+	
+	/**
+	 * @return Some human readable information about the size of the automaton.
+	 */
+	String sizeInformation();
+	
+	/**
+	 * Checks whether two automata have the same alphabet.
+	 * 
+	 * @param fstOperand
+	 *            first operand
+	 * @param sndOperand
+	 *            second operand
+	 * @return {@code true} iff the automata have the same alphabet
+	 */
+	static <LETTER, STATE> boolean sameAlphabet(final IAutomaton<LETTER, STATE> fstOperand,
+			final IAutomaton<LETTER, STATE> sndOperand) {
+		return fstOperand.getAlphabet().equals(sndOperand.getAlphabet());
+	}
 }

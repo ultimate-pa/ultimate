@@ -44,7 +44,7 @@ public class AutomizerRegressionTestBdd extends AbstractTraceAbstractionTestSuit
 	private static final String[] mUltimateRepository_ForwardPredicates = {
 		"examples/programs/regression",
 		"examples/programs/quantifier/regression",
-//		"examples/programs/recursivePrograms",
+//		"examples/programs/recursive/regression",
 //		"examples/programs/toy",
 	};
 	
