@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
@@ -57,7 +58,9 @@ import org.eclipse.cdt.internal.core.dom.parser.c.CASTFunctionDeclarator;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
@@ -77,6 +80,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ReturnStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.StructAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
@@ -917,6 +921,72 @@ public class FunctionHandler {
 			return mExpressionTranslation.createNanOrInfinity(loc, "inf");
 		} else if (methodName.equals("__builtin_huge_valf")) {
 			return mExpressionTranslation.createNanOrInfinity(loc, "inff");
+		} else if (methodName.equals("__builtin_strchr")) {
+			/*
+			 * C11, 7.21.5.2 says: 
+			 * "#include <string.h> char *strchr(const char *s, int c);
+ 		     * Description: The strchr function locates the first occurrence of c (converted to a char) in the
+             * string pointed to by s. The terminating null character is considered to be part of the
+             * string.
+             * Returns : The strchr function returns a pointer to the located character, or a null pointer if the
+             * character does not occur in the string."
+             * 
+             * We replace the method call by a fresh char pointer variable which is havocced, and assumed to be either
+             * NULL or a pointer into the area where the argument pointer is valid.
+			 */
+			List<Declaration> decl = new ArrayList<>();
+			List<Statement> stmt = new ArrayList<>();
+			Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
+			
+			// dispatch first argument
+			assert arguments.length == 2 : "wrong number of arguments";
+			final ExpressionResult arg_s = ((ExpressionResult) main.dispatch(arguments[0]))
+					.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
+			
+			// introduce fresh aux variable
+			final CPointer resultType = new CPointer(new CPrimitive(CPrimitives.CHAR));
+			final String tmpId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.NONDET, resultType);
+			final VariableDeclaration tmpVarDecl =
+					SFO.getTempVarVariableDeclaration(tmpId, main.mTypeHandler.constructPointerType(loc), loc);
+			decl.add(tmpVarDecl);
+			auxVars.put(tmpVarDecl, loc);
+			
+
+			
+			final Expression tmpExpr = new IdentifierExpression(loc, tmpId);
+			final Expression nullExpr = new IdentifierExpression(loc, SFO.NULL);
+			// res == NULL
+			final BinaryExpression equalsNull = new BinaryExpression(loc, Operator.COMPEQ, tmpExpr, nullExpr);
+			// res.base == arg_s.base
+			final BinaryExpression baseEquals = new BinaryExpression(loc, Operator.COMPEQ, 
+					new StructAccessExpression(loc, tmpExpr, SFO.POINTER_BASE), 
+					new StructAccessExpression(loc, arg_s.lrVal.getValue(), SFO.POINTER_BASE));
+			// res.offset >= 0
+			final BinaryExpression offsetNonNegative = new BinaryExpression(loc, Operator.COMPLEQ, 
+					new IntegerLiteral(loc, "0"),
+					new StructAccessExpression(loc, tmpExpr, SFO.POINTER_OFFSET)); 
+			// res.offset < length(arg_s.base)
+			final BinaryExpression offsetSmallerLength = new BinaryExpression(loc, Operator.COMPLEQ, 
+					new StructAccessExpression(loc, tmpExpr, SFO.POINTER_OFFSET),
+					new ArrayAccessExpression(loc,
+							new IdentifierExpression(loc, SFO.LENGTH),
+							new Expression[] { new StructAccessExpression(loc, arg_s.lrVal.getValue(), SFO.POINTER_BASE) }));
+			// res.base == arg_s.base && res.offset >= 0 && res.offset <= length(arg_s.base)
+			final BinaryExpression inRange = new BinaryExpression(loc, Operator.LOGICAND, baseEquals,
+					new BinaryExpression(loc, Operator.LOGICAND,
+							offsetNonNegative, offsetSmallerLength));
+			// assume equalsNull or inRange
+			final AssumeStatement assume = new AssumeStatement(loc, new BinaryExpression(loc, Operator.LOGICOR,
+					equalsNull, inRange));
+
+			stmt.add(assume);
+
+			RValue lrVal = new RValue(tmpExpr, resultType);
+			
+			List<Overapprox> overapprox = new ArrayList<>();
+			overapprox.add(new Overapprox("builtin_strchr", loc));
+
+			return new ExpressionResult(stmt, lrVal, decl, auxVars, overapprox);
 		} else {
 			final FloatFunction floatFunction = FloatFunction.decode(methodName);
 			if (floatFunction != null) {
