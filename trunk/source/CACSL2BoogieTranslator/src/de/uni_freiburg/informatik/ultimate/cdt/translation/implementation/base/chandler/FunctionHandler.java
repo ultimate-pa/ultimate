@@ -1019,7 +1019,7 @@ public class FunctionHandler {
 			Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
 	
 			// introduce fresh aux variable
-			final CPointer resultType = new CPointer(new CPrimitive(CPrimitives.CHAR));
+			final CPointer resultType = new CPointer(new CPrimitive(CPrimitives.VOID));
 			final String tmpId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.NONDET, resultType);
 			final VariableDeclaration tmpVarDecl =
 					SFO.getTempVarVariableDeclaration(tmpId, main.mTypeHandler.constructPointerType(loc), loc);
