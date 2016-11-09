@@ -355,7 +355,7 @@ public class SvComp14CHandler extends CHandler {
 		 * value
 		 */
 		if ("__builtin_prefetch".equals(methodName) || "__builtin_va_start".equals(methodName)
-				|| "__builtin_va_end".equals(methodName) || "__builtin_return_address".equals(methodName)) {
+				|| "__builtin_va_end".equals(methodName)) {
 			main.warn(loc, "ignored call to " + methodName);
 			return new SkipResult();
 		}
