@@ -274,7 +274,8 @@ public final class Term2Expression implements Serializable {
 		final Expression index = translate(term.getParameters()[1]);
 		final Expression[] indices = { index };
 		final Expression value = translate(term.getParameters()[2]);
-		return new ArrayStoreExpression(null, array, indices, value);
+		final IBoogieType type = mTypeSortTranslator.getType(term.getSort());
+		return new ArrayStoreExpression(null, type, array, indices, value);
 	}
 
 	/**
@@ -285,7 +286,8 @@ public final class Term2Expression implements Serializable {
 		final Expression array = translate(term.getParameters()[0]);
 		final Expression index = translate(term.getParameters()[1]);
 		final Expression[] indices = { index };
-		return new ArrayAccessExpression(null, array, indices);
+		final IBoogieType type = mTypeSortTranslator.getType(term.getSort());
+		return new ArrayAccessExpression(null, type, array, indices);
 	}
 
 	/**
@@ -309,7 +311,8 @@ public final class Term2Expression implements Serializable {
 		for (int i = 0; i < indices.length; i++) {
 			indices[i] = reverseIndices.get(indices.length - 1 - i);
 		}
-		return new ArrayAccessExpression(null, array, indices);
+		final IBoogieType type = mTypeSortTranslator.getType(term.getSort());
+		return new ArrayAccessExpression(null, type, array, indices);
 	}
 
 	private Expression translate(final ConstantTerm term) {
