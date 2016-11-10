@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.InCaReAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -41,9 +42,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractInterpretationRunner;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
@@ -135,14 +136,14 @@ public class InterpolantAutomatonBuilderFactory {
 	}
 
 	public NestedWordAutomaton<CodeBlock, IPredicate> getResult(final IAutomaton<CodeBlock, IPredicate> abstraction,
-			final IInterpolantGenerator interpolGenerator, final IRun<CodeBlock, IPredicate> counterexample)
+			final IInterpolantGenerator interpolGenerator, final IRun<CodeBlock, IPredicate, ?> counterexample)
 			throws AutomataOperationCanceledException {
 		return createBuilder(abstraction, interpolGenerator, counterexample).getResult();
 	}
 
 	public IInterpolantAutomatonBuilder<CodeBlock, IPredicate> createBuilder(
 			final IAutomaton<CodeBlock, IPredicate> abstraction, final IInterpolantGenerator interpolGenerator,
-			final IRun<CodeBlock, IPredicate> counterexample) throws AutomataOperationCanceledException {
+			final IRun<CodeBlock, IPredicate, ?> counterexample) throws AutomataOperationCanceledException {
 		mBenchmark.start(CegarLoopStatisticsDefinitions.BasicInterpolantAutomatonTime.toString());
 		try {
 			final IInterpolantAutomatonBuilder<CodeBlock, IPredicate> builder =
@@ -155,29 +156,30 @@ public class InterpolantAutomatonBuilderFactory {
 
 	private IInterpolantAutomatonBuilder<CodeBlock, IPredicate> createBuilderAbstractInterpretation(
 			final IAutomaton<CodeBlock, IPredicate> abstraction, final IInterpolantGenerator interpolGenerator,
-			final IRun<CodeBlock, IPredicate> counterexample) {
+			final IRun<CodeBlock, IPredicate, ?> counterexample) {
 		return mAbsIntRunner.createInterpolantAutomatonBuilder(interpolGenerator,
 				(INestedWordAutomaton<CodeBlock, IPredicate>) abstraction, counterexample);
 	}
 
 	private IInterpolantAutomatonBuilder<CodeBlock, IPredicate> createBuilderCanonical(
 			final IAutomaton<CodeBlock, IPredicate> abstraction, final IInterpolantGenerator interpolGenerator,
-			final IRun<CodeBlock, IPredicate> counterexample) {
+			final IRun<CodeBlock, IPredicate, ?> counterexample) {
 		final List<BoogieIcfgLocation> programPoints = CoverageAnalysis.extractProgramPoints(counterexample);
 		final CanonicalInterpolantAutomatonBuilder iab =
-				new CanonicalInterpolantAutomatonBuilder(mServices, interpolGenerator, programPoints,
-						new InCaReAlphabet<CodeBlock>(abstraction), mCsToolkit, mPredicateFactory, mLogger);
+				new CanonicalInterpolantAutomatonBuilder(mServices, interpolGenerator.getIpp(), programPoints,
+						new InCaReAlphabet<CodeBlock>(abstraction), mCsToolkit, mPredicateFactory, mLogger,
+						interpolGenerator.getPredicateUnifier(), (NestedWord<CodeBlock>) interpolGenerator.getTrace());
 		iab.analyze();
 		mLogger.info("Interpolants " + iab.getResult().getStates());
-		final BackwardCoveringInformation bci =
-				TraceCheckerUtils.computeCoverageCapability(mServices, interpolGenerator, programPoints, mLogger);
+		final BackwardCoveringInformation bci = TraceCheckerUtils.computeCoverageCapability(
+				mServices, interpolGenerator.getIpp(), programPoints, mLogger, interpolGenerator.getPredicateUnifier());
 		mBenchmark.addBackwardCoveringInformation(bci);
 		return iab;
 	}
 
 	private IInterpolantAutomatonBuilder<CodeBlock, IPredicate> createBuilderSingleTrace(
 			final IAutomaton<CodeBlock, IPredicate> abstraction, final IInterpolantGenerator interpolGenerator,
-			final IRun<CodeBlock, IPredicate> counterexample) {
+			final IRun<CodeBlock, IPredicate, ?> counterexample) {
 		final StraightLineInterpolantAutomatonBuilder iab = new StraightLineInterpolantAutomatonBuilder(mServices,
 				new InCaReAlphabet<CodeBlock>(abstraction), interpolGenerator, mPredicateFactory);
 		return iab;
@@ -185,7 +187,7 @@ public class InterpolantAutomatonBuilderFactory {
 
 	private IInterpolantAutomatonBuilder<CodeBlock, IPredicate> createBuilderTotalInterpolation2(
 			final IAutomaton<CodeBlock, IPredicate> abstraction, final IInterpolantGenerator interpolGenerator,
-			final IRun<CodeBlock, IPredicate> counterexample) throws AutomataOperationCanceledException {
+			final IRun<CodeBlock, IPredicate, ?> counterexample) throws AutomataOperationCanceledException {
 		final INestedWordAutomaton<CodeBlock, IPredicate> castedAbstraction =
 				(INestedWordAutomaton<CodeBlock, IPredicate>) abstraction;
 		final NestedRun<CodeBlock, IPredicate> castedCex = (NestedRun<CodeBlock, IPredicate>) counterexample;
@@ -199,7 +201,7 @@ public class InterpolantAutomatonBuilderFactory {
 
 	private IInterpolantAutomatonBuilder<CodeBlock, IPredicate> createBuilderTwoTrack(
 			final IAutomaton<CodeBlock, IPredicate> abstraction, final IInterpolantGenerator interpolGenerator,
-			final IRun<CodeBlock, IPredicate> counterexample) throws AutomataOperationCanceledException {
+			final IRun<CodeBlock, IPredicate, ?> counterexample) throws AutomataOperationCanceledException {
 		if (!(interpolGenerator instanceof TraceCheckerSpWp)
 				&& !(interpolGenerator instanceof InterpolantConsolidation)) {
 			throw new AssertionError("TWOTRACK only for TraceCheckerSpWp or InterpolantConsolidation");
@@ -237,7 +239,7 @@ public class InterpolantAutomatonBuilderFactory {
 	@FunctionalInterface
 	private interface IBuilderFunction {
 		IInterpolantAutomatonBuilder<CodeBlock, IPredicate> create(final IAutomaton<CodeBlock, IPredicate> abstraction,
-				final IInterpolantGenerator interpolGenerator, final IRun<CodeBlock, IPredicate> counterexample)
+				final IInterpolantGenerator interpolGenerator, final IRun<CodeBlock, IPredicate, ?> counterexample)
 				throws AutomataOperationCanceledException;
 	}
 }

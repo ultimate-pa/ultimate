@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.s
 
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import java.util.SortedMap;
 
@@ -66,6 +67,8 @@ public abstract class InterpolatingTraceChecker extends TraceChecker implements 
 
 	protected IPredicate[] mInterpolants;
 	
+	protected List<? extends Object> mControlLocationSequence;
+	
 	/**
 	 * Check if trace fulfills specification given by precondition,
 	 * postcondition and pending contexts. The pendingContext maps the positions
@@ -88,7 +91,8 @@ public abstract class InterpolatingTraceChecker extends TraceChecker implements 
 			final AssertCodeBlockOrder assertCodeBlocksIncrementally, final IUltimateServiceProvider services,
 			final boolean computeRcfgProgramExecution, final PredicateUnifier predicateUnifier, 
 			final ManagedScript tcSmtManager, final SimplificationTechnique simplificationTechnique, 
-			final XnfConversionTechnique xnfConversionTechnique) {
+			final XnfConversionTechnique xnfConversionTechnique,
+			final List<? extends Object> controlLocationSequence) {
 		super(precondition, postcondition, pendingContexts, trace, csToolkit, new DefaultTransFormulas(trace, precondition, postcondition, pendingContexts, csToolkit.getModifiableGlobals(), false),
 				assertCodeBlocksIncrementally,
 				services, computeRcfgProgramExecution, false, tcSmtManager);
@@ -96,6 +100,7 @@ public abstract class InterpolatingTraceChecker extends TraceChecker implements 
 		mPredicateFactory = predicateUnifier.getPredicateFactory();
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
+		mControlLocationSequence = controlLocationSequence;
 	}
 
 
@@ -165,7 +170,7 @@ public abstract class InterpolatingTraceChecker extends TraceChecker implements 
 			throw new UnsupportedOperationException("Interpolants are only available if trace is correct.");
 		}
 	}
-
+	
 	@Override
 	public final PredicateUnifier getPredicateUnifier() {
 		return mPredicateUnifier;

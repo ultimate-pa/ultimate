@@ -45,8 +45,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareT
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.MonolithicHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
@@ -90,17 +90,14 @@ public class TraceCheckerUtils {
 			final IInterpolantGenerator traceChecker, final ILogger logger) {
 		final NestedWord<CodeBlock> trace = (NestedWord<CodeBlock>) NestedWord.nestedWord(traceChecker.getTrace());
 		final List<BoogieIcfgLocation> programPoints = getSequenceOfProgramPoints(trace);
-		return computeCoverageCapability(services, traceChecker, programPoints, logger);
+		return computeCoverageCapability(services, traceChecker.getIpp(), programPoints, logger, traceChecker.getPredicateUnifier());
 	}
 	
-	public static BackwardCoveringInformation computeCoverageCapability(
+	public static <CL> BackwardCoveringInformation computeCoverageCapability(
 			final IUltimateServiceProvider services, 
-			final IInterpolantGenerator interpolantGenerator, final List<BoogieIcfgLocation> programPoints, final ILogger logger) {
-		if (interpolantGenerator.getInterpolants() == null) {
-			throw new AssertionError("We can only build an interpolant "
-					+ "automaton for which interpolants were computed");
-		}
-		final CoverageAnalysis ca = new CoverageAnalysis(services, interpolantGenerator, programPoints, logger);
+			final InterpolantsPreconditionPostcondition ipp,
+			final List<CL> controlLocationSequence, final ILogger logger, final PredicateUnifier predicateUnifier) {
+		final CoverageAnalysis<CL> ca = new CoverageAnalysis<CL>(services, ipp, controlLocationSequence, logger, predicateUnifier);
 		ca.analyze();
 		return ca.getBackwardCoveringInformation();
 	}
@@ -158,6 +155,16 @@ public class TraceCheckerUtils {
 		public List<IPredicate> getInterpolants() {
 			return Collections.unmodifiableList(mInterpolants);
 		}
+
+		public IPredicate getPrecondition() {
+			return mPrecondition;
+		}
+
+		public IPredicate getPostcondition() {
+			return mPostcondition;
+		}
+		
+		
 	}
 	
 	

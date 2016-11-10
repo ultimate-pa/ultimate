@@ -83,7 +83,7 @@ public class AbsIntTotalInterpolationAutomatonBuilder implements IInterpolantAut
 	private final ILogger mLogger;
 	private final NestedWordAutomaton<CodeBlock, IPredicate> mResult;
 	private final CfgSmtToolkit mCsToolkit;
-	private final IRun<CodeBlock, IPredicate> mCurrentCounterExample;
+	private final IRun<CodeBlock, IPredicate, ?> mCurrentCounterExample;
 	private final RcfgStatementExtractor mStatementExtractor;
 	private final VariableCollector mVariableCollector;
 	private final Boogie2SmtSymbolTable mSymbolTable;
@@ -108,7 +108,7 @@ public class AbsIntTotalInterpolationAutomatonBuilder implements IInterpolantAut
 	        final INestedWordAutomatonSimple<CodeBlock, IPredicate> oldAbstraction,
 	        final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> aiResult,
 	        final PredicateUnifier predicateUnifier, final CfgSmtToolkit csToolkit,
-	        final IRun<CodeBlock, IPredicate> currentCounterExample, final Boogie2SmtSymbolTable symbolTable) {
+	        final IRun<CodeBlock, IPredicate, ?> currentCounterExample, final Boogie2SmtSymbolTable symbolTable) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mCsToolkit = csToolkit;

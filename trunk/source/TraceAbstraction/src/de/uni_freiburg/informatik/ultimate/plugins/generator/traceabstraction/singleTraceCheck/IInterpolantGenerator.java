@@ -26,11 +26,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck;
 
+import java.util.Arrays;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
 
 /**
  * Interface for objects that generate sequences of interpolants. Given
@@ -66,5 +68,10 @@ public interface IInterpolantGenerator {
 	 * @return the PredicateUnifier that was used to construct the interpolants
 	 */
 	PredicateUnifier getPredicateUnifier();
+	
+	default public InterpolantsPreconditionPostcondition getIpp() {
+		return new InterpolantsPreconditionPostcondition(getPrecondition(), getPostcondition(), Arrays.asList(getInterpolants()));
+	}
+
 
 }

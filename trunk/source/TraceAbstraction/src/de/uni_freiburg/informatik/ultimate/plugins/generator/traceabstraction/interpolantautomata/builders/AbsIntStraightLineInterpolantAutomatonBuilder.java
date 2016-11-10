@@ -77,14 +77,14 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder
 	private final ILogger mLogger;
 	private final NestedWordAutomaton<CodeBlock, IPredicate> mResult;
 	private final CfgSmtToolkit mCsToolkit;
-	private final IRun<CodeBlock, IPredicate> mCurrentCounterExample;
+	private final IRun<CodeBlock, IPredicate, ?> mCurrentCounterExample;
 	private final ICfgSymbolTable mSymbolTable;
 
 	public AbsIntStraightLineInterpolantAutomatonBuilder(final IUltimateServiceProvider services,
 			final INestedWordAutomatonSimple<CodeBlock, IPredicate> oldAbstraction,
 			final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> aiResult,
 			final PredicateUnifier predUnifier, final CfgSmtToolkit csToolkit,
-			final IRun<CodeBlock, IPredicate> currentCounterExample,
+			final IRun<CodeBlock, IPredicate, ?> currentCounterExample,
 			final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique, 
 			final ICfgSymbolTable symbolTable) {

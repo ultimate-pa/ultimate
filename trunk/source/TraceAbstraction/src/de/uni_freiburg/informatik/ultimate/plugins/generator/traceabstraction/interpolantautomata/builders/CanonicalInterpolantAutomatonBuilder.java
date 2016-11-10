@@ -35,17 +35,20 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.InCaReAlphabet;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.IInterpolantGenerator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
 
 /**
  * Constructs the canonical interpolant automaton. Boolean flags determine if we also add selfloops in the initial and
@@ -53,23 +56,26 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * 
  * @author heizmann@informatik.uni-freiburg.de
  */
-public class CanonicalInterpolantAutomatonBuilder extends CoverageAnalysis
+public class CanonicalInterpolantAutomatonBuilder extends CoverageAnalysis<BoogieIcfgLocation>
 		implements IInterpolantAutomatonBuilder<CodeBlock, IPredicate> {
 
 	private final NestedWordAutomaton<CodeBlock, IPredicate> mIA;
 
 	private final boolean mSelfloopAtInitial = false;
 	private final boolean mSelfloopAtFinal = true;
+	
+	protected final NestedWord<? extends IAction> mNestedWord;
 
 	private final CfgSmtToolkit mCsToolkit;
 
 	private final Map<Integer, Set<IPredicate>> mAlternativeCallPredecessors = new HashMap<Integer, Set<IPredicate>>();
 
-	public CanonicalInterpolantAutomatonBuilder(IUltimateServiceProvider services,
-			IInterpolantGenerator interpolantGenerator, List<BoogieIcfgLocation> programPointSequence,
-			InCaReAlphabet<CodeBlock> alphabet, CfgSmtToolkit csToolkit, IStateFactory<IPredicate> predicateFactory,
-			ILogger logger) {
-		super(services, interpolantGenerator, programPointSequence, logger);
+	public CanonicalInterpolantAutomatonBuilder(final IUltimateServiceProvider services,
+			final InterpolantsPreconditionPostcondition ipp, final List<BoogieIcfgLocation> programPointSequence,
+			final InCaReAlphabet<CodeBlock> alphabet, final CfgSmtToolkit csToolkit, final IStateFactory<IPredicate> predicateFactory,
+			final ILogger logger, final PredicateUnifier predicateUnifier, final NestedWord<? extends IAction> nestedWord) {
+		super(services, ipp, programPointSequence, logger, predicateUnifier);
+		mNestedWord = nestedWord;
 		mIA = new NestedWordAutomaton<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
 				alphabet.getInternalAlphabet(), alphabet.getCallAlphabet(), alphabet.getReturnAlphabet(),
 				predicateFactory);
@@ -77,17 +83,17 @@ public class CanonicalInterpolantAutomatonBuilder extends CoverageAnalysis
 	}
 
 	@Override
-	protected void processCodeBlock(int i) {
+	protected void processCodeBlock(final int i) {
 		// interpolant after the CodeBlock
-		final IPredicate successorInterpolant = mIPP.getInterpolant(i + 1);
+		final IPredicate successorInterpolant = mIpp.getInterpolant(i + 1);
 		if (!mIA.getStates().contains(successorInterpolant)) {
-			assert (successorInterpolant != mInterpolantGenerator.getPostcondition());
+			assert (successorInterpolant != mIpp.getPostcondition());
 			mIA.addState(false, false, successorInterpolant);
 		}
 		addTransition(i, i, i + 1);
 	}
 
-	protected void processCoveringResult(int currentPosition, int previousOccurrence, LBool lbool) {
+	protected void processCoveringResult(final int currentPosition, final int previousOccurrence, final LBool lbool) {
 		if (lbool == LBool.UNSAT) {
 			addTransition(currentPosition - 1, currentPosition - 1, previousOccurrence);
 			addTransition(currentPosition, previousOccurrence, previousOccurrence + 1);
@@ -97,7 +103,7 @@ public class CanonicalInterpolantAutomatonBuilder extends CoverageAnalysis
 	@Override
 	protected void postprocess() {
 		if (mSelfloopAtInitial) {
-			final IPredicate precond = mInterpolantGenerator.getPrecondition();
+			final IPredicate precond = mIpp.getPrecondition();
 			for (final CodeBlock symbol : mIA.getInternalAlphabet()) {
 				mIA.addInternalTransition(precond, symbol, precond);
 			}
@@ -115,7 +121,7 @@ public class CanonicalInterpolantAutomatonBuilder extends CoverageAnalysis
 		}
 
 		if (mSelfloopAtFinal) {
-			final IPredicate postcond = mInterpolantGenerator.getPostcondition();
+			final IPredicate postcond = mIpp.getPostcondition();
 			for (final CodeBlock symbol : mIA.getInternalAlphabet()) {
 				mIA.addInternalTransition(postcond, symbol, postcond);
 			}
@@ -144,8 +150,8 @@ public class CanonicalInterpolantAutomatonBuilder extends CoverageAnalysis
 		}
 		mLogger.info(interpolantAutomatonType);
 
-		mIA.addState(true, false, mInterpolantGenerator.getPrecondition());
-		mIA.addState(false, true, mInterpolantGenerator.getPostcondition());
+		mIA.addState(true, false, mIpp.getPrecondition());
+		mIA.addState(false, true, mIpp.getPostcondition());
 	}
 
 	@Override
@@ -153,18 +159,18 @@ public class CanonicalInterpolantAutomatonBuilder extends CoverageAnalysis
 		return mIA;
 	}
 
-	private void addTransition(int prePos, int symbolPos, int succPos) {
-		final IPredicate pred = mIPP.getInterpolant(prePos);
-		final IPredicate succ = mIPP.getInterpolant(succPos);
+	private void addTransition(final int prePos, final int symbolPos, final int succPos) {
+		final IPredicate pred = mIpp.getInterpolant(prePos);
+		final IPredicate succ = mIpp.getInterpolant(succPos);
 		final CodeBlock symbol = (CodeBlock) mNestedWord.getSymbol(symbolPos);
 		if (mNestedWord.isCallPosition(symbolPos)) {
 			mIA.addCallTransition(pred, symbol, succ);
-			if (mIPP.getInterpolant(prePos) != mIPP.getInterpolant(symbolPos)) {
-				addAlternativeCallPredecessor(symbolPos, mIPP.getInterpolant(prePos));
+			if (mIpp.getInterpolant(prePos) != mIpp.getInterpolant(symbolPos)) {
+				addAlternativeCallPredecessor(symbolPos, mIpp.getInterpolant(prePos));
 			}
 		} else if (mNestedWord.isReturnPosition(symbolPos)) {
 			final int callPos = mNestedWord.getCallPosition(symbolPos);
-			final IPredicate hier = mIPP.getInterpolant(callPos);
+			final IPredicate hier = mIpp.getInterpolant(callPos);
 			mIA.addReturnTransition(pred, hier, symbol, succ);
 			addAlternativeReturnTransitions(pred, callPos, symbol, succ);
 		} else {
@@ -172,7 +178,7 @@ public class CanonicalInterpolantAutomatonBuilder extends CoverageAnalysis
 		}
 	}
 
-	private void addAlternativeCallPredecessor(int symbolPos, IPredicate alternativeCallPredecessor) {
+	private void addAlternativeCallPredecessor(final int symbolPos, final IPredicate alternativeCallPredecessor) {
 		Set<IPredicate> alts = mAlternativeCallPredecessors.get(symbolPos);
 		if (alts == null) {
 			alts = new HashSet<IPredicate>();
@@ -181,7 +187,7 @@ public class CanonicalInterpolantAutomatonBuilder extends CoverageAnalysis
 		alts.add(alternativeCallPredecessor);
 	}
 
-	private void addAlternativeReturnTransitions(IPredicate pred, int callPos, CodeBlock symbol, IPredicate succ) {
+	private void addAlternativeReturnTransitions(final IPredicate pred, final int callPos, final CodeBlock symbol, final IPredicate succ) {
 		if (mAlternativeCallPredecessors.get(callPos) == null) {
 			return;
 		}

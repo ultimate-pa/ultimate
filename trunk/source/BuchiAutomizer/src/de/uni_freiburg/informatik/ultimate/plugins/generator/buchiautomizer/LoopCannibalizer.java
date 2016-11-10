@@ -156,7 +156,7 @@ public class LoopCannibalizer {
 					 * to a different value.
 					 */AssertCodeBlockOrder.NOT_INCREMENTALLY,
 					mServices, false, mPredicateUnifier, interpolation,
-						true, mXnfConversionTechnique, mSimplificationTechnique);
+						true, mXnfConversionTechnique, mSimplificationTechnique, null);
 			break;
 		case ForwardPredicates:
 		case BackwardPredicates:
@@ -171,7 +171,7 @@ public class LoopCannibalizer {
 					 */AssertCodeBlockOrder.NOT_INCREMENTALLY,
 					UnsatCores.CONJUNCT_LEVEL,
 					 true, mServices, false, mPredicateUnifier, interpolation,
-						mCsToolkit.getManagedScript(), mXnfConversionTechnique, mSimplificationTechnique);
+						mCsToolkit.getManagedScript(), mXnfConversionTechnique, mSimplificationTechnique, null);
 			break;
 		default:
 			throw new UnsupportedOperationException("unsupported interpolation");

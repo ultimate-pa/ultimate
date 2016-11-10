@@ -64,8 +64,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfCon
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateTransformer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.FaultLocalizationRelevanceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.FaultLocalizationRelevanceChecker.ERelevanceStatus;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
@@ -109,7 +109,7 @@ public class FlowSensitiveFaultLocalizer {
 	 */
 	private final boolean mApplyQuantifierElimination = true;
 
-	public FlowSensitiveFaultLocalizer(final IRun<CodeBlock, IPredicate> counterexample,
+	public FlowSensitiveFaultLocalizer(final IRun<CodeBlock, IPredicate, ?> counterexample,
 			final INestedWordAutomaton<CodeBlock, IPredicate> cfg, final IUltimateServiceProvider services,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final ModifiableGlobalVariableManager modGlobVarManager, final PredicateUnifier predicateUnifier,
@@ -142,7 +142,7 @@ public class FlowSensitiveFaultLocalizer {
 	 * @return array with empty IRelevanceInformation for each IAction in the trace.
 	 */
 	private static IRelevanceInformation[] initializeRelevanceOfTrace(
-			final IRun<CodeBlock, IPredicate> counterexampleRun){
+			final IRun<CodeBlock, IPredicate, ?> counterexampleRun){
 		final IRelevanceInformation[] result = new IRelevanceInformation[counterexampleRun.getLength() - 1];
 		final NestedWord<CodeBlock> counterexampleWord = (NestedWord<CodeBlock>) counterexampleRun.getWord();
 		for(int i = 0; i<counterexampleWord.length(); i++){

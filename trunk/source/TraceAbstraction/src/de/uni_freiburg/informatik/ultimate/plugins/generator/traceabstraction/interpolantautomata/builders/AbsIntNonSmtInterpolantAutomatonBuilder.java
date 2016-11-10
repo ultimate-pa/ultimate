@@ -62,14 +62,14 @@ public class AbsIntNonSmtInterpolantAutomatonBuilder implements IInterpolantAuto
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final NestedWordAutomaton<CodeBlock, IPredicate> mResult;
-	private final IRun<CodeBlock, IPredicate> mCurrentCounterExample;
+	private final IRun<CodeBlock, IPredicate, ?> mCurrentCounterExample;
 	private final PredicateFactory mPredicateFactory;
 	private final ManagedScript mBoogie2Smt;
 
 	public AbsIntNonSmtInterpolantAutomatonBuilder(final IUltimateServiceProvider services,
 			final INestedWordAutomatonSimple<CodeBlock, IPredicate> oldAbstraction, final PredicateUnifier predUnifier,
 			final ManagedScript csToolkit, final ICfgSymbolTable symbolTable,
-			final IRun<CodeBlock, IPredicate> currentCounterexample,
+			final IRun<CodeBlock, IPredicate, ?> currentCounterexample,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);

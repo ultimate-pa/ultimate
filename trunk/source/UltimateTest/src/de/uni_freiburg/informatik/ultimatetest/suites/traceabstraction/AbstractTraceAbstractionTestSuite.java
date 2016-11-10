@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.CodeCheck
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier.PredicateUniferStatisticsDefinitions;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.decider.SafetyCheckTestResultDecider;
@@ -125,11 +126,14 @@ public abstract class AbstractTraceAbstractionTestSuite extends AbstractModelChe
 								ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Average),
 						new ColumnDefinition(CegarLoopStatisticsDefinitions.AutomataDifference.toString(), "adiff time",
 								ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Average),
-						new ColumnDefinition(CegarLoopStatisticsDefinitions.TraceCheckerStatistics.toString() + "_InterpolantComputationTime", "itp time",
+						new ColumnDefinition(CegarLoopStatisticsDefinitions.TraceCheckerStatistics.toString() + "_" + TraceCheckerStatisticsDefinitions.InterpolantComputationTime.toString(), "itp time",
 								ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Average),
-						new ColumnDefinition(CegarLoopStatisticsDefinitions.TraceCheckerStatistics.toString() +"_SatisfiabilityAnalysisTime", "check-sat time",
+						new ColumnDefinition(CegarLoopStatisticsDefinitions.TraceCheckerStatistics.toString() + "_" + TraceCheckerStatisticsDefinitions.SatisfiabilityAnalysisTime.toString(), "check-sat time",
 								ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Average),
-
+						new ColumnDefinition(CegarLoopStatisticsDefinitions.TraceCheckerStatistics.toString() + "_" + TraceCheckerStatisticsDefinitions.InterpolantComputations.toString(), "itps",
+								ConversionContext.Divide(1, 2, " s"), Aggregate.Ignore, Aggregate.Sum),
+						new ColumnDefinition(CegarLoopStatisticsDefinitions.TraceCheckerStatistics.toString() + "_" + TraceCheckerStatisticsDefinitions.PerfectInterpolantSequences.toString(), "perf. itps",
+								ConversionContext.Divide(1, 2, " s"), Aggregate.Ignore, Aggregate.Sum),
 					};
 				// @formatter:on
 

@@ -57,12 +57,14 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer.PredicatePostprocessor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerStatisticsGenerator.InterpolantType;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
 import de.uni_freiburg.informatik.ultimate.util.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
@@ -81,7 +83,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 
 	private final UnsatCores mUnsatCores;
 	private final boolean mLiveVariables;
-	private final static boolean museLiveVariablesInsteadOfRelevantVariables = false;
+	private final static boolean mUseLiveVariablesInsteadOfRelevantVariables = false;
 	
 	// We may post-process the forwards predicates, after the backwards predicates has been computed in order 
 	// to potentially eliminate quantifiers. The idea is the following:
@@ -104,11 +106,12 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			final boolean useLiveVariables, final IUltimateServiceProvider services, 
 			final boolean computeRcfgProgramExecution, final PredicateUnifier predicateUnifier, 
 			final InterpolationTechnique interpolation, final ManagedScript mgdScriptTc, final XnfConversionTechnique xnfConversionTechnique, 
-			final SimplificationTechnique simplificationTechnique) {
+			final SimplificationTechnique simplificationTechnique,
+			final List<? extends Object> controlLocationSequence) {
 		// superclass does feasibility check
 		super(precondition, postcondition, pendingContexts, trace, csToolkit, assertCodeBlocksIncrementally,
 				services, computeRcfgProgramExecution, predicateUnifier, mgdScriptTc, 
-				simplificationTechnique, xnfConversionTechnique);
+				simplificationTechnique, xnfConversionTechnique, controlLocationSequence);
 		mUnsatCores = unsatCores;
 		mLiveVariables = useLiveVariables;
 		switch (interpolation) {
@@ -159,12 +162,21 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		assert mInterpolantsFp != null : "Forwards predicates not computed!";
 		return mInterpolantsFp;
 	}
+	
+	public InterpolantsPreconditionPostcondition getForwardIpp() {
+		return new InterpolantsPreconditionPostcondition(getPrecondition(), getPostcondition(), getForwardPredicates());
+	}
 
 
 	public List<IPredicate> getBackwardPredicates() {
 		assert mInterpolantsBp != null : "Backwards predicates not computed!";
 		return mInterpolantsBp;
 	}
+	
+	public InterpolantsPreconditionPostcondition getBackwardIpp() {
+		return new InterpolantsPreconditionPostcondition(getPrecondition(), getPostcondition(), getBackwardPredicates());
+	}
+
 
 
 
@@ -216,7 +228,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 
 		
 		final Set<IProgramVar>[] liveVariables;
-		if (museLiveVariablesInsteadOfRelevantVariables) {
+		if (mUseLiveVariablesInsteadOfRelevantVariables) {
 			// computation of live variables whose input is the original trace
 			final LiveVariables lvar = new LiveVariables(mNsb.getVariable2Constant(), mNsb.getConstants2BoogieVar(),
 					mNsb.getIndexedVarRepresentative(), mCsToolkit.getModifiableGlobals());
@@ -296,10 +308,31 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		if (mConstructForwardInterpolantSequence) {
 			mTraceCheckerBenchmarkGenerator.reportSequenceOfInterpolants(mInterpolantsFp, InterpolantType.Forward);
 			mTraceCheckerBenchmarkGenerator.reportNumberOfNonLiveVariables(mNonLiveVariablesFp, InterpolantType.Forward);
+			mTraceCheckerBenchmarkGenerator.reportInterpolantComputation();
+			if (mControlLocationSequence != null) {
+				final BackwardCoveringInformation bci = TraceCheckerUtils.computeCoverageCapability(
+						mServices, getForwardIpp(), mControlLocationSequence, mLogger, mPredicateUnifier);
+				final boolean perfectSequence = (bci.getPotentialBackwardCoverings() == bci.getSuccessfullBackwardCoverings());
+				if (perfectSequence) {
+					mTraceCheckerBenchmarkGenerator.reportPerfectInterpolantSequences();
+				}
+				mTraceCheckerBenchmarkGenerator.addBackwardCoveringInformation(bci);
+			}
 		}
 		if (mConstructBackwardInterpolantSequence) {
 			mTraceCheckerBenchmarkGenerator.reportSequenceOfInterpolants(mInterpolantsBp, InterpolantType.Backward);
 			mTraceCheckerBenchmarkGenerator.reportNumberOfNonLiveVariables(mNonLiveVariablesBp, InterpolantType.Backward);
+			mTraceCheckerBenchmarkGenerator.reportInterpolantComputation();
+			if (mControlLocationSequence != null) {
+				final BackwardCoveringInformation bci = TraceCheckerUtils.computeCoverageCapability(
+						mServices, getBackwardIpp(), mControlLocationSequence, mLogger, mPredicateUnifier);
+				final boolean perfectSequence = (bci.getPotentialBackwardCoverings() == bci.getSuccessfullBackwardCoverings());
+				if (perfectSequence) {
+					mTraceCheckerBenchmarkGenerator.reportPerfectInterpolantSequences();
+				}
+				mTraceCheckerBenchmarkGenerator.addBackwardCoveringInformation(bci);
+			}
+
 		}
 		
 		

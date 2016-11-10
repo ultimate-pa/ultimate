@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata;
 
+import java.util.List;
+
 /**
  * Interface for automata runs.<br>
  * A run is a sequence of states corresponding to a word, i.e., a sequence of symbols.
@@ -37,7 +39,7 @@ package de.uni_freiburg.informatik.ultimate.automata;
  * @param <STATE>
  *            state type
  */
-public interface IRun<LETTER, STATE> {
+public interface IRun<LETTER, STATE, CC> {
 	/**
 	 * The word corresponding to the run.
 	 * 
@@ -62,4 +64,6 @@ public interface IRun<LETTER, STATE> {
 	 * @return length of the run
 	 */
 	int getLength();
+	
+	List<CC> getStateSequence();
 }

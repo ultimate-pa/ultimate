@@ -63,8 +63,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfCon
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer.BuchiComplementationConstruction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer.BuchiInterpolantAutomaton;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
@@ -504,7 +504,7 @@ public class RefineBuchi {
 					 * to a different value.
 					 */AssertCodeBlockOrder.NOT_INCREMENTALLY,
 					mServices, false, pu, interpolation, true, mXnfConversionTechnique, 
-					 mSimplificationTechnique);
+					 mSimplificationTechnique, null);
 			break;
 		}
 		case ForwardPredicates:
@@ -520,7 +520,7 @@ public class RefineBuchi {
 					 */AssertCodeBlockOrder.NOT_INCREMENTALLY,
 					UnsatCores.CONJUNCT_LEVEL,
 					 true, mServices, false, pu, interpolation, mCsToolkit.getManagedScript(), mXnfConversionTechnique, 
-					 mSimplificationTechnique);
+					 mSimplificationTechnique, null);
 			break;
 		}
 		default:

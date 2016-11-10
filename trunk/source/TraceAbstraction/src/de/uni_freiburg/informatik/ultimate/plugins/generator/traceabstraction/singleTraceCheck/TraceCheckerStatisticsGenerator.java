@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ContainsQuantif
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils.FormulaSize;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsGeneratorWithStopwatches;
@@ -42,15 +43,18 @@ public class TraceCheckerStatisticsGenerator extends StatisticsGeneratorWithStop
 	
 	public enum InterpolantType { Craig, Forward, Backward };
 
-	int mNumberOfCodeBlocks = 0;
-	int mNumberOfCodeBlocksAsserted = 0;
-	int mNumberOfCheckSat = 0;
-	int mConstructedInterpolants = 0;
-	int mQuantifiedInterpolants = 0;
-	long mSizeOfPredicates = 0;
-	int mNumberOfNonLiveVariables = 0;
-	int mConjunctsInSsa = 0;
-	int mConjunctsInUnsatCore = 0;
+	private int mNumberOfCodeBlocks = 0;
+	private int mNumberOfCodeBlocksAsserted = 0;
+	private int mNumberOfCheckSat = 0;
+	private int mConstructedInterpolants = 0;
+	private int mQuantifiedInterpolants = 0;
+	private long mSizeOfPredicates = 0;
+	private int mNumberOfNonLiveVariables = 0;
+	private int mConjunctsInSsa = 0;
+	private int mConjunctsInUnsatCore = 0;
+	private int mInterpolantComputations = 0;
+	private int mPerfectInterpolantSequences = 0;
+	private BackwardCoveringInformation mInterpolantCoveringCapability = new BackwardCoveringInformation(0, 0);
 
 
 
@@ -110,6 +114,18 @@ public class TraceCheckerStatisticsGenerator extends StatisticsGeneratorWithStop
 		mNumberOfNonLiveVariables += numberOfNonLiveVariables;
 	}
 	
+	public void reportInterpolantComputation() {
+		mInterpolantComputations++;
+	}
+	
+	public void reportPerfectInterpolantSequences() {
+		mPerfectInterpolantSequences++;
+	}
+	
+	public void addBackwardCoveringInformation(final BackwardCoveringInformation bci) {
+		mInterpolantCoveringCapability = new BackwardCoveringInformation(mInterpolantCoveringCapability, bci);
+	}
+	
 	
 	@Override
 	public Object getValue(final String key) {
@@ -141,6 +157,12 @@ public class TraceCheckerStatisticsGenerator extends StatisticsGeneratorWithStop
 			return mConjunctsInSsa;
 		case ConjunctsInUnsatCore:
 			return mConjunctsInUnsatCore;
+		case InterpolantComputations:
+			return mInterpolantComputations;
+		case PerfectInterpolantSequences:
+			return mPerfectInterpolantSequences;
+		case InterpolantCoveringCapability:
+			return mInterpolantCoveringCapability;
 		default:
 			throw new AssertionError("unknown data");
 		}

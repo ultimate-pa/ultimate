@@ -25,8 +25,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfCon
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractInterpreter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.IAbstractInterpretationResult;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.AbsIntNonSmtInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.AbsIntStraightLineInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.AbsIntTotalInterpolationAutomatonBuilder;
@@ -109,7 +109,7 @@ public class AbstractInterpretationRunner {
 	 * <li>The path program does not contain any loops.
 	 * </ul>
 	 */
-	public void generateFixpoints(final IRun<CodeBlock, IPredicate> currentCex,
+	public void generateFixpoints(final IRun<CodeBlock, IPredicate, ?> currentCex,
 			final INestedWordAutomatonSimple<CodeBlock, IPredicate> currentAbstraction) {
 		assert currentCex != null : "Cannot run AI on empty counterexample";
 		assert currentAbstraction != null : "Cannot run AI on empty abstraction";
@@ -180,7 +180,7 @@ public class AbstractInterpretationRunner {
 	public IInterpolantAutomatonBuilder<CodeBlock, IPredicate> createInterpolantAutomatonBuilder(
 			final IInterpolantGenerator interpolGenerator,
 			final INestedWordAutomaton<CodeBlock, IPredicate> abstraction,
-			final IRun<CodeBlock, IPredicate> currentCex) {
+			final IRun<CodeBlock, IPredicate, ?> currentCex) {
 		if (mMode == AbstractInterpretationMode.NONE) {
 			return null;
 		}
@@ -229,7 +229,7 @@ public class AbstractInterpretationRunner {
 	}
 
 	public void refineAnyways(final IInterpolantGenerator interpolGenerator,
-			final INestedWordAutomaton<CodeBlock, IPredicate> abstraction, final IRun<CodeBlock, IPredicate> cex,
+			final INestedWordAutomaton<CodeBlock, IPredicate> abstraction, final IRun<CodeBlock, IPredicate, ?> cex,
 			final IRefineFunction refineFun) throws AutomataLibraryException {
 		if (mMode == AbstractInterpretationMode.NONE || !mAlwaysRefine || mSkipIteration) {
 			return;
@@ -246,7 +246,7 @@ public class AbstractInterpretationRunner {
 	 */
 	public boolean refine(final PredicateUnifier predUnifier,
 			final NestedWordAutomaton<CodeBlock, IPredicate> aiInterpolAutomaton,
-			final IRun<CodeBlock, IPredicate> currentCex, final IRefineFunction refineFun)
+			final IRun<CodeBlock, IPredicate, ?> currentCex, final IRefineFunction refineFun)
 			throws AutomataLibraryException {
 		if (mMode == AbstractInterpretationMode.NONE) {
 			throw new UnsupportedOperationException("You cannot refine in mode " + AbstractInterpretationMode.NONE);
@@ -274,7 +274,7 @@ public class AbstractInterpretationRunner {
 		}
 	}
 
-	private Set<CodeBlock> convertCex2Set(final IRun<CodeBlock, IPredicate> currentCex) {
+	private Set<CodeBlock> convertCex2Set(final IRun<CodeBlock, IPredicate, ?> currentCex) {
 		final Set<CodeBlock> transitions = new HashSet<CodeBlock>();
 		// words count their states, so 0 is first state, length is last state
 		final int length = currentCex.getLength() - 1;
@@ -286,7 +286,7 @@ public class AbstractInterpretationRunner {
 
 	private boolean hasAiProgress(final boolean result,
 			final INestedWordAutomaton<CodeBlock, IPredicate> aiInterpolAutomaton,
-			final IRun<CodeBlock, IPredicate> cex) {
+			final IRun<CodeBlock, IPredicate, ?> cex) {
 		if (result) {
 			return result;
 		}

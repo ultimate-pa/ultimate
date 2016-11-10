@@ -74,9 +74,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.S
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.LineCoverageCalculator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.IInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.InterpolantAutomatonBuilderFactory;
@@ -323,6 +323,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			mgdScriptTc = mCsToolkit.getManagedScript();
 		}
 		
+		
 		final LBool feasibility;
 		switch (mInterpolation) {
 		case Craig_NestedInterpolation:
@@ -331,7 +332,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					new TreeMap<Integer, IPredicate>(), NestedWord.nestedWord(mCounterexample.getWord()),
 					mCsToolkit, mAssertCodeBlocksIncrementally,
 					mServices, true, predicateUnifier, mInterpolation, mgdScriptTc,
-					true, mXnfConversionTechnique, mSimplificationTechnique);
+					true, mXnfConversionTechnique, mSimplificationTechnique, mCounterexample.getStateSequence());
 		}
 			break;
 		case ForwardPredicates:
@@ -341,7 +342,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					new TreeMap<Integer, IPredicate>(), NestedWord.nestedWord(mCounterexample.getWord()),
 					mCsToolkit, mAssertCodeBlocksIncrementally,
 					mUnsatCores, mUseLiveVariables, mServices, true, predicateUnifier, mInterpolation,
-					mgdScriptTc, mXnfConversionTechnique, mSimplificationTechnique);
+					mgdScriptTc, mXnfConversionTechnique, mSimplificationTechnique, mCounterexample.getStateSequence());
 			
 			break;
 		case PathInvariants: {

@@ -59,9 +59,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
@@ -592,7 +592,7 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 				 * AssertCodeBlockOrder.NOT_INCREMENTALLY. Check if you want to set this to another value.
 				 */AssertCodeBlockOrder.NOT_INCREMENTALLY,
 				mServices, false, mPredicateUnifier, mPref.interpolation(), true,
-				mXnfConversionTechnique, mSimplificationTechnique);
+				mXnfConversionTechnique, mSimplificationTechnique, null);
 
 		mInterpolantGenerator = traceChecker;
 		if (traceChecker.isCorrect() == LBool.UNSAT) {

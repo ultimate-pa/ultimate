@@ -320,7 +320,8 @@ public class TotalInterpolationAutomatonBuilder implements IInterpolantAutomaton
 			tc = new InterpolatingTraceCheckerCraig(precondition, postcondition,
 					pendingContexts, run.getWord(),
 					mCsToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices,
-					true, mPredicateUnifier, mInterpolation, true, mXnfConversionTechnique, mSimplificationTechnique);
+					true, mPredicateUnifier, mInterpolation, true, mXnfConversionTechnique, mSimplificationTechnique,
+					run.getStateSequence());
 			break;
 		case ForwardPredicates:
 		case BackwardPredicates:
@@ -328,7 +329,7 @@ public class TotalInterpolationAutomatonBuilder implements IInterpolantAutomaton
 			tc = new TraceCheckerSpWp(precondition, postcondition, pendingContexts, run.getWord(), mCsToolkit,
 					AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true, mServices,
 					true, mPredicateUnifier, mInterpolation, mCsToolkit.getManagedScript(), mXnfConversionTechnique, 
-					mSimplificationTechnique);
+					mSimplificationTechnique, run.getStateSequence());
 
 			break;
 		case PathInvariants:

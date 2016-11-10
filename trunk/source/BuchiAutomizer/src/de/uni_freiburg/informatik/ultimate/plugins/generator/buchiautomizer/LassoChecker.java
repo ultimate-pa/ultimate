@@ -452,7 +452,7 @@ public class LassoChecker {
 						 * AssertCodeBlockOrder.NOT_INCREMENTALLY. Check if you want to set this to a different value.
 						 */AssertCodeBlockOrder.NOT_INCREMENTALLY,
 						mServices, false, mPredicateUnifier, mInterpolation, true,
-						mXnfConversionTechnique, mSimplificationTechnique);
+						mXnfConversionTechnique, mSimplificationTechnique, null);
 				break;
 			case ForwardPredicates:
 			case BackwardPredicates:
@@ -463,7 +463,7 @@ public class LassoChecker {
 						 * AssertCodeBlockOrder.NOT_INCREMENTALLY. Check if you want to set this to a different value.
 						 */AssertCodeBlockOrder.NOT_INCREMENTALLY,
 						UnsatCores.CONJUNCT_LEVEL, true, mServices, false, mPredicateUnifier,
-						mInterpolation, mCsToolkit.getManagedScript(), mXnfConversionTechnique, mSimplificationTechnique);
+						mInterpolation, mCsToolkit.getManagedScript(), mXnfConversionTechnique, mSimplificationTechnique, null);
 				break;
 			default:
 				throw new UnsupportedOperationException("unsupported interpolation");

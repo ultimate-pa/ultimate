@@ -35,16 +35,13 @@ import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
 
@@ -57,19 +54,18 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * ProgramPoint.
  * @author heizmann@informatik.uni-freiburg.de
  */
-public class CoverageAnalysis {
+public class CoverageAnalysis<CL> {
 	
 	protected final IUltimateServiceProvider mServices;
 
 	protected final ILogger mLogger ;
 	
-	protected final NestedWord<? extends IAction> mNestedWord;
-	private final List<BoogieIcfgLocation> mProgramPointSequence;
-	private final IPredicate[] mInterpolants;
+
+	private final List<CL> mProgramPointSequence;
 	private final PredicateUnifier mPredicateUnifier;
 	
-	private final Map<BoogieIcfgLocation, List<Integer>> mProgramPoint2Occurence = 
-		new HashMap<BoogieIcfgLocation, List<Integer>>();
+	private final Map<CL, List<Integer>> mProgramPoint2Occurence = 
+		new HashMap<>();
 	
 	private int mUnsat;
 	private int mSat;
@@ -77,31 +73,27 @@ public class CoverageAnalysis {
 	private int mTrivial;
 	private int mNotchecked;
 	
-	protected final IInterpolantGenerator mInterpolantGenerator;
-	protected final InterpolantsPreconditionPostcondition mIPP;
+	protected final InterpolantsPreconditionPostcondition mIpp;
 
-	public CoverageAnalysis(IUltimateServiceProvider services, 
-			IInterpolantGenerator interpolantGenerator,
-			List<BoogieIcfgLocation> programPointSequence, ILogger logger) {
+	public CoverageAnalysis(final IUltimateServiceProvider services, 
+			final InterpolantsPreconditionPostcondition ipp,
+			final List<CL> programPointSequence, final ILogger logger, final PredicateUnifier predicateUnifier) {
 		mServices = services;
 		mLogger = logger;
-		mInterpolants = interpolantGenerator.getInterpolants();
-		mNestedWord = NestedWord.nestedWord(interpolantGenerator.getTrace());
 		mProgramPointSequence = programPointSequence;
-		mPredicateUnifier = interpolantGenerator.getPredicateUnifier();
-		mInterpolantGenerator = interpolantGenerator;
-		mIPP = new InterpolantsPreconditionPostcondition(interpolantGenerator);
+		mPredicateUnifier = predicateUnifier;
+		mIpp = ipp;
 	}
 	
 	public void analyze() {
-		assert(mNestedWord.length()-1 == mInterpolants.length);
+		assert(mProgramPointSequence.size()-2 == mIpp.getInterpolants().size());
 		preprocess();
 		
-		for (int i=0; i<mNestedWord.length(); i++) {
+		for (int i=0; i<mProgramPointSequence.size()-1; i++) {
 
 			processCodeBlock(i);
 
-			final BoogieIcfgLocation pp = mProgramPointSequence.get(i);
+			final CL pp = mProgramPointSequence.get(i);
 			List<Integer> previousOccurrences = mProgramPoint2Occurence.get(pp);
 			if (previousOccurrences == null) {
 				previousOccurrences = new ArrayList<Integer>();
@@ -109,8 +101,8 @@ public class CoverageAnalysis {
 			} else {
 				for (final int previousOccurrence : previousOccurrences) {
 					assert i > previousOccurrence;
-					final IPredicate currentPredicate = mIPP.getInterpolant(i);
-					final IPredicate previousPredicate = mIPP.getInterpolant(previousOccurrence);
+					final IPredicate currentPredicate = mIpp.getInterpolant(i);
+					final IPredicate previousPredicate = mIpp.getInterpolant(previousOccurrence);
 					if (currentPredicate == previousPredicate) {
 						// trivially covered and backedges already contained
 						mTrivial++;
@@ -155,18 +147,18 @@ public class CoverageAnalysis {
 
 	private int sumCountedOccurrences() {
 		int occurrenceSum = 0;
-		for (final Entry<BoogieIcfgLocation, List<Integer>> entry : mProgramPoint2Occurence.entrySet()) {
+		for (final Entry<CL, List<Integer>> entry : mProgramPoint2Occurence.entrySet()) {
 			occurrenceSum += entry.getValue().size();
 		}
 		return occurrenceSum;
 	}
 
-	protected void processCodeBlock(int i) {
+	protected void processCodeBlock(final int i) {
 		// do nothing
 	}
 
-	protected void processCoveringResult(int currentPosition,
-			int previousOccurrence, Validity lbool) {
+	protected void processCoveringResult(final int currentPosition,
+			final int previousOccurrence, final Validity lbool) {
 		// do nothing
 	}
 
@@ -179,7 +171,7 @@ public class CoverageAnalysis {
 	}
 	
 	
-	public static List<BoogieIcfgLocation> extractProgramPoints(IRun<CodeBlock, IPredicate> irun) {
+	public static List<BoogieIcfgLocation> extractProgramPoints(final IRun<CodeBlock, IPredicate, ?> irun) {
 		final ArrayList<IPredicate> predicateSequence = 
 				((NestedRun<CodeBlock, IPredicate>) irun).getStateSequence();
 		final ArrayList<BoogieIcfgLocation> result = new ArrayList<>();
@@ -205,14 +197,14 @@ public class CoverageAnalysis {
 		private final int mPotentialBackwardCoverings;
 		private final int mSuccessfullBackwardCoverings;
 		
-		public BackwardCoveringInformation(int potentialBackwardCoverings,
-				int successfullBackwardCoverings) {
+		public BackwardCoveringInformation(final int potentialBackwardCoverings,
+				final int successfullBackwardCoverings) {
 			super();
 			mPotentialBackwardCoverings = potentialBackwardCoverings;
 			mSuccessfullBackwardCoverings = successfullBackwardCoverings;
 		}
 		
-		public BackwardCoveringInformation(BackwardCoveringInformation bci1, BackwardCoveringInformation bci2) {
+		public BackwardCoveringInformation(final BackwardCoveringInformation bci1, final BackwardCoveringInformation bci2) {
 			mPotentialBackwardCoverings = bci1.getPotentialBackwardCoverings() + bci2.getPotentialBackwardCoverings();
 			mSuccessfullBackwardCoverings = bci1.getSuccessfullBackwardCoverings() + bci2.getSuccessfullBackwardCoverings();
 		}

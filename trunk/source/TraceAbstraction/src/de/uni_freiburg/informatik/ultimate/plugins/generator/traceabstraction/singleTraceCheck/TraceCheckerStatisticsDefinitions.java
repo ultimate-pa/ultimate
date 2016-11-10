@@ -28,6 +28,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.s
 
 import java.util.function.Function;
 
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.util.statistics.AStatisticsType;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsElement;
 
@@ -56,7 +58,17 @@ public enum TraceCheckerStatisticsDefinitions implements IStatisticsElement {
 	
 	ConjunctsInSsa(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
 	
-	ConjunctsInUnsatCore(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),;
+	ConjunctsInUnsatCore(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
+	
+	InterpolantComputations(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
+	
+	PerfectInterpolantSequences(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
+	
+	InterpolantCoveringCapability(BackwardCoveringInformation.class, CoverageAnalysis.s_DefaultAggregation,
+			AStatisticsType.s_DataBeforeKey),;
+
+	
+	
 
 	private final Class<?> mClazz;
 	private final Function<Object, Function<Object, Object>> mAggr;

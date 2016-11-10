@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.petrinet;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
@@ -41,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
  * @param <C>
  *            place content type
  */
-public class PetriNetRun<S, C> implements IRun<S, C> {
+public class PetriNetRun<S, C> implements IRun<S, C, Marking<S, C>> {
 	
 	private final Word<S> mWord;
 	private final ArrayList<Marking<S, C>> mMarkingSequence;
@@ -152,5 +153,10 @@ public class PetriNetRun<S, C> implements IRun<S, C> {
 		}
 		sb.append(mMarkingSequence.get(mMarkingSequence.size() - 1));
 		return sb.toString();
+	}
+
+	@Override
+	public List<Marking<S, C>> getStateSequence() {
+		return mMarkingSequence;
 	}
 }

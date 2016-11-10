@@ -51,9 +51,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.Increme
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
@@ -126,7 +126,7 @@ public abstract class AbstractCegarLoop {
 	/**
 	 * Accepting run of the abstraction obtained in this iteration.
 	 */
-	protected IRun<CodeBlock, IPredicate> mCounterexample;
+	protected IRun<CodeBlock, IPredicate, ?> mCounterexample;
 	
 	/**
 	 * Abstraction of this iteration. The language of mAbstraction is a set of traces which is

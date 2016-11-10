@@ -74,7 +74,7 @@ public class TwoTrackInterpolantAutomatonBuilder implements IInterpolantAutomato
 	 * @param abstraction
 	 * 
 	 */
-	public TwoTrackInterpolantAutomatonBuilder(final IUltimateServiceProvider services, final IRun<CodeBlock, IPredicate> nestedRun,
+	public TwoTrackInterpolantAutomatonBuilder(final IUltimateServiceProvider services, final IRun<CodeBlock, IPredicate, ?> nestedRun,
 			final CfgSmtToolkit csToolkit, final List<IPredicate> interpolantsFP, final List<IPredicate> interpolantsBP,
 			final IPredicate preCondition, final IPredicate postCondition, final IAutomaton<CodeBlock, IPredicate> abstraction) {
 		mServices = services;

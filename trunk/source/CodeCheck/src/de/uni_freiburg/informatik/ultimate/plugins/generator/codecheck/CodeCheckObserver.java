@@ -595,7 +595,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 						mCsToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY,
 						mServices, true, mPredicateUnifier, GlobalSettings._instance._interpolationMode,
 						mgdScriptTracechecks, true, mXnfConversionTechnique,
-						mSimplificationTechnique);
+						mSimplificationTechnique, errorRun.getStateSequence());
 			} catch (final Exception e) {
 				if (!GlobalSettings._instance.useFallbackForSeparateSolverForTracechecks) {
 					throw e;
@@ -610,7 +610,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 						new TreeMap<Integer, IPredicate>(), errorRun.getWord(), mCsToolkit,
 						AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL,
 						true, mServices, true, mPredicateUnifier, InterpolationTechnique.ForwardPredicates,
-						mCsToolkit.getManagedScript(), mXnfConversionTechnique, mSimplificationTechnique);
+						mCsToolkit.getManagedScript(), mXnfConversionTechnique, mSimplificationTechnique, errorRun.getStateSequence());
 			}
 		case ForwardPredicates:
 		case BackwardPredicates:
@@ -622,7 +622,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 						AssertCodeBlockOrder.NOT_INCREMENTALLY, GlobalSettings._instance.useUnsatCores,
 						GlobalSettings._instance.useLiveVariables, mServices, true,
 						mPredicateUnifier, GlobalSettings._instance._interpolationMode, mgdScriptTracechecks, mXnfConversionTechnique,
-						mSimplificationTechnique);
+						mSimplificationTechnique, errorRun.getStateSequence());
 			} catch (final Exception e) {
 				if (!GlobalSettings._instance.useFallbackForSeparateSolverForTracechecks) {
 					throw e;
@@ -632,7 +632,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 						new TreeMap<Integer, IPredicate>(), errorRun.getWord(), mCsToolkit,
 						AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL,
 						true, mServices, true, mPredicateUnifier, GlobalSettings._instance._interpolationMode,
-						mCsToolkit.getManagedScript(), mXnfConversionTechnique, mSimplificationTechnique);
+						mCsToolkit.getManagedScript(), mXnfConversionTechnique, mSimplificationTechnique, errorRun.getStateSequence());
 			}
 		default:
 			throw new UnsupportedOperationException(

@@ -86,10 +86,11 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 			final AssertCodeBlockOrder assertCodeBlocksIncrementally, final IUltimateServiceProvider services,
 			final boolean computeRcfgProgramExecution, final PredicateUnifier predicateUnifier, 
 			final InterpolationTechnique interpolation, final ManagedScript mgdScriptTc, final boolean instanticateArrayExt, final XnfConversionTechnique xnfConversionTechnique,
-			final SimplificationTechnique simplificationTechnique) {
+			final SimplificationTechnique simplificationTechnique,
+			final List<? extends Object> controlLocationSequence) {
 		super(precondition, postcondition, pendingContexts, trace, csToolkit, assertCodeBlocksIncrementally,
 				services, computeRcfgProgramExecution, predicateUnifier, mgdScriptTc, simplificationTechnique, 
-				xnfConversionTechnique);
+				xnfConversionTechnique, controlLocationSequence);
 		mInstantiateArrayExt = instanticateArrayExt;
 		if (isCorrect() == LBool.UNSAT) {
 			computeInterpolants(new AllIntegers(), interpolation);
@@ -101,10 +102,11 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 			final AssertCodeBlockOrder assertCodeBlocksIncrementally, final IUltimateServiceProvider services,
 			final boolean computeRcfgProgramExecution, final PredicateUnifier predicateUnifier, 
 			final InterpolationTechnique interpolation, final boolean instanticateArrayExt, final XnfConversionTechnique xnfConversionTechnique,
-			final SimplificationTechnique simplificationTechnique) {
+			final SimplificationTechnique simplificationTechnique,
+			final List<? extends Object> controlLocationSequence) {
 		this(precondition, postcondition, pendingContexts, trace, csToolkit, 
 				assertCodeBlocksIncrementally, services, computeRcfgProgramExecution, predicateUnifier, 
-				interpolation, csToolkit.getManagedScript(), instanticateArrayExt, xnfConversionTechnique, simplificationTechnique);
+				interpolation, csToolkit.getManagedScript(), instanticateArrayExt, xnfConversionTechnique, simplificationTechnique, controlLocationSequence);
 	}
 
 
@@ -286,7 +288,7 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 			// computed by this TraceChecker
 			final InterpolatingTraceCheckerCraig tc = new InterpolatingTraceCheckerCraig(precondition, interpolantAtReturnPosition, pendingContexts, subtrace,
 					mCsToolkit, massertCodeBlocksIncrementally, mServices, false, mPredicateUnifier, InterpolationTechnique.Craig_NestedInterpolation, 
-					mTcSmtManager, mInstantiateArrayExt, mXnfConversionTechnique, mSimplificationTechnique);
+					mTcSmtManager, mInstantiateArrayExt, mXnfConversionTechnique, mSimplificationTechnique, mControlLocationSequence);
 			final LBool isSafe = tc.isCorrect();
 			if (isSafe == LBool.SAT) {
 				throw new AssertionError("has to be unsat by construction, we do check only for interpolant computation");

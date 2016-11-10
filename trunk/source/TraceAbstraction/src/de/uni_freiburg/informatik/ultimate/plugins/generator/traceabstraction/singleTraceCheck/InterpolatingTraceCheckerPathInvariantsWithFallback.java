@@ -78,7 +78,8 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends
 			final SimplificationTechnique simplificationTechnique, final Collection<Term> axioms) {
 		super(precondition, postcondition, pendingContexts, run.getWord(), csToolkit,
 				assertCodeBlocksIncrementally, services, computeRcfgProgramExecution,
-				predicateUnifier, csToolkit.getManagedScript(), simplificationTechnique, xnfConversionTechnique);
+				predicateUnifier, csToolkit.getManagedScript(), simplificationTechnique, 
+				xnfConversionTechnique, run.getStateSequence());
 		mStorage = storage;
 		mNestedRun = run;
 		mUseNonlinerConstraints = useNonlinerConstraints;

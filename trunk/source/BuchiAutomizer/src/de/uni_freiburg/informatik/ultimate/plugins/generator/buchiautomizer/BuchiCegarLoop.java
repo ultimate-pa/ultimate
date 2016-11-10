@@ -907,8 +907,8 @@ public class BuchiCegarLoop {
 	protected void constructInterpolantAutomaton(final InterpolatingTraceChecker traceChecker,
 			final NestedRun<CodeBlock, IPredicate> run) throws AutomataOperationCanceledException {
 		final CanonicalInterpolantAutomatonBuilder iab = new CanonicalInterpolantAutomatonBuilder(mServices,
-				traceChecker, CoverageAnalysis.extractProgramPoints(run), new InCaReAlphabet<>(mAbstraction),
-				mCsToolkit, mAbstraction.getStateFactory(), mLogger);
+				traceChecker.getIpp(), CoverageAnalysis.extractProgramPoints(run), new InCaReAlphabet<>(mAbstraction),
+				mCsToolkit, mAbstraction.getStateFactory(), mLogger, traceChecker.getPredicateUnifier(), run.getWord());
 		iab.analyze();
 		mInterpolAutomaton = iab.getResult();
 
