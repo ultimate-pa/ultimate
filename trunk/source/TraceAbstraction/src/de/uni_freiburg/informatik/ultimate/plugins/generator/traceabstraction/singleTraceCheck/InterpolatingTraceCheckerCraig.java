@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE TraceAbstraction plug-in.
- * 
+ *
  * The ULTIMATE TraceAbstraction plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE TraceAbstraction plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE TraceAbstraction plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck;
@@ -56,41 +56,40 @@ import de.uni_freiburg.informatik.ultimate.util.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 /**
- * Uses Craig interpolation for computation of nested interpolants.
- * Supports two algorithms.
- * 1. Matthias' recursive algorithm.
- * 2. Tree interpolation
- * 
+ * Uses Craig interpolation for computation of nested interpolants. Supports two algorithms. 1. Matthias' recursive
+ * algorithm. 2. Tree interpolation
+ *
  * @author heizmann@informatik.uni-freiburg.de
  */
 public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 
 	private final boolean mInstantiateArrayExt;
+
 	/**
-	 * Check if trace fulfills specification given by precondition,
-	 * postcondition and pending contexts. The pendingContext maps the positions
-	 * of pending returns to predicates which define possible variable
-	 * valuations in the context to which the return leads the trace.
+	 * Check if trace fulfills specification given by precondition, postcondition and pending contexts. The
+	 * pendingContext maps the positions of pending returns to predicates which define possible variable valuations in
+	 * the context to which the return leads the trace.
+	 *
 	 * @param assertCodeBlocksIncrementally
-	 *            If set to false, check-sat is called after all CodeBlocks are
-	 *            asserted. If set to true we use Betims heuristic an
-	 *            incrementally assert CodeBlocks and do check-sat until all
-	 *            CodeBlocks are asserted or the result to a check-sat is UNSAT.
+	 *            If set to false, check-sat is called after all CodeBlocks are asserted. If set to true we use Betims
+	 *            heuristic an incrementally assert CodeBlocks and do check-sat until all CodeBlocks are asserted or the
+	 *            result to a check-sat is UNSAT.
 	 * @param services
-	 * @param predicateUnifier 
-	 * @param interpolation 
-	 * @param instanticateArrayExt 
+	 * @param predicateUnifier
+	 * @param interpolation
+	 * @param instanticateArrayExt
 	 * @param logger
 	 */
 	public InterpolatingTraceCheckerCraig(final IPredicate precondition, final IPredicate postcondition,
-			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IAction> trace, final CfgSmtToolkit csToolkit,
-			final AssertCodeBlockOrder assertCodeBlocksIncrementally, final IUltimateServiceProvider services,
-			final boolean computeRcfgProgramExecution, final PredicateUnifier predicateUnifier, 
-			final InterpolationTechnique interpolation, final ManagedScript mgdScriptTc, final boolean instanticateArrayExt, final XnfConversionTechnique xnfConversionTechnique,
-			final SimplificationTechnique simplificationTechnique,
+			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IAction> trace,
+			final CfgSmtToolkit csToolkit, final AssertCodeBlockOrder assertCodeBlocksIncrementally,
+			final IUltimateServiceProvider services, final boolean computeRcfgProgramExecution,
+			final PredicateUnifier predicateUnifier, final InterpolationTechnique interpolation,
+			final ManagedScript mgdScriptTc, final boolean instanticateArrayExt,
+			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique,
 			final List<? extends Object> controlLocationSequence) {
-		super(precondition, postcondition, pendingContexts, trace, csToolkit, assertCodeBlocksIncrementally,
-				services, computeRcfgProgramExecution, predicateUnifier, mgdScriptTc, simplificationTechnique, 
+		super(precondition, postcondition, pendingContexts, trace, csToolkit, assertCodeBlocksIncrementally, services,
+				computeRcfgProgramExecution, predicateUnifier, mgdScriptTc, simplificationTechnique,
 				xnfConversionTechnique, controlLocationSequence);
 		mInstantiateArrayExt = instanticateArrayExt;
 		if (isCorrect() == LBool.UNSAT) {
@@ -99,31 +98,30 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 	}
 
 	public InterpolatingTraceCheckerCraig(final IPredicate precondition, final IPredicate postcondition,
-			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IAction> trace, final CfgSmtToolkit csToolkit,
-			final AssertCodeBlockOrder assertCodeBlocksIncrementally, final IUltimateServiceProvider services,
-			final boolean computeRcfgProgramExecution, final PredicateUnifier predicateUnifier, 
-			final InterpolationTechnique interpolation, final boolean instanticateArrayExt, final XnfConversionTechnique xnfConversionTechnique,
+			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IAction> trace,
+			final CfgSmtToolkit csToolkit, final AssertCodeBlockOrder assertCodeBlocksIncrementally,
+			final IUltimateServiceProvider services, final boolean computeRcfgProgramExecution,
+			final PredicateUnifier predicateUnifier, final InterpolationTechnique interpolation,
+			final boolean instanticateArrayExt, final XnfConversionTechnique xnfConversionTechnique,
 			final SimplificationTechnique simplificationTechnique,
 			final List<? extends Object> controlLocationSequence) {
-		this(precondition, postcondition, pendingContexts, trace, csToolkit, 
-				assertCodeBlocksIncrementally, services, computeRcfgProgramExecution, predicateUnifier, 
-				interpolation, csToolkit.getManagedScript(), instanticateArrayExt, xnfConversionTechnique, simplificationTechnique, controlLocationSequence);
+		this(precondition, postcondition, pendingContexts, trace, csToolkit, assertCodeBlocksIncrementally, services,
+				computeRcfgProgramExecution, predicateUnifier, interpolation, csToolkit.getManagedScript(),
+				instanticateArrayExt, xnfConversionTechnique, simplificationTechnique, controlLocationSequence);
 	}
 
-
-//	protected int[] getSizeOfPredicates(InterpolationTechnique interpolation) {
-//		return mCsToolkit.computeDagSizeOfPredicates(mInterpolants);
-//	}
+	// protected int[] getSizeOfPredicates(InterpolationTechnique interpolation) {
+	// return mCsToolkit.computeDagSizeOfPredicates(mInterpolants);
+	// }
 
 	/**
-	 * 
+	 *
 	 * @param interpolation
 	 * @return
 	 */
 	protected int getTotalNumberOfPredicates(final InterpolationTechnique interpolation) {
 		return mInterpolants != null ? mInterpolants.length : 0;
 	}
-
 
 	@Override
 	protected void computeInterpolants(final Set<Integer> interpolatedPositions,
@@ -146,12 +144,14 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 			default:
 				throw new UnsupportedOperationException("unsupportedInterpolation");
 			}
-			mTraceCheckerBenchmarkGenerator.reportSequenceOfInterpolants(Arrays.asList(mInterpolants), InterpolantType.Craig);
+			mTraceCheckerBenchmarkGenerator.reportSequenceOfInterpolants(Arrays.asList(mInterpolants),
+					InterpolantType.Craig);
 			mTraceCheckerBenchmarkGenerator.reportInterpolantComputation();
 			if (mControlLocationSequence != null) {
-				final BackwardCoveringInformation bci = TraceCheckerUtils.computeCoverageCapability(
-						mServices, getIpp(), mControlLocationSequence, mLogger, mPredicateUnifier);
-				final boolean perfectSequence = (bci.getPotentialBackwardCoverings() == bci.getSuccessfullBackwardCoverings());
+				final BackwardCoveringInformation bci = TraceCheckerUtils.computeCoverageCapability(mServices, getIpp(),
+						mControlLocationSequence, mLogger, mPredicateUnifier);
+				final boolean perfectSequence =
+						(bci.getPotentialBackwardCoverings() == bci.getSuccessfullBackwardCoverings());
 				if (perfectSequence) {
 					mTraceCheckerBenchmarkGenerator.reportPerfectInterpolantSequences();
 				}
@@ -163,7 +163,8 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 			tce.addRunningTaskInfo(new RunningTaskInfo(getClass(), taskDescription));
 			throw tce;
 		} finally {
-			mTraceCheckerBenchmarkGenerator.stop(TraceCheckerStatisticsDefinitions.InterpolantComputationTime.toString());
+			mTraceCheckerBenchmarkGenerator
+					.stop(TraceCheckerStatisticsDefinitions.InterpolantComputationTime.toString());
 		}
 		// TODO: remove this if relevant variables are definitely correct.
 		// assert testRelevantVars() : "bug in relevant variables";
@@ -197,11 +198,9 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 			}
 			assert mInterpolants.length == mTrace.length() - 1;
 			return mInterpolants;
-		} else {
-			throw new UnsupportedOperationException("Interpolants are only available if trace is correct.");
 		}
+		throw new UnsupportedOperationException("Interpolants are only available if trace is correct.");
 	}
-
 
 	/**
 	 * Use tree interpolants to compute nested interpolants.
@@ -213,43 +212,40 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 		if (mInterpolants != null) {
 			throw new AssertionError("You already computed interpolants");
 		}
-		final NestedInterpolantsBuilder nib = new NestedInterpolantsBuilder(mTcSmtManager, mTraceCheckerLock, 
-				mAAA.getAnnotatedSsa(),	mNsb.getConstants2BoogieVar(), mPredicateUnifier, mPredicateFactory, 
-				interpolatedPositions, true, mServices, this, mCfgManagedScript, mInstantiateArrayExt, 
+		final NestedInterpolantsBuilder nib = new NestedInterpolantsBuilder(mTcSmtManager, mTraceCheckerLock,
+				mAAA.getAnnotatedSsa(), mNsb.getConstants2BoogieVar(), mPredicateUnifier, mPredicateFactory,
+				interpolatedPositions, true, mServices, this, mCfgManagedScript, mInstantiateArrayExt,
 				mSimplificationTechnique, mXnfConversionTechnique);
 		mInterpolants = nib.getNestedInterpolants();
-		assert TraceCheckerUtils.checkInterpolantsInductivityForward(
-				Arrays.asList(mInterpolants), mTrace, mPrecondition, mPostcondition, 
-				mPendingContexts, "Craig", mCsToolkit, mLogger, 
-				mCfgManagedScript) : 
-					"invalid Hoare triple in tree interpolants";
+		assert TraceCheckerUtils.checkInterpolantsInductivityForward(Arrays.asList(mInterpolants), mTrace,
+				mPrecondition, mPostcondition, mPendingContexts, "Craig", mCsToolkit, mLogger,
+				mCfgManagedScript) : "invalid Hoare triple in tree interpolants";
 		assert mInterpolants != null;
 	}
 
 	/**
-	 * Use Matthias' old naive iterative method to compute nested interpolants.
-	 * (Recursive interpolation queries, one for each call-return pair)
+	 * Use Matthias' old naive iterative method to compute nested interpolants. (Recursive interpolation queries, one
+	 * for each call-return pair)
 	 */
 	private void computeInterpolants_Recursive(final Set<Integer> interpolatedPositions) {
 		assert interpolatedPositions != null : "no interpolatedPositions";
 		if (mIsSafe != LBool.UNSAT) {
 			if (mIsSafe == null) {
 				throw new AssertionError("No trace check at the moment - no interpolants!");
-			} else {
-				throw new AssertionError("Interpolants only available if trace fulfills specification");
 			}
+			throw new AssertionError("Interpolants only available if trace fulfills specification");
 		}
 		if (mInterpolants != null) {
 			throw new AssertionError("You already computed interpolants");
 		}
 
-		final List<Integer> nonPendingCallPositions = new ArrayList<Integer>();
-		final Set<Integer> newInterpolatedPositions = interpolatedPositionsForSubtraces(interpolatedPositions,
-				nonPendingCallPositions);
+		final List<Integer> nonPendingCallPositions = new ArrayList<>();
+		final Set<Integer> newInterpolatedPositions =
+				interpolatedPositionsForSubtraces(interpolatedPositions, nonPendingCallPositions);
 
-		final NestedInterpolantsBuilder nib = new NestedInterpolantsBuilder(mTcSmtManager, mTraceCheckerLock, 
-				mAAA.getAnnotatedSsa(),	mNsb.getConstants2BoogieVar(), mPredicateUnifier, mPredicateFactory, 
-				newInterpolatedPositions, false, mServices, this, mCfgManagedScript, mInstantiateArrayExt, 
+		final NestedInterpolantsBuilder nib = new NestedInterpolantsBuilder(mTcSmtManager, mTraceCheckerLock,
+				mAAA.getAnnotatedSsa(), mNsb.getConstants2BoogieVar(), mPredicateUnifier, mPredicateFactory,
+				newInterpolatedPositions, false, mServices, this, mCfgManagedScript, mInstantiateArrayExt,
 				mSimplificationTechnique, mXnfConversionTechnique);
 		mInterpolants = nib.getNestedInterpolants();
 		final IPredicate oldPrecondition = mPrecondition;
@@ -262,7 +258,8 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 
 			final Call call = (Call) mTrace.getSymbol(nonPendingCall);
 			final String calledMethod = call.getCallStatement().getMethodName();
-			final TermVarsProc oldVarsEquality = TraceAbstractionUtils.getOldVarsEquality(calledMethod, mCsToolkit.getModifiableGlobals(), mCfgManagedScript.getScript());
+			final TermVarsProc oldVarsEquality = TraceAbstractionUtils.getOldVarsEquality(calledMethod,
+					mCsToolkit.getModifiableGlobals(), mCfgManagedScript.getScript());
 
 			final IPredicate precondition = mPredicateUnifier.getOrConstructPredicate(oldVarsEquality.getFormula());
 
@@ -270,7 +267,7 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 			// call, if this is -1 (because call is first codeBlock) use the
 			// precondition used in this recursive interpolant computation one
 			// level above
-			final SortedMap<Integer, IPredicate> pendingContexts = new TreeMap<Integer, IPredicate>();
+			final SortedMap<Integer, IPredicate> pendingContexts = new TreeMap<>();
 			IPredicate beforeCall;
 			if (nonPendingCall == 0) {
 				beforeCall = oldPrecondition;
@@ -294,22 +291,23 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 				interpolantAtReturnPosition = mInterpolants[returnPosition];
 				assert interpolantAtReturnPosition != null;
 			}
-			
+
 			// Compute interpolants for subsequence and add them to interpolants
 			// computed by this TraceChecker
-			final InterpolatingTraceCheckerCraig tc = new InterpolatingTraceCheckerCraig(precondition, interpolantAtReturnPosition, pendingContexts, subtrace,
-					mCsToolkit, massertCodeBlocksIncrementally, mServices, false, mPredicateUnifier, InterpolationTechnique.Craig_NestedInterpolation, 
-					mTcSmtManager, mInstantiateArrayExt, mXnfConversionTechnique, mSimplificationTechnique, mControlLocationSequence);
+			final InterpolatingTraceCheckerCraig tc =
+					new InterpolatingTraceCheckerCraig(precondition, interpolantAtReturnPosition, pendingContexts,
+							subtrace, mCsToolkit, massertCodeBlocksIncrementally, mServices, false, mPredicateUnifier,
+							InterpolationTechnique.Craig_NestedInterpolation, mTcSmtManager, mInstantiateArrayExt,
+							mXnfConversionTechnique, mSimplificationTechnique, mControlLocationSequence);
 			final LBool isSafe = tc.isCorrect();
 			if (isSafe == LBool.SAT) {
-				throw new AssertionError("has to be unsat by construction, we do check only for interpolant computation");
+				throw new AssertionError(
+						"has to be unsat by construction, we do check only for interpolant computation");
 			} else if (isSafe == LBool.UNKNOWN) {
-				if(mServices.getProgressMonitorService().continueProcessing()) {
+				if (mServices.getProgressMonitorService().continueProcessing()) {
 					throw new AssertionError("UNKNOWN during nested interpolation. I don't know how to continue");
-				} else {
-					throw new ToolchainCanceledException(this.getClass(),
-							"construction of nested interpolants");
 				}
+				throw new ToolchainCanceledException(this.getClass(), "construction of nested interpolants");
 			}
 			// tc.computeInterpolants_Recursive(interpolatedPositions, mPredicateUnifier);
 			final IPredicate[] interpolantSubsequence = tc.getInterpolants();
@@ -321,14 +319,12 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 				mInterpolants[nonPendingCall + 1 + i] = interpolantSubsequence[i];
 			}
 		}
-		
-//		if (mInterpolants != null) {
-			assert TraceCheckerUtils.checkInterpolantsInductivityForward(
-					Arrays.asList(mInterpolants), mTrace, mPrecondition, mPostcondition, 
-					mPendingContexts, "Craig", mCsToolkit, mLogger,
-					mCfgManagedScript) : 
-						"invalid Hoare triple in nested interpolants";
-//		}
+
+		// if (mInterpolants != null) {
+		assert TraceCheckerUtils.checkInterpolantsInductivityForward(Arrays.asList(mInterpolants), mTrace,
+				mPrecondition, mPostcondition, mPendingContexts, "Craig", mCsToolkit, mLogger,
+				mCfgManagedScript) : "invalid Hoare triple in nested interpolants";
+		// }
 	}
 
 	/**
@@ -337,7 +333,7 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 	private Set<Integer> interpolatedPositionsForSubtraces(final Set<Integer> interpolatedPositions,
 			final List<Integer> nonPendingCallPositions) {
 
-		final Set<Integer> newInterpolatedPositions = new HashSet<Integer>();
+		final Set<Integer> newInterpolatedPositions = new HashSet<>();
 
 		int currentContextStackDepth = 0;
 		final NestedWord<CodeBlock> nestedTrace = (NestedWord<CodeBlock>) mTrace;

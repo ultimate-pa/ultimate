@@ -67,6 +67,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 /**
  * Represents a map of invariants to a run, that has been generated using a {@link IInvariantPatternProcessor} on the
  * run-projected CFG.
+ *
  * @author Dirk Steinmetz, Matthias Heizmann, Betim Musa
  */
 public final class PathInvariantsGenerator implements IInterpolantGenerator {
@@ -103,8 +104,8 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		final ILinearInequalityInvariantPatternStrategy strategy =
 				new LocationIndependentLinearInequalityInvariantPatternStrategy(1, 1, 1, 1, 5);
 		return new LinearInequalityInvariantPatternProcessorFactory(services, storage, predicateUnifier, csToolkit,
-				strategy, useNonlinerConstraints, useVarsFromUnsatCore, solverSettings, simplicationTechnique, xnfConversionTechnique,
-				axioms);
+				strategy, useNonlinerConstraints, useVarsFromUnsatCore, solverSettings, simplicationTechnique,
+				xnfConversionTechnique, axioms);
 	}
 
 	/**
@@ -134,11 +135,12 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	public PathInvariantsGenerator(final IUltimateServiceProvider services, final IToolchainStorage storage,
 			final NestedRun<? extends IAction, IPredicate> run, final IPredicate precondition,
 			final IPredicate postcondition, final PredicateUnifier predicateUnifier, final ManagedScript csToolkit,
-			final ModifiableGlobalVariableManager modGlobVarManager, final boolean useNonlinerConstraints, 
-			final boolean useVarsFromUnsatCore, final Settings solverSettings, final SimplificationTechnique simplicationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique, final Collection<Term> axioms) {
+			final ModifiableGlobalVariableManager modGlobVarManager, final boolean useNonlinerConstraints,
+			final boolean useVarsFromUnsatCore, final Settings solverSettings,
+			final SimplificationTechnique simplicationTechnique, final XnfConversionTechnique xnfConversionTechnique,
+			final Collection<Term> axioms) {
 		this(services, run, precondition, postcondition, predicateUnifier, useVarsFromUnsatCore, modGlobVarManager,
-				createDefaultFactory(services, storage, predicateUnifier, csToolkit, useNonlinerConstraints, 
+				createDefaultFactory(services, storage, predicateUnifier, csToolkit, useNonlinerConstraints,
 						useVarsFromUnsatCore, solverSettings, simplicationTechnique, xnfConversionTechnique, axioms));
 	}
 
@@ -163,8 +165,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	 */
 	public PathInvariantsGenerator(final IUltimateServiceProvider services,
 			final NestedRun<? extends IAction, IPredicate> run, final IPredicate precondition,
-			final IPredicate postcondition, final PredicateUnifier predicateUnifier,
-			final boolean useVarsFromUnsatCore,
+			final IPredicate postcondition, final PredicateUnifier predicateUnifier, final boolean useVarsFromUnsatCore,
 			final ModifiableGlobalVariableManager modGlobVarManager,
 			final IInvariantPatternProcessorFactory<?> invPatternProcFactory) {
 		super();
@@ -173,14 +174,14 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		mPostcondition = postcondition;
 		mPredicateUnifier = predicateUnifier;
 
-		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);;
+		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 
 		mLogger.info("Started with a run of length " + mRun.getLength());
 
 		// Project path to CFG
 		final int len = mRun.getLength();
 		final List<Location> locations = new ArrayList<>(len);
-		final Map<BoogieIcfgLocation, Location> locationsForProgramPoint = new HashMap<BoogieIcfgLocation, Location>(len);
+		final Map<BoogieIcfgLocation, Location> locationsForProgramPoint = new HashMap<>(len);
 		final Collection<Transition> transitions = new ArrayList<>(len - 1);
 
 		for (int i = 0; i < len; i++) {
@@ -207,18 +208,19 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 
 		final ControlFlowGraph cfg =
 				new ControlFlowGraph(locations.get(0), locations.get(len - 1), locations, transitions);
-		mLogger.info("[PathInvariants] Built projected CFG, " + locations.size() + " states and "
-				+ transitions.size() + " transitions.");
+		mLogger.info("[PathInvariants] Built projected CFG, " + locations.size() + " states and " + transitions.size()
+				+ " transitions.");
 
 		// Generate invariants
 		final CFGInvariantsGenerator generator = new CFGInvariantsGenerator(services, modGlobVarManager);
 		final Map<ControlFlowGraph.Location, IPredicate> invariants;
-		
+
 		if (USE_LIVE_VARIABLES) {
 			invariants = null;
 			// TODO: Compute the live variables and use them.
 		} else {
-			invariants = generator.generateInvariantsFromCFG(cfg, precondition, postcondition, invPatternProcFactory, useVarsFromUnsatCore, false, null);
+			invariants = generator.generateInvariantsFromCFG(cfg, precondition, postcondition, invPatternProcFactory,
+					useVarsFromUnsatCore, false, null);
 			mLogger.info("[PathInvariants] Generated invariant map.");
 		}
 

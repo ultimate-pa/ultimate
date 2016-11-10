@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE TraceAbstraction plug-in.
- * 
+ *
  * The ULTIMATE TraceAbstraction plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE TraceAbstraction plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE TraceAbstraction plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck;
@@ -47,15 +47,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 
 /**
- * Check if a trace fulfills a specification and additionally compute a 
- * sequence of interpolants if the trace check was positive.
- * This sequence of interpolants is a Hoare annotation for program that
- * corresponds to this trace (see IInterpolantGenerator).
- * 
+ * Check if a trace fulfills a specification and additionally compute a sequence of interpolants if the trace check was
+ * positive. This sequence of interpolants is a Hoare annotation for program that corresponds to this trace (see
+ * IInterpolantGenerator).
+ *
  * @author heizmann@informatik.uni-freiburg.de
  */
 public abstract class InterpolatingTraceChecker extends TraceChecker implements IInterpolantGenerator {
-	
+
 	protected final SimplificationTechnique mSimplificationTechnique;
 	protected final XnfConversionTechnique mXnfConversionTechnique;
 
@@ -66,36 +65,36 @@ public abstract class InterpolatingTraceChecker extends TraceChecker implements 
 	protected final PredicateFactory mPredicateFactory;
 
 	protected IPredicate[] mInterpolants;
-	
+
 	protected List<? extends Object> mControlLocationSequence;
-	
+
 	/**
-	 * Check if trace fulfills specification given by precondition,
-	 * postcondition and pending contexts. The pendingContext maps the positions
-	 * of pending returns to predicates which define possible variable
-	 * valuations in the context to which the return leads the trace.
+	 * Check if trace fulfills specification given by precondition, postcondition and pending contexts. The
+	 * pendingContext maps the positions of pending returns to predicates which define possible variable valuations in
+	 * the context to which the return leads the trace.
+	 * 
 	 * @param assertCodeBlocksIncrementally
-	 *            If set to false, check-sat is called after all CodeBlocks are
-	 *            asserted. If set to true we use Betims heuristic an
-	 *            incrementally assert CodeBlocks and do check-sat until all
-	 *            CodeBlocks are asserted or the result to a check-sat is UNSAT.
+	 *            If set to false, check-sat is called after all CodeBlocks are asserted. If set to true we use Betims
+	 *            heuristic an incrementally assert CodeBlocks and do check-sat until all CodeBlocks are asserted or the
+	 *            result to a check-sat is UNSAT.
 	 * @param services
-	 * @param predicateUnifier 
-	 * @param simplificationTechnique 
-	 * @param xnfConversionTechnique 
+	 * @param predicateUnifier
+	 * @param simplificationTechnique
+	 * @param xnfConversionTechnique
 	 * @param logger
-	 * @param interpolation 
+	 * @param interpolation
 	 */
 	public InterpolatingTraceChecker(final IPredicate precondition, final IPredicate postcondition,
-			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IAction> trace, final CfgSmtToolkit csToolkit,
-			final AssertCodeBlockOrder assertCodeBlocksIncrementally, final IUltimateServiceProvider services,
-			final boolean computeRcfgProgramExecution, final PredicateUnifier predicateUnifier, 
-			final ManagedScript tcSmtManager, final SimplificationTechnique simplificationTechnique, 
-			final XnfConversionTechnique xnfConversionTechnique,
+			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IAction> trace,
+			final CfgSmtToolkit csToolkit, final AssertCodeBlockOrder assertCodeBlocksIncrementally,
+			final IUltimateServiceProvider services, final boolean computeRcfgProgramExecution,
+			final PredicateUnifier predicateUnifier, final ManagedScript tcSmtManager,
+			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
 			final List<? extends Object> controlLocationSequence) {
-		super(precondition, postcondition, pendingContexts, trace, csToolkit, new DefaultTransFormulas(trace, precondition, postcondition, pendingContexts, csToolkit.getModifiableGlobals(), false),
-				assertCodeBlocksIncrementally,
-				services, computeRcfgProgramExecution, false, tcSmtManager);
+		super(precondition, postcondition, pendingContexts, trace, csToolkit,
+				new DefaultTransFormulas(trace, precondition, postcondition, pendingContexts,
+						csToolkit.getModifiableGlobals(), false),
+				assertCodeBlocksIncrementally, services, computeRcfgProgramExecution, false, tcSmtManager);
 		mPredicateUnifier = predicateUnifier;
 		mPredicateFactory = predicateUnifier.getPredicateFactory();
 		mSimplificationTechnique = simplificationTechnique;
@@ -103,35 +102,27 @@ public abstract class InterpolatingTraceChecker extends TraceChecker implements 
 		mControlLocationSequence = controlLocationSequence;
 	}
 
-
 	/**
-	 * Return a sequence of nested interpolants φ_1,...,φ_{n-1} that is
-	 * inductive for the trace, precondition φ_0, and postcondition φ_n that
-	 * were checked last. Interpolants are only available if the trace fulfilled
-	 * its specification. The length of the returned sequence is the length of
-	 * the trace minus one.
+	 * Return a sequence of nested interpolants φ_1,...,φ_{n-1} that is inductive for the trace, precondition φ_0, and
+	 * postcondition φ_n that were checked last. Interpolants are only available if the trace fulfilled its
+	 * specification. The length of the returned sequence is the length of the trace minus one.
 	 * <p>
-	 * For each two interpolants φ_i, φ_j which are similar (represented by the
-	 * same term) the TraceChecker will use the same predicate. This means the
-	 * returned array may contain the same object several times.
+	 * For each two interpolants φ_i, φ_j which are similar (represented by the same term) the TraceChecker will use the
+	 * same predicate. This means the returned array may contain the same object several times.
 	 * <p>
-	 * Furthermore throughout the lifetime of the TraceChecker, the TraceChecker
-	 * will always use one predicate object for all interpolants which are
-	 * similar (represented by the same term).
+	 * Furthermore throughout the lifetime of the TraceChecker, the TraceChecker will always use one predicate object
+	 * for all interpolants which are similar (represented by the same term).
 	 * <p>
-	 * 
+	 *
 	 * @param interpolatedPositions
-	 *            Positions at which we compute interpolants. If
-	 *            interpolatedPositions==null each interpolant φ_0,...,φ_n is
-	 *            computed. Otherwise for each index i (but zero and n) that
-	 *            does not occur in interpolatedPositions φ_i will be an
-	 *            UnknownPredicate.
+	 *            Positions at which we compute interpolants. If interpolatedPositions==null each interpolant
+	 *            φ_0,...,φ_n is computed. Otherwise for each index i (but zero and n) that does not occur in
+	 *            interpolatedPositions φ_i will be an UnknownPredicate.
 	 *            <p>
-	 *            interpolatedPositions has to be sorted (ascending) and its
-	 *            entries have to be smaller than or equal to mTrace.size()
+	 *            interpolatedPositions has to be sorted (ascending) and its entries have to be smaller than or equal to
+	 *            mTrace.size()
 	 * @param predicateUnifier
-	 *            A PredicateUnifier in which precondition, postcondition and
-	 *            all pending contexts are representatives.
+	 *            A PredicateUnifier in which precondition, postcondition and all pending contexts are representatives.
 	 * @param interpolation
 	 *            Method that is used to compute the interpolants.
 	 */
@@ -166,22 +157,20 @@ public abstract class InterpolatingTraceChecker extends TraceChecker implements 
 			}
 			assert mInterpolants.length == mTrace.length() - 1;
 			return mInterpolants;
-		} else {
-			throw new UnsupportedOperationException("Interpolants are only available if trace is correct.");
 		}
+		throw new UnsupportedOperationException("Interpolants are only available if trace is correct.");
 	}
-	
+
 	@Override
 	public final PredicateUnifier getPredicateUnifier() {
 		return mPredicateUnifier;
 	}
 
 	/**
-	 * Set<Integer> implementation that has only a contains method. The method
-	 * always returns true;
-	 * 
+	 * Set<Integer> implementation that has only a contains method. The method always returns true;
+	 *
 	 * @author heizmann@informatik.uni-freiburg.de
-	 * 
+	 *
 	 */
 	public static class AllIntegers implements Set<Integer> {
 
@@ -251,7 +240,5 @@ public abstract class InterpolatingTraceChecker extends TraceChecker implements 
 		}
 
 	}
-
-
 
 }
