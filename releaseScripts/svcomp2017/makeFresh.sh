@@ -14,6 +14,7 @@ fi
 
 echo "Enter password for user ${CURRENTUSER} on ${DEPLOY_SERVER}:" 
 read -s -p "Password: " SSHPASS
+echo 
 export SSHPASS
 sshpass -e ssh -oHostKeyAlgorithms=+ssh-dss $CURRENTUSER@$DEPLOY_SERVER "( test -e ${FILE} || touch ${FILE} ) && test -w ${FILE} && /usr/bin/rm ${FILE}"
 if [ ! $? -eq 0 ]; then 
@@ -21,9 +22,9 @@ if [ ! $? -eq 0 ]; then
 	exit 1
 fi
 
-pushd ../../trunk/source/BA_MavenParentUltimate/
+pushd ../../trunk/source/BA_MavenParentUltimate/ > /dev/null
 mvn clean install -Pmaterialize
-popd
+popd > /dev/null
 
 ./createZip.sh Taipan linux AutomizerC_WitnessPrinter.xml
 ./createZip.sh Automizer linux AutomizerC_WitnessPrinter.xml BuchiAutomizerCWithBlockEncoding.xml AutomizerC.xml
