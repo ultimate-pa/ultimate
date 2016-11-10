@@ -167,6 +167,34 @@ chooseMathsat = '''
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Command\ for\ external\ solver=mathsat
 '''
 
+chooseExternalDefault_bv = '''
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Use\ separate\ solver\ for\ tracechecks=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Choose\ which\ separate\ solver\ to\ use\ for\ tracechecks=External_ModelsAndUnsatCoreMode
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Theory\ for\ external\ solver=AUFNIRA
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Command\ for\ calling\ external\ solver=z3 SMTLIB2_COMPLIANT\=true -memory\:2024 -smt2 -in -t\:12000'''
+
+chooseIZ3_bv = '''
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Use\ separate\ solver\ for\ tracechecks=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Choose\ which\ separate\ solver\ to\ use\ for\ tracechecks=External_Z3InterpolationMode
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Theory\ for\ external\ solver=AUFNIRA
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Command\ for\ calling\ external\ solver=z3 SMTLIB2_COMPLIANT\=true -memory\:2024 -smt2 -in -t\:12000'''
+
+chooseCvc4_bv = '''
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Use\ separate\ solver\ for\ tracechecks=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Choose\ which\ separate\ solver\ to\ use\ for\ tracechecks=External_ModelsAndUnsatCoreMode
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Theory\ for\ external\ solver=AUFLIRA
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Command\ for\ calling\ external\ solver=cvc4 --tear-down-incremental --rewrite-divk --print-success --lang smt --tlimit-per\=12000
+'''
+
+chooseMathsat_bv = '''
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Use\ separate\ solver\ for\ tracechecks=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Choose\ which\ separate\ solver\ to\ use\ for\ tracechecks=External_ModelsAndUnsatCoreMode
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Theory\ for\ external\ solver=AUFBV
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Command\ for\ external\ solver=mathsat
+'''
+
+
+
 
 dontUseLV = '''/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck//Use\ live\ variables\ in\ FP/BP\ interpolation=false'''
 useLV = '''/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck//Use\ live\ variables\ in\ FP/BP\ interpolation=true'''
@@ -236,16 +264,26 @@ for root, dirs, files in os.walk("."):
 
    if 'SMTInterpol' in fn:
     print(chooseSMTInterpol, file=f)
-   elif 'iZ3' in fn:
+   elif 'iZ3' and 'Integer' in fn:
     print(chooseIZ3, file=f)
-   elif '-Z3-' in fn:
+   elif 'iZ3' and 'Bitvector' in fn:
+    print(chooseIZ3_bv, file=f)
+   elif '-Z3-' and 'Integer' in fn:
     print(chooseExternalDefault, file=f)
+   elif '-Z3-' and 'Bitvector' in fn:
+    print(chooseExternalDefault_bv, file=f)
    elif 'Princess' in fn:
     print(choosePrincess, file=f)
-   elif 'CVC4' in fn:
+   elif 'CVC4' and 'Integer' in fn:
     print(chooseCvc4, file=f)
-   elif 'Mathsat' in fn:
+   elif 'CVC4' and 'Bitvector' in fn:
+    print(chooseCvc4_bv, file=f)
+   elif 'Mathsat' and 'Integer' in fn:
     print(chooseMathsat, file=f)
+   elif 'Mathsat' and 'Bitvector' in fn:
+    print(chooseMathsat_bv, file=f)
+   elif 'Mathsat' and 'Float' in fn:
+    print(chooseMathsat_bv, file=f)
    else:
     print('ERROR: did not recognize solver to use')
 
