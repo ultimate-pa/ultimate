@@ -46,7 +46,6 @@ public class InterpolationTestSuiteBitvector extends InterpolationTestSuite {
 		final List<Pair<String, String>> rtr = new ArrayList<>();
 		rtr.addAll(getReachBitvectorAutomizer());
 		rtr.addAll(getReachBitvectorKojak());
-		rtr.addAll(getReachBitvectorImpulse());
 		return rtr;
 	}
 	

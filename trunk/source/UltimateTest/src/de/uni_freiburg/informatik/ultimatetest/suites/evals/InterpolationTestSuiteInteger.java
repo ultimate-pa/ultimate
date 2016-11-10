@@ -46,7 +46,6 @@ public class InterpolationTestSuiteInteger extends InterpolationTestSuite {
 		final List<Pair<String, String>> rtr = new ArrayList<>();
 		rtr.addAll(getReachIntegerAutomizer());
 		rtr.addAll(getReachIntegerKojak());
-		rtr.addAll(getReachIntegerImpulse());
 		return rtr;
 	}
 	

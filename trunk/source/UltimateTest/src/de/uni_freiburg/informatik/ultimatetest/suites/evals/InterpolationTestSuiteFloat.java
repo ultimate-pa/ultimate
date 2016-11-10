@@ -45,6 +45,7 @@ public class InterpolationTestSuiteFloat extends InterpolationTestSuite {
 	protected List<Pair<String, String>> getToolchainSettings() {
 		final List<Pair<String, String>> rtr = new ArrayList<>();
 		rtr.addAll(getReachFloatAutomizer());
+		rtr.addAll(getReachFloatKojak());
 		return rtr;
 	}
 	
