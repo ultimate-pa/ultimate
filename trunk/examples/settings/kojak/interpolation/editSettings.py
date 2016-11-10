@@ -264,25 +264,27 @@ for root, dirs, files in os.walk("."):
 
    if 'SMTInterpol' in fn:
     print(chooseSMTInterpol, file=f)
-   elif 'iZ3' and 'Integer' in fn:
+   elif 'iZ3' in fn and 'Integer' in fn:
     print(chooseIZ3, file=f)
-   elif 'iZ3' and 'Bitvector' in fn:
+   elif 'iZ3' in fn and 'Bitvector' in fn:
     print(chooseIZ3_bv, file=f)
-   elif '-Z3-' and 'Integer' in fn:
+   elif '-Z3-' in fn and 'Integer' in fn:
     print(chooseExternalDefault, file=f)
-   elif '-Z3-' and 'Bitvector' in fn:
+   elif '-Z3-' in fn and 'Bitvector' in fn:
+    print(chooseExternalDefault_bv, file=f)
+   elif '-Z3-' in fn and 'Float' in fn:
     print(chooseExternalDefault_bv, file=f)
    elif 'Princess' in fn:
     print(choosePrincess, file=f)
-   elif 'CVC4' and 'Integer' in fn:
+   elif 'CVC4' in fn and 'Integer' in fn:
     print(chooseCvc4, file=f)
-   elif 'CVC4' and 'Bitvector' in fn:
+   elif 'CVC4' in fn and 'Bitvector' in fn:
     print(chooseCvc4_bv, file=f)
-   elif 'Mathsat' and 'Integer' in fn:
+   elif 'Mathsat' in fn and 'Integer' in fn:
     print(chooseMathsat, file=f)
-   elif 'Mathsat' and 'Bitvector' in fn:
+   elif 'Mathsat' in fn and 'Bitvector' in fn:
     print(chooseMathsat_bv, file=f)
-   elif 'Mathsat' and 'Float' in fn:
+   elif 'Mathsat' in fn and 'Float' in fn:
     print(chooseMathsat_bv, file=f)
    else:
     print('ERROR: did not recognize solver to use')
