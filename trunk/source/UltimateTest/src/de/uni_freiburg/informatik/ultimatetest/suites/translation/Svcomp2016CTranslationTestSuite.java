@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimatetest.summaries.ConversionContext;
 public class Svcomp2016CTranslationTestSuite extends AbstractEvalTestSuite {
 
 	private static final String[] ALL_C = new String[] { ".c", ".i" };
-	private static final int DEFAULT_LIMIT = 100;
+	private static final int DEFAULT_LIMIT = Integer.MAX_VALUE;
 
 	// @formatter:off
 
@@ -59,9 +59,9 @@ public class Svcomp2016CTranslationTestSuite extends AbstractEvalTestSuite {
 			new Triple<>("CTranslationTest.xml", ALL_C, "translation/Float.epf"),
 			new Triple<>("CTranslationTest.xml", ALL_C, "translation/Integer.epf"),
 
-			new Triple<>("CTranslationBETest.xml", ALL_C, "translation/Bitvector.epf"),
-			new Triple<>("CTranslationBETest.xml", ALL_C, "translation/DerefFreeMemtrackInteger.epf"),
-			new Triple<>("CTranslationBETest.xml", ALL_C, "translation/Float.epf"),
+//			new Triple<>("CTranslationBETest.xml", ALL_C, "translation/Bitvector.epf"),
+//			new Triple<>("CTranslationBETest.xml", ALL_C, "translation/DerefFreeMemtrackInteger.epf"),
+//			new Triple<>("CTranslationBETest.xml", ALL_C, "translation/Float.epf"),
 			new Triple<>("CTranslationBETest.xml", ALL_C, "translation/Integer.epf"),
 	};
 
