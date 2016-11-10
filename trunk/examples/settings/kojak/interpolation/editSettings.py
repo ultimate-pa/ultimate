@@ -84,7 +84,7 @@ def writeSettingsFile(path, fn) :
    print(useUC, file=f)
 
   #codecheck set algorithm
-  if 'Impulse' not in fn:
+  if 'Kojak' in fn:
    print(useKojakAlgorithm, file=f)
   elif 'Impulse' in fn:
    print(useImpulseAlgorithm, file=f)
@@ -407,7 +407,7 @@ def generateFileNames():
 
 for root, fn in sorted(generateFileNames()):
   print(os.path.join(root, fn))
-  #writeSettingsFile(root, fn)
+  writeSettingsFile(root, fn)
 
 
 #for root, dirs, files in os.walk("."):
