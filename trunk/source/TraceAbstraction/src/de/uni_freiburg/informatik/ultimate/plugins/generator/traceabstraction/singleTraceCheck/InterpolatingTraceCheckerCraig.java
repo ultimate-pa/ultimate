@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
@@ -146,6 +147,16 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 				throw new UnsupportedOperationException("unsupportedInterpolation");
 			}
 			mTraceCheckerBenchmarkGenerator.reportSequenceOfInterpolants(Arrays.asList(mInterpolants), InterpolantType.Craig);
+			mTraceCheckerBenchmarkGenerator.reportInterpolantComputation();
+			if (mControlLocationSequence != null) {
+				final BackwardCoveringInformation bci = TraceCheckerUtils.computeCoverageCapability(
+						mServices, getIpp(), mControlLocationSequence, mLogger, mPredicateUnifier);
+				final boolean perfectSequence = (bci.getPotentialBackwardCoverings() == bci.getSuccessfullBackwardCoverings());
+				if (perfectSequence) {
+					mTraceCheckerBenchmarkGenerator.reportPerfectInterpolantSequences();
+				}
+				mTraceCheckerBenchmarkGenerator.addBackwardCoveringInformation(bci);
+			}
 			mTraceCheckFinished = true;
 		} catch (final ToolchainCanceledException tce) {
 			final String taskDescription = "constructing Craig interpolants";
