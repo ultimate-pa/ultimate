@@ -32,24 +32,26 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.test.DirectoryFileEndingsPair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
-public class InterpolationTestSuiteFloat extends InterpolationTestSuite {
+public class InterpolationTestSuiteInteger extends InterpolationTestSuite {
 	
 	@Override
 	protected List<DirectoryFileEndingsPair> getDirectories() {
 		final List<DirectoryFileEndingsPair> rtr = new ArrayList<>();
-		rtr.addAll(getFloatSet());
+		rtr.addAll(getReachSet());
 		return rtr;
 	}
 	
 	@Override
 	protected List<Pair<String, String>> getToolchainSettings() {
 		final List<Pair<String, String>> rtr = new ArrayList<>();
-		rtr.addAll(getReachFloatAutomizer());
+		rtr.addAll(getReachIntegerAutomizer());
+		rtr.addAll(getReachIntegerKojak());
+		rtr.addAll(getReachIntegerImpulse());
 		return rtr;
 	}
 	
 	@Override
 	protected int getFilesPerDirectory() {
-		return super.getFilesPerDirectory();
+		return 5;
 	}
 }

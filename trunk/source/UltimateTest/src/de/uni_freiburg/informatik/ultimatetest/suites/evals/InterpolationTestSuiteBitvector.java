@@ -49,4 +49,9 @@ public class InterpolationTestSuiteBitvector extends InterpolationTestSuite {
 		rtr.addAll(getReachBitvectorImpulse());
 		return rtr;
 	}
+	
+	@Override
+	protected int getFilesPerDirectory() {
+		return 5;
+	}
 }

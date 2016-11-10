@@ -49,4 +49,9 @@ public class InterpolationTestSuiteMemsafety extends InterpolationTestSuite {
 		rtr.addAll(getMemsafetyImpulse());
 		return rtr;
 	}
+	
+	@Override
+	protected int getFilesPerDirectory() {
+		return super.getFilesPerDirectory();
+	}
 }

@@ -44,9 +44,8 @@ public abstract class InterpolationTestSuite extends AbstractEvalTestSuite {
 	public static final String[] I = new String[] { ".i" };
 	public static final String[] ALL = new String[] { ".i", ".c" };
 	
-	protected static int getFilesPerDirectory() {
-		return 1;
-		// return Integer.MAX_VALUE;
+	protected int getFilesPerDirectory() {
+		return Integer.MAX_VALUE;
 	}
 	
 	@Override
@@ -104,13 +103,13 @@ public abstract class InterpolationTestSuite extends AbstractEvalTestSuite {
 		return super.createTestCases();
 	}
 	
-	protected static DirectoryFileEndingsPair getPair(final String dir, final String[] endings) {
+	protected DirectoryFileEndingsPair getPair(final String dir, final String[] endings) {
 		return new DirectoryFileEndingsPair(dir, endings, getFilesPerDirectory());
 	}
 	
 	// @formatter:off
 	public static List<Pair<String, String>> getReachIntegerImpulse() {
-		final List<Pair<String, String>> rtr = new ArrayList<Pair<String, String>>();
+		final List<Pair<String, String>> rtr = new ArrayList<>();
 		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/Reach-32bit-iZ3-NestedInterpolation-Integer-Impulse.epf"));
 		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/Reach-32bit-Princess-TreeInterpolation-Integer-Impulse.epf"));
 		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/Reach-32bit-SMTInterpol-TreeInterpolation-Integer-Impulse.epf"));
@@ -126,7 +125,7 @@ public abstract class InterpolationTestSuite extends AbstractEvalTestSuite {
 	}
 	
 	public static List<Pair<String, String>> getReachBitvectorImpulse() {
-		final List<Pair<String, String>> rtr = new ArrayList<Pair<String, String>>();
+		final List<Pair<String, String>> rtr = new ArrayList<>();
 		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/bitvector/Reach-32bit-iZ3-NestedInterpolation-Bitvector-Impulse.epf"));
 		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/bitvector/Reach-32bit-Z3-BP-UC-LV-Bitvector-Impulse.epf"));
 		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/bitvector/Reach-32bit-Z3-FP-UC-LV-Bitvector-Impulse.epf"));
@@ -134,7 +133,7 @@ public abstract class InterpolationTestSuite extends AbstractEvalTestSuite {
 	}
 	
 	public static List<Pair<String, String>> getMemsafetyImpulse() {
-		final List<Pair<String, String>> rtr = new ArrayList<Pair<String, String>>();
+		final List<Pair<String, String>> rtr = new ArrayList<>();
 		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/memsafety/DerefFreeMemtrack-32bit-iZ3-NestedInterpolation-Integer-Impulse.epf"));
 		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/memsafety/DerefFreeMemtrack-32bit-Princess-TreeInterpolation-Integer-Impulse.epf"));
 		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/memsafety/DerefFreeMemtrack-32bit-SMTInterpol-TreeInterpolation-Integer-Impulse.epf"));
@@ -150,7 +149,7 @@ public abstract class InterpolationTestSuite extends AbstractEvalTestSuite {
 	}
 	
 	public static List<Pair<String, String>> getReachIntegerKojak() {
-		final List<Pair<String, String>> rtr = new ArrayList<Pair<String, String>>();
+		final List<Pair<String, String>> rtr = new ArrayList<>();
 		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/Reach-32bit-iZ3-NestedInterpolation-Integer.epf"));
 		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/Reach-32bit-Princess-TreeInterpolation-Integer.epf"));
 		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/Reach-32bit-SMTInterpol-TreeInterpolation-Integer.epf"));
@@ -166,7 +165,7 @@ public abstract class InterpolationTestSuite extends AbstractEvalTestSuite {
 	}
 	
 	public static List<Pair<String, String>> getReachBitvectorKojak() {
-		final List<Pair<String, String>> rtr = new ArrayList<Pair<String, String>>();
+		final List<Pair<String, String>> rtr = new ArrayList<>();
 		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/bitvector/Reach-32bit-iZ3-NestedInterpolation-Bitvector.epf"));
 		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/bitvector/Reach-32bit-Z3-BP-UC-LV-Bitvector.epf"));
 		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/bitvector/Reach-32bit-Z3-FP-UC-LV-Bitvector.epf"));
@@ -174,7 +173,7 @@ public abstract class InterpolationTestSuite extends AbstractEvalTestSuite {
 	}
 	
 	public static List<Pair<String, String>> getMemsafetyKojak() {
-		final List<Pair<String, String>> rtr = new ArrayList<Pair<String, String>>();
+		final List<Pair<String, String>> rtr = new ArrayList<>();
 		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/memsafety/DerefFreeMemtrack-32bit-iZ3-NestedInterpolation-Integer.epf"));
 		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/memsafety/DerefFreeMemtrack-32bit-Princess-TreeInterpolation-Integer.epf"));
 		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/memsafety/DerefFreeMemtrack-32bit-SMTInterpol-TreeInterpolation-Integer.epf"));
@@ -190,7 +189,7 @@ public abstract class InterpolationTestSuite extends AbstractEvalTestSuite {
 	}
 	
 	public static List<Pair<String, String>> getReachIntegerAutomizer() {
-		final List<Pair<String, String>> rtr = new ArrayList<Pair<String, String>>();
+		final List<Pair<String, String>> rtr = new ArrayList<>();
 		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/Reach-32bit-CVC4-IcSpLv.epf"));
 		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/Reach-32bit-MathSAT-IcSpLv.epf"));
 		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/Reach-32bit-Princess-TreeInterpolation.epf"));
@@ -213,7 +212,7 @@ public abstract class InterpolationTestSuite extends AbstractEvalTestSuite {
 	}
 	
 	public static List<Pair<String, String>> getReachBitvectorAutomizer() {
-		final List<Pair<String, String>> rtr = new ArrayList<Pair<String, String>>();
+		final List<Pair<String, String>> rtr = new ArrayList<>();
 		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/bitvector/Reach-32bit-CVC4-FPandBP-Bitvector.epf"));
 		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/bitvector/Reach-32bit-CVC4-IcSpLv-Bitvector.epf"));
 		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/bitvector/Reach-32bit-CVC4-IcWpLv-Bitvector.epf"));
@@ -232,7 +231,7 @@ public abstract class InterpolationTestSuite extends AbstractEvalTestSuite {
 	}
 	
 	public static List<Pair<String, String>> getReachFloatAutomizer() {
-		final List<Pair<String, String>> rtr = new ArrayList<Pair<String, String>>();
+		final List<Pair<String, String>> rtr = new ArrayList<>();
 		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/float/Reach-32bit-MathSAT-IcSpLv-Float.epf"));
 		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/float/Reach-32bit-MathSAT-IcWpLv-Float.epf"));
 		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/float/Reach-32bit-Z3-IcSpLv-Float.epf"));
@@ -241,7 +240,7 @@ public abstract class InterpolationTestSuite extends AbstractEvalTestSuite {
 	}
 	
 	public static List<Pair<String, String>> getMemsafetyAutomizer() {
-		final List<Pair<String, String>> rtr = new ArrayList<Pair<String, String>>();
+		final List<Pair<String, String>> rtr = new ArrayList<>();
 		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/memsafety/DerefFreeMemtrack-32bit-Princess-TreeInterpolation-Integer.epf"));
 		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/memsafety/DerefFreeMemtrack-32bit-SMTInterpol-TreeInterpolation-Integer.epf"));
 		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-NestedInterpolation-Integer.epf"));
@@ -259,7 +258,7 @@ public abstract class InterpolationTestSuite extends AbstractEvalTestSuite {
 		return rtr;
 	}
 	
-	public static List<DirectoryFileEndingsPair> getReachSet() {
+	public List<DirectoryFileEndingsPair> getReachSet() {
 		final List<DirectoryFileEndingsPair> rtr = new ArrayList<>();
 		rtr.add(getPair("examples/svcomp/array-examples/", I));
 		rtr.add(getPair("examples/svcomp/reducercommutativity/", I));
@@ -302,20 +301,20 @@ public abstract class InterpolationTestSuite extends AbstractEvalTestSuite {
 		return rtr;
 	}
 	
-	public static List<DirectoryFileEndingsPair> getFloatSet() {
+	public List<DirectoryFileEndingsPair> getFloatSet() {
 		final List<DirectoryFileEndingsPair> rtr = new ArrayList<>();
 		rtr.add(getPair("examples/svcomp/floats-cdfpl/", I));
 		rtr.add(getPair("examples/svcomp/floats-cbmc-regression/", I));
 		rtr.add(getPair("examples/svcomp/float-benchs/", C));
 		return rtr;
 	}
-	public static List<DirectoryFileEndingsPair> getMemsafetyDerefSet() {
+	public List<DirectoryFileEndingsPair> getMemsafetyDerefSet() {
 		final List<DirectoryFileEndingsPair> rtr = new ArrayList<>();
 		rtr.add(getPair("examples/svcomp/array-memsafety/", I));
 		return rtr;
 	}
 	
-	public static List<DirectoryFileEndingsPair> getMemsafetyDerefFreeMemtrackSet() {
+	public List<DirectoryFileEndingsPair> getMemsafetyDerefFreeMemtrackSet() {
 		final List<DirectoryFileEndingsPair> rtr = new ArrayList<>();
 		rtr.add(getPair("examples/svcomp/memsafety/", I) );
 		rtr.add(getPair("examples/svcomp/list-ext-properties/", I) );
