@@ -190,19 +190,20 @@ public abstract class InterpolationTestSuite extends AbstractEvalTestSuite {
 	
 	public static List<Pair<String, String>> getReachIntegerAutomizer() {
 		final List<Pair<String, String>> rtr = new ArrayList<>();
-		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/Reach-32bit-CVC4-IcSpLv.epf"));
-		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/Reach-32bit-MathSAT-IcSpLv.epf"));
+
 		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/Reach-32bit-Princess-TreeInterpolation.epf"));
-		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/Reach-32bit-SMTInterpol-FPandBP-cannibalize.epf"));
-		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/Reach-32bit-SMTInterpol-FPandBP.epf"));
-		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/Reach-32bit-SMTInterpol-IcSpLv.epf"));
 		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/Reach-32bit-SMTInterpol-TreeInterpolation.epf"));
-		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/Reach-32bit-Z3-FPandBP.epf"));
+		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/Reach-32bit-Z3-NestedInterpolation.epf"));
+//		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/Reach-32bit-SMTInterpol-FPandBP-cannibalize.epf"));
+//		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/Reach-32bit-SMTInterpol-FPandBP.epf"));
+		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/Reach-32bit-MathSAT-IcSpLv.epf"));
+		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/Reach-32bit-SMTInterpol-IcSpLv.epf"));
+		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/Reach-32bit-CVC4-IcSpLv.epf"));
+//		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/Reach-32bit-Z3-FPandBP.epf"));
 		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/Reach-32bit-Z3-IcSp.epf"));
 		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/Reach-32bit-Z3-IcSpLv.epf"));
 		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/Reach-32bit-Z3-IcWp.epf"));
 		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/Reach-32bit-Z3-IcWpLv.epf"));
-		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/Reach-32bit-Z3-NestedInterpolation.epf"));
 		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/Reach-32bit-Z3-Sp.epf"));
 		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/Reach-32bit-Z3-SpLv.epf"));
 		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/Reach-32bit-Z3-Wp.epf"));
@@ -213,16 +214,16 @@ public abstract class InterpolationTestSuite extends AbstractEvalTestSuite {
 	
 	public static List<Pair<String, String>> getReachBitvectorAutomizer() {
 		final List<Pair<String, String>> rtr = new ArrayList<>();
-		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/bitvector/Reach-32bit-CVC4-FPandBP-Bitvector.epf"));
+		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/bitvector/Reach-32bit-Z3-NestedInterpolation-Bitvector.epf"));
+//		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/bitvector/Reach-32bit-CVC4-FPandBP-Bitvector.epf"));
 		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/bitvector/Reach-32bit-CVC4-IcSpLv-Bitvector.epf"));
-		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/bitvector/Reach-32bit-CVC4-IcWpLv-Bitvector.epf"));
+//		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/bitvector/Reach-32bit-CVC4-IcWpLv-Bitvector.epf"));
 		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/bitvector/Reach-32bit-MathSAT-IcSpLv-Bitvector.epf"));
-		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/bitvector/Reach-32bit-Z3-FPandBP-Bitvector.epf"));
+//		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/bitvector/Reach-32bit-Z3-FPandBP-Bitvector.epf"));
 		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/bitvector/Reach-32bit-Z3-IcSp-Bitvector.epf"));
 		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/bitvector/Reach-32bit-Z3-IcSpLv-Bitvector.epf"));
 		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/bitvector/Reach-32bit-Z3-IcWp-Bitvector.epf"));
 		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/bitvector/Reach-32bit-Z3-IcWpLv-Bitvector.epf"));
-		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/bitvector/Reach-32bit-Z3-NestedInterpolation-Bitvector.epf"));
 		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/bitvector/Reach-32bit-Z3-Sp-Bitvector.epf"));
 		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/bitvector/Reach-32bit-Z3-SpLv-Bitvector.epf"));
 		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/bitvector/Reach-32bit-Z3-Wp-Bitvector.epf"));
@@ -233,7 +234,7 @@ public abstract class InterpolationTestSuite extends AbstractEvalTestSuite {
 	public static List<Pair<String, String>> getReachFloatAutomizer() {
 		final List<Pair<String, String>> rtr = new ArrayList<>();
 		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/float/Reach-32bit-MathSAT-IcSpLv-Float.epf"));
-		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/float/Reach-32bit-MathSAT-IcWpLv-Float.epf"));
+//		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/float/Reach-32bit-MathSAT-IcWpLv-Float.epf"));
 		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/float/Reach-32bit-Z3-IcSpLv-Float.epf"));
 		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/float/Reach-32bit-Z3-IcWpLv-Float.epf"));
 		return rtr;
@@ -244,9 +245,9 @@ public abstract class InterpolationTestSuite extends AbstractEvalTestSuite {
 		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/memsafety/DerefFreeMemtrack-32bit-Princess-TreeInterpolation-Integer.epf"));
 		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/memsafety/DerefFreeMemtrack-32bit-SMTInterpol-TreeInterpolation-Integer.epf"));
 		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-NestedInterpolation-Integer.epf"));
-		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/memsafety/DerefFreeMemtrack-32bit-SMTInterpol-FPandBP-Integer.epf"));
-		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/memsafety/DerefFreeMemtrack-32bit-CVC4-IcWpLv-Integer.epf"));
-		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-FPandBP-Integer.epf"));
+//		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/memsafety/DerefFreeMemtrack-32bit-SMTInterpol-FPandBP-Integer.epf"));
+//		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/memsafety/DerefFreeMemtrack-32bit-CVC4-IcWpLv-Integer.epf"));
+//		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-FPandBP-Integer.epf"));
 		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-IcSp-Integer.epf"));
 		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-IcSpLv-Integer.epf"));
 		rtr.add(new Pair<>("AutomizerCInline.xml", "automizer/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-IcWp-Integer.epf"));
