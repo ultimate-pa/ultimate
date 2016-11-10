@@ -13,7 +13,7 @@ popd
 
 ./createZip.sh Taipan linux AutomizerC_WitnessPrinter.xml
 ./createZip.sh Automizer linux AutomizerC_WitnessPrinter.xml BuchiAutomizerCWithBlockEncoding.xml AutomizerC.xml
-./createZip.sh Kojak linux KojakC.xml
+./createZip.sh Kojak linux KojakC_WitnessPrinter.xml
 
 scp -oHostKeyAlgorithms=+ssh-dss *.zip $CURRENTUSER@sotec.informatik.uni-freiburg.de:/export/server/httpd/ultimate/downloads/svcomp2017/.
 rm *.zip 
