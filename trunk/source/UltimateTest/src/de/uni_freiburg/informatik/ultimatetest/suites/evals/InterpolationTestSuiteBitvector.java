@@ -51,6 +51,7 @@ public class InterpolationTestSuiteBitvector extends InterpolationTestSuite {
 	
 	@Override
 	protected int getFilesPerDirectory() {
+		// 5 is 4512
 		return 5;
 	}
 }

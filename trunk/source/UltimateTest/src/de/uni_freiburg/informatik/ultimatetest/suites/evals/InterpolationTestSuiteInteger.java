@@ -51,6 +51,7 @@ public class InterpolationTestSuiteInteger extends InterpolationTestSuite {
 	
 	@Override
 	protected int getFilesPerDirectory() {
+		// 5 is 5264
 		return 5;
 	}
 }

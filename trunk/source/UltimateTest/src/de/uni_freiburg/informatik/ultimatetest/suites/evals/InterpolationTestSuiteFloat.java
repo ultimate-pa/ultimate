@@ -51,6 +51,7 @@ public class InterpolationTestSuiteFloat extends InterpolationTestSuite {
 	
 	@Override
 	protected int getFilesPerDirectory() {
+		// all are 2322 (ok)
 		return super.getFilesPerDirectory();
 	}
 }
