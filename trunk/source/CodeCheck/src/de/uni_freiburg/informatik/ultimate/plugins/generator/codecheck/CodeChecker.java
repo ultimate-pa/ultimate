@@ -3,27 +3,27 @@
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2013-2015 Mostafa Mahmoud Amin
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE CodeCheck plug-in.
- * 
+ *
  * The ULTIMATE CodeCheck plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE CodeCheck plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE CodeCheck plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CodeCheck plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE CodeCheck plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE CodeCheck plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck;
@@ -48,109 +48,106 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 
 public abstract class CodeChecker {
 
-	protected BoogieIcfgContainer moriginalRoot;
-	protected CfgSmtToolkit mcsToolkit;
-	protected ImpRootNode mgraphRoot;
+	protected BoogieIcfgContainer mOriginalRoot;
+	protected CfgSmtToolkit mCfgToolkit;
+	protected ImpRootNode mGraphRoot;
 
-
-	protected IHoareTripleChecker _edgeChecker;
-	protected PredicateUnifier mpredicateUnifier;
+	protected IHoareTripleChecker mEdgeChecker;
+	protected PredicateUnifier mPredicateUnifier;
 
 	/*
 	 * Maps for storing edge check results. Not that in case of ImpulseChecker these really are valid, not sat, triples.
-	 * TODO: either change name, make duplicates for ImpulseChecker, or modify ImpulseChecker such that those are really sat triples.
+	 * TODO: either change name, make duplicates for ImpulseChecker, or modify ImpulseChecker such that those are really
+	 * sat triples.
 	 */
-	protected NestedMap3<IPredicate, CodeBlock, IPredicate, IsContained> _satTriples;
-	protected NestedMap3<IPredicate, CodeBlock, IPredicate, IsContained> _unsatTriples;
-	protected NestedMap4<IPredicate, IPredicate, CodeBlock, IPredicate, IsContained> _satQuadruples;
-	protected NestedMap4<IPredicate, IPredicate, CodeBlock, IPredicate, IsContained> _unsatQuadruples;
+	protected NestedMap3<IPredicate, CodeBlock, IPredicate, IsContained> mSatTriples;
+	protected NestedMap3<IPredicate, CodeBlock, IPredicate, IsContained> mUnsatTriples;
+	protected NestedMap4<IPredicate, IPredicate, CodeBlock, IPredicate, IsContained> mSatQuadruples;
+	protected NestedMap4<IPredicate, IPredicate, CodeBlock, IPredicate, IsContained> mUnsatQuadruples;
 
 	// stats
-	protected int memoizationHitsSat = 0;
-	protected int memoizationHitsUnsat = 0;
-	protected int memoizationReturnHitsSat = 0;
-	protected int memoizationReturnHitsUnsat = 0;
+	protected int mMemoizationHitsSat = 0;
+	protected int mMemoizationHitsUnsat = 0;
+	protected int mMemoizationReturnHitsSat = 0;
+	protected int mMemoizationReturnHitsUnsat = 0;
 
-	protected GraphWriter _graphWriter;
+	protected GraphWriter mGraphWriter;
 
-	public CodeChecker(final IElement root, final CfgSmtToolkit csToolkit, final BoogieIcfgContainer originalRoot, final ImpRootNode graphRoot, final GraphWriter graphWriter,
-			final IHoareTripleChecker edgeChecker, final PredicateUnifier predicateUnifier, final ILogger logger) {
+	/**
+	 * Debugs all the nodes in a graph.
+	 */
+	private final HashSet<AnnotatedProgramPoint> mVisited = new HashSet<>();
+	protected final ILogger mLogger;
+
+	public CodeChecker(final IElement root, final CfgSmtToolkit csToolkit, final BoogieIcfgContainer originalRoot,
+			final ImpRootNode graphRoot, final GraphWriter graphWriter, final IHoareTripleChecker edgeChecker,
+			final PredicateUnifier predicateUnifier, final ILogger logger) {
 		mLogger = logger;
-		mcsToolkit = csToolkit;
-		moriginalRoot = originalRoot;
-		mgraphRoot = graphRoot;
+		mCfgToolkit = csToolkit;
+		mOriginalRoot = originalRoot;
+		mGraphRoot = graphRoot;
 
-		_edgeChecker = edgeChecker;
-		mpredicateUnifier = predicateUnifier;
+		mEdgeChecker = edgeChecker;
+		mPredicateUnifier = predicateUnifier;
 
-		_graphWriter = graphWriter;
+		mGraphWriter = graphWriter;
 	}
 
 	public abstract boolean codeCheck(NestedRun<CodeBlock, AnnotatedProgramPoint> errorRun, IPredicate[] interpolants,
 			AnnotatedProgramPoint procedureRoot);
 
 	public abstract boolean codeCheck(NestedRun<CodeBlock, AnnotatedProgramPoint> errorRun, IPredicate[] interpolants,
-			AnnotatedProgramPoint procedureRoot,
-			NestedMap3<IPredicate, CodeBlock, IPredicate, IsContained> satTriples,
+			AnnotatedProgramPoint procedureRoot, NestedMap3<IPredicate, CodeBlock, IPredicate, IsContained> satTriples,
 			NestedMap3<IPredicate, CodeBlock, IPredicate, IsContained> unsatTriples);
 
 	public abstract boolean codeCheck(NestedRun<CodeBlock, AnnotatedProgramPoint> errorRun, IPredicate[] interpolants,
-			AnnotatedProgramPoint procedureRoot,
-			NestedMap3<IPredicate, CodeBlock, IPredicate, IsContained> satTriples,
+			AnnotatedProgramPoint procedureRoot, NestedMap3<IPredicate, CodeBlock, IPredicate, IsContained> satTriples,
 			NestedMap3<IPredicate, CodeBlock, IPredicate, IsContained> unsatTriples,
 			NestedMap4<IPredicate, IPredicate, CodeBlock, IPredicate, IsContained> satQuadruples,
 			NestedMap4<IPredicate, IPredicate, CodeBlock, IPredicate, IsContained> unsatQuadruples);
 
 	/**
 	 * Given 2 predicates, return a predicate which is the conjunction of both.
-	 * 
+	 *
 	 * @param a
 	 *            : The first Predicate.
 	 * @param b
 	 *            : The second Predicate.
 	 */
 	protected IPredicate conjugatePredicates(final IPredicate a, final IPredicate b) {
-		final Term tvp = mpredicateUnifier.getPredicateFactory().and(a, b);
-		return mpredicateUnifier.getOrConstructPredicate(tvp);
+		final Term tvp = mPredicateUnifier.getPredicateFactory().and(a, b);
+		return mPredicateUnifier.getOrConstructPredicate(tvp);
 	}
 
 	/**
 	 * Given a predicate, return a predicate which is the negation of it.
-	 * 
+	 *
 	 * @param a
 	 *            : The Predicate.
 	 */
 	protected IPredicate negatePredicate(final IPredicate a) {
-		final Term tvp = mpredicateUnifier.getPredicateFactory().not(a);
-		return mpredicateUnifier.getOrConstructPredicate(tvp);
+		final Term tvp = mPredicateUnifier.getPredicateFactory().not(a);
+		return mPredicateUnifier.getOrConstructPredicate(tvp);
 	}
 
 	/**
-	 * Given a predicate, return a predicate which is the negation of it, not
-	 * showing it to the PredicateUnifier
-	 * 
+	 * Given a predicate, return a predicate which is the negation of it, not showing it to the PredicateUnifier
+	 *
 	 * @param a
 	 *            : The Predicate.
 	 */
 	protected IPredicate negatePredicateNoPU(final IPredicate a) {
-		final Term negation = mpredicateUnifier.getPredicateFactory().not(a);
-		return mpredicateUnifier.getPredicateFactory().newPredicate(negation);
+		final Term negation = mPredicateUnifier.getPredicateFactory().not(a);
+		return mPredicateUnifier.getPredicateFactory().newPredicate(negation);
 	}
-
 
 	public static String objectReference(final Object o) {
 		return Integer.toHexString(System.identityHashCode(o));
 	}
 
-	/**
-	 * Debugs all the nodes in a graph.
-	 */
-	HashSet<AnnotatedProgramPoint> visited = new HashSet<AnnotatedProgramPoint>();
-	protected final ILogger mLogger;
-
 	public void debug() {
-		visited.clear();
-		dfs(mgraphRoot);
+		mVisited.clear();
+		dfs(mGraphRoot);
 	}
 
 	protected boolean debugNode(final AnnotatedProgramPoint node) {
@@ -158,9 +155,9 @@ public abstract class CodeChecker {
 	}
 
 	/**
-	 * A method used for debugging, it prints all the connections of a given
-	 * node. A message can be added to the printed information.
-	 * 
+	 * A method used for debugging, it prints all the connections of a given node. A message can be added to the printed
+	 * information.
+	 *
 	 * @param node
 	 * @param message
 	 * @return
@@ -168,9 +165,8 @@ public abstract class CodeChecker {
 	protected boolean debugNode(final AnnotatedProgramPoint node, final String message) {
 		String display = "";
 		/*
-		 * display += String.format("connected To: %s\n",
-		 * node.getOutgoingNodes()); display +=
-		 * String.format("connected Fr: %s\n", node.getIncomingNodes());
+		 * display += String.format("connected To: %s\n", node.getOutgoingNodes()); display += String.format(
+		 * "connected Fr: %s\n", node.getIncomingNodes());
 		 */
 		// if (node.moutgoingReturnCallPreds != null &&
 		// node.moutgoingReturnCallPreds.size() > 0) {
@@ -183,7 +179,7 @@ public abstract class CodeChecker {
 		// node.mnodesThatThisIsReturnCallPredOf);
 		// }
 		if (display.length() > 0) {
-			display = String.format("%s\nNode %s:\n", message, node) + display;
+			display = String.format("%s\nNode %s:%n", message, node) + display;
 			mLogger.debug(display);
 		}
 		return false;
@@ -191,14 +187,14 @@ public abstract class CodeChecker {
 
 	/**
 	 * Depth First Search algorithm that debugs all the nodes in a graph.
-	 * 
+	 *
 	 * @param node
 	 *            : The current Node being explored in the DFS.
 	 * @return
 	 */
 	private boolean dfs(final AnnotatedProgramPoint node) {
-		if (!visited.contains(node)) {
-			visited.add(node);
+		if (!mVisited.contains(node)) {
+			mVisited.add(node);
 			debugNode(node);
 			final AnnotatedProgramPoint[] adj = node.getOutgoingNodes().toArray(new AnnotatedProgramPoint[] {});
 			for (final AnnotatedProgramPoint child : adj) {

@@ -503,7 +503,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 							mCodeChecker.codeCheck(errorRun, interpolants, procedureRoot);
 						}
 
-						benchmarkGenerator.addEdgeCheckerData(mCodeChecker._edgeChecker.getEdgeCheckerBenchmark());
+						benchmarkGenerator.addEdgeCheckerData(mCodeChecker.mEdgeChecker.getEdgeCheckerBenchmark());
 
 					} else { // trace is feasible
 						mLogger.warn(
@@ -523,7 +523,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 			}
 			// we need a fresh copy for each iteration because..??
 			mGraphRoot = copyGraph(originalGraphCopy);
-			mCodeChecker.mgraphRoot = mGraphRoot;
+			mCodeChecker.mGraphRoot = mGraphRoot;
 
 			if (!allSafe) {
 				break;
@@ -544,10 +544,10 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 			reportTimeoutResult(mErrNodesOfAllProc);
 		}
 
-		mLogger.debug("MemoizationHitsSat: " + mCodeChecker.memoizationHitsSat);
-		mLogger.debug("MemoizationHitsUnsat: " + mCodeChecker.memoizationHitsUnsat);
-		mLogger.debug("MemoizationReturnHitsSat: " + mCodeChecker.memoizationReturnHitsSat);
-		mLogger.debug("MemoizationReturnHitsUnsat: " + mCodeChecker.memoizationReturnHitsUnsat);
+		mLogger.debug("MemoizationHitsSat: " + mCodeChecker.mMemoizationHitsSat);
+		mLogger.debug("MemoizationHitsUnsat: " + mCodeChecker.mMemoizationHitsUnsat);
+		mLogger.debug("MemoizationReturnHitsSat: " + mCodeChecker.mMemoizationReturnHitsSat);
+		mLogger.debug("MemoizationReturnHitsUnsat: " + mCodeChecker.mMemoizationReturnHitsUnsat);
 
 		// benchmark stuff
 		benchmarkGenerator.setResult(overallResult);
@@ -828,7 +828,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	}
 
 	public ImpRootNode getRoot() {
-		return mCodeChecker.mgraphRoot;
+		return mCodeChecker.mGraphRoot;
 	}
 
 	@Override

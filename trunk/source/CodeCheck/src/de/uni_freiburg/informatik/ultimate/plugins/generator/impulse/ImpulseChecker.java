@@ -60,10 +60,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap4;
 
 public class ImpulseChecker extends CodeChecker {
-	
+
 	private final RedirectionFinder mCloneFinder;
 	private int mNodeId;
-	
+
 	public ImpulseChecker(final IElement root, final CfgSmtToolkit mcsToolkit, final BoogieIcfgContainer moriginalRoot,
 			final ImpRootNode mgraphRoot, final GraphWriter mgraphWriter, final IHoareTripleChecker edgeChecker,
 			final PredicateUnifier predicateUnifier, final ILogger logger) {
@@ -71,7 +71,7 @@ public class ImpulseChecker extends CodeChecker {
 		mCloneFinder = new RedirectionFinder(this);
 		mNodeId = 0;
 	}
-	
+
 	public void replaceEdge(final AppEdge edge, final AnnotatedProgramPoint newTarget) {
 		if (edge instanceof AppHyperEdge) {
 			edge.getSource().connectOutgoingReturn(((AppHyperEdge) edge).getHier(), (Return) edge.getStatement(),
@@ -79,12 +79,12 @@ public class ImpulseChecker extends CodeChecker {
 		} else {
 			edge.getSource().connectOutgoing(edge.getStatement(), newTarget);
 		}
-		
+
 		edge.disconnect();
 	}
-	
+
 	public boolean defaultRedirecting(final AnnotatedProgramPoint[] nodes, final AnnotatedProgramPoint[] clones) {
-		
+
 		boolean errorReached = false;
 		for (int i = 0; i + 1 < nodes.length; ++i) {
 			if (nodes[i + 1].isErrorLocation()) {
@@ -103,7 +103,7 @@ public class ImpulseChecker extends CodeChecker {
 					if (GlobalSettings._instance.redirectionStrategy != RedirectionStrategy.No_Strategy) {
 						clone = mCloneFinder.getStrongestValidCopy(prevEdge);
 					}
-					
+
 					if (clone == null) {
 						continue;
 					}
@@ -111,12 +111,12 @@ public class ImpulseChecker extends CodeChecker {
 				}
 			}
 		}
-		
+
 		return errorReached;
 	}
-	
+
 	public boolean redirectEdges(final AnnotatedProgramPoint[] nodes, final AnnotatedProgramPoint[] clones) {
-		
+
 		for (int i = 0; i < nodes.length; ++i) {
 			if (nodes[i].isErrorLocation()) {
 				continue;
@@ -124,11 +124,11 @@ public class ImpulseChecker extends CodeChecker {
 			final AppEdge[] prevEdges = nodes[i].getIncomingEdges().toArray(new AppEdge[] {});
 			for (final AppEdge prevEdge : prevEdges) {
 				AnnotatedProgramPoint clone = clones[i];
-				
+
 				if (GlobalSettings._instance.redirectionStrategy != RedirectionStrategy.No_Strategy) {
 					clone = mCloneFinder.getStrongestValidCopy(prevEdge);
 				}
-				
+
 				if (clone == null) {
 					continue;
 				}
@@ -137,83 +137,82 @@ public class ImpulseChecker extends CodeChecker {
 		}
 		return true;
 	}
-	
+
 	protected void redirectIfValid(final AppEdge edge, final AnnotatedProgramPoint target) {
 		if (edge.getTarget() == target) {
 			return;
 		}
 		if (isValidRedirection(edge, target)) {
 			if (edge instanceof AppHyperEdge) {
-				
+
 				if (!GlobalSettings._instance.checkSatisfiability
-						|| _edgeChecker.checkReturn(edge.getSource().getPredicate(),
+						|| mEdgeChecker.checkReturn(edge.getSource().getPredicate(),
 								((AppHyperEdge) edge).getHier().getPredicate(), (IReturnAction) edge.getStatement(),
 								edge.getTarget().getPredicate()) != Validity.VALID) {
-					edge.getSource().connectOutgoingReturn(((AppHyperEdge) edge).getHier(), (Return) edge.getStatement(),
-							target);
+					edge.getSource().connectOutgoingReturn(((AppHyperEdge) edge).getHier(),
+							(Return) edge.getStatement(), target);
 				}
 			} else {
-				
+
 				boolean result = !GlobalSettings._instance.checkSatisfiability;
 				if (!result) {
 					if (edge.getStatement() instanceof Call) {
-						result = _edgeChecker.checkCall(edge.getSource().getPredicate(),
+						result = mEdgeChecker.checkCall(edge.getSource().getPredicate(),
 								(ICallAction) edge.getStatement(), edge.getTarget().getPredicate()) != Validity.VALID;
 					} else {
-						result = _edgeChecker.checkInternal(edge.getSource().getPredicate(),
+						result = mEdgeChecker.checkInternal(edge.getSource().getPredicate(),
 								(IInternalAction) edge.getStatement(),
 								edge.getTarget().getPredicate()) != Validity.VALID;
 					}
 				}
-				
+
 				if (result) {
 					edge.getSource().connectOutgoing(edge.getStatement(), target);
 				}
-				
+
 			}
-			
+
 			edge.disconnect();
 		}
 	}
-	
+
 	public boolean isValidRedirection(final AppEdge edge, final AnnotatedProgramPoint target) {
 		if (edge instanceof AppHyperEdge) {
 			return isValidReturnEdge(edge.getSource(), edge.getStatement(), target, ((AppHyperEdge) edge).getHier());
-		} else {
-			return isValidEdge(edge.getSource(), edge.getStatement(), target);
 		}
+		return isValidEdge(edge.getSource(), edge.getStatement(), target);
 	}
-	
+
 	@Override
 	public boolean codeCheck(final NestedRun<CodeBlock, AnnotatedProgramPoint> errorRun,
 			final IPredicate[] interpolants, final AnnotatedProgramPoint procedureRoot) {
-		
+
 		final AnnotatedProgramPoint[] nodes = errorRun.getStateSequence().toArray(new AnnotatedProgramPoint[0]);
 		final AnnotatedProgramPoint[] clones = new AnnotatedProgramPoint[nodes.length];
-		
+
 		final AnnotatedProgramPoint newRoot =
 				new AnnotatedProgramPoint(nodes[0], nodes[0].getPredicate(), true, ++mNodeId);
-		
+
 		clones[0] = nodes[0];
 		nodes[0] = newRoot;
-		
+
 		for (int i = 0; i < interpolants.length; ++i) {
 			clones[i + 1] = new AnnotatedProgramPoint(nodes[i + 1],
 					conjugatePredicates(nodes[i + 1].getPredicate(), interpolants[i]), true, ++mNodeId);
 		}
-		
+
 		if (!defaultRedirecting(nodes, clones)) {
 			throw new AssertionError("The error location hasn't been reached.");
 		}
 		redirectEdges(nodes, clones);
-		
+
 		if (GlobalSettings._instance.removeFalseNodes) {
 			removeFalseNodes(nodes, clones);
 		}
-		
+
 		return true;
 	}
-	
+
 	public boolean removeFalseNodes(final AnnotatedProgramPoint[] nodes, final AnnotatedProgramPoint[] clones) {
 		for (int i = 0; i < nodes.length; ++i) {
 			if (nodes[i].isErrorLocation()) {
@@ -221,23 +220,23 @@ public class ImpulseChecker extends CodeChecker {
 			}
 			// TODO: Handle the false predicate properly.
 			final IPredicate annotation = clones[i].getPredicate();
-			if (mpredicateUnifier.getOrConstructPredicate(annotation.getFormula())
-					.equals(mpredicateUnifier.getFalsePredicate())) {
+			if (mPredicateUnifier.getOrConstructPredicate(annotation.getFormula())
+					.equals(mPredicateUnifier.getFalsePredicate())) {
 				clones[i].isolateNode();
 			}
 		}
 		return true;
 	}
-	
+
 	public boolean improveAnnotations(final AnnotatedProgramPoint root) {
-		final HashSet<AnnotatedProgramPoint> seen = new HashSet<AnnotatedProgramPoint>();
-		
-		final HashSet<AnnotatedProgramPoint> pushed = new HashSet<AnnotatedProgramPoint>();
-		final Queue<AnnotatedProgramPoint> queue = new LinkedList<AnnotatedProgramPoint>();
-		
+		final HashSet<AnnotatedProgramPoint> seen = new HashSet<>();
+
+		final HashSet<AnnotatedProgramPoint> pushed = new HashSet<>();
+		final Queue<AnnotatedProgramPoint> queue = new LinkedList<>();
+
 		queue.add(root);
 		pushed.add(root);
-		
+
 		while (!queue.isEmpty()) {
 			final AnnotatedProgramPoint peak = queue.poll();
 			final AnnotatedProgramPoint[] prevNodes = peak.getIncomingNodes().toArray(new AnnotatedProgramPoint[] {});
@@ -255,7 +254,7 @@ public class ImpulseChecker extends CodeChecker {
 					}
 				}
 			}
-			
+
 			final AnnotatedProgramPoint[] nextNodes = peak.getOutgoingNodes().toArray(new AnnotatedProgramPoint[] {});
 			for (final AnnotatedProgramPoint nextNode : nextNodes) {
 				if (!pushed.contains(nextNode)) {
@@ -265,92 +264,92 @@ public class ImpulseChecker extends CodeChecker {
 			}
 			seen.add(peak);
 		}
-		
+
 		return true;
 	}
-	
+
 	public boolean isValidEdge(final AnnotatedProgramPoint sourceNode, final CodeBlock edgeLabel,
 			final AnnotatedProgramPoint destinationNode) {
 		if (edgeLabel instanceof DummyCodeBlock) {
 			return false;
 		}
-		
+
 		if (GlobalSettings._instance._memoizeNormalEdgeChecks) {
-			if (_satTriples.get(sourceNode.getPredicate(), edgeLabel,
+			if (mSatTriples.get(sourceNode.getPredicate(), edgeLabel,
 					destinationNode.getPredicate()) == IsContained.IsContained) {
-				memoizationHitsSat++;
+				mMemoizationHitsSat++;
 				return true;
 			}
-			if (_unsatTriples.get(sourceNode.getPredicate(), edgeLabel,
+			if (mUnsatTriples.get(sourceNode.getPredicate(), edgeLabel,
 					destinationNode.getPredicate()) == IsContained.IsContained) {
-				memoizationHitsUnsat++;
+				mMemoizationHitsUnsat++;
 				return false;
 			}
 		}
-		
+
 		boolean result = true;
 		if (edgeLabel instanceof Call) {
-			result = _edgeChecker.checkCall(sourceNode.getPredicate(), (ICallAction) edgeLabel,
+			result = mEdgeChecker.checkCall(sourceNode.getPredicate(), (ICallAction) edgeLabel,
 					destinationNode.getPredicate()) == Validity.VALID;
 		} else {
-			result = _edgeChecker.checkInternal(sourceNode.getPredicate(), (IInternalAction) edgeLabel,
+			result = mEdgeChecker.checkInternal(sourceNode.getPredicate(), (IInternalAction) edgeLabel,
 					destinationNode.getPredicate()) == Validity.VALID;
 		}
-		
+
 		if (GlobalSettings._instance._memoizeNormalEdgeChecks) {
 			if (result) {
-				_satTriples.put(sourceNode.getPredicate(), edgeLabel, destinationNode.getPredicate(),
+				mSatTriples.put(sourceNode.getPredicate(), edgeLabel, destinationNode.getPredicate(),
 						IsContained.IsContained);
 			} else {
-				_unsatTriples.put(sourceNode.getPredicate(), edgeLabel, destinationNode.getPredicate(),
+				mUnsatTriples.put(sourceNode.getPredicate(), edgeLabel, destinationNode.getPredicate(),
 						IsContained.IsContained);
 			}
 		}
-		
+
 		return result;
 	}
-	
+
 	public boolean isValidReturnEdge(final AnnotatedProgramPoint sourceNode, final CodeBlock edgeLabel,
 			final AnnotatedProgramPoint destinationNode, final AnnotatedProgramPoint callNode) {
 		if (GlobalSettings._instance._memoizeReturnEdgeChecks) {
-			if (_satQuadruples.get(sourceNode.getPredicate(), callNode.getPredicate(), edgeLabel,
+			if (mSatQuadruples.get(sourceNode.getPredicate(), callNode.getPredicate(), edgeLabel,
 					destinationNode.getPredicate()) == IsContained.IsContained) {
-				memoizationReturnHitsSat++;
+				mMemoizationReturnHitsSat++;
 				return true;
 			}
-			if (_unsatQuadruples.get(sourceNode.getPredicate(), callNode.getPredicate(), edgeLabel,
+			if (mUnsatQuadruples.get(sourceNode.getPredicate(), callNode.getPredicate(), edgeLabel,
 					destinationNode.getPredicate()) == IsContained.IsContained) {
-				memoizationReturnHitsUnsat++;
+				mMemoizationReturnHitsUnsat++;
 				return false;
 			}
 		}
-		
-		final boolean result = _edgeChecker.checkReturn(sourceNode.getPredicate(), callNode.getPredicate(),
+
+		final boolean result = mEdgeChecker.checkReturn(sourceNode.getPredicate(), callNode.getPredicate(),
 				(IReturnAction) edgeLabel, destinationNode.getPredicate()) == Validity.VALID;
-		
+
 		if (GlobalSettings._instance._memoizeReturnEdgeChecks) {
 			if (result) {
-				_satQuadruples.put(sourceNode.getPredicate(), callNode.getPredicate(), edgeLabel,
+				mSatQuadruples.put(sourceNode.getPredicate(), callNode.getPredicate(), edgeLabel,
 						destinationNode.getPredicate(), IsContained.IsContained);
 			} else {
-				_unsatQuadruples.put(sourceNode.getPredicate(), callNode.getPredicate(), edgeLabel,
+				mUnsatQuadruples.put(sourceNode.getPredicate(), callNode.getPredicate(), edgeLabel,
 						destinationNode.getPredicate(), IsContained.IsContained);
 			}
 		}
-		
+
 		return result;
 	}
-	
+
 	@Override
 	public boolean codeCheck(final NestedRun<CodeBlock, AnnotatedProgramPoint> errorRun,
 			final IPredicate[] interpolants, final AnnotatedProgramPoint procedureRoot,
 			final NestedMap3<IPredicate, CodeBlock, IPredicate, IsContained> satTriples,
 			final NestedMap3<IPredicate, CodeBlock, IPredicate, IsContained> unsatTriples) {
-		_satTriples = satTriples;
-		_unsatTriples = unsatTriples;
+		mSatTriples = satTriples;
+		mUnsatTriples = unsatTriples;
 		return this.codeCheck(errorRun, interpolants, procedureRoot);
 	}
-	
+
 	@Override
 	public boolean codeCheck(final NestedRun<CodeBlock, AnnotatedProgramPoint> errorRun,
 			final IPredicate[] interpolants, final AnnotatedProgramPoint procedureRoot,
@@ -358,35 +357,33 @@ public class ImpulseChecker extends CodeChecker {
 			final NestedMap3<IPredicate, CodeBlock, IPredicate, IsContained> unsatTriples,
 			final NestedMap4<IPredicate, IPredicate, CodeBlock, IPredicate, IsContained> satQuadruples,
 			final NestedMap4<IPredicate, IPredicate, CodeBlock, IPredicate, IsContained> unsatQuadruples) {
-		_satQuadruples = satQuadruples;
-		_unsatQuadruples = unsatQuadruples;
+		mSatQuadruples = satQuadruples;
+		mUnsatQuadruples = unsatQuadruples;
 		return this.codeCheck(errorRun, interpolants, procedureRoot, satTriples, unsatTriples);
 	}
-	
+
 	protected boolean connectOutgoingIfValid(final AnnotatedProgramPoint source, final CodeBlock statement,
 			final AnnotatedProgramPoint target) {
 		if (isValidEdge(source, statement, target)) {
 			source.connectOutgoing(statement, target);
 			return true;
-		} else {
-			return false;
 		}
+		return false;
 	}
-	
+
 	protected boolean connectOutgoingReturnIfValid(final AnnotatedProgramPoint source, final AnnotatedProgramPoint hier,
 			final Return statement, final AnnotatedProgramPoint target) {
 		if (isValidReturnEdge(source, statement, target, hier)) {
 			source.connectOutgoingReturn(hier, statement, target);
 			return true;
-		} else {
-			return false;
 		}
+		return false;
 	}
-	
+
 	HashSet<AnnotatedProgramPoint> visited;
-	
+
 	protected void dfsDEBUG(final AnnotatedProgramPoint node, final boolean print) {
-		
+
 		if (visited.contains(node)) {
 			return;
 		}
@@ -401,7 +398,7 @@ public class ImpulseChecker extends CodeChecker {
 				System.err.print(" , ");
 			}
 			System.err.println("]");
-			
+
 			System.err.print("\nCopied From " + node.getParentCopy() + "\nCopies :: { ");
 			for (final AnnotatedProgramPoint copy : node.getNextClones()) {
 				System.err.print(copy + " , ");
@@ -412,13 +409,13 @@ public class ImpulseChecker extends CodeChecker {
 			dfsDEBUG(nextNode, print);
 		}
 	}
-	
+
 	boolean isStrongerPredicate(final AnnotatedProgramPoint node1, final AnnotatedProgramPoint node2) {
-		
-		boolean result = mpredicateUnifier.getCoverageRelation().isCovered(node1.getPredicate(),
+
+		boolean result = mPredicateUnifier.getCoverageRelation().isCovered(node1.getPredicate(),
 				node2.getPredicate()) == Validity.VALID;
 		if (result) {
-			final boolean converse = mpredicateUnifier.getCoverageRelation().isCovered(node2.getPredicate(),
+			final boolean converse = mPredicateUnifier.getCoverageRelation().isCovered(node2.getPredicate(),
 					node1.getPredicate()) == Validity.VALID;
 			result &= !converse || converse && node1._nodeID > node2._nodeID;
 		}
