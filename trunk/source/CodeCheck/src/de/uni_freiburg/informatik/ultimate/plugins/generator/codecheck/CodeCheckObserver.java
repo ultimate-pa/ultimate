@@ -595,7 +595,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 						mCsToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY,
 						mServices, true, mPredicateUnifier, GlobalSettings._instance._interpolationMode,
 						mgdScriptTracechecks, true, mXnfConversionTechnique,
-						mSimplificationTechnique, errorRun.getStateSequence());
+						mSimplificationTechnique, errorRun.getStateSequence(), false);
 			} catch (final Exception e) {
 				if (!GlobalSettings._instance.useFallbackForSeparateSolverForTracechecks) {
 					throw e;

@@ -332,7 +332,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					new TreeMap<Integer, IPredicate>(), NestedWord.nestedWord(mCounterexample.getWord()),
 					mCsToolkit, mAssertCodeBlocksIncrementally,
 					mServices, true, predicateUnifier, mInterpolation, mgdScriptTc,
-					true, mXnfConversionTechnique, mSimplificationTechnique, mCounterexample.getStateSequence());
+					true, mXnfConversionTechnique, mSimplificationTechnique, mCounterexample.getStateSequence(), false);
 		}
 			break;
 		case ForwardPredicates:
