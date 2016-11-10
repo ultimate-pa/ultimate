@@ -27,6 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
+import java.io.File;
 import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
@@ -287,7 +288,7 @@ public abstract class AbstractCegarLoop {
 		mIteration = 0;
 		mLogger.info("======== Iteration " + mIteration + "==of CEGAR loop == " + mName + "========");
 		
-		// intialize dump of debugging output to files if necessary
+		// initialize dump of debugging output to files if necessary
 		if (mPref.dumpAutomata()) {
 			mDumper = new Dumper(mLogger, mPref, mName, mIteration);
 		}
@@ -380,14 +381,9 @@ public abstract class AbstractCegarLoop {
 					throw new AssertionError("No progress! Counterexample is still accepted by refined abstraction.");
 					// return Result.UNKNOWN;
 				}
-			} catch (final ToolchainCanceledException e) {
+			} catch (final ToolchainCanceledException | AutomataOperationCanceledException e) {
 				mRunningTaskStackProvider = e;
-				mLogger.warn("Verification cancelled");
-				mCegarLoopBenchmark.setResult(Result.TIMEOUT);
-				return Result.TIMEOUT;
-			} catch (final AutomataOperationCanceledException e) {
-				mRunningTaskStackProvider = e;
-				mLogger.warn("Verification cancelled");
+				mLogger.warn("Verification canceled");
 				mCegarLoopBenchmark.setResult(Result.TIMEOUT);
 				return Result.TIMEOUT;
 			} catch (final AutomataLibraryException e) {
@@ -437,7 +433,7 @@ public abstract class AbstractCegarLoop {
 	
 	protected void writeAutomatonToFile(final IAutomaton<CodeBlock, IPredicate> automaton, final String filename) {
 		new AutomatonDefinitionPrinter<String, String>(new AutomataLibraryServices(mServices), "nwa",
-				mPref.dumpPath() + "/" + filename, mPrintAutomataLabeling, "", automaton);
+				mPref.dumpPath() + File.separator + filename, mPrintAutomataLabeling, "", automaton);
 	}
 	
 	public static String addIndentation(final int indentation, final String s) {
