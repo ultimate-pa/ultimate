@@ -70,6 +70,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceCheckAndRefinementSelection.IInterpolantAutomatonEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.LineCoverageCalculator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.InterpolantAutomatonBuilderFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.BestApproximationDeterminizer;
@@ -291,8 +292,9 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		final List<TaCheckAndRefinementPreferences> taCheckAndRefinementPrefsList =
 				Collections.singletonList(taCheckAndRefinementPrefs);
 		final TaCheckAndRefinementSettingPolicy settingsPolicy = TaCheckAndRefinementSettingPolicy.SEQUENTIAL;
+		final IInterpolantAutomatonEvaluator evaluator = automaton -> true;
 		mTraceCheckAndRefinementSelection = new TraceCheckAndRefinementSelection(mServices, mLogger,
-				taCheckAndRefinementPrefsList, settingsPolicy, mCsToolkit, mPredicateFactory, mIcfgContainer,
+				taCheckAndRefinementPrefsList, settingsPolicy, evaluator, mCsToolkit, mPredicateFactory, mIcfgContainer,
 				mSimplificationTechnique, mXnfConversionTechnique, mToolchainStorage, mCegarLoopBenchmark,
 				mInterpolantAutomatonBuilderFactory, mPref, mIteration, mCounterexample, mAbstraction);
 		

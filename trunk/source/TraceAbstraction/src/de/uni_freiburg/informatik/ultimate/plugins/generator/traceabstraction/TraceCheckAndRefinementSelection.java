@@ -66,6 +66,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceCheckerPathInvariantsWithFallback;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerSpWp;
+import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 /**
  * Checks a trace for feasibility and, if infeasible, selects a refinement strategy, i.e., constructs an interpolant
@@ -118,6 +119,10 @@ public final class TraceCheckAndRefinementSelection {
 	/* intermediate */
 	
 	private TaCheckAndRefinementPreferences mPrefs;
+	/**
+	 * Interpolant automaton evaluator.
+	 */
+	private final IInterpolantAutomatonEvaluator mEvaluator;
 	
 	/* outputs */
 	
@@ -148,10 +153,11 @@ public final class TraceCheckAndRefinementSelection {
 	
 	public TraceCheckAndRefinementSelection(final IUltimateServiceProvider services, final ILogger logger,
 			final List<TaCheckAndRefinementPreferences> prefsList,
-			final TaCheckAndRefinementSettingPolicy settingsPolicy, final CfgSmtToolkit cfgSmtToolkit,
-			final PredicateFactory predicateFactory, final BoogieIcfgContainer icfgContainer,
-			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
-			final IToolchainStorage toolchainStorage, final CegarLoopStatisticsGenerator cegarLoopBenchmark,
+			final TaCheckAndRefinementSettingPolicy settingsPolicy, final IInterpolantAutomatonEvaluator evaluator,
+			final CfgSmtToolkit cfgSmtToolkit, final PredicateFactory predicateFactory,
+			final BoogieIcfgContainer icfgContainer, final SimplificationTechnique simplificationTechnique,
+			final XnfConversionTechnique xnfConversionTechnique, final IToolchainStorage toolchainStorage,
+			final CegarLoopStatisticsGenerator cegarLoopBenchmark,
 			final InterpolantAutomatonBuilderFactory interpolantAutomatonBuilderFactory,
 			final TAPreferences taPrefsForInterpolantConsolidation, final int iteration,
 			final IRun<CodeBlock, IPredicate, ?> counterexample,
@@ -175,38 +181,9 @@ public final class TraceCheckAndRefinementSelection {
 				mPredicateFactory, mIcfgContainer.getBoogie2SMT().getBoogie2SmtSymbolTable(),
 				mSimplificationTechnique, mXnfConversionTechnique);
 		
+		mEvaluator = evaluator;
+		
 		execute(settingsPolicy, counterexample, abstraction);
-	}
-	
-	private void execute(final TaCheckAndRefinementSettingPolicy settingsPolicy,
-			final IRun<CodeBlock, IPredicate, ?> counterexample, final IAutomaton<CodeBlock, IPredicate> abstraction)
-			throws AutomataOperationCanceledException {
-		switch (settingsPolicy) {
-			case SEQUENTIAL:
-				executeSequential(counterexample, abstraction);
-				break;
-			
-			default:
-				throw new IllegalArgumentException("Unknown settings policy: " + settingsPolicy);
-		}
-	}
-	
-	private void executeSequential(final IRun<CodeBlock, IPredicate, ?> counterexample,
-			final IAutomaton<CodeBlock, IPredicate> abstraction) throws AutomataOperationCanceledException {
-		// run through all preferences
-		for (final TaCheckAndRefinementPreferences prefs : mPrefsList) {
-			mPrefs = prefs;
-			
-			// check counterexample feasibility
-			checkCounterexampleFeasibility(counterexample);
-			
-			// construct interpolant automaton depending on feasibility
-			if (mFeasibility == LBool.UNSAT) {
-				constructInterpolantAutomaton(counterexample, abstraction);
-			}
-			
-			return;
-		}
 	}
 	
 	public LBool getCounterexampleFeasibility() {
@@ -239,38 +216,73 @@ public final class TraceCheckAndRefinementSelection {
 		return mHoareTripleChecker;
 	}
 	
-	private void checkCounterexampleFeasibility(final IRun<CodeBlock, IPredicate, ?> counterexample) {
-		final FeasibilityCheckResult result;
-		
-		// TODO add several strategies here
-		result = checkFeasibilityDefault(counterexample);
-		
-		// set fields feasibility
-		mFeasibility = result.getFeasibility();
-		mInterpolantGenerator = result.getInterpolantGenerator();
-		mHoareTripleChecker = result.getHoareTripleChecker();
+	private void execute(final TaCheckAndRefinementSettingPolicy settingsPolicy,
+			final IRun<CodeBlock, IPredicate, ?> counterexample, final IAutomaton<CodeBlock, IPredicate> abstraction)
+			throws AutomataOperationCanceledException {
+		switch (settingsPolicy) {
+			case SEQUENTIAL:
+				executeSequential(counterexample, abstraction);
+				break;
+			default:
+				throw new IllegalArgumentException("Unknown settings policy: " + settingsPolicy);
+		}
 	}
 	
-	private FeasibilityCheckResult checkFeasibilityDefault(final IRun<CodeBlock, IPredicate, ?> counterexample) {
-		final FeasibilityCheckResult result = new FeasibilityCheckResult();
-		
+	private void executeSequential(final IRun<CodeBlock, IPredicate, ?> counterexample,
+			final IAutomaton<CodeBlock, IPredicate> abstraction) throws AutomataOperationCanceledException {
+		// run through all preferences
+		for (final TaCheckAndRefinementPreferences prefs : mPrefsList) {
+			mPrefs = prefs;
+			
+			// check counterexample feasibility
+			try {
+				checkCounterexampleFeasibility(counterexample);
+			} catch (final ToolchainCanceledException e) {
+				throw e;
+			} catch (final Exception e) {
+				mLogger.info("Error during feasibility check, trying next one.");
+				continue;
+			}
+			
+			// construct interpolant automaton depending on feasibility
+			if (mFeasibility == LBool.UNSAT) {
+				constructInterpolantAutomaton(counterexample, abstraction);
+			}
+			
+			return;
+		}
+	}
+	
+	private void checkCounterexampleFeasibility(final IRun<CodeBlock, IPredicate, ?> counterexample) {
 		constructInterpolatingTraceChecker(counterexample);
 		
 		// check feasibility
 		final LBool feasibility = mInterpolatingTraceChecker.isCorrect();
-		result.setFeasibility(feasibility);
+		mFeasibility = feasibility;
 		
 		if (feasibility != LBool.UNSAT) {
 			// no infeasibility found, CEGAR loop is about to terminate
-			return result;
+			return;
 		}
 		
 		// mTraceCheckerBenchmark.aggregateBenchmarkData(interpolatingTraceChecker.getTraceCheckerBenchmark());
 		final IInterpolantGenerator interpolantGenerator = constructInterpolantGenerator(counterexample);
-		result.setInterpolantGenerator(interpolantGenerator);
+		mInterpolantGenerator = interpolantGenerator;
 		
 		// TODO set Hoare triple check and use it in BasicCegarLoop
-		return result;
+	}
+	
+	private void constructInterpolatingTraceChecker(final IRun<CodeBlock, IPredicate, ?> counterexample)
+			throws AssertionError {
+		final ManagedScript mgdScriptTc = setupManagedScript();
+		
+		mInterpolatingTraceChecker = constructTraceChecker(counterexample, mgdScriptTc);
+		
+		if (mInterpolatingTraceChecker.getToolchainCanceledExpection() != null) {
+			throw mInterpolatingTraceChecker.getToolchainCanceledExpection();
+		} else if (mPrefs.getUseSeparateSolverForTracechecks()) {
+			mgdScriptTc.getScript().exit();
+		}
 	}
 	
 	private ManagedScript setupManagedScript() throws AssertionError {
@@ -296,19 +308,6 @@ public final class TraceCheckAndRefinementSelection {
 			mgdScriptTc = mCsToolkit.getManagedScript();
 		}
 		return mgdScriptTc;
-	}
-	
-	private void constructInterpolatingTraceChecker(final IRun<CodeBlock, IPredicate, ?> counterexample)
-			throws AssertionError {
-		final ManagedScript mgdScriptTc = setupManagedScript();
-		
-		mInterpolatingTraceChecker = constructTraceChecker(counterexample, mgdScriptTc);
-		
-		if (mInterpolatingTraceChecker.getToolchainCanceledExpection() != null) {
-			throw mInterpolatingTraceChecker.getToolchainCanceledExpection();
-		} else if (mPrefs.getUseSeparateSolverForTracechecks()) {
-			mgdScriptTc.getScript().exit();
-		}
 	}
 	
 	private InterpolatingTraceChecker constructTraceChecker(final IRun<CodeBlock, IPredicate, ?> counterexample,
@@ -425,41 +424,17 @@ public final class TraceCheckAndRefinementSelection {
 	}
 	
 	/**
-	 * Wrapper for the data of fields that are only initialized after the feasibility check has finished.
+	 * Evaluator for interpolant automata.
 	 * 
 	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 	 */
-	private static class FeasibilityCheckResult {
-		private LBool mFeasibilityInner;
-		private IHoareTripleChecker mHoareTripleCheckerInner;
-		private IInterpolantGenerator mInterpolantGeneratorInner;
-		
-		public FeasibilityCheckResult() {
-			// nothing to do
-		}
-		
-		public LBool getFeasibility() {
-			return mFeasibilityInner;
-		}
-		
-		public IInterpolantGenerator getInterpolantGenerator() {
-			return mInterpolantGeneratorInner;
-		}
-		
-		public IHoareTripleChecker getHoareTripleChecker() {
-			return mHoareTripleCheckerInner;
-		}
-		
-		public void setFeasibility(final LBool isFeasible) {
-			mFeasibilityInner = isFeasible;
-		}
-		
-		public void setInterpolantGenerator(final IInterpolantGenerator interpolantGenerator) {
-			mInterpolantGeneratorInner = interpolantGenerator;
-		}
-		
-		public void setHoareTripleChecker(final IHoareTripleChecker hoareTripleChecker) {
-			mHoareTripleCheckerInner = hoareTripleChecker;
-		}
+	@FunctionalInterface
+	public interface IInterpolantAutomatonEvaluator {
+		/**
+		 * @param interpolantAutomaton
+		 *            Interpolant automaton.
+		 * @return {@code true} iff automaton should be accepted
+		 */
+		boolean accept(NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton);
 	}
 }
