@@ -49,7 +49,7 @@ public class RedirectionFinder {
 		final ArrayList <AnnotatedProgramPoint> nextNodes = new ArrayList<AnnotatedProgramPoint> ();
 		for (final AnnotatedProgramPoint nextClone : clone.getNextClones()) {
 			if (codeChecker.isValidRedirection(edge, nextClone)) {
-				if (GlobalSettings._instance.redirectionStrategy == RedirectionStrategy.FIRST) {
+				if (GlobalSettings.INSTANCE.getRedirectionStrategy() == RedirectionStrategy.FIRST) {
 					return depthFirstSearch(edge, nextClone);
 				}
 				nextNodes.add(depthFirstSearch(edge, nextClone));
@@ -60,10 +60,10 @@ public class RedirectionFinder {
 	private AnnotatedProgramPoint pickUp(AnnotatedProgramPoint def, ArrayList<AnnotatedProgramPoint> nodes) {
 		AnnotatedProgramPoint ret = def;
 		if (!nodes.isEmpty()) {
-			if (GlobalSettings._instance.redirectionStrategy == RedirectionStrategy.RANDOM) {
+			if (GlobalSettings.INSTANCE.getRedirectionStrategy() == RedirectionStrategy.RANDOM) {
 				ret = nodes.get((int) (Math.random() * nodes.size()));
 			}
-			if (GlobalSettings._instance.redirectionStrategy == RedirectionStrategy.RANDOmSTRONGEST) {
+			if (GlobalSettings.INSTANCE.getRedirectionStrategy() == RedirectionStrategy.RANDOmSTRONGEST) {
 				ret = strongRandomPickup(nodes);
 			}
 		}

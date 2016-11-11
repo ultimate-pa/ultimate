@@ -35,54 +35,194 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferenc
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
 
-public class GlobalSettings {
+public final class GlobalSettings {
 	
-	public static GlobalSettings _instance;
+	public static final GlobalSettings INSTANCE = new GlobalSettings();
 	
-		//default configuration
-//	String mdotGraphPath = "C:/temp/codeCheckGraphs";
+	private String mDotGraphPath = "";
+	private InterpolationTechnique mInterpolationMode = InterpolationTechnique.ForwardPredicates;
+	private PredicateUnification mPredicateUnification = PredicateUnification.PER_VERIFICATION;
+	private EdgeCheckOptimization mEdgeCheckOptimization = EdgeCheckOptimization.NONE;
+	private Checker mChecker = Checker.ULTIMATE;
+	private boolean mMemoizeNormalEdgeChecks = true;
+	private boolean mMemoizeReturnEdgeChecks = true;
+	private int mIterations = -1;
+	private RedirectionStrategy mRedirectionStrategy = RedirectionStrategy.No_Strategy;
+	private boolean mDefaultRedirection = true;
+	private boolean mRemoveFalseNodes = false;
+	private boolean mCheckSatisfiability = false;
+	private boolean mUseInterpolantconsolidation = true;
+	private boolean mUseSeparateSolverForTracechecks = true;
+	private SolverMode mChooseSeparateSolverForTracechecks;
+	private String mSeparateSolverForTracechecksCommand;
+	private String mSeparateSolverForTracechecksTheory;
+	private boolean mUseLiveVariables;
+	private UnsatCores mUseUnsatCores;
+	private boolean mUseFallbackForSeparateSolverForTracechecks;
 	
-	
-//    boolean svcomp2014Mode = false; //TODO: this is only hardcoded??
-//    boolean svcomp2014Mode = true;
-	public String _dotGraphPath = "";
-//	String _dotGraphPath = "C:/temp/codeCheckGraphs";
-//	SolverAndInterpolator _solverAndInterpolator = SolverAndInterpolator.SMTINTERPOL;
-//	public SolverAndInterpolator _solverAndInterpolator = SolverAndInterpolator.Z3SPWP;
-//	InterpolationTechnique _interpolationMode = InterpolationTechnique.Craig_TreeInterpolation;
-	public InterpolationTechnique _interpolationMode = InterpolationTechnique.ForwardPredicates;
-	public PredicateUnification _predicateUnification = PredicateUnification.PER_VERIFICATION;
-	public EdgeCheckOptimization _edgeCheckOptimization = EdgeCheckOptimization.NONE;
-	public Checker checker = Checker.ULTIMATE;
-//	boolean _checkOnlyMain = false;
-	public boolean _memoizeNormalEdgeChecks = true;
-	public boolean _memoizeReturnEdgeChecks = true;
-	public int _iterations = -1;
-	public RedirectionStrategy redirectionStrategy = RedirectionStrategy.No_Strategy;
-	
-	public boolean defaultRedirection = true;
-	
-	public boolean removeFalseNodes = false;
-	
-	public boolean checkSatisfiability = false;
-	
-	public boolean useInterpolantconsolidation = true;
-
-	public boolean useSeparateSolverForTracechecks = true;
-
-	public SolverMode chooseSeparateSolverForTracechecks;
-
-	public String separateSolverForTracechecksCommand;
-
-	public String separateSolverForTracechecksTheory;
-
-	public boolean useLiveVariables;
-
-	public UnsatCores useUnsatCores;
-
-	public boolean useFallbackForSeparateSolverForTracechecks;
-
-	public static void init() {
-		_instance = new GlobalSettings();
+	private GlobalSettings() {
+		// prevent initialization from somewhere else
 	}
+	
+	public String getSeparateSolverForTracechecksCommand() {
+		return mSeparateSolverForTracechecksCommand;
+	}
+	
+	public void setSeparateSolverForTracechecksCommand(final String separateSolverForTracechecksCommand) {
+		mSeparateSolverForTracechecksCommand = separateSolverForTracechecksCommand;
+	}
+	
+	public boolean isUseFallbackForSeparateSolverForTracechecks() {
+		return mUseFallbackForSeparateSolverForTracechecks;
+	}
+	
+	public void
+			setUseFallbackForSeparateSolverForTracechecks(final boolean useFallbackForSeparateSolverForTracechecks) {
+		mUseFallbackForSeparateSolverForTracechecks = useFallbackForSeparateSolverForTracechecks;
+	}
+	
+	public UnsatCores getUseUnsatCores() {
+		return mUseUnsatCores;
+	}
+	
+	public void setUseUnsatCores(final UnsatCores useUnsatCores) {
+		mUseUnsatCores = useUnsatCores;
+	}
+	
+	public boolean isUseLiveVariables() {
+		return mUseLiveVariables;
+	}
+	
+	public void setUseLiveVariables(final boolean useLiveVariables) {
+		mUseLiveVariables = useLiveVariables;
+	}
+	
+	public String getSeparateSolverForTracechecksTheory() {
+		return mSeparateSolverForTracechecksTheory;
+	}
+	
+	public void setSeparateSolverForTracechecksTheory(final String separateSolverForTracechecksTheory) {
+		mSeparateSolverForTracechecksTheory = separateSolverForTracechecksTheory;
+	}
+	
+	public SolverMode getChooseSeparateSolverForTracechecks() {
+		return mChooseSeparateSolverForTracechecks;
+	}
+	
+	public void setChooseSeparateSolverForTracechecks(final SolverMode chooseSeparateSolverForTracechecks) {
+		mChooseSeparateSolverForTracechecks = chooseSeparateSolverForTracechecks;
+	}
+	
+	public boolean isUseSeparateSolverForTracechecks() {
+		return mUseSeparateSolverForTracechecks;
+	}
+	
+	public void setUseSeparateSolverForTracechecks(final boolean useSeparateSolverForTracechecks) {
+		mUseSeparateSolverForTracechecks = useSeparateSolverForTracechecks;
+	}
+	
+	public boolean isUseInterpolantconsolidation() {
+		return mUseInterpolantconsolidation;
+	}
+	
+	public void setUseInterpolantconsolidation(final boolean useInterpolantconsolidation) {
+		mUseInterpolantconsolidation = useInterpolantconsolidation;
+	}
+	
+	public boolean isCheckSatisfiability() {
+		return mCheckSatisfiability;
+	}
+	
+	public void setCheckSatisfiability(final boolean checkSatisfiability) {
+		mCheckSatisfiability = checkSatisfiability;
+	}
+	
+	public boolean isRemoveFalseNodes() {
+		return mRemoveFalseNodes;
+	}
+	
+	public void setRemoveFalseNodes(final boolean removeFalseNodes) {
+		mRemoveFalseNodes = removeFalseNodes;
+	}
+	
+	public boolean isDefaultRedirection() {
+		return mDefaultRedirection;
+	}
+	
+	public void setDefaultRedirection(final boolean defaultRedirection) {
+		mDefaultRedirection = defaultRedirection;
+	}
+	
+	public RedirectionStrategy getRedirectionStrategy() {
+		return mRedirectionStrategy;
+	}
+	
+	public void setRedirectionStrategy(final RedirectionStrategy redirectionStrategy) {
+		mRedirectionStrategy = redirectionStrategy;
+	}
+	
+	public int getIterations() {
+		return mIterations;
+	}
+	
+	public void setIterations(final int iterations) {
+		mIterations = iterations;
+	}
+	
+	public boolean isMemoizeReturnEdgeChecks() {
+		return mMemoizeReturnEdgeChecks;
+	}
+	
+	public void setMemoizeReturnEdgeChecks(final boolean memoizeReturnEdgeChecks) {
+		mMemoizeReturnEdgeChecks = memoizeReturnEdgeChecks;
+	}
+	
+	public boolean isMemoizeNormalEdgeChecks() {
+		return mMemoizeNormalEdgeChecks;
+	}
+	
+	public void setMemoizeNormalEdgeChecks(final boolean memoizeNormalEdgeChecks) {
+		mMemoizeNormalEdgeChecks = memoizeNormalEdgeChecks;
+	}
+	
+	public Checker getChecker() {
+		return mChecker;
+	}
+	
+	public void setChecker(final Checker checker) {
+		mChecker = checker;
+	}
+	
+	public EdgeCheckOptimization getEdgeCheckOptimization() {
+		return mEdgeCheckOptimization;
+	}
+	
+	public void setEdgeCheckOptimization(final EdgeCheckOptimization edgeCheckOptimization) {
+		mEdgeCheckOptimization = edgeCheckOptimization;
+	}
+	
+	public PredicateUnification getPredicateUnification() {
+		return mPredicateUnification;
+	}
+	
+	public void setPredicateUnification(final PredicateUnification predicateUnification) {
+		mPredicateUnification = predicateUnification;
+	}
+	
+	public InterpolationTechnique getInterpolationMode() {
+		return mInterpolationMode;
+	}
+	
+	public void setInterpolationMode(final InterpolationTechnique interpolationMode) {
+		mInterpolationMode = interpolationMode;
+	}
+	
+	public String getDotGraphPath() {
+		return mDotGraphPath;
+	}
+	
+	public void setDotGraphPath(final String dotGraphPath) {
+		mDotGraphPath = dotGraphPath;
+	}
+	
 }

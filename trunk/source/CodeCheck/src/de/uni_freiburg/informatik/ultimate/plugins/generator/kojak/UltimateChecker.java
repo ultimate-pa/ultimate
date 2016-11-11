@@ -282,7 +282,7 @@ public class UltimateChecker extends CodeChecker {
 			return false;
 		}
 
-		if (GlobalSettings._instance._memoizeNormalEdgeChecks) {
+		if (GlobalSettings.INSTANCE.isMemoizeNormalEdgeChecks()) {
 			if (mSatTriples.get(preCondition, statement, postCondition) == IsContained.IsContained) {
 				mMemoizationHitsSat++;
 				return true;
@@ -303,7 +303,7 @@ public class UltimateChecker extends CodeChecker {
 					negatePredicateNoPU(postCondition)) != Validity.VALID;
 		}
 
-		if (GlobalSettings._instance._memoizeNormalEdgeChecks) {
+		if (GlobalSettings.INSTANCE.isMemoizeNormalEdgeChecks()) {
 			if (result) {
 				mSatTriples.put(preCondition, statement, postCondition, IsContained.IsContained);
 			} else {
@@ -325,7 +325,7 @@ public class UltimateChecker extends CodeChecker {
 	 */
 	protected boolean isSatRetEdge(final IPredicate preCondition, final IPredicate hier, final Return statement,
 			final IPredicate postCondition) {
-		if (GlobalSettings._instance._memoizeReturnEdgeChecks) {
+		if (GlobalSettings.INSTANCE.isMemoizeReturnEdgeChecks()) {
 			if (mSatQuadruples.get(preCondition, hier, statement, postCondition) == IsContained.IsContained) {
 				mMemoizationReturnHitsSat++;
 				return true;
@@ -339,7 +339,7 @@ public class UltimateChecker extends CodeChecker {
 		final boolean result = mEdgeChecker.checkReturn(preCondition, hier, statement,
 				negatePredicateNoPU(postCondition)) != Validity.VALID;
 
-		if (GlobalSettings._instance._memoizeReturnEdgeChecks) {
+		if (GlobalSettings.INSTANCE.isMemoizeReturnEdgeChecks()) {
 			if (result) {
 				mSatQuadruples.put(preCondition, hier, statement, postCondition, IsContained.IsContained);
 			} else {
