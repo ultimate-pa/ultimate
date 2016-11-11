@@ -29,7 +29,9 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -82,6 +84,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TaCheckAndRefinementPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.CounterexampleSearchStrategy;
@@ -128,8 +131,6 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	
 	protected final boolean mComputeHoareAnnotation;
 	
-	private final boolean mUseInterpolantConsolidation;
-	
 	protected final AssertCodeBlockOrder mAssertCodeBlocksIncrementally;
 	
 	private INestedWordAutomatonSimple<WitnessEdge, WitnessNode> mWitnessAutomaton;
@@ -152,8 +153,6 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		
 		super(services, storage, name, rootNode, csToolkit, predicateFactory, taPrefs, errorLocs,
 				services.getLoggingService().getLogger(Activator.PLUGIN_ID));
-		mUseInterpolantConsolidation = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
-				.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_INTERPOLANTS_CONSOLIDATION);
 		if (mFallbackToFpIfInterprocedural && rootNode.getProcedureEntryNodes().size() > 1) {
 			if (interpolation == InterpolationTechnique.FPandBP) {
 				mLogger.info("fallback from FPandBP to FP because CFG is interprocedural");
@@ -286,10 +285,14 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	
 	@Override
 	protected LBool isCounterexampleFeasible() throws AutomataOperationCanceledException {
-		mTraceCheckAndRefinementSelection = new TraceCheckAndRefinementSelection(mServices, mLogger, mPref, mCsToolkit,
-				mPredicateFactory, mIcfgContainer, mSimplificationTechnique, mXnfConversionTechnique, mInterpolation,
-				mToolchainStorage, mCegarLoopBenchmark, mInterpolantAutomatonBuilderFactory, mIteration,
-				mCounterexample, mAbstraction);
+		final TaCheckAndRefinementPreferences taCheckAndRefinementPrefs =
+				new TaCheckAndRefinementPreferences(mServices, mPref, mInterpolation);
+		final List<TaCheckAndRefinementPreferences> taCheckAndRefinementPrefsList =
+				Collections.singletonList(taCheckAndRefinementPrefs);
+		mTraceCheckAndRefinementSelection = new TraceCheckAndRefinementSelection(mServices, mLogger,
+				taCheckAndRefinementPrefsList, mCsToolkit, mPredicateFactory, mIcfgContainer, mSimplificationTechnique,
+				mXnfConversionTechnique, mToolchainStorage, mCegarLoopBenchmark,
+				mInterpolantAutomatonBuilderFactory, mPref, mIteration, mCounterexample, mAbstraction);
 		
 		final PredicateUnifier predicateUnifier = mTraceCheckAndRefinementSelection.getPredicateUnifier();
 		final LBool feasibility = mTraceCheckAndRefinementSelection.getCounterexampleFeasibility();

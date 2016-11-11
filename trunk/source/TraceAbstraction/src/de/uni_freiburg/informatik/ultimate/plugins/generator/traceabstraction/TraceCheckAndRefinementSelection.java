@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
+import java.util.List;
 import java.util.TreeMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
@@ -34,7 +35,6 @@ import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -57,10 +57,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.in
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.InterpolantAutomatonBuilderFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TaCheckAndRefinementPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolantConsolidation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceChecker;
@@ -90,7 +87,7 @@ public final class TraceCheckAndRefinementSelection {
 	/**
 	 * Trace abstraction preferences.
 	 */
-	private final TAPreferences mTaPrefs;
+	private final List<TaCheckAndRefinementPreferences> mPrefsList;
 	/**
 	 * Intermediate layer to encapsulate communication with SMT solvers.
 	 */
@@ -106,7 +103,6 @@ public final class TraceCheckAndRefinementSelection {
 	
 	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
-	private final InterpolationTechnique mInterpolation;
 	private final IToolchainStorage mToolchainStorage;
 	private final CegarLoopStatisticsGenerator mCegarLoopBenchmark;
 	private final InterpolantAutomatonBuilderFactory mInterpolantAutomatonBuilderFactory;
@@ -115,13 +111,12 @@ public final class TraceCheckAndRefinementSelection {
 	 */
 	private final int mIteration;
 	
-	/* preferences created from input settings */
+	// TODO Christian 2016-11-11: Matthias wants to get rid of this
+	private final TAPreferences mTaPrefsForInterpolantConsolidation;
 	
-	private final IPreferenceProvider mGeneralPrefs;
-	private final AssertCodeBlockOrder mAssertCodeBlocksIncrementally;
-	private final UnsatCores mUnsatCores;
-	private final boolean mUseLiveVariables;
-	private final boolean mUseInterpolantConsolidation;
+	/* intermediate */
+	
+	private TaCheckAndRefinementPreferences mPrefs;
 	
 	/* outputs */
 	
@@ -151,47 +146,47 @@ public final class TraceCheckAndRefinementSelection {
 	private IHoareTripleChecker mHoareTripleChecker;
 	
 	public TraceCheckAndRefinementSelection(final IUltimateServiceProvider services, final ILogger logger,
-			final TAPreferences taPrefs, final CfgSmtToolkit cfgSmtToolkit, final PredicateFactory predicateFactory,
+			final List<TaCheckAndRefinementPreferences> prefsList, final CfgSmtToolkit cfgSmtToolkit,
+			final PredicateFactory predicateFactory,
 			final BoogieIcfgContainer icfgContainer, final SimplificationTechnique simplificationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique, final InterpolationTechnique interpolation,
+			final XnfConversionTechnique xnfConversionTechnique,
 			final IToolchainStorage toolchainStorage, final CegarLoopStatisticsGenerator cegarLoopBenchmark,
-			final InterpolantAutomatonBuilderFactory interpolantAutomatonBuilderFactory, final int iteration,
+			final InterpolantAutomatonBuilderFactory interpolantAutomatonBuilderFactory,
+			final TAPreferences taPrefsForInterpolantConsolidation, final int iteration,
 			final IRun<CodeBlock, IPredicate, ?> counterexample,
 			final IAutomaton<CodeBlock, IPredicate> abstraction) throws AutomataOperationCanceledException {
-		// initialize settings etc. (TODO move this to a preference factory)
+		// initialize fields
 		mServices = services;
 		mLogger = logger;
-		mTaPrefs = taPrefs;
+		mPrefsList = prefsList;
 		mCsToolkit = cfgSmtToolkit;
 		mPredicateFactory = predicateFactory;
 		mIcfgContainer = icfgContainer;
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
-		mInterpolation = interpolation;
 		mToolchainStorage = toolchainStorage;
 		mCegarLoopBenchmark = cegarLoopBenchmark;
 		mInterpolantAutomatonBuilderFactory = interpolantAutomatonBuilderFactory;
 		mIteration = iteration;
-		
-		mGeneralPrefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
-		mAssertCodeBlocksIncrementally =
-				mGeneralPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_ASSERT_CODEBLOCKS_INCREMENTALLY,
-						AssertCodeBlockOrder.class);
-		mUnsatCores = mGeneralPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_UNSAT_CORES, UnsatCores.class);
-		mUseLiveVariables = mGeneralPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_LIVE_VARIABLES);
-		mUseInterpolantConsolidation =
-				mGeneralPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_INTERPOLANTS_CONSOLIDATION);
+		mTaPrefsForInterpolantConsolidation = taPrefsForInterpolantConsolidation;
 		
 		mPredicateUnifier = new PredicateUnifier(mServices, mCsToolkit.getManagedScript(),
 				mPredicateFactory, mIcfgContainer.getBoogie2SMT().getBoogie2SmtSymbolTable(),
 				mSimplificationTechnique, mXnfConversionTechnique);
 		
-		// check counterexample feasibility
-		checkCounterexampleFeasibility(counterexample);
-		
-		// construct interpolant automaton depending on feasibility
-		if (mFeasibility == LBool.UNSAT) {
-			constructInterpolantAutomaton(counterexample, abstraction);
+		// run through all preferences
+		for (final TaCheckAndRefinementPreferences prefs : mPrefsList) {
+			mPrefs = prefs;
+			
+			// check counterexample feasibility
+			checkCounterexampleFeasibility(counterexample);
+			
+			// construct interpolant automaton depending on feasibility
+			if (mFeasibility == LBool.UNSAT) {
+				constructInterpolantAutomaton(counterexample, abstraction);
+			}
+			
+			return;
 		}
 	}
 	
@@ -261,17 +256,17 @@ public final class TraceCheckAndRefinementSelection {
 	
 	private ManagedScript setupManagedScript() throws AssertionError {
 		final ManagedScript mgdScriptTc;
-		if (mTaPrefs.useSeparateSolverForTracechecks()) {
+		if (mPrefs.useSeparateSolverForTracechecks()) {
 			final String filename = mIcfgContainer.getFilename() + "_TraceCheck_Iteration" + mIteration;
-			final SolverMode solverMode = mTaPrefs.solverMode();
-			final boolean fakeNonIncrementalSolver = mTaPrefs.fakeNonIncrementalSolver();
-			final String commandExternalSolver = mTaPrefs.commandExternalSolver();
-			final boolean dumpSmtScriptToFile = mTaPrefs.dumpSmtScriptToFile();
-			final String pathOfDumpedScript = mTaPrefs.pathOfDumpedScript();
+			final SolverMode solverMode = mPrefs.solverMode();
+			final boolean fakeNonIncrementalSolver = mPrefs.fakeNonIncrementalSolver();
+			final String commandExternalSolver = mPrefs.commandExternalSolver();
+			final boolean dumpSmtScriptToFile = mPrefs.dumpSmtScriptToFile();
+			final String pathOfDumpedScript = mPrefs.pathOfDumpedScript();
 			final Settings solverSettings = SolverBuilder.constructSolverSettings(filename, solverMode,
 					fakeNonIncrementalSolver, commandExternalSolver, dumpSmtScriptToFile, pathOfDumpedScript);
 			final Script tcSolver = SolverBuilder.buildAndInitializeSolver(mServices, mToolchainStorage,
-					mTaPrefs.solverMode(), solverSettings, false, false, mTaPrefs.logicForExternalSolver(),
+					mPrefs.solverMode(), solverSettings, false, false, mPrefs.logicForExternalSolver(),
 					"TraceCheck_Iteration" + mIteration);
 			mgdScriptTc = new ManagedScript(mServices, tcSolver);
 			final TermTransferrer tt = new TermTransferrer(tcSolver);
@@ -292,7 +287,7 @@ public final class TraceCheckAndRefinementSelection {
 		
 		if (mInterpolatingTraceChecker.getToolchainCanceledExpection() != null) {
 			throw mInterpolatingTraceChecker.getToolchainCanceledExpection();
-		} else if (mTaPrefs.useSeparateSolverForTracechecks()) {
+		} else if (mPrefs.useSeparateSolverForTracechecks()) {
 			mgdScriptTc.getScript().exit();
 		}
 	}
@@ -303,13 +298,13 @@ public final class TraceCheckAndRefinementSelection {
 		final IPredicate falsePredicate = mPredicateUnifier.getFalsePredicate();
 		
 		final InterpolatingTraceChecker interpolatingTraceChecker;
-		switch (mInterpolation) {
+		switch (mPrefs.getInterpolationTechnique()) {
 			case Craig_NestedInterpolation:
 			case Craig_TreeInterpolation:
 				interpolatingTraceChecker = new InterpolatingTraceCheckerCraig(truePredicate, falsePredicate,
 						new TreeMap<Integer, IPredicate>(), NestedWord.nestedWord(counterexample.getWord()),
-						mCsToolkit, mAssertCodeBlocksIncrementally,
-						mServices, true, mPredicateUnifier, mInterpolation, mgdScriptTc,
+						mCsToolkit, mPrefs.assertCodeBlocksIncrementally(),
+						mServices, true, mPredicateUnifier, mPrefs.getInterpolationTechnique(), mgdScriptTc,
 						true, mXnfConversionTechnique, mSimplificationTechnique, counterexample.getStateSequence(),
 						false);
 				break;
@@ -317,20 +312,17 @@ public final class TraceCheckAndRefinementSelection {
 			case BackwardPredicates:
 			case FPandBP:
 				interpolatingTraceChecker = new TraceCheckerSpWp(truePredicate, falsePredicate,
-						new TreeMap<Integer, IPredicate>(), NestedWord.nestedWord(counterexample.getWord()),
-						mCsToolkit, mAssertCodeBlocksIncrementally,
-						mUnsatCores, mUseLiveVariables, mServices, true, mPredicateUnifier, mInterpolation,
-						mgdScriptTc, mXnfConversionTechnique, mSimplificationTechnique,
-						counterexample.getStateSequence());
+						new TreeMap<Integer, IPredicate>(), NestedWord.nestedWord(counterexample.getWord()), mCsToolkit,
+						mPrefs.assertCodeBlocksIncrementally(), mPrefs.getUnsatCores(), mPrefs.useLiveVariables(),
+						mServices, true, mPredicateUnifier, mPrefs.getInterpolationTechnique(), mgdScriptTc,
+						mXnfConversionTechnique, mSimplificationTechnique, counterexample.getStateSequence());
 				
 				break;
 			case PathInvariants:
-				final boolean useNonlinearConstraints = mGeneralPrefs.getBoolean(
-						TraceAbstractionPreferenceInitializer.LABEL_NONLINEAR_CONSTRAINTS_IN_PATHINVARIANTS);
-				final boolean useVarsFromUnsatCore = mGeneralPrefs
-						.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_UNSAT_CORES_IN_PATHINVARIANTS);
-				final boolean dumpSmtScriptToFile = mTaPrefs.dumpSmtScriptToFile();
-				final String pathOfDumpedScript = mTaPrefs.pathOfDumpedScript();
+				final boolean useNonlinearConstraints = mPrefs.useNonlinearConstraints();
+				final boolean useVarsFromUnsatCore = mPrefs.useVarsFromUnsatCore();
+				final boolean dumpSmtScriptToFile = mPrefs.dumpSmtScriptToFile();
+				final String pathOfDumpedScript = mPrefs.pathOfDumpedScript();
 				final String baseNameOfDumpedScript =
 						"InVarSynth_" + mIcfgContainer.getFilename() + "_Iteration" + mIteration;
 				final String solverCommand;
@@ -349,7 +341,7 @@ public final class TraceCheckAndRefinementSelection {
 				interpolatingTraceChecker =
 						new InterpolatingTraceCheckerPathInvariantsWithFallback(truePredicate, falsePredicate,
 								new TreeMap<Integer, IPredicate>(), (NestedRun<CodeBlock, IPredicate>) counterexample,
-								mCsToolkit, mAssertCodeBlocksIncrementally, mServices,
+								mCsToolkit, mPrefs.assertCodeBlocksIncrementally(), mServices,
 								mToolchainStorage, true, mPredicateUnifier, useNonlinearConstraints,
 								useVarsFromUnsatCore,
 								settings, mXnfConversionTechnique,
@@ -365,7 +357,7 @@ public final class TraceCheckAndRefinementSelection {
 	private IInterpolantGenerator constructInterpolantGenerator(final IRun<CodeBlock, IPredicate, ?> counterexample)
 			throws AssertionError {
 		final IInterpolantGenerator interpolantGenerator;
-		if (mUseInterpolantConsolidation) {
+		if (mPrefs.useInterpolantConsolidation()) {
 			try {
 				interpolantGenerator = consolidateInterpolants(counterexample, mInterpolatingTraceChecker);
 			} catch (final AutomataOperationCanceledException e) {
@@ -386,7 +378,8 @@ public final class TraceCheckAndRefinementSelection {
 				new InterpolantConsolidation(mPredicateUnifier.getTruePredicate(),
 						mPredicateUnifier.getFalsePredicate(), new TreeMap<Integer, IPredicate>(),
 						NestedWord.nestedWord(counterexample.getWord()), mCsToolkit, mCsToolkit.getModifiableGlobals(),
-						mServices, mLogger, mPredicateUnifier, interpolatingTraceChecker, mTaPrefs);
+						mServices, mLogger, mPredicateUnifier, interpolatingTraceChecker,
+						mTaPrefsForInterpolantConsolidation);
 		// Add benchmark data of interpolant consolidation
 		mCegarLoopBenchmark.addInterpolationConsolidationData(interpConsoli.getInterpolantConsolidationBenchmarks());
 		interpolantGenerator = interpConsoli;
