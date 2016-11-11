@@ -240,15 +240,7 @@ public final class TraceCheckAndRefinementSelection {
 	}
 	
 	private FeasibilityCheckResult checkFeasibilityDefault(final IRun<CodeBlock, IPredicate, ?> counterexample) {
-		final ManagedScript mgdScriptTc = setupManagedScript();
-		
-		mInterpolatingTraceChecker = constructTraceChecker(counterexample, mgdScriptTc);
-		
-		if (mInterpolatingTraceChecker.getToolchainCanceledExpection() != null) {
-			throw mInterpolatingTraceChecker.getToolchainCanceledExpection();
-		} else if (mTaPrefs.useSeparateSolverForTracechecks()) {
-			mgdScriptTc.getScript().exit();
-		}
+		constructInterpolatingTraceChecker(counterexample);
 		
 		// check feasibility
 		final FeasibilityCheckResult result = new FeasibilityCheckResult();
@@ -277,6 +269,19 @@ public final class TraceCheckAndRefinementSelection {
 		
 		// TODO set Hoare triple check and use it in BasicCegarLoop
 		return result;
+	}
+
+	private void constructInterpolatingTraceChecker(final IRun<CodeBlock, IPredicate, ?> counterexample)
+			throws AssertionError {
+		final ManagedScript mgdScriptTc = setupManagedScript();
+		
+		mInterpolatingTraceChecker = constructTraceChecker(counterexample, mgdScriptTc);
+		
+		if (mInterpolatingTraceChecker.getToolchainCanceledExpection() != null) {
+			throw mInterpolatingTraceChecker.getToolchainCanceledExpection();
+		} else if (mTaPrefs.useSeparateSolverForTracechecks()) {
+			mgdScriptTc.getScript().exit();
+		}
 	}
 	
 	private ManagedScript setupManagedScript() throws AssertionError {
