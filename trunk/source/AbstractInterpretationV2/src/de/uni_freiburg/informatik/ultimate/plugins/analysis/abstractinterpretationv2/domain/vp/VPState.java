@@ -672,8 +672,8 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 
 	@Override
 	public Term getTerm(Script script) {
-		// TODO Auto-generated method stub
-		return null;
+		// TODO: (alex:) do we want to describe the state precisely via a formula?? (useful for some assertion(s), and what else?..)
+		return mDomain.getManagedScript().getScript().term("true");
 	}
 
 }

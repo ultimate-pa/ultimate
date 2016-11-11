@@ -61,6 +61,7 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 	
 	private final VPStateTop mTopState;
 	private final VPStateBottom mBottomState;
+	private final ManagedScript mScript;
 	
 	public VPDomain(final ILogger logger, 
 			final ManagedScript script, 
@@ -79,6 +80,7 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 		mTopState = new VPStateTop(mEqGraphNodeSet, mTermToBaseNodeMap, mTermToFnNodeMap, mEqNodeToEqGraphNodeMap, mDisEqualityMap, this);
 		mPost = new VPPostOperator(script, services, this);
 		mMerge = new VPMergeOperator();
+		mScript = script;
 	}
 
 	@Override
@@ -138,4 +140,11 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 		return mBottomState;
 	}
 
+	public ManagedScript getManagedScript() {
+		return mScript;
+	}
+
+	public ILogger getLogger() {
+		return mLogger;
+	}
 }

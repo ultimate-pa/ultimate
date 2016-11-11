@@ -86,8 +86,8 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 		final Term nnfTerm = new Nnf(mScript, mServices, QuantifierHandling.CRASH)
 				.transform(transition.getTransitionFormula().getFormula());
 		
-		System.out.println("Original term: " + tf.getFormula());
-		System.out.println("Nnf term:      " + nnfTerm);
+		mDomain.getLogger().debug("Original term: " + tf.getFormula());
+		mDomain.getLogger().debug("Nnf term:      " + nnfTerm);
 		
 		// Substitution
 		final Map<Term, Term> substitionMap = new HashMap<Term, Term>();
@@ -102,7 +102,7 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 		
 		final VPState resultState = handleTransition(substitutedTerm);
 		
-		System.out.println(resultState.toLogString());
+		mDomain.getLogger().debug(resultState.toLogString());
 		
 		if (resultState instanceof VPStateBottom) {
 			return Collections.singletonList(mDomain.getmBottomState());
