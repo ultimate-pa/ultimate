@@ -76,7 +76,7 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 		mTermToFnNodeMap = termToFnNodeMap;
 		mEqNodeToEqGraphNodeMap = eqNodeToEqGraphNodeMap;
 		mDisEqualityMap = new HashSet<VPDomainSymmetricPair<EqNode>>();
-		mBottomState = new VPStateBottom();
+		mBottomState = new VPStateBottom(this);
 		mTopState = new VPStateTop(mEqGraphNodeSet, mTermToBaseNodeMap, mTermToFnNodeMap, mEqNodeToEqGraphNodeMap, mDisEqualityMap, this);
 		mPost = new VPPostOperator(script, services, this);
 		mMerge = new VPMergeOperator();

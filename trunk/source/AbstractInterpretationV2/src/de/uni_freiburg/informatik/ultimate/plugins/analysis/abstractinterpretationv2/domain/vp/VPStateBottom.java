@@ -7,8 +7,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 */
 public class VPStateBottom extends VPState {
 	
-	VPStateBottom() {
-		super();
+	VPStateBottom(VPDomain domain) {
+		super(domain);
 	}
 	
 	@Override

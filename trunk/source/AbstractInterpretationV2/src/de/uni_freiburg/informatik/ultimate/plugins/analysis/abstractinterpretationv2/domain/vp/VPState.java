@@ -84,8 +84,8 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 		this.mDisEqualitySet = disEqualitySet;
 	}
 	
-	VPState() {
-		this(null, null, null, null, null, null);
+	VPState(VPDomain domain) {
+		this(null, null, null, null, null, domain);
 	}
 	
 	VPState(Set<EqGraphNode> eqGraphNodeSet, Map<Term, EqBaseNode> termToBaseNodeMap,

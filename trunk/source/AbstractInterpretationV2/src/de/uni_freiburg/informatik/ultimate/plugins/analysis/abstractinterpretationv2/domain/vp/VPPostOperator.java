@@ -102,7 +102,7 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 		
 		final VPState resultState = handleTransition(substitutedTerm);
 		
-		mDomain.getLogger().debug(resultState.toLogString());
+		mDomain.getLogger().debug("state after transition " + transition + ": " + resultState.toLogString());
 		
 		if (resultState instanceof VPStateBottom) {
 			return Collections.singletonList(mDomain.getmBottomState());
