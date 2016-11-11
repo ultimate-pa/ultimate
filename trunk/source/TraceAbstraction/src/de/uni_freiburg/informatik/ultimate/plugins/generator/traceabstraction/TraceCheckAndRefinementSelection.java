@@ -179,8 +179,10 @@ public final class TraceCheckAndRefinementSelection {
 				mPredicateFactory, mIcfgContainer.getBoogie2SMT().getBoogie2SmtSymbolTable(),
 				mSimplificationTechnique, mXnfConversionTechnique);
 		
+		// check counterexample feasibility
 		checkCounterexampleFeasibility(counterexample);
 		
+		// construct interpolant automaton depending on feasibility
 		if (mFeasibility == LBool.UNSAT) {
 			constructInterpolantAutomaton(counterexample, abstraction);
 		}
@@ -216,7 +218,7 @@ public final class TraceCheckAndRefinementSelection {
 		return mHoareTripleChecker;
 	}
 	
-	public void checkCounterexampleFeasibility(final IRun<CodeBlock, IPredicate, ?> counterexample) {
+	private void checkCounterexampleFeasibility(final IRun<CodeBlock, IPredicate, ?> counterexample) {
 		final FeasibilityCheckResult result;
 		
 		// TODO add several strategies here
@@ -228,22 +230,12 @@ public final class TraceCheckAndRefinementSelection {
 		mHoareTripleChecker = result.getHoareTripleChecker();
 	}
 	
-	public void constructInterpolantAutomaton(final IRun<CodeBlock, IPredicate, ?> counterexample,
-			final IAutomaton<CodeBlock, IPredicate> abstraction) throws AutomataOperationCanceledException {
-		if (mFeasibility != LBool.UNSAT) {
-			throw new UnsupportedOperationException(
-					"Constructing an interpolant automaton requires infeasible counterexample.");
-		}
-		
-		// TODO add several strategies here
-		mInterpolantAutomaton = constructInterpolantAutomatonDefault(counterexample, abstraction);
-	}
-	
 	private FeasibilityCheckResult checkFeasibilityDefault(final IRun<CodeBlock, IPredicate, ?> counterexample) {
+		final FeasibilityCheckResult result = new FeasibilityCheckResult();
+		
 		constructInterpolatingTraceChecker(counterexample);
 		
 		// check feasibility
-		final FeasibilityCheckResult result = new FeasibilityCheckResult();
 		final LBool feasibility = mInterpolatingTraceChecker.isCorrect();
 		result.setFeasibility(feasibility);
 		
@@ -253,35 +245,11 @@ public final class TraceCheckAndRefinementSelection {
 		}
 		
 		// mTraceCheckerBenchmark.aggregateBenchmarkData(interpolatingTraceChecker.getTraceCheckerBenchmark());
-		final IInterpolantGenerator interpolantGenerator;
-		if (mUseInterpolantConsolidation) {
-			try {
-				interpolantGenerator = consolidateInterpolants(counterexample, mInterpolatingTraceChecker);
-			} catch (final AutomataOperationCanceledException e) {
-				// Timeout
-				e.printStackTrace();
-				throw new AssertionError("react on timeout, not yet implemented");
-			}
-		} else {
-			interpolantGenerator = mInterpolatingTraceChecker;
-		}
+		final IInterpolantGenerator interpolantGenerator = constructInterpolantGenerator(counterexample);
 		result.setInterpolantGenerator(interpolantGenerator);
 		
 		// TODO set Hoare triple check and use it in BasicCegarLoop
 		return result;
-	}
-
-	private void constructInterpolatingTraceChecker(final IRun<CodeBlock, IPredicate, ?> counterexample)
-			throws AssertionError {
-		final ManagedScript mgdScriptTc = setupManagedScript();
-		
-		mInterpolatingTraceChecker = constructTraceChecker(counterexample, mgdScriptTc);
-		
-		if (mInterpolatingTraceChecker.getToolchainCanceledExpection() != null) {
-			throw mInterpolatingTraceChecker.getToolchainCanceledExpection();
-		} else if (mTaPrefs.useSeparateSolverForTracechecks()) {
-			mgdScriptTc.getScript().exit();
-		}
 	}
 	
 	private ManagedScript setupManagedScript() throws AssertionError {
@@ -307,6 +275,19 @@ public final class TraceCheckAndRefinementSelection {
 			mgdScriptTc = mCsToolkit.getManagedScript();
 		}
 		return mgdScriptTc;
+	}
+
+	private void constructInterpolatingTraceChecker(final IRun<CodeBlock, IPredicate, ?> counterexample)
+			throws AssertionError {
+		final ManagedScript mgdScriptTc = setupManagedScript();
+		
+		mInterpolatingTraceChecker = constructTraceChecker(counterexample, mgdScriptTc);
+		
+		if (mInterpolatingTraceChecker.getToolchainCanceledExpection() != null) {
+			throw mInterpolatingTraceChecker.getToolchainCanceledExpection();
+		} else if (mTaPrefs.useSeparateSolverForTracechecks()) {
+			mgdScriptTc.getScript().exit();
+		}
 	}
 	
 	private InterpolatingTraceChecker constructTraceChecker(final IRun<CodeBlock, IPredicate, ?> counterexample,
@@ -374,6 +355,23 @@ public final class TraceCheckAndRefinementSelection {
 		mCegarLoopBenchmark.addTraceCheckerData(interpolatingTraceChecker.getTraceCheckerBenchmark());
 		return interpolatingTraceChecker;
 	}
+
+	private IInterpolantGenerator constructInterpolantGenerator(final IRun<CodeBlock, IPredicate, ?> counterexample)
+			throws AssertionError {
+		final IInterpolantGenerator interpolantGenerator;
+		if (mUseInterpolantConsolidation) {
+			try {
+				interpolantGenerator = consolidateInterpolants(counterexample, mInterpolatingTraceChecker);
+			} catch (final AutomataOperationCanceledException e) {
+				// Timeout
+				e.printStackTrace();
+				throw new AssertionError("react on timeout, not yet implemented");
+			}
+		} else {
+			interpolantGenerator = mInterpolatingTraceChecker;
+		}
+		return interpolantGenerator;
+	}
 	
 	private IInterpolantGenerator consolidateInterpolants(final IRun<CodeBlock, IPredicate, ?> counterexample,
 			final InterpolatingTraceChecker interpolatingTraceChecker) throws AutomataOperationCanceledException {
@@ -387,6 +385,17 @@ public final class TraceCheckAndRefinementSelection {
 		mCegarLoopBenchmark.addInterpolationConsolidationData(interpConsoli.getInterpolantConsolidationBenchmarks());
 		interpolantGenerator = interpConsoli;
 		return interpolantGenerator;
+	}
+	
+	private void constructInterpolantAutomaton(final IRun<CodeBlock, IPredicate, ?> counterexample,
+			final IAutomaton<CodeBlock, IPredicate> abstraction) throws AutomataOperationCanceledException {
+		if (mFeasibility != LBool.UNSAT) {
+			throw new UnsupportedOperationException(
+					"Constructing an interpolant automaton requires infeasible counterexample.");
+		}
+		
+		// TODO add several strategies here
+		mInterpolantAutomaton = constructInterpolantAutomatonDefault(counterexample, abstraction);
 	}
 	
 	private NestedWordAutomaton<CodeBlock, IPredicate> constructInterpolantAutomatonDefault(
