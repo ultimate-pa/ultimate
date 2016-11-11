@@ -16,8 +16,8 @@ public class VPStateTop extends VPState {
 	
 	VPStateTop(Set<EqGraphNode> eqGraphNodeSet, Map<Term, EqBaseNode> termToBaseNodeMap,
 			Map<Term, Set<EqFunctionNode>> termToFnNodeMap, Map<EqNode, EqGraphNode> eqNodeToEqGraphNodeMap,
-			Set<VPDomainSymmetricPair<EqNode>> disEqualitySet, VPStateBottom bottomState) {
-		super(eqGraphNodeSet, termToBaseNodeMap, termToFnNodeMap, eqNodeToEqGraphNodeMap, disEqualitySet, bottomState);
+			Set<VPDomainSymmetricPair<EqNode>> disEqualitySet, VPDomain domain) {
+		super(eqGraphNodeSet, termToBaseNodeMap, termToFnNodeMap, eqNodeToEqGraphNodeMap, disEqualitySet, domain);
 		this.clearState();
 	}
 	
@@ -34,13 +34,13 @@ public class VPStateTop extends VPState {
 	}
 
 	@Override
-	public VPState conjoin(VPState state1, VPState state2) {
+	public VPState conjoin(VPState other) {
 		// Do nothing
 		return this;
 	}
 
 	@Override
-	public VPState disjoin(VPState state1, VPState state2) {
+	public VPState disjoin(VPState other) {
 		// Do nothing
 		return this;
 	}
@@ -133,12 +133,6 @@ public class VPStateTop extends VPState {
 	public boolean equals(Object obj) {
 		// Auto-generated method stub
 		return super.equals(obj);
-	}
-
-	@Override
-	VPState union(VPState other) {
-		// Auto-generated method stub
-		return super.union(other);
 	}
 	
 }

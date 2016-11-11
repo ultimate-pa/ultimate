@@ -62,14 +62,12 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 	private final IUltimateServiceProvider mServices;
 	
 	private VPState preparedState;
-	private final VPStateTop mTopState;
-	private final VPStateBottom mBottomState;
+	private final VPDomain mDomain;
 	
-	public VPPostOperator(ManagedScript script, IUltimateServiceProvider services, VPStateTop topState, VPStateBottom bottomState) {
+	public VPPostOperator(final ManagedScript script, final IUltimateServiceProvider services, final VPDomain domain) {
 		mScript = script;
 		mServices = services;
-		mTopState = topState;
-		mBottomState = bottomState;
+		mDomain = domain;
 	}
 
 	@Override
@@ -81,33 +79,33 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 		}
 		
 		if (oldstate instanceof VPStateBottom) {
-			return Collections.singletonList(mBottomState);
+			return Collections.singletonList(mDomain.getmBottomState());
 		}
 		
 		preparedState = oldstate.prepareState(tf.getAssignedVars());
-		Term nnfTerm = new Nnf(mScript, mServices, QuantifierHandling.CRASH)
+		final Term nnfTerm = new Nnf(mScript, mServices, QuantifierHandling.CRASH)
 				.transform(transition.getTransitionFormula().getFormula());
 		
 		System.out.println("Original term: " + tf.getFormula());
 		System.out.println("Nnf term:      " + nnfTerm);
 		
 		// Substitution
-		Map<Term, Term> substitionMap = new HashMap<Term, Term>();
-		for (Entry<IProgramVar, TermVariable> entry : tf.getInVars().entrySet()) {
+		final Map<Term, Term> substitionMap = new HashMap<Term, Term>();
+		for (final Entry<IProgramVar, TermVariable> entry : tf.getInVars().entrySet()) {
 			substitionMap.put(entry.getValue(), entry.getKey().getTermVariable());
 		}
-		for (Entry<IProgramVar, TermVariable> entry : tf.getOutVars().entrySet()) {
+		for (final Entry<IProgramVar, TermVariable> entry : tf.getOutVars().entrySet()) {
 			substitionMap.put(entry.getValue(), entry.getKey().getTermVariable());
 		}
 		
-		Term substitutedTerm = new Substitution(mScript, substitionMap).transform(nnfTerm);
+		final Term substitutedTerm = new Substitution(mScript, substitionMap).transform(nnfTerm);
 		
-		VPState resultState = handleTransition(substitutedTerm);
+		final VPState resultState = handleTransition(substitutedTerm);
 		
 		System.out.println(resultState.toLogString());
 		
 		if (resultState instanceof VPStateBottom) {
-			return Collections.singletonList(mBottomState);
+			return Collections.singletonList(mDomain.getmBottomState());
 		}
 		
 		return Collections.singletonList(
@@ -116,10 +114,10 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 						resultState.getTermToFnNodeMap(),
 						resultState.getEqNodeToEqGraphNodeMap(),  
 						resultState.getDisEqualitySet(),
-						mBottomState));
+						mDomain));
 	}
 	
-	private VPState handleTransition(Term term) {
+	private VPState handleTransition(final Term term) {
 		
 		VPState resultState = preparedState.copy();
 		
@@ -131,35 +129,25 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 			if (applicationName == "and") {
 				
 				List<VPState> andList = new ArrayList<VPState>();
-				for (Term t : appTerm.getParameters()) {
+				for (final Term t : appTerm.getParameters()) {
 					andList.add(handleTransition(t));
 				}
 				VPState state = andList.get(0);
 				for (int i = 1; i < andList.size(); i++) {
-					state = state.conjoin(state, andList.get(i));	
+					state = state.conjoin(andList.get(i));
 				}
-//				if (state.checkContradiction()) {
-//					return mBottomState;
-//				} else {
-//					return state;
-//				}
 				return state;
 				
 			} else if (applicationName == "or") {
 				
 				List<VPState> orList = new ArrayList<VPState>();
-				for (Term t : appTerm.getParameters()) {
+				for (final Term t : appTerm.getParameters()) {
 					orList.add(handleTransition(t));
 				}
 				VPState state = orList.get(0);
 				for (int i = 1; i < orList.size(); i++) {
-					state = state.disjoin(state, orList.get(i));	
+					state = state.disjoin(orList.get(i));	
 				}
-//				if (state.checkContradiction()) {
-//					return mBottomState;
-//				} else {
-//					return state;
-//				}
 				return state;
 				
 			} else if (applicationName == "=") {
@@ -201,7 +189,7 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 				boolean isContradic = resultState.addEquality(node1, node2);
 				
 				if (isContradic) {
-					return mBottomState;
+					return mDomain.getmBottomState();
 				}
 				
 				return resultState;
@@ -212,7 +200,7 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 				ApplicationTerm equalTerm = (ApplicationTerm)appTerm.getParameters()[0];
 				if (!(equalTerm.getFunction().getName() == "=")) {
 					// TODO: check: is it correct here to return bottom?
-					return mBottomState;
+					return mDomain.getmBottomState();
 				} else {
 					EqNode node1 = getNodeFromTerm(equalTerm.getParameters()[0], resultState);
 					EqNode node2 = getNodeFromTerm(equalTerm.getParameters()[1], resultState);
@@ -224,7 +212,7 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 					boolean isContradic = resultState.addDisEquality(node1, node2);
 					
 					if (isContradic) {
-						return mBottomState;
+						return mDomain.getmBottomState();
 					}
 					
 					return resultState;
@@ -236,13 +224,13 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 				EqNode node2 = getNodeFromTerm(appTerm.getParameters()[1], resultState);
 				
 				if (node1 == null || node2 == null) {
-					return mBottomState;
+					return mDomain.getmBottomState();
 				}
 				
 				boolean isContradic = resultState.addDisEquality(node1, node2);
 				
 				if (isContradic) {
-					return mBottomState;
+					return mDomain.getmBottomState();
 				}
 				
 				return resultState;
@@ -255,29 +243,25 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 			return handleTransition(((AnnotatedTerm) term).getSubterm());
 		}
 		
-		// Return a top state
-		for (EqGraphNode graphNode : resultState.getEqGraphNodeSet()) {
-			graphNode.setNodeToInitial();
-		}
-		resultState.getDisEqualitySet().clear();
-		return mTopState;
+		return resultState;
 	}
 	
-	private EqNode getNodeFromTerm (Term term, VPState state) {
+	private EqNode getNodeFromTerm(final Term term, final VPState state) {
 		
-		Map<Term, EqBaseNode> baseNodeMap = state.getTermToBaseNodeMap();
-		Map<Term, Set<EqFunctionNode>> fnNodeMap = state.getTermToFnNodeMap();
+		final Map<Term, EqBaseNode> baseNodeMap = state.getTermToBaseNodeMap();
+		final Map<Term, Set<EqFunctionNode>> fnNodeMap = state.getTermToFnNodeMap();
 		
 		if (term instanceof TermVariable || term instanceof ConstantTerm) {
 			if (baseNodeMap.containsKey(term)) {
 				return baseNodeMap.get(term);
 			}
 		} else {
-			Term arg1 = ((ApplicationTerm)term).getParameters()[0];
-			Term arg2 = ((ApplicationTerm)term).getParameters()[1];
-			if (fnNodeMap.containsKey(arg1)) {
-				for (EqFunctionNode fnNode : fnNodeMap.get(arg1)) {
-					if (fnNode.arg.term.equals(arg2)) {
+			final Term array = ((ApplicationTerm)term).getParameters()[0];
+			final Term index = ((ApplicationTerm)term).getParameters()[1];
+			final EqNode indexNode = getNodeFromTerm(index, state);
+			if (fnNodeMap.containsKey(array)) {
+				for (final EqFunctionNode fnNode : fnNodeMap.get(array)) {
+					if (fnNode.getArg().equals(indexNode)) {
 						return fnNode;
 					}
 				}
@@ -286,7 +270,7 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 		return null;
 	}
 
-	private boolean isArray(Term term, VPState state) {
+	private boolean isArray(final Term term, final VPState state) {
 		for (Term key : state.getTermToFnNodeMap().keySet()) {
 			if (term.equals(key)) {
 				return true;

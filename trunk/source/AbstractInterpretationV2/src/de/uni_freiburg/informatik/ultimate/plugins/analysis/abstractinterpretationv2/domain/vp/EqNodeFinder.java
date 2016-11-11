@@ -26,7 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.vp;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
@@ -69,9 +71,9 @@ public class EqNodeFinder extends NonRecursive {
 		@Override
 		public void walk(NonRecursive walker, ApplicationTerm term) {
 			if (term.getFunction().getName() == "select") {
-				mResultSet.add(new SelectArguments(term.getParameters()[0], term.getParameters()[1]));
+				mResultList.add(new SelectArguments(term.getParameters()[0], term.getParameters()[1]));
 			} else if (term.getFunction().getName() == "store") {
-				mResultSet.add(new StoreArguments(term.getParameters()[0], term.getParameters()[1], term.getParameters()[2]));
+				mResultList.add(new StoreArguments(term.getParameters()[0], term.getParameters()[1], term.getParameters()[2]));
 			}
 			for (final Term t : term.getParameters()) {
 				walker.enqueueWalker(new ArrayIndexFindWalker(t));
@@ -95,19 +97,19 @@ public class EqNodeFinder extends NonRecursive {
 		super();
 	}
 
-	private Set<SelectOrStoreArguments> mResultSet;
+	private List<SelectOrStoreArguments> mResultList;
 	private Set<Term> mVisited;
 	
-	public Set<SelectOrStoreArguments> findEqNode(Term term) {
+	public List<SelectOrStoreArguments> findEqNode(Term term) {
 		if (term == null) {
 			throw new NullPointerException();
 		}
 		mVisited = new HashSet<>();
-		mResultSet = new HashSet<SelectOrStoreArguments>();
+		mResultList = new ArrayList<SelectOrStoreArguments>();
 		run(new ArrayIndexFindWalker(term));
 		mVisited = null;
 
-		return mResultSet;
+		return mResultList;
 	}
 	
 	static class SelectOrStoreArguments {

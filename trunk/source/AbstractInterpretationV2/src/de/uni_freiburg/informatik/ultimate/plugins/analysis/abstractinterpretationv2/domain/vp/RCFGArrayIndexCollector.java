@@ -33,10 +33,13 @@ import java.util.Collection;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -85,8 +88,6 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 	protected void visit(final CodeBlock c) {
 		c.getPrettyPrintedStatements();
 		
-		final Set<EqNodeFinder.SelectOrStoreArguments> argsSet = new EqNodeFinder().findEqNode(c.getTransitionFormula().getFormula());
-
 		final Map<Term, Term> substitionMap = new HashMap<Term, Term>();
 		for (final Entry<IProgramVar, TermVariable> entry : c.getTransitionFormula().getInVars().entrySet()) {
 			substitionMap.put(entry.getValue(), entry.getKey().getTermVariable());
@@ -94,27 +95,45 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 		for (final Entry<IProgramVar, TermVariable> entry : c.getTransitionFormula().getOutVars().entrySet()) {
 			substitionMap.put(entry.getValue(), entry.getKey().getTermVariable());
 		}
+		
+		final Term transFormedTerm = new Substitution(mScript, substitionMap).transform(c.getTransitionFormula().getFormula());
+		final List<EqNodeFinder.SelectOrStoreArguments> argsList = new EqNodeFinder().findEqNode(transFormedTerm);
 
-		Term subArg0, subArg1, subArg2;
-		EqNode subArg1Node;
+		Term array, index, element;
+		int argsListSize = argsList.size();
+		EqNodeFinder.SelectOrStoreArguments selOrStore;
+		
+		for (int i = argsListSize - 1; i >= 0; i--) {
+			
+			selOrStore = argsList.get(i);
 
-		for (final EqNodeFinder.SelectOrStoreArguments selOrStore : argsSet) {
-
-			subArg0 = new Substitution(mScript, substitionMap).transform(selOrStore.function);
-			subArg1 = new Substitution(mScript, substitionMap).transform(selOrStore.arg);
-
-			subArg1Node = createNodeAndConnection(subArg1, null);
-			createNodeAndConnection(subArg0, subArg1Node);
-
+			array = selOrStore.function;
+			index = selOrStore.arg;			
 			if (selOrStore instanceof EqNodeFinder.StoreArguments) {
-				subArg2 = new Substitution(mScript, substitionMap).transform(((EqNodeFinder.StoreArguments) selOrStore).arg2);
-
-				createNodeAndConnection(subArg2, null);
+				element = ((EqNodeFinder.StoreArguments) selOrStore).arg2;
+			} else {
+				element = null;
+			}
+			
+			createNode(array, indexAndElementHandler(index));
+			if (element != null) {
+				indexAndElementHandler(element);
 			}
 		}
 	}
-
-	private EqNode createNodeAndConnection(final Term term, final EqNode arg) {
+	
+	private EqNode indexAndElementHandler(final Term index) {
+				
+		if (index instanceof TermVariable || index instanceof ConstantTerm) {
+			return createNode(index, null);
+		} else if (index instanceof ApplicationTerm) {
+			return getAppNode((ApplicationTerm)index);
+		}
+		
+		return null;
+	}
+	
+	private EqNode createNode(final Term term, final EqNode arg) {
 		
 		if (arg == null) {
 			return getEqBaseNode(term);
@@ -123,6 +142,14 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 		}			
 	}
 
+	private EqNode getAppNode(ApplicationTerm appTerm) {
+		if (appTerm.getParameters()[1] instanceof ApplicationTerm) {
+			return getEqFnNode(appTerm.getParameters()[0], getAppNode((ApplicationTerm)appTerm.getParameters()[1]));
+		} else {
+			return getEqFnNode(appTerm.getParameters()[0], getEqBaseNode(appTerm.getParameters()[1]));
+		}
+	}
+	
 	/**
 	 * 
 	 * @param term
@@ -145,7 +172,7 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 		
 		if (termToFnNodeMap.containsKey(term)) {
 			for (final EqFunctionNode fnNode : termToFnNodeMap.get(term)) {
-				if (fnNode.getArg().term.equals(arg.term)) {
+				if (fnNode.getArg().equals(arg)) {
 					return fnNode;
 				}
 			}			
