@@ -493,8 +493,10 @@ public final class SmtUtils {
 		} else if (fstValue instanceof Rational && sndValue instanceof BigInteger) {
 			sndValue = Rational.valueOf((BigInteger) sndValue, BigInteger.ONE);
 		}
-		if (fstValue.getClass() != sndValue.getClass()) {
-			throw new UnsupportedOperationException("First value is " + fstValue.getClass().getSimpleName()
+		if (!fstValue.getClass().isAssignableFrom(sndValue.getClass()) && 
+				sndValue.getClass().isAssignableFrom(fst.getClass())) {
+			throw new UnsupportedOperationException("Incompatible classes. "
+					+ "First value is " + fstValue.getClass().getSimpleName()
 					+ " second value is " + sndValue.getClass().getSimpleName());
 		}
 		return !fstValue.equals(sndValue);
