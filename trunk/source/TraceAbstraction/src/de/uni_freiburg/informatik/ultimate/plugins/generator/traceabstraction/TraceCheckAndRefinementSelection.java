@@ -137,7 +137,7 @@ public final class TraceCheckAndRefinementSelection {
 	/**
 	 * Predicate unifier.
 	 */
-	private PredicateUnifier mPredicateUnifier;
+	private final PredicateUnifier mPredicateUnifier;
 	/**
 	 * Hoare triple checker that was used.
 	 */
@@ -174,6 +174,10 @@ public final class TraceCheckAndRefinementSelection {
 		mUseLiveVariables = mGeneralPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_LIVE_VARIABLES);
 		mUseInterpolantConsolidation =
 				mGeneralPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_INTERPOLANTS_CONSOLIDATION);
+		
+		mPredicateUnifier = new PredicateUnifier(mServices, mCsToolkit.getManagedScript(),
+				mPredicateFactory, mIcfgContainer.getBoogie2SMT().getBoogie2SmtSymbolTable(),
+				mSimplificationTechnique, mXnfConversionTechnique);
 		
 		checkCounterexampleFeasibility(counterexample);
 		
@@ -236,15 +240,12 @@ public final class TraceCheckAndRefinementSelection {
 	}
 	
 	private FeasibilityCheckResult checkFeasibilityDefault(final IRun<CodeBlock, IPredicate, ?> counterexample) {
-		mPredicateUnifier = new PredicateUnifier(mServices, mCsToolkit.getManagedScript(),
-				mPredicateFactory, mIcfgContainer.getBoogie2SMT().getBoogie2SmtSymbolTable(),
-				mSimplificationTechnique, mXnfConversionTechnique);
-		
 		final ManagedScript mgdScriptTc = setupManagedScript();
 		
 		mInterpolatingTraceChecker = constructTraceChecker(counterexample, mgdScriptTc);
-		if (mInterpolatingTraceChecker.getToolchainCancelledExpection() != null) {
-			throw mInterpolatingTraceChecker.getToolchainCancelledExpection();
+		
+		if (mInterpolatingTraceChecker.getToolchainCanceledExpection() != null) {
+			throw mInterpolatingTraceChecker.getToolchainCanceledExpection();
 		} else if (mTaPrefs.useSeparateSolverForTracechecks()) {
 			mgdScriptTc.getScript().exit();
 		}
@@ -331,7 +332,7 @@ public final class TraceCheckAndRefinementSelection {
 				
 				break;
 			case PathInvariants: {
-				final boolean useNonlinerConstraints = mGeneralPrefs.getBoolean(
+				final boolean useNonlinearConstraints = mGeneralPrefs.getBoolean(
 						TraceAbstractionPreferenceInitializer.LABEL_NONLINEAR_CONSTRAINTS_IN_PATHINVARIANTS);
 				final boolean useVarsFromUnsatCore = mGeneralPrefs
 						.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_UNSAT_CORES_IN_PATHINVARIANTS);
@@ -340,7 +341,7 @@ public final class TraceCheckAndRefinementSelection {
 				final String baseNameOfDumpedScript =
 						"InVarSynth_" + mIcfgContainer.getFilename() + "_Iteration" + mIteration;
 				final String solverCommand;
-				if (useNonlinerConstraints) {
+				if (useNonlinearConstraints) {
 					// solverCommand = "yices-smt2 --incremental";
 					// solverCommand = "/home/matthias/ultimate/barcelogic/barcelogic-NIRA -tlimit 5";
 					solverCommand = "z3 -smt2 -in SMTLIB2_COMPLIANT=true -t:42000";
@@ -356,7 +357,7 @@ public final class TraceCheckAndRefinementSelection {
 						new InterpolatingTraceCheckerPathInvariantsWithFallback(truePredicate, falsePredicate,
 								new TreeMap<Integer, IPredicate>(), (NestedRun<CodeBlock, IPredicate>) counterexample,
 								mCsToolkit, mAssertCodeBlocksIncrementally, mServices,
-								mToolchainStorage, true, mPredicateUnifier, useNonlinerConstraints,
+								mToolchainStorage, true, mPredicateUnifier, useNonlinearConstraints,
 								useVarsFromUnsatCore,
 								settings, mXnfConversionTechnique,
 								mSimplificationTechnique, mIcfgContainer.getBoogie2SMT().getAxioms());

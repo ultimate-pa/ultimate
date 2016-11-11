@@ -339,8 +339,8 @@ public class TotalInterpolationAutomatonBuilder implements IInterpolantAutomaton
 			throw new UnsupportedOperationException("unsupported interpolation");
 		}
 		mBenchmarkGenerator.addTraceCheckerData(tc.getTraceCheckerBenchmark());
-		if (tc.getToolchainCancelledExpection() != null) {
-			throw tc.getToolchainCancelledExpection();
+		if (tc.getToolchainCanceledExpection() != null) {
+			throw tc.getToolchainCanceledExpection();
 		}
 		if (tc.isCorrect() == LBool.UNSAT) {
 			mBenchmarkGenerator.incrementUsefullRunGeq2();

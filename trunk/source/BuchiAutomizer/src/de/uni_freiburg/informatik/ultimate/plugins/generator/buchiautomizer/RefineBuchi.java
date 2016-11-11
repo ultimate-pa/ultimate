@@ -526,8 +526,8 @@ public class RefineBuchi {
 		default:
 			throw new UnsupportedOperationException("unsupported interpolation");
 		}
-		if (itc.getToolchainCancelledExpection() != null) {
-			throw itc.getToolchainCancelledExpection();
+		if (itc.getToolchainCanceledExpection() != null) {
+			throw itc.getToolchainCanceledExpection();
 		}
 		return itc;
 	}
