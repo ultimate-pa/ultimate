@@ -46,12 +46,12 @@ public class InterpolationTestSuiteInteger extends InterpolationTestSuite {
 		final List<Pair<String, String>> rtr = new ArrayList<>();
 		rtr.addAll(getReachIntegerAutomizer());
 		rtr.addAll(getReachIntegerKojak());
-		rtr.addAll(getReachIntegerImpulse());
 		return rtr;
 	}
 	
 	@Override
 	protected int getFilesPerDirectory() {
+		// 5 is 5264
 		return 5;
 	}
 }

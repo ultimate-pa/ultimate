@@ -306,8 +306,8 @@ public class TraceChecker {
 						mNestedFormulas.getPostcondition(), mPendingContexts, mNestedFormulas.getTrace(),
 						mCsToolkit, withBE, AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, true,
 						true, mTcSmtManager);
-				if (tc.getToolchainCancelledExpection() != null) {
-					throw tc.getToolchainCancelledExpection();
+				if (tc.getToolchainCanceledExpection() != null) {
+					throw tc.getToolchainCanceledExpection();
 				}
 				assert tc.isCorrect() == LBool.SAT : "result of second trace check is different";
 				mRcfgProgramExecution = tc.getRcfgProgramExecution();
@@ -444,7 +444,7 @@ public class TraceChecker {
 	 * Returns the {@link ToolchainCanceledException} that was thrown if the computation was cancelled. If the
 	 * computation was not cancelled, we return null.
 	 */
-	public ToolchainCanceledException getToolchainCancelledExpection() {
+	public ToolchainCanceledException getToolchainCanceledExpection() {
 		return mToolchainCanceledException;
 	}
 	

@@ -424,8 +424,8 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		final TraceChecker tc =
 				new TraceChecker(rv.getPrecondition(), rv.getPostcondition(), new TreeMap<Integer, IPredicate>(),
 						rv.getTrace(), mCsToolkit, rv, AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, true);
-		if (tc.getToolchainCancelledExpection() != null) {
-			throw tc.getToolchainCancelledExpection();
+		if (tc.getToolchainCanceledExpection() != null) {
+			throw tc.getToolchainCanceledExpection();
 		}
 		final boolean result = (tc.isCorrect() != LBool.SAT);
 		return result;

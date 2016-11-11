@@ -46,12 +46,12 @@ public class InterpolationTestSuiteMemsafety extends InterpolationTestSuite {
 		final List<Pair<String, String>> rtr = new ArrayList<>();
 		rtr.addAll(getMemsafetyAutomizer());
 		rtr.addAll(getMemsafetyKojak());
-		rtr.addAll(getMemsafetyImpulse());
 		return rtr;
 	}
 	
 	@Override
 	protected int getFilesPerDirectory() {
+		// all is 5376 (ok)
 		return super.getFilesPerDirectory();
 	}
 }

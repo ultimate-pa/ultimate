@@ -62,27 +62,28 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 	private final VPStateTop mTopState;
 	private final VPStateBottom mBottomState;
 	
-	public VPDomain(final ILogger logger, ManagedScript script, 
-			IUltimateServiceProvider services,
+	public VPDomain(final ILogger logger, 
+			final ManagedScript script, 
+			final IUltimateServiceProvider services,
 			final Set<EqGraphNode> eqGraphNodeSet, 
 			final Map<Term, EqBaseNode> termToBaseNodeMap,
 			final Map<Term, Set<EqFunctionNode>> termToFnNodeMap,
 			final Map<EqNode, EqGraphNode> eqNodeToEqGraphNodeMap) {
+		mLogger = logger;
 		mEqGraphNodeSet = eqGraphNodeSet;
 		mTermToBaseNodeMap = termToBaseNodeMap;
 		mTermToFnNodeMap = termToFnNodeMap;
 		mEqNodeToEqGraphNodeMap = eqNodeToEqGraphNodeMap;
 		mDisEqualityMap = new HashSet<VPDomainSymmetricPair<EqNode>>();
 		mBottomState = new VPStateBottom();
-		mTopState = new VPStateTop(mEqGraphNodeSet, mTermToBaseNodeMap, mTermToFnNodeMap, mEqNodeToEqGraphNodeMap, mDisEqualityMap, mBottomState);
-		mPost = new VPPostOperator(script, services, mTopState, mBottomState);
+		mTopState = new VPStateTop(mEqGraphNodeSet, mTermToBaseNodeMap, mTermToFnNodeMap, mEqNodeToEqGraphNodeMap, mDisEqualityMap, this);
+		mPost = new VPPostOperator(script, services, this);
 		mMerge = new VPMergeOperator();
-		mLogger = logger;
 	}
 
 	@Override
 	public VPState createFreshState() {
-		return new VPState(mEqGraphNodeSet, mTermToBaseNodeMap, mTermToFnNodeMap, mEqNodeToEqGraphNodeMap, mDisEqualityMap, mBottomState);
+		return new VPState(mEqGraphNodeSet, mTermToBaseNodeMap, mTermToFnNodeMap, mEqNodeToEqGraphNodeMap, mDisEqualityMap, this);
 	}
 
 	@Override
@@ -109,18 +110,7 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 
 		@Override
 		public VPState apply(final VPState first, final VPState second) {
-			final VPState rtr = first.union(second);
-			if (mLogger.isDebugEnabled()) {
-				final StringBuilder sb = new StringBuilder();
-				sb.append("merge(");
-				sb.append(first.toLogString());
-				sb.append(',');
-				sb.append(second.toLogString());
-				sb.append(") = ");
-				sb.append(rtr.toLogString());
-				mLogger.debug(sb);
-			}
-			return rtr;
+			return first.disjoin(second);
 		}
 	}
 
@@ -138,6 +128,14 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 
 	public Map<EqNode, EqGraphNode> getmEqNodeToEqGraphNodeMap() {
 		return mEqNodeToEqGraphNodeMap;
+	}
+	
+	public VPStateTop getmTopState() {
+		return mTopState;
+	}
+
+	public VPStateBottom getmBottomState() {
+		return mBottomState;
 	}
 
 }

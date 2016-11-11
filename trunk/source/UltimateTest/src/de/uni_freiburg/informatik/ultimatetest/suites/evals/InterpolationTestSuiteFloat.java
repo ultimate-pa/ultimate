@@ -45,11 +45,13 @@ public class InterpolationTestSuiteFloat extends InterpolationTestSuite {
 	protected List<Pair<String, String>> getToolchainSettings() {
 		final List<Pair<String, String>> rtr = new ArrayList<>();
 		rtr.addAll(getReachFloatAutomizer());
+		rtr.addAll(getReachFloatKojak());
 		return rtr;
 	}
 	
 	@Override
 	protected int getFilesPerDirectory() {
+		// all are 2322 (ok)
 		return super.getFilesPerDirectory();
 	}
 }

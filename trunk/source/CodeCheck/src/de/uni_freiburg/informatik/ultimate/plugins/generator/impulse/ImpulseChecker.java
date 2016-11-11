@@ -91,8 +91,8 @@ public class ImpulseChecker extends CodeChecker {
 				clones[i].getEdge(nodes[i + 1]).disconnect();
 				errorReached = true;
 			} else {
-				if (GlobalSettings._instance.defaultRedirection) {
-					if (GlobalSettings._instance.checkSatisfiability) {
+				if (GlobalSettings.INSTANCE.isDefaultRedirection()) {
+					if (GlobalSettings.INSTANCE.isCheckSatisfiability()) {
 						redirectIfValid(clones[i].getEdge(nodes[i + 1]), clones[i + 1]);
 					} else {
 						replaceEdge(clones[i].getEdge(nodes[i + 1]), clones[i + 1]);
@@ -100,7 +100,7 @@ public class ImpulseChecker extends CodeChecker {
 				} else {
 					AnnotatedProgramPoint clone = clones[i + 1];
 					final AppEdge prevEdge = clones[i].getEdge(nodes[i + 1]);
-					if (GlobalSettings._instance.redirectionStrategy != RedirectionStrategy.No_Strategy) {
+					if (GlobalSettings.INSTANCE.getRedirectionStrategy() != RedirectionStrategy.No_Strategy) {
 						clone = mCloneFinder.getStrongestValidCopy(prevEdge);
 					}
 
@@ -125,7 +125,7 @@ public class ImpulseChecker extends CodeChecker {
 			for (final AppEdge prevEdge : prevEdges) {
 				AnnotatedProgramPoint clone = clones[i];
 
-				if (GlobalSettings._instance.redirectionStrategy != RedirectionStrategy.No_Strategy) {
+				if (GlobalSettings.INSTANCE.getRedirectionStrategy() != RedirectionStrategy.No_Strategy) {
 					clone = mCloneFinder.getStrongestValidCopy(prevEdge);
 				}
 
@@ -145,7 +145,7 @@ public class ImpulseChecker extends CodeChecker {
 		if (isValidRedirection(edge, target)) {
 			if (edge instanceof AppHyperEdge) {
 
-				if (!GlobalSettings._instance.checkSatisfiability
+				if (!GlobalSettings.INSTANCE.isCheckSatisfiability()
 						|| mEdgeChecker.checkReturn(edge.getSource().getPredicate(),
 								((AppHyperEdge) edge).getHier().getPredicate(), (IReturnAction) edge.getStatement(),
 								edge.getTarget().getPredicate()) != Validity.VALID) {
@@ -154,7 +154,7 @@ public class ImpulseChecker extends CodeChecker {
 				}
 			} else {
 
-				boolean result = !GlobalSettings._instance.checkSatisfiability;
+				boolean result = !GlobalSettings.INSTANCE.isCheckSatisfiability();
 				if (!result) {
 					if (edge.getStatement() instanceof Call) {
 						result = mEdgeChecker.checkCall(edge.getSource().getPredicate(),
@@ -206,7 +206,7 @@ public class ImpulseChecker extends CodeChecker {
 		}
 		redirectEdges(nodes, clones);
 
-		if (GlobalSettings._instance.removeFalseNodes) {
+		if (GlobalSettings.INSTANCE.isRemoveFalseNodes()) {
 			removeFalseNodes(nodes, clones);
 		}
 
@@ -274,7 +274,7 @@ public class ImpulseChecker extends CodeChecker {
 			return false;
 		}
 
-		if (GlobalSettings._instance._memoizeNormalEdgeChecks) {
+		if (GlobalSettings.INSTANCE.isMemoizeNormalEdgeChecks()) {
 			if (mSatTriples.get(sourceNode.getPredicate(), edgeLabel,
 					destinationNode.getPredicate()) == IsContained.IsContained) {
 				mMemoizationHitsSat++;
@@ -296,7 +296,7 @@ public class ImpulseChecker extends CodeChecker {
 					destinationNode.getPredicate()) == Validity.VALID;
 		}
 
-		if (GlobalSettings._instance._memoizeNormalEdgeChecks) {
+		if (GlobalSettings.INSTANCE.isMemoizeNormalEdgeChecks()) {
 			if (result) {
 				mSatTriples.put(sourceNode.getPredicate(), edgeLabel, destinationNode.getPredicate(),
 						IsContained.IsContained);
@@ -311,7 +311,7 @@ public class ImpulseChecker extends CodeChecker {
 
 	public boolean isValidReturnEdge(final AnnotatedProgramPoint sourceNode, final CodeBlock edgeLabel,
 			final AnnotatedProgramPoint destinationNode, final AnnotatedProgramPoint callNode) {
-		if (GlobalSettings._instance._memoizeReturnEdgeChecks) {
+		if (GlobalSettings.INSTANCE.isMemoizeReturnEdgeChecks()) {
 			if (mSatQuadruples.get(sourceNode.getPredicate(), callNode.getPredicate(), edgeLabel,
 					destinationNode.getPredicate()) == IsContained.IsContained) {
 				mMemoizationReturnHitsSat++;
@@ -327,7 +327,7 @@ public class ImpulseChecker extends CodeChecker {
 		final boolean result = mEdgeChecker.checkReturn(sourceNode.getPredicate(), callNode.getPredicate(),
 				(IReturnAction) edgeLabel, destinationNode.getPredicate()) == Validity.VALID;
 
-		if (GlobalSettings._instance._memoizeReturnEdgeChecks) {
+		if (GlobalSettings.INSTANCE.isMemoizeReturnEdgeChecks()) {
 			if (result) {
 				mSatQuadruples.put(sourceNode.getPredicate(), callNode.getPredicate(), edgeLabel,
 						destinationNode.getPredicate(), IsContained.IsContained);

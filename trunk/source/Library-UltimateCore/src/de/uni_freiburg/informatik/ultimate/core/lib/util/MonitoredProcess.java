@@ -48,6 +48,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IStorable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -300,7 +301,8 @@ public final class MonitoredProcess implements IStorable {
 			throw new IllegalArgumentException("gracePeriod must be non-negative");
 		}
 		mLogger.info(String.format("Waiting until toolchain timeout for monitored process %s with %s", mID, mCommand));
-		while (mServices.getProgressMonitorService().continueProcessing()) {
+		final IProgressMonitorService progressService = mServices.getProgressMonitorService();
+		while (progressService != null && progressService.continueProcessing()) {
 			try {
 				final MonitoredProcessState state = waitfor(WAIT_BETWEEN_CHECKS_MILLIS);
 				if (!state.isRunning()) {

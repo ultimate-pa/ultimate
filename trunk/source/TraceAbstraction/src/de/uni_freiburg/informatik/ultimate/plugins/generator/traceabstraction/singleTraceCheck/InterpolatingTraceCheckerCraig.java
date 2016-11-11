@@ -87,13 +87,29 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 			final PredicateUnifier predicateUnifier, final InterpolationTechnique interpolation,
 			final ManagedScript mgdScriptTc, final boolean instanticateArrayExt,
 			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique,
-			final List<? extends Object> controlLocationSequence) {
+			final List<? extends Object> controlLocationSequence,
+			final boolean innerRecursiveNestedInterpolationCall) {
 		super(precondition, postcondition, pendingContexts, trace, csToolkit, assertCodeBlocksIncrementally, services,
 				computeRcfgProgramExecution, predicateUnifier, mgdScriptTc, simplificationTechnique,
 				xnfConversionTechnique, controlLocationSequence);
 		mInstantiateArrayExt = instanticateArrayExt;
 		if (isCorrect() == LBool.UNSAT) {
 			computeInterpolants(new AllIntegers(), interpolation);
+			mTraceCheckerBenchmarkGenerator.reportSequenceOfInterpolants(Arrays.asList(mInterpolants),
+					InterpolantType.Craig);
+			if (!innerRecursiveNestedInterpolationCall) {
+				mTraceCheckerBenchmarkGenerator.reportInterpolantComputation();
+				if (mControlLocationSequence != null) {
+					final BackwardCoveringInformation bci = TraceCheckerUtils.computeCoverageCapability(mServices, getIpp(),
+							mControlLocationSequence, mLogger, mPredicateUnifier);
+					final boolean perfectSequence =
+							(bci.getPotentialBackwardCoverings() == bci.getSuccessfullBackwardCoverings());
+					if (perfectSequence) {
+						mTraceCheckerBenchmarkGenerator.reportPerfectInterpolantSequences();
+					}
+					mTraceCheckerBenchmarkGenerator.addBackwardCoveringInformation(bci);
+				}
+			}
 		}
 	}
 
@@ -107,7 +123,7 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 			final List<? extends Object> controlLocationSequence) {
 		this(precondition, postcondition, pendingContexts, trace, csToolkit, assertCodeBlocksIncrementally, services,
 				computeRcfgProgramExecution, predicateUnifier, interpolation, csToolkit.getManagedScript(),
-				instanticateArrayExt, xnfConversionTechnique, simplificationTechnique, controlLocationSequence);
+				instanticateArrayExt, xnfConversionTechnique, simplificationTechnique, controlLocationSequence, false);
 	}
 
 	// protected int[] getSizeOfPredicates(InterpolationTechnique interpolation) {
@@ -143,19 +159,6 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 				break;
 			default:
 				throw new UnsupportedOperationException("unsupportedInterpolation");
-			}
-			mTraceCheckerBenchmarkGenerator.reportSequenceOfInterpolants(Arrays.asList(mInterpolants),
-					InterpolantType.Craig);
-			mTraceCheckerBenchmarkGenerator.reportInterpolantComputation();
-			if (mControlLocationSequence != null) {
-				final BackwardCoveringInformation bci = TraceCheckerUtils.computeCoverageCapability(mServices, getIpp(),
-						mControlLocationSequence, mLogger, mPredicateUnifier);
-				final boolean perfectSequence =
-						(bci.getPotentialBackwardCoverings() == bci.getSuccessfullBackwardCoverings());
-				if (perfectSequence) {
-					mTraceCheckerBenchmarkGenerator.reportPerfectInterpolantSequences();
-				}
-				mTraceCheckerBenchmarkGenerator.addBackwardCoveringInformation(bci);
 			}
 			mTraceCheckFinished = true;
 		} catch (final ToolchainCanceledException tce) {
@@ -298,7 +301,7 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 					new InterpolatingTraceCheckerCraig(precondition, interpolantAtReturnPosition, pendingContexts,
 							subtrace, mCsToolkit, massertCodeBlocksIncrementally, mServices, false, mPredicateUnifier,
 							InterpolationTechnique.Craig_NestedInterpolation, mTcSmtManager, mInstantiateArrayExt,
-							mXnfConversionTechnique, mSimplificationTechnique, mControlLocationSequence);
+							mXnfConversionTechnique, mSimplificationTechnique, null, true);
 			final LBool isSafe = tc.isCorrect();
 			if (isSafe == LBool.SAT) {
 				throw new AssertionError(

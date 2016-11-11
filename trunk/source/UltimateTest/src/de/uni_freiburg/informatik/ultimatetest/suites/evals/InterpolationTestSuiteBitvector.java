@@ -46,12 +46,12 @@ public class InterpolationTestSuiteBitvector extends InterpolationTestSuite {
 		final List<Pair<String, String>> rtr = new ArrayList<>();
 		rtr.addAll(getReachBitvectorAutomizer());
 		rtr.addAll(getReachBitvectorKojak());
-		rtr.addAll(getReachBitvectorImpulse());
 		return rtr;
 	}
 	
 	@Override
 	protected int getFilesPerDirectory() {
+		// 5 is 4512
 		return 5;
 	}
 }
