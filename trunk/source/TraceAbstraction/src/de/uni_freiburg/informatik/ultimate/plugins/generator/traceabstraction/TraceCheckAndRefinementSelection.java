@@ -148,7 +148,9 @@ public final class TraceCheckAndRefinementSelection {
 			final BoogieIcfgContainer icfgContainer, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique, final InterpolationTechnique interpolation,
 			final IToolchainStorage toolchainStorage, final CegarLoopStatisticsGenerator cegarLoopBenchmark,
-			final InterpolantAutomatonBuilderFactory interpolantAutomatonBuilderFactory, final int iteration) {
+			final InterpolantAutomatonBuilderFactory interpolantAutomatonBuilderFactory, final int iteration,
+			final IRun<CodeBlock, IPredicate, ?> counterexample,
+			final IAutomaton<CodeBlock, IPredicate> abstraction) throws AutomataOperationCanceledException {
 		// initialize settings etc. (TODO move this to a preference factory)
 		mServices = services;
 		mLogger = logger;
@@ -172,6 +174,12 @@ public final class TraceCheckAndRefinementSelection {
 		mUseLiveVariables = mGeneralPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_LIVE_VARIABLES);
 		mUseInterpolantConsolidation =
 				mGeneralPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_INTERPOLANTS_CONSOLIDATION);
+		
+		checkCounterexampleFeasibility(counterexample);
+		
+		if (mFeasibility == LBool.UNSAT) {
+			constructInterpolantAutomaton(counterexample, abstraction);
+		}
 	}
 	
 	public LBool getCounterexampleFeasibility() {

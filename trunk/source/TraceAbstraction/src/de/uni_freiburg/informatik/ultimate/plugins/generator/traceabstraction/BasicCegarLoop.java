@@ -285,12 +285,11 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	}
 	
 	@Override
-	protected LBool isCounterexampleFeasible() {
+	protected LBool isCounterexampleFeasible() throws AutomataOperationCanceledException {
 		mTraceCheckAndRefinementSelection = new TraceCheckAndRefinementSelection(mServices, mLogger, mPref, mCsToolkit,
 				mPredicateFactory, mIcfgContainer, mSimplificationTechnique, mXnfConversionTechnique, mInterpolation,
-				mToolchainStorage, mCegarLoopBenchmark, mInterpolantAutomatonBuilderFactory, mIteration);
-		
-		mTraceCheckAndRefinementSelection.checkCounterexampleFeasibility(mCounterexample);
+				mToolchainStorage, mCegarLoopBenchmark, mInterpolantAutomatonBuilderFactory, mIteration,
+				mCounterexample, mAbstraction);
 		
 		final PredicateUnifier predicateUnifier = mTraceCheckAndRefinementSelection.getPredicateUnifier();
 		final LBool feasibility = mTraceCheckAndRefinementSelection.getCounterexampleFeasibility();
@@ -337,8 +336,6 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	
 	@Override
 	protected void constructInterpolantAutomaton() throws AutomataOperationCanceledException {
-		mTraceCheckAndRefinementSelection.constructInterpolantAutomaton(mCounterexample, mAbstraction);
-		
 		mInterpolAutomaton = mTraceCheckAndRefinementSelection.getInterpolantAutomaton();
 		mInterpolantGenerator = mTraceCheckAndRefinementSelection.getInterpolantGenerator();
 		

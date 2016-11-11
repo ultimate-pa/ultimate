@@ -221,8 +221,13 @@ public abstract class AbstractCegarLoop {
 	 * <li>UNSAT if the trace is infeasible
 	 * <li>UNKNOWN if the algorithm was not able to determine the feasibility.
 	 * </ul>
+	 *
+	 * @throws AutomataOperationCanceledException
+	 * 
+	 * TODO Christian 2016-11-11: Merge the methods isCounterexampleFeasible() and constructInterpolantAutomaton()
+	 *      after {@link TreeAutomizerCEGAR} does not depend on this class anymore.
 	 */
-	protected abstract LBool isCounterexampleFeasible();
+	protected abstract LBool isCounterexampleFeasible() throws AutomataOperationCanceledException;
 	
 	/**
 	 * Construct an automaton mInterpolantAutomaton which
@@ -334,6 +339,7 @@ public abstract class AbstractCegarLoop {
 			if (mPref.dumpAutomata()) {
 				mDumper = new Dumper(mLogger, mPref, mName, mIteration);
 			}
+			
 			try {
 				final LBool isCounterexampleFeasible = isCounterexampleFeasible();
 				if (isCounterexampleFeasible == Script.LBool.SAT) {
@@ -345,14 +351,6 @@ public abstract class AbstractCegarLoop {
 					mReasonUnknown = new UnprovabilityReason("unable to decide satisfiability of path constraint");
 					return Result.UNKNOWN;
 				}
-			} catch (final ToolchainCanceledException e) {
-				mRunningTaskStackProvider = e;
-				mLogger.warn("Verification cancelled");
-				mCegarLoopBenchmark.setResult(Result.TIMEOUT);
-				return Result.TIMEOUT;
-			}
-			
-			try {
 				constructInterpolantAutomaton();
 			} catch (final AutomataOperationCanceledException e1) {
 				mLogger.warn("Verification cancelled");
