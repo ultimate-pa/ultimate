@@ -69,6 +69,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerSpWp;
 
+/**
+ * Checks a trace for feasibility and, if infeasible, selects a refinement strategy, i.e., constructs an interpolant
+ * automaton.<br>
+ * This class is used in the {@link BasicCegarLoop}.
+ * 
+ * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+ */
 public final class TraceCheckAndRefinementSelection {
 	/* inputs */
 	
@@ -276,7 +283,7 @@ public final class TraceCheckAndRefinementSelection {
 		}
 		return mgdScriptTc;
 	}
-
+	
 	private void constructInterpolatingTraceChecker(final IRun<CodeBlock, IPredicate, ?> counterexample)
 			throws AssertionError {
 		final ManagedScript mgdScriptTc = setupManagedScript();
@@ -317,7 +324,7 @@ public final class TraceCheckAndRefinementSelection {
 						counterexample.getStateSequence());
 				
 				break;
-			case PathInvariants: {
+			case PathInvariants:
 				final boolean useNonlinearConstraints = mGeneralPrefs.getBoolean(
 						TraceAbstractionPreferenceInitializer.LABEL_NONLINEAR_CONSTRAINTS_IN_PATHINVARIANTS);
 				final boolean useVarsFromUnsatCore = mGeneralPrefs
@@ -347,7 +354,6 @@ public final class TraceCheckAndRefinementSelection {
 								useVarsFromUnsatCore,
 								settings, mXnfConversionTechnique,
 								mSimplificationTechnique, mIcfgContainer.getBoogie2SMT().getAxioms());
-			}
 				break;
 			default:
 				throw new UnsupportedOperationException("unsupported interpolation");
@@ -355,7 +361,7 @@ public final class TraceCheckAndRefinementSelection {
 		mCegarLoopBenchmark.addTraceCheckerData(interpolatingTraceChecker.getTraceCheckerBenchmark());
 		return interpolatingTraceChecker;
 	}
-
+	
 	private IInterpolantGenerator constructInterpolantGenerator(final IRun<CodeBlock, IPredicate, ?> counterexample)
 			throws AssertionError {
 		final IInterpolantGenerator interpolantGenerator;
@@ -403,8 +409,7 @@ public final class TraceCheckAndRefinementSelection {
 			throws AutomataOperationCanceledException {
 		final IInterpolantAutomatonBuilder<CodeBlock, IPredicate> builder =
 				mInterpolantAutomatonBuilderFactory.createBuilder(abstraction, mInterpolantGenerator, counterexample);
-		final NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton = builder.getResult();
-		return interpolantAutomaton;
+		return builder.getResult();
 	}
 	
 	/**
