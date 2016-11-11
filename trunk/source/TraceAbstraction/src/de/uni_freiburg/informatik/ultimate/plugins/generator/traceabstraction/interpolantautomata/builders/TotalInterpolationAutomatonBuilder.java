@@ -2,22 +2,22 @@
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE TraceAbstraction plug-in.
- * 
+ *
  * The ULTIMATE TraceAbstraction plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE TraceAbstraction plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE TraceAbstraction plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -94,8 +94,8 @@ public class TotalInterpolationAutomatonBuilder implements IInterpolantAutomaton
 
 	private final CfgSmtToolkit mCsToolkit;
 
-	private final ArrayDeque<IPredicate> mWorklist = new ArrayDeque<IPredicate>();
-	private final Set<IPredicate> mAnnotated = new HashSet<IPredicate>();
+	private final ArrayDeque<IPredicate> mWorklist = new ArrayDeque<>();
+	private final Set<IPredicate> mAnnotated = new HashSet<>();
 
 	// private final IPredicate mTruePredicate;
 	// private final IPredicate mFalsePredicate;
@@ -111,10 +111,11 @@ public class TotalInterpolationAutomatonBuilder implements IInterpolantAutomaton
 	private final ICfgSymbolTable mSymbolTable;
 
 	public TotalInterpolationAutomatonBuilder(final INestedWordAutomaton<CodeBlock, IPredicate> abstraction,
-			final ArrayList<IPredicate> stateSequence, final IInterpolantGenerator interpolantGenerator, final CfgSmtToolkit csToolkit,
-			final PredicateFactoryForInterpolantAutomata predicateFactory, final ModifiableGlobalVariableManager modifiableGlobals,
-			final InterpolationTechnique interpolation, final IUltimateServiceProvider services, final HoareTripleChecks hoareTripleChecks,
-			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique, 
+			final ArrayList<IPredicate> stateSequence, final IInterpolantGenerator interpolantGenerator,
+			final CfgSmtToolkit csToolkit, final PredicateFactoryForInterpolantAutomata predicateFactory,
+			final ModifiableGlobalVariableManager modifiableGlobals, final InterpolationTechnique interpolation,
+			final IUltimateServiceProvider services, final HoareTripleChecks hoareTripleChecks,
+			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
 			final ICfgSymbolTable symbolTable) throws AutomataOperationCanceledException {
 		super();
 		mServices = services;
@@ -127,12 +128,12 @@ public class TotalInterpolationAutomatonBuilder implements IInterpolantAutomaton
 		// mInterpolants = traceChecker.getInterpolants();
 		mPredicateUnifier = interpolantGenerator.getPredicateUnifier();
 		mAbstraction = abstraction;
-		final InCaReAlphabet<CodeBlock> alphabet = new InCaReAlphabet<CodeBlock>(abstraction);
+		final InCaReAlphabet<CodeBlock> alphabet = new InCaReAlphabet<>(abstraction);
 		mIA = (new StraightLineInterpolantAutomatonBuilder(mServices, alphabet, interpolantGenerator, predicateFactory))
 				.getResult();
 		mModifiedGlobals = modifiableGlobals;
 		mInterpolation = interpolation;
-		mEpimorphism = new AutomatonEpimorphism<IPredicate>(new AutomataLibraryServices(mServices));
+		mEpimorphism = new AutomatonEpimorphism<>(new AutomataLibraryServices(mServices));
 		{
 			final IPredicate firstAutomatonState = mStateSequence.get(0);
 			mEpimorphism.insert(firstAutomatonState, interpolantGenerator.getPrecondition());
@@ -146,7 +147,8 @@ public class TotalInterpolationAutomatonBuilder implements IInterpolantAutomaton
 			mAnnotated.add(lastAutomatonState);
 			mWorklist.add(lastAutomatonState);
 		}
-		mHtc = TraceAbstractionUtils.constructEfficientHoareTripleChecker(services, HoareTripleChecks.MONOLITHIC, mCsToolkit, mPredicateUnifier);
+		mHtc = TraceAbstractionUtils.constructEfficientHoareTripleChecker(services, HoareTripleChecks.MONOLITHIC,
+				mCsToolkit, mPredicateUnifier);
 		for (final IPredicate state : stateSequence) {
 			mWorklist.add(state);
 			mAnnotated.add(state);
@@ -173,8 +175,9 @@ public class TotalInterpolationAutomatonBuilder implements IInterpolantAutomaton
 
 	}
 
-	private void continueCheckForOutgoingPath(final IPredicate p, final ITransitionlet<CodeBlock, IPredicate> transition,
-			final IPredicate succ) throws AutomataOperationCanceledException {
+	private void continueCheckForOutgoingPath(final IPredicate p,
+			final ITransitionlet<CodeBlock, IPredicate> transition, final IPredicate succ)
+			throws AutomataOperationCanceledException {
 		if (mAnnotated.contains(succ)) {
 			final IPredicate predItp = mEpimorphism.getMapping(p);
 			final IPredicate succItp = mEpimorphism.getMapping(succ);
@@ -222,7 +225,7 @@ public class TotalInterpolationAutomatonBuilder implements IInterpolantAutomaton
 		}
 	}
 
-	private NestedRun<CodeBlock, IPredicate> constructRunOfLengthOne(final IPredicate p,
+	private static NestedRun<CodeBlock, IPredicate> constructRunOfLengthOne(final IPredicate p,
 			final ITransitionlet<CodeBlock, IPredicate> transition) {
 		if (transition instanceof OutgoingInternalTransition) {
 			final OutgoingInternalTransition<CodeBlock, IPredicate> internalTrans =
@@ -286,7 +289,8 @@ public class TotalInterpolationAutomatonBuilder implements IInterpolantAutomaton
 		}
 	}
 
-	private void caseDistinction(final IPredicate p, final ITransitionlet<CodeBlock, IPredicate> transition, final IPredicate succ) {
+	private static void caseDistinction(final IPredicate p, final ITransitionlet<CodeBlock, IPredicate> transition,
+			final IPredicate succ) {
 		if (transition instanceof OutgoingInternalTransition) {
 			final OutgoingInternalTransition<CodeBlock, IPredicate> internalTrans =
 					(OutgoingInternalTransition<CodeBlock, IPredicate>) transition;
@@ -317,18 +321,16 @@ public class TotalInterpolationAutomatonBuilder implements IInterpolantAutomaton
 		switch (mInterpolation) {
 		case Craig_NestedInterpolation:
 		case Craig_TreeInterpolation:
-			tc = new InterpolatingTraceCheckerCraig(precondition, postcondition,
-					pendingContexts, run.getWord(),
-					mCsToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices,
-					true, mPredicateUnifier, mInterpolation, true, mXnfConversionTechnique, mSimplificationTechnique,
-					run.getStateSequence());
+			tc = new InterpolatingTraceCheckerCraig(precondition, postcondition, pendingContexts, run.getWord(),
+					mCsToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, true, mPredicateUnifier,
+					mInterpolation, true, mXnfConversionTechnique, mSimplificationTechnique, run.getStateSequence());
 			break;
 		case ForwardPredicates:
 		case BackwardPredicates:
 		case FPandBP:
 			tc = new TraceCheckerSpWp(precondition, postcondition, pendingContexts, run.getWord(), mCsToolkit,
-					AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true, mServices,
-					true, mPredicateUnifier, mInterpolation, mCsToolkit.getManagedScript(), mXnfConversionTechnique, 
+					AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true, mServices, true,
+					mPredicateUnifier, mInterpolation, mCsToolkit.getManagedScript(), mXnfConversionTechnique,
 					mSimplificationTechnique, run.getStateSequence());
 
 			break;
@@ -354,13 +356,13 @@ public class TotalInterpolationAutomatonBuilder implements IInterpolantAutomaton
 		final SortedMap<Integer, IPredicate> result = new TreeMap<>();
 		for (final int pendingReturnPos : run.getWord().getPendingReturns().keySet()) {
 			final IPredicate linPred = run.getStateAtPosition(pendingReturnPos);
-			final Iterable<IPredicate> hierPreds = mAbstraction.hierarchicalPredecessorsOutgoing(linPred, run.getSymbol(pendingReturnPos));
+			final Iterable<IPredicate> hierPreds =
+					mAbstraction.hierarchicalPredecessorsOutgoing(linPred, run.getSymbol(pendingReturnPos));
 			final IPredicate hierPred = getSomeAnnotatedState(hierPreds);
 			if (hierPred == null) {
 				throw new AssertionError("found nothing");
-			} else {
-				result.put(pendingReturnPos, mEpimorphism.getMapping(hierPred));
 			}
+			result.put(pendingReturnPos, mEpimorphism.getMapping(hierPred));
 		}
 		return result;
 	}
@@ -423,8 +425,8 @@ public class TotalInterpolationAutomatonBuilder implements IInterpolantAutomaton
 
 	private NestedRun<CodeBlock, IPredicate> findRun(final IPredicate p, final Set<IPredicate> annotated)
 			throws AutomataOperationCanceledException {
-		return (new IsEmpty<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), mAbstraction,
-				Collections.singleton(p), Collections.emptySet(), mAnnotated)).getNestedRun();
+		return (new IsEmpty<>(new AutomataLibraryServices(mServices), mAbstraction, Collections.singleton(p),
+				Collections.emptySet(), mAnnotated)).getNestedRun();
 	}
 
 	@Override
