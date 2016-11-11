@@ -85,6 +85,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TaCheckAndRefinementPreferences;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TaCheckAndRefinementPreferences.TaCheckAndRefinementSettingPolicy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.CounterexampleSearchStrategy;
@@ -289,9 +290,10 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				new TaCheckAndRefinementPreferences(mServices, mPref, mInterpolation);
 		final List<TaCheckAndRefinementPreferences> taCheckAndRefinementPrefsList =
 				Collections.singletonList(taCheckAndRefinementPrefs);
+		final TaCheckAndRefinementSettingPolicy settingsPolicy = TaCheckAndRefinementSettingPolicy.SEQUENTIAL;
 		mTraceCheckAndRefinementSelection = new TraceCheckAndRefinementSelection(mServices, mLogger,
-				taCheckAndRefinementPrefsList, mCsToolkit, mPredicateFactory, mIcfgContainer, mSimplificationTechnique,
-				mXnfConversionTechnique, mToolchainStorage, mCegarLoopBenchmark,
+				taCheckAndRefinementPrefsList, settingsPolicy, mCsToolkit, mPredicateFactory, mIcfgContainer,
+				mSimplificationTechnique, mXnfConversionTechnique, mToolchainStorage, mCegarLoopBenchmark,
 				mInterpolantAutomatonBuilderFactory, mPref, mIteration, mCounterexample, mAbstraction);
 		
 		final PredicateUnifier predicateUnifier = mTraceCheckAndRefinementSelection.getPredicateUnifier();

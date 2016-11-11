@@ -30,6 +30,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferencePro
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceCheckAndRefinementSelection;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
@@ -40,6 +41,18 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
 public class TaCheckAndRefinementPreferences {
+	/**
+	 * Policy how to choose the setting in {@link TraceCheckAndRefinementSelection}.
+	 * 
+	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+	 */
+	public enum TaCheckAndRefinementSettingPolicy {
+		/**
+		 * Chooses the settings in the list order.
+		 */
+		SEQUENTIAL
+	}
+	
 	private final InterpolationTechnique mInterpolationTechnique;
 	
 	private final boolean mUseSeparateSolverForTracechecks;
@@ -93,31 +106,31 @@ public class TaCheckAndRefinementPreferences {
 				ultimatePrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_UNSAT_CORES_IN_PATHINVARIANTS);
 	}
 	
-	public boolean useSeparateSolverForTracechecks() {
+	public boolean getUseSeparateSolverForTracechecks() {
 		return mUseSeparateSolverForTracechecks;
 	}
 	
-	public SolverMode solverMode() {
+	public SolverMode getSolverMode() {
 		return mSolverMode;
 	}
 	
-	public boolean fakeNonIncrementalSolver() {
+	public boolean getFakeNonIncrementalSolver() {
 		return mFakeNonIncrementalSolver;
 	}
 	
-	public String commandExternalSolver() {
+	public String getCommandExternalSolver() {
 		return mCommandExternalSolver;
 	}
 	
-	public boolean dumpSmtScriptToFile() {
+	public boolean getDumpSmtScriptToFile() {
 		return mDumpSmtScriptToFile;
 	}
 	
-	public String pathOfDumpedScript() {
+	public String getPathOfDumpedScript() {
 		return mPathOfDumpedScript;
 	}
 	
-	public String logicForExternalSolver() {
+	public String getLogicForExternalSolver() {
 		return mLogicForExternalSolver;
 	}
 	
@@ -125,7 +138,7 @@ public class TaCheckAndRefinementPreferences {
 		return mInterpolationTechnique;
 	}
 	
-	public AssertCodeBlockOrder assertCodeBlocksIncrementally() {
+	public AssertCodeBlockOrder getAssertCodeBlocksIncrementally() {
 		return mAssertCodeBlocksIncrementally;
 	}
 	
@@ -133,19 +146,19 @@ public class TaCheckAndRefinementPreferences {
 		return mUnsatCores;
 	}
 	
-	public boolean useLiveVariables() {
+	public boolean getUseLiveVariables() {
 		return mUseLiveVariables;
 	}
 	
-	public boolean useInterpolantConsolidation() {
+	public boolean getUseInterpolantConsolidation() {
 		return mUseInterpolantConsolidation;
 	}
 	
-	public boolean useNonlinearConstraints() {
+	public boolean getUseNonlinearConstraints() {
 		return mUseNonlinearConstraints;
 	}
 	
-	public boolean useVarsFromUnsatCore() {
+	public boolean getUseVarsFromUnsatCore() {
 		return mUseVarsFromUnsatCore;
 	}
 }
