@@ -108,6 +108,19 @@ def writeSettingsFile(path, fn) :
 
   print(automizerCommon, file=f)
 
+  if treeinterpolationKey in fn:
+   print(treeItpAutomizer, file=f)
+  elif nestedinterpolationKey in fn:
+   print(nestedItpAutomizer, file=f)
+  elif fpKey in fn:
+   print(fpItpAutomizer, file=f)
+  elif bpKey in fn:
+   print(bpItpAutomizer, file=f)
+  else:
+   print('ERROR: did not recognize interpolation mode')
+
+
+
   if solverSMTInterpolKey in fn and treeinterpolationKey in fn:
    print(solverCallSMTInterpolAutomizerInt, file=f)
    print(interpolationModeSMTInterpolAutomizer, file=f)
