@@ -341,13 +341,13 @@ interpolationModeSMTInterpolKojak = '''/instance/de.uni_freiburg.informatik.ulti
 interpolationModePrincessKojak = '''/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Use\ separate\ solver\ for\ tracechecks=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Choose\ which\ separate\ solver\ to\ use\ for\ tracechecks=External_PrincessInterpolationMode'''
 
-solverCallZ3KojakInt = '''/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Theory\ for\ external\ solver=AUFNIRA
+solverCallZ3KojakInt = '''/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Theory\ for\ external\ solver=AUFLIRA
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Command\ for\ calling\ external\ solver=z3 SMTLIB2_COMPLIANT\=true -memory\:2024 -smt2 -in'''
 
 solverCallSMTInterpolKojakInt = '''/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Theory\ for\ external\ solver=QF_AUFLIRA
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Command\ for\ calling\ external\ solver=smtinterpol -q'''
 
-solverCallPrincessKojakInt = '''/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Theory\ for\ external\ solver=AUFNIRA
+solverCallPrincessKojakInt = '''/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Theory\ for\ external\ solver=AUFLIRA
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Command\ for\ calling\ external\ solver=princess +incremental +stdin'''
 
 solverCallCVC4KojakInt = '''/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Theory\ for\ external\ solver=AUFLIRA
@@ -362,20 +362,12 @@ solverCallZ3KojakBitvector = '''/instance/de.uni_freiburg.informatik.ultimate.pl
 solverCallZ3KojakFloat = '''/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Theory\ for\ external\ solver=ALL
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Command\ for\ calling\ external\ solver=z3 SMTLIB2_COMPLIANT\=true -memory\:2024 -smt2 -in'''
 
-solverCallIZ3KojakBitvector = '''/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Theory\ for\ external\ solver=AUFBV
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Command\ for\ calling\ external\ solver=z3 SMTLIB2_COMPLIANT\=true -memory\:2024 -smt2 -in'''
-
-
 solverCallCVC4KojakBitvector = '''/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Theory\ for\ external\ solver=AUFBV
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Command\ for\ calling\ external\ solver=cvc4 --tear-down-incremental --rewrite-divk --print-success --lang smt'''
 
 
 solverCallMathSATKojakBitvector = '''/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Theory\ for\ external\ solver=AUFBV
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Command\ for\ calling\ external\ solver=mathsat'''
-
-
-solverCallExternalDefaultKojakFloat = '''/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Theory\ for\ external\ solver=ALL
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Command\ for\ calling\ external\ solver=z3 SMTLIB2_COMPLIANT\=true -memory\:2024 -smt2 -in'''
 
 solverCallMathSATKojakFloat = '''/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Theory\ for\ external\ solver=QF_BVFP
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Command\ for\ calling\ external\ solver=mathsat'''
