@@ -6,7 +6,6 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeRun;
-import de.uni_freiburg.informatik.ultimate.automata.tree.Tree;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeRun;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -20,7 +19,12 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
 
+/** SSABuilder
+ * @author mostafa (mostafa.amin93@gmail.com)
+ * A class the is used for building an SSA from a given TreeRun.
+ * */
 public class SSABuilder {
+	
 	private final ITreeRun<HCTransFormula, HCPredicate> mTreeRun;
 	private final HCPredicate mPostCondition;
 	private final HCPredicate mPreCondition;
@@ -34,19 +38,18 @@ public class SSABuilder {
 
 	private final TermTransferrer mTermTransferrer;
 
-	private final MultiElementCounter<TermVariable> mConstForTvCounter = new MultiElementCounter<TermVariable>();
+	private final MultiElementCounter<TermVariable> mConstForTvCounter = new MultiElementCounter<>();
 
 	private final Map<HCVar, Term> currentLocalAndOldVarVersion;
 
-	private final Map<HCVar, TreeMap<Integer, Term>> mIndexedVarRepresentative = new HashMap<HCVar, TreeMap<Integer, Term>>();
+	private final Map<HCVar, TreeMap<Integer, Term>> mIndexedVarRepresentative = new HashMap<>();
 
 	private final Map<Term, Integer> mCounters;
 	private int currentTree = -1;
-	private final Map<String, Term> mIndexedConstants = new HashMap<String, Term>();
+	private final Map<String, Term> mIndexedConstants = new HashMap<>();
 
 	public SSABuilder(final ITreeRun<HCTransFormula, HCPredicate> trace, final Script script,
-			final HCPredicate preCondition, final HCPredicate postCondition, 
-			final Map<Term, Integer> counters) {
+			final HCPredicate preCondition, final HCPredicate postCondition, final Map<Term, Integer> counters) {
 		mTreeRun = trace;
 		mScript = script;
 		mTermTransferrer = new TermTransferrer(mScript);
@@ -70,7 +73,7 @@ public class SSABuilder {
 	private final Map<TreeRun<HCTransFormula, HCPredicate>, Integer> idxMap = new HashMap<>();
 	private int curIdx = 0;
 
-	public int getIndex(final TreeRun<HCTransFormula, HCPredicate> tree) {
+	private int getIndex(final TreeRun<HCTransFormula, HCPredicate> tree) {
 		if (!idxMap.containsKey(tree)) {
 			idxMap.put(tree, ++curIdx);
 		}
@@ -85,15 +88,15 @@ public class SSABuilder {
 		}
 
 		if (tree.getRootSymbol() == null) {
-			return new TreeRun<Term, HCPredicate>(tree.getRoot(), null, childTrees);
+			return new TreeRun<>(tree.getRoot(), null, childTrees);
 		}
 		final VariableVersioneer vvRoot = new VariableVersioneer(tree.getRootSymbol());
 		vvRoot.versionInVars();
 		vvRoot.versionAssignedVars(getIndex(tree));
-		
+
 		currentTree = getIndex(tree);
 
-		return new TreeRun<Term, HCPredicate>(tree.getRoot(), vvRoot.getVersioneeredTerm(), childTrees);
+		return new TreeRun<>(tree.getRoot(), vvRoot.getVersioneeredTerm(), childTrees);
 	}
 
 	private HCSsa buildSSA() {
@@ -119,7 +122,6 @@ public class SSABuilder {
 			// variable was not yet assigned in the calling context
 			result = setCurrentVarVersion(bv, currentTree);
 		}
-
 		return result;
 	}
 
@@ -129,7 +131,6 @@ public class SSABuilder {
 	 */
 	private Term setCurrentVarVersion(final HCVar bv, final int index) {
 		final Term var = buildVersion(bv, index);
-
 		currentLocalAndOldVarVersion.put(bv, var);
 
 		return var;
@@ -142,7 +143,7 @@ public class SSABuilder {
 	private Term buildVersion(final HCVar bv, final int index) {
 		TreeMap<Integer, Term> index2constant = mIndexedVarRepresentative.get(bv);
 		if (index2constant == null) {
-			index2constant = new TreeMap<Integer, Term>();
+			index2constant = new TreeMap<>();
 			mIndexedVarRepresentative.put(bv, index2constant);
 		}
 		assert !index2constant.containsKey(index) : "version was already constructed";
@@ -153,7 +154,6 @@ public class SSABuilder {
 		return constant;
 	}
 
-	// TODO
 	private TermVariable transferToCurrentScriptIfNecessary(final TermVariable tv) {
 		final TermVariable result;
 		if (mTransferToScriptNeeded) {

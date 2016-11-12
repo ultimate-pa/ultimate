@@ -27,12 +27,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.BasePayloadContainer;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
@@ -41,16 +37,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserv
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HCTransFormula;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClause;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClausePredicateSymbol;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.graph.TreeAutomizerCEGAR;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.script.HornAnnot;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.script.HornClauseAST;
 
 /**
  * import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU; /**
@@ -95,14 +84,11 @@ public class TreeAutomizerObserver implements IUnmanagedObserver {
 		
 		final Map<String, IAnnotations> st = rootNode.getPayload().getAnnotations();
 		final HornAnnot annot = (HornAnnot) st.get("HoRNClauses");
-		System.err.println("TreeAutomizer");
-		System.err.println(st.get("HoRNClauses"));
-		System.err.println(annot.getAnnotationsAsMap().get("HoRNClauses"));
+		mLogger.debug((annot.getAnnotationsAsMap().get("HoRNClauses")));
 		
 		TreeAutomizerCEGAR cegar = new TreeAutomizerCEGAR(mServices, mToolchainStorage, "TreeCegar",
 				rootNode, taPrefs, mLogger, annot.getScript());
 		
-		//cegar.run();
 		cegar.iterate();
 		
 		return false;

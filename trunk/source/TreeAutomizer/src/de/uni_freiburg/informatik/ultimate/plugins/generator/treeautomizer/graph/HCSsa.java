@@ -5,12 +5,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.automata.tree.Tree;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeRun;
-import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
+/**HCSsa HornClause-SSA
+ * */
 public class HCSsa {
 	private final TreeRun<Term, HCPredicate> nestedFormulas;
 	private final Term postCondition;
@@ -38,6 +38,9 @@ public class HCSsa {
 		return "HCsSATerm_" + getCounter(t);
 	}
 	
+	/**
+	 * @return return a flat version of the SSA.
+	 * */
 	public List<Term> flatten() {
 		return flatten(nestedFormulas);
 	}
@@ -48,7 +51,7 @@ public class HCSsa {
 			res.addAll(flatten(child));
 		}
 		if (tree.getRootSymbol() != null) {
-			final Annotation ann = new Annotation(":named", getName(tree.getRootSymbol()));
+			//final Annotation ann = new Annotation(":named", getName(tree.getRootSymbol()));
 			res.add(tree.getRootSymbol());
 		}
 		return res;

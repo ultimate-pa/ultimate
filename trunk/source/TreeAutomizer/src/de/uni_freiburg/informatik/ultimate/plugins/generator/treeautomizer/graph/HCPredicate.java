@@ -67,9 +67,6 @@ public class HCPredicate extends BasicPredicate implements IPredicate {
 		}
 	}
 
-	/**
-	 * @return the mAssertion
-	 */
 	@Override
 	public Term getFormula() {
 		return mFormula;
@@ -87,7 +84,7 @@ public class HCPredicate extends BasicPredicate implements IPredicate {
 
 	@Override
 	public String toString() {
-		String result = "#";//super.mSerialNumber + "#";
+		String result = "#"; //super.mSerialNumber + "#";
 		if (mProgramPoint != null) {
 			if (mProgramPoint.toString().equals("true")) {
 				result += "True";
