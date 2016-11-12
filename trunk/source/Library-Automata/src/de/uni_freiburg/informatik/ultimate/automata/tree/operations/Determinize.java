@@ -67,6 +67,33 @@ public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		
 		final Map<LETTER, Map<List<Set<STATE>>, Set<STATE>>> rules = new HashMap<LETTER, Map<List<Set<STATE>>, Set<STATE>>>();
 		
+		// Dummy rules
+		final STATE dummyState = stateFactory.createEmptyStackState();
+		final Set<STATE> superSet = new HashSet<STATE>();
+		superSet.addAll(treeAutomaton.getStates());
+		superSet.add(dummyState);
+
+		if (!stateToSState.containsKey(dummyState)) {
+			final Set<STATE> nw = new HashSet<>();
+			nw.add(dummyState);
+			stateToSState.put(dummyState, nw);
+		}
+		for (final TreeAutomatonRule<LETTER, STATE> rule : treeAutomaton.getRules()) {
+			if (!rules.containsKey(rule.getLetter())) {
+				rules.put(rule.getLetter(), new HashMap<>());
+			}
+			final Map<List<Set<STATE>>, Set<STATE>> mp = rules.get(rule.getLetter());
+			final List<Set<STATE>> source = new ArrayList<>();
+			for (int i = 0; i < rule.getSource().size(); ++i) {
+				source.add(superSet);
+			}
+			if (!mp.containsKey(source)) {
+				mp.put(source, new HashSet<STATE>());
+			}
+			mp.get(source).add(dummyState);
+		}
+		// Dummy Rules end.
+		
 		for (final TreeAutomatonRule<LETTER, STATE> rule : treeAutomaton.getRules()) {
 			if (!rules.containsKey(rule.getLetter())) {
 				rules.put(rule.getLetter(), new HashMap<>());
@@ -216,5 +243,23 @@ public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		
 		System.out.println(treeA.toString() + "\n");
 		System.out.println(res.toString() + "\n");
+		
+		final TreeAutomatonBU<String, String> treeB = new TreeAutomatonBU<>();
+		
+		final String NAT = "NAT", NatList = "NatList", Bool = "Bool", BoolList = "BoolList", initA = "_", initB = "_";
+		treeB.addInitialState(initA);
+		treeB.addFinalState(NatList);
+		treeB.addRule("0", new ArrayList<>(Arrays.asList(new String[]{initA})), NAT);
+		treeB.addRule("s", new ArrayList<>(Arrays.asList(new String[]{NAT})), NAT);
+		treeB.addRule("nil", new ArrayList<>(Arrays.asList(new String[]{initA})), NatList);
+		treeB.addRule("cons", new ArrayList<>(Arrays.asList(new String[]{NAT, NatList})), NatList);
+
+		final Determinize<String, String> opB = new Determinize<>(treeB, fac);
+		final ITreeAutomaton<String, String> resB = opB.getResult();
+		
+
+		System.out.println(treeB.toString() + "\n");
+		System.out.println(resB.toString() + "\n");
+		
 	}
 }
