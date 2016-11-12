@@ -1,20 +1,15 @@
-package de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.graph;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.LevelRankingState;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+/*
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IMLPredicate;
@@ -23,7 +18,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareAnnotationPositions;
-
+*/
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClausePredicateSymbol;
+import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 public class HCPredicateFactory implements IStateFactory<HCPredicate> {
 
@@ -36,15 +33,18 @@ public class HCPredicateFactory implements IStateFactory<HCPredicate> {
 
 	public HCPredicateFactory(final Script backendSmtSolverScript) {
 		mBackendSmtSolverScript = backendSmtSolverScript;
-		
+	}
+	
+	public HCPredicate createPredicate(HornClausePredicateSymbol loc) {
+		return new HCPredicate(loc, mBackendSmtSolverScript.term(loc.toString()));
 	}
 	
 	public HCPredicate truePredicate(HornClausePredicateSymbol loc) {
-		return new HCPredicate(loc, loc.hashCode(), mBackendSmtSolverScript.term("true"), new HashSet<>());
+		return new HCPredicate(loc, mBackendSmtSolverScript.term("true"));
 	}
 
 	public HCPredicate falsePredicate(HornClausePredicateSymbol loc) {
-		return new HCPredicate(loc, loc.hashCode(), mBackendSmtSolverScript.term("false"), new HashSet<>());
+		return new HCPredicate(loc, mBackendSmtSolverScript.term("false"));
 	}
 	@Override
 	public HCPredicate intersection(final HCPredicate p1, final HCPredicate p2) {
@@ -52,7 +52,7 @@ public class HCPredicateFactory implements IStateFactory<HCPredicate> {
 		Set<IProgramVar> s = new HashSet<>();
 		s.addAll(p1.getVars());
 		s.addAll(p2.getVars());
-		return new HCPredicate(p1.mProgramPoint, p1.hashCode(), Util.and(mBackendSmtSolverScript, new Term[]{p1.getFormula(), p2.getFormula()}), s);
+		return new HCPredicate(p1.mProgramPoint, Util.and(mBackendSmtSolverScript, new Term[]{p1.getFormula(), p2.getFormula()}), s);
 	}
 
 	@Override
@@ -68,7 +68,7 @@ public class HCPredicateFactory implements IStateFactory<HCPredicate> {
 		
 		HornClausePredicateSymbol loc = states.iterator().next().mProgramPoint;
 		
-		return new HCPredicate(loc, loc.hashCode(), Util.or(mBackendSmtSolverScript, terms), s);
+		return new HCPredicate(loc, Util.or(mBackendSmtSolverScript, terms), s);
 		//final Term disjunction = mSmtManager.getPredicateFactory().or(false, states);
 		//final HCPredicate result = mSmtManager.getPredicateFactory().newPredicate(disjunction);
 		//return result;

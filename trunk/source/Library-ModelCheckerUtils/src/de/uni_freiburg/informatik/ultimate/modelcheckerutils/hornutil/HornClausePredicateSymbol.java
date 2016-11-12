@@ -8,14 +8,21 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil;
  */
 public class HornClausePredicateSymbol {
 
-	int arity;
-	String name;
+	private int arity;
+	private String name;
 	
 	public HornClausePredicateSymbol(String name, int arity) {
 		this.name = name;
 		this.arity = arity;
 	}
 	
+	public String getName() {
+		return name;
+	}
+	
+	public int getArity() {
+		return arity;
+	}
 	@Override
 	public String toString() {
 		return name;

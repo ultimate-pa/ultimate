@@ -55,4 +55,10 @@ public class HCTransFormula {
 	public String toString() {
 		return formula.toString();
 	}
+	/*
+	@Override
+	public int hashCode() {
+		return formula.hashCode();
+	}
+	*/
 }

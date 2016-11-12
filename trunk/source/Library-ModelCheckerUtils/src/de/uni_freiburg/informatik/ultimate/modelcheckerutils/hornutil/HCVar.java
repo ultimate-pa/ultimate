@@ -19,10 +19,10 @@ public class HCVar {
 	
 	@Override
 	public String toString() {
-		return predicate.name + "{" + idx + "}";
+		return predicate.getName() + "{" + idx + "}";
 	}
 	
 	public String getGloballyUniqueId() {
-		return String.format("%s_%d_%s", predicate.name, idx, termVariable.getName());
+		return String.format("%s_%d_%s", predicate.getName(), idx, termVariable.getName());
 	}
 }
