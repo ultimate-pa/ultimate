@@ -28,10 +28,12 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.BasePayloadContainer;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
@@ -39,11 +41,16 @@ import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserv
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.hornutil.HCTransFormula;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.hornutil.HornClause;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.hornutil.HornClausePredicateSymbol;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HCTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClause;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClausePredicateSymbol;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.graph.TreeAutomizerCEGAR;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.script.HornAnnot;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.script.HornClauseAST;
 
 /**
  * import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU; /**
@@ -54,11 +61,13 @@ public class TreeAutomizerObserver implements IUnmanagedObserver {
 	private final IUltimateServiceProvider mServices;
 	private final IToolchainStorage mToolchainStorage;
 	private final ILogger mLogger;
+	private final TAPreferences taPrefs;
 	
 	public TreeAutomizerObserver(final IUltimateServiceProvider services, final IToolchainStorage toolchainStorage) {
 		mServices = services;
 		mToolchainStorage = toolchainStorage;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		taPrefs = new TAPreferences(mServices);
 	}
 
 	@Override
@@ -82,27 +91,20 @@ public class TreeAutomizerObserver implements IUnmanagedObserver {
 	@Override
 	public boolean process(final IElement root) throws Throwable {
 		
-		final BoogieIcfgContainer rootNode = (BoogieIcfgContainer) root;
-		rootNode.getCfgSmtToolkit().getManagedScript().getScript();
+		final BasePayloadContainer rootNode = (BasePayloadContainer) root;
 		
-		final Map<String, IAnnotations> st = root.getPayload().getAnnotations();
+		final Map<String, IAnnotations> st = rootNode.getPayload().getAnnotations();
 		final HornAnnot annot = (HornAnnot) st.get("HoRNClauses");
-		final List<HornClause> hornClauses = (List<HornClause>) annot.getAnnotationsAsMap().get("HoRNClauses");
-
-		final TreeAutomatonBU<HCTransFormula, HornClausePredicateSymbol> tree = new TreeAutomatonBU<>();
+		System.err.println("TreeAutomizer");
+		System.err.println(st.get("HoRNClauses"));
+		System.err.println(annot.getAnnotationsAsMap().get("HoRNClauses"));
 		
-		for (final HornClause clause : hornClauses) {
-			final List<HornClausePredicateSymbol> tail = new ArrayList<HornClausePredicateSymbol>();
-			tail.addAll(clause.getTailPredicates());
-			tree.addRule(clause.getTransitionFormula(), tail, clause.getHeadPredicate());
-		}
+		TreeAutomizerCEGAR cegar = new TreeAutomizerCEGAR(mServices, mToolchainStorage, "TreeCegar",
+				rootNode, taPrefs, mLogger, annot.getScript());
 		
-		// TODO(mostafa): Add initial and final states.
-		tree.addFinalState(new HornClausePredicateSymbol.HornClauseFalsePredicateSymbol());
-		//tree.addFinalState(state);
-		//tree.addInitialState(state);
-//		TreeAutomizerCEGAR cegar = new TreeAutomizerCEGAR(mServices,
-//				mToolchainStorage, "name", rootNode, csToolkit, taPrefs, errorLocs, mLogger, script);
+		//cegar.run();
+		cegar.iterate();
+		
 		return false;
 	}
 
