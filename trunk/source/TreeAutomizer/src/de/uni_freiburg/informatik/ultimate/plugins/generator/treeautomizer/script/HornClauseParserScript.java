@@ -24,9 +24,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Theory;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClause;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClausePredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.hornutil.HornClause;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.hornutil.HornClausePredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.terms.Body;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.terms.Cobody;
 
@@ -50,7 +50,7 @@ public class HornClauseParserScript extends NoopScript {
 		mLogic = logic;
 		mSolverSettings = settings;
 		setupBackendSolver();
-		mDeclaredPredicateSymbols = new HashSet<String>();
+		mDeclaredPredicateSymbols = new HashSet<>();
 
 		mCurrentHornClause = new ArrayList<>();
 		mcurrentPredicateAtoms = new ArrayList<>();
@@ -61,8 +61,9 @@ public class HornClauseParserScript extends NoopScript {
 
 	public IElement getHornClauses() {
 		final Payload payload = new Payload();
-		payload.getAnnotations().put("HoRNClauses", new HornAnnot(mCurrentHornClause));
-//		payload.getAnnotations().put("HoRNClausesScript", mBackendSmtSolver);
+		payload.getAnnotations().put("HoRNClauses", new HornAnnot(mCurrentHornClause, mBackendSmtSolver));
+		
+		//payload.getAnnotations().put("HoRNClausesScript", mBackendSmtSolver);
 		return new HornClauseAST(payload);
 	}
 	
@@ -283,7 +284,6 @@ public class HornClauseParserScript extends NoopScript {
 			if (thisTerm.getQuantifier() == FORALL) {
 				final Body body = parseBody(thisTerm.getSubformula());
 				mCurrentHornClause.add(body.convertToHornClause(predicates, getTheory()));
-
 				//System.err.println(mCurrentHornClause.get(mCurrentHornClause.size() - 1));
 			}
 		}
@@ -301,6 +301,7 @@ public class HornClauseParserScript extends NoopScript {
 				}
 			}
 		}
+		System.err.println("Parsed: " + mCurrentHornClause);
 		// for Horn clause solving we do no checks nothing until check-sat:
 		return LBool.UNKNOWN;
 	}

@@ -1,24 +1,12 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.script;
 
 
-import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.BasePayloadContainer;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
-import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
 
-public class HornClauseAST implements IElement {
+public class HornClauseAST extends BasePayloadContainer {
 
-	Payload payload;
-	public HornClauseAST(Payload payload) {
-		this.payload = payload;
+	public HornClauseAST(IPayload payload) {
+		super(payload);
 	}
-	@Override
-	public IPayload getPayload() {
-		return payload;
-	}
-
-	@Override
-	public boolean hasPayload() {
-		return payload != null;
-	}
-
 }
