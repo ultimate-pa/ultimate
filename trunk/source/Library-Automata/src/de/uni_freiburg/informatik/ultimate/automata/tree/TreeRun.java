@@ -45,7 +45,8 @@ public class TreeRun<LETTER, STATE> implements ITreeRun<LETTER, STATE> {
 		for (final TreeRun<LETTER, STATE> c : children) {
 			child.add(c.reconstruct(stMap));
 		}
-		return new TreeRun<LETTER, STATE>(stMap.get(state), letter, child);
+		
+		return new TreeRun<LETTER, STATE>(stMap.containsKey(state) ? stMap.get(state) : state, letter, child);
 	}
 	/*
 	public TreeRun(final STATE state, final LETTER letter, final TreeRun<LETTER, STATE>[] children) {

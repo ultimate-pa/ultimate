@@ -140,6 +140,7 @@ public class TreeAutomatonBU<LETTER, STATE> implements ITreeAutomaton<LETTER, ST
 		return initalStates;
 	}
 
+	@Override
 	public Set<STATE> getStates() {
 		return states;
 	}

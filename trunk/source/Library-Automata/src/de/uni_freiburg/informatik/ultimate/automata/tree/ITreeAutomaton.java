@@ -12,6 +12,10 @@ import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
  */
 public interface ITreeAutomaton<LETTER, STATE> extends IAutomaton<LETTER, STATE> {
 
+	/**
+	 * @return a set of all the states in the automaton.
+	 */
+	public Set<STATE> getStates();
 	
 	/**
 	 * @return a set of all initial states in the automaton.
