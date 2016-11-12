@@ -96,8 +96,8 @@ def writeSettingsFile(path, fn) :
 
   if ucOnKey not in fn:
    print(dontUseUCKojak, file=f)
-  elif ucOnKey in fn:
-   print(useUCKojak, file=f)
+  #elif ucOnKey in fn:
+   #print(useUCKojak, file=f)
 
   if kojakKey in fn:
    print(useKojakAlgorithm, file=f)
@@ -192,8 +192,8 @@ def writeSettingsFile(path, fn) :
 
   if ucOnKey not in fn:
    print(dontUseUCAutomizer, file=f)
-  elif ucOnKey in fn:
-   print(useUCAutomizer, file=f)
+  #elif ucOnKey in fn:
+   #print(useUCAutomizer, file=f)
 
 
 
