@@ -440,7 +440,8 @@ solverCallSMTInterpolAutomizerInt = '''/instance/de.uni_freiburg.informatik.ulti
 
 solverCallPrincessAutomizerInt = '''/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Dump\ SMT\ script\ to\ file=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/To\ the\ following\ directory=/home/matthias/ultimate/dump
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Command\ for\ external\ solver=princess +incremental +stdin'''
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Command\ for\ external\ solver=princess +incremental +stdin
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Logic\ for\ external\ solver=AUFLIRA'''
 
 solverCallCVC4AutomizerInt = '''/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Dump\ SMT\ script\ to\ file=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/To\ the\ following\ directory=/home/matthias/ultimate/dump
@@ -493,6 +494,7 @@ solverPrincessKey = 'Princess'
 solverKeys = [solverZ3Key, solverCVC4Key, solverMathSATKey, solverSMTInterpolKey, solverPrincessKey]
 solverKeysFloat = [solverZ3Key, solverMathSATKey]
 solverKeysUc = [solverZ3Key, solverCVC4Key, solverMathSATKey, solverSMTInterpolKey]
+solverKeysUcBV = [solverZ3Key, solverCVC4Key, solverMathSATKey]
 
 fpKey = 'FP'
 bpKey = 'BP'
@@ -563,7 +565,7 @@ def generateFileNames():
   fns |= combineAll([memsafetyRoot], [[memsafetyKey], [threeTwoBitKey], solverKeysUc, [fpKey], [ucOnKey], [lvOnKey], [intKey], algorithmKeys])
 
   fns |= combineAll([bitvectorRoot], [[reachKey], [threeTwoBitKey], [solverZ3Key], fpbpKeys, ucKeys, lvKeys, [bitvectorKey], algorithmKeys])
-  fns |= combineAll([bitvectorRoot], [[reachKey], [threeTwoBitKey], solverKeysUc, [fpKey], [ucOnKey], [lvOnKey], [bitvectorKey], algorithmKeys])
+  fns |= combineAll([bitvectorRoot], [[reachKey], [threeTwoBitKey], solverKeysUcBV, [fpKey], [ucOnKey], [lvOnKey], [bitvectorKey], algorithmKeys])
 
   fns |= combineAll([floatRoot], [[reachKey], [threeTwoBitKey], [solverZ3Key], fpbpKeys, ucKeys, lvKeys, [floatKey], algorithmKeys])
   fns |= combineAll([floatRoot], [[reachKey], [threeTwoBitKey], solverKeysFloat, [fpKey], [ucOnKey], [lvOnKey], [floatKey], algorithmKeys])
