@@ -56,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.AnnotateAndAsserter.AbnormalSolverTerminationDuringFeasibilityCheck;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 /**
@@ -270,6 +271,9 @@ public class TraceChecker {
 			} else {
 				throw e;
 			}
+		} catch (final AbnormalSolverTerminationDuringFeasibilityCheck e) {
+			mLogger.warn("Trace check result unknown due to an abnormal solver termination.");
+			isSafe = LBool.UNKNOWN;
 		} finally {
 			mTraceCheckerBenchmarkGenerator.stop(TraceCheckerStatisticsDefinitions.SatisfiabilityAnalysisTime.toString());
 		}

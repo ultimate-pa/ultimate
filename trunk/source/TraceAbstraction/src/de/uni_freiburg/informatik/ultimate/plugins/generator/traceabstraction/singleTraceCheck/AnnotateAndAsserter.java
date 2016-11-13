@@ -39,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
-import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 
 /**
@@ -78,7 +77,7 @@ public class AnnotateAndAsserter {
 	}
 
 
-	public void buildAnnotatedSsaAndAssertTerms() {
+	public void buildAnnotatedSsaAndAssertTerms() throws AbnormalSolverTerminationDuringFeasibilityCheck {
 		if (mAnnotSSA != null) {
 			throw new AssertionError("already build");
 		}
@@ -134,10 +133,8 @@ public class AnnotateAndAsserter {
 		try {
 			mSatisfiable = mMgdScriptTc.getScript().checkSat();
 		} catch (final SMTLIBException e) {
-			if (e.getMessage().contains("Received EOF on stdin. No stderr output.")
-					&& !mServices.getProgressMonitorService().continueProcessing()) {
-				throw new ToolchainCanceledException(getClass(), 
-						"checking feasibility of error trace whose length is " + mTrace.length());
+			if (e.getMessage().contains(AbnormalSolverTerminationDuringFeasibilityCheck.TYPICAL_ERROR_MESSAGE)) {
+				throw new AbnormalSolverTerminationDuringFeasibilityCheck();
 			} else {
 				throw e;
 			}
@@ -161,5 +158,12 @@ public class AnnotateAndAsserter {
 	}
 
 
+	
+	public static class AbnormalSolverTerminationDuringFeasibilityCheck extends Exception {
+		private static final long serialVersionUID = 1605915090440572006L;
+		
+		private static String TYPICAL_ERROR_MESSAGE = "Received EOF on stdin. No stderr output.";
+		
+	}
 
 }
