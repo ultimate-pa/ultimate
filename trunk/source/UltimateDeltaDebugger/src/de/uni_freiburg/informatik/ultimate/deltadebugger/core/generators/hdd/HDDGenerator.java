@@ -24,17 +24,21 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceDocume
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.SourceRewriter;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.StringSourceDocument;
 
-class HDDGenerator implements IVariantGenerator {
-	private final HDDGeneratorFactory mFactory;
+/**
+ * Generator for hierarchical delta debugging.
+ */
+class HddGenerator implements IVariantGenerator {
+	private final HddGeneratorFactory mFactory;
 	private final IPassContext mContext;
 	private final int mLevel;
 	private final ISourceDocument mSource;
 	private final List<IPSTNode> mNodes;
 	private final List<List<Change>> mChangeGroups;
 	private final List<Change> mPersistentChanges;
-
-	HDDGenerator(HDDGeneratorFactory factory, final IPassContext context, final int level, final ISourceDocument source,
-			final List<IPSTNode> nodes, final List<List<Change>> changeGroups, final List<Change> persistentChanges) {
+	
+	HddGenerator(final HddGeneratorFactory factory, final IPassContext context, final int level,
+			final ISourceDocument source, final List<IPSTNode> nodes, final List<List<Change>> changeGroups,
+			final List<Change> persistentChanges) {
 		mFactory = factory;
 		mContext = context;
 		mLevel = level;
@@ -43,7 +47,7 @@ class HDDGenerator implements IVariantGenerator {
 		mChangeGroups = Collections.unmodifiableList(changeGroups);
 		mPersistentChanges = Collections.unmodifiableList(persistentChanges);
 	}
-
+	
 	@Override
 	public String apply(final List<IChangeHandle> activeChanges) {
 		final SourceRewriter rewriter = new SourceRewriter(mSource);
@@ -56,11 +60,10 @@ class HDDGenerator implements IVariantGenerator {
 				change.updateDeferredChange(perChangeClassMap);
 			}
 		});
-		deferredChangeMap.values().stream().flatMap(m -> m.values().stream())
-				.forEach(change -> change.apply(rewriter));
+		deferredChangeMap.values().stream().flatMap(m -> m.values().stream()).forEach(change -> change.apply(rewriter));
 		return rewriter.apply();
 	}
-
+	
 	@Override
 	public List<IChangeHandle> getChanges() {
 		return Collections.unmodifiableList(mChangeGroups.get(0));
@@ -86,59 +89,63 @@ class HDDGenerator implements IVariantGenerator {
 		activeChanges.stream().map(c -> ((Change) c).getNode()).forEach(removedNodes::add);
 		return mNodes.stream().filter(n -> !removedNodes.contains(n)).collect(Collectors.toList());
 	}
-
+	
 	private Stream<Change> getStreamOfAllChanges(final List<IChangeHandle> activeChanges) {
 		return Stream.concat(mPersistentChanges.stream(), activeChanges.stream().map(c -> (Change) c));
 	}
-
+	
 	@Override
 	public Optional<IVariantGenerator> next(final List<IChangeHandle> activeChanges) {
 		// Advance to the next group of changes on this level
 		if (mChangeGroups.size() > 1) {
-			return Optional.of(new HDDGenerator(mFactory, mContext, mLevel, mSource, getRemainingNodes(activeChanges),
+			return Optional.of(new HddGenerator(mFactory, mContext, mLevel, mSource, getRemainingNodes(activeChanges),
 					mChangeGroups.subList(1, mChangeGroups.size()), getMergedPersistentChanges(activeChanges)));
 		}
-
+		
 		// Continue with the remaining nodes without reparsing
 		if (!mFactory.isReparseBetweenLevelsEnabled()) {
 			return mFactory.createGeneratorForNextLevel(mContext, mLevel, mSource, getRemainingNodes(activeChanges),
 					getMergedPersistentChanges(activeChanges));
 		}
-
+		
 		// Skip reparsing if no changes could be applied
 		if (activeChanges.isEmpty() && mPersistentChanges.isEmpty()) {
 			return mFactory.createGeneratorForNextLevel(mContext, mLevel, mSource, mNodes, mPersistentChanges);
 		}
-
+		
 		// Unparse, parse, and collect nodes on the current level
 		final ISourceDocument newSource = new StringSourceDocument(apply(activeChanges));
 		final IASTTranslationUnit ast = mContext.getParser().parse(newSource.getText());
 		final IPSTTranslationUnit tu = mContext.getParser().createPst(ast, newSource);
 		final List<IPSTNode> remainingNodes = collectNodesOnLevel(tu, mLevel);
-		return mFactory.createGeneratorForNextLevel(mContext, mLevel, newSource, remainingNodes, Collections.emptyList());
+		return mFactory.createGeneratorForNextLevel(mContext, mLevel, newSource, remainingNodes,
+				Collections.emptyList());
 	}
-
-	private List<IPSTNode> collectNodesOnLevel(final IPSTTranslationUnit tu, final int level) {
+	
+	private List<IPSTNode> collectNodesOnLevel(final IPSTTranslationUnit translationUnit, final int level) {
 		final NodeCollector collector = new NodeCollector(level);
-		tu.accept(collector);
+		translationUnit.accept(collector);
 		return collector.getResult();
 	}
 	
+	/**
+	 * Collector of PST nodes.
+	 */
 	private final class NodeCollector implements IPSTVisitor {
 		private final List<IPSTNode> mResult = new ArrayList<>();
 		private final int mTargetLevel;
 		private int mCurrentLevel;
-
+		
 		NodeCollector(final int targetLevel) {
 			mTargetLevel = targetLevel;
 		}
-
+		
 		@Override
 		public int defaultLeave(final IPSTNode node) {
 			--mCurrentLevel;
 			return PROCESS_CONTINUE;
 		}
-
+		
 		@Override
 		public int defaultVisit(final IPSTNode node) {
 			if (mFactory.getStrategy().skipSubTree(node)) {
@@ -151,7 +158,7 @@ class HDDGenerator implements IVariantGenerator {
 			++mCurrentLevel;
 			return PROCESS_CONTINUE;
 		}
-
+		
 		public List<IPSTNode> getResult() {
 			return mResult;
 		}

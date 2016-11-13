@@ -11,18 +11,18 @@ import org.eclipse.cdt.internal.core.parser.scanner.InternalFileContentProvider;
  * be initialized and so it crashes.
  */
 public class NoWorkspaceSavedFilesProvider extends InternalFileContentProvider {
-
+	
 	@Override
 	public InternalFileContent getContentForInclusion(final IIndexFileLocation ifl, final String astPath) {
 		return (InternalFileContent) FileContent.create(ifl);
 	}
-
+	
 	@Override
 	public InternalFileContent getContentForInclusion(final String path, final IMacroDictionary macroDictionary) {
 		if (!getInclusionExists(path)) {
 			return null;
 		}
-
+		
 		return (InternalFileContent) FileContent.createForExternalFileLocation(path);
 	}
 }

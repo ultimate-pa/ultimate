@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.PassRunner;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.exceptions.UncheckedInterruptedException;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.util.RewriteUtils;
-import de.uni_freiburg.informatik.ultimate.deltadebugger.core.passes.HDDPass;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.passes.HddPass;
 
 /**
  * The delta debugger controller can repeat a defined toolchain until the specified input cannot be reduced any
@@ -129,7 +129,7 @@ public class DeltaDebuggerController extends CommandLineController {
 		});
 		
 		// TODO: Make this a setting
-		runner.setPasses(Arrays.asList(HDDPass.HDDSTAR));
+		runner.setPasses(Arrays.asList(HddPass.HDDSTAR));
 		
 		// No parallel testing is currently possible because global state is
 		// used to store toolchain results/exception.

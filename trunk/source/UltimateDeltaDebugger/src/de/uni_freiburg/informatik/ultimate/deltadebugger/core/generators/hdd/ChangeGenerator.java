@@ -13,34 +13,24 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfa
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTRegularNode;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.util.CommaSeparatedChild;
 
+/**
+ * Generator of changes in the C file.
+ */
 class ChangeGenerator {
-
-	static class ExpansionResult {
-		protected final int mAdvancedLevels;
-		protected final List<List<Change>> mChangeGroups;
-		protected final List<IPSTNode> mRemainingNodes;
-
-		public ExpansionResult(final int advancedLevels, final List<List<Change>> changeGroups,
-				final List<IPSTNode> remainingNodes) {
-			mAdvancedLevels = advancedLevels;
-			mChangeGroups = changeGroups;
-			mRemainingNodes = remainingNodes;
-		}
-	}
 	private final ILogger mLogger;
-	private final IHDDStrategy mStrategy;
-
+	private final IHddStrategy mStrategy;
+	
 	private final Map<IPSTRegularNode, List<CommaSeparatedChild>> mParentToCommaPositionMap = new IdentityHashMap<>();
-
-	public ChangeGenerator(final ILogger logger, final IHDDStrategy strategy) {
+	
+	public ChangeGenerator(final ILogger logger, final IHddStrategy strategy) {
 		mLogger = logger;
 		mStrategy = strategy;
 	}
-
+	
 	private List<List<Change>> expandCurrentLevel(final List<IPSTNode> remaingNodesOnCurrentLevel,
 			final List<IPSTNode> nextLevelNodes) {
 		final List<List<Change>> changeGroups = new ArrayList<>();
-
+		
 		final ChangeCollector collector = new ChangeCollector(mLogger, mParentToCommaPositionMap);
 		for (final IPSTNode node : remaingNodesOnCurrentLevel) {
 			if (mStrategy.expandIntoOwnGroup(node)) {
@@ -56,10 +46,10 @@ class ChangeGenerator {
 		if (!collector.getChanges().isEmpty()) {
 			changeGroups.add(collector.getChanges());
 		}
-
+		
 		return changeGroups;
 	}
-
+	
 	private void expandCurrentLevelNode(final IPSTNode node, final List<IPSTNode> nextLevelNodes,
 			final ChangeCollector collector) {
 		mStrategy.createAdditionalChangesForExpandedNode(node, collector);
@@ -77,7 +67,7 @@ class ChangeGenerator {
 			}
 		}
 	}
-
+	
 	ExpansionResult generateNextLevelChanges(final List<IPSTNode> currentLevelNodes) {
 		int advancedLevels = 0;
 		// A certain level may not generate a change but still contain nodes to expand,
@@ -90,7 +80,23 @@ class ChangeGenerator {
 			remainingNodes = nextLevelNodes;
 			++advancedLevels;
 		}
-
+		
 		return new ExpansionResult(advancedLevels, changeGroups, remainingNodes);
+	}
+	
+	/**
+	 * Expansion result.
+	 */
+	static class ExpansionResult {
+		protected final int mAdvancedLevels;
+		protected final List<List<Change>> mChangeGroups;
+		protected final List<IPSTNode> mRemainingNodes;
+		
+		public ExpansionResult(final int advancedLevels, final List<List<Change>> changeGroups,
+				final List<IPSTNode> remainingNodes) {
+			mAdvancedLevels = advancedLevels;
+			mChangeGroups = changeGroups;
+			mRemainingNodes = remainingNodes;
+		}
 	}
 }

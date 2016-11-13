@@ -10,23 +10,68 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfa
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceRange;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.SourceRewriter;
 
+/**
+ * Change by binary expression operand deletion.
+ */
 public class DeleteBinaryExpressionOperandChange extends Change {
 	private final IPSTRegularNode mBinaryExpressionNode;
 	private final ISourceRange mOperatorPosition;
 	private final String mFullReplacement;
 	
+	/**
+	 * @param operandNode
+	 *            Operand PST node.
+	 * @param binaryExpressionNode
+	 *            binary expression PST node
+	 * @param operatorPosition
+	 *            operator position
+	 * @param fullReplacement
+	 *            full replacement string
+	 */
+	public DeleteBinaryExpressionOperandChange(final IPSTRegularNode operandNode,
+			final IPSTRegularNode binaryExpressionNode, final ISourceRange operatorPosition,
+			final String fullReplacement) {
+		super(operandNode);
+		mBinaryExpressionNode = Objects.requireNonNull(binaryExpressionNode);
+		mOperatorPosition = Objects.requireNonNull(operatorPosition);
+		mFullReplacement = Objects.requireNonNull(fullReplacement);
+	}
 	
+	@Override
+	public void apply(final SourceRewriter rewriter) {
+		// no immediate modification possible
+	}
+	
+	@Override
+	public boolean hasDeferredChange() {
+		return true;
+	}
+	
+	@Override
+	public String toString() {
+		return "Delete binary expression operand " + getNode() + " (from " + mBinaryExpressionNode + ")";
+	}
+	
+	@Override
+	public void updateDeferredChange(final Map<IPSTNode, Change> deferredChangeMap) {
+		((CombinedChange) deferredChangeMap.computeIfAbsent(mBinaryExpressionNode, CombinedChange::new))
+				.addOperand(getNode());
+	}
+	
+	/**
+	 * Combined change.
+	 */
 	class CombinedChange extends Change {
-		private List<IPSTNode> mOperandsToDelete = new ArrayList<>();
-
+		private final List<IPSTNode> mOperandsToDelete = new ArrayList<>();
+		
 		CombinedChange(final IPSTNode node) {
 			super(node);
 		}
-
+		
 		void addOperand(final IPSTNode child) {
 			mOperandsToDelete.add(child);
 		}
-
+		
 		@Override
 		public void apply(final SourceRewriter rewriter) {
 			if (mOperandsToDelete.size() == 1) {
@@ -40,38 +85,5 @@ public class DeleteBinaryExpressionOperandChange extends Change {
 				throw new IllegalStateException("invalid number of operands to delete: " + mOperandsToDelete.size());
 			}
 		}
-
-	}
-
-	
-
-	public DeleteBinaryExpressionOperandChange(final IPSTRegularNode operandNode,
-			final IPSTRegularNode binaryExpressionNode, final ISourceRange operatorPosition,
-			final String fullReplacement) {
-		super(operandNode);
-		mBinaryExpressionNode = Objects.requireNonNull(binaryExpressionNode);
-		mOperatorPosition = Objects.requireNonNull(operatorPosition);
-		mFullReplacement = Objects.requireNonNull(fullReplacement);
-	}
-
-	@Override
-	public void apply(final SourceRewriter rewriter) {
-		// no immediate modification possible
-	}
-
-	@Override
-	public boolean hasDeferredChange() {
-		return true;
-	}
-
-	@Override
-	public String toString() {
-		return "Delete binary expression operand " + getNode() + " (from " + mBinaryExpressionNode + ")";
-	}
-
-	@Override
-	public void updateDeferredChange(final Map<IPSTNode, Change> deferredChangeMap) {
-		((CombinedChange) deferredChangeMap.computeIfAbsent(mBinaryExpressionNode, CombinedChange::new))
-				.addOperand(getNode());
 	}
 }

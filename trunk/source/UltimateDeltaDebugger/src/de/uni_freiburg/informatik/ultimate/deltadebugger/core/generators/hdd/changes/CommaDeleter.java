@@ -10,22 +10,25 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.util.CommaS
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceRange;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.SourceRewriter;
 
+/**
+ * Change by comma deletion.
+ */
 final class CommaDeleter extends CommaSeparatedChildDeleter {
 	private final SourceRewriter mRewriter;
-
+	
 	private CommaDeleter(final List<IPSTNode> childrenToDelete, final List<CommaSeparatedChild> allChildren,
 			final SourceRewriter rewriter) {
 		super(childrenToDelete, allChildren);
-		this.mRewriter = rewriter;
+		mRewriter = rewriter;
 	}
-
+	
 	@Override
 	protected void deleteComma(final ISourceRange location) {
 		if (mRewriter != null) {
 			Change.replaceByWhitespace(mRewriter, location);
 		}
 	}
-
+	
 	@Override
 	protected void deleteNode(final IPSTNode node) {
 		if (mRewriter != null) {
@@ -41,7 +44,7 @@ final class CommaDeleter extends CommaSeparatedChildDeleter {
 			throw new ChangeConflictException(e);
 		}
 	}
-
+	
 	static boolean isDeletionWithCommaPossible(final IPSTNode node, final List<CommaSeparatedChild> commaPositions) {
 		try {
 			new CommaDeleter(Arrays.asList(node), commaPositions, null).deleteChildren();
