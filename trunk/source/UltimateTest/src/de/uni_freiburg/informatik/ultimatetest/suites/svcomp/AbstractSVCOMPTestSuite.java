@@ -125,7 +125,7 @@ public abstract class AbstractSVCOMPTestSuite extends UltimateTestSuite {
 			final List<UltimateTestCase> testcases, final File svcompRootDir) {
 
 		final int limit = def.getLimit() < 0 ? getFilesPerCategory() : def.getLimit();
-		final Collection<File> inputFiles = TestUtil.limitFiles(allInputFiles, limit);
+		final Collection<File> inputFiles = TestUtil.limitFiles(allInputFiles, 0, limit);
 
 		for (final File input : inputFiles) {
 			try {
