@@ -66,6 +66,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode.ACSLSourceLocation;
 import de.uni_freiburg.informatik.ultimate.model.acsl.LTLPrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.GlobalLTLInvariant;
@@ -245,8 +246,7 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 		//if an additional Annotation was parsed put it into the root node
 		if (mAdditionalAnnotationObserver.getAnnotation() != null){
 			ACSLNode node = mAdditionalAnnotationObserver.getAnnotation();
-			node.setStartingLineNumber(1);
-			node.setEndingLineNumber(1);
+			node.setLocation(new ACSLSourceLocation(1, 0, 1, 0));
 			decorator.getRootNode().getChildren().add(
 					0, 
 					new DecoratorNode(decorator.getRootNode(), node));

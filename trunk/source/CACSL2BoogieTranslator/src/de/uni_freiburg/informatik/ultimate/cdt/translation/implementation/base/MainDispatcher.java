@@ -614,7 +614,7 @@ public class MainDispatcher extends Dispatcher {
 			try {
 				checkForQuantifiers(invariant.getInvariant());
 				acslNode = Parser.parseComment("lstart\n assert " + invariant.getInvariant() + ";",
-						invariant.getStartline(), invariant.getEndline(), mLogger);
+						invariant.getStartline(), 1, mLogger);
 			} catch (final ACSLSyntaxErrorException e) {
 				throw new UnsupportedSyntaxException(loc, e.getMessage());
 			} catch (final Exception e) {

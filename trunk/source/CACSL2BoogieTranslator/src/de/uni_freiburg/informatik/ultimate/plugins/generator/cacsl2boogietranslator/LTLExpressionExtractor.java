@@ -130,8 +130,7 @@ public class LTLExpressionExtractor {
 		}
 
 		private void addAdditionalInfo(final BinaryExpression node, final Expression expr) {
-			expr.setEndingLineNumber(node.getEndingLineNumber());
-			expr.setStartingLineNumber(node.getStartingLineNumber());
+			expr.setLocation(node.getLocation());
 			expr.setFileName(node.getFileName());
 			expr.setType(node.getType());
 		}

@@ -41,6 +41,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.eclipse.cdt.core.dom.ast.IASTComment;
+import org.eclipse.cdt.core.dom.ast.IASTFileLocation;
+import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 
 import de.uni_freiburg.informatik.ultimate.acsl.parser.ACSLSyntaxErrorException;
 import de.uni_freiburg.informatik.ultimate.acsl.parser.Parser;
@@ -59,15 +61,6 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 public class CommentParser {
 
 	/**
-	 * Pattern which recognizes ACSL comments.
-	 */
-	private static final String ACSL_PATTERN = "(/\\*@.*@\\*/)|(//@.*)";
-	/**
-	 * Pattern which recognizes ACSL comments.
-	 */
-	private static final String COMMENT_PATTERN = "(/\\*@)|(@\\*/)|(@[^\\*])";
-	
-	/**
 	 * The list of comments.
 	 */
 	private final IASTComment[] mCommentList;
@@ -76,10 +69,6 @@ public class CommentParser {
 	 */
 	private final HashMap<Integer, Integer> mFunctionLineRange;
 
-	/**
-	 * The compiled pattern to use.
-	 */
-	private final Pattern mPattern;
 	private final ILogger mLogger;
 	private final Dispatcher mDispatcher;
 
@@ -96,7 +85,6 @@ public class CommentParser {
 			Dispatcher dispatch) {
 		mCommentList = comments;
 		mFunctionLineRange = lineRange;
-		mPattern = Pattern.compile(ACSL_PATTERN, Pattern.DOTALL);
 		mLogger = logger;
 		mDispatcher = dispatch;
 	}
@@ -116,32 +104,28 @@ public class CommentParser {
 	 * @return <code>List&lt;ACSLNode&gt;</code> a list of ACSL ASTs
 	 */
 	public List<ACSLNode> processComments() {
-		final StringBuilder sb = new StringBuilder();
 		final ArrayList<ACSLNode> acslList = new ArrayList<ACSLNode>();
 		for (final IASTComment comment : mCommentList) {
-			sb.append(comment.getComment());
+			final String text = new String(comment.getComment());
 			// We check if the comment is a ACSL_Comment
-			final Matcher matcher = mPattern.matcher(sb);
-			if (matcher.matches()) {
+			if (text.startsWith("//@") || text.startsWith("/*@")) {
 				// We need to remove comment symbols
 				final StringBuilder input = new StringBuilder();
 				input.append(determineCodePosition(comment));
 				input.append('\n');
-				input.append(removeCommentSymbols(sb.toString()));
-				// System.out.println(input.toString());
+				input.append(text, 2, text.length() - (text.endsWith("*/") ? 2 : 0));
+				final int lineOffset = comment.getFileLocation().getStartingLineNumber();
+				final int columnOffset = getColumnOffset(comment) + 2;
 				// now we parse the ACSL thing
 				try {
 					ACSLNode acslNode;
 					try {
-						acslNode = Parser.parseComment(input.toString(),
-								comment.getFileLocation().getStartingLineNumber(),
-								comment.getFileLocation().getEndingLineNumber(), mLogger);
+						acslNode = Parser.parseComment(input.toString(), lineOffset, columnOffset, mLogger);
 					} catch (final ExceptionInInitializerError e) { // ignore
 					} catch (final NoClassDefFoundError e) { // ignore
 					} finally {
-						acslNode = Parser.parseComment(input.toString(),
-								comment.getFileLocation().getStartingLineNumber(),
-								comment.getFileLocation().getEndingLineNumber(), mLogger);
+						// Is parsing every comment twice actually intended?
+						acslNode = Parser.parseComment(input.toString(), lineOffset, columnOffset, mLogger);
 					}
 					if (acslNode != null) {
 						acslNode.setFileName(comment.getContainingFilename());
@@ -156,25 +140,31 @@ public class CommentParser {
 					throw new RuntimeException(e);
 				}
 			}
-			sb.delete(0, sb.length());
 		}
 		return acslList;
 	}
 
 	/**
-	 * Uses a regular expression pattern to remove all comment symbols.
+	 * Compute the column number of the first comment character.
 	 * 
-	 * @param input
-	 *            the comment
-	 * @return ACSL without comment symbols
+	 * @param comment comment
+	 * @return column offset
 	 */
-	private String removeCommentSymbols(String input) {
-		// the easy case, only a one line comment
-		if (input.startsWith("//@")) {
-			return input.replaceFirst("//@", "");
+	private int getColumnOffset(IASTComment comment) {
+		final IASTFileLocation loc = comment.getFileLocation();
+		if (!comment.isPartOfTranslationUnitFile()) {
+			// No idea how to get header source text
+			return 0;
 		}
-		// so this is difficult block comment
-		return input.replaceAll(COMMENT_PATTERN, "");
+		final String sourceText = comment.getTranslationUnit().getRawSignature();
+		final int commentOffset = loc.getNodeOffset();
+		for (int i = commentOffset - 1; i >= 0; --i) {
+			final char c = sourceText.charAt(i);
+			if (c == '\n' || c == '\r') {
+				return commentOffset - i - 1;
+			}
+		}
+		return commentOffset;
 	}
 
 	/**
