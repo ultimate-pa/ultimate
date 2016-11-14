@@ -85,7 +85,13 @@ public final class TestUtil {
 		} else {
 			final List<File> shuffle = new ArrayList<>(files);
 			Collections.shuffle(shuffle, new Random(PSEUDO_RANDOM_FILE_SELECTION_SEED));
-			final int upperIndex = Math.min(files.size(), offset + n);
+			int nPlusOffset;
+			if (((long) offset + (long) n > Integer.MAX_VALUE)) {
+				nPlusOffset = Integer.MAX_VALUE;
+			} else {
+				nPlusOffset = offset + n;
+			}
+			final int upperIndex = Math.min(files.size(), nPlusOffset);
 			return new ArrayList<>(shuffle.subList(offset, upperIndex));
 		}
 	}
