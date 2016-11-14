@@ -40,7 +40,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.InCaReAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Accepts;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Difference;
@@ -54,9 +53,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AutomataMinimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
@@ -64,7 +63,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryResultChecking;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionUtils;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.StraightLineInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
@@ -88,23 +86,6 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 		// super.mCsToolkit.getTheory(),
 		// super.mHoareAnnotation,
 		// false);
-	}
-	
-	@Override
-	protected void constructInterpolantAutomaton() throws AutomataOperationCanceledException {
-		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.BasicInterpolantAutomatonTime.toString());
-		try {
-			final StraightLineInterpolantAutomatonBuilder iab = new StraightLineInterpolantAutomatonBuilder(mServices,
-					new InCaReAlphabet<>(mAbstraction), mInterpolantGenerator, mPredicateFactoryInterpolantAutomata);
-			mInterpolAutomaton = iab.getResult();
-			mLogger.info("Interpolatants " + mInterpolAutomaton.getStates());
-			assert accepts(mServices, mInterpolAutomaton, mCounterexample.getWord()) : "Interpolant automaton broken!";
-			assert new InductivityCheck(mServices, mInterpolAutomaton, false, true,
-					new IncrementalHoareTripleChecker(mCsToolkit))
-							.getResult() : "Not inductive";
-		} finally {
-			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.BasicInterpolantAutomatonTime.toString());
-		}
 	}
 	
 	@Override
