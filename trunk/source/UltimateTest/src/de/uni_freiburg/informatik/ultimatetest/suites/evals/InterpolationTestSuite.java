@@ -48,6 +48,10 @@ public abstract class InterpolationTestSuite extends AbstractEvalTestSuite {
 		return Integer.MAX_VALUE;
 	}
 	
+	protected int getFilesPerDirectoryOffset() {
+		return 0;
+	}
+	
 	@Override
 	protected long getTimeout() {
 		return 120 * 1000;
@@ -104,7 +108,7 @@ public abstract class InterpolationTestSuite extends AbstractEvalTestSuite {
 	}
 	
 	protected DirectoryFileEndingsPair getPair(final String dir, final String[] endings) {
-		return new DirectoryFileEndingsPair(dir, endings, getFilesPerDirectory());
+		return new DirectoryFileEndingsPair(dir, endings, getFilesPerDirectoryOffset(), getFilesPerDirectory());
 	}
 	
 	// @formatter:off
