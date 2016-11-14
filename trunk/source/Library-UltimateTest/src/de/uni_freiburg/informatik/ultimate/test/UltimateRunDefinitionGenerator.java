@@ -33,8 +33,8 @@ public final class UltimateRunDefinitionGenerator {
 	/**
 	 * Get input files from directory. Do not take all files but only up to n pseudorandomly selected files.
 	 */
-	private static Collection<File> getInputFiles(final File directory, final String[] fileEndings, final int n) {
-		return TestUtil.limitFiles(TestUtil.getFiles(directory, fileEndings), n);
+	private static Collection<File> getInputFiles(final File directory, final String[] fileEndings, final int offset, final int n) {
+		return TestUtil.limitFiles(TestUtil.getFiles(directory, fileEndings), offset, n);
 	}
 
 	/**
@@ -61,7 +61,7 @@ public final class UltimateRunDefinitionGenerator {
 	 */
 	public static Collection<UltimateRunDefinition> getRunDefinitionFromTrunk(final String[] directories,
 			final String[] fileEndings, final String settings, final String toolchain) {
-		return getRunDefinitionFromTrunk(directories, fileEndings, settings, toolchain, -1);
+		return getRunDefinitionFromTrunk(directories, fileEndings, settings, toolchain, 0, -1);
 	}
 
 	/**
@@ -77,11 +77,11 @@ public final class UltimateRunDefinitionGenerator {
 	 * </ul>
 	 */
 	public static Collection<UltimateRunDefinition> getRunDefinitionFromTrunk(final String[] directories,
-			final String[] fileEndings, final String settings, final String toolchain, final int limit) {
+			final String[] fileEndings, final String settings, final String toolchain, final int offset, final int limit) {
 		final File toolchainFile = getFileFromToolchainDir(toolchain);
 		final File settingsFile = settings == null ? null : getFileFromSettingsDir(settings);
 		return Arrays.stream(directories).map(a -> getFileFromTrunkDir(a))
-				.map(a -> getInputFiles(a, fileEndings, limit)).flatMap(a -> a.stream()).distinct()
+				.map(a -> getInputFiles(a, fileEndings, offset, limit)).flatMap(a -> a.stream()).distinct()
 				.map(a -> new UltimateRunDefinition(a, settingsFile, toolchainFile)).collect(Collectors.toList());
 	}
 
@@ -89,7 +89,7 @@ public final class UltimateRunDefinitionGenerator {
 			final String settings, final DirectoryFileEndingsPair[] directoryFileEndingsPairs) {
 		return Arrays.stream(directoryFileEndingsPairs)
 				.map(a -> UltimateRunDefinitionGenerator.getRunDefinitionFromTrunk(new String[] { a.getDirectory() },
-						a.getFileEndings(), settings, toolchain, a.getLimit()))
+						a.getFileEndings(), settings, toolchain, a.getOffset(), a.getLimit()))
 				.flatMap(a -> a.stream()).collect(Collectors.toList());
 	}
 
@@ -106,7 +106,7 @@ public final class UltimateRunDefinitionGenerator {
 	 */
 	public static Collection<UltimateRunDefinition> getRunDefinitionFromTrunkWithWitnesses(final String[] directories,
 			final String[] fileEndings, final String settings, final String toolchain) {
-		return getRunDefinitionFromTrunkWithWitnesses(directories, fileEndings, settings, toolchain, -1);
+		return getRunDefinitionFromTrunkWithWitnesses(directories, fileEndings, settings, toolchain, 0, -1);
 	}
 
 	/**
@@ -123,9 +123,9 @@ public final class UltimateRunDefinitionGenerator {
 	 * </ul>
 	 */
 	public static Collection<UltimateRunDefinition> getRunDefinitionFromTrunkWithWitnesses(final String[] directories,
-			final String[] fileEndings, final String settings, final String toolchain, final int limit) {
+			final String[] fileEndings, final String settings, final String toolchain, final int offset, final int limit) {
 		return getRunDefinitionFromTrunkWithWitnesses(toolchain, settings,
-				Arrays.stream(directories).map(a -> new DirectoryFileEndingsPair(a, fileEndings, limit))
+				Arrays.stream(directories).map(a -> new DirectoryFileEndingsPair(a, fileEndings, offset, limit))
 						.toArray(size -> new DirectoryFileEndingsPair[size]));
 	}
 
@@ -137,7 +137,7 @@ public final class UltimateRunDefinitionGenerator {
 
 		for (final DirectoryFileEndingsPair pair : directoryFileEndingsPairs) {
 			final File dir = getFileFromTrunkDir(pair.getDirectory());
-			final Collection<File> inputFiles = getInputFiles(dir, pair.getFileEndings(), pair.getLimit());
+			final Collection<File> inputFiles = getInputFiles(dir, pair.getFileEndings(), pair.getOffset(), pair.getLimit());
 			final Collection<File> witnessCandidates;
 			if (dir.isFile()) {
 				witnessCandidates = TestUtil.getFiles(dir.getParentFile(), new String[] { ".graphml" });
@@ -192,7 +192,7 @@ public final class UltimateRunDefinitionGenerator {
 
 		for (final DirectoryFileEndingsPair pair : input) {
 			final File dir = getFileFromTrunkDir(pair.getDirectory());
-			final Collection<File> inputFiles = getInputFiles(dir, pair.getFileEndings(), pair.getLimit());
+			final Collection<File> inputFiles = getInputFiles(dir, pair.getFileEndings(), pair.getOffset(), pair.getLimit());
 
 			for (final File inputFile : inputFiles) {
 				final List<File> witnesses = witnessCandidates.stream()
@@ -207,9 +207,9 @@ public final class UltimateRunDefinitionGenerator {
 
 	public static Collection<UltimateRunDefinition> getRunDefinitionFromTrunkWithWitnessesFromSomeFolder(
 			final String[] directories, final String[] fileEndings, final String settings, final String toolchain,
-			final String witnessFolder, final int limit) {
+			final String witnessFolder, final int offset, final int limit) {
 		return getRunDefinitionFromTrunkWithWitnessesFromSomeFolder(toolchain, settings,
-				Arrays.stream(directories).map(a -> new DirectoryFileEndingsPair(a, fileEndings, limit))
+				Arrays.stream(directories).map(a -> new DirectoryFileEndingsPair(a, fileEndings, offset, limit))
 						.toArray(size -> new DirectoryFileEndingsPair[size]),
 				witnessFolder);
 	}
@@ -218,6 +218,6 @@ public final class UltimateRunDefinitionGenerator {
 			final String[] directories, final String[] fileEndings, final String settings, final String toolchain,
 			final String witnessFolder) {
 		return getRunDefinitionFromTrunkWithWitnessesFromSomeFolder(directories, fileEndings, settings, toolchain,
-				witnessFolder, -1);
+				witnessFolder, 0, -1);
 	}
 }
