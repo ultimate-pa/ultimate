@@ -1,2 +1,0 @@
-//#Unsafe
-G( ! "init == 3" || GF"time > otime")
