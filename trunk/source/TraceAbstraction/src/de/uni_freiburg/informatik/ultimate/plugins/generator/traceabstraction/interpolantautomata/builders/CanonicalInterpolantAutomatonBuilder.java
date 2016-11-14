@@ -44,7 +44,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
@@ -56,7 +55,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * 
  * @author heizmann@informatik.uni-freiburg.de
  */
-public class CanonicalInterpolantAutomatonBuilder extends CoverageAnalysis<BoogieIcfgLocation>
+public class CanonicalInterpolantAutomatonBuilder<CL> extends CoverageAnalysis<CL>
 		implements IInterpolantAutomatonBuilder<CodeBlock, IPredicate> {
 
 	private final NestedWordAutomaton<CodeBlock, IPredicate> mIA;
@@ -71,7 +70,7 @@ public class CanonicalInterpolantAutomatonBuilder extends CoverageAnalysis<Boogi
 	private final Map<Integer, Set<IPredicate>> mAlternativeCallPredecessors = new HashMap<Integer, Set<IPredicate>>();
 
 	public CanonicalInterpolantAutomatonBuilder(final IUltimateServiceProvider services,
-			final InterpolantsPreconditionPostcondition ipp, final List<BoogieIcfgLocation> programPointSequence,
+			final InterpolantsPreconditionPostcondition ipp, final List<CL> programPointSequence,
 			final InCaReAlphabet<CodeBlock> alphabet, final CfgSmtToolkit csToolkit, final IStateFactory<IPredicate> predicateFactory,
 			final ILogger logger, final PredicateUnifier predicateUnifier, final NestedWord<? extends IAction> nestedWord) {
 		super(services, ipp, programPointSequence, logger, predicateUnifier);

@@ -104,7 +104,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CFG2NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.HoareAnnotationFragments;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
@@ -906,8 +905,8 @@ public class BuchiCegarLoop {
 
 	protected void constructInterpolantAutomaton(final InterpolatingTraceChecker traceChecker,
 			final NestedRun<CodeBlock, IPredicate> run) throws AutomataOperationCanceledException {
-		final CanonicalInterpolantAutomatonBuilder iab = new CanonicalInterpolantAutomatonBuilder(mServices,
-				traceChecker.getIpp(), CoverageAnalysis.extractProgramPoints(run), new InCaReAlphabet<>(mAbstraction),
+		final CanonicalInterpolantAutomatonBuilder<? extends Object> iab = new CanonicalInterpolantAutomatonBuilder(mServices,
+				traceChecker.getIpp(), run.getStateSequence(), new InCaReAlphabet<>(mAbstraction),
 				mCsToolkit, mAbstraction.getStateFactory(), mLogger, traceChecker.getPredicateUnifier(), run.getWord());
 		iab.analyze();
 		mInterpolAutomaton = iab.getResult();
