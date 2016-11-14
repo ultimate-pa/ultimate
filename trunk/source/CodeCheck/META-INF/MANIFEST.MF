@@ -9,6 +9,7 @@ Require-Bundle: Library-UltimateCore,
  Library-UltimateUtil,
  Library-BoogieAST,
  Library-SMTLIB,
+ de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2,
  de.uni_freiburg.informatik.ultimate.automata,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
  de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction
