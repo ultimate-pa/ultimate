@@ -20,21 +20,26 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareAnnotationPositions;
 */
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClausePredicateSymbol;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClausePredicateSymbol.HornClauseDontCareSymbol;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 public class HCPredicateFactory implements IStateFactory<HCPredicate> {
 
 	//final protected boolean mComputeHoareAnnotation;
 //	final protected TAPreferences mPref;
-	//private final HCPredicate memtpyStack;
+	private final HCPredicate memtpyStack;
 	//protected final SmtManager mSmtManager;
 	
 	private final Script mBackendSmtSolverScript;
 
 	public HCPredicateFactory(final Script backendSmtSolverScript) {
 		mBackendSmtSolverScript = backendSmtSolverScript;
+		memtpyStack = createDontCarePredicate(new HornClauseDontCareSymbol());
 	}
 	
+	public HCPredicate createDontCarePredicate(HornClausePredicateSymbol loc) {
+		return new HCPredicate(loc, mBackendSmtSolverScript.term("false"));
+	}
 	public HCPredicate createPredicate(HornClausePredicateSymbol loc) {
 		return new HCPredicate(loc, mBackendSmtSolverScript.term(loc.toString()));
 	}
@@ -74,6 +79,10 @@ public class HCPredicateFactory implements IStateFactory<HCPredicate> {
 		//return result;
 	}
 
+	@Override
+	public HCPredicate createEmptyStackState() {
+		return memtpyStack;
+	}
 	/*
 	@Override
 	public HCPredicate determinize(final Map<HCPredicate, Set<HCPredicate>> down2up) {
@@ -100,10 +109,6 @@ public class HCPredicateFactory implements IStateFactory<HCPredicate> {
 		return mSmtManager.getPredicateFactory().newPredicate(mSmtManager.getScript().term("true"));
 	}
 
-	@Override
-	public HCPredicate createEmptyStackState() {
-		return memtpyStack;
-	}
 
 	@Override
 	public HCPredicate createDoubleDeckerContent(final HCPredicate down, final HCPredicate up) {

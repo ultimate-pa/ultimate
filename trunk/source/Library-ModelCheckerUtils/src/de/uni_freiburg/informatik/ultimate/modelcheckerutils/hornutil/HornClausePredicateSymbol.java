@@ -39,4 +39,10 @@ public class HornClausePredicateSymbol {
 			super("true", 0);
 		}
 	}
+	
+	public static class HornClauseDontCareSymbol extends HornClausePredicateSymbol {
+		public HornClauseDontCareSymbol() {
+			super("€", 0);
+		}
+	}
 }
