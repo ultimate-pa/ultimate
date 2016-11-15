@@ -1,7 +1,7 @@
 syntax = "proto3";
 package de.uni_freiburg.informatik.ultimate.graphvr;
 
-option java_package = "de.uni_freiburg.informatik.ultimate.graphvr";
+//option java_package = "de.uni_freiburg.informatik.ultimate.graphvr";
 option java_outer_classname = "TraceAbstractionProtos";
 
 message ToolchainInfo {
@@ -36,7 +36,7 @@ message TAPreferences {
 	}
 
 	enum Minimization {
-		NONE = 0;
+		NO_MINIMIZATION = 0;
 		MINIMIZE_SEVPA = 1;
 		SHRINK_NWA = 2;
 		DFA_HOPCROFT_ARRAYS = 3;
@@ -60,7 +60,7 @@ message TAPreferences {
 	}
 
 	enum InterpolantAutomatonEnhancement {
-		NONE = 0;
+		NO_ENHANCEMENT = 0;
 		BESTAPPROXIMATION_DEPRECATED = 1;
 		SELFLOOP = 2;
 		EAGER = 3;
@@ -162,15 +162,17 @@ message StateSet {
 }
 
 message CodeBlock {
-
+	string code = 1;
+	// the transformulas and lots of other stuff
+	// in CodeBlock is probably not needed.
 }
 
 message Predicate {
-
+	string label = 1;
+	// possibly a string created from the formula
 }
 
 
-// Notes:
 /*
 Data Needed:
 
