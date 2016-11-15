@@ -79,16 +79,17 @@ mLatexPlotMarkRepeat = 10
 mLatexPlotLines = ['solid', 'dotted', 'dashed' ]
 
 mUltimateHeaders = []
+mFriendlySettingNames = {}
 mNecessaryHeaders = ['Settings', 'Toolchain', 'Result', 'File']
 
 
-mRowFuns = { 'Time' : lambda r : timeInNanosToSeconds(r, 'OverallTime'),
-             'Iter' : lambda r : toInt(r, 'OverallIterations'),
-             'InterTime' : lambda r : timeInNanosToSeconds(r, 'TraceCheckerStatistics_InterpolantComputationTime'),
-             'UnsatSize':lambda r : toPercent(r, 'TraceCheckerStatistics_ConjunctsInUnsatCore', 'TraceCheckerStatistics_ConjunctsInSsa'),
-             'QuantPreds':lambda r : toPercent(r, 'TraceCheckerStatistics_QuantifiedInterpolants', 'TraceCheckerStatistics_ConstructedInterpolants'),
-             'PerfInter': lambda r : toPercent(r, 'TraceCheckerStatistics_PerfectInterpolantSequences', 'TraceCheckerStatistics_InterpolantComputations'),
-            }
+mRowFuns = [ ('Time' , lambda r : timeInNanosToSeconds(r, 'OverallTime'), 'semilogyaxis'),
+             ('Iter' , lambda r : toInt(r, 'OverallIterations'), 'axis'),
+             ('InterTime' , lambda r : timeInNanosToSeconds(r, 'TraceCheckerStatistics_InterpolantComputationTime'), 'semilogyaxis'),
+             ('UnsatSize' , lambda r : toPercent(r, 'TraceCheckerStatistics_ConjunctsInUnsatCore', 'TraceCheckerStatistics_ConjunctsInSsa'), 'semilogyaxis'),
+             ('QuantPreds' , lambda r : toPercent(r, 'TraceCheckerStatistics_QuantifiedInterpolants', 'TraceCheckerStatistics_ConstructedInterpolants'), 'axis'),
+             ('PerfInter' , lambda r : toPercent(r, 'TraceCheckerStatistics_PerfectInterpolantSequences', 'TraceCheckerStatistics_InterpolantComputations'), 'axis'),
+            ]
 # # row funs for tacas taipan 
 # mRowFuns = { 
 #            'Time' : lambda r : timeInNanosToSeconds(r, 'Overall time'),
@@ -401,9 +402,9 @@ def writeLatexPlotLegend(f, namesAndStyles):
     f.write('    \\end{tikzpicture}\n')
     return
 
-def writeLatexFigure(f, xlabel, ylabel, files, namesAndStylesDict, caption):
-    f.write('\\begin{tikzpicture}\n')
-    f.write('\\begin{semilogyaxis}[%\n')
+def writeLatexPlot(f, xlabel, ylabel, files, namesAndStylesDict, caption, axis):
+    f.write('\\begin{tikzpicture}[scale=\\plotscale]\n')
+    f.write('\\begin{' + axis + '}[%\n')
     f.write('log ticks with fixed point,%\n')
     f.write('xmin=0, ymin=0,%\n')
     f.write('xlabel={' + xlabel + '},%\n')
@@ -413,20 +414,21 @@ def writeLatexFigure(f, xlabel, ylabel, files, namesAndStylesDict, caption):
     f.write('\\addlegendimage{empty legend}\\addlegendentry{' + caption + '}\n')
     for file, name in files:
         f.write('\\addplot[' + namesAndStylesDict[name][1] + '] table {fig/plots/' + file + '};\n')
-    f.write('\\end{semilogyaxis}\n')
+    f.write('\\end{' + axis + '}\n')
     f.write('\\end{tikzpicture}\n')
     return
 
-def createLatexFigures(successrows, uniqueSettings, tcName, outputDir, name):
+def createLatexPlots(successrows, uniqueSettings, tcName, outputDir, name):
     latexFigures = []
-    for funName, fun in mRowFuns.iteritems():
+    for funName, fun, axis in mRowFuns:
         print 'Writing plot for ' + funName
         plottable = getPlottable(successrows, fun, map(lambda x : (x), uniqueSettings))
         plotfiles = []
         plotnames = []
         for setting, values in plottable.iteritems():
-            friendlySetting = os.path.basename(setting)
-            filename = tcName + '-' + funName + '-' + friendlySetting + '.plot'
+            friendlySetting = mFriendlySettingNames[setting]
+            #friendlySetting = os.path.basename(setting)
+            filename = tcName + '-' + funName + '-' + os.path.basename(setting) + '.plot'
             f = codecs.open(os.path.join(outputDir, filename), 'w', 'utf-8')
             i = 0
             for val in values:
@@ -443,13 +445,13 @@ def createLatexFigures(successrows, uniqueSettings, tcName, outputDir, name):
                     plotnames.append(friendlySetting)
         if name != '':
             funName = name + '-' + funName
-        latexFigures.append((funName, zip(plotfiles, plotnames)))
+        latexFigures.append((funName, zip(plotfiles, plotnames), axis))
     return latexFigures
 
 def getNamesAndStyles(latexFigures):
     namesAndStylesDict = {}
     styles = iter(getLatexPlotStyles())    
-    for key, val in latexFigures:
+    for key, val, val2 in latexFigures:
         for file, pname in val:
             if not pname in namesAndStylesDict:
                 namesAndStylesDict[pname] = (file, next(styles))
@@ -460,7 +462,7 @@ def writePlots(successrows, toolchain, uniqueSettings, outputDir, name):
     tcName = os.path.splitext(os.path.basename(toolchain))[0]
     writeLatexPlotsPreamble(os.path.join(outputDir, tcName + 'plots-pre.tex'))
 
-    latexFigures = createLatexFigures(successrows, uniqueSettings, tcName, outputDir, name);
+    latexFigures = createLatexPlots(successrows, uniqueSettings, tcName, outputDir, name);
     namesAndStyles, namesAndStylesDict = getNamesAndStyles(latexFigures)
     
     plotsfile = os.path.join(outputDir, tcName + '-legend.tex')
@@ -470,13 +472,13 @@ def writePlots(successrows, toolchain, uniqueSettings, outputDir, name):
     
     figCounter = 1
     figPerLine = 3    
-    for funName, filesAndNames in latexFigures:
+    for funName, filesAndNames, axis in latexFigures:
         plotsfile = os.path.join(outputDir, tcName + '-' + funName + '-plots.tex')
         f = codecs.open(plotsfile, 'w', 'utf-8')    
         sortedByName = sorted(filesAndNames, key=lambda x : x[1])
-        #f.write('\\resizebox*{0.45\\textwidth}{!}{%\n')
-        writeLatexFigure(f, 'x', 'y', sortedByName, namesAndStylesDict, funName)
-        #f.write('}\n')
+        # f.write('\\resizebox*{0.45\\textwidth}{!}{%\n')
+        writeLatexPlot(f, 'x', 'y', sortedByName, namesAndStylesDict, funName, axis)
+        # f.write('}\n')
         f.close()        
     return
 
@@ -574,7 +576,8 @@ def main():
         commonSettingsPrefix = os.path.commonprefix(uniqueSettings)
         
         renameSettings = lambda x : mLatexSettingsMappings[x[len(commonSettingsPrefix):]] if x[len(commonSettingsPrefix):] in mLatexSettingsMappings else x[len(commonSettingsPrefix):]
-        
+        for setting in uniqueSettings:
+            mFriendlySettingNames[setting] = renameSettings(setting)
         
         solversOnlySettings = filter(lambda x: not re.match('.*FP.*|.*BP.*', os.path.basename(x)), uniqueSettings)
         championsSettings = filter(lambda x: re.match('.*FP-UC-LV.*', os.path.basename(x)), uniqueSettings)
@@ -594,8 +597,8 @@ def main():
     
         mixed = getMixedInputs(rows, successResults)
         
-        remPathD = lambda x : mapKeys(lambda y : renameSettings(y), x)
-        remPathS = lambda x : map(lambda y : renameSettings(y), x)
+        remPathD = lambda x : mapKeys(lambda y : mFriendlySettingNames[y], x)
+        remPathS = lambda x : map(lambda y : mFriendlySettingNames[y], x)
     
         print 'Settings:         ', remPathS(uniqueSettings)
         print 'Total inputs:     ', len(uniqueFiles)
@@ -626,7 +629,7 @@ def main():
         
         # Use this if you want to print specific settings for the ECS set
         for s in ecs:
-            print '## Setting', renameSettings(s), '##'
+            print '## Setting', mFriendlySettingNames[s], '##'
             # printStats('ECS', rowsEveryoneCouldSolve, s, 'AbstIntIterations')
             # printStats('ECS', rowsEveryoneCouldSolve, s, 'AbstIntStrong')
             # printStats('ALL', successrows, s, 'AbstIntIterations')
