@@ -554,7 +554,7 @@ def checkCsv(rows):
 def main():
     file, output, name = getArgs()
     
-    successResults = ['SAFE', 'UNSAFE']
+    successResults = ['SAFE', 'UNSAFE','CORRECT','INCORRECT']
     timeoutResults = ['TIMEOUT']
     failResults = ['FAIL']
 
