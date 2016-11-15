@@ -1,3 +1,5 @@
+//#Safe
+
 #include <stdio.h> 
 
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));
@@ -5,7 +7,7 @@ extern void __VERIFIER_assume() __attribute__ ((__noreturn__));
 extern int __VERIFIER_nondet_int() __attribute__ ((__noreturn__));
 
 int error, tempDisplay, warnLED, tempIn, chainBroken,
-warnLight, temp, otime = 0, time = 0, limit, init = 0;
+warnLight, temp, otime = 0, time = 0, limit, init;
 
 
 void display(int tempdiff, int warning)

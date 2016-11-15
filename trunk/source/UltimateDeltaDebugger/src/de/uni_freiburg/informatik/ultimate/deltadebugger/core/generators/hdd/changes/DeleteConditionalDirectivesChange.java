@@ -4,9 +4,16 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfa
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceRange;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.SourceRewriter;
 
+/**
+ * Change by conditional directives deletion.
+ */
 public class DeleteConditionalDirectivesChange extends Change {
 	private final ISourceRange[] mDeleteLocations;
-
+	
+	/**
+	 * @param block
+	 *            PST block.
+	 */
 	public DeleteConditionalDirectivesChange(final IPSTConditionalBlock block) {
 		super(block);
 		if (!block.hasActiveBranch()) {
@@ -18,7 +25,7 @@ public class DeleteConditionalDirectivesChange extends Change {
 		mDeleteLocations[0] = block.getSource().newSourceRange(block.offset(), activeBranchLocation.offset());
 		mDeleteLocations[1] = block.getSource().newSourceRange(activeBranchLocation.endOffset(), block.endOffset());
 	}
-
+	
 	@Override
 	public void apply(final SourceRewriter rewriter) {
 		if (mDeleteLocations == null) {
@@ -28,10 +35,11 @@ public class DeleteConditionalDirectivesChange extends Change {
 			rewriter.delete(mDeleteLocations[1]);
 		}
 	}
-
+	
 	@Override
 	public String toString() {
 		return "Delete conditional directives " + getNode() + (mDeleteLocations != null
-				? (" (deleting " + mDeleteLocations[0] + " and " + mDeleteLocations[1] + ")") : "");
+				? (" (deleting " + mDeleteLocations[0] + " and " + mDeleteLocations[1] + ")")
+				: "");
 	}
 }

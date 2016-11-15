@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -59,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TaCheckAndRefinementPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TaCheckAndRefinementPreferences.TaCheckAndRefinementSettingPolicy;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TaCheckAndRefinementPreferences.TaInterpolantAutomatonConstructionPolicy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolantConsolidation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceChecker;
@@ -102,6 +104,14 @@ public final class TraceCheckAndRefinementSelection {
 	 * Node of a recursive control flow graph which stores additional information about the program.
 	 */
 	private final BoogieIcfgContainer mIcfgContainer;
+	/**
+	 * Interpolant automaton evaluator.
+	 */
+	private final IInterpolantAutomatonEvaluator mEvaluator;
+	/**
+	 * Interpolant automaton construction policy.
+	 */
+	private final TaInterpolantAutomatonConstructionPolicy mInterpolantAutomatonConstructionPolicy;
 	
 	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
@@ -119,10 +129,6 @@ public final class TraceCheckAndRefinementSelection {
 	/* intermediate */
 	
 	private TaCheckAndRefinementPreferences mPrefs;
-	/**
-	 * Interpolant automaton evaluator.
-	 */
-	private final IInterpolantAutomatonEvaluator mEvaluator;
 	
 	/* outputs */
 	
@@ -153,7 +159,9 @@ public final class TraceCheckAndRefinementSelection {
 	
 	public TraceCheckAndRefinementSelection(final IUltimateServiceProvider services, final ILogger logger,
 			final List<TaCheckAndRefinementPreferences> prefsList,
-			final TaCheckAndRefinementSettingPolicy settingsPolicy, final IInterpolantAutomatonEvaluator evaluator,
+			final TaCheckAndRefinementSettingPolicy settingsPolicy,
+			final TaInterpolantAutomatonConstructionPolicy automatonPolicy,
+			final IInterpolantAutomatonEvaluator evaluator,
 			final CfgSmtToolkit cfgSmtToolkit, final PredicateFactory predicateFactory,
 			final BoogieIcfgContainer icfgContainer, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique, final IToolchainStorage toolchainStorage,
@@ -166,6 +174,8 @@ public final class TraceCheckAndRefinementSelection {
 		mServices = services;
 		mLogger = logger;
 		mPrefsList = prefsList;
+		mInterpolantAutomatonConstructionPolicy = automatonPolicy;
+		mEvaluator = evaluator;
 		mCsToolkit = cfgSmtToolkit;
 		mPredicateFactory = predicateFactory;
 		mIcfgContainer = icfgContainer;
@@ -180,8 +190,6 @@ public final class TraceCheckAndRefinementSelection {
 		mPredicateUnifier = new PredicateUnifier(mServices, mCsToolkit.getManagedScript(),
 				mPredicateFactory, mIcfgContainer.getBoogie2SMT().getBoogie2SmtSymbolTable(),
 				mSimplificationTechnique, mXnfConversionTechnique);
-		
-		mEvaluator = evaluator;
 		
 		execute(settingsPolicy, counterexample, abstraction);
 	}
@@ -239,17 +247,32 @@ public final class TraceCheckAndRefinementSelection {
 				checkCounterexampleFeasibility(counterexample);
 			} catch (final ToolchainCanceledException e) {
 				throw e;
-			} catch (final Exception e) {
-				mLogger.info("Error during feasibility check, trying next one.");
+			} catch (final SMTLIBException e) {
+				if (mLogger.isInfoEnabled()) {
+					mLogger.info("Error during feasibility check, trying different setting.");
+				}
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug(e.getMessage());
+				}
+				// TODO exception handling should happen inside the trace checker
 				continue;
 			}
 			
-			// construct interpolant automaton depending on feasibility
 			if (mFeasibility == LBool.UNSAT) {
+				// construct interpolant automaton
 				constructInterpolantAutomaton(counterexample, abstraction);
+			} else if (mFeasibility == LBool.UNKNOWN) {
+				// try next trace checker
+				continue;
 			}
 			
 			return;
+		}
+		if (mFeasibility == null) {
+			if (mLogger.isInfoEnabled()) {
+				mLogger.info("No setting worked for the feasibility check, considering it unknown.");
+			}
+			mFeasibility = LBool.UNKNOWN;
 		}
 	}
 	
@@ -411,16 +434,30 @@ public final class TraceCheckAndRefinementSelection {
 					"Constructing an interpolant automaton requires infeasible counterexample.");
 		}
 		
-		// TODO add several strategies here
-		mInterpolantAutomaton = constructInterpolantAutomatonDefault(counterexample, abstraction);
+		final NestedWordAutomaton<CodeBlock, IPredicate> automaton;
+		switch (mInterpolantAutomatonConstructionPolicy) {
+			case FIRST_BEST:
+				automaton = constructInterpolantAutomatonFirstBest(counterexample, abstraction);
+				break;
+			default:
+				throw new IllegalArgumentException("Unknown policy: " + mInterpolantAutomatonConstructionPolicy);
+		}
+		mInterpolantAutomaton = automaton;
 	}
 	
-	private NestedWordAutomaton<CodeBlock, IPredicate> constructInterpolantAutomatonDefault(
+	private NestedWordAutomaton<CodeBlock, IPredicate> constructInterpolantAutomatonFirstBest(
 			final IRun<CodeBlock, IPredicate, ?> counterexample, final IAutomaton<CodeBlock, IPredicate> abstraction)
 			throws AutomataOperationCanceledException {
 		final IInterpolantAutomatonBuilder<CodeBlock, IPredicate> builder =
 				mInterpolantAutomatonBuilderFactory.createBuilder(abstraction, mInterpolantGenerator, counterexample);
-		return builder.getResult();
+		final NestedWordAutomaton<CodeBlock, IPredicate> automaton = builder.getResult();
+		
+		if (mEvaluator.accept(automaton)) {
+			return automaton;
+		}
+		// TODO add code to construct the next automaton
+		mLogger.debug("The interpolant automaton is not considered good, but at the moment we still use it.");
+		return automaton;
 	}
 	
 	/**

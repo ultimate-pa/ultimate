@@ -71,19 +71,28 @@ public final class TestUtil {
 	}
 
 	/**
-	 * Select n files from a collection of files in a pseudo-random and deterministic way.
+	 * Select (n - offset) files from a collection of files in a pseudo-random and deterministic way.
 	 */
-	public static Collection<File> limitFiles(final Collection<File> files, final int n) {
+	public static Collection<File> limitFiles(final Collection<File> files, final int offset, final int n) {
 		if (files == null || files.isEmpty() || n < 0) {
 			return files;
 		} else if (n == 0) {
-			return new ArrayList<>();
-		} else if (n >= files.size()) {
+			return Collections.emptyList();
+		} else if (offset >= files.size()) {
+			return Collections.emptyList();
+		} else if (offset == 0 && n >= files.size()) {
 			return files;
 		} else {
 			final List<File> shuffle = new ArrayList<>(files);
 			Collections.shuffle(shuffle, new Random(PSEUDO_RANDOM_FILE_SELECTION_SEED));
-			return new ArrayList<>(shuffle.subList(0, n));
+			int nPlusOffset;
+			if (((long) offset + (long) n > Integer.MAX_VALUE)) {
+				nPlusOffset = Integer.MAX_VALUE;
+			} else {
+				nPlusOffset = offset + n;
+			}
+			final int upperIndex = Math.min(files.size(), nPlusOffset);
+			return new ArrayList<>(shuffle.subList(offset, upperIndex));
 		}
 	}
 

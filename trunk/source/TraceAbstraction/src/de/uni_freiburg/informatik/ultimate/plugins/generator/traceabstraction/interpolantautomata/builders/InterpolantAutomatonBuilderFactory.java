@@ -43,13 +43,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.Simpli
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractInterpretationRunner;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
@@ -164,15 +162,14 @@ public class InterpolantAutomatonBuilderFactory {
 	private IInterpolantAutomatonBuilder<CodeBlock, IPredicate> createBuilderCanonical(
 			final IAutomaton<CodeBlock, IPredicate> abstraction, final IInterpolantGenerator interpolGenerator,
 			final IRun<CodeBlock, IPredicate, ?> counterexample) {
-		final List<BoogieIcfgLocation> programPoints = CoverageAnalysis.extractProgramPoints(counterexample);
-		final CanonicalInterpolantAutomatonBuilder iab =
-				new CanonicalInterpolantAutomatonBuilder(mServices, interpolGenerator.getIpp(), programPoints,
+		final CanonicalInterpolantAutomatonBuilder<? extends Object> iab =
+				new CanonicalInterpolantAutomatonBuilder(mServices, interpolGenerator.getIpp(), counterexample.getStateSequence(),
 						new InCaReAlphabet<CodeBlock>(abstraction), mCsToolkit, mPredicateFactory, mLogger,
 						interpolGenerator.getPredicateUnifier(), (NestedWord<CodeBlock>) interpolGenerator.getTrace());
 		iab.analyze();
 		mLogger.info("Interpolants " + iab.getResult().getStates());
 		final BackwardCoveringInformation bci = TraceCheckerUtils.computeCoverageCapability(
-				mServices, interpolGenerator.getIpp(), programPoints, mLogger, interpolGenerator.getPredicateUnifier());
+				mServices, interpolGenerator.getIpp(), counterexample.getStateSequence(), mLogger, interpolGenerator.getPredicateUnifier());
 		mBenchmark.addBackwardCoveringInformation(bci);
 		return iab;
 	}

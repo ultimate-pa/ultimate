@@ -1,0 +1,1 @@
+[]( ("limit > -273" || "limit < 10") ==> ("tempIn < 0" ==> <> "warnLED == 1") )

@@ -48,6 +48,10 @@ public abstract class InterpolationTestSuite extends AbstractEvalTestSuite {
 		return Integer.MAX_VALUE;
 	}
 	
+	protected int getFilesPerDirectoryOffset() {
+		return 0;
+	}
+	
 	@Override
 	protected long getTimeout() {
 		return 120 * 1000;
@@ -104,7 +108,7 @@ public abstract class InterpolationTestSuite extends AbstractEvalTestSuite {
 	}
 	
 	protected DirectoryFileEndingsPair getPair(final String dir, final String[] endings) {
-		return new DirectoryFileEndingsPair(dir, endings, getFilesPerDirectory());
+		return new DirectoryFileEndingsPair(dir, endings, getFilesPerDirectoryOffset(), getFilesPerDirectory());
 	}
 	
 	// @formatter:off
@@ -185,7 +189,7 @@ public abstract class InterpolationTestSuite extends AbstractEvalTestSuite {
 		
 		rtr.add(new Pair<>("AutomizerCInline.xml", "kojak/interpolation/bitvector/Reach-32bit-CVC4-FP-UC-LV-Bitvector-Kojak.epf"));
 		rtr.add(new Pair<>("AutomizerCInline.xml", "kojak/interpolation/bitvector/Reach-32bit-Mathsat-FP-UC-LV-Bitvector-Kojak.epf"));
-		rtr.add(new Pair<>("AutomizerCInline.xml", "kojak/interpolation/bitvector/Reach-32bit-SMTInterpol-FP-UC-LV-Bitvector-Kojak.epf"));
+//		rtr.add(new Pair<>("AutomizerCInline.xml", "kojak/interpolation/bitvector/Reach-32bit-SMTInterpol-FP-UC-LV-Bitvector-Kojak.epf"));
 		rtr.add(new Pair<>("AutomizerCInline.xml", "kojak/interpolation/bitvector/Reach-32bit-Z3-FP-UC-LV-Bitvector-Kojak.epf"));
 		
 		rtr.add(new Pair<>("AutomizerCInline.xml", "kojak/interpolation/bitvector/Reach-32bit-Z3-BP-Bitvector-Kojak.epf"));
@@ -206,7 +210,7 @@ public abstract class InterpolationTestSuite extends AbstractEvalTestSuite {
 		
 		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/bitvector/Reach-32bit-CVC4-FP-UC-LV-Bitvector-Impulse.epf"));
 		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/bitvector/Reach-32bit-Mathsat-FP-UC-LV-Bitvector-Impulse.epf"));
-		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/bitvector/Reach-32bit-SMTInterpol-FP-UC-LV-Bitvector-Impulse.epf"));
+//		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/bitvector/Reach-32bit-SMTInterpol-FP-UC-LV-Bitvector-Impulse.epf"));
 		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/bitvector/Reach-32bit-Z3-FP-UC-LV-Bitvector-Impulse.epf"));
 		
 		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/bitvector/Reach-32bit-Z3-BP-Bitvector-Impulse.epf"));
@@ -227,7 +231,7 @@ public abstract class InterpolationTestSuite extends AbstractEvalTestSuite {
 		
 		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/bitvector/Reach-32bit-CVC4-FP-UC-LV-Bitvector-Kojak.epf"));
 		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/bitvector/Reach-32bit-Mathsat-FP-UC-LV-Bitvector-Kojak.epf"));
-		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/bitvector/Reach-32bit-SMTInterpol-FP-UC-LV-Bitvector-Kojak.epf"));
+//		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/bitvector/Reach-32bit-SMTInterpol-FP-UC-LV-Bitvector-Kojak.epf"));
 		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/bitvector/Reach-32bit-Z3-FP-UC-LV-Bitvector-Kojak.epf"));
 
 		rtr.add(new Pair<>("KojakCBEV2.xml", "kojak/interpolation/bitvector/Reach-32bit-Z3-BP-Bitvector-Kojak.epf"));

@@ -21,7 +21,7 @@ public class LocationResolver {
 	private final String mTranslationUnitFilePath;
 	private final ISourceDocument mSourceDocument;
 	private final CommentLocationHack mCommentHack;
-
+	
 	/**
 	 * Default constructor uses a default constructed comment location hack instance.
 	 * 
@@ -36,55 +36,80 @@ public class LocationResolver {
 			final ILogger logger) {
 		this(translationUnitFilePath, sourceDocument, new CommentLocationHack(logger));
 	}
-
+	
+	/**
+	 * @param translationUnitFilePath
+	 *            File path of the translation unit.
+	 * @param sourceDocument
+	 *            source document
+	 * @param commentHack
+	 *            comment location hack
+	 */
 	public LocationResolver(final String translationUnitFilePath, final ISourceDocument sourceDocument,
-			CommentLocationHack commentHack) {
+			final CommentLocationHack commentHack) {
 		mTranslationUnitFilePath = translationUnitFilePath;
 		mSourceDocument = sourceDocument;
 		mCommentHack = commentHack;
 	}
-
+	
+	/**
+	 * @param loc
+	 *            AST file location.
+	 * @return source range
+	 */
 	public ISourceRange asSourceRange(final IASTFileLocation loc) {
 		final int offset = loc.getNodeOffset();
 		final int length = loc.getNodeLength();
 		return mSourceDocument.newSourceRange(offset, offset + length);
 	}
-
+	
+	/**
+	 * @param node
+	 *            AST node.
+	 * @return AST file location
+	 */
 	public IASTFileLocation getFileLocation(final IASTNode node) {
 		if (node instanceof IASTComment) {
 			return mCommentHack.getFileLocation((IASTComment) node, mSourceDocument);
 		}
 		return node.getFileLocation();
 	}
-
+	
+	/**
+	 * @param node
+	 *            AST node.
+	 * @return source range
+	 */
 	public ISourceRange getSourceRange(final IASTNode node) {
 		return asSourceRange(getFileLocation(node));
 	}
-
+	
 	/**
 	 * Compute the location of a node in the translation unit file.
 	 *
 	 * @param node
+	 *            AST node
 	 * @return source range in the translation unit file or null if node is not part of it
 	 */
 	public ISourceRange getSourceRangeInTranslationUnitFile(final IASTNode node) {
 		if (!isPartOfTranslationUnitFile(node)) {
 			return null;
 		}
-
+		
 		final IASTFileLocation loc = getFileLocation(node);
 		if (loc == null) {
 			return null;
 		}
-
+		
 		return asSourceRange(loc);
 	}
-
+	
 	/**
 	 * Compute the source range of any node. If a node is located in an included file, the location of the outermost
 	 * inclusion statement is returned.
 	 *
 	 * @param node
+	 *            AST node
 	 * @return source range of either the node itself or the originating inclusion statement. null if no location
 	 *         information is available.
 	 */
@@ -95,12 +120,12 @@ public class LocationResolver {
 			if (range != null) {
 				return range;
 			}
-
+			
 			final IASTFileLocation loc = getFileLocation(current);
 			if (loc == null) {
 				return null;
 			}
-
+			
 			// map nodes inside external files to originating include
 			final IASTPreprocessorIncludeStatement include = loc.getContextInclusionStatement();
 			if (include == null) {
@@ -110,17 +135,18 @@ public class LocationResolver {
 				assert false : "should not happen!?!";
 				return null;
 			}
-
+			
 			current = include;
 		}
 	}
-
+	
 	/**
 	 * Check if a node is located in the translation unit file. Note that in contrast to
 	 * IASTNode.isPartOfTranslationUnitFile() it returns true for nodes that span over multiple files and only partly
 	 * overlap the translation unit file.
 	 *
 	 * @param node
+	 *            AST node
 	 * @return true iff node is (partly) located in the translation unit file
 	 */
 	public boolean isPartOfTranslationUnitFile(final IASTNode node) {
@@ -140,5 +166,5 @@ public class LocationResolver {
 		final IASTFileLocation loc = node.getFileLocation();
 		return loc != null && mTranslationUnitFilePath.equals(loc.getFileName());
 	}
-
+	
 }

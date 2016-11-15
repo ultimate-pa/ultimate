@@ -1,3 +1,4 @@
+//#Safe
 
 #include <stdio.h>
 
@@ -30,7 +31,7 @@ void coolantControl()
 	while(1)
 	{
 		otime = time;
-		time = otime; //BUG +1;
+		time = otime + 1;
 		tempIn = __VERIFIER_nondet_int();
 		temp = vinToCels(tempIn);
 		if(temp > limit) 

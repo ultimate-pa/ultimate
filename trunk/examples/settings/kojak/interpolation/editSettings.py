@@ -32,183 +32,120 @@ def writeSettingsFile(path, fn) :
   else:
    print('ERROR: did not recognize translation mode')
 
-  #codecheck settings
-  print(dateline, file=f)
-  print(codecheckCommon, file=f)
+  #codecheck and Automizer settings
+
+  kojakString = ''
+  automizerString = ''
+
+  kojakString += dateline + '\n'
+  kojakString += codecheckCommon + '\n'
+
+  #automizerString += dateline, file=f)
+  automizerString += automizerCommon + '\n'
 
   if treeinterpolationKey in fn:
-   print(treeItpKojak, file=f)
+   kojakString += treeItpKojak + '\n'
+   automizerString += treeItpAutomizer + '\n'
   elif nestedinterpolationKey in fn:
-   print(nestedItpKojak, file=f)
+   kojakString += nestedItpKojak + '\n'
+   automizerString += nestedItpAutomizer + '\n'
   elif fpKey in fn:
-   print(fpItpKojak, file=f)
+   kojakString += fpItpKojak + '\n'
+   automizerString += fpItpAutomizer + '\n'
   elif bpKey in fn:
-   print(bpItpKojak, file=f)
+   kojakString += bpItpKojak + '\n'
+   automizerString += bpItpAutomizer + '\n'
   else:
    print('ERROR: did not recognize interpolation mode')
 
   if solverSMTInterpolKey in fn and treeinterpolationKey in fn:
-   print(solverCallSMTInterpolKojakInt, file=f)
-   print(interpolationModeSMTInterpolKojak, file=f)
+   kojakString += solverCallSMTInterpolKojakInt + '\n'
+   kojakString += interpolationModeSMTInterpolKojak + '\n'
+   automizerString += solverCallSMTInterpolAutomizerInt + '\n'
+   automizerString += interpolationModeSMTInterpolAutomizer + '\n'
   elif solverSMTInterpolKey in fn and (fpKey in fn or bpKey in fn):
-   print(solverCallSMTInterpolKojakInt, file=f)
-   print(interpolationModeTraceInterpolationKojak, file=f)
+   kojakString += solverCallSMTInterpolKojakInt + '\n'
+   kojakString += interpolationModeTraceInterpolationKojak + '\n'
+   automizerString += solverCallSMTInterpolAutomizerInt + '\n'
+   automizerString += interpolationModeTraceInterpolationAutomizer + '\n'
   elif solverZ3Key in fn and nestedinterpolationKey in fn and intKey in fn:
-   print(solverCallZ3KojakInt, file=f)
-   print(interpolationModeZ3Kojak, file=f)
+   kojakString += solverCallZ3KojakInt + '\n'
+   kojakString += interpolationModeZ3Kojak + '\n'
+   automizerString += solverCallZ3AutomizerInt + '\n'
+   automizerString += interpolationModeZ3Automizer + '\n'
   elif solverZ3Key in fn and nestedinterpolationKey in fn and bitvectorKey in fn:
-   print(solverCallZ3KojakBitvector, file=f)
-   print(interpolationModeZ3Kojak, file=f)
+   kojakString += solverCallZ3KojakBitvector + '\n'
+   kojakString += interpolationModeZ3Kojak + '\n'
+   automizerString += solverCallZ3AutomizerBitvector + '\n'
+   automizerString += interpolationModeZ3Automizer + '\n'
   elif solverZ3Key in fn and (fpKey in fn or bpKey in fn) and intKey in fn:
-   print(solverCallZ3KojakInt, file=f)
-   print(interpolationModeTraceInterpolationKojak, file=f)
+   kojakString += solverCallZ3KojakInt + '\n'
+   kojakString += interpolationModeTraceInterpolationKojak + '\n'
+   automizerString += solverCallZ3AutomizerInt + '\n'
+   automizerString += interpolationModeTraceInterpolationAutomizer + '\n'
   elif solverZ3Key in fn and (fpKey in fn or bpKey in fn) and bitvectorKey in fn:
-   print(solverCallZ3KojakBitvector, file=f)
-   print(interpolationModeTraceInterpolationKojak, file=f)
+   kojakString += solverCallZ3KojakBitvector + '\n'
+   kojakString += interpolationModeTraceInterpolationKojak + '\n'
+   automizerString += solverCallZ3AutomizerBitvector + '\n'
+   automizerString += interpolationModeTraceInterpolationAutomizer + '\n'
   elif solverZ3Key in fn and floatKey in fn:
-   print(solverCallZ3KojakFloat, file=f)
-   print(interpolationModeTraceInterpolationKojak, file=f)
+   kojakString += solverCallZ3KojakFloat + '\n'
+   kojakString += interpolationModeTraceInterpolationKojak + '\n'
+   automizerString += solverCallZ3AutomizerFloat + '\n'
+   automizerString += interpolationModeTraceInterpolationAutomizer + '\n'
   elif solverPrincessKey in fn:
-   print(solverCallPrincessKojakInt, file=f)
-   print(interpolationModePrincessKojak, file=f)
+   kojakString += solverCallPrincessKojakInt + '\n'
+   kojakString += interpolationModePrincessKojak + '\n'
+   automizerString += solverCallPrincessAutomizerInt + '\n'
+   automizerString += interpolationModePrincessAutomizer + '\n'
   elif solverCVC4Key in fn and intKey in fn:
-   print(solverCallCVC4KojakInt, file=f)
-   print(interpolationModeTraceInterpolationKojak, file=f)
+   kojakString += solverCallCVC4KojakInt + '\n'
+   kojakString += interpolationModeTraceInterpolationKojak + '\n'
+   automizerString += solverCallCVC4AutomizerInt + '\n'
+   automizerString += interpolationModeTraceInterpolationAutomizer + '\n'
   elif solverCVC4Key in fn and bitvectorKey in fn:
-   print(solverCallCVC4KojakBitvector, file=f)
-   print(interpolationModeTraceInterpolationKojak, file=f)
+   kojakString += solverCallCVC4KojakBitvector + '\n'
+   kojakString += interpolationModeTraceInterpolationKojak + '\n'
+   automizerString += solverCallCVC4AutomizerBitvector + '\n'
+   automizerString += interpolationModeTraceInterpolationAutomizer + '\n'
   elif solverMathSATKey in fn and intKey in fn:
-   print(solverCallMathSATKojakInt, file=f)
-   print(interpolationModeTraceInterpolationKojak, file=f)
+   kojakString += solverCallMathSATKojakInt + '\n'
+   kojakString += interpolationModeTraceInterpolationKojak + '\n'
+   automizerString += solverCallMathSATAutomizerInt + '\n'
+   automizerString += interpolationModeTraceInterpolationAutomizer + '\n'
   elif solverMathSATKey in fn and bitvectorKey in fn:
-   print(solverCallMathSATKojakBitvector, file=f)
-   print(interpolationModeTraceInterpolationKojak, file=f)
+   kojakString += solverCallMathSATKojakBitvector + '\n'
+   kojakString += interpolationModeTraceInterpolationKojak + '\n'
+   automizerString += solverCallMathSATAutomizerBitvector + '\n'
+   automizerString += interpolationModeTraceInterpolationAutomizer + '\n'
   elif solverMathSATKey in fn and floatKey in fn:
-   print(solverCallMathSATKojakFloat, file=f)
-   print(interpolationModeTraceInterpolationKojak, file=f)
+   kojakString += solverCallMathSATKojakFloat + '\n'
+   kojakString += interpolationModeTraceInterpolationKojak + '\n'
+   automizerString += solverCallMathSATAutomizerFloat + '\n'
+   automizerString += interpolationModeTraceInterpolationAutomizer + '\n'
   else:
    print('ERROR: did not recognize solver to use: ' + fn)
 
   if lvOnKey not in fn:
-   print(dontUseLVKojak, file=f)
+   kojakString += dontUseLVKojak + '\n'
+   automizerString += dontUseLVAutomizer + '\n'
   elif lvOnKey in fn:
-   print(useLVKojak, file=f)
+   kojakString += useLVKojak + '\n'
+   automizerString += useLVAutomizer + '\n'
 
   if ucOnKey not in fn:
-   print(dontUseUCKojak, file=f)
+   kojakString += dontUseUCKojak + '\n'
+   automizerString += dontUseUCAutomizer + '\n'
   #elif ucOnKey in fn:
-   #print(useUCKojak, file=f)
+   #kojakString += useUCKojak, file=f)
 
   if kojakKey in fn:
-   print(useKojakAlgorithm, file=f)
+   kojakString += useKojakAlgorithm + '\n'
   elif impulseKey in fn:
-   print(useImpulseAlgorithm, file=f)
+   kojakString += useImpulseAlgorithm + '\n'
 
-  #Automizer settings
-
-  print(automizerCommon, file=f)
-
-  if treeinterpolationKey in fn:
-   print(treeItpAutomizer, file=f)
-  elif nestedinterpolationKey in fn:
-   print(nestedItpAutomizer, file=f)
-  elif fpKey in fn:
-   print(fpItpAutomizer, file=f)
-  elif bpKey in fn:
-   print(bpItpAutomizer, file=f)
-  else:
-   print('ERROR: did not recognize interpolation mode')
-
-
-
-  if solverSMTInterpolKey in fn and treeinterpolationKey in fn:
-   print(solverCallSMTInterpolAutomizerInt, file=f)
-   print(interpolationModeSMTInterpolAutomizer, file=f)
-  elif solverSMTInterpolKey in fn and (fpKey in fn or bpKey in fn):
-   print(solverCallSMTInterpolAutomizerInt, file=f)
-   print(interpolationModeTraceInterpolationAutomizer, file=f)
-  elif solverZ3Key in fn and nestedinterpolationKey in fn and intKey in fn:
-   print(solverCallZ3AutomizerInt, file=f)
-   print(interpolationModeZ3Automizer, file=f)
-  elif solverZ3Key in fn and nestedinterpolationKey in fn and bitvectorKey in fn:
-   print(solverCallZ3AutomizerBitvector, file=f)
-   print(interpolationModeZ3Automizer, file=f)
-  elif solverZ3Key in fn and (fpKey in fn or bpKey in fn) and intKey in fn:
-   print(solverCallZ3AutomizerInt, file=f)
-   print(interpolationModeTraceInterpolationAutomizer, file=f)
-  elif solverZ3Key in fn and (fpKey in fn or bpKey in fn) and bitvectorKey in fn:
-   print(solverCallZ3AutomizerBitvector, file=f)
-   print(interpolationModeTraceInterpolationAutomizer, file=f)
-  elif solverZ3Key in fn and floatKey in fn:
-   print(solverCallZ3AutomizerFloat, file=f)
-   print(interpolationModeTraceInterpolationAutomizer, file=f)
-  elif solverPrincessKey in fn:
-   print(solverCallPrincessAutomizerInt, file=f)
-   print(interpolationModePrincessAutomizer, file=f)
-  elif solverCVC4Key in fn and intKey in fn:
-   print(solverCallCVC4AutomizerInt, file=f)
-   print(interpolationModeTraceInterpolationAutomizer, file=f)
-  elif solverCVC4Key in fn and bitvectorKey in fn:
-   print(solverCallCVC4AutomizerBitvector, file=f)
-   print(interpolationModeTraceInterpolationAutomizer, file=f)
-  elif solverMathSATKey in fn and intKey in fn:
-   print(solverCallMathSATAutomizerInt, file=f)
-   print(interpolationModeTraceInterpolationAutomizer, file=f)
-  elif solverMathSATKey in fn and bitvectorKey in fn:
-   print(solverCallMathSATAutomizerBitvector, file=f)
-   print(interpolationModeTraceInterpolationAutomizer, file=f)
-  elif solverMathSATKey in fn and floatKey in fn:
-   print(solverCallMathSATAutomizerFloat, file=f)
-   print(interpolationModeTraceInterpolationAutomizer, file=f)
-  else:
-   print('ERROR: did not recognize solver to use: ' + fn)
-
-
-#  if solverSMTInterpolKey in fn:
-#   print(interpolatorSMTInterpolAutomizerInt, file=f)
-#  elif solverZ3Key in fn and nestedinterpolationKey in fn and intKey in fn:
-#   print(interpolatorIZ3AutomizerInt, file=f)
-#  elif solverZ3Key in fn and nestedinterpolationKey in fn and bitvectorKey in fn:
-#   print(interpolatorIZ3AutomizerBitvector, file=f)
-#  elif solverZ3Key in fn and intKey in fn:
-#   print(interpolatorExternalDefaultAutomizer, file=f)
-#  elif solverZ3Key in fn and bitvectorKey in fn:
-#   print(interpolatorExternalDefaultAutomizerBitvector, file=f)
-#  elif solverZ3Key in fn and floatKey in fn:
-#   print(interpolatorExternalDefaultAutomizerFloat, file=f)
-#  elif solverPrincessKey in fn:
-#   print(interpolatorPrincessAutomizerInt, file=f)
-#  elif solverCVC4Key in fn and intKey in fn:
-#   print(interpolatorCVC4AutomizerInt, file=f)
-#  elif solverCVC4Key in fn and bitvectorKey in fn:
-#   print(interpolatorCVC4AutomizerBitvector, file=f)
-#  elif solverMathSATKey in fn and intKey in fn:
-#   print(interpolatorMathSATAutomizerInt, file=f)
-#  elif solverMathSATKey in fn and bitvectorKey in fn:
-#   print(interpolatorMathSATAutomizerFloat, file=f)
-#
-#  if treeinterpolationKey in fn:
-#   print(treeItpAutomizer, file=f)
-#  elif nestedinterpolationKey in fn:
-#   print(nestedItpAutomizer, file=f)
-#  elif fpKey in fn:
-#   print(fpItpAutomizer, file=f)
-#  elif bpKey in fn:
-#   print(bpItpAutomizer, file=f)
-#  else:
-#   print('ERROR: did not recognize interpolation mode')
-
-  if lvOnKey not in fn:
-   print(dontUseLVAutomizer, file=f)
-  elif lvOnKey in fn:
-   print(useLVAutomizer, file=f)
-
-  if ucOnKey not in fn:
-   print(dontUseUCAutomizer, file=f)
-  #elif ucOnKey in fn:
-   #print(useUCAutomizer, file=f)
-
-
+  print(kojakString, file=f)
+  print(automizerString, file=f)
 
 #############################################################################
 #######  the contents of the settings files are hardcoded in this section ###

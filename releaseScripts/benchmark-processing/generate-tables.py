@@ -37,15 +37,29 @@ def toFloat(row, a):
         return float(value)
     return None 
 
+# Mappings for TACAS Taipan Paper 
+# mLatexSettingsMappings = {
+# 'svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Simple.epf' : '\\setComp',
+# 'svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Simple_total.epf' : '\\setCompT',
+# 'svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf' : '\\setInt',
+# 'svcomp-Reach-32bit-Automizer_Default+AIv2_INT_total.epf' : '\\setIntT',
+# 'svcomp-Reach-32bit-Automizer_Default+AIv2_OCT.epf' : '\\setOct',
+# 'svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_total.epf' : '\\setOctT',
+# 'svcomp-Reach-32bit-Automizer_Default.epf' : '\\setAuto',
+# }
+
+# Mappings for Interpol PLDI17 Paper 
 mLatexSettingsMappings = {
-'svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Simple.epf' : '\\setComp',
-'svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Simple_total.epf' : '\\setCompT',
-'svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf' : '\\setInt',
-'svcomp-Reach-32bit-Automizer_Default+AIv2_INT_total.epf' : '\\setIntT',
-'svcomp-Reach-32bit-Automizer_Default+AIv2_OCT.epf' : '\\setOct',
-'svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_total.epf' : '\\setOctT',
-'svcomp-Reach-32bit-Automizer_Default.epf' : '\\setAuto',
-}
+'Z3-FP-UC-LV-Float-Kojak.epf'        : '\\zzztip',
+'Mathsat-FP-UC-LV-Float-Kojak.epf'   : '\\mathsattip',
+'Z3-FP-UC-Float-Kojak.epf'           : '\\spic',
+'Z3-FP-LV-Float-Kojak.epf'           : '\\splv',
+'Z3-FP-Float-Kojak.epf'              : '\\sponly',
+'Z3-BP-UC-LV-Float-Kojak.epf'        : '\\wpiclv',
+'Z3-BP-LV-Float-Kojak.epf'           : '\\wplv',
+'Z3-BP-UC-Float-Kojak.epf'           : '\\wpic',
+'Z3-BP-Float-Kojak.epf'              : '\\wponly',
+ }
 
 # Those are the dvips colors of xcolor 
 # mLatexColors = ['Apricot', 'Aquamarine', 'Bittersweet', 'Black', 'Blue', 'BlueGreen', 'BlueViolet',
@@ -64,39 +78,30 @@ mLatexPlotMarks = ['star', 'triangle', 'diamond', 'x', '|', '10-pointed-star', '
 mLatexPlotMarkRepeat = 10
 mLatexPlotLines = ['solid', 'dotted', 'dashed' ]
 
-mUltimateHeader = ['Folder',
-                   'File',
-                   'Settings',
-                   'Toolchain',
-                   'Result',
-                   'Category',
-                   'Message',
-                   'Runtime (ns)',
-                   'Allocated memory end (bytes)'
-                   'OverallIterations',
-                   'AbstIntIterations',
-                   'AbstIntStrong',
-                   'AbstIntTime',
-                   'OverallTime',
-                   'TraceCheckerStatistics_NumberOfCodeBlocks',
-                   'TraceCheckerStatistics_SizeOfPredicatesFP',
-                   'TraceCheckerStatistics_SizeOfPredicatesBP',
-                   'TraceCheckerStatistics_Conjuncts in SSA',
-                   'TraceCheckerStatistics_Conjuncts in UnsatCore',
-                   'InterpolantCoveringCapability',
-                   ]
+mUltimateHeaders = []
+mFriendlySettingNames = {}
+mNecessaryHeaders = ['Settings', 'Toolchain', 'Result', 'File']
 
-mRowFuns = { 
+
+mRowFuns = [ ('Time' , lambda r : timeInNanosToSeconds(r, 'OverallTime'), 'semilogyaxis'),
+             ('Iter' , lambda r : toInt(r, 'OverallIterations'), 'axis'),
+             ('InterTime' , lambda r : timeInNanosToSeconds(r, 'TraceCheckerStatistics_InterpolantComputationTime'), 'semilogyaxis'),
+             ('UnsatSize' , lambda r : toPercent(r, 'TraceCheckerStatistics_ConjunctsInUnsatCore', 'TraceCheckerStatistics_ConjunctsInSsa'), 'semilogyaxis'),
+             ('QuantPreds' , lambda r : toPercent(r, 'TraceCheckerStatistics_QuantifiedInterpolants', 'TraceCheckerStatistics_ConstructedInterpolants'), 'axis'),
+             ('PerfInter' , lambda r : toPercent(r, 'TraceCheckerStatistics_PerfectInterpolantSequences', 'TraceCheckerStatistics_InterpolantComputations'), 'axis'),
+            ]
+# # row funs for tacas taipan 
+# mRowFuns = { 
 #            'Time' : lambda r : timeInNanosToSeconds(r, 'Overall time'),
-            'Runtime' : lambda r : timeInNanosToSeconds(r, 'OverallTime'),
-            'TotalIterations' : lambda r : toInt(r, 'OverallIterations'),
-            'AIIterations' : lambda r : toInt(r, 'AbstIntIterations'),
-            'AI Refinements' : lambda r : toInt(r, 'AbstIntStrong'),
+#            'Runtime' : lambda r : timeInNanosToSeconds(r, 'OverallTime'),
+#            'TotalIterations' : lambda r : toInt(r, 'OverallIterations'),
+#            'AIIterations' : lambda r : toInt(r, 'AbstIntIterations'),
+#            'AI Refinements' : lambda r : toInt(r, 'AbstIntStrong'),
 #            'Iter' : lambda r : toInt(r, 'Overall iterations'),
 #            'InterpolantTime' : lambda r : timeInNanosToSeconds(r, 'TraceCheckerBenchmark_InterpolantComputationTime'),
 #            'SizeReduction':lambda r : toPercent(r, 'TraceCheckerBenchmark_Conjuncts in UnsatCore', 'TraceCheckerBenchmark_Conjuncts in SSA'),
 #            'QuantPreds':lambda r : toPercent(r, 'TraceCheckerBenchmark_QuantifiedInterpolants', 'TraceCheckerBenchmark_ConstructedInterpolants'),
-            }
+#            }
 
 def parseArgs():
     # parse command line arguments
@@ -119,28 +124,28 @@ def getSuffix(prefix, input):
 def parseCsvFile(fname):
     csvfile = open(fname, 'rb')
     try:
-        dialect = csv.Sniffer().sniff(csvfile.read(2048),delimiters=',')
+        dialect = csv.Sniffer().sniff(csvfile.read(2048), delimiters=',')
     except csv.Error:
         print "Could not guess .csv dialect, assuming Ultimate defaults"
-        csv.register_dialect('ultimate',delimiter=',')
+        csv.register_dialect('ultimate', delimiter=',')
         dialect = 'ultimate'
     csvfile.seek(0)
     return csv.DictReader(csvfile, dialect=dialect)
 
-def applyOnCsvFile(reader, fun, *args):
+def mapCsv(reader, fun, *args):
     acc = None
     for row in reader:
         acc = fun(row, acc, *args)
     return acc
 
-def reduce(col, fun, init, *args):
+def reduceWithArgs(col, fun, init, *args):
     acc = init
     for elem in col:
         acc = fun(elem, acc, *args)
     return acc
 
 def printFields(row, acc):
-    for field in mUltimateHeader:
+    for field in mUltimateHeaders:
         print row[field],
     print
     return
@@ -154,7 +159,7 @@ def getUniqueSet(fieldname, row, acc):
 def getFolders(row, acc):
     if acc == None:
         acc = {}
-    for field in mUltimateHeader:
+    for field in mUltimateHeaders:
         input = row['File']
         key = getSvcompSubFolder(input)
         if(not key in acc):
@@ -193,7 +198,7 @@ def getResultInputPerSetting(result, row, acc):
     return acc
 
 def getExclusivePerSetting(rows, results):
-    matchingInputs = applyOnCsvFile(rows, lambda x, y : getResultInputPerSetting(results, x, y))
+    matchingInputs = mapCsv(rows, lambda x, y : getResultInputPerSetting(results, x, y))
     acc = {}
     for key, value in matchingInputs.iteritems():
         exclusive = value
@@ -210,14 +215,14 @@ def getExclusiveCountPerSetting(rows, results):
     return mapValues(lambda x : len(x), getExclusivePerSetting(rows, results))
 
 def getMixedInputs(rows, results):
-    matchingInputs = applyOnCsvFile(rows, lambda x, y : getResultInputPerSetting(results, x, y))
+    matchingInputs = mapCsv(rows, lambda x, y : getResultInputPerSetting(results, x, y))
     shared = set.intersection(*matchingInputs.values())
     exclusive = getExclusivePerSetting(rows, results).values()  
     pure = shared.union(*exclusive)  
     return set.union(*matchingInputs.values()).difference(pure)
 
 def getResultPerPortfolioAny(rows, portfolio, results):
-    successCounts = applyOnCsvFile(rows, lambda x, y : getResultInputPerSetting(results, x, y))
+    successCounts = mapCsv(rows, lambda x, y : getResultInputPerSetting(results, x, y))
     goodResults = set()
     for key, value in successCounts.iteritems():
         if(key in portfolio):
@@ -225,18 +230,17 @@ def getResultPerPortfolioAny(rows, portfolio, results):
         
     return goodResults
 
-def getResultPerPortfolioAll(rows, results):
+def getResultPerPortfolioAll(rows, results, uniqueFiles):
     rowsEveryoneCouldSolve = []
-    for r in rows:
-        add = True
-        for o in rows:
-            if o['File'] == r['File'] :
-                add = add and o['Result'] in results
-            if not add:
-                break    
-        if add:
-            rowsEveryoneCouldSolve.append(r)
-    return rowsEveryoneCouldSolve
+    goodResults = []
+    for file in uniqueFiles:
+        rowsPerFile = filter(lambda x : x['File'] == file, rows)
+        if reduce(lambda acc, x : acc and x['Result'] in results, rowsPerFile, True):
+            goodResults = goodResults + rowsPerFile
+            # print "All of " + file + " have one of the results " + ' '.join(results)
+    
+    return goodResults        
+    
 
 def getCrashedInputs(rows, uniqueSettings):
     acc = {}
@@ -384,15 +388,12 @@ def writeLatexPlotsPreamble(filename):
     return
 
  
-def writeLatexFigureBegin(f, namesAndStyles):
+def writeLatexPlotLegend(f, namesAndStyles):
     legendentriesstr = ''
     for name, (file, style) in namesAndStyles:
         legendentriesstr = legendentriesstr + name + ','
     
-    f.write('\\onecolumn\n')
-    f.write('\\begin{figure}\n')
-    f.write('\\centering\n')
-    f.write('    \\begin{tikzpicture}\n')
+    f.write('    \\begin{tikzpicture}[scale=\\plotscale]\n')
     f.write('    \\begin{customlegend}[legend columns=' + str(len(namesAndStyles) / 2) + ',legend style={align=left,draw=none,column sep=2ex,thick},\n')
     f.write('                          legend entries={' + legendentriesstr + '}]\n')
     for name, (file, style) in namesAndStyles:
@@ -401,15 +402,9 @@ def writeLatexFigureBegin(f, namesAndStyles):
     f.write('    \\end{tikzpicture}\n')
     return
 
-def writeLatexFigureEnd(f, caption):
-    f.write('\\caption{' + caption + '}\n')
-    f.write('\\end{figure}\n')
-    f.write('\\twocolumn\n')
-    return
-
-def writeLatexFigure(f, xlabel, ylabel, files, namesAndStylesDict, caption):
-    f.write('\\begin{tikzpicture}\n')
-    f.write('\\begin{semilogyaxis}[%\n')
+def writeLatexPlot(f, xlabel, ylabel, files, namesAndStylesDict, caption, axis):
+    f.write('\\begin{tikzpicture}[scale=\\plotscale]\n')
+    f.write('\\begin{' + axis + '}[%\n')
     f.write('log ticks with fixed point,%\n')
     f.write('xmin=0, ymin=0,%\n')
     f.write('xlabel={' + xlabel + '},%\n')
@@ -418,28 +413,22 @@ def writeLatexFigure(f, xlabel, ylabel, files, namesAndStylesDict, caption):
     f.write(']%\n')
     f.write('\\addlegendimage{empty legend}\\addlegendentry{' + caption + '}\n')
     for file, name in files:
-        f.write('\\addplot[' + namesAndStylesDict[name][1] + '] table {plots/' + file + '};\n')
-    f.write('\\end{semilogyaxis}\n')
+        f.write('\\addplot[' + namesAndStylesDict[name][1] + '] table {fig/plots/' + file + '};\n')
+    f.write('\\end{' + axis + '}\n')
     f.write('\\end{tikzpicture}\n')
     return
 
-def writePlots(successrows, uniqueSettings, outputDir, name):
-    plotsfile = os.path.join(outputDir, 'plots.tex')
-    if os.path.isfile(plotsfile):
-        os.remove(plotsfile)
-
-    plotspreamblefile = os.path.join(outputDir, 'plots-pre.tex')
-    writeLatexPlotsPreamble(plotspreamblefile)
-
+def createLatexPlots(successrows, uniqueSettings, tcName, outputDir, name):
     latexFigures = []
-    
-    for funName, fun in mRowFuns.iteritems():
+    for funName, fun, axis in mRowFuns:
+        print 'Writing plot for ' + funName
         plottable = getPlottable(successrows, fun, map(lambda x : (x), uniqueSettings))
         plotfiles = []
         plotnames = []
         for setting, values in plottable.iteritems():
-            friendlySetting = os.path.basename(setting)
-            filename = funName + '-' + friendlySetting + '.plot'
+            friendlySetting = mFriendlySettingNames[setting]
+            #friendlySetting = os.path.basename(setting)
+            filename = tcName + '-' + funName + '-' + os.path.basename(setting) + '.plot'
             f = codecs.open(os.path.join(outputDir, filename), 'w', 'utf-8')
             i = 0
             for val in values:
@@ -455,29 +444,42 @@ def writePlots(successrows, uniqueSettings, outputDir, name):
                 else:
                     plotnames.append(friendlySetting)
         if name != '':
-            funName = name + ' ' + funName
-        latexFigures.append((funName, zip(plotfiles, plotnames)))
+            funName = name + '-' + funName
+        latexFigures.append((funName, zip(plotfiles, plotnames), axis))
+    return latexFigures
 
+def getNamesAndStyles(latexFigures):
     namesAndStylesDict = {}
     styles = iter(getLatexPlotStyles())    
-    for key, val in latexFigures:
+    for key, val, val2 in latexFigures:
         for file, pname in val:
             if not pname in namesAndStylesDict:
                 namesAndStylesDict[pname] = (file, next(styles))
     
-    namesAndStyles = sorted(namesAndStylesDict.items())
+    return sorted(namesAndStylesDict.items()), namesAndStylesDict
+
+def writePlots(successrows, toolchain, uniqueSettings, outputDir, name):
+    tcName = os.path.splitext(os.path.basename(toolchain))[0]
+    writeLatexPlotsPreamble(os.path.join(outputDir, tcName + 'plots-pre.tex'))
+
+    latexFigures = createLatexPlots(successrows, uniqueSettings, tcName, outputDir, name);
+    namesAndStyles, namesAndStylesDict = getNamesAndStyles(latexFigures)
     
-    f = codecs.open(plotsfile, 'a', 'utf-8')
-    writeLatexFigureBegin(f, namesAndStyles)
+    plotsfile = os.path.join(outputDir, tcName + '-legend.tex')
+    legendFile = codecs.open(plotsfile, 'w', 'utf-8')
+    writeLatexPlotLegend(legendFile, namesAndStyles)
+    legendFile.close()
+    
     figCounter = 1
     figPerLine = 3    
-    for funName, filesAndNames in latexFigures:
+    for funName, filesAndNames, axis in latexFigures:
+        plotsfile = os.path.join(outputDir, tcName + '-' + funName + '-plots.tex')
+        f = codecs.open(plotsfile, 'w', 'utf-8')    
         sortedByName = sorted(filesAndNames, key=lambda x : x[1])
-        f.write('\\resizebox*{0.45\\textwidth}{!}{%\n')
-        writeLatexFigure(f, 'x', 'y', sortedByName, namesAndStylesDict, funName)
-        f.write('}\n')
-    writeLatexFigureEnd(f, name)    
-    f.close()        
+        # f.write('\\resizebox*{0.45\\textwidth}{!}{%\n')
+        writeLatexPlot(f, 'x', 'y', sortedByName, namesAndStylesDict, funName, axis)
+        # f.write('}\n')
+        f.close()        
     return
 
 def getArgs():
@@ -515,7 +517,7 @@ def getStats(rows, title):
     if lenSorted > 0:
         if len(rows) > lenSorted:
             print 'Lost', len(rows) - lenSorted, 'rows for stats because there was no value'
-        avg = reduce(sortedByIter, lambda iter, acc : iter + acc, 0) / lenSorted
+        avg = reduceWithArgs(sortedByIter, lambda iter, acc : iter + acc, 0) / lenSorted
         min = sortedByIter[0]
         max = sortedByIter[lenSorted - 1]
         if len(rows) % 2 == 0:
@@ -538,81 +540,105 @@ def printStats(type, rowsEveryoneCouldSolve, setting, column):
     print type, column, 'Max:', iterMax
     print type, column, 'Med:', iterMed
 
+def checkCsv(rows):
+    headers = rows[0];
+    for header in mNecessaryHeaders:
+        if not header in headers:
+            print 'Necessary header ' + header + ' not present in input'
+            print headers 
+            sys.exit(1)
+    mUltimateHeaders = sorted(list(headers.keys()))
+    print 'Available Headers:'
+    print mUltimateHeaders
+
 def main():
     file, output, name = getArgs()
     
-    rows = list(parseCsvFile(file))
-    uniqueSettings = applyOnCsvFile(rows, lambda x, y : getUniqueSet('Settings', x, y))
-    uniqueToolchains = applyOnCsvFile(rows, lambda x, y : getUniqueSet('Toolchain', x, y))
-    
-    if len(uniqueToolchains) > 1:
-        print 'We only support 1 toolchain per .csv so far, sorry. You had the following toolchains:'
-        print uniqueToolchains
-        sys.exit(1)
-        return
-    
-    crashed = getCrashedInputs(rows, uniqueSettings)
-    rows = addRowsForCrashedInputs(rows, crashed, next(iter(uniqueToolchains)))
-    
-    
-    uniqueFiles = applyOnCsvFile(rows, lambda x, y : getUniqueSet('File', x, y))
-    # for s in uniqueSettings:
-    #    print s, len(filter(lambda x : x['Settings'] == s, rows))
-    
-    successResults = ['SUCCESS']
-    timeoutResults = ['UNKNOWN']
+    successResults = ['SAFE', 'UNSAFE','CORRECT','INCORRECT']
+    timeoutResults = ['TIMEOUT']
     failResults = ['FAIL']
 
-    renameSettings = lambda x : mLatexSettingsMappings[os.path.basename(x)] if os.path.basename(x) in mLatexSettingsMappings else getSuffix('settings/', x)
+    allRows = list(parseCsvFile(file))
     
-    # # one line of unique settings: total success
-    success = applyOnCsvFile(rows, lambda x, y : getResultCountPerSetting(successResults, x, y))
-    timeout = applyOnCsvFile(rows, lambda x, y : getResultCountPerSetting(timeoutResults, x, y))
-    fail = applyOnCsvFile(rows, lambda x, y : getResultCountPerSetting(failResults, x, y))
-    exclusive = getExclusiveCountPerSetting(rows, successResults)
-    allPortfolio = getResultPerPortfolioAny(rows, uniqueSettings, successResults)
-    allTOPortfolio = getResultPerPortfolioAll(rows,  timeoutResults)
-    allFailPortfolio = getResultPerPortfolioAll(rows, failResults)
-
-    mixed = getMixedInputs(rows, successResults)
-
+    checkCsv(allRows);
+    uniqueToolchains = mapCsv(allRows, lambda x, y : getUniqueSet('Toolchain', x, y))
     
-    remPathD = lambda x : mapKeys(lambda y : renameSettings(y), x)
-    remPathS = lambda x : map(lambda y : renameSettings(y), x)
-
-    print 'Settings:         ', remPathS(uniqueSettings)
-    print 'Total inputs:     ', len(uniqueFiles)
-    print 'Crashed inputs #: ', len(crashed)
-    print 'Crashed inputs:   ', crashed
-    print 'Success:          ', remPathD(success)
-    print 'Timeout:          ', remPathD(timeout)
-    print 'Error:             ', remPathD(fail)
-    print 'Exclusive success:', remPathD(exclusive)
-    print 'All Portfolio:        ', len(allPortfolio)
-    print 'All Timeout:        ', len(allTOPortfolio) / len(uniqueSettings)
-    print 'All Error:        ', len(allFailPortfolio) / len(uniqueSettings)
-    # print 'Mixed:            ', mixed
-    print 'Mixed Count:      ', len(mixed)
+    for toolchain in uniqueToolchains:
+        print '### ' + toolchain + ' ###'
+        rows = filter(lambda row: row['Toolchain'] == toolchain, allRows)
+        uniqueSettings = mapCsv(rows, lambda x, y : getUniqueSet('Settings', x, y))
+        uniqueFiles = mapCsv(rows, lambda x, y : getUniqueSet('File', x, y))
+        
+        crashed = getCrashedInputs(rows, uniqueSettings)
+        rows = addRowsForCrashedInputs(rows, crashed, next(iter(uniqueToolchains)))
     
-    rowsEveryoneCouldSolve = getResultPerPortfolioAll(rows,successResults)
     
-    successrows = filter(lambda x : x['Result'] in successResults , rows)
-    ecs = [i for i in uniqueSettings ]
+        commonSettingsPrefix = os.path.commonprefix(uniqueSettings)
+        
+        renameSettings = lambda x : mLatexSettingsMappings[x[len(commonSettingsPrefix):]] if x[len(commonSettingsPrefix):] in mLatexSettingsMappings else x[len(commonSettingsPrefix):]
+        for setting in uniqueSettings:
+            mFriendlySettingNames[setting] = renameSettings(setting)
+        
+        solversOnlySettings = filter(lambda x: not re.match('.*FP.*|.*BP.*', os.path.basename(x)), uniqueSettings)
+        championsSettings = filter(lambda x: re.match('.*FP-UC-LV.*', os.path.basename(x)), uniqueSettings)
     
-    print 'Everyone',remPathS(ecs)
-    print 'Everyone could solve (ECS):', len(rowsEveryoneCouldSolve) / len(uniqueSettings)
-    # Use this if you want to print specific settings for the ECS set
-    for s in ecs:
-        print '## Setting',  renameSettings(s), '##'
-        printStats('ECS',rowsEveryoneCouldSolve, s, 'AbstIntIterations')
-        printStats('ECS',rowsEveryoneCouldSolve, s, 'AbstIntStrong')
-        printStats('ALL',successrows, s, 'AbstIntIterations')
-        printStats('ALL',successrows, s, 'AbstIntStrong')
-        #printStats(rowsEveryoneCouldSolve, s, 'Overall time')
-    print 
+        
+        # one line of unique settings: total success
+        success = mapCsv(rows, lambda x, y : getResultCountPerSetting(successResults, x, y))
+        timeout = mapCsv(rows, lambda x, y : getResultCountPerSetting(timeoutResults, x, y))
+        fail = mapCsv(rows, lambda x, y : getResultCountPerSetting(failResults, x, y))
+        exclusive = getExclusiveCountPerSetting(rows, successResults)
+        
+        allPortfolio = getResultPerPortfolioAny(rows, uniqueSettings, successResults)
+        allTOPortfolio = getResultPerPortfolioAll(rows, timeoutResults, uniqueFiles)
+        allFailPortfolio = getResultPerPortfolioAll(rows, failResults, uniqueFiles)
+        otherPortfolio = getResultPerPortfolioAny(rows, solversOnlySettings, successResults)
+        championsPortfolio = getResultPerPortfolioAny(rows, championsSettings, successResults)
     
-    # # gnuplot and stuff 
-    writePlots(successrows, uniqueSettings, output, name)
+        mixed = getMixedInputs(rows, successResults)
+        
+        remPathD = lambda x : mapKeys(lambda y : mFriendlySettingNames[y], x)
+        remPathS = lambda x : map(lambda y : mFriendlySettingNames[y], x)
+    
+        print 'Settings:         ', remPathS(uniqueSettings)
+        print 'Total inputs:     ', len(uniqueFiles)
+        print 'Crashed inputs #: ', len(crashed)
+        print 'Crashed inputs:   ', crashed
+        print 'Success:          ', remPathD(success)
+        print 'Timeout:          ', remPathD(timeout)
+        print 'Error:            ', remPathD(fail)
+        print 'Exclusive success:', remPathD(exclusive)
+        print 'All Portfolio:    ', len(allPortfolio)
+        print 'All Timeout:      ', len(allTOPortfolio) / len(uniqueSettings)
+        print 'All Error:        ', len(allFailPortfolio) / len(uniqueSettings)
+        print '# Craig Portfolio:  ', len(otherPortfolio)
+        print 'Craig Portfolio:  ', remPathS(solversOnlySettings)
+        print '# Craig+IT-SP Portfolio: ', len(championsPortfolio)
+        print 'Craig+IT-SP Portfolio: ', remPathS(championsSettings)
+        
+        # print 'Mixed:            ', mixed
+        print 'Mixed Count:      ', len(mixed)
+        
+        rowsEveryoneCouldSolve = getResultPerPortfolioAll(rows, successResults, uniqueFiles)
+        
+        successrows = filter(lambda x : x['Result'] in successResults , rows)
+        ecs = [i for i in uniqueSettings ]
+        
+        print 'Everyone', remPathS(ecs)
+        print 'Everyone could solve (ECS):', len(rowsEveryoneCouldSolve) / len(uniqueSettings)
+        
+        # Use this if you want to print specific settings for the ECS set
+        for s in ecs:
+            print '## Setting', mFriendlySettingNames[s], '##'
+            # printStats('ECS', rowsEveryoneCouldSolve, s, 'AbstIntIterations')
+            # printStats('ECS', rowsEveryoneCouldSolve, s, 'AbstIntStrong')
+            # printStats('ALL', successrows, s, 'AbstIntIterations')
+            # printStats('ALL', successrows, s, 'AbstIntStrong')
+            # printStats(rowsEveryoneCouldSolve, s, 'Overall time')
+        print 
+        
+        # # gnuplot and stuff 
+        writePlots(successrows, toolchain, uniqueSettings, output, name)
     
     return
 
