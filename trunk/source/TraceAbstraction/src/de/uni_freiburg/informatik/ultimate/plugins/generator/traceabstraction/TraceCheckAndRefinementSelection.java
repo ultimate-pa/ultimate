@@ -59,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TaCheckAndRefinementPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TaCheckAndRefinementPreferences.TaCheckAndRefinementSettingPolicy;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TaCheckAndRefinementPreferences.TaInterpolantAutomatonConstructionPolicy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolantConsolidation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceChecker;
@@ -102,6 +103,14 @@ public final class TraceCheckAndRefinementSelection {
 	 * Node of a recursive control flow graph which stores additional information about the program.
 	 */
 	private final BoogieIcfgContainer mIcfgContainer;
+	/**
+	 * Interpolant automaton evaluator.
+	 */
+	private final IInterpolantAutomatonEvaluator mEvaluator;
+	/**
+	 * Interpolant automaton construction policy.
+	 */
+	private final TaInterpolantAutomatonConstructionPolicy mInterpolantAutomatonConstructionPolicy;
 	
 	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
@@ -119,10 +128,6 @@ public final class TraceCheckAndRefinementSelection {
 	/* intermediate */
 	
 	private TaCheckAndRefinementPreferences mPrefs;
-	/**
-	 * Interpolant automaton evaluator.
-	 */
-	private final IInterpolantAutomatonEvaluator mEvaluator;
 	
 	/* outputs */
 	
@@ -153,7 +158,9 @@ public final class TraceCheckAndRefinementSelection {
 	
 	public TraceCheckAndRefinementSelection(final IUltimateServiceProvider services, final ILogger logger,
 			final List<TaCheckAndRefinementPreferences> prefsList,
-			final TaCheckAndRefinementSettingPolicy settingsPolicy, final IInterpolantAutomatonEvaluator evaluator,
+			final TaCheckAndRefinementSettingPolicy settingsPolicy,
+			final TaInterpolantAutomatonConstructionPolicy automatonPolicy,
+			final IInterpolantAutomatonEvaluator evaluator,
 			final CfgSmtToolkit cfgSmtToolkit, final PredicateFactory predicateFactory,
 			final BoogieIcfgContainer icfgContainer, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique, final IToolchainStorage toolchainStorage,
@@ -166,6 +173,8 @@ public final class TraceCheckAndRefinementSelection {
 		mServices = services;
 		mLogger = logger;
 		mPrefsList = prefsList;
+		mInterpolantAutomatonConstructionPolicy = automatonPolicy;
+		mEvaluator = evaluator;
 		mCsToolkit = cfgSmtToolkit;
 		mPredicateFactory = predicateFactory;
 		mIcfgContainer = icfgContainer;
@@ -180,8 +189,6 @@ public final class TraceCheckAndRefinementSelection {
 		mPredicateUnifier = new PredicateUnifier(mServices, mCsToolkit.getManagedScript(),
 				mPredicateFactory, mIcfgContainer.getBoogie2SMT().getBoogie2SmtSymbolTable(),
 				mSimplificationTechnique, mXnfConversionTechnique);
-		
-		mEvaluator = evaluator;
 		
 		execute(settingsPolicy, counterexample, abstraction);
 	}
@@ -411,16 +418,30 @@ public final class TraceCheckAndRefinementSelection {
 					"Constructing an interpolant automaton requires infeasible counterexample.");
 		}
 		
-		// TODO add several strategies here
-		mInterpolantAutomaton = constructInterpolantAutomatonDefault(counterexample, abstraction);
+		final NestedWordAutomaton<CodeBlock, IPredicate> automaton;
+		switch (mInterpolantAutomatonConstructionPolicy) {
+			case FIRST_BEST:
+				automaton = constructInterpolantAutomatonFirstBest(counterexample, abstraction);
+				break;
+			default:
+				throw new IllegalArgumentException("Unknown policy: " + mInterpolantAutomatonConstructionPolicy);
+		}
+		mInterpolantAutomaton = automaton;
 	}
 	
-	private NestedWordAutomaton<CodeBlock, IPredicate> constructInterpolantAutomatonDefault(
+	private NestedWordAutomaton<CodeBlock, IPredicate> constructInterpolantAutomatonFirstBest(
 			final IRun<CodeBlock, IPredicate, ?> counterexample, final IAutomaton<CodeBlock, IPredicate> abstraction)
 			throws AutomataOperationCanceledException {
 		final IInterpolantAutomatonBuilder<CodeBlock, IPredicate> builder =
 				mInterpolantAutomatonBuilderFactory.createBuilder(abstraction, mInterpolantGenerator, counterexample);
-		return builder.getResult();
+		final NestedWordAutomaton<CodeBlock, IPredicate> automaton = builder.getResult();
+		
+		if (mEvaluator.accept(automaton)) {
+			return automaton;
+		}
+		// TODO add code to construct the next automaton
+		mLogger.debug("The interpolant automaton is not considered good, but at the moment we still use it.");
+		return automaton;
 	}
 	
 	/**

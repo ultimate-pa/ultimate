@@ -87,6 +87,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TaCheckAndRefinementPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TaCheckAndRefinementPreferences.TaCheckAndRefinementSettingPolicy;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TaCheckAndRefinementPreferences.TaInterpolantAutomatonConstructionPolicy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.CounterexampleSearchStrategy;
@@ -293,10 +294,13 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				Collections.singletonList(taCheckAndRefinementPrefs);
 		final TaCheckAndRefinementSettingPolicy settingsPolicy = TaCheckAndRefinementSettingPolicy.SEQUENTIAL;
 		final IInterpolantAutomatonEvaluator evaluator = automaton -> true;
+		final TaInterpolantAutomatonConstructionPolicy automatonPolicy =
+				TaInterpolantAutomatonConstructionPolicy.FIRST_BEST;
 		mTraceCheckAndRefinementSelection = new TraceCheckAndRefinementSelection(mServices, mLogger,
-				taCheckAndRefinementPrefsList, settingsPolicy, evaluator, mCsToolkit, mPredicateFactory, mIcfgContainer,
-				mSimplificationTechnique, mXnfConversionTechnique, mToolchainStorage, mCegarLoopBenchmark,
-				mInterpolantAutomatonBuilderFactory, mPref, mIteration, mCounterexample, mAbstraction);
+				taCheckAndRefinementPrefsList, settingsPolicy, automatonPolicy, evaluator, mCsToolkit,
+				mPredicateFactory, mIcfgContainer, mSimplificationTechnique, mXnfConversionTechnique, mToolchainStorage,
+				mCegarLoopBenchmark, mInterpolantAutomatonBuilderFactory, mPref, mIteration, mCounterexample,
+				mAbstraction);
 		
 		final PredicateUnifier predicateUnifier = mTraceCheckAndRefinementSelection.getPredicateUnifier();
 		final LBool feasibility = mTraceCheckAndRefinementSelection.getCounterexampleFeasibility();

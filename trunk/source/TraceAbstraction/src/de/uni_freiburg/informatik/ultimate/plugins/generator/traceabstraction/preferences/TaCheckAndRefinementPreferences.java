@@ -53,6 +53,19 @@ public class TaCheckAndRefinementPreferences {
 		SEQUENTIAL
 	}
 	
+	/**
+	 * Policy how to choose the interpolant automaton in {@link TraceCheckAndRefinementSelection}.
+	 * 
+	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+	 */
+	public enum TaInterpolantAutomatonConstructionPolicy {
+		/**
+		 * Uses the first interpolant automaton that is accepted. If none is accepted, the best automaton is used. Ties
+		 * are broken for the first result in the sequence.
+		 */
+		FIRST_BEST
+	}
+	
 	private final InterpolationTechnique mInterpolationTechnique;
 	
 	private final boolean mUseSeparateSolverForTracechecks;
