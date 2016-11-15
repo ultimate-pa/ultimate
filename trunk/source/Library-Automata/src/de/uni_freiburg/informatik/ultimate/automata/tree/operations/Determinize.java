@@ -37,7 +37,9 @@ public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		stateFactory = factory;
 		
 		treeAutomaton = tree;
-		result = computeResult();
+		final ITreeAutomaton<LETTER, STATE> t = computeResult();
+		final Totalize<LETTER, STATE> op = new Totalize<>(t, factory);
+		result = op.getResult();
 	}
 	
 	private STATE reduceState(final Set<STATE> key) {
@@ -67,6 +69,7 @@ public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		
 		final Map<LETTER, Map<List<Set<STATE>>, Set<STATE>>> rules = new HashMap<LETTER, Map<List<Set<STATE>>, Set<STATE>>>();
 		
+		/*
 		// Dummy rules
 		final STATE dummyState = stateFactory.createEmptyStackState();
 		final Set<STATE> superSet = new HashSet<STATE>();
@@ -93,6 +96,7 @@ public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			mp.get(source).add(dummyState);
 		}
 		// Dummy Rules end.
+		*/
 		
 		for (final TreeAutomatonRule<LETTER, STATE> rule : treeAutomaton.getRules()) {
 			if (!rules.containsKey(rule.getLetter())) {
