@@ -37,7 +37,7 @@ def toFloat(row, a):
         return float(value)
     return None 
 
-# Mappings for AI TACAS Paper 
+# Mappings for TACAS Taipan Paper 
 # mLatexSettingsMappings = {
 # 'svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Simple.epf' : '\\setComp',
 # 'svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Simple_total.epf' : '\\setCompT',
@@ -80,17 +80,27 @@ mLatexPlotLines = ['solid', 'dotted', 'dashed' ]
 
 mUltimateHeaders = []
 mNecessaryHeaders = ['Settings', 'Toolchain', 'Result', 'File']
-mRowFuns = { 
+
+
+mRowFuns = { 'Time' : lambda r : timeInNanosToSeconds(r, 'OverallTime'),
+             'Iter' : lambda r : toInt(r, 'OverallIterations'),
+             'InterTime' : lambda r : timeInNanosToSeconds(r, 'TraceCheckerStatistics_InterpolantComputationTime'),
+             'UnsatSize':lambda r : toPercent(r, 'TraceCheckerStatistics_ConjunctsInUnsatCore', 'TraceCheckerStatistics_ConjunctsInSsa'),
+             'QuantPreds':lambda r : toPercent(r, 'TraceCheckerStatistics_QuantifiedInterpolants', 'TraceCheckerStatistics_ConstructedInterpolants'),
+             'PerfInter': lambda r : toPercent(r, 'TraceCheckerStatistics_PerfectInterpolantSequences', 'TraceCheckerStatistics_InterpolantComputations'),
+            }
+# # row funs for tacas taipan 
+# mRowFuns = { 
 #            'Time' : lambda r : timeInNanosToSeconds(r, 'Overall time'),
-            'Runtime' : lambda r : timeInNanosToSeconds(r, 'OverallTime'),
-            'TotalIterations' : lambda r : toInt(r, 'OverallIterations'),
-            'AIIterations' : lambda r : toInt(r, 'AbstIntIterations'),
-            'AI Refinements' : lambda r : toInt(r, 'AbstIntStrong'),
+#            'Runtime' : lambda r : timeInNanosToSeconds(r, 'OverallTime'),
+#            'TotalIterations' : lambda r : toInt(r, 'OverallIterations'),
+#            'AIIterations' : lambda r : toInt(r, 'AbstIntIterations'),
+#            'AI Refinements' : lambda r : toInt(r, 'AbstIntStrong'),
 #            'Iter' : lambda r : toInt(r, 'Overall iterations'),
 #            'InterpolantTime' : lambda r : timeInNanosToSeconds(r, 'TraceCheckerBenchmark_InterpolantComputationTime'),
 #            'SizeReduction':lambda r : toPercent(r, 'TraceCheckerBenchmark_Conjuncts in UnsatCore', 'TraceCheckerBenchmark_Conjuncts in SSA'),
 #            'QuantPreds':lambda r : toPercent(r, 'TraceCheckerBenchmark_QuantifiedInterpolants', 'TraceCheckerBenchmark_ConstructedInterpolants'),
-            }
+#            }
 
 def parseArgs():
     # parse command line arguments
@@ -226,7 +236,7 @@ def getResultPerPortfolioAll(rows, results, uniqueFiles):
         rowsPerFile = filter(lambda x : x['File'] == file, rows)
         if reduce(lambda acc, x : acc and x['Result'] in results, rowsPerFile, True):
             goodResults = goodResults + rowsPerFile
-            #print "All of " + file + " have one of the results " + ' '.join(results)
+            # print "All of " + file + " have one of the results " + ' '.join(results)
     
     return goodResults        
     
@@ -377,27 +387,18 @@ def writeLatexPlotsPreamble(filename):
     return
 
  
-def writeLatexFigureBegin(f, namesAndStyles):
+def writeLatexPlotLegend(f, namesAndStyles):
     legendentriesstr = ''
     for name, (file, style) in namesAndStyles:
         legendentriesstr = legendentriesstr + name + ','
     
-    f.write('\\onecolumn\n')
-    f.write('\\begin{figure}\n')
-    f.write('\\centering\n')
-    f.write('    \\begin{tikzpicture}\n')
+    f.write('    \\begin{tikzpicture}[scale=\\plotscale]\n')
     f.write('    \\begin{customlegend}[legend columns=' + str(len(namesAndStyles) / 2) + ',legend style={align=left,draw=none,column sep=2ex,thick},\n')
     f.write('                          legend entries={' + legendentriesstr + '}]\n')
     for name, (file, style) in namesAndStyles:
         f.write('        \\addlegendimage{' + style + '}\n')
     f.write('    \\end{customlegend}\n')
     f.write('    \\end{tikzpicture}\n')
-    return
-
-def writeLatexFigureEnd(f, caption):
-    f.write('\\caption{' + caption + '}\n')
-    f.write('\\end{figure}\n')
-    f.write('\\twocolumn\n')
     return
 
 def writeLatexFigure(f, xlabel, ylabel, files, namesAndStylesDict, caption):
@@ -411,22 +412,13 @@ def writeLatexFigure(f, xlabel, ylabel, files, namesAndStylesDict, caption):
     f.write(']%\n')
     f.write('\\addlegendimage{empty legend}\\addlegendentry{' + caption + '}\n')
     for file, name in files:
-        f.write('\\addplot[' + namesAndStylesDict[name][1] + '] table {plots/' + file + '};\n')
+        f.write('\\addplot[' + namesAndStylesDict[name][1] + '] table {fig/plots/' + file + '};\n')
     f.write('\\end{semilogyaxis}\n')
     f.write('\\end{tikzpicture}\n')
     return
 
-def writePlots(successrows, toolchain, uniqueSettings, outputDir, name):
-    tcName = os.path.splitext(os.path.basename(toolchain))[0]
-    plotsfile = os.path.join(outputDir, tcName + 'plots.tex')
-    if os.path.isfile(plotsfile):
-        os.remove(plotsfile)
-
-    plotspreamblefile = os.path.join(outputDir, tcName + 'plots-pre.tex')
-    writeLatexPlotsPreamble(plotspreamblefile)
-
+def createLatexFigures(successrows, uniqueSettings, tcName, outputDir, name):
     latexFigures = []
-    
     for funName, fun in mRowFuns.iteritems():
         print 'Writing plot for ' + funName
         plottable = getPlottable(successrows, fun, map(lambda x : (x), uniqueSettings))
@@ -450,9 +442,11 @@ def writePlots(successrows, toolchain, uniqueSettings, outputDir, name):
                 else:
                     plotnames.append(friendlySetting)
         if name != '':
-            funName = name + ' ' + funName
+            funName = name + '-' + funName
         latexFigures.append((funName, zip(plotfiles, plotnames)))
+    return latexFigures
 
+def getNamesAndStyles(latexFigures):
     namesAndStylesDict = {}
     styles = iter(getLatexPlotStyles())    
     for key, val in latexFigures:
@@ -460,19 +454,30 @@ def writePlots(successrows, toolchain, uniqueSettings, outputDir, name):
             if not pname in namesAndStylesDict:
                 namesAndStylesDict[pname] = (file, next(styles))
     
-    namesAndStyles = sorted(namesAndStylesDict.items())
+    return sorted(namesAndStylesDict.items()), namesAndStylesDict
+
+def writePlots(successrows, toolchain, uniqueSettings, outputDir, name):
+    tcName = os.path.splitext(os.path.basename(toolchain))[0]
+    writeLatexPlotsPreamble(os.path.join(outputDir, tcName + 'plots-pre.tex'))
+
+    latexFigures = createLatexFigures(successrows, uniqueSettings, tcName, outputDir, name);
+    namesAndStyles, namesAndStylesDict = getNamesAndStyles(latexFigures)
     
-    f = codecs.open(plotsfile, 'a', 'utf-8')
-    writeLatexFigureBegin(f, namesAndStyles)
+    plotsfile = os.path.join(outputDir, tcName + '-legend.tex')
+    legendFile = codecs.open(plotsfile, 'w', 'utf-8')
+    writeLatexPlotLegend(legendFile, namesAndStyles)
+    legendFile.close()
+    
     figCounter = 1
     figPerLine = 3    
     for funName, filesAndNames in latexFigures:
+        plotsfile = os.path.join(outputDir, tcName + '-' + funName + '-plots.tex')
+        f = codecs.open(plotsfile, 'w', 'utf-8')    
         sortedByName = sorted(filesAndNames, key=lambda x : x[1])
-        f.write('\\resizebox*{0.45\\textwidth}{!}{%\n')
+        #f.write('\\resizebox*{0.45\\textwidth}{!}{%\n')
         writeLatexFigure(f, 'x', 'y', sortedByName, namesAndStylesDict, funName)
-        f.write('}\n')
-    writeLatexFigureEnd(f, name)    
-    f.close()        
+        #f.write('}\n')
+        f.close()        
     return
 
 def getArgs():
@@ -570,14 +575,22 @@ def main():
         
         renameSettings = lambda x : mLatexSettingsMappings[x[len(commonSettingsPrefix):]] if x[len(commonSettingsPrefix):] in mLatexSettingsMappings else x[len(commonSettingsPrefix):]
         
-        # # one line of unique settings: total success
+        
+        solversOnlySettings = filter(lambda x: not re.match('.*FP.*|.*BP.*', os.path.basename(x)), uniqueSettings)
+        championsSettings = filter(lambda x: re.match('.*FP-UC-LV.*', os.path.basename(x)), uniqueSettings)
+    
+        
+        # one line of unique settings: total success
         success = mapCsv(rows, lambda x, y : getResultCountPerSetting(successResults, x, y))
         timeout = mapCsv(rows, lambda x, y : getResultCountPerSetting(timeoutResults, x, y))
         fail = mapCsv(rows, lambda x, y : getResultCountPerSetting(failResults, x, y))
         exclusive = getExclusiveCountPerSetting(rows, successResults)
+        
         allPortfolio = getResultPerPortfolioAny(rows, uniqueSettings, successResults)
         allTOPortfolio = getResultPerPortfolioAll(rows, timeoutResults, uniqueFiles)
         allFailPortfolio = getResultPerPortfolioAll(rows, failResults, uniqueFiles)
+        otherPortfolio = getResultPerPortfolioAny(rows, solversOnlySettings, successResults)
+        championsPortfolio = getResultPerPortfolioAny(rows, championsSettings, successResults)
     
         mixed = getMixedInputs(rows, successResults)
         
@@ -595,6 +608,11 @@ def main():
         print 'All Portfolio:    ', len(allPortfolio)
         print 'All Timeout:      ', len(allTOPortfolio) / len(uniqueSettings)
         print 'All Error:        ', len(allFailPortfolio) / len(uniqueSettings)
+        print '# Craig Portfolio:  ', len(otherPortfolio)
+        print 'Craig Portfolio:  ', remPathS(solversOnlySettings)
+        print '# Craig+IT-SP Portfolio: ', len(championsPortfolio)
+        print 'Craig+IT-SP Portfolio: ', remPathS(championsSettings)
+        
         # print 'Mixed:            ', mixed
         print 'Mixed Count:      ', len(mixed)
         
