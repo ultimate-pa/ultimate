@@ -54,4 +54,9 @@ public class InterpolationTestSuiteBitvector extends InterpolationTestSuite {
 		// 5 is 4512
 		return 5;
 	}
+	
+	@Override
+	protected int getFilesPerDirectoryOffset() {
+		return 0;
+	}
 }
