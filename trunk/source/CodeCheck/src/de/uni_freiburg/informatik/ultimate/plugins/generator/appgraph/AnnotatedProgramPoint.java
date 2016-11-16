@@ -40,7 +40,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Boo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 
 /**
- * A ProgramPoint with a predicate. Also includes information about hyperedges.
+ * A node in the abstract reachability graph that Kojak maintains.
+ * Contains an IcfgLocation (earlier called ProgramPoint) that is annotated with a Predicate.
+ * 
+ * (Note that it is correct that this should not inherit from IcfgLocation because we may 
+ *  have many instances of this class for a single program location -- which are annotated
+ *  with different predicates
+ *  -- writing this down here because of several attempts to go into that wrong direction)
  *
  * @author Alexander Nutz
  * @author Mohamed Sherif

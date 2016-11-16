@@ -29,6 +29,11 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.ModifiableMultigraphEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
+/**
+ * An edge in the abstract reachability graph maintained by Kojak.
+ * 
+ * @author Alexander Nutz
+ */
 public class AppEdge extends
 		ModifiableMultigraphEdge<AnnotatedProgramPoint, AppEdge,AnnotatedProgramPoint, AppEdge> {
 
