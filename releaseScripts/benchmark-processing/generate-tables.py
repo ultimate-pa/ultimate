@@ -72,6 +72,17 @@ mLatexSettingsMappings = {
 'Z3-FP-UC-Integer-Kojak.epf'                        : '\\spic',
 'Z3-BP-UC-Integer-Kojak.epf'                        : '\\wpic',
 'Z3-BP-UC-LV-Integer-Kojak.epf'                     : '\\wpiclv',
+'Mathsat-FP-UC-LV-Bitvector-Kojak.epf'              : '\\mathsattip',
+'Z3-BP-UC-LV-Bitvector-Kojak.epf'                   : '\\wpiclv',
+'Z3-FP-UC-LV-Bitvector-Kojak.epf'                   : '\\zzztip',
+'Z3-FP-UC-Bitvector-Kojak.epf'                      : '\\spic',
+'CVC4-FP-UC-LV-Bitvector-Kojak.epf'                 : '\\cvctip',
+'Z3-BP-UC-Bitvector-Kojak.epf'                      : '\\wpic',
+'Z3-BP-LV-Bitvector-Kojak.epf'                      : '\\wplv',
+'Z3-FP-LV-Bitvector-Kojak.epf'                      : '\\splv',
+'Z3-NestedInterpolation-Bitvector-Kojak.epf'        : '\\zzzip',
+'Z3-FP-Bitvector-Kojak.epf'                         : '\\sponly',
+'Z3-BP-Bitvector-Kojak.epf'                         : '\\wponly',
  }
 
 # Those are the dvips colors of xcolor 
@@ -422,8 +433,10 @@ def writeLatexPlot(f, xlabel, ylabel, files, namesAndStylesDict, caption, axis):
     f.write('log ticks with fixed point,%\n')
     f.write('xmin=0, ymin=0,%\n')
     f.write('xlabel={' + xlabel + '},%\n')
-    f.write('ylabel={' + ylabel + '},grid=major,%\n')
-    f.write('legend style={at={(0.025,0.975)},anchor=north west,legend cell align=left}%\n')
+    f.write('ylabel={' + ylabel + '},%\n')
+    f.write('grid=major,%\n')
+    f.write('y label style={at={(axis description cs:0.1,.5)},anchor=south},%\n')
+    f.write('legend style={at={(0.5,0.975)},anchor=south,legend cell align=left}%\n')
     f.write(']%\n')
     f.write('\\addlegendimage{empty legend}\\addlegendentry{' + caption + '}\n')
     for file, name in files:
@@ -619,7 +632,7 @@ def main():
         remPathD = lambda x : mapKeys(lambda y : mFriendlySettingNames[y], x)
         remPathS = lambda x : map(lambda y : mFriendlySettingNames[y], x)
     
-        print 'Settings:         ', remPathS(uniqueSettings)
+        print 'Settings:         ', len(uniqueSettings),':', remPathS(uniqueSettings)
         print 'Total inputs:     ', len(uniqueFiles)
         print 'Crashed inputs #: ', len(crashed)
         print 'Crashed inputs:   ', crashed
@@ -647,18 +660,18 @@ def main():
         print 'Everyone could solve (ECS):', len(rowsEveryoneCouldSolve) / len(uniqueSettings)
         
         # Use this if you want to print specific settings for the ECS set
-        for s in ecs:
-            print '## Setting', mFriendlySettingNames[s], '##'
+#        for s in ecs:
+ #           print '## Setting', mFriendlySettingNames[s], '##'
             # printStats('ECS', rowsEveryoneCouldSolve, s, 'AbstIntIterations')
             # printStats('ECS', rowsEveryoneCouldSolve, s, 'AbstIntStrong')
             # printStats('ALL', successrows, s, 'AbstIntIterations')
             # printStats('ALL', successrows, s, 'AbstIntStrong')
             # printStats(rowsEveryoneCouldSolve, s, 'Overall time')
-        print 
+        #print 
         
         # # gnuplot and stuff 
         writePlots(successrows, toolchain, uniqueSettings, output, name)
-    
+        print
     return
 
 if __name__ == "__main__":
