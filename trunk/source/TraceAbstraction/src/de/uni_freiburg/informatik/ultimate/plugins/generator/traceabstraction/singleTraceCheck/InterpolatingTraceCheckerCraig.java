@@ -299,7 +299,7 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 			// computed by this TraceChecker
 			final InterpolatingTraceCheckerCraig tc =
 					new InterpolatingTraceCheckerCraig(precondition, interpolantAtReturnPosition, pendingContexts,
-							subtrace, mCsToolkit, massertCodeBlocksIncrementally, mServices, false, mPredicateUnifier,
+							subtrace, mCsToolkit, mAssertCodeBlocksIncrementally, mServices, false, mPredicateUnifier,
 							InterpolationTechnique.Craig_NestedInterpolation, mTcSmtManager, mInstantiateArrayExt,
 							mXnfConversionTechnique, mSimplificationTechnique, null, true);
 			final LBool isSafe = tc.isCorrect();

@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck;
@@ -40,32 +40,30 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IActi
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 
-
 /**
  * TODO: use quick check
- * @author heizmann@informatik.uni-freiburg.de
- *
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class AnnotateAndAsserter {
 	
 	protected final IUltimateServiceProvider mServices;
 	protected final ILogger mLogger;
-
+	
 	protected final ManagedScript mMgdScriptTc;
 	protected final NestedWord<? extends IAction> mTrace;
-
-
+	
 	protected LBool mSatisfiable;
 	protected final NestedFormulas<Term, Term> mSSA;
 	protected ModifiableNestedFormulas<Term, Term> mAnnotSSA;
-
+	
 	protected final AnnotateAndAssertCodeBlocks mAnnotateAndAssertCodeBlocks;
-
+	
 	protected final TraceCheckerStatisticsGenerator mTcbg;
-
+	
 	public AnnotateAndAsserter(final ManagedScript mgdScriptTc,
-			final NestedFormulas<Term, Term> nestedSSA, 
-			final AnnotateAndAssertCodeBlocks aaacb, 
+			final NestedFormulas<Term, Term> nestedSSA,
+			final AnnotateAndAssertCodeBlocks aaacb,
 			final TraceCheckerStatisticsGenerator tcbg, final IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -75,39 +73,41 @@ public class AnnotateAndAsserter {
 		mAnnotateAndAssertCodeBlocks = aaacb;
 		mTcbg = tcbg;
 	}
-
-
-	public void buildAnnotatedSsaAndAssertTerms() throws AbnormalSolverTerminationDuringFeasibilityCheck {
+	
+	public void buildAnnotatedSsaAndAssertTerms() throws AbnormalSolverTerminationDuringFeasibilityCheck,
+			AbnormalUnknownSolverTerminationDuringFeasibilityCheck {
 		if (mAnnotSSA != null) {
 			throw new AssertionError("already build");
 		}
 		assert mSatisfiable == null;
-
-		mAnnotSSA = new ModifiableNestedFormulas<Term, Term>(mTrace, new TreeMap<Integer, Term>());
-
+		
+		mAnnotSSA = new ModifiableNestedFormulas<>(mTrace, new TreeMap<Integer, Term>());
+		
 		mAnnotSSA.setPrecondition(mAnnotateAndAssertCodeBlocks.annotateAndAssertPrecondition());
 		mAnnotSSA.setPostcondition(mAnnotateAndAssertCodeBlocks.annotateAndAssertPostcondition());
-
-		final Collection<Integer> callPositions = new ArrayList<Integer>();
-		final Collection<Integer> pendingReturnPositions = new ArrayList<Integer>();
-		for (int i=0; i<mTrace.length(); i++) {
+		
+		final Collection<Integer> callPositions = new ArrayList<>();
+		final Collection<Integer> pendingReturnPositions = new ArrayList<>();
+		for (int i = 0; i < mTrace.length(); i++) {
 			if (mTrace.isCallPosition(i)) {
 				callPositions.add(i);
-				mAnnotSSA.setGlobalVarAssignmentAtPos(i, mAnnotateAndAssertCodeBlocks.annotateAndAssertGlobalVarAssignemntCall(i));
-				mAnnotSSA.setLocalVarAssignmentAtPos(i, mAnnotateAndAssertCodeBlocks.annotateAndAssertLocalVarAssignemntCall(i));
-				mAnnotSSA.setOldVarAssignmentAtPos(i, mAnnotateAndAssertCodeBlocks.annotateAndAssertOldVarAssignemntCall(i));
-			} else  {
+				mAnnotSSA.setGlobalVarAssignmentAtPos(i,
+						mAnnotateAndAssertCodeBlocks.annotateAndAssertGlobalVarAssignemntCall(i));
+				mAnnotSSA.setLocalVarAssignmentAtPos(i,
+						mAnnotateAndAssertCodeBlocks.annotateAndAssertLocalVarAssignemntCall(i));
+				mAnnotSSA.setOldVarAssignmentAtPos(i,
+						mAnnotateAndAssertCodeBlocks.annotateAndAssertOldVarAssignemntCall(i));
+			} else {
 				if (mTrace.isReturnPosition(i) && mTrace.isPendingReturn(i)) {
 					pendingReturnPositions.add(i);
 				}
 				mAnnotSSA.setFormulaAtNonCallPos(i, mAnnotateAndAssertCodeBlocks.annotateAndAssertNonCall(i));
 			}
 		}
-
+		
 		assert callPositions.containsAll(mTrace.getCallPositions());
 		assert mTrace.getCallPositions().containsAll(callPositions);
-
-
+		
 		// number that the pending context. The first pending context has
 		// number -1, the second -2, ...
 		int pendingContextCode = -1 - mSSA.getTrace().getPendingReturns().size();
@@ -133,11 +133,10 @@ public class AnnotateAndAsserter {
 		try {
 			mSatisfiable = mMgdScriptTc.getScript().checkSat();
 		} catch (final SMTLIBException e) {
-			if (e.getMessage().contains(AbnormalSolverTerminationDuringFeasibilityCheck.TYPICAL_ERROR_MESSAGE)) {
+			if (isKnownException(e)) {
 				throw new AbnormalSolverTerminationDuringFeasibilityCheck();
-			} else {
-				throw e;
 			}
+			throw new AbnormalUnknownSolverTerminationDuringFeasibilityCheck(e);
 		}
 		// Report benchmarks
 		mTcbg.reportnewCheckSat();
@@ -145,25 +144,60 @@ public class AnnotateAndAsserter {
 		mTcbg.reportnewAssertedCodeBlocks(mTrace.length());
 		mLogger.info("Conjunction of SSA is " + mSatisfiable);
 	}
-
-
-
+	
+	private static boolean isKnownException(final SMTLIBException e) {
+		final String message = e.getMessage();
+		if (message.contains(AbnormalSolverTerminationDuringFeasibilityCheck.TYPICAL_ERROR_MESSAGE)) {
+			return true;
+		}
+		if (message.equals(AbnormalSolverTerminationDuringFeasibilityCheck.NONLINEAR_ARITHMETIC_MESSAGE)) {
+			return true;
+		}
+		return false;
+	}
+	
 	public LBool isInputSatisfiable() {
 		return mSatisfiable;
 	}
-
-
+	
 	public NestedFormulas<Term, Term> getAnnotatedSsa() {
 		return mAnnotSSA;
 	}
-
-
 	
 	public static class AbnormalSolverTerminationDuringFeasibilityCheck extends Exception {
 		private static final long serialVersionUID = 1605915090440572006L;
 		
-		private static String TYPICAL_ERROR_MESSAGE = "Received EOF on stdin. No stderr output.";
-		
+		public static final String TYPICAL_ERROR_MESSAGE = "Received EOF on stdin. No stderr output.";
+		public static final String NONLINEAR_ARITHMETIC_MESSAGE = "Unsupported non-linear arithmetic";
 	}
-
+	
+	/**
+	 * Exception thrown in case of an abnormal solver termination which is unknown and thus should be reported to the
+	 * developer.
+	 * 
+	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+	 */
+	public static class AbnormalUnknownSolverTerminationDuringFeasibilityCheck extends Exception {
+		private static final long serialVersionUID = 6055606988186582091L;
+		
+		private final SMTLIBException mException;
+		
+		/**
+		 * @param exception
+		 *            Exception.
+		 */
+		public AbnormalUnknownSolverTerminationDuringFeasibilityCheck(final SMTLIBException exception) {
+			mException = exception;
+		}
+		
+		@Override
+		public String getMessage() {
+			return mException.getMessage();
+		}
+		
+		@Override
+		public void printStackTrace() {
+			mException.printStackTrace();
+		}
+	}
 }
