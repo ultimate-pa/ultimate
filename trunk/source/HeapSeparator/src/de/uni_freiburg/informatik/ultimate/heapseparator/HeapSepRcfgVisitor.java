@@ -35,7 +35,9 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 	HashMap<IProgramVar, HashMap<IProgramVar, HashSet<IProgramVar>>> marrayToPartitions;
 	ManagedScript mScript;
 
-	public HeapSepRcfgVisitor(final ILogger logger, final HashMap<IProgramVar, HashMap<IProgramVar, IProgramVar>> map, final ManagedScript script) {
+	public HeapSepRcfgVisitor(final ILogger logger, 
+			final HashMap<IProgramVar, HashMap<IProgramVar, IProgramVar>> map, 
+			final ManagedScript script) {
 		super(logger);
 		moldArrayToPointerToNewArray = map;
 		marrayToPartitions = reverseInnerMap(moldArrayToPointerToNewArray);
