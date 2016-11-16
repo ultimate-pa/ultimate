@@ -117,7 +117,7 @@ public class BoogieIcfgContainer extends ModernAnnotations implements IElement, 
 		mModifiableGlobalVariableManager = new ModifiableGlobalVariableManager(mBoogieDeclarations.getModifiedVars(),
 				mManagedScript, mBoogie2smt.getBoogie2SmtSymbolTable());
 		mCfgSmtToolkit = new CfgSmtToolkit(mModifiableGlobalVariableManager, mManagedScript,
-				mBoogie2smt.getBoogie2SmtSymbolTable());
+				mBoogie2smt.getBoogie2SmtSymbolTable(), mBoogie2SMT.getAxioms());
 		mCodeBlockFactory = new CodeBlockFactory(services, mManagedScript, mModifiableGlobalVariableManager,
 				mBoogie2SMT.getBoogie2SmtSymbolTable());
 		mPayload = new Payload(loc);

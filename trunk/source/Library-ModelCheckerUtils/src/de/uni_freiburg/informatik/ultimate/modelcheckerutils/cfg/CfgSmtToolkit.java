@@ -27,6 +27,9 @@
 
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg;
 
+import java.util.Collection;
+
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 public class CfgSmtToolkit {
@@ -35,15 +38,17 @@ public class CfgSmtToolkit {
 	private final ManagedScript mManagedScript;
 	private final ModifiableGlobalVariableManager mModifiableGlobals;
 	private final ICfgSymbolTable mSymbolTable;
+	private final Collection<Term> mAxioms;
 
 
 
 
 	public CfgSmtToolkit(final ModifiableGlobalVariableManager modifiableGlobals, final ManagedScript managedScript, 
-			final ICfgSymbolTable symbolTable) {
+			final ICfgSymbolTable symbolTable, final Collection<Term> axioms) {
 		mManagedScript = managedScript;
 		mSymbolTable = symbolTable;
 		mModifiableGlobals = modifiableGlobals;
+		mAxioms = axioms;
 	}
 
 
@@ -57,6 +62,10 @@ public class CfgSmtToolkit {
 
 	public ICfgSymbolTable getSymbolTable() {
 		return mSymbolTable;
+	}
+
+	public Collection<Term> getAxioms() {
+		return mAxioms;
 	}
 	
 	
