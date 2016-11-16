@@ -6,7 +6,6 @@ import os
 import sys
 import codecs
 import itertools
-from test.test_math import acc_check
 
 def toPercent(row, a, b):
     part = row[a]
@@ -50,15 +49,29 @@ def toFloat(row, a):
 
 # Mappings for Interpol PLDI17 Paper 
 mLatexSettingsMappings = {
-'Z3-FP-UC-LV-Float-Kojak.epf'        : '\\zzztip',
-'Mathsat-FP-UC-LV-Float-Kojak.epf'   : '\\mathsattip',
-'Z3-FP-UC-Float-Kojak.epf'           : '\\spic',
-'Z3-FP-LV-Float-Kojak.epf'           : '\\splv',
-'Z3-FP-Float-Kojak.epf'              : '\\sponly',
-'Z3-BP-UC-LV-Float-Kojak.epf'        : '\\wpiclv',
-'Z3-BP-LV-Float-Kojak.epf'           : '\\wplv',
-'Z3-BP-UC-Float-Kojak.epf'           : '\\wpic',
-'Z3-BP-Float-Kojak.epf'              : '\\wponly',
+'Z3-FP-UC-LV-Float-Kojak.epf'                       : '\\zzztip',
+'Mathsat-FP-UC-LV-Float-Kojak.epf'                  : '\\mathsattip',
+'Z3-FP-UC-Float-Kojak.epf'                          : '\\spic',
+'Z3-FP-LV-Float-Kojak.epf'                          : '\\splv',
+'Z3-FP-Float-Kojak.epf'                             : '\\sponly',
+'Z3-BP-UC-LV-Float-Kojak.epf'                       : '\\wpiclv',
+'Z3-BP-LV-Float-Kojak.epf'                          : '\\wplv',
+'Z3-BP-UC-Float-Kojak.epf'                          : '\\wpic',
+'Z3-BP-Float-Kojak.epf'                             : '\\wponly',
+'SMTInterpol-FP-UC-LV-Integer-Kojak.epf'            : '\\smtinterpoltip',
+'Mathsat-FP-UC-LV-Integer-Kojak.epf'                : '\\mathsattip',
+'CVC4-FP-UC-LV-Integer-Kojak.epf'                   : '\\cvctip',
+'SMTInterpol-TreeInterpolation-Integer-Kojak.epf'   : '\\smtinterpolip',
+'Princess-TreeInterpolation-Integer-Kojak.epf'      : '\\princessip',
+'Z3-NestedInterpolation-Integer-Kojak.epf'          : '\\zzzip',
+'Z3-FP-UC-LV-Integer-Kojak.epf'                     : '\\zzztip',
+'Z3-FP-Integer-Kojak.epf'                           : '\\sponly',
+'Z3-BP-Integer-Kojak.epf'                           : '\\wponly',
+'Z3-BP-LV-Integer-Kojak.epf'                        : '\\wplv',
+'Z3-FP-LV-Integer-Kojak.epf'                        : '\\splv',
+'Z3-FP-UC-Integer-Kojak.epf'                        : '\\spic',
+'Z3-BP-UC-Integer-Kojak.epf'                        : '\\wpic',
+'Z3-BP-UC-LV-Integer-Kojak.epf'                     : '\\wpiclv',
  }
 
 # Those are the dvips colors of xcolor 
@@ -76,7 +89,7 @@ mLatexColors = ['s1', 's2', 's3', 's4', 's5', 's6', 's7', 's8', 's9', 'black', '
 
 mLatexPlotMarks = ['star', 'triangle', 'diamond', 'x', '|', '10-pointed-star', 'pentagon', 'o']
 mLatexPlotMarkRepeat = 10
-mLatexPlotLines = ['solid', 'dotted', 'dashed' ]
+mLatexPlotLines = ['solid', 'dotted', 'dashed' , 'dashdotted']
 
 mUltimateHeaders = []
 mFriendlySettingNames = {}
@@ -317,14 +330,15 @@ def max(val, acc):
         return val
 
 def getLatexPlotStyles():
-    plotstylesLines = zip(mLatexColors, mLatexPlotLines)
-    plotstylesMarks = zip(mLatexColors[len(mLatexPlotLines):], mLatexPlotMarks)
+    threecolor = mLatexColors + mLatexColors + mLatexColors
+    plotstylesLines = zip(threecolor, mLatexPlotLines)
+    plotstylesMarks = zip(threecolor[len(mLatexPlotLines):], mLatexPlotMarks)
     acc = []
     for color, linestyle in plotstylesLines:
         acc.append('draw=' + color + ',' + linestyle)
     for color, markstyle in plotstylesMarks:
         acc.append('mark repeat={' + str(mLatexPlotMarkRepeat) + '},draw=' + color + ',solid,mark=' + markstyle)
-    for color in mLatexColors[len(plotstylesLines) + len(plotstylesMarks):]:
+    for color in threecolor[len(plotstylesLines) + len(plotstylesMarks):]:
         acc.append('draw=' + color + ',solid')
     return acc
 
@@ -418,7 +432,7 @@ def writeLatexPlot(f, xlabel, ylabel, files, namesAndStylesDict, caption, axis):
     f.write('\\end{tikzpicture}\n')
     return
 
-def createLatexPlots(successrows, uniqueSettings, tcName, outputDir, name):
+def createLatexPlots(successrows, uniqueSettings, filenamePrefix, outputDir, name):
     latexFigures = []
     for funName, fun, axis in mRowFuns:
         print 'Writing plot for ' + funName
@@ -427,8 +441,7 @@ def createLatexPlots(successrows, uniqueSettings, tcName, outputDir, name):
         plotnames = []
         for setting, values in plottable.iteritems():
             friendlySetting = mFriendlySettingNames[setting]
-            #friendlySetting = os.path.basename(setting)
-            filename = tcName + '-' + funName + '-' + os.path.basename(setting) + '.plot'
+            filename = filenamePrefix + '-' + funName + '-' + os.path.basename(setting) + '.plot'
             f = codecs.open(os.path.join(outputDir, filename), 'w', 'utf-8')
             i = 0
             for val in values:
@@ -443,8 +456,6 @@ def createLatexPlots(successrows, uniqueSettings, tcName, outputDir, name):
                     plotnames.append(mLatexSettingsMappings[friendlySetting])
                 else:
                     plotnames.append(friendlySetting)
-        if name != '':
-            funName = name + '-' + funName
         latexFigures.append((funName, zip(plotfiles, plotnames), axis))
     return latexFigures
 
@@ -460,12 +471,20 @@ def getNamesAndStyles(latexFigures):
 
 def writePlots(successrows, toolchain, uniqueSettings, outputDir, name):
     tcName = os.path.splitext(os.path.basename(toolchain))[0]
-    writeLatexPlotsPreamble(os.path.join(outputDir, tcName + 'plots-pre.tex'))
+    if not name:
+        name = ''
+        fileNamePrefix = tcName
+    else:
+        fileNamePrefix = name + '-' + tcName
+    
+    preambleFileName = os.path.join(outputDir, fileNamePrefix + '-plots-pre.tex')
+    
+    writeLatexPlotsPreamble(preambleFileName)
 
-    latexFigures = createLatexPlots(successrows, uniqueSettings, tcName, outputDir, name);
+    latexFigures = createLatexPlots(successrows, uniqueSettings, fileNamePrefix, outputDir, name);
     namesAndStyles, namesAndStylesDict = getNamesAndStyles(latexFigures)
     
-    plotsfile = os.path.join(outputDir, tcName + '-legend.tex')
+    plotsfile = os.path.join(outputDir, fileNamePrefix + '-legend.tex')
     legendFile = codecs.open(plotsfile, 'w', 'utf-8')
     writeLatexPlotLegend(legendFile, namesAndStyles)
     legendFile.close()
@@ -473,7 +492,7 @@ def writePlots(successrows, toolchain, uniqueSettings, outputDir, name):
     figCounter = 1
     figPerLine = 3    
     for funName, filesAndNames, axis in latexFigures:
-        plotsfile = os.path.join(outputDir, tcName + '-' + funName + '-plots.tex')
+        plotsfile = os.path.join(outputDir, fileNamePrefix + '-' + funName + '-plots.tex')
         f = codecs.open(plotsfile, 'w', 'utf-8')    
         sortedByName = sorted(filesAndNames, key=lambda x : x[1])
         # f.write('\\resizebox*{0.45\\textwidth}{!}{%\n')
@@ -554,7 +573,7 @@ def checkCsv(rows):
 def main():
     file, output, name = getArgs()
     
-    successResults = ['SAFE', 'UNSAFE','CORRECT','INCORRECT']
+    successResults = ['SAFE', 'UNSAFE', 'CORRECT', 'INCORRECT']
     timeoutResults = ['TIMEOUT']
     failResults = ['FAIL']
 
@@ -613,8 +632,8 @@ def main():
         print 'All Error:        ', len(allFailPortfolio) / len(uniqueSettings)
         print '# Craig Portfolio:  ', len(otherPortfolio)
         print 'Craig Portfolio:  ', remPathS(solversOnlySettings)
-        print '# Craig+IT-SP Portfolio: ', len(championsPortfolio)
-        print 'Craig+IT-SP Portfolio: ', remPathS(championsSettings)
+        print '# Craig+IT-SP+LV Portfolio: ', len(championsPortfolio)
+        print 'Craig+IT-SP+LV Portfolio: ', remPathS(championsSettings)
         
         # print 'Mixed:            ', mixed
         print 'Mixed Count:      ', len(mixed)
