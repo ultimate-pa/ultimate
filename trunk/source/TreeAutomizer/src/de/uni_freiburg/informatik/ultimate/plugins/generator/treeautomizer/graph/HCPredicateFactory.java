@@ -38,7 +38,7 @@ public class HCPredicateFactory implements IStateFactory<HCPredicate> {
 	}
 	
 	public HCPredicate createDontCarePredicate(HornClausePredicateSymbol loc) {
-		return new HCPredicate(loc, mBackendSmtSolverScript.term("false"));
+		return new HCPredicate(loc, mBackendSmtSolverScript.term("true"));
 	}
 	public HCPredicate createPredicate(HornClausePredicateSymbol loc) {
 		return new HCPredicate(loc, mBackendSmtSolverScript.term(loc.toString()));

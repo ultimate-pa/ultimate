@@ -29,10 +29,12 @@ public class TreeChecker {
 			ILogger logger) {
 		mTree = tree;
 		mBackendSmtSolverScript = backendSmtSolverScript;
+		mBackendSmtSolverScript.push(1);
 		mCounters = counters;
 		mPostCondition = postCondition;
 		mPreCondition = preCondition;
 		mSSABuilder = new SSABuilder(mTree, mBackendSmtSolverScript, mPreCondition, mPostCondition, mCounters);
+		mBackendSmtSolverScript.pop(1);
 		mLogger = logger;
 	}
 	

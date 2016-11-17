@@ -152,7 +152,8 @@ public class TreeAutomizerCEGAR {
 		}
 		mInterpolAutomaton = ((TreeRun<HCTransFormula, HCPredicate>) mCounterexample).reconstruct(predsMap)
 				.getAutomaton();
-
+		((TreeAutomatonBU<HCTransFormula, HCPredicate>) mInterpolAutomaton).extendAlphabet(mAbstraction.getAlphabet());
+		
 	}
 
 	private void generalizeCounterExample() {
