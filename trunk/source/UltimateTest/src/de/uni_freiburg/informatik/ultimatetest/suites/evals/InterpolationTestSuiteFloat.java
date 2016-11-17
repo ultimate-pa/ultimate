@@ -54,4 +54,9 @@ public class InterpolationTestSuiteFloat extends InterpolationTestSuite {
 		// all are 2322 (ok)
 		return super.getFilesPerDirectory();
 	}
+	
+	@Override
+	protected int getFilesPerDirectoryOffset() {
+		return 0;
+	}
 }

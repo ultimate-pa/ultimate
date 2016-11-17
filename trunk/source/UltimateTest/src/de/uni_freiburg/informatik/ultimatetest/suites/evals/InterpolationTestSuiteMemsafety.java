@@ -54,4 +54,9 @@ public class InterpolationTestSuiteMemsafety extends InterpolationTestSuite {
 		// all is 5376 (ok)
 		return super.getFilesPerDirectory();
 	}
+	
+	@Override
+	protected int getFilesPerDirectoryOffset() {
+		return 0;
+	}
 }
