@@ -27,50 +27,75 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
 import java.util.NoSuchElementException;
-import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.function.Supplier;
 
+import de.uni_freiburg.informatik.ultimate.automata.IRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheckerCraig;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheckerPathInvariantsWithFallback;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerSpWp;
 
 /**
  * {@link IRefinementStrategy} that provides only one element, namely the one selected in the Ultimate preferences.
  *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- *
  */
 public class FixedTraceAbstractionRefinementStrategy implements IRefinementStrategy {
-
-	private final Supplier<TraceChecker> mFunConstructTraceChecker;
+	private final TraceCheckerConstructorFromPreferences mFunConstructTraceChecker;
 	private TraceChecker mTraceChecker;
 	private IInterpolantGenerator mInterpolantGenerator;
-
-	public FixedTraceAbstractionRefinementStrategy(final IPredicate precondition, final IPredicate postcondition,
-			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IAction> trace,
+	
+	/**
+	 * @param prefs
+	 *            Preferences.
+	 *            pending contexts
+	 * @param cfgSmtToolkit
+	 *            CFG-SMT toolkit
+	 * @param managedScript
+	 *            managed script
+	 * @param services
+	 *            Ultimate services
+	 * @param predicateUnifier
+	 *            predicate unifier
+	 * @param counterexample
+	 *            counterexample trace
+	 */
+	public FixedTraceAbstractionRefinementStrategy(final TaCheckAndRefinementPreferences prefs,
 			final CfgSmtToolkit cfgSmtToolkit, final ManagedScript managedScript,
-			final IUltimateServiceProvider services) {
-		mFunConstructTraceChecker = () -> new TraceChecker(precondition, postcondition, pendingContexts, trace,
-				cfgSmtToolkit, AssertCodeBlockOrder.INSIDE_LOOP_FIRST1, services, true);
+			final IUltimateServiceProvider services, final PredicateUnifier predicateUnifier,
+			final IRun<CodeBlock, IPredicate, ?> counterexample) {
+		mFunConstructTraceChecker =
+				new TraceCheckerConstructorFromPreferences(prefs, cfgSmtToolkit, managedScript, services,
+						predicateUnifier, counterexample);
 	}
-
+	
 	@Override
 	public boolean hasMoreStrategies() {
 		return false;
 	}
-
+	
 	@Override
 	public void next() {
-		throw new NoSuchElementException("This strategy has only one element");
+		throw new NoSuchElementException("This strategy has only one element.");
 	}
-
+	
 	@Override
 	public TraceChecker getTraceChecker() {
 		if (mTraceChecker == null) {
@@ -78,10 +103,122 @@ public class FixedTraceAbstractionRefinementStrategy implements IRefinementStrat
 		}
 		return mTraceChecker;
 	}
-
+	
 	@Override
 	public IInterpolantGenerator getInterpolantGenerator() {
 		return mInterpolantGenerator;
 	}
-
+	
+	/**
+	 * Trace checker constructor on demand.
+	 * 
+	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+	 */
+	private static class TraceCheckerConstructorFromPreferences implements Supplier<TraceChecker> {
+		private final TaCheckAndRefinementPreferences mPrefs;
+		private final CfgSmtToolkit mCfgSmtToolkit;
+		private final ManagedScript mManagedScript;
+		private final IUltimateServiceProvider mServices;
+		private final PredicateUnifier mPredicateUnifier;
+		private final IRun<CodeBlock, IPredicate, ?> mCounterexample;
+		
+		/**
+		 * @param prefs
+		 *            Preferences.
+		 * @param precondition
+		 *            precondition
+		 * @param postcondition
+		 *            postcondition
+		 * @param pendingContexts
+		 *            pending contexts
+		 * @param cfgSmtToolkit
+		 *            CFG-SMT toolkit
+		 * @param managedScript
+		 *            managed script
+		 * @param services
+		 *            Ultimate services
+		 * @param predicateUnifier
+		 *            predicate unifier
+		 * @param counterexample
+		 *            counterexample trace
+		 */
+		public TraceCheckerConstructorFromPreferences(final TaCheckAndRefinementPreferences prefs,
+				final CfgSmtToolkit cfgSmtToolkit, final ManagedScript managedScript,
+				final IUltimateServiceProvider services, final PredicateUnifier predicateUnifier,
+				final IRun<CodeBlock, IPredicate, ?> counterexample) {
+			mPrefs = prefs;
+			mCfgSmtToolkit = cfgSmtToolkit;
+			mManagedScript = managedScript;
+			mServices = services;
+			mPredicateUnifier = predicateUnifier;
+			mCounterexample = counterexample;
+		}
+		
+		@Override
+		public TraceChecker get() {
+			final IPredicate truePredicate = mPredicateUnifier.getTruePredicate();
+			final IPredicate falsePredicate = mPredicateUnifier.getFalsePredicate();
+			final AssertCodeBlockOrder assertCodeBlocksIncrementally = mPrefs.getAssertCodeBlocksIncrementally();
+			final InterpolationTechnique interpolationTechnique = mPrefs.getInterpolationTechnique();
+			final XnfConversionTechnique xnfConversionTechnique = mPrefs.getXnfConversionTechnique();
+			final SimplificationTechnique simplificationTechnique = mPrefs.getSimplificationTechnique();
+			
+			final TraceChecker traceChecker;
+			switch (interpolationTechnique) {
+				case Craig_NestedInterpolation:
+				case Craig_TreeInterpolation:
+					traceChecker = new InterpolatingTraceCheckerCraig(truePredicate, falsePredicate,
+							new TreeMap<Integer, IPredicate>(), NestedWord.nestedWord(mCounterexample.getWord()),
+							mCfgSmtToolkit, assertCodeBlocksIncrementally, mServices, true,
+							mPredicateUnifier, interpolationTechnique, mManagedScript, true,
+							xnfConversionTechnique, simplificationTechnique, mCounterexample.getStateSequence(),
+							false);
+					break;
+				case ForwardPredicates:
+				case BackwardPredicates:
+				case FPandBP:
+					traceChecker = new TraceCheckerSpWp(truePredicate, falsePredicate,
+							new TreeMap<Integer, IPredicate>(), NestedWord.nestedWord(mCounterexample.getWord()),
+							mCfgSmtToolkit, assertCodeBlocksIncrementally, mPrefs.getUnsatCores(),
+							mPrefs.getUseLiveVariables(), mServices, true, mPredicateUnifier,
+							interpolationTechnique, mManagedScript, xnfConversionTechnique,
+							simplificationTechnique, mCounterexample.getStateSequence());
+					
+					break;
+				case PathInvariants:
+					final BoogieIcfgContainer icfgContainer = mPrefs.getIcfgContainer();
+					final boolean useNonlinearConstraints = mPrefs.getUseNonlinearConstraints();
+					final boolean useVarsFromUnsatCore = mPrefs.getUseVarsFromUnsatCore();
+					final boolean dumpSmtScriptToFile = mPrefs.getDumpSmtScriptToFile();
+					final String pathOfDumpedScript = mPrefs.getPathOfDumpedScript();
+					final String baseNameOfDumpedScript =
+							"InVarSynth_" + icfgContainer.getFilename() + "_Iteration" + mPrefs.getIteration();
+					final String solverCommand;
+					if (useNonlinearConstraints) {
+						// solverCommand = "yices-smt2 --incremental";
+						// solverCommand = "/home/matthias/ultimate/barcelogic/barcelogic-NIRA -tlimit 5";
+						solverCommand = "z3 -smt2 -in SMTLIB2_COMPLIANT=true -t:42000";
+						// solverCommand = "z3 -smt2 -in SMTLIB2_COMPLIANT=true -t:1000";
+					} else {
+						// solverCommand = "yices-smt2 --incremental";
+						solverCommand = "z3 -smt2 -in SMTLIB2_COMPLIANT=true -t:42000";
+					}
+					final boolean fakeNonIncrementalSolver = false;
+					final Settings settings = new Settings(fakeNonIncrementalSolver, true, solverCommand, -1, null,
+							dumpSmtScriptToFile, pathOfDumpedScript, baseNameOfDumpedScript);
+					traceChecker = new InterpolatingTraceCheckerPathInvariantsWithFallback(truePredicate,
+							falsePredicate, new TreeMap<Integer, IPredicate>(),
+							(NestedRun<CodeBlock, IPredicate>) mCounterexample, mCfgSmtToolkit,
+							assertCodeBlocksIncrementally, mServices, mPrefs.getToolchainStorage(), true,
+							mPredicateUnifier, useNonlinearConstraints, useVarsFromUnsatCore, settings,
+							xnfConversionTechnique, simplificationTechnique,
+							icfgContainer.getBoogie2SMT().getAxioms());
+					break;
+				default:
+					throw new UnsupportedOperationException("unsupported interpolation");
+			}
+			mPrefs.getCegarLoopBenchmark().addTraceCheckerData(traceChecker.getTraceCheckerBenchmark());
+			return traceChecker;
+		}
+	}
 }

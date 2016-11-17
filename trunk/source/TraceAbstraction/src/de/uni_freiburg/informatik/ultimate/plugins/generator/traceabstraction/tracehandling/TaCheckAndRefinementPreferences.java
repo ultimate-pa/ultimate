@@ -27,9 +27,16 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
@@ -67,8 +74,18 @@ public class TaCheckAndRefinementPreferences {
 		FIRST_BEST
 	}
 	
+	// fields that are provided in the constructor
 	private final InterpolationTechnique mInterpolationTechnique;
+	private final SimplificationTechnique mSimplificationTechnique;
+	private final XnfConversionTechnique mXnfConversionTechnique;
+	private final CfgSmtToolkit mCfgSmtToolkit;
+	private final PredicateFactory mPredicateFactory;
+	private final BoogieIcfgContainer mIcfgContainer;
+	private final IToolchainStorage mToolchainStorage;
+	private final CegarLoopStatisticsGenerator mCegarLoopBenchmark;
+	private final int mIteration;
 	
+	// fields that can be read from the TAPreferences
 	private final boolean mUseSeparateSolverForTracechecks;
 	private final SolverMode mSolverMode;
 	private final boolean mFakeNonIncrementalSolver;
@@ -77,6 +94,7 @@ public class TaCheckAndRefinementPreferences {
 	private final String mPathOfDumpedScript;
 	private final String mLogicForExternalSolver;
 	
+	// fields that can be read from the IUltimateServiceProvider
 	private final AssertCodeBlockOrder mAssertCodeBlocksIncrementally;
 	private final UnsatCores mUnsatCores;
 	private final boolean mUseLiveVariables;
@@ -93,10 +111,38 @@ public class TaCheckAndRefinementPreferences {
 	 *            trace abstraction preferences
 	 * @param interpolationTechnique
 	 *            interpolation technique
+	 * @param iteration
+	 *            iteration number
+	 * @param icfgContainer
+	 *            ICFG container
+	 * @param simplificationTechnique
+	 *            simplification technique
+	 * @param xnfConversionTechnique
+	 *            XNF conversion technique
+	 * @param cfgSmtToolkit
+	 *            CFG-SMT toolkit
+	 * @param predicateFactory
+	 *            predicate factory
+	 * @param toolchainStorage
+	 *            toolchain storage
+	 * @param cegarLoopBenchmark
+	 *            benchmark object of the CEGAR loop
 	 */
 	public TaCheckAndRefinementPreferences(final IUltimateServiceProvider services, final TAPreferences taPrefs,
-			final InterpolationTechnique interpolationTechnique) {
+			final InterpolationTechnique interpolationTechnique, final SimplificationTechnique simplificationTechnique,
+			final XnfConversionTechnique xnfConversionTechnique, final CfgSmtToolkit cfgSmtToolkit,
+			final PredicateFactory predicateFactory, final BoogieIcfgContainer icfgContainer,
+			final IToolchainStorage toolchainStorage, final CegarLoopStatisticsGenerator cegarLoopBenchmark,
+			final int iteration) {
 		mInterpolationTechnique = interpolationTechnique;
+		mSimplificationTechnique = simplificationTechnique;
+		mXnfConversionTechnique = xnfConversionTechnique;
+		mCfgSmtToolkit = cfgSmtToolkit;
+		mPredicateFactory = predicateFactory;
+		mIcfgContainer = icfgContainer;
+		mToolchainStorage = toolchainStorage;
+		mCegarLoopBenchmark = cegarLoopBenchmark;
+		mIteration = iteration;
 		
 		mUseSeparateSolverForTracechecks = taPrefs.useSeparateSolverForTracechecks();
 		mSolverMode = taPrefs.solverMode();
@@ -150,6 +196,38 @@ public class TaCheckAndRefinementPreferences {
 	
 	public InterpolationTechnique getInterpolationTechnique() {
 		return mInterpolationTechnique;
+	}
+	
+	public SimplificationTechnique getSimplificationTechnique() {
+		return mSimplificationTechnique;
+	}
+	
+	public XnfConversionTechnique getXnfConversionTechnique() {
+		return mXnfConversionTechnique;
+	}
+	
+	public CfgSmtToolkit getCfgSmtToolkit() {
+		return mCfgSmtToolkit;
+	}
+	
+	public PredicateFactory getPredicateFactory() {
+		return mPredicateFactory;
+	}
+	
+	public BoogieIcfgContainer getIcfgContainer() {
+		return mIcfgContainer;
+	}
+	
+	public IToolchainStorage getToolchainStorage() {
+		return mToolchainStorage;
+	}
+	
+	public CegarLoopStatisticsGenerator getCegarLoopBenchmark() {
+		return mCegarLoopBenchmark;
+	}
+	
+	public int getIteration() {
+		return mIteration;
 	}
 	
 	public AssertCodeBlockOrder getAssertCodeBlocksIncrementally() {

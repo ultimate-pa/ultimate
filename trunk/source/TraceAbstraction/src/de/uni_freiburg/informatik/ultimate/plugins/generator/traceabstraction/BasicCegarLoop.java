@@ -94,11 +94,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantConsolidation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementSelector;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TaCheckAndRefinementPreferences;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementSelector.IInterpolantAutomatonEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TaCheckAndRefinementPreferences.TaCheckAndRefinementSettingPolicy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TaCheckAndRefinementPreferences.TaInterpolantAutomatonConstructionPolicy;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementSelector;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementSelector.IInterpolantAutomatonEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessProductAutomaton;
 import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
@@ -290,7 +290,9 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	@Override
 	protected LBool isCounterexampleFeasible() throws AutomataOperationCanceledException {
 		final TaCheckAndRefinementPreferences taCheckAndRefinementPrefs =
-				new TaCheckAndRefinementPreferences(mServices, mPref, mInterpolation);
+				new TaCheckAndRefinementPreferences(mServices, mPref, mInterpolation, mSimplificationTechnique,
+						mXnfConversionTechnique, mCsToolkit, mPredicateFactory, mIcfgContainer, mToolchainStorage,
+						mCegarLoopBenchmark, mIteration);
 		final List<TaCheckAndRefinementPreferences> taCheckAndRefinementPrefsList =
 				Collections.singletonList(taCheckAndRefinementPrefs);
 		final TaCheckAndRefinementSettingPolicy settingsPolicy = TaCheckAndRefinementSettingPolicy.SEQUENTIAL;
