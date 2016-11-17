@@ -30,19 +30,21 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.t
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 
 /**
- * Checks a trace for feasibility and, if infeasible, selects a refinement strategy, i.e., constructs a representation
- * of a proof of infeasibility.
- *
- * @param <T>
- *            The type of infeasibility proof, e.g., an interpolant automaton or a set of hoare triples.
+ * Checks a trace for feasibility and, if infeasible, constructs a proof of infeasibility.
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * @param <T>
+ *            The type of infeasibility proof, e.g., an interpolant automaton or a set of hoare triples.
  */
 public interface IRefinementSelector<T> {
-
+	/**
+	 * @return Feasibility status of the counterexample trace.
+	 */
 	LBool getCounterexampleFeasibility();
-
+	
+	/**
+	 * @return Proof of infeasibility.
+	 */
 	T getInfeasibilityProof();
-
 }
