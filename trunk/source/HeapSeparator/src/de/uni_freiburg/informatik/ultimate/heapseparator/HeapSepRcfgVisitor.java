@@ -23,8 +23,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
-	
-	
+
+
 	/**
 	 *  arrayId before separation --> pointerId --> arrayId after separation
 	 */
@@ -88,19 +88,19 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 			return;
 		}
 		final UnmodifiableTransFormula tf = ((CodeBlock) edge).getTransitionFormula();
-		
+
 		final UnmodifiableTransFormula newTf = splitArraysInTransFormula(tf);
-		
+
 		((CodeBlock) edge).setTransitionFormula(newTf);
-		
+
 		super.level(edge);
 	}
 
-	
+
 	private UnmodifiableTransFormula splitArraysInTransFormula(final UnmodifiableTransFormula tf) {
 
-	
-		
+
+
 		// new plan: we don't need a term transformer, here (at least not for the simple cases?..)
 		// --> just rename the BoogieVars in the maps
 		// insight:
@@ -111,7 +111,7 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 		// other thing:
 		//  "(store (store a q i) p j)" where p and q don't alias
 		//   --> is this a problem? Is this even possible?
-		
+
 		//cases where arrays may occur, in the SMT theory of arrays:
 		// - store
 		// - select
@@ -119,7 +119,7 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 		// example
 		//  a' in "(= a' (store a p i))"
 		//   
-		
+
 
 		final ArraySplitter as = new ArraySplitter(mScript.getScript(), moldArrayToPointerToNewArray, marrayToPartitions, tf.getInVars(), tf.getOutVars());
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(
@@ -136,7 +136,7 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 	public static TermVariable getSplitTermVariable(final String arrayName, final int splitIndex, final Sort sort, final Script script) {
 		return script.variable(String.format("{}_split_{}", arrayName, splitIndex), sort);
 	}
-	
+
 	public static IProgramVar getBoogieVarFromTermVar(final TermVariable tv, final Map<IProgramVar, TermVariable> map1, final Map<IProgramVar, TermVariable> map2) {
 		for (final Entry<IProgramVar, TermVariable> en : map1.entrySet()) {
 			if (en.getValue().equals(tv)) {
@@ -151,30 +151,35 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 		assert false : "did not find " + tv + " in the given maps";
 		return null;
 	}
+
+
+
+
+
 	/**
- 	 * Input:
- 	 *  maps that say how arrays should be split
- 	 *  a term to split arrays in
- 	 *  inVar and outVar mappings
- 	 * Output:
- 	 *  the term where arrays are split
- 	 * SideEffect:
- 	 *  inVar and outVar mappings are updated according to the splitting
+	 * Input:
+	 *  maps that say how arrays should be split
+	 *  a term to split arrays in
+	 *  inVar and outVar mappings
+	 * Output:
+	 *  the term where arrays are split
+	 * SideEffect:
+	 *  inVar and outVar mappings are updated according to the splitting
 	 */
-	public static class ArraySplitter extends TermTransformer {
+	static class ArraySplitter extends TermTransformer {
 		Script mscript;
 		Map<IProgramVar, TermVariable> minVars;
 		Map<IProgramVar, TermVariable> moutVars;
-		
+
 		Set<IProgramVar> minVarsToRemove = new HashSet<IProgramVar>();
 		Map<IProgramVar, TermVariable> minVarsToAdd = new HashMap<>();
 		Set<IProgramVar> moutVarsToRemove = new HashSet<IProgramVar>();
 		Map<IProgramVar, TermVariable> moutVarsToAdd = new HashMap<>();
-		
+
 		boolean mequalsMode = false;
-//		BoogieVar maOld;
+		//		BoogieVar maOld;
 		TermVariable maOld;
-//		BoogieVar maNew;
+		//		BoogieVar maNew;
 		TermVariable maNew;
 
 		/**
@@ -186,7 +191,7 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 		 */
 		HashMap<IProgramVar, HashMap<IProgramVar, HashSet<IProgramVar>>> marrayToPartitions;
 
-		
+
 		public ArraySplitter(final Script script, 
 				final HashMap<IProgramVar, HashMap<IProgramVar, IProgramVar>> arrayToPointerToPartition,
 				final HashMap<IProgramVar, HashMap<IProgramVar, HashSet<IProgramVar>>> arrayToPartitions,
@@ -198,7 +203,7 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 			moutVars = outVars;
 		}
 
-		
+
 		public ArraySplitter(final Script script, 
 				final HashMap<IProgramVar, HashMap<IProgramVar, IProgramVar>> arrayToPointerToPartition,
 				final HashMap<IProgramVar, HashMap<IProgramVar, HashSet<IProgramVar>>> arrayToPartitions,
@@ -273,14 +278,14 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 						final Term p0 = appTerm.getParameters()[0];
 						final Term p1 = appTerm.getParameters()[1];
 
-						final ArrayFinder af0 = new ArrayFinder();
-						af0.transform(p0);
-						final TermVariable a0Tv = af0.getResult();
+//						final ArrayFinder af0 = new ArrayFinder();
+//						af0.transform(p0);
+						final TermVariable a0Tv = new ArrayFinder(p0).getResult();
 						final IProgramVar a0Id = getBoogieVarFromTermVar(a0Tv, minVars, moutVars);
 
-						final ArrayFinder af1 = new ArrayFinder();
-						af1.transform(p1);
-						final TermVariable a1Tv = af1.getResult();
+//						final ArrayFinder af1 = new ArrayFinder();
+//						af1.transform(p1);
+						final TermVariable a1Tv = new ArrayFinder(p1).getResult();
 						final IProgramVar a1Id = getBoogieVarFromTermVar(a1Tv, minVars, moutVars);
 
 						/*
@@ -358,7 +363,7 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 			}
 			return result;
 		}
-		
+
 		public HashMap<IProgramVar, TermVariable> getUpdatedOutVars() {
 			final HashMap<IProgramVar, TermVariable> result = new HashMap<IProgramVar, TermVariable>(moutVars);
 			for (final IProgramVar bv : moutVarsToRemove) {
@@ -371,26 +376,4 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 		}
 
 	}
-
-
-	public static class ArrayFinder extends TermTransformer {
-		TermVariable marrayId;
-		
-		@Override
-		protected void convert(final Term term) {
-			if (term.getSort().isArraySort() && term instanceof TermVariable) {
-				marrayId = (TermVariable) term;
-				setResult(term);
-				return;
-			}
-			super.convert(term);
-		}
-	
-		TermVariable getResult() {
-			return marrayId;
-		}
-	}
-	
-	
-
 }
