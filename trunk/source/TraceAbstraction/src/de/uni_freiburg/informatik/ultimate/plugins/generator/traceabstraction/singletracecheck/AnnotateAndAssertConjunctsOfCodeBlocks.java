@@ -25,7 +25,7 @@
  * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.Bin
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.BinaryRelation.RelationSymbol;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceChecker.TraceCheckerLock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceChecker.TraceCheckerLock;
 
 
 /**

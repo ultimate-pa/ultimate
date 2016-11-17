@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.HoareTr
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.MonolithicHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 
 public class EfficientHoareTripleChecker implements IHoareTripleChecker {
 	private static final boolean mReviewSmtResultsIfAssertionsEnabled = true;

@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck;
 
 import de.uni_freiburg.informatik.ultimate.util.statistics.AStatisticsType;
 

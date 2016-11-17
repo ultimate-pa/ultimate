@@ -52,7 +52,8 @@ public class BlockEncodingDevelTestSuite extends AbstractEvalTestSuite {
 	private static final Triple<String, String[], String>[] TOOLCHAINS = new Triple[] {
 			//### C
 //			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default.epf"),
-			new Triple<>("AutomizerCWithBlockEncodingV2.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default.epf"),
+//			new Triple<>("AutomizerCWithBlockEncodingV2.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default.epf"),
+			new Triple<>("KojakCBEV2.xml", C, "kojak/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-BP-UC-LV-Integer.epf"),
 //			new Triple<>("AutomizerCWithBlockEncoding.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default.epf"),
 	};
 
@@ -61,7 +62,8 @@ public class BlockEncodingDevelTestSuite extends AbstractEvalTestSuite {
 //			"examples/svcomp/ssh-simplified/s3_srvr_13_false-unreach-call.cil.c",
 //			"examples/svcomp/",
 //			"examples/svcomp/ldv-linux-3.4-simple/32_1_cilled_true-unreach-call_ok_nondet_linux-3.4-32_1-drivers--media--rc--keymaps--rc-snapstream-firefly.ko-ldv_main0_sequence_infinite_withcheck_stateful.cil.out.c",
-			"examples/svcomp/regression/drivers--block--drbd--drbd.ko_343.90ab5ee.32_7a.cil_true-unreach-call.i"
+//			"examples/svcomp/regression/drivers--block--drbd--drbd.ko_343.90ab5ee.32_7a.cil_true-unreach-call.i",
+			"examples/svcomp/ldv-memsafety/memleaks_test22_3_true-valid-memsafety.i"
 
 	};
 	// @formatter:on

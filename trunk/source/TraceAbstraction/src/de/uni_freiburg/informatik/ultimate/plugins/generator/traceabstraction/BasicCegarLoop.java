@@ -70,7 +70,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceCheckAndRefinementSelection.IInterpolantAutomatonEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.LineCoverageCalculator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.InterpolantAutomatonBuilderFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.BestApproximationDeterminizer;
@@ -85,9 +84,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TaCheckAndRefinementPreferences;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TaCheckAndRefinementPreferences.TaCheckAndRefinementSettingPolicy;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TaCheckAndRefinementPreferences.TaInterpolantAutomatonConstructionPolicy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.CounterexampleSearchStrategy;
@@ -96,8 +92,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolantConsolidation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantConsolidation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.RefinementSelector;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TaCheckAndRefinementPreferences;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.RefinementSelector.IInterpolantAutomatonEvaluator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TaCheckAndRefinementPreferences.TaCheckAndRefinementSettingPolicy;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TaCheckAndRefinementPreferences.TaInterpolantAutomatonConstructionPolicy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessProductAutomaton;
 import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
@@ -146,7 +147,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	
 	private final SearchStrategy mSearchStrategy;
 	
-	private TraceCheckAndRefinementSelection mTraceCheckAndRefinementSelection;
+	private RefinementSelector mTraceCheckAndRefinementSelection;
 	
 	public BasicCegarLoop(final String name, final BoogieIcfgContainer rootNode, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
@@ -296,7 +297,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		final IInterpolantAutomatonEvaluator evaluator = automaton -> true;
 		final TaInterpolantAutomatonConstructionPolicy automatonPolicy =
 				TaInterpolantAutomatonConstructionPolicy.FIRST_BEST;
-		mTraceCheckAndRefinementSelection = new TraceCheckAndRefinementSelection(mServices, mLogger,
+		mTraceCheckAndRefinementSelection = new RefinementSelector(mServices, mLogger,
 				taCheckAndRefinementPrefsList, settingsPolicy, automatonPolicy, evaluator, mCsToolkit,
 				mPredicateFactory, mIcfgContainer, mSimplificationTechnique, mXnfConversionTechnique, mToolchainStorage,
 				mCegarLoopBenchmark, mInterpolantAutomatonBuilderFactory, mPref, mIteration, mCounterexample,

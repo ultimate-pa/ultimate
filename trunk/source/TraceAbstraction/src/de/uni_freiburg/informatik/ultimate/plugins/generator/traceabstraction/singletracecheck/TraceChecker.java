@@ -25,7 +25,7 @@
  * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -55,8 +55,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.AnnotateAndAsserter.AbnormalSolverTerminationDuringFeasibilityCheck;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.AnnotateAndAsserter.AbnormalUnknownSolverTerminationDuringFeasibilityCheck;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.AnnotateAndAsserter.AbnormalSolverTerminationDuringFeasibilityCheck;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.AnnotateAndAsserter.AbnormalUnknownSolverTerminationDuringFeasibilityCheck;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 /**
