@@ -33,23 +33,32 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
+import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractInterpreter;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.IAbstractInterpretationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.CFGInvariantsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.ControlFlowGraph;
@@ -180,47 +189,76 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 
 		// Project path to CFG
 		final int len = mRun.getLength();
-		final List<Location> locations = new ArrayList<>(len);
-		final Map<BoogieIcfgLocation, Location> locationsForProgramPoint = new HashMap<>(len);
-		final Collection<Transition> transitions = new ArrayList<>(len - 1);
+		final List<BoogieIcfgLocation> locations = new ArrayList<>(len);
+//		final Map<BoogieIcfgLocation, IcfgLocation> locationsForProgramPoint = new HashMap<>(len);
+		final List<IcfgInternalAction> transitions = new ArrayList<>(len - 1);
 
 		for (int i = 0; i < len; i++) {
 			final ISLPredicate pred = (ISLPredicate) mRun.getStateAtPosition(i);
 			final BoogieIcfgLocation programPoint = pred.getProgramPoint();
 
-			Location location = locationsForProgramPoint.get(programPoint);
-			if (location == null) {
-				location = new Location(programPoint);
-				locationsForProgramPoint.put(programPoint, location);
-			}
+//			IcfgLocation location = locationsForProgramPoint.get(programPoint);
+//			if (location == null) {
+//				location = new IcfgLocation(programPoint.getDebugIdentifier(), programPoint.getProcedure(), (Payload) programPoint.getPayload());
+//				locationsForProgramPoint.put(programPoint, location);
+//			}
 
-			locations.add(location);
+			locations.add(programPoint);
 
 			if (i > 0) {
 				if (!mRun.getWord().isInternalPosition(i - 1)) {
 					throw new UnsupportedOperationException("interprocedural traces are not supported (yet)");
 				}
+				
 				final UnmodifiableTransFormula transFormula =
 						((IInternalAction) mRun.getSymbol(i - 1)).getTransformula();
-				transitions.add(new Transition(transFormula, locations.get(i - 1), location));
+//				transitions.add(new Transition(transFormula, locations.get(i - 1), location));
+				transitions.add(new IcfgInternalAction(locations.get(i - 1), programPoint, programPoint.getPayload(), transFormula));
 			}
 		}
-
-		final ControlFlowGraph cfg =
-				new ControlFlowGraph(locations.get(0), locations.get(len - 1), locations, transitions);
+//
+//		final ControlFlowGraph cfg =
+//				new ControlFlowGraph(locations.get(0), locations.get(len - 1), locations, transitions);
 		mLogger.info("[PathInvariants] Built projected CFG, " + locations.size() + " states and " + transitions.size()
-				+ " transitions.");
+		+ " transitions.");
+
+//		// AI Module
+//		final boolean usePredicatesFromAbstractInterpretation = true; // TODO make a Pref
+//		Map<IcfgLocation, Term> initialPredicates = null;
+//		if (usePredicatesFromAbstractInterpretation) {
+//
+//			final List<CodeBlock> initials = getInitialEdges(mOriginalRoot);
+//
+//			// Run for 20% of the complete time.
+//			final IProgressAwareTimer timer = services.getProgressMonitorService().getChildTimer(0.2);
+//
+//			final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, BoogieIcfgLocation> result = AbstractInterpreter
+//					.run(mOriginalRoot, initials, timer, services);
+//
+//			if (result == null) {
+//				mLogger.warn(
+//						"was not able to retrieve initial predicates from abstract interpretation --> wrong toolchain?? (using \"true\")");
+//				initialPredicates = null;
+//			} else {
+//				initialPredicates = result.getLoc2Term().entrySet().stream()
+//						.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+//			}
+//		}
+//		// End AI Module
 
 		// Generate invariants
 		final CFGInvariantsGenerator generator = new CFGInvariantsGenerator(services, modGlobVarManager);
-		final Map<ControlFlowGraph.Location, IPredicate> invariants;
+		final Map<BoogieIcfgLocation, IPredicate> invariants;
 
 		if (USE_LIVE_VARIABLES) {
 			invariants = null;
 			// TODO: Compute the live variables and use them.
 		} else {
-			invariants = generator.generateInvariantsFromCFG(cfg, precondition, postcondition, invPatternProcFactory,
-					useVarsFromUnsatCore, false, null);
+//			invariants = generator.generateInvariantsFromCFG(cfg, precondition, postcondition, invPatternProcFactory,
+//					useVarsFromUnsatCore, false, null);
+			invariants = generator.generateInvariantsForTransitions(locations, transitions, precondition, postcondition, invPatternProcFactory,
+			useVarsFromUnsatCore, false, null);
+			
 			mLogger.info("[PathInvariants] Generated invariant map.");
 		}
 

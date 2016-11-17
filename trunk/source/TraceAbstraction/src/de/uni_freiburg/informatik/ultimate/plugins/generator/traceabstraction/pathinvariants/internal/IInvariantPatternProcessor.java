@@ -31,6 +31,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.ControlFlowGraph.Location;
 
 /**
@@ -71,7 +72,7 @@ public interface IInvariantPatternProcessor<IPT> {
 	 *            attempt; see {@link #getMaxRounds()}
 	 * @return invariant pattern for location
 	 */
-	public IPT getInvariantPatternForLocation(final Location location,
+	public IPT getInvariantPatternForLocation(final BoogieIcfgLocation location,
 			final int round);
 
 	/**

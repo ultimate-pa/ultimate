@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal;
 
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.ControlFlowGraph.Location;
 
 /**
@@ -73,17 +74,17 @@ public final class LocationIndependentLinearInequalityInvariantPatternStrategy
 		this.maxRounds = maxRounds;
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public int[] getDimensions(final Location location, final int round) {
-		return new int[] { baseDisjuncts + round * disjunctsPerRound,
-				baseConjuncts + round * conjunctsPerRound };
-		// 2015-10-27: Use the following instead to obtain two disjuncts
-		// consisting of one strict-nonstrict conjunction pair each. 
-//		return new int[] { 2, 1};
-	}
+//	/**
+//	 * {@inheritDoc}
+//	 */
+//	@Override
+//	public int[] getDimensions(final Location location, final int round) {
+//		return new int[] { baseDisjuncts + round * disjunctsPerRound,
+//				baseConjuncts + round * conjunctsPerRound };
+//		// 2015-10-27: Use the following instead to obtain two disjuncts
+//		// consisting of one strict-nonstrict conjunction pair each. 
+////		return new int[] { 2, 1};
+//	}
 
 	/**
 	 * {@inheritDoc}
@@ -91,6 +92,18 @@ public final class LocationIndependentLinearInequalityInvariantPatternStrategy
 	@Override
 	public int getMaxRounds() {
 		return maxRounds;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public int[] getDimensions(BoogieIcfgLocation location, int round) {
+		return new int[] { baseDisjuncts + round * disjunctsPerRound,
+				baseConjuncts + round * conjunctsPerRound };
+		// 2015-10-27: Use the following instead to obtain two disjuncts
+		// consisting of one strict-nonstrict conjunction pair each. 
+//		return new int[] { 2, 1};
 	}
 
 }

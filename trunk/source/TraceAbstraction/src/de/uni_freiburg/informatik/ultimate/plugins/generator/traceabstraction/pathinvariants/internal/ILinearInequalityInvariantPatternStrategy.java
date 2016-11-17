@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal;
 
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.ControlFlowGraph.Location;
 
 /**
@@ -52,7 +53,9 @@ public interface ILinearInequalityInvariantPatternStrategy {
 	 *         where each element means
 	 *         "one strict inequality and one non-strict one".
 	 */
-	public int[] getDimensions(final Location location, final int round);
+//	public int[] getDimensions(final Location location, final int round);
+	public int[] getDimensions(final BoogieIcfgLocation location, final int round);
+	
 
 	/**
 	 * Returns the maximal number of attempts to re-generate the invariant

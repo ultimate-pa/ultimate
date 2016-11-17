@@ -28,12 +28,14 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal;
 
 import java.util.Collection;
+import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ScriptWithTermConstructionChecks;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -42,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.S
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 
 /**
@@ -103,14 +106,14 @@ public class LinearInequalityInvariantPatternProcessorFactory
 	/**
 	 * {@inheritDoc}
 	 */
-	@Override
-	public LinearInequalityInvariantPatternProcessor produce(
-			final ControlFlowGraph cfg, final IPredicate precondition,
-			final IPredicate postcondition) {
-		return new LinearInequalityInvariantPatternProcessor(services,
-				storage, predUnifier, csToolkit, mAxioms, produceSmtSolver(), cfg, precondition,
-				postcondition, strategy, mUseNonlinearConstraints, mUseVarsFromUnsatCore, mSimplificationTechnique, mXnfConversionTechnique);
-	}
+//	@Override
+//	public LinearInequalityInvariantPatternProcessor produce(
+//			final ControlFlowGraph cfg, final IPredicate precondition,
+//			final IPredicate postcondition) {
+//		return new LinearInequalityInvariantPatternProcessor(services,
+//				storage, predUnifier, csToolkit, mAxioms, produceSmtSolver(), cfg, precondition,
+//				postcondition, strategy, mUseNonlinearConstraints, mUseVarsFromUnsatCore, mSimplificationTechnique, mXnfConversionTechnique);
+//	}
 
 	/**
 	 * Produces a SMT solver instance.
@@ -153,5 +156,15 @@ public class LinearInequalityInvariantPatternProcessorFactory
 				solverCommand, -1, null,
 				dumpSmtScriptToFile, pathOfDumpedScript, baseNameOfDumpedScript);
 	}
+
+	@Override
+	public IInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> produce(
+			List<BoogieIcfgLocation> locations, List<IcfgInternalAction> transitions, final IPredicate precondition,
+			final IPredicate postcondition) {
+		return new LinearInequalityInvariantPatternProcessor(services,
+				storage, predUnifier, csToolkit, mAxioms, produceSmtSolver(), locations, transitions, precondition,
+				postcondition, strategy, mUseNonlinearConstraints, mUseVarsFromUnsatCore, mSimplificationTechnique, mXnfConversionTechnique);
+	}
+
 
 }

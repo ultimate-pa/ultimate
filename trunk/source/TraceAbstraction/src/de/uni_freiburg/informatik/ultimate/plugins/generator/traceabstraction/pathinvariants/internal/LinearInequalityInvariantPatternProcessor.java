@@ -61,6 +61,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -69,6 +70,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.Simpli
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.ControlFlowGraph.Location;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.ControlFlowGraph.Transition;
@@ -85,12 +87,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * @author David Zschocke, Dirk Steinmetz, Matthias Heizmann, Betim Musa
  */
 public final class LinearInequalityInvariantPatternProcessor
-		extends
-		AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> {
+extends
+AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> {
 
 	private static final String PREFIX = "liipp_";
 	private static final String PREFIX_SEPARATOR = "_";
-	
+
 	private static final String Annot_Prefix = "LIIPP_Annot";
 	private int mAnnotTermCounter;
 	/**
@@ -101,10 +103,10 @@ public final class LinearInequalityInvariantPatternProcessor
 	 * @see {@link MotzkinTransformation}.mMotzkinCoeffiecients2LinearInequalities
 	 */
 	private Map<String, LinearInequality> mMotzkinCoeffiecients2LinearInequalities;
-	
+
 	private final boolean mUseVarsFromUnsatCore;
 
-	
+
 	private final IUltimateServiceProvider services;
 	private final ILogger logger;
 	private final Script solver;
@@ -112,7 +114,11 @@ public final class LinearInequalityInvariantPatternProcessor
 	private final LinearTransition precondition;
 	private final LinearTransition postcondition;
 	private final CachedTransFormulaLinearizer linearizer;
-	private final ControlFlowGraph cfg;
+	//	private final ControlFlowGraph cfg;
+
+	// New CFG
+	private final List<BoogieIcfgLocation> mLocations;
+	private final List<IcfgInternalAction> mTransitions;
 
 	/**
 	 * The pattern variables, that is the coefficients of program- and helper
@@ -166,13 +172,58 @@ public final class LinearInequalityInvariantPatternProcessor
 	 * @param xnfConversionTechnique 
 	 * @param axioms 
 	 */
+	//	public LinearInequalityInvariantPatternProcessor(
+	//			final IUltimateServiceProvider services,
+	//			final IToolchainStorage storage,
+	//			final PredicateUnifier predicateUnifier,
+	//			final ManagedScript predicateScript, final Collection<Term> axioms, 
+	//			final Script solver,
+	//			final ControlFlowGraph cfg, final IPredicate precondition,
+	//			final IPredicate postcondition,
+	//			final ILinearInequalityInvariantPatternStrategy strategy,
+	//			final boolean useNonlinearConstraints,
+	//			final boolean useVarsFromUnsatCore,
+	//			final SimplificationTechnique simplicationTechnique, 
+	//			final XnfConversionTechnique xnfConversionTechnique) {
+	//		super(predicateUnifier, predicateScript);
+	//		this.services = services;
+	//		logger = services.getLoggingService().getLogger(
+	//				Activator.PLUGIN_ID);
+	//		this.solver = solver;
+	//		this.strategy = strategy;
+	//		this.cfg = cfg;
+	//
+	//		patternVariables = new ArrayList<>();
+	//		patternCoefficients = new HashSet<>();
+	//
+	//		linearizer = new CachedTransFormulaLinearizer(services, 
+	//				predicateScript, axioms, storage, simplicationTechnique, xnfConversionTechnique);
+	//		this.precondition = linearizer.linearize(
+	//				TransFormulaBuilder.constructTransFormulaFromPredicate(precondition, predicateScript));
+	//		this.postcondition = linearizer.linearize(
+	//				TransFormulaBuilder.constructTransFormulaFromPredicate(postcondition, predicateScript));
+	//		
+	//		currentRound = -1;
+	//		maxRounds = strategy.getMaxRounds();
+	//		mUseNonlinearConstraints = useNonlinearConstraints;
+	//		mUseVarsFromUnsatCore = useVarsFromUnsatCore;
+	//		mAnnotTermCounter = 0;
+	//		mAnnotTerm2OriginalTerm = new HashMap<>();
+	//		mMotzkinCoeffiecients2LinearInequalities = new HashMap<>();
+	//		mTransitions = null;
+	//		mLocations = null;
+	//	}
+
+
+
+
 	public LinearInequalityInvariantPatternProcessor(
 			final IUltimateServiceProvider services,
 			final IToolchainStorage storage,
 			final PredicateUnifier predicateUnifier,
 			final ManagedScript predicateScript, final Collection<Term> axioms, 
 			final Script solver,
-			final ControlFlowGraph cfg, final IPredicate precondition,
+			List<BoogieIcfgLocation> locations, List<IcfgInternalAction> transitions, final IPredicate precondition,
 			final IPredicate postcondition,
 			final ILinearInequalityInvariantPatternStrategy strategy,
 			final boolean useNonlinearConstraints,
@@ -185,7 +236,9 @@ public final class LinearInequalityInvariantPatternProcessor
 				Activator.PLUGIN_ID);
 		this.solver = solver;
 		this.strategy = strategy;
-		this.cfg = cfg;
+		//		this.cfg = null;
+		mLocations = locations;
+		mTransitions = transitions;
 
 		patternVariables = new ArrayList<>();
 		patternCoefficients = new HashSet<>();
@@ -196,7 +249,7 @@ public final class LinearInequalityInvariantPatternProcessor
 				TransFormulaBuilder.constructTransFormulaFromPredicate(precondition, predicateScript));
 		this.postcondition = linearizer.linearize(
 				TransFormulaBuilder.constructTransFormulaFromPredicate(postcondition, predicateScript));
-		
+
 		currentRound = -1;
 		maxRounds = strategy.getMaxRounds();
 		mUseNonlinearConstraints = useNonlinearConstraints;
@@ -205,14 +258,13 @@ public final class LinearInequalityInvariantPatternProcessor
 		mAnnotTerm2OriginalTerm = new HashMap<>();
 		mMotzkinCoeffiecients2LinearInequalities = new HashMap<>();
 	}
-
 	/**
 	 * {@inheritDoc}
 	 */
 	@Override
 	public void startRound(final int round, final boolean useLiveVariables, final Set<IProgramVar> liveVariables, 
 			final boolean useVarsFromUnsatCore, final Set<IProgramVar> varsFromUnsatCore) {
-	
+
 		resetSettings();
 		patternVariables.clear();
 		entryInvariantPattern = null;
@@ -225,9 +277,9 @@ public final class LinearInequalityInvariantPatternProcessor
 		if (round == 0) {
 			logger.info( "[LIIPP] First round, linearizing...");
 			patternCoefficients.clear();
-			for (final Transition transition : cfg.getTransitions()) {
+			for (final IcfgInternalAction transition : mTransitions) {
 				final LinearTransition lTransition = linearizer
-						.linearize(transition.getTransFormula());
+						.linearize(transition.getTransformula());
 				patternCoefficients.addAll(lTransition.getInVars().keySet());
 				patternCoefficients.addAll(lTransition.getOutVars().keySet());
 			}
@@ -244,7 +296,7 @@ public final class LinearInequalityInvariantPatternProcessor
 			patternCoefficients.retainAll(varsFromUnsatCore);
 		}
 	}
-	
+
 	/**
 	 * Reset the solver and additionally reset the annotation term counter and the map mAnnotTerm2OriginalTerm
 	 */
@@ -267,54 +319,54 @@ public final class LinearInequalityInvariantPatternProcessor
 		return PREFIX + (prefixCounter++) + PREFIX_SEPARATOR;
 	}
 
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
-	public Collection<Collection<LinearPatternBase>> getInvariantPatternForLocation(
-			final Location location, final int round) {
-		// Build invariant pattern
-		final Collection<Collection<LinearPatternBase>> disjunction;
-		if (cfg.getEntry().equals(location)) {
-			// entry pattern is equivalent to true
-			final Collection<LinearPatternBase> emptyConjunction = Collections.emptyList();
-			disjunction = Collections.singleton(emptyConjunction);
-		} else if (cfg.getExit().equals(location)) {
-			// exit pattern is equivalent to false
-			disjunction = Collections.emptyList();
-		} else {
-			final int[] dimensions = strategy.getDimensions(location, round);
-			disjunction = new ArrayList<>(dimensions[0]);
-			for (int i = 0; i < dimensions[0]; i++) {
-				final Collection<LinearPatternBase> conjunction = new ArrayList<>(
-						dimensions[1]);
-				for (int j = 0; j < dimensions[1]; j++) {
-					final boolean[] invariantPatternCopies;
-					if (mAlwaysStrictAndNonStrictCopies ) {
-						invariantPatternCopies = new boolean[] { false, true }; 
-					} else {
-						invariantPatternCopies = new boolean[] { false };
-					}
-					for (final boolean strict : invariantPatternCopies) {
-						final LinearPatternBase inequality = new LinearPatternBase(
-								solver, patternCoefficients, newPrefix(), strict);
-						patternVariables.addAll(inequality.getVariables());
-						conjunction.add(inequality);
-					}
-				}
-				disjunction.add(conjunction);
-			}
-		}
-
-		// Keep track of entry and exit patterns, as we need them separately
-		if (cfg.getEntry().equals(location)) {
-			entryInvariantPattern = disjunction;
-		} else if (cfg.getExit().equals(location)) {
-			exitInvariantPattern = disjunction;
-		}
-
-		return disjunction;
-	}
+//	/**
+//	 * {@inheritDoc}
+//	 */
+//	@Override
+//	public Collection<Collection<LinearPatternBase>> getInvariantPatternForLocation(
+//			final Location location, final int round) {
+//		// Build invariant pattern
+//		final Collection<Collection<LinearPatternBase>> disjunction;
+//		if (mLocations.get(0).equals(location)) {
+//			// entry pattern is equivalent to true
+//			final Collection<LinearPatternBase> emptyConjunction = Collections.emptyList();
+//			disjunction = Collections.singleton(emptyConjunction);
+//		} else if (mLocations.get(mLocations.size()-1).equals(location)) {
+//			// exit pattern is equivalent to false
+//			disjunction = Collections.emptyList();
+//		} else {
+//			final int[] dimensions = strategy.getDimensions(location, round);
+//			disjunction = new ArrayList<>(dimensions[0]);
+//			for (int i = 0; i < dimensions[0]; i++) {
+//				final Collection<LinearPatternBase> conjunction = new ArrayList<>(
+//						dimensions[1]);
+//				for (int j = 0; j < dimensions[1]; j++) {
+//					final boolean[] invariantPatternCopies;
+//					if (mAlwaysStrictAndNonStrictCopies ) {
+//						invariantPatternCopies = new boolean[] { false, true }; 
+//					} else {
+//						invariantPatternCopies = new boolean[] { false };
+//					}
+//					for (final boolean strict : invariantPatternCopies) {
+//						final LinearPatternBase inequality = new LinearPatternBase(
+//								solver, patternCoefficients, newPrefix(), strict);
+//						patternVariables.addAll(inequality.getVariables());
+//						conjunction.add(inequality);
+//					}
+//				}
+//				disjunction.add(conjunction);
+//			}
+//		}
+//
+//		// Keep track of entry and exit patterns, as we need them separately
+//		if (mLocations.get(0).equals(location)) {
+//			entryInvariantPattern = disjunction;
+//		} else if (mLocations.get(mLocations.size()-1).equals(location)) {
+//			exitInvariantPattern = disjunction;
+//		}
+//
+//		return disjunction;
+//	}
 
 
 	/**
@@ -383,7 +435,7 @@ public final class LinearInequalityInvariantPatternProcessor
 		return mappedAndNegatedPattern;
 	}
 
-	
+
 	/**
 	 * Performs a single expandation, meaning transforming
 	 * conjunct /\ dnf to an equivalent dnf
@@ -714,7 +766,7 @@ public final class LinearInequalityInvariantPatternProcessor
 		return transformNegatedConjunction(startInvariantDNF, endInvariantDNF,
 				transitionDNF);
 	}
-	
+
 	/**
 	 * Split the given term in its conjunctions, annotate and assert each conjunction one by one, 
 	 * and store the mapping annotated term -> original term in a map.
@@ -737,7 +789,7 @@ public final class LinearInequalityInvariantPatternProcessor
 			solver.assertTerm(annotTerm);
 		}
 	}
-	
+
 	/**
 	 * Generate constraints for invariant template as follows:
 	 * 1. Generate a constraint s.t. the precondition implies the invariant template.
@@ -781,11 +833,11 @@ public final class LinearInequalityInvariantPatternProcessor
 			Term subterm = ((LetTerm)t).getSubTerm();
 			result.addAll(getTermVariablesFromTerm(subterm));
 		} else if (t instanceof TermVariable) {
-//			result.add((TermVariable)t);
+			//			result.add((TermVariable)t);
 		}
 		return result;
 	}
-	
+
 	/**
 	 * @author Betim Musa (musab@informaitk.uni-freiburg.de)
 	 * @return
@@ -802,7 +854,7 @@ public final class LinearInequalityInvariantPatternProcessor
 			final Collection<InvariantTransitionPredicate<Collection<Collection<LinearPatternBase>>>> predicates,
 			final int round) {
 		logger.info( "[LIIPP] Start generating terms.");
-		
+
 		if (!mUseVarsFromUnsatCore) {
 			solver.assertTerm(buildImplicationTerm(precondition,
 					entryInvariantPattern));
@@ -842,7 +894,7 @@ public final class LinearInequalityInvariantPatternProcessor
 						} else {
 							throw new UnsupportedOperationException("Var in linear inequality is not a TermVariable.");
 						}
-						
+
 					}
 				}
 			}
@@ -936,7 +988,7 @@ public final class LinearInequalityInvariantPatternProcessor
 		}
 		return SmtUtils.or(mScript.getScript(), conjunctions);
 	}
-	
+
 	private static Term constructZero(final Script script, final Sort sort) {
 		if (sort.getRealSort().getName().equals("Int")) {
 			return script.numeral(BigInteger.ZERO);
@@ -982,6 +1034,55 @@ public final class LinearInequalityInvariantPatternProcessor
 			final Collection<Collection<LinearPatternBase>> pattern) {
 		final Term term = getValuatedTermForPattern(pattern);
 		return predicateUnifier.getOrConstructPredicate(term);
+	}
+	
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public Collection<Collection<LinearPatternBase>> getInvariantPatternForLocation(BoogieIcfgLocation location,
+			int round) {
+		// Build invariant pattern
+		final Collection<Collection<LinearPatternBase>> disjunction;
+		if (mLocations.get(0).equals(location)) {
+			// entry pattern is equivalent to true
+			final Collection<LinearPatternBase> emptyConjunction = Collections.emptyList();
+			disjunction = Collections.singleton(emptyConjunction);
+		} else if (mLocations.get(mLocations.size()-1).equals(location)) {
+			// exit pattern is equivalent to false
+			disjunction = Collections.emptyList();
+		} else {
+			final int[] dimensions = strategy.getDimensions(location, round);
+			disjunction = new ArrayList<>(dimensions[0]);
+			for (int i = 0; i < dimensions[0]; i++) {
+				final Collection<LinearPatternBase> conjunction = new ArrayList<>(
+						dimensions[1]);
+				for (int j = 0; j < dimensions[1]; j++) {
+					final boolean[] invariantPatternCopies;
+					if (mAlwaysStrictAndNonStrictCopies ) {
+						invariantPatternCopies = new boolean[] { false, true }; 
+					} else {
+						invariantPatternCopies = new boolean[] { false };
+					}
+					for (final boolean strict : invariantPatternCopies) {
+						final LinearPatternBase inequality = new LinearPatternBase(
+								solver, patternCoefficients, newPrefix(), strict);
+						patternVariables.addAll(inequality.getVariables());
+						conjunction.add(inequality);
+					}
+				}
+				disjunction.add(conjunction);
+			}
+		}
+
+		// Keep track of entry and exit patterns, as we need them separately
+		if (mLocations.get(0).equals(location)) {
+			entryInvariantPattern = disjunction;
+		} else if (mLocations.get(mLocations.size()-1).equals(location)) {
+			exitInvariantPattern = disjunction;
+		}
+
+		return disjunction;
 	}
 
 }
