@@ -54,15 +54,15 @@ public class Svcomp2016CTranslationTestSuite extends AbstractEvalTestSuite {
 
 	@SuppressWarnings("unchecked")
 	private static final Triple<String, String[], String>[] TOOLCHAINS = new Triple[] {
-			new Triple<>("CTranslationTest.xml", ALL_C, "translation/Bitvector.epf"),
+			new Triple<>("CTranslationTest.xml", ALL_C, "translation/ReachBitvector.epf"),
 			new Triple<>("CTranslationTest.xml", ALL_C, "translation/DerefFreeMemtrackInteger.epf"),
-			new Triple<>("CTranslationTest.xml", ALL_C, "translation/Float.epf"),
-			new Triple<>("CTranslationTest.xml", ALL_C, "translation/Integer.epf"),
+			new Triple<>("CTranslationTest.xml", ALL_C, "translation/DerefFreeMemtrackBitvector.epf"),
+			new Triple<>("CTranslationTest.xml", ALL_C, "translation/ReachInteger.epf"),
 
-//			new Triple<>("CTranslationBETest.xml", ALL_C, "translation/Bitvector.epf"),
+//			new Triple<>("CTranslationBETest.xml", ALL_C, "translation/ReachBitvector.epf"),
 //			new Triple<>("CTranslationBETest.xml", ALL_C, "translation/DerefFreeMemtrackInteger.epf"),
-//			new Triple<>("CTranslationBETest.xml", ALL_C, "translation/Float.epf"),
-			new Triple<>("CTranslationBETest.xml", ALL_C, "translation/Integer.epf"),
+//			new Triple<>("CTranslationBETest.xml", ALL_C, "translation/DerefFreeMemtrackBitvector.epf"),
+			new Triple<>("CTranslationBETest.xml", ALL_C, "translation/ReachInteger.epf"),
 	};
 
 	private static final String[] INPUT = new String[] {
@@ -105,4 +105,7 @@ public class Svcomp2016CTranslationTestSuite extends AbstractEvalTestSuite {
 		}
 		return super.createTestCases();
 	}
+	
+	
+	
 }
