@@ -1,10 +1,10 @@
 package de.uni_freiburg.informatik.ultimate.automata.tree;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -25,6 +25,7 @@ public class TreeAutomatonBU<LETTER, STATE> implements ITreeAutomaton<LETTER, ST
 	private final Map<List<STATE>, Map<LETTER, Iterable<STATE>>> parentsMap;
 	private final Map<STATE, Map<LETTER, Iterable<List<STATE>>>> childrenMap;
 	private final Map<LETTER, Iterable<TreeAutomatonRule<LETTER, STATE>>> lettersMap;
+	private final Map<STATE, Iterable<TreeAutomatonRule<LETTER, STATE>>> sourceMap;
 	private final Set<LETTER> alphabet;
 	private final Set<STATE> finalStates;
 	private final Set<STATE> initalStates;
@@ -38,6 +39,7 @@ public class TreeAutomatonBU<LETTER, STATE> implements ITreeAutomaton<LETTER, ST
 		parentsMap = new HashMap<>();
 		alphabet = new HashSet<>();
 		lettersMap = new HashMap<>();
+		sourceMap = new HashMap<>();
 
 		finalStates = new HashSet<>();
 		states = new HashSet<>();
@@ -65,9 +67,9 @@ public class TreeAutomatonBU<LETTER, STATE> implements ITreeAutomaton<LETTER, ST
 		}
 		final Map<LETTER, Iterable<List<STATE>>> childLetter = childrenMap.get(dest);
 		if (!childLetter.containsKey(letter)) {
-			childLetter.put(letter, new LinkedList<List<STATE>>());
+			childLetter.put(letter, new HashSet<List<STATE>>());
 		}
-		final LinkedList<List<STATE>> children = (LinkedList<List<STATE>>) childLetter.get(letter);
+		final HashSet<List<STATE>> children = (HashSet<List<STATE>>) childLetter.get(letter);
 		children.add(src);
 		
 		// parents(q1, ..., qn)[f] = q
@@ -76,9 +78,9 @@ public class TreeAutomatonBU<LETTER, STATE> implements ITreeAutomaton<LETTER, ST
 		}
 		final Map<LETTER, Iterable<STATE>> parentLetter = parentsMap.get(src);
 		if (!parentLetter.containsKey(letter)) {
-			parentLetter.put(letter, new LinkedList<STATE>());
+			parentLetter.put(letter, new HashSet<STATE>());
 		}
-		final LinkedList<STATE> parents = (LinkedList<STATE>) parentLetter.get(letter);
+		final Set<STATE> parents = (Set<STATE>) parentLetter.get(letter);
 		parents.add(dest);
 		
 		// lettersMap[f] = [f(p) -> q]
@@ -87,6 +89,19 @@ public class TreeAutomatonBU<LETTER, STATE> implements ITreeAutomaton<LETTER, ST
 		}
 		final HashSet<TreeAutomatonRule<LETTER, STATE>> rulesByLetter = (HashSet<TreeAutomatonRule<LETTER, STATE>>) lettersMap.get(letter);
 		rulesByLetter.add(rule);
+		
+		// sourceRules[q] = {f(p1, ..., q, ... pn) -> p0}
+		for (final STATE st : src) {
+			if (!sourceMap.containsKey(st)) {
+				sourceMap.put(st, new HashSet<>());
+			}
+			final HashSet<TreeAutomatonRule<LETTER, STATE>> rulesBySource = (HashSet<TreeAutomatonRule<LETTER, STATE>>) sourceMap.get(st);
+			rulesBySource.add(rule);
+		}
+	}
+	
+	public void extendAlphabet(final Collection<LETTER> sigma) {
+		alphabet.addAll(sigma);
 	}
 	
 	public void addRule(final LETTER letter, final List<STATE> src, final STATE dest) {
@@ -113,6 +128,10 @@ public class TreeAutomatonBU<LETTER, STATE> implements ITreeAutomaton<LETTER, ST
 	
 	public Iterable<TreeAutomatonRule<LETTER, STATE>> getRulesByLetter(final LETTER letter) {
 		return lettersMap.get(letter);
+	}
+
+	public Iterable<TreeAutomatonRule<LETTER, STATE>> getRulesBySource(final STATE src) {
+		return sourceMap.get(src);
 	}
 	
 	@Override

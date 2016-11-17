@@ -97,7 +97,6 @@ public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		}
 		// Dummy Rules end.
 		*/
-		
 		for (final TreeAutomatonRule<LETTER, STATE> rule : treeAutomaton.getRules()) {
 			if (!rules.containsKey(rule.getLetter())) {
 				rules.put(rule.getLetter(), new HashMap<>());
@@ -182,6 +181,11 @@ public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			}
 		}
 		final TreeAutomatonBU<LETTER, STATE> res = new TreeAutomatonBU<>();
+
+		for (final LETTER sym : treeAutomaton.getAlphabet()) {
+			res.addLetter(sym);
+		}
+		
 		for (final LETTER letter : rules.keySet()) {
 			final Map<List<Set<STATE>>, Set<STATE>> mp = rules.get(letter);
 			for (final List<Set<STATE>> sSrc : mp.keySet()) {
