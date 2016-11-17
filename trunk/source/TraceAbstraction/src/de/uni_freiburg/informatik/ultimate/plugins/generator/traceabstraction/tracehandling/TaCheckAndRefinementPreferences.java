@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  */
 public class TaCheckAndRefinementPreferences {
 	/**
-	 * Policy how to choose the setting in {@link RefinementSelector}.
+	 * Policy how to choose the setting in {@link TraceAbstractionRefinementSelector}.
 	 * 
 	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 	 */
@@ -55,7 +55,7 @@ public class TaCheckAndRefinementPreferences {
 	}
 	
 	/**
-	 * Policy how to choose the interpolant automaton in {@link RefinementSelector}.
+	 * Policy how to choose the interpolant automaton in {@link TraceAbstractionRefinementSelector}.
 	 * 
 	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 	 */

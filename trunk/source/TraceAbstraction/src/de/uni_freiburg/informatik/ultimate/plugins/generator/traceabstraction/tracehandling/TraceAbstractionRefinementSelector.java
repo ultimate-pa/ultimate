@@ -78,7 +78,8 @@ import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
  *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
-public final class RefinementSelector {
+public final class TraceAbstractionRefinementSelector
+		implements IRefinementSelector<NestedWordAutomaton<CodeBlock, IPredicate>> {
 	/* inputs */
 
 	/**
@@ -158,7 +159,7 @@ public final class RefinementSelector {
 	 */
 	private IHoareTripleChecker mHoareTripleChecker;
 
-	public RefinementSelector(final IUltimateServiceProvider services, final ILogger logger,
+	public TraceAbstractionRefinementSelector(final IUltimateServiceProvider services, final ILogger logger,
 			final List<TaCheckAndRefinementPreferences> prefsList,
 			final TaCheckAndRefinementSettingPolicy settingsPolicy,
 			final TaInterpolantAutomatonConstructionPolicy automatonPolicy,
@@ -194,11 +195,13 @@ public final class RefinementSelector {
 		execute(settingsPolicy, counterexample, abstraction);
 	}
 
+	@Override
 	public LBool getCounterexampleFeasibility() {
 		return mFeasibility;
 	}
 
-	public NestedWordAutomaton<CodeBlock, IPredicate> getInterpolantAutomaton() {
+	@Override
+	public NestedWordAutomaton<CodeBlock, IPredicate> getInfeasibilityProof() {
 		if (mInterpolantAutomaton == null) {
 			throw new UnsupportedOperationException("There is no interpolant automaton.");
 		}

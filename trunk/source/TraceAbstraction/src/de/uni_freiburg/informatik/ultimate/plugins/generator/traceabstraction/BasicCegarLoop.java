@@ -94,9 +94,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantConsolidation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.RefinementSelector;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementSelector;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TaCheckAndRefinementPreferences;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.RefinementSelector.IInterpolantAutomatonEvaluator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementSelector.IInterpolantAutomatonEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TaCheckAndRefinementPreferences.TaCheckAndRefinementSettingPolicy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TaCheckAndRefinementPreferences.TaInterpolantAutomatonConstructionPolicy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessProductAutomaton;
@@ -147,7 +147,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	
 	private final SearchStrategy mSearchStrategy;
 	
-	private RefinementSelector mTraceCheckAndRefinementSelection;
+	private TraceAbstractionRefinementSelector mTraceCheckAndRefinementSelection;
 	
 	public BasicCegarLoop(final String name, final BoogieIcfgContainer rootNode, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
@@ -297,7 +297,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		final IInterpolantAutomatonEvaluator evaluator = automaton -> true;
 		final TaInterpolantAutomatonConstructionPolicy automatonPolicy =
 				TaInterpolantAutomatonConstructionPolicy.FIRST_BEST;
-		mTraceCheckAndRefinementSelection = new RefinementSelector(mServices, mLogger,
+		mTraceCheckAndRefinementSelection = new TraceAbstractionRefinementSelector(mServices, mLogger,
 				taCheckAndRefinementPrefsList, settingsPolicy, automatonPolicy, evaluator, mCsToolkit,
 				mPredicateFactory, mIcfgContainer, mSimplificationTechnique, mXnfConversionTechnique, mToolchainStorage,
 				mCegarLoopBenchmark, mInterpolantAutomatonBuilderFactory, mPref, mIteration, mCounterexample,
@@ -348,7 +348,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	
 	@Override
 	protected void constructInterpolantAutomaton() throws AutomataOperationCanceledException {
-		mInterpolAutomaton = mTraceCheckAndRefinementSelection.getInterpolantAutomaton();
+		mInterpolAutomaton = mTraceCheckAndRefinementSelection.getInfeasibilityProof();
 		mInterpolantGenerator = mTraceCheckAndRefinementSelection.getInterpolantGenerator();
 		
 		assert accepts(mServices, mInterpolAutomaton, mCounterexample.getWord()) : "Interpolant automaton broken!";
