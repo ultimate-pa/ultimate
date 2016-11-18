@@ -58,7 +58,7 @@ public class HCPredicateFactory implements IStateFactory<HCPredicate> {
 		s.addAll(p1.getVars());
 		s.addAll(p2.getVars());
 
-		int predHash = HashUtils.hashHsieh(mBackendSmtSolverScript.hashCode(), p1.mProgramPoint, p1.getFormula(), p2.mProgramPoint, p2.getFormula());
+		int predHash = HashUtils.hashHsieh(mBackendSmtSolverScript.hashCode(), p1, p1.mProgramPoint, p1.getFormula(), p2, p2.mProgramPoint, p2.getFormula());
 		return new HCPredicate(p1.mProgramPoint, predHash, Util.and(mBackendSmtSolverScript, new Term[]{p1.getFormula(), p2.getFormula()}), s);
 		
 		//return new HCPredicate(p1.mProgramPoint, predHash, Util.and(mBackendSmtSolverScript, new Term[]{p1.getFormula(), p2.getFormula()}), s);
@@ -76,7 +76,11 @@ public class HCPredicateFactory implements IStateFactory<HCPredicate> {
 		}
 		
 		HornClausePredicateSymbol loc = states.iterator().next().mProgramPoint;
-		int predHash = HashUtils.hashHsieh(mBackendSmtSolverScript.hashCode(), loc, states, states.iterator().next().getFormula());
+		
+		int predHash = HashUtils.hashHsieh(mBackendSmtSolverScript.hashCode(), loc, states);
+		for (final HCPredicate p : states) {
+			predHash = HashUtils.hashHsieh(mBackendSmtSolverScript.hashCode(), predHash, p, p.mProgramPoint);
+		}
 
 		//return new HCPredicate(loc, Util.or(mBackendSmtSolverScript, terms), s);
 		return new HCPredicate(loc, predHash, Util.or(mBackendSmtSolverScript, terms), s);

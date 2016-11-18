@@ -135,6 +135,7 @@ public class TreeAutomizerCEGAR {
 		// Using simple interpolant automaton : the counterexample's automaton.
 		// mInterpolAutomaton = mCounterexample.getAutomaton();
 		
+		
 		PostfixTree<Term, HCPredicate> postfixT = new PostfixTree<>(mSSA.getFormulasTree());
 
 		Term[] ts = new Term[postfixT.getPostFix().size()];
@@ -155,6 +156,7 @@ public class TreeAutomizerCEGAR {
 		mInterpolAutomaton = ((TreeRun<HCTransFormula, HCPredicate>) mCounterexample).reconstruct(predsMap)
 				.getAutomaton();
 		
+		 
 		((TreeAutomatonBU<HCTransFormula, HCPredicate>) mInterpolAutomaton).extendAlphabet(mAbstraction.getAlphabet());
 	}
 
@@ -172,6 +174,7 @@ public class TreeAutomizerCEGAR {
 		mLogger.debug(cExample);
 		mAbstraction = (TreeAutomatonBU<HCTransFormula, HCPredicate>) (new Intersect<HCTransFormula, HCPredicate>(
 				mAbstraction, cExample, mPredicateFactory)).getResult();
+		
 		
 		mAbstraction = (TreeAutomatonBU<HCTransFormula, HCPredicate>) (new Totalize<HCTransFormula, HCPredicate>(
 				mAbstraction, mPredicateFactory)).getResult();
