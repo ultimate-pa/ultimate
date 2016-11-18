@@ -41,7 +41,16 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
- * Given a PetriNet, constructs a finite Automaton that recognizes the same language.
+ * Product of two automata that is similar to the synchronization operator
+ * for parallel transition systems.
+ * For shared letters of both input automata move if the letter is read.
+ * For the other letters only the corresponding automaton moves.
+ * 
+ * 2016-11-18 Matthias: It seems that for similar alphabets the result of this
+ * operation is equivalent to the intersection if the parameter 
+ * concurrentPrefixProduct is true and it is equivalent to the union if 
+ * the parameter concurrentPrefixProduct if false.
+ * 
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
