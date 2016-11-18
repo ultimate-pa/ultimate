@@ -59,7 +59,9 @@ public class SSABuilder {
 		mCounters = counters;
 
 		currentLocalAndOldVarVersion = new HashMap<>();
+		mScript.push(1);
 		mResult = buildSSA();
+		mScript.pop(1);
 	}
 
 	public SSABuilder(final ITreeRun<HCTransFormula, HCPredicate> trace, final Script script) {

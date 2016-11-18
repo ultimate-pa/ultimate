@@ -14,6 +14,8 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeRun;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.Complement;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.Intersect;
+import de.uni_freiburg.informatik.ultimate.automata.tree.operations.Minimize;
+import de.uni_freiburg.informatik.ultimate.automata.tree.operations.Totalize;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.TreeEmptinessCheck;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.BasePayloadContainer;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
@@ -132,7 +134,7 @@ public class TreeAutomizerCEGAR {
 	protected void constructInterpolantAutomaton() throws AutomataOperationCanceledException {
 		// Using simple interpolant automaton : the counterexample's automaton.
 		// mInterpolAutomaton = mCounterexample.getAutomaton();
-
+		
 		PostfixTree<Term, HCPredicate> postfixT = new PostfixTree<>(mSSA.getFormulasTree());
 
 		Term[] ts = new Term[postfixT.getPostFix().size()];
@@ -152,8 +154,8 @@ public class TreeAutomizerCEGAR {
 		}
 		mInterpolAutomaton = ((TreeRun<HCTransFormula, HCPredicate>) mCounterexample).reconstruct(predsMap)
 				.getAutomaton();
-		((TreeAutomatonBU<HCTransFormula, HCPredicate>) mInterpolAutomaton).extendAlphabet(mAbstraction.getAlphabet());
 		
+		((TreeAutomatonBU<HCTransFormula, HCPredicate>) mInterpolAutomaton).extendAlphabet(mAbstraction.getAlphabet());
 	}
 
 	private void generalizeCounterExample() {
@@ -170,6 +172,12 @@ public class TreeAutomizerCEGAR {
 		mLogger.debug(cExample);
 		mAbstraction = (TreeAutomatonBU<HCTransFormula, HCPredicate>) (new Intersect<HCTransFormula, HCPredicate>(
 				mAbstraction, cExample, mPredicateFactory)).getResult();
+		
+		mAbstraction = (TreeAutomatonBU<HCTransFormula, HCPredicate>) (new Totalize<HCTransFormula, HCPredicate>(
+				mAbstraction, mPredicateFactory)).getResult();
+		mAbstraction = (TreeAutomatonBU<HCTransFormula, HCPredicate>) (new Minimize<HCTransFormula, HCPredicate>(
+				mAbstraction, mPredicateFactory)).getResult();
+		
 		mLogger.debug(mAbstraction);
 
 		mLogger.debug("Refine ends...");

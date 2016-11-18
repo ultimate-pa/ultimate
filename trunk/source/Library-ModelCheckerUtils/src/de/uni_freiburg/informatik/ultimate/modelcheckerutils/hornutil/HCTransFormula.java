@@ -15,6 +15,9 @@ public class HCTransFormula {
 	private final Map<HCVar, TermVariable> inVars;
 	private final Map<HCVar, TermVariable> outVars;
 	
+	public int getArity() {
+		return Math.max(1, inVars.size());
+	}
 	public Map<HCVar, TermVariable> getInVars() {
 		return inVars;
 	}

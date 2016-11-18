@@ -57,7 +57,11 @@ public class HCPredicateFactory implements IStateFactory<HCPredicate> {
 		Set<IProgramVar> s = new HashSet<>();
 		s.addAll(p1.getVars());
 		s.addAll(p2.getVars());
-		return new HCPredicate(p1.mProgramPoint, Util.and(mBackendSmtSolverScript, new Term[]{p1.getFormula(), p2.getFormula()}), s);
+
+		int predHash = HashUtils.hashHsieh(mBackendSmtSolverScript.hashCode(), p1.mProgramPoint, p1.getFormula(), p2.mProgramPoint, p2.getFormula());
+		return new HCPredicate(p1.mProgramPoint, predHash, Util.and(mBackendSmtSolverScript, new Term[]{p1.getFormula(), p2.getFormula()}), s);
+		
+		//return new HCPredicate(p1.mProgramPoint, predHash, Util.and(mBackendSmtSolverScript, new Term[]{p1.getFormula(), p2.getFormula()}), s);
 	}
 
 	@Override
@@ -72,8 +76,10 @@ public class HCPredicateFactory implements IStateFactory<HCPredicate> {
 		}
 		
 		HornClausePredicateSymbol loc = states.iterator().next().mProgramPoint;
-		
-		return new HCPredicate(loc, Util.or(mBackendSmtSolverScript, terms), s);
+		int predHash = HashUtils.hashHsieh(mBackendSmtSolverScript.hashCode(), loc, states, states.iterator().next().getFormula());
+
+		//return new HCPredicate(loc, Util.or(mBackendSmtSolverScript, terms), s);
+		return new HCPredicate(loc, predHash, Util.or(mBackendSmtSolverScript, terms), s);
 		//final Term disjunction = mSmtManager.getPredicateFactory().or(false, states);
 		//final HCPredicate result = mSmtManager.getPredicateFactory().newPredicate(disjunction);
 		//return result;

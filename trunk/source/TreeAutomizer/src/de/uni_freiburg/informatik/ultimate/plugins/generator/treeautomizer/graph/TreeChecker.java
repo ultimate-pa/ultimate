@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.graph;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -23,18 +24,16 @@ public class TreeChecker {
 	private ILogger mLogger;
 	
 	public TreeChecker(final ITreeRun<HCTransFormula, HCPredicate> tree,
-			final Script backendSmtSolverScript,
-			final Map<Term, Integer> counters,
+			final Script backendSmtSolverScript, final Map<Term, Integer> counters,
 			final HCPredicate preCondition, final HCPredicate postCondition,
 			ILogger logger) {
 		mTree = tree;
 		mBackendSmtSolverScript = backendSmtSolverScript;
-		mBackendSmtSolverScript.push(1);
 		mCounters = counters;
 		mPostCondition = postCondition;
 		mPreCondition = preCondition;
 		mSSABuilder = new SSABuilder(mTree, mBackendSmtSolverScript, mPreCondition, mPostCondition, mCounters);
-		mBackendSmtSolverScript.pop(1);
+		
 		mLogger = logger;
 	}
 	
