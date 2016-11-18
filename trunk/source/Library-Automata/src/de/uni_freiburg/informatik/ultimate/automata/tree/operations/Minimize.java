@@ -167,11 +167,10 @@ public class Minimize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			}
 			res.addRule(new TreeAutomatonRule<LETTER, STATE>(rule.getLetter(), src, minimize(worklist.getPartition(rule.getDest()))));
 		}
-		return res;
+		return removeUnreachables(res);
 	}
 	
-	/*
-	private ITreeAutomaton<LETTER, STATE> computeResult() {
+	private ITreeAutomaton<LETTER, STATE> removeUnreachables(final TreeAutomatonBU<LETTER, STATE> treeAutomaton) {
 		final TreeAutomatonBU<LETTER, STATE> res = new TreeAutomatonBU<>();
 		
 		final Set<STATE> worklist = new HashSet<>();
@@ -249,7 +248,6 @@ public class Minimize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		
 		return res;
 	}
-	*/
 	
 	@Override
 	public ITreeAutomaton<LETTER, STATE> getResult() {

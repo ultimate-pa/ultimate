@@ -1,8 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.automata.tree.operations;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -87,6 +87,29 @@ public class Totalize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				}
 			}
 			
+		}
+		for (final LETTER sym : treeAutomaton.getAlphabet()) {
+			Method getAr = null;
+			int arity = -1;
+			try {
+				getAr = sym.getClass().getMethod("getArity");
+			} catch (Exception e) {
+				continue;
+			}
+			try {
+				arity = (int) getAr.invoke(sym);
+			} catch (Exception e) {
+				continue;
+			}
+			if (arity >= 0) {
+				//System.err.println(sym);
+				for (final List<STATE> srcSt : combinations(arity)) {
+					Iterable<STATE> st = treeAutomaton.getSuccessors(srcSt, sym);
+					if (st != null && !st.iterator().hasNext()) {
+						res.addRule(new TreeAutomatonRule<LETTER, STATE>(sym, srcSt, dummyState));
+					}
+				}
+			}
 		}
 		return res;
 	}

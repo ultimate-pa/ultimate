@@ -49,8 +49,8 @@ public class Complement<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		final Determinize<LETTER, STATE> op = new Determinize<>(treeAutomaton, stateFactory);
 		final TreeAutomatonBU<LETTER, STATE> res = (TreeAutomatonBU<LETTER, STATE>) op.getResult();
 		res.complementFinals();
-		
-		return res;
+		final Minimize<LETTER, STATE> mini = new Minimize<>(res, stateFactory);
+		return mini.getResult();
 	}
 	
 	@Override

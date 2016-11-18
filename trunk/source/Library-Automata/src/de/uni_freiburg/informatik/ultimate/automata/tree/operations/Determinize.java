@@ -35,11 +35,9 @@ public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	public Determinize(final ITreeAutomaton<LETTER, STATE> tree, final IStateFactory<STATE> factory) {
 		reducedStates = new HashMap<>();
 		stateFactory = factory;
-		
 		treeAutomaton = tree;
-		final ITreeAutomaton<LETTER, STATE> t = computeResult();
-		final Totalize<LETTER, STATE> op = new Totalize<>(t, factory);
-		result = op.getResult();
+		
+		result = computeResult();
 	}
 	
 	private STATE reduceState(final Set<STATE> key) {
@@ -64,7 +62,7 @@ public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		return "Exiting determinization";
 	}
 	
-	private TreeAutomatonBU<LETTER, STATE> computeResult() {
+	private ITreeAutomaton<LETTER, STATE> computeResult() {
 		final Map<STATE, Set<STATE>> stateToSState = new HashMap<>();
 		
 		final Map<LETTER, Map<List<Set<STATE>>, Set<STATE>>> rules = new HashMap<LETTER, Map<List<Set<STATE>>, Set<STATE>>>();
@@ -182,9 +180,7 @@ public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		}
 		final TreeAutomatonBU<LETTER, STATE> res = new TreeAutomatonBU<>();
 
-		for (final LETTER sym : treeAutomaton.getAlphabet()) {
-			res.addLetter(sym);
-		}
+		res.extendAlphabet(treeAutomaton.getAlphabet());
 		
 		for (final LETTER letter : rules.keySet()) {
 			final Map<List<Set<STATE>>, Set<STATE>> mp = rules.get(letter);
@@ -218,7 +214,9 @@ public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE> {
 				}
 			}
 		}
-		return res;
+
+		final Totalize<LETTER, STATE> op = new Totalize<>(res, stateFactory);
+		return op.getResult();
 	}
 	
 	@Override

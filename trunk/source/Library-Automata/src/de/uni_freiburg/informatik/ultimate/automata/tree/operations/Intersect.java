@@ -193,5 +193,40 @@ public class Intersect<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		System.out.println(treeB.toString() + "\n");
 		System.out.println(res + "\n");
 		System.out.println(((TreeAutomatonBU<String, String>) res).DebugString() + "\n");
+		
+		final TreeAutomatonBU<Character, String> tree1 = new TreeAutomatonBU<>();
+		final String I = "I", T = "T", F = "F", E = "E";
+		tree1.addRule('A', new ArrayList<>(Arrays.asList(new String[]{T})), I);
+		tree1.addRule('B', new ArrayList<>(Arrays.asList(new String[]{I})), I);
+		tree1.addRule('C', new ArrayList<>(Arrays.asList(new String[]{I})), F);
+		tree1.addFinalState(F);
+		tree1.addInitialState(T);
+		
+		final TreeAutomatonBU<Character, String> tree2 = new TreeAutomatonBU<>();
+		tree2.addRule('A', new ArrayList<>(Arrays.asList(new String[]{T})), I);
+		tree2.addRule('B', new ArrayList<>(Arrays.asList(new String[]{T})), E);
+		tree2.addRule('C', new ArrayList<>(Arrays.asList(new String[]{T})), E);
+		
+		tree2.addRule('A', new ArrayList<>(Arrays.asList(new String[]{I})), E);
+		tree2.addRule('B', new ArrayList<>(Arrays.asList(new String[]{I})), E);
+		tree2.addRule('C', new ArrayList<>(Arrays.asList(new String[]{I})), F);
+		
+		tree2.addRule('A', new ArrayList<>(Arrays.asList(new String[]{F})), E);
+		tree2.addRule('B', new ArrayList<>(Arrays.asList(new String[]{F})), E);
+		tree2.addRule('C', new ArrayList<>(Arrays.asList(new String[]{F})), E);
+
+		tree2.addRule('A', new ArrayList<>(Arrays.asList(new String[]{E})), E);
+		tree2.addRule('B', new ArrayList<>(Arrays.asList(new String[]{E})), E);
+		tree2.addRule('C', new ArrayList<>(Arrays.asList(new String[]{E})), E);
+		tree2.addInitialState(T);
+		tree2.addFinalState(I);
+		tree2.addFinalState(T);
+		tree2.addFinalState(E);
+		
+		System.out.println(tree1);
+		System.out.println(tree2);
+		final Intersect<Character, String> oo = new Intersect<>(tree1, tree2, fac);
+		final Minimize<Character, String> oo2 = new Minimize<>(oo.getResult(), fac);
+		System.out.println(oo2.getResult());
 	}
 }
