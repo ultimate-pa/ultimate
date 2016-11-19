@@ -105,6 +105,9 @@ public class TreeAutomizerCEGAR {
 
 		mAbstraction.addInitialState(mInitialPredicate);
 		mAbstraction.addFinalState(mFinalPredicate);
+		
+		mLogger.debug("Initial abstraction tree Automaton:");
+		mLogger.debug(mAbstraction);
 	}
 
 	// @Override
@@ -112,15 +115,12 @@ public class TreeAutomizerCEGAR {
 		final TreeEmptinessCheck<HCTransFormula, HCPredicate> emptiness = new TreeEmptinessCheck<>(mAbstraction);
 
 		mCounterexample = emptiness.getResult();
-
 		if (mCounterexample == null) {
 			return true;
 		}
-		mLogger.info("Found error trace");
-		if (mLogger.isDebugEnabled()) {
-			mLogger.debug(mCounterexample.toString());
-		}
-
+		mLogger.debug("Error trace found.");
+		mLogger.debug(mCounterexample.toString());
+		
 		return false;
 	}
 
@@ -128,14 +128,12 @@ public class TreeAutomizerCEGAR {
 		final TreeChecker checker = new TreeChecker(mCounterexample, mBackendSmtSolverScript,
 				mInitialPredicate, mFinalPredicate, mLogger);
 		mSSA = checker.getSSA();
-		final LBool res = checker.checkTrace();
-		return res;
+		return checker.checkTrace();
 	}
 
 	protected void constructInterpolantAutomaton() throws AutomataOperationCanceledException {
 		// Using simple interpolant automaton : the counterexample's automaton.
 		//mInterpolAutomaton = mCounterexample.getAutomaton();
-		
 		
 		PostfixTree<Term, HCPredicate> postfixT = new PostfixTree<>(mSSA.getFormulasTree());
 
@@ -167,23 +165,20 @@ public class TreeAutomizerCEGAR {
 	protected boolean refineAbstraction() throws AutomataOperationCanceledException, AutomataLibraryException {
 		generalizeCounterExample();
 		mLogger.debug("Refine begins...");
-		mLogger.debug(mAbstraction);
-		mLogger.debug(mInterpolAutomaton);
+		//mLogger.debug(mAbstraction);
+		
 		final ITreeAutomaton<HCTransFormula, HCPredicate> cExample = (new Complement<HCTransFormula, HCPredicate>(
 				mInterpolAutomaton, mPredicateFactory)).getResult();
+		mLogger.debug("Complemented counter example automaton:");
 		mLogger.debug(cExample);
 		
 		mAbstraction = (TreeAutomatonBU<HCTransFormula, HCPredicate>) (new Intersect<HCTransFormula, HCPredicate>(
 				mAbstraction, cExample, mPredicateFactory)).getResult();
-		
-		
 		mAbstraction = (TreeAutomatonBU<HCTransFormula, HCPredicate>) (new Totalize<HCTransFormula, HCPredicate>(
 				mAbstraction, mPredicateFactory)).getResult();
 		mAbstraction = (TreeAutomatonBU<HCTransFormula, HCPredicate>) (new Minimize<HCTransFormula, HCPredicate>(
 				mAbstraction, mPredicateFactory)).getResult();
 		
-		mLogger.debug(mAbstraction);
-
 		mLogger.debug("Refine ends...");
 
 		++mIteration;
@@ -193,28 +188,34 @@ public class TreeAutomizerCEGAR {
 	public Result iterate() throws AutomataLibraryException {
 		getInitialAbstraction();
 
+		mLogger.debug("Abstraction tree automaton before iteration #" + (mIteration + 1));
 		mLogger.debug(mAbstraction);
 		while (true) {
 			mLogger.debug("Iteration #" + (mIteration + 1));
 			if (isAbstractionCorrect()) {
-				mLogger.debug("The program is safe.");
+				mLogger.info("The program is safe.");
 				return Result.SAFE;
 			}
 
 			mBackendSmtSolverScript.push(1);
 			if (isCounterexampleFeasible() == LBool.SAT) {
-
-				mLogger.debug("The program is unsafe, feasible counterexample.");
-				mLogger.debug(mCounterexample.getTree());
+				mLogger.info("The program is unsafe, feasible counterexample.");
+				mLogger.info(mCounterexample.getTree());
+				mBackendSmtSolverScript.pop(1);
 				return Result.UNSAFE;
 
 			}
 			mLogger.debug("Getting Interpolants...");
 			constructInterpolantAutomaton();
 
+			mLogger.debug("Interpolant automaton:");
+			mLogger.debug(mInterpolAutomaton);
+			
 			mBackendSmtSolverScript.pop(1);
+			
 			mLogger.debug("Refining abstract model...");
 			refineAbstraction();
+			mLogger.debug("Abstraction tree automaton before iteration #" + (mIteration + 1));
 			mLogger.debug(mAbstraction);
 		}
 	}
