@@ -336,7 +336,7 @@ public final class SmtUtils {
 	public static Term binaryBitvectorSum(final Script script, final Sort sort, final Term... summands) {
 		if (summands.length == 0) {
 			return BitvectorUtils.constructTerm(script, BigInteger.ZERO, sort);
-		} else if (summands.length == 0) {
+		} else if (summands.length == 1) {
 			return summands[0];
 		} else {
 			Term result = script.term("bvadd", summands[0], summands[1]);
