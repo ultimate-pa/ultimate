@@ -8,6 +8,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 /*
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
@@ -31,10 +32,12 @@ public class HCPredicateFactory implements IStateFactory<HCPredicate> {
 	//protected final SmtManager mSmtManager;
 	
 	private final Script mBackendSmtSolverScript;
+	private final SimplifyDDA mSimplifier;
 
 	public HCPredicateFactory(final Script backendSmtSolverScript) {
 		mBackendSmtSolverScript = backendSmtSolverScript;
 		memtpyStack = createDontCarePredicate(new HornClauseDontCareSymbol());
+		mSimplifier = new SimplifyDDA(mBackendSmtSolverScript);
 	}
 	
 	public HCPredicate createDontCarePredicate(HornClausePredicateSymbol loc) {
@@ -59,7 +62,7 @@ public class HCPredicateFactory implements IStateFactory<HCPredicate> {
 		s.addAll(p2.getVars());
 
 		int predHash = HashUtils.hashHsieh(mBackendSmtSolverScript.hashCode(), p1, p1.mProgramPoint, p1.getFormula(), p2, p2.mProgramPoint, p2.getFormula());
-		return new HCPredicate(p1.mProgramPoint, predHash, Util.and(mBackendSmtSolverScript, new Term[]{p1.getFormula(), p2.getFormula()}), s);
+		return new HCPredicate(p1.mProgramPoint, predHash, mSimplifier.getSimplifiedTerm(Util.and(mBackendSmtSolverScript, new Term[]{p1.getFormula(), p2.getFormula()})), s);
 		
 		//return new HCPredicate(p1.mProgramPoint, predHash, Util.and(mBackendSmtSolverScript, new Term[]{p1.getFormula(), p2.getFormula()}), s);
 	}
@@ -83,7 +86,7 @@ public class HCPredicateFactory implements IStateFactory<HCPredicate> {
 		}
 
 		//return new HCPredicate(loc, Util.or(mBackendSmtSolverScript, terms), s);
-		return new HCPredicate(loc, predHash, Util.or(mBackendSmtSolverScript, terms), s);
+		return new HCPredicate(loc, predHash, mSimplifier.getSimplifiedTerm(Util.or(mBackendSmtSolverScript, terms)), s);
 		//final Term disjunction = mSmtManager.getPredicateFactory().or(false, states);
 		//final HCPredicate result = mSmtManager.getPredicateFactory().newPredicate(disjunction);
 		//return result;
