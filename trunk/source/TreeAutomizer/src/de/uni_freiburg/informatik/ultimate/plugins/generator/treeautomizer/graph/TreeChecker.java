@@ -1,9 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.graph;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeRun;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -17,22 +15,19 @@ public class TreeChecker {
 	
 	private final ITreeRun<HCTransFormula, HCPredicate> mTree;
 	private final Script mBackendSmtSolverScript;
-	private final Map<Term, Integer> mCounters;
 	private final HCPredicate mPostCondition;
 	private final HCPredicate mPreCondition;
 	private final SSABuilder mSSABuilder;
 	private ILogger mLogger;
 	
 	public TreeChecker(final ITreeRun<HCTransFormula, HCPredicate> tree,
-			final Script backendSmtSolverScript, final Map<Term, Integer> counters,
-			final HCPredicate preCondition, final HCPredicate postCondition,
-			ILogger logger) {
+			final Script backendSmtSolverScript, final HCPredicate preCondition,
+			final HCPredicate postCondition, ILogger logger) {
 		mTree = tree;
 		mBackendSmtSolverScript = backendSmtSolverScript;
-		mCounters = counters;
 		mPostCondition = postCondition;
 		mPreCondition = preCondition;
-		mSSABuilder = new SSABuilder(mTree, mBackendSmtSolverScript, mPreCondition, mPostCondition, mCounters);
+		mSSABuilder = new SSABuilder(mTree, mPreCondition, mPostCondition, mBackendSmtSolverScript);
 		
 		mLogger = logger;
 	}

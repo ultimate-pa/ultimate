@@ -23,6 +23,6 @@ public class HCVar {
 	}
 	
 	public String getGloballyUniqueId() {
-		return String.format("%s_%d_%s", predicate.getName(), idx, termVariable.getName());
+		return String.format("%s_%d", predicate.getName(), idx);
 	}
 }

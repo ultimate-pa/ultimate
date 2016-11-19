@@ -19,12 +19,14 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
 
-/** SSABuilder
- * @author mostafa (mostafa.amin93@gmail.com)
- * A class the is used for building an SSA from a given TreeRun.
- * */
+/**
+ * SSABuilder
+ * 
+ * @author mostafa (mostafa.amin93@gmail.com) A class the is used for building
+ *         an SSA from a given TreeRun.
+ */
 public class SSABuilder {
-	
+
 	private final ITreeRun<HCTransFormula, HCPredicate> mTreeRun;
 	private final HCPredicate mPostCondition;
 	private final HCPredicate mPreCondition;
@@ -48,24 +50,22 @@ public class SSABuilder {
 	private int currentTree = -1;
 	private final Map<String, Term> mIndexedConstants = new HashMap<>();
 
-	public SSABuilder(final ITreeRun<HCTransFormula, HCPredicate> trace, final Script script,
-			final HCPredicate preCondition, final HCPredicate postCondition, final Map<Term, Integer> counters) {
+	public SSABuilder(final ITreeRun<HCTransFormula, HCPredicate> trace, final HCPredicate preCondition,
+			final HCPredicate postCondition, final Script script) {
 		mTreeRun = trace;
 		mScript = script;
 		mTermTransferrer = new TermTransferrer(mScript);
 		mTransferToScriptNeeded = true;
 		mPreCondition = preCondition;
 		mPostCondition = postCondition;
-		mCounters = counters;
+		mCounters = new HashMap<>();
 
 		currentLocalAndOldVarVersion = new HashMap<>();
-		mScript.push(1);
 		mResult = buildSSA();
-		mScript.pop(1);
 	}
 
 	public SSABuilder(final ITreeRun<HCTransFormula, HCPredicate> trace, final Script script) {
-		this(trace, script, null, null, new HashMap<>());
+		this(trace, null, null, script);
 	}
 
 	public HCSsa getSSA() {
@@ -94,9 +94,8 @@ public class SSABuilder {
 		}
 		final VariableVersioneer vvRoot = new VariableVersioneer(tree.getRootSymbol());
 		vvRoot.versionInVars();
-		vvRoot.versionAssignedVars(getIndex(tree));
-
 		currentTree = getIndex(tree);
+		vvRoot.versionAssignedVars(currentTree);
 
 		return new TreeRun<>(tree.getRoot(), vvRoot.getVersioneeredTerm(), childTrees);
 	}
@@ -120,10 +119,10 @@ public class SSABuilder {
 
 	private Term getCurrentVarVersion(final HCVar bv) {
 		Term result = currentLocalAndOldVarVersion.get(bv);
-		if (result == null) {
-			// variable was not yet assigned in the calling context
-			result = setCurrentVarVersion(bv, currentTree);
-		}
+		// if (result == null) {
+		// variable was not yet assigned in the calling context
+		result = setCurrentVarVersion(bv, currentTree);
+		// }
 		return result;
 	}
 
@@ -133,6 +132,9 @@ public class SSABuilder {
 	 */
 	private Term setCurrentVarVersion(final HCVar bv, final int index) {
 		final Term var = buildVersion(bv, index);
+		if (currentLocalAndOldVarVersion.containsKey(bv)) {
+			currentLocalAndOldVarVersion.remove(bv);
+		}
 		currentLocalAndOldVarVersion.put(bv, var);
 
 		return var;
