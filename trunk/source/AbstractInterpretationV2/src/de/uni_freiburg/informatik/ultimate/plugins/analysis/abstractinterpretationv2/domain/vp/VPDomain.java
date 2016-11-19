@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  * Domain of variable partition.
@@ -133,11 +134,16 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 		return mEqNodeToEqGraphNodeMap;
 	}
 	
+	public HashRelation<IProgramVar, IProgramVar> getArrayToIndices() {
+		// TODO: implement
+		return null;
+	}
+	
 	public VPStateTop getmTopState() {
 		return mTopState;
 	}
 
-	public VPStateBottom getmBottomState() {
+	public VPStateBottom getBottomState() {
 		return mBottomState;
 	}
 

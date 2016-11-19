@@ -1,7 +1,10 @@
 package de.uni_freiburg.informatik.ultimate.heapseparator;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -10,11 +13,27 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.visitors.SimpleRCFGVisitor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.AbstractRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
+/**
+ * Does a preanalysis on the program before the actual heap separation is done (using the
+ * abstract interpretation result from the equality domain).
+ * Computes:
+ *  - which arrays are equated, anywhere in the program (occur left and right each of an equality in a TransFormula)
+ *  - for each array in the program the locations where it is accessed
+ *     (question: does this mean that large block encoding is hurtful for heapseparation?)
+ * 
+ * 
+ * @author Alexander Nutz
+ *
+ */
 public class HeapSepPreAnalysisVisitor extends SimpleRCFGVisitor {
 
 	/**
@@ -25,10 +44,13 @@ public class HeapSepPreAnalysisVisitor extends SimpleRCFGVisitor {
 	 * Boogie program
 	 */
 	private final Set<Pair<IProgramVar, IProgramVar>> mEquatedArrays;
+	
+	private final HashRelation<IProgramVar, IcfgLocation> mArrayToAccessLocations;
 
 	public HeapSepPreAnalysisVisitor(ILogger logger) {
 		super(logger);
 		mEquatedArrays = new HashSet<>();
+		mArrayToAccessLocations = new HashRelation<>();
 	}
 
 	@Override
@@ -36,11 +58,38 @@ public class HeapSepPreAnalysisVisitor extends SimpleRCFGVisitor {
 		
 		if (edge instanceof CodeBlock) {
 			mEquatedArrays.addAll(new EquatedArraysFinder((CodeBlock) edge).getResult());
+			
+//			mArrayToAccessPositions.addAll(new ArrayAccessFinder((CodeBlock) edge, edge.getSource()).getResult());
+			mArrayToAccessLocations.addAll(findArrayAccesses((CodeBlock) edge));
 		}
 		super.level(edge);
 	}
+	
+	
 
 
+
+	private AbstractRelation<IProgramVar, IcfgLocation, ?> findArrayAccesses(CodeBlock edge) {
+		AbstractRelation<IProgramVar, IcfgLocation, ?> result = new HashRelation<>();
+		
+		for (Entry<IProgramVar, TermVariable> en : edge.getTransitionFormula().getInVars().entrySet()) {
+			IProgramVar pv = en.getKey();
+			if (!pv.getTermVariable().getSort().isArraySort()) {
+				continue;
+			}
+			// we have an array variable --> store that it occurs after the source location of the edge
+			result.addPair(pv, edge.getSource());
+		}
+		for (Entry<IProgramVar, TermVariable> en : edge.getTransitionFormula().getOutVars().entrySet()) {
+			IProgramVar pv = en.getKey();
+			if (!pv.getTermVariable().getSort().isArraySort()) {
+				continue;
+			}
+			// we have an array variable --> store that it occurs after the source location of the edge
+			result.addPair(pv, edge.getSource());
+		}	
+		return result;
+	}
 
 	@Override
 	public boolean performedChanges() {
@@ -50,17 +99,19 @@ public class HeapSepPreAnalysisVisitor extends SimpleRCFGVisitor {
 
 	@Override
 	public boolean abortCurrentBranch() {
-		// TODO Auto-generated method stub
 		return false;
 	}
 
 	@Override
 	public boolean abortAll() {
-		// TODO Auto-generated method stub
 		return false;
 	}
 	
+	HashRelation<IProgramVar, IcfgLocation> getArrayToAccessLocations() {
+		return mArrayToAccessLocations;
+	}
 }
+
 class EquatedArraysFinder extends TermTransformer {
 	private final CodeBlock mCodeBlock;
 	private final Set<Pair<IProgramVar, IProgramVar>> mEquatedArrays;
@@ -101,3 +152,31 @@ class EquatedArraysFinder extends TermTransformer {
 	}
 }
 
+class ArrayAccessFinder extends TermTransformer {
+
+	private final CodeBlock mCodeBlock;
+	private final IcfgLocation mLocation;
+	private final HashRelation<IProgramVar, IcfgLocation> mResult;
+	
+	public ArrayAccessFinder(CodeBlock edge, IcfgLocation location) {
+
+		mCodeBlock = edge;
+		mResult = new HashRelation<>();
+		mLocation = location;
+	}
+
+	public HashRelation<IProgramVar, IcfgLocation> getResult() {
+		return mResult;
+	}
+
+	@Override
+	public void convertApplicationTerm(ApplicationTerm appTerm, Term[] newArgs) {
+		String funcName = appTerm.getFunction().getName();
+		if ("select".equals(funcName)) {
+			
+		} else if ("store".equals(funcName)) {
+
+		}
+		super.convertApplicationTerm(appTerm, newArgs);
+	}
+}

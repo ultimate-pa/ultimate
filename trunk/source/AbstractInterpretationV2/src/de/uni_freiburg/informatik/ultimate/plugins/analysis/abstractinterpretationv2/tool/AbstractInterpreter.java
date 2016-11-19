@@ -280,6 +280,77 @@ public final class AbstractInterpreter {
 		return result;
 	}
 	
+	/**
+	 * so far, this is a copy of runFuture(..), except some parameters (e.g. abstract domain) are not taken from the settings but hardcoded
+	 *
+	 */
+	public static <STATE extends IAbstractState<STATE, CodeBlock, IProgramVar>>
+			IAbstractInterpretationResult<STATE, CodeBlock, IProgramVar, BoogieIcfgLocation> runFutureEqualityDomain(final BoogieIcfgContainer root,
+					final Collection<CodeBlock> initials, final IProgressAwareTimer timer,
+					final IUltimateServiceProvider services, final boolean isSilent) {
+		if (initials == null) {
+			throw new IllegalArgumentException("No initial edges provided");
+		}
+		if (timer == null) {
+			throw new IllegalArgumentException("timer is null");
+		}
+		
+		final ITransitionProvider<CodeBlock, BoogieIcfgLocation> transProvider = new RcfgTransitionProvider();
+		final Collection<CodeBlock> filteredInitialElements = transProvider.filterInitialElements(initials);
+		
+		if (filteredInitialElements.isEmpty()) {
+			getReporter(services, false, false).reportSafe(null, "The program is empty");
+			return null;
+		}
+		
+		final Boogie2SMT bpl2smt = root.getBoogie2SMT();
+		final Script script = root.getCfgSmtToolkit().getManagedScript().getScript();
+
+		/*
+		 * We want our own parameters, not those in the settings
+		 */
+		final FixpointEngineParameterFactory domFac =
+				new FixpointEngineParameterFactory(root, () -> new RCFGLiteralCollector(root), services);
+		
+		final boolean isLib = filteredInitialElements.size() > 1;
+		final Iterator<CodeBlock> iter = filteredInitialElements.iterator();
+		final ILoopDetector<CodeBlock> loopDetector =
+				new RcfgLoopDetector<>(root.getLoopLocations().keySet(), transProvider);
+		
+		AbstractInterpretationResult<STATE, CodeBlock, IProgramVar, BoogieIcfgLocation> result = null;
+		
+		// TODO: If an if is at the beginning of a method, this method will be analyzed two times
+		while (iter.hasNext()) {
+			final CodeBlock initial = iter.next();
+			
+			final FixpointEngineParameters<STATE, CodeBlock, IProgramVar, BoogieIcfgLocation, Expression> params =
+					domFac.createParamsFutureEqualityDomain(timer, transProvider, loopDetector);
+			
+			final FixpointEngine<STATE, CodeBlock, IProgramVar, BoogieIcfgLocation, Expression> fxpe =
+					new FixpointEngine<>(params);
+			result = fxpe.run(initial, script, bpl2smt, result);
+		}
+		
+		final ILogger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		if (result == null) {
+			logger.error("Could not run because no initial element could be found");
+			return null;
+		}
+		if (result.hasReachedError()) {
+			final IResultReporter<STATE, CodeBlock, IProgramVar, BoogieIcfgLocation> reporter =
+					getReporter(services, isLib, isSilent);
+			result.getCounterexamples().forEach(cex -> reporter.reportPossibleError(cex));
+		} else {
+			getReporter(services, false, isSilent).reportSafe(null);
+		}
+		if (logger.isDebugEnabled()) {
+			logger.debug("Found the following predicates:");
+			AbsIntUtil.logPredicates(result.getLoc2Term(), logger::debug);
+		}
+		logger.info(result.getBenchmark());
+		return result;
+	}
+	
 	private static <STATE extends IAbstractState<STATE, CodeBlock, VARDECL>, VARDECL, LOC>
 			IAbstractInterpretationResult<STATE, CodeBlock, VARDECL, LOC>
 			runSilently(final Supplier<IAbstractInterpretationResult<STATE, CodeBlock, VARDECL, LOC>> fun,

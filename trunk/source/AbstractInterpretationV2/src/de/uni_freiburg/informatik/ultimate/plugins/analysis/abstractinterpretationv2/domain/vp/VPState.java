@@ -235,7 +235,7 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 	public VPState conjoin(VPState other) {
 
 		if (this instanceof VPStateBottom || other instanceof VPStateBottom) {
-			return mDomain.getmBottomState();
+			return mDomain.getBottomState();
 		}
 		
 		if (this instanceof VPStateTop) {
@@ -261,7 +261,7 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 						.get(otherGraphNode.getRepresentative());
 				isContradic = conjoinedState.addEquality(thisGraphNode.eqNode, thisGraphNodeFind.eqNode);
 				if (isContradic) {
-					return mDomain.getmBottomState();
+					return mDomain.getBottomState();
 				}
 			}
 
@@ -313,19 +313,19 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 			if (thisNodeRepresentative.equals(otherNodeRepresentative)) {
 				isContradic = disjoinedState.addEquality(node, thisNodeRepresentative);
 				if (isContradic) {
-					return mDomain.getmBottomState();
+					return mDomain.getBottomState();
 				}
 			} else {
 				
 				if (other.find(node).equals(other.find(thisNodeRepresentative))) {
 					isContradic = disjoinedState.addEquality(node, thisNodeRepresentative);
 					if (isContradic) {
-						return mDomain.getmBottomState();
+						return mDomain.getBottomState();
 					}
 				} else if (this.find(node).equals(this.find(otherNodeRepresentative))) {
 					isContradic = disjoinedState.addEquality(node, otherNodeRepresentative);
 					if (isContradic) {
-						return mDomain.getmBottomState();
+						return mDomain.getBottomState();
 					}
 				}	
 			}
@@ -726,6 +726,21 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 		}
 		
 		return mDomain.getManagedScript().getScript().term(TERM_FUNC_NAME_AND, disEquality, equality);
+	}
+
+	public Set<EqNode> getEquivalenceRepresentatives() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	/**
+	 * 
+	 * @param node
+	 * @return All the eqNodes that are in the same equivalence class as node in this state.
+	 */
+	public Set<EqNode> getEquivalentEqNodes(EqNode node) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

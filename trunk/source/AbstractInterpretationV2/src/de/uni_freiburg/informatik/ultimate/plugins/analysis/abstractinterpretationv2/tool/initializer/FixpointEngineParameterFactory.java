@@ -134,6 +134,42 @@ public class FixpointEngineParameterFactory {
 				.setDebugHelper(debugHelper).setTimer(timer);
 	}
 	
+	/**
+	 * Creates parameters for when the equality domain is invoked from another plugin (e.g. HeapSeparator) and
+	 * should not take (all) its parameters from the settings.
+	 * @param timer
+	 * @param transitionProvider
+	 * @param loopDetector
+	 * @return
+	 */
+	@SuppressWarnings("unchecked")
+	public <STATE extends IAbstractState<STATE, CodeBlock, IProgramVar>>
+			FixpointEngineParameters<STATE, CodeBlock, IProgramVar, BoogieIcfgLocation, Expression>
+			createParamsFutureEqualityDomain(final IProgressAwareTimer timer,
+					final ITransitionProvider<CodeBlock, BoogieIcfgLocation> transitionProvider,
+					final ILoopDetector<CodeBlock> loopDetector) {
+		final BoogieIcfgContainer rootAnnot = mRoot;
+		final ILogger logger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
+
+		final IAbstractDomain<STATE, CodeBlock, IProgramVar> domain =
+				(IAbstractDomain<STATE, CodeBlock, IProgramVar>) createEqualityDomain(logger);
+
+		final IAbstractStateStorage<STATE, CodeBlock, IProgramVar, BoogieIcfgLocation> storageProvider =
+				new RcfgAbstractStateStorageProvider<>(domain.getMergeOperator(), mServices, transitionProvider);
+
+		final IVariableProvider<STATE, CodeBlock, IProgramVar> variableProvider = new FutureRcfgVariableProvider<>(
+				mSymbolTable, rootAnnot.getBoogie2SMT().getBoogie2SmtSymbolTable(), mServices);
+
+		final IDebugHelper<STATE, CodeBlock, IProgramVar, BoogieIcfgLocation> debugHelper =
+				new RcfgDebugHelper<>(rootAnnot.getCfgSmtToolkit(), mServices, 
+						mRoot.getBoogie2SMT().getBoogie2SmtSymbolTable());
+		
+		return new FixpointEngineParameters<STATE, CodeBlock, IProgramVar, BoogieIcfgLocation, Expression>(mServices)
+				.setDomain(domain).setLoopDetector(loopDetector).setStorage(storageProvider)
+				.setTransitionProvider(transitionProvider).setVariableProvider(variableProvider)
+				.setDebugHelper(debugHelper).setTimer(timer);
+	}
+	
 	private IAbstractDomain<?, CodeBlock, IProgramVar> selectDomainFutureCfg() {
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		final String selectedDomain = prefs.getString(AbsIntPrefInitializer.LABEL_ABSTRACT_DOMAIN);
@@ -144,13 +180,19 @@ public class FixpointEngineParameterFactory {
 		} else if (DataflowDomain.class.getSimpleName().equals(selectedDomain)) {
 			return new DataflowDomain(logger);
 		} else if (VPDomain.class.getSimpleName().equals(selectedDomain)) {
-			final RCFGArrayIndexCollector arrayIndexCollector = new RCFGArrayIndexCollector(mRoot);
-			return new VPDomain(logger, mRoot.getCfgSmtToolkit().getManagedScript(), mServices,
-					arrayIndexCollector.getEqGraphNodeSet(), arrayIndexCollector.getTermToBaseNodeMap(),
-					arrayIndexCollector.getTermToFnNodeMap(), arrayIndexCollector.getEqNodeToEqGraphNodeMap());
+			return createEqualityDomain(logger);
 		}
 		throw new UnsupportedOperationException(getFailureString(selectedDomain));
 	}
+
+	private IAbstractDomain<?, CodeBlock, IProgramVar> createEqualityDomain(final ILogger logger) {
+		final RCFGArrayIndexCollector arrayIndexCollector = new RCFGArrayIndexCollector(mRoot);
+		return new VPDomain(logger, mRoot.getCfgSmtToolkit().getManagedScript(), mServices,
+				arrayIndexCollector.getEqGraphNodeSet(), arrayIndexCollector.getTermToBaseNodeMap(),
+				arrayIndexCollector.getTermToFnNodeMap(), arrayIndexCollector.getEqNodeToEqGraphNodeMap());
+	}
+	
+	
 	
 	private IAbstractDomain<?, CodeBlock, IBoogieVar> selectDomain() {
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);

@@ -21,6 +21,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.visitors.SimpleRCFGVisitor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 
@@ -28,7 +30,7 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 	/**
 	 *  arrayId before separation --> pointerId --> arrayId after separation
 	 */
-	HashMap<IProgramVar, HashMap<IProgramVar, IProgramVar>> moldArrayToPointerToNewArray;
+	NestedMap2<IProgramVar, IProgramVar, IProgramVar> moldArrayToPointerToNewArray;
 	/**
 	 *  arrayId before separation --> arrayId after separation--> Set of pointerIds
 	 */
@@ -36,32 +38,32 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 	ManagedScript mScript;
 
 	public HeapSepRcfgVisitor(final ILogger logger, 
-			final HashMap<IProgramVar, HashMap<IProgramVar, IProgramVar>> map, 
+			final NestedMap2<IProgramVar, IProgramVar, IProgramVar> oldArrayToPointerToNewArray, 
 			final ManagedScript script) {
 		super(logger);
-		moldArrayToPointerToNewArray = map;
-		marrayToPartitions = reverseInnerMap(moldArrayToPointerToNewArray);
+		moldArrayToPointerToNewArray = oldArrayToPointerToNewArray;
+		marrayToPartitions = null; //TODO: do we need reverseInnerMap, still?? //reverseInnerMap(moldArrayToPointerToNewArray);
 		mScript = script;
 	}
 
 
-	private HashMap<IProgramVar, HashMap<IProgramVar, HashSet<IProgramVar>>> reverseInnerMap(
-			final HashMap<IProgramVar, HashMap<IProgramVar, IProgramVar>> map) {
-		final HashMap<IProgramVar, HashMap<IProgramVar, HashSet<IProgramVar>>> result = new HashMap<IProgramVar, HashMap<IProgramVar,HashSet<IProgramVar>>>();
-
-		for (final Entry<IProgramVar, HashMap<IProgramVar, IProgramVar>> en1 : map.entrySet()) {
-			result.put(en1.getKey(), new HashMap<>());
-			for (final Entry<IProgramVar, IProgramVar> en2 : en1.getValue().entrySet()) {
-				HashSet<IProgramVar> pointers = result.get(en1.getKey()).get(en2.getValue());
-				if (pointers == null) {
-					pointers = new HashSet<IProgramVar>();
-					result.get(en1.getKey()).put(en2.getValue(), pointers);
-				}
-				pointers.add(en2.getKey());
-			}
-		}
-		return result;
-	}
+//	private HashMap<IProgramVar, HashMap<IProgramVar, HashSet<IProgramVar>>> reverseInnerMap(
+//			final NestedMap2<IProgramVar,IProgramVar,IProgramVar> moldArrayToPointerToNewArray2) {
+//		final HashMap<IProgramVar, HashMap<IProgramVar, HashSet<IProgramVar>>> result = new HashMap<IProgramVar, HashMap<IProgramVar,HashSet<IProgramVar>>>();
+//
+//		for (final Triple<IProgramVar, IProgramVar, IProgramVar> en1 : moldArrayToPointerToNewArray2.entrySet()) {
+//			result.put(en1.getKey(), new HashMap<>());
+//			for (final Entry<IProgramVar, IProgramVar> en2 : en1.getValue().entrySet()) {
+//				HashSet<IProgramVar> pointers = result.get(en1.getKey()).get(en2.getValue());
+//				if (pointers == null) {
+//					pointers = new HashSet<IProgramVar>();
+//					result.get(en1.getKey()).put(en2.getValue(), pointers);
+//				}
+//				pointers.add(en2.getKey());
+//			}
+//		}
+//		return result;
+//	}
 
 
 	@Override
@@ -185,7 +187,7 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 		/**
 		 * arrayId (old array) X pointerId -> arrayId (split version)
 		 */
-		HashMap<IProgramVar, HashMap<IProgramVar, IProgramVar>> marrayToPointerToPartition;
+		NestedMap2<IProgramVar, IProgramVar, IProgramVar> marrayToPointerToPartition;
 		/**
 		 * arrayId (old array) X arrayId (split version) -> Set<pointerId>
 		 */
@@ -193,10 +195,10 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 
 
 		public ArraySplitter(final Script script, 
-				final HashMap<IProgramVar, HashMap<IProgramVar, IProgramVar>> arrayToPointerToPartition,
+				final NestedMap2<IProgramVar, IProgramVar, IProgramVar> moldArrayToPointerToNewArray,
 				final HashMap<IProgramVar, HashMap<IProgramVar, HashSet<IProgramVar>>> arrayToPartitions,
 				final Map<IProgramVar, TermVariable> inVars, final Map<IProgramVar, TermVariable> outVars) {
-			marrayToPointerToPartition = arrayToPointerToPartition;
+			marrayToPointerToPartition = moldArrayToPointerToNewArray;
 			marrayToPartitions = arrayToPartitions;
 			mscript = script;
 			minVars = inVars;
@@ -205,7 +207,7 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 
 
 		public ArraySplitter(final Script script, 
-				final HashMap<IProgramVar, HashMap<IProgramVar, IProgramVar>> arrayToPointerToPartition,
+				final NestedMap2<IProgramVar, IProgramVar, IProgramVar> arrayToPointerToPartition,
 				final HashMap<IProgramVar, HashMap<IProgramVar, HashSet<IProgramVar>>> arrayToPartitions,
 				final Map<IProgramVar, TermVariable> inVars, final Map<IProgramVar, TermVariable> outVars, 
 				final TermVariable aOld, final TermVariable aNew
@@ -244,7 +246,7 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 
 						final IProgramVar oldArrayVar = getBoogieVarFromTermVar(((TermVariable) appTerm.getParameters()[0]), minVars, moutVars);
 
-						final HashMap<IProgramVar, IProgramVar> im = marrayToPointerToPartition.get(oldArrayVar);
+						final Map<IProgramVar, IProgramVar> im = marrayToPointerToPartition.get(oldArrayVar);
 						if (im != null) {
 							final IProgramVar ptrName = getBoogieVarFromTermVar(((TermVariable) appTerm.getParameters()[1]), minVars, moutVars);
 

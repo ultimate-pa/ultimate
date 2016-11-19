@@ -79,7 +79,7 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 		}
 		
 		if (oldstate instanceof VPStateBottom) {
-			return Collections.singletonList(mDomain.getmBottomState());
+			return Collections.singletonList(mDomain.getBottomState());
 		}
 		
 		preparedState = oldstate.prepareState(tf.getAssignedVars());
@@ -105,7 +105,7 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 		mDomain.getLogger().debug("state after transition " + transition + ": " + resultState.toLogString());
 		
 		if (resultState instanceof VPStateBottom) {
-			return Collections.singletonList(mDomain.getmBottomState());
+			return Collections.singletonList(mDomain.getBottomState());
 		}
 		
 		return Collections.singletonList(
@@ -187,7 +187,7 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 				boolean isContradic = resultState.addEquality(node1, node2);
 				
 				if (isContradic) {
-					return mDomain.getmBottomState();
+					return mDomain.getBottomState();
 				}
 				
 				return resultState;
@@ -211,7 +211,7 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 					boolean isContradic = resultState.addDisEquality(node1, node2);
 					
 					if (isContradic) {
-						return mDomain.getmBottomState();
+						return mDomain.getBottomState();
 					}
 					
 					return resultState;
@@ -230,7 +230,7 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 				boolean isContradic = resultState.addDisEquality(node1, node2);
 				
 				if (isContradic) {
-					return mDomain.getmBottomState();
+					return mDomain.getBottomState();
 				}
 				
 				return resultState;
