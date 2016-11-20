@@ -93,7 +93,7 @@ public abstract class InterpolatingTraceChecker extends TraceChecker implements 
 			final List<? extends Object> controlLocationSequence) {
 		super(precondition, postcondition, pendingContexts, trace, csToolkit,
 				new DefaultTransFormulas(trace, precondition, postcondition, pendingContexts,
-						csToolkit.getModifiableGlobals(), false),
+						csToolkit.getOldVarsAssignmentCache(), false),
 				assertCodeBlocksIncrementally, services, computeRcfgProgramExecution, false, tcSmtManager);
 		mPredicateUnifier = predicateUnifier;
 		mPredicateFactory = predicateUnifier.getPredicateFactory();
@@ -131,7 +131,7 @@ public abstract class InterpolatingTraceChecker extends TraceChecker implements 
 
 	private boolean testRelevantVars() {
 		boolean result = true;
-		final RelevantVariables rv = new RelevantVariables(mNestedFormulas, mCsToolkit.getModifiableGlobals());
+		final RelevantVariables rv = new RelevantVariables(mNestedFormulas, mCsToolkit.getModifiableGlobalsTable());
 		for (int i = 0; i < mInterpolants.length; i++) {
 			final IPredicate itp = mInterpolants[i];
 			final Set<IProgramVar> vars = itp.getVars();

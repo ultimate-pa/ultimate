@@ -56,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICfgSymbolTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
@@ -101,7 +101,7 @@ public class TotalInterpolationAutomatonBuilder implements IInterpolantAutomaton
 	// private final IPredicate mFalsePredicate;
 	private final AutomatonEpimorphism<IPredicate> mEpimorphism;
 	private final IHoareTripleChecker mHtc;
-	private final ModifiableGlobalVariableManager mModifiedGlobals;
+	private final ModifiableGlobalsTable mModifiedGlobals;
 	private final InterpolationTechnique mInterpolation;
 
 	private final TotalInterpolationBenchmarkGenerator mBenchmarkGenerator = new TotalInterpolationBenchmarkGenerator();
@@ -113,7 +113,7 @@ public class TotalInterpolationAutomatonBuilder implements IInterpolantAutomaton
 	public TotalInterpolationAutomatonBuilder(final INestedWordAutomaton<CodeBlock, IPredicate> abstraction,
 			final ArrayList<IPredicate> stateSequence, final IInterpolantGenerator interpolantGenerator,
 			final CfgSmtToolkit csToolkit, final PredicateFactoryForInterpolantAutomata predicateFactory,
-			final ModifiableGlobalVariableManager modifiableGlobals, final InterpolationTechnique interpolation,
+			final ModifiableGlobalsTable modifiableGlobalsTable, final InterpolationTechnique interpolation,
 			final IUltimateServiceProvider services, final HoareTripleChecks hoareTripleChecks,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
 			final ICfgSymbolTable symbolTable) throws AutomataOperationCanceledException {
@@ -131,7 +131,7 @@ public class TotalInterpolationAutomatonBuilder implements IInterpolantAutomaton
 		final InCaReAlphabet<CodeBlock> alphabet = new InCaReAlphabet<>(abstraction);
 		mIA = (new StraightLineInterpolantAutomatonBuilder(mServices, alphabet, interpolantGenerator, predicateFactory))
 				.getResult();
-		mModifiedGlobals = modifiableGlobals;
+		mModifiedGlobals = modifiableGlobalsTable;
 		mInterpolation = interpolation;
 		mEpimorphism = new AutomatonEpimorphism<>(new AutomataLibraryServices(mServices));
 		{

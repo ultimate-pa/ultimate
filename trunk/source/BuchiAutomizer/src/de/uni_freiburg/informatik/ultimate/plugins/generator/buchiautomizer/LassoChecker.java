@@ -74,10 +74,10 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICfgSymbolTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.DagSizePrinter;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
@@ -150,8 +150,6 @@ public class LassoChecker {
 	 * Intermediate layer to encapsulate communication with SMT solvers.
 	 */
 	private final CfgSmtToolkit mCsToolkit;
-
-	private final ModifiableGlobalVariableManager mModifiableGlobalVariableManager;
 
 	private final BinaryStatePredicateManager mBspm;
 
@@ -240,7 +238,7 @@ public class LassoChecker {
 	}
 
 	public LassoChecker(final InterpolationTechnique interpolation, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
-			final ICfgSymbolTable symbolTable, final ModifiableGlobalVariableManager modifiableGlobalVariableManager, final Collection<Term> axioms,
+			final ICfgSymbolTable symbolTable, final ModifiableGlobalsTable modifiableGlobalsTable, final Collection<Term> axioms,
 			final BinaryStatePredicateManager bspm, final NestedLassoRun<CodeBlock, IPredicate> counterexample,
 			final String lassoCheckerIdentifier, final IUltimateServiceProvider services,
 			final IToolchainStorage storage, final SimplificationTechnique simplificationTechnique,
@@ -261,7 +259,6 @@ public class LassoChecker {
 		mTryTwofoldRefinement = baPref.getBoolean(PreferenceInitializer.LABEL_TRY_TWOFOLD_REFINEMENT);
 		mInterpolation = interpolation;
 		mCsToolkit = csToolkit;
-		mModifiableGlobalVariableManager = modifiableGlobalVariableManager;
 		mBspm = bspm;
 		mCounterexample = counterexample;
 		mLassoCheckerIdentifier = lassoCheckerIdentifier;
@@ -563,10 +560,9 @@ public class LassoChecker {
 			final boolean extendedPartialQuantifierElimination, final boolean withBranchEncoders) {
 		final boolean toCNF = false;
 		final UnmodifiableTransFormula tf =
-				SequentialComposition.getInterproceduralTransFormula(mCsToolkit.getManagedScript(),
-						mModifiableGlobalVariableManager, simplify, extendedPartialQuantifierElimination, toCNF,
-						withBranchEncoders, mLogger, mServices, word.asList(), mXnfConversionTechnique,
-						mSimplificationTechnique, mSymbolTable);
+				SequentialComposition.getInterproceduralTransFormula(mCsToolkit,
+						simplify, extendedPartialQuantifierElimination, toCNF, withBranchEncoders,
+						mLogger, mServices, word.asList(), mXnfConversionTechnique, mSimplificationTechnique);
 		return tf;
 	}
 
@@ -582,12 +578,12 @@ public class LassoChecker {
 		} else {
 			for (final SupportingInvariant si : mBspm.getTerminationArgument().getSupportingInvariants()) {
 				final IPredicate siPred = mBspm.supportingInvariant2Predicate(si);
-				siCorrect &= mBspm.checkSupportingInvariant(siPred, stem, loop, mModifiableGlobalVariableManager);
+				siCorrect &= mBspm.checkSupportingInvariant(siPred, stem, loop, mCsToolkit.getModifiableGlobalsTable());
 			}
 			// check array index supporting invariants
 			for (final Term aisi : mBspm.getTerminationArgument().getArrayIndexSupportingInvariants()) {
 				final IPredicate siPred = mBspm.term2Predicate(aisi);
-				siCorrect &= mBspm.checkSupportingInvariant(siPred, stem, loop, mModifiableGlobalVariableManager);
+				siCorrect &= mBspm.checkSupportingInvariant(siPred, stem, loop, mCsToolkit.getModifiableGlobalsTable());
 			}
 		}
 		return siCorrect;
@@ -596,7 +592,7 @@ public class LassoChecker {
 	private boolean isRankingFunctionCorrect() {
 		final NestedWord<CodeBlock> loop = mCounterexample.getLoop().getWord();
 		mLogger.info("Loop: " + loop);
-		final boolean rfCorrect = mBspm.checkRankDecrease(loop, mModifiableGlobalVariableManager);
+		final boolean rfCorrect = mBspm.checkRankDecrease(loop, mCsToolkit.getModifiableGlobalsTable());
 		return rfCorrect;
 	}
 
@@ -746,8 +742,8 @@ public class LassoChecker {
 			throw new AssertionError("SMTManager must not be locked at the beginning of synthesis");
 		}
 
-		final Set<IProgramVar> modifiableGlobalsAtHonda = mModifiableGlobalVariableManager.getModifiedBoogieVars(
-				((ISLPredicate) mCounterexample.getLoop().getStateAtPosition(0)).getProgramPoint().getProcedure());
+		final String proc = ((ISLPredicate) mCounterexample.getLoop().getStateAtPosition(0)).getProgramPoint().getProcedure(); 
+		final Set<IProgramNonOldVar> modifiableGlobalsAtHonda = mCsToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(proc);
 
 		if (!withStem) {
 			stemTF = TransFormulaBuilder.getTrivialTransFormula(mCsToolkit.getManagedScript());
@@ -887,8 +883,8 @@ public class LassoChecker {
 			final UnmodifiableTransFormula loopTF) throws AssertionError, IOException {
 		final String hondaProcedure =
 				((ISLPredicate) mCounterexample.getLoop().getStateAtPosition(0)).getProgramPoint().getProcedure();
-		final Set<IProgramVar> modifiableGlobals =
-				mModifiableGlobalVariableManager.getModifiedBoogieVars(hondaProcedure);
+		final Set<IProgramNonOldVar> modifiableGlobals =
+				mCsToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(hondaProcedure);
 
 		TerminationArgument firstTerminationArgument = null;
 		for (final RankingTemplate rft : rankingFunctionTemplates) {

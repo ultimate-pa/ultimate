@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
@@ -87,7 +87,7 @@ public class RewriteArrays2 extends LassoPreprocessor {
 	private final UnmodifiableTransFormula mOriginalStem;
 	private final UnmodifiableTransFormula mOriginalLoop;
 	private final Set<Term> mArrayIndexSupportingInvariants;
-	private final Set<IProgramVar> mModifiableGlobalsAtHonda;
+	private final Set<IProgramNonOldVar> mModifiableGlobalsAtHonda;
 
 	private final ReplacementVarFactory mReplacementVarFactory;
 	private final ManagedScript mFreshTermVariableConstructor;
@@ -96,7 +96,7 @@ public class RewriteArrays2 extends LassoPreprocessor {
 	private final boolean mOverapproximateByOmmitingDisjointIndices;
 
 	public RewriteArrays2(final boolean overapproximateByOmmitingDisjointIndices, final UnmodifiableTransFormula originalStem,
-			final UnmodifiableTransFormula originalLoop, final Set<IProgramVar> modifiableGlobalsAtHonda,
+			final UnmodifiableTransFormula originalLoop, final Set<IProgramNonOldVar> modifiableGlobalsAtHonda,
 			final IUltimateServiceProvider services, final Set<Term> arrayIndexSupportingInvariants,
 			final ICfgSymbolTable boogie2smt, final ManagedScript mgdScript, final ReplacementVarFactory ReplacementVarFactory,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {

@@ -335,7 +335,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				final INestedWordAutomaton<CodeBlock, IPredicate> cfg = cFG2NestedWordAutomaton
 						.getNestedWordAutomaton(super.mIcfgContainer, mStateFactoryForRefinement, super.mErrorLocs);
 				final FlowSensitiveFaultLocalizer a = new FlowSensitiveFaultLocalizer(mCounterexample, cfg, mServices,
-						mCsToolkit, mPredicateFactory, mCsToolkit.getModifiableGlobals(), predicateUnifier,
+						mCsToolkit, mPredicateFactory, mCsToolkit.getModifiableGlobalsTable(), predicateUnifier,
 						mDoFaultLocalizationNonFlowSensitive,
 						mDoFaultLocalizationFlowSensitive, mSimplificationTechnique, mXnfConversionTechnique,
 						mIcfgContainer.getBoogie2SMT().getBoogie2SmtSymbolTable());

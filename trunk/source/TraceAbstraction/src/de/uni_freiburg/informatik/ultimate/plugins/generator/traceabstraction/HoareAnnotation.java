@@ -47,7 +47,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICfgSymbolTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
@@ -90,7 +91,7 @@ public class HoareAnnotation extends SPredicate {
 	private final ICfgSymbolTable mSymbolTable;
 	private final ManagedScript mMgdScript;
 	private final PredicateFactory mPredicateFactory;
-	private final ModifiableGlobalVariableManager mModifiableGlobals;
+	private final ModifiableGlobalsTable mModifiableGlobals;
 	
 	private final Map<Term, Term> mPrecondition2Invariant = new HashMap<Term, Term>();
 	private boolean mIsUnknown = false;
@@ -101,7 +102,7 @@ public class HoareAnnotation extends SPredicate {
 	
 	public HoareAnnotation(final BoogieIcfgLocation programPoint, final int serialNumber,
 			final ICfgSymbolTable symbolTable, final PredicateFactory predicateFactory,
-			final ModifiableGlobalVariableManager modifiableGlobals, final ManagedScript mgdScript, final Script script,
+			final ModifiableGlobalsTable modifiableGlobalsTable, final ManagedScript mgdScript, final Script script,
 			final IUltimateServiceProvider services, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique) {
 		super(programPoint, serialNumber, new String[] { programPoint.getProcedure() }, script.term("true"),
@@ -114,7 +115,7 @@ public class HoareAnnotation extends SPredicate {
 		mMgdScript = mgdScript;
 		mPredicateFactory = predicateFactory;
 		mScript = script;
-		mModifiableGlobals = modifiableGlobals;
+		mModifiableGlobals = modifiableGlobalsTable;
 	}
 	
 	/**
@@ -211,8 +212,7 @@ public class HoareAnnotation extends SPredicate {
 	 */
 	public Term substituteOldVarsOfNonModifiableGlobals(final String proc, final Set<IProgramVar> vars,
 			final Term term) {
-		final Set<IProgramVar> oldVarsOfmodifiableGlobals =
-				mModifiableGlobals.getOldVarsAssignment(proc).getAssignedVars();
+		final Set<IProgramNonOldVar> modifiableGlobals = mModifiableGlobals.getModifiedBoogieVars(proc);
 		final List<IProgramVar> replacedOldVars = new ArrayList<IProgramVar>();
 		
 		final ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
@@ -220,7 +220,8 @@ public class HoareAnnotation extends SPredicate {
 		
 		for (final IProgramVar bv : vars) {
 			if (bv instanceof IProgramOldVar) {
-				if (!oldVarsOfmodifiableGlobals.contains(bv)) {
+				final IProgramNonOldVar pnov = ((IProgramOldVar) bv).getNonOldVar();
+				if (!modifiableGlobals.contains(pnov)) {
 					replacees.add(bv.getTermVariable());
 					replacers.add(((IProgramOldVar) bv).getNonOldVar().getTermVariable());
 					replacedOldVars.add(bv);

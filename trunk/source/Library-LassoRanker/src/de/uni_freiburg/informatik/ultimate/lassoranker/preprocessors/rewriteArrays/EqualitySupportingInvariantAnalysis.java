@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.EqualityAnalysisResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
@@ -88,8 +89,8 @@ public class EqualitySupportingInvariantAnalysis {
 	
 	private final UnmodifiableTransFormula mOriginalStem;
 	private final UnmodifiableTransFormula mOriginalLoop;
-	private final Set<IProgramVar> mModifiableGlobalsAtStart;
-	private final Set<IProgramVar> mModifiableGlobalsAtHonda;
+	private final Set<IProgramNonOldVar> mModifiableGlobalsAtStart;
+	private final Set<IProgramNonOldVar> mModifiableGlobalsAtHonda;
 	
 	/**
 	 * 
@@ -106,7 +107,7 @@ public class EqualitySupportingInvariantAnalysis {
 			final ICfgSymbolTable symbolTable,
 			final Script script,
 			final UnmodifiableTransFormula originalStem,
-			final UnmodifiableTransFormula originalLoop, final Set<IProgramVar> modifiableGlobalsAtHonda) {
+			final UnmodifiableTransFormula originalLoop, final Set<IProgramNonOldVar> modifiableGlobalsAtHonda) {
 		super();
 		mSymbolTable = symbolTable;
 		mScript = script;

@@ -190,7 +190,7 @@ public class InterpolantAutomatonBuilderFactory {
 		final NestedRun<CodeBlock, IPredicate> castedCex = (NestedRun<CodeBlock, IPredicate>) counterexample;
 		final TotalInterpolationAutomatonBuilder iab = new TotalInterpolationAutomatonBuilder(castedAbstraction,
 				castedCex.getStateSequence(), interpolGenerator, mCsToolkit, mPredicateFactory,
-				mCsToolkit.getModifiableGlobals(), mInterpolationTechnique, mServices, mHoareTripleChecks,
+				mCsToolkit.getModifiableGlobalsTable(), mInterpolationTechnique, mServices, mHoareTripleChecks,
 				mSimplificationTechnique, mXnfConversionTechnique, mRootAnnot.getBoogie2SMT().getBoogie2SmtSymbolTable());
 		mBenchmark.addTotalInterpolationData(iab.getTotalInterpolationBenchmark());
 		return iab;

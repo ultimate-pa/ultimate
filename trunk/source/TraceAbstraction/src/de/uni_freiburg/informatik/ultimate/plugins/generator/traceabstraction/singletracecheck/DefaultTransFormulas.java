@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.s
 import java.util.SortedMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.OldVarsAssignmentCache;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
@@ -40,24 +40,24 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 
 public class DefaultTransFormulas extends NestedFormulas<UnmodifiableTransFormula, IPredicate> {
 	
-	private final ModifiableGlobalVariableManager mModifiableGlobalVariableManager;
+	private final OldVarsAssignmentCache mModifiableGlobalVariableManager;
 	private final boolean mWithBranchEncoders;
 	
 	
 	
-	public ModifiableGlobalVariableManager getModifiableGlobalVariableManager() {
+	public OldVarsAssignmentCache getModifiableGlobalVariableManager() {
 		return mModifiableGlobalVariableManager;
 	}
 
-	public DefaultTransFormulas(NestedWord<? extends IAction> nestedWord, 
-			IPredicate precondition, IPredicate postcondition,
-			SortedMap<Integer, IPredicate> pendingContexts,
-			ModifiableGlobalVariableManager modifiableGlobalVariableManager,
-			boolean withBranchEncoders) {
+	public DefaultTransFormulas(final NestedWord<? extends IAction> nestedWord, 
+			final IPredicate precondition, final IPredicate postcondition,
+			final SortedMap<Integer, IPredicate> pendingContexts,
+			final OldVarsAssignmentCache oldVarsAssignmentCache,
+			final boolean withBranchEncoders) {
 		super(nestedWord, pendingContexts);
 		super.setPrecondition(precondition);
 		super.setPostcondition(postcondition);
-		mModifiableGlobalVariableManager = modifiableGlobalVariableManager;
+		mModifiableGlobalVariableManager = oldVarsAssignmentCache;
 		mWithBranchEncoders = withBranchEncoders;
 	}
 	
@@ -66,7 +66,7 @@ public class DefaultTransFormulas extends NestedFormulas<UnmodifiableTransFormul
 	}
 	
 	@Override
-	protected UnmodifiableTransFormula getFormulaFromValidNonCallPos(int i) {
+	protected UnmodifiableTransFormula getFormulaFromValidNonCallPos(final int i) {
 		if (super.getTrace().isReturnPosition(i)) {
 			final IReturnAction ret = (IReturnAction) super.getTrace().getSymbolAt(i);
 			return ret.getAssignmentOfReturn();
@@ -81,20 +81,20 @@ public class DefaultTransFormulas extends NestedFormulas<UnmodifiableTransFormul
 	}
 
 	@Override
-	protected UnmodifiableTransFormula getLocalVarAssignmentFromValidPos(int i) {
+	protected UnmodifiableTransFormula getLocalVarAssignmentFromValidPos(final int i) {
 		final ICallAction cb = (ICallAction) super.getTrace().getSymbolAt(i);
 		return cb.getLocalVarsAssignment();
 	}
 
 	@Override
-	protected UnmodifiableTransFormula getGlobalVarAssignmentFromValidPos(int i) {
+	protected UnmodifiableTransFormula getGlobalVarAssignmentFromValidPos(final int i) {
 		final String calledProcedure = getCalledProcedure(i);
 		return mModifiableGlobalVariableManager.getGlobalVarsAssignment(calledProcedure);
 
 	}
 
 	@Override
-	protected UnmodifiableTransFormula getOldVarAssignmentFromValidPos(int i) {		
+	protected UnmodifiableTransFormula getOldVarAssignmentFromValidPos(final int i) {		
 		final String calledProcedure = getCalledProcedure(i);
 		return mModifiableGlobalVariableManager.getOldVarsAssignment(calledProcedure);
 	}
@@ -102,7 +102,7 @@ public class DefaultTransFormulas extends NestedFormulas<UnmodifiableTransFormul
 	/**
 	 * TODO: return set of all pending calls in case of InterproceduralSequentialComposition
 	 */
-	private String getCalledProcedure(int i) {
+	private String getCalledProcedure(final int i) {
 		if (super.getTrace().isCallPosition(i)) {
 			final ICallAction call = (ICallAction) super.getTrace().getSymbolAt(i);
 			return call.getSucceedingProcedure();

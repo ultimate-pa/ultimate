@@ -74,7 +74,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SMTPrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -128,7 +128,7 @@ public class LassoAnalysis {
 	/**
 	 * Global BoogieVars that are modifiable in the procedure where the honda of the lasso lies.
 	 */
-	private final Set<IProgramVar> mModifiableGlobalsAtHonda;
+	private final Set<IProgramNonOldVar> mModifiableGlobalsAtHonda;
 
 	/**
 	 * The axioms regarding the transitions' constants
@@ -197,7 +197,7 @@ public class LassoAnalysis {
 	 */
 	public LassoAnalysis(final ManagedScript mgdScript, final ICfgSymbolTable symbolTable,
 			final UnmodifiableTransFormula stemTransition, final UnmodifiableTransFormula loopTransition,
-			final Set<IProgramVar> modifiableGlobalsAtHonda, final Term[] axioms,
+			final Set<IProgramNonOldVar> modifiableGlobalsAtHonda, final Term[] axioms,
 			final ILassoRankerPreferences preferences, final IUltimateServiceProvider services,
 			final IToolchainStorage storage, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique) throws TermException {
@@ -254,7 +254,7 @@ public class LassoAnalysis {
 	 *             if the file for dumping the script cannot be opened
 	 */
 	public LassoAnalysis(final ManagedScript mgdScript, final ICfgSymbolTable symbolTable, final UnmodifiableTransFormula loop,
-			final Set<IProgramVar> modifiableGlobalsAtHonda, final Term[] axioms,
+			final Set<IProgramNonOldVar> modifiableGlobalsAtHonda, final Term[] axioms,
 			final LassoRankerPreferences preferences, final IUltimateServiceProvider services,
 			final IToolchainStorage storage, final XnfConversionTechnique xnfConversionTechnique,
 			final SimplificationTechnique simplificationTechnique) throws TermException, FileNotFoundException {

@@ -160,7 +160,7 @@ public class TraceChecker {
 			final AssertCodeBlockOrder assertCodeBlocksIncrementally, final IUltimateServiceProvider services,
 			final boolean computeRcfgProgramExecution) {
 		this(precondition, postcondition, pendingContexts, trace, csToolkit, new DefaultTransFormulas(trace,
-				precondition, postcondition, pendingContexts, csToolkit.getModifiableGlobals(), false),
+				precondition, postcondition, pendingContexts, csToolkit.getOldVarsAssignmentCache(), false),
 				assertCodeBlocksIncrementally,
 				services, computeRcfgProgramExecution, true);
 	}
@@ -252,7 +252,7 @@ public class TraceChecker {
 		startTraceCheck();
 		final boolean transferToDifferentScript = mTcSmtManager != mCfgManagedScript;
 		mTraceCheckerBenchmarkGenerator.start(TraceCheckerStatisticsDefinitions.SsaConstructionTime.toString());
-		mNsb = new NestedSsaBuilder(mTrace, mTcSmtManager, mNestedFormulas, mCsToolkit.getModifiableGlobals(), mLogger,
+		mNsb = new NestedSsaBuilder(mTrace, mTcSmtManager, mNestedFormulas, mCsToolkit.getModifiableGlobalsTable(), mLogger,
 				transferToDifferentScript);
 		final NestedFormulas<Term, Term> ssa = mNsb.getSsa();
 		mTraceCheckerBenchmarkGenerator.stop(TraceCheckerStatisticsDefinitions.SsaConstructionTime.toString());
@@ -312,7 +312,7 @@ public class TraceChecker {
 				unlockSmtManager();
 				final DefaultTransFormulas withBE = new DefaultTransFormulas(mNestedFormulas.getTrace(),
 						mNestedFormulas.getPrecondition(), mNestedFormulas.getPostcondition(), mPendingContexts,
-						mCsToolkit.getModifiableGlobals(), true);
+						mCsToolkit.getOldVarsAssignmentCache(), true);
 				final TraceChecker tc = new TraceChecker(mNestedFormulas.getPrecondition(),
 						mNestedFormulas.getPostcondition(), mPendingContexts, mNestedFormulas.getTrace(),
 						mCsToolkit, withBE, AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, true,
@@ -354,8 +354,8 @@ public class TraceChecker {
 	 * Compute program execution in the case that the checked specification is violated (result of trace check is SAT).
 	 */
 	private RcfgProgramExecution computeRcfgProgramExecutionCaseSAT(final NestedSsaBuilder nsb) {
-		final RelevantVariables relVars = new RelevantVariables(mNestedFormulas, mCsToolkit.getModifiableGlobals());
-		final RcfgProgramExecutionBuilder rpeb = new RcfgProgramExecutionBuilder(mCsToolkit.getModifiableGlobals(),
+		final RelevantVariables relVars = new RelevantVariables(mNestedFormulas, mCsToolkit.getModifiableGlobalsTable());
+		final RcfgProgramExecutionBuilder rpeb = new RcfgProgramExecutionBuilder(mCsToolkit.getModifiableGlobalsTable(),
 				(NestedWord<CodeBlock>) mTrace, relVars, mBoogie2SmtSymbolTable);
 		for (int i = 0; i < mTrace.length(); i++) {
 			final CodeBlock cb = (CodeBlock) mTrace.getSymbolAt(i);

@@ -175,7 +175,7 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 
 	private boolean testRelevantVars() {
 		boolean result = true;
-		final RelevantVariables rv = new RelevantVariables(mNestedFormulas, mCsToolkit.getModifiableGlobals());
+		final RelevantVariables rv = new RelevantVariables(mNestedFormulas, mCsToolkit.getModifiableGlobalsTable());
 		for (int i = 0; i < mInterpolants.length; i++) {
 			final IPredicate itp = mInterpolants[i];
 			final Set<IProgramVar> vars = itp.getVars();
@@ -262,7 +262,7 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 			final Call call = (Call) mTrace.getSymbol(nonPendingCall);
 			final String calledMethod = call.getCallStatement().getMethodName();
 			final TermVarsProc oldVarsEquality = TraceAbstractionUtils.getOldVarsEquality(calledMethod,
-					mCsToolkit.getModifiableGlobals(), mCfgManagedScript.getScript());
+					mCsToolkit.getModifiableGlobalsTable(), mCfgManagedScript.getScript());
 
 			final IPredicate precondition = mPredicateUnifier.getOrConstructPredicate(oldVarsEquality.getFormula());
 

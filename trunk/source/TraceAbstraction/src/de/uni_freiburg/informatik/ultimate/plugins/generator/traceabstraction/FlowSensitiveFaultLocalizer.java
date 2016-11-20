@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICfgSymbolTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.BasicInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
@@ -72,10 +72,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer.PredicatePostprocessor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer.QuantifierEliminationPostprocessor;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.DefaultTransFormulas;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.util.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 /**
@@ -112,7 +112,7 @@ public class FlowSensitiveFaultLocalizer {
 	public FlowSensitiveFaultLocalizer(final IRun<CodeBlock, IPredicate, ?> counterexample,
 			final INestedWordAutomaton<CodeBlock, IPredicate> cfg, final IUltimateServiceProvider services,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
-			final ModifiableGlobalVariableManager modGlobVarManager, final PredicateUnifier predicateUnifier,
+			final ModifiableGlobalsTable modifiableGlobalsTable, final PredicateUnifier predicateUnifier,
 			final boolean doNonFlowSensitiveAnalysis, final boolean doFlowSensitiveAnalysis,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique, 
 			final ICfgSymbolTable symbolTable) {
@@ -126,12 +126,12 @@ public class FlowSensitiveFaultLocalizer {
 
 		if (doNonFlowSensitiveAnalysis) {
 			doNonFlowSensitiveAnalysis((NestedWord<CodeBlock>) counterexample.getWord(),
-					predicateUnifier.getFalsePredicate(), modGlobVarManager, csToolkit);
+					predicateUnifier.getFalsePredicate(), modifiableGlobalsTable, csToolkit);
 		}
 
 		if (doFlowSensitiveAnalysis) {
 			doFlowSensitiveAnalysis((NestedRun<CodeBlock, IPredicate>) counterexample, cfg,
-					modGlobVarManager, csToolkit);
+					modifiableGlobalsTable, csToolkit);
 		}
 	}
 	
@@ -335,7 +335,7 @@ public class FlowSensitiveFaultLocalizer {
 	
 	
 	private void doNonFlowSensitiveAnalysis(final NestedWord<CodeBlock> counterexampleWord,
-		final IPredicate falsePredicate, final ModifiableGlobalVariableManager modGlobVarManager, final CfgSmtToolkit csToolkit) {
+		final IPredicate falsePredicate, final ModifiableGlobalsTable modGlobVarManager, final CfgSmtToolkit csToolkit) {
 		mLogger.info("Starting non-flow-sensitive error relevancy analysis");
 		
 		final FaultLocalizationRelevanceChecker rc = new FaultLocalizationRelevanceChecker(
@@ -345,13 +345,13 @@ public class FlowSensitiveFaultLocalizer {
 		// Calculating the WP-List
 		final IterativePredicateTransformer ipt = new IterativePredicateTransformer(
 				mPredicateFactory,
-				csToolkit.getManagedScript(), modGlobVarManager, mServices,
+				csToolkit.getManagedScript(), csToolkit.getModifiableGlobalsTable(), mServices,
 				counterexampleWord, null, falsePredicate, null, mPredicateFactory.newPredicate(mPredicateFactory.not(falsePredicate)),
 				mSimplificationTechnique,
 				mXnfConversionTechnique, mSymbolTable);
 		
 		final DefaultTransFormulas dtf = new DefaultTransFormulas(counterexampleWord,
-				null, falsePredicate, Collections.emptySortedMap(), modGlobVarManager, false);
+				null, falsePredicate, Collections.emptySortedMap(), csToolkit.getOldVarsAssignmentCache(), false);
 		
 		
 		
@@ -457,7 +457,7 @@ public class FlowSensitiveFaultLocalizer {
 	private boolean checkBranchRelevance(final int startPosition, final int endPosition,
 			final UnmodifiableTransFormula markhor,final IPredicate weakestPreconditionLeft,
 			final IPredicate weakestPreconditionRight, final NestedWord<CodeBlock> counterexampleWord,
-			final CfgSmtToolkit csToolkit, final ModifiableGlobalVariableManager modGlobVarManager){
+			final CfgSmtToolkit csToolkit, final ModifiableGlobalsTable modifiableGlobalsTable){
 
 		final FaultLocalizationRelevanceChecker rc = new FaultLocalizationRelevanceChecker(
 				csToolkit);
@@ -501,7 +501,7 @@ public class FlowSensitiveFaultLocalizer {
 	private void computeRelevantStatements_FlowSensitive(final NestedWord<CodeBlock> counterexampleWord,
 			final int startLocation, final int endLocation, final IPredicate weakestPreconditionBranchEndlocation,
 			final PredicateTransformer pt, final FaultLocalizationRelevanceChecker rc,
-			final CfgSmtToolkit csToolkit, final ModifiableGlobalVariableManager modGlobVarManager,
+			final CfgSmtToolkit csToolkit, final ModifiableGlobalsTable modifiableGlobalsTable,
 			final Map<Integer, List<Integer>> informationFromCFG) {
 		IPredicate weakestPreconditionLeft = weakestPreconditionBranchEndlocation;
 		for (int position = endLocation; position >= startLocation; position--){
@@ -526,15 +526,15 @@ public class FlowSensitiveFaultLocalizer {
 						csToolkit.getManagedScript(), pt, mApplyQuantifierElimination);
 				weakestPreconditionLeft = mPredicateFactory.newPredicate(wpTerm);
 				// Check the relevance of the branch.
-				final boolean isRelevant =  checkBranchRelevance(
+				final boolean isRelevant = checkBranchRelevance(
 						branchOutPosition,positionBranchIn,markhor,weakestPreconditionLeft,
 						weakestPreconditionRight,counterexampleWord,
-						csToolkit,modGlobVarManager);
+						csToolkit,modifiableGlobalsTable);
 				if(isRelevant){
 					// If the branch is Relevant. Recursion
 					computeRelevantStatements_FlowSensitive(
 							counterexampleWord, branchOutPosition,positionBranchIn,
-							weakestPreconditionRight,pt,rc,csToolkit,modGlobVarManager,informationFromCFG);
+							weakestPreconditionRight,pt,rc,csToolkit,modifiableGlobalsTable,informationFromCFG);
 				} else{
 					// Don't do anything.
 					mLogger.debug(" - - Irrelevant Branch - - - [MarkhorFormula:"+ markhor + " ]");
@@ -634,7 +634,7 @@ public class FlowSensitiveFaultLocalizer {
 	
 	private void doFlowSensitiveAnalysis(final NestedRun<CodeBlock, IPredicate> counterexample,
 			final INestedWordAutomaton<CodeBlock, IPredicate> cfg,
-			final ModifiableGlobalVariableManager modGlobVarManager,
+			final ModifiableGlobalsTable modifiableGlobalsTable,
 			final CfgSmtToolkit csToolkit){
 		mLogger.info("Starting flow-sensitive error relevancy analysis");
 		final Map<Integer, List<Integer>> informationFromCFG = computeInformationFromCFG(counterexample, cfg);
@@ -649,7 +649,7 @@ public class FlowSensitiveFaultLocalizer {
 				csToolkit.getManagedScript().getScript().term("false"));
 
 		computeRelevantStatements_FlowSensitive(counterexample.getWord(),startLocation, endLocation,
-				falsePredicate, pt, rc, csToolkit,modGlobVarManager, informationFromCFG);
+				falsePredicate, pt, rc, csToolkit,modifiableGlobalsTable, informationFromCFG);
 	}
 
 

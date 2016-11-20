@@ -496,7 +496,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 							final InterpolantConsolidation interpConsoli = new InterpolantConsolidation(
 							        mPredicateUnifier.getTruePredicate(), mPredicateUnifier.getFalsePredicate(),
 							        new TreeMap<Integer, IPredicate>(), NestedWord.nestedWord(errorRun.getWord()),
-							        mCsToolkit, mCsToolkit.getModifiableGlobals(), mServices, mLogger,
+							        mCsToolkit, mCsToolkit.getModifiableGlobalsTable(), mServices, mLogger,
 							        mPredicateUnifier, traceChecker, null// mtaPrefs
 							);
 							// Add benchmark data of interpolant consolidation

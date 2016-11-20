@@ -37,7 +37,7 @@ import java.util.TreeSet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.GlobalBoogieVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
@@ -57,15 +57,15 @@ public class RelevantVariables {
 	private final Set<IProgramVar>[] mForwardRelevantVariables;
 	private final Set<IProgramVar>[] mBackwardRelevantVariables;
 	private final Set<IProgramVar>[] mRelevantVariables;
-	private final ModifiableGlobalVariableManager mModifiableGlobals;
+	private final ModifiableGlobalsTable mModifiableGlobals;
 	private final NestedConstraintAnalysis mNestedConstraintAnalysis;
 	private final VariableOccurrence mOccurrence;
 	
 	@SuppressWarnings("unchecked")
 	public RelevantVariables(final NestedFormulas<UnmodifiableTransFormula, IPredicate> traceWithFormulas,
-			final ModifiableGlobalVariableManager modifiedGlobals) {
+			final ModifiableGlobalsTable modifiableGlobalsTable) {
 		super();
-		mModifiableGlobals = modifiedGlobals;
+		mModifiableGlobals = modifiableGlobalsTable;
 		mTraceWithFormulas = traceWithFormulas;
 		mNestedConstraintAnalysis = new NestedConstraintAnalysis(traceWithFormulas.getTrace(),
 				new TreeMap<Integer, IPredicate>(), traceWithFormulas);

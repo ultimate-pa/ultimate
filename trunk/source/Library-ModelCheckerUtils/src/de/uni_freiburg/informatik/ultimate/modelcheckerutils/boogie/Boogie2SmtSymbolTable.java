@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
@@ -55,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICfgSymbolTable
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  * Stores a mapping from Boogie identifiers to BoogieVars and a mapping from TermVariables that are representatives of
@@ -671,6 +673,17 @@ public class Boogie2SmtSymbolTable implements ICfgSymbolTable {
 		mGlobals.put(identifier, bv);
 		mOldGlobals.put(identifier, bv.getOldVar());
 		return bv;
+	}
+	
+	public HashRelation<String, IProgramNonOldVar> constructProc2ModifiableGlobalsMapping() {
+		final HashRelation<String, IProgramNonOldVar> result = new HashRelation<>();
+		for (final Entry<String, Set<String>> proc2vars : mBoogieDeclarations.getModifiedVars().entrySet()) {
+			for (final String var : proc2vars.getValue()) {
+				final IProgramNonOldVar pv = getGlobals().get(var);
+				result.addPair(proc2vars.getKey(), pv);
+			}
+		}
+		return result;
 	}
 
 }

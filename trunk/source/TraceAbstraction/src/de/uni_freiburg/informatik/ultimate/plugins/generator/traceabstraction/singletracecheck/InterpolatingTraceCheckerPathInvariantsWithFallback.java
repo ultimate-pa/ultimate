@@ -91,7 +91,7 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends Interpo
 			final InterpolationTechnique interpolation) {
 		final PathInvariantsGenerator pathInvariantsGenerator = new PathInvariantsGenerator(super.mServices, mStorage,
 				mNestedRun, super.getPrecondition(), super.getPostcondition(), mPredicateUnifier,
-				super.mCfgManagedScript, mCsToolkit.getModifiableGlobals(), mUseNonlinerConstraints,
+				super.mCfgManagedScript, mCsToolkit.getModifiableGlobalsTable(), mUseNonlinerConstraints,
 				mUseVarsFromUnsatCore, mSolverSettings, mSimplificationTechnique, mXnfConversionTechnique, mAxioms);
 		IPredicate[] interpolants = pathInvariantsGenerator.getInterpolants();
 		if (interpolants == null) {

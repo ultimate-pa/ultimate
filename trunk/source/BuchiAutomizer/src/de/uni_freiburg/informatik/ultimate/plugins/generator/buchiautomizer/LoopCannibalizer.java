@@ -65,7 +65,6 @@ public class LoopCannibalizer {
 	private final BinaryStatePredicateManager mBspm;
 	private final PredicateUnifier mPredicateUnifier;
 	private final CfgSmtToolkit mCsToolkit;
-	private final BuchiModGlobalVarManager mbuchiModGlobalVarManager;
 	private final Set<IPredicate> mResultPredicates;
 	private final Set<IPredicate> mOriginalLoopInterpolants;
 	private final NestedWord<CodeBlock> mLoop;
@@ -78,7 +77,7 @@ public class LoopCannibalizer {
 
 	public LoopCannibalizer(final NestedLassoRun<CodeBlock, IPredicate> counterexample, final Set<IPredicate> loopInterpolants,
 			final BinaryStatePredicateManager bspm, final PredicateUnifier predicateUnifier, final CfgSmtToolkit csToolkit,
-			final BuchiModGlobalVarManager buchiModGlobalVarManager, final InterpolationTechnique interpolation,
+			final InterpolationTechnique interpolation,
 			final ICfgSymbolTable boogie2SmtSymbolTable, final IUltimateServiceProvider services,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		super();
@@ -91,7 +90,6 @@ public class LoopCannibalizer {
 		mBspm = bspm;
 		mPredicateUnifier = predicateUnifier;
 		mCsToolkit = csToolkit;
-		mbuchiModGlobalVarManager = buchiModGlobalVarManager;
 		mOriginalLoopInterpolants = loopInterpolants;
 		mResultPredicates = new HashSet<IPredicate>(loopInterpolants);
 		mLoop = mCounterexample.getLoop().getWord();

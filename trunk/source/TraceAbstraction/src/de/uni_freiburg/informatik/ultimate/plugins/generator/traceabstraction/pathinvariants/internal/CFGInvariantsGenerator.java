@@ -38,14 +38,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.ControlFlowGraph.Location;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.ControlFlowGraph.Transition;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 /**
@@ -66,8 +63,7 @@ public final class CFGInvariantsGenerator {
 	 * @param modGlobVarManager
 	 *            reserved for future use.
 	 */
-	public CFGInvariantsGenerator(final IUltimateServiceProvider services,
-			final ModifiableGlobalVariableManager modGlobVarManager) {
+	public CFGInvariantsGenerator(final IUltimateServiceProvider services) {
 		pmService = services.getProgressMonitorService();
 		logService = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
@@ -213,16 +209,16 @@ public <IPT> Map<BoogieIcfgLocation, IPredicate> generateInvariantsForTransition
 	final Collection<InvariantTransitionPredicate<IPT>> predicates = new ArrayList<InvariantTransitionPredicate<IPT>>(
 			transitions.size() + 2);
 	
-	Map<TermVariable, IProgramVar> smtVars2ProgramVars = new HashMap<>();
+	final Map<TermVariable, IProgramVar> smtVars2ProgramVars = new HashMap<>();
 	if (useVariablesFromUnsatCore) {
 		// Compute map smt-variables to program variables
-		for (IcfgInternalAction t : transitions) {
+		for (final IcfgInternalAction t : transitions) {
 			// Add value-key-pairs from transitions invars to smtVars2ProgramVars
-			for (Map.Entry<IProgramVar, TermVariable> entry : t.getTransformula().getInVars().entrySet()) {
+			for (final Map.Entry<IProgramVar, TermVariable> entry : t.getTransformula().getInVars().entrySet()) {
 				smtVars2ProgramVars.put(entry.getValue(), entry.getKey());
 			}
 			// Add value-key-pairs from transitions outvars to smtVars2ProgramVars
-			for (Map.Entry<IProgramVar, TermVariable> entry : t.getTransformula().getOutVars().entrySet()) {
+			for (final Map.Entry<IProgramVar, TermVariable> entry : t.getTransformula().getOutVars().entrySet()) {
 				smtVars2ProgramVars.put(entry.getValue(), entry.getKey());
 			}
 		}
@@ -269,11 +265,11 @@ public <IPT> Map<BoogieIcfgLocation, IPredicate> generateInvariantsForTransition
 		} else {
 			// If no configuration could have been found, the constraints may be unsatisfiable
 			if (useVariablesFromUnsatCore) {
-				Collection<TermVariable> smtVarsFromUnsatCore = ((LinearInequalityInvariantPatternProcessor)processor).getVarsFromUnsatCore();
+				final Collection<TermVariable> smtVarsFromUnsatCore = ((LinearInequalityInvariantPatternProcessor)processor).getVarsFromUnsatCore();
 				if (smtVarsFromUnsatCore != null) {
 					// The result in pattern processor was 'unsat'
 					varsFromUnsatCore = new HashSet<>(smtVarsFromUnsatCore.size());
-					for (TermVariable smtVar : smtVarsFromUnsatCore) {
+					for (final TermVariable smtVar : smtVarsFromUnsatCore) {
 						varsFromUnsatCore.add(smtVars2ProgramVars.get(smtVar));
 					}
 				} else {

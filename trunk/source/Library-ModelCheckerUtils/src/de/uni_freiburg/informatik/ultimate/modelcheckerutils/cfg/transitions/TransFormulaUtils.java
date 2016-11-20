@@ -49,10 +49,12 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICfgSymbolTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ILocalProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ConstantFinder;
@@ -442,10 +444,10 @@ public class TransFormulaUtils {
 			final List<UnmodifiableTransFormula> beforeCall, final UnmodifiableTransFormula callTf,
 			final UnmodifiableTransFormula oldVarsAssignment, final UnmodifiableTransFormula globalVarsAssignment,
 			final UnmodifiableTransFormula afterCall, final ILogger logger, final IUltimateServiceProvider services,
-			final Set<IProgramVar> modifiableGlobalsOfEndProcedure, final XnfConversionTechnique xnfConversionTechnique,
+			final Set<IProgramNonOldVar> modifiableGlobalsOfEndProcedure, final XnfConversionTechnique xnfConversionTechnique,
 			final SimplificationTechnique simplificationTechnique, final ICfgSymbolTable symbolTable,
 			final String procAtStart, final String procBeforeCall, final String procAfterCall, final String procAtEnd,
-			final ModifiableGlobalVariableManager modGlobVarManager) {
+			final ModifiableGlobalsTable modifiableGlobalsTable) {
 		assert procAtStart != null : "proc at start must not be null";
 		if (!procAtStart.equals(procBeforeCall)) {
 			throw new UnsupportedOperationException("proc change before call");
@@ -477,9 +479,9 @@ public class TransFormulaUtils {
 			final Map<IProgramVar, TermVariable> varsToHavoc = new HashMap<>();
 			// we havoc all oldvars that are modifiable by the caller
 			// but not modifiable y the callee
-			final Set<IProgramVar> modifiableByCaller =
-					modGlobVarManager.getOldVarsAssignment(procBeforeCall).getAssignedVars();
-			for (final IProgramVar oldVar : modifiableByCaller) {
+			final Set<IProgramNonOldVar> modifiableByCaller = modifiableGlobalsTable.getModifiedBoogieVars(procBeforeCall);
+			for (final IProgramNonOldVar modifiable : modifiableByCaller) {
+				final IProgramOldVar oldVar = modifiable.getOldVar();
 				final boolean modifiableByCallee = oldVarsAssignment.getAssignedVars().contains(oldVar);
 				if (!modifiableByCallee) {
 					varsToHavoc.put(oldVar, mgdScript.constructFreshCopy(oldVar.getTermVariable()));
@@ -626,7 +628,7 @@ public class TransFormulaUtils {
 			final UnmodifiableTransFormula callTf, final UnmodifiableTransFormula oldVarsAssignment,
 			final UnmodifiableTransFormula globalVarsAssignment, final UnmodifiableTransFormula afterCallTf,
 			final UnmodifiableTransFormula result, final ICfgSymbolTable symbolTable,
-			final Set<IProgramVar> modifiableGlobals) {
+			final Set<IProgramNonOldVar> modifiableGlobalsOfEndProcedure) {
 		assert result.getBranchEncoders().isEmpty() : "result check not applicable with branch encoders";
 		final PredicateTransformer pt =
 				new PredicateTransformer(services, mgdScript, simplificationTechnique, xnfConversionTechnique);
@@ -642,7 +644,7 @@ public class TransFormulaUtils {
 			beforeCallPredicate = bpf.newPredicate(tmp);
 		}
 		final Term afterCallTerm = pt.strongestPostconditionCall(beforeCallPredicate, callTf, globalVarsAssignment,
-				oldVarsAssignment, modifiableGlobals);
+				oldVarsAssignment, modifiableGlobalsOfEndProcedure);
 		final IPredicate afterCallPredicate = bpf.newPredicate(afterCallTerm);
 		Term endTerm = pt.strongestPostcondition(afterCallPredicate, afterCallTf);
 		endTerm = new QuantifierPusher(mgdScript, services).transform(endTerm);
@@ -677,7 +679,7 @@ public class TransFormulaUtils {
 			final UnmodifiableTransFormula globalVarsAssignment, final UnmodifiableTransFormula procedureTf,
 			final UnmodifiableTransFormula returnTf, final ILogger logger, final IUltimateServiceProvider services,
 			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique,
-			final ICfgSymbolTable symbolTable, final Set<IProgramVar> modifiableGlobalsOfCallee) {
+			final ICfgSymbolTable symbolTable, final Set<IProgramNonOldVar> modifiableGlobalsOfCallee) {
 		logger.debug("sequential composition (call/return) with" + (simplify ? "" : "out") + " formula simplification");
 		final UnmodifiableTransFormula composition =
 				sequentialComposition(logger, services, mgdScript, simplify, extPqe, transformToCNF,
@@ -782,7 +784,7 @@ public class TransFormulaUtils {
 			final UnmodifiableTransFormula oldVarsAssignment, final UnmodifiableTransFormula globalVarsAssignment,
 			final UnmodifiableTransFormula procedureTf, final UnmodifiableTransFormula returnTf,
 			final UnmodifiableTransFormula result, final ICfgSymbolTable symbolTable,
-			final Set<IProgramVar> modifiableGlobals) {
+			final Set<IProgramNonOldVar> modifiableGlobals) {
 		assert result.getBranchEncoders().isEmpty() : "result check not applicable with branch encoders";
 		final PredicateTransformer pt =
 				new PredicateTransformer(services, mgdScript, simplificationTechnique, xnfConversionTechnique);

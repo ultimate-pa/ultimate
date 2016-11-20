@@ -79,15 +79,16 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Term2Expression;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgElement;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BinaryStatePredicateManager;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.RankVarConstructor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -165,8 +166,8 @@ public class LassoRankerStarter {
 		loopTf = tvr.renameVars(loopTf, "Loop");
 
 		final Term[] axioms = mRootAnnot.getBoogie2SMT().getAxioms().toArray(new Term[0]);
-		final Set<IProgramVar> modifiableGlobalsAtHonda =
-				mCsToolkit.getModifiableGlobals().getModifiedBoogieVars(mHonda.getProcedure());
+		final Set<IProgramNonOldVar> modifiableGlobalsAtHonda =
+				mCsToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(mHonda.getProcedure());
 
 		// Construct LassoAnalysis for nontermination
 		LassoAnalysis laNT = null;
@@ -263,16 +264,13 @@ public class LassoRankerStarter {
 	}
 
 	public UnmodifiableTransFormula constructTransformula(final NestedWord<CodeBlock> nw) {
-		final ManagedScript mgdScript = mRootAnnot.getBoogie2SMT().getManagedScript();
-		final ModifiableGlobalVariableManager modGlobVarManager = mCsToolkit.getModifiableGlobals();
 		final boolean simplify = true;
 		final boolean extPqe = true;
 		final boolean tranformToCNF = false;
 		final boolean withBranchEncoders = false;
 		final List<CodeBlock> codeBlocks = Collections.unmodifiableList(nw.asList());
-		return SequentialComposition.getInterproceduralTransFormula(mgdScript, modGlobVarManager, simplify, extPqe,
-				tranformToCNF, withBranchEncoders, mLogger, mServices, codeBlocks, mXnfConversionTechnique,
-				mSimplificationTechnique, mRootAnnot.getBoogie2SMT().getBoogie2SmtSymbolTable());
+		return SequentialComposition.getInterproceduralTransFormula(mCsToolkit, simplify, extPqe, tranformToCNF,
+				withBranchEncoders, mLogger, mServices, codeBlocks, mXnfConversionTechnique, mSimplificationTechnique);
 	}
 
 	/**
@@ -369,28 +367,29 @@ public class LassoRankerStarter {
 	private boolean isTerminationArgumentCorrect(final TerminationArgument arg, final UnmodifiableTransFormula stemTF,
 			final UnmodifiableTransFormula loopTf) {
 
-		final BinaryStatePredicateManager bspm = new BinaryStatePredicateManager(mCsToolkit,
-				mPredicateFactory, mRootAnnot.getBoogie2SMT(), mServices,
-				mSimplificationTechnique, mXnfConversionTechnique);
-		final Set<IProgramVar> modifiableGlobals =
-				mCsToolkit.getModifiableGlobals().getModifiedBoogieVars(mHonda.getProcedure());
+		final RankVarConstructor rankVarConstructor = new RankVarConstructor(mCsToolkit, mRootAnnot.getBoogie2SMT());
+		final BinaryStatePredicateManager bspm = new BinaryStatePredicateManager(mCsToolkit, mPredicateFactory, 
+				rankVarConstructor.getUnseededVariable(), rankVarConstructor.getOldRankVariables(), 
+				mServices, mSimplificationTechnique, mXnfConversionTechnique);
+		final Set<IProgramNonOldVar> modifiableGlobals =
+				mCsToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(mHonda.getProcedure());
 		bspm.computePredicates(false, arg, false, stemTF, loopTf, modifiableGlobals);
 
 		// check supporting invariants
 		boolean siCorrect = true;
 		for (final SupportingInvariant si : bspm.getTerminationArgument().getSupportingInvariants()) {
 			final IPredicate siPred = bspm.supportingInvariant2Predicate(si);
-			siCorrect &= bspm.checkSupportingInvariant(siPred, mStem, mLoop, mCsToolkit.getModifiableGlobals());
+			siCorrect &= bspm.checkSupportingInvariant(siPred, mStem, mLoop, mCsToolkit.getModifiableGlobalsTable());
 		}
 
 		// check array index supporting invariants
 		for (final Term aisi : bspm.getTerminationArgument().getArrayIndexSupportingInvariants()) {
 			final IPredicate siPred = bspm.term2Predicate(aisi);
-			siCorrect &= bspm.checkSupportingInvariant(siPred, mStem, mLoop, mCsToolkit.getModifiableGlobals());
+			siCorrect &= bspm.checkSupportingInvariant(siPred, mStem, mLoop, mCsToolkit.getModifiableGlobalsTable());
 		}
 
 		// check ranking function
-		final boolean rfCorrect = bspm.checkRankDecrease(mLoop, mCsToolkit.getModifiableGlobals());
+		final boolean rfCorrect = bspm.checkRankDecrease(mLoop, mCsToolkit.getModifiableGlobalsTable());
 		if (siCorrect && rfCorrect) {
 			mLogger.info("Termination argument has been successfully verified.");
 		}

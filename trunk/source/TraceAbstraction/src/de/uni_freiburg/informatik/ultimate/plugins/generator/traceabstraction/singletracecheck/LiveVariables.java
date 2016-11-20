@@ -34,7 +34,6 @@ import java.util.Set;
 import java.util.TreeMap;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashSet;
 
@@ -74,8 +73,7 @@ public class LiveVariables {
 	public LiveVariables(final ModifiableNestedFormulas<Map<Term,Term>, 
 			Map<Term,Term>> traceWithConstants,
 			final Map<Term,IProgramVar> constants2BoogieVar,
-			final Map<IProgramVar, TreeMap<Integer, Term>> indexedVarRepresentative,
-			final ModifiableGlobalVariableManager modifiedGlobals) {
+			final Map<IProgramVar, TreeMap<Integer, Term>> indexedVarRepresentative) {
 		mConstants2BoogieVar = constants2BoogieVar;
 		mTraceWithConstants = traceWithConstants;
 		mIndexedVarRepresentative = indexedVarRepresentative;

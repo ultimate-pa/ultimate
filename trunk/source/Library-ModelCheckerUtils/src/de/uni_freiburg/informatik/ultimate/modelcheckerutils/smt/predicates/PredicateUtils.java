@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
@@ -144,8 +144,8 @@ public class PredicateUtils {
 	 * </ul>
 	 */
 	public static Term formulaWithIndexedVars(final IPredicate ps, final Set<IProgramVar> varsWithSpecialIdx, final int specialIdx,
-			final int defaultIdx, final int oldVarIdx, final Set<IProgramVar> globalsWithSpecialIdx, final int globSpecialIdx, final int globDefaultIdx,
-			final Map<String, Term> indexedConstants, final Script script, final Set<IProgramVar> modifiableGlobals) {
+			final int defaultIdx, final int oldVarIdx, final Set<IProgramNonOldVar> modifiableGlobalsCallee, final int globSpecialIdx, final int globDefaultIdx,
+			final Map<String, Term> indexedConstants, final Script script, final Set<IProgramNonOldVar> modifiableGlobalsCaller) {
 		final Term psTerm = ps.getFormula();
 		if (ps.getVars() == null) {
 			return psTerm;
@@ -159,7 +159,7 @@ public class PredicateUtils {
 				cIndex = getIndexedConstant(var, specialIdx, indexedConstants, script);
 			} else if (var.isOldvar()) {
 				final IProgramNonOldVar bnov = ((IProgramOldVar) var).getNonOldVar();
-				if (modifiableGlobals.contains(bnov)) {
+				if (modifiableGlobalsCaller.contains(bnov)) {
 					if (oldVarIdx == Integer.MIN_VALUE) {
 						cIndex = var.getDefaultConstant();
 					} else {
@@ -170,7 +170,7 @@ public class PredicateUtils {
 					cIndex = getIndexedConstant(bnov, globDefaultIdx, indexedConstants, script);
 				}
 			} else if (var.isGlobal()) {
-				if (globalsWithSpecialIdx != null && globalsWithSpecialIdx.contains(var)) {
+				if (modifiableGlobalsCallee != null && modifiableGlobalsCallee.contains(var)) {
 					cIndex = getIndexedConstant(var, globSpecialIdx, indexedConstants, script);
 				} else {
 					cIndex = getIndexedConstant(var, globDefaultIdx, indexedConstants, script);
@@ -278,7 +278,7 @@ public class PredicateUtils {
 	}
 
 	public static LBool isInductiveHelper(final Script script, final IPredicate precond, final IPredicate postcond,
-			final UnmodifiableTransFormula tf, final Set<IProgramVar> modifiableGlobalsBefore, final Set<IProgramVar> modifiableGlobalsAfter) {
+			final UnmodifiableTransFormula tf, final Set<IProgramNonOldVar> modifiableGlobalsPred, final Set<IProgramNonOldVar> modifiableGlobalsSucc) {
 		script.push(1);
 
 		final List<Term> conjuncts = new ArrayList<Term>();
@@ -287,20 +287,20 @@ public class PredicateUtils {
 			final Set<IProgramNonOldVar> unprimedOldVarEqualities = new HashSet<>();
 			final Set<IProgramNonOldVar> primedOldVarEqualities = new HashSet<>();
 
-			findNonModifiablesGlobals(precond.getVars(), modifiableGlobalsBefore, Collections.emptySet(), unprimedOldVarEqualities,
+			findNonModifiablesGlobals(precond.getVars(), modifiableGlobalsPred, Collections.emptySet(), unprimedOldVarEqualities,
 					primedOldVarEqualities);
-			findNonModifiablesGlobals(tf.getInVars().keySet(), modifiableGlobalsBefore, Collections.emptySet(), unprimedOldVarEqualities,
+			findNonModifiablesGlobals(tf.getInVars().keySet(), modifiableGlobalsPred, Collections.emptySet(), unprimedOldVarEqualities,
 					primedOldVarEqualities);
-			findNonModifiablesGlobals(tf.getOutVars().keySet(), modifiableGlobalsAfter, tf.getAssignedVars(),
+			findNonModifiablesGlobals(tf.getOutVars().keySet(), modifiableGlobalsSucc, tf.getAssignedVars(),
 					unprimedOldVarEqualities, primedOldVarEqualities);
 
 			
 			for (final IProgramNonOldVar bv : unprimedOldVarEqualities) {
-				conjuncts.add(ModifiableGlobalVariableManager.constructConstantOldVarEquality(bv, false,
+				conjuncts.add(ModifiableGlobalsTable.constructConstantOldVarEquality(bv, false,
 						script));
 			}
 			for (final IProgramNonOldVar bv : primedOldVarEqualities) {
-				conjuncts.add(ModifiableGlobalVariableManager.constructConstantOldVarEquality(bv, true,
+				conjuncts.add(ModifiableGlobalsTable.constructConstantOldVarEquality(bv, true,
 						script));
 			}
 		}
@@ -322,14 +322,14 @@ public class PredicateUtils {
 			final Set<IProgramNonOldVar> unprimedOldVarEqualities = new HashSet<>();
 			final Set<IProgramNonOldVar> primedOldVarEqualities = new HashSet<>();
 		
-			findNonModifiablesGlobals(postcond.getVars(), modifiableGlobalsAfter, tf.getAssignedVars(),
+			findNonModifiablesGlobals(postcond.getVars(), modifiableGlobalsSucc, tf.getAssignedVars(),
 					unprimedOldVarEqualities, primedOldVarEqualities);
 			for (final IProgramNonOldVar bv : unprimedOldVarEqualities) {
-				conjuncts.add(ModifiableGlobalVariableManager.constructConstantOldVarEquality(bv, false,
+				conjuncts.add(ModifiableGlobalsTable.constructConstantOldVarEquality(bv, false,
 						script));
 			}
 			for (final IProgramNonOldVar bv : primedOldVarEqualities) {
-				conjuncts.add(ModifiableGlobalVariableManager.constructConstantOldVarEquality(bv, true,
+				conjuncts.add(ModifiableGlobalsTable.constructConstantOldVarEquality(bv, true,
 						script));
 			}
 		}
@@ -349,18 +349,18 @@ public class PredicateUtils {
 	 * nonModifiableGlobalsPrimed if the corresponding oldVar is in primedRequired.
 	 * 
 	 * @param vars
-	 * @param modifiables
+	 * @param modifiableGlobalsPred
 	 * @param primedRequired
 	 * @param nonModifiableGlobalsUnprimed
 	 * @param nonModifiableGlobalsPrimed
 	 */
-	private static void findNonModifiablesGlobals(final Set<IProgramVar> vars, final Set<IProgramVar> modifiables,
+	private static void findNonModifiablesGlobals(final Set<IProgramVar> vars, final Set<IProgramNonOldVar> modifiableGlobalsPred,
 			final Set<IProgramVar> primedRequired, final Set<IProgramNonOldVar> nonModifiableGlobalsUnprimed,
 			final Set<IProgramNonOldVar> nonModifiableGlobalsPrimed) {
 		for (final IProgramVar bv : vars) {
 			if (bv instanceof IProgramOldVar) {
 				final IProgramNonOldVar nonOldVar = ((IProgramOldVar) bv).getNonOldVar();
-				if (modifiables.contains(nonOldVar)) {
+				if (modifiableGlobalsPred.contains(nonOldVar)) {
 					// var modifiable, do nothing
 				} else {
 					if (primedRequired.contains(bv)) {

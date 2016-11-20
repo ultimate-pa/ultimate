@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.MultiElementCounter;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
@@ -136,7 +136,7 @@ public class NestedSsaBuilder {
 	protected final ModifiableNestedFormulas<Term, Term> mSsa;
 	protected final ModifiableNestedFormulas<Map<Term, Term>, Map<Term, Term>> mVariable2Constant;
 
-	private final ModifiableGlobalVariableManager mModGlobVarManager;
+	private final ModifiableGlobalsTable mModGlobVarManager;
 
 	private final Map<String, Term> mIndexedConstants = new HashMap<String, Term>();
 
@@ -174,12 +174,12 @@ public class NestedSsaBuilder {
 
 	public NestedSsaBuilder(final NestedWord<? extends IAction> trace, final ManagedScript csToolkit,
 			final NestedFormulas<UnmodifiableTransFormula, IPredicate> nestedTransFormulas,
-			final ModifiableGlobalVariableManager globModVarManager, final ILogger logger,
+			final ModifiableGlobalsTable modifiableGlobalsTable, final ILogger logger,
 			final boolean transferToScriptNeeded) {
 		mLogger = logger;
 		mScript = csToolkit.getScript();
 		mFormulas = nestedTransFormulas;
-		mModGlobVarManager = globModVarManager;
+		mModGlobVarManager = modifiableGlobalsTable;
 		mSsa = new ModifiableNestedFormulas<Term, Term>(trace, new TreeMap<Integer, Term>());
 		mVariable2Constant = new ModifiableNestedFormulas<Map<Term, Term>, Map<Term, Term>>(trace,
 				new TreeMap<Integer, Map<Term, Term>>());
@@ -363,7 +363,7 @@ public class NestedSsaBuilder {
 	 * procedure.
 	 */
 	protected void reVersionModifiableGlobals() {
-		final Set<IProgramVar> modifiable = mModGlobVarManager.getGlobalVarsAssignment(mcurrentProcedure).getAssignedVars();
+		final Set<IProgramNonOldVar> modifiable = mModGlobVarManager.getModifiedBoogieVars(mcurrentProcedure);
 		for (final IProgramVar bv : modifiable) {
 			setCurrentVarVersion(bv, startOfCallingContext);
 		}
@@ -374,9 +374,10 @@ public class NestedSsaBuilder {
 	 * procedure.
 	 */
 	protected void reVersionModifiableOldVars() {
-		final Set<IProgramVar> modifiable = mModGlobVarManager.getOldVarsAssignment(mcurrentProcedure).getAssignedVars();
-		for (final IProgramVar bv : modifiable) {
-			setCurrentVarVersion(bv, startOfCallingContext);
+		final Set<IProgramNonOldVar> modifiable = mModGlobVarManager.getModifiedBoogieVars(mcurrentProcedure);
+		for (final IProgramNonOldVar bv : modifiable) {
+			final IProgramOldVar oldVar = bv.getOldVar();
+			setCurrentVarVersion(oldVar, startOfCallingContext);
 		}
 	}
 

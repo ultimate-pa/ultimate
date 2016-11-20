@@ -33,12 +33,13 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.HoareTripleCheckerStatisticsGenerator;
@@ -46,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareT
 
 public class SdHoareTripleCheckerHelper {
 	
-	private final ModifiableGlobalVariableManager mModifiableGlobalVariableManager;
+	private final ModifiableGlobalsTable mModifiableGlobalVariableManager;
 	
 	private final HoareTripleCheckerStatisticsGenerator mHoareTripleCheckerStatistics;
 	private final IPredicateCoverageChecker mPredicateCoverageChecker;
@@ -55,7 +56,7 @@ public class SdHoareTripleCheckerHelper {
 	public SdHoareTripleCheckerHelper(final CfgSmtToolkit csToolkit,
 			final IPredicateCoverageChecker predicateCoverageChecker,
 			final HoareTripleCheckerStatisticsGenerator edgeCheckerBenchmarkGenerator) {
-		mModifiableGlobalVariableManager = csToolkit.getModifiableGlobals();
+		mModifiableGlobalVariableManager = csToolkit.getModifiableGlobalsTable();
 		mPredicateCoverageChecker = predicateCoverageChecker;
 		if (edgeCheckerBenchmarkGenerator == null) {
 			mHoareTripleCheckerStatistics = new HoareTripleCheckerStatisticsGenerator();
@@ -347,7 +348,7 @@ public class SdHoareTripleCheckerHelper {
 		}
 
 		final String proc = ret.getPrecedingProcedure();
-		final Set<IProgramVar> modifiableGlobals =
+		final Set<IProgramNonOldVar> modifiableGlobals =
 				mModifiableGlobalVariableManager.getModifiedBoogieVars(proc);
 		final boolean assignedVarsRestrictedByPre =
 				!varSetDisjoint(ret.getAssignmentOfReturn().getInVars().keySet(), pre.getVars());
@@ -362,7 +363,7 @@ public class SdHoareTripleCheckerHelper {
 	}
 	
 	
-	private static boolean continueSdLazyEcReturnLoop(final IProgramVar bv, final Set<IProgramVar> modifiableGlobals,
+	private static boolean continueSdLazyEcReturnLoop(final IProgramVar bv, final Set<IProgramNonOldVar> modifiableGlobals,
 			final IPredicate hier, final IPredicate pre, final Set<IProgramVar> assignedVars,
 			final boolean assignedVarsRestrictedByPre) {
 		if (bv.isGlobal()) {
@@ -420,7 +421,7 @@ public class SdHoareTripleCheckerHelper {
 		
 		// cases where pre and hier share non-modifiable var g, or
 		// g occurs in hier, and old(g) occurs in pre.
-		final Set<IProgramVar> modifiableGlobals =
+		final Set<IProgramNonOldVar> modifiableGlobals =
 				mModifiableGlobalVariableManager.getModifiedBoogieVars(calledProcedure);
 
 		
@@ -468,7 +469,7 @@ public class SdHoareTripleCheckerHelper {
 		final Set<IProgramVar> assignedVars = ret.getAssignmentOfReturn().getAssignedVars();
 		
 		final String proc = ret.getPrecedingProcedure();
-		final Set<IProgramVar> modifiableGlobals =
+		final Set<IProgramNonOldVar> modifiableGlobals =
 				mModifiableGlobalVariableManager.getModifiedBoogieVars(proc);
 		
 		for (final IProgramVar bv : post.getVars()) {
@@ -551,7 +552,7 @@ public class SdHoareTripleCheckerHelper {
 	public Validity sdecReturnSelfloopHier(final IPredicate p, final IReturnAction ret) {
 		final Set<IProgramVar> assignedVars = ret.getAssignmentOfReturn().getAssignedVars();
 		final String proc = ret.getPrecedingProcedure();
-		final Set<IProgramVar> modifiableGlobals =
+		final Set<IProgramNonOldVar> modifiableGlobals =
 				mModifiableGlobalVariableManager.getModifiedBoogieVars(proc);
 
 		for (final IProgramVar bv : p.getVars()) {

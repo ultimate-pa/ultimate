@@ -111,8 +111,9 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		final TAPreferences taPrefs = new TAPreferences(mServices);
 		mGraphRoot = root;
 
-		mCsToolkit = new CfgSmtToolkit(mRootAnnot.getCfgSmtToolkit().getModifiableGlobals(), mRootAnnot.getCfgSmtToolkit().getManagedScript(),
-				mRootAnnot.getBoogie2SMT().getBoogie2SmtSymbolTable(), mRootAnnot.getCfgSmtToolkit().getAxioms());
+		mCsToolkit = new CfgSmtToolkit(mRootAnnot.getCfgSmtToolkit().getModifiableGlobalsTable(), mRootAnnot.getCfgSmtToolkit().getManagedScript(),
+				mRootAnnot.getBoogie2SMT().getBoogie2SmtSymbolTable(), mRootAnnot.getCfgSmtToolkit().getAxioms(), 
+				mRootAnnot.getCfgSmtToolkit().getProcedures());
 		final PredicateFactory predicateFactory = new PredicateFactory(mServices, mCsToolkit.getManagedScript(), 
 				mCsToolkit.getSymbolTable(), taPrefs.getSimplificationTechnique(), taPrefs.getXnfConversionTechnique());
 

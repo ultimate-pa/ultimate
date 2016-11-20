@@ -41,11 +41,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICfgSymbolTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
@@ -67,7 +68,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * 
  */
 public class IterativePredicateTransformer {
-	private final ModifiableGlobalVariableManager mModifiedGlobals;
+	private final ModifiableGlobalsTable mModifiedGlobals;
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final SimplificationTechnique mSimplificationTechnique;
@@ -88,7 +89,7 @@ public class IterativePredicateTransformer {
 
 	public IterativePredicateTransformer(final PredicateFactory predicateFactory,
 			final ManagedScript mgdScript,
-			final ModifiableGlobalVariableManager modifiableGlobalVariableManager,
+			final ModifiableGlobalsTable modifiableGlobalsTable,
 			final IUltimateServiceProvider services,
 			final NestedWord<? extends IAction> trace, final IPredicate precondition,
 			final IPredicate postcondition, final SortedMap<Integer, IPredicate> pendingContexts,
@@ -100,7 +101,7 @@ public class IterativePredicateTransformer {
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
 		mMgdScript = mgdScript;
-		mModifiedGlobals = modifiableGlobalVariableManager;
+		mModifiedGlobals = modifiableGlobalsTable;
 		mPredicateTransformer = new PredicateTransformer(services,
 				mgdScript, simplificationTechnique, xnfConversionTechnique);
 		mPredicateFactory = predicateFactory;
@@ -149,7 +150,7 @@ public class IterativePredicateTransformer {
 			if (mTrace.getSymbol(i) instanceof Call) {
 				final Call call = (Call) mTrace.getSymbol(i);
 				final String calledMethod = call.getCallStatement().getMethodName();
-				final Set<IProgramVar> modifiedGlobals = mModifiedGlobals.getModifiedBoogieVars(calledMethod);
+				final Set<IProgramNonOldVar> modifiedGlobals = mModifiedGlobals.getModifiedBoogieVars(calledMethod);
 				if (mTrace.isPendingCall(i) || !mInterproceduralPost ) {
 					spTerm = mPredicateTransformer.strongestPostconditionCall(
 							predecessor, nf.getLocalVarAssignment(i),
@@ -292,7 +293,7 @@ public class IterativePredicateTransformer {
 				if (mTrace.isPendingCall(i)) {
 					final Call call = (Call) mTrace.getSymbol(i);
 					final String calledMethod = call.getCallStatement().getMethodName();
-					final Set<IProgramVar> modifiedGlobals = mModifiedGlobals.getModifiedBoogieVars(calledMethod);
+					final Set<IProgramNonOldVar> modifiedGlobals = mModifiedGlobals.getModifiedBoogieVars(calledMethod);
 					wpTerm = mPredicateTransformer.weakestPrecondition(
 							successor,
 							nf.getLocalVarAssignment(i), nf.getGlobalVarAssignment(i),
@@ -311,7 +312,7 @@ public class IterativePredicateTransformer {
 				final UnmodifiableTransFormula returnTf = nf.getFormulaFromNonCallPos(i);
 				final Return returnCB = (Return) mTrace.getSymbol(i);
 				final String calledMethod = returnCB.getCallStatement().getMethodName();
-				final Set<IProgramVar> modifiableGlobals = mModifiedGlobals.getModifiedBoogieVars(calledMethod);
+				final Set<IProgramNonOldVar> modifiableGlobals = mModifiedGlobals.getModifiedBoogieVars(calledMethod);
 
 				final Set<IProgramVar> varsOccurringBetweenCallAndReturn;
 				if (mTrace.isPendingReturn(i)) {
@@ -562,7 +563,7 @@ public class IterativePredicateTransformer {
 						// then we handle this case as a pending-call
 						final UnmodifiableTransFormula summaryAfterPendingCall = computeSummaryForInterproceduralTrace(trace, rv, i + 1, end);
 						final String nameEndProcedure = trace.getSymbol(end).getSucceedingProcedure();
-						final Set<IProgramVar> modifiableGlobalsOfEndProcedure = mModifiedGlobals.getModifiedBoogieVars(nameEndProcedure);
+						final Set<IProgramNonOldVar> modifiableGlobalsOfEndProcedure = mModifiedGlobals.getModifiedBoogieVars(nameEndProcedure);
 						return TransFormulaUtils.sequentialCompositionWithPendingCall(mMgdScript, true,
 								false, s_TransformSummaryToCNF, transformulasToComputeSummaryFor,
 								callTf, oldVarsAssignment, globalVarsAssignment,
@@ -574,7 +575,7 @@ public class IterativePredicateTransformer {
 				} else {
 					final UnmodifiableTransFormula summaryAfterPendingCall = computeSummaryForInterproceduralTrace(trace, rv, i + 1, end);
 					final String nameEndProcedure = trace.getSymbol(end).getSucceedingProcedure();
-					final Set<IProgramVar> modifiableGlobalsOfEndProcedure = mModifiedGlobals.getModifiedBoogieVars(nameEndProcedure);
+					final Set<IProgramNonOldVar> modifiableGlobalsOfEndProcedure = mModifiedGlobals.getModifiedBoogieVars(nameEndProcedure);
 					return TransFormulaUtils.sequentialCompositionWithPendingCall(mMgdScript, true, false,
 							s_TransformSummaryToCNF, transformulasToComputeSummaryFor,
 							callTf, oldVarsAssignment, null, summaryAfterPendingCall,

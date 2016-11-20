@@ -30,6 +30,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -52,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieDeclarations;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -94,7 +95,7 @@ public class BoogieIcfgContainer extends ModernAnnotations implements IElement, 
 
 	private final Boogie2SMT mBoogie2SMT;
 	private final ManagedScript mManagedScript;
-	private final ModifiableGlobalVariableManager mModifiableGlobalVariableManager;
+	private final ModifiableGlobalsTable mModifiableGlobalVariableManager;
 	private final CodeBlockFactory mCodeBlockFactory;
 	private final CfgSmtToolkit mCfgSmtToolkit;
 	private final IPayload mPayload;
@@ -114,11 +115,14 @@ public class BoogieIcfgContainer extends ModernAnnotations implements IElement, 
 		mBoogieDeclarations = boogieDeclarations;
 		mBoogie2SMT = mBoogie2smt;
 		mManagedScript = mBoogie2smt.getManagedScript();
-		mModifiableGlobalVariableManager = new ModifiableGlobalVariableManager(mBoogieDeclarations.getModifiedVars(),
-				mManagedScript, mBoogie2smt.getBoogie2SmtSymbolTable());
+		mModifiableGlobalVariableManager = new ModifiableGlobalsTable(
+				mBoogie2smt.getBoogie2SmtSymbolTable().constructProc2ModifiableGlobalsMapping());
+		final Set<String> procs = new HashSet<>();
+		procs.addAll(boogieDeclarations.getProcImplementation().keySet());
+		procs.addAll(boogieDeclarations.getProcSpecification().keySet());
 		mCfgSmtToolkit = new CfgSmtToolkit(mModifiableGlobalVariableManager, mManagedScript,
-				mBoogie2smt.getBoogie2SmtSymbolTable(), mBoogie2SMT.getAxioms());
-		mCodeBlockFactory = new CodeBlockFactory(services, mManagedScript, mModifiableGlobalVariableManager,
+				mBoogie2smt.getBoogie2SmtSymbolTable(), mBoogie2SMT.getAxioms(), procs);
+		mCodeBlockFactory = new CodeBlockFactory(services, mManagedScript, mCfgSmtToolkit,
 				mBoogie2SMT.getBoogie2SmtSymbolTable());
 		mPayload = new Payload(loc);
 		mPayload.getAnnotations().put(Activator.PLUGIN_ID, this);

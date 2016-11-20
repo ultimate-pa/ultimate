@@ -41,7 +41,8 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.GlobalBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.OldVarsAssignmentCache;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
@@ -59,7 +60,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
 public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILockHolderWithVoluntaryLockRelease  {
 	
 	protected final ManagedScript mManagedScript;
-	private final ModifiableGlobalVariableManager mModifiableGlobalVariableManager;
+	private final ModifiableGlobalsTable mModifiableGlobalVariableManager;
+	private final OldVarsAssignmentCache mOldVarsAssignmentCache;
 	
 	private IPredicate mAssertedPrecond;
 	private IPredicate mAssertedHier;
@@ -80,12 +82,14 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 	private final HoareTripleCheckerStatisticsGenerator mEdgeCheckerBenchmark;
 	
 	
+	
 	private static final String s_StartEdgeCheck = "starting to check validity of Hoare triples";
 	private static final String s_EndEdgeCheck = "finished to check validity of Hoare triples";
 	
 	public IncrementalHoareTripleChecker(final CfgSmtToolkit csToolkit) {
 		mManagedScript = csToolkit.getManagedScript();
-		mModifiableGlobalVariableManager = csToolkit.getModifiableGlobals();
+		mModifiableGlobalVariableManager = csToolkit.getModifiableGlobalsTable();
+		mOldVarsAssignmentCache = csToolkit.getOldVarsAssignmentCache();
 		mEdgeCheckerBenchmark = new HoareTripleCheckerStatisticsGenerator();
 	}
 	
@@ -281,9 +285,8 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		}
 		LBool quickCheck = mManagedScript.assertTerm(this, predcondition);
 		final String predProc = mAssertedAction.getPrecedingProcedure();
-		final Set<IProgramVar> oldVarsOfModifiable = mModifiableGlobalVariableManager.
-				getOldVarsAssignment(predProc).getAssignedVars();
-		final Collection<Term> oldVarEqualities = constructNonModOldVarsEquality(p.getVars(), oldVarsOfModifiable);
+		final Set<IProgramNonOldVar> modifiableGlobals = mModifiableGlobalVariableManager.getModifiedBoogieVars(predProc);
+		final Collection<Term> oldVarEqualities = constructNonModOldVarsEquality(p.getVars(), modifiableGlobals);
 		if (!oldVarEqualities.isEmpty()) {
 			Term nonModOldVarsEquality = Util.and(mManagedScript.getScript(), oldVarEqualities.toArray(new Term[oldVarEqualities.size()]));
 			if (mUseNamedTerms) {
@@ -304,11 +307,14 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 	 * global variable g and c_old(g) is the default constant of old(g).
 	 */
 	private Collection<Term> constructNonModOldVarsEquality(final Set<IProgramVar> vars,
-			final Set<IProgramVar> oldVarsOfModifiableGlobals) {
+			final Set<IProgramNonOldVar> oldVarsOfModifiableGlobals) {
 		final Collection<Term> conjunction = new ArrayList<>();
 		for (final IProgramVar bv : vars) {
-			if (bv instanceof IProgramOldVar && !oldVarsOfModifiableGlobals.contains(bv)) {
-				conjunction.add(oldVarsEquality((IProgramOldVar) bv));
+			if (bv instanceof IProgramOldVar) {
+				final IProgramNonOldVar pnov = ((IProgramOldVar) bv).getNonOldVar();
+				if (!oldVarsOfModifiableGlobals.contains(pnov)) {
+					conjunction.add(oldVarsEquality((IProgramOldVar) bv));
+				}
 			}
 		}
 		return conjunction;
@@ -368,7 +374,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 			mHierConstants = new ScopedHashMap<IProgramVar,Term>();
 			final IReturnAction ret = (IReturnAction) act;
 			final String proc = ret.getPrecedingProcedure();
-			final UnmodifiableTransFormula ovaTF = mModifiableGlobalVariableManager.
+			final UnmodifiableTransFormula ovaTF = mOldVarsAssignmentCache.
 					getOldVarsAssignment(proc);
 			Term ovaFormula = ovaTF.getFormula();
 
@@ -443,7 +449,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		
 		// rename globals that are not modifiable by callee to default constants
 		final String callee = mAssertedAction.getPrecedingProcedure();
-		final Set<IProgramVar> modifiableGlobalsCallee = mModifiableGlobalVariableManager.
+		final Set<IProgramNonOldVar> modifiableGlobalsCallee = mModifiableGlobalVariableManager.
 				getModifiedBoogieVars(callee);
 		hierFormula = renameNonModifiableNonOldGlobalsToDefaultConstants(
 				p.getVars(), modifiableGlobalsCallee, hierFormula);
@@ -451,7 +457,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		// rename oldvars of globals that are not modifiable by caller to 
 		// default constants of nonOldVar
 		final String caller = mAssertedAction.getSucceedingProcedure();
-		final Set<IProgramVar> modifiableGlobalsCaller = mModifiableGlobalVariableManager.
+		final Set<IProgramNonOldVar> modifiableGlobalsCaller = mModifiableGlobalVariableManager.
 				getModifiedBoogieVars(caller);
 		hierFormula = renameNonModifiableOldGlobalsToDefaultConstantOfNonOldVar(
 				p.getVars(), modifiableGlobalsCaller, hierFormula);
@@ -542,7 +548,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		final Set<IProgramVar> assignedVars = ((IInternalAction) mAssertedAction).getTransformula().getAssignedVars();
 		Term renamedFormula = renameVarsToPrimedConstants(assignedVars, p.getFormula());
 		final String succProc = mAssertedAction.getSucceedingProcedure();
-		final Set<IProgramVar> modifiableGlobals = mModifiableGlobalVariableManager.getModifiedBoogieVars(succProc);
+		final Set<IProgramNonOldVar> modifiableGlobals = mModifiableGlobalVariableManager.getModifiedBoogieVars(succProc);
 		renamedFormula = renameNonModifiableOldGlobalsToDefaultConstantOfNonOldVar(p.getVars(), modifiableGlobals, renamedFormula);
 		renamedFormula = renameVarsToDefaultConstants(p.getVars(), renamedFormula);
 		if (mUnletTerms ) {
@@ -608,7 +614,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		Term renamedFormula = renameVarsToPrimedConstants(assignedVars, p.getFormula());
 		
 		final String callee = mAssertedAction.getPrecedingProcedure();
-		final Set<IProgramVar> modifiableGlobalsCallee = mModifiableGlobalVariableManager.
+		final Set<IProgramNonOldVar> modifiableGlobalsCallee = mModifiableGlobalVariableManager.
 				getModifiedBoogieVars(callee);
 		
 		//rename modifiable globals to default constants
@@ -621,7 +627,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		// rename oldvars of globals that are not modifiable by caller to 
 		// default constants of nonOldVar
 		final String caller = mAssertedAction.getSucceedingProcedure();
-		final Set<IProgramVar> modifiableGlobalsCaller = mModifiableGlobalVariableManager.
+		final Set<IProgramNonOldVar> modifiableGlobalsCaller = mModifiableGlobalVariableManager.
 				getModifiedBoogieVars(caller);
 		renamedFormula = renameNonModifiableOldGlobalsToDefaultConstantOfNonOldVar(
 				p.getVars(), modifiableGlobalsCaller, renamedFormula);
@@ -695,10 +701,10 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 
 	
 	
-	private Term renameVarsToDefaultConstants(final Set<IProgramVar> boogieVars, final Term formula) {
+	private Term renameVarsToDefaultConstants(final Set<? extends IProgramVar> set, final Term formula) {
 		final ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
 		final ArrayList<Term> replacers = new ArrayList<Term>();
-		for (final IProgramVar bv : boogieVars) {
+		for (final IProgramVar bv : set) {
 			replacees.add(bv.getTermVariable());
 			replacers.add(bv.getDefaultConstant());
 		}
@@ -794,14 +800,14 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 	 */
 	private Term renameNonModifiableNonOldGlobalsToDefaultConstants(
 			final Set<IProgramVar> boogieVars, 
-			final Set<IProgramVar> modifiableGlobals,
+			final Set<IProgramNonOldVar> modifiableGlobalsCallee,
 			final Term formula) {
 		final ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
 		final ArrayList<Term> replacers = new ArrayList<Term>();
 		for (final IProgramVar bv : boogieVars) {
 			if (bv.isGlobal()) {
 				if (bv instanceof IProgramNonOldVar) {
-					if (modifiableGlobals.contains(bv)) {
+					if (modifiableGlobalsCallee.contains(bv)) {
 						//do nothing
 					} else {
 						replacees.add(bv.getTermVariable());
@@ -822,14 +828,14 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 	 */
 	private Term renameNonModifiableOldGlobalsToDefaultConstantOfNonOldVar(
 			final Set<IProgramVar> boogieVars, 
-			final Set<IProgramVar> modifiableGlobals,
+			final Set<IProgramNonOldVar> modifiableGlobalsCaller,
 			final Term formula) {
 		final ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
 		final ArrayList<Term> replacers = new ArrayList<Term>();
 		for (final IProgramVar bv : boogieVars) {
 			if (bv instanceof IProgramOldVar) {
 				final IProgramNonOldVar nonOldVar = ((IProgramOldVar) bv).getNonOldVar();
-				if (modifiableGlobals.contains(nonOldVar)) {
+				if (modifiableGlobalsCaller.contains(nonOldVar)) {
 					//do nothing
 				} else {
 					replacees.add(bv.getTermVariable());

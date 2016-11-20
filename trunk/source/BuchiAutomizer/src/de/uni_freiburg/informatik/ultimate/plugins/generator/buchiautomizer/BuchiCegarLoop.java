@@ -82,7 +82,6 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationAr
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfunctions.RankingFunction;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgElement;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
@@ -241,6 +240,7 @@ public class BuchiCegarLoop {
 	private final IToolchainStorage mStorage;
 
 	private ToolchainCanceledException mToolchainCancelledException;
+	private final RankVarConstructor mRankVarConstructor;
 	
 	private static final boolean DUMP_BIGGEST_AUTOMATON = false;
 
@@ -262,10 +262,12 @@ public class BuchiCegarLoop {
 		mMDBenchmark = new BuchiAutomizerModuleDecompositionBenchmark(mServices.getBacktranslationService());
 		mName = "BuchiCegarLoop";
 		mRootAnnot = rootNode;
-		mCsToolkit = csToolkit;
 		mPredicateFactory = predicateFactory;
-		mBinaryStatePredicateManager = new BinaryStatePredicateManager(mCsToolkit, predicateFactory, rootNode.getBoogie2SMT(), 
-				mServices, mSimplificationTechnique, mXnfConversionTechnique);
+		mRankVarConstructor = new RankVarConstructor(csToolkit, rootNode.getBoogie2SMT());
+		mCsToolkit = mRankVarConstructor.getCsToolkitWithRankVariables();
+		mBinaryStatePredicateManager = new BinaryStatePredicateManager(mCsToolkit, predicateFactory, mRankVarConstructor.getUnseededVariable(),
+				mRankVarConstructor.getOldRankVariables(), mServices,
+				mSimplificationTechnique, mXnfConversionTechnique);
 		mBenchmarkGenerator = new BuchiCegarLoopBenchmarkGenerator();
 		mBenchmarkGenerator.start(CegarLoopStatisticsDefinitions.OverallTime.toString());
 		// this.buchiModGlobalVarManager = new BuchiModGlobalVarManager(
@@ -429,7 +431,7 @@ public class BuchiCegarLoop {
 				mBenchmarkGenerator.start(BuchiCegarLoopBenchmark.s_LassoAnalysisTime);
 				lassoChecker = new LassoChecker(mInterpolation, mCsToolkit,
 						mPredicateFactory, mRootAnnot.getBoogie2SMT().getBoogie2SmtSymbolTable(),
-						mCsToolkit.getModifiableGlobals(),
+						mCsToolkit.getModifiableGlobalsTable(),
 						mRootAnnot.getBoogie2SMT().getAxioms(), mBinaryStatePredicateManager,
 						mCounterexample, generateLassoCheckerIdentifier(), mServices, mStorage, mSimplificationTechnique, mXnfConversionTechnique);
 				if (lassoChecker.getLassoCheckResult().getContinueDirective() == ContinueDirective.REPORT_UNKNOWN) {
@@ -442,7 +444,7 @@ public class BuchiCegarLoop {
 					mCounterexample = new NestedLassoRun<>(newStem, mCounterexample.getLoop());
 					lassoChecker = new LassoChecker(mInterpolation, mCsToolkit,
 							mPredicateFactory, mRootAnnot.getBoogie2SMT().getBoogie2SmtSymbolTable(), 
-							mCsToolkit.getModifiableGlobals(),
+							mCsToolkit.getModifiableGlobalsTable(),
 							mRootAnnot.getBoogie2SMT().getAxioms(), mBinaryStatePredicateManager,
 							mCounterexample, generateLassoCheckerIdentifier(), mServices, mStorage, mSimplificationTechnique, mXnfConversionTechnique);
 				}
@@ -738,16 +740,16 @@ public class BuchiCegarLoop {
 			throws AutomataOperationCanceledException {
 		mBenchmarkGenerator.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 		int stage = 0;
-		final BuchiModGlobalVarManager bmgvm = new BuchiModGlobalVarManager(
-				lassoChecker.getBinaryStatePredicateManager().getUnseededVariable(),
-				lassoChecker.getBinaryStatePredicateManager().getOldRankVariables(),
-				mRootAnnot.getCfgSmtToolkit().getModifiableGlobals(), mRootAnnot.getBoogie2SMT());
+//		final BuchiModGlobalVarManager bmgvm = new BuchiModGlobalVarManager(
+//				lassoChecker.getBinaryStatePredicateManager().getUnseededVariable(),
+//				lassoChecker.getBinaryStatePredicateManager().getOldRankVariables(),
+//				mRootAnnot.getCfgSmtToolkit().getModifiableGlobals(), mRootAnnot.getBoogie2SMT());
 		for (final RefinementSetting rs : mBuchiRefinementSettingSequence) {
 			assert automatonUsesISLPredicates(mAbstraction) : "used wrong StateFactory";
 			INestedWordAutomaton<CodeBlock, IPredicate> newAbstraction = null;
 			try {
 				newAbstraction = mRefineBuchi.refineBuchi(mAbstraction, mCounterexample, mIteration, rs,
-						lassoChecker.getBinaryStatePredicateManager(), bmgvm, mInterpolation, mBenchmarkGenerator,
+						lassoChecker.getBinaryStatePredicateManager(), mCsToolkit.getModifiableGlobalsTable(), mInterpolation, mBenchmarkGenerator,
 						mComplementationConstruction);
 			} catch (final AutomataOperationCanceledException e) {
 				mBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
@@ -861,7 +863,6 @@ public class BuchiCegarLoop {
 		mBenchmarkGenerator.addBackwardCoveringInformationFinite(bci);
 		constructInterpolantAutomaton(traceChecker, run);
 
-		final ModifiableGlobalVariableManager modGlobVarManager = mRootAnnot.getCfgSmtToolkit().getModifiableGlobals();
 		final IHoareTripleChecker htc = TraceAbstractionUtils.constructEfficientHoareTripleChecker(
 				mServices, HoareTripleChecks.INCREMENTAL, mCsToolkit, traceChecker.getPredicateUnifier());
 

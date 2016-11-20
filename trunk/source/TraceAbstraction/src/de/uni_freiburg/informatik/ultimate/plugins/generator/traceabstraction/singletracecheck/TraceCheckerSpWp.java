@@ -223,11 +223,11 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		if (mUseLiveVariablesInsteadOfRelevantVariables) {
 			// computation of live variables whose input is the original trace
 			final LiveVariables lvar = new LiveVariables(mNsb.getVariable2Constant(), mNsb.getConstants2BoogieVar(),
-					mNsb.getIndexedVarRepresentative(), mCsToolkit.getModifiableGlobals());
+					mNsb.getIndexedVarRepresentative());
 			liveVariables = lvar.getLiveVariables();
 		} else {
 			// computation of live variables whose input takes the unsat core into a account (if applicable)
-			final RelevantVariables rvar = new RelevantVariables(rtf, mCsToolkit.getModifiableGlobals());
+			final RelevantVariables rvar = new RelevantVariables(rtf, mCsToolkit.getModifiableGlobalsTable());
 			liveVariables = rvar.getRelevantVariables();
 		}
 
@@ -242,7 +242,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 						mCfgManagedScript, mPredicateFactory, mSimplificationTechnique, mXnfConversionTechnique));
 				postprocs.add(new UnifyPostprocessor());
 				final IterativePredicateTransformer spt = new IterativePredicateTransformer(mPredicateFactory,
-						mCfgManagedScript, mCsToolkit.getModifiableGlobals(), mServices, mTrace, mPrecondition,
+						mCfgManagedScript, mCsToolkit.getModifiableGlobalsTable(), mServices, mTrace, mPrecondition,
 						mPostcondition, mPendingContexts, null, mSimplificationTechnique, mXnfConversionTechnique,
 						mBoogie2SmtSymbolTable);
 				mInterpolantsFp = spt.computeStrongestPostconditionSequence(rtf, postprocs).getInterpolants();
@@ -267,7 +267,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 						mCfgManagedScript, mPredicateFactory, mSimplificationTechnique, mXnfConversionTechnique));
 				postprocs.add(new UnifyPostprocessor());
 				final IterativePredicateTransformer spt = new IterativePredicateTransformer(mPredicateFactory,
-						mCfgManagedScript, mCsToolkit.getModifiableGlobals(), mServices, mTrace, mPrecondition,
+						mCfgManagedScript, mCsToolkit.getModifiableGlobalsTable(), mServices, mTrace, mPrecondition,
 						mPostcondition, mPendingContexts, null, mSimplificationTechnique, mXnfConversionTechnique,
 						mBoogie2SmtSymbolTable);
 				mInterpolantsBp = spt.computeWeakestPreconditionSequence(rtf, postprocs, false).getInterpolants();
@@ -354,7 +354,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		final NestedFormulas<UnmodifiableTransFormula, IPredicate> rtf;
 		if (mUnsatCores == UnsatCores.IGNORE) {
 			rtf = new DefaultTransFormulas(mTrace, mPrecondition, mPostcondition, mPendingContexts,
-					mCsToolkit.getModifiableGlobals(), false);
+					mCsToolkit.getOldVarsAssignmentCache(), false);
 		} else if (mUnsatCores == UnsatCores.STATEMENT_LEVEL) {
 			final boolean[] localVarAssignmentAtCallInUnsatCore = new boolean[mTrace.length()];
 			final boolean[] oldVarAssignmentAtCallInUnsatCore = new boolean[mTrace.length()];
@@ -362,11 +362,11 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			final Set<IAction> codeBlocksInUnsatCore = filterOutIrrelevantStatements(mTrace, unsatCore,
 					localVarAssignmentAtCallInUnsatCore, oldVarAssignmentAtCallInUnsatCore);
 			rtf = new RelevantTransFormulas(mTrace, mPrecondition, mPostcondition, mPendingContexts,
-					codeBlocksInUnsatCore, mCsToolkit.getModifiableGlobals(), localVarAssignmentAtCallInUnsatCore,
+					codeBlocksInUnsatCore, mCsToolkit.getOldVarsAssignmentCache(), localVarAssignmentAtCallInUnsatCore,
 					oldVarAssignmentAtCallInUnsatCore, mCfgManagedScript);
 		} else if (mUnsatCores == UnsatCores.CONJUNCT_LEVEL) {
 			rtf = new RelevantTransFormulas(mTrace, mPrecondition, mPostcondition, mPendingContexts, unsatCore,
-					mCsToolkit.getModifiableGlobals(), mCfgManagedScript, mAAA, mAnnotateAndAsserterConjuncts);
+					mCsToolkit.getOldVarsAssignmentCache(), mCfgManagedScript, mAAA, mAnnotateAndAsserterConjuncts);
 		} else {
 			throw new AssertionError("unknown case:" + mUnsatCores);
 		}

@@ -41,8 +41,10 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICfgSymbolTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
@@ -51,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.Rc
 
 public class RcfgProgramExecutionBuilder {
 
-	private final ModifiableGlobalVariableManager mModifiableGlobalVariableManager;
+	private final ModifiableGlobalsTable mModifiableGlobalVariableManager;
 	private final NestedWord<CodeBlock> mTrace;
 	private final Map<IProgramVar, Map<Integer, Term>> mvar2pos2value;
 	private final RelevantVariables mRelevantVariables;
@@ -59,10 +61,10 @@ public class RcfgProgramExecutionBuilder {
 	private final Map<TermVariable, Boolean>[] mBranchEncoders;
 	private final ICfgSymbolTable mSymbolTable;
 
-	public RcfgProgramExecutionBuilder(final ModifiableGlobalVariableManager modifiableGlobalVariableManager,
+	public RcfgProgramExecutionBuilder(final ModifiableGlobalsTable modifiableGlobalsTable,
 			final NestedWord<CodeBlock> trace, final RelevantVariables relevantVariables, final ICfgSymbolTable symbolTable) {
 		super();
-		mModifiableGlobalVariableManager = modifiableGlobalVariableManager;
+		mModifiableGlobalVariableManager = modifiableGlobalsTable;
 		mTrace = trace;
 		mvar2pos2value = new HashMap<IProgramVar, Map<Integer, Term>>();
 		mRelevantVariables = relevantVariables;
@@ -87,11 +89,14 @@ public class RcfgProgramExecutionBuilder {
 			final Call call = (Call) mTrace.getSymbolAt(position);
 			final String callee = call.getCallStatement().getMethodName();
 			if (bv.isGlobal()) {
-				final Set<IProgramVar> modGlobals = mModifiableGlobalVariableManager.getGlobalVarsAssignment(callee)
-						.getOutVars().keySet();
-				final Set<IProgramVar> modOldGlobals = mModifiableGlobalVariableManager.getOldVarsAssignment(callee)
-						.getOutVars().keySet();
-				result = modGlobals.contains(bv) || modOldGlobals.contains(bv);
+				final Set<IProgramNonOldVar> modGlobals = mModifiableGlobalVariableManager.getModifiedBoogieVars(callee);
+				if (bv instanceof IProgramNonOldVar) {
+					result = modGlobals.contains(bv);
+				} else if (bv instanceof IProgramOldVar) {
+					result = modGlobals.contains(((IProgramOldVar) bv).getNonOldVar());
+				} else {
+					throw new AssertionError("unknown var");
+				}
 			} else {
 				// TransFormula locVarAssign =
 				// mTrace.getSymbolAt(position).getTransitionFormula();

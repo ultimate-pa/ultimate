@@ -34,8 +34,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IStorable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICfgSymbolTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -54,12 +54,12 @@ public class CodeBlockFactory implements IStorable {
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final ManagedScript mMgdScript;
-	private final ModifiableGlobalVariableManager mMgvManager;
+	private final CfgSmtToolkit mMgvManager;
 	private int mSerialNumberCounter = 0;
 	private final ICfgSymbolTable mSymbolTable;
 
 	public CodeBlockFactory(final IUltimateServiceProvider services, final ManagedScript mgdScript,
-			final ModifiableGlobalVariableManager mgvManager, final ICfgSymbolTable symbolTable) {
+			final CfgSmtToolkit mgvManager, final ICfgSymbolTable symbolTable) {
 		super();
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -97,8 +97,8 @@ public class CodeBlockFactory implements IStorable {
 	public SequentialComposition constructSequentialComposition(final BoogieIcfgLocation source, final BoogieIcfgLocation target,
 			final boolean simplify, final boolean extPqe, final List<CodeBlock> codeBlocks,
 			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique) {
-		return new SequentialComposition(mSerialNumberCounter++, source, target, mMgdScript, mMgvManager, simplify,
-				extPqe, mServices, codeBlocks, xnfConversionTechnique, simplificationTechnique, mSymbolTable);
+		return new SequentialComposition(mSerialNumberCounter++, source, target, mMgvManager, simplify, extPqe,
+				mServices, codeBlocks, xnfConversionTechnique, simplificationTechnique);
 	}
 
 	public StatementSequence constructStatementSequence(final BoogieIcfgLocation source, final BoogieIcfgLocation target,

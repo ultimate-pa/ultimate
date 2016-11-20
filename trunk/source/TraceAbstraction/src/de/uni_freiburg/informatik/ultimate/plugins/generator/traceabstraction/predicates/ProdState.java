@@ -44,9 +44,9 @@ public class ProdState extends BasicPredicate {
 	
 	List<IPredicate> mPredicates = new ArrayList<IPredicate>();
 	
-	protected ProdState(int serialNumber, List<IPredicate> mPredicates, Term term, Set<IProgramVar> vars) {
+	protected ProdState(final int serialNumber, final List<IPredicate> predicates, final Term term, final Set<IProgramVar> vars) {
 		super(serialNumber, null, term, vars, null);
-		mPredicates = mPredicates;
+		mPredicates = predicates;
 	}
 
 	/**
@@ -63,7 +63,7 @@ public class ProdState extends BasicPredicate {
 	}
 
 	@Override
-	protected Object getFieldValue(String field) {
+	protected Object getFieldValue(final String field) {
 		if (field == "Predicates") {
 			return mPredicates;
 		} else {
@@ -71,7 +71,7 @@ public class ProdState extends BasicPredicate {
 		}
 	}
 
-	public void addPredicate(IPredicate Predicate) {
+	public void addPredicate(final IPredicate Predicate) {
 		mPredicates.add(Predicate);
 	}
 	

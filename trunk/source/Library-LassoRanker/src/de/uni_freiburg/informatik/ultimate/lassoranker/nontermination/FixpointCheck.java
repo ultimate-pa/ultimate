@@ -62,14 +62,14 @@ public class FixpointCheck {
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final ManagedScript mManagedScript;
-	private final Set<IProgramVar> mModifiableGlobalsAtHonda;
+	private final Set<IProgramNonOldVar> mModifiableGlobalsAtHonda;
 	private final TransFormula mStem;
 	private final TransFormula mLoop;
 	private final HasFixpoint mResult;
 	private InfiniteFixpointRepetition mTerminationArgument;
 	
 	public FixpointCheck(final IUltimateServiceProvider services, final ILogger logger, final ManagedScript managedScript,
-			final Set<IProgramVar> modifiableGlobalsAtHonda, 
+			final Set<IProgramNonOldVar> modifiableGlobalsAtHonda, 
 			final TransFormula stem, final TransFormula loop) {
 		super();
 		mServices = services;

@@ -150,7 +150,7 @@ public class PredicateTransformer {
 		return pushed;
 	}
 
-	public Term weakLocalPostconditionCall(final IPredicate p, final UnmodifiableTransFormula globalVarAssignments, final Set<IProgramVar> modifiableGlobals) {
+	public Term weakLocalPostconditionCall(final IPredicate p, final UnmodifiableTransFormula globalVarAssignments, final Set<IProgramNonOldVar> modifiedGlobals) {
 		final Set<TermVariable> varsToQuantify = new HashSet<>();
 		
 		final Term renamedOldVarsAssignment;
@@ -173,7 +173,7 @@ public class PredicateTransformer {
 			TermVariable substituent;
 			for (final IProgramVar pv : p.getVars()) {
 				if (pv instanceof IProgramNonOldVar) {
-					if (modifiableGlobals.contains(pv)) {
+					if (modifiedGlobals.contains(pv)) {
 						substituent = constructFreshTermVariable(mMgdScript, pv);
 						varsToQuantify.add(substituent);
 						substitutionMapping.put(pv.getTermVariable(), substituent);
@@ -203,7 +203,7 @@ public class PredicateTransformer {
 	
 	
 	public Term strongestPostconditionCall(final IPredicate p, final UnmodifiableTransFormula localVarAssignments,
-			final UnmodifiableTransFormula globalVarAssignments, final UnmodifiableTransFormula oldVarAssignments, final Set<IProgramVar> modifiableGlobals) {
+			final UnmodifiableTransFormula globalVarAssignments, final UnmodifiableTransFormula oldVarAssignments, final Set<IProgramNonOldVar> modifiableGlobalsOfEndProcedure) {
 		final Set<TermVariable> varsToQuantify = new HashSet<>();
 		final IValueConstruction<IProgramVar, TermVariable> substituentConstruction = new IValueConstruction<IProgramVar, TermVariable>() {
 
@@ -211,7 +211,7 @@ public class PredicateTransformer {
 			public TermVariable constructValue(final IProgramVar pv) {
 				final TermVariable result;
 				if (pv instanceof IProgramNonOldVar) {
-					if (modifiableGlobals.contains(pv)) {
+					if (modifiableGlobalsOfEndProcedure.contains(pv)) {
 						result = constructFreshTermVariable(mMgdScript, pv);
 						varsToQuantify.add(result);
 					} else {
@@ -530,7 +530,7 @@ public class PredicateTransformer {
 	 */
 	public Term weakestPrecondition(final IPredicate calleePred, final UnmodifiableTransFormula call_TF,
 			final UnmodifiableTransFormula globalVarsAssignments, final UnmodifiableTransFormula oldVarsAssignments, 
-			final Set<IProgramVar> modifiableGlobals) {
+			final Set<IProgramNonOldVar> modifiableGlobals) {
 		
 		final InstanceProviderWpCall ip = new InstanceProviderWpCall(modifiableGlobals);
 		
@@ -621,7 +621,7 @@ public class PredicateTransformer {
 	public Term weakestPrecondition(final IPredicate returnerPred, final IPredicate callerPred, 
 			final UnmodifiableTransFormula returnTF, final UnmodifiableTransFormula callTF, 
 			final UnmodifiableTransFormula globalVarsAssignments, final UnmodifiableTransFormula oldVarAssignments,
-			final Set<IProgramVar> modifiableGlobals, final Set<IProgramVar> varsOccurringBetweenCallAndReturn) {
+			final Set<IProgramNonOldVar> modifiableGlobals, final Set<IProgramVar> varsOccurringBetweenCallAndReturn) {
 		assert(callTF.getAuxVars().isEmpty()) : "no auxvars allowed";
 		assert(returnTF.getAuxVars().isEmpty()) : "no auxvars allowed";
 		
@@ -764,7 +764,7 @@ public class PredicateTransformer {
 	 *
 	 */
 	private class InstanceProviderWpCall {
-		private final Set<IProgramVar> mModifiableGlobals;
+		private final Set<IProgramNonOldVar> mModifiableGlobals;
 		private final IValueConstruction<IProgramVar, TermVariable> mValueConstruction = new IValueConstruction<IProgramVar, TermVariable>() {
 			@Override
 			public TermVariable constructValue(final IProgramVar pv) {
@@ -773,7 +773,7 @@ public class PredicateTransformer {
 		};
 		private final ConstructionCache<IProgramVar, TermVariable> mFreshVariables = new ConstructionCache<>(mValueConstruction);
 		
-		public InstanceProviderWpCall(final Set<IProgramVar> modifiableGlobals) {
+		public InstanceProviderWpCall(final Set<IProgramNonOldVar> modifiableGlobals) {
 			super();
 			mModifiableGlobals = modifiableGlobals;
 		}
@@ -828,12 +828,12 @@ public class PredicateTransformer {
 		private final Map<IProgramVar, TermVariable> mBeforeCall = new HashMap<IProgramVar, TermVariable>();
 		private final Map<IProgramVar, TermVariable> mAfterReturn = new HashMap<IProgramVar, TermVariable>();
 		private final Map<IProgramVar, TermVariable> mBeforeAfterCallCoincide = new HashMap<IProgramVar, TermVariable>();
-		private final Set<IProgramVar> mModifiableGlobals;
+		private final Set<IProgramNonOldVar> mModifiableGlobals;
 		private final Set<IProgramVar> mVarsOccurringBetweenCallAndReturn;
 		private final Set<IProgramVar> mAssignedOnReturn;
 		private final Set<TermVariable> mFreshTermVariables = new HashSet<TermVariable>();
 		
-		public InstanceProviderWpReturn(final Set<IProgramVar> modifiableGlobals,
+		public InstanceProviderWpReturn(final Set<IProgramNonOldVar> modifiableGlobals,
 				final Set<IProgramVar> varsOccurringBetweenCallAndReturn,
 				final Set<IProgramVar> assignedOnReturn) {
 			super();

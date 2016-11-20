@@ -58,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.HoareTripleCheckerStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -95,7 +95,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 	private final NestedWord<CodeBlock> mTrace;
 	private final IUltimateServiceProvider mServices;
 	private final CfgSmtToolkit mCsToolkit;
-	private final ModifiableGlobalVariableManager mModifiedGlobals;
+	private final ModifiableGlobalsTable mModifiedGlobals;
 	private final PredicateUnifier mPredicateUnifier;
 	private final ILogger mLogger;
 	private final CachingHoareTripleChecker mHoareTripleChecker;
@@ -108,7 +108,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 
 	public InterpolantConsolidation(final IPredicate precondition, final IPredicate postcondition,
 			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<CodeBlock> trace,
-			final CfgSmtToolkit csToolkit, final ModifiableGlobalVariableManager modifiedGlobals,
+			final CfgSmtToolkit csToolkit, final ModifiableGlobalsTable modifiableGlobalsTable,
 			final IUltimateServiceProvider services, final ILogger logger, final PredicateUnifier predicateUnifier,
 			final InterpolatingTraceChecker tc, final TAPreferences taPrefs) throws AutomataOperationCanceledException {
 		mPrecondition = precondition;
@@ -116,7 +116,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 		mPendingContexts = pendingContexts;
 		mTrace = trace;
 		mCsToolkit = csToolkit;
-		mModifiedGlobals = modifiedGlobals;
+		mModifiedGlobals = modifiableGlobalsTable;
 		mServices = services;
 		mLogger = logger;
 		mPredicateUnifier = predicateUnifier;

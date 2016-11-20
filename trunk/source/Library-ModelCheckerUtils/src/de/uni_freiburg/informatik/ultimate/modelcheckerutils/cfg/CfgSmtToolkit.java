@@ -28,27 +28,30 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg;
 
 import java.util.Collection;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 public class CfgSmtToolkit {
 
-
 	private final ManagedScript mManagedScript;
-	private final ModifiableGlobalVariableManager mModifiableGlobals;
+	private final ModifiableGlobalsTable mModifiableGlobalsTable;
 	private final ICfgSymbolTable mSymbolTable;
 	private final Collection<Term> mAxioms;
+	private final OldVarsAssignmentCache mOldVarsAssignmentCache;
+	private final Set<String> mProcedures;
 
 
 
-
-	public CfgSmtToolkit(final ModifiableGlobalVariableManager modifiableGlobals, final ManagedScript managedScript, 
-			final ICfgSymbolTable symbolTable, final Collection<Term> axioms) {
+	public CfgSmtToolkit(final ModifiableGlobalsTable modifiableGlobalsTable, final ManagedScript managedScript, 
+			final ICfgSymbolTable symbolTable, final Collection<Term> axioms, final Set<String> procedures) {
 		mManagedScript = managedScript;
 		mSymbolTable = symbolTable;
-		mModifiableGlobals = modifiableGlobals;
+		mModifiableGlobalsTable = modifiableGlobalsTable;
+		mOldVarsAssignmentCache = new OldVarsAssignmentCache(mManagedScript, mModifiableGlobalsTable);
 		mAxioms = axioms;
+		mProcedures = procedures;
 	}
 
 
@@ -56,8 +59,12 @@ public class CfgSmtToolkit {
 		return mManagedScript;
 	}
 
-	public ModifiableGlobalVariableManager getModifiableGlobals() {
-		return mModifiableGlobals;
+	public ModifiableGlobalsTable getModifiableGlobalsTable() {
+		return mModifiableGlobalsTable;
+	}
+	
+	public OldVarsAssignmentCache getOldVarsAssignmentCache() {
+		return mOldVarsAssignmentCache;
 	}
 
 	public ICfgSymbolTable getSymbolTable() {
@@ -67,6 +74,12 @@ public class CfgSmtToolkit {
 	public Collection<Term> getAxioms() {
 		return mAxioms;
 	}
+
+	public Set<String> getProcedures() {
+		return mProcedures;
+	}
+	
+	
 	
 	
 	

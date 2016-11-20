@@ -36,12 +36,13 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.HoareTripleCheckerStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
@@ -53,7 +54,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 	
 	private final CfgSmtToolkit mCsToolkit;
 	private final ManagedScript mManagedScript;
-	private final ModifiableGlobalVariableManager mModifiableGlobals;
+	private final ModifiableGlobalsTable mModifiableGlobals;
 	
 	private final HoareTripleCheckerStatisticsGenerator mHoareTripleCheckerStatistics;
 
@@ -81,7 +82,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		super();
 		mCsToolkit = csToolkit;
 		mManagedScript = csToolkit.getManagedScript();
-		mModifiableGlobals = csToolkit.getModifiableGlobals();
+		mModifiableGlobals = csToolkit.getModifiableGlobalsTable();
 		mHoareTripleCheckerStatistics = new HoareTripleCheckerStatisticsGenerator();
 	}
 
@@ -208,8 +209,8 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		final String procPred = ta.getPrecedingProcedure();
 		final String procSucc = ta.getSucceedingProcedure();
 //		assert proc.equals(ta.getSucceedingProcedure()) : "different procedure before and after";
-		final Set<IProgramVar> modifiableGlobalsPred = mModifiableGlobals.getModifiedBoogieVars(procPred);
-		final Set<IProgramVar> modifiableGlobalsSucc = mModifiableGlobals.getModifiedBoogieVars(procSucc);
+		final Set<IProgramNonOldVar> modifiableGlobalsPred = mModifiableGlobals.getModifiedBoogieVars(procPred);
+		final Set<IProgramNonOldVar> modifiableGlobalsSucc = mModifiableGlobals.getModifiedBoogieVars(procSucc);
 
 		final LBool result = PredicateUtils.isInductiveHelper(mManagedScript.getScript(), 
 				ps1, ps2, tf, modifiableGlobalsPred, modifiableGlobalsSucc);
@@ -254,7 +255,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		// OldVars not renamed if modifiable.
 		// All variables get index 0.
 		final String caller = ta.getPrecedingProcedure();
-		final Set<IProgramVar> modifiableGlobalsCaller = mModifiableGlobals.getModifiedBoogieVars(caller);
+		final Set<IProgramNonOldVar> modifiableGlobalsCaller = mModifiableGlobals.getModifiedBoogieVars(caller);
 		final Term ps1renamed = PredicateUtils.formulaWithIndexedVars(ps1, new HashSet<IProgramVar>(0), 4, 0,
 				Integer.MIN_VALUE, null, -5, 0, mIndexedConstants, mManagedScript.getScript(), modifiableGlobalsCaller);
 
@@ -266,7 +267,7 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		// GlobalVars renamed to index 0
 		// Other vars get index 1
 		final String callee = ta.getSucceedingProcedure();
-		final Set<IProgramVar> modifiableGlobalsCallee = mModifiableGlobals.getModifiedBoogieVars(callee);
+		final Set<IProgramNonOldVar> modifiableGlobalsCallee = mModifiableGlobals.getModifiedBoogieVars(callee);
 		final Term ps2renamed = PredicateUtils.formulaWithIndexedVars(ps2, new HashSet<IProgramVar>(0), 4, 1, 0, null, 23, 0,
 				mIndexedConstants, mManagedScript.getScript(), modifiableGlobalsCallee);
 
@@ -326,10 +327,10 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 		// fCall = (new FormulaUnLet()).unlet(fCall);
 
 		final String callee = ta.getPrecedingProcedure();
-		final Set<IProgramVar> modifiableGlobalsCallee = mModifiableGlobals.getModifiedBoogieVars(callee);
+		final Set<IProgramNonOldVar> modifiableGlobalsCallee = mModifiableGlobals.getModifiedBoogieVars(callee);
 
 		final String caller = ta.getSucceedingProcedure();
-		final Set<IProgramVar> modifiableGlobalsCaller = mModifiableGlobals.getModifiedBoogieVars(caller);
+		final Set<IProgramNonOldVar> modifiableGlobalsCaller = mModifiableGlobals.getModifiedBoogieVars(caller);
 
 		// oldVars not renamed if modifiable
 		// other variables get index 0

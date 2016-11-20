@@ -57,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -207,7 +208,7 @@ public class RefineBuchi {
 	INestedWordAutomaton<CodeBlock, IPredicate> refineBuchi(
 			final INestedWordAutomatonSimple<CodeBlock, IPredicate> abstraction,
 			final NestedLassoRun<CodeBlock, IPredicate> mCounterexample, final int mIteration, final RefinementSetting setting,
-			final BinaryStatePredicateManager bspm, final BuchiModGlobalVarManager buchiModGlobalVarManager,
+			final BinaryStatePredicateManager bspm, final ModifiableGlobalsTable modifiableGlobalsTable,
 			final InterpolationTechnique interpolation, final BuchiCegarLoopBenchmarkGenerator benchmarkGenerator,
 			final BuchiComplementationConstruction complementationConstruction)
 			throws AutomataLibraryException {
@@ -232,7 +233,7 @@ public class RefineBuchi {
 		} else {
 
 			traceChecker = constructTraceChecker(bspm.getStemPrecondition(), bspm.getStemPostcondition(), stem,
-					mCsToolkit, buchiModGlobalVarManager, pu, mInterpolation);
+					mCsToolkit, pu, mInterpolation);
 			final LBool stemCheck = traceChecker.isCorrect();
 			if (stemCheck == LBool.UNSAT) {
 				stemInterpolants = traceChecker.getInterpolants();
@@ -242,7 +243,7 @@ public class RefineBuchi {
 		}
 
 		traceChecker = constructTraceChecker(bspm.getRankEqAndSi(), bspm.getHondaPredicate(), loop, mCsToolkit,
-				buchiModGlobalVarManager, pu, mInterpolation);
+				pu, mInterpolation);
 		final LBool loopCheck = traceChecker.isCorrect();
 		IPredicate[] loopInterpolants;
 		if (loopCheck == LBool.UNSAT) {
@@ -301,7 +302,7 @@ public class RefineBuchi {
 					loopInterpolantsForRefinement.addAll(pu.cannibalize(false, bspm.getRankEqAndSi().getFormula()));
 
 					final LoopCannibalizer lc = new LoopCannibalizer(mCounterexample, loopInterpolantsForRefinement, bspm, pu,
-							mCsToolkit, buchiModGlobalVarManager, interpolation, 
+							mCsToolkit, interpolation, 
 							mICfgContainer.getBoogie2SMT().getBoogie2SmtSymbolTable(),
 							mServices, mSimplificationTechnique, mXnfConversionTechnique);
 					loopInterpolantsForRefinement = lc.getResult();
@@ -489,7 +490,7 @@ public class RefineBuchi {
 	}
 
 	private InterpolatingTraceChecker constructTraceChecker(final IPredicate precond, final IPredicate postcond,
-			final NestedWord<CodeBlock> word, final CfgSmtToolkit csToolkit, final BuchiModGlobalVarManager buchiModGlobalVarManager,
+			final NestedWord<CodeBlock> word, final CfgSmtToolkit csToolkit,
 			final PredicateUnifier pu, final InterpolationTechnique interpolation) {
 		final InterpolatingTraceChecker itc;
 		switch (mInterpolation) {

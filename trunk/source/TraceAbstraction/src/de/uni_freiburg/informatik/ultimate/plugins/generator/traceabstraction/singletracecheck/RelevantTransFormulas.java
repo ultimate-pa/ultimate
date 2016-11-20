@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.OldVarsAssignmentCache;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
@@ -101,7 +101,7 @@ public class RelevantTransFormulas extends NestedFormulas<UnmodifiableTransFormu
 			final IPredicate precondition, final IPredicate postcondition,
 			final SortedMap<Integer, IPredicate> pendingContexts,
 			final Set<IAction> unsat_core,
-			final ModifiableGlobalVariableManager modGlobalVarManager,
+			final OldVarsAssignmentCache oldVarsAssignmentCache,
 			final boolean[] localVarAssignmentsAtCallInUnsatCore,
 			final boolean[] oldVarAssignmentAtCallInUnsatCore,
 			final ManagedScript script) {
@@ -113,7 +113,7 @@ public class RelevantTransFormulas extends NestedFormulas<UnmodifiableTransFormu
 		mOldVarsAssignmentTransFormulasAtCall = new HashMap<Integer, UnmodifiableTransFormula>();
 		mScript = script;
 		generateRelevantTransFormulas(unsat_core, localVarAssignmentsAtCallInUnsatCore,
-				oldVarAssignmentAtCallInUnsatCore, modGlobalVarManager);
+				oldVarAssignmentAtCallInUnsatCore, oldVarsAssignmentCache);
 		
 	}
 	
@@ -121,7 +121,7 @@ public class RelevantTransFormulas extends NestedFormulas<UnmodifiableTransFormu
 			final IPredicate precondition, final IPredicate postcondition,
 			final SortedMap<Integer, IPredicate> pendingContexts,
 			final Set<Term> unsat_core,
-			final ModifiableGlobalVariableManager modGlobalVarManager,
+			final OldVarsAssignmentCache modGlobalVarManager,
 			final ManagedScript script,
 			final AnnotateAndAsserter aaa,
 			final AnnotateAndAssertConjunctsOfCodeBlocks aac) {
@@ -138,15 +138,15 @@ public class RelevantTransFormulas extends NestedFormulas<UnmodifiableTransFormu
 	private void generateRelevantTransFormulas(final Set<IAction> unsat_core,
 			final boolean[] localVarAssignmentsAtCallInUnsatCore,
 			final boolean[] oldVarAssignmentAtCallInUnsatCore,
-			final ModifiableGlobalVariableManager modGlobalVarManager) {
+			final OldVarsAssignmentCache oldVarsAssignmentCache) {
 		for (int i = 0; i < super.getTrace().length(); i++) {
 			if (unsat_core.contains(super.getTrace().getSymbol(i))) {
 				if (super.getTrace().getSymbol(i) instanceof ICallAction) {
 					final ICallAction call = (ICallAction) super.getTrace().getSymbol(i);
 					mGlobalAssignmentTransFormulaAtCall.put(i,
-							modGlobalVarManager.getGlobalVarsAssignment(call.getSucceedingProcedure()));
+							oldVarsAssignmentCache.getGlobalVarsAssignment(call.getSucceedingProcedure()));
 					mOldVarsAssignmentTransFormulasAtCall.put(i,
-							modGlobalVarManager.getOldVarsAssignment(call.getSucceedingProcedure()));
+							oldVarsAssignmentCache.getOldVarsAssignment(call.getSucceedingProcedure()));
 					if (localVarAssignmentsAtCallInUnsatCore[i]) {
 						mTransFormulas[i] = call.getLocalVarsAssignment();
 					} else {
@@ -163,14 +163,14 @@ public class RelevantTransFormulas extends NestedFormulas<UnmodifiableTransFormu
 						mTransFormulas[i] = buildTransFormulaForStmtNotInUnsatCore(((CodeBlock) super.getTrace().getSymbol(i)).getTransitionFormula());
 					}
 					if (oldVarAssignmentAtCallInUnsatCore[i]) {
-						mOldVarsAssignmentTransFormulasAtCall.put(i, modGlobalVarManager.getOldVarsAssignment(((Call)super.getTrace().getSymbol(i)).getCallStatement().getMethodName()));
+						mOldVarsAssignmentTransFormulasAtCall.put(i, oldVarsAssignmentCache.getOldVarsAssignment(((Call)super.getTrace().getSymbol(i)).getCallStatement().getMethodName()));
 					} else {
 						mOldVarsAssignmentTransFormulasAtCall.put(i,
 								buildTransFormulaForStmtNotInUnsatCore(
-										modGlobalVarManager.getOldVarsAssignment(((Call)super.getTrace().getSymbol(i)).getCallStatement().getMethodName())));
+										oldVarsAssignmentCache.getOldVarsAssignment(((Call)super.getTrace().getSymbol(i)).getCallStatement().getMethodName())));
 					}
 					mGlobalAssignmentTransFormulaAtCall.put(i, buildTransFormulaForStmtNotInUnsatCore(
-							modGlobalVarManager.getGlobalVarsAssignment(((Call)super.getTrace().getSymbol(i)).getCallStatement().getMethodName())));
+							oldVarsAssignmentCache.getGlobalVarsAssignment(((Call)super.getTrace().getSymbol(i)).getCallStatement().getMethodName())));
 					
 				} else {
 					mTransFormulas[i] = buildTransFormulaForStmtNotInUnsatCore(((CodeBlock) super.getTrace().getSymbol(i)).getTransitionFormula());
@@ -181,7 +181,7 @@ public class RelevantTransFormulas extends NestedFormulas<UnmodifiableTransFormu
 	}
 	
 	private void generateRelevantTransFormulas(final Set<Term> unsat_core,
-			final ModifiableGlobalVariableManager modGlobalVarManager,
+			final OldVarsAssignmentCache modGlobalVarManager,
 			final AnnotateAndAsserter aaa,
 			final AnnotateAndAssertConjunctsOfCodeBlocks aac) {
 		final Map<Term, Term> annot2Original = aac.getAnnotated2Original();

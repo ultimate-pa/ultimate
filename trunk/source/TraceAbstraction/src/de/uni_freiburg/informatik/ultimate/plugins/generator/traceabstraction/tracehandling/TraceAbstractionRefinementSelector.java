@@ -417,7 +417,7 @@ public final class TraceAbstractionRefinementSelector
 		final InterpolantConsolidation interpConsoli = new InterpolantConsolidation(
 				mPredicateUnifier.getTruePredicate(), mPredicateUnifier.getFalsePredicate(),
 				new TreeMap<Integer, IPredicate>(), NestedWord.nestedWord(counterexample.getWord()), mCsToolkit,
-				mCsToolkit.getModifiableGlobals(), mServices, mLogger, mPredicateUnifier, interpolatingTraceChecker,
+				mCsToolkit.getModifiableGlobalsTable(), mServices, mLogger, mPredicateUnifier, interpolatingTraceChecker,
 				mTaPrefsForInterpolantConsolidation);
 		// Add benchmark data of interpolant consolidation
 		mCegarLoopBenchmark.addInterpolationConsolidationData(interpConsoli.getInterpolantConsolidationBenchmarks());

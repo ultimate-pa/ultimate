@@ -132,7 +132,7 @@ public class HoareAnnotationWriter {
 		
 		final HoareAnnotation taAnnot = HoareAnnotation.getAnnotation(locNode);
 		if (taAnnot == null) {
-			hoareAnnot = mPredicateFactory.getNewHoareAnnotation(pp, mCsToolkit.getModifiableGlobals());
+			hoareAnnot = mPredicateFactory.getNewHoareAnnotation(pp, mCsToolkit.getModifiableGlobalsTable());
 			hoareAnnot.annotate(locNode);
 		} else {
 			hoareAnnot = taAnnot;
