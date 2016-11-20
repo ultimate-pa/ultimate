@@ -17,11 +17,11 @@ public interface IRefinementStrategy {
 	/**
 	 * @return {@code true} iff there are more combinations available.
 	 */
-	boolean hasMoreStrategies();
+	boolean hasNext();
 	
 	/**
 	 * Changes the combination.<br>
-	 * Throws a {@link NoSuchElementException} if there is no next combination; use {@link #hasMoreStrategies()} to
+	 * Throws a {@link NoSuchElementException} if there is no next combination; use {@link #hasNext()} to
 	 * check this.
 	 * <p>
 	 * TODO We need an interface to give more information to the strategy about why we need a different combination.<br>

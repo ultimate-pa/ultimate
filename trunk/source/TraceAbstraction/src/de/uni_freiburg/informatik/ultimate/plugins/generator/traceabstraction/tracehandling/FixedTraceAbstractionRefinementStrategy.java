@@ -87,7 +87,7 @@ public class FixedTraceAbstractionRefinementStrategy implements IRefinementStrat
 	}
 	
 	@Override
-	public boolean hasMoreStrategies() {
+	public boolean hasNext() {
 		return false;
 	}
 	
