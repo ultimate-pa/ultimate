@@ -28,36 +28,25 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.t
 
 import java.util.NoSuchElementException;
 import java.util.TreeMap;
-import java.util.function.Supplier;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.IInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantConsolidation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceChecker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheckerCraig;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheckerPathInvariantsWithFallback;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceChecker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerSpWp;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 /**
@@ -76,7 +65,7 @@ public class FixedTraceAbstractionRefinementStrategy
 	private final PredicateUnifier mPredicateUnifier;
 	private final IUltimateServiceProvider mServices;
 	
-	private final ConstructorFromPreferences mFunConstructFromPrefs;
+	private final TraceCheckerConstructor mFunConstructFromPrefs;
 	private TraceChecker mTraceChecker;
 	private IInterpolantGenerator mInterpolantGenerator;
 	private NestedWordAutomaton<CodeBlock, IPredicate> mInterpolantAutomaton;
@@ -112,8 +101,8 @@ public class FixedTraceAbstractionRefinementStrategy
 		mPredicateUnifier = predicateUnifier;
 		mCounterexample = counterexample;
 		mTaPrefsForInterpolantConsolidation = taPrefsForInterpolantConsolidation;
-		mFunConstructFromPrefs =
-				new ConstructorFromPreferences(prefs, managedScript, services, predicateUnifier, counterexample);
+		mFunConstructFromPrefs = new TraceCheckerConstructor(prefs, managedScript, services, predicateUnifier,
+				counterexample, mPrefs.getInterpolationTechnique());
 	}
 	
 	@Override
@@ -218,115 +207,5 @@ public class FixedTraceAbstractionRefinementStrategy
 		// TODO add code to construct the next automaton
 		mLogger.debug("The interpolant automaton is not considered good, but at the moment we still use it.");
 		return automaton;
-	}
-	
-	/**
-	 * Trace checker constructor on demand.
-	 * 
-	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
-	 */
-	private static class ConstructorFromPreferences implements Supplier<TraceChecker> {
-		private final TaCheckAndRefinementPreferences mPrefs;
-		private final ManagedScript mManagedScript;
-		private final IUltimateServiceProvider mServices;
-		private final PredicateUnifier mPredicateUnifier;
-		private final IRun<CodeBlock, IPredicate, ?> mCounterexample;
-		
-		/**
-		 * @param prefs
-		 *            Preferences.
-		 * @param managedScript
-		 *            managed script
-		 * @param services
-		 *            Ultimate services
-		 * @param predicateUnifier
-		 *            predicate unifier
-		 * @param counterexample
-		 *            counterexample trace
-		 */
-		public ConstructorFromPreferences(final TaCheckAndRefinementPreferences prefs,
-				final ManagedScript managedScript, final IUltimateServiceProvider services,
-				final PredicateUnifier predicateUnifier, final IRun<CodeBlock, IPredicate, ?> counterexample) {
-			mPrefs = prefs;
-			mManagedScript = managedScript;
-			mServices = services;
-			mPredicateUnifier = predicateUnifier;
-			mCounterexample = counterexample;
-		}
-		
-		@SuppressWarnings("unchecked")
-		@Override
-		public TraceChecker get() {
-			final IPredicate truePredicate = mPredicateUnifier.getTruePredicate();
-			final IPredicate falsePredicate = mPredicateUnifier.getFalsePredicate();
-			final AssertCodeBlockOrder assertCodeBlocksIncrementally = mPrefs.getAssertCodeBlocksIncrementally();
-			final InterpolationTechnique interpolationTechnique = mPrefs.getInterpolationTechnique();
-			final XnfConversionTechnique xnfConversionTechnique = mPrefs.getXnfConversionTechnique();
-			final SimplificationTechnique simplificationTechnique = mPrefs.getSimplificationTechnique();
-			
-			final TraceChecker traceChecker;
-			switch (interpolationTechnique) {
-				case Craig_NestedInterpolation:
-				case Craig_TreeInterpolation:
-					traceChecker = new InterpolatingTraceCheckerCraig(truePredicate, falsePredicate,
-							new TreeMap<Integer, IPredicate>(), NestedWord.nestedWord(mCounterexample.getWord()),
-							mPrefs.getCfgSmtToolkit(), assertCodeBlocksIncrementally, mServices, true,
-							mPredicateUnifier, interpolationTechnique, mManagedScript, true,
-							xnfConversionTechnique, simplificationTechnique, mCounterexample.getStateSequence(),
-							false);
-					break;
-				case ForwardPredicates:
-				case BackwardPredicates:
-				case FPandBP:
-					traceChecker = new TraceCheckerSpWp(truePredicate, falsePredicate,
-							new TreeMap<Integer, IPredicate>(), NestedWord.nestedWord(mCounterexample.getWord()),
-							mPrefs.getCfgSmtToolkit(), assertCodeBlocksIncrementally, mPrefs.getUnsatCores(),
-							mPrefs.getUseLiveVariables(), mServices, true, mPredicateUnifier,
-							interpolationTechnique, mManagedScript, xnfConversionTechnique,
-							simplificationTechnique, mCounterexample.getStateSequence());
-					
-					break;
-				case PathInvariants:
-					final BoogieIcfgContainer icfgContainer = mPrefs.getIcfgContainer();
-					final boolean useNonlinearConstraints = mPrefs.getUseNonlinearConstraints();
-					final boolean useVarsFromUnsatCore = mPrefs.getUseVarsFromUnsatCore();
-					final boolean dumpSmtScriptToFile = mPrefs.getDumpSmtScriptToFile();
-					final String pathOfDumpedScript = mPrefs.getPathOfDumpedScript();
-					final String baseNameOfDumpedScript =
-							"InVarSynth_" + icfgContainer.getFilename() + "_Iteration" + mPrefs.getIteration();
-					final String solverCommand;
-					if (useNonlinearConstraints) {
-						// solverCommand = "yices-smt2 --incremental";
-						// solverCommand = "/home/matthias/ultimate/barcelogic/barcelogic-NIRA -tlimit 5";
-						solverCommand = "z3 -smt2 -in SMTLIB2_COMPLIANT=true -t:42000";
-						// solverCommand = "z3 -smt2 -in SMTLIB2_COMPLIANT=true -t:1000";
-					} else {
-						// solverCommand = "yices-smt2 --incremental";
-						solverCommand = "z3 -smt2 -in SMTLIB2_COMPLIANT=true -t:42000";
-					}
-					final boolean fakeNonIncrementalSolver = false;
-					final Settings settings = new Settings(fakeNonIncrementalSolver, true, solverCommand, -1, null,
-							dumpSmtScriptToFile, pathOfDumpedScript, baseNameOfDumpedScript);
-					traceChecker = new InterpolatingTraceCheckerPathInvariantsWithFallback(truePredicate,
-							falsePredicate, new TreeMap<Integer, IPredicate>(),
-							(NestedRun<CodeBlock, IPredicate>) mCounterexample, mPrefs.getCfgSmtToolkit(),
-							assertCodeBlocksIncrementally, mServices, mPrefs.getToolchainStorage(), true,
-							mPredicateUnifier, useNonlinearConstraints, useVarsFromUnsatCore, settings,
-							xnfConversionTechnique, simplificationTechnique,
-							icfgContainer.getBoogie2SMT().getAxioms());
-					break;
-				default:
-					throw new UnsupportedOperationException("unsupported interpolation");
-			}
-			mPrefs.getCegarLoopBenchmark().addTraceCheckerData(traceChecker.getTraceCheckerBenchmark());
-			
-			if (traceChecker.getToolchainCanceledExpection() != null) {
-				throw traceChecker.getToolchainCanceledExpection();
-			} else if (mPrefs.getUseSeparateSolverForTracechecks()) {
-				mManagedScript.getScript().exit();
-			}
-			
-			return traceChecker;
-		}
 	}
 }
