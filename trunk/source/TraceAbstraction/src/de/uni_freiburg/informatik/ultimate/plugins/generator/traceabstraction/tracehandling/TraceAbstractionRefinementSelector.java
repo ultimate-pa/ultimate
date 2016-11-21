@@ -57,31 +57,24 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * Checks a trace for feasibility and, if infeasible, selects a refinement strategy, i.e., constructs an interpolant
  * automaton.<br>
  * This class is used in the {@link BasicCegarLoop}.
+ * <p>
+ * TODO add timeout checks?
  *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
 public final class TraceAbstractionRefinementSelector
 		implements IRefinementSelector<NestedWordAutomaton<CodeBlock, IPredicate>> {
 	/* inputs */
-	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
-	private final IRun<CodeBlock, IPredicate, ?> mCounterexample;
-	private final PredicateFactory mPredicateFactory;
-	private final BoogieIcfgContainer mIcfgContainer;
-	private final SimplificationTechnique mSimplificationTechnique;
-	private final XnfConversionTechnique mXnfConversionTechnique;
-	private final IToolchainStorage mToolchainStorage;
-	private final int mIteration;
-
-	/* intermediate */
 	private final TaCheckAndRefinementPreferences mPrefs;
-
+	
 	/* outputs */
-	private IRefinementStrategy<NestedWordAutomaton<CodeBlock, IPredicate>> mStrategy;
-	private final LBool mFeasibility;
 	private final PredicateUnifier mPredicateUnifier;
-
-	@SuppressWarnings("unchecked")
+	private final LBool mFeasibility;
+	private NestedWordAutomaton<CodeBlock, IPredicate> mInterpolantAutomaton;
+	private RcfgProgramExecution mRcfgProgramExecution;
+	private final CachingHoareTripleChecker mHoareTripleChecker;
+	
 	public TraceAbstractionRefinementSelector(final IUltimateServiceProvider services, final ILogger logger,
 			final TaCheckAndRefinementPreferences prefs, final IInterpolantAutomatonEvaluator evaluator,
 			final PredicateFactory predicateFactory, final BoogieIcfgContainer icfgContainer,
@@ -90,98 +83,111 @@ public final class TraceAbstractionRefinementSelector
 			final int iteration, final IRun<CodeBlock, IPredicate, ?> counterexample,
 			final IAutomaton<CodeBlock, IPredicate> abstraction) {
 		// initialize fields
-		mServices = services;
 		mLogger = logger;
-		mCounterexample = counterexample;
 		mPrefs = prefs;
-		mPredicateFactory = predicateFactory;
-		mIcfgContainer = icfgContainer;
-		mSimplificationTechnique = simplificationTechnique;
-		mXnfConversionTechnique = xnfConversionTechnique;
-		mToolchainStorage = toolchainStorage;
-		mIteration = iteration;
-
-		mPredicateUnifier = new PredicateUnifier(mServices, mPrefs.getCfgSmtToolkit().getManagedScript(),
-				mPredicateFactory, mIcfgContainer.getBoogie2SMT().getBoogie2SmtSymbolTable(), mSimplificationTechnique,
-				mXnfConversionTechnique);
-
+		
+		mPredicateUnifier = new PredicateUnifier(services, mPrefs.getCfgSmtToolkit().getManagedScript(),
+				predicateFactory, icfgContainer.getBoogie2SMT().getBoogie2SmtSymbolTable(), simplificationTechnique,
+				xnfConversionTechnique);
+		final ManagedScript managedScript = setupManagedScript(services, icfgContainer, toolchainStorage, iteration);
+		
 		// choose strategy
-		mStrategy = chooseStrategy(abstraction, evaluator, taPrefsForInterpolantConsolidation);
-
-		// check feasibility using the strategy
-		mFeasibility = checkCounterexampleFeasibility();
-		switch (mFeasibility) {
-		case UNKNOWN:
-			if (mLogger.isInfoEnabled()) {
-				mLogger.info("Strategy " + mStrategy.getClass().getSimpleName()
-						+ " was unsuccessful and could not determine trace feasibility.");
-			}
-			mStrategy = new ProoflessRefinementStrategy(mStrategy.getTraceChecker());
-			break;
-		case UNSAT:
-			break;
-		case SAT:
-			mStrategy = new ProoflessRefinementStrategy(mStrategy.getTraceChecker());
-			break;
-		default:
-			throw new IllegalArgumentException("Unknown case: " + mFeasibility);
+		final IRefinementStrategy strategy = chooseStrategy(counterexample, abstraction, services, managedScript,
+				taPrefsForInterpolantConsolidation);
+		
+		mFeasibility = executeStrategy(strategy, evaluator);
+		if (strategy.getInterpolantGenerator() instanceof InterpolantConsolidation) {
+			mHoareTripleChecker =
+					((InterpolantConsolidation) strategy.getInterpolantGenerator()).getHoareTripleChecker();
+		} else {
+			mHoareTripleChecker = null;
 		}
 	}
-
+	
 	@Override
 	public LBool getCounterexampleFeasibility() {
 		return mFeasibility;
 	}
-
+	
 	@Override
 	public RcfgProgramExecution getRcfgProgramExecution() {
-		return mStrategy.getTraceChecker().getRcfgProgramExecution();
+		return mRcfgProgramExecution;
 	}
-
+	
 	@Override
 	public NestedWordAutomaton<CodeBlock, IPredicate> getInfeasibilityProof() {
-		return mStrategy.getInfeasibilityProof();
+		return mInterpolantAutomaton;
 	}
-
+	
 	@Override
 	public PredicateUnifier getPredicateUnifier() {
 		return mPredicateUnifier;
 	}
-
+	
+	@Override
 	public CachingHoareTripleChecker getHoareTripleChecker() {
-		if (mStrategy.getInterpolantGenerator() instanceof InterpolantConsolidation) {
-			return ((InterpolantConsolidation) mStrategy.getInterpolantGenerator()).getHoareTripleChecker();
-		}
-		return null;
+		return mHoareTripleChecker;
 	}
 	
-	private IRefinementStrategy<NestedWordAutomaton<CodeBlock, IPredicate>> chooseStrategy(
-			final IAutomaton<CodeBlock, IPredicate> abstraction, final IInterpolantAutomatonEvaluator evaluator,
-			final TAPreferences taPrefsForInterpolantConsolidation) {
+	private IRefinementStrategy chooseStrategy(final IRun<CodeBlock, IPredicate, ?> counterexample,
+			final IAutomaton<CodeBlock, IPredicate> abstraction, final IUltimateServiceProvider services,
+			final ManagedScript managedScript, final TAPreferences taPrefsForInterpolantConsolidation) {
 		// TODO add options in preferences, currently we only try the FixedTraceAbstractionRefinementStrategy
-		final ManagedScript managedScript = setupManagedScript();
-		final IRefinementStrategy<NestedWordAutomaton<CodeBlock, IPredicate>> strategy =
-				new FixedTraceAbstractionRefinementStrategy(mLogger, mPrefs, managedScript, mServices,
-						mPredicateUnifier, mCounterexample, abstraction, evaluator, taPrefsForInterpolantConsolidation);
+		final IRefinementStrategy strategy =
+				new FixedTraceAbstractionRefinementStrategy(mLogger, mPrefs, managedScript, services,
+						mPredicateUnifier, counterexample, abstraction, taPrefsForInterpolantConsolidation);
 		return strategy;
 	}
-
-	private LBool checkCounterexampleFeasibility() {
+	
+	private LBool executeStrategy(final IRefinementStrategy strategy, final IInterpolantAutomatonEvaluator evaluator) {
 		do {
-			final LBool feasibility = mStrategy.getTraceChecker().isCorrect();
-			// TODO add timeout check
-			if (feasibility == LBool.UNKNOWN && mStrategy.hasNext()) {
-				mStrategy.next();
+			// check feasibility using the strategy
+			final LBool feasibility = strategy.getTraceChecker().isCorrect();
+			
+			if (feasibility == LBool.UNKNOWN && strategy.hasNext()) {
+				// feasibility check failed, try next combination in the strategy
+				strategy.next();
 				continue;
 			}
+			
+			switch (feasibility) {
+				case UNKNOWN:
+					if (mLogger.isInfoEnabled()) {
+						mLogger.info("Strategy " + strategy.getClass().getSimpleName()
+								+ " was unsuccessful and could not determine trace feasibility.");
+					}
+					mRcfgProgramExecution = strategy.getTraceChecker().getRcfgProgramExecution();
+					break;
+				case UNSAT:
+					final NestedWordAutomaton<CodeBlock, IPredicate> automaton =
+							strategy.getInterpolantAutomatonBuilder().getResult();
+					
+					if (evaluator.accept(automaton)) {
+						mInterpolantAutomaton = automaton;
+					} else {
+						// TODO add code to construct the next automaton
+						continue;
+					}
+					
+					break;
+				case SAT:
+					// feasible counterexample, nothing more to do here
+					mRcfgProgramExecution = strategy.getTraceChecker().getRcfgProgramExecution();
+					break;
+				default:
+					throw new IllegalArgumentException("Unknown case: " + feasibility);
+			}
+			
 			return feasibility;
 		} while (true);
 	}
-
-	private ManagedScript setupManagedScript() throws AssertionError {
+	
+	private ManagedScript setupManagedScript(final IUltimateServiceProvider services,
+			final BoogieIcfgContainer icfgContainer, final IToolchainStorage toolchainStorage, final int iteration)
+			throws AssertionError {
 		final ManagedScript mgdScriptTc;
 		if (mPrefs.getUseSeparateSolverForTracechecks()) {
-			final String filename = mIcfgContainer.getFilename() + "_TraceCheck_Iteration" + mIteration;
+			final String filename = icfgContainer.getFilename() + "_TraceCheck_Iteration" + iteration;
 			final SolverMode solverMode = mPrefs.getSolverMode();
 			final boolean fakeNonIncrementalSolver = mPrefs.getFakeNonIncrementalSolver();
 			final String commandExternalSolver = mPrefs.getCommandExternalSolver();
@@ -189,12 +195,12 @@ public final class TraceAbstractionRefinementSelector
 			final String pathOfDumpedScript = mPrefs.getPathOfDumpedScript();
 			final Settings solverSettings = SolverBuilder.constructSolverSettings(filename, solverMode,
 					fakeNonIncrementalSolver, commandExternalSolver, dumpSmtScriptToFile, pathOfDumpedScript);
-			final Script tcSolver = SolverBuilder.buildAndInitializeSolver(mServices, mToolchainStorage,
+			final Script tcSolver = SolverBuilder.buildAndInitializeSolver(services, toolchainStorage,
 					mPrefs.getSolverMode(), solverSettings, false, false, mPrefs.getLogicForExternalSolver(),
-					"TraceCheck_Iteration" + mIteration);
-			mgdScriptTc = new ManagedScript(mServices, tcSolver);
+					"TraceCheck_Iteration" + iteration);
+			mgdScriptTc = new ManagedScript(services, tcSolver);
 			final TermTransferrer tt = new TermTransferrer(tcSolver);
-			for (final Term axiom : mIcfgContainer.getBoogie2SMT().getAxioms()) {
+			for (final Term axiom : icfgContainer.getBoogie2SMT().getAxioms()) {
 				tcSolver.assertTerm(tt.transform(axiom));
 			}
 		} else {

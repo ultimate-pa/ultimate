@@ -33,7 +33,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -55,30 +55,26 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public class FixedTraceAbstractionRefinementStrategy
-		implements IRefinementStrategy<NestedWordAutomaton<CodeBlock, IPredicate>> {
+public class FixedTraceAbstractionRefinementStrategy implements IRefinementStrategy {
+	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final TaCheckAndRefinementPreferences mPrefs;
 	private final IRun<CodeBlock, IPredicate, ?> mCounterexample;
 	private final IAutomaton<CodeBlock, IPredicate> mAbstraction;
-	private final IInterpolantAutomatonEvaluator mEvaluator;
 	private final PredicateUnifier mPredicateUnifier;
-	private final IUltimateServiceProvider mServices;
+	
+	// TODO Christian 2016-11-11: Matthias wants to get rid of this
+	private final TAPreferences mTaPrefsForInterpolantConsolidation;
 	
 	private final TraceCheckerConstructor mFunConstructFromPrefs;
 	private TraceChecker mTraceChecker;
 	private IInterpolantGenerator mInterpolantGenerator;
-	private NestedWordAutomaton<CodeBlock, IPredicate> mInterpolantAutomaton;
-	private AutomataOperationCanceledException mInterpolantAutomatonGenerationException;
-	// TODO Christian 2016-11-11: Matthias wants to get rid of this
-	private final TAPreferences mTaPrefsForInterpolantConsolidation;
+	private IInterpolantAutomatonBuilder<CodeBlock, IPredicate> mInterpolantAutomatonBuilder;
 	
 	/**
 	 * @param prefs
 	 *            Preferences.
 	 *            pending contexts
-	 * @param cfgSmtToolkit
-	 *            CFG-SMT toolkit
 	 * @param managedScript
 	 *            managed script
 	 * @param services
@@ -91,23 +87,20 @@ public class FixedTraceAbstractionRefinementStrategy
 	 *            logger
 	 * @param abstraction
 	 *            abstraction
-	 * @param evaluator
-	 *            interpolant automaton evaluator
 	 * @param taPrefsForInterpolantConsolidation
 	 *            temporary argument, should be removed
 	 */
 	public FixedTraceAbstractionRefinementStrategy(final ILogger logger, final TaCheckAndRefinementPreferences prefs,
 			final ManagedScript managedScript, final IUltimateServiceProvider services,
 			final PredicateUnifier predicateUnifier, final IRun<CodeBlock, IPredicate, ?> counterexample,
-			final IAutomaton<CodeBlock, IPredicate> abstraction, final IInterpolantAutomatonEvaluator evaluator,
+			final IAutomaton<CodeBlock, IPredicate> abstraction,
 			final TAPreferences taPrefsForInterpolantConsolidation) {
+		mServices = services;
 		mLogger = logger;
 		mPrefs = prefs;
-		mServices = services;
-		mAbstraction = abstraction;
-		mEvaluator = evaluator;
-		mPredicateUnifier = predicateUnifier;
 		mCounterexample = counterexample;
+		mAbstraction = abstraction;
+		mPredicateUnifier = predicateUnifier;
 		mTaPrefsForInterpolantConsolidation = taPrefsForInterpolantConsolidation;
 		mFunConstructFromPrefs = new TraceCheckerConstructor(prefs, managedScript, services, predicateUnifier,
 				counterexample, mPrefs.getInterpolationTechnique());
@@ -126,8 +119,7 @@ public class FixedTraceAbstractionRefinementStrategy
 	@Override
 	public TraceChecker getTraceChecker() {
 		if (mTraceChecker == null) {
-			mTraceChecker = mFunConstructFromPrefs.get();
-			constructInterpolantAutomaton();
+			computeAll();
 		}
 		return mTraceChecker;
 	}
@@ -141,34 +133,27 @@ public class FixedTraceAbstractionRefinementStrategy
 	}
 	
 	@Override
-	public NestedWordAutomaton<CodeBlock, IPredicate> getInfeasibilityProof() {
-		if (mInterpolantAutomaton == null) {
-			throw new UnsupportedOperationException("There is no interpolant automaton.");
-		}
-		if (mInterpolantAutomatonGenerationException != null) {
-			throw new ToolchainCanceledException(mInterpolantAutomatonGenerationException.getClassOfThrower());
-		}
-		return mInterpolantAutomaton;
+	public IInterpolantAutomatonBuilder<CodeBlock, IPredicate> getInterpolantAutomatonBuilder() {
+		return mInterpolantAutomatonBuilder;
 	}
 	
-	private void constructInterpolantAutomaton() throws AssertionError {
+	private void computeAll() {
+		mTraceChecker = mFunConstructFromPrefs.get();
 		// mTraceCheckerBenchmark.aggregateBenchmarkData(interpolatingTraceChecker.getTraceCheckerBenchmark());
 		mInterpolantGenerator = constructInterpolantGenerator();
 		try {
-			mInterpolantAutomaton = generateInterpolantAutomaton();
+			mInterpolantAutomatonBuilder = mPrefs.getInterpolantAutomatonBuilderFactory().createBuilder(mAbstraction,
+					mInterpolantGenerator, mCounterexample);
 		} catch (final AutomataOperationCanceledException e) {
-			mInterpolantAutomatonGenerationException = e;
+			throw new ToolchainCanceledException(e,
+					new RunningTaskInfo(this.getClass(), "creating interpolant automaton"));
 		}
 	}
 	
-	private IInterpolantGenerator constructInterpolantGenerator()
-			throws AssertionError {
+	private IInterpolantGenerator constructInterpolantGenerator() throws AssertionError {
 		final IInterpolantGenerator interpolantGenerator;
-		final InterpolatingTraceChecker interpolatingTraceChecker =
-				(getTraceChecker() instanceof InterpolatingTraceChecker)
-						? (InterpolatingTraceChecker) getTraceChecker()
-						: null;
-		if (interpolatingTraceChecker != null) {
+		if (getTraceChecker() instanceof InterpolatingTraceChecker) {
+			final InterpolatingTraceChecker interpolatingTraceChecker = (InterpolatingTraceChecker) getTraceChecker();
 			if (mPrefs.getUseInterpolantConsolidation()) {
 				try {
 					interpolantGenerator = consolidateInterpolants(interpolatingTraceChecker);
@@ -200,20 +185,5 @@ public class FixedTraceAbstractionRefinementStrategy
 				.addInterpolationConsolidationData(interpConsoli.getInterpolantConsolidationBenchmarks());
 		interpolantGenerator = interpConsoli;
 		return interpolantGenerator;
-	}
-	
-	private NestedWordAutomaton<CodeBlock, IPredicate> generateInterpolantAutomaton()
-			throws AutomataOperationCanceledException {
-		final IInterpolantAutomatonBuilder<CodeBlock, IPredicate> builder =
-				mPrefs.getInterpolantAutomatonBuilderFactory().createBuilder(mAbstraction, mInterpolantGenerator,
-						mCounterexample);
-		final NestedWordAutomaton<CodeBlock, IPredicate> automaton = builder.getResult();
-		
-		if (mEvaluator.accept(automaton)) {
-			return automaton;
-		}
-		// TODO add code to construct the next automaton
-		mLogger.debug("The interpolant automaton is not considered good, but at the moment we still use it.");
-		return automaton;
 	}
 }
