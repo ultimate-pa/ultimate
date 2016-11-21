@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <T>
- *            The type of infeasibility proof, e.g., an interpolant automaton or a set of hoare triples.
+ *            The type of the infeasibility proof, e.g., an interpolant automaton or a set of Hoare triples.
  */
 public interface IRefinementSelector<T> {
 	/**
@@ -47,6 +47,8 @@ public interface IRefinementSelector<T> {
 	LBool getCounterexampleFeasibility();
 	
 	/**
+	 * This method must only be called if {@link #getCounterexampleFeasibility()} returns {@code UNSAT}.
+	 * 
 	 * @return Proof of infeasibility.
 	 */
 	T getInfeasibilityProof();
