@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.S
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.InterpolantAutomatonBuilderFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
@@ -49,31 +50,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
 public class TaCheckAndRefinementPreferences {
-	/**
-	 * Policy how to choose the setting in {@link TraceAbstractionRefinementSelector}.
-	 * 
-	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
-	 */
-	public enum TaCheckAndRefinementSettingPolicy {
-		/**
-		 * Chooses the settings in the list order.
-		 */
-		SEQUENTIAL
-	}
-	
-	/**
-	 * Policy how to choose the interpolant automaton in {@link TraceAbstractionRefinementSelector}.
-	 * 
-	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
-	 */
-	public enum TaInterpolantAutomatonConstructionPolicy {
-		/**
-		 * Uses the first interpolant automaton that is accepted. If none is accepted, the best automaton is used. Ties
-		 * are broken for the first result in the sequence.
-		 */
-		FIRST_BEST
-	}
-	
 	// fields that are provided in the constructor
 	private final InterpolationTechnique mInterpolationTechnique;
 	private final SimplificationTechnique mSimplificationTechnique;
@@ -82,6 +58,7 @@ public class TaCheckAndRefinementPreferences {
 	private final PredicateFactory mPredicateFactory;
 	private final BoogieIcfgContainer mIcfgContainer;
 	private final IToolchainStorage mToolchainStorage;
+	private final InterpolantAutomatonBuilderFactory mInterpolantAutomatonBuilderFactory;
 	private final CegarLoopStatisticsGenerator mCegarLoopBenchmark;
 	private final int mIteration;
 	
@@ -125,6 +102,8 @@ public class TaCheckAndRefinementPreferences {
 	 *            predicate factory
 	 * @param toolchainStorage
 	 *            toolchain storage
+	 * @param interpolantAutomatonBuilderFactory
+	 *            factory for interpolant automaton builder
 	 * @param cegarLoopBenchmark
 	 *            benchmark object of the CEGAR loop
 	 */
@@ -132,8 +111,9 @@ public class TaCheckAndRefinementPreferences {
 			final InterpolationTechnique interpolationTechnique, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique, final CfgSmtToolkit cfgSmtToolkit,
 			final PredicateFactory predicateFactory, final BoogieIcfgContainer icfgContainer,
-			final IToolchainStorage toolchainStorage, final CegarLoopStatisticsGenerator cegarLoopBenchmark,
-			final int iteration) {
+			final IToolchainStorage toolchainStorage,
+			final InterpolantAutomatonBuilderFactory interpolantAutomatonBuilderFactory,
+			final CegarLoopStatisticsGenerator cegarLoopBenchmark, final int iteration) {
 		mInterpolationTechnique = interpolationTechnique;
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
@@ -141,6 +121,7 @@ public class TaCheckAndRefinementPreferences {
 		mPredicateFactory = predicateFactory;
 		mIcfgContainer = icfgContainer;
 		mToolchainStorage = toolchainStorage;
+		mInterpolantAutomatonBuilderFactory = interpolantAutomatonBuilderFactory;
 		mCegarLoopBenchmark = cegarLoopBenchmark;
 		mIteration = iteration;
 		
@@ -220,6 +201,10 @@ public class TaCheckAndRefinementPreferences {
 	
 	public IToolchainStorage getToolchainStorage() {
 		return mToolchainStorage;
+	}
+
+	public InterpolantAutomatonBuilderFactory getInterpolantAutomatonBuilderFactory() {
+		return mInterpolantAutomatonBuilderFactory;
 	}
 	
 	public CegarLoopStatisticsGenerator getCegarLoopBenchmark() {

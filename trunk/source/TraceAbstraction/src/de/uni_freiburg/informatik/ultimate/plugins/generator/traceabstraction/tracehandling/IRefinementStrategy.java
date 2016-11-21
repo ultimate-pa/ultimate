@@ -2,6 +2,9 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.t
 
 import java.util.NoSuchElementException;
 
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceChecker;
 
@@ -38,4 +41,9 @@ public interface IRefinementStrategy {
 	 * @return The interpolant generator of the current combination.
 	 */
 	IInterpolantGenerator getInterpolantGenerator();
+	
+	/**
+	 * @return The interpolant automaton.
+	 */
+	NestedWordAutomaton<CodeBlock, IPredicate> getInfeasibilityProof();
 }

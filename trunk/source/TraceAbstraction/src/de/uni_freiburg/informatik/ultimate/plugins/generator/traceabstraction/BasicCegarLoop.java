@@ -95,11 +95,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantConsolidation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IInterpolantAutomatonEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TaCheckAndRefinementPreferences;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TaCheckAndRefinementPreferences.TaCheckAndRefinementSettingPolicy;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TaCheckAndRefinementPreferences.TaInterpolantAutomatonConstructionPolicy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementSelector;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementSelector.IInterpolantAutomatonEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessProductAutomaton;
 import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
@@ -293,17 +291,13 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		final TaCheckAndRefinementPreferences taCheckAndRefinementPrefs =
 				new TaCheckAndRefinementPreferences(mServices, mPref, mInterpolation, mSimplificationTechnique,
 						mXnfConversionTechnique, mCsToolkit, mPredicateFactory, mIcfgContainer, mToolchainStorage,
-						mCegarLoopBenchmark, mIteration);
+						mInterpolantAutomatonBuilderFactory, mCegarLoopBenchmark, mIteration);
 		final List<TaCheckAndRefinementPreferences> taCheckAndRefinementPrefsList =
 				Collections.singletonList(taCheckAndRefinementPrefs);
-		final TaCheckAndRefinementSettingPolicy settingsPolicy = TaCheckAndRefinementSettingPolicy.SEQUENTIAL;
 		final IInterpolantAutomatonEvaluator evaluator = automaton -> true;
-		final TaInterpolantAutomatonConstructionPolicy automatonPolicy =
-				TaInterpolantAutomatonConstructionPolicy.FIRST_BEST;
 		mTraceCheckAndRefinementSelection = new TraceAbstractionRefinementSelector(mServices, mLogger,
-				taCheckAndRefinementPrefsList, settingsPolicy, automatonPolicy, evaluator, mCsToolkit,
-				mPredicateFactory, mIcfgContainer, mSimplificationTechnique, mXnfConversionTechnique, mToolchainStorage,
-				mCegarLoopBenchmark, mInterpolantAutomatonBuilderFactory, mPref, mIteration, mCounterexample,
+				taCheckAndRefinementPrefs, evaluator, mPredicateFactory, mIcfgContainer, mSimplificationTechnique,
+				mXnfConversionTechnique, mToolchainStorage, mCegarLoopBenchmark, mPref, mIteration, mCounterexample,
 				mAbstraction);
 		
 		final PredicateUnifier predicateUnifier = mTraceCheckAndRefinementSelection.getPredicateUnifier();
@@ -326,8 +320,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					indentation = indentation.substring(0, indentation.length() - 4);
 				}
 			}
-			mRcfgProgramExecution =
-					mTraceCheckAndRefinementSelection.getInterpolatingTraceChecker().getRcfgProgramExecution();
+			mRcfgProgramExecution = mTraceCheckAndRefinementSelection.getTraceChecker().getRcfgProgramExecution();
 			if ((mDoFaultLocalizationNonFlowSensitive || mDoFaultLocalizationFlowSensitive)
 					&& feasibility == LBool.SAT) {
 				final CFG2NestedWordAutomaton cFG2NestedWordAutomaton =

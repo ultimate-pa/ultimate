@@ -26,32 +26,21 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceChecker;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
- * {@link IRefinementStrategy} with no functionality.
- * 
+ * Evaluator for interpolant automata.
+ *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
-public class DummyRefinementStrategy implements IRefinementStrategy {
-	@Override
-	public boolean hasNext() {
-		return false;
-	}
-	
-	@Override
-	public void next() {
-		throw new UnsupportedOperationException("No trace checker available.");
-	}
-	
-	@Override
-	public TraceChecker getTraceChecker() {
-		throw new UnsupportedOperationException("No trace checker available.");
-	}
-	
-	@Override
-	public IInterpolantGenerator getInterpolantGenerator() {
-		throw new UnsupportedOperationException("No interpolant generator available.");
-	}
+@FunctionalInterface
+public interface IInterpolantAutomatonEvaluator {
+	/**
+	 * @param interpolantAutomaton
+	 *            Interpolant automaton.
+	 * @return {@code true} iff automaton should be accepted
+	 */
+	boolean accept(NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton);
 }

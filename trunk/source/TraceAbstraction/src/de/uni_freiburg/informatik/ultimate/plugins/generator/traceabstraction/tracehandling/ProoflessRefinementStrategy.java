@@ -1,5 +1,4 @@
 /*
- * Copyright (C) 2016 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
  * Copyright (C) 2016 University of Freiburg
  *
@@ -27,42 +26,45 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
-import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceChecker;
 
 /**
- * Checks a trace for feasibility and, if infeasible, constructs a proof of infeasibility.
- *
- * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * {@link IRefinementStrategy} with a fixed trace checker and no proof generation.
+ * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
- * @param <T>
- *            The type of infeasibility proof, e.g., an interpolant automaton or a set of hoare triples.
  */
-public interface IRefinementSelector<T> {
-	/**
-	 * @return Feasibility status of the counterexample trace.
-	 */
-	LBool getCounterexampleFeasibility();
+public class ProoflessRefinementStrategy implements IRefinementStrategy {
+	private final TraceChecker mTraceChecker;
+	public ProoflessRefinementStrategy(final TraceChecker traceChecker) {
+		mTraceChecker = traceChecker;
+	}
+
+	@Override
+	public boolean hasNext() {
+		return false;
+	}
 	
-	/**
-	 * @return Proof of infeasibility.
-	 */
-	T getInfeasibilityProof();
+	@Override
+	public void next() {
+		throw new UnsupportedOperationException("No next combination available.");
+	}
 	
-	/**
-	 * @return Interpolant generator.
-	 */
-	IInterpolantGenerator getInterpolantGenerator();
+	@Override
+	public TraceChecker getTraceChecker() {
+		return mTraceChecker;
+	}
 	
-	/**
-	 * @return Trace checker.
-	 */
-	TraceChecker getTraceChecker();
-	
-	/**
-	 * @return Predicate unifier.
-	 */
-	PredicateUnifier getPredicateUnifier();
+	@Override
+	public IInterpolantGenerator getInterpolantGenerator() {
+		throw new UnsupportedOperationException("No interpolant generator available.");
+	}
+
+	@Override
+	public NestedWordAutomaton<CodeBlock, IPredicate> getInfeasibilityProof() {
+		throw new UnsupportedOperationException("No infeasibility proof available.");
+	}
 }
