@@ -298,8 +298,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		final IInterpolantAutomatonEvaluator evaluator = automaton -> true;
 		mTraceCheckAndRefinementSelection = new TraceAbstractionRefinementSelector(mServices, mLogger,
 				taCheckAndRefinementPrefs, evaluator, mPredicateFactory, mIcfgContainer, mSimplificationTechnique,
-				mXnfConversionTechnique, mToolchainStorage, mCegarLoopBenchmark, mPref, mIteration, mCounterexample,
-				mAbstraction);
+				mXnfConversionTechnique, mToolchainStorage, mPref, mIteration, mCounterexample, mAbstraction);
 		
 		final PredicateUnifier predicateUnifier = mTraceCheckAndRefinementSelection.getPredicateUnifier();
 		final LBool feasibility = mTraceCheckAndRefinementSelection.getCounterexampleFeasibility();

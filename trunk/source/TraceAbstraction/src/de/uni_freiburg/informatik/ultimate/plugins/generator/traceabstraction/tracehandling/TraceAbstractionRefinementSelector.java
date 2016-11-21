@@ -48,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Boo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
@@ -88,9 +87,9 @@ public final class TraceAbstractionRefinementSelector
 			final TaCheckAndRefinementPreferences prefs, final IInterpolantAutomatonEvaluator evaluator,
 			final PredicateFactory predicateFactory, final BoogieIcfgContainer icfgContainer,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
-			final IToolchainStorage toolchainStorage, final CegarLoopStatisticsGenerator cegarLoopBenchmark,
-			final TAPreferences taPrefsForInterpolantConsolidation, final int iteration,
-			final IRun<CodeBlock, IPredicate, ?> counterexample, final IAutomaton<CodeBlock, IPredicate> abstraction) {
+			final IToolchainStorage toolchainStorage, final TAPreferences taPrefsForInterpolantConsolidation,
+			final int iteration, final IRun<CodeBlock, IPredicate, ?> counterexample,
+			final IAutomaton<CodeBlock, IPredicate> abstraction) {
 		// initialize fields
 		mServices = services;
 		mLogger = logger;
@@ -108,7 +107,7 @@ public final class TraceAbstractionRefinementSelector
 				mXnfConversionTechnique);
 		
 		// choose strategy
-		mStrategy = chooseStrategy(abstraction, evaluator, cegarLoopBenchmark, taPrefsForInterpolantConsolidation);
+		mStrategy = chooseStrategy(abstraction, evaluator, taPrefsForInterpolantConsolidation);
 		
 		// check feasibility using the strategy
 		mFeasibility = checkCounterexampleFeasibility();
@@ -133,7 +132,7 @@ public final class TraceAbstractionRefinementSelector
 	public LBool getCounterexampleFeasibility() {
 		return mFeasibility;
 	}
-
+	
 	@Override
 	public RcfgProgramExecution getRcfgProgramExecution() {
 		return mStrategy.getTraceChecker().getRcfgProgramExecution();
@@ -158,13 +157,12 @@ public final class TraceAbstractionRefinementSelector
 	}
 	
 	private IRefinementStrategy chooseStrategy(final IAutomaton<CodeBlock, IPredicate> abstraction,
-			final IInterpolantAutomatonEvaluator evaluator, final CegarLoopStatisticsGenerator cegarLoopBenchmark,
-			final TAPreferences taPrefsForInterpolantConsolidation) {
+			final IInterpolantAutomatonEvaluator evaluator, final TAPreferences taPrefsForInterpolantConsolidation) {
 		// TODO add options in preferences, currently we only try the FixedTraceAbstractionRefinementStrategy
 		final ManagedScript managedScript = setupManagedScript();
 		final IRefinementStrategy strategy = new FixedTraceAbstractionRefinementStrategy(mLogger, mPrefs,
 				managedScript, mServices, mPredicateUnifier, mCounterexample, abstraction, evaluator,
-				cegarLoopBenchmark, taPrefsForInterpolantConsolidation);
+				taPrefsForInterpolantConsolidation);
 		return strategy;
 	}
 	

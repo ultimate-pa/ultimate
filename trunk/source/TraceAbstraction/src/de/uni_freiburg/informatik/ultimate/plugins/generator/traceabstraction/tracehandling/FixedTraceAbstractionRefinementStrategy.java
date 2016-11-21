@@ -46,7 +46,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.IInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
@@ -73,7 +72,6 @@ public class FixedTraceAbstractionRefinementStrategy implements IRefinementStrat
 	private final IRun<CodeBlock, IPredicate, ?> mCounterexample;
 	private final IAutomaton<CodeBlock, IPredicate> mAbstraction;
 	private final IInterpolantAutomatonEvaluator mEvaluator;
-	private final CegarLoopStatisticsGenerator mCegarLoopBenchmark;
 	private final PredicateUnifier mPredicateUnifier;
 	private final IUltimateServiceProvider mServices;
 	
@@ -104,7 +102,6 @@ public class FixedTraceAbstractionRefinementStrategy implements IRefinementStrat
 			final ManagedScript managedScript, final IUltimateServiceProvider services,
 			final PredicateUnifier predicateUnifier, final IRun<CodeBlock, IPredicate, ?> counterexample,
 			final IAutomaton<CodeBlock, IPredicate> abstraction, final IInterpolantAutomatonEvaluator evaluator,
-			final CegarLoopStatisticsGenerator cegarLoopBenchmark,
 			final TAPreferences taPrefsForInterpolantConsolidation) {
 		mLogger = logger;
 		mPrefs = prefs;
@@ -113,7 +110,6 @@ public class FixedTraceAbstractionRefinementStrategy implements IRefinementStrat
 		mEvaluator = evaluator;
 		mPredicateUnifier = predicateUnifier;
 		mCounterexample = counterexample;
-		mCegarLoopBenchmark = cegarLoopBenchmark;
 		mTaPrefsForInterpolantConsolidation = taPrefsForInterpolantConsolidation;
 		mFunConstructFromPrefs =
 				new ConstructorFromPreferences(prefs, managedScript, services, predicateUnifier, counterexample);
@@ -145,7 +141,7 @@ public class FixedTraceAbstractionRefinementStrategy implements IRefinementStrat
 		}
 		return mInterpolantGenerator;
 	}
-
+	
 	@Override
 	public NestedWordAutomaton<CodeBlock, IPredicate> getInfeasibilityProof() {
 		if (mInterpolantAutomaton == null) {
@@ -202,7 +198,8 @@ public class FixedTraceAbstractionRefinementStrategy implements IRefinementStrat
 				cfgSmtToolkit.getModifiableGlobalsTable(), mServices, mLogger, mPredicateUnifier,
 				interpolatingTraceChecker, mTaPrefsForInterpolantConsolidation);
 		// Add benchmark data of interpolant consolidation
-		mCegarLoopBenchmark.addInterpolationConsolidationData(interpConsoli.getInterpolantConsolidationBenchmarks());
+		mPrefs.getCegarLoopBenchmark()
+				.addInterpolationConsolidationData(interpConsoli.getInterpolantConsolidationBenchmarks());
 		interpolantGenerator = interpConsoli;
 		return interpolantGenerator;
 	}
