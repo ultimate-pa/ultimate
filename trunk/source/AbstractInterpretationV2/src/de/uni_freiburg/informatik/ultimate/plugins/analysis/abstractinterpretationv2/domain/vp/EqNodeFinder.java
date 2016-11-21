@@ -71,9 +71,9 @@ public class EqNodeFinder extends NonRecursive {
 		@Override
 		public void walk(NonRecursive walker, ApplicationTerm term) {
 			if (term.getFunction().getName() == "select") {
-				mResultList.add(new SelectArguments(term.getParameters()[0], term.getParameters()[1]));
+				mResultList.add(new SelectArguments(term, term.getParameters()[0], term.getParameters()[1]));
 			} else if (term.getFunction().getName() == "store") {
-				mResultList.add(new StoreArguments(term.getParameters()[0], term.getParameters()[1], term.getParameters()[2]));
+				mResultList.add(new StoreArguments(term, term.getParameters()[0], term.getParameters()[1], term.getParameters()[2]));
 			}
 			for (final Term t : term.getParameters()) {
 				walker.enqueueWalker(new ArrayIndexFindWalker(t));
@@ -113,24 +113,26 @@ public class EqNodeFinder extends NonRecursive {
 	}
 	
 	static class SelectOrStoreArguments {
-		Term function;
-		Term arg;
-		SelectOrStoreArguments(Term function, Term arg) {
+		final Term originalTerm;
+		final Term function;
+		final Term arg;
+		SelectOrStoreArguments(Term originalTerm, Term function, Term arg) {
+			this.originalTerm = originalTerm;
 			this.function = function;
 			this.arg = arg;
 		}
 	}
 
 	static class SelectArguments extends SelectOrStoreArguments {
-		SelectArguments(Term function, Term arg) {
-			super(function, arg);
+		SelectArguments(Term originalTerm, Term function, Term arg) {
+			super(originalTerm, function, arg);
 		}
 	}
 	
 	static class StoreArguments extends SelectOrStoreArguments{
-		Term arg2;
-		StoreArguments(Term function, Term arg, Term arg2) {
-			super(function, arg);
+		final Term arg2;
+		StoreArguments(Term originalTerm, Term function, Term arg, Term arg2) {
+			super(originalTerm, function, arg);
 			this.arg2 = arg2;
 		}
 	}

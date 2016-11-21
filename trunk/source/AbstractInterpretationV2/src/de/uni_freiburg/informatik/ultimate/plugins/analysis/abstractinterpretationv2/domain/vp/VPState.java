@@ -35,6 +35,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -48,6 +49,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  *
  */
 public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> {
+	
+	private static final String TERM_FUNC_NAME_AND = "and";
+	private static final String TERM_TRUE = "true";
+	private static final String TERM_FUNC_NAME_SELECT = "select";
+	private static final String TERM_FUNC_NAME_DISTINCT = "distinct";
 
 	private final Set<IProgramVar> mVars;
 
@@ -85,19 +91,18 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 	}
 	
 	VPState(VPDomain domain) {
-		this(null, null, null, null, null, domain);
+		this(null, null, null, domain);
 	}
 	
-	VPState(Set<EqGraphNode> eqGraphNodeSet, Map<Term, EqBaseNode> termToBaseNodeMap,
-			Map<Term, Set<EqFunctionNode>> termToFnNodeMap, Map<EqNode, EqGraphNode> eqNodeToEqGraphNodeMap,
+	VPState(Set<EqGraphNode> eqGraphNodeSet, Map<EqNode, EqGraphNode> eqNodeToEqGraphNodeMap,
 			Set<VPDomainSymmetricPair<EqNode>> disEqualitySet, VPDomain domain) {
 		mVars = new HashSet<IProgramVar>();
 		mEqGraphNodeSet = eqGraphNodeSet == null ? null : Collections.unmodifiableSet(eqGraphNodeSet);
-		mTermToBaseNodeMap = termToBaseNodeMap == null ? null : Collections.unmodifiableMap(termToBaseNodeMap);
-		mTermToFnNodeMap = termToFnNodeMap == null ? null : Collections.unmodifiableMap(termToFnNodeMap);
 		mEqNodeToEqGraphNodeMap = eqNodeToEqGraphNodeMap;
 		mDisEqualitySet = disEqualitySet;
 		mDomain = domain;
+		mTermToBaseNodeMap = mDomain.getmTermToBaseNodeMap();
+		mTermToFnNodeMap = mDomain.getmTermToFnNodeMap();
 	}
 
 	/**
@@ -208,7 +213,7 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 	}
 
 	private void restorePropagation(final EqFunctionNode node) {
-		final Set<EqFunctionNode> fnNodeSet = mTermToFnNodeMap.get(node.term);
+		final Set<EqFunctionNode> fnNodeSet = mTermToFnNodeMap.get(node.getFunction());
 		for (final EqFunctionNode fnNode1: fnNodeSet) {
 			for (final EqFunctionNode fnNode2: fnNodeSet) {
 				if (!fnNode1.equals(fnNode2) && find(fnNode1).equals(find(fnNode2))) {
@@ -354,6 +359,13 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 	 */
 	public boolean addDisEquality(final EqNode node1, final EqNode node2) {
 
+		if (node1.equals(node2)) {
+			return true;
+		}
+		if (find(node1).equals(find(node2))) {
+			return true;
+		}
+		
 		addToDisEqSet(node1, node2);
 
 		Set<EqNode> ccchild1 = ccchild(node1);
@@ -447,7 +459,7 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 		EqFunctionNode fnNode1 = (EqFunctionNode) node1;
 		EqFunctionNode fnNode2 = (EqFunctionNode) node2;
 
-		if (!(fnNode1.term.equals(fnNode2.term))) {
+		if (!(fnNode1.getFunction().equals(fnNode2.getFunction()))) {
 			return false;
 		}
 		if ((fnNode1.getArg() == null && fnNode2.getArg() != null)
@@ -491,9 +503,9 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 		havocArray(firstArray);
 
 		for (final EqFunctionNode fnNode : mTermToFnNodeMap.get(secondArray)) {
-			for (final EqNode eqNode : mEqNodeToEqGraphNodeMap.get(find(fnNode.arg)).getCcpar()) {
+			for (final EqNode eqNode : mEqNodeToEqGraphNodeMap.get(find(fnNode.getArg())).getCcpar()) {
 				if (eqNode instanceof EqFunctionNode) {
-					if (((EqFunctionNode) eqNode).term.equals(firstArray)) {
+					if (((EqFunctionNode) eqNode).getFunction().equals(firstArray)) {
 						addEquality(eqNode, fnNode);
 					}
 				}
@@ -552,20 +564,6 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 
 	public VPState copy() {
 
-		final Map<Term, EqBaseNode> newTermToBaseNodeMap = new HashMap<Term, EqBaseNode>();
-		for (final Entry<Term, EqBaseNode> entry : mTermToBaseNodeMap.entrySet()) {
-			newTermToBaseNodeMap.put(entry.getKey(), entry.getValue());
-		}
-
-		final Map<Term, Set<EqFunctionNode>> newTermToFnNodeMap = new HashMap<Term, Set<EqFunctionNode>>();
-		for (final Entry<Term, Set<EqFunctionNode>> entry : mTermToFnNodeMap.entrySet()) {
-			Set<EqFunctionNode> fnNodeSet = new HashSet<EqFunctionNode>();
-			for (EqFunctionNode fnNode : entry.getValue()) {
-				fnNodeSet.add(fnNode);
-			}
-			newTermToFnNodeMap.put(entry.getKey(), fnNodeSet);
-		}
-
 		final Set<EqGraphNode> newEqGraphNodeSet = new HashSet<EqGraphNode>();
 		final Map<EqNode, EqGraphNode> newEqNodeToEqGraphNodeMap = new HashMap<EqNode, EqGraphNode>();
 		for (final Entry<EqNode, EqGraphNode> entry : mEqNodeToEqGraphNodeMap.entrySet()) {
@@ -579,8 +577,7 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 			newDisEqualitySet.add(new VPDomainSymmetricPair<EqNode>(pair.getFirst(), pair.getSecond()));
 		}
 
-		return new VPState(newEqGraphNodeSet, newTermToBaseNodeMap, newTermToFnNodeMap, newEqNodeToEqGraphNodeMap,
-				newDisEqualitySet, mDomain);
+		return new VPState(newEqGraphNodeSet, newEqNodeToEqGraphNodeMap, newDisEqualitySet, mDomain);
 	}
 
 	@Override
@@ -612,11 +609,21 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 
 	@Override
 	public boolean isEqualTo(final VPState other) {
-		if (other == null) {
-			return false;
-		}
-		// TODO
-		return false;
+		
+		Script script = mDomain.getManagedScript().getScript();
+		
+		script.push(1);
+		
+		Term equiv = script.term(TERM_FUNC_NAME_DISTINCT, new Term[] { this.getTerm(script), other.getTerm(script) } );
+		
+		script.assertTerm(equiv);
+		
+		LBool res = script.checkSat();
+		
+		script.pop(1);
+		
+		return res == LBool.UNSAT;
+
 	}
 
 	@Override
@@ -663,17 +670,62 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 			return false;
 		}
 		final VPState other = (VPState) obj;
-		if (!isEqualTo(other)) {
-			return false;
+		if (isEqualTo(other)) {
+			return true;
 		}
-		// TODO
 		return false;
+	}
+	
+	public Term getArraySelectTerm(Term array, Term index) {
+		return mDomain.getManagedScript().getScript().term(TERM_FUNC_NAME_SELECT, array, index);
 	}
 
 	@Override
 	public Term getTerm(Script script) {
-		// TODO: (alex:) do we want to describe the state precisely via a formula?? (useful for some assertion(s), and what else?..)
-		return mDomain.getManagedScript().getScript().term("true");
+		
+		Term trueTerm = mDomain.getManagedScript().getScript().term(TERM_TRUE);
+		
+		Term disEqualityFirst;
+		Term disEqualitySecond;
+		Set<Term> distinctTermSet = new HashSet<Term>();
+		Term disEquality;
+		
+		for (VPDomainSymmetricPair<EqNode> pair : this.mDisEqualitySet) {
+			disEqualityFirst = pair.getFirst().getTerm();
+			disEqualitySecond = pair.getSecond().getTerm();			
+			distinctTermSet.add(mDomain.getManagedScript().getScript().term(TERM_FUNC_NAME_DISTINCT, disEqualityFirst, disEqualitySecond));
+		}
+		
+		if (distinctTermSet.isEmpty()) {
+			disEquality = mDomain.getManagedScript().getScript().term(TERM_TRUE);
+		} else if (distinctTermSet.size() == 1) {
+			disEquality = mDomain.getManagedScript().getScript().term(TERM_FUNC_NAME_AND, distinctTermSet.iterator().next(), trueTerm);
+		} else {
+			disEquality = mDomain.getManagedScript().getScript().term(TERM_FUNC_NAME_AND, distinctTermSet.toArray(new Term[distinctTermSet.size()]));
+		}
+				
+		Term equalityFirst;
+		Term equalitySecond;
+		Set<Term> equalityTermSet = new HashSet<Term>();
+		Term equality;
+		
+		for (EqGraphNode graphNode : this.mEqGraphNodeSet) {
+			if (!graphNode.eqNode.equals(graphNode.getRepresentative())) {
+				equalityFirst = graphNode.eqNode.getTerm();
+				equalitySecond = graphNode.getRepresentative().getTerm();
+				equalityTermSet.add(mDomain.getManagedScript().getScript().term("=", equalityFirst, equalitySecond));
+			}
+		}
+		
+		if (equalityTermSet.isEmpty()) {
+			equality = mDomain.getManagedScript().getScript().term(TERM_TRUE);
+		} else if (equalityTermSet.size() == 1) {
+			equality = mDomain.getManagedScript().getScript().term(TERM_FUNC_NAME_AND, equalityTermSet.iterator().next(), trueTerm);
+		} else {
+			equality = mDomain.getManagedScript().getScript().term(TERM_FUNC_NAME_AND, equalityTermSet.toArray(new Term[equalityTermSet.size()]));
+		}
+		
+		return mDomain.getManagedScript().getScript().term(TERM_FUNC_NAME_AND, disEquality, equality);
 	}
 
 }

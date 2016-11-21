@@ -110,8 +110,6 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 		
 		return Collections.singletonList(
 				new VPState(resultState.getEqGraphNodeSet(), 
-						resultState.getTermToBaseNodeMap(),
-						resultState.getTermToFnNodeMap(),
 						resultState.getEqNodeToEqGraphNodeMap(),  
 						resultState.getDisEqualitySet(),
 						mDomain));
@@ -199,13 +197,14 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 				
 				ApplicationTerm equalTerm = (ApplicationTerm)appTerm.getParameters()[0];
 				if (!(equalTerm.getFunction().getName() == "=")) {
-					// TODO: check: is it correct here to return bottom?
-					return mDomain.getmBottomState();
+					// TODO: check: is it correct here to return pre-state?
+					return resultState;
 				} else {
 					EqNode node1 = getNodeFromTerm(equalTerm.getParameters()[0], resultState);
 					EqNode node2 = getNodeFromTerm(equalTerm.getParameters()[1], resultState);
 					
 					if (node1 == null || node2 == null) {
+						// encounter node(s) that is not being traced, return pre-state.
 						return resultState;
 					}
 					
@@ -224,7 +223,8 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 				EqNode node2 = getNodeFromTerm(appTerm.getParameters()[1], resultState);
 				
 				if (node1 == null || node2 == null) {
-					return mDomain.getmBottomState();
+					// encounter node(s) that is not being traced, return pre-state.
+					return resultState;
 				}
 				
 				boolean isContradic = resultState.addDisEquality(node1, node2);

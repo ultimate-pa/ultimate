@@ -26,4 +26,8 @@ public class EqNode {
 		}
 		return term.equals(((EqNode)o).term);
 	}
+	
+	public Term getTerm() {
+		return term;
+	}
 }

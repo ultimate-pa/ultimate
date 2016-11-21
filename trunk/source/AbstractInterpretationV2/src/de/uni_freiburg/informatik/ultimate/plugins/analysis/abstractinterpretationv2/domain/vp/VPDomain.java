@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.vp;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -72,8 +73,8 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 			final Map<EqNode, EqGraphNode> eqNodeToEqGraphNodeMap) {
 		mLogger = logger;
 		mEqGraphNodeSet = eqGraphNodeSet;
-		mTermToBaseNodeMap = termToBaseNodeMap;
-		mTermToFnNodeMap = termToFnNodeMap;
+		mTermToBaseNodeMap = termToBaseNodeMap == null ? null : Collections.unmodifiableMap(termToBaseNodeMap);
+		mTermToFnNodeMap = termToFnNodeMap == null ? null : Collections.unmodifiableMap(termToFnNodeMap);
 		mEqNodeToEqGraphNodeMap = eqNodeToEqGraphNodeMap;
 		mDisEqualityMap = new HashSet<VPDomainSymmetricPair<EqNode>>();
 		mBottomState = new VPStateBottom(this);
@@ -85,7 +86,7 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 
 	@Override
 	public VPState createFreshState() {
-		return new VPState(mEqGraphNodeSet, mTermToBaseNodeMap, mTermToFnNodeMap, mEqNodeToEqGraphNodeMap, mDisEqualityMap, this);
+		return new VPState(mEqGraphNodeSet, mEqNodeToEqGraphNodeMap, mDisEqualityMap, this);
 	}
 
 	@Override

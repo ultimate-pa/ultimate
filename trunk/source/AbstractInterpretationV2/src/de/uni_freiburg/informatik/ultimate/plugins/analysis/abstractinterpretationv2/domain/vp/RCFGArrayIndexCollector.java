@@ -56,6 +56,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RC
  * @author Yu-Wen Chen (yuwenchen1105@gmail.com)
  */
 public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
+	
+	private static final String TERM_FUNC_NAME_SELECT = "select";
 
 	private final Set<EqGraphNode> eqGraphNodeSet = new HashSet<EqGraphNode>();
 	private final Map<Term, EqBaseNode> termToBaseNodeMap = new HashMap<>();
@@ -168,25 +170,29 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 		return baseNode;
 	}
 	
-	private EqFunctionNode getEqFnNode(final Term term, final EqNode arg) {
+	private EqFunctionNode getEqFnNode(final Term function, final EqNode arg) {
 		
-		if (termToFnNodeMap.containsKey(term)) {
-			for (final EqFunctionNode fnNode : termToFnNodeMap.get(term)) {
+		if (termToFnNodeMap.containsKey(function)) {
+			for (final EqFunctionNode fnNode : termToFnNodeMap.get(function)) {
 				if (fnNode.getArg().equals(arg)) {
 					return fnNode;
 				}
 			}			
 		}
 			
-		final EqFunctionNode fnNode = new EqFunctionNode(term, arg);
-		if (termToFnNodeMap.get(term) == null) {
-			termToFnNodeMap.put(term, new HashSet<EqFunctionNode>());
+		final EqFunctionNode fnNode = new EqFunctionNode(getArraySelectTerm(function, arg.getTerm()), function, arg);
+		if (!termToFnNodeMap.containsKey(function)) {
+			termToFnNodeMap.put(function, new HashSet<EqFunctionNode>());
 		}
-		termToFnNodeMap.get(term).add(fnNode);
+		termToFnNodeMap.get(function).add(fnNode);
 		putToEqGraphSet(fnNode, arg);
-			
+		
 		return fnNode;
 		
+	}
+	
+	private Term getArraySelectTerm(Term array, Term index) {
+		return mScript.term(TERM_FUNC_NAME_SELECT, array, index);
 	}
 	
 	private void putToEqGraphSet(final EqNode node, final EqNode arg) {

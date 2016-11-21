@@ -9,23 +9,25 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  */
 public class EqFunctionNode extends EqNode {
 	
-	public EqNode arg;
+	private final Term function;
+	private final EqNode arg;
 
-	public EqFunctionNode(Term function, EqNode arg) {
-		super(function);
+	public EqFunctionNode(Term term, Term function, EqNode arg) {
+		super(term);
+		this.function = function;
 		this.arg = arg;
 	}
 	
+	public Term getFunction() {
+		return function;
+	}
+
 	public EqNode getArg() {
 		return arg;
 	}
 
-	public void setArg(EqNode arg) {
-		this.arg = arg;
-	}
-	
 	public String toString() {
-		return term.toString() + "[" + arg + "]";
+		return function.toString() + "[" + arg.toString() + "]";
 	}
 	
 	@Override
@@ -33,7 +35,7 @@ public class EqFunctionNode extends EqNode {
 		if (!(o instanceof EqFunctionNode)) {
 			return false;
 		}
-		return term.equals(((EqFunctionNode)o).term) && arg.term.equals((((EqFunctionNode)o).arg).term);
+		return term.equals(((EqFunctionNode)o).getTerm()) && arg.getTerm().equals((((EqFunctionNode)o).getArg()).getTerm());
 	}
 	
 }
