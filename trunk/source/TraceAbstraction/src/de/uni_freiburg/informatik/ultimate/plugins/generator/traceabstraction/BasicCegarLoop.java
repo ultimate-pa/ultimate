@@ -93,7 +93,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantConsolidation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IInterpolantAutomatonEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementSelector;
@@ -345,7 +344,6 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	@Override
 	protected void constructInterpolantAutomaton() throws AutomataOperationCanceledException {
 		mInterpolAutomaton = mTraceCheckAndRefinementSelection.getInfeasibilityProof();
-		mInterpolantGenerator = mTraceCheckAndRefinementSelection.getInterpolantGenerator();
 		
 		assert accepts(mServices, mInterpolAutomaton, mCounterexample.getWord()) : "Interpolant automaton broken!";
 		assert new InductivityCheck(mServices, mInterpolAutomaton, false, true,
@@ -354,13 +352,14 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	
 	@Override
 	protected boolean refineAbstraction() throws AutomataLibraryException {
-		final PredicateUnifier predUnifier = mInterpolantGenerator.getPredicateUnifier();
+		final PredicateUnifier predUnifier = mTraceCheckAndRefinementSelection.getPredicateUnifier();
 		if (mAbsIntRunner.hasShownInfeasibility()) {
 			return mAbsIntRunner.refine(predUnifier, mInterpolAutomaton, mCounterexample,
 					this::refineWithGivenAutomaton);
 		}
-		mAbsIntRunner.refineAnyways(mInterpolantGenerator, (INestedWordAutomaton<CodeBlock, IPredicate>) mAbstraction,
-				mCounterexample, this::refineWithGivenAutomaton);
+		mAbsIntRunner.refineAnyways(mTraceCheckAndRefinementSelection.getPredicateUnifier(),
+				(INestedWordAutomaton<CodeBlock, IPredicate>) mAbstraction, mCounterexample,
+				this::refineWithGivenAutomaton);
 		return refineWithGivenAutomaton(mInterpolAutomaton, predUnifier);
 	}
 	
@@ -379,13 +378,14 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		// Map<IPredicate, IPredicate> context2entry = null;
 		
 		final CachingHoareTripleChecker htc;
-		if (mInterpolantGenerator instanceof InterpolantConsolidation) {
-			htc = ((InterpolantConsolidation) mInterpolantGenerator).getHoareTripleChecker();
+		if (mTraceCheckAndRefinementSelection.getHoareTripleChecker() != null) {
+			htc = mTraceCheckAndRefinementSelection.getHoareTripleChecker();
 		} else {
 			final IHoareTripleChecker ehtc = TraceAbstractionUtils.constructEfficientHoareTripleChecker(
 					mServices, mPref.getHoareTripleChecks(),
-					super.mCsToolkit, mInterpolantGenerator.getPredicateUnifier());
-			htc = new CachingHoareTripleChecker_Map(mServices, ehtc, mInterpolantGenerator.getPredicateUnifier());
+					super.mCsToolkit, mTraceCheckAndRefinementSelection.getPredicateUnifier());
+			htc = new CachingHoareTripleChecker_Map(mServices, ehtc,
+					mTraceCheckAndRefinementSelection.getPredicateUnifier());
 		}
 		try {
 			if (DIFFERENCE_INSTEAD_OF_INTERSECTION) {
@@ -458,8 +458,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 									.interpolantAutomatonEnhancement() == InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION_CANNIBALIZE;
 							final DeterministicInterpolantAutomaton determinized =
 									new DeterministicInterpolantAutomaton(mServices, mCsToolkit, htc, oldAbstraction,
-											interpolAutomaton, mInterpolantGenerator.getPredicateUnifier(), mLogger,
-											conservativeSuccessorCandidateSelection, cannibalize);
+											interpolAutomaton, mTraceCheckAndRefinementSelection.getPredicateUnifier(),
+											mLogger, conservativeSuccessorCandidateSelection, cannibalize);
 							// NondeterministicInterpolantAutomaton determinized =
 							// new NondeterministicInterpolantAutomaton(
 							// mServices, mCsToolkit, mModGlobVarManager, htc,

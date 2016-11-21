@@ -34,7 +34,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.in
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AbstractInterpretationMode;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 
 /**
@@ -178,7 +177,7 @@ public class AbstractInterpretationRunner {
 	}
 
 	public IInterpolantAutomatonBuilder<CodeBlock, IPredicate> createInterpolantAutomatonBuilder(
-			final IInterpolantGenerator interpolGenerator,
+			final PredicateUnifier predicateUnifier,
 			final INestedWordAutomaton<CodeBlock, IPredicate> abstraction,
 			final IRun<CodeBlock, IPredicate, ?> currentCex) {
 		if (mMode == AbstractInterpretationMode.NONE) {
@@ -201,14 +200,14 @@ public class AbstractInterpretationRunner {
 				throw new AssertionError("Mode should have been checked earlier");
 			case USE_PATH_PROGRAM:
 				aiInterpolAutomatonBuilder = new AbsIntNonSmtInterpolantAutomatonBuilder(mServices, abstraction,
-						interpolGenerator.getPredicateUnifier(), mCsToolkit.getManagedScript(),
+						predicateUnifier, mCsToolkit.getManagedScript(),
 						mRoot.getBoogie2SMT().getBoogie2SmtSymbolTable(), currentCex, mSimplificationTechnique,
 						mXnfConversionTechnique);
 				break;
 			case USE_PREDICATES:
 				aiInterpolAutomatonBuilder = new AbsIntStraightLineInterpolantAutomatonBuilder(mServices, abstraction,
-						mAbsIntResult, interpolGenerator.getPredicateUnifier(), mCsToolkit, currentCex,
-						mSimplificationTechnique, mXnfConversionTechnique, 
+						mAbsIntResult, predicateUnifier, mCsToolkit, currentCex,
+						mSimplificationTechnique, mXnfConversionTechnique,
 						mRoot.getBoogie2SMT().getBoogie2SmtSymbolTable());
 				break;
 			case USE_CANONICAL:
@@ -216,7 +215,7 @@ public class AbstractInterpretationRunner {
 						"Canonical interpolant automaton generation not yet implemented.");
 			case USE_TOTAL:
 				aiInterpolAutomatonBuilder = new AbsIntTotalInterpolationAutomatonBuilder(mServices, abstraction,
-						mAbsIntResult, interpolGenerator.getPredicateUnifier(), mCsToolkit, currentCex, 
+						mAbsIntResult, predicateUnifier, mCsToolkit, currentCex,
 						mRoot.getBoogie2SMT().getBoogie2SmtSymbolTable());
 				break;
 			default:
@@ -228,7 +227,7 @@ public class AbstractInterpretationRunner {
 		}
 	}
 
-	public void refineAnyways(final IInterpolantGenerator interpolGenerator,
+	public void refineAnyways(final PredicateUnifier predicateUnifier,
 			final INestedWordAutomaton<CodeBlock, IPredicate> abstraction, final IRun<CodeBlock, IPredicate, ?> cex,
 			final IRefineFunction refineFun) throws AutomataLibraryException {
 		if (mMode == AbstractInterpretationMode.NONE || !mAlwaysRefine || mSkipIteration) {
@@ -236,8 +235,8 @@ public class AbstractInterpretationRunner {
 		}
 		mLogger.info("Refining with AI automaton anyways");
 		final NestedWordAutomaton<CodeBlock, IPredicate> aiInterpolAutomaton =
-				createInterpolantAutomatonBuilder(interpolGenerator, abstraction, cex).getResult();
-		refine(interpolGenerator.getPredicateUnifier(), aiInterpolAutomaton, cex, refineFun);
+				createInterpolantAutomatonBuilder(predicateUnifier, abstraction, cex).getResult();
+		refine(predicateUnifier, aiInterpolAutomaton, cex, refineFun);
 	}
 
 	/**

@@ -47,9 +47,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Boo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.CachingHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantConsolidation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 
 /**
@@ -142,16 +143,15 @@ public final class TraceAbstractionRefinementSelector
 	}
 	
 	@Override
-	public IInterpolantGenerator getInterpolantGenerator() {
-		if (mFeasibility != LBool.UNSAT) {
-			throw new UnsupportedOperationException("There is no infeasibility proof available.");
-		}
-		return mStrategy.getInterpolantGenerator();
-	}
-	
-	@Override
 	public PredicateUnifier getPredicateUnifier() {
 		return mPredicateUnifier;
+	}
+	
+	public CachingHoareTripleChecker getHoareTripleChecker() {
+		if (mStrategy.getInterpolantGenerator() instanceof InterpolantConsolidation) {
+			return ((InterpolantConsolidation) mStrategy.getInterpolantGenerator()).getHoareTripleChecker();
+		}
+		return null;
 	}
 	
 	private IRefinementStrategy<NestedWordAutomaton<CodeBlock, IPredicate>> chooseStrategy(

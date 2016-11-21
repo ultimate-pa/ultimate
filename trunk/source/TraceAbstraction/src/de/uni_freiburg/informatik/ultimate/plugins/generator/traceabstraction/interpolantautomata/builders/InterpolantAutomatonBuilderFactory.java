@@ -56,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantConsolidation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerSpWp;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils;
 
@@ -113,7 +114,8 @@ public class InterpolantAutomatonBuilderFactory {
 		}
 
 		return (abstraction, interpolGenerator, counterexample) -> abstractInterpretationRunner.hasShownInfeasibility()
-				? createBuilderAbstractInterpretation(abstraction, interpolGenerator, counterexample)
+				? createBuilderAbstractInterpretation(abstraction, interpolGenerator.getPredicateUnifier(),
+						counterexample)
 				: basicBuilder.create(abstraction, interpolGenerator, counterexample);
 	}
 
@@ -153,9 +155,9 @@ public class InterpolantAutomatonBuilderFactory {
 	}
 
 	private IInterpolantAutomatonBuilder<CodeBlock, IPredicate> createBuilderAbstractInterpretation(
-			final IAutomaton<CodeBlock, IPredicate> abstraction, final IInterpolantGenerator interpolGenerator,
+			final IAutomaton<CodeBlock, IPredicate> abstraction, final PredicateUnifier predicateUnifier,
 			final IRun<CodeBlock, IPredicate, ?> counterexample) {
-		return mAbsIntRunner.createInterpolantAutomatonBuilder(interpolGenerator,
+		return mAbsIntRunner.createInterpolantAutomatonBuilder(predicateUnifier,
 				(INestedWordAutomaton<CodeBlock, IPredicate>) abstraction, counterexample);
 	}
 

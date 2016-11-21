@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.t
 
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.CachingHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 
 /**
@@ -52,11 +52,6 @@ public interface IRefinementSelector<T> {
 	T getInfeasibilityProof();
 	
 	/**
-	 * @return Interpolant generator.
-	 */
-	IInterpolantGenerator getInterpolantGenerator();
-	
-	/**
 	 * @return Predicate unifier.
 	 */
 	PredicateUnifier getPredicateUnifier();
@@ -65,4 +60,9 @@ public interface IRefinementSelector<T> {
 	 * @return RCFG program execution.
 	 */
 	RcfgProgramExecution getRcfgProgramExecution();
+	
+	/**
+	 * @return Hoare triple checker.
+	 */
+	CachingHoareTripleChecker getHoareTripleChecker();
 }
