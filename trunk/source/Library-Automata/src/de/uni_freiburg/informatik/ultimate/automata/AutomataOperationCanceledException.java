@@ -29,8 +29,8 @@ package de.uni_freiburg.informatik.ultimate.automata;
 import java.util.ArrayList;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.util.IRunningTaskStackProvider;
-import de.uni_freiburg.informatik.ultimate.util.RunningTaskInfo;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.IRunningTaskStackProvider;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 
 /**
  * Exception that is thrown by automata operations if they detected that the caller requested a cancellation of the
