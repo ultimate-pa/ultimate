@@ -28,9 +28,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceChecker;
 
 /**
  * Checks a trace for feasibility and, if infeasible, constructs a proof of infeasibility.
@@ -57,12 +57,12 @@ public interface IRefinementSelector<T> {
 	IInterpolantGenerator getInterpolantGenerator();
 	
 	/**
-	 * @return Trace checker.
-	 */
-	TraceChecker getTraceChecker();
-	
-	/**
 	 * @return Predicate unifier.
 	 */
 	PredicateUnifier getPredicateUnifier();
+	
+	/**
+	 * @return RCFG program execution.
+	 */
+	RcfgProgramExecution getRcfgProgramExecution();
 }

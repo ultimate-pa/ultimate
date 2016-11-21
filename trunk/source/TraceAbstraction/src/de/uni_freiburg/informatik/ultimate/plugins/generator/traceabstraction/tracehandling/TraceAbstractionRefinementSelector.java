@@ -46,13 +46,13 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceChecker;
 
 /**
  * Checks a trace for feasibility and, if infeasible, selects a refinement strategy, i.e., constructs an interpolant
@@ -133,6 +133,11 @@ public final class TraceAbstractionRefinementSelector
 	public LBool getCounterexampleFeasibility() {
 		return mFeasibility;
 	}
+
+	@Override
+	public RcfgProgramExecution getRcfgProgramExecution() {
+		return mStrategy.getTraceChecker().getRcfgProgramExecution();
+	}
 	
 	@Override
 	public NestedWordAutomaton<CodeBlock, IPredicate> getInfeasibilityProof() {
@@ -145,11 +150,6 @@ public final class TraceAbstractionRefinementSelector
 			throw new UnsupportedOperationException("There is no infeasibility proof available.");
 		}
 		return mStrategy.getInterpolantGenerator();
-	}
-	
-	@Override
-	public TraceChecker getTraceChecker() {
-		return mStrategy.getTraceChecker();
 	}
 	
 	@Override
