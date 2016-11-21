@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
@@ -77,12 +76,11 @@ public final class TraceAbstractionRefinementSelector
 	private final TaCheckAndRefinementPreferences mPrefs;
 	
 	/* outputs */
-	private IRefinementStrategy mStrategy;
+	private IRefinementStrategy<NestedWordAutomaton<CodeBlock, IPredicate>> mStrategy;
 	private final LBool mFeasibility;
-	private NestedWordAutomaton<CodeBlock, IPredicate> mInterpolantAutomaton;
 	private final PredicateUnifier mPredicateUnifier;
-	private AutomataOperationCanceledException mInterpolantAutomatonGenerationException;
 	
+	@SuppressWarnings("unchecked")
 	public TraceAbstractionRefinementSelector(final IUltimateServiceProvider services, final ILogger logger,
 			final TaCheckAndRefinementPreferences prefs, final IInterpolantAutomatonEvaluator evaluator,
 			final PredicateFactory predicateFactory, final BoogieIcfgContainer icfgContainer,
@@ -156,13 +154,15 @@ public final class TraceAbstractionRefinementSelector
 		return mPredicateUnifier;
 	}
 	
-	private IRefinementStrategy chooseStrategy(final IAutomaton<CodeBlock, IPredicate> abstraction,
-			final IInterpolantAutomatonEvaluator evaluator, final TAPreferences taPrefsForInterpolantConsolidation) {
+	private IRefinementStrategy<NestedWordAutomaton<CodeBlock, IPredicate>> chooseStrategy(
+			final IAutomaton<CodeBlock, IPredicate> abstraction, final IInterpolantAutomatonEvaluator evaluator,
+			final TAPreferences taPrefsForInterpolantConsolidation) {
 		// TODO add options in preferences, currently we only try the FixedTraceAbstractionRefinementStrategy
 		final ManagedScript managedScript = setupManagedScript();
-		final IRefinementStrategy strategy = new FixedTraceAbstractionRefinementStrategy(mLogger, mPrefs,
-				managedScript, mServices, mPredicateUnifier, mCounterexample, abstraction, evaluator,
-				taPrefsForInterpolantConsolidation);
+		final IRefinementStrategy<NestedWordAutomaton<CodeBlock, IPredicate>> strategy =
+				new FixedTraceAbstractionRefinementStrategy(mLogger, mPrefs,
+						managedScript, mServices, mPredicateUnifier, mCounterexample, abstraction, evaluator,
+						taPrefsForInterpolantConsolidation);
 		return strategy;
 	}
 	

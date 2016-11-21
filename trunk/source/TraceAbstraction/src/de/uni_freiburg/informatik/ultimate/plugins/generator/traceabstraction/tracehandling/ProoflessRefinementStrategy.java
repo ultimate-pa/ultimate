@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
+@SuppressWarnings("rawtypes")
 public class ProoflessRefinementStrategy implements IRefinementStrategy {
 	private final TraceChecker mTraceChecker;
 	public ProoflessRefinementStrategy(final TraceChecker traceChecker) {

@@ -66,7 +66,8 @@ import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public class FixedTraceAbstractionRefinementStrategy implements IRefinementStrategy {
+public class FixedTraceAbstractionRefinementStrategy
+		implements IRefinementStrategy<NestedWordAutomaton<CodeBlock, IPredicate>> {
 	private final ILogger mLogger;
 	private final TaCheckAndRefinementPreferences mPrefs;
 	private final IRun<CodeBlock, IPredicate, ?> mCounterexample;
@@ -253,6 +254,7 @@ public class FixedTraceAbstractionRefinementStrategy implements IRefinementStrat
 			mCounterexample = counterexample;
 		}
 		
+		@SuppressWarnings("unchecked")
 		@Override
 		public TraceChecker get() {
 			final IPredicate truePredicate = mPredicateUnifier.getTruePredicate();
