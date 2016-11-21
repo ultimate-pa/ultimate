@@ -6,6 +6,7 @@ import os
 import sys
 import codecs
 import itertools
+import collections
 
 def toPercent(row, a, b):
     part = row[a]
@@ -107,15 +108,16 @@ mFriendlySettingNames = {}
 mNecessaryHeaders = ['Settings', 'Toolchain', 'Result', 'File']
 
 
-mRowFuns = [ ('Time' , lambda r : timeInNanosToSeconds(r, 'OverallTime'), 'semilogyaxis'),
-             ('Iter' , lambda r : toInt(r, 'OverallIterations'), 'axis'),
-             ('InterTime' , lambda r : timeInNanosToSeconds(r, 'TraceCheckerStatistics_InterpolantComputationTime'), 'semilogyaxis'),
-             ('UnsatSize' , lambda r : toPercent(r, 'TraceCheckerStatistics_ConjunctsInUnsatCore', 'TraceCheckerStatistics_ConjunctsInSsa'), 'semilogyaxis'),
-             ('QuantPreds' , lambda r : toPercent(r, 'TraceCheckerStatistics_QuantifiedInterpolants', 'TraceCheckerStatistics_ConstructedInterpolants'), 'axis'),
-             ('PerfInter' , lambda r : toPercent(r, 'TraceCheckerStatistics_PerfectInterpolantSequences', 'TraceCheckerStatistics_InterpolantComputations'), 'axis'),
-            ]
+mPlotdefinitions = [ 
+    ('Time' , lambda r : timeInNanosToSeconds(r, 'OverallTime'), 'semilogyaxis', 'Samples', 'log(s)'),
+    ('Iter' , lambda r : toInt(r, 'OverallIterations'), 'axis', 'Samples', 'Iterations'),
+    ('InterTime' , lambda r : timeInNanosToSeconds(r, 'TraceCheckerStatistics_InterpolantComputationTime'), 'semilogyaxis', 'Samples', 'log(s)'),
+    ('UnsatSize' , lambda r : toPercent(r, 'TraceCheckerStatistics_ConjunctsInUnsatCore', 'TraceCheckerStatistics_ConjunctsInSsa'), 'semilogyaxis', 'Samples', 'log(\\%)'),
+    ('QuantPreds' , lambda r : toPercent(r, 'TraceCheckerStatistics_QuantifiedInterpolants', 'TraceCheckerStatistics_ConstructedInterpolants'), 'axis', 'Samples', '\\% quantified interpolants'),
+    ('PerfInter' , lambda r : toPercent(r, 'TraceCheckerStatistics_PerfectInterpolantSequences', 'TraceCheckerStatistics_InterpolantComputations'), 'axis', 'Samples', '\\% perfect interpolants'),
+]
 # # row funs for tacas taipan 
-# mRowFuns = { 
+# mPlotdefinitions = { 
 #            'Time' : lambda r : timeInNanosToSeconds(r, 'Overall time'),
 #            'Runtime' : lambda r : timeInNanosToSeconds(r, 'OverallTime'),
 #            'TotalIterations' : lambda r : toInt(r, 'OverallIterations'),
@@ -427,7 +429,11 @@ def writeLatexPlotLegend(f, namesAndStyles):
     f.write('    \\end{tikzpicture}\n')
     return
 
-def writeLatexPlot(f, xlabel, ylabel, files, namesAndStylesDict, caption, axis):
+def writeLatexPlot(f, files, namesAndStylesDict, caption, nametuple):
+    axis = nametuple[0]
+    xlabel = nametuple[1]
+    ylabel = nametuple[2]
+    
     f.write('\\begin{tikzpicture}[scale=\\plotscale]\n')
     f.write('\\begin{' + axis + '}[%\n')
     f.write('log ticks with fixed point,%\n')
@@ -447,7 +453,7 @@ def writeLatexPlot(f, xlabel, ylabel, files, namesAndStylesDict, caption, axis):
 
 def createLatexPlots(successrows, uniqueSettings, filenamePrefix, outputDir, name):
     latexFigures = []
-    for funName, fun, axis in mRowFuns:
+    for funName, fun, axis, xlabel, ylabel in mPlotdefinitions:
         print 'Writing plot for ' + funName
         plottable = getPlottable(successrows, fun, map(lambda x : (x), uniqueSettings))
         plotfiles = []
@@ -469,17 +475,16 @@ def createLatexPlots(successrows, uniqueSettings, filenamePrefix, outputDir, nam
                     plotnames.append(mLatexSettingsMappings[friendlySetting])
                 else:
                     plotnames.append(friendlySetting)
-        latexFigures.append((funName, zip(plotfiles, plotnames), axis))
+        latexFigures.append((funName, sorted(zip(plotfiles, plotnames), key=lambda x : x[1]), (axis, xlabel, ylabel)))
     return latexFigures
 
 def getNamesAndStyles(latexFigures):
     namesAndStylesDict = {}
-    styles = iter(getLatexPlotStyles())    
+    styles = iter(getLatexPlotStyles()) 
     for key, val, val2 in latexFigures:
         for file, pname in val:
             if not pname in namesAndStylesDict:
                 namesAndStylesDict[pname] = (file, next(styles))
-    
     return sorted(namesAndStylesDict.items()), namesAndStylesDict
 
 def writePlots(successrows, toolchain, uniqueSettings, outputDir, name):
@@ -509,7 +514,7 @@ def writePlots(successrows, toolchain, uniqueSettings, outputDir, name):
         f = codecs.open(plotsfile, 'w', 'utf-8')    
         sortedByName = sorted(filesAndNames, key=lambda x : x[1])
         # f.write('\\resizebox*{0.45\\textwidth}{!}{%\n')
-        writeLatexPlot(f, 'x', 'y', sortedByName, namesAndStylesDict, funName, axis)
+        writeLatexPlot(f, sortedByName, namesAndStylesDict, funName, axis)
         # f.write('}\n')
         f.close()        
     return
@@ -632,7 +637,7 @@ def main():
         remPathD = lambda x : mapKeys(lambda y : mFriendlySettingNames[y], x)
         remPathS = lambda x : map(lambda y : mFriendlySettingNames[y], x)
     
-        print 'Settings:         ', len(uniqueSettings),':', remPathS(uniqueSettings)
+        print 'Settings:         ', len(uniqueSettings), ':', remPathS(uniqueSettings)
         print 'Total inputs:     ', len(uniqueFiles)
         print 'Crashed inputs #: ', len(crashed)
         print 'Crashed inputs:   ', crashed
@@ -667,7 +672,7 @@ def main():
             # printStats('ALL', successrows, s, 'AbstIntIterations')
             # printStats('ALL', successrows, s, 'AbstIntStrong')
             # printStats(rowsEveryoneCouldSolve, s, 'Overall time')
-        #print 
+        # print 
         
         # # gnuplot and stuff 
         writePlots(successrows, toolchain, uniqueSettings, output, name)
