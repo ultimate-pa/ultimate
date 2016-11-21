@@ -87,6 +87,14 @@ public class FixedTraceAbstractionRefinementStrategy
 	 *            predicate unifier
 	 * @param counterexample
 	 *            counterexample trace
+	 * @param logger
+	 *            logger
+	 * @param abstraction
+	 *            abstraction
+	 * @param evaluator
+	 *            interpolant automaton evaluator
+	 * @param taPrefsForInterpolantConsolidation
+	 *            temporary argument, should be removed
 	 */
 	public FixedTraceAbstractionRefinementStrategy(final ILogger logger, final TaCheckAndRefinementPreferences prefs,
 			final ManagedScript managedScript, final IUltimateServiceProvider services,
