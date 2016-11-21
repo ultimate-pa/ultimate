@@ -19,6 +19,14 @@ public interface IPSTVisitor {
 		return defaultLeave(comment);
 	}
 
+	default int leave(final IPSTACSLComment acslComment) {
+		return defaultLeave(acslComment);
+	}
+	
+	default int leave(final IPSTACSLNode acslNode) {
+		return defaultLeave(acslNode);
+	}
+	
 	default int leave(final IPSTConditionalBlock conditionalBlock) {
 		return defaultLeave(conditionalBlock);
 	}
@@ -51,6 +59,14 @@ public interface IPSTVisitor {
 		return defaultVisit(comment);
 	}
 
+	default int visit(final IPSTACSLComment acslComment) {
+		return defaultVisit(acslComment);
+	}
+		
+	default int visit(final IPSTACSLNode acslNode) {
+		return defaultVisit(acslNode);
+	}
+	
 	default int visit(final IPSTConditionalBlock conditionalBlock) {
 		return defaultVisit(conditionalBlock);
 	}

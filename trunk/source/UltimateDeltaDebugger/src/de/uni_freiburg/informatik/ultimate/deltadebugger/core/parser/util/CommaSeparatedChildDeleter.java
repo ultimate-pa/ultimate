@@ -95,8 +95,8 @@ public abstract class CommaSeparatedChildDeleter {
 
 	private void deleteLastChild(final IPSTNode child, final ISourceRange rightComma)
 			throws MissingCommaLocationException {
-		// Delete the comma to the left if more than one child will be left
-		if (mChildrenToDelete.size() < mAllChildren.size() - 1) {
+		// Delete the comma to the left if at least one child will be left
+		if (mChildrenToDelete.size() <= mAllChildren.size() - 1) {
 			if (mLeftComma == null) {
 				throw new MissingCommaLocationException("Unable to delete last child: " + child);
 			}

@@ -23,7 +23,7 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceRange;
 
 public class DefaultNodeFactory implements IPSTNodeFactory {
 
-	private ISourceDocument mSource;
+	protected ISourceDocument mSource;
 
 	@Override
 	public IPSTComment createComment(final ISourceRange location, final IASTComment comment) {

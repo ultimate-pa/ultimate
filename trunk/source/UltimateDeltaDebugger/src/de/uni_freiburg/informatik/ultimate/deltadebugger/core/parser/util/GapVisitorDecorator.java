@@ -3,6 +3,8 @@ package de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.util;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTACSLComment;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTACSLNode;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTComment;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTConditionalBlock;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTDirective;
@@ -102,6 +104,22 @@ class GapVisitorDecorator implements IPSTVisitor {
 	}
 
 	@Override
+	public int leave(final IPSTACSLComment node) {
+		if (!checkForGapUntil(node.endOffset())) {
+			return PROCESS_ABORT;
+		}
+		return afterLeave(node, mDelegate.leave(node));
+	}
+	
+	@Override
+	public int leave(final IPSTACSLNode node) {
+		if (!checkForGapUntil(node.endOffset())) {
+			return PROCESS_ABORT;
+		}
+		return afterLeave(node, mDelegate.leave(node));
+	}
+	
+	@Override
 	public int leave(final IPSTConditionalBlock node) {
 		if (!checkForGapUntil(node.endOffset())) {
 			return PROCESS_ABORT;
@@ -165,6 +183,22 @@ class GapVisitorDecorator implements IPSTVisitor {
 		return afterVisit(node, mDelegate.visit(node));
 	}
 
+	@Override
+	public int visit(final IPSTACSLComment node) {
+		if (!checkForGapUntil(node.offset())) {
+			return PROCESS_ABORT;
+		}
+		return afterVisit(node, mDelegate.visit(node));
+	}
+	
+	@Override
+	public int visit(final IPSTACSLNode node) {
+		if (!checkForGapUntil(node.offset())) {
+			return PROCESS_ABORT;
+		}
+		return afterVisit(node, mDelegate.visit(node));
+	}
+	
 	@Override
 	public int visit(final IPSTConditionalBlock node) {
 		if (!checkForGapUntil(node.offset())) {

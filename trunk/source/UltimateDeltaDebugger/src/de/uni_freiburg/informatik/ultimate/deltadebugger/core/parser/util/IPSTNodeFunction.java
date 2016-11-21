@@ -1,5 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.util;
 
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTACSLComment;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTACSLNode;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTComment;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTConditionalBlock;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTDirective;
@@ -23,7 +25,15 @@ public interface IPSTNodeFunction<T> {
 	default T on(final IPSTComment comment) {
 		return on((IPSTPreprocessorNode) comment);
 	}
-
+	
+	default T on(final IPSTACSLComment acslComment) {
+		return on((IPSTComment) acslComment);
+	}
+	
+	default T on(final IPSTACSLNode acslNode) {
+		return on((IPSTNode) acslNode);
+	}
+	
 	default T on(final IPSTConditionalBlock conditionalBlock) {
 		return on((IPSTNode) conditionalBlock);
 	}

@@ -1,5 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.util;
 
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTACSLComment;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTACSLNode;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTComment;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTConditionalBlock;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTDirective;
@@ -12,7 +14,7 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfa
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTTranslationUnit;
 
 /**
- * Simluate a double dispatch function for an IPSTNode argument. Analoguous to IASTNodeConsumer for consistency reasons.
+ * Simulate a double dispatch function for an IPSTNode argument. Analogous to IASTNodeConsumer for consistency reasons.
  *
  */
 @FunctionalInterface
@@ -22,6 +24,14 @@ public interface IPSTNodeConsumer {
 		on((IPSTPreprocessorNode) comment);
 	}
 
+	default void on(final IPSTACSLComment acslComment) {
+		on((IPSTComment) acslComment);
+	}
+	
+	default void on(final IPSTACSLNode acslNode) {
+		on((IPSTNode) acslNode);
+	}
+	
 	default void on(final IPSTConditionalBlock conditionalBlock) {
 		on((IPSTNode) conditionalBlock);
 	}

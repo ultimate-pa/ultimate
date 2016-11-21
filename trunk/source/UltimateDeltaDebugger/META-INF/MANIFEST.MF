@@ -10,4 +10,5 @@ Require-Bundle: Library-UltimateCore,
  Library-UltimateUtil,
  de.uni_freiburg.informatik.ultimate.cli,
  org.eclipse.cdt.core,
- org.eclipse.jface.text
+ org.eclipse.jface.text,
+ ACSLParser

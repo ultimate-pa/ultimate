@@ -1,6 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.util;
 
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.implementation.PSTVisitorWithResult;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTACSLComment;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTACSLNode;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTComment;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTConditionalBlock;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTDirective;
@@ -38,7 +40,19 @@ public final class PSTNodeFunctionDispatcher<T> {
 			setResult(mFunc.on(conditionalBlock));
 			return PROCESS_ABORT;
 		}
-
+		
+		@Override
+		public int visit(final IPSTACSLComment acslComment) {
+			setResult(mFunc.on(acslComment));
+			return PROCESS_ABORT;
+		}
+		
+		@Override
+		public int visit(final IPSTACSLNode acslNode) {
+			setResult(mFunc.on(acslNode));
+			return PROCESS_ABORT;
+		}
+		
 		@Override
 		public int visit(final IPSTDirective directive) {
 			setResult(mFunc.on(directive));

@@ -32,12 +32,15 @@ import org.eclipse.cdt.core.dom.ast.IASTWhileStatement;
 import org.eclipse.cdt.core.dom.ast.c.ICASTDesignatedInitializer;
 
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.generators.hdd.changes.ChangeCollector;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTACSLNode;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTConditionalBlock;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTNode;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTProtectedRegion;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTRegularNode;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTTranslationUnit;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.util.ASTNodeConsumerDispatcher;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.util.IASTNodeConsumer;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression;
 
 /**
  * Default delta debugger strategy.
@@ -93,6 +96,18 @@ public class DefaultStrategy implements IHddStrategy {
 				collector.addDeleteChange(node);
 			}
 			return;
+		} else if (node instanceof IPSTACSLNode) {
+			final IPSTACSLNode acslNode = (IPSTACSLNode) node;
+			if (acslNode.getACSLNode() instanceof Expression) {
+				// Replace expressions by 0 (just for testing)
+				// TODO: remove or at least check the type
+				collector.addReplaceChange(acslNode, "0");
+			} else {
+				// Delete any other thing
+				collector.addDeleteChange(node);
+			}
+			
+			
 		} else {
 			// delete every preprocessor node
 			collector.addDeleteChange(node);
@@ -117,10 +132,9 @@ public class DefaultStrategy implements IHddStrategy {
 	
 	@Override
 	public boolean skipSubTree(final IPSTNode node) {
-		// Could try to remove the region completely, but have to make sure not
-		// to expand it
-		// return node instanceof IPSTLiteralRegion;
-		return false;
+		// Overlapping regions are removed and expanded, risking syntax errors in favor of a better reduction.
+		// Only explicitly protected regions are left untouched.
+		return node instanceof IPSTProtectedRegion;
 	}
 	
 	/**

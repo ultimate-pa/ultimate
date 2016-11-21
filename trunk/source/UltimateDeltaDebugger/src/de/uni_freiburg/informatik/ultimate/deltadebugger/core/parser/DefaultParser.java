@@ -49,15 +49,15 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceDocume
  * Default parser implementation.
  */
 public class DefaultParser implements IParser {
-	private static final int DEFAULT_OPTIONS = ILanguage.OPTION_NO_IMAGE_LOCATIONS | ILanguage.OPTION_IS_SOURCE_UNIT;
+	protected static final int DEFAULT_OPTIONS = ILanguage.OPTION_NO_IMAGE_LOCATIONS | ILanguage.OPTION_IS_SOURCE_UNIT;
 	
-	private static final String DEFAULT_FILEPATH = "<input>";
+	protected static final String DEFAULT_FILEPATH = "<input>";
 	
-	private final ILogger mLogger;
-	private final String mDummySourceFilePath;
-	private final ScannerInfo mScannerInfo;
-	private final IncludeFileContentProvider mIncludeFileContentProvider;
-	private final IParserLogService mParserLogService;
+	protected final ILogger mLogger;
+	protected final String mDummySourceFilePath;
+	protected final ScannerInfo mScannerInfo;
+	protected final IncludeFileContentProvider mIncludeFileContentProvider;
+	protected final IParserLogService mParserLogService;
 	
 	/**
 	 * Default constructor.

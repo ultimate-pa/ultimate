@@ -30,7 +30,6 @@ import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.DefaultParser;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.IParser;
-import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.PSTBuilder;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTTranslationUnit;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceDocument;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.StringSourceDocument;
@@ -118,7 +117,7 @@ public class DefaultPassContext implements IPassContext {
 		if (mPst == null) {
 			synchronized (this) {
 				if (mPst == null) {
-					mPst = new PSTBuilder(mLogger, getSharedAst(), mInput).build();
+					mPst = mParser.createPst(getSharedAst(), mInput);
 				}
 			}
 		}
