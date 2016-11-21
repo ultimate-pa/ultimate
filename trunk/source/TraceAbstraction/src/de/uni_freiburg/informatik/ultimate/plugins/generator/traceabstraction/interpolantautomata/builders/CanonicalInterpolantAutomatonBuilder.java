@@ -2,27 +2,27 @@
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2010-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE TraceAbstraction plug-in.
- * 
+ *
  * The ULTIMATE TraceAbstraction plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE TraceAbstraction plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE TraceAbstraction plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders;
@@ -52,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 /**
  * Constructs the canonical interpolant automaton. Boolean flags determine if we also add selfloops in the initial and
  * final state. I think this construction is unsound if the precondition if not the "true" predicate.
- * 
+ *
  * @author heizmann@informatik.uni-freiburg.de
  */
 public class CanonicalInterpolantAutomatonBuilder<CL> extends CoverageAnalysis<CL>
@@ -62,22 +62,22 @@ public class CanonicalInterpolantAutomatonBuilder<CL> extends CoverageAnalysis<C
 
 	private final boolean mSelfloopAtInitial = false;
 	private final boolean mSelfloopAtFinal = true;
-	
+
 	protected final NestedWord<? extends IAction> mNestedWord;
 
 	private final CfgSmtToolkit mCsToolkit;
 
-	private final Map<Integer, Set<IPredicate>> mAlternativeCallPredecessors = new HashMap<Integer, Set<IPredicate>>();
+	private final Map<Integer, Set<IPredicate>> mAlternativeCallPredecessors = new HashMap<>();
 
 	public CanonicalInterpolantAutomatonBuilder(final IUltimateServiceProvider services,
 			final InterpolantsPreconditionPostcondition ipp, final List<CL> programPointSequence,
-			final InCaReAlphabet<CodeBlock> alphabet, final CfgSmtToolkit csToolkit, final IStateFactory<IPredicate> predicateFactory,
-			final ILogger logger, final PredicateUnifier predicateUnifier, final NestedWord<? extends IAction> nestedWord) {
+			final InCaReAlphabet<CodeBlock> alphabet, final CfgSmtToolkit csToolkit,
+			final IStateFactory<IPredicate> predicateFactory, final ILogger logger,
+			final PredicateUnifier predicateUnifier, final NestedWord<? extends IAction> nestedWord) {
 		super(services, ipp, programPointSequence, logger, predicateUnifier);
 		mNestedWord = nestedWord;
-		mIA = new NestedWordAutomaton<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
-				alphabet.getInternalAlphabet(), alphabet.getCallAlphabet(), alphabet.getReturnAlphabet(),
-				predicateFactory);
+		mIA = new NestedWordAutomaton<>(new AutomataLibraryServices(mServices), alphabet.getInternalAlphabet(),
+				alphabet.getCallAlphabet(), alphabet.getReturnAlphabet(), predicateFactory);
 		mCsToolkit = csToolkit;
 	}
 
@@ -180,13 +180,14 @@ public class CanonicalInterpolantAutomatonBuilder<CL> extends CoverageAnalysis<C
 	private void addAlternativeCallPredecessor(final int symbolPos, final IPredicate alternativeCallPredecessor) {
 		Set<IPredicate> alts = mAlternativeCallPredecessors.get(symbolPos);
 		if (alts == null) {
-			alts = new HashSet<IPredicate>();
+			alts = new HashSet<>();
 			mAlternativeCallPredecessors.put(symbolPos, alts);
 		}
 		alts.add(alternativeCallPredecessor);
 	}
 
-	private void addAlternativeReturnTransitions(final IPredicate pred, final int callPos, final CodeBlock symbol, final IPredicate succ) {
+	private void addAlternativeReturnTransitions(final IPredicate pred, final int callPos, final CodeBlock symbol,
+			final IPredicate succ) {
 		if (mAlternativeCallPredecessors.get(callPos) == null) {
 			return;
 		}

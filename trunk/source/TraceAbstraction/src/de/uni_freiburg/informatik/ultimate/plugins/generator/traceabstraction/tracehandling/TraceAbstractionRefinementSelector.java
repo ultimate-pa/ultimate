@@ -72,15 +72,15 @@ public final class TraceAbstractionRefinementSelector
 	private final XnfConversionTechnique mXnfConversionTechnique;
 	private final IToolchainStorage mToolchainStorage;
 	private final int mIteration;
-	
+
 	/* intermediate */
 	private final TaCheckAndRefinementPreferences mPrefs;
-	
+
 	/* outputs */
 	private IRefinementStrategy<NestedWordAutomaton<CodeBlock, IPredicate>> mStrategy;
 	private final LBool mFeasibility;
 	private final PredicateUnifier mPredicateUnifier;
-	
+
 	@SuppressWarnings("unchecked")
 	public TraceAbstractionRefinementSelector(final IUltimateServiceProvider services, final ILogger logger,
 			final TaCheckAndRefinementPreferences prefs, final IInterpolantAutomatonEvaluator evaluator,
@@ -100,53 +100,54 @@ public final class TraceAbstractionRefinementSelector
 		mXnfConversionTechnique = xnfConversionTechnique;
 		mToolchainStorage = toolchainStorage;
 		mIteration = iteration;
-		
+
 		mPredicateUnifier = new PredicateUnifier(mServices, mPrefs.getCfgSmtToolkit().getManagedScript(),
 				mPredicateFactory, mIcfgContainer.getBoogie2SMT().getBoogie2SmtSymbolTable(), mSimplificationTechnique,
 				mXnfConversionTechnique);
-		
+
 		// choose strategy
 		mStrategy = chooseStrategy(abstraction, evaluator, taPrefsForInterpolantConsolidation);
-		
+
 		// check feasibility using the strategy
 		mFeasibility = checkCounterexampleFeasibility();
 		switch (mFeasibility) {
-			case UNKNOWN:
-				if (mLogger.isInfoEnabled()) {
-					mLogger.info("No strategy for checking trace feasibility found, considering it unknown.");
-				}
-				mStrategy = new ProoflessRefinementStrategy(mStrategy.getTraceChecker());
-				break;
-			case UNSAT:
-				break;
-			case SAT:
-				mStrategy = new ProoflessRefinementStrategy(mStrategy.getTraceChecker());
-				break;
-			default:
-				throw new IllegalArgumentException("Unknown case: " + mFeasibility);
+		case UNKNOWN:
+			if (mLogger.isInfoEnabled()) {
+				mLogger.info("Strategy " + mStrategy.getClass().getSimpleName()
+						+ " was unsuccessful and could not determine trace feasibility.");
+			}
+			mStrategy = new ProoflessRefinementStrategy(mStrategy.getTraceChecker());
+			break;
+		case UNSAT:
+			break;
+		case SAT:
+			mStrategy = new ProoflessRefinementStrategy(mStrategy.getTraceChecker());
+			break;
+		default:
+			throw new IllegalArgumentException("Unknown case: " + mFeasibility);
 		}
 	}
-	
+
 	@Override
 	public LBool getCounterexampleFeasibility() {
 		return mFeasibility;
 	}
-	
+
 	@Override
 	public RcfgProgramExecution getRcfgProgramExecution() {
 		return mStrategy.getTraceChecker().getRcfgProgramExecution();
 	}
-	
+
 	@Override
 	public NestedWordAutomaton<CodeBlock, IPredicate> getInfeasibilityProof() {
 		return mStrategy.getInfeasibilityProof();
 	}
-	
+
 	@Override
 	public PredicateUnifier getPredicateUnifier() {
 		return mPredicateUnifier;
 	}
-	
+
 	public CachingHoareTripleChecker getHoareTripleChecker() {
 		if (mStrategy.getInterpolantGenerator() instanceof InterpolantConsolidation) {
 			return ((InterpolantConsolidation) mStrategy.getInterpolantGenerator()).getHoareTripleChecker();
@@ -160,12 +161,11 @@ public final class TraceAbstractionRefinementSelector
 		// TODO add options in preferences, currently we only try the FixedTraceAbstractionRefinementStrategy
 		final ManagedScript managedScript = setupManagedScript();
 		final IRefinementStrategy<NestedWordAutomaton<CodeBlock, IPredicate>> strategy =
-				new FixedTraceAbstractionRefinementStrategy(mLogger, mPrefs,
-						managedScript, mServices, mPredicateUnifier, mCounterexample, abstraction, evaluator,
-						taPrefsForInterpolantConsolidation);
+				new FixedTraceAbstractionRefinementStrategy(mLogger, mPrefs, managedScript, mServices,
+						mPredicateUnifier, mCounterexample, abstraction, evaluator, taPrefsForInterpolantConsolidation);
 		return strategy;
 	}
-	
+
 	private LBool checkCounterexampleFeasibility() {
 		do {
 			final LBool feasibility = mStrategy.getTraceChecker().isCorrect();
@@ -177,7 +177,7 @@ public final class TraceAbstractionRefinementSelector
 			return feasibility;
 		} while (true);
 	}
-	
+
 	private ManagedScript setupManagedScript() throws AssertionError {
 		final ManagedScript mgdScriptTc;
 		if (mPrefs.getUseSeparateSolverForTracechecks()) {
