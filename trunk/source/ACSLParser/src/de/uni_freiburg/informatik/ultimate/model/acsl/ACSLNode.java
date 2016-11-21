@@ -46,21 +46,22 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLVisitor;
  */
 public abstract class ACSLNode {
 	/**
-	 * The starting line number of this ACSL comment.
+	 * The default location value used until it is explicitly set
 	 */
-	private int startingLineNumber;
-	/**
-	 * The ending line number of this ACSL comment.
-	 */
-	private int endingLineNumber;
+	public static final ACSLSourceLocation INVALID_LOCATION = new ACSLSourceLocation(-1, -1, -1, -1);
+
 	/**
 	 * The list of children.
 	 */
-	private final List<Object> children = new ArrayList<Object>();
+	private final List<Object> children = new ArrayList<>();
 	/**
 	 * File Name.
 	 */
 	private String fileName;
+	/**
+	 * The location in the source code.
+	 */
+	private ACSLSourceLocation location = INVALID_LOCATION;
 
 	/**
 	 * Getter for the starting line number of this ACSL comment.
@@ -68,36 +69,16 @@ public abstract class ACSLNode {
 	 * @return the starting line number of the ACSL-comment.
 	 */
 	public int getStartingLineNumber() {
-		return startingLineNumber;
-	}
-
-	/**
-	 * Setter for the starting line number of this ACSL comment.
-	 * 
-	 * @param startingLineNumber
-	 *            the starting line number of the ACSL-comment.
-	 */
-	public void setStartingLineNumber(int startingLineNumber) {
-		this.startingLineNumber = startingLineNumber;
+		return location.getStartLine();
 	}
 
 	/**
 	 * Getter for the ending line number of this ACSL comment.
-	 * 
+	 *
 	 * @return the ending line number of the ACSL-comment.
 	 */
 	public int getEndingLineNumber() {
-		return endingLineNumber;
-	}
-
-	/**
-	 * Setter for the ending line number of this ACSL comment.
-	 * 
-	 * @param endingLineNumber
-	 *            the ending line number of the ACSL-comment.
-	 */
-	public void setEndingLineNumber(int endingLineNumber) {
-		this.endingLineNumber = endingLineNumber;
+		return location.getEndLine();
 	}
 
 	/**
@@ -129,12 +110,72 @@ public abstract class ACSLNode {
 	}
 
 	/**
+	 * Getter for the location.
+	 *
+	 * @return the location of this node
+	 */
+	public ACSLSourceLocation getLocation() {
+		return location;
+	}
+
+	/**
+	 * Sets the location.
+	 *
+	 * @param location
+	 *            the location to set
+	 */
+	public void setLocation(ACSLSourceLocation location) {
+		this.location = location;
+	}
+
+	/**
 	 * Accepts a visitor and starts a dfs traversal of the AST.
 	 * 
 	 * @param visitor
 	 */
 	public abstract void accept(ACSLVisitor visitor);
-	
+
 	public abstract ACSLNode accept(ACSLTransformer visitor);
 
+	/**
+	 * Source location of a node.
+	 */
+	public static class ACSLSourceLocation {
+		final int startLine;
+		final int startColumn;
+		final int endLine;
+		final int endColumn;
+
+		public ACSLSourceLocation(int startLine, int startColumn, int endLine, int endColumn) {
+			super();
+			this.startLine = startLine;
+			this.startColumn = startColumn;
+			this.endLine = endLine;
+			this.endColumn = endColumn;
+		}
+
+		public int getStartLine() {
+			return startLine;
+		}
+
+		public int getStartColumn() {
+			return startColumn;
+		}
+
+		public int getEndLine() {
+			return endLine;
+		}
+
+		public int getEndColumn() {
+			return endColumn;
+		}
+
+		@Override
+		public String toString() {
+			final StringBuilder sb = new StringBuilder();
+			sb.append("[").append(startLine).append("/").append(startColumn).append("-").append(endLine).append("/")
+					.append(endColumn).append("]");
+			return sb.toString();
+		}
+	}
 }

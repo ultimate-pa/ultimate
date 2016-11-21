@@ -72,11 +72,17 @@ public class ACSLLocation extends CACSLLocation {
 
 	@Override
 	public int getStartColumn() {
+		if (mNode != null) {
+			return mNode.getLocation().getStartColumn();
+		}
 		return -1;
 	}
 
 	@Override
 	public int getEndColumn() {
+		if (mNode != null) {
+			return mNode.getLocation().getEndColumn();
+		}
 		return -1;
 	}
 
