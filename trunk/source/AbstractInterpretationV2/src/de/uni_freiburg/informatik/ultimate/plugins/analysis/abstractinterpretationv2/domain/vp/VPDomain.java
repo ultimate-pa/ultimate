@@ -31,9 +31,11 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractDomain;
@@ -64,10 +66,12 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 	private final VPStateTop mTopState;
 	private final VPStateBottom mBottomState;
 	private final ManagedScript mScript;
+	private final Boogie2SMT mBoogie2Smt;
 	
 	public VPDomain(final ILogger logger, 
 			final ManagedScript script, 
 			final IUltimateServiceProvider services,
+			Boogie2SMT boogie2smt, 
 			final Set<EqGraphNode> eqGraphNodeSet, 
 			final Map<Term, EqBaseNode> termToBaseNodeMap,
 			final Map<Term, Set<EqFunctionNode>> termToFnNodeMap,
@@ -83,6 +87,7 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 		mPost = new VPPostOperator(script, services, this);
 		mMerge = new VPMergeOperator();
 		mScript = script;
+		mBoogie2Smt = boogie2smt;
 	}
 
 	@Override
@@ -108,6 +113,10 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 	@Override
 	public int getDomainPrecision() {
 		throw new UnsupportedOperationException("this domain has no precision");
+	}
+
+	public Boogie2SMT getBoogie2Smt() {
+		return mBoogie2Smt;
 	}
 
 	private final class VPMergeOperator implements IAbstractStateBinaryOperator<VPState> {

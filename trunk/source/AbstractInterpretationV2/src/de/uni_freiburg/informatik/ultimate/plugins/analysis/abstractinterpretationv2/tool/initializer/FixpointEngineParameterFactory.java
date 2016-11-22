@@ -187,9 +187,14 @@ public class FixpointEngineParameterFactory {
 
 	private IAbstractDomain<?, CodeBlock, IProgramVar> createEqualityDomain(final ILogger logger) {
 		final RCFGArrayIndexCollector arrayIndexCollector = new RCFGArrayIndexCollector(mRoot);
-		return new VPDomain(logger, mRoot.getCfgSmtToolkit().getManagedScript(), mServices,
-				arrayIndexCollector.getEqGraphNodeSet(), arrayIndexCollector.getTermToBaseNodeMap(),
-				arrayIndexCollector.getTermToFnNodeMap(), arrayIndexCollector.getEqNodeToEqGraphNodeMap());
+		return new VPDomain(logger, 
+				mRoot.getCfgSmtToolkit().getManagedScript(), 
+				mServices,
+				mRoot.getBoogie2SMT(),
+				arrayIndexCollector.getEqGraphNodeSet(), 
+				arrayIndexCollector.getTermToBaseNodeMap(),
+				arrayIndexCollector.getTermToFnNodeMap(), 
+				arrayIndexCollector.getEqNodeToEqGraphNodeMap());
 	}
 	
 	

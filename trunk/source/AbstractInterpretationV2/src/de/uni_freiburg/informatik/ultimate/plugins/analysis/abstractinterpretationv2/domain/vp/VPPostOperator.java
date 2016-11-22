@@ -251,6 +251,7 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 		final Map<Term, EqBaseNode> baseNodeMap = state.getTermToBaseNodeMap();
 		final Map<Term, Set<EqFunctionNode>> fnNodeMap = state.getTermToFnNodeMap();
 		
+		
 		if (term instanceof TermVariable || term instanceof ConstantTerm) {
 			if (baseNodeMap.containsKey(term)) {
 				return baseNodeMap.get(term);
@@ -261,9 +262,10 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 			final EqNode indexNode = getNodeFromTerm(index, state);
 			if (fnNodeMap.containsKey(array)) {
 				for (final EqFunctionNode fnNode : fnNodeMap.get(array)) {
-					if (fnNode.getArg().equals(indexNode)) {
-						return fnNode;
-					}
+					// TODO (alex) : fix this
+//					if (fnNode.getArg().equals(indexNode)) {
+//						return fnNode;
+//					}
 				}
 			}
 		}

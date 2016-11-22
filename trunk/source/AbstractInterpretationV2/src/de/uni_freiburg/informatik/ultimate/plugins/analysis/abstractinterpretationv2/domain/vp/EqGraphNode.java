@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.vp;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -16,27 +17,27 @@ import java.util.Set;
 public class EqGraphNode {
 
 	public final EqNode eqNode;
-	private EqNode arg;
+	private List<EqNode> args;
 	private EqNode representative;
 	private Set<EqNode> reverseRepresentative;
 	private Set<EqNode> ccpar;
-	private Set<EqNode> ccchild;
+	private Set<List<EqNode>> ccchild;
 
 	private Set<EqNode> initCcpar;
-	private EqNode initCcchild = null;
+	private List<EqNode> initCcchildren = null;
 
 	public EqGraphNode(EqNode eqNode) {
 		this.eqNode = eqNode;
 		this.representative = eqNode;
 		this.reverseRepresentative = new HashSet<EqNode>();
 		this.ccpar = new HashSet<EqNode>();
-		this.ccchild = new HashSet<EqNode>();
+		this.ccchild = new HashSet<List<EqNode>>();
 		this.initCcpar = new HashSet<EqNode>();
 	}
 
-	public EqGraphNode(EqNode eqNode, EqNode arg) {
+	public EqGraphNode(EqNode eqNode, List<EqNode> args) {
 		this(eqNode);
-		this.arg = arg;
+		this.args = args;
 	}
 
 	public void setNodeToInitial() {
@@ -47,29 +48,29 @@ public class EqGraphNode {
 		if (initCcpar != null) {
 			this.ccpar.addAll(initCcpar);
 		}
-		if (initCcchild != null) {
-			this.ccchild.add(initCcchild);
+		if (initCcchildren != null) {
+			this.ccchild.add(initCcchildren);
 		}
 	}
 
 	public EqGraphNode copy() {
 
-		EqGraphNode newGraphNode = new EqGraphNode(this.eqNode, this.arg);
+		EqGraphNode newGraphNode = new EqGraphNode(this.eqNode, this.args);
 		newGraphNode.setRepresentative(this.representative);
 		newGraphNode.setReverseRepresentative(new HashSet<EqNode>(this.reverseRepresentative));
 		newGraphNode.setCcpar(new HashSet<EqNode>(this.ccpar));
-		newGraphNode.setCcchild(new HashSet<EqNode>(this.ccchild));
+		newGraphNode.setCcchild(new HashSet<List<EqNode>>(this.ccchild));
 		newGraphNode.addToInitCcpar(this.initCcpar);
-		newGraphNode.setInitCcchild(this.initCcchild);
+		newGraphNode.setInitCcchild(this.initCcchildren);
 		return newGraphNode;
 	}
 
-	public EqNode getArg() {
-		return arg;
+	public List<EqNode> getArgs() {
+		return args;
 	}
 
-	public void setArg(EqNode arg) {
-		this.arg = arg;
+	public void setArgs(List<EqNode> args) {
+		this.args = args;
 	}
 
 	public EqNode getRepresentative() {
@@ -108,19 +109,19 @@ public class EqGraphNode {
 		this.ccpar.addAll(ccpar);
 	}
 
-	public Set<EqNode> getCcchild() {
+	public Set<List<EqNode>> getCcchild() {
 		return ccchild;
 	}
 
-	public void setCcchild(Set<EqNode> ccchild) {
+	public void setCcchild(Set<List<EqNode>> ccchild) {
 		this.ccchild = ccchild;
 	}
 
-	public void addToCcchild(EqNode ccchild) {
+	public void addToCcchild(List<EqNode> ccchild) {
 		this.ccchild.add(ccchild);
 	}
 	
-	public void addToCcchild(Set<EqNode> ccchild) {
+	public void addToCcchild(Set<List<EqNode>> ccchild) {
 		this.ccchild.addAll(ccchild);
 	}
 
@@ -140,12 +141,12 @@ public class EqGraphNode {
 		this.initCcpar.add(initCcpar);
 	}
 
-	public EqNode getInitCcchild() {
-		return initCcchild;
+	public List<EqNode> getInitCcchild() {
+		return initCcchildren;
 	}
 
-	public void setInitCcchild(EqNode initCcchild) {
-		this.initCcchild = initCcchild;
+	public void setInitCcchild(List<EqNode> initCcchild) {
+		this.initCcchildren = initCcchild;
 	}
 
 	public String toString() {
@@ -166,7 +167,7 @@ public class EqGraphNode {
 			sb.append("  ");
 		}
 		sb.append(" ||| ccchild: ");
-		for (EqNode node : ccchild) {
+		for (List<EqNode> node : ccchild) {
 			sb.append(node.toString());
 			sb.append("  ");
 		}

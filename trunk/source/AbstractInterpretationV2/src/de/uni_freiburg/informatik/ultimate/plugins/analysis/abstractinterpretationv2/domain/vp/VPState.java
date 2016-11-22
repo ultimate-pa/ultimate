@@ -30,15 +30,18 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -65,6 +68,7 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 	private Set<VPDomainSymmetricPair<EqNode>> mDisEqualitySet;
 	
 	private final VPDomain mDomain;
+	private final Script mScript;
 
 	public Set<EqGraphNode> getEqGraphNodeSet() {
 		return mEqGraphNodeSet;
@@ -103,6 +107,7 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 		mDomain = domain;
 		mTermToBaseNodeMap = mDomain.getmTermToBaseNodeMap();
 		mTermToFnNodeMap = mDomain.getmTermToFnNodeMap();
+		mScript = mDomain.getManagedScript().getScript();
 	}
 
 	/**
@@ -368,14 +373,17 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 		
 		addToDisEqSet(node1, node2);
 
-		Set<EqNode> ccchild1 = ccchild(node1);
-		Set<EqNode> ccchild2 = ccchild(node2);
+		Set<List<EqNode>> ccchild1 = ccchild(node1);
+		Set<List<EqNode>> ccchild2 = ccchild(node2);
+		
+		//TODO
+		assert false : "TODO: treat the case with several children";
 
-		for (final EqNode child1 : ccchild1) {
-			for (final EqNode child2 : ccchild2) {
-				addDisEquality(child1, child2);
-			}
-		}
+//			for (final EqNode child1 : ccchild1.) {
+//				for (final EqNode child2 : ccchild2) {
+//					addDisEquality(child1, child2);
+//				}
+//			}
 
 		return checkContradiction();
 	}
@@ -440,15 +448,15 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 		return this.mEqNodeToEqGraphNodeMap.get(find(node)).getCcpar();
 	}
 
-	private Set<EqNode> ccchild(final EqNode node) {
+	private Set<List<EqNode>> ccchild(final EqNode node) {
 		return this.mEqNodeToEqGraphNodeMap.get(find(node)).getCcchild();
 	}
 
 	/**
 	 * Test whether @param node1 and @param node2 are congruent.
 	 * 
-	 * @param i1
-	 * @param i2
+	 * @param node1
+	 * @param node2
 	 * @return
 	 */
 	private boolean congruent(final EqNode node1, final EqNode node2) {
@@ -462,12 +470,16 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 		if (!(fnNode1.getFunction().equals(fnNode2.getFunction()))) {
 			return false;
 		}
-		if ((fnNode1.getArg() == null && fnNode2.getArg() != null)
-				|| (fnNode2.getArg() == null && fnNode1.getArg() != null)) {
-			return false;
-		}
-		if (!find(fnNode1.getArg()).equals(find(fnNode2.getArg()))) {
-			return false;
+		assert fnNode1.getArgs() != null && fnNode2.getArgs() != null;
+//		if ((fnNode1.getArgs() == null) != (fnNode2.getArgs() == null)) {
+//			return false;
+//		}
+		for (int i = 0; i < fnNode1.getArgs().size(); i++) {
+			EqNode fnNode1Arg = fnNode1.getArgs().get(i);
+			EqNode fnNode2Arg = fnNode2.getArgs().get(i);
+			if (!find(fnNode1Arg).equals(find(fnNode2Arg))) {
+				return false;
+			}
 		}
 		return true;
 	}
@@ -502,15 +514,16 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 
 		havocArray(firstArray);
 
-		for (final EqFunctionNode fnNode : mTermToFnNodeMap.get(secondArray)) {
-			for (final EqNode eqNode : mEqNodeToEqGraphNodeMap.get(find(fnNode.getArg())).getCcpar()) {
-				if (eqNode instanceof EqFunctionNode) {
-					if (((EqFunctionNode) eqNode).getFunction().equals(firstArray)) {
-						addEquality(eqNode, fnNode);
-					}
-				}
-			}
-		}
+		// TODO (alex) : fix this
+//		for (final EqFunctionNode fnNode : mTermToFnNodeMap.get(secondArray)) {
+//			for (final EqNode eqNode : mEqNodeToEqGraphNodeMap.get(find(fnNode.getArg())).getCcpar()) {
+//				if (eqNode instanceof EqFunctionNode) {
+//					if (((EqFunctionNode) eqNode).getFunction().equals(firstArray)) {
+//						addEquality(eqNode, fnNode);
+//					}
+//				}
+//			}
+//		}
 	}
 
 	private boolean isArray(final TermVariable term) {
@@ -612,6 +625,7 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 		
 		Script script = mDomain.getManagedScript().getScript();
 		
+		script.echo(new QuotedObject("VPState.isEqualTo()"));
 		script.push(1);
 		
 		Term equiv = script.term(TERM_FUNC_NAME_DISTINCT, new Term[] { this.getTerm(script), other.getTerm(script) } );
@@ -653,7 +667,7 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 			sb.append('\n');
 		}
 
-		System.out.println(sb.toString());
+//		System.out.println(sb.toString());
 
 		return sb.toString();
 	}
@@ -691,8 +705,8 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 		Term disEquality;
 		
 		for (VPDomainSymmetricPair<EqNode> pair : this.mDisEqualitySet) {
-			disEqualityFirst = pair.getFirst().getTerm();
-			disEqualitySecond = pair.getSecond().getTerm();			
+			disEqualityFirst = pair.getFirst().getTerm(mScript);
+			disEqualitySecond = pair.getSecond().getTerm(mScript);
 			distinctTermSet.add(mDomain.getManagedScript().getScript().term(TERM_FUNC_NAME_DISTINCT, disEqualityFirst, disEqualitySecond));
 		}
 		
@@ -711,11 +725,12 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 		
 		for (EqGraphNode graphNode : this.mEqGraphNodeSet) {
 			if (!graphNode.eqNode.equals(graphNode.getRepresentative())) {
-				equalityFirst = graphNode.eqNode.getTerm();
-				equalitySecond = graphNode.getRepresentative().getTerm();
+				equalityFirst = graphNode.eqNode.getTerm(mScript);
+				equalitySecond = graphNode.getRepresentative().getTerm(mScript);
 				equalityTermSet.add(mDomain.getManagedScript().getScript().term("=", equalityFirst, equalitySecond));
 			}
 		}
+		
 		
 		if (equalityTermSet.isEmpty()) {
 			equality = mDomain.getManagedScript().getScript().term(TERM_TRUE);

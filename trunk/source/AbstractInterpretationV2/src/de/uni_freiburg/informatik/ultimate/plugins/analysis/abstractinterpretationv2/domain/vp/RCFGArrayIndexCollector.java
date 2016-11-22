@@ -29,6 +29,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.vp;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Deque;
 import java.util.HashMap;
@@ -43,12 +44,19 @@ import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RCFGEdgeVisitor;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 /**
  * Create and collects @EqNode from ApplicationTerm (store and select)
@@ -59,15 +67,22 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 	
 	private static final String TERM_FUNC_NAME_SELECT = "select";
 
-	private final Set<EqGraphNode> eqGraphNodeSet = new HashSet<EqGraphNode>();
 	private final Map<Term, EqBaseNode> termToBaseNodeMap = new HashMap<>();
 	private final Map<Term, Set<EqFunctionNode>> termToFnNodeMap = new HashMap<>();
 	private final Map<EqNode, EqGraphNode> eqNodeToEqGraphNodeMap = new HashMap<>();
+	
+	private final Map<Term, EqNode> mTermToEqNode = new HashMap<>();
 
 	private final Script mScript;
 
+	private final Boogie2SMT mBoogie2SMT;
+
+	private final NestedMap2<BoogieVarOrConst, List<EqNode>, EqFunctionNode> mEqFunctionNodeStore = new NestedMap2<>();
+	private final Map<BoogieVarOrConst, EqBaseNode> mEqBaseNodeStore = new HashMap<>();
+
 	public RCFGArrayIndexCollector(final BoogieIcfgContainer root) {
 		mScript = root.getCfgSmtToolkit().getManagedScript().getScript();
+		mBoogie2SMT = root.getBoogie2SMT();
 		process(BoogieIcfgContainer.extractStartEdges(root));
 	}
 
@@ -98,143 +113,162 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 			substitionMap.put(entry.getValue(), entry.getKey().getTermVariable());
 		}
 		
-		final Term transFormedTerm = new Substitution(mScript, substitionMap).transform(c.getTransitionFormula().getFormula());
+		final Term transFormulaTerm = c.getTransitionFormula().getFormula();
+		final Term transFormedTerm = new Substitution(mScript, substitionMap).transform(transFormulaTerm);
 		final List<EqNodeFinder.SelectOrStoreArguments> argsList = new EqNodeFinder().findEqNode(transFormedTerm);
 
-		Term array, index, element;
 		int argsListSize = argsList.size();
-		EqNodeFinder.SelectOrStoreArguments selOrStore;
 		
 		for (int i = argsListSize - 1; i >= 0; i--) {
-			
-			selOrStore = argsList.get(i);
-
-			array = selOrStore.function;
-			index = selOrStore.arg;			
-			if (selOrStore instanceof EqNodeFinder.StoreArguments) {
-				element = ((EqNodeFinder.StoreArguments) selOrStore).arg2;
-			} else {
-				element = null;
-			}
-			
-			createNode(array, indexAndElementHandler(index));
-			if (element != null) {
-				indexAndElementHandler(element);
-			}
+			getOrConstructEqNode(argsList.get(i).originalTerm);
 		}
 	}
 	
-	private EqNode indexAndElementHandler(final Term index) {
+	private EqNode getOrConstructEqNode(Term t) {
+		EqNode result = mTermToEqNode.get(t);
+		if (result != null) {
+			return result;
+		}
+		// we need to construct a fresh EqNode
+		if (t instanceof TermVariable 
+				|| t instanceof ConstantTerm
+				|| (t instanceof ApplicationTerm && ((ApplicationTerm) t).getParameters().length == 0)) {
+			result = getEqBaseNode(getBoogieVarOrConst(t));
+			mTermToEqNode.put(t, result);
+			return result;
+		} 
+		// we need to construct an EqFunctionNode	
+		assert t instanceof ApplicationTerm;
+		ApplicationTerm at = (ApplicationTerm) t;
+		if (at.getFunction().getName() == "select") {
+			MultiDimensionalSelect mds = new MultiDimensionalSelect(at);
+			Term array = mds.getArray();
+			List<EqNode> indices = new ArrayList<>();
+			for (Term ai : mds.getIndex()) {
+				indices.add(getOrConstructEqNode(ai));
+			}
+			
+			result = getEqFnNode(getBoogieVarOrConst(array),
+					indices);
+			mTermToEqNode.put(t, result);
+			return result;
+		} else if (at.getFunction().getName() == "store") {
+			MultiDimensionalStore mds = new MultiDimensionalStore(at);
+			Term array = mds.getArray();
+			List<EqNode> indices = new ArrayList<>();
+			for (Term ai : mds.getIndex()) {
+				indices.add(getOrConstructEqNode(ai));
+			}
+			getOrConstructEqNode(mds.getValue());
 				
-		if (index instanceof TermVariable || index instanceof ConstantTerm) {
-			return createNode(index, null);
-		} else if (index instanceof ApplicationTerm) {
-			return getAppNode((ApplicationTerm)index);
+			result = getEqFnNode(getBoogieVarOrConst(array), indices);
+			mTermToEqNode.put(t, result);
+			return result;
+		} else {
+			assert false : "should not happen";
+			return null;
 		}
-		
-		return null;
 	}
 	
-	private EqNode createNode(final Term term, final EqNode arg) {
+	private BoogieVarOrConst getBoogieVarOrConst(final Term t) {
+		Map<Term, BoogieVarOrConst> mTermToBoogieVarOrConst = new HashMap<>();
 		
-		if (arg == null) {
-			return getEqBaseNode(term);
-		} else {
-			return getEqFnNode(term, arg);
-		}			
-	}
-
-	private EqNode getAppNode(ApplicationTerm appTerm) {
-		if (appTerm.getParameters()[1] instanceof ApplicationTerm) {
-			return getEqFnNode(appTerm.getParameters()[0], getAppNode((ApplicationTerm)appTerm.getParameters()[1]));
-		} else {
-			return getEqFnNode(appTerm.getParameters()[0], getEqBaseNode(appTerm.getParameters()[1]));
+		BoogieVarOrConst result = mTermToBoogieVarOrConst.get(t);
+		if (result != null) {
+			return result;
 		}
+		
+		if (t instanceof ApplicationTerm ) {
+			assert ((ApplicationTerm) t).getParameters().length == 0 : "not a constant";
+			BoogieConst bc = mBoogie2SMT.getBoogie2SmtSymbolTable().getBoogieConst((ApplicationTerm) t);
+			result = new BoogieVarOrConst(bc);
+		} else if (t instanceof ConstantTerm) {
+			result = new BoogieVarOrConst((ConstantTerm) t);
+		} else if (t instanceof TermVariable) {
+			IProgramVar pv = mBoogie2SMT.getBoogie2SmtSymbolTable().getBoogieVar((TermVariable) t);
+			assert pv != null : "?";
+			result = new BoogieVarOrConst(pv);
+		} else {
+			assert false;
+			return null;
+		}
+		mTermToBoogieVarOrConst.put(t, result);
+		return result;
 	}
 	
 	/**
 	 * 
-	 * @param term
+	 * @param tv
 	 * @return
 	 */
-	private EqBaseNode getEqBaseNode(final Term term) {
+	private EqBaseNode getEqBaseNode(final BoogieVarOrConst bv) {
 		
-		if (termToBaseNodeMap.containsKey(term)) {
-			return termToBaseNodeMap.get(term);
+		EqBaseNode result = mEqBaseNodeStore.get(bv);
+		
+		if (result == null) {
+			result = new EqBaseNode(bv);
+			mEqBaseNodeStore.put(bv, result);
+			putToEqGraphSet(result, null);		
 		}
-		
-		final EqBaseNode baseNode = new EqBaseNode(term);
-		termToBaseNodeMap.put(term, baseNode);
-		
-		putToEqGraphSet(baseNode, null);		
-		return baseNode;
+		return result;
 	}
 	
-	private EqFunctionNode getEqFnNode(final Term function, final EqNode arg) {
-		
-		if (termToFnNodeMap.containsKey(function)) {
-			for (final EqFunctionNode fnNode : termToFnNodeMap.get(function)) {
-				if (fnNode.getArg().equals(arg)) {
-					return fnNode;
-				}
-			}			
-		}
+	private EqFunctionNode getEqFnNode(final BoogieVarOrConst eqNode, final List<EqNode> indices) {
 			
-		final EqFunctionNode fnNode = new EqFunctionNode(getArraySelectTerm(function, arg.getTerm()), function, arg);
-		if (!termToFnNodeMap.containsKey(function)) {
-			termToFnNodeMap.put(function, new HashSet<EqFunctionNode>());
+		EqFunctionNode result = mEqFunctionNodeStore.get(eqNode, indices);
+		if (result == null) {
+			result = new EqFunctionNode(eqNode, indices);
+
+			mEqFunctionNodeStore.put(eqNode, indices, result);
+			putToEqGraphSet(result, indices);
 		}
-		termToFnNodeMap.get(function).add(fnNode);
-		putToEqGraphSet(fnNode, arg);
-		
-		return fnNode;
-		
+		return result;
 	}
-	
-	private Term getArraySelectTerm(Term array, Term index) {
-		return mScript.term(TERM_FUNC_NAME_SELECT, array, index);
-	}
-	
-	private void putToEqGraphSet(final EqNode node, final EqNode arg) {
+
+	private void putToEqGraphSet(final EqNode node, final List<EqNode> args) {
 		final EqGraphNode graphNode = new EqGraphNode(node);
-		EqGraphNode argNode = null;
+		List<EqGraphNode> argNodes = new ArrayList<>();
 		
-		if (arg != null) {
-			graphNode.setArg(arg);
-			argNode = eqNodeToEqGraphNodeMap.get(arg);
-			argNode.addToInitCcpar(node);
-			argNode.addToCcpar(node);
+		if (args != null) {
+			assert !args.isEmpty();
+			graphNode.setArgs(args);
+			for (EqNode arg : args) {
+				EqGraphNode argNode = eqNodeToEqGraphNodeMap.get(arg);
+				argNode.addToInitCcpar(node);
+				argNode.addToCcpar(node);
+				argNodes.add(argNode);
+			}
+			graphNode.setInitCcchild(args);
+			graphNode.getCcchild().add(args);
 		}
 		
-		if (argNode != null) {
-			graphNode.setInitCcchild(argNode.eqNode);
-			graphNode.getCcchild().add(argNode.eqNode);
-		}
-		
-		eqGraphNodeSet.add(graphNode);
+//		eqGraphNodeSet.add(graphNode);
 		eqNodeToEqGraphNodeMap.put(node, graphNode);
-		
 	}
 
 	public Set<EqGraphNode> getEqGraphNodeSet() {
-		return eqGraphNodeSet;
+//		return eqGraphNodeSet;
+		return new HashSet<EqGraphNode>(eqNodeToEqGraphNodeMap.values());
 	}
 
 	public Map<Term, EqBaseNode> getTermToBaseNodeMap() {
+		assert false : "probably not filled correctly";
 		return termToBaseNodeMap;
 	}
 
 	public Map<Term, Set<EqFunctionNode>> getTermToFnNodeMap() {
+		assert false : "probably not filled correctly";
 		return termToFnNodeMap;
 	}
 
 	public Map<EqNode, EqGraphNode> getEqNodeToEqGraphNodeMap() {
+		assert false : "probably not filled correctly";
 		return eqNodeToEqGraphNodeMap;
 	}
-
+	
 	@Override
 	public String toString() {
-		return "";
+		return "-RCFGArrayIndexCollector-";
 	}
 
 
