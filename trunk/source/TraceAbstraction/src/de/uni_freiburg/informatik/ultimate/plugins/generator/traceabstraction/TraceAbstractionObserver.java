@@ -81,7 +81,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 				}
 			}
 		}
-		if (mCurrentGraphType.getType() == Type.VIOLATION_WITNESS) {
+		if (root instanceof WitnessNode && mCurrentGraphType.getType() == Type.VIOLATION_WITNESS) {
 			if (mWitnessNode == null) {
 				mWitnessNode = (WitnessNode) root;
 			} else {
