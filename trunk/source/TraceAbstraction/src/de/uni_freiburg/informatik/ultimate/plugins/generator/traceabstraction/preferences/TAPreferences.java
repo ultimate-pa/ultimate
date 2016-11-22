@@ -42,8 +42,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
 
-public class TAPreferences {
-
+public final class TAPreferences {
+	private static final boolean SEPARATE_VIOLATION_CHECK = true;
 	private final boolean mInterprocedural;
 	private final int mMaxIterations;
 	private final int mWatchIteration;
@@ -57,7 +57,6 @@ public class TAPreferences {
 	private final Minimization mMinimize;
 	private final boolean mHoare;
 	private final Concurrency mConcurrency;
-	private static final boolean SEPARATE_VIOLATION_CHECK = true;
 	private final HoareTripleChecks mHoareTripleChecks;
 	private final IPreferenceProvider mPrefs;
 	private final HoareAnnotationPositions mHoareAnnotationPositions;
@@ -67,7 +66,8 @@ public class TAPreferences {
 	}
 
 	public enum InterpolantAutomatonEnhancement {
-		NONE, BESTAPPROXIMATION_DEPRECATED, SELFLOOP, EAGER, EAGER_CONSERVATIVE, NO_SECOND_CHANCE, PREDICATE_ABSTRACTION, PREDICATE_ABSTRACTION_CONSERVATIVE, PREDICATE_ABSTRACTION_CANNIBALIZE,
+		NONE, BESTAPPROXIMATION_DEPRECATED, SELFLOOP, EAGER, EAGER_CONSERVATIVE, NO_SECOND_CHANCE,
+		PREDICATE_ABSTRACTION, PREDICATE_ABSTRACTION_CONSERVATIVE, PREDICATE_ABSTRACTION_CANNIBALIZE,
 	}
 
 	public enum Concurrency {
@@ -88,7 +88,7 @@ public class TAPreferences {
 		mHoare = mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_HOARE,
 				TraceAbstractionPreferenceInitializer.DEF_HOARE);
 
-		mHoareAnnotationPositions = mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_HOARE_Positions,
+		mHoareAnnotationPositions = mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_HOARE_POSITIONS,
 				TraceAbstractionPreferenceInitializer.DEF_HOARE_POSITIONS, HoareAnnotationPositions.class);
 
 		mInterpolation = mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_INTERPOLATED_LOCS,
@@ -107,7 +107,7 @@ public class TAPreferences {
 				InterpolantAutomatonEnhancement.class);
 
 		mHoareTripleChecks =
-				mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_HoareTripleChecks, HoareTripleChecks.class);
+				mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_HOARE_TRIPLE_CHECKS, HoareTripleChecks.class);
 
 		mMinimize = mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_MINIMIZE, Minimization.class);
 
@@ -126,7 +126,7 @@ public class TAPreferences {
 	}
 
 	/**
-	 * @return the interprocedural
+	 * @return The interprocedural.
 	 */
 	public boolean interprocedural() {
 		return mInterprocedural;
@@ -145,36 +145,33 @@ public class TAPreferences {
 	}
 
 	public String logicForExternalSolver() {
-		final String logicForExternalSolver = mPrefs.getString(RcfgPreferenceInitializer.LABEL_ExtSolverLogic);
-		return logicForExternalSolver;
+		return mPrefs.getString(RcfgPreferenceInitializer.LABEL_ExtSolverLogic);
 	}
 
 	public boolean dumpSmtScriptToFile() {
-		final boolean dumpSmtScriptToFile = mPrefs.getBoolean(RcfgPreferenceInitializer.LABEL_DumpToFile);
-		return dumpSmtScriptToFile;
+		return mPrefs.getBoolean(RcfgPreferenceInitializer.LABEL_DumpToFile);
 	}
 
 	public String pathOfDumpedScript() {
-		final String pathOfDumpedScript = mPrefs.getString(RcfgPreferenceInitializer.LABEL_Path);
-		return pathOfDumpedScript;
+		return mPrefs.getString(RcfgPreferenceInitializer.LABEL_Path);
 	}
 
 	/**
-	 * @return the maxIterations
+	 * @return The maxIterations.
 	 */
 	public int maxIterations() {
 		return mMaxIterations;
 	}
 
 	/**
-	 * @return the prefObservedIteration
+	 * @return The prefObservedIteration.
 	 */
 	public int watchIteration() {
 		return mWatchIteration;
 	}
 
 	/**
-	 * @return the artifact
+	 * @return The artifact.
 	 */
 	public Artifact artifact() {
 		return mArtifact;
@@ -185,21 +182,21 @@ public class TAPreferences {
 	}
 
 	/**
-	 * @return the interpolatedLocs
+	 * @return The interpolation technique.
 	 */
 	public InterpolationTechnique interpolation() {
 		return mInterpolation;
 	}
 
 	/**
-	 * @return the additionalEdges
+	 * @return The interpolant automaton.
 	 */
 	public InterpolantAutomaton interpolantAutomaton() {
 		return mInterpolantAutomaton;
 	}
 
 	/**
-	 * @return the dumpAutomata
+	 * @return The dump automata flag.
 	 */
 	public boolean dumpAutomata() {
 		return mDumpAutomata;
@@ -210,14 +207,14 @@ public class TAPreferences {
 	}
 
 	/**
-	 * @return the dumpPath
+	 * @return The dump path.
 	 */
 	public String dumpPath() {
 		return mDumpPath;
 	}
 
 	/**
-	 * @return the determinization
+	 * @return The determinization.
 	 */
 	public InterpolantAutomatonEnhancement interpolantAutomatonEnhancement() {
 		return mDeterminiation;
@@ -228,14 +225,14 @@ public class TAPreferences {
 	}
 
 	/**
-	 * @return the difference
+	 * @return The difference.
 	 */
 	public boolean differenceSenwa() {
 		return mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_DIFFERENCE_SENWA);
 	}
 
 	/**
-	 * @return the minimize
+	 * @return The minimization.
 	 */
 	public Minimization minimize() {
 		return mMinimize;
@@ -253,7 +250,7 @@ public class TAPreferences {
 		return mHoareAnnotationPositions;
 	}
 
-	public boolean seperateViolationCheck() {
+	public static boolean separateViolationCheck() {
 		return SEPARATE_VIOLATION_CHECK;
 	}
 

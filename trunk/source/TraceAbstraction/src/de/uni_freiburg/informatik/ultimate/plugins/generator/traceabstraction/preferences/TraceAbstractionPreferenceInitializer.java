@@ -41,7 +41,121 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Concurrency;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
 
+/**
+ * Initializer and container of preferences for the trace abstraction plugin.
+ * 
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+ */
 public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceInitializer {
+	/*
+	 * labels for the different preferencess
+	 */
+	public static final String LABEL_INTERPROCEDUTAL = "Interprocedural analysis (Nested Interpolants)";
+	public static final String LABEL_ALL_ERRORS_AT_ONCE = "Stop after first violation was found";
+	public static final String LABEL_ITERATIONS = "Iterations until the model checker surrenders";
+	public static final String LABEL_ARTIFACT = "Kind of artifact that is visualized";
+	public static final String LABEL_WATCHITERATION = "Number of iteration whose artifact is visualized";
+	public static final String LABEL_HOARE =
+			"Compute Hoare Annotation of negated interpolant automaton, abstraction and CFG";
+	public static final String LABEL_HOARE_POSITIONS = "Positions where we compute the Hoare Annotation";
+	public static final String LABEL_SEPARATE_SOLVER = "Use separate solver for trace checks";
+	public static final String LABEL_INTERPOLATED_LOCS = "Compute Interpolants along a Counterexample";
+	public static final String LABEL_NONLINEAR_CONSTRAINTS_IN_PATHINVARIANTS =
+			"Use nonlinear constraints in PathInvariants";
+	public static final String LABEL_UNSAT_CORES_IN_PATHINVARIANTS = "Use unsat cores in PathInvariants";
+	public static final String LABEL_INTERPOLANTS_CONSOLIDATION = "Interpolants consolidation";
+	public static final String LABEL_INTERPOLANT_AUTOMATON = "Interpolant automaton";
+	public static final String LABEL_DUMPAUTOMATA = "Dump automata to files";
+	public static final String LABEL_AUTOMATAFORMAT = "Output format of dumped automata";
+	public static final String LABEL_DUMPPATH = "Dump automata to the following directory";
+	public static final String LABEL_INTERPOLANT_AUTOMATON_ENHANCEMENT = "Interpolant automaton enhancement";
+	public static final String LABEL_HOARE_TRIPLE_CHECKS = "Hoare triple checks";
+	public static final String LABEL_DIFFERENCE_SENWA = "DifferenceSenwa operation instead classical Difference";
+	public static final String LABEL_MINIMIZE = "Minimization of abstraction";
+	public static final String LABEL_CONCURRENCY = "Automaton type used in concurrency analysis";
+	public static final String LABEL_ORDER = "Order in Petri net unfolding";
+	public static final String LABEL_CUTOFF = "cut-off requires same transition";
+	public static final String LABEL_UNFOLDING2NET = "use unfolding as abstraction";
+	public static final String LABEL_ASSERT_CODEBLOCKS_INCREMENTALLY = "Assert CodeBlocks";
+	public static final String LABEL_UNSAT_CORES = "Use unsat cores";
+	public static final String LABEL_LIVE_VARIABLES = "Use live variables";
+	public static final String LABEL_LANGUAGE_OPERATION = "LanguageOperation";
+	public static final String LABEL_ABSINT_MODE = "Abstract interpretation Mode";
+	public static final String LABEL_ABSINT_ALWAYS_REFINE = "Refine always when using abstract interpretation";
+	public static final String LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_NON_FLOW_SENSITIVE =
+			"Non-flow-sensitive error trace relevance analysis";
+	public static final String LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_FLOW_SENSITIVE =
+			"Flow-sensitive error trace relevance analysis";
+	public static final String LABEL_SIMPLIFICATION_TECHNIQUE = "Simplification technique";
+	public static final String LABEL_XNF_CONVERSION_TECHNIQUE = "Xnf conversion technique";
+	public static final String LABEL_COUNTEREXAMPLE_SEARCH_STRATEGY = "Counterexample search strategy";
+	public static final String LABEL_REFINEMENT_STRATEGY = "Trace refinement strategy";
+	
+	public static final String VALUE_ABSTRACTION = "Abstraction";
+	public static final String VALUE_RCFG = "RecursiveControlFlowGraph";
+	public static final String VALUE_INTERPOLANT_AUTOMATON = "InterpolantAutomaton";
+	public static final String VALUE_NEG_INTERPOLANT_AUTOMATON = "NegatedInterpolantAutomaton";
+	public static final String VALUE_ITP_WP = "StrongestPostcondition&WeakestPrecondition";
+	public static final String VALUE_ITP_GUESS = "Guess Interpolants";
+	public static final String VALUE_INTERPOLANT_AUTOMATON_SINGLE_TRACE = "SingleTrace";
+	public static final String VALUE_INTERPOLANT_AUTOMATON_TWO_TRACK = "TwoTrack";
+	public static final String VALUE_INTERPOLANT_AUTOMATON_CANONICAL =
+			"With backedges to repeated locations (Canonial)";
+	public static final String VALUE_INTERPOLANT_AUTOMATON_TOTAL_INTERPOLATION = "Total interpolation (Jan)";
+	
+	public static final String VALUE_FINITE_AUTOMATON = "Finite Automata";
+	public static final String VALUE_PETRI_NET = "Petri Net";
+	public static final String VALUE_KMM = "Ken McMillan";
+	public static final String VALUE_EVR = "Esparza Römer Vogler";
+	public static final String VALUE_EVR_MARK = "ERV with equal markings";
+	
+	/*
+	 * default values for the different preferences
+	 */
+	public static final boolean DEF_INTERPROCEDUTAL = true;
+	public static final int DEF_ITERATIONS = 1_000_000;
+	public static final String DEF_ARTIFACT = VALUE_RCFG;
+	public static final int DEF_WATCHITERATION = 1_000_000;
+	public static final boolean DEF_HOARE = false;
+	public static final HoareAnnotationPositions DEF_HOARE_POSITIONS = HoareAnnotationPositions.All;
+	public static final boolean DEF_SEPARATE_SOLVER = true;
+	public static final SolverMode DEF_SOLVER = SolverMode.Internal_SMTInterpol;
+	public static final String DEF_EXTERNAL_SOLVER_COMMAND = RcfgPreferenceInitializer.Z3_DEFAULT;
+	public static final InterpolationTechnique DEF_INTERPOLANTS = InterpolationTechnique.ForwardPredicates;
+	public static final String DEF_ADDITIONAL_EDGES = VALUE_INTERPOLANT_AUTOMATON_CANONICAL;
+	public static final boolean DEF_DUMPAUTOMATA = false;
+	public static final Format DEF_AUTOMATAFORMAT = Format.ATS;
+	public static final String DEF_DUMPPATH = ".";
+	public static final boolean DEF_DIFFERENCE_SENWA = false;
+	public static final boolean DEF_MINIMIZE = true;
+	public static final String DEF_CONCURRENCY = VALUE_FINITE_AUTOMATON;
+	public static final boolean DEF_ALL_ERRORS_AT_ONCE = true;
+	public static final CounterexampleSearchStrategy DEF_COUNTEREXAMPLE_SEARCH_STRATEGY =
+			CounterexampleSearchStrategy.BFS;
+	public static final RefinementStrategy DEF_REFINEMENT_STRATEGY = RefinementStrategy.FIXED_PREFERENCES;
+	// public static final boolean DEF_ALL_ERRORS_AT_ONCE = false;
+	
+	public static final boolean DEF_CUTOFF = true;
+	public static final boolean DEF_UNFOLDING2NET = false;
+	public static final String DEF_ORDER = VALUE_EVR;
+	public static final boolean DEF_SIMPLIFY_CODE_BLOCKS = false;
+	public static final boolean DEF_PRESERVE_GOTO_EDGES = false;
+	public static final AbstractInterpretationMode DEF_ABSINT_MODE = AbstractInterpretationMode.NONE;
+	public static final boolean DEF_USE_AI_PATH_PROGRAM_CONSTRUCTION = false;
+	public static final boolean DEF_ERROR_TRACE_RELEVANCE_ANALYSIS_NON_FLOW_SENSITIVE = false;
+	public static final boolean DEF_ERROR_TRACE_RELEVANCE_ANALYSIS_FLOW_SENSITIVE = false;
+	
+	public static final SimplificationTechnique DEF_SIMPLIFICATION_TECHNIQUE = SimplificationTechnique.SIMPLIFY_DDA;
+	public static final XnfConversionTechnique DEF_XNF_CONVERSION_TECHNIQUE =
+			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
+	
+	private static final Boolean DEF_ABSINT_ALWAYS_REFINE = Boolean.FALSE;
+	
+	/**
+	 * Constructor.
+	 */
 	public TraceAbstractionPreferenceInitializer() {
 		super(Activator.PLUGIN_ID, "Automizer (Trace Abstraction)");
 	}
@@ -53,22 +167,22 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_ALL_ERRORS_AT_ONCE, DEF_ALL_ERRORS_AT_ONCE,
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_ITERATIONS, DEF_ITERATIONS, PreferenceType.Integer,
-						new IUltimatePreferenceItemValidator.IntegerValidator(0, 1000000)),
+						new IUltimatePreferenceItemValidator.IntegerValidator(0, 1_000_000)),
 				new UltimatePreferenceItem<>(LABEL_ARTIFACT, Artifact.RCFG, PreferenceType.Combo,
 						Artifact.values()),
 				new UltimatePreferenceItem<>(LABEL_WATCHITERATION, DEF_WATCHITERATION, PreferenceType.Integer,
-						new IUltimatePreferenceItemValidator.IntegerValidator(0, 10000000)),
+						new IUltimatePreferenceItemValidator.IntegerValidator(0, 1_0000_000)),
 				new UltimatePreferenceItem<>(LABEL_HOARE, DEF_HOARE, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_HOARE_Positions, DEF_HOARE_POSITIONS,
+				new UltimatePreferenceItem<>(LABEL_HOARE_POSITIONS, DEF_HOARE_POSITIONS,
 						PreferenceType.Combo, HoareAnnotationPositions.values()),
 				
 				new UltimatePreferenceItem<>(LABEL_SEPARATE_SOLVER, DEF_SEPARATE_SOLVER, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(RcfgPreferenceInitializer.LABEL_Solver, DEF_Solver,
+				new UltimatePreferenceItem<>(RcfgPreferenceInitializer.LABEL_Solver, DEF_SOLVER,
 						PreferenceType.Combo, SolverMode.values()),
 				new UltimatePreferenceItem<>(RcfgPreferenceInitializer.LABEL_FakeNonIncrementalScript,
 						RcfgPreferenceInitializer.DEF_FakeNonIncrementalScript, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(RcfgPreferenceInitializer.LABEL_ExtSolverCommand,
-						DEF_ExtSolverCommand, PreferenceType.String),
+						DEF_EXTERNAL_SOLVER_COMMAND, PreferenceType.String),
 				new UltimatePreferenceItem<>(RcfgPreferenceInitializer.LABEL_ExtSolverLogic,
 						RcfgPreferenceInitializer.DEF_ExtSolverLogic, PreferenceType.String),
 				new UltimatePreferenceItem<>(RcfgPreferenceInitializer.LABEL_DumpToFile, Boolean.FALSE,
@@ -97,7 +211,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_INTERPOLANT_AUTOMATON_ENHANCEMENT,
 						InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION, PreferenceType.Combo,
 						InterpolantAutomatonEnhancement.values()),
-				new UltimatePreferenceItem<>(LABEL_HoareTripleChecks, HoareTripleChecks.INCREMENTAL,
+				new UltimatePreferenceItem<>(LABEL_HOARE_TRIPLE_CHECKS, HoareTripleChecks.INCREMENTAL,
 						PreferenceType.Combo, HoareTripleChecks.values()),
 				new UltimatePreferenceItem<>(LABEL_LANGUAGE_OPERATION, LanguageOperation.DIFFERENCE,
 						PreferenceType.Combo, LanguageOperation.values()),
@@ -115,10 +229,10 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						PreferenceType.Combo, AbstractInterpretationMode.values()),
 				new UltimatePreferenceItem<>(LABEL_ABSINT_ALWAYS_REFINE, DEF_ABSINT_ALWAYS_REFINE,
 						PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_NonFlowSensitive,
-						DEF_ERROR_TRACE_RELEVANCE_ANALYSIS_NonFlowSensitive, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_FlowSensitive,
-						DEF_ERROR_TRACE_RELEVANCE_ANALYSIS_FlowSensitive, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_NON_FLOW_SENSITIVE,
+						DEF_ERROR_TRACE_RELEVANCE_ANALYSIS_NON_FLOW_SENSITIVE, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_FLOW_SENSITIVE,
+						DEF_ERROR_TRACE_RELEVANCE_ANALYSIS_FLOW_SENSITIVE, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_SIMPLIFICATION_TECHNIQUE,
 						DEF_SIMPLIFICATION_TECHNIQUE, PreferenceType.Combo, SimplificationTechnique.values()),
 				new UltimatePreferenceItem<>(LABEL_XNF_CONVERSION_TECHNIQUE,
@@ -129,108 +243,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						RefinementStrategy.values()), };
 	}
 	
-	/*
-	 * labels for the different preferencess
+	/**
+	 * Abstract interpretation mode.
 	 */
-	public static final String LABEL_INTERPROCEDUTAL = "Interprocedural analysis (Nested Interpolants)";
-	public static final String LABEL_ALL_ERRORS_AT_ONCE = "Stop after first violation was found";
-	public static final String LABEL_ITERATIONS = "Iterations until the model checker surrenders";
-	public static final String LABEL_ARTIFACT = "Kind of artifact that is visualized";
-	public static final String LABEL_WATCHITERATION = "Number of iteration whose artifact is visualized";
-	public static final String LABEL_HOARE =
-			"Compute Hoare Annotation of negated interpolant automaton, abstraction and CFG";
-	public static final String LABEL_HOARE_Positions = "Positions where we compute the Hoare Annotation";
-	public static final String LABEL_SEPARATE_SOLVER = "Use separate solver for trace checks";
-	public static final String LABEL_INTERPOLATED_LOCS = "Compute Interpolants along a Counterexample";
-	public static final String LABEL_NONLINEAR_CONSTRAINTS_IN_PATHINVARIANTS =
-			"Use nonlinear constraints in PathInvariants";
-	public static final String LABEL_UNSAT_CORES_IN_PATHINVARIANTS = "Use unsat cores in PathInvariants";
-	public static final String LABEL_INTERPOLANTS_CONSOLIDATION = "Interpolants consolidation";
-	public static final String LABEL_INTERPOLANT_AUTOMATON = "Interpolant automaton";
-	public static final String LABEL_DUMPAUTOMATA = "Dump automata to files";
-	public static final String LABEL_AUTOMATAFORMAT = "Output format of dumped automata";
-	public static final String LABEL_DUMPPATH = "Dump automata to the following directory";
-	public static final String LABEL_INTERPOLANT_AUTOMATON_ENHANCEMENT = "Interpolant automaton enhancement";
-	public static final String LABEL_HoareTripleChecks = "Hoare triple checks";
-	public static final String LABEL_DIFFERENCE_SENWA = "DifferenceSenwa operation instead classical Difference";
-	public static final String LABEL_MINIMIZE = "Minimization of abstraction";
-	public static final String LABEL_CONCURRENCY = "Automaton type used in concurrency analysis";
-	public static final String LABEL_ORDER = "Order in Petri net unfolding";
-	public static final String LABEL_CUTOFF = "cut-off requires same transition";
-	public static final String LABEL_UNFOLDING2NET = "use unfolding as abstraction";
-	public static final String LABEL_ASSERT_CODEBLOCKS_INCREMENTALLY = "Assert CodeBlocks";
-	public static final String LABEL_UNSAT_CORES = "Use unsat cores";
-	public static final String LABEL_LIVE_VARIABLES = "Use live variables";
-	public static final String LABEL_LANGUAGE_OPERATION = "LanguageOperation";
-	public static final String LABEL_ABSINT_MODE = "Abstract interpretation Mode";
-	public static final String LABEL_ABSINT_ALWAYS_REFINE = "Refine always when using abstract interpretation";
-	public static final String LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_NonFlowSensitive =
-			"Non-flow-sensitive error trace relevance analysis";
-	public static final String LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_FlowSensitive =
-			"Flow-sensitive error trace relevance analysis";
-	public static final String LABEL_SIMPLIFICATION_TECHNIQUE = "Simplification technique";
-	public static final String LABEL_XNF_CONVERSION_TECHNIQUE = "Xnf conversion technique";
-	public static final String LABEL_COUNTEREXAMPLE_SEARCH_STRATEGY = "Counterexample search strategy";
-	public static final String LABEL_REFINEMENT_STRATEGY = "Trace refinement strategy";
-	
-	public static final String VALUE_ABSTRACTION = "Abstraction";
-	public static final String VALUE_RCFG = "RecursiveControlFlowGraph";
-	public static final String VALUE_INTERPOLANT_AUTOMATON = "InterpolantAutomaton";
-	public static final String VALUE_NEG_INTERPOLANT_AUTOMATON = "NegatedInterpolantAutomaton";
-	public static final String VALUE_ITP_WP = "StrongestPostcondition&WeakestPrecondition";
-	public static final String VALUE_ITP_GUESS = "Guess Interpolants";
-	public static final String VALUE_InterpolantAutomaton_SingleTrace = "SingleTrace";
-	public static final String VALUE_InterpolantAutomaton_TwoTrack = "TwoTrack";
-	public static final String VALUE_InterpolantAutomaton_Canonical = "With backedges to repeated locations (Canonial)";
-	public static final String VALUE_InterpolantAutomaton_TotalInterpolation = "Total interpolation (Jan)";
-	
-	public static final String VALUE_FINITE_AUTOMATON = "Finite Automata";
-	public static final String VALUE_PETRI_NET = "Petri Net";
-	public static final String VALUE_KMM = "Ken McMillan";
-	public static final String VALUE_EVR = "Esparza Römer Vogler";
-	public static final String VALUE_EVR_MARK = "ERV with equal markings";
-	
-	/*
-	 * default values for the different preferences
-	 */
-	public static final boolean DEF_INTERPROCEDUTAL = true;
-	public static final int DEF_ITERATIONS = 1000000;
-	public static final String DEF_ARTIFACT = VALUE_RCFG;
-	public static final int DEF_WATCHITERATION = 1000000;
-	public static final boolean DEF_HOARE = false;
-	public static final HoareAnnotationPositions DEF_HOARE_POSITIONS = HoareAnnotationPositions.All;
-	public static final boolean DEF_SEPARATE_SOLVER = true;
-	public static final SolverMode DEF_Solver = SolverMode.Internal_SMTInterpol;
-	public static final String DEF_ExtSolverCommand = RcfgPreferenceInitializer.Z3_DEFAULT;
-	public static final InterpolationTechnique DEF_INTERPOLANTS = InterpolationTechnique.ForwardPredicates;
-	public static final String DEF_ADDITIONAL_EDGES = VALUE_InterpolantAutomaton_Canonical;
-	public static final boolean DEF_DUMPAUTOMATA = false;
-	public static final Format DEF_AUTOMATAFORMAT = Format.ATS;
-	public static final String DEF_DUMPPATH = ".";
-	public static final boolean DEF_DIFFERENCE_SENWA = false;
-	public static final boolean DEF_MINIMIZE = true;
-	public static final String DEF_CONCURRENCY = VALUE_FINITE_AUTOMATON;
-	public static final boolean DEF_ALL_ERRORS_AT_ONCE = true;
-	public static final CounterexampleSearchStrategy DEF_COUNTEREXAMPLE_SEARCH_STRATEGY =
-			CounterexampleSearchStrategy.BFS;
-	public static final RefinementStrategy DEF_REFINEMENT_STRATEGY = RefinementStrategy.FIXED_PREFERENCES;
-	// public static final boolean DEF_ALL_ERRORS_AT_ONCE = false;
-	
-	public static final boolean DEF_CUTOFF = true;
-	public static final boolean DEF_UNFOLDING2NET = false;
-	public static final String DEF_ORDER = VALUE_EVR;
-	public static final boolean DEF_simplifyCodeBlocks = false;
-	public static final boolean DEF_PreserveGotoEdges = false;
-	public static final AbstractInterpretationMode DEF_ABSINT_MODE = AbstractInterpretationMode.NONE;
-	private static final Boolean DEF_ABSINT_ALWAYS_REFINE = Boolean.FALSE;
-	public static final boolean DEF_USE_AI_PATH_PROGRAM_CONSTRUCTION = false;
-	public static final boolean DEF_ERROR_TRACE_RELEVANCE_ANALYSIS_NonFlowSensitive = false;
-	public static final boolean DEF_ERROR_TRACE_RELEVANCE_ANALYSIS_FlowSensitive = false;
-	
-	public static final SimplificationTechnique DEF_SIMPLIFICATION_TECHNIQUE = SimplificationTechnique.SIMPLIFY_DDA;
-	public static final XnfConversionTechnique DEF_XNF_CONVERSION_TECHNIQUE =
-			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
-	
 	public enum AbstractInterpretationMode {
 		NONE,
 		USE_PREDICATES,
@@ -239,6 +254,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		USE_TOTAL,
 	}
 	
+	/**
+	 * Interpolant automaton mode.
+	 */
 	public enum InterpolantAutomaton {
 		CANONICAL,
 		TOTALINTERPOLATION,
@@ -247,6 +265,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		TOTALINTERPOLATION2
 	}
 	
+	/**
+	 * Interpolation technique.
+	 */
 	public enum InterpolationTechnique {
 		Craig_NestedInterpolation,
 		Craig_TreeInterpolation,
@@ -256,6 +277,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		PathInvariants
 	}
 	
+	/**
+	 * Minimization mode.
+	 */
 	public enum Minimization {
 		NONE,
 		MINIMIZE_SEVPA,
@@ -273,6 +297,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		NWA_COMBINATOR_MULTI_SIMULATION
 	}
 	
+	/**
+	 * Code block assertion order.
+	 */
 	public enum AssertCodeBlockOrder {
 		NOT_INCREMENTALLY,
 		OUTSIDE_LOOP_FIRST1,
@@ -282,12 +309,18 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		TERMS_WITH_SMALL_CONSTANTS_FIRST
 	}
 	
+	/**
+	 * Unsatisfiable core mode.
+	 */
 	public enum UnsatCores {
 		IGNORE,
 		STATEMENT_LEVEL,
 		CONJUNCT_LEVEL
 	}
 	
+	/**
+	 * Language operation during refinement.
+	 */
 	public enum LanguageOperation {
 		DIFFERENCE,
 		INCREMENTAL_INCLUSION_VIA_DIFFERENCE,
@@ -304,21 +337,43 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		INCREMENTAL_INCLUSION_5_2,
 	}
 	
+	/**
+	 * Hoare triple check mode.
+	 */
 	public enum HoareTripleChecks {
 		MONOLITHIC,
 		INCREMENTAL
 	}
 	
+	/**
+	 * Hoare annotation position.
+	 */
 	public enum HoareAnnotationPositions {
 		All,
 		LoopsAndPotentialCycles,
 	}
 	
+	/**
+	 * Search strategy for counterexamples in the remainder language of the current abstraction (automaton).
+	 * 
+	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+	 */
 	public enum CounterexampleSearchStrategy {
+		/**
+		 * Breadth-first search (finds the shortest counterexample).
+		 */
 		BFS,
+		/**
+		 * Depth-first search.
+		 */
 		DFS
 	}
 	
+	/**
+	 * Strategy used for trace check and trace refinement (i.e., interpolant automaton construction).
+	 * 
+	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+	 */
 	public enum RefinementStrategy {
 		FIXED_PREFERENCES
 	}

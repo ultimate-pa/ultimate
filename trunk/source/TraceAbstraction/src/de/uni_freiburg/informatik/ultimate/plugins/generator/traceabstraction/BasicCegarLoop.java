@@ -201,9 +201,9 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		mUnsatCores = prefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_UNSAT_CORES, UnsatCores.class);
 		mUseLiveVariables = prefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_LIVE_VARIABLES);
 		mDoFaultLocalizationNonFlowSensitive = prefs.getBoolean(
-				TraceAbstractionPreferenceInitializer.LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_NonFlowSensitive);
+				TraceAbstractionPreferenceInitializer.LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_NON_FLOW_SENSITIVE);
 		mDoFaultLocalizationFlowSensitive = prefs
-				.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_FlowSensitive);
+				.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_FLOW_SENSITIVE);
 		
 		mAbsIntRunner = new AbstractInterpretationRunner(services, mCegarLoopBenchmark, rootNode,
 				mSimplificationTechnique, mXnfConversionTechnique, mCsToolkit);
