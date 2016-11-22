@@ -26,9 +26,8 @@
  * licensors of the ULTIMATE UnitTest Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.test.reporting;
+package de.uni_freiburg.informatik.ultimatetest.summaries;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -36,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider.TestResult;
+import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvProviderTransformerCombinator;
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvUtils;
@@ -140,33 +140,13 @@ public class CsvConcatenator implements ITestSummary {
 				.getCsvProviderProviderFromUltimateResults(resultService.getResults(), mBenchmark)) {
 			final ICsvProviderProvider<Object> benchmarkResult = (ICsvProviderProvider<Object>) benchmarkResultWildcard;
 			final ICsvProvider<Object> benchmarkCsv = benchmarkResult.createCvsProvider();
-			final ICsvProvider<Object> benchmarkCsvWithRunDefinition =
-					addUltimateRunDefinition(ultimateRunDefinition, benchmarkCsv, category, message);
+			final ICsvProvider<Object> benchmarkCsvWithRunDefinition = ColumnDefinitionUtil.prefixCsvProvider(
+					ultimateRunDefinition, threeValuedResult, category, message, benchmarkCsv, a -> a);
 			add(benchmarkCsvWithRunDefinition);
 		}
 	}
 
 	private void add(final ICsvProvider<Object> benchmarkCsvWithRunDefinition) {
 		mCsvProvider = CsvUtils.concatenateRows(mCsvProvider, benchmarkCsvWithRunDefinition);
-	}
-
-	private static ICsvProvider<Object> addUltimateRunDefinition(final UltimateRunDefinition ultimateRunDefinition,
-			final ICsvProvider<Object> benchmark, final String category, final String message) {
-		final List<String> resultColumns = new ArrayList<>();
-		resultColumns.add("File");
-		resultColumns.add("Settings");
-		resultColumns.add("Toolchain");
-		resultColumns.addAll(benchmark.getColumnTitles());
-		final ICsvProvider<Object> result = new SimpleCsvProvider<>(resultColumns);
-		final int rows = benchmark.getRowHeaders().size();
-		for (int i = 0; i < rows; i++) {
-			final List<Object> resultRow = new ArrayList<>();
-			resultRow.add(ultimateRunDefinition.getInputFileNames().replace(",", ";"));
-			resultRow.add(ultimateRunDefinition.getSettingsAbsolutePath());
-			resultRow.add(ultimateRunDefinition.getToolchain().getAbsolutePath());
-			resultRow.addAll(benchmark.getRow(i));
-			result.addRow(resultRow);
-		}
-		return result;
 	}
 }

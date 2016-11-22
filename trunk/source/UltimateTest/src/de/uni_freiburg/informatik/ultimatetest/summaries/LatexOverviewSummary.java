@@ -70,7 +70,7 @@ public class LatexOverviewSummary extends LatexSummary {
 			final Collection<Class<? extends ICsvProviderProvider<? extends Object>>> benchmarks,
 			final ColumnDefinition[] columnDefinitions) {
 		super(ultimateTestSuite, benchmarks, columnDefinitions);
-		mLatexTableHeaderCount = (int) mColumnDefinitions.stream().filter(a -> a.getLatexTableTitle() != null).count();
+		mLatexTableHeaderCount = (int) mColumnDefinitions.stream().filter(a -> a.getLatexColumnTitle() != null).count();
 	}
 
 	@Override
@@ -109,11 +109,11 @@ public class LatexOverviewSummary extends LatexSummary {
 
 			int i = 0;
 			for (final ColumnDefinition cd : mColumnDefinitions) {
-				if (cd.getLatexTableTitle() == null) {
+				if (cd.getLatexColumnTitle() == null) {
 					continue;
 				}
 				sb.append("  \\header{");
-				sb.append(removeInvalidCharsForLatex(cd.getLatexTableTitle()));
+				sb.append(removeInvalidCharsForLatex(cd.getLatexColumnTitle()));
 				sb.append("}");
 				i++;
 				if (i < mLatexTableHeaderCount) {
@@ -297,7 +297,7 @@ public class LatexOverviewSummary extends LatexSummary {
 		ICsvProvider<String> csv = makePrintCsvProviderFromResults(results, mColumnDefinitions);
 
 		csv = CsvUtils.projectColumn(csv,
-				mColumnDefinitions.stream().map(a -> a.getColumnToKeep()).collect(Collectors.toList()));
+				mColumnDefinitions.stream().map(a -> a.getCsvColumnTitle()).collect(Collectors.toList()));
 
 		csv = ColumnDefinitionUtil.reduceProvider(csv,
 				mColumnDefinitions.stream().map(a -> a.getManyRunsToOneRow()).collect(Collectors.toList()),
@@ -313,8 +313,8 @@ public class LatexOverviewSummary extends LatexSummary {
 		for (int i = 1; i < idx.length; ++i) {
 			final String currentHeader = csv.getColumnTitles().get(i);
 			for (final ColumnDefinition cd : mColumnDefinitions) {
-				if (cd.getColumnToKeep().equals(currentHeader)) {
-					idx[i] = (cd.getLatexTableTitle() != null);
+				if (cd.getCsvColumnTitle().equals(currentHeader)) {
+					idx[i] = (cd.getLatexColumnTitle() != null);
 					break;
 				}
 			}

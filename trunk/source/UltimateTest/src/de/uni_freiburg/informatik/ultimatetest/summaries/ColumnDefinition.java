@@ -51,11 +51,11 @@ public class ColumnDefinition {
 		mManyRunsToOneRow = howToAggregateForLatexTableRow;
 	}
 
-	public String getColumnToKeep() {
+	public String getCsvColumnTitle() {
 		return mColumnToKeep;
 	}
 
-	public String getLatexTableTitle() {
+	public String getLatexColumnTitle() {
 		return mLatexTableTitle;
 	}
 

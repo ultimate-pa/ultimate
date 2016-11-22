@@ -46,7 +46,6 @@ import de.uni_freiburg.informatik.ultimate.test.UltimateStarter;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimate.test.decider.AutomataScriptTestResultDecider;
-import de.uni_freiburg.informatik.ultimate.test.reporting.CsvConcatenator;
 import de.uni_freiburg.informatik.ultimate.test.reporting.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
@@ -59,6 +58,7 @@ import de.uni_freiburg.informatik.ultimatetest.summaries.AutomataScriptTestSumma
 import de.uni_freiburg.informatik.ultimatetest.summaries.ColumnDefinition;
 import de.uni_freiburg.informatik.ultimatetest.summaries.ColumnDefinition.Aggregate;
 import de.uni_freiburg.informatik.ultimatetest.summaries.ConversionContext;
+import de.uni_freiburg.informatik.ultimatetest.summaries.CsvConcatenator;
 import de.uni_freiburg.informatik.ultimatetest.summaries.LatexOverviewSummary;
 
 public class AutomataMinimizationTestSuite extends UltimateTestSuite {

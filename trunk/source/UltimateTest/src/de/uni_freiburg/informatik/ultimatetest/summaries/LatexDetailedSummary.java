@@ -66,7 +66,7 @@ public class LatexDetailedSummary extends LatexSummary {
 						if (lastValue == null) {
 							lastValue = 0;
 						}
-						return entry.getLatexTableTitle() != null ? lastValue + 1 : lastValue;
+						return entry.getLatexColumnTitle() != null ? lastValue + 1 : lastValue;
 					}
 				});
 	}
@@ -120,11 +120,11 @@ public class LatexDetailedSummary extends LatexSummary {
 
 			int i = 0;
 			for (final ColumnDefinition cd : mColumnDefinitions) {
-				if (cd.getLatexTableTitle() == null) {
+				if (cd.getLatexColumnTitle() == null) {
 					continue;
 				}
 				sb.append("  \\header{");
-				sb.append(removeInvalidCharsForLatex(cd.getLatexTableTitle()));
+				sb.append(removeInvalidCharsForLatex(cd.getLatexColumnTitle()));
 				sb.append("}");
 				i++;
 				if (i < mLatexTableHeaderCount) {
@@ -329,7 +329,7 @@ public class LatexDetailedSummary extends LatexSummary {
 					CoreUtil.select(mColumnDefinitions, new CoreUtil.IReduce<String, ColumnDefinition>() {
 						@Override
 						public String reduce(final ColumnDefinition entry) {
-							return entry.getColumnToKeep();
+							return entry.getCsvColumnTitle();
 						}
 					}));
 
@@ -350,8 +350,8 @@ public class LatexDetailedSummary extends LatexSummary {
 			for (int i = 1; i < idx.length; ++i) {
 				final String currentHeader = csv.getColumnTitles().get(i);
 				for (final ColumnDefinition cd : mColumnDefinitions) {
-					if (cd.getColumnToKeep().equals(currentHeader)) {
-						idx[i] = (cd.getLatexTableTitle() != null);
+					if (cd.getCsvColumnTitle().equals(currentHeader)) {
+						idx[i] = (cd.getLatexColumnTitle() != null);
 						break;
 					}
 				}

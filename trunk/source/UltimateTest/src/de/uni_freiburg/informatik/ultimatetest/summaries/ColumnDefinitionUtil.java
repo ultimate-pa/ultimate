@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Test Library.
- * 
+ *
  * The ULTIMATE Test Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Test Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Test Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Test Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -29,11 +29,14 @@ package de.uni_freiburg.informatik.ultimatetest.summaries;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
+import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider.TestResult;
 import de.uni_freiburg.informatik.ultimate.test.reporting.ExtendedResult;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvUtils;
@@ -43,11 +46,40 @@ import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
 import de.uni_freiburg.informatik.ultimatetest.summaries.ColumnDefinition.Aggregate;
 
 /**
- * 
- * @author dietsch@informatik.uni-freiburg.de
- * 
+ *
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
  */
-public class ColumnDefinitionUtil {
+public final class ColumnDefinitionUtil {
+
+	// @formatter:off
+	private static final ColumnDefinition[] ADDITIONAL_DEFS = new ColumnDefinition[] {
+			new ColumnDefinition("Folder", "Folder", ConversionContext.Keep(), Aggregate.Ignore, Aggregate.Ignore),
+			new ColumnDefinition("File", "File", ConversionContext.Keep(), Aggregate.Ignore, Aggregate.Ignore),
+			new ColumnDefinition("Settings", "Settings", ConversionContext.Keep(), Aggregate.Ignore, Aggregate.Ignore),
+			new ColumnDefinition("Toolchain", "Toolchain", ConversionContext.Keep(), Aggregate.Ignore,
+					Aggregate.Ignore),
+			new ColumnDefinition("Result", "Result", ConversionContext.Keep(), Aggregate.Ignore, Aggregate.Ignore),
+			new ColumnDefinition("Category", "Category", ConversionContext.Keep(), Aggregate.Ignore, Aggregate.Ignore),
+			new ColumnDefinition("Message", "Message", ConversionContext.Keep(), Aggregate.Ignore, Aggregate.Ignore),
+
+	};
+
+	private static final IExtractionFunction[] FUN_ADDITIONAL_DEFS = new IExtractionFunction[] {
+			((urd, tr, cat, message) -> urd.getInputFileFolders()),
+			((urd, tr, cat, message) -> urd.getInputFileNames().replace(',', ';')),
+			((urd, tr, cat, message) -> urd.getSettingsAbsolutePath()),
+			((urd, tr, cat, message) -> urd.getToolchain().getAbsolutePath()),
+			((urd, tr, cat, message) -> tr.toString()),
+			((urd, tr, cat, message) -> cat),
+			((urd, tr, cat, message) -> message),
+
+	};
+	// @formatter:on
+
+	private ColumnDefinitionUtil() {
+		// utility class should not be instantiated
+	}
 
 	public static ICsvProvider<String> makeHumanReadable(final ICsvProvider<String> csv,
 			final List<ColumnDefinition> columnDefinitions) {
@@ -96,11 +128,11 @@ public class ColumnDefinitionUtil {
 		final HashSet<String> max = new HashSet<>();
 		final HashSet<String> avg = new HashSet<>();
 
-		final List<String> columnsToKeep = new ArrayList<>(
-				CoreUtil.select(columnDefinitions, new CoreUtil.IReduce<String, ColumnDefinition>() {
+		final List<String> columnsToKeep =
+				new ArrayList<>(CoreUtil.select(columnDefinitions, new CoreUtil.IReduce<String, ColumnDefinition>() {
 					@Override
 					public String reduce(final ColumnDefinition entry) {
-						return entry.getColumnToKeep();
+						return entry.getCsvColumnTitle();
 					}
 				}));
 
@@ -122,8 +154,8 @@ public class ColumnDefinitionUtil {
 			++i;
 		}
 
-		final ICsvProvider<String> newProvider = CsvUtils.convertComplete(provider,
-				new IExplicitConverter<ICsvProvider<?>, ICsvProvider<String>>() {
+		final ICsvProvider<String> newProvider =
+				CsvUtils.convertComplete(provider, new IExplicitConverter<ICsvProvider<?>, ICsvProvider<String>>() {
 					@Override
 					public ICsvProvider<String> convert(final ICsvProvider<?> input) {
 						final ICsvProvider<String> rtr = new SimpleCsvProvider<>(input.getColumnTitles());
@@ -199,7 +231,7 @@ public class ColumnDefinitionUtil {
 	 * {@link ColumnDefinition#getSingleRunToOneRow()} method.
 	 * <li>Add new columns containing information from {@link UltimateRunDefinition} and {@link ExtendedResult}.
 	 * </ul>
-	 * 
+	 *
 	 * @return A new {@link ICsvProvider} that contains one row per test case, only the user-selected columns, and
 	 *         additional columns for run definition and test results.
 	 */
@@ -211,7 +243,7 @@ public class ColumnDefinitionUtil {
 				CoreUtil.select(columnDefinitions, new CoreUtil.IReduce<String, ColumnDefinition>() {
 					@Override
 					public String reduce(final ColumnDefinition entry) {
-						return entry.getColumnToKeep();
+						return entry.getCsvColumnTitle();
 					}
 				}));
 
@@ -230,41 +262,39 @@ public class ColumnDefinitionUtil {
 		return newProvider;
 	}
 
+	public static <T> ICsvProvider<T> prefixCsvProvider(final UltimateRunDefinition urd, final TestResult testResult,
+			final String category, final String message, final ICsvProvider<T> provider,
+			final Function<String, T> typeConverter) {
+		final List<String> resultColumns = new ArrayList<>();
+		for (final ColumnDefinition cd : ADDITIONAL_DEFS) {
+			resultColumns.add(cd.getCsvColumnTitle());
+		}
+		resultColumns.addAll(provider.getColumnTitles());
+
+		final ICsvProvider<T> result = new SimpleCsvProvider<>(resultColumns);
+		final int rows = provider.getRowHeaders().size();
+		for (int i = 0; i < rows; i++) {
+			final List<T> newRow = new ArrayList<>();
+			for (final IExtractionFunction funDefs : FUN_ADDITIONAL_DEFS) {
+				newRow.add(typeConverter.apply(funDefs.extract(urd, testResult, category, message)));
+			}
+			newRow.addAll(provider.getRow(i));
+			result.addRow(newRow);
+		}
+		return result;
+	}
+
 	/**
 	 * Create a new ICsvProvider by prefixing every row with the contents of the {@link UltimateRunDefinition} and the
 	 * result of the test (taken from {@link ExtendedResult}).
-	 * 
+	 *
 	 * This method expects that the ICsvProvider belongs to a certain Ultimate run.
-	 * 
+	 *
 	 */
 	public static ICsvProvider<String> prefixCsvProvider(final UltimateRunDefinition urd,
 			final ExtendedResult extendedResult, final ICsvProvider<String> provider) {
-		// Note: Also change {@link #getColumnDefinitionForPrefix()} if you add a column here.
-		final List<String> resultColumns = new ArrayList<>();
-		resultColumns.add("Folder");
-		resultColumns.add("File");
-		resultColumns.add("Settings");
-		resultColumns.add("Toolchain");
-		resultColumns.add("Result");
-		resultColumns.add("Category");
-		resultColumns.add("Message");
-		resultColumns.addAll(provider.getColumnTitles());
-
-		final ICsvProvider<String> result = new SimpleCsvProvider<>(resultColumns);
-		final int rows = provider.getRowHeaders().size();
-		for (int i = 0; i < rows; i++) {
-			final List<String> resultRow = new ArrayList<>();
-			resultRow.add(urd.getInputFileFolders());
-			resultRow.add(urd.getInputFileNames());
-			resultRow.add(urd.getSettingsName());
-			resultRow.add(urd.getToolchain().getName());
-			resultRow.add(extendedResult.getResult().toString());
-			resultRow.add(extendedResult.getCategory());
-			resultRow.add(extendedResult.getMessage());
-			resultRow.addAll(provider.getRow(i));
-			result.addRow(resultRow);
-		}
-		return result;
+		return prefixCsvProvider(urd, extendedResult.getResult(), extendedResult.getCategory(),
+				extendedResult.getMessage(), provider, a -> a);
 	}
 
 	/**
@@ -272,31 +302,25 @@ public class ColumnDefinitionUtil {
 	 * {@link #prefixCsvProvider(UltimateRunDefinition, ExtendedResult, ICsvProvider)}.
 	 */
 	public static List<ColumnDefinition> getColumnDefinitionForPrefix() {
-		final List<ColumnDefinition> rtr = new ArrayList<>();
-		rtr.add(new ColumnDefinition("Folder", "Folder", ConversionContext.Keep(), Aggregate.Ignore, Aggregate.Ignore));
-		rtr.add(new ColumnDefinition("File", "File", ConversionContext.Keep(), Aggregate.Ignore, Aggregate.Ignore));
-		rtr.add(new ColumnDefinition("Settings", "Settings", ConversionContext.Keep(), Aggregate.Ignore,
-				Aggregate.Ignore));
-		rtr.add(new ColumnDefinition("Toolchain", "Toolchain", ConversionContext.Keep(), Aggregate.Ignore,
-				Aggregate.Ignore));
-		rtr.add(new ColumnDefinition("Result", "Result", ConversionContext.Keep(), Aggregate.Ignore,
-				Aggregate.Ignore));
-		rtr.add(new ColumnDefinition("Category", "Category", ConversionContext.Keep(), Aggregate.Ignore,
-				Aggregate.Ignore));
-		rtr.add(new ColumnDefinition("Message", "Message", ConversionContext.Keep(), Aggregate.Ignore,
-				Aggregate.Ignore));
-		return rtr;
+		return Arrays.asList(ADDITIONAL_DEFS);
 	}
 
-	static void renameHeadersToLatexTitles(final ICsvProvider<String> csvTotal, final List<ColumnDefinition> columnDefinitions) {
+	static void renameHeadersToLatexTitles(final ICsvProvider<String> csvTotal,
+			final List<ColumnDefinition> columnDefinitions) {
 		int i = 0;
 		for (final String oldTitle : csvTotal.getColumnTitles()) {
-			final String newTitle = columnDefinitions.get(i).getLatexTableTitle();
+			final String newTitle = columnDefinitions.get(i).getLatexColumnTitle();
 			if (newTitle != null) {
-				csvTotal.renameColumnTitle(oldTitle, columnDefinitions.get(i).getLatexTableTitle());
+				csvTotal.renameColumnTitle(oldTitle, columnDefinitions.get(i).getLatexColumnTitle());
 			}
 			i++;
 		}
+	}
+
+	@FunctionalInterface
+	private static interface IExtractionFunction {
+		String extract(final UltimateRunDefinition urd, final TestResult testResult, final String category,
+				final String message);
 	}
 
 }

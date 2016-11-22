@@ -53,7 +53,7 @@ public class LatexPlotSummary extends LatexSummary {
 			Collection<Class<? extends ICsvProviderProvider<? extends Object>>> benchmarks,
 			ColumnDefinition[] columnDefinitions) {
 		super(ultimateTestSuite, benchmarks, columnDefinitions);
-		mLatexTableHeaderCount = (int) mColumnDefinitions.stream().filter(a -> a.getLatexTableTitle() != null).count();
+		mLatexTableHeaderCount = (int) mColumnDefinitions.stream().filter(a -> a.getLatexColumnTitle() != null).count();
 	}
 
 	@Override
@@ -105,11 +105,11 @@ public class LatexPlotSummary extends LatexSummary {
 
 			int i = 0;
 			for (final ColumnDefinition cd : mColumnDefinitions) {
-				if (cd.getLatexTableTitle() == null) {
+				if (cd.getLatexColumnTitle() == null) {
 					continue;
 				}
 				sb.append("  \\header{");
-				sb.append(removeInvalidCharsForLatex(cd.getLatexTableTitle()));
+				sb.append(removeInvalidCharsForLatex(cd.getLatexColumnTitle()));
 				sb.append("}");
 				i++;
 				if (i < mLatexTableHeaderCount) {
