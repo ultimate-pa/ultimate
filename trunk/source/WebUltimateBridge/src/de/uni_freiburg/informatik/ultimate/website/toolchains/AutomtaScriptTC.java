@@ -18,12 +18,12 @@ public class AutomtaScriptTC extends WebToolchain {
 
 	@Override
 	protected String defineDescription() {
-		return NameStrings.s_TOOL_AutomataScriptInterpreter;
+		return NameStrings.TOOL_AUTOMATA_SCRIPT_INTERPRETER;
 	}
 
 	@Override
 	protected String defineName() {
-		return NameStrings.s_TOOL_AutomataScriptInterpreter;
+		return NameStrings.TOOL_AUTOMATA_SCRIPT_INTERPRETER;
 	}
 
 	@Override

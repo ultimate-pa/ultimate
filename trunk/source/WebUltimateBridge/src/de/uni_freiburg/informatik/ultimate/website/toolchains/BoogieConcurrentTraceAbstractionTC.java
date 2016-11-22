@@ -18,12 +18,12 @@ public class BoogieConcurrentTraceAbstractionTC extends WebToolchain {
 
 	@Override
 	protected String defineDescription() {
-		return NameStrings.s_TOOL_AutomizerConcurrent;
+		return NameStrings.TOOL_AUTOMIZER_CONCURRENT;
 	}
 
 	@Override
 	protected String defineName() {
-		return NameStrings.s_TOOL_AutomizerConcurrent;
+		return NameStrings.TOOL_AUTOMIZER_CONCURRENT;
 	}
 
 	@Override

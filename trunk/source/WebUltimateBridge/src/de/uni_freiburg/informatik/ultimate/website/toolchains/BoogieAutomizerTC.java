@@ -21,12 +21,12 @@ public class BoogieAutomizerTC extends WebToolchain {
 
 	@Override
 	protected String defineDescription() {
-		return NameStrings.s_TOOL_Automizer;
+		return NameStrings.TOOL_AUTOMIZER;
 	}
 
 	@Override
 	protected String defineName() {
-		return NameStrings.s_TOOL_Automizer;
+		return NameStrings.TOOL_AUTOMIZER;
 	}
 
 	@Override
@@ -48,7 +48,7 @@ public class BoogieAutomizerTC extends WebToolchain {
 	protected String defineUserInfo() {
 		return null;
 	}
-	
+
 	@Override
 	protected String defineInterfaceLayoutFontsize() {
 		return PrefStrings.s_InterfaceLayoutFontsizeDefault;
@@ -75,7 +75,7 @@ public class BoogieAutomizerTC extends WebToolchain {
 	}
 
 	static List<Tool> boogieAutomizerTools() {
-		final List<Tool> tools = new ArrayList<Tool>();
+		final List<Tool> tools = new ArrayList<>();
 
 		tools.add(new Tool(PrefStrings.s_boogiePreprocessor));
 		tools.add(new Tool(PrefStrings.s_rcfgBuilder));
@@ -87,16 +87,15 @@ public class BoogieAutomizerTC extends WebToolchain {
 	static List<Setting> boogieAutomizerAdditionalSettings() {
 		final List<Setting> rtr = new ArrayList<>();
 
-//		rtr.add(new Setting(PrefStrings.s_TA_LABEL_Hoare, Setting.SettingType.BOOLEAN, "Compute Hoare Annotation",
-//				"true", true));
+		// rtr.add(new Setting(PrefStrings.s_TA_LABEL_Hoare, Setting.SettingType.BOOLEAN, "Compute Hoare Annotation",
+		// "true", true));
 
 		return rtr;
 	}
-	
+
 	@Override
 	protected String defineToolchainSettingsFile() {
 		return "Automizer.epf";
 	}
-
 
 }

@@ -4,6 +4,7 @@
 package de.uni_freiburg.informatik.ultimate.website;
 
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -14,13 +15,11 @@ import de.uni_freiburg.informatik.ultimate.website.toolchains.BoogieBuchiAutomiz
 import de.uni_freiburg.informatik.ultimate.website.toolchains.BoogieConcurrentTraceAbstractionTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.BoogieKojakTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.BoogieLassoRankerTC;
-import de.uni_freiburg.informatik.ultimate.website.toolchains.BoogieTaipanTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.CAutomizerTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.CBuchiAutomizerTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.CKojakTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.CLTLAutomizerTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.CLassoRankerTC;
-import de.uni_freiburg.informatik.ultimate.website.toolchains.CTaipanTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.NameStrings;
 
 /**
@@ -33,22 +32,33 @@ public class Tasks {
 	/**
 	 * List all toolchains that should be shown. Instantiate all toolchains, that should be shown.
 	 */
-	private static final Class<?>[] sToolchainTypes = { AutomtaScriptTC.class, BoogieAutomizerTC.class,
-	        CAutomizerTC.class, BoogieLassoRankerTC.class, CLassoRankerTC.class, BoogieBuchiAutomizerTC.class,
-	        CBuchiAutomizerTC.class, BoogieConcurrentTraceAbstractionTC.class, CLTLAutomizerTC.class, CKojakTC.class,
-	        BoogieKojakTC.class, CTaipanTC.class, BoogieTaipanTC.class };
+	private static final Class<?>[] TOOLCHAIN_TYPES = {
+			//@formatter:off
+			AutomtaScriptTC.class,
+			BoogieAutomizerTC.class,
+			CAutomizerTC.class,
+			BoogieLassoRankerTC.class,
+			CLassoRankerTC.class,
+			BoogieBuchiAutomizerTC.class,
+			CBuchiAutomizerTC.class,
+			BoogieConcurrentTraceAbstractionTC.class,
+			CLTLAutomizerTC.class,
+			CKojakTC.class,
+			BoogieKojakTC.class
+			//@formatter:on
+	};
 	/**
 	 * The String representations of TaskNames.
 	 */
-	private static final Map<TaskNames, String> sTaskStrings = new HashMap<Tasks.TaskNames, String>();
+	private static final Map<TaskNames, String> TASK_STRINGS = new EnumMap<>(TaskNames.class);
 	/**
 	 * Active toolchains, listed by their task(s).
 	 */
-	private static final Map<String, ArrayList<WebToolchain>> sActiveToolchains = new HashMap<String, ArrayList<WebToolchain>>();
+	private static final Map<String, ArrayList<WebToolchain>> ACTIVE_TOOLCHAINS = new HashMap<>();
 	/**
 	 * All generalized toolchains by their names.
 	 */
-	private static final Map<String, Worker> sWorkers = new HashMap<String, Worker>();
+	private static final Map<String, Worker> WORKERS = new HashMap<>();
 
 	/**
 	 * @author Markus Lindenmann
@@ -57,19 +67,27 @@ public class Tasks {
 	 * @date 14.02.2012
 	 */
 	public enum TaskNames {
-		AUTOMIZER_BOOGIE, AUTOMIZER_C,
+		AUTOMIZER_BOOGIE,
 
-		TERMINATION_BOOGIE, TERMINATION_C,
+		AUTOMIZER_C,
 
-		RANK_SYNTHESIS_BOOGIE, RANK_SYNTHESIS_C,
+		TERMINATION_BOOGIE,
+
+		TERMINATION_C,
+
+		RANK_SYNTHESIS_BOOGIE,
+
+		RANK_SYNTHESIS_C,
 
 		AUTOMATA_SCRIPT,
 
 		CONCURRENT_TRACE_ABSTRACTION_BOOGIE,
 
-		LTLAUTOMIZER_C, KOJAK_C, KOJAK_BOOGIE,
+		LTLAUTOMIZER_C,
 
-		TAIPAN_C, TAIPAN_BOOGIE,
+		KOJAK_C,
+
+		KOJAK_BOOGIE
 
 		// If you add something here, add a String representation to
 		// initTaskNames()
@@ -83,10 +101,10 @@ public class Tasks {
 	 * @return a map of <code>TaskNames</code> to its String representation
 	 */
 	public static final Map<TaskNames, String> getTaskString() {
-		if (sTaskStrings.isEmpty()) {
+		if (TASK_STRINGS.isEmpty()) {
 			initTaskNames();
 		}
-		return sTaskStrings;
+		return TASK_STRINGS;
 	}
 
 	/**
@@ -94,15 +112,15 @@ public class Tasks {
 	 *
 	 * @return a map of Worker name to workers
 	 */
-	public final static Map<String, Worker> getWorker() {
-		if (sWorkers.isEmpty()) {
+	public static final Map<String, Worker> getWorker() {
+		if (WORKERS.isEmpty()) {
 			initWorkers();
 		}
-		SimpleLogger.log("returning " + sWorkers.size() + " workers");
-		for (final Entry<String, Worker> entry : sWorkers.entrySet()) {
+		SimpleLogger.log("returning " + WORKERS.size() + " workers");
+		for (final Entry<String, Worker> entry : WORKERS.entrySet()) {
 			SimpleLogger.log("Woker name " + entry.getKey() + " " + entry.getValue());
 		}
-		return sWorkers;
+		return WORKERS;
 	}
 
 	/**
@@ -117,28 +135,23 @@ public class Tasks {
 			final TaskNames name = TaskNames.valueOf(taskName);
 			// TODO : check if the js file exists...
 			switch (name) {
-			// case AUTOMATA_SCRIPT:
-			// return "ats";
-			// case RunSmt2Script:
-			// return "smt2";
 			case AUTOMIZER_BOOGIE:
 			case TERMINATION_BOOGIE:
 			case RANK_SYNTHESIS_BOOGIE:
 			case CONCURRENT_TRACE_ABSTRACTION_BOOGIE:
 			case KOJAK_BOOGIE:
-			case TAIPAN_BOOGIE:
 				return "boogie";
 			case AUTOMIZER_C:
 			case TERMINATION_C:
 			case RANK_SYNTHESIS_C:
 			case LTLAUTOMIZER_C:
 			case KOJAK_C:
-			case TAIPAN_C:
 				return "c_cpp";
 			default:
 				return "text";
 			}
 		} catch (final IllegalArgumentException e) {
+			SimpleLogger.log("taskName " + taskName + " is not known, using \"text\"");
 			return "text";
 		}
 	}
@@ -148,11 +161,11 @@ public class Tasks {
 	 *
 	 * @return a list of toolchains, that should be displayed on the website.
 	 */
-	public final static Map<String, ArrayList<WebToolchain>> getActiveToolchains() {
-		if (sActiveToolchains.isEmpty()) {
+	public static final Map<String, ArrayList<WebToolchain>> getActiveToolchains() {
+		if (ACTIVE_TOOLCHAINS.isEmpty()) {
 			initToolchains();
 		}
-		return sActiveToolchains;
+		return ACTIVE_TOOLCHAINS;
 	}
 
 	/**
@@ -163,35 +176,35 @@ public class Tasks {
 
 		String description, name;
 
-		name = NameStrings.s_TOOL_Automizer;
-		description = NameStrings.s_DESCRIPTION_Automizer;
-		Worker w = new Worker(name, NameStrings.s_TASK_verify, description, null);
+		name = NameStrings.TOOL_AUTOMIZER;
+		description = NameStrings.DESCRIPTION_AUTOMIZER;
+		Worker w = new Worker(name, NameStrings.TASK_VERIFY, description, null);
 		w.setLogoURL("img/tool_logo.png");
-		sWorkers.put(w.getId(), w);
+		WORKERS.put(w.getId(), w);
 
-		name = NameStrings.s_TOOL_AutomizerConcurrent;
-		description = NameStrings.s_DESCRIPTION_AutomizerConcurrent;
-		w = new Worker(name, NameStrings.s_TASK_verify, description, null);
-		sWorkers.put(w.getId(), w);
+		name = NameStrings.TOOL_AUTOMIZER_CONCURRENT;
+		description = NameStrings.DESCRIPTION_AUTOMIZER_CONCURRENT;
+		w = new Worker(name, NameStrings.TASK_VERIFY, description, null);
+		WORKERS.put(w.getId(), w);
 
-		name = NameStrings.s_TOOL_BuchiAutomizer;
-		description = NameStrings.s_DESCRIPTION_BuchiAutomizer;
-		w = new Worker(name, NameStrings.s_TASK_analyze, description, null);
-		sWorkers.put(w.getId(), w);
+		name = NameStrings.TOOL_AUTOMIZER_BUCHI;
+		description = NameStrings.DESCRIPTION_AUTOMIZER_BUCHI;
+		w = new Worker(name, NameStrings.TASK_ANALYZE, description, null);
+		WORKERS.put(w.getId(), w);
 
 		name = "LTL Automizer";
 		description = "An LTL software model checker based on Büchi programs.";
-		w = new Worker(name, NameStrings.s_TASK_verify, description, null);
-		sWorkers.put(w.getId(), w);
+		w = new Worker(name, NameStrings.TASK_VERIFY, description, null);
+		WORKERS.put(w.getId(), w);
 
 		name = "Kojak";
 		description = "A software model checker";
-		w = new Worker(name, NameStrings.s_TASK_verify, description, null);
-		sWorkers.put(w.getId(), w);
+		w = new Worker(name, NameStrings.TASK_VERIFY, description, null);
+		WORKERS.put(w.getId(), w);
 
-		name = NameStrings.s_TOOL_LassoRanker;
-		description = NameStrings.s_DESCRIPTION_LassoRanker;
-		w = new Worker(name, NameStrings.s_TASK_synthesize, description, null);
+		name = NameStrings.TOOL_LASSO_RANKER;
+		description = NameStrings.DESCRIPTION_LASSO_RANKER;
+		w = new Worker(name, NameStrings.TASK_SYNTHESIZE, description, null);
 		// w.setInterfaceLayoutFontsize("40"); // sample for overwriting
 		// fontsize setting
 		// w.setInterfaceLayoutOrientation("vertical"); // sample for
@@ -200,19 +213,14 @@ public class Tasks {
 		// animations setting
 		// w.setContentURL("http://localhost:8080/Website/json/lasso_ranker.json");
 		// // sample for setting an optional url
-		sWorkers.put(w.getId(), w);
+		WORKERS.put(w.getId(), w);
 
-		name = NameStrings.s_TOOL_AutomataScriptInterpreter;
-		description = NameStrings.s_DESCRIPTION_AutomataScriptInterpreter;
-		w = new Worker(name, NameStrings.s_TASK_run, description, null);
+		name = NameStrings.TOOL_AUTOMATA_SCRIPT_INTERPRETER;
+		description = NameStrings.DESCRIPTION_AUTOMATA_SCRIPT_INTERPRETER;
+		w = new Worker(name, NameStrings.TASK_RUN, description, null);
 		w.setUserInfo(""); // sample user information, being shown on Automata
-		                   // Script page
-		sWorkers.put(w.getId(), w);
-
-		name = NameStrings.s_TOOL_Taipan;
-		description = NameStrings.s_DESCRIPTION_Taipan;
-		w = new Worker(name, NameStrings.s_TASK_verify, description, null);
-		sWorkers.put(w.getId(), w);
+							// Script page
+		WORKERS.put(w.getId(), w);
 
 		completeInitWorker();
 
@@ -224,18 +232,18 @@ public class Tasks {
 	private static void completeInitWorker() {
 		for (final Map.Entry<String, ArrayList<WebToolchain>> tcPair : getActiveToolchains().entrySet()) {
 			for (final WebToolchain toolchain : tcPair.getValue()) {
-				if (!sWorkers.containsKey(Worker.toKey(toolchain.getName()))) {
+				if (!WORKERS.containsKey(Worker.toKey(toolchain.getName()))) {
 					SimpleLogger.log("Worker for toolchain " + toolchain.getName()
-					        + " missing! Adding a worker via a very strange workaround");
-					sWorkers.put(Worker.toKey(toolchain.getName()), new Worker(toolchain.getName(), null, null, null));
+							+ " missing! Adding a worker via a very strange workaround");
+					WORKERS.put(Worker.toKey(toolchain.getName()), new Worker(toolchain.getName(), null, null, null));
 					SimpleLogger.log("Added worker for toolchain " + toolchain.getName());
 				}
-				sWorkers.get(Worker.toKey(toolchain.getName())).addToolchain(toolchain);
+				WORKERS.get(Worker.toKey(toolchain.getName())).addToolchain(toolchain);
 			}
 		}
 		SimpleLogger.log("Finished initializing workers");
-		SimpleLogger.log("The following " + sWorkers.size() + " workers are present:");
-		for (final Entry<String, Worker> worker : sWorkers.entrySet()) {
+		SimpleLogger.log("The following " + WORKERS.size() + " workers are present:");
+		for (final Entry<String, Worker> worker : WORKERS.entrySet()) {
 			SimpleLogger.log(worker.getKey());
 		}
 	}
@@ -247,43 +255,41 @@ public class Tasks {
 		SimpleLogger.log("Initializing task names...");
 
 		// String should have at most 30 chars and must not be empty!
-		sTaskStrings.put(TaskNames.AUTOMATA_SCRIPT, "Run Automata Script");
-		sTaskStrings.put(TaskNames.AUTOMIZER_BOOGIE, "Verify Boogie");
-		sTaskStrings.put(TaskNames.AUTOMIZER_C, "Verify C");
-		sTaskStrings.put(TaskNames.TERMINATION_BOOGIE, "Analyze Termination Boogie");
-		sTaskStrings.put(TaskNames.TERMINATION_C, "Analyze Termination C");
-		sTaskStrings.put(TaskNames.RANK_SYNTHESIS_BOOGIE, "Synthesize ranking function Boogie");
-		sTaskStrings.put(TaskNames.RANK_SYNTHESIS_C, "Synthesize ranking function C");
-		sTaskStrings.put(TaskNames.CONCURRENT_TRACE_ABSTRACTION_BOOGIE, "Verify concurrent Boogie");
-		sTaskStrings.put(TaskNames.LTLAUTOMIZER_C, "Verify if C program fulfils LTL property");
-		sTaskStrings.put(TaskNames.KOJAK_C, "Verify C");
-		sTaskStrings.put(TaskNames.KOJAK_BOOGIE, "Verify Boogie");
-		sTaskStrings.put(TaskNames.TAIPAN_C, "Verify C");
-		sTaskStrings.put(TaskNames.TAIPAN_BOOGIE, "Verify Boogie");
+		TASK_STRINGS.put(TaskNames.AUTOMATA_SCRIPT, "Run Automata Script");
+		TASK_STRINGS.put(TaskNames.AUTOMIZER_BOOGIE, "Verify Boogie");
+		TASK_STRINGS.put(TaskNames.AUTOMIZER_C, "Verify C");
+		TASK_STRINGS.put(TaskNames.TERMINATION_BOOGIE, "Analyze Termination Boogie");
+		TASK_STRINGS.put(TaskNames.TERMINATION_C, "Analyze Termination C");
+		TASK_STRINGS.put(TaskNames.RANK_SYNTHESIS_BOOGIE, "Synthesize ranking function Boogie");
+		TASK_STRINGS.put(TaskNames.RANK_SYNTHESIS_C, "Synthesize ranking function C");
+		TASK_STRINGS.put(TaskNames.CONCURRENT_TRACE_ABSTRACTION_BOOGIE, "Verify concurrent Boogie");
+		TASK_STRINGS.put(TaskNames.LTLAUTOMIZER_C, "Verify if C program fulfils LTL property");
+		TASK_STRINGS.put(TaskNames.KOJAK_C, "Verify C");
+		TASK_STRINGS.put(TaskNames.KOJAK_BOOGIE, "Verify Boogie");
 
 		SimpleLogger.log("Finished initializing task names");
-		SimpleLogger.log("The following " + sTaskStrings.size() + " task names are present:");
-		for (final Entry<TaskNames, String> entry : sTaskStrings.entrySet()) {
+		SimpleLogger.log("The following " + TASK_STRINGS.size() + " task names are present:");
+		for (final Entry<TaskNames, String> entry : TASK_STRINGS.entrySet()) {
 			SimpleLogger.log(entry.getKey());
 		}
 	}
 
 	private static void initToolchains() {
 		SimpleLogger.log("Initializing toolchains...");
-		for (final Class<?> toolchainType : sToolchainTypes) {
+		for (final Class<?> toolchainType : TOOLCHAIN_TYPES) {
 			WebToolchain tc;
 			try {
 				tc = (WebToolchain) toolchainType.getConstructor().newInstance((Object[]) null);
 				for (final TaskNames taskName : tc.getTaskName()) {
-					if (!sActiveToolchains.containsKey(taskName.toString())) {
-						sActiveToolchains.put(taskName.toString(), new ArrayList<WebToolchain>());
+					if (!ACTIVE_TOOLCHAINS.containsKey(taskName.toString())) {
+						ACTIVE_TOOLCHAINS.put(taskName.toString(), new ArrayList<WebToolchain>());
 						SimpleLogger.log("Added toolchain " + tc.getId() + " to task " + taskName.toString());
 					}
-					sActiveToolchains.get(taskName.toString()).add(tc);
+					ACTIVE_TOOLCHAINS.get(taskName.toString()).add(tc);
 				}
 			} catch (final Exception e) {
 				SimpleLogger.log(
-				        "An exception occured during initialization of toolchain " + toolchainType.getCanonicalName());
+						"An exception occured during initialization of toolchain " + toolchainType.getCanonicalName());
 				SimpleLogger.log(e.getCause());
 			}
 		}

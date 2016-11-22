@@ -12,12 +12,12 @@ public class CBuchiAutomizerTC extends WebToolchain {
 
 	@Override
 	protected String defineDescription() {
-		return NameStrings.s_TOOL_BuchiAutomizer;
+		return NameStrings.TOOL_AUTOMIZER_BUCHI;
 	}
 
 	@Override
 	protected String defineName() {
-		return NameStrings.s_TOOL_BuchiAutomizer;
+		return NameStrings.TOOL_AUTOMIZER_BUCHI;
 	}
 
 	@Override

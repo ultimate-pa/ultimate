@@ -60,7 +60,7 @@ public class Worker {
 	/**
 	 * The languages of this workers toolchains.
 	 */
-	private final ArrayList<String> languages = new ArrayList<String>();
+	private final ArrayList<String> languages = new ArrayList<>();
 
 	/**
 	 * Constructor.
@@ -75,17 +75,15 @@ public class Worker {
 	 *            a list of toolchains for this worker.
 	 */
 	public Worker(final String name, final String label, final String description,
-	        final ArrayList<WebToolchain> toolchains) {
-		//@formatter:off
-		this.name              = name;
-		this.label             = (label == null) ? getLabel(name) : label;
-		this.description       = (description == null) ? getDescription(name) : description;
-		this.toolchains        = (toolchains == null) ? new ArrayList<WebToolchain>() : toolchains;
-		layoutFontsize         = null;
-		layoutOrientation      = null;
-		layoutTransitions      = null;
+			final ArrayList<WebToolchain> toolchains) {
+		this.name = name;
+		this.label = (label == null) ? getLabel(name) : label;
+		this.description = (description == null) ? getDescription(name) : description;
+		this.toolchains = (toolchains == null) ? new ArrayList<WebToolchain>() : toolchains;
+		layoutFontsize = null;
+		layoutOrientation = null;
+		layoutTransitions = null;
 		setId(name);
-		//@formatter:on
 	}
 
 	/**
@@ -121,21 +119,18 @@ public class Worker {
 			result = label;
 		} else {
 			switch (name) {
-			case NameStrings.s_TOOL_Automizer:
-			case NameStrings.s_TOOL_AutomizerConcurrent:
-				result = NameStrings.s_TASK_verify;
+			case NameStrings.TOOL_AUTOMIZER:
+			case NameStrings.TOOL_AUTOMIZER_CONCURRENT:
+				result = NameStrings.TASK_VERIFY;
 				break;
-			case NameStrings.s_TOOL_BuchiAutomizer:
-				result = NameStrings.s_TASK_analyze;
+			case NameStrings.TOOL_AUTOMIZER_BUCHI:
+				result = NameStrings.TASK_ANALYZE;
 				break;
-			case NameStrings.s_TOOL_LassoRanker:
-				result = NameStrings.s_TASK_synthesize;
+			case NameStrings.TOOL_LASSO_RANKER:
+				result = NameStrings.TASK_SYNTHESIZE;
 				break;
-			case NameStrings.s_TOOL_AutomataScriptInterpreter:
-				result = NameStrings.s_TASK_run;
-				break;
-			case NameStrings.s_TOOL_Taipan:
-				result = NameStrings.s_TASK_verify;
+			case NameStrings.TOOL_AUTOMATA_SCRIPT_INTERPRETER:
+				result = NameStrings.TASK_RUN;
 				break;
 			default:
 				result = "No description available";
@@ -315,15 +310,15 @@ public class Worker {
 	 */
 	public static String toKey(final String name) {
 		return name.toLowerCase().replaceAll("\\s+", "_").replaceAll("ü", "ue").replaceAll("ö", "oe").replaceAll("ä",
-		        "ae");
+				"ae");
 	}
 
 	@Override
 	public String toString() {
 		return "Worker [id=" + id + ", name=" + name + ", description=" + description + ", label=" + label
-		        + ", userInfo=" + userInfo + ", layoutOrientation=" + layoutOrientation + ", layoutFontsize="
-		        + layoutFontsize + ", layoutTransitions=" + layoutTransitions + ", contentURL=" + contentURL
-		        + ", logoURL=" + logoURL + ", toolchains=" + toolchains + ", languages=" + languages + "]";
+				+ ", userInfo=" + userInfo + ", layoutOrientation=" + layoutOrientation + ", layoutFontsize="
+				+ layoutFontsize + ", layoutTransitions=" + layoutTransitions + ", contentURL=" + contentURL
+				+ ", logoURL=" + logoURL + ", toolchains=" + toolchains + ", languages=" + languages + "]";
 	}
 
 }

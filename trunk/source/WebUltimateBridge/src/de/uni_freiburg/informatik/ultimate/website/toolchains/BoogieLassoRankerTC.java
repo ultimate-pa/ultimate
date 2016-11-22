@@ -12,12 +12,12 @@ public class BoogieLassoRankerTC extends WebToolchain {
 
 	@Override
 	protected String defineDescription() {
-		return NameStrings.s_TOOL_LassoRanker;
+		return NameStrings.TOOL_LASSO_RANKER;
 	}
 
 	@Override
 	protected String defineName() {
-		return NameStrings.s_TOOL_LassoRanker;
+		return NameStrings.TOOL_LASSO_RANKER;
 	}
 
 	@Override

@@ -17,12 +17,12 @@ public class BoogieTaipanTC extends WebToolchain {
 
 	@Override
 	protected String defineDescription() {
-		return NameStrings.s_TOOL_Taipan;
+		return NameStrings.TOOL_TAIPAN;
 	}
 
 	@Override
 	protected String defineName() {
-		return NameStrings.s_TOOL_Taipan;
+		return NameStrings.TOOL_TAIPAN;
 	}
 
 	@Override

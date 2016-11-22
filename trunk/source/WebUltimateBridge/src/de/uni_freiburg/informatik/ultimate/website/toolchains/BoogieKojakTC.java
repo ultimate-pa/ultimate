@@ -16,12 +16,12 @@ public class BoogieKojakTC extends WebToolchain {
 
 	@Override
 	protected String defineDescription() {
-		return NameStrings.s_TOOL_Kojak;
+		return NameStrings.TOOL_KOJAK;
 	}
 
 	@Override
 	protected String defineName() {
-		return NameStrings.s_TOOL_Kojak;
+		return NameStrings.TOOL_KOJAK;
 	}
 
 	@Override
