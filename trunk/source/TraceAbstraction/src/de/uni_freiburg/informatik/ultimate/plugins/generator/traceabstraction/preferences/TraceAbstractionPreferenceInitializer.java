@@ -102,7 +102,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String VALUE_INTERPOLANT_AUTOMATON_SINGLE_TRACE = "SingleTrace";
 	public static final String VALUE_INTERPOLANT_AUTOMATON_TWO_TRACK = "TwoTrack";
 	public static final String VALUE_INTERPOLANT_AUTOMATON_CANONICAL =
-			"With backedges to repeated locations (Canonial)";
+			"With backedges to repeated locations (Canonical)";
 	public static final String VALUE_INTERPOLANT_AUTOMATON_TOTAL_INTERPOLATION = "Total interpolation (Jan)";
 	
 	public static final String VALUE_FINITE_AUTOMATON = "Finite Automata";
