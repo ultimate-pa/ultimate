@@ -62,18 +62,18 @@ import de.uni_freiburg.informatik.ultimate.witnessprinter.preferences.Preference
  * @see IProgramExecution
  */
 public class WitnessManager {
-	
+
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final IToolchainStorage mStorage;
-	
+
 	public WitnessManager(final ILogger logger, final IUltimateServiceProvider services,
 			final IToolchainStorage storage) {
 		mLogger = logger;
 		mServices = services;
 		mStorage = storage;
 	}
-	
+
 	/**
 	 * @param funsResultSupplier
 	 *            A collection of functions were each provides a triple (IResult, filename, string that represents a
@@ -84,7 +84,7 @@ public class WitnessManager {
 	public void run(final Collection<Supplier<Triple<IResult, String, String>>> funsResultSupplier)
 			throws IOException, InterruptedException {
 		final IPreferenceProvider ups = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
-		
+
 		int cexNo = 0;
 		String suffix = null;
 		for (final Supplier<Triple<IResult, String, String>> funResultSupplier : funsResultSupplier) {
@@ -92,11 +92,11 @@ public class WitnessManager {
 			final IResult cex = triple.getFirst();
 			final String originalFile = triple.getSecond();
 			final String svcompWitness = triple.getThird();
-			
+
 			final boolean writeInWorkingDir = ups.getBoolean(PreferenceInitializer.LABEL_WITNESS_WRITE_WORKINGDIR);
 			final boolean writeBesideInputFile = ups.getBoolean(PreferenceInitializer.LABEL_WITNESS_WRITE);
 			final List<String> filenamesToDelete = new ArrayList<>();
-			
+
 			if (!writeBesideInputFile && !writeInWorkingDir) {
 				continue;
 			}
@@ -105,12 +105,12 @@ public class WitnessManager {
 				filename = writeWitness(svcompWitness, null, suffix);
 				filenamesToDelete.add(filename);
 			}
-			
+
 			if (writeBesideInputFile && svcompWitness != null) {
 				filename = writeWitness(svcompWitness, originalFile, suffix);
 				filenamesToDelete.add(filename);
 			}
-			
+
 			if (ups.getBoolean(PreferenceInitializer.LABEL_WITNESS_VERIFY)) {
 				if (svcompWitness == null) {
 					reportWitnessResult(null, cex, WitnessVerificationStatus.INTERNAL_ERROR,
@@ -122,7 +122,7 @@ public class WitnessManager {
 				reportWitnessResult(svcompWitness, cex, WitnessVerificationStatus.UNVERIFIED,
 						WitnessVerificationStatus.UNVERIFIED);
 			}
-			
+
 			if (ups.getBoolean(PreferenceInitializer.LABEL_WITNESS_DELETE_GRAPHML)) {
 				for (final String fi : filenamesToDelete) {
 					deleteFile(fi);
@@ -132,7 +132,7 @@ public class WitnessManager {
 			suffix = String.valueOf(cexNo);
 		}
 	}
-	
+
 	private void deleteFile(final String filename) {
 		if (filename == null) {
 			return;
@@ -142,24 +142,24 @@ public class WitnessManager {
 			mLogger.warn("File " + filename + " could not be deleted");
 		}
 	}
-	
+
 	private String writeWitness(final String svcompWitness, final String origInputFile, final String additionalSuffix) {
 		final String suffix = "witness";
 		final String fileending = ".graphml";
 		final String separator = "-";
-		
+
 		final StringBuilder filename = new StringBuilder();
 		if (origInputFile != null) {
 			filename.append(origInputFile).append(separator).append(suffix);
 		} else {
 			filename.append(suffix);
 		}
-		
+
 		if (additionalSuffix != null) {
 			filename.append(separator).append(additionalSuffix);
 		}
 		filename.append(fileending);
-		
+
 		try {
 			final File file = CoreUtil.writeFile(filename.toString(), svcompWitness);
 			mLogger.info("Wrote witness to " + file.getAbsolutePath());
@@ -169,13 +169,13 @@ public class WitnessManager {
 		}
 		return filename.toString();
 	}
-	
+
 	private void reportWitnessResult(final String svcompWitness, final IResult cex,
 			final WitnessVerificationStatus verificationStatus, final WitnessVerificationStatus expectedStatus) {
 		mServices.getResultService().reportResult(cex.getPlugin(),
 				new WitnessResult(Activator.PLUGIN_ID, cex, svcompWitness, verificationStatus, expectedStatus));
 	}
-	
+
 	private boolean checkWitness(final String svcompWitnessFile, final IResult cex, final String originalFile,
 			final String svcompWitness) throws IOException, InterruptedException {
 		mLogger.info("Verifying witness for CEX: " + cex.getShortDescription());
@@ -183,7 +183,7 @@ public class WitnessManager {
 		final PreferenceInitializer.WitnessVerifierType type = ups.getEnum(PreferenceInitializer.LABEL_WITNESS_VERIFIER,
 				PreferenceInitializer.WitnessVerifierType.class);
 		final String command = ups.getString(PreferenceInitializer.LABEL_WITNESS_VERIFIER_COMMAND);
-		
+
 		switch (type) {
 		case CPACHECKER:
 			return checkWitnessWithCPAChecker(svcompWitnessFile, cex, originalFile, command, svcompWitness);
@@ -191,7 +191,7 @@ public class WitnessManager {
 			throw new UnsupportedOperationException("Witness verifier " + type + " unknown");
 		}
 	}
-	
+
 	private boolean checkWitnessWithCPAChecker(final String svcompWitnessFile, final IResult cex,
 			final String originalFile, final String command, final String svcompWitness)
 			throws IOException, InterruptedException {
@@ -204,7 +204,7 @@ public class WitnessManager {
 		}
 		final IPreferenceProvider ups = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		int timeoutInS = ups.getInt(PreferenceInitializer.LABEL_WITNESS_VERIFIER_TIMEOUT);
-		
+
 		final String[] cmdArray = makeCPACheckerCommand(command, svcompWitnessFile,
 				ups.getString(PreferenceInitializer.LABEL_WITNESS_CPACHECKER_PROPERTY), originalFile, cpaCheckerHome,
 				timeoutInS);
@@ -214,40 +214,37 @@ public class WitnessManager {
 				MonitoredProcess.exec(cmdArray, cpaCheckerHome, null, mServices, mStorage, mLogger);
 		final BufferedInputStream errorStream = new BufferedInputStream(cpaCheckerProcess.getErrorStream());
 		final BufferedInputStream outputStream = new BufferedInputStream(cpaCheckerProcess.getInputStream());
-		
 		final String error = convertStreamToString(errorStream);
 		final String output = convertStreamToString(outputStream);
-		
+
 		// wait for timeoutInS seconds for the witness checker, then kill it
 		// forcefully
 		mLogger.info("Waiting for " + timeoutInS + "s for CPA Checker...");
 		final MonitoredProcessState cpaCheckerState = cpaCheckerProcess.impatientWaitUntilTime(timeoutInS * 1000L);
 		mLogger.info("Return code was " + cpaCheckerState.getReturnCode());
-		
+
 		// TODO: interpret error and output
-		
+
 		if (checkOutputForSuccess(output)) {
 			mLogger.info("Witness for CEX was verified successfully");
 			reportWitnessResult(svcompWitness, cex, WitnessVerificationStatus.VERIFIED,
 					WitnessVerificationStatus.VERIFIED);
 			return true;
-		} else {
-			final StringBuilder logMessage = new StringBuilder().append("Witness for CEX did not verify");
-			if (cpaCheckerState.isKilled()) {
-				logMessage.append(" due to timeout of ").append(timeoutInS).append("s");
-			}
-			logMessage.append("! CPAChecker said:").append(CoreUtil.getPlatformLineSeparator()).append("STDERR:")
-					.append(CoreUtil.getPlatformLineSeparator()).append(error)
-					.append(CoreUtil.getPlatformLineSeparator()).append("STDOUT:")
-					.append(CoreUtil.getPlatformLineSeparator()).append(output);
-			mLogger.error(logMessage.toString());
-			reportWitnessResult(svcompWitness, cex, WitnessVerificationStatus.VERIFICATION_FAILED,
-					WitnessVerificationStatus.VERIFIED);
-			return false;
 		}
+		final StringBuilder logMessage = new StringBuilder().append("Witness for CEX did not verify");
+		if (cpaCheckerState.isKilled()) {
+			logMessage.append(" due to timeout of ").append(timeoutInS).append("s");
+		}
+		logMessage.append("! CPAChecker said:").append(CoreUtil.getPlatformLineSeparator()).append("STDERR:")
+				.append(CoreUtil.getPlatformLineSeparator()).append(error).append(CoreUtil.getPlatformLineSeparator())
+				.append("STDOUT:").append(CoreUtil.getPlatformLineSeparator()).append(output);
+		mLogger.error(logMessage.toString());
+		reportWitnessResult(svcompWitness, cex, WitnessVerificationStatus.VERIFICATION_FAILED,
+				WitnessVerificationStatus.VERIFIED);
+		return false;
 	}
-	
-	private boolean checkOutputForSuccess(final String output) {
+
+	private static boolean checkOutputForSuccess(final String output) {
 		for (final String line : output.split(CoreUtil.getPlatformLineSeparator())) {
 			if (line.startsWith("Verification result: FALSE.")) {
 				return true;
@@ -255,7 +252,7 @@ public class WitnessManager {
 		}
 		return false;
 	}
-	
+
 	private String[] makeCPACheckerCommand(final String command, final String svcompWitnessFile,
 			final String cpaCheckerProp, final String originalFile, final String workingDir, final int timeoutInS) {
 		final List<String> cmdArgs = new ArrayList<>();
@@ -274,11 +271,11 @@ public class WitnessManager {
 		cmdArgs.add(escape(originalFile));
 		return cmdArgs.toArray(new String[cmdArgs.size()]);
 	}
-	
-	private String escape(final String str) {
+
+	private static String escape(final String str) {
 		return str;
 	}
-	
+
 	private static String convertStreamToString(final InputStream input) {
 		final BufferedReader reader = new BufferedReader(new InputStreamReader(input));
 		final StringBuilder out = new StringBuilder();

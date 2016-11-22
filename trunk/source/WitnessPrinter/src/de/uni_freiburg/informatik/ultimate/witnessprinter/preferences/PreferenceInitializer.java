@@ -56,7 +56,7 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	private static final boolean VALUE_WITNESS_LOG = false;
 
 	public static final String LABEL_WITNESS_WRITE = "Write witness besides input file";
-	private static final boolean VALUE_WITNESS_WRITE = false;
+	private static final boolean VALUE_WITNESS_WRITE = true;
 	private static final String DESC_WITNESS_WRITE =
 			"Write witness as \"<inputfilename>-witness.graphml\" " + "in the same directory as the input file.";
 
@@ -113,7 +113,8 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<>(LABEL_WITNESS_VERIFIER_COMMAND, VALUE_WITNESS_VERIFIER_COMMAND,
 						DESC_WITNESS_VERIFIER_COMMAND, PreferenceType.String),
 				new UltimatePreferenceItem<>(LABEL_WITNESS_VERIFIER_TIMEOUT, VALUE_WITNESS_VERIFIER_TIMEOUT,
-						PreferenceType.Integer, new IUltimatePreferenceItemValidator.IntegerValidator(1, 1000000)),
+						PreferenceType.Integer,
+						new IUltimatePreferenceItemValidator.IntegerValidator(1, Integer.MAX_VALUE)),
 				new UltimatePreferenceItem<>(LABEL_WITNESS_CPACHECKER_PROPERTY, VALUE_WITNESS_CPACHECKER_PROPERTY,
 						DESC_WITNESS_CPACHECKER_PROPERTY, PreferenceType.String),
 				new UltimatePreferenceItem<>(LABEL_WITNESS_DELETE_GRAPHML, VALUE_WITNESS_DELETE_GRAPHML,
@@ -128,7 +129,7 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 		return services.getPreferenceProvider(Activator.PLUGIN_ID);
 	}
 
-	private class WitnessVerifierValidator implements IUltimatePreferenceItemValidator<Boolean> {
+	private static final class WitnessVerifierValidator implements IUltimatePreferenceItemValidator<Boolean> {
 
 		@Override
 		public boolean isValid(final Boolean value) {
