@@ -9,6 +9,7 @@ import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTConditionalExpression;
 import org.eclipse.cdt.core.dom.ast.IASTForStatement;
 import org.eclipse.cdt.core.dom.ast.IASTIfStatement;
+import org.eclipse.cdt.core.dom.ast.IASTStandardFunctionDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTWhileStatement;
 import org.eclipse.cdt.core.parser.IToken;
 
@@ -61,7 +62,7 @@ public class ChangeCollector {
 	 * @return {@code true}
 	 */
 	public boolean addChange(final Change newChange) {
-		newChange.setIndex(mChanges.size());
+		newChange.setSequenceIndex(mChanges.size());
 		mChanges.add(newChange);
 		return true;
 	}
@@ -95,20 +96,19 @@ public class ChangeCollector {
 	 *
 	 * @param operandNode
 	 *            operand PST node
-	 * @param fullReplacement
-	 *            replacement to use in case changes that delete both operands are applied
+	 * @param altOperandReplacements
+	 *            alternative replacements if the operand could not be deleted
 	 * @return {@code true} iff a change has been added
 	 */
-	@SuppressWarnings("squid:S1698")
 	public boolean addDeleteBinaryExpressionOperandChange(final IPSTRegularNode operandNode,
-			final String fullReplacement) {
+			final List<String> altOperandReplacements) {
 		final ASTNodeProperty property = operandNode.getASTNode().getPropertyInParent();
 		if (property != IASTBinaryExpression.OPERAND_ONE && property != IASTBinaryExpression.OPERAND_TWO) {
 			mLogger.warn("DeleteBinaryExpressionOperand not supported for operand node " + operandNode
 					+ " with property " + property);
 			return false;
 		}
-		
+
 		// Get the tokens between child nodes and just assume that if there is
 		// exactly one token it is the operator.
 		final IPSTRegularNode binaryExpressionNode = operandNode.getRegularParent();
@@ -116,11 +116,11 @@ public class ChangeCollector {
 		if (tokens.size() != 1) {
 			mLogger.debug(
 					"DeleteBinaryExpressionOperand not supported because of missing operator token: " + operandNode);
-			return false;
+			return addMultiReplaceChange(operandNode, altOperandReplacements);
 		}
-		
+
 		return addChange(new DeleteBinaryExpressionOperandChange(operandNode, binaryExpressionNode, tokens.get(0),
-				fullReplacement));
+				RewriteUtils.removeEquivalentReplacements(operandNode, altOperandReplacements)));
 	}
 	
 	/**
@@ -455,6 +455,46 @@ public class ChangeCollector {
 		return addChange(new DeleteWithCommaChange(node, parent, commaPositions, keepOne));
 	}
 	
+	
+
+	/**
+	 * The varargs token "..." is not a node in the PST and so it cannot be deleted with the existing
+	 * {@code CommaDeleter} implementation to delete it like the other comma separated nodes. A better solution would be
+	 * to change the CommaDeleter to not require a valid node and/or add a special node for this token to the PST. This
+	 * workaround just deletes the "..."-token independently from the other parameters. To prevent syntax errors because
+	 * of trailing comma, it should only be used if there are not other parameters. 
+	 * 
+	 * @param node
+	 *            PST node
+	 * @param astNode
+	 *            standard function declarator
+	 */
+	public boolean addDeleteVarArgsChange(IPSTRegularNode node, IASTStandardFunctionDeclarator astNode) {
+		if (!astNode.takesVarArgs()) {
+			mLogger.warn("DeleteVarArgsChange not supported for node " + node + " because it does not take varargs");
+			return false;
+		}
+		final List<Token> tokens = TokenCollector.collect(node);
+		final Token token = tokens.stream().filter(t -> t.getType() == IToken.tELLIPSIS).findAny().orElse(null);
+		if (token == null) {
+			mLogger.debug("DeleteVarArgsChange not supported because of missing ellipsis: " + node);
+			return false;
+		}
+		
+		return addChange(new Change(node) {
+			@Override
+			public void apply(final SourceRewriter rewriter) {
+				replaceByWhitespace(rewriter, token);
+			}
+			
+			@Override
+			public String toString() {
+				return "Delete varargs from function declarator " + getNode();
+			}
+		});
+	}
+	
+	
 	/**
 	 * @param node
 	 *            PST node.
@@ -466,8 +506,23 @@ public class ChangeCollector {
 			addChange(new ReplaceChange(node, replacementString));
 		}
 	}
-	
+
+	/**
+	 * @param node
+	 *            PST node to be replacement
+	 * @param replacementStrings
+	 *            list of replacements to be tested in the given order
+	 */
+	public boolean addMultiReplaceChange(final IPSTNode node, final List<String> replacementStrings) {
+		final List<String> validReplacements = RewriteUtils.removeEquivalentReplacements(node, replacementStrings);
+		if (!validReplacements.isEmpty()) {
+			return addChange(new MultiReplaceChange(node, validReplacements));
+		}
+		return false;
+	}
+
 	public List<Change> getChanges() {
 		return mChanges;
 	}
+
 }

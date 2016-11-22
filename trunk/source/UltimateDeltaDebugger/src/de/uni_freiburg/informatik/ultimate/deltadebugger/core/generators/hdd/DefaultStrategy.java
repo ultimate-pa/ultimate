@@ -1,5 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.deltadebugger.core.generators.hdd;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
 import org.eclipse.cdt.core.dom.ast.ASTNodeProperty;
 import org.eclipse.cdt.core.dom.ast.IASTArrayModifier;
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
@@ -17,6 +21,7 @@ import org.eclipse.cdt.core.dom.ast.IASTExpression;
 import org.eclipse.cdt.core.dom.ast.IASTExpressionList;
 import org.eclipse.cdt.core.dom.ast.IASTForStatement;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
+import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTIfStatement;
 import org.eclipse.cdt.core.dom.ast.IASTInitializerList;
 import org.eclipse.cdt.core.dom.ast.IASTLabelStatement;
@@ -29,6 +34,9 @@ import org.eclipse.cdt.core.dom.ast.IASTStatement;
 import org.eclipse.cdt.core.dom.ast.IASTTypeId;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTWhileStatement;
+import org.eclipse.cdt.core.dom.ast.IBasicType;
+import org.eclipse.cdt.core.dom.ast.IPointerType;
+import org.eclipse.cdt.core.dom.ast.IType;
 import org.eclipse.cdt.core.dom.ast.c.ICASTDesignatedInitializer;
 
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.generators.hdd.changes.ChangeCollector;
@@ -77,6 +85,10 @@ public class DefaultStrategy implements IHddStrategy {
 		if (node.getASTNode() instanceof IASTCompoundStatement
 				&& node.getASTNode().getPropertyInParent() == IASTCompoundStatement.NESTED_STATEMENT) {
 			collector.addDeleteAllTokensChange(node);
+		}
+		
+		if (node.getASTNode() instanceof IASTStandardFunctionDeclarator) {
+			collector.addDeleteVarArgsChange((IPSTRegularNode) node, (IASTStandardFunctionDeclarator) node.getASTNode());
 		}
 	}
 	
@@ -211,7 +223,12 @@ public class DefaultStrategy implements IHddStrategy {
 			// Of course, it should be possible to simplify it, replace macros and
 			// type qualifiers
 			
-			// collector.addReplaceChange(currentNode, "int");
+			// Temp change for testing: just try to delete it anyways... 
+			if (mCurrentNode.getRegularParent().getASTNode() instanceof IASTFunctionDefinition) {
+				mCollector.addMultiReplaceChange(mCurrentNode, Arrays.asList("void", "int"));
+			} else {
+				mCollector.addReplaceChange(mCurrentNode, "int");
+			}
 		}
 		
 		@Override
@@ -223,6 +240,9 @@ public class DefaultStrategy implements IHddStrategy {
 			// In such a case the initializer could be deleted.
 			// TODO: actually implement the idea above: need to get the corresponding IASTDeclaration and then check the
 			// storage class.
+			
+			// Temp change for testing: just try to delete it anyways... 
+			mCollector.addDeleteChange(mCurrentNode);
 		}
 		
 		@SuppressWarnings("squid:S1698")
@@ -247,41 +267,54 @@ public class DefaultStrategy implements IHddStrategy {
 				mCollector.addDeleteChange(mCurrentNode);
 				return;
 			}
-			
-			// Binary expression operands
-			if (property == IASTBinaryExpression.OPERAND_ONE || property == IASTBinaryExpression.OPERAND_TWO) {
-				mCollector.addDeleteBinaryExpressionOperandChange(mCurrentNode, "0");
-				return;
-			}
-			
+						
 			if (property == IASTConditionalExpression.LOGICAL_CONDITION
 					|| property == IASTConditionalExpression.POSITIVE_RESULT
 					|| property == IASTConditionalExpression.NEGATIVE_RESULT) {
 				mCollector.addDeleteConditionalExpressionChange(mCurrentNode, "0");
 				return;
 			}
-			
-			// IASTCastExpression
-			// IASTConditionalExpression
-			//
+
+			final List<String> replacements = getMinimalExpressionReplacements(expression);
+
+			// Binary expression operands are deleted or replaced
+			if (property == IASTBinaryExpression.OPERAND_ONE || property == IASTBinaryExpression.OPERAND_TWO) {
+				mCollector.addDeleteBinaryExpressionOperandChange(mCurrentNode, replacements);
+				return;
+			}
 			
 			// All other expressions have to be replaced by a smaller alternatively,
 			// optimally of the same type. IASTExpression.getExpressionType()
 			// appears to be pretty useful for this.
 			
+			if (!replacements.isEmpty()) {
+				mCollector.addMultiReplaceChange(mCurrentNode, replacements);
+			}
+		}
+		
+		
+		private List<String> getMinimalExpressionReplacements(IASTExpression expression) {
 			if (expression instanceof IASTLiteralExpression) {
 				final IASTLiteralExpression literalExpression = (IASTLiteralExpression) expression;
 				if (literalExpression.getKind() == IASTLiteralExpression.lk_float_constant) {
-					mCollector.addReplaceChange(mCurrentNode, ".0f");
-					return;
+					return Arrays.asList(".0f");
 				} else if (literalExpression.getKind() == IASTLiteralExpression.lk_string_literal) {
-					mCollector.addReplaceChange(mCurrentNode, "\"\"");
-					return;
+					return Arrays.asList("\"\"");
 				}
 			}
 			
-			mCollector.addReplaceChange(mCurrentNode, "0");
+			final IType expressionType = expression.getExpressionType();
+			if (expressionType instanceof IBasicType) {
+				return Arrays.asList("0", "1");
+			} else if (expressionType instanceof IPointerType) {
+				return Arrays.asList("0");
+			}	
+			
+			return Collections.emptyList();
 		}
+		
+		
+		
 		
 		@Override
 		public void on(final IASTInitializerList initializerList) {

@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
@@ -23,6 +24,7 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfa
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceDocument;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.SourceRewriter;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.StringSourceDocument;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.util.ListUtils;
 
 /**
  * Generator for hierarchical delta debugging.
@@ -69,6 +71,25 @@ class HddGenerator implements IVariantGenerator {
 		return Collections.unmodifiableList(mChangeGroups.get(0));
 	}
 	
+	private List<Change> createAlternativeChanges(final List<IChangeHandle> activeChanges, final List<Change> allChanges) {
+		final List<Change> alternativeChanges = ListUtils.complementOfSubsequence(activeChanges, allChanges).stream()
+				.map(c -> ((Change) c).createAlternativeChange()).filter(Optional::isPresent).map(Optional::get)
+				.collect(Collectors.toList());
+		IntStream.range(0, alternativeChanges.size()).forEach(i -> alternativeChanges.get(i).setSequenceIndex(i));
+		return Collections.unmodifiableList(alternativeChanges);
+	}
+	
+	private List<List<Change>> getNextChangeGroups(final List<IChangeHandle> activeChanges) {
+		// Check for alternative changes for the inactive changes of the current group
+		final List<Change> alternativeChanges = createAlternativeChanges(activeChanges, mChangeGroups.get(0));
+		if (!alternativeChanges.isEmpty()) {
+			final List<List<Change>> nextChangeGroups = new ArrayList<>(mChangeGroups);
+			nextChangeGroups.set(0, alternativeChanges);
+			return Collections.unmodifiableList(nextChangeGroups);
+		}
+		return mChangeGroups.subList(1, mChangeGroups.size());
+	}
+	
 	private List<Change> getMergedPersistentChanges(final List<IChangeHandle> activeChanges) {
 		if (activeChanges.isEmpty()) {
 			return mPersistentChanges;
@@ -97,11 +118,12 @@ class HddGenerator implements IVariantGenerator {
 	@Override
 	public Optional<IVariantGenerator> next(final List<IChangeHandle> activeChanges) {
 		// Advance to the next group of changes on this level
-		if (mChangeGroups.size() > 1) {
+		final List<List<Change>> nextChangeGroups = getNextChangeGroups(activeChanges);
+		if (!nextChangeGroups.isEmpty()) {
 			return Optional.of(new HddGenerator(mFactory, mContext, mLevel, mSource, getRemainingNodes(activeChanges),
-					mChangeGroups.subList(1, mChangeGroups.size()), getMergedPersistentChanges(activeChanges)));
+					nextChangeGroups, getMergedPersistentChanges(activeChanges)));
 		}
-		
+
 		// Continue with the remaining nodes without reparsing
 		if (!mFactory.isReparseBetweenLevelsEnabled()) {
 			return mFactory.createGeneratorForNextLevel(mContext, mLevel, mSource, getRemainingNodes(activeChanges),

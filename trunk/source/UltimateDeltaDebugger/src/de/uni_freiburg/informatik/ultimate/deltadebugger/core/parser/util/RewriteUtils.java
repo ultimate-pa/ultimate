@@ -1,5 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.util;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import org.eclipse.cdt.core.ToolFactory;
@@ -92,6 +94,28 @@ public final class RewriteUtils {
 		final String lhs = node.getSourceText().replaceAll("\\s+", " ");
 		final String rhs = replacementString.replaceAll("\\s+", " ");
 		return lhs.equals(rhs);
+	}
+
+	/**
+	 * If any replacement already matches the current source text, skip ALL the other alternatives, not just the one
+	 * that matches. This is important to not endlessly switch between two alternatives that are both possible in
+	 * repeated HDD aplications.
+	 * 
+	 * @param node
+	 *            PST node to be replacement
+	 * @param replacementStrings
+	 *            list of replacements to be tested in the given order
+	 * @return list of valid replacement strings
+	 */
+	public static List<String> removeEquivalentReplacements(final IPSTNode node, final List<String> replacementStrings) {
+		final List<String> validReplacements = new ArrayList<>();
+		for (String replacement : replacementStrings) {
+			if (RewriteUtils.skipEquivalentReplacement(node, replacement)) {
+				break;
+			}
+			validReplacements.add(replacement);
+		}
+		return validReplacements;
 	}
 
 }

@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.deltadebugger.core.generators.hdd.changes;
 
 import java.util.Map;
+import java.util.Optional;
 
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.IChangeHandle;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTNode;
@@ -56,7 +57,7 @@ public abstract class Change implements IChangeHandle {
 		return false;
 	}
 	
-	void setIndex(final int index) {
+	public void setSequenceIndex(final int index) {
 		mIndex = index;
 	}
 	
@@ -68,5 +69,15 @@ public abstract class Change implements IChangeHandle {
 	 */
 	public void updateDeferredChange(final Map<IPSTNode, Change> deferredChangeMap) {
 		throw new UnsupportedOperationException();
+	}
+	
+	/**
+	 * Creates an alternative change instance. Note that a new instance is required because the sequence index depends
+	 * on the containing list.
+	 * 
+	 * @return an optional alternative to this change
+	 */
+	public Optional<Change> createAlternativeChange() {
+		return Optional.empty();
 	}
 }
