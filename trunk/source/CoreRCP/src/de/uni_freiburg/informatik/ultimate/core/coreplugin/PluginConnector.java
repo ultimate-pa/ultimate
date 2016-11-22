@@ -201,16 +201,19 @@ public class PluginConnector {
 		final IElement element = tool.getModel();
 		final ModelType type = tool.getOutputDefinition();
 		if (element != null && type != null) {
+			mLogger.info("Adding new model " + type + " " + element.getClass().getSimpleName());
 			mModelManager.addItem(element, type);
 		} else {
-			mLogger.debug(
-					String.format("%s did return invalid model for observer %s, skipping insertion in model container",
-							tool.getPluginName(), observer));
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug(String.format(
+						"%s did return invalid model for observer %s, skipping insertion in model container",
+						tool.getPluginName(), observer));
+			}
 		}
 	}
 
 	private List<ModelType> selectModels() {
-		final List<ModelType> models = new ArrayList<ModelType>();
+		final List<ModelType> models = new ArrayList<>();
 
 		switch (mTool.getModelQuery()) {
 		case ALL:
@@ -243,17 +246,16 @@ public class PluginConnector {
 			final List<String> desiredToolIDs = mTool.getDesiredToolID();
 			if (desiredToolIDs == null || desiredToolIDs.isEmpty()) {
 				break;
-			} else {
-				models.addAll(mModelManager.getItemKeys());
-				final List<ModelType> removeModels = new ArrayList<ModelType>();
-				for (final ModelType t : models) {
-					if (!desiredToolIDs.contains(t.getCreator())) {
-						removeModels.add(t);
-					}
-				}
-				models.removeAll(removeModels);
-				break;
 			}
+			models.addAll(mModelManager.getItemKeys());
+			final List<ModelType> removeModels = new ArrayList<>();
+			for (final ModelType t : models) {
+				if (!desiredToolIDs.contains(t.getCreator())) {
+					removeModels.add(t);
+				}
+			}
+			models.removeAll(removeModels);
+			break;
 		default:
 			final IllegalStateException ex = new IllegalStateException("Unknown Query type");
 			mLogger.fatal("Unknown Query type", ex);
@@ -266,7 +268,7 @@ public class PluginConnector {
 	}
 
 	private IWalker selectWalker(final ModelType currentModel) {
-		if (currentModel.getType().name().equals("CFG")) {
+		if ("CFG".equals(currentModel.getType().name())) {
 			return new CFGWalker(mLogger);
 		}
 		return new DFSTreeWalker(mLogger);

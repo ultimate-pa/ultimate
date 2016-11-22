@@ -2,31 +2,31 @@
  * Copyright (C) 2008-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2010-2015 Jürgen Christ (christj@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Core.
- * 
+ *
  * The ULTIMATE Core is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Core is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Core. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Core, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Core grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Core grant you additional permission
  * to convey the resulting work.
  */
 /**
- * 
+ *
  */
 package de.uni_freiburg.informatik.ultimate.core.model.models;
 
@@ -42,16 +42,16 @@ import java.util.List;
 /**
  * Intended for separating different types of graphs and trees like Call Graphs, Data Flow Graphs, AST Should also
  * specify their special attributes
- * 
+ *
  * Change in Ultimate 2.0:
- * 
+ *
  * A GraphType should be identified by its String representation. Unlike object identity this should be preserved during
  * serialization. Therefore the equals method now checks for equal String representation instead of object identity. In
  * order to be consistent this change is carried to hashCode.
- * 
+ *
  * The changes will allow the GraphType to remain a suitable key in the model managers in-memory map and its string
  * representation to be the key in the repository.
- * 
+ *
  * @author dietsch
  */
 public class ModelType implements Serializable {
@@ -87,7 +87,7 @@ public class ModelType implements Serializable {
 		AST, CG, CFG, DFG, CST, TS, PG, OTHER, CORRECTNESS_WITNESS, VIOLATION_WITNESS
 	}
 
-	public ModelType(String creatorPluginID, Type type, Collection<String> fileNames) {
+	public ModelType(final String creatorPluginID, final Type type, final Collection<String> fileNames) {
 		if (fileNames == null) {
 			throw new IllegalArgumentException("A graphtype has to have at least one filename");
 		}
@@ -96,18 +96,18 @@ public class ModelType implements Serializable {
 		}
 		mCreator = creatorPluginID;
 		mType = type;
-		mFileNames = new ArrayList<String>(fileNames);
+		mFileNames = new ArrayList<>(fileNames);
 
 		init();
 	}
 
 	/**
 	 * Should be set AFTER a write operation was performed on this data structure was completed
-	 * 
+	 *
 	 * @param modifierPluginID
 	 *            The ID of the plugin which performed the write operation
 	 */
-	public void modified(String modifierPluginID) {
+	public void modified(final String modifierPluginID) {
 		setDirty(true);
 		mLastModifier = modifierPluginID;
 		mLastModified = System.currentTimeMillis();
@@ -116,11 +116,11 @@ public class ModelType implements Serializable {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (obj instanceof ModelType) {
 			final ModelType t = (ModelType) obj;
 			return t.mLastModified == mLastModified && t.mCreator.equals(mCreator);
@@ -130,7 +130,7 @@ public class ModelType implements Serializable {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.lang.Object#hashCode()
 	 */
 	@Override
@@ -140,7 +140,7 @@ public class ModelType implements Serializable {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see java.lang.Object#toString()
 	 */
 	@Override
@@ -162,7 +162,7 @@ public class ModelType implements Serializable {
 		return mTouched;
 	}
 
-	public void setDirty(boolean flag) {
+	public void setDirty(final boolean flag) {
 		mTouched = flag;
 	}
 
@@ -214,11 +214,11 @@ public class ModelType implements Serializable {
 		return mIsMultiGraph;
 	}
 
-	public String getAbsolutePath(int i) {
+	public String getAbsolutePath(final int i) {
 		return mFileNames.get(i);
 	}
 
-	public String getFileName(int i) {
+	public String getFileName(final int i) {
 		String s = mFileNames.get(i);
 		if (s.contains(", ")) {
 			final String fileSep = ", ";
@@ -293,7 +293,7 @@ public class ModelType implements Serializable {
 			mIsFinite = false;
 			break;
 		default:
-			//do nothing
+			// do nothing
 			break;
 		}
 	}
@@ -302,7 +302,7 @@ public class ModelType implements Serializable {
 		return mSize;
 	}
 
-	public void setSize(int size) {
+	public void setSize(final int size) {
 		mSize = size;
 	}
 
