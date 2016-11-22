@@ -64,7 +64,6 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 
 	@Override
 	public boolean process(final IElement root) {
-		mLogger.info("Processing " + root.getClass().getSimpleName());
 		if (root instanceof BoogieIcfgContainer) {
 			if (isOriginalRcfg(mCurrentGraphType)) {
 				if (mRcfgRootNode == null) {
@@ -137,7 +136,6 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 
 	@Override
 	public void init(final ModelType modelType, final int currentModelIndex, final int numberOfModels) {
-		mLogger.info("Model type is " + modelType);
 		mCurrentGraphType = modelType;
 		if (currentModelIndex == numberOfModels - 1) {
 			mLastModel = true;
