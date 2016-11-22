@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.TreeMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
@@ -62,19 +63,18 @@ public class FixedTraceAbstractionRefinementStrategy implements IRefinementStrat
 	private final IRun<CodeBlock, IPredicate, ?> mCounterexample;
 	private final IAutomaton<CodeBlock, IPredicate> mAbstraction;
 	private final PredicateUnifier mPredicateUnifier;
-	
+
 	// TODO Christian 2016-11-11: Matthias wants to get rid of this
 	private final TAPreferences mTaPrefsForInterpolantConsolidation;
-	
+
 	private final TraceCheckerConstructor mFunConstructFromPrefs;
 	private TraceChecker mTraceChecker;
 	private IInterpolantGenerator mInterpolantGenerator;
 	private IInterpolantAutomatonBuilder<CodeBlock, IPredicate> mInterpolantAutomatonBuilder;
-	
+
 	/**
 	 * @param prefs
-	 *            Preferences.
-	 *            pending contexts
+	 *            Preferences. pending contexts
 	 * @param managedScript
 	 *            managed script
 	 * @param services
@@ -105,75 +105,75 @@ public class FixedTraceAbstractionRefinementStrategy implements IRefinementStrat
 		mFunConstructFromPrefs = new TraceCheckerConstructor(prefs, managedScript, services, predicateUnifier,
 				counterexample, mPrefs.getInterpolationTechnique());
 	}
-	
+
 	@Override
 	public boolean hasNext() {
 		return false;
 	}
-	
+
 	@Override
 	public void next() {
 		throw new NoSuchElementException("This strategy has only one element.");
 	}
-	
+
 	@Override
 	public TraceChecker getTraceChecker() {
 		if (mTraceChecker == null) {
-			computeAll();
+			mTraceChecker = mFunConstructFromPrefs.get();
 		}
 		return mTraceChecker;
 	}
-	
+
 	@Override
 	public IInterpolantGenerator getInterpolantGenerator() {
 		if (mInterpolantGenerator == null) {
-			throw new UnsupportedOperationException("There is no infeasibility proof available.");
+			mInterpolantGenerator = constructInterpolantGenerator(getTraceChecker());
 		}
 		return mInterpolantGenerator;
 	}
-	
+
 	@Override
 	public IInterpolantAutomatonBuilder<CodeBlock, IPredicate> getInterpolantAutomatonBuilder() {
+		if (mInterpolantAutomatonBuilder == null) {
+			mInterpolantAutomatonBuilder = constructInterpolantAutomatonBuilder(getInterpolantGenerator());
+		}
 		return mInterpolantAutomatonBuilder;
 	}
-	
-	private void computeAll() {
-		mTraceChecker = mFunConstructFromPrefs.get();
-		// mTraceCheckerBenchmark.aggregateBenchmarkData(interpolatingTraceChecker.getTraceCheckerBenchmark());
-		mInterpolantGenerator = constructInterpolantGenerator();
+
+	private IInterpolantGenerator constructInterpolantGenerator(final TraceChecker tracechecker) {
+		final TraceChecker localTraceChecker = Objects.requireNonNull(tracechecker,
+				"cannot construct interpolant generator if no trace checker is present");
+		if (localTraceChecker instanceof InterpolatingTraceChecker) {
+			final InterpolatingTraceChecker interpolatingTraceChecker = (InterpolatingTraceChecker) localTraceChecker;
+			if (mPrefs.getUseInterpolantConsolidation()) {
+				try {
+					return consolidateInterpolants(interpolatingTraceChecker);
+				} catch (final AutomataOperationCanceledException e1) {
+					// Timeout
+					throw new AssertionError("react on timeout, not yet implemented");
+				}
+			}
+			return interpolatingTraceChecker;
+		}
+		// TODO insert code here to support generating interpolants from a different source
+		throw new AssertionError("Currently only interpolating trace checkers are supported.");
+	}
+
+	private IInterpolantAutomatonBuilder<CodeBlock, IPredicate>
+			constructInterpolantAutomatonBuilder(final IInterpolantGenerator interpolantGenerator) {
+		final IInterpolantGenerator localInterpolantGenerator = Objects.requireNonNull(interpolantGenerator,
+				"cannot construct interpolant automaton if no interpolant generator is present");
 		try {
-			mInterpolantAutomatonBuilder = mPrefs.getInterpolantAutomatonBuilderFactory().createBuilder(mAbstraction,
-					mInterpolantGenerator, mCounterexample);
+			return mPrefs.getInterpolantAutomatonBuilderFactory().createBuilder(mAbstraction, localInterpolantGenerator,
+					mCounterexample);
 		} catch (final AutomataOperationCanceledException e) {
 			throw new ToolchainCanceledException(e,
 					new RunningTaskInfo(this.getClass(), "creating interpolant automaton"));
 		}
 	}
-	
-	private IInterpolantGenerator constructInterpolantGenerator() throws AssertionError {
-		final IInterpolantGenerator interpolantGenerator;
-		if (getTraceChecker() instanceof InterpolatingTraceChecker) {
-			final InterpolatingTraceChecker interpolatingTraceChecker = (InterpolatingTraceChecker) getTraceChecker();
-			if (mPrefs.getUseInterpolantConsolidation()) {
-				try {
-					interpolantGenerator = consolidateInterpolants(interpolatingTraceChecker);
-				} catch (final AutomataOperationCanceledException e) {
-					// Timeout
-					throw new AssertionError("react on timeout, not yet implemented");
-				}
-			} else {
-				interpolantGenerator = interpolatingTraceChecker;
-			}
-		} else {
-			// TODO insert code here to support generating interpolants from a different source
-			throw new AssertionError("Currently only interpolating trace checkers are supported.");
-		}
-		return interpolantGenerator;
-	}
-	
+
 	private IInterpolantGenerator consolidateInterpolants(final InterpolatingTraceChecker interpolatingTraceChecker)
 			throws AutomataOperationCanceledException {
-		final IInterpolantGenerator interpolantGenerator;
 		final CfgSmtToolkit cfgSmtToolkit = mPrefs.getCfgSmtToolkit();
 		final InterpolantConsolidation interpConsoli = new InterpolantConsolidation(
 				mPredicateUnifier.getTruePredicate(), mPredicateUnifier.getFalsePredicate(),
@@ -183,7 +183,6 @@ public class FixedTraceAbstractionRefinementStrategy implements IRefinementStrat
 		// Add benchmark data of interpolant consolidation
 		mPrefs.getCegarLoopBenchmark()
 				.addInterpolationConsolidationData(interpConsoli.getInterpolantConsolidationBenchmarks());
-		interpolantGenerator = interpConsoli;
-		return interpolantGenerator;
+		return interpConsoli;
 	}
 }
