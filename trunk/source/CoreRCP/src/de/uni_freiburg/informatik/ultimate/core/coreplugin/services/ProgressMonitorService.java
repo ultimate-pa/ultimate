@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.core.coreplugin.services;
 
+import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchainProgressMonitor;
@@ -41,22 +42,22 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class ProgressMonitorService implements IStorable, IToolchainCancel, IProgressMonitorService, IDeadlineProvider {
+public class ProgressMonitorService implements IStorable, IProgressMonitorService, IDeadlineProvider {
 
 	private static final String STORAGE_KEY = "CancelNotificationService";
 
-	private IToolchainProgressMonitor mMonitor;
+	private final IToolchainProgressMonitor mMonitor;
+	private final ILogger mLogger;
+	private final IToolchainCancel mToolchainCancel;
+
 	private IDeadlineProvider mTimer;
-	private ILogger mLogger;
-	private IToolchainCancel mToolchainCancel;
 	private boolean mCancelRequest;
 
 	public ProgressMonitorService(final IToolchainProgressMonitor monitor, final ILogger logger,
 			final IToolchainCancel cancel) {
-		assert monitor != null;
-		mMonitor = monitor;
-		mLogger = logger;
-		mToolchainCancel = cancel;
+		mMonitor = Objects.requireNonNull(monitor, "monitor may not be null");
+		mLogger = Objects.requireNonNull(logger, "logger may not be null");
+		mToolchainCancel = Objects.requireNonNull(cancel, "cancel may not be null");
 		mCancelRequest = false;
 	}
 
@@ -64,7 +65,7 @@ public class ProgressMonitorService implements IStorable, IToolchainCancel, IPro
 	public boolean continueProcessing() {
 		final boolean cancel =
 				mMonitor.isCanceled() || mCancelRequest || (mTimer != null && !mTimer.continueProcessing());
-		if (cancel) {
+		if (cancel && mLogger.isDebugEnabled()) {
 			mLogger.debug("Do not continue processing!");
 		}
 		return !cancel;
@@ -101,9 +102,6 @@ public class ProgressMonitorService implements IStorable, IToolchainCancel, IPro
 	@Override
 	public void destroy() {
 		mMonitor.done();
-		mMonitor = null;
-		mToolchainCancel = null;
-		mLogger = null;
 	}
 
 	@Override
