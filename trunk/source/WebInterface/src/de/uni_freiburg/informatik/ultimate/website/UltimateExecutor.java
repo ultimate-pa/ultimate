@@ -16,25 +16,23 @@ import de.uni_freiburg.informatik.ultimate.website.Tasks.TaskNames;
 public class UltimateExecutor {
 
 	private final ServletLogger mLogger;
-	
-	/**
-	 * Upper bound for the all timeouts that are set by {@link WebToolchain}s.
-	 * While executing a toolchain Ultimate uses the minimum of this number and
-	 * the timeout of the {@link WebToolchain}.
-	 * Reducing this to a small number is helpful if the website is running on
-	 * a computer that is not able to handle many requests in parallel.
-	 */
-	private static final long sTimeoutUpperBound = 24 * 60 * 60 * 1000; 
 
-	public UltimateExecutor(ServletLogger logger) {
+	/**
+	 * Upper bound for the all timeouts that are set by {@link WebToolchain}s. While executing a toolchain Ultimate uses
+	 * the minimum of this number and the timeout of the {@link WebToolchain}. Reducing this to a small number is
+	 * helpful if the website is running on a computer that is not able to handle many requests in parallel.
+	 */
+	private static final long sTimeoutUpperBound = 24 * 60 * 60 * 1000;
+
+	public UltimateExecutor(final ServletLogger logger) {
 		mLogger = logger;
 	}
 
-	public JSONObject executeUltimate(Request internalRequest) throws JSONException {
+	public JSONObject executeUltimate(final Request internalRequest) throws JSONException {
 		return handleActionExecute(internalRequest);
 	}
 
-	private JSONObject handleActionExecute(Request internalRequest) throws JSONException {
+	private JSONObject handleActionExecute(final Request internalRequest) throws JSONException {
 		JSONObject json = new JSONObject();
 
 		File inputFile = null;
@@ -50,8 +48,8 @@ public class UltimateExecutor {
 
 			final WebToolchain tc = getToolchain(taskId, tcId);
 			if (tc == null) {
-				throw new IllegalArgumentException("Invalid task or toolchain ID. taskID=" + taskId + ", toolchainID="
-						+ tcId);
+				throw new IllegalArgumentException(
+						"Invalid task or toolchain ID. taskID=" + taskId + ", toolchainID=" + tcId);
 			}
 			// Apply the current user settings that are contained in the request
 			// to the settings instances defined by the toolchain
@@ -96,7 +94,7 @@ public class UltimateExecutor {
 		return json;
 	}
 
-	private String getCheckedArgument(Request internalRequest, String paramId) {
+	private static String getCheckedArgument(final Request internalRequest, final String paramId) {
 		final String[] rtr = internalRequest.get(paramId);
 
 		if (rtr == null) {
@@ -111,7 +109,7 @@ public class UltimateExecutor {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param json
 	 * @param toolchainFile
 	 * @param settingsFile
@@ -119,11 +117,12 @@ public class UltimateExecutor {
 	 * @return true iff ultimate terminated normally, false otherwise
 	 * @throws JSONException
 	 */
-	private boolean runUltimate(JSONObject json, File inputFile, File settingsFile, File toolchainFile, long timeout)
-			throws JSONException {
+	private boolean runUltimate(final JSONObject json, final File inputFile, final File settingsFile,
+			final File toolchainFile, final long timeout) throws JSONException {
 		try {
 			mLogger.logDebug("ULTIMATE Application started");
-			final UltimateWebController uwc = new UltimateWebController(settingsFile, inputFile, toolchainFile, timeout);
+			final UltimateWebController uwc =
+					new UltimateWebController(settingsFile, inputFile, toolchainFile, timeout);
 			uwc.runUltimate(json);
 		} catch (final Throwable t) {
 			t.printStackTrace();
@@ -136,7 +135,7 @@ public class UltimateExecutor {
 		return true;
 	}
 
-	private void postProcessTemporaryFiles(File settingsFile, File tcFile, File codeFile) {
+	private static void postProcessTemporaryFiles(final File settingsFile, final File tcFile, final File codeFile) {
 		// if (logRun) {
 		final File logDir = new File(System.getProperty("java.io.tmpdir") + File.separator + "log" + File.separator);
 		if (!logDir.exists()) {
@@ -149,21 +148,21 @@ public class UltimateExecutor {
 		if (settingsFile != null) {
 			settingsFile.renameTo(new File(logDir, settingsFile.getName()));
 		}
-		if (tcFile != null)
-		 {
+		if (tcFile != null) {
 			tcFile.renameTo(new File(logDir, tcFile.getName()));
-		// } else {
-		// if (codeFile != null)
-		// codeFile.delete();
-		// if (settingsFile != null)
-		// settingsFile.delete();
-		// if (tcFile != null)
-		// tcFile.delete();
-		// }
+			// } else {
+			// if (codeFile != null)
+			// codeFile.delete();
+			// if (settingsFile != null)
+			// settingsFile.delete();
+			// if (tcFile != null)
+			// tcFile.delete();
+			// }
 		}
 	}
 
-	private File writeTemporaryFile(String name, String content, String fileExtension) throws IOException {
+	private static File writeTemporaryFile(final String name, final String content, final String fileExtension)
+			throws IOException {
 		final File codeFile = File.createTempFile(name, fileExtension);
 		final BufferedWriter out = new BufferedWriter(new FileWriter(codeFile));
 		out.write(content);
@@ -171,7 +170,7 @@ public class UltimateExecutor {
 		return codeFile;
 	}
 
-	private String getFileExtension(String taskId) {
+	private static String getFileExtension(final String taskId) {
 		final TaskNames taskName = TaskNames.valueOf(taskId);
 		String fileExtension;
 
@@ -184,6 +183,7 @@ public class UltimateExecutor {
 		case RANK_SYNTHESIS_BOOGIE:
 		case TERMINATION_BOOGIE:
 		case KOJAK_BOOGIE:
+		case TAIPAN_BOOGIE:
 			fileExtension = ".bpl";
 			break;
 		case AUTOMIZER_C:
@@ -191,6 +191,7 @@ public class UltimateExecutor {
 		case RANK_SYNTHESIS_C:
 		case TERMINATION_C:
 		case KOJAK_C:
+		case TAIPAN_C:
 			fileExtension = ".c";
 			break;
 		default:
@@ -199,7 +200,8 @@ public class UltimateExecutor {
 		return fileExtension;
 	}
 
-	private void applyUserSettings(Request internalRequest, String toolchainId, WebToolchain toolchain) {
+	private static void applyUserSettings(final Request internalRequest, final String toolchainId,
+			final WebToolchain toolchain) {
 		for (final Setting setting : toolchain.getUserModifiableSettings()) {
 			final String sid = toolchainId + "_" + setting.getSettingIdentifier();
 			if (!internalRequest.containsKey(sid)) {
@@ -228,7 +230,7 @@ public class UltimateExecutor {
 		}
 	}
 
-	private WebToolchain getToolchain(String taskId, String tcId) {
+	private static WebToolchain getToolchain(final String taskId, final String tcId) {
 		// get user settings for this toolchain
 		final ArrayList<WebToolchain> tcs = Tasks.getActiveToolchains().get(taskId);
 		if (tcs == null) {

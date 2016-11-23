@@ -74,8 +74,8 @@ public final class Example {
 		final Tasks.TaskNames[] verifyC = { Tasks.TaskNames.AUTOMIZER_C, TaskNames.KOJAK_C, TaskNames.TAIPAN_C };
 		addAllFilesInExamplesSubfolder(list, "verifyC/", verifyC);
 
-		final Tasks.TaskNames[] verifyBoogie = { Tasks.TaskNames.AUTOMIZER_BOOGIE, Tasks.TaskNames.KOJAK_BOOGIE,
-		        TaskNames.TAIPAN_BOOGIE };
+		final Tasks.TaskNames[] verifyBoogie =
+				{ Tasks.TaskNames.AUTOMIZER_BOOGIE, Tasks.TaskNames.KOJAK_BOOGIE, TaskNames.TAIPAN_BOOGIE };
 		addAllFilesInExamplesSubfolder(list, "verifyBoogie/", verifyBoogie);
 
 		final Tasks.TaskNames[] rankBoogie = { Tasks.TaskNames.RANK_SYNTHESIS_BOOGIE };
@@ -277,7 +277,7 @@ public final class Example {
 	 * defined by hash codes.
 	 */
 	static private void addAllFilesInExamplesSubfolder(final List<Example> list, final String subfolder,
-	        final TaskNames[] taskNames) {
+			final TaskNames[] taskNames) {
 		final String[] filesInSubfolder = filenamesOfFilesInSubdirectory(subfolder);
 		for (final String filename : filesInSubfolder) {
 			final String exPath = subfolder + filename;

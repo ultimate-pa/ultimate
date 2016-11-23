@@ -15,11 +15,13 @@ import de.uni_freiburg.informatik.ultimate.website.toolchains.BoogieBuchiAutomiz
 import de.uni_freiburg.informatik.ultimate.website.toolchains.BoogieConcurrentTraceAbstractionTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.BoogieKojakTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.BoogieLassoRankerTC;
+import de.uni_freiburg.informatik.ultimate.website.toolchains.BoogieTaipanTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.CAutomizerTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.CBuchiAutomizerTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.CKojakTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.CLTLAutomizerTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.CLassoRankerTC;
+import de.uni_freiburg.informatik.ultimate.website.toolchains.CTaipanTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.NameStrings;
 
 /**
@@ -44,7 +46,9 @@ public class Tasks {
 			BoogieConcurrentTraceAbstractionTC.class,
 			CLTLAutomizerTC.class,
 			CKojakTC.class,
-			BoogieKojakTC.class
+			BoogieKojakTC.class,
+			CTaipanTC.class,
+			BoogieTaipanTC.class
 			//@formatter:on
 	};
 	/**
@@ -87,7 +91,11 @@ public class Tasks {
 
 		KOJAK_C,
 
-		KOJAK_BOOGIE
+		KOJAK_BOOGIE,
+
+		TAIPAN_C,
+
+		TAIPAN_BOOGIE
 
 		// If you add something here, add a String representation to
 		// initTaskNames()
@@ -140,12 +148,14 @@ public class Tasks {
 			case RANK_SYNTHESIS_BOOGIE:
 			case CONCURRENT_TRACE_ABSTRACTION_BOOGIE:
 			case KOJAK_BOOGIE:
+			case TAIPAN_BOOGIE:
 				return "boogie";
 			case AUTOMIZER_C:
 			case TERMINATION_C:
 			case RANK_SYNTHESIS_C:
 			case LTLAUTOMIZER_C:
 			case KOJAK_C:
+			case TAIPAN_C:
 				return "c_cpp";
 			default:
 				return "text";
