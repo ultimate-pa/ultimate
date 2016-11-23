@@ -33,6 +33,7 @@ import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
@@ -145,7 +146,12 @@ public class SyntaxChecker implements IAnalysis {
 		if (doSyntaxWarningCheck) {
 			final String toolCommandWarnings = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 					.getString(PreferenceInitializer.LABEL_SyntaxErrorCommand);
-			final String outputWarnings = callSytaxCheckerAndReturnStderrOutput(toolCommandWarnings, filename);
+			final String outputWarnings;
+			if (Objects.equals(toolCommandError, toolCommandWarnings)) {
+				outputWarnings = outputError;
+			} else {
+				outputWarnings = callSytaxCheckerAndReturnStderrOutput(toolCommandWarnings, filename);
+			}
 			if (outputWarnings == null) {
 				// everything fine, do nothing
 			} else {
