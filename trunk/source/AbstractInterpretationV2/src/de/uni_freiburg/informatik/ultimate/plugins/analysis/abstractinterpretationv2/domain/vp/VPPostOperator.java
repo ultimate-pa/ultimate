@@ -165,10 +165,10 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 							if (param1.getFunction().getName() == "store") {
 								MultiDimensionalStore mulStore = new MultiDimensionalStore(param1);
 								if (mulStore.getArray().equals(appTerm.getParameters()[0])) {
-									node1 = getNodeFromTerm(param1, resultState);
+									node1 = getNodeFromTerm(param1);
 									resultState.havoc(node1);
 									resultState.getEqNodeToEqGraphNodeMap().get(node1).setNodeToInitial();
-									node2 = getNodeFromTerm(param1.getParameters()[2], resultState);
+									node2 = getNodeFromTerm(param1.getParameters()[2]);
 								}
 							}
 						}
@@ -176,8 +176,8 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 				}
 				
 				if (node1 == null && node2 == null) {
-					node1 = getNodeFromTerm(appTerm.getParameters()[0], resultState);
-					node2 = getNodeFromTerm(appTerm.getParameters()[1], resultState);
+					node1 = getNodeFromTerm(appTerm.getParameters()[0]);
+					node2 = getNodeFromTerm(appTerm.getParameters()[1]);
 				}
 							
 				if (node1 == null || node2 == null) {
@@ -200,8 +200,8 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 					// TODO: check: is it correct here to return pre-state?
 					return resultState;
 				} else {
-					EqNode node1 = getNodeFromTerm(equalTerm.getParameters()[0], resultState);
-					EqNode node2 = getNodeFromTerm(equalTerm.getParameters()[1], resultState);
+					EqNode node1 = getNodeFromTerm(equalTerm.getParameters()[0]);
+					EqNode node2 = getNodeFromTerm(equalTerm.getParameters()[1]);
 					
 					if (node1 == null || node2 == null) {
 						// encounter node(s) that is not being traced, return pre-state.
@@ -219,8 +219,8 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 
 			} else if (applicationName == "distinct") {
 				
-				EqNode node1 = getNodeFromTerm(appTerm.getParameters()[0], resultState);
-				EqNode node2 = getNodeFromTerm(appTerm.getParameters()[1], resultState);
+				EqNode node1 = getNodeFromTerm(appTerm.getParameters()[0]);
+				EqNode node2 = getNodeFromTerm(appTerm.getParameters()[1]);
 				
 				if (node1 == null || node2 == null) {
 					// encounter node(s) that is not being traced, return pre-state.
@@ -246,30 +246,42 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 		return resultState;
 	}
 	
-	private EqNode getNodeFromTerm(final Term term, final VPState state) {
+	/**
+	 * 
+	 * 
+	 * 
+	 * @param term
+	 * @param state
+	 * @return
+	 */
+	private EqNode getNodeFromTerm(final Term term) {
+		EqNode result = mDomain.getEqNodeFromTerm(term);
+		assert result != null;
+		return result;
 		
-		final Map<Term, EqBaseNode> baseNodeMap = state.getTermToBaseNodeMap();
-		final Map<Term, Set<EqFunctionNode>> fnNodeMap = state.getTermToFnNodeMap();
 		
-		
-		if (term instanceof TermVariable || term instanceof ConstantTerm) {
-			if (baseNodeMap.containsKey(term)) {
-				return baseNodeMap.get(term);
-			}
-		} else {
-			final Term array = ((ApplicationTerm)term).getParameters()[0];
-			final Term index = ((ApplicationTerm)term).getParameters()[1];
-			final EqNode indexNode = getNodeFromTerm(index, state);
-			if (fnNodeMap.containsKey(array)) {
-				for (final EqFunctionNode fnNode : fnNodeMap.get(array)) {
-					// TODO (alex) : fix this
-//					if (fnNode.getArg().equals(indexNode)) {
-//						return fnNode;
-//					}
-				}
-			}
-		}
-		return null;
+//		final Map<Term, EqBaseNode> baseNodeMap = state.getTermToBaseNodeMap();
+//		final Map<Term, Set<EqFunctionNode>> fnNodeMap = state.getTermToFnNodeMap();
+//		
+//		
+//		if (term instanceof TermVariable || term instanceof ConstantTerm) {
+//			if (baseNodeMap.containsKey(term)) {
+//				return baseNodeMap.get(term);
+//			}
+//		} else {
+//			final Term array = ((ApplicationTerm)term).getParameters()[0];
+//			final Term index = ((ApplicationTerm)term).getParameters()[1];
+//			final EqNode indexNode = getNodeFromTerm(index, state);
+//			if (fnNodeMap.containsKey(array)) {
+//				for (final EqFunctionNode fnNode : fnNodeMap.get(array)) {
+//					// TODO (alex) : fix this
+////					if (fnNode.getArg().equals(indexNode)) {
+////						return fnNode;
+////					}
+//				}
+//			}
+//		}
+//		return null;
 	}
 
 	private boolean isArray(final Term term, final VPState state) {

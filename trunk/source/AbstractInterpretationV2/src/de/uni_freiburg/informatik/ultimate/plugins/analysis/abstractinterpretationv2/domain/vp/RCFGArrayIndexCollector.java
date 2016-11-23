@@ -141,19 +141,20 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 	}
 	
 	private EqNode getOrConstructEqNode(MultiDimensionalStore mds) {
+		// TODO
 		EqNode result = mTermToEqNode.get(mds.getStoreTerm());
 		if (result != null) {
 			return result;
 		}
 		
-		Term array = mds.getArray();
-		List<EqNode> indices = new ArrayList<>();
+		List<EqNode> arguments = new ArrayList<>();
 		for (Term ai : mds.getIndex()) {
-			indices.add(getOrConstructEqNode(ai));
+			arguments.add(getOrConstructEqNode(ai));
 		}
 		getOrConstructEqNode(mds.getValue());
 
-		result = getOrConstructEqFnNode(getOrConstructBoogieVarOrConst(array), indices);
+		Term array = mds.getArray();
+		result = getOrConstructEqFnNode(getOrConstructBoogieVarOrConst(array), arguments);
 		mTermToEqNode.put(mds.getStoreTerm(), result);
 		return result;
 	}
@@ -165,13 +166,13 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 		}
 		
 		Term array = mds.getArray();
-		List<EqNode> indices = new ArrayList<>();
+		List<EqNode> arguments = new ArrayList<>();
 		for (Term ai : mds.getIndex()) {
-			indices.add(getOrConstructEqNode(ai));
+			arguments.add(getOrConstructEqNode(ai));
 		}
 
 		result = getOrConstructEqFnNode(getOrConstructBoogieVarOrConst(array),
-				indices);
+				arguments);
 		mTermToEqNode.put(mds.getSelectTerm(), result);
 		return result;
 	}
@@ -299,6 +300,10 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 	@Override
 	public String toString() {
 		return "-RCFGArrayIndexCollector-";
+	}
+
+	public Map<Term, EqNode> getTermToEqNodeMap() {
+		return mTermToEqNode;
 	}
 
 

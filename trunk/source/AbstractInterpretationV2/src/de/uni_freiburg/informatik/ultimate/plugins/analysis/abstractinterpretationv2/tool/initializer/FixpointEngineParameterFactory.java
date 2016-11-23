@@ -194,7 +194,8 @@ public class FixpointEngineParameterFactory {
 				arrayIndexCollector.getEqGraphNodeSet(), 
 				arrayIndexCollector.getTermToBaseNodeMap(),
 				arrayIndexCollector.getTermToFnNodeMap(), 
-				arrayIndexCollector.getEqNodeToEqGraphNodeMap());
+				arrayIndexCollector.getEqNodeToEqGraphNodeMap(),
+				arrayIndexCollector.getTermToEqNodeMap());
 	}
 	
 	

@@ -67,6 +67,7 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 	private final VPStateBottom mBottomState;
 	private final ManagedScript mScript;
 	private final Boogie2SMT mBoogie2Smt;
+	private final Map<Term, EqNode> mTermToEqNode;
 	
 	public VPDomain(final ILogger logger, 
 			final ManagedScript script, 
@@ -75,7 +76,8 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 			final Set<EqGraphNode> eqGraphNodeSet, 
 			final Map<Term, EqBaseNode> termToBaseNodeMap,
 			final Map<Term, Set<EqFunctionNode>> termToFnNodeMap,
-			final Map<EqNode, EqGraphNode> eqNodeToEqGraphNodeMap) {
+			final Map<EqNode, EqGraphNode> eqNodeToEqGraphNodeMap,
+			final Map<Term, EqNode> termToEqNode) {
 		mLogger = logger;
 		mEqGraphNodeSet = eqGraphNodeSet;
 		mTermToBaseNodeMap = termToBaseNodeMap == null ? null : Collections.unmodifiableMap(termToBaseNodeMap);
@@ -88,6 +90,7 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 		mMerge = new VPMergeOperator();
 		mScript = script;
 		mBoogie2Smt = boogie2smt;
+		mTermToEqNode = termToEqNode;
 	}
 
 	@Override
@@ -162,5 +165,9 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 
 	public ILogger getLogger() {
 		return mLogger;
+	}
+
+	public EqNode getEqNodeFromTerm(Term term) {
+		return mTermToEqNode.get(term);
 	}
 }

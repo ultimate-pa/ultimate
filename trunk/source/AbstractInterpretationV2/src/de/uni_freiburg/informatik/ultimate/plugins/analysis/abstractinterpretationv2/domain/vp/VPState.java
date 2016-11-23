@@ -379,11 +379,21 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 		//TODO
 		assert false : "TODO: treat the case with several children";
 
-//			for (final EqNode child1 : ccchild1.) {
-//				for (final EqNode child2 : ccchild2) {
-//					addDisEquality(child1, child2);
-//				}
-//			}
+		for (final List<EqNode> child1 : ccchild1) {
+			if (child1.size() > 1) {
+				continue;
+			}
+			for (final List<EqNode> child2 : ccchild2) {
+				if (child2.size() != child1.size()) {
+					continue;
+				}
+				for (EqNode par : mEqNodeToEqGraphNodeMap.get(child1.get(0)).getInitCcpar()) {
+					if (mEqNodeToEqGraphNodeMap.get(child2.get(0)).getInitCcpar().contains(par)) {
+						addDisEquality(child1.get(0), child2.get(0));
+					}
+				}
+			}
+		}
 
 		return checkContradiction();
 	}
@@ -470,10 +480,19 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 		if (!(fnNode1.getFunction().equals(fnNode2.getFunction()))) {
 			return false;
 		}
+		return congruentIgnoreFunctionSymbol(fnNode1, fnNode2);
+	}
+
+	/**
+	 * Checks if the arguments of the given EqFunctionNodes are all congruent.
+	 * @param fnNode1
+	 * @param fnNode2
+	 * @return
+	 */
+	private boolean congruentIgnoreFunctionSymbol(final EqFunctionNode fnNode1, final EqFunctionNode fnNode2) {
 		assert fnNode1.getArgs() != null && fnNode2.getArgs() != null;
-//		if ((fnNode1.getArgs() == null) != (fnNode2.getArgs() == null)) {
-//			return false;
-//		}
+		assert fnNode1.getArgs().size() == fnNode2.getArgs().size();
+
 		for (int i = 0; i < fnNode1.getArgs().size(); i++) {
 			EqNode fnNode1Arg = fnNode1.getArgs().get(i);
 			EqNode fnNode2Arg = fnNode2.getArgs().get(i);
@@ -510,20 +529,23 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 		}
 	}
 
+	/**
+	 * Updates this state according to the added information that firstArray equals secondArray.
+	 * I.e., we ensure that they are equal on all points that we track.
+	 * 
+	 * @param firstArray
+	 * @param secondArray
+	 */
 	public void arrayAssignment(final Term firstArray, final Term secondArray) {
-
 		havocArray(firstArray);
-
-		// TODO (alex) : fix this
-//		for (final EqFunctionNode fnNode : mTermToFnNodeMap.get(secondArray)) {
-//			for (final EqNode eqNode : mEqNodeToEqGraphNodeMap.get(find(fnNode.getArg())).getCcpar()) {
-//				if (eqNode instanceof EqFunctionNode) {
-//					if (((EqFunctionNode) eqNode).getFunction().equals(firstArray)) {
-//						addEquality(eqNode, fnNode);
-//					}
-//				}
-//			}
-//		}
+		
+		for (final EqFunctionNode fnNode1 : mTermToFnNodeMap.get(firstArray)) {
+			for (final EqFunctionNode fnNode2 : mTermToFnNodeMap.get(secondArray)) {
+				if (congruentIgnoreFunctionSymbol(fnNode1, fnNode2)) {
+					addEquality(fnNode1, fnNode2);
+				}
+			}
+		}
 	}
 
 	private boolean isArray(final TermVariable term) {
@@ -667,8 +689,6 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 			sb.append('\n');
 		}
 
-//		System.out.println(sb.toString());
-
 		return sb.toString();
 	}
 
@@ -731,7 +751,6 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 			}
 		}
 		
-		
 		if (equalityTermSet.isEmpty()) {
 			equality = mDomain.getManagedScript().getScript().term(TERM_TRUE);
 		} else if (equalityTermSet.size() == 1) {
@@ -744,8 +763,13 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 	}
 
 	public Set<EqNode> getEquivalenceRepresentatives() {
-		// TODO Auto-generated method stub
-		return null;
+		Set<EqNode> result = new HashSet<>();
+		for (EqGraphNode egn: mEqGraphNodeSet) {
+			if (mEqNodeToEqGraphNodeMap.get(egn.getRepresentative()) == egn) {
+				result.add(egn.eqNode);
+			}
+		}
+		return result;
 	}
 
 	/**
@@ -754,8 +778,13 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 	 * @return All the eqNodes that are in the same equivalence class as node in this state.
 	 */
 	public Set<EqNode> getEquivalentEqNodes(EqNode node) {
-		// TODO Auto-generated method stub
-		return null;
+		Set<EqNode> result = new HashSet<>();
+		for (EqGraphNode egn: mEqGraphNodeSet) {
+			if (mEqNodeToEqGraphNodeMap.get(find(egn.eqNode)).eqNode == node) {
+				result.add(egn.eqNode);
+			}
+		}
+		return result;
 	}
 
 }

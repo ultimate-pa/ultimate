@@ -32,17 +32,18 @@ public class EqFunctionNode extends EqNode {
 	}
 
 	public String toString() {
-		return function.toString() + "[" + args.toString() + "]";
+		return function.toString() + args.toString();
 	}
 	
 	@Override
 	public boolean equals(Object other) {
-		if (!(other instanceof EqFunctionNode)) {
-			return false;
-		}
-		EqFunctionNode efn = (EqFunctionNode) other;
-		return function.equals(efn.function)
-				&& this.args.equals(efn.args);
+		return other == this;
+//		if (!(other instanceof EqFunctionNode)) {
+//			return false;
+//		}
+//		EqFunctionNode efn = (EqFunctionNode) other;
+//		return function.equals(efn.function)
+//				&& this.args.equals(efn.args);
 	}
 
 	@Override

@@ -14,34 +14,29 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public class EqBaseNode extends EqNode {
 	
-	private final BoogieVarOrConst mBoogieVar;
+	private final BoogieVarOrConst mBoogieVarOrConst;
 
 	public EqBaseNode(BoogieVarOrConst bv) {
-//		super(NonrelationalTermUtils.getTermVar(bv), bv.getDefaultConstant());
-		mBoogieVar = bv;
+		mBoogieVarOrConst = bv;
 	}
 	
 	public String toString() {
-		return mBoogieVar.toString();
+		return mBoogieVarOrConst.toString();
 	}
 
 	@Override
 	public Term getTerm(Script s) {
-//		if (mBoogieVar instanceof IProgramVar) {
-//			return ((IProgramVar) mBoogieVar).getTermVariable();
-//		} else {
-//			return mBoogieVar.getDefaultConstant();
-//		}
-		return mBoogieVar.getTerm();
+		return mBoogieVarOrConst.getTerm();
 	}
 	
 	@Override
 	public boolean equals(Object other) {
-		if (!(other instanceof EqBaseNode)) {
-			return false;
-		}
-		EqBaseNode ebn = (EqBaseNode) other;
-		
-		return ebn.mBoogieVar.equals(this.mBoogieVar);
+		return other == this;
+//		if (!(other instanceof EqBaseNode)) {
+//			return false;
+//		}
+//		EqBaseNode ebn = (EqBaseNode) other;
+//		
+//		return ebn.mBoogieVarOrConst.equals(this.mBoogieVarOrConst);
 	}
 }
