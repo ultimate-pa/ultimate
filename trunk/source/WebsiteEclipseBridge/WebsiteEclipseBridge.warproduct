@@ -37,8 +37,9 @@
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.plugins.analysis.syntaxchecker"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.plugins.blockencoding"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter"/>
-      <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck"/>
@@ -128,8 +129,9 @@
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker" autoStart="true" startLevel="0" />
+      <plugin id="de.uni_freiburg.informatik.ultimate.plugins.analysis.syntaxchecker" autoStart="true" startLevel="0" />
+      <plugin id="de.uni_freiburg.informatik.ultimate.plugins.blockencoding" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter" autoStart="true" startLevel="0" />
-      <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck" autoStart="true" startLevel="0" />

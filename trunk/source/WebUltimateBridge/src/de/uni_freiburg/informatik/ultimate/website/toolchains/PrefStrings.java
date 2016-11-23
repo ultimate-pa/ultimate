@@ -22,7 +22,7 @@ public class PrefStrings {
 			"de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer";
 	public static final String s_automatascriptinterpreter =
 			"de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter";
-	public static final String s_blockencoding = "de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding";
+	public static final String s_blockencoding = "de.uni_freiburg.informatik.ultimate.plugins.blockencoding";
 	public static final String s_traceAbstractionConcurrent =
 			"de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent";
 	public static final String s_lassoRanker = "de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker";
