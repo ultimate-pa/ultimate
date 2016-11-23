@@ -1,10 +1,17 @@
 package de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.util;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 import org.eclipse.cdt.core.ToolFactory;
+import org.eclipse.cdt.core.dom.ast.IASTExpression;
+import org.eclipse.cdt.core.dom.ast.IASTLiteralExpression;
+import org.eclipse.cdt.core.dom.ast.IBasicType;
+import org.eclipse.cdt.core.dom.ast.IPointerType;
+import org.eclipse.cdt.core.dom.ast.IType;
 import org.eclipse.cdt.core.formatter.CodeFormatter;
 import org.eclipse.cdt.core.formatter.DefaultCodeFormatterConstants;
 import org.eclipse.jface.text.BadLocationException;
@@ -99,7 +106,7 @@ public final class RewriteUtils {
 	/**
 	 * If any replacement already matches the current source text, skip ALL the other alternatives, not just the one
 	 * that matches. This is important to not endlessly switch between two alternatives that are both possible in
-	 * repeated HDD aplications.
+	 * repeated HDD applications.
 	 * 
 	 * @param node
 	 *            PST node to be replacement
@@ -116,6 +123,26 @@ public final class RewriteUtils {
 			validReplacements.add(replacement);
 		}
 		return validReplacements;
+	}
+
+	public static List<String> getMinimalExpressionReplacements(IASTExpression expression) {
+		if (expression instanceof IASTLiteralExpression) {
+			final IASTLiteralExpression literalExpression = (IASTLiteralExpression) expression;
+			if (literalExpression.getKind() == IASTLiteralExpression.lk_float_constant) {
+				return Arrays.asList(".0f");
+			} else if (literalExpression.getKind() == IASTLiteralExpression.lk_string_literal) {
+				return Arrays.asList("\"\"");
+			}
+		}
+
+		final IType expressionType = expression.getExpressionType();
+		if (expressionType instanceof IBasicType) {
+			return Arrays.asList("0", "1");
+		} else if (expressionType instanceof IPointerType) {
+			return Arrays.asList("0");
+		}
+
+		return Collections.emptyList();
 	}
 
 }

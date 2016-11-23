@@ -21,13 +21,6 @@ public class HddGeneratorFactory implements IVariantGeneratorFactory {
 	private final boolean mReparseBetweenLevels;
 	
 	/**
-	 * Default strategy constructor.
-	 */
-	public HddGeneratorFactory() {
-		this(new DefaultStrategy(), false);
-	}
-	
-	/**
 	 * Constructor with strategy.
 	 * 
 	 * @param strategy

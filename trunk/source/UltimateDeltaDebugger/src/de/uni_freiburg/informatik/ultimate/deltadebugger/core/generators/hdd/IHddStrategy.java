@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.deltadebugger.core.generators.hdd;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.IVariantGenerator;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.generators.hdd.changes.ChangeCollector;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTNode;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTProtectedRegion;
 
 /**
  * Strategy for the HDD inspired pass that controls if and how nodes of the tree are changed.
@@ -68,6 +69,6 @@ public interface IHddStrategy {
 	 * @return whether the full subtree starting at node will be skipped
 	 */
 	default boolean skipSubTree(final IPSTNode node) {
-		return false;
+		return node instanceof IPSTProtectedRegion;
 	}
 }

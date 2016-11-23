@@ -1,10 +1,15 @@
 package de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.util;
 
+import java.util.Arrays;
+
 import org.eclipse.cdt.core.dom.ast.ASTNodeProperty;
+import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTEnumerationSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTExpressionList;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
+import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTInitializerList;
+import org.eclipse.cdt.core.dom.ast.IASTName;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTPreprocessorElifStatement;
 import org.eclipse.cdt.core.dom.ast.IASTPreprocessorElseStatement;
@@ -12,7 +17,10 @@ import org.eclipse.cdt.core.dom.ast.IASTPreprocessorEndifStatement;
 import org.eclipse.cdt.core.dom.ast.IASTPreprocessorIfStatement;
 import org.eclipse.cdt.core.dom.ast.IASTPreprocessorIfdefStatement;
 import org.eclipse.cdt.core.dom.ast.IASTPreprocessorIfndefStatement;
+import org.eclipse.cdt.core.dom.ast.IASTPreprocessorMacroDefinition;
+import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTStandardFunctionDeclarator;
+import org.eclipse.cdt.core.dom.ast.IBinding;
 
 public final class ASTNodeUtils {
 
@@ -71,4 +79,28 @@ public final class ASTNodeUtils {
 		return false;
 	}
 
+	public static boolean hasReferences(IASTSimpleDeclaration simpleDeclaration) {
+		return Arrays.stream(simpleDeclaration.getDeclarators()).anyMatch(ASTNodeUtils::hasReferences);
+	}
+
+	public static boolean hasReferences(IASTFunctionDefinition functionDefinition) {
+		return hasReferences(functionDefinition.getDeclarator());
+	}
+
+	public static boolean hasReferences(IASTPreprocessorMacroDefinition macroDefintion) {
+		final IASTName astName = macroDefintion.getName();
+		return astName != null && hasReferences(astName);
+	}
+
+	public static boolean hasReferences(final IASTDeclarator declarator) {
+		final IASTName astName = declarator.getName();
+		return astName != null && hasReferences(astName);
+	}
+
+	public static boolean hasReferences(final IASTName astName) {
+		final IBinding binding = astName.resolveBinding();
+		final IASTName[] names = astName.getTranslationUnit().getReferences(binding);
+		return names.length != 0;
+	}
+	
 }

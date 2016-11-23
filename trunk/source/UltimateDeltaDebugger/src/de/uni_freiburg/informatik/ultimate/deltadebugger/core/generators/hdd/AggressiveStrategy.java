@@ -1,11 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.deltadebugger.core.generators.hdd;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import org.eclipse.cdt.core.dom.ast.ASTNodeProperty;
-import org.eclipse.cdt.core.dom.ast.IASTArrayModifier;
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTCastExpression;
 import org.eclipse.cdt.core.dom.ast.IASTCompoundStatement;
@@ -25,18 +23,13 @@ import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTIfStatement;
 import org.eclipse.cdt.core.dom.ast.IASTInitializerList;
 import org.eclipse.cdt.core.dom.ast.IASTLabelStatement;
-import org.eclipse.cdt.core.dom.ast.IASTLiteralExpression;
 import org.eclipse.cdt.core.dom.ast.IASTName;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
-import org.eclipse.cdt.core.dom.ast.IASTPointerOperator;
 import org.eclipse.cdt.core.dom.ast.IASTStandardFunctionDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTStatement;
 import org.eclipse.cdt.core.dom.ast.IASTTypeId;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTWhileStatement;
-import org.eclipse.cdt.core.dom.ast.IBasicType;
-import org.eclipse.cdt.core.dom.ast.IPointerType;
-import org.eclipse.cdt.core.dom.ast.IType;
 import org.eclipse.cdt.core.dom.ast.c.ICASTDesignatedInitializer;
 
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.generators.hdd.changes.ChangeCollector;
@@ -48,13 +41,13 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfa
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTTranslationUnit;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.util.ASTNodeConsumerDispatcher;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.util.IASTNodeConsumer;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.util.RewriteUtils;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression;
 
 /**
- * Default delta debugger strategy.
+ * An aggressive delta debugger strategy.
  */
-public class DefaultStrategy implements IHddStrategy {
-	@SuppressWarnings("squid:S1698")
+public class AggressiveStrategy implements IHddStrategy {
 	@Override
 	public void createAdditionalChangesForExpandedNode(final IPSTNode node, final ChangeCollector collector) {
 		// Add a change to remove the inactive parts of the conditional block
@@ -88,7 +81,10 @@ public class DefaultStrategy implements IHddStrategy {
 		}
 		
 		if (node.getASTNode() instanceof IASTStandardFunctionDeclarator) {
-			collector.addDeleteVarArgsChange((IPSTRegularNode) node, (IASTStandardFunctionDeclarator) node.getASTNode());
+			final IASTStandardFunctionDeclarator astNode = (IASTStandardFunctionDeclarator) node.getASTNode();
+			if (astNode.takesVarArgs()) {
+				collector.addDeleteVarArgsChange((IPSTRegularNode) node, astNode);
+			}
 		}
 	}
 	
@@ -107,19 +103,16 @@ public class DefaultStrategy implements IHddStrategy {
 					|| regularParent.getASTNode() instanceof IASTCompoundStatement) {
 				collector.addDeleteChange(node);
 			}
-			return;
 		} else if (node instanceof IPSTACSLNode) {
 			final IPSTACSLNode acslNode = (IPSTACSLNode) node;
 			if (acslNode.getACSLNode() instanceof Expression) {
 				// Replace expressions by 0 (just for testing)
 				// TODO: remove or at least check the type
-				collector.addReplaceChange(acslNode, "0");
+				collector.addMultiReplaceChange(acslNode, Arrays.asList("0"));
 			} else {
 				// Delete any other thing
 				collector.addDeleteChange(node);
 			}
-			
-			
 		} else {
 			// delete every preprocessor node
 			collector.addDeleteChange(node);
@@ -142,13 +135,6 @@ public class DefaultStrategy implements IHddStrategy {
 		return node instanceof IPSTConditionalBlock;
 	}
 	
-	@Override
-	public boolean skipSubTree(final IPSTNode node) {
-		// Overlapping regions are removed and expanded, risking syntax errors in favor of a better reduction.
-		// Only explicitly protected regions are left untouched.
-		return node instanceof IPSTProtectedRegion;
-	}
-	
 	/**
 	 * Regular node handler.
 	 */
@@ -166,7 +152,6 @@ public class DefaultStrategy implements IHddStrategy {
 			mCollector = collector;
 		}
 		
-		@SuppressWarnings("squid:S1698")
 		static void invoke(final IPSTRegularNode node, final ChangeCollector collector) {
 			final IASTNode astNode = node.getASTNode();
 			
@@ -187,13 +172,7 @@ public class DefaultStrategy implements IHddStrategy {
 			new ASTNodeConsumerDispatcher(new RegularNodeHandler(node, collector)).dispatch(astNode);
 		}
 		
-		@Override
-		public void on(final IASTArrayModifier arrayModifier) {
-			// Removing the brackets from an array declaration (that could not be removed itself)
-			// should have a very low probability to still type check, so better don't do this.
-		}
 		
-		@SuppressWarnings("squid:S1698")
 		@Override
 		public void on(final IASTDeclaration declaration) {
 			
@@ -219,11 +198,8 @@ public class DefaultStrategy implements IHddStrategy {
 		
 		@Override
 		public void on(final IASTDeclSpecifier declSpecifier) {
-			// Too many type checking errors if we change it.
-			// Of course, it should be possible to simplify it, replace macros and
-			// type qualifiers
-			
-			// Temp change for testing: just try to delete it anyways... 
+			// This causes many type checking errors, but let's see what happens
+			// Should add at least a few more checks to rule out clear compilation errors
 			if (mCurrentNode.getRegularParent().getASTNode() instanceof IASTFunctionDefinition) {
 				mCollector.addMultiReplaceChange(mCurrentNode, Arrays.asList("void", "int"));
 			} else {
@@ -233,19 +209,9 @@ public class DefaultStrategy implements IHddStrategy {
 		
 		@Override
 		public void on(final IASTEqualsInitializer equalsInitializer) {
-			// We don't want to create uninitialized variables (and thus undefined behavior), so always keep equals
-			// initializer.
-			
-			// The only exception are variables with static storage, these are zero initialized implicitly.
-			// In such a case the initializer could be deleted.
-			// TODO: actually implement the idea above: need to get the corresponding IASTDeclaration and then check the
-			// storage class.
-			
-			// Temp change for testing: just try to delete it anyways... 
 			mCollector.addDeleteChange(mCurrentNode);
 		}
 		
-		@SuppressWarnings("squid:S1698")
 		@Override
 		public void on(final IASTExpression expression) {
 			final ASTNodeProperty property = expression.getPropertyInParent();
@@ -268,14 +234,17 @@ public class DefaultStrategy implements IHddStrategy {
 				return;
 			}
 						
+			final List<String> replacements = RewriteUtils.getMinimalExpressionReplacements(expression);
+
+			// The Ternary operator handling is a mess, but okay for an aggressive reduction
 			if (property == IASTConditionalExpression.LOGICAL_CONDITION
 					|| property == IASTConditionalExpression.POSITIVE_RESULT
 					|| property == IASTConditionalExpression.NEGATIVE_RESULT) {
-				mCollector.addDeleteConditionalExpressionChange(mCurrentNode, "0");
+				// TODO: correctly replace expressions by alternatives (and not at all if there are none)
+				mCollector.addDeleteConditionalExpressionChange(mCurrentNode,
+						replacements.stream().findFirst().orElse("0"));
 				return;
 			}
-
-			final List<String> replacements = getMinimalExpressionReplacements(expression);
 
 			// Binary expression operands are deleted or replaced
 			if (property == IASTBinaryExpression.OPERAND_ONE || property == IASTBinaryExpression.OPERAND_TWO) {
@@ -283,37 +252,10 @@ public class DefaultStrategy implements IHddStrategy {
 				return;
 			}
 			
-			// All other expressions have to be replaced by a smaller alternatively,
-			// optimally of the same type. IASTExpression.getExpressionType()
-			// appears to be pretty useful for this.
-			
 			if (!replacements.isEmpty()) {
 				mCollector.addMultiReplaceChange(mCurrentNode, replacements);
 			}
 		}
-		
-		
-		private List<String> getMinimalExpressionReplacements(IASTExpression expression) {
-			if (expression instanceof IASTLiteralExpression) {
-				final IASTLiteralExpression literalExpression = (IASTLiteralExpression) expression;
-				if (literalExpression.getKind() == IASTLiteralExpression.lk_float_constant) {
-					return Arrays.asList(".0f");
-				} else if (literalExpression.getKind() == IASTLiteralExpression.lk_string_literal) {
-					return Arrays.asList("\"\"");
-				}
-			}
-			
-			final IType expressionType = expression.getExpressionType();
-			if (expressionType instanceof IBasicType) {
-				return Arrays.asList("0", "1");
-			} else if (expressionType instanceof IPointerType) {
-				return Arrays.asList("0");
-			}	
-			
-			return Collections.emptyList();
-		}
-		
-		
 		
 		
 		@Override
@@ -343,15 +285,8 @@ public class DefaultStrategy implements IHddStrategy {
 			// Unless overridden regular nodes are simply deleted
 			mCollector.addDeleteChange(mCurrentNode);
 		}
+
 		
-		@Override
-		public void on(final IASTPointerOperator pointerOperator) {
-			// removing a pointer operator appears to be a bad idea, because of
-			// compilation errors.
-			// could try to remove specifiers, like const, restrict etc. though.
-		}
-		
-		@SuppressWarnings("squid:S1698")
 		@Override
 		public void on(final IASTStatement statement) {
 			// delete statements inside compound statements
@@ -369,14 +304,13 @@ public class DefaultStrategy implements IHddStrategy {
 			mCollector.addReplaceChange(mCurrentNode, ";");
 		}
 		
-		@SuppressWarnings("squid:S1698")
 		@Override
 		public void on(final IASTTypeId typeId) {
 			// Delete typeid and parenthesis from cast expression
 			if (typeId.getPropertyInParent() == IASTCastExpression.TYPE_ID) {
 				mCollector.addDeleteTypeIdFromCastExpressionChange(mCurrentNode);
 			} else {
-				// collector.addReplaceChange(currentNode, "int");
+				mCollector.addReplaceChange(mCurrentNode, "int");
 			}
 		}
 	}
