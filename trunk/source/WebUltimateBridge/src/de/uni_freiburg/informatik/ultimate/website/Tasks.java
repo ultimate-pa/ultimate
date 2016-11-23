@@ -14,11 +14,13 @@ import de.uni_freiburg.informatik.ultimate.website.toolchains.BoogieBuchiAutomiz
 import de.uni_freiburg.informatik.ultimate.website.toolchains.BoogieConcurrentTraceAbstractionTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.BoogieKojakTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.BoogieLassoRankerTC;
+import de.uni_freiburg.informatik.ultimate.website.toolchains.BoogieTaipanTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.CAutomizerTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.CBuchiAutomizerTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.CKojakTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.CLTLAutomizerTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.CLassoRankerTC;
+import de.uni_freiburg.informatik.ultimate.website.toolchains.CTaipanTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.NameStrings;
 
 /**
@@ -29,13 +31,12 @@ import de.uni_freiburg.informatik.ultimate.website.toolchains.NameStrings;
  */
 public class Tasks {
 	/**
-	 * List all toolchains that should be shown. Instantiate all toolchains,
-	 * that should be shown.
+	 * List all toolchains that should be shown. Instantiate all toolchains, that should be shown.
 	 */
 	private static final Class<?>[] sToolchainTypes = { AutomtaScriptTC.class, BoogieAutomizerTC.class,
-			CAutomizerTC.class, BoogieLassoRankerTC.class, CLassoRankerTC.class, BoogieBuchiAutomizerTC.class,
-			CBuchiAutomizerTC.class, BoogieConcurrentTraceAbstractionTC.class, CLTLAutomizerTC.class, 
-			CKojakTC.class,	BoogieKojakTC.class };
+	        CAutomizerTC.class, BoogieLassoRankerTC.class, CLassoRankerTC.class, BoogieBuchiAutomizerTC.class,
+	        CBuchiAutomizerTC.class, BoogieConcurrentTraceAbstractionTC.class, CLTLAutomizerTC.class, CKojakTC.class,
+	        BoogieKojakTC.class, CTaipanTC.class, BoogieTaipanTC.class };
 	/**
 	 * The String representations of TaskNames.
 	 */
@@ -66,7 +67,9 @@ public class Tasks {
 
 		CONCURRENT_TRACE_ABSTRACTION_BOOGIE,
 
-		LTLAUTOMIZER_C,KOJAK_C, KOJAK_BOOGIE
+		LTLAUTOMIZER_C, KOJAK_C, KOJAK_BOOGIE,
+
+		TAIPAN_C, TAIPAN_BOOGIE,
 
 		// If you add something here, add a String representation to
 		// initTaskNames()
@@ -76,7 +79,7 @@ public class Tasks {
 
 	/**
 	 * Getter for the string representation of task names.
-	 * 
+	 *
 	 * @return a map of <code>TaskNames</code> to its String representation
 	 */
 	public static final Map<TaskNames, String> getTaskString() {
@@ -88,7 +91,7 @@ public class Tasks {
 
 	/**
 	 * Getter for the worker Array.
-	 * 
+	 *
 	 * @return a map of Worker name to workers
 	 */
 	public final static Map<String, Worker> getWorker() {
@@ -104,12 +107,12 @@ public class Tasks {
 
 	/**
 	 * Get the corresponding syntax highlighter for this task.
-	 * 
+	 *
 	 * @param taskName
 	 *            the task name
 	 * @return the SyntaxHighlighter to use
 	 */
-	public static final String getSyntaxHighlightingMode(String taskName) {
+	public static final String getSyntaxHighlightingMode(final String taskName) {
 		try {
 			final TaskNames name = TaskNames.valueOf(taskName);
 			// TODO : check if the js file exists...
@@ -123,12 +126,14 @@ public class Tasks {
 			case RANK_SYNTHESIS_BOOGIE:
 			case CONCURRENT_TRACE_ABSTRACTION_BOOGIE:
 			case KOJAK_BOOGIE:
+			case TAIPAN_BOOGIE:
 				return "boogie";
 			case AUTOMIZER_C:
 			case TERMINATION_C:
 			case RANK_SYNTHESIS_C:
 			case LTLAUTOMIZER_C:
 			case KOJAK_C:
+			case TAIPAN_C:
 				return "c_cpp";
 			default:
 				return "text";
@@ -140,7 +145,7 @@ public class Tasks {
 
 	/**
 	 * Getter for active toolchains.
-	 * 
+	 *
 	 * @return a list of toolchains, that should be displayed on the website.
 	 */
 	public final static Map<String, ArrayList<WebToolchain>> getActiveToolchains() {
@@ -178,7 +183,7 @@ public class Tasks {
 		description = "An LTL software model checker based on Büchi programs.";
 		w = new Worker(name, NameStrings.s_TASK_verify, description, null);
 		sWorkers.put(w.getId(), w);
-		
+
 		name = "Kojak";
 		description = "A software model checker";
 		w = new Worker(name, NameStrings.s_TASK_verify, description, null);
@@ -201,7 +206,12 @@ public class Tasks {
 		description = NameStrings.s_DESCRIPTION_AutomataScriptInterpreter;
 		w = new Worker(name, NameStrings.s_TASK_run, description, null);
 		w.setUserInfo(""); // sample user information, being shown on Automata
-							// Script page
+		                   // Script page
+		sWorkers.put(w.getId(), w);
+
+		name = NameStrings.s_TOOL_Taipan;
+		description = NameStrings.s_DESCRIPTION_Taipan;
+		w = new Worker(name, NameStrings.s_TASK_analyze, description, null);
 		sWorkers.put(w.getId(), w);
 
 		completeInitWorker();
@@ -215,7 +225,8 @@ public class Tasks {
 		for (final Map.Entry<String, ArrayList<WebToolchain>> tcPair : getActiveToolchains().entrySet()) {
 			for (final WebToolchain toolchain : tcPair.getValue()) {
 				if (!sWorkers.containsKey(Worker.toKey(toolchain.getName()))) {
-					SimpleLogger.log("Worker for toolchain " + toolchain.getName() + " missing! Adding a worker via a very strange workaround");
+					SimpleLogger.log("Worker for toolchain " + toolchain.getName()
+					        + " missing! Adding a worker via a very strange workaround");
 					sWorkers.put(Worker.toKey(toolchain.getName()), new Worker(toolchain.getName(), null, null, null));
 					SimpleLogger.log("Added worker for toolchain " + toolchain.getName());
 				}
@@ -247,6 +258,8 @@ public class Tasks {
 		sTaskStrings.put(TaskNames.LTLAUTOMIZER_C, "Verify if C program fulfils LTL property");
 		sTaskStrings.put(TaskNames.KOJAK_C, "Verify C");
 		sTaskStrings.put(TaskNames.KOJAK_BOOGIE, "Verify Boogie");
+		sTaskStrings.put(TaskNames.TAIPAN_C, "Verify C");
+		sTaskStrings.put(TaskNames.TAIPAN_BOOGIE, "Verify Boogie");
 
 		SimpleLogger.log("Finished initializing task names");
 		SimpleLogger.log("The following " + sTaskStrings.size() + " task names are present:");
@@ -269,8 +282,8 @@ public class Tasks {
 					sActiveToolchains.get(taskName.toString()).add(tc);
 				}
 			} catch (final Exception e) {
-				SimpleLogger.log("An exception occured during initialization of toolchain "
-						+ toolchainType.getCanonicalName());
+				SimpleLogger.log(
+				        "An exception occured during initialization of toolchain " + toolchainType.getCanonicalName());
 				SimpleLogger.log(e.getCause());
 			}
 		}

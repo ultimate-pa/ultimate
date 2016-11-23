@@ -61,9 +61,10 @@ public class Worker {
 	 * The languages of this workers toolchains.
 	 */
 	private final ArrayList<String> languages = new ArrayList<String>();
+
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param name
 	 *            the ultimate name for this toolchain collection.
 	 * @param label
@@ -73,33 +74,36 @@ public class Worker {
 	 * @param toolchains
 	 *            a list of toolchains for this worker.
 	 */
-	public Worker(String name, String label, String description, ArrayList<WebToolchain> toolchains) {
+	public Worker(final String name, final String label, final String description,
+	        final ArrayList<WebToolchain> toolchains) {
+		//@formatter:off
 		this.name              = name;
 		this.label             = (label == null) ? getLabel(name) : label;
 		this.description       = (description == null) ? getDescription(name) : description;
 		this.toolchains        = (toolchains == null) ? new ArrayList<WebToolchain>() : toolchains;
-		layoutFontsize    = null;
-		layoutOrientation = null;
-		layoutTransitions = null;
+		layoutFontsize         = null;
+		layoutOrientation      = null;
+		layoutTransitions      = null;
 		setId(name);
+		//@formatter:on
 	}
 
 	/**
 	 * Getter for a description for a specific worker-name.
-	 * 
+	 *
 	 * @return the description of the name's matching worker.
 	 */
-	public String getDescription(String name) {
-		if(description != null) {
+	public String getDescription(final String name) {
+		if (description != null) {
 			return description;
 		}
-		
+
 		return "No description yet.";
 	}
-	
+
 	/**
 	 * overloading getDescription(String name) {}
-	 * 
+	 *
 	 * @return
 	 */
 	public String getDescription() {
@@ -108,12 +112,12 @@ public class Worker {
 
 	/**
 	 * Getter for a label for a specific worker-name.
-	 * 
+	 *
 	 * @return the label of the name's matching worker.
 	 */
-	public String getLabel(String name) {
+	public String getLabel(final String name) {
 		final String result;
-		if(label != null) {
+		if (label != null) {
 			result = label;
 		} else {
 			switch (name) {
@@ -130,6 +134,9 @@ public class Worker {
 			case NameStrings.s_TOOL_AutomataScriptInterpreter:
 				result = NameStrings.s_TASK_run;
 				break;
+			case NameStrings.s_TOOL_Taipan:
+				result = NameStrings.s_TASK_verify;
+				break;
 			default:
 				result = "No description available";
 				break;
@@ -141,7 +148,7 @@ public class Worker {
 
 	/**
 	 * overloading getLabel(String name) {}
-	 * 
+	 *
 	 * @return
 	 */
 	public String getLabel() {
@@ -150,11 +157,11 @@ public class Worker {
 
 	/**
 	 * Adding a toolchain to this workers collection.
-	 * 
-	 * @return 
+	 *
+	 * @return
 	 */
-	public void addToolchain(WebToolchain toolchain) {
-		if(toolchains.contains(toolchain)) {
+	public void addToolchain(final WebToolchain toolchain) {
+		if (toolchains.contains(toolchain)) {
 			return;
 		}
 		toolchains.add(toolchain);
@@ -162,14 +169,14 @@ public class Worker {
 
 	/**
 	 * Getter for toolchains languages.
-	 * 
+	 *
 	 * @return a list of languages
 	 */
 	public ArrayList<String> getLanguages() {
 		if (languages.isEmpty()) {
 			for (final WebToolchain toolchain : toolchains) {
 				SimpleLogger.log("Toolchain " + toolchain.getId() + " has language " + toolchain.getLanguage());
-				if(!languages.contains(toolchain.getLanguage())) {
+				if (!languages.contains(toolchain.getLanguage())) {
 					languages.add(toolchain.getLanguage());
 				}
 			}
@@ -180,7 +187,7 @@ public class Worker {
 
 	/**
 	 * Getter for the ultimate name for this worker.
-	 * 
+	 *
 	 * @return the name for this worker.
 	 */
 	public String getName() {
@@ -189,7 +196,7 @@ public class Worker {
 
 	/**
 	 * Getter for the html id for this worker.
-	 * 
+	 *
 	 * @return the name for this worker.
 	 */
 	public String getId() {
@@ -198,17 +205,17 @@ public class Worker {
 
 	/**
 	 * Setter for the html id for this worker.
-	 * 
+	 *
 	 * @param name
-	 * 			the Ultimate name of this worker
+	 *            the Ultimate name of this worker
 	 */
-	public void setId(String name) {
+	public void setId(final String name) {
 		id = toKey(name);
 	}
 
 	/**
 	 * Getter for the toolchain collection of this worker.
-	 * 
+	 *
 	 * @return the list of toolchains for this worker.
 	 */
 	public ArrayList<WebToolchain> getToolchains() {
@@ -217,7 +224,7 @@ public class Worker {
 
 	/**
 	 * Getter for the html id for this worker.
-	 * 
+	 *
 	 * @return the name for this worker.
 	 */
 	public String getUserInfo() {
@@ -226,7 +233,7 @@ public class Worker {
 
 	/**
 	 * Getter for the specific content URL for this worker
-	 * 
+	 *
 	 * @return the url for this workers content json.
 	 */
 	public String getContentURL() {
@@ -235,7 +242,7 @@ public class Worker {
 
 	/**
 	 * Getter for the logo URL for this worker
-	 * 
+	 *
 	 * @return the url for this workers content json.
 	 */
 	public String getLogoURL() {
@@ -256,73 +263,67 @@ public class Worker {
 
 	/**
 	 * Setter for the html userInfo for this worker.
-	 * 
+	 *
 	 */
-	public void setUserInfo(String userInfo) {
+	public void setUserInfo(final String userInfo) {
 		this.userInfo = userInfo;
 	}
 
 	/**
 	 * Setter for the html json content URL.
-	 * 
+	 *
 	 */
-	public void setContentURL(String url) {
+	public void setContentURL(final String url) {
 		contentURL = url;
 	}
 
 	/**
 	 * Setter for the html logo of this worker.
-	 * 
+	 *
 	 */
-	public void setLogoURL(String url) {
+	public void setLogoURL(final String url) {
 		logoURL = url;
 	}
 
 	/**
 	 * Setter for the html fontsize preset of this worker.
-	 * 
+	 *
 	 */
-	public void setInterfaceLayoutFontsize(String fontsize) {
+	public void setInterfaceLayoutFontsize(final String fontsize) {
 		layoutFontsize = fontsize;
 	}
 
 	/**
 	 * Setter for the html orientation preset of this worker.
-	 * 
+	 *
 	 */
-	public void setInterfaceLayoutOrientation(String orientation) {
+	public void setInterfaceLayoutOrientation(final String orientation) {
 		layoutOrientation = orientation;
 	}
 
 	/**
 	 * Setter for the html transitions usage preset of this worker.
-	 * 
+	 *
 	 */
-	public void setInterfaceLayoutTransitions(String transitions) {
+	public void setInterfaceLayoutTransitions(final String transitions) {
 		layoutTransitions = transitions;
 	}
 
 	/**
 	 * Converts a given String to URL and HTML usable
-	 * 
+	 *
 	 */
-	public static String toKey(String name) {
-		return name.toLowerCase()
-				.replaceAll("\\s+","_")
-				.replaceAll("ü", "ue")
-				.replaceAll("ö", "oe")
-				.replaceAll("ä", "ae");
+	public static String toKey(final String name) {
+		return name.toLowerCase().replaceAll("\\s+", "_").replaceAll("ü", "ue").replaceAll("ö", "oe").replaceAll("ä",
+		        "ae");
 	}
 
 	@Override
 	public String toString() {
-		return "Worker [id=" + id + ", name=" + name + ", description="
-				+ description + ", label=" + label + ", userInfo=" + userInfo
-				+ ", layoutOrientation=" + layoutOrientation
-				+ ", layoutFontsize=" + layoutFontsize + ", layoutTransitions="
-				+ layoutTransitions + ", contentURL=" + contentURL
-				+ ", logoURL=" + logoURL + ", toolchains=" + toolchains
-				+ ", languages=" + languages + "]";
+		return "Worker [id=" + id + ", name=" + name + ", description=" + description + ", label=" + label
+		        + ", userInfo=" + userInfo + ", layoutOrientation=" + layoutOrientation + ", layoutFontsize="
+		        + layoutFontsize + ", layoutTransitions=" + layoutTransitions + ", contentURL=" + contentURL
+		        + ", logoURL=" + logoURL + ", toolchains=" + toolchains + ", languages=" + languages + "]";
 	}
-	
+
 }
