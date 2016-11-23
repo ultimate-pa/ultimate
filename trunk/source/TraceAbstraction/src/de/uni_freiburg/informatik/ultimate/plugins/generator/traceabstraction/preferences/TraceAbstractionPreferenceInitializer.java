@@ -294,7 +294,12 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		RAQ_DIRECT_SIMULATION_B,
 		NWA_OVERAPPROXIMATION,
 		NWA_COMBINATOR_MULTI_DEFAULT,
-		NWA_COMBINATOR_MULTI_SIMULATION
+		NWA_COMBINATOR_MULTI_SIMULATION,
+		DelayedSimulation,
+		FairSimulation_WithSCC,
+		FairSimulation_WithoutSCC,
+		FairDirectSimulation,
+		RaqDelayedSimulation,
 	}
 	
 	/**

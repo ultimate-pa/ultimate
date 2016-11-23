@@ -53,7 +53,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeSevpa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.ShrinkNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.arrays.MinimizeNwaMaxSAT;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.delayed.BuchiReduce;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.delayed.nwa.ReduceNwaDelayedSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.direct.nwa.ReduceNwaDirectSimulation;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.fair.ReduceBuchiFairDirectSimulation;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.fair.ReduceBuchiFairSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.summarycomputationgraph.ReduceNwaDirectSimulationB;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -85,6 +89,7 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate> {
 	private final MinimizationResult mMinimizationResult;
 	private final IDoubleDeckerAutomaton<CodeBlock, IPredicate> mMinimizedAutomaton;
 	private final Map<IPredicate, IPredicate> mOldState2newState;
+	private final AutomataMinimizationStatisticsGenerator mStatistics;
 
 
 	public AutomataMinimization(final IUltimateServiceProvider services, 
@@ -99,6 +104,7 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate> {
 			final Function<LCSP, LCS> lcsProvider) throws AutomataOperationCanceledException {
 		
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		final long startTime = System.nanoTime();
 		
 		final Collection<Set<IPredicate>> partition = TraceAbstractionUtils.computePartition(operand, mLogger, lcsProvider); 
 
@@ -111,7 +117,7 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate> {
 					storedRawInterpolantAutomata, interpolAutomaton, minimizationTimeout, partition, autServices);
 			// postprocessing after minimization
 			final IDoubleDeckerAutomaton<CodeBlock, IPredicate> newAbstraction;
-			if (mMinimizationResult.isWasMinimized()) {
+			if (mMinimizationResult.wasMinimized()) {
 				// extract result
 				try {
 					assert mMinimizationResult.getRawMinimizationOutput().checkResult(resultCheckPredFac);
@@ -150,8 +156,11 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate> {
 			} else {
 				mMinimizedAutomaton = null;
 				mOldState2newState = null;
-				
 			}
+			final long statesRemovedByMinimization = operand.size() - mMinimizedAutomaton.size();
+			final long automataMinimizationTime = System.nanoTime() - startTime;
+			mStatistics = new AutomataMinimizationStatisticsGenerator(automataMinimizationTime, 
+					mMinimizationResult.wasMinimizationAttempted(), mMinimizationResult.wasMinimized(), statesRemovedByMinimization);
 	}
 
 	private MinimizationResult doMinimizationOperation(final INestedWordAutomaton<CodeBlock, IPredicate> operand,
@@ -257,6 +266,33 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate> {
 			minimizationResult = new MinimizationResult(minimizationAttempt, true, minNwa); 
 			break;
 		}
+		case DelayedSimulation: {
+			minimizationResult = new MinimizationResult(true, true, 
+					new BuchiReduce<>(autServices, predicateFactoryRefinement, operand));
+			break;
+		}
+		case FairSimulation_WithSCC: {
+			minimizationResult = new MinimizationResult(true, true, 
+					new ReduceBuchiFairSimulation<>(autServices, predicateFactoryRefinement, operand, true));
+			break;
+		}
+		case FairSimulation_WithoutSCC: {
+			minimizationResult = new MinimizationResult(true, true, 
+					new ReduceBuchiFairSimulation<>(autServices, predicateFactoryRefinement, operand, false));
+			break;
+		}
+		case FairDirectSimulation: {
+			minimizationResult = new MinimizationResult(true, true, 
+					new ReduceBuchiFairDirectSimulation<>(autServices, predicateFactoryRefinement, operand, true));
+			break;
+		}
+		case RaqDelayedSimulation: {
+			minimizationResult = new MinimizationResult(true, true,
+			new ReduceNwaDelayedSimulation<>(autServices,
+					predicateFactoryRefinement, (IDoubleDeckerAutomaton<CodeBlock, IPredicate>) operand,
+					false, partition));
+			break;
+		}
 		case NONE:
 			throw new IllegalArgumentException("No minimization method specified.");
 		default:
@@ -274,14 +310,20 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate> {
 	}
 
 	public boolean wasMinimized() {
-		return mMinimizationResult.isWasMinimized();
+		return mMinimizationResult.wasMinimized();
 	}
 
 	public boolean wasMinimizationAttempted() {
 		return mMinimizationResult.wasMinimizationAttempted();
 	}
 	
-	
+	public AutomataMinimizationStatisticsGenerator getStatistics() {
+		return mStatistics;
+	}
+
+
+
+
 	private class MinimizationResult {
 		private final boolean mWasMinimized;
 		private final boolean mMinimizationAttempt;
@@ -294,7 +336,7 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate> {
 			mMinimizationAttempt = minimizationAttempt;
 			mRawMinimizationOutput = rawMinimizationOutput;
 		}
-		public boolean isWasMinimized() {
+		public boolean wasMinimized() {
 			return mWasMinimized;
 		}
 		public boolean wasMinimizationAttempted() {
