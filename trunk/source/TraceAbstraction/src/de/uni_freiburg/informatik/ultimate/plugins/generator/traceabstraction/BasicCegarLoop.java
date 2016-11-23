@@ -146,7 +146,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	
 	private final SearchStrategy mSearchStrategy;
 	
-	private IRefinementSelector<NestedWordAutomaton<CodeBlock, IPredicate>> mTraceCheckAndRefinementSelection;
+	protected IRefinementSelector<NestedWordAutomaton<CodeBlock, IPredicate>> mTraceCheckAndRefinementSelection;
 	
 	public BasicCegarLoop(final String name, final BoogieIcfgContainer rootNode, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
