@@ -95,13 +95,13 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 	@Override
 	protected BaseUltimatePreferenceItem[] initDefaultPreferences() {
 		final ArrayList<BaseUltimatePreferenceItem> rtr = new ArrayList<>();
-		rtr.add(new UltimatePreferenceItem<Integer>(LABEL_ITERATIONS_UNTIL_WIDENING, DEF_ITERATIONS_UNTIL_WIDENING,
+		rtr.add(new UltimatePreferenceItem<>(LABEL_ITERATIONS_UNTIL_WIDENING, DEF_ITERATIONS_UNTIL_WIDENING,
 				PreferenceType.Integer, new IUltimatePreferenceItemValidator.IntegerValidator(1, 100000)));
-		rtr.add(new UltimatePreferenceItem<Integer>(LABEL_MAX_PARALLEL_STATES, DEF_STATES_UNTIL_MERGE,
-				PreferenceType.Integer, new IUltimatePreferenceItemValidator.IntegerValidator(1, 100000)));
-		rtr.add(new UltimatePreferenceItem<Boolean>(LABEL_RUN_AS_PRE_ANALYSIS, DEF_RUN_AS_PRE_ANALYSIS,
+		rtr.add(new UltimatePreferenceItem<>(LABEL_MAX_PARALLEL_STATES, DEF_STATES_UNTIL_MERGE, PreferenceType.Integer,
+				new IUltimatePreferenceItemValidator.IntegerValidator(1, 100000)));
+		rtr.add(new UltimatePreferenceItem<>(LABEL_RUN_AS_PRE_ANALYSIS, DEF_RUN_AS_PRE_ANALYSIS,
 				TOOLTIP_RUN_AS_PRE_ANALYSIS, PreferenceType.Boolean));
-		rtr.add(new UltimatePreferenceItem<Boolean>(LABEL_USE_FUTURE_RCFG, DEF_USE_FUTURE_RCFG, TOOLTIP_USE_FUTURE_RCFG,
+		rtr.add(new UltimatePreferenceItem<>(LABEL_USE_FUTURE_RCFG, DEF_USE_FUTURE_RCFG, TOOLTIP_USE_FUTURE_RCFG,
 				PreferenceType.Boolean));
 
 		// Abstract Domains Container
@@ -109,7 +109,7 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItemContainer("Abstract Domains");
 		abstractDomainContainer.addItem(
 				new UltimatePreferenceItem<String>(LABEL_DESCRIPTION_ABSTRACT_DOMAIN, null, PreferenceType.Label));
-		abstractDomainContainer.addItem(new UltimatePreferenceItem<String>(LABEL_ABSTRACT_DOMAIN, DEF_ABSTRACT_DOMAIN,
+		abstractDomainContainer.addItem(new UltimatePreferenceItem<>(LABEL_ABSTRACT_DOMAIN, DEF_ABSTRACT_DOMAIN,
 				PreferenceType.Combo, VALUES_ABSTRACT_DOMAIN));
 
 		// Interval Domain
