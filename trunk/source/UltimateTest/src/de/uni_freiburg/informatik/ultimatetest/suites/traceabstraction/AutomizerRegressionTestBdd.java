@@ -50,7 +50,8 @@ public class AutomizerRegressionTestBdd extends AbstractTraceAbstractionTestSuit
 	
 	
 	private static final String[] mSettings_ForwardPredicates = {
-		"automizer/ForwardPredicates-BddProp.epf",
+		"automizer/ForwardPredicates-BDD_PROP.epf",
+		"automizer/ForwardPredicates-BDD_FIRST_ORDER.epf",
 	};
 	
 	/**
