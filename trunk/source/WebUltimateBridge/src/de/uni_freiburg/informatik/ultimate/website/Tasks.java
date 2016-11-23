@@ -215,21 +215,17 @@ public class Tasks {
 		name = NameStrings.TOOL_LASSO_RANKER;
 		description = NameStrings.DESCRIPTION_LASSO_RANKER;
 		w = new Worker(name, NameStrings.TASK_SYNTHESIZE, description, null);
-		// w.setInterfaceLayoutFontsize("40"); // sample for overwriting
-		// fontsize setting
-		// w.setInterfaceLayoutOrientation("vertical"); // sample for
-		// overwriting orientation setting
-		// w.setInterfaceLayoutTransitions("false"); // sample for overwriting
-		// animations setting
-		// w.setContentURL("http://localhost:8080/Website/json/lasso_ranker.json");
-		// // sample for setting an optional url
 		WORKERS.put(w.getId(), w);
 
 		name = NameStrings.TOOL_AUTOMATA_SCRIPT_INTERPRETER;
 		description = NameStrings.DESCRIPTION_AUTOMATA_SCRIPT_INTERPRETER;
 		w = new Worker(name, NameStrings.TASK_RUN, description, null);
-		w.setUserInfo(""); // sample user information, being shown on Automata
-							// Script page
+		w.setUserInfo("");
+		WORKERS.put(w.getId(), w);
+
+		name = NameStrings.TOOL_TAIPAN;
+		description = NameStrings.DESCRIPTION_TAIPAN;
+		w = new Worker(name, NameStrings.TASK_VERIFY, description, null);
 		WORKERS.put(w.getId(), w);
 
 		completeInitWorker();
