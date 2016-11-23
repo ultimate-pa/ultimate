@@ -10,6 +10,7 @@
 	</rundefinition>
 
 	<option name="${inputfile_path_abs}/${inputfile_name}-witness.graphml"/>
+	<option name="--validate"/>
 
 	<tasks name="LDV">
 		<include>../../../trunk/examples/svcomp/ldv-regression/1_3.c_false-unreach-call.cil.c</include>

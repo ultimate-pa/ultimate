@@ -9,7 +9,7 @@ import platform
 import argparse
 
 
-version = 'f286451a'
+version = '997d45e1'
 writeUltimateOutputToFile = True
 outputFileName = 'Ultimate.log'
 errorPathFileName = 'UltimateCounterExample.errorpath'
@@ -199,6 +199,7 @@ def parseArgs():
     parser = argparse.ArgumentParser(description='Ultimate wrapper script for SVCOMP')
     parser.add_argument('--version', action='store_true')
     parser.add_argument('--full-output', action='store_true')
+    parser.add_argument('--validate', action='store_true')
     parser.add_argument('spec', nargs=1, help='An property (.prp) file from SVCOMP')
     parser.add_argument('architecture', choices=['32bit', '64bit'])
     parser.add_argument('memorymodel', choices=['simple', 'precise'])
@@ -215,7 +216,7 @@ def parseArgs():
         sys.exit(1)
     
     if(len(args.file) > 2):
-        printErr('You cannot specify more than 2 input files')
+        printErr('Ultimate.py does not support more than 2 input files, use Ultimate directly')
         sys.exit(1)
     
     cFile = None
@@ -237,8 +238,16 @@ def parseArgs():
     if not os.path.isfile(propertyFileName):
         printErr("Property file not found at " + propertyFileName)
         sys.exit(1)
+        
+    if not args.validate and witness != None:
+        printErr("You did specify a witness but not --validate")
+        sys.exit(1)
    
-    return propertyFileName, args.architecture, args.file, args.full_output
+    if args.validate and witness == None:
+        printErr("You did specify --validate but no witness")
+        sys.exit(1)
+    
+    return propertyFileName, args.architecture, args.file, args.full_output, args.validate
 
 
 def createSettingsSearchString(memDeref, memDerefMemtrack, terminationMode, overflowMode, architecture):
@@ -298,7 +307,7 @@ def main():
     
     ultimateBin = getBinary()
     
-    propertyFileName, architecture, cFile, verbose = parseArgs()
+    propertyFileName, architecture, cFile, verbose, witnessMode = parseArgs()
     
     propFile = open(propertyFileName, 'r')
     for line in propFile:
@@ -310,9 +319,7 @@ def main():
             terminationMode = True
         if line.find('overflow') != -1:
             overflowMode = True
-    
-    witnessMode = len(cFile) > 1
-    
+   
     settingsSearchString = createSettingsSearchString(memDeref, memDerefMemtrack, terminationMode, overflowMode, architecture)
     settingsArgument = getSettingsFile(False, settingsSearchString)
     
