@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.TestBuchiEquivalence;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.GetRandomDfa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.GetRandomNwa;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizeNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.DuplicatorVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.SpoilerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.Vertex;
@@ -62,7 +63,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * @param <STATE>
  *            State class of buechi automaton
  */
-public class ReduceBuchiFairSimulation<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
+public class ReduceBuchiFairSimulation<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE>
+		implements IMinimizeNwa<LETTER, STATE> {
 	/**
 	 * Demo usage of fair simulation in general. Also used for debugging
 	 * purpose.

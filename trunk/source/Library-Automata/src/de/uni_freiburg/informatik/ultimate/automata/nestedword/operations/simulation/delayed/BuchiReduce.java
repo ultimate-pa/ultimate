@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.TestBuchiEquivalence;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizeNwa;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
@@ -61,7 +62,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * @param <STATE>
  *            State class of buechi automaton
  */
-public class BuchiReduce<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> {
+public class BuchiReduce<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE> 
+		implements IMinimizeNwa<LETTER, STATE> {
 	/**
 	 * The inputed buechi automaton.
 	 */
