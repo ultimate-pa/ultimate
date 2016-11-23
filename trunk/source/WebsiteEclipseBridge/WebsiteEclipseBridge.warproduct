@@ -32,6 +32,7 @@
       <plugin id="com.ibm.icu"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.automata"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.boogie.printer"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.boogie.procedureinliner"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.buchiprogramproduct"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.ltl2aut"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2"/>
@@ -124,6 +125,7 @@
       <plugin id="com.ibm.icu" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.automata" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.boogie.printer" autoStart="true" startLevel="0" />
+      <plugin id="de.uni_freiburg.informatik.ultimate.boogie.procedureinliner" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.buchiprogramproduct" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.ltl2aut" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2" autoStart="true" startLevel="0" />
