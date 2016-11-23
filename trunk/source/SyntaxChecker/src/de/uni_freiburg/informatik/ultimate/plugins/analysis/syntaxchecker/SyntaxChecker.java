@@ -31,9 +31,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxErrorResult;
@@ -54,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
  * @author Matthias Heizmann
  */
 public class SyntaxChecker implements IAnalysis {
+	private static final int SYNTAX_CHECKER_TIMEOUT_MS = 20 * 1000;
 	protected String[] mFileTypes;
 	protected ILogger mLogger;
 	protected List<String> mFileNames;
@@ -65,7 +68,6 @@ public class SyntaxChecker implements IAnalysis {
 
 	@Override
 	public ModelType getOutputDefinition() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
@@ -81,14 +83,12 @@ public class SyntaxChecker implements IAnalysis {
 
 	@Override
 	public List<String> getDesiredToolID() {
-		// TODO Auto-generated method stub
-		return null;
+		return Collections.emptyList();
 	}
 
 	@Override
 	public void setInputDefinition(final ModelType graphType) {
-		// TODO Auto-generated method stub
-
+		// not needed
 	}
 
 	@Override
@@ -104,12 +104,12 @@ public class SyntaxChecker implements IAnalysis {
 	@Override
 	public void setServices(final IUltimateServiceProvider services) {
 		mServices = services;
+		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
 
 	@Override
 	public void init() {
-		// TODO Auto-generated method stub
-
+		// no init needed
 	}
 
 	@Override
@@ -117,8 +117,7 @@ public class SyntaxChecker implements IAnalysis {
 		try {
 			doSyntaxCheck();
 		} catch (final IOException e) {
-			e.printStackTrace();
-			throw new AssertionError(e);
+			throw new ToolchainCanceledException(e.getMessage(), SyntaxChecker.class, "Syntax Checking");
 		}
 	}
 
@@ -161,17 +160,16 @@ public class SyntaxChecker implements IAnalysis {
 		}
 	}
 
-	private String generateLongDescription(final String toolCommand, final String outputError, final String filename,
-			final boolean replaceFilename) {
+	private static String generateLongDescription(final String toolCommand, final String outputError,
+			final String filename, final boolean replaceFilename) {
 		final String toolOutput;
 		if (replaceFilename) {
 			toolOutput = outputError.replaceAll(filename, "");
 		} else {
 			toolOutput = outputError;
 		}
-		final String longMessage = "Syntax check with command \"" + toolCommand + "\" returned the following output. "
+		return "Syntax check with command \"" + toolCommand + "\" returned the following output. "
 				+ System.lineSeparator() + toolOutput;
-		return longMessage;
 	}
 
 	private String callSytaxCheckerAndReturnStderrOutput(final String toolCommand, final String filename)
@@ -186,29 +184,28 @@ public class SyntaxChecker implements IAnalysis {
 			throw new IllegalStateException(errorMsg);
 		}
 		// Let all processes terminate when the toolchain terminates
-		mProcess.setTerminationAfterToolchainTimeout(20 * 1000);
+		mProcess.setTerminationAfterToolchainTimeout(SYNTAX_CHECKER_TIMEOUT_MS);
 
 		final String stderr = convert(mProcess.getErrorStream());
 		return stderr;
 	}
 
-	private String convert(final InputStream is) throws IOException {
+	private static String convert(final InputStream is) throws IOException {
 		final InputStreamReader isr = new InputStreamReader(is);
 		final BufferedReader br = new BufferedReader(isr);
 		String line = br.readLine();
 		if (line == null) {
 			return null;
-		} else {
-			final StringBuilder sb = new StringBuilder();
+		}
+		final StringBuilder sb = new StringBuilder();
+		sb.append(line);
+		line = br.readLine();
+		while (line != null) {
+			sb.append(System.lineSeparator());
 			sb.append(line);
 			line = br.readLine();
-			while (line != null) {
-				sb.append(System.lineSeparator());
-				sb.append(line);
-				line = br.readLine();
-			}
-			return sb.toString();
 		}
+		return sb.toString();
 	}
 
 	@Override
@@ -226,8 +223,8 @@ public class SyntaxChecker implements IAnalysis {
 		return new PreferenceInitializer();
 	}
 
-	private class DummyLocation implements ILocation {
-		
+	private final class DummyLocation implements ILocation {
+
 		@Override
 		public String getFileName() {
 			return mFilenameExtractionObserver.getFilename();
@@ -235,43 +232,36 @@ public class SyntaxChecker implements IAnalysis {
 
 		@Override
 		public int getStartLine() {
-			// TODO Auto-generated method stub
 			return -1;
 		}
 
 		@Override
 		public int getEndLine() {
-			// TODO Auto-generated method stub
 			return 0;
 		}
 
 		@Override
 		public int getStartColumn() {
-			// TODO Auto-generated method stub
 			return 0;
 		}
 
 		@Override
 		public int getEndColumn() {
-			// TODO Auto-generated method stub
 			return 0;
 		}
 
 		@Override
 		public ILocation getOrigin() {
-			// TODO Auto-generated method stub
 			return null;
 		}
 
 		@Override
 		public Check getCheck() {
-			// TODO Auto-generated method stub
 			return null;
 		}
 
 		@Override
 		public boolean isLoop() {
-			// TODO Auto-generated method stub
 			return false;
 		}
 
