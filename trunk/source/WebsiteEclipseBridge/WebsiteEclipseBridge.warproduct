@@ -6,22 +6,22 @@
       <plugin id="ACSLParser"/>
       <plugin id="ASTBuilder"/>
       <plugin id="AutomataScriptParser"/>
-      <plugin id="BlockEncodingTest" fragment="true"/>
       <plugin id="BoogieParser"/>
       <plugin id="BoogiePreprocessor"/>
-      <plugin id="BoogiePreprocessorTest" fragment="true"/>
       <plugin id="CDTParser"/>
-      <plugin id="CoreRCPTest" fragment="true"/>
       <plugin id="JavaCup"/>
       <plugin id="Library-ApacheCommonsLang"/>
+      <plugin id="Library-BoogieAST"/>
+      <plugin id="Library-Disruptor"/>
+      <plugin id="Library-JavaBDD"/>
       <plugin id="Library-Jung"/>
       <plugin id="Library-LassoRanker"/>
+      <plugin id="Library-Log4j2"/>
       <plugin id="Library-ModelCheckerUtils"/>
-      <plugin id="Library-ModelCheckerUtilsTest" fragment="true"/>
       <plugin id="Library-SMTLIB"/>
+      <plugin id="Library-UltimateCore"/>
+      <plugin id="Library-UltimateModel"/>
       <plugin id="Library-UltimateUtil"/>
-      <plugin id="Library-UltimateUtilTest" fragment="true"/>
-      <plugin id="Library-junit-helper"/>
       <plugin id="Library-log4j"/>
       <plugin id="Library-ojAlgo"/>
       <plugin id="SMTInterpol"/>
@@ -45,10 +45,10 @@
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent"/>
-      <plugin id="de.uni_freiburg.informatik.ultimate.source.syntaxchecker"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.witnessparser"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.witnessprinter"/>
       <plugin id="javax.xml"/>
+      <plugin id="org.apache.ant"/>
       <plugin id="org.apache.commons.io"/>
       <plugin id="org.apache.log4j"/>
       <plugin id="org.eclipse.cdt.core"/>
@@ -102,12 +102,17 @@
       <plugin id="CDTParser" autoStart="true" startLevel="0" />
       <plugin id="JavaCup" autoStart="true" startLevel="0" />
       <plugin id="Library-ApacheCommonsLang" autoStart="true" startLevel="0" />
+      <plugin id="Library-BoogieAST" autoStart="true" startLevel="0" />
+      <plugin id="Library-Disruptor" autoStart="true" startLevel="0" />
+      <plugin id="Library-JavaBDD" autoStart="true" startLevel="0" />
       <plugin id="Library-Jung" autoStart="true" startLevel="0" />
       <plugin id="Library-LassoRanker" autoStart="true" startLevel="0" />
+      <plugin id="Library-Log4j2" autoStart="true" startLevel="0" />
       <plugin id="Library-ModelCheckerUtils" autoStart="true" startLevel="0" />
       <plugin id="Library-SMTLIB" autoStart="true" startLevel="0" />
+      <plugin id="Library-UltimateCore" autoStart="true" startLevel="0" />
+      <plugin id="Library-UltimateModel" autoStart="true" startLevel="0" />
       <plugin id="Library-UltimateUtil" autoStart="true" startLevel="0" />
-      <plugin id="Library-junit-helper" autoStart="true" startLevel="0" />
       <plugin id="Library-log4j" autoStart="true" startLevel="0" />
       <plugin id="Library-ojAlgo" autoStart="true" startLevel="0" />
       <plugin id="SMTInterpol" autoStart="true" startLevel="0" />
@@ -131,10 +136,10 @@
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent" autoStart="true" startLevel="0" />
-      <plugin id="de.uni_freiburg.informatik.ultimate.source.syntaxchecker" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.witnessparser" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.witnessprinter" autoStart="true" startLevel="0" />
       <plugin id="javax.xml" autoStart="true" startLevel="0" />
+      <plugin id="org.apache.ant" autoStart="true" startLevel="0" />
       <plugin id="org.apache.commons.io" autoStart="true" startLevel="0" />
       <plugin id="org.apache.log4j" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.cdt.core" autoStart="true" startLevel="0" />
@@ -171,7 +176,7 @@
 
    <warConfiguration webXml="/WebsiteEclipseBridge/WEB-INF/web.xml" launchIni="/WebsiteEclipseBridge/WEB-INF/launch.ini">
    <libraries>
-      <library path="org.eclipse.equinox.servletbridge_1.3.0.v20140430-1556.jar" fromTarget="true"/>
+      <library path="org.eclipse.equinox.servletbridge_1.3.100.v20160113-1459.jar" fromTarget="true"/>
    </libraries>
    </warConfiguration>
 </product>
