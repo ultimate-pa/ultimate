@@ -211,7 +211,7 @@ public class Tasks {
 
 		name = NameStrings.s_TOOL_Taipan;
 		description = NameStrings.s_DESCRIPTION_Taipan;
-		w = new Worker(name, NameStrings.s_TASK_analyze, description, null);
+		w = new Worker(name, NameStrings.s_TASK_verify, description, null);
 		sWorkers.put(w.getId(), w);
 
 		completeInitWorker();

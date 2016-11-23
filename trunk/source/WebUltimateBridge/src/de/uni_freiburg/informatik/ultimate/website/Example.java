@@ -34,18 +34,16 @@ public final class Example {
 	 */
 	private String mFileContent;
 	/**
-	 * The files name; a String describing the file - this is the name shown to
-	 * the web user in a dropdown box.
+	 * The files name; a String describing the file - this is the name shown to the web user in a dropdown box.
 	 */
 	private final String mFileName;
 	/**
-	 * The path to the file - actually the files real name without an absolute
-	 * path! This is used by the Class Loader to find the file!
+	 * The path to the file - actually the files real name without an absolute path! This is used by the Class Loader to
+	 * find the file!
 	 */
 	private String mFilePath;
 	/**
-	 * The examples identifier used to uniquely identify the example on
-	 * communication between client and server.
+	 * The examples identifier used to uniquely identify the example on communication between client and server.
 	 */
 	private final String mId;
 	/**
@@ -53,9 +51,8 @@ public final class Example {
 	 */
 	private Tasks.TaskNames[] mTaskNames;
 	/**
-	 * The map of examples - generated automatically and holding the
-	 * representations of the examples, sorted by the corresponding task(s).
-	 * This implies, that examples with multiple tasks are contained multiply!
+	 * The map of examples - generated automatically and holding the representations of the examples, sorted by the
+	 * corresponding task(s). This implies, that examples with multiple tasks are contained multiply!
 	 */
 	private static final Map<Tasks.TaskNames, ArrayList<Example>> sExamplesByTask = new HashMap<>();
 	/**
@@ -63,8 +60,7 @@ public final class Example {
 	 */
 	private static final Set<String> sIds = new HashSet<>();
 	/**
-	 * List of examples, sorted by their ids - each example is therefore
-	 * contained only once!
+	 * List of examples, sorted by their ids - each example is therefore contained only once!
 	 */
 	private static final Map<String, Example> sExamplesById = new HashMap<>();
 
@@ -75,10 +71,11 @@ public final class Example {
 		SimpleLogger.log("Initializing Examples.");
 		final ArrayList<Example> list = new ArrayList<>();
 
-		final Tasks.TaskNames[] verifyC = { Tasks.TaskNames.AUTOMIZER_C, TaskNames.KOJAK_C };
+		final Tasks.TaskNames[] verifyC = { Tasks.TaskNames.AUTOMIZER_C, TaskNames.KOJAK_C, TaskNames.TAIPAN_C };
 		addAllFilesInExamplesSubfolder(list, "verifyC/", verifyC);
 
-		final Tasks.TaskNames[] verifyBoogie = { Tasks.TaskNames.AUTOMIZER_BOOGIE, Tasks.TaskNames.KOJAK_BOOGIE };
+		final Tasks.TaskNames[] verifyBoogie = { Tasks.TaskNames.AUTOMIZER_BOOGIE, Tasks.TaskNames.KOJAK_BOOGIE,
+		        TaskNames.TAIPAN_BOOGIE };
 		addAllFilesInExamplesSubfolder(list, "verifyBoogie/", verifyBoogie);
 
 		final Tasks.TaskNames[] rankBoogie = { Tasks.TaskNames.RANK_SYNTHESIS_BOOGIE };
@@ -118,9 +115,8 @@ public final class Example {
 	}
 
 	/**
-	 * Returns a map of example files sorted by their corresponding task. This
-	 * map
-	 * 
+	 * Returns a map of example files sorted by their corresponding task. This map
+	 *
 	 * @return a map of example files.
 	 */
 	public static Map<Tasks.TaskNames, ArrayList<Example>> getExamples() {
@@ -133,7 +129,7 @@ public final class Example {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param name
 	 *            the file name to be shown in the Website
 	 * @param taskNames
@@ -180,7 +176,7 @@ public final class Example {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @param name
 	 *            the file name to be shown in the Website
 	 * @param path
@@ -199,7 +195,7 @@ public final class Example {
 
 	/**
 	 * Reads a file and returns its content in a String
-	 * 
+	 *
 	 * @param name
 	 *            the path to the file
 	 * @return the file content in a String
@@ -228,12 +224,11 @@ public final class Example {
 	}
 
 	/**
-	 * Return the filenames of the files in the folder /resources/examples/ +
-	 * dirSuffix (path given relative to root of this package).
-	 * 
-	 * We use the classloader to get the URL of this folder. We support only
-	 * URLs with protocol <i>file</i> and <i>bundleresource</i>. At the moment
-	 * these are the only ones that occur in Website and WebsiteEclipseBridge.
+	 * Return the filenames of the files in the folder /resources/examples/ + dirSuffix (path given relative to root of
+	 * this package).
+	 *
+	 * We use the classloader to get the URL of this folder. We support only URLs with protocol <i>file</i> and
+	 * <i>bundleresource</i>. At the moment these are the only ones that occur in Website and WebsiteEclipseBridge.
 	 */
 	static private String[] filenamesOfFilesInSubdirectory(final String dirSuffix) {
 		final String dir = "/resources/examples/" + dirSuffix;
@@ -278,10 +273,11 @@ public final class Example {
 	}
 
 	/**
-	 * Add all files in subfolder of /resource/example as Example to list for
-	 * taskNames. The id of the examples is defined by hash codes.
+	 * Add all files in subfolder of /resource/example as Example to list for taskNames. The id of the examples is
+	 * defined by hash codes.
 	 */
-	static private void addAllFilesInExamplesSubfolder(final List<Example> list, final String subfolder, final TaskNames[] taskNames) {
+	static private void addAllFilesInExamplesSubfolder(final List<Example> list, final String subfolder,
+	        final TaskNames[] taskNames) {
 		final String[] filesInSubfolder = filenamesOfFilesInSubdirectory(subfolder);
 		for (final String filename : filesInSubfolder) {
 			final String exPath = subfolder + filename;
@@ -300,7 +296,7 @@ public final class Example {
 
 	/**
 	 * Getter for file content.
-	 * 
+	 *
 	 * @return the fileContent
 	 */
 	public String getFileContent() {
@@ -309,7 +305,7 @@ public final class Example {
 
 	/**
 	 * Getter for file name.
-	 * 
+	 *
 	 * @return the fileName
 	 */
 	public String getFileName() {
@@ -318,7 +314,7 @@ public final class Example {
 
 	/**
 	 * Getter for task name.
-	 * 
+	 *
 	 * @return the taskNames
 	 */
 	public Tasks.TaskNames[] getTaskNames() {
@@ -327,7 +323,7 @@ public final class Example {
 
 	/**
 	 * Getter for the examples id.
-	 * 
+	 *
 	 * @return the id
 	 */
 	public String getId() {
@@ -352,7 +348,7 @@ public final class Example {
 
 	/**
 	 * Get the example with the identifier id.
-	 * 
+	 *
 	 * @param id
 	 *            the identifier
 	 * @return the corresponding example or null, if ID not found!
