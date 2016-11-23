@@ -56,21 +56,21 @@ echo "Version is "$VERSION
 TARGETDIR=U${TOOLNAME}-${ARCH}
 ZIPFILE=Ultimate${TOOLNAME}-${ARCH}.zip
 
-if [ ! -z "$3" ]; then
+if [ ! -z "$3" -a ! "NONE" = "$3" ]; then
 	TOOLCHAIN=../../trunk/examples/toolchains/${3}
 else 
 	echo "No reach toolchain specified, ommitting..."
 	TOOLCHAIN=
 fi
 
-if [ ! -z "$4" ]; then
+if [ ! -z "$4" -a ! "NONE" = "$4" ]; then
 	TERMTOOLCHAIN=../../trunk/examples/toolchains/${4}
 else
 	echo "No termination toolchain specified, ommitting..." 
 	TERMTOOLCHAIN=
 fi
 
-if [ ! -z "$5" ]; then
+if [ ! -z "$5" -a ! "NONE" = "$5" ]; then
 	VALTOOLCHAIN=../../trunk/examples/toolchains/${5}
 else 
 	echo "No witness validation toolchain specified, ommitting..."
