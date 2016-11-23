@@ -207,7 +207,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		        mCsToolkit.getManagedScript().getScript());
 
 		// AI Module
-		final boolean usePredicatesFromAbstractInterpretation = true; // TODO make a Pref
+		final boolean usePredicatesFromAbstractInterpretation = GlobalSettings.INSTANCE.getUseAbstractInterpretation();
 		Map<IcfgLocation, Term> initialPredicates = null;
 		if (usePredicatesFromAbstractInterpretation) {
 
@@ -342,6 +342,13 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		        .setUseLiveVariables(prefs.getBoolean(CodeCheckPreferenceInitializer.LABEL_LIVE_VARIABLES, true));
 		GlobalSettings.INSTANCE
 		        .setUseUnsatCores(prefs.getEnum(CodeCheckPreferenceInitializer.LABEL_UNSAT_CORES, UnsatCores.class));
+
+		/*
+		 * Abstract interpretataion settings
+		 */
+		GlobalSettings.INSTANCE.setUseAbstractInterpretation(
+		        prefs.getBoolean(CodeCheckPreferenceInitializer.LABEL_USE_ABSTRACT_INTERPRETATION,
+		                CodeCheckPreferenceInitializer.DEF_USE_ABSTRACT_INTERPRETATION));
 
 	}
 
