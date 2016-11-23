@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
@@ -72,6 +73,8 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 	private final Map<EqNode, EqGraphNode> eqNodeToEqGraphNodeMap = new HashMap<>();
 	
 	private final Map<Term, EqNode> mTermToEqNode = new HashMap<>();
+
+	Map<Term, BoogieVarOrConst> mTermToBoogieVarOrConst = new HashMap<>();
 
 	private final Script mScript;
 
@@ -114,16 +117,65 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 		}
 		
 		final Term transFormulaTerm = c.getTransitionFormula().getFormula();
-		final Term transFormedTerm = new Substitution(mScript, substitionMap).transform(transFormulaTerm);
-		final List<EqNodeFinder.SelectOrStoreArguments> argsList = new EqNodeFinder().findEqNode(transFormedTerm);
-
-		int argsListSize = argsList.size();
+		final Term formulaWithNormalizedVariables = new Substitution(mScript, substitionMap).transform(transFormulaTerm);
 		
-		for (int i = argsListSize - 1; i >= 0; i--) {
-			getOrConstructEqNode(argsList.get(i).originalTerm);
+		// handle selects in the formula
+		List<MultiDimensionalSelect> mdSelects = MultiDimensionalSelect.extractSelectShallow(formulaWithNormalizedVariables, false);
+		for (MultiDimensionalSelect mds : mdSelects) {
+			getOrConstructEqNode(mds);
+		}
+		
+		// handle stores in the formula
+		List<MultiDimensionalStore> mdStores = MultiDimensionalStore.extractArrayStoresShallow(formulaWithNormalizedVariables);
+		for (MultiDimensionalStore mds : mdStores) {
+			getOrConstructEqNode(mds);
+		}
+
+		// handle TermVariables and constants that are equated to a select
+		Set<Term> selectTerms = mdSelects.stream().map(mds -> mds.getSelectTerm()).collect(Collectors.toSet());
+		EquatedTermsFinder etf = new EquatedTermsFinder(selectTerms);
+		etf.transform(formulaWithNormalizedVariables);
+		for (Term t : etf.getEquatedTerms()) {
+			getOrConstructEqNode(t);
 		}
 	}
 	
+	private EqNode getOrConstructEqNode(MultiDimensionalStore mds) {
+		EqNode result = mTermToEqNode.get(mds.getStoreTerm());
+		if (result != null) {
+			return result;
+		}
+		
+		Term array = mds.getArray();
+		List<EqNode> indices = new ArrayList<>();
+		for (Term ai : mds.getIndex()) {
+			indices.add(getOrConstructEqNode(ai));
+		}
+		getOrConstructEqNode(mds.getValue());
+
+		result = getOrConstructEqFnNode(getOrConstructBoogieVarOrConst(array), indices);
+		mTermToEqNode.put(mds.getStoreTerm(), result);
+		return result;
+	}
+
+	private EqNode getOrConstructEqNode(MultiDimensionalSelect mds) {
+		EqNode result = mTermToEqNode.get(mds.getSelectTerm());
+		if (result != null) {
+			return result;
+		}
+		
+		Term array = mds.getArray();
+		List<EqNode> indices = new ArrayList<>();
+		for (Term ai : mds.getIndex()) {
+			indices.add(getOrConstructEqNode(ai));
+		}
+
+		result = getOrConstructEqFnNode(getOrConstructBoogieVarOrConst(array),
+				indices);
+		mTermToEqNode.put(mds.getSelectTerm(), result);
+		return result;
+	}
+
 	private EqNode getOrConstructEqNode(Term t) {
 		EqNode result = mTermToEqNode.get(t);
 		if (result != null) {
@@ -133,7 +185,7 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 		if (t instanceof TermVariable 
 				|| t instanceof ConstantTerm
 				|| (t instanceof ApplicationTerm && ((ApplicationTerm) t).getParameters().length == 0)) {
-			result = getEqBaseNode(getBoogieVarOrConst(t));
+			result = getOrConstructEqBaseNode(getOrConstructBoogieVarOrConst(t));
 			mTermToEqNode.put(t, result);
 			return result;
 		} 
@@ -142,37 +194,17 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 		ApplicationTerm at = (ApplicationTerm) t;
 		if (at.getFunction().getName() == "select") {
 			MultiDimensionalSelect mds = new MultiDimensionalSelect(at);
-			Term array = mds.getArray();
-			List<EqNode> indices = new ArrayList<>();
-			for (Term ai : mds.getIndex()) {
-				indices.add(getOrConstructEqNode(ai));
-			}
-			
-			result = getEqFnNode(getBoogieVarOrConst(array),
-					indices);
-			mTermToEqNode.put(t, result);
-			return result;
+			return getOrConstructEqNode(mds);
 		} else if (at.getFunction().getName() == "store") {
 			MultiDimensionalStore mds = new MultiDimensionalStore(at);
-			Term array = mds.getArray();
-			List<EqNode> indices = new ArrayList<>();
-			for (Term ai : mds.getIndex()) {
-				indices.add(getOrConstructEqNode(ai));
-			}
-			getOrConstructEqNode(mds.getValue());
-				
-			result = getEqFnNode(getBoogieVarOrConst(array), indices);
-			mTermToEqNode.put(t, result);
-			return result;
+			return getOrConstructEqNode(mds);
 		} else {
 			assert false : "should not happen";
 			return null;
 		}
 	}
 	
-	private BoogieVarOrConst getBoogieVarOrConst(final Term t) {
-		Map<Term, BoogieVarOrConst> mTermToBoogieVarOrConst = new HashMap<>();
-		
+	private BoogieVarOrConst getOrConstructBoogieVarOrConst(final Term t) {
 		BoogieVarOrConst result = mTermToBoogieVarOrConst.get(t);
 		if (result != null) {
 			return result;
@@ -201,7 +233,7 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 	 * @param tv
 	 * @return
 	 */
-	private EqBaseNode getEqBaseNode(final BoogieVarOrConst bv) {
+	private EqBaseNode getOrConstructEqBaseNode(final BoogieVarOrConst bv) {
 		
 		EqBaseNode result = mEqBaseNodeStore.get(bv);
 		
@@ -213,7 +245,7 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 		return result;
 	}
 	
-	private EqFunctionNode getEqFnNode(final BoogieVarOrConst eqNode, final List<EqNode> indices) {
+	private EqFunctionNode getOrConstructEqFnNode(final BoogieVarOrConst eqNode, final List<EqNode> indices) {
 			
 		EqFunctionNode result = mEqFunctionNodeStore.get(eqNode, indices);
 		if (result == null) {
@@ -242,12 +274,10 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 			graphNode.getCcchild().add(args);
 		}
 		
-//		eqGraphNodeSet.add(graphNode);
 		eqNodeToEqGraphNodeMap.put(node, graphNode);
 	}
 
 	public Set<EqGraphNode> getEqGraphNodeSet() {
-//		return eqGraphNodeSet;
 		return new HashSet<EqGraphNode>(eqNodeToEqGraphNodeMap.values());
 	}
 
