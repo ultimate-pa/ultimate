@@ -140,12 +140,14 @@ public class ElimStore3 {
 	// return result;
 	// }
 
-	public Term elim(final int quantifier, TermVariable eliminatee, Term term, final Set<TermVariable> newAuxVars) {
+	public Term elim(final int quantifier, final TermVariable inputeliminatee, final Term inputterm, final Set<TermVariable> newAuxVars) {
 		mQuantifier = quantifier;
 		ArrayUpdate writeInto = null;
 		ArrayUpdate writtenFrom = null;
 		Term[] conjuncts;
 		Term othersT;
+		TermVariable eliminatee = inputeliminatee;
+		Term term = inputterm;
 		
 		term = eliminateSelfUpdates(mScript, quantifier, term);
 
