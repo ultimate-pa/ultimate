@@ -26,7 +26,7 @@ pushd ../../trunk/source/BA_MavenParentUltimate/ > /dev/null
 mvn clean install -Pmaterialize
 popd > /dev/null
 
-./createZip.sh Taipan linux AutomizerC_WitnessPrinter.xml
+./createZip.sh Taipan linux AutomizerC_WitnessPrinter.xml NONE AutomizerC.xml
 ./createZip.sh Automizer linux AutomizerC_WitnessPrinter.xml BuchiAutomizerCWithBlockEncoding.xml AutomizerC.xml
 ./createZip.sh Kojak linux KojakC_WitnessPrinter.xml
 
