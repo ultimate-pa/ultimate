@@ -252,7 +252,8 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 		} else {
 			// construct initial partition using collections from constructor
 			assert (mPartition == null
-					&& assertStatesSeparation(equivalenceClasses));
+					&& assertStatesSeparation(equivalenceClasses)) : 
+						"initial partition does not separate final/non-final states";
 			mPartition = new Partition(mOperand, states.size());
 			
 			for (final Set<STATE> ecSet : equivalenceClasses) {
