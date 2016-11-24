@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -48,16 +49,21 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  * @author Matthias Heizmann
  */
 public class ApplicationTermFinder extends NonRecursive {
-	protected final String mFunctionSymbolName;
+	protected final Set<String> mFunctionSymbolNames;
 	protected Set<ApplicationTerm> mResult;
 	protected final boolean mOnlyOutermost;
 	protected Set<Term> mVisitedSubterms;
 	
 	public ApplicationTermFinder(final String functionSymbolName, final boolean onlyOutermost) {
+		this(Collections.singleton(functionSymbolName), onlyOutermost);
+	}
+	
+	public ApplicationTermFinder(final Set<String> functionSymbolNames, final boolean onlyOutermost) {
 		super();
-		mFunctionSymbolName = functionSymbolName;
+		mFunctionSymbolNames = functionSymbolNames;
 		mOnlyOutermost = onlyOutermost;
 	}
+
 	
 	public Set<ApplicationTerm> findMatchingSubterms(final Term term) {
 		if (term == null) {
@@ -91,7 +97,7 @@ public class ApplicationTermFinder extends NonRecursive {
 				return;
 			}
 			mVisitedSubterms.add(term);
-			if (term.getFunction().getName().equals(mFunctionSymbolName)) {
+			if (mFunctionSymbolNames.contains(term.getFunction().getName())) {
 				mResult.add(term);
 				if (mOnlyOutermost) {
 					return;

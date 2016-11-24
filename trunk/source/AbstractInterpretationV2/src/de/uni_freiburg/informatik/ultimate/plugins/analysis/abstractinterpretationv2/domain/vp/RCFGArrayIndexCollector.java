@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ApplicationTermFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
@@ -132,10 +133,24 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 		}
 
 		// handle TermVariables and constants that are equated to a select
+		Set<String> equationFunctionNames = new HashSet<String>(2);
+		equationFunctionNames.add("=");
+		equationFunctionNames.add("distinct");
+		Set<ApplicationTerm> equations = 
+				new ApplicationTermFinder(equationFunctionNames, false)
+					.findMatchingSubterms(formulaWithNormalizedVariables);
 		Set<Term> selectTerms = mdSelects.stream().map(mds -> mds.getSelectTerm()).collect(Collectors.toSet());
-		EquatedTermsFinder etf = new EquatedTermsFinder(selectTerms);
-		etf.transform(formulaWithNormalizedVariables);
-		for (Term t : etf.getEquatedTerms()) {
+		Set<Term> termsEquatedWithASelectTerm = new HashSet<>();
+		for (ApplicationTerm eq : equations) {
+			if (selectTerms.contains(eq.getParameters()[0])
+					&& !selectTerms.contains(eq.getParameters()[1])) {
+				termsEquatedWithASelectTerm.add(eq.getParameters()[1]);
+			} else if (selectTerms.contains(eq.getParameters()[1])
+					&& !selectTerms.contains(eq.getParameters()[0])) {
+				termsEquatedWithASelectTerm.add(eq.getParameters()[0]);
+			}
+		}
+		for (Term t : termsEquatedWithASelectTerm) {
 			getOrConstructEqNode(t);
 		}
 	}
