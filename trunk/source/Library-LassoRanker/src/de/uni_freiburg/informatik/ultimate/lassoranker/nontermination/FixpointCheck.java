@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2016 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE LassoRanker Library.
- * 
+ *
  * The ULTIMATE LassoRanker Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE LassoRanker Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE LassoRanker Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE LassoRanker Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE LassoRanker Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE LassoRanker Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.lassoranker.nontermination;
@@ -49,15 +49,17 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
- * Check if a Lasso given as a stem and a loop has a fixpoint (i.e., a
- * nonterminating execution in which the same state is repeated after each
- * execution of the loop).
+ * Check if a Lasso given as a stem and a loop has a fixpoint (i.e., a nonterminating execution in which the same state
+ * is repeated after each execution of the loop).
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
 public class FixpointCheck {
-	
-	public enum HasFixpoint { YES, NO, UNKNOWN };
+
+	public enum HasFixpoint {
+		YES, NO, UNKNOWN
+	}
 
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
@@ -67,9 +69,9 @@ public class FixpointCheck {
 	private final TransFormula mLoop;
 	private final HasFixpoint mResult;
 	private InfiniteFixpointRepetition mTerminationArgument;
-	
-	public FixpointCheck(final IUltimateServiceProvider services, final ILogger logger, final ManagedScript managedScript,
-			final Set<IProgramNonOldVar> modifiableGlobalsAtHonda, 
+
+	public FixpointCheck(final IUltimateServiceProvider services, final ILogger logger,
+			final ManagedScript managedScript, final Set<IProgramNonOldVar> modifiableGlobalsAtHonda,
 			final TransFormula stem, final TransFormula loop) {
 		super();
 		mServices = services;
@@ -83,14 +85,15 @@ public class FixpointCheck {
 		mManagedScript.unlock(this);
 	}
 
-	
 	private HasFixpoint checkForFixpoint() {
-		final Map<Term, Term> substitutionMappingStem = 
+		final Map<Term, Term> substitutionMappingStem =
 				constructSubtitutionMapping(mStem, this::getConstantAtInit, this::getConstantAtHonda);
-		final Map<Term, Term> substitutionMappingLoop = 
+		final Map<Term, Term> substitutionMappingLoop =
 				constructSubtitutionMapping(mLoop, this::getConstantAtHonda, this::getConstantAtHonda);
-		final Term renamedStem = new Substitution(mManagedScript, substitutionMappingStem).transform(mStem.getFormula());
-		final Term renamedLoop = new Substitution(mManagedScript, substitutionMappingLoop).transform(mLoop.getFormula());
+		final Term renamedStem =
+				new Substitution(mManagedScript, substitutionMappingStem).transform(mStem.getFormula());
+		final Term renamedLoop =
+				new Substitution(mManagedScript, substitutionMappingLoop).transform(mLoop.getFormula());
 		mManagedScript.echo(this, new QuotedObject("Start fixpoint check"));
 		mManagedScript.push(this, 1);
 		mManagedScript.assertTerm(this, renamedStem);
@@ -100,7 +103,8 @@ public class FixpointCheck {
 		switch (lbool) {
 		case SAT:
 			result = HasFixpoint.YES;
-			final Set<Term> wantValues = computeTermsForWhichWeWantValues(substitutionMappingStem, substitutionMappingLoop);
+			final Set<Term> wantValues =
+					computeTermsForWhichWeWantValues(substitutionMappingStem, substitutionMappingLoop);
 			final Map<Term, Term> valueMap = SmtUtils.getValues(mManagedScript.getScript(), wantValues);
 			final Map<Term, Term> valuesAtInit = computeValuesAtInit(valueMap);
 			final Map<Term, Term> valuesAtHonda = computeValuesAtHonda(valueMap);
@@ -119,7 +123,6 @@ public class FixpointCheck {
 		mManagedScript.echo(this, new QuotedObject("Finished fixpoint check"));
 		return result;
 	}
-
 
 	private Map<Term, Term> computeValuesAtHonda(final Map<Term, Term> valueMap) {
 		final Map<Term, Term> valuesAtHonda = new HashMap<>();
@@ -147,7 +150,6 @@ public class FixpointCheck {
 		return valuesAtHonda;
 	}
 
-
 	private Map<Term, Term> computeValuesAtInit(final Map<Term, Term> valueMap) {
 		final Map<Term, Term> valuesAtInit = new HashMap<>();
 		for (final IProgramVar pv : mStem.getInVars().keySet()) {
@@ -159,9 +161,9 @@ public class FixpointCheck {
 		}
 		return valuesAtInit;
 	}
-	
-	private Set<Term> computeTermsForWhichWeWantValues(
-			final Map<Term, Term> substitutionMappingStem, final Map<Term, Term> substitutionMappingLoop) {
+
+	private static Set<Term> computeTermsForWhichWeWantValues(final Map<Term, Term> substitutionMappingStem,
+			final Map<Term, Term> substitutionMappingLoop) {
 		final Set<Term> result = new HashSet<>();
 		final Predicate<Term> predicate = x -> SmtUtils.isSortForWhichWeCanGetValues(x.getSort());
 		result.addAll(substitutionMappingStem.values().stream().filter(predicate).collect(Collectors.toList()));
@@ -169,16 +171,15 @@ public class FixpointCheck {
 		return result;
 	}
 
-	private IProgramVar replaceOldByNonOld(final IProgramVar pv) {
+	private static IProgramVar replaceOldByNonOld(final IProgramVar pv) {
 		if (pv.isOldvar()) {
 			return ((IProgramOldVar) pv).getNonOldVar();
-		} else {
-			return pv;
 		}
+		return pv;
 	}
-	
-	private Map<Term, Term> constructSubtitutionMapping(final TransFormula tf, 
-			final IConstantMapper inVarMapping, final IConstantMapper outVarMapping) {
+
+	private Map<Term, Term> constructSubtitutionMapping(final TransFormula tf, final IConstantMapper inVarMapping,
+			final IConstantMapper outVarMapping) {
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		for (final Entry<IProgramVar, TermVariable> entry : tf.getInVars().entrySet()) {
 			substitutionMapping.put(entry.getValue(), inVarMapping.getConstant(entry.getKey()));
@@ -191,16 +192,15 @@ public class FixpointCheck {
 		}
 		return substitutionMapping;
 	}
-	
-	
+
 	private Term getConstantAtInit(final IProgramVar pv) {
 		final IProgramVar updated = replaceOldByNonOld(pv);
 		return updated.getDefaultConstant();
 	}
-	
+
 	private Term getConstantAtHonda(final IProgramVar pv) {
 		final boolean wasModifiedByStem = mStem.getAssignedVars().contains(pv);
-		
+
 		final IProgramVar updated;
 		if (pv.isOldvar()) {
 			final IProgramNonOldVar nonOld = ((IProgramOldVar) pv).getNonOldVar();
@@ -214,17 +214,14 @@ public class FixpointCheck {
 		}
 		if (wasModifiedByStem) {
 			return updated.getPrimedConstant();
-		} else {
-			return updated.getDefaultConstant();
 		}
+		return updated.getDefaultConstant();
 	}
-	
-	
+
 	@FunctionalInterface
 	private interface IConstantMapper {
 		public Term getConstant(final IProgramVar key);
 	}
-
 
 	/**
 	 * @return the result
@@ -233,13 +230,11 @@ public class FixpointCheck {
 		return mResult;
 	}
 
-
 	/**
 	 * @return the terminationArgument
 	 */
 	public InfiniteFixpointRepetition getTerminationArgument() {
 		return mTerminationArgument;
 	}
-	
-	
+
 }

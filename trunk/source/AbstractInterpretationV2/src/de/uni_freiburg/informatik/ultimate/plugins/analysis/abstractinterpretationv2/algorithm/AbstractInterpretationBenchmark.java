@@ -28,7 +28,7 @@ public class AbstractInterpretationBenchmark<ACTION, LOCATION> implements ICsvPr
 	}
 
 	@Override
-	public ICsvProvider<Object> createCvsProvider() {
+	public ICsvProvider<Object> createCsvProvider() {
 		return null;
 	}
 

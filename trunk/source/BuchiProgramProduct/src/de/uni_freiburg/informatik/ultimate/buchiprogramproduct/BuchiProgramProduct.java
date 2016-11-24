@@ -28,7 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.buchiprogramproduct;
 
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizercfg.SmallBlockEncoder;
@@ -156,7 +156,7 @@ public class BuchiProgramProduct implements IGenerator {
 
 	@Override
 	public List<String> getDesiredToolID() {
-		return null;
+		return Collections.emptyList();
 	}
 
 	@Override
@@ -169,14 +169,12 @@ public class BuchiProgramProduct implements IGenerator {
 		mStorage = storage;
 	}
 
-	@SuppressWarnings("rawtypes")
 	@Override
 	public void setServices(final IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		final Collection<CounterExampleResult> cex =
-				ResultUtil.filterResults(services.getResultService().getResults(), CounterExampleResult.class);
-		mPreviousToolFoundErrors = !cex.isEmpty();
+		mPreviousToolFoundErrors = !ResultUtil
+				.filterResults(services.getResultService().getResults(), CounterExampleResult.class).isEmpty();
 		mBacktranslator = new ProductBacktranslator(IcfgEdge.class, Term.class);
 		if (!mPreviousToolFoundErrors) {
 			mServices.getBacktranslationService().addTranslator(mBacktranslator);

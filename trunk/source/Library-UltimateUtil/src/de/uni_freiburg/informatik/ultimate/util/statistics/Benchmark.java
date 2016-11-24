@@ -458,7 +458,7 @@ public class Benchmark implements ICsvProviderProvider<Double> {
 	}
 
 	@Override
-	public ICsvProvider<Double> createCvsProvider() {
+	public ICsvProvider<Double> createCsvProvider() {
 
 		final List<String> columHeaders = new ArrayList<>();
 		columHeaders.add("Runtime (ns)");

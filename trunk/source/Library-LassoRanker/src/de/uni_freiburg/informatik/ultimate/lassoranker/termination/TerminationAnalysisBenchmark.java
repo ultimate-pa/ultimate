@@ -165,7 +165,7 @@ public class TerminationAnalysisBenchmark
 	
 	
 	@Override
-	public ICsvProvider<Object> createCvsProvider() {
+	public ICsvProvider<Object> createCsvProvider() {
 		return CsvUtils.constructCvsProviderFromMap(getKeyValueMap());
 	}
 }

@@ -30,7 +30,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.blockencoding;
 import java.util.ArrayList;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.core.lib.results.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
@@ -41,7 +40,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.benchmark.SizeBenchmark;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding.AssumeMerger;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding.IEncoder;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding.MaximizeFinalStates;
@@ -55,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.preferences.Pre
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.annot.BuchiProgramAcceptingStateAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgSizeBenchmark;
 
 /**
  *
@@ -62,17 +61,17 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Boo
  *
  */
 public class BlockEncodingObserver implements IUnmanagedObserver {
-	
+
 	private static final BuchiProgramAcceptingStateAnnotation BUCHI_PROGRAM_ACCEPTING_STATE_ANNOTATION =
 			new BuchiProgramAcceptingStateAnnotation();
-	
+
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final BlockEncodingBacktranslator mBacktranslator;
 	private final XnfConversionTechnique mXnfConversionTechnique;
 	private final SimplificationTechnique mSimplificationTechnique;
 	private BoogieIcfgContainer mIterationResult;
-	
+
 	public BlockEncodingObserver(final ILogger logger, final IUltimateServiceProvider services,
 			final BlockEncodingBacktranslator backtranslator, final SimplificationTechnique simplTech,
 			final XnfConversionTechnique xnfConvTech) {
@@ -83,26 +82,26 @@ public class BlockEncodingObserver implements IUnmanagedObserver {
 		mSimplificationTechnique = simplTech;
 		mXnfConversionTechnique = xnfConvTech;
 	}
-	
+
 	@Override
 	public void init(final ModelType modelType, final int currentModelIndex, final int numberOfModels) {
 		// no initialisation needed
 	}
-	
+
 	@Override
 	public void finish() throws Throwable {
 		// not needed
 	}
-	
+
 	@Override
 	public boolean performedChanges() {
 		return false;
 	}
-	
+
 	public IElement getModel() {
 		return mIterationResult;
 	}
-	
+
 	@Override
 	public boolean process(final IElement root) throws Exception {
 		if (root instanceof BoogieIcfgContainer) {
@@ -111,17 +110,17 @@ public class BlockEncodingObserver implements IUnmanagedObserver {
 		}
 		return true;
 	}
-	
+
 	private void processIcfg(final BoogieIcfgContainer node) {
 		// measure size of rcfg
 		reportSizeBenchmark("Initial Icfg", node);
-		
+
 		final IPreferenceProvider ups = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		int maxIters = ups.getInt(PreferenceInitializer.OPTIMIZE_MAX_ITERATIONS) - 1;
 		if (maxIters < 0) {
 			maxIters = -1;
 		}
-		
+
 		final List<IEncoderProvider> encoderProviders = getEncoderProviders(ups);
 		final boolean optimizeUntilFixpoint = ups.getBoolean(PreferenceInitializer.OPTIMIZE_UNTIL_FIXPOINT);
 		int i = 1;
@@ -132,20 +131,20 @@ public class BlockEncodingObserver implements IUnmanagedObserver {
 			}
 			++i;
 			EncodingResult currentResult = new EncodingResult(mIterationResult, false);
-			
+
 			for (final IEncoderProvider provider : encoderProviders) {
 				final IEncoder encoder = provider.createEncoder(currentResult.getIcfg());
 				currentResult = applyEncoder(currentResult, encoder);
 			}
-			
+
 			mIterationResult = currentResult.getIcfg();
-			
+
 			if (!mServices.getProgressMonitorService().continueProcessing()) {
 				mServices.getResultService().reportResult(Activator.PLUGIN_ID,
 						new TimeoutResult(Activator.PLUGIN_ID, "Timeout during block encoding"));
 				return;
 			}
-			
+
 			if (!optimizeUntilFixpoint || !currentResult.isChanged() || maxIters == 0) {
 				break;
 			}
@@ -155,25 +154,25 @@ public class BlockEncodingObserver implements IUnmanagedObserver {
 		}
 		reportSizeBenchmark("Encoded RCFG", mIterationResult);
 	}
-	
+
 	private List<IEncoderProvider> getEncoderProviders(final IPreferenceProvider ups) {
 		final List<IEncoderProvider> rtr = new ArrayList<>();
-		
+
 		// note that the order is important
-		
+
 		if (ups.getBoolean(PreferenceInitializer.OPTIMIZE_REMOVE_INFEASIBLE_EDGES)) {
 			rtr.add((node) -> new RemoveInfeasibleEdges(node, mServices));
 		}
-		
+
 		if (ups.getBoolean(PreferenceInitializer.OPTIMIZE_REMOVE_SINK_STATES)) {
 			rtr.add((node) -> new RemoveSinkStates(node, mServices, BlockEncodingObserver::hasToBePreserved));
 		}
-		
+
 		if (ups.getBoolean(PreferenceInitializer.OPTIMIZE_MAXIMIZE_FINAL_STATES)) {
 			rtr.add((node) -> new MaximizeFinalStates(node, mServices, BlockEncodingObserver::markBuchiProgramAccepting,
 					BlockEncodingObserver::isBuchiProgramAccepting));
 		}
-		
+
 		final MinimizeStates minimizeStates =
 				ups.getEnum(PreferenceInitializer.OPTIMIZE_MINIMIZE_STATES, MinimizeStates.class);
 		if (minimizeStates != MinimizeStates.NONE) {
@@ -194,29 +193,25 @@ public class BlockEncodingObserver implements IUnmanagedObserver {
 				throw new IllegalArgumentException(minimizeStates + " is an unknown enum value!");
 			}
 		}
-		
+
 		if (ups.getBoolean(PreferenceInitializer.OPTIMIZE_SIMPLIFY_ASSUMES)) {
 			rtr.add((node) -> new AssumeMerger(node, mServices, mSimplificationTechnique, mXnfConversionTechnique,
 					mBacktranslator));
 		}
 		return rtr;
 	}
-	
+
 	private static EncodingResult applyEncoder(final EncodingResult previousResult, final IEncoder encoder) {
 		final BoogieIcfgContainer result = encoder.getResult(previousResult.getIcfg());
 		return new EncodingResult(result, previousResult.isChanged() || encoder.isGraphChanged());
 	}
-	
+
 	private void reportSizeBenchmark(final String message, final BoogieIcfgContainer root) {
-		reportSizeBenchmark(message, new SizeBenchmark(root, message));
-	}
-	
-	private void reportSizeBenchmark(final String message, final SizeBenchmark bench) {
+		final IcfgSizeBenchmark bench = new IcfgSizeBenchmark(root, message);
 		mLogger.info(message + " " + bench);
-		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
-				new BenchmarkResult<>(Activator.PLUGIN_ID, message, bench));
+		bench.reportBenchmarkResult(mServices.getResultService(), Activator.PLUGIN_ID, message);
 	}
-	
+
 	private static boolean hasToBePreserved(final IcfgLocation node) {
 		if (node instanceof BoogieIcfgLocation) {
 			final BoogieIcfgLocation pp = (BoogieIcfgLocation) node;
@@ -224,33 +219,33 @@ public class BlockEncodingObserver implements IUnmanagedObserver {
 		}
 		return false;
 	}
-	
+
 	private static boolean isBuchiProgramAccepting(final IcfgLocation node) {
 		return BuchiProgramAcceptingStateAnnotation.getAnnotation(node) != null;
 	}
-	
+
 	private static void markBuchiProgramAccepting(final IcfgLocation node) {
 		BUCHI_PROGRAM_ACCEPTING_STATE_ANNOTATION.annotate(node);
 	}
-	
+
 	@FunctionalInterface
 	private static interface IEncoderProvider {
 		IEncoder createEncoder(final BoogieIcfgContainer boogieIcfgContainer);
 	}
-	
+
 	private static class EncodingResult {
 		private final BoogieIcfgContainer mNode;
 		private final boolean mIsChanged;
-		
+
 		private EncodingResult(final BoogieIcfgContainer node, final boolean isChanged) {
 			mNode = node;
 			mIsChanged = isChanged;
 		}
-		
+
 		private boolean isChanged() {
 			return mIsChanged;
 		}
-		
+
 		private BoogieIcfgContainer getIcfg() {
 			return mNode;
 		}

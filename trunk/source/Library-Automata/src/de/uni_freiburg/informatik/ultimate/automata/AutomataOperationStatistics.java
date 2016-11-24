@@ -55,7 +55,7 @@ public class AutomataOperationStatistics implements ICsvProviderProvider<Object>
 	private final TreeMap<StatisticsType, Object> mKeyValueMap = new TreeMap<>();
 	
 	@Override
-	public ICsvProvider<Object> createCvsProvider() {
+	public ICsvProvider<Object> createCsvProvider() {
 		final List<String> columnTitles = new ArrayList<>(mKeyValueMap.size());
 		final List<Object> firstRow = new ArrayList<>(mKeyValueMap.size());
 		for (final Entry<StatisticsType, Object> entry : mKeyValueMap.entrySet()) {

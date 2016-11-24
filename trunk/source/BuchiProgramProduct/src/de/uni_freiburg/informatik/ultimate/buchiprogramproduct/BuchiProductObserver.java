@@ -29,24 +29,11 @@ package de.uni_freiburg.informatik.ultimate.buchiprogramproduct;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck;
-import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.benchmark.SizeBenchmark;
-import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizeproduct.AssumeMerger;
-import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizeproduct.BaseProductOptimizer;
-import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizeproduct.MaximizeFinalStates;
-import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizeproduct.MinimizeStatesMultiEdgeMultiNode;
-import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizeproduct.MinimizeStatesMultiEdgeSingleNode;
-import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizeproduct.MinimizeStatesSingleEdgeSingleNode;
-import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizeproduct.RemoveInfeasibleEdges;
-import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizeproduct.RemoveSinkStates;
-import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.preferences.PreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.preferences.PreferenceInitializer.MinimizeStates;
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.productgenerator.ProductGenerator;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.BenchmarkResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
-import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -92,7 +79,7 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 
 	@Override
 	public void init(final ModelType modelType, final int currentModelIndex, final int numberOfModels) {
-		// no initialisation needed
+		// no initialization needed
 	}
 
 	@Override
@@ -106,116 +93,16 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 		reportSizeBenchmark("Initial RCFG", mRcfg);
 
 		mLogger.info("Beginning generation of product automaton");
-		final IPreferenceProvider ups = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		try {
 			final LTLPropertyCheck ltlAnnot = LTLPropertyCheck.getAnnotation(mNeverClaimNWAContainer);
 			mProduct = new ProductGenerator(mNeverClaimNWAContainer.getValue(), mRcfg, ltlAnnot, mServices,
 					mBacktranslator, mSimplificationTechnique, mXnfConversionTechnique).getProductRcfg();
 			mLogger.info("Finished generation of product automaton successfully");
 			reportSizeBenchmark("Initial product", mProduct);
-
-			int maxIters = ups.getInt(PreferenceInitializer.OPTIMIZE_MAX_ITERATIONS) - 1;
-			if (maxIters < 0) {
-				maxIters = -1;
-			}
-			int i = 1;
-			while (true) {
-				mLogger.debug("==== Optimization #" + i + "====");
-				++i;
-				boolean continueOptimization = false;
-
-				continueOptimization = optimizeRemoveInfeasibleEdges(ups, continueOptimization);
-				continueOptimization = optimizeRemoveSinkStates(ups, continueOptimization);
-				continueOptimization = optimizeMaximizeFinalStates(ups, continueOptimization);
-				continueOptimization = optimizeMinimizeStates(ups, continueOptimization);
-				continueOptimization = optimizeSimplifyAssumes(ups, continueOptimization);
-
-				if (!mServices.getProgressMonitorService().continueProcessing()) {
-					mServices.getResultService().reportResult(Activator.PLUGIN_ID,
-							new TimeoutResult(Activator.PLUGIN_ID, "Timeout during product optimization"));
-					return;
-				}
-
-				if (!ups.getBoolean(PreferenceInitializer.OPTIMIZE_UNTIL_FIXPOINT) || !continueOptimization
-						|| maxIters == 0) {
-					break;
-				}
-				if (maxIters > 0) {
-					maxIters--;
-				}
-			}
-			reportSizeBenchmark("Optimized Product", mProduct);
-
 		} catch (final Exception e) {
 			mLogger.error("BuchiProgramProduct encountered an error during product automaton generation:", e);
 			throw e;
 		}
-	}
-
-	private boolean optimizeRemoveSinkStates(final IPreferenceProvider ups, final boolean continueOptimization) {
-		if (ups.getBoolean(PreferenceInitializer.OPTIMIZE_REMOVE_SINK_STATES)) {
-			final RemoveSinkStates rss = new RemoveSinkStates(mProduct, mServices, mStorage);
-			mProduct = rss.getResult(mProduct);
-			return continueOptimization || rss.isGraphChanged();
-		}
-		return continueOptimization;
-	}
-
-	private boolean optimizeRemoveInfeasibleEdges(final IPreferenceProvider ups, final boolean continueOptimization) {
-		if (ups.getBoolean(PreferenceInitializer.OPTIMIZE_REMOVE_INFEASIBLE_EDGES)) {
-			final RemoveInfeasibleEdges opt1 = new RemoveInfeasibleEdges(mProduct, mServices, mStorage);
-			mProduct = opt1.getResult(mProduct);
-			return continueOptimization || opt1.isGraphChanged();
-		}
-		return continueOptimization;
-	}
-
-	private boolean optimizeMaximizeFinalStates(final IPreferenceProvider ups, final boolean continueOptimization) {
-		if (ups.getBoolean(PreferenceInitializer.OPTIMIZE_MAXIMIZE_FINAL_STATES)) {
-			final MaximizeFinalStates opt2 = new MaximizeFinalStates(mProduct, mServices, mStorage);
-			mProduct = opt2.getResult(mProduct);
-			return continueOptimization || opt2.isGraphChanged();
-		}
-		return continueOptimization;
-	}
-
-	private boolean optimizeMinimizeStates(final IPreferenceProvider ups, final boolean continueOptimization) {
-		final MinimizeStates minimizeStates =
-				ups.getEnum(PreferenceInitializer.OPTIMIZE_MINIMIZE_STATES, MinimizeStates.class);
-
-		if (minimizeStates != MinimizeStates.NONE) {
-			BaseProductOptimizer opt3;
-			switch (minimizeStates) {
-			case SINGLE:
-				opt3 = new MinimizeStatesSingleEdgeSingleNode(mProduct, mServices, mStorage, mSimplificationTechnique,
-						mXnfConversionTechnique);
-				break;
-			case SINGLE_NODE_MULTI_EDGE:
-				opt3 = new MinimizeStatesMultiEdgeSingleNode(mProduct, mServices, mStorage, mSimplificationTechnique,
-						mXnfConversionTechnique);
-				break;
-			case MULTI:
-				opt3 = new MinimizeStatesMultiEdgeMultiNode(mProduct, mServices, mStorage, mSimplificationTechnique,
-						mXnfConversionTechnique);
-				break;
-			default:
-				throw new IllegalArgumentException(minimizeStates + " is an unknown enum value!");
-
-			}
-			mProduct = opt3.getResult(mProduct);
-			return continueOptimization || opt3.isGraphChanged();
-		}
-		return continueOptimization;
-	}
-
-	private boolean optimizeSimplifyAssumes(final IPreferenceProvider ups, final boolean continueOptimization) {
-		if (ups.getBoolean(PreferenceInitializer.OPTIMIZE_SIMPLIFY_ASSUMES)) {
-			final BaseProductOptimizer opt4 =
-					new AssumeMerger(mProduct, mServices, mStorage, mSimplificationTechnique, mXnfConversionTechnique);
-			mProduct = opt4.getResult(mProduct);
-			return continueOptimization || opt4.isGraphChanged();
-		}
-		return continueOptimization;
 	}
 
 	private void reportSizeBenchmark(final String message, final INestedWordAutomaton<CodeBlock, String> nwa) {

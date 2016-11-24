@@ -165,7 +165,7 @@ public class BuchiAutomizerModuleDecompositionBenchmark implements ICsvProviderP
 	}
 
 	@Override
-	public ICsvProvider<String> createCvsProvider() {
+	public ICsvProvider<String> createCsvProvider() {
 
 		final ArrayList<String> header = new ArrayList<String>();
 		header.add("Modules");

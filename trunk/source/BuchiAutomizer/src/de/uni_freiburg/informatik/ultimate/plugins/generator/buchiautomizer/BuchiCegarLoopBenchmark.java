@@ -307,7 +307,7 @@ public class BuchiCegarLoopBenchmark extends CegarStatisticsType implements ISta
 		final List<ICsvProvider<Object>> list = new ArrayList<ICsvProvider<Object>>();
 		benchmarks = Collections.singletonList(mostMotzkinButUnknownFirst(benchmarks));
 		for (final TerminationAnalysisBenchmark benchmark : benchmarks) {
-			list.add(benchmark.createCvsProvider());
+			list.add(benchmark.createCsvProvider());
 		}
 		final ICsvProvider<Object> allRows = CsvUtils.concatenateRows(list);
 		final ICsvProvider<Object> numericColumns = CsvUtils.projectColumn(

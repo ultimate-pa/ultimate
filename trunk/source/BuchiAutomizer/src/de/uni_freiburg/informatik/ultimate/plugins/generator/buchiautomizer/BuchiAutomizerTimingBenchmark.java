@@ -45,7 +45,7 @@ public class BuchiAutomizerTimingBenchmark implements ICsvProviderProvider<Objec
 	}
 
 	@Override
-	public ICsvProvider<Object> createCvsProvider() {
+	public ICsvProvider<Object> createCsvProvider() {
 		return mBenchmarkData.createCvsProvider();
 	}
 }

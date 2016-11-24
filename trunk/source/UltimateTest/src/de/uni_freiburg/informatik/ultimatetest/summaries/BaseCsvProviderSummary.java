@@ -79,7 +79,7 @@ public abstract class BaseCsvProviderSummary extends BaseTestSummary {
 		for (final Class<? extends ICsvProviderProvider<? extends Object>> benchmark : mBenchmarks) {
 			for (final ICsvProviderProvider<?> benchmarkResultWildcard : TestUtil
 					.getCsvProviderProviderFromUltimateResults(resultService.getResults(), benchmark)) {
-				current = (ICsvProvider<Object>) benchmarkResultWildcard.createCvsProvider();
+				current = (ICsvProvider<Object>) benchmarkResultWildcard.createCsvProvider();
 				aggregate = CsvUtils.concatenateRows(aggregate, current);
 			}
 		}

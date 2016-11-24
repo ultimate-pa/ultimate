@@ -72,7 +72,7 @@ public class TraceAbstractionBenchmarks implements ICsvProviderProvider<Object> 
 	}
 
 	@Override
-	public ICsvProvider<Object> createCvsProvider() {
+	public ICsvProvider<Object> createCsvProvider() {
 		return mCegarLoopBenchmarkData.createCvsProvider();
 	}
 

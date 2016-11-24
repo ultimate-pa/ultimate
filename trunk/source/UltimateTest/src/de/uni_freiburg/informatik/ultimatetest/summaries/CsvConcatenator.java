@@ -139,7 +139,7 @@ public class CsvConcatenator implements ITestSummary {
 		for (final ICsvProviderProvider<?> benchmarkResultWildcard : TestUtil
 				.getCsvProviderProviderFromUltimateResults(resultService.getResults(), mBenchmark)) {
 			final ICsvProviderProvider<Object> benchmarkResult = (ICsvProviderProvider<Object>) benchmarkResultWildcard;
-			final ICsvProvider<Object> benchmarkCsv = benchmarkResult.createCvsProvider();
+			final ICsvProvider<Object> benchmarkCsv = benchmarkResult.createCsvProvider();
 			final ICsvProvider<Object> benchmarkCsvWithRunDefinition = ColumnDefinitionUtil.prefixCsvProvider(
 					ultimateRunDefinition, threeValuedResult, category, message, benchmarkCsv, a -> a);
 			add(benchmarkCsvWithRunDefinition);

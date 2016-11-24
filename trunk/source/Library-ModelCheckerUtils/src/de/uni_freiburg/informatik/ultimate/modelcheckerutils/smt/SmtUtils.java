@@ -71,22 +71,24 @@ import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
 public final class SmtUtils {
 
-	public enum XnfConversionTechnique {
-		BDD_BASED, BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION
-	};
-
-	public enum SimplificationTechnique {
-		SIMPLIFY_BDD_PROP, SIMPLIFY_BDD_FIRST_ORDER, SIMPLIFY_QUICK, SIMPLIFY_DDA
-	};
-
-	private SmtUtils() {
-		// Prevent instantiation of this utility class
-	}
-
+	private static final String ERROR_MESSAGE_UNKNOWN_ENUM_CONSTANT = "unknown enum constant ";
+	private static final String ERROR_MSG_UNKNOWN_SORT = "unknown sort ";
 	/**
 	 * Avoid the construction of "bvadd" with more than two arguments and use nested "bvadd" terms instead.
 	 */
 	private static final boolean BINARY_BITVECTOR_SUM_WORKAROUND = false;
+
+	public enum XnfConversionTechnique {
+		BDD_BASED, BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION
+	}
+
+	public enum SimplificationTechnique {
+		SIMPLIFY_BDD_PROP, SIMPLIFY_BDD_FIRST_ORDER, SIMPLIFY_QUICK, SIMPLIFY_DDA
+	}
+
+	private SmtUtils() {
+		// Prevent instantiation of this utility class
+	}
 
 	public static Term simplify(final ManagedScript script, final Term formula, final IUltimateServiceProvider services,
 			final SimplificationTechnique simplificationTechnique) {
@@ -109,7 +111,7 @@ public final class SmtUtils {
 			simplified = (new SimplifyQuick(script.getScript(), services)).getSimplifiedTerm(formula);
 			break;
 		default:
-			throw new AssertionError("unknown enum constant");
+			throw new AssertionError(ERROR_MESSAGE_UNKNOWN_ENUM_CONSTANT + simplificationTechnique);
 		}
 		if (logger.isDebugEnabled()) {
 			logger.debug(new DebugMessage("DAG size before simplification {0}, DAG size after simplification {1}",
@@ -164,7 +166,7 @@ public final class SmtUtils {
 	public static Term[] getConjuncts(final Term term) {
 		if (term instanceof ApplicationTerm) {
 			final ApplicationTerm appTerm = (ApplicationTerm) term;
-			if (appTerm.getFunction().getName().equals("and")) {
+			if ("and".equals(appTerm.getFunction().getName())) {
 				return appTerm.getParameters();
 			}
 		}
@@ -179,7 +181,7 @@ public final class SmtUtils {
 	public static Term[] getDisjuncts(final Term term) {
 		if (term instanceof ApplicationTerm) {
 			final ApplicationTerm appTerm = (ApplicationTerm) term;
-			if (appTerm.getFunction().getName().equals("or")) {
+			if ("or".equals(appTerm.getFunction().getName())) {
 				return appTerm.getParameters();
 			}
 		}
@@ -201,7 +203,7 @@ public final class SmtUtils {
 		final String functionName = functionSymbol.getApplicationString();
 		final Term[] params = term.getParameters();
 		assert params.length > 1;
-		final List<Term> conjuncts = new ArrayList<Term>();
+		final List<Term> conjuncts = new ArrayList<>();
 		for (int i = 0; i < params.length; i++) {
 			for (int j = i + 1; j < params.length; j++) {
 				conjuncts.add(script.term(functionName, params[i], params[j]));
@@ -212,13 +214,13 @@ public final class SmtUtils {
 
 	public static boolean firstParamIsBool(final ApplicationTerm term) {
 		final Term[] params = term.getParameters();
-		final boolean result = params[0].getSort().getName().equals("Bool");
+		final boolean result = "Bool".equals(params[0].getSort().getName());
 		return result;
 	}
 
 	public static boolean allParamsAreBool(final ApplicationTerm term) {
 		for (final Term param : term.getParameters()) {
-			if (!param.getSort().getName().equals("Bool")) {
+			if (!"Bool".equals(param.getSort().getName())) {
 				return false;
 			}
 		}
@@ -230,8 +232,8 @@ public final class SmtUtils {
 	 * boolean connectives "and" and "or".
 	 */
 	public static Term binaryBooleanEquality(final Script script, final Term lhs, final Term rhs) {
-		assert lhs.getSort().getName().equals("Bool");
-		assert rhs.getSort().getName().equals("Bool");
+		assert "Bool".equals(lhs.getSort().getName());
+		assert "Bool".equals(rhs.getSort().getName());
 		final Term bothTrue = Util.and(script, lhs, rhs);
 		final Term bothFalse = Util.and(script, SmtUtils.not(script, lhs), SmtUtils.not(script, rhs));
 		return Util.or(script, bothTrue, bothFalse);
@@ -242,8 +244,8 @@ public final class SmtUtils {
 	 * the boolean connectives "and" and "or".
 	 */
 	public static Term binaryBooleanNotEquals(final Script script, final Term lhs, final Term rhs) {
-		assert lhs.getSort().getName().equals("Bool");
-		assert rhs.getSort().getName().equals("Bool");
+		assert "Bool".equals(lhs.getSort().getName());
+		assert "Bool".equals(rhs.getSort().getName());
 		final Term oneIsTrue = Util.or(script, lhs, rhs);
 		final Term oneIsFalse = Util.or(script, SmtUtils.not(script, lhs), SmtUtils.not(script, rhs));
 		return Util.and(script, oneIsTrue, oneIsFalse);
@@ -281,7 +283,7 @@ public final class SmtUtils {
 	 */
 	public static Term multiDimensionalStore(final Script script, final Term a, final ArrayIndex index,
 			final Term value) {
-		assert index.size() > 0;
+		assert !index.isEmpty();
 		assert a.getSort().isArraySort();
 		Term result = value;
 		for (int i = index.size() - 1; i >= 0; i--) {
@@ -336,14 +338,14 @@ public final class SmtUtils {
 	public static Term sum(final Script script, final Sort sort, final Term... summands) {
 		assert sort.isNumericSort() || BitvectorUtils.isBitvectorSort(sort);
 		if (summands.length == 0) {
-			if (sort.toString().equals("Int")) {
+			if ("Int".equals(sort.toString())) {
 				return script.numeral(BigInteger.ZERO);
-			} else if (sort.toString().equals("Real")) {
+			} else if ("Real".equals(sort.toString())) {
 				return script.decimal(BigDecimal.ZERO);
 			} else if (BitvectorUtils.isBitvectorSort(sort)) {
 				return BitvectorUtils.constructTerm(script, BigInteger.ZERO, sort);
 			} else {
-				throw new UnsupportedOperationException("unkown sort " + sort);
+				throw new UnsupportedOperationException(ERROR_MSG_UNKNOWN_SORT + sort);
 			}
 		} else if (summands.length == 1) {
 			return summands[0];
@@ -353,11 +355,10 @@ public final class SmtUtils {
 			} else if (BitvectorUtils.isBitvectorSort(sort)) {
 				if (BINARY_BITVECTOR_SUM_WORKAROUND) {
 					return binaryBitvectorSum(script, sort, summands);
-				} else {
-					return script.term("bvadd", summands);
 				}
+				return script.term("bvadd", summands);
 			} else {
-				throw new UnsupportedOperationException("unkown sort " + sort);
+				throw new UnsupportedOperationException(ERROR_MSG_UNKNOWN_SORT + sort);
 			}
 		}
 	}
@@ -391,14 +392,14 @@ public final class SmtUtils {
 	public static Term mul(final Script script, final Sort sort, final Term... factors) {
 		assert sort.isNumericSort() || BitvectorUtils.isBitvectorSort(sort);
 		if (factors.length == 0) {
-			if (sort.toString().equals("Int")) {
+			if ("Int".equals(sort.toString())) {
 				return script.numeral(BigInteger.ONE);
-			} else if (sort.toString().equals("Real")) {
+			} else if ("Real".equals(sort.toString())) {
 				return script.decimal(BigDecimal.ONE);
 			} else if (BitvectorUtils.isBitvectorSort(sort)) {
 				return BitvectorUtils.constructTerm(script, BigInteger.ONE, sort);
 			} else {
-				throw new UnsupportedOperationException("unkown sort " + sort);
+				throw new UnsupportedOperationException(ERROR_MSG_UNKNOWN_SORT + sort);
 			}
 		} else if (factors.length == 1) {
 			return factors[0];
@@ -408,7 +409,7 @@ public final class SmtUtils {
 			} else if (BitvectorUtils.isBitvectorSort(sort)) {
 				return script.term("bvmul", factors);
 			} else {
-				throw new UnsupportedOperationException("unkown sort " + sort);
+				throw new UnsupportedOperationException(ERROR_MSG_UNKNOWN_SORT + sort);
 			}
 		}
 	}
@@ -420,14 +421,13 @@ public final class SmtUtils {
 	 *            either "+" or "bvadd".
 	 */
 	public static Term sum(final Script script, final String funcname, final Term... summands) {
-		assert funcname.equals("+") || funcname.equals("bvadd");
+		assert "+".equals(funcname) || "bvadd".equals(funcname);
 		final Term sum = script.term(funcname, summands);
 		final AffineTerm affine = (AffineTerm) (new AffineTermTransformer(script)).transform(sum);
 		if (affine.isErrorTerm()) {
 			return sum;
-		} else {
-			return affine.toTerm(script);
 		}
+		return affine.toTerm(script);
 	}
 
 	/**
@@ -440,7 +440,7 @@ public final class SmtUtils {
 		} else if (BitvectorUtils.isBitvectorSort(sort)) {
 			return script.term("bvneg", operand);
 		} else {
-			throw new UnsupportedOperationException("unkown sort " + sort);
+			throw new UnsupportedOperationException(ERROR_MSG_UNKNOWN_SORT + sort);
 		}
 	}
 
@@ -450,14 +450,12 @@ public final class SmtUtils {
 	public static Term not(final Script script, final Term term) {
 		if (term instanceof ApplicationTerm) {
 			final ApplicationTerm appTerm = (ApplicationTerm) term;
-			if (appTerm.getFunction().getName().equals("distinct") && appTerm.getParameters().length == 2) {
+			if ("distinct".equals(appTerm.getFunction().getName()) && appTerm.getParameters().length == 2) {
 				return SmtUtils.binaryEquality(script, appTerm.getParameters()[0], appTerm.getParameters()[1]);
-			} else {
-				return Util.not(script, term);
 			}
-		} else {
 			return Util.not(script, term);
 		}
+		return Util.not(script, term);
 	}
 
 	/**
@@ -469,7 +467,7 @@ public final class SmtUtils {
 			return script.term("true");
 		} else if (twoConstantTermsWithDifferentValue(lhs, rhs)) {
 			return script.term("false");
-		} else if (lhs.getSort().getName().equals("Bool")) {
+		} else if ("Bool".equals(lhs.getSort().getName())) {
 			return booleanEquality(script, lhs, rhs);
 		} else {
 			return script.term("=", lhs, rhs);
@@ -530,17 +528,16 @@ public final class SmtUtils {
 		} else if (fstValue instanceof Rational && sndValue instanceof BigInteger) {
 			sndValue = Rational.valueOf((BigInteger) sndValue, BigInteger.ONE);
 		}
-		if (!fstValue.getClass().isAssignableFrom(sndValue.getClass()) && 
-				sndValue.getClass().isAssignableFrom(fst.getClass())) {
-			throw new UnsupportedOperationException("Incompatible classes. "
-					+ "First value is " + fstValue.getClass().getSimpleName()
-					+ " second value is " + sndValue.getClass().getSimpleName());
+		if (!fstValue.getClass().isAssignableFrom(sndValue.getClass())
+				&& sndValue.getClass().isAssignableFrom(fst.getClass())) {
+			throw new UnsupportedOperationException("Incompatible classes. " + "First value is "
+					+ fstValue.getClass().getSimpleName() + " second value is " + sndValue.getClass().getSimpleName());
 		}
 		return !fstValue.equals(sndValue);
 	}
 
 	public static List<Term> substitutionElementwise(final List<Term> subtituents, final Substitution subst) {
-		final List<Term> result = new ArrayList<Term>();
+		final List<Term> result = new ArrayList<>();
 		for (int i = 0; i < subtituents.size(); i++) {
 			result.add(subst.transform(subtituents.get(i)));
 		}
@@ -558,7 +555,7 @@ public final class SmtUtils {
 
 	public static Map<Term, Term> termVariables2Constants(final Script script,
 			final Collection<TermVariable> termVariables, final boolean declareConstants) {
-		final Map<Term, Term> mapping = new HashMap<Term, Term>();
+		final Map<Term, Term> mapping = new HashMap<>();
 		for (final TermVariable tv : termVariables) {
 			final Term constant = termVariable2constant(script, tv, declareConstants);
 			mapping.put(tv, constant);
@@ -630,20 +627,18 @@ public final class SmtUtils {
 		if (term instanceof ApplicationTerm) {
 			final ApplicationTerm appTerm = (ApplicationTerm) term;
 			final FunctionSymbol fun = appTerm.getFunction();
-			return fun.getApplicationString().equals("false");
-		} else {
-			return false;
+			return "false".equals(fun.getApplicationString());
 		}
+		return false;
 	}
 
 	public static boolean isTrue(final Term term) {
 		if (term instanceof ApplicationTerm) {
 			final ApplicationTerm appTerm = (ApplicationTerm) term;
 			final FunctionSymbol fun = appTerm.getFunction();
-			return fun.getApplicationString().equals("true");
-		} else {
-			return false;
+			return "true".equals(fun.getApplicationString());
 		}
+		return false;
 	}
 
 	/**
@@ -653,9 +648,8 @@ public final class SmtUtils {
 		if (term instanceof ApplicationTerm) {
 			final ApplicationTerm appTerm = (ApplicationTerm) term;
 			return appTerm.getParameters().length == 0 && !appTerm.getFunction().isIntern();
-		} else {
-			return false;
 		}
+		return false;
 	}
 
 	/**
@@ -696,7 +690,7 @@ public final class SmtUtils {
 	 * Return all free TermVariables that occur in a set of Terms.
 	 */
 	public static Set<TermVariable> getFreeVars(final Collection<Term> terms) {
-		final Set<TermVariable> freeVars = new HashSet<TermVariable>();
+		final Set<TermVariable> freeVars = new HashSet<>();
 		for (final Term term : terms) {
 			freeVars.addAll(Arrays.asList(term.getFreeVars()));
 		}
@@ -796,7 +790,7 @@ public final class SmtUtils {
 	 *             if ct does not represent a Rational.
 	 */
 	public static Rational convertCT(final ConstantTerm ct) throws IllegalArgumentException {
-		if (ct.getSort().getName().equals("Real")) {
+		if ("Real".equals(ct.getSort().getName())) {
 			if (ct.getValue() instanceof Rational) {
 				return (Rational) ct.getValue();
 			} else if (ct.getValue() instanceof BigDecimal) {
@@ -804,13 +798,12 @@ public final class SmtUtils {
 			} else {
 				throw new UnsupportedOperationException("ConstantTerm's value has to be either Rational or BigDecimal");
 			}
-		} else if (ct.getSort().getName().equals("Int")) {
+		} else if ("Int".equals(ct.getSort().getName())) {
 			if (ct.getValue() instanceof Rational) {
 				return (Rational) ct.getValue();
-			} else {
-				final Rational r = Rational.valueOf((BigInteger) ct.getValue(), BigInteger.ONE);
-				return r;
 			}
+			final Rational r = Rational.valueOf((BigInteger) ct.getValue(), BigInteger.ONE);
+			return r;
 		} else {
 			throw new IllegalArgumentException("Trying to convert a ConstantTerm of unknown sort." + ct);
 		}
@@ -832,23 +825,20 @@ public final class SmtUtils {
 		case "not":
 			if (params.length != 1) {
 				throw new IllegalArgumentException("no not term");
-			} else {
-				result = SmtUtils.not(script, params[0]);
 			}
+			result = SmtUtils.not(script, params[0]);
 			break;
 		case "=":
 			if (params.length != 2) {
 				throw new UnsupportedOperationException("not yet implemented");
-			} else {
-				result = binaryEquality(script, params[0], params[1]);
 			}
+			result = binaryEquality(script, params[0], params[1]);
 			break;
 		case "distinct":
 			if (params.length != 2) {
 				throw new UnsupportedOperationException("not yet implemented");
-			} else {
-				result = SmtUtils.not(script, binaryEquality(script, params[0], params[1]));
 			}
+			result = SmtUtils.not(script, binaryEquality(script, params[0], params[1]));
 			break;
 		case "=>":
 			result = Util.implies(script, params);
@@ -856,40 +846,34 @@ public final class SmtUtils {
 		case "ite":
 			if (params.length != 3) {
 				throw new IllegalArgumentException("no ite");
-			} else {
-				result = Util.ite(script, params[0], params[1], params[2]);
 			}
+			result = Util.ite(script, params[0], params[1], params[2]);
 			break;
 		case "+":
-		case "bvadd": {
+		case "bvadd":
 			result = SmtUtils.sum(script, funcname, params);
-		}
 			break;
 		case "div":
 			if (params.length != 2) {
 				throw new IllegalArgumentException("no div");
-			} else {
-				result = div(script, params[0], params[1]);
 			}
+			result = div(script, params[0], params[1]);
 			break;
 		case "mod":
 			if (params.length != 2) {
 				throw new IllegalArgumentException("no mod");
-			} else {
-				result = mod(script, params[0], params[1]);
 			}
+			result = mod(script, params[0], params[1]);
 			break;
 		case ">=":
 		case "<=":
 		case ">":
-		case "<": {
+		case "<":
 			if (params.length != 2) {
 				throw new IllegalArgumentException("no comparison");
-			} else {
-				result = comparison(script, funcname, params[0], params[1]);
 			}
+			result = comparison(script, funcname, params[0], params[1]);
 			break;
-		}
 		case "zero_extend":
 		case "extract":
 		case "bvsub":
@@ -943,9 +927,8 @@ public final class SmtUtils {
 				result = quotientAsRational.floor();
 			}
 			return result.toTerm(dividend.getSort());
-		} else {
-			return script.term("div", dividend, divisor);
 		}
+		return script.term("div", dividend, divisor);
 	}
 
 	/**
@@ -971,14 +954,12 @@ public final class SmtUtils {
 				final BigInteger bigIntDivident = toInt(affineDivident.getConstant());
 				final BigInteger modulus = BoogieUtils.euclideanMod(bigIntDivident, bigIntDivisor);
 				return script.numeral(modulus);
-			} else {
-				final AffineTerm moduloApplied = AffineTerm.applyModuloToAllCoefficients(script, affineDivident,
-						bigIntDivisor);
-				return script.term("mod", moduloApplied.toTerm(script), affineDivisor.toTerm(script));
 			}
-		} else {
-			return script.term("mod", affineDivident.toTerm(script), affineDivisor.toTerm(script));
+			final AffineTerm moduloApplied =
+					AffineTerm.applyModuloToAllCoefficients(script, affineDivident, bigIntDivisor);
+			return script.term("mod", moduloApplied.toTerm(script), affineDivisor.toTerm(script));
 		}
+		return script.term("mod", affineDivident.toTerm(script), affineDivisor.toTerm(script));
 	}
 
 	public static BigInteger toInt(final Rational integralRational) {
@@ -1001,9 +982,8 @@ public final class SmtUtils {
 		} else if (BitvectorUtils.isBitvectorSort(sort)) {
 			if (rational.isIntegral() && rational.isRational()) {
 				return BitvectorUtils.constructTerm(script, rational.numerator(), sort);
-			} else {
-				throw new IllegalArgumentException("unable to convert rational to bitvector if not integer");
 			}
+			throw new IllegalArgumentException("unable to convert rational to bitvector if not integer");
 		} else {
 			throw new AssertionError("unknown sort " + sort);
 		}
@@ -1017,7 +997,7 @@ public final class SmtUtils {
 	 * @param term
 	 *            may contain free variables
 	 */
-	public static LBool checkSat_DebuggingVersion(final Script script, final Term term) {
+	public static LBool checkSatDebug(final Script script, final Term term, final ILogger logger) {
 		script.push(1);
 		try {
 			final TermVariable[] vars = term.getFreeVars();
@@ -1041,7 +1021,7 @@ public final class SmtUtils {
 				final Term[] ucTerms = script.getUnsatCore();
 				for (final Term ucTerm : ucTerms) {
 					final Term conjunct = ucMapping.get(ucTerm);
-					System.out.println("in uc: " + conjunct);
+					logger.debug("in uc: " + conjunct);
 				}
 			}
 			script.pop(1);
@@ -1073,7 +1053,7 @@ public final class SmtUtils {
 		Rational rational;
 		assert constTerm.getSort().isNumericSort();
 		final Object value = constTerm.getValue();
-		if (constTerm.getSort().getName().equals("Int")) {
+		if ("Int".equals(constTerm.getSort().getName())) {
 			if (value instanceof BigInteger) {
 				rational = Rational.valueOf((BigInteger) value, BigInteger.ONE);
 			} else if (value instanceof Rational) {
@@ -1081,7 +1061,7 @@ public final class SmtUtils {
 			} else {
 				throw new UnsupportedOperationException();
 			}
-		} else if (constTerm.getSort().getName().equals("Real")) {
+		} else if ("Real".equals(constTerm.getSort().getName())) {
 			if (value instanceof BigDecimal) {
 				rational = decimalToRational((BigDecimal) value);
 			} else if (value instanceof Rational) {
@@ -1102,18 +1082,15 @@ public final class SmtUtils {
 	public static boolean occursAtMostAsLhs(final TermVariable tv, final ApplicationTerm appTerm) {
 		if (appTerm.getParameters().length != 2) {
 			return !Arrays.asList(appTerm.getFreeVars()).contains(tv);
-		} else {
-			if (Arrays.asList(appTerm.getParameters()[1].getFreeVars()).contains(tv)) {
-				// occurs on rhs
-				return false;
-			} else {
-				if (appTerm.getParameters()[0].equals(tv)) {
-					return true;
-				} else {
-					return !Arrays.asList(appTerm.getParameters()[0].getFreeVars()).contains(tv);
-				}
-			}
 		}
+		if (Arrays.asList(appTerm.getParameters()[1].getFreeVars()).contains(tv)) {
+			// occurs on rhs
+			return false;
+		}
+		if (appTerm.getParameters()[0].equals(tv)) {
+			return true;
+		}
+		return !Arrays.asList(appTerm.getParameters()[0].getFreeVars()).contains(tv);
 	}
 
 	/**
@@ -1128,25 +1105,23 @@ public final class SmtUtils {
 		final Collection<TermVariable> resultVars = filterToVarsThatOccurFreelyInTerm(vars, body);
 		if (resultVars.isEmpty()) {
 			return body;
-		} else {
-			final QuantifiedFormula innerQuantifiedFormula = isQuantifiedFormulaWithSameQuantifier(quantifier, body);
-			if (innerQuantifiedFormula == null) {
-				return script.quantifier(quantifier, resultVars.toArray(new TermVariable[resultVars.size()]), body);
-			} else {
-				final Set<TermVariable> resultQuantifiedVars = new HashSet<>(
-						Arrays.asList(innerQuantifiedFormula.getVariables()));
-				resultQuantifiedVars.addAll(vars);
-				return script.quantifier(quantifier,
-						resultQuantifiedVars.toArray(new TermVariable[resultQuantifiedVars.size()]),
-						innerQuantifiedFormula.getSubformula());
-			}
 		}
+		final QuantifiedFormula innerQuantifiedFormula = isQuantifiedFormulaWithSameQuantifier(quantifier, body);
+		if (innerQuantifiedFormula == null) {
+			return script.quantifier(quantifier, resultVars.toArray(new TermVariable[resultVars.size()]), body);
+		}
+		final Set<TermVariable> resultQuantifiedVars =
+				new HashSet<>(Arrays.asList(innerQuantifiedFormula.getVariables()));
+		resultQuantifiedVars.addAll(vars);
+		return script.quantifier(quantifier,
+				resultQuantifiedVars.toArray(new TermVariable[resultQuantifiedVars.size()]),
+				innerQuantifiedFormula.getSubformula());
 	}
 
 	/**
-	 * Returns a new HashSet that contains all variables that are contained in vars and occur freely in term.
+	 * Returns a new {@link Set} that contains all variables that are contained in vars and occur freely in term.
 	 */
-	public static HashSet<TermVariable> filterToVarsThatOccurFreelyInTerm(final Collection<TermVariable> vars,
+	public static Set<TermVariable> filterToVarsThatOccurFreelyInTerm(final Collection<TermVariable> vars,
 			final Term term) {
 		final HashSet<TermVariable> result = new HashSet<>();
 		for (final TermVariable tv : Arrays.asList(term.getFreeVars())) {
@@ -1227,7 +1202,7 @@ public final class SmtUtils {
 			result = (new Dnf(mgdScript, services)).transform(term);
 			break;
 		default:
-			throw new AssertionError("unknown enum constant");
+			throw new AssertionError(ERROR_MESSAGE_UNKNOWN_ENUM_CONSTANT + xnfConversionTechnique);
 		}
 		return result;
 	}
@@ -1246,7 +1221,7 @@ public final class SmtUtils {
 			result = (new Cnf(mgdScript, services)).transform(term);
 			break;
 		default:
-			throw new AssertionError("unknown enum constant");
+			throw new AssertionError(ERROR_MESSAGE_UNKNOWN_ENUM_CONSTANT + xnfConversionTechnique);
 		}
 		return result;
 	}
@@ -1257,9 +1232,9 @@ public final class SmtUtils {
 	 * sort we can get values for array cells (resp. the corresponding select term).
 	 */
 	public static boolean isSortForWhichWeCanGetValues(final Sort sort) {
-		return sort.isNumericSort() || sort.getRealSort().getName().equals("Bool")
-				|| sort.getRealSort().getName().equals("BitVec")
-				|| sort.getRealSort().getName().equals("FloatingPoint");
+		return sort.isNumericSort() || "Bool".equals(sort.getRealSort().getName())
+				|| "BitVec".equals(sort.getRealSort().getName())
+				|| "FloatingPoint".equals(sort.getRealSort().getName());
 	}
 
 	/**
@@ -1276,27 +1251,25 @@ public final class SmtUtils {
 	public static Map<Term, Term> getValues(final Script script, final Collection<Term> terms) {
 		if (terms.isEmpty()) {
 			return Collections.emptyMap();
-		} else {
-			final Term[] asArray = terms.toArray(new Term[terms.size()]);
-			final Map<Term, Term> mapFromSolver = script.getValue(asArray);
-			/*
-			 * Some solvers, e.g., Z3 return -1 not as a literal but as a unary minus of a positive literal. We use our
-			 * affine term to obtain the negative literal.
-			 */
-			final Map<Term, Term> copyWithNiceValues = new HashMap<Term, Term>();
-			for (final Entry<Term, Term> entry : mapFromSolver.entrySet()) {
-				copyWithNiceValues.put(entry.getKey(), makeAffineIfPossible(script, entry.getValue()));
-			}
-			return Collections.unmodifiableMap(copyWithNiceValues);
 		}
+		final Term[] asArray = terms.toArray(new Term[terms.size()]);
+		final Map<Term, Term> mapFromSolver = script.getValue(asArray);
+		/*
+		 * Some solvers, e.g., Z3 return -1 not as a literal but as a unary minus of a positive literal. We use our
+		 * affine term to obtain the negative literal.
+		 */
+		final Map<Term, Term> copyWithNiceValues = new HashMap<>();
+		for (final Entry<Term, Term> entry : mapFromSolver.entrySet()) {
+			copyWithNiceValues.put(entry.getKey(), makeAffineIfPossible(script, entry.getValue()));
+		}
+		return Collections.unmodifiableMap(copyWithNiceValues);
 	}
 
 	private static Term makeAffineIfPossible(final Script script, final Term term) {
 		final AffineTerm affineTerm = (AffineTerm) (new AffineTermTransformer(script)).transform(term);
 		if (affineTerm.isErrorTerm()) {
 			return term;
-		} else {
-			return affineTerm.toTerm(script);
 		}
+		return affineTerm.toTerm(script);
 	}
 }

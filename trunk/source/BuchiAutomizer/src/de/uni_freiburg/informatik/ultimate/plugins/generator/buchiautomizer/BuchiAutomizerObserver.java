@@ -412,7 +412,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		}
 
 		@Override
-		public ICsvProvider<String> createCvsProvider() {
+		public ICsvProvider<String> createCsvProvider() {
 			return new SimpleCsvProvider<>(Arrays.asList(new String[] { "nta" }));
 		}
 

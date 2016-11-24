@@ -237,7 +237,7 @@ public class LineCoverageCalculator {
 		}
 
 		@Override
-		public ICsvProvider<String> createCvsProvider() {
+		public ICsvProvider<String> createCsvProvider() {
 			final SimpleCsvProvider<String> provider = new SimpleCsvProvider<String>(Arrays.asList(new String[] {
 					"Covered lines", "Total lines", "Line coverage", }));
 

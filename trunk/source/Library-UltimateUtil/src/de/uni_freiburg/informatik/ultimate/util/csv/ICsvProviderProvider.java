@@ -33,5 +33,5 @@ package de.uni_freiburg.informatik.ultimate.util.csv;
  * @param <T>
  */
 public interface ICsvProviderProvider<T> {
-	ICsvProvider<T> createCvsProvider();
+	ICsvProvider<T> createCsvProvider();
 }

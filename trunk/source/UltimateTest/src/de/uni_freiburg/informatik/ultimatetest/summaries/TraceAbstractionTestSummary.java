@@ -96,7 +96,7 @@ public class TraceAbstractionTestSummary extends BaseTestSummary {
 				if (result.getBenchmark().getClass() == Benchmark.class) {
 					continue;
 				}
-				providers.add(result.getBenchmark().createCvsProvider());
+				providers.add(result.getBenchmark().createCsvProvider());
 			}
 			if (!providers.isEmpty()) {
 				mTraceAbstractionBenchmarks.put(ultimateRunDefinition, providers);
