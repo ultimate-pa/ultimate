@@ -66,27 +66,32 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 	private final ManagedScript mScript;
 	private final Boogie2SMT mBoogie2Smt;
 	private final Map<Term, EqNode> mTermToEqNodeMap;
+	private RCFGArrayIndexCollector mPreAnalysis;
 	
 	public VPDomain(final ILogger logger, 
 			final ManagedScript script, 
 			final IUltimateServiceProvider services,
 			Boogie2SMT boogie2smt, 
-			final Set<EqGraphNode> eqGraphNodeSet, 
-			final Map<Term, Set<EqFunctionNode>> termToFnNodeMap,
-			final Map<EqNode, EqGraphNode> eqNodeToEqGraphNodeMap,
-			final Map<Term, EqNode> termToEqNodeMap) {
+			RCFGArrayIndexCollector preAnalysis) {
 		mLogger = logger;
-		mScript = script;
-		mBoogie2Smt = boogie2smt;
-		mEqGraphNodeSet = eqGraphNodeSet;
-		mTermToFnNodeMap = termToFnNodeMap == null ? null : Collections.unmodifiableMap(termToFnNodeMap);
-		mEqNodeToEqGraphNodeMap = eqNodeToEqGraphNodeMap;
+		mPreAnalysis = preAnalysis;
+		mEqGraphNodeSet = preAnalysis.getEqGraphNodeSet();
+		mTermToBaseNodeMap = preAnalysis.getTermToBaseNodeMap() == null ? 
+				null : 
+					Collections.unmodifiableMap(preAnalysis.getTermToBaseNodeMap());
+		mTermToFnNodeMap = preAnalysis.getTermToFnNodeMap() == null 
+				? null 
+						: Collections.unmodifiableMap(preAnalysis.getTermToFnNodeMap());
+		mEqNodeToEqGraphNodeMap = preAnalysis.getEqNodeToEqGraphNodeMap();
 		mDisEqualityMap = new HashSet<>();
 		mBottomState = new VPStateBottom(this);
 		mTermToEqNodeMap = termToEqNodeMap;
 		mTopState = new VPStateTop(mEqGraphNodeSet, mTermToEqNodeMap, mTermToFnNodeMap, mEqNodeToEqGraphNodeMap, mDisEqualityMap, this);
 		mPost = new VPPostOperator(script, services, this);
 		mMerge = new VPMergeOperator();
+		mScript = script;
+		mBoogie2Smt = boogie2smt;
+		mTermToEqNode = preAnalysis.getTermToEqNodeMap();
 	}
 
 	@Override
@@ -165,5 +170,9 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 
 	public EqNode getEqNodeFromTerm(Term term) {
 		return mTermToEqNodeMap.get(term);
+	}
+
+	public RCFGArrayIndexCollector getPreAnalysis() {
+		return mPreAnalysis;
 	}
 }
