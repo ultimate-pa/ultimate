@@ -1,4 +1,4 @@
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
 <body>
 	<h1>Automizer</h1>
 	<p>
@@ -37,29 +37,78 @@
 		available via a web interface in which you can verify C programs.
 	</p>
 
-	<h2>Commandline Version</h2>
+	<h2>Download</h2>
 	<p>
-		A <a
-			href="https://ultimate.informatik.uni-freiburg.de/downloads/svcomp2016/UltimateAutomizer.zip">commandline
-			version</a> of <span style="font-variant: small-caps">Ultimate</span>
-		Automizer is available. This version runs on x86-64 linux machines and
-		is our candiate for the SV-COMP 2016.
+		We try to provide regular releases for Windows and Linux at <a
+			href="https://github.com/ultimate-pa/ultimate/releases">our
+			GitHub release page</a>.
+	</p>
+	<h3>SV-COMP</h3>
+	<ul>
+		<li><a
+			href="https://ultimate.informatik.uni-freiburg.de/downloads/svcomp2017/UltimateAutomizer-linux.zip"><span
+				style="font-variant: small-caps">Ultimate</span> Automizer for
+				SV-COMP 2017 </a></li>
+		<li><a
+			href="https://ultimate.informatik.uni-freiburg.de/downloads/svcomp2016/UltimateAutomizer.zip"><span
+				style="font-variant: small-caps">Ultimate</span> Automizer for
+				SV-COMP 2016</a>.</li>
+	</ul>
+	<p>
+		All archives available here contain commandline versions of <span
+			style="font-variant: small-caps">Ultimate</span> Automizer that
+		participate(d) in the <a href="https://sv-comp.sosy-lab.org">Competition
+			on Software Verification (SV-COMP)</a>. They are build for x86-64 linux
+		and can be run using the provided Python script
+		<code>Ultimate.py</code>
+		as follows.
+	</p>
+	<p>
+		<code>Ultimate.py [-h] [--version] [--full-output] [--validate]
+			spec {32bit,64bit} {simple,precise} file [file ...]</code>
+		<br />
+	</p>
+	<p>Mandatory arguments</p>
+	<ul>
+		<li><code>spec</code><br /> An property (.prp) file from SVCOMP.</li>
+		<li><code>{32bit,64bit}</code><br /> Choose which architecture
+			(defined as per SV-COMP rules) should be assumed.</li>
+		<li><code>{simple,precise}</code><br /> Ultimate does not use
+			the distinction between simple and precise memory model and always
+			assumes precise. For compatibility reasons, you have to provide
+			either value.</li>
+		<li><code>file</code><br />Either one C file or one C file and
+			one witness as matching .graphml file.</li>
+	</ul>
+	<p>Optional arguments</p>
+	<ul>
+		<li><code>-h, --help</code><br /> Show a help message and exit.</li>
+		<li><code>--version</code><br />Print <span
+			style="font-variant: small-caps">Ultimate</span> Automizer's version
+			and exit.</li>
+		<li><code>--full-output</code><br /> Print <span
+			style="font-variant: small-caps">Ultimate</span> Automizer's full
+			output to stderr after verification ends.</li>
+		<li><code>--validate </code><br />Validate the provided witness</li>
+	</ul>
 	</p>
 
-	<h2>Eclipse CDT</h2>
+
+
+	<h3>Eclipse CDT</h3>
 	<p>
 		We are planing to release an Eclipse CDT plugin that is able to use
 		all toolchains of <span style="font-variant: small-caps">Ultimate</span>.
 	</p>
 
 	<h2>Example</h2>
-	A commented
-	<a
-		href=?ui=int&tool=automata_script_interpreter&task=automataScript&sample=1354300666><em>automata
-			script</em> file that explains some aspects of our verification approach
-		for recursive programs</a> is available in the web interface of our
-	<a href=?ui=tool&tool=automata_script_interpreter></a>automata library
-	</a>.
+	<p>
+		A commented <a
+			href=?ui=int&tool=automata_script_interpreter&task=automataScript&sample=1354300666><em>automata
+				script</em> file that explains some aspects of our verification approach
+			for recursive programs</a> is available in the web interface of our <a
+			href=?ui=tool&tool=automata_script_interpreter></a>automata library.
+	</p>
 
 	<h2>Developers</h2>
 	<p>
@@ -94,7 +143,6 @@
 			Heizmann, Jochen Hoenicke, Andreas Podelski: Refinement of Trace
 			Abstraction. SAS 2009:69-85</a>
 	</p>
-
 </body>
 </html>
 
