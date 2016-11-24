@@ -14,7 +14,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 */
 public class VPStateTop extends VPState {
 	
-	VPStateTop(Set<EqGraphNode> eqGraphNodeSet, Map<Term, EqBaseNode> termToBaseNodeMap,
+	VPStateTop(Set<EqGraphNode> eqGraphNodeSet, Map<Term, EqNode> termToEqNodeMap,
 			Map<Term, Set<EqFunctionNode>> termToFnNodeMap, Map<EqNode, EqGraphNode> eqNodeToEqGraphNodeMap,
 			Set<VPDomainSymmetricPair<EqGraphNode>> disEqualitySet, VPDomain domain) {
 		super(eqGraphNodeSet, eqNodeToEqGraphNodeMap, disEqualitySet, domain);

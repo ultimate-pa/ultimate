@@ -57,7 +57,6 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 	private final ILogger mLogger;
 	
 	private final Set<EqGraphNode> mEqGraphNodeSet;
-	private final Map<Term, EqBaseNode> mTermToBaseNodeMap;
 	private final Map<Term, Set<EqFunctionNode>> mTermToFnNodeMap;
 	private final Map<EqNode, EqGraphNode> mEqNodeToEqGraphNodeMap;
 	private Set<VPDomainSymmetricPair<EqGraphNode>> mDisEqualityMap;
@@ -66,30 +65,28 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 	private final VPStateBottom mBottomState;
 	private final ManagedScript mScript;
 	private final Boogie2SMT mBoogie2Smt;
-	private final Map<Term, EqNode> mTermToEqNode;
+	private final Map<Term, EqNode> mTermToEqNodeMap;
 	
 	public VPDomain(final ILogger logger, 
 			final ManagedScript script, 
 			final IUltimateServiceProvider services,
 			Boogie2SMT boogie2smt, 
 			final Set<EqGraphNode> eqGraphNodeSet, 
-			final Map<Term, EqBaseNode> termToBaseNodeMap,
 			final Map<Term, Set<EqFunctionNode>> termToFnNodeMap,
 			final Map<EqNode, EqGraphNode> eqNodeToEqGraphNodeMap,
-			final Map<Term, EqNode> termToEqNode) {
+			final Map<Term, EqNode> termToEqNodeMap) {
 		mLogger = logger;
+		mScript = script;
+		mBoogie2Smt = boogie2smt;
 		mEqGraphNodeSet = eqGraphNodeSet;
-		mTermToBaseNodeMap = termToBaseNodeMap == null ? null : Collections.unmodifiableMap(termToBaseNodeMap);
 		mTermToFnNodeMap = termToFnNodeMap == null ? null : Collections.unmodifiableMap(termToFnNodeMap);
 		mEqNodeToEqGraphNodeMap = eqNodeToEqGraphNodeMap;
 		mDisEqualityMap = new HashSet<>();
 		mBottomState = new VPStateBottom(this);
-		mTopState = new VPStateTop(mEqGraphNodeSet, mTermToBaseNodeMap, mTermToFnNodeMap, mEqNodeToEqGraphNodeMap, mDisEqualityMap, this);
+		mTermToEqNodeMap = termToEqNodeMap;
+		mTopState = new VPStateTop(mEqGraphNodeSet, mTermToEqNodeMap, mTermToFnNodeMap, mEqNodeToEqGraphNodeMap, mDisEqualityMap, this);
 		mPost = new VPPostOperator(script, services, this);
 		mMerge = new VPMergeOperator();
-		mScript = script;
-		mBoogie2Smt = boogie2smt;
-		mTermToEqNode = termToEqNode;
 	}
 
 	@Override
@@ -133,8 +130,8 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 		return mEqGraphNodeSet;
 	}
 
-	public Map<Term, EqBaseNode> getTermToBaseNodeMap() {
-		return mTermToBaseNodeMap;
+	public Map<Term, EqNode> getTermToEqNodeMap() {
+		return mTermToEqNodeMap;
 	}
 
 	public Map<Term, Set<EqFunctionNode>> getTermToFnNodeMap() {
@@ -167,6 +164,6 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 	}
 
 	public EqNode getEqNodeFromTerm(Term term) {
-		return mTermToEqNode.get(term);
+		return mTermToEqNodeMap.get(term);
 	}
 }

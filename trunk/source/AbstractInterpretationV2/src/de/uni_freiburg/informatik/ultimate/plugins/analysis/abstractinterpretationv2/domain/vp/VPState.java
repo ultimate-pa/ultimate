@@ -131,9 +131,9 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 				continue;
 			}
 
-			if (mDomain.getTermToBaseNodeMap().containsKey(tv)) {
-				assert this.getEqNodeToEqGraphNodeMap().containsKey(mDomain.getTermToBaseNodeMap().get(tv));
-				havoc(this.getEqNodeToEqGraphNodeMap().get(mDomain.getTermToBaseNodeMap().get(tv)));
+			if (mDomain.getTermToEqNodeMap().containsKey(tv)) {
+				assert this.getEqNodeToEqGraphNodeMap().containsKey(mDomain.getTermToEqNodeMap().get(tv));
+				havoc(this.getEqNodeToEqGraphNodeMap().get(mDomain.getTermToEqNodeMap().get(tv)));
 			}
 		}
 	}

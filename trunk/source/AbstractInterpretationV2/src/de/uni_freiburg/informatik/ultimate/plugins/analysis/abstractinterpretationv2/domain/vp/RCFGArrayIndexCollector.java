@@ -65,7 +65,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  */
 public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 
-	private final Map<Term, EqBaseNode> termToBaseNodeMap = new HashMap<>();
 	private final Map<Term, Set<EqFunctionNode>> termToFnNodeMap = new HashMap<>();
 	private final Map<EqNode, EqGraphNode> eqNodeToEqGraphNodeMap = new HashMap<>();
 	
@@ -271,6 +270,13 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 		if (result == null) {
 			result = new EqFunctionNode(eqNode, indices);
 
+			if (termToFnNodeMap.containsKey(eqNode.getTerm())) {
+				termToFnNodeMap.get(eqNode.getTerm()).add(result);
+			} else {
+				termToFnNodeMap.put(eqNode.getTerm(), new HashSet<>());
+				termToFnNodeMap.get(eqNode.getTerm()).add(result);
+			}
+			
 			mEqFunctionNodeStore.put(eqNode, indices, result);
 			putToEqGraphSet(result, indices);
 		}
@@ -301,18 +307,11 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 		return new HashSet<EqGraphNode>(eqNodeToEqGraphNodeMap.values());
 	}
 
-	public Map<Term, EqBaseNode> getTermToBaseNodeMap() {
-		assert false : "probably not filled correctly";
-		return termToBaseNodeMap;
-	}
-
 	public Map<Term, Set<EqFunctionNode>> getTermToFnNodeMap() {
-		assert false : "probably not filled correctly";
 		return termToFnNodeMap;
 	}
 
 	public Map<EqNode, EqGraphNode> getEqNodeToEqGraphNodeMap() {
-		assert false : "probably not filled correctly";
 		return eqNodeToEqGraphNodeMap;
 	}
 	
