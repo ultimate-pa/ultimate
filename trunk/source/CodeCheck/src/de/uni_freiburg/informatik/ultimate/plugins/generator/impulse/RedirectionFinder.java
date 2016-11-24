@@ -31,7 +31,7 @@ import java.util.HashSet;
 
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AnnotatedProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AppEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.GlobalSettings;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.CodeCheckSettings;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.CodeCheckPreferenceInitializer.RedirectionStrategy;
 
 
@@ -49,7 +49,7 @@ public class RedirectionFinder {
 		final ArrayList <AnnotatedProgramPoint> nextNodes = new ArrayList<AnnotatedProgramPoint> ();
 		for (final AnnotatedProgramPoint nextClone : clone.getNextClones()) {
 			if (codeChecker.isValidRedirection(edge, nextClone)) {
-				if (GlobalSettings.INSTANCE.getRedirectionStrategy() == RedirectionStrategy.FIRST) {
+				if (codeChecker.getGlobalSettings().getRedirectionStrategy() == RedirectionStrategy.FIRST) {
 					return depthFirstSearch(edge, nextClone);
 				}
 				nextNodes.add(depthFirstSearch(edge, nextClone));
@@ -60,10 +60,10 @@ public class RedirectionFinder {
 	private AnnotatedProgramPoint pickUp(AnnotatedProgramPoint def, ArrayList<AnnotatedProgramPoint> nodes) {
 		AnnotatedProgramPoint ret = def;
 		if (!nodes.isEmpty()) {
-			if (GlobalSettings.INSTANCE.getRedirectionStrategy() == RedirectionStrategy.RANDOM) {
+			if (codeChecker.getGlobalSettings().getRedirectionStrategy() == RedirectionStrategy.RANDOM) {
 				ret = nodes.get((int) (Math.random() * nodes.size()));
 			}
-			if (GlobalSettings.INSTANCE.getRedirectionStrategy() == RedirectionStrategy.RANDOmSTRONGEST) {
+			if (codeChecker.getGlobalSettings().getRedirectionStrategy() == RedirectionStrategy.RANDOmSTRONGEST) {
 				ret = strongRandomPickup(nodes);
 			}
 		}

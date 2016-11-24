@@ -191,10 +191,7 @@ public class FixpointEngineParameterFactory {
 				mRoot.getCfgSmtToolkit().getManagedScript(), 
 				mServices,
 				mRoot.getBoogie2SMT(),
-				arrayIndexCollector.getEqGraphNodeSet(), 
-				arrayIndexCollector.getTermToFnNodeMap(), 
-				arrayIndexCollector.getEqNodeToEqGraphNodeMap(),
-				arrayIndexCollector.getTermToEqNodeMap());
+				arrayIndexCollector);
 	}
 	
 	

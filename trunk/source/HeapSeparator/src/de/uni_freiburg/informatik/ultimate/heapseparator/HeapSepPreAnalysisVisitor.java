@@ -15,6 +15,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.vp.BoogieVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.visitors.SimpleRCFGVisitor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.AbstractRelation;
@@ -43,9 +44,9 @@ public class HeapSepPreAnalysisVisitor extends SimpleRCFGVisitor {
 	 * (= a (store b i x)) (though it is not clear to me if this case can arise in a normal
 	 * Boogie program
 	 */
-	private final Set<Pair<IProgramVar, IProgramVar>> mEquatedArrays;
+	private final Set<Pair<BoogieVarOrConst, BoogieVarOrConst>> mEquatedArrays;
 	
-	private final HashRelation<IProgramVar, IcfgLocation> mArrayToAccessLocations;
+	private final HashRelation<BoogieVarOrConst, IcfgLocation> mArrayToAccessLocations;
 
 	public HeapSepPreAnalysisVisitor(ILogger logger) {
 		super(logger);
@@ -69,7 +70,7 @@ public class HeapSepPreAnalysisVisitor extends SimpleRCFGVisitor {
 
 
 
-	private AbstractRelation<IProgramVar, IcfgLocation, ?> findArrayAccesses(CodeBlock edge) {
+	private AbstractRelation<BoogieVarOrConst, IcfgLocation, ?> findArrayAccesses(CodeBlock edge) {
 		AbstractRelation<IProgramVar, IcfgLocation, ?> result = new HashRelation<>();
 		
 		for (Entry<IProgramVar, TermVariable> en : edge.getTransitionFormula().getInVars().entrySet()) {
@@ -88,7 +89,8 @@ public class HeapSepPreAnalysisVisitor extends SimpleRCFGVisitor {
 			// we have an array variable --> store that it occurs after the source location of the edge
 			result.addPair(pv, edge.getSource());
 		}	
-		return result;
+		return null;
+//		return result; //TODO
 	}
 
 	@Override
@@ -107,14 +109,14 @@ public class HeapSepPreAnalysisVisitor extends SimpleRCFGVisitor {
 		return false;
 	}
 	
-	HashRelation<IProgramVar, IcfgLocation> getArrayToAccessLocations() {
+	HashRelation<BoogieVarOrConst, IcfgLocation> getArrayToAccessLocations() {
 		return mArrayToAccessLocations;
 	}
 }
 
 class EquatedArraysFinder extends TermTransformer {
 	private final CodeBlock mCodeBlock;
-	private final Set<Pair<IProgramVar, IProgramVar>> mEquatedArrays;
+	private final Set<Pair<BoogieVarOrConst, BoogieVarOrConst>> mEquatedArrays;
 
 	EquatedArraysFinder(CodeBlock edge) {
 		mCodeBlock = edge;
@@ -122,17 +124,16 @@ class EquatedArraysFinder extends TermTransformer {
 		transform(edge.getTransitionFormula().getFormula());
 	}
 
-	public Collection<? extends Pair<IProgramVar, IProgramVar>> getResult() {
+	public Collection<? extends Pair<BoogieVarOrConst, BoogieVarOrConst>> getResult() {
 		return mEquatedArrays;
 	}
 
 	@Override
 	public void convertApplicationTerm(ApplicationTerm appTerm, Term[] newArgs) {
 		final String funcName = appTerm.getFunction().getName();
-		if (funcName.equals("=")
+		if (("=".equals(funcName) || "distinct".equals(funcName))
 				&& appTerm.getParameters()[0].getSort().isArraySort()
-				&& appTerm.getParameters()[1].getSort().isArraySort()
-				) {
+				&& appTerm.getParameters()[1].getSort().isArraySort()) {
 			// we have an array assignment
 			TermVariable a1 = new ArrayFinder(appTerm.getParameters()[0]).getResult();
 			TermVariable a2 = new ArrayFinder(appTerm.getParameters()[1]).getResult();
@@ -145,38 +146,38 @@ class EquatedArraysFinder extends TermTransformer {
 						mCodeBlock.getTransitionFormula().getInVars(), 
 						mCodeBlock.getTransitionFormula().getOutVars());
 				// two non-identical arrays are equated --> store that fact
-				mEquatedArrays.add(new Pair<IProgramVar, IProgramVar>(pv1, pv2));
+//				mEquatedArrays.add(new Pair<IProgramVar, IProgramVar>(pv1, pv2)); //TODO
 			}
 		}
 		super.convertApplicationTerm(appTerm, newArgs);
 	}
 }
-
-class ArrayAccessFinder extends TermTransformer {
-
-	private final CodeBlock mCodeBlock;
-	private final IcfgLocation mLocation;
-	private final HashRelation<IProgramVar, IcfgLocation> mResult;
-	
-	public ArrayAccessFinder(CodeBlock edge, IcfgLocation location) {
-
-		mCodeBlock = edge;
-		mResult = new HashRelation<>();
-		mLocation = location;
-	}
-
-	public HashRelation<IProgramVar, IcfgLocation> getResult() {
-		return mResult;
-	}
-
-	@Override
-	public void convertApplicationTerm(ApplicationTerm appTerm, Term[] newArgs) {
-		String funcName = appTerm.getFunction().getName();
-		if ("select".equals(funcName)) {
-			
-		} else if ("store".equals(funcName)) {
-
-		}
-		super.convertApplicationTerm(appTerm, newArgs);
-	}
-}
+//
+//class ArrayAccessFinder extends TermTransformer {
+//
+//	private final CodeBlock mCodeBlock;
+//	private final IcfgLocation mLocation;
+//	private final HashRelation<IProgramVar, IcfgLocation> mResult;
+//	
+//	public ArrayAccessFinder(CodeBlock edge, IcfgLocation location) {
+//
+//		mCodeBlock = edge;
+//		mResult = new HashRelation<>();
+//		mLocation = location;
+//	}
+//
+//	public HashRelation<IProgramVar, IcfgLocation> getResult() {
+//		return mResult;
+//	}
+//
+//	@Override
+//	public void convertApplicationTerm(ApplicationTerm appTerm, Term[] newArgs) {
+//		String funcName = appTerm.getFunction().getName();
+//		if ("select".equals(funcName)) {
+//			
+//		} else if ("store".equals(funcName)) {
+//
+//		}
+//		super.convertApplicationTerm(appTerm, newArgs);
+//	}
+//}

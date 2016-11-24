@@ -48,6 +48,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 
 public abstract class CodeChecker {
 
+	
+	
+	private CodeCheckSettings mGlobalSettings;
+
 	protected BoogieIcfgContainer mOriginalRoot;
 	protected CfgSmtToolkit mCfgToolkit;
 	protected ImpRootNode mGraphRoot;
@@ -81,7 +85,7 @@ public abstract class CodeChecker {
 
 	public CodeChecker(final IElement root, final CfgSmtToolkit csToolkit, final BoogieIcfgContainer originalRoot,
 			final ImpRootNode graphRoot, final GraphWriter graphWriter, final IHoareTripleChecker edgeChecker,
-			final PredicateUnifier predicateUnifier, final ILogger logger) {
+			final PredicateUnifier predicateUnifier, final ILogger logger, final CodeCheckSettings globalSettings) {
 		mLogger = logger;
 		mCfgToolkit = csToolkit;
 		mOriginalRoot = originalRoot;
@@ -91,6 +95,8 @@ public abstract class CodeChecker {
 		mPredicateUnifier = predicateUnifier;
 
 		mGraphWriter = graphWriter;
+		
+		setG(globalSettings);
 	}
 
 	public abstract boolean codeCheck(NestedRun<CodeBlock, AnnotatedProgramPoint> errorRun, IPredicate[] interpolants,
@@ -202,5 +208,13 @@ public abstract class CodeChecker {
 			}
 		}
 		return false;
+	}
+
+	public CodeCheckSettings getGlobalSettings() {
+		return mGlobalSettings;
+	}
+
+	public void setG(CodeCheckSettings mGlobalSettings) {
+		this.mGlobalSettings = mGlobalSettings;
 	}
 }
