@@ -198,10 +198,8 @@ public class AbsIntTotalInterpolationAutomatonBuilder implements IInterpolantAut
 		}
 
 		// Add self-loops to final states
-		if (!result.getFinalStates().isEmpty()) {
-			for (final IPredicate finalState : result.getFinalStates()) {
-				oldAbstraction.getAlphabet().forEach(l -> result.addInternalTransition(finalState, l, finalState));
-			}
+		for (final IPredicate finalState : result.getFinalStates()) {
+			oldAbstraction.getAlphabet().forEach(l -> result.addInternalTransition(finalState, l, finalState));
 		}
 
 		if (PRINT_PREDS_LIMIT < alreadyThereAsState.size()) {
