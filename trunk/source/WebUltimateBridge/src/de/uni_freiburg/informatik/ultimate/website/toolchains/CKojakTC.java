@@ -67,7 +67,7 @@ public class CKojakTC extends WebToolchain {
 
 	@Override
 	protected String defineToolchainSettingsFile() {
-		return "Kojak-C.epf";
+		return "Kojak.epf";
 	}
 
 }
