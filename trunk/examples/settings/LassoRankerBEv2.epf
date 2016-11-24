@@ -1,0 +1,31 @@
+#Thu Nov 24 11:45:03 CET 2016
+@de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=0.0.1
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Translate\ Boogie\ integers\ to\ SMT\ bitvectors=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Simplify\ code\ blocks=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Fake\ non-incremental\ script=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Convert\ code\ blocks\ to\ CNF=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Add\ additional\ assume\ for\ each\ assert=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Dump\ unsat\ core\ track\ benchmark\ to\ file=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Remove\ goto\ edges\ from\ RCFG=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Size\ of\ a\ code\ block=SingleStatement
+file_export_version=3.0
+
+
+#Thu Nov 24 11:45:03 CET 2016
+@de.uni_freiburg.informatik.ultimate.plugins.blockencoding=0.0.1
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding/Use\ SBE\ for\ initial\ RCFG=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding/Apply\ optimizations\ until\ nothing\ changes=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding/Simplify\ assume\ statements=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding/Use\ SBE\ during\ assume\ simplification=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding/Rewrite\ not-equals\ during\ SBE=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding/Rewrite\ not\ equals\ when\ simplifying\ assume\ statements\ with\ SBE=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding/Remove\ sink\ states=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding/Iterate\ optimizations\ for\ n\ times\ (<\=0\ means\ until\ nothing\ changes)=0
+/instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding/Remove\ infeasible\ edges=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding/Maximize\ final\ states=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding/Minimize\ states\ even\ if\ more\ edges\ are\ added\ than\ removed.=true
+/instance/de.uni_freiburg.informatik.ultimate.buchiprogramproduct/Minimize\ states\ even\ if\ more\ edges\ are\ added\ than\ removed.=false
+file_export_version=3.0
+
