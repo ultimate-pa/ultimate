@@ -77,7 +77,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Term2Expression;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgElement;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
@@ -129,8 +128,8 @@ public class LassoRankerStarter {
 		// checkRCFGBuilderSettings();
 		final LassoRankerPreferences preferences = PreferencesInitializer.getLassoRankerPreferences(mServices);
 		mCsToolkit = mRootAnnot.getCfgSmtToolkit();
-		mPredicateFactory = new PredicateFactory(mServices, mCsToolkit.getManagedScript(), 
-				mCsToolkit.getSymbolTable(), mSimplificationTechnique, mXnfConversionTechnique);
+		mPredicateFactory = new PredicateFactory(mServices, mCsToolkit.getManagedScript(), mCsToolkit.getSymbolTable(),
+				mSimplificationTechnique, mXnfConversionTechnique);
 
 		AbstractLassoExtractor lassoExtractor;
 		try {
@@ -368,9 +367,9 @@ public class LassoRankerStarter {
 			final UnmodifiableTransFormula loopTf) {
 
 		final RankVarConstructor rankVarConstructor = new RankVarConstructor(mCsToolkit, mRootAnnot.getBoogie2SMT());
-		final BinaryStatePredicateManager bspm = new BinaryStatePredicateManager(mCsToolkit, mPredicateFactory, 
-				rankVarConstructor.getUnseededVariable(), rankVarConstructor.getOldRankVariables(), 
-				mServices, mSimplificationTechnique, mXnfConversionTechnique);
+		final BinaryStatePredicateManager bspm = new BinaryStatePredicateManager(mCsToolkit, mPredicateFactory,
+				rankVarConstructor.getUnseededVariable(), rankVarConstructor.getOldRankVariables(), mServices,
+				mSimplificationTechnique, mXnfConversionTechnique);
 		final Set<IProgramNonOldVar> modifiableGlobals =
 				mCsToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(mHonda.getProcedure());
 		bspm.computePredicates(false, arg, false, stemTF, loopTf, modifiableGlobals);
@@ -436,7 +435,7 @@ public class LassoRankerStarter {
 	private void reportNonTerminationResult(final GeometricNonTerminationArgument nta) {
 		// TODO: translate also the rational coefficients to Expressions?
 		// mRootAnnot.getBoogie2Smt().translate(term)
-		final Term2Expression term2expression = mRootAnnot.getBoogie2SMT().getTerm2Expression();
+		// final Term2Expression term2expression = mRootAnnot.getBoogie2SMT().getTerm2Expression();
 
 		final List<Map<IProgramVar, Rational>> states = new ArrayList<>();
 		states.add(nta.getStateInit());

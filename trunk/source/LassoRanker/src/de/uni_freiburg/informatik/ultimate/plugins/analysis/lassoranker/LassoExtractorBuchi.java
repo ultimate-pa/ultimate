@@ -26,21 +26,15 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.InCaReAlphabet;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiAccepts;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiDifferenceFKV;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiIsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
@@ -97,8 +91,8 @@ public class LassoExtractorBuchi extends AbstractLassoExtractor {
 		} else {
 			final NestedLassoWord<CodeBlock> nlw = run.getNestedLassoWord();
 			final InCaReAlphabet<CodeBlock> alphabet = new InCaReAlphabet<>(mCfgAutomaton);
-			mLassoAutomaton = (new LassoAutomatonBuilder(alphabet, mPredicateFactoryRc, nlw.getStem(), nlw.getLoop()))
-					.getResult();
+			mLassoAutomaton = (new LassoAutomatonBuilder(alphabet, mPredicateFactoryRc, mPredicateFactory,
+					nlw.getStem(), nlw.getLoop(), mServices)).getResult();
 			final INestedWordAutomatonSimple<CodeBlock, IPredicate> difference =
 					(new BuchiDifferenceFKV<>(new AutomataLibraryServices(mServices), mPredicateFactoryRc,
 							mCfgAutomaton, mLassoAutomaton)).getResult();
@@ -133,61 +127,5 @@ public class LassoExtractorBuchi extends AbstractLassoExtractor {
 			allNodes.addAll(prog2pp.values());
 		}
 		return cFG2NestedWordAutomaton.getNestedWordAutomaton(rootNode, mPredicateFactoryRc, allNodes);
-	}
-
-	public class LassoAutomatonBuilder {
-
-		private final NestedWordAutomaton<CodeBlock, IPredicate> mResult;
-
-		public LassoAutomatonBuilder(final InCaReAlphabet<CodeBlock> alphabet,
-				final IStateFactory<IPredicate> predicateFactory, final NestedWord<CodeBlock> stem,
-				final NestedWord<CodeBlock> loop) throws AutomataOperationCanceledException {
-			mResult = new NestedWordAutomaton<>(new AutomataLibraryServices(mServices), alphabet.getInternalAlphabet(),
-					alphabet.getCallAlphabet(), alphabet.getReturnAlphabet(), predicateFactory);
-			final List<IPredicate> stemStates = constructListOfDontCarePredicates(stem.length());
-			final List<IPredicate> loopStates = constructListOfDontCarePredicates(loop.length());
-			IPredicate initialState;
-			if (stem.length() == 0) {
-				initialState = loopStates.get(0);
-				mResult.addState(true, true, initialState);
-			} else {
-				initialState = stemStates.get(0);
-				mResult.addState(true, false, initialState);
-			}
-			final IPredicate hondaState = loopStates.get(0);
-			if (stem.length() > 0) {
-				mResult.addState(false, true, hondaState);
-			}
-			stemStates.add(hondaState);
-			loopStates.add(hondaState);
-			addSequenceOfStatesButFirstAndLast(stemStates);
-			mResult.addTransitions(stem, stemStates);
-			addSequenceOfStatesButFirstAndLast(loopStates);
-			mResult.addTransitions(loop, loopStates);
-			try {
-				assert (new BuchiAccepts<>(new AutomataLibraryServices(mServices), mResult,
-						new NestedLassoWord<>(stem, loop)).getResult());
-			} catch (final AutomataLibraryException e) {
-				throw new AssertionError(e);
-			}
-		}
-
-		private List<IPredicate> constructListOfDontCarePredicates(final int length) {
-			final ArrayList<IPredicate> result = new ArrayList<>(length);
-			for (int i = 0; i < length; i++) {
-				result.add(mPredicateFactory.newDontCarePredicate(null));
-			}
-			return result;
-		}
-
-		private void addSequenceOfStatesButFirstAndLast(final List<IPredicate> states) {
-			for (int i = 1; i < states.size() - 1; i++) {
-				mResult.addState(false, false, states.get(i));
-			}
-		}
-
-		public INestedWordAutomatonSimple<CodeBlock, IPredicate> getResult() {
-			return mResult;
-		}
 	}
 }

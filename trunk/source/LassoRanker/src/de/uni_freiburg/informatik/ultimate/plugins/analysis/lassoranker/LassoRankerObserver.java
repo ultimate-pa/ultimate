@@ -3,27 +3,27 @@
  * Copyright (C) 2013-2015 Jan Leike (leike@informatik.uni-freiburg.de)
  * Copyright (C) 2013-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE LassoRanker plug-in.
- * 
+ *
  * The ULTIMATE LassoRanker plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE LassoRanker plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE LassoRanker plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE LassoRanker plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE LassoRanker plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE LassoRanker plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker;
@@ -38,55 +38,49 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.lassoranker.LassoAnalysis;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 
-
 /**
  * Observer for LassoRanker
- * 
- * Extracts the lasso program's stem and loop transition from the RCFG builder's
- * transition graph. This is then passed to the LassoAnalysis
- * class, which serves as an interface to LassoRanker's termination and
- * non-termination analysis methods.
- * 
- * Termination and non-termination arguments are synthesizer via constraint
- * solving. The generated constraints are non-linear algebraic constraints.
- * We use an external SMT solver to solve these constraints.
- * 
+ *
+ * Extracts the lasso program's stem and loop transition from the RCFG builder's transition graph. This is then passed
+ * to the LassoAnalysis class, which serves as an interface to LassoRanker's termination and non-termination analysis
+ * methods.
+ *
+ * Termination and non-termination arguments are synthesizer via constraint solving. The generated constraints are
+ * non-linear algebraic constraints. We use an external SMT solver to solve these constraints.
+ *
  * @see LassoAnalysis
  * @author Matthias Heizmann, Jan Leike
  */
 public class LassoRankerObserver implements IUnmanagedObserver {
 
-	
 	private final IUltimateServiceProvider mServices;
 	private final IToolchainStorage mStorage;
-	
-	public LassoRankerObserver(final IUltimateServiceProvider services, final IToolchainStorage storage){
+
+	public LassoRankerObserver(final IUltimateServiceProvider services, final IToolchainStorage storage) {
 		mServices = services;
 		mStorage = storage;
 	}
 
 	@Override
 	public boolean process(final IElement root) throws IOException {
-		
 		if (!(root instanceof BoogieIcfgContainer)) {
 			throw new UnsupportedOperationException(
-					"LassoRanker can only be applied to models constructed" +
-					" by the RCFGBuilder");
+					"LassoRanker can only be applied to models constructed" + " by the RCFGBuilder");
 		}
 		new LassoRankerStarter((BoogieIcfgContainer) root, mServices, mStorage);
 		return false;
 	}
-	
+
 	/**
 	 * @return the root of the CFG.
 	 */
-	public IElement getRoot(){
+	public IElement getRoot() {
 		return null;
 	}
-	
+
 	@Override
 	public void init(final ModelType modelType, final int currentModelIndex, final int numberOfModels) {
-//		Ordinal.testcases();
+		// not needed
 	}
 
 	@Override
