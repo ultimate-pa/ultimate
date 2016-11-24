@@ -60,7 +60,11 @@ public enum CegarLoopStatisticsDefinitions implements IStatisticsElement {
 
 	AbstIntIterations(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
 
-	AbstIntStrong(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),;
+	AbstIntStrong(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
+	
+	AutomataMinimizationStatistics(StatisticsData.class, AStatisticsType.s_StatisticsDataAggregation,
+			AStatisticsType.s_KeyBeforeData),
+	;
 
 	private final Class<?> mClazz;
 	private final Function<Object, Function<Object, Object>> mAggr;

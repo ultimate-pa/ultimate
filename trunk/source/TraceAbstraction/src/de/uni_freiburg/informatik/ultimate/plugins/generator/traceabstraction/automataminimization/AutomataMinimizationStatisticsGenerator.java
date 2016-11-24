@@ -57,7 +57,7 @@ public class AutomataMinimizationStatisticsGenerator implements IStatisticsDataP
 			return mAutomataMinimizationTime;
 		case MinimizatonAttempts:
 			return mMinimizatonAttempt ? 1 : 0;
-		case NontrivialMinimizatons:
+		case NontrivialMinimizations:
 			return mNontrivialMinimizaton ? 1 : 0;
 		case StatesRemovedByMinimization:
 			return mStatesRemovedByMinimization;
@@ -68,7 +68,7 @@ public class AutomataMinimizationStatisticsGenerator implements IStatisticsDataP
 
 	@Override
 	public IStatisticsType getBenchmarkType() {
-		return null;
+		return AutomataMinimizationStatisticsType.getInstance();
 	}
 
 	@Override

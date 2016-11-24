@@ -121,7 +121,7 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 					(INestedWordAutomaton<CodeBlock, IPredicate>) mAbstraction, minimization, mComputeHoareAnnotation,
 					mIteration, predicateFactoryRefinement, MINIMIZE_EVERY_KTH_ITERATION, mStoredRawInterpolantAutomata,
 					mInterpolAutomaton, MINIMIZATION_TIMEOUT, resultCheckPredFac, lcsProvider);
-			final boolean wasMinimized = am.wasMinimized();
+			final boolean wasMinimized = am.newAutomatonWasBuilt();
 
 			if (wasMinimized) {
 				// postprocessing after minimization

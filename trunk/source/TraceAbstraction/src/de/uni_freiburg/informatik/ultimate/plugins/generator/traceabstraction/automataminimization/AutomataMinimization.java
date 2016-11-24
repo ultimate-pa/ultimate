@@ -117,7 +117,7 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate> {
 					storedRawInterpolantAutomata, interpolAutomaton, minimizationTimeout, partition, autServices);
 			// postprocessing after minimization
 			final IDoubleDeckerAutomaton<CodeBlock, IPredicate> newAbstraction;
-			if (mMinimizationResult.wasMinimized()) {
+			if (mMinimizationResult.wasNewAutomatonWasBuilt()) {
 				// extract result
 				try {
 					assert mMinimizationResult.getRawMinimizationOutput().checkResult(resultCheckPredFac);
@@ -160,7 +160,7 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate> {
 			final long statesRemovedByMinimization = operand.size() - mMinimizedAutomaton.size();
 			final long automataMinimizationTime = System.nanoTime() - startTime;
 			mStatistics = new AutomataMinimizationStatisticsGenerator(automataMinimizationTime, 
-					mMinimizationResult.wasMinimizationAttempted(), mMinimizationResult.wasMinimized(), statesRemovedByMinimization);
+					mMinimizationResult.wasMinimizationAttempted(), statesRemovedByMinimization > 0, statesRemovedByMinimization);
 	}
 
 	private MinimizationResult doMinimizationOperation(final INestedWordAutomaton<CodeBlock, IPredicate> operand,
@@ -170,8 +170,8 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate> {
 			final INestedWordAutomaton<CodeBlock, IPredicate> interpolAutomaton, final int minimizationTimeout,
 			final Collection<Set<IPredicate>> partition, final AutomataLibraryServices autServices)
 			throws AutomataOperationCanceledException, AssertionError {
-		final MinimizationResult minimizationResult;
 		
+		final MinimizationResult minimizationResult;
 		switch (minimization) {
 		case MINIMIZE_SEVPA: {
 			minimizationResult = new MinimizationResult(true, true, 
@@ -191,8 +191,8 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate> {
 					(IDoubleDeckerAutomaton<CodeBlock, IPredicate>) operand, partition,
 					computeOldState2NewStateMapping, iteration);
 			// it can happen that no minimization took place
-			final boolean wasMinimized = (minNwa == operand);
-			minimizationResult = new MinimizationResult(true, wasMinimized, minNwa); 
+			final boolean newAutomatonWasBuilt = (minNwa != operand);
+			minimizationResult = new MinimizationResult(true, newAutomatonWasBuilt, minNwa); 
 			break;
 		}
 		case NWA_COMBINATOR_EVERY_KTH: {
@@ -200,8 +200,8 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate> {
 					(IDoubleDeckerAutomaton<CodeBlock, IPredicate>) operand, partition,
 					computeOldState2NewStateMapping, minimizeEveryKthIteration, iteration);
 			// it can happen that no minimization took place
-			final boolean wasMinimized = (minNwa == operand);
-			minimizationResult = new MinimizationResult(true, wasMinimized, minNwa); 
+			final boolean newAutomatonWasBuilt = (minNwa != operand);
+			minimizationResult = new MinimizationResult(true, newAutomatonWasBuilt, minNwa); 
 			throw new UnsupportedOperationException("currently unsupported - check minimizaton attemp");
 		}
 		case NWA_OVERAPPROXIMATION: {
@@ -210,8 +210,8 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate> {
 			final IMinimizeNwa<CodeBlock, IPredicate> minNwa = new MinimizeNwaOverapproximation<>(autServices, 
 					predicateFactoryRefinement, operand, partition, computeOldState2NewStateMapping, minimizationTimeout,
 					storedRawInterpolantAutomata);
-			final boolean wasMinimized = (minNwa == operand);
-			minimizationResult = new MinimizationResult(true, wasMinimized, minNwa); 
+			final boolean newAutomatonWasBuilt = (minNwa != operand);
+			minimizationResult = new MinimizationResult(true, newAutomatonWasBuilt, minNwa); 
 			throw new UnsupportedOperationException("currently unsupported - check minimizaton attemp");
 		}
 		case DFA_HOPCROFT_ARRAYS: {
@@ -309,8 +309,8 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate> {
 		return mOldState2newState;
 	}
 
-	public boolean wasMinimized() {
-		return mMinimizationResult.wasMinimized();
+	public boolean newAutomatonWasBuilt() {
+		return mMinimizationResult.wasNewAutomatonWasBuilt();
 	}
 
 	public boolean wasMinimizationAttempted() {
@@ -325,19 +325,19 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate> {
 
 
 	private class MinimizationResult {
-		private final boolean mWasMinimized;
+		private final boolean mNewAutomatonWasBuilt;
 		private final boolean mMinimizationAttempt;
 		private final IMinimizeNwa<CodeBlock, IPredicate> mRawMinimizationOutput;
 		
-		public MinimizationResult(final boolean minimizationAttempt, final boolean wasMinimized,
+		public MinimizationResult(final boolean minimizationAttempt, final boolean newAutomatonWasBuilt,
 				final IMinimizeNwa<CodeBlock, IPredicate> rawMinimizationOutput) {
 			super();
-			mWasMinimized = wasMinimized;
+			mNewAutomatonWasBuilt = newAutomatonWasBuilt;
 			mMinimizationAttempt = minimizationAttempt;
 			mRawMinimizationOutput = rawMinimizationOutput;
 		}
-		public boolean wasMinimized() {
-			return mWasMinimized;
+		public boolean wasNewAutomatonWasBuilt() {
+			return mNewAutomatonWasBuilt;
 		}
 		public boolean wasMinimizationAttempted() {
 			return mMinimizationAttempt;

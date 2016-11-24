@@ -43,6 +43,7 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 	private final StatisticsData mPuData = new StatisticsData();
 	private final StatisticsData mTcData = new StatisticsData();
 	private final StatisticsData mTiData = new StatisticsData();
+	private final StatisticsData mAmData = new StatisticsData();
 	private final StatisticsData mInterpolantConsolidationBenchmarks = new StatisticsData();
 	private int mStatesRemovedByMinimization = 0;
 	private int mMinimizationAttempts = 0;
@@ -100,6 +101,10 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 
 	public void announceStrongAbsInt() {
 		mAbsIntStrong++;
+	}
+	
+	public void addAutomataMinimizationData(final IStatisticsDataProvider tcbd) {
+		mAmData.aggregateBenchmarkData(tcbd);
 	}
 
 	/**
@@ -167,6 +172,8 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 			return mBiggestAbstraction;
 		case InterpolantCoveringCapability:
 			return mBCI;
+		case AutomataMinimizationStatistics:
+			return mAmData;
 		default:
 			throw new AssertionError("unknown data");
 		}

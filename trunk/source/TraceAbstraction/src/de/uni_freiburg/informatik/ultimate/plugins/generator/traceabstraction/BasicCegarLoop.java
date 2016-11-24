@@ -672,12 +672,13 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					(INestedWordAutomaton<CodeBlock, IPredicate>) mAbstraction, minimization, mComputeHoareAnnotation,
 					mIteration, predicateFactoryRefinement, MINIMIZE_EVERY_KTH_ITERATION, mStoredRawInterpolantAutomata,
 					mInterpolAutomaton, MINIMIZATION_TIMEOUT, resultCheckPredFac, lcsProvider);
-			final boolean wasMinimized = am.wasMinimized();
+			mCegarLoopBenchmark.addAutomataMinimizationData(am.getStatistics());
+			final boolean newAutomatonWasBuilt = am.newAutomatonWasBuilt();
 			if (am.wasMinimizationAttempted()) {
 				mCegarLoopBenchmark.reportMinimizationAttempt();
 			}
 			
-			if (wasMinimized) {
+			if (newAutomatonWasBuilt) {
 				// postprocessing after minimization
 				final IDoubleDeckerAutomaton<CodeBlock, IPredicate> newAbstraction = am.getMinimizedAutomaton();
 				

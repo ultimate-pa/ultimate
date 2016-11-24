@@ -39,11 +39,11 @@ public enum AutomataMinimizationStatisticsDefinitions implements IStatisticsElem
 
 	AutomataMinimizationTime(Long.class, AStatisticsType.s_LongAddition, AStatisticsType.s_TimeBeforeKey),
 	
-	MinimizatonAttempts(Long.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
+	MinimizatonAttempts(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
 
-	StatesRemovedByMinimization(Long.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
+	StatesRemovedByMinimization(Long.class, AStatisticsType.s_LongAddition, AStatisticsType.s_DataBeforeKey),
 	
-	NontrivialMinimizatons(Long.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey);
+	NontrivialMinimizations(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey);
 
 	private final Class<?> mClazz;
 	private final Function<Object, Function<Object, Object>> mAggr;
