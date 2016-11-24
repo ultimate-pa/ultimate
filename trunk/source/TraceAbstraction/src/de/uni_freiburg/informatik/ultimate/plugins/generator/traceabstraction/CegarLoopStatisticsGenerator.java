@@ -45,8 +45,6 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 	private final StatisticsData mTiData = new StatisticsData();
 	private final StatisticsData mAmData = new StatisticsData();
 	private final StatisticsData mInterpolantConsolidationBenchmarks = new StatisticsData();
-	private int mStatesRemovedByMinimization = 0;
-	private int mMinimizationAttempts = 0;
 	private int mIterations = 0;
 	private int mAbsIntIterations = 0;
 	private SizeIterationPair mBiggestAbstraction = new SizeIterationPair(-1, -1);
@@ -87,10 +85,6 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 		mBCI = new BackwardCoveringInformation(mBCI, bci);
 	}
 
-	public void announceStatesRemovedByMinimization(final int statesRemoved) {
-		mStatesRemovedByMinimization += statesRemoved;
-	}
-
 	public void announceNextIteration() {
 		mIterations++;
 	}
@@ -124,10 +118,6 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 		}
 	}
 
-	public void reportMinimizationAttempt() {
-		mMinimizationAttempts++;
-	}
-
 	@Override
 	public Object getValue(final String key) {
 		final CegarLoopStatisticsDefinitions keyEnum = Enum.valueOf(CegarLoopStatisticsDefinitions.class, key);
@@ -137,7 +127,6 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 		case OverallTime:
 		case AutomataDifference:
 		case DeadEndRemovalTime:
-		case AutomataMinimizationTime:
 		case HoareAnnotationTime:
 		case BasicInterpolantAutomatonTime:
 		case AbstIntTime:
@@ -156,10 +145,6 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 			return mInterpolantConsolidationBenchmarks;
 		case TotalInterpolationStatistics:
 			return mTiData;
-		case StatesRemovedByMinimization:
-			return mStatesRemovedByMinimization;
-		case MinimizatonAttempts:
-			return mMinimizationAttempts;
 		case OverallIterations:
 			return mIterations;
 		case TraceHistogramMax:
@@ -190,7 +175,6 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 				CegarLoopStatisticsDefinitions.AbstIntTime.toString(),
 				CegarLoopStatisticsDefinitions.AutomataDifference.toString(),
 				CegarLoopStatisticsDefinitions.DeadEndRemovalTime.toString(),
-				CegarLoopStatisticsDefinitions.AutomataMinimizationTime.toString(),
 				CegarLoopStatisticsDefinitions.HoareAnnotationTime.toString(),
 				CegarLoopStatisticsDefinitions.BasicInterpolantAutomatonTime.toString() };
 	}

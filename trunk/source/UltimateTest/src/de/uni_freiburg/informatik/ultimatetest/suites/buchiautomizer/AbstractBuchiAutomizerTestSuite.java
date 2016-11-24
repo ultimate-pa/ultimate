@@ -31,7 +31,9 @@ import java.util.ArrayList;
 
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiAutomizerModuleDecompositionBenchmark;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiAutomizerTimingBenchmark;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoopBenchmark;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimizationStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.decider.TerminationAnalysisTestResultDecider;
@@ -56,7 +58,7 @@ import de.uni_freiburg.informatik.ultimatetest.summaries.TraceAbstractionTestSum
 public abstract class AbstractBuchiAutomizerTestSuite extends AbstractModelCheckerTestSuite {
 
 	@Override
-	public ITestResultDecider constructITestResultDecider(UltimateRunDefinition ultimateRunDefinition) {
+	public ITestResultDecider constructITestResultDecider(final UltimateRunDefinition ultimateRunDefinition) {
 		return new TerminationAnalysisTestResultDecider(ultimateRunDefinition, true);
 	}
 
@@ -85,9 +87,11 @@ public abstract class AbstractBuchiAutomizerTestSuite extends AbstractModelCheck
 				
 				new ColumnDefinition("Dead end removal time", "dead end time", 
 						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Average),
-				new ColumnDefinition(CegarLoopStatisticsDefinitions.AutomataMinimizationTime.toString(), "mnmz time", 
+				new ColumnDefinition(CegarLoopStatisticsDefinitions.AutomataMinimizationStatistics.toString() + "_" 
+						+ AutomataMinimizationStatisticsDefinitions.AutomataMinimizationTime.toString(), "mnmz time", 
 						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Average),
-				new ColumnDefinition(CegarLoopStatisticsDefinitions.StatesRemovedByMinimization.toString(), "mnmz states", 
+				new ColumnDefinition(CegarLoopStatisticsDefinitions.AutomataMinimizationStatistics.toString() + "_" 
+						+ AutomataMinimizationStatisticsDefinitions.StatesRemovedByMinimization.toString(), "mnmz states", 
 						ConversionContext.Divide(1, 2, ""), Aggregate.Ignore, Aggregate.Average),
 				new ColumnDefinition("BasicInterpolantAutomatonTime", "bia time", 
 						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Average),
@@ -116,8 +120,12 @@ public abstract class AbstractBuchiAutomizerTestSuite extends AbstractModelCheck
 				new ColumnDefinition(
 						"LassoNonterminationAnalysisUnknown", "gnta unknown",
 						ConversionContext.Divide(1, 0, ""), Aggregate.Ignore, Aggregate.Sum),
-
-				
+				new ColumnDefinition(
+						BuchiCegarLoopBenchmark.s_MinimizationsOfDetermnisticAutomatomata, "mnmz det",
+						ConversionContext.Divide(1, 0, ""), Aggregate.Ignore, Aggregate.Sum),
+				new ColumnDefinition(
+						BuchiCegarLoopBenchmark.s_MinimizationsOfNondetermnisticAutomatomata, "mnmz nondet",
+						ConversionContext.Divide(1, 0, ""), Aggregate.Ignore, Aggregate.Sum),
 		};
 
 		return new ITestSummary[] { 

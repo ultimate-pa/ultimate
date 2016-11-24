@@ -24,8 +24,6 @@ public enum CegarLoopStatisticsDefinitions implements IStatisticsElement {
 
 	DeadEndRemovalTime(Long.class, AStatisticsType.s_LongAddition, AStatisticsType.s_TimeBeforeKey),
 
-	AutomataMinimizationTime(Long.class, AStatisticsType.s_LongAddition, AStatisticsType.s_TimeBeforeKey),
-
 	HoareAnnotationTime(Long.class, AStatisticsType.s_LongAddition, AStatisticsType.s_TimeBeforeKey),
 
 	HoareTripleCheckerStatistics(StatisticsData.class, AStatisticsType.s_StatisticsDataAggregation,
@@ -33,10 +31,6 @@ public enum CegarLoopStatisticsDefinitions implements IStatisticsElement {
 
 	PredicateUnifierStatistics(StatisticsData.class, AStatisticsType.s_StatisticsDataAggregation,
 			AStatisticsType.s_KeyBeforeData),
-
-	StatesRemovedByMinimization(Long.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
-	
-	MinimizatonAttempts(Long.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
 
 	BasicInterpolantAutomatonTime(Long.class, AStatisticsType.s_LongAddition, AStatisticsType.s_TimeBeforeKey),
 

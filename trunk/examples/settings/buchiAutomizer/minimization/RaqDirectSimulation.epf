@@ -38,5 +38,5 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Use\ external\ solver\ (rank\ synthesis)=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Dump\ automata\ to\ files=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Dump\ automata\ to\ the\ following\ directory=/home/matthias/ultimate/dump/auto
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Automata\ minimization=RaqDirectSimulation
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Automata\ minimization=RAQ_DIRECT_SIMULATION
 

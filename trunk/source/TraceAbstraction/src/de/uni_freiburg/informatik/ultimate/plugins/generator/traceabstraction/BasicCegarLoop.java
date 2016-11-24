@@ -72,6 +72,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Boo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization.AutomataMinimizationTimeout;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.LineCoverageCalculator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.InterpolantAutomatonBuilderFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.BestApproximationDeterminizer;
@@ -665,43 +666,40 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					mIcfgContainer.getFilename() + "_DiffAutomatonBeforeMinimization_Iteration" + mIteration;
 			super.writeAutomatonToFile(mAbstraction, filename);
 		}
-		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AutomataMinimizationTime.toString());
 		final Function<ISLPredicate, BoogieIcfgLocation> lcsProvider = x -> x.getProgramPoint();
+		AutomataMinimization<BoogieIcfgLocation, ISLPredicate> am;
 		try {
-			final AutomataMinimization<BoogieIcfgLocation, ISLPredicate> am = new AutomataMinimization<>(mServices,
+			am = new AutomataMinimization<>(mServices,
 					(INestedWordAutomaton<CodeBlock, IPredicate>) mAbstraction, minimization, mComputeHoareAnnotation,
 					mIteration, predicateFactoryRefinement, MINIMIZE_EVERY_KTH_ITERATION, mStoredRawInterpolantAutomata,
 					mInterpolAutomaton, MINIMIZATION_TIMEOUT, resultCheckPredFac, lcsProvider);
-			mCegarLoopBenchmark.addAutomataMinimizationData(am.getStatistics());
-			final boolean newAutomatonWasBuilt = am.newAutomatonWasBuilt();
-			if (am.wasMinimizationAttempted()) {
-				mCegarLoopBenchmark.reportMinimizationAttempt();
-			}
-			
-			if (newAutomatonWasBuilt) {
-				// postprocessing after minimization
-				final IDoubleDeckerAutomaton<CodeBlock, IPredicate> newAbstraction = am.getMinimizedAutomaton();
-				
-				// extract Hoare annotation
-				if (mComputeHoareAnnotation) {
-					final Map<IPredicate, IPredicate> oldState2newState = am.getOldState2newStateMapping();
-					if (oldState2newState == null) {
-						throw new AssertionError("Hoare annotation and " + minimization + " incompatible");
-					}
-					mHaf.updateOnMinimization(oldState2newState, newAbstraction);
+		} catch (final AutomataMinimizationTimeout e) {
+			mCegarLoopBenchmark.addAutomataMinimizationData(e.getStatistics());
+			throw e.getAutomataOperationCanceledException();
+		}
+		mCegarLoopBenchmark.addAutomataMinimizationData(am.getStatistics());
+		final boolean newAutomatonWasBuilt = am.newAutomatonWasBuilt();
+
+		if (newAutomatonWasBuilt) {
+			// postprocessing after minimization
+			final IDoubleDeckerAutomaton<CodeBlock, IPredicate> newAbstraction = am.getMinimizedAutomaton();
+
+			// extract Hoare annotation
+			if (mComputeHoareAnnotation) {
+				final Map<IPredicate, IPredicate> oldState2newState = am.getOldState2newStateMapping();
+				if (oldState2newState == null) {
+					throw new AssertionError("Hoare annotation and " + minimization + " incompatible");
 				}
-				
-				// statistics
-				final int oldSize = mAbstraction.size();
-				final int newSize = newAbstraction.size();
-				assert oldSize == 0 || oldSize >= newSize : "Minimization increased state space";
-				mCegarLoopBenchmark.announceStatesRemovedByMinimization(oldSize - newSize);
-				
-				// use result
-				mAbstraction = newAbstraction;
+				mHaf.updateOnMinimization(oldState2newState, newAbstraction);
 			}
-		} finally {
-			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.AutomataMinimizationTime.toString());
+
+			// statistics
+			final int oldSize = mAbstraction.size();
+			final int newSize = newAbstraction.size();
+			assert oldSize == 0 || oldSize >= newSize : "Minimization increased state space";
+
+			// use result
+			mAbstraction = newAbstraction;
 		}
 	}
 	

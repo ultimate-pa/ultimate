@@ -33,8 +33,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareT
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.CodeCheckBenchmarks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerStatisticsDefinitions;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimizationStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier.PredicateUniferStatisticsDefinitions;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.decider.SafetyCheckTestResultDecider;
@@ -116,7 +117,8 @@ public abstract class AbstractTraceAbstractionTestSuite extends AbstractModelChe
 //						new ColumnDefinition(
 //								"ICC %", "ICC",
 //								ConversionContext.Percent(true,2), Aggregate.Ignore, Aggregate.Average)
-						new ColumnDefinition(CegarLoopStatisticsDefinitions.AutomataMinimizationTime.toString(), "mnmz time",
+						new ColumnDefinition(CegarLoopStatisticsDefinitions.AutomataMinimizationStatistics.toString() + "_" 
+								+ AutomataMinimizationStatisticsDefinitions.AutomataMinimizationTime.toString(), "mnmz time",
 								ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Average),
 //						new ColumnDefinition("BasicInterpolantAutomatonTime", "bia time",
 //								ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Average),

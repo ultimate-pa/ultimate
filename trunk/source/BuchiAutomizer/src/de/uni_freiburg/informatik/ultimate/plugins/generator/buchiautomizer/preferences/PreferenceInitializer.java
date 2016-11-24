@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.AnalysisType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
 
 public class PreferenceInitializer extends UltimatePreferenceInitializer {
 
@@ -45,33 +46,6 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 		Ncsb, Elastic, HeiMat2, TightRO, TightBasic, TightHighEven
 	}
 
-	public enum AutomataMinimization {
-		None,
-
-		MinimizeSevpa,
-
-		ShrinkNwa,
-
-		DelayedSimulation,
-
-		FairSimulation_WithSCC,
-
-		FairSimulation_WithoutSCC,
-
-		FairDirectSimulation,
-
-		MinimizeNwaMaxSat2,
-
-		MinimizeNwaMaxSat,
-
-		RaqDirectSimulation,
-
-		RaqDelayedSimulation,
-
-		MultiDefault,
-
-		MultiSimulation
-	}
 
 	public static final String LABEL_IGNORE_DOWN_STATES = "Ignore down states";
 	public static final String LABEL_DETERMINIZATION_ON_DEMAND = "Determinization on demand";
@@ -102,7 +76,7 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_CONSTRUCT_TERMCOMP_PROOF = "Construct termination proof for TermComp";
 	public static final String LABEL_SIMPLIFY = "Try to simplify termination arguments";
 	public static final String LABEL_AUTOMATA_MINIMIZATION = "Automata minimization";
-	private static final AutomataMinimization DEF_AUTOMATA_MINIMIZATION = AutomataMinimization.None;
+	private static final Minimization DEF_AUTOMATA_MINIMIZATION = Minimization.NONE;
 	/**
 	 * If true we check if the loop is terminating even if the stem or the concatenation of stem and loop are already
 	 * infeasible. This allows us to use refineFinite and refineBuchi in the same iteration.
@@ -166,7 +140,7 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<>(LABEL_SIMPLIFY, true, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_TRY_TWOFOLD_REFINEMENT, true, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_AUTOMATA_MINIMIZATION, DEF_AUTOMATA_MINIMIZATION,
-						PreferenceType.Combo, AutomataMinimization.values()),
+						PreferenceType.Combo, Minimization.values()),
 				new UltimatePreferenceItem<>(LABEL_USE_OLD_MAP_ELIMINATION, DEF_USE_OLD_MAP_ELIMINATION,
 						"Use either Matthias' (old) or Frank's (new) implementation of a map elimination algorithm",
 						PreferenceType.Boolean),

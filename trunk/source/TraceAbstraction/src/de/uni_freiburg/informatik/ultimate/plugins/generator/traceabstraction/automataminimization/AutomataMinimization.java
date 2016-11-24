@@ -58,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.direct.nwa.ReduceNwaDirectSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.fair.ReduceBuchiFairDirectSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.fair.ReduceBuchiFairSimulation;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.summarycomputationgraph.ReduceNwaDelayedSimulationB;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.summarycomputationgraph.ReduceNwaDirectSimulationB;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -84,7 +85,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  */
 public class AutomataMinimization<LCS, LCSP extends IPredicate> {
 	
-	
 	private final ILogger mLogger;
 	private final MinimizationResult mMinimizationResult;
 	private final IDoubleDeckerAutomaton<CodeBlock, IPredicate> mMinimizedAutomaton;
@@ -101,7 +101,7 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate> {
 			final INestedWordAutomaton<CodeBlock, IPredicate> interpolAutomaton,
 			final int minimizationTimeout,
 			final IStateFactory<IPredicate> resultCheckPredFac,
-			final Function<LCSP, LCS> lcsProvider) throws AutomataOperationCanceledException {
+			final Function<LCSP, LCS> lcsProvider) throws AutomataOperationCanceledException, AutomataMinimizationTimeout {
 		
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		final long startTime = System.nanoTime();
@@ -111,57 +111,70 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate> {
 			// output of minimization
 			
 			final AutomataLibraryServices autServices = new AutomataLibraryServices(services);
-			
-			mMinimizationResult = doMinimizationOperation(operand, minimization,
-					computeOldState2NewStateMapping, iteration, predicateFactoryRefinement, minimizeEveryKthIteration,
-					storedRawInterpolantAutomata, interpolAutomaton, minimizationTimeout, partition, autServices);
-			// postprocessing after minimization
-			final IDoubleDeckerAutomaton<CodeBlock, IPredicate> newAbstraction;
-			if (mMinimizationResult.wasNewAutomatonWasBuilt()) {
-				// extract result
-				try {
-					assert mMinimizationResult.getRawMinimizationOutput().checkResult(resultCheckPredFac);
-				} catch (final AutomataLibraryException e) {
-					throw new AssertionError(e);
-				}
-				if (mMinimizationResult.getRawMinimizationOutput() instanceof IMinimizeNwaDD) {
-					/**
-					 * TODO Christian 2016-08-05: remove RemoveUnreachable() call (test thoroughly first!)
-					 */
-					// DoubleDecker information already present in output
-					newAbstraction = (IDoubleDeckerAutomaton<CodeBlock, IPredicate>) mMinimizationResult.getRawMinimizationOutput().getResult();
-					// (new RemoveUnreachable<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
-					// newAbstractionRaw.getResult())).getResult();
-				} else {
-					// compute DoubleDecker information
-					newAbstraction = (new RemoveUnreachable<>(new AutomataLibraryServices(services),
-							mMinimizationResult.getRawMinimizationOutput().getResult())).getResult();
-				}
-
-				// extract Hoare annotation
-				if (computeOldState2NewStateMapping) {
-					if (!(mMinimizationResult.getRawMinimizationOutput() instanceof AbstractMinimizeNwa)) {
-						throw new AssertionError("Hoare annotation and " + minimization + " incompatible");
+			try {
+				mMinimizationResult = doMinimizationOperation(operand, minimization,
+						computeOldState2NewStateMapping, iteration, predicateFactoryRefinement, minimizeEveryKthIteration,
+						storedRawInterpolantAutomata, interpolAutomaton, minimizationTimeout, partition, autServices);
+				// postprocessing after minimization
+				final IDoubleDeckerAutomaton<CodeBlock, IPredicate> newAbstraction;
+				if (mMinimizationResult.wasNewAutomatonWasBuilt()) {
+					// extract result
+					try {
+						assert mMinimizationResult.getRawMinimizationOutput().checkResult(resultCheckPredFac) : "incorrect minimization result for " + minimization;
+					} catch (final AutomataLibraryException e) {
+						throw new AssertionError(e);
 					}
-					final AbstractMinimizeNwa<CodeBlock, IPredicate> minimizeOpCast =
-							(AbstractMinimizeNwa<CodeBlock, IPredicate>) mMinimizationResult.getRawMinimizationOutput();
-					mOldState2newState = minimizeOpCast.getOldState2newState();
+					if (mMinimizationResult.getRawMinimizationOutput() instanceof IMinimizeNwaDD) {
+						/**
+						 * TODO Christian 2016-08-05: remove RemoveUnreachable() call (test thoroughly first!)
+						 */
+						// DoubleDecker information already present in output
+						newAbstraction = (IDoubleDeckerAutomaton<CodeBlock, IPredicate>) mMinimizationResult.getRawMinimizationOutput().getResult();
+						// (new RemoveUnreachable<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices),
+						// newAbstractionRaw.getResult())).getResult();
+					} else {
+						// compute DoubleDecker information
+						newAbstraction = (new RemoveUnreachable<>(new AutomataLibraryServices(services),
+								mMinimizationResult.getRawMinimizationOutput().getResult())).getResult();
+					}
+
+					// extract Hoare annotation
+					if (computeOldState2NewStateMapping) {
+						if (!(mMinimizationResult.getRawMinimizationOutput() instanceof AbstractMinimizeNwa)) {
+							throw new AssertionError("Hoare annotation and " + minimization + " incompatible");
+						}
+						final AbstractMinimizeNwa<CodeBlock, IPredicate> minimizeOpCast =
+								(AbstractMinimizeNwa<CodeBlock, IPredicate>) mMinimizationResult.getRawMinimizationOutput();
+						mOldState2newState = minimizeOpCast.getOldState2newState();
+					} else {
+						mOldState2newState = null;
+					}
+
+					// use result
+					mMinimizedAutomaton = newAbstraction;
+
 				} else {
+					mMinimizedAutomaton = null;
 					mOldState2newState = null;
 				}
-
-				// use result
-				mMinimizedAutomaton = newAbstraction;
-
-			} else {
-				mMinimizedAutomaton = null;
-				mOldState2newState = null;
+			} catch (final AutomataOperationCanceledException aoce) {
+				final long automataMinimizationTime = System.nanoTime() - startTime;
+				mStatistics = new AutomataMinimizationStatisticsGenerator(automataMinimizationTime, 
+						true, false, 0);
+				throw new AutomataMinimizationTimeout(aoce, mStatistics);
 			}
-			final long statesRemovedByMinimization = operand.size() - mMinimizedAutomaton.size();
+			final long statesRemovedByMinimization;
+			if (mMinimizationResult.wasNewAutomatonWasBuilt()) {
+				statesRemovedByMinimization = operand.size() - mMinimizedAutomaton.size();
+			} else {
+				statesRemovedByMinimization = 0;
+			}
 			final long automataMinimizationTime = System.nanoTime() - startTime;
 			mStatistics = new AutomataMinimizationStatisticsGenerator(automataMinimizationTime, 
 					mMinimizationResult.wasMinimizationAttempted(), statesRemovedByMinimization > 0, statesRemovedByMinimization);
 	}
+
+
 
 	private MinimizationResult doMinimizationOperation(final INestedWordAutomaton<CodeBlock, IPredicate> operand,
 			final Minimization minimization, final boolean computeOldState2NewStateMapping, final int iteration,
@@ -266,35 +279,56 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate> {
 			minimizationResult = new MinimizationResult(minimizationAttempt, true, minNwa); 
 			break;
 		}
-		case DelayedSimulation: {
+		case DELAYED_SIMULATION: {
 			minimizationResult = new MinimizationResult(true, true, 
 					new BuchiReduce<>(autServices, predicateFactoryRefinement, operand));
 			break;
 		}
-		case FairSimulation_WithSCC: {
+		case FAIR_SIMULATION_WITH_SCC: {
 			minimizationResult = new MinimizationResult(true, true, 
 					new ReduceBuchiFairSimulation<>(autServices, predicateFactoryRefinement, operand, true));
 			break;
 		}
-		case FairSimulation_WithoutSCC: {
+		case FAIR_SIMULATION_WITHOUT_SCC: {
 			minimizationResult = new MinimizationResult(true, true, 
 					new ReduceBuchiFairSimulation<>(autServices, predicateFactoryRefinement, operand, false));
 			break;
 		}
-		case FairDirectSimulation: {
+		case FAIR_DIRECT_SIMULATION: {
 			minimizationResult = new MinimizationResult(true, true, 
 					new ReduceBuchiFairDirectSimulation<>(autServices, predicateFactoryRefinement, operand, true));
 			break;
 		}
-		case RaqDelayedSimulation: {
+		case RAQ_DELAYED_SIMULATION: {
 			minimizationResult = new MinimizationResult(true, true,
 			new ReduceNwaDelayedSimulation<>(autServices,
 					predicateFactoryRefinement, (IDoubleDeckerAutomaton<CodeBlock, IPredicate>) operand,
 					false, partition));
 			break;
 		}
-		case NONE:
-			throw new IllegalArgumentException("No minimization method specified.");
+		case RAQ_DELAYED_SIMULATION_B: {
+			minimizationResult = new MinimizationResult(true, true, 
+					new ReduceNwaDelayedSimulationB<CodeBlock, IPredicate>(autServices, predicateFactoryRefinement,
+					(IDoubleDeckerAutomaton<CodeBlock, IPredicate>) operand));
+			break;
+		}
+		case NONE: {
+			// no-op minimization
+			minimizationResult = new MinimizationResult(false, false, 
+					new IMinimizeNwa<CodeBlock, IPredicate>() {
+						@Override
+						public INestedWordAutomaton<CodeBlock, IPredicate> getResult() {
+							return operand;
+						}
+
+						@Override
+						public boolean checkResult(final IStateFactory<IPredicate> stateFactory)
+								throws AutomataLibraryException {
+							return true;
+						}
+					});
+			break;
+		}
 		default:
 			throw new AssertionError("Unknown minimization method.");
 		}
@@ -345,8 +379,28 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate> {
 		public IMinimizeNwa<CodeBlock, IPredicate> getRawMinimizationOutput() {
 			return mRawMinimizationOutput;
 		}
-		
-		
+	}
+	
+	
+	
+	
+	public static class AutomataMinimizationTimeout extends Exception {
+		private final AutomataMinimizationStatisticsGenerator mStatistics;
+		private final AutomataOperationCanceledException mAutomataOperationCanceledException;
+
+		public AutomataMinimizationTimeout(final AutomataOperationCanceledException aoce,
+				final AutomataMinimizationStatisticsGenerator statistics) {
+			mAutomataOperationCanceledException = aoce;
+			mStatistics = statistics; 
+		}
+
+		public AutomataMinimizationStatisticsGenerator getStatistics() {
+			return mStatistics;
+		}
+
+		public AutomataOperationCanceledException getAutomataOperationCanceledException() {
+			return mAutomataOperationCanceledException;
+		}
 	}
 	
 	

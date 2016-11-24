@@ -196,13 +196,7 @@ public class BuchiCegarLoopBenchmark extends CegarStatisticsType implements ISta
 		sb.append(benchmarkData.getValue(s_MinimizationsOfNondetermnisticAutomatomata.toString()));
 		sb.append(". ");
 		
-		sb.append("Minimization removed ");
-		sb.append(benchmarkData.getValue(CegarLoopStatisticsDefinitions.StatesRemovedByMinimization.toString()));
-		sb.append(" states and took ");
-		final Long time = (Long) benchmarkData.getValue(CegarLoopStatisticsDefinitions.AutomataMinimizationTime.toString());
-		sb.append(prettyprintNanoseconds(time));
-		sb.append(". ");
-		
+	
 		sb.append("Non-live state removal took ");
 		final Long nonLiveTime = (Long) benchmarkData.getValue(s_NonLiveStateRemoval);
 		sb.append(prettyprintNanoseconds(nonLiveTime));
