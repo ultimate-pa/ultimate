@@ -76,22 +76,22 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 		mLogger = logger;
 		mPreAnalysis = preAnalysis;
 		mEqGraphNodeSet = preAnalysis.getEqGraphNodeSet();
-		mTermToBaseNodeMap = preAnalysis.getTermToBaseNodeMap() == null ? 
-				null : 
-					Collections.unmodifiableMap(preAnalysis.getTermToBaseNodeMap());
+//		mTermToBaseNodeMap = preAnalysis.getTermToBaseNodeMap() == null ? 
+//				null : 
+//					Collections.unmodifiableMap(preAnalysis.getTermToBaseNodeMap());
 		mTermToFnNodeMap = preAnalysis.getTermToFnNodeMap() == null 
 				? null 
 						: Collections.unmodifiableMap(preAnalysis.getTermToFnNodeMap());
 		mEqNodeToEqGraphNodeMap = preAnalysis.getEqNodeToEqGraphNodeMap();
 		mDisEqualityMap = new HashSet<>();
 		mBottomState = new VPStateBottom(this);
-		mTermToEqNodeMap = termToEqNodeMap;
+		mTermToEqNodeMap = preAnalysis.getTermToEqNodeMap();//termToEqNodeMap;
 		mTopState = new VPStateTop(mEqGraphNodeSet, mTermToEqNodeMap, mTermToFnNodeMap, mEqNodeToEqGraphNodeMap, mDisEqualityMap, this);
 		mPost = new VPPostOperator(script, services, this);
 		mMerge = new VPMergeOperator();
 		mScript = script;
 		mBoogie2Smt = boogie2smt;
-		mTermToEqNode = preAnalysis.getTermToEqNodeMap();
+//		mTermToEqNode = 
 	}
 
 	@Override
