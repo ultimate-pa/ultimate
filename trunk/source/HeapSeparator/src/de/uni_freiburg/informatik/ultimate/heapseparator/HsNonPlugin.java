@@ -91,8 +91,8 @@ public class HsNonPlugin {
 			walker.run(initialEdges.iterator().next().getTarget()); // TODO: which location to take really??
 		}
 
-		NestedMap2<IProgramVar, IProgramVar, IProgramVar> oldArrayToPointerToNewArray = 
-				processAbstractInterpretationResult(abstractInterpretationResult, hspav);
+		NestedMap2<IProgramVar, IProgramVar, IProgramVar> oldArrayToPointerToNewArray =  null;//TODO
+//				processAbstractInterpretationResult(abstractInterpretationResult, hspav);
 
 	
 
@@ -176,8 +176,8 @@ public class HsNonPlugin {
 					NestedMap2<BoogieVarOrConst, BoogieVarOrConst, ReplacementVar> arrayToRepresentativeToFreshArrayVar =
 							new NestedMap2<>();
 
-					arrayToRepresentativeToFreshArrayVar.put(
-							array, ind1, mReplacementVarFactory.getOrConstuctReplacementVar(array));
+//					arrayToRepresentativeToFreshArrayVar.put(
+//							array, ind1, mReplacementVarFactory.getOrConstuctReplacementVar(array)); //TODO
 				}
 			}
 		}

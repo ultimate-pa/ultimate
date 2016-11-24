@@ -89,7 +89,8 @@ public class HeapSepPreAnalysisVisitor extends SimpleRCFGVisitor {
 			// we have an array variable --> store that it occurs after the source location of the edge
 			result.addPair(pv, edge.getSource());
 		}	
-		return result;
+		return null;
+//		return result; //TODO
 	}
 
 	@Override
@@ -145,7 +146,7 @@ class EquatedArraysFinder extends TermTransformer {
 						mCodeBlock.getTransitionFormula().getInVars(), 
 						mCodeBlock.getTransitionFormula().getOutVars());
 				// two non-identical arrays are equated --> store that fact
-				mEquatedArrays.add(new Pair<IProgramVar, IProgramVar>(pv1, pv2));
+//				mEquatedArrays.add(new Pair<IProgramVar, IProgramVar>(pv1, pv2)); //TODO
 			}
 		}
 		super.convertApplicationTerm(appTerm, newArgs);
