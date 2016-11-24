@@ -63,6 +63,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization.AutomataMinimizationTimeout;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
@@ -114,40 +115,42 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 			final String filename = mIcfgContainer.getFilename() + "_DiffAutomatonBeforeMinimization_Iteration" + mIteration;
 			super.writeAutomatonToFile(mAbstraction, filename);
 		}
-		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AutomataMinimizationTime.toString());
 		final Function<IMLPredicate, Set<BoogieIcfgLocation>> lcsProvider = x -> asHashSet(x.getProgramPoints());
+		AutomataMinimization<Set<BoogieIcfgLocation>, IMLPredicate> am;
 		try {
-			final AutomataMinimization<Set<BoogieIcfgLocation>, IMLPredicate> am = new AutomataMinimization<>(mServices,
+			am = new AutomataMinimization<>(mServices,
 					(INestedWordAutomaton<CodeBlock, IPredicate>) mAbstraction, minimization, mComputeHoareAnnotation,
 					mIteration, predicateFactoryRefinement, MINIMIZE_EVERY_KTH_ITERATION, mStoredRawInterpolantAutomata,
 					mInterpolAutomaton, MINIMIZATION_TIMEOUT, resultCheckPredFac, lcsProvider);
-			final boolean wasMinimized = am.newAutomatonWasBuilt();
+		} catch (final AutomataMinimizationTimeout e) {
+			mCegarLoopBenchmark.addAutomataMinimizationData(e.getStatistics());
+			throw e.getAutomataOperationCanceledException();
+		}
+		mCegarLoopBenchmark.addAutomataMinimizationData(am.getStatistics());
 
-			if (wasMinimized) {
-				// postprocessing after minimization
-				final IDoubleDeckerAutomaton<CodeBlock, IPredicate> newAbstraction = am.getMinimizedAutomaton();
-				
-				// extract Hoare annotation
-				if (mComputeHoareAnnotation) {
-					final Map<IPredicate, IPredicate> oldState2newState = am.getOldState2newStateMapping();
-					if (oldState2newState == null) {
-						throw new AssertionError("Hoare annotation and " + minimization + " incompatible");
-					}
-					mHaf.updateOnMinimization(oldState2newState, newAbstraction);
+		final boolean newAutomatonWasBuilt = am.newAutomatonWasBuilt();
+
+		if (newAutomatonWasBuilt) {
+			// postprocessing after minimization
+			final IDoubleDeckerAutomaton<CodeBlock, IPredicate> newAbstraction = am.getMinimizedAutomaton();
+
+			// extract Hoare annotation
+			if (mComputeHoareAnnotation) {
+				final Map<IPredicate, IPredicate> oldState2newState = am.getOldState2newStateMapping();
+				if (oldState2newState == null) {
+					throw new AssertionError("Hoare annotation and " + minimization + " incompatible");
 				}
-				
-				// statistics
-				final int oldSize = mAbstraction.size();
-				final int newSize = newAbstraction.size();
-				assert oldSize == 0 || oldSize >= newSize : "Minimization increased state space";
-				mCegarLoopBenchmark.announceStatesRemovedByMinimization(oldSize - newSize);
-
-				// use result
-				mAbstraction = newAbstraction;
-				
+				mHaf.updateOnMinimization(oldState2newState, newAbstraction);
 			}
-		} finally {
-			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.AutomataMinimizationTime.toString());
+
+			// statistics
+			final int oldSize = mAbstraction.size();
+			final int newSize = newAbstraction.size();
+			assert oldSize == 0 || oldSize >= newSize : "Minimization increased state space";
+
+			// use result
+			mAbstraction = newAbstraction;
+
 		}
 	}
 	
