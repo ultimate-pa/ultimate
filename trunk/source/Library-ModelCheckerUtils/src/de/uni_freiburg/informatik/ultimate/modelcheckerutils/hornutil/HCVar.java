@@ -1,8 +1,10 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil;
 
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
-public class HCVar {
+public class HCVar implements IProgramVar {
 	private final HornClausePredicateSymbol predicate;
 	private final TermVariable termVariable;
 	private final int idx;
@@ -13,6 +15,7 @@ public class HCVar {
 		termVariable = v;
 	}
 	
+	@Override
 	public TermVariable getTermVariable() {
 		return termVariable;
 	}
@@ -22,7 +25,38 @@ public class HCVar {
 		return predicate.getName() + "{" + idx + "}";
 	}
 	
+	@Override
 	public String getGloballyUniqueId() {
 		return String.format("%s_%d", predicate.getName(), idx);
+	}
+
+	@Override
+	public String getProcedure() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public boolean isGlobal() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public boolean isOldvar() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public ApplicationTerm getDefaultConstant() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public ApplicationTerm getPrimedConstant() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

@@ -2,16 +2,20 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.grap
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeRun;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeRun;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.BasicToolchainJob;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.MultiElementCounter;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HCTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HCVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
@@ -46,6 +50,9 @@ public class SSABuilder {
 
 	private final Map<HCVar, TreeMap<Integer, Term>> mIndexedVarRepresentative = new HashMap<>();
 
+	private final Map<TreeRun<HCTransFormula, HCPredicate>, VariableVersioneer> mSubsMap;
+	
+	
 	private final Map<Term, Integer> mCounters;
 	private int currentTree = -1;
 	private final Map<String, Term> mIndexedConstants = new HashMap<>();
@@ -59,6 +66,7 @@ public class SSABuilder {
 		mPreCondition = preCondition;
 		mPostCondition = postCondition;
 		mCounters = new HashMap<>();
+		mSubsMap = new HashMap<>();
 
 		currentLocalAndOldVarVersion = new HashMap<>();
 		mResult = buildSSA();
@@ -82,6 +90,34 @@ public class SSABuilder {
 		return idxMap.get(tree);
 	}
 
+	public Map<HCPredicate, HCPredicate> rebuildSSApredicates(final Map<HCPredicate, Term> interpolantsMap) {
+		final Map<HCPredicate, HCPredicate> res = new HashMap<>();
+		rebuild((TreeRun<HCTransFormula, HCPredicate>) mTreeRun, res, interpolantsMap);
+		return res;
+	}
+	
+	private void rebuild(final TreeRun<HCTransFormula, HCPredicate> tree, final Map<HCPredicate, HCPredicate> res,
+			final Map<HCPredicate, Term> interpolantsMap) {
+		currentTree = getIndex(tree);
+		for (final TreeRun<HCTransFormula, HCPredicate> child : tree.getChildren()) {
+			rebuild(child, res, interpolantsMap);
+		}
+
+		if (tree.getRootSymbol() == null) {
+			tree.getRoot(); // TODO;
+			res.put(tree.getRoot(), tree.getRoot());
+			return ;
+		}
+		final VariableVersioneer vvRoot = mSubsMap.get(tree);
+		currentTree = getIndex(tree);
+		if (interpolantsMap.containsKey(tree.getRoot())) {
+			res.put(tree.getRoot(), vvRoot.backVersion(tree.getRoot(), interpolantsMap.get(tree.getRoot())));
+		} else {
+			res.put(tree.getRoot(), tree.getRoot());
+		}
+	}
+
+
 	private TreeRun<Term, HCPredicate> buildNestedFormulaTree(final TreeRun<HCTransFormula, HCPredicate> tree) {
 		final ArrayList<TreeRun<Term, HCPredicate>> childTrees = new ArrayList<>();
 		currentTree = getIndex(tree);
@@ -96,6 +132,8 @@ public class SSABuilder {
 		vvRoot.versionInVars();
 		currentTree = getIndex(tree);
 		vvRoot.versionAssignedVars(currentTree);
+		
+		mSubsMap.put(tree, vvRoot);
 
 		return new TreeRun<>(tree.getRoot(), vvRoot.getVersioneeredTerm(), childTrees);
 	}
@@ -223,13 +261,14 @@ public class SSABuilder {
 		}
 
 		public void versionPredicate() {
-			/*
-			 * for (final IProgramVar bv : mPred.getVars()) { final TermVariable
-			 * tv = transferToCurrentScriptIfNecessary(bv.getTermVariable());
-			 * final Term versioneered = getCurrentVarVersion(bv);
-			 * mConstants2BoogieVar.put(versioneered, bv);
-			 * mSubstitutionMapping.put(tv, versioneered); }
-			 */
+			for (final IProgramVar bv : mPred.getVars()) {
+				final HCVar hv = (HCVar) bv;
+				final TermVariable tv = transferToCurrentScriptIfNecessary(hv.getTermVariable());
+				final Term versioneered = getCurrentVarVersion(hv);
+				mConstants2HCVar.put(versioneered, hv);
+				mSubstitutionMapping.put(tv, versioneered);
+			}
+
 		}
 
 		public Term getVersioneeredTerm() {
@@ -245,6 +284,21 @@ public class SSABuilder {
 			return result;
 		}
 
+		public HCPredicate backVersion(final HCPredicate pl, final Term term) {
+			final Map<Term, Term> backSubstitutionMap = new HashMap<>();
+			final Set<IProgramVar> vars = new HashSet<>();
+			for (final Term hcvar : mSubstitutionMapping.keySet()) {
+				backSubstitutionMap.put(mSubstitutionMapping.get(hcvar), hcvar);
+				vars.add(mConstants2HCVar.get(mSubstitutionMapping.get(hcvar)));
+			}
+			
+			final Substitution subst = new Substitution(mScript, backSubstitutionMap);
+			final Term t = transferToCurrentScriptIfNecessary(term);
+			final Term formula = subst.transform(t);
+			
+			return new HCPredicate(pl.mProgramPoint, pl.hashCode(), formula, vars);
+		}
+		
 		public Map<Term, Term> getSubstitutionMapping() {
 			return mSubstitutionMapping;
 		}

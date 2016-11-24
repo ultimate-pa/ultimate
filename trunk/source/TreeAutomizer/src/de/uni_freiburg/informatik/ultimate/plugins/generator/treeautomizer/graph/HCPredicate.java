@@ -30,17 +30,31 @@ public class HCPredicate extends BasicPredicate implements IPredicate {
 		mProgramPoint = programPoint;
 	}
 
-	protected HCPredicate(final HornClausePredicateSymbol programPoint, final Term term, final Set<IProgramVar> vars) {
-		// ,
-		// Term
-		// closedFormula)
-		// {
-		super(HashUtils.hashHsieh(serialHCPredicate, programPoint), new String[] {}, term, vars, null);
+	protected HCPredicate(HornClausePredicateSymbol programPoint, Term term,
+			Set<IProgramVar> vars) {//, Term closedFormula) {
+		
+		super(HashUtils.hashHsieh(serialHCPredicate, programPoint, term), new String[]{}, term, vars, null);
 		mProgramPoint = programPoint;
 	}
 
 	protected HCPredicate(final HornClausePredicateSymbol programPoint, final Term term) {
 		this(programPoint, term, new HashSet<>());
+	}
+	
+	public HCPredicate(Term formula, HCPredicate oldPredicate) {
+		// TODO: Intersect oldPredicate.mVars with formula.vars
+		this(oldPredicate.mProgramPoint, HashUtils.hashHsieh(serialHCPredicate, formula, oldPredicate), formula, oldPredicate.mVars);
+	}
+	
+	/**
+	 * The published attributes. Update this and getFieldValue() if you add new
+	 * attributes.
+	 */
+	private final static String[] s_AttribFields = { "ProgramPoint", "Formula", "Vars" };
+
+	@Override
+	protected String[] getFieldNames() {
+		return s_AttribFields;
 	}
 
 	public HCPredicate(final Term formula, final HCPredicate oldPredicate) {

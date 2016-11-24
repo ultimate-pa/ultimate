@@ -54,6 +54,7 @@ public class TreeAutomizerCEGAR {
 	private final HCPredicate mFinalPredicate;
 
 	private HCSsa mSSA;
+	private TreeChecker mChecker;
 
 	/**
 	 * IInterpolantGenerator that was used in the current iteration.
@@ -125,10 +126,10 @@ public class TreeAutomizerCEGAR {
 	}
 
 	protected LBool isCounterexampleFeasible() {
-		final TreeChecker checker = new TreeChecker(mCounterexample, mBackendSmtSolverScript,
+		mChecker = new TreeChecker(mCounterexample, mBackendSmtSolverScript,
 				mInitialPredicate, mFinalPredicate, mLogger);
-		mSSA = checker.getSSA();
-		return checker.checkTrace();
+		mSSA = mChecker.getSSA();
+		return mChecker.checkTrace();
 	}
 
 	protected void constructInterpolantAutomaton() throws AutomataOperationCanceledException {
@@ -147,13 +148,19 @@ public class TreeAutomizerCEGAR {
 		}
 		Term[] interpolants = mBackendSmtSolverScript.getInterpolants(ts, idx);
 
-		Map<HCPredicate, HCPredicate> predsMap = new HashMap<>();
+		//Map<HCPredicate, HCPredicate> predsMap = new HashMap<>();
+
+		Map<HCPredicate, Term> interpolantsMap = new HashMap<>();
 		for (int i = 0; i < interpolants.length; ++i) {
 			HCPredicate p = postfixT.getPostFixStates().get(i);
-			predsMap.put(p, new HCPredicate(interpolants[i], p));
+			//predsMap.put(p, new HCPredicate(interpolants[i], p));
+			interpolantsMap.put(p, interpolants[i]);
 		}
-		mInterpolAutomaton = ((TreeRun<HCTransFormula, HCPredicate>) mCounterexample).reconstruct(predsMap)
+
+		mInterpolAutomaton = ((TreeRun<HCTransFormula, HCPredicate>) mCounterexample).reconstruct(mChecker.rebuild(interpolantsMap))
 				.getAutomaton();
+		//mInterpolAutomaton = ((TreeRun<HCTransFormula, HCPredicate>) mCounterexample).reconstruct(predsMap)
+		//		.getAutomaton();
 		
 		((TreeAutomatonBU<HCTransFormula, HCPredicate>) mInterpolAutomaton).extendAlphabet(mAbstraction.getAlphabet());
 	}

@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.grap
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeRun;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -32,6 +33,9 @@ public class TreeChecker {
 		mLogger = logger;
 	}
 	
+	public Map<HCPredicate, HCPredicate> rebuild(final Map<HCPredicate, Term> interpolantsMap) {
+		return mSSABuilder.rebuildSSApredicates(interpolantsMap);
+	}
 	
 	protected HCSsa getSSA() {
 		return mSSABuilder.getSSA();

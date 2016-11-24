@@ -12,18 +12,26 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 /**HCSsa HornClause-SSA
  * */
 public class HCSsa {
-	private final TreeRun<Term, HCPredicate> nestedFormulas;
-	private final Term postCondition;
-	private final Term preCondition;
+	private final TreeRun<Term, HCPredicate> mNestedFormulas;
+	private final Term mPostCondition;
+	private final Term mPreCondition;
 	private final Map<Term, Integer> mCounters;
 	private final Map<Term, Term> mTermToAssertion;
 	
 	public HCSsa(final TreeRun<Term, HCPredicate> t, final Term pre, final Term post, final Map<Term, Integer> counters) {
-		nestedFormulas = t;
-		postCondition = post;
-		preCondition = pre;
+		mNestedFormulas = t;
+		mPostCondition = post;
+		mPreCondition = pre;
 		mCounters = counters;
 		mTermToAssertion = new HashMap<>();
+	}
+	
+	public HCSsa(final HCSsa ssa, final TreeRun<Term, HCPredicate> nestedFormulas) {
+		 mNestedFormulas = nestedFormulas;
+		 mPostCondition = ssa.mPostCondition;
+		 mPreCondition = ssa.mPreCondition;
+		 mCounters = ssa.mCounters;
+		 mTermToAssertion = ssa.mTermToAssertion;
 	}
 	
 	protected int getCounter(final Term t) {
@@ -42,7 +50,7 @@ public class HCSsa {
 	 * @return return a flat version of the SSA.
 	 * */
 	public List<Term> flatten() {
-		return flatten(nestedFormulas);
+		return flatten(mNestedFormulas);
 	}
 	
 	private List<Term> flatten(final TreeRun<Term, HCPredicate> tree) {
@@ -58,7 +66,7 @@ public class HCSsa {
 	}
 	
 	public TreeRun<Term, HCPredicate> getFormulasTree() {
-		return nestedFormulas;
+		return mNestedFormulas;
 	}
 
 	protected Term getPredicateVariable(final Term term, final Script script) {
