@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AppHyperEd
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.DummyCodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.ImpRootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.CodeChecker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.GlobalSettings;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.CodeCheckSettings;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.GraphWriter;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
@@ -73,8 +73,8 @@ public class UltimateChecker extends CodeChecker {
 
 	public UltimateChecker(final IElement root, final CfgSmtToolkit mcsToolkit, final BoogieIcfgContainer moriginalRoot,
 			final ImpRootNode mgraphRoot, final GraphWriter mgraphWriter, final IHoareTripleChecker edgeChecker,
-			final PredicateUnifier predicateUnifier, final ILogger logger) {
-		super(root, mcsToolkit, moriginalRoot, mgraphRoot, mgraphWriter, edgeChecker, predicateUnifier, logger);
+			final PredicateUnifier predicateUnifier, final ILogger logger, final CodeCheckSettings globalSettings) {
+		super(root, mcsToolkit, moriginalRoot, mgraphRoot, mgraphWriter, edgeChecker, predicateUnifier, logger, globalSettings);
 	}
 
 	/**
@@ -282,7 +282,7 @@ public class UltimateChecker extends CodeChecker {
 			return false;
 		}
 
-		if (GlobalSettings.INSTANCE.isMemoizeNormalEdgeChecks()) {
+		if (getGlobalSettings().isMemoizeNormalEdgeChecks()) {
 			if (mSatTriples.get(preCondition, statement, postCondition) == IsContained.IsContained) {
 				mMemoizationHitsSat++;
 				return true;
@@ -303,7 +303,7 @@ public class UltimateChecker extends CodeChecker {
 					negatePredicateNoPU(postCondition)) != Validity.VALID;
 		}
 
-		if (GlobalSettings.INSTANCE.isMemoizeNormalEdgeChecks()) {
+		if (getGlobalSettings().isMemoizeNormalEdgeChecks()) {
 			if (result) {
 				mSatTriples.put(preCondition, statement, postCondition, IsContained.IsContained);
 			} else {
@@ -325,7 +325,7 @@ public class UltimateChecker extends CodeChecker {
 	 */
 	protected boolean isSatRetEdge(final IPredicate preCondition, final IPredicate hier, final Return statement,
 			final IPredicate postCondition) {
-		if (GlobalSettings.INSTANCE.isMemoizeReturnEdgeChecks()) {
+		if (getGlobalSettings().isMemoizeReturnEdgeChecks()) {
 			if (mSatQuadruples.get(preCondition, hier, statement, postCondition) == IsContained.IsContained) {
 				mMemoizationReturnHitsSat++;
 				return true;
@@ -339,7 +339,7 @@ public class UltimateChecker extends CodeChecker {
 		final boolean result = mEdgeChecker.checkReturn(preCondition, hier, statement,
 				negatePredicateNoPU(postCondition)) != Validity.VALID;
 
-		if (GlobalSettings.INSTANCE.isMemoizeReturnEdgeChecks()) {
+		if (getGlobalSettings().isMemoizeReturnEdgeChecks()) {
 			if (result) {
 				mSatQuadruples.put(preCondition, hier, statement, postCondition, IsContained.IsContained);
 			} else {

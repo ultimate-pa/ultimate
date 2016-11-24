@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AppHyperEd
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.DummyCodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.ImpRootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.CodeChecker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.GlobalSettings;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.CodeCheckSettings;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.GraphWriter;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.CodeCheckPreferenceInitializer.RedirectionStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
@@ -66,8 +66,8 @@ public class ImpulseChecker extends CodeChecker {
 
 	public ImpulseChecker(final IElement root, final CfgSmtToolkit mcsToolkit, final BoogieIcfgContainer moriginalRoot,
 			final ImpRootNode mgraphRoot, final GraphWriter mgraphWriter, final IHoareTripleChecker edgeChecker,
-			final PredicateUnifier predicateUnifier, final ILogger logger) {
-		super(root, mcsToolkit, moriginalRoot, mgraphRoot, mgraphWriter, edgeChecker, predicateUnifier, logger);
+			final PredicateUnifier predicateUnifier, final ILogger logger, final CodeCheckSettings globSettings) {
+		super(root, mcsToolkit, moriginalRoot, mgraphRoot, mgraphWriter, edgeChecker, predicateUnifier, logger, globSettings);
 		mCloneFinder = new RedirectionFinder(this);
 		mNodeId = 0;
 	}
@@ -91,8 +91,8 @@ public class ImpulseChecker extends CodeChecker {
 				clones[i].getEdge(nodes[i + 1]).disconnect();
 				errorReached = true;
 			} else {
-				if (GlobalSettings.INSTANCE.isDefaultRedirection()) {
-					if (GlobalSettings.INSTANCE.isCheckSatisfiability()) {
+				if (getGlobalSettings().isDefaultRedirection()) {
+					if (getGlobalSettings().isCheckSatisfiability()) {
 						redirectIfValid(clones[i].getEdge(nodes[i + 1]), clones[i + 1]);
 					} else {
 						replaceEdge(clones[i].getEdge(nodes[i + 1]), clones[i + 1]);
@@ -100,7 +100,7 @@ public class ImpulseChecker extends CodeChecker {
 				} else {
 					AnnotatedProgramPoint clone = clones[i + 1];
 					final AppEdge prevEdge = clones[i].getEdge(nodes[i + 1]);
-					if (GlobalSettings.INSTANCE.getRedirectionStrategy() != RedirectionStrategy.No_Strategy) {
+					if (getGlobalSettings().getRedirectionStrategy() != RedirectionStrategy.No_Strategy) {
 						clone = mCloneFinder.getStrongestValidCopy(prevEdge);
 					}
 
@@ -125,7 +125,7 @@ public class ImpulseChecker extends CodeChecker {
 			for (final AppEdge prevEdge : prevEdges) {
 				AnnotatedProgramPoint clone = clones[i];
 
-				if (GlobalSettings.INSTANCE.getRedirectionStrategy() != RedirectionStrategy.No_Strategy) {
+				if (getGlobalSettings().getRedirectionStrategy() != RedirectionStrategy.No_Strategy) {
 					clone = mCloneFinder.getStrongestValidCopy(prevEdge);
 				}
 
@@ -145,7 +145,7 @@ public class ImpulseChecker extends CodeChecker {
 		if (isValidRedirection(edge, target)) {
 			if (edge instanceof AppHyperEdge) {
 
-				if (!GlobalSettings.INSTANCE.isCheckSatisfiability()
+				if (!getGlobalSettings().isCheckSatisfiability()
 						|| mEdgeChecker.checkReturn(edge.getSource().getPredicate(),
 								((AppHyperEdge) edge).getHier().getPredicate(), (IReturnAction) edge.getStatement(),
 								edge.getTarget().getPredicate()) != Validity.VALID) {
@@ -154,7 +154,7 @@ public class ImpulseChecker extends CodeChecker {
 				}
 			} else {
 
-				boolean result = !GlobalSettings.INSTANCE.isCheckSatisfiability();
+				boolean result = !getGlobalSettings().isCheckSatisfiability();
 				if (!result) {
 					if (edge.getStatement() instanceof Call) {
 						result = mEdgeChecker.checkCall(edge.getSource().getPredicate(),
@@ -206,7 +206,7 @@ public class ImpulseChecker extends CodeChecker {
 		}
 		redirectEdges(nodes, clones);
 
-		if (GlobalSettings.INSTANCE.isRemoveFalseNodes()) {
+		if (getGlobalSettings().isRemoveFalseNodes()) {
 			removeFalseNodes(nodes, clones);
 		}
 
@@ -274,7 +274,7 @@ public class ImpulseChecker extends CodeChecker {
 			return false;
 		}
 
-		if (GlobalSettings.INSTANCE.isMemoizeNormalEdgeChecks()) {
+		if (getGlobalSettings().isMemoizeNormalEdgeChecks()) {
 			if (mSatTriples.get(sourceNode.getPredicate(), edgeLabel,
 					destinationNode.getPredicate()) == IsContained.IsContained) {
 				mMemoizationHitsSat++;
@@ -296,7 +296,7 @@ public class ImpulseChecker extends CodeChecker {
 					destinationNode.getPredicate()) == Validity.VALID;
 		}
 
-		if (GlobalSettings.INSTANCE.isMemoizeNormalEdgeChecks()) {
+		if (getGlobalSettings().isMemoizeNormalEdgeChecks()) {
 			if (result) {
 				mSatTriples.put(sourceNode.getPredicate(), edgeLabel, destinationNode.getPredicate(),
 						IsContained.IsContained);
@@ -311,7 +311,7 @@ public class ImpulseChecker extends CodeChecker {
 
 	public boolean isValidReturnEdge(final AnnotatedProgramPoint sourceNode, final CodeBlock edgeLabel,
 			final AnnotatedProgramPoint destinationNode, final AnnotatedProgramPoint callNode) {
-		if (GlobalSettings.INSTANCE.isMemoizeReturnEdgeChecks()) {
+		if (getGlobalSettings().isMemoizeReturnEdgeChecks()) {
 			if (mSatQuadruples.get(sourceNode.getPredicate(), callNode.getPredicate(), edgeLabel,
 					destinationNode.getPredicate()) == IsContained.IsContained) {
 				mMemoizationReturnHitsSat++;
@@ -327,7 +327,7 @@ public class ImpulseChecker extends CodeChecker {
 		final boolean result = mEdgeChecker.checkReturn(sourceNode.getPredicate(), callNode.getPredicate(),
 				(IReturnAction) edgeLabel, destinationNode.getPredicate()) == Validity.VALID;
 
-		if (GlobalSettings.INSTANCE.isMemoizeReturnEdgeChecks()) {
+		if (getGlobalSettings().isMemoizeReturnEdgeChecks()) {
 			if (result) {
 				mSatQuadruples.put(sourceNode.getPredicate(), callNode.getPredicate(), edgeLabel,
 						destinationNode.getPredicate(), IsContained.IsContained);

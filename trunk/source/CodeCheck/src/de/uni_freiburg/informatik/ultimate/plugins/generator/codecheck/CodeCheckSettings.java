@@ -35,9 +35,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferenc
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
 
-public final class GlobalSettings {
-
-	public static final GlobalSettings INSTANCE = new GlobalSettings();
+public final class CodeCheckSettings {
 
 	private String mDotGraphPath = "";
 	private InterpolationTechnique mInterpolationMode = InterpolationTechnique.ForwardPredicates;
@@ -60,10 +58,6 @@ public final class GlobalSettings {
 	private UnsatCores mUseUnsatCores;
 	private boolean mUseFallbackForSeparateSolverForTracechecks;
 	private boolean mUseAbstractInterpretation;
-
-	private GlobalSettings() {
-		// prevent initialization from somewhere else
-	}
 
 	public String getSeparateSolverForTracechecksCommand() {
 		return mSeparateSolverForTracechecksCommand;

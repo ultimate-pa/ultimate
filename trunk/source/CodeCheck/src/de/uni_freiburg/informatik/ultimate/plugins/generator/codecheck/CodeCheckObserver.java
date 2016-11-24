@@ -146,6 +146,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	private BoogieIcfgContainer mOriginalRoot;
 	private ImpRootNode mGraphRoot;
 
+	private CodeCheckSettings mGlobalSettings;
+
 	private CfgSmtToolkit mCsToolkit;
 
 	private GraphWriter mGraphWriter;
@@ -175,6 +177,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	 */
 	private boolean initialize(final IElement root) {
 		readPreferencePage();
+		
+		mGlobalSettings = new CodeCheckSettings();
 
 		mOriginalRoot = (BoogieIcfgContainer) root;
 		final BoogieIcfgContainer rootAnnot = mOriginalRoot;
@@ -195,19 +199,19 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 			mErrNodesOfAllProc.addAll(errNodeOfProc);
 		}
 
-		if (GlobalSettings.INSTANCE.isMemoizeNormalEdgeChecks()) {
+		if (mGlobalSettings.isMemoizeNormalEdgeChecks()) {
 			mSatTriples = new NestedMap3<>();
 			mUnsatTriples = new NestedMap3<>();
 		}
-		if (GlobalSettings.INSTANCE.isMemoizeReturnEdgeChecks()) {
+		if (mGlobalSettings.isMemoizeReturnEdgeChecks()) {
 			mSatQuadruples = new NestedMap4<>();
 			mUnsatQuadruples = new NestedMap4<>();
 		}
-		mGraphWriter = new GraphWriter(GlobalSettings.INSTANCE.getDotGraphPath(), true, true, true, false,
+		mGraphWriter = new GraphWriter(mGlobalSettings.getDotGraphPath(), true, true, true, false,
 		        mCsToolkit.getManagedScript().getScript());
 
 		// AI Module
-		final boolean usePredicatesFromAbstractInterpretation = GlobalSettings.INSTANCE.getUseAbstractInterpretation();
+		final boolean usePredicatesFromAbstractInterpretation = mGlobalSettings.getUseAbstractInterpretation();
 		Map<IcfgLocation, Term> initialPredicates = null;
 		if (usePredicatesFromAbstractInterpretation) {
 
@@ -242,14 +246,14 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		mGraphWriter.writeGraphAsImage(mGraphRoot,
 		        String.format("graph_%s_originalSummaryEdgesRemoved", mGraphWriter._graphCounter));
 
-		if (GlobalSettings.INSTANCE.getChecker() == Checker.IMPULSE) {
+		if (mGlobalSettings.getChecker() == Checker.IMPULSE) {
 			mCodeChecker = new ImpulseChecker(root, mCsToolkit, mOriginalRoot, mGraphRoot, mGraphWriter, edgeChecker,
-			        mPredicateUnifier, mLogger);
+			        mPredicateUnifier, mLogger, mGlobalSettings);
 		} else {
 			mCodeChecker = new UltimateChecker(root, mCsToolkit, mOriginalRoot, mGraphRoot, mGraphWriter, edgeChecker,
-			        mPredicateUnifier, mLogger);
+			        mPredicateUnifier, mLogger, mGlobalSettings);
 		}
-		mIterationsLimit = GlobalSettings.INSTANCE.getIterations();
+		mIterationsLimit = mGlobalSettings.getIterations();
 		mLoopForever = mIterationsLimit == -1;
 
 		return false;
@@ -275,78 +279,78 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	private void readPreferencePage() {
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 
-		GlobalSettings.INSTANCE.setChecker(prefs.getEnum(CodeCheckPreferenceInitializer.LABEL_CHECKER, Checker.class));
+		mGlobalSettings.setChecker(prefs.getEnum(CodeCheckPreferenceInitializer.LABEL_CHECKER, Checker.class));
 
-		GlobalSettings.INSTANCE.setMemoizeNormalEdgeChecks(
+		mGlobalSettings.setMemoizeNormalEdgeChecks(
 		        prefs.getBoolean(CodeCheckPreferenceInitializer.LABEL_MEMOIZENORMALEDGECHECKS,
 		                CodeCheckPreferenceInitializer.DEF_MEMOIZENORMALEDGECHECKS));
-		GlobalSettings.INSTANCE.setMemoizeReturnEdgeChecks(
+		mGlobalSettings.setMemoizeReturnEdgeChecks(
 		        prefs.getBoolean(CodeCheckPreferenceInitializer.LABEL_MEMOIZERETURNEDGECHECKS,
 		                CodeCheckPreferenceInitializer.DEF_MEMOIZERETURNEDGECHECKS));
 
-		GlobalSettings.INSTANCE.setInterpolationMode(
+		mGlobalSettings.setInterpolationMode(
 		        prefs.getEnum(CodeCheckPreferenceInitializer.LABEL_INTERPOLATIONMODE, InterpolationTechnique.class));
 
-		GlobalSettings.INSTANCE.setUseInterpolantconsolidation(
+		mGlobalSettings.setUseInterpolantconsolidation(
 		        prefs.getBoolean(CodeCheckPreferenceInitializer.LABEL_INTERPOLANTCONSOLIDATION,
 		                CodeCheckPreferenceInitializer.DEF_INTERPOLANTCONSOLIDATION));
 
-		GlobalSettings.INSTANCE.setPredicateUnification(
+		mGlobalSettings.setPredicateUnification(
 		        prefs.getEnum(CodeCheckPreferenceInitializer.LABEL_PREDICATEUNIFICATION, PredicateUnification.class));
 
-		GlobalSettings.INSTANCE.setEdgeCheckOptimization(
+		mGlobalSettings.setEdgeCheckOptimization(
 		        prefs.getEnum(CodeCheckPreferenceInitializer.LABEL_EDGECHECKOPTIMIZATION, EdgeCheckOptimization.class));
 
-		GlobalSettings.INSTANCE.setIterations(prefs.getInt(CodeCheckPreferenceInitializer.LABEL_ITERATIONS,
+		mGlobalSettings.setIterations(prefs.getInt(CodeCheckPreferenceInitializer.LABEL_ITERATIONS,
 		        CodeCheckPreferenceInitializer.DEF_ITERATIONS));
 
-		GlobalSettings.INSTANCE.setDotGraphPath(prefs.getString(CodeCheckPreferenceInitializer.LABEL_GRAPHWRITERPATH,
+		mGlobalSettings.setDotGraphPath(prefs.getString(CodeCheckPreferenceInitializer.LABEL_GRAPHWRITERPATH,
 		        CodeCheckPreferenceInitializer.DEF_GRAPHWRITERPATH));
 
-		GlobalSettings.INSTANCE.setRedirectionStrategy(
+		mGlobalSettings.setRedirectionStrategy(
 		        prefs.getEnum(CodeCheckPreferenceInitializer.LABEL_REDIRECTION, RedirectionStrategy.class));
 
-		GlobalSettings.INSTANCE.setDefaultRedirection(prefs.getBoolean(CodeCheckPreferenceInitializer.LABEL_DEF_RED,
+		mGlobalSettings.setDefaultRedirection(prefs.getBoolean(CodeCheckPreferenceInitializer.LABEL_DEF_RED,
 		        CodeCheckPreferenceInitializer.DEF_DEF_RED));
-		GlobalSettings.INSTANCE.setRemoveFalseNodes(prefs.getBoolean(CodeCheckPreferenceInitializer.LABEL_RmFALSE,
+		mGlobalSettings.setRemoveFalseNodes(prefs.getBoolean(CodeCheckPreferenceInitializer.LABEL_RmFALSE,
 		        CodeCheckPreferenceInitializer.DEF_RmFALSE));
-		GlobalSettings.INSTANCE.setCheckSatisfiability(prefs.getBoolean(CodeCheckPreferenceInitializer.LABEL_CHK_SAT,
+		mGlobalSettings.setCheckSatisfiability(prefs.getBoolean(CodeCheckPreferenceInitializer.LABEL_CHK_SAT,
 		        CodeCheckPreferenceInitializer.DEF_CHK_SAT));
 
 		/*
 		 * Settings concerning the solver for trace checks
 		 */
-		GlobalSettings.INSTANCE.setUseSeparateSolverForTracechecks(
+		mGlobalSettings.setUseSeparateSolverForTracechecks(
 		        prefs.getBoolean(CodeCheckPreferenceInitializer.LABEL_USESEPARATETRACECHECKSOLVER,
 		                CodeCheckPreferenceInitializer.DEF_USESEPARATETRACECHECKSOLVER));
 
-		GlobalSettings.INSTANCE.setUseFallbackForSeparateSolverForTracechecks(
+		mGlobalSettings.setUseFallbackForSeparateSolverForTracechecks(
 		        prefs.getBoolean(CodeCheckPreferenceInitializer.LABEL_USEFALLBACKFORSEPARATETRACECHECKSOLVER,
 		                CodeCheckPreferenceInitializer.DEF_USEFALLBACKFORSEPARATETRACECHECKSOLVER));
 
-		GlobalSettings.INSTANCE.setChooseSeparateSolverForTracechecks(
+		mGlobalSettings.setChooseSeparateSolverForTracechecks(
 		        prefs.getEnum(CodeCheckPreferenceInitializer.LABEL_CHOOSESEPARATETRACECHECKSOLVER, SolverMode.class));
 
-		GlobalSettings.INSTANCE.setSeparateSolverForTracechecksCommand(
+		mGlobalSettings.setSeparateSolverForTracechecksCommand(
 		        prefs.getString(CodeCheckPreferenceInitializer.LABEL_SEPARATETRACECHECKSOLVERCOMMAND,
 		                CodeCheckPreferenceInitializer.DEF_SEPARATETRACECHECKSOLVERCOMMAND));
 
-		GlobalSettings.INSTANCE.setSeparateSolverForTracechecksTheory(
+		mGlobalSettings.setSeparateSolverForTracechecksTheory(
 		        prefs.getString(CodeCheckPreferenceInitializer.LABEL_SEPARATETRACECHECKSOLVERTHEORY,
 		                CodeCheckPreferenceInitializer.DEF_SEPARATETRACECHECKSOLVERTHEORY));
 
 		/*
 		 * Settings concerning betim interpolation
 		 */
-		GlobalSettings.INSTANCE
+		mGlobalSettings
 		        .setUseLiveVariables(prefs.getBoolean(CodeCheckPreferenceInitializer.LABEL_LIVE_VARIABLES, true));
-		GlobalSettings.INSTANCE
+		mGlobalSettings
 		        .setUseUnsatCores(prefs.getEnum(CodeCheckPreferenceInitializer.LABEL_UNSAT_CORES, UnsatCores.class));
 
 		/*
 		 * Abstract interpretataion settings
 		 */
-		GlobalSettings.INSTANCE.setUseAbstractInterpretation(
+		mGlobalSettings.setUseAbstractInterpretation(
 		        prefs.getBoolean(CodeCheckPreferenceInitializer.LABEL_USE_ABSTRACT_INTERPRETATION,
 		                CodeCheckPreferenceInitializer.DEF_USE_ABSTRACT_INTERPRETATION));
 
@@ -450,17 +454,17 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 				                procedureRoot.toString().substring(0, 5)),
 				        errorRun.getStateSequence().toArray(new AnnotatedProgramPoint[] {}));
 
-				if (GlobalSettings.INSTANCE.getPredicateUnification() == PredicateUnification.PER_ITERATION) {
+				if (mGlobalSettings.getPredicateUnification() == PredicateUnification.PER_ITERATION) {
 					mPredicateUnifier = new PredicateUnifier(mServices, mCsToolkit.getManagedScript(),
 					        mPredicateFactory, mOriginalRoot.getBoogie2SMT().getBoogie2SmtSymbolTable(),
 					        SIMPLIFICATION_TECHNIQUE, XNF_CONVERSION_TECHNIQUE);
 				}
 
 				ManagedScript mgdScriptTracechecks;
-				if (GlobalSettings.INSTANCE.isUseSeparateSolverForTracechecks()) {
+				if (mGlobalSettings.isUseSeparateSolverForTracechecks()) {
 					final String filename = mOriginalRoot.getFilename() + "_TraceCheck_Iteration" + iterationsCount;
-					final SolverMode solverMode = GlobalSettings.INSTANCE.getChooseSeparateSolverForTracechecks();
-					final String commandExternalSolver = GlobalSettings.INSTANCE
+					final SolverMode solverMode = mGlobalSettings.getChooseSeparateSolverForTracechecks();
+					final String commandExternalSolver = mGlobalSettings
 					        .getSeparateSolverForTracechecksCommand();
 					final boolean dumpSmtScriptToFile = false;
 					final String pathOfDumpedScript = "";
@@ -468,8 +472,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 					final Settings solverSettings = SolverBuilder.constructSolverSettings(filename, solverMode,
 					        fakeNonIncrementalScript, commandExternalSolver, dumpSmtScriptToFile, pathOfDumpedScript);
 					final Script tcSolver = SolverBuilder.buildAndInitializeSolver(mServices, mToolchainStorage,
-					        GlobalSettings.INSTANCE.getChooseSeparateSolverForTracechecks(), solverSettings, false,
-					        false, GlobalSettings.INSTANCE.getSeparateSolverForTracechecksTheory(),
+					        mGlobalSettings.getChooseSeparateSolverForTracechecks(), solverSettings, false,
+					        false, mGlobalSettings.getSeparateSolverForTracechecksTheory(),
 					        "TraceCheck_Iteration" + iterationsCount);
 
 					mgdScriptTracechecks = new ManagedScript(mServices, tcSolver);
@@ -483,7 +487,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 
 				traceChecker = createTraceChecker(errorRun, mgdScriptTracechecks);
 
-				if (GlobalSettings.INSTANCE.isUseSeparateSolverForTracechecks()) {
+				if (mGlobalSettings.isUseSeparateSolverForTracechecks()) {
 					mgdScriptTracechecks.getScript().exit();
 				}
 
@@ -497,7 +501,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 				if (isSafe == LBool.UNSAT) { // trace is infeasible
 					IPredicate[] interpolants = null;
 
-					if (GlobalSettings.INSTANCE.isUseInterpolantconsolidation()) {
+					if (mGlobalSettings.isUseInterpolantconsolidation()) {
 						try {
 
 							final InterpolantConsolidation interpConsoli = new InterpolantConsolidation(
@@ -518,12 +522,12 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 						interpolants = traceChecker.getInterpolants();
 					}
 
-					if (GlobalSettings.INSTANCE.isMemoizeNormalEdgeChecks()
-					        && GlobalSettings.INSTANCE.isMemoizeReturnEdgeChecks()) {
+					if (mGlobalSettings.isMemoizeNormalEdgeChecks()
+					        && mGlobalSettings.isMemoizeReturnEdgeChecks()) {
 						mCodeChecker.codeCheck(errorRun, interpolants, procedureRoot, mSatTriples, mUnsatTriples,
 						        mSatQuadruples, mUnsatQuadruples);
-					} else if (GlobalSettings.INSTANCE.isMemoizeNormalEdgeChecks()
-					        && !GlobalSettings.INSTANCE.isMemoizeReturnEdgeChecks()) {
+					} else if (mGlobalSettings.isMemoizeNormalEdgeChecks()
+					        && !mGlobalSettings.isMemoizeReturnEdgeChecks()) {
 						mCodeChecker.codeCheck(errorRun, interpolants, procedureRoot, mSatTriples, mUnsatTriples);
 					} else {
 						mCodeChecker.codeCheck(errorRun, interpolants, procedureRoot);
@@ -610,17 +614,17 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 
 	private InterpolatingTraceChecker createTraceChecker(final NestedRun<CodeBlock, AnnotatedProgramPoint> errorRun,
 	        final ManagedScript mgdScriptTracechecks) {
-		switch (GlobalSettings.INSTANCE.getInterpolationMode()) {
+		switch (mGlobalSettings.getInterpolationMode()) {
 		case Craig_TreeInterpolation:
 		case Craig_NestedInterpolation:
 			try {
 				return new InterpolatingTraceCheckerCraig(mPredicateUnifier.getTruePredicate(),
 				        mPredicateUnifier.getFalsePredicate(), new TreeMap<Integer, IPredicate>(), errorRun.getWord(),
 				        mCsToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, true, mPredicateUnifier,
-				        GlobalSettings.INSTANCE.getInterpolationMode(), mgdScriptTracechecks, true,
+				        mGlobalSettings.getInterpolationMode(), mgdScriptTracechecks, true,
 				        XNF_CONVERSION_TECHNIQUE, SIMPLIFICATION_TECHNIQUE, errorRun.getStateSequence(), false);
 			} catch (final Exception e) {
-				if (!GlobalSettings.INSTANCE.isUseFallbackForSeparateSolverForTracechecks()) {
+				if (!mGlobalSettings.isUseFallbackForSeparateSolverForTracechecks()) {
 					throw e;
 				}
 				/*
@@ -642,25 +646,25 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 			try {
 				return new TraceCheckerSpWp(mPredicateUnifier.getTruePredicate(), mPredicateUnifier.getFalsePredicate(),
 				        new TreeMap<Integer, IPredicate>(), errorRun.getWord(), mCsToolkit,
-				        AssertCodeBlockOrder.NOT_INCREMENTALLY, GlobalSettings.INSTANCE.getUseUnsatCores(),
-				        GlobalSettings.INSTANCE.isUseLiveVariables(), mServices, true, mPredicateUnifier,
-				        GlobalSettings.INSTANCE.getInterpolationMode(), mgdScriptTracechecks, XNF_CONVERSION_TECHNIQUE,
+				        AssertCodeBlockOrder.NOT_INCREMENTALLY, mGlobalSettings.getUseUnsatCores(),
+				        mGlobalSettings.isUseLiveVariables(), mServices, true, mPredicateUnifier,
+				        mGlobalSettings.getInterpolationMode(), mgdScriptTracechecks, XNF_CONVERSION_TECHNIQUE,
 				        SIMPLIFICATION_TECHNIQUE, errorRun.getStateSequence());
 			} catch (final Exception e) {
-				if (!GlobalSettings.INSTANCE.isUseFallbackForSeparateSolverForTracechecks()) {
+				if (!mGlobalSettings.isUseFallbackForSeparateSolverForTracechecks()) {
 					throw e;
 				}
 
 				return new TraceCheckerSpWp(mPredicateUnifier.getTruePredicate(), mPredicateUnifier.getFalsePredicate(),
 				        new TreeMap<Integer, IPredicate>(), errorRun.getWord(), mCsToolkit,
 				        AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true, mServices, true,
-				        mPredicateUnifier, GlobalSettings.INSTANCE.getInterpolationMode(),
+				        mPredicateUnifier, mGlobalSettings.getInterpolationMode(),
 				        mCsToolkit.getManagedScript(), XNF_CONVERSION_TECHNIQUE, SIMPLIFICATION_TECHNIQUE,
 				        errorRun.getStateSequence());
 			}
 		default:
 			throw new UnsupportedOperationException(
-			        "Unsupported interpolation mode: " + GlobalSettings.INSTANCE.getInterpolationMode());
+			        "Unsupported interpolation mode: " + mGlobalSettings.getInterpolationMode());
 		}
 	}
 
