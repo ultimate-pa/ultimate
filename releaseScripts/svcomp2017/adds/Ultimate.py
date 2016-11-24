@@ -197,13 +197,13 @@ def parseArgs():
         sys.exit(0)
     
     parser = argparse.ArgumentParser(description='Ultimate wrapper script for SVCOMP')
-    parser.add_argument('--version', action='store_true')
-    parser.add_argument('--full-output', action='store_true')
-    parser.add_argument('--validate', action='store_true')
+    parser.add_argument('--version', action='store_true', help='Print Ultimate\'s version and exit')
+    parser.add_argument('--full-output', action='store_true', help='Print Ultimate\'s full output to stderr after verification ends')
+    parser.add_argument('--validate', action='store_true', help='Activate witness validation mode (if supported)')
     parser.add_argument('spec', nargs=1, help='An property (.prp) file from SVCOMP')
-    parser.add_argument('architecture', choices=['32bit', '64bit'])
-    parser.add_argument('memorymodel', choices=['simple', 'precise'])
-    parser.add_argument('file', nargs='+', help='All the input files')
+    parser.add_argument('architecture', choices=['32bit', '64bit'], help='Choose which architecture (defined as per SV-COMP rules) should be assumed')
+    parser.add_argument('memorymodel', choices=['simple', 'precise'], help='Ultimate does not use the distinction between simple and precise memory model and always assumes precise')
+    parser.add_argument('file', nargs='+', help='Either one C file or one C file and one witness as matching .graphml file')
     
     args = parser.parse_args()
   
