@@ -120,25 +120,33 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 		final Term transFormulaTerm = c.getTransitionFormula().getFormula();
 		final Term formulaWithNormalizedVariables = new Substitution(mScript, substitionMap).transform(transFormulaTerm);
 		
-		// handle selects in the formula
+		/*
+		 * handle selects in the formula
+		 */
 		List<MultiDimensionalSelect> mdSelects = MultiDimensionalSelect.extractSelectShallow(formulaWithNormalizedVariables, false);
 		for (MultiDimensionalSelect mds : mdSelects) {
 			getOrConstructEqNode(mds);
 		}
 		
-		// handle stores in the formula
+		/*
+		 * handle stores in the formula
+		 */
 		List<MultiDimensionalStore> mdStores = MultiDimensionalStore.extractArrayStoresShallow(formulaWithNormalizedVariables);
 		for (MultiDimensionalStore mds : mdStores) {
 			getOrConstructEqNode(mds);
 		}
 
-		// handle TermVariables and constants that are equated to a select
+		/*
+		 * handle TermVariables and constants that are equated to a select
+		 */
+		// find equations
 		Set<String> equationFunctionNames = new HashSet<String>(2);
 		equationFunctionNames.add("=");
 		equationFunctionNames.add("distinct");
 		Set<ApplicationTerm> equations = 
 				new ApplicationTermFinder(equationFunctionNames, false)
 					.findMatchingSubterms(formulaWithNormalizedVariables);
+		// find the "other sides" of an equation were one side is a select term
 		Set<Term> selectTerms = mdSelects.stream().map(mds -> mds.getSelectTerm()).collect(Collectors.toSet());
 		Set<Term> termsEquatedWithASelectTerm = new HashSet<>();
 		for (ApplicationTerm eq : equations) {
@@ -150,13 +158,13 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 				termsEquatedWithASelectTerm.add(eq.getParameters()[0]);
 			}
 		}
+		// construct nodes for the "other sides"
 		for (Term t : termsEquatedWithASelectTerm) {
 			getOrConstructEqNode(t);
 		}
 	}
 	
 	private EqNode getOrConstructEqNode(MultiDimensionalStore mds) {
-		// TODO
 		EqNode result = mTermToEqNode.get(mds.getStoreTerm());
 		if (result != null) {
 			return result;
