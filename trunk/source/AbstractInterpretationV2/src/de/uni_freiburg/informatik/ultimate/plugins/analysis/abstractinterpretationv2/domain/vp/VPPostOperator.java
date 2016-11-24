@@ -32,12 +32,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -126,7 +124,7 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 			
 			if (applicationName == "and") {
 				
-				List<VPState> andList = new ArrayList<VPState>();
+				List<VPState> andList = new ArrayList<>();
 				for (final Term t : appTerm.getParameters()) {
 					andList.add(handleTransition(t));
 				}
@@ -138,7 +136,7 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 				
 			} else if (applicationName == "or") {
 				
-				List<VPState> orList = new ArrayList<VPState>();
+				List<VPState> orList = new ArrayList<>();
 				for (final Term t : appTerm.getParameters()) {
 					orList.add(handleTransition(t));
 				}
@@ -153,8 +151,8 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 				EqNode node1 = null;
 				EqNode node2 = null;
 				
-				if (isArray(appTerm.getParameters()[0], resultState)) {
-					if (isArray(appTerm.getParameters()[1], resultState)) {
+				if (isArray(appTerm.getParameters()[0])) {
+					if (isArray(appTerm.getParameters()[1])) {
 						
 						resultState.arrayAssignment(appTerm.getParameters()[0], appTerm.getParameters()[1]);
 						return resultState;
@@ -166,8 +164,7 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 								MultiDimensionalStore mulStore = new MultiDimensionalStore(param1);
 								if (mulStore.getArray().equals(appTerm.getParameters()[0])) {
 									node1 = getNodeFromTerm(param1);
-									resultState.havoc(node1);
-									resultState.getEqNodeToEqGraphNodeMap().get(node1).setNodeToInitial();
+									resultState.havoc(resultState.getEqNodeToEqGraphNodeMap().get(node1));
 									node2 = getNodeFromTerm(param1.getParameters()[2]);
 								}
 							}
@@ -184,7 +181,8 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 					return resultState;
 				}
 				
-				boolean isContradic = resultState.addEquality(node1, node2);
+				boolean isContradic = resultState.addEquality(resultState.getEqNodeToEqGraphNodeMap().get(node1)
+						, resultState.getEqNodeToEqGraphNodeMap().get(node2));
 				
 				if (isContradic) {
 					return mDomain.getBottomState();
@@ -208,7 +206,8 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 						return resultState;
 					}
 					
-					boolean isContradic = resultState.addDisEquality(node1, node2);
+					boolean isContradic = resultState.addDisEquality(resultState.getEqNodeToEqGraphNodeMap().get(node1)
+							, resultState.getEqNodeToEqGraphNodeMap().get(node2));
 					
 					if (isContradic) {
 						return mDomain.getBottomState();
@@ -227,7 +226,8 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 					return resultState;
 				}
 				
-				boolean isContradic = resultState.addDisEquality(node1, node2);
+				boolean isContradic = resultState.addDisEquality(resultState.getEqNodeToEqGraphNodeMap().get(node1)
+						, resultState.getEqNodeToEqGraphNodeMap().get(node2));
 				
 				if (isContradic) {
 					return mDomain.getBottomState();
@@ -284,13 +284,9 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 //		return null;
 	}
 
-	private boolean isArray(final Term term, final VPState state) {
-		for (Term key : state.getTermToFnNodeMap().keySet()) {
-			if (term.equals(key)) {
-				return true;
-			}
-		}
-		return false;
+	private boolean isArray(final Term term) {
+		
+		return mDomain.getTermToFnNodeMap().keySet().contains(term);
 	}
 	
 	@Override

@@ -47,9 +47,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ApplicationTermFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
@@ -66,8 +64,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  * @author Yu-Wen Chen (yuwenchen1105@gmail.com)
  */
 public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
-	
-	private static final String TERM_FUNC_NAME_SELECT = "select";
 
 	private final Map<Term, EqBaseNode> termToBaseNodeMap = new HashMap<>();
 	private final Map<Term, Set<EqFunctionNode>> termToFnNodeMap = new HashMap<>();
@@ -287,15 +283,15 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 		
 		if (args != null) {
 			assert !args.isEmpty();
-			graphNode.setArgs(args);
+			
 			for (EqNode arg : args) {
 				EqGraphNode argNode = eqNodeToEqGraphNodeMap.get(arg);
-				argNode.addToInitCcpar(node);
-				argNode.addToCcpar(node);
+				argNode.addToInitCcpar(graphNode);
+				argNode.addToCcpar(graphNode);
 				argNodes.add(argNode);
 			}
-			graphNode.setInitCcchild(args);
-			graphNode.getCcchild().add(args);
+			graphNode.addToInitCcchild(argNodes);
+			graphNode.getCcchild().add(argNodes);
 		}
 		
 		eqNodeToEqGraphNodeMap.put(node, graphNode);

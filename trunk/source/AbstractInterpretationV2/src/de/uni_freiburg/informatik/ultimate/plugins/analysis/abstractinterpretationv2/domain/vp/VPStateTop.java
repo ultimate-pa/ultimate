@@ -16,7 +16,7 @@ public class VPStateTop extends VPState {
 	
 	VPStateTop(Set<EqGraphNode> eqGraphNodeSet, Map<Term, EqBaseNode> termToBaseNodeMap,
 			Map<Term, Set<EqFunctionNode>> termToFnNodeMap, Map<EqNode, EqGraphNode> eqNodeToEqGraphNodeMap,
-			Set<VPDomainSymmetricPair<EqNode>> disEqualitySet, VPDomain domain) {
+			Set<VPDomainSymmetricPair<EqGraphNode>> disEqualitySet, VPDomain domain) {
 		super(eqGraphNodeSet, eqNodeToEqGraphNodeMap, disEqualitySet, domain);
 		this.clearState();
 	}
@@ -46,13 +46,13 @@ public class VPStateTop extends VPState {
 	}
 
 	@Override
-	public boolean addEquality(EqNode node1, EqNode node2) {
+	public boolean addEquality(EqGraphNode node1, EqGraphNode node2) {
 		// Do nothing
 		return true;
 	}
 
 	@Override
-	public boolean addDisEquality(EqNode node1, EqNode node2) {
+	public boolean addDisEquality(EqGraphNode node1, EqGraphNode node2) {
 		// Do nothing
 		return true;
 	}

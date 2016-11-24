@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.vp;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -17,136 +18,131 @@ import java.util.Set;
 public class EqGraphNode {
 
 	public final EqNode eqNode;
-	private List<EqNode> args;
-	private EqNode representative;
-	private Set<EqNode> reverseRepresentative;
-	private Set<EqNode> ccpar;
-	private Set<List<EqNode>> ccchild;
+	private EqGraphNode representative;
+	private Set<EqGraphNode> reverseRepresentative;
+	private Set<EqGraphNode> ccpar;
+	private Set<List<EqGraphNode>> ccchild;
 
-	private Set<EqNode> initCcpar;
-	private List<EqNode> initCcchildren = null;
+	private Set<EqGraphNode> initCcpar;
+	private List<EqGraphNode> initCcchild;
 
 	public EqGraphNode(EqNode eqNode) {
 		this.eqNode = eqNode;
-		this.representative = eqNode;
-		this.reverseRepresentative = new HashSet<EqNode>();
-		this.ccpar = new HashSet<EqNode>();
-		this.ccchild = new HashSet<List<EqNode>>();
-		this.initCcpar = new HashSet<EqNode>();
-	}
-
-	public EqGraphNode(EqNode eqNode, List<EqNode> args) {
-		this(eqNode);
-		this.args = args;
+		this.representative = this;
+		this.reverseRepresentative = new HashSet<>();
+		this.ccpar = new HashSet<>();
+		this.ccchild = new HashSet<>();
+		this.initCcpar = new HashSet<>();
+		this.initCcchild = new ArrayList<>();
 	}
 
 	public void setNodeToInitial() {
-		this.representative = eqNode;
+		this.representative = this;
 		this.reverseRepresentative.clear();
 		this.ccpar.clear();
 		this.ccchild.clear();
 		if (initCcpar != null) {
 			this.ccpar.addAll(initCcpar);
 		}
-		if (initCcchildren != null) {
-			this.ccchild.add(initCcchildren);
+		if (initCcchild != null) {
+			this.ccchild.add(initCcchild);
 		}
 	}
 
 	public EqGraphNode copy() {
 
-		EqGraphNode newGraphNode = new EqGraphNode(this.eqNode, this.args);
-		newGraphNode.setRepresentative(this.representative);
-		newGraphNode.setReverseRepresentative(new HashSet<EqNode>(this.reverseRepresentative));
-		newGraphNode.setCcpar(new HashSet<EqNode>(this.ccpar));
-		newGraphNode.setCcchild(new HashSet<List<EqNode>>(this.ccchild));
+		EqGraphNode newGraphNode = new EqGraphNode(this.eqNode);
+		newGraphNode.setRepresentative(this);
+		newGraphNode.setReverseRepresentative(new HashSet<>(this.reverseRepresentative));
+		newGraphNode.setCcpar(new HashSet<>(this.ccpar));
+		newGraphNode.setCcchild(new HashSet<>(this.ccchild));
 		newGraphNode.addToInitCcpar(this.initCcpar);
-		newGraphNode.setInitCcchild(this.initCcchildren);
+		newGraphNode.setInitCcchild(this.initCcchild);
 		return newGraphNode;
 	}
 
-	public List<EqNode> getArgs() {
-		return args;
-	}
-
-	public void setArgs(List<EqNode> args) {
-		this.args = args;
-	}
-
-	public EqNode getRepresentative() {
+	public EqGraphNode getRepresentative() {
 		return representative;
 	}
 
-	public void setRepresentative(EqNode find) {
+	public void setRepresentative(EqGraphNode find) {
 		this.representative = find;
 	}
 
-	public Set<EqNode> getReverseRepresentative() {
+	public Set<EqGraphNode> getReverseRepresentative() {
 		return reverseRepresentative;
 	}
 
-	public void setReverseRepresentative(Set<EqNode> reverseRepresentative) {
+	public void setReverseRepresentative(Set<EqGraphNode> reverseRepresentative) {
 		this.reverseRepresentative = reverseRepresentative;
 	}
 
-	public void addToReverseRepresentative(EqNode reverseRepresentative) {
+	public void addToReverseRepresentative(EqGraphNode reverseRepresentative) {
 		this.reverseRepresentative.add(reverseRepresentative);
 	}
 
-	public Set<EqNode> getCcpar() {
+	public Set<EqGraphNode> getCcpar() {
 		return ccpar;
 	}
 
-	public void setCcpar(Set<EqNode> ccpar) {
+	public void setCcpar(Set<EqGraphNode> ccpar) {
 		this.ccpar = ccpar;
 	}
 
-	public void addToCcpar(EqNode ccpar) {
+	public void addToCcpar(EqGraphNode ccpar) {
 		this.ccpar.add(ccpar);
 	}
 	
-	public void addToCcpar(Set<EqNode> ccpar) {
+	public void addToCcpar(Set<EqGraphNode> ccpar) {
 		this.ccpar.addAll(ccpar);
 	}
 
-	public Set<List<EqNode>> getCcchild() {
+	public Set<List<EqGraphNode>> getCcchild() {
 		return ccchild;
 	}
 
-	public void setCcchild(Set<List<EqNode>> ccchild) {
+	public void setCcchild(Set<List<EqGraphNode>> ccchild) {
 		this.ccchild = ccchild;
 	}
 
-	public void addToCcchild(List<EqNode> ccchild) {
+	public void addToCcchild(List<EqGraphNode> ccchild) {
 		this.ccchild.add(ccchild);
 	}
 	
-	public void addToCcchild(Set<List<EqNode>> ccchild) {
+	public void addToCcchild(Set<List<EqGraphNode>> ccchild) {
 		this.ccchild.addAll(ccchild);
 	}
 
-	public Set<EqNode> getInitCcpar() {
+	public Set<EqGraphNode> getInitCcpar() {
 		return initCcpar;
 	}
 
-	public void setInitCcpar(Set<EqNode> initCcpar) {
+	public void setInitCcpar(Set<EqGraphNode> initCcpar) {
 		this.initCcpar = initCcpar;
 	}
 
-	public void addToInitCcpar(Set<EqNode> initCcpar) {
+	public void addToInitCcpar(Set<EqGraphNode> initCcpar) {
 		this.initCcpar.addAll(initCcpar);
 	}
 
-	public void addToInitCcpar(EqNode initCcpar) {
+	public void addToInitCcpar(EqGraphNode initCcpar) {
 		this.initCcpar.add(initCcpar);
 	}
 
-	public List<EqNode> getInitCcchild() {
-		return initCcchildren;
+	public List<EqGraphNode> getInitCcchild() {
+		return initCcchild;
 	}
 
-	public void setInitCcchild(List<EqNode> initCcchild) {
-		this.initCcchildren = initCcchild;
+	public void setInitCcchild(List<EqGraphNode> initCcchild) {
+		this.initCcchild = initCcchild;
+	}
+	
+	public void addToInitCcchild(EqGraphNode initCcchild) {
+		this.initCcchild.add(initCcchild);
+	}
+	
+	public void addToInitCcchild(List<EqGraphNode> initCcchild) {
+		this.initCcchild.addAll(initCcchild);
 	}
 
 	public String toString() {
@@ -157,22 +153,29 @@ public class EqGraphNode {
 		sb.append(" ||| representative: ");
 		sb.append(representative.toString());
 		sb.append(" ||| reverseRepresentative: ");
-		for (EqNode node : reverseRepresentative) {
+		for (EqGraphNode node : reverseRepresentative) {
 			sb.append(node.toString());
 			sb.append("  ");
 		}
 		sb.append(" ||| ccpar: ");
-		for (EqNode node : ccpar) {
+		for (EqGraphNode node : ccpar) {
 			sb.append(node.toString());
 			sb.append("  ");
 		}
 		sb.append(" ||| ccchild: ");
-		for (List<EqNode> node : ccchild) {
+		for (List<EqGraphNode> node : ccchild) {
 			sb.append(node.toString());
 			sb.append("  ");
 		}
 
 		return sb.toString();
 	}
-
+	
+	@Override
+	public boolean equals(Object other) {
+		if (!(other instanceof EqGraphNode)) {
+			return false;
+		}
+		return ((EqGraphNode)other).eqNode.equals(this.eqNode);
+	}
 }
