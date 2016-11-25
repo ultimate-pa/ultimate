@@ -55,8 +55,9 @@ public class BlockEncodingDevelTestSuite extends AbstractEvalTestSuite {
 //			new Triple<>("AutomizerCWithBlockEncodingV2.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default.epf"),
 //			new Triple<>("KojakCBEV2.xml", C, "kojak/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-BP-UC-LV-Integer.epf"),
 //			new Triple<>("AutomizerCWithBlockEncoding.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default.epf"),
-			new Triple<>("BuchiAutomizerC.xml", C, "svcomp2017/automizer/svcomp-Termination-64bit-Automizer_Default.epf"),
-			new Triple<>("BuchiAutomizerCWithBlockEncoding.xml", C, "svcomp2017/automizer/svcomp-Termination-64bit-Automizer_Default.epf"),
+//			new Triple<>("BuchiAutomizerC.xml", C, "svcomp2017/automizer/svcomp-Termination-64bit-Automizer_Default.epf"),
+//			new Triple<>("BuchiAutomizerCWithBlockEncoding.xml", C, "svcomp2017/automizer/svcomp-Termination-64bit-Automizer_Default.epf"),
+			new Triple<>("LassoRankerCBEv2.xml", C, "LassoRankerBEv2.epf"),
 	};
 
 	private static final String[] INPUT = new String[] {
@@ -66,7 +67,8 @@ public class BlockEncodingDevelTestSuite extends AbstractEvalTestSuite {
 //			"examples/svcomp/ldv-linux-3.4-simple/32_1_cilled_true-unreach-call_ok_nondet_linux-3.4-32_1-drivers--media--rc--keymaps--rc-snapstream-firefly.ko-ldv_main0_sequence_infinite_withcheck_stateful.cil.out.c",
 //			"examples/svcomp/regression/drivers--block--drbd--drbd.ko_343.90ab5ee.32_7a.cil_true-unreach-call.i",
 //			"examples/svcomp/ldv-memsafety/memleaks_test22_3_true-valid-memsafety.i",
-			"examples/svcomp/termination-restricted-15/ConvLower_false-termination.c"
+//			"examples/svcomp/termination-restricted-15/ConvLower_false-termination.c",
+			"examples/termination/svcomp15/termination-crafted-lit/AliasDarteFeautrierGonnord-SAS2010-aaron2_true-termination.c"
 
 
 	};
