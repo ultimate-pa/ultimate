@@ -361,6 +361,7 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 
 		Set<List<EqGraphNode>> ccchild1 = ccchild(node1);
 		Set<List<EqGraphNode>> ccchild2 = ccchild(node2);
+			
 		
 		//TODO
 		assert false : "TODO: treat the case with several children";
@@ -385,7 +386,7 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 	}
 
 	// TODO VPDomainSymmetricPair<EqNode> or VPDomainSymmetricPair<EqGraphNode>
-	private void addToDisEqSet(final EqGraphNode node1, final EqGraphNode node2) {
+	public void addToDisEqSet(final EqGraphNode node1, final EqGraphNode node2) {
 		this.getDisEqualitySet().add(new VPDomainSymmetricPair<EqGraphNode>(node1, node2));
 	}
 
@@ -410,7 +411,7 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 	 * @param node
 	 * @return
 	 */
-	private EqGraphNode find(final EqGraphNode node) {
+	public EqGraphNode find(final EqGraphNode node) {
 		if (node.getRepresentative().equals(node)) {
 			return node;
 		} else {
@@ -428,7 +429,7 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 		return find(node).getCcpar();
 	}
 
-	private Set<List<EqGraphNode>> ccchild(final EqGraphNode node) {
+	public Set<List<EqGraphNode>> ccchild(final EqGraphNode node) {
 		return find(node).getCcchild();
 	}
 
@@ -788,4 +789,7 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 		return result;
 	}
 
+	public VPDomain getDomain() {
+		return mDomain;
+	}
 }
