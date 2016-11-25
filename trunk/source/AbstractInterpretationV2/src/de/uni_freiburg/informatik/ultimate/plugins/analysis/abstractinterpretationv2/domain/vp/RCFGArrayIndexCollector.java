@@ -31,6 +31,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -57,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDim
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RCFGEdgeVisitor;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 /**
@@ -66,8 +68,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  */
 public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 
-	private final Map<Term, Set<EqFunctionNode>> termToFnNodeMap = new HashMap<>();
-	private final Map<EqNode, EqGraphNode> eqNodeToEqGraphNodeMap = new HashMap<>();
+	private final HashRelation<IProgramVarOrConst, EqFunctionNode> mArrayIdToFnNodes = new HashRelation<>();
+	private final Map<EqNode, EqGraphNode> mEqNodeToEqGraphNodeMap = new HashMap<>();
 	
 	private final Map<Term, EqNode> mTermToEqNode = new HashMap<>();
 
@@ -271,12 +273,7 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 		if (result == null) {
 			result = new EqFunctionNode(eqNode, indices);
 
-			if (termToFnNodeMap.containsKey(eqNode.getTerm())) {
-				termToFnNodeMap.get(eqNode.getTerm()).add(result);
-			} else {
-				termToFnNodeMap.put(eqNode.getTerm(), new HashSet<>());
-				termToFnNodeMap.get(eqNode.getTerm()).add(result);
-			}
+			mArrayIdToFnNodes.addPair(eqNode, result);
 			
 			mEqFunctionNodeStore.put(eqNode, indices, result);
 			putToEqGraphSet(result, indices);
@@ -292,7 +289,7 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 			assert !args.isEmpty();
 			
 			for (EqNode arg : args) {
-				EqGraphNode argNode = eqNodeToEqGraphNodeMap.get(arg);
+				EqGraphNode argNode = mEqNodeToEqGraphNodeMap.get(arg);
 				argNode.addToInitCcpar(graphNode);
 				argNode.addToCcpar(graphNode);
 				argNodes.add(argNode);
@@ -301,19 +298,20 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 			graphNode.getCcchild().add(argNodes);
 		}
 		
-		eqNodeToEqGraphNodeMap.put(node, graphNode);
+		mEqNodeToEqGraphNodeMap.put(node, graphNode);
 	}
 
 	public Set<EqGraphNode> getEqGraphNodeSet() {
-		return new HashSet<EqGraphNode>(eqNodeToEqGraphNodeMap.values());
+		return new HashSet<EqGraphNode>(mEqNodeToEqGraphNodeMap.values());
 	}
 
-	public Map<Term, Set<EqFunctionNode>> getTermToFnNodeMap() {
-		return termToFnNodeMap;
+	public  HashRelation<IProgramVarOrConst, EqFunctionNode> getArrayIdToFnNodeMap() {
+		assert mArrayIdToFnNodes != null;
+		return  mArrayIdToFnNodes;
 	}
 
 	public Map<EqNode, EqGraphNode> getEqNodeToEqGraphNodeMap() {
-		return eqNodeToEqGraphNodeMap;
+		return mEqNodeToEqGraphNodeMap;
 	}
 	
 	@Override
@@ -323,6 +321,10 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 
 	public Map<Term, EqNode> getTermToEqNodeMap() {
 		return mTermToEqNode;
+	}
+
+	public IProgramVarOrConst getIProgramVarOrConst(Term term) {
+		return mTermToBoogieVarOrConst.get(term);
 	}
 
 

@@ -107,8 +107,7 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 		}
 		
 		return Collections.singletonList(
-				new VPState(resultState.getEqGraphNodeSet(), 
-						resultState.getEqNodeToEqGraphNodeMap(),  
+				new VPState(resultState.getEqNodeToEqGraphNodeMap(),  
 						resultState.getDisEqualitySet(),
 						mDomain));
 	}
@@ -151,8 +150,8 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 				EqNode node1 = null;
 				EqNode node2 = null;
 				
-				if (isArray(appTerm.getParameters()[0])) {
-					if (isArray(appTerm.getParameters()[1])) {
+				if (mDomain.isArray(appTerm.getParameters()[0])) {
+					if (mDomain.isArray(appTerm.getParameters()[1])) {
 						
 						resultState.arrayAssignment(appTerm.getParameters()[0], appTerm.getParameters()[1]);
 						return resultState;
@@ -284,10 +283,7 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 //		return null;
 	}
 
-	private boolean isArray(final Term term) {
-		
-		return mDomain.getTermToFnNodeMap().keySet().contains(term);
-	}
+
 	
 	@Override
 	public List<VPState> apply(final VPState stateBeforeLeaving, final VPState stateAfterLeaving,

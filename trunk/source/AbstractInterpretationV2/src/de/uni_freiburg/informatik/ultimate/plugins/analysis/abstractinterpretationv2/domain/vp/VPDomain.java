@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
@@ -57,7 +58,7 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 	private final ILogger mLogger;
 	
 	private final Set<EqGraphNode> mEqGraphNodeSet;
-	private final Map<Term, Set<EqFunctionNode>> mTermToFnNodeMap;
+	private final HashRelation<IProgramVarOrConst, EqFunctionNode> mArrayIdToEqFnNodes;
 	private final Map<EqNode, EqGraphNode> mEqNodeToEqGraphNodeMap;
 	private Set<VPDomainSymmetricPair<EqGraphNode>> mDisEqualityMap;
 	
@@ -76,27 +77,21 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 		mLogger = logger;
 		mPreAnalysis = preAnalysis;
 		mEqGraphNodeSet = preAnalysis.getEqGraphNodeSet();
-//		mTermToBaseNodeMap = preAnalysis.getTermToBaseNodeMap() == null ? 
-//				null : 
-//					Collections.unmodifiableMap(preAnalysis.getTermToBaseNodeMap());
-		mTermToFnNodeMap = preAnalysis.getTermToFnNodeMap() == null 
-				? null 
-						: Collections.unmodifiableMap(preAnalysis.getTermToFnNodeMap());
+		mArrayIdToEqFnNodes = preAnalysis.getArrayIdToFnNodeMap();
 		mEqNodeToEqGraphNodeMap = preAnalysis.getEqNodeToEqGraphNodeMap();
 		mDisEqualityMap = new HashSet<>();
 		mBottomState = new VPStateBottom(this);
-		mTermToEqNodeMap = preAnalysis.getTermToEqNodeMap();//termToEqNodeMap;
-		mTopState = new VPStateTop(mEqGraphNodeSet, mTermToEqNodeMap, mTermToFnNodeMap, mEqNodeToEqGraphNodeMap, mDisEqualityMap, this);
+		mTermToEqNodeMap = preAnalysis.getTermToEqNodeMap();
+		mTopState = new VPStateTop(mEqNodeToEqGraphNodeMap, mDisEqualityMap, this);
 		mPost = new VPPostOperator(script, services, this);
 		mMerge = new VPMergeOperator();
 		mScript = script;
 		mBoogie2Smt = boogie2smt;
-//		mTermToEqNode = 
 	}
 
 	@Override
 	public VPState createFreshState() {
-		return new VPState(mEqGraphNodeSet, mEqNodeToEqGraphNodeMap, mDisEqualityMap, this);
+		return new VPState(mEqNodeToEqGraphNodeMap, mDisEqualityMap, this);
 	}
 
 	@Override
@@ -130,6 +125,11 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 			return first.disjoin(second);
 		}
 	}
+	
+	boolean isArray(final Term term) {
+		return getArrayIdToEqFnNodeMap()
+				.getDomain().contains(getPreAnalysis().getIProgramVarOrConst(term));
+	}
 
 	public Set<EqGraphNode> getEqGraphNodeSet() {
 		return mEqGraphNodeSet;
@@ -139,8 +139,8 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 		return mTermToEqNodeMap;
 	}
 
-	public Map<Term, Set<EqFunctionNode>> getTermToFnNodeMap() {
-		return mTermToFnNodeMap;
+	public  HashRelation<IProgramVarOrConst, EqFunctionNode> getArrayIdToEqFnNodeMap() {
+		return mArrayIdToEqFnNodes;
 	}
 
 	public Map<EqNode, EqGraphNode> getEqNodeToEqGraphNodeMap() {
