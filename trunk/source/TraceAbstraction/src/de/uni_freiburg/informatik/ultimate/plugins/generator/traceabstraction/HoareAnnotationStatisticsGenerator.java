@@ -84,8 +84,8 @@ public class HoareAnnotationStatisticsGenerator implements IStatisticsDataProvid
 		mFormulaSimplificationTreeSizeReduction += reductionOfTreeSize;
 	}
 
-	public void reportSimplificationTime(long simplificationTimeNano) {
-		simplificationTimeNano += simplificationTimeNano;
+	public void reportSimplificationTime(final long simplificationTimeNano) {
+		mHoareSimplificationTime += simplificationTimeNano;
 	}
 
 }
