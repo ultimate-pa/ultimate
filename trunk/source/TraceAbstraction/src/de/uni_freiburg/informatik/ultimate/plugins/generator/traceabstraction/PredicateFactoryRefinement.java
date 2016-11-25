@@ -49,8 +49,6 @@ public class PredicateFactoryRefinement extends PredicateFactoryForInterpolantAu
 	
 	protected final Map<String,Map<String,BoogieIcfgLocation>> mlocNodes;
 	protected int mIteration;
-	protected final HoareAnnotationFragments mHoareAnnotationFragments;
-	private final boolean mMaintainHoareAnnotationFragments = false;
 	private final HashSet<BoogieIcfgLocation> mHoareAnnotationProgramPoints;
 	private final HoareAnnotationPositions mHoareAnnotationPositions;
 	
@@ -58,13 +56,11 @@ public class PredicateFactoryRefinement extends PredicateFactoryForInterpolantAu
 	public PredicateFactoryRefinement(final Map<String,Map<String,BoogieIcfgLocation>> locNodes,
 							final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 							final boolean computeHoareAnnoation, 
-							final HoareAnnotationFragments haf, 
 							final HashSet<BoogieIcfgLocation> hoareAnnotationProgramPoints, 
 							final HoareAnnotationPositions hoareAnnoationPositions) {
 		super(csToolkit, predicateFactory, computeHoareAnnoation);
 		mlocNodes = locNodes;
 //		mMaintainHoareAnnotationFragments = maintainHoareAnnotationFragments;
-		mHoareAnnotationFragments = haf;
 		mHoareAnnotationProgramPoints = hoareAnnotationProgramPoints;
 		mHoareAnnotationPositions = hoareAnnoationPositions;
 	}
@@ -98,9 +94,6 @@ public class PredicateFactoryRefinement extends PredicateFactoryForInterpolantAu
 			result = mPredicateFactory.newSPredicate(pp, conjunction);
 		}
 		
-		if (mMaintainHoareAnnotationFragments) {
-//			mHoareAnnotationFragments.announceReplacement(p1, result);
-		}
 		return result;
 	}
 	

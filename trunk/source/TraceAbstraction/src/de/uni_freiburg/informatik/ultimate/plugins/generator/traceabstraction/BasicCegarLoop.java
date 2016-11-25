@@ -183,7 +183,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		}
 		mHaf = new HoareAnnotationFragments(mLogger, mHoareAnnotationPositions, mPref.getHoareAnnotationPositions());
 		mStateFactoryForRefinement = new PredicateFactoryRefinement(mIcfgContainer.getProgramPoints(),
-				super.mCsToolkit, predicateFactory, mPref.computeHoareAnnotation(), mHaf, mHoareAnnotationPositions,
+				super.mCsToolkit, predicateFactory, mPref.computeHoareAnnotation(), mHoareAnnotationPositions,
 				mPref.getHoareAnnotationPositions());
 		mPredicateFactoryInterpolantAutomata =
 				new PredicateFactoryForInterpolantAutomata(super.mCsToolkit, mPredicateFactory,

@@ -92,7 +92,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.Rc
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CFG2NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.HoareAnnotationFragments;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryResultChecking;
@@ -193,8 +192,6 @@ public class BuchiCegarLoop {
 	private final PredicateFactoryForInterpolantAutomata mDefaultStateFactory;
 	private final PredicateFactoryResultChecking mPredicateFactoryResultChecking;
 
-	private final HoareAnnotationFragments mHaf;
-
 	private final PredicateFactoryRefinement mStateFactoryForRefinement;
 
 	private final BuchiAutomizerModuleDecompositionBenchmark mMDBenchmark;
@@ -268,9 +265,8 @@ public class BuchiCegarLoop {
 		mDefaultStateFactory = new PredicateFactoryForInterpolantAutomata(mCsToolkit, predicateFactory, mPref.computeHoareAnnotation());
 		mPredicateFactoryResultChecking = new PredicateFactoryResultChecking(predicateFactory);
 
-		mHaf = new HoareAnnotationFragments(mLogger, null, null);
 		mStateFactoryForRefinement = new PredicateFactoryRefinement(mRootAnnot.getProgramPoints(),
-				mCsToolkit, predicateFactory, false, mHaf, null, mPref.getHoareAnnotationPositions());
+				mCsToolkit, predicateFactory, false, null, mPref.getHoareAnnotationPositions());
 
 		final IPreferenceProvider baPref = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 
