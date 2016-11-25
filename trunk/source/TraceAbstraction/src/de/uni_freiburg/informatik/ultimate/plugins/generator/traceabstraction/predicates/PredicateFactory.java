@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.HoareAnnotation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.HoareAnnotationStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
 public class PredicateFactory extends BasicPredicateFactory {
@@ -109,8 +110,8 @@ public class PredicateFactory extends BasicPredicateFactory {
 		return pred;
 	}
 
-	public HoareAnnotation getNewHoareAnnotation(final BoogieIcfgLocation pp, final ModifiableGlobalsTable modifiableGlobalsTable) {
-		return new HoareAnnotation(pp, constructFreshSerialNumber(), mSymbolTable, this, modifiableGlobalsTable, mMgdScript, mScript, mServices, mSimplificationTechnique, mXnfConversionTechnique);
+	public HoareAnnotation getNewHoareAnnotation(final BoogieIcfgLocation pp, final ModifiableGlobalsTable modifiableGlobalsTable, final HoareAnnotationStatisticsGenerator hoareAnnotationStatisticsGenerator) {
+		return new HoareAnnotation(pp, constructFreshSerialNumber(), mSymbolTable, this, modifiableGlobalsTable, mMgdScript, mScript, mServices, mSimplificationTechnique, mXnfConversionTechnique, hoareAnnotationStatisticsGenerator);
 	}
 
 

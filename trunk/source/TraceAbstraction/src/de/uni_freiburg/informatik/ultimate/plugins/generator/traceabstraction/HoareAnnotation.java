@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.ExtendedSimplificationResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineSubtermNormalizer;
@@ -100,11 +101,13 @@ public class HoareAnnotation extends SPredicate {
 	private Term mClosedFormula;
 	private static final boolean s_AvoidImplications = true;
 	
+	private final HoareAnnotationStatisticsGenerator mHoareAnnotationStatisticsGenerator;
+	
 	public HoareAnnotation(final BoogieIcfgLocation programPoint, final int serialNumber,
 			final ICfgSymbolTable symbolTable, final PredicateFactory predicateFactory,
 			final ModifiableGlobalsTable modifiableGlobalsTable, final ManagedScript mgdScript, final Script script,
 			final IUltimateServiceProvider services, final SimplificationTechnique simplificationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique) {
+			final XnfConversionTechnique xnfConversionTechnique, final HoareAnnotationStatisticsGenerator hoareAnnotationStatisticsGenerator) {
 		super(programPoint, serialNumber, new String[] { programPoint.getProcedure() }, script.term("true"),
 				new HashSet<IProgramVar>(), null);
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -116,6 +119,7 @@ public class HoareAnnotation extends SPredicate {
 		mPredicateFactory = predicateFactory;
 		mScript = script;
 		mModifiableGlobals = modifiableGlobalsTable;
+		mHoareAnnotationStatisticsGenerator = hoareAnnotationStatisticsGenerator;
 	}
 	
 	/**
@@ -200,7 +204,11 @@ public class HoareAnnotation extends SPredicate {
 			mFormula = Util.and(mScript, mFormula, precondTerm);
 		}
 		mFormula = substituteOldVarsOfNonModifiableGlobals(getProgramPoint().getProcedure(), mVars, mFormula);
-		mFormula = SmtUtils.simplify(mMgdScript, mFormula, mServices, mSimplificationTechnique);
+		final ExtendedSimplificationResult simplificationResult = SmtUtils.simplifyWithStatistics(mMgdScript, mFormula, mServices, mSimplificationTechnique);
+		mHoareAnnotationStatisticsGenerator.reportSimplification();
+		mFormula = simplificationResult.getSimplifiedTerm();
+		mHoareAnnotationStatisticsGenerator.reportReduction(simplificationResult.getReductionOfTreeSize());
+		mHoareAnnotationStatisticsGenerator.reportSimplificationTime(simplificationResult.getSimplificationTimeNano());
 		mFormula = getPositiveNormalForm(mFormula);
 		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(mFormula, mScript, mSymbolTable);
 		mClosedFormula = PredicateUtils.computeClosedFormula(tvp.getFormula(), tvp.getVars(), mScript);

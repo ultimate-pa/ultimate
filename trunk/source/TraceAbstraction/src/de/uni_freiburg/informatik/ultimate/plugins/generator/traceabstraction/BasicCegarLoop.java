@@ -797,10 +797,14 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		}
 		final INestedWordAutomaton<CodeBlock, IPredicate> abstraction =
 				(INestedWordAutomaton<CodeBlock, IPredicate>) mAbstraction;
+		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.HoareAnnotationTime.toString());
 		new HoareAnnotationExtractor(mServices, abstraction, mHaf);
-		new HoareAnnotationWriter(mIcfgContainer, mCsToolkit, mPredicateFactory, mHaf, mServices,
-				mSimplificationTechnique,
-				mXnfConversionTechnique).addHoareAnnotationToCFG();
+		final HoareAnnotationWriter writer = new HoareAnnotationWriter(mIcfgContainer, mCsToolkit, mPredicateFactory, mHaf, mServices,
+				mSimplificationTechnique, mXnfConversionTechnique);
+		writer.addHoareAnnotationToCFG();
+		mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.HoareAnnotationTime.toString());
+		final HoareAnnotationStatisticsGenerator gen = writer.getHoareAnnotationStatisticsGenerator();
+		gen.toString();
 	}
 	
 	@Override

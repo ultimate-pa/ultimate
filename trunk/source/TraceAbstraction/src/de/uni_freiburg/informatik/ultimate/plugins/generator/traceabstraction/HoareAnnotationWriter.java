@@ -36,9 +36,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.Simpli
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateTransformer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -56,6 +56,8 @@ public class HoareAnnotationWriter {
 	private final CfgSmtToolkit mCsToolkit;
 	private final PredicateFactory mPredicateFactory;
 	private final HoareAnnotationFragments mHoareAnnotationFragments;
+	
+	private final HoareAnnotationStatisticsGenerator mHoareAnnotationStatisticsGenerator;
 
 	/**
 	 * What is the precondition for a context? Strongest postcondition or entry
@@ -75,6 +77,7 @@ public class HoareAnnotationWriter {
 		mUseEntry = true;
 		mPredicateTransformer = new PredicateTransformer(services, 
 				csToolkit.getManagedScript(), simplicationTechnique, xnfConversionTechnique);
+		mHoareAnnotationStatisticsGenerator = new HoareAnnotationStatisticsGenerator();
 	}
 
 	public void addHoareAnnotationToCFG() {
@@ -132,7 +135,7 @@ public class HoareAnnotationWriter {
 		
 		final HoareAnnotation taAnnot = HoareAnnotation.getAnnotation(locNode);
 		if (taAnnot == null) {
-			hoareAnnot = mPredicateFactory.getNewHoareAnnotation(pp, mCsToolkit.getModifiableGlobalsTable());
+			hoareAnnot = mPredicateFactory.getNewHoareAnnotation(pp, mCsToolkit.getModifiableGlobalsTable(), mHoareAnnotationStatisticsGenerator);
 			hoareAnnot.annotate(locNode);
 		} else {
 			hoareAnnot = taAnnot;
@@ -166,5 +169,11 @@ public class HoareAnnotationWriter {
 		}
 		return false;
 	}
+
+	public HoareAnnotationStatisticsGenerator getHoareAnnotationStatisticsGenerator() {
+		return mHoareAnnotationStatisticsGenerator;
+	}
+	
+	
 
 }

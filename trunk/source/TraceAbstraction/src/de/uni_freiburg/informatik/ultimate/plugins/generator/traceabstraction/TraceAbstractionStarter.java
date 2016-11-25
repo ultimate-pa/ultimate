@@ -63,8 +63,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgElement;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
@@ -253,21 +253,23 @@ public class TraceAbstractionStarter {
 		
 		final Result result = basicCegarLoop.iterate();
 		basicCegarLoop.finish();
-		final CegarLoopStatisticsGenerator cegarLoopBenchmarkGenerator = basicCegarLoop.getCegarLoopBenchmark();
-		cegarLoopBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.OverallTime.toString());
-		// TODO: Stop AI clock
-		taBenchmark.aggregateBenchmarkData(cegarLoopBenchmarkGenerator);
 		
 		mOverallResult = computeOverallResult(errorLocs, basicCegarLoop, result);
 		
 		if (taPrefs.computeHoareAnnotation() && mOverallResult == Result.SAFE) {
 			mLogger.debug("Computing Hoare annotation of CFG");
 			basicCegarLoop.computeCFGHoareAnnotation();
-			writeHoareAnnotationToLogger(root);
+//			writeHoareAnnotationToLogger(root);
 		} else {
 			mLogger.debug("Ommiting computation of Hoare annotation");
 			
 		}
+		
+		final CegarLoopStatisticsGenerator cegarLoopBenchmarkGenerator = basicCegarLoop.getCegarLoopBenchmark();
+		cegarLoopBenchmarkGenerator.stop(CegarLoopStatisticsDefinitions.OverallTime.toString());
+		// TODO: Stop AI clock
+		taBenchmark.aggregateBenchmarkData(cegarLoopBenchmarkGenerator);
+
 		mArtifact = basicCegarLoop.getArtifact();
 	}
 	
