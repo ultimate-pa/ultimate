@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.Rc
  */
 public class BlockEncodingBacktranslator extends DefaultTranslator<IcfgEdge, IcfgEdge, Term, Term, String, String> {
 
-	private final HashMap<IcfgEdge, IcfgEdge> mEdgeMapping;
+	private final Map<IcfgEdge, IcfgEdge> mEdgeMapping;
 
 	public BlockEncodingBacktranslator(final Class<IcfgEdge> traceElementType, final Class<Term> expressionType) {
 		super(traceElementType, traceElementType, expressionType, expressionType);

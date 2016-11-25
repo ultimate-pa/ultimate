@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BitVectorAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BitvecLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
@@ -97,8 +98,8 @@ public final class Term2Expression implements Serializable {
 
 	private final Set<IdentifierExpression> mFreeVariables;
 
-	public Term2Expression(final TypeSortTranslator tsTranslation, 
-			final Boogie2SmtSymbolTable boogie2SmtSymbolTable, final ManagedScript maScript) {
+	public Term2Expression(final TypeSortTranslator tsTranslation, final Boogie2SmtSymbolTable boogie2SmtSymbolTable,
+			final ManagedScript maScript) {
 		mTypeSortTranslator = tsTranslation;
 		mBoogie2SmtSymbolTable = boogie2SmtSymbolTable;
 		mScript = maScript.getScript();
@@ -108,7 +109,8 @@ public final class Term2Expression implements Serializable {
 	}
 
 	private String getFreshIdenfier() {
-		return "freshIdentifier" + mFreshIdentiferCounter++;
+		mFreshIdentiferCounter++;
+		return "freshIdentifier" + mFreshIdentiferCounter;
 	}
 
 	public Expression translate(final Term term) {
@@ -128,29 +130,31 @@ public final class Term2Expression implements Serializable {
 		} else {
 			throw new UnsupportedOperationException("unknown kind of Term");
 		}
-		assert (result != null);
+		assert result != null;
 		return result;
 	}
 
-	private Expression translate(final AnnotatedTerm term) {
+	private static Expression translate(final AnnotatedTerm term) {
 		throw new UnsupportedOperationException("annotations not supported yet" + term);
 	}
 
 	private Expression translate(final ApplicationTerm term) {
 		final FunctionSymbol symb = term.getFunction();
-		final IBoogieType type = mTypeSortTranslator.getType(symb.getReturnSort());
-		final Term[] termParams = term.getParameters();
-		if (symb.isIntern() && symb.getName().equals("select")) {
+
+		if (symb.isIntern() && "select".equals(symb.getName())) {
 			return translateSelect(term);
-		} else if (symb.isIntern() && symb.getName().equals("store")) {
+		} else if (symb.isIntern() && "store".equals(symb.getName())) {
 			return translateStore(term);
 		} else if (BitvectorUtils.isBitvectorConstant(symb)) {
 			return translateBitvectorConstant(term);
 		}
+
+		final Term[] termParams = term.getParameters();
 		final Expression[] params = new Expression[termParams.length];
 		for (int i = 0; i < termParams.length; i++) {
 			params[i] = translate(termParams[i]);
 		}
+		final IBoogieType type = mTypeSortTranslator.getType(symb.getReturnSort());
 		if (symb.getParameterSorts().length == 0) {
 			if (term == mScript.term("true")) {
 				final IBoogieType booleanType = mTypeSortTranslator.getType(mScript.sort("Bool"));
@@ -162,22 +166,19 @@ public final class Term2Expression implements Serializable {
 			}
 			final BoogieConst boogieConst = mBoogie2SmtSymbolTable.getBoogieConst(term);
 			if (boogieConst != null) {
-				final IdentifierExpression ie =
-						new IdentifierExpression(null, mTypeSortTranslator.getType(term.getSort()),
-								boogieConst.getIdentifier(), new DeclarationInformation(StorageClass.GLOBAL, null));
-				return ie;
+				return new IdentifierExpression(null, mTypeSortTranslator.getType(term.getSort()),
+						boogieConst.getIdentifier(), new DeclarationInformation(StorageClass.GLOBAL, null));
 			}
 			if (mBoogie2SmtSymbolTable.getSmtFunction2BoogieFunction().containsKey(symb.getName())) {
 				return translateWithSymbolTable(symb, type, termParams);
-			} else {
-				throw new IllegalArgumentException();
 			}
-		} else if (symb.getName().equals("ite")) {
+			throw new IllegalArgumentException();
+		} else if ("ite".equals(symb.getName())) {
 			return new IfThenElseExpression(null, type, params[0], params[1], params[2]);
 		} else if (symb.isIntern()) {
 			if (symb.getParameterSorts().length > 0 && BitvectorUtils.isBitvectorSort(symb.getParameterSorts()[0])
-					&& !symb.getName().equals("=") && !symb.getName().equals("distinct")) {
-				if (symb.getName().equals("extract")) {
+					&& !"=".equals(symb.getName()) && !"distinct".equals(symb.getName())) {
+				if ("extract".equals(symb.getName())) {
 					return translateBitvectorAccess(type, term);
 				} else if (mBoogie2SmtSymbolTable.getSmtFunction2BoogieFunction().containsKey(symb.getName())) {
 					return translateWithSymbolTable(symb, type, termParams);
@@ -186,22 +187,19 @@ public final class Term2Expression implements Serializable {
 							"translation of " + symb + " not yet implemented, please contact Matthias");
 				}
 			} else if (symb.getParameterSorts().length == 1) {
-				if (symb.getName().equals("not")) {
+				if ("not".equals(symb.getName())) {
 					final Expression param = translate(term.getParameters()[0]);
-					return new UnaryExpression(null, type,
-							de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression.Operator.LOGICNEG, param);
-				} else if (symb.getName().equals("-")) {
+					return new UnaryExpression(null, type, UnaryExpression.Operator.LOGICNEG, param);
+				} else if ("-".equals(symb.getName())) {
 					final Expression param = translate(term.getParameters()[0]);
-					return new UnaryExpression(null, type,
-							de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression.Operator.ARITHNEGATIVE,
-							param);
+					return new UnaryExpression(null, type, UnaryExpression.Operator.ARITHNEGATIVE, param);
 				} else {
 					throw new IllegalArgumentException("unknown symbol " + symb);
 				}
 			} else {
-				if (symb.getName().equals("xor")) {
+				if ("xor".equals(symb.getName())) {
 					return xor(params);
-				} else if (symb.getName().equals("mod")) {
+				} else if ("mod".equals(symb.getName())) {
 					return mod(params);
 				}
 				final Operator op = getBinaryOperator(symb);
@@ -227,7 +225,7 @@ public final class Term2Expression implements Serializable {
 	}
 
 	private Expression translateBitvectorAccess(final IBoogieType type, final ApplicationTerm term) {
-		assert term.getFunction().getName().equals("extract") : "no extract";
+		assert "extract".equals(term.getFunction().getName()) : "no extract";
 		assert term.getParameters().length == 1;
 		assert term.getFunction().getIndices().length == 2;
 		final Expression bitvector = translate(term.getParameters()[0]);
@@ -294,36 +292,38 @@ public final class Term2Expression implements Serializable {
 	 * Translate a nested sequence of select expressions to a single ArrayAccessExpression. (see translateSelect why
 	 * this might be useful)
 	 */
-	private ArrayAccessExpression translateArray(ApplicationTerm term) {
+	private ArrayAccessExpression translateArray(final ApplicationTerm term) {
 		final List<Expression> reverseIndices = new ArrayList<>();
-		while (term.getFunction().getName().equals("select") && (term.getParameters()[0] instanceof ApplicationTerm)) {
-			assert (term.getParameters().length == 2);
-			final Expression index = translate(term.getParameters()[1]);
+		ApplicationTerm localTerm = term;
+		while ("select".equals(localTerm.getFunction().getName())
+				&& (localTerm.getParameters()[0] instanceof ApplicationTerm)) {
+			assert localTerm.getParameters().length == 2;
+			final Expression index = translate(localTerm.getParameters()[1]);
 			reverseIndices.add(index);
-			term = (ApplicationTerm) term.getParameters()[0];
+			localTerm = (ApplicationTerm) localTerm.getParameters()[0];
 		}
-		assert (term.getParameters().length == 2);
-		final Expression index = translate(term.getParameters()[1]);
+		assert localTerm.getParameters().length == 2;
+		final Expression index = translate(localTerm.getParameters()[1]);
 		reverseIndices.add(index);
 
-		final Expression array = translate(term.getParameters()[0]);
+		final Expression array = translate(localTerm.getParameters()[0]);
 		final Expression[] indices = new Expression[reverseIndices.size()];
 		for (int i = 0; i < indices.length; i++) {
 			indices[i] = reverseIndices.get(indices.length - 1 - i);
 		}
-		final IBoogieType type = mTypeSortTranslator.getType(term.getSort());
+		final IBoogieType type = mTypeSortTranslator.getType(localTerm.getSort());
 		return new ArrayAccessExpression(null, type, array, indices);
 	}
 
 	private Expression translate(final ConstantTerm term) {
 		final Object value = term.getValue();
 		final IBoogieType type = mTypeSortTranslator.getType(term.getSort());
-		if (term.getSort().getRealSort().getName().equals("BitVec")) {
+		if ("BitVec".equals(term.getSort().getRealSort().getName())) {
 			final BigInteger[] indices = term.getSort().getIndices();
 			if (indices.length != 1) {
 				throw new AssertionError("BitVec has exactly one index");
 			}
-			final int length = indices[0].intValue();
+
 			BigInteger decimalValue;
 			if (value.toString().startsWith("#x")) {
 				decimalValue = new BigInteger(value.toString().substring(2), 16);
@@ -332,6 +332,7 @@ public final class Term2Expression implements Serializable {
 			} else {
 				throw new UnsupportedOperationException("only hexadecimal values and boolean values supported yet");
 			}
+			final int length = indices[0].intValue();
 			return new BitvecLiteral(null, type, String.valueOf(decimalValue), length);
 		}
 		if (value instanceof String) {
@@ -341,9 +342,9 @@ public final class Term2Expression implements Serializable {
 		} else if (value instanceof BigDecimal) {
 			return new RealLiteral(null, type, value.toString());
 		} else if (value instanceof Rational) {
-			if (term.getSort().getName().equals("Int")) {
+			if ("Int".equals(term.getSort().getName())) {
 				return new IntegerLiteral(null, type, value.toString());
-			} else if (term.getSort().getName().equals("Real")) {
+			} else if ("Real".equals(term.getSort().getName())) {
 				return new RealLiteral(null, type, value.toString());
 			} else {
 				throw new UnsupportedOperationException("unknown Sort");
@@ -353,7 +354,7 @@ public final class Term2Expression implements Serializable {
 		}
 	}
 
-	private Expression translate(final LetTerm term) {
+	private static Expression translate(final LetTerm term) {
 		throw new IllegalArgumentException("unlet Term first");
 	}
 
@@ -362,7 +363,7 @@ public final class Term2Expression implements Serializable {
 		final VarList[] parameters = new VarList[term.getVariables().length];
 		int offset = 0;
 		for (final TermVariable tv : term.getVariables()) {
-			final IBoogieType type = mTypeSortTranslator.getType(tv.getSort());
+			// final IBoogieType type = mTypeSortTranslator.getType(tv.getSort());
 			final String[] identifiers = { tv.getName() };
 			// FIXME: Matthias: How can I get the ASTType of type?
 			final VarList varList = new VarList(null, identifiers, null);
@@ -371,19 +372,19 @@ public final class Term2Expression implements Serializable {
 			offset++;
 		}
 		final IBoogieType type = mTypeSortTranslator.getType(term.getSort());
-		assert (term.getQuantifier() == QuantifiedFormula.FORALL || term.getQuantifier() == QuantifiedFormula.EXISTS);
+		assert term.getQuantifier() == QuantifiedFormula.FORALL || term.getQuantifier() == QuantifiedFormula.EXISTS;
 		final boolean isUniversal = term.getQuantifier() == QuantifiedFormula.FORALL;
 		final String[] typeParams = new String[0];
 		Attribute[] attributes;
 		Term subTerm = term.getSubformula();
 		if (subTerm instanceof AnnotatedTerm) {
-			assert ((AnnotatedTerm) subTerm).getAnnotations()[0].getKey().equals(":pattern");
+			assert ":pattern".equals(((AnnotatedTerm) subTerm).getAnnotations()[0].getKey());
 			final Annotation[] annotations = ((AnnotatedTerm) subTerm).getAnnotations();
 			// FIXME: does not have to be the case, allow several annotations
-			assert (annotations.length == 1) : "expecting only one annotation at a time";
+			assert annotations.length == 1 : "expecting only one annotation at a time";
 			final Annotation annotation = annotations[0];
 			final Object value = annotation.getValue();
-			assert (value instanceof Term[]) : "expecting Term[]" + value;
+			assert value instanceof Term[] : "expecting Term[]" + value;
 			final Term[] pattern = (Term[]) value;
 			subTerm = ((AnnotatedTerm) subTerm).getSubterm();
 			final Expression[] triggers = new Expression[pattern.length];
@@ -422,14 +423,16 @@ public final class Term2Expression implements Serializable {
 			mFreeVariables.add((IdentifierExpression) result);
 		} else {
 			final IProgramVar pv = mBoogie2SmtSymbolTable.getBoogieVar(term);
-			final ILocation loc = mBoogie2SmtSymbolTable.getAstNode(pv).getLocation();
+			final BoogieASTNode astNode = mBoogie2SmtSymbolTable.getAstNode(pv);
+			assert astNode != null : "There is no AstNode for the IProgramVar " + pv;
+			final ILocation loc = astNode.getLocation();
 			final DeclarationInformation declInfo = mBoogie2SmtSymbolTable.getDeclarationInformation(pv);
 			if (pv instanceof LocalBoogieVar) {
 				result = new IdentifierExpression(loc, type, ((LocalBoogieVar) pv).getIdentifier(), declInfo);
 			} else if (pv instanceof BoogieNonOldVar) {
 				result = new IdentifierExpression(loc, type, ((BoogieNonOldVar) pv).getIdentifier(), declInfo);
 			} else if (pv instanceof BoogieOldVar) {
-				assert (pv.isGlobal());
+				assert pv.isGlobal();
 				final Expression nonOldExpression =
 						new IdentifierExpression(loc, type, ((BoogieOldVar) pv).getIdentifierOfNonOldVar(), declInfo);
 				result = new UnaryExpression(loc, type, UnaryExpression.Operator.OLD, nonOldExpression);
@@ -442,49 +445,49 @@ public final class Term2Expression implements Serializable {
 		return result;
 	}
 
-	private Operator getBinaryOperator(final FunctionSymbol symb) {
-		if (symb.getName().equals("and")) {
+	private static Operator getBinaryOperator(final FunctionSymbol symb) {
+		if ("and".equals(symb.getName())) {
 			return Operator.LOGICAND;
-		} else if (symb.getName().equals("or")) {
+		} else if ("or".equals(symb.getName())) {
 			return Operator.LOGICOR;
-		} else if (symb.getName().equals("=>")) {
+		} else if ("=>".equals(symb.getName())) {
 			return Operator.LOGICIMPLIES;
-		} else if (symb.getName().equals("=") && symb.getParameterSort(0).getName().equals("bool")) {
+		} else if ("=".equals(symb.getName()) && "bool".equals(symb.getParameterSort(0).getName())) {
 			return Operator.LOGICIFF;
-		} else if (symb.getName().equals("=")) {
+		} else if ("=".equals(symb.getName())) {
 			return Operator.COMPEQ;
-		} else if (symb.getName().equals("distinct")) {
+		} else if ("distinct".equals(symb.getName())) {
 			return Operator.COMPNEQ;
-		} else if (symb.getName().equals("<=")) {
+		} else if ("<=".equals(symb.getName())) {
 			return Operator.COMPLEQ;
-		} else if (symb.getName().equals(">=")) {
+		} else if (">=".equals(symb.getName())) {
 			return Operator.COMPGEQ;
-		} else if (symb.getName().equals("<")) {
+		} else if ("<".equals(symb.getName())) {
 			return Operator.COMPLT;
-		} else if (symb.getName().equals(">")) {
+		} else if (">".equals(symb.getName())) {
 			return Operator.COMPGT;
-		} else if (symb.getName().equals("+")) {
+		} else if ("+".equals(symb.getName())) {
 			return Operator.ARITHPLUS;
-		} else if (symb.getName().equals("-")) {
+		} else if ("-".equals(symb.getName())) {
 			return Operator.ARITHMINUS;
-		} else if (symb.getName().equals("*")) {
+		} else if ("*".equals(symb.getName())) {
 			return Operator.ARITHMUL;
-		} else if (symb.getName().equals("/")) {
+		} else if ("/".equals(symb.getName())) {
 			return Operator.ARITHDIV;
-		} else if (symb.getName().equals("div")) {
+		} else if ("div".equals(symb.getName())) {
 			return Operator.ARITHDIV;
-		} else if (symb.getName().equals("mod")) {
+		} else if ("mod".equals(symb.getName())) {
 			return Operator.ARITHMOD;
-		} else if (symb.getName().equals("ite")) {
+		} else if ("ite".equals(symb.getName())) {
 			throw new UnsupportedOperationException("not yet implemented");
-		} else if (symb.getName().equals("abs")) {
+		} else if ("abs".equals(symb.getName())) {
 			throw new UnsupportedOperationException("not yet implemented");
 		} else {
 			throw new IllegalArgumentException("unknown symbol " + symb);
 		}
 	}
 
-	private Expression leftAssoc(final Operator op, final IBoogieType type, final Expression[] params) {
+	private static Expression leftAssoc(final Operator op, final IBoogieType type, final Expression[] params) {
 		Expression result = params[0];
 		for (int i = 0; i < params.length - 1; i++) {
 			result = new BinaryExpression(null, type, op, result, params[i + 1]);
@@ -492,7 +495,7 @@ public final class Term2Expression implements Serializable {
 		return result;
 	}
 
-	private Expression rightAssoc(final Operator op, final IBoogieType type, final Expression[] params) {
+	private static Expression rightAssoc(final Operator op, final IBoogieType type, final Expression[] params) {
 		Expression result = params[params.length - 1];
 		for (int i = params.length - 1; i > 0; i--) {
 			result = new BinaryExpression(null, type, op, params[i - 1], result);
@@ -500,8 +503,8 @@ public final class Term2Expression implements Serializable {
 		return result;
 	}
 
-	private Expression chainable(final Operator op, final IBoogieType type, final Expression[] params) {
-		assert (type == BoogieType.TYPE_BOOL);
+	private static Expression chainable(final Operator op, final IBoogieType type, final Expression[] params) {
+		assert type == BoogieType.TYPE_BOOL;
 		Expression result = new BinaryExpression(null, type, op, params[0], params[1]);
 		Expression chain;
 		for (int i = 1; i < params.length - 1; i++) {
@@ -511,8 +514,8 @@ public final class Term2Expression implements Serializable {
 		return result;
 	}
 
-	private Expression pairwise(final Operator op, final IBoogieType type, final Expression[] params) {
-		assert (type == BoogieType.TYPE_BOOL);
+	private static Expression pairwise(final Operator op, final IBoogieType type, final Expression[] params) {
+		assert type == BoogieType.TYPE_BOOL;
 		Expression result = new BinaryExpression(null, type, op, params[0], params[1]);
 		Expression neq;
 		for (int i = 0; i < params.length - 1; i++) {
@@ -527,7 +530,7 @@ public final class Term2Expression implements Serializable {
 		return result;
 	}
 
-	private Expression xor(final Expression[] params) {
+	private static Expression xor(final Expression[] params) {
 		final IBoogieType type = BoogieType.TYPE_BOOL;
 		final Operator iff = Operator.LOGICIFF;
 		final UnaryExpression.Operator neg = UnaryExpression.Operator.LOGICNEG;
