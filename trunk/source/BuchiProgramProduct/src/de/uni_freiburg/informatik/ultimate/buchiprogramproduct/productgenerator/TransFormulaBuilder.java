@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE BuchiProgramProduct plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizeproduct;
+package de.uni_freiburg.informatik.ultimate.buchiprogramproduct.productgenerator;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;

@@ -18,4 +18,3 @@ Require-Bundle: Library-UltimateCore,
  de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
-Export-Package: de.uni_freiburg.informatik.ultimate.buchiprogramproduct.benchmark

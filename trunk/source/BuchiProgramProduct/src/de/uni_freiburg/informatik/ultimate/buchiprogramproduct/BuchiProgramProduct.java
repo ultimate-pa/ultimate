@@ -31,8 +31,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizercfg.SmallBlockEncoder;
-import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
 import de.uni_freiburg.informatik.ultimate.core.model.IGenerator;
@@ -60,10 +58,8 @@ public class BuchiProgramProduct implements IGenerator {
 	private boolean mPreviousToolFoundErrors;
 	private IUltimateServiceProvider mServices;
 	private int mUseful;
-	private boolean mModelIsRCFG;
 
 	private ProductBacktranslator mBacktranslator;
-	private IToolchainStorage mStorage;
 
 	@Override
 	public ModelType getOutputDefinition() {
@@ -93,46 +89,35 @@ public class BuchiProgramProduct implements IGenerator {
 	public void setInputDefinition(final ModelType graphType) {
 		switch (graphType.getCreator()) {
 		case "de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder":
-			mModelIsRCFG = true;
-			mUseBuchiProductObserver = true;
-			mUseful++;
-			break;
 		case "de.uni_freiburg.informatik.ultimate.ltl2aut":
 			mUseBuchiProductObserver = true;
 			mUseful++;
 			break;
 		default:
 			mUseBuchiProductObserver = false;
-			mModelIsRCFG = false;
 			break;
 		}
 	}
 
 	@Override
 	public List<IObserver> getObservers() {
-		final List<IObserver> observers = new ArrayList<>();
-		if (!mPreviousToolFoundErrors) {
-			if (mModelIsRCFG && mServices.getPreferenceProvider(Activator.PLUGIN_ID)
-					.getBoolean(PreferenceInitializer.OPTIMIZE_SBE)) {
-				final boolean rewriteAssumes = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
-						.getBoolean(PreferenceInitializer.OPTIMIZE_SBE_REWRITENOTEQUALS);
-				observers.add(new SmallBlockEncoder(mLogger, mBacktranslator, mStorage, rewriteAssumes));
-			}
-
-			if (mUseBuchiProductObserver) {
-				if (mBuchiProductObserver == null) {
-					mBuchiProductObserver = new BuchiProductObserver(mLogger, mServices, mBacktranslator, mStorage);
-				}
-				observers.add(mBuchiProductObserver);
-			}
+		if (!mPreviousToolFoundErrors && mUseBuchiProductObserver) {
+			final BuchiProductObserver observer = getProductObserver();
+			return Collections.singletonList(observer);
 		}
-		return observers;
+		return Collections.emptyList();
+	}
+
+	private BuchiProductObserver getProductObserver() {
+		if (mBuchiProductObserver == null) {
+			mBuchiProductObserver = new BuchiProductObserver(mLogger, mServices, mBacktranslator);
+		}
+		return mBuchiProductObserver;
 	}
 
 	@Override
 	public void init() {
 		mUseBuchiProductObserver = false;
-		mModelIsRCFG = false;
 		mUseful = 0;
 	}
 
@@ -148,10 +133,7 @@ public class BuchiProgramProduct implements IGenerator {
 
 	@Override
 	public IElement getModel() {
-		if (mBuchiProductObserver.getModel() != null) {
-			return mBuchiProductObserver.getModel();
-		}
-		return null;
+		return getProductObserver().getModel();
 	}
 
 	@Override
@@ -161,12 +143,13 @@ public class BuchiProgramProduct implements IGenerator {
 
 	@Override
 	public IPreferenceInitializer getPreferences() {
-		return new PreferenceInitializer();
+		// currently no preferences
+		return null;
 	}
 
 	@Override
 	public void setToolchainStorage(final IToolchainStorage storage) {
-		mStorage = storage;
+		// not needed
 	}
 
 	@Override
@@ -184,11 +167,10 @@ public class BuchiProgramProduct implements IGenerator {
 	@Override
 	public void finish() {
 		if (!mPreviousToolFoundErrors && mUseful == 0) {
-			throw new IllegalStateException("Was used in a toolchain were it did nothing");
+			throw new IllegalStateException("Was used in a toolchain and did nothing");
 		}
 		if (mPreviousToolFoundErrors) {
 			mLogger.info("Another plugin discovered errors, skipping...");
 		}
 	}
-
 }

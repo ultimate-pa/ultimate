@@ -28,20 +28,20 @@
 package de.uni_freiburg.informatik.ultimate.buchiprogramproduct;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataSizeBenchmark;
 import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck;
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.productgenerator.ProductGenerator;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.never2nwa.NWAContainer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgSizeBenchmark;
 
 /**
  *
@@ -60,15 +60,13 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 	private BoogieIcfgContainer mProduct;
 	private final IUltimateServiceProvider mServices;
 	private final ProductBacktranslator mBacktranslator;
-	private final IToolchainStorage mStorage;
 	private final XnfConversionTechnique mXnfConversionTechnique;
 	private final SimplificationTechnique mSimplificationTechnique;
 
 	public BuchiProductObserver(final ILogger logger, final IUltimateServiceProvider services,
-			final ProductBacktranslator backtranslator, final IToolchainStorage storage) {
+			final ProductBacktranslator backtranslator) {
 		mLogger = logger;
 		mServices = services;
-		mStorage = storage;
 		mRcfg = null;
 		mProduct = null;
 		mNeverClaimNWAContainer = null;
@@ -93,30 +91,24 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 		reportSizeBenchmark("Initial RCFG", mRcfg);
 
 		mLogger.info("Beginning generation of product automaton");
-		try {
-			final LTLPropertyCheck ltlAnnot = LTLPropertyCheck.getAnnotation(mNeverClaimNWAContainer);
-			mProduct = new ProductGenerator(mNeverClaimNWAContainer.getValue(), mRcfg, ltlAnnot, mServices,
-					mBacktranslator, mSimplificationTechnique, mXnfConversionTechnique).getProductRcfg();
-			mLogger.info("Finished generation of product automaton successfully");
-			reportSizeBenchmark("Initial product", mProduct);
-		} catch (final Exception e) {
-			mLogger.error("BuchiProgramProduct encountered an error during product automaton generation:", e);
-			throw e;
-		}
+		final LTLPropertyCheck ltlAnnot = LTLPropertyCheck.getAnnotation(mNeverClaimNWAContainer);
+		mProduct = new ProductGenerator(mNeverClaimNWAContainer.getValue(), mRcfg, ltlAnnot, mServices, mBacktranslator,
+				mSimplificationTechnique, mXnfConversionTechnique).getProductRcfg();
+		mLogger.info("Finished generation of product automaton successfully");
+		reportSizeBenchmark("BuchiProgram size", mProduct);
 	}
 
 	private void reportSizeBenchmark(final String message, final INestedWordAutomaton<CodeBlock, String> nwa) {
-		reportSizeBenchmark(message, new SizeBenchmark(nwa, message));
+		final NestedWordAutomataSizeBenchmark<CodeBlock, String> bench =
+				new NestedWordAutomataSizeBenchmark<>(nwa, message);
+		mLogger.info(message + " " + bench);
+		bench.reportBenchmarkResult(mServices.getResultService(), Activator.PLUGIN_ID, message);
 	}
 
 	private void reportSizeBenchmark(final String message, final BoogieIcfgContainer root) {
-		reportSizeBenchmark(message, new SizeBenchmark(root, message));
-	}
-
-	private void reportSizeBenchmark(final String message, final SizeBenchmark bench) {
+		final IcfgSizeBenchmark bench = new IcfgSizeBenchmark(root, message);
 		mLogger.info(message + " " + bench);
-		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
-				new BenchmarkResult<>(Activator.PLUGIN_ID, message, bench));
+		bench.reportBenchmarkResult(mServices.getResultService(), Activator.PLUGIN_ID, message);
 	}
 
 	@Override
@@ -133,7 +125,6 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 	 */
 	@Override
 	public boolean process(final IElement root) throws Exception {
-
 		// collect root nodes of Buechi automaton
 		if (root instanceof NWAContainer) {
 			mLogger.debug("Collecting NWA representing NeverClaim");
@@ -147,9 +138,6 @@ public class BuchiProductObserver implements IUnmanagedObserver {
 			mRcfg = (BoogieIcfgContainer) root;
 			return false;
 		}
-
 		return true;
-
 	}
-
 }

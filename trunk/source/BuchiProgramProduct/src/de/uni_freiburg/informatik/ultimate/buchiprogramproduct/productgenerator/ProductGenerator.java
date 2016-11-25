@@ -50,7 +50,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.Activator;
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.ProductBacktranslator;
-import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.optimizeproduct.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LTLStepAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;

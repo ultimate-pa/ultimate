@@ -27,31 +27,24 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util;
 
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.lib.results.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
-import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
-import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
-import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.GraphSizeCsvProvider;
 
 /**
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class IcfgSizeBenchmark implements ICsvProviderProvider<Integer> {
+public class IcfgSizeBenchmark {
 
-	private final int mEdges;
-	private final int mLocations;
-	private final String mLabel;
+	private final GraphSizeCsvProvider mCsvProvider;
 
 	public IcfgSizeBenchmark(final BoogieIcfgContainer root, final String label) {
 		final Deque<IcfgEdge> edges = new ArrayDeque<>();
@@ -78,33 +71,16 @@ public class IcfgSizeBenchmark implements ICsvProviderProvider<Integer> {
 			}
 		}
 
-		mEdges = closedE.size();
-		mLocations = closedV.size();
-		mLabel = label;
-	}
-
-	@Override
-	public ICsvProvider<Integer> createCvsProvider() {
-		final List<String> columnTitles = new ArrayList<>();
-		columnTitles.add(mLabel + " Locations");
-		columnTitles.add(mLabel + " Edges");
-
-		final List<Integer> row = new ArrayList<>();
-		row.add(mLocations);
-		row.add(mEdges);
-
-		final SimpleCsvProvider<Integer> rtr = new SimpleCsvProvider<>(columnTitles);
-		rtr.addRow(row);
-		return rtr;
+		mCsvProvider = new GraphSizeCsvProvider(closedE.size(), closedV.size(), label);
 	}
 
 	@Override
 	public String toString() {
-		return String.valueOf(mLocations) + " locations, " + String.valueOf(mEdges) + " edges";
+		return mCsvProvider.toString();
 	}
 
 	public void reportBenchmarkResult(final IResultService resultService, final String pluginId, final String message) {
-		resultService.reportResult(pluginId, new BenchmarkResult<>(pluginId, message, this));
+		resultService.reportResult(pluginId, new de.uni_freiburg.informatik.ultimate.core.lib.results.BenchmarkResult<>(
+				pluginId, message, mCsvProvider));
 	}
-
 }

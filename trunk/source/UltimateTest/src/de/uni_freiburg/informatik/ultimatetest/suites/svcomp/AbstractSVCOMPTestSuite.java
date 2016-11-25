@@ -39,7 +39,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.regex.Pattern;
 
-import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.benchmark.SizeBenchmark;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiAutomizerModuleDecompositionBenchmark;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiAutomizerTimingBenchmark;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.CodeCheckBenchmarks;
@@ -56,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
+import de.uni_freiburg.informatik.ultimate.util.statistics.GraphSizeCsvProvider;
 import de.uni_freiburg.informatik.ultimatetest.logs.IncrementalLogWithBenchmarkResults;
 import de.uni_freiburg.informatik.ultimatetest.logs.IncrementalLogWithVMParameters;
 import de.uni_freiburg.informatik.ultimatetest.summaries.ColumnDefinition;
@@ -203,7 +203,7 @@ public abstract class AbstractSVCOMPTestSuite extends UltimateTestSuite {
 		benchmarks.add(TraceAbstractionBenchmarks.class);
 		benchmarks.add(CodeCheckBenchmarks.class);
 		benchmarks.add(BuchiAutomizerModuleDecompositionBenchmark.class);
-		benchmarks.add(SizeBenchmark.class);
+		benchmarks.add(GraphSizeCsvProvider.class);
 
 		final ColumnDefinition[] columnDef = new ColumnDefinition[] {
 				new ColumnDefinition("Runtime (ns)", "Avg. runtime", ConversionContext.Divide(1000000000, 2, " s"),
