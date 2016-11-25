@@ -64,7 +64,7 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 	
 	private final VPStateTop mTopState;
 	private final VPStateBottom mBottomState;
-	private final ManagedScript mScript;
+	private final ManagedScript mManagedScript;
 	private final Boogie2SMT mBoogie2Smt;
 	private final Map<Term, EqNode> mTermToEqNodeMap;
 	private RCFGArrayIndexCollector mPreAnalysis;
@@ -72,10 +72,12 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 	public VPDomain(final ILogger logger, 
 			final ManagedScript script, 
 			final IUltimateServiceProvider services,
-			Boogie2SMT boogie2smt, 
-			RCFGArrayIndexCollector preAnalysis) {
+			final Boogie2SMT boogie2smt, 
+			final RCFGArrayIndexCollector preAnalysis) {
+		assert script != null;
 		mLogger = logger;
 		mPreAnalysis = preAnalysis;
+		mManagedScript = script;
 		mEqGraphNodeSet = preAnalysis.getEqGraphNodeSet();
 		mArrayIdToEqFnNodes = preAnalysis.getArrayIdToFnNodeMap();
 		mEqNodeToEqGraphNodeMap = preAnalysis.getEqNodeToEqGraphNodeMap();
@@ -85,7 +87,6 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 		mTopState = new VPStateTop(mEqNodeToEqGraphNodeMap, mDisEqualityMap, this);
 		mPost = new VPPostOperator(script, services, this);
 		mMerge = new VPMergeOperator();
-		mScript = script;
 		mBoogie2Smt = boogie2smt;
 	}
 
@@ -161,7 +162,7 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 	}
 
 	public ManagedScript getManagedScript() {
-		return mScript;
+		return mManagedScript;
 	}
 
 	public ILogger getLogger() {

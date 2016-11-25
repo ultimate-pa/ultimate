@@ -32,6 +32,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
@@ -98,21 +99,23 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 		
 		final Term substitutedTerm = new Substitution(mScript, substitionMap).transform(nnfTerm);
 		
-		final VPState resultState = handleTransition(substitutedTerm);
+		final List<VPState> resultStates = handleTransition(substitutedTerm);
 		
-		mDomain.getLogger().debug("state after transition " + transition + ": " + resultState.toLogString());
+		mDomain.getLogger().debug("states after transition " + transition + ": " + resultStates);
 		
-		if (resultState instanceof VPStateBottom) {
-			return Collections.singletonList(mDomain.getBottomState());
-		}
+		return resultStates;
 		
-		return Collections.singletonList(
-				new VPState(resultState.getEqNodeToEqGraphNodeMap(),  
-						resultState.getDisEqualitySet(),
-						mDomain));
+//		if (resultState instanceof VPStateBottom) {
+//			return Collections.singletonList(mDomain.getBottomState());
+//		}
+//		
+//		return Collections.singletonList(
+//				new VPState(resultState.getEqNodeToEqGraphNodeMap(),  
+//						resultState.getDisEqualitySet(),
+//						mDomain));
 	}
 	
-	private VPState handleTransition(final Term term) {
+	private List<VPState> handleTransition(final Term term) {
 		
 		VPState resultState = preparedState.copy();
 		
@@ -124,27 +127,28 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 			if (applicationName == "and") {
 				
 				List<VPState> andList = new ArrayList<>();
-				for (final Term t : appTerm.getParameters()) {
-					andList.add(handleTransition(t));
-				}
-				VPState state = andList.get(0);
-				for (int i = 1; i < andList.size(); i++) {
-					state = state.conjoin(andList.get(i));
-				}
-				return state;
+//				for (final Term t : appTerm.getParameters()) {
+//					andList.add(handleTransition(t));
+//				}
+//				VPState state = andList.get(0);
+//				for (int i = 1; i < andList.size(); i++) {
+//					state = state.conjoin(andList.get(i));
+//				}
+				return null;
 				
 			} else if (applicationName == "or") {
 				
 				List<VPState> orList = new ArrayList<>();
 				for (final Term t : appTerm.getParameters()) {
-					orList.add(handleTransition(t));
+					orList.addAll(handleTransition(t));
 				}
-				VPState state = orList.get(0);
-				for (int i = 1; i < orList.size(); i++) {
-					state = state.disjoin(orList.get(i));	
-				}
-				return state;
-				
+				//TODO
+//				VPState state = orList.get(0);
+//				for (int i = 1; i < orList.size(); i++) {
+//					state = state.disjoin(orList.get(i));	
+//				}
+//				return state;
+				return orList;
 			} else if (applicationName == "=") {
 				
 				EqNode node1 = null;
@@ -154,7 +158,7 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 					if (mDomain.isArray(appTerm.getParameters()[1])) {
 						
 						resultState.arrayAssignment(appTerm.getParameters()[0], appTerm.getParameters()[1]);
-						return resultState;
+						return Collections.singletonList(resultState);
 						
 					} else {
 						if (appTerm.getParameters()[1] instanceof ApplicationTerm) {
@@ -177,17 +181,17 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 				}
 							
 				if (node1 == null || node2 == null) {
-					return resultState;
+					return Collections.singletonList(resultState);
 				}
 				
 				boolean isContradic = resultState.addEquality(resultState.getEqNodeToEqGraphNodeMap().get(node1)
 						, resultState.getEqNodeToEqGraphNodeMap().get(node2));
 				
 				if (isContradic) {
-					return mDomain.getBottomState();
+					return Collections.singletonList(mDomain.getBottomState());
 				}
 				
-				return resultState;
+				return Collections.singletonList(resultState);
 				
 				
 			} else if (applicationName == "not") {
@@ -195,24 +199,26 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 				ApplicationTerm equalTerm = (ApplicationTerm)appTerm.getParameters()[0];
 				if (!(equalTerm.getFunction().getName() == "=")) {
 					// TODO: check: is it correct here to return pre-state?
-					return resultState;
+					return Collections.singletonList(resultState);
 				} else {
 					EqNode node1 = getNodeFromTerm(equalTerm.getParameters()[0]);
 					EqNode node2 = getNodeFromTerm(equalTerm.getParameters()[1]);
 					
 					if (node1 == null || node2 == null) {
 						// encounter node(s) that is not being traced, return pre-state.
-						return resultState;
+						return Collections.singletonList(resultState);
 					}
 					
-					boolean isContradic = resultState.addDisEquality(resultState.getEqNodeToEqGraphNodeMap().get(node1)
-							, resultState.getEqNodeToEqGraphNodeMap().get(node2));
-					
-					if (isContradic) {
-						return mDomain.getBottomState();
-					}
-					
-					return resultState;
+					return VPStateOperations.addDisEquality(resultState.getEqNodeToEqGraphNodeMap().get(node1)
+							, resultState.getEqNodeToEqGraphNodeMap().get(node2), resultState);
+//					boolean isContradic = resultState.addDisEquality(resultState.getEqNodeToEqGraphNodeMap().get(node1)
+//							, resultState.getEqNodeToEqGraphNodeMap().get(node2));
+//					
+//					if (isContradic) {
+//						return mDomain.getBottomState();
+//					}
+//					
+//					return resultState;
 				}
 
 			} else if (applicationName == "distinct") {
@@ -222,17 +228,20 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 				
 				if (node1 == null || node2 == null) {
 					// encounter node(s) that is not being traced, return pre-state.
-					return resultState;
+					return Collections.singletonList(resultState);
 				}
 				
-				boolean isContradic = resultState.addDisEquality(resultState.getEqNodeToEqGraphNodeMap().get(node1)
-						, resultState.getEqNodeToEqGraphNodeMap().get(node2));
-				
-				if (isContradic) {
-					return mDomain.getBottomState();
-				}
-				
-				return resultState;
+				return VPStateOperations.addDisEquality(resultState.getEqNodeToEqGraphNodeMap().get(node1)
+						, resultState.getEqNodeToEqGraphNodeMap().get(node2), resultState);
+
+//				boolean isContradic = resultState.addDisEquality(resultState.getEqNodeToEqGraphNodeMap().get(node1)
+//						, resultState.getEqNodeToEqGraphNodeMap().get(node2));
+//				
+//				if (isContradic) {
+//					return Collections.singletonList(mDomain.getBottomState());
+//				}
+//				
+//				return Collections.singletonList(resultState);
 			}
 			
 			
@@ -241,8 +250,10 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 		} else if (term instanceof AnnotatedTerm) {
 			return handleTransition(((AnnotatedTerm) term).getSubterm());
 		}
-		
-		return resultState;
+		/*
+		 * no part of the TransFormula influences the state --> return a copy
+		 */
+		return Collections.singletonList(resultState);
 	}
 	
 	/**

@@ -79,7 +79,7 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 	}
 
 	VPState(VPDomain domain) {
-		this(null, null, domain);
+		this(Collections.emptyMap(), Collections.emptySet(), domain);
 	}
 
 	VPState(Map<EqNode, EqGraphNode> eqNodeToEqGraphNodeMap, Set<VPDomainSymmetricPair<EqGraphNode>> disEqualitySet,
@@ -346,47 +346,6 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 		return checkContradiction();
 	}
 
-	/**
-	 * Three steps for adding disequality relation into graph: 1) Add relation
-	 * to disEqualitySet. 2) Propagation (use ccchild). 3) Check for
-	 * contradiction.
-	 * 
-	 * @param node1
-	 * @param node2
-	 * @return true if contradiction is met.
-	 */
-	public boolean addDisEquality(final EqGraphNode node1, final EqGraphNode node2) {
-
-		if (find(node1).equals(find(node2))) {
-			return true;
-		}
-
-		this.addToDisEqSet(node1, node2);
-
-		Set<List<EqGraphNode>> ccchild1 = ccchild(node1);
-		Set<List<EqGraphNode>> ccchild2 = ccchild(node2);
-
-		// TODO
-		assert false : "TODO: treat the case with several children";
-
-		for (final List<EqGraphNode> child1 : ccchild1) {
-			if (child1.size() > 1) {
-				continue;
-			}
-			for (final List<EqGraphNode> child2 : ccchild2) {
-				if (child2.size() != child1.size()) {
-					continue;
-				}
-				for (EqGraphNode par : child1.get(0).getInitCcpar()) {
-					if (mEqNodeToEqGraphNodeMap.get(child2.get(0)).getInitCcpar().contains(par)) {
-						addDisEquality(child1.get(0), child2.get(0));
-					}
-				}
-			}
-		}
-
-		return checkContradiction();
-	}
 
 	// TODO VPDomainSymmetricPair<EqNode> or VPDomainSymmetricPair<EqGraphNode>
 	public void addToDisEqSet(final EqGraphNode node1, final EqGraphNode node2) {
