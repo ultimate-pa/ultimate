@@ -55,6 +55,7 @@ public class BlockEncodingDevelTestSuite extends AbstractEvalTestSuite {
 //			new Triple<>("AutomizerCWithBlockEncodingV2.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default.epf"),
 //			new Triple<>("KojakCBEV2.xml", C, "kojak/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-BP-UC-LV-Integer.epf"),
 //			new Triple<>("AutomizerCWithBlockEncoding.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default.epf"),
+			new Triple<>("BuchiAutomizerC.xml", C, "svcomp2017/automizer/svcomp-Termination-64bit-Automizer_Default.epf"),
 			new Triple<>("BuchiAutomizerCWithBlockEncoding.xml", C, "svcomp2017/automizer/svcomp-Termination-64bit-Automizer_Default.epf"),
 	};
 
