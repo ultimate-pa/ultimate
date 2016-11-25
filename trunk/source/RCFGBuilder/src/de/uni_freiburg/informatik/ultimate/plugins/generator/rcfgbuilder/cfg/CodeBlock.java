@@ -2,22 +2,22 @@
  * Copyright (C) 2013-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2010-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE RCFGBuilder plug-in.
- * 
+ *
  * The ULTIMATE RCFGBuilder plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE RCFGBuilder plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE RCFGBuilder plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE RCFGBuilder plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -28,12 +28,12 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 
 /**
  * Edge in a recursive control flow graph. A CodeBlock has a source and a target which are both ProgramPoints and define
@@ -53,17 +53,17 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activat
  * </ul>
  * Furthermore a CodeBlock can be a GotoEdge, but all GotoEdges are removed when the construction of the control flow
  * graph is complete.
- * 
+ *
  * In an ULTIMATE graph a CodeBlock is an edge as well as an annotation of this edge.
- * 
+ *
  * mTransitionFormula stores a TransitionFormula that describes the effect of this InternalEdge. (TODO: Add this
  * information later, as additional annotation)
- * 
+ *
  * mOccurenceInCounterexamples is used to store in a CEGAR based verification process how often this CodeBlock occurred
  * in a counterexample. (TODO: Store this information somewhere in the model checker)
- * 
+ *
  * @author heizmann@informatik.uni-freiburg.de
- * 
+ *
  */
 public abstract class CodeBlock extends IcfgEdge implements IAction {
 
@@ -79,7 +79,7 @@ public abstract class CodeBlock extends IcfgEdge implements IAction {
 
 	protected UnmodifiableTransFormula mTransitionFormula;
 	protected UnmodifiableTransFormula mTransitionFormulaWithBranchEncoders;
-	
+
 	private String mPrecedingProcedure;
 	private String mSucceedingProcedure;
 
@@ -87,25 +87,11 @@ public abstract class CodeBlock extends IcfgEdge implements IAction {
 
 	int mOccurenceInCounterexamples = 0;
 
-	CodeBlock(final int serialNumber, final BoogieIcfgLocation source, final BoogieIcfgLocation target, final ILogger logger) {
+	CodeBlock(final int serialNumber, final BoogieIcfgLocation source, final BoogieIcfgLocation target,
+			final ILogger logger) {
 		super(source, target, (source == null ? new Payload() : new Payload(source.getPayload().getLocation())));
 		mSerialnumber = serialNumber;
 		mLogger = logger;
-		mAnnotation = new RCFGEdgeAnnotation(this) {
-
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			protected Object getFieldValue(final String field) {
-				return CodeBlock.this.getFieldValue(field);
-			}
-
-			@Override
-			protected String[] getFieldNames() {
-				return CodeBlock.this.getFieldNames();
-			}
-		};
-		getPayload().getAnnotations().put(Activator.PLUGIN_ID, mAnnotation);
 		connectSource(source);
 		connectTarget(target);
 		setPreceedingProcedure(source);
@@ -121,42 +107,17 @@ public abstract class CodeBlock extends IcfgEdge implements IAction {
 		super(source, target, (source == null ? new Payload() : new Payload(source.getPayload().getLocation())));
 		mSerialnumber = -1;
 		mLogger = logger;
-		mAnnotation = new RCFGEdgeAnnotation(this) {
-
-			private static final long serialVersionUID = 1L;
-
-			@Override
-			protected Object getFieldValue(final String field) {
-				return CodeBlock.this.getFieldValue(field);
-			}
-
-			@Override
-			protected String[] getFieldNames() {
-				return CodeBlock.this.getFieldNames();
-			}
-		};
-		getPayload().getAnnotations().put(Activator.PLUGIN_ID, mAnnotation);
 		connectSource(source);
 		connectTarget(target);
 	}
 
-	protected Object getFieldValue(final String field) {
-		if (field == "TransitionFormula") {
-			return mTransitionFormula;
-		} else if (field == "OccurenceInCounterexamples") {
-			return mOccurenceInCounterexamples;
-		} else {
-			throw new UnsupportedOperationException("Unknown field " + field);
-		}
-	}
-
-	protected abstract String[] getFieldNames();
-
+	@Visualizable
 	public abstract String getPrettyPrintedStatements();
 
 	/**
 	 * @return an SMT-LIB based representation of this CodeBlock's transition relation
 	 */
+	@Visualizable
 	public UnmodifiableTransFormula getTransitionFormula() {
 		return mTransitionFormula;
 	}
@@ -170,6 +131,7 @@ public abstract class CodeBlock extends IcfgEdge implements IAction {
 		mTransitionFormulaWithBranchEncoders = transFormula;
 	}
 
+	@Visualizable
 	public int getOccurenceInCounterexamples() {
 		return mOccurenceInCounterexamples;
 	}
@@ -186,7 +148,7 @@ public abstract class CodeBlock extends IcfgEdge implements IAction {
 	public int hashCode() {
 		return getSerialNumber();
 	}
-	
+
 	private void setPreceedingProcedure(final IcfgLocation source) {
 		if (source instanceof BoogieIcfgLocation) {
 			final String name = ((BoogieIcfgLocation) source).getProcedure();
@@ -201,7 +163,7 @@ public abstract class CodeBlock extends IcfgEdge implements IAction {
 			}
 		}
 	}
-	
+
 	private void setSucceedingProcedure(final IcfgLocation source) {
 		if (source instanceof BoogieIcfgLocation) {
 			final String name = ((BoogieIcfgLocation) source).getProcedure();
@@ -262,24 +224,15 @@ public abstract class CodeBlock extends IcfgEdge implements IAction {
 	@Override
 	public abstract String toString();
 
-	/* (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.core.lib.models.ModifiableMultigraphEdge#setTarget(de.uni_freiburg.informatik.ultimate.core.model.models.IModifiableExplicitEdgesMultigraph)
-	 */
 	@Override
 	public void setTarget(final IcfgLocation target) {
 		setSucceedingProcedure(target);
 		super.setTarget(target);
 	}
 
-	/* (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.core.lib.models.ModifiableMultigraphEdge#setSource(de.uni_freiburg.informatik.ultimate.core.model.models.IModifiableExplicitEdgesMultigraph)
-	 */
 	@Override
 	public void setSource(final IcfgLocation source) {
 		setPreceedingProcedure(source);
 		super.setSource(source);
 	}
-	
-	
-
 }

@@ -175,7 +175,7 @@ public class AnnotationTreeProvider implements ITreeContentProvider {
 					group.addEntry(innerEntry);
 				}
 				// add modern annotations to view
-				addVisualizableFields(group, outer.getValue());
+				addVisualizableFieldsAndMethods(group, outer.getValue());
 				annotationGroup.addEntry(group);
 			}
 		}
@@ -184,8 +184,6 @@ public class AnnotationTreeProvider implements ITreeContentProvider {
 
 	private static GroupEntry createIElementGroup(final IElement elem) {
 		final GroupEntry elementGroup = new GroupEntry("IElement", null);
-		elementGroup.addEntry(new Entry("HashCode", String.valueOf(elem.hashCode()), elementGroup));
-
 		final Object inspectionTarget;
 		if (elem instanceof VisualizationNode) {
 			inspectionTarget = ((VisualizationNode) elem).getBacking();
@@ -195,11 +193,14 @@ public class AnnotationTreeProvider implements ITreeContentProvider {
 			inspectionTarget = elem;
 		}
 
-		addVisualizableFields(elementGroup, inspectionTarget);
+		elementGroup.addEntry(new Entry("HashCode", String.valueOf(inspectionTarget.hashCode()), elementGroup));
+		elementGroup.addEntry(
+				new Entry("Class", String.valueOf(inspectionTarget.getClass().getSimpleName()), elementGroup));
+		addVisualizableFieldsAndMethods(elementGroup, inspectionTarget);
 		return elementGroup;
 	}
 
-	private static void addVisualizableFields(final GroupEntry elementGroup, final Object inspectionTarget) {
+	private static void addVisualizableFieldsAndMethods(final GroupEntry elementGroup, final Object inspectionTarget) {
 		final Field[] fields = getFields(inspectionTarget);
 		for (final Field field : fields) {
 			if (!field.isAnnotationPresent(Visualizable.class)) {
