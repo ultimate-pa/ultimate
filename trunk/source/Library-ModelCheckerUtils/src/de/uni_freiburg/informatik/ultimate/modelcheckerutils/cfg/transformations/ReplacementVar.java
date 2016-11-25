@@ -69,6 +69,11 @@ public class ReplacementVar implements IProgramVar {
 	}
 
 	@Override
+	public Term getTerm() {
+		return getTermVariable();
+	}
+
+	@Override
 	public String toString() {
 		return mName;
 	}

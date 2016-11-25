@@ -4,28 +4,45 @@ import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 
-public class BoogieVarOrConst {
+public class BoogieVarOrConst implements IProgramVarOrConst {
 	
 	final bvocType mType;
 	
 	final Term mTerm;
 	
+	final IProgramVar mProgramVar;
+
+	final ConstantTerm mConstantTerm;
+	
+	final BoogieConst mBoogieConst;
+	
 	public BoogieVarOrConst(IProgramVar pv) {
 		mType = bvocType.PROGRAMVAR;
-		mTerm = pv.getTermVariable();
+		mTerm = pv.getTerm();
+		mProgramVar = pv;
+		mConstantTerm = null;
+		mBoogieConst = null;
 	}
 	
 	public BoogieVarOrConst(BoogieConst bc) {
 		mType = bvocType.BOOGIECONST;
-		mTerm = bc.getDefaultConstant();
+		mTerm = bc.getTerm();
+		mProgramVar = null;
+		mConstantTerm = null;
+		mBoogieConst = bc;
 	}
 
 	public BoogieVarOrConst(ConstantTerm ct) {
 		mType = bvocType.CONST;
 		mTerm = ct;
+		mProgramVar = null;
+		mConstantTerm = ct;
+		mBoogieConst = null;
 	}
 	
+	@Override
 	public Term getTerm() {
 		return mTerm;
 	}
@@ -35,5 +52,20 @@ public class BoogieVarOrConst {
 		return mTerm.toString();
 	}
 	
-	private enum bvocType { PROGRAMVAR, BOOGIECONST, CONST };
+	private enum bvocType { PROGRAMVAR, BOOGIECONST, CONST }
+
+	@Override
+	public String getGloballyUniqueId() {
+		switch (mType) {
+		case BOOGIECONST:
+			return mBoogieConst.getGloballyUniqueId();
+		case CONST:
+			return mConstantTerm.toString();
+		case PROGRAMVAR:
+			return mProgramVar.getGloballyUniqueId();
+		default:
+			assert false;
+			return null;
+		}
+	};
 }

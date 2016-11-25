@@ -31,6 +31,7 @@ import java.io.Serializable;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 
@@ -123,5 +124,10 @@ public class BoogieNonOldVar extends GlobalBoogieVar implements Serializable, IP
 			return false;
 		}
 		return true;
+	}
+
+	@Override
+	public Term getTerm() {
+		return getTermVariable();
 	}
 }

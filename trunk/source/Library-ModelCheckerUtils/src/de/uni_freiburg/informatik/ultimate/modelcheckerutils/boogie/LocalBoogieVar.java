@@ -31,6 +31,7 @@ import java.io.Serializable;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ILocalProgramVar;
 
@@ -76,6 +77,11 @@ public class LocalBoogieVar extends BoogieVar  implements Serializable, ILocalPr
 	@Override
 	public String getProcedure() {
 		return mProcedure;
+	}
+
+	@Override
+	public Term getTerm() {
+		return getTermVariable();
 	}
 
 	private int computeHashCode() {

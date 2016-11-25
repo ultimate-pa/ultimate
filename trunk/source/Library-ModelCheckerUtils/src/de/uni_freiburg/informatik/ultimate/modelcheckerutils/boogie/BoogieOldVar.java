@@ -31,6 +31,7 @@ import java.io.Serializable;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
@@ -62,6 +63,11 @@ public class BoogieOldVar extends GlobalBoogieVar implements Serializable, IProg
 	@Override
 	public String getIdentifierOfNonOldVar() {
 		return mIdentifier;
+	}
+
+	@Override
+	public Term getTerm() {
+		return getTermVariable();
 	}
 
 	/* (non-Javadoc)

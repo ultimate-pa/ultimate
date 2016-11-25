@@ -28,14 +28,10 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 
-public interface IProgramConst {
+public interface IProgramConst extends IProgramVarOrConst {
 	
 	String getIdentifier();
 
-	default public String getGloballyUniqueId() {
-		return getIdentifier();
-	};
-	
 	public ApplicationTerm getDefaultConstant();
 
 }
