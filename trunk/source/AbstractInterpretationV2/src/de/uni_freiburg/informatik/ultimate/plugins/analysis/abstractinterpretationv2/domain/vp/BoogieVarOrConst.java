@@ -43,18 +43,6 @@ public class BoogieVarOrConst implements IProgramVarOrConst {
 	}
 	
 	@Override
-	public Term getTerm() {
-		return mTerm;
-	}
-	
-	@Override
-	public String toString() {
-		return mTerm.toString();
-	}
-	
-	private enum bvocType { PROGRAMVAR, BOOGIECONST, CONST }
-
-	@Override
 	public String getGloballyUniqueId() {
 		switch (mType) {
 		case BOOGIECONST:
@@ -67,5 +55,17 @@ public class BoogieVarOrConst implements IProgramVarOrConst {
 			assert false;
 			return null;
 		}
-	};
+	}
+
+	@Override
+	public Term getTerm() {
+		return mTerm;
+	}
+	
+	@Override
+	public String toString() {
+		return mTerm.toString();
+	}
+	
+	private enum bvocType { PROGRAMVAR, BOOGIECONST, CONST };
 }

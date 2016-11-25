@@ -15,6 +15,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.vp.BoogieVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.visitors.SimpleRCFGVisitor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -44,9 +45,9 @@ public class HeapSepPreAnalysisVisitor extends SimpleRCFGVisitor {
 	 * (= a (store b i x)) (though it is not clear to me if this case can arise in a normal
 	 * Boogie program
 	 */
-	private final Set<Pair<BoogieVarOrConst, BoogieVarOrConst>> mEquatedArrays;
+	private final Set<Pair<IProgramVarOrConst, IProgramVarOrConst>> mEquatedArrays;
 	
-	private final HashRelation<BoogieVarOrConst, IcfgLocation> mArrayToAccessLocations;
+	private final HashRelation<IProgramVarOrConst, IcfgLocation> mArrayToAccessLocations;
 
 	public HeapSepPreAnalysisVisitor(ILogger logger) {
 		super(logger);
@@ -70,7 +71,7 @@ public class HeapSepPreAnalysisVisitor extends SimpleRCFGVisitor {
 
 
 
-	private AbstractRelation<BoogieVarOrConst, IcfgLocation, ?> findArrayAccesses(CodeBlock edge) {
+	private AbstractRelation<IProgramVarOrConst, IcfgLocation, ?> findArrayAccesses(CodeBlock edge) {
 		AbstractRelation<IProgramVar, IcfgLocation, ?> result = new HashRelation<>();
 		
 		for (Entry<IProgramVar, TermVariable> en : edge.getTransitionFormula().getInVars().entrySet()) {
@@ -109,14 +110,14 @@ public class HeapSepPreAnalysisVisitor extends SimpleRCFGVisitor {
 		return false;
 	}
 	
-	HashRelation<BoogieVarOrConst, IcfgLocation> getArrayToAccessLocations() {
+	HashRelation<IProgramVarOrConst, IcfgLocation> getArrayToAccessLocations() {
 		return mArrayToAccessLocations;
 	}
 }
 
 class EquatedArraysFinder extends TermTransformer {
 	private final CodeBlock mCodeBlock;
-	private final Set<Pair<BoogieVarOrConst, BoogieVarOrConst>> mEquatedArrays;
+	private final Set<Pair<IProgramVarOrConst, IProgramVarOrConst>> mEquatedArrays;
 
 	EquatedArraysFinder(CodeBlock edge) {
 		mCodeBlock = edge;
@@ -124,7 +125,7 @@ class EquatedArraysFinder extends TermTransformer {
 		transform(edge.getTransitionFormula().getFormula());
 	}
 
-	public Collection<? extends Pair<BoogieVarOrConst, BoogieVarOrConst>> getResult() {
+	public Collection<? extends Pair<IProgramVarOrConst, IProgramVarOrConst>> getResult() {
 		return mEquatedArrays;
 	}
 

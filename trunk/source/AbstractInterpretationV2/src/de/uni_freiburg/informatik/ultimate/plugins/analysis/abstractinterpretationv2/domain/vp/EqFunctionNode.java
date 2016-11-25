@@ -5,6 +5,7 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 
 /**
  * 
@@ -13,15 +14,15 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
  */
 public class EqFunctionNode extends EqNode {
 	
-	private final BoogieVarOrConst function;
+	private final IProgramVarOrConst function;
 	private final List<EqNode> args;
 
-	public EqFunctionNode(BoogieVarOrConst function, List<EqNode> args) {
+	public EqFunctionNode(IProgramVarOrConst function, List<EqNode> args) {
 		this.function = function;
 		this.args = args;
 	}
 	
-	public BoogieVarOrConst getFunction() {
+	public IProgramVarOrConst getFunction() {
 		return function;
 	}
 
@@ -50,7 +51,7 @@ public class EqFunctionNode extends EqNode {
 	}
 	
 	private static Term restoreMultidimensionalSelect(Script script,
-			BoogieVarOrConst function, List<EqNode> args) {
+			IProgramVarOrConst function, List<EqNode> args) {
 		
 		Term functionTerm = null;
 		if (function instanceof IProgramVar) {

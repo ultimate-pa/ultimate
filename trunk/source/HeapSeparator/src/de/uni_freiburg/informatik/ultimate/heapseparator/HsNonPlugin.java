@@ -17,6 +17,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.vp.BoogieVarOrConst;
@@ -118,7 +119,7 @@ public class HsNonPlugin {
 	 * @param hspav
 	 * @return a map of the form (unseparated array --> index --> separated array)
 	 */
-	private NestedMap2<BoogieVarOrConst, BoogieVarOrConst, BoogieVarOrConst> processAbstractInterpretationResult(
+	private NestedMap2<IProgramVarOrConst, IProgramVarOrConst, IProgramVarOrConst> processAbstractInterpretationResult(
 			IAbstractInterpretationResult<VPState, CodeBlock, IProgramVar, ?> result, 
 			HeapSepPreAnalysisVisitor hspav) {
 
@@ -130,9 +131,9 @@ public class HsNonPlugin {
 		 *  - per array? --> then only take positions where that array is used??
 		 */
 		// TODO: disjoin procedurewise? now: global
-		Map<BoogieVarOrConst, VPState> arrayToVPState = new HashMap<>();
+		Map<IProgramVarOrConst, VPState> arrayToVPState = new HashMap<>();
 		
-		for (BoogieVarOrConst array : hspav.getArrayToAccessLocations().getDomain()) {
+		for (IProgramVarOrConst array : hspav.getArrayToAccessLocations().getDomain()) {
 			VPState disjoinedState = vpDomain.getBottomState();
 			for (IcfgLocation loc : hspav.getArrayToAccessLocations().getImage(array)) {
 				disjoinedState = disjoinedState.disjoin(result.getLoc2SingleStates().get(loc));
@@ -140,10 +141,10 @@ public class HsNonPlugin {
 			arrayToVPState.put(array, disjoinedState);
 		}
 		
-		Map<BoogieVarOrConst, Set<EqNode>> arrayToPartition = new HashMap<>();
+		Map<IProgramVarOrConst, Set<EqNode>> arrayToPartition = new HashMap<>();
 		
-		for (Entry<BoogieVarOrConst, VPState> en : arrayToVPState.entrySet()) {
-			BoogieVarOrConst array = en.getKey();
+		for (Entry<IProgramVarOrConst, VPState> en : arrayToVPState.entrySet()) {
+			IProgramVarOrConst array = en.getKey();
 			VPState state = en.getValue();
 			
 			/*
@@ -173,7 +174,7 @@ public class HsNonPlugin {
 				if (indUneqAllOthers) {
 					// ind1 and all EqNodes that are known to be equal get 1 partition.
 					arrayToPartition.put(array, arrayToVPState.get(array).getEquivalentEqNodes(ind1));
-					NestedMap2<BoogieVarOrConst, BoogieVarOrConst, ReplacementVar> arrayToRepresentativeToFreshArrayVar =
+					NestedMap2<IProgramVarOrConst, IProgramVarOrConst, ReplacementVar> arrayToRepresentativeToFreshArrayVar =
 							new NestedMap2<>();
 
 //					arrayToRepresentativeToFreshArrayVar.put(

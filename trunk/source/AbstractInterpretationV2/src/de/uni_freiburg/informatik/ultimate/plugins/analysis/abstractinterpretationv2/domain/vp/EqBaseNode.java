@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 
 /**
  * 
@@ -10,19 +11,19 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  */
 public class EqBaseNode extends EqNode {
 	
-	private final BoogieVarOrConst mBoogieVarOrConst;
+	private final IProgramVarOrConst mVarOrConst;
 
-	public EqBaseNode(BoogieVarOrConst bv) {
-		mBoogieVarOrConst = bv;
+	public EqBaseNode(IProgramVarOrConst bv) {
+		mVarOrConst = bv;
 	}
 	
 	public String toString() {
-		return mBoogieVarOrConst.toString();
+		return mVarOrConst.toString();
 	}
 
 	@Override
 	public Term getTerm(Script s) {
-		return mBoogieVarOrConst.getTerm();
+		return mVarOrConst.getTerm();
 	}
 	
 	@Override

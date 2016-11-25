@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ApplicationTermFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
@@ -76,8 +77,8 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 
 	private final Boogie2SMT mBoogie2SMT;
 
-	private final NestedMap2<BoogieVarOrConst, List<EqNode>, EqFunctionNode> mEqFunctionNodeStore = new NestedMap2<>();
-	private final Map<BoogieVarOrConst, EqBaseNode> mEqBaseNodeStore = new HashMap<>();
+	private final NestedMap2<IProgramVarOrConst, List<EqNode>, EqFunctionNode> mEqFunctionNodeStore = new NestedMap2<>();
+	private final Map<IProgramVarOrConst, EqBaseNode> mEqBaseNodeStore = new HashMap<>();
 
 	public RCFGArrayIndexCollector(final BoogieIcfgContainer root) {
 		mScript = root.getCfgSmtToolkit().getManagedScript().getScript();
@@ -252,7 +253,7 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 	 * @param tv
 	 * @return
 	 */
-	private EqBaseNode getOrConstructEqBaseNode(final BoogieVarOrConst bv) {
+	private EqBaseNode getOrConstructEqBaseNode(final IProgramVarOrConst bv) {
 		
 		EqBaseNode result = mEqBaseNodeStore.get(bv);
 		
@@ -264,7 +265,7 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 		return result;
 	}
 	
-	private EqFunctionNode getOrConstructEqFnNode(final BoogieVarOrConst eqNode, final List<EqNode> indices) {
+	private EqFunctionNode getOrConstructEqFnNode(final IProgramVarOrConst eqNode, final List<EqNode> indices) {
 			
 		EqFunctionNode result = mEqFunctionNodeStore.get(eqNode, indices);
 		if (result == null) {
