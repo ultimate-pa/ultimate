@@ -66,6 +66,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.Not
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Cnf;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Dnf;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
 public final class SmtUtils {
@@ -115,6 +116,42 @@ public final class SmtUtils {
 					new DagSizePrinter(formula), new DagSizePrinter(simplified)));
 		}
 		return simplified;
+	}
+	
+	public static ExtendedSimplificationResult simplifyWithStatistics(final ManagedScript script, final Term formula, final IUltimateServiceProvider services,
+			final SimplificationTechnique simplificationTechnique) {
+		final long startTime = System.nanoTime();
+		final int sizeBefore = new DAGSize().treesize(formula);
+		final Term simplified = simplify(script, formula, services, simplificationTechnique);
+		final int sizeAfter = new DAGSize().treesize(formula);
+		final long endTime = System.nanoTime();
+		final ExtendedSimplificationResult result = new ExtendedSimplificationResult(
+				simplified, endTime - startTime, sizeBefore - sizeAfter);
+		return result;
+	}
+	
+	
+	public static class ExtendedSimplificationResult {
+		private final Term mSimplifiedTerm;
+		private final long mSimplificationTimeNano;
+		private final long mReductionOfTreeSize;
+		public ExtendedSimplificationResult(final Term simplifiedTerm, final long simplificationTimeNano,
+				final long reductionOfTreeSize) {
+			super();
+			mSimplifiedTerm = simplifiedTerm;
+			mSimplificationTimeNano = simplificationTimeNano;
+			mReductionOfTreeSize = reductionOfTreeSize;
+		}
+		public Term getSimplifiedTerm() {
+			return mSimplifiedTerm;
+		}
+		public long getSimplificationTimeNano() {
+			return mSimplificationTimeNano;
+		}
+		public long getReductionOfTreeSize() {
+			return mReductionOfTreeSize;
+		}
+		
 	}
 
 	public static LBool checkSatTerm(final Script script, final Term formula) {
