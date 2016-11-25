@@ -50,11 +50,11 @@ public class VPStateTop extends VPState {
 		return true;
 	}
 
-	@Override
-	public boolean addDisEquality(EqGraphNode node1, EqGraphNode node2) {
-		// Do nothing
-		return true;
-	}
+//	@Override
+//	public boolean addDisEquality(EqGraphNode node1, EqGraphNode node2) {
+//		// Do nothing
+//		return true;
+//	}
 
 	@Override
 	public VPState addVariable(IProgramVar variable) {
