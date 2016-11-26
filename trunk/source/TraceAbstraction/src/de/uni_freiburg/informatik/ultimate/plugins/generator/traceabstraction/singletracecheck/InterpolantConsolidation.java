@@ -64,6 +64,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareT
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarStatisticsType;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantConsolidation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionUtils;
@@ -604,6 +605,13 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 	@Override
 	public PredicateUnifier getPredicateUnifier() {
 		return mPredicateUnifier;
+	}
+	
+	@Override
+	public boolean isPerfectSequence() {
+		final BackwardCoveringInformation bci = TraceCheckerUtils.computeCoverageCapability(mServices, this, mLogger);
+		final boolean isPerfect = bci.getPotentialBackwardCoverings() == bci.getSuccessfullBackwardCoverings();
+		return isPerfect;
 	}
 
 	public InterpolantConsolidationBenchmarkGenerator getInterpolantConsolidationBenchmarks() {

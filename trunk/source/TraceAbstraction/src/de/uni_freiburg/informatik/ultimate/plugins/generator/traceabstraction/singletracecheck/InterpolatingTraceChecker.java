@@ -54,20 +54,20 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
  * @author heizmann@informatik.uni-freiburg.de
  */
 public abstract class InterpolatingTraceChecker extends TraceChecker implements IInterpolantGenerator {
-
+	
 	protected final SimplificationTechnique mSimplificationTechnique;
 	protected final XnfConversionTechnique mXnfConversionTechnique;
-
+	
 	/**
 	 * Data structure that unifies Predicates with respect to its Term.
 	 */
 	protected final PredicateUnifier mPredicateUnifier;
 	protected final PredicateFactory mPredicateFactory;
-
+	
 	protected IPredicate[] mInterpolants;
-
+	
 	protected List<? extends Object> mControlLocationSequence;
-
+	
 	/**
 	 * Check if trace fulfills specification given by precondition, postcondition and pending contexts. The
 	 * pendingContext maps the positions of pending returns to predicates which define possible variable valuations in
@@ -77,12 +77,6 @@ public abstract class InterpolatingTraceChecker extends TraceChecker implements 
 	 *            If set to false, check-sat is called after all CodeBlocks are asserted. If set to true we use Betims
 	 *            heuristic an incrementally assert CodeBlocks and do check-sat until all CodeBlocks are asserted or the
 	 *            result to a check-sat is UNSAT.
-	 * @param services
-	 * @param predicateUnifier
-	 * @param simplificationTechnique
-	 * @param xnfConversionTechnique
-	 * @param logger
-	 * @param interpolation
 	 */
 	public InterpolatingTraceChecker(final IPredicate precondition, final IPredicate postcondition,
 			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IAction> trace,
@@ -101,7 +95,7 @@ public abstract class InterpolatingTraceChecker extends TraceChecker implements 
 		mXnfConversionTechnique = xnfConversionTechnique;
 		mControlLocationSequence = controlLocationSequence;
 	}
-
+	
 	/**
 	 * Return a sequence of nested interpolants φ_1,...,φ_{n-1} that is inductive for the trace, precondition φ_0, and
 	 * postcondition φ_n that were checked last. Interpolants are only available if the trace fulfilled its
@@ -128,7 +122,7 @@ public abstract class InterpolatingTraceChecker extends TraceChecker implements 
 	 */
 	protected abstract void computeInterpolants(Set<Integer> interpolatedPositions,
 			InterpolationTechnique interpolation);
-
+	
 	private boolean testRelevantVars() {
 		boolean result = true;
 		final RelevantVariables rv = new RelevantVariables(mNestedFormulas, mCsToolkit.getModifiableGlobalsTable());
@@ -148,7 +142,7 @@ public abstract class InterpolatingTraceChecker extends TraceChecker implements 
 		}
 		return result;
 	}
-
+	
 	@Override
 	public IPredicate[] getInterpolants() {
 		if (isCorrect() == LBool.UNSAT) {
@@ -160,85 +154,90 @@ public abstract class InterpolatingTraceChecker extends TraceChecker implements 
 		}
 		throw new UnsupportedOperationException("Interpolants are only available if trace is correct.");
 	}
-
+	
 	@Override
 	public final PredicateUnifier getPredicateUnifier() {
 		return mPredicateUnifier;
 	}
-
+	
+	@Override
+	public boolean isPerfectSequence() {
+		final int perfectSequences = (int) getTraceCheckerBenchmark()
+				.getValue(TraceCheckerStatisticsDefinitions.PerfectInterpolantSequences.toString());
+		assert perfectSequences == 0 || perfectSequences == 1;
+		return perfectSequences == 1;
+	}
+	
 	/**
-	 * Set<Integer> implementation that has only a contains method. The method always returns true;
+	 * Integer set implementation that has only a contains method. The method always returns true.
 	 *
 	 * @author heizmann@informatik.uni-freiburg.de
-	 *
 	 */
 	public static class AllIntegers implements Set<Integer> {
-
+		
 		@Override
 		public int size() {
 			throw new UnsupportedOperationException();
 		}
-
+		
 		@Override
 		public boolean isEmpty() {
 			throw new UnsupportedOperationException();
 		}
-
+		
 		@Override
-		public boolean contains(final Object o) {
+		public boolean contains(final Object obj) {
 			return true;
 		}
-
+		
 		@Override
 		public Iterator<Integer> iterator() {
 			throw new UnsupportedOperationException();
 		}
-
+		
 		@Override
 		public Object[] toArray() {
 			throw new UnsupportedOperationException();
 		}
-
+		
 		@Override
-		public <T> T[] toArray(final T[] a) {
+		public <T> T[] toArray(final T[] array) {
 			throw new UnsupportedOperationException();
 		}
-
+		
 		@Override
-		public boolean add(final Integer e) {
+		public boolean add(final Integer elem) {
 			throw new UnsupportedOperationException();
 		}
-
+		
 		@Override
-		public boolean remove(final Object o) {
+		public boolean remove(final Object obj) {
 			throw new UnsupportedOperationException();
 		}
-
+		
 		@Override
-		public boolean containsAll(final Collection<?> c) {
+		public boolean containsAll(final Collection<?> coll) {
 			throw new UnsupportedOperationException();
 		}
-
+		
 		@Override
-		public boolean addAll(final Collection<? extends Integer> c) {
+		public boolean addAll(final Collection<? extends Integer> coll) {
 			throw new UnsupportedOperationException();
 		}
-
+		
 		@Override
-		public boolean retainAll(final Collection<?> c) {
+		public boolean retainAll(final Collection<?> coll) {
 			throw new UnsupportedOperationException();
 		}
-
+		
 		@Override
-		public boolean removeAll(final Collection<?> c) {
+		public boolean removeAll(final Collection<?> coll) {
 			throw new UnsupportedOperationException();
 		}
-
+		
 		@Override
 		public void clear() {
 			throw new UnsupportedOperationException();
 		}
-
 	}
-
 }
