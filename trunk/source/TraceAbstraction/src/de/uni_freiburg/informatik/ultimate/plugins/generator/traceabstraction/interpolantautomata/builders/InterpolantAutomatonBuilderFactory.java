@@ -168,9 +168,10 @@ public class InterpolantAutomatonBuilderFactory {
 			final IAutomaton<CodeBlock, IPredicate> abstraction, final IInterpolantGenerator interpolGenerator,
 			final IRun<CodeBlock, IPredicate, ?> counterexample,
 			final List<InterpolantsPreconditionPostcondition> ipps) {
-		if (ipps.size() != 1) {
-			throw new IllegalArgumentException("Need exactly one sequence of interpolants.");
+		if (ipps.isEmpty()) {
+			throw new IllegalArgumentException("Need at least one sequence of interpolants.");
 		}
+		// use the first sequence of interpolants
 		final InterpolantsPreconditionPostcondition ipp = ipps.get(0);
 		
 		@SuppressWarnings("unchecked")
