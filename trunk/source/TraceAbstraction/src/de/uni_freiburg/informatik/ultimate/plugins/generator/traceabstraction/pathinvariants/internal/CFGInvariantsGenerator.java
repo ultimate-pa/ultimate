@@ -239,8 +239,10 @@ public <IPT> Map<BoogieIcfgLocation, IPredicate> generateInvariantsForTransition
 
 		// Build pattern map
 		patterns.clear();
+		// Init the entry pattern with 'true' and the exit pattern with 'false'
+		processor.initializeEntryAndExitPattern();
+		
 		for (final BoogieIcfgLocation location : locations) {
-			
 			if (useVariablesFromUnsatCore) {
 				if (INIT_USE_EMPTY_PATTERNS && round == 0) {
 					patterns.put(location, processor.getEmptyInvariantPattern());

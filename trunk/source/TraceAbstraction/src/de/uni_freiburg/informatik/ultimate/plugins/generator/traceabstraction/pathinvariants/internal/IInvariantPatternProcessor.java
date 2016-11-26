@@ -123,6 +123,11 @@ public interface IInvariantPatternProcessor<IPT> {
 	 * @return maximal number of attempts to re-generate the invariant map
 	 */
 	public int getMaxRounds();
+	
+	/**
+	 * Sets the entry pattern to 'true' and the exit pattern to 'false'.
+	 */
+	public void initializeEntryAndExitPattern();
 
 
 }
