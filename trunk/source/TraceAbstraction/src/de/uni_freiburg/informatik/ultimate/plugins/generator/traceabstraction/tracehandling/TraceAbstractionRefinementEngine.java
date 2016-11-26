@@ -51,13 +51,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Boo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.CachingHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantConsolidation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementStrategy.RefinementStrategyAdvance;
 
 /**
@@ -170,7 +168,7 @@ public final class TraceAbstractionRefinementEngine
 				case UNSAT:
 					final IPredicate[] interpolants = strategy.getInterpolantGenerator().getInterpolants();
 					
-					if (isPerfectInterpolantSequence(strategy, services)) {
+					if (strategy.getInterpolantGenerator().isPerfectSequence()) {
 						// construct interpolant automaton using only this (perfect) sequence
 						interpolantSequences = Collections.singletonList(interpolants);
 						if (mLogger.isInfoEnabled()) {
@@ -209,14 +207,6 @@ public final class TraceAbstractionRefinementEngine
 			
 			return feasibility;
 		} while (true);
-	}
-	
-	private boolean isPerfectInterpolantSequence(final IRefinementStrategy strategy,
-			final IUltimateServiceProvider services) {
-		final BackwardCoveringInformation bci =
-				TraceCheckerUtils.computeCoverageCapability(services, strategy.getInterpolantGenerator(), mLogger);
-		final boolean isPerfect = bci.getPotentialBackwardCoverings() == bci.getSuccessfullBackwardCoverings();
-		return isPerfect;
 	}
 	
 	private ManagedScript setupManagedScript(final IUltimateServiceProvider services,
