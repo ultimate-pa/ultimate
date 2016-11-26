@@ -92,10 +92,11 @@ public class HsNonPlugin {
 			walker.run(initialEdges.iterator().next().getTarget()); // TODO: which location to take really??
 		}
 
-		NestedMap2<IProgramVar, IProgramVar, IProgramVar> oldArrayToPointerToNewArray =  null;//TODO
-//				processAbstractInterpretationResult(abstractInterpretationResult, hspav);
+//		NestedMap2<IProgramVarOrConst, IProgramVarOrConst, ReplacementVar> oldArrayToPointerToNewArray =  
+		NewArrayIdProvider newArrayIdProvider = 
+				processAbstractInterpretationResult(abstractInterpretationResult, hspav);
 
-	
+
 
 		/*
 		 * do the transformation itself..
@@ -105,7 +106,7 @@ public class HsNonPlugin {
 		final RCFGWalkerBreadthFirst walker = new RCFGWalkerBreadthFirst(od, mLogger);
 		od.setWalker(walker);
 
-		final HeapSepRcfgVisitor hsv = new HeapSepRcfgVisitor(mLogger, oldArrayToPointerToNewArray, mManagedScript);
+		final HeapSepRcfgVisitor hsv = new HeapSepRcfgVisitor(mLogger, newArrayIdProvider, mManagedScript, vpDomain);
 		walker.addObserver(hsv);
 		walker.run(initialEdges.iterator().next().getTarget()); // TODO: whih location to take really??
 	
@@ -115,36 +116,41 @@ public class HsNonPlugin {
 
 	/**
 	 * 
-	 * @param result
+	 * @param vpDomainResult
 	 * @param hspav
 	 * @return a map of the form (unseparated array --> index --> separated array)
 	 */
-	private NestedMap2<IProgramVarOrConst, IProgramVarOrConst, IProgramVarOrConst> processAbstractInterpretationResult(
-			IAbstractInterpretationResult<VPState, CodeBlock, IProgramVar, ?> result, 
+	private NewArrayIdProvider processAbstractInterpretationResult(
+			IAbstractInterpretationResult<VPState, CodeBlock, IProgramVar, ?> vpDomainResult, 
 			HeapSepPreAnalysisVisitor hspav) {
 
-		VPDomain vpDomain = (VPDomain) result.getUsedDomain();
-		
+//		VPDomain vpDomain = (VPDomain) vpDomainResult.getUsedDomain();
+
 		/*
-		 * disjoin:
-		 *  - procedurewise??
-		 *  - per array? --> then only take positions where that array is used??
+		 * Compute the mapping array to VPState:
+		 * The HeapSepPreAnalysisVisitor can tell us which arrays are accessed at which locations.
+		 * For each array take only the VPStates intro account that belong to a location directly
+		 * before an access to that array. Those are disjoined.
 		 */
-		// TODO: disjoin procedurewise? now: global
 		Map<IProgramVarOrConst, VPState> arrayToVPState = new HashMap<>();
-		
 		for (IProgramVarOrConst array : hspav.getArrayToAccessLocations().getDomain()) {
-			VPState disjoinedState = vpDomain.getBottomState();
+			VPState disjoinedState = ((VPDomain) vpDomainResult.getUsedDomain()).getBottomState();
 			for (IcfgLocation loc : hspav.getArrayToAccessLocations().getImage(array)) {
-				disjoinedState = disjoinedState.disjoin(result.getLoc2SingleStates().get(loc));
+				disjoinedState = disjoinedState.disjoin(vpDomainResult.getLoc2SingleStates().get(loc));
 			}
 			arrayToVPState.put(array, disjoinedState);
 		}
 		
-		Map<IProgramVarOrConst, Set<EqNode>> arrayToPartition = new HashMap<>();
-		
+		/*
+		 * Compute the actual partitioning for each array.
+		 */
+		RCFGArrayIndexCollector vpPreAnalysis = ((VPDomain) vpDomainResult.getUsedDomain()).getPreAnalysis();
+		NewArrayIdProvider result = new NewArrayIdProvider();
+//		Map<IProgramVarOrConst, Set<EqNode>> arrayToPartition = new HashMap<>();
+//		NestedMap2<IProgramVarOrConst, IProgramVarOrConst, ReplacementVar> arrayToRepresentativeToFreshArrayVar =
+//				new NestedMap2<>();
 		for (Entry<IProgramVarOrConst, VPState> en : arrayToVPState.entrySet()) {
-			IProgramVarOrConst array = en.getKey();
+			IProgramVarOrConst currentArray = en.getKey();
 			VPState state = en.getValue();
 			
 			/*
@@ -155,27 +161,39 @@ public class HsNonPlugin {
 			 * (would be nice here, if the EQNodes in the disequality pairs would be only the 
 			 *  representatives of each equivalence class.)
 			 */
-			for (EqNode ind1 : arrayToVPState.get(array).getEquivalenceRepresentatives()) {
+			for (EqNode ind1 : arrayToVPState.get(currentArray).getEquivalenceRepresentatives()) {
+				if (!vpPreAnalysis.isArrayAccessedAt(currentArray, ind1)) {
+					// we don't need an entry for ind1 in our partitioning map because 
+					// it is never used to access the currentArray
+					continue;
+				}
+
 				/*
-				 * 	question: is ind known to be unequal to all the other indices (equality representatives) of array?
-				 *   --> then it and its equal elements are
+				 * 	Check if ind1 is known to be unequal to all the other indices (equality representatives) 
+				 * that the array "array" is accessed with?
 				 */
 				boolean indUneqAllOthers = true;
-				for (EqNode ind2 : arrayToVPState.get(array).getEquivalenceRepresentatives()) {
+				for (EqNode ind2 : arrayToVPState.get(currentArray).getEquivalenceRepresentatives()) {
+					if (!vpPreAnalysis.isArrayAccessedAt(currentArray, ind2)) {
+						// the currentArray is never accessed at ind2
+						// --> it does not matter if ind2 may alias with ind1
+						continue;
+					}
 					if (ind2 == ind1) {
 						continue;
 					}
 					if (!state.getDisEqualitySet().contains(new VPDomainSymmetricPair<EqNode>(ind1, ind2))) {
 						// ind1 and ind2 may be equal
 						indUneqAllOthers = false;
+						break;
 					}
 				}
 				
 				if (indUneqAllOthers) {
 					// ind1 and all EqNodes that are known to be equal get 1 partition.
-					arrayToPartition.put(array, arrayToVPState.get(array).getEquivalentEqNodes(ind1));
-					NestedMap2<IProgramVarOrConst, IProgramVarOrConst, ReplacementVar> arrayToRepresentativeToFreshArrayVar =
-							new NestedMap2<>();
+					result.makeNewPartition(currentArray, ind1);
+					
+//					arrayToPartition.put(currentArray, arrayToVPState.get(currentArray).getEquivalentEqNodes(ind1));
 
 //					arrayToRepresentativeToFreshArrayVar.put(
 //							array, ind1, mReplacementVarFactory.getOrConstuctReplacementVar(array)); //TODO
@@ -183,8 +201,8 @@ public class HsNonPlugin {
 			}
 		}
 		
-		// TODO Auto-generated method stub
-		return null;
+		
+		return result;
 	}
 
 	/**

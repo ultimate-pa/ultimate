@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.heapseparator;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -16,6 +17,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgE
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayEquality;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.vp.BoogieVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.visitors.SimpleRCFGVisitor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -49,6 +51,8 @@ public class HeapSepPreAnalysisVisitor extends SimpleRCFGVisitor {
 	
 	private final HashRelation<IProgramVarOrConst, IcfgLocation> mArrayToAccessLocations;
 
+	private List<ArrayEquality> mArrayEqualities;
+
 	public HeapSepPreAnalysisVisitor(ILogger logger) {
 		super(logger);
 		mEquatedArrays = new HashSet<>();
@@ -60,6 +64,8 @@ public class HeapSepPreAnalysisVisitor extends SimpleRCFGVisitor {
 		
 		if (edge instanceof CodeBlock) {
 			mEquatedArrays.addAll(new EquatedArraysFinder((CodeBlock) edge).getResult());
+			
+			mArrayEqualities = ArrayEquality.extractArrayEqualities(((CodeBlock) edge).getTransitionFormula().getFormula());
 			
 //			mArrayToAccessPositions.addAll(new ArrayAccessFinder((CodeBlock) edge, edge.getSource()).getResult());
 			mArrayToAccessLocations.addAll(findArrayAccesses((CodeBlock) edge));

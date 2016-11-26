@@ -116,7 +116,7 @@ public class HeapSeparatorObserver implements IUnmanagedObserver {
 		final RCFGWalkerBreadthFirst walker = new RCFGWalkerBreadthFirst(od, mLogger);
 		od.setWalker(walker);
 
-		final HeapSepRcfgVisitor hsv = new HeapSepRcfgVisitor(mLogger, mOldArrayToPointerToNewArray, mScript);
+		final HeapSepRcfgVisitor hsv = null; //new HeapSepRcfgVisitor(mLogger, mOldArrayToPointerToNewArray, mScript);
 		walker.addObserver(hsv);
 		walker.run((IcfgLocation) root);
 

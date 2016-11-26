@@ -81,6 +81,11 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 
 	private final NestedMap2<IProgramVarOrConst, List<EqNode>, EqFunctionNode> mEqFunctionNodeStore = new NestedMap2<>();
 	private final Map<IProgramVarOrConst, EqBaseNode> mEqBaseNodeStore = new HashMap<>();
+	
+	/**
+	 * Stores for each array, which Terms(EqNodes) are used to access it.
+	 */
+	HashRelation<IProgramVarOrConst, EqNode> mArrayToAccessingEqNodes = new HashRelation<>();
 
 	public RCFGArrayIndexCollector(final BoogieIcfgContainer root) {
 		mScript = root.getCfgSmtToolkit().getManagedScript().getScript();
@@ -123,7 +128,7 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 		 */
 		List<MultiDimensionalSelect> mdSelects = MultiDimensionalSelect.extractSelectShallow(formulaWithNormalizedVariables, false);
 		for (MultiDimensionalSelect mds : mdSelects) {
-			getOrConstructEqNode(mds);
+			constructEqNode(mds);
 		}
 		
 		/*
@@ -131,7 +136,7 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 		 */
 		List<MultiDimensionalStore> mdStores = MultiDimensionalStore.extractArrayStoresShallow(formulaWithNormalizedVariables);
 		for (MultiDimensionalStore mds : mdStores) {
-			getOrConstructEqNode(mds);
+			constructEqNode(mds);
 		}
 
 		/*
@@ -162,38 +167,43 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 		}
 	}
 	
-	private EqNode getOrConstructEqNode(MultiDimensionalStore mds) {
+	private EqNode constructEqNode(MultiDimensionalStore mds) {
 		EqNode result = mTermToEqNode.get(mds.getStoreTerm());
 		if (result != null) {
 			return result;
 		}
+
+		IProgramVarOrConst arrayId = getOrConstructBoogieVarOrConst(mds.getArray());
 		
 		List<EqNode> arguments = new ArrayList<>();
-		for (Term ai : mds.getIndex()) {
-			arguments.add(getOrConstructEqNode(ai));
+		for (Term arrayIndex : mds.getIndex()) {
+			EqNode argumentEqNode = getOrConstructEqNode(arrayIndex);
+			arguments.add(argumentEqNode);
+			mArrayToAccessingEqNodes.addPair(arrayId, argumentEqNode);
 		}
 		getOrConstructEqNode(mds.getValue());
 
-		Term array = mds.getArray();
-		result = getOrConstructEqFnNode(getOrConstructBoogieVarOrConst(array), arguments);
+		result = getOrConstructEqFnNode(arrayId, arguments);
 		mTermToEqNode.put(mds.getStoreTerm(), result);
 		return result;
 	}
 
-	private EqNode getOrConstructEqNode(MultiDimensionalSelect mds) {
+	private EqNode constructEqNode(MultiDimensionalSelect mds) {
 		EqNode result = mTermToEqNode.get(mds.getSelectTerm());
 		if (result != null) {
 			return result;
 		}
 		
-		Term array = mds.getArray();
+		IProgramVarOrConst arrayId = getOrConstructBoogieVarOrConst(mds.getArray());
+
 		List<EqNode> arguments = new ArrayList<>();
 		for (Term ai : mds.getIndex()) {
-			arguments.add(getOrConstructEqNode(ai));
+			EqNode argumentEqNode = getOrConstructEqNode(ai);
+			arguments.add(argumentEqNode);
+			mArrayToAccessingEqNodes.addPair(arrayId, argumentEqNode);
 		}
 
-		result = getOrConstructEqFnNode(getOrConstructBoogieVarOrConst(array),
-				arguments);
+		result = getOrConstructEqFnNode(arrayId, arguments);
 		mTermToEqNode.put(mds.getSelectTerm(), result);
 		return result;
 	}
@@ -216,10 +226,10 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 		ApplicationTerm at = (ApplicationTerm) t;
 		if (at.getFunction().getName() == "select") {
 			MultiDimensionalSelect mds = new MultiDimensionalSelect(at);
-			return getOrConstructEqNode(mds);
+			return constructEqNode(mds);
 		} else if (at.getFunction().getName() == "store") {
 			MultiDimensionalStore mds = new MultiDimensionalStore(at);
-			return getOrConstructEqNode(mds);
+			return constructEqNode(mds);
 		} else {
 			assert false : "should not happen";
 			return null;
@@ -327,5 +337,12 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 		return mTermToBoogieVarOrConst.get(term);
 	}
 
-
+	/**
+	 * @param array
+	 * @param index
+	 * @return true iff the given array is ever accessed using the given index in the program.
+	 */
+	public boolean isArrayAccessedAt(IProgramVarOrConst array, EqNode index) {
+		return mArrayToAccessingEqNodes.containsPair(array, index);
+	}
 }
