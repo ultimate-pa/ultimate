@@ -176,15 +176,21 @@ public class MultiTrackInterpolantAutomatonBuilder implements IInterpolantAutoma
 		final IPredicate succ = interpolantSequence.getInterpolant(symbolPos + 1);
 		if (nestedWord.isCallPosition(symbolPos)) {
 			final IPredicate pred = interpolantSequence.getInterpolant(symbolPos);
-			nwa.addCallTransition(pred, symbol, succ);
+			if (!nwa.containsCallTransition(pred, symbol, succ)) {
+				nwa.addCallTransition(pred, symbol, succ);
+			}
 		} else if (nestedWord.isReturnPosition(symbolPos)) {
 			final IPredicate pred = interpolantSequence.getInterpolant(symbolPos);
 			final int callPos = nestedWord.getCallPosition(symbolPos);
 			final IPredicate hier = interpolantSequence.getInterpolant(callPos);
-			nwa.addReturnTransition(pred, hier, symbol, succ);
+			if (!nwa.containsReturnTransition(pred, hier, symbol, succ)) {
+				nwa.addReturnTransition(pred, hier, symbol, succ);
+			}
 		} else {
 			final IPredicate pred = interpolantSequence.getInterpolant(symbolPos);
-			nwa.addInternalTransition(pred, symbol, succ);
+			if (!nwa.containsInternalTransition(pred, symbol, succ)) {
+				nwa.addInternalTransition(pred, symbol, succ);
+			}
 		}
 	}
 }
