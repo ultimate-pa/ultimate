@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
+import java.util.List;
 import java.util.NoSuchElementException;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -8,6 +9,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.in
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.InterpolantAutomatonBuilderFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
 
 /**
  * An {@link IRefinementStrategy} allows an {@link IRefinementEngine} to try multiple combinations of
@@ -68,5 +70,6 @@ public interface IRefinementStrategy {
 	/**
 	 * @return The interpolant automaton builder.
 	 */
-	IInterpolantAutomatonBuilder<CodeBlock, IPredicate> getInterpolantAutomatonBuilder();
+	IInterpolantAutomatonBuilder<CodeBlock, IPredicate>
+			getInterpolantAutomatonBuilder(List<InterpolantsPreconditionPostcondition> ipps);
 }

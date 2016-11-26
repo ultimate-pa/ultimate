@@ -56,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantConsolidation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementStrategy.RefinementStrategyAdvance;
 
 /**
@@ -146,7 +147,7 @@ public final class TraceAbstractionRefinementEngine
 	}
 	
 	private LBool executeStrategy(final IRefinementStrategy strategy, final IUltimateServiceProvider services) {
-		List<IPredicate[]> interpolantSequences = new LinkedList<>();
+		List<InterpolantsPreconditionPostcondition> interpolantSequences = new LinkedList<>();
 		do {
 			// check feasibility using the strategy
 			final LBool feasibility = strategy.getTraceChecker().isCorrect();
@@ -166,7 +167,8 @@ public final class TraceAbstractionRefinementEngine
 					mRcfgProgramExecution = strategy.getTraceChecker().getRcfgProgramExecution();
 					break;
 				case UNSAT:
-					final IPredicate[] interpolants = strategy.getInterpolantGenerator().getInterpolants();
+					final InterpolantsPreconditionPostcondition interpolants =
+							strategy.getInterpolantGenerator().getIpp();
 					
 					if (strategy.getInterpolantGenerator().isPerfectSequence()) {
 						// construct interpolant automaton using only this (perfect) sequence
@@ -193,7 +195,7 @@ public final class TraceAbstractionRefinementEngine
 					// construct the interpolant automaton from the sequences
 					// TODO use the list of interpolants here, currently the last sequence from the generator is used
 					final NestedWordAutomaton<CodeBlock, IPredicate> automaton =
-							strategy.getInterpolantAutomatonBuilder().getResult();
+							strategy.getInterpolantAutomatonBuilder(interpolantSequences).getResult();
 					mInterpolantAutomaton = automaton;
 					
 					break;
