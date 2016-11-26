@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * @param <T>
  *            The type of the infeasibility proof, e.g., an interpolant automaton or a set of Hoare triples.
  */
-public interface IRefinementSelector<T> {
+public interface IRefinementEngine<T> {
 	/**
 	 * @return Feasibility status of the counterexample trace.
 	 */

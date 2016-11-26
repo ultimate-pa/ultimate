@@ -97,9 +97,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IInterpolantAutomatonEvaluator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementSelector;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementEngine;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TaCheckAndRefinementPreferences;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementSelector;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessProductAutomaton;
 import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
@@ -147,7 +147,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	
 	private final SearchStrategy mSearchStrategy;
 	
-	protected IRefinementSelector<NestedWordAutomaton<CodeBlock, IPredicate>> mTraceCheckAndRefinementSelection;
+	protected IRefinementEngine<NestedWordAutomaton<CodeBlock, IPredicate>> mTraceCheckAndRefinementSelection;
 	
 	public BasicCegarLoop(final String name, final BoogieIcfgContainer rootNode, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
@@ -296,7 +296,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		final List<TaCheckAndRefinementPreferences> taCheckAndRefinementPrefsList =
 				Collections.singletonList(taCheckAndRefinementPrefs);
 		final IInterpolantAutomatonEvaluator evaluator = automaton -> true;
-		mTraceCheckAndRefinementSelection = new TraceAbstractionRefinementSelector(mServices, mLogger,
+		mTraceCheckAndRefinementSelection = new TraceAbstractionRefinementEngine(mServices, mLogger,
 				taCheckAndRefinementPrefs, evaluator, mPredicateFactory, mIcfgContainer, mSimplificationTechnique,
 				mXnfConversionTechnique, mToolchainStorage, mPref, mIteration, mCounterexample, mAbstraction);
 		

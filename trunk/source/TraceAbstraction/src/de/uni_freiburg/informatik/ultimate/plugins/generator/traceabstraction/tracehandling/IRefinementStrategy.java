@@ -10,7 +10,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceChecker;
 
 /**
- * An {@link IRefinementStrategy} allows an {@link IRefinementSelector} to try multiple combinations of
+ * An {@link IRefinementStrategy} allows an {@link IRefinementEngine} to try multiple combinations of
  * <ol>
  * <li>a {@link TraceChecker},</li>
  * <li>an {@link IInterpolantGenerator}, and</li>

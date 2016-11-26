@@ -54,16 +54,15 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 
 /**
- * Checks a trace for feasibility and, if infeasible, selects a refinement strategy, i.e., constructs an interpolant
- * automaton.<br>
+ * Checks a trace for feasibility and, if infeasible, constructs an interpolant automaton.<br>
  * This class is used in the {@link BasicCegarLoop}.
  * <p>
  * TODO add timeout checks?
  *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
-public final class TraceAbstractionRefinementSelector
-		implements IRefinementSelector<NestedWordAutomaton<CodeBlock, IPredicate>> {
+public final class TraceAbstractionRefinementEngine
+		implements IRefinementEngine<NestedWordAutomaton<CodeBlock, IPredicate>> {
 	/* inputs */
 	private final ILogger mLogger;
 	private final TaCheckAndRefinementPreferences mPrefs;
@@ -75,7 +74,7 @@ public final class TraceAbstractionRefinementSelector
 	private RcfgProgramExecution mRcfgProgramExecution;
 	private final CachingHoareTripleChecker mHoareTripleChecker;
 	
-	public TraceAbstractionRefinementSelector(final IUltimateServiceProvider services, final ILogger logger,
+	public TraceAbstractionRefinementEngine(final IUltimateServiceProvider services, final ILogger logger,
 			final TaCheckAndRefinementPreferences prefs, final IInterpolantAutomatonEvaluator evaluator,
 			final PredicateFactory predicateFactory, final BoogieIcfgContainer icfgContainer,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
