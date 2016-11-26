@@ -27,11 +27,14 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ApplicationTermFinder;
 
 /**
  * Wrapper for an equality of the form a1=a2, where a1 and a2 are TermVariables.
@@ -41,17 +44,46 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  */
 public class ArrayEquality {
 	private final Term mOriginalTerm;
-	private final TermVariable lhs;
-	private final TermVariable rhs;
+	private final Term mLhs;
+	private final Term mRhs;
+	/*
+	 * this represents a disequality instead of an equality
+	 */
+	private final boolean mIsNegated;
 
 	public ArrayEquality(final Term term) throws ArrayEqualityException {
+		this(term, false, false);
+	}
+
+	public ArrayEquality(final Term term, final boolean allowDisequalities, final boolean allowConstants) 
+					throws ArrayEqualityException {
+
 		if (!(term instanceof ApplicationTerm)) {
 			throw new ArrayEqualityException("no ApplicationTerm");
 		}
-		final ApplicationTerm eqAppTerm = (ApplicationTerm) term;
-		if (!eqAppTerm.getFunction().getName().equals("=")) {
-			throw new ArrayEqualityException("no equality");
+		
+		final ApplicationTerm appTerm = (ApplicationTerm) term;
+		
+		
+		boolean isNotEqualsAppTerm = (appTerm.getFunction().getName().equals("not") 
+						&& ((ApplicationTerm) appTerm.getParameters()[0]).getFunction().getName().equals("="));
+		boolean isDisEquality = appTerm.getFunction().getName().equals("distinct")
+				|| isNotEqualsAppTerm;
+
+		mIsNegated = isDisEquality;
+
+		if (!appTerm.getFunction().getName().equals("=")) {
+			if (!allowDisequalities) {
+				throw new ArrayEqualityException("no equality");
+			} else if(!isDisEquality) {
+				throw new ArrayEqualityException("no (dis)equality");
+			}
 		}
+
+		final ApplicationTerm eqAppTerm = isNotEqualsAppTerm ?
+				(ApplicationTerm) appTerm.getParameters()[0] :
+					appTerm;
+
 		if (eqAppTerm.getParameters().length != 2) {
 			throw new ArrayEqualityException("no binary equality");
 		}
@@ -63,15 +95,19 @@ public class ArrayEquality {
 		}
 
 		if (lhsTerm instanceof TermVariable) {
-			lhs = (TermVariable) lhsTerm;
+			mLhs = lhsTerm;
+		} else if (allowConstants && isTermVarOrConst(lhsTerm)) {
+			mLhs = lhsTerm;
 		} else {
-			throw new ArrayEqualityException("no tv");
+			throw new ArrayEqualityException("no TermVariable or constant");
 		}
 
 		if (rhsTerm instanceof TermVariable) {
-			rhs = (TermVariable) rhsTerm;
+			mRhs = rhsTerm;
+		} else if (allowConstants && isTermVarOrConst(rhsTerm)) {
+			mRhs = rhsTerm;
 		} else {
-			throw new ArrayEqualityException("no tv");
+			throw new ArrayEqualityException("no TermVariable or constant");
 		}
 	}
 
@@ -79,12 +115,76 @@ public class ArrayEquality {
 		return mOriginalTerm;
 	}
 
-	public TermVariable getLhs() {
-		return lhs;
+	public Term getLhs() {
+		return mLhs;
 	}
 
-	public TermVariable getRhs() {
-		return rhs;
+	public Term getRhs() {
+		return mRhs;
+	}
+
+	public TermVariable getLhsTermVariable() {
+		return (TermVariable) mLhs;
+	}
+
+	public TermVariable getRhsTermVariable() {
+		return (TermVariable) mRhs;
+	}
+	
+	public boolean isNegated() {
+		return mIsNegated;
+	}
+	
+	public static List<ArrayEquality> extractArrayEqualities(Term term) {
+		HashSet<String> functionSymbolNames = new HashSet<>(3);
+		functionSymbolNames.add("=");
+		functionSymbolNames.add("distinct");
+		functionSymbolNames.add("not");
+
+		List<ArrayEquality> result = new ArrayList<>();
+
+		ApplicationTermFinder atf = new ApplicationTermFinder(functionSymbolNames, false);
+		for (ApplicationTerm subterm : atf.findMatchingSubterms(term)) {
+//			if (subterm.getParameters().length == 0) {
+//				continue;
+//			}
+//			String functionSymbolName = subterm.getFunction().getName();
+//			boolean isNegated = false;
+//			ApplicationTerm subtermStripped = null;
+//			
+//			
+//			if ("not".equals(functionSymbolName)) {
+//				if (!(subterm.getParameters()[0] instanceof ApplicationTerm)) {
+//					continue;
+//				}
+//				isNegated = true;
+//				subtermStripped = (ApplicationTerm) subterm.getParameters()[0];
+//				functionSymbolName = subtermStripped.getFunction().getName();
+//			} else {
+//				subtermStripped = subterm;
+//			}
+//		
+			ArrayEquality arrayEquality = null;
+			try {
+				arrayEquality = new ArrayEquality(subterm, true, true);
+			} catch (ArrayEqualityException e) {
+				continue;
+			}
+			result.add(arrayEquality);
+		}
+		return result;
+	}
+	
+	private static boolean isTermVarOrConst(Term t) {
+		if (t instanceof TermVariable) {
+			return true;
+		} else if (t instanceof ConstantTerm) {
+			return true;
+		} else if (t instanceof ApplicationTerm
+				&& ((ApplicationTerm) t).getParameters().length == 0) {
+			return true;
+		}
+		return false;
 	}
 
 	@Override

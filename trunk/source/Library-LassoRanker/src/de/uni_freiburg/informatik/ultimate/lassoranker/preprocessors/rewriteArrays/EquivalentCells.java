@@ -131,9 +131,9 @@ public class EquivalentCells {
 	private void addArrayEqualityConstraints(final UnionFind<TermVariable> uf, final List<ArrayEquality> arrayEqualities) {
 		for (final ArrayEquality ae : arrayEqualities) {
 			final Map<ArrayIndex, TermVariable> lhsInstance2Index2CellVariable = mArrayInstance2Index2CellVariable.get(ae
-					.getLhs());
+					.getLhsTermVariable());
 			final Map<ArrayIndex, TermVariable> rhsInstance2Index2CellVariable = mArrayInstance2Index2CellVariable.get(ae
-					.getRhs());
+					.getRhsTermVariable());
 			if (lhsInstance2Index2CellVariable == null && rhsInstance2Index2CellVariable == null) {
 				// has no index at all
 			}

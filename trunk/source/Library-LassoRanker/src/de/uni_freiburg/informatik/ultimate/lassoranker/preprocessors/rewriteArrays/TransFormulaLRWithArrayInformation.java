@@ -369,8 +369,8 @@ public class TransFormulaLRWithArrayInformation {
 			mTransFormula = tf;
 			final UnionFind<TermVariable> uf = new UnionFind<>();
 			for (final ArrayEquality ae : arrayEqualities) {
-				final TermVariable lhs = ae.getLhs();
-				final TermVariable rhs = ae.getRhs();
+				final TermVariable lhs = ae.getLhsTermVariable();
+				final TermVariable rhs = ae.getRhsTermVariable();
 				TermVariable lhsRepresentative = uf.find(lhs);
 				if (lhsRepresentative == null) {
 					uf.makeEquivalenceClass(lhs);
@@ -411,8 +411,8 @@ public class TransFormulaLRWithArrayInformation {
 				determineRepresentative((TermVariable) ar.getArray());
 			}
 			for (final ArrayEquality ae : arrayEqualities) {
-				determineRepresentative(ae.getLhs());
-				determineRepresentative(ae.getRhs());
+				determineRepresentative(ae.getLhsTermVariable());
+				determineRepresentative(ae.getRhsTermVariable());
 			}
 			for (final ArrayUpdate au : arrayUpdates) {
 				determineRepresentative(au.getNewArray());
@@ -591,10 +591,10 @@ public class TransFormulaLRWithArrayInformation {
 		private boolean occursInArrayEqualities(final TermVariable arrayInstance) {
 			for (final List<ArrayEquality> equalitiesOfDisjunct : mArrayEqualities) {
 				for (final ArrayEquality ae : equalitiesOfDisjunct) {
-					if (ae.getLhs() == arrayInstance) {
+					if (ae.getLhsTermVariable() == arrayInstance) {
 						return true;
 					}
-					if (ae.getRhs() == arrayInstance) {
+					if (ae.getRhsTermVariable() == arrayInstance) {
 						return true;
 					}
 				}
