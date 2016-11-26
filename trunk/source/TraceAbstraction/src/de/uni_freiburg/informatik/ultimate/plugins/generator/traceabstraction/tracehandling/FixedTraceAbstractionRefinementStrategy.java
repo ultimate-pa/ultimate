@@ -107,12 +107,12 @@ public class FixedTraceAbstractionRefinementStrategy implements IRefinementStrat
 	}
 
 	@Override
-	public boolean hasNext() {
+	public boolean hasNext(final RefinementStrategyAdvance advance) {
 		return false;
 	}
 
 	@Override
-	public void next() {
+	public void next(final RefinementStrategyAdvance advance) {
 		throw new NoSuchElementException("This strategy has only one element.");
 	}
 

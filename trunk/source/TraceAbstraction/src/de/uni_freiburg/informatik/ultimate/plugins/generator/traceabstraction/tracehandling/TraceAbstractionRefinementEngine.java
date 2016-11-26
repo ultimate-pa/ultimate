@@ -26,6 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
@@ -47,11 +51,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Boo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.CachingHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantConsolidation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementStrategy.RefinementStrategyAdvance;
 
 /**
  * Checks a trace for feasibility and, if infeasible, constructs an interpolant automaton.<br>
@@ -75,12 +82,11 @@ public final class TraceAbstractionRefinementEngine
 	private final CachingHoareTripleChecker mHoareTripleChecker;
 	
 	public TraceAbstractionRefinementEngine(final IUltimateServiceProvider services, final ILogger logger,
-			final TaCheckAndRefinementPreferences prefs, final IInterpolantAutomatonEvaluator evaluator,
-			final PredicateFactory predicateFactory, final BoogieIcfgContainer icfgContainer,
-			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
-			final IToolchainStorage toolchainStorage, final TAPreferences taPrefsForInterpolantConsolidation,
-			final int iteration, final IRun<CodeBlock, IPredicate, ?> counterexample,
-			final IAutomaton<CodeBlock, IPredicate> abstraction) {
+			final TaCheckAndRefinementPreferences prefs, final PredicateFactory predicateFactory,
+			final BoogieIcfgContainer icfgContainer, final SimplificationTechnique simplificationTechnique,
+			final XnfConversionTechnique xnfConversionTechnique, final IToolchainStorage toolchainStorage,
+			final TAPreferences taPrefsForInterpolantConsolidation, final int iteration,
+			final IRun<CodeBlock, IPredicate, ?> counterexample, final IAutomaton<CodeBlock, IPredicate> abstraction) {
 		// initialize fields
 		mLogger = logger;
 		mPrefs = prefs;
@@ -94,7 +100,7 @@ public final class TraceAbstractionRefinementEngine
 		final IRefinementStrategy strategy = chooseStrategy(counterexample, abstraction, services, managedScript,
 				taPrefsForInterpolantConsolidation);
 		
-		mFeasibility = executeStrategy(strategy, evaluator);
+		mFeasibility = executeStrategy(strategy, services);
 		if (strategy.getInterpolantGenerator() instanceof InterpolantConsolidation) {
 			mHoareTripleChecker =
 					((InterpolantConsolidation) strategy.getInterpolantGenerator()).getHoareTripleChecker();
@@ -131,21 +137,25 @@ public final class TraceAbstractionRefinementEngine
 	private IRefinementStrategy chooseStrategy(final IRun<CodeBlock, IPredicate, ?> counterexample,
 			final IAutomaton<CodeBlock, IPredicate> abstraction, final IUltimateServiceProvider services,
 			final ManagedScript managedScript, final TAPreferences taPrefsForInterpolantConsolidation) {
-		// TODO add options in preferences, currently we only try the FixedTraceAbstractionRefinementStrategy
-		final IRefinementStrategy strategy =
-				new FixedTraceAbstractionRefinementStrategy(mLogger, mPrefs, managedScript, services,
+		switch (mPrefs.getRefinementStrategy()) {
+			case FIXED_PREFERENCES:
+				return new FixedTraceAbstractionRefinementStrategy(mLogger, mPrefs, managedScript, services,
 						mPredicateUnifier, counterexample, abstraction, taPrefsForInterpolantConsolidation);
-		return strategy;
+			default:
+				throw new IllegalArgumentException(
+						"Unknown refinement strategy specified: " + mPrefs.getRefinementStrategy());
+		}
 	}
 	
-	private LBool executeStrategy(final IRefinementStrategy strategy, final IInterpolantAutomatonEvaluator evaluator) {
+	private LBool executeStrategy(final IRefinementStrategy strategy, final IUltimateServiceProvider services) {
+		List<IPredicate[]> interpolantSequences = new LinkedList<>();
 		do {
 			// check feasibility using the strategy
 			final LBool feasibility = strategy.getTraceChecker().isCorrect();
 			
-			if (feasibility == LBool.UNKNOWN && strategy.hasNext()) {
+			if (feasibility == LBool.UNKNOWN && strategy.hasNext(RefinementStrategyAdvance.TRACE_CHECKER)) {
 				// feasibility check failed, try next combination in the strategy
-				strategy.next();
+				strategy.next(RefinementStrategyAdvance.TRACE_CHECKER);
 				continue;
 			}
 			
@@ -158,15 +168,35 @@ public final class TraceAbstractionRefinementEngine
 					mRcfgProgramExecution = strategy.getTraceChecker().getRcfgProgramExecution();
 					break;
 				case UNSAT:
+					final IPredicate[] interpolants = strategy.getInterpolantGenerator().getInterpolants();
+					
+					if (isPerfectInterpolantSequence(strategy, services)) {
+						// construct interpolant automaton using only this (perfect) sequence
+						interpolantSequences = Collections.singletonList(interpolants);
+						if (mLogger.isInfoEnabled()) {
+							mLogger.info("Found a perfect sequence of interpolants.");
+						}
+					} else {
+						interpolantSequences.add(interpolants);
+						
+						if (strategy.hasNext(RefinementStrategyAdvance.INTERPOLANT_GENERATOR)) {
+							// construct the next sequence of interpolants
+							if (mLogger.isInfoEnabled()) {
+								mLogger.info(
+										"The current sequence of interpolants is not perfect, trying the next one.");
+							}
+							strategy.next(RefinementStrategyAdvance.INTERPOLANT_GENERATOR);
+							continue;
+						} else if (mLogger.isInfoEnabled()) {
+							mLogger.info("No perfect sequence of interpolants found, combining those found.");
+						}
+					}
+					
+					// construct the interpolant automaton from the sequences
+					// TODO use the list of interpolants here, currently the last sequence from the generator is used
 					final NestedWordAutomaton<CodeBlock, IPredicate> automaton =
 							strategy.getInterpolantAutomatonBuilder().getResult();
-					
-					if (evaluator.accept(automaton)) {
-						mInterpolantAutomaton = automaton;
-					} else {
-						// TODO add code to construct the next automaton
-						continue;
-					}
+					mInterpolantAutomaton = automaton;
 					
 					break;
 				case SAT:
@@ -179,6 +209,14 @@ public final class TraceAbstractionRefinementEngine
 			
 			return feasibility;
 		} while (true);
+	}
+	
+	private boolean isPerfectInterpolantSequence(final IRefinementStrategy strategy,
+			final IUltimateServiceProvider services) {
+		final BackwardCoveringInformation bci =
+				TraceCheckerUtils.computeCoverageCapability(services, strategy.getInterpolantGenerator(), mLogger);
+		final boolean isPerfect = bci.getPotentialBackwardCoverings() == bci.getSuccessfullBackwardCoverings();
+		return isPerfect;
 	}
 	
 	private ManagedScript setupManagedScript(final IUltimateServiceProvider services,

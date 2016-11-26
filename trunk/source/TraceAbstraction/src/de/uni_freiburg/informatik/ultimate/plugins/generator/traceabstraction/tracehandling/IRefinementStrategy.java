@@ -22,10 +22,23 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public interface IRefinementStrategy {
+	public enum RefinementStrategyAdvance {
+		/**
+		 * Advance the {@link TraceChecker}.
+		 */
+		TRACE_CHECKER,
+		/**
+		 * Advance the {@link IInterpolantGenerator}.
+		 */
+		INTERPOLANT_GENERATOR,
+	}
+	
 	/**
+	 * @param advance
+	 *            How to advance.
 	 * @return {@code true} iff there are more combinations available.
 	 */
-	boolean hasNext();
+	boolean hasNext(RefinementStrategyAdvance advance);
 	
 	/**
 	 * Changes the combination.<br>
@@ -34,8 +47,11 @@ public interface IRefinementStrategy {
 	 * <p>
 	 * TODO We need an interface to give more information to the strategy about why we need a different combination.<br>
 	 * We need to collect the use cases first.
+	 * 
+	 * @param advance
+	 *            how to advance
 	 */
-	void next();
+	void next(final RefinementStrategyAdvance advance);
 	
 	/**
 	 * @return The trace checker strategy of the current combination.
