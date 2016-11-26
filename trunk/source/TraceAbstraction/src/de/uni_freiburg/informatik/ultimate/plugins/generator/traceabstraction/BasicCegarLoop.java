@@ -29,9 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -293,8 +291,6 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				new TaCheckAndRefinementPreferences(mServices, mPref, mInterpolation, mSimplificationTechnique,
 						mXnfConversionTechnique, mCsToolkit, mPredicateFactory, mIcfgContainer, mToolchainStorage,
 						mInterpolantAutomatonBuilderFactory, mCegarLoopBenchmark, mIteration);
-		final List<TaCheckAndRefinementPreferences> taCheckAndRefinementPrefsList =
-				Collections.singletonList(taCheckAndRefinementPrefs);
 		final IInterpolantAutomatonEvaluator evaluator = automaton -> true;
 		mTraceCheckAndRefinementSelection = new TraceAbstractionRefinementEngine(mServices, mLogger,
 				taCheckAndRefinementPrefs, evaluator, mPredicateFactory, mIcfgContainer, mSimplificationTechnique,
