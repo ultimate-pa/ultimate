@@ -1084,5 +1084,13 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 
 		return disjunction;
 	}
+	@Override
+	public Collection<Collection<LinearPatternBase>> getEmptyInvariantPattern() {
+		final Collection<Collection<LinearPatternBase>> emptyInvPattern;
+		// empty invariant pattern should be equivalent to true, so we create an empty conjunction
+		final Collection<LinearPatternBase> emptyConjunction = Collections.emptyList();
+		emptyInvPattern = Collections.singleton(emptyConjunction);
+		return emptyInvPattern;
+	}
 
 }

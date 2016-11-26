@@ -74,6 +74,12 @@ public interface IInvariantPatternProcessor<IPT> {
 	 */
 	public IPT getInvariantPatternForLocation(final BoogieIcfgLocation location,
 			final int round);
+	
+	/**
+	 * Returns an empty invariant pattern that is equivalent to 'true'.
+	 * @return
+	 */
+	public IPT getEmptyInvariantPattern();
 
 	/**
 	 * Attempts to find a valid configuration for all pattern variables,
@@ -117,4 +123,6 @@ public interface IInvariantPatternProcessor<IPT> {
 	 * @return maximal number of attempts to re-generate the invariant map
 	 */
 	public int getMaxRounds();
+
+
 }

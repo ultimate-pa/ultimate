@@ -53,6 +53,7 @@ public final class CFGInvariantsGenerator {
 
 	private final ILogger logService;
 	private final IProgressMonitorService pmService;
+	private final static boolean INIT_USE_EMPTY_PATTERNS = true;
 	
 
 	/**
@@ -239,7 +240,16 @@ public <IPT> Map<BoogieIcfgLocation, IPredicate> generateInvariantsForTransition
 		// Build pattern map
 		patterns.clear();
 		for (final BoogieIcfgLocation location : locations) {
-			patterns.put(location, processor.getInvariantPatternForLocation(location, round));
+			
+			if (useVariablesFromUnsatCore) {
+				if (INIT_USE_EMPTY_PATTERNS && round == 0) {
+					patterns.put(location, processor.getEmptyInvariantPattern());
+				} else {
+					patterns.put(location, processor.getInvariantPatternForLocation(location, round));
+				}
+			} else {
+				patterns.put(location, processor.getInvariantPatternForLocation(location, round));
+			}
 		}
 		logService.info("[CFGInvariants] Built pattern map.");
 

@@ -204,7 +204,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 				transitions.add(new IcfgInternalAction(locations.get(i - 1), programPoint, programPoint.getPayload(), transFormula));
 			}
 		}
-//
+
 //		final ControlFlowGraph cfg =
 //				new ControlFlowGraph(locations.get(0), locations.get(len - 1), locations, transitions);
 		mLogger.info("[PathInvariants] Built projected CFG, " + locations.size() + " states and " + transitions.size()
