@@ -59,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerSpWp;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
 
 /**
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
@@ -72,15 +73,15 @@ public class InterpolantAutomatonBuilderFactory {
 	private final BoogieIcfgContainer mRootAnnot;
 	private final AbstractInterpretationRunner mAbsIntRunner;
 	private final CegarLoopStatisticsGenerator mBenchmark;
-
+	
 	private final HoareTripleChecks mHoareTripleChecks;
 	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
 	private final InterpolationTechnique mInterpolationTechnique;
 	private final InterpolantAutomaton mInterpolantAutomatonStyle;
-
+	
 	private final IBuilderFunction mBuilderFunction;
-
+	
 	public InterpolantAutomatonBuilderFactory(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
 			final PredicateFactoryForInterpolantAutomata predFac, final BoogieIcfgContainer RootAnnot,
 			final AbstractInterpretationRunner abstractInterpretationRunner, final TAPreferences taPrefs,
@@ -94,7 +95,7 @@ public class InterpolantAutomatonBuilderFactory {
 		mRootAnnot = RootAnnot;
 		mAbsIntRunner = abstractInterpretationRunner;
 		mBenchmark = benchmark;
-
+		
 		// settings
 		// interpolation settings is different because of settings fallback
 		mInterpolationTechnique = interpolation;
@@ -102,105 +103,121 @@ public class InterpolantAutomatonBuilderFactory {
 		mHoareTripleChecks = taPrefs.getHoareTripleChecks();
 		mSimplificationTechnique = taPrefs.getSimplificationTechnique();
 		mXnfConversionTechnique = taPrefs.getXnfConversionTechnique();
-
+		
 		mBuilderFunction = determineBuilder(abstractInterpretationRunner, mInterpolantAutomatonStyle);
 	}
-
+	
 	private IBuilderFunction determineBuilder(final AbstractInterpretationRunner abstractInterpretationRunner,
 			final InterpolantAutomaton interpolAutomatonStyle) {
 		final IBuilderFunction basicBuilder = determineBuilder(interpolAutomatonStyle);
 		if (abstractInterpretationRunner.isDisabled()) {
 			return basicBuilder;
 		}
-
-		return (abstraction, interpolGenerator, counterexample) -> abstractInterpretationRunner.hasShownInfeasibility()
-				? createBuilderAbstractInterpretation(abstraction, interpolGenerator.getPredicateUnifier(),
-						counterexample)
-				: basicBuilder.create(abstraction, interpolGenerator, counterexample);
+		
+		return (abstraction, interpolGenerator, counterexample,
+				ipp) -> abstractInterpretationRunner.hasShownInfeasibility()
+						? createBuilderAbstractInterpretation(abstraction, interpolGenerator.getPredicateUnifier(),
+								counterexample)
+						: basicBuilder.create(abstraction, interpolGenerator, counterexample, ipp);
 	}
-
+	
 	private IBuilderFunction determineBuilder(final InterpolantAutomaton interpolAutomatonStyle) {
 		switch (interpolAutomatonStyle) {
-		case CANONICAL:
-			return this::createBuilderCanonical;
-		case SINGLETRACE:
-			return this::createBuilderSingleTrace;
-		case TOTALINTERPOLATION2:
-			return this::createBuilderTotalInterpolation2;
-		case TWOTRACK:
-			return this::createBuilderTwoTrack;
-		case TOTALINTERPOLATION:
-		default:
-			throw new IllegalArgumentException("Setting " + interpolAutomatonStyle + " is unsupported");
+			case CANONICAL:
+				return this::createBuilderCanonical;
+			case SINGLETRACE:
+				return this::createBuilderSingleTrace;
+			case TOTALINTERPOLATION2:
+				return this::createBuilderTotalInterpolation2;
+			case TWOTRACK:
+				return this::createBuilderTwoTrack;
+			case TOTALINTERPOLATION:
+			default:
+				throw new IllegalArgumentException("Setting " + interpolAutomatonStyle + " is unsupported");
 		}
 	}
-
+	
 	public NestedWordAutomaton<CodeBlock, IPredicate> getResult(final IAutomaton<CodeBlock, IPredicate> abstraction,
-			final IInterpolantGenerator interpolGenerator, final IRun<CodeBlock, IPredicate, ?> counterexample)
-			throws AutomataOperationCanceledException {
-		return createBuilder(abstraction, interpolGenerator, counterexample).getResult();
+			final IInterpolantGenerator interpolGenerator, final IRun<CodeBlock, IPredicate, ?> counterexample,
+			final List<InterpolantsPreconditionPostcondition> ipps) throws AutomataOperationCanceledException {
+		return createBuilder(abstraction, interpolGenerator, counterexample, ipps).getResult();
 	}
-
+	
 	public IInterpolantAutomatonBuilder<CodeBlock, IPredicate> createBuilder(
 			final IAutomaton<CodeBlock, IPredicate> abstraction, final IInterpolantGenerator interpolGenerator,
-			final IRun<CodeBlock, IPredicate, ?> counterexample) throws AutomataOperationCanceledException {
+			final IRun<CodeBlock, IPredicate, ?> counterexample, final List<InterpolantsPreconditionPostcondition> ipps)
+			throws AutomataOperationCanceledException {
 		mBenchmark.start(CegarLoopStatisticsDefinitions.BasicInterpolantAutomatonTime.toString());
 		try {
 			final IInterpolantAutomatonBuilder<CodeBlock, IPredicate> builder =
-					mBuilderFunction.create(abstraction, interpolGenerator, counterexample);
+					mBuilderFunction.create(abstraction, interpolGenerator, counterexample, ipps);
 			return builder;
 		} finally {
 			mBenchmark.stop(CegarLoopStatisticsDefinitions.BasicInterpolantAutomatonTime.toString());
 		}
 	}
-
+	
 	private IInterpolantAutomatonBuilder<CodeBlock, IPredicate> createBuilderAbstractInterpretation(
 			final IAutomaton<CodeBlock, IPredicate> abstraction, final PredicateUnifier predicateUnifier,
 			final IRun<CodeBlock, IPredicate, ?> counterexample) {
 		return mAbsIntRunner.createInterpolantAutomatonBuilder(predicateUnifier,
 				(INestedWordAutomaton<CodeBlock, IPredicate>) abstraction, counterexample);
 	}
-
+	
 	private IInterpolantAutomatonBuilder<CodeBlock, IPredicate> createBuilderCanonical(
 			final IAutomaton<CodeBlock, IPredicate> abstraction, final IInterpolantGenerator interpolGenerator,
-			final IRun<CodeBlock, IPredicate, ?> counterexample) {
+			final IRun<CodeBlock, IPredicate, ?> counterexample,
+			final List<InterpolantsPreconditionPostcondition> ipps) {
+		if (ipps.size() != 1) {
+			throw new IllegalArgumentException("Need exactly one sequence of interpolants.");
+		}
+		final InterpolantsPreconditionPostcondition ipp = ipps.get(0);
+		
+		@SuppressWarnings("unchecked")
 		final CanonicalInterpolantAutomatonBuilder<? extends Object> iab =
-				new CanonicalInterpolantAutomatonBuilder(mServices, interpolGenerator.getIpp(), counterexample.getStateSequence(),
-						new InCaReAlphabet<CodeBlock>(abstraction), mCsToolkit, mPredicateFactory, mLogger,
+				new CanonicalInterpolantAutomatonBuilder<>(mServices, ipp, counterexample.getStateSequence(),
+						new InCaReAlphabet<>(abstraction), mCsToolkit, mPredicateFactory, mLogger,
 						interpolGenerator.getPredicateUnifier(), (NestedWord<CodeBlock>) interpolGenerator.getTrace());
 		iab.analyze();
 		mLogger.info("Interpolants " + iab.getResult().getStates());
 		final BackwardCoveringInformation bci = TraceCheckerUtils.computeCoverageCapability(
-				mServices, interpolGenerator.getIpp(), counterexample.getStateSequence(), mLogger, interpolGenerator.getPredicateUnifier());
+				mServices, ipp, counterexample.getStateSequence(), mLogger, interpolGenerator.getPredicateUnifier());
 		mBenchmark.addBackwardCoveringInformation(bci);
 		return iab;
 	}
-
+	
 	private IInterpolantAutomatonBuilder<CodeBlock, IPredicate> createBuilderSingleTrace(
 			final IAutomaton<CodeBlock, IPredicate> abstraction, final IInterpolantGenerator interpolGenerator,
-			final IRun<CodeBlock, IPredicate, ?> counterexample) {
+			@SuppressWarnings("unused") final IRun<CodeBlock, IPredicate, ?> counterexample,
+			@SuppressWarnings("unused") final List<InterpolantsPreconditionPostcondition> ipps) {
 		final StraightLineInterpolantAutomatonBuilder iab = new StraightLineInterpolantAutomatonBuilder(mServices,
-				new InCaReAlphabet<CodeBlock>(abstraction), interpolGenerator, mPredicateFactory);
+				new InCaReAlphabet<>(abstraction), interpolGenerator, mPredicateFactory);
 		return iab;
 	}
-
+	
 	private IInterpolantAutomatonBuilder<CodeBlock, IPredicate> createBuilderTotalInterpolation2(
 			final IAutomaton<CodeBlock, IPredicate> abstraction, final IInterpolantGenerator interpolGenerator,
-			final IRun<CodeBlock, IPredicate, ?> counterexample) throws AutomataOperationCanceledException {
+			final IRun<CodeBlock, IPredicate, ?> counterexample,
+			@SuppressWarnings("unused") final List<InterpolantsPreconditionPostcondition> ipps)
+			throws AutomataOperationCanceledException {
 		final INestedWordAutomaton<CodeBlock, IPredicate> castedAbstraction =
 				(INestedWordAutomaton<CodeBlock, IPredicate>) abstraction;
+		@SuppressWarnings("unchecked")
 		final NestedRun<CodeBlock, IPredicate> castedCex = (NestedRun<CodeBlock, IPredicate>) counterexample;
 		final TotalInterpolationAutomatonBuilder iab = new TotalInterpolationAutomatonBuilder(castedAbstraction,
 				castedCex.getStateSequence(), interpolGenerator, mCsToolkit, mPredicateFactory,
 				mCsToolkit.getModifiableGlobalsTable(), mInterpolationTechnique, mServices, mHoareTripleChecks,
-				mSimplificationTechnique, mXnfConversionTechnique, mRootAnnot.getBoogie2SMT().getBoogie2SmtSymbolTable());
+				mSimplificationTechnique, mXnfConversionTechnique,
+				mRootAnnot.getBoogie2SMT().getBoogie2SmtSymbolTable());
 		mBenchmark.addTotalInterpolationData(iab.getTotalInterpolationBenchmark());
 		return iab;
 	}
-
+	
+	@SuppressWarnings("unused")
 	private IInterpolantAutomatonBuilder<CodeBlock, IPredicate> createBuilderTwoTrack(
 			final IAutomaton<CodeBlock, IPredicate> abstraction, final IInterpolantGenerator interpolGenerator,
-			final IRun<CodeBlock, IPredicate, ?> counterexample) throws AutomataOperationCanceledException {
+			final IRun<CodeBlock, IPredicate, ?> counterexample, final List<InterpolantsPreconditionPostcondition> ipps)
+			throws AutomataOperationCanceledException {
 		if (!(interpolGenerator instanceof TraceCheckerSpWp)
 				&& !(interpolGenerator instanceof InterpolantConsolidation)) {
 			throw new AssertionError("TWOTRACK only for TraceCheckerSpWp or InterpolantConsolidation");
@@ -228,17 +245,16 @@ public class InterpolantAutomatonBuilderFactory {
 					counterexample, mCsToolkit, predicatesA, predicatesB, interpolGenerator.getPrecondition(),
 					interpolGenerator.getPostcondition(), abstraction);
 			return ttiab;
-		} else {
-			// Case of Canonical_Automaton, i.e. if the consolidation was successful
-			// FIXME: The case TWOTRACK from the switch is not nice. Should be refactored!
-			return createBuilderCanonical(abstraction, interpolGenerator, counterexample);
 		}
+		// Case of Canonical_Automaton, i.e. if the consolidation was successful
+		// FIXME: The case TWOTRACK from the switch is not nice. Should be refactored!
+		return createBuilderCanonical(abstraction, interpolGenerator, counterexample, ipps);
 	}
-
+	
 	@FunctionalInterface
 	private interface IBuilderFunction {
 		IInterpolantAutomatonBuilder<CodeBlock, IPredicate> create(final IAutomaton<CodeBlock, IPredicate> abstraction,
-				final IInterpolantGenerator interpolGenerator, final IRun<CodeBlock, IPredicate, ?> counterexample)
-				throws AutomataOperationCanceledException;
+				final IInterpolantGenerator interpolGenerator, final IRun<CodeBlock, IPredicate, ?> counterexample,
+				final List<InterpolantsPreconditionPostcondition> ipps) throws AutomataOperationCanceledException;
 	}
 }

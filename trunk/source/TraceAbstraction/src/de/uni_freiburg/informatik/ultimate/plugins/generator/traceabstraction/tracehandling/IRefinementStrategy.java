@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
+import java.util.List;
 import java.util.NoSuchElementException;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -8,9 +9,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.in
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.InterpolantAutomatonBuilderFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
 
 /**
- * An {@link IRefinementStrategy} allows an {@link IRefinementSelector} to try multiple combinations of
+ * An {@link IRefinementStrategy} allows an {@link IRefinementEngine} to try multiple combinations of
  * <ol>
  * <li>a {@link TraceChecker},</li>
  * <li>an {@link IInterpolantGenerator}, and</li>
@@ -22,10 +24,23 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public interface IRefinementStrategy {
+	public enum RefinementStrategyAdvance {
+		/**
+		 * Advance the {@link TraceChecker}.
+		 */
+		TRACE_CHECKER,
+		/**
+		 * Advance the {@link IInterpolantGenerator}.
+		 */
+		INTERPOLANT_GENERATOR,
+	}
+	
 	/**
+	 * @param advance
+	 *            How to advance.
 	 * @return {@code true} iff there are more combinations available.
 	 */
-	boolean hasNext();
+	boolean hasNext(RefinementStrategyAdvance advance);
 	
 	/**
 	 * Changes the combination.<br>
@@ -34,8 +49,11 @@ public interface IRefinementStrategy {
 	 * <p>
 	 * TODO We need an interface to give more information to the strategy about why we need a different combination.<br>
 	 * We need to collect the use cases first.
+	 * 
+	 * @param advance
+	 *            how to advance
 	 */
-	void next();
+	void next(final RefinementStrategyAdvance advance);
 	
 	/**
 	 * @return The trace checker strategy of the current combination.
@@ -52,5 +70,6 @@ public interface IRefinementStrategy {
 	/**
 	 * @return The interpolant automaton builder.
 	 */
-	IInterpolantAutomatonBuilder<CodeBlock, IPredicate> getInterpolantAutomatonBuilder();
+	IInterpolantAutomatonBuilder<CodeBlock, IPredicate>
+			getInterpolantAutomatonBuilder(List<InterpolantsPreconditionPostcondition> ipps);
 }

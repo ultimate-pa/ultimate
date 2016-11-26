@@ -1,4 +1,5 @@
 /*
+ * Copyright (C) 2016 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
  * Copyright (C) 2016 University of Freiburg
  *
@@ -26,21 +27,44 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.CachingHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 
 /**
- * Evaluator for interpolant automata.
+ * Checks a trace for feasibility and, if infeasible, constructs a proof of infeasibility.
  *
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * @param <T>
+ *            The type of the infeasibility proof, e.g., an interpolant automaton or a set of Hoare triples.
  */
-@FunctionalInterface
-public interface IInterpolantAutomatonEvaluator {
+public interface IRefinementEngine<T> {
 	/**
-	 * @param interpolantAutomaton
-	 *            Interpolant automaton.
-	 * @return {@code true} iff automaton should be accepted
+	 * @return Feasibility status of the counterexample trace.
 	 */
-	boolean accept(NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton);
+	LBool getCounterexampleFeasibility();
+	
+	/**
+	 * This method must only be called if {@link #getCounterexampleFeasibility()} returns {@code UNSAT}.
+	 * 
+	 * @return Proof of infeasibility.
+	 */
+	T getInfeasibilityProof();
+	
+	/**
+	 * @return Predicate unifier.
+	 */
+	PredicateUnifier getPredicateUnifier();
+	
+	/**
+	 * @return RCFG program execution.
+	 */
+	RcfgProgramExecution getRcfgProgramExecution();
+	
+	/**
+	 * @return Hoare triple checker.
+	 */
+	CachingHoareTripleChecker getHoareTripleChecker();
 }

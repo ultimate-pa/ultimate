@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.CFGInvariantsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.IInvariantPatternProcessor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.IInvariantPatternProcessorFactory;
@@ -60,23 +61,25 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pa
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils;
 
 /**
- * Represents a map of invariants to a run, that has been generated using a {@link IInvariantPatternProcessor} on the
+ * Represents a map of invariants to a run that has been generated using a {@link IInvariantPatternProcessor} on the
  * run-projected CFG.
  *
  * @author Dirk Steinmetz, Matthias Heizmann, Betim Musa
  */
 public final class PathInvariantsGenerator implements IInterpolantGenerator {
-
+	
 	private final NestedRun<? extends IAction, IPredicate> mRun;
 	private final IPredicate mPrecondition;
 	private final IPredicate mPostcondition;
 	private final IPredicate[] mInterpolants;
 	private final PredicateUnifier mPredicateUnifier;
+	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private static boolean USE_LIVE_VARIABLES = false;
-
+	
 	/**
 	 * Creates a default factory.
 	 *
@@ -104,7 +107,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 				strategy, useNonlinerConstraints, useVarsFromUnsatCore, solverSettings, simplicationTechnique,
 				xnfConversionTechnique, axioms);
 	}
-
+	
 	/**
 	 * Generates a map of invariants to a given run, using an {@link IInvariantPatternProcessor} produced by the default
 	 * {@link IInvariantPatternProcessorFactory} (with default settings).
@@ -140,7 +143,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 				createDefaultFactory(services, storage, predicateUnifier, csToolkit, useNonlinerConstraints,
 						useVarsFromUnsatCore, solverSettings, simplicationTechnique, xnfConversionTechnique, axioms));
 	}
-
+	
 	/**
 	 * Generates a map of invariants to a given run, using an {@link IInvariantPatternProcessor} produced by a given
 	 * {@link IInvariantPatternProcessorFactory}.
@@ -166,33 +169,34 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 			final ModifiableGlobalsTable modifiableGlobalsTable,
 			final IInvariantPatternProcessorFactory<?> invPatternProcFactory) {
 		super();
+		mServices = services;
 		mRun = run;
 		mPrecondition = precondition;
 		mPostcondition = postcondition;
 		mPredicateUnifier = predicateUnifier;
-
+		
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
-
+		
 		mLogger.info("Started with a run of length " + mRun.getLength());
-
+		
 		// Project path to CFG
 		final int len = mRun.getLength();
 		final List<BoogieIcfgLocation> locations = new ArrayList<>(len);
 //		final Map<BoogieIcfgLocation, IcfgLocation> locationsForProgramPoint = new HashMap<>(len);
 		final List<IcfgInternalAction> transitions = new ArrayList<>(len - 1);
-
+		
 		for (int i = 0; i < len; i++) {
 			final ISLPredicate pred = (ISLPredicate) mRun.getStateAtPosition(i);
 			final BoogieIcfgLocation programPoint = pred.getProgramPoint();
-
+			
 //			IcfgLocation location = locationsForProgramPoint.get(programPoint);
 //			if (location == null) {
 //				location = new IcfgLocation(programPoint.getDebugIdentifier(), programPoint.getProcedure(), (Payload) programPoint.getPayload());
 //				locationsForProgramPoint.put(programPoint, location);
 //			}
-
+			
 			locations.add(programPoint);
-
+			
 			if (i > 0) {
 				if (!mRun.getWord().isInternalPosition(i - 1)) {
 					throw new UnsupportedOperationException("interprocedural traces are not supported (yet)");
@@ -201,15 +205,16 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 				final UnmodifiableTransFormula transFormula =
 						((IInternalAction) mRun.getSymbol(i - 1)).getTransformula();
 //				transitions.add(new Transition(transFormula, locations.get(i - 1), location));
-				transitions.add(new IcfgInternalAction(locations.get(i - 1), programPoint, programPoint.getPayload(), transFormula));
+				transitions.add(new IcfgInternalAction(locations.get(i - 1), programPoint, programPoint.getPayload(),
+						transFormula));
 			}
 		}
 
 //		final ControlFlowGraph cfg =
 //				new ControlFlowGraph(locations.get(0), locations.get(len - 1), locations, transitions);
 		mLogger.info("[PathInvariants] Built projected CFG, " + locations.size() + " states and " + transitions.size()
-		+ " transitions.");
-
+				+ " transitions.");
+		
 //		// AI Module
 //		final boolean usePredicatesFromAbstractInterpretation = true; // TODO make a Pref
 //		Map<IcfgLocation, Term> initialPredicates = null;
@@ -233,23 +238,24 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 //			}
 //		}
 //		// End AI Module
-
+		
 		// Generate invariants
 		final CFGInvariantsGenerator generator = new CFGInvariantsGenerator(services);
 		final Map<BoogieIcfgLocation, IPredicate> invariants;
-
+		
 		if (USE_LIVE_VARIABLES) {
 			invariants = null;
 			// TODO: Compute the live variables and use them.
 		} else {
 //			invariants = generator.generateInvariantsFromCFG(cfg, precondition, postcondition, invPatternProcFactory,
 //					useVarsFromUnsatCore, false, null);
-			invariants = generator.generateInvariantsForTransitions(locations, transitions, precondition, postcondition, invPatternProcFactory,
-			useVarsFromUnsatCore, false, null);
+			invariants = generator.generateInvariantsForTransitions(locations, transitions, precondition, postcondition,
+					invPatternProcFactory,
+					useVarsFromUnsatCore, false, null);
 			
 			mLogger.info("[PathInvariants] Generated invariant map.");
 		}
-
+		
 		// Populate resulting array
 		if (invariants != null) {
 			mInterpolants = new IPredicate[len];
@@ -264,32 +270,32 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 			mLogger.info("[PathInvariants] No invariants found.");
 		}
 	}
-
+	
 	@Override
 	public Word<? extends IAction> getTrace() {
 		return mRun.getWord();
 	}
-
+	
 	@Override
 	public IPredicate getPrecondition() {
 		return mPrecondition;
 	}
-
+	
 	@Override
 	public IPredicate getPostcondition() {
 		return mPostcondition;
 	}
-
+	
 	@Override
 	public Map<Integer, IPredicate> getPendingContexts() {
 		throw new UnsupportedOperationException("Call/Return not supported yet");
 	}
-
+	
 	@Override
 	public PredicateUnifier getPredicateUnifier() {
 		return mPredicateUnifier;
 	}
-
+	
 	/**
 	 * Returns a sequence of interpolants (see definition in {@link IInterpolantGenerator}) the trace which is
 	 * mRun.getWord() with an additional property. If the ProgramPoint and position i and k coincide then the
@@ -306,5 +312,12 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		final IPredicate[] interpolantMapWithOutFirstInterpolant = new IPredicate[mInterpolants.length - 2];
 		System.arraycopy(mInterpolants, 1, interpolantMapWithOutFirstInterpolant, 0, mInterpolants.length - 2);
 		return interpolantMapWithOutFirstInterpolant;
+	}
+	
+	@Override
+	public boolean isPerfectSequence() {
+		final BackwardCoveringInformation bci = TraceCheckerUtils.computeCoverageCapability(mServices, this, mLogger);
+		final boolean isPerfect = bci.getPotentialBackwardCoverings() == bci.getSuccessfullBackwardCoverings();
+		return isPerfect;
 	}
 }

@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
 
 /**
@@ -63,6 +64,7 @@ public class TaCheckAndRefinementPreferences {
 	private final int mIteration;
 	
 	// fields that can be read from the TAPreferences
+	private final RefinementStrategy mRefinementStrategy;
 	private final boolean mUseSeparateSolverForTracechecks;
 	private final SolverMode mSolverMode;
 	private final boolean mFakeNonIncrementalSolver;
@@ -125,6 +127,7 @@ public class TaCheckAndRefinementPreferences {
 		mCegarLoopBenchmark = cegarLoopBenchmark;
 		mIteration = iteration;
 		
+		mRefinementStrategy = taPrefs.getRefinementStrategy();
 		mUseSeparateSolverForTracechecks = taPrefs.useSeparateSolverForTracechecks();
 		mSolverMode = taPrefs.solverMode();
 		mFakeNonIncrementalSolver = taPrefs.fakeNonIncrementalSolver();
@@ -145,6 +148,10 @@ public class TaCheckAndRefinementPreferences {
 				.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_NONLINEAR_CONSTRAINTS_IN_PATHINVARIANTS);
 		mUseVarsFromUnsatCore =
 				ultimatePrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_UNSAT_CORES_IN_PATHINVARIANTS);
+	}
+
+	public RefinementStrategy getRefinementStrategy() {
+		return mRefinementStrategy;
 	}
 	
 	public boolean getUseSeparateSolverForTracechecks() {

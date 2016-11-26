@@ -43,35 +43,37 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * </ul>
  * a sequence of interpolants is a sequence of predicates φ_1,...,φ_{n-1} such that the inclusion post(φ_i, cb_i}) ⊆
  * φ_{i+1} holds for 0⩽i<n.
- *
  * A sequence of interpolants can be seen as a Hoare annotation for the program that corresponds to the trace.
  *
  * @author heizmann@informatik.uni-freiburg.de
- *
  */
 public interface IInterpolantGenerator {
-
+	
 	Word<? extends IAction> getTrace();
-
+	
 	IPredicate getPrecondition();
-
+	
 	IPredicate getPostcondition();
-
+	
 	Map<Integer, IPredicate> getPendingContexts();
-
+	
 	/**
-	 * Return a sequence of predicates that is a sequence of interpolations according to the definition given above.
+	 * @return A sequence of predicates that is a sequence of interpolations according to the definition given above.
 	 */
 	IPredicate[] getInterpolants();
-
+	
 	/**
-	 * @return the PredicateUnifier that was used to construct the interpolants
+	 * @return The PredicateUnifier that was used to construct the interpolants.
 	 */
 	PredicateUnifier getPredicateUnifier();
 	
-	default public InterpolantsPreconditionPostcondition getIpp() {
-		return new InterpolantsPreconditionPostcondition(getPrecondition(), getPostcondition(), Arrays.asList(getInterpolants()));
+	default InterpolantsPreconditionPostcondition getIpp() {
+		return new InterpolantsPreconditionPostcondition(getPrecondition(), getPostcondition(),
+				Arrays.asList(getInterpolants()));
 	}
-
-
+	
+	/**
+	 * @return {@code true} iff the interpolant sequence is perfect.
+	 */
+	boolean isPerfectSequence();
 }
