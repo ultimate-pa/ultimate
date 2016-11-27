@@ -381,6 +381,13 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 	 */
 	public enum RefinementStrategy {
-		FIXED_PREFERENCES
+		/**
+		 * Simple strategy that reads the information from the settings.
+		 */
+		FIXED_PREFERENCES,
+		/**
+		 * Multi track strategy that tries Craig interpolation and Sp/Wp interpolation.
+		 */
+		MULTI_TRACK
 	}
 }

@@ -166,6 +166,9 @@ public final class TraceAbstractionRefinementEngine
 			case FIXED_PREFERENCES:
 				return new FixedTraceAbstractionRefinementStrategy(mLogger, mPrefs, managedScript, services,
 						mPredicateUnifier, counterexample, abstraction, taPrefsForInterpolantConsolidation);
+			case MULTI_TRACK:
+				return new MultiTrackTraceAbstractionRefinementStrategy(mLogger, mPrefs, managedScript, services,
+						mPredicateUnifier, counterexample, abstraction, taPrefsForInterpolantConsolidation);
 			default:
 				throw new IllegalArgumentException(
 						"Unknown refinement strategy specified: " + mPrefs.getRefinementStrategy());
