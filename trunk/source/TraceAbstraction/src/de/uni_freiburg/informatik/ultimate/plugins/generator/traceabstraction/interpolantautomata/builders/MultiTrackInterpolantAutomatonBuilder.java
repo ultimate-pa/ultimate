@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders;
 
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -44,12 +45,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
 
 /**
- * Interpolant automaton builder for multiple sequences of interpolants.
+ * Interpolant automaton builder for multiple sequences of interpolants (also works for one sequence).
  * <p>
  * The contract of this class is that all sequences of interpolants in the input share the same pre- and postcondition.
  * Hence it suffices to look at only one of them.
  * <p>
- * This is a generalization of the {@link TwoTrackInterpolantAutomatonBuilder}.
+ * This class is a generalization of {@link TwoTrackInterpolantAutomatonBuilder}.
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
@@ -73,6 +74,8 @@ public class MultiTrackInterpolantAutomatonBuilder implements IInterpolantAutoma
 		if (interpolantSequences.isEmpty()) {
 			throw new IllegalArgumentException("Empty list of interpolant sequences is not allowed.");
 		}
+		assert sequencesHaveSamePrePostconditions(
+				interpolantSequences) : "The interpolant sequences should have the same pre- and postconditions.";
 		
 		mResult = constructInterpolantAutomaton(services, abstraction, interpolantSequences,
 				NestedWord.nestedWord(nestedRun.getWord()), abstraction.getStateFactory());
@@ -119,6 +122,7 @@ public class MultiTrackInterpolantAutomatonBuilder implements IInterpolantAutoma
 	 * @param interpolantSequences
 	 *            sequences of interpolants
 	 * @param nestedWord
+	 *            trace along which the interpolants are constructed
 	 */
 	private static void addStatesAccordingToPredicates(final NestedWordAutomaton<CodeBlock, IPredicate> nwa,
 			final List<InterpolantsPreconditionPostcondition> interpolantSequences,
@@ -138,7 +142,7 @@ public class MultiTrackInterpolantAutomatonBuilder implements IInterpolantAutoma
 	
 	/**
 	 * @param predicate
-	 *            predicate
+	 *            Predicate.
 	 * @return {@code true} iff the predicate is {@code false}
 	 */
 	private static boolean isFalsePredicate(final IPredicate predicate) {
@@ -158,6 +162,7 @@ public class MultiTrackInterpolantAutomatonBuilder implements IInterpolantAutoma
 	 * @param interpolantSequences
 	 *            sequences of interpolants
 	 * @param nestedWord
+	 *            trace along which the interpolants are constructed
 	 */
 	private static void addBasicTransitions(final NestedWordAutomaton<CodeBlock, IPredicate> nwa,
 			final List<InterpolantsPreconditionPostcondition> interpolantSequences,
@@ -192,5 +197,23 @@ public class MultiTrackInterpolantAutomatonBuilder implements IInterpolantAutoma
 				nwa.addInternalTransition(pred, symbol, succ);
 			}
 		}
+	}
+	
+	@SuppressWarnings("squid:S1698")
+	private static boolean
+			sequencesHaveSamePrePostconditions(final List<InterpolantsPreconditionPostcondition> interpolantSequences) {
+		final Iterator<InterpolantsPreconditionPostcondition> it = interpolantSequences.iterator();
+		final InterpolantsPreconditionPostcondition first = it.next();
+		
+		final IPredicate precondition = first.getPrecondition();
+		final IPredicate postcondition = first.getPostcondition();
+		
+		while (it.hasNext()) {
+			final InterpolantsPreconditionPostcondition sequence = it.next();
+			if (precondition != sequence.getPrecondition() || postcondition != sequence.getPostcondition()) {
+				return false;
+			}
+		}
+		return true;
 	}
 }
