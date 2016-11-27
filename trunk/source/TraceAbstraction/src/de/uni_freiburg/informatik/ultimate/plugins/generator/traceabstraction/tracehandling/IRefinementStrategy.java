@@ -18,12 +18,21 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * <li>an {@link IInterpolantGenerator}, and</li>
  * <li>an {@link InterpolantAutomatonBuilderFactory}.</li>
  * </ol>
- * In the following, this combination is just called "combination".
+ * In the following class documentation this combination is just called "combination".
+ * <p>
+ * The class contract is that {@link #hasNext(RefinementStrategyAdvance)} returns {@code true} iff
+ * {@link #next(RefinementStrategyAdvance)} advances the respective component. Between two calls to
+ * {@link #next(RefinementStrategyAdvance)} the respective getter returns the same object.
  *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public interface IRefinementStrategy {
+	/**
+	 * Determines which component of the current combination should be advanced.
+	 * 
+	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+	 */
 	public enum RefinementStrategyAdvance {
 		/**
 		 * Advance the {@link TraceChecker}.
@@ -46,9 +55,6 @@ public interface IRefinementStrategy {
 	 * Changes the combination.<br>
 	 * Throws a {@link NoSuchElementException} if there is no next combination; use {@link #hasNext()} to
 	 * check this.
-	 * <p>
-	 * TODO We need an interface to give more information to the strategy about why we need a different combination.<br>
-	 * We need to collect the use cases first.
 	 * 
 	 * @param advance
 	 *            how to advance
@@ -68,6 +74,8 @@ public interface IRefinementStrategy {
 	IInterpolantGenerator getInterpolantGenerator();
 	
 	/**
+	 * @param ipps
+	 *            Sequences of interpolants.
 	 * @return The interpolant automaton builder.
 	 */
 	IInterpolantAutomatonBuilder<CodeBlock, IPredicate>
