@@ -80,6 +80,32 @@ public final class TraceAbstractionRefinementEngine
 	private RcfgProgramExecution mRcfgProgramExecution;
 	private final CachingHoareTripleChecker mHoareTripleChecker;
 	
+	/**
+	 * @param services
+	 *            Ultimate services.
+	 * @param logger
+	 *            logger
+	 * @param prefs
+	 *            preferences
+	 * @param predicateFactory
+	 *            predicate factory
+	 * @param icfgContainer
+	 *            ICFG container
+	 * @param simplificationTechnique
+	 *            simplification technique
+	 * @param xnfConversionTechnique
+	 *            XNF conversion technique
+	 * @param toolchainStorage
+	 *            toolchain storage
+	 * @param taPrefsForInterpolantConsolidation
+	 *            trace abstraction preferences (only used for interpolant consolidation)
+	 * @param iteration
+	 *            current iteration
+	 * @param counterexample
+	 *            counterexample
+	 * @param abstraction
+	 *            old abstraction
+	 */
 	public TraceAbstractionRefinementEngine(final IUltimateServiceProvider services, final ILogger logger,
 			final TaCheckAndRefinementPreferences prefs, final PredicateFactory predicateFactory,
 			final BoogieIcfgContainer icfgContainer, final SimplificationTechnique simplificationTechnique,
@@ -99,7 +125,7 @@ public final class TraceAbstractionRefinementEngine
 		final IRefinementStrategy strategy = chooseStrategy(counterexample, abstraction, services, managedScript,
 				taPrefsForInterpolantConsolidation);
 		
-		mFeasibility = executeStrategy(strategy, services);
+		mFeasibility = executeStrategy(strategy);
 		if (strategy.getInterpolantGenerator() instanceof InterpolantConsolidation) {
 			mHoareTripleChecker =
 					((InterpolantConsolidation) strategy.getInterpolantGenerator()).getHoareTripleChecker();
@@ -146,7 +172,7 @@ public final class TraceAbstractionRefinementEngine
 		}
 	}
 	
-	private LBool executeStrategy(final IRefinementStrategy strategy, final IUltimateServiceProvider services) {
+	private LBool executeStrategy(final IRefinementStrategy strategy) {
 		List<InterpolantsPreconditionPostcondition> interpolantSequences = new LinkedList<>();
 		do {
 			// check feasibility using the strategy
