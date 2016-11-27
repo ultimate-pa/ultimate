@@ -85,6 +85,24 @@ class TraceCheckerConstructor implements Supplier<TraceChecker> {
 		mInterpolationTechnique = interpolationTechnique;
 	}
 	
+	/**
+	 * Copy constructor.
+	 * 
+	 * @param other
+	 *            other object to copy fields from
+	 * @param interpolationTechnique
+	 *            new interpolation technique
+	 */
+	public TraceCheckerConstructor(final TraceCheckerConstructor other,
+			final InterpolationTechnique interpolationTechnique) {
+		mPrefs = other.mPrefs;
+		mManagedScript = other.mManagedScript;
+		mServices = other.mServices;
+		mPredicateUnifier = other.mPredicateUnifier;
+		mCounterexample = other.mCounterexample;
+		mInterpolationTechnique = interpolationTechnique;
+	}
+	
 	@Override
 	public TraceChecker get() {
 		final TraceChecker traceChecker;
@@ -114,7 +132,7 @@ class TraceCheckerConstructor implements Supplier<TraceChecker> {
 		
 		return traceChecker;
 	}
-
+	
 	private TraceChecker constructCraig() {
 		final IPredicate truePredicate = mPredicateUnifier.getTruePredicate();
 		final IPredicate falsePredicate = mPredicateUnifier.getFalsePredicate();
@@ -131,7 +149,7 @@ class TraceCheckerConstructor implements Supplier<TraceChecker> {
 				false);
 		return traceChecker;
 	}
-
+	
 	private TraceChecker constructForwardBackward() {
 		final IPredicate truePredicate = mPredicateUnifier.getTruePredicate();
 		final IPredicate falsePredicate = mPredicateUnifier.getFalsePredicate();
@@ -148,7 +166,7 @@ class TraceCheckerConstructor implements Supplier<TraceChecker> {
 				simplificationTechnique, mCounterexample.getStateSequence());
 		return traceChecker;
 	}
-
+	
 	@SuppressWarnings("unchecked")
 	private TraceChecker constructPathInvariants() {
 		final IPredicate truePredicate = mPredicateUnifier.getTruePredicate();
