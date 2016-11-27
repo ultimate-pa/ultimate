@@ -151,7 +151,7 @@ public class FixedTraceAbstractionRefinementStrategy implements IRefinementStrat
 			if (mPrefs.getUseInterpolantConsolidation()) {
 				try {
 					return consolidateInterpolants(interpolatingTraceChecker);
-				} catch (final AutomataOperationCanceledException e1) {
+				} catch (final AutomataOperationCanceledException e) {
 					// Timeout
 					throw new AssertionError("react on timeout, not yet implemented");
 				}
