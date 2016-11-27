@@ -60,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.bdd.SimplifyBdd;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineRelation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineSubtermNormalizer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineTerm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineTermTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.NotAffineException;
@@ -125,7 +126,7 @@ public final class SmtUtils {
 		final long startTime = System.nanoTime();
 		final int sizeBefore = new DAGSize().treesize(formula);
 		final Term simplified = simplify(script, formula, services, simplificationTechnique);
-		final int sizeAfter = new DAGSize().treesize(formula);
+		final int sizeAfter = new DAGSize().treesize(simplified);
 		final long endTime = System.nanoTime();
 		final ExtendedSimplificationResult result = new ExtendedSimplificationResult(
 				simplified, endTime - startTime, sizeBefore - sizeAfter);
@@ -1271,5 +1272,11 @@ public final class SmtUtils {
 			return term;
 		}
 		return affineTerm.toTerm(script);
+	}
+	
+	public static Term constructPositiveNormalForm(final Script script, final Term term) {
+		final Term result = new AffineSubtermNormalizer(script).transform(term);
+		assert Util.checkSat(script, script.term("distinct", term, result)) != LBool.SAT;
+		return result;
 	}
 }
