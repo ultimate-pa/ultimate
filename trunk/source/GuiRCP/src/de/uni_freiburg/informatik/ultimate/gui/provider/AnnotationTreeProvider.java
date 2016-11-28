@@ -163,7 +163,9 @@ public class AnnotationTreeProvider implements ITreeContentProvider {
 			rtr.add(annotationGroup);
 			for (final Map.Entry<String, IAnnotations> outer : payload.getAnnotations().entrySet()) {
 				final GroupEntry group = new GroupEntry(outer.getKey(), annotationGroup);
-
+				if (outer.getValue() == null) {
+					continue;
+				}
 				final Map<String, Object> innerMap = outer.getValue().getAnnotationsAsMap();
 
 				// add traditional annotations to view
