@@ -258,15 +258,13 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 	
 	/**
 	 * 
-	 * 
-	 * 
 	 * @param term
 	 * @param state
-	 * @return
+	 * @return An eqNode if we are tracking term, null otherwise
 	 */
 	private EqNode getNodeFromTerm(final Term term) {
 		EqNode result = mDomain.getEqNodeFromTerm(term);
-		assert result != null;
+		//assert result != null;
 		return result;
 		
 		
