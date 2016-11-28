@@ -29,7 +29,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Collectionsaaaa;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.core.model.IAnalysis;
