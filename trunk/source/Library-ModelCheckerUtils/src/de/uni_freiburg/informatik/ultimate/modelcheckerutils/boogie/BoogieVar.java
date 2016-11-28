@@ -98,7 +98,7 @@ public abstract class BoogieVar implements IProgramVar, Serializable, IBoogieVar
 	
 	@Override
 	public Term getTerm() {
-		return mDefaultConstant;
+		return mTermVariable;
 	}
 
 	@Override
