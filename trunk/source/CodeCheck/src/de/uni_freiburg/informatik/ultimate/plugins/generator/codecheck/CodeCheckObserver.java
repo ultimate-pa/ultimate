@@ -66,6 +66,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.heapseparator.HsNonPlugin;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -178,8 +179,6 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	private boolean initialize(final IElement root) {
 		readPreferencePage();
 		
-		mGlobalSettings = new CodeCheckSettings();
-
 		mOriginalRoot = (BoogieIcfgContainer) root;
 		final BoogieIcfgContainer rootAnnot = mOriginalRoot;
 
@@ -278,6 +277,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 
 	private void readPreferencePage() {
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
+		
+		mGlobalSettings = new CodeCheckSettings();
 
 		mGlobalSettings.setChecker(prefs.getEnum(CodeCheckPreferenceInitializer.LABEL_CHECKER, Checker.class));
 
@@ -380,6 +381,15 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	@Override
 	public boolean process(final IElement root) {
 		initialize(root);
+		
+		
+		/*
+		 * test code for heap separation
+		 */
+//		HsNonPlugin hnp = new HsNonPlugin(mServices, mCsToolkit.getManagedScript(), mLogger);
+//		hnp.separate((BoogieIcfgContainer) root);
+		
+		
 
 		mGraphWriter.writeGraphAsImage(mGraphRoot, String.format("graph_%s_original", mGraphWriter._graphCounter));
 
