@@ -58,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDim
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RCFGEdgeVisitor;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.AbstractRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
@@ -81,6 +82,9 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 
 	private final NestedMap2<IProgramVarOrConst, List<EqNode>, EqFunctionNode> mEqFunctionNodeStore = new NestedMap2<>();
 	private final Map<IProgramVarOrConst, EqBaseNode> mEqBaseNodeStore = new HashMap<>();
+	
+	private final Set<ApplicationTerm> mEquations = new HashSet<>();
+	private final Set<ApplicationTerm> mSelectTerms = new HashSet<>();
 	
 	/**
 	 * Stores for each array, which Terms(EqNodes) are used to access it.
@@ -140,31 +144,19 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 		}
 
 		/*
-		 * handle TermVariables and constants that are equated to a select
+		 * Store all select-terms and equations for postprocessing
+		 *  
 		 */
-		// find equations
 		Set<String> equationFunctionNames = new HashSet<String>(2);
 		equationFunctionNames.add("=");
 		equationFunctionNames.add("distinct");
 		Set<ApplicationTerm> equations = 
 				new ApplicationTermFinder(equationFunctionNames, false)
 					.findMatchingSubterms(formulaWithNormalizedVariables);
-		// find the "other sides" of an equation were one side is a select term
-		Set<Term> selectTerms = mdSelects.stream().map(mds -> mds.getSelectTerm()).collect(Collectors.toSet());
-		Set<Term> termsEquatedWithASelectTerm = new HashSet<>();
-		for (ApplicationTerm eq : equations) {
-			if (selectTerms.contains(eq.getParameters()[0])
-					&& !selectTerms.contains(eq.getParameters()[1])) {
-				termsEquatedWithASelectTerm.add(eq.getParameters()[1]);
-			} else if (selectTerms.contains(eq.getParameters()[1])
-					&& !selectTerms.contains(eq.getParameters()[0])) {
-				termsEquatedWithASelectTerm.add(eq.getParameters()[0]);
-			}
-		}
-		// construct nodes for the "other sides"
-		for (Term t : termsEquatedWithASelectTerm) {
-			getOrConstructEqNode(t);
-		}
+		mEquations.addAll(equations);
+		Set<ApplicationTerm> selectTerms = mdSelects.stream().map(mds -> mds.getSelectTerm()).collect(Collectors.toSet());
+		mSelectTerms.addAll(selectTerms);
+
 	}
 	
 	private EqNode constructEqNode(MultiDimensionalStore mds) {
@@ -344,5 +336,89 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 	 */
 	public boolean isArrayAccessedAt(IProgramVarOrConst array, EqNode index) {
 		return mArrayToAccessingEqNodes.containsPair(array, index);
+	}
+
+	/**
+	 * Called after the main run (which is initiated by the constructor)
+	 * 
+	 * We have collected all (multi-dimensional) select-terms in the program and all equations.
+	 * Plan:
+	 *  construct EqNodes for everything that is equated to a select-term, and then build the
+	 *  transitive closure.
+	 */
+	public void postProcess() {
+		/*
+		 * Add to the initial set all terms that are
+		 * equated to a select-term 
+		 */
+		final Set<Term> termsEquatedWithASelectTerm = new HashSet<>();
+		for (ApplicationTerm eq : mEquations) {
+			if (mSelectTerms.contains(eq.getParameters()[0])
+					&& !mSelectTerms.contains(eq.getParameters()[1])) {
+				termsEquatedWithASelectTerm.add(eq.getParameters()[1]);
+			} else if (mSelectTerms.contains(eq.getParameters()[1])
+					&& !mSelectTerms.contains(eq.getParameters()[0])) {
+				termsEquatedWithASelectTerm.add(eq.getParameters()[0]);
+			}
+		}
+		
+		/*
+		 * Add to the initial set all terms that are equated to an array index.
+		 */
+		Set<Term> arrayIndices = new HashSet<>();
+		for (IProgramVarOrConst array : mArrayToAccessingEqNodes.getDomain()) {
+			for (EqNode eqNode : mArrayToAccessingEqNodes.getImage(array)) {
+				arrayIndices.add(eqNode.getTerm(mScript));
+			}
+		}
+		
+		
+		/*
+		 * compute the closure over the "being-equated-in-the-program" relation
+		 */
+		final Set<Term> closure = new HashSet<>(termsEquatedWithASelectTerm);
+		closure.addAll(arrayIndices);
+
+		boolean madeProgress = true;
+		while (madeProgress) {
+			madeProgress = false;
+			
+			for (ApplicationTerm eq : mEquations) {
+				if (closure.contains(eq.getParameters()[0])
+						&& !closure.contains(eq.getParameters()[1])) {
+					closure.add(eq.getParameters()[1]);
+					madeProgress = true;
+				} else if (closure.contains(eq.getParameters()[1])
+						&& !closure.contains(eq.getParameters()[0])) {
+					closure.add(eq.getParameters()[0]);
+					madeProgress = true;
+				}
+			}
+		}
+		
+		/*
+		 * Construct EqNodes for all the additionally discovered Terms
+		 */
+		for (Term t : closure) {
+			getOrConstructEqNode(t);
+		}
+			
+			
+//		// find the "other sides" of an equation were one side is a select term
+//		Set<Term> selectTerms = mdSelects.stream().map(mds -> mds.getSelectTerm()).collect(Collectors.toSet());
+//		Set<Term> termsEquatedWithASelectTerm = new HashSet<>();
+//		for (ApplicationTerm eq : equations) {
+//			if (selectTerms.contains(eq.getParameters()[0])
+//					&& !selectTerms.contains(eq.getParameters()[1])) {
+//				termsEquatedWithASelectTerm.add(eq.getParameters()[1]);
+//			} else if (selectTerms.contains(eq.getParameters()[1])
+//					&& !selectTerms.contains(eq.getParameters()[0])) {
+//				termsEquatedWithASelectTerm.add(eq.getParameters()[0]);
+//			}
+//		}
+		// construct nodes for the "other sides"
+//		for (Term t : termsEquatedWithASelectTerm) {
+//			getOrConstructEqNode(t);
+//		}
 	}
 }
