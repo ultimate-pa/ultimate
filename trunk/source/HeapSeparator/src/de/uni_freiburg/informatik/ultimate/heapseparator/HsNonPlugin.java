@@ -130,7 +130,15 @@ public class HsNonPlugin {
 		for (IProgramVarOrConst array : hspav.getArrayToAccessLocations().getDomain()) {
 			VPState disjoinedState = ((VPDomain) vpDomainResult.getUsedDomain()).getBottomState();
 			for (IcfgLocation loc : hspav.getArrayToAccessLocations().getImage(array)) {
-				disjoinedState = disjoinedState.disjoin(vpDomainResult.getLoc2SingleStates().get(loc));
+				Set<VPState> statesAtLoc = vpDomainResult.getLoc2States().get(loc);
+				if (statesAtLoc == null) {
+					//TODO: this probably should not happen once we support procedures
+					continue;
+				}
+				for (VPState state : statesAtLoc) {
+					disjoinedState = disjoinedState.disjoin(state);
+					assert disjoinedState != null;
+				}
 			}
 			arrayToVPState.put(array, disjoinedState);
 		}

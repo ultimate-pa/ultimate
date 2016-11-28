@@ -77,8 +77,8 @@ public class HeapSepPreAnalysisVisitor extends SimpleRCFGVisitor {
 
 
 
-	private AbstractRelation<IProgramVarOrConst, IcfgLocation, ?> findArrayAccesses(CodeBlock edge) {
-		AbstractRelation<IProgramVar, IcfgLocation, ?> result = new HashRelation<>();
+	private HashRelation<IProgramVarOrConst, IcfgLocation> findArrayAccesses(CodeBlock edge) {
+		HashRelation<IProgramVarOrConst, IcfgLocation> result = new HashRelation<>();
 		
 		for (Entry<IProgramVar, TermVariable> en : edge.getTransitionFormula().getInVars().entrySet()) {
 			IProgramVar pv = en.getKey();
@@ -96,8 +96,7 @@ public class HeapSepPreAnalysisVisitor extends SimpleRCFGVisitor {
 			// we have an array variable --> store that it occurs after the source location of the edge
 			result.addPair(pv, edge.getSource());
 		}	
-		return null;
-//		return result; //TODO
+		return result;
 	}
 
 	@Override
