@@ -93,7 +93,7 @@ public final class Difference<LETTER, STATE> extends BinaryNwaOperation<LETTER, 
 	 * @param services
 	 *            Ultimate services
 	 * @param stateFactory
-	 *            state factory for powerset determinizer
+	 *            state factory for powerset determinizer and intersection
 	 * @param fstOperand
 	 *            first operand
 	 * @param sndOperand
@@ -104,7 +104,7 @@ public final class Difference<LETTER, STATE> extends BinaryNwaOperation<LETTER, 
 	public Difference(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) throws AutomataLibraryException {
-		this(services, fstOperand.getStateFactory(), fstOperand, sndOperand,
+		this(services, stateFactory, fstOperand, sndOperand,
 				new PowersetDeterminizer<>(sndOperand, true, stateFactory), false);
 	}
 	
