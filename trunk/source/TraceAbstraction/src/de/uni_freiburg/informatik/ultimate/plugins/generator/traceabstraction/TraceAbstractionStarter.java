@@ -62,6 +62,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgElement;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
@@ -170,6 +171,8 @@ public class TraceAbstractionStarter {
 			locsForLoopLocations.addAll(rootAnnot.getPotentialCycleProgramPoints());
 			locsForLoopLocations.addAll(rootAnnot.getLoopLocations().keySet());
 			// find all locations that have outgoing edges which are annotated with LoopEntry, i.e., all loop candidates
+
+			
 			
 			for (final BoogieIcfgLocation locNode : locsForLoopLocations) {
 				final HoareAnnotation hoare = getHoareAnnotation(locNode);
@@ -224,6 +227,18 @@ public class TraceAbstractionStarter {
 		
 		mRootOfNewModel = mArtifact;
 	}
+
+//	private void computeHoareAnnotation(final Set<? extends IcfgLocation> locsForHoareAnnotation) {
+//		final HoareAnnotationStatisticsGenerator hoareAnnotationStatisticsGenerator = new HoareAnnotationStatisticsGenerator();
+//		for (final IcfgLocation locNode : locsForHoareAnnotation) {
+//			final HoareAnnotation hoare = getHoareAnnotation(locNode);
+//			if (hoare == null) {
+//				continue;
+//			}
+//			hoare.computeFormula(hoareAnnotationStatisticsGenerator);
+//		}
+//		hoareAnnotationStatisticsGenerator.toString();
+//	}
 	
 	private void logNumberOfWitnessInvariants(final Collection<BoogieIcfgLocation> errNodesOfAllProc) {
 		int numberOfCheckedInvariants = 0;
@@ -259,7 +274,14 @@ public class TraceAbstractionStarter {
 		if (taPrefs.computeHoareAnnotation() && mOverallResult == Result.SAFE) {
 			mLogger.debug("Computing Hoare annotation of CFG");
 			basicCegarLoop.computeCFGHoareAnnotation();
-//			writeHoareAnnotationToLogger(root);
+			
+		
+//			final Set<? extends IcfgLocation> locsForHoareAnnotation = 
+//					TraceAbstractionUtils.getLocationsForWhichHoareAnnotationIsComputed(
+//							root, taPrefs.getHoareAnnotationPositions());
+//			computeHoareAnnotation(locsForHoareAnnotation);
+			
+			writeHoareAnnotationToLogger(root);
 		} else {
 			mLogger.debug("Ommiting computation of Hoare annotation");
 			
@@ -405,8 +427,8 @@ public class TraceAbstractionStarter {
 		return mRootOfNewModel;
 	}
 	
-	public static HoareAnnotation getHoareAnnotation(final BoogieIcfgLocation programPoint) {
-		return HoareAnnotation.getAnnotation(programPoint);
+	public static HoareAnnotation getHoareAnnotation(final IcfgLocation locNode) {
+		return HoareAnnotation.getAnnotation(locNode);
 	}
 	
 	public static BoogieIcfgLocation getErrorPP(final RcfgProgramExecution rcfgProgramExecution) {

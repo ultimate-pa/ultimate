@@ -30,11 +30,11 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
@@ -43,9 +43,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IOpWithDelayedDeadEndRemoval.UpDownEntry;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.UnknownState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareAnnotationPositions;
@@ -77,7 +78,7 @@ public class HoareAnnotationFragments {
 
 	private final HashRelation<BoogieIcfgLocation, IPredicate> mProgPoint2StatesWithEmptyContext = new HashRelation<BoogieIcfgLocation, IPredicate>();
 
-	private final HashSet<BoogieIcfgLocation> mHoareAnnotationPositions;
+	private final Set<IcfgLocation> mHoareAnnotationPositions;
 
 	private final HoareAnnotationPositions mHoareAnnotationPos;
 
@@ -103,10 +104,10 @@ public class HoareAnnotationFragments {
 		return mContext2Entry;
 	}
 
-	public HoareAnnotationFragments(ILogger logger, HashSet<BoogieIcfgLocation> hoareAnnotationPositions, 
-			HoareAnnotationPositions hoareAnnotationPos){
+	public HoareAnnotationFragments(final ILogger logger, final Set<IcfgLocation> hoareAnnotationLocations, 
+			final HoareAnnotationPositions hoareAnnotationPos){
 		mLogger = logger;
-		mHoareAnnotationPositions = hoareAnnotationPositions;
+		mHoareAnnotationPositions = hoareAnnotationLocations;
 		mHoareAnnotationPos = hoareAnnotationPos;
 	}
 	
@@ -115,8 +116,8 @@ public class HoareAnnotationFragments {
 	 * because the current abstraction was updated by an intersection.
 	 */
 	public void updateOnIntersection(
-			Map<IPredicate, Map<IPredicate, IntersectNwa<CodeBlock, IPredicate>.ProductState>> fst2snd2res,
-			INestedWordAutomatonSimple<CodeBlock, IPredicate> abstraction) {
+			final Map<IPredicate, Map<IPredicate, IntersectNwa<CodeBlock, IPredicate>.ProductState>> fst2snd2res,
+			final INestedWordAutomatonSimple<CodeBlock, IPredicate> abstraction) {
 		final Update update = new IntersectionUpdate(fst2snd2res);
 		update(update, abstraction);
 	}
@@ -125,8 +126,8 @@ public class HoareAnnotationFragments {
 	 * Perform an update of these HoareAnnotationFragments that became necessary
 	 * because the current abstraction was updated by a minimization.
 	 */
-	public void updateOnMinimization(Map<IPredicate, IPredicate> old2New,
-			INestedWordAutomatonSimple<CodeBlock, IPredicate> abstraction) {
+	public void updateOnMinimization(final Map<IPredicate, IPredicate> old2New,
+			final INestedWordAutomatonSimple<CodeBlock, IPredicate> abstraction) {
 		final Update update = new MinimizationUpdate(old2New);
 		update(update, abstraction);
 	}
@@ -139,7 +140,7 @@ public class HoareAnnotationFragments {
 	 * mapping, because we expect the our HoareAnnotationFragments stores double
 	 * deckers that have been removed by a dead end removal.
 	 */
-	private void update(Update update, INestedWordAutomatonSimple<CodeBlock, IPredicate> newAbstraction) {
+	private void update(final Update update, final INestedWordAutomatonSimple<CodeBlock, IPredicate> newAbstraction) {
 		final Map<IPredicate, HashRelation<BoogieIcfgLocation, IPredicate>> oldLiveContexts2ProgPoint2Preds = mLiveContexts2ProgPoint2Preds;
 		mLiveContexts2ProgPoint2Preds = new HashMap<IPredicate, HashRelation<BoogieIcfgLocation, IPredicate>>();
 		for (final Entry<IPredicate, HashRelation<BoogieIcfgLocation, IPredicate>> contextHrPair : oldLiveContexts2ProgPoint2Preds
@@ -178,7 +179,7 @@ public class HoareAnnotationFragments {
 	 * Get the unique call successor of a state newContext. Return null if there
 	 * is no call successor. Throw exception if call successor is not unique.
 	 */
-	private IPredicate getEntry(INestedWordAutomatonSimple<CodeBlock, IPredicate> abstraction, IPredicate newContext) {
+	private IPredicate getEntry(final INestedWordAutomatonSimple<CodeBlock, IPredicate> abstraction, final IPredicate newContext) {
 		final Iterator<OutgoingCallTransition<CodeBlock, IPredicate>> it = abstraction.callSuccessors(newContext).iterator();
 		if (!it.hasNext()) {
 			return null;
@@ -210,12 +211,12 @@ public class HoareAnnotationFragments {
 		private final Map<IPredicate, Map<IPredicate, IntersectNwa<CodeBlock, IPredicate>.ProductState>> mFst2snd2res;
 
 		public IntersectionUpdate(
-				Map<IPredicate, Map<IPredicate, IntersectNwa<CodeBlock, IPredicate>.ProductState>> fst2snd2res) {
+				final Map<IPredicate, Map<IPredicate, IntersectNwa<CodeBlock, IPredicate>.ProductState>> fst2snd2res) {
 			mFst2snd2res = fst2snd2res;
 		}
 
 		@Override
-		public List<IPredicate> getNewPredicates(IPredicate oldPredicate) {
+		public List<IPredicate> getNewPredicates(final IPredicate oldPredicate) {
 			final Map<IPredicate, IntersectNwa<CodeBlock, IPredicate>.ProductState> mapping = mFst2snd2res.get(oldPredicate);
 			if (mapping == null) {
 				return null;
@@ -233,13 +234,13 @@ public class HoareAnnotationFragments {
 
 		private final Map<IPredicate, IPredicate> mOld2New;
 
-		public MinimizationUpdate(Map<IPredicate, IPredicate> old2New) {
+		public MinimizationUpdate(final Map<IPredicate, IPredicate> old2New) {
 			super();
 			mOld2New = old2New;
 		}
 
 		@Override
-		public List<IPredicate> getNewPredicates(IPredicate oldPredicate) {
+		public List<IPredicate> getNewPredicates(final IPredicate oldPredicate) {
 			final IPredicate newPredicate = mOld2New.get(oldPredicate);
 			if (newPredicate == null) {
 				return null;
@@ -250,7 +251,7 @@ public class HoareAnnotationFragments {
 		}
 	}
 
-	void addDoubleDecker(IPredicate down, IPredicate up, IPredicate emtpy) {
+	void addDoubleDecker(final IPredicate down, final IPredicate up, final IPredicate emtpy) {
 		final BoogieIcfgLocation pp = getProgramPoint(up);
 		if (mHoareAnnotationPos == HoareAnnotationPositions.LoopsAndPotentialCycles && 
 				!mHoareAnnotationPositions.contains(pp)) {
@@ -269,7 +270,7 @@ public class HoareAnnotationFragments {
 		}
 	}
 	
-	private BoogieIcfgLocation getProgramPoint(IPredicate pred) {
+	private BoogieIcfgLocation getProgramPoint(final IPredicate pred) {
 		final BoogieIcfgLocation pp;
 		if (pred instanceof SPredicate) {
 			pp = ((SPredicate) pred).getProgramPoint();
@@ -281,7 +282,7 @@ public class HoareAnnotationFragments {
 		return pp;
 	}
 
-	void addContextEntryPair(IPredicate context, IPredicate entry) {
+	void addContextEntryPair(final IPredicate context, final IPredicate entry) {
 		mContext2Entry.put(context, entry);
 	}
 
@@ -290,7 +291,7 @@ public class HoareAnnotationFragments {
 	 * directly after the automaton operation op - after dead ends where removed
 	 * from op dd was no double decker of the automaton any more.
 	 */
-	public void addDeadEndDoubleDeckers(IOpWithDelayedDeadEndRemoval<CodeBlock, IPredicate> op)
+	public void addDeadEndDoubleDeckers(final IOpWithDelayedDeadEndRemoval<CodeBlock, IPredicate> op)
 			throws AutomataOperationCanceledException {
 		final IPredicate emtpyStack = op.getResult().getEmptyStackState();
 		for (final UpDownEntry<IPredicate> upDownEntry : op.getRemovedUpDownEntry()) {

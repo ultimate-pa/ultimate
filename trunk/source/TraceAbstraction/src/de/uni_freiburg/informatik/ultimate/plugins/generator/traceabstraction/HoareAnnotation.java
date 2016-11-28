@@ -33,35 +33,24 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.ExtendedSimplificationResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineSubtermNormalizer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
@@ -97,17 +86,16 @@ public class HoareAnnotation extends SPredicate {
 	private final Map<Term, Term> mPrecondition2Invariant = new HashMap<Term, Term>();
 	private boolean mIsUnknown = false;
 	
-	private boolean mFormulaHasBeenComputed = false;
+	private final boolean mFormulaHasBeenComputed = false;
 	private Term mClosedFormula;
 	private static final boolean s_AvoidImplications = true;
-	
-	private final HoareAnnotationStatisticsGenerator mHoareAnnotationStatisticsGenerator;
+	private final List<Term> mInvariants = new ArrayList<>();
 	
 	public HoareAnnotation(final BoogieIcfgLocation programPoint, final int serialNumber,
 			final ICfgSymbolTable symbolTable, final PredicateFactory predicateFactory,
 			final ModifiableGlobalsTable modifiableGlobalsTable, final ManagedScript mgdScript, final Script script,
 			final IUltimateServiceProvider services, final SimplificationTechnique simplificationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique, final HoareAnnotationStatisticsGenerator hoareAnnotationStatisticsGenerator) {
+			final XnfConversionTechnique xnfConversionTechnique) {
 		super(programPoint, serialNumber, new String[] { programPoint.getProcedure() }, script.term("true"),
 				new HashSet<IProgramVar>(), null);
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -119,7 +107,6 @@ public class HoareAnnotation extends SPredicate {
 		mPredicateFactory = predicateFactory;
 		mScript = script;
 		mModifiableGlobals = modifiableGlobalsTable;
-		mHoareAnnotationStatisticsGenerator = hoareAnnotationStatisticsGenerator;
 	}
 	
 	/**
@@ -144,6 +131,11 @@ public class HoareAnnotation extends SPredicate {
 		} else {
 			return super.getFieldValue(field);
 		}
+	}
+	
+	public void addInvariant(final IPredicate pred) {
+		mVars.addAll(pred.getVars());
+		mInvariants.add(pred.getFormula());
 	}
 	
 	public void addInvariant(final IPredicate procPrecond, final IPredicate locInvar) {
@@ -176,85 +168,17 @@ public class HoareAnnotation extends SPredicate {
 	
 	@Override
 	public Term getFormula() {
-		if (!mFormulaHasBeenComputed) {
-			computeFormula();
-			mFormulaHasBeenComputed = true;
-		}
-		return mFormula;
+		return SmtUtils.and(mScript, mInvariants);
 	}
 	
 	@Override
 	public Term getClosedFormula() {
-		if (!mFormulaHasBeenComputed) {
-			computeFormula();
-			mFormulaHasBeenComputed = true;
-		}
-		return mClosedFormula;
+		final Term closedFormula = PredicateUtils.computeClosedFormula(getFormula(), mVars, mScript);
+		return closedFormula;
 	}
 	
-	private void computeFormula() {
-		for (final Term precond : getPrecondition2Invariant().keySet()) {
-			Term invariant = getPrecondition2Invariant().get(precond);
-			invariant = SmtUtils.simplify(mMgdScript, invariant, mServices, mSimplificationTechnique);
-			Term precondTerm = Util.implies(mScript, precond, invariant);
-			if (s_AvoidImplications) {
-				precondTerm = new Nnf(mMgdScript, mServices, QuantifierHandling.KEEP).transform(precondTerm);
-			}
-			mLogger.debug("In " + this + " holds " + invariant + " for precond " + precond);
-			mFormula = Util.and(mScript, mFormula, precondTerm);
-		}
-		mFormula = substituteOldVarsOfNonModifiableGlobals(getProgramPoint().getProcedure(), mVars, mFormula);
-		final ExtendedSimplificationResult simplificationResult = SmtUtils.simplifyWithStatistics(mMgdScript, mFormula, mServices, mSimplificationTechnique);
-		mHoareAnnotationStatisticsGenerator.reportSimplification();
-		mFormula = simplificationResult.getSimplifiedTerm();
-		mHoareAnnotationStatisticsGenerator.reportReduction(simplificationResult.getReductionOfTreeSize());
-		mHoareAnnotationStatisticsGenerator.reportSimplificationTime(simplificationResult.getSimplificationTimeNano());
-		mFormula = getPositiveNormalForm(mFormula);
-		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(mFormula, mScript, mSymbolTable);
-		mClosedFormula = PredicateUtils.computeClosedFormula(tvp.getFormula(), tvp.getVars(), mScript);
-	}
-	
-	/**
-	 * For each oldVar in vars that is not modifiable by procedure proc: substitute the oldVar by the corresponding
-	 * globalVar in term and remove the oldvar from vars.
-	 */
-	public Term substituteOldVarsOfNonModifiableGlobals(final String proc, final Set<IProgramVar> vars,
-			final Term term) {
-		final Set<IProgramNonOldVar> modifiableGlobals = mModifiableGlobals.getModifiedBoogieVars(proc);
-		final List<IProgramVar> replacedOldVars = new ArrayList<IProgramVar>();
-		
-		final ArrayList<TermVariable> replacees = new ArrayList<TermVariable>();
-		final ArrayList<Term> replacers = new ArrayList<Term>();
-		
-		for (final IProgramVar bv : vars) {
-			if (bv instanceof IProgramOldVar) {
-				final IProgramNonOldVar pnov = ((IProgramOldVar) bv).getNonOldVar();
-				if (!modifiableGlobals.contains(pnov)) {
-					replacees.add(bv.getTermVariable());
-					replacers.add(((IProgramOldVar) bv).getNonOldVar().getTermVariable());
-					replacedOldVars.add(bv);
-				}
-			}
-		}
-		
-		final TermVariable[] substVars = replacees.toArray(new TermVariable[replacees.size()]);
-		final Term[] substValues = replacers.toArray(new Term[replacers.size()]);
-		Term result = mScript.let(substVars, substValues, term);
-		result = new FormulaUnLet().unlet(result);
-		
-		for (final IProgramVar bv : replacedOldVars) {
-			vars.remove(bv);
-			vars.add(((IProgramOldVar) bv).getNonOldVar());
-		}
-		return result;
-	}
-	
-	private Term getPositiveNormalForm(final Term term) {
-		final Script script = mScript;
-		final Term result = new AffineSubtermNormalizer(mScript, mLogger).transform(term);
-		assert Util.checkSat(script, script.term("distinct", term, result)) != LBool.SAT;
-		return result;
-	}
+
+
 	
 	/**
 	 * @return the mFormulaMapping

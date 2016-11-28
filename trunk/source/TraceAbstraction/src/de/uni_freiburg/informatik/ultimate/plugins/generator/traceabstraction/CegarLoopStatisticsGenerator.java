@@ -44,6 +44,7 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 	private final StatisticsData mTcData = new StatisticsData();
 	private final StatisticsData mTiData = new StatisticsData();
 	private final StatisticsData mAmData = new StatisticsData();
+	private final StatisticsData mHaData = new StatisticsData();
 	private final StatisticsData mInterpolantConsolidationBenchmarks = new StatisticsData();
 	private int mIterations = 0;
 	private int mAbsIntIterations = 0;
@@ -99,6 +100,10 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 	
 	public void addAutomataMinimizationData(final IStatisticsDataProvider tcbd) {
 		mAmData.aggregateBenchmarkData(tcbd);
+	}
+	
+	public void addHoareAnnotationData(final IStatisticsDataProvider hasp) {
+		mHaData.aggregateBenchmarkData(hasp);
 	}
 
 	/**
@@ -159,6 +164,8 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 			return mBCI;
 		case AutomataMinimizationStatistics:
 			return mAmData;
+		case HoareAnnotationStatistics:
+			return mHaData;
 		default:
 			throw new AssertionError("unknown data");
 		}

@@ -41,6 +41,10 @@ public enum HoareAnnotationStatisticsDefinitions implements IStatisticsElement {
 	
 	LocationsWithAnnotation(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
 	
+	PreInvPairs(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
+	
+	NumberOfFragments(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
+	
 	HoareAnnotationTreeSize(Long.class, AStatisticsType.s_LongAddition, AStatisticsType.s_DataBeforeKey),
 	
 	FomulaSimplifications(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
@@ -48,6 +52,13 @@ public enum HoareAnnotationStatisticsDefinitions implements IStatisticsElement {
 	FormulaSimplificationTreeSizeReduction(Long.class, AStatisticsType.s_LongAddition, AStatisticsType.s_DataBeforeKey),
 	
 	HoareSimplificationTime(Long.class, AStatisticsType.s_LongAddition, AStatisticsType.s_TimeBeforeKey),
+	
+	FomulaSimplificationsInter(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
+
+	FormulaSimplificationTreeSizeReductionInter(Long.class, AStatisticsType.s_LongAddition, AStatisticsType.s_DataBeforeKey),
+	
+	HoareSimplificationTimeInter(Long.class, AStatisticsType.s_LongAddition, AStatisticsType.s_TimeBeforeKey),
+
 	
 	;
 	

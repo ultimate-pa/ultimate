@@ -53,7 +53,7 @@ public class PredicateFactoryForInterpolantConsolidation extends PredicateFactor
 	public PredicateFactoryForInterpolantConsolidation(final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory,
 			final boolean taPrefs) {
-		super(csToolkit, predicateFactory, taPrefs);
+		super(csToolkit.getManagedScript(), predicateFactory, taPrefs);
 		mLocationsToSetOfPredicates = new HashMap<IPredicate, Set<IPredicate>>();
 		mIntersectedPredicateToArgumentPredicates = new HashMap<IPredicate, AbstractMap.SimpleEntry<IPredicate, IPredicate>>();
 		mArgumentPredicatesToIntersectedPredicate = new HashMap<AbstractMap.SimpleEntry<IPredicate, IPredicate>, IPredicate>();

@@ -30,20 +30,25 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
@@ -56,11 +61,13 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.MonolithicHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EfficientHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareAnnotationPositions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareTripleChecks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -172,4 +179,62 @@ public class TraceAbstractionUtils {
 	}
 	
 
+	
+	
+	public static Set<IcfgLocation> getLocationsForWhichHoareAnnotationIsComputed(
+			final BoogieIcfgContainer root, final HoareAnnotationPositions hoareAnnotationPositions) {
+		final Set<IcfgLocation> hoareAnnotationLocs = new HashSet<>();
+		switch (hoareAnnotationPositions) {
+		case All:
+			for (final Entry<String, Map<String, BoogieIcfgLocation>> entry : root.getProgramPoints().entrySet()) {
+				hoareAnnotationLocs.addAll(entry.getValue().values());
+			}
+			break;
+		case LoopsAndPotentialCycles:
+			hoareAnnotationLocs.addAll(root.getPotentialCycleProgramPoints());
+			hoareAnnotationLocs.addAll(root.getLoopLocations().keySet());
+			break;
+		default:
+			throw new AssertionError("unknown value " + hoareAnnotationPositions);
+		}
+		return hoareAnnotationLocs;
+	}
+	
+	
+	/**
+	 * For each oldVar in vars that is not modifiable by procedure proc: substitute the oldVar by the corresponding
+	 * globalVar in term and remove the oldvar from vars.
+	 * @param modifiableGlobals 
+	 * @param script 
+	 */
+	public static Term substituteOldVarsOfNonModifiableGlobals(final String proc, final Set<IProgramVar> vars,
+			final Term term, final ModifiableGlobalsTable modifiableGlobals, final Script script) {
+		final Set<IProgramNonOldVar> modifiableGlobalsOfProc = modifiableGlobals.getModifiedBoogieVars(proc);
+		final List<IProgramVar> replacedOldVars = new ArrayList<>();
+		
+		final ArrayList<TermVariable> replacees = new ArrayList<>();
+		final ArrayList<Term> replacers = new ArrayList<>();
+		
+		for (final IProgramVar bv : vars) {
+			if (bv instanceof IProgramOldVar) {
+				final IProgramNonOldVar pnov = ((IProgramOldVar) bv).getNonOldVar();
+				if (!modifiableGlobalsOfProc.contains(pnov)) {
+					replacees.add(bv.getTermVariable());
+					replacers.add(((IProgramOldVar) bv).getNonOldVar().getTermVariable());
+					replacedOldVars.add(bv);
+				}
+			}
+		}
+		
+		final TermVariable[] substVars = replacees.toArray(new TermVariable[replacees.size()]);
+		final Term[] substValues = replacers.toArray(new Term[replacers.size()]);
+		Term result = script.let(substVars, substValues, term);
+		result = new FormulaUnLet().unlet(result);
+		
+		for (final IProgramVar bv : replacedOldVars) {
+			vars.remove(bv);
+			vars.add(((IProgramOldVar) bv).getNonOldVar());
+		}
+		return result;
+	}
 }

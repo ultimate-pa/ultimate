@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -263,11 +264,12 @@ public class BuchiCegarLoop {
 		// mRootAnnot.getBoogie2SMT());
 
 		mPref = taPrefs;
-		mDefaultStateFactory = new PredicateFactoryForInterpolantAutomata(mCsToolkitWithRankVars, predicateFactory, mPref.computeHoareAnnotation());
+		mDefaultStateFactory = new PredicateFactoryForInterpolantAutomata(mCsToolkitWithRankVars.getManagedScript(), 
+				predicateFactory, mPref.computeHoareAnnotation());
 		mPredicateFactoryResultChecking = new PredicateFactoryResultChecking(predicateFactory);
 
-		mStateFactoryForRefinement = new PredicateFactoryRefinement(mRootAnnot.getProgramPoints(),
-				mCsToolkitWithRankVars, predicateFactory, false, null, mPref.getHoareAnnotationPositions());
+		mStateFactoryForRefinement = new PredicateFactoryRefinement(mServices, 
+				mCsToolkitWithRankVars.getManagedScript(),predicateFactory, false, Collections.emptySet());
 
 		final IPreferenceProvider baPref = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 

@@ -51,7 +51,7 @@ public class TaConcurContentFactory extends PredicateFactoryForInterpolantAutoma
 			final boolean taPrefs,
 			final boolean hoareAnnotation,
 			final boolean interprocedural) {
-		super(theory, predicateFactory, taPrefs);
+		super(theory.getManagedScript(), predicateFactory, taPrefs);
 		// TODO Auto-generated constructor stub
 	}
 	

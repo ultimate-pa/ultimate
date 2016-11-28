@@ -58,6 +58,9 @@ public enum CegarLoopStatisticsDefinitions implements IStatisticsElement {
 	
 	AutomataMinimizationStatistics(StatisticsData.class, AStatisticsType.s_StatisticsDataAggregation,
 			AStatisticsType.s_KeyBeforeData),
+	
+	HoareAnnotationStatistics(StatisticsData.class, AStatisticsType.s_StatisticsDataAggregation,
+			AStatisticsType.s_KeyBeforeData),
 	;
 
 	private final Class<?> mClazz;

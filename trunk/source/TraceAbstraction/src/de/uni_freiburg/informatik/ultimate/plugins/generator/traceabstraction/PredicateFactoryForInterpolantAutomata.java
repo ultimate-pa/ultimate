@@ -36,7 +36,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.LevelRankingState;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IMLPredicate;
@@ -48,13 +48,13 @@ public class PredicateFactoryForInterpolantAutomata implements IStateFactory<IPr
 
 	final protected boolean mComputeHoareAnnotation;
 	private final IPredicate memtpyStack;
-	protected final CfgSmtToolkit mCsToolkit;
+	protected final ManagedScript mMgdScript;
 	protected final PredicateFactory mPredicateFactory;
 
-	public PredicateFactoryForInterpolantAutomata(final CfgSmtToolkit csToolkit, 
+	public PredicateFactoryForInterpolantAutomata(final ManagedScript mgdScript, 
 			final PredicateFactory predicateFactory, final boolean computeHoareAnnotation) {
 		mComputeHoareAnnotation = computeHoareAnnotation;
-		mCsToolkit = csToolkit;
+		mMgdScript = mgdScript;
 		mPredicateFactory = predicateFactory;
 		memtpyStack = mPredicateFactory.newEmptyStackPredicate();
 	}
@@ -87,7 +87,7 @@ public class PredicateFactoryForInterpolantAutomata implements IStateFactory<IPr
 
 	@Override
 	public IPredicate createSinkStateContent() {
-		return mPredicateFactory.newPredicate(mCsToolkit.getManagedScript().getScript().term("true"));
+		return mPredicateFactory.newPredicate(mMgdScript.getScript().term("true"));
 	}
 
 	@Override

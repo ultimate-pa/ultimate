@@ -92,7 +92,7 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 	@Override
 	protected void getInitialAbstraction() {
 		final IStateFactory<IPredicate> predicateFactory =
-				new PredicateFactoryForInterpolantAutomata(super.mCsToolkit, mPredicateFactory, mPref.computeHoareAnnotation());
+				new PredicateFactoryForInterpolantAutomata(super.mCsToolkit.getManagedScript(), mPredicateFactory, mPref.computeHoareAnnotation());
 		final CFG2Automaton cFG2NestedWordAutomaton = new Cfg2Nwa(mIcfgContainer, predicateFactory, mCsToolkit, mPredicateFactory, mServices,
 				mXnfConversionTechnique, mSimplificationTechnique);
 		mAbstraction = (INestedWordAutomatonSimple<CodeBlock, IPredicate>) cFG2NestedWordAutomaton.getResult();

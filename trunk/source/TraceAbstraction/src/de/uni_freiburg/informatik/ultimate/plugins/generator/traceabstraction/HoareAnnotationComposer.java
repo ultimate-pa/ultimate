@@ -27,19 +27,34 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.ExtendedSimplificationResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf.QuantifierHandling;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation3;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
@@ -50,9 +65,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  * @author heizmann@informatik.uni-freiburg.de
  * 
  */
-public class CegarLoopHoareAnnotation {
+public class HoareAnnotationComposer {
 
 	private final IUltimateServiceProvider mServices;
+	private final ILogger mLogger;
 	private final CfgSmtToolkit mCsToolkit;
 	private final PredicateFactory mPredicateFactory;
 	private final HoareAnnotationFragments mHoareAnnotationFragments;
@@ -66,12 +82,21 @@ public class CegarLoopHoareAnnotation {
 	private final boolean mUseEntry = true;
 	private final PredicateTransformer mPredicateTransformer;
 	
-	final NestedMap2<IcfgLocation, IPredicate, IPredicate> mLoc2precond2invariant;
+	private final NestedMap2<IcfgLocation, IPredicate, IPredicate> mLoc2precond2invariant;
+	private final SimplificationTechnique mSimplificationTechnique = SimplificationTechnique.SIMPLIFY_DDA;
+	
+	private int mNumberOfFragments = 0;
+	private final Map<IcfgLocation, IPredicate> mLoc2hoare;
 
-	public CegarLoopHoareAnnotation(final BoogieIcfgContainer rootAnnot, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
+	
+	private static final boolean s_AvoidImplications = true;
+
+	public HoareAnnotationComposer(final BoogieIcfgContainer rootAnnot, final CfgSmtToolkit csToolkit, 
+			final PredicateFactory predicateFactory,
 			final HoareAnnotationFragments hoareAnnotationFragments, final IUltimateServiceProvider services, 
 			final SimplificationTechnique simplicationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
+		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mCsToolkit = csToolkit;
 		mPredicateFactory = predicateFactory;
 		mHoareAnnotationFragments = hoareAnnotationFragments;
@@ -79,15 +104,58 @@ public class CegarLoopHoareAnnotation {
 				csToolkit.getManagedScript(), simplicationTechnique, xnfConversionTechnique);
 		mHoareAnnotationStatisticsGenerator = new HoareAnnotationStatisticsGenerator();
 		final HashRelation3<IcfgLocation, IPredicate, IPredicate> loc2precond2invariantSet = constructMapping();
-		mLoc2precond2invariant = combine(loc2precond2invariantSet);
+		mLoc2precond2invariant = combineIntra(loc2precond2invariantSet);
+		mHoareAnnotationStatisticsGenerator.setNumberOfFragments(mNumberOfFragments);
+		mHoareAnnotationStatisticsGenerator.setLocationsWithHoareAnnotation(mLoc2precond2invariant.keySet().size());
+		mHoareAnnotationStatisticsGenerator.setPreInvPairs(mLoc2precond2invariant.size());
+		mLoc2hoare = combineInter(mLoc2precond2invariant);
+
 	}
 
-	private NestedMap2<IcfgLocation, IPredicate, IPredicate> combine(
+	private Map<IcfgLocation, IPredicate> combineInter(
+			final NestedMap2<IcfgLocation, IPredicate, IPredicate> loc2precond2invariant) {
+		final Map<IcfgLocation, IPredicate> result = new HashMap<>();
+		for (final IcfgLocation loc : loc2precond2invariant.keySet()) {
+			final Map<IPredicate, IPredicate> precond2invariant = loc2precond2invariant.get(loc);
+			final List<Term> conjuncts = new ArrayList<>(precond2invariant.size());
+			final Set<IProgramVar> vars = new HashSet<>();
+			for (final Entry<IPredicate, IPredicate> entry : precond2invariant.entrySet()) {
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug("In " + this + " holds " + entry.getKey().getFormula() + " for precond " + entry.getValue().getFormula());
+				}
+				Term precondImpliesInvariant = Util.implies(mCsToolkit.getManagedScript().getScript(), entry.getKey().getFormula(), entry.getValue().getFormula());
+				if (s_AvoidImplications) {
+					precondImpliesInvariant = new Nnf(mCsToolkit.getManagedScript(), mServices, QuantifierHandling.KEEP).transform(precondImpliesInvariant);
+				}
+				conjuncts.add(precondImpliesInvariant);
+				vars.addAll(entry.getKey().getVars());
+				vars.addAll(entry.getValue().getVars());
+			}
+			Term conjunction = SmtUtils.and(mCsToolkit.getManagedScript().getScript(), conjuncts);
+			
+			conjunction = TraceAbstractionUtils.substituteOldVarsOfNonModifiableGlobals(loc.getProcedure(), 
+					vars, conjunction, mCsToolkit.getModifiableGlobalsTable(), mCsToolkit.getManagedScript().getScript());
+			final ExtendedSimplificationResult simplificationResult = SmtUtils.simplifyWithStatistics(
+					mCsToolkit.getManagedScript(), conjunction, mServices, SimplificationTechnique.SIMPLIFY_DDA);
+			mHoareAnnotationStatisticsGenerator.reportSimplificationInter();
+			mHoareAnnotationStatisticsGenerator.reportReductionInter(simplificationResult.getReductionOfTreeSize());
+			mHoareAnnotationStatisticsGenerator.reportSimplificationTimeInter(simplificationResult.getSimplificationTimeNano());
+			mHoareAnnotationStatisticsGenerator.reportAnnotationSize(new DAGSize().treesize(simplificationResult.getSimplifiedTerm()));
+			final Term simplified = simplificationResult.getSimplifiedTerm();
+			final Term pnf = SmtUtils.constructPositiveNormalForm(mCsToolkit.getManagedScript().getScript(), simplified);
+			final BasicPredicate pred = mPredicateFactory.newPredicate(pnf);
+			result.put(loc, pred);
+		}
+		return result;
+	}
+
+	private NestedMap2<IcfgLocation, IPredicate, IPredicate> combineIntra(
 			final HashRelation3<IcfgLocation, IPredicate, IPredicate> loc2precond2invariantSet) {
 		final NestedMap2<IcfgLocation, IPredicate, IPredicate> loc2precond2invariant = new NestedMap2<>();
 		for (final IcfgLocation loc : loc2precond2invariantSet.projectToFst()) {
 			for (final IPredicate precond : loc2precond2invariantSet.projectToSnd(loc)) {
 				final Set<IPredicate> preds = loc2precond2invariantSet.projectToTrd(loc, precond);
+				mNumberOfFragments += preds.size();
 				final IPredicate invariant = or(preds);
 				loc2precond2invariant.put(loc, precond, invariant);
 			}
@@ -96,13 +164,17 @@ public class CegarLoopHoareAnnotation {
 	}
 
 	private IPredicate or(final Set<IPredicate> preds) {
-		// TODO Auto-generated method stub
-		
-//		
-//		final Term tvp = mPredicateFactory.or(false, preds);
-//		final IPredicate formulaForPP = mPredicateFactory.newPredicate(tvp);
-//		addFormulasToLocNodes(loc, precondForContext, formulaForPP);
-		return null;
+		final List<Term> terms = new ArrayList<>(preds.size());
+		for (final IPredicate pred : preds) {
+			terms.add(pred.getFormula());
+		}
+		final Term disjunction = SmtUtils.or(mCsToolkit.getManagedScript().getScript(), terms);
+		final ExtendedSimplificationResult simplificationResult = SmtUtils.simplifyWithStatistics(
+				mCsToolkit.getManagedScript(), disjunction, mServices, SimplificationTechnique.SIMPLIFY_QUICK);
+		mHoareAnnotationStatisticsGenerator.reportSimplification();
+		mHoareAnnotationStatisticsGenerator.reportReduction(simplificationResult.getReductionOfTreeSize());
+		mHoareAnnotationStatisticsGenerator.reportSimplificationTime(simplificationResult.getSimplificationTimeNano());
+		return mPredicateFactory.newPredicate(simplificationResult.getSimplifiedTerm());
 	}
 
 	
@@ -181,6 +253,15 @@ public class CegarLoopHoareAnnotation {
 	public HoareAnnotationStatisticsGenerator getHoareAnnotationStatisticsGenerator() {
 		return mHoareAnnotationStatisticsGenerator;
 	}
+
+	public NestedMap2<IcfgLocation, IPredicate, IPredicate> getLoc2precond2invariant() {
+		return mLoc2precond2invariant;
+	}
+
+	public Map<IcfgLocation, IPredicate> getLoc2hoare() {
+		return mLoc2hoare;
+	}
+	
 	
 	
 

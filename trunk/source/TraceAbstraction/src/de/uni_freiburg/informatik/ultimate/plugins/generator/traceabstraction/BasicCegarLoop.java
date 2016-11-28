@@ -29,8 +29,9 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
@@ -63,6 +64,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -138,7 +140,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	
 	private final boolean mDoFaultLocalizationNonFlowSensitive;
 	private final boolean mDoFaultLocalizationFlowSensitive;
-	private HashSet<BoogieIcfgLocation> mHoareAnnotationPositions;
+	private final Set<IcfgLocation> mHoareAnnotationLocations;
 	
 	protected final Collection<INestedWordAutomatonSimple<CodeBlock, IPredicate>> mStoredRawInterpolantAutomata;
 	
@@ -172,18 +174,16 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		}
 		// InterpolationPreferenceChecker.check(Activator.s_PLUGIN_NAME, interpolation);
 		mComputeHoareAnnotation = computeHoareAnnotation;
-		if (mPref.getHoareAnnotationPositions() == HoareAnnotationPositions.LoopsAndPotentialCycles) {
-			mHoareAnnotationPositions = new HashSet<>();
-			mHoareAnnotationPositions.addAll(rootNode.getLoopLocations().keySet());
-			// mHoareAnnotationPositions.addAll(rootNode.getRootAnnot().getExitNodes().values());
-			mHoareAnnotationPositions.addAll(rootNode.getPotentialCycleProgramPoints());
+		if (mComputeHoareAnnotation) {
+			mHoareAnnotationLocations = TraceAbstractionUtils.getLocationsForWhichHoareAnnotationIsComputed(rootNode, mPref.getHoareAnnotationPositions());
+		} else {
+			mHoareAnnotationLocations = Collections.emptySet();
 		}
-		mHaf = new HoareAnnotationFragments(mLogger, mHoareAnnotationPositions, mPref.getHoareAnnotationPositions());
-		mStateFactoryForRefinement = new PredicateFactoryRefinement(mIcfgContainer.getProgramPoints(),
-				super.mCsToolkit, predicateFactory, mPref.computeHoareAnnotation(), mHoareAnnotationPositions,
-				mPref.getHoareAnnotationPositions());
+		mHaf = new HoareAnnotationFragments(mLogger, mHoareAnnotationLocations, mPref.getHoareAnnotationPositions());
+		mStateFactoryForRefinement = new PredicateFactoryRefinement(mServices, super.mCsToolkit.getManagedScript(), 
+				predicateFactory,mPref.computeHoareAnnotation(), mHoareAnnotationLocations);
 		mPredicateFactoryInterpolantAutomata =
-				new PredicateFactoryForInterpolantAutomata(super.mCsToolkit, mPredicateFactory,
+				new PredicateFactoryForInterpolantAutomata(super.mCsToolkit.getManagedScript(), mPredicateFactory,
 						mPref.computeHoareAnnotation());
 		
 		mAssertCodeBlocksIncrementally = mServices.getPreferenceProvider(Activator.PLUGIN_ID).getEnum(
@@ -227,8 +227,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					(INestedWordAutomaton<CodeBlock, IPredicate>) mAbstraction;
 			for (final IPredicate pred : nwa.getStates()) {
 				for (final OutgoingCallTransition<CodeBlock, IPredicate> trans : nwa.callSuccessors(pred)) {
-					mHoareAnnotationPositions.add(((ISLPredicate) pred).getProgramPoint());
-					mHoareAnnotationPositions.add(((ISLPredicate) trans.getSucc()).getProgramPoint());
+					mHoareAnnotationLocations.add(((ISLPredicate) pred).getProgramPoint());
+					mHoareAnnotationLocations.add(((ISLPredicate) trans.getSucc()).getProgramPoint());
 				}
 			}
 		}
@@ -793,12 +793,13 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				(INestedWordAutomaton<CodeBlock, IPredicate>) mAbstraction;
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.HoareAnnotationTime.toString());
 		new HoareAnnotationExtractor(mServices, abstraction, mHaf);
-		final HoareAnnotationWriter writer = new HoareAnnotationWriter(mIcfgContainer, mCsToolkit, mPredicateFactory, mHaf, mServices,
+		final HoareAnnotationComposer clha = new HoareAnnotationComposer(mIcfgContainer, mCsToolkit, mPredicateFactory, 
+				mHaf, mServices, mSimplificationTechnique, mXnfConversionTechnique);
+		final HoareAnnotationWriter writer = new HoareAnnotationWriter(mIcfgContainer, mCsToolkit, mPredicateFactory, clha, mServices,
 				mSimplificationTechnique, mXnfConversionTechnique);
 		writer.addHoareAnnotationToCFG();
 		mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.HoareAnnotationTime.toString());
-		final HoareAnnotationStatisticsGenerator gen = writer.getHoareAnnotationStatisticsGenerator();
-		gen.toString();
+		mCegarLoopBenchmark.addHoareAnnotationData(clha.getHoareAnnotationStatisticsGenerator());
 	}
 	
 	@Override

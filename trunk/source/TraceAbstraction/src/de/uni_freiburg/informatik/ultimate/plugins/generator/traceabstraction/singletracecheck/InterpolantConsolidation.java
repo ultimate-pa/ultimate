@@ -159,7 +159,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 				mCsToolkit, mPredicateUnifier.getPredicateFactory(), mTaPrefs.computeHoareAnnotation());
 
 		final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata =
-				new PredicateFactoryForInterpolantAutomata(mCsToolkit, mPredicateUnifier.getPredicateFactory(),
+				new PredicateFactoryForInterpolantAutomata(mCsToolkit.getManagedScript(), mPredicateUnifier.getPredicateFactory(),
 						mTaPrefs.computeHoareAnnotation());
 
 		final PowersetDeterminizer<CodeBlock, IPredicate> psd2 =
@@ -501,7 +501,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 			}
 		}
 
-		final IStateFactory<IPredicate> predicateFactoryFia = new PredicateFactoryForInterpolantAutomata(csToolkit,
+		final IStateFactory<IPredicate> predicateFactoryFia = new PredicateFactoryForInterpolantAutomata(csToolkit.getManagedScript(),
 				predicateFactor, taPrefs.computeHoareAnnotation());
 
 		final NestedWordAutomaton<CodeBlock, IPredicate> nwa =

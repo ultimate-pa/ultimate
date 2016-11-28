@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms;
 
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
@@ -40,15 +39,13 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.Bin
 public class AffineSubtermNormalizer extends TermTransformer {
 
 	private final Script mScript;
-	private final ILogger mLogger;
 
-	public AffineSubtermNormalizer(Script script, ILogger logger) {
+	public AffineSubtermNormalizer(final Script script) {
 		super();
 		mScript = script;
-		mLogger = logger;
 	}
 
-	private static boolean isBinaryNumericRelation(Term term) {
+	private static boolean isBinaryNumericRelation(final Term term) {
 		boolean result = true;
 		try {
 			new BinaryNumericRelation(term);
@@ -59,7 +56,7 @@ public class AffineSubtermNormalizer extends TermTransformer {
 	}
 
 	@Override
-	protected void convert(Term term) {
+	protected void convert(final Term term) {
 		if (!term.getSort().getName().equals("Bool")) {
 			// do not descend further
 			super.setResult(term);

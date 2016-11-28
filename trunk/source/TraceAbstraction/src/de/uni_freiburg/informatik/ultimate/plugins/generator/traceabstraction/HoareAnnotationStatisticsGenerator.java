@@ -28,7 +28,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.Collection;
 
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimizationStatisticsType;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
 
@@ -36,10 +35,18 @@ public class HoareAnnotationStatisticsGenerator implements IStatisticsDataProvid
 	
 	private int mFomulaSimplifications;
 	private long mFormulaSimplificationTreeSizeReduction;
+	private long mHoareSimplificationTime;
+	
+	private int mFomulaSimplificationsInter;
+	private long mFormulaSimplificationTreeSizeReductionInter;
+	private long mHoareSimplificationTimeInter;
+	
 	private long mHoareAnnotationTime;
 	private long mHoareAnnotationTreeSize;
-	private long mHoareSimplificationTime;
+	
 	private int mLocationsWithAnnotation;
+	private int mPreInvPairs;
+	private int mNumberOfFragments;
 
 	public HoareAnnotationStatisticsGenerator() {
 		super();
@@ -53,14 +60,24 @@ public class HoareAnnotationStatisticsGenerator implements IStatisticsDataProvid
 			return mFomulaSimplifications;
 		case FormulaSimplificationTreeSizeReduction:
 			return mFormulaSimplificationTreeSizeReduction;
+		case HoareSimplificationTime:
+			return mHoareSimplificationTime;
+		case FomulaSimplificationsInter:
+			return mFomulaSimplificationsInter;
+		case FormulaSimplificationTreeSizeReductionInter:
+			return mFormulaSimplificationTreeSizeReductionInter;
+		case HoareSimplificationTimeInter:
+			return mHoareSimplificationTimeInter;
 		case HoareAnnotationTime:
 			return mHoareAnnotationTime;
 		case HoareAnnotationTreeSize:
 			return mHoareAnnotationTreeSize;
-		case HoareSimplificationTime:
-			return mHoareSimplificationTime;
 		case LocationsWithAnnotation:
 			return mLocationsWithAnnotation;
+		case PreInvPairs:
+			return mPreInvPairs;
+		case NumberOfFragments:
+			return mNumberOfFragments;
 		default:
 			throw new AssertionError("unknown data");
 		}
@@ -68,7 +85,7 @@ public class HoareAnnotationStatisticsGenerator implements IStatisticsDataProvid
 
 	@Override
 	public IStatisticsType getBenchmarkType() {
-		return AutomataMinimizationStatisticsType.getInstance();
+		return HoareAnnotationStatisticsType.getInstance();
 	}
 
 	@Override
@@ -86,6 +103,45 @@ public class HoareAnnotationStatisticsGenerator implements IStatisticsDataProvid
 
 	public void reportSimplificationTime(final long simplificationTimeNano) {
 		mHoareSimplificationTime += simplificationTimeNano;
+	}
+	
+	public void reportSimplificationInter() {
+		mFomulaSimplificationsInter++;
+	}
+
+	public void reportReductionInter(final long reductionOfTreeSize) {
+		mFormulaSimplificationTreeSizeReductionInter += reductionOfTreeSize;
+	}
+
+	public void reportSimplificationTimeInter(final long simplificationTimeNano) {
+		mHoareSimplificationTimeInter += simplificationTimeNano;
+	}
+	
+	
+
+	public void setLocationsWithHoareAnnotation(final int size) {
+		if (mLocationsWithAnnotation != 0) {
+			throw new AssertionError("already set");
+		}
+		mLocationsWithAnnotation = size;
+	}
+	
+	public void setPreInvPairs(final int size) {
+		if (mPreInvPairs != 0) {
+			throw new AssertionError("already set");
+		}
+		mPreInvPairs = size;
+	}
+
+	public void setNumberOfFragments(final int numberOfFragments) {
+		if (mNumberOfFragments != 0) {
+			throw new AssertionError("already set");
+		}
+		mNumberOfFragments = numberOfFragments;
+	}
+
+	public void reportAnnotationSize(final int treesize) {
+		mHoareAnnotationTreeSize += treesize;
 	}
 
 }

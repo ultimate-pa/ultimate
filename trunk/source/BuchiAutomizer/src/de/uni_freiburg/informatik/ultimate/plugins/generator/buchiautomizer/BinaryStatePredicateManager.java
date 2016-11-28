@@ -411,7 +411,7 @@ public class BinaryStatePredicateManager {
 		if (SIMPLIFY_SUPPORTING_INVARIANTS) {
 			final Term simplified = SmtUtils.simplify(mManagedScript, conjunction, mServices, mSimplificationTechnique);
 			final Term normalized =
-					(new AffineSubtermNormalizer(mManagedScript.getScript(), mLogger)).transform(simplified);
+					(new AffineSubtermNormalizer(mManagedScript.getScript())).transform(simplified);
 			si = normalized;
 			if (SmtUtils.isFalse(si)) {
 				throw new AssertionError(

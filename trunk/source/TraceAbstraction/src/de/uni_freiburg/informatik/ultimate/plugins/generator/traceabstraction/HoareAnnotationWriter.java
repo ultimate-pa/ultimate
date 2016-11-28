@@ -27,10 +27,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
+import java.util.Map.Entry;
+
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -55,10 +58,8 @@ public class HoareAnnotationWriter {
 	private final BoogieIcfgContainer mrootAnnot;
 	private final CfgSmtToolkit mCsToolkit;
 	private final PredicateFactory mPredicateFactory;
-	private final HoareAnnotationFragments mHoareAnnotationFragments;
+	private final HoareAnnotationComposer mCegarLoopHoareAnnotation;
 	
-	private final HoareAnnotationStatisticsGenerator mHoareAnnotationStatisticsGenerator;
-
 	/**
 	 * What is the precondition for a context? Strongest postcondition or entry
 	 * given by automaton?
@@ -67,49 +68,33 @@ public class HoareAnnotationWriter {
 	private final PredicateTransformer mPredicateTransformer;
 
 	public HoareAnnotationWriter(final BoogieIcfgContainer rootAnnot, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
-			final HoareAnnotationFragments hoareAnnotationFragments, final IUltimateServiceProvider services, 
+			final HoareAnnotationComposer cegarLoopHoareAnnotation, final IUltimateServiceProvider services, 
 			final SimplificationTechnique simplicationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
 		mrootAnnot = rootAnnot;
 		mCsToolkit = csToolkit;
 		mPredicateFactory = predicateFactory;
-		mHoareAnnotationFragments = hoareAnnotationFragments;
+		mCegarLoopHoareAnnotation = cegarLoopHoareAnnotation;
 		mUseEntry = true;
 		mPredicateTransformer = new PredicateTransformer(services, 
 				csToolkit.getManagedScript(), simplicationTechnique, xnfConversionTechnique);
-		mHoareAnnotationStatisticsGenerator = new HoareAnnotationStatisticsGenerator();
 	}
 
 	public void addHoareAnnotationToCFG() {
-		IPredicate precondForContext = mPredicateFactory.newPredicate(mCsToolkit.getManagedScript().getScript().term("true"));
-		addHoareAnnotationForContext(mCsToolkit, precondForContext,
-				mHoareAnnotationFragments.getProgPoint2StatesWithEmptyContext());
-
-		for (final IPredicate context : mHoareAnnotationFragments.getDeadContexts2ProgPoint2Preds().keySet()) {
-			if (mUseEntry || containsAnOldVar(context)) {
-				precondForContext = mHoareAnnotationFragments.getContext2Entry().get(context);
+		for (final Entry<IcfgLocation, IPredicate> entry : mCegarLoopHoareAnnotation.getLoc2hoare().entrySet()) {
+			final HoareAnnotation taAnnot = HoareAnnotation.getAnnotation(entry.getKey());
+			final HoareAnnotation hoareAnnot;
+			if (taAnnot == null) {
+				hoareAnnot = mPredicateFactory.getNewHoareAnnotation((BoogieIcfgLocation) entry.getKey(), mCsToolkit.getModifiableGlobalsTable());
+				hoareAnnot.annotate(entry.getKey());
 			} else {
-				// compute SP
+				hoareAnnot = taAnnot;
 			}
-			precondForContext = TraceAbstractionUtils.renameGlobalsToOldGlobals(precondForContext, 
-					mServices, mCsToolkit.getManagedScript(), mPredicateFactory, SimplificationTechnique.SIMPLIFY_DDA);
-			final HashRelation<BoogieIcfgLocation, IPredicate> pp2preds = mHoareAnnotationFragments
-					.getDeadContexts2ProgPoint2Preds().get(context);
-			addHoareAnnotationForContext(mCsToolkit, precondForContext, pp2preds);
+			hoareAnnot.addInvariant(entry.getValue());
 		}
-
-		for (final IPredicate context : mHoareAnnotationFragments.getLiveContexts2ProgPoint2Preds().keySet()) {
-			if (mUseEntry || containsAnOldVar(context)) {
-				precondForContext = mHoareAnnotationFragments.getContext2Entry().get(context);
-			} else {
-				// compute SP
-			}
-			precondForContext = TraceAbstractionUtils.renameGlobalsToOldGlobals(precondForContext, 
-					mServices, mCsToolkit.getManagedScript(), mPredicateFactory, SimplificationTechnique.SIMPLIFY_DDA);
-			final HashRelation<BoogieIcfgLocation, IPredicate> pp2preds = mHoareAnnotationFragments
-					.getLiveContexts2ProgPoint2Preds().get(context);
-			addHoareAnnotationForContext(mCsToolkit, precondForContext, pp2preds);
-		}
+//		for (final Triple<IcfgLocation, IPredicate, IPredicate> locPrecondInvariant : mCegarLoopHoareAnnotation.getLoc2precond2invariant().entrySet()) {
+//			addFormulasToLocNodes(locPrecondInvariant.getFirst(), locPrecondInvariant.getSecond(), locPrecondInvariant.getThird());
+//		}
 	}
 
 	/**
@@ -127,7 +112,7 @@ public class HoareAnnotationWriter {
 		}
 	}
 
-	private void addFormulasToLocNodes(final BoogieIcfgLocation pp, final IPredicate context, final IPredicate current) {
+	private void addFormulasToLocNodes(final IcfgLocation pp, final IPredicate context, final IPredicate current) {
 		final String procName = pp.getProcedure();
 		final String locName = pp.getDebugIdentifier();
 		final BoogieIcfgLocation locNode = mrootAnnot.getProgramPoints().get(procName).get(locName);
@@ -135,7 +120,7 @@ public class HoareAnnotationWriter {
 		
 		final HoareAnnotation taAnnot = HoareAnnotation.getAnnotation(locNode);
 		if (taAnnot == null) {
-			hoareAnnot = mPredicateFactory.getNewHoareAnnotation(pp, mCsToolkit.getModifiableGlobalsTable(), mHoareAnnotationStatisticsGenerator);
+			hoareAnnot = mPredicateFactory.getNewHoareAnnotation((BoogieIcfgLocation) pp, mCsToolkit.getModifiableGlobalsTable());
 			hoareAnnot.annotate(locNode);
 		} else {
 			hoareAnnot = taAnnot;
@@ -170,10 +155,6 @@ public class HoareAnnotationWriter {
 		return false;
 	}
 
-	public HoareAnnotationStatisticsGenerator getHoareAnnotationStatisticsGenerator() {
-		return mHoareAnnotationStatisticsGenerator;
-	}
-	
 	
 
 }
