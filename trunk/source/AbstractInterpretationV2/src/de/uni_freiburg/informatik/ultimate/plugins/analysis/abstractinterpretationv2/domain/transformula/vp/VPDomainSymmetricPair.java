@@ -4,7 +4,7 @@
  * This is a copy of class SymmetricPair, which is part of SMTInterpol.
  *
  */
-package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.vp;
+package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
 
 public class VPDomainSymmetricPair<T> {
 	T mFst, mSnd;
