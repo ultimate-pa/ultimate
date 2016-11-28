@@ -31,6 +31,7 @@ import java.io.Serializable;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
@@ -93,6 +94,11 @@ public abstract class BoogieVar implements IProgramVar, Serializable, IBoogieVar
 	@Override
 	public ApplicationTerm getPrimedConstant() {
 		return mPrimedConstant;
+	}
+	
+	@Override
+	public Term getTerm() {
+		return mDefaultConstant;
 	}
 
 	@Override

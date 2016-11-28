@@ -79,11 +79,6 @@ public class LocalBoogieVar extends BoogieVar  implements Serializable, ILocalPr
 		return mProcedure;
 	}
 
-	@Override
-	public Term getTerm() {
-		return getTermVariable();
-	}
-
 	private int computeHashCode() {
 		final int prime = 31;
 		int result = 1;

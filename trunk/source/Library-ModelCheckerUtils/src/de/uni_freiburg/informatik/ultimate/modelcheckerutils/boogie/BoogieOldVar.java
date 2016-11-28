@@ -65,11 +65,6 @@ public class BoogieOldVar extends GlobalBoogieVar implements Serializable, IProg
 		return mIdentifier;
 	}
 
-	@Override
-	public Term getTerm() {
-		return getTermVariable();
-	}
-
 	/* (non-Javadoc)
 	 * @see de.uni_freiburg.informatik.ultimate.boogie.IProgramOldVar_Backupt#getNonOldVar()
 	 */

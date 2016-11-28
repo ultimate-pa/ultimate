@@ -125,9 +125,4 @@ public class BoogieNonOldVar extends GlobalBoogieVar implements Serializable, IP
 		}
 		return true;
 	}
-
-	@Override
-	public Term getTerm() {
-		return getTermVariable();
-	}
 }
