@@ -2,31 +2,31 @@
  * Copyright (C) 2013-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 Stefan Wissert
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE BlockEncoding plug-in.
- * 
+ *
  * The ULTIMATE BlockEncoding plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE BlockEncoding plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE BlockEncoding plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BlockEncoding plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE BlockEncoding plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE BlockEncoding plug-in grant you additional permission
  * to convey the resulting work.
  */
 /**
- * 
+ *
  */
 package de.uni_freiburg.informatik.ultimate.blockencoding.algorithm;
 
@@ -51,11 +51,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 /**
  * This Class is the base class for the minimization algorithm. <br>
  * He starts the minimization on a RootNode, which is the input of this class. <br>
- * On this RootNode, the minimization is applied. This is done with the single
- * Minimization Visitors.
- * 
+ * On this RootNode, the minimization is applied. This is done with the single Minimization Visitors.
+ *
  * @author Stefan Wissert
- * 
+ *
  */
 public class BlockEncoder {
 
@@ -75,26 +74,26 @@ public class BlockEncoder {
 
 	private final IUltimateServiceProvider mServices;
 
-	public BlockEncoder(ILogger logger, IUltimateServiceProvider services) {
+	public BlockEncoder(final ILogger logger, final IUltimateServiceProvider services) {
 		mLogger = logger;
 		mServices = services;
 	}
 
 	/**
 	 * Public method to start the minimization.
-	 * 
+	 *
 	 * @param root
 	 *            the RootNode of the input RCFG
 	 * @return the minimized CFG
 	 */
-	public RootNode startMinimization(RootNode root) {
+	public RootNode startMinimization(final RootNode root) {
 		mLogger.info("Start BlockEncoding on RCFG");
 		// initialize the statistics
 		EncodingStatistics.init();
 		// We need to know, which rating strategy should be chosen
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
-		RatingFactory.getInstance().setRatingStrategy(
-				prefs.getEnum(PreferenceInitializer.LABEL_STRATEGY, RatingStrategy.class));
+		RatingFactory.getInstance()
+				.setRatingStrategy(prefs.getEnum(PreferenceInitializer.LABEL_STRATEGY, RatingStrategy.class));
 		shouldMinimizeCallReturn = prefs.getBoolean(PreferenceInitializer.LABEL_CALLMINIMIZE);
 
 		// Initialize the Visitors, which apply the minimization rules
@@ -103,7 +102,7 @@ public class BlockEncoder {
 		mcrVisitor = new MinimizeCallReturnVisitor(mLogger, mbVisitor);
 		tmVisitor = new TestMinimizationVisitor(mLogger);
 
-		nonCallingFunctions = new ArrayList<MinimizedNode>();
+		nonCallingFunctions = new ArrayList<>();
 
 		for (final IcfgEdge edge : root.getOutgoingEdges()) {
 			if (edge instanceof RootEdge) {
@@ -130,7 +129,7 @@ public class BlockEncoder {
 			// to handle this. Therefore we made up a list where the
 			// MinimizeCallReturnVisitor tells us which nodes we have to inspect
 			// again!
-			final ArrayList<MinimizedNode> methodNodes = new ArrayList<MinimizedNode>();
+			final ArrayList<MinimizedNode> methodNodes = new ArrayList<>();
 			for (final IcfgEdge edge : root.getOutgoingEdges()) {
 				if (edge instanceof RootEdge) {
 					methodNodes.add(BlockEncodingAnnotation.getAnnotation(edge).getNode());
@@ -173,13 +172,12 @@ public class BlockEncoder {
 	}
 
 	/**
-	 * This method processes the CFG of a single function. Basically the
-	 * functions are independent from each other.
-	 * 
+	 * This method processes the CFG of a single function. Basically the functions are independent from each other.
+	 *
 	 * @param methodEntryNode
 	 *            the entry point of a function
 	 */
-	private void processFunction(BoogieIcfgLocation methodEntryNode, RootEdge rootEdge) {
+	private void processFunction(final BoogieIcfgLocation methodEntryNode, final RootEdge rootEdge) {
 		mLogger.info("Start processing function: " + methodEntryNode.getProcedure());
 		// Remark: While doing the initialization of the min model, we probably
 		// create already a method entry node

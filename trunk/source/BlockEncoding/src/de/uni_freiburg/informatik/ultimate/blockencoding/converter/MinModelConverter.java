@@ -2,31 +2,31 @@
  * Copyright (C) 2013-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2013-2015 Stefan Wissert
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE BlockEncoding plug-in.
- * 
+ *
  * The ULTIMATE BlockEncoding plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE BlockEncoding plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE BlockEncoding plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BlockEncoding plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE BlockEncoding plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE BlockEncoding plug-in grant you additional permission
  * to convey the resulting work.
  */
 /**
- * 
+ *
  */
 package de.uni_freiburg.informatik.ultimate.blockencoding.converter;
 
@@ -59,9 +59,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.prefere
 /**
  * This class is like BlockEncoder, the start point where every function in the program is converted back to an RCFG. An
  * advantage is, that this can be executed in parallel, which gives some performance gains.
- * 
+ *
  * @author Stefan Wissert
- * 
+ *
  */
 public class MinModelConverter {
 
@@ -84,8 +84,8 @@ public class MinModelConverter {
 	/**
 	 * Starting point of the back conversion to an RCFG. Note: Due to changes of data model, the minimized model belongs
 	 * now as Annotation at the RootEdges.
-	 * 
-	 * @param root
+	 *
+	 * @param rootNode
 	 *            the rootNode to convert
 	 * @return the converted rootNode
 	 */
@@ -120,7 +120,7 @@ public class MinModelConverter {
 
 	/**
 	 * Checks the preferences for a given rating bound.
-	 * 
+	 *
 	 * @return gets the rating boundary
 	 */
 	private IRatingHeuristic getRatingHeuristic() {
@@ -159,7 +159,7 @@ public class MinModelConverter {
 
 	/**
 	 * Converts a function (given as MinimizedNode) by calling the ConversionVisitor.
-	 * 
+	 *
 	 * @param node
 	 *            function head
 	 * @return converted ProgramPoint
@@ -180,13 +180,13 @@ public class MinModelConverter {
 	 * afterwards. Most of the maps are usual very small, so that iterating over them should be not that expensive. One
 	 * exception is the field "locNodes", there is every ProgramPoint stored, with its name and the procedure name. We
 	 * store during the conversion.
-	 * 
+	 *
 	 * @param rootAnnot
 	 */
 	private void updateRootAnnot(final BoogieIcfgContainer rootAnnot) {
 		final HashMap<BoogieIcfgLocation, BoogieIcfgLocation> progPointMap = mConvertVisitor.getOrigToNewMap();
 		// Update the Entry-Nodes
-		final HashMap<String, BoogieIcfgLocation> entryNodes = new HashMap<String, BoogieIcfgLocation>(rootAnnot.getProcedureEntryNodes());
+		final HashMap<String, BoogieIcfgLocation> entryNodes = new HashMap<>(rootAnnot.getProcedureEntryNodes());
 		rootAnnot.getProcedureEntryNodes().clear();
 		for (final String key : entryNodes.keySet()) {
 			final BoogieIcfgLocation oldVal = entryNodes.get(key);
@@ -195,7 +195,7 @@ public class MinModelConverter {
 			}
 		}
 		// Update the Exit-Nodes
-		final HashMap<String, BoogieIcfgLocation> exitNodes = new HashMap<String, BoogieIcfgLocation>(rootAnnot.getProcedureExitNodes());
+		final HashMap<String, BoogieIcfgLocation> exitNodes = new HashMap<>(rootAnnot.getProcedureExitNodes());
 		rootAnnot.getProcedureExitNodes().clear();
 		for (final String key : exitNodes.keySet()) {
 			final BoogieIcfgLocation oldVal = exitNodes.get(key);
@@ -205,7 +205,7 @@ public class MinModelConverter {
 		}
 		// Update the Error-Nodes
 		for (final String key : rootAnnot.getProcedureErrorNodes().keySet()) {
-			final ArrayList<BoogieIcfgLocation> newReferences = new ArrayList<BoogieIcfgLocation>();
+			final ArrayList<BoogieIcfgLocation> newReferences = new ArrayList<>();
 			for (final BoogieIcfgLocation oldVal : rootAnnot.getProcedureErrorNodes().get(key)) {
 				if (progPointMap.containsKey(oldVal)) {
 					newReferences.add(progPointMap.get(oldVal));
@@ -218,7 +218,7 @@ public class MinModelConverter {
 		}
 		// Update the LoopLocations
 		// Attention: ProgramPoint implements equals, we have to care for that!
-		final HashSet<BoogieIcfgLocation> keySet = new HashSet<BoogieIcfgLocation>(rootAnnot.getLoopLocations().keySet());
+		final HashSet<BoogieIcfgLocation> keySet = new HashSet<>(rootAnnot.getLoopLocations().keySet());
 		rootAnnot.getLoopLocations().clear();
 		for (final BoogieIcfgLocation oldVal : keySet) {
 			if (progPointMap.containsKey(oldVal)) {
