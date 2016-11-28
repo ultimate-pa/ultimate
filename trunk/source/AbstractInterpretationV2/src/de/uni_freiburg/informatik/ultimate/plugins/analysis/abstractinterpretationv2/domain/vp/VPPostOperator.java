@@ -126,15 +126,29 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 			
 			if (applicationName == "and") {
 				
-				List<VPState> andList = new ArrayList<>();
-//				for (final Term t : appTerm.getParameters()) {
-//					andList.add(handleTransition(t));
-//				}
-//				VPState state = andList.get(0);
-//				for (int i = 1; i < andList.size(); i++) {
-//					state = state.conjoin(andList.get(i));
-//				}
-				return null;
+				List<List<VPState>> andList = new ArrayList<>();
+				for (final Term t : appTerm.getParameters()) {
+					andList.add(handleTransition(t));
+				}
+				
+				assert andList.size() > 1;
+				
+				List<VPState> result = new ArrayList<>();
+				List<VPState> state = new ArrayList<>();
+				state.addAll(andList.get(0));
+				for (int i = 1; i < andList.size(); i++) {
+					for (int j = 0; j < state.size(); j++) {
+						for (int k = 0; k < andList.get(i).size(); k++) {
+							result.add(state.get(j).conjoin(andList.get(i).get(k)));
+						}
+					}
+					state.clear();
+					state.addAll(result);
+					if (!(i == andList.size() - 1)) {
+						result.clear();
+					}
+				}
+				return result;
 				
 			} else if (applicationName == "or") {
 				
@@ -142,7 +156,6 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 				for (final Term t : appTerm.getParameters()) {
 					orList.addAll(handleTransition(t));
 				}
-				//TODO
 //				VPState state = orList.get(0);
 //				for (int i = 1; i < orList.size(); i++) {
 //					state = state.disjoin(orList.get(i));	

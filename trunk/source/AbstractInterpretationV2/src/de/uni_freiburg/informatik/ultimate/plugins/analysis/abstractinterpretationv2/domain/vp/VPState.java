@@ -346,8 +346,6 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 		return checkContradiction();
 	}
 
-
-	// TODO VPDomainSymmetricPair<EqNode> or VPDomainSymmetricPair<EqGraphNode>
 	public void addToDisEqSet(final EqGraphNode node1, final EqGraphNode node2) {
 		this.getDisEqualitySet().add(new VPDomainSymmetricPair<EqGraphNode>(node1, node2));
 	}

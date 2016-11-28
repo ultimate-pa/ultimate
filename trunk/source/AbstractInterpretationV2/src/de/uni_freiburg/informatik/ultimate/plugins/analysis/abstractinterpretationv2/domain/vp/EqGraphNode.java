@@ -150,25 +150,28 @@ public class EqGraphNode {
 		final StringBuilder sb = new StringBuilder();
 
 		sb.append(eqNode.toString());
-//		if (representative != this) {
-//			sb.append(" ||| representative: ");
-//			sb.append(representative.toString());
-//		}
-//		sb.append(" ||| reverseRepresentative: ");
-//		for (EqGraphNode node : reverseRepresentative) {
-//			sb.append(node.toString());
-//			sb.append("  ");
-//		}
-//		sb.append(" ||| ccpar: ");
-//		for (EqGraphNode node : ccpar) {
-//			sb.append(node.toString());
-//			sb.append("  ");
-//		}
-//		sb.append(" ||| ccchild: ");
-//		for (List<EqGraphNode> node : ccchild) {
-//			sb.append(node.toString());
-//			sb.append("  ");
-//		}
+		sb.append(" ||| representative: ");
+		sb.append(representative.eqNode.toString());
+		
+		sb.append(" ||| reverseRepresentative: ");
+		for (EqGraphNode node : reverseRepresentative) {
+			sb.append(node.eqNode.toString());
+			sb.append("  ");
+		}
+		sb.append(" ||| ccpar: ");
+		for (EqGraphNode node : ccpar) {
+			sb.append(node.eqNode.toString());
+			sb.append("  ");
+		}
+		sb.append(" ||| ccchild: ");
+		for (List<EqGraphNode> nodes : ccchild) {
+			sb.append("{");
+			for (EqGraphNode node : nodes) {
+				sb.append(node.toString());
+				sb.append("  ");
+			}
+			sb.append("}, ");
+		}
 
 		return sb.toString();
 	}
