@@ -22,3 +22,4 @@ Import-Package: junit.framework,
  org.junit,
  org.junit.runner,
  org.junit.runners
+Export-Package: de.uni_freiburg.informatik.ultimate.heapseparator

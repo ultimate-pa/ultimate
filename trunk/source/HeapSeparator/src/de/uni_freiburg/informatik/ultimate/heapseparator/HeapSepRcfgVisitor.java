@@ -42,44 +42,21 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 	/**
 	 * arrayId before separation --> arrayId after separation--> Set of pointerIds
 	 */
-//	HashRelation3<IProgramVarOrConst, ReplacementVar, EqNode> marrayToPartitions;
-//	HashRelation3<IProgramVarOrConst, ReplacementVar, EqNode> mArrayIdToNewArrayIdToPointers;
 	ManagedScript mScript;
 	private VPDomain mVpDomain;
 	private NewArrayIdProvider mNewArrayIdProvider;
 
 	public HeapSepRcfgVisitor(final ILogger logger,
-//			final NestedMap2<IProgramVarOrConst, EqNode, ReplacementVar> oldArrayToPointerToNewArray,
 			NewArrayIdProvider naip,
 			final ManagedScript script,
 			final VPDomain vpDomain) {
 		super(logger);
-//		moldArrayToPointerToNewArray = oldArrayToPointerToNewArray;
-//		marrayToPartitions = null; // TODO: do we need reverseInnerMap, still??
-									// //reverseInnerMap(moldArrayToPointerToNewArray);
 		mNewArrayIdProvider = naip;
 		mVpDomain = vpDomain;
 		mScript = script;
 	}
 
-	// private HashMap<IProgramVar, HashMap<IProgramVar, HashSet<IProgramVar>>> reverseInnerMap(
-	// final NestedMap2<IProgramVar,IProgramVar,IProgramVar> moldArrayToPointerToNewArray2) {
-	// final HashMap<IProgramVar, HashMap<IProgramVar, HashSet<IProgramVar>>> result = new HashMap<IProgramVar,
-	// HashMap<IProgramVar,HashSet<IProgramVar>>>();
-	//
-	// for (final Triple<IProgramVar, IProgramVar, IProgramVar> en1 : moldArrayToPointerToNewArray2.entrySet()) {
-	// result.put(en1.getKey(), new HashMap<>());
-	// for (final Entry<IProgramVar, IProgramVar> en2 : en1.getValue().entrySet()) {
-	// HashSet<IProgramVar> pointers = result.get(en1.getKey()).get(en2.getValue());
-	// if (pointers == null) {
-	// pointers = new HashSet<IProgramVar>();
-	// result.get(en1.getKey()).put(en2.getValue(), pointers);
-	// }
-	// pointers.add(en2.getKey());
-	// }
-	// }
-	// return result;
-	// }
+
 
 	@Override
 	public boolean performedChanges() {
@@ -135,37 +112,6 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 	}
 
 	private UnmodifiableTransFormula splitArraysInTransFormula(final UnmodifiableTransFormula tf) {
-
-		// new plan: we don't need a term transformer, here (at least not for the simple cases?..)
-		// --> just rename the BoogieVars in the maps
-		// insight:
-		// that won't work
-		// example:
-		// "(= x' (+ (select a p) (select a q)))" where p and q don't alias
-		// --> we'll need to duplicate a in outvars in this case..
-		// other thing:
-		// "(store (store a q i) p j)" where p and q don't alias
-		// --> is this a problem? Is this even possible?
-
-		// cases where arrays may occur, in the SMT theory of arrays:
-		// - store
-		// - select
-		// - equals/distinct
-		// example
-		// a' in "(= a' (store a p i))"
-		//
-
-		//		final ArraySplitter as = new ArraySplitter(mScript.getScript(),
-		//				 tf.getInVars(), tf.getOutVars());
-		//		final TransFormulaBuilder tfb = new TransFormulaBuilder(as.getUpdatedInVars(), as.getUpdatedOutVars(), false,
-		//				tf.getNonTheoryConsts(), false, tf.getBranchEncoders(), false);
-		//		final Term newFormula = as.transform(tf.getFormula());
-		//		tfb.setFormula(newFormula);
-		//		tfb.setInfeasibility(tf.isInfeasible());
-		//		tfb.addAuxVarsButRenameToFreshCopies(tf.getAuxVars(), mScript);
-		//		return tfb.finishConstruction(mScript);
-
-
 		/*
 		 * need:
 		 *  - a substitution that also updates the invars/outvars
@@ -181,18 +127,29 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 
 		Map<IProgramVarOrConst, ReplacementVar> substitutionMap = new HashMap<>();
 
-		List<MultiDimensionalStore> mdStores = MultiDimensionalStore.extractArrayStoresShallow(tf.getFormula());
 
-		List<MultiDimensionalSelect> mdSelects = MultiDimensionalSelect.extractSelectShallow(tf.getFormula(), false); //TODO allowArrayValues??
-
+		List<MultiDimensionalSelect> mdSelects = MultiDimensionalSelect.extractSelectShallow(tf.getFormula(), false);//TODO allowArrayValues??
 		for (MultiDimensionalSelect mds : mdSelects) {
 			IProgramVarOrConst oldArray = mVpDomain.getPreAnalysis().getIProgramVarOrConst(mds.getArray());
 			List<EqNode> pointers = mds.getIndex().stream()
 					.map(indexTerm -> mVpDomain.getPreAnalysis().getTermToEqNodeMap().get(indexTerm))
 					.collect(Collectors.toList());
 			ReplacementVar newArray = mNewArrayIdProvider.getNewArrayId(oldArray, pointers);
-			substitutionMap.put( oldArray, newArray);
+			substitutionMap.put(oldArray, newArray);
 		}
+
+		List<MultiDimensionalStore> mdStores = MultiDimensionalStore.extractArrayStoresShallow(tf.getFormula());
+		for (MultiDimensionalStore mds : mdStores) {
+			IProgramVarOrConst oldArray = mVpDomain.getPreAnalysis().getIProgramVarOrConst(mds.getArray());
+			List<EqNode> pointers = mds.getIndex().stream()
+					.map(indexTerm -> mVpDomain.getPreAnalysis().getTermToEqNodeMap().get(indexTerm))
+					.collect(Collectors.toList());
+			ReplacementVar newArray = mNewArrayIdProvider.getNewArrayId(oldArray, pointers);
+			substitutionMap.put(oldArray, newArray);
+		}
+		
+		//TODO: array equalities, array updates
+		// updates are equalities, but...
 
 		return null;
 	}

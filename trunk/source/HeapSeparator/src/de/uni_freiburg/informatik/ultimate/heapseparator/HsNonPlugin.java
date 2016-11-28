@@ -71,7 +71,6 @@ public class HsNonPlugin {
 			        .runFutureEqualityDomain(oldBoogieIcfg, initialEdges, timer, mServices, false);
 		
 		VPDomain vpDomain = (VPDomain) abstractInterpretationResult.getUsedDomain();
-		RCFGArrayIndexCollector preAnalysis = vpDomain.getPreAnalysis();
 		
 		/*
 		 * process AI result
@@ -89,14 +88,15 @@ public class HsNonPlugin {
 
 			hspav = new HeapSepPreAnalysisVisitor(mLogger);
 			walker.addObserver(hspav);
-			walker.run(initialEdges.iterator().next().getTarget()); // TODO: which location to take really??
+			for (CodeBlock ed : initialEdges) {
+				
+				walker.run(ed.getTarget()); 
+			}
+//			walker.run(initialEdges.iterator().next().getTarget()); // TODO: which location to take really??
 		}
 
-//		NestedMap2<IProgramVarOrConst, IProgramVarOrConst, ReplacementVar> oldArrayToPointerToNewArray =  
 		NewArrayIdProvider newArrayIdProvider = 
 				processAbstractInterpretationResult(abstractInterpretationResult, hspav);
-
-
 
 		/*
 		 * do the transformation itself..
@@ -123,9 +123,6 @@ public class HsNonPlugin {
 	private NewArrayIdProvider processAbstractInterpretationResult(
 			IAbstractInterpretationResult<VPState, CodeBlock, IProgramVar, ?> vpDomainResult, 
 			HeapSepPreAnalysisVisitor hspav) {
-
-//		VPDomain vpDomain = (VPDomain) vpDomainResult.getUsedDomain();
-
 		/*
 		 * Compute the mapping array to VPState:
 		 * The HeapSepPreAnalysisVisitor can tell us which arrays are accessed at which locations.
@@ -145,10 +142,7 @@ public class HsNonPlugin {
 		 * Compute the actual partitioning for each array.
 		 */
 		RCFGArrayIndexCollector vpPreAnalysis = ((VPDomain) vpDomainResult.getUsedDomain()).getPreAnalysis();
-		NewArrayIdProvider result = new NewArrayIdProvider();
-//		Map<IProgramVarOrConst, Set<EqNode>> arrayToPartition = new HashMap<>();
-//		NestedMap2<IProgramVarOrConst, IProgramVarOrConst, ReplacementVar> arrayToRepresentativeToFreshArrayVar =
-//				new NestedMap2<>();
+		NewArrayIdProvider newArrayIdProvider = new NewArrayIdProvider(mManagedScript);
 		for (Entry<IProgramVarOrConst, VPState> en : arrayToVPState.entrySet()) {
 			IProgramVarOrConst currentArray = en.getKey();
 			VPState state = en.getValue();
@@ -191,18 +185,12 @@ public class HsNonPlugin {
 				
 				if (indUneqAllOthers) {
 					// ind1 and all EqNodes that are known to be equal get 1 partition.
-					result.makeNewPartition(currentArray, ind1);
-					
-//					arrayToPartition.put(currentArray, arrayToVPState.get(currentArray).getEquivalentEqNodes(ind1));
-
-//					arrayToRepresentativeToFreshArrayVar.put(
-//							array, ind1, mReplacementVarFactory.getOrConstuctReplacementVar(array)); //TODO
+					newArrayIdProvider.registerDisjunctSinglePointer(currentArray, ind1);
 				}
 			}
 		}
 		
-		
-		return result;
+		return newArrayIdProvider;
 	}
 
 	/**
