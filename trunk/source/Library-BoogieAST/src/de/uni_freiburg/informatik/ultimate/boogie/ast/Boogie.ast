@@ -448,6 +448,35 @@ Statement ::=
 		 */
 		arguments : Expression[]
 	| { /**
+	     * A asynchrone procedure call.
+	     * The arguments are evaluated before the procedure call and then
+	     * the side-effects of the procedure call occur.
+	     */
+	    ForkStatement }
+	    /**
+	     * True if this is a forall procedure call.
+	     * In Boogie there are special forall procedure calls. See the
+	     * Boogie documentation for more details.  This is usually false.
+	     */
+		isForall  : boolean
+		/**
+		 * The variables where the return values are written to.
+		 */
+		lhs       : VariableLHS[]
+		/**
+		 * The name of the procedure.
+		 */
+		methodName: String
+		/**
+		 * The arguments.  This must contain the same number of expressions
+		 * as there are input parameters to the procedure.
+		 * If {@link #isForall()} is true, the argument can be a wildcard
+		 * and the procedure is &ldquo;called&rdquo; for all possible values.
+		 * This is used for lemma procedures which should not have any
+		 * side effects.
+		 */
+		arguments : Expression[]
+	| { /**
 	     * An if statements.  The condition is evaluated and according to
 	     * the result either the then part or else part is executed.  Note
 	     * that the condition cannot have side-effects.
