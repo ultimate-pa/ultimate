@@ -117,8 +117,8 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 	//	private final ControlFlowGraph cfg;
 
 	// New CFG
-	private final List<BoogieIcfgLocation> mLocations;
-	private final List<IcfgInternalAction> mTransitions;
+	private final Set<BoogieIcfgLocation> mLocations;
+	private final Set<IcfgInternalAction> mTransitions;
 
 	/**
 	 * The pattern variables, that is the coefficients of program- and helper
@@ -223,7 +223,7 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 			final PredicateUnifier predicateUnifier,
 			final ManagedScript predicateScript, final Collection<Term> axioms, 
 			final Script solver,
-			List<BoogieIcfgLocation> locations, List<IcfgInternalAction> transitions, final IPredicate precondition,
+			Set<BoogieIcfgLocation> locations, Set<IcfgInternalAction> transitions, final IPredicate precondition,
 			final IPredicate postcondition,
 			final ILinearInequalityInvariantPatternStrategy strategy,
 			final boolean useNonlinearConstraints,
@@ -1044,14 +1044,15 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 			int round) {
 		// Build invariant pattern
 		final Collection<Collection<LinearPatternBase>> disjunction;
-		if (mLocations.get(0).equals(location)) {
-			// entry pattern is equivalent to true
-			final Collection<LinearPatternBase> emptyConjunction = Collections.emptyList();
-			disjunction = Collections.singleton(emptyConjunction);
-		} else if (mLocations.get(mLocations.size()-1).equals(location)) {
-			// exit pattern is equivalent to false
-			disjunction = Collections.emptyList();
-		} else {
+//		if (mLocations.get(0).equals(location)) {
+//			// entry pattern is equivalent to true
+//			final Collection<LinearPatternBase> emptyConjunction = Collections.emptyList();
+//			disjunction = Collections.singleton(emptyConjunction);
+//		} else if (mLocations.get(mLocations.size()-1).equals(location)) {
+//			// exit pattern is equivalent to false
+//			disjunction = Collections.emptyList();
+//		} else 
+		{
 			final int[] dimensions = mStrategy.getDimensions(location, round);
 			disjunction = new ArrayList<>(dimensions[0]);
 			for (int i = 0; i < dimensions[0]; i++) {
@@ -1075,12 +1076,12 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 			}
 		}
 
-		// Keep track of entry and exit patterns, as we need them separately
-		if (mLocations.get(0).equals(location)) {
-			mEntryInvariantPattern = disjunction;
-		} else if (mLocations.get(mLocations.size()-1).equals(location)) {
-			mExitInvariantPattern = disjunction;
-		}
+//		// Keep track of entry and exit patterns, as we need them separately
+//		if (mLocations.get(0).equals(location)) {
+//			mEntryInvariantPattern = disjunction;
+//		} else if (mLocations.get(mLocations.size()-1).equals(location)) {
+//			mExitInvariantPattern = disjunction;
+//		}
 
 		return disjunction;
 	}

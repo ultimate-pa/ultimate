@@ -30,8 +30,10 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
@@ -43,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGloba
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -61,6 +64,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pa
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerSpWp;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils;
 
 /**
@@ -78,7 +82,10 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	private final PredicateUnifier mPredicateUnifier;
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
-	private static boolean USE_LIVE_VARIABLES = false;
+	private final static boolean USE_LIVE_VARIABLES = false;
+	// This is the simplest strategy: to add the backward predicate at the last location to the constraints, 
+	// as an additional conjunct
+	private final static boolean USE_ONLY_LAST_BACKWARD_PREDICATES = false;
 	
 	/**
 	 * Creates a default factory.
@@ -138,10 +145,11 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 			final ModifiableGlobalsTable modifiableGlobalsTable, final boolean useNonlinerConstraints,
 			final boolean useVarsFromUnsatCore, final Settings solverSettings,
 			final SimplificationTechnique simplicationTechnique, final XnfConversionTechnique xnfConversionTechnique,
-			final Collection<Term> axioms) {
-		this(services, run, precondition, postcondition, predicateUnifier, useVarsFromUnsatCore, modifiableGlobalsTable,
+			final Collection<Term> axioms, final List<IPredicate> backwardPredicates) {
+		this(services, run, precondition, postcondition, predicateUnifier, useVarsFromUnsatCore, modifiableGlobalsTable, csToolkit,
 				createDefaultFactory(services, storage, predicateUnifier, csToolkit, useNonlinerConstraints,
-						useVarsFromUnsatCore, solverSettings, simplicationTechnique, xnfConversionTechnique, axioms));
+						useVarsFromUnsatCore, solverSettings, simplicationTechnique, xnfConversionTechnique, axioms),
+				backwardPredicates);
 	}
 	
 	/**
@@ -166,8 +174,8 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	public PathInvariantsGenerator(final IUltimateServiceProvider services,
 			final NestedRun<? extends IAction, IPredicate> run, final IPredicate precondition,
 			final IPredicate postcondition, final PredicateUnifier predicateUnifier, final boolean useVarsFromUnsatCore,
-			final ModifiableGlobalsTable modifiableGlobalsTable,
-			final IInvariantPatternProcessorFactory<?> invPatternProcFactory) {
+			final ModifiableGlobalsTable modifiableGlobalsTable, final ManagedScript csToolkit,
+			final IInvariantPatternProcessorFactory<?> invPatternProcFactory, final List<IPredicate> backwardPredicates) {
 		super();
 		mServices = services;
 		mRun = run;
@@ -181,13 +189,13 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		
 		// Project path to CFG
 		final int len = mRun.getLength();
-		final List<BoogieIcfgLocation> locations = new ArrayList<>(len);
+		final Set<BoogieIcfgLocation> locations = new HashSet<>(len);
 //		final Map<BoogieIcfgLocation, IcfgLocation> locationsForProgramPoint = new HashMap<>(len);
-		final List<IcfgInternalAction> transitions = new ArrayList<>(len - 1);
-		
+		final Set<IcfgInternalAction> transitions = new HashSet<>(len - 1);
+		BoogieIcfgLocation previousLocation = null;
 		for (int i = 0; i < len; i++) {
 			final ISLPredicate pred = (ISLPredicate) mRun.getStateAtPosition(i);
-			final BoogieIcfgLocation programPoint = pred.getProgramPoint();
+			final BoogieIcfgLocation currentLocation = pred.getProgramPoint();
 			
 //			IcfgLocation location = locationsForProgramPoint.get(programPoint);
 //			if (location == null) {
@@ -195,7 +203,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 //				locationsForProgramPoint.put(programPoint, location);
 //			}
 			
-			locations.add(programPoint);
+			locations.add(currentLocation);
 			
 			if (i > 0) {
 				if (!mRun.getWord().isInternalPosition(i - 1)) {
@@ -205,9 +213,15 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 				final UnmodifiableTransFormula transFormula =
 						((IInternalAction) mRun.getSymbol(i - 1)).getTransformula();
 //				transitions.add(new Transition(transFormula, locations.get(i - 1), location));
-				transitions.add(new IcfgInternalAction(locations.get(i - 1), programPoint, programPoint.getPayload(),
-						transFormula));
+				transitions.add(new IcfgInternalAction(previousLocation, currentLocation, currentLocation.getPayload(),
+						transFormula));				
+				if (backwardPredicates != null && (i == len - 1) && USE_ONLY_LAST_BACKWARD_PREDICATES ) {
+					final UnmodifiableTransFormula wpAsTransformula = TransFormulaBuilder.constructTransFormulaFromPredicate(backwardPredicates.get(i),
+							csToolkit);
+					transitions.add(new IcfgInternalAction(previousLocation, currentLocation, currentLocation.getPayload(), wpAsTransformula));
+				}
 			}
+			previousLocation = currentLocation;
 		}
 
 //		final ControlFlowGraph cfg =
@@ -239,6 +253,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 //		}
 //		// End AI Module
 		
+		
 		// Generate invariants
 		final CFGInvariantsGenerator generator = new CFGInvariantsGenerator(services);
 		final Map<BoogieIcfgLocation, IPredicate> invariants;
@@ -260,7 +275,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		if (invariants != null) {
 			mInterpolants = new IPredicate[len];
 			for (int i = 0; i < len; i++) {
-				mInterpolants[i] = invariants.get(locations.get(i));
+				mInterpolants[i] = invariants.get(((ISLPredicate) mRun.getStateAtPosition(i)).getProgramPoint());
 				mLogger.info("[PathInvariants] Interpolant no " + i + " " + mInterpolants[i].toString());
 			}
 			mLogger.info("[PathInvariants] Invariants found and " + "processed.");

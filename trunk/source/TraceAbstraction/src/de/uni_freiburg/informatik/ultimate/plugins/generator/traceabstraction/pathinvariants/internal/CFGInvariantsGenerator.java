@@ -197,8 +197,8 @@ public final class CFGInvariantsGenerator {
  * @return the invariant map for the set of given locations or null if the processor failed to process its invariant
  *         patterns up to its final run.
  */
-public <IPT> Map<BoogieIcfgLocation, IPredicate> generateInvariantsForTransitions(final List<BoogieIcfgLocation> locations, 
-		final List<IcfgInternalAction> transitions,
+public <IPT> Map<BoogieIcfgLocation, IPredicate> generateInvariantsForTransitions(final Set<BoogieIcfgLocation> locations, 
+		final Set<IcfgInternalAction> transitions,
 		final IPredicate precondition, final IPredicate postcondition,
 		final IInvariantPatternProcessorFactory<IPT> invPatternProcFactory, final boolean useVariablesFromUnsatCore, 
 		final boolean useLiveVariables, final Set<IProgramVar> liveVariables) {

@@ -196,13 +196,21 @@ class TraceCheckerConstructor implements Supplier<TraceChecker> {
 		final boolean fakeNonIncrementalSolver = false;
 		final Settings settings = new Settings(fakeNonIncrementalSolver, true, solverCommand, -1, null,
 				dumpSmtScriptToFile, pathOfDumpedScript, baseNameOfDumpedScript);
+		// Construct TraceCheckerSpWp that computes backward predicates
+		final TraceCheckerSpWp tcspwp = new TraceCheckerSpWp(truePredicate, falsePredicate,
+				new TreeMap<Integer, IPredicate>(), NestedWord.nestedWord(mCounterexample.getWord()),
+				mPrefs.getCfgSmtToolkit(), assertCodeBlocksIncrementally, mPrefs.getUnsatCores(),
+				mPrefs.getUseLiveVariables(), mServices, true, mPredicateUnifier,
+				InterpolationTechnique.BackwardPredicates, mManagedScript, xnfConversionTechnique,
+				simplificationTechnique, mCounterexample.getStateSequence());
+				
 		traceChecker = new InterpolatingTraceCheckerPathInvariantsWithFallback(truePredicate,
 				falsePredicate, new TreeMap<Integer, IPredicate>(),
 				(NestedRun<CodeBlock, IPredicate>) mCounterexample, mPrefs.getCfgSmtToolkit(),
 				assertCodeBlocksIncrementally, mServices, mPrefs.getToolchainStorage(), true,
 				mPredicateUnifier, useNonlinearConstraints, useVarsFromUnsatCore, settings,
 				xnfConversionTechnique, simplificationTechnique,
-				icfgContainer.getBoogie2SMT().getAxioms());
+				icfgContainer.getBoogie2SMT().getAxioms(), tcspwp);
 		return traceChecker;
 	}
 }
