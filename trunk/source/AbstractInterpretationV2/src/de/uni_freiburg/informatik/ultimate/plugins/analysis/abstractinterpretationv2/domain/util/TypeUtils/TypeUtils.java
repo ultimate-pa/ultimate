@@ -36,7 +36,9 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.ConstructedType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 
 public class TypeUtils {
 	public static void consumeVariable(final Consumer<IBoogieVar> varConsumer, final Consumer<IBoogieVar> boolConsumer,
@@ -45,6 +47,27 @@ public class TypeUtils {
 		assert variable != null;
 
 		consumeVariablePerType(varConsumer, boolConsumer, arrayConsumer, variable, variable.getIType());
+	}
+
+	public static void consumeVariable(final Consumer<IProgramVarOrConst> varConsumer,
+	        final Consumer<IProgramVarOrConst> boolConsumer, final Object arrayConsumer,
+	        final IProgramVarOrConst variable) {
+		assert arrayConsumer == null;
+		assert variable != null;
+
+		final Sort sort = variable.getTerm().getSort();
+
+		if (sort.isNumericSort()) {
+			varConsumer.accept(variable);
+		} else if (sort.getName().equals("Bool")) {
+			boolConsumer.accept(variable);
+		} else if (sort.isArraySort()) {
+			// TODO: Insert arrayConsumer as soon as array support is implemented.
+			varConsumer.accept(variable);
+			// arrayConsumer.equals(variable);
+		} else {
+			throw new UnsupportedOperationException("Type not supported.");
+		}
 	}
 
 	private static void consumeVariablePerType(final Consumer<IBoogieVar> varConsumer,

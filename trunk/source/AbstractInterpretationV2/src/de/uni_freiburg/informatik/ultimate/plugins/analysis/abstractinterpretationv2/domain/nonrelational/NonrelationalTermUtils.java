@@ -33,7 +33,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 
 /**
  * Utilities for the creation of terms for nonrelational domains.
@@ -60,6 +62,27 @@ public class NonrelationalTermUtils {
 			final ApplicationTerm termvar = ((BoogieConst) var).getDefaultConstant();
 			assert termvar != null : "There seems to be no termvar for this BoogieConst";
 			return termvar;
+		}
+		return null;
+	}
+
+	/**
+	 * Generates an SMT {@link Term} for a given variable.
+	 * 
+	 * @param var
+	 *            The variable to generate the SMT term for.
+	 * @return The SMT term.
+	 */
+	public static Term getTermVar(final IProgramVarOrConst var) {
+		assert var != null : "Cannot get TermVariable from null";
+		if (var instanceof IProgramVar) {
+			final TermVariable termVar = ((IProgramVar) var).getTermVariable();
+			assert termVar != null : "There seems to be no termvar for this ProgramVar";
+			return termVar;
+		} else if (var instanceof IProgramConst) {
+			final ApplicationTerm termVar = ((IProgramConst) var).getDefaultConstant();
+			assert termVar != null : "There seems to be no termvar for this IProgramConst";
+			return termVar;
 		}
 		return null;
 	}
