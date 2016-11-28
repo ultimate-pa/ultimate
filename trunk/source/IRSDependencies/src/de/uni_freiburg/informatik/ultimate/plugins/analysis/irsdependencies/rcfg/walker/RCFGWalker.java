@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.walker;
 
+import java.util.Collection;
+
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
@@ -84,8 +86,8 @@ public abstract class RCFGWalker implements IRCFGWalker {
 	}
 
 	@Override
-	public void run(IcfgLocation rootNode) {
-		mDispatcher.run(rootNode);
+	public void run(final Collection<IcfgEdge> startEdges) {
+		mDispatcher.run(startEdges);
 	}
 
 	protected void programExitReached() {

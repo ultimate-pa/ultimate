@@ -26,10 +26,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.walker;
 
+import java.util.Collection;
+
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.visitors.SimpleRCFGVisitor;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 
 public class ObserverDispatcherSequential extends ObserverDispatcher
 {
@@ -41,16 +42,13 @@ public class ObserverDispatcherSequential extends ObserverDispatcher
 	private SimpleRCFGVisitor mCurrentVisitor;
 
 	@Override
-	public void run(IcfgLocation node)
+	public void run(final Collection<IcfgEdge> startEdges)
 	{
-		if (!(node instanceof RootNode)) {
-			mLogger.error("RCFGWalker can only process models created by RCFGBuilder");
-			return;
-		}
+
 		for (final SimpleRCFGVisitor visitor : mObservers) {
 			mCurrentVisitor = visitor;
 			mCurrentVisitor.init(null, 0, 1);
-			mWalker.startFrom((RootNode) node);
+			mWalker.startFrom(startEdges);
 			mCurrentVisitor.finish();
 		}
 

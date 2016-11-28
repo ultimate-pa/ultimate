@@ -26,14 +26,18 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.observers;
 
+import java.util.Collection;
+
 import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.visitors.DebugRCFGVisitor;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.walker.ObserverDispatcher;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.walker.ObserverDispatcherSequential;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.walker.RCFGWalkerUnroller;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 
 /**
  * 
@@ -72,7 +76,8 @@ public class DependencyFinder extends BaseObserver {
 		walker.addObserver(new DebugRCFGVisitor(mLogger, 500));
 		// walker.addObserver(new UseDefVisitor());
 		// walker.addObserver(new SequencingVisitor(walker));
-		walker.run((IcfgLocation) root);
+		Collection<IcfgEdge> startEdges = BoogieIcfgContainer.extractStartEdges((BoogieIcfgContainer) root);
+		walker.run(startEdges);
 
 		final DebugFileWriterDietsch dfw = new DebugFileWriterDietsch(walker.getPaths(), mLogger, unrollings);
 		dfw.run();

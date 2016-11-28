@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.walker;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -63,9 +64,9 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 	}
 
 	@Override
-	public void startFrom(final RootNode node) {
+	public void startFrom(Collection<IcfgEdge> startEdges) {
 		init();
-		final IcfgEdge start = searchMainEdge(node);
+		final IcfgEdge start = searchMainEdge(startEdges);
 		if (start == null) {
 			mLogger.error("No main procedure found");
 			return;
@@ -120,9 +121,9 @@ public class RCFGWalkerUnroller extends RCFGWalker {
 		}
 	}
 
-	protected IcfgEdge searchMainEdge(final RootNode node) {
+	protected IcfgEdge searchMainEdge(final Collection<IcfgEdge> startEdges) {
 		mLogger.debug("Searching for procedure \"" + MAIN_PROCEDURE_NAME + "\"");
-		for (final IcfgEdge edge : node.getOutgoingEdges()) {
+		for (final IcfgEdge edge : startEdges) {
 			final BoogieIcfgLocation possibleMain = (BoogieIcfgLocation) edge.getTarget();
 			mLogger.debug("Candidate: \"" + possibleMain.getProcedure() + "\"");
 			if (possibleMain.getProcedure()

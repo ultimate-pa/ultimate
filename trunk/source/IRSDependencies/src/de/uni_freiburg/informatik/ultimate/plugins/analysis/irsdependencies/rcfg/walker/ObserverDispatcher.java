@@ -26,11 +26,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.walker;
 
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.visitors.SimpleRCFGVisitor;
 
@@ -81,7 +83,7 @@ public abstract class ObserverDispatcher {
 		return mObservers.contains(observer);
 	}
 
-	public abstract void run(IcfgLocation rootNode);
+	public abstract void run(Collection<IcfgEdge> startEdges);
 
 	protected abstract void callObservers(IRCFGVisitorDispatcher dispatcher);
 

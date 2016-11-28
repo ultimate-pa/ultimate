@@ -118,7 +118,7 @@ public class HeapSeparatorObserver implements IUnmanagedObserver {
 
 		final HeapSepRcfgVisitor hsv = null; //new HeapSepRcfgVisitor(mLogger, mOldArrayToPointerToNewArray, mScript);
 		walker.addObserver(hsv);
-		walker.run((IcfgLocation) root);
+		walker.run(BoogieIcfgContainer.extractStartEdges(boogieIcfgContainer));
 
 		return false;
 	}

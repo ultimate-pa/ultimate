@@ -26,13 +26,14 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.walker;
 
+import java.util.Collection;
+
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IObserver;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 
 public interface IRCFGWalker
 {
-	void startFrom(RootNode node);
+	void startFrom(Collection<IcfgEdge> startEdges);
 	
 	public boolean addObserver(IObserver observer);
 	
@@ -42,6 +43,6 @@ public interface IRCFGWalker
 	
 	public boolean containsObserver(IObserver observer);
 	
-	public void run(IcfgLocation node);
+	public void run(Collection<IcfgEdge> startEdges);
 	
 }

@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.walker;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Queue;
@@ -33,7 +34,6 @@ import java.util.Queue;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 
 /**
  * This walker traverses RCFG-graphs in breadth-first order with incoming edges
@@ -56,12 +56,12 @@ public class RCFGWalkerBreadthFirst extends RCFGWalker
 	}
 
 	@Override
-	public void startFrom(RootNode node)
-	{
-		level(node);
-		for (final IcfgEdge edge : node.getOutgoingEdges()) {
-			mRemainingEdges.add(edge);
-		}
+	public void startFrom(final Collection<IcfgEdge> startEdges) {
+//		level(node);
+//		for (final IcfgEdge edge : node.getOutgoingEdges()) {
+//			mRemainingEdges.add(edge);
+//		}
+		mRemainingEdges.addAll(startEdges);
 		processMethods();
 	}
 

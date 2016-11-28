@@ -88,11 +88,8 @@ public class HsNonPlugin {
 
 			hspav = new HeapSepPreAnalysisVisitor(mLogger);
 			walker.addObserver(hspav);
-			for (CodeBlock ed : initialEdges) {
 				
-				walker.run(ed.getTarget()); 
-			}
-//			walker.run(initialEdges.iterator().next().getTarget()); // TODO: which location to take really??
+			walker.run(BoogieIcfgContainer.extractStartEdges(oldBoogieIcfg)); 
 		}
 
 		NewArrayIdProvider newArrayIdProvider = 
@@ -108,7 +105,7 @@ public class HsNonPlugin {
 
 		final HeapSepRcfgVisitor hsv = new HeapSepRcfgVisitor(mLogger, newArrayIdProvider, mManagedScript, vpDomain);
 		walker.addObserver(hsv);
-		walker.run(initialEdges.iterator().next().getTarget()); // TODO: whih location to take really??
+		walker.run(BoogieIcfgContainer.extractStartEdges(oldBoogieIcfg));
 	
 
 		return null;
