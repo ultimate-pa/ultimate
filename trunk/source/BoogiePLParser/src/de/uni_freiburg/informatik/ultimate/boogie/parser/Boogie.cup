@@ -720,7 +720,6 @@ stmt ::=
 	  {: RESULT = s; :}
 	| callStmt:s
 	| forkStmt:s
-	  {: RESULT = s; :}
 	;
 callStmt ::= 
       CALL:x ID:m LPAR:y exprCommaStar:e RPAR SEMI
@@ -729,10 +728,11 @@ callStmt ::=
 	  {: RESULT = new CallStatement(getLocation(x$,p$,false), false, ass.toArray(new VariableLHS[ass.size()]), m, p.toArray(new Expression[p.size()])); :}
 	| CALL:x FORALL:z ID:m LPAR wildcardExprCommaStar:e RPAR SEMI
 	  {: RESULT = new CallStatement(getLocation(x$,e$,false), true, new VariableLHS[0], m, e.toArray(new Expression[e.size()])); :}
-	;  
+	;
+/* Example: fork 5 someProcedure(firstArg, true); */ 
 forkStmt ::=
-      FORK:x ID:m LPAR:y exprCommaStar:e RPAR SEMI
-	  {: RESULT = new ForkStatement(getLocation(x$,e$,false), false, new VariableLHS[0], m, e.toArray(new Expression[e.size()])); :}
+      FORK:x expr:i ID:m LPAR:y exprCommaStar:e RPAR SEMI
+	  {: RESULT = new ForkStatement(getLocation(x$,e$,false), i, m, e.toArray(new Expression[e.size()])); :}
 	;
 ifStmt ::=
 	  IF:x LPAR wildcardExpr:c RPAR blockStmt:block elseOpt:e

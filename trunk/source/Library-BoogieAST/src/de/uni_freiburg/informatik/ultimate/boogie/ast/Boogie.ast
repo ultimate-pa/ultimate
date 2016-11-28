@@ -458,11 +458,7 @@ Statement ::=
 	     * In Boogie there are special forall procedure calls. See the
 	     * Boogie documentation for more details.  This is usually false.
 	     */
-		isForall  : boolean
-		/**
-		 * The variables where the return values are written to.
-		 */
-		lhs       : VariableLHS[]
+		forkID  : Expression
 		/**
 		 * The name of the procedure.
 		 */
