@@ -608,7 +608,7 @@ public class Boogie2SmtSymbolTable implements ICfgSymbolTable {
 			final ApplicationTerm defaultConstant = constructDefaultConstant(sort, name);
 			final ApplicationTerm primedConstant = constructPrimedConstant(sort, name);
 
-			oldVar = new BoogieOldVar(identifier, iType, isOldVar, termVariable, defaultConstant, primedConstant);
+			oldVar = new BoogieOldVar(identifier, iType, termVariable, defaultConstant, primedConstant);
 			mSmtVar2BoogieVar.put(termVariable, oldVar);
 			mBoogieVar2DeclarationInformation.put(oldVar, declarationInformation);
 			mBoogieVar2AstNode.put(oldVar, varlist);
