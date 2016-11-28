@@ -454,9 +454,7 @@ Statement ::=
 	     */
 	    ForkStatement }
 	    /**
-	     * True if this is a forall procedure call.
-	     * In Boogie there are special forall procedure calls. See the
-	     * Boogie documentation for more details.  This is usually false.
+	     * An id referencing that fork statement out of multiple ones.
 	     */
 		forkID  : Expression
 		/**
@@ -472,6 +470,16 @@ Statement ::=
 		 * side effects.
 		 */
 		arguments : Expression[]
+	| { /**
+	     * A join statement waits for a procedure (which was called
+	     * with fork before) to termiate.
+	     */
+	    JoinStatement }
+	    /**
+	     * The id of the fork expression, to which the join statement
+	     * is referring to.
+	     */
+		forkID  : Expression
 	| { /**
 	     * An if statements.  The condition is evaluated and according to
 	     * the result either the then part or else part is executed.  Note
