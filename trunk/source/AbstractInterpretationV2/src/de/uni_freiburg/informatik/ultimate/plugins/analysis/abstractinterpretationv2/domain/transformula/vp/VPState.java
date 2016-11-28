@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -611,11 +612,15 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 	public boolean isEqualTo(final VPState other) {
 
 		Script script = mDomain.getManagedScript().getScript();
+		
+		TermVarsProc tvpThis = TermVarsProc.computeTermVarsProc(this.getTerm(mScript), mScript, mDomain.getBoogie2Smt().getBoogie2SmtSymbolTable());
+		TermVarsProc tvpOther = TermVarsProc.computeTermVarsProc(other.getTerm(mScript), mScript, mDomain.getBoogie2Smt().getBoogie2SmtSymbolTable());
 
 		script.echo(new QuotedObject("VPState.isEqualTo()"));
 		script.push(1);
 
-		Term equiv = script.term(TERM_FUNC_NAME_DISTINCT, new Term[] { this.getTerm(script), other.getTerm(script) });
+//		Term equiv = script.term(TERM_FUNC_NAME_DISTINCT, new Term[] { this.getTerm(script), other.getTerm(script) });
+		Term equiv = script.term(TERM_FUNC_NAME_DISTINCT, new Term[] { tvpThis.getClosedFormula(), tvpOther.getClosedFormula() });
 
 		script.assertTerm(equiv);
 
