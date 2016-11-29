@@ -60,12 +60,12 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
 public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILockHolderWithVoluntaryLockRelease  {
 	
 	protected final ManagedScript mManagedScript;
-	private final ModifiableGlobalsTable mModifiableGlobalVariableManager;
+	protected final ModifiableGlobalsTable mModifiableGlobalVariableManager;
 	private final OldVarsAssignmentCache mOldVarsAssignmentCache;
 	
 	private IPredicate mAssertedPrecond;
-	private IPredicate mAssertedHier;
-	private IAction mAssertedAction;
+	protected IPredicate mAssertedHier;
+	protected IAction mAssertedAction;
 	private IPredicate mAssertedPostcond;
 	private ScopedHashMap<IProgramVar, Term> mHierConstants;
 	public final boolean mUseNamedTerms = true;
@@ -79,7 +79,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 	protected static final String s_IdHierarchicalPrecondition = "hierarchicalPrecondition";
 	protected static final String s_IdNegatedPostcondition = "negatedPostcondition";
 	
-	private final HoareTripleCheckerStatisticsGenerator mEdgeCheckerBenchmark;
+	protected final HoareTripleCheckerStatisticsGenerator mEdgeCheckerBenchmark;
 	
 	
 	
@@ -275,9 +275,6 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		mAssertedPrecond = p;
 		mEdgeCheckerBenchmark.continueEdgeCheckerTime();
 		mManagedScript.push(this, 1);
-		if (mAssertedAction instanceof IReturnAction) {
-			mHierConstants.beginScope();
-		}
 		Term predcondition = p.getClosedFormula();
 		if (mUseNamedTerms) {
 			final Annotation annot = new Annotation(":named", s_IdPrecondition);
@@ -306,7 +303,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 	 * an equality (= c_g c_old(g)) where c_g is the default constant of the 
 	 * global variable g and c_old(g) is the default constant of old(g).
 	 */
-	private Collection<Term> constructNonModOldVarsEquality(final Set<IProgramVar> vars,
+	protected Collection<Term> constructNonModOldVarsEquality(final Set<IProgramVar> vars,
 			final Set<IProgramNonOldVar> oldVarsOfModifiableGlobals) {
 		final Collection<Term> conjunction = new ArrayList<>();
 		for (final IProgramVar bv : vars) {
@@ -334,9 +331,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		assert mAssertedPrecond != null : "No PrePred asserted";
 		mAssertedPrecond = null;
 		mManagedScript.pop(this, 1);
-		if (mAssertedAction instanceof IReturnAction) {
-			mHierConstants.endScope();
-		}
+
 		if (mAssertedAction == null) {
 			throw new AssertionError("CodeBlock is assigned first");
 		}
@@ -522,7 +517,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 	}
 
 	
-	private void unAssertHierPred() {
+	protected void unAssertHierPred() {
 		assert mManagedScript.isLockOwner(this);
 		assert mAssertedHier != null : "No HierPred asserted";
 		assert (mAssertedAction instanceof IReturnAction) : "Wrong kind of action";
@@ -654,7 +649,7 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		return isSat;
 	}
 	
-	private void unAssertPostcondition() {
+	protected void unAssertPostcondition() {
 		assert mManagedScript.isLockOwner(this);
 		assert mAssertedAction != null : "Assert CodeBlock first!";
 		assert mAssertedPrecond != null : "Assert precond first!";
