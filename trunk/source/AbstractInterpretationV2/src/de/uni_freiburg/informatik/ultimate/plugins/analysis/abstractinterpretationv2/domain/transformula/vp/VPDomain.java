@@ -155,7 +155,7 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 		return null;
 	}
 	
-	public VPStateTop getmTopState() {
+	public VPStateTop getTopState() {
 		return mTopState;
 	}
 
