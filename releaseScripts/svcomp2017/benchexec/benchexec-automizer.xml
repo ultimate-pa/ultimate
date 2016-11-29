@@ -17,7 +17,6 @@
     <include>../../../trunk/examples/svcomp/ldv-regression/mutex_lock_int.c_false-unreach-call.cil.c</include>
     <propertyfile>../../../trunk/examples/svcomp/PropertyUnreachCall.prp</propertyfile>
 	<option name="32bit"></option>
-	<option name="precise"></option>
   </tasks>
 
   <tasks name="Memsafety Deref">
@@ -25,7 +24,6 @@
     <include>../../../trunk/examples/svcomp/array-memsafety/array02-alloca_true-valid-memsafety.i</include>
     <propertyfile>../../../trunk/examples/svcomp/PropertyMemSafety.prp</propertyfile>
 	<option name="32bit"></option>
-	<option name="precise"></option>
   </tasks>
 
   <tasks name="Memsafety DerefFreeMemtrack">
@@ -37,7 +35,6 @@
 	<include>../../../trunk/examples/svcomp/ldv-memsafety/memset_false-valid-deref-write.c</include>
     <propertyfile>../../../trunk/examples/svcomp/PropertyMemSafety.prp</propertyfile>
 	<option name="32bit"></option>
-	<option name="precise"></option>
   </tasks>
 
   <tasks name="Overflow">
@@ -45,7 +42,6 @@
     <include>../../../trunk/examples/svcomp/signedintegeroverflow-regression/AdditionIntMin_false-no-overflow.c.i</include>
     <propertyfile>../../../trunk/examples/svcomp/PropertyOverflow.prp</propertyfile>
 	<option name="64bit"></option>
-	<option name="precise"></option>
   </tasks>
   
   <tasks name="CFI">
@@ -56,7 +52,6 @@
 	<include>../../../trunk/examples/svcomp/seq-pthread/cs_dekker_true-unreach-call.i</include>
     <propertyfile>../../../trunk/examples/svcomp/PropertyUnreachCall.prp</propertyfile>
 	<option name="32bit"></option>
-	<option name="precise"></option>
   </tasks>
 
   <tasks name="Bitvectors">
@@ -75,7 +70,6 @@
 	<include>../../../trunk/examples/svcomp/bitvector/soft_float_2_true-unreach-call.c.cil.c</include>
 	<propertyfile>../../../trunk/examples/svcomp/PropertyUnreachCall.prp</propertyfile>
 	<option name="32bit"></option>
-	<option name="precise"></option>
   </tasks>
 
   <tasks name="Recursive">
@@ -83,7 +77,6 @@
     <include>../../../trunk/examples/svcomp/recursive/McCarthy91_false-unreach-call_false-termination.c</include>
     <propertyfile>../../../trunk/examples/svcomp/PropertyUnreachCall.prp</propertyfile>
 	<option name="32bit"></option>
-	<option name="precise"></option>
   </tasks>
 
   <tasks name="Termination">
@@ -108,7 +101,6 @@
 	<include>../../../trunk/examples/svcomp/termination-libowfat/dirname_true-termination.c.i</include>
     <propertyfile>../../../trunk/examples/svcomp/Termination.prp</propertyfile>
 	<option name="64bit"></option>
-	<option name="precise"></option>
   </tasks>
 
 
