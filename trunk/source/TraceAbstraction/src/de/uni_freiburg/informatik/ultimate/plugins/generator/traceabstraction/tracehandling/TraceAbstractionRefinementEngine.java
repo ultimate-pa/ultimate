@@ -69,9 +69,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
  */
 public final class TraceAbstractionRefinementEngine
 		implements IRefinementEngine<NestedWordAutomaton<CodeBlock, IPredicate>> {
-	/* inputs */
 	private final ILogger mLogger;
-	private final TaCheckAndRefinementPreferences mPrefs;
 	
 	/* outputs */
 	private final PredicateUnifier mPredicateUnifier;
@@ -114,16 +112,16 @@ public final class TraceAbstractionRefinementEngine
 			final IRun<CodeBlock, IPredicate, ?> counterexample, final IAutomaton<CodeBlock, IPredicate> abstraction) {
 		// initialize fields
 		mLogger = logger;
-		mPrefs = prefs;
 		
-		mPredicateUnifier = new PredicateUnifier(services, mPrefs.getCfgSmtToolkit().getManagedScript(),
+		mPredicateUnifier = new PredicateUnifier(services, prefs.getCfgSmtToolkit().getManagedScript(),
 				predicateFactory, icfgContainer.getBoogie2SMT().getBoogie2SmtSymbolTable(), simplificationTechnique,
 				xnfConversionTechnique);
-		final ManagedScript managedScript = setupManagedScript(services, icfgContainer, toolchainStorage, iteration);
+		final ManagedScript managedScript = setupManagedScript(services, icfgContainer, toolchainStorage, iteration,
+				prefs);
 		
 		// choose strategy
 		final IRefinementStrategy strategy = chooseStrategy(counterexample, abstraction, services, managedScript,
-				taPrefsForInterpolantConsolidation);
+				taPrefsForInterpolantConsolidation, prefs);
 		
 		mFeasibility = executeStrategy(strategy);
 		if (strategy.getInterpolantGenerator() instanceof InterpolantConsolidation) {
@@ -161,20 +159,30 @@ public final class TraceAbstractionRefinementEngine
 	
 	private IRefinementStrategy chooseStrategy(final IRun<CodeBlock, IPredicate, ?> counterexample,
 			final IAutomaton<CodeBlock, IPredicate> abstraction, final IUltimateServiceProvider services,
-			final ManagedScript managedScript, final TAPreferences taPrefsForInterpolantConsolidation) {
-		switch (mPrefs.getRefinementStrategy()) {
+			final ManagedScript managedScript, final TAPreferences taPrefsForInterpolantConsolidation,
+			final TaCheckAndRefinementPreferences prefs) {
+		switch (prefs.getRefinementStrategy()) {
 			case FIXED_PREFERENCES:
-				return new FixedTraceAbstractionRefinementStrategy(mLogger, mPrefs, managedScript, services,
+				return new FixedTraceAbstractionRefinementStrategy(mLogger, prefs, managedScript, services,
 						mPredicateUnifier, counterexample, abstraction, taPrefsForInterpolantConsolidation);
 			case MULTI_TRACK:
-				return new MultiTrackTraceAbstractionRefinementStrategy(mLogger, mPrefs, managedScript, services,
+				return new MultiTrackTraceAbstractionRefinementStrategy(mLogger, prefs, managedScript, services,
 						mPredicateUnifier, counterexample, abstraction, taPrefsForInterpolantConsolidation);
 			default:
 				throw new IllegalArgumentException(
-						"Unknown refinement strategy specified: " + mPrefs.getRefinementStrategy());
+						"Unknown refinement strategy specified: " + prefs.getRefinementStrategy());
 		}
 	}
 	
+	/**
+	 * This method is the heart of the refinement engine.<br>
+	 * It first checks feasibility of the counterexample. If infeasible, the method tries to find a perfect interpolant
+	 * sequence. If unsuccessful, it collects all tested sequences. In the end an interpolant automaton is created.
+	 * 
+	 * @param strategy
+	 *            refinement strategy
+	 * @return counterexample feasibility
+	 */
 	private LBool executeStrategy(final IRefinementStrategy strategy) {
 		List<InterpolantsPreconditionPostcondition> interpolantSequences = new LinkedList<>();
 		do {
@@ -241,21 +249,31 @@ public final class TraceAbstractionRefinementEngine
 		} while (true);
 	}
 	
-	private ManagedScript setupManagedScript(final IUltimateServiceProvider services,
-			final BoogieIcfgContainer icfgContainer, final IToolchainStorage toolchainStorage, final int iteration)
+	public static ManagedScript setupManagedScript(final IUltimateServiceProvider services,
+			final BoogieIcfgContainer icfgContainer, final IToolchainStorage toolchainStorage, final int iteration,
+			final TaCheckAndRefinementPreferences prefs)
 			throws AssertionError {
+		switch (prefs.getRefinementStrategy()) {
+			case MULTI_TRACK:
+				return null;
+			case FIXED_PREFERENCES:
+				break;
+			default:
+				throw new IllegalArgumentException("Unknown mode: " + prefs.getRefinementStrategy());
+		}
+		
 		final ManagedScript mgdScriptTc;
-		if (mPrefs.getUseSeparateSolverForTracechecks()) {
+		if (prefs.getUseSeparateSolverForTracechecks()) {
 			final String filename = icfgContainer.getFilename() + "_TraceCheck_Iteration" + iteration;
-			final SolverMode solverMode = mPrefs.getSolverMode();
-			final boolean fakeNonIncrementalSolver = mPrefs.getFakeNonIncrementalSolver();
-			final String commandExternalSolver = mPrefs.getCommandExternalSolver();
-			final boolean dumpSmtScriptToFile = mPrefs.getDumpSmtScriptToFile();
-			final String pathOfDumpedScript = mPrefs.getPathOfDumpedScript();
+			final SolverMode solverMode = prefs.getSolverMode();
+			final boolean fakeNonIncrementalSolver = prefs.getFakeNonIncrementalSolver();
+			final String commandExternalSolver = prefs.getCommandExternalSolver();
+			final boolean dumpSmtScriptToFile = prefs.getDumpSmtScriptToFile();
+			final String pathOfDumpedScript = prefs.getPathOfDumpedScript();
 			final Settings solverSettings = SolverBuilder.constructSolverSettings(filename, solverMode,
 					fakeNonIncrementalSolver, commandExternalSolver, dumpSmtScriptToFile, pathOfDumpedScript);
 			final Script tcSolver = SolverBuilder.buildAndInitializeSolver(services, toolchainStorage,
-					mPrefs.getSolverMode(), solverSettings, false, false, mPrefs.getLogicForExternalSolver(),
+					prefs.getSolverMode(), solverSettings, false, false, prefs.getLogicForExternalSolver(),
 					"TraceCheck_Iteration" + iteration);
 			mgdScriptTc = new ManagedScript(services, tcSolver);
 			final TermTransferrer tt = new TermTransferrer(tcSolver);
@@ -263,7 +281,7 @@ public final class TraceAbstractionRefinementEngine
 				tcSolver.assertTerm(tt.transform(axiom));
 			}
 		} else {
-			mgdScriptTc = mPrefs.getCfgSmtToolkit().getManagedScript();
+			mgdScriptTc = prefs.getCfgSmtToolkit().getManagedScript();
 		}
 		return mgdScriptTc;
 	}
