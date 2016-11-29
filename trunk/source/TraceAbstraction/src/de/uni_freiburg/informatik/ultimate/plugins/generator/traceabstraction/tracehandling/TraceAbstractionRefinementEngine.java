@@ -232,7 +232,14 @@ public final class TraceAbstractionRefinementEngine
 						}
 						if (interpolants == null) {
 							continue;
-						} else if (strategy.getInterpolantGenerator().isPerfectSequence()) {
+						}
+						if (interpolantGenerator instanceof TraceCheckerSpWp) {
+							perfectInterpolantsFound =
+									((TraceCheckerSpWp) interpolantGenerator).isPerfectSequence(i == 1);
+						} else {
+							perfectInterpolantsFound = strategy.getInterpolantGenerator().isPerfectSequence();
+						}
+						if (perfectInterpolantsFound) {
 							perfectInterpolantsFound = true;
 							// construct interpolant automaton using only this (perfect) sequence
 							interpolantSequences = Collections.singletonList(interpolants);
@@ -273,6 +280,7 @@ public final class TraceAbstractionRefinementEngine
 			
 			return feasibility;
 		} while (true);
+		
 	}
 	
 	private static ManagedScript setupManagedScriptInternal(final IUltimateServiceProvider services,
