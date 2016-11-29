@@ -52,7 +52,7 @@ public class EqGraphNode {
 	public EqGraphNode copy() {
 
 		EqGraphNode newGraphNode = new EqGraphNode(this.eqNode);
-		newGraphNode.setRepresentative(this);
+		newGraphNode.setRepresentative(newGraphNode);
 		newGraphNode.setReverseRepresentative(new HashSet<>(this.reverseRepresentative));
 		newGraphNode.setCcpar(new HashSet<>(this.ccpar));
 		newGraphNode.setCcchild(new HashSet<>(this.ccchild));

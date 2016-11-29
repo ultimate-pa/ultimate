@@ -34,13 +34,11 @@ public class VPStateTop extends VPState {
 
 	@Override
 	public VPState conjoin(VPState other) {
-		// Do nothing
-		return this;
+		return other;
 	}
 
 	@Override
 	public VPState disjoin(VPState other) {
-		// Do nothing
 		return this;
 	}
 
