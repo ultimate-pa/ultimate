@@ -68,18 +68,6 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 	private final VPDomain mDomain;
 	private final Script mScript;
 
-	public Map<EqNode, EqGraphNode> getEqNodeToEqGraphNodeMap() {
-		return mEqNodeToEqGraphNodeMap;
-	}
-
-	public Set<VPDomainSymmetricPair<EqGraphNode>> getDisEqualitySet() {
-		return mDisEqualitySet;
-	}
-
-	public void setDisEqualitySet(Set<VPDomainSymmetricPair<EqGraphNode>> disEqualitySet) {
-		this.mDisEqualitySet = disEqualitySet;
-	}
-
 	VPState(VPDomain domain) {
 		this(Collections.emptyMap(), Collections.emptySet(), domain);
 	}
@@ -94,6 +82,17 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 		mScript = mDomain.getManagedScript().getScript();
 	}
 
+	public Set<VPDomainSymmetricPair<EqGraphNode>> getDisEqualitySet() {
+		return mDisEqualitySet;
+	}
+
+	public void setDisEqualitySet(Set<VPDomainSymmetricPair<EqGraphNode>> disEqualitySet) {
+		this.mDisEqualitySet = disEqualitySet;
+	}
+
+	public Map<EqNode, EqGraphNode> getEqNodeToEqGraphNodeMap() {
+		return mEqNodeToEqGraphNodeMap;
+	}
 
 	void restorePropagation(final EqFunctionNode node) {
 
