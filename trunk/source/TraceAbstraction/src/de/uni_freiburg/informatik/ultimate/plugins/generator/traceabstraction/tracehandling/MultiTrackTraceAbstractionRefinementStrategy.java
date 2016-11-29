@@ -179,6 +179,9 @@ public class MultiTrackTraceAbstractionRefinementStrategy implements IRefinement
 		return list.iterator();
 	}
 	
+	/**
+	 * TODO refactor this code duplicate with {@link FixedTraceAbstractionRefinementStrategy}
+	 */
 	private IInterpolantGenerator constructInterpolantGenerator(final TraceChecker tracechecker) {
 		final TraceChecker localTraceChecker = Objects.requireNonNull(tracechecker,
 				"cannot construct interpolant generator if no trace checker is present");
@@ -198,6 +201,9 @@ public class MultiTrackTraceAbstractionRefinementStrategy implements IRefinement
 		throw new AssertionError("Currently only interpolating trace checkers are supported.");
 	}
 	
+	/**
+	 * TODO refactor this code duplicate with {@link FixedTraceAbstractionRefinementStrategy}
+	 */
 	private IInterpolantGenerator consolidateInterpolants(final InterpolatingTraceChecker interpolatingTraceChecker)
 			throws AutomataOperationCanceledException {
 		final CfgSmtToolkit cfgSmtToolkit = mPrefs.getCfgSmtToolkit();
