@@ -116,8 +116,9 @@ public final class TraceAbstractionRefinementEngine
 		mPredicateUnifier = new PredicateUnifier(services, prefs.getCfgSmtToolkit().getManagedScript(),
 				predicateFactory, icfgContainer.getBoogie2SMT().getBoogie2SmtSymbolTable(), simplificationTechnique,
 				xnfConversionTechnique);
-		final ManagedScript managedScript = setupManagedScript(services, icfgContainer, toolchainStorage, iteration,
-				prefs);
+		
+		final ManagedScript managedScript =
+				setupManagedScriptInternal(services, prefs, icfgContainer, toolchainStorage, iteration);
 		
 		// choose strategy
 		final IRefinementStrategy strategy = chooseStrategy(counterexample, abstraction, services, managedScript,
@@ -249,19 +250,28 @@ public final class TraceAbstractionRefinementEngine
 		} while (true);
 	}
 	
-	public static ManagedScript setupManagedScript(final IUltimateServiceProvider services,
-			final BoogieIcfgContainer icfgContainer, final IToolchainStorage toolchainStorage, final int iteration,
-			final TaCheckAndRefinementPreferences prefs)
-			throws AssertionError {
+	private static ManagedScript setupManagedScriptInternal(final IUltimateServiceProvider services,
+			final TaCheckAndRefinementPreferences prefs, final BoogieIcfgContainer icfgContainer,
+			final IToolchainStorage toolchainStorage, final int iteration) throws AssertionError {
+		final ManagedScript managedScript;
+		
 		switch (prefs.getRefinementStrategy()) {
 			case MULTI_TRACK:
-				return null;
+				managedScript = null;
+				break;
 			case FIXED_PREFERENCES:
+				managedScript = setupManagedScript(services, icfgContainer, toolchainStorage, iteration, prefs);
 				break;
 			default:
 				throw new IllegalArgumentException("Unknown mode: " + prefs.getRefinementStrategy());
 		}
-		
+		return managedScript;
+	}
+	
+	public static ManagedScript setupManagedScript(final IUltimateServiceProvider services,
+			final BoogieIcfgContainer icfgContainer, final IToolchainStorage toolchainStorage, final int iteration,
+			final TaCheckAndRefinementPreferences prefs)
+			throws AssertionError {
 		final ManagedScript mgdScriptTc;
 		if (prefs.getUseSeparateSolverForTracechecks()) {
 			final String filename = icfgContainer.getFilename() + "_TraceCheck_Iteration" + iteration;
