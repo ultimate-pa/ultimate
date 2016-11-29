@@ -72,34 +72,34 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * Use unsat core, predicate transformer and live variable analsysis to compute a sequence of interpolants.
  *
  * @author Betim Musa, Matthias Heizmann
- *
  */
 public class TraceCheckerSpWp extends InterpolatingTraceChecker {
-
 	// Forward relevant predicates
 	protected List<IPredicate> mInterpolantsFp;
 	// Backward relevant predicates
 	protected List<IPredicate> mInterpolantsBp;
-
+	
 	private final UnsatCores mUnsatCores;
 	private final boolean mLiveVariables;
 	private final static boolean mUseLiveVariablesInsteadOfRelevantVariables = false;
-
+	
 	// We may post-process the forwards predicates, after the backwards predicates has been computed in order
 	// to potentially eliminate quantifiers. The idea is the following:
 	// If there is a predicate p in the forwards predicates that contains quantifiers and there is an equivalent
 	// predicate p' in the backwards
 	// predicates that is quantifier-free, then we may replace p by p'.
 	private final static boolean mPostProcess_FP_Predicates = false;
-
+	
 	private final boolean mConstructForwardInterpolantSequence;
 	private final boolean mConstructBackwardInterpolantSequence;
-
+	
 	private AnnotateAndAssertConjunctsOfCodeBlocks mAnnotateAndAsserterConjuncts;
-
+	
 	private int mNonLiveVariablesFp = 0;
 	private int mNonLiveVariablesBp = 0;
-
+	private boolean mPerfectForwardSequence;
+	private boolean mPerfectBackwardSequence;
+	
 	public TraceCheckerSpWp(final IPredicate precondition, final IPredicate postcondition,
 			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IAction> trace,
 			final CfgSmtToolkit csToolkit, final AssertCodeBlockOrder assertCodeBlocksIncrementally,
@@ -115,26 +115,26 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		mUnsatCores = unsatCores;
 		mLiveVariables = useLiveVariables;
 		switch (interpolation) {
-		case ForwardPredicates:
-			mConstructForwardInterpolantSequence = true;
-			mConstructBackwardInterpolantSequence = false;
-			break;
-		case BackwardPredicates:
-			mConstructForwardInterpolantSequence = false;
-			mConstructBackwardInterpolantSequence = true;
-			break;
-		case FPandBP:
-			mConstructForwardInterpolantSequence = true;
-			mConstructBackwardInterpolantSequence = true;
-			break;
-		default:
-			throw new UnsupportedOperationException("unsupportedInterpolation");
+			case ForwardPredicates:
+				mConstructForwardInterpolantSequence = true;
+				mConstructBackwardInterpolantSequence = false;
+				break;
+			case BackwardPredicates:
+				mConstructForwardInterpolantSequence = false;
+				mConstructBackwardInterpolantSequence = true;
+				break;
+			case FPandBP:
+				mConstructForwardInterpolantSequence = true;
+				mConstructBackwardInterpolantSequence = true;
+				break;
+			default:
+				throw new UnsupportedOperationException("unsupportedInterpolation");
 		}
 		if (isCorrect() == LBool.UNSAT) {
 			computeInterpolants(new AllIntegers(), interpolation);
 		}
 	}
-
+	
 	@Override
 	public void computeInterpolants(final Set<Integer> interpolatedPositions,
 			final InterpolationTechnique interpolation) {
@@ -150,34 +150,34 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		}
 		mTraceCheckFinished = true;
 	}
-
+	
 	public boolean forwardsPredicatesComputed() {
 		return mConstructForwardInterpolantSequence;
 	}
-
+	
 	public boolean backwardsPredicatesComputed() {
 		return mConstructBackwardInterpolantSequence;
 	}
-
+	
 	public List<IPredicate> getForwardPredicates() {
 		assert mInterpolantsFp != null : "Forwards predicates not computed!";
 		return mInterpolantsFp;
 	}
-
+	
 	public InterpolantsPreconditionPostcondition getForwardIpp() {
 		return new InterpolantsPreconditionPostcondition(getPrecondition(), getPostcondition(), getForwardPredicates());
 	}
-
+	
 	public List<IPredicate> getBackwardPredicates() {
 		assert mInterpolantsBp != null : "Backwards predicates not computed!";
 		return mInterpolantsBp;
 	}
-
+	
 	public InterpolantsPreconditionPostcondition getBackwardIpp() {
 		return new InterpolantsPreconditionPostcondition(getPrecondition(), getPostcondition(),
 				getBackwardPredicates());
 	}
-
+	
 	/***
 	 * Computes predicates (interpolants) for the statements of an infeasible trace specified by the given set.
 	 * Depending on settings, there are only forward predicates, or only backward predicates or both of them computed
@@ -201,7 +201,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		// unsat core obtained. We now pop assertion stack of solver. This
 		// allows us to use solver e.g. for simplifications
 		unlockSmtManager();
-
+		
 		{
 			final int numberOfConjunctsInTrace = mAnnotateAndAsserterConjuncts.getAnnotated2Original().keySet().size();
 			final int numberOfConjunctsInUnsatCore;
@@ -214,11 +214,11 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			mLogger.debug("Number of conjuncts in unsatisfiable core: " + unsatCore.size());
 			mTraceCheckerBenchmarkGenerator.setConjunctsInSSA(numberOfConjunctsInTrace, numberOfConjunctsInUnsatCore);
 		}
-
+		
 		final NestedFormulas<UnmodifiableTransFormula, IPredicate> rtf = constructRelevantTransFormulas(unsatCore);
 		assert stillInfeasible(rtf) : "incorrect Unsatisfiable Core! trace length " + mTrace.length()
 				+ " unsat-core size " + unsatCore.size();
-
+		
 		final Set<IProgramVar>[] liveVariables;
 		if (mUseLiveVariablesInsteadOfRelevantVariables) {
 			// computation of live variables whose input is the original trace
@@ -230,7 +230,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			final RelevantVariables rvar = new RelevantVariables(rtf, mCsToolkit.getModifiableGlobalsTable());
 			liveVariables = rvar.getRelevantVariables();
 		}
-
+		
 		if (mConstructForwardInterpolantSequence) {
 			mLogger.debug("Computing forward predicates...");
 			try {
@@ -255,7 +255,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 					mPostcondition, mPendingContexts, "FP", mCsToolkit, mLogger,
 					mCfgManagedScript) : "invalid Hoare triple in FP";
 		}
-
+		
 		if (mConstructBackwardInterpolantSequence) {
 			mLogger.debug("Computing backward predicates...");
 			try {
@@ -280,7 +280,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 					mPostcondition, mPendingContexts, "BP", mCsToolkit, mLogger,
 					mCfgManagedScript) : "invalid Hoare triple in BP";
 		}
-
+		
 		if (mConstructForwardInterpolantSequence && mConstructBackwardInterpolantSequence) {
 			// Post-process forwards predicates
 			if (mPostProcess_FP_Predicates) {
@@ -291,7 +291,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 				}
 			}
 		}
-
+		
 		if (mConstructForwardInterpolantSequence) {
 			mTraceCheckerBenchmarkGenerator.reportSequenceOfInterpolants(mInterpolantsFp, InterpolantType.Forward);
 			mTraceCheckerBenchmarkGenerator.reportNumberOfNonLiveVariables(mNonLiveVariablesFp,
@@ -300,9 +300,9 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			if (mControlLocationSequence != null) {
 				final BackwardCoveringInformation bci = TraceCheckerUtils.computeCoverageCapability(mServices,
 						getForwardIpp(), mControlLocationSequence, mLogger, mPredicateUnifier);
-				final boolean perfectSequence =
+				mPerfectForwardSequence =
 						(bci.getPotentialBackwardCoverings() == bci.getSuccessfullBackwardCoverings());
-				if (perfectSequence) {
+				if (mPerfectForwardSequence) {
 					mTraceCheckerBenchmarkGenerator.reportPerfectInterpolantSequences();
 				}
 				mTraceCheckerBenchmarkGenerator.addBackwardCoveringInformation(bci);
@@ -316,16 +316,16 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			if (mControlLocationSequence != null) {
 				final BackwardCoveringInformation bci = TraceCheckerUtils.computeCoverageCapability(mServices,
 						getBackwardIpp(), mControlLocationSequence, mLogger, mPredicateUnifier);
-				final boolean perfectSequence =
+				mPerfectBackwardSequence =
 						(bci.getPotentialBackwardCoverings() == bci.getSuccessfullBackwardCoverings());
-				if (perfectSequence) {
+				if (mPerfectBackwardSequence) {
 					mTraceCheckerBenchmarkGenerator.reportPerfectInterpolantSequences();
 				}
 				mTraceCheckerBenchmarkGenerator.addBackwardCoveringInformation(bci);
 			}
-
+			
 		}
-
+		
 		// Check the validity of the computed interpolants.
 		// if (mConstructForwardInterpolantSequence && mConstructBackwardInterpolantSequence) {
 		// checkSPImpliesWP(mInterpolantsFp, mInterpolantsBp);
@@ -345,7 +345,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			throw new AssertionError("illegal choice");
 		}
 	}
-
+	
 	/**
 	 * Construct representation of the trace formula that contains only the conjuncts that occur in the unsat core.
 	 */
@@ -372,13 +372,12 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		}
 		return rtf;
 	}
-
+	
 	/***
 	 * Selects a list of predicates from the predicates computed via strongest post-condition and the weakest
 	 * precondition, such that the number of predicates containing quantifiers is minimized and a mix-up of the two
 	 * types is avoided. (If the predicates are mixed-up, they may get non-inductive.) Predicates are selected in the
 	 * following way: (TODO:)
-	 *
 	 */
 	private void selectListOFPredicatesFromBothTypes() {
 		assert mInterpolantsFp.size() == mInterpolantsBp.size();
@@ -413,7 +412,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			}
 		}
 	}
-
+	
 	/**
 	 * Checks whether the trace consisting of only relevant statements is still infeasible. This check is desired, when
 	 * we use unsatisfiable cores of finer granularity.
@@ -430,7 +429,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		final boolean result = (tc.isCorrect() != LBool.SAT);
 		return result;
 	}
-
+	
 	/**
 	 * Select the statements from the given trace, which are contained in the unsatisfiable core. These statements
 	 * contribute to the unsatisfiability of the trace, and therefore only these are important for the computations done
@@ -471,15 +470,14 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		}
 		return codeBlocksInUnsatCore;
 	}
-
+	
 	public class LiveVariablesPostprocessor_Forward implements PredicatePostprocessor {
-
 		private final Set<IProgramVar>[] mRelevantVars;
-
+		
 		public LiveVariablesPostprocessor_Forward(final Set<IProgramVar>[] relevantVars) {
 			mRelevantVars = relevantVars;
 		}
-
+		
 		@Override
 		public IPredicate postprocess(final IPredicate pred, final int i) {
 			assert mLiveVariables : "use this postprocessor only if mLiveVariables";
@@ -491,18 +489,17 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			mNonLiveVariablesFp += nonLiveVars.size();
 			return projected;
 		}
-
+		
 	}
-
+	
 	public class LiveVariablesPostprocessor_Backward implements PredicatePostprocessor {
-
 		private final Set<IProgramVar>[] mRelevantVars;
-
+		
 		public LiveVariablesPostprocessor_Backward(final Set<IProgramVar>[] relevantVars) {
 			super();
 			mRelevantVars = relevantVars;
 		}
-
+		
 		@Override
 		public IPredicate postprocess(final IPredicate pred, final int i) {
 			assert mLiveVariables : "use this postprocessor only if mLiveVariables";
@@ -515,17 +512,15 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			return projected;
 		}
 	}
-
+	
 	public class UnifyPostprocessor implements PredicatePostprocessor {
-
 		@Override
 		public IPredicate postprocess(final IPredicate pred, final int i) {
 			final IPredicate unified = mPredicateUnifier.getOrConstructPredicate(pred.getFormula());
 			return unified;
 		}
-
 	}
-
+	
 	/**
 	 * Compute the irrelevant variables of the given predicate p. A variable is irrelevant, if it isn't contained in the
 	 * given set of relevantVars.
@@ -542,7 +537,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		}
 		return result;
 	}
-
+	
 	/***
 	 * Check for each predicate computed via the strongest post-condition, whether it implies the predicate computed via
 	 * weakest precondition. This check is desired, when predicates are computed twice (once via strongest post, and
@@ -558,7 +553,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			assert (result == Validity.VALID || result == Validity.UNKNOWN) : "checkSPImpliesWP failed";
 		}
 	}
-
+	
 	@Override
 	protected AnnotateAndAssertCodeBlocks getAnnotateAndAsserterCodeBlocks(final NestedFormulas<Term, Term> ssa) {
 		if (mAnnotateAndAsserterConjuncts == null) {
@@ -567,5 +562,8 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		}
 		return mAnnotateAndAsserterConjuncts;
 	}
-
+	
+	public boolean isPerfectSequence(final boolean forward) {
+		return forward ? mPerfectForwardSequence : mPerfectBackwardSequence;
+	}
 }
