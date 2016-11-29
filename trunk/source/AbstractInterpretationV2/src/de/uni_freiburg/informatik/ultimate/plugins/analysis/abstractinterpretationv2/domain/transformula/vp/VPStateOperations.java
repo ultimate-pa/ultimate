@@ -1,15 +1,16 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 public class VPStateOperations {
 	
@@ -61,21 +62,22 @@ public class VPStateOperations {
 		 */
 		
 		//TODO
-	
+		HashRelation<IProgramVarOrConst, List<EqGraphNode>> ccchild1 = originalState.ccchild(n1);
+		HashRelation<IProgramVarOrConst, List<EqGraphNode>> ccchild2 = originalState.ccchild(n2);
 		
-//		Set<List<EqGraphNode>> ccchild1 = originalState.ccchild(n1);
-//		Set<List<EqGraphNode>> ccchild2 = originalState.ccchild(n2);
-//		
-//		List<VPState> stateList = new ArrayList<>();
-//		
-//		// propagation of disequality
-//		for (int i = 0; i < ((EqFunctionNode)n1.eqNode).getArgs().size(); i++) {
-//			VPState newState = originalState.copy();
-//			stateList.addAll(addDisEquality(n1.getInitCcchild().get(i), n2.getInitCcchild().get(i), newState));
-//		}
+		for (IProgramVarOrConst arrayId : ccchild1.getDomain()) {
+			for (List<EqGraphNode> list1 : ccchild1.getImage(arrayId)) {
+				for (List<EqGraphNode> list2 : ccchild2.getImage(arrayId)) {
+					for (int i = 0; i < list1.size(); i++) {
+						EqGraphNode c1 = list1.get(i);
+						EqGraphNode c2 = list2.get(i);
+						result.addAll(addDisEquality(c1, c2, originalState));
+					}
+				}
+			}
+		}
 
 		return result;
-		
 	}
 	
 	/**
@@ -94,11 +96,16 @@ public class VPStateOperations {
 		nextRepresentative.getReverseRepresentative().remove(graphNode);
 		while (!(nextRepresentative.equals(nextRepresentative.getRepresentative()))) {
 			nextRepresentative.getCcpar().removeAll(graphNode.getCcpar());
-			nextRepresentative.getCcchild().removeAll(graphNode.getCcchild());
+			// TODO check if pair is correctly removed.
+			for (final Entry<IProgramVarOrConst, List<EqGraphNode>> entry : graphNode.getCcchild().entrySet()) {
+				nextRepresentative.getCcchild().removePair(entry.getKey(), entry.getValue());
+			}
 			nextRepresentative = nextRepresentative.getRepresentative();
 		}
 		nextRepresentative.getCcpar().removeAll(graphNode.getCcpar());
-		nextRepresentative.getCcchild().removeAll(graphNode.getCcchild());
+		for (final Entry<IProgramVarOrConst, List<EqGraphNode>> entry : graphNode.getCcchild().entrySet()) {
+			nextRepresentative.getCcchild().removePair(entry.getKey(), entry.getValue());
+		}
 
 		// Handling the incoming edges
 		for (final EqGraphNode reverseNode : graphNode.getReverseRepresentative()) {

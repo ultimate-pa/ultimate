@@ -3,7 +3,11 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Set;
+
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  * This class contain information such as representative, reverse
@@ -21,7 +25,7 @@ public class EqGraphNode {
 	private EqGraphNode representative;
 	private Set<EqGraphNode> reverseRepresentative;
 	private Set<EqGraphNode> ccpar;
-	private Set<List<EqGraphNode>> ccchild;
+	private HashRelation<IProgramVarOrConst, List<EqGraphNode>> ccchild;
 
 	private Set<EqGraphNode> initCcpar;
 	private List<EqGraphNode> initCcchild;
@@ -31,7 +35,7 @@ public class EqGraphNode {
 		this.representative = this;
 		this.reverseRepresentative = new HashSet<>();
 		this.ccpar = new HashSet<>();
-		this.ccchild = new HashSet<>();
+		this.ccchild = new HashRelation<>();
 		this.initCcpar = new HashSet<>();
 		this.initCcchild = new ArrayList<>();
 	}
@@ -40,22 +44,30 @@ public class EqGraphNode {
 		this.representative = this;
 		this.reverseRepresentative.clear();
 		this.ccpar.clear();
-		this.ccchild.clear();
+		this.ccchild = new HashRelation<>();
 		if (initCcpar != null) {
 			this.ccpar.addAll(initCcpar);
 		}
 		if (initCcchild != null) {
-			this.ccchild.add(initCcchild);
+			/*
+			 * Only function node have initCcchild.
+			 */
+			if (eqNode instanceof EqFunctionNode) {
+				this.ccchild.addPair(((EqFunctionNode)eqNode).getFunction(), initCcchild);
+			}
+			
 		}
 	}
 
 	public EqGraphNode copy() {
 
+		//TODO
 		EqGraphNode newGraphNode = new EqGraphNode(this.eqNode);
 		newGraphNode.setRepresentative(newGraphNode);
 		newGraphNode.setReverseRepresentative(new HashSet<>(this.reverseRepresentative));
 		newGraphNode.setCcpar(new HashSet<>(this.ccpar));
-		newGraphNode.setCcchild(new HashSet<>(this.ccchild));
+		assert false;
+//		newGraphNode.setCcchild(new HashSet<>(this.ccchild));
 		newGraphNode.addToInitCcpar(this.initCcpar);
 		newGraphNode.setInitCcchild(this.initCcchild);
 		return newGraphNode;
@@ -67,8 +79,9 @@ public class EqGraphNode {
 
 	public void setRepresentative(EqGraphNode find) {
 		this.representative = find;
-		// if (eqNodes are identical) then (graphnodes must be identical)
-		assert this.representative.eqNode != this.eqNode || this.representative == this;
+		//TODO check
+        // if (eqNodes are identical) then (graphnodes must be identical)
+        assert this.representative.eqNode != this.eqNode || this.representative == this;
 	}
 
 	public Set<EqGraphNode> getReverseRepresentative() {
@@ -99,22 +112,14 @@ public class EqGraphNode {
 		this.ccpar.addAll(ccpar);
 	}
 
-	public Set<List<EqGraphNode>> getCcchild() {
+	public HashRelation<IProgramVarOrConst, List<EqGraphNode>> getCcchild() {
 		return ccchild;
 	}
-
-	public void setCcchild(Set<List<EqGraphNode>> ccchild) {
-		this.ccchild = ccchild;
-	}
-
-	public void addToCcchild(List<EqGraphNode> ccchild) {
-		this.ccchild.add(ccchild);
+	
+	public void addToCcchild(IProgramVarOrConst pVorC, List<EqGraphNode> ccchild) {
+		this.ccchild.addPair(pVorC, ccchild);
 	}
 	
-	public void addToCcchild(Set<List<EqGraphNode>> ccchild) {
-		this.ccchild.addAll(ccchild);
-	}
-
 	public Set<EqGraphNode> getInitCcpar() {
 		return initCcpar;
 	}
@@ -166,9 +171,9 @@ public class EqGraphNode {
 			sb.append("  ");
 		}
 		sb.append(" ||| ccchild: ");
-		for (List<EqGraphNode> nodes : ccchild) {
-			sb.append("{");
-			for (EqGraphNode node : nodes) {
+		for (final Entry<IProgramVarOrConst, List<EqGraphNode>> entry : ccchild.entrySet()) {
+			sb.append(entry.getKey().toString() + ": {");
+			for (EqGraphNode node : entry.getValue()) {
 				sb.append(node.toString());
 				sb.append("  ");
 			}

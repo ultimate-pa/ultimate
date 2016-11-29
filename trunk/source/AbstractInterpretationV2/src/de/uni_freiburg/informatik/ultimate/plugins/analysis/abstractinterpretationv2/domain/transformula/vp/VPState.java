@@ -40,10 +40,12 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  *
@@ -92,7 +94,9 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 		mScript = mDomain.getManagedScript().getScript();
 	}
 
+
 	void restorePropagation(final EqFunctionNode node) {
+
 		final Set<EqFunctionNode> fnNodeSet = mDomain.getArrayIdToEqFnNodeMap().getImage(node.getFunction());
 		for (final EqFunctionNode fnNode1 : fnNodeSet) {
 			for (final EqFunctionNode fnNode2 : fnNodeSet) {
@@ -148,7 +152,7 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 		return find(node).getCcpar();
 	}
 
-	public Set<List<EqGraphNode>> ccchild(final EqGraphNode node) {
+	public HashRelation<IProgramVarOrConst, List<EqGraphNode>> ccchild(final EqGraphNode node) {
 		return find(node).getCcchild();
 	}
 
@@ -223,7 +227,10 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 			graphNode2Find.addToReverseRepresentative(graphNode1Find);
 			graphNode1Find.setRepresentative(graphNode2Find);
 			graphNode2Find.addToCcpar(graphNode1Find.getCcpar());
-			graphNode2Find.addToCcchild(graphNode1Find.getCcchild());
+			for (final Entry<IProgramVarOrConst, List<EqGraphNode>> entry : graphNode1Find.getCcchild().entrySet()) {
+				graphNode2Find.getCcchild().addPair(entry.getKey(), entry.getValue());
+			}
+//			graphNode2Find.addToCcchild(graphNode1Find.getCcchild());
 		}
 	}
 
@@ -385,13 +392,13 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 
 		sb.append("Graph: \n");
 		for (EqGraphNode graphNode : mEqGraphNodeSet) {
-			if (graphNode.getRepresentative() == graphNode) {
-				// print only the interesting graph nodes in full
-				sb.append(graphNode.eqNode.toString());
-			} else {
-				sb.append(graphNode.toString());
-			}
+            if (graphNode.getRepresentative() == graphNode) {
+                // print only the interesting graph nodes in full
+                sb.append(graphNode.eqNode.toString());
+            } else {
+                sb.append(graphNode.toString());
 			sb.append('\n');
+            }
 		}
 
 		sb.append("Disequality Set:  \n");
@@ -403,11 +410,6 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 		}
 
 		return sb.toString();
-	}
-	
-	@Override
-	public String toString() {
-		return toLogString();
 	}
 
 	@Override

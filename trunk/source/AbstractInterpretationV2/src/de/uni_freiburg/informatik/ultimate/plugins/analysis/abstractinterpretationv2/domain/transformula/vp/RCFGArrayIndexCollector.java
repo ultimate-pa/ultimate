@@ -31,7 +31,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -58,7 +57,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDim
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RCFGEdgeVisitor;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.AbstractRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
@@ -297,7 +295,7 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 				argNodes.add(argNode);
 			}
 			graphNode.addToInitCcchild(argNodes);
-			graphNode.getCcchild().add(argNodes);
+			graphNode.getCcchild().addPair(((EqFunctionNode)node).getFunction(), argNodes);
 		}
 		
 		mEqNodeToEqGraphNodeMap.put(node, graphNode);
