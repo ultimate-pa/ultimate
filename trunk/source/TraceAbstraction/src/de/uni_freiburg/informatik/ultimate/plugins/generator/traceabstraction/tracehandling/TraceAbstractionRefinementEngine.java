@@ -199,14 +199,16 @@ public final class TraceAbstractionRefinementEngine
 					final InterpolantsPreconditionPostcondition interpolants =
 							strategy.getInterpolantGenerator().getIpp();
 					
-					if (strategy.getInterpolantGenerator().isPerfectSequence()) {
+					if (interpolants != null && strategy.getInterpolantGenerator().isPerfectSequence()) {
 						// construct interpolant automaton using only this (perfect) sequence
 						interpolantSequences = Collections.singletonList(interpolants);
 						if (mLogger.isInfoEnabled()) {
 							mLogger.info("Found a perfect sequence of interpolants.");
 						}
 					} else {
-						interpolantSequences.add(interpolants);
+						if (interpolants != null) {
+							interpolantSequences.add(interpolants);
+						}
 						
 						if (strategy.hasNext(RefinementStrategyAdvance.INTERPOLANT_GENERATOR)) {
 							// construct the next sequence of interpolants
@@ -217,12 +219,11 @@ public final class TraceAbstractionRefinementEngine
 							strategy.next(RefinementStrategyAdvance.INTERPOLANT_GENERATOR);
 							continue;
 						} else if (mLogger.isInfoEnabled()) {
-							mLogger.info("No perfect sequence of interpolants found, combining those found.");
+							mLogger.info("No perfect sequence of interpolants found, combining those we have.");
 						}
 					}
 					
 					// construct the interpolant automaton from the sequences
-					// TODO use the list of interpolants here, currently the last sequence from the generator is used
 					final NestedWordAutomaton<CodeBlock, IPredicate> automaton =
 							strategy.getInterpolantAutomatonBuilder(interpolantSequences).getResult();
 					mInterpolantAutomaton = automaton;
