@@ -226,7 +226,7 @@ public final class TraceAbstractionRefinementEngine
 						iterate = 1;
 					}
 					
-					for (int i = 1; i < iterate; ++i) {
+					for (int i = 1; i <= iterate; ++i) {
 						if (i == 2) {
 							interpolants = ((TraceCheckerSpWp) interpolantGenerator).getBackwardIpp();
 						}
