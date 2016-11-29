@@ -651,7 +651,12 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 
 		sb.append("Graph: \n");
 		for (EqGraphNode graphNode : mEqGraphNodeSet) {
-			sb.append(graphNode.toString());
+			if (graphNode.getRepresentative() == graphNode) {
+				// print only the interesting graph nodes in full
+				sb.append(graphNode.eqNode.toString());
+			} else {
+				sb.append(graphNode.toString());
+			}
 			sb.append('\n');
 		}
 
@@ -664,6 +669,11 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 		}
 
 		return sb.toString();
+	}
+	
+	@Override
+	public String toString() {
+		return toLogString();
 	}
 
 	@Override

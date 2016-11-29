@@ -80,20 +80,20 @@ public class HsNonPlugin {
 		 *    must be made compatible
 		 *     (equal?, through union of partitions?)
 		 */
-		HeapSepPreAnalysisVisitor hspav = null;
+		HeapSepPreAnalysisVisitor heapSepPreanalysis = null;
 		{
 			final ObserverDispatcher od = new ObserverDispatcherSequential(mLogger);
 			final RCFGWalkerBreadthFirst walker = new RCFGWalkerBreadthFirst(od, mLogger);
 			od.setWalker(walker);
 
-			hspav = new HeapSepPreAnalysisVisitor(mLogger);
-			walker.addObserver(hspav);
+			heapSepPreanalysis = new HeapSepPreAnalysisVisitor(mLogger);
+			walker.addObserver(heapSepPreanalysis);
 				
 			walker.run(BoogieIcfgContainer.extractStartEdges(oldBoogieIcfg)); 
 		}
 
 		NewArrayIdProvider newArrayIdProvider = 
-				processAbstractInterpretationResult(abstractInterpretationResult, hspav);
+				processAbstractInterpretationResult(abstractInterpretationResult, heapSepPreanalysis);
 
 		/*
 		 * do the transformation itself..

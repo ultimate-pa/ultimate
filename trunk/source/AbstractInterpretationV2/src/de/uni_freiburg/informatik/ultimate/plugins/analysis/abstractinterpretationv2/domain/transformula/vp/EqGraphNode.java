@@ -67,6 +67,8 @@ public class EqGraphNode {
 
 	public void setRepresentative(EqGraphNode find) {
 		this.representative = find;
+		// if (eqNodes are identical) then (graphnodes must be identical)
+		assert this.representative.eqNode != this.eqNode || this.representative == this;
 	}
 
 	public Set<EqGraphNode> getReverseRepresentative() {

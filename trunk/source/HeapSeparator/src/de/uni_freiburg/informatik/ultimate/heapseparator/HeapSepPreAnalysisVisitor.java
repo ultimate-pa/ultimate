@@ -53,6 +53,12 @@ public class HeapSepPreAnalysisVisitor extends SimpleRCFGVisitor {
 
 	private List<ArrayEquality> mArrayEqualities;
 
+	/**
+	 * The HeapSepPreAnalysisVisitor computes and provides the following information:
+	 *  - which arrays (base arrays, not store terms) are equated in the program
+	 *  - for each array at which locations in the CFG it is accessed
+	 * @param logger
+	 */
 	public HeapSepPreAnalysisVisitor(ILogger logger) {
 		super(logger);
 		mEquatedArrays = new HashSet<>();
