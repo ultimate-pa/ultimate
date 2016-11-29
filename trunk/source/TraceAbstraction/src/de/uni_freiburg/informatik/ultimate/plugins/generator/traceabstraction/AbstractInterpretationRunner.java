@@ -147,6 +147,7 @@ public class AbstractInterpretationRunner {
 					mLogger.debug("[" + trans.hashCode() + "] " + trans);
 				}
 			}
+			@SuppressWarnings("unchecked")
 			final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> result =
 					AbstractInterpreter.runOnPathProgram(mRoot, currentAbstraction,
 							(NestedRun<CodeBlock, IPredicate>) currentCex, pathProgramSet, timer, mServices);

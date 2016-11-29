@@ -390,7 +390,15 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				
 				IOpWithDelayedDeadEndRemoval<CodeBlock, IPredicate> diff;
 				
-				switch (mPref.interpolantAutomatonEnhancement()) {
+				InterpolantAutomatonEnhancement enhanceMode = mPref.interpolantAutomatonEnhancement();
+				// Do not enhance if abstract interpretation was strong enough to prove infeasibility. This statement
+				// evaluates to false if abstract interpretation did not run at all (because it's turned off in the
+				// preferences).
+				if (mAbsIntRunner.hasShownInfeasibility()) {
+					enhanceMode = InterpolantAutomatonEnhancement.NONE;
+				}
+
+				switch (enhanceMode) {
 					case NONE:
 						final PowersetDeterminizer<CodeBlock, IPredicate> psd =
 								new PowersetDeterminizer<>(interpolAutomaton, true,
