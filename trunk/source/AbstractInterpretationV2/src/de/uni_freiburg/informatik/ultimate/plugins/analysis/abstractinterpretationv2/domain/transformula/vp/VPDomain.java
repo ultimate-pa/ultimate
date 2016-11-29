@@ -67,7 +67,8 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 	private final ManagedScript mManagedScript;
 	private final Boogie2SMT mBoogie2Smt;
 	private final Map<Term, EqNode> mTermToEqNodeMap;
-	private RCFGArrayIndexCollector mPreAnalysis;
+	private final RCFGArrayIndexCollector mPreAnalysis;
+	private final VPStateOperations mVpStateOperations;
 	
 	public VPDomain(final ILogger logger, 
 			final ManagedScript script, 
@@ -88,6 +89,7 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 		mPost = new VPPostOperator(script, services, this);
 		mMerge = new VPMergeOperator();
 		mBoogie2Smt = boogie2smt;
+		mVpStateOperations = new VPStateOperations(this);
 	}
 
 	@Override
@@ -123,7 +125,7 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 
 		@Override
 		public VPState apply(final VPState first, final VPState second) {
-			return first.disjoin(second);
+			return getVpStateOperations().disjoin(first, second);
 		}
 	}
 	
@@ -175,5 +177,9 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 
 	public RCFGArrayIndexCollector getPreAnalysis() {
 		return mPreAnalysis;
+	}
+	
+	public VPStateOperations getVpStateOperations() {
+		return mVpStateOperations;
 	}
 }

@@ -39,9 +39,7 @@ import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
@@ -60,7 +58,7 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 
 	private final Set<IProgramVar> mVars;
 
-	private final Collection<EqGraphNode> mEqGraphNodeSet;
+	final Collection<EqGraphNode> mEqGraphNodeSet;
 	private final Map<EqNode, EqGraphNode> mEqNodeToEqGraphNodeMap;
 
 	private Set<VPDomainSymmetricPair<EqGraphNode>> mDisEqualitySet;
@@ -94,112 +92,7 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 		mScript = mDomain.getManagedScript().getScript();
 	}
 
-	/**
-	 * This is a pre-step before deriving a new @VPState with @CodeBlock
-	 * (transition) in order to handle assignment and assume in the same way. In
-	 * this method, the variables that are about to be assigned will be havoc
-	 * first. Then the graph will be change and return a new @VPState with the
-	 * new graph.
-	 * 
-	 * @param assignmentVars
-	 * @return a state that the assignment vars are being havoc.
-	 */
-	public VPState prepareState(final Set<IProgramVar> assignmentVars) {
-
-		VPState preparedState = this.copy();
-		preparedState.havocBaseNode(assignmentVars);
-
-		return preparedState;
-	}
-
-	/**
-	 * To havoc a set of nodes. If this set contains array, it will not be havoc
-	 * here.
-	 * 
-	 * @param assignmentVars
-	 */
-	private void havocBaseNode(final Set<IProgramVar> assignmentVars) {
-
-		TermVariable tv;
-
-		for (final IProgramVar var : assignmentVars) {
-
-			tv = var.getTermVariable();
-			if (mDomain.isArray(tv)) {
-				continue;
-			}
-
-			if (mDomain.getTermToEqNodeMap().containsKey(tv)) {
-				assert this.getEqNodeToEqGraphNodeMap().containsKey(mDomain.getTermToEqNodeMap().get(tv));
-				havoc(this.getEqNodeToEqGraphNodeMap().get(mDomain.getTermToEqNodeMap().get(tv)));
-			}
-		}
-	}
-
-	/**
-	 * To havoc an array. All the element in this array will be havoc.
-	 * 
-	 * @param term
-	 */
-	private void havocArray(final Term term) {
-
-		assert mDomain.isArray(term);
-
-		for (final EqFunctionNode fnNode : mDomain.getArrayIdToEqFnNodeMap()
-				.getImage(mDomain.getPreAnalysis().getIProgramVarOrConst(term))) {
-			havoc(this.getEqNodeToEqGraphNodeMap().get(fnNode));
-		}
-	}
-
-	/**
-	 * To havoc a node. There are three main parts to handle: (1) Handling the
-	 * outgoing edge chain. (2) Handling the incoming edges. (3) Handling the
-	 * node itself.
-	 * 
-	 * @param EqGraphNode
-	 *            to be havoc
-	 */
-	public void havoc(final EqGraphNode graphNode) {
-
-		// Handling the outgoing edge chain
-		EqGraphNode nextRepresentative = graphNode.getRepresentative();
-		nextRepresentative.getReverseRepresentative().remove(graphNode);
-		while (!(nextRepresentative.equals(nextRepresentative.getRepresentative()))) {
-			nextRepresentative.getCcpar().removeAll(graphNode.getCcpar());
-			nextRepresentative.getCcchild().removeAll(graphNode.getCcchild());
-			nextRepresentative = nextRepresentative.getRepresentative();
-		}
-		nextRepresentative.getCcpar().removeAll(graphNode.getCcpar());
-		nextRepresentative.getCcchild().removeAll(graphNode.getCcchild());
-
-		// Handling the incoming edges
-		for (final EqGraphNode reverseNode : graphNode.getReverseRepresentative()) {
-			reverseNode.setRepresentative(reverseNode);
-		}
-
-		// Handling the node itself
-		graphNode.setNodeToInitial();
-		for (final VPDomainSymmetricPair<EqGraphNode> disEqPair : this.getDisEqualitySet()) {
-			if (disEqPair.getFirst().equals(graphNode)) {
-				this.getDisEqualitySet().remove(disEqPair);
-			} else if (disEqPair.getSecond().equals(graphNode)) {
-				this.getDisEqualitySet().remove(disEqPair);
-			}
-		}
-
-		if (graphNode.eqNode instanceof EqFunctionNode) {
-			restorePropagation((EqFunctionNode) graphNode.eqNode);
-		}
-
-		// also havoc the function nodes which index had been havoc.
-		if (!graphNode.getInitCcpar().isEmpty()) {
-			for (final EqGraphNode initCcpar : graphNode.getInitCcpar()) {
-				havoc(initCcpar);
-			}
-		}
-	}
-
-	private void restorePropagation(final EqFunctionNode node) {
+	void restorePropagation(final EqFunctionNode node) {
 		final Set<EqFunctionNode> fnNodeSet = mDomain.getArrayIdToEqFnNodeMap().getImage(node.getFunction());
 		for (final EqFunctionNode fnNode1 : fnNodeSet) {
 			for (final EqFunctionNode fnNode2 : fnNodeSet) {
@@ -212,142 +105,6 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 		}
 	}
 
-	/**
-	 * Join two @VPState. Two steps: 1) Create a new @VPState conjoinedState
-	 * based on thisState, add all the edge(equality relation) from otherState
-	 * into conjoinedState. 2) Join the disEqualitySet form thisState and
-	 * otherState into conjoinedState.
-	 * 
-	 * @param other
-	 * @return conjoinedState
-	 */
-	public VPState conjoin(VPState other) {
-
-		if (this instanceof VPStateBottom || other instanceof VPStateBottom) {
-			return mDomain.getBottomState();
-		}
-
-		if (this instanceof VPStateTop) {
-			return other;
-		} else if (other instanceof VPStateTop) {
-			return this;
-		}
-
-		VPState conjoinedState = this.copy();
-		EqGraphNode conStateGraphNode;
-		EqGraphNode conStateGraphNodeRe;
-		boolean isContradic;
-
-		for (VPDomainSymmetricPair<EqGraphNode> otherPair : other.getDisEqualitySet()) {
-			conjoinedState.getDisEqualitySet()
-					.add(new VPDomainSymmetricPair<EqGraphNode>(otherPair.getFirst(), otherPair.getSecond()));
-		}
-
-		for (final EqGraphNode otherGraphNode : other.mEqGraphNodeSet) {
-			if (!otherGraphNode.getRepresentative().equals(otherGraphNode)) {
-				conStateGraphNode = conjoinedState.getEqNodeToEqGraphNodeMap().get(otherGraphNode.eqNode);
-				conStateGraphNodeRe = conjoinedState.getEqNodeToEqGraphNodeMap()
-						.get(otherGraphNode.getRepresentative().eqNode);
-				isContradic = conjoinedState.addEquality(conStateGraphNode, conStateGraphNodeRe);
-				if (isContradic) {
-					return mDomain.getBottomState();
-				}
-			}
-		}
-		return conjoinedState;
-	}
-
-	/**
-	 * Disjoin two @VPState. For each node x, if in both state, x.representative
-	 * is the same, say it's i, then newState.addEquality(x, i). If
-	 * x.representative is different, say in thisState x.representative = i, in
-	 * otherState x.representative = j, then we have another if-else branch: If
-	 * otherState.find(x) = otherState.find(i), this means in both state, x and
-	 * i are in the same equivalence class, so newState.addEquality(x, i). Else
-	 * if thisState.find(x) = thisState.find(j), this means in both state, x and
-	 * j are in the same equivalence class, so newState.addEquality(x, j).
-	 * 
-	 * @param other
-	 * @return disjoinedState
-	 */
-	public VPState disjoin(final VPState other) {
-
-		if (this instanceof VPStateTop || other instanceof VPStateTop) {
-			return mDomain.getmTopState();
-		}
-
-		if (this instanceof VPStateBottom) {
-			return other;
-		} else if (other instanceof VPStateBottom) {
-			return this;
-		}
-
-		VPState disjoinedState = this.copy();
-		EqGraphNode otherGraphNode;
-
-		boolean isContradic;
-
-		disjoinedState.clearState();
-
-		for (final VPDomainSymmetricPair<EqGraphNode> otherPair : other.getDisEqualitySet()) {
-			if (this.getDisEqualitySet().contains(otherPair)) {
-				disjoinedState.getDisEqualitySet()
-						.add(new VPDomainSymmetricPair<EqGraphNode>(otherPair.getFirst(), otherPair.getSecond()));
-			}
-		}
-
-		for (final EqGraphNode thisGraphNode : this.mEqGraphNodeSet) {
-
-			otherGraphNode = other.getEqNodeToEqGraphNodeMap().get(thisGraphNode.eqNode);
-
-			EqGraphNode thisNodeRepresentative = thisGraphNode.getRepresentative();
-			EqGraphNode otherNodeRepresentative = otherGraphNode.getRepresentative();
-
-			if (thisNodeRepresentative.equals(otherNodeRepresentative)) {
-				isContradic = disjoinedState.addEquality(
-						disjoinedState.getEqNodeToEqGraphNodeMap().get(thisGraphNode.eqNode),
-						disjoinedState.getEqNodeToEqGraphNodeMap().get(thisNodeRepresentative.eqNode));
-				if (isContradic) {
-					return mDomain.getBottomState();
-				}
-			} else {
-
-				if (find(otherGraphNode)
-						.equals(find(other.getEqNodeToEqGraphNodeMap().get(thisNodeRepresentative.eqNode)))) {
-					isContradic = disjoinedState.addEquality(
-							disjoinedState.getEqNodeToEqGraphNodeMap().get(thisGraphNode.eqNode),
-							disjoinedState.getEqNodeToEqGraphNodeMap().get(thisNodeRepresentative.eqNode));
-					if (isContradic) {
-						return mDomain.getBottomState();
-					}
-				} else if (find(thisGraphNode)
-						.equals(find(this.getEqNodeToEqGraphNodeMap().get(otherNodeRepresentative.eqNode)))) {
-					isContradic = disjoinedState.addEquality(
-							disjoinedState.getEqNodeToEqGraphNodeMap().get(thisGraphNode.eqNode),
-							disjoinedState.getEqNodeToEqGraphNodeMap().get(otherNodeRepresentative.eqNode));
-					if (isContradic) {
-						return mDomain.getBottomState();
-					}
-				}
-			}
-		}
-
-		return disjoinedState;
-	}
-
-	/**
-	 * Three steps for adding equality relation into graph: 1) Union two nodes.
-	 * 2) Propagate (merge congruence class). 3) Check for contradiction.
-	 * 
-	 * @param graphNode1
-	 * @param graphNode2
-	 * @return true if contradiction is met.
-	 */
-	public boolean addEquality(final EqGraphNode graphNode1, final EqGraphNode graphNode2) {
-		merge(graphNode1, graphNode2);
-		return checkContradiction();
-	}
-
 	public void addToDisEqSet(final EqGraphNode node1, final EqGraphNode node2) {
 		this.getDisEqualitySet().add(new VPDomainSymmetricPair<EqGraphNode>(node1, node2));
 	}
@@ -357,7 +114,7 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 	 * 
 	 * @return true if there is contradiction
 	 */
-	public boolean checkContradiction() {
+	boolean checkContradiction() {
 
 		for (final VPDomainSymmetricPair<EqGraphNode> disEqPair : this.getDisEqualitySet()) {
 			if (find(disEqPair.getFirst()).equals(find(disEqPair.getSecond()))) {
@@ -423,7 +180,7 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 	 * @param fnNode2
 	 * @return
 	 */
-	private boolean congruentIgnoreFunctionSymbol(final EqFunctionNode fnNode1, final EqFunctionNode fnNode2) {
+	boolean congruentIgnoreFunctionSymbol(final EqFunctionNode fnNode1, final EqFunctionNode fnNode2) {
 		assert fnNode1.getArgs() != null && fnNode2.getArgs() != null;
 		assert fnNode1.getArgs().size() == fnNode2.getArgs().size();
 
@@ -444,7 +201,7 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 	 * @param i1
 	 * @param i2
 	 */
-	private void merge(final EqGraphNode node1, final EqGraphNode node2) {
+	void merge(final EqGraphNode node1, final EqGraphNode node2) {
 		if (!find(node1).equals(find(node2))) {
 			union(node1, node2);
 			equalityPropagation(node1, node2);
@@ -483,30 +240,7 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 		}
 	}
 
-	/**
-	 * Updates this state according to the added information that firstArray
-	 * equals secondArray. I.e., we ensure that they are equal on all points
-	 * that we track.
-	 * 
-	 * @param firstArray
-	 * @param secondArray
-	 */
-	public void arrayAssignment(final Term firstArray, final Term secondArray) {
-		havocArray(firstArray);
 
-		for (final EqFunctionNode fnNode1 : mDomain.getArrayIdToEqFnNodeMap()
-				.getImage(
-						mDomain.getPreAnalysis().getIProgramVarOrConst(firstArray))) {
-			for (final EqFunctionNode fnNode2 : mDomain.getArrayIdToEqFnNodeMap()
-					.getImage(
-							mDomain.getPreAnalysis().getIProgramVarOrConst(secondArray))) {
-				if (congruentIgnoreFunctionSymbol(fnNode1, fnNode2)) {
-					this.addEquality(this.getEqNodeToEqGraphNodeMap().get(fnNode1),
-							this.getEqNodeToEqGraphNodeMap().get(fnNode2));
-				}
-			}
-		}
-	}
 
 //	private boolean isArray(final TermVariable term) {
 //		return mDomain.getArrayIdToEqFnNodeMap().containsKey(term);
