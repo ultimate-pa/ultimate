@@ -26,27 +26,27 @@ public class VPStateTop extends VPState {
 		return false;
 	}
 
-	@Override
-	public VPState prepareState(Set<IProgramVar> assignmentVars) {
-		// Do nothing
-		return this;
-	}
-
-	@Override
-	public VPState conjoin(VPState other) {
-		return other;
-	}
-
-	@Override
-	public VPState disjoin(VPState other) {
-		return this;
-	}
-
-	@Override
-	public boolean addEquality(EqGraphNode node1, EqGraphNode node2) {
-		// Do nothing
-		return true;
-	}
+//	@Override
+//	public VPState prepareState(Set<IProgramVar> assignmentVars) {
+//		// Do nothing
+//		return this;
+//	}
+//
+//	@Override
+//	public VPState conjoin(VPState other) {
+//		return other;
+//	}
+//
+//	@Override
+//	public VPState disjoin(VPState other) {
+//		return this;
+//	}
+//
+//	@Override
+//	public boolean addEquality(EqGraphNode node1, EqGraphNode node2) {
+//		// Do nothing
+//		return true;
+//	}
 
 //	@Override
 //	public boolean addDisEquality(EqGraphNode node1, EqGraphNode node2) {

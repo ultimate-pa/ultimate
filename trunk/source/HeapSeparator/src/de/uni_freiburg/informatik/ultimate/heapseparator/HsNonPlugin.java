@@ -113,6 +113,9 @@ public class HsNonPlugin {
 	private NewArrayIdProvider processAbstractInterpretationResult(
 			IAbstractInterpretationResult<VPState, CodeBlock, IProgramVar, ?> vpDomainResult, 
 			HeapSepPreAnalysisVisitor hspav) {
+		
+		VPDomain vpDomain = (VPDomain) vpDomainResult.getUsedDomain();
+		
 		/*
 		 * Compute the mapping array to VPState:
 		 * The HeapSepPreAnalysisVisitor can tell us which arrays are accessed at which locations.
@@ -121,7 +124,7 @@ public class HsNonPlugin {
 		 */
 		Map<IProgramVarOrConst, VPState> arrayToVPState = new HashMap<>();
 		for (IProgramVarOrConst array : hspav.getArrayToAccessLocations().getDomain()) {
-			VPState disjoinedState = ((VPDomain) vpDomainResult.getUsedDomain()).getBottomState();
+			VPState disjoinedState = vpDomain.getBottomState();
 			for (IcfgLocation loc : hspav.getArrayToAccessLocations().getImage(array)) {
 				Set<VPState> statesAtLoc = vpDomainResult.getLoc2States().get(loc);
 				if (statesAtLoc == null) {
@@ -129,7 +132,7 @@ public class HsNonPlugin {
 					continue;
 				}
 				for (VPState state : statesAtLoc) {
-					disjoinedState = disjoinedState.disjoin(state);
+					disjoinedState = vpDomain.getVpStateOperations().disjoin(disjoinedState, state);
 					assert disjoinedState != null;
 				}
 			}
