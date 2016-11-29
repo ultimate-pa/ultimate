@@ -31,6 +31,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.Activator;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
@@ -56,6 +57,7 @@ public class MapEliminationLassoPreprocessor extends LassoPreprocessor {
 	private static final String DESCRIPTION = "Removes maps (arrays and UFs) by introducing new variables for each relevant argument";
 
 	private final IUltimateServiceProvider mServices;
+	private final ILogger mLogger;
 	private final ManagedScript mManagedScript;
 	private final IIcfgSymbolTable mSymbolTable;
 	private final ReplacementVarFactory mReplacementVarFactory;
@@ -63,7 +65,6 @@ public class MapEliminationLassoPreprocessor extends LassoPreprocessor {
 	private final UnmodifiableTransFormula mOriginalLoop;
 	private final Set<IProgramNonOldVar> mModifiableGlobalsAtHonda;
 	private final Set<Term> mArrayIndexSupportingInvariants;
-
 	private final MapEliminationSettings mSettings;
 
 	public MapEliminationLassoPreprocessor(final IUltimateServiceProvider services, final ManagedScript managedScript,
@@ -72,6 +73,7 @@ public class MapEliminationLassoPreprocessor extends LassoPreprocessor {
 			final Set<IProgramNonOldVar> modifiableGlobalsAtHonda, final Set<Term> arrayIndexSupportingInvariants,
 			final MapEliminationSettings settings) {
 		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
 		mManagedScript = managedScript;
 		mSymbolTable = symbolTable;
 		mReplacementVarFactory = replacementVarFactory;
@@ -94,8 +96,8 @@ public class MapEliminationLassoPreprocessor extends LassoPreprocessor {
 
 	@Override
 	public Collection<LassoUnderConstruction> process(final LassoUnderConstruction lasso) throws TermException {
-		final MapEliminator elim = new MapEliminator(mServices, mManagedScript, mSymbolTable, mReplacementVarFactory,
-				Arrays.asList(lasso.getStem(), lasso.getLoop()), mSettings);
+		final MapEliminator elim = new MapEliminator(mServices, mLogger, mManagedScript, mSymbolTable,
+				mReplacementVarFactory, Arrays.asList(lasso.getStem(), lasso.getLoop()), mSettings);
 		final EqualityAnalysisResult equalityAnalysisStem = new EqualityAnalysisResult(elim.getDoubletons());
 		final EqualitySupportingInvariantAnalysis esia = new EqualitySupportingInvariantAnalysis(elim.getDoubletons(),
 				mSymbolTable, mManagedScript.getScript(), mOriginalStem, mOriginalLoop, mModifiableGlobalsAtHonda);
@@ -109,8 +111,7 @@ public class MapEliminationLassoPreprocessor extends LassoPreprocessor {
 		final ModifiableTransFormula newLoop = elim.getRewrittenTransFormula(lasso.getLoop(), equalityAnalysisLoop,
 				equalityAnalysisLoop);
 		final LassoUnderConstruction newLasso = new LassoUnderConstruction(newStem, newLoop);
-		assert RewriteArrays2.checkStemImplication(mServices,
-				mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID), lasso, newLasso, mSymbolTable,
+		assert RewriteArrays2.checkStemImplication(mServices, mLogger, lasso, newLasso, mSymbolTable,
 				mManagedScript) : "result of RewriteArrays too strong";
 		return Collections.singleton(newLasso);
 	}

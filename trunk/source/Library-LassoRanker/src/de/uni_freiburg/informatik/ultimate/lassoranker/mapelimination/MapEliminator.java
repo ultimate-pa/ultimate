@@ -44,7 +44,6 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lassoranker.Activator;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArrays.IndexAnalyzer;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
@@ -113,10 +112,12 @@ public class MapEliminator {
 	 *
 	 * @param services
 	 *            UltimateServices
+	 * @param logger
+	 *            The logger
 	 * @param managedScript
 	 *            ManagedScript
 	 * @param symbolTable
-	 *            Boogie2SmtSymbolTable
+	 *            Symbol Table
 	 * @param replacementVarFactory
 	 *            ReplacementVarFactory
 	 * @param transformulas
@@ -124,13 +125,14 @@ public class MapEliminator {
 	 * @param settings
 	 *            Settings for the map-elimination
 	 */
-	public MapEliminator(final IUltimateServiceProvider services, final ManagedScript managedScript,
-			final IIcfgSymbolTable symbolTable, final ReplacementVarFactory replacementVarFactory,
-			final Collection<ModifiableTransFormula> transformulas, final MapEliminationSettings settings) {
+	public MapEliminator(final IUltimateServiceProvider services, final ILogger logger,
+			final ManagedScript managedScript, final IIcfgSymbolTable symbolTable,
+			final ReplacementVarFactory replacementVarFactory, final Collection<ModifiableTransFormula> transformulas,
+			final MapEliminationSettings settings) {
 		mSettings = settings;
 		mServices = services;
 		mScript = managedScript.getScript();
-		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+		mLogger = logger;
 		mLogger.info("Using MapEliminator with " + mSettings);
 		mManagedScript = managedScript;
 		mReplacementVarFactory = replacementVarFactory;
@@ -299,8 +301,8 @@ public class MapEliminator {
 	 * This method ignores the index analysis
 	 *
 	 * @param transformula
-	 *            The old TransFormulaLR (quantifier-free, in NNF), which might contain maps
-	 * @return A TransFormulaLR, where array accesses and calls of uninterpreted functions are replaced
+	 *            The old TransFormula (quantifier-free, in NNF), which might contain maps
+	 * @return A TransFormula, where array accesses and calls of uninterpreted functions are replaced
 	 */
 	public ModifiableTransFormula getRewrittenTransFormula(final ModifiableTransFormula transformula) {
 		final EqualityAnalysisResult emptyResult = new EqualityAnalysisResult(mDoubletons);
@@ -315,12 +317,12 @@ public class MapEliminator {
 	 * quantifier-free.
 	 *
 	 * @param transformula
-	 *            The old TransFormulaLR (quantifier-free, in NNF), which might contain maps
+	 *            The old TransFormula (quantifier-free, in NNF), which might contain maps
 	 * @param equalityAnalysisBefore
 	 *            The invariants that are valid before the transformula
 	 * @param equalityAnalysisAfter
 	 *            The invariants that are valid after the transformula
-	 * @return A TransFormulaLR, where array accesses and calls of uninterpreted functions are replaced
+	 * @return A TransFormula, where array accesses and calls of uninterpreted functions are replaced
 	 */
 	public ModifiableTransFormula getRewrittenTransFormula(final ModifiableTransFormula transformula,
 			final EqualityAnalysisResult equalityAnalysisBefore, final EqualityAnalysisResult equalityAnalysisAfter) {
@@ -497,7 +499,7 @@ public class MapEliminator {
 	 * aux-vars. So this method produces a map-free term.
 	 *
 	 * @param transformula
-	 *            A TransFormulaLR
+	 *            A TransFormula
 	 * @param term
 	 *            A store-free term
 	 * @return A new map-free term
@@ -575,7 +577,7 @@ public class MapEliminator {
 	 * @param term
 	 *            The term to be replaced
 	 * @param transformula
-	 *            The new TransFormulaLR (in-/out-vars are added)
+	 *            The new TransFormula (in-/out-vars are added)
 	 * @param invariants
 	 *            The valid invariants
 	 * @return A term, that doen't contain store-terms
@@ -664,7 +666,7 @@ public class MapEliminator {
 	 * @param term
 	 *            A term of the form: (= b (store ... (store a i_1 x_1) i_n x_n))
 	 * @param transformula
-	 *            A TransFormulaLR
+	 *            A TransFormula
 	 * @param invariants
 	 *            The valid invariants
 	 * @return A term store-free term
@@ -777,7 +779,7 @@ public class MapEliminator {
 	 * @param term
 	 *            A SMT-Term with global variables
 	 * @param transformula
-	 *            A TransFormulaLR
+	 *            A TransFormula
 	 * @param returnInVar
 	 *            Switch to return only in- or out-vars
 	 * @return The local term (with in- or out-vars) for the given global term
@@ -811,7 +813,7 @@ public class MapEliminator {
 	 * @param term
 	 *            An array-index with global variables
 	 * @param transformula
-	 *            A TransFormulaLR
+	 *            A TransFormula
 	 * @param returnInVar
 	 *            Switch to return only in- or out-vars
 	 * @return The local index (with in- or out-vars) for the given global index
