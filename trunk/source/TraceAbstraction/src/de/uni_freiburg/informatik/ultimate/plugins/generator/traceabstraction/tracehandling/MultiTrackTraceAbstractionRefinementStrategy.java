@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerSpWp;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
 
 /**
@@ -125,6 +126,10 @@ public class MultiTrackTraceAbstractionRefinementStrategy implements IRefinement
 			case TRACE_CHECKER:
 				return mInterpolationTechniques.hasNext();
 			case INTERPOLANT_GENERATOR:
+				if (mInterpolantGenerator instanceof TraceCheckerSpWpWrapper) {
+					// several interpolant sequences possible here
+					return ((TraceCheckerSpWpWrapper) mInterpolantGenerator).hasNext();
+				}
 				return false;
 			default:
 				throw new IllegalArgumentException("Unknown mode: " + advance);
@@ -140,6 +145,11 @@ public class MultiTrackTraceAbstractionRefinementStrategy implements IRefinement
 				mTcConstructorFromPrefs = new TraceCheckerConstructor(mTcConstructorFromPrefs, nextTechnique);
 				break;
 			case INTERPOLANT_GENERATOR:
+				// TODO should we advance the trace checker as well?
+				if (mInterpolantGenerator instanceof TraceCheckerSpWpWrapper) {
+					// several interpolant sequences possible here
+					((TraceCheckerSpWpWrapper) mInterpolantGenerator).next();
+				}
 				throw new NoSuchElementException();
 			default:
 				throw new IllegalArgumentException("Unknown mode: " + advance);
@@ -180,13 +190,18 @@ public class MultiTrackTraceAbstractionRefinementStrategy implements IRefinement
 	}
 	
 	/**
-	 * TODO refactor this code duplicate with {@link FixedTraceAbstractionRefinementStrategy}
+	 * TODO Refactor this code duplicate with {@link FixedTraceAbstractionRefinementStrategy}. But careful: The
+	 * {@link TraceCheckerSpWpWrapper} code is unique to this class.
 	 */
 	private IInterpolantGenerator constructInterpolantGenerator(final TraceChecker tracechecker) {
 		final TraceChecker localTraceChecker = Objects.requireNonNull(tracechecker,
 				"cannot construct interpolant generator if no trace checker is present");
 		if (localTraceChecker instanceof InterpolatingTraceChecker) {
+			if (localTraceChecker instanceof TraceCheckerSpWp) {
+				return new TraceCheckerSpWpWrapper((TraceCheckerSpWp) localTraceChecker);
+			}
 			final InterpolatingTraceChecker interpolatingTraceChecker = (InterpolatingTraceChecker) localTraceChecker;
+			
 			if (mPrefs.getUseInterpolantConsolidation()) {
 				try {
 					return consolidateInterpolants(interpolatingTraceChecker);
@@ -202,7 +217,7 @@ public class MultiTrackTraceAbstractionRefinementStrategy implements IRefinement
 	}
 	
 	/**
-	 * TODO refactor this code duplicate with {@link FixedTraceAbstractionRefinementStrategy}
+	 * TODO Refactor this code duplicate with {@link FixedTraceAbstractionRefinementStrategy}.
 	 */
 	private IInterpolantGenerator consolidateInterpolants(final InterpolatingTraceChecker interpolatingTraceChecker)
 			throws AutomataOperationCanceledException {
