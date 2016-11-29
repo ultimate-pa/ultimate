@@ -395,6 +395,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				// evaluates to false if abstract interpretation did not run at all (because it's turned off in the
 				// preferences).
 				if (mAbsIntRunner.hasShownInfeasibility()) {
+					mLogger.debug(
+							"Abstract interpretation has shown infeasibility and performed enhancement. Skipping default enhancement.");
 					enhanceMode = InterpolantAutomatonEnhancement.NONE;
 				}
 
