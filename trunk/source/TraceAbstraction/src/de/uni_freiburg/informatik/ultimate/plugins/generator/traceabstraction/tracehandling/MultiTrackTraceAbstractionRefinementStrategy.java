@@ -39,7 +39,12 @@ import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -65,6 +70,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public class MultiTrackTraceAbstractionRefinementStrategy implements IRefinementStrategy {
+	private static final String Z3_COMMAND = "z3 -smt2 -in SMTLIB2_COMPLIANT=true";
+	
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final TaCheckAndRefinementPreferences mPrefs;
@@ -101,8 +108,7 @@ public class MultiTrackTraceAbstractionRefinementStrategy implements IRefinement
 	 *            temporary argument, should be removed
 	 */
 	public MultiTrackTraceAbstractionRefinementStrategy(final ILogger logger,
-			final TaCheckAndRefinementPreferences prefs,
-			final ManagedScript managedScript, final IUltimateServiceProvider services,
+			final TaCheckAndRefinementPreferences prefs, final IUltimateServiceProvider services,
 			final PredicateUnifier predicateUnifier, final IRun<CodeBlock, IPredicate, ?> counterexample,
 			final IAutomaton<CodeBlock, IPredicate> abstraction,
 			final TAPreferences taPrefsForInterpolantConsolidation) {
@@ -116,8 +122,10 @@ public class MultiTrackTraceAbstractionRefinementStrategy implements IRefinement
 		
 		mInterpolationTechniques = initializeInterpolationTechniquesList();
 		
-		mTcConstructorFromPrefs = new TraceCheckerConstructor(prefs, managedScript, services, predicateUnifier,
-				counterexample, InterpolationTechnique.Craig_TreeInterpolation);
+		// dummy construction, is overwritten in the next step
+		mTcConstructorFromPrefs =
+				new TraceCheckerConstructor(mPrefs, null, mServices, mPredicateUnifier, mCounterexample, null);
+		mTcConstructorFromPrefs = constructTraceCheckerConstructor();
 	}
 	
 	@Override
@@ -140,9 +148,7 @@ public class MultiTrackTraceAbstractionRefinementStrategy implements IRefinement
 	public void next(final RefinementStrategyAdvance advance) {
 		switch (advance) {
 			case TRACE_CHECKER:
-				final InterpolationTechnique nextTechnique = mInterpolationTechniques.next();
-				mTraceChecker = null;
-				mTcConstructorFromPrefs = new TraceCheckerConstructor(mTcConstructorFromPrefs, nextTechnique);
+				mTcConstructorFromPrefs = constructTraceCheckerConstructor();
 				break;
 			case INTERPOLANT_GENERATOR:
 				// TODO should we advance the trace checker as well?
@@ -187,6 +193,46 @@ public class MultiTrackTraceAbstractionRefinementStrategy implements IRefinement
 		list.add(InterpolationTechnique.Craig_TreeInterpolation);
 		list.add(InterpolationTechnique.FPandBP);
 		return list.iterator();
+	}
+	
+	private TraceCheckerConstructor constructTraceCheckerConstructor() {
+		// reset trace checker
+		mTraceChecker = null;
+		
+		final InterpolationTechnique nextTechnique = mInterpolationTechniques.next();
+		final ManagedScript managedScript = constructManagedScript(nextTechnique);
+		
+		return new TraceCheckerConstructor(mTcConstructorFromPrefs, managedScript, nextTechnique);
+	}
+	
+	private ManagedScript constructManagedScript(final InterpolationTechnique interpolationTechnique) {
+		final Settings solverSettings;
+		switch (interpolationTechnique) {
+			case Craig_TreeInterpolation:
+				solverSettings = new Settings(false, false, null, 10_000, null, false, null, null);
+				break;
+			case FPandBP:
+				// final String commandExternalSolver = RcfgPreferenceInitializer.Z3_DEFAULT;
+				final String commandExternalSolver = Z3_COMMAND;
+				solverSettings = new Settings(false, true, commandExternalSolver, 0, null, false, null, null);
+				break;
+			default:
+				throw new IllegalArgumentException(
+						"Managed script construction not supported for interpolation technique: "
+								+ interpolationTechnique);
+		}
+		final Script solver = SolverBuilder.buildAndInitializeSolver(mServices, mPrefs.getToolchainStorage(),
+				mPrefs.getSolverMode(), solverSettings, false, false, mPrefs.getLogicForExternalSolver(),
+				"TraceCheck_Iteration" + mPrefs.getIteration());
+		final ManagedScript result = new ManagedScript(mServices, solver);
+		
+		// TODO do we need this?
+		final TermTransferrer tt = new TermTransferrer(solver);
+		for (final Term axiom : mPrefs.getIcfgContainer().getBoogie2SMT().getAxioms()) {
+			solver.assertTerm(tt.transform(axiom));
+		}
+		
+		return result;
 	}
 	
 	/**

@@ -90,16 +90,19 @@ class TraceCheckerConstructor implements Supplier<TraceChecker> {
 	 * 
 	 * @param other
 	 *            other object to copy fields from
+	 * @param managedScript
+	 *            managed script
 	 * @param interpolationTechnique
 	 *            new interpolation technique
 	 */
 	public TraceCheckerConstructor(final TraceCheckerConstructor other,
-			final InterpolationTechnique interpolationTechnique) {
+			final ManagedScript managedScript, final InterpolationTechnique interpolationTechnique) {
 		mPrefs = other.mPrefs;
-		mManagedScript = other.mManagedScript;
 		mServices = other.mServices;
 		mPredicateUnifier = other.mPredicateUnifier;
 		mCounterexample = other.mCounterexample;
+		
+		mManagedScript = managedScript;
 		mInterpolationTechnique = interpolationTechnique;
 	}
 	
@@ -203,7 +206,7 @@ class TraceCheckerConstructor implements Supplier<TraceChecker> {
 				mPrefs.getUseLiveVariables(), mServices, true, mPredicateUnifier,
 				InterpolationTechnique.BackwardPredicates, mManagedScript, xnfConversionTechnique,
 				simplificationTechnique, mCounterexample.getStateSequence());
-				
+		
 		traceChecker = new InterpolatingTraceCheckerPathInvariantsWithFallback(truePredicate,
 				falsePredicate, new TreeMap<Integer, IPredicate>(),
 				(NestedRun<CodeBlock, IPredicate>) mCounterexample, mPrefs.getCfgSmtToolkit(),
