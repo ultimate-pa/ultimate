@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.CommuhashNormalForm;
@@ -105,7 +105,7 @@ public class PredicateUnifier {
 	private final IUltimateServiceProvider mServices;
 	private final Script mScript;
 	private final MonolithicImplicationChecker mImplicationChecker;
-	private final ICfgSymbolTable mSymbolTable;
+	private final IIcfgSymbolTable mSymbolTable;
 	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
 	
@@ -115,7 +115,7 @@ public class PredicateUnifier {
 	private final PredicateUnifierStatisticsGenerator mPredicateUnifierBenchmarkGenerator;
 
 	public PredicateUnifier(final IUltimateServiceProvider services, final ManagedScript mgnScript,
-			final PredicateFactory predicateFactory, final ICfgSymbolTable symbolTable,
+			final PredicateFactory predicateFactory, final IIcfgSymbolTable symbolTable,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
 			final IPredicate... initialPredicates) {
 		mPredicateUnifierBenchmarkGenerator = new PredicateUnifierStatisticsGenerator();

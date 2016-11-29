@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
@@ -138,7 +138,7 @@ public class TraceChecker {
 			new TraceCheckerStatisticsGenerator();
 	protected final AssertCodeBlockOrder mAssertCodeBlocksIncrementally;
 	protected ToolchainCanceledException mToolchainCanceledException;
-	protected final ICfgSymbolTable mBoogie2SmtSymbolTable;
+	protected final IIcfgSymbolTable mBoogie2SmtSymbolTable;
 	
 	/**
 	 * Check if trace fulfills specification given by precondition, postcondition and pending contexts. The

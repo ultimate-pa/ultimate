@@ -33,7 +33,7 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
 public class PredicateFactory extends BasicPredicateFactory {
 
-	public PredicateFactory(final IUltimateServiceProvider services, final ManagedScript mgdScript, final ICfgSymbolTable symbolTable, final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
+	public PredicateFactory(final IUltimateServiceProvider services, final ManagedScript mgdScript, final IIcfgSymbolTable symbolTable, final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		super(services, mgdScript, symbolTable, simplificationTechnique, xnfConversionTechnique);
 	}
 	

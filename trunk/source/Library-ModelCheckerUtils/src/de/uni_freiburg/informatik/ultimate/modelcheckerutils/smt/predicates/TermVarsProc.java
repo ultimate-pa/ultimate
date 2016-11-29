@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -81,7 +81,7 @@ public class TermVarsProc {
 	 * procedures of these BoogieVariables.
 	 */
 	public static TermVarsProc computeTermVarsProc(final Term term, final Script script, 
-			final ICfgSymbolTable symbolTable) {
+			final IIcfgSymbolTable symbolTable) {
 		final HashSet<IProgramVar> vars = new HashSet<IProgramVar>();
 		final Set<String> procs = new HashSet<String>();
 		for (final TermVariable tv : term.getFreeVars()) {

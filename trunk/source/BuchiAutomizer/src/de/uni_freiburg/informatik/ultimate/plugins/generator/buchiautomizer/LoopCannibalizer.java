@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -73,12 +73,12 @@ public class LoopCannibalizer {
 	private final IUltimateServiceProvider mServices;
 	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
-	private final ICfgSymbolTable mBoogie2SmtSymbolTable;
+	private final IIcfgSymbolTable mBoogie2SmtSymbolTable;
 
 	public LoopCannibalizer(final NestedLassoRun<CodeBlock, IPredicate> counterexample, final Set<IPredicate> loopInterpolants,
 			final BinaryStatePredicateManager bspm, final PredicateUnifier predicateUnifier, final CfgSmtToolkit csToolkit,
 			final InterpolationTechnique interpolation,
-			final ICfgSymbolTable boogie2SmtSymbolTable, final IUltimateServiceProvider services,
+			final IIcfgSymbolTable boogie2SmtSymbolTable, final IUltimateServiceProvider services,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		super();
 		mServices = services;

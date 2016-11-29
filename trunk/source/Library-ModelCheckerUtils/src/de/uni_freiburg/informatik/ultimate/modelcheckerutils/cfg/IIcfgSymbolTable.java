@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
-public interface ICfgSymbolTable {
+public interface IIcfgSymbolTable {
 
 	IProgramVar getBoogieVar(TermVariable tv);
 

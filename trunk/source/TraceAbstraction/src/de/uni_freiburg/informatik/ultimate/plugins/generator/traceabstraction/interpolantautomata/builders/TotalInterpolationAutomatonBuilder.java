@@ -55,7 +55,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Summa
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
@@ -108,7 +108,7 @@ public class TotalInterpolationAutomatonBuilder implements IInterpolantAutomaton
 	private final IUltimateServiceProvider mServices;
 	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
-	private final ICfgSymbolTable mSymbolTable;
+	private final IIcfgSymbolTable mSymbolTable;
 
 	public TotalInterpolationAutomatonBuilder(final INestedWordAutomaton<CodeBlock, IPredicate> abstraction,
 			final ArrayList<IPredicate> stateSequence, final IInterpolantGenerator interpolantGenerator,
@@ -116,7 +116,7 @@ public class TotalInterpolationAutomatonBuilder implements IInterpolantAutomaton
 			final ModifiableGlobalsTable modifiableGlobalsTable, final InterpolationTechnique interpolation,
 			final IUltimateServiceProvider services, final HoareTripleChecks hoareTripleChecks,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
-			final ICfgSymbolTable symbolTable) throws AutomataOperationCanceledException {
+			final IIcfgSymbolTable symbolTable) throws AutomataOperationCanceledException {
 		super();
 		mServices = services;
 		mSimplificationTechnique = simplificationTechnique;

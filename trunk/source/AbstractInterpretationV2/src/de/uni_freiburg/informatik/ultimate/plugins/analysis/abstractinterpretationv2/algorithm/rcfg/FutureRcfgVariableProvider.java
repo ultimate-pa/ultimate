@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
@@ -57,9 +57,9 @@ public class FutureRcfgVariableProvider<STATE extends IAbstractState<STATE, Code
 		implements IVariableProvider<STATE, CodeBlock, IProgramVar> {
 
 	private final ILogger mLogger;
-	private final ICfgSymbolTable mBoogieVarTable;
+	private final IIcfgSymbolTable mBoogieVarTable;
 
-	public FutureRcfgVariableProvider(final BoogieSymbolTable table, final ICfgSymbolTable boogieVarTable,
+	public FutureRcfgVariableProvider(final BoogieSymbolTable table, final IIcfgSymbolTable boogieVarTable,
 			final IUltimateServiceProvider services) {
 		assert services != null;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);

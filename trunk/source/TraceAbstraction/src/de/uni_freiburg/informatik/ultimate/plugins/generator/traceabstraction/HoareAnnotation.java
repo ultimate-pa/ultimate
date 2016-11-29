@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
@@ -78,7 +78,7 @@ public class HoareAnnotation extends SPredicate {
 	private final XnfConversionTechnique mXnfConversionTechnique;
 	
 	private final Script mScript;
-	private final ICfgSymbolTable mSymbolTable;
+	private final IIcfgSymbolTable mSymbolTable;
 	private final ManagedScript mMgdScript;
 	private final PredicateFactory mPredicateFactory;
 	private final ModifiableGlobalsTable mModifiableGlobals;
@@ -92,7 +92,7 @@ public class HoareAnnotation extends SPredicate {
 	private final List<Term> mInvariants = new ArrayList<>();
 	
 	public HoareAnnotation(final BoogieIcfgLocation programPoint, final int serialNumber,
-			final ICfgSymbolTable symbolTable, final PredicateFactory predicateFactory,
+			final IIcfgSymbolTable symbolTable, final PredicateFactory predicateFactory,
 			final ModifiableGlobalsTable modifiableGlobalsTable, final ManagedScript mgdScript, final Script script,
 			final IUltimateServiceProvider services, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique) {

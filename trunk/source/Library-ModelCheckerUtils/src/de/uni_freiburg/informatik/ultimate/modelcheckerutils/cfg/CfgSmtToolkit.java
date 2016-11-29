@@ -37,7 +37,7 @@ public class CfgSmtToolkit {
 
 	private final ManagedScript mManagedScript;
 	private final ModifiableGlobalsTable mModifiableGlobalsTable;
-	private final ICfgSymbolTable mSymbolTable;
+	private final IIcfgSymbolTable mSymbolTable;
 	private final Collection<Term> mAxioms;
 	private final OldVarsAssignmentCache mOldVarsAssignmentCache;
 	private final Set<String> mProcedures;
@@ -45,7 +45,7 @@ public class CfgSmtToolkit {
 
 
 	public CfgSmtToolkit(final ModifiableGlobalsTable modifiableGlobalsTable, final ManagedScript managedScript, 
-			final ICfgSymbolTable symbolTable, final Collection<Term> axioms, final Set<String> procedures) {
+			final IIcfgSymbolTable symbolTable, final Collection<Term> axioms, final Set<String> procedures) {
 		mManagedScript = managedScript;
 		mSymbolTable = symbolTable;
 		mModifiableGlobalsTable = modifiableGlobalsTable;
@@ -67,7 +67,7 @@ public class CfgSmtToolkit {
 		return mOldVarsAssignmentCache;
 	}
 
-	public ICfgSymbolTable getSymbolTable() {
+	public IIcfgSymbolTable getSymbolTable() {
 		return mSymbolTable;
 	}
 

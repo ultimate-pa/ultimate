@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.BasicInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
@@ -99,7 +99,7 @@ public class FlowSensitiveFaultLocalizer {
 	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
 	private final IRelevanceInformation[] mRelevanceOfTrace;
-	private final ICfgSymbolTable mSymbolTable;
+	private final IIcfgSymbolTable mSymbolTable;
 	private final PredicateFactory mPredicateFactory;
 	/**
 	 * Apply quantifier elimination during the computation of pre and wp.
@@ -115,7 +115,7 @@ public class FlowSensitiveFaultLocalizer {
 			final ModifiableGlobalsTable modifiableGlobalsTable, final PredicateUnifier predicateUnifier,
 			final boolean doNonFlowSensitiveAnalysis, final boolean doFlowSensitiveAnalysis,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique, 
-			final ICfgSymbolTable symbolTable) {
+			final IIcfgSymbolTable symbolTable) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mSimplificationTechnique = simplificationTechnique;

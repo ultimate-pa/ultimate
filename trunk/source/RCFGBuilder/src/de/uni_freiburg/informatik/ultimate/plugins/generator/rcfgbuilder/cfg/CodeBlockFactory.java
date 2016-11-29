@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IStorable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -56,10 +56,10 @@ public class CodeBlockFactory implements IStorable {
 	private final ManagedScript mMgdScript;
 	private final CfgSmtToolkit mMgvManager;
 	private int mSerialNumberCounter = 0;
-	private final ICfgSymbolTable mSymbolTable;
+	private final IIcfgSymbolTable mSymbolTable;
 
 	public CodeBlockFactory(final IUltimateServiceProvider services, final ManagedScript mgdScript,
-			final CfgSmtToolkit mgvManager, final ICfgSymbolTable symbolTable) {
+			final CfgSmtToolkit mgvManager, final IIcfgSymbolTable symbolTable) {
 		super();
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);

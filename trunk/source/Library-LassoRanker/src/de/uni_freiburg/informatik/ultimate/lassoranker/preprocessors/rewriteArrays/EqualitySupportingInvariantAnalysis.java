@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -81,7 +81,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 public class EqualitySupportingInvariantAnalysis {
 	private final Set<Doubleton<Term>> mAllDoubletons;
 	private final Script mScript;
-	private final ICfgSymbolTable mSymbolTable;
+	private final IIcfgSymbolTable mSymbolTable;
 	
 	private final Set<Doubleton<Term>> mDistinctDoubletons = new HashSet<>();
 	private final Set<Doubleton<Term>> mEqualDoubletons = new HashSet<>();
@@ -104,7 +104,7 @@ public class EqualitySupportingInvariantAnalysis {
 	 * that are modifiable at the program point between stem and loop.
 	 */
 	public EqualitySupportingInvariantAnalysis(final Set<Doubleton<Term>> doubletons,
-			final ICfgSymbolTable symbolTable,
+			final IIcfgSymbolTable symbolTable,
 			final Script script,
 			final UnmodifiableTransFormula originalStem,
 			final UnmodifiableTransFormula originalLoop, final Set<IProgramNonOldVar> modifiableGlobalsAtHonda) {

@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
@@ -83,7 +83,7 @@ public class IterativePredicateTransformer {
 	protected final SortedMap<Integer, IPredicate> mPendingContexts;
 	private final IPredicate mFalsePredicate;
 	private final boolean mInterproceduralPost = true;
-	private final ICfgSymbolTable mSymbolTable;
+	private final IIcfgSymbolTable mSymbolTable;
 	
 	private static final boolean s_TransformSummaryToCNF = true;
 
@@ -95,7 +95,7 @@ public class IterativePredicateTransformer {
 			final IPredicate postcondition, final SortedMap<Integer, IPredicate> pendingContexts,
 			final IPredicate falsePredicate,
 			final SimplificationTechnique simplificationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique, final ICfgSymbolTable symbolTable) {
+			final XnfConversionTechnique xnfConversionTechnique, final IIcfgSymbolTable symbolTable) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mSimplificationTechnique = simplificationTechnique;

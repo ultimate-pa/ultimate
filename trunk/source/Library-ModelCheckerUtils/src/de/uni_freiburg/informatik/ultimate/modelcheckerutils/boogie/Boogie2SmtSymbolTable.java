@@ -52,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -65,7 +65,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  * @author Matthias Heizmann
  *
  */
-public class Boogie2SmtSymbolTable implements ICfgSymbolTable {
+public class Boogie2SmtSymbolTable implements IIcfgSymbolTable {
 	/**
 	 * Identifier of attribute that we use to state that
 	 * <ul>

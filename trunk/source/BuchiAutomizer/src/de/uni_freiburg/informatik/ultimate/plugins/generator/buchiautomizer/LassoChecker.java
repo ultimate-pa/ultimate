@@ -75,7 +75,7 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ICfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
@@ -194,7 +194,7 @@ public class LassoChecker {
 
 	private final List<TerminationAnalysisBenchmark> mTerminationAnalysisBenchmarks = new ArrayList<>();
 	private final List<NonterminationAnalysisBenchmark> mNonterminationAnalysisBenchmarks = new ArrayList<>();
-	private final ICfgSymbolTable mSymbolTable;
+	private final IIcfgSymbolTable mSymbolTable;
 
 	public LassoCheckResult getLassoCheckResult() {
 		return mLassoCheckResult;
@@ -238,7 +238,7 @@ public class LassoChecker {
 	}
 
 	public LassoChecker(final InterpolationTechnique interpolation, final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
-			final ICfgSymbolTable symbolTable, final ModifiableGlobalsTable modifiableGlobalsTable, final Collection<Term> axioms,
+			final IIcfgSymbolTable symbolTable, final ModifiableGlobalsTable modifiableGlobalsTable, final Collection<Term> axioms,
 			final BinaryStatePredicateManager bspm, final NestedLassoRun<CodeBlock, IPredicate> counterexample,
 			final String lassoCheckerIdentifier, final IUltimateServiceProvider services,
 			final IToolchainStorage storage, final SimplificationTechnique simplificationTechnique,
