@@ -65,7 +65,7 @@ public class AffineRelation {
 	
 	public enum TrivialityStatus { EQUIVALENT_TO_TRUE, EQUIVALENT_TO_FALSE, NONTRIVIAL };
 	
-	public AffineRelation(Script script, Term term) throws NotAffineException {
+	public AffineRelation(final Script script, final Term term) throws NotAffineException {
 		this(script, term, TransformInequality.NO_TRANFORMATION);
 	}
 
@@ -76,7 +76,7 @@ public class AffineRelation {
 	 * inequalities and vice versa
 	 * @throws NotAffineException Thrown if Term is not affine.
 	 */
-	public AffineRelation(Script script, Term term, TransformInequality transformInequality) throws NotAffineException {
+	public AffineRelation(final Script script, final Term term, final TransformInequality transformInequality) throws NotAffineException {
 		mOriginalTerm = term;
 		BinaryNumericRelation bnr = null;
 		try {
@@ -222,7 +222,7 @@ public class AffineRelation {
 	 * Return if term is variable (possibly with coefficient 0) in this affine
 	 * relation.
 	 */
-	public boolean isVariable(Term term) {
+	public boolean isVariable(final Term term) {
 		return mAffineTerm.getVariable2Coefficient().containsKey(term);
 	}
 
@@ -233,7 +233,7 @@ public class AffineRelation {
 	 * If the term is equivalent to <i>true</i> (resp. <i>false</i>) we return 
 	 * <i>true</i> (resp. <i>false</i>).
 	 */
-	public Term positiveNormalForm(Script script) {
+	public Term positiveNormalForm(final Script script) {
 		if (mTrivialityStatus == TrivialityStatus.EQUIVALENT_TO_TRUE) {
 			return script.term("true");
 		} else if (mTrivialityStatus == TrivialityStatus.EQUIVALENT_TO_FALSE) {
@@ -272,7 +272,7 @@ public class AffineRelation {
 	 * variable does not occur in the term, or the variable is x, its sort is
 	 * Int and the term is 2x=1.)
 	 */
-	public ApplicationTerm onLeftHandSideOnly(Script script, Term var) throws NotAffineException {
+	public ApplicationTerm onLeftHandSideOnly(final Script script, final Term var) throws NotAffineException {
 		assert mAffineTerm.getVariable2Coefficient().containsKey(var);
 		final Rational termsCoeff = mAffineTerm.getVariable2Coefficient().get(var);
 		if (termsCoeff.equals(Rational.ZERO)) {
@@ -317,18 +317,18 @@ public class AffineRelation {
 		final RelationSymbol relSymb = useRelationSymbolForSwappedTerms ? BinaryRelation.swapParameters(mRelationSymbol)
 				: mRelationSymbol;
 		final ApplicationTerm result = (ApplicationTerm) script.term(relSymb.toString(), var, rhsTerm);
-		assert isEquivalent(script, mOriginalTerm, result) == LBool.UNSAT : "transformation to AffineRelation unsound";
+		assert isEquivalent(script, mOriginalTerm, result) != LBool.SAT : "transformation to AffineRelation unsound";
 		return result;
 	}
 
-	private static LBool isEquivalent(Script script, Term term1, Term term2) {
+	private static LBool isEquivalent(final Script script, final Term term1, final Term term2) {
 		Term comp = script.term("=", term1, term2);
 		comp = script.term("not", comp);
 		final LBool sat = Util.checkSat(script, comp);
 		return sat;
 	}
 
-	private static Term product(Script script, Rational rational, Term term) {
+	private static Term product(final Script script, final Rational rational, final Term term) {
 		if (rational.equals(Rational.ONE)) {
 			return term;
 		} else if (rational.equals(Rational.MONE)) {
