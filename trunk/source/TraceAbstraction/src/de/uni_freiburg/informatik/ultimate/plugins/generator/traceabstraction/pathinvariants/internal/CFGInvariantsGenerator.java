@@ -279,6 +279,7 @@ public <IPT> Map<BoogieIcfgLocation, IPredicate> generateInvariantsForTransition
 			if (useVariablesFromUnsatCore) {
 				final Collection<TermVariable> smtVarsFromUnsatCore = ((LinearInequalityInvariantPatternProcessor)processor).getVarsFromUnsatCore();
 				if (smtVarsFromUnsatCore != null) {
+					logService.info(smtVarsFromUnsatCore.size() + " out of " + smtVars2ProgramVars.size() + " program variables in unsat core");
 					// The result in pattern processor was 'unsat'
 					varsFromUnsatCore = new HashSet<>(smtVarsFromUnsatCore.size());
 					for (final TermVariable smtVar : smtVarsFromUnsatCore) {
