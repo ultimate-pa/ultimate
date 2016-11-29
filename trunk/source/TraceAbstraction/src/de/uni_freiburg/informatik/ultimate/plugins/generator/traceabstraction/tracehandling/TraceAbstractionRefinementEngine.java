@@ -240,7 +240,6 @@ public final class TraceAbstractionRefinementEngine
 							perfectInterpolantsFound = strategy.getInterpolantGenerator().isPerfectSequence();
 						}
 						if (perfectInterpolantsFound) {
-							perfectInterpolantsFound = true;
 							// construct interpolant automaton using only this (perfect) sequence
 							interpolantSequences = Collections.singletonList(interpolants);
 							if (mLogger.isInfoEnabled()) {
