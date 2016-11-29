@@ -164,7 +164,7 @@ public abstract class InterpolatingTraceChecker extends TraceChecker implements 
 	public boolean isPerfectSequence() {
 		final int perfectSequences = (int) getTraceCheckerBenchmark()
 				.getValue(TraceCheckerStatisticsDefinitions.PerfectInterpolantSequences.toString());
-		assert perfectSequences == 0 || perfectSequences == 1;
+		assert perfectSequences == 0 || perfectSequences == 1 || perfectSequences == 2;
 		return perfectSequences == 1;
 	}
 	
