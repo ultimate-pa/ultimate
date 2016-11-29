@@ -59,6 +59,7 @@ public class EqGraphNode {
 		}
 	}
 
+	@Deprecated
 	public EqGraphNode copy() {
 
 		//TODO
@@ -71,6 +72,11 @@ public class EqGraphNode {
 		newGraphNode.addToInitCcpar(this.initCcpar);
 		newGraphNode.setInitCcchild(this.initCcchild);
 		return newGraphNode;
+	}
+	
+	void copyFields(EqGraphNode other) {
+		assert this.eqNode == other.eqNode;
+		// TODO
 	}
 
 	public EqGraphNode getRepresentative() {

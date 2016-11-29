@@ -132,7 +132,7 @@ public class HsNonPlugin {
 					continue;
 				}
 				for (VPState state : statesAtLoc) {
-					disjoinedState = vpDomain.getVpStateOperations().disjoin(disjoinedState, state);
+					disjoinedState = vpDomain.getVpStateFactory().disjoin(disjoinedState, state);
 					assert disjoinedState != null;
 				}
 			}

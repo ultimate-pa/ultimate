@@ -80,7 +80,7 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 			return Collections.singletonList(mDomain.getBottomState());
 		}
 		
-		preparedState = mDomain.getVpStateOperations().havocBaseNode(tf.getAssignedVars(), oldstate);
+		preparedState = mDomain.getVpStateFactory().havocBaseNode(tf.getAssignedVars(), oldstate);
 		final Term nnfTerm = new Nnf(mScript, mServices, QuantifierHandling.CRASH)
 				.transform(transition.getTransitionFormula().getFormula());
 		
@@ -129,7 +129,7 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 				for (int i = 1; i < andList.size(); i++) {
 					for (int j = 0; j < state.size(); j++) {
 						for (int k = 0; k < andList.get(i).size(); k++) {
-							result.add(mDomain.getVpStateOperations().conjoin(state.get(j), andList.get(i).get(k)));
+							result.add(mDomain.getVpStateFactory().conjoin(state.get(j), andList.get(i).get(k)));
 						}
 					}
 					state.clear();
@@ -160,7 +160,7 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 				if (mDomain.isArray(appTerm.getParameters()[0])) {
 					if (mDomain.isArray(appTerm.getParameters()[1])) {
 						
-						resultState = mDomain.getVpStateOperations().arrayAssignment(appTerm.getParameters()[0], appTerm.getParameters()[1], resultState);
+						resultState = mDomain.getVpStateFactory().arrayAssignment(appTerm.getParameters()[0], appTerm.getParameters()[1], resultState);
 						return Collections.singletonList(resultState);
 						
 					} else {
@@ -170,7 +170,7 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 								MultiDimensionalStore mulStore = new MultiDimensionalStore(param1);
 								if (mulStore.getArray().equals(appTerm.getParameters()[0])) {
 									node1 = getNodeFromTerm(param1);
-									resultState = mDomain.getVpStateOperations().havoc(resultState.getEqNodeToEqGraphNodeMap().get(node1), resultState);
+									resultState = mDomain.getVpStateFactory().havoc(resultState.getEqNodeToEqGraphNodeMap().get(node1), resultState);
 									node2 = getNodeFromTerm(param1.getParameters()[2]);
 								}
 							}
@@ -187,7 +187,7 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 					return Collections.singletonList(resultState);
 				}
 				
-				resultState = mDomain.getVpStateOperations().addEquality(resultState.getEqNodeToEqGraphNodeMap().get(node1)
+				resultState = mDomain.getVpStateFactory().addEquality(resultState.getEqNodeToEqGraphNodeMap().get(node1)
 						, resultState.getEqNodeToEqGraphNodeMap().get(node2), resultState);
 				
 				return Collections.singletonList(resultState);
@@ -208,7 +208,7 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 						return Collections.singletonList(resultState);
 					}
 					
-					return mDomain.getVpStateOperations().addDisEquality(resultState.getEqNodeToEqGraphNodeMap().get(node1)
+					return mDomain.getVpStateFactory().addDisEquality(resultState.getEqNodeToEqGraphNodeMap().get(node1)
 							, resultState.getEqNodeToEqGraphNodeMap().get(node2), resultState);
 				}
 
@@ -222,7 +222,7 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 					return Collections.singletonList(resultState);
 				}
 				
-				return mDomain.getVpStateOperations().addDisEquality(resultState.getEqNodeToEqGraphNodeMap().get(node1)
+				return mDomain.getVpStateFactory().addDisEquality(resultState.getEqNodeToEqGraphNodeMap().get(node1)
 						, resultState.getEqNodeToEqGraphNodeMap().get(node2), resultState);
 			}
 			

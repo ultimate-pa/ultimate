@@ -305,6 +305,7 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 	 * @return a fresh @VPState that have the same equality/disequality edges
 	 *         with the calling state.
 	 */
+	@Deprecated
 	public VPState copy() {
 
 		final Map<EqNode, EqGraphNode> newEqNodeToEqGraphNodeMap = new HashMap<>();

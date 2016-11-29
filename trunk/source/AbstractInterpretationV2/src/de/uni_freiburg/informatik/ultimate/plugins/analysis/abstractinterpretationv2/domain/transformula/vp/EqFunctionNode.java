@@ -70,5 +70,11 @@ public class EqFunctionNode extends EqNode {
 					args.get(args.size() - 1).getTerm(script));
 		}
 	}
+
+	@Override
+	public boolean isLiteral() {
+		// a function node is never a literal
+		return false;
+	}
 	
 }

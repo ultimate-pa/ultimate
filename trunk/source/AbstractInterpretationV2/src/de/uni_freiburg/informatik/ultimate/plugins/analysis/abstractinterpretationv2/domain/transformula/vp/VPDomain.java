@@ -68,7 +68,7 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 	private final Boogie2SMT mBoogie2Smt;
 	private final Map<Term, EqNode> mTermToEqNodeMap;
 	private final RCFGArrayIndexCollector mPreAnalysis;
-	private final VPStateOperations mVpStateOperations;
+	private final VPStateFactory mVpStateFactory;
 	
 	public VPDomain(final ILogger logger, 
 			final ManagedScript script, 
@@ -89,7 +89,7 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 		mPost = new VPPostOperator(script, services, this);
 		mMerge = new VPMergeOperator();
 		mBoogie2Smt = boogie2smt;
-		mVpStateOperations = new VPStateOperations(this);
+		mVpStateFactory = new VPStateFactory(this);
 	}
 
 	@Override
@@ -125,7 +125,7 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 
 		@Override
 		public VPState apply(final VPState first, final VPState second) {
-			return getVpStateOperations().disjoin(first, second);
+			return getVpStateFactory().disjoin(first, second);
 		}
 	}
 	
@@ -155,10 +155,12 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 		return null;
 	}
 	
+	@Deprecated
 	public VPStateTop getTopState() {
 		return mTopState;
 	}
 
+	@Deprecated
 	public VPStateBottom getBottomState() {
 		return mBottomState;
 	}
@@ -179,7 +181,7 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 		return mPreAnalysis;
 	}
 	
-	public VPStateOperations getVpStateOperations() {
-		return mVpStateOperations;
+	public VPStateFactory getVpStateFactory() {
+		return mVpStateFactory;
 	}
 }

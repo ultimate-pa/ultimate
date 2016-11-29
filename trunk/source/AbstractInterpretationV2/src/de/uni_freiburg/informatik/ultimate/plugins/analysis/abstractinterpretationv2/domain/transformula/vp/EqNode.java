@@ -12,4 +12,5 @@ public abstract class EqNode {
 
 	public abstract Term getTerm(Script s) ;
 
+	public abstract boolean isLiteral();
 }

@@ -12,12 +12,34 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
-public class VPStateOperations {
+public class VPStateFactory {
 	
 	private final VPDomain mDomain;
+	private final VPStateBottom mBottomState;
+	private final VPState mTopState;
 
-	public VPStateOperations(VPDomain vpdomain) {
+	public VPStateFactory(VPDomain vpdomain) {
 		mDomain = vpdomain;
+		mBottomState = new VPStateBottom(vpdomain);
+		mTopState = createTopState();
+	}
+	
+	private VPState createTopState() {
+		//TODO
+		return null;
+	}
+	
+	public VPStateBottom getBottomState() {
+		return mBottomState;
+	}
+	
+	public VPState getTopState() {
+		return mTopState;
+	}
+	
+	public VPState copy(VPState originalState) {
+		// TODO
+		return null;
 	}
 	
 	/**
@@ -39,31 +61,30 @@ public class VPStateOperations {
 	}
 
 	public List<VPState> addDisEquality(EqGraphNode n1, EqGraphNode n2, VPState originalState) {
+		VPState originalStateCopy = originalState.copy();
 
 		List<VPState> result = new ArrayList<>();
 		
-		VPStateBottom bottom = originalState.getDomain().getBottomState();
+		VPStateBottom bottom = originalStateCopy.getDomain().getBottomState();
 		
 		/*
 		 * check if the disequality introduces a contradiction, return bottom in that case
 		 */
-		if (originalState.find(n1).equals(originalState.find(n2))) {
+		if (originalStateCopy.find(n1).equals(originalStateCopy.find(n2))) {
 			return Collections.singletonList(bottom);
 		}
 		
 		/*
 		 * no contradiction --> introduce disequality
 		 */
-		originalState.addToDisEqSet(n1, n2);
+		originalStateCopy.addToDisEqSet(n1, n2);
 		
 		
 		/*
 		 * propagate disequality to children
 		 */
-		
-		//TODO
-		HashRelation<IProgramVarOrConst, List<EqGraphNode>> ccchild1 = originalState.ccchild(n1);
-		HashRelation<IProgramVarOrConst, List<EqGraphNode>> ccchild2 = originalState.ccchild(n2);
+		HashRelation<IProgramVarOrConst, List<EqGraphNode>> ccchild1 = originalStateCopy.ccchild(n1);
+		HashRelation<IProgramVarOrConst, List<EqGraphNode>> ccchild2 = originalStateCopy.ccchild(n2);
 		
 		for (IProgramVarOrConst arrayId : ccchild1.getDomain()) {
 			for (List<EqGraphNode> list1 : ccchild1.getImage(arrayId)) {
@@ -71,7 +92,7 @@ public class VPStateOperations {
 					for (int i = 0; i < list1.size(); i++) {
 						EqGraphNode c1 = list1.get(i);
 						EqGraphNode c2 = list2.get(i);
-						result.addAll(addDisEquality(c1, c2, originalState));
+						result.addAll(addDisEquality(c1, c2, originalStateCopy));
 					}
 				}
 			}
