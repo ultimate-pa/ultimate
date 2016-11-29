@@ -31,7 +31,7 @@ public interface ILocalProgramVar extends IProgramVar {
 	String getIdentifier();
 
 	@Override
-	default public String getGloballyUniqueId() {
+	default String getGloballyUniqueId() {
 		return getProcedure() + "_" + getIdentifier();
 	}
 
