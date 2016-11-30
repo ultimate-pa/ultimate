@@ -388,6 +388,7 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate> {
 	
 	
 	public static class AutomataMinimizationTimeout extends Exception {
+		private static final long serialVersionUID = 1L;
 		private final AutomataMinimizationStatisticsGenerator mStatistics;
 		private final AutomataOperationCanceledException mAutomataOperationCanceledException;
 
