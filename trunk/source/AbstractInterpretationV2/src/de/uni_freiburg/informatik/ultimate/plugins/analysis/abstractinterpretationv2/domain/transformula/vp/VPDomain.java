@@ -26,10 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
 
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -57,12 +54,8 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 	private final VPMergeOperator mMerge;
 	private final ILogger mLogger;
 	
-	private final Set<EqGraphNode> mEqGraphNodeSet;
 	private final HashRelation<IProgramVarOrConst, EqFunctionNode> mArrayIdToEqFnNodes;
-	private final Map<EqNode, EqGraphNode> mEqNodeToEqGraphNodeMap;
-	private Set<VPDomainSymmetricPair<EqGraphNode>> mDisEqualityMap;
 	
-	private final VPStateTop mTopState;
 	private final VPStateBottom mBottomState;
 	private final ManagedScript mManagedScript;
 	private final Boogie2SMT mBoogie2Smt;
@@ -79,13 +72,9 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 		mLogger = logger;
 		mPreAnalysis = preAnalysis;
 		mManagedScript = script;
-		mEqGraphNodeSet = preAnalysis.getEqGraphNodeSet();
 		mArrayIdToEqFnNodes = preAnalysis.getArrayIdToFnNodeMap();
-		mEqNodeToEqGraphNodeMap = preAnalysis.getEqNodeToEqGraphNodeMap();
-		mDisEqualityMap = new HashSet<>();
 		mBottomState = new VPStateBottom(this);
 		mTermToEqNodeMap = preAnalysis.getTermToEqNodeMap();
-		mTopState = new VPStateTop(mEqNodeToEqGraphNodeMap, mDisEqualityMap, this);
 		mPost = new VPPostOperator(script, services, this);
 		mMerge = new VPMergeOperator();
 		mBoogie2Smt = boogie2smt;
@@ -94,7 +83,7 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 
 	@Override
 	public VPState createFreshState() {
-		return new VPState(mEqNodeToEqGraphNodeMap, mDisEqualityMap, this);
+		return this.getVpStateFactory().getTopState();
 	}
 
 	@Override
@@ -134,10 +123,6 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 				.getDomain().contains(getPreAnalysis().getIProgramVarOrConst(term));
 	}
 
-	public Set<EqGraphNode> getEqGraphNodeSet() {
-		return mEqGraphNodeSet;
-	}
-
 	public Map<Term, EqNode> getTermToEqNodeMap() {
 		return mTermToEqNodeMap;
 	}
@@ -146,18 +131,9 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 		return mArrayIdToEqFnNodes;
 	}
 
-	public Map<EqNode, EqGraphNode> getEqNodeToEqGraphNodeMap() {
-		return mEqNodeToEqGraphNodeMap;
-	}
-	
 	public HashRelation<IProgramVar, IProgramVar> getArrayToIndices() {
 		// TODO: implement
 		return null;
-	}
-	
-	@Deprecated
-	public VPStateTop getTopState() {
-		return mTopState;
 	}
 
 	@Deprecated

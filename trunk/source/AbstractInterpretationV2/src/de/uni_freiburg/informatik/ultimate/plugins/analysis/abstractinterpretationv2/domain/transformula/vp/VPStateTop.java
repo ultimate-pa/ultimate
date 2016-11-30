@@ -32,7 +32,6 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 /**
@@ -43,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 public class VPStateTop extends VPState {
 	
 	VPStateTop(Map<EqNode, EqGraphNode> eqNodeToEqGraphNodeMap,
-			Set<VPDomainSymmetricPair<EqGraphNode>> disEqualitySet, VPDomain domain) {
+			Set<VPDomainSymmetricPair<EqNode>> disEqualitySet, VPDomain domain) {
 		super(eqNodeToEqGraphNodeMap, disEqualitySet, domain);
 		this.clearState();
 	}
@@ -75,11 +74,6 @@ public class VPStateTop extends VPState {
 	public VPState removeVariables(Collection<IProgramVar> variables) {
 		// Do nothing
 		return this;
-	}
-
-	@Override
-	public VPState copy() {
-		return super.copy();
 	}
 
 	@Override

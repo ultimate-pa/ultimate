@@ -67,7 +67,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 
 	private final HashRelation<IProgramVarOrConst, EqFunctionNode> mArrayIdToFnNodes = new HashRelation<>();
-	private final Map<EqNode, EqGraphNode> mEqNodeToEqGraphNodeMap = new HashMap<>();
 	
 	private final Map<Term, EqNode> mTermToEqNode = new HashMap<>();
 
@@ -260,8 +259,7 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 		
 		if (result == null) {
 			result = new EqBaseNode(bv);
-			mEqBaseNodeStore.put(bv, result);
-			putToEqGraphSet(result, null);		
+			mEqBaseNodeStore.put(bv, result);	
 		}
 		return result;
 	}
@@ -275,42 +273,14 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 			mArrayIdToFnNodes.addPair(eqNode, result);
 			
 			mEqFunctionNodeStore.put(eqNode, indices, result);
-			putToEqGraphSet(result, indices);
 		}
 		return result;
 	}
 
-	private void putToEqGraphSet(final EqNode node, final List<EqNode> args) {
-		final EqGraphNode graphNode = new EqGraphNode(node);
-		List<EqGraphNode> argNodes = new ArrayList<>();
-		
-		if (args != null) {
-			assert !args.isEmpty();
-			
-			for (EqNode arg : args) {
-				EqGraphNode argNode = mEqNodeToEqGraphNodeMap.get(arg);
-				argNode.addToInitCcpar(graphNode);
-				argNode.addToCcpar(graphNode);
-				argNodes.add(argNode);
-			}
-			graphNode.addToInitCcchild(argNodes);
-			graphNode.getCcchild().addPair(((EqFunctionNode)node).getFunction(), argNodes);
-		}
-		
-		mEqNodeToEqGraphNodeMap.put(node, graphNode);
-	}
-
-	public Set<EqGraphNode> getEqGraphNodeSet() {
-		return new HashSet<EqGraphNode>(mEqNodeToEqGraphNodeMap.values());
-	}
 
 	public  HashRelation<IProgramVarOrConst, EqFunctionNode> getArrayIdToFnNodeMap() {
 		assert mArrayIdToFnNodes != null;
 		return  mArrayIdToFnNodes;
-	}
-
-	public Map<EqNode, EqGraphNode> getEqNodeToEqGraphNodeMap() {
-		return mEqNodeToEqGraphNodeMap;
 	}
 	
 	@Override

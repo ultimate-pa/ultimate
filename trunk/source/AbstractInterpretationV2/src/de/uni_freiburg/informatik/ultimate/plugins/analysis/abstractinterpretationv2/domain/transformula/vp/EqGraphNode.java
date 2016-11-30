@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -86,32 +87,41 @@ public class EqGraphNode {
 		}
 	}
 
-	@Deprecated
-	public EqGraphNode copy() {
-
-		//TODO
-		EqGraphNode newGraphNode = new EqGraphNode(this.eqNode);
-		newGraphNode.setRepresentative(newGraphNode);
-		newGraphNode.setReverseRepresentative(new HashSet<>(this.reverseRepresentative));
-		newGraphNode.setCcpar(new HashSet<>(this.ccpar));
-		assert false;
-//		newGraphNode.setCcchild(new HashSet<>(this.ccchild));
-		newGraphNode.addToInitCcpar(this.initCcpar);
-		newGraphNode.setInitCcchild(this.initCcchild);
-		return newGraphNode;
-	}
-	
-	void copyFields(EqGraphNode other) {
+	void copyFields(EqGraphNode other, VPState state) {
 		assert this.eqNode == other.eqNode;
-		// TODO
+		
+		Map<EqNode, EqGraphNode> mapping = state.getEqNodeToEqGraphNodeMap();
+		
+		this.setRepresentative(mapping.get(other.getRepresentative().eqNode));
+		for (EqGraphNode reverseRe : other.getReverseRepresentative()) {
+			this.getReverseRepresentative().add(mapping.get(reverseRe.eqNode));
+		}
+		for (EqGraphNode ccpar : other.getCcpar()) {
+			this.getCcpar().add(mapping.get(ccpar.eqNode));
+		}
+		for (IProgramVarOrConst key : other.getCcchild().getDomain()) {
+			for (List<EqGraphNode> nodes : other.getCcchild().getImage(key)) {
+				List<EqGraphNode> newList = new ArrayList<>();
+				for (EqGraphNode node : nodes) {
+					newList.add(mapping.get(node.eqNode));
+				}
+				this.getCcchild().addPair(key, newList);
+			}
+		}
+		for (EqGraphNode initCcpar : other.getInitCcpar()) {
+			this.getInitCcpar().add(mapping.get(initCcpar.eqNode));
+		}
+		for (EqGraphNode initCcchild : other.getInitCcchild()) {
+			this.getInitCcchild().add(mapping.get(initCcchild.eqNode));
+		}
 	}
 
 	public EqGraphNode getRepresentative() {
 		return representative;
 	}
 
-	public void setRepresentative(EqGraphNode find) {
-		this.representative = find;
+	public void setRepresentative(EqGraphNode representative) {
+		this.representative = representative;
 		//TODO check
         // if (eqNodes are identical) then (graphnodes must be identical)
         assert this.representative.eqNode != this.eqNode || this.representative == this;

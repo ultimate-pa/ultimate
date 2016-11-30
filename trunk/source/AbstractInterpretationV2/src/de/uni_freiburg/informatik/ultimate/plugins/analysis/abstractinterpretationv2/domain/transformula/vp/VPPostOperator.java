@@ -77,7 +77,7 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 		}
 		
 		if (oldstate instanceof VPStateBottom) {
-			return Collections.singletonList(mDomain.getBottomState());
+			return Collections.singletonList(mDomain.getVpStateFactory().getBottomState());
 		}
 		
 		preparedState = mDomain.getVpStateFactory().havocBaseNode(tf.getAssignedVars(), oldstate);
@@ -107,7 +107,7 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 	
 	private List<VPState> handleTransition(final Term term) {
 		
-		VPState resultState = preparedState.copy();
+		VPState resultState = mDomain.getVpStateFactory().copy(preparedState);
 		
 		if (term instanceof ApplicationTerm) {
 			
