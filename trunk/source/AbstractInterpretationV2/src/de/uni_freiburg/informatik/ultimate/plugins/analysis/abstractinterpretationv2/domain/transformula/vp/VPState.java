@@ -269,9 +269,9 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 		if (mVars.contains(variable)) {
 			return this;
 		}
-		final Set<IProgramVar> vars = AbsIntUtil.getFreshSet(mVars, mVars.size() + 1);
-		vars.add(variable);
-		return this;
+		VPState copy = mDomain.getVpStateFactory().copy(this);
+		copy.mVars.add(variable);
+		return copy;
 	}
 
 	@Override
@@ -279,9 +279,10 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 		if (!mVars.contains(variable)) {
 			return this;
 		}
-		final Set<IProgramVar> vars = AbsIntUtil.getFreshSet(mVars);
-		vars.remove(variable);
-		return this;
+		VPState copy = mDomain.getVpStateFactory().copy(this);
+		copy.mVars.remove(variable);
+		return copy;
+
 	}
 
 	@Override
@@ -289,9 +290,9 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 		if (variables == null || variables.isEmpty()) {
 			return this;
 		}
-		final Set<IProgramVar> vars = AbsIntUtil.getFreshSet(mVars, mVars.size() + variables.size());
-		vars.addAll(variables);
-		return this;
+		VPState copy = mDomain.getVpStateFactory().copy(this);
+		copy.mVars.addAll(variables);
+		return copy;
 	}
 
 	@Override
@@ -299,7 +300,9 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 		if (variables == null || variables.isEmpty()) {
 			return this;
 		}
-		return this;
+		VPState copy = mDomain.getVpStateFactory().copy(this);
+		copy.mVars.removeAll(variables);
+		return copy;
 	}
 
 	/**
@@ -338,8 +341,13 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 
 	@Override
 	public VPState patch(final VPState dominator) {
-		// TODO Auto-generated method stub
-		return null;
+		VPState result = mDomain.getVpStateFactory().copy(this);
+
+		result = mDomain.getVpStateFactory().havocBaseNode(dominator.mVars, result);
+		
+		result = mDomain.getVpStateFactory().conjoin(result, dominator);
+
+		return result;
 	}
 
 	@Override

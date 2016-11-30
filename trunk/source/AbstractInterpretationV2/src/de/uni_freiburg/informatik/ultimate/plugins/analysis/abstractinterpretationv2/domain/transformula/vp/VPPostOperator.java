@@ -279,8 +279,9 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 	@Override
 	public List<VPState> apply(final VPState stateBeforeLeaving, final VPState stateAfterLeaving,
 			final CodeBlock transition) {
-		// TODO Auto-generated method stub
-		return null;
+		VPState conjoined = mDomain.getVpStateFactory().conjoin(stateBeforeLeaving, stateAfterLeaving);
+		
+		return apply(conjoined, transition);
 	}
 
 }
