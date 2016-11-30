@@ -68,7 +68,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public class MultiTrackTraceAbstractionRefinementStrategy implements IRefinementStrategy {
-	private static final int SOLVER_TIMEOUT = 10_000;
+	private static final int SMTINTERPOL_TIMEOUT = 10_000;
 	private static final String Z3_COMMAND = "z3 -smt2 -in SMTLIB2_COMPLIANT=true";
 	
 	private final IUltimateServiceProvider mServices;
@@ -84,6 +84,9 @@ public class MultiTrackTraceAbstractionRefinementStrategy implements IRefinement
 	private final Iterator<InterpolationTechnique> mInterpolationTechniques;
 	
 	private TraceCheckerConstructor mTcConstructor;
+	private TraceCheckerConstructor mPrevTcConstructor;
+	private InterpolationTechnique mNextTechnique;
+	
 	private TraceChecker mTraceChecker;
 	private IInterpolantGenerator mInterpolantGenerator;
 	private IInterpolantAutomatonBuilder<CodeBlock, IPredicate> mInterpolantAutomatonBuilder;
@@ -119,8 +122,7 @@ public class MultiTrackTraceAbstractionRefinementStrategy implements IRefinement
 		
 		mInterpolationTechniques = initializeInterpolationTechniquesList();
 		
-		// dummy construction, is overwritten in the next step
-		mTcConstructor = constructTraceCheckerConstructor(null);
+		mNextTechnique = mInterpolationTechniques.next();
 	}
 	
 	@Override
@@ -139,7 +141,16 @@ public class MultiTrackTraceAbstractionRefinementStrategy implements IRefinement
 		switch (advance) {
 			case TRACE_CHECKER:
 			case INTERPOLANT_GENERATOR:
-				mTcConstructor = constructTraceCheckerConstructor(mTcConstructor);
+				if (mNextTechnique != null) {
+					throw new UnsupportedOperationException("Try the existing combination before advancing.");
+				}
+				mNextTechnique = mInterpolationTechniques.next();
+				
+				// reset trace checker, interpolant generator, and constructor
+				mTraceChecker = null;
+				mInterpolantGenerator = null;
+				mPrevTcConstructor = mTcConstructor;
+				mTcConstructor = null;
 				break;
 			default:
 				throw new IllegalArgumentException("Unknown mode: " + advance);
@@ -149,6 +160,9 @@ public class MultiTrackTraceAbstractionRefinementStrategy implements IRefinement
 	@Override
 	public TraceChecker getTraceChecker() {
 		if (mTraceChecker == null) {
+			if (mTcConstructor == null) {
+				mTcConstructor = constructTraceCheckerConstructor();
+			}
 			mTraceChecker = mTcConstructor.get();
 		}
 		return mTraceChecker;
@@ -179,48 +193,46 @@ public class MultiTrackTraceAbstractionRefinementStrategy implements IRefinement
 		return list.iterator();
 	}
 	
-	private TraceCheckerConstructor constructTraceCheckerConstructor(final TraceCheckerConstructor tcConstructor) {
-		final InterpolationTechnique nextTechnique = mInterpolationTechniques.next();
-		final ManagedScript managedScript = constructManagedScript(nextTechnique);
+	private TraceCheckerConstructor constructTraceCheckerConstructor() {
+		final ManagedScript managedScript = constructManagedScript(mServices, mPrefs, mNextTechnique);
 		
 		TraceCheckerConstructor result;
-		if (tcConstructor == null) {
+		if (mPrevTcConstructor == null) {
 			result = new TraceCheckerConstructor(mPrefs, managedScript, mServices, mPredicateUnifier, mCounterexample,
-					nextTechnique);
+					mNextTechnique);
 		} else {
-			result = new TraceCheckerConstructor(mTcConstructor, managedScript, nextTechnique);
-			
-			// reset trace checker and interpolant generator
-			mTraceChecker = null;
-			mInterpolantGenerator = null;
+			result = new TraceCheckerConstructor(mPrevTcConstructor, managedScript, mNextTechnique);
 		}
+		
+		mNextTechnique = null;
+		
 		return result;
 	}
 	
-	private ManagedScript constructManagedScript(final InterpolationTechnique interpolationTechnique) {
+	private static ManagedScript constructManagedScript(final IUltimateServiceProvider services,
+			final TaCheckAndRefinementPreferences prefs, final InterpolationTechnique interpolationTechnique) {
 		final Settings solverSettings;
 		switch (interpolationTechnique) {
 			case Craig_TreeInterpolation:
-				solverSettings = new Settings(false, false, null, SOLVER_TIMEOUT, null, false, null, null);
+				solverSettings = new Settings(false, false, null, SMTINTERPOL_TIMEOUT, null, false, null, null);
 				break;
 			case FPandBP:
 				// final String commandExternalSolver = RcfgPreferenceInitializer.Z3_DEFAULT;
-				final String commandExternalSolver = Z3_COMMAND;
-				solverSettings = new Settings(false, true, commandExternalSolver, 0, null, false, null, null);
+				solverSettings = new Settings(false, true, Z3_COMMAND, 0, null, false, null, null);
 				break;
 			default:
 				throw new IllegalArgumentException(
 						"Managed script construction not supported for interpolation technique: "
 								+ interpolationTechnique);
 		}
-		final Script solver = SolverBuilder.buildAndInitializeSolver(mServices, mPrefs.getToolchainStorage(),
-				mPrefs.getSolverMode(), solverSettings, false, false, mPrefs.getLogicForExternalSolver(),
-				"TraceCheck_Iteration" + mPrefs.getIteration());
-		final ManagedScript result = new ManagedScript(mServices, solver);
+		final Script solver = SolverBuilder.buildAndInitializeSolver(services, prefs.getToolchainStorage(),
+				prefs.getSolverMode(), solverSettings, false, false, prefs.getLogicForExternalSolver(),
+				"TraceCheck_Iteration" + prefs.getIteration());
+		final ManagedScript result = new ManagedScript(services, solver);
 		
 		// TODO do we need this?
 		final TermTransferrer tt = new TermTransferrer(solver);
-		for (final Term axiom : mPrefs.getIcfgContainer().getBoogie2SMT().getAxioms()) {
+		for (final Term axiom : prefs.getIcfgContainer().getBoogie2SMT().getAxioms()) {
 			solver.assertTerm(tt.transform(axiom));
 		}
 		
@@ -240,7 +252,6 @@ public class MultiTrackTraceAbstractionRefinementStrategy implements IRefinement
 				try {
 					return consolidateInterpolants(interpolatingTraceChecker);
 				} catch (final AutomataOperationCanceledException e) {
-					// Timeout
 					throw new AssertionError("react on timeout, not yet implemented");
 				}
 			}
