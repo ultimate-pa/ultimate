@@ -64,6 +64,11 @@ public final class UltimatePreferenceItem<T> extends BaseUltimatePreferenceItem 
 		this(label, defaultValue, type, null, false, choices, null);
 	}
 
+	public UltimatePreferenceItem(final String label, final T defaultValue, final String desc,
+			final PreferenceType type, final T[] choices) {
+		this(label, defaultValue, type, desc, false, choices, null);
+	}
+
 	public UltimatePreferenceItem(final String label, final T defaultValue, final PreferenceType type,
 			final IUltimatePreferenceItemValidator<T> preferenceValidator) {
 		this(label, defaultValue, type, null, false, null, preferenceValidator);
