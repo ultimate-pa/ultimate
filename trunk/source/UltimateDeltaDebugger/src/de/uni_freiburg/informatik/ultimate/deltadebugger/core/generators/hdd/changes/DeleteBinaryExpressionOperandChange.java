@@ -29,8 +29,6 @@ public class DeleteBinaryExpressionOperandChange extends Change {
 	 *            binary expression PST node
 	 * @param operatorPosition
 	 *            operator position
-	 * @param fullReplacement
-	 *            full replacement string
 	 * @param alternativeOperandReplacements
 	 *            alternative operand replacement strings
 	 */
@@ -72,7 +70,7 @@ public class DeleteBinaryExpressionOperandChange extends Change {
 		if (!mAlternativeOperandReplacements.isEmpty()) {
 			return Optional.of(new MultiReplaceChange(getNode(), mAlternativeOperandReplacements));
 		}
-		return Optional.empty(); 
+		return Optional.empty();
 	}
 
 	
@@ -96,7 +94,7 @@ public class DeleteBinaryExpressionOperandChange extends Change {
 				deleteNodeText(rewriter, mOperandChanges.get(0).getNode());
 				replaceByWhitespace(rewriter, mOperandChanges.get(0).mOperatorPosition);
 				return;
-			} 
+			}
 			if (mOperandChanges.size() != 2) {
 				throw new IllegalStateException("invalid number of operands to delete: " + mOperandChanges.size());
 			}
@@ -123,8 +121,9 @@ public class DeleteBinaryExpressionOperandChange extends Change {
 					mOperandChanges.get(1 - deleteIndex).mAlternativeOperandReplacements.get(0));
 		}
 
-		private static int countChildren(IPSTNode node) {
+		private static int countChildren(final IPSTNode node) {
 			final PSTVisitorWithResult<Integer> action = new PSTVisitorWithResult<Integer>() {
+				@Override
 				public int defaultVisit(final IPSTNode node) {
 					setResult(getResult().orElse(0) + 1);
 					return PROCESS_CONTINUE;

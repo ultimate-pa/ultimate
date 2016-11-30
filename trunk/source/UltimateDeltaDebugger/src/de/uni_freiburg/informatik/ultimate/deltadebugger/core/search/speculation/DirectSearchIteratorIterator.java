@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.ISearchStep
  */
 public class DirectSearchIteratorIterator<T extends ISearchStep<?, T>> {
 	private final SpeculativeSearchIterator<T> mSearchIterator;
-	private final CancelableStepTest<T> mCancelableTest;
+	private final ICancelableStepTest<T> mCancelableTest;
 	
 	/**
 	 * Constructs a new instance that can be used for one iteration.
@@ -50,7 +50,7 @@ public class DirectSearchIteratorIterator<T extends ISearchStep<?, T>> {
 	 *            test function that is called to determine test results
 	 */
 	public DirectSearchIteratorIterator(final SpeculativeSearchIterator<T> searchIterator,
-			final CancelableStepTest<T> cancelableTest) {
+			final ICancelableStepTest<T> cancelableTest) {
 		mSearchIterator = searchIterator;
 		mCancelableTest = cancelableTest;
 	}

@@ -5,5 +5,8 @@ package de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.minimizers
  */
 @FunctionalInterface
 public interface IHasSequenceIndex {
+	/**
+	 * @return The sequence index.
+	 */
 	int getSequenceIndex();
 }

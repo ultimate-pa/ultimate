@@ -37,6 +37,11 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.ISearchStep
  *            search step type
  */
 @FunctionalInterface
-public interface CancelableStepTest<T extends ISearchStep<?, T>> {
+public interface ICancelableStepTest<T extends ISearchStep<?, T>> {
+	/**
+	 * @param step Search step.
+	 * @param marks a search step as canceled
+	 * @return
+	 */
 	Optional<Boolean> test(T step, BooleanSupplier isCanceled);
 }

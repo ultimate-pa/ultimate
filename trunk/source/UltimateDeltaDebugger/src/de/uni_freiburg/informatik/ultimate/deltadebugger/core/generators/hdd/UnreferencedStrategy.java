@@ -12,35 +12,61 @@ import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTPreprocessorMacroDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
+
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.generators.hdd.changes.ChangeCollector;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTNode;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.util.ASTNodeUtils;
 
 /**
  * A strategy to delete unreferenced things only.
- * 
  * A slightly better solution would be to create a dedicated VariantGenerator/Pass that can delete all declarations of
  * the same name, e.g. forward declarations and also function definition and all prototypes.
  */
 public class UnreferencedStrategy implements IHddStrategy {
-
+	
 	/**
 	 * Specifies what kind of names to delete.
 	 */
 	public enum Kind {
-		FUNCTION_DEF, GLOBAL_DECL, LOCAL_DECL, OTHER_DECL, MAKRO_DEF;
+		/**
+		 * Function definition.
+		 */
+		FUNCTION_DEF,
+		/**
+		 * Global declaration.
+		 */
+		GLOBAL_DECL,
+		/**
+		 * Local declaration.
+		 */
+		LOCAL_DECL,
+		/**
+		 * Other declaration.
+		 */
+		OTHER_DECL,
+		/**
+		 * Macro definition.
+		 */
+		MAKRO_DEF;
 	}
-
+	
 	private final Set<Kind> mKinds;
-
+	
+	/**
+	 * Constructor using all {@link Kind}s.
+	 */
 	public UnreferencedStrategy() {
 		this(EnumSet.allOf(Kind.class));
 	}
-
+	
+	/**
+	 * @param kinds
+	 *            Kinds of names to delete.
+	 */
 	public UnreferencedStrategy(final Set<Kind> kinds) {
 		mKinds = EnumSet.copyOf(kinds);
 	}
-
+	
 	@Override
 	public void createChangeForNode(final IPSTNode node, final ChangeCollector collector) {
 		final IASTNode astNode = node.getASTNode();
@@ -53,8 +79,9 @@ public class UnreferencedStrategy implements IHddStrategy {
 			collector.addDeleteChange(node);
 		}
 	}
-
-	private boolean isStatementRequired(IASTNode astNode) {
+	
+	@SuppressWarnings("squid:S1698")
+	private static boolean isStatementRequired(final IASTNode astNode) {
 		final ASTNodeProperty property = astNode.getPropertyInParent();
 		if (property == IASTForStatement.INITIALIZER) {
 			return true;
@@ -69,8 +96,8 @@ public class UnreferencedStrategy implements IHddStrategy {
 		// TODO: find out what's left and handle it accordingly
 		return false;
 	}
-
-	private boolean isUnreferencedNodeToDelete(IASTNode astNode) {
+	
+	private boolean isUnreferencedNodeToDelete(final IASTNode astNode) {
 		if (astNode instanceof IASTSimpleDeclaration && mKinds.contains(getDeclKind(astNode))) {
 			return !ASTNodeUtils.hasReferences((IASTSimpleDeclaration) astNode);
 		} else if (astNode instanceof IASTFunctionDefinition && mKinds.contains(Kind.FUNCTION_DEF)) {
@@ -80,8 +107,9 @@ public class UnreferencedStrategy implements IHddStrategy {
 		}
 		return false;
 	}
-
-	private Kind getDeclKind(IASTNode astNode) {
+	
+	@SuppressWarnings("squid:S1698")
+	private static Kind getDeclKind(final IASTNode astNode) {
 		final ASTNodeProperty property = astNode.getPropertyInParent();
 		if (property == IASTTranslationUnit.OWNED_DECLARATION) {
 			return Kind.GLOBAL_DECL;
@@ -91,7 +119,7 @@ public class UnreferencedStrategy implements IHddStrategy {
 		}
 		return Kind.OTHER_DECL;
 	}
-
+	
 	@Override
 	public boolean expandUnchangeableNodeImmediately(final IPSTNode node) {
 		return true;

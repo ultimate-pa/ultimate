@@ -34,8 +34,8 @@ import java.util.concurrent.TimeUnit;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.exceptions.UncheckedInterruptedException;
-import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.IGeneratorSearchStep;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.GeneratorSearchStepFactory;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.IGeneratorSearchStep;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.minimizers.IDuplicateVariantTracker;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.minimizers.IMinimizer;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.minimizers.algorithms.BinarySearchMinimizer;
@@ -100,7 +100,9 @@ public class PassRunner {
 			lastStep = iterateDirect(new DirectSearchIteratorIterator<>(stepIterator, observer::runTestForStep));
 		}
 		
-		return successfulStepsBefore != mStats.getSuccessfulSteps() ? Optional.of(lastStep.getResult()) : Optional.empty();
+		return successfulStepsBefore != mStats.getSuccessfulSteps()
+				? Optional.of(lastStep.getResult())
+				: Optional.empty();
 	}
 	
 	Optional<String> applyPass(final PassDescription pass, final IPassContext context) {

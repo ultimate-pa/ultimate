@@ -87,6 +87,7 @@ class SearchObserver implements ISpeculativeIterationObserver<IGeneratorSearchSt
 		}
 	}
 	
+	@SuppressWarnings("squid:S1698")
 	@Override
 	public void onStepBegin(final IGeneratorSearchStep step) {
 		// inequality intended here

@@ -73,7 +73,7 @@ public interface IPassContext {
 	IPSTTranslationUnit getSharedPst();
 
 	/**
-	 * @return the logger instance to use for debug output
+	 * @return The logger instance to use for debug output.
 	 */
 	ILogger getLogger();
 }

@@ -36,7 +36,6 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.generators.hdd.cha
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTACSLNode;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTConditionalBlock;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTNode;
-import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTProtectedRegion;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTRegularNode;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTTranslationUnit;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.util.ASTNodeConsumerDispatcher;
@@ -48,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Expression;
  * An aggressive delta debugger strategy.
  */
 public class AggressiveStrategy implements IHddStrategy {
+	@SuppressWarnings("squid:S1698")
 	@Override
 	public void createAdditionalChangesForExpandedNode(final IPSTNode node, final ChangeCollector collector) {
 		// Add a change to remove the inactive parts of the conditional block
@@ -144,14 +144,17 @@ public class AggressiveStrategy implements IHddStrategy {
 		private final ChangeCollector mCollector;
 		
 		/**
-		 * @param node Node.
-		 * @param collector collector of changes
+		 * @param node
+		 *            Node.
+		 * @param collector
+		 *            collector of changes
 		 */
 		private RegularNodeHandler(final IPSTRegularNode node, final ChangeCollector collector) {
 			mCurrentNode = node;
 			mCollector = collector;
 		}
 		
+		@SuppressWarnings("squid:S1698")
 		static void invoke(final IPSTRegularNode node, final ChangeCollector collector) {
 			final IASTNode astNode = node.getASTNode();
 			
@@ -172,7 +175,7 @@ public class AggressiveStrategy implements IHddStrategy {
 			new ASTNodeConsumerDispatcher(new RegularNodeHandler(node, collector)).dispatch(astNode);
 		}
 		
-		
+		@SuppressWarnings("squid:S1698")
 		@Override
 		public void on(final IASTDeclaration declaration) {
 			
@@ -181,7 +184,7 @@ public class AggressiveStrategy implements IHddStrategy {
 				return;
 			}
 			
-			// A condition declaration should be valid for C++ only, not sure if gcc accepts it anyways for C
+			// Condition declarations should be valid for C++ only, not sure if gcc accepts it anyways for C
 			if (declaration.getPropertyInParent() == IASTIfStatement.CONDITION) {
 				mCollector.addReplaceChange(mCurrentNode, "0");
 				return;
@@ -212,6 +215,7 @@ public class AggressiveStrategy implements IHddStrategy {
 			mCollector.addDeleteChange(mCurrentNode);
 		}
 		
+		@SuppressWarnings("squid:S1698")
 		@Override
 		public void on(final IASTExpression expression) {
 			final ASTNodeProperty property = expression.getPropertyInParent();
@@ -233,9 +237,9 @@ public class AggressiveStrategy implements IHddStrategy {
 				mCollector.addDeleteChange(mCurrentNode);
 				return;
 			}
-						
+			
 			final List<String> replacements = RewriteUtils.getMinimalExpressionReplacements(expression);
-
+			
 			// The Ternary operator handling is a mess, but okay for an aggressive reduction
 			if (property == IASTConditionalExpression.LOGICAL_CONDITION
 					|| property == IASTConditionalExpression.POSITIVE_RESULT
@@ -245,7 +249,7 @@ public class AggressiveStrategy implements IHddStrategy {
 						replacements.stream().findFirst().orElse("0"));
 				return;
 			}
-
+			
 			// Binary expression operands are deleted or replaced
 			if (property == IASTBinaryExpression.OPERAND_ONE || property == IASTBinaryExpression.OPERAND_TWO) {
 				mCollector.addDeleteBinaryExpressionOperandChange(mCurrentNode, replacements);
@@ -256,7 +260,6 @@ public class AggressiveStrategy implements IHddStrategy {
 				mCollector.addMultiReplaceChange(mCurrentNode, replacements);
 			}
 		}
-		
 		
 		@Override
 		public void on(final IASTInitializerList initializerList) {
@@ -285,8 +288,8 @@ public class AggressiveStrategy implements IHddStrategy {
 			// Unless overridden regular nodes are simply deleted
 			mCollector.addDeleteChange(mCurrentNode);
 		}
-
 		
+		@SuppressWarnings("squid:S1698")
 		@Override
 		public void on(final IASTStatement statement) {
 			// delete statements inside compound statements
@@ -304,6 +307,7 @@ public class AggressiveStrategy implements IHddStrategy {
 			mCollector.addReplaceChange(mCurrentNode, ";");
 		}
 		
+		@SuppressWarnings("squid:S1698")
 		@Override
 		public void on(final IASTTypeId typeId) {
 			// Delete typeid and parenthesis from cast expression

@@ -50,7 +50,7 @@ public class ParallelSearchIteratorIterator<T extends ISearchStep<?, T>> {
 	private static final int SLEEP_TIME_MILLISEC = 10;
 	
 	private final SpeculativeSearchIterator<T> mSearchIterator;
-	private final CancelableStepTest<T> mCancelableTest;
+	private final ICancelableStepTest<T> mCancelableTest;
 	private final List<Future<?>> mPendingWorkers = new ArrayList<>();
 	private volatile boolean mStopRequested;
 	
@@ -65,7 +65,7 @@ public class ParallelSearchIteratorIterator<T extends ISearchStep<?, T>> {
 	 *            test function that is called to determine test results
 	 */
 	public ParallelSearchIteratorIterator(final SpeculativeSearchIterator<T> searchIterator,
-			final CancelableStepTest<T> cancelableTest) {
+			final ICancelableStepTest<T> cancelableTest) {
 		this.mSearchIterator = searchIterator;
 		this.mCancelableTest = cancelableTest;
 	}

@@ -2,7 +2,6 @@ package de.uni_freiburg.informatik.ultimate.deltadebugger.core.generators.hdd;
 
 import java.util.List;
 
-import org.eclipse.cdt.core.dom.ast.ASTGenericVisitor;
 import org.eclipse.cdt.core.dom.ast.ASTNodeProperty;
 import org.eclipse.cdt.core.dom.ast.IASTArrayModifier;
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
@@ -36,7 +35,6 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.generators.hdd.cha
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTACSLNode;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTConditionalBlock;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTNode;
-import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTProtectedRegion;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTRegularNode;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTTranslationUnit;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.util.ASTNodeConsumerDispatcher;
@@ -50,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopStatement;
  * A safer delta debugger strategy.
  */
 public class SafeStrategy implements IHddStrategy {
+	@SuppressWarnings("squid:S1698")
 	@Override
 	public void createAdditionalChangesForExpandedNode(final IPSTNode node, final ChangeCollector collector) {
 		// Add a change to remove the inactive parts of the conditional block
@@ -81,7 +80,7 @@ public class SafeStrategy implements IHddStrategy {
 				&& node.getASTNode().getPropertyInParent() == IASTCompoundStatement.NESTED_STATEMENT) {
 			collector.addDeleteAllTokensChange(node);
 		}
-	
+		
 	}
 	
 	@Override
@@ -131,23 +130,26 @@ public class SafeStrategy implements IHddStrategy {
 		private final ChangeCollector mCollector;
 		
 		/**
-		 * @param node Node.
-		 * @param collector collector of changes
+		 * @param node
+		 *            Node.
+		 * @param collector
+		 *            collector of changes
 		 */
 		private RegularNodeHandler(final IPSTRegularNode node, final ChangeCollector collector) {
 			mCurrentNode = node;
 			mCollector = collector;
 		}
 		
+		@SuppressWarnings("squid:S1698")
 		static void invoke(final IPSTRegularNode node, final ChangeCollector collector) {
 			final IASTNode astNode = node.getASTNode();
 			final ASTNodeProperty propertyInParent = astNode.getPropertyInParent();
-
+			
 			// Delete everything that is known to be comma separated accordingly
 			if (propertyInParent == IASTExpressionList.NESTED_EXPRESSION
 					|| propertyInParent == IASTInitializerList.NESTED_INITIALIZER
 					|| propertyInParent == ICASTDesignatedInitializer.OPERAND) {
-					// TODO: add check for referenced function before deleting parameters/arguments
+				// TODO: add check for referenced function before deleting parameters/arguments
 				collector.addDeleteWithCommaChange(node, true);
 				return;
 			} else if (propertyInParent == IASTStandardFunctionDeclarator.FUNCTION_PARAMETER
@@ -156,7 +158,7 @@ public class SafeStrategy implements IHddStrategy {
 				collector.addDeleteWithCommaChange(node, false);
 				return;
 			}
-
+			
 			new ASTNodeConsumerDispatcher(new RegularNodeHandler(node, collector)).dispatch(astNode);
 		}
 		
@@ -166,6 +168,7 @@ public class SafeStrategy implements IHddStrategy {
 			// should have a very low probability to still type check, so better don't do this.
 		}
 		
+		@SuppressWarnings("squid:S1698")
 		@Override
 		public void on(final IASTDeclaration declaration) {
 			
@@ -201,6 +204,7 @@ public class SafeStrategy implements IHddStrategy {
 			// storage class.
 		}
 		
+		@SuppressWarnings("squid:S1698")
 		@Override
 		public void on(final IASTExpression expression) {
 			final ASTNodeProperty property = expression.getPropertyInParent();
@@ -222,9 +226,9 @@ public class SafeStrategy implements IHddStrategy {
 				mCollector.addDeleteChange(mCurrentNode);
 				return;
 			}
-
+			
 			final List<String> replacements = RewriteUtils.getMinimalExpressionReplacements(expression);
-
+			
 			// Binary expression operands are deleted or replaced
 			if (property == IASTBinaryExpression.OPERAND_ONE || property == IASTBinaryExpression.OPERAND_TWO) {
 				mCollector.addDeleteBinaryExpressionOperandChange(mCurrentNode, replacements);
@@ -235,7 +239,6 @@ public class SafeStrategy implements IHddStrategy {
 				mCollector.addMultiReplaceChange(mCurrentNode, replacements);
 			}
 		}
-		
 		
 		@Override
 		public void on(final IASTInitializerList initializerList) {
@@ -272,6 +275,7 @@ public class SafeStrategy implements IHddStrategy {
 			// could try to remove specifiers, like const, restrict etc. though.
 		}
 		
+		@SuppressWarnings("squid:S1698")
 		@Override
 		public void on(final IASTStatement statement) {
 			// delete statements inside compound statements
@@ -289,6 +293,7 @@ public class SafeStrategy implements IHddStrategy {
 			mCollector.addReplaceChange(mCurrentNode, ";");
 		}
 		
+		@SuppressWarnings("squid:S1698")
 		@Override
 		public void on(final IASTTypeId typeId) {
 			// Delete typeid and parenthesis from cast expression
