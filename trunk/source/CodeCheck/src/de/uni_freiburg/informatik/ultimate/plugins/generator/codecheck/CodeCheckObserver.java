@@ -386,8 +386,9 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		/*
 		 * test code for heap separation
 		 */
-//		HsNonPlugin hnp = new HsNonPlugin(mServices, mCsToolkit.getManagedScript(), mLogger);
-//		hnp.separate((BoogieIcfgContainer) root);
+		mLogger.warn("Heapseparator is run for debugging purposes - this should not happen during a normal Kojak run!");
+		HsNonPlugin hnp = new HsNonPlugin(mServices, mCsToolkit.getManagedScript(), mLogger);
+		hnp.separate((BoogieIcfgContainer) root);
 		
 		
 

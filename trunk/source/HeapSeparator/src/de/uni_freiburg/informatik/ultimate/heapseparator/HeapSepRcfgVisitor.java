@@ -1,3 +1,29 @@
+/*
+ * Copyright (C) 2016 Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ * Copyright (C) 2016 University of Freiburg
+ *
+ * This file is part of the ULTIMATE HeapSeparator plug-in.
+ *
+ * The ULTIMATE HeapSeparator plug-in is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE HeapSeparator plug-in is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE HeapSeparator plug-in. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE HeapSeparator plug-in, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE HeapSeparator plug-in grant you additional permission
+ * to convey the resulting work.
+ */
 package de.uni_freiburg.informatik.ultimate.heapseparator;
 
 import java.util.HashMap;
@@ -11,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -30,7 +55,7 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 	/**
 	 * arrayId before separation --> pointerId --> arrayId after separation
 	 */
-	NestedMap2<IProgramVarOrConst, EqNode, ReplacementVar> moldArrayToPointerToNewArray;
+	NestedMap2<IProgramVarOrConst, EqNode, IProgramVar> moldArrayToPointerToNewArray;
 	/**
 	 * arrayId before separation --> arrayId after separation--> Set of pointerIds
 	 */
@@ -117,7 +142,7 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 		 *  build a substitution
 		 */
 
-		Map<IProgramVarOrConst, ReplacementVar> substitutionMap = new HashMap<>();
+		Map<IProgramVarOrConst, IProgramVar> substitutionMap = new HashMap<>();
 
 
 		List<MultiDimensionalSelect> mdSelects = MultiDimensionalSelect.extractSelectShallow(tf.getFormula(), false);//TODO allowArrayValues??
@@ -126,7 +151,7 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 			List<EqNode> pointers = mds.getIndex().stream()
 					.map(indexTerm -> mVpDomain.getPreAnalysis().getTermToEqNodeMap().get(indexTerm))
 					.collect(Collectors.toList());
-			ReplacementVar newArray = mNewArrayIdProvider.getNewArrayId(oldArray, pointers);
+			IProgramVar newArray = mNewArrayIdProvider.getNewArrayId(oldArray, pointers);
 			substitutionMap.put(oldArray, newArray);
 		}
 
@@ -136,7 +161,7 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 			List<EqNode> pointers = mds.getIndex().stream()
 					.map(indexTerm -> mVpDomain.getPreAnalysis().getTermToEqNodeMap().get(indexTerm))
 					.collect(Collectors.toList());
-			ReplacementVar newArray = mNewArrayIdProvider.getNewArrayId(oldArray, pointers);
+			IProgramVar newArray = mNewArrayIdProvider.getNewArrayId(oldArray, pointers);
 			substitutionMap.put(oldArray, newArray);
 		}
 		
