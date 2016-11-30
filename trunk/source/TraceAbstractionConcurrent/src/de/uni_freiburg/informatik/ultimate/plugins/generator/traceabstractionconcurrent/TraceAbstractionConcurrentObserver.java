@@ -52,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgElement;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
@@ -218,7 +218,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 		} else {
 			longDescription = errorLocs.size() + " specifications checked. All of them hold";
 			for (final BoogieIcfgLocation errorLoc : errorLocs) {
-				final PositiveResult<IcfgElement> pResult = new PositiveResult<>(Activator.PLUGIN_NAME, errorLoc,
+				final PositiveResult<IIcfgElement> pResult = new PositiveResult<>(Activator.PLUGIN_NAME, errorLoc,
 						mServices.getBacktranslationService());
 				reportResult(pResult);
 			}
@@ -233,7 +233,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 			reportUnproveableResult(pe, pe.getUnprovabilityReasons());
 			return;
 		}
-		reportResult(new CounterExampleResult<IcfgElement, IcfgEdge, Term>(getErrorPP(pe),
+		reportResult(new CounterExampleResult<IIcfgElement, IcfgEdge, Term>(getErrorPP(pe),
 				Activator.PLUGIN_NAME, mServices.getBacktranslationService(), pe));
 	}
 
@@ -244,7 +244,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 			final Check check = ResultUtil.getCheckedSpecification(errorLoc.getBoogieASTNode());
 			String timeOutMessage = "Timeout! Unable to prove that " + check.getPositiveMessage();
 			timeOutMessage += " (line " + origin.getStartLine() + ")";
-			final TimeoutResultAtElement<IcfgElement> timeOutRes = new TimeoutResultAtElement<>(errorLoc,
+			final TimeoutResultAtElement<IIcfgElement> timeOutRes = new TimeoutResultAtElement<>(errorLoc,
 					Activator.PLUGIN_NAME, mServices.getBacktranslationService(), timeOutMessage);
 			reportResult(timeOutRes);
 			mLogger.warn(timeOutMessage);
@@ -253,7 +253,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 
 	private void reportUnproveableResult(final RcfgProgramExecution pe, final List<UnprovabilityReason> unproabilityReasons) {
 		final BoogieIcfgLocation errorPP = getErrorPP(pe);
-		final UnprovableResult<IcfgElement, IcfgEdge, Term> uknRes = new UnprovableResult<>(
+		final UnprovableResult<IIcfgElement, IcfgEdge, Term> uknRes = new UnprovableResult<>(
 				Activator.PLUGIN_NAME, errorPP, mServices.getBacktranslationService(), pe, unproabilityReasons);
 		reportResult(uknRes);
 	}

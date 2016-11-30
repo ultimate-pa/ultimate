@@ -78,7 +78,7 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgElement;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgElement;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -421,7 +421,7 @@ public class LassoRankerStarter {
 			++i;
 		}
 
-		final TerminationArgumentResult<IcfgElement, Term> result =
+		final TerminationArgumentResult<IIcfgElement, Term> result =
 				new TerminationArgumentResult<>(mHonda, Activator.PLUGIN_NAME, rf.asLexTerm(script), rf.getName(),
 						suppInvArray, getTranslatorSequence(), Term.class);
 		reportResult(result);
@@ -443,7 +443,7 @@ public class LassoRankerStarter {
 		states.addAll(nta.getGEVs());
 		final List<Map<Term, Rational>> initHondaRays = BacktranslationUtil.rank2Rcfg(states);
 
-		final NonTerminationArgumentResult<IcfgElement, Term> result =
+		final NonTerminationArgumentResult<IIcfgElement, Term> result =
 				new GeometricNonTerminationArgumentResult<>(mHonda, Activator.PLUGIN_NAME, initHondaRays.get(0),
 						initHondaRays.get(1), initHondaRays.subList(2, initHondaRays.size()), nta.getLambdas(),
 						nta.getNus(), getTranslatorSequence(), Term.class);
@@ -457,7 +457,7 @@ public class LassoRankerStarter {
 	 *            the current preferences
 	 */
 	private void reportNoResult(final RankingTemplate[] templates) {
-		final NoResult<IcfgElement> result = new NoResult<>(mHonda, Activator.PLUGIN_NAME, getTranslatorSequence());
+		final NoResult<IIcfgElement> result = new NoResult<>(mHonda, Activator.PLUGIN_NAME, getTranslatorSequence());
 		result.setShortDescription("LassoRanker could not prove termination");
 		final StringBuilder sb = new StringBuilder();
 		sb.append(
@@ -479,7 +479,7 @@ public class LassoRankerStarter {
 	 *            the current preferences
 	 */
 	private void reportFailBecauseOfOverapproximationResult() {
-		final NoResult<IcfgElement> result = new NoResult<>(mHonda, Activator.PLUGIN_NAME, getTranslatorSequence());
+		final NoResult<IIcfgElement> result = new NoResult<>(mHonda, Activator.PLUGIN_NAME, getTranslatorSequence());
 		result.setShortDescription("LassoRanker could not prove termination");
 		final StringBuilder sb = new StringBuilder();
 		sb.append(
@@ -503,7 +503,7 @@ public class LassoRankerStarter {
 			sb.append(" ");
 			sb.append(template.getClass().getSimpleName());
 		}
-		final TimeoutResultAtElement<IcfgElement> result =
+		final TimeoutResultAtElement<IIcfgElement> result =
 				new TimeoutResultAtElement<>(mHonda, Activator.PLUGIN_NAME, getTranslatorSequence(), sb.toString());
 		mLogger.info(sb.toString());
 		reportResult(result);
@@ -517,9 +517,9 @@ public class LassoRankerStarter {
 	 * @param message
 	 *            an error message explaining the problem
 	 */
-	private void reportUnuspportedSyntax(final IcfgElement position, final String message) {
+	private void reportUnuspportedSyntax(final IIcfgElement position, final String message) {
 		mLogger.error(message);
-		final UnsupportedSyntaxResult<IcfgElement> result =
+		final UnsupportedSyntaxResult<IIcfgElement> result =
 				new UnsupportedSyntaxResult<>(position, Activator.PLUGIN_NAME, getTranslatorSequence(), message);
 		reportResult(result);
 	}

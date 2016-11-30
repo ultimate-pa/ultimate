@@ -61,7 +61,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgElement;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgElement;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
@@ -180,7 +180,7 @@ public class TraceAbstractionStarter {
 					continue;
 				}
 				final Term formula = hoare.getFormula();
-				final InvariantResult<IcfgElement, Term> invResult =
+				final InvariantResult<IIcfgElement, Term> invResult =
 						new InvariantResult<>(Activator.PLUGIN_NAME, locNode, backTranslatorService, formula);
 				reportResult(invResult);
 				
@@ -202,7 +202,7 @@ public class TraceAbstractionStarter {
 				final HoareAnnotation hoare = getHoareAnnotation(finalNode);
 				if (hoare != null) {
 					final Term formula = hoare.getFormula();
-					final ProcedureContractResult<IcfgElement, Term> result = new ProcedureContractResult<>(
+					final ProcedureContractResult<IIcfgElement, Term> result = new ProcedureContractResult<>(
 							Activator.PLUGIN_NAME, finalNode, backTranslatorService, procName, formula);
 					
 					reportResult(result);
@@ -367,7 +367,7 @@ public class TraceAbstractionStarter {
 	
 	private void reportPositiveResults(final Collection<BoogieIcfgLocation> errorLocs) {
 		for (final BoogieIcfgLocation errorLoc : errorLocs) {
-			final PositiveResult<IcfgElement> pResult =
+			final PositiveResult<IIcfgElement> pResult =
 					new PositiveResult<>(Activator.PLUGIN_NAME, errorLoc, mServices.getBacktranslationService());
 			reportResult(pResult);
 		}
@@ -378,7 +378,7 @@ public class TraceAbstractionStarter {
 			reportUnproveableResult(pe, pe.getUnprovabilityReasons());
 			return;
 		}
-		reportResult(new CounterExampleResult<IcfgElement, IcfgEdge, Term>(getErrorPP(pe), Activator.PLUGIN_NAME,
+		reportResult(new CounterExampleResult<IIcfgElement, IcfgEdge, Term>(getErrorPP(pe), Activator.PLUGIN_NAME,
 				mServices.getBacktranslationService(), pe));
 	}
 	
@@ -392,7 +392,7 @@ public class TraceAbstractionStarter {
 			if (rtsp != null) {
 				timeOutMessage += " Cancelled " + rtsp.printRunningTaskMessage();
 			}
-			final TimeoutResultAtElement<IcfgElement> timeOutRes = new TimeoutResultAtElement<>(errorLoc,
+			final TimeoutResultAtElement<IIcfgElement> timeOutRes = new TimeoutResultAtElement<>(errorLoc,
 					Activator.PLUGIN_NAME, mServices.getBacktranslationService(), timeOutMessage);
 			reportResult(timeOutRes);
 		}
@@ -401,7 +401,7 @@ public class TraceAbstractionStarter {
 	private void reportUnproveableResult(final RcfgProgramExecution pe,
 			final List<UnprovabilityReason> unproabilityReasons) {
 		final BoogieIcfgLocation errorPP = getErrorPP(pe);
-		final UnprovableResult<IcfgElement, IcfgEdge, Term> uknRes = new UnprovableResult<>(Activator.PLUGIN_NAME,
+		final UnprovableResult<IIcfgElement, IcfgEdge, Term> uknRes = new UnprovableResult<>(Activator.PLUGIN_NAME,
 				errorPP, mServices.getBacktranslationService(), pe, unproabilityReasons);
 		reportResult(uknRes);
 	}

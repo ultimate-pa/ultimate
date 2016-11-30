@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2013-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE ModelCheckerUtils Library.
  *
  * The ULTIMATE ModelCheckerUtils Library is free software: you can redistribute it and/or modify
@@ -31,20 +31,19 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 
 /**
  * Edge of an ICFG.
+ * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
 public abstract class IcfgEdge extends ModifiableMultigraphEdge<IcfgLocation, IcfgEdge, IcfgLocation, IcfgEdge>
-		implements IcfgElement {
+		implements IIcfgElement {
 
 	private static final long serialVersionUID = -7368006453981803743L;
-
 
 	protected IcfgEdge(final IcfgLocation source, final IcfgLocation target, final IPayload payload) {
 		super(source, target, payload);
 	}
 
-	
 	@Override
 	public IcfgEdge getLabel() {
 		return this;

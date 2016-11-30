@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualiz
  * @author heizmann@informatik.uni-freiburg.
  */
 public class IcfgLocation extends ModifiableExplicitEdgesMultigraph<IcfgLocation, IcfgEdge, IcfgLocation, IcfgEdge>
-		implements IcfgElement {
+		implements IIcfgElement {
 	
 	private static final long serialVersionUID = -7381268073266733825L;
 	

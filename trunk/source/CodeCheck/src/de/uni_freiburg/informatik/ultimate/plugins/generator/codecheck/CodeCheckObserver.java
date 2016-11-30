@@ -73,7 +73,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgElement;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgElement;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -809,7 +809,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		} else {
 			longDescription = errorLocs.size() + " specifications checked. All of them hold";
 			for (final BoogieIcfgLocation errorLoc : errorLocs) {
-				final PositiveResult<IcfgElement> pResult = new PositiveResult<>(Activator.PLUGIN_NAME, errorLoc,
+				final PositiveResult<IIcfgElement> pResult = new PositiveResult<>(Activator.PLUGIN_NAME, errorLoc,
 				        mServices.getBacktranslationService());
 				reportResult(pResult);
 			}
@@ -826,14 +826,14 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 			return;
 		}
 
-		reportResult(new CounterExampleResult<IcfgElement, IcfgEdge, Term>(getErrorPP(pe), Activator.PLUGIN_NAME,
+		reportResult(new CounterExampleResult<IIcfgElement, IcfgEdge, Term>(getErrorPP(pe), Activator.PLUGIN_NAME,
 		        mServices.getBacktranslationService(), pe));
 	}
 
 	private void reportUnproveableResult(final RcfgProgramExecution pe,
 	        final List<UnprovabilityReason> unproabilityReasons) {
 		final BoogieIcfgLocation errorPP = getErrorPP(pe);
-		final UnprovableResult<IcfgElement, IcfgEdge, Term> uknRes = new UnprovableResult<>(Activator.PLUGIN_NAME,
+		final UnprovableResult<IIcfgElement, IcfgEdge, Term> uknRes = new UnprovableResult<>(Activator.PLUGIN_NAME,
 		        errorPP, mServices.getBacktranslationService(), pe, unproabilityReasons);
 		reportResult(uknRes);
 	}
@@ -852,7 +852,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 			String timeOutMessage = "Unable to prove that "
 			        + ResultUtil.getCheckedSpecification(errorLoc).getPositiveMessage();
 			timeOutMessage += " (line " + origin.getStartLine() + ")";
-			final TimeoutResultAtElement<IcfgElement> timeOutRes = new TimeoutResultAtElement<>(errorLoc,
+			final TimeoutResultAtElement<IIcfgElement> timeOutRes = new TimeoutResultAtElement<>(errorLoc,
 			        Activator.PLUGIN_NAME, mServices.getBacktranslationService(), timeOutMessage);
 			reportResult(timeOutRes);
 		}

@@ -47,5 +47,4 @@ public class DummyCodeBlock extends CodeBlock {
 	public String toString() {
 		return "DUMMYCODEBLOCK";
 	}
-
 }

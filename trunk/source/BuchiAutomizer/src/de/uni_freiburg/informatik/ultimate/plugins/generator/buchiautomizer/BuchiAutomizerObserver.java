@@ -67,7 +67,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Term2Expression;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgElement;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgElement;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoop.Result;
@@ -148,7 +148,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	 * Report a nontermination argument back to Ultimate's toolchain
 	 */
 	private void reportNonTerminationResult(final BoogieIcfgLocation honda, final NonTerminationArgument nta) {
-		final NonTerminationArgumentResult<IcfgElement, Term> result;
+		final NonTerminationArgumentResult<IIcfgElement, Term> result;
 		if (nta instanceof GeometricNonTerminationArgument) {
 			final GeometricNonTerminationArgument gnta = (GeometricNonTerminationArgument) nta;
 			// TODO: translate also the rational coefficients to Expressions?
@@ -161,13 +161,13 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			states.addAll(gnta.getGEVs());
 			final List<Map<Term, Rational>> initHondaRays = BacktranslationUtil.rank2Rcfg(states);
 
-			result = new GeometricNonTerminationArgumentResult<IcfgElement, Term>(
+			result = new GeometricNonTerminationArgumentResult<IIcfgElement, Term>(
 					honda, Activator.PLUGIN_NAME, initHondaRays.get(0), initHondaRays.get(1),
 					initHondaRays.subList(2, initHondaRays.size()), gnta.getLambdas(), gnta.getNus(),
 					getBacktranslationService(), Term.class);
 		} else if (nta instanceof InfiniteFixpointRepetition) {
 			final InfiniteFixpointRepetition ifr = (InfiniteFixpointRepetition) nta;
-			result = new FixpointNonTerminationResult<IcfgElement, Term>(
+			result = new FixpointNonTerminationResult<IIcfgElement, Term>(
 					honda, Activator.PLUGIN_NAME, ifr.getValuesAtInit(), ifr.getValuesAtHonda(), 
 					getBacktranslationService(), Term.class);
 		} else {
@@ -222,7 +222,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			final BoogieIcfgLocation position = mRootAnnot.getProcedureEntryNodes().values().iterator().next();
 			final String longDescr = "Timeout while trying to prove " + whatToProve + ". "
 					+ bcl.getToolchainCancelledException().printRunningTaskMessage();
-			final IResult reportRes = new TimeoutResultAtElement<IcfgElement>(position, Activator.PLUGIN_ID,
+			final IResult reportRes = new TimeoutResultAtElement<IIcfgElement>(position, Activator.PLUGIN_ID,
 					mServices.getBacktranslationService(), longDescr);
 			reportResult(reportRes);
 		} else if (result == Result.NONTERMINATING) {
@@ -248,7 +248,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			final
 			RcfgProgramExecution loopPE = new RcfgProgramExecution(counterexample.getLoop().getWord().asList(),
 					partialProgramStateMapping, new Map[counterexample.getLoop().getLength()]);
-			final IResult ntreportRes = new NonterminatingLassoResult<IcfgElement, IcfgEdge, Term>(honda,
+			final IResult ntreportRes = new NonterminatingLassoResult<IIcfgElement, IcfgEdge, Term>(honda,
 					Activator.PLUGIN_ID, mServices.getBacktranslationService(), stemPE, loopPE,
 					honda.getPayload().getLocation());
 			reportResult(ntreportRes);
@@ -302,7 +302,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			final
 			RcfgProgramExecution loopPE = new RcfgProgramExecution(loop, partialProgramStateMapping,
 					new Map[loop.size()]);
-			reportResult(new LTLInfiniteCounterExampleResult<IcfgElement, IcfgEdge, Term>(position, Activator.PLUGIN_ID,
+			reportResult(new LTLInfiniteCounterExampleResult<IIcfgElement, IcfgEdge, Term>(position, Activator.PLUGIN_ID,
 					mServices.getBacktranslationService(), stemPE, loopPE, position.getPayload().getLocation(),
 					ltlAnnot.getLTLProperty()));
 		}

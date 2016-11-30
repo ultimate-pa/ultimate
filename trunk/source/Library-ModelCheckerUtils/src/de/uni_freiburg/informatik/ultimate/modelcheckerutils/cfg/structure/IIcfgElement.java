@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2012-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE ModelCheckerUtils Library.
  *
  * The ULTIMATE ModelCheckerUtils Library is free software: you can redistribute it and/or modify
@@ -30,9 +30,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 
 /**
  * Common interface for nodes and edges of an ICFG.
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public interface IcfgElement extends IElement {
-
+public interface IIcfgElement extends IElement {
+	// just for grouping
 }

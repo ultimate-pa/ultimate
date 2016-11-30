@@ -72,7 +72,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationAr
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfunctions.RankingFunction;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgElement;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgElement;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
@@ -457,7 +457,7 @@ public class BuchiCegarLoop {
 					}
 					final ISLPredicate hondaISLP = (ISLPredicate) mCounterexample.getLoop().getStateAtPosition(0);
 					final BoogieIcfgLocation hondaPP = hondaISLP.getProgramPoint();
-					final TerminationArgumentResult<IcfgElement, Term> tar = constructTAResult(
+					final TerminationArgumentResult<IIcfgElement, Term> tar = constructTAResult(
 							bspm.getTerminationArgument(), hondaPP, mCounterexample.getStem().getWord(),
 							mCounterexample.getLoop().getWord());
 					mMDBenchmark.reportRankingFunction(mIteration, tar);
@@ -488,7 +488,7 @@ public class BuchiCegarLoop {
 					}
 					final ISLPredicate hondaISLP = (ISLPredicate) mCounterexample.getLoop().getStateAtPosition(0);
 					final BoogieIcfgLocation hondaPP = hondaISLP.getProgramPoint();
-					final TerminationArgumentResult<IcfgElement, Term> tar = constructTAResult(
+					final TerminationArgumentResult<IIcfgElement, Term> tar = constructTAResult(
 							bspm.getTerminationArgument(), hondaPP, mCounterexample.getStem().getWord(),
 							mCounterexample.getLoop().getWord());
 					mMDBenchmark.reportRankingFunction(mIteration, tar);
@@ -814,7 +814,7 @@ public class BuchiCegarLoop {
 				new IncrementalHoareTripleChecker(mCsToolkitWithRankVars))).getResult();
 	}
 
-	private TerminationArgumentResult<IcfgElement, Term> constructTAResult(
+	private TerminationArgumentResult<IIcfgElement, Term> constructTAResult(
 			final TerminationArgument terminationArgument, final BoogieIcfgLocation honda, final NestedWord<CodeBlock> stem,
 			final NestedWord<CodeBlock> loop) {
 		final RankingFunction rf = terminationArgument.getRankingFunction();
@@ -825,7 +825,7 @@ public class BuchiCegarLoop {
 			supporting_invariants[i] = si.asTerm(mCsToolkitWithRankVars.getManagedScript().getScript());
 			++i;
 		}
-		final TerminationArgumentResult<IcfgElement, Term> result = new TerminationArgumentResult<>(
+		final TerminationArgumentResult<IIcfgElement, Term> result = new TerminationArgumentResult<>(
 				honda, Activator.PLUGIN_NAME,
 				rf.asLexTerm(mCsToolkitWithRankVars.getManagedScript().getScript()),
 				rf.getName(), supporting_invariants, mServices.getBacktranslationService(), Term.class);
