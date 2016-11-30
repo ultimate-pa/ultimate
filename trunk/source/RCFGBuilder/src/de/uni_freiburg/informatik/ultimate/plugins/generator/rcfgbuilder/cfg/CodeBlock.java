@@ -85,11 +85,11 @@ public abstract class CodeBlock extends IcfgEdge implements IAction {
 
 	protected RCFGEdgeAnnotation mAnnotation;
 
-	int mOccurenceInCounterexamples = 0;
+	private int mOccurenceInCounterexamples = 0;
 
 	CodeBlock(final int serialNumber, final BoogieIcfgLocation source, final BoogieIcfgLocation target,
 			final ILogger logger) {
-		super(source, target, (source == null ? new Payload() : new Payload(source.getPayload().getLocation())));
+		super(source, target, source == null ? new Payload() : new Payload(source.getPayload().getLocation()));
 		mSerialnumber = serialNumber;
 		mLogger = logger;
 		connectSource(source);
@@ -101,10 +101,12 @@ public abstract class CodeBlock extends IcfgEdge implements IAction {
 	/**
 	 * This constructor is for subclasses that are not constructed by the CodeBlockFactory. All these CodeBlocks will
 	 * have serial number "-1" and hence they will have the same hash code.
+	 *
+	 * @deprecated Do not use this constructor, use the {@link CodeBlockFactory} instead.
 	 */
 	@Deprecated
 	public CodeBlock(final BoogieIcfgLocation source, final BoogieIcfgLocation target, final ILogger logger) {
-		super(source, target, (source == null ? new Payload() : new Payload(source.getPayload().getLocation())));
+		super(source, target, source == null ? new Payload() : new Payload(source.getPayload().getLocation()));
 		mSerialnumber = -1;
 		mLogger = logger;
 		connectSource(source);
@@ -144,11 +146,6 @@ public abstract class CodeBlock extends IcfgEdge implements IAction {
 		return mSerialnumber;
 	}
 
-	@Override
-	public int hashCode() {
-		return getSerialNumber();
-	}
-
 	private void setPreceedingProcedure(final IcfgLocation source) {
 		if (source instanceof BoogieIcfgLocation) {
 			final String name = ((BoogieIcfgLocation) source).getProcedure();
@@ -183,8 +180,6 @@ public abstract class CodeBlock extends IcfgEdge implements IAction {
 		if (source != null) {
 			setSource(source);
 			source.addOutgoing(this);
-			// s_Logger.debug("Edge " + this + " is successor of Node " +
-			// source);
 		}
 	}
 
@@ -192,8 +187,6 @@ public abstract class CodeBlock extends IcfgEdge implements IAction {
 		if (target != null) {
 			setTarget(target);
 			target.addIncoming(this);
-			// s_Logger.debug("Node " + target + " is successor of Edge " +
-			// this);
 		}
 	}
 
@@ -234,5 +227,17 @@ public abstract class CodeBlock extends IcfgEdge implements IAction {
 	public void setSource(final IcfgLocation source) {
 		setPreceedingProcedure(source);
 		super.setSource(source);
+	}
+
+	/**
+	 * @return the number of open calls contained in this codeblock.
+	 */
+	protected int getNumberOfOpenCalls() {
+		return 0;
+	}
+
+	@Override
+	public int hashCode() {
+		return getSerialNumber();
 	}
 }

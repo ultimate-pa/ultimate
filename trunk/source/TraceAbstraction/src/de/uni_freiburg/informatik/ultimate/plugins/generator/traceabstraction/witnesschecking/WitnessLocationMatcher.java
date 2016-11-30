@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE TraceAbstraction plug-in.
- * 
+ *
  * The ULTIMATE TraceAbstraction plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE TraceAbstraction plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE TraceAbstraction plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -39,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.InterproceduralSequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ParallelComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
@@ -53,16 +52,15 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 public class WitnessLocationMatcher {
 
 	private final IUltimateServiceProvider mServices;
-	private final Set<WitnessEdge> mPureAnnotationEdges = new HashSet<WitnessEdge>();
+	private final Set<WitnessEdge> mPureAnnotationEdges = new HashSet<>();
 	private final HashRelation<Integer, WitnessEdge> mLineNumber2WitnessLetter = new HashRelation<>();
 	private final HashRelation<ILocation, WitnessEdge> mSingleLineLocation2WitnessLetters = new HashRelation<>();
 	private final HashRelation<WitnessEdge, ILocation> mWitnessLetters2SingleLineLocations = new HashRelation<>();
-	private final Set<ILocation> mMultiLineLocations = new HashSet<ILocation>();
+	private final Set<ILocation> mMultiLineLocations = new HashSet<>();
 	private final ILogger mLogger;
 	private final ArrayList<WitnessEdge> mUnmatchedWitnessLetters;
 
-	public WitnessLocationMatcher(
-			final IUltimateServiceProvider services,
+	public WitnessLocationMatcher(final IUltimateServiceProvider services,
 			final INestedWordAutomatonSimple<CodeBlock, IPredicate> controlFlowAutomaton,
 			final INestedWordAutomatonSimple<WitnessEdge, WitnessNode> witnessAutomaton) {
 		mServices = services;
@@ -71,11 +69,11 @@ public class WitnessLocationMatcher {
 		matchLocations(controlFlowAutomaton.getInternalAlphabet());
 		matchLocations(controlFlowAutomaton.getCallAlphabet());
 		matchLocations(controlFlowAutomaton.getReturnAlphabet());
-		mUnmatchedWitnessLetters = new ArrayList<WitnessEdge>(witnessAutomaton.getInternalAlphabet());
+		mUnmatchedWitnessLetters = new ArrayList<>(witnessAutomaton.getInternalAlphabet());
 		mUnmatchedWitnessLetters.removeAll(mWitnessLetters2SingleLineLocations.getDomain());
-//		for (WitnessEdge witnessLetter : mUnmatchedWitnessLetters) {
-//			mLogger.info("Unmatched witness edge: " + witnessLetter);
-//		}
+		// for (WitnessEdge witnessLetter : mUnmatchedWitnessLetters) {
+		// mLogger.info("Unmatched witness edge: " + witnessLetter);
+		// }
 		mLogger.info(witnessAutomaton.getInternalAlphabet().size() + " witness edges");
 		mLogger.info(mPureAnnotationEdges.size() + " pure annotation edges");
 		mLogger.info(mUnmatchedWitnessLetters.size() + " unmatched witness edges");
@@ -87,11 +85,11 @@ public class WitnessLocationMatcher {
 	public boolean isMatchedWitnessEdge(final WitnessEdge wal) {
 		return mWitnessLetters2SingleLineLocations.getDomain().contains(wal);
 	}
-	
+
 	public boolean isCompatible(final ILocation loc, final WitnessEdge wal) {
 		return mSingleLineLocation2WitnessLetters.containsPair(loc, wal);
 	}
-	
+
 	public Set<ILocation> getCorrespondingLocations(final WitnessEdge wal) {
 		return mWitnessLetters2SingleLineLocations.getImage(wal);
 	}
@@ -102,22 +100,18 @@ public class WitnessLocationMatcher {
 			mLineNumber2WitnessLetter.addPair(startline, we);
 		}
 	}
-	
+
 	private void matchLocations(final Set<CodeBlock> internalAlphabet) {
 		for (final CodeBlock cb : internalAlphabet) {
 			matchLocations(cb);
 		}
-		
+
 	}
-	
-	
+
 	private void matchLocations(final CodeBlock cb) {
 		if (cb instanceof Call) {
 			final Call call = (Call) cb;
 			matchLocations(call);
-		} else if (cb instanceof InterproceduralSequentialComposition) {
-			final InterproceduralSequentialComposition isc = (InterproceduralSequentialComposition) cb;
-			matchLocations(isc);
 		} else if (cb instanceof ParallelComposition) {
 			final ParallelComposition pc = (ParallelComposition) cb;
 			matchLocations(pc);
@@ -138,42 +132,31 @@ public class WitnessLocationMatcher {
 		}
 	}
 
-	
 	private void matchLocations(final Call call) {
 		matchLocations(call.getCallStatement());
 	}
-	
-	private void matchLocations(final InterproceduralSequentialComposition isc) {
-		for (final CodeBlock cb : isc.getCodeBlocks()) {
-			matchLocations(cb);
-		}
-	}
-	
-
 
 	private void matchLocations(final ParallelComposition pc) {
 		for (final CodeBlock cb : pc.getCodeBlocks()) {
 			matchLocations(cb);
 		}
 	}
-	
+
 	private void matchLocations(final Return ret) {
 		matchLocations(ret.getPayload().getLocation());
 	}
-	
+
 	private void matchLocations(final SequentialComposition sc) {
 		for (final CodeBlock cb : sc.getCodeBlocks()) {
 			matchLocations(cb);
 		}
 	}
-	
+
 	private void matchLocations(final StatementSequence ss) {
 		for (final Statement st : ss.getStatements()) {
 			matchLocations(st);
 		}
 	}
-
-
 
 	private void matchLocations(final Statement st) {
 		if (st instanceof AssumeStatement) {
@@ -182,8 +165,6 @@ public class WitnessLocationMatcher {
 			matchLocations(st.getLocation());
 		}
 	}
-
-
 
 	private void matchLocations(final ILocation location) {
 		if (location.getStartLine() == location.getEndLine()) {
@@ -198,7 +179,5 @@ public class WitnessLocationMatcher {
 			mMultiLineLocations.add(location);
 		}
 	}
-	
-	
 
 }

@@ -242,7 +242,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 					cb = replaceGotoEdge(cb, null);
 				} else if (edge instanceof ShortcutErrEdge) {
 					if (cb instanceof ShortcutCodeBlock) {
-						cb = mCbf.constuctInterproceduralSequentialComposition(null, null, false, false,
+						cb = mCbf.constructSequentialComposition(null, null, false, false,
 								Arrays.asList(((ShortcutCodeBlock) cb).getCodeBlocks()), mXnfConversionTechnique,
 								mSimplificationTechnique);
 					} else {

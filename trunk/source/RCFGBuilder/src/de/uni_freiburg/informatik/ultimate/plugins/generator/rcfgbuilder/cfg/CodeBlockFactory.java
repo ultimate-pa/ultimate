@@ -55,12 +55,13 @@ public class CodeBlockFactory implements IStorable {
 	private final ILogger mLogger;
 	private final ManagedScript mMgdScript;
 	private final CfgSmtToolkit mMgvManager;
-	private int mSerialNumberCounter = 0;
+	private int mSerialNumberCounter;
 	private final IIcfgSymbolTable mSymbolTable;
 
 	public CodeBlockFactory(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final CfgSmtToolkit mgvManager, final IIcfgSymbolTable symbolTable) {
 		super();
+		mSerialNumberCounter = 0;
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mMgdScript = mgdScript;
@@ -68,60 +69,62 @@ public class CodeBlockFactory implements IStorable {
 		mSymbolTable = symbolTable;
 	}
 
-	public Call constructCall(final BoogieIcfgLocation source, final BoogieIcfgLocation target, final CallStatement call) {
-		return new Call(mSerialNumberCounter++, source, target, call, mLogger);
-	}
-
-	public InterproceduralSequentialComposition constuctInterproceduralSequentialComposition(final BoogieIcfgLocation source,
-			final BoogieIcfgLocation target, final boolean simplify, final boolean extPqe, final List<CodeBlock> codeBlocks,
-			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique) {
-		return new InterproceduralSequentialComposition(mSerialNumberCounter++, source, target, mMgdScript, mMgvManager,
-				simplify, extPqe, codeBlocks, mLogger, mServices, xnfConversionTechnique, simplificationTechnique, mSymbolTable);
+	public Call constructCall(final BoogieIcfgLocation source, final BoogieIcfgLocation target,
+			final CallStatement call) {
+		return new Call(makeFreshSerial(), source, target, call, mLogger);
 	}
 
 	public GotoEdge constructGotoEdge(final BoogieIcfgLocation source, final BoogieIcfgLocation target) {
-		return new GotoEdge(mSerialNumberCounter++, source, target, mLogger);
+		return new GotoEdge(makeFreshSerial(), source, target, mLogger);
 	}
 
-	public ParallelComposition constructParallelComposition(final BoogieIcfgLocation source, final BoogieIcfgLocation target,
-			final List<CodeBlock> codeBlocks, final XnfConversionTechnique xnfConversionTechnique,
+	public ParallelComposition constructParallelComposition(final BoogieIcfgLocation source,
+			final BoogieIcfgLocation target, final List<CodeBlock> codeBlocks,
+			final XnfConversionTechnique xnfConversionTechnique,
 			final SimplificationTechnique simplificationTechnique) {
-		return new ParallelComposition(mSerialNumberCounter++, source, target, mMgdScript, mServices, codeBlocks,
+		return new ParallelComposition(makeFreshSerial(), source, target, mMgdScript, mServices, codeBlocks,
 				xnfConversionTechnique);
 	}
 
-	public Return constructReturn(final BoogieIcfgLocation source, final BoogieIcfgLocation target, final Call correspondingCall) {
-		return new Return(mSerialNumberCounter++, source, target, correspondingCall, mLogger);
+	public Return constructReturn(final BoogieIcfgLocation source, final BoogieIcfgLocation target,
+			final Call correspondingCall) {
+		return new Return(makeFreshSerial(), source, target, correspondingCall, mLogger);
 	}
 
-	public SequentialComposition constructSequentialComposition(final BoogieIcfgLocation source, final BoogieIcfgLocation target,
-			final boolean simplify, final boolean extPqe, final List<CodeBlock> codeBlocks,
-			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique) {
-		return new SequentialComposition(mSerialNumberCounter++, source, target, mMgvManager, simplify, extPqe,
-				mServices, codeBlocks, xnfConversionTechnique, simplificationTechnique);
+	public SequentialComposition constructSequentialComposition(final BoogieIcfgLocation source,
+			final BoogieIcfgLocation target, final boolean simplify, final boolean extPqe,
+			final List<CodeBlock> codeBlocks, final XnfConversionTechnique xnfConversionTechnique,
+			final SimplificationTechnique simplificationTechnique) {
+		return new SequentialComposition(makeFreshSerial(), source, target, mMgvManager, simplify, extPqe, mServices,
+				codeBlocks, xnfConversionTechnique, simplificationTechnique);
 	}
 
-	public StatementSequence constructStatementSequence(final BoogieIcfgLocation source, final BoogieIcfgLocation target,
-			final Statement st) {
-		return new StatementSequence(mSerialNumberCounter++, source, target, st, mLogger);
+	public StatementSequence constructStatementSequence(final BoogieIcfgLocation source,
+			final BoogieIcfgLocation target, final Statement st) {
+		return new StatementSequence(makeFreshSerial(), source, target, st, mLogger);
 	}
 
-	public StatementSequence constructStatementSequence(final BoogieIcfgLocation source, final BoogieIcfgLocation target,
-			final Statement st, final Origin origin) {
-		return new StatementSequence(mSerialNumberCounter++, source, target, st, origin, mLogger);
+	public StatementSequence constructStatementSequence(final BoogieIcfgLocation source,
+			final BoogieIcfgLocation target, final Statement st, final Origin origin) {
+		return new StatementSequence(makeFreshSerial(), source, target, st, origin, mLogger);
 	}
 
-	public StatementSequence constructStatementSequence(final BoogieIcfgLocation source, final BoogieIcfgLocation target,
-			final List<Statement> stmts, final Origin origin) {
-		return new StatementSequence(mSerialNumberCounter++, source, target, stmts, origin, mLogger);
+	public StatementSequence constructStatementSequence(final BoogieIcfgLocation source,
+			final BoogieIcfgLocation target, final List<Statement> stmts, final Origin origin) {
+		return new StatementSequence(makeFreshSerial(), source, target, stmts, origin, mLogger);
 	}
 
-	public Summary constructSummary(final BoogieIcfgLocation source, final BoogieIcfgLocation target, final CallStatement st,
-			final boolean calledProcedureHasImplementation) {
-		return new Summary(mSerialNumberCounter++, source, target, st, calledProcedureHasImplementation, mLogger);
+	public Summary constructSummary(final BoogieIcfgLocation source, final BoogieIcfgLocation target,
+			final CallStatement st, final boolean calledProcedureHasImplementation) {
+		return new Summary(makeFreshSerial(), source, target, st, calledProcedureHasImplementation, mLogger);
 	}
 
-	public CodeBlock copyCodeBlock(final CodeBlock codeBlock, final BoogieIcfgLocation source, final BoogieIcfgLocation target) {
+	private int makeFreshSerial() {
+		return mSerialNumberCounter++;
+	}
+
+	public CodeBlock copyCodeBlock(final CodeBlock codeBlock, final BoogieIcfgLocation source,
+			final BoogieIcfgLocation target) {
 		if (codeBlock instanceof Call) {
 			final Call copy = constructCall(source, target, ((Call) codeBlock).getCallStatement());
 			copy.setTransitionFormula(codeBlock.getTransitionFormula());
@@ -143,8 +146,7 @@ public class CodeBlockFactory implements IStorable {
 			copy.setTransitionFormula(codeBlock.getTransitionFormula());
 			return copy;
 		} else if (codeBlock instanceof GotoEdge) {
-			final GotoEdge copy = constructGotoEdge(source, target);
-			return copy;
+			return constructGotoEdge(source, target);
 		} else {
 			throw new UnsupportedOperationException("unsupported kind of CodeBlock");
 		}

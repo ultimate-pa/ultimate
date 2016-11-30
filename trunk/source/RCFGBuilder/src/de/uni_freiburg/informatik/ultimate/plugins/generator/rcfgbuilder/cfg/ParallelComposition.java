@@ -71,24 +71,32 @@ public class ParallelComposition extends CodeBlock implements IInternalAction {
 		final UnmodifiableTransFormula[] transFormulasWithBranchEncoders =
 				new UnmodifiableTransFormula[codeBlocks.size()];
 		final TermVariable[] branchIndicator = new TermVariable[codeBlocks.size()];
-		for (int i = 0; i < codeBlocks.size(); i++) {
-			if (!(codeBlocks.get(i) instanceof StatementSequence || codeBlocks.get(i) instanceof SequentialComposition
-					|| codeBlocks.get(i) instanceof ParallelComposition || codeBlocks.get(i) instanceof GotoEdge)) {
+
+		for (int i = 0; i < codeBlocks.size(); ++i) {
+			final CodeBlock currentCodeblock = codeBlocks.get(i);
+			if (!(currentCodeblock instanceof StatementSequence || currentCodeblock instanceof SequentialComposition
+					|| currentCodeblock instanceof ParallelComposition || currentCodeblock instanceof GotoEdge)) {
 				throw new IllegalArgumentException("Only StatementSequence,"
 						+ " SequentialComposition, ParallelComposition, and GotoEdge supported");
 			}
-			codeBlocks.get(i).disconnectSource();
-			codeBlocks.get(i).disconnectTarget();
-			prettyPrinted += "PARALLEL" + codeBlocks.get(i).getPrettyPrintedStatements();
-			transFormulas[i] = codeBlocks.get(i).getTransitionFormula();
-			transFormulasWithBranchEncoders[i] = codeBlocks.get(i).getTransitionFormulaWithBranchEncoders();
-			final String varname = "LBE" + codeBlocks.get(i).getSerialNumber();
+
+			if (currentCodeblock.getNumberOfOpenCalls() != 0) {
+				throw new IllegalArgumentException("No open calls allowed");
+			}
+
+			currentCodeblock.disconnectSource();
+			currentCodeblock.disconnectTarget();
+			prettyPrinted += "PARALLEL" + currentCodeblock.getPrettyPrintedStatements();
+			transFormulas[i] = currentCodeblock.getTransitionFormula();
+			transFormulasWithBranchEncoders[i] = currentCodeblock.getTransitionFormulaWithBranchEncoders();
+			final String varname = "LBE" + currentCodeblock.getSerialNumber();
 			final Sort boolSort = script.sort("Bool");
 			final TermVariable tv = script.variable(varname, boolSort);
 			branchIndicator[i] = tv;
-			mBranchIndicator2CodeBlock.put(branchIndicator[i], codeBlocks.get(i));
-			ModelUtils.copyAnnotations(codeBlocks.get(i), this);
+			mBranchIndicator2CodeBlock.put(branchIndicator[i], currentCodeblock);
+			ModelUtils.copyAnnotations(currentCodeblock, this);
 		}
+
 		// workaround: set annotation with this pluginId again, because it was
 		// overwritten by the mergeAnnotations method
 		getPayload().getAnnotations().put(Activator.PLUGIN_ID, mAnnotation);

@@ -27,9 +27,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Deque;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
@@ -51,12 +54,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.prefere
  * other if this edge is executed.
  *
  * @author Matthias Heizmann
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public class SequentialComposition extends CodeBlock implements IInternalAction {
 
 	private static final long serialVersionUID = 9192152338120598669L;
 	private final List<CodeBlock> mCodeBlocks;
 	private final String mPrettyPrinted;
+	private final int mCallsWithoutReturns;
 
 	SequentialComposition(final int serialNumber, final BoogieIcfgLocation source, final BoogieIcfgLocation target,
 			final CfgSmtToolkit csToolkit, final boolean simplify, final boolean extPqe,
@@ -64,37 +69,22 @@ public class SequentialComposition extends CodeBlock implements IInternalAction 
 			final XnfConversionTechnique xnfConversionTechnique,
 			final SimplificationTechnique simplificationTechnique) {
 		super(serialNumber, source, target, services.getLoggingService().getLogger(Activator.PLUGIN_ID));
+
 		mCodeBlocks = codeBlocks;
-
 		final StringBuilder prettyPrinted = new StringBuilder();
+		mCallsWithoutReturns = getCheckedOpenCalls(codeBlocks).size();
 
-		int numberCalls = 0;
-		int numberReturns = 0;
-		for (int i = 0; i < codeBlocks.size(); i++) {
-			if (codeBlocks.get(i) instanceof InterproceduralSequentialComposition) {
-				throw new IllegalArgumentException(
-						"InterproceduralSequentialComposition " + "must not participate in sequential compositions");
-			} else if (codeBlocks.get(i) instanceof Call) {
-				numberCalls++;
-			} else if (codeBlocks.get(i) instanceof Return) {
-				numberReturns++;
-			} else if (codeBlocks.get(i) instanceof StatementSequence
-					|| codeBlocks.get(i) instanceof SequentialComposition
-					|| codeBlocks.get(i) instanceof ParallelComposition || codeBlocks.get(i) instanceof Summary
-					|| codeBlocks.get(i) instanceof GotoEdge) {
-				// do nothing
-			} else {
-				throw new IllegalArgumentException("unknown CodeBlock");
-			}
-			codeBlocks.get(i).disconnectSource();
-			codeBlocks.get(i).disconnectTarget();
-			prettyPrinted.append(codeBlocks.get(i).getPrettyPrintedStatements());
-			ModelUtils.copyAnnotations(codeBlocks.get(i), this);
+		for (final CodeBlock currentCodeblock : codeBlocks) {
+			currentCodeblock.disconnectSource();
+			currentCodeblock.disconnectTarget();
+			prettyPrinted.append(currentCodeblock.getPrettyPrintedStatements());
+			ModelUtils.copyAnnotations(currentCodeblock, this);
 		}
+		mPrettyPrinted = prettyPrinted.toString();
+
 		// workaround: set annotation with this pluginId again, because it was
 		// overwritten by the mergeAnnotations method
 		getPayload().getAnnotations().put(Activator.PLUGIN_ID, mAnnotation);
-		checkNumberOfCallsAndReturns(numberCalls, numberReturns);
 
 		final boolean transformToCNF =
 				services.getPreferenceProvider(Activator.PLUGIN_ID).getBoolean(RcfgPreferenceInitializer.LABEL_CNF);
@@ -103,14 +93,33 @@ public class SequentialComposition extends CodeBlock implements IInternalAction 
 				services, codeBlocks, xnfConversionTechnique, simplificationTechnique);
 		mTransitionFormulaWithBranchEncoders = getInterproceduralTransFormula(csToolkit, simplify, extPqe,
 				transformToCNF, true, mLogger, services, codeBlocks, xnfConversionTechnique, simplificationTechnique);
-
-		mPrettyPrinted = prettyPrinted.toString();
 	}
 
-	protected void checkNumberOfCallsAndReturns(final int numberCalls, final int numberReturns) {
-		if (numberCalls != numberReturns) {
-			throw new IllegalArgumentException("same number of calls and returns required");
+	private Deque<Call> getCheckedOpenCalls(final List<CodeBlock> codeBlocks) {
+		final Deque<Call> callstack = new ArrayDeque<>();
+		for (final CodeBlock currentCodeblock : codeBlocks) {
+			if (currentCodeblock instanceof Call) {
+				callstack.addFirst((Call) currentCodeblock);
+			} else if (currentCodeblock instanceof Return) {
+				final Return currentReturn = (Return) currentCodeblock;
+				if (callstack.isEmpty()) {
+					throw new IllegalArgumentException("Call/Return order violated");
+				}
+				final Call lastCall = callstack.removeFirst();
+				if (!Objects.equals(currentReturn.getCallStatement(), lastCall.getCallStatement())) {
+					throw new IllegalArgumentException("Call/Return order violated");
+				}
+			} else if (currentCodeblock.getNumberOfOpenCalls() != 0) {
+				if (currentCodeblock instanceof SequentialComposition) {
+					final SequentialComposition seqComp = (SequentialComposition) currentCodeblock;
+					final Deque<Call> innerCallstack = getCheckedOpenCalls(seqComp.getCodeBlocks());
+					callstack.addAll(innerCallstack);
+				} else {
+					throw new IllegalArgumentException("Open calls are only supported in sequential compositions");
+				}
+			}
 		}
+		return callstack;
 	}
 
 	@Override
@@ -272,4 +281,8 @@ public class SequentialComposition extends CodeBlock implements IInternalAction 
 		return getTransitionFormula();
 	}
 
+	@Override
+	protected int getNumberOfOpenCalls() {
+		return mCallsWithoutReturns;
+	}
 }

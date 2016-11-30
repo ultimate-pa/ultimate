@@ -86,5 +86,4 @@ public class Return extends CodeBlock implements IReturnAction {
 	public UnmodifiableTransFormula getLocalVarsAssignmentOfCall() {
 		return getCorrespondingCall().getLocalVarsAssignment();
 	}
-
 }

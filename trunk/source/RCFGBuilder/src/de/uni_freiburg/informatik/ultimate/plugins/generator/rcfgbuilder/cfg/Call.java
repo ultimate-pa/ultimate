@@ -78,4 +78,9 @@ public class Call extends CodeBlock implements ICallAction {
 		return getTransitionFormula();
 	}
 
+	@Override
+	protected int getNumberOfOpenCalls() {
+		return 1;
+	}
+
 }
