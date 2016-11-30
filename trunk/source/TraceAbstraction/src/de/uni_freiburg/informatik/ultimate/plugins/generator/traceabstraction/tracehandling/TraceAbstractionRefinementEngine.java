@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.t
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.function.Supplier;
 
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
@@ -36,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -57,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantConsolidation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerSpWp;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementStrategy.RefinementStrategyAdvance;
@@ -182,10 +185,10 @@ public final class TraceAbstractionRefinementEngine
 	 * It first checks feasibility of the counterexample. If infeasible, the method tries to find a perfect interpolant
 	 * sequence. If unsuccessful, it collects all tested sequences. In the end an interpolant automaton is created.
 	 * <p>
-	 * There is a huge hack for supporting the special {@link TraceCheckerSpWp} architecture where
+	 * There is a huge hack for supporting the special {@link TraceCheckerSpWp} architecture because
 	 * <ol>
 	 * <li>we need a different getter for the interpolant sequence and</li>
-	 * <li>there are two sequences of interpolants</li>
+	 * <li>there are two sequences of interpolants.</li>
 	 * </ol>
 	 * 
 	 * @param strategy
@@ -198,7 +201,10 @@ public final class TraceAbstractionRefinementEngine
 		boolean perfectInterpolantsFound = false;
 		outer: do {
 			// check feasibility using the strategy
-			final LBool feasibility = strategy.getTraceChecker().isCorrect();
+			LBool feasibility = wrapExceptionHandling(() -> strategy.getTraceChecker().isCorrect());
+			if (feasibility == null) {
+				feasibility = LBool.UNKNOWN;
+			}
 			
 			if (feasibility == LBool.UNKNOWN && strategy.hasNext(RefinementStrategyAdvance.TRACE_CHECKER)) {
 				// feasibility check failed, try next combination in the strategy
@@ -215,51 +221,55 @@ public final class TraceAbstractionRefinementEngine
 					mRcfgProgramExecution = strategy.getTraceChecker().getRcfgProgramExecution();
 					break;
 				case UNSAT:
-					final IInterpolantGenerator interpolantGenerator = strategy.getInterpolantGenerator();
-					InterpolantsPreconditionPostcondition interpolants;
-					int numberOfInterpolantSequencesAvailable;
-					if (interpolantGenerator instanceof TraceCheckerSpWp) {
-						final TraceCheckerSpWp traceCheckerSpWp = (TraceCheckerSpWp) interpolantGenerator;
-						numberOfInterpolantSequencesAvailable = 0;
-						if (traceCheckerSpWp.forwardsPredicatesComputed()) {
-							interpolants = traceCheckerSpWp.getForwardIpp();
-							++numberOfInterpolantSequencesAvailable;
-							if (traceCheckerSpWp.backwardsPredicatesComputed()) {
+					final IInterpolantGenerator interpolantGenerator =
+							wrapExceptionHandling(() -> strategy.getInterpolantGenerator());
+					
+					if (interpolantGenerator != null) {
+						InterpolantsPreconditionPostcondition interpolants;
+						int numberOfInterpolantSequencesAvailable;
+						if (interpolantGenerator instanceof TraceCheckerSpWp) {
+							final TraceCheckerSpWp traceCheckerSpWp = (TraceCheckerSpWp) interpolantGenerator;
+							numberOfInterpolantSequencesAvailable = 0;
+							if (traceCheckerSpWp.forwardsPredicatesComputed()) {
+								interpolants = traceCheckerSpWp.getForwardIpp();
 								++numberOfInterpolantSequencesAvailable;
+								if (traceCheckerSpWp.backwardsPredicatesComputed()) {
+									++numberOfInterpolantSequencesAvailable;
+								}
+							} else {
+								interpolants = traceCheckerSpWp.backwardsPredicatesComputed()
+										? traceCheckerSpWp.getBackwardIpp()
+										: null;
+								numberOfInterpolantSequencesAvailable = 1;
 							}
 						} else {
-							interpolants = traceCheckerSpWp.backwardsPredicatesComputed()
-									? traceCheckerSpWp.getBackwardIpp()
-									: null;
+							interpolants = interpolantGenerator.getIpp();
 							numberOfInterpolantSequencesAvailable = 1;
 						}
-					} else {
-						interpolants = interpolantGenerator.getIpp();
-						numberOfInterpolantSequencesAvailable = 1;
-					}
-					
-					for (int i = 1; i <= numberOfInterpolantSequencesAvailable; ++i) {
-						if (i == 2) {
-							interpolants = ((TraceCheckerSpWp) interpolantGenerator).getBackwardIpp();
-						}
-						if (interpolants == null) {
-							continue;
-						}
-						if (interpolantGenerator instanceof TraceCheckerSpWp) {
-							perfectInterpolantsFound =
-									((TraceCheckerSpWp) interpolantGenerator).isPerfectSequence(i == 1);
-						} else {
-							perfectInterpolantsFound = strategy.getInterpolantGenerator().isPerfectSequence();
-						}
-						if (perfectInterpolantsFound) {
-							// construct interpolant automaton using only this (perfect) sequence
-							interpolantSequences = Collections.singletonList(interpolants);
-							if (mLogger.isInfoEnabled()) {
-								mLogger.info("Found a perfect sequence of interpolants.");
+						
+						for (int i = 1; i <= numberOfInterpolantSequencesAvailable; ++i) {
+							if (i == 2) {
+								interpolants = ((TraceCheckerSpWp) interpolantGenerator).getBackwardIpp();
 							}
-							break;
+							if (interpolants == null) {
+								continue;
+							}
+							if (interpolantGenerator instanceof TraceCheckerSpWp) {
+								perfectInterpolantsFound =
+										((TraceCheckerSpWp) interpolantGenerator).isPerfectSequence(i == 1);
+							} else {
+								perfectInterpolantsFound = strategy.getInterpolantGenerator().isPerfectSequence();
+							}
+							if (perfectInterpolantsFound) {
+								// construct interpolant automaton using only this (perfect) sequence
+								interpolantSequences = Collections.singletonList(interpolants);
+								if (mLogger.isInfoEnabled()) {
+									mLogger.info("Found a perfect sequence of interpolants.");
+								}
+								break;
+							}
+							interpolantSequences.add(interpolants);
 						}
-						interpolantSequences.add(interpolants);
 					}
 					if (!perfectInterpolantsFound) {
 						if (strategy.hasNext(RefinementStrategyAdvance.INTERPOLANT_GENERATOR)) {
@@ -291,6 +301,22 @@ public final class TraceAbstractionRefinementEngine
 			
 			return feasibility;
 		} while (true);
+	}
+	
+	/**
+	 * Wraps the exception handling during {@link TraceChecker} or {@link IInterpolantGenerator} construction.
+	 */
+	private <T> T wrapExceptionHandling(final Supplier<T> supp) {
+		T result;
+		try {
+			result = supp.get();
+		} catch (final UnsupportedOperationException | SMTLIBException e) {
+			result = null;
+			if (mLogger.isErrorEnabled()) {
+				mLogger.error("Caught exception: " + e.getMessage());
+			}
+		}
+		return result;
 	}
 	
 	private static ManagedScript setupManagedScriptInternal(final IUltimateServiceProvider services,
