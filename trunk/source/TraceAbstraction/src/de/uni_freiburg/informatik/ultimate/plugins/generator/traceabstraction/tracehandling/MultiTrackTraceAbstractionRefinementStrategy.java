@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -68,6 +69,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public class MultiTrackTraceAbstractionRefinementStrategy implements IRefinementStrategy {
+	private static final String LOGIC_FOR_EXTERNAL_SOLVERS = "AUFNIRA";
 	private static final int SMTINTERPOL_TIMEOUT = 10_000;
 	private static final String Z3_COMMAND = "z3 -smt2 -in SMTLIB2_COMPLIANT=true";
 	
@@ -212,13 +214,19 @@ public class MultiTrackTraceAbstractionRefinementStrategy implements IRefinement
 	private static ManagedScript constructManagedScript(final IUltimateServiceProvider services,
 			final TaCheckAndRefinementPreferences prefs, final InterpolationTechnique interpolationTechnique) {
 		final Settings solverSettings;
+		final SolverMode solverMode;
+		final String logicForExternalSolver;
 		switch (interpolationTechnique) {
 			case Craig_TreeInterpolation:
 				solverSettings = new Settings(false, false, null, SMTINTERPOL_TIMEOUT, null, false, null, null);
+				solverMode = SolverMode.Internal_SMTInterpol;
+				logicForExternalSolver = null;
 				break;
 			case FPandBP:
 				// final String commandExternalSolver = RcfgPreferenceInitializer.Z3_DEFAULT;
 				solverSettings = new Settings(false, true, Z3_COMMAND, 0, null, false, null, null);
+				solverMode = SolverMode.External_DefaultMode;
+				logicForExternalSolver = LOGIC_FOR_EXTERNAL_SOLVERS;
 				break;
 			default:
 				throw new IllegalArgumentException(
@@ -226,7 +234,7 @@ public class MultiTrackTraceAbstractionRefinementStrategy implements IRefinement
 								+ interpolationTechnique);
 		}
 		final Script solver = SolverBuilder.buildAndInitializeSolver(services, prefs.getToolchainStorage(),
-				prefs.getSolverMode(), solverSettings, false, false, prefs.getLogicForExternalSolver(),
+				solverMode, solverSettings, false, false, logicForExternalSolver,
 				"TraceCheck_Iteration" + prefs.getIteration());
 		final ManagedScript result = new ManagedScript(services, solver);
 		
