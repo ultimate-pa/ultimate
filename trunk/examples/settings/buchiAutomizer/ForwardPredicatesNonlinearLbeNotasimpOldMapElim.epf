@@ -19,6 +19,7 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Translation\ Mode\:=SV_COMP14
 @de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=0.0.1
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Checked\ method.\ Library\ mode\ if\ empty.=main
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Overapproximate\ operations\ on\ floating\ types=true
 #Fri Apr 03 17:28:56 CEST 2015
 file_export_version=3.0
 @de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer=0.0.1
