@@ -28,7 +28,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -144,11 +143,13 @@ public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
 		final List<Pair<CodeBlock, CodeBlock>> rtr = new ArrayList<>();
 		for (final IcfgEdge inEdge : target.getIncomingEdges()) {
 			if (inEdge instanceof Summary) {
-				return Collections.emptyList();
+				// skip combinations with summary edges
+				continue;
 			}
 			for (final IcfgEdge outEdge : target.getOutgoingEdges()) {
 				if (outEdge instanceof Summary) {
-					return Collections.emptyList();
+					// skip combinations with summary edges
+					continue;
 				}
 				rtr.add(new Pair<>((CodeBlock) inEdge, (CodeBlock) outEdge));
 			}

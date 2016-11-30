@@ -114,7 +114,7 @@ public final class MaximizeFinalStates extends BaseBlockEncoder {
 	}
 	
 	@Override
-	public boolean isGraphChanged() {
+	public boolean isGraphStructureChanged() {
 		return mNewAcceptingStates > 0;
 	}
 }

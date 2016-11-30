@@ -34,8 +34,16 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Boo
  *
  */
 public interface IEncoder {
-	
-	boolean isGraphChanged();
-	
+
+	/**
+	 * Used to decide whether the optimization should continue or not. If all encoders say false, the optimization
+	 * stops.
+	 *
+	 * Note: If only the type of edges or nodes changed, you may return false.
+	 *
+	 * @return true iff there are more/less edges or nodes in the graph
+	 */
+	boolean isGraphStructureChanged();
+
 	BoogieIcfgContainer getResult(final BoogieIcfgContainer boogieIcfgContainer);
 }

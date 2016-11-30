@@ -42,12 +42,15 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.Simpli
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding.AssumeMerger;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding.IEncoder;
+import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding.InterproceduralSequenzer;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding.MaximizeFinalStates;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding.MinimizeStatesMultiEdgeMultiNode;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding.MinimizeStatesMultiEdgeSingleNode;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding.MinimizeStatesSingleEdgeSingleNode;
+import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding.ParallelComposer;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding.RemoveInfeasibleEdges;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding.RemoveSinkStates;
+import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding.Simplifier;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.preferences.PreferenceInitializer.MinimizeStates;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.annot.BuchiProgramAcceptingStateAnnotation;
@@ -116,13 +119,13 @@ public class BlockEncodingObserver implements IUnmanagedObserver {
 		reportSizeBenchmark("Initial Icfg", node);
 
 		final IPreferenceProvider ups = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
-		int maxIters = ups.getInt(PreferenceInitializer.OPTIMIZE_MAX_ITERATIONS) - 1;
+		int maxIters = ups.getInt(PreferenceInitializer.FXP_MAX_ITERATIONS) - 1;
 		if (maxIters < 0) {
 			maxIters = -1;
 		}
 
 		final List<IEncoderProvider> encoderProviders = getEncoderProviders(ups);
-		final boolean optimizeUntilFixpoint = ups.getBoolean(PreferenceInitializer.OPTIMIZE_UNTIL_FIXPOINT);
+		final boolean optimizeUntilFixpoint = ups.getBoolean(PreferenceInitializer.FXP_UNTIL_FIXPOINT);
 		int i = 1;
 		mIterationResult = node;
 		while (true) {
@@ -152,6 +155,23 @@ public class BlockEncodingObserver implements IUnmanagedObserver {
 				maxIters--;
 			}
 		}
+
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("==== BE Post Processing ====");
+		}
+
+		if (ups.getBoolean(PreferenceInitializer.POST_USE_PARALLEL_COMPOSITION)) {
+			mIterationResult =
+					new ParallelComposer(mIterationResult, mServices, mSimplificationTechnique, mXnfConversionTechnique)
+							.getResult(mIterationResult);
+		}
+
+		if (ups.getBoolean(PreferenceInitializer.POST_SIMPLIFY_CODEBLOCKS)) {
+			mIterationResult =
+					new Simplifier(mIterationResult, mServices, mSimplificationTechnique, mXnfConversionTechnique)
+							.getResult(mIterationResult);
+		}
+
 		reportSizeBenchmark("Encoded RCFG", mIterationResult);
 	}
 
@@ -160,21 +180,17 @@ public class BlockEncodingObserver implements IUnmanagedObserver {
 
 		// note that the order is important
 
-		if (ups.getBoolean(PreferenceInitializer.OPTIMIZE_REMOVE_INFEASIBLE_EDGES)) {
+		if (ups.getBoolean(PreferenceInitializer.FXP_REMOVE_INFEASIBLE_EDGES)) {
 			rtr.add((node) -> new RemoveInfeasibleEdges(node, mServices));
 		}
 
-		if (ups.getBoolean(PreferenceInitializer.OPTIMIZE_REMOVE_SINK_STATES)) {
-			rtr.add((node) -> new RemoveSinkStates(node, mServices, BlockEncodingObserver::hasToBePreserved));
-		}
-
-		if (ups.getBoolean(PreferenceInitializer.OPTIMIZE_MAXIMIZE_FINAL_STATES)) {
+		if (ups.getBoolean(PreferenceInitializer.FXP_MAXIMIZE_FINAL_STATES)) {
 			rtr.add((node) -> new MaximizeFinalStates(node, mServices, BlockEncodingObserver::markBuchiProgramAccepting,
 					BlockEncodingObserver::isBuchiProgramAccepting));
 		}
 
 		final MinimizeStates minimizeStates =
-				ups.getEnum(PreferenceInitializer.OPTIMIZE_MINIMIZE_STATES, MinimizeStates.class);
+				ups.getEnum(PreferenceInitializer.FXP_MINIMIZE_STATES, MinimizeStates.class);
 		if (minimizeStates != MinimizeStates.NONE) {
 			switch (minimizeStates) {
 			case SINGLE:
@@ -194,16 +210,24 @@ public class BlockEncodingObserver implements IUnmanagedObserver {
 			}
 		}
 
-		if (ups.getBoolean(PreferenceInitializer.OPTIMIZE_SIMPLIFY_ASSUMES)) {
+		if (ups.getBoolean(PreferenceInitializer.FXP_SIMPLIFY_ASSUMES)) {
 			rtr.add((node) -> new AssumeMerger(node, mServices, mSimplificationTechnique, mXnfConversionTechnique,
 					mBacktranslator));
 		}
+
+		if (ups.getBoolean(PreferenceInitializer.FXP_REMOVE_SINK_STATES)) {
+			rtr.add((node) -> new RemoveSinkStates(node, mServices, BlockEncodingObserver::hasToBePreserved));
+		}
+
+		rtr.add((node) -> new InterproceduralSequenzer(node, mServices, mSimplificationTechnique,
+				mXnfConversionTechnique));
+
 		return rtr;
 	}
 
 	private static EncodingResult applyEncoder(final EncodingResult previousResult, final IEncoder encoder) {
 		final BoogieIcfgContainer result = encoder.getResult(previousResult.getIcfg());
-		return new EncodingResult(result, previousResult.isChanged() || encoder.isGraphChanged());
+		return new EncodingResult(result, previousResult.isChanged() || encoder.isGraphStructureChanged());
 	}
 
 	private void reportSizeBenchmark(final String message, final BoogieIcfgContainer root) {

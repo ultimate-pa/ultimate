@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
@@ -57,34 +56,34 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sta
  *
  */
 public final class AssumeMerger extends BaseBlockEncoder {
-	
+
 	private int mAssumesMerged;
 	private final boolean mRewriteNotEquals;
 	private final boolean mUseSBE;
-	
+
 	private final RcfgEdgeBuilder mEdgeBuilder;
 	private final BlockEncodingBacktranslator mBacktranslator;
-	
+
 	public AssumeMerger(final BoogieIcfgContainer product, final IUltimateServiceProvider services,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
 			final BlockEncodingBacktranslator backtranslator) {
 		super(product, services);
 		mAssumesMerged = 0;
 		mRewriteNotEquals = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
-				.getBoolean(PreferenceInitializer.OPTIMIZE_SIMPLIFY_ASSUMES_REWRITENOTEQUALS);
+				.getBoolean(PreferenceInitializer.FXP_SIMPLIFY_ASSUMES_REWRITENOTEQUALS);
 		mUseSBE = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
-				.getBoolean(PreferenceInitializer.OPTIMIZE_SIMPLIFY_ASSUMES_SBE);
+				.getBoolean(PreferenceInitializer.FXP_SIMPLIFY_ASSUMES_SBE);
 		mEdgeBuilder = new RcfgEdgeBuilder(product, services, simplificationTechnique, xnfConversionTechnique);
 		mBacktranslator = backtranslator;
 	}
-	
+
 	@Override
 	protected BoogieIcfgContainer createResult(final BoogieIcfgContainer root) {
 		final ArrayDeque<IcfgEdge> edges = new ArrayDeque<>();
 		final HashSet<IcfgEdge> closed = new HashSet<>();
-		
+
 		edges.addAll(BoogieIcfgContainer.extractStartEdges(root));
-		
+
 		while (!edges.isEmpty()) {
 			final IcfgEdge current = edges.removeFirst();
 			if (closed.contains(current)) {
@@ -92,7 +91,7 @@ public final class AssumeMerger extends BaseBlockEncoder {
 			}
 			closed.add(current);
 			edges.addAll(current.getTarget().getOutgoingEdges());
-			
+
 			if (current instanceof CodeBlock) {
 				mergeEdge(root, (CodeBlock) current);
 			}
@@ -100,14 +99,14 @@ public final class AssumeMerger extends BaseBlockEncoder {
 		mLogger.info("Merged " + mAssumesMerged + " AssumeStatements");
 		return root;
 	}
-	
+
 	private void mergeEdge(final BoogieIcfgContainer root, final CodeBlock current) {
 		final List<Statement> stmts = new StatementExtractor(mLogger).process(current);
 		if (stmts.size() < 2) {
 			// there is nothing to merge here
 			return;
 		}
-		
+
 		final List<Statement> newStmts = new ArrayList<>();
 		List<AssumeStatement> successiveAssumes = new ArrayList<>();
 		boolean successive = false;
@@ -126,12 +125,12 @@ public final class AssumeMerger extends BaseBlockEncoder {
 				newStmts.add(stmt);
 			}
 		}
-		
+
 		if (!successiveAssumes.isEmpty()) {
 			// the edge ends with assumes
 			newStmts.add(mergeAssumes(successiveAssumes));
 		}
-		
+
 		if (!collectionsEqual(stmts, newStmts)) {
 			// there were optimizations, replace the edge with new edge(s)
 			createNewEdges(root, current, newStmts);
@@ -139,9 +138,9 @@ public final class AssumeMerger extends BaseBlockEncoder {
 			current.disconnectSource();
 			current.disconnectTarget();
 		}
-		
+
 	}
-	
+
 	private void createNewEdges(final BoogieIcfgContainer root, final CodeBlock current,
 			final List<Statement> newStmts) {
 		boolean allAssumes = true;
@@ -157,7 +156,7 @@ public final class AssumeMerger extends BaseBlockEncoder {
 			assert newStmts.size() == 1;
 			final AssumeStatement stmt = (AssumeStatement) newStmts.get(0);
 			final NormalFormTransformer<Expression> ct = new NormalFormTransformer<>(new BoogieExpressionTransformer());
-			
+
 			Expression formula = stmt.getFormula();
 			if (mRewriteNotEquals) {
 				formula = ct.rewriteNotEquals(formula);
@@ -168,7 +167,7 @@ public final class AssumeMerger extends BaseBlockEncoder {
 				for (final Expression disjunct : disjuncts) {
 					mEdgeBuilder.constructStatementSequence((BoogieIcfgLocation) current.getSource(),
 							(BoogieIcfgLocation) current.getTarget(),
-							Collections.singletonList(new AssumeStatement(stmt.getLocation(), disjunct)));
+							new AssumeStatement(stmt.getLocation(), disjunct));
 				}
 				return;
 			}
@@ -182,7 +181,7 @@ public final class AssumeMerger extends BaseBlockEncoder {
 			mLogger.debug(ss);
 		}
 	}
-	
+
 	private AssumeStatement mergeAssumes(final List<AssumeStatement> successiveAssumes) {
 		final List<Expression> assumeExpressions = new ArrayList<>();
 		mLogger.debug("Trying to merge the following assume statements:");
@@ -192,14 +191,14 @@ public final class AssumeMerger extends BaseBlockEncoder {
 			}
 			assumeExpressions.add(stmt.getFormula());
 		}
-		
+
 		final BoogieExpressionTransformer bcw = new BoogieExpressionTransformer();
 		final NormalFormTransformer<Expression> ct = new NormalFormTransformer<>(bcw);
 		final int assumeExprSize = assumeExpressions.size();
 		final Collection<Expression> disjuncts =
 				new ArrayList<>(ct.toDnfDisjuncts(bcw.makeAnd(assumeExpressions.iterator())));
 		final int disjunctsSize = disjuncts.size();
-		
+
 		if (successiveAssumes.size() > 1) {
 			mAssumesMerged += successiveAssumes.size();
 		} else if (successiveAssumes.size() == 1 && (assumeExprSize == disjunctsSize || disjunctsSize == 0)) {
@@ -213,7 +212,7 @@ public final class AssumeMerger extends BaseBlockEncoder {
 		}
 		return rtr;
 	}
-	
+
 	private static boolean collectionsEqual(final List<Statement> stmts, final List<Statement> newStmts) {
 		if (stmts == null && newStmts == null) {
 			return true;
@@ -233,9 +232,9 @@ public final class AssumeMerger extends BaseBlockEncoder {
 			return false;
 		}
 	}
-	
+
 	@Override
-	public boolean isGraphChanged() {
+	public boolean isGraphStructureChanged() {
 		return mAssumesMerged > 0;
 	}
 }

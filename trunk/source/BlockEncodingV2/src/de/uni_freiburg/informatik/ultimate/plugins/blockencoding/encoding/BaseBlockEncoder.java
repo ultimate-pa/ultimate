@@ -36,6 +36,7 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
@@ -90,13 +91,14 @@ public abstract class BaseBlockEncoder implements IEncoder {
 	}
 
 	protected void removeDisconnectedLocations(final BoogieIcfgContainer root) {
+		// check all locations without incoming edges that are not initial or which are initial sinks
 		final Set<BoogieIcfgLocation> initial =
 				root.getProcedureEntryNodes().entrySet().stream().map(a -> a.getValue()).collect(Collectors.toSet());
-
-		// get all locations without incoming edges that are not initial
-		final Deque<BoogieIcfgLocation> locationsWithoutInEdge = root.getProgramPoints().entrySet().stream()
-				.flatMap(a -> a.getValue().entrySet().stream()).map(a -> a.getValue())
-				.filter(a -> !initial.contains(a) && a.getIncomingEdges().isEmpty()).collect(new DequeCollector<>());
+		final Predicate<BoogieIcfgLocation> filter =
+				a -> (!initial.contains(a) || a.getOutgoingEdges().isEmpty()) && a.getIncomingEdges().isEmpty();
+		final Deque<BoogieIcfgLocation> locationsWithoutInEdge =
+				root.getProgramPoints().entrySet().stream().flatMap(a -> a.getValue().entrySet().stream())
+						.map(a -> a.getValue()).filter(filter).collect(new DequeCollector<>());
 
 		while (!locationsWithoutInEdge.isEmpty()) {
 			final BoogieIcfgLocation current = locationsWithoutInEdge.removeFirst();

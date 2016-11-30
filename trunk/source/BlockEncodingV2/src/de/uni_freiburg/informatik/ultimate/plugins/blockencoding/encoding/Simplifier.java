@@ -33,70 +33,57 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 
-public class RemoveInfeasibleEdges extends BaseBlockEncoder {
-	
-	public RemoveInfeasibleEdges(final BoogieIcfgContainer icfg, final IUltimateServiceProvider services) {
-		super(icfg, services);
+/**
+ *
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ */
+public final class Simplifier extends BaseBlockEncoder {
+
+	private final RcfgEdgeBuilder mEdgeBuilder;
+
+	public Simplifier(final BoogieIcfgContainer product, final IUltimateServiceProvider services,
+			final SimplificationTechnique simplificationTechnique,
+			final XnfConversionTechnique xnfConversionTechnique) {
+		super(product, services);
+		mEdgeBuilder = new RcfgEdgeBuilder(product, services, simplificationTechnique, xnfConversionTechnique);
 	}
-	
+
 	@Override
 	protected BoogieIcfgContainer createResult(final BoogieIcfgContainer icfg) {
+		mLogger.info("Simplifying codeblocks");
+
 		final Deque<IcfgEdge> edges = new ArrayDeque<>();
 		final Set<IcfgEdge> closed = new HashSet<>();
-		
-		edges.addAll(BoogieIcfgContainer.extractStartEdges(icfg));
-		
+		icfg.getProcedureEntryNodes().values().stream().forEach(a -> edges.addAll(a.getOutgoingEdges()));
+
 		while (!edges.isEmpty()) {
 			final IcfgEdge current = edges.removeFirst();
-			if (closed.contains(current)) {
+			if (!closed.add(current)) {
 				continue;
 			}
-			closed.add(current);
-			edges.addAll(current.getTarget().getOutgoingEdges());
-			
-			if (current instanceof CodeBlock) {
-				checkCodeblock((CodeBlock) current);
+			if (current instanceof Call || current instanceof Return) {
+				continue;
 			}
+			edges.addAll(current.getTarget().getOutgoingEdges());
+			mEdgeBuilder.constructSimplifiedSequentialComposition((BoogieIcfgLocation) current.getSource(),
+					(BoogieIcfgLocation) current.getTarget(), (CodeBlock) current);
+			current.disconnectSource();
+			current.disconnectTarget();
 		}
-		
-		removeDisconnectedLocations(icfg);
-		mLogger.info("Removed " + mRemovedEdges + " edges and " + mRemovedLocations
-				+ " locations because of local infeasibility");
 		return icfg;
 	}
-	
-	private void checkCodeblock(final CodeBlock cb) {
-		if (cb instanceof Call || cb instanceof Return) {
-			return;
-		}
-		
-		final Infeasibility result = cb.getTransitionFormula().isInfeasible();
-		
-		switch (result) {
-		case INFEASIBLE:
-			mLogger.debug("Removing " + result + ": " + cb);
-			cb.disconnectSource();
-			cb.disconnectTarget();
-			mRemovedEdges++;
-			break;
-		case NOT_DETERMINED:
-			break;
-		case UNPROVEABLE:
-			break;
-		default:
-			throw new IllegalArgumentException();
-		}
-	}
-	
+
 	@Override
 	public boolean isGraphStructureChanged() {
-		return mRemovedEdges > 0 || mRemovedLocations > 0;
+		return false;
 	}
-	
 }

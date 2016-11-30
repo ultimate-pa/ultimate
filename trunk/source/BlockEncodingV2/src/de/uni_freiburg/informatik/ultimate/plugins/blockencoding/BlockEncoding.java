@@ -84,9 +84,9 @@ public class BlockEncoding implements IGenerator {
 	@Override
 	public List<IObserver> getObservers() {
 		final List<IObserver> observers = new ArrayList<>();
-		if (mServices.getPreferenceProvider(Activator.PLUGIN_ID).getBoolean(PreferenceInitializer.OPTIMIZE_SBE)) {
+		if (mServices.getPreferenceProvider(Activator.PLUGIN_ID).getBoolean(PreferenceInitializer.PRE_SBE)) {
 			final boolean rewriteAssumes = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
-					.getBoolean(PreferenceInitializer.OPTIMIZE_SBE_REWRITENOTEQUALS);
+					.getBoolean(PreferenceInitializer.PRE_SBE_REWRITENOTEQUALS);
 			observers.add(new SmallBlockEncoder(mLogger, mBacktranslator, rewriteAssumes, mServices,
 					SIMPLIFICATION_TECHNIQUE, XNF_CONVERSION_TECHNIQUE));
 		}

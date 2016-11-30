@@ -37,29 +37,45 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 		NONE, SINGLE, SINGLE_NODE_MULTI_EDGE, MULTI
 	}
 
-	public static final String OPTIMIZE_SBE = "Use SBE for initial RCFG";
-	public static final String OPTIMIZE_SBE_REWRITENOTEQUALS = "Rewrite not-equals during SBE";
+	public static final String PRE_SBE = "Use SBE for initial RCFG";
+	public static final String PRE_SBE_REWRITENOTEQUALS = "Rewrite not-equals during SBE";
 
-	/**
-	 * Only for termination (i.e., "Büchi" RCFGs)
-	 */
-	public static final String OPTIMIZE_MAXIMIZE_FINAL_STATES = "Maximize final states";
-	public static final String OPTIMIZE_MINIMIZE_STATES = "Minimize states using LBE with the strategy";
-	public static final String OPTIMIZE_MINIMIZE_STATES_IGNORE_BLOWUP =
+	public static final String FXP_MAXIMIZE_FINAL_STATES = "Maximize final states";
+
+	public static final String FXP_MINIMIZE_STATES = "Minimize states using LBE with the strategy";
+	public static final String FXP_MINIMIZE_STATES_IGNORE_BLOWUP =
 			"Minimize states even if more edges are added than removed.";
-	public static final String OPTIMIZE_REMOVE_INFEASIBLE_EDGES = "Remove infeasible edges";
-
-	/**
-	 * Only for termination (i.e., "Büchi" RCFGs)
-	 */
-	public static final String OPTIMIZE_REMOVE_SINK_STATES = "Remove sink states";
-	public static final String OPTIMIZE_SIMPLIFY_ASSUMES = "Simplify assume statements";
-	public static final String OPTIMIZE_SIMPLIFY_ASSUMES_SBE = "Use SBE during assume simplification";
-	public static final String OPTIMIZE_SIMPLIFY_ASSUMES_REWRITENOTEQUALS =
+	public static final String FXP_REMOVE_INFEASIBLE_EDGES = "Remove infeasible edges";
+	public static final String FXP_REMOVE_SINK_STATES = "Remove sink states";
+	public static final String FXP_SIMPLIFY_ASSUMES = "Simplify assume statements";
+	public static final String FXP_SIMPLIFY_ASSUMES_SBE = "Use SBE during assume simplification";
+	public static final String FXP_SIMPLIFY_ASSUMES_REWRITENOTEQUALS =
 			"Rewrite not equals when simplifying assume statements with SBE";
-	public static final String OPTIMIZE_UNTIL_FIXPOINT = "Apply optimizations until nothing changes";
-	public static final String OPTIMIZE_MAX_ITERATIONS =
+	public static final String FXP_UNTIL_FIXPOINT = "Apply optimizations until nothing changes";
+	public static final String FXP_MAX_ITERATIONS =
 			"Iterate optimizations for n times (<=0 means until nothing changes)";
+	public static final String FXP_INTERPROCEDURAL_COMPOSITION = "Create interprocedural compositions";
+
+	public static final String POST_USE_PARALLEL_COMPOSITION = "Create parallel compositions if possible";
+	public static final String POST_SIMPLIFY_CODEBLOCKS = "Simplify codeblocks";
+
+	private static final String PRE_SBE_DESC = null;
+	private static final String PRE_SBE_REWRITENOTEQUALS_DESC = null;
+
+	private static final String FXP_MAX_ITERATIONS_DESC = null;
+	private static final String FXP_UNTIL_FIXPOINT_DESC = null;
+	private static final String FXP_SIMPLIFY_ASSUMES_REWRITENOTEQUALS_DESC = null;
+	private static final String FXP_SIMPLIFY_ASSUMES_SBE_DESC = null;
+	private static final String FXP_SIMPLIFY_ASSUMES_DESC = null;
+	private static final String FXP_REMOVE_SINK_STATES_DESC = null;
+	private static final String FXP_REMOVE_INFEASIBLE_EDGES_DESC = null;
+	private static final String FXP_INTERPROCEDURAL_COMPOSITION_DESC = null;
+	private static final String FXP_MINIMIZE_STATES_IGNORE_BLOWUP_DESC = null;
+	private static final String FXP_MINIMIZE_STATES_DESC = null;
+	private static final String FXP_MAXIMIZE_FINAL_STATES_DESC = null;
+
+	private static final String POST_USE_PARALLEL_COMPOSITION_DESC = null;
+	private static final String POST_SIMPLIFY_CODEBLOCKS_DESC = null;
 
 	public PreferenceInitializer() {
 		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
@@ -68,24 +84,39 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
 		return new UltimatePreferenceItem<?>[] {
-				new UltimatePreferenceItem<>("RCFG Optimizations", "", PreferenceType.Label),
-				new UltimatePreferenceItem<>(OPTIMIZE_SBE, Boolean.FALSE, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(OPTIMIZE_SBE_REWRITENOTEQUALS, Boolean.FALSE, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>("Pre-processing", "", PreferenceType.Label),
+				new UltimatePreferenceItem<>(PRE_SBE, Boolean.FALSE, PRE_SBE_DESC, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(PRE_SBE_REWRITENOTEQUALS, Boolean.FALSE, PRE_SBE_REWRITENOTEQUALS_DESC,
+						PreferenceType.Boolean),
 
-				new UltimatePreferenceItem<>("Product Optimizations", "", PreferenceType.Label),
-				new UltimatePreferenceItem<>(OPTIMIZE_MAXIMIZE_FINAL_STATES, Boolean.TRUE, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(OPTIMIZE_MINIMIZE_STATES, MinimizeStates.MULTI, PreferenceType.Combo,
-						MinimizeStates.values()),
-				new UltimatePreferenceItem<>(OPTIMIZE_MINIMIZE_STATES_IGNORE_BLOWUP, Boolean.FALSE,
+				new UltimatePreferenceItem<>("Iterative encodings", "", PreferenceType.Label),
+				new UltimatePreferenceItem<>(FXP_MAXIMIZE_FINAL_STATES, Boolean.TRUE, FXP_MAXIMIZE_FINAL_STATES_DESC,
 						PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(OPTIMIZE_REMOVE_INFEASIBLE_EDGES, Boolean.TRUE, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(OPTIMIZE_REMOVE_SINK_STATES, Boolean.TRUE, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(OPTIMIZE_SIMPLIFY_ASSUMES, Boolean.FALSE, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(OPTIMIZE_SIMPLIFY_ASSUMES_SBE, Boolean.FALSE, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(OPTIMIZE_SIMPLIFY_ASSUMES_REWRITENOTEQUALS, Boolean.FALSE,
+				new UltimatePreferenceItem<>(FXP_MINIMIZE_STATES, MinimizeStates.MULTI, FXP_MINIMIZE_STATES_DESC,
+						PreferenceType.Combo, MinimizeStates.values()),
+				new UltimatePreferenceItem<>(FXP_MINIMIZE_STATES_IGNORE_BLOWUP, Boolean.FALSE,
+						FXP_MINIMIZE_STATES_IGNORE_BLOWUP_DESC, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(FXP_REMOVE_INFEASIBLE_EDGES, Boolean.TRUE,
+						FXP_REMOVE_INFEASIBLE_EDGES_DESC, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(FXP_REMOVE_SINK_STATES, Boolean.TRUE, FXP_REMOVE_SINK_STATES_DESC,
 						PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(OPTIMIZE_UNTIL_FIXPOINT, Boolean.TRUE, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(OPTIMIZE_MAX_ITERATIONS, 0, PreferenceType.Integer),
+				new UltimatePreferenceItem<>(FXP_INTERPROCEDURAL_COMPOSITION, Boolean.TRUE,
+						FXP_INTERPROCEDURAL_COMPOSITION_DESC, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(FXP_SIMPLIFY_ASSUMES, Boolean.FALSE, FXP_SIMPLIFY_ASSUMES_DESC,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(FXP_SIMPLIFY_ASSUMES_SBE, Boolean.FALSE, FXP_SIMPLIFY_ASSUMES_SBE_DESC,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(FXP_SIMPLIFY_ASSUMES_REWRITENOTEQUALS, Boolean.FALSE,
+						FXP_SIMPLIFY_ASSUMES_REWRITENOTEQUALS_DESC, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(FXP_UNTIL_FIXPOINT, Boolean.TRUE, FXP_UNTIL_FIXPOINT_DESC,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(FXP_MAX_ITERATIONS, 0, FXP_MAX_ITERATIONS_DESC, PreferenceType.Integer),
+
+				new UltimatePreferenceItem<>("Post processing", "", PreferenceType.Label),
+				new UltimatePreferenceItem<>(POST_USE_PARALLEL_COMPOSITION, Boolean.TRUE,
+						POST_USE_PARALLEL_COMPOSITION_DESC, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(POST_SIMPLIFY_CODEBLOCKS, Boolean.FALSE, POST_SIMPLIFY_CODEBLOCKS_DESC,
+						PreferenceType.Boolean),
 
 		};
 	}

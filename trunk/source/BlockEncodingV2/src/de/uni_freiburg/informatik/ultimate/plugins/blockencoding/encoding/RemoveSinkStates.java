@@ -119,7 +119,7 @@ public final class RemoveSinkStates extends BaseBlockEncoder {
 	}
 	
 	@Override
-	public boolean isGraphChanged() {
+	public boolean isGraphStructureChanged() {
 		return mRemovedEdges > 0 || mRemovedLocations > 0;
 	}
 }

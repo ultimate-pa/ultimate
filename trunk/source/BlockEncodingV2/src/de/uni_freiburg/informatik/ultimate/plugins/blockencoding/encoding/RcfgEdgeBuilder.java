@@ -74,10 +74,26 @@ public class RcfgEdgeBuilder {
 	}
 
 	public SequentialComposition constructSequentialComposition(final BoogieIcfgLocation source,
+			final BoogieIcfgLocation target, final List<CodeBlock> codeblocks) {
+		return constructSequentialComposition(source, target, codeblocks, false, false);
+	}
+
+	public SequentialComposition constructSequentialComposition(final BoogieIcfgLocation source,
 			final BoogieIcfgLocation target, final CodeBlock first, final CodeBlock second) {
 		final List<CodeBlock> codeblocks = Arrays.asList(new CodeBlock[] { first, second });
-		final SequentialComposition sc = mCbf.constructSequentialComposition(source, target, true, true, codeblocks,
-				mXnfConversionTechnique, mSimplificationTechnique);
+		return constructSequentialComposition(source, target, codeblocks, false, false);
+	}
+
+	public SequentialComposition constructSimplifiedSequentialComposition(final BoogieIcfgLocation source,
+			final BoogieIcfgLocation target, final CodeBlock block) {
+		return constructSequentialComposition(source, target, Collections.singletonList(block), true, true);
+	}
+
+	private SequentialComposition constructSequentialComposition(final BoogieIcfgLocation source,
+			final BoogieIcfgLocation target, final List<CodeBlock> codeblocks, final boolean simplify,
+			final boolean elimQuants) {
+		final SequentialComposition sc = mCbf.constructSequentialComposition(source, target, simplify, elimQuants,
+				codeblocks, mXnfConversionTechnique, mSimplificationTechnique);
 		assert sc.getTransformula() != null : "Transformula was not added although it should have been";
 		assert sc.getTransitionFormula() != null;
 		assert sc.getTarget() != null;
