@@ -121,9 +121,12 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate> {
 					// extract result
 					try {
 						assert mMinimizationResult.getRawMinimizationOutput().checkResult(resultCheckPredFac) : "incorrect minimization result for " + minimization;
+					} catch (final AutomataOperationCanceledException e) {
+						throw e;
 					} catch (final AutomataLibraryException e) {
 						throw new AssertionError(e);
 					}
+					
 					if (mMinimizationResult.getRawMinimizationOutput() instanceof IMinimizeNwaDD) {
 						/**
 						 * TODO Christian 2016-08-05: remove RemoveUnreachable() call (test thoroughly first!)
