@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -98,6 +99,8 @@ public class Boogie2SmtSymbolTable implements IIcfgSymbolTable {
 	final Map<String, String> mBoogieFunction2SmtFunction = new HashMap<>();
 	final Map<String, String> mSmtFunction2BoogieFunction = new HashMap<>();
 	final Map<String, Map<String, Expression[]>> mBoogieFunction2Attributes = new HashMap<>();
+	
+	final DefaultIcfgSymbolTable mICfgSymbolTable = new DefaultIcfgSymbolTable();
 
 	public Boogie2SmtSymbolTable(final BoogieDeclarations boogieDeclarations, final ManagedScript script,
 			final TypeSortTranslator typeSortTranslator) {
@@ -225,7 +228,8 @@ public class Boogie2SmtSymbolTable implements IIcfgSymbolTable {
 
 	@Override
 	public IProgramVar getBoogieVar(final TermVariable tv) {
-		return mSmtVar2BoogieVar.get(tv);
+		return mICfgSymbolTable.getBoogieVar(tv);
+//		return mSmtVar2BoogieVar.get(tv);
 	}
 
 	public DeclarationInformation getDeclarationInformation(final IProgramVar bv) {
@@ -259,6 +263,7 @@ public class Boogie2SmtSymbolTable implements IIcfgSymbolTable {
 				final BoogieConst previousValue = mConstants.put(constId, boogieConst);
 				assert previousValue == null : "constant already contained";
 				mSmtConst2BoogieConst.put(constant, boogieConst);
+				mICfgSymbolTable.add(boogieConst);
 				return;
 			}
 		}
@@ -269,6 +274,7 @@ public class Boogie2SmtSymbolTable implements IIcfgSymbolTable {
 			final BoogieConst previousValue = mConstants.put(constId, boogieConst);
 			assert previousValue == null : "constant already contained";
 			mSmtConst2BoogieConst.put(constant, boogieConst);
+			mICfgSymbolTable.add(boogieConst);
 		}
 	}
 
@@ -278,7 +284,7 @@ public class Boogie2SmtSymbolTable implements IIcfgSymbolTable {
 
 	@Override
 	public BoogieConst getBoogieConst(final ApplicationTerm smtConstant) {
-		return mSmtConst2BoogieConst.get(smtConstant);
+		return (BoogieConst) mICfgSymbolTable.getBoogieConst(smtConstant);
 	}
 
 	public Map<String, Expression[]> getAttributes(final String boogieFunctionId) {
@@ -584,6 +590,7 @@ public class Boogie2SmtSymbolTable implements IIcfgSymbolTable {
 		mSmtVar2BoogieVar.put(termVariable, bv);
 		mBoogieVar2DeclarationInformation.put(bv, declarationInformation);
 		mBoogieVar2AstNode.put(bv, varList);
+		mICfgSymbolTable.add(bv);
 		return bv;
 	}
 
@@ -627,6 +634,7 @@ public class Boogie2SmtSymbolTable implements IIcfgSymbolTable {
 			mBoogieVar2AstNode.put(nonOldVar, varlist);
 		}
 		oldVar.setNonOldVar(nonOldVar);
+		mICfgSymbolTable.add(nonOldVar);
 		return nonOldVar;
 	}
 
