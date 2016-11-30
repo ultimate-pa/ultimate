@@ -77,7 +77,8 @@ public class ParallelComposition extends CodeBlock implements IInternalAction {
 			if (!(currentCodeblock instanceof StatementSequence || currentCodeblock instanceof SequentialComposition
 					|| currentCodeblock instanceof ParallelComposition || currentCodeblock instanceof GotoEdge)) {
 				throw new IllegalArgumentException("Only StatementSequence,"
-						+ " SequentialComposition, ParallelComposition, and GotoEdge supported");
+						+ " SequentialComposition, ParallelComposition, and GotoEdge supported, but got "
+						+ currentCodeblock.getClass().getSimpleName());
 			}
 
 			if (currentCodeblock.getNumberOfOpenCalls() != 0) {
