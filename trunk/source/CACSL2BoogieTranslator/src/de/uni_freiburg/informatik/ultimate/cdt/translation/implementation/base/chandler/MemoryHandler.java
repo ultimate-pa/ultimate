@@ -284,8 +284,13 @@ public class MemoryHandler {
 		}
 
 		decl.add(constructNullPointerConstant());
-		decl.add(constructValidArrayDeclaration());
-		decl.add(constuctLengthArrayDeclaration());
+		//TODO should we introduce the commented out conditions -- right now it seems safe to always declare the base arrays and functions
+//		if (getRequiredMemoryModelFeatures().getRequiredMemoryModelDeclarations().contains(MemoryModelDeclarations.Ultimate_Valid)) {
+			decl.add(constructValidArrayDeclaration());
+//		}
+//		if (getRequiredMemoryModelFeatures().getRequiredMemoryModelDeclarations().contains(MemoryModelDeclarations.Ultimate_Length)) {
+			decl.add(constuctLengthArrayDeclaration());
+//		}
 
 		final Collection<HeapDataArray> heapDataArrays = mMemoryModel.getDataHeapArrays(mRequiredMemoryModelFeatures);
 
@@ -1058,7 +1063,7 @@ public class MemoryHandler {
 		} else {
 			final Expression ptrExpr = new IdentifierExpression(loc, ptrName);
 			final Expression ptrBase = getPointerBaseAddress(ptrExpr, loc);
-			final Expression aae = new ArrayAccessExpression(loc, getLenthArray(loc), new Expression[] { ptrBase });
+			final Expression aae = new ArrayAccessExpression(loc, getLengthArray(loc), new Expression[] { ptrBase });
 			final Expression ptrOffset = getPointerOffset(ptrExpr, loc);
 			final Expression sum = constructPointerComponentAddition(loc, size, ptrOffset);
 			final Expression leq = constructPointerComponentLessEqual(loc, sum, aae);
@@ -1120,7 +1125,8 @@ public class MemoryHandler {
 	 *            location of translation unit
 	 * @return new IdentifierExpression that represents the <em>#length array</em>
 	 */
-	private Expression getLenthArray(final ILocation loc) {
+	public Expression getLengthArray(final ILocation loc) {
+		getRequiredMemoryModelFeatures().require(MemoryModelDeclarations.Ultimate_Length);
 		return new IdentifierExpression(loc, SFO.LENGTH);
 	}
 
@@ -1129,7 +1135,8 @@ public class MemoryHandler {
 	 *            location of translation unit
 	 * @return new IdentifierExpression that represents the <em>#valid array</em>
 	 */
-	private Expression getValidArray(final ILocation loc) {
+	public Expression getValidArray(final ILocation loc) {
+		getRequiredMemoryModelFeatures().require(MemoryModelDeclarations.Ultimate_Valid);
 		return new IdentifierExpression(loc, SFO.VALID);
 	}
 
@@ -1293,7 +1300,7 @@ public class MemoryHandler {
 		// ensures #length = old(#length)[#res!base := ~size];
 		// modifies #length, #valid;
 		final Expression res = new IdentifierExpression(tuLoc, SFO.RES);
-		final Expression length = getLenthArray(tuLoc);
+		final Expression length = getLengthArray(tuLoc);
 		final Expression base = new StructAccessExpression(tuLoc, res, SFO.POINTER_BASE);
 		final Expression[] idcMalloc = new Expression[] { base };
 		final Expression bLTrue = mBooleanArrayHelper.constructTrue();
@@ -1990,7 +1997,8 @@ public class MemoryHandler {
 
 	public static enum MemoryModelDeclarations {
 		Ultimate_Alloc("#Ultimate.alloc"), Ultimate_MemInit("#Ultimate.meminit"), C_Memcpy(
-				"#Ultimate.C_memcpy"), C_Memset("#Ultimate.C_memset");
+				"#Ultimate.C_memcpy"), C_Memset("#Ultimate.C_memset"),
+			Ultimate_Length("#length"), Ultimate_Valid("#valid");
 
 		private final String mName;
 

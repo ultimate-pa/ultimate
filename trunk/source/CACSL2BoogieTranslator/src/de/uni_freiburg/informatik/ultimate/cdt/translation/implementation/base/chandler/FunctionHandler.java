@@ -29,6 +29,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -794,8 +795,14 @@ public class FunctionHandler {
 	 * @param arguments
 	 * @return
 	 */
-	public Result handleStandardFunctions(final Dispatcher main, final MemoryHandler memoryHandler, final StructHandler structHandler,
-			final ILocation loc, final String methodName, final IASTInitializerClause[] arguments) {
+	public Result handleStandardFunctions(
+			final Dispatcher main, 
+			final MemoryHandler memoryHandler, 
+			final StructHandler structHandler,
+			final AExpressionTranslation expressionTranslation,
+			final ILocation loc, 
+			final String methodName, 
+			final IASTInitializerClause[] arguments) {
 		if (methodName.equals("malloc") || methodName.equals("alloca") || methodName.equals("__builtin_alloca")) {
 			assert arguments.length == 1;
 			ExpressionResult exprRes = (ExpressionResult) main.dispatch(arguments[0]);
@@ -954,23 +961,41 @@ public class FunctionHandler {
 
 			
 			final Expression tmpExpr = new IdentifierExpression(loc, tmpId);
-			final Expression nullExpr = new IdentifierExpression(loc, SFO.NULL);
-			// res == NULL
-			final BinaryExpression equalsNull = new BinaryExpression(loc, Operator.COMPEQ, tmpExpr, nullExpr);
+			final Expression nullExpr = expressionTranslation.constructNullPointer(loc);
+			// res.base == 0 && res.offset == 0
+			final Expression baseEqualsNull = expressionTranslation.constructBinaryComparisonIntegerExpression(loc, 
+					IASTBinaryExpression.op_equals,
+					MemoryHandler.getPointerBaseAddress(tmpExpr, loc), expressionTranslation.getCTypeOfPointerComponents(),
+					MemoryHandler.getPointerBaseAddress(nullExpr, loc), expressionTranslation.getCTypeOfPointerComponents());
+			final Expression offsetEqualsNull = expressionTranslation.constructBinaryComparisonIntegerExpression(loc, 
+					IASTBinaryExpression.op_equals,
+					MemoryHandler.getPointerOffset(tmpExpr, loc), expressionTranslation.getCTypeOfPointerComponents(),
+					MemoryHandler.getPointerOffset(nullExpr, loc), expressionTranslation.getCTypeOfPointerComponents());
+			final BinaryExpression equalsNull  = new BinaryExpression(loc, Operator.LOGICAND, baseEqualsNull, offsetEqualsNull);
+			//old solution did not work quickly..
+//			final BinaryExpression equalsNull = expressionTranslation.constructBinaryComparisonExpression(loc, 
+//					new BinaryExpression(loc, Operator.COMPEQ, tmpExpr, nullExpr);
 			// res.base == arg_s.base
-			final BinaryExpression baseEquals = new BinaryExpression(loc, Operator.COMPEQ, 
-					new StructAccessExpression(loc, tmpExpr, SFO.POINTER_BASE), 
-					new StructAccessExpression(loc, arg_s.lrVal.getValue(), SFO.POINTER_BASE));
+			final Expression baseEquals = expressionTranslation.constructBinaryComparisonIntegerExpression(loc, 
+					IASTBinaryExpression.op_equals,
+					MemoryHandler.getPointerBaseAddress(tmpExpr, loc), expressionTranslation.getCTypeOfPointerComponents(),
+					MemoryHandler.getPointerBaseAddress(arg_s.lrVal.getValue(), loc), expressionTranslation.getCTypeOfPointerComponents()); 
 			// res.offset >= 0
-			final BinaryExpression offsetNonNegative = new BinaryExpression(loc, Operator.COMPLEQ, 
-					new IntegerLiteral(loc, "0"),
-					new StructAccessExpression(loc, tmpExpr, SFO.POINTER_OFFSET)); 
+			final Expression offsetNonNegative = expressionTranslation.constructBinaryComparisonIntegerExpression(loc, 
+					IASTBinaryExpression.op_lessEqual,
+					expressionTranslation.constructLiteralForIntegerType(loc, expressionTranslation.getCTypeOfPointerComponents(), new BigInteger("0")),
+					expressionTranslation.getCTypeOfPointerComponents(),
+					MemoryHandler.getPointerOffset(tmpExpr, loc), 
+					expressionTranslation.getCTypeOfPointerComponents());
 			// res.offset < length(arg_s.base)
-			final BinaryExpression offsetSmallerLength = new BinaryExpression(loc, Operator.COMPLEQ, 
-					new StructAccessExpression(loc, tmpExpr, SFO.POINTER_OFFSET),
+			final Expression offsetSmallerLength = expressionTranslation.constructBinaryComparisonIntegerExpression(loc, 
+					IASTBinaryExpression.op_lessEqual,
+					MemoryHandler.getPointerOffset(tmpExpr, loc), 
+					expressionTranslation.getCTypeOfPointerComponents(),
 					new ArrayAccessExpression(loc,
-							new IdentifierExpression(loc, SFO.LENGTH),
-							new Expression[] { new StructAccessExpression(loc, arg_s.lrVal.getValue(), SFO.POINTER_BASE) }));
+							memoryHandler.getLengthArray(loc),
+							new Expression[] { MemoryHandler.getPointerBaseAddress(arg_s.lrVal.getValue(), loc) } ), 
+					expressionTranslation.getCTypeOfPointerComponents());
 			// res.base == arg_s.base && res.offset >= 0 && res.offset <= length(arg_s.base)
 			final BinaryExpression inRange = new BinaryExpression(loc, Operator.LOGICAND, baseEquals,
 					new BinaryExpression(loc, Operator.LOGICAND,

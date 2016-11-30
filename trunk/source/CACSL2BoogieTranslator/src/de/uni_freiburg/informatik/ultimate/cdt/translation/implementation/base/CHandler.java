@@ -2489,7 +2489,7 @@ public class CHandler implements ICHandler {
 		final IASTExpression functionName = node.getFunctionNameExpression();
 		if (functionName instanceof IASTIdExpression) {
 			final Result standardFunction = mFunctionHandler.handleStandardFunctions(main, mMemoryHandler,
-					mStructHandler, loc, ((IASTIdExpression) functionName).getName().toString(), node.getArguments());
+					mStructHandler, mExpressionTranslation, loc, ((IASTIdExpression) functionName).getName().toString(), node.getArguments());
 			if (standardFunction != null) {
 				return standardFunction;
 			}
@@ -3218,6 +3218,9 @@ public class CHandler implements ICHandler {
 
 						stmt.add(new AssignmentStatement(loc, new LeftHandSide[] { en.getKey() },
 								new Expression[] { new IdentifierExpression(loc, tmpId) }));
+						
+						overappr.add(new Overapprox("union field of non-heap union updated "
+								+ "--> havoccing other fields (CHandler.makeAssignment(..))", loc));
 					}
 				}
 			}
