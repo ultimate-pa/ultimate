@@ -22,7 +22,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * <p>
  * The class contract is that {@link #hasNext(RefinementStrategyAdvance)} returns {@code true} iff
  * {@link #next(RefinementStrategyAdvance)} advances the respective component. Between two calls to
- * {@link #next(RefinementStrategyAdvance)} the respective getter returns the same object.
+ * {@link #next(RefinementStrategyAdvance)} the respective getter returns the same object. However, for instance by
+ * a call to this method to advance the {@link IInterpolantGenerator}, the {@link TraceChecker} may change. A user
+ * should hence not store these objects temporarily.
  *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
