@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.t
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.TreeMap;
 
@@ -69,6 +68,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public class MultiTrackTraceAbstractionRefinementStrategy implements IRefinementStrategy {
+	private static final int SOLVER_TIMEOUT = 10_000;
 	private static final String Z3_COMMAND = "z3 -smt2 -in SMTLIB2_COMPLIANT=true";
 	
 	private final IUltimateServiceProvider mServices;
@@ -83,7 +83,7 @@ public class MultiTrackTraceAbstractionRefinementStrategy implements IRefinement
 	
 	private final Iterator<InterpolationTechnique> mInterpolationTechniques;
 	
-	private TraceCheckerConstructor mTcConstructorFromPrefs;
+	private TraceCheckerConstructor mTcConstructor;
 	private TraceChecker mTraceChecker;
 	private IInterpolantGenerator mInterpolantGenerator;
 	private IInterpolantAutomatonBuilder<CodeBlock, IPredicate> mInterpolantAutomatonBuilder;
@@ -91,8 +91,6 @@ public class MultiTrackTraceAbstractionRefinementStrategy implements IRefinement
 	/**
 	 * @param prefs
 	 *            Preferences. pending contexts
-	 * @param managedScript
-	 *            managed script
 	 * @param services
 	 *            Ultimate services
 	 * @param predicateUnifier
@@ -122,18 +120,15 @@ public class MultiTrackTraceAbstractionRefinementStrategy implements IRefinement
 		mInterpolationTechniques = initializeInterpolationTechniquesList();
 		
 		// dummy construction, is overwritten in the next step
-		mTcConstructorFromPrefs =
-				new TraceCheckerConstructor(mPrefs, null, mServices, mPredicateUnifier, mCounterexample, null);
-		mTcConstructorFromPrefs = constructTraceCheckerConstructor();
+		mTcConstructor = constructTraceCheckerConstructor(null);
 	}
 	
 	@Override
 	public boolean hasNext(final RefinementStrategyAdvance advance) {
 		switch (advance) {
 			case TRACE_CHECKER:
-				return mInterpolationTechniques.hasNext();
 			case INTERPOLANT_GENERATOR:
-				return false;
+				return mInterpolationTechniques.hasNext();
 			default:
 				throw new IllegalArgumentException("Unknown mode: " + advance);
 		}
@@ -143,11 +138,9 @@ public class MultiTrackTraceAbstractionRefinementStrategy implements IRefinement
 	public void next(final RefinementStrategyAdvance advance) {
 		switch (advance) {
 			case TRACE_CHECKER:
-				mTcConstructorFromPrefs = constructTraceCheckerConstructor();
-				break;
 			case INTERPOLANT_GENERATOR:
-				// TODO should we advance the trace checker as well?
-				throw new NoSuchElementException();
+				mTcConstructor = constructTraceCheckerConstructor(mTcConstructor);
+				break;
 			default:
 				throw new IllegalArgumentException("Unknown mode: " + advance);
 		}
@@ -156,7 +149,7 @@ public class MultiTrackTraceAbstractionRefinementStrategy implements IRefinement
 	@Override
 	public TraceChecker getTraceChecker() {
 		if (mTraceChecker == null) {
-			mTraceChecker = mTcConstructorFromPrefs.get();
+			mTraceChecker = mTcConstructor.get();
 		}
 		return mTraceChecker;
 	}
@@ -186,21 +179,29 @@ public class MultiTrackTraceAbstractionRefinementStrategy implements IRefinement
 		return list.iterator();
 	}
 	
-	private TraceCheckerConstructor constructTraceCheckerConstructor() {
-		// reset trace checker
-		mTraceChecker = null;
-		
+	private TraceCheckerConstructor constructTraceCheckerConstructor(final TraceCheckerConstructor tcConstructor) {
 		final InterpolationTechnique nextTechnique = mInterpolationTechniques.next();
 		final ManagedScript managedScript = constructManagedScript(nextTechnique);
 		
-		return new TraceCheckerConstructor(mTcConstructorFromPrefs, managedScript, nextTechnique);
+		TraceCheckerConstructor result;
+		if (tcConstructor == null) {
+			result = new TraceCheckerConstructor(mPrefs, managedScript, mServices, mPredicateUnifier, mCounterexample,
+					nextTechnique);
+		} else {
+			result = new TraceCheckerConstructor(mTcConstructor, managedScript, nextTechnique);
+			
+			// reset trace checker and interpolant generator
+			mTraceChecker = null;
+			mInterpolantGenerator = null;
+		}
+		return result;
 	}
 	
 	private ManagedScript constructManagedScript(final InterpolationTechnique interpolationTechnique) {
 		final Settings solverSettings;
 		switch (interpolationTechnique) {
 			case Craig_TreeInterpolation:
-				solverSettings = new Settings(false, false, null, 10_000, null, false, null, null);
+				solverSettings = new Settings(false, false, null, SOLVER_TIMEOUT, null, false, null, null);
 				break;
 			case FPandBP:
 				// final String commandExternalSolver = RcfgPreferenceInitializer.Z3_DEFAULT;
