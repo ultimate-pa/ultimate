@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2016 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -54,30 +54,29 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
 
 /**
- * Construct game automaton given the input automaton (not a game graph) and
- * the initial partition.
- * 
+ * Construct game automaton given the input automaton (not a game graph) and the initial partition.
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  * @param <LETTER>
  * @param <STATE>
  */
-public class GameAutomaton<LETTER, STATE> extends NestedWordAutomatonOnDemandStateAndLetter<IGameLetter<LETTER, STATE>, IGameState> {
-	
+public class GameAutomaton<LETTER, STATE>
+		extends NestedWordAutomatonOnDemandStateAndLetter<IGameLetter<LETTER, STATE>, IGameState> {
+
 	private final boolean mOmitSymmetricPairs = true;
-	
+
 	private final Collection<Set<STATE>> mPossibleEquivalentClasses;
 	private final IDoubleDeckerAutomaton<LETTER, STATE> mOperand;
-	
+
 	private final ISimulationInfoProvider<LETTER, STATE> mSimulationInfoProvider;
-	
+
 	private final GameStateFactory mGameStateFactory;
 	private final GameLetterFactory mGameLetterFactory;
 
-
 	public GameAutomaton(final AutomataLibraryServices services, final IStateFactory<IGameState> stateFactory,
 			final Collection<Set<STATE>> possibleEquivalentClasses, final IDoubleDeckerAutomaton<LETTER, STATE> operand,
-			final ISimulationInfoProvider<LETTER, STATE> simulationInfoProvider, 
+			final ISimulationInfoProvider<LETTER, STATE> simulationInfoProvider,
 			final SpoilerNwaVertex<LETTER, STATE> uniqueSpoilerWinningSink) throws AutomataOperationCanceledException {
 		super(services, stateFactory);
 		mPossibleEquivalentClasses = possibleEquivalentClasses;
@@ -87,13 +86,15 @@ public class GameAutomaton<LETTER, STATE> extends NestedWordAutomatonOnDemandSta
 		mGameStateFactory = new GameStateFactory(uniqueSpoilerWinningSink);
 		constructInitialStates();
 	}
+
 	@Override
 	protected void constructInitialStates() throws AutomataOperationCanceledException {
 		for (final Set<STATE> eqClass : mPossibleEquivalentClasses) {
 			if (!mServices.getProgressMonitorService().continueProcessing()) {
-				final long initialNodes = NestedWordAutomataUtils.computeNumberOfEquivalentPairs(mPossibleEquivalentClasses);
-				final RunningTaskInfo rti = new RunningTaskInfo(getClass(),
-						"constructing " + initialNodes + "initial vertices");
+				final long initialNodes =
+						NestedWordAutomataUtils.computeNumberOfEquivalentPairs(mPossibleEquivalentClasses);
+				final RunningTaskInfo rti =
+						new RunningTaskInfo(getClass(), "constructing " + initialNodes + "initial vertices");
 				throw new AutomataOperationCanceledException(rti);
 			}
 			for (final STATE q0 : eqClass) {
@@ -108,126 +109,134 @@ public class GameAutomaton<LETTER, STATE> extends NestedWordAutomatonOnDemandSta
 		}
 		mInitialStateHaveBeenConstructed = true;
 	}
-	
-	
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 *
 	 * @see de.uni_freiburg.informatik.ultimate.automata.IAutomaton#hasModifiableAlphabet()
 	 */
 	@Override
 	public boolean hasModifiableAlphabet() {
 		return true;
 	}
-	
+
 	private IGameState constructInitialVertex(final STATE spoilerState, final STATE duplicatorState) {
 		final boolean isSpoilerAccepting = mOperand.isFinal(spoilerState);
 		final boolean isDuplicatorAccepting = mOperand.isFinal(duplicatorState);
-		final boolean isImmediatelyWinningForSpoiler = mSimulationInfoProvider.isImmediatelyWinningForSpoiler(isSpoilerAccepting, isDuplicatorAccepting);
-		final boolean delayedbit = mSimulationInfoProvider.computeBitForInitialVertex(isSpoilerAccepting, isDuplicatorAccepting);
-		final int priority = mSimulationInfoProvider.computePriority(delayedbit, isSpoilerAccepting, isDuplicatorAccepting);
-		final IGameState result = mGameStateFactory.getOrConstructGameState(spoilerState, duplicatorState, delayedbit , priority, isImmediatelyWinningForSpoiler, false);
+		final boolean isImmediatelyWinningForSpoiler =
+				mSimulationInfoProvider.isImmediatelyWinningForSpoiler(isSpoilerAccepting, isDuplicatorAccepting);
+		final boolean delayedbit =
+				mSimulationInfoProvider.computeBitForInitialVertex(isSpoilerAccepting, isDuplicatorAccepting);
+		final int priority =
+				mSimulationInfoProvider.computePriority(delayedbit, isSpoilerAccepting, isDuplicatorAccepting);
+		final IGameState result = mGameStateFactory.getOrConstructGameState(spoilerState, duplicatorState, delayedbit,
+				priority, isImmediatelyWinningForSpoiler, false);
 		return result;
 	}
-	
-	
+
 	@Override
 	protected void constructInternalSuccessors(final IGameState state) {
 		if (isSpoilerSink(state) || isDuplicatorSink(state)) {
 			// do nothing
 		} else {
 			final SpoilerNwaVertex<LETTER, STATE> vertex = unwrapSpoilerNwaVertex(state);
-			final HashRelation<IGameLetter<LETTER, STATE>, IGameState> succTrans = 
-					constructSuccessors(vertex, new InternalLetterAndSuccessorProvider(), 
-							ETransitionType.INTERNAL, false);
+			final HashRelation<IGameLetter<LETTER, STATE>, IGameState> succTrans = constructSuccessors(vertex,
+					new InternalLetterAndSuccessorProvider(), ETransitionType.INTERNAL, false);
 			addInternalTransitionsToAutomaton(state, succTrans);
 		}
 	}
-	
+
 	@Override
 	protected void constructCallSuccessors(final IGameState state) {
 		if (isSpoilerSink(state) || isDuplicatorSink(state)) {
 			// do nothing
 		} else {
 			final SpoilerNwaVertex<LETTER, STATE> vertex = unwrapSpoilerNwaVertex(state);
-			final HashRelation<IGameLetter<LETTER, STATE>, IGameState> succTrans = 
-					constructSuccessors(vertex, new CallLetterAndSuccessorProvider(), 
-							ETransitionType.CALL, false);
+			final HashRelation<IGameLetter<LETTER, STATE>, IGameState> succTrans =
+					constructSuccessors(vertex, new CallLetterAndSuccessorProvider(), ETransitionType.CALL, false);
 			addCallTransitionsToAutomaton(state, succTrans);
 		}
-		
+
 	}
+
 	@Override
 	protected void constructReturnSuccessors(final IGameState lin, final IGameState hier) {
 		if (isSpoilerSink(lin) || isDuplicatorSink(lin)) {
 			// do nothing
 		} else {
 			final SpoilerNwaVertex<LETTER, STATE> vertex = unwrapSpoilerNwaVertex(lin);
-			final HashRelation<IGameLetter<LETTER, STATE>, IGameState> succTrans = 
-					constructSuccessors(vertex, new ReturnLetterAndSuccessorProvider(unwrapSpoilerNwaVertex(hier)), 
-							ETransitionType.RETURN, true);
+			final HashRelation<IGameLetter<LETTER, STATE>, IGameState> succTrans = constructSuccessors(vertex,
+					new ReturnLetterAndSuccessorProvider(unwrapSpoilerNwaVertex(hier)), ETransitionType.RETURN, true);
 			addReturnTransitionsToAutomaton(lin, hier, succTrans);
 		}
 	}
-	
+
 	public static <LETTER, STATE> SpoilerNwaVertex<LETTER, STATE> unwrapSpoilerNwaVertex(final IGameState state) {
 		final GameSpoilerNwaVertex<LETTER, STATE> wrapper = (GameSpoilerNwaVertex<LETTER, STATE>) state;
 		final SpoilerNwaVertex<LETTER, STATE> vertex = wrapper.getSpoilerNwaVertex();
 		return vertex;
 	}
-	
+
 	private HashRelation<IGameLetter<LETTER, STATE>, IGameState> constructSuccessors(
 			final SpoilerNwaVertex<LETTER, STATE> vertex,
-			final LetterAndSuccessorProvider<LETTER, STATE, ? extends IOutgoingTransitionlet<LETTER, STATE>> lasp, 
+			final LetterAndSuccessorProvider<LETTER, STATE, ? extends IOutgoingTransitionlet<LETTER, STATE>> lasp,
 			final ETransitionType transitionType, final boolean spoilerStateNeededInSucc) {
 		final STATE spoilerState = vertex.getQ0();
 		final STATE duplicatorState = vertex.getQ1();
 		final HashRelation<IGameLetter<LETTER, STATE>, IGameState> succTrans = new HashRelation<>();
 		for (final LETTER letter : lasp.getLettersForSpoiler(spoilerState)) {
-			final Iterable<? extends IOutgoingTransitionlet<LETTER, STATE>> spoilerSuccIt = lasp.getOutgoingTransitionsForSpoiler(spoilerState, letter);
+			final Iterable<? extends IOutgoingTransitionlet<LETTER, STATE>> spoilerSuccIt =
+					lasp.getOutgoingTransitionsForSpoiler(spoilerState, letter);
 			final Set<STATE> spoilerSuccs = NestedWordAutomataUtils.constructSuccessorSet(spoilerSuccIt);
-			final Iterable<? extends IOutgoingTransitionlet<LETTER, STATE>> duplicatorSuccIt = lasp.getOutgoingTransitionsForSpoiler(duplicatorState, letter);
+			final Iterable<? extends IOutgoingTransitionlet<LETTER, STATE>> duplicatorSuccIt =
+					lasp.getOutgoingTransitionsForSpoiler(duplicatorState, letter);
 			final Set<STATE> duplicatorSuccs = NestedWordAutomataUtils.constructSuccessorSet(duplicatorSuccIt);
-			final HashRelation<IGameLetter<LETTER, STATE>, IGameState> succTransForLetter = 
-					computerSuccessorTransitions(vertex, letter, transitionType, spoilerSuccs, duplicatorSuccs, spoilerStateNeededInSucc);
+			final HashRelation<IGameLetter<LETTER, STATE>, IGameState> succTransForLetter =
+					computerSuccessorTransitions(vertex, letter, transitionType, spoilerSuccs, duplicatorSuccs,
+							spoilerStateNeededInSucc);
 			succTrans.addAll(succTransForLetter);
 		}
 		return succTrans;
 	}
-	
-	private void addInternalTransitionsToAutomaton(final IGameState state, final HashRelation<IGameLetter<LETTER, STATE>, IGameState> succTrans) {
+
+	private void addInternalTransitionsToAutomaton(final IGameState state,
+			final HashRelation<IGameLetter<LETTER, STATE>, IGameState> succTrans) {
 		for (final IGameLetter<LETTER, STATE> gameLetter : succTrans.getDomain()) {
 			mCache.addInternalTransitions(state, gameLetter, succTrans.getImage(gameLetter));
 		}
 	}
-	
-	private void addCallTransitionsToAutomaton(final IGameState state, final HashRelation<IGameLetter<LETTER, STATE>, IGameState> succTrans) {
+
+	private void addCallTransitionsToAutomaton(final IGameState state,
+			final HashRelation<IGameLetter<LETTER, STATE>, IGameState> succTrans) {
 		for (final IGameLetter<LETTER, STATE> gameLetter : succTrans.getDomain()) {
 			mCache.addCallTransitions(state, gameLetter, succTrans.getImage(gameLetter));
 		}
 	}
-	
-	private void addReturnTransitionsToAutomaton(final IGameState lin, final IGameState hier, final HashRelation<IGameLetter<LETTER, STATE>, IGameState> succTrans) {
+
+	private void addReturnTransitionsToAutomaton(final IGameState lin, final IGameState hier,
+			final HashRelation<IGameLetter<LETTER, STATE>, IGameState> succTrans) {
 		for (final IGameLetter<LETTER, STATE> gameLetter : succTrans.getDomain()) {
 			mCache.addReturnTransitions(lin, hier, gameLetter, succTrans.getImage(gameLetter));
 		}
 	}
-	
-	
-	
+
 	private HashRelation<IGameLetter<LETTER, STATE>, IGameState> computerSuccessorTransitions(
-			final SpoilerNwaVertex<LETTER, STATE> vertex, final LETTER letter, final ETransitionType transitionType, final Set<STATE> spoilerSuccs,
-			final Set<STATE> duplicatorSuccs, final boolean spoilerStateNeededInSucc) {
+			final SpoilerNwaVertex<LETTER, STATE> vertex, final LETTER letter, final ETransitionType transitionType,
+			final Set<STATE> spoilerSuccs, final Set<STATE> duplicatorSuccs, final boolean spoilerStateNeededInSucc) {
 		final HashRelation<IGameLetter<LETTER, STATE>, IGameState> result = new HashRelation<>();
 		for (final STATE spoilerSucc : spoilerSuccs) {
-			final IGameLetter<LETTER, STATE> gameLetter = getOrConstuctSuccessorGameLetter(vertex, letter, transitionType, spoilerSucc);
+			final IGameLetter<LETTER, STATE> gameLetter =
+					getOrConstuctSuccessorGameLetter(vertex, letter, transitionType, spoilerSucc);
 			if (duplicatorSuccs.isEmpty()) {
-				final IGameState wrapper = getOrConstructSuccessorSpoilerWinningSinkVertex(vertex, letter, spoilerSucc, spoilerStateNeededInSucc);
+				final IGameState wrapper = getOrConstructSuccessorSpoilerWinningSinkVertex(vertex, letter, spoilerSucc,
+						spoilerStateNeededInSucc);
 				assert wrapper != null;
 				result.addPair(gameLetter, wrapper);
 			} else {
 				final DuplicatorNwaVertex<LETTER, STATE> dnv = (DuplicatorNwaVertex<LETTER, STATE>) gameLetter;
 				for (final STATE duplicatorSucc : duplicatorSuccs) {
-					final IGameState wrapper = getOrConstructSuccessorVertex(dnv.isB(), letter, spoilerSucc, duplicatorSucc, spoilerStateNeededInSucc);
+					final IGameState wrapper = getOrConstructSuccessorVertex(dnv.isB(), letter, spoilerSucc,
+							duplicatorSucc, spoilerStateNeededInSucc);
 					assert wrapper != null;
 					result.addPair(gameLetter, wrapper);
 				}
@@ -235,45 +244,51 @@ public class GameAutomaton<LETTER, STATE> extends NestedWordAutomatonOnDemandSta
 		}
 		return result;
 	}
-	private IGameState getOrConstructSuccessorSpoilerWinningSinkVertex(final SpoilerNwaVertex<LETTER, STATE> predVertex, final LETTER letter,
-			final STATE spoilerSucc, final boolean spoilerStateNeededInSucc) {
+
+	private IGameState getOrConstructSuccessorSpoilerWinningSinkVertex(final SpoilerNwaVertex<LETTER, STATE> predVertex,
+			final LETTER letter, final STATE spoilerSucc, final boolean spoilerStateNeededInSucc) {
 		final boolean isDuplicatorAccepting = mOperand.isFinal(predVertex.getQ1());
-		final boolean delayedbit = mSimulationInfoProvider.computeBitForDuplicatorVertex(predVertex.isB(), isDuplicatorAccepting);
+		final boolean delayedbit =
+				mSimulationInfoProvider.computeBitForDuplicatorVertex(predVertex.isB(), isDuplicatorAccepting);
 		// only auxiliary step to sink, use "neutral" priority
 		final int priority = 2;
-		final IGameState result = mGameStateFactory.getOrConstructGameState(spoilerSucc, null, delayedbit , priority, true, spoilerStateNeededInSucc);
+		final IGameState result = mGameStateFactory.getOrConstructGameState(spoilerSucc, null, delayedbit, priority,
+				true, spoilerStateNeededInSucc);
 		return result;
 	}
-	private IGameState getOrConstructSuccessorVertex(final boolean predBit, final LETTER letter, final STATE spoilerSucc,
-			final STATE duplicatorSucc, final boolean spoilerStateNeededInSucc) {
+
+	private IGameState getOrConstructSuccessorVertex(final boolean predBit, final LETTER letter,
+			final STATE spoilerSucc, final STATE duplicatorSucc, final boolean spoilerStateNeededInSucc) {
 		final boolean isSpoilerAccepting = mOperand.isFinal(spoilerSucc);
 		final boolean isDuplicatorAccepting = mOperand.isFinal(duplicatorSucc);
-		final boolean isImmediatelyWinningForSpoiler = mSimulationInfoProvider.isImmediatelyWinningForSpoiler(isSpoilerAccepting, isDuplicatorAccepting);
+		final boolean isImmediatelyWinningForSpoiler =
+				mSimulationInfoProvider.isImmediatelyWinningForSpoiler(isSpoilerAccepting, isDuplicatorAccepting);
 		final boolean delayedbit = mSimulationInfoProvider.computeBitForSpoilerVertex(predBit, isDuplicatorAccepting);
-		final int priority = mSimulationInfoProvider.computePriority(delayedbit, isSpoilerAccepting, isDuplicatorAccepting);
-		final IGameState result = mGameStateFactory.getOrConstructGameState(
-				spoilerSucc, duplicatorSucc, delayedbit , priority, isImmediatelyWinningForSpoiler, spoilerStateNeededInSucc);
+		final int priority =
+				mSimulationInfoProvider.computePriority(delayedbit, isSpoilerAccepting, isDuplicatorAccepting);
+		final IGameState result = mGameStateFactory.getOrConstructGameState(spoilerSucc, duplicatorSucc, delayedbit,
+				priority, isImmediatelyWinningForSpoiler, spoilerStateNeededInSucc);
 		return result;
 	}
-	private IGameLetter<LETTER, STATE> getOrConstuctSuccessorGameLetter(final SpoilerNwaVertex<LETTER, STATE> predVertex, final LETTER letter,
-			final ETransitionType transitionType, final STATE spoilerSucc) {
+
+	private IGameLetter<LETTER, STATE> getOrConstuctSuccessorGameLetter(
+			final SpoilerNwaVertex<LETTER, STATE> predVertex, final LETTER letter, final ETransitionType transitionType,
+			final STATE spoilerSucc) {
 		final boolean isSpoilerAccepting = mOperand.isFinal(spoilerSucc);
-		final boolean delayedbit = mSimulationInfoProvider.computeBitForDuplicatorVertex(predVertex.isB(), isSpoilerAccepting);
-		final IGameLetter<LETTER, STATE> result = mGameLetterFactory.getOrConstructGameLetter(spoilerSucc, predVertex.getQ1(), letter, delayedbit, transitionType);
+		final boolean delayedbit =
+				mSimulationInfoProvider.computeBitForDuplicatorVertex(predVertex.isB(), isSpoilerAccepting);
+		final IGameLetter<LETTER, STATE> result = mGameLetterFactory.getOrConstructGameLetter(spoilerSucc,
+				predVertex.getQ1(), letter, delayedbit, transitionType);
 		return result;
 	}
-	
+
 	public static boolean isDuplicatorSink(final IGameState state) {
 		return (unwrapSpoilerNwaVertex(state).getSink() instanceof DuplicatorWinningSink);
 	}
+
 	public static boolean isSpoilerSink(final IGameState state) {
-		return (unwrapSpoilerNwaVertex(state).getSink() instanceof SpoilerWinningSink);	
+		return (unwrapSpoilerNwaVertex(state).getSink() instanceof SpoilerWinningSink);
 	}
-
-
-
-
-
 
 	private class GameStateFactory {
 		private final NestedMap2<STATE, STATE, IGameState> mSpoiler2duplicator2vertexForFalse = new NestedMap2<>();
@@ -281,24 +296,22 @@ public class GameAutomaton<LETTER, STATE> extends NestedWordAutomatonOnDemandSta
 		private final SpoilerWinningSink<LETTER, STATE> mSpoilerWinningSinkMarker;
 		private final GameSpoilerNwaVertex<LETTER, STATE> mUniqueSpoilerWinningSink;
 
-		
-		
-		
-		private IGameState getGameState(final STATE spoilerState, final STATE duplicatorState, final boolean delayedbit) {
-			if (delayedbit) {
-				return mSpoiler2duplicator2vertexForTrue.get(spoilerState, duplicatorState);
-			} else {
-				return mSpoiler2duplicator2vertexForFalse.get(spoilerState, duplicatorState);
-			}
-		}
-		
 		public GameStateFactory(final SpoilerNwaVertex<LETTER, STATE> uniqueSpoilerWinningSink) {
-				mUniqueSpoilerWinningSink = new GameSpoilerNwaVertex<LETTER, STATE>(uniqueSpoilerWinningSink);
-				mSpoilerWinningSinkMarker = (SpoilerWinningSink<LETTER, STATE>) uniqueSpoilerWinningSink.getSink();
+			mUniqueSpoilerWinningSink = new GameSpoilerNwaVertex<>(uniqueSpoilerWinningSink);
+			mSpoilerWinningSinkMarker = (SpoilerWinningSink<LETTER, STATE>) uniqueSpoilerWinningSink.getSink();
 		}
 
-		public IGameState getOrConstructGameState(final STATE spoilerState, final STATE duplicatorState, 
-				final boolean delayedbit, final int priority, final boolean isSpoilerWinningSink, final boolean spoilerStateNeededInSucc){
+		private IGameState getGameState(final STATE spoilerState, final STATE duplicatorState,
+				final boolean delayedbit) {
+			if (delayedbit) {
+				return mSpoiler2duplicator2vertexForTrue.get(spoilerState, duplicatorState);
+			}
+			return mSpoiler2duplicator2vertexForFalse.get(spoilerState, duplicatorState);
+		}
+
+		public IGameState getOrConstructGameState(final STATE spoilerState, final STATE duplicatorState,
+				final boolean delayedbit, final int priority, final boolean isSpoilerWinningSink,
+				final boolean spoilerStateNeededInSucc) {
 			assert spoilerState != null;
 			assert duplicatorState != null || isSpoilerWinningSink;
 			IGameState result = getGameState(spoilerState, duplicatorState, delayedbit);
@@ -310,15 +323,16 @@ public class GameAutomaton<LETTER, STATE> extends NestedWordAutomatonOnDemandSta
 			return result;
 		}
 
-		private IGameState constructGameState(final STATE spoilerState, final STATE duplicatorState, 
+		private IGameState constructGameState(final STATE spoilerState, final STATE duplicatorState,
 				final boolean delayedbit, final int priority, final boolean isSpoilerWinningSink) {
 			final SpoilerNwaVertex<LETTER, STATE> spoilerNwaVertex;
 			if (isSpoilerWinningSink) {
-				spoilerNwaVertex = new SpoilerNwaVertex<LETTER, STATE>(priority, delayedbit, spoilerState, duplicatorState, mSpoilerWinningSinkMarker);
+				spoilerNwaVertex = new SpoilerNwaVertex<>(priority, delayedbit, spoilerState, duplicatorState,
+						mSpoilerWinningSinkMarker);
 			} else {
-				spoilerNwaVertex = new SpoilerNwaVertex<LETTER, STATE>(priority, delayedbit, spoilerState, duplicatorState);
+				spoilerNwaVertex = new SpoilerNwaVertex<>(priority, delayedbit, spoilerState, duplicatorState);
 			}
-			final IGameState result = new GameSpoilerNwaVertex<LETTER, STATE>(spoilerNwaVertex);
+			final IGameState result = new GameSpoilerNwaVertex<>(spoilerNwaVertex);
 			if (delayedbit) {
 				mSpoiler2duplicator2vertexForTrue.put(spoilerState, duplicatorState, result);
 			} else {
@@ -328,37 +342,41 @@ public class GameAutomaton<LETTER, STATE> extends NestedWordAutomatonOnDemandSta
 			return result;
 		}
 	}
-	
+
 	private class GameLetterFactory {
-		private final NestedMap3<STATE, STATE, LETTER, IGameLetter<LETTER, STATE>> mSpoi2Dupl2letter2GameLetter_ForFalse_ForInternal = new NestedMap3<>();
-		private final NestedMap3<STATE, STATE, LETTER, IGameLetter<LETTER, STATE>> mSpoi2Dupl2letter2GameLetter_ForTrue_ForInternal = new NestedMap3<>();
-		
-		private final NestedMap3<STATE, STATE, LETTER, IGameLetter<LETTER, STATE>> mSpoi2Dupl2letter2GameLetter_ForFalse_ForCall = new NestedMap3<>();
-		private final NestedMap3<STATE, STATE, LETTER, IGameLetter<LETTER, STATE>> mSpoi2Dupl2letter2GameLetter_ForTrue_ForCall = new NestedMap3<>();
+		private final NestedMap3<STATE, STATE, LETTER, IGameLetter<LETTER, STATE>> mSpoi2Dupl2letter2GameLetter_ForFalse_ForInternal =
+				new NestedMap3<>();
+		private final NestedMap3<STATE, STATE, LETTER, IGameLetter<LETTER, STATE>> mSpoi2Dupl2letter2GameLetter_ForTrue_ForInternal =
+				new NestedMap3<>();
 
-		private final NestedMap3<STATE, STATE, LETTER, IGameLetter<LETTER, STATE>> mSpoi2Dupl2letter2GameLetter_ForFalse_ForReturn = new NestedMap3<>();
-		private final NestedMap3<STATE, STATE, LETTER, IGameLetter<LETTER, STATE>> mSpoi2Dupl2letter2GameLetter_ForTrue_ForReturn = new NestedMap3<>();
+		private final NestedMap3<STATE, STATE, LETTER, IGameLetter<LETTER, STATE>> mSpoi2Dupl2letter2GameLetter_ForFalse_ForCall =
+				new NestedMap3<>();
+		private final NestedMap3<STATE, STATE, LETTER, IGameLetter<LETTER, STATE>> mSpoi2Dupl2letter2GameLetter_ForTrue_ForCall =
+				new NestedMap3<>();
 
-		private IGameLetter<LETTER, STATE> getGameLetter(final STATE spoilerState, final STATE duplicatorState, final LETTER letter, final boolean delayedbit, final ETransitionType transitionType) {
+		private final NestedMap3<STATE, STATE, LETTER, IGameLetter<LETTER, STATE>> mSpoi2Dupl2letter2GameLetter_ForFalse_ForReturn =
+				new NestedMap3<>();
+		private final NestedMap3<STATE, STATE, LETTER, IGameLetter<LETTER, STATE>> mSpoi2Dupl2letter2GameLetter_ForTrue_ForReturn =
+				new NestedMap3<>();
+
+		private IGameLetter<LETTER, STATE> getGameLetter(final STATE spoilerState, final STATE duplicatorState,
+				final LETTER letter, final boolean delayedbit, final ETransitionType transitionType) {
 			switch (transitionType) {
 			case CALL:
 				if (delayedbit) {
 					return mSpoi2Dupl2letter2GameLetter_ForTrue_ForCall.get(spoilerState, duplicatorState, letter);
-				} else {
-					return mSpoi2Dupl2letter2GameLetter_ForFalse_ForCall.get(spoilerState, duplicatorState, letter);
 				}
+				return mSpoi2Dupl2letter2GameLetter_ForFalse_ForCall.get(spoilerState, duplicatorState, letter);
 			case INTERNAL:
 				if (delayedbit) {
 					return mSpoi2Dupl2letter2GameLetter_ForTrue_ForInternal.get(spoilerState, duplicatorState, letter);
-				} else {
-					return mSpoi2Dupl2letter2GameLetter_ForFalse_ForInternal.get(spoilerState, duplicatorState, letter);
 				}
+				return mSpoi2Dupl2letter2GameLetter_ForFalse_ForInternal.get(spoilerState, duplicatorState, letter);
 			case RETURN:
 				if (delayedbit) {
 					return mSpoi2Dupl2letter2GameLetter_ForTrue_ForReturn.get(spoilerState, duplicatorState, letter);
-				} else {
-					return mSpoi2Dupl2letter2GameLetter_ForFalse_ForReturn.get(spoilerState, duplicatorState, letter);
 				}
+				return mSpoi2Dupl2letter2GameLetter_ForFalse_ForReturn.get(spoilerState, duplicatorState, letter);
 			case SINK:
 			case SUMMARIZE_ENTRY:
 			case SUMMARIZE_EXIT:
@@ -366,22 +384,25 @@ public class GameAutomaton<LETTER, STATE> extends NestedWordAutomatonOnDemandSta
 				throw new AssertionError("illegal transition type");
 			}
 		}
-		
-		public IGameLetter<LETTER, STATE> getOrConstructGameLetter(final STATE spoilerState, final STATE duplicatorState, final LETTER letter, 
-				final boolean delayedbit, final ETransitionType transitionType){
+
+		public IGameLetter<LETTER, STATE> getOrConstructGameLetter(final STATE spoilerState,
+				final STATE duplicatorState, final LETTER letter, final boolean delayedbit,
+				final ETransitionType transitionType) {
 			assert spoilerState != null;
 			assert duplicatorState != null;
 			assert letter != null;
-			IGameLetter<LETTER, STATE> result = getGameLetter(spoilerState, duplicatorState, letter, delayedbit, transitionType);
+			IGameLetter<LETTER, STATE> result =
+					getGameLetter(spoilerState, duplicatorState, letter, delayedbit, transitionType);
 			if (result == null) {
 				result = constructGameLetter(spoilerState, duplicatorState, letter, delayedbit, transitionType);
 			}
 			return result;
 		}
-		
-		private IGameLetter<LETTER, STATE> constructGameLetter(final STATE spoilerState, final STATE duplicatorState, 
+
+		private IGameLetter<LETTER, STATE> constructGameLetter(final STATE spoilerState, final STATE duplicatorState,
 				final LETTER letter, final boolean delayedbit, final ETransitionType transitionType) {
-			final IGameLetter<LETTER, STATE> result = new DuplicatorNwaVertex<>(2, delayedbit, spoilerState, duplicatorState, letter, transitionType);
+			final IGameLetter<LETTER, STATE> result =
+					new DuplicatorNwaVertex<>(2, delayedbit, spoilerState, duplicatorState, letter, transitionType);
 			switch (transitionType) {
 			case CALL:
 				if (delayedbit) {
@@ -395,7 +416,8 @@ public class GameAutomaton<LETTER, STATE> extends NestedWordAutomatonOnDemandSta
 				if (delayedbit) {
 					mSpoi2Dupl2letter2GameLetter_ForTrue_ForInternal.put(spoilerState, duplicatorState, letter, result);
 				} else {
-					mSpoi2Dupl2letter2GameLetter_ForFalse_ForInternal.put(spoilerState, duplicatorState, letter, result);
+					mSpoi2Dupl2letter2GameLetter_ForFalse_ForInternal.put(spoilerState, duplicatorState, letter,
+							result);
 				}
 				mInternalAlphabet.add(result);
 				break;
@@ -416,14 +438,17 @@ public class GameAutomaton<LETTER, STATE> extends NestedWordAutomatonOnDemandSta
 			return result;
 		}
 	}
-	
+
 	private interface LetterAndSuccessorProvider<LETTER, STATE, T extends IOutgoingTransitionlet<LETTER, STATE>> {
 		Set<LETTER> getLettersForSpoiler(STATE spoilerState);
+
 		Iterable<T> getOutgoingTransitionsForSpoiler(STATE spoilerState, LETTER letter);
+
 		Iterable<T> getOutgoingTransitionsForDuplicator(STATE duplicatorState, LETTER letter);
 	}
-	
-	private class InternalLetterAndSuccessorProvider implements LetterAndSuccessorProvider<LETTER, STATE, OutgoingInternalTransition<LETTER, STATE>> {
+
+	private class InternalLetterAndSuccessorProvider
+			implements LetterAndSuccessorProvider<LETTER, STATE, OutgoingInternalTransition<LETTER, STATE>> {
 
 		@Override
 		public Set<LETTER> getLettersForSpoiler(final STATE state) {
@@ -431,17 +456,20 @@ public class GameAutomaton<LETTER, STATE> extends NestedWordAutomatonOnDemandSta
 		}
 
 		@Override
-		public Iterable<OutgoingInternalTransition<LETTER, STATE>> getOutgoingTransitionsForSpoiler(final STATE state, final LETTER letter) {
+		public Iterable<OutgoingInternalTransition<LETTER, STATE>> getOutgoingTransitionsForSpoiler(final STATE state,
+				final LETTER letter) {
 			return mOperand.internalSuccessors(state, letter);
 		}
-		
+
 		@Override
-		public Iterable<OutgoingInternalTransition<LETTER, STATE>> getOutgoingTransitionsForDuplicator(final STATE state, final LETTER letter) {
+		public Iterable<OutgoingInternalTransition<LETTER, STATE>>
+				getOutgoingTransitionsForDuplicator(final STATE state, final LETTER letter) {
 			return mOperand.internalSuccessors(state, letter);
 		}
 	}
-	
-	private class CallLetterAndSuccessorProvider implements LetterAndSuccessorProvider<LETTER, STATE, OutgoingCallTransition<LETTER, STATE>> {
+
+	private class CallLetterAndSuccessorProvider
+			implements LetterAndSuccessorProvider<LETTER, STATE, OutgoingCallTransition<LETTER, STATE>> {
 
 		@Override
 		public Set<LETTER> getLettersForSpoiler(final STATE state) {
@@ -449,21 +477,23 @@ public class GameAutomaton<LETTER, STATE> extends NestedWordAutomatonOnDemandSta
 		}
 
 		@Override
-		public Iterable<OutgoingCallTransition<LETTER, STATE>> getOutgoingTransitionsForSpoiler(final STATE state, final LETTER letter) {
+		public Iterable<OutgoingCallTransition<LETTER, STATE>> getOutgoingTransitionsForSpoiler(final STATE state,
+				final LETTER letter) {
 			return mOperand.callSuccessors(state, letter);
 		}
-		
+
 		@Override
-		public Iterable<OutgoingCallTransition<LETTER, STATE>> getOutgoingTransitionsForDuplicator(final STATE state, final LETTER letter) {
+		public Iterable<OutgoingCallTransition<LETTER, STATE>> getOutgoingTransitionsForDuplicator(final STATE state,
+				final LETTER letter) {
 			return mOperand.callSuccessors(state, letter);
 		}
 	}
-	
-	
-	private class ReturnLetterAndSuccessorProvider implements LetterAndSuccessorProvider<LETTER, STATE, OutgoingReturnTransition<LETTER, STATE>> {
+
+	private class ReturnLetterAndSuccessorProvider
+			implements LetterAndSuccessorProvider<LETTER, STATE, OutgoingReturnTransition<LETTER, STATE>> {
 
 		private final SpoilerNwaVertex<LETTER, STATE> mHier;
-		
+
 		public ReturnLetterAndSuccessorProvider(final SpoilerNwaVertex<LETTER, STATE> hier) {
 			super();
 			mHier = hier;
@@ -481,16 +511,17 @@ public class GameAutomaton<LETTER, STATE> extends NestedWordAutomatonOnDemandSta
 		}
 
 		@Override
-		public Iterable<OutgoingReturnTransition<LETTER, STATE>> getOutgoingTransitionsForSpoiler(final STATE lin, final LETTER letter) {
+		public Iterable<OutgoingReturnTransition<LETTER, STATE>> getOutgoingTransitionsForSpoiler(final STATE lin,
+				final LETTER letter) {
 			return mOperand.returnSuccessors(lin, mHier.getQ0(), letter);
 		}
-		
+
 		@Override
-		public Iterable<OutgoingReturnTransition<LETTER, STATE>> getOutgoingTransitionsForDuplicator(final STATE lin, final LETTER letter) {
+		public Iterable<OutgoingReturnTransition<LETTER, STATE>> getOutgoingTransitionsForDuplicator(final STATE lin,
+				final LETTER letter) {
 			return mOperand.returnSuccessors(lin, mHier.getQ1(), letter);
 		}
 
 	}
-	
-	
+
 }
