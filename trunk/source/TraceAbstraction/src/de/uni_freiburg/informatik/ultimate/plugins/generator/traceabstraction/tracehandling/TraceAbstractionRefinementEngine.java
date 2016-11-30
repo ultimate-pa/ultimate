@@ -217,16 +217,28 @@ public final class TraceAbstractionRefinementEngine
 				case UNSAT:
 					final IInterpolantGenerator interpolantGenerator = strategy.getInterpolantGenerator();
 					InterpolantsPreconditionPostcondition interpolants;
-					int iterate;
+					int numberOfInterpolantSequencesAvailable;
 					if (interpolantGenerator instanceof TraceCheckerSpWp) {
-						interpolants = ((TraceCheckerSpWp) interpolantGenerator).getForwardIpp();
-						iterate = 2;
+						final TraceCheckerSpWp traceCheckerSpWp = (TraceCheckerSpWp) interpolantGenerator;
+						numberOfInterpolantSequencesAvailable = 0;
+						if (traceCheckerSpWp.forwardsPredicatesComputed()) {
+							interpolants = traceCheckerSpWp.getForwardIpp();
+							++numberOfInterpolantSequencesAvailable;
+							if (traceCheckerSpWp.backwardsPredicatesComputed()) {
+								++numberOfInterpolantSequencesAvailable;
+							}
+						} else {
+							interpolants = traceCheckerSpWp.backwardsPredicatesComputed()
+									? traceCheckerSpWp.getBackwardIpp()
+									: null;
+							numberOfInterpolantSequencesAvailable = 1;
+						}
 					} else {
 						interpolants = interpolantGenerator.getIpp();
-						iterate = 1;
+						numberOfInterpolantSequencesAvailable = 1;
 					}
 					
-					for (int i = 1; i <= iterate; ++i) {
+					for (int i = 1; i <= numberOfInterpolantSequencesAvailable; ++i) {
 						if (i == 2) {
 							interpolants = ((TraceCheckerSpWp) interpolantGenerator).getBackwardIpp();
 						}
@@ -279,7 +291,6 @@ public final class TraceAbstractionRefinementEngine
 			
 			return feasibility;
 		} while (true);
-		
 	}
 	
 	private static ManagedScript setupManagedScriptInternal(final IUltimateServiceProvider services,
