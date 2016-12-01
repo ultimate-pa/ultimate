@@ -313,15 +313,27 @@ public final class TraceAbstractionRefinementEngine
 		try {
 			result = supp.get();
 		} catch (final UnsupportedOperationException e) {
-			if (e.getMessage() == null) {
+			final String message = e.getMessage();
+			if (message == null) {
 				unknownException = e;
-			} else if (e.getMessage().startsWith("Cannot interpolate")) {
+			} else if (message.startsWith("Cannot interpolate")) {
 				knownException = e;
 			} else {
 				unknownException = e;
 			}
 		} catch (final SMTLIBException e) {
-			unknownException = e;
+			final String message = e.getMessage();
+			if (message == null) {
+				unknownException = e;
+			} else if (message.endsWith("Connection to SMT solver broken")) {
+				// TODO find out the origin of this exception
+				unknownException = e;
+			} else if (message.endsWith("Received EOF on stdin. No stderr output.")) {
+				// TODO find out the origin of this exception
+				unknownException = e;
+			} else {
+				unknownException = e;
+			}
 		}
 		
 		if (knownException != null) {
