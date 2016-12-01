@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2016 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -30,6 +30,9 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IOutgoingTransitionlet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
@@ -38,17 +41,17 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 
 /**
  * Provides static methods that are helpful for working with nested word automata.
- * 
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public final class NestedWordAutomataUtils {
 	private NestedWordAutomataUtils() {
 		// prevent instantiation of this class
 	}
-	
+
 	/**
 	 * Applies a function to all direct successors of a state.
-	 * 
+	 *
 	 * @param operand
 	 *            The operand.
 	 * @param state
@@ -60,8 +63,8 @@ public final class NestedWordAutomataUtils {
 	 * @param <STATE>
 	 *            state type
 	 */
-	public static <LETTER, STATE> void applyToReachableSuccessors(
-			final IDoubleDeckerAutomaton<LETTER, STATE> operand, final STATE state, final Consumer<STATE> consumer) {
+	public static <LETTER, STATE> void applyToReachableSuccessors(final IDoubleDeckerAutomaton<LETTER, STATE> operand,
+			final STATE state, final Consumer<STATE> consumer) {
 		for (final OutgoingInternalTransition<LETTER, STATE> t : operand.internalSuccessors(state)) {
 			consumer.accept(t.getSucc());
 		}
@@ -74,7 +77,7 @@ public final class NestedWordAutomataUtils {
 			}
 		}
 	}
-	
+
 	/**
 	 * @param operand
 	 *            A double decker automaton.
@@ -95,7 +98,7 @@ public final class NestedWordAutomataUtils {
 			final LETTER letter) {
 		return operand.returnSuccessors(lin, hier, letter).iterator().hasNext();
 	}
-	
+
 	/**
 	 * @param iterable
 	 *            An {@link Iterable} of {@link IOutgoingTransitionlet}.
@@ -112,11 +115,11 @@ public final class NestedWordAutomataUtils {
 		final Set<STATE> result = new HashSet<>();
 		for (final E trans : iterable) {
 			result.add(trans.getSucc());
-			
+
 		}
 		return result;
 	}
-	
+
 	/**
 	 * @param partition
 	 *            A partition of states.
@@ -131,7 +134,7 @@ public final class NestedWordAutomataUtils {
 		}
 		return result;
 	}
-	
+
 	/**
 	 * @param partition
 	 *            A partition of states.
@@ -146,7 +149,7 @@ public final class NestedWordAutomataUtils {
 		}
 		return result;
 	}
-	
+
 	/**
 	 * @param operand
 	 *            A nested word automaton.
@@ -165,7 +168,7 @@ public final class NestedWordAutomataUtils {
 		return generateGenericMinimizationRunningTaskDescription(operand, initialPartition.size(),
 				sizeOfLargestEquivalenceClass);
 	}
-	
+
 	/**
 	 * @param operand
 	 *            A nested word automaton.
@@ -184,5 +187,19 @@ public final class NestedWordAutomataUtils {
 			final int sizeOfLargestBlock) {
 		return "minimizing NWA with " + operand.size() + " states" + "(initial partition has " + initialPartitionSize
 				+ " blocks, largest block has " + sizeOfLargestBlock + " states)";
+	}
+
+	/**
+	 * Method that helps converting the return type of {@link INestedWordAutomaton#internalSuccessors(Object)} and the
+	 * other similar methods of {@link INestedWordAutomaton} to a {@link Set} of successor states.
+	 *
+	 * @param iterable
+	 *            The return type of, e.g., {@link INestedWordAutomaton#internalSuccessors(Object)}
+	 * @param funGetState
+	 *            A function that extracts a STATE from an element of iterable
+	 * @return A set of STATEs extracted from iterable.
+	 */
+	public static <STATE, T> Set<STATE> getStates(final Iterable<T> iterable, final Function<T, STATE> funGetState) {
+		return StreamSupport.stream(iterable.spliterator(), false).map(funGetState).collect(Collectors.toSet());
 	}
 }
