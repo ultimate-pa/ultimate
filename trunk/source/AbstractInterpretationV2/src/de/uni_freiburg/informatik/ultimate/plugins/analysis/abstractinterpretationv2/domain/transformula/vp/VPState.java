@@ -66,11 +66,20 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 
 	private final VPDomain mDomain;
 	private final Script mScript;
+	private boolean mIsTop;
 
+	/**
+	 * Constructor for bottom state only.
+	 * @param domain
+	 */
 	VPState(VPDomain domain) {
 		this(Collections.emptyMap(), Collections.emptySet(), domain);
+		mIsTop = false;
 	}
 
+	/*
+	 * Constructor to be used by VPStateFactory.createTopState() only.
+	 */
 	VPState(Map<EqNode, EqGraphNode> eqNodeToEqGraphNodeMap, 
 			Set<VPDomainSymmetricPair<EqNode>> disEqualitySet,
 			VPDomain domain) {
@@ -79,6 +88,7 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 		mDisEqualitySet = disEqualitySet;
 		mDomain = domain;
 		mScript = mDomain.getManagedScript().getScript();
+		mIsTop = true;
 	}
 
 	public Set<VPDomainSymmetricPair<EqNode>> getDisEqualitySet() {
@@ -332,6 +342,14 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 	@Override
 	public boolean isBottom() {
 		return false;
+	}
+	
+	public boolean isTop() {
+		return mIsTop;
+	}
+	
+	void setIsTop(boolean isTop) {
+		mIsTop = isTop;
 	}
 
 	@Override

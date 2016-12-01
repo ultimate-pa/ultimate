@@ -55,30 +55,25 @@ public class VPStateFactory {
 	}
 	
 	private VPState createTopState() {
-		EqGraphNode graphNode;
 		Map<EqNode, EqGraphNode> eqNodeToEqGraphNodeMap = new HashMap<>();
-		Set<EqNode> literalSet1 = new HashSet<>();
-		Set<EqNode> literalSet2 = new HashSet<>();
+		Set<EqNode> literalSet = new HashSet<>();
 		Set<VPDomainSymmetricPair<EqNode>> disEqualitySet = new HashSet<>();
 		
 		/*
 		 * Create fresh EqGraphNodes from EqNodes.
 		 */
 		for (EqNode eqNode : mDomain.getTermToEqNodeMap().values()) {
-			graphNode = getOrConstructEqGraphNode(eqNode, eqNodeToEqGraphNodeMap);
-			eqNodeToEqGraphNodeMap.put(eqNode, graphNode);
+			getOrConstructEqGraphNode(eqNode, eqNodeToEqGraphNodeMap);
 			if (eqNode.isLiteral()) {
-				literalSet1.add(eqNode);
+				literalSet.add(eqNode);
 			}
 		}
-		
-		literalSet2.addAll(literalSet1);
 		
 		/*
 		 * Generate disequality set for constants
 		 */
-		for (EqNode node1 : literalSet1) {
-			for (EqNode node2 : literalSet2) {
+		for (EqNode node1 : literalSet) {
+			for (EqNode node2 : literalSet) {
 				if (!node1.equals(node2)) {
 					disEqualitySet.add(new VPDomainSymmetricPair<EqNode>(node1, node2));
 				}
@@ -88,10 +83,10 @@ public class VPStateFactory {
 		return new VPState(eqNodeToEqGraphNodeMap, disEqualitySet, mDomain);
 	}
 	
-	private EqGraphNode getOrConstructEqGraphNode(EqNode eqNode, Map<EqNode, EqGraphNode> mapping) {
+	private EqGraphNode getOrConstructEqGraphNode(EqNode eqNode, Map<EqNode, EqGraphNode> eqNodeToEqGraphNode) {
 		
-		if (mapping.containsKey(eqNode)) {
-			return mapping.get(eqNode);
+		if (eqNodeToEqGraphNode.containsKey(eqNode)) {
+			return eqNodeToEqGraphNode.get(eqNode);
 		}
 		
 		final EqGraphNode graphNode = new EqGraphNode(eqNode);
@@ -100,7 +95,7 @@ public class VPStateFactory {
 		if (eqNode instanceof EqFunctionNode) {
 
 			for (EqNode arg : ((EqFunctionNode)eqNode).getArgs()) {
-				EqGraphNode argNode = getOrConstructEqGraphNode(arg, mapping);
+				EqGraphNode argNode = getOrConstructEqGraphNode(arg, eqNodeToEqGraphNode);
 				argNode.addToInitCcpar(graphNode);
 				argNode.addToCcpar(graphNode);
 				argNodes.add(argNode);
@@ -108,7 +103,7 @@ public class VPStateFactory {
 			graphNode.addToInitCcchild(argNodes);
 			graphNode.getCcchild().addPair(((EqFunctionNode)eqNode).getFunction(), argNodes);
 		}
-		mapping.put(eqNode, graphNode);
+		eqNodeToEqGraphNode.put(eqNode, graphNode);
 		return graphNode;
 	}
 	
@@ -121,8 +116,13 @@ public class VPStateFactory {
 	}
 	
 	public VPState copy(VPState originalState) {
+		if (originalState.isTop()) {
+			assert mTopState == originalState : "we have more than one top state";
+			return originalState;
+		}
 		
 		VPState result = createTopState();
+		
 		
 		for (EqGraphNode gNode : result.getEqNodeToEqGraphNodeMap().values()) {
 			gNode.copyFields(originalState.getEqNodeToEqGraphNodeMap().get(gNode.eqNode), result);
@@ -132,6 +132,8 @@ public class VPStateFactory {
 			result.getDisEqualitySet().add(pair);
 		}
 		
+		result.setIsTop(false);
+
 		return result;
 	}
 	
@@ -303,13 +305,13 @@ public class VPStateFactory {
 	 */
 	public VPState conjoin(VPState first, VPState second) {
 
-		if (first instanceof VPStateBottom || second instanceof VPStateBottom) {
+		if (first.isBottom() || second.isBottom()) {
 			return this.getBottomState();
 		}
 
-		if (first instanceof VPStateTop) {
+		if (first.isTop()) {
 			return second;
-		} else if (second instanceof VPStateTop) {
+		} else if (second.isTop()) {
 			return first;
 		}
 
@@ -348,13 +350,13 @@ public class VPStateFactory {
 		 */
 		public VPState disjoin(final VPState first, final VPState second) {
 		
-			if (first instanceof VPStateTop || second instanceof VPStateTop) {
+			if (first.isTop() || second.isTop()) {
 				return this.getTopState();
 			}
 		
-			if (first instanceof VPStateBottom) {
+			if (first.isBottom()) {
 				return second;
-			} else if (second instanceof VPStateBottom) {
+			} else if (second.isBottom()) {
 				return first;
 			}
 		
