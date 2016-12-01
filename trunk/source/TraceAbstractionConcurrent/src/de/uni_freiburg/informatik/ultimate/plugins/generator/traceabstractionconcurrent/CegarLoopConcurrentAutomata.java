@@ -220,7 +220,7 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 		mCegarLoopBenchmark.addEdgeCheckerData(htc.getEdgeCheckerBenchmark());
 		mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 		
-		final Minimization minimization = mPref.minimize();
+		final Minimization minimization = mPref.getMinimization();
 		switch (minimization) {
 		case NONE:
 			break;

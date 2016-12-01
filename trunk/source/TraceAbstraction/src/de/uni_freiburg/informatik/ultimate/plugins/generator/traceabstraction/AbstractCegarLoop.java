@@ -288,7 +288,7 @@ public abstract class AbstractCegarLoop {
 		mLogger.info("Backedges is " + mPref.interpolantAutomaton());
 		mLogger.info("Determinization is " + mPref.interpolantAutomatonEnhancement());
 		mLogger.info("Difference is " + mPref.differenceSenwa());
-		mLogger.info("Minimize is " + mPref.minimize());
+		mLogger.info("Minimize is " + mPref.getMinimization());
 		
 		mIteration = 0;
 		mLogger.info("======== Iteration " + mIteration + "==of CEGAR loop == " + mName + "========");

@@ -594,7 +594,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		// mAbstraction)).getResult();
 		mLogger.info(predicateUnifier.collectPredicateUnifierStatistics());
 
-		final Minimization minimization = mPref.minimize();
+		final Minimization minimization = mPref.getMinimization();
 		switch (minimization) {
 		case NONE:
 			break;
@@ -864,7 +864,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	}
 
 	private final static boolean checkStoreCounterExamples(final TAPreferences pref) {
-		return pref.minimize() == Minimization.NWA_OVERAPPROXIMATION;
+		return pref.getMinimization() == Minimization.NWA_OVERAPPROXIMATION;
 	}
 
 	private static SearchStrategy getSearchStrategy(final IPreferenceProvider mPrefs) {

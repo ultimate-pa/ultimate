@@ -523,7 +523,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 
 		mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 
-		final Minimization minimization = mPref.minimize();
+		final Minimization minimization = mPref.getMinimization();
 		switch (minimization) {
 		case NONE:
 			break;

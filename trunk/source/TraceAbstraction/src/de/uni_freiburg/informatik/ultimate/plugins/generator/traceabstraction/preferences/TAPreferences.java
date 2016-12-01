@@ -234,7 +234,7 @@ public final class TAPreferences {
 	/**
 	 * @return The minimization.
 	 */
-	public Minimization minimize() {
+	public Minimization getMinimization() {
 		return mMinimize;
 	}
 

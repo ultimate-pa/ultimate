@@ -734,7 +734,7 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 		mLogger.info("Abstraction has " + mNestedAbstraction.sizeInformation());
 		mLogger.info("Interpolant automaton has " + mInterpolAutomaton.sizeInformation());
 
-		final Minimization minimization = mPref.minimize();
+		final Minimization minimization = mPref.getMinimization();
 		switch (minimization) {
 		case NONE:
 			break;
