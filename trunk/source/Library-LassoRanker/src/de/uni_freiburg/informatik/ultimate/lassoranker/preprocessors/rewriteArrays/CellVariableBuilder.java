@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ModifiableTrans
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.IReplacementVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 
 public class CellVariableBuilder {
 	private final Map<TermVariable, Map<ArrayIndex, TermVariable>> mArrayInstance2Index2CellVariable;
-	private final Map<Term, Map<ArrayIndex, ReplacementVar>> mArray2Index2RepVar;
+	private final Map<Term, Map<ArrayIndex, IReplacementVar>> mArray2Index2RepVar;
 	private final Set<TermVariable> mAuxVars = new HashSet<TermVariable>();
 	private final ModifiableTransFormula mTransFormula;
 	private final TransFormulaLRWithArrayInformation tflrwai;
@@ -75,7 +75,7 @@ public class CellVariableBuilder {
 		this.tflrwac = tflrwac;
 		tflrwai = tflrwac.getTransFormulaLRWithArrayInformation();
 		mArrayInstance2Index2CellVariable = new HashMap<TermVariable, Map<ArrayIndex, TermVariable>>();
-		mArray2Index2RepVar = new HashMap<Term, Map<ArrayIndex, ReplacementVar>>();
+		mArray2Index2RepVar = new HashMap<Term, Map<ArrayIndex, IReplacementVar>>();
 		mArrayCellInVars = arrayCellInVars;
 		mArrayCellOutVars = arrayCellOutVars;
 		dotSomething();
@@ -115,7 +115,7 @@ public class CellVariableBuilder {
 						final TermVariable arrayRepresentative = (TermVariable) ModifiableTransFormulaUtils.getDefinition(mTransFormula, instance);
 						final ArrayIndex indexRepresentative = tflrwac.getOrConstructIndexRepresentative(index);
 						if (isInVarCell) {
-							final ReplacementVar rv = mArrayCellInVars.get(arrayRepresentative, indexRepresentative).getReplacementVar();
+							final IReplacementVar rv = mArrayCellInVars.get(arrayRepresentative, indexRepresentative).getReplacementVar();
 							final TermVariable inVar = (TermVariable) mTransFormula.getInVars().get(rv);
 							if (inVar == null) {
 								mTransFormula.addInVar(rv, tv);
@@ -128,7 +128,7 @@ public class CellVariableBuilder {
 							}
 						}
 						if (isOutVarCell) {
-							final ReplacementVar rv = mArrayCellOutVars.get(arrayRepresentative, indexRepresentative).getReplacementVar();
+							final IReplacementVar rv = mArrayCellOutVars.get(arrayRepresentative, indexRepresentative).getReplacementVar();
 							final TermVariable outVar = (TermVariable) mTransFormula.getOutVars().get(rv);
 							if (outVar == null) {
 								mTransFormula.addOutVar(rv, tv);

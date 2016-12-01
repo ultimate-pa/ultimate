@@ -31,10 +31,18 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ILocalProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ConstantFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
@@ -48,8 +56,9 @@ public class ReplacementVarFactory {
 	
 	private final ManagedScript mMgdScript;
 	private final IIcfgSymbolTable mIIcfgSymbolTable;
-	private final Map<Term, ReplacementVar> mRepVarMapping = new HashMap<>();
+	private final Map<Term, IReplacementVar> mRepVarMapping = new HashMap<>();
 	private final Map<String, TermVariable> mAuxVarMapping = new HashMap<>();
+	private final boolean mUseIntraproceduralReplacementVars = true;
 
 	public ReplacementVarFactory(final ManagedScript mgdScript, final IIcfgSymbolTable symbolTable) {
 		super();
@@ -61,16 +70,20 @@ public class ReplacementVarFactory {
 	 * Get the ReplacementVar that is used as a replacement for the Term
 	 * definition. Construct this ReplacementVar if it does not exist yet.
 	 */
-	public ReplacementVar getOrConstuctReplacementVar(final Term definition) {
-		ReplacementVar repVar = mRepVarMapping.get(definition);
-		if (repVar == null) {
+	public IReplacementVar getOrConstuctReplacementVar(final Term definition) {
+		final IReplacementVar repVar = mRepVarMapping.get(definition);
+		if (repVar != null) {
+			return repVar;
+		} else {
+			final IReplacementVar newRepVar;
 			analyzeDefinition(definition);
 			final String name = SmtUtils.removeSmtQuoteCharacters(definition.toString());
 			final TermVariable tv = mMgdScript.constructFreshTermVariable(name, definition.getSort());
-			repVar = new ReplacementVar(definition.toString(), definition, tv);
+			newRepVar = new ReplacementVar(definition.toString(), definition, tv);
 			mRepVarMapping.put(definition, repVar);
+			return newRepVar;
 		}
-		return repVar;
+		
 	}
 
 
@@ -92,11 +105,25 @@ public class ReplacementVarFactory {
 
 	
 	
-	private void analyzeDefinition(final Term definition) {
-		final Set<Class> kinds = new HashSet<>();
+	private Set<Class<? extends IProgramVarOrConst>> analyzeDefinition(final Term definition) {
+		final Set<Class<? extends IProgramVarOrConst>> constOrVarKinds = new HashSet<>();
 		for (final TermVariable tv : definition.getFreeVars()) {
-//			m
+			final IProgramVar pv = mIIcfgSymbolTable.getProgramVar(tv);
+			if (pv instanceof ILocalProgramVar) {
+				constOrVarKinds.add(ILocalProgramVar.class);
+			} else if (pv instanceof IProgramNonOldVar) {
+				constOrVarKinds.add(IProgramNonOldVar.class);
+			} else if (pv instanceof IProgramOldVar) {
+				constOrVarKinds.add(IProgramOldVar.class);
+			} else {
+				throw new AssertionError("unknown kind of variable");
+			}
 		}
+		final Set<ApplicationTerm> constants = new ConstantFinder().findConstants(definition, true);
+		if (!constants.isEmpty()) {
+			constOrVarKinds.add(IProgramConst.class);
+		}
+		return constOrVarKinds;
 	}
 	
 }

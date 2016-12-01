@@ -30,7 +30,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 /**
- * Some static methods for {@link ReplacementVar}s. 
+ * Some static methods for {@link IReplacementVar}s. 
  * 
  * @author Matthias Heizmann
  */
@@ -38,8 +38,8 @@ public class ReplacementVarUtils {
 
 	public static Term getDefinition(final IProgramVar pv) {
 		final Term result; 
-		if (pv instanceof ReplacementVar) {
-			result = ((ReplacementVar) pv).getDefinition();
+		if (pv instanceof IReplacementVar) {
+			result = ((IReplacementVar) pv).getDefinition();
 		} else {
 			result = pv.getTermVariable();
 		}

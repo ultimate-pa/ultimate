@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.IReplacementVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -115,9 +115,9 @@ public abstract class RewriteTermVariables extends TransitionPreprocessor {
 	 * Get the new ReplacementVar for a given RankVar.
 	 * Constructs a new replacement variable, if needed.
 	 */
-	private final ReplacementVar getOrConstructReplacementVar(final IProgramVar rankVar) {
+	private final IReplacementVar getOrConstructReplacementVar(final IProgramVar rankVar) {
 		final Term definition = constructNewDefinitionForRankVar(rankVar);
-		final ReplacementVar repVar = mVarFactory.
+		final IReplacementVar repVar = mVarFactory.
 				getOrConstuctReplacementVar(definition);
 		return repVar;
 	}
@@ -151,7 +151,7 @@ public abstract class RewriteTermVariables extends TransitionPreprocessor {
 		}
 	
 		for (final IProgramVar rv : rankVarsWithCommonInVarOutVar) {
-			final ReplacementVar repVar = getOrConstructReplacementVar(rv);
+			final IReplacementVar repVar = getOrConstructReplacementVar(rv);
 			final TermVariable newInOutVar = mVarFactory.getOrConstructAuxVar(
 					computeTermVariableName(repVar.getGloballyUniqueId(), true, true), 
 					mrepVarSort);
@@ -164,7 +164,7 @@ public abstract class RewriteTermVariables extends TransitionPreprocessor {
 		}
 	
 		for (final IProgramVar rv : rankVarsWithDistinctInVar) {
-			final ReplacementVar repVar = getOrConstructReplacementVar(rv);
+			final IReplacementVar repVar = getOrConstructReplacementVar(rv);
 			final TermVariable newInVar = mVarFactory.getOrConstructAuxVar(
 					computeTermVariableName(repVar.getGloballyUniqueId(), true, false), 
 					mrepVarSort);
@@ -175,7 +175,7 @@ public abstract class RewriteTermVariables extends TransitionPreprocessor {
 		}
 		
 		for (final IProgramVar rv : rankVarsWithDistinctOutVar) {
-			final ReplacementVar repVar = getOrConstructReplacementVar(rv);
+			final IReplacementVar repVar = getOrConstructReplacementVar(rv);
 			final TermVariable newOutVar = mVarFactory.getOrConstructAuxVar(
 					computeTermVariableName(repVar.getGloballyUniqueId(), false, true), 
 					mrepVarSort);
