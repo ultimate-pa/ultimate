@@ -143,12 +143,12 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 	/**
 	 * Count how many paths other than the initial path have been added in the actual iteration.
 	 */
-	protected int mnofAdditionalPaths;
+	protected int mNofAdditionalPaths;
 
 	/**
 	 * Counts how many paths have been explored, but could not be added.
 	 */
-	protected int mnofDeclinedPaths;
+	protected int mNofDeclinedPaths;
 
 	// / ------- debugging -------
 	/**
@@ -189,8 +189,8 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 	protected void constructInterpolantAutomaton() throws AutomataOperationCanceledException {
 		mLogger.debug("Start constructing interpolant automaton.");
 
-		mnofAdditionalPaths = 0;
-		mnofDeclinedPaths = 0;
+		mNofAdditionalPaths = 0;
+		mNofDeclinedPaths = 0;
 
 		// cast the abstraction automaton as nested word and double decker
 		// automaton
@@ -322,9 +322,9 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 			}
 		}
 
-		mLogger.info("Explored paths: " + (mnofDeclinedPaths + mnofAdditionalPaths));
-		mLogger.info("Added paths   : " + mnofAdditionalPaths);
-		mLogger.info("Declined paths: " + mnofDeclinedPaths);
+		mLogger.info("Explored paths: " + (mNofDeclinedPaths + mNofAdditionalPaths));
+		mLogger.info("Added paths   : " + mNofAdditionalPaths);
+		mLogger.info("Declined paths: " + mNofDeclinedPaths);
 		mLogger.debug("Epimorphism:");
 		mEpimorphism.print();
 
@@ -598,14 +598,14 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 		if (traceChecker.isCorrect() == LBool.UNSAT) {
 			mLogger.debug("Accepted");
 			addPath(word, mActualPath, traceChecker.getInterpolants(), pre, post, pendingContexts);
-			mnofAdditionalPaths++;
+			mNofAdditionalPaths++;
 			return true;
 		}
 		// else if (mTraceChecker.isCorrect() == LBool.SAT)
 		// {
 		// }
 		mLogger.debug("Declined");
-		mnofDeclinedPaths++;
+		mNofDeclinedPaths++;
 		return false;
 	}
 

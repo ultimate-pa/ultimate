@@ -72,7 +72,7 @@ public class AbstractInterpretationRunner {
 		mRoot = root;
 		mAbsIntResult = null;
 		mSkipIteration = false;
-		mKnownPathPrograms = new HashSet<Set<CodeBlock>>();
+		mKnownPathPrograms = new HashSet<>();
 		mCsToolkit = csToolkit;
 
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
@@ -160,7 +160,7 @@ public class AbstractInterpretationRunner {
 		}
 	}
 
-	private boolean containsLoop(final Set<CodeBlock> pathProgramSet) {
+	private static boolean containsLoop(final Set<CodeBlock> pathProgramSet) {
 		final Set<IcfgLocation> programPoints = new HashSet<>();
 		return pathProgramSet.stream().anyMatch(a -> !programPoints.add(a.getTarget()));
 	}
@@ -178,8 +178,7 @@ public class AbstractInterpretationRunner {
 	}
 
 	public IInterpolantAutomatonBuilder<CodeBlock, IPredicate> createInterpolantAutomatonBuilder(
-			final PredicateUnifier predicateUnifier,
-			final INestedWordAutomaton<CodeBlock, IPredicate> abstraction,
+			final PredicateUnifier predicateUnifier, final INestedWordAutomaton<CodeBlock, IPredicate> abstraction,
 			final IRun<CodeBlock, IPredicate, ?> currentCex) {
 		if (mMode == AbstractInterpretationMode.NONE) {
 			return null;
@@ -200,16 +199,15 @@ public class AbstractInterpretationRunner {
 			case NONE:
 				throw new AssertionError("Mode should have been checked earlier");
 			case USE_PATH_PROGRAM:
-				aiInterpolAutomatonBuilder = new AbsIntNonSmtInterpolantAutomatonBuilder(mServices, abstraction,
-						predicateUnifier, mCsToolkit.getManagedScript(),
-						mRoot.getBoogie2SMT().getBoogie2SmtSymbolTable(), currentCex, mSimplificationTechnique,
-						mXnfConversionTechnique);
+				aiInterpolAutomatonBuilder =
+						new AbsIntNonSmtInterpolantAutomatonBuilder(mServices, abstraction, predicateUnifier,
+								mCsToolkit.getManagedScript(), mRoot.getBoogie2SMT().getBoogie2SmtSymbolTable(),
+								currentCex, mSimplificationTechnique, mXnfConversionTechnique);
 				break;
 			case USE_PREDICATES:
 				aiInterpolAutomatonBuilder = new AbsIntStraightLineInterpolantAutomatonBuilder(mServices, abstraction,
-						mAbsIntResult, predicateUnifier, mCsToolkit, currentCex,
-						mSimplificationTechnique, mXnfConversionTechnique,
-						mRoot.getBoogie2SMT().getBoogie2SmtSymbolTable());
+						mAbsIntResult, predicateUnifier, mCsToolkit, currentCex, mSimplificationTechnique,
+						mXnfConversionTechnique, mRoot.getBoogie2SMT().getBoogie2SmtSymbolTable());
 				break;
 			case USE_CANONICAL:
 				throw new UnsupportedOperationException(
@@ -274,8 +272,8 @@ public class AbstractInterpretationRunner {
 		}
 	}
 
-	private Set<CodeBlock> convertCex2Set(final IRun<CodeBlock, IPredicate, ?> currentCex) {
-		final Set<CodeBlock> transitions = new HashSet<CodeBlock>();
+	private static Set<CodeBlock> convertCex2Set(final IRun<CodeBlock, IPredicate, ?> currentCex) {
+		final Set<CodeBlock> transitions = new HashSet<>();
 		// words count their states, so 0 is first state, length is last state
 		final int length = currentCex.getLength() - 1;
 		for (int i = 0; i < length; ++i) {
