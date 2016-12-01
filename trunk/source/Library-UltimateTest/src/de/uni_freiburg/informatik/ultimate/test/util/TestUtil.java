@@ -74,10 +74,10 @@ public final class TestUtil {
 	 * Select (n - offset) files from a collection of files in a pseudo-random and deterministic way.
 	 */
 	public static Collection<File> limitFiles(final Collection<File> files, final int offset, final int n) {
-		if (files == null || files.isEmpty() || n < 0) {
-			return files;
-		} else if (n == 0) {
+		if (files == null || n == 0) {
 			return Collections.emptyList();
+		} else if (files.isEmpty() || n < 0) {
+			return files;
 		} else if (offset >= files.size()) {
 			return Collections.emptyList();
 		} else if (offset == 0 && n >= files.size()) {
@@ -508,8 +508,7 @@ public final class TestUtil {
 	 * verification result of a termination analysis.
 	 */
 	public static Map<String, TerminationAnalysisOverallResult> constructFilenameKeywordMap_TerminationAnalysis() {
-		final Map<String, TerminationAnalysisOverallResult> map =
-				new HashMap<>();
+		final Map<String, TerminationAnalysisOverallResult> map = new HashMap<>();
 		// true-unreach-call is the SV-COMP annotation for safe
 		map.put(".*_true-termination.*", TerminationAnalysisOverallResult.TERMINATING);
 		// false-unreach-call is the SV-COMP annotation for safe
@@ -523,8 +522,7 @@ public final class TestUtil {
 	 * result of a termination analysis.
 	 */
 	public static Map<String, TerminationAnalysisOverallResult> constructPathKeywordMap_TerminationAnalysis() {
-		final Map<String, TerminationAnalysisOverallResult> map =
-				new HashMap<>();
+		final Map<String, TerminationAnalysisOverallResult> map = new HashMap<>();
 		// we sometimes put terminating examples in a folder with this name
 		map.put("/terminating", TerminationAnalysisOverallResult.TERMINATING);
 		// we sometimes put nonterminating examples in a folder with this name
@@ -538,8 +536,7 @@ public final class TestUtil {
 	 * the expected verification result of a termination analysis.
 	 */
 	public static Map<String, TerminationAnalysisOverallResult> constructFirstlineKeywordMap_TerminationAnalysis() {
-		final Map<String, TerminationAnalysisOverallResult> map =
-				new HashMap<>();
+		final Map<String, TerminationAnalysisOverallResult> map = new HashMap<>();
 		map.put("#rTerminationDerivable", TerminationAnalysisOverallResult.TERMINATING);
 		map.put("#rTermination", TerminationAnalysisOverallResult.TERMINATING);
 		map.put("#Terminating", TerminationAnalysisOverallResult.TERMINATING);

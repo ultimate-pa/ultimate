@@ -111,7 +111,11 @@ public abstract class AbstractSVCOMPTestSuite extends UltimateTestSuite {
 			for (final SVCOMPTestDefinition def : testDefs) {
 				final List<UltimateTestCase> current = new ArrayList<>();
 				final String setFileName = def.getSetName() + ".set";
-				addTestCases(def, set2InputFiles.get(setFileName), current, svcompRootDir);
+				final Collection<File> inputFiles = set2InputFiles.get(setFileName);
+				addTestCases(def, inputFiles, current, svcompRootDir);
+				if (current.isEmpty()) {
+					System.err.println("No input file for set " + setFileName);
+				}
 				mTestCases.addAll(current);
 			}
 
@@ -147,7 +151,7 @@ public abstract class AbstractSVCOMPTestSuite extends UltimateTestSuite {
 		}
 	}
 
-	private Map<String, Collection<File>> getSetName2InputFiles(final Map<String, File> setName2File,
+	private static Map<String, Collection<File>> getSetName2InputFiles(final Map<String, File> setName2File,
 			final Collection<File> allInputFiles) {
 		final Map<String, Collection<File>> rtr = new HashMap<>();
 		for (final Entry<String, File> entry : setName2File.entrySet()) {
@@ -274,7 +278,7 @@ public abstract class AbstractSVCOMPTestSuite extends UltimateTestSuite {
 
 	protected abstract long getTimeout();
 
-	private Collection<File> getFilesForSetFile(final Collection<File> allFiles, final File setFile) {
+	private static Collection<File> getFilesForSetFile(final Collection<File> allFiles, final File setFile) {
 		final List<String> regexes = new ArrayList<>();
 		try {
 			final DataInputStream in = new DataInputStream(new FileInputStream(setFile));
@@ -301,14 +305,17 @@ public abstract class AbstractSVCOMPTestSuite extends UltimateTestSuite {
 		for (final String regex : regexes) {
 			currentFiles.addAll(TestUtil.filterFiles(allFiles, regex));
 		}
+		if (currentFiles.isEmpty()) {
+			System.err.println("Could not find files matchin the set file " + setFile);
+		}
 		return currentFiles;
 	}
 
-	private Collection<File> getAllSetFiles(final File rootdir) {
+	private static Collection<File> getAllSetFiles(final File rootdir) {
 		return TestUtil.getFilesRegex(rootdir, new String[] { ".*\\.set" });
 	}
 
-	private Collection<File> getAllPotentialInputFiles(final File rootdir) {
+	private static Collection<File> getAllPotentialInputFiles(final File rootdir) {
 		return TestUtil.getFilesRegex(rootdir, new String[] { ".*\\.c", ".*\\.i" });
 	}
 

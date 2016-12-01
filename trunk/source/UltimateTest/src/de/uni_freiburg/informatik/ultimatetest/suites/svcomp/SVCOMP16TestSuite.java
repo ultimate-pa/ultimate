@@ -84,7 +84,6 @@ public class SVCOMP16TestSuite extends AbstractSVCOMPTestSuite {
 		//@formatter:on
 
 		rtr.addAll(getForAll("ControlFlow"));
-		rtr.addAll(getForAll("Simple"));
 		// rtr.addAll(getForAll("ECA", 10));
 		// rtr.addAll(getForAll("DeviceDriversLinux64", 50));
 		rtr.addAll(getForAll("Loops"));
