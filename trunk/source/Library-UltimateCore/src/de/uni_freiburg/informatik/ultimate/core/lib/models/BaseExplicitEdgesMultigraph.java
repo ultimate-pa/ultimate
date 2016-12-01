@@ -178,7 +178,7 @@ public abstract class BaseExplicitEdgesMultigraph<V extends IExplicitEdgesMultig
 	 */
 	public List<V> getOutgoingNodes() {
 		final ArrayList<V> rtr = new ArrayList<>();
-		for (final E e : mOutgoingEdges) {
+		for (final E e : getOutgoingEdges()) {
 			final V target = e.getTarget();
 			if (target != null) {
 				rtr.add(target);
