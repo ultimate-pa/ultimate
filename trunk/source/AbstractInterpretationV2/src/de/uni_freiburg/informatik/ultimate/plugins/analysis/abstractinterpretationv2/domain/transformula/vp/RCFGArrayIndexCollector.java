@@ -47,10 +47,13 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ApplicationTermFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
@@ -70,7 +73,7 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 	
 	private final Map<Term, EqNode> mTermToEqNode = new HashMap<>();
 
-	Map<Term, BoogieVarOrConst> mTermToBoogieVarOrConst = new HashMap<>();
+	Map<Term, IProgramVarOrConst> mTermToProgramVarOrConst = new HashMap<>();
 
 	private final Script mScript;
 
@@ -112,16 +115,17 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 	protected void visit(final CodeBlock c) {
 		c.getPrettyPrintedStatements();
 		
-		final Map<Term, Term> substitionMap = new HashMap<Term, Term>();
-		for (final Entry<IProgramVar, TermVariable> entry : c.getTransitionFormula().getInVars().entrySet()) {
-			substitionMap.put(entry.getValue(), entry.getKey().getTermVariable());
-		}
-		for (final Entry<IProgramVar, TermVariable> entry : c.getTransitionFormula().getOutVars().entrySet()) {
-			substitionMap.put(entry.getValue(), entry.getKey().getTermVariable());
-		}
-		
-		final Term transFormulaTerm = c.getTransitionFormula().getFormula();
-		final Term formulaWithNormalizedVariables = new Substitution(mScript, substitionMap).transform(transFormulaTerm);
+//		final Map<Term, Term> substitionMap = new HashMap<Term, Term>();
+//		for (final Entry<IProgramVar, TermVariable> entry : c.getTransitionFormula().getInVars().entrySet()) {
+//			substitionMap.put(entry.getValue(), entry.getKey().getTermVariable());
+//		}
+//		for (final Entry<IProgramVar, TermVariable> entry : c.getTransitionFormula().getOutVars().entrySet()) {
+//			substitionMap.put(entry.getValue(), entry.getKey().getTermVariable());
+//		}
+		TransFormula tf = c.getTransitionFormula();
+		final Map<Term, Term> substitionMap = 
+				computeNormalizingSubstitution(VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf));
+		final Term formulaWithNormalizedVariables = new Substitution(mScript, substitionMap).transform(tf.getFormula());
 		
 		/*
 		 * handle selects in the formula
@@ -153,6 +157,21 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 		Set<ApplicationTerm> selectTerms = mdSelects.stream().map(mds -> mds.getSelectTerm()).collect(Collectors.toSet());
 		mSelectTerms.addAll(selectTerms);
 
+	}
+
+	/**
+	 * compute a substitution mapping that translates the TermVariables in a Term
+	 * to the corresponding default TermVariable of a IProgramVar.
+	 * (TODO: not so happy with everything that is connected to this..)
+	 * @param c
+	 * @return
+	 */
+	private Map<Term, Term> computeNormalizingSubstitution(final Map<TermVariable, IProgramVar> tvToPvMap) {
+		final Map<Term, Term> substitionMap = new HashMap<Term, Term>();
+		for (Entry<TermVariable, IProgramVar> en : tvToPvMap.entrySet()) {
+			substitionMap.put(en.getKey(), en.getValue().getTerm());
+		}
+		return substitionMap;
 	}
 	
 	private EqNode constructEqNode(MultiDimensionalStore mds) {
@@ -245,8 +264,8 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 		}
 	}
 	
-	private BoogieVarOrConst getOrConstructBoogieVarOrConst(final Term t) {
-		BoogieVarOrConst result = mTermToBoogieVarOrConst.get(t);
+	private IProgramVarOrConst getOrConstructBoogieVarOrConst(final Term t) {
+		IProgramVarOrConst result = mTermToProgramVarOrConst.get(t);
 		if (result != null) {
 			return result;
 		}
@@ -254,18 +273,18 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 		if (t instanceof ApplicationTerm ) {
 			assert ((ApplicationTerm) t).getParameters().length == 0 : "not a constant";
 			BoogieConst bc = mBoogie2SMT.getBoogie2SmtSymbolTable().getProgramConst((ApplicationTerm) t);
-			result = new BoogieVarOrConst(bc);
+			result = new ConstOrLiteral(bc);
 		} else if (t instanceof ConstantTerm) {
-			result = new BoogieVarOrConst((ConstantTerm) t);
+			result = new ConstOrLiteral((ConstantTerm) t);
 		} else if (t instanceof TermVariable) {
 			IProgramVar pv = mBoogie2SMT.getBoogie2SmtSymbolTable().getProgramVar((TermVariable) t);
 			assert pv != null : "?";
-			result = new BoogieVarOrConst(pv);
+			result = pv;
 		} else {
 			assert false;
 			return null;
 		}
-		mTermToBoogieVarOrConst.put(t, result);
+		mTermToProgramVarOrConst.put(t, result);
 		return result;
 	}
 	
@@ -317,8 +336,14 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 		return mTermToEqNode;
 	}
 
-	public IProgramVarOrConst getIProgramVarOrConst(Term term) {
-		return mTermToBoogieVarOrConst.get(term);
+	public IProgramVarOrConst getIProgramVarOrConstOrLiteral(Term term, Map<TermVariable, IProgramVar> tvToPvMap) {
+		if (term instanceof TermVariable) {
+			IProgramVar pv = tvToPvMap.get(term);
+			assert mTermToProgramVarOrConst.get(pv.getTerm()) == pv : "right?...";
+			return pv;
+		} else {
+			return  mTermToProgramVarOrConst.get(term);
+		}
 	}
 
 	/**
@@ -412,5 +437,15 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 //		for (Term t : termsEquatedWithASelectTerm) {
 //			getOrConstructEqNode(t);
 //		}
+	}
+
+
+	public EqNode getEqNode(final Term term, final Map<TermVariable, IProgramVar> tvToPvMap) {
+		// our mapping is in terms of normalized terms, so we need to make a substitution before we can look it up
+		final Map<Term, Term> substitionMap = computeNormalizingSubstitution(tvToPvMap);
+		final Term termWithNormalizedVariables = new Substitution(mScript, substitionMap).transform(term);
+		EqNode result = mTermToEqNode.get(termWithNormalizedVariables);
+		assert result != null;
+		return result;
 	}
 }

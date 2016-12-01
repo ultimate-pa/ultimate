@@ -327,7 +327,7 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 	public VPState patch(final VPState dominator) {
 		VPState result = mDomain.getVpStateFactory().copy(this);
 
-		result = mDomain.getVpStateFactory().havocBaseNode(dominator.mVars, result);
+		result = mDomain.getVpStateFactory().havocVariables(dominator.mVars, result);
 		
 		result = mDomain.getVpStateFactory().conjoin(result, dominator);
 

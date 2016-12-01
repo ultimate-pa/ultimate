@@ -258,12 +258,11 @@ public class VPStateFactory {
 	 * 
 	 * @param term
 	 */
-	public VPState havocArray(final Term term, VPState originalState) {
-		assert mDomain.isArray(term);
+	public VPState havocArray(final IProgramVarOrConst array, VPState originalState) {
 		VPState resultState = copy(originalState);
 
 		for (final EqFunctionNode fnNode : mDomain.getArrayIdToEqFnNodeMap()
-				.getImage(mDomain.getPreAnalysis().getIProgramVarOrConst(term))) {
+				.getImage(array)) {
 			resultState = this.havoc(resultState.getEqNodeToEqGraphNodeMap().get(fnNode), resultState);
 		}
 		return resultState;
@@ -275,14 +274,15 @@ public class VPStateFactory {
 	 * 
 	 * @param assignmentVars
 	 */
-	public VPState havocBaseNode(final Set<IProgramVar> assignmentVars, VPState originalState) {
+	public VPState havocVariables(final Set<IProgramVar> assignmentVars, VPState originalState) {
 		VPState resultState = copy(originalState);
 		TermVariable tv;
 
 		for (final IProgramVar var : assignmentVars) {
 
 			tv = var.getTermVariable();
-			if (mDomain.isArray(tv)) {
+			if (tv.getSort().isArraySort()) {
+				// assigned to arrays get special treatment..
 				continue;
 			}
 
@@ -413,16 +413,16 @@ public class VPStateFactory {
 	 * @param firstArray
 	 * @param secondArray
 	 */
-	public VPState arrayAssignment(final Term firstArray, final Term secondArray, VPState originalState) {
+	public VPState arrayAssignment(final IProgramVarOrConst firstArray, final IProgramVarOrConst secondArray, VPState originalState) {
 		VPState resultState = copy(originalState);
 		resultState = havocArray(firstArray, resultState);
 
 		for (final EqFunctionNode fnNode1 : mDomain.getArrayIdToEqFnNodeMap()
 				.getImage(
-						mDomain.getPreAnalysis().getIProgramVarOrConst(firstArray))) {
+						firstArray)) {
 			for (final EqFunctionNode fnNode2 : mDomain.getArrayIdToEqFnNodeMap()
 					.getImage(
-							mDomain.getPreAnalysis().getIProgramVarOrConst(secondArray))) {
+							secondArray)) {
 				if (resultState.congruentIgnoreFunctionSymbol(fnNode1, fnNode2)) {
 					resultState = addEquality(resultState.getEqNodeToEqGraphNodeMap().get(fnNode1),
 							resultState.getEqNodeToEqGraphNodeMap().get(fnNode2), resultState);

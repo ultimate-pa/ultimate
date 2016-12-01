@@ -118,10 +118,10 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 		}
 	}
 	
-	boolean isArray(final Term term) {
-		return getArrayIdToEqFnNodeMap()
-				.getDomain().contains(getPreAnalysis().getIProgramVarOrConst(term));
-	}
+//	boolean isArray(final Term term) {
+//		return getArrayIdToEqFnNodeMap()
+//				.getDomain().contains(getPreAnalysis().getIProgramVarOrConst(term));
+//	}
 
 	public Map<Term, EqNode> getTermToEqNodeMap() {
 		return mTermToEqNodeMap;

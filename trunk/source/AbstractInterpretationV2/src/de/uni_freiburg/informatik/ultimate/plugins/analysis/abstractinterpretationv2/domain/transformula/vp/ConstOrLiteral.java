@@ -33,7 +33,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 
-public class BoogieVarOrConst implements IProgramVarOrConst {
+public class ConstOrLiteral implements IProgramVarOrConst {
 	
 	final bvocType mType;
 	
@@ -45,7 +45,8 @@ public class BoogieVarOrConst implements IProgramVarOrConst {
 	
 	final BoogieConst mBoogieConst;
 	
-	public BoogieVarOrConst(IProgramVar pv) {
+	@Deprecated
+	public ConstOrLiteral(IProgramVar pv) {
 		mType = bvocType.PROGRAMVAR;
 		mTerm = pv.getTerm();
 		mProgramVar = pv;
@@ -53,7 +54,7 @@ public class BoogieVarOrConst implements IProgramVarOrConst {
 		mBoogieConst = null;
 	}
 	
-	public BoogieVarOrConst(BoogieConst bc) {
+	public ConstOrLiteral(BoogieConst bc) {
 		mType = bvocType.BOOGIECONST;
 		mTerm = bc.getTerm();
 		mProgramVar = null;
@@ -61,7 +62,7 @@ public class BoogieVarOrConst implements IProgramVarOrConst {
 		mBoogieConst = bc;
 	}
 
-	public BoogieVarOrConst(ConstantTerm ct) {
+	public ConstOrLiteral(ConstantTerm ct) {
 		mType = bvocType.CONST;
 		mTerm = ct;
 		mProgramVar = null;

@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
@@ -46,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDim
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.EqNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomain;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainHelpers;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.visitors.SimpleRCFGVisitor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
@@ -147,7 +149,11 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 
 		List<MultiDimensionalSelect> mdSelects = MultiDimensionalSelect.extractSelectShallow(tf.getFormula(), false);//TODO allowArrayValues??
 		for (MultiDimensionalSelect mds : mdSelects) {
-			IProgramVarOrConst oldArray = mVpDomain.getPreAnalysis().getIProgramVarOrConst(mds.getArray());
+			IProgramVarOrConst oldArray = 
+					mVpDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(
+							mds.getArray(), 
+							VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf));
+			assert oldArray != null;
 			List<EqNode> pointers = mds.getIndex().stream()
 					.map(indexTerm -> mVpDomain.getPreAnalysis().getTermToEqNodeMap().get(indexTerm))
 					.collect(Collectors.toList());
@@ -157,7 +163,10 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 
 		List<MultiDimensionalStore> mdStores = MultiDimensionalStore.extractArrayStoresShallow(tf.getFormula());
 		for (MultiDimensionalStore mds : mdStores) {
-			IProgramVarOrConst oldArray = mVpDomain.getPreAnalysis().getIProgramVarOrConst(mds.getArray());
+			IProgramVarOrConst oldArray = 
+					mVpDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(
+							mds.getArray(), 
+							VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf));
 			List<EqNode> pointers = mds.getIndex().stream()
 					.map(indexTerm -> mVpDomain.getPreAnalysis().getTermToEqNodeMap().get(indexTerm))
 					.collect(Collectors.toList());
