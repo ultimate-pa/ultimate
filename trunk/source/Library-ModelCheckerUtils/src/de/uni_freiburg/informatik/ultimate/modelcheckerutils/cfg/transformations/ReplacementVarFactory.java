@@ -27,11 +27,14 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
@@ -43,13 +46,15 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
  */
 public class ReplacementVarFactory {
 	
-	private final ManagedScript mVariableManager;
+	private final ManagedScript mMgdScript;
+	private final IIcfgSymbolTable mIIcfgSymbolTable;
 	private final Map<Term, ReplacementVar> mRepVarMapping = new HashMap<>();
 	private final Map<String, TermVariable> mAuxVarMapping = new HashMap<>();
 
-	public ReplacementVarFactory(final ManagedScript variableManager) {
+	public ReplacementVarFactory(final ManagedScript mgdScript, final IIcfgSymbolTable symbolTable) {
 		super();
-		mVariableManager = variableManager;
+		mMgdScript = mgdScript;
+		mIIcfgSymbolTable = symbolTable;
 	}
 
 	/**
@@ -59,21 +64,23 @@ public class ReplacementVarFactory {
 	public ReplacementVar getOrConstuctReplacementVar(final Term definition) {
 		ReplacementVar repVar = mRepVarMapping.get(definition);
 		if (repVar == null) {
+			analyzeDefinition(definition);
 			final String name = SmtUtils.removeSmtQuoteCharacters(definition.toString());
-			final TermVariable tv = mVariableManager.constructFreshTermVariable(name, definition.getSort());
+			final TermVariable tv = mMgdScript.constructFreshTermVariable(name, definition.getSort());
 			repVar = new ReplacementVar(definition.toString(), definition, tv);
 			mRepVarMapping.put(definition, repVar);
 		}
 		return repVar;
 	}
-	
+
+
 	/**
 	 * Construct and return a unique TermVariable with the given name.
 	 */
 	public TermVariable getOrConstructAuxVar(final String name, final Sort sort) {
 		TermVariable auxVar = mAuxVarMapping.get(name);
 		if (auxVar == null) {
-			auxVar = mVariableManager.constructFreshTermVariable(SmtUtils.removeSmtQuoteCharacters(name), sort);
+			auxVar = mMgdScript.constructFreshTermVariable(SmtUtils.removeSmtQuoteCharacters(name), sort);
 			mAuxVarMapping.put(name, auxVar);
 		} else {
 			if (sort != auxVar.getSort()) {
@@ -83,4 +90,13 @@ public class ReplacementVarFactory {
 		return auxVar;
 	}
 
+	
+	
+	private void analyzeDefinition(final Term definition) {
+		final Set<Class> kinds = new HashSet<>();
+		for (final TermVariable tv : definition.getFreeVars()) {
+//			m
+		}
+	}
+	
 }

@@ -72,7 +72,7 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends Interpo
 			final PredicateUnifier predicateUnifier, final boolean useNonlinerConstraints,
 			final boolean useVarsFromUnsatCore, final Settings solverSettings,
 			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique,
-			final Collection<Term> axioms, TraceCheckerSpWp tcspwp) {
+			final Collection<Term> axioms, final TraceCheckerSpWp tcspwp) {
 		super(precondition, postcondition, pendingContexts, run.getWord(), csToolkit, assertCodeBlocksIncrementally,
 				services, computeRcfgProgramExecution, predicateUnifier, csToolkit.getManagedScript(),
 				simplificationTechnique, xnfConversionTechnique, run.getStateSequence());
@@ -97,12 +97,12 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends Interpo
 		if (USE_BACKWARD_PREDICATES) {
 			mTraceCheckerSpWp.computeInterpolants(new AllIntegers(), InterpolationTechnique.BackwardPredicates);
 			pathInvariantsGenerator = new PathInvariantsGenerator(super.mServices, mStorage, mNestedRun, super.getPrecondition(), super.getPostcondition(), mPredicateUnifier,
-					super.mCfgManagedScript, mCsToolkit.getModifiableGlobalsTable(), mUseNonlinerConstraints,
+					super.mCsToolkit, mCsToolkit.getModifiableGlobalsTable(), mUseNonlinerConstraints,
 					mUseVarsFromUnsatCore, mSolverSettings, mSimplificationTechnique, mXnfConversionTechnique, mAxioms,
 					mTraceCheckerSpWp.getBackwardPredicates());
 		} else {
 			pathInvariantsGenerator = new PathInvariantsGenerator(super.mServices, mStorage, mNestedRun, super.getPrecondition(), super.getPostcondition(), mPredicateUnifier,
-				super.mCfgManagedScript, mCsToolkit.getModifiableGlobalsTable(), mUseNonlinerConstraints,
+				super.mCsToolkit, mCsToolkit.getModifiableGlobalsTable(), mUseNonlinerConstraints,
 				mUseVarsFromUnsatCore, mSolverSettings, mSimplificationTechnique, mXnfConversionTechnique, mAxioms,
 				null);
 		}

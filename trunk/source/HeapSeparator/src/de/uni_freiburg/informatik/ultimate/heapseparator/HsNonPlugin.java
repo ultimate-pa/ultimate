@@ -37,6 +37,7 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
@@ -65,15 +66,15 @@ public class HsNonPlugin {
 	private final ILogger mLogger;
 	private final ReplacementVarFactory mReplacementVarFactory;
 
-	public HsNonPlugin(IUltimateServiceProvider services, ManagedScript ms, ILogger logger) {
+	public HsNonPlugin(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit, final ILogger logger) {
 		
 		mServices = services;
-		mManagedScript = ms;
+		mManagedScript = csToolkit.getManagedScript();
 		mLogger = logger;
-		mReplacementVarFactory = new ReplacementVarFactory(ms);
+		mReplacementVarFactory = new ReplacementVarFactory(csToolkit.getManagedScript(), csToolkit.getSymbolTable());
 	}
 	
-	public BoogieIcfgContainer separate(BoogieIcfgContainer oldBoogieIcfg ) {
+	public BoogieIcfgContainer separate(final BoogieIcfgContainer oldBoogieIcfg ) {
 		
 		
 		
@@ -83,13 +84,13 @@ public class HsNonPlugin {
 		
 		//TODO taken from CodeCheck, what timer is suitable here?
 		final IProgressAwareTimer timer = mServices.getProgressMonitorService().getChildTimer(0.2);
-		List<CodeBlock> initialEdges = getInitialEdges(oldBoogieIcfg);
+		final List<CodeBlock> initialEdges = getInitialEdges(oldBoogieIcfg);
 		@SuppressWarnings("unchecked")
 		final IAbstractInterpretationResult<VPState, CodeBlock, IProgramVar, ?> abstractInterpretationResult = 
 				(IAbstractInterpretationResult<VPState, CodeBlock, IProgramVar, ?>) AbstractInterpreter
 			        .runFutureEqualityDomain(oldBoogieIcfg, initialEdges, timer, mServices, false);
 		
-		VPDomain vpDomain = (VPDomain) abstractInterpretationResult.getUsedDomain();
+		final VPDomain vpDomain = (VPDomain) abstractInterpretationResult.getUsedDomain();
 		
 		/*
 		 * process AI result
@@ -111,7 +112,7 @@ public class HsNonPlugin {
 			walker.run(BoogieIcfgContainer.extractStartEdges(oldBoogieIcfg)); 
 		}
 
-		NewArrayIdProvider newArrayIdProvider = 
+		final NewArrayIdProvider newArrayIdProvider = 
 				processAbstractInterpretationResult(abstractInterpretationResult, heapSepPreanalysis);
 
 		/*
@@ -137,10 +138,10 @@ public class HsNonPlugin {
 	 * @return a map of the form (unseparated array --> index --> separated array)
 	 */
 	private NewArrayIdProvider processAbstractInterpretationResult(
-			IAbstractInterpretationResult<VPState, CodeBlock, IProgramVar, ?> vpDomainResult, 
-			HeapSepPreAnalysisVisitor hspav) {
+			final IAbstractInterpretationResult<VPState, CodeBlock, IProgramVar, ?> vpDomainResult, 
+			final HeapSepPreAnalysisVisitor hspav) {
 		
-		VPDomain vpDomain = (VPDomain) vpDomainResult.getUsedDomain();
+		final VPDomain vpDomain = (VPDomain) vpDomainResult.getUsedDomain();
 		
 		/*
 		 * Compute the mapping array to VPState:
@@ -148,16 +149,16 @@ public class HsNonPlugin {
 		 * For each array take only the VPStates intro account that belong to a location directly
 		 * before an access to that array. Those are disjoined.
 		 */
-		Map<IProgramVarOrConst, VPState> arrayToVPState = new HashMap<>();
-		for (IProgramVarOrConst array : hspav.getArrayToAccessLocations().getDomain()) {
+		final Map<IProgramVarOrConst, VPState> arrayToVPState = new HashMap<>();
+		for (final IProgramVarOrConst array : hspav.getArrayToAccessLocations().getDomain()) {
 			VPState disjoinedState = vpDomain.getBottomState();
-			for (IcfgLocation loc : hspav.getArrayToAccessLocations().getImage(array)) {
-				Set<VPState> statesAtLoc = vpDomainResult.getLoc2States().get(loc);
+			for (final IcfgLocation loc : hspav.getArrayToAccessLocations().getImage(array)) {
+				final Set<VPState> statesAtLoc = vpDomainResult.getLoc2States().get(loc);
 				if (statesAtLoc == null) {
 					//TODO: this probably should not happen once we support procedures
 					continue;
 				}
-				for (VPState state : statesAtLoc) {
+				for (final VPState state : statesAtLoc) {
 					disjoinedState = vpDomain.getVpStateFactory().disjoin(disjoinedState, state);
 					assert disjoinedState != null;
 				}
@@ -168,11 +169,11 @@ public class HsNonPlugin {
 		/*
 		 * Compute the actual partitioning for each array.
 		 */
-		RCFGArrayIndexCollector vpPreAnalysis = ((VPDomain) vpDomainResult.getUsedDomain()).getPreAnalysis();
-		NewArrayIdProvider newArrayIdProvider = new NewArrayIdProvider(mManagedScript);
-		for (Entry<IProgramVarOrConst, VPState> en : arrayToVPState.entrySet()) {
-			IProgramVarOrConst currentArray = en.getKey();
-			VPState state = en.getValue();
+		final RCFGArrayIndexCollector vpPreAnalysis = ((VPDomain) vpDomainResult.getUsedDomain()).getPreAnalysis();
+		final NewArrayIdProvider newArrayIdProvider = new NewArrayIdProvider(mManagedScript);
+		for (final Entry<IProgramVarOrConst, VPState> en : arrayToVPState.entrySet()) {
+			final IProgramVarOrConst currentArray = en.getKey();
+			final VPState state = en.getValue();
 			
 			/*
 			 * For an index i to be in its own partition (along with its =-equivalence class) for array
@@ -182,7 +183,7 @@ public class HsNonPlugin {
 			 * (would be nice here, if the EQNodes in the disequality pairs would be only the 
 			 *  representatives of each equivalence class.)
 			 */
-			for (EqNode ind1 : arrayToVPState.get(currentArray).getEquivalenceRepresentatives()) {
+			for (final EqNode ind1 : arrayToVPState.get(currentArray).getEquivalenceRepresentatives()) {
 				if (!vpPreAnalysis.isArrayAccessedAt(currentArray, ind1)) {
 					// we don't need an entry for ind1 in our partitioning map because 
 					// it is never used to access the currentArray
@@ -194,7 +195,7 @@ public class HsNonPlugin {
 				 * that the array "array" is accessed with?
 				 */
 				boolean indUneqAllOthers = true;
-				for (EqNode ind2 : arrayToVPState.get(currentArray).getEquivalenceRepresentatives()) {
+				for (final EqNode ind2 : arrayToVPState.get(currentArray).getEquivalenceRepresentatives()) {
 					if (!vpPreAnalysis.isArrayAccessedAt(currentArray, ind2)) {
 						// the currentArray is never accessed at ind2
 						// --> it does not matter if ind2 may alias with ind1

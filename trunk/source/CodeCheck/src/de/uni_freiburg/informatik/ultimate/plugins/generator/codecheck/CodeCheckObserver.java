@@ -72,8 +72,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgElement;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -387,7 +387,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		 * test code for heap separation
 		 */
 		mLogger.warn("Heapseparator is run for debugging purposes - this should not happen during a normal Kojak run!");
-		HsNonPlugin hnp = new HsNonPlugin(mServices, mCsToolkit.getManagedScript(), mLogger);
+		final HsNonPlugin hnp = new HsNonPlugin(mServices, mCsToolkit, mLogger);
 		hnp.separate((BoogieIcfgContainer) root);
 		
 		

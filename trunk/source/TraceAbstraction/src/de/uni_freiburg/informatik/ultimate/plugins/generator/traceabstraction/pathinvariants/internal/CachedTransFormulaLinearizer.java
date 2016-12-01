@@ -51,13 +51,13 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.TransitionP
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.InequalityConverter.NlaHandling;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.ModifiableTransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
  * Class linearizing {@link UnmodifiableTransFormula}s. For improved performance and
@@ -75,7 +75,7 @@ public class CachedTransFormulaLinearizer {
 	private final XnfConversionTechnique mXnfConversionTechnique;
 	private final Term[] mAxioms;
 	private final ReplacementVarFactory mReplacementVarFactory;
-	private final ManagedScript mPredicateScript;
+	private final CfgSmtToolkit mCsToolkit;
 	private final Map<UnmodifiableTransFormula, LinearTransition> mCache;
 
 
@@ -91,15 +91,15 @@ public class CachedTransFormulaLinearizer {
 	 * @author Matthias Heizmann
 	 */
 	public CachedTransFormulaLinearizer(final IUltimateServiceProvider services,
-			final ManagedScript csToolkit, final Collection<Term> axioms, final IToolchainStorage storage, 
+			final CfgSmtToolkit csToolkit, final Collection<Term> axioms, final IToolchainStorage storage, 
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) {
 		super();
 		mServices = services;
 		mStorage = storage;
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
-		mPredicateScript = csToolkit;
-		mReplacementVarFactory = new ReplacementVarFactory(mPredicateScript);
+		mCsToolkit = csToolkit;
+		mReplacementVarFactory = new ReplacementVarFactory(csToolkit.getManagedScript(), csToolkit.getSymbolTable());
 		mAxioms = axioms.toArray(new Term[axioms.size()]);
 
 		mCache = new HashMap<UnmodifiableTransFormula, LinearTransition>();
@@ -155,11 +155,11 @@ public class CachedTransFormulaLinearizer {
 	 */
 	private LinearTransition makeLinear(final UnmodifiableTransFormula tf) {
 		ModifiableTransFormula tflr = ModifiableTransFormulaUtils.buildTransFormula(tf,
-				mReplacementVarFactory, mPredicateScript);
+				mReplacementVarFactory, mCsToolkit.getManagedScript());
 
 		for (final TransitionPreprocessor tpp : getPreprocessors()) {
 			try {
-				tflr = tpp.process(mPredicateScript.getScript(), tflr);
+				tflr = tpp.process(mCsToolkit.getManagedScript().getScript(), tflr);
 			} catch (final TermException e) {
 				throw new RuntimeException(e);
 			}
@@ -180,16 +180,16 @@ public class CachedTransFormulaLinearizer {
 	 */
 	private TransitionPreprocessor[] getPreprocessors() {
 		return new TransitionPreprocessor[] {
-				new MatchInOutVars(mPredicateScript),
+				new MatchInOutVars(mCsToolkit.getManagedScript()),
 				new AddAxioms(mReplacementVarFactory, mAxioms),
 				new RewriteDivision(mReplacementVarFactory),
-				new RewriteBooleans(mReplacementVarFactory, mPredicateScript), 
-				new RewriteIte(mPredicateScript),
-				new RewriteUserDefinedTypes(mReplacementVarFactory, mPredicateScript),
+				new RewriteBooleans(mReplacementVarFactory, mCsToolkit.getManagedScript()), 
+				new RewriteIte(mCsToolkit.getManagedScript()),
+				new RewriteUserDefinedTypes(mReplacementVarFactory, mCsToolkit.getManagedScript()),
 				new RewriteEquality(), 
-				new SimplifyPreprocessor(mServices, mStorage, mPredicateScript, mSimplificationTechnique),
-				new DNF(mServices, mPredicateScript, mXnfConversionTechnique), 
-				new SimplifyPreprocessor(mServices, mStorage, mPredicateScript, mSimplificationTechnique),
+				new SimplifyPreprocessor(mServices, mStorage, mCsToolkit.getManagedScript(), mSimplificationTechnique),
+				new DNF(mServices, mCsToolkit.getManagedScript(), mXnfConversionTechnique), 
+				new SimplifyPreprocessor(mServices, mStorage, mCsToolkit.getManagedScript(), mSimplificationTechnique),
 				new RewriteTrueFalse(), 
 				new RemoveNegation(),
 				new RewriteStrictInequalities(), };

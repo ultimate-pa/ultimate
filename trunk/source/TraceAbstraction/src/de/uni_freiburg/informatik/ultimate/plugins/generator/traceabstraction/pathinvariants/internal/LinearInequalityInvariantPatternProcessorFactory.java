@@ -28,7 +28,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
@@ -36,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ScriptWithTermConstructionChecks;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
@@ -43,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfCon
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
@@ -60,7 +59,7 @@ public class LinearInequalityInvariantPatternProcessorFactory
 	private final SimplificationTechnique mSimplificationTechnique;
 	private final XnfConversionTechnique mXnfConversionTechnique;
 	protected final PredicateUnifier predUnifier;
-	protected final ManagedScript csToolkit;
+	protected final CfgSmtToolkit mCsToolkit;
 	protected final ILinearInequalityInvariantPatternStrategy strategy;
 	private final boolean mUseNonlinearConstraints;
 	private final boolean mUseVarsFromUnsatCore;
@@ -88,7 +87,7 @@ public class LinearInequalityInvariantPatternProcessorFactory
 	public LinearInequalityInvariantPatternProcessorFactory(
 			final IUltimateServiceProvider services,
 			final IToolchainStorage storage,
-			final PredicateUnifier predUnifier, final ManagedScript csToolkit,
+			final PredicateUnifier predUnifier, final CfgSmtToolkit csToolkit,
 			final ILinearInequalityInvariantPatternStrategy strategy, final boolean useNonlinerConstraints, final boolean useVarsFromUnsatCore,
 			final Settings solverSettings, final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique, final Collection<Term> axioms) {
 		this.services = services;
@@ -96,7 +95,7 @@ public class LinearInequalityInvariantPatternProcessorFactory
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
 		this.predUnifier = predUnifier;
-		this.csToolkit = csToolkit;
+		this.mCsToolkit = csToolkit;
 		mAxioms = axioms;
 		this.strategy = strategy;
 		mUseNonlinearConstraints = useNonlinerConstraints;
@@ -160,10 +159,10 @@ public class LinearInequalityInvariantPatternProcessorFactory
 
 	@Override
 	public IInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> produce(
-			Set<BoogieIcfgLocation> locations, Set<IcfgInternalAction> transitions, final IPredicate precondition,
+			final Set<BoogieIcfgLocation> locations, final Set<IcfgInternalAction> transitions, final IPredicate precondition,
 			final IPredicate postcondition) {
 		return new LinearInequalityInvariantPatternProcessor(services,
-				storage, predUnifier, csToolkit, mAxioms, produceSmtSolver(), locations, transitions, precondition,
+				storage, predUnifier, mCsToolkit, mAxioms, produceSmtSolver(), locations, transitions, precondition,
 				postcondition, strategy, mUseNonlinearConstraints, mUseVarsFromUnsatCore, mSimplificationTechnique, mXnfConversionTechnique);
 	}
 

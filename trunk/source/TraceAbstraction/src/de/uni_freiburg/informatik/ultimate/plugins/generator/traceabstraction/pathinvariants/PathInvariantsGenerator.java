@@ -28,7 +28,6 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -41,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
@@ -50,7 +50,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Unm
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
@@ -64,7 +63,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pa
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerSpWp;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils;
 
 /**
@@ -104,7 +102,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	 * @return a default invariant pattern processor factory
 	 */
 	private static IInvariantPatternProcessorFactory<?> createDefaultFactory(final IUltimateServiceProvider services,
-			final IToolchainStorage storage, final PredicateUnifier predicateUnifier, final ManagedScript csToolkit,
+			final IToolchainStorage storage, final PredicateUnifier predicateUnifier, final CfgSmtToolkit csToolkit,
 			final boolean useNonlinerConstraints, final boolean useVarsFromUnsatCore, final Settings solverSettings,
 			final SimplificationTechnique simplicationTechnique, final XnfConversionTechnique xnfConversionTechnique,
 			final Collection<Term> axioms) {
@@ -141,7 +139,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	 */
 	public PathInvariantsGenerator(final IUltimateServiceProvider services, final IToolchainStorage storage,
 			final NestedRun<? extends IAction, IPredicate> run, final IPredicate precondition,
-			final IPredicate postcondition, final PredicateUnifier predicateUnifier, final ManagedScript csToolkit,
+			final IPredicate postcondition, final PredicateUnifier predicateUnifier, final CfgSmtToolkit csToolkit,
 			final ModifiableGlobalsTable modifiableGlobalsTable, final boolean useNonlinerConstraints,
 			final boolean useVarsFromUnsatCore, final Settings solverSettings,
 			final SimplificationTechnique simplicationTechnique, final XnfConversionTechnique xnfConversionTechnique,
@@ -174,7 +172,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	public PathInvariantsGenerator(final IUltimateServiceProvider services,
 			final NestedRun<? extends IAction, IPredicate> run, final IPredicate precondition,
 			final IPredicate postcondition, final PredicateUnifier predicateUnifier, final boolean useVarsFromUnsatCore,
-			final ModifiableGlobalsTable modifiableGlobalsTable, final ManagedScript csToolkit,
+			final ModifiableGlobalsTable modifiableGlobalsTable, final CfgSmtToolkit csToolkit,
 			final IInvariantPatternProcessorFactory<?> invPatternProcFactory, final List<IPredicate> backwardPredicates) {
 		super();
 		mServices = services;
@@ -217,7 +215,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 						transFormula));				
 				if (backwardPredicates != null && (i == len - 1) && USE_ONLY_LAST_BACKWARD_PREDICATES ) {
 					final UnmodifiableTransFormula wpAsTransformula = TransFormulaBuilder.constructTransFormulaFromPredicate(backwardPredicates.get(i),
-							csToolkit);
+							csToolkit.getManagedScript());
 					transitions.add(new IcfgInternalAction(previousLocation, currentLocation, currentLocation.getPayload(), wpAsTransformula));
 				}
 			}

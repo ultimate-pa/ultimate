@@ -42,8 +42,8 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.LinearTransition;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.LassoPreprocessor;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.InequalityConverter.NlaHandling;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
@@ -62,7 +62,7 @@ public class LassoBuilder {
 	/**
 	 * The Boogie2SMT object
 	 */
-	private final ManagedScript mboogie2smt;
+	private final ManagedScript mMgdScript;
 
 	/**
 	 * Collection of all generated replacement TermVariables
@@ -75,11 +75,6 @@ public class LassoBuilder {
 	private List<LassoUnderConstruction> mLassosUC;
 
 	private Collection<Lasso> mLassos;
-
-	/**
-	 * The script used to create terms in the transition formulas
-	 */
-	private final Script mScript;
 
 	/**
 	 * Object that has to be used for getting and constructing ReplacementVars that occur in this LassoBuilder.
@@ -102,29 +97,20 @@ public class LassoBuilder {
 	 * @param loop
 	 *            the loop transition
 	 */
-	public LassoBuilder(final ILogger logger, final Script script, final ManagedScript mgdScript,
+	public LassoBuilder(final ILogger logger, final ManagedScript mgdScript, final IIcfgSymbolTable symbolTable,
 			final UnmodifiableTransFormula stem, final UnmodifiableTransFormula loop, final NlaHandling nlaHandling) {
-		assert script != null;
 		assert mgdScript != null;
 		mLogger = logger;
-		mScript = script;
-		mboogie2smt = mgdScript;
+		mMgdScript = mgdScript;
 		mNlaHandling = nlaHandling;
 		mtermVariables = new ArrayList<>();
 
-		mReplacementVarFactory = new ReplacementVarFactory(mboogie2smt);
+		mReplacementVarFactory = new ReplacementVarFactory(mMgdScript, symbolTable);
 
 		mLassosUC = new ArrayList<>();
 		mLassosUC.add(
 				new LassoUnderConstruction(ModifiableTransFormulaUtils.buildTransFormula(stem, mReplacementVarFactory, mgdScript),
 						ModifiableTransFormulaUtils.buildTransFormula(loop, mReplacementVarFactory, mgdScript)));
-	}
-
-	/**
-	 * @return the script used to generate the transition formulas
-	 */
-	public Script getScript() {
-		return mScript;
 	}
 
 	public ReplacementVarFactory getReplacementVarFactory() {

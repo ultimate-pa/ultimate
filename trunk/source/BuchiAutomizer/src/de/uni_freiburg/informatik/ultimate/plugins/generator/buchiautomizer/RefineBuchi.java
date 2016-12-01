@@ -303,8 +303,8 @@ public class RefineBuchi {
 
 					final LoopCannibalizer lc = new LoopCannibalizer(mCounterexample, loopInterpolantsForRefinement, bspm, pu,
 							mCsToolkit, interpolation, 
-							mICfgContainer.getBoogie2SMT().getBoogie2SmtSymbolTable(),
-							mServices, mSimplificationTechnique, mXnfConversionTechnique);
+							mServices,
+							mSimplificationTechnique, mXnfConversionTechnique);
 					loopInterpolantsForRefinement = lc.getResult();
 				} catch (final ToolchainCanceledException tce) {
 					final String taskDescription = "loop cannibalization";

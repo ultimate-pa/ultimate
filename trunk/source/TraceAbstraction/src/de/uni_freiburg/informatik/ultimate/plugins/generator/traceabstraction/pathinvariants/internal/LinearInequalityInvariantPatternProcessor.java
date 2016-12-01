@@ -61,6 +61,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
@@ -68,12 +69,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.ControlFlowGraph.Location;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.ControlFlowGraph.Transition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 
 /**
@@ -102,7 +100,7 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 	/**
 	 * @see {@link MotzkinTransformation}.mMotzkinCoeffiecients2LinearInequalities
 	 */
-	private Map<String, LinearInequality> mMotzkinCoeffiecients2LinearInequalities;
+	private final Map<String, LinearInequality> mMotzkinCoeffiecients2LinearInequalities;
 
 	private final boolean mUseVarsFromUnsatCore;
 
@@ -152,7 +150,7 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 	 *            Service provider to use, for example for logging and timeouts
 	 * @param predicateUnifier
 	 *            the predicate unifier to unify final predicates with
-	 * @param predicateScript
+	 * @param csToolkit
 	 *            the smt manager to use with the predicateUnifier
 	 * @param solver
 	 *            SMT solver to use
@@ -221,16 +219,16 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 			final IUltimateServiceProvider services,
 			final IToolchainStorage storage,
 			final PredicateUnifier predicateUnifier,
-			final ManagedScript predicateScript, final Collection<Term> axioms, 
+			final CfgSmtToolkit csToolkit, final Collection<Term> axioms, 
 			final Script solver,
-			Set<BoogieIcfgLocation> locations, Set<IcfgInternalAction> transitions, final IPredicate precondition,
+			final Set<BoogieIcfgLocation> locations, final Set<IcfgInternalAction> transitions, final IPredicate precondition,
 			final IPredicate postcondition,
 			final ILinearInequalityInvariantPatternStrategy strategy,
 			final boolean useNonlinearConstraints,
 			final boolean useVarsFromUnsatCore,
 			final SimplificationTechnique simplicationTechnique, 
 			final XnfConversionTechnique xnfConversionTechnique) {
-		super(predicateUnifier, predicateScript);
+		super(predicateUnifier, csToolkit);
 		this.mServices = services;
 		mLogger = services.getLoggingService().getLogger(
 				Activator.PLUGIN_ID);
@@ -244,11 +242,11 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 		mPatternCoefficients = new HashSet<>();
 
 		mLinearizer = new CachedTransFormulaLinearizer(services, 
-				predicateScript, axioms, storage, simplicationTechnique, xnfConversionTechnique);
+				csToolkit, axioms, storage, simplicationTechnique, xnfConversionTechnique);
 		this.mPrecondition = mLinearizer.linearize(
-				TransFormulaBuilder.constructTransFormulaFromPredicate(precondition, predicateScript));
+				TransFormulaBuilder.constructTransFormulaFromPredicate(precondition, csToolkit.getManagedScript()));
 		this.mPostcondition = mLinearizer.linearize(
-				TransFormulaBuilder.constructTransFormulaFromPredicate(postcondition, predicateScript));
+				TransFormulaBuilder.constructTransFormulaFromPredicate(postcondition, csToolkit.getManagedScript()));
 
 		mCurrentRound = -1;
 		mMaxRounds = strategy.getMaxRounds();
@@ -776,11 +774,11 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 	private void annotateAndAssertTermAndStoreMapping(final Term term) {
 		assert term.getFreeVars().length == 0 : "Term has free vars";
 		// Annotate and assert the conjuncts of the term one by one 
-		Term[] conjunctsOfTerm = SmtUtils.getConjuncts(term);
+		final Term[] conjunctsOfTerm = SmtUtils.getConjuncts(term);
 		final String termAnnotName = ANNOT_PREFIX + PREFIX_SEPARATOR + (mAnnotTermCounter++);
 		for (int conjunctCounter = 0; conjunctCounter < conjunctsOfTerm.length; conjunctCounter++) {
 			// Generate unique name for this term
-			String conjunctAnnotName = termAnnotName + PREFIX_SEPARATOR + (conjunctCounter); 
+			final String conjunctAnnotName = termAnnotName + PREFIX_SEPARATOR + (conjunctCounter); 
 			// Store mapping termAnnotName -> original term
 			mAnnotTerm2OriginalTerm.put(conjunctAnnotName, conjunctsOfTerm[conjunctCounter]);
 
@@ -814,23 +812,23 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 	 * @return
 	 * @author Betim Musa (musab@informaitk.uni-freiburg.de)
 	 */
-	private Set<String> getTermVariablesFromTerm(Term t) {
-		HashSet<String> result = new HashSet<>();
+	private Set<String> getTermVariablesFromTerm(final Term t) {
+		final HashSet<String> result = new HashSet<>();
 		if (t instanceof ApplicationTerm) {
 			if (((ApplicationTerm)t).getFunction().getName().startsWith("motzkin_")) {
 				result.add(((ApplicationTerm)t).getFunction().getName());
 				return result;
 			} else {
-				Term[] subterms = ((ApplicationTerm)t).getParameters();
-				for (Term st : subterms) {
+				final Term[] subterms = ((ApplicationTerm)t).getParameters();
+				for (final Term st : subterms) {
 					result.addAll(getTermVariablesFromTerm(st));
 				}
 			}
 		} else if (t instanceof AnnotatedTerm) {
-			Term subterm = ((AnnotatedTerm)t).getSubterm();
+			final Term subterm = ((AnnotatedTerm)t).getSubterm();
 			result.addAll(getTermVariablesFromTerm(subterm));
 		} else if (t instanceof LetTerm) {
-			Term subterm = ((LetTerm)t).getSubTerm();
+			final Term subterm = ((LetTerm)t).getSubTerm();
 			result.addAll(getTermVariablesFromTerm(subterm));
 		} else if (t instanceof TermVariable) {
 			//			result.add((TermVariable)t);
@@ -879,16 +877,16 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 				// Extract the variables from the unsatisfiable core by 
 				// first extracting the motzkin variables and then using them
 				// to get the corresponding program variables 
-				Term[] unsatCoreAnnots = mSolver.getUnsatCore();
-				Set<String> motzkinVariables = new HashSet<>();
-				for (Term t : unsatCoreAnnots) {
-					Term origTerm = mAnnotTerm2OriginalTerm.get(t.toStringDirect());
+				final Term[] unsatCoreAnnots = mSolver.getUnsatCore();
+				final Set<String> motzkinVariables = new HashSet<>();
+				for (final Term t : unsatCoreAnnots) {
+					final Term origTerm = mAnnotTerm2OriginalTerm.get(t.toStringDirect());
 					motzkinVariables.addAll(getTermVariablesFromTerm(origTerm));
 				}
 				mVarsFromUnsatCore = new HashSet<>();
-				for (String motzkinVar : motzkinVariables) {
-					LinearInequality linq = mMotzkinCoeffiecients2LinearInequalities.get(motzkinVar);
-					for (Term varInLinq : linq.getVariables()) {
+				for (final String motzkinVar : motzkinVariables) {
+					final LinearInequality linq = mMotzkinCoeffiecients2LinearInequalities.get(motzkinVar);
+					for (final Term varInLinq : linq.getVariables()) {
 						if (varInLinq instanceof TermVariable) {
 							mVarsFromUnsatCore.add((TermVariable)varInLinq);
 						} else {
@@ -965,7 +963,7 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 	 */
 	protected Term getValuatedTermForPattern(
 			final Collection<Collection<LinearPatternBase>> pattern) {
-		final Script script = mScript.getScript();
+		final Script script = mCsToolkit.getManagedScript().getScript();
 		final Collection<Term> conjunctions = new ArrayList<Term>(
 				pattern.size());
 		for (final Collection<LinearPatternBase> conjunct : pattern) {
@@ -984,9 +982,9 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 							affineFunctionTerm));
 				}
 			}
-			conjunctions.add(SmtUtils.and(mScript.getScript(), inequalities));
+			conjunctions.add(SmtUtils.and(mCsToolkit.getManagedScript().getScript(), inequalities));
 		}
-		return SmtUtils.or(mScript.getScript(), conjunctions);
+		return SmtUtils.or(mCsToolkit.getManagedScript().getScript(), conjunctions);
 	}
 
 	private static Term constructZero(final Script script, final Sort sort) {
@@ -1040,8 +1038,8 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 	 * {@inheritDoc}
 	 */
 	@Override
-	public Collection<Collection<LinearPatternBase>> getInvariantPatternForLocation(BoogieIcfgLocation location,
-			int round) {
+	public Collection<Collection<LinearPatternBase>> getInvariantPatternForLocation(final BoogieIcfgLocation location,
+			final int round) {
 		// Build invariant pattern
 		final Collection<Collection<LinearPatternBase>> disjunction;
 //		if (mLocations.get(0).equals(location)) {

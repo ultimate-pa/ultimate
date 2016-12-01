@@ -31,8 +31,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 
 /**
@@ -45,21 +45,21 @@ public abstract class AbstractSMTInvariantPatternProcessor<IPT> implements
 		IInvariantPatternProcessor<IPT> {
 
 	protected final PredicateUnifier predicateUnifier;
-	protected final ManagedScript mScript;
+	protected final CfgSmtToolkit mCsToolkit;
 
 	/**
 	 * Creates a new pattern processor based on SMT.
 	 * 
 	 * @param predicateUnifier
 	 *            predicate unifier to unify predicates with
-	 * @param script
+	 * @param csToolkit
 	 *            SMT manager to access {@link Boogie2SMT} through
 	 */
 	public AbstractSMTInvariantPatternProcessor(
 			final PredicateUnifier predicateUnifier,
-			final ManagedScript script) {
+			final CfgSmtToolkit csToolkit) {
 		this.predicateUnifier = predicateUnifier;
-		this.mScript = script;
+		this.mCsToolkit = csToolkit;
 	}
 
 	/**

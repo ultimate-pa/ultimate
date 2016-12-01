@@ -274,7 +274,7 @@ public class LassoAnalysis {
 	 */
 	protected void preprocess() throws TermException {
 		mLogger.info("Starting lasso preprocessing...");
-		final LassoBuilder lassoBuilder = new LassoBuilder(mLogger, mMgdScript.getScript(), mMgdScript, mStemTransition,
+		final LassoBuilder lassoBuilder = new LassoBuilder(mLogger, mMgdScript, mSymbolTable, mStemTransition,
 				mLoopTransition, mPreferences.getNlaHandling());
 		assert lassoBuilder.isSane("initial lasso construction");
 		lassoBuilder.preprocess(getPreProcessors(lassoBuilder, mPreferences.isOverapproximateArrayIndexConnection()),
