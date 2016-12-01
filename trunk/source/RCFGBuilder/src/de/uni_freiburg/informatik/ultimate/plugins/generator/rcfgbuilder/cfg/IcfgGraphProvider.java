@@ -40,14 +40,14 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
  */
 public final class IcfgGraphProvider {
 
-	public static VisualizationNode getVisualizationGraph(final BoogieIcfgContainer cont) {
+	public static VisualizationNode getVisualizationGraph(final IIcfg cont) {
 		final IExplicitEdgesMultigraph<IcfgLocation, IcfgEdge, IcfgLocation, IcfgEdge, VisualizationNode> artificialRoot =
 				getVirtualRoot(cont);
 		return new VisualizationNode(artificialRoot);
 	}
 
 	public static IExplicitEdgesMultigraph<IcfgLocation, IcfgEdge, IcfgLocation, IcfgEdge, VisualizationNode>
-			getVirtualRoot(final BoogieIcfgContainer cont) {
+			getVirtualRoot(final IIcfg cont) {
 		final IcfgVirtualRoot artificialRoot = new IcfgVirtualRoot();
 		artificialRoot.getPayload().getAnnotations().put(cont.getClass().getSimpleName(), cont);
 		for (final Entry<String, BoogieIcfgLocation> entry : cont.getProcedureEntryNodes().entrySet()) {

@@ -42,7 +42,6 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryA
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation.LoopEntryType;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.ModernAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IExplicitEdgesMultigraph;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IVisualizable;
@@ -55,7 +54,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieDeclar
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBacktranslator;
@@ -68,7 +66,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBac
  * @author heizmann@informatik.uni-freiburg.de
  *
  */
-public class BoogieIcfgContainer extends ModernAnnotations implements IElement, IVisualizable<VisualizationNode> {
+public class BoogieIcfgContainer extends ModernAnnotations
+		implements IElement, IVisualizable<VisualizationNode>, IIcfg {
 	/**
 	 * The serial version UID. Change only if serial representation changes.
 	 */
@@ -122,15 +121,13 @@ public class BoogieIcfgContainer extends ModernAnnotations implements IElement, 
 		procs.addAll(boogieDeclarations.getProcSpecification().keySet());
 		mCfgSmtToolkit = new CfgSmtToolkit(mModifiableGlobalVariableManager, mManagedScript,
 				mBoogie2smt.getBoogie2SmtSymbolTable(), mBoogie2SMT.getAxioms(), procs);
-		mCodeBlockFactory = new CodeBlockFactory(services, mManagedScript, mCfgSmtToolkit,
-				mBoogie2SMT.getBoogie2SmtSymbolTable());
+		mCodeBlockFactory =
+				new CodeBlockFactory(services, mManagedScript, mCfgSmtToolkit, mBoogie2SMT.getBoogie2SmtSymbolTable());
 		mPayload = new Payload(loc);
 		mPayload.getAnnotations().put(Activator.PLUGIN_ID, this);
 	}
 
-	/**
-	 * Maps the pair of procedure name location name to the LocNode that represents this location.
-	 */
+	@Override
 	@Visualizable
 	public Map<String, Map<String, BoogieIcfgLocation>> getProgramPoints() {
 		return mLocNodes;
@@ -144,28 +141,17 @@ public class BoogieIcfgContainer extends ModernAnnotations implements IElement, 
 		return result;
 	}
 
-	/**
-	 * Maps a procedure name to the entry node of that procedure. The entry node of a procedure represents an auxiliary
-	 * location that is reached after calling the procedure. Afterwards we assume that the global variables and
-	 * corresponding and oldvars have the same values, we assume the requires clause and reach the initial node.
-	 *
-	 */
+	@Override
 	public Map<String, BoogieIcfgLocation> getProcedureEntryNodes() {
 		return mEntryNodes;
 	}
 
-	/**
-	 * Maps a procedure name to the the exit node of that procedure. The exit node of a procedure represents an
-	 * auxiliary location that is reached after assuming the ensures part of the specification. This locNode is the
-	 * source of ReturnEdges which lead to the callers of this procecure.
-	 */
+	@Override
 	public Map<String, BoogieIcfgLocation> getProcedureExitNodes() {
 		return mExitNode;
 	}
 
-	/**
-	 * Maps a procedure name to error locations generated for this procedure.
-	 */
+	@Override
 	public Map<String, Collection<BoogieIcfgLocation>> getProcedureErrorNodes() {
 		return mErrorNodes;
 	}
@@ -198,6 +184,7 @@ public class BoogieIcfgContainer extends ModernAnnotations implements IElement, 
 		return mBoogieDeclarations;
 	}
 
+	@Override
 	public CodeBlockFactory getCodeBlockFactory() {
 		return mCodeBlockFactory;
 	}
@@ -214,6 +201,7 @@ public class BoogieIcfgContainer extends ModernAnnotations implements IElement, 
 		return mPotentialCycleProgramPoints;
 	}
 
+	@Override
 	public CfgSmtToolkit getCfgSmtToolkit() {
 		return mCfgSmtToolkit;
 	}
@@ -228,10 +216,6 @@ public class BoogieIcfgContainer extends ModernAnnotations implements IElement, 
 		return true;
 	}
 
-	/**
-	 * Returns the name of the file that is analyzed. The result is the name without the full path.
-	 *
-	 */
 	public String getFilename() {
 		final String pathAndFilename = getPayload().getLocation().getFileName();
 		final String pureFilename = new File(pathAndFilename).getName();
@@ -258,11 +242,7 @@ public class BoogieIcfgContainer extends ModernAnnotations implements IElement, 
 	}
 
 	@Override
-	public VisualizationNode getVisualizationGraph() {
-		return IcfgGraphProvider.getVisualizationGraph(this);
-	}
-
-	public IExplicitEdgesMultigraph<IcfgLocation, IcfgEdge, IcfgLocation, IcfgEdge, ?> getVirtualRoot() {
-		return IcfgGraphProvider.getVirtualRoot(this);
+	public String getIdentifier() {
+		return getClass().getSimpleName() + " " + getFilename();
 	}
 }

@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslatedCFG;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.IcfgGraphProvider;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.preferences.PreferenceInitializer;
 
@@ -171,7 +172,7 @@ public class WitnessPrinter implements IOutput {
 		final BoogieIcfgContainer root = mRCFGCatcher.getModel();
 		final String filename = root.getPayload().getLocation().getFileName();
 		final BacktranslatedCFG<?, IcfgEdge> origCfg =
-				new BacktranslatedCFG<>(filename, root.getVirtualRoot(), IcfgEdge.class);
+				new BacktranslatedCFG<>(filename, IcfgGraphProvider.getVirtualRoot(root), IcfgEdge.class);
 		final IBacktranslatedCFG<?, ?> translatedCFG = backtrans.translateCFG(origCfg);
 
 		return Collections.singleton(() -> new Triple<>(result, filename, translatedCFG.getSVCOMPWitnessString()));
