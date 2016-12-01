@@ -27,6 +27,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
@@ -40,4 +43,19 @@ public abstract class EqNode {
 	public abstract Term getTerm(Script s) ;
 
 	public abstract boolean isLiteral();
+	
+
+	Set<EqNode> mParents = new HashSet<>();
+
+	/**
+	 * Yields the parents of this node in the EqNode graph (where the edges mean "is applied to"/"is a function argument of").
+	 * Can be used to obtain initial ccParents for the corresponding EqGraphNode.
+	 */
+	Set<EqNode> getParents() {
+		return mParents;
+	}
+	
+	void addParent(EqNode parent) {
+		mParents.add(parent);
+	}
 }

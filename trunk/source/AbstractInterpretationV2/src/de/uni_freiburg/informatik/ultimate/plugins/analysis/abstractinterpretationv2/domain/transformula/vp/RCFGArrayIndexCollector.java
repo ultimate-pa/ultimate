@@ -318,6 +318,10 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 			
 			mEqFunctionNodeStore.put(function, indices, result);
 		}
+		
+		for (EqNode child : indices) {
+			child.addParent(result);
+		}
 		return result;
 	}
 

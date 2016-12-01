@@ -68,6 +68,16 @@ public class VPStateFactory {
 				literalSet.add(eqNode);
 			}
 		}
+		eqNodeToEqGraphNodeMap = Collections.unmodifiableMap(eqNodeToEqGraphNodeMap);
+		
+		/*
+		 * When all EqGraphNodes for the VPState have been created, we can set their
+		 * initCcpar and initCcchild fields
+		 */
+		for (EqGraphNode egn : eqNodeToEqGraphNodeMap.values()) {
+			egn.setupNode(eqNodeToEqGraphNodeMap);
+		}
+		
 		
 		/*
 		 * Generate disequality set for constants
@@ -96,11 +106,11 @@ public class VPStateFactory {
 
 			for (EqNode arg : ((EqFunctionNode)eqNode).getArgs()) {
 				EqGraphNode argNode = getOrConstructEqGraphNode(arg, eqNodeToEqGraphNode);
-				argNode.addToInitCcpar(graphNode);
+//				argNode.addToInitCcpar(graphNode);
 				argNode.addToCcpar(graphNode);
 				argNodes.add(argNode);
 			}
-			graphNode.addToInitCcchild(argNodes);
+//			graphNode.addToInitCcchild(argNodes);
 			graphNode.getCcchild().addPair(((EqFunctionNode)eqNode).getFunction(), argNodes);
 		}
 		eqNodeToEqGraphNode.put(eqNode, graphNode);
@@ -116,10 +126,6 @@ public class VPStateFactory {
 	}
 	
 	public VPState copy(VPState originalState) {
-//		if (originalState.isTop()) { //BUG!
-//			assert mTopState == originalState : "we have more than one top state";
-//			return originalState;
-//		}
 		
 		VPState result = createTopState();
 		
