@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2015 Evren Ermis
+ * Copyright (C) 2012-2015 Alexander Nutz (nutz@informatik.uni-freiburg.de)
  * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 University of Freiburg
  * 
@@ -25,41 +25,22 @@
  * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.modelcheckerutils.transfomers;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck;
 
-import java.util.HashMap;
 
+import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 
-public class SubstituteTermTransformer extends TermTransformer{
+public class StripAnnotationsTermTransformer extends TermTransformer{
 
-//	private Term mterm = null;
-//	private Term msubstitute = null;
-	private HashMap<Term, Term> msubstitution = new HashMap<Term, Term>();
-	
-	public Term substitute(Term formula, Term term, Term substitute) {
-//		mterm = term;
-//		msubstitute = substitute;
-		msubstitution.clear();
-		msubstitution.put(term, substitute);
-		final Term result = transform(formula);
-		return result;
-	}
-	
-	public Term substitute(Term formula, HashMap<Term,Term> substitution) {
-		msubstitution = substitution;
-		final Term result = transform(formula);
-		return result;
-	}
-	
 	@Override
 	protected void convert(Term term) {
-		if (msubstitution.containsKey(term)) {
-			super.setResult(msubstitution.get(term));
-			return;
+		if (term instanceof AnnotatedTerm) {
+			final AnnotatedTerm at = (AnnotatedTerm) term;
+			super.setResult(at.getSubterm());
+		} else {
+			super.convert(term);
 		}
-		super.convert(term);
 	}
-	
 }

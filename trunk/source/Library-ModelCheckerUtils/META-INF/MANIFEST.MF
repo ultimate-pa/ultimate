@@ -20,8 +20,7 @@ Export-Package: de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie,
  de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript,
  de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.mapelimination,
  de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms,
- de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates,
- de.uni_freiburg.informatik.ultimate.modelcheckerutils.transfomers
+ de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates
 Require-Bundle: Library-UltimateCore,
  UltimateCore,
  Library-SMTLIB,
