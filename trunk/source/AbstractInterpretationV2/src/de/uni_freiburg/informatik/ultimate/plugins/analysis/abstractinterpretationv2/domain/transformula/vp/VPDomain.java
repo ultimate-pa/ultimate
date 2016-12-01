@@ -149,10 +149,6 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 		return mLogger;
 	}
 
-	public EqNode getEqNodeFromTerm(Term term) {
-		return mTermToEqNodeMap.get(term);
-	}
-
 	public RCFGArrayIndexCollector getPreAnalysis() {
 		return mPreAnalysis;
 	}

@@ -220,8 +220,8 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 				/*
 				 * case "two terms we track are equated"
 				 */
-				EqNode node1 = getNodeFromTerm(appTerm.getParameters()[0]);
-				EqNode node2 = getNodeFromTerm(appTerm.getParameters()[1]);
+				EqNode node1 = mDomain.getPreAnalysis().getEqNode(appTerm.getParameters()[0], tvToPvMap);
+				EqNode node2 = mDomain.getPreAnalysis().getEqNode(appTerm.getParameters()[1], tvToPvMap);
 							
 				if (node1 != null && node2 != null) {
 					VPState resultState = mDomain.getVpStateFactory().addEquality(
@@ -262,43 +262,6 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 		return Collections.singletonList(resultState);
 	}
 	
-	/**
-	 * 
-	 * @param term
-	 * @param state
-	 * @return An eqNode if we are tracking term, null otherwise
-	 */
-	private EqNode getNodeFromTerm(final Term term) {
-		EqNode result = mDomain.getEqNodeFromTerm(term);
-		//assert result != null;
-		return result;
-		
-		
-//		final Map<Term, EqBaseNode> baseNodeMap = state.getTermToBaseNodeMap();
-//		final Map<Term, Set<EqFunctionNode>> fnNodeMap = state.getTermToFnNodeMap();
-//		
-//		
-//		if (term instanceof TermVariable || term instanceof ConstantTerm) {
-//			if (baseNodeMap.containsKey(term)) {
-//				return baseNodeMap.get(term);
-//			}
-//		} else {
-//			final Term array = ((ApplicationTerm)term).getParameters()[0];
-//			final Term index = ((ApplicationTerm)term).getParameters()[1];
-//			final EqNode indexNode = getNodeFromTerm(index, state);
-//			if (fnNodeMap.containsKey(array)) {
-//				for (final EqFunctionNode fnNode : fnNodeMap.get(array)) {
-//					// TODO (alex) : fix this
-////					if (fnNode.getArg().equals(indexNode)) {
-////						return fnNode;
-////					}
-//				}
-//			}
-//		}
-//		return null;
-	}
-
-
 	
 	@Override
 	public List<VPState> apply(final VPState stateBeforeLeaving, final VPState stateAfterLeaving,

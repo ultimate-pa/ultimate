@@ -116,16 +116,18 @@ public class VPStateFactory {
 	}
 	
 	public VPState copy(VPState originalState) {
-		if (originalState.isTop()) {
-			assert mTopState == originalState : "we have more than one top state";
-			return originalState;
-		}
+//		if (originalState.isTop()) { //BUG!
+//			assert mTopState == originalState : "we have more than one top state";
+//			return originalState;
+//		}
 		
 		VPState result = createTopState();
 		
 		
-		for (EqGraphNode gNode : result.getEqNodeToEqGraphNodeMap().values()) {
-			gNode.copyFields(originalState.getEqNodeToEqGraphNodeMap().get(gNode.eqNode), result);
+		for (EqNode eqNode : mDomain.getTermToEqNodeMap().values()) {
+			EqGraphNode newGraphNode = result.getEqNodeToEqGraphNodeMap().get(eqNode);
+			EqGraphNode oldGraphNode = originalState.getEqNodeToEqGraphNodeMap().get(eqNode);
+			newGraphNode.copyFields(oldGraphNode, result.getEqNodeToEqGraphNodeMap());
 		}
 		
 		for (VPDomainSymmetricPair<EqNode> pair : originalState.getDisEqualitySet()) {

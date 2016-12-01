@@ -87,10 +87,8 @@ public class EqGraphNode {
 		}
 	}
 
-	void copyFields(EqGraphNode other, VPState state) {
+	void copyFields(EqGraphNode other, Map<EqNode, EqGraphNode> mapping) {
 		assert this.eqNode == other.eqNode;
-		
-		Map<EqNode, EqGraphNode> mapping = state.getEqNodeToEqGraphNodeMap();
 		
 		this.setRepresentative(mapping.get(other.getRepresentative().eqNode));
 		for (EqGraphNode reverseRe : other.getReverseRepresentative()) {
@@ -203,25 +201,25 @@ public class EqGraphNode {
 		sb.append(" ||| representative: ");
 		sb.append(representative.eqNode.toString());
 		
-		sb.append(" ||| reverseRepresentative: ");
-		for (EqGraphNode node : reverseRepresentative) {
-			sb.append(node.eqNode.toString());
-			sb.append("  ");
-		}
-		sb.append(" ||| ccpar: ");
-		for (EqGraphNode node : ccpar) {
-			sb.append(node.eqNode.toString());
-			sb.append("  ");
-		}
-		sb.append(" ||| ccchild: ");
-		for (final Entry<IProgramVarOrConst, List<EqGraphNode>> entry : ccchild.entrySet()) {
-			sb.append(entry.getKey().toString() + ": {");
-			for (EqGraphNode node : entry.getValue()) {
-				sb.append(node.toString());
-				sb.append("  ");
-			}
-			sb.append("}, ");
-		}
+//		sb.append(" ||| reverseRepresentative: ");
+//		for (EqGraphNode node : reverseRepresentative) {
+//			sb.append(node.eqNode.toString());
+//			sb.append("  ");
+//		}
+//		sb.append(" ||| ccpar: ");
+//		for (EqGraphNode node : ccpar) {
+//			sb.append(node.eqNode.toString());
+//			sb.append("  ");
+//		}
+//		sb.append(" ||| ccchild: ");
+//		for (final Entry<IProgramVarOrConst, List<EqGraphNode>> entry : ccchild.entrySet()) {
+//			sb.append(entry.getKey().toString() + ": {");
+//			for (EqGraphNode node : entry.getValue()) {
+//				sb.append(node.toString());
+//				sb.append("  ");
+//			}
+//			sb.append("}, ");
+//		}
 
 		return sb.toString();
 	}

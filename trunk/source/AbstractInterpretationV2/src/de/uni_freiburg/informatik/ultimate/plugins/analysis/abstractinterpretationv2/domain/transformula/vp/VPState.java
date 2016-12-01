@@ -413,6 +413,11 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 
 		return sb.toString();
 	}
+	
+	@Override
+	public String toString() {
+		return toLogString();
+	}
 
 	@Override
 	public boolean equals(final Object obj) {

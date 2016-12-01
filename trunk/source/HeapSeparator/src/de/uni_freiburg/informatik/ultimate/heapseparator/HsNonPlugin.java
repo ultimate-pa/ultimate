@@ -92,6 +92,8 @@ public class HsNonPlugin {
 		
 		final VPDomain vpDomain = (VPDomain) abstractInterpretationResult.getUsedDomain();
 		
+		printAIResult(abstractInterpretationResult);
+		
 		/*
 		 * process AI result
 		 *  - bring result into partition-form (if it is not yet)
@@ -114,7 +116,7 @@ public class HsNonPlugin {
 
 		final NewArrayIdProvider newArrayIdProvider = 
 				processAbstractInterpretationResult(abstractInterpretationResult, heapSepPreanalysis);
-
+		
 		/*
 		 * do the transformation itself..
 		 */
@@ -129,6 +131,18 @@ public class HsNonPlugin {
 	
 
 		return null;
+	}
+
+	private void printAIResult(
+			final IAbstractInterpretationResult<VPState, CodeBlock, IProgramVar, ?> abstractInterpretationResult) {
+		mLogger.debug("equality domain result");
+		for (Entry<?, Set<VPState>> en : abstractInterpretationResult.getLoc2States().entrySet()) {
+			mLogger.debug(en.getKey());
+			for (VPState vps : en.getValue()) {
+				mLogger.debug("");
+				mLogger.debug(vps);
+			}
+		}
 	}
 
 	/**

@@ -440,12 +440,17 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 	}
 
 
+	/**
+	 * 
+	 * @param term
+	 * @param tvToPvMap
+	 * @return the EqNode for term (normalized by tvToPvMap) if we track term, null otherwise
+	 */
 	public EqNode getEqNode(final Term term, final Map<TermVariable, IProgramVar> tvToPvMap) {
 		// our mapping is in terms of normalized terms, so we need to make a substitution before we can look it up
 		final Map<Term, Term> substitionMap = computeNormalizingSubstitution(tvToPvMap);
 		final Term termWithNormalizedVariables = new Substitution(mScript, substitionMap).transform(term);
 		EqNode result = mTermToEqNode.get(termWithNormalizedVariables);
-		assert result != null;
 		return result;
 	}
 }
