@@ -313,7 +313,9 @@ public final class TraceAbstractionRefinementEngine
 		try {
 			result = supp.get();
 		} catch (final UnsupportedOperationException e) {
-			if (e.getMessage().startsWith("Cannot interpolate")) {
+			if (e.getMessage() == null) {
+				unknownException = e;
+			} else if (e.getMessage().startsWith("Cannot interpolate")) {
 				knownException = e;
 			} else {
 				unknownException = e;
