@@ -213,19 +213,25 @@ public class MultiTrackTraceAbstractionRefinementStrategy implements IRefinement
 	
 	private static ManagedScript constructManagedScript(final IUltimateServiceProvider services,
 			final TaCheckAndRefinementPreferences prefs, final InterpolationTechnique interpolationTechnique) {
+		final boolean dumpSmtScriptToFile = prefs.getDumpSmtScriptToFile();
+		final String pathOfDumpedScript = prefs.getPathOfDumpedScript();
+		final String baseNameOfDumpedScript =
+				"Script_" + prefs.getIcfgContainer().getFilename() + "_Iteration" + prefs.getIteration();
 		final Settings solverSettings;
 		final SolverMode solverMode;
 		final String logicForExternalSolver;
 		switch (interpolationTechnique) {
 			case Craig_TreeInterpolation:
-				solverSettings = new Settings(false, false, null, SMTINTERPOL_TIMEOUT, null, false, null, null);
+				solverSettings = new Settings(false, false, null, SMTINTERPOL_TIMEOUT, null, dumpSmtScriptToFile,
+						pathOfDumpedScript, baseNameOfDumpedScript);
 				solverMode = SolverMode.Internal_SMTInterpol;
 				logicForExternalSolver = null;
 				break;
 			case FPandBP:
 				// final String commandExternalSolver = RcfgPreferenceInitializer.Z3_DEFAULT;
-				solverSettings = new Settings(false, true, Z3_COMMAND, 0, null, false, null, null);
-				solverMode = SolverMode.External_DefaultMode;
+				solverSettings = new Settings(false, true, Z3_COMMAND, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
+						baseNameOfDumpedScript);
+				solverMode = SolverMode.External_ModelsAndUnsatCoreMode;
 				logicForExternalSolver = LOGIC_FOR_EXTERNAL_SOLVERS;
 				break;
 			default:
