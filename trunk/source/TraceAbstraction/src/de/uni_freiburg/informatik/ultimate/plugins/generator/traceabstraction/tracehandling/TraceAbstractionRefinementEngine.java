@@ -307,15 +307,32 @@ public final class TraceAbstractionRefinementEngine
 	 * Wraps the exception handling during {@link TraceChecker} or {@link IInterpolantGenerator} construction.
 	 */
 	private <T> T wrapExceptionHandling(final Supplier<T> supp) {
-		T result;
+		Exception knownException = null;
+		Exception unknownException = null;
+		T result = null;
 		try {
 			result = supp.get();
-		} catch (final UnsupportedOperationException | SMTLIBException e) {
-			result = null;
-			if (mLogger.isErrorEnabled()) {
-				mLogger.error("Caught exception: " + e.getMessage());
+		} catch (final UnsupportedOperationException e) {
+			if (e.getMessage().startsWith("Cannot interpolate")) {
+				knownException = e;
+			} else {
+				unknownException = e;
 			}
+		} catch (final SMTLIBException e) {
+			unknownException = e;
 		}
+		
+		if (knownException != null) {
+			if (mLogger.isErrorEnabled()) {
+				mLogger.error("Caught known exception: " + knownException.getMessage());
+			}
+		} else if (unknownException != null) {
+			if (mLogger.isErrorEnabled()) {
+				mLogger.error("Caught unknown exception: " + unknownException.getMessage());
+			}
+			throw new AssertionError(unknownException);
+		}
+		
 		return result;
 	}
 	
