@@ -618,7 +618,7 @@ public class BuchiCegarLoop {
 			}
 		} catch (final AutomataOperationCanceledException e) {
 			throw new ToolchainCanceledException(getClass(),
-					"minimizing automaton with " + mAbstraction.size() + " states");
+					"minimizing (" + mAutomataMinimization + ") automaton with " + mAbstraction.size() + " states");
 		} 
 		mLogger.info("Abstraction has " + mAbstraction.sizeInformation());
 	}
