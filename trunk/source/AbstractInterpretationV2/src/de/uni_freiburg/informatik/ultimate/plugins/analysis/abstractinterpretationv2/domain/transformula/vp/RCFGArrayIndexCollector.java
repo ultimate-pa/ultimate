@@ -160,8 +160,16 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 		if (result != null) {
 			return result;
 		}
-
-		IProgramVarOrConst arrayId = getOrConstructBoogieVarOrConst(mds.getArray());
+		
+		IProgramVarOrConst arrayId;
+		if (!isArrayOrConst(mds.getArray())) {
+			// if mds.getArray ist not a constant or variable, it must be a select, right?
+			MultiDimensionalSelect innerSelect = new MultiDimensionalSelect(mds.getArray());
+			EqFunctionNode innerSelectNode = (EqFunctionNode) constructEqNode(innerSelect);
+			arrayId = innerSelectNode.getFunction();
+		} else {
+			arrayId = getOrConstructBoogieVarOrConst(mds.getArray());
+		}
 		
 		List<EqNode> arguments = new ArrayList<>();
 		for (Term arrayIndex : mds.getIndex()) {
@@ -181,8 +189,17 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 		if (result != null) {
 			return result;
 		}
-		
-		IProgramVarOrConst arrayId = getOrConstructBoogieVarOrConst(mds.getArray());
+
+		IProgramVarOrConst arrayId;
+		if (!isArrayOrConst(mds.getArray())) {
+			// if mds.getArray ist not a constant or variable, it must be a store, right?
+			MultiDimensionalStore innerStore = new MultiDimensionalStore(mds.getArray());
+			EqFunctionNode innerStoreNode = (EqFunctionNode) constructEqNode(innerStore);
+			arrayId = innerStoreNode.getFunction();
+		} else {
+			arrayId = getOrConstructBoogieVarOrConst(mds.getArray());
+		}
+
 
 		List<EqNode> arguments = new ArrayList<>();
 		for (Term ai : mds.getIndex()) {
@@ -196,15 +213,19 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 		return result;
 	}
 
+	private boolean isArrayOrConst(Term t) {
+		return t instanceof TermVariable 
+				|| t instanceof ConstantTerm
+				|| (t instanceof ApplicationTerm && ((ApplicationTerm) t).getParameters().length == 0);
+	}
+
 	private EqNode getOrConstructEqNode(Term t) {
 		EqNode result = mTermToEqNode.get(t);
 		if (result != null) {
 			return result;
 		}
 		// we need to construct a fresh EqNode
-		if (t instanceof TermVariable 
-				|| t instanceof ConstantTerm
-				|| (t instanceof ApplicationTerm && ((ApplicationTerm) t).getParameters().length == 0)) {
+		if (isArrayOrConst(t)) {
 			result = getOrConstructEqBaseNode(getOrConstructBoogieVarOrConst(t));
 			mTermToEqNode.put(t, result);
 			return result;
@@ -264,15 +285,19 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 		return result;
 	}
 	
-	private EqFunctionNode getOrConstructEqFnNode(final IProgramVarOrConst eqNode, final List<EqNode> indices) {
-			
-		EqFunctionNode result = mEqFunctionNodeStore.get(eqNode, indices);
-		if (result == null) {
-			result = new EqFunctionNode(eqNode, indices);
+//	private EqFunctionNode getOrConstructEqFnNode(final EqNode eqNode, final List<EqNode> indices) {
+//
+//	}
 
-			mArrayIdToFnNodes.addPair(eqNode, result);
+	private EqFunctionNode getOrConstructEqFnNode(final IProgramVarOrConst function, final List<EqNode> indices) {
 			
-			mEqFunctionNodeStore.put(eqNode, indices, result);
+		EqFunctionNode result = mEqFunctionNodeStore.get(function, indices);
+		if (result == null) {
+			result = new EqFunctionNode(function, indices);
+
+			mArrayIdToFnNodes.addPair(function, result);
+			
+			mEqFunctionNodeStore.put(function, indices, result);
 		}
 		return result;
 	}
