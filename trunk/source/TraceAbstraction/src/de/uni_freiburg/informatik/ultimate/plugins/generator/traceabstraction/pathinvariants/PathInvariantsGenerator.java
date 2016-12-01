@@ -37,6 +37,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -72,7 +73,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * @author Dirk Steinmetz, Matthias Heizmann, Betim Musa
  */
 public final class PathInvariantsGenerator implements IInterpolantGenerator {
-	
+
 	private final NestedRun<? extends IAction, IPredicate> mRun;
 	private final IPredicate mPrecondition;
 	private final IPredicate mPostcondition;
@@ -81,10 +82,10 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final static boolean USE_LIVE_VARIABLES = false;
-	// This is the simplest strategy: to add the backward predicate at the last location to the constraints, 
+	// This is the simplest strategy: to add the backward predicate at the last location to the constraints,
 	// as an additional conjunct
 	private final static boolean USE_ONLY_LAST_BACKWARD_PREDICATES = false;
-	
+
 	/**
 	 * Creates a default factory.
 	 *
@@ -112,7 +113,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 				strategy, useNonlinerConstraints, useVarsFromUnsatCore, solverSettings, simplicationTechnique,
 				xnfConversionTechnique, axioms);
 	}
-	
+
 	/**
 	 * Generates a map of invariants to a given run, using an {@link IInvariantPatternProcessor} produced by the default
 	 * {@link IInvariantPatternProcessorFactory} (with default settings).
@@ -144,12 +145,13 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 			final boolean useVarsFromUnsatCore, final Settings solverSettings,
 			final SimplificationTechnique simplicationTechnique, final XnfConversionTechnique xnfConversionTechnique,
 			final Collection<Term> axioms, final List<IPredicate> backwardPredicates) {
-		this(services, run, precondition, postcondition, predicateUnifier, useVarsFromUnsatCore, modifiableGlobalsTable, csToolkit,
+		this(services, run, precondition, postcondition, predicateUnifier, useVarsFromUnsatCore, modifiableGlobalsTable,
+				csToolkit,
 				createDefaultFactory(services, storage, predicateUnifier, csToolkit, useNonlinerConstraints,
 						useVarsFromUnsatCore, solverSettings, simplicationTechnique, xnfConversionTechnique, axioms),
 				backwardPredicates);
 	}
-	
+
 	/**
 	 * Generates a map of invariants to a given run, using an {@link IInvariantPatternProcessor} produced by a given
 	 * {@link IInvariantPatternProcessorFactory}.
@@ -173,102 +175,108 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 			final NestedRun<? extends IAction, IPredicate> run, final IPredicate precondition,
 			final IPredicate postcondition, final PredicateUnifier predicateUnifier, final boolean useVarsFromUnsatCore,
 			final ModifiableGlobalsTable modifiableGlobalsTable, final CfgSmtToolkit csToolkit,
-			final IInvariantPatternProcessorFactory<?> invPatternProcFactory, final List<IPredicate> backwardPredicates) {
+			final IInvariantPatternProcessorFactory<?> invPatternProcFactory,
+			final List<IPredicate> backwardPredicates) {
 		super();
 		mServices = services;
 		mRun = run;
 		mPrecondition = precondition;
 		mPostcondition = postcondition;
 		mPredicateUnifier = predicateUnifier;
-		
+
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		
+
 		mLogger.info("Started with a run of length " + mRun.getLength());
-		
+
 		// Project path to CFG
 		final int len = mRun.getLength();
 		final Set<BoogieIcfgLocation> locations = new HashSet<>(len);
-//		final Map<BoogieIcfgLocation, IcfgLocation> locationsForProgramPoint = new HashMap<>(len);
+		// final Map<BoogieIcfgLocation, IcfgLocation> locationsForProgramPoint = new HashMap<>(len);
 		final Set<IcfgInternalAction> transitions = new HashSet<>(len - 1);
 		BoogieIcfgLocation previousLocation = null;
 		for (int i = 0; i < len; i++) {
 			final ISLPredicate pred = (ISLPredicate) mRun.getStateAtPosition(i);
 			final BoogieIcfgLocation currentLocation = pred.getProgramPoint();
-			
-//			IcfgLocation location = locationsForProgramPoint.get(programPoint);
-//			if (location == null) {
-//				location = new IcfgLocation(programPoint.getDebugIdentifier(), programPoint.getProcedure(), (Payload) programPoint.getPayload());
-//				locationsForProgramPoint.put(programPoint, location);
-//			}
-			
+
+			// IcfgLocation location = locationsForProgramPoint.get(programPoint);
+			// if (location == null) {
+			// location = new IcfgLocation(programPoint.getDebugIdentifier(), programPoint.getProcedure(), (Payload)
+			// programPoint.getPayload());
+			// locationsForProgramPoint.put(programPoint, location);
+			// }
+
 			locations.add(currentLocation);
-			
+
 			if (i > 0) {
 				if (!mRun.getWord().isInternalPosition(i - 1)) {
 					throw new UnsupportedOperationException("interprocedural traces are not supported (yet)");
 				}
-				
+
 				final UnmodifiableTransFormula transFormula =
 						((IInternalAction) mRun.getSymbol(i - 1)).getTransformula();
-//				transitions.add(new Transition(transFormula, locations.get(i - 1), location));
+				// transitions.add(new Transition(transFormula, locations.get(i - 1), location));
 				transitions.add(new IcfgInternalAction(previousLocation, currentLocation, currentLocation.getPayload(),
-						transFormula));				
-				if (backwardPredicates != null && (i == len - 1) && USE_ONLY_LAST_BACKWARD_PREDICATES ) {
-					final UnmodifiableTransFormula wpAsTransformula = TransFormulaBuilder.constructTransFormulaFromPredicate(backwardPredicates.get(i),
-							csToolkit.getManagedScript());
-					transitions.add(new IcfgInternalAction(previousLocation, currentLocation, currentLocation.getPayload(), wpAsTransformula));
+						transFormula));
+				if (backwardPredicates != null && (i == len - 1) && USE_ONLY_LAST_BACKWARD_PREDICATES) {
+					final UnmodifiableTransFormula wpAsTransformula =
+							TransFormulaBuilder.constructTransFormulaFromPredicate(backwardPredicates.get(i),
+									csToolkit.getManagedScript());
+					transitions.add(new IcfgInternalAction(previousLocation, currentLocation,
+							currentLocation.getPayload(), wpAsTransformula));
 				}
 			}
 			previousLocation = currentLocation;
 		}
 
-//		final ControlFlowGraph cfg =
-//				new ControlFlowGraph(locations.get(0), locations.get(len - 1), locations, transitions);
+		// final ControlFlowGraph cfg =
+		// new ControlFlowGraph(locations.get(0), locations.get(len - 1), locations, transitions);
 		mLogger.info("[PathInvariants] Built projected CFG, " + locations.size() + " states and " + transitions.size()
 				+ " transitions.");
-		
-//		// AI Module
-//		final boolean usePredicatesFromAbstractInterpretation = true; // TODO make a Pref
-//		Map<IcfgLocation, Term> initialPredicates = null;
-//		if (usePredicatesFromAbstractInterpretation) {
-//
-//			final List<CodeBlock> initials = getInitialEdges(mOriginalRoot);
-//
-//			// Run for 20% of the complete time.
-//			final IProgressAwareTimer timer = services.getProgressMonitorService().getChildTimer(0.2);
-//
-//			final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, BoogieIcfgLocation> result = AbstractInterpreter
-//					.run(mOriginalRoot, initials, timer, services);
-//
-//			if (result == null) {
-//				mLogger.warn(
-//						"was not able to retrieve initial predicates from abstract interpretation --> wrong toolchain?? (using \"true\")");
-//				initialPredicates = null;
-//			} else {
-//				initialPredicates = result.getLoc2Term().entrySet().stream()
-//						.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-//			}
-//		}
-//		// End AI Module
-		
-		
+
+		generateLiveVariables(transitions);
+
+		// // AI Module
+		// final boolean usePredicatesFromAbstractInterpretation = true; // TODO make a Pref
+		// Map<IcfgLocation, Term> initialPredicates = null;
+		// if (usePredicatesFromAbstractInterpretation) {
+		//
+		// final List<CodeBlock> initials = getInitialEdges(mOriginalRoot);
+		//
+		// // Run for 20% of the complete time.
+		// final IProgressAwareTimer timer = services.getProgressMonitorService().getChildTimer(0.2);
+		//
+		// final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, BoogieIcfgLocation> result =
+		// AbstractInterpreter
+		// .run(mOriginalRoot, initials, timer, services);
+		//
+		// if (result == null) {
+		// mLogger.warn(
+		// "was not able to retrieve initial predicates from abstract interpretation --> wrong toolchain?? (using
+		// \"true\")");
+		// initialPredicates = null;
+		// } else {
+		// initialPredicates = result.getLoc2Term().entrySet().stream()
+		// .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+		// }
+		// }
+		// // End AI Module
+
 		// Generate invariants
 		final CFGInvariantsGenerator generator = new CFGInvariantsGenerator(services);
 		final Map<BoogieIcfgLocation, IPredicate> invariants;
-		
+
 		if (USE_LIVE_VARIABLES) {
 			invariants = null;
 			// TODO: Compute the live variables and use them.
 		} else {
-//			invariants = generator.generateInvariantsFromCFG(cfg, precondition, postcondition, invPatternProcFactory,
-//					useVarsFromUnsatCore, false, null);
+			// invariants = generator.generateInvariantsFromCFG(cfg, precondition, postcondition, invPatternProcFactory,
+			// useVarsFromUnsatCore, false, null);
 			invariants = generator.generateInvariantsForTransitions(locations, transitions, precondition, postcondition,
-					invPatternProcFactory,
-					useVarsFromUnsatCore, false, null);
-			
+					invPatternProcFactory, useVarsFromUnsatCore, false, null);
+
 			mLogger.info("[PathInvariants] Generated invariant map.");
 		}
-		
+
 		// Populate resulting array
 		if (invariants != null) {
 			mInterpolants = new IPredicate[len];
@@ -283,32 +291,44 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 			mLogger.info("[PathInvariants] No invariants found.");
 		}
 	}
-	
+
+	private void generateLiveVariables(final Set<IcfgInternalAction> pathProgramTransitions) {
+
+		// allow for 20% of the remaining time
+		final IProgressAwareTimer timer = mServices.getProgressMonitorService().getChildTimer(0.2);
+
+		// TODO: Create path program as IIcfg
+		// @SuppressWarnings("unchecked")
+		// final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> result =
+		// AbstractInterpreter.runFuture(root, initials, timer, services, isSilent)(mRoot, currentAbstraction,
+		// (NestedRun<CodeBlock, IPredicate>) currentCex, pathProgramSet, timer, mServices);
+	}
+
 	@Override
 	public Word<? extends IAction> getTrace() {
 		return mRun.getWord();
 	}
-	
+
 	@Override
 	public IPredicate getPrecondition() {
 		return mPrecondition;
 	}
-	
+
 	@Override
 	public IPredicate getPostcondition() {
 		return mPostcondition;
 	}
-	
+
 	@Override
 	public Map<Integer, IPredicate> getPendingContexts() {
 		throw new UnsupportedOperationException("Call/Return not supported yet");
 	}
-	
+
 	@Override
 	public PredicateUnifier getPredicateUnifier() {
 		return mPredicateUnifier;
 	}
-	
+
 	/**
 	 * Returns a sequence of interpolants (see definition in {@link IInterpolantGenerator}) the trace which is
 	 * mRun.getWord() with an additional property. If the ProgramPoint and position i and k coincide then the
@@ -326,7 +346,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		System.arraycopy(mInterpolants, 1, interpolantMapWithOutFirstInterpolant, 0, mInterpolants.length - 2);
 		return interpolantMapWithOutFirstInterpolant;
 	}
-	
+
 	@Override
 	public boolean isPerfectSequence() {
 		final BackwardCoveringInformation bci = TraceCheckerUtils.computeCoverageCapability(mServices, this, mLogger);
