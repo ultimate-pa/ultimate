@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.Simpli
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
@@ -82,6 +83,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final static boolean USE_LIVE_VARIABLES = false;
+	private final PredicateTransformer mPredicateTransformer;
 	// This is the simplest strategy: to add the backward predicate at the last location to the constraints,
 	// as an additional conjunct
 	private final static boolean USE_ONLY_LAST_BACKWARD_PREDICATES = false;
@@ -143,13 +145,12 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 			final IPredicate postcondition, final PredicateUnifier predicateUnifier, final CfgSmtToolkit csToolkit,
 			final ModifiableGlobalsTable modifiableGlobalsTable, final boolean useNonlinerConstraints,
 			final boolean useVarsFromUnsatCore, final Settings solverSettings,
-			final SimplificationTechnique simplicationTechnique, final XnfConversionTechnique xnfConversionTechnique,
-			final Collection<Term> axioms, final List<IPredicate> backwardPredicates) {
+			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
+			final Collection<Term> axioms) {
 		this(services, run, precondition, postcondition, predicateUnifier, useVarsFromUnsatCore, modifiableGlobalsTable,
-				csToolkit,
+				csToolkit, simplificationTechnique, xnfConversionTechnique,
 				createDefaultFactory(services, storage, predicateUnifier, csToolkit, useNonlinerConstraints,
-						useVarsFromUnsatCore, solverSettings, simplicationTechnique, xnfConversionTechnique, axioms),
-				backwardPredicates);
+						useVarsFromUnsatCore, solverSettings, simplificationTechnique, xnfConversionTechnique, axioms));
 	}
 
 	/**
@@ -174,16 +175,17 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	public PathInvariantsGenerator(final IUltimateServiceProvider services,
 			final NestedRun<? extends IAction, IPredicate> run, final IPredicate precondition,
 			final IPredicate postcondition, final PredicateUnifier predicateUnifier, final boolean useVarsFromUnsatCore,
-			final ModifiableGlobalsTable modifiableGlobalsTable, final CfgSmtToolkit csToolkit,
-			final IInvariantPatternProcessorFactory<?> invPatternProcFactory,
-			final List<IPredicate> backwardPredicates) {
+			final ModifiableGlobalsTable modifiableGlobalsTable, final CfgSmtToolkit csToolkit, 
+			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
+			final IInvariantPatternProcessorFactory<?> invPatternProcFactory) {
 		super();
 		mServices = services;
 		mRun = run;
 		mPrecondition = precondition;
 		mPostcondition = postcondition;
 		mPredicateUnifier = predicateUnifier;
-
+		mPredicateTransformer = new PredicateTransformer(services, csToolkit.getManagedScript(), simplificationTechnique, xnfConversionTechnique);
+		
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 
 		mLogger.info("Started with a run of length " + mRun.getLength());
@@ -217,12 +219,13 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 				// transitions.add(new Transition(transFormula, locations.get(i - 1), location));
 				transitions.add(new IcfgInternalAction(previousLocation, currentLocation, currentLocation.getPayload(),
 						transFormula));
-				if (backwardPredicates != null && (i == len - 1) && USE_ONLY_LAST_BACKWARD_PREDICATES) {
-					final UnmodifiableTransFormula wpAsTransformula =
-							TransFormulaBuilder.constructTransFormulaFromPredicate(backwardPredicates.get(i),
-									csToolkit.getManagedScript());
-					transitions.add(new IcfgInternalAction(previousLocation, currentLocation,
-							currentLocation.getPayload(), wpAsTransformula));
+				if (USE_ONLY_LAST_BACKWARD_PREDICATES && (i == len - 1)) {
+					IPredicate wpAsPredicate = mPredicateUnifier.getOrConstructPredicate(
+							mPredicateTransformer.weakestPrecondition(mPostcondition, transFormula));
+					final UnmodifiableTransFormula wpAsTransformula = TransFormulaBuilder.constructTransFormulaFromPredicate(wpAsPredicate,
+							csToolkit.getManagedScript());
+					transitions.add(new IcfgInternalAction(previousLocation, currentLocation, currentLocation.getPayload(), wpAsTransformula));
+					mLogger.info("wp computed: " + wpAsPredicate);
 				}
 			}
 			previousLocation = currentLocation;

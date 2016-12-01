@@ -60,8 +60,6 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends Interpo
 	private final boolean mUseVarsFromUnsatCore;
 	private final Settings mSolverSettings;
 	private final Collection<Term> mAxioms;
-	private final TraceCheckerSpWp mTraceCheckerSpWp;
-	private final static boolean USE_BACKWARD_PREDICATES = false;
 
 
 	public InterpolatingTraceCheckerPathInvariantsWithFallback(final IPredicate precondition,
@@ -72,7 +70,7 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends Interpo
 			final PredicateUnifier predicateUnifier, final boolean useNonlinerConstraints,
 			final boolean useVarsFromUnsatCore, final Settings solverSettings,
 			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique,
-			final Collection<Term> axioms, final TraceCheckerSpWp tcspwp) {
+			final Collection<Term> axioms) {
 		super(precondition, postcondition, pendingContexts, run.getWord(), csToolkit, assertCodeBlocksIncrementally,
 				services, computeRcfgProgramExecution, predicateUnifier, csToolkit.getManagedScript(),
 				simplificationTechnique, xnfConversionTechnique, run.getStateSequence());
@@ -82,7 +80,6 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends Interpo
 		mUseVarsFromUnsatCore = useVarsFromUnsatCore;
 		mSolverSettings = solverSettings;
 		mAxioms = axioms;
-		mTraceCheckerSpWp = tcspwp;
 		if (super.isCorrect() == LBool.UNSAT) {
 			mTraceCheckFinished = true;
 			super.unlockSmtManager();
@@ -93,19 +90,10 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends Interpo
 	@Override
 	protected void computeInterpolants(final Set<Integer> interpolatedPositions,
 			final InterpolationTechnique interpolation) {
-		final PathInvariantsGenerator pathInvariantsGenerator;
-		if (USE_BACKWARD_PREDICATES) {
-			mTraceCheckerSpWp.computeInterpolants(new AllIntegers(), InterpolationTechnique.BackwardPredicates);
-			pathInvariantsGenerator = new PathInvariantsGenerator(super.mServices, mStorage, mNestedRun, super.getPrecondition(), super.getPostcondition(), mPredicateUnifier,
-					super.mCsToolkit, mCsToolkit.getModifiableGlobalsTable(), mUseNonlinerConstraints,
-					mUseVarsFromUnsatCore, mSolverSettings, mSimplificationTechnique, mXnfConversionTechnique, mAxioms,
-					mTraceCheckerSpWp.getBackwardPredicates());
-		} else {
-			pathInvariantsGenerator = new PathInvariantsGenerator(super.mServices, mStorage, mNestedRun, super.getPrecondition(), super.getPostcondition(), mPredicateUnifier,
+
+		final PathInvariantsGenerator pathInvariantsGenerator = new PathInvariantsGenerator(super.mServices, mStorage, mNestedRun, super.getPrecondition(), super.getPostcondition(), mPredicateUnifier,
 				super.mCsToolkit, mCsToolkit.getModifiableGlobalsTable(), mUseNonlinerConstraints,
-				mUseVarsFromUnsatCore, mSolverSettings, mSimplificationTechnique, mXnfConversionTechnique, mAxioms,
-				null);
-		}
+				mUseVarsFromUnsatCore, mSolverSettings, mSimplificationTechnique, mXnfConversionTechnique, mAxioms);
 		IPredicate[] interpolants = pathInvariantsGenerator.getInterpolants();
 		if (interpolants == null) {
 			interpolants = fallbackInterpolantComputation();
