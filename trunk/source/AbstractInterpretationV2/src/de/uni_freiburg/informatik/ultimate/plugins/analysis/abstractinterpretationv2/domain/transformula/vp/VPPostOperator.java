@@ -90,20 +90,7 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 		mDomain.getLogger().debug("Original term: " + tf.getFormula());
 		mDomain.getLogger().debug("Nnf term:      " + nnfTerm);
 	
-
-//		//		Substitution
-//		final Map<Term, Term> substitionMap = new HashMap<Term, Term>();
-//		for (final Entry<IProgramVar, TermVariable> entry : tf.getInVars().entrySet()) {
-//			substitionMap.put(entry.getValue(), entry.getKey().getTermVariable());
-//		}
-//		for (final Entry<IProgramVar, TermVariable> entry : tf.getOutVars().entrySet()) {
-//			substitionMap.put(entry.getValue(), entry.getKey().getTermVariable());
-//		}
-//		final Term substitutedTerm = new Substitution(mScript, substitionMap).transform(nnfTerm);
-//
-//		final Term term = substitutedTerm;	
 		final Term term = nnfTerm;
-	
 		
 		VPState preparedState = mDomain.getVpStateFactory().havocVariables(tf.getAssignedVars(), oldstate);
 		
@@ -149,7 +136,6 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 					}
 				}
 				return result;
-				
 			} else if (applicationName == "or") {
 				assert !negated : "we transformed to nnf before, right?";
 				
@@ -159,10 +145,6 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 				}
 				return orList;
 			} else if (applicationName == "=") {
-				
-//				EqNode node1 = null;
-//				EqNode node2 = null;
-				
 				/*
 				 * case "ArrayEquality"
 				 */
@@ -179,7 +161,7 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 					Term array2Term = aeq.getRhs();
 					IProgramVarOrConst array1 = mDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(array1Term, tvToPvMap);
 					IProgramVarOrConst array2 = mDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(array2Term, tvToPvMap);
-					VPState resultState = mDomain.getVpStateFactory().arrayAssignment(array1, array2, preState);
+					VPState resultState = mDomain.getVpStateFactory().arrayEquality(array1, array2, preState);
 					return Collections.singletonList(resultState);
 				}
 				
@@ -217,10 +199,10 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 						EqNode valueNode = mDomain.getPreAnalysis().getEqNode(value, tvToPvMap);
 
 						VPState resultState = mDomain.getVpStateFactory().havoc(
-								preState.getEqNodeToEqGraphNodeMap().get(arrayAtIndexNode), preState);
+								arrayAtIndexNode, preState);
 						resultState = mDomain.getVpStateFactory().addEquality(
-								resultState.getEqNodeToEqGraphNodeMap().get(arrayAtIndexNode), 
-								resultState.getEqNodeToEqGraphNodeMap().get(valueNode), 
+								arrayAtIndexNode, 
+								valueNode, 
 								resultState);
 						return Collections.singletonList(resultState);
 					} else {
@@ -231,36 +213,9 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 						 * --> 
 						 */
 						assert false : "does this occur?";
-					return null;
+						return null;
 					}
-
 				}
-				
-			
-//				if (mDomain.isArray(appTerm.getParameters()[0])) {
-//					if (mDomain.isArray(appTerm.getParameters()[1])) {
-//						IProgramVarOrConst array1 = mDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(
-//								appTerm.getParameters()[0], tvToPvMap);
-//						IProgramVarOrConst array2 = mDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(
-//								appTerm.getParameters()[1], tvToPvMap);
-//						
-//						VPState resultState = mDomain.getVpStateFactory().arrayAssignment(
-//								array1, array2, resultState);
-//						return Collections.singletonList(resultState);
-//					} else {
-//						if (appTerm.getParameters()[1] instanceof ApplicationTerm) {
-//							ApplicationTerm param1 = (ApplicationTerm) appTerm.getParameters()[1];
-//							if (param1.getFunction().getName() == "store") {
-//								MultiDimensionalStore mulStore = new MultiDimensionalStore(param1);
-//								if (mulStore.getArray().equals(appTerm.getParameters()[0])) {
-//									node1 = getNodeFromTerm(param1);
-//									resultState = mDomain.getVpStateFactory().havoc(resultState.getEqNodeToEqGraphNodeMap().get(node1), resultState);
-//									node2 = getNodeFromTerm(param1.getParameters()[2]);
-//								}
-//							}
-//						}
-//					}
-//				}
 				
 				/*
 				 * case "two terms we track are equated"
@@ -270,8 +225,8 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 							
 				if (node1 != null && node2 != null) {
 					VPState resultState = mDomain.getVpStateFactory().addEquality(
-							preState.getEqNodeToEqGraphNodeMap().get(node1), 
-							preState.getEqNodeToEqGraphNodeMap().get(node2), 
+							node1, 
+							node2, 
 							preState);
 					return Collections.singletonList(resultState);
 				}
@@ -280,45 +235,15 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 				 * case "otherwise"
 				 */
 				return Collections.singletonList(preState);
-				
 			} else if (applicationName == "not") {
 				assert !negated : "we transformed to nnf before, right?";
 				return handleTransition(preState, appTerm.getParameters()[0], tvToPvMap, true);
-				
-//				ApplicationTerm equalTerm = (ApplicationTerm)appTerm.getParameters()[0];
-//				if (!(equalTerm.getFunction().getName() == "=")) {
-//					// TODO: check: is it correct here to return pre-state?
-//					return Collections.singletonList(preState);
-//				} else {
-//					EqNode node1 = getNodeFromTerm(equalTerm.getParameters()[0]);
-//					EqNode node2 = getNodeFromTerm(equalTerm.getParameters()[1]);
-//					
-//					if (node1 == null || node2 == null) {
-//						// encounter node(s) that is not being traced, return pre-state.
-//						return Collections.singletonList(preState);
-//					}
-//					
-//					return mDomain.getVpStateFactory().addDisEquality(preState.getEqNodeToEqGraphNodeMap().get(node1)
-//							, preState.getEqNodeToEqGraphNodeMap().get(node2), preState);
-//				}
-
 			} else if (applicationName == "distinct") {
 				
 				Term equality = mScript.getScript().term("=", appTerm.getParameters()[0], appTerm.getParameters()[1]);
 				boolean newNegated = !negated;
 				
 				handleTransition(preState, equality, tvToPvMap, newNegated);
-				
-//				EqNode node1 = getNodeFromTerm(appTerm.getParameters()[0]);
-//				EqNode node2 = getNodeFromTerm(appTerm.getParameters()[1]);
-//				
-//				if (node1 == null || node2 == null) {
-//					// encounter node(s) that is not being traced, return pre-state.
-//					return Collections.singletonList(preState);
-//				}
-//				
-//				return mDomain.getVpStateFactory().addDisEquality(preState.getEqNodeToEqGraphNodeMap().get(node1)
-//						, preState.getEqNodeToEqGraphNodeMap().get(node2), preState);
 			}
 			
 			
