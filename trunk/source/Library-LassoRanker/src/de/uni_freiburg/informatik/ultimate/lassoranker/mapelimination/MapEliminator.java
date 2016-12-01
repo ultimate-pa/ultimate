@@ -530,7 +530,7 @@ public class MapEliminator {
 				final IProgramVar var = mReplacementVarFactory.getOrConstuctReplacementVar(term);
 				boolean containsAssignedVar = false;
 				for (final TermVariable tv : term.getFreeVars()) {
-					final IProgramVar progVar = mSymbolTable.getBoogieVar(tv);
+					final IProgramVar progVar = mSymbolTable.getProgramVar(tv);
 					if (transformula.getInVars().get(progVar) != transformula.getOutVars().get(progVar)) {
 						containsAssignedVar = true;
 						break;
@@ -787,7 +787,7 @@ public class MapEliminator {
 	private Term getLocalTerm(final Term term, final ModifiableTransFormula transformula, final boolean returnInVar) {
 		final Map<Term, Term> substitution = new HashMap<>();
 		for (final TermVariable var : term.getFreeVars()) {
-			final IProgramVar programVar = mSymbolTable.getBoogieVar(var);
+			final IProgramVar programVar = mSymbolTable.getProgramVar(var);
 			// Add the missing in-/out-vars to the transformula if necessary
 			final TermVariable freshTermVar = getFreshTermVar(var);
 			if (!transformula.getInVars().containsKey(programVar)) {

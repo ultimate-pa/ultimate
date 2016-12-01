@@ -27,11 +27,12 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg;
 
 import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 
 /**
@@ -42,9 +43,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 public interface ISymbolTableAdapter {
 	Map<String, Declaration> getLocalVariables(String procedure);
 	
-	Map<String, IProgramNonOldVar> getGlobals();
+	Set<IProgramNonOldVar> getGlobals();
 	
-	Map<String, BoogieConst> getConsts();
+	Set<IProgramConst> getConsts();
 	
 	BoogieVar getBoogieVar(final String varId, final DeclarationInformation declarationInformation,
 			final boolean inOldContext);

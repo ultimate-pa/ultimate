@@ -28,7 +28,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg;
 
 import java.util.HashSet;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -69,9 +68,9 @@ public class FutureRcfgVariableProvider<STATE extends IAbstractState<STATE, Code
 	@Override
 	public STATE defineInitialVariables(final CodeBlock current, final STATE state) {
 		final Set<IProgramVar> vars = new HashSet<>();
-		mBoogieVarTable.getGlobals().entrySet().stream().forEach(a -> vars.add(a.getValue()));
-		mBoogieVarTable.getLocals(current.getPrecedingProcedure()).entrySet().stream()
-				.forEach(a -> vars.add(a.getValue()));
+		mBoogieVarTable.getGlobals().stream().forEach(a -> vars.add(a));
+		mBoogieVarTable.getLocals(current.getPrecedingProcedure()).stream()
+				.forEach(a -> vars.add(a));
 
 		return state.addVariables(vars);
 	}
@@ -194,8 +193,8 @@ public class FutureRcfgVariableProvider<STATE extends IAbstractState<STATE, Code
 	private Set<IProgramVar> getMaskedGlobalsVariables(final String procedure) {
 		assert procedure != null;
 		final Set<IProgramVar> globals = new HashSet<>();
-		for (final Entry<String, IProgramNonOldVar> entry : mBoogieVarTable.getGlobals().entrySet()) {
-			globals.add(entry.getValue());
+		for (final IProgramNonOldVar global : mBoogieVarTable.getGlobals()) {
+			globals.add(global);
 		}
 		// globals.addAll(mBoogieVarTable.getConsts().values());
 
@@ -219,7 +218,7 @@ public class FutureRcfgVariableProvider<STATE extends IAbstractState<STATE, Code
 
 	private Set<IProgramVar> getLocalVariables(final String procedure) {
 		assert procedure != null;
-		return mBoogieVarTable.getLocals(procedure).entrySet().stream().map(a -> (IProgramVar) a.getValue())
+		return mBoogieVarTable.getLocals(procedure).stream().map(a -> (IProgramVar) a)
 				.collect(Collectors.toSet());
 	}
 

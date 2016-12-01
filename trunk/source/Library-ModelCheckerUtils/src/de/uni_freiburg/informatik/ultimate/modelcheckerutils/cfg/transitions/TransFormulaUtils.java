@@ -489,9 +489,8 @@ public class TransFormulaUtils {
 			}
 
 			// we havoc all local variables of the caller (unless they are inparams of callee)
-			final Map<String, ? extends ILocalProgramVar> locals = symbolTable.getLocals(procBeforeCall);
-			for (final Entry<String, ? extends ILocalProgramVar> entry : locals.entrySet()) {
-				final ILocalProgramVar localVar = entry.getValue();
+			final Set<ILocalProgramVar> locals = symbolTable.getLocals(procBeforeCall);
+			for (final ILocalProgramVar localVar : locals) {
 				final boolean isInParamOfCallee = callTf.getAssignedVars().contains(localVar);
 				if (!isInParamOfCallee) {
 					varsToHavoc.put(localVar, mgdScript.constructFreshCopy(localVar.getTermVariable()));

@@ -283,7 +283,7 @@ public class PredicateUnifier {
 	 */
 	private boolean varsIsSupersetOfFreeTermVariables(final Term term, final Set<IProgramVar> vars) {
 		for (final TermVariable tv : term.getFreeVars()) {
-			final IProgramVar bv = mSymbolTable.getBoogieVar(tv);
+			final IProgramVar bv = mSymbolTable.getProgramVar(tv);
 			if (bv == null) {
 				throw new AssertionError("Variable " + tv + " has no corresponding BoogieVar, hence seems "
 						+ "to be some auxiliary variable and may not "

@@ -33,9 +33,9 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -66,12 +66,12 @@ public class PathProgramVariableProvider<STATE extends IAbstractState<STATE, Cod
 		}
 		
 		@Override
-		public Map<String, IProgramNonOldVar> getGlobals() {
+		public Set<IProgramNonOldVar> getGlobals() {
 			return mAdapter.getGlobals();
 		}
 		
 		@Override
-		public Map<String, BoogieConst> getConsts() {
+		public Set<IProgramConst> getConsts() {
 			return mAdapter.getConsts();
 		}
 		

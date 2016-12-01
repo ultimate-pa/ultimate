@@ -164,7 +164,7 @@ public final class Term2Expression implements Serializable {
 				final IBoogieType booleanType = mTypeSortTranslator.getType(mScript.sort("Bool"));
 				return new BooleanLiteral(null, booleanType, false);
 			}
-			final BoogieConst boogieConst = mBoogie2SmtSymbolTable.getBoogieConst(term);
+			final BoogieConst boogieConst = mBoogie2SmtSymbolTable.getProgramConst(term);
 			if (boogieConst != null) {
 				return new IdentifierExpression(null, mTypeSortTranslator.getType(term.getSort()),
 						boogieConst.getIdentifier(), new DeclarationInformation(StorageClass.GLOBAL, null));
@@ -413,7 +413,7 @@ public final class Term2Expression implements Serializable {
 			final String id = varList.getIdentifiers()[0];
 			result = new IdentifierExpression(null, type, id,
 					new DeclarationInformation(StorageClass.QUANTIFIED, null));
-		} else if (mBoogie2SmtSymbolTable.getBoogieVar(term) == null) {
+		} else if (mBoogie2SmtSymbolTable.getProgramVar(term) == null) {
 			// Case where term contains some auxilliary variable that was
 			// introduced during model checking.
 			// TODO: Matthias: I think we want closed expressions, we should
@@ -422,7 +422,7 @@ public final class Term2Expression implements Serializable {
 					new DeclarationInformation(StorageClass.QUANTIFIED, null));
 			mFreeVariables.add((IdentifierExpression) result);
 		} else {
-			final IProgramVar pv = mBoogie2SmtSymbolTable.getBoogieVar(term);
+			final IProgramVar pv = mBoogie2SmtSymbolTable.getProgramVar(term);
 			final BoogieASTNode astNode = mBoogie2SmtSymbolTable.getAstNode(pv);
 			assert astNode != null : "There is no AstNode for the IProgramVar " + pv;
 			final ILocation loc = astNode.getLocation();

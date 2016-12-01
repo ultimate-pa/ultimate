@@ -54,6 +54,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ILocalProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -227,8 +229,8 @@ public class Boogie2SmtSymbolTable implements IIcfgSymbolTable {
 	}
 
 	@Override
-	public IProgramVar getBoogieVar(final TermVariable tv) {
-		return mICfgSymbolTable.getBoogieVar(tv);
+	public IProgramVar getProgramVar(final TermVariable tv) {
+		return mICfgSymbolTable.getProgramVar(tv);
 //		return mSmtVar2BoogieVar.get(tv);
 	}
 
@@ -283,8 +285,8 @@ public class Boogie2SmtSymbolTable implements IIcfgSymbolTable {
 	}
 
 	@Override
-	public BoogieConst getBoogieConst(final ApplicationTerm smtConstant) {
-		return (BoogieConst) mICfgSymbolTable.getBoogieConst(smtConstant);
+	public BoogieConst getProgramConst(final ApplicationTerm smtConstant) {
+		return (BoogieConst) mICfgSymbolTable.getProgramConst(smtConstant);
 	}
 
 	public Map<String, Expression[]> getAttributes(final String boogieFunctionId) {
@@ -403,13 +405,17 @@ public class Boogie2SmtSymbolTable implements IIcfgSymbolTable {
 		}
 	}
 
+	@Override
+	public Set<IProgramNonOldVar> getGlobals() {
+		return Collections.unmodifiableSet(mICfgSymbolTable.getGlobals());
+	}
+	
 	/**
 	 * Return global variables;
 	 *
 	 * @return Map that assigns to each variable identifier the non-old global variable
 	 */
-	@Override
-	public Map<String, IProgramNonOldVar> getGlobals() {
+	public Map<String, IProgramNonOldVar> getGlobalsMap() {
 		return Collections.unmodifiableMap(mGlobals);
 	}
 
@@ -419,12 +425,18 @@ public class Boogie2SmtSymbolTable implements IIcfgSymbolTable {
 	public Map<String, IProgramVar> getOldVars() {
 		return Collections.unmodifiableMap(mOldGlobals);
 	}
+	
+	
+
+	@Override
+	public Set<ILocalProgramVar> getLocals(final String proc) {
+		return Collections.unmodifiableSet(mICfgSymbolTable.getLocals(proc));
+	}
 
 	/**
 	 * Return all local variables, input parameters and output parameters for a given procedure.
 	 */
-	@Override
-	public Map<String, LocalBoogieVar> getLocals(final String procedurename) {
+	public Map<String, LocalBoogieVar> getLocalsMap(final String procedurename) {
 		final Map<String, LocalBoogieVar> rtr = new HashMap<>();
 		addLocals(rtr, mImplementationLocals, procedurename);
 		addLocals(rtr, mImplementationInParam, procedurename);
@@ -442,12 +454,18 @@ public class Boogie2SmtSymbolTable implements IIcfgSymbolTable {
 			current.put(entry.getKey(), (LocalBoogieVar) entry.getValue());
 		}
 	}
+	
+	
+
+	@Override
+	public Set<IProgramConst> getConstants() {
+		return Collections.unmodifiableSet(mICfgSymbolTable.getConstants());
+	}
 
 	/**
 	 * Return global constants;
 	 */
-	@Override
-	public Map<String, BoogieConst> getConsts() {
+	public Map<String, BoogieConst> getConstsMap() {
 		return Collections.unmodifiableMap(mConstants);
 	}
 
@@ -687,7 +705,7 @@ public class Boogie2SmtSymbolTable implements IIcfgSymbolTable {
 		final HashRelation<String, IProgramNonOldVar> result = new HashRelation<>();
 		for (final Entry<String, Set<String>> proc2vars : mBoogieDeclarations.getModifiedVars().entrySet()) {
 			for (final String var : proc2vars.getValue()) {
-				final IProgramNonOldVar pv = getGlobals().get(var);
+				final IProgramNonOldVar pv = getGlobalsMap().get(var);
 				result.addPair(proc2vars.getKey(), pv);
 			}
 		}

@@ -25,37 +25,54 @@
  * to convey the resulting work.
  */package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg;
 
-import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ILocalProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
+/**
+ * Symbol table for interprocedural control flow graphs (ICFG)
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ *
+ */
 public interface IIcfgSymbolTable {
 
-	IProgramVar getBoogieVar(TermVariable tv);
-
-	BoogieConst getBoogieConst(ApplicationTerm smtConstant);
 
 	/**
-	 * Return global variables;
-	 *
-	 * @return Map that assigns to each variable identifier the non-old global variable
+	 * Each {@link IProgramVar} has a unique {@link TermVariable}, this method
+	 * allows us to do the inverse mapping.
+	 * @param at {@link TermVariable} that is the {@link IProgramVar#getTermVariable()} 
+	 * of an {@link IProgramVar}
+	 * @return {@link IProgramVar} such that parameter at is {@link IProgramVar#getTermVariable()}
 	 */
-	Map<String, IProgramNonOldVar> getGlobals();
+	IProgramVar getProgramVar(TermVariable tv);
 
 	/**
-	 * Return all local variables, input parameters and output parameters for a given procedure.
+	 * Each {@link IProgramConst} has a unique {@link ApplicationTerm}, this 
+	 * method allows us to do the inverse mapping.
+	 * @param at {@link ApplicationTerm} that is the {@link IProgramConst#getDefaultConstant()} 
+	 * of an {@link IProgramConst}
+	 * @return {@link IProgramConst} such that parameter at is {@link IProgramConst#getDefaultConstant()}
 	 */
-	Map<String, ? extends ILocalProgramVar> getLocals(String procedurename);
+	IProgramConst getProgramConst(ApplicationTerm at);
 
 	/**
-	 * Return global constants;
+	 * @return Set of all global (non-old) variables that occur in the ICFG.
 	 */
-	Map<String, ? extends IProgramConst> getConsts();
+	Set<IProgramNonOldVar> getGlobals();
+
+	/**
+	 * @return all local variables, input parameters and output parameters for a given procedure.
+	 */
+	Set<ILocalProgramVar> getLocals(String procedurename);
+
+	/**
+	 * @return global constants;
+	 */
+	Set<IProgramConst> getConstants();
 
 }

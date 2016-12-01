@@ -154,7 +154,7 @@ public class ModifiableTransFormulaUtils {
 			final ModifiableTransFormula tf, final Term term) {
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		for (final TermVariable tv : term.getFreeVars()) {
-			final IProgramVar bv = symbTab.getBoogieVar(tv);
+			final IProgramVar bv = symbTab.getProgramVar(tv);
 			if (bv == null) {
 				throw new IllegalArgumentException("term contains unknown variable");
 			}
@@ -168,7 +168,7 @@ public class ModifiableTransFormulaUtils {
 			final ModifiableTransFormula tf, final Term term) {
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		for (final TermVariable tv : term.getFreeVars()) {
-			final IProgramVar bv = symbTab.getBoogieVar(tv);
+			final IProgramVar bv = symbTab.getProgramVar(tv);
 			if (bv == null) {
 				throw new IllegalArgumentException("term contains unknown variable");
 			}
@@ -213,7 +213,7 @@ public class ModifiableTransFormulaUtils {
 			}
 		}
 		for (final TermVariable var : vars) {
-			final IProgramVar boogieVar = symbTab.getBoogieVar(var);
+			final IProgramVar boogieVar = symbTab.getProgramVar(var);
 			if (!programVars.contains(boogieVar)) {
 				final Term equality = SmtUtils.binaryEquality(script, boogieVar.getDefaultConstant(),
 						boogieVar.getPrimedConstant());
@@ -309,7 +309,7 @@ public class ModifiableTransFormulaUtils {
 			final Term term, final IIcfgSymbolTable symbolTable, final ReplacementVarFactory repVarFac) {
 		final Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
 		for (final TermVariable tv : term.getFreeVars()) {
-			final IProgramVar bv = symbolTable.getBoogieVar(tv);
+			final IProgramVar bv = symbolTable.getProgramVar(tv);
 			final Term inVar = tf.getInVars().get(bv);
 			assert inVar != null : "no inVar for " + bv;
 			substitutionMapping.put(tv, inVar);

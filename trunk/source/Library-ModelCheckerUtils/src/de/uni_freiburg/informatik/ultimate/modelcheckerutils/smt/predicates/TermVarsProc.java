@@ -85,7 +85,7 @@ public class TermVarsProc {
 		final HashSet<IProgramVar> vars = new HashSet<IProgramVar>();
 		final Set<String> procs = new HashSet<String>();
 		for (final TermVariable tv : term.getFreeVars()) {
-			final IProgramVar bv = symbolTable.getBoogieVar(tv);
+			final IProgramVar bv = symbolTable.getProgramVar(tv);
 			if (bv == null) {
 				throw new AssertionError("No corresponding BoogieVar for " + tv);
 			}
@@ -116,7 +116,7 @@ public class TermVarsProc {
 		final List<IProgramOldVar> oldVarsThatHaveToBeReplaced = new ArrayList<>();
 		final Set<String> procs = new HashSet<String>();
 		for (final TermVariable tv : term.getFreeVars()) {
-			IProgramVar bv = boogie2smt.getBoogie2SmtSymbolTable().getBoogieVar(tv);
+			IProgramVar bv = boogie2smt.getBoogie2SmtSymbolTable().getProgramVar(tv);
 			if (bv == null) {
 				throw new AssertionError("No corresponding BoogieVar for " + tv);
 			}

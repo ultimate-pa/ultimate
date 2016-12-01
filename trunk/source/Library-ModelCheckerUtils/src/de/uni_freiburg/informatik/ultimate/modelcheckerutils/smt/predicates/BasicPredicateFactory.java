@@ -96,7 +96,7 @@ public class BasicPredicateFactory {
 	 */
 	private boolean checkIfValidPredicate(final Term term, final Set<TermVariable> quantifiedVariables) {
 		for (final TermVariable tv : term.getFreeVars()) {
-			final IProgramVar bv = mSymbolTable.getBoogieVar(tv);
+			final IProgramVar bv = mSymbolTable.getProgramVar(tv);
 			if (bv == null) {
 				if (!quantifiedVariables.contains(tv)) {
 					throw new AssertionError("Variable " + tv + " does not corresponds to a BoogieVar, and is"

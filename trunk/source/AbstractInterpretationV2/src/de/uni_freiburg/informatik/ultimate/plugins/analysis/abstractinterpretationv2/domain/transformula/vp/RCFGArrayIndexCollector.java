@@ -232,12 +232,12 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 		
 		if (t instanceof ApplicationTerm ) {
 			assert ((ApplicationTerm) t).getParameters().length == 0 : "not a constant";
-			BoogieConst bc = mBoogie2SMT.getBoogie2SmtSymbolTable().getBoogieConst((ApplicationTerm) t);
+			BoogieConst bc = mBoogie2SMT.getBoogie2SmtSymbolTable().getProgramConst((ApplicationTerm) t);
 			result = new BoogieVarOrConst(bc);
 		} else if (t instanceof ConstantTerm) {
 			result = new BoogieVarOrConst((ConstantTerm) t);
 		} else if (t instanceof TermVariable) {
-			IProgramVar pv = mBoogie2SMT.getBoogie2SmtSymbolTable().getBoogieVar((TermVariable) t);
+			IProgramVar pv = mBoogie2SMT.getBoogie2SmtSymbolTable().getProgramVar((TermVariable) t);
 			assert pv != null : "?";
 			result = new BoogieVarOrConst(pv);
 		} else {

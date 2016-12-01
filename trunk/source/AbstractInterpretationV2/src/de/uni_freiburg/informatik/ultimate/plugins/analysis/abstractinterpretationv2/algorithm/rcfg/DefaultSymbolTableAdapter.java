@@ -27,13 +27,14 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg;
 
 import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 
 /**
@@ -56,13 +57,13 @@ public final class DefaultSymbolTableAdapter implements ISymbolTableAdapter {
 	}
 	
 	@Override
-	public Map<String, IProgramNonOldVar> getGlobals() {
+	public Set<IProgramNonOldVar> getGlobals() {
 		return mBoogieVarTable.getGlobals();
 	}
 	
 	@Override
-	public Map<String, BoogieConst> getConsts() {
-		return mBoogieVarTable.getConsts();
+	public Set<IProgramConst> getConsts() {
+		return mBoogieVarTable.getConstants();
 	}
 	
 	@Override

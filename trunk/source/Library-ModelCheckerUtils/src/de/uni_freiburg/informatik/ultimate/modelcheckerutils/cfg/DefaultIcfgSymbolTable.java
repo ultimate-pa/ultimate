@@ -41,41 +41,73 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
-public class DefaultIcfgSymbolTable {
+/**
+ * Default implementation of an {@link IIcfgSymbolTable}
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ *
+ */
+public class DefaultIcfgSymbolTable implements IIcfgSymbolTable {
 	
 	private final Map<TermVariable, IProgramVar> mTermVariable2ProgramVar = new HashMap<>();
 	private final Map<ApplicationTerm, IProgramConst> mAppTerm2ProgramConst = new HashMap<>();
 	
 	private final Set<IProgramNonOldVar> mGlobals = new HashSet<>();
-	private final Set<IProgramConst> mNonTheoryConstants = new HashSet<>();
+	private final Set<IProgramConst> mConstants = new HashSet<>();
 	private final HashRelation<String, ILocalProgramVar> mLocals = new HashRelation<>();
 	
-	
+	private boolean mConstructionFinished = false;
 
-	public IProgramVar getBoogieVar(final TermVariable tv) {
+	/**
+	 * Constructor for empty symbol table.
+	 */
+	public DefaultIcfgSymbolTable() {
+	}
+
+	
+	/**
+	 * Copy constructor. Constructs deep copy.
+	 */
+	public DefaultIcfgSymbolTable(final DefaultIcfgSymbolTable symbolTable) {
+		mTermVariable2ProgramVar.putAll(symbolTable.mTermVariable2ProgramVar);
+		mAppTerm2ProgramConst.putAll(symbolTable.mAppTerm2ProgramConst);
+		mGlobals.addAll(symbolTable.mGlobals);
+		mConstants.addAll(symbolTable.mConstants);
+		mLocals.addAll(symbolTable.mLocals);
+	}
+	
+	@Override
+	public IProgramVar getProgramVar(final TermVariable tv) {
 		return mTermVariable2ProgramVar.get(tv);
 	}
 
-	public IProgramConst getBoogieConst(final ApplicationTerm smtConstant) {
+	@Override
+	public IProgramConst getProgramConst(final ApplicationTerm smtConstant) {
 		return mAppTerm2ProgramConst.get(smtConstant);
 	}
 
+	@Override
 	public Set<IProgramNonOldVar> getGlobals() {
 		return Collections.unmodifiableSet(mGlobals);
 	}
 	
-	public Set<IProgramConst> getNonTheoryConstants() {
-		return Collections.unmodifiableSet(mNonTheoryConstants);
+	@Override
+	public Set<IProgramConst> getConstants() {
+		return Collections.unmodifiableSet(mConstants);
 	}
 	
+	@Override
 	public Set<ILocalProgramVar> getLocals(final String proc) {
 		return Collections.unmodifiableSet(mLocals.getImage(proc));
 	}
 	
 	public void add(final IProgramVarOrConst varOrConst) {
+		if (mConstructionFinished) {
+			throw new IllegalStateException(
+					"Construction finished, unable to add new variables or constants."); 
+		}
 		if (varOrConst instanceof IProgramConst) {
 			final IProgramConst pc = (IProgramConst) varOrConst;
-			mNonTheoryConstants.add(pc);
+			mConstants.add(pc);
 			mAppTerm2ProgramConst.put(pc.getDefaultConstant(), pc);
 		} else if (varOrConst instanceof IProgramVar) {
 			final IProgramVar var = (IProgramVar) varOrConst;
@@ -92,6 +124,13 @@ public class DefaultIcfgSymbolTable {
 				throw new AssertionError("unknown kind of variable");
 			}
 		}
+	}
+	
+	/**
+	 * Make this {@link IIcfgSymbolTable} unmodifiable.
+	 */
+	public void finishConstruction() {
+		mConstructionFinished = true;
 	}
 
 }
