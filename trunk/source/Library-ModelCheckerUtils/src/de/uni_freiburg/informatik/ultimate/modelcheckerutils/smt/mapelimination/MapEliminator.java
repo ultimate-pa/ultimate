@@ -24,12 +24,12 @@
  * licensors of the ULTIMATE LassoRanker Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.lassoranker.mapelimination;
+package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.mapelimination;
 
-import static de.uni_freiburg.informatik.ultimate.lassoranker.variables.ModifiableTransFormulaUtils.allVariablesAreInVars;
-import static de.uni_freiburg.informatik.ultimate.lassoranker.variables.ModifiableTransFormulaUtils.allVariablesAreOutVars;
-import static de.uni_freiburg.informatik.ultimate.lassoranker.variables.ModifiableTransFormulaUtils.allVariablesAreVisible;
-import static de.uni_freiburg.informatik.ultimate.lassoranker.variables.ModifiableTransFormulaUtils.translateTermVariablesToDefinitions;
+import static de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormulaUtils.allVariablesAreInVars;
+import static de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormulaUtils.allVariablesAreOutVars;
+import static de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormulaUtils.allVariablesAreVisible;
+import static de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormulaUtils.translateTermVariablesToDefinitions;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -44,7 +44,6 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArrays.IndexAnalyzer;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -66,6 +65,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.EqualityAnalysisResult;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.IndexAnalyzer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;

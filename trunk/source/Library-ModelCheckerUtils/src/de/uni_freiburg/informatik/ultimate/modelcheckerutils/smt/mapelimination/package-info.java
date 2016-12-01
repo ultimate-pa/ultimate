@@ -4,4 +4,4 @@
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  *
  */
-package de.uni_freiburg.informatik.ultimate.lassoranker.mapelimination;
+package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.mapelimination;

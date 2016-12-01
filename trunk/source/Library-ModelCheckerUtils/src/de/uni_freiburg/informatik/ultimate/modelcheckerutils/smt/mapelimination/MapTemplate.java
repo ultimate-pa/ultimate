@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE LassoRanker Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.lassoranker.mapelimination;
+package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.mapelimination;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;

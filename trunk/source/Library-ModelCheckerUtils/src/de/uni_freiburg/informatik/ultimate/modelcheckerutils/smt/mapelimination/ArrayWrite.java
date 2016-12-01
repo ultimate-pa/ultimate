@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.lassoranker.mapelimination;
+package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.mapelimination;
 
 import java.util.ArrayList;
 import java.util.List;
