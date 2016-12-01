@@ -30,6 +30,7 @@ import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.VisualizationNode;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IExplicitEdgesMultigraph;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 
@@ -49,7 +50,9 @@ public final class IcfgGraphProvider {
 	public static IExplicitEdgesMultigraph<IcfgLocation, IcfgEdge, IcfgLocation, IcfgEdge, VisualizationNode>
 			getVirtualRoot(final IIcfg cont) {
 		final IcfgVirtualRoot artificialRoot = new IcfgVirtualRoot();
-		artificialRoot.getPayload().getAnnotations().put(cont.getClass().getSimpleName(), cont);
+		if (cont instanceof IAnnotations) {
+			artificialRoot.getPayload().getAnnotations().put(cont.getClass().getSimpleName(), (IAnnotations) cont);
+		}
 		for (final Entry<String, BoogieIcfgLocation> entry : cont.getProcedureEntryNodes().entrySet()) {
 			final IcfgVirtualRootEdge edge = new IcfgVirtualRootEdge(artificialRoot, entry.getValue());
 			edge.redirectSource(artificialRoot);
