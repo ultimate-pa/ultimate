@@ -28,17 +28,18 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.nonrelational;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValue;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 public abstract class NonrelationalPostOperator<STATE extends NonrelationalState<STATE, V>, V extends INonrelationalValue<V>>
-        implements IAbstractPostOperator<STATE, IAction, IProgramVarOrConst> {
-
+		implements IAbstractPostOperator<STATE, CodeBlock, IProgramVarOrConst> {
+	
 	private final ILogger mLogger;
 
 	protected NonrelationalPostOperator(final ILogger logger) {
@@ -46,16 +47,22 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 	}
 
 	@Override
-	public List<STATE> apply(final STATE oldstate, final IAction transition) {
+	public List<STATE> apply(final STATE oldstate, final CodeBlock transition) {
 		assert oldstate != null;
 		assert !oldstate.isBottom() : "Trying to compute post for a bottom state.";
 		assert transition != null;
 
-		return null;
+		final List<STATE> currentStates = new ArrayList<>();
+		currentStates.add(oldstate);
+
+		// TODO
+
+		return currentStates;
 	}
 
 	@Override
-	public List<STATE> apply(final STATE stateBeforeLeaving, final STATE stateAfterLeaving, final IAction transition) {
+	public List<STATE> apply(final STATE stateBeforeLeaving, final STATE stateAfterLeaving,
+			final CodeBlock transition) {
 		// TODO Auto-generated method stub
 		return null;
 	}
