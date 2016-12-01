@@ -80,7 +80,7 @@ public class ReplacementVarFactory {
 			final String name = SmtUtils.removeSmtQuoteCharacters(definition.toString());
 			final TermVariable tv = mMgdScript.constructFreshTermVariable(name, definition.getSort());
 			newRepVar = new ReplacementVar(definition.toString(), definition, tv);
-			mRepVarMapping.put(definition, repVar);
+			mRepVarMapping.put(definition, newRepVar);
 			return newRepVar;
 		}
 		
