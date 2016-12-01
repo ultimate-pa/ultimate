@@ -117,7 +117,7 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate> {
 						storedRawInterpolantAutomata, interpolAutomaton, minimizationTimeout, partition, autServices);
 				// postprocessing after minimization
 				final IDoubleDeckerAutomaton<CodeBlock, IPredicate> newAbstraction;
-				if (mMinimizationResult.wasNewAutomatonWasBuilt()) {
+				if (mMinimizationResult.wasNewAutomatonBuilt()) {
 					// extract result
 					try {
 						assert mMinimizationResult.getRawMinimizationOutput().checkResult(resultCheckPredFac) : "incorrect minimization result for " + minimization;
@@ -167,7 +167,7 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate> {
 				throw new AutomataMinimizationTimeout(aoce, mStatistics);
 			}
 			final long statesRemovedByMinimization;
-			if (mMinimizationResult.wasNewAutomatonWasBuilt()) {
+			if (mMinimizationResult.wasNewAutomatonBuilt()) {
 				statesRemovedByMinimization = operand.size() - mMinimizedAutomaton.size();
 			} else {
 				statesRemovedByMinimization = 0;
@@ -347,7 +347,7 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate> {
 	}
 
 	public boolean newAutomatonWasBuilt() {
-		return mMinimizationResult.wasNewAutomatonWasBuilt();
+		return mMinimizationResult.wasNewAutomatonBuilt();
 	}
 
 	public boolean wasMinimizationAttempted() {
@@ -373,7 +373,7 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate> {
 			mMinimizationAttempt = minimizationAttempt;
 			mRawMinimizationOutput = rawMinimizationOutput;
 		}
-		public boolean wasNewAutomatonWasBuilt() {
+		public boolean wasNewAutomatonBuilt() {
 			return mNewAutomatonWasBuilt;
 		}
 		public boolean wasMinimizationAttempted() {
