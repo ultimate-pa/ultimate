@@ -47,7 +47,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayEquality;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayUpdate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayUpdate.ArrayUpdateExtractor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayEquality.ArrayEqualityExtractor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf.QuantifierHandling;
@@ -148,73 +150,22 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 				/*
 				 * case "ArrayEquality"
 				 */
-				ArrayEquality aeq;
-				try {
-					 aeq = new ArrayEquality(appTerm);
-				} catch (Exception ex) {
-					aeq = null;
-				}
-				
-				if (aeq != null) {
+				List<ArrayEquality> aeqs = new ArrayEqualityExtractor(new Term[] { appTerm } ).getArrayEqualities();
+				if (!aeqs.isEmpty()) {
+					assert aeqs.size() == 1 : "?";
 					// we have an array equality (i.e. something like (= a b) where a,b are arrays)
-					Term array1Term = aeq.getLhs();
-					Term array2Term = aeq.getRhs();
-					IProgramVarOrConst array1 = mDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(array1Term, tvToPvMap);
-					IProgramVarOrConst array2 = mDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(array2Term, tvToPvMap);
-					VPState resultState = mDomain.getVpStateFactory().arrayEquality(array1, array2, preState);
-					return Collections.singletonList(resultState);
+					return handleArrayEqualityTransition(preState, tvToPvMap, negated, aeqs.get(0));
 				}
 				
 				/*
 				 * case "ArrayUpdate"
 				 */
-				ArrayUpdate au;
-				try {
-					au = new ArrayUpdate(appTerm, negated, false);
-				} catch (Exception ex) {
-					au = null;
-				} 
-				
-				if (au != null) {
-					// we have an array update
-					MultiDimensionalStore mdStore = au.getMultiDimensionalStore();
-					TermVariable newArrayTv = au.getNewArray();
-					Term oldArrayTerm = au.getOldArray();
-					ArrayIndex arrayIndex = au.getIndex();
-					Term value = au.getValue();
-					
-					IProgramVarOrConst newArrayId = mDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(newArrayTv, tvToPvMap);
-					IProgramVarOrConst oldArrayId = mDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(newArrayTv, tvToPvMap);
-					
-					if (newArrayId.equals(oldArrayId)) {
-						assert newArrayId == oldArrayId : "right?..";
-						/*
-						 * we essentially have something of the form 
-						 * a[i_1, ..,i_n] := v;
-						 * in terms of Boogie
-						 *  --> we only havoc the EqNode belonging to a[i_1, ..,i_n] and add an equality to v
-						 */
-						
-						EqNode arrayAtIndexNode = mDomain.getPreAnalysis().getEqNode(mdStore.getStoreTerm(), tvToPvMap);
-						EqNode valueNode = mDomain.getPreAnalysis().getEqNode(value, tvToPvMap);
+				List<ArrayUpdate> aus = new ArrayUpdateExtractor(false, false, appTerm).getArrayUpdates();
 
-						VPState resultState = mDomain.getVpStateFactory().havoc(
-								arrayAtIndexNode, preState);
-						resultState = mDomain.getVpStateFactory().addEquality(
-								arrayAtIndexNode, 
-								valueNode, 
-								resultState);
-						return Collections.singletonList(resultState);
-					} else {
-						/*
-						 * we have something of the form 
-						 * b := a[(i_1, ..,i_n) := v]
-						 * in terms of Boogie
-						 * --> 
-						 */
-						assert false : "does this occur?";
-						return null;
-					}
+				if (!aus.isEmpty()) {
+					assert aus.size() == 1 : "?";
+					// we have an array update
+					return handleArrayUpdateTransition(preState, tvToPvMap, negated, aus.get(0));
 				}
 				
 				/*
@@ -224,26 +175,28 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 				EqNode node2 = mDomain.getPreAnalysis().getEqNode(appTerm.getParameters()[1], tvToPvMap);
 							
 				if (node1 != null && node2 != null) {
-					VPState resultState = mDomain.getVpStateFactory().addEquality(
-							node1, 
-							node2, 
-							preState);
-					return Collections.singletonList(resultState);
+					if (!negated) {
+						VPState resultState = mDomain.getVpStateFactory().addEquality(node1, node2, preState);
+						return Collections.singletonList(resultState);
+					} else {
+						List<VPState> resultStates = mDomain.getVpStateFactory().addDisEquality(node1, node2, preState);
+						return resultStates;
+					}
 				}
 				
 				/*
 				 * case "otherwise"
+				 *  --> we leave the state unchanged
 				 */
 				return Collections.singletonList(preState);
 			} else if (applicationName == "not") {
 				assert !negated : "we transformed to nnf before, right?";
-				return handleTransition(preState, appTerm.getParameters()[0], tvToPvMap, true);
+				return handleTransition(preState, appTerm.getParameters()[0], tvToPvMap, !negated);
 			} else if (applicationName == "distinct") {
 				
 				Term equality = mScript.getScript().term("=", appTerm.getParameters()[0], appTerm.getParameters()[1]);
-				boolean newNegated = !negated;
 				
-				handleTransition(preState, equality, tvToPvMap, newNegated);
+				return handleTransition(preState, equality, tvToPvMap, !negated);
 			}
 			
 			
@@ -260,6 +213,69 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 
 		VPState resultState = mDomain.getVpStateFactory().copy(preState);
 		return Collections.singletonList(resultState);
+	}
+
+	private List<VPState> handleArrayEqualityTransition(final VPState preState,
+			Map<TermVariable, IProgramVar> tvToPvMap, boolean negated, ArrayEquality aeq) {
+		Term array1Term = aeq.getLhs();
+		Term array2Term = aeq.getRhs();
+		IProgramVarOrConst array1 = mDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(array1Term, tvToPvMap);
+		IProgramVarOrConst array2 = mDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(array2Term, tvToPvMap);
+		if (!negated) {
+			VPState resultState = mDomain.getVpStateFactory().arrayEquality(array1, array2, preState);
+			return Collections.singletonList(resultState);
+		} else {
+			assert false : "TODO";//TODO
+			return null;
+		}
+	}
+
+	private List<VPState> handleArrayUpdateTransition(final VPState preState, Map<TermVariable, IProgramVar> tvToPvMap,
+			boolean negated, ArrayUpdate au) {
+		MultiDimensionalStore mdStore = au.getMultiDimensionalStore();
+		TermVariable newArrayTv = au.getNewArray();
+		Term oldArrayTerm = au.getOldArray();
+		Term value = au.getValue();
+		
+		IProgramVarOrConst newArrayId = mDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(newArrayTv, tvToPvMap);
+		IProgramVarOrConst oldArrayId = mDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(oldArrayTerm, tvToPvMap);
+		
+		if (newArrayId.equals(oldArrayId)) {
+			assert newArrayId == oldArrayId : "right?..";
+			/*
+			 * we essentially have something of the form 
+			 * a[i_1, ..,i_n] := v;
+			 * in terms of Boogie
+			 *  --> we only havoc the EqNode belonging to a[i_1, ..,i_n] and add an equality to v
+			 */
+			
+			//TODO: strictly speaking we have to check here, that newArrayId is an outVar, oldArrayId an inVar
+			
+			EqNode arrayAtIndexNode = mDomain.getPreAnalysis().getEqNode(mdStore.getStoreTerm(), tvToPvMap);
+			EqNode valueNode = mDomain.getPreAnalysis().getEqNode(value, tvToPvMap);
+			
+			if (!negated) {
+				VPState resultState = mDomain.getVpStateFactory().havoc(
+						arrayAtIndexNode, preState);
+				resultState = mDomain.getVpStateFactory().addEquality(
+						arrayAtIndexNode, 
+						valueNode, 
+						resultState);
+				return Collections.singletonList(resultState);
+			} else {
+				assert false : "TODO";//TODO
+				return null;
+			}
+		} else {
+			/*
+			 * we have something of the form 
+			 * b := a[(i_1, ..,i_n) := v]
+			 * in terms of Boogie
+			 * --> 
+			 */
+			assert false : "does this occur?";
+			return null;
+		}
 	}
 	
 	
