@@ -14,7 +14,7 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.minimizers.
  */
 public interface IGeneratorSearchStep extends ISearchStep<String, IGeneratorSearchStep> {
 	/**
-	 * @return The current set of active changes to be tested.
+	 * @return The current set of active changes found so far.
 	 */
 	List<IChangeHandle> getActiveChanges();
 	

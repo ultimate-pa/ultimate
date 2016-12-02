@@ -70,7 +70,9 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LogicStatement;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopStatement;
 
 /**
- * A safer delta debugger strategy.
+ * A delta debugger strategy that skips some of the problematic transformations of the aggressive strategy. It doesn't
+ * remove function parameters, pointer operators and does not change types. It also doesn't try multiple alternative
+ * replacements for expressions.
  */
 public class SafeStrategy implements IHddStrategy {
 	@SuppressWarnings("squid:S1698")
@@ -105,7 +107,6 @@ public class SafeStrategy implements IHddStrategy {
 				&& node.getASTNode().getPropertyInParent() == IASTCompoundStatement.NESTED_STATEMENT) {
 			collector.addDeleteAllTokensChange(node);
 		}
-		
 	}
 	
 	@Override
@@ -145,7 +146,7 @@ public class SafeStrategy implements IHddStrategy {
 	public boolean expandUnchangeableNodeImmediately(final IPSTNode node) {
 		return node instanceof IPSTConditionalBlock;
 	}
-	
+
 	/**
 	 * Regular node handler.
 	 */
@@ -169,17 +170,17 @@ public class SafeStrategy implements IHddStrategy {
 		static void invoke(final IPSTRegularNode node, final ChangeCollector collector) {
 			final IASTNode astNode = node.getASTNode();
 			final ASTNodeProperty propertyInParent = astNode.getPropertyInParent();
-			
-			// Delete everything that is known to be comma separated accordingly
-			if (propertyInParent == IASTExpressionList.NESTED_EXPRESSION
+
+			// Do not delete function parameters. Call Arguments are handled like normal expressions.
+			// Delete everything else is comma separated
+			if (propertyInParent == IASTStandardFunctionDeclarator.FUNCTION_PARAMETER) {
+				return;
+			} else if (propertyInParent == IASTExpressionList.NESTED_EXPRESSION
 					|| propertyInParent == IASTInitializerList.NESTED_INITIALIZER
 					|| propertyInParent == ICASTDesignatedInitializer.OPERAND) {
-				// TODO: add check for referenced function before deleting parameters/arguments
 				collector.addDeleteWithCommaChange(node, true);
 				return;
-			} else if (propertyInParent == IASTStandardFunctionDeclarator.FUNCTION_PARAMETER
-					|| propertyInParent == IASTFunctionCallExpression.ARGUMENT
-					|| propertyInParent == IASTEnumerationSpecifier.ENUMERATOR) {
+			} else if (propertyInParent == IASTEnumerationSpecifier.ENUMERATOR) {
 				collector.addDeleteWithCommaChange(node, false);
 				return;
 			}
@@ -251,8 +252,12 @@ public class SafeStrategy implements IHddStrategy {
 				mCollector.addDeleteChange(mCurrentNode);
 				return;
 			}
-			
-			final List<String> replacements = RewriteUtils.getMinimalExpressionReplacements(expression);
+
+			final List<String> allReplacements = RewriteUtils.removeEquivalentReplacements(mCurrentNode,
+					RewriteUtils.getMinimalExpressionReplacements(expression));
+
+			// Do not try multiple alternatives to not waste time
+			final List<String> replacements = allReplacements.subList(0, allReplacements.isEmpty() ? 0 : 1);
 			
 			// Binary expression operands are deleted or replaced
 			if (property == IASTBinaryExpression.OPERAND_ONE || property == IASTBinaryExpression.OPERAND_TWO) {

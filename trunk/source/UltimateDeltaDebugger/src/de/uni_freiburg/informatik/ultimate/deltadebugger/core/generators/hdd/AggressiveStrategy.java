@@ -262,9 +262,10 @@ public class AggressiveStrategy implements IHddStrategy {
 				mCollector.addDeleteChange(mCurrentNode);
 				return;
 			}
-			
-			final List<String> replacements = RewriteUtils.getMinimalExpressionReplacements(expression);
-			
+
+			final List<String> replacements = RewriteUtils.removeEquivalentReplacements(mCurrentNode,
+					RewriteUtils.getMinimalExpressionReplacements(expression));
+
 			// The Ternary operator handling is a mess, but okay for an aggressive reduction
 			if (property == IASTConditionalExpression.LOGICAL_CONDITION
 					|| property == IASTConditionalExpression.POSITIVE_RESULT

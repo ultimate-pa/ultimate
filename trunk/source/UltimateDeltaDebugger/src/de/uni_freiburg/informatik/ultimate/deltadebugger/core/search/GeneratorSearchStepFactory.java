@@ -72,17 +72,16 @@ public final class GeneratorSearchStepFactory {
 		 */
 		private abstract class BaseStep implements IGeneratorSearchStep {
 			protected final IMinimizerStep<IChangeHandle> mMinimizerStep;
-			protected final List<IChangeHandle> mActiveChanges;
+			protected final List<IChangeHandle> mChanges;
 			
-			public BaseStep(final IMinimizerStep<IChangeHandle> minimizerStep,
-					final List<IChangeHandle> activeChanges) {
+			public BaseStep(final IMinimizerStep<IChangeHandle> minimizerStep, final List<IChangeHandle> changes) {
 				mMinimizerStep = minimizerStep;
-				mActiveChanges = activeChanges;
+				mChanges = changes;
 			}
 			
 			@Override
-			public List<IChangeHandle> getActiveChanges() {
-				return mActiveChanges;
+			public String getResult() {
+				return mGenerator.apply(getActiveChanges());
 			}
 			
 			@Override
@@ -107,13 +106,13 @@ public final class GeneratorSearchStepFactory {
 		 */
 		private final class CompletedStep extends BaseStep {
 			private CompletedStep(final IMinimizerStep<IChangeHandle> minimizerStep,
-					final List<IChangeHandle> activeChanges) {
-				super(minimizerStep, activeChanges);
+					final List<IChangeHandle> finalActiveChanges) {
+				super(minimizerStep, finalActiveChanges);
 			}
 			
 			@Override
-			public String getResult() {
-				return mGenerator.apply(mActiveChanges);
+			public List<IChangeHandle> getActiveChanges() {
+				return mChanges;
 			}
 			
 			@Override
@@ -141,13 +140,13 @@ public final class GeneratorSearchStepFactory {
 			}
 			
 			@Override
-			public String getResult() {
-				return mGenerator.apply(complementOf(mMinimizerStep.getResult()));
+			public List<IChangeHandle> getActiveChanges() {
+				return complementOf(mMinimizerStep.getResult());
 			}
 			
 			@Override
 			public String getVariant() {
-				return mGenerator.apply(mActiveChanges);
+				return mGenerator.apply(mChanges);
 			}
 			
 			@Override

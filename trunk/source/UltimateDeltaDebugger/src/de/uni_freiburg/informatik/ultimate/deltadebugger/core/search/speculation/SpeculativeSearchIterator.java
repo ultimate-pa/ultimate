@@ -128,8 +128,11 @@ public class SpeculativeSearchIterator<T extends ISearchStep<?, T>> {
 		// Note that the latest speculative step may not have another variant to
 		// test, but we must not return a step that is done unless it is the
 		// final result.
-		if (!mPending.peekLast().isDone()) {
-			final Task nextSpeculativeTask = new Task(mPending.peekLast().getStep().next(false));
+		final Task lastPending = mPending.peekLast();
+		if (!lastPending.isDone()) {
+			// If the result is already known, use it to compute the next step, otherwise speculate on failure
+			final boolean expectedStepResult = lastPending.isPending() ? false : lastPending.getResult();
+			final Task nextSpeculativeTask = new Task(lastPending.getStep().next(expectedStepResult));
 			mPending.addLast(nextSpeculativeTask);
 			if (!nextSpeculativeTask.isDone()) {
 				return nextSpeculativeTask;

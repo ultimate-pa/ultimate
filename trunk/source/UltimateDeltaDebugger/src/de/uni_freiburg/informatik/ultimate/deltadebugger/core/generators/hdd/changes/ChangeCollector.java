@@ -187,6 +187,11 @@ public class ChangeCollector {
 			return false;
 		}
 		
+		// Do not replace something by itself...
+		if (RewriteUtils.skipEquivalentReplacement(node, replacement)) {
+			return false;
+		}
+		
 		final IPSTRegularNode conditionalExpressionNode = node.getRegularParent();
 		final Token[] tokens =
 				TokenUtils.getExpectedTokenArray(conditionalExpressionNode, IToken.tQUESTION, IToken.tCOLON);

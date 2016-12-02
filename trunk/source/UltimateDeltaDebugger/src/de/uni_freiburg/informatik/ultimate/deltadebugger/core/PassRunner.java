@@ -268,6 +268,9 @@ public class PassRunner {
 				result = thisResult;
 				
 				if (pass.repeatUntilReductionFails()) {
+					// TODO: Actually check if the result is a new variant by comparing the source text.
+					//       VariantGenerators should not support changes that don't actually change anything, 
+					//       but if they do anyways, this loop won't terminate.
 					--passIndex;
 				}
 			}
