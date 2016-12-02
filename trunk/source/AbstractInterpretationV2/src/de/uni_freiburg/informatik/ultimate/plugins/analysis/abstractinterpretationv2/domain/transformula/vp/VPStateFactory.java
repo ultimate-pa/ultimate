@@ -34,6 +34,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -153,33 +155,61 @@ public class VPStateFactory {
 	 * @param eqNode2
 	 * @return true if contradiction is met.
 	 */
-	public VPState addEquality(final EqNode eqNode1, final EqNode eqNode2, final VPState originalState) {
+	public Set<VPState> addEquality(final EqNode eqNode1, final EqNode eqNode2, final VPState originalState) {
 		VPState resultState = copy(originalState);
-		resultState.merge(resultState.getEqNodeToEqGraphNodeMap().get(eqNode1), 
-				resultState.getEqNodeToEqGraphNodeMap().get(eqNode2));
+		EqGraphNode gn1 = resultState.getEqNodeToEqGraphNodeMap().get(eqNode1);
+		EqGraphNode gn2 = resultState.getEqNodeToEqGraphNodeMap().get(eqNode2);
+		resultState.merge(gn1, gn2);
 		boolean contradiction = resultState.checkContradiction();
 		if (contradiction) {
-			return this.getBottomState();
+			return Collections.singleton(this.getBottomState());
 		}
-		return resultState;
+		
+		
+		/**
+		 * Propagate disequalites
+		 */
+		Set<VPState> resultStates = new HashSet<>();
+		resultStates.add(resultState);
+		for (EqNode other : getDisEqualites(originalState, gn1.eqNode)) {
+			resultStates.addAll(
+					propagateDisEqualites(
+							resultState, gn1, resultState.getEqNodeToEqGraphNodeMap().get(other)));
+		}
+		for (EqNode other : getDisEqualites(originalState, gn2.eqNode)) {
+			resultStates.addAll(
+					propagateDisEqualites(
+							resultState, gn2, resultState.getEqNodeToEqGraphNodeMap().get(other)));
+		}
+	
+		
+		return resultStates;
 	}
 
-	public List<VPState> addDisEquality(EqNode n1, EqNode n2, VPState originalState) {
+	private Set<EqNode> getDisEqualites(VPState originalState, EqNode eqNode) {
+		Set<EqNode> result = new HashSet<>();
+		 for (VPDomainSymmetricPair<EqNode> pair : originalState.getDisEqualitySet()) {
+			 if (pair.contains(eqNode)) {
+				 result.add(pair.getOther(eqNode));
+			 }
+		 }
+		 return result;
+	}
+
+	public Set<VPState> addDisEquality(EqNode n1, EqNode n2, VPState originalState) {
 		VPState originalStateCopy = copy(originalState);
 		
 		EqGraphNode gn1 = originalStateCopy.getEqNodeToEqGraphNodeMap().get(n1);
 		EqGraphNode gn2 = originalStateCopy.getEqNodeToEqGraphNodeMap().get(n2);
 
 
-		List<VPState> result = new ArrayList<>();
-		
 		VPStateBottom bottom = this.getBottomState();
 		
 		/*
 		 * check if the disequality introduces a contradiction, return bottom in that case
 		 */
 		if (originalStateCopy.find(gn1).equals(originalStateCopy.find(gn2))) {
-			return Collections.singletonList(bottom);
+			return Collections.singleton(bottom);
 		}
 		
 		/*
@@ -191,8 +221,32 @@ public class VPStateFactory {
 		/*
 		 * propagate disequality to children
 		 */
-		HashRelation<IProgramVarOrConst, List<EqGraphNode>> ccchild1 = originalStateCopy.ccchild(gn1);
-		HashRelation<IProgramVarOrConst, List<EqGraphNode>> ccchild2 = originalStateCopy.ccchild(gn2);
+		Set<VPState> result = propagateDisEqualites(originalStateCopy, gn1, gn2);
+
+		return result;
+	}
+
+	/**
+	 * Takes a preState and two representatives of different equivalence classes.
+	 * Under the assumption that a disequality between the equivalence classes has been introduced, propagates
+	 * all the disequalities that follow from that disequality.
+	 * 
+	 * @param originalStateCopy
+	 * @param representative1
+	 * @param representative2
+	 * @return
+	 */
+	private Set<VPState> propagateDisEqualites(
+			VPState originalStateCopy, 
+			EqGraphNode representative1, 
+			EqGraphNode representative2) {
+		assert representative1.getRepresentative() == representative1
+				&& representative2.getRepresentative() == representative2;
+		assert !representative1.equals(representative2);
+		Set<VPState> result = new HashSet<>();
+		
+		HashRelation<IProgramVarOrConst, List<EqGraphNode>> ccchild1 = originalStateCopy.ccchild(representative1);
+		HashRelation<IProgramVarOrConst, List<EqGraphNode>> ccchild2 = originalStateCopy.ccchild(representative2);
 		
 		for (IProgramVarOrConst arrayId : ccchild1.getDomain()) {
 			for (List<EqGraphNode> list1 : ccchild1.getImage(arrayId)) {
@@ -205,7 +259,11 @@ public class VPStateFactory {
 				}
 			}
 		}
-
+		
+		if (result.isEmpty()) {
+			// no propagations -- return the input state
+			return Collections.singleton(originalStateCopy);
+		}
 		return result;
 	}
 	
@@ -315,16 +373,16 @@ public class VPStateFactory {
 	 * @param second
 	 * @return conjoinedState
 	 */
-	public VPState conjoin(VPState first, VPState second) {
+	public Set<VPState> conjoin(VPState first, VPState second) {
 
 		if (first.isBottom() || second.isBottom()) {
-			return this.getBottomState();
+			return Collections.singleton(this.getBottomState());
 		}
 
 		if (first.isTop()) {
-			return second;
+			return Collections.singleton(second);
 		} else if (second.isTop()) {
-			return first;
+			return Collections.singleton(first);
 		}
 
 		VPState conjoinedState = copy(first);
@@ -336,14 +394,15 @@ public class VPStateFactory {
 					.add(new VPDomainSymmetricPair<EqNode>(otherPair.getFirst(), otherPair.getSecond()));
 		}
 
+		Set<VPState> resultStates = new HashSet<>();
 		for (final EqGraphNode otherGraphNode : second.getEqNodeToEqGraphNodeMap().values()) {
 			if (!otherGraphNode.getRepresentative().equals(otherGraphNode)) {
 				conStateGraphNode = otherGraphNode.eqNode;
 				conStateGraphNodeRe = otherGraphNode.getRepresentative().eqNode;
-				conjoinedState = addEquality(conStateGraphNode, conStateGraphNodeRe, conjoinedState);
+				resultStates.addAll(addEquality(conStateGraphNode, conStateGraphNodeRe, conjoinedState));
 			}
 		}
-		return conjoinedState;
+		return resultStates;
 	}
 	
 		/**
@@ -383,6 +442,7 @@ public class VPStateFactory {
 				}
 			}
 		
+			Set<VPState> resultStates = new HashSet<>();
 			for (final EqGraphNode thisGraphNode : first.getEqNodeToEqGraphNodeMap().values()) {
 		
 				otherGraphNode = second.getEqNodeToEqGraphNodeMap().get(thisGraphNode.eqNode);
@@ -391,24 +451,30 @@ public class VPStateFactory {
 				EqGraphNode otherNodeRepresentative = otherGraphNode.getRepresentative();
 		
 				if (thisNodeRepresentative.equals(otherNodeRepresentative)) {
-					disjoinedState = addEquality(
+					Set<VPState> addEq = addEquality(
 							thisGraphNode.eqNode,
 							thisNodeRepresentative.eqNode,
 							disjoinedState);
+					assert addEq.size() == 1;
+					disjoinedState = addEq.iterator().next();
 				} else {
 		
 					if (first.find(otherGraphNode)
 							.equals(first.find(second.getEqNodeToEqGraphNodeMap().get(thisNodeRepresentative.eqNode)))) {
-						disjoinedState = addEquality(
+						Set<VPState> addEq = addEquality(
 								thisGraphNode.eqNode,
 								thisNodeRepresentative.eqNode,
 								disjoinedState);
+						assert addEq.size() == 1;
+						disjoinedState = addEq.iterator().next();
 					} else if (first.find(thisGraphNode)
 							.equals(first.find(first.getEqNodeToEqGraphNodeMap().get(otherNodeRepresentative.eqNode)))) {
-						disjoinedState = addEquality(
+						Set<VPState> addEq = addEquality(
 								thisGraphNode.eqNode,
 								otherNodeRepresentative.eqNode,
 								disjoinedState);
+						assert addEq.size() == 1;
+						disjoinedState = addEq.iterator().next();
 					}
 				}
 			}
@@ -424,10 +490,11 @@ public class VPStateFactory {
 	 * @param firstArray
 	 * @param secondArray
 	 */
-	public VPState arrayEquality(final IProgramVarOrConst firstArray, final IProgramVarOrConst secondArray, VPState originalState) {
+	public Set<VPState> arrayEquality(final IProgramVarOrConst firstArray, final IProgramVarOrConst secondArray, VPState originalState) {
 		VPState resultState = copy(originalState);
 		resultState = havocArray(firstArray, resultState);
 
+		Set<VPState> resultStates = new HashSet<>();
 		for (final EqFunctionNode fnNode1 : mDomain.getArrayIdToEqFnNodeMap()
 				.getImage(
 						firstArray)) {
@@ -435,10 +502,10 @@ public class VPStateFactory {
 					.getImage(
 							secondArray)) {
 				if (resultState.congruentIgnoreFunctionSymbol(fnNode1, fnNode2)) {
-					resultState = addEquality(fnNode1, fnNode2, resultState);
+					resultStates.addAll(addEquality(fnNode1, fnNode2, resultState));
 				}
 			}
 		}
-		return resultState;
+		return resultStates;
 	}
 }

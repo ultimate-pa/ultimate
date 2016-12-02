@@ -32,6 +32,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
@@ -128,7 +129,7 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 				for (int i = 1; i < andList.size(); i++) {
 					for (int j = 0; j < state.size(); j++) {
 						for (int k = 0; k < andList.get(i).size(); k++) {
-							result.add(mDomain.getVpStateFactory().conjoin(state.get(j), andList.get(i).get(k)));
+							result.addAll(mDomain.getVpStateFactory().conjoin(state.get(j), andList.get(i).get(k)));
 						}
 					}
 					state.clear();
@@ -154,7 +155,7 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 				if (!aeqs.isEmpty()) {
 					assert aeqs.size() == 1 : "?";
 					// we have an array equality (i.e. something like (= a b) where a,b are arrays)
-					return handleArrayEqualityTransition(preState, tvToPvMap, negated, aeqs.get(0));
+					return new ArrayList<>(handleArrayEqualityTransition(preState, tvToPvMap, negated, aeqs.get(0)));
 				}
 				
 				/*
@@ -165,7 +166,7 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 				if (!aus.isEmpty()) {
 					assert aus.size() == 1 : "?";
 					// we have an array update
-					return handleArrayUpdateTransition(preState, tvToPvMap, negated, aus.get(0));
+					return new ArrayList<>(handleArrayUpdateTransition(preState, tvToPvMap, negated, aus.get(0)));
 				}
 				
 				/*
@@ -176,11 +177,11 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 							
 				if (node1 != null && node2 != null) {
 					if (!negated) {
-						VPState resultState = mDomain.getVpStateFactory().addEquality(node1, node2, preState);
-						return Collections.singletonList(resultState);
+						Set<VPState> resultStates = mDomain.getVpStateFactory().addEquality(node1, node2, preState);
+						return new ArrayList<>(resultStates);
 					} else {
-						List<VPState> resultStates = mDomain.getVpStateFactory().addDisEquality(node1, node2, preState);
-						return resultStates;
+						Set<VPState> resultStates = mDomain.getVpStateFactory().addDisEquality(node1, node2, preState);
+						return new ArrayList<>(resultStates);
 					}
 				}
 				
@@ -215,15 +216,15 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 		return Collections.singletonList(resultState);
 	}
 
-	private List<VPState> handleArrayEqualityTransition(final VPState preState,
+	private Set<VPState> handleArrayEqualityTransition(final VPState preState,
 			Map<TermVariable, IProgramVar> tvToPvMap, boolean negated, ArrayEquality aeq) {
 		Term array1Term = aeq.getLhs();
 		Term array2Term = aeq.getRhs();
 		IProgramVarOrConst array1 = mDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(array1Term, tvToPvMap);
 		IProgramVarOrConst array2 = mDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(array2Term, tvToPvMap);
 		if (!negated) {
-			VPState resultState = mDomain.getVpStateFactory().arrayEquality(array1, array2, preState);
-			return Collections.singletonList(resultState);
+			Set<VPState> resultStates = mDomain.getVpStateFactory().arrayEquality(array1, array2, preState);
+			return resultStates;
 		} else {
 			assert false : "TODO";//TODO
 			return null;
@@ -257,11 +258,12 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 			if (!negated) {
 				VPState resultState = mDomain.getVpStateFactory().havoc(
 						arrayAtIndexNode, preState);
-				resultState = mDomain.getVpStateFactory().addEquality(
+				List<VPState> resultStates = new ArrayList<>();
+				resultStates.addAll(mDomain.getVpStateFactory().addEquality(
 						arrayAtIndexNode, 
 						valueNode, 
-						resultState);
-				return Collections.singletonList(resultState);
+						resultState));
+				return resultStates;
 			} else {
 				assert false : "TODO";//TODO
 				return null;
@@ -282,9 +284,12 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 	@Override
 	public List<VPState> apply(final VPState stateBeforeLeaving, final VPState stateAfterLeaving,
 			final CodeBlock transition) {
-		VPState conjoined = mDomain.getVpStateFactory().conjoin(stateBeforeLeaving, stateAfterLeaving);
+//		List<VPState> conjoined = mDomain.getVpStateFactory().conjoin(stateBeforeLeaving, stateAfterLeaving);
 		
-		return apply(conjoined, transition);
+		//TODO
+		
+//		return apply(conjoined, transition);
+		return null;
 	}
 
 }

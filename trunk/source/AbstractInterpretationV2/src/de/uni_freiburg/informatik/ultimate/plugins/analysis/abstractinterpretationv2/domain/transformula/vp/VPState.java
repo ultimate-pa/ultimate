@@ -28,6 +28,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -325,13 +326,18 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 
 	@Override
 	public VPState patch(final VPState dominator) {
-		VPState result = mDomain.getVpStateFactory().copy(this);
-
-		result = mDomain.getVpStateFactory().havocVariables(dominator.mVars, result);
-		
-		result = mDomain.getVpStateFactory().conjoin(result, dominator);
-
-		return result;
+		//TODO
+//		VPState state = mDomain.getVpStateFactory().copy(this);
+//
+//		state = mDomain.getVpStateFactory().havocVariables(dominator.mVars, state);
+//		
+//		List<VPState> conjoined = new ArrayList<>();
+//		conjoined.addAll(mDomain.getVpStateFactory().conjoin(state, dominator));
+//		
+//		
+//
+//		return result;
+		return null;
 	}
 
 	@Override

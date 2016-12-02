@@ -64,4 +64,19 @@ public class VPDomainSymmetricPair<T> {
 	public String toString() {
 		return "(" + mFst + "," + mSnd + ")";
 	}
+
+	public boolean contains(T element) {
+		return mFst.equals(element) || mSnd.equals(element);
+	}
+	
+	public T getOther(T element) {
+		if (element.equals(mFst)) {
+			return mSnd;
+		} else if (element.equals(mSnd)) {
+			return mFst;
+		} 
+		assert false : "check for containment first!";
+		return null;
+		
+	}
 }
