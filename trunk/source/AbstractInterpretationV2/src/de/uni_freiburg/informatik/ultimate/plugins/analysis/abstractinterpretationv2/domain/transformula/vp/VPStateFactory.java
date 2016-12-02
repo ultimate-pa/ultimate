@@ -242,9 +242,9 @@ public class VPStateFactory {
 			VPState originalStateCopy, 
 			EqGraphNode representative1, 
 			EqGraphNode representative2) {
-		assert representative1.getRepresentative() == representative1
-				&& representative2.getRepresentative() == representative2;
-		assert !representative1.equals(representative2);
+//		assert representative1.getRepresentative() == representative1
+//				&& representative2.getRepresentative() == representative2;
+//		assert !representative1.equals(representative2);
 		Set<VPState> result = new HashSet<>();
 		
 		HashRelation<IProgramVarOrConst, List<EqGraphNode>> ccchild1 = originalStateCopy.ccchild(representative1);
@@ -435,7 +435,10 @@ public class VPStateFactory {
 			VPState disjoinedState = copy(first);
 			EqGraphNode otherGraphNode;
 		
-			disjoinedState.clearState();
+			// TODO: (alex:) replaced clearState (which seems evil), but I'm not sure I understand this code anyway
+			//  --> maybe revise..
+//			disjoinedState.clearState();
+			disjoinedState = createTopState();
 		
 			for (final VPDomainSymmetricPair<EqNode> otherPair : second.getDisEqualitySet()) {
 				if (first.getDisEqualitySet().contains(otherPair)) {

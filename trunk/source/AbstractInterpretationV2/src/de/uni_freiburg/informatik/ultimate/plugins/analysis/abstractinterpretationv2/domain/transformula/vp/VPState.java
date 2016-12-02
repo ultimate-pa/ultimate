@@ -93,7 +93,7 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 	}
 
 	public Set<VPDomainSymmetricPair<EqNode>> getDisEqualitySet() {
-		return mDisEqualitySet;
+		return Collections.unmodifiableSet(mDisEqualitySet);
 	}
 
 	public void setDisEqualitySet(Set<VPDomainSymmetricPair<EqNode>> disEqualitySet) {
@@ -119,7 +119,7 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 	}
 
 	public void addToDisEqSet(final EqNode node1, final EqNode node2) {
-		this.getDisEqualitySet().add(new VPDomainSymmetricPair<EqNode>(node1, node2));
+		mDisEqualitySet.add(new VPDomainSymmetricPair<EqNode>(node1, node2));
 	}
 
 	/**
@@ -129,7 +129,7 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 	 */
 	boolean checkContradiction() {
 
-		for (final VPDomainSymmetricPair<EqNode> disEqPair : this.getDisEqualitySet()) {
+		for (final VPDomainSymmetricPair<EqNode> disEqPair : this.mDisEqualitySet) {
 			if (find(mEqNodeToEqGraphNodeMap.get(disEqPair.getFirst())).equals(
 					find(mEqNodeToEqGraphNodeMap.get(disEqPair.getSecond())))) {
 				return true;
@@ -263,15 +263,15 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 //		return mDomain.getArrayIdToEqFnNodeMap().containsKey(term);
 //	}
 
-	/**
-	 * Erase all the edges in the graph of this state.
-	 */
-	public void clearState() {
-		this.getDisEqualitySet().clear();
-		for (EqGraphNode graphNode : this.mEqNodeToEqGraphNodeMap.values()) {
-			graphNode.setNodeToInitial();
-		}
-	}
+//	/**
+//	 * Erase all the edges in the graph of this state.
+//	 */
+//	public void clearState() {
+//		mDisEqualitySet.clear();
+//		for (EqGraphNode graphNode : this.mEqNodeToEqGraphNodeMap.values()) {
+//			graphNode.setNodeToInitial();
+//		}
+//	}
 
 	@Override
 	public VPState addVariable(final IProgramVar variable) {
@@ -524,5 +524,9 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 
 	public VPDomain getDomain() {
 		return mDomain;
+	}
+
+	public boolean mayEqual(EqNode accessingNode1, EqNode accessingNode2) {
+		return mDisEqualitySet.contains(new VPDomainSymmetricPair<EqNode>(accessingNode1, accessingNode2));
 	}
 }

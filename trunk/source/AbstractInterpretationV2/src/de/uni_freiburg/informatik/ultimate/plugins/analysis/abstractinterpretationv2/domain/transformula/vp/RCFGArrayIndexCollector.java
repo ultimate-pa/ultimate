@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -357,6 +358,10 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 	 */
 	public boolean isArrayAccessedAt(IProgramVarOrConst array, EqNode index) {
 		return mArrayToAccessingEqNodes.containsPair(array, index);
+	}
+	
+	public Set<EqNode> getAccessingIndicesForArray(IProgramVarOrConst array) {
+		return Collections.unmodifiableSet(mArrayToAccessingEqNodes.getImage(array));
 	}
 
 	/**
