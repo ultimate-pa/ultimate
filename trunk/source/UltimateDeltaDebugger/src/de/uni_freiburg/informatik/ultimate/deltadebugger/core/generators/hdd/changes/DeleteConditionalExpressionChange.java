@@ -29,15 +29,17 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
 
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.generators.hdd.HddChange;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTNode;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTRegularNode;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.util.RewriteUtils;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.util.TokenCollector.Token;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.SourceRewriter;
 
 /**
  * Change by conditional expression deletion.
  */
-public class DeleteConditionalExpressionChange extends Change {
+public class DeleteConditionalExpressionChange extends HddChange {
 	private static final int NUM_OPERANDS = 3;
 	
 	private final IPSTRegularNode mConditionalExpressionNode;
@@ -92,7 +94,7 @@ public class DeleteConditionalExpressionChange extends Change {
 	}
 	
 	@Override
-	public void updateDeferredChange(final Map<IPSTNode, Change> deferredChangeMap) {
+	public void updateDeferredChange(final Map<IPSTNode, HddChange> deferredChangeMap) {
 		((CombinedChange) deferredChangeMap.computeIfAbsent(mConditionalExpressionNode, CombinedChange::new))
 				.addChange(this);
 	}
@@ -100,7 +102,7 @@ public class DeleteConditionalExpressionChange extends Change {
 	/**
 	 * Combined change.
 	 */
-	class CombinedChange extends Change {
+	class CombinedChange extends HddChange {
 		private final DeleteConditionalExpressionChange[] mParts = new DeleteConditionalExpressionChange[NUM_OPERANDS];
 		
 		CombinedChange(final IPSTNode node) {
@@ -116,10 +118,10 @@ public class DeleteConditionalExpressionChange extends Change {
 			final long count = Arrays.stream(mParts).filter(Objects::nonNull).count();
 			if (count == NUM_OPERANDS) {
 				// Replace whole expression by the replacement of the negative result
-				deleteNodeText(rewriter, mParts[0].getNode());
-				replaceByWhitespace(rewriter, mTokColon);
-				deleteNodeText(rewriter, mParts[1].getNode());
-				replaceByWhitespace(rewriter, mTokQuestion);
+				RewriteUtils.deleteNodeText(rewriter, mParts[0].getNode());
+				RewriteUtils.replaceByWhitespace(rewriter, mTokColon);
+				RewriteUtils.deleteNodeText(rewriter, mParts[1].getNode());
+				RewriteUtils.replaceByWhitespace(rewriter, mTokQuestion);
 				rewriter.replace(mParts[2].getNode(), mParts[2].mReplacement);
 			} else if (count == 2) {
 				if (mParts[0] == null) {
@@ -128,13 +130,13 @@ public class DeleteConditionalExpressionChange extends Change {
 					rewriter.replace(mParts[2].getNode(), mParts[2].mReplacement);
 				} else {
 					// delete condition and tokens and one of the results
-					deleteNodeText(rewriter, mParts[0].getNode());
-					replaceByWhitespace(rewriter, mTokQuestion);
-					replaceByWhitespace(rewriter, mTokColon);
+					RewriteUtils.deleteNodeText(rewriter, mParts[0].getNode());
+					RewriteUtils.replaceByWhitespace(rewriter, mTokQuestion);
+					RewriteUtils.replaceByWhitespace(rewriter, mTokColon);
 					if (mParts[1] != null) {
-						deleteNodeText(rewriter, mParts[1].getNode());
+						RewriteUtils.deleteNodeText(rewriter, mParts[1].getNode());
 					} else {
-						deleteNodeText(rewriter, mParts[2].getNode());
+						RewriteUtils.deleteNodeText(rewriter, mParts[2].getNode());
 					}
 				}
 			} else if (count == 1) {

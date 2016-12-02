@@ -39,6 +39,7 @@ import org.eclipse.cdt.core.dom.ast.IASTWhileStatement;
 import org.eclipse.cdt.core.parser.IToken;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.generators.hdd.HddChange;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTConditionalBlock;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTNode;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTRegularNode;
@@ -57,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.SourceRewrite
 public class ChangeCollector {
 	private final ILogger mLogger;
 	private final Map<IPSTRegularNode, List<CommaSeparatedChild>> mParentToCommaPositionMap;
-	private final List<Change> mChanges = new ArrayList<>();
+	private final List<HddChange> mChanges = new ArrayList<>();
 	
 	/**
 	 * @param logger
@@ -86,7 +87,7 @@ public class ChangeCollector {
 	 *            New change.
 	 * @return {@code true}
 	 */
-	public boolean addChange(final Change newChange) {
+	public boolean addChange(final HddChange newChange) {
 		newChange.setSequenceIndex(mChanges.size());
 		mChanges.add(newChange);
 		return true;
@@ -228,15 +229,15 @@ public class ChangeCollector {
 		final Token tokLparen = tokens[2];
 		final Token tokRparen = tokens[3];
 		
-		return addChange(new Change(node) {
+		return addChange(new HddChange(node) {
 			@Override
 			public void apply(final SourceRewriter rewriter) {
-				replaceByWhitespace(rewriter, tokDo);
-				replaceByWhitespace(rewriter, tokWhile);
+				RewriteUtils.replaceByWhitespace(rewriter, tokDo);
+				RewriteUtils.replaceByWhitespace(rewriter, tokWhile);
 				// Do no create unbalanced parentheses by only deleting one
 				if (tokLparen != null && tokRparen != null) {
-					replaceByWhitespace(rewriter, tokLparen);
-					replaceByWhitespace(rewriter, tokRparen);
+					RewriteUtils.replaceByWhitespace(rewriter, tokLparen);
+					RewriteUtils.replaceByWhitespace(rewriter, tokRparen);
 				}
 			}
 			
@@ -279,13 +280,13 @@ public class ChangeCollector {
 			return false;
 		}
 		
-		return addChange(new Change(node) {
+		return addChange(new HddChange(node) {
 			
 			@Override
 			public void apply(final SourceRewriter rewriter) {
-				replaceByWhitespace(rewriter, tokFor);
-				replaceByWhitespace(rewriter, tokLparen);
-				replaceByWhitespace(rewriter, tokRparen);
+				RewriteUtils.replaceByWhitespace(rewriter, tokFor);
+				RewriteUtils.replaceByWhitespace(rewriter, tokLparen);
+				RewriteUtils.replaceByWhitespace(rewriter, tokRparen);
 				rewriter.insert(insertionOffset, ";");
 			}
 			
@@ -334,10 +335,10 @@ public class ChangeCollector {
 		// has been found, try to delete the else-token instead
 		if (tokIf == null || insertionOffset == -1) {
 			if (tokElse != null) {
-				return addChange(new Change(node) {
+				return addChange(new HddChange(node) {
 					@Override
 					public void apply(final SourceRewriter rewriter) {
-						replaceByWhitespace(rewriter, tokElse);
+						RewriteUtils.replaceByWhitespace(rewriter, tokElse);
 					}
 					
 					@Override
@@ -351,17 +352,17 @@ public class ChangeCollector {
 		
 		final Token tokLparen = tokens[1];
 		
-		return addChange(new Change(node) {
+		return addChange(new HddChange(node) {
 			@Override
 			public void apply(final SourceRewriter rewriter) {
-				replaceByWhitespace(rewriter, tokIf);
+				RewriteUtils.replaceByWhitespace(rewriter, tokIf);
 				// Do no create unbalanced parentheses by only deleting one
 				if (tokLparen != null && tokRparen != null) {
-					replaceByWhitespace(rewriter, tokLparen);
-					replaceByWhitespace(rewriter, tokRparen);
+					RewriteUtils.replaceByWhitespace(rewriter, tokLparen);
+					RewriteUtils.replaceByWhitespace(rewriter, tokRparen);
 				}
 				if (tokElse != null) {
-					replaceByWhitespace(rewriter, tokElse);
+					RewriteUtils.replaceByWhitespace(rewriter, tokElse);
 				}
 				rewriter.insert(insertionOffset, ";");
 			}
@@ -388,13 +389,13 @@ public class ChangeCollector {
 			return false;
 		}
 		
-		return addChange(new Change(typeIdNode) {
+		return addChange(new HddChange(typeIdNode) {
 			
 			@Override
 			public void apply(final SourceRewriter rewriter) {
-				replaceByWhitespace(rewriter, tokLparen);
-				replaceByWhitespace(rewriter, tokRparen);
-				replaceByWhitespace(rewriter, getNode());
+				RewriteUtils.replaceByWhitespace(rewriter, tokLparen);
+				RewriteUtils.replaceByWhitespace(rewriter, tokRparen);
+				RewriteUtils.replaceByWhitespace(rewriter, getNode());
 			}
 			
 			@Override
@@ -436,14 +437,14 @@ public class ChangeCollector {
 		
 		final Token tokLparen = tokens[1];
 		
-		return addChange(new Change(node) {
+		return addChange(new HddChange(node) {
 			@Override
 			public void apply(final SourceRewriter rewriter) {
-				replaceByWhitespace(rewriter, tokWhile);
+				RewriteUtils.replaceByWhitespace(rewriter, tokWhile);
 				// Do no create unbalanced parentheses by only deleting one
 				if (tokLparen != null && tokRparen != null) {
-					replaceByWhitespace(rewriter, tokLparen);
-					replaceByWhitespace(rewriter, tokRparen);
+					RewriteUtils.replaceByWhitespace(rewriter, tokLparen);
+					RewriteUtils.replaceByWhitespace(rewriter, tokRparen);
 				}
 				rewriter.insert(insertionOffset, ";");
 			}
@@ -511,10 +512,10 @@ public class ChangeCollector {
 			return false;
 		}
 		
-		return addChange(new Change(node) {
+		return addChange(new HddChange(node) {
 			@Override
 			public void apply(final SourceRewriter rewriter) {
-				replaceByWhitespace(rewriter, token);
+				RewriteUtils.replaceByWhitespace(rewriter, token);
 			}
 			
 			@Override
@@ -551,7 +552,7 @@ public class ChangeCollector {
 		return false;
 	}
 	
-	public List<Change> getChanges() {
+	public List<HddChange> getChanges() {
 		return mChanges;
 	}
 }

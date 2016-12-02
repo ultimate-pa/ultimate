@@ -32,6 +32,7 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.exceptions.ChangeC
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTNode;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.util.CommaSeparatedChild;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.util.CommaSeparatedChildDeleter;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.util.RewriteUtils;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceRange;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.SourceRewriter;
 
@@ -50,14 +51,14 @@ final class CommaDeleter extends CommaSeparatedChildDeleter {
 	@Override
 	protected void deleteComma(final ISourceRange location) {
 		if (mRewriter != null) {
-			Change.replaceByWhitespace(mRewriter, location);
+			RewriteUtils.replaceByWhitespace(mRewriter, location);
 		}
 	}
 	
 	@Override
 	protected void deleteNode(final IPSTNode node) {
 		if (mRewriter != null) {
-			Change.deleteNodeText(mRewriter, node);
+			RewriteUtils.deleteNodeText(mRewriter, node);
 		}
 	}
 	

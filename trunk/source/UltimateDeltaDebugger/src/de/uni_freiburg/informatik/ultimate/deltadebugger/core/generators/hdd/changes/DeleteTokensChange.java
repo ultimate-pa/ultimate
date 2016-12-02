@@ -27,7 +27,9 @@ package de.uni_freiburg.informatik.ultimate.deltadebugger.core.generators.hdd.ch
 
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.generators.hdd.HddChange;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTNode;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.util.RewriteUtils;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.util.TokenCollector.Token;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceRange;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.SourceRewriter;
@@ -35,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.SourceRewrite
 /**
  * Change by token deletion.
  */
-public class DeleteTokensChange extends Change {
+public class DeleteTokensChange extends HddChange {
 	private final List<Token> mTokens;
 	
 	/**
@@ -52,7 +54,7 @@ public class DeleteTokensChange extends Change {
 	@Override
 	public void apply(final SourceRewriter rewriter) {
 		for (final ISourceRange location : mTokens) {
-			replaceByWhitespace(rewriter, location);
+			RewriteUtils.replaceByWhitespace(rewriter, location);
 		}
 	}
 	

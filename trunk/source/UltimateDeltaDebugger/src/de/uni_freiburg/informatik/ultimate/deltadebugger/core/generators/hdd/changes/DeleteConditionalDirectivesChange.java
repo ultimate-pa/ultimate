@@ -25,6 +25,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.deltadebugger.core.generators.hdd.changes;
 
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.generators.hdd.HddChange;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTConditionalBlock;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceRange;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.SourceRewriter;
@@ -32,7 +33,7 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.SourceRewrite
 /**
  * Change by conditional directives deletion.
  */
-public class DeleteConditionalDirectivesChange extends Change {
+public class DeleteConditionalDirectivesChange extends HddChange {
 	private final ISourceRange[] mDeleteLocations;
 	
 	/**

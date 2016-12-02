@@ -23,39 +23,28 @@
  * licensors of the Ultimate Delta Debugger plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.deltadebugger.core.generators.hdd.changes;
+package de.uni_freiburg.informatik.ultimate.deltadebugger.core.generators.hdd;
 
 import java.util.Map;
 import java.util.Optional;
 
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.IChangeHandle;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTNode;
-import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.util.RewriteUtils;
-import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceRange;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.SourceRewriter;
 
 /**
- * A change to the C code.
+ * A change of a PST node that can be applied by the HddGenerator.
  */
-public abstract class Change implements IChangeHandle {
+public abstract class HddChange implements IChangeHandle {
 	private final IPSTNode mNode;
-	
 	private int mIndex = -1;
 	
 	/**
 	 * @param node
 	 *            PST node.
 	 */
-	public Change(final IPSTNode node) {
+	public HddChange(final IPSTNode node) {
 		mNode = node;
-	}
-	
-	static void deleteNodeText(final SourceRewriter rewriter, final IPSTNode node) {
-		rewriter.replace(node, RewriteUtils.getDeletionStringWithWhitespaces(node));
-	}
-	
-	static void replaceByWhitespace(final SourceRewriter rewriter, final ISourceRange location) {
-		rewriter.replace(location, " ");
 	}
 	
 	/**
@@ -92,7 +81,7 @@ public abstract class Change implements IChangeHandle {
 	 * @param deferredChangeMap
 	 *            map (PST node -> deferred change)
 	 */
-	public void updateDeferredChange(final Map<IPSTNode, Change> deferredChangeMap) {
+	public void updateDeferredChange(final Map<IPSTNode, HddChange> deferredChangeMap) {
 		throw new UnsupportedOperationException();
 	}
 	
@@ -102,7 +91,7 @@ public abstract class Change implements IChangeHandle {
 	 * 
 	 * @return an optional alternative to this change
 	 */
-	public Optional<Change> createAlternativeChange() {
+	public Optional<HddChange> createAlternativeChange() {
 		return Optional.empty();
 	}
 }

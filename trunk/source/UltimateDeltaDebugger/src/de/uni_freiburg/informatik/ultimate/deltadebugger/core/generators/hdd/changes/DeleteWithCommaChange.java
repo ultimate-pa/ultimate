@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.exceptions.ChangeConflictException;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.generators.hdd.HddChange;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTNode;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTRegularNode;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.util.CommaSeparatedChild;
@@ -39,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.SourceRewrite
 /**
  * Change by deletion with comma.
  */
-public class DeleteWithCommaChange extends Change {
+public class DeleteWithCommaChange extends HddChange {
 	private final IPSTNode mParent;
 	private final List<CommaSeparatedChild> mCommaPositions;
 	
@@ -81,14 +82,14 @@ public class DeleteWithCommaChange extends Change {
 	}
 	
 	@Override
-	public void updateDeferredChange(final Map<IPSTNode, Change> deferredChangeMap) {
+	public void updateDeferredChange(final Map<IPSTNode, HddChange> deferredChangeMap) {
 		((CombinedChange) deferredChangeMap.computeIfAbsent(mParent, CombinedChange::new)).addChild(getNode());
 	}
 	
 	/**
 	 * Combined change.
 	 */
-	class CombinedChange extends Change {
+	class CombinedChange extends HddChange {
 		private final List<IPSTNode> mChildrenToDelete = new ArrayList<>();
 		
 		CombinedChange(final IPSTNode node) {

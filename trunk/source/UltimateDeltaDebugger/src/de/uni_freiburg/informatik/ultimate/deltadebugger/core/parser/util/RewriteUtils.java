@@ -48,6 +48,8 @@ import org.eclipse.text.edits.TextEdit;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTComment;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTMacroExpansion;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTNode;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceRange;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.SourceRewriter;
 
 /**
  * Contains
@@ -168,6 +170,14 @@ public final class RewriteUtils {
 		}
 
 		return Collections.emptyList();
+	}
+
+	public static void deleteNodeText(final SourceRewriter rewriter, final IPSTNode node) {
+		rewriter.replace(node, getDeletionStringWithWhitespaces(node));
+	}
+
+	public static void replaceByWhitespace(final SourceRewriter rewriter, final ISourceRange location) {
+		rewriter.replace(location, " ");
 	}
 
 }

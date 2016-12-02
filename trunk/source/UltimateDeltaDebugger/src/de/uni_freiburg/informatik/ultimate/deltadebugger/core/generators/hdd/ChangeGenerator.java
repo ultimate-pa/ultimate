@@ -32,7 +32,6 @@ import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.deltadebugger.core.generators.hdd.changes.Change;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.generators.hdd.changes.ChangeCollector;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTNode;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTRegularNode;
@@ -52,9 +51,9 @@ class ChangeGenerator {
 		mStrategy = strategy;
 	}
 	
-	private List<List<Change>> expandCurrentLevel(final List<IPSTNode> remaingNodesOnCurrentLevel,
+	private List<List<HddChange>> expandCurrentLevel(final List<IPSTNode> remaingNodesOnCurrentLevel,
 			final List<IPSTNode> nextLevelNodes) {
-		final List<List<Change>> changeGroups = new ArrayList<>();
+		final List<List<HddChange>> changeGroups = new ArrayList<>();
 		
 		final ChangeCollector collector = new ChangeCollector(mLogger, mParentToCommaPositionMap);
 		for (final IPSTNode node : remaingNodesOnCurrentLevel) {
@@ -97,7 +96,7 @@ class ChangeGenerator {
 		int advancedLevels = 0;
 		// A certain level may not generate a change but still contain nodes to expand,
 		// so loop until either some changes are generated or no nodes remain
-		List<List<Change>> changeGroups = Collections.emptyList();
+		List<List<HddChange>> changeGroups = Collections.emptyList();
 		List<IPSTNode> remainingNodes = currentLevelNodes;
 		while (changeGroups.isEmpty() && !remainingNodes.isEmpty()) {
 			final List<IPSTNode> nextLevelNodes = new ArrayList<>();
@@ -114,10 +113,10 @@ class ChangeGenerator {
 	 */
 	static class ExpansionResult {
 		protected final int mAdvancedLevels;
-		protected final List<List<Change>> mChangeGroups;
+		protected final List<List<HddChange>> mChangeGroups;
 		protected final List<IPSTNode> mRemainingNodes;
 		
-		public ExpansionResult(final int advancedLevels, final List<List<Change>> changeGroups,
+		public ExpansionResult(final int advancedLevels, final List<List<HddChange>> changeGroups,
 				final List<IPSTNode> remainingNodes) {
 			mAdvancedLevels = advancedLevels;
 			mChangeGroups = changeGroups;

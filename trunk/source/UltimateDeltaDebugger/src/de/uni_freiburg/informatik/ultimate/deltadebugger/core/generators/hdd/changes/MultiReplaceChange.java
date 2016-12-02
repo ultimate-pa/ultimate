@@ -29,13 +29,14 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.generators.hdd.HddChange;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTNode;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.SourceRewriter;
 
 /**
  * Change by replacing a node with one of multiple alternatives.
  */
-public class MultiReplaceChange extends Change {
+public class MultiReplaceChange extends HddChange {
 	private final List<String> mReplacements;
 	
 	MultiReplaceChange(final IPSTNode node, final List<String> replacements) {
@@ -53,7 +54,7 @@ public class MultiReplaceChange extends Change {
 	
 
 	@Override
-	public Optional<Change> createAlternativeChange() {
+	public Optional<HddChange> createAlternativeChange() {
 		if (mReplacements.size() > 1) {
 			return Optional.of(new MultiReplaceChange(getNode(), mReplacements.subList(1, mReplacements.size())));
 		}

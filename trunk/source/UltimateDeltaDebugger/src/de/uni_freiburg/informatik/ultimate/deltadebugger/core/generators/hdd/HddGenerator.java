@@ -42,7 +42,6 @@ import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.IChangeHandle;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.IPassContext;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.IVariantGenerator;
-import de.uni_freiburg.informatik.ultimate.deltadebugger.core.generators.hdd.changes.Change;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTNode;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTTranslationUnit;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTVisitor;
@@ -60,12 +59,12 @@ class HddGenerator implements IVariantGenerator {
 	private final int mLevel;
 	private final ISourceDocument mSource;
 	private final List<IPSTNode> mNodes;
-	private final List<List<Change>> mChangeGroups;
-	private final List<Change> mPersistentChanges;
+	private final List<List<HddChange>> mChangeGroups;
+	private final List<HddChange> mPersistentChanges;
 	
 	HddGenerator(final HddGeneratorFactory factory, final IPassContext context, final int level,
-			final ISourceDocument source, final List<IPSTNode> nodes, final List<List<Change>> changeGroups,
-			final List<Change> persistentChanges) {
+			final ISourceDocument source, final List<IPSTNode> nodes, final List<List<HddChange>> changeGroups,
+			final List<HddChange> persistentChanges) {
 		mFactory = factory;
 		mContext = context;
 		mLevel = level;
@@ -78,11 +77,11 @@ class HddGenerator implements IVariantGenerator {
 	@Override
 	public String apply(final List<IChangeHandle> activeChanges) {
 		final SourceRewriter rewriter = new SourceRewriter(mSource);
-		final Map<Class<?>, Map<IPSTNode, Change>> deferredChangeMap = new IdentityHashMap<>();
+		final Map<Class<?>, Map<IPSTNode, HddChange>> deferredChangeMap = new IdentityHashMap<>();
 		getStreamOfAllChanges(activeChanges).forEach(change -> {
 			change.apply(rewriter);
 			if (change.hasDeferredChange()) {
-				final Map<IPSTNode, Change> perChangeClassMap =
+				final Map<IPSTNode, HddChange> perChangeClassMap =
 						deferredChangeMap.computeIfAbsent(change.getClass(), c -> new IdentityHashMap<>());
 				change.updateDeferredChange(perChangeClassMap);
 			}
@@ -96,30 +95,30 @@ class HddGenerator implements IVariantGenerator {
 		return Collections.unmodifiableList(mChangeGroups.get(0));
 	}
 	
-	private List<Change> createAlternativeChanges(final List<IChangeHandle> activeChanges, final List<Change> allChanges) {
-		final List<Change> alternativeChanges = ListUtils.complementOfSubsequence(activeChanges, allChanges).stream()
-				.map(c -> ((Change) c).createAlternativeChange()).filter(Optional::isPresent).map(Optional::get)
+	private List<HddChange> createAlternativeChanges(final List<IChangeHandle> activeChanges, final List<HddChange> allChanges) {
+		final List<HddChange> alternativeChanges = ListUtils.complementOfSubsequence(activeChanges, allChanges).stream()
+				.map(c -> ((HddChange) c).createAlternativeChange()).filter(Optional::isPresent).map(Optional::get)
 				.collect(Collectors.toList());
 		IntStream.range(0, alternativeChanges.size()).forEach(i -> alternativeChanges.get(i).setSequenceIndex(i));
 		return Collections.unmodifiableList(alternativeChanges);
 	}
 	
-	private List<List<Change>> getNextChangeGroups(final List<IChangeHandle> activeChanges) {
+	private List<List<HddChange>> getNextChangeGroups(final List<IChangeHandle> activeChanges) {
 		// Check for alternative changes for the inactive changes of the current group
-		final List<Change> alternativeChanges = createAlternativeChanges(activeChanges, mChangeGroups.get(0));
+		final List<HddChange> alternativeChanges = createAlternativeChanges(activeChanges, mChangeGroups.get(0));
 		if (!alternativeChanges.isEmpty()) {
-			final List<List<Change>> nextChangeGroups = new ArrayList<>(mChangeGroups);
+			final List<List<HddChange>> nextChangeGroups = new ArrayList<>(mChangeGroups);
 			nextChangeGroups.set(0, alternativeChanges);
 			return Collections.unmodifiableList(nextChangeGroups);
 		}
 		return mChangeGroups.subList(1, mChangeGroups.size());
 	}
 	
-	private List<Change> getMergedPersistentChanges(final List<IChangeHandle> activeChanges) {
+	private List<HddChange> getMergedPersistentChanges(final List<IChangeHandle> activeChanges) {
 		if (activeChanges.isEmpty()) {
 			return mPersistentChanges;
 		}
-		final List<Change> merged = new ArrayList<>(mPersistentChanges.size() + activeChanges.size());
+		final List<HddChange> merged = new ArrayList<>(mPersistentChanges.size() + activeChanges.size());
 		getStreamOfAllChanges(activeChanges).forEachOrdered(merged::add);
 		merged.sort(Comparator.comparingInt(c -> c.getNode().offset()));
 		return merged;
@@ -132,18 +131,18 @@ class HddGenerator implements IVariantGenerator {
 		// Compute the remaining nodes by removing nodes that have been
 		// successfully changed
 		final Set<IPSTNode> removedNodes = Collections.newSetFromMap(new IdentityHashMap<>(activeChanges.size()));
-		activeChanges.stream().map(c -> ((Change) c).getNode()).forEach(removedNodes::add);
+		activeChanges.stream().map(c -> ((HddChange) c).getNode()).forEach(removedNodes::add);
 		return mNodes.stream().filter(n -> !removedNodes.contains(n)).collect(Collectors.toList());
 	}
 	
-	private Stream<Change> getStreamOfAllChanges(final List<IChangeHandle> activeChanges) {
-		return Stream.concat(mPersistentChanges.stream(), activeChanges.stream().map(c -> (Change) c));
+	private Stream<HddChange> getStreamOfAllChanges(final List<IChangeHandle> activeChanges) {
+		return Stream.concat(mPersistentChanges.stream(), activeChanges.stream().map(c -> (HddChange) c));
 	}
 	
 	@Override
 	public Optional<IVariantGenerator> next(final List<IChangeHandle> activeChanges) {
 		// Advance to the next group of changes on this level
-		final List<List<Change>> nextChangeGroups = getNextChangeGroups(activeChanges);
+		final List<List<HddChange>> nextChangeGroups = getNextChangeGroups(activeChanges);
 		if (!nextChangeGroups.isEmpty()) {
 			return Optional.of(new HddGenerator(mFactory, mContext, mLevel, mSource, getRemainingNodes(activeChanges),
 					nextChangeGroups, getMergedPersistentChanges(activeChanges)));

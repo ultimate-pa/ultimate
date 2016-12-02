@@ -33,16 +33,18 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.exceptions.ChangeConflictException;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.generators.hdd.HddChange;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.implementation.PSTVisitorWithResult;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTNode;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTRegularNode;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.util.RewriteUtils;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceRange;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.SourceRewriter;
 
 /**
  * Change by binary expression operand deletion.
  */
-public class DeleteBinaryExpressionOperandChange extends Change {
+public class DeleteBinaryExpressionOperandChange extends HddChange {
 	private final IPSTRegularNode mBinaryExpressionNode;
 	private final ISourceRange mOperatorPosition;
 	private final List<String> mAlternativeOperandReplacements;
@@ -85,13 +87,13 @@ public class DeleteBinaryExpressionOperandChange extends Change {
 	}
 
 	@Override
-	public void updateDeferredChange(final Map<IPSTNode, Change> deferredChangeMap) {
+	public void updateDeferredChange(final Map<IPSTNode, HddChange> deferredChangeMap) {
 		((CombinedChange) deferredChangeMap.computeIfAbsent(mBinaryExpressionNode, CombinedChange::new))
 				.addOperandChange(this);
 	}
 	
 	@Override
-	public Optional<Change> createAlternativeChange() {
+	public Optional<HddChange> createAlternativeChange() {
 		if (!mAlternativeOperandReplacements.isEmpty()) {
 			return Optional.of(new MultiReplaceChange(getNode(), mAlternativeOperandReplacements));
 		}
@@ -102,7 +104,7 @@ public class DeleteBinaryExpressionOperandChange extends Change {
 	/**
 	 * Combined change.
 	 */
-	static class CombinedChange extends Change {
+	static class CombinedChange extends HddChange {
 		private final List<DeleteBinaryExpressionOperandChange> mOperandChanges = new ArrayList<>();
 		
 		CombinedChange(final IPSTNode node) {
@@ -116,8 +118,8 @@ public class DeleteBinaryExpressionOperandChange extends Change {
 		@Override
 		public void apply(final SourceRewriter rewriter) {
 			if (mOperandChanges.size() == 1) {
-				deleteNodeText(rewriter, mOperandChanges.get(0).getNode());
-				replaceByWhitespace(rewriter, mOperandChanges.get(0).mOperatorPosition);
+				RewriteUtils.deleteNodeText(rewriter, mOperandChanges.get(0).getNode());
+				RewriteUtils.replaceByWhitespace(rewriter, mOperandChanges.get(0).mOperatorPosition);
 				return;
 			}
 			if (mOperandChanges.size() != 2) {
@@ -140,8 +142,8 @@ public class DeleteBinaryExpressionOperandChange extends Change {
 				deleteIndex = countChildren(lhs.getNode()) >= countChildren(rhs.getNode()) ? 0 : 1;
 			}
 
-			deleteNodeText(rewriter, mOperandChanges.get(deleteIndex).getNode());
-			replaceByWhitespace(rewriter, lhs.mOperatorPosition);
+			RewriteUtils.deleteNodeText(rewriter, mOperandChanges.get(deleteIndex).getNode());
+			RewriteUtils.replaceByWhitespace(rewriter, lhs.mOperatorPosition);
 			rewriter.replace(mOperandChanges.get(1 - deleteIndex).getNode(),
 					mOperandChanges.get(1 - deleteIndex).mAlternativeOperandReplacements.get(0));
 		}

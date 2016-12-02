@@ -34,7 +34,6 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.IPassContext;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.IVariantGenerator;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.IVariantGeneratorFactory;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.generators.hdd.ChangeGenerator.ExpansionResult;
-import de.uni_freiburg.informatik.ultimate.deltadebugger.core.generators.hdd.changes.Change;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTNode;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceDocument;
 
@@ -95,7 +94,7 @@ public class HddGeneratorFactory implements IVariantGeneratorFactory {
 	 * @return generator for the next level
 	 */
 	public Optional<IVariantGenerator> createGeneratorForNextLevel(final IPassContext context, final int currentLevel,
-			final ISourceDocument source, final List<IPSTNode> nodes, final List<Change> persistentChanges) {
+			final ISourceDocument source, final List<IPSTNode> nodes, final List<HddChange> persistentChanges) {
 		final ChangeGenerator changeGenerator = new ChangeGenerator(context.getLogger(), mStrategy);
 		final ExpansionResult expansion = changeGenerator.generateNextLevelChanges(nodes);
 		if (expansion.mChangeGroups.isEmpty()) {
