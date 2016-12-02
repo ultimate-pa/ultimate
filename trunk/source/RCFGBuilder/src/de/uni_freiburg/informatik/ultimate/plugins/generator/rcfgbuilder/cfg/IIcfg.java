@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.VisualizationNode;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IVisualizable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 
 /**
@@ -72,6 +73,8 @@ public interface IIcfg<LOC extends IcfgLocation> extends IElement, IVisualizable
 	CodeBlockFactory getCodeBlockFactory();
 
 	CfgSmtToolkit getCfgSmtToolkit();
+
+	IIcfgSymbolTable getSymboltable();
 
 	/**
 	 * Returns an identifier that can be used during debugging.

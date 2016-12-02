@@ -35,6 +35,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.BasePayloadContainer;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
@@ -182,6 +183,11 @@ public class PathProgram<LOC extends IcfgLocation> extends BasePayloadContainer 
 	@Override
 	public String getIdentifier() {
 		return mIdentifier;
+	}
+
+	@Override
+	public IIcfgSymbolTable getSymboltable() {
+		return mOriginalIcfg.getSymboltable();
 	}
 
 	private final static class PathProgramIcfgLocation extends IcfgLocation {
