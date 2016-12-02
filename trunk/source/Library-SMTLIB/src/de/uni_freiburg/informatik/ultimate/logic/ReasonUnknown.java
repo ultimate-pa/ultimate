@@ -54,5 +54,11 @@ public enum ReasonUnknown {
 		public String toString() {
 			return "cancelled";
 		}
+	}, 
+	OTHER {
+		@Override
+		public String toString() {
+			return "other";
+		}
 	}
 }
