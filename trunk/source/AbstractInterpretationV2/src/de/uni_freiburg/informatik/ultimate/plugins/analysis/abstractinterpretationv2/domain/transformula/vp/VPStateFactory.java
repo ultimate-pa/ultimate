@@ -170,7 +170,6 @@ public class VPStateFactory {
 		 * Propagate disequalites
 		 */
 		Set<VPState> resultStates = new HashSet<>();
-		resultStates.add(resultState);
 		for (EqNode other : getDisEqualites(originalState, gn1.eqNode)) {
 			resultStates.addAll(
 					propagateDisEqualites(
@@ -182,6 +181,9 @@ public class VPStateFactory {
 							resultState, gn2, resultState.getEqNodeToEqGraphNodeMap().get(other)));
 		}
 	
+		if (resultStates.isEmpty()) {
+			return Collections.singleton(resultState);
+		}
 		
 		return resultStates;
 	}

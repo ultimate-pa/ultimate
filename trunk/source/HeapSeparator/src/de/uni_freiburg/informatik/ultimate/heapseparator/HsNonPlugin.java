@@ -75,9 +75,6 @@ public class HsNonPlugin {
 	}
 	
 	public BoogieIcfgContainer separate(final BoogieIcfgContainer oldBoogieIcfg ) {
-		
-		
-		
 		/*
 		 * obtain partitioning from equality domain abstract interpretation run
 		 */
