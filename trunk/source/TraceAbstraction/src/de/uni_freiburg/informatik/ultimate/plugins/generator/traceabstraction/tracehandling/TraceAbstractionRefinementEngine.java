@@ -252,12 +252,21 @@ public final class TraceAbstractionRefinementEngine
 			
 			switch (feasibility) {
 				case UNKNOWN:
-					if (mLogger.isInfoEnabled()) {
-						mLogger.info("Strategy " + strategy.getClass().getSimpleName()
-								+ " was unsuccessful and could not determine trace feasibility.");
+					if (!interpolantSequences.isEmpty()) {
+						// construct the interpolant automaton from the sequences we have found previously
+						if (mLogger.isInfoEnabled()) {
+							mLogger.info("No perfect sequence of interpolants found, combining those we have.");
+						}
+						mInterpolantAutomaton =
+								strategy.getInterpolantAutomatonBuilder(interpolantSequences).getResult();
+					} else {
+						if (mLogger.isInfoEnabled()) {
+							mLogger.info("Strategy " + strategy.getClass().getSimpleName()
+									+ " was unsuccessful and could not determine trace feasibility.");
+						}
+						// NOTE: This can crash as well, but such a crash is intended.
+						mRcfgProgramExecution = strategy.getTraceChecker().getRcfgProgramExecution();
 					}
-					// NOTE: This can crash as well, but such a crash is intended.
-					mRcfgProgramExecution = strategy.getTraceChecker().getRcfgProgramExecution();
 					break;
 				case UNSAT:
 					final IInterpolantGenerator interpolantGenerator =
@@ -325,10 +334,7 @@ public final class TraceAbstractionRefinementEngine
 					}
 					
 					// construct the interpolant automaton from the sequences
-					final NestedWordAutomaton<CodeBlock, IPredicate> automaton =
-							strategy.getInterpolantAutomatonBuilder(interpolantSequences).getResult();
-					mInterpolantAutomaton = automaton;
-					
+					mInterpolantAutomaton = strategy.getInterpolantAutomatonBuilder(interpolantSequences).getResult();
 					break;
 				case SAT:
 					// feasible counterexample, nothing more to do here
