@@ -30,9 +30,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.blockencoding.converter;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.BlockEncodingAnnotation;
 import de.uni_freiburg.informatik.ultimate.blockencoding.model.MinimizedNode;
@@ -205,7 +205,7 @@ public class MinModelConverter {
 		}
 		// Update the Error-Nodes
 		for (final String key : rootAnnot.getProcedureErrorNodes().keySet()) {
-			final ArrayList<BoogieIcfgLocation> newReferences = new ArrayList<>();
+			final Set<BoogieIcfgLocation> newReferences = new HashSet<>();
 			for (final BoogieIcfgLocation oldVal : rootAnnot.getProcedureErrorNodes().get(key)) {
 				if (progPointMap.containsKey(oldVal)) {
 					newReferences.add(progPointMap.get(oldVal));
@@ -218,7 +218,7 @@ public class MinModelConverter {
 		}
 		// Update the LoopLocations
 		// Attention: ProgramPoint implements equals, we have to care for that!
-		final HashSet<BoogieIcfgLocation> keySet = new HashSet<>(rootAnnot.getLoopLocations().keySet());
+		final Set<BoogieIcfgLocation> keySet = new HashSet<>(rootAnnot.getLoopLocations().keySet());
 		rootAnnot.getLoopLocations().clear();
 		for (final BoogieIcfgLocation oldVal : keySet) {
 			if (progPointMap.containsKey(oldVal)) {

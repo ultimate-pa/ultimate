@@ -37,14 +37,12 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.core.lib.models.VisualizationNode;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation.LoopEntryType;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.ModernAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IVisualizable;
 import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
@@ -66,8 +64,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBac
  * @author heizmann@informatik.uni-freiburg.de
  *
  */
-public class BoogieIcfgContainer extends ModernAnnotations
-		implements IElement, IVisualizable<VisualizationNode>, IIcfg {
+public class BoogieIcfgContainer extends ModernAnnotations implements IIcfg<BoogieIcfgLocation> {
 	/**
 	 * The serial version UID. Change only if serial representation changes.
 	 */
@@ -77,7 +74,7 @@ public class BoogieIcfgContainer extends ModernAnnotations
 	private final Map<String, BoogieIcfgLocation> mEntryNodes;
 	private final Map<String, BoogieIcfgLocation> mExitNode;
 	private final Map<BoogieIcfgLocation, ILocation> mLoopLocations;
-	private final Map<String, Collection<BoogieIcfgLocation>> mErrorNodes;
+	private final Map<String, Set<BoogieIcfgLocation>> mErrorNodes;
 	private final Map<String, Map<String, BoogieIcfgLocation>> mLocNodes;
 
 	/**
@@ -152,7 +149,7 @@ public class BoogieIcfgContainer extends ModernAnnotations
 	}
 
 	@Override
-	public Map<String, Collection<BoogieIcfgLocation>> getProcedureErrorNodes() {
+	public Map<String, Set<BoogieIcfgLocation>> getProcedureErrorNodes() {
 		return mErrorNodes;
 	}
 
