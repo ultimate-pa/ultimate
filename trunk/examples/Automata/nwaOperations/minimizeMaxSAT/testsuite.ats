@@ -1,0 +1,342 @@
+// author: Christian Schilling (schillic@informatik.uni-freiburg.de)
+// date: 2016
+// 
+// Automata which revealed bugs for minimizeNwaMaxSat2.
+
+NestedWordAutomaton nwa1 = removeUnreachable(nwaUnprocessed1);
+NestedWordAutomaton nwa2 = removeUnreachable(nwaUnprocessed2);
+NestedWordAutomaton nwa3 = removeUnreachable(nwaUnprocessed3);
+NestedWordAutomaton nwa4 = removeUnreachable(nwaUnprocessed4);
+NestedWordAutomaton nwa5 = removeUnreachable(nwaUnprocessed5);
+NestedWordAutomaton nwa6 = removeUnreachable(nwaUnprocessed6);
+NestedWordAutomaton nwa7 = removeUnreachable(nwaUnprocessed7);
+NestedWordAutomaton nwa8 = removeUnreachable(nwaUnprocessed8);
+NestedWordAutomaton nwa9 = removeUnreachable(nwaUnprocessed9);
+NestedWordAutomaton nwa10 = removeUnreachable(nwaUnprocessed10);
+NestedWordAutomaton nwa11 = removeUnreachable(nwaUnprocessed11);
+NestedWordAutomaton nwa12 = removeUnreachable(nwaUnprocessed12);
+NestedWordAutomaton nwa13 = removeUnreachable(nwaUnprocessed13);
+
+print(numberOfStates(minimizeNwaMaxSat2(nwa1)));
+print(numberOfStates(minimizeNwaMaxSat2(nwa2)));
+print(numberOfStates(minimizeNwaMaxSat2(nwa3)));
+print(numberOfStates(minimizeNwaMaxSat2(nwa4)));
+print(numberOfStates(minimizeNwaMaxSat2(nwa5)));
+print(numberOfStates(minimizeNwaMaxSat2(nwa6)));
+print(numberOfStates(minimizeNwaMaxSat2(nwa7)));
+print(numberOfStates(minimizeNwaMaxSat2(nwa8)));
+print(numberOfStates(minimizeNwaMaxSat2(nwa9)));
+print(numberOfStates(minimizeNwaMaxSat2(nwa10)));
+print(numberOfStates(minimizeNwaMaxSat2(nwa11)));
+print(numberOfStates(minimizeNwaMaxSat2(nwa12)));
+print(numberOfStates(minimizeNwaMaxSat2(nwa13)));
+
+NestedWordAutomaton nwaUnprocessed1 = (
+	callAlphabet = {"c" },
+	internalAlphabet = {"a2" "a1" "a3" },
+	returnAlphabet = {"r" },
+	states = {"q_1" "q_3" "q_2" "q_5" "q_4" "14090#L17" "q_7" "q_6" "qI_1" },
+	initialStates = {"qI_1" },
+	finalStates = {"qI_1" },
+	callTransitions = {
+		 ("q_3" "c" "q_4")
+		 ("14090#L17" "c" "q_7")
+	},
+	internalTransitions = {
+		 ("q_1" "a2" "q_3")
+		 ("q_4" "a3" "q_2")
+		 ("q_7" "a3" "q_5")
+		 ("q_6" "a2" "14090#L17")
+		 ("qI_1" "a1" "q_1")
+	},
+	returnTransitions = {
+		 ("q_2" "q_3" "r" "q_6")
+	}
+);
+
+
+NestedWordAutomaton nwaUnprocessed2 = (
+	callAlphabet = {"c" },
+	internalAlphabet = {"a" "a3" },
+	returnAlphabet = {"r" },
+	states = {"q_1" "q_2" "q_3" "q_7" "q_5" },
+	initialStates = {"q_1" },
+	finalStates = { },
+	callTransitions = {
+		 ("q_1" "c" "q_2")
+		 ("q_3" "c" "q_7")
+		 ("q_5" "c" "q_7")
+	},
+	internalTransitions = {
+	},
+	returnTransitions = {
+		 ("q_2" "q_1" "r" "q_3")
+		 ("q_7" "q_3" "r" "q_5")
+	}
+);
+
+
+NestedWordAutomaton nwaUnprocessed3 = (
+	callAlphabet = {"c" },
+	internalAlphabet = {"a1" },
+	returnAlphabet = {"r" },
+	states = {"q_1" "qF_1" "q_3" "q_2" "q_5" "q_4" "q_7" "q_6" "q_9" "q_8" "qF_2" "qI_1" },
+	initialStates = {"qI_1" },
+	finalStates = {"qF_1" "qF_2" "qI_1" },
+	callTransitions = {
+		 ("qF_1" "c" "q_1")
+		 ("q_4" "c" "q_5")
+		 ("q_7" "c" "q_8")
+	},
+	internalTransitions = {
+		 ("q_1" "a1" "q_2")
+		 ("q_3" "a1" "q_4")
+		 ("q_5" "a1" "q_6")
+		 ("q_8" "a1" "q_9")
+		 ("qI_1" "a1" "qF_1")
+	},
+	returnTransitions = {
+		 ("q_2" "qF_1" "r" "q_3")
+		 ("q_6" "q_4" "r" "q_7")
+		 ("q_9" "q_7" "r" "qF_2")
+	}
+);
+
+
+NestedWordAutomaton nwaUnprocessed4 = (
+	callAlphabet = {"c" },
+	internalAlphabet = {"a" },
+	returnAlphabet = {"r" },
+	states = {"q_1" "qF_1" "q_3" "q_2" "q_5" "q_4" "q_6" },
+	initialStates = {"q_1" },
+	finalStates = {"qF_1" },
+	callTransitions = {
+		 ("q_1" "c" "q_2")
+		 ("q_2" "c" "q_3")
+		 ("q_4" "c" "q_5")
+		 ("q_5" "c" "q_6")
+	},
+	internalTransitions = {
+	},
+	returnTransitions = {
+		 ("q_3" "q_2" "r" "q_4")
+		 ("q_6" "q_5" "r" "qF_1")
+	}
+);
+
+
+NestedWordAutomaton nwaUnprocessed5 = (
+	callAlphabet = {"call rec(y);" },
+	internalAlphabet = {"y := y + 1;" "assume y < k;" "y := 0;" "assume y >= k;assume true;" },
+	returnAlphabet = {"return;" },
+	states = {"q_1" "qF_1" "q_3" "q_2" "q_5" "q_4" "q_7" "q_6" "qI_1" },
+	initialStates = {"qI_1" },
+	finalStates = {"qF_1" "qI_1" },
+	callTransitions = {
+		 ("q_1" "call rec(y);" "q_2")
+		 ("q_5" "call rec(y);" "q_6")
+		 ("q_4" "call rec(y);" "qF_1")
+		 ("q_4" "call rec(y);" "q_5")
+		 ("q_7" "call rec(y);" "q_6")
+	},
+	internalTransitions = {
+		 ("q_3" "assume y >= k;assume true;" "q_4")
+		 ("qI_1" "y := 0;" "q_1")
+	},
+	returnTransitions = {
+		 ("q_2" "q_1" "return;" "q_3")
+		 ("q_6" "q_5" "return;" "q_7")
+		 ("q_6" "q_7" "return;" "q_4")
+	}
+);
+
+
+NestedWordAutomaton nwaUnprocessed6 = (
+	callAlphabet = {"c3" "c4" "c5" "c0" "c1" "c2" },
+	internalAlphabet = {"a11" "a10" "a21" "a13" "a12" "a15" "a14" "a17" "a16" "a19" "a18" "a0" "a1" "a2" "a3" "a4" "a5" "a6" "a7" "a8" "a9" "a20" },
+	returnAlphabet = {"r2" "r3" "r4" "r5" "r0" "r1" },
+	states = {"q_17" "q_18" "q_19" "q_1" "q_13" "q_3" "q_14" "q_2" "q_5" "q_15" "q_4" "q_16" "q_10" "qF_2" },
+	initialStates = {"q_15" },
+	finalStates = {"qF_2" },
+	callTransitions = {
+		 ("q_19" "c4" "q_13")
+		 ("q_1" "c0" "q_16")
+		 ("q_3" "c1" "q_4")
+		 ("q_14" "c4" "q_13")
+		 ("q_5" "c1" "q_1")
+		 ("q_15" "c1" "q_1")
+		 ("q_10" "c0" "q_2")
+	},
+	internalTransitions = {
+		 ("q_4" "a3" "q_3")
+		 ("q_4" "a0" "q_10")
+		 ("q_16" "a10" "q_2")
+		 ("q_16" "a9" "q_5")
+	},
+	returnTransitions = {
+		 ("q_17" "q_1" "r0" "q_4")
+		 ("q_17" "q_3" "r1" "q_14")
+		 ("q_17" "q_15" "r1" "q_14")
+		 ("q_18" "q_3" "r1" "q_19")
+		 ("q_18" "q_15" "r1" "q_19")
+		 ("q_18" "q_5" "r1" "q_19")
+		 ("q_13" "q_19" "r4" "q_17")
+		 ("q_13" "q_14" "r4" "qF_2")
+		 ("q_2" "q_1" "r0" "q_18")
+		 ("q_2" "q_10" "r0" "q_18")
+	}
+);
+
+
+NestedWordAutomaton nwaUnprocessed7 = (
+	callAlphabet = {"c" },
+	internalAlphabet = {"a"},
+	returnAlphabet = {"r" },
+	states = {"qF_1" "q_3" "q_2" "14143#recENTRY" "q_5" "q3" "q_6" "q1" },
+	initialStates = {"q1" },
+	finalStates = {"qF_1" },
+	callTransitions = {
+		 ("q_6" "c" "q3")
+		 ("q_2" "c" "q_5")
+	},
+	internalTransitions = {
+		 ("q1" "a" "q_6")
+		 ("14143#recENTRY" "a" "q_2")
+	},
+	returnTransitions = {
+		 ("q3" "q_6" "r" "14143#recENTRY")
+		 ("q_5" "q_2" "r" "qF_1")
+	}
+);
+
+
+NestedWordAutomaton nwaUnprocessed8 = (
+	callAlphabet = {"c" },
+	internalAlphabet = {"a"},
+	returnAlphabet = {"r" },
+	states = {"q_1" "qq_2" "q_4" "q_2" "q_5" "14147#recENTRY" "14132#recEXIT" "14138#recEXIT" "qF_2"},
+	initialStates = {"q_1" },
+	finalStates = {"qF_2" },
+	callTransitions = {
+		 ("q_1" "c" "qq_2")
+		 ("q_4" "c" "q_5")
+		 ("q_5" "c" "14147#recENTRY")
+	},
+	internalTransitions = {
+		 ("qq_2" "a" "14138#recEXIT")
+		 ("14147#recENTRY" "a" "14132#recEXIT")
+	},
+	returnTransitions = {
+		 ("14138#recEXIT" "q_1" "r" "q_4")
+		 ("14132#recEXIT" "q_5" "r" "q_2")
+		 ("q_2" "q_4" "r" "qF_2")
+	}
+);
+
+
+NestedWordAutomaton nwaUnprocessed9 = (
+	callAlphabet = {"c"},
+	internalAlphabet = {"a"},
+	returnAlphabet = {"r"},
+	states = {"q_1" "qF" "q_3" "q_2" "q_5" "q_4" "q_7" "q_6" },
+	initialStates = {"q_1" },
+	finalStates = {"qF" },
+	callTransitions = {
+		 ("q_1" "c" "q_2")
+		 ("q_4" "c" "qF")
+		 ("q_4" "c" "q_5")
+		 ("q_5" "c" "q_6")
+		 ("q_7" "c" "q_6")
+	},
+	internalTransitions = {
+		 ("q_3" "a" "q_4")
+	},
+	returnTransitions = {
+		 ("q_2" "q_1" "r" "q_3")
+		 ("q_6" "q_5" "r" "q_7")
+		 ("q_6" "q_7" "r" "q_4")
+	}
+);
+
+
+NestedWordAutomaton nwaUnprocessed10 = (
+	callAlphabet = {"c" },
+	internalAlphabet = {},
+	returnAlphabet = {"r" },
+	states = {"q_1" "qF_1" "q_3" "q_2" "q_5" "q_0" },
+	initialStates = {"q_0" },
+	finalStates = {"qF_1" },
+	callTransitions = {
+		 ("q_0" "c" "q_1")
+		 ("q_2" "c" "q_3")
+		 ("q_5" "c" "q_1")
+	},
+	internalTransitions = {
+	},
+	returnTransitions = {
+		 ("q_1" "q_0" "r" "q_5")
+		 ("q_1" "q_5" "r" "q_2")
+		 ("q_3" "q_2" "r" "qF_1")
+	}
+);
+
+NestedWordAutomaton nwaUnprocessed11 = (
+	callAlphabet = {"c3" "c1" "c2" },
+	internalAlphabet = {},
+	returnAlphabet = {"r2" "r3" "r1" },
+	states = {"q_1" "qF_1" "q_2" "q_3" "q_4" "qI_1" },
+	initialStates = {"qI_1" },
+	finalStates = {"qF_1" },
+	callTransitions = {
+		("q_3" "c3" "q_4")
+		("qI_1" "c1" "q_1")
+		("qI_1" "c2" "qI_1")
+	},
+	internalTransitions = {
+	},
+	returnTransitions = {
+		("q_1" "qI_1" "r2" "q_2")
+		("q_2" "qI_1" "r1" "q_3")
+		("q_4" "q_3" "r3" "qF_1")
+	}
+);
+
+NestedWordAutomaton nwaUnprocessed12 = (
+	callAlphabet = {"c3" },
+	internalAlphabet = {"a10" },
+	returnAlphabet = {},
+	states = {"qF_1" "qF_2" "qF_3" "qI_1" "qF_4" },
+	initialStates = {"qI_1" },
+	finalStates = {"qF_1" "qF_2" "qF_3" "qI_1" "qF_4" },
+	callTransitions = {
+		("qF_1" "c3" "qF_2")
+		("qF_1" "c3" "qF_3")
+		("qF_3" "c3" "qF_4")
+	},
+	internalTransitions = {
+		("qI_1" "a10" "qF_1")
+	},
+	returnTransitions = {
+	}
+);
+
+NestedWordAutomaton nwaUnprocessed13 = (
+	callAlphabet = {},
+	internalAlphabet = {"a1" "a2" "a3" "b"},
+	returnAlphabet = {},
+	states = {"q4" "q1" "q2" "q3" "q0" },
+	initialStates = {"q0" },
+	finalStates = {"q1" "q2" "q3" },
+	callTransitions = {
+	},
+	internalTransitions = {
+		("q0" "a1" "q1")
+		("q0" "a2" "q2")
+		("q4" "a3" "q3")
+		("q1" "b" "q4")
+		("q1" "b" "q3")
+		("q2" "b" "q4")
+	},
+	returnTransitions = {
+	}
+);
