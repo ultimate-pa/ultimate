@@ -2,27 +2,27 @@
  * Copyright (C) 2013-2015 Christian Schilling (schillic@informatik.uni-freiburg.de)
  * Copyright (C) 2011-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE RCFGBuilder plug-in.
- * 
+ *
  * The ULTIMATE RCFGBuilder plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE RCFGBuilder plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE RCFGBuilder plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE RCFGBuilder plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE RCFGBuilder plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE RCFGBuilder plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder;
@@ -48,57 +48,49 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 
 public class WeakestPrecondition extends BoogieTransformer {
-	
-	HashMap<String, Expression> name2expression = 
-											new HashMap<String,Expression>();
+
+	HashMap<String, Expression> name2expression = new HashMap<>();
 	Expression mResult;
-	
-	public WeakestPrecondition(Expression expr, CallStatement call, Procedure proc) {
+
+	public WeakestPrecondition(final Expression expr, final CallStatement call, final Procedure proc) {
 		final Expression[] arguments = call.getArguments();
 		final VarList[] inParams = proc.getInParams();
 		int paramNumber = 0;
 		for (final VarList varList : inParams) {
 			final String[] identifiers = varList.getIdentifiers();
 			for (final String identifier : identifiers) {
-				if (paramNumber>= arguments.length) {
-					throw new IllegalArgumentException("CallStatement" + call + 
-					"has wrong number of arguments");
+				if (paramNumber >= arguments.length) {
+					throw new IllegalArgumentException("CallStatement" + call + "has wrong number of arguments");
 				}
 				name2expression.put(identifier, arguments[paramNumber]);
 				paramNumber++;
 			}
 		}
-		if (arguments.length!=paramNumber) {
-			throw new IllegalArgumentException("CallStatement" + call + 
-					"has wrong number of arguments");
+		if (arguments.length != paramNumber) {
+			throw new IllegalArgumentException("CallStatement" + call + "has wrong number of arguments");
 		}
-		
+
 		mResult = processExpression(expr);
 	}
-	
+
 	@Override
-	protected Expression processExpression(Expression expr) {
-	    Expression newExpr = null;
+	protected Expression processExpression(final Expression expr) {
+		Expression newExpr = null;
 		if (expr instanceof IdentifierExpression) {
 			final IdentifierExpression iExpr = (IdentifierExpression) expr;
 			final Expression substitute = name2expression.get(iExpr.getIdentifier());
 			if (substitute == null) {
 				return expr;
 			}
-			else {
-			    newExpr = substitute;
-			}
-		}
-		else if (expr instanceof UnaryExpression) {
+			newExpr = substitute;
+		} else if (expr instanceof UnaryExpression) {
 			final UnaryExpression unexp = (UnaryExpression) expr;
 			if (unexp.getOperator() == Operator.OLD) {
-			    newExpr = unexp.getExpr();
-			}
-			else {
+				newExpr = unexp.getExpr();
+			} else {
 				final Expression subexpr = processExpression(unexp.getExpr());
 				if (subexpr != unexp.getExpr()) {
-				    newExpr = new UnaryExpression(subexpr.getLocation(), unexp.getType(),
-							unexp.getOperator(), subexpr);
+					newExpr = new UnaryExpression(subexpr.getLocation(), unexp.getType(), unexp.getOperator(), subexpr);
 				}
 
 			}
@@ -108,17 +100,14 @@ public class WeakestPrecondition extends BoogieTransformer {
 			final BinaryExpression binexp = (BinaryExpression) expr;
 			final Expression left = processExpression(binexp.getLeft());
 			final Expression right = processExpression(binexp.getRight());
-			if (left != binexp.getLeft()
-				|| right != binexp.getRight()) {
-			    newExpr = new BinaryExpression(expr.getLocation(), binexp.getType(),
-						binexp.getOperator(), left, right);
+			if (left != binexp.getLeft() || right != binexp.getRight()) {
+				newExpr = new BinaryExpression(expr.getLocation(), binexp.getType(), binexp.getOperator(), left, right);
 			}
 		} else if (expr instanceof UnaryExpression) {
 			final UnaryExpression unexp = (UnaryExpression) expr;
 			final Expression subexpr = processExpression(unexp.getExpr());
 			if (subexpr != unexp.getExpr()) {
-			    newExpr = new UnaryExpression(expr.getLocation(), unexp.getType(),
-						unexp.getOperator(), subexpr);
+				newExpr = new UnaryExpression(expr.getLocation(), unexp.getType(), unexp.getOperator(), subexpr);
 			}
 		} else if (expr instanceof ArrayAccessExpression) {
 			final ArrayAccessExpression aaexpr = (ArrayAccessExpression) expr;
@@ -152,12 +141,11 @@ public class WeakestPrecondition extends BoogieTransformer {
 				newExpr = new ArrayStoreExpression(expr.getLocation(), aaexpr.getType(), arr, newIndices, value);
 			}
 		} else if (expr instanceof BitVectorAccessExpression) {
-			final BitVectorAccessExpression bvaexpr = 
-				(BitVectorAccessExpression) expr;
+			final BitVectorAccessExpression bvaexpr = (BitVectorAccessExpression) expr;
 			final Expression bv = processExpression(bvaexpr.getBitvec());
 			if (bv != bvaexpr.getBitvec()) {
-				newExpr = new BitVectorAccessExpression(expr.getLocation(), bvaexpr.getType(), bv, 
-						bvaexpr.getEnd(), bvaexpr.getStart());
+				newExpr = new BitVectorAccessExpression(expr.getLocation(), bvaexpr.getType(), bv, bvaexpr.getEnd(),
+						bvaexpr.getStart());
 			}
 		} else if (expr instanceof FunctionApplication) {
 			final FunctionApplication app = (FunctionApplication) expr;
@@ -171,9 +159,7 @@ public class WeakestPrecondition extends BoogieTransformer {
 			final Expression cond = processExpression(ite.getCondition());
 			final Expression thenPart = processExpression(ite.getThenPart());
 			final Expression elsePart = processExpression(ite.getElsePart());
-			if (cond != ite.getCondition()
-			    || thenPart != ite.getThenPart()
-			    || elsePart != ite.getElsePart()) {
+			if (cond != ite.getCondition() || thenPart != ite.getThenPart() || elsePart != ite.getElsePart()) {
 				newExpr = new IfThenElseExpression(expr.getLocation(), ite.getType(), cond, thenPart, elsePart);
 			}
 		} else if (expr instanceof QuantifierExpression) {
@@ -183,22 +169,18 @@ public class WeakestPrecondition extends BoogieTransformer {
 			final VarList[] params = quant.getParameters();
 			final VarList[] newParams = processVarLists(params);
 			final Expression subform = processExpression(quant.getSubformula());
-			if (subform != quant.getSubformula()
-				|| attrs != newAttrs
-				|| params != newParams) {
-				newExpr = new QuantifierExpression(expr.getLocation(), quant.getType(), quant.isUniversal(), 
+			if (subform != quant.getSubformula() || attrs != newAttrs || params != newParams) {
+				newExpr = new QuantifierExpression(expr.getLocation(), quant.getType(), quant.isUniversal(),
 						quant.getTypeParams(), newParams, newAttrs, subform);
 			}
 		}
 		if (newExpr == null) {
-		    return expr;
+			return expr;
 		}
-		else {
-		    ModelUtils.copyAnnotations(expr, newExpr);
-		    return newExpr;
-		}
+		ModelUtils.copyAnnotations(expr, newExpr);
+		return newExpr;
 	}
-	
+
 	public Expression getResult() {
 		return mResult;
 	}
