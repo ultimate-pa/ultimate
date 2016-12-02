@@ -51,6 +51,8 @@ public interface IInvariantPatternProcessorFactory<IPT> {
 	 *            cfg
 	 * @param postcondition
 	 *            the invariant on the {@link ControlFlowGraph#getExit()} of cfg
+	 * @param mErrorLocation 
+	 * @param mStartLocation 
 	 * 
 	 * @return new {@link IInvariantPatternProcessor} instance
 	 */
@@ -59,5 +61,5 @@ public interface IInvariantPatternProcessorFactory<IPT> {
 	
 	public IInvariantPatternProcessor<IPT> produce(final Set<BoogieIcfgLocation> locations, 
 		final Set<IcfgInternalAction> transitions, final IPredicate precondition,
-		final IPredicate postcondition);
+		final IPredicate postcondition, BoogieIcfgLocation startLocation, BoogieIcfgLocation errorLocation);
 }

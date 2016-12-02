@@ -61,12 +61,15 @@ public final class CFGInvariantsGenerator {
 	 * 
 	 * @param services
 	 *            Service provider to use, for example for logging and timeouts
+	 * @param errorLocation - the location where the nested run ends
+	 * @param startLocation - the location where the nested run starts
 	 * @param modGlobVarManager
 	 *            reserved for future use.
 	 */
 	public CFGInvariantsGenerator(final IUltimateServiceProvider services) {
 		pmService = services.getProgressMonitorService();
 		logService = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		
 	}
 
 //	/**
@@ -199,11 +202,11 @@ public final class CFGInvariantsGenerator {
  */
 public <IPT> Map<BoogieIcfgLocation, IPredicate> generateInvariantsForTransitions(final Set<BoogieIcfgLocation> locations, 
 		final Set<IcfgInternalAction> transitions,
-		final IPredicate precondition, final IPredicate postcondition,
+		final IPredicate precondition, final IPredicate postcondition, BoogieIcfgLocation startLocation, BoogieIcfgLocation errorLocation,
 		final IInvariantPatternProcessorFactory<IPT> invPatternProcFactory, final boolean useVariablesFromUnsatCore, 
 		final boolean useLiveVariables, final Set<IProgramVar> liveVariables) {
 	final IInvariantPatternProcessor<IPT> processor = invPatternProcFactory.produce(locations, transitions, precondition,
-			postcondition);
+			postcondition, startLocation, errorLocation);
 
 	logService.info("(Path)program has " + locations.size() + " locations");
 	final Map<BoogieIcfgLocation, IPT> patterns = new HashMap<BoogieIcfgLocation, IPT>(locations.size());
@@ -244,8 +247,17 @@ public <IPT> Map<BoogieIcfgLocation, IPredicate> generateInvariantsForTransition
 		
 		for (final BoogieIcfgLocation location : locations) {
 			if (useVariablesFromUnsatCore) {
+				// It makes only sense to start with empty patterns if we use the variables from the unsat core
 				if (INIT_USE_EMPTY_PATTERNS && round == 0) {
-					patterns.put(location, processor.getEmptyInvariantPattern());
+					final IPT invPattern;
+					if (location.equals(startLocation)) {
+						invPattern = processor.getEntryInvariantPattern();
+					} else if (location.equals(errorLocation)) {
+						invPattern = processor.getExitInvariantPattern();
+					} else {
+						invPattern = processor.getEmptyInvariantPattern();
+					}
+					patterns.put(location, invPattern);
 				} else {
 					patterns.put(location, processor.getInvariantPatternForLocation(location, round));
 				}

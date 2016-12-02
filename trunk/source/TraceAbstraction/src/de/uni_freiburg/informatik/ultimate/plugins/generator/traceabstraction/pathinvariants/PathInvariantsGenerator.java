@@ -196,6 +196,10 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		// final Map<BoogieIcfgLocation, IcfgLocation> locationsForProgramPoint = new HashMap<>(len);
 		final Set<IcfgInternalAction> transitions = new HashSet<>(len - 1);
 		BoogieIcfgLocation previousLocation = null;
+		// The location where the nestedRun starts
+		BoogieIcfgLocation startLocation = ((ISLPredicate) mRun.getStateAtPosition(0)).getProgramPoint();
+		// The location where the nestedRun ends (i.e. the error location)
+		BoogieIcfgLocation errorLocation = ((ISLPredicate) mRun.getStateAtPosition(len-1)).getProgramPoint();
 		for (int i = 0; i < len; i++) {
 			final ISLPredicate pred = (ISLPredicate) mRun.getStateAtPosition(i);
 			final BoogieIcfgLocation currentLocation = pred.getProgramPoint();
@@ -274,7 +278,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		} else {
 			// invariants = generator.generateInvariantsFromCFG(cfg, precondition, postcondition, invPatternProcFactory,
 			// useVarsFromUnsatCore, false, null);
-			invariants = generator.generateInvariantsForTransitions(locations, transitions, precondition, postcondition,
+			invariants = generator.generateInvariantsForTransitions(locations, transitions, precondition, postcondition, startLocation, errorLocation,
 					invPatternProcFactory, useVarsFromUnsatCore, false, null);
 
 			mLogger.info("[PathInvariants] Generated invariant map.");

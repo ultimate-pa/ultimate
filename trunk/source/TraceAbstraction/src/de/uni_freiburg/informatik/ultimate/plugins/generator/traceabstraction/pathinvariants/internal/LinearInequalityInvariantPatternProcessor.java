@@ -115,7 +115,6 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 	//	private final ControlFlowGraph cfg;
 
 	// New CFG
-	private final Set<BoogieIcfgLocation> mLocations;
 	private final Set<IcfgInternalAction> mTransitions;
 
 	/**
@@ -142,6 +141,8 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 	 */
 	private final boolean mAlwaysStrictAndNonStrictCopies = false;
 	private Collection<TermVariable> mVarsFromUnsatCore;
+	private final BoogieIcfgLocation mStartLocation;
+	private final BoogieIcfgLocation mErrorLocation;
 
 	/**
 	 * Creates a pattern processor using linear inequalities as patterns.
@@ -169,6 +170,8 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 	 * @param simplicationTechnique 
 	 * @param xnfConversionTechnique 
 	 * @param axioms 
+	 * @param errorLocation 
+	 * @param startLocation 
 	 */
 	//	public LinearInequalityInvariantPatternProcessor(
 	//			final IUltimateServiceProvider services,
@@ -223,7 +226,7 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 			final Script solver,
 			final Set<BoogieIcfgLocation> locations, final Set<IcfgInternalAction> transitions, final IPredicate precondition,
 			final IPredicate postcondition,
-			final ILinearInequalityInvariantPatternStrategy strategy,
+			BoogieIcfgLocation startLocation, BoogieIcfgLocation errorLocation, final ILinearInequalityInvariantPatternStrategy strategy,
 			final boolean useNonlinearConstraints,
 			final boolean useVarsFromUnsatCore,
 			final SimplificationTechnique simplicationTechnique, 
@@ -235,8 +238,9 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 		this.mSolver = solver;
 		this.mStrategy = strategy;
 		//		this.cfg = null;
-		mLocations = locations;
 		mTransitions = transitions;
+		mStartLocation = startLocation;
+		mErrorLocation = errorLocation;
 
 		mPatternVariables = new ArrayList<>();
 		mPatternCoefficients = new HashSet<>();
@@ -1040,8 +1044,7 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 	@Override
 	public Collection<Collection<LinearPatternBase>> getInvariantPatternForLocation(final BoogieIcfgLocation location,
 			final int round) {
-		// Build invariant pattern
-		final Collection<Collection<LinearPatternBase>> disjunction;
+		
 //		if (mLocations.get(0).equals(location)) {
 //			// entry pattern is equivalent to true
 //			final Collection<LinearPatternBase> emptyConjunction = Collections.emptyList();
@@ -1049,10 +1052,17 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 //		} else if (mLocations.get(mLocations.size()-1).equals(location)) {
 //			// exit pattern is equivalent to false
 //			disjunction = Collections.emptyList();
-//		} else 
-		{
+//		} else
+		if (mStartLocation.equals(location)) {
+			assert mEntryInvariantPattern != null : "call initializeEntryAndExitPattern() before this";
+			return mEntryInvariantPattern;
+		} else if (mErrorLocation.equals(location)) {
+			assert mExitInvariantPattern != null : "call initializeEntryAndExitPattern() before this";
+			return mExitInvariantPattern;
+		} else {
 			final int[] dimensions = mStrategy.getDimensions(location, round);
-			disjunction = new ArrayList<>(dimensions[0]);
+			// Build invariant pattern
+			final Collection<Collection<LinearPatternBase>> disjunction = new ArrayList<>(dimensions[0]);
 			for (int i = 0; i < dimensions[0]; i++) {
 				final Collection<LinearPatternBase> conjunction = new ArrayList<>(
 						dimensions[1]);
@@ -1072,6 +1082,7 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 				}
 				disjunction.add(conjunction);
 			}
+			return disjunction;
 		}
 
 //		// Keep track of entry and exit patterns, as we need them separately
@@ -1080,8 +1091,6 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 //		} else if (mLocations.get(mLocations.size()-1).equals(location)) {
 //			mExitInvariantPattern = disjunction;
 //		}
-
-		return disjunction;
 	}
 	
 	@Override
@@ -1093,7 +1102,14 @@ AbstractSMTInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> 
 		// exit pattern is equivalent to false, we create an empty disjunction
 		mExitInvariantPattern = Collections.emptyList();
 	}
-	
+	@Override		
+	public Collection<Collection<LinearPatternBase>> getEntryInvariantPattern() {
+		return mEntryInvariantPattern;
+	}
+	@Override	
+	public Collection<Collection<LinearPatternBase>> getExitInvariantPattern() {
+		return mExitInvariantPattern;
+	}
 	@Override
 	public Collection<Collection<LinearPatternBase>> getEmptyInvariantPattern() {
 		final Collection<Collection<LinearPatternBase>> emptyInvPattern;

@@ -129,5 +129,9 @@ public interface IInvariantPatternProcessor<IPT> {
 	 */
 	public void initializeEntryAndExitPattern();
 
+	public IPT getEntryInvariantPattern();
+
+	public IPT getExitInvariantPattern();
+
 
 }

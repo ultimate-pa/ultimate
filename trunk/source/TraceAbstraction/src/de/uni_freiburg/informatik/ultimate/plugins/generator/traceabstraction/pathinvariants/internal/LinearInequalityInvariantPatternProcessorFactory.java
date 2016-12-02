@@ -160,10 +160,10 @@ public class LinearInequalityInvariantPatternProcessorFactory
 	@Override
 	public IInvariantPatternProcessor<Collection<Collection<LinearPatternBase>>> produce(
 			final Set<BoogieIcfgLocation> locations, final Set<IcfgInternalAction> transitions, final IPredicate precondition,
-			final IPredicate postcondition) {
+			final IPredicate postcondition, BoogieIcfgLocation startLocation, BoogieIcfgLocation errorLocation) {
 		return new LinearInequalityInvariantPatternProcessor(services,
-				storage, predUnifier, mCsToolkit, mAxioms, produceSmtSolver(), locations, transitions, precondition,
-				postcondition, strategy, mUseNonlinearConstraints, mUseVarsFromUnsatCore, mSimplificationTechnique, mXnfConversionTechnique);
+				storage, predUnifier, mCsToolkit, mAxioms, produceSmtSolver(), locations, transitions, precondition, 
+				postcondition, startLocation, errorLocation, strategy, mUseNonlinearConstraints, mUseVarsFromUnsatCore, mSimplificationTechnique, mXnfConversionTechnique);
 	}
 
 
