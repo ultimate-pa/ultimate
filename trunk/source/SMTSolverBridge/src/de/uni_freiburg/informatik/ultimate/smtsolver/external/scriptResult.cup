@@ -208,6 +208,31 @@ action code {:
   			throw se;
   		}
   	}
+  	
+	private ReasonUnknown parseReasonUnknown(Object e) {
+		/* According to 4.1.8. of SMT-LIB 2.5 the response to ':reason-unknown' is
+		* either 'memout', 'incomplete' or an s-expression.
+		*/
+		if (e.equals("memout")) {
+			return ReasonUnknown.MEMOUT;
+		} else if (e.equals("incomplete")) {
+			return ReasonUnknown.INCOMPLETE;
+		} else if (e.equals("timeout")) {
+			// non-standard extension of SMTInterpol
+			return ReasonUnknown.TIMEOUT;
+		} else if (e.equals("canceled")) {
+			// non-standard extension of Z3.
+			// 'canceled' is returned if the timeout
+			// specified by the user via the -t parameter is overdue.
+			return ReasonUnknown.TIMEOUT;
+		} else if (e.equals("(incomplete quantifiers)")) {
+			// non-standard extension of Z3.
+			return ReasonUnknown.INCOMPLETE;
+		} else {
+			return ReasonUnknown.OTHER;
+		}
+	}
+
 :}
 
 /*init with {: getScanner().init(); :} */
@@ -475,20 +500,7 @@ errorBehavior ::= IMMEDIATEEXIT:i {: RESULT = i; :} |
 				  CONTINUEDEXECUTION:c {: RESULT = c; :};
 
 
-reasonUnknown ::= TIMEOUT {: RESULT = ReasonUnknown.TIMEOUT; :} |
-				  MEMOUT {: RESULT = ReasonUnknown.MEMOUT; :} |
-				  INCOMPLETE {: RESULT = ReasonUnknown.INCOMPLETE; :} | 
-				  /* The following line is not compatible to the SMT-LIB 2.0 
-				   * standard. The reason-Unknown "(incomplete <sexpr>)" is used 
-				   * by Z3 and not documented. We received this information 
-				   * from Leo via email on 2012-05-21 */ 
-				  LPAR INCOMPLETE sExpr RPAR {: RESULT = ReasonUnknown.INCOMPLETE; :} |
-				    /* Matthias: "canceled" is a non-standard extension 
-				     * required by Z3. "canceled" is returned if the timeout
-				     * specified by the user via the -t parameter is overdue.
-                     */
-				  CANCELED {: RESULT = ReasonUnknown.TIMEOUT; :};
-
+reasonUnknown ::= sExpr:e {: RESULT = parseReasonUnknown(e); :}; 
 
 infoResponse ::= CERRORBEHAVIOR:c errorBehavior:e {: RESULT = e; :} |
 				 CNAME:c STRING:i {: RESULT = new QuotedObject(i); :} |
