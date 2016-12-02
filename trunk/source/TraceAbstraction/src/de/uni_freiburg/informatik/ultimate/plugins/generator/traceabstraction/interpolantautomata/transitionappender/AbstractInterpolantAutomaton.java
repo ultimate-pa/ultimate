@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE TraceAbstraction plug-in.
- * 
+ *
  * The ULTIMATE TraceAbstraction plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE TraceAbstraction plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE TraceAbstraction plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -55,43 +55,34 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 
 /**
- * Superclass for interpolant automata that are build on-demand.
- * An interpolant automaton is an automaton
+ * Superclass for interpolant automata that are build on-demand. An interpolant automaton is an automaton
  * <ul>
- * <li> whose letters are CodeBlocks
- * <li> whose states are IPredicates
- * <li> whose accepting state is an IPredicate whose formula is "false"
- * <li> that has a transition (ψ, st, φ) only if the Hoare triple {ψ} st {φ}
- *  is valid.
+ * <li>whose letters are CodeBlocks
+ * <li>whose states are IPredicates
+ * <li>whose accepting state is an IPredicate whose formula is "false"
+ * <li>that has a transition (ψ, st, φ) only if the Hoare triple {ψ} st {φ} is valid.
  * </ul>
- * 
- *  The on-demand construction works as follows.
- *  Initially, the automaton does not have any transitions. Furthermore,
- *  the automaton is always in one of the following two modes
- *  Mode.ON_DEMAND_CONSTRUCTION or Mode.READ_ONLY.
- *  The user can switch between both modes using the
- *  {@code #switchToOnDemandConstructionMode()} and the
- *  {@code #switchToReadonlyMode()} methods.
- *  New transitions are only added if the automaton is in
- *  ON_DEMAND_CONSTRUCTION mode. Furthermore,
- *  new transitions are only added on-demand while the user asks the for
- *  successors (e.g., via the {@code #internalSuccessors(IPredicate)} method.
- *  If the automaton is asked for successors of a given state ψ, the automaton
- *  first checks if outgoing transitions for this state were already
- *  constructed({@code #mAlreadyConstrucedAutomaton}).
- *  If these were already constructed, these successors are returned.
- *  Otherwise the successors are constructed and then returned.
- *  The construction of successor is defined by the subclasses of this class.
- *  Note that while constructing successor transitions new states may be added.
- *  In the construction of successors information from the automaton
- *  {@code #mInputInterpolantAutomaton} can be used.
- * 
+ *
+ * The on-demand construction works as follows. Initially, the automaton does not have any transitions. Furthermore, the
+ * automaton is always in one of the following two modes Mode.ON_DEMAND_CONSTRUCTION or Mode.READ_ONLY. The user can
+ * switch between both modes using the {@code #switchToOnDemandConstructionMode()} and the
+ * {@code #switchToReadonlyMode()} methods. New transitions are only added if the automaton is in ON_DEMAND_CONSTRUCTION
+ * mode. Furthermore, new transitions are only added on-demand while the user asks the for successors (e.g., via the
+ * {@code #internalSuccessors(IPredicate)} method. If the automaton is asked for successors of a given state ψ, the
+ * automaton first checks if outgoing transitions for this state were already constructed(
+ * {@code #mAlreadyConstrucedAutomaton}). If these were already constructed, these successors are returned. Otherwise
+ * the successors are constructed and then returned. The construction of successor is defined by the subclasses of this
+ * class. Note that while constructing successor transitions new states may be added. In the construction of successors
+ * information from the automaton {@code #mInputInterpolantAutomaton} can be used.
+ *
  * @author Matthias Heizmann
- * 
+ *
  */
 public abstract class AbstractInterpolantAutomaton implements INestedWordAutomatonSimple<CodeBlock, IPredicate> {
-	
-	public enum Mode { ON_DEMAND_CONSTRUCTION, READ_ONLY }
+
+	public enum Mode {
+		ON_DEMAND_CONSTRUCTION, READ_ONLY
+	}
 
 	protected final IUltimateServiceProvider mServices;
 	protected final ILogger mLogger;
@@ -101,23 +92,21 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 	protected final IPredicate mIaFalseState;
 	protected final NestedWordAutomatonCache<CodeBlock, IPredicate> mAlreadyConstrucedAutomaton;
 	protected final NestedWordAutomaton<CodeBlock, IPredicate> mInputInterpolantAutomaton;
-	
+
 	private Mode mMode = Mode.ON_DEMAND_CONSTRUCTION;
 
 	private final InternalSuccessorComputationHelper mInSucComp;
 	private final CallSuccessorComputationHelper mCaSucComp;
 	private final ReturnSuccessorComputationHelper mReSucComp;
 	private final ISuccessorComputationBookkeeping mSuccessorComputationBookkeeping;
-	
 
 	/**
-	 * @param useEfficientTotalAutomatonBookkeeping If the constructed automaton
-	 * is guaranteed to be we use a more efficient bookkeeping for
-	 * already computed successors.
+	 * @param useEfficientTotalAutomatonBookkeeping
+	 *            If the constructed automaton is guaranteed to be we use a more efficient bookkeeping for already
+	 *            computed successors.
 	 */
-	public AbstractInterpolantAutomaton(final IUltimateServiceProvider services,
-			final CfgSmtToolkit csToolkit, final IHoareTripleChecker hoareTripleChecker,
-			final boolean useEfficientTotalAutomatonBookkeeping,
+	public AbstractInterpolantAutomaton(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
+			final IHoareTripleChecker hoareTripleChecker, final boolean useEfficientTotalAutomatonBookkeeping,
 			final INestedWordAutomatonSimple<CodeBlock, IPredicate> abstraction, final IPredicate falseState,
 			final NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton, final ILogger logger) {
 		super();
@@ -130,8 +119,9 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 		mInSucComp = new InternalSuccessorComputationHelper();
 		mCaSucComp = new CallSuccessorComputationHelper();
 		mReSucComp = new ReturnSuccessorComputationHelper();
-		mAlreadyConstrucedAutomaton = new NestedWordAutomatonCache<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), abstraction.getInternalAlphabet(),
-				abstraction.getCallAlphabet(), abstraction.getReturnAlphabet(), abstraction.getStateFactory());
+		mAlreadyConstrucedAutomaton = new NestedWordAutomatonCache<>(new AutomataLibraryServices(mServices),
+				abstraction.getInternalAlphabet(), abstraction.getCallAlphabet(), abstraction.getReturnAlphabet(),
+				abstraction.getStateFactory());
 		if (useEfficientTotalAutomatonBookkeeping) {
 			mSuccessorComputationBookkeeping = new SuccessorComputationBookkeepingForTotalAutomata();
 		} else {
@@ -140,42 +130,39 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 	}
 
 	/**
-	 * Switch the mode to READ_ONLY. In this mode the automaton returns
-	 * only existing transitions but does not compute new ones.
+	 * Switch the mode to READ_ONLY. In this mode the automaton returns only existing transitions but does not compute
+	 * new ones.
 	 */
 	public final void switchToReadonlyMode() {
 		if (mMode == Mode.READ_ONLY) {
 			throw new AssertionError("already in mode READ_ONLY");
-		} else {
-			mMode = Mode.READ_ONLY;
-			mIHoareTripleChecker.releaseLock();
-			mLogger.info(switchToReadonlyMessage());
 		}
+		mMode = Mode.READ_ONLY;
+		mIHoareTripleChecker.releaseLock();
+		mLogger.info(switchToReadonlyMessage());
 	}
-	
+
 	/**
-	 * Switch the mode to ON_DEMAND_CONSTRUCTION. In this mode the automaton
-	 * behaves as follows:
-	 * If the automaton is asked if a transition exists, the automaton checks
-	 * the rules that define this automaton (validity of Hoare triples) and
-	 * constructs the transition on demand.
+	 * Switch the mode to ON_DEMAND_CONSTRUCTION. In this mode the automaton behaves as follows: If the automaton is
+	 * asked if a transition exists, the automaton checks the rules that define this automaton (validity of Hoare
+	 * triples) and constructs the transition on demand.
 	 */
 	public final void switchToOnDemandConstructionMode() {
 		if (mMode == Mode.ON_DEMAND_CONSTRUCTION) {
 			throw new AssertionError("already in mode ON_DEMAND_CONSTRUCTION");
-		} else {
-			mMode = Mode.ON_DEMAND_CONSTRUCTION;
-			mLogger.info(switchToOnDemandConstructionMessage());
 		}
+		mMode = Mode.ON_DEMAND_CONSTRUCTION;
+			mLogger.info(switchToOnDemandConstructionMessage());
 	}
-	
 
 	protected abstract String startMessage();
 
 	protected abstract String switchToReadonlyMessage();
-	
+
 	protected abstract String switchToOnDemandConstructionMessage();
 
+	protected abstract void computeSuccs(IPredicate state, IPredicate hier, CodeBlock ret,
+			SuccessorComputationHelper sch);
 
 	@Override
 	public final int size() {
@@ -191,9 +178,8 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 	public final String sizeInformation() {
 		if (mInputInterpolantAutomaton == null) {
 			return "yet neither states nor transitions";
-		} else {
-			return mInputInterpolantAutomaton.sizeInformation();
 		}
+		return mInputInterpolantAutomaton.sizeInformation();
 	}
 
 	@Override
@@ -262,12 +248,9 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 		return mAlreadyConstrucedAutomaton.internalSuccessors(state, letter);
 	}
 
-	protected abstract void computeSuccs(IPredicate state, IPredicate hier, CodeBlock ret,
-			SuccessorComputationHelper sch);
-
-
 	@Override
-	public final Iterable<OutgoingInternalTransition<CodeBlock, IPredicate>> internalSuccessors(final IPredicate state) {
+	public final Iterable<OutgoingInternalTransition<CodeBlock, IPredicate>>
+			internalSuccessors(final IPredicate state) {
 		if (mMode == Mode.ON_DEMAND_CONSTRUCTION) {
 			for (final CodeBlock letter : lettersInternal(state)) {
 				if (!mSuccessorComputationBookkeeping.areInternalSuccsComputed(state, letter)) {
@@ -289,8 +272,6 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 		}
 		return mAlreadyConstrucedAutomaton.callSuccessors(state, call);
 	}
-
-
 
 	@Override
 	public final Iterable<OutgoingCallTransition<CodeBlock, IPredicate>> callSuccessors(final IPredicate state) {
@@ -317,11 +298,9 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 		return mAlreadyConstrucedAutomaton.returnSuccessors(state, hier, ret);
 	}
 
-
-
 	@Override
-	public final Iterable<OutgoingReturnTransition<CodeBlock, IPredicate>> returnSuccessorsGivenHier(final IPredicate state,
-			final IPredicate hier) {
+	public final Iterable<OutgoingReturnTransition<CodeBlock, IPredicate>>
+			returnSuccessorsGivenHier(final IPredicate state, final IPredicate hier) {
 		if (mMode == Mode.ON_DEMAND_CONSTRUCTION) {
 			for (final CodeBlock letter : lettersReturn(state)) {
 				final Return ret = (Return) letter;
@@ -336,18 +315,16 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 	@Override
 	public final String toString() {
 		if (mMode == Mode.READ_ONLY) {
-			return (new AutomatonDefinitionPrinter<String, String>(new AutomataLibraryServices(mServices), "nwa", Format.ATS, this)).getDefinitionAsString();
-		} else {
-			return "automaton under construction";
+			return (new AutomatonDefinitionPrinter<String, String>(new AutomataLibraryServices(mServices), "nwa",
+					Format.ATS, this)).getDefinitionAsString();
 		}
+		return "automaton under construction";
 	}
 
 	/**
-	 * Abstract class for successor computation. Subclasses are the successor
-	 * computations for internal, call, and return. Because we can only override
-	 * methods with the same signature (in Java) we use the
-	 * 3-parameter-signature for return (with hierarchical state) and use null
-	 * as hierarchical state for call and internal.
+	 * Abstract class for successor computation. Subclasses are the successor computations for internal, call, and
+	 * return. Because we can only override methods with the same signature (in Java) we use the 3-parameter-signature
+	 * for return (with hierarchical state) and use null as hierarchical state for call and internal.
 	 */
 	public abstract class SuccessorComputationHelper {
 
@@ -363,7 +340,7 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 
 		public abstract Collection<IPredicate> getSuccsInterpolantAutomaton(IPredicate resPred, IPredicate resHier,
 				CodeBlock letter);
-		
+
 		public abstract void reportSuccsComputed(IPredicate resPred, IPredicate resHier, CodeBlock letter);
 
 	}
@@ -382,14 +359,15 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 		}
 
 		@Override
-		public void addTransition(final IPredicate resPred, final IPredicate resHier, final CodeBlock letter, final IPredicate inputSucc) {
+		public void addTransition(final IPredicate resPred, final IPredicate resHier, final CodeBlock letter,
+				final IPredicate inputSucc) {
 			assert resHier == null;
 			mAlreadyConstrucedAutomaton.addInternalTransition(resPred, letter, inputSucc);
 		}
 
 		@Override
-		public Validity computeSuccWithSolver(final IPredicate resPred, final IPredicate resHier, final CodeBlock letter,
-				final IPredicate inputSucc) {
+		public Validity computeSuccWithSolver(final IPredicate resPred, final IPredicate resHier,
+				final CodeBlock letter, final IPredicate inputSucc) {
 			assert resHier == null;
 			return mIHoareTripleChecker.checkInternal(resPred, (IInternalAction) letter, inputSucc);
 		}
@@ -401,13 +379,12 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 			final Collection<IPredicate> succs = mInputInterpolantAutomaton.succInternal(resPred, letter);
 			if (succs == null) {
 				return Collections.emptySet();
-			} else {
-				return succs;
 			}
+			return succs;
 		}
 
 		@Override
-		public void reportSuccsComputed(final IPredicate resPred, final IPredicate resHier,	final CodeBlock letter) {
+		public void reportSuccsComputed(final IPredicate resPred, final IPredicate resHier, final CodeBlock letter) {
 			assert resHier == null;
 			mSuccessorComputationBookkeeping.reportInternalSuccsComputed(resPred, letter);
 		}
@@ -428,14 +405,15 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 		}
 
 		@Override
-		public void addTransition(final IPredicate resPred, final IPredicate resHier, final CodeBlock letter, final IPredicate inputSucc) {
+		public void addTransition(final IPredicate resPred, final IPredicate resHier, final CodeBlock letter,
+				final IPredicate inputSucc) {
 			assert resHier == null;
 			mAlreadyConstrucedAutomaton.addCallTransition(resPred, letter, inputSucc);
 		}
 
 		@Override
-		public Validity computeSuccWithSolver(final IPredicate resPred, final IPredicate resHier, final CodeBlock letter,
-				final IPredicate inputSucc) {
+		public Validity computeSuccWithSolver(final IPredicate resPred, final IPredicate resHier,
+				final CodeBlock letter, final IPredicate inputSucc) {
 			assert resHier == null;
 			return mIHoareTripleChecker.checkCall(resPred, (ICallAction) letter, inputSucc);
 		}
@@ -447,13 +425,12 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 			final Collection<IPredicate> succs = mInputInterpolantAutomaton.succCall(resPred, letter);
 			if (succs == null) {
 				return Collections.emptySet();
-			} else {
-				return succs;
 			}
+			return succs;
 		}
 
 		@Override
-		public void reportSuccsComputed(final IPredicate resPred, final IPredicate resHier,	final CodeBlock letter) {
+		public void reportSuccsComputed(final IPredicate resPred, final IPredicate resHier, final CodeBlock letter) {
 			assert resHier == null;
 			mSuccessorComputationBookkeeping.reportCallSuccsComputed(resPred, (Call) letter);
 		}
@@ -473,13 +450,14 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 		}
 
 		@Override
-		public void addTransition(final IPredicate resPred, final IPredicate resHier, final CodeBlock letter, final IPredicate inputSucc) {
+		public void addTransition(final IPredicate resPred, final IPredicate resHier, final CodeBlock letter,
+				final IPredicate inputSucc) {
 			mAlreadyConstrucedAutomaton.addReturnTransition(resPred, resHier, letter, inputSucc);
 		}
 
 		@Override
-		public Validity computeSuccWithSolver(final IPredicate resPred, final IPredicate resHier, final CodeBlock letter,
-				final IPredicate inputSucc) {
+		public Validity computeSuccWithSolver(final IPredicate resPred, final IPredicate resHier,
+				final CodeBlock letter, final IPredicate inputSucc) {
 			return mIHoareTripleChecker.checkReturn(resPred, resHier, (IReturnAction) letter, inputSucc);
 		}
 
@@ -489,25 +467,20 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 			final Collection<IPredicate> succs = mInputInterpolantAutomaton.succReturn(resPred, resHier, letter);
 			if (succs == null) {
 				return Collections.emptySet();
-			} else {
-				return succs;
 			}
+			return succs;
 		}
 
 		@Override
-		public void reportSuccsComputed(final IPredicate resPred, final IPredicate resHier,	final CodeBlock letter) {
+		public void reportSuccsComputed(final IPredicate resPred, final IPredicate resHier, final CodeBlock letter) {
 			mSuccessorComputationBookkeeping.reportReturnSuccsComputed(resPred, resHier, (Return) letter);
 		}
 
 	}
-	
-	
-	
-	
+
 	/**
-	 * Objects that implement this interface provide information if successors
-	 * have already been computed.
-	 * 
+	 * Objects that implement this interface provide information if successors have already been computed.
+	 *
 	 * @author Matthias Heizmann
 	 */
 	public interface ISuccessorComputationBookkeeping {
@@ -516,22 +489,22 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 		 * Have the internal successors of state and letter already been computed.
 		 */
 		abstract boolean areInternalSuccsComputed(IPredicate state, CodeBlock letter);
-		
+
 		/**
 		 * Announce that the internal successors of state and letter have been computed.
 		 */
 		abstract void reportInternalSuccsComputed(IPredicate state, CodeBlock letter);
-		
+
 		/**
 		 * Have the call successors of state and call already been computed.
 		 */
 		abstract boolean areCallSuccsComputed(IPredicate state, Call call);
-		
+
 		/**
 		 * Announce that the call successors of state and call have been computed.
 		 */
 		abstract void reportCallSuccsComputed(IPredicate state, Call call);
-		
+
 		/**
 		 * Have the return successors of state, hier and ret already been computed.
 		 */
@@ -540,62 +513,54 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 		/**
 		 * Announce that the return successors of state, hier and have been computed.
 		 */
-		abstract void reportReturnSuccsComputed(IPredicate state, IPredicate hier,
-				Return ret);
+		abstract void reportReturnSuccsComputed(IPredicate state, IPredicate hier, Return ret);
 	}
-	
-	/**
-	 * Default implementation of {@link ISuccessorComputationBookkeeping} uses
-	 * a NwaCacheBookkeeping to store which successors have already been computed.
-	 */
-	private class DefaultSuccessorComputationBookkeeping implements	ISuccessorComputationBookkeeping {
 
-		private final NwaCacheBookkeeping<CodeBlock, IPredicate> mResultBookkeeping =
-				new NwaCacheBookkeeping<CodeBlock, IPredicate>();
+	/**
+	 * Default implementation of {@link ISuccessorComputationBookkeeping} uses a NwaCacheBookkeeping to store which
+	 * successors have already been computed.
+	 */
+	private class DefaultSuccessorComputationBookkeeping implements ISuccessorComputationBookkeeping {
+
+		private final NwaCacheBookkeeping<CodeBlock, IPredicate> mResultBookkeeping = new NwaCacheBookkeeping<>();
 
 		@Override
 		public boolean areInternalSuccsComputed(final IPredicate state, final CodeBlock letter) {
 			return mResultBookkeeping.isCachedInternal(state, letter);
 		}
-		
+
 		@Override
 		public void reportInternalSuccsComputed(final IPredicate state, final CodeBlock letter) {
 			mResultBookkeeping.reportCachedInternal(state, letter);
 		}
 
-
 		@Override
 		public boolean areCallSuccsComputed(final IPredicate state, final Call call) {
 			return mResultBookkeeping.isCachedCall(state, call);
 		}
-		
+
 		@Override
 		public void reportCallSuccsComputed(final IPredicate state, final Call call) {
 			mResultBookkeeping.reportCachedCall(state, call);
 		}
 
-
 		@Override
 		public boolean areReturnSuccsComputed(final IPredicate state, final IPredicate hier, final Return ret) {
 			return mResultBookkeeping.isCachedReturn(state, hier, ret);
 		}
-		
+
 		@Override
 		public void reportReturnSuccsComputed(final IPredicate state, final IPredicate hier, final Return ret) {
 			mResultBookkeeping.reportCachedReturn(state, hier, ret);
 		}
 
 	}
-	
-	
-	
+
 	/**
-	 * Implementation of {@link ISuccessorComputationBookkeeping} that avoids
-	 * an additional bookkeeping but works only if we construct a total automata.
-	 * Idea: If there is no successor, we have not yet computed the successors,
-	 * because there would be at least one since the automaton is total.
-	 * (An automaton is total if for each state and each letter, there is at least
-	 * one outgoing transition)
+	 * Implementation of {@link ISuccessorComputationBookkeeping} that avoids an additional bookkeeping but works only
+	 * if we construct a total automata. Idea: If there is no successor, we have not yet computed the successors,
+	 * because there would be at least one since the automaton is total. (An automaton is total if for each state and
+	 * each letter, there is at least one outgoing transition)
 	 */
 	private class SuccessorComputationBookkeepingForTotalAutomata implements ISuccessorComputationBookkeeping {
 
@@ -604,9 +569,8 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 			final Collection<IPredicate> succs = mAlreadyConstrucedAutomaton.succInternal(state, letter);
 			if (succs == null) {
 				return false;
-			} else {
-				return succs.iterator().hasNext();
 			}
+			return succs.iterator().hasNext();
 		}
 
 		@Override
@@ -614,20 +578,17 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 			final Collection<IPredicate> succs = mAlreadyConstrucedAutomaton.succCall(state, call);
 			if (succs == null) {
 				return false;
-			} else {
-				return succs.iterator().hasNext();
 			}
+			return succs.iterator().hasNext();
 		}
 
 		@Override
-		public boolean areReturnSuccsComputed(final IPredicate state, final IPredicate hier,
-				final Return ret) {
+		public boolean areReturnSuccsComputed(final IPredicate state, final IPredicate hier, final Return ret) {
 			final Collection<IPredicate> succs = mAlreadyConstrucedAutomaton.succReturn(state, hier, ret);
 			if (succs == null) {
 				return false;
-			} else {
-				return succs.iterator().hasNext();
 			}
+			return succs.iterator().hasNext();
 		}
 
 		@Override
@@ -641,11 +602,10 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 		}
 
 		@Override
-		public void reportReturnSuccsComputed(final IPredicate state,	final IPredicate hier, final Return ret) {
+		public void reportReturnSuccsComputed(final IPredicate state, final IPredicate hier, final Return ret) {
 			// do nothing, information is implicitly stored in total automaton
 		}
 
 	}
-	
 
 }
