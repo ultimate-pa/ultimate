@@ -46,7 +46,6 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.AbstractMultiState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IAbstractStateStorage;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ITransitionProvider;
@@ -131,10 +130,9 @@ public class RcfgAbstractStateStorageProvider<STATE extends IAbstractState<STATE
 	}
 
 	@Override
-	public Map<LOCATION, Term> getLoc2Term(final CodeBlock initialTransition, final Script script,
-			final Boogie2SMT bpl2smt) {
+	public Map<LOCATION, Term> getLoc2Term(final CodeBlock initialTransition, final Script script) {
 		final Map<LOCATION, StateDecorator> states = getMergedStatesOfAllChildren(initialTransition);
-		return convertStates2Terms(states, script, bpl2smt);
+		return convertStates2Terms(states, script);
 	}
 
 	@Override
@@ -154,11 +152,10 @@ public class RcfgAbstractStateStorageProvider<STATE extends IAbstractState<STATE
 	}
 
 	@Override
-	public Set<Term> getTerms(final CodeBlock initialTransition, final Script script, final Boogie2SMT bpl2smt) {
+	public Set<Term> getTerms(final CodeBlock initialTransition, final Script script) {
 		final Set<Term> rtr = new LinkedHashSet<>();
-		getLocalTerms(initialTransition, script, bpl2smt, rtr);
-		mChildStores.stream().filter(a -> a != this)
-				.forEach(a -> rtr.addAll(a.getTerms(initialTransition, script, bpl2smt)));
+		getLocalTerms(initialTransition, script, rtr);
+		mChildStores.stream().filter(a -> a != this).forEach(a -> rtr.addAll(a.getTerms(initialTransition, script)));
 		return rtr;
 	}
 
@@ -476,8 +473,7 @@ public class RcfgAbstractStateStorageProvider<STATE extends IAbstractState<STATE
 		return rtr;
 	}
 
-	private Set<Term> getLocalTerms(final CodeBlock initialTransition, final Script script, final Boogie2SMT bpl2smt,
-			final Set<Term> terms) {
+	private Set<Term> getLocalTerms(final CodeBlock initialTransition, final Script script, final Set<Term> terms) {
 		final Deque<CodeBlock> worklist = new ArrayDeque<>();
 		final Set<CodeBlock> closed = new LinkedHashSet<>();
 
@@ -543,12 +539,11 @@ public class RcfgAbstractStateStorageProvider<STATE extends IAbstractState<STATE
 		});
 	}
 
-	private Map<LOCATION, Term> convertStates2Terms(final Map<LOCATION, StateDecorator> states, final Script script,
-			final Boogie2SMT bpl2smt) {
+	private Map<LOCATION, Term> convertStates2Terms(final Map<LOCATION, StateDecorator> states, final Script script) {
 		final Map<LOCATION, Term> rtr = new HashMap<>();
 
 		for (final Entry<LOCATION, StateDecorator> entry : states.entrySet()) {
-			final Term term = entry.getValue().getTerm(script, bpl2smt);
+			final Term term = entry.getValue().getTerm(script);
 			final LOCATION loc = entry.getKey();
 			rtr.put(loc, term);
 		}
@@ -583,7 +578,7 @@ public class RcfgAbstractStateStorageProvider<STATE extends IAbstractState<STATE
 			mState = state;
 		}
 
-		private Term getTerm(final Script script, final Boogie2SMT bpl2smt) {
+		private Term getTerm(final Script script) {
 			if (mState == null) {
 				return script.term("false");
 			}

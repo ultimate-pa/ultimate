@@ -31,7 +31,7 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -53,21 +53,18 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 	private final VPPostOperator mPost;
 	private final VPMergeOperator mMerge;
 	private final ILogger mLogger;
-	
+
 	private final HashRelation<IProgramVarOrConst, EqFunctionNode> mArrayIdToEqFnNodes;
-	
+
 	private final VPStateBottom mBottomState;
 	private final ManagedScript mManagedScript;
-	private final Boogie2SMT mBoogie2Smt;
 	private final Map<Term, EqNode> mTermToEqNodeMap;
 	private final RCFGArrayIndexCollector mPreAnalysis;
 	private final VPStateFactory mVpStateFactory;
-	
-	public VPDomain(final ILogger logger, 
-			final ManagedScript script, 
-			final IUltimateServiceProvider services,
-			final Boogie2SMT boogie2smt, 
-			final RCFGArrayIndexCollector preAnalysis) {
+	private final IIcfgSymbolTable mSymboltable;
+
+	public VPDomain(final ILogger logger, final ManagedScript script, final IUltimateServiceProvider services,
+			final IIcfgSymbolTable symbolTable, final RCFGArrayIndexCollector preAnalysis) {
 		assert script != null;
 		mLogger = logger;
 		mPreAnalysis = preAnalysis;
@@ -77,13 +74,13 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 		mTermToEqNodeMap = preAnalysis.getTermToEqNodeMap();
 		mPost = new VPPostOperator(script, services, this);
 		mMerge = new VPMergeOperator();
-		mBoogie2Smt = boogie2smt;
 		mVpStateFactory = new VPStateFactory(this);
+		mSymboltable = symbolTable;
 	}
 
 	@Override
 	public VPState createFreshState() {
-		return this.getVpStateFactory().getTopState();
+		return getVpStateFactory().getTopState();
 	}
 
 	@Override
@@ -106,10 +103,6 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 		throw new UnsupportedOperationException("this domain has no precision");
 	}
 
-	public Boogie2SMT getBoogie2Smt() {
-		return mBoogie2Smt;
-	}
-
 	private final class VPMergeOperator implements IAbstractStateBinaryOperator<VPState> {
 
 		@Override
@@ -117,17 +110,12 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 			return getVpStateFactory().disjoin(first, second);
 		}
 	}
-	
-//	boolean isArray(final Term term) {
-//		return getArrayIdToEqFnNodeMap()
-//				.getDomain().contains(getPreAnalysis().getIProgramVarOrConst(term));
-//	}
 
 	public Map<Term, EqNode> getTermToEqNodeMap() {
 		return mTermToEqNodeMap;
 	}
 
-	public  HashRelation<IProgramVarOrConst, EqFunctionNode> getArrayIdToEqFnNodeMap() {
+	public HashRelation<IProgramVarOrConst, EqFunctionNode> getArrayIdToEqFnNodeMap() {
 		return mArrayIdToEqFnNodes;
 	}
 
@@ -152,8 +140,12 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 	public RCFGArrayIndexCollector getPreAnalysis() {
 		return mPreAnalysis;
 	}
-	
+
 	public VPStateFactory getVpStateFactory() {
 		return mVpStateFactory;
+	}
+
+	public IIcfgSymbolTable getSymbolTable() {
+		return mSymboltable;
 	}
 }
