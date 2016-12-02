@@ -31,6 +31,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
@@ -45,9 +46,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Boo
 public class AbstractInterpretationRcfgObserver extends BaseObserver {
 
 	private final IUltimateServiceProvider mServices;
+	private final ILogger mLogger;
 
 	public AbstractInterpretationRcfgObserver(final IUltimateServiceProvider services) {
 		mServices = services;
+		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
 
 	@Override
@@ -65,7 +68,7 @@ public class AbstractInterpretationRcfgObserver extends BaseObserver {
 		}
 
 		if (ups.getBoolean(AbsIntPrefInitializer.LABEL_USE_FUTURE_RCFG)) {
-			AbstractInterpreter.runFuture(root, timer, mServices, false);
+			AbstractInterpreter.runFuture(root, timer, mServices, false, mLogger);
 		} else {
 			AbstractInterpreter.run(root, timer, mServices);
 		}

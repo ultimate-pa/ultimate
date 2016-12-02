@@ -26,19 +26,15 @@
  */
 package de.uni_freiburg.informatik.ultimate.heapseparator;
 
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -47,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.EqNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.RCFGArrayIndexCollector;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomain;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractInterpreter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.IAbstractInterpretationResult;
@@ -55,50 +50,44 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.walker.ObserverDispatcherSequential;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.walker.RCFGWalkerBreadthFirst;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 
 public class HsNonPlugin {
-	
-	private static final String ULTIMATE_START = "ULTIMATE.start";
+
 	private final IUltimateServiceProvider mServices;
 	private final ManagedScript mManagedScript;
 	private final ILogger mLogger;
 	private final ReplacementVarFactory mReplacementVarFactory;
 
 	public HsNonPlugin(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit, final ILogger logger) {
-		
+
 		mServices = services;
 		mManagedScript = csToolkit.getManagedScript();
 		mLogger = logger;
 		mReplacementVarFactory = new ReplacementVarFactory(csToolkit.getManagedScript(), csToolkit.getSymbolTable());
 	}
-	
-	public BoogieIcfgContainer separate(final BoogieIcfgContainer oldBoogieIcfg ) {
+
+	public BoogieIcfgContainer separate(final BoogieIcfgContainer oldBoogieIcfg) {
 		/*
 		 * obtain partitioning from equality domain abstract interpretation run
 		 */
-		
-		//TODO taken from CodeCheck, what timer is suitable here?
+
+		// TODO taken from CodeCheck, what timer is suitable here?
 		final IProgressAwareTimer timer = mServices.getProgressMonitorService().getChildTimer(0.2);
-		final List<CodeBlock> initialEdges = getInitialEdges(oldBoogieIcfg);
 		@SuppressWarnings("unchecked")
-		final IAbstractInterpretationResult<VPState, CodeBlock, IProgramVar, ?> abstractInterpretationResult = 
+		final IAbstractInterpretationResult<VPState, CodeBlock, IProgramVar, ?> abstractInterpretationResult =
 				(IAbstractInterpretationResult<VPState, CodeBlock, IProgramVar, ?>) AbstractInterpreter
-			        .runFutureEqualityDomain(oldBoogieIcfg, initialEdges, timer, mServices, false);
-		
+						.runFutureEqualityDomain(oldBoogieIcfg, timer, mServices, false, mLogger);
+
 		final VPDomain vpDomain = (VPDomain) abstractInterpretationResult.getUsedDomain();
-		
+
 		printAIResult(abstractInterpretationResult);
-		
+
 		/*
-		 * process AI result
-		 *  - bring result into partition-form (if it is not yet)
-		 *  - do sanity preprocessing: 
-		 *    if, at any point in the program, two arrays are assigned to each other, then their partitionings
-		 *    must be made compatible
-		 *     (equal?, through union of partitions?)
+		 * process AI result - bring result into partition-form (if it is not yet) - do sanity preprocessing: if, at any
+		 * point in the program, two arrays are assigned to each other, then their partitionings must be made compatible
+		 * (equal?, through union of partitions?)
 		 */
 		HeapSepPreAnalysisVisitor heapSepPreanalysis = null;
 		{
@@ -108,17 +97,17 @@ public class HsNonPlugin {
 
 			heapSepPreanalysis = new HeapSepPreAnalysisVisitor(mLogger);
 			walker.addObserver(heapSepPreanalysis);
-				
-			walker.run(BoogieIcfgContainer.extractStartEdges(oldBoogieIcfg)); 
+
+			walker.run(BoogieIcfgContainer.extractStartEdges(oldBoogieIcfg));
 		}
 
-		final NewArrayIdProvider newArrayIdProvider = 
+		final NewArrayIdProvider newArrayIdProvider =
 				processAbstractInterpretationResult(abstractInterpretationResult, heapSepPreanalysis);
-		
+
 		/*
 		 * do the transformation itself..
 		 */
-		
+
 		final ObserverDispatcher od = new ObserverDispatcherSequential(mLogger);
 		final RCFGWalkerBreadthFirst walker = new RCFGWalkerBreadthFirst(od, mLogger);
 		od.setWalker(walker);
@@ -126,7 +115,6 @@ public class HsNonPlugin {
 		final HeapSepRcfgVisitor hsv = new HeapSepRcfgVisitor(mLogger, newArrayIdProvider, mManagedScript, vpDomain);
 		walker.addObserver(hsv);
 		walker.run(BoogieIcfgContainer.extractStartEdges(oldBoogieIcfg));
-	
 
 		return null;
 	}
@@ -134,9 +122,9 @@ public class HsNonPlugin {
 	private void printAIResult(
 			final IAbstractInterpretationResult<VPState, CodeBlock, IProgramVar, ?> abstractInterpretationResult) {
 		mLogger.debug("equality domain result");
-		for (Entry<?, Set<VPState>> en : abstractInterpretationResult.getLoc2States().entrySet()) {
+		for (final Entry<?, Set<VPState>> en : abstractInterpretationResult.getLoc2States().entrySet()) {
 			mLogger.debug(en.getKey());
-			for (VPState vps : en.getValue()) {
+			for (final VPState vps : en.getValue()) {
 				mLogger.debug("");
 				mLogger.debug(vps);
 			}
@@ -144,21 +132,20 @@ public class HsNonPlugin {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param vpDomainResult
 	 * @param hspav
 	 * @return a map of the form (unseparated array --> index --> separated array)
 	 */
 	private NewArrayIdProvider processAbstractInterpretationResult(
-			final IAbstractInterpretationResult<VPState, CodeBlock, IProgramVar, ?> vpDomainResult, 
+			final IAbstractInterpretationResult<VPState, CodeBlock, IProgramVar, ?> vpDomainResult,
 			final HeapSepPreAnalysisVisitor hspav) {
-		
+
 		final VPDomain vpDomain = (VPDomain) vpDomainResult.getUsedDomain();
-		
+
 		/*
-		 * Compute the mapping array to VPState:
-		 * The HeapSepPreAnalysisVisitor can tell us which arrays are accessed at which locations.
-		 * For each array take only the VPStates intro account that belong to a location directly
+		 * Compute the mapping array to VPState: The HeapSepPreAnalysisVisitor can tell us which arrays are accessed at
+		 * which locations. For each array take only the VPStates intro account that belong to a location directly
 		 * before an access to that array. Those are disjoined.
 		 */
 		final Map<IProgramVarOrConst, VPState> arrayToVPState = new HashMap<>();
@@ -167,7 +154,7 @@ public class HsNonPlugin {
 			for (final IcfgLocation loc : hspav.getArrayToAccessLocations().getImage(array)) {
 				final Set<VPState> statesAtLoc = vpDomainResult.getLoc2States().get(loc);
 				if (statesAtLoc == null) {
-					//TODO: this probably should not happen once we support procedures
+					// TODO: this probably should not happen once we support procedures
 					continue;
 				}
 				for (final VPState state : statesAtLoc) {
@@ -177,7 +164,7 @@ public class HsNonPlugin {
 			}
 			arrayToVPState.put(array, disjoinedState);
 		}
-		
+
 		/*
 		 * Compute the actual partitioning for each array.
 		 */
@@ -186,92 +173,68 @@ public class HsNonPlugin {
 		for (final Entry<IProgramVarOrConst, VPState> en : arrayToVPState.entrySet()) {
 			final IProgramVarOrConst currentArray = en.getKey();
 			final VPState state = en.getValue();
-			
-			
-			UnionFind<EqNode> uf = new UnionFind<>();
-			for (EqNode accessingNode : vpPreAnalysis.getAccessingIndicesForArray(currentArray)) {
+
+			final UnionFind<EqNode> uf = new UnionFind<>();
+			for (final EqNode accessingNode : vpPreAnalysis.getAccessingIndicesForArray(currentArray)) {
 				uf.findAndConstructEquivalenceClassIfNeeded(accessingNode);
 			}
-			//TODO: optimization: compute partitioning on the equivalence class representatives instead
-			//  of all nodes
-			for (EqNode accessingNode1 : vpPreAnalysis.getAccessingIndicesForArray(currentArray)) {
-				for (EqNode accessingNode2 : vpPreAnalysis.getAccessingIndicesForArray(currentArray)) {
+			// TODO: optimization: compute partitioning on the equivalence class representatives instead
+			// of all nodes
+			for (final EqNode accessingNode1 : vpPreAnalysis.getAccessingIndicesForArray(currentArray)) {
+				for (final EqNode accessingNode2 : vpPreAnalysis.getAccessingIndicesForArray(currentArray)) {
 					if (state.mayEqual(accessingNode1, accessingNode2)) {
 						uf.union(accessingNode1, accessingNode2);
 					}
 				}
 			}
-			for (Set<EqNode> ec : uf.getAllEquivalenceClasses()) {
+			for (final Set<EqNode> ec : uf.getAllEquivalenceClasses()) {
 				newArrayIdProvider.registerEquivalenceClass(currentArray, ec);
 			}
 		}
-			
-//			/*
-//			 * For an index i to be in its own partition (along with its =-equivalence class) for array
-//			 * a, we have to know that it _must_ be different from all other indices (eq-class representatives)
-//			 *   that are used for array a
-//			 * 
-//			 * (would be nice here, if the EQNodes in the disequality pairs would be only the 
-//			 *  representatives of each equivalence class.)
-//			 */
-//			for (final EqNode ind1 : arrayToVPState.get(currentArray).getEquivalenceRepresentatives()) {
-//				if (!vpPreAnalysis.isArrayAccessedAt(currentArray, ind1)) {
-//					// we don't need an entry for ind1 in our partitioning map because 
-//					// it is never used to access the currentArray
-//					continue;
-//				}
-//
-//				/*
-//				 * 	Check if ind1 is known to be unequal to all the other indices (equality representatives) 
-//				 * that the array "array" is accessed with?
-//				 */
-//				boolean indUneqAllOthers = true;
-//				for (final EqNode ind2 : arrayToVPState.get(currentArray).getEquivalenceRepresentatives()) {
-//					if (!vpPreAnalysis.isArrayAccessedAt(currentArray, ind2)) {
-//						// the currentArray is never accessed at ind2
-//						// --> it does not matter if ind2 may alias with ind1
-//						continue;
-//					}
-//					if (ind2 == ind1) {
-//						continue;
-//					}
-//					if (!state.getDisEqualitySet().contains(new VPDomainSymmetricPair<EqNode>(ind1, ind2))) {
-//						// ind1 and ind2 may be equal
-//						indUneqAllOthers = false;
-//						break;
-//					}
-//				}
-//				
-//				if (indUneqAllOthers) {
-//					// ind1 and all EqNodes that are known to be equal get 1 partition.
-//					newArrayIdProvider.registerDisjunctSinglePointer(currentArray, ind1);
-//				}
-//			}
-//		}
-		
+
+		// /*
+		// * For an index i to be in its own partition (along with its =-equivalence class) for array
+		// * a, we have to know that it _must_ be different from all other indices (eq-class representatives)
+		// * that are used for array a
+		// *
+		// * (would be nice here, if the EQNodes in the disequality pairs would be only the
+		// * representatives of each equivalence class.)
+		// */
+		// for (final EqNode ind1 : arrayToVPState.get(currentArray).getEquivalenceRepresentatives()) {
+		// if (!vpPreAnalysis.isArrayAccessedAt(currentArray, ind1)) {
+		// // we don't need an entry for ind1 in our partitioning map because
+		// // it is never used to access the currentArray
+		// continue;
+		// }
+		//
+		// /*
+		// * Check if ind1 is known to be unequal to all the other indices (equality representatives)
+		// * that the array "array" is accessed with?
+		// */
+		// boolean indUneqAllOthers = true;
+		// for (final EqNode ind2 : arrayToVPState.get(currentArray).getEquivalenceRepresentatives()) {
+		// if (!vpPreAnalysis.isArrayAccessedAt(currentArray, ind2)) {
+		// // the currentArray is never accessed at ind2
+		// // --> it does not matter if ind2 may alias with ind1
+		// continue;
+		// }
+		// if (ind2 == ind1) {
+		// continue;
+		// }
+		// if (!state.getDisEqualitySet().contains(new VPDomainSymmetricPair<EqNode>(ind1, ind2))) {
+		// // ind1 and ind2 may be equal
+		// indUneqAllOthers = false;
+		// break;
+		// }
+		// }
+		//
+		// if (indUneqAllOthers) {
+		// // ind1 and all EqNodes that are known to be equal get 1 partition.
+		// newArrayIdProvider.registerDisjunctSinglePointer(currentArray, ind1);
+		// }
+		// }
+		// }
+
 		return newArrayIdProvider;
-	}
-
-	/**
-	 * copied from CodeCheck 
-	 * TODO: ugly, right?..
-	 * @param root
-	 * @return
-	 */
-	private List<CodeBlock> getInitialEdges(final BoogieIcfgContainer root) {
-		final Collection<IcfgEdge> startEdges = BoogieIcfgContainer.extractStartEdges(root);
-
-		final Set<BoogieIcfgLocation> ultimateStartNodes = startEdges.stream().map(a -> a.getSource())
-		        .filter(source -> source instanceof BoogieIcfgLocation
-		                && ((BoogieIcfgLocation) source).getProcedure().equals(ULTIMATE_START))
-		        .map(a -> (BoogieIcfgLocation) a).collect(Collectors.toSet());
-		if (!ultimateStartNodes.isEmpty()) {
-//			mLogger.info("Found entry method " + ULTIMATE_START);
-			return ultimateStartNodes.stream().flatMap(a -> a.getOutgoingEdges().stream()).map(a -> (CodeBlock) a)
-			        .collect(Collectors.toList());
-		}
-//		mLogger.info("Did not find entry method " + ULTIMATE_START + ", using library mode");
-		return startEdges.stream().filter(a -> a instanceof CodeBlock).map(a -> (CodeBlock) a)
-		        .collect(Collectors.toList());
 	}
 }

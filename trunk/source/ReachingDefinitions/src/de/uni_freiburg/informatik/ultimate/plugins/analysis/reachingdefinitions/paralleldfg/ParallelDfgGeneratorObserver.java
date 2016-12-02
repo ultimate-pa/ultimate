@@ -113,7 +113,7 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 	private IAbstractInterpretationResult<DataflowState, CodeBlock, IProgramVar, BoogieIcfgLocation>
 			obtainDataflowAnalysisResult(final BoogieIcfgContainer r) {
 		final IProgressAwareTimer timer = mServices.getProgressMonitorService().getChildTimer(0.2);
-		return AbstractInterpreter.runFuture(r, timer, mServices, false);
+		return AbstractInterpreter.runFuture(r, timer, mServices, false, mLogger);
 	}
 
 	// Algorithm
