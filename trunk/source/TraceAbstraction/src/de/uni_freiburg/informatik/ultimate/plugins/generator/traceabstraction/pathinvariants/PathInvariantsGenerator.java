@@ -29,7 +29,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants;
 
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -84,7 +84,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 
 	// This is the simplest strategy: to add the backward predicate at the last location to the constraints,
 	// as an additional conjunct
-	private final static boolean USE_ONLY_LAST_BACKWARD_PREDICATES = false;
+	private final static boolean USE_ONLY_LAST_BACKWARD_PREDICATES = !false;
 	private final static boolean USE_LIVE_VARIABLES = false;
 
 	private final NestedRun<? extends IAction, IPredicate> mRun;
@@ -200,9 +200,10 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 
 		// Project path to CFG
 		final int len = mRun.getLength();
-		final Set<BoogieIcfgLocation> locations = new HashSet<>(len);
+		// Use LinkedHashSet to iterate in insertion-order afterwards
+		final Set<BoogieIcfgLocation> locations = new LinkedHashSet<>(len);
 		// final Map<BoogieIcfgLocation, IcfgLocation> locationsForProgramPoint = new HashMap<>(len);
-		final Set<IcfgInternalAction> transitions = new HashSet<>(len - 1);
+		final Set<IcfgInternalAction> transitions = new LinkedHashSet<>(len - 1);
 		BoogieIcfgLocation previousLocation = null;
 		// The location where the nestedRun starts
 		final BoogieIcfgLocation startLocation = ((ISLPredicate) mRun.getStateAtPosition(0)).getProgramPoint();
@@ -249,17 +250,17 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		mLogger.info("[PathInvariants] Built projected CFG, " + locations.size() + " states and " + transitions.size()
 				+ " transitions.");
 
-		// // AI Module
-		generateLiveVariables(icfg, transitions);
-
-		// // End AI Module
-
+		
 		// Generate invariants
 		final CFGInvariantsGenerator generator = new CFGInvariantsGenerator(services);
 		final Map<BoogieIcfgLocation, IPredicate> invariants;
 
 		if (USE_LIVE_VARIABLES) {
 			invariants = null;
+			// // AI Module
+			generateLiveVariables(icfg, transitions);
+
+			// // End AI Module
 			// TODO: Compute the live variables and use them.
 		} else {
 			// invariants = generator.generateInvariantsFromCFG(cfg, precondition, postcondition, invPatternProcFactory,
