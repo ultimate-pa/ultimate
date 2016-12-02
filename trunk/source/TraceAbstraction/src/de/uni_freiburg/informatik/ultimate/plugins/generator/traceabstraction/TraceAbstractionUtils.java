@@ -74,21 +74,22 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 
 /**
  * Provides static auxiliary methods for trace abstraction.
+ * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
 public class TraceAbstractionUtils {
 
-	
-	
 	/**
-	 * @param <LCS> local control state, e.g., {@link BoogieIcfgLocation} for sequential
-	 * programs or a set of {@link BoogieIcfgLocation}s for parallel programs.
-	 * @param <LCSP> local control state provider, e.g., {@link ISLPredicate}, or
-	 * {@link IMLPredicate}
+	 * @param <LCS>
+	 *            local control state, e.g., {@link BoogieIcfgLocation} for sequential programs or a set of
+	 *            {@link BoogieIcfgLocation}s for parallel programs.
+	 * @param <LCSP>
+	 *            local control state provider, e.g., {@link ISLPredicate}, or {@link IMLPredicate}
 	 */
 	public static <LCSP extends IPredicate, LCS> Collection<Set<IPredicate>> computePartition(
-			final INestedWordAutomaton<CodeBlock, IPredicate> automaton, final ILogger logger, final Function<LCSP, LCS> lcsProvider) {
+			final INestedWordAutomaton<CodeBlock, IPredicate> automaton, final ILogger logger,
+			final Function<LCSP, LCS> lcsProvider) {
 		logger.debug("Start computation of initial partition.");
 		final Collection<IPredicate> states = automaton.getStates();
 		final HashRelation<LCS, IPredicate> lcs2p = new HashRelation<>();
@@ -104,12 +105,10 @@ public class TraceAbstractionUtils {
 		logger.debug("Finished computation of initial partition.");
 		return partition;
 	}
-	
-	
-	
+
 	public static IHoareTripleChecker constructEfficientHoareTripleChecker(final IUltimateServiceProvider services,
-			final HoareTripleChecks hoareTripleChecks, final CfgSmtToolkit csToolkit, final PredicateUnifier predicateUnifier)
-			throws AssertionError {
+			final HoareTripleChecks hoareTripleChecks, final CfgSmtToolkit csToolkit,
+			final PredicateUnifier predicateUnifier) throws AssertionError {
 		final IHoareTripleChecker solverHtc;
 		switch (hoareTripleChecks) {
 		case MONOLITHIC:
@@ -123,14 +122,13 @@ public class TraceAbstractionUtils {
 		}
 		return new EfficientHoareTripleChecker(solverHtc, csToolkit, predicateUnifier);
 	}
-	
-	
+
 	/**
-	 * Returns a predicate which states that old(g)=g for all global variables g
-	 * that are modifiable by procedure proc according to
-	 * ModifiableGlobalVariableManager modGlobVarManager.
+	 * Returns a predicate which states that old(g)=g for all global variables g that are modifiable by procedure proc
+	 * according to ModifiableGlobalVariableManager modGlobVarManager.
 	 */
-	public static TermVarsProc getOldVarsEquality(final String proc, final ModifiableGlobalsTable modifiableGlobalsTable, final Script script) {
+	public static TermVarsProc getOldVarsEquality(final String proc,
+			final ModifiableGlobalsTable modifiableGlobalsTable, final Script script) {
 		final Set<IProgramVar> vars = new HashSet<IProgramVar>();
 		Term term = script.term("true");
 		for (final IProgramVar bv : modifiableGlobalsTable.getModifiedBoogieVars(proc)) {
@@ -143,24 +141,23 @@ public class TraceAbstractionUtils {
 			term = Util.and(script, term, equality);
 		}
 		final String[] procs = new String[0];
-		final TermVarsProc result = new TermVarsProc(term, vars, procs, PredicateUtils.computeClosedFormula(term, vars,
-				script));
+		final TermVarsProc result =
+				new TermVarsProc(term, vars, procs, PredicateUtils.computeClosedFormula(term, vars, script));
 		return result;
 
 	}
 
-
-
 	/**
-	 * Construct Predicate which represents the same Predicate as ps, but where
-	 * all globalVars are renamed to oldGlobalVars.
-	 * @param services 
-	 * @param mgdScript 
-	 * @param predicateFactory 
-	 * @param simplificationTechnique 
+	 * Construct Predicate which represents the same Predicate as ps, but where all globalVars are renamed to
+	 * oldGlobalVars.
+	 * 
+	 * @param services
+	 * @param mgdScript
+	 * @param predicateFactory
+	 * @param simplificationTechnique
 	 */
-	public static IPredicate renameGlobalsToOldGlobals(final IPredicate ps, final IUltimateServiceProvider services, 
-			final ManagedScript mgdScript, final BasicPredicateFactory predicateFactory, 
+	public static IPredicate renameGlobalsToOldGlobals(final IPredicate ps, final IUltimateServiceProvider services,
+			final ManagedScript mgdScript, final BasicPredicateFactory predicateFactory,
 			final SimplificationTechnique simplificationTechnique) {
 		if (predicateFactory.isDontCare(ps)) {
 			throw new UnsupportedOperationException("don't cat not expected");
@@ -177,12 +174,9 @@ public class TraceAbstractionUtils {
 		final IPredicate result = predicateFactory.newPredicate(renamedFormula);
 		return result;
 	}
-	
 
-	
-	
-	public static Set<IcfgLocation> getLocationsForWhichHoareAnnotationIsComputed(
-			final BoogieIcfgContainer root, final HoareAnnotationPositions hoareAnnotationPositions) {
+	public static Set<IcfgLocation> getLocationsForWhichHoareAnnotationIsComputed(final BoogieIcfgContainer root,
+			final HoareAnnotationPositions hoareAnnotationPositions) {
 		final Set<IcfgLocation> hoareAnnotationLocs = new HashSet<>();
 		switch (hoareAnnotationPositions) {
 		case All:
@@ -192,29 +186,29 @@ public class TraceAbstractionUtils {
 			break;
 		case LoopsAndPotentialCycles:
 			hoareAnnotationLocs.addAll(root.getPotentialCycleProgramPoints());
-			hoareAnnotationLocs.addAll(root.getLoopLocations().keySet());
+			hoareAnnotationLocs.addAll(root.getLoopLocations());
 			break;
 		default:
 			throw new AssertionError("unknown value " + hoareAnnotationPositions);
 		}
 		return hoareAnnotationLocs;
 	}
-	
-	
+
 	/**
 	 * For each oldVar in vars that is not modifiable by procedure proc: substitute the oldVar by the corresponding
 	 * globalVar in term and remove the oldvar from vars.
-	 * @param modifiableGlobals 
-	 * @param script 
+	 * 
+	 * @param modifiableGlobals
+	 * @param script
 	 */
 	public static Term substituteOldVarsOfNonModifiableGlobals(final String proc, final Set<IProgramVar> vars,
 			final Term term, final ModifiableGlobalsTable modifiableGlobals, final Script script) {
 		final Set<IProgramNonOldVar> modifiableGlobalsOfProc = modifiableGlobals.getModifiedBoogieVars(proc);
 		final List<IProgramVar> replacedOldVars = new ArrayList<>();
-		
+
 		final ArrayList<TermVariable> replacees = new ArrayList<>();
 		final ArrayList<Term> replacers = new ArrayList<>();
-		
+
 		for (final IProgramVar bv : vars) {
 			if (bv instanceof IProgramOldVar) {
 				final IProgramNonOldVar pnov = ((IProgramOldVar) bv).getNonOldVar();
@@ -225,12 +219,12 @@ public class TraceAbstractionUtils {
 				}
 			}
 		}
-		
+
 		final TermVariable[] substVars = replacees.toArray(new TermVariable[replacees.size()]);
 		final Term[] substValues = replacers.toArray(new Term[replacers.size()]);
 		Term result = script.let(substVars, substValues, term);
 		result = new FormulaUnLet().unlet(result);
-		
+
 		for (final IProgramVar bv : replacedOldVars) {
 			vars.remove(bv);
 			vars.add(((IProgramOldVar) bv).getNonOldVar());

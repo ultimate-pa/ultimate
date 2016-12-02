@@ -218,7 +218,7 @@ public class MinModelConverter {
 		}
 		// Update the LoopLocations
 		// Attention: ProgramPoint implements equals, we have to care for that!
-		final Set<BoogieIcfgLocation> keySet = new HashSet<>(rootAnnot.getLoopLocations().keySet());
+		final Set<BoogieIcfgLocation> keySet = new HashSet<>(rootAnnot.getLoopLocations());
 		rootAnnot.getLoopLocations().clear();
 		for (final BoogieIcfgLocation oldVal : keySet) {
 			if (progPointMap.containsKey(oldVal)) {
@@ -227,7 +227,7 @@ public class MinModelConverter {
 					// Since hashCode(oldVal) == hashCode(newVal), this line
 					// overwrites the old entry, so that we do not remove it in
 					// the end!
-					rootAnnot.getLoopLocations().put(newVal, newVal.getBoogieASTNode().getLocation());
+					rootAnnot.getLoopLocations().add(newVal);
 				}
 			}
 		}

@@ -63,6 +63,8 @@ public class PathProgram<LOC extends IcfgLocation> extends BasePayloadContainer 
 	private final Map<String, IcfgLocation> mProcEntries;
 	private final Map<String, IcfgLocation> mProcExits;
 	private final Map<String, Set<IcfgLocation>> mProcError;
+	private final Set<IcfgLocation> mInitialNodes;
+	private final Set<IcfgLocation> mLoopLocations;
 
 	public PathProgram(final String identifier, final IIcfg<LOC> originalIcfg,
 			final Set<? extends IcfgEdge> allowedTransitions) {
@@ -73,6 +75,8 @@ public class PathProgram<LOC extends IcfgLocation> extends BasePayloadContainer 
 		mProcEntries = new HashMap<>();
 		mProcExits = new HashMap<>();
 		mProcError = new HashMap<>();
+		mInitialNodes = new HashSet<>();
+		mLoopLocations = new HashSet<>();
 
 		for (final IcfgEdge transition : allowedTransitions) {
 			final IcfgLocation origSource = transition.getSource();
@@ -83,6 +87,9 @@ public class PathProgram<LOC extends IcfgLocation> extends BasePayloadContainer 
 			ppTransition.redirectSource(ppSource);
 			ppTransition.redirectTarget(ppTarget);
 		}
+
+		assert !getInitialNodes()
+				.isEmpty() : "You cannot have a path program that does not start at an initial location";
 	}
 
 	private static IcfgEdge createPathProgramTransition(final IcfgLocation source, final IcfgLocation target,
@@ -147,6 +154,14 @@ public class PathProgram<LOC extends IcfgLocation> extends BasePayloadContainer 
 		}
 		newProcProgramPoints.put(ppLoc.getDebugIdentifier(), ppLoc);
 
+		if (mOriginalIcfg.getInitialNodes().contains(loc)) {
+			mInitialNodes.add(ppLoc);
+		}
+
+		if (mOriginalIcfg.getLoopLocations().contains(loc)) {
+			mInitialNodes.add(ppLoc);
+		}
+
 		return ppLoc;
 	}
 
@@ -188,6 +203,16 @@ public class PathProgram<LOC extends IcfgLocation> extends BasePayloadContainer 
 	@Override
 	public IIcfgSymbolTable getSymboltable() {
 		return mOriginalIcfg.getSymboltable();
+	}
+
+	@Override
+	public Set<IcfgLocation> getInitialNodes() {
+		return mInitialNodes;
+	}
+
+	@Override
+	public Set<IcfgLocation> getLoopLocations() {
+		return mLoopLocations;
 	}
 
 	private final static class PathProgramIcfgLocation extends IcfgLocation {

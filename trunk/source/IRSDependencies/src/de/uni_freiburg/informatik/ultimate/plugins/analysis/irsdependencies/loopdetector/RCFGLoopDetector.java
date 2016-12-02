@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE IRSDependencies plug-in.
- * 
+ *
  * The ULTIMATE IRSDependencies plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE IRSDependencies plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE IRSDependencies plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE IRSDependencies plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -48,12 +48,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Ret
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 
 /**
- * 
+ *
  * {@link RCFGLoopDetector} computes for each Loophead of an RCFG the edge which is used to enter the loop body and the
  * corresponding edge that leads back to the loop head.
- * 
+ *
  * If your graph looks like this and L1 and L2 are loop heads,
- * 
+ *
  * <pre>
  * 		 e1              e4
  * 		+--+            +--+
@@ -62,17 +62,17 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
  * 		     <---------
  * 		         e3
  * </pre>
- * 
+ *
  * you will get the following map:<br>
  * L1 -> (e2 -> e3, e1 -> e1)<br>
  * L2 -> (e4 -> e4) <br>
  * <br>
- * 
+ *
  * You should call {@link #process(RootNode)} on the root element of your RCFG and then get the resulting map via
  * {@link #getResult()}.
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * 
+ *
  */
 public class RCFGLoopDetector {
 
@@ -94,7 +94,7 @@ public class RCFGLoopDetector {
 		final RootNode rootNode = annot.constructRootNode();
 
 		// get a hashset of all loop heads
-		final Set<BoogieIcfgLocation> loopHeadsSet = new HashSet<>(annot.getLoopLocations().keySet());
+		final Set<BoogieIcfgLocation> loopHeadsSet = new HashSet<>(annot.getLoopLocations());
 
 		// order the loopheads after their occurance in the program
 		final List<BoogieIcfgLocation> loopHeads = orderLoopHeads(loopHeadsSet, rootNode);
@@ -113,7 +113,8 @@ public class RCFGLoopDetector {
 		printResult(mLoopEntryExit);
 	}
 
-	private List<BoogieIcfgLocation> orderLoopHeads(final Set<BoogieIcfgLocation> loopHeads, final RootNode programStart) {
+	private List<BoogieIcfgLocation> orderLoopHeads(final Set<BoogieIcfgLocation> loopHeads,
+			final RootNode programStart) {
 		final List<BoogieIcfgLocation> rtr = new ArrayList<>();
 
 		final Stack<IcfgLocation> open = new Stack<>();
@@ -137,7 +138,8 @@ public class RCFGLoopDetector {
 		return rtr;
 	}
 
-	private void process(final BoogieIcfgLocation loopHead, final Map<IcfgEdge, IcfgEdge> map, final List<IcfgEdge> forbiddenEdges) {
+	private void process(final BoogieIcfgLocation loopHead, final Map<IcfgEdge, IcfgEdge> map,
+			final List<IcfgEdge> forbiddenEdges) {
 		AStar<IcfgLocation, IcfgEdge> walker = new AStar<>(mLogger, loopHead, loopHead, new ZeroHeuristic(),
 				new RcfgWrapper(), forbiddenEdges, mServices.getProgressMonitorService());
 
@@ -153,8 +155,8 @@ public class RCFGLoopDetector {
 			final IcfgEdge forbiddenEdge = addToResult(path, map);
 			forbiddenEdges.add(forbiddenEdge);
 
-			walker = new AStar<IcfgLocation, IcfgEdge>(mLogger, loopHead, loopHead, new ZeroHeuristic(), new RcfgWrapper(),
-					createDenier(forbiddenEdges), mServices.getProgressMonitorService());
+			walker = new AStar<IcfgLocation, IcfgEdge>(mLogger, loopHead, loopHead, new ZeroHeuristic(),
+					new RcfgWrapper(), createDenier(forbiddenEdges), mServices.getProgressMonitorService());
 			path = walker.findPath();
 		}
 	}

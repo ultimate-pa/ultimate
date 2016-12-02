@@ -70,11 +70,25 @@ public interface IIcfg<LOC extends IcfgLocation> extends IElement, IVisualizable
 	 */
 	Map<String, Set<LOC>> getProcedureErrorNodes();
 
+	/**
+	 * Return all locations that are considered to be loop heads.
+	 */
+	Set<LOC> getLoopLocations();
+
 	CodeBlockFactory getCodeBlockFactory();
 
 	CfgSmtToolkit getCfgSmtToolkit();
 
 	IIcfgSymbolTable getSymboltable();
+
+	/**
+	 * The set of initial nodes represents those nodes from which an analysis should start. It is used to distinguish
+	 * "library mode" from "main method mode". Hence, it contains only procedure entry nodes (see
+	 * {@link #getProcedureEntryNodes()} and either all or one.
+	 *
+	 * @return A set containing all initial nodes.
+	 */
+	Set<LOC> getInitialNodes();
 
 	/**
 	 * Returns an identifier that can be used during debugging.

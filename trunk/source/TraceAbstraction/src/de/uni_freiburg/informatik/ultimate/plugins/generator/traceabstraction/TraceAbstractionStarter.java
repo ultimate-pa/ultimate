@@ -169,7 +169,7 @@ public class TraceAbstractionStarter {
 
 			final Set<BoogieIcfgLocation> locsForLoopLocations = new HashSet<>();
 			locsForLoopLocations.addAll(rootAnnot.getPotentialCycleProgramPoints());
-			locsForLoopLocations.addAll(rootAnnot.getLoopLocations().keySet());
+			locsForLoopLocations.addAll(rootAnnot.getLoopLocations());
 			// find all locations that have outgoing edges which are annotated with LoopEntry, i.e., all loop candidates
 
 			for (final BoogieIcfgLocation locNode : locsForLoopLocations) {

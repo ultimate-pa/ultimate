@@ -51,7 +51,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.Activator;
 import de.uni_freiburg.informatik.ultimate.buchiprogramproduct.ProductBacktranslator;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LTLStepAnnotation;
-import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
@@ -824,33 +823,31 @@ public final class ProductGenerator {
 		final BoogieIcfgLocation rtr = new BoogieIcfgLocation(stateName, originalState.getProcedure(), false,
 				originalState.getBoogieASTNode());
 
-		// update annotations
-		final BoogieIcfgContainer rootAnnot = mProductRoot;
+		// update metadata
 		Map<String, BoogieIcfgLocation> prog2programPoints =
-				rootAnnot.getProgramPoints().get(originalState.getProcedure());
+				mProductRoot.getProgramPoints().get(originalState.getProcedure());
 		if (prog2programPoints == null) {
 			prog2programPoints = new HashMap<>();
-			rootAnnot.getProgramPoints().put(originalState.getProcedure(), prog2programPoints);
+			mProductRoot.getProgramPoints().put(originalState.getProcedure(), prog2programPoints);
 		}
 		prog2programPoints.put(stateName, rtr);
 
-		final ILocation currentLoopLoc = mProductRoot.getLoopLocations().remove(originalState);
-		if (currentLoopLoc != null) {
-			rootAnnot.getLoopLocations().put(rtr, currentLoopLoc);
+		if (mProductRoot.getLoopLocations().remove(originalState)) {
+			mProductRoot.getLoopLocations().add(rtr);
 		}
 
 		// TODO: It may happen that we have multiple entry points because of the
 		// products; but we can currently only represent one. Do we need to do
 		// something about that?
 
-		final BoogieIcfgLocation entry = rootAnnot.getProcedureEntryNodes().get(originalState.getProcedure());
+		final BoogieIcfgLocation entry = mProductRoot.getProcedureEntryNodes().get(originalState.getProcedure());
 		if (entry != null) {
-			rootAnnot.getProcedureEntryNodes().put(originalState.getProcedure(), rtr);
+			mProductRoot.getProcedureEntryNodes().put(originalState.getProcedure(), rtr);
 		}
 
-		final BoogieIcfgLocation exit = rootAnnot.getProcedureExitNodes().get(originalState.getProcedure());
+		final BoogieIcfgLocation exit = mProductRoot.getProcedureExitNodes().get(originalState.getProcedure());
 		if (exit != null) {
-			rootAnnot.getProcedureExitNodes().put(originalState.getProcedure(), rtr);
+			mProductRoot.getProcedureExitNodes().put(originalState.getProcedure(), rtr);
 		}
 
 		if (ProductLocationNameGenerator.isHelperState(rtr)) {
