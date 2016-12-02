@@ -9,7 +9,7 @@ import platform
 import argparse
 
 
-version = '997d45e1'
+version = '47e1251f'
 writeUltimateOutputToFile = True
 outputFileName = 'Ultimate.log'
 errorPathFileName = 'UltimateCounterExample.errorpath'
@@ -188,6 +188,11 @@ def getSettingsFile(bitprecise, settingsSearchString):
     return settingsArgument
 
 
+def checkFile(f):
+    if not os.path.isfile(f):
+        printErr('Input file ' + f + ' does not exist')
+        sys.exit(1)
+    return file
 
 def parseArgs():
     # parse command line arguments
@@ -199,10 +204,10 @@ def parseArgs():
     parser = argparse.ArgumentParser(description='Ultimate wrapper script for SVCOMP')
     parser.add_argument('--version', action='store_true', help='Print Ultimate\'s version and exit')
     parser.add_argument('--full-output', action='store_true', help='Print Ultimate\'s full output to stderr after verification ends')
-    parser.add_argument('--validate', action='store_true', help='Activate witness validation mode (if supported)')
+    parser.add_argument('--validate', nargs=1,metavar='<file>', help='Activate witness validation mode (if supported) and specify a .graphml file as witness')
     parser.add_argument('spec', nargs=1, help='An property (.prp) file from SVCOMP')
     parser.add_argument('architecture', choices=['32bit', '64bit'], help='Choose which architecture (defined as per SV-COMP rules) should be assumed')
-    parser.add_argument('file', nargs='+', help='Either one C file or one C file and one witness as matching .graphml file')
+    parser.add_argument('file', metavar='<file>', nargs=1, help='One C file')
     
     args = parser.parse_args()
   
@@ -214,20 +219,10 @@ def parseArgs():
         printErr('You must specify at least one input file')
         sys.exit(1)
     
-    if(len(args.file) > 2):
-        printErr('Ultimate.py does not support more than 2 input files, use Ultimate directly')
-        sys.exit(1)
-    
-    cFile = None
-    witness = None   
-    for f in args.file:
-        if not os.path.isfile(f):
-            printErr('Input file ' + f + ' does not exist')
-            sys.exit(1)
-        if f.endswith('.graphml'):
-            witness = f
-        else:
-            cFile = f
+    witness = None
+    cFile = checkFile(args.file[0])
+    if args.validate:
+        witness = checkFile(args.validate[0])
     
     if(cFile == None and witness != None):
         printErr("You did not specify a C file with your witness")
