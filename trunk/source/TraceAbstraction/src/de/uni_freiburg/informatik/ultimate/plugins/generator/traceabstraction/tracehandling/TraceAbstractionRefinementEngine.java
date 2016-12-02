@@ -118,7 +118,7 @@ public final class TraceAbstractionRefinementEngine
 	private final LBool mFeasibility;
 	private NestedWordAutomaton<CodeBlock, IPredicate> mInterpolantAutomaton;
 	private RcfgProgramExecution mRcfgProgramExecution;
-	private final CachingHoareTripleChecker mHoareTripleChecker;
+	private CachingHoareTripleChecker mHoareTripleChecker;
 	
 	/**
 	 * @param services
@@ -163,17 +163,10 @@ public final class TraceAbstractionRefinementEngine
 		final ManagedScript managedScript =
 				setupManagedScriptInternal(services, prefs, icfgContainer, toolchainStorage, iteration);
 		
-		// choose strategy
 		final IRefinementStrategy strategy = chooseStrategy(counterexample, abstraction, services, managedScript,
 				taPrefsForInterpolantConsolidation, prefs);
 		
 		mFeasibility = executeStrategy(strategy);
-		if (strategy.getInterpolantGenerator() instanceof InterpolantConsolidation) {
-			mHoareTripleChecker =
-					((InterpolantConsolidation) strategy.getInterpolantGenerator()).getHoareTripleChecker();
-		} else {
-			mHoareTripleChecker = null;
-		}
 	}
 	
 	@Override
@@ -257,6 +250,7 @@ public final class TraceAbstractionRefinementEngine
 						if (mLogger.isInfoEnabled()) {
 							mLogger.info("No perfect sequence of interpolants found, combining those we have.");
 						}
+						feasibility = LBool.UNSAT;
 						mInterpolantAutomaton =
 								strategy.getInterpolantAutomatonBuilder(interpolantSequences).getResult();
 					} else {
@@ -273,6 +267,12 @@ public final class TraceAbstractionRefinementEngine
 							wrapExceptionHandling(() -> strategy.getInterpolantGenerator());
 					
 					if (interpolantGenerator != null) {
+						if (interpolantGenerator instanceof InterpolantConsolidation) {
+							// set Hoare triple checker
+							mHoareTripleChecker =
+									((InterpolantConsolidation) interpolantGenerator).getHoareTripleChecker();
+						}
+						
 						InterpolantsPreconditionPostcondition interpolants;
 						int numberOfInterpolantSequencesAvailable;
 						if (interpolantGenerator instanceof TraceCheckerSpWp) {
