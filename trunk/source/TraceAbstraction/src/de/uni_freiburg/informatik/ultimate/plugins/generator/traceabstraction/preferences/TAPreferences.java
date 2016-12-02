@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategyExceptionBlacklist;
 
 public final class TAPreferences {
 	private static final boolean SEPARATE_VIOLATION_CHECK = true;
@@ -283,5 +284,10 @@ public final class TAPreferences {
 	public RefinementStrategy getRefinementStrategy() {
 		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_REFINEMENT_STRATEGY,
 				RefinementStrategy.class);
+	}
+	
+	public RefinementStrategyExceptionBlacklist getRefinementStrategyExceptionSpecification() {
+		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_REFINEMENT_STRATEGY_EXCEPTION_BLACKLIST,
+				RefinementStrategyExceptionBlacklist.class);
 	}
 }

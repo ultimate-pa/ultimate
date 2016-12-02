@@ -56,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ba
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.CachingHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategyExceptionBlacklist;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantConsolidation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
@@ -78,33 +79,39 @@ public final class TraceAbstractionRefinementEngine
 		/**
 		 * The exception is known and we always want to ignore it.
 		 */
-		KNOWN_IGNORE(1),
+		KNOWN_IGNORE,
 		/**
 		 * The exception is known and we sometimes want it to be thrown depending on the use case.
 		 */
-		KNOWN_DEPENDING(2),
+		KNOWN_DEPENDING,
 		/**
 		 * The exception is unknown and we usually want it to be thrown.
 		 */
-		UNKNOWN(3);
-		
-		private final int mValue;
-		
-		ExceptionHandlingCategory(final int value) {
-			mValue = value;
-		}
+		UNKNOWN;
 		
 		/**
 		 * @param throwSpecification
 		 *            Specifies which exception categories should be thrown.
 		 * @return {@code true} iff this exception category should be thrown.
 		 */
-		public boolean throwException(final int throwSpecification) {
-			return mValue >= throwSpecification;
+		public boolean throwException(final RefinementStrategyExceptionBlacklist throwSpecification) {
+			switch (throwSpecification) {
+				case ALL:
+					return true;
+				case UNKNOWN:
+					return this == UNKNOWN;
+				case DEPENDING:
+					return this == UNKNOWN || this == KNOWN_DEPENDING;
+				case NONE:
+					return false;
+				default:
+					throw new IllegalArgumentException("Unknown category specification: " + throwSpecification);
+			}
 		}
 	}
 	
 	private final ILogger mLogger;
+	private final RefinementStrategyExceptionBlacklist mExceptionBlacklist;
 	
 	/* outputs */
 	private final PredicateUnifier mPredicateUnifier;
@@ -147,6 +154,7 @@ public final class TraceAbstractionRefinementEngine
 			final IRun<CodeBlock, IPredicate, ?> counterexample, final IAutomaton<CodeBlock, IPredicate> abstraction) {
 		// initialize fields
 		mLogger = logger;
+		mExceptionBlacklist = prefs.getExceptionBlacklist();
 		
 		mPredicateUnifier = new PredicateUnifier(services, prefs.getCfgSmtToolkit().getManagedScript(),
 				predicateFactory, icfgContainer.getBoogie2SMT().getBoogie2SmtSymbolTable(), simplificationTechnique,
@@ -371,8 +379,7 @@ public final class TraceAbstractionRefinementEngine
 			}
 		}
 		
-		final int throwLevel = 3;
-		final boolean throwException = exceptionCategory.throwException(throwLevel);
+		final boolean throwException = exceptionCategory.throwException(mExceptionBlacklist);
 		
 		switch (exceptionCategory) {
 			case KNOWN_IGNORE:

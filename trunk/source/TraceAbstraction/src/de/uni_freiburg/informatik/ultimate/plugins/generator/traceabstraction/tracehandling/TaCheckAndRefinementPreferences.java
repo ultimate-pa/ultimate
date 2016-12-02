@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategyExceptionBlacklist;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
 
 /**
@@ -72,6 +73,7 @@ public class TaCheckAndRefinementPreferences {
 	private final boolean mDumpSmtScriptToFile;
 	private final String mPathOfDumpedScript;
 	private final String mLogicForExternalSolver;
+	private final RefinementStrategyExceptionBlacklist mExceptionBlacklist;
 	
 	// fields that can be read from the IUltimateServiceProvider
 	private final AssertCodeBlockOrder mAssertCodeBlocksIncrementally;
@@ -135,6 +137,7 @@ public class TaCheckAndRefinementPreferences {
 		mDumpSmtScriptToFile = taPrefs.dumpSmtScriptToFile();
 		mPathOfDumpedScript = taPrefs.pathOfDumpedScript();
 		mLogicForExternalSolver = taPrefs.logicForExternalSolver();
+		mExceptionBlacklist = taPrefs.getRefinementStrategyExceptionSpecification();
 		
 		final IPreferenceProvider ultimatePrefs = services.getPreferenceProvider(Activator.PLUGIN_ID);
 		mAssertCodeBlocksIncrementally =
@@ -244,5 +247,9 @@ public class TaCheckAndRefinementPreferences {
 	
 	public boolean getUseVarsFromUnsatCore() {
 		return mUseVarsFromUnsatCore;
+	}
+
+	public RefinementStrategyExceptionBlacklist getExceptionBlacklist() {
+		return mExceptionBlacklist;
 	}
 }

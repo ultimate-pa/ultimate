@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ac
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Concurrency;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine.ExceptionHandlingCategory;
 
 /**
  * Initializer and container of preferences for the trace abstraction plugin.
@@ -92,6 +93,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_XNF_CONVERSION_TECHNIQUE = "Xnf conversion technique";
 	public static final String LABEL_COUNTEREXAMPLE_SEARCH_STRATEGY = "Counterexample search strategy";
 	public static final String LABEL_REFINEMENT_STRATEGY = "Trace refinement strategy";
+	public static final String LABEL_REFINEMENT_STRATEGY_EXCEPTION_BLACKLIST = "Trace refinement exception blacklist";
 	
 	public static final String VALUE_ABSTRACTION = "Abstraction";
 	public static final String VALUE_RCFG = "RecursiveControlFlowGraph";
@@ -135,6 +137,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final CounterexampleSearchStrategy DEF_COUNTEREXAMPLE_SEARCH_STRATEGY =
 			CounterexampleSearchStrategy.BFS;
 	public static final RefinementStrategy DEF_REFINEMENT_STRATEGY = RefinementStrategy.FIXED_PREFERENCES;
+	public static final RefinementStrategyExceptionBlacklist DEF_REFINEMENT_STRATEGY_EXCEPTION_BLACKLIST =
+			RefinementStrategyExceptionBlacklist.DEPENDING;
 	// public static final boolean DEF_ALL_ERRORS_AT_ONCE = false;
 	
 	public static final boolean DEF_CUTOFF = true;
@@ -240,7 +244,10 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<>(LABEL_COUNTEREXAMPLE_SEARCH_STRATEGY, DEF_COUNTEREXAMPLE_SEARCH_STRATEGY,
 						PreferenceType.Combo, CounterexampleSearchStrategy.values()),
 				new UltimatePreferenceItem<>(LABEL_REFINEMENT_STRATEGY, DEF_REFINEMENT_STRATEGY, PreferenceType.Combo,
-						RefinementStrategy.values()), };
+						RefinementStrategy.values()),
+				new UltimatePreferenceItem<>(LABEL_REFINEMENT_STRATEGY_EXCEPTION_BLACKLIST,
+						DEF_REFINEMENT_STRATEGY_EXCEPTION_BLACKLIST, PreferenceType.Combo,
+						RefinementStrategyExceptionBlacklist.values()), };
 	}
 	
 	/**
@@ -389,5 +396,30 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		 * Multi track strategy that tries Craig interpolation and Sp/Wp interpolation.
 		 */
 		MULTI_TRACK
+	}
+	
+	/**
+	 * Specifies which categories of exceptions to throw. All other categories are ignored.
+	 * 
+	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+	 * @see ExceptionHandlingCategory
+	 */
+	public enum RefinementStrategyExceptionBlacklist {
+		/**
+		 * Throw no exceptions.
+		 */
+		NONE,
+		/**
+		 * Throw only unknown exceptions.
+		 */
+		UNKNOWN,
+		/**
+		 * Throw unknown exceptions and known exceptions that are categorized as "sometimes good, sometimes bad".
+		 */
+		DEPENDING,
+		/**
+		 * Throw all exceptions.
+		 */
+		ALL
 	}
 }
