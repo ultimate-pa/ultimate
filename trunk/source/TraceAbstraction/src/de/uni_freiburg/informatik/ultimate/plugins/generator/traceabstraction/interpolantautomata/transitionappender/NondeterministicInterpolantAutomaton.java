@@ -129,7 +129,7 @@ public class NondeterministicInterpolantAutomaton extends BasicAbstractInterpola
 	}
 
 	@Override
-	protected String switchToOnTheFlyConstructionMessage() {
+	protected String switchToOnDemandConstructionMessage() {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("Switched to On-DemandConstruction mode: nondeterministic interpolant automaton has ");
 		sb.append(mAlreadyConstrucedAutomaton.size()).append(" states. ");

@@ -222,7 +222,7 @@ public class BuchiInterpolantAutomatonBouncer extends AbstractInterpolantAutomat
 	}
 	
 	@Override
-	protected String switchToOnTheFlyConstructionMessage() {
+	protected String switchToOnDemandConstructionMessage() {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("Switched to OnTheFlyConstruction mode: Buchi interpolant automaton has ");
 		sb.append(mAlreadyConstrucedAutomaton.size()).append(" states ");

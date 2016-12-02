@@ -165,7 +165,7 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 			throw new AssertionError("already in mode ON_DEMAND_CONSTRUCTION");
 		} else {
 			mMode = Mode.ON_DEMAND_CONSTRUCTION;
-			mLogger.info(switchToOnTheFlyConstructionMessage());
+			mLogger.info(switchToOnDemandConstructionMessage());
 		}
 	}
 	
@@ -174,7 +174,7 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 
 	protected abstract String switchToReadonlyMessage();
 	
-	protected abstract String switchToOnTheFlyConstructionMessage();
+	protected abstract String switchToOnDemandConstructionMessage();
 
 
 	@Override
