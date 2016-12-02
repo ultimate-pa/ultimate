@@ -59,11 +59,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgResultReporter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.initializer.FixpointEngineFutureParameterFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.initializer.FixpointEngineParameterFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.IIcfg;
 
 /**
  * Should be used by other tools to run abstract interpretation on various parts of the RCFG.
@@ -71,7 +73,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Boo
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public final class AbstractInterpreter {
-	
+
 	/**
 	 * Run abstract interpretation on the whole RCFG.
 	 *
@@ -80,29 +82,29 @@ public final class AbstractInterpreter {
 	 *
 	 */
 	public static <STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>>
-			IAbstractInterpretationResult<STATE, CodeBlock, IBoogieVar, BoogieIcfgLocation> runSilently(final BoogieIcfgContainer root,
-					final Collection<CodeBlock> initials, final IProgressAwareTimer timer,
-					final IUltimateServiceProvider services) {
+			IAbstractInterpretationResult<STATE, CodeBlock, IBoogieVar, BoogieIcfgLocation>
+			runSilently(final BoogieIcfgContainer root, final Collection<CodeBlock> initials,
+					final IProgressAwareTimer timer, final IUltimateServiceProvider services) {
 		final ILogger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		final Supplier<IAbstractInterpretationResult<STATE, CodeBlock, IBoogieVar, BoogieIcfgLocation>> fun =
 				() -> run(root, initials, timer, services, true);
 		return runSilently(fun, logger);
 	}
-	
+
 	/**
 	 * Run abstract interpretation on the whole RCFG.
 	 *
 	 */
 	public static <STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>>
-			IAbstractInterpretationResult<STATE, CodeBlock, IBoogieVar, BoogieIcfgLocation> run(final BoogieIcfgContainer root,
-					final Collection<CodeBlock> initials, final IProgressAwareTimer timer,
+			IAbstractInterpretationResult<STATE, CodeBlock, IBoogieVar, BoogieIcfgLocation>
+			run(final BoogieIcfgContainer root, final Collection<CodeBlock> initials, final IProgressAwareTimer timer,
 					final IUltimateServiceProvider services) {
 		return run(root, initials, timer, services, false);
 	}
-	
+
 	/**
 	 * Run abstract interpretation on a path program constructed from a counterexample.
-	 * 
+	 *
 	 * @param pathProgramProjection
 	 *
 	 */
@@ -116,11 +118,11 @@ public final class AbstractInterpreter {
 		assert root != null;
 		assert services != null;
 		assert timer != null;
-		
+
 		final ILogger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		try {
-			final NWAPathProgramTransitionProvider transProvider = new NWAPathProgramTransitionProvider(counterexample,
-					pathProgramProjection, services, root);
+			final NWAPathProgramTransitionProvider transProvider =
+					new NWAPathProgramTransitionProvider(counterexample, pathProgramProjection, services, root);
 			final CodeBlock initial = counterexample.getSymbol(0);
 			final BoogieIcfgContainer rootAnnot = root;
 			final Boogie2SMT bpl2smt = rootAnnot.getBoogie2SMT();
@@ -131,7 +133,7 @@ public final class AbstractInterpreter {
 					domFac.createParamsPathProgram(timer, transProvider, transProvider);
 			final FixpointEngine<STATE, CodeBlock, IBoogieVar, BoogieIcfgLocation, Expression> fxpe =
 					new FixpointEngine<>(params);
-				final AbstractInterpretationResult<STATE, CodeBlock, IBoogieVar, BoogieIcfgLocation> result =
+			final AbstractInterpretationResult<STATE, CodeBlock, IBoogieVar, BoogieIcfgLocation> result =
 					fxpe.run(initial, script, bpl2smt);
 			if (!result.hasReachedError()) {
 				logger.info("NWA was safe (error state unreachable)");
@@ -151,10 +153,10 @@ public final class AbstractInterpreter {
 			return null;
 		}
 	}
-	
+
 	private static <STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>>
-			IAbstractInterpretationResult<STATE, CodeBlock, IBoogieVar, BoogieIcfgLocation> run(final BoogieIcfgContainer root,
-					final Collection<CodeBlock> initials, final IProgressAwareTimer timer,
+			IAbstractInterpretationResult<STATE, CodeBlock, IBoogieVar, BoogieIcfgLocation>
+			run(final BoogieIcfgContainer root, final Collection<CodeBlock> initials, final IProgressAwareTimer timer,
 					final IUltimateServiceProvider services, final boolean isSilent) {
 		if (initials == null) {
 			throw new IllegalArgumentException("No initial edges provided");
@@ -162,38 +164,36 @@ public final class AbstractInterpreter {
 		if (timer == null) {
 			throw new IllegalArgumentException("timer is null");
 		}
-		
+
 		final ITransitionProvider<CodeBlock, BoogieIcfgLocation> transProvider = new RcfgTransitionProvider();
 		final Collection<CodeBlock> filteredInitialElements = transProvider.filterInitialElements(initials);
-		
+
 		if (filteredInitialElements.isEmpty()) {
 			getReporter(services, false, false).reportSafe(null, "The program is empty");
 			return null;
 		}
-		
-		final Boogie2SMT bpl2smt = root.getBoogie2SMT();
+
 		final Script script = root.getCfgSmtToolkit().getManagedScript().getScript();
 		final FixpointEngineParameterFactory domFac =
 				new FixpointEngineParameterFactory(root, () -> new RCFGLiteralCollector(root), services);
 		final boolean isLib = filteredInitialElements.size() > 1;
 		final Iterator<CodeBlock> iter = filteredInitialElements.iterator();
-		final ILoopDetector<CodeBlock> loopDetector =
-				new RcfgLoopDetector<>(root.getLoopLocations().keySet(), transProvider);
-		
+		final ILoopDetector<CodeBlock> loopDetector = new RcfgLoopDetector<>();
+
 		AbstractInterpretationResult<STATE, CodeBlock, IBoogieVar, BoogieIcfgLocation> result = null;
-		
+
 		// TODO: If an if is at the beginning of a method, this method will be analyzed two times
 		while (iter.hasNext()) {
 			final CodeBlock initial = iter.next();
-			
+
 			final FixpointEngineParameters<STATE, CodeBlock, IBoogieVar, BoogieIcfgLocation, Expression> params =
 					domFac.createParams(timer, transProvider, loopDetector);
-			
+
 			final FixpointEngine<STATE, CodeBlock, IBoogieVar, BoogieIcfgLocation, Expression> fxpe =
 					new FixpointEngine<>(params);
-			result = fxpe.run(initial, script, bpl2smt, result);
+			result = fxpe.run(initial, script, result);
 		}
-		
+
 		final ILogger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		if (result == null) {
 			logger.error("Could not run because no initial element could be found");
@@ -213,14 +213,14 @@ public final class AbstractInterpreter {
 		logger.info(result.getBenchmark());
 		return result;
 	}
-	
+
 	/**
 	 * Run abstract interpretation on the RCFG of the future (experimental).
 	 *
 	 */
 	public static <STATE extends IAbstractState<STATE, CodeBlock, IProgramVar>>
-			IAbstractInterpretationResult<STATE, CodeBlock, IProgramVar, BoogieIcfgLocation> runFuture(final BoogieIcfgContainer root,
-					final Collection<CodeBlock> initials, final IProgressAwareTimer timer,
+			IAbstractInterpretationResult<STATE, CodeBlock, IProgramVar, BoogieIcfgLocation>
+			runFuture(final IIcfg<?> root, final Collection<CodeBlock> initials, final IProgressAwareTimer timer,
 					final IUltimateServiceProvider services, final boolean isSilent) {
 		if (initials == null) {
 			throw new IllegalArgumentException("No initial edges provided");
@@ -228,38 +228,36 @@ public final class AbstractInterpreter {
 		if (timer == null) {
 			throw new IllegalArgumentException("timer is null");
 		}
-		
+
 		final ITransitionProvider<CodeBlock, BoogieIcfgLocation> transProvider = new RcfgTransitionProvider();
 		final Collection<CodeBlock> filteredInitialElements = transProvider.filterInitialElements(initials);
-		
+
 		if (filteredInitialElements.isEmpty()) {
 			getReporter(services, false, false).reportSafe(null, "The program is empty");
 			return null;
 		}
-		
-		final Boogie2SMT bpl2smt = root.getBoogie2SMT();
+
 		final Script script = root.getCfgSmtToolkit().getManagedScript().getScript();
-		final FixpointEngineParameterFactory domFac =
-				new FixpointEngineParameterFactory(root, () -> new RCFGLiteralCollector(root), services);
+		final FixpointEngineFutureParameterFactory domFac =
+				new FixpointEngineFutureParameterFactory(root, () -> new RCFGLiteralCollector(root), services);
 		final boolean isLib = filteredInitialElements.size() > 1;
 		final Iterator<CodeBlock> iter = filteredInitialElements.iterator();
-		final ILoopDetector<CodeBlock> loopDetector =
-				new RcfgLoopDetector<>(root.getLoopLocations().keySet(), transProvider);
-		
+		final ILoopDetector<CodeBlock> loopDetector = new RcfgLoopDetector<>();
+
 		AbstractInterpretationResult<STATE, CodeBlock, IProgramVar, BoogieIcfgLocation> result = null;
-		
+
 		// TODO: If an if is at the beginning of a method, this method will be analyzed two times
 		while (iter.hasNext()) {
 			final CodeBlock initial = iter.next();
-			
+
 			final FixpointEngineParameters<STATE, CodeBlock, IProgramVar, BoogieIcfgLocation, Expression> params =
 					domFac.createParamsFuture(timer, transProvider, loopDetector);
-			
+
 			final FixpointEngine<STATE, CodeBlock, IProgramVar, BoogieIcfgLocation, Expression> fxpe =
 					new FixpointEngine<>(params);
-			result = fxpe.run(initial, script, bpl2smt, result);
+			result = fxpe.run(initial, script, result);
 		}
-		
+
 		final ILogger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		if (result == null) {
 			logger.error("Could not run because no initial element could be found");
@@ -279,31 +277,31 @@ public final class AbstractInterpreter {
 		logger.info(result.getBenchmark());
 		return result;
 	}
-	
+
 	/**
-	 * so far, this is a copy of runFuture(..), except some parameters (e.g. abstract domain) are not taken from the settings but hardcoded
+	 * so far, this is a copy of runFuture(..), except some parameters (e.g. abstract domain) are not taken from the
+	 * settings but hardcoded
 	 *
 	 */
 	public static <STATE extends IAbstractState<STATE, CodeBlock, IProgramVar>>
-			IAbstractInterpretationResult<STATE, CodeBlock, IProgramVar, BoogieIcfgLocation> runFutureEqualityDomain(final BoogieIcfgContainer root,
-					final Collection<CodeBlock> initials, final IProgressAwareTimer timer,
-					final IUltimateServiceProvider services, final boolean isSilent) {
+			IAbstractInterpretationResult<STATE, CodeBlock, IProgramVar, BoogieIcfgLocation>
+			runFutureEqualityDomain(final BoogieIcfgContainer root, final Collection<CodeBlock> initials,
+					final IProgressAwareTimer timer, final IUltimateServiceProvider services, final boolean isSilent) {
 		if (initials == null) {
 			throw new IllegalArgumentException("No initial edges provided");
 		}
 		if (timer == null) {
 			throw new IllegalArgumentException("timer is null");
 		}
-		
+
 		final ITransitionProvider<CodeBlock, BoogieIcfgLocation> transProvider = new RcfgTransitionProvider();
 		final Collection<CodeBlock> filteredInitialElements = transProvider.filterInitialElements(initials);
-		
+
 		if (filteredInitialElements.isEmpty()) {
 			getReporter(services, false, false).reportSafe(null, "The program is empty");
 			return null;
 		}
-		
-		final Boogie2SMT bpl2smt = root.getBoogie2SMT();
+
 		final Script script = root.getCfgSmtToolkit().getManagedScript().getScript();
 
 		/*
@@ -311,26 +309,25 @@ public final class AbstractInterpreter {
 		 */
 		final FixpointEngineParameterFactory domFac =
 				new FixpointEngineParameterFactory(root, () -> new RCFGLiteralCollector(root), services);
-		
+
 		final boolean isLib = filteredInitialElements.size() > 1;
 		final Iterator<CodeBlock> iter = filteredInitialElements.iterator();
-		final ILoopDetector<CodeBlock> loopDetector =
-				new RcfgLoopDetector<>(root.getLoopLocations().keySet(), transProvider);
-		
+		final ILoopDetector<CodeBlock> loopDetector = new RcfgLoopDetector<>();
+
 		AbstractInterpretationResult<STATE, CodeBlock, IProgramVar, BoogieIcfgLocation> result = null;
-		
+
 		// TODO: If an if is at the beginning of a method, this method will be analyzed two times
 		while (iter.hasNext()) {
 			final CodeBlock initial = iter.next();
-			
+
 			final FixpointEngineParameters<STATE, CodeBlock, IProgramVar, BoogieIcfgLocation, Expression> params =
 					domFac.createParamsFutureEqualityDomain(timer, transProvider, loopDetector);
-			
+
 			final FixpointEngine<STATE, CodeBlock, IProgramVar, BoogieIcfgLocation, Expression> fxpe =
 					new FixpointEngine<>(params);
-			result = fxpe.run(initial, script, bpl2smt, result);
+			result = fxpe.run(initial, script, result);
 		}
-		
+
 		final ILogger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		if (result == null) {
 			logger.error("Could not run because no initial element could be found");
@@ -350,7 +347,7 @@ public final class AbstractInterpreter {
 		logger.info(result.getBenchmark());
 		return result;
 	}
-	
+
 	private static <STATE extends IAbstractState<STATE, CodeBlock, VARDECL>, VARDECL, LOC>
 			IAbstractInterpretationResult<STATE, CodeBlock, VARDECL, LOC>
 			runSilently(final Supplier<IAbstractInterpretationResult<STATE, CodeBlock, VARDECL, LOC>> fun,
@@ -369,7 +366,7 @@ public final class AbstractInterpreter {
 			return null;
 		}
 	}
-	
+
 	private static <STATE extends IAbstractState<STATE, CodeBlock, VARDECL>, VARDECL>
 			IResultReporter<STATE, CodeBlock, VARDECL, BoogieIcfgLocation>
 			getReporter(final IUltimateServiceProvider services, final boolean isLibrary, final boolean isSilent) {

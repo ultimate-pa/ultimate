@@ -37,14 +37,12 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.core.lib.models.VisualizationNode;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.LoopEntryAnnotation.LoopEntryType;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.ModernAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IVisualizable;
 import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
@@ -52,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieDeclarations;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -66,8 +65,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBac
  * @author heizmann@informatik.uni-freiburg.de
  *
  */
-public class BoogieIcfgContainer extends ModernAnnotations
-		implements IElement, IVisualizable<VisualizationNode>, IIcfg {
+public class BoogieIcfgContainer extends ModernAnnotations implements IIcfg<BoogieIcfgLocation> {
 	/**
 	 * The serial version UID. Change only if serial representation changes.
 	 */
@@ -76,8 +74,8 @@ public class BoogieIcfgContainer extends ModernAnnotations
 	private final BoogieDeclarations mBoogieDeclarations;
 	private final Map<String, BoogieIcfgLocation> mEntryNodes;
 	private final Map<String, BoogieIcfgLocation> mExitNode;
-	private final Map<BoogieIcfgLocation, ILocation> mLoopLocations;
-	private final Map<String, Collection<BoogieIcfgLocation>> mErrorNodes;
+	private final Set<BoogieIcfgLocation> mLoopLocations;
+	private final Map<String, Set<BoogieIcfgLocation>> mErrorNodes;
 	private final Map<String, Map<String, BoogieIcfgLocation>> mLocNodes;
 
 	/**
@@ -98,8 +96,8 @@ public class BoogieIcfgContainer extends ModernAnnotations
 	private final CodeBlockFactory mCodeBlockFactory;
 	private final CfgSmtToolkit mCfgSmtToolkit;
 	private final IPayload mPayload;
-
 	private Set<BoogieIcfgLocation> mPotentialCycleProgramPoints;
+	private final Set<BoogieIcfgLocation> mInitialNodes;
 
 	public BoogieIcfgContainer(final IUltimateServiceProvider services, final BoogieDeclarations boogieDeclarations,
 			final Boogie2SMT mBoogie2smt, final RCFGBacktranslator backtranslator, final ILocation loc) {
@@ -109,7 +107,8 @@ public class BoogieIcfgContainer extends ModernAnnotations
 		mFinalNode = new HashMap<>();
 		mLocNodes = new HashMap<>();
 		mErrorNodes = new HashMap<>();
-		mLoopLocations = new HashMap<>();
+		mLoopLocations = new HashSet<>();
+		mInitialNodes = new HashSet<>();
 
 		mBoogieDeclarations = boogieDeclarations;
 		mBoogie2SMT = mBoogie2smt;
@@ -152,7 +151,7 @@ public class BoogieIcfgContainer extends ModernAnnotations
 	}
 
 	@Override
-	public Map<String, Collection<BoogieIcfgLocation>> getProcedureErrorNodes() {
+	public Map<String, Set<BoogieIcfgLocation>> getProcedureErrorNodes() {
 		return mErrorNodes;
 	}
 
@@ -172,11 +171,9 @@ public class BoogieIcfgContainer extends ModernAnnotations
 		return mBoogie2SMT;
 	}
 
-	/**
-	 * Maps a {@code LocNode}s to the while loop that it represents
-	 */
+	@Override
 	@Visualizable
-	public Map<BoogieIcfgLocation, ILocation> getLoopLocations() {
+	public Set<BoogieIcfgLocation> getLoopLocations() {
 		return mLoopLocations;
 	}
 
@@ -244,5 +241,15 @@ public class BoogieIcfgContainer extends ModernAnnotations
 	@Override
 	public String getIdentifier() {
 		return getClass().getSimpleName() + " " + getFilename();
+	}
+
+	@Override
+	public IIcfgSymbolTable getSymboltable() {
+		return mBoogie2SMT.getBoogie2SmtSymbolTable();
+	}
+
+	@Override
+	public Set<BoogieIcfgLocation> getInitialNodes() {
+		return mInitialNodes;
 	}
 }

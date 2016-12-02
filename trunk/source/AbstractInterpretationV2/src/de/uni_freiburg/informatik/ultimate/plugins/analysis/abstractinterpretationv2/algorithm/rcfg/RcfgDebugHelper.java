@@ -49,8 +49,8 @@ public class RcfgDebugHelper<STATE extends IAbstractState<STATE, CodeBlock, VARD
 
 	private static int sIllegalPredicates = Integer.MAX_VALUE;
 
-	public RcfgDebugHelper(final CfgSmtToolkit csToolkit,
-			final IUltimateServiceProvider services, final IIcfgSymbolTable symbolTable) {
+	public RcfgDebugHelper(final CfgSmtToolkit csToolkit, final IUltimateServiceProvider services,
+			final IIcfgSymbolTable symbolTable) {
 		mServices = services;
 		mSymbolTable = symbolTable;
 		mMgdScript = csToolkit.getManagedScript();
@@ -108,19 +108,20 @@ public class RcfgDebugHelper<STATE extends IAbstractState<STATE, CodeBlock, VARD
 			final IPredicate precondHier) {
 		mLogger.fatal("Soundness check failed for the following triple:");
 		final String simplePre = SmtUtils
-				.simplify(mMgdScript, precond.getFormula(), mServices, mSimplificationTechnique)
-				.toStringDirect();
+				.simplify(mMgdScript, precond.getFormula(), mServices, mSimplificationTechnique).toStringDirect();
 		if (precondHier == null) {
 			mLogger.fatal("Pre: {" + simplePre + "}");
 		} else {
 			mLogger.fatal("PreBefore: {" + simplePre + "}");
-			mLogger.fatal("PreAfter: {" + SmtUtils.simplify(mMgdScript, precondHier.getFormula(),
-					mServices, mSimplificationTechnique).toStringDirect() + "}");
+			mLogger.fatal("PreAfter: {"
+					+ SmtUtils.simplify(mMgdScript, precondHier.getFormula(), mServices, mSimplificationTechnique)
+							.toStringDirect()
+					+ "}");
 		}
 		mLogger.fatal(transition.getTransitionFormula().getFormula().toStringDirect() + " (" + transition + ")");
-		mLogger.fatal("Post: {" + SmtUtils
-				.simplify(mMgdScript, postcond.getFormula(), mServices, mSimplificationTechnique)
-				.toStringDirect() + "}");
+		mLogger.fatal(
+				"Post: {" + SmtUtils.simplify(mMgdScript, postcond.getFormula(), mServices, mSimplificationTechnique)
+						.toStringDirect() + "}");
 	}
 
 	private IPredicate createPredicateFromState(final Collection<STATE> states) {

@@ -27,13 +27,15 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 
-import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.VisualizationNode;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IVisualizable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 
 /**
  *
@@ -41,12 +43,12 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public interface IIcfg extends IElement, IVisualizable<VisualizationNode> {
+public interface IIcfg<LOC extends IcfgLocation> extends IElement, IVisualizable<VisualizationNode> {
 
 	/**
 	 * Maps the pair of procedure name location name to the LocNode that represents this location.
 	 */
-	Map<String, Map<String, BoogieIcfgLocation>> getProgramPoints();
+	Map<String, Map<String, LOC>> getProgramPoints();
 
 	/**
 	 * Maps a procedure name to the entry node of that procedure. The entry node of a procedure represents an auxiliary
@@ -54,23 +56,39 @@ public interface IIcfg extends IElement, IVisualizable<VisualizationNode> {
 	 * corresponding and oldvars have the same values, we assume the requires clause and reach the initial node.
 	 *
 	 */
-	Map<String, BoogieIcfgLocation> getProcedureEntryNodes();
+	Map<String, LOC> getProcedureEntryNodes();
 
 	/**
 	 * Maps a procedure name to the the exit node of that procedure. The exit node of a procedure represents an
 	 * auxiliary location that is reached after assuming the ensures part of the specification. This locNode is the
 	 * source of ReturnEdges which lead to the callers of this procecure.
 	 */
-	Map<String, BoogieIcfgLocation> getProcedureExitNodes();
+	Map<String, LOC> getProcedureExitNodes();
 
 	/**
 	 * Maps a procedure name to error locations generated for this procedure.
 	 */
-	Map<String, Collection<BoogieIcfgLocation>> getProcedureErrorNodes();
+	Map<String, Set<LOC>> getProcedureErrorNodes();
+
+	/**
+	 * Return all locations that are considered to be loop heads.
+	 */
+	Set<LOC> getLoopLocations();
 
 	CodeBlockFactory getCodeBlockFactory();
 
 	CfgSmtToolkit getCfgSmtToolkit();
+
+	IIcfgSymbolTable getSymboltable();
+
+	/**
+	 * The set of initial nodes represents those nodes from which an analysis should start. It is used to distinguish
+	 * "library mode" from "main method mode". Hence, it contains only procedure entry nodes (see
+	 * {@link #getProcedureEntryNodes()} and either all or one.
+	 *
+	 * @return A set containing all initial nodes.
+	 */
+	Set<LOC> getInitialNodes();
 
 	/**
 	 * Returns an identifier that can be used during debugging.

@@ -39,7 +39,6 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractCounterexample;
@@ -103,10 +102,10 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 	}
 
 	void saveRootStorage(final IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> rootStateStorage,
-			final ACTION start, final Script script, final Boogie2SMT bpl2smt) {
+			final ACTION start, final Script script) {
 		mRootStorage = rootStateStorage;
-		mTerms.addAll(rootStateStorage.getTerms(start, script, bpl2smt));
-		mLoc2Term.putAll(rootStateStorage.getLoc2Term(start, script, bpl2smt));
+		mTerms.addAll(rootStateStorage.getTerms(start, script));
+		mLoc2Term.putAll(rootStateStorage.getLoc2Term(start, script));
 
 		final Map<LOCATION, Set<AbstractMultiState<STATE, ACTION, VARDECL>>> loc2states =
 				rootStateStorage.getLoc2States(start);

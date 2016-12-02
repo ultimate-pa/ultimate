@@ -148,4 +148,9 @@ public class NewArrayIdProvider {
 	public void registerDisjunctSinglePointer(IProgramVarOrConst currentArray, EqNode ind1) {
 		arrayToDisjunctIndices.addPair(currentArray, ind1);
 	}
+
+	public void registerEquivalenceClass(IProgramVarOrConst currentArray, Set<EqNode> ec) {
+		// TODO Auto-generated method stub
+		
+	}
 }
