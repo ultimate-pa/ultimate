@@ -29,8 +29,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2;
 
 import java.util.Collection;
-import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
@@ -39,11 +37,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferencePro
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractInterpreter;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
@@ -52,28 +49,28 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  *
  */
 public class AbstractInterpretationRcfgObserver extends BaseObserver {
-	
-	private static final String ULTIMATE_START = "ULTIMATE.start";
+
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
-	
+
 	public AbstractInterpretationRcfgObserver(final IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
-	
+
 	@Override
 	public boolean process(final IElement elem) throws Throwable {
 		if (!(elem instanceof BoogieIcfgContainer)) {
 			throw new IllegalArgumentException("You cannot use this observer for " + elem.getClass().getSimpleName());
 		}
 		final BoogieIcfgContainer root = (BoogieIcfgContainer) elem;
-		
-		final List<CodeBlock> initial = getInitialEdges(root);
+
+		final Collection<CodeBlock> initial =
+				RcfgUtils.getInitialEdges(root).stream().map(a -> (CodeBlock) a).collect(Collectors.toSet());
 		if (initial == null) {
 			throw new IllegalArgumentException("Could not find an initial edge");
 		}
-		
+
 		final IPreferenceProvider ups = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		final IProgressAwareTimer timer;
 		if (ups.getBoolean(AbsIntPrefInitializer.LABEL_RUN_AS_PRE_ANALYSIS)) {
@@ -81,31 +78,14 @@ public class AbstractInterpretationRcfgObserver extends BaseObserver {
 		} else {
 			timer = mServices.getProgressMonitorService();
 		}
-		
+
 		if (ups.getBoolean(AbsIntPrefInitializer.LABEL_USE_FUTURE_RCFG)) {
 			AbstractInterpreter.runFuture(root, initial, timer, mServices, false);
 		} else {
 			AbstractInterpreter.run(root, initial, timer, mServices);
 		}
-		
+
 		// do not descend, this is already the root
 		return false;
-	}
-	
-	private List<CodeBlock> getInitialEdges(final BoogieIcfgContainer root) {
-		final Collection<IcfgEdge> startEdges = BoogieIcfgContainer.extractStartEdges(root);
-		
-		final Set<BoogieIcfgLocation> ultimateStartNodes = startEdges.stream().map(a -> a.getSource())
-				.filter(source -> source instanceof BoogieIcfgLocation
-						&& ((BoogieIcfgLocation) source).getProcedure().equals(ULTIMATE_START))
-				.map(a -> (BoogieIcfgLocation) a).collect(Collectors.toSet());
-		if (!ultimateStartNodes.isEmpty()) {
-			mLogger.info("Found entry method " + ULTIMATE_START);
-			return ultimateStartNodes.stream().flatMap(a -> a.getOutgoingEdges().stream()).map(a -> (CodeBlock) a)
-					.collect(Collectors.toList());
-		}
-		mLogger.info("Did not find entry method " + ULTIMATE_START + ", using library mode");
-		return startEdges.stream().filter(a -> a instanceof CodeBlock).map(a -> (CodeBlock) a)
-				.collect(Collectors.toList());
 	}
 }
