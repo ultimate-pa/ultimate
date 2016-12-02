@@ -57,6 +57,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 
 public class HsNonPlugin {
 	
@@ -186,48 +187,67 @@ public class HsNonPlugin {
 			final IProgramVarOrConst currentArray = en.getKey();
 			final VPState state = en.getValue();
 			
-			/*
-			 * For an index i to be in its own partition (along with its =-equivalence class) for array
-			 * a, we have to know that it _must_ be different from all other indices (eq-class representatives)
-			 *   that are used for array a
-			 * 
-			 * (would be nice here, if the EQNodes in the disequality pairs would be only the 
-			 *  representatives of each equivalence class.)
-			 */
-			for (final EqNode ind1 : arrayToVPState.get(currentArray).getEquivalenceRepresentatives()) {
-				if (!vpPreAnalysis.isArrayAccessedAt(currentArray, ind1)) {
-					// we don't need an entry for ind1 in our partitioning map because 
-					// it is never used to access the currentArray
-					continue;
-				}
-
-				/*
-				 * 	Check if ind1 is known to be unequal to all the other indices (equality representatives) 
-				 * that the array "array" is accessed with?
-				 */
-				boolean indUneqAllOthers = true;
-				for (final EqNode ind2 : arrayToVPState.get(currentArray).getEquivalenceRepresentatives()) {
-					if (!vpPreAnalysis.isArrayAccessedAt(currentArray, ind2)) {
-						// the currentArray is never accessed at ind2
-						// --> it does not matter if ind2 may alias with ind1
-						continue;
+			
+			UnionFind<EqNode> uf = new UnionFind<>();
+			for (EqNode accessingNode : vpPreAnalysis.getAccessingIndicesForArray(currentArray)) {
+				uf.findAndConstructEquivalenceClassIfNeeded(accessingNode);
+			}
+			//TODO: optimization: compute partitioning on the equivalence class representatives instead
+			//  of all nodes
+			for (EqNode accessingNode1 : vpPreAnalysis.getAccessingIndicesForArray(currentArray)) {
+				for (EqNode accessingNode2 : vpPreAnalysis.getAccessingIndicesForArray(currentArray)) {
+					if (state.mayEqual(accessingNode1, accessingNode2)) {
+						uf.union(accessingNode1, accessingNode2);
 					}
-					if (ind2 == ind1) {
-						continue;
-					}
-					if (!state.getDisEqualitySet().contains(new VPDomainSymmetricPair<EqNode>(ind1, ind2))) {
-						// ind1 and ind2 may be equal
-						indUneqAllOthers = false;
-						break;
-					}
-				}
-				
-				if (indUneqAllOthers) {
-					// ind1 and all EqNodes that are known to be equal get 1 partition.
-					newArrayIdProvider.registerDisjunctSinglePointer(currentArray, ind1);
 				}
 			}
+			for (Set<EqNode> ec : uf.getAllEquivalenceClasses()) {
+				newArrayIdProvider.registerEquivalenceClass(currentArray, ec);
+			}
 		}
+			
+//			/*
+//			 * For an index i to be in its own partition (along with its =-equivalence class) for array
+//			 * a, we have to know that it _must_ be different from all other indices (eq-class representatives)
+//			 *   that are used for array a
+//			 * 
+//			 * (would be nice here, if the EQNodes in the disequality pairs would be only the 
+//			 *  representatives of each equivalence class.)
+//			 */
+//			for (final EqNode ind1 : arrayToVPState.get(currentArray).getEquivalenceRepresentatives()) {
+//				if (!vpPreAnalysis.isArrayAccessedAt(currentArray, ind1)) {
+//					// we don't need an entry for ind1 in our partitioning map because 
+//					// it is never used to access the currentArray
+//					continue;
+//				}
+//
+//				/*
+//				 * 	Check if ind1 is known to be unequal to all the other indices (equality representatives) 
+//				 * that the array "array" is accessed with?
+//				 */
+//				boolean indUneqAllOthers = true;
+//				for (final EqNode ind2 : arrayToVPState.get(currentArray).getEquivalenceRepresentatives()) {
+//					if (!vpPreAnalysis.isArrayAccessedAt(currentArray, ind2)) {
+//						// the currentArray is never accessed at ind2
+//						// --> it does not matter if ind2 may alias with ind1
+//						continue;
+//					}
+//					if (ind2 == ind1) {
+//						continue;
+//					}
+//					if (!state.getDisEqualitySet().contains(new VPDomainSymmetricPair<EqNode>(ind1, ind2))) {
+//						// ind1 and ind2 may be equal
+//						indUneqAllOthers = false;
+//						break;
+//					}
+//				}
+//				
+//				if (indUneqAllOthers) {
+//					// ind1 and all EqNodes that are known to be equal get 1 partition.
+//					newArrayIdProvider.registerDisjunctSinglePointer(currentArray, ind1);
+//				}
+//			}
+//		}
 		
 		return newArrayIdProvider;
 	}
