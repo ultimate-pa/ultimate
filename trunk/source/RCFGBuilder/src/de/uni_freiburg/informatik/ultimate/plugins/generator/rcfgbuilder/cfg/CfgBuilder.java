@@ -203,7 +203,7 @@ public class CfgBuilder {
 	 *            that encodes a program.
 	 * @return RootNode of a recursive control flow graph.
 	 */
-	public BoogieIcfgContainer getRootNode(final Unit unit) {
+	public BoogieIcfgContainer createIcfg(final Unit unit) {
 
 		mTransFormulaAdder = new TransFormulaAdder(mBoogie2smt, mServices);
 
@@ -301,12 +301,20 @@ public class CfgBuilder {
 		returnAnnot.setTransitionFormula(outParams2CallerVars.getTransFormula());
 	}
 
+	private static void passAllAnnotations(final BoogieASTNode node, final IIcfgElement cb) {
+		ModelUtils.copyAnnotations(node, cb);
+	}
+
+	private static void passAllAnnotations(final BoogieASTNode node, final Statement st) {
+		ModelUtils.copyAnnotations(node, st);
+	}
+
 	/**
 	 * Build control flow graph of single procedures.
 	 *
 	 * @author heizmann@informatik.uni-freiburg.de
 	 */
-	private class ProcedureCfgBuilder {
+	private final class ProcedureCfgBuilder {
 
 		/**
 		 * Maps a position identifier to the LocNode that represents this position in the CFG.
@@ -316,7 +324,7 @@ public class CfgBuilder {
 		/**
 		 * Maps a Label identifier to the LocNode that represents this Label in the CFG.
 		 */
-		private HashMap<String, BoogieIcfgLocation> mLabel2LocNodes;
+		private Map<String, BoogieIcfgLocation> mLabel2LocNodes;
 
 		/**
 		 * Set of all labels that occurred in the procedure. If an element is inserted twice this is an error.
@@ -326,7 +334,7 @@ public class CfgBuilder {
 		/**
 		 * Name of that last Label for which we constructed a LocNode
 		 */
-		String mLastLabelName;
+		private String mLastLabelName;
 
 		/**
 		 * Distance to the last LocNode that was constructed as representative of a label.
@@ -542,7 +550,7 @@ public class CfgBuilder {
 		 *
 		 * @return
 		 */
-		private BoogieIcfgLocation addErrorNode(final String procName, final BoogieASTNode BoogieASTNode) {
+		private BoogieIcfgLocation addErrorNode(final String procName, final BoogieASTNode boogieASTNode) {
 			Set<BoogieIcfgLocation> errorNodes = mIcfg.getProcedureErrorNodes().get(procName);
 			if (errorNodes == null) {
 				errorNodes = new HashSet<>();
@@ -550,18 +558,18 @@ public class CfgBuilder {
 			}
 			final int locNodeNumber = mIcfg.getProcedureErrorNodes().get(procName).size();
 			String errorLocLabel;
-			if (BoogieASTNode instanceof AssertStatement) {
+			if (boogieASTNode instanceof AssertStatement) {
 				errorLocLabel = procName + "Err" + locNodeNumber + "AssertViolation";
-			} else if (BoogieASTNode instanceof EnsuresSpecification) {
+			} else if (boogieASTNode instanceof EnsuresSpecification) {
 				errorLocLabel = procName + "Err" + locNodeNumber + "EnsuresViolation";
-			} else if (BoogieASTNode instanceof CallStatement) {
+			} else if (boogieASTNode instanceof CallStatement) {
 				errorLocLabel = procName + "Err" + locNodeNumber + "RequiresViolation";
 			} else {
 				throw new IllegalArgumentException();
 			}
 			final BoogieIcfgLocation errorLocNode =
-					new BoogieIcfgLocation(errorLocLabel, procName, true, BoogieASTNode);
-			final Object checkCand = BoogieASTNode.getPayload().getAnnotations().get(Check.getIdentifier());
+					new BoogieIcfgLocation(errorLocLabel, procName, true, boogieASTNode);
+			final Object checkCand = boogieASTNode.getPayload().getAnnotations().get(Check.getIdentifier());
 			if (checkCand != null) {
 				final Check check = (Check) checkCand;
 				errorLocNode.getPayload().getAnnotations().put(Check.getIdentifier(), check);
@@ -1137,8 +1145,8 @@ public class CfgBuilder {
 
 	private class LargeBlockEncoding {
 
-		Set<BoogieIcfgLocation> sequentialQueue = new HashSet<>();
-		Map<BoogieIcfgLocation, List<CodeBlock>> parallelQueue = new HashMap<>();
+		Set<BoogieIcfgLocation> mSequentialQueue = new HashSet<>();
+		Map<BoogieIcfgLocation, List<CodeBlock>> mParallelQueue = new HashMap<>();
 		final boolean mSimplifyCodeBlocks;
 
 		public LargeBlockEncoding() {
@@ -1149,26 +1157,26 @@ public class CfgBuilder {
 				for (final String position : mIcfg.getProgramPoints().get(proc).keySet()) {
 					final BoogieIcfgLocation pp = mIcfg.getProgramPoints().get(proc).get(position);
 					if (superfluousSequential(pp)) {
-						sequentialQueue.add(pp);
+						mSequentialQueue.add(pp);
 					} else {
 						final List<CodeBlock> list = superfluousParallel(pp);
 						if (list != null) {
-							parallelQueue.put(pp, list);
+							mParallelQueue.put(pp, list);
 						}
 					}
 				}
 			}
-			while (!sequentialQueue.isEmpty() || !parallelQueue.isEmpty()) {
-				if (!sequentialQueue.isEmpty()) {
-					final BoogieIcfgLocation superfluousPP = sequentialQueue.iterator().next();
-					sequentialQueue.remove(superfluousPP);
+			while (!mSequentialQueue.isEmpty() || !mParallelQueue.isEmpty()) {
+				if (!mSequentialQueue.isEmpty()) {
+					final BoogieIcfgLocation superfluousPP = mSequentialQueue.iterator().next();
+					mSequentialQueue.remove(superfluousPP);
 					composeSequential(superfluousPP);
 				} else {
 					final Entry<BoogieIcfgLocation, List<CodeBlock>> superfluous =
-							parallelQueue.entrySet().iterator().next();
+							mParallelQueue.entrySet().iterator().next();
 					final BoogieIcfgLocation pp = superfluous.getKey();
 					final List<CodeBlock> outgoing = superfluous.getValue();
-					parallelQueue.remove(pp);
+					mParallelQueue.remove(pp);
 					composeParallel(pp, outgoing);
 				}
 			}
@@ -1186,10 +1194,10 @@ public class CfgBuilder {
 			sequence.add(outgoing);
 			mCbf.constructSequentialComposition(predecessor, successor, mSimplifyCodeBlocks, false, sequence,
 					mXnfConversionTechnique, mSimplificationTechnique);
-			if (!sequentialQueue.contains(predecessor)) {
+			if (!mSequentialQueue.contains(predecessor)) {
 				final List<CodeBlock> outEdges = superfluousParallel(predecessor);
 				if (outEdges != null) {
-					parallelQueue.put(predecessor, outEdges);
+					mParallelQueue.put(predecessor, outEdges);
 				}
 			}
 		}
@@ -1199,15 +1207,15 @@ public class CfgBuilder {
 			mCbf.constructParallelComposition(pp, successor, Collections.unmodifiableList(outgoing),
 					mXnfConversionTechnique, mSimplificationTechnique);
 			if (superfluousSequential(pp)) {
-				sequentialQueue.add(pp);
+				mSequentialQueue.add(pp);
 			} else {
 				final List<CodeBlock> list = superfluousParallel(pp);
 				if (list != null) {
-					parallelQueue.put(pp, list);
+					mParallelQueue.put(pp, list);
 				}
 			}
 			if (superfluousSequential(successor)) {
-				sequentialQueue.add(successor);
+				mSequentialQueue.add(successor);
 			}
 		}
 
@@ -1265,13 +1273,5 @@ public class CfgBuilder {
 			}
 			return result;
 		}
-	}
-
-	private static void passAllAnnotations(final BoogieASTNode node, final IIcfgElement cb) {
-		ModelUtils.copyAnnotations(node, cb);
-	}
-
-	private static void passAllAnnotations(final BoogieASTNode node, final Statement st) {
-		ModelUtils.copyAnnotations(node, st);
 	}
 }

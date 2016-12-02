@@ -95,7 +95,7 @@ public class RCFGBuilderObserver implements IUnmanagedObserver {
 			final RCFGBacktranslator translator = new RCFGBacktranslator(mLogger);
 			final CfgBuilder recCFGBuilder = new CfgBuilder(unit, translator, mServices, mStorage);
 			try {
-				mGraphroot = recCFGBuilder.getRootNode(unit);
+				mGraphroot = recCFGBuilder.createIcfg(unit);
 				translator.setTerm2Expression(mGraphroot.getBoogie2SMT().getTerm2Expression());				
 				ModelUtils.copyAnnotations(unit, mGraphroot);
 				mServices.getBacktranslationService().addTranslator(translator);
