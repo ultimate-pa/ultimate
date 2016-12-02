@@ -24,7 +24,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Boo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 public class ParallelDfgGeneratorObserver extends BaseObserver {
-	
+
 	final private ILogger mLogger;
 	final private IUltimateServiceProvider mServices;
 	IAbstractInterpretationResult<DataflowState, CodeBlock, IProgramVar, BoogieIcfgLocation> mDataflowAnalysisResult;
@@ -35,7 +35,7 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 	private ParallelDataflowgraph<IcfgEdge> mInitNode;
 	private final Map<String, Integer> mStmtsPerThread;
 	private final Map<String, Integer> mLocsPerThread;
-	
+
 	public ParallelDfgGeneratorObserver(final ILogger logger, final IUltimateServiceProvider services) {
 		mLogger = logger;
 		mServices = services;
@@ -48,16 +48,16 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 		mStmtsPerThread = new HashMap<>();
 		mLocsPerThread = new HashMap<>();
 	}
-	
+
 	@Override
 	public boolean process(final IElement root) throws Throwable {
-		
+
 		// rootNode is the dummy note with edges leading to every procedure entry point
 		final BoogieIcfgContainer rootNode = (BoogieIcfgContainer) root;
 		// n = number of threads. Carefull with init procedure
 		final int n = BoogieIcfgContainer.extractStartEdges(rootNode).size();
 		mDataflowAnalysisResult = obtainDataflowAnalysisResult(rootNode);
-		
+
 		computeInitNode(rootNode);
 		// look for asserts in the RCFG
 		final List<IcfgLocation> nodes = new ArrayList<>();
@@ -70,15 +70,15 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 		final List<List<IcfgLocation>> endError = getEndErrorLocations(nodes);
 		final List<IcfgLocation> assertLocs = endError.get(0);
 		final List<IcfgLocation> endLocs = endError.get(1);
-		
+
 		if (assertLocs.isEmpty()) {
-			// no asserts,  nothing to check
+			// no asserts, nothing to check
 			return false;
 		}
 		// compute Start Locations
 		final List<ParallelDataflowgraph<IcfgEdge>> starts = computeStartLocs(assertLocs, endLocs);
 		mNodeCount += starts.size();
-		
+
 		// Debug info before computation of DFG
 		mLogger.debug("The init Node is " + mInitNode.toString());
 		mLogger.debug("Number of Threads: " + (n - 1));
@@ -93,35 +93,29 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 		for (final ParallelDataflowgraph<IcfgEdge> s : starts) {
 			mLogger.debug("  " + s.toString());
 		}
-		
+
 		// Algorithm with the start Locations
 		collectDFGEdges(starts);
-		
+
 		// Debug info after the algorithm
-		
+
 		mLogger.debug("Information of the orignial CFG of the program: ");
 		mLogger.debug("Total number of control flow nodes: " + mCFGNodeCount);
 		mLogger.debug("Total number of control flowe edges: " + mCFGEdgeCount);
 		mLogger.debug("Maximal number of nodes in the Parallel DFG: " + computeMaxNodes());
-		
+
 		mLogger.debug("Information of the Parallel DFG:");
 		mLogger.debug("Total number of data flow nodes: " + mNodeCount);
 		mLogger.debug("Total number of data flow edges: " + mEdgeCount);
 		return false;
 	}
-	
+
 	private IAbstractInterpretationResult<DataflowState, CodeBlock, IProgramVar, BoogieIcfgLocation>
 			obtainDataflowAnalysisResult(final BoogieIcfgContainer r) {
-		final List<CodeBlock> edges = new ArrayList<>();
-		r.getProcedureEntryNodes();
-		for (final Entry<String, BoogieIcfgLocation> en : r.getProcedureEntryNodes().entrySet()) {
-			edges.add((CodeBlock) en.getValue().getOutgoingEdges().get(0));
-		}
-		
 		final IProgressAwareTimer timer = mServices.getProgressMonitorService().getChildTimer(0.2);
-		return AbstractInterpreter.runFuture(r, edges, timer, mServices, false);
+		return AbstractInterpreter.runFuture(r, timer, mServices, false);
 	}
-	
+
 	// Algorithm
 	private void collectDFGEdges(final List<ParallelDataflowgraph<IcfgEdge>> starts) {
 		// compute the edges
@@ -173,7 +167,7 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 			}
 		}
 	}
-	
+
 	private List<ParallelDataflowgraph<IcfgEdge>> explain(final IProgramVar var,
 			final ParallelDataflowgraph<IcfgEdge> node) {
 		// TODO handle the special case init in the Reaching Definition
@@ -198,7 +192,7 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 					initInRDProc = true;
 					continue;
 				}
-				
+
 				// this pp has init in nowrite(x,pp)
 				final Set<BoogieIcfgLocation> nwls = dfs.getNowriteLocations(var);
 				final Set<BoogieIcfgLocation> entryPoint = mInitNode.getLocations(entry.getKey());
@@ -209,11 +203,11 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 				if (nwls.contains(en)) {
 					initInRDProc = true;
 				}
-				
+
 				// Reaching Definition
 				final Set<CodeBlock> rd = dfs.getReachingDefinitions(var);
 				for (final IcfgEdge s : rd) {
-					// mLogger.debug("      by the statement(explain) " + s.toString());
+					// mLogger.debug(" by the statement(explain) " + s.toString());
 					// construct a new node
 					final Map<String, Set<BoogieIcfgLocation>> loc = new HashMap<>(nowriteLocs);
 					final Set<BoogieIcfgLocation> srcSet = new HashSet<>();
@@ -234,10 +228,10 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 			// insert init as a sourceNode
 			sources.add(mInitNode);
 		}
-		
+
 		return sources;
 	}
-	
+
 	private Map<String, Set<BoogieIcfgLocation>> computeLocationSets(final IProgramVar var,
 			final Map<String, Set<BoogieIcfgLocation>> locations) {
 		final Map<String, Set<BoogieIcfgLocation>> nowriteLocs = new HashMap<>();
@@ -258,15 +252,15 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 				} else {
 					// mLogger.debug("Do not compute nowrite for "+pp.toString() );
 				}
-				
+
 			}
 			nowriteLocs.put(entry.getKey(), L);
 		}
 		return nowriteLocs;
 	}
-	
+
 	// Functions for the procedure
-	
+
 	private Set<IcfgLocation> nodesInGraph(final IcfgLocation root) {
 		// Called for every Thread, where root is the entry point of the thread.
 		// Returns a list of all the nodes in the graph
@@ -299,7 +293,7 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 		mLocsPerThread.put(pp.getProcedure(), countEdges);
 		return visited;
 	}
-	
+
 	private static List<List<IcfgLocation>> getEndErrorLocations(final List<IcfgLocation> nodes) {
 		// getAsserts and getEndLocations in one function
 		// first return: asserts, second return: end locations
@@ -322,7 +316,7 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 		list.add(endLocations);
 		return list;
 	}
-	
+
 	private static List<ParallelDataflowgraph<IcfgEdge>> computeStartLocs(final List<IcfgLocation> assertLocs,
 			final List<IcfgLocation> endLocs) {
 		final List<ParallelDataflowgraph<IcfgEdge>> starts = new ArrayList<>();
@@ -358,7 +352,7 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 		}
 		return starts;
 	}
-	
+
 	private void computeInitNode(final BoogieIcfgContainer r) {
 		final Map<String, Set<BoogieIcfgLocation>> locations = new HashMap<>();
 		IcfgEdge stmt = null;
@@ -380,7 +374,7 @@ public class ParallelDfgGeneratorObserver extends BaseObserver {
 		mInitNode = new ParallelDataflowgraph<>(stmt, locations);
 		mNodeCount++;
 	}
-	
+
 	private Integer computeMaxNodes() {
 		Integer count = 0;
 		for (final Entry<String, Integer> entry : mStmtsPerThread.entrySet()) {

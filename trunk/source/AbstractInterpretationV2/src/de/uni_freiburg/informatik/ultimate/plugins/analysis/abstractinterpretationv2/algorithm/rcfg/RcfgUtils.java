@@ -78,7 +78,8 @@ public final class RcfgUtils {
 		return false;
 	}
 
-	public static Collection<IcfgEdge> getInitialEdges(final IIcfg<?> icfg) {
-		return icfg.getInitialNodes().stream().flatMap(a -> a.getOutgoingEdges().stream()).collect(Collectors.toSet());
+	public static Collection<CodeBlock> getInitialEdges(final IIcfg<?> icfg) {
+		return icfg.getInitialNodes().stream().flatMap(a -> a.getOutgoingEdges().stream()).map(a -> (CodeBlock) a)
+				.collect(Collectors.toSet());
 	}
 }

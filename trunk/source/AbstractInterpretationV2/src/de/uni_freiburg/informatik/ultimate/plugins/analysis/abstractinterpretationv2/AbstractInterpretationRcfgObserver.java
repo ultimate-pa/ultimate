@@ -28,20 +28,14 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2;
 
-import java.util.Collection;
-import java.util.stream.Collectors;
-
 import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractInterpreter;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
  *
@@ -51,11 +45,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 public class AbstractInterpretationRcfgObserver extends BaseObserver {
 
 	private final IUltimateServiceProvider mServices;
-	private final ILogger mLogger;
 
 	public AbstractInterpretationRcfgObserver(final IUltimateServiceProvider services) {
 		mServices = services;
-		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
 
 	@Override
@@ -64,13 +56,6 @@ public class AbstractInterpretationRcfgObserver extends BaseObserver {
 			throw new IllegalArgumentException("You cannot use this observer for " + elem.getClass().getSimpleName());
 		}
 		final BoogieIcfgContainer root = (BoogieIcfgContainer) elem;
-
-		final Collection<CodeBlock> initial =
-				RcfgUtils.getInitialEdges(root).stream().map(a -> (CodeBlock) a).collect(Collectors.toSet());
-		if (initial == null) {
-			throw new IllegalArgumentException("Could not find an initial edge");
-		}
-
 		final IPreferenceProvider ups = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		final IProgressAwareTimer timer;
 		if (ups.getBoolean(AbsIntPrefInitializer.LABEL_RUN_AS_PRE_ANALYSIS)) {
@@ -80,9 +65,9 @@ public class AbstractInterpretationRcfgObserver extends BaseObserver {
 		}
 
 		if (ups.getBoolean(AbsIntPrefInitializer.LABEL_USE_FUTURE_RCFG)) {
-			AbstractInterpreter.runFuture(root, initial, timer, mServices, false);
+			AbstractInterpreter.runFuture(root, timer, mServices, false);
 		} else {
-			AbstractInterpreter.run(root, initial, timer, mServices);
+			AbstractInterpreter.run(root, timer, mServices);
 		}
 
 		// do not descend, this is already the root

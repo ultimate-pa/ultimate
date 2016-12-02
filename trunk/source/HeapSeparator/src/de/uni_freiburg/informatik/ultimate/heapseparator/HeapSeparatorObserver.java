@@ -26,11 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.heapseparator;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
@@ -40,8 +35,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractInterpreter;
@@ -57,8 +50,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 public class HeapSeparatorObserver implements IUnmanagedObserver {
 
 	private final ILogger mLogger;
-
-	private static final String ULTIMATE_START = "ULTIMATE.start";
 
 	/**
 	 * arrayId before separation --> pointerId --> arrayId after separation
@@ -108,13 +99,13 @@ public class HeapSeparatorObserver implements IUnmanagedObserver {
 		final IProgressAwareTimer timer = mServices.getProgressMonitorService().getChildTimer(0.2);
 
 		final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, BoogieIcfgLocation> result =
-				AbstractInterpreter.run(boogieIcfgContainer, getInitialEdges(boogieIcfgContainer), timer, mServices);
+				AbstractInterpreter.run(boogieIcfgContainer, timer, mServices);
 
 		final ObserverDispatcher od = new ObserverDispatcherSequential(mLogger);
 		final RCFGWalkerBreadthFirst walker = new RCFGWalkerBreadthFirst(od, mLogger);
 		od.setWalker(walker);
 
-		final HeapSepRcfgVisitor hsv = null; //new HeapSepRcfgVisitor(mLogger, mOldArrayToPointerToNewArray, mScript);
+		final HeapSepRcfgVisitor hsv = null; // new HeapSepRcfgVisitor(mLogger, mOldArrayToPointerToNewArray, mScript);
 		walker.addObserver(hsv);
 		walker.run(BoogieIcfgContainer.extractStartEdges(boogieIcfgContainer));
 
@@ -165,28 +156,5 @@ public class HeapSeparatorObserver implements IUnmanagedObserver {
 		mOldArrayToPointerToNewArray = new NestedMap2<>();
 		mOldArrayToPointerToNewArray.put(m, p, m1);
 		mOldArrayToPointerToNewArray.put(m, q, m2);
-	}
-
-	/**
-	 * copied from CodeCheck TODO: ugly, right?..
-	 *
-	 * @param root
-	 * @return
-	 */
-	private List<CodeBlock> getInitialEdges(final BoogieIcfgContainer root) {
-		final Collection<IcfgEdge> startEdges = BoogieIcfgContainer.extractStartEdges(root);
-
-		final Set<BoogieIcfgLocation> ultimateStartNodes = startEdges.stream().map(a -> a.getSource())
-				.filter(source -> source instanceof BoogieIcfgLocation
-						&& ((BoogieIcfgLocation) source).getProcedure().equals(ULTIMATE_START))
-				.map(a -> (BoogieIcfgLocation) a).collect(Collectors.toSet());
-		if (!ultimateStartNodes.isEmpty()) {
-			mLogger.info("Found entry method " + ULTIMATE_START);
-			return ultimateStartNodes.stream().flatMap(a -> a.getOutgoingEdges().stream()).map(a -> (CodeBlock) a)
-					.collect(Collectors.toList());
-		}
-		mLogger.info("Did not find entry method " + ULTIMATE_START + ", using library mode");
-		return startEdges.stream().filter(a -> a instanceof CodeBlock).map(a -> (CodeBlock) a)
-				.collect(Collectors.toList());
 	}
 }

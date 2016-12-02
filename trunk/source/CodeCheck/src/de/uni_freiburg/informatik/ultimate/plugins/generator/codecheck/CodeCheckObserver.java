@@ -135,8 +135,6 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	private static final XnfConversionTechnique XNF_CONVERSION_TECHNIQUE =
 			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 
-	private static final String ULTIMATE_START = "ULTIMATE.start";
-
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final IToolchainStorage mToolchainStorage;
@@ -215,13 +213,11 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		Map<IcfgLocation, Term> initialPredicates = null;
 		if (usePredicatesFromAbstractInterpretation) {
 
-			final List<CodeBlock> initials = getInitialEdges(mOriginalRoot);
-
 			// Run for 20% of the complete time.
 			final IProgressAwareTimer timer = mServices.getProgressMonitorService().getChildTimer(0.2);
 
 			final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, BoogieIcfgLocation> result =
-					AbstractInterpreter.run(mOriginalRoot, initials, timer, mServices);
+					AbstractInterpreter.run(mOriginalRoot, timer, mServices);
 
 			if (result == null) {
 				mLogger.warn(
@@ -257,23 +253,6 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		mLoopForever = mIterationsLimit == -1;
 
 		return false;
-	}
-
-	private List<CodeBlock> getInitialEdges(final BoogieIcfgContainer root) {
-		final Collection<IcfgEdge> startEdges = BoogieIcfgContainer.extractStartEdges(root);
-
-		final Set<BoogieIcfgLocation> ultimateStartNodes = startEdges.stream().map(a -> a.getSource())
-				.filter(source -> source instanceof BoogieIcfgLocation
-						&& ((BoogieIcfgLocation) source).getProcedure().equals(ULTIMATE_START))
-				.map(a -> (BoogieIcfgLocation) a).collect(Collectors.toSet());
-		if (!ultimateStartNodes.isEmpty()) {
-			mLogger.info("Found entry method " + ULTIMATE_START);
-			return ultimateStartNodes.stream().flatMap(a -> a.getOutgoingEdges().stream()).map(a -> (CodeBlock) a)
-					.collect(Collectors.toList());
-		}
-		mLogger.info("Did not find entry method " + ULTIMATE_START + ", using library mode");
-		return startEdges.stream().filter(a -> a instanceof CodeBlock).map(a -> (CodeBlock) a)
-				.collect(Collectors.toList());
 	}
 
 	private void readPreferencePage() {

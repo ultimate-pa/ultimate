@@ -32,6 +32,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
@@ -58,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgLoopDetector;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgResultReporter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.initializer.FixpointEngineFutureParameterFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.initializer.FixpointEngineParameterFactory;
@@ -97,9 +99,9 @@ public final class AbstractInterpreter {
 	 */
 	public static <STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>>
 			IAbstractInterpretationResult<STATE, CodeBlock, IBoogieVar, BoogieIcfgLocation>
-			run(final BoogieIcfgContainer root, final Collection<CodeBlock> initials, final IProgressAwareTimer timer,
+			run(final BoogieIcfgContainer root, final IProgressAwareTimer timer,
 					final IUltimateServiceProvider services) {
-		return run(root, initials, timer, services, false);
+		return run(root, RcfgUtils.getInitialEdges(root), timer, services, false);
 	}
 
 	/**
@@ -220,17 +222,16 @@ public final class AbstractInterpreter {
 	 */
 	public static <STATE extends IAbstractState<STATE, CodeBlock, IProgramVar>>
 			IAbstractInterpretationResult<STATE, CodeBlock, IProgramVar, BoogieIcfgLocation>
-			runFuture(final IIcfg<?> root, final Collection<CodeBlock> initials, final IProgressAwareTimer timer,
-					final IUltimateServiceProvider services, final boolean isSilent) {
-		if (initials == null) {
-			throw new IllegalArgumentException("No initial edges provided");
-		}
+			runFuture(final IIcfg<?> root, final IProgressAwareTimer timer, final IUltimateServiceProvider services,
+					final boolean isSilent) {
 		if (timer == null) {
 			throw new IllegalArgumentException("timer is null");
 		}
 
 		final ITransitionProvider<CodeBlock, BoogieIcfgLocation> transProvider = new RcfgTransitionProvider();
-		final Collection<CodeBlock> filteredInitialElements = transProvider.filterInitialElements(initials);
+		final Collection<CodeBlock> initialEdges =
+				RcfgUtils.getInitialEdges(root).stream().map(a -> (CodeBlock) a).collect(Collectors.toSet());
+		final Collection<CodeBlock> filteredInitialElements = transProvider.filterInitialElements(initialEdges);
 
 		if (filteredInitialElements.isEmpty()) {
 			getReporter(services, false, false).reportSafe(null, "The program is empty");
