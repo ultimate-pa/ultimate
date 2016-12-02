@@ -844,12 +844,12 @@ public final class ProductGenerator {
 		// something about that?
 
 		final BoogieIcfgLocation entry = rootAnnot.getProcedureEntryNodes().get(originalState.getProcedure());
-		if (entry != null) {
+		if (entry != null && originalState == entry) {
 			rootAnnot.getProcedureEntryNodes().put(originalState.getProcedure(), rtr);
 		}
 
 		final BoogieIcfgLocation exit = rootAnnot.getProcedureExitNodes().get(originalState.getProcedure());
-		if (exit != null) {
+		if (exit != null && originalState == entry) {
 			rootAnnot.getProcedureExitNodes().put(originalState.getProcedure(), rtr);
 		}
 
