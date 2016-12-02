@@ -74,6 +74,36 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
  */
 public final class TraceAbstractionRefinementEngine
 		implements IRefinementEngine<NestedWordAutomaton<CodeBlock, IPredicate>> {
+	public enum ExceptionHandlingCategory {
+		/**
+		 * The exception is known and we always want to ignore it.
+		 */
+		KNOWN_IGNORE(1),
+		/**
+		 * The exception is known and we sometimes want it to be thrown depending on the use case.
+		 */
+		KNOWN_DEPENDING(2),
+		/**
+		 * The exception is unknown and we usually want it to be thrown.
+		 */
+		UNKNOWN(3);
+		
+		private final int mValue;
+		
+		ExceptionHandlingCategory(final int value) {
+			mValue = value;
+		}
+		
+		/**
+		 * @param throwSpecification
+		 *            Specifies which exception categories should be thrown.
+		 * @return {@code true} iff this exception category should be thrown.
+		 */
+		public boolean throwException(final int throwSpecification) {
+			return mValue >= throwSpecification;
+		}
+	}
+	
 	private final ILogger mLogger;
 	
 	/* outputs */
@@ -218,6 +248,7 @@ public final class TraceAbstractionRefinementEngine
 						mLogger.info("Strategy " + strategy.getClass().getSimpleName()
 								+ " was unsuccessful and could not determine trace feasibility.");
 					}
+					// NOTE: This can crash as well, but such a crash is intended.
 					mRcfgProgramExecution = strategy.getTraceChecker().getRcfgProgramExecution();
 					break;
 				case UNSAT:
@@ -307,44 +338,78 @@ public final class TraceAbstractionRefinementEngine
 	 * Wraps the exception handling during {@link TraceChecker} or {@link IInterpolantGenerator} construction.
 	 */
 	private <T> T wrapExceptionHandling(final Supplier<T> supp) {
-		Exception knownException = null;
-		Exception unknownException = null;
+		Exception exception = null;
+		ExceptionHandlingCategory exceptionCategory = ExceptionHandlingCategory.UNKNOWN;
 		T result = null;
 		try {
 			result = supp.get();
+			return result;
 		} catch (final UnsupportedOperationException e) {
+			exception = e;
 			final String message = e.getMessage();
 			if (message == null) {
-				unknownException = e;
+				exceptionCategory = ExceptionHandlingCategory.UNKNOWN;
 			} else if (message.startsWith("Cannot interpolate")) {
-				knownException = e;
+				// SMTInterpol throws this during interpolation for unsupported fragments such as arrays
+				exceptionCategory = ExceptionHandlingCategory.KNOWN_IGNORE;
 			} else {
-				unknownException = e;
+				exceptionCategory = ExceptionHandlingCategory.UNKNOWN;
 			}
 		} catch (final SMTLIBException e) {
+			exception = e;
 			final String message = e.getMessage();
 			if (message == null) {
-				unknownException = e;
+				exceptionCategory = ExceptionHandlingCategory.UNKNOWN;
 			} else if (message.endsWith("Connection to SMT solver broken")) {
-				// TODO find out the origin of this exception
-				unknownException = e;
+				// broken SMT solver connection can have various reasons such as misconfiguration or solver crashes
+				exceptionCategory = ExceptionHandlingCategory.KNOWN_DEPENDING;
 			} else if (message.endsWith("Received EOF on stdin. No stderr output.")) {
 				// TODO find out the origin of this exception
-				unknownException = e;
+				exceptionCategory = ExceptionHandlingCategory.KNOWN_DEPENDING;
 			} else {
-				unknownException = e;
+				exceptionCategory = ExceptionHandlingCategory.UNKNOWN;
 			}
 		}
 		
-		if (knownException != null) {
-			if (mLogger.isErrorEnabled()) {
-				mLogger.error("Caught known exception: " + knownException.getMessage());
-			}
-		} else if (unknownException != null) {
-			if (mLogger.isErrorEnabled()) {
-				mLogger.error("Caught unknown exception: " + unknownException.getMessage());
-			}
-			throw new AssertionError(unknownException);
+		final int throwLevel = 3;
+		final boolean throwException = exceptionCategory.throwException(throwLevel);
+		
+		switch (exceptionCategory) {
+			case KNOWN_IGNORE:
+				if (mLogger.isErrorEnabled()) {
+					mLogger.error("Caught known exception: " + exception.getMessage());
+				}
+				if (throwException) {
+					if (mLogger.isInfoEnabled()) {
+						mLogger.info("Global settings require throwing the exception.");
+					}
+					throw new AssertionError(exception);
+				}
+				break;
+			case KNOWN_DEPENDING:
+				if (mLogger.isErrorEnabled()) {
+					mLogger.error("Caught known exception: " + exception.getMessage());
+				}
+				if (throwException) {
+					if (mLogger.isInfoEnabled()) {
+						mLogger.info("Global settings require throwing the exception.");
+					}
+					throw new AssertionError(exception);
+				}
+				break;
+			case UNKNOWN:
+				if (mLogger.isErrorEnabled()) {
+					mLogger.error("Caught unknown exception: " + exception.getMessage());
+				}
+				if (throwException) {
+					if (mLogger.isInfoEnabled()) {
+						mLogger.info("Global settings require throwing the exception.");
+					}
+					throw new AssertionError(exception);
+				}
+				break;
+			default:
+				throw new IllegalArgumentException("Unknown exception category: " + exceptionCategory);
 		}
 		
 		return result;
