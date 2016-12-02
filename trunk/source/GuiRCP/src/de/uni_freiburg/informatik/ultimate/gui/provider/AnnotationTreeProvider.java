@@ -131,7 +131,7 @@ public class AnnotationTreeProvider implements ITreeContentProvider {
 		return currentBuffer;
 	}
 
-	private Object[] generateTree(final IElement elem) {
+	private static Object[] generateTree(final IElement elem) {
 
 		final List<Object> rtr = new ArrayList<>();
 

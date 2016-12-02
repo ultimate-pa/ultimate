@@ -28,7 +28,8 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates;
 
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.AbstractAnnotations;
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.ModernAnnotations;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
@@ -36,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
  * @author heizmann@informatik.uni-freiburg.de
  *
  */
-public class BasicPredicate extends AbstractAnnotations implements IPredicate {
+public class BasicPredicate extends ModernAnnotations implements IPredicate {
 	private static final long serialVersionUID = -2257982001512157622L;
 	protected final String[] mProcedures;
 	protected Term mFormula;
@@ -53,30 +54,8 @@ public class BasicPredicate extends AbstractAnnotations implements IPredicate {
 		mSerialNumber = serialNumber;
 	}
 
-	/**
-	 * The published attributes. Update this and getFieldValue() if you add new attributes.
-	 */
-	private final static String[] ATTRIB_FIELDS = { "Procedures", "Formula", "Vars" };
-
 	@Override
-	protected String[] getFieldNames() {
-		return ATTRIB_FIELDS;
-	}
-
-	@Override
-	protected Object getFieldValue(final String field) {
-		if (field.equals("Procedures")) {
-			return mProcedures;
-		} else if (field.equals("Formula")) {
-			return mFormula;
-		} else if (field.equals("Vars")) {
-			return mVars;
-		} else {
-			throw new UnsupportedOperationException("Unknown field " + field);
-		}
-	}
-
-	@Override
+	@Visualizable
 	public String[] getProcedures() {
 		return mProcedures;
 	}
@@ -85,6 +64,7 @@ public class BasicPredicate extends AbstractAnnotations implements IPredicate {
 	 * @return the mAssertion
 	 */
 	@Override
+	@Visualizable
 	public Term getFormula() {
 		return mFormula;
 	}
@@ -95,6 +75,7 @@ public class BasicPredicate extends AbstractAnnotations implements IPredicate {
 	}
 
 	@Override
+	@Visualizable
 	public Set<IProgramVar> getVars() {
 		return mVars;
 	}
