@@ -348,10 +348,8 @@ public final class TraceAbstractionRefinementEngine
 	private <T> T wrapExceptionHandling(final Supplier<T> supp) {
 		Exception exception = null;
 		ExceptionHandlingCategory exceptionCategory = ExceptionHandlingCategory.UNKNOWN;
-		T result = null;
 		try {
-			result = supp.get();
-			return result;
+			return supp.get();
 		} catch (final UnsupportedOperationException e) {
 			exception = e;
 			final String message = e.getMessage();
@@ -368,6 +366,9 @@ public final class TraceAbstractionRefinementEngine
 			final String message = e.getMessage();
 			if (message == null) {
 				exceptionCategory = ExceptionHandlingCategory.UNKNOWN;
+			} else if ("Unsupported non-linear arithmetic".equals(message)) {
+				// SMT solver does not support non-linear arithmetic
+				exceptionCategory = ExceptionHandlingCategory.KNOWN_IGNORE;
 			} else if (message.endsWith("Connection to SMT solver broken")) {
 				// broken SMT solver connection can have various reasons such as misconfiguration or solver crashes
 				exceptionCategory = ExceptionHandlingCategory.KNOWN_DEPENDING;
@@ -419,7 +420,7 @@ public final class TraceAbstractionRefinementEngine
 				throw new IllegalArgumentException("Unknown exception category: " + exceptionCategory);
 		}
 		
-		return result;
+		return null;
 	}
 	
 	private static ManagedScript setupManagedScriptInternal(final IUltimateServiceProvider services,
