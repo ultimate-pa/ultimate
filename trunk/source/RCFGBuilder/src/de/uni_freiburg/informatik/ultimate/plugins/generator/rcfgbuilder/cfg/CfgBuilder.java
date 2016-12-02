@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
@@ -101,6 +102,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.Tr
 
 // TODO How to give every location the right line number
 public class CfgBuilder {
+
+	private static final String ULTIMATE_START = "ULTIMATE.start";
 
 	/**
 	 * ILogger for this plugin.
@@ -248,10 +251,21 @@ public class CfgBuilder {
 			new LargeBlockEncoding();
 		}
 
+		final Set<BoogieIcfgLocation> initialNodes = mIcfg.getProcedureEntryNodes().entrySet().stream()
+				.filter(a -> a.getKey().equals(ULTIMATE_START)).map(a -> a.getValue()).collect(Collectors.toSet());
+		if (initialNodes.isEmpty()) {
+			mLogger.info("Using library mode");
+			mIcfg.getInitialNodes().addAll(mIcfg.getProcedureEntryNodes().values());
+		} else {
+			mLogger.info("Using the " + initialNodes.size() + " location(s) as analysis (start of procedure "
+					+ ULTIMATE_START + ")");
+			mIcfg.getInitialNodes().addAll(initialNodes);
+		}
+
 		return mIcfg;
 	}
 
-	private Expression getNegation(final Expression expr) {
+	private static Expression getNegation(final Expression expr) {
 		if (expr == null) {
 			return null;
 		}
