@@ -27,19 +27,18 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 
 /**
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public interface IReplacementVar extends IProgramVar, IReplacementVarOrConst {
+public interface IReplacementVarOrConst extends IProgramVarOrConst {
 
 	/**
 	 * @return the definition of this replacement variable, i.e., the term it replaces
 	 */
-	@Override
 	Term getDefinition();
 
 }

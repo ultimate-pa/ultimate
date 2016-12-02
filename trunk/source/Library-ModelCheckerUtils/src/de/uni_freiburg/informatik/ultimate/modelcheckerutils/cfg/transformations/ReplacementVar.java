@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
  *
  * @author Jan Leike, Matthias Heizmann
  */
-public class ReplacementVar implements IProgramVar, IReplacementVar {
+public class ReplacementVar implements IProgramVar, IReplacementVarOrConst {
 	private static final long serialVersionUID = 5797704734079950805L;
 
 	private final String mName;

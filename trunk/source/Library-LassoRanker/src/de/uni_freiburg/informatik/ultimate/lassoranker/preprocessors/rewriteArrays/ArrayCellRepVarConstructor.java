@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.rewriteArr
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.IReplacementVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.IReplacementVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
@@ -84,7 +84,7 @@ public class ArrayCellRepVarConstructor {
 
 	private void constructRepVarIfNecessaryAndAdd(
 			ArrayCellReplacementVarInformation acrvi) {
-		final IReplacementVar repVar = getOrconstructReplacementVar(acrvi);
+		final IReplacementVarOrConst repVar = getOrconstructReplacementVar(acrvi);
 		acrvi.setReplacementVar(repVar);
 	}
 	
@@ -94,11 +94,11 @@ public class ArrayCellRepVarConstructor {
 	 * to the map. We expect that the repVar is added to the acrvi by the 
 	 * caller of this method.
 	 */
-	private IReplacementVar getOrconstructReplacementVar(ArrayCellReplacementVarInformation acrvi) {
+	private IReplacementVarOrConst getOrconstructReplacementVar(ArrayCellReplacementVarInformation acrvi) {
 		final TermVariable array = acrvi.getArrayRepresentative();
 		final ArrayIndex index = acrvi.getIndexRepresentative();
 		final ArrayCellReplacementVarInformation repVarInfo = mArrayRepresentative2IndexRepresentative2ReplacementVar.get(array, index);
-		IReplacementVar repVar;
+		IReplacementVarOrConst repVar;
 		if (repVarInfo == null) {
 			repVar = constructReplacementVar(array, index);
 			mArrayRepresentative2IndexRepresentative2ReplacementVar.put(array, index, acrvi);
@@ -113,9 +113,9 @@ public class ArrayCellRepVarConstructor {
 	 * Returns a ReplacementVar that will represent the array
 	 * cell array[index].
 	 */
-	private IReplacementVar constructReplacementVar(TermVariable array, ArrayIndex index) {
+	private IReplacementVarOrConst constructReplacementVar(TermVariable array, ArrayIndex index) {
 			final Term definition = SmtUtils.multiDimensionalSelect(mScript, array, index);
-			final IReplacementVar repVar = mReplacementVarFactory.getOrConstuctReplacementVar(definition);
+			final IReplacementVarOrConst repVar = mReplacementVarFactory.getOrConstuctReplacementVar(definition);
 		return repVar;
 	}
 

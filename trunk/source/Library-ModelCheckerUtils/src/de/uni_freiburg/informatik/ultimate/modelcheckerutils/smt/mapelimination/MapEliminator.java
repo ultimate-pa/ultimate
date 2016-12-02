@@ -51,6 +51,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.IReplacementVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.IReplacementVarOrConst;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
@@ -527,26 +530,33 @@ public class MapEliminator {
 		for (final MapTemplate template : mMapsToIndices.getDomain()) {
 			for (final ArrayIndex index : mMapsToIndices.getImage(template)) {
 				final Term term = template.getTerm(index);
-				final IProgramVar var = mReplacementVarFactory.getOrConstuctReplacementVar(term);
-				boolean containsAssignedVar = false;
-				for (final TermVariable tv : term.getFreeVars()) {
-					final IProgramVar progVar = mSymbolTable.getProgramVar(tv);
-					if (transformula.getInVars().get(progVar) != transformula.getOutVars().get(progVar)) {
-						containsAssignedVar = true;
-						break;
+				final IReplacementVarOrConst varOrConst = mReplacementVarFactory.getOrConstuctReplacementVar(term);
+				if (varOrConst instanceof ReplacementConst) {
+					throw new UnsupportedOperationException("not yet implemented");
+				} else if (varOrConst instanceof IReplacementVar) {
+					final IReplacementVar var = (IReplacementVar) varOrConst;
+					boolean containsAssignedVar = false;
+					for (final TermVariable tv : term.getFreeVars()) {
+						final IProgramVar progVar = mSymbolTable.getProgramVar(tv);
+						if (transformula.getInVars().get(progVar) != transformula.getOutVars().get(progVar)) {
+							containsAssignedVar = true;
+							break;
+						}
 					}
-				}
-				final TermVariable termVar = getFreshTermVar(term);
-				if (!transformula.getInVars().containsKey(var)) {
-					transformula.addInVar(var, termVar);
-				}
-				if (!transformula.getOutVars().containsKey(var)) {
-					// If the term contains an assigned var, different in- and out-vars are created, otherwise the same
-					if (containsAssignedVar) {
-						transformula.addOutVar(var, getFreshTermVar(term));
-					} else {
-						transformula.addOutVar(var, termVar);
+					final TermVariable termVar = getFreshTermVar(term);
+					if (!transformula.getInVars().containsKey(var)) {
+						transformula.addInVar(var, termVar);
 					}
+					if (!transformula.getOutVars().containsKey(var)) {
+						// If the term contains an assigned var, different in- and out-vars are created, otherwise the same
+						if (containsAssignedVar) {
+							transformula.addOutVar(var, getFreshTermVar(term));
+						} else {
+							transformula.addOutVar(var, termVar);
+						}
+					}
+				} else {
+					throw new AssertionError("illegal type " + varOrConst.getClass());
 				}
 			}
 		}
@@ -561,13 +571,21 @@ public class MapEliminator {
 			return getAndAddAuxVar(term);
 		}
 		final Term definition = translateTermVariablesToDefinitions(mScript, transformula, term);
-		final IProgramVar var = mReplacementVarFactory.getOrConstuctReplacementVar(definition);
-		assert transformula.getInVars().containsKey(var) && transformula.getOutVars().containsKey(var) : var
-				+ " was not added to the transformula!";
-		if (allVariablesAreInVars(term, transformula)) {
-			return transformula.getInVars().get(var);
+		final IReplacementVarOrConst varOrConst = mReplacementVarFactory.getOrConstuctReplacementVar(definition); 
+		if (varOrConst instanceof ReplacementConst) {
+			throw new UnsupportedOperationException("not yet implemented");
+		} else if (varOrConst instanceof IReplacementVar) {
+			final IReplacementVar var = (IReplacementVar) varOrConst;
+			assert transformula.getInVars().containsKey(var) && transformula.getOutVars().containsKey(var) : var
+					+ " was not added to the transformula!";
+			if (allVariablesAreInVars(term, transformula)) {
+				return transformula.getInVars().get(var);
+			}
+			return transformula.getOutVars().get(var);
+		} else {
+			throw new AssertionError("illegal type " + varOrConst.getClass());
 		}
-		return transformula.getOutVars().get(var);
+
 	}
 
 	/**

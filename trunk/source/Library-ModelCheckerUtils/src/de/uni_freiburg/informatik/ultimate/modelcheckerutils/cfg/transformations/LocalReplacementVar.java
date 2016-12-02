@@ -26,20 +26,31 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations;
 
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.LocalBoogieVar;
 
 /**
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public interface IReplacementVar extends IProgramVar, IReplacementVarOrConst {
+public class LocalReplacementVar extends LocalBoogieVar implements IReplacementVar  {
 
-	/**
-	 * @return the definition of this replacement variable, i.e., the term it replaces
-	 */
+	private static final long serialVersionUID = 8758509461003371994L;
+	private final Term mDefinition;
+	
+	public LocalReplacementVar(final String identifier, final String proc, 
+			final TermVariable tv, final ApplicationTerm defaultConstant,
+			final ApplicationTerm primedContant, final Term definition) {
+		super(identifier, proc, null, tv, defaultConstant, primedContant);
+		mDefinition = definition;
+	}
+
 	@Override
-	Term getDefinition();
+	public Term getDefinition() {
+		return mDefinition;
+	}
 
 }

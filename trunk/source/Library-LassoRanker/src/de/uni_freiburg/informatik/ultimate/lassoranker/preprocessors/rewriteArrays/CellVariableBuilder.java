@@ -37,6 +37,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.IReplacementVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.IReplacementVarOrConst;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormulaUtils;
@@ -48,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 
 public class CellVariableBuilder {
 	private final Map<TermVariable, Map<ArrayIndex, TermVariable>> mArrayInstance2Index2CellVariable;
-	private final Map<Term, Map<ArrayIndex, IReplacementVar>> mArray2Index2RepVar;
+	private final Map<Term, Map<ArrayIndex, IReplacementVarOrConst>> mArray2Index2RepVar;
 	private final Set<TermVariable> mAuxVars = new HashSet<TermVariable>();
 	private final ModifiableTransFormula mTransFormula;
 	private final TransFormulaLRWithArrayInformation tflrwai;
@@ -75,7 +77,7 @@ public class CellVariableBuilder {
 		this.tflrwac = tflrwac;
 		tflrwai = tflrwac.getTransFormulaLRWithArrayInformation();
 		mArrayInstance2Index2CellVariable = new HashMap<TermVariable, Map<ArrayIndex, TermVariable>>();
-		mArray2Index2RepVar = new HashMap<Term, Map<ArrayIndex, IReplacementVar>>();
+		mArray2Index2RepVar = new HashMap<Term, Map<ArrayIndex, IReplacementVarOrConst>>();
 		mArrayCellInVars = arrayCellInVars;
 		mArrayCellOutVars = arrayCellOutVars;
 		dotSomething();
@@ -115,29 +117,44 @@ public class CellVariableBuilder {
 						final TermVariable arrayRepresentative = (TermVariable) ModifiableTransFormulaUtils.getDefinition(mTransFormula, instance);
 						final ArrayIndex indexRepresentative = tflrwac.getOrConstructIndexRepresentative(index);
 						if (isInVarCell) {
-							final IReplacementVar rv = mArrayCellInVars.get(arrayRepresentative, indexRepresentative).getReplacementVar();
-							final TermVariable inVar = (TermVariable) mTransFormula.getInVars().get(rv);
-							if (inVar == null) {
-								mTransFormula.addInVar(rv, tv);
+							final IReplacementVarOrConst varOrConst = mArrayCellInVars.get(arrayRepresentative, indexRepresentative).getReplacementVar();
+							if (varOrConst instanceof ReplacementConst) {
+					            throw new UnsupportedOperationException("not yet implemented");
+							} else if (varOrConst instanceof IReplacementVar) {
+								final IReplacementVar rv = (IReplacementVar) varOrConst;
+								final TermVariable inVar = mTransFormula.getInVars().get(rv);
+								if (inVar == null) {
+									mTransFormula.addInVar(rv, tv);
+								} else {
+									// case where two TermVariables have the same
+									// ReplacementVar is also possible e.g. if there
+									// is an array equality, see 
+									// SyntaxSupportArrays20-ArrayEquality.bpl
+									addToAuxVars(tv);
+								}
 							} else {
-								// case where two TermVariables have the same
-								// ReplacementVar is also possible e.g. if there
-								// is an array equality, see 
-								// SyntaxSupportArrays20-ArrayEquality.bpl
-								addToAuxVars(tv);
+								throw new AssertionError("illegal type " + varOrConst.getClass());
 							}
+
 						}
 						if (isOutVarCell) {
-							final IReplacementVar rv = mArrayCellOutVars.get(arrayRepresentative, indexRepresentative).getReplacementVar();
-							final TermVariable outVar = (TermVariable) mTransFormula.getOutVars().get(rv);
-							if (outVar == null) {
-								mTransFormula.addOutVar(rv, tv);
+							final IReplacementVarOrConst varOrConst = mArrayCellOutVars.get(arrayRepresentative, indexRepresentative).getReplacementVar();
+							if (varOrConst instanceof ReplacementConst) {
+					            throw new UnsupportedOperationException("not yet implemented");
+							} else if (varOrConst instanceof IReplacementVar) {
+								final IReplacementVar rv = (IReplacementVar) varOrConst;
+								final TermVariable outVar = mTransFormula.getOutVars().get(rv);
+								if (outVar == null) {
+									mTransFormula.addOutVar(rv, tv);
+								} else {
+									// case where two TermVariables have the same
+									// ReplacementVar is also possible e.g. if there
+									// is an array equality, see 
+									// SyntaxSupportArrays20-ArrayEquality.bpl
+									addToAuxVars(tv);
+								}
 							} else {
-								// case where two TermVariables have the same
-								// ReplacementVar is also possible e.g. if there
-								// is an array equality, see 
-								// SyntaxSupportArrays20-ArrayEquality.bpl
-								addToAuxVars(tv);
+								throw new AssertionError("illegal type " + varOrConst.getClass());
 							}
 						}
 					} else {

@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.TransitionP
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.InequalityConverter.NlaHandling;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.IReplacementVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.IReplacementVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormulaUtils;
@@ -116,9 +116,9 @@ public class CachedTransFormulaLinearizer {
 	 * x_1,...,x_n. The output is a {@link LinearTransition} that represent a
 	 * formula ψ whose free variables are primed and unprimed versions of
 	 * x_1,...,x_n and additionally primed and unprimed versions of a set
-	 * {@link IReplacementVar}s y_1,...,y_m. If we replace for each
-	 * {@link IReplacementVar} the corresponding primed and unprimed variables by
-	 * primed and unprimed versions of the {@link IReplacementVar}'s definition
+	 * {@link IReplacementVarOrConst}s y_1,...,y_m. If we replace for each
+	 * {@link IReplacementVarOrConst} the corresponding primed and unprimed variables by
+	 * primed and unprimed versions of the {@link IReplacementVarOrConst}'s definition
 	 * the the resulting formula is logically equivalent to the formula φ.
 	 * 
 	 * @param tf
@@ -143,9 +143,9 @@ public class CachedTransFormulaLinearizer {
 	 * x_1,...,x_n. The output is a {@link LinearTransition} that represent a
 	 * formula ψ whose free variables are primed and unprimed versions of
 	 * x_1,...,x_n and additionally primed and unprimed versions of a set
-	 * {@link IReplacementVar}s y_1,...,y_m. If we replace for each
-	 * {@link IReplacementVar} the corresponding primed and unprimed variables by
-	 * primed and unprimed versions of the {@link IReplacementVar}'s definition
+	 * {@link IReplacementVarOrConst}s y_1,...,y_m. If we replace for each
+	 * {@link IReplacementVarOrConst} the corresponding primed and unprimed variables by
+	 * primed and unprimed versions of the {@link IReplacementVarOrConst}'s definition
 	 * the the resulting formula is logically equivalent to the formula φ.
 	 * 
 	 * @author Matthias Heizmann

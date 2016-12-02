@@ -31,7 +31,7 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.IReplacementVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.IReplacementVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
@@ -69,7 +69,7 @@ public class ArrayCellReplacementVarInformation {
 	 */
 	private final ModifiableTransFormula mTransFormulaLR;
 	
-	private IReplacementVar mReplacementVar;
+	private IReplacementVarOrConst mReplacementVar;
 	
 	
 	public ArrayCellReplacementVarInformation(TermVariable arrayInstance,
@@ -110,12 +110,12 @@ public class ArrayCellReplacementVarInformation {
 	}
 
 
-	public IReplacementVar getReplacementVar() {
+	public IReplacementVarOrConst getReplacementVar() {
 		return mReplacementVar;
 	}
 
 
-	public void setReplacementVar(IReplacementVar replacementVar) {
+	public void setReplacementVar(IReplacementVarOrConst replacementVar) {
 		mReplacementVar = replacementVar;
 	}
 	

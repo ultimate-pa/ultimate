@@ -58,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ILoca
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
@@ -599,8 +600,8 @@ public class Boogie2SmtSymbolTable implements IIcfgSymbolTable {
 
 		final TermVariable termVariable = mScript.variable(name, sort);
 
-		final ApplicationTerm defaultConstant = constructDefaultConstant(sort, name);
-		final ApplicationTerm primedConstant = constructPrimedConstant(sort, name);
+		final ApplicationTerm defaultConstant = ProgramVarUtils.constructDefaultConstant(mScript, this, sort, name);
+		final ApplicationTerm primedConstant = ProgramVarUtils.constructPrimedConstant(mScript, this, sort, name);
 
 		final LocalBoogieVar bv =
 				new LocalBoogieVar(identifier, procedure, iType, termVariable, defaultConstant, primedConstant);
@@ -630,8 +631,8 @@ public class Boogie2SmtSymbolTable implements IIcfgSymbolTable {
 			final boolean isOldVar = true;
 			final String name = constructBoogieVarName(identifier, procedure, true, isOldVar);
 			final TermVariable termVariable = mScript.variable(name, sort);
-			final ApplicationTerm defaultConstant = constructDefaultConstant(sort, name);
-			final ApplicationTerm primedConstant = constructPrimedConstant(sort, name);
+			final ApplicationTerm defaultConstant = ProgramVarUtils.constructDefaultConstant(mScript, this, sort, name);
+			final ApplicationTerm primedConstant = ProgramVarUtils.constructPrimedConstant(mScript, this, sort, name);
 
 			oldVar = new BoogieOldVar(identifier, iType, termVariable, defaultConstant, primedConstant);
 			mSmtVar2BoogieVar.put(termVariable, oldVar);
@@ -643,8 +644,8 @@ public class Boogie2SmtSymbolTable implements IIcfgSymbolTable {
 			final boolean isOldVar = false;
 			final String name = constructBoogieVarName(identifier, procedure, true, isOldVar);
 			final TermVariable termVariable = mScript.variable(name, sort);
-			final ApplicationTerm defaultConstant = constructDefaultConstant(sort, name);
-			final ApplicationTerm primedConstant = constructPrimedConstant(sort, name);
+			final ApplicationTerm defaultConstant = ProgramVarUtils.constructDefaultConstant(mScript, this, sort, name);
+			final ApplicationTerm primedConstant = ProgramVarUtils.constructPrimedConstant(mScript, this, sort, name);
 
 			nonOldVar = new BoogieNonOldVar(identifier, iType, termVariable, defaultConstant, primedConstant, oldVar);
 			mSmtVar2BoogieVar.put(termVariable, nonOldVar);
@@ -656,25 +657,7 @@ public class Boogie2SmtSymbolTable implements IIcfgSymbolTable {
 		return nonOldVar;
 	}
 
-	private ApplicationTerm constructPrimedConstant(final Sort sort, final String name) {
-		ApplicationTerm primedConstant;
-		{
-			final String primedConstantName = "c_" + name + "_primed";
-			mScript.declareFun(this, primedConstantName, new Sort[0], sort);
-			primedConstant = (ApplicationTerm) mScript.term(this, primedConstantName);
-		}
-		return primedConstant;
-	}
 
-	private ApplicationTerm constructDefaultConstant(final Sort sort, final String name) {
-		ApplicationTerm defaultConstant;
-		{
-			final String defaultConstantName = "c_" + name;
-			mScript.declareFun(this, defaultConstantName, new Sort[0], sort);
-			defaultConstant = (ApplicationTerm) mScript.term(this, defaultConstantName);
-		}
-		return defaultConstant;
-	}
 
 	private static String constructBoogieVarName(final String identifier, final String procedure,
 			final boolean isGlobal, final boolean isOldvar) {

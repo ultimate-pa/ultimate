@@ -48,10 +48,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.IReplacementVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.IReplacementVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
@@ -224,7 +223,7 @@ public class ModifiableTransFormulaUtils {
 	}
 
 	/**
-	 * Rename all to inVars/outVars by default/primed constants (including the definitions of {@link IReplacementVar}s.
+	 * Rename all to inVars/outVars by default/primed constants (including the definitions of {@link IReplacementVarOrConst}s.
 	 * Quantify auxVars existentially.
 	 *
 	 * @param services
@@ -234,7 +233,7 @@ public class ModifiableTransFormulaUtils {
 			final Script script, final IIcfgSymbolTable symbTab, final ModifiableTransFormula tf) {
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		for (final Entry<IProgramVar, TermVariable> entry : tf.getInVars().entrySet()) {
-			if (entry.getKey() instanceof IReplacementVar) {
+			if (entry.getKey() instanceof IReplacementVarOrConst) {
 				final Term definition = ReplacementVarUtils.getDefinition(entry.getKey());
 				final Term renamedDefinition = renameToDefaultConstants(script, symbTab, tf, definition);
 				substitutionMapping.put(entry.getValue(), renamedDefinition);
@@ -244,7 +243,7 @@ public class ModifiableTransFormulaUtils {
 			}
 		}
 		for (final Entry<IProgramVar, TermVariable> entry : tf.getOutVars().entrySet()) {
-			if (entry.getKey() instanceof IReplacementVar) {
+			if (entry.getKey() instanceof IReplacementVarOrConst) {
 				final Term definition = ReplacementVarUtils.getDefinition(entry.getKey());
 				final Term renamedDefinition = renameToPrimedConstants(script, symbTab, tf, definition);
 				substitutionMapping.put(entry.getValue(), renamedDefinition);
@@ -324,7 +323,7 @@ public class ModifiableTransFormulaUtils {
 	private static Term constructEqualitiesForCoinciding(final Script script, final ModifiableTransFormula tf) {
 		final ArrayList<Term> conjuncts = new ArrayList<Term>();
 		for (final IProgramVar rv : tf.getInVars().keySet()) {
-			if (!(rv instanceof IReplacementVar)) {
+			if (!(rv instanceof IReplacementVarOrConst)) {
 				if (inVarAndOutVarCoincide(rv, tf)) {
 					final IProgramVar bv = rv;
 					conjuncts.add(SmtUtils.binaryEquality(script, bv.getDefaultConstant(), bv.getPrimedConstant()));
@@ -356,7 +355,7 @@ public class ModifiableTransFormulaUtils {
 		// Add constant variables as in- and outVars
 		for (final IProgramConst progConst : inputTf.getNonTheoryConsts()) {
 			final ApplicationTerm constVar = progConst.getDefaultConstant();
-			final IReplacementVar repVar = replacementVarFactory.getOrConstuctReplacementVar(constVar);
+			final IReplacementVar repVar = (IReplacementVar) replacementVarFactory.getOrConstuctReplacementVar(constVar);
 			newTf.addInVar(repVar, repVar.getTermVariable());
 			newTf.addOutVar(repVar, repVar.getTermVariable());
 			substitutionMapping.put(constVar, repVar.getTermVariable());
