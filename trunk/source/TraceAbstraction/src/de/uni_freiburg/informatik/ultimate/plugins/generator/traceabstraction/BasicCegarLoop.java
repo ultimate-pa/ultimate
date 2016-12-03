@@ -629,47 +629,6 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		}
 	}
 
-	// private static Collection<Set<IPredicate>>
-	// computePartitionDistinguishFinalNonFinal(
-	// INestedWordAutomatonOldApi<CodeBlock, IPredicate> automaton, ILogger
-	// logger) {
-	// logger.info("Start computation of initial partition.");
-	// Collection<IPredicate> states = automaton.getStates();
-	// Map<ProgramPoint, Set<IPredicate>> pp2pFin = new HashMap<ProgramPoint,
-	// Set<IPredicate>>();
-	// Map<ProgramPoint, Set<IPredicate>> pp2pNonFin = new HashMap<ProgramPoint,
-	// Set<IPredicate>>();
-	// for (IPredicate p : states) {
-	// ISLPredicate sp = (ISLPredicate) p;
-	// if (automaton.isFinal(sp)) {
-	// pigeonHole(pp2pFin, sp);
-	// } else {
-	// pigeonHole(pp2pNonFin, sp);
-	// }
-	//
-	// }
-	// Collection<Set<IPredicate>> partition = new ArrayList<Set<IPredicate>>();
-	// for (ProgramPoint pp : pp2pFin.keySet()) {
-	// Set<IPredicate> statesWithSamePP = pp2pFin.get(pp);
-	// partition.add(statesWithSamePP);
-	// }
-	// for (ProgramPoint pp : pp2pNonFin.keySet()) {
-	// Set<IPredicate> statesWithSamePP = pp2pNonFin.get(pp);
-	// partition.add(statesWithSamePP);
-	// }
-	// logger.info("Finished computation of initial partition.");
-	// return partition;
-	// }
-
-	// private boolean eachStateIsFinal(Collection<IPredicate> states,
-	// INestedWordAutomatonOldApi<CodeBlock, IPredicate> automaton) {
-	// boolean result = true;
-	// for (IPredicate p : states) {
-	// result &= automaton.isFinal(p);
-	// }
-	// return result;
-	// }
-
 	protected INestedWordAutomaton<CodeBlock, IPredicate>
 			determinizeInterpolantAutomaton(final INestedWordAutomaton<CodeBlock, IPredicate> interpolAutomaton)
 					throws AutomataOperationCanceledException {
