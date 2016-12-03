@@ -256,7 +256,6 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		if (mPref.dumpAutomata()) {
 			mDumper.dumpNestedRun(mCounterexample);
 		}
-		// mRunAnalyzer = new RunAnalyzer(mCounterexample);
 		mLogger.info("Found error trace");
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug(mCounterexample.getWord());
@@ -273,8 +272,6 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				throw new ToolchainCanceledException(message, getClass(), taskDescription);
 			}
 		}
-		// s_Logger.info("Cutpoints: " + mRunAnalyzer.getCutpoints());
-		// s_Logger.debug(mRunAnalyzer.getOccurence());
 		return false;
 	}
 
