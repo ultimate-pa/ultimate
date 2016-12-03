@@ -34,10 +34,13 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.ComplementDD;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DeterminizeDD;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.BranchingProcess;
@@ -49,12 +52,14 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetUnfo
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
@@ -176,6 +181,36 @@ public class CegarLoopJulian extends BasicCegarLoop {
 			writeAutomatonToFile(mAbstraction, filename);
 		}
 		return true;
+	}
+	
+	protected INestedWordAutomaton<CodeBlock, IPredicate>
+	determinizeInterpolantAutomaton(final INestedWordAutomaton<CodeBlock, IPredicate> interpolAutomaton)
+			throws AutomataOperationCanceledException {
+		mLogger.debug("Start determinization");
+		INestedWordAutomaton<CodeBlock, IPredicate> dia;
+		switch (mPref.interpolantAutomatonEnhancement()) {
+		case NONE:
+			final PowersetDeterminizer<CodeBlock, IPredicate> psd =
+			new PowersetDeterminizer<>(interpolAutomaton, true, mPredicateFactoryInterpolantAutomata);
+			final DeterminizeDD<CodeBlock, IPredicate> dabps =
+					new DeterminizeDD<>(new AutomataLibraryServices(mServices), interpolAutomaton, psd);
+			dia = dabps.getResult();
+			break;
+		default:
+			throw new UnsupportedOperationException();
+		}
+
+		if (mComputeHoareAnnotation) {
+			assert new InductivityCheck(mServices, dia, false, true,
+					new IncrementalHoareTripleChecker(super.mCsToolkit)).getResult() : "Not inductive";
+		}
+		if (mPref.dumpAutomata()) {
+			final String filename = "InterpolantAutomatonDeterminized_Iteration" + mIteration;
+			writeAutomatonToFile(dia, filename);
+		}
+		assert accepts(mServices, dia, mCounterexample.getWord());
+		mLogger.debug("Sucessfully determinized");
+		return dia;
 	}
 
 	@Override
