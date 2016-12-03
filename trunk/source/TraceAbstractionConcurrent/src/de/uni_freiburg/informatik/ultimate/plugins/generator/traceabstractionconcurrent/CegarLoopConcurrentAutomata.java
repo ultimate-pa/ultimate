@@ -170,14 +170,14 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 		final Map<IPredicate, Set<IPredicate>> removedDoubleDeckers = null;
 		final Map<IPredicate, IPredicate> context2entry = null;
 		final IHoareTripleChecker htc = TraceAbstractionUtils.constructEfficientHoareTripleChecker(mServices, mPref.getHoareTripleChecks(),
-				mCsToolkit, mTraceCheckAndRefinementSelection.getPredicateUnifier());
+				mCsToolkit, mTraceCheckAndRefinementEngine.getPredicateUnifier());
 		mLogger.debug("Start constructing difference");
 		// assert (oldAbstraction.getStateFactory() == mInterpolAutomaton.getStateFactory());
 		
 		IOpWithDelayedDeadEndRemoval<CodeBlock, IPredicate> diff;
 		
 		final DeterministicInterpolantAutomaton determinized =
-				new DeterministicInterpolantAutomaton(mServices, mCsToolkit, htc, mInterpolAutomaton, mTraceCheckAndRefinementSelection.getPredicateUnifier(),
+				new DeterministicInterpolantAutomaton(mServices, mCsToolkit, htc, mInterpolAutomaton, mTraceCheckAndRefinementEngine.getPredicateUnifier(),
 						mLogger, false, false);
 		// ComplementDeterministicNwa<CodeBlock, IPredicate>
 		// cdnwa = new ComplementDeterministicNwa<>(dia);

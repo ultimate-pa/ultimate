@@ -140,7 +140,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 
 	private final SearchStrategy mSearchStrategy;
 
-	protected IRefinementEngine<NestedWordAutomaton<CodeBlock, IPredicate>> mTraceCheckAndRefinementSelection;
+	protected IRefinementEngine<NestedWordAutomaton<CodeBlock, IPredicate>> mTraceCheckAndRefinementEngine;
 
 	public BasicCegarLoop(final String name, final BoogieIcfgContainer rootNode, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
@@ -280,12 +280,12 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				new TaCheckAndRefinementPreferences(mServices, mPref, mInterpolation, mSimplificationTechnique,
 						mXnfConversionTechnique, mCsToolkit, mPredicateFactory, mIcfgContainer, mToolchainStorage,
 						mInterpolantAutomatonBuilderFactory, mCegarLoopBenchmark, mIteration);
-		mTraceCheckAndRefinementSelection = new TraceAbstractionRefinementEngine(mServices, mLogger,
+		mTraceCheckAndRefinementEngine = new TraceAbstractionRefinementEngine(mServices, mLogger,
 				taCheckAndRefinementPrefs, mPredicateFactory, mIcfgContainer, mSimplificationTechnique,
 				mXnfConversionTechnique, mToolchainStorage, mPref, mIteration, mCounterexample, mAbstraction);
 
-		final PredicateUnifier predicateUnifier = mTraceCheckAndRefinementSelection.getPredicateUnifier();
-		final LBool feasibility = mTraceCheckAndRefinementSelection.getCounterexampleFeasibility();
+		final PredicateUnifier predicateUnifier = mTraceCheckAndRefinementEngine.getPredicateUnifier();
+		final LBool feasibility = mTraceCheckAndRefinementEngine.getCounterexampleFeasibility();
 
 		if (feasibility != LBool.UNSAT) {
 			mLogger.info("Counterexample might be feasible");
@@ -304,7 +304,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					indentation = indentation.substring(0, indentation.length() - 4);
 				}
 			}
-			mRcfgProgramExecution = mTraceCheckAndRefinementSelection.getRcfgProgramExecution();
+			mRcfgProgramExecution = mTraceCheckAndRefinementEngine.getRcfgProgramExecution();
 			if ((mDoFaultLocalizationNonFlowSensitive || mDoFaultLocalizationFlowSensitive)
 					&& feasibility == LBool.SAT) {
 				final CFG2NestedWordAutomaton cFG2NestedWordAutomaton = new CFG2NestedWordAutomaton(mServices,
@@ -327,7 +327,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 
 	@Override
 	protected void constructInterpolantAutomaton() throws AutomataOperationCanceledException {
-		mInterpolAutomaton = mTraceCheckAndRefinementSelection.getInfeasibilityProof();
+		mInterpolAutomaton = mTraceCheckAndRefinementEngine.getInfeasibilityProof();
 
 		assert accepts(mServices, mInterpolAutomaton, mCounterexample.getWord()) : "Interpolant automaton broken!";
 		assert new InductivityCheck(mServices, mInterpolAutomaton, false, true,
@@ -336,12 +336,12 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 
 	@Override
 	protected boolean refineAbstraction() throws AutomataLibraryException {
-		final PredicateUnifier predUnifier = mTraceCheckAndRefinementSelection.getPredicateUnifier();
+		final PredicateUnifier predUnifier = mTraceCheckAndRefinementEngine.getPredicateUnifier();
 		if (mAbsIntRunner.hasShownInfeasibility()) {
 			return mAbsIntRunner.refine(predUnifier, mInterpolAutomaton, mCounterexample,
 					this::refineWithGivenAutomaton);
 		}
-		mAbsIntRunner.refineAnyways(mTraceCheckAndRefinementSelection.getPredicateUnifier(),
+		mAbsIntRunner.refineAnyways(mTraceCheckAndRefinementEngine.getPredicateUnifier(),
 				(INestedWordAutomaton<CodeBlock, IPredicate>) mAbstraction, mCounterexample,
 				this::refineWithGivenAutomaton);
 		return refineWithGivenAutomaton(mInterpolAutomaton, predUnifier);
@@ -360,14 +360,14 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 
 		final IHoareTripleChecker htc;
 		{
-			if (mTraceCheckAndRefinementSelection.getHoareTripleChecker() != null) {
-				htc = mTraceCheckAndRefinementSelection.getHoareTripleChecker();
+			if (mTraceCheckAndRefinementEngine.getHoareTripleChecker() != null) {
+				htc = mTraceCheckAndRefinementEngine.getHoareTripleChecker();
 			} else {
 				final IHoareTripleChecker ehtc =
 						TraceAbstractionUtils.constructEfficientHoareTripleChecker(mServices, mPref.getHoareTripleChecks(),
-								super.mCsToolkit, mTraceCheckAndRefinementSelection.getPredicateUnifier());
+								super.mCsToolkit, mTraceCheckAndRefinementEngine.getPredicateUnifier());
 				htc = new CachingHoareTripleChecker_Map(mServices, ehtc,
-						mTraceCheckAndRefinementSelection.getPredicateUnifier());
+						mTraceCheckAndRefinementEngine.getPredicateUnifier());
 			}
 		}
 		
@@ -510,7 +510,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					(enhanceMode == InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION_CANNIBALIZE);
 			final DeterministicInterpolantAutomaton determinized =
 					new DeterministicInterpolantAutomaton(mServices, mCsToolkit, htc, inputInterpolantAutomaton,
-							mTraceCheckAndRefinementSelection.getPredicateUnifier(), mLogger, conservativeSuccessorCandidateSelection,
+							mTraceCheckAndRefinementEngine.getPredicateUnifier(), mLogger, conservativeSuccessorCandidateSelection,
 							cannibalize);
 			result = determinized;
 		}

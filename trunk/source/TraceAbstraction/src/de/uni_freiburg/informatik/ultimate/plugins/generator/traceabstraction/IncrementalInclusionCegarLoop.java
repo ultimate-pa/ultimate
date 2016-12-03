@@ -226,7 +226,7 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 		final boolean explointSigmaStarConcatOfIA = !mComputeHoareAnnotation;
 
 		final IHoareTripleChecker edgeChecker = TraceAbstractionUtils.constructEfficientHoareTripleChecker(
-				mServices, HoareTripleChecks.MONOLITHIC, mCsToolkit, mTraceCheckAndRefinementSelection.getPredicateUnifier()); 
+				mServices, HoareTripleChecks.MONOLITHIC, mCsToolkit, mTraceCheckAndRefinementEngine.getPredicateUnifier()); 
 		
 		boolean progress;
 		try {
@@ -247,7 +247,7 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 						(mPref.interpolantAutomatonEnhancement() == InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION_CANNIBALIZE);
 				final DeterministicInterpolantAutomaton determinized = new DeterministicInterpolantAutomaton(mServices,
 						mCsToolkit, edgeChecker, mInterpolAutomaton,
-						mTraceCheckAndRefinementSelection.getPredicateUnifier(),
+						mTraceCheckAndRefinementEngine.getPredicateUnifier(),
 						mLogger, conservativeSuccessorCandidateSelection, cannibalize);
 				switchAllInterpolantAutomataToOnTheFlyConstructionMode();
 				mInclusionCheck.addSubtrahend(determinized);
@@ -269,7 +269,7 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 				final boolean secondChance = (mPref.interpolantAutomatonEnhancement() != InterpolantAutomatonEnhancement.NO_SECOND_CHANCE);
 				final NondeterministicInterpolantAutomaton nondet = new NondeterministicInterpolantAutomaton(mServices,
 						mCsToolkit, edgeChecker, mInterpolAutomaton,
-						mTraceCheckAndRefinementSelection.getPredicateUnifier(),
+						mTraceCheckAndRefinementEngine.getPredicateUnifier(),
 						mLogger, conservativeSuccessorCandidateSelection, secondChance);
 				switchAllInterpolantAutomataToOnTheFlyConstructionMode();
 				mInclusionCheck.addSubtrahend(nondet);
