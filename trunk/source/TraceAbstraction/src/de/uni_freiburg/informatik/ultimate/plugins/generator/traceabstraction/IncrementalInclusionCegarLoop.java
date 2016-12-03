@@ -290,8 +290,6 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 						(NestedWord<CodeBlock>) mCounterexample.getWord())).getResult();
 				progress = acceptedByIA;
 				break;
-			case BESTAPPROXIMATION_DEPRECATED:
-			case SELFLOOP:
 			default:
 				throw new UnsupportedOperationException();
 			}

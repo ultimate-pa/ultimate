@@ -75,10 +75,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.au
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization.AutomataMinimizationTimeout;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.LineCoverageCalculator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.InterpolantAutomatonBuilderFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.BestApproximationDeterminizer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.NondeterministicInterpolantAutomaton;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.SelfloopDeterminizer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.CachingHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.CachingHoareTripleChecker_Map;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
@@ -405,38 +403,6 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 								interpolAutomaton, psd, mStateFactoryForRefinement, explointSigmaStarConcatOfIA);
 					}
 					break;
-				case BESTAPPROXIMATION_DEPRECATED:
-					final BestApproximationDeterminizer bed = new BestApproximationDeterminizer(mCsToolkit, mPref,
-							interpolAutomaton, mPredicateFactoryInterpolantAutomata);
-					diff = new Difference<>(new AutomataLibraryServices(mServices), oldAbstraction, interpolAutomaton,
-							bed, mStateFactoryForRefinement, explointSigmaStarConcatOfIA);
-
-					mLogger.info("Internal Transitions: " + bed.getmAnswerInternalAutomaton()
-							+ " answers given by automaton " + bed.getmAnswerInternalCache()
-							+ " answers given by cache " + bed.getmAnswerInternalSolver() + " answers given by solver");
-					mLogger.info("Call Transitions: " + bed.getmAnswerCallAutomaton() + " answers given by automaton "
-							+ bed.getmAnswerCallCache() + " answers given by cache " + bed.getmAnswerCallSolver()
-							+ " answers given by solver");
-					mLogger.info("Return Transitions: " + bed.getmAnswerReturnAutomaton()
-							+ " answers given by automaton " + bed.getmAnswerReturnCache() + " answers given by cache "
-							+ bed.getmAnswerReturnSolver() + " answers given by solver");
-					break;
-				case SELFLOOP:
-					final SelfloopDeterminizer sed = new SelfloopDeterminizer(mCsToolkit, mPref, interpolAutomaton,
-							mPredicateFactoryInterpolantAutomata);
-					if (mPref.differenceSenwa()) {
-						diff = new DifferenceSenwa<>(new AutomataLibraryServices(mServices), oldAbstraction,
-								interpolAutomaton, sed, false);
-					} else {
-						diff = new Difference<>(new AutomataLibraryServices(mServices), oldAbstraction,
-								interpolAutomaton, sed, mStateFactoryForRefinement, explointSigmaStarConcatOfIA);
-					}
-					mLogger.info("Internal Selfloops: " + sed.mInternalSelfloop + " Internal NonSelfloops "
-							+ sed.mInternalNonSelfloop);
-					mLogger.info("Call Selfloops: " + sed.mCallSelfloop + " Call NonSelfloops " + sed.mCallNonSelfloop);
-					mLogger.info("Return Selfloops: " + sed.mReturnSelfloop + " Return NonSelfloops "
-							+ sed.mReturnNonSelfloop);
-					break;
 				case PREDICATE_ABSTRACTION:
 				case PREDICATE_ABSTRACTION_CONSERVATIVE:
 				case PREDICATE_ABSTRACTION_CANNIBALIZE:
@@ -741,21 +707,6 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			final DeterminizeDD<CodeBlock, IPredicate> dabps =
 					new DeterminizeDD<>(new AutomataLibraryServices(mServices), interpolAutomaton, psd);
 			dia = dabps.getResult();
-			break;
-		case BESTAPPROXIMATION_DEPRECATED:
-			final BestApproximationDeterminizer bed = new BestApproximationDeterminizer(mCsToolkit, mPref,
-					(NestedWordAutomaton<CodeBlock, IPredicate>) interpolAutomaton,
-					mPredicateFactoryInterpolantAutomata);
-			final DeterminizeDD<CodeBlock, IPredicate> dab =
-					new DeterminizeDD<>(new AutomataLibraryServices(mServices), interpolAutomaton, bed);
-			dia = dab.getResult();
-			break;
-		case SELFLOOP:
-			final SelfloopDeterminizer sed = new SelfloopDeterminizer(mCsToolkit, mPref, interpolAutomaton,
-					mPredicateFactoryInterpolantAutomata);
-			final DeterminizeDD<CodeBlock, IPredicate> dabsl =
-					new DeterminizeDD<>(new AutomataLibraryServices(mServices), interpolAutomaton, sed);
-			dia = dabsl.getResult();
 			break;
 		default:
 			throw new UnsupportedOperationException();
