@@ -78,8 +78,9 @@ public class ReplacementVarFactory {
 			return repVar;
 		} else {
 			final IReplacementVarOrConst newRepVar;
-			final String name = "rep" + SmtUtils.removeSmtQuoteCharacters(definition.toString());
-			final TermVariable tv = mMgdScript.constructFreshTermVariable(name, definition.getSort());
+			final String nameCandidate = "rep" + SmtUtils.removeSmtQuoteCharacters(definition.toString());
+			final TermVariable tv = mMgdScript.constructFreshTermVariable(nameCandidate, definition.getSort());
+			final String name = tv.getName();
 			
 			final Pair<Set<Class<? extends IProgramVarOrConst>>, Set<String>> analysisResult = analyzeDefinition(definition);
 			if (analysisResult.getFirst().contains(IProgramNonOldVar.class) && analysisResult.getFirst().contains(IProgramOldVar.class)) {
@@ -93,10 +94,12 @@ public class ReplacementVarFactory {
 					// newRepVar = new ReplacementVar(definition.toString(), definition, tv);
 				} else {
 					final String proc = analysisResult.getSecond().iterator().next();
+					mMgdScript.lock(this);
 					final ApplicationTerm defaultConstant = ProgramVarUtils.constructDefaultConstant(
 							mMgdScript, this, tv.getSort(), name);
-					final ApplicationTerm primedContant = ProgramVarUtils.constructDefaultConstant(
+					final ApplicationTerm primedContant = ProgramVarUtils.constructPrimedConstant(
 							mMgdScript, this, tv.getSort(), name);
+					mMgdScript.unlock(this);
 					newRepVar = new LocalReplacementVar(name, proc, tv, defaultConstant, primedContant, definition);
 				} 
 			} else if (analysisResult.getFirst().contains(IProgramNonOldVar.class)) {
@@ -104,7 +107,9 @@ public class ReplacementVarFactory {
 			} else if (analysisResult.getFirst().contains(IProgramOldVar.class)) {
 				newRepVar = new ReplacementVar(definition.toString(), definition, tv);
 			} else {
-				mMgdScript.declareFun(this, name, new Sort[0], tv.getSort());
+//				mMgdScript.lock(this);
+//				mMgdScript.declareFun(this, name, new Sort[0], tv.getSort());
+//				mMgdScript.unlock(this);
 //				final ApplicationTerm smtConstant = (ApplicationTerm) mMgdScript.term(this, name);
 //				newRepVar = new ReplacementConst(name, smtConstant, definition);
 				newRepVar = new ReplacementVar(definition.toString(), definition, tv);
@@ -142,6 +147,7 @@ public class ReplacementVarFactory {
 			final IProgramVar pv = mIIcfgSymbolTable.getProgramVar(tv);
 			if (pv instanceof ILocalProgramVar) {
 				constOrVarKinds.add(ILocalProgramVar.class);
+				procs.add(pv.getProcedure());
 			} else if (pv instanceof IProgramNonOldVar) {
 				constOrVarKinds.add(IProgramNonOldVar.class);
 			} else if (pv instanceof IProgramOldVar) {
