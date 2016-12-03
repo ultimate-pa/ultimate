@@ -75,6 +75,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.au
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization.AutomataMinimizationTimeout;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.LineCoverageCalculator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.InterpolantAutomatonBuilderFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.NondeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.CachingHoareTripleChecker;
@@ -354,33 +355,34 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		return refineWithGivenAutomaton(mInterpolAutomaton, predUnifier);
 	}
 
-	private boolean refineWithGivenAutomaton(final NestedWordAutomaton<CodeBlock, IPredicate> interpolAutomaton,
+	private boolean refineWithGivenAutomaton(final NestedWordAutomaton<CodeBlock, IPredicate> inputInterpolantAutomaton,
 			final PredicateUnifier predicateUnifier)
 			throws AssertionError, AutomataOperationCanceledException, AutomataLibraryException {
 		mStateFactoryForRefinement.setIteration(super.mIteration);
-		// howDifferentAreInterpolants(interpolAutomaton.getStates());
 
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 		final boolean explointSigmaStarConcatOfIA = !mComputeHoareAnnotation;
 
 		final INestedWordAutomaton<CodeBlock, IPredicate> oldAbstraction =
 				(INestedWordAutomaton<CodeBlock, IPredicate>) mAbstraction;
-		// Map<IPredicate, Set<IPredicate>> removedDoubleDeckers = null;
-		// Map<IPredicate, IPredicate> context2entry = null;
 
 		final CachingHoareTripleChecker htc;
-		if (mTraceCheckAndRefinementSelection.getHoareTripleChecker() != null) {
-			htc = mTraceCheckAndRefinementSelection.getHoareTripleChecker();
-		} else {
-			final IHoareTripleChecker ehtc =
-					TraceAbstractionUtils.constructEfficientHoareTripleChecker(mServices, mPref.getHoareTripleChecks(),
-							super.mCsToolkit, mTraceCheckAndRefinementSelection.getPredicateUnifier());
-			htc = new CachingHoareTripleChecker_Map(mServices, ehtc,
-					mTraceCheckAndRefinementSelection.getPredicateUnifier());
+		{
+			if (mTraceCheckAndRefinementSelection.getHoareTripleChecker() != null) {
+				htc = mTraceCheckAndRefinementSelection.getHoareTripleChecker();
+			} else {
+				final IHoareTripleChecker ehtc =
+						TraceAbstractionUtils.constructEfficientHoareTripleChecker(mServices, mPref.getHoareTripleChecks(),
+								super.mCsToolkit, mTraceCheckAndRefinementSelection.getPredicateUnifier());
+				htc = new CachingHoareTripleChecker_Map(mServices, ehtc,
+						mTraceCheckAndRefinementSelection.getPredicateUnifier());
+			}
 		}
+		
+		
 		try {
 			if (DIFFERENCE_INSTEAD_OF_INTERSECTION) {
-				mLogger.debug("Start constructing difference");
+				
 
 				final InterpolantAutomatonEnhancement enhanceMode;
 				if (mAbsIntRunner.hasShownInfeasibility()) {
@@ -390,71 +392,25 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					enhanceMode = mPref.interpolantAutomatonEnhancement();
 				}
 
-				IOpWithDelayedDeadEndRemoval<CodeBlock, IPredicate> diff;
+				final INestedWordAutomatonSimple<CodeBlock, IPredicate> interpolantAutomaton;
 				switch (enhanceMode) {
 				case NONE:
-					final PowersetDeterminizer<CodeBlock, IPredicate> psd =
-							new PowersetDeterminizer<>(interpolAutomaton, true, mPredicateFactoryInterpolantAutomata);
-					if (mPref.differenceSenwa()) {
-						diff = new DifferenceSenwa<>(new AutomataLibraryServices(mServices), oldAbstraction,
-								interpolAutomaton, psd, false);
-					} else {
-						diff = new Difference<>(new AutomataLibraryServices(mServices), oldAbstraction,
-								interpolAutomaton, psd, mStateFactoryForRefinement, explointSigmaStarConcatOfIA);
-					}
+					interpolantAutomaton = inputInterpolantAutomaton;
 					break;
 				case PREDICATE_ABSTRACTION:
 				case PREDICATE_ABSTRACTION_CONSERVATIVE:
-				case PREDICATE_ABSTRACTION_CANNIBALIZE:
-					if (mPref.differenceSenwa()) {
-						throw new UnsupportedOperationException();
-					} {
+				case PREDICATE_ABSTRACTION_CANNIBALIZE: {
 					final boolean conservativeSuccessorCandidateSelection = mPref
 							.interpolantAutomatonEnhancement() == InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION_CONSERVATIVE;
 					final boolean cannibalize = mPref
 							.interpolantAutomatonEnhancement() == InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION_CANNIBALIZE;
 					final DeterministicInterpolantAutomaton determinized =
-							new DeterministicInterpolantAutomaton(mServices, mCsToolkit, htc, interpolAutomaton,
+							new DeterministicInterpolantAutomaton(mServices, mCsToolkit, htc, inputInterpolantAutomaton,
 									mTraceCheckAndRefinementSelection.getPredicateUnifier(), mLogger, conservativeSuccessorCandidateSelection,
 									cannibalize);
-					// NondeterministicInterpolantAutomaton determinized =
-					// new NondeterministicInterpolantAutomaton(
-					// mServices, mCsToolkit, mModGlobVarManager, htc,
-					// oldAbstraction, interpolAutomaton,
-					// mTraceChecker.getPredicateUnifier(), mLogger);
-					// ComplementDeterministicNwa<CodeBlock, IPredicate>
-					// cdnwa = new ComplementDeterministicNwa<>(dia);
-					final PowersetDeterminizer<CodeBlock, IPredicate> psd2 =
-							new PowersetDeterminizer<>(determinized, true, mPredicateFactoryInterpolantAutomata);
-					try {
-						diff = new Difference<>(new AutomataLibraryServices(mServices), oldAbstraction, determinized,
-								psd2, mStateFactoryForRefinement, explointSigmaStarConcatOfIA);
-					} catch (final AutomataOperationCanceledException aoce) {
-						throw aoce;
-					} finally {
-						determinized.switchToReadonlyMode();
-					}
-					final INestedWordAutomaton<CodeBlock, IPredicate> completelyBuiltInterpolantAutomaton =
-							new RemoveUnreachable<>(new AutomataLibraryServices(mServices), determinized).getResult();
-					if (mPref.dumpAutomata()) {
-						final String filename = "EnhancedInterpolantAutomaton_Iteration" + mIteration;
-						super.writeAutomatonToFile(completelyBuiltInterpolantAutomaton, filename);
-					}
-					if (mAbsIntRunner.isDisabled()) {
-						// check only if AI did not run
-						final boolean ctxAccepted = new Accepts<>(new AutomataLibraryServices(mServices),
-								completelyBuiltInterpolantAutomaton, (NestedWord<CodeBlock>) mCounterexample.getWord(),
-								true, false).getResult();
-						if (!ctxAccepted) {
-							throw new AssertionError("enhanced interpolant automaton in iteration " + mIteration
-									+ " broken: counterexample of length " + mCounterexample.getLength()
-									+ " not accepted");
-						}
-					}
-					assert new InductivityCheck(mServices, completelyBuiltInterpolantAutomaton, false, true,
-							new IncrementalHoareTripleChecker(super.mCsToolkit)).getResult();
+					interpolantAutomaton = determinized;
 				}
-					break;
+				break;
 				case EAGER:
 				case NO_SECOND_CHANCE:
 				case EAGER_CONSERVATIVE: {
@@ -464,37 +420,55 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 							mPref.interpolantAutomatonEnhancement() != InterpolantAutomatonEnhancement.NO_SECOND_CHANCE;
 					final NondeterministicInterpolantAutomaton nondet =
 							new NondeterministicInterpolantAutomaton(mServices, mCsToolkit, htc,
-									interpolAutomaton, predicateUnifier,
+									inputInterpolantAutomaton, predicateUnifier,
 									mLogger, conservativeSuccessorCandidateSelection, secondChance);
-					final PowersetDeterminizer<CodeBlock, IPredicate> psd2 =
-							new PowersetDeterminizer<>(nondet, true, mPredicateFactoryInterpolantAutomata);
-					try {
-						diff = new Difference<>(new AutomataLibraryServices(mServices), oldAbstraction, nondet, psd2,
-								mStateFactoryForRefinement, explointSigmaStarConcatOfIA);
-					} catch (final AutomataOperationCanceledException aoce) {
-						throw aoce;
-					} finally {
-						nondet.switchToReadonlyMode();
-					}
-					final INestedWordAutomaton<CodeBlock, IPredicate> test =
-							new RemoveUnreachable<>(new AutomataLibraryServices(mServices), nondet).getResult();
-					if (mPref.dumpAutomata()) {
-						final String filename = "EnhancedInterpolantAutomaton_Iteration" + mIteration;
-						super.writeAutomatonToFile(test, filename);
-					}
-					final boolean ctxAccepted = new Accepts<>(new AutomataLibraryServices(mServices), test,
-							(NestedWord<CodeBlock>) mCounterexample.getWord(), true, false).getResult();
-					if (!ctxAccepted) {
-						throw new AssertionError("enhanced interpolant automaton in iteration " + mIteration
-								+ " broken: counterexample of length " + mCounterexample.getLength() + " not accepted");
-					}
-					assert new InductivityCheck(mServices, test, false, true,
-							new IncrementalHoareTripleChecker(super.mCsToolkit)).getResult();
+					interpolantAutomaton = nondet;
 				}
-					break;
+				break;
 				default:
 					throw new UnsupportedOperationException();
 				}
+				final PowersetDeterminizer<CodeBlock, IPredicate> psd =
+						new PowersetDeterminizer<>(interpolantAutomaton, true, mPredicateFactoryInterpolantAutomata);
+				
+				mLogger.debug("Start constructing difference");
+				IOpWithDelayedDeadEndRemoval<CodeBlock, IPredicate> diff;
+				try {
+				if (mPref.differenceSenwa()) {
+					diff = new DifferenceSenwa<>(new AutomataLibraryServices(mServices), oldAbstraction,
+							interpolantAutomaton, psd, false);
+				} else {
+					diff = new Difference<>(new AutomataLibraryServices(mServices), oldAbstraction,
+							interpolantAutomaton, psd, mStateFactoryForRefinement, explointSigmaStarConcatOfIA);
+				}
+				} catch (final AutomataOperationCanceledException aoce) {
+					throw aoce;
+				} finally {
+					if (enhanceMode != InterpolantAutomatonEnhancement.NONE) {
+						assert (interpolantAutomaton instanceof AbstractInterpolantAutomaton) : "if enhancement is used we need AbstractInterpolantAutomaton";
+						((AbstractInterpolantAutomaton) interpolantAutomaton).switchToReadonlyMode();
+					}
+				}
+					
+				if (mPref.dumpAutomata()) {
+					final String filename = "EnhancedInterpolantAutomaton_Iteration" + mIteration;
+					super.writeAutomatonToFile(interpolantAutomaton, filename);
+				}
+				if (mAbsIntRunner.isDisabled()) {
+					// check only if AI did not run
+					final boolean ctxAccepted = new Accepts<>(new AutomataLibraryServices(mServices),
+							interpolantAutomaton, (NestedWord<CodeBlock>) mCounterexample.getWord(),
+							true, false).getResult();
+					if (!ctxAccepted) {
+						throw new AssertionError("enhanced interpolant automaton in iteration " + mIteration
+								+ " broken: counterexample of length " + mCounterexample.getLength()
+								+ " not accepted");
+					}
+				}
+				assert new InductivityCheck(mServices, new RemoveUnreachable<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), interpolantAutomaton).getResult(), false, true,
+						new IncrementalHoareTripleChecker(super.mCsToolkit)).getResult();
+				
+				
 				if (REMOVE_DEAD_ENDS) {
 					if (mComputeHoareAnnotation) {
 						final Difference<CodeBlock, IPredicate> difference = (Difference<CodeBlock, IPredicate>) diff;
@@ -511,12 +485,12 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 
 				if (mPref.dumpAutomata()) {
 					final String filename = "InterpolantAutomaton_Iteration" + mIteration;
-					super.writeAutomatonToFile(interpolAutomaton, filename);
+					super.writeAutomatonToFile(inputInterpolantAutomaton, filename);
 				}
 			} else {// complement and intersection instead of difference
 
 				final INestedWordAutomatonSimple<CodeBlock, IPredicate> dia =
-						determinizeInterpolantAutomaton(interpolAutomaton);
+						determinizeInterpolantAutomaton(inputInterpolantAutomaton);
 
 				mLogger.debug("Start complementation");
 				final INestedWordAutomatonSimple<CodeBlock, IPredicate> nia =
@@ -528,7 +502,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				if (mIteration <= mPref.watchIteration() && mPref.artifact() == Artifact.NEG_INTERPOLANT_AUTOMATON) {
 					mArtifactAutomaton = nia;
 				}
-				assert oldAbstraction.getStateFactory() == interpolAutomaton.getStateFactory();
+				assert oldAbstraction.getStateFactory() == inputInterpolantAutomaton.getStateFactory();
 				mLogger.debug("Start intersection");
 				final IntersectDD<CodeBlock, IPredicate> intersect =
 						new IntersectDD<>(new AutomataLibraryServices(mServices), false, oldAbstraction, nia);
