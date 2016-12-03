@@ -379,59 +379,28 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			}
 		}
 		
+		final InterpolantAutomatonEnhancement enhanceMode;
+		if (mAbsIntRunner.hasShownInfeasibility()) {
+			// Do not enhance if abstract interpretation was strong enough to prove infeasibility.
+			enhanceMode = InterpolantAutomatonEnhancement.NONE;
+		} else {
+			enhanceMode = mPref.interpolantAutomatonEnhancement();
+		}
+
+		final INestedWordAutomatonSimple<CodeBlock, IPredicate> interpolantAutomaton;
+		if (enhanceMode == InterpolantAutomatonEnhancement.NONE) {
+			interpolantAutomaton = inputInterpolantAutomaton;
+		} else {
+			interpolantAutomaton = constructInterpolantAutomatonForOnDemandEnhancement(
+					inputInterpolantAutomaton, predicateUnifier, htc, enhanceMode);
+		}
+		
 		
 		try {
 			if (DIFFERENCE_INSTEAD_OF_INTERSECTION) {
-				
-
-				final InterpolantAutomatonEnhancement enhanceMode;
-				if (mAbsIntRunner.hasShownInfeasibility()) {
-					// Do not enhance if abstract interpretation was strong enough to prove infeasibility.
-					enhanceMode = InterpolantAutomatonEnhancement.NONE;
-				} else {
-					enhanceMode = mPref.interpolantAutomatonEnhancement();
-				}
-
-				final INestedWordAutomatonSimple<CodeBlock, IPredicate> interpolantAutomaton;
-				switch (enhanceMode) {
-				case NONE:
-					interpolantAutomaton = inputInterpolantAutomaton;
-					break;
-				case PREDICATE_ABSTRACTION:
-				case PREDICATE_ABSTRACTION_CONSERVATIVE:
-				case PREDICATE_ABSTRACTION_CANNIBALIZE: {
-					final boolean conservativeSuccessorCandidateSelection = mPref
-							.interpolantAutomatonEnhancement() == InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION_CONSERVATIVE;
-					final boolean cannibalize = mPref
-							.interpolantAutomatonEnhancement() == InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION_CANNIBALIZE;
-					final DeterministicInterpolantAutomaton determinized =
-							new DeterministicInterpolantAutomaton(mServices, mCsToolkit, htc, inputInterpolantAutomaton,
-									mTraceCheckAndRefinementSelection.getPredicateUnifier(), mLogger, conservativeSuccessorCandidateSelection,
-									cannibalize);
-					interpolantAutomaton = determinized;
-				}
-				break;
-				case EAGER:
-				case NO_SECOND_CHANCE:
-				case EAGER_CONSERVATIVE: {
-					final boolean conservativeSuccessorCandidateSelection = mPref
-							.interpolantAutomatonEnhancement() == InterpolantAutomatonEnhancement.EAGER_CONSERVATIVE;
-					final boolean secondChance =
-							mPref.interpolantAutomatonEnhancement() != InterpolantAutomatonEnhancement.NO_SECOND_CHANCE;
-					final NondeterministicInterpolantAutomaton nondet =
-							new NondeterministicInterpolantAutomaton(mServices, mCsToolkit, htc,
-									inputInterpolantAutomaton, predicateUnifier,
-									mLogger, conservativeSuccessorCandidateSelection, secondChance);
-					interpolantAutomaton = nondet;
-				}
-				break;
-				default:
-					throw new UnsupportedOperationException();
-				}
+				mLogger.debug("Start constructing difference");
 				final PowersetDeterminizer<CodeBlock, IPredicate> psd =
 						new PowersetDeterminizer<>(interpolantAutomaton, true, mPredicateFactoryInterpolantAutomata);
-				
-				mLogger.debug("Start constructing difference");
 				IOpWithDelayedDeadEndRemoval<CodeBlock, IPredicate> diff;
 				try {
 				if (mPref.differenceSenwa()) {
@@ -445,7 +414,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					throw aoce;
 				} finally {
 					if (enhanceMode != InterpolantAutomatonEnhancement.NONE) {
-						assert (interpolantAutomaton instanceof AbstractInterpolantAutomaton) : "if enhancement is used we need AbstractInterpolantAutomaton";
+						assert (interpolantAutomaton instanceof AbstractInterpolantAutomaton) : 
+							"if enhancement is used, we need AbstractInterpolantAutomaton";
 						((AbstractInterpolantAutomaton) interpolantAutomaton).switchToReadonlyMode();
 					}
 				}
@@ -465,7 +435,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 								+ " not accepted");
 					}
 				}
-				assert new InductivityCheck(mServices, new RemoveUnreachable<CodeBlock, IPredicate>(new AutomataLibraryServices(mServices), interpolantAutomaton).getResult(), false, true,
+				assert new InductivityCheck(mServices, new RemoveUnreachable<CodeBlock, IPredicate>(
+						new AutomataLibraryServices(mServices), interpolantAutomaton).getResult(), false, true,
 						new IncrementalHoareTripleChecker(super.mCsToolkit)).getResult();
 				
 				
@@ -479,9 +450,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 						mHaf.addDeadEndDoubleDeckers(diff);
 					}
 				}
-
 				mAbstraction = diff.getResult();
-				// mDeadEndRemovalTime = diff.getDeadEndRemovalTime();
 
 				if (mPref.dumpAutomata()) {
 					final String filename = "InterpolantAutomaton_Iteration" + mIteration;
@@ -522,16 +491,6 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 		}
 
-		// if(mRemoveDeadEnds && mComputeHoareAnnotation) {
-		// mHaf.wipeReplacedContexts();
-		// mHaf.addDoubleDeckers(removedDoubleDeckers,
-		// oldAbstraction.getEmptyStackState());
-		// mHaf.addContext2Entry(context2entry);
-		// }
-
-		// (new RemoveDeadEnds<CodeBlock,
-		// IPredicate>((INestedWordAutomatonOldApi<CodeBlock, IPredicate>)
-		// mAbstraction)).getResult();
 		mLogger.info(predicateUnifier.collectPredicateUnifierStatistics());
 
 		final Minimization minimization = mPref.getMinimization();
@@ -571,6 +530,48 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				(INestedWordAutomatonSimple<CodeBlock, IPredicate>) mAbstraction,
 				(NestedWord<CodeBlock>) mCounterexample.getWord()).getResult();
 		return !stillAccepted;
+	}
+
+	private INestedWordAutomatonSimple<CodeBlock, IPredicate> constructInterpolantAutomatonForOnDemandEnhancement(
+			final NestedWordAutomaton<CodeBlock, IPredicate> inputInterpolantAutomaton,
+			final PredicateUnifier predicateUnifier, final CachingHoareTripleChecker htc,
+			final InterpolantAutomatonEnhancement enhanceMode) {
+		final AbstractInterpolantAutomaton result;
+		switch (enhanceMode) {
+		case NONE:
+			throw new IllegalArgumentException("In setting NONE we will not do any enhancement");
+		case PREDICATE_ABSTRACTION:
+		case PREDICATE_ABSTRACTION_CONSERVATIVE:
+		case PREDICATE_ABSTRACTION_CANNIBALIZE: {
+			final boolean conservativeSuccessorCandidateSelection = 
+					(enhanceMode == InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION_CONSERVATIVE);
+			final boolean cannibalize = 
+					(enhanceMode == InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION_CANNIBALIZE);
+			final DeterministicInterpolantAutomaton determinized =
+					new DeterministicInterpolantAutomaton(mServices, mCsToolkit, htc, inputInterpolantAutomaton,
+							mTraceCheckAndRefinementSelection.getPredicateUnifier(), mLogger, conservativeSuccessorCandidateSelection,
+							cannibalize);
+			result = determinized;
+		}
+		break;
+		case EAGER:
+		case NO_SECOND_CHANCE:
+		case EAGER_CONSERVATIVE: {
+			final boolean conservativeSuccessorCandidateSelection = 
+					(enhanceMode == InterpolantAutomatonEnhancement.EAGER_CONSERVATIVE);
+			final boolean secondChance =
+					(enhanceMode != InterpolantAutomatonEnhancement.NO_SECOND_CHANCE);
+			final NondeterministicInterpolantAutomaton nondet =
+					new NondeterministicInterpolantAutomaton(mServices, mCsToolkit, htc,
+							inputInterpolantAutomaton, predicateUnifier,
+							mLogger, conservativeSuccessorCandidateSelection, secondChance);
+			result = nondet;
+		}
+		break;
+		default:
+			throw new UnsupportedOperationException("unknown " + enhanceMode);
+		}
+		return result;
 	}
 
 	/**
