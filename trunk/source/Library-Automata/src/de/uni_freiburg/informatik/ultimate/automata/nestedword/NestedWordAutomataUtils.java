@@ -202,4 +202,35 @@ public final class NestedWordAutomataUtils {
 	public static <STATE, T> Set<STATE> getStates(final Iterable<T> iterable, final Function<T, STATE> funGetState) {
 		return StreamSupport.stream(iterable.spliterator(), false).map(funGetState).collect(Collectors.toSet());
 	}
+	
+	
+	public static <LETTER, STATE> Set<STATE> constructInternalSuccessors(final INestedWordAutomatonSimple<LETTER, STATE> nwa, 
+			final STATE state, final LETTER letter) {
+		if (nwa instanceof NestedWordAutomaton) {
+			return ((NestedWordAutomaton<LETTER, STATE>) nwa).succInternal(state, letter);
+		} else {
+			final Function<OutgoingInternalTransition<LETTER, STATE>, STATE> funGetState = (t -> t.getSucc());
+			return getStates(nwa.internalSuccessors(state, letter), funGetState);
+		}
+	}
+	
+	public static <LETTER, STATE> Set<STATE> constructCallSuccessors(final INestedWordAutomatonSimple<LETTER, STATE> nwa, 
+			final STATE state, final LETTER letter) {
+		if (nwa instanceof NestedWordAutomaton) {
+			return ((NestedWordAutomaton<LETTER, STATE>) nwa).succCall(state, letter);
+		} else {
+			final Function<OutgoingCallTransition<LETTER, STATE>, STATE> funGetState = (t -> t.getSucc());
+			return getStates(nwa.callSuccessors(state, letter), funGetState);
+		}
+	}
+	
+	public static <LETTER, STATE> Set<STATE> constructReturnSuccessors(final INestedWordAutomatonSimple<LETTER, STATE> nwa, 
+			final STATE lin, final STATE hier, final LETTER letter) {
+		if (nwa instanceof NestedWordAutomaton) {
+			return ((NestedWordAutomaton<LETTER, STATE>) nwa).succReturn(lin, hier, letter);
+		} else {
+			final Function<OutgoingReturnTransition<LETTER, STATE>, STATE> funGetState = (t -> t.getSucc());
+			return getStates(nwa.returnSuccessors(lin, hier, letter), funGetState);
+		}
+	}
 }
