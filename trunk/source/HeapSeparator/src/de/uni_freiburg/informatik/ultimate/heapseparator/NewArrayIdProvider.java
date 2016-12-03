@@ -31,9 +31,18 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieNonOldVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieOldVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.LocalBoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -44,36 +53,41 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 
 public class NewArrayIdProvider {
 	
-	/**
-	 * maps an original array id and an index vector to a new array id
-	 *  --> caches the "main result" of this class
-	 */
-	NestedMap2<IProgramVarOrConst, List<EqNode>, IProgramVar> oldArrayIdToIndexVectorToNewArrayId = 
-			new NestedMap2<>();
+//	/**
+//	 * maps an original array id and an index vector to a new array id
+//	 *  --> caches the "main result" of this class
+//	 */
+//	NestedMap2<IProgramVarOrConst, List<EqNode>, IProgramVar> oldArrayIdToIndexVectorToNewArrayId = 
+//			new NestedMap2<>();
+//	
+//	/**
+//	 * Stores
+//	 *  for each original array id and
+//	 *   for each disjunct index and position in an index vector
+//	 *    the new array partitions id
+//	 */
+//	NestedMap3<IProgramVarOrConst, IndexPartition, Integer, IProgramVar> 
+//		oldArrayIdToIndexPartitionToPositionToNewArrayId  = 
+//			new NestedMap3<>();
+//	
+//	/**
+//	 * A disjunct index, wrt. an array, is one that is guaranteed (by the VPDomain's result) to be different from all (non-congruent) 
+//	 * other indices at each access of the array.
+//	 * One could also call these indicdes "non-aliasing"
+//	 */
+//	HashRelation<IProgramVarOrConst, IndexPartition> arrayToIndexPartitions = new HashRelation<>();
 	
-	/**
-	 * Stores
-	 *  for each original array id and
-	 *   for each disjunct index and position in an index vector
-	 *    the new array partitions id
-	 */
-	NestedMap3<IProgramVarOrConst, EqNode, Integer, IProgramVar> 
-		oldArrayIdToDisjunctIndexToPositionToNewArrayId  = 
-			new NestedMap3<>();
+//	Map<IProgramVarOrConst, IProgramVar> oldArrayToDefaultNewPartition = new HashMap<>();
 	
-	/**
-	 * A disjunct index, wrt. an array, is one that is guaranteed (by the VPDomain's result) to be different from all (non-congruent) 
-	 * other indices at each access of the array.
-	 * One could also call these indicdes "non-aliasing"
-	 */
-	HashRelation<IProgramVarOrConst, EqNode> arrayToDisjunctIndices = new HashRelation<>();
-	
-	Map<IProgramVarOrConst, IProgramVar> oldArrayToDefaultNewPartition = new HashMap<>();
+	Map<IProgramVarOrConst, PartitionInformation> arrayToPartitionInformation = new HashMap<>();
+	private final DefaultIcfgSymbolTable mNewSymbolTable;
 
 	private final ManagedScript mManagedScript;
-	
-	public NewArrayIdProvider(ManagedScript ms) {
+	private final IIcfgSymbolTable mSymbolTable;
+	public NewArrayIdProvider(ManagedScript ms, IIcfgSymbolTable iIcfgSymbolTable) {
 		mManagedScript = ms;
+		mSymbolTable = iIcfgSymbolTable;
+		mNewSymbolTable = new DefaultIcfgSymbolTable((DefaultIcfgSymbolTable) iIcfgSymbolTable);
 	}
 
 	/**
@@ -82,75 +96,170 @@ public class NewArrayIdProvider {
 	 * @param indexVector
 	 * @return
 	 */
-	public IProgramVar getNewArrayId(IProgramVarOrConst originalArrayId, List<EqNode> indexVector) {
-		IProgramVar result = oldArrayIdToIndexVectorToNewArrayId.get(originalArrayId, indexVector);
-		
-		
-		if (result == null) {
-			/*
-			 * Our convention on index-vectors:
-			 * If a vector contains at least one disjunct single pointer, it gets its own array partition.
-			 */
-			Set<EqNode> disjunctPointers = new HashSet<>(arrayToDisjunctIndices.getImage(originalArrayId));
-			disjunctPointers.retainAll(indexVector);
-			
-			if (disjunctPointers.isEmpty()) {
-				return getDefaultNewId(originalArrayId);
-			}
-			
-			EqNode disjunctPointer = disjunctPointers.iterator().next();
-			Integer disjunctPointerIndex = indexVector.indexOf(disjunctPointer);
-			
-			result = getNewArrayPartition(originalArrayId, disjunctPointer, disjunctPointerIndex);
-		}
-		return null;
+	public IProgramVarOrConst getNewArrayId(IProgramVarOrConst originalArrayId, List<EqNode> indexVector) {
+		return arrayToPartitionInformation.get(originalArrayId).getNewArray(indexVector);
+//		IProgramVar result = oldArrayIdToIndexVectorToNewArrayId.get(originalArrayId, indexVector);
+//		
+//		NestedMap2<IProgramVarOrConst, List<IndexPartition>, IProgramVarOrConst> oldArrayToIndexPartitionsToNewArray
+//		  = new NestedMap2<>();
+//				
+//		
+//		if (result == null) {
+//			/*
+//			 */
+//
+//			Set<Set<EqNode>> indexPartitions = arrayToIndexPartitions.getImage(originalArrayId);
+//			
+//			
+//			EqNode disjunctPointer = disjunctPointers.iterator().next();
+//			Integer disjunctPointerIndex = indexVector.indexOf(disjunctPointer);
+//			
+//			result = getNewArrayPartition(originalArrayId, disjunctPointer, disjunctPointerIndex);
+//		}
+//		return null;
 	}
 
-	private IProgramVar getNewArrayPartition(IProgramVarOrConst originalArrayId, 
-			EqNode disjunctPointer, Integer disjunctPointerIndex) {
-		IProgramVar result = oldArrayIdToDisjunctIndexToPositionToNewArrayId.get(
-				originalArrayId, disjunctPointer, disjunctPointerIndex);
-		if (result == null) {
+//	private IProgramVar getNewArrayPartition(IProgramVarOrConst originalArrayId, 
+//			EqNode pointer, Integer argumentPosition) {
+//		IProgramVar result = oldArrayIdToIndexPartitionToPositionToNewArrayId.get(
+//				originalArrayId, pointer, argumentPosition);
+//		if (result == null) {
+//			IProgramVar newVariable = obtainFreshProgramVar(originalArrayId);
+//			oldArrayIdToIndexPartitionToPositionToNewArrayId.put(
+//					originalArrayId, 
+//					pointer, 
+//					argumentPosition, 
+//					newVariable);
+//		}
+//		return result;
+//	}
 
-			IProgramVar newVariable = obtainFreshProgramVar(originalArrayId);
-			oldArrayIdToDisjunctIndexToPositionToNewArrayId.put(
-					originalArrayId, 
-					disjunctPointer, 
-					disjunctPointerIndex, 
-					newVariable);
+	
+
+//	private IProgramVar getDefaultNewId(IProgramVarOrConst originalArrayId) {
+//		IProgramVar result = oldArrayToDefaultNewPartition.get(originalArrayId);
+//		if (result == null) {
+//			result = obtainFreshProgramVar(originalArrayId);
+//			oldArrayToDefaultNewPartition.put(originalArrayId, result);
+//		}
+//		return result;
+//	}
+
+//	/**
+//	 * This must be called for all indices that are known to be disjunct from all other indices
+//	 * (except those in the same equivalence class) with respect to array currentArray.
+//	 * @param currentArray
+//	 * @param ind1
+//	 */
+//	public void registerDisjunctSinglePointer(IProgramVarOrConst currentArray, EqNode ind1) {
+//		arrayToIndexPartitions.addPair(currentArray, ind1);
+//	}
+
+	public void registerEquivalenceClass(
+			final IProgramVarOrConst arrayId, 
+			final Set<EqNode> ec) {
+		final IndexPartition indexPartition = new IndexPartition(arrayId, ec);
+
+		PartitionInformation partitionInfo = arrayToPartitionInformation.get(arrayId);
+		if (partitionInfo == null) {
+			partitionInfo = new PartitionInformation(arrayId, mManagedScript, mNewSymbolTable);
+			arrayToPartitionInformation.put(arrayId, partitionInfo);
+		}
+		partitionInfo.addPartition(indexPartition);
+	}
+}
+
+/*
+ * Represents a set of Array Indices which, with respect to a given array, may never alias with 
+ * the indices in any other partition.
+ */
+class IndexPartition {
+	final IProgramVarOrConst arrayId;
+	final Set<EqNode> indices;
+
+	public IndexPartition(IProgramVarOrConst arrayId, Set<EqNode> indices) {
+		this.arrayId = arrayId;
+		this.indices = indices;
+	}
+}
+
+class PartitionInformation {
+	private final IProgramVarOrConst arrayId;
+	int versionCounter = 0;
+	private final DefaultIcfgSymbolTable mNewSymbolTable;
+	private final Set<IndexPartition> indexPartitions;
+	
+//	final Map<List<EqNode>, IProgramVarOrConst> indexVectorToNewArrayId;
+	
+	final Map<IndexPartition, IProgramVarOrConst> indexPartitionToNewArrayId = new HashMap<>();
+	
+	private final Map<List<IndexPartition>, IProgramVarOrConst> partitionVectorToNewArrayId = new HashMap<>();
+	
+	private final Map<EqNode, IndexPartition> indexToIndexPartition = new HashMap<>();
+	private final ManagedScript mManagedScript;
+	
+	public PartitionInformation(IProgramVarOrConst arrayId, ManagedScript mScript, DefaultIcfgSymbolTable newSymbolTable) {
+		this.arrayId = arrayId;
+		indexPartitions = new HashSet<>();
+		mManagedScript = mScript;
+		mNewSymbolTable = newSymbolTable;
+	}
+	
+	public IProgramVarOrConst getNewArray(List<EqNode> indexVector) {
+		List<IndexPartition> partitionVector = 
+				indexVector.stream().map(eqNode -> indexToIndexPartition.get(eqNode)).collect(Collectors.toList());
+		return getNewArrayIdForIndexPartitionVector(partitionVector);
+	}
+
+	private IProgramVarOrConst getNewArrayIdForIndexPartitionVector(List<IndexPartition> partitionVector) {
+		IProgramVarOrConst result = partitionVectorToNewArrayId.get(partitionVector);
+		if (result == null) {
+			result = obtainFreshProgramVar(arrayId);
+			partitionVectorToNewArrayId.put(partitionVector, arrayId);
 		}
 		return result;
 	}
 
-	private IProgramVar obtainFreshProgramVar(IProgramVarOrConst originalArrayId) {
-		//TOOD rework with the new symbolTable (i would hope that it will provide a method similar to Boogie2SMTsymboltable
-		// that constructs a ProgramVar
-		TermVariable newTv = mManagedScript.constructFreshCopy((TermVariable) originalArrayId.getTerm());
-		IProgramVar result = new BoogieNonOldVar(newTv.getName(), null, newTv, null, null, null);
-		return result;
+	void addPartition(IndexPartition ip) {
+		indexPartitions.add(ip);
 	}
 
-	private IProgramVar getDefaultNewId(IProgramVarOrConst originalArrayId) {
-		IProgramVar result = oldArrayToDefaultNewPartition.get(originalArrayId);
-		if (result == null) {
-			result = obtainFreshProgramVar(originalArrayId);
-			oldArrayToDefaultNewPartition.put(originalArrayId, result);
-		}
-		return result;
+	private int getFreshVersionIndex() {
+		//TODO: a method seems overkill right now -- remove if nothing changes..
+		return versionCounter++;
 	}
 
-	/**
-	 * This must be called for all indices that are known to be disjunct from all other indices
-	 * (except those in the same equivalence class) with respect to array currentArray.
-	 * @param currentArray
-	 * @param ind1
-	 */
-	public void registerDisjunctSinglePointer(IProgramVarOrConst currentArray, EqNode ind1) {
-		arrayToDisjunctIndices.addPair(currentArray, ind1);
-	}
-
-	public void registerEquivalenceClass(IProgramVarOrConst currentArray, Set<EqNode> ec) {
-		// TODO Auto-generated method stub
+	private IProgramVarOrConst obtainFreshProgramVar(IProgramVarOrConst originalArrayId) {
+		// TODO: would it be a good idea to introduce something like ReplacementVar for this??
 		
+		IProgramVarOrConst freshVar = null;
+		
+		if (originalArrayId instanceof LocalBoogieVar) {
+			LocalBoogieVar lbv = (LocalBoogieVar) originalArrayId;
+			String newId = lbv.getIdentifier() + "_part_" + getFreshVersionIndex();
+			TermVariable newTv = mManagedScript.constructFreshCopy(lbv.getTermVariable());
+			ApplicationTerm newConst = (ApplicationTerm) mManagedScript.getScript().term(newId + "_const");
+			ApplicationTerm newPrimedConst = (ApplicationTerm) mManagedScript.getScript().term(newId + "_const_primed");
+			freshVar = new LocalBoogieVar(
+					newId, 
+					lbv.getProcedure(), 
+					null, 
+					newTv, 
+					newConst, 
+					newPrimedConst);
+		} else if (originalArrayId instanceof BoogieNonOldVar) {
+			assert false : "TODO: implement";
+		} else if (originalArrayId instanceof BoogieOldVar) {
+			assert false : "TODO: implement";
+		} else if (originalArrayId instanceof ReplacementVar) {
+			assert false : "TODO: implement";
+		} else if (originalArrayId instanceof BoogieConst) {
+			assert false : "TODO: implement";
+		} else {
+			assert false : "case missing --> add it?";
+		}
+		
+		mNewSymbolTable.add(freshVar);
+		return freshVar;
 	}
 }

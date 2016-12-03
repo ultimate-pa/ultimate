@@ -169,7 +169,7 @@ public class HsNonPlugin {
 		 * Compute the actual partitioning for each array.
 		 */
 		final RCFGArrayIndexCollector vpPreAnalysis = ((VPDomain) vpDomainResult.getUsedDomain()).getPreAnalysis();
-		final NewArrayIdProvider newArrayIdProvider = new NewArrayIdProvider(mManagedScript);
+		final NewArrayIdProvider newArrayIdProvider = new NewArrayIdProvider(mManagedScript, vpDomain.getSymbolTable());
 		for (final Entry<IProgramVarOrConst, VPState> en : arrayToVPState.entrySet()) {
 			final IProgramVarOrConst currentArray = en.getKey();
 			final VPState state = en.getValue();

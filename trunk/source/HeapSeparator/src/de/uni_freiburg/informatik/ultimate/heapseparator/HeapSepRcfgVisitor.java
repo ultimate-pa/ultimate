@@ -144,7 +144,7 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 		 *  build a substitution
 		 */
 
-		Map<IProgramVarOrConst, IProgramVar> substitutionMap = new HashMap<>();
+		Map<IProgramVarOrConst, IProgramVarOrConst> substitutionMap = new HashMap<>();
 
 
 		List<MultiDimensionalSelect> mdSelects = MultiDimensionalSelect.extractSelectShallow(tf.getFormula(), false);//TODO allowArrayValues??
@@ -157,7 +157,7 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 			List<EqNode> pointers = mds.getIndex().stream()
 					.map(indexTerm -> mVpDomain.getPreAnalysis().getTermToEqNodeMap().get(indexTerm))
 					.collect(Collectors.toList());
-			IProgramVar newArray = mNewArrayIdProvider.getNewArrayId(oldArray, pointers);
+			IProgramVarOrConst newArray = mNewArrayIdProvider.getNewArrayId(oldArray, pointers);
 			substitutionMap.put(oldArray, newArray);
 		}
 
@@ -170,7 +170,7 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 			List<EqNode> pointers = mds.getIndex().stream()
 					.map(indexTerm -> mVpDomain.getPreAnalysis().getTermToEqNodeMap().get(indexTerm))
 					.collect(Collectors.toList());
-			IProgramVar newArray = mNewArrayIdProvider.getNewArrayId(oldArray, pointers);
+			IProgramVarOrConst newArray = mNewArrayIdProvider.getNewArrayId(oldArray, pointers);
 			substitutionMap.put(oldArray, newArray);
 		}
 		
