@@ -150,8 +150,8 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 				mCsToolkit, mPredicateUnifier.getPredicateFactory(), mTaPrefs, mServices, mInterpolatingTraceChecker);
 		// 3. Determinize the finite automaton from step 2.
 		final DeterministicInterpolantAutomaton interpolantAutomatonDeterminized =
-				new DeterministicInterpolantAutomaton(mServices, mCsToolkit, mHoareTripleChecker, pathprogramautomaton,
-						interpolantAutomaton, mPredicateUnifier, mLogger, false, false // PREDICATE_ABSTRACTION_CANNIBALIZE
+				new DeterministicInterpolantAutomaton(mServices, mCsToolkit, mHoareTripleChecker, interpolantAutomaton,
+						mPredicateUnifier, mLogger, false, false // PREDICATE_ABSTRACTION_CANNIBALIZE
 																						// = false (default)
 				);
 

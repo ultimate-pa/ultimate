@@ -34,8 +34,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -76,12 +75,11 @@ public class DeterministicInterpolantAutomaton extends BasicAbstractInterpolantA
 
 	public DeterministicInterpolantAutomaton(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
 			final IHoareTripleChecker hoareTripleChecker,
-			final INestedWordAutomatonSimple<CodeBlock, IPredicate> abstraction,
-			final NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton,
-			final PredicateUnifier predicateUnifier, final ILogger logger,
-			final boolean conservativeSuccessorCandidateSelection, final boolean cannibalize) {
-		super(services, csToolkit, hoareTripleChecker, true, abstraction, predicateUnifier, interpolantAutomaton,
-				logger);
+			final INestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton,
+			final PredicateUnifier predicateUnifier,
+			final ILogger logger, final boolean conservativeSuccessorCandidateSelection,
+			final boolean cannibalize) {
+		super(services, csToolkit, hoareTripleChecker, true, predicateUnifier, interpolantAutomaton, logger);
 		mCannibalize = cannibalize;
 		mConservativeSuccessorCandidateSelection = conservativeSuccessorCandidateSelection;
 		if (mConservativeSuccessorCandidateSelection && mCannibalize) {
@@ -94,7 +92,7 @@ public class DeterministicInterpolantAutomaton extends BasicAbstractInterpolantA
 					interpolantAutomaton.getStates().toArray(new IPredicate[0]));
 			for (final IPredicate pred : allPredicates) {
 				if (!interpolantAutomaton.getStates().contains(pred)) {
-					interpolantAutomaton.addState(false, false, pred);
+					mAlreadyConstrucedAutomaton.addState(false, false, pred);
 				}
 			}
 		} else {
@@ -108,7 +106,7 @@ public class DeterministicInterpolantAutomaton extends BasicAbstractInterpolantA
 			allPredicates.addAll(divPreds);
 			for (final IPredicate pred : divPreds) {
 				if (!interpolantAutomaton.getStates().contains(pred)) {
-					interpolantAutomaton.addState(false, false, pred);
+					mAlreadyConstrucedAutomaton.addState(false, false, pred);
 				}
 			}
 		}

@@ -448,9 +448,9 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					final boolean cannibalize = mPref
 							.interpolantAutomatonEnhancement() == InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION_CANNIBALIZE;
 					final DeterministicInterpolantAutomaton determinized =
-							new DeterministicInterpolantAutomaton(mServices, mCsToolkit, htc, oldAbstraction,
-									interpolAutomaton, mTraceCheckAndRefinementSelection.getPredicateUnifier(), mLogger,
-									conservativeSuccessorCandidateSelection, cannibalize);
+							new DeterministicInterpolantAutomaton(mServices, mCsToolkit, htc, interpolAutomaton,
+									mTraceCheckAndRefinementSelection.getPredicateUnifier(), mLogger, conservativeSuccessorCandidateSelection,
+									cannibalize);
 					// NondeterministicInterpolantAutomaton determinized =
 					// new NondeterministicInterpolantAutomaton(
 					// mServices, mCsToolkit, mModGlobVarManager, htc,
@@ -498,8 +498,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 							mPref.interpolantAutomatonEnhancement() != InterpolantAutomatonEnhancement.NO_SECOND_CHANCE;
 					final NondeterministicInterpolantAutomaton nondet =
 							new NondeterministicInterpolantAutomaton(mServices, mCsToolkit, htc,
-									(INestedWordAutomatonSimple<CodeBlock, IPredicate>) mAbstraction, interpolAutomaton,
-									predicateUnifier, mLogger, conservativeSuccessorCandidateSelection, secondChance);
+									interpolAutomaton, predicateUnifier,
+									mLogger, conservativeSuccessorCandidateSelection, secondChance);
 					final PowersetDeterminizer<CodeBlock, IPredicate> psd2 =
 							new PowersetDeterminizer<>(nondet, true, mPredicateFactoryInterpolantAutomata);
 					try {

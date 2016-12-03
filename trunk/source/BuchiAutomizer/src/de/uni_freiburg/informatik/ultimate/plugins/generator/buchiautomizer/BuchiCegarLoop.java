@@ -760,8 +760,8 @@ public class BuchiCegarLoop {
 				mServices, HoareTripleChecks.INCREMENTAL, mCsToolkitWithRankVars, traceChecker.getPredicateUnifier());
 
 		final DeterministicInterpolantAutomaton determinized = new DeterministicInterpolantAutomaton(mServices,
-				mCsToolkitWithRankVars, htc, mAbstraction, mInterpolAutomaton, traceChecker.getPredicateUnifier(),
-				mLogger, false, false);
+				mCsToolkitWithRankVars, htc, mInterpolAutomaton, traceChecker.getPredicateUnifier(), mLogger,
+				false, false);
 		final PowersetDeterminizer<CodeBlock, IPredicate> psd = new PowersetDeterminizer<>(
 				determinized, true, mDefaultStateFactory);
 		Difference<CodeBlock, IPredicate> diff = null;

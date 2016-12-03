@@ -484,8 +484,8 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 		IOpWithDelayedDeadEndRemoval<CodeBlock, IPredicate> diff;
 
 		final DeterministicInterpolantAutomaton determinized = new DeterministicInterpolantAutomaton(
-				mServices, mCsToolkit, htc, oldAbstraction, mInterpolAutomaton, mPredicateUnifier,
-				mLogger, false, false);//change to CegarLoopConcurrentAutomata
+				mServices, mCsToolkit, htc, mInterpolAutomaton, mPredicateUnifier, mLogger,
+				false, false);//change to CegarLoopConcurrentAutomata
 		// ComplementDeterministicNwa<CodeBlock, IPredicate>
 		// cdnwa = new ComplementDeterministicNwa<>(dia);
 		final PowersetDeterminizer<CodeBlock, IPredicate> psd2 = new PowersetDeterminizer<CodeBlock, IPredicate>(

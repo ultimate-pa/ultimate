@@ -108,8 +108,8 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 	 */
 	public AbstractInterpolantAutomaton(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
 			final IHoareTripleChecker hoareTripleChecker, final boolean useEfficientTotalAutomatonBookkeeping,
-			final INestedWordAutomatonSimple<CodeBlock, IPredicate> abstraction, final IPredicate falseState,
-			final INestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton, final ILogger logger) {
+			final IPredicate falseState, final INestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton,
+			final ILogger logger) {
 		super();
 		mServices = services;
 		mLogger = logger;
@@ -121,8 +121,8 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 		mCaSucComp = new CallSuccessorComputationHelper();
 		mReSucComp = new ReturnSuccessorComputationHelper();
 		mAlreadyConstrucedAutomaton = new NestedWordAutomatonCache<>(new AutomataLibraryServices(mServices),
-				abstraction.getInternalAlphabet(), abstraction.getCallAlphabet(), abstraction.getReturnAlphabet(),
-				abstraction.getStateFactory());
+				interpolantAutomaton.getInternalAlphabet(), interpolantAutomaton.getCallAlphabet(), interpolantAutomaton.getReturnAlphabet(),
+				interpolantAutomaton.getStateFactory());
 		if (useEfficientTotalAutomatonBookkeeping) {
 			mSuccessorComputationBookkeeping = new SuccessorComputationBookkeepingForTotalAutomata();
 		} else {

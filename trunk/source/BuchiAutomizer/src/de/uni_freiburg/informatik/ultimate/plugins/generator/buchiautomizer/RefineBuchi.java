@@ -281,7 +281,7 @@ public class RefineBuchi {
 				mInterpolAutomaton.addState(false, true, pu.getFalsePredicate());
 			}
 			mInterpolAutomatonUsedInRefinement = new NondeterministicInterpolantAutomaton(mServices, mCsToolkit,
-					bhtc, abstraction, mInterpolAutomaton, pu, mLogger, false, true);
+					bhtc, mInterpolAutomaton, pu, mLogger, false, true);
 			break;
 		case ScroogeNondeterminism:
 		case Deterministic:
@@ -319,11 +319,10 @@ public class RefineBuchi {
 			mInterpolAutomatonUsedInRefinement = new BuchiInterpolantAutomatonBouncer(mCsToolkit, mPredicateFactory, bspm, bhtc,
 					BuchiCegarLoop.emptyStem(mCounterexample), stemInterpolantsForRefinement,
 					loopInterpolantsForRefinement, BuchiCegarLoop.emptyStem(mCounterexample) ? null
-							: stem.getSymbol(stem.length() - 1), loop.getSymbol(loop.length() - 1), abstraction,
-					setting.isScroogeNondeterminismStem(), setting.isScroogeNondeterminismLoop(),
-					setting.isBouncerStem(), setting.isBouncerLoop(), mStateFactoryInterpolAutom, pu, pu,
-					pu.getFalsePredicate(), mServices, mSimplificationTechnique, mXnfConversionTechnique,
-					mICfgContainer.getBoogie2SMT().getBoogie2SmtSymbolTable());
+							: stem.getSymbol(stem.length() - 1), loop.getSymbol(loop.length() - 1), setting.isScroogeNondeterminismStem(),
+					setting.isScroogeNondeterminismLoop(), setting.isBouncerStem(),
+					setting.isBouncerLoop(), mStateFactoryInterpolAutom, pu, pu, pu.getFalsePredicate(),
+					mServices, mSimplificationTechnique, mXnfConversionTechnique, mICfgContainer.getBoogie2SMT().getBoogie2SmtSymbolTable());
 			break;
 		default:
 			throw new UnsupportedOperationException("unknown automaton");
