@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.heapseparator;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -53,6 +54,7 @@ public class NewArrayIdProvider {
 
 	private final ManagedScript mManagedScript;
 	private final IIcfgSymbolTable mSymbolTable;
+
 	public NewArrayIdProvider(ManagedScript ms, IIcfgSymbolTable iIcfgSymbolTable) {
 		mManagedScript = ms;
 		mSymbolTable = iIcfgSymbolTable;
@@ -93,7 +95,7 @@ class IndexPartition {
 
 	public IndexPartition(IProgramVarOrConst arrayId, Set<EqNode> indices) {
 		this.arrayId = arrayId;
-		this.indices = indices;
+		this.indices = Collections.unmodifiableSet(indices);
 	}
 }
 

@@ -53,17 +53,16 @@ public class VPStateFactory {
 	public VPStateFactory(VPDomain vpdomain) {
 		mDomain = vpdomain;
 		mBottomState = new VPStateBottom(vpdomain);
-		mTopState = createTopState();
+		mTopState = createEmptyState().build();
 	}
 	
-	private VPState createTopState() {
-		Map<EqNode, EqGraphNode> eqNodeToEqGraphNodeMap = new HashMap<>();
-		Set<EqNode> literalSet = new HashSet<>();
-		Set<VPDomainSymmetricPair<EqNode>> disEqualitySet = new HashSet<>();
+	private VPStateBuilder createEmptyState() {
 		
 		/*
 		 * Create fresh EqGraphNodes from EqNodes.
 		 */
+		Set<EqNode> literalSet = new HashSet<>();
+		Map<EqNode, EqGraphNode> eqNodeToEqGraphNodeMap = new HashMap<>();
 		for (EqNode eqNode : mDomain.getTermToEqNodeMap().values()) {
 			getOrConstructEqGraphNode(eqNode, eqNodeToEqGraphNodeMap);
 			if (eqNode.isLiteral()) {
@@ -80,10 +79,10 @@ public class VPStateFactory {
 			egn.setupNode(eqNodeToEqGraphNodeMap);
 		}
 		
-		
 		/*
 		 * Generate disequality set for constants
 		 */
+		Set<VPDomainSymmetricPair<EqNode>> disEqualitySet = new HashSet<>();
 		for (EqNode node1 : literalSet) {
 			for (EqNode node2 : literalSet) {
 				if (!node1.equals(node2)) {
@@ -92,7 +91,16 @@ public class VPStateFactory {
 			}
 		}
 		
-		return new VPState(eqNodeToEqGraphNodeMap, disEqualitySet, mDomain);
+		/*
+		 * The set of tracked variables (as exposed to the fixpointengine) is empty, initially.
+		 */
+		Set<IProgramVar> vars = new HashSet<>();
+		VPStateBuilder builder = new VPStateBuilder(mDomain)
+				.setEqGraphNodes(eqNodeToEqGraphNodeMap)
+				.setVars(vars)
+				.setDisEqualites(disEqualitySet)
+				.setIsTop(true);
+		return builder;
 	}
 	
 	private EqGraphNode getOrConstructEqGraphNode(EqNode eqNode, Map<EqNode, EqGraphNode> eqNodeToEqGraphNode) {
@@ -128,23 +136,24 @@ public class VPStateFactory {
 	}
 	
 	public VPState copy(VPState originalState) {
+		assert !originalState.isBottom();
+		assert !originalState.isTop();
 		
-		VPState result = createTopState();
-		
+		VPStateBuilder builder = createEmptyState();
 		
 		for (EqNode eqNode : mDomain.getTermToEqNodeMap().values()) {
-			EqGraphNode newGraphNode = result.getEqNodeToEqGraphNodeMap().get(eqNode);
+			EqGraphNode newGraphNode = builder.getEqNodeToEqGraphNodeMap().get(eqNode);
 			EqGraphNode oldGraphNode = originalState.getEqNodeToEqGraphNodeMap().get(eqNode);
-			newGraphNode.copyFields(oldGraphNode, result.getEqNodeToEqGraphNodeMap());
+			newGraphNode.copyFields(oldGraphNode, builder.getEqNodeToEqGraphNodeMap());
 		}
 		
 		for (VPDomainSymmetricPair<EqNode> pair : originalState.getDisEqualitySet()) {
-			result.getDisEqualitySet().add(pair);
+			builder.getDisEqualitySet().add(pair);
 		}
 		
-		result.setIsTop(false);
+		builder.setIsTop(false);
 
-		return result;
+		return builder.build();
 	}
 	
 	/**
@@ -432,51 +441,56 @@ public class VPStateFactory {
 				return first;
 			}
 		
-			VPState disjoinedState = copy(first);
-			EqGraphNode otherGraphNode;
+			VPStateBuilder builder = new VPStateBuilder(mDomain);
+			builder.setIsTop(false);
+			
+			/**
+			 * the disjoined state contains the disequalities that both first and second contain. (i.e. intersection)
+			 */
+			Set<VPDomainSymmetricPair<EqNode>> newDisequalities = new HashSet<>(first.getDisEqualitySet());
+			newDisequalities.retainAll(second.getDisEqualitySet());
+			builder.setDisEqualites(newDisequalities);
+			
+			/**
+			 * the disjoined state has the intersection of the prior state's variables
+			 */
+			Set<IProgramVar> newVars = new HashSet<>(first.getVariables());
+			newVars.retainAll(second.getVariables());
+			builder.setVars(newVars);
+			
+			/**
+			 * the disjoined state contains exactly the equalities that both and second contain.(i.e. intersection)
+			 */
+			VPState disjoinedState = builder.build();
+			for (final EqGraphNode firstGraphNode : first.getEqNodeToEqGraphNodeMap().values()) {
 		
-			// TODO: (alex:) replaced clearState (which seems evil), but I'm not sure I understand this code anyway
-			//  --> maybe revise..
-//			disjoinedState.clearState();
-			disjoinedState = createTopState();
+				EqGraphNode secondGraphNode = second.getEqNodeToEqGraphNodeMap().get(firstGraphNode.eqNode);
 		
-			for (final VPDomainSymmetricPair<EqNode> otherPair : second.getDisEqualitySet()) {
-				if (first.getDisEqualitySet().contains(otherPair)) {
-					disjoinedState.getDisEqualitySet()
-							.add(new VPDomainSymmetricPair<EqNode>(otherPair.getFirst(), otherPair.getSecond()));
-				}
-			}
+				EqGraphNode firstNodeRepresentative = firstGraphNode.getRepresentative();
+				EqGraphNode secondNodeRepresentative = secondGraphNode.getRepresentative();
 		
-			Set<VPState> resultStates = new HashSet<>();
-			for (final EqGraphNode thisGraphNode : first.getEqNodeToEqGraphNodeMap().values()) {
-		
-				otherGraphNode = second.getEqNodeToEqGraphNodeMap().get(thisGraphNode.eqNode);
-		
-				EqGraphNode thisNodeRepresentative = thisGraphNode.getRepresentative();
-				EqGraphNode otherNodeRepresentative = otherGraphNode.getRepresentative();
-		
-				if (thisNodeRepresentative.equals(otherNodeRepresentative)) {
+				if (firstNodeRepresentative.equals(secondNodeRepresentative)) {
 					Set<VPState> addEq = addEquality(
-							thisGraphNode.eqNode,
-							thisNodeRepresentative.eqNode,
+							firstGraphNode.eqNode,
+							firstNodeRepresentative.eqNode,
 							disjoinedState);
 					assert addEq.size() == 1;
 					disjoinedState = addEq.iterator().next();
 				} else {
 		
-					if (first.find(otherGraphNode)
-							.equals(first.find(second.getEqNodeToEqGraphNodeMap().get(thisNodeRepresentative.eqNode)))) {
+					if (first.find(secondGraphNode)
+							.equals(first.find(second.getEqNodeToEqGraphNodeMap().get(firstNodeRepresentative.eqNode)))) {
 						Set<VPState> addEq = addEquality(
-								thisGraphNode.eqNode,
-								thisNodeRepresentative.eqNode,
+								firstGraphNode.eqNode,
+								firstNodeRepresentative.eqNode,
 								disjoinedState);
 						assert addEq.size() == 1;
 						disjoinedState = addEq.iterator().next();
-					} else if (first.find(thisGraphNode)
-							.equals(first.find(first.getEqNodeToEqGraphNodeMap().get(otherNodeRepresentative.eqNode)))) {
+					} else if (first.find(firstGraphNode)
+							.equals(first.find(first.getEqNodeToEqGraphNodeMap().get(secondNodeRepresentative.eqNode)))) {
 						Set<VPState> addEq = addEquality(
-								thisGraphNode.eqNode,
-								otherNodeRepresentative.eqNode,
+								firstGraphNode.eqNode,
+								secondNodeRepresentative.eqNode,
 								disjoinedState);
 						assert addEq.size() == 1;
 						disjoinedState = addEq.iterator().next();

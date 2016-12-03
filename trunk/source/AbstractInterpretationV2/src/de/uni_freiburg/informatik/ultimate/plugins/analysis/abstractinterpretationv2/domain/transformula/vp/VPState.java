@@ -58,9 +58,7 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 	private static final String TERM_FUNC_NAME_AND = "and";
 	private static final String TERM_TRUE = "true";
 	private static final String TERM_FUNC_NAME_DISTINCT = "distinct";
-
-	private static int sId;
-	private final int mId;
+	
 
 	private final Set<IProgramVar> mVars;
 
@@ -70,7 +68,7 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 
 	private final VPDomain mDomain;
 	private final Script mScript;
-	private boolean mIsTop;
+	private final boolean mIsTop;
 
 	/**
 	 * Constructor for bottom state only.
@@ -78,26 +76,27 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 	 * @param domain
 	 */
 	VPState(final VPDomain domain) {
-		this(Collections.emptyMap(), Collections.emptySet(), domain);
-		mIsTop = false;
+		this(Collections.emptyMap(), Collections.emptySet(), Collections.emptySet(), domain, false);
 	}
 
 	/*
 	 * Constructor to be used by VPStateFactory.createTopState() only.
 	 */
 	VPState(final Map<EqNode, EqGraphNode> eqNodeToEqGraphNodeMap,
-			final Set<VPDomainSymmetricPair<EqNode>> disEqualitySet, final VPDomain domain) {
-		mVars = new HashSet<>();
-		mEqNodeToEqGraphNodeMap = eqNodeToEqGraphNodeMap;
-		mDisEqualitySet = disEqualitySet;
+			final Set<VPDomainSymmetricPair<EqNode>> disEqualitySet, 
+			final Set<IProgramVar> vars, 
+			final VPDomain domain, 
+			final boolean isTop) {
+		mVars = vars;
+		mEqNodeToEqGraphNodeMap = Collections.unmodifiableMap(eqNodeToEqGraphNodeMap);
+		mDisEqualitySet = Collections.unmodifiableSet(disEqualitySet);
 		mDomain = domain;
 		mScript = mDomain.getManagedScript().getScript();
-		mIsTop = true;
-		mId = sId++;
+		mIsTop = isTop;
 	}
 
 	public Set<VPDomainSymmetricPair<EqNode>> getDisEqualitySet() {
-		return Collections.unmodifiableSet(mDisEqualitySet);
+		return mDisEqualitySet;
 	}
 
 	public void setDisEqualitySet(final Set<VPDomainSymmetricPair<EqNode>> disEqualitySet) {
@@ -292,7 +291,6 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 		final VPState copy = mDomain.getVpStateFactory().copy(this);
 		copy.mVars.remove(variable);
 		return copy;
-
 	}
 
 	@Override
@@ -322,7 +320,7 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 
 	@Override
 	public Set<IProgramVar> getVariables() {
-		return Collections.unmodifiableSet(mVars);
+		return mVars;
 	}
 
 	@Override
@@ -353,10 +351,6 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 
 	public boolean isTop() {
 		return mIsTop;
-	}
-
-	void setIsTop(final boolean isTop) {
-		mIsTop = isTop;
 	}
 
 	@Override
@@ -425,26 +419,26 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 		return toLogString();
 	}
 
-	@Override
-	public int hashCode() {
-		return mId;
-	}
+//	@Override
+//	public int hashCode() {
+//		//TODO: overwrite sensibly
+//		return mId;
+//	}
 
 	@Override
 	public boolean equals(final Object obj) {
+		if (!(obj instanceof VPState)) {
+			return false;
+		}
 		if (this == obj) {
 			return true;
 		}
-		if (obj == null) {
-			return false;
-		}
-		if (getClass() != obj.getClass()) {
-			return false;
-		}
+		
 		final VPState other = (VPState) obj;
-		if (mId == other.mId) {
-			return true;
-		} else if (isEqualTo(other)) {
+//		if (mId == other.mId) {
+//			return true;
+//		} else 
+		if (isEqualTo(other)) {
 			// TODO: Note that computing isEqualTo can be quite expensive!
 			return true;
 		}
@@ -535,5 +529,5 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 
 	public boolean mayEqual(EqNode accessingNode1, EqNode accessingNode2) {
 		return mDisEqualitySet.contains(new VPDomainSymmetricPair<EqNode>(accessingNode1, accessingNode2));
-}
+	}
 }
