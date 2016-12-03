@@ -75,7 +75,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.in
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.NondeterministicInterpolantAutomaton;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.CachingHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.CachingHoareTripleChecker_Map;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
@@ -359,7 +358,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		final INestedWordAutomaton<CodeBlock, IPredicate> oldAbstraction =
 				(INestedWordAutomaton<CodeBlock, IPredicate>) mAbstraction;
 
-		final CachingHoareTripleChecker htc;
+		final IHoareTripleChecker htc;
 		{
 			if (mTraceCheckAndRefinementSelection.getHoareTripleChecker() != null) {
 				htc = mTraceCheckAndRefinementSelection.getHoareTripleChecker();
@@ -496,7 +495,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 
 	private INestedWordAutomatonSimple<CodeBlock, IPredicate> constructInterpolantAutomatonForOnDemandEnhancement(
 			final NestedWordAutomaton<CodeBlock, IPredicate> inputInterpolantAutomaton,
-			final PredicateUnifier predicateUnifier, final CachingHoareTripleChecker htc,
+			final PredicateUnifier predicateUnifier, final IHoareTripleChecker htc,
 			final InterpolantAutomatonEnhancement enhanceMode) {
 		final AbstractInterpolantAutomaton result;
 		switch (enhanceMode) {
