@@ -51,7 +51,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpt
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveDeadEnds;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DeterminizeDD;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IOpWithDelayedDeadEndRemoval;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.senwa.DifferenceSenwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
@@ -595,35 +594,6 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		}
 	}
 
-	protected INestedWordAutomaton<CodeBlock, IPredicate>
-			determinizeInterpolantAutomaton(final INestedWordAutomaton<CodeBlock, IPredicate> interpolAutomaton)
-					throws AutomataOperationCanceledException {
-		mLogger.debug("Start determinization");
-		INestedWordAutomaton<CodeBlock, IPredicate> dia;
-		switch (mPref.interpolantAutomatonEnhancement()) {
-		case NONE:
-			final PowersetDeterminizer<CodeBlock, IPredicate> psd =
-					new PowersetDeterminizer<>(interpolAutomaton, true, mPredicateFactoryInterpolantAutomata);
-			final DeterminizeDD<CodeBlock, IPredicate> dabps =
-					new DeterminizeDD<>(new AutomataLibraryServices(mServices), interpolAutomaton, psd);
-			dia = dabps.getResult();
-			break;
-		default:
-			throw new UnsupportedOperationException();
-		}
-
-		if (mComputeHoareAnnotation) {
-			assert new InductivityCheck(mServices, dia, false, true,
-					new IncrementalHoareTripleChecker(super.mCsToolkit)).getResult() : "Not inductive";
-		}
-		if (mPref.dumpAutomata()) {
-			final String filename = "InterpolantAutomatonDeterminized_Iteration" + mIteration;
-			writeAutomatonToFile(dia, filename);
-		}
-		assert accepts(mServices, dia, mCounterexample.getWord());
-		mLogger.debug("Sucessfully determinized");
-		return dia;
-	}
 
 	@Override
 	protected void computeCFGHoareAnnotation() {
