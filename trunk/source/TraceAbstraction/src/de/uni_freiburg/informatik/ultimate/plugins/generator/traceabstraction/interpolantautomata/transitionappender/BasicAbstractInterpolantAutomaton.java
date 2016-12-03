@@ -29,8 +29,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.i
 import java.util.HashSet;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -55,7 +55,7 @@ public abstract class BasicAbstractInterpolantAutomaton extends AbstractInterpol
 			final IHoareTripleChecker hoareTripleChecker, final boolean useEfficientTotalAutomatonBookkeeping,
 			final INestedWordAutomatonSimple<CodeBlock, IPredicate> abstraction,
 			final PredicateUnifier predicateUnifier,
-			final NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton, final ILogger logger) {
+			final INestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton, final ILogger logger) {
 		super(services, csToolkit, hoareTripleChecker, useEfficientTotalAutomatonBookkeeping, abstraction,
 				predicateUnifier.getFalsePredicate(), interpolantAutomaton, logger);
 		mPredicateUnifier = predicateUnifier;

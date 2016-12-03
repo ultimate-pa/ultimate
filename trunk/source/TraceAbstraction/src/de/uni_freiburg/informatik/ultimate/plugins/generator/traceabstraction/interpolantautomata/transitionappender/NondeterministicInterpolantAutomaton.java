@@ -31,8 +31,8 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -78,7 +78,7 @@ public class NondeterministicInterpolantAutomaton extends BasicAbstractInterpola
 	public NondeterministicInterpolantAutomaton(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
 			final IHoareTripleChecker hoareTripleChecker,
 			final INestedWordAutomatonSimple<CodeBlock, IPredicate> abstraction,
-			final NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton,
+			final INestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton,
 			final PredicateUnifier predicateUnifier, final ILogger logger,
 			final boolean conservativeSuccessorCandidateSelection, final boolean secondChance) {
 		super(services, csToolkit, hoareTripleChecker, true, abstraction, predicateUnifier, interpolantAutomaton,

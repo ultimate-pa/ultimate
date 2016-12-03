@@ -33,8 +33,9 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonCache;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NwaCacheBookkeeping;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
@@ -91,7 +92,7 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 	protected final IHoareTripleChecker mIHoareTripleChecker;
 	protected final IPredicate mIaFalseState;
 	protected final NestedWordAutomatonCache<CodeBlock, IPredicate> mAlreadyConstrucedAutomaton;
-	protected final NestedWordAutomaton<CodeBlock, IPredicate> mInputInterpolantAutomaton;
+	protected final INestedWordAutomaton<CodeBlock, IPredicate> mInputInterpolantAutomaton;
 
 	private Mode mMode = Mode.ON_DEMAND_CONSTRUCTION;
 
@@ -108,7 +109,7 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 	public AbstractInterpolantAutomaton(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
 			final IHoareTripleChecker hoareTripleChecker, final boolean useEfficientTotalAutomatonBookkeeping,
 			final INestedWordAutomatonSimple<CodeBlock, IPredicate> abstraction, final IPredicate falseState,
-			final NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton, final ILogger logger) {
+			final INestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton, final ILogger logger) {
 		super();
 		mServices = services;
 		mLogger = logger;
@@ -376,7 +377,8 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 		public Collection<IPredicate> getSuccsInterpolantAutomaton(final IPredicate resPred, final IPredicate resHier,
 				final CodeBlock letter) {
 			assert resHier == null;
-			final Collection<IPredicate> succs = mInputInterpolantAutomaton.succInternal(resPred, letter);
+			final Collection<IPredicate> succs = NestedWordAutomataUtils.constructInternalSuccessors(
+					mInputInterpolantAutomaton, resPred, letter);
 			if (succs == null) {
 				return Collections.emptySet();
 			}
@@ -422,7 +424,8 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 		public Collection<IPredicate> getSuccsInterpolantAutomaton(final IPredicate resPred, final IPredicate resHier,
 				final CodeBlock letter) {
 			assert resHier == null;
-			final Collection<IPredicate> succs = mInputInterpolantAutomaton.succCall(resPred, letter);
+			final Collection<IPredicate> succs = NestedWordAutomataUtils.constructCallSuccessors(
+						mInputInterpolantAutomaton, resPred, letter);
 			if (succs == null) {
 				return Collections.emptySet();
 			}
@@ -464,7 +467,8 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 		@Override
 		public Collection<IPredicate> getSuccsInterpolantAutomaton(final IPredicate resPred, final IPredicate resHier,
 				final CodeBlock letter) {
-			final Collection<IPredicate> succs = mInputInterpolantAutomaton.succReturn(resPred, resHier, letter);
+			final Collection<IPredicate> succs = NestedWordAutomataUtils.constructReturnSuccessors(
+					mInputInterpolantAutomaton, resPred, resHier, letter);
 			if (succs == null) {
 				return Collections.emptySet();
 			}
