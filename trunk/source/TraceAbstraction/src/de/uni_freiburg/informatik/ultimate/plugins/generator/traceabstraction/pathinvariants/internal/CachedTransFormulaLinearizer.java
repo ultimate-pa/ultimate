@@ -99,7 +99,8 @@ public class CachedTransFormulaLinearizer {
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
 		mCsToolkit = csToolkit;
-		mReplacementVarFactory = new ReplacementVarFactory(csToolkit.getManagedScript(), csToolkit.getSymbolTable());
+		mReplacementVarFactory = new ReplacementVarFactory(csToolkit.getManagedScript(), 
+				csToolkit.getSymbolTable(), false);
 		mAxioms = axioms.toArray(new Term[axioms.size()]);
 
 		mCache = new HashMap<UnmodifiableTransFormula, LinearTransition>();

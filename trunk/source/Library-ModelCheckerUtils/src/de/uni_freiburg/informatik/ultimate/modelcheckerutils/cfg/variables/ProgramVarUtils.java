@@ -26,10 +26,20 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables;
 
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
  * Provides static methods for {@link IProgramVar}s.
@@ -74,4 +84,58 @@ public class ProgramVarUtils {
 		}
 		return defaultConstant;
 	}
+	
+	
+	public static Set<IProgramNonOldVar> extractNonOldVars(final Term term, final IIcfgSymbolTable symbolTable) {
+		final Set<IProgramNonOldVar> result = new HashSet<>();
+		for (final TermVariable tv : term.getFreeVars()) {
+			final IProgramVar pv = symbolTable.getProgramVar(tv);
+			if (pv instanceof IProgramNonOldVar) {
+				result.add((IProgramNonOldVar) pv);
+			}
+		}
+		return result;
+	}
+	
+	public static Set<IProgramOldVar> extractOldVars(final Term term, final IIcfgSymbolTable symbolTable) {
+		final Set<IProgramOldVar> result = new HashSet<>();
+		for (final TermVariable tv : term.getFreeVars()) {
+			final IProgramVar pv = symbolTable.getProgramVar(tv);
+			if (pv instanceof IProgramOldVar) {
+				result.add((IProgramOldVar) pv);
+			}
+		}
+		return result;
+	}
+	
+	public static Term renameNonOldGlobalsToOldGlobals(final Term term, 
+			final IIcfgSymbolTable symbolTable,
+			final ManagedScript mgdScript) {
+		final Set<IProgramNonOldVar> nonOldVars = extractNonOldVars(term, symbolTable);
+		final Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
+		for (final IProgramNonOldVar pv : nonOldVars) {
+			if (pv instanceof IProgramNonOldVar) {
+				final IProgramOldVar oldVar = pv.getOldVar();
+				substitutionMapping.put(pv.getTermVariable(), oldVar.getTermVariable());
+			}
+		}
+		final Term result = (new Substitution(mgdScript, substitutionMapping)).transform(term);
+		return result;
+	}
+	
+	public static Term renameOldGlobalsToNonOldGlobals(final Term term, 
+			final IIcfgSymbolTable symbolTable,
+			final ManagedScript mgdScript) {
+		final Set<IProgramOldVar> oldVars = extractOldVars(term, symbolTable);
+		final Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
+		for (final IProgramOldVar pv : oldVars) {
+			if (pv instanceof IProgramOldVar) {
+				final IProgramNonOldVar nonoldVar = pv.getNonOldVar();
+				substitutionMapping.put(pv.getTermVariable(), nonoldVar.getTermVariable());
+			}
+		}
+		final Term result = (new Substitution(mgdScript, substitutionMapping)).transform(term);
+		return result;
+	}
+	
 }

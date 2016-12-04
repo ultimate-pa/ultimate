@@ -530,7 +530,7 @@ public class MapEliminator {
 		for (final MapTemplate template : mMapsToIndices.getDomain()) {
 			for (final ArrayIndex index : mMapsToIndices.getImage(template)) {
 				final Term term = template.getTerm(index);
-				final IReplacementVarOrConst varOrConst = mReplacementVarFactory.getOrConstuctReplacementVar(term);
+				final IReplacementVarOrConst varOrConst = mReplacementVarFactory.getOrConstuctReplacementVar(term, false);
 				if (varOrConst instanceof ReplacementConst) {
 					throw new UnsupportedOperationException("not yet implemented");
 				} else if (varOrConst instanceof IReplacementVar) {
@@ -571,7 +571,7 @@ public class MapEliminator {
 			return getAndAddAuxVar(term);
 		}
 		final Term definition = translateTermVariablesToDefinitions(mScript, transformula, term);
-		final IReplacementVarOrConst varOrConst = mReplacementVarFactory.getOrConstuctReplacementVar(definition); 
+		final IReplacementVarOrConst varOrConst = mReplacementVarFactory.getOrConstuctReplacementVar(definition, false); 
 		if (varOrConst instanceof ReplacementConst) {
 			throw new UnsupportedOperationException("not yet implemented");
 		} else if (varOrConst instanceof IReplacementVar) {

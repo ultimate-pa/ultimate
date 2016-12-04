@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieOldVar
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.LocalBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.IntraproceduralReplacementVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.EqNode;
@@ -165,7 +165,7 @@ class PartitionInformation {
 			assert false : "TODO: implement";
 		} else if (originalArrayId instanceof BoogieOldVar) {
 			assert false : "TODO: implement";
-		} else if (originalArrayId instanceof ReplacementVar) {
+		} else if (originalArrayId instanceof IntraproceduralReplacementVar) {
 			assert false : "TODO: implement";
 		} else if (originalArrayId instanceof BoogieConst) {
 			assert false : "TODO: implement";

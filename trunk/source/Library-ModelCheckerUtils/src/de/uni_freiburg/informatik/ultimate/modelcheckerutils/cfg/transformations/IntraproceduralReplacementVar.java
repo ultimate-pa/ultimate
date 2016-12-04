@@ -32,11 +32,12 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 /**
- * A replacement variable replacing another variable or term that cannot be used directly.
+ * Kind of {@link IReplacementVar} that cannot be used in an interprocedural 
+ * analysis but do not require primed and unprimed constants.
  *
  * @author Jan Leike, Matthias Heizmann
  */
-public class ReplacementVar implements IProgramVar, IReplacementVar {
+public class IntraproceduralReplacementVar implements IProgramVar, IReplacementVar {
 	private static final long serialVersionUID = 5797704734079950805L;
 
 	private final String mName;
@@ -50,7 +51,7 @@ public class ReplacementVar implements IProgramVar, IReplacementVar {
 	 *            the definition of this replacement variable, i.e., the term it replaces
 	 * @param tv 
 	 */
-	public ReplacementVar(final String name, final Term definition, final TermVariable tv) {
+	public IntraproceduralReplacementVar(final String name, final Term definition, final TermVariable tv) {
 		mName = name;
 		mDefinition = definition;
 		mTermVariable = tv;
@@ -81,17 +82,17 @@ public class ReplacementVar implements IProgramVar, IReplacementVar {
 
 	@Override
 	public String getProcedure() {
-		throw new UnsupportedOperationException("Matthias will implement this if you need it.");
+		throw new UnsupportedOperationException("IntraproceduralReplacementVars do not have procedure");
 	}
 
 	@Override
 	public boolean isGlobal() {
-		throw new UnsupportedOperationException("Matthias will implement this if you need it.");
+		throw new UnsupportedOperationException("IntraproceduralReplacementVars are neither old nor non-old");
 	}
 
 	@Override
 	public boolean isOldvar() {
-		throw new UnsupportedOperationException("Matthias will implement this if you need it.");
+		throw new UnsupportedOperationException("IntraproceduralReplacementVars are neither old nor non-old");
 	}
 
 	@Override
@@ -101,12 +102,12 @@ public class ReplacementVar implements IProgramVar, IReplacementVar {
 
 	@Override
 	public ApplicationTerm getDefaultConstant() {
-		throw new UnsupportedOperationException("Matthias will implement this if you need it.");
+		throw new UnsupportedOperationException("IntraproceduralReplacementVars do not have SMT terms");
 	}
 
 	@Override
 	public ApplicationTerm getPrimedConstant() {
-		throw new UnsupportedOperationException("Matthias will implement this if you need it.");
+		throw new UnsupportedOperationException("IntraproceduralReplacementVars do not have SMT terms");
 	}
 
 }

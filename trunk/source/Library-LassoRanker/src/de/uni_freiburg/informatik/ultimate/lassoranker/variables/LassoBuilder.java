@@ -106,7 +106,7 @@ public class LassoBuilder {
 		mNlaHandling = nlaHandling;
 		mtermVariables = new ArrayList<>();
 
-		mReplacementVarFactory = new ReplacementVarFactory(mMgdScript, symbolTable);
+		mReplacementVarFactory = new ReplacementVarFactory(mMgdScript, symbolTable, true);
 
 		mLassosUC = new ArrayList<>();
 		mLassosUC.add(

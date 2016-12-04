@@ -119,8 +119,8 @@ public abstract class RewriteTermVariables extends TransitionPreprocessor {
 	 */
 	private final IReplacementVarOrConst getOrConstructReplacementVar(final IProgramVar rankVar) {
 		final Term definition = constructNewDefinitionForRankVar(rankVar);
-		final IReplacementVarOrConst repVar = mVarFactory.
-				getOrConstuctReplacementVar(definition);
+		final IReplacementVar repVar = (IReplacementVar) mVarFactory.
+				getOrConstuctReplacementVar(definition, false);
 		return repVar;
 	}
 

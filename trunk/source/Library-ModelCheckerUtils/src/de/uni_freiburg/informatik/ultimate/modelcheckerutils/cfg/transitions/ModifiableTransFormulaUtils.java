@@ -355,7 +355,7 @@ public class ModifiableTransFormulaUtils {
 		// Add constant variables as in- and outVars
 		for (final IProgramConst progConst : inputTf.getNonTheoryConsts()) {
 			final ApplicationTerm constVar = progConst.getDefaultConstant();
-			final IReplacementVar repVar = (IReplacementVar) replacementVarFactory.getOrConstuctReplacementVar(constVar);
+			final IReplacementVar repVar = (IReplacementVar) replacementVarFactory.getOrConstuctReplacementVar(constVar, true);
 			newTf.addInVar(repVar, repVar.getTermVariable());
 			newTf.addOutVar(repVar, repVar.getTermVariable());
 			substitutionMapping.put(constVar, repVar.getTermVariable());

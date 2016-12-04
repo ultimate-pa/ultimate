@@ -79,7 +79,7 @@ public class AddAxioms extends TransitionPreprocessor {
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		// Add constant variables as in- and outVars
 		for (final ApplicationTerm constVar : mConstants) {
-			final IProgramVar repVar = (IProgramVar) mReplacementVarFactory.getOrConstuctReplacementVar(constVar);
+			final IProgramVar repVar = (IProgramVar) mReplacementVarFactory.getOrConstuctReplacementVar(constVar, true);
 			tf.addInVar(repVar, repVar.getTermVariable());
 			tf.addOutVar(repVar, repVar.getTermVariable());
 			substitutionMapping.put(constVar, repVar.getTermVariable());

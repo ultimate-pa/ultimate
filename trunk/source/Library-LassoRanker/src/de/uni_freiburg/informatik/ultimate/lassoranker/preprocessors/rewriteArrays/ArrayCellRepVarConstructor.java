@@ -57,9 +57,9 @@ public class ArrayCellRepVarConstructor {
 	private final TransFormulaLRWithArrayInformation mLoop;
 	
 	public ArrayCellRepVarConstructor(
-			ReplacementVarFactory replacementVarFactory, Script script,
-			TransFormulaLRWithArrayInformation stemTfwai,
-			TransFormulaLRWithArrayInformation loopTfwai) {
+			final ReplacementVarFactory replacementVarFactory, final Script script,
+			final TransFormulaLRWithArrayInformation stemTfwai,
+			final TransFormulaLRWithArrayInformation loopTfwai) {
 		super();
 		mReplacementVarFactory = replacementVarFactory;
 		mScript = script;
@@ -70,7 +70,7 @@ public class ArrayCellRepVarConstructor {
 	}
 
 
-	private void constructRepVars(TransFormulaLRWithArrayInformation tfwac) {
+	private void constructRepVars(final TransFormulaLRWithArrayInformation tfwac) {
 		for (final Triple<TermVariable, ArrayIndex, ArrayCellReplacementVarInformation> triple : tfwac.getArrayCellInVars().entrySet()) {
 			final ArrayCellReplacementVarInformation acrvi = triple.getThird();
 			constructRepVarIfNecessaryAndAdd(acrvi);
@@ -83,7 +83,7 @@ public class ArrayCellRepVarConstructor {
 
 
 	private void constructRepVarIfNecessaryAndAdd(
-			ArrayCellReplacementVarInformation acrvi) {
+			final ArrayCellReplacementVarInformation acrvi) {
 		final IReplacementVarOrConst repVar = getOrconstructReplacementVar(acrvi);
 		acrvi.setReplacementVar(repVar);
 	}
@@ -94,7 +94,7 @@ public class ArrayCellRepVarConstructor {
 	 * to the map. We expect that the repVar is added to the acrvi by the 
 	 * caller of this method.
 	 */
-	private IReplacementVarOrConst getOrconstructReplacementVar(ArrayCellReplacementVarInformation acrvi) {
+	private IReplacementVarOrConst getOrconstructReplacementVar(final ArrayCellReplacementVarInformation acrvi) {
 		final TermVariable array = acrvi.getArrayRepresentative();
 		final ArrayIndex index = acrvi.getIndexRepresentative();
 		final ArrayCellReplacementVarInformation repVarInfo = mArrayRepresentative2IndexRepresentative2ReplacementVar.get(array, index);
@@ -113,9 +113,9 @@ public class ArrayCellRepVarConstructor {
 	 * Returns a ReplacementVar that will represent the array
 	 * cell array[index].
 	 */
-	private IReplacementVarOrConst constructReplacementVar(TermVariable array, ArrayIndex index) {
+	private IReplacementVarOrConst constructReplacementVar(final TermVariable array, final ArrayIndex index) {
 			final Term definition = SmtUtils.multiDimensionalSelect(mScript, array, index);
-			final IReplacementVarOrConst repVar = mReplacementVarFactory.getOrConstuctReplacementVar(definition);
+			final IReplacementVarOrConst repVar = mReplacementVarFactory.getOrConstuctReplacementVar(definition, false);
 		return repVar;
 	}
 

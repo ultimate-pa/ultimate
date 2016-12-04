@@ -65,7 +65,7 @@ public class HsNonPlugin {
 		mServices = services;
 		mManagedScript = csToolkit.getManagedScript();
 		mLogger = logger;
-		mReplacementVarFactory = new ReplacementVarFactory(csToolkit.getManagedScript(), csToolkit.getSymbolTable());
+		mReplacementVarFactory = new ReplacementVarFactory(csToolkit.getManagedScript(), csToolkit.getSymbolTable(), false);
 	}
 
 	public BoogieIcfgContainer separate(final BoogieIcfgContainer oldBoogieIcfg) {
@@ -77,8 +77,8 @@ public class HsNonPlugin {
 		final IProgressAwareTimer timer = mServices.getProgressMonitorService().getChildTimer(0.2);
 		@SuppressWarnings("unchecked")
 		final IAbstractInterpretationResult<VPState, CodeBlock, IProgramVar, ?> abstractInterpretationResult =
-				(IAbstractInterpretationResult<VPState, CodeBlock, IProgramVar, ?>) AbstractInterpreter
-						.runFutureEqualityDomain(oldBoogieIcfg, timer, mServices, false, mLogger);
+				AbstractInterpreter
+				.runFutureEqualityDomain(oldBoogieIcfg, timer, mServices, false, mLogger);
 
 		final VPDomain vpDomain = (VPDomain) abstractInterpretationResult.getUsedDomain();
 
