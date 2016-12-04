@@ -65,14 +65,20 @@ public class DefaultIcfgSymbolTable implements IIcfgSymbolTable {
 
 	
 	/**
-	 * Copy constructor. Constructs deep copy.
+	 * Constructs copy of {@link IIcfgSymbolTable}
 	 */
-	public DefaultIcfgSymbolTable(final DefaultIcfgSymbolTable symbolTable) {
-		mTermVariable2ProgramVar.putAll(symbolTable.mTermVariable2ProgramVar);
-		mAppTerm2ProgramConst.putAll(symbolTable.mAppTerm2ProgramConst);
-		mGlobals.addAll(symbolTable.mGlobals);
-		mConstants.addAll(symbolTable.mConstants);
-		mLocals.addAll(symbolTable.mLocals);
+	public DefaultIcfgSymbolTable(final IIcfgSymbolTable symbolTable, final Set<String> procs) {
+		for (final IProgramConst constant : symbolTable.getConstants()) {
+			add(constant);
+		}
+		for (final IProgramNonOldVar nonold : symbolTable.getGlobals()) {
+			add(nonold);
+		}
+		for (final String proc : procs) {
+			for (final ILocalProgramVar local : symbolTable.getLocals(proc)) {
+				add(local);
+			}
+		}
 	}
 	
 	@Override
@@ -97,7 +103,12 @@ public class DefaultIcfgSymbolTable implements IIcfgSymbolTable {
 	
 	@Override
 	public Set<ILocalProgramVar> getLocals(final String proc) {
-		return Collections.unmodifiableSet(mLocals.getImage(proc));
+		final Set<ILocalProgramVar> locals = mLocals.getImage(proc);
+		if (locals == null) {
+			return Collections.emptySet();
+		} else {
+			return Collections.unmodifiableSet(mLocals.getImage(proc));
+		}
 	}
 	
 	public void add(final IProgramVarOrConst varOrConst) {
