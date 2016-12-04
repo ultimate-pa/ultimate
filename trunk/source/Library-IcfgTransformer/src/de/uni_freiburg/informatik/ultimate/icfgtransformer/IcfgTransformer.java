@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.icfgtransformer;
 
 import java.util.ArrayDeque;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -45,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgReturnAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.IIcfg;
@@ -137,8 +139,8 @@ public class IcfgTransformer {
 		final ExampleLoopAccelerationTransformulaTransformer transformer =
 				new ExampleLoopAccelerationTransformulaTransformer(mLogger, mManagedScript, origSymbolTable, fac, tf);
 		final TransFormula newTransformula = transformer.getTransformationResult();
-		// TODO: How to create unmodifiable transformula from transformula?
-		final UnmodifiableTransFormula unmodTf = null;
+		final UnmodifiableTransFormula unmodTf = TransFormulaBuilder.constructCopy(mManagedScript, newTransformula,
+				Collections.emptySet(), Collections.emptySet(), Collections.emptyMap());
 		return unmodTf;
 	}
 	
