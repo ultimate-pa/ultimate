@@ -36,10 +36,9 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class Utils {
-
+	
 	/**
-	 * Converts a number of bytes to a human readable String containing the byte
-	 * number as the highest compatible unit.
+	 * Converts a number of bytes to a human readable String containing the byte number as the highest compatible unit.
 	 * 
 	 * @param bytes
 	 *            A number of bytes
@@ -58,18 +57,17 @@ public class Utils {
 	}
 	
 	public static String humanReadableNumber(final long number) {
-		final int unit = 1000 ;
+		final int unit = 1000;
 		if (number < unit) {
 			return Long.toString(number);
 		}
 		final int exp = (int) (Math.log(number) / Math.log(unit));
-		final String pre = String.valueOf(("KMGTPE").charAt(exp - 1));
+		final String pre = String.valueOf("KMGTPE".charAt(exp - 1));
 		return String.format("%.1f %s", number / Math.pow(unit, exp), pre);
 	}
-
+	
 	/***
-	 * Returns a String representation of a collection by calling toString on
-	 * each object in the collection.
+	 * Returns a String representation of a collection by calling toString on each object in the collection.
 	 * 
 	 * @param collection
 	 * @param delimiter
@@ -87,10 +85,9 @@ public class Utils {
 		}
 		return builder.toString();
 	}
-
+	
 	/**
-	 * Returns a String representation of time as a fraction of the largest
-	 * whole unit.
+	 * Returns a String representation of time as a fraction of the largest whole unit.
 	 * 
 	 * I.e. 1001ms becomes 1,001s, 25h become 1,041d.
 	 * 
@@ -105,10 +102,9 @@ public class Utils {
 	public static String humanReadableTime(final long time, final TimeUnit unit, final int decimal) {
 		return humanReadableTime((double) time, unit, decimal);
 	}
-
+	
 	/**
-	 * Returns a String representation of time as a fraction of the largest
-	 * whole unit.
+	 * Returns a String representation of time as a fraction of the largest whole unit.
 	 * 
 	 * I.e. 1001ms becomes 1,001s, 25h become 1,041d.
 	 * 
@@ -122,59 +118,52 @@ public class Utils {
 	 */
 	public static String humanReadableTime(final double time, final TimeUnit unit, final int decimal) {
 		final String[] units = { "ns", "µs", "ms", "s", "m", "h", "d" };
-
+		
 		switch (unit) {
 		case DAYS:
 			return String.format("%." + decimal + "f %s", time, units[6]);
 		case HOURS:
 			if (time > 24) {
 				return humanReadableTime(time / 24.0, TimeUnit.DAYS, decimal);
-			} else {
-				return String.format("%." + decimal + "f %s", time, units[5]);
 			}
+			return String.format("%." + decimal + "f %s", time, units[5]);
 		case MINUTES:
 			if (time > 60) {
 				return humanReadableTime(time / 60.0, TimeUnit.HOURS, decimal);
-			} else {
-				return String.format("%." + decimal + "f %s", time, units[4]);
 			}
+			return String.format("%." + decimal + "f %s", time, units[4]);
 		case SECONDS:
 			if (time > 60) {
 				return humanReadableTime(time / 60.0, TimeUnit.MINUTES, decimal);
-			} else {
-				return String.format("%." + decimal + "f %s", time, units[3]);
 			}
+			return String.format("%." + decimal + "f %s", time, units[3]);
 		case MILLISECONDS:
 			if (time > 1000) {
 				return humanReadableTime(time / 1000.0, TimeUnit.SECONDS, decimal);
-			} else {
-				return String.format("%." + decimal + "f %s", time, units[2]);
 			}
+			return String.format("%." + decimal + "f %s", time, units[2]);
 		case MICROSECONDS:
 			if (time > 1000) {
 				return humanReadableTime(time / 1000.0, TimeUnit.MILLISECONDS, decimal);
-			} else {
-				return String.format("%." + decimal + "f %s", time, units[1]);
 			}
+			return String.format("%." + decimal + "f %s", time, units[1]);
 		case NANOSECONDS:
 			if (time > 1000) {
 				return humanReadableTime(time / 1000.0, TimeUnit.MICROSECONDS, decimal);
-			} else {
-				return String.format("%." + decimal + "f %s", time, units[0]);
 			}
+			return String.format("%." + decimal + "f %s", time, units[0]);
 		default:
 			throw new UnsupportedOperationException(unit + " TimeUnit not yet implemented");
 		}
 	}
-	
 	
 	/**
 	 * Filter Collection to all elements that are subclasses of clazz.
 	 */
 	@SuppressWarnings("unchecked")
 	public static <E> Collection<E> filter(final Collection<?> iterable, final Class<E> clazz) {
-		final ArrayList<E> filteredList = new ArrayList<E>();
-		for (final Object e: iterable) {
+		final ArrayList<E> filteredList = new ArrayList<>();
+		for (final Object e : iterable) {
 			if (clazz.isAssignableFrom(e.getClass())) {
 				filteredList.add((E) e);
 			}
@@ -186,7 +175,7 @@ public class Utils {
 	 * Construct a new HashSet that contains the elements of a given Iterable.
 	 */
 	public static <E> HashSet<E> constructHashSet(final Iterable<E> iterable) {
-		final HashSet<E> result = new HashSet<E>();
+		final HashSet<E> result = new HashSet<>();
 		for (final E element : iterable) {
 			result.add(element);
 		}
@@ -194,11 +183,10 @@ public class Utils {
 	}
 	
 	/**
-	 * @return a new HashMap that contains all key-value pairs of map whose
-	 * key is contained in filter.
+	 * @return a new HashMap that contains all key-value pairs of map whose key is contained in filter.
 	 */
-	public static <K,V> HashMap<K,V> constructFilteredMap(final Map<K,V> map, final Collection<K> filter) {
-		final HashMap<K,V> result = new HashMap<>();
+	public static <K, V> HashMap<K, V> constructFilteredMap(final Map<K, V> map, final Collection<K> filter) {
+		final HashMap<K, V> result = new HashMap<>();
 		for (final K key : filter) {
 			final V value = map.get(key);
 			if (value != null) {
