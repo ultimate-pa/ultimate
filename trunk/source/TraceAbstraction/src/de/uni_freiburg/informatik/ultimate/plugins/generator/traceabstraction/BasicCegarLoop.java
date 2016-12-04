@@ -260,7 +260,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			mLogger.debug(mCounterexample.getWord());
 		}
 		final HistogramOfIterable<CodeBlock> traceHistogram = new HistogramOfIterable<>(mCounterexample.getWord());
-		mCegarLoopBenchmark.reportTraceHistogramMaximum(traceHistogram.getVisualizationArray()[0]);
+		mCegarLoopBenchmark.reportTraceHistogramMaximum(traceHistogram.getMax());
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("trace histogram " + traceHistogram.toString());
 		}

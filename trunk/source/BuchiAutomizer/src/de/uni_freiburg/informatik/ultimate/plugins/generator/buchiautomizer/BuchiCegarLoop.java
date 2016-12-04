@@ -437,8 +437,8 @@ public class BuchiCegarLoop {
 							mCounterexample, generateLassoCheckerIdentifier(), mServices, mStorage, mSimplificationTechnique, mXnfConversionTechnique);
 				}
 			} catch (final ToolchainCanceledException e) {
-				final int traceHistogramMaxStem = new HistogramOfIterable<>(mCounterexample.getStem().getWord()).getVisualizationArray()[0];
-				final int traceHistogramMaxLoop = new HistogramOfIterable<>(mCounterexample.getLoop().getWord()).getVisualizationArray()[0];
+				final int traceHistogramMaxStem = new HistogramOfIterable<>(mCounterexample.getStem().getWord()).getMax();
+				final int traceHistogramMaxLoop = new HistogramOfIterable<>(mCounterexample.getLoop().getWord()).getMax();
 				final String taskDescription = "analyzing lasso ("
 						+ "stem: length " + mCounterexample.getStem().getLength() + " TraceHistMax " + traceHistogramMaxStem + " "
 						+ "loop: length " + mCounterexample.getLoop().getLength() + " TraceHistMax " + traceHistogramMaxLoop + ")";
