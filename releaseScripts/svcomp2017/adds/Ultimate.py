@@ -10,6 +10,7 @@ import argparse
 
 
 version = '47e1251f'
+toolname = 'wrong toolname'
 writeUltimateOutputToFile = True
 outputFileName = 'Ultimate.log'
 errorPathFileName = 'UltimateCounterExample.errorpath'
@@ -48,12 +49,12 @@ def getBinary():
     currentPlatform = platform.system()
     
     if currentPlatform == 'Windows':
-        ultimateBin = ['java', '-Xmx12G', '-Xms1G', '-jar' ,'plugins/org.eclipse.equinox.launcher_1.3.100.v20150511-1540.jar', '-data', '@user.home/.ultimate']
+        ultimateBin = ['java', '-Xmx12G', '-Xms1G', '-jar' , 'plugins/org.eclipse.equinox.launcher_1.3.100.v20150511-1540.jar', '-data', '@user.home/.ultimate']
     else:
-        ultimateBin = ['java', '-Xmx12G', '-Xms1G', '-jar' ,'plugins/org.eclipse.equinox.launcher_1.3.100.v20150511-1540.jar', '-data', '@user.home/.ultimate']
+        ultimateBin = ['java', '-Xmx12G', '-Xms1G', '-jar' , 'plugins/org.eclipse.equinox.launcher_1.3.100.v20150511-1540.jar', '-data', '@user.home/.ultimate']
     
     # check if ultimate bin is there 
-    #if not os.path.isfile(ultimateBin):
+    # if not os.path.isfile(ultimateBin):
     #    print("Ultimate binary not found, expected " + ultimateBin)
     #    sys.exit(1)
     
@@ -71,11 +72,11 @@ def searchCurrentDir(searchstring):
 
 def containsOverapproximationResult(line):
     triggers = [
-                'Reason: overapproximation of bitwiseAnd', 
-                'Reason: overapproximation of bitwiseOr', 
-                'Reason: overapproximation of bitwiseXor', 
-                'Reason: overapproximation of shiftLeft', 
-                'Reason: overapproximation of shiftRight', 
+                'Reason: overapproximation of bitwiseAnd',
+                'Reason: overapproximation of bitwiseOr',
+                'Reason: overapproximation of bitwiseXor',
+                'Reason: overapproximation of shiftLeft',
+                'Reason: overapproximation of shiftRight',
                 'Reason: overapproximation of bitwiseComplement'
                 ]
     
@@ -171,7 +172,27 @@ def createUltimateCall(call, arguments):
         else:
             call = call + [arg]
     return call    
-    
+
+def createWitnessPassthroughArgumentsList(witnessMode, propFile, architecture, cFile):
+    if witnessMode:
+        return []
+    ret = []
+    ret.append('--witnessprinter.graph.data.specification')
+    ret.append(propFile)
+    ret.append('--witnessprinter.graph.data.producer')
+    ret.append(toolname)
+    ret.append('--witnessprinter.graph.data.architecture')
+    ret.append(architecture)
+
+    ret.append('--witnessprinter.graph.data.programhash')
+    try:
+        sha = subprocess.Popen(['sha1sum', cFile], stdout=subprocess.PIPE).communicate()[0]
+        ret.append(sha.split()[0])
+    except:
+        print('Error trying to start sha1sum')
+        sys.exit(1)
+    return ret
+        
 
 def getSettingsFile(bitprecise, settingsSearchString):
     if bitprecise:
@@ -204,7 +225,7 @@ def parseArgs():
     parser = argparse.ArgumentParser(description='Ultimate wrapper script for SVCOMP')
     parser.add_argument('--version', action='store_true', help='Print Ultimate\'s version and exit')
     parser.add_argument('--full-output', action='store_true', help='Print Ultimate\'s full output to stderr after verification ends')
-    parser.add_argument('--validate', nargs=1,metavar='<file>', help='Activate witness validation mode (if supported) and specify a .graphml file as witness')
+    parser.add_argument('--validate', nargs=1, metavar='<file>', help='Activate witness validation mode (if supported) and specify a .graphml file as witness')
     parser.add_argument('spec', nargs=1, help='An property (.prp) file from SVCOMP')
     parser.add_argument('architecture', choices=['32bit', '64bit'], help='Choose which architecture (defined as per SV-COMP rules) should be assumed')
     parser.add_argument('file', metavar='<file>', nargs=1, help='One C file')
@@ -241,7 +262,7 @@ def parseArgs():
         printErr("You did specify --validate but no witness")
         sys.exit(1)
     
-    return propertyFileName, args.architecture, args.file, args.full_output, args.validate
+    return propertyFileName, args.architecture, args.file[0], args.full_output, args.validate
 
 
 def createSettingsSearchString(memDeref, memDerefMemtrack, terminationMode, overflowMode, architecture):
@@ -313,15 +334,17 @@ def main():
             terminationMode = True
         if line.find('overflow') != -1:
             overflowMode = True
-   
+            
+    propFileStr = propFile.read()
+
+    toolchain = createToolchainString(terminationMode, witnessMode)
     settingsSearchString = createSettingsSearchString(memDeref, memDerefMemtrack, terminationMode, overflowMode, architecture)
     settingsArgument = getSettingsFile(False, settingsSearchString)
-    
-    toolchain = createToolchainString(terminationMode, witnessMode)
+    witnessPassthroughArguments = createWitnessPassthroughArgumentsList(witnessMode, propFileStr, architecture, cFile)
 
     # execute ultimate
     print('Version ' + version)
-    ultimateCall = createUltimateCall(ultimateBin, ['-tc', toolchain, '-i', cFile, '-s', settingsArgument])
+    ultimateCall = createUltimateCall(ultimateBin, ['-tc', toolchain, '-i', cFile, '-s', settingsArgument, witnessPassthroughArguments])
  
 
     # actually run Ultimate 
@@ -331,7 +354,7 @@ def main():
         # we did fail because we had to overaproximate. Lets rerun with bit-precision 
         print('Retrying with bit-precise analysis')
         settingsArgument = getSettingsFile(True, settingsSearchString)
-        ultimateCall = createUltimateCall(ultimateBin, ['-tc',toolchain, '-i', cFile, '-s', settingsArgument])
+        ultimateCall = createUltimateCall(ultimateBin, ['-tc', toolchain, '-i', cFile, '-s', settingsArgument, witnessPassthroughArguments])
         safetyResult, memResult, overflow, overapprox, ultimate2Output, errorPath = runUltimate(ultimateCall, terminationMode)
         ultimateOutput = ultimateOutput + '\n### Bit-precise run ###\n' + ultimate2Output
     
