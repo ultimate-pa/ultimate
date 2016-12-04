@@ -51,13 +51,13 @@ public class IcfgLocation extends ModifiableExplicitEdgesMultigraph<IcfgLocation
 	@Visualizable
 	private final String mDebugIdentifier;
 	
-	protected IcfgLocation(final String debugIdentifier, final String procedure, final Payload payload) {
+	public IcfgLocation(final String debugIdentifier, final String procedure, final Payload payload) {
 		super(payload);
 		mProcedure = procedure;
 		mDebugIdentifier = debugIdentifier;
 	}
 	
-	protected IcfgLocation(final String debugIdentifier, final String procedure) {
+	public IcfgLocation(final String debugIdentifier, final String procedure) {
 		super();
 		mProcedure = procedure;
 		mDebugIdentifier = debugIdentifier;

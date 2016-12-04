@@ -89,7 +89,7 @@ public class BoogieIcfgLocation extends IcfgLocation {
 		return mBoogieASTNode;
 	}
 	
-	public String BoogieASTNodeType() {
+	public String getBoogieASTNodeType() {
 		if (mBoogieASTNode instanceof AssertStatement) {
 			return "AssertStatement";
 		} else if (mBoogieASTNode instanceof CallStatement) {

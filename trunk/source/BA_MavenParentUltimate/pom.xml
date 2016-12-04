@@ -303,6 +303,7 @@
 		<module>../Library-UltimateCore</module>
 		<module>../Library-UltimateModel</module>
 		<module>../Library-ApacheCommonsCLI</module>
+		<module>../Library-IcfgTransformer</module>
 		<module>../BuchiProgramProduct</module>
 		<module>../LTL2aut</module>
 		<module>../ReachingDefinitions</module>
