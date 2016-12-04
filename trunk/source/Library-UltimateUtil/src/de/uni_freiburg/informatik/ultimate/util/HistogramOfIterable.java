@@ -73,6 +73,17 @@ public class HistogramOfIterable<E> {
 	public Integer[] getVisualizationArray() {
 		return mVisualizationArray;
 	}
+	
+	/**
+	 * @return return the highest occurrence, return 0 if there are no elements
+	 */
+	public int getMax() {
+		if (getVisualizationArray().length == 0) {
+			return 0;
+		} else {
+			return getVisualizationArray()[0];
+		}
+	}
 
 	public static <E> Map<E, Integer> generateHistogramMap(
 			final Iterable<E> iterable) {
