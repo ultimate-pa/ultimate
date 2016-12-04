@@ -33,6 +33,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -117,8 +118,9 @@ public class BuchiInterpolantAutomatonBouncer extends AbstractInterpolantAutomat
 			final boolean hondaBouncerStem, final boolean hondaBouncerLoop, final PredicateFactoryForInterpolantAutomata predicateFactoryFia,
 			final PredicateUnifier stemPU, final PredicateUnifier loopPU, final IPredicate falsePredicate,
 			final IUltimateServiceProvider services, final SimplificationTechnique simplificationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique, final IIcfgSymbolTable symbolTable) {
-		super(services, csToolkit, bhtc, false, falsePredicate, null, services.getLoggingService().getLogger(
+			final XnfConversionTechnique xnfConversionTechnique, final IIcfgSymbolTable symbolTable, 
+			final NestedWordAutomaton<CodeBlock, IPredicate> alphabetProvider) {
+		super(services, csToolkit, bhtc, false, falsePredicate, alphabetProvider, services.getLoggingService().getLogger(
 				Activator.PLUGIN_ID));
 		mServices = services;
 		mPredicateFactory = predicateFactory;

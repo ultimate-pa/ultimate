@@ -322,7 +322,7 @@ public class RefineBuchi {
 							: stem.getSymbol(stem.length() - 1), loop.getSymbol(loop.length() - 1), setting.isScroogeNondeterminismStem(),
 					setting.isScroogeNondeterminismLoop(), setting.isBouncerStem(),
 					setting.isBouncerLoop(), mStateFactoryInterpolAutom, pu, pu, pu.getFalsePredicate(),
-					mServices, mSimplificationTechnique, mXnfConversionTechnique, mICfgContainer.getBoogie2SMT().getBoogie2SmtSymbolTable());
+					mServices, mSimplificationTechnique, mXnfConversionTechnique, mICfgContainer.getBoogie2SMT().getBoogie2SmtSymbolTable(), mInterpolAutomaton);
 			break;
 		default:
 			throw new UnsupportedOperationException("unknown automaton");
