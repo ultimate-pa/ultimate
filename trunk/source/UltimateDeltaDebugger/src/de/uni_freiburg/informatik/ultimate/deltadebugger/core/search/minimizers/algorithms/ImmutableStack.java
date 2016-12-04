@@ -28,33 +28,45 @@ package de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.minimizers
 import java.util.EmptyStackException;
 
 /**
- * Immutable stack (effectively a singly linked list)
+ * Immutable stack (effectively a singly linked list).
  *
  * @param <E>
  *            element type
  */
 public final class ImmutableStack<E> {
-	
+	@SuppressWarnings("rawtypes")
 	public static final ImmutableStack EMPTY_STACK = new ImmutableStack();
-
+	
 	private final E mHead;
 	private final ImmutableStack<E> mTail;
-
+	
 	private ImmutableStack() {
 		mHead = null;
 		mTail = this;
 	}
-
+	
 	private ImmutableStack(final E head, final ImmutableStack<E> tail) {
 		mHead = head;
 		mTail = tail;
 	}
 	
-	
-	public static <T> ImmutableStack<T> emptyStack() {
+	/**
+	 * @param <E>
+	 *            Element type.
+	 * @return empty stack
+	 */
+	@SuppressWarnings("unchecked")
+	public static <E> ImmutableStack<E> emptyStack() {
 		return EMPTY_STACK;
 	}
 	
+	/**
+	 * @param fifoItems
+	 *            Elements in FIFO order.
+	 * @param <E>
+	 *            element type
+	 * @return stack
+	 */
 	@SafeVarargs
 	public static <E> ImmutableStack<E> of(final E... fifoItems) {
 		ImmutableStack<E> stack = emptyStack();
@@ -63,33 +75,49 @@ public final class ImmutableStack<E> {
 		}
 		return stack;
 	}
-
-
-	public boolean empty() {
+	
+	/**
+	 * @return {@code true} iff the stack is empty.
+	 */
+	public boolean isEmpty() {
 		return mTail.equals(this);
 	}
-
+	
+	/**
+	 * @return Top element (retained).
+	 */
 	public E peek() {
-		if (empty()) {
+		if (isEmpty()) {
 			throw new EmptyStackException();
 		}
 		return mHead;
 	}
-
+	
+	/**
+	 * @return Top element (removed).
+	 */
 	public ImmutableStack<E> pop() {
-		if (empty()) {
+		if (isEmpty()) {
 			throw new EmptyStackException();
 		}
 		return mTail;
 	}
-
+	
+	/**
+	 * @param item
+	 *            New element.
+	 * @return new stack
+	 */
 	public ImmutableStack<E> push(final E item) {
 		return new ImmutableStack<>(item, this);
 	}
-
+	
+	/**
+	 * @return Stack size in use.
+	 */
 	public int size() {
 		int result = 0;
-		for (ImmutableStack<E> stack = this; !stack.empty(); stack = stack.pop()) {
+		for (ImmutableStack<E> stack = this; !stack.isEmpty(); stack = stack.pop()) {
 			++result;
 		}
 		return result;

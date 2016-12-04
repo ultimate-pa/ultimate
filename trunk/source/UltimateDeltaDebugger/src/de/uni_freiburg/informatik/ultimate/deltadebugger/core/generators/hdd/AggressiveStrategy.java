@@ -81,32 +81,32 @@ public class AggressiveStrategy implements IHddStrategy {
 		}
 		
 		// Add a change to delete the operator of unary expressions
-		if (node.getASTNode() instanceof IASTUnaryExpression) {
+		if (node.getAstNode() instanceof IASTUnaryExpression) {
 			collector.addDeleteAllTokensChange(node);
 		}
 		
-		if (node.getASTNode() instanceof IASTIfStatement) {
-			collector.addDeleteIfStatementTokensChange((IPSTRegularNode) node, (IASTIfStatement) node.getASTNode());
+		if (node.getAstNode() instanceof IASTIfStatement) {
+			collector.addDeleteIfStatementTokensChange((IPSTRegularNode) node, (IASTIfStatement) node.getAstNode());
 		}
-		if (node.getASTNode() instanceof IASTForStatement) {
-			collector.addDeleteForStatementTokensChange((IPSTRegularNode) node, (IASTForStatement) node.getASTNode());
+		if (node.getAstNode() instanceof IASTForStatement) {
+			collector.addDeleteForStatementTokensChange((IPSTRegularNode) node, (IASTForStatement) node.getAstNode());
 		}
-		if (node.getASTNode() instanceof IASTWhileStatement) {
+		if (node.getAstNode() instanceof IASTWhileStatement) {
 			collector.addDeleteWhileStatementTokensChange((IPSTRegularNode) node,
-					(IASTWhileStatement) node.getASTNode());
+					(IASTWhileStatement) node.getAstNode());
 		}
 		
-		if (node.getASTNode() instanceof IASTDoStatement) {
+		if (node.getAstNode() instanceof IASTDoStatement) {
 			collector.addDeleteDoStatementTokensChange((IPSTRegularNode) node);
 		}
 		
-		if (node.getASTNode() instanceof IASTCompoundStatement
-				&& node.getASTNode().getPropertyInParent() == IASTCompoundStatement.NESTED_STATEMENT) {
+		if (node.getAstNode() instanceof IASTCompoundStatement
+				&& node.getAstNode().getPropertyInParent() == IASTCompoundStatement.NESTED_STATEMENT) {
 			collector.addDeleteAllTokensChange(node);
 		}
 		
-		if (node.getASTNode() instanceof IASTStandardFunctionDeclarator) {
-			final IASTStandardFunctionDeclarator astNode = (IASTStandardFunctionDeclarator) node.getASTNode();
+		if (node.getAstNode() instanceof IASTStandardFunctionDeclarator) {
+			final IASTStandardFunctionDeclarator astNode = (IASTStandardFunctionDeclarator) node.getAstNode();
 			if (astNode.takesVarArgs()) {
 				collector.addDeleteVarArgsChange((IPSTRegularNode) node, astNode);
 			}
@@ -125,12 +125,12 @@ public class AggressiveStrategy implements IHddStrategy {
 			// same time
 			final IPSTRegularNode regularParent = node.getRegularParent();
 			if (regularParent instanceof IPSTTranslationUnit
-					|| regularParent.getASTNode() instanceof IASTCompoundStatement) {
+					|| regularParent.getAstNode() instanceof IASTCompoundStatement) {
 				collector.addDeleteChange(node);
 			}
 		} else if (node instanceof IPSTACSLNode) {
 			final IPSTACSLNode acslNode = (IPSTACSLNode) node;
-			if (acslNode.getACSLNode() instanceof Expression) {
+			if (acslNode.getAcslNode() instanceof Expression) {
 				// Replace expressions by 0 (just for testing)
 				// TODO: remove or at least check the type
 				collector.addMultiReplaceChange(acslNode, Arrays.asList("0"));
@@ -181,7 +181,7 @@ public class AggressiveStrategy implements IHddStrategy {
 		
 		@SuppressWarnings("squid:S1698")
 		static void invoke(final IPSTRegularNode node, final ChangeCollector collector) {
-			final IASTNode astNode = node.getASTNode();
+			final IASTNode astNode = node.getAstNode();
 			
 			// Delete everything that is known to be comma separated accordingly
 			final ASTNodeProperty propertyInParent = astNode.getPropertyInParent();
@@ -228,7 +228,7 @@ public class AggressiveStrategy implements IHddStrategy {
 		public void on(final IASTDeclSpecifier declSpecifier) {
 			// This causes many type checking errors, but let's see what happens
 			// Should add at least a few more checks to rule out clear compilation errors
-			if (mCurrentNode.getRegularParent().getASTNode() instanceof IASTFunctionDefinition) {
+			if (mCurrentNode.getRegularParent().getAstNode() instanceof IASTFunctionDefinition) {
 				mCollector.addMultiReplaceChange(mCurrentNode, Arrays.asList("void", "int"));
 			} else {
 				mCollector.addReplaceChange(mCurrentNode, "int");

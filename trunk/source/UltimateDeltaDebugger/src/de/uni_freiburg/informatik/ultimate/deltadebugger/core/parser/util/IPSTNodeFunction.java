@@ -39,56 +39,116 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfa
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTTranslationUnit;
 
 /**
- * Simluate a double dispatch function for an IPSTNode argument. Analoguous to IASTNodeFunction for consistency reasons.
+ * Simulate a double dispatch function for an {@link IPSTNode} argument. Analogous to {@link IASTNodeFunction} for
+ * consistency reasons.
  *
  * @param <T>
  *            returned type
  */
 @FunctionalInterface
 public interface IPSTNodeFunction<T> {
-
+	/**
+	 * @param comment
+	 *            PST comment.
+	 * @return result
+	 */
 	default T on(final IPSTComment comment) {
 		return on((IPSTPreprocessorNode) comment);
 	}
 	
+	/**
+	 * @param acslComment
+	 *            PST ACSL comment.
+	 * @return result
+	 */
 	default T on(final IPSTACSLComment acslComment) {
 		return on((IPSTComment) acslComment);
 	}
 	
+	/**
+	 * @param acslNode
+	 *            PST ACSL node.
+	 * @return result
+	 */
 	default T on(final IPSTACSLNode acslNode) {
 		return on((IPSTNode) acslNode);
 	}
 	
+	/**
+	 * @param conditionalBlock
+	 *            PST conditional block.
+	 * @return result
+	 */
 	default T on(final IPSTConditionalBlock conditionalBlock) {
 		return on((IPSTNode) conditionalBlock);
 	}
-
+	
+	/**
+	 * @param directive
+	 *            PST directive.
+	 * @return result
+	 */
 	default T on(final IPSTDirective directive) {
 		return on((IPSTPreprocessorNode) directive);
 	}
-
+	
+	/**
+	 * @param includeDirective
+	 *            PST include directive.
+	 * @return result
+	 */
 	default T on(final IPSTIncludeDirective includeDirective) {
 		return on((IPSTDirective) includeDirective);
 	}
-
+	
+	/**
+	 * @param literalRegion
+	 *            PST literal region.
+	 * @return result
+	 */
 	default T on(final IPSTLiteralRegion literalRegion) {
 		return on((IPSTNode) literalRegion);
 	}
-
+	
+	/**
+	 * @param macroExpansion
+	 *            PST macro expansion.
+	 * @return result
+	 */
 	default T on(final IPSTMacroExpansion macroExpansion) {
 		return on((IPSTPreprocessorNode) macroExpansion);
 	}
-
+	
+	/**
+	 * @param node
+	 *            PST node.
+	 * @return result
+	 */
 	T on(IPSTNode node);
-
-	default T on(final IPSTPreprocessorNode preprocessOrNode) {
-		return on((IPSTNode) preprocessOrNode);
+	
+	/**
+	 * @param preprocessorNode
+	 *            PST preprocessor node.
+	 * @return result
+	 */
+	default T on(final IPSTPreprocessorNode preprocessorNode) {
+		return on((IPSTNode) preprocessorNode);
 	}
-
+	
+	/**
+	 * @param node
+	 *            PST regular node.
+	 * @return result
+	 */
 	default T on(final IPSTRegularNode node) {
 		return on((IPSTNode) node);
 	}
-
+	
+	/**
+	 * @param translationUnit
+	 *            PST translation unit.
+	 * @return result
+	 */
 	default T on(final IPSTTranslationUnit translationUnit) {
 		return on((IPSTRegularNode) translationUnit);
 	}

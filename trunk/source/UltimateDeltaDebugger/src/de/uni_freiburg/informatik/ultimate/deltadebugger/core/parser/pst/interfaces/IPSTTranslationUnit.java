@@ -27,7 +27,10 @@ package de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interf
 
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 
+/**
+ * PST translation unit.
+ */
 public interface IPSTTranslationUnit extends IPSTRegularNode {
 	@Override
-	IASTTranslationUnit getASTNode();
+	IASTTranslationUnit getAstNode();
 }

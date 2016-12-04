@@ -32,25 +32,34 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfa
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceDocument;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceRange;
 
+/**
+ * PST comment.
+ */
 public class PSTComment extends PSTNode implements IPSTComment {
-
+	/**
+	 * @param source
+	 *            Source document.
+	 * @param location
+	 *            source range
+	 * @param comment
+	 *            AST comment
+	 */
 	public PSTComment(final ISourceDocument source, final ISourceRange location, final IASTComment comment) {
 		super(source, location, comment);
 	}
-
+	
 	@Override
 	int dispatchLeave(final IPSTVisitor action) {
 		return action.leave(this);
 	}
-
+	
 	@Override
 	int dispatchVisit(final IPSTVisitor action) {
 		return action.visit(this);
 	}
-
+	
 	@Override
-	public IASTComment getASTNode() {
+	public IASTComment getAstNode() {
 		return (IASTComment) mAstNode;
 	}
-
 }

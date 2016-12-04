@@ -29,15 +29,21 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfa
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTNode;
 
 /**
- * Utility class to invoke an IPSTGapVisitor on a given node
+ * Utility class to invoke an IPSTGapVisitor on a given node.
  */
 public final class GapVisitor {
-
 	private GapVisitor() {
+		// utility class
 	}
 	
+	/**
+	 * @param node
+	 *            PST node.
+	 * @param action
+	 *            PST gap visitor action
+	 * @return {@code node.accept()}
+	 */
 	public static boolean invokeAccept(final IPSTNode node, final IPSTGapVisitor action) {
 		return node.accept(new GapVisitorDecorator(action, node.offset()));
 	}
 }
-

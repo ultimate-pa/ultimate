@@ -40,10 +40,12 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceDocume
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceRange;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.SourceDocumentLocationPrinter;
 
+/**
+ * Abstract PST node.
+ */
 public abstract class PSTNode implements IPSTNode {
-
 	protected static final int ASTNODE_TOSTRING_LIMIT = 32;
-
+	
 	protected final int mOffset;
 	protected final int mEndOffset;
 	protected final IASTNode mAstNode;
@@ -51,7 +53,15 @@ public abstract class PSTNode implements IPSTNode {
 	protected IPSTNode mParent;
 	protected List<IPSTNode> mChildren;
 	protected List<IASTNode> mUnexpandedChildNodes;
-
+	
+	/**
+	 * @param source
+	 *            Source document.
+	 * @param location
+	 *            source range
+	 * @param astNode
+	 *            AST node
+	 */
 	public PSTNode(final ISourceDocument source, final ISourceRange location, final IASTNode astNode) {
 		mSource = Objects.requireNonNull(source);
 		mOffset = location.offset();
@@ -62,49 +72,48 @@ public abstract class PSTNode implements IPSTNode {
 		mAstNode = astNode;
 	}
 	
-	
-
 	@Override
 	public final boolean accept(final IPSTVisitor action) {
 		return acceptNonRecursive(this, action);
 	}
-
+	
 	@Override
 	public void addChild(final int index, final IPSTNode node) {
 		if (index < 0 || index > (mChildren != null ? mChildren.size() : 0)) {
 			throw new IndexOutOfBoundsException();
 		}
-
+		
 		if (node.getParent() != null) {
 			throw new IllegalStateException("node to be inserted already has a parent");
 		}
-
+		
 		if (mChildren == null) {
 			mChildren = new ArrayList<>(2);
 		}
-
+		
 		mChildren.add(index, node);
 		node.setParent(this);
 	}
-
+	
 	@Override
 	public void addChild(final IPSTNode node) {
 		addChild(mChildren == null ? 0 : mChildren.size(), node);
 	}
-
+	
 	abstract int dispatchLeave(IPSTVisitor action);
-
+	
 	/*
 	 * Non-recursive visitor implementation. Derived types implement dispatchVisit/dispatchLeave instead of accept to
 	 * invoke the corresponding overload.
 	 */
 	abstract int dispatchVisit(IPSTVisitor action);
-
+	
 	@Override
 	public final int endOffset() {
 		return mEndOffset;
 	}
-
+	
+	@SuppressWarnings("squid:S1698")
 	@Override
 	public IPSTNode findDescendantByLocation(final ISourceRange location) {
 		// Possible improvement: This implementation does not take advantage of the
@@ -123,27 +132,27 @@ public abstract class PSTNode implements IPSTNode {
 		startNode.accept(action);
 		return action.getResult().orElse(null);
 	}
-
+	
 	@Override
-	public IASTNode getASTNode() {
+	public IASTNode getAstNode() {
 		return mAstNode;
 	}
-
+	
 	@Override
 	public List<IPSTNode> getChildren() {
 		return mChildren != null ? mChildren : Collections.emptyList();
 	}
-
+	
 	@Override
 	public int getEndingLineNumber() {
 		return mSource.getLineNumber(mOffset != mEndOffset ? (mEndOffset - 1) : mOffset);
 	}
-
+	
 	@Override
 	public final IPSTNode getParent() {
 		return mParent;
 	}
-
+	
 	@Override
 	public IPSTRegularNode getRegularParent() {
 		for (IPSTNode p = mParent; p != null; p = p.getParent()) {
@@ -153,22 +162,22 @@ public abstract class PSTNode implements IPSTNode {
 		}
 		return null;
 	}
-
+	
 	@Override
 	public ISourceDocument getSource() {
 		return mSource;
 	}
-
+	
 	@Override
 	public String getSourceText() {
 		return mSource.getText(mOffset, mEndOffset);
 	}
-
+	
 	@Override
 	public int getStartingLineNumber() {
 		return mSource.getLineNumber(mOffset);
 	}
-
+	
 	@Override
 	public IPSTTranslationUnit getTranslationUnit() {
 		IPSTNode node = this;
@@ -177,17 +186,17 @@ public abstract class PSTNode implements IPSTNode {
 		}
 		return node instanceof IPSTTranslationUnit ? (IPSTTranslationUnit) node : null;
 	}
-
+	
 	@Override
 	public List<IASTNode> getUnexpandedChildNodes() {
 		return mUnexpandedChildNodes != null ? mUnexpandedChildNodes : Collections.emptyList();
 	}
-
+	
 	@Override
 	public final int offset() {
 		return mOffset;
 	}
-
+	
 	@Override
 	public void removeChild(final int index) {
 		if (mChildren == null || index < 0 || index >= mChildren.size()) {
@@ -195,7 +204,7 @@ public abstract class PSTNode implements IPSTNode {
 		}
 		mChildren.remove(index).setParent(null);
 	}
-
+	
 	@Override
 	public void setParent(final IPSTNode node) {
 		if (mParent != null) {
@@ -203,12 +212,12 @@ public abstract class PSTNode implements IPSTNode {
 		}
 		mParent = node;
 	}
-
+	
 	@Override
 	public void setUnexpandedChildNodes(final List<IASTNode> astNodes) {
 		mUnexpandedChildNodes = astNodes;
 	}
-
+	
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
@@ -233,17 +242,6 @@ public abstract class PSTNode implements IPSTNode {
 		return sb.toString();
 	}
 	
-
-	private static class VisitorStep {
-		private final PSTNode mNode;
-		private int mState;
-		private VisitorStep mTail;
-
-		VisitorStep(final PSTNode node) {
-			mNode = node;
-		}
-	}
-
 	protected static boolean acceptNonRecursive(final PSTNode root, final IPSTVisitor action) {
 		VisitorStep head = new VisitorStep(root);
 		while (head != null) {
@@ -257,11 +255,11 @@ public abstract class PSTNode implements IPSTNode {
 				}
 				head.mState = 1;
 			}
-
+			
 			if (head.mNode.mChildren != null && head.mState <= head.mNode.mChildren.size()) {
 				final IPSTNode nextChild = head.mNode.mChildren.get(head.mState - 1);
 				++head.mState;
-
+				
 				if (nextChild instanceof PSTNode) {
 					final VisitorStep nextStep = new VisitorStep((PSTNode) nextChild);
 					nextStep.mTail = head;
@@ -273,15 +271,27 @@ public abstract class PSTNode implements IPSTNode {
 				}
 				continue;
 			}
-
+			
 			if (head.mNode.dispatchLeave(action) == IPSTVisitor.PROCESS_ABORT) {
 				return false;
 			}
-
+			
 			head = head.mTail;
 		}
-
+		
 		return true;
 	}
-
+	
+	/**
+	 * A step in the visitor.
+	 */
+	private static class VisitorStep {
+		private final PSTNode mNode;
+		private int mState;
+		private VisitorStep mTail;
+		
+		VisitorStep(final PSTNode node) {
+			mNode = node;
+		}
+	}
 }

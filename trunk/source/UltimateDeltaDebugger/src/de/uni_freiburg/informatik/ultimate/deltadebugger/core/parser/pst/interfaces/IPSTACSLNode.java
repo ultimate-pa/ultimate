@@ -29,12 +29,17 @@ import org.eclipse.cdt.core.dom.ast.IASTNode;
 
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 
+/**
+ * Interface between PST and ACSL node.
+ */
 public interface IPSTACSLNode extends IPSTNode {
-
-	ACSLNode getACSLNode();
+	/**
+	 * @return ACSL node.
+	 */
+	ACSLNode getAcslNode();
 	
 	@Override
-	default IASTNode getASTNode() {
+	default IASTNode getAstNode() {
 		return null;
 	}
 }

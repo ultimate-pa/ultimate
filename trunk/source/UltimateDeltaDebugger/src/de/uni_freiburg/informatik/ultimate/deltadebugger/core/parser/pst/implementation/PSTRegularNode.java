@@ -32,22 +32,33 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfa
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceDocument;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceRange;
 
+/**
+ * Regular PST node.
+ */
 public class PSTRegularNode extends PSTNode implements IPSTRegularNode {
-
+	/**
+	 * @param source
+	 *            Source document.
+	 * @param location
+	 *            source range
+	 * @param astNode
+	 *            AST node
+	 */
 	public PSTRegularNode(final ISourceDocument source, final ISourceRange location, final IASTNode astNode) {
 		super(source, location, astNode);
 	}
-
+	
 	@Override
 	int dispatchLeave(final IPSTVisitor action) {
 		return action.leave(this);
 	}
-
+	
 	@Override
 	int dispatchVisit(final IPSTVisitor action) {
 		return action.visit(this);
 	}
-
+	
+	@SuppressWarnings("squid:S1698")
 	@Override
 	public IPSTRegularNode findRegularChild(final IASTNode astNode) {
 		final PSTVisitorWithResult<IPSTRegularNode> action = new PSTVisitorWithResult<IPSTRegularNode>() {
@@ -55,7 +66,7 @@ public class PSTRegularNode extends PSTNode implements IPSTRegularNode {
 			public int visit(final IPSTRegularNode node) {
 				if (PSTRegularNode.this.equals(node)) {
 					return PROCESS_CONTINUE;
-				} else if (node.getASTNode() == astNode) {
+				} else if (node.getAstNode() == astNode) {
 					setResult(node);
 					return PROCESS_ABORT;
 				}
@@ -65,5 +76,4 @@ public class PSTRegularNode extends PSTNode implements IPSTRegularNode {
 		accept(action);
 		return action.getResult().orElse(null);
 	}
-
 }

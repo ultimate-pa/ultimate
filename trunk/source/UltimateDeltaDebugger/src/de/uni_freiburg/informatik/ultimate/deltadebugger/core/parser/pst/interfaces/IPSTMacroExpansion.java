@@ -27,7 +27,10 @@ package de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interf
 
 import org.eclipse.cdt.core.dom.ast.IASTPreprocessorMacroExpansion;
 
+/**
+ * PST macro expansion interface.
+ */
 public interface IPSTMacroExpansion extends IPSTPreprocessorNode {
 	@Override
-	IASTPreprocessorMacroExpansion getASTNode();
+	IASTPreprocessorMacroExpansion getAstNode();
 }

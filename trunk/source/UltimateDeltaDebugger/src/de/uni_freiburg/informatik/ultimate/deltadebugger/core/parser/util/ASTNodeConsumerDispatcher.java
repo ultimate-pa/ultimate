@@ -134,19 +134,26 @@ import org.eclipse.cdt.core.dom.ast.gnu.c.IGCCASTArrayRangeDesignator;
 /**
  * Contains the instanceof mess that is necessary to detect the actual runtime type of an IASTNode and call the correct
  * overload of an IASTNodeConsumer object.
- *
  * Note: The idea of this class is to move the complexity out of the rest of the code, that needs to detect the runtime
- * type of an IASTNode. The Cyclomatic Complexity (and other complexity metrics) cannot be reduced without artificially
- * obfuscating the code.
+ * type of an IASTNode.
+ * <p>
+ * The Cyclomatic Complexity (and other complexity metrics) cannot be reduced without artificially obfuscating the code.
  */
 public final class ASTNodeConsumerDispatcher {
-	
 	private final IASTNodeConsumer mConsumer;
-
+	
+	/**
+	 * @param consumer
+	 *            AST node consumer.
+	 */
 	public ASTNodeConsumerDispatcher(final IASTNodeConsumer consumer) {
 		mConsumer = consumer;
 	}
-
+	
+	/**
+	 * @param arrayModifier
+	 *            AST array modifier.
+	 */
 	public void dispatch(final IASTArrayModifier arrayModifier) {
 		if (arrayModifier instanceof ICASTArrayModifier) {
 			mConsumer.on((ICASTArrayModifier) arrayModifier);
@@ -154,7 +161,11 @@ public final class ASTNodeConsumerDispatcher {
 			mConsumer.on(arrayModifier);
 		}
 	}
-
+	
+	/**
+	 * @param attributeSpecifier
+	 *            AST .
+	 */
 	public void dispatch(final IASTAttributeSpecifier attributeSpecifier) {
 		if (attributeSpecifier instanceof IGCCASTAttributeSpecifier) {
 			mConsumer.on((IGCCASTAttributeSpecifier) attributeSpecifier);
@@ -162,7 +173,11 @@ public final class ASTNodeConsumerDispatcher {
 			mConsumer.on(attributeSpecifier);
 		}
 	}
-
+	
+	/**
+	 * @param declaration
+	 *            AST declaration.
+	 */
 	public void dispatch(final IASTDeclaration declaration) {
 		if (declaration instanceof IASTSimpleDeclaration) {
 			mConsumer.on((IASTSimpleDeclaration) declaration);
@@ -176,7 +191,11 @@ public final class ASTNodeConsumerDispatcher {
 			mConsumer.on(declaration);
 		}
 	}
-
+	
+	/**
+	 * @param declarator
+	 *            AST declarator.
+	 */
 	public void dispatch(final IASTDeclarator declarator) {
 		if (declarator instanceof IASTFunctionDeclarator) {
 			if (declarator instanceof IASTStandardFunctionDeclarator) {
@@ -194,7 +213,11 @@ public final class ASTNodeConsumerDispatcher {
 			mConsumer.on(declarator);
 		}
 	}
-
+	
+	/**
+	 * @param declSpecifier
+	 *            AST declaration specifier.
+	 */
 	public void dispatch(final IASTDeclSpecifier declSpecifier) {
 		if (declSpecifier instanceof IASTSimpleDeclSpecifier) {
 			mConsumer.on((IASTSimpleDeclSpecifier) declSpecifier);
@@ -210,7 +233,12 @@ public final class ASTNodeConsumerDispatcher {
 			mConsumer.on(declSpecifier);
 		}
 	}
-
+	
+	/**
+	 * @param expression
+	 *            AST expression.
+	 */
+	@SuppressWarnings("squid:MethodCyclomaticComplexity")
 	public void dispatch(final IASTExpression expression) {
 		if (expression instanceof IASTIdExpression) {
 			mConsumer.on((IASTIdExpression) expression);
@@ -246,7 +274,11 @@ public final class ASTNodeConsumerDispatcher {
 			mConsumer.on(expression);
 		}
 	}
-
+	
+	/**
+	 * @param initializer
+	 *            AST initializer.
+	 */
 	public void dispatch(final IASTInitializer initializer) {
 		if (initializer instanceof IASTEqualsInitializer) {
 			mConsumer.on((IASTEqualsInitializer) initializer);
@@ -258,7 +290,11 @@ public final class ASTNodeConsumerDispatcher {
 			mConsumer.on(initializer);
 		}
 	}
-
+	
+	/**
+	 * @param name
+	 *            AST name.
+	 */
 	public void dispatch(final IASTName name) {
 		if (name instanceof IASTImplicitName) {
 			if (name instanceof IASTImplicitDestructorName) {
@@ -270,12 +306,14 @@ public final class ASTNodeConsumerDispatcher {
 			mConsumer.on(name);
 		}
 	}
-
+	
 	/**
 	 * Invokes the function on the actual node type.
 	 *
-	 * @param node node to call the function for
+	 * @param node
+	 *            node to call the function for
 	 */
+	@SuppressWarnings("squid:MethodCyclomaticComplexity")
 	public void dispatch(final IASTNode node) {
 		if (node instanceof IASTExpression) {
 			dispatch((IASTExpression) node);
@@ -325,7 +363,11 @@ public final class ASTNodeConsumerDispatcher {
 			mConsumer.on(node);
 		}
 	}
-
+	
+	/**
+	 * @param pointerOperator
+	 *            AST pointer operator.
+	 */
 	public void dispatch(final IASTPointerOperator pointerOperator) {
 		if (pointerOperator instanceof IASTPointer) {
 			if (pointerOperator instanceof ICASTPointer) {
@@ -337,7 +379,11 @@ public final class ASTNodeConsumerDispatcher {
 			mConsumer.on(pointerOperator);
 		}
 	}
-
+	
+	/**
+	 * @param preprocessorStatement
+	 *            AST preprocessor statement.
+	 */
 	public void dispatch(final IASTPreprocessorStatement preprocessorStatement) {
 		if (preprocessorStatement instanceof IASTPreprocessorEndifStatement) {
 			mConsumer.on((IASTPreprocessorEndifStatement) preprocessorStatement);
@@ -371,7 +417,12 @@ public final class ASTNodeConsumerDispatcher {
 			mConsumer.on(preprocessorStatement);
 		}
 	}
-
+	
+	/**
+	 * @param statement
+	 *            AST statement.
+	 */
+	@SuppressWarnings("squid:MethodCyclomaticComplexity")
 	public void dispatch(final IASTStatement statement) {
 		if (statement instanceof IASTExpressionStatement) {
 			mConsumer.on((IASTExpressionStatement) statement);
@@ -413,7 +464,11 @@ public final class ASTNodeConsumerDispatcher {
 			mConsumer.on(statement);
 		}
 	}
-
+	
+	/**
+	 * @param token
+	 *            AST token.
+	 */
 	public void dispatch(final IASTToken token) {
 		if (token instanceof IASTTokenList) {
 			mConsumer.on((IASTTokenList) token);
@@ -421,7 +476,11 @@ public final class ASTNodeConsumerDispatcher {
 			mConsumer.on(token);
 		}
 	}
-
+	
+	/**
+	 * @param typeId
+	 *            AST type ID.
+	 */
 	public void dispatch(final IASTTypeId typeId) {
 		if (typeId instanceof IASTProblemTypeId) {
 			mConsumer.on((IASTProblemTypeId) typeId);
@@ -429,36 +488,43 @@ public final class ASTNodeConsumerDispatcher {
 			mConsumer.on(typeId);
 		}
 	}
-
-	public void dispatch(final ICASTDesignator cDesignator) {
-		if (cDesignator instanceof ICASTFieldDesignator) {
-			mConsumer.on((ICASTFieldDesignator) cDesignator);
-		} else if (cDesignator instanceof ICASTArrayDesignator) {
-			mConsumer.on((ICASTArrayDesignator) cDesignator);
-		} else if (cDesignator instanceof IGCCASTArrayRangeDesignator) {
-			mConsumer.on((IGCCASTArrayRangeDesignator) cDesignator);
+	
+	/**
+	 * @param castDesignator
+	 *            CAST designator.
+	 */
+	public void dispatch(final ICASTDesignator castDesignator) {
+		if (castDesignator instanceof ICASTFieldDesignator) {
+			mConsumer.on((ICASTFieldDesignator) castDesignator);
+		} else if (castDesignator instanceof ICASTArrayDesignator) {
+			mConsumer.on((ICASTArrayDesignator) castDesignator);
+		} else if (castDesignator instanceof IGCCASTArrayRangeDesignator) {
+			mConsumer.on((IGCCASTArrayRangeDesignator) castDesignator);
 		} else {
-			mConsumer.on(cDesignator);
+			mConsumer.on(castDesignator);
 		}
 	}
-
+	
 	/**
 	 * Invokes the function by using an ASTVisitor instead of multiple instanceof checks in order to detect the first
 	 * first level of subtypes faster.
-	 *
 	 * Note that this is not the default implementation of dispatch(), because calling IASTNode.accept() is not
 	 * guaranteed to be concurency safe. The caller has to explicitly decide if calling IASTNode methods is safe.
 	 *
-	 * @param node node to call the function for
+	 * @param node
+	 *            node to call the function for
 	 */
 	public void dispatchByVisitor(final IASTNode node) {
 		new DispatchVisitor(node).dispatchByVisitor();
 	}
 	
+	/**
+	 * Visitor for dispatching.
+	 */
 	private final class DispatchVisitor extends ASTVisitor {
 		private final IASTNode mExpectedNode;
 		private boolean mDispatched;
-
+		
 		DispatchVisitor(final IASTNode expectedNode) {
 			// Visit everything that can be visited to get exactly one call to
 			// visit whenever possible
@@ -467,19 +533,22 @@ public final class ASTNodeConsumerDispatcher {
 			includeInactiveNodes = true;
 			shouldVisitImplicitNames = true;
 			shouldVisitTokens = true;
-
+			
 			// We need to make sure that the visit() overload is actually called
 			// for the node we want and not a child, though
 			mExpectedNode = expectedNode;
 		}
-
+		
+		/**
+		 * Dispatches.
+		 */
 		public void dispatchByVisitor() {
 			mExpectedNode.accept(this);
 			if (!mDispatched) {
 				dispatchNonVisitedNode();
 			}
 		}
-
+		
 		private void dispatchNonVisitedNode() {
 			if (mExpectedNode instanceof IASTPreprocessorMacroExpansion) {
 				mConsumer.on((IASTPreprocessorMacroExpansion) mExpectedNode);
@@ -495,7 +564,7 @@ public final class ASTNodeConsumerDispatcher {
 				mConsumer.on(mExpectedNode);
 			}
 		}
-
+		
 		@Override
 		public int visit(final IASTArrayModifier arrayModifier) {
 			if (mExpectedNode.equals(arrayModifier)) {
@@ -504,7 +573,7 @@ public final class ASTNodeConsumerDispatcher {
 			}
 			return PROCESS_ABORT;
 		}
-
+		
 		@Override
 		public int visit(final IASTAttribute attribute) {
 			if (mExpectedNode.equals(attribute)) {
@@ -513,7 +582,7 @@ public final class ASTNodeConsumerDispatcher {
 			}
 			return PROCESS_ABORT;
 		}
-
+		
 		@Override
 		public int visit(final IASTAttributeSpecifier attributeSpecifier) {
 			if (mExpectedNode.equals(attributeSpecifier)) {
@@ -522,7 +591,7 @@ public final class ASTNodeConsumerDispatcher {
 			}
 			return PROCESS_ABORT;
 		}
-
+		
 		@Override
 		public int visit(final IASTDeclaration declaration) {
 			if (mExpectedNode.equals(declaration)) {
@@ -531,7 +600,7 @@ public final class ASTNodeConsumerDispatcher {
 			}
 			return PROCESS_ABORT;
 		}
-
+		
 		@Override
 		public int visit(final IASTDeclarator declarator) {
 			if (mExpectedNode.equals(declarator)) {
@@ -540,7 +609,7 @@ public final class ASTNodeConsumerDispatcher {
 			}
 			return PROCESS_ABORT;
 		}
-
+		
 		@Override
 		public int visit(final IASTDeclSpecifier declSpecifier) {
 			if (mExpectedNode.equals(declSpecifier)) {
@@ -549,7 +618,7 @@ public final class ASTNodeConsumerDispatcher {
 			}
 			return PROCESS_ABORT;
 		}
-
+		
 		@Override
 		public int visit(final IASTEnumerator enumerator) {
 			if (mExpectedNode.equals(enumerator)) {
@@ -558,7 +627,7 @@ public final class ASTNodeConsumerDispatcher {
 			}
 			return PROCESS_ABORT;
 		}
-
+		
 		@Override
 		public int visit(final IASTExpression expression) {
 			if (mExpectedNode.equals(expression)) {
@@ -567,7 +636,7 @@ public final class ASTNodeConsumerDispatcher {
 			}
 			return PROCESS_ABORT;
 		}
-
+		
 		@Override
 		public int visit(final IASTInitializer initializer) {
 			if (mExpectedNode.equals(initializer)) {
@@ -576,7 +645,7 @@ public final class ASTNodeConsumerDispatcher {
 			}
 			return PROCESS_ABORT;
 		}
-
+		
 		@Override
 		public int visit(final IASTName name) {
 			if (mExpectedNode.equals(name)) {
@@ -585,7 +654,7 @@ public final class ASTNodeConsumerDispatcher {
 			}
 			return PROCESS_ABORT;
 		}
-
+		
 		@Override
 		public int visit(final IASTParameterDeclaration parameterDeclaration) {
 			if (mExpectedNode.equals(parameterDeclaration)) {
@@ -594,7 +663,7 @@ public final class ASTNodeConsumerDispatcher {
 			}
 			return PROCESS_ABORT;
 		}
-
+		
 		@Override
 		public int visit(final IASTPointerOperator pointerOperator) {
 			if (mExpectedNode.equals(pointerOperator)) {
@@ -603,7 +672,7 @@ public final class ASTNodeConsumerDispatcher {
 			}
 			return PROCESS_ABORT;
 		}
-
+		
 		@Override
 		public int visit(final IASTProblem problem) {
 			if (mExpectedNode.equals(problem)) {
@@ -612,7 +681,7 @@ public final class ASTNodeConsumerDispatcher {
 			}
 			return PROCESS_ABORT;
 		}
-
+		
 		@Override
 		public int visit(final IASTStatement statement) {
 			if (mExpectedNode.equals(statement)) {
@@ -621,7 +690,7 @@ public final class ASTNodeConsumerDispatcher {
 			}
 			return PROCESS_ABORT;
 		}
-
+		
 		@Override
 		public int visit(final IASTToken token) {
 			if (mExpectedNode.equals(token)) {
@@ -630,7 +699,7 @@ public final class ASTNodeConsumerDispatcher {
 			}
 			return PROCESS_ABORT;
 		}
-
+		
 		@Override
 		public int visit(final IASTTranslationUnit translationUnit) {
 			if (mExpectedNode.equals(translationUnit)) {
@@ -639,7 +708,7 @@ public final class ASTNodeConsumerDispatcher {
 			}
 			return PROCESS_ABORT;
 		}
-
+		
 		@Override
 		public int visit(final IASTTypeId typeId) {
 			if (mExpectedNode.equals(typeId)) {
@@ -648,51 +717,49 @@ public final class ASTNodeConsumerDispatcher {
 			}
 			return PROCESS_ABORT;
 		}
-
+		
 		@Override
-		public int visit(final ICASTDesignator cDesignator) {
-			if (mExpectedNode.equals(cDesignator)) {
-				dispatch(cDesignator);
+		public int visit(final ICASTDesignator castDesignator) {
+			if (mExpectedNode.equals(castDesignator)) {
+				dispatch(castDesignator);
 				mDispatched = true;
 			}
 			return PROCESS_ABORT;
 		}
-
+		
 		@Override
 		public int visit(final ICPPASTBaseSpecifier cppBaseSpecifier) {
 			return PROCESS_ABORT;
 		}
-
+		
 		@Override
 		public int visit(final ICPPASTCapture cppCapture) {
 			return PROCESS_ABORT;
 		}
-
+		
 		@Override
 		public int visit(final ICPPASTClassVirtSpecifier cppClassVirtSpecifier) {
 			return PROCESS_ABORT;
 		}
-
+		
 		@Override
 		public int visit(final ICPPASTDecltypeSpecifier cppDecltypeSpecifier) {
 			return PROCESS_ABORT;
 		}
-
+		
 		@Override
 		public int visit(final ICPPASTNamespaceDefinition cppNamespaceDefinition) {
 			return PROCESS_ABORT;
 		}
-
+		
 		@Override
 		public int visit(final ICPPASTTemplateParameter cppTemplateParameter) {
 			return PROCESS_ABORT;
 		}
-
+		
 		@Override
 		public int visit(final ICPPASTVirtSpecifier cppVirtSpecifier) {
 			return PROCESS_ABORT;
 		}
-
 	}
-
 }

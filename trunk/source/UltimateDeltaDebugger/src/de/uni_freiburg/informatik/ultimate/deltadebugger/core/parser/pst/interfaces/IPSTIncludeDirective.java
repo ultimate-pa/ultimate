@@ -27,7 +27,10 @@ package de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interf
 
 import org.eclipse.cdt.core.dom.ast.IASTPreprocessorIncludeStatement;
 
+/**
+ * PST include directive interface.
+ */
 public interface IPSTIncludeDirective extends IPSTDirective {
 	@Override
-	IASTPreprocessorIncludeStatement getASTNode();
+	IASTPreprocessorIncludeStatement getAstNode();
 }

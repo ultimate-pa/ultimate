@@ -33,7 +33,7 @@ import org.eclipse.cdt.core.dom.ast.IASTNode;
  */
 public interface IPSTLiteralRegion extends IPSTNode {
 	@Override
-	default IASTNode getASTNode() {
+	default IASTNode getAstNode() {
 		return null;
 	}
 }

@@ -25,6 +25,16 @@
  */
 package de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces;
 
+/**
+ * PST gap visitor interface.
+ */
 public interface IPSTGapVisitor extends IPSTVisitor {
+	/**
+	 * @param offset
+	 *            Offset.
+	 * @param endOffset
+	 *            end of the offset
+	 * @return instruction how to continue
+	 */
 	int visitGap(int offset, int endOffset);
 }

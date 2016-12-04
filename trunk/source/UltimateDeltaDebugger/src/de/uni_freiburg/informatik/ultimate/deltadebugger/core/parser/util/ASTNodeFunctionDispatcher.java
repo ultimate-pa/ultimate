@@ -136,38 +136,54 @@ import org.eclipse.cdt.core.dom.ast.gnu.c.IGCCASTArrayRangeDesignator;
 /**
  * Contains the instanceof mess that is necessary to detect the actual runtime type of an IASTNode and call the correct
  * overload of an IASTNodeFunction object.
- *
  * Note: The idea of this class is to move the complexity out of the rest of the code, that needs to detect the runtime
- * type of an IASTNode. The Cyclomatic Complexity (and other complexity metrics) cannot be reduced without artificially
- * obfuscating the code.
+ * type of an IASTNode.
+ * <p>
+ * The Cyclomatic Complexity (and other complexity metrics) cannot be reduced without artificially obfuscating the code.
  * 
  * @param <T>
  *            function return type
  */
 public final class ASTNodeFunctionDispatcher<T> {
-
 	private final IASTNodeFunction<T> mFunc;
-
+	
+	/**
+	 * @param func
+	 *            AST node function.
+	 */
 	public ASTNodeFunctionDispatcher(final IASTNodeFunction<T> func) {
 		mFunc = func;
 	}
-
+	
+	/**
+	 * @param arrayModifier
+	 *            AST array modifier.
+	 * @return result
+	 */
 	public T dispatch(final IASTArrayModifier arrayModifier) {
 		if (arrayModifier instanceof ICASTArrayModifier) {
 			return mFunc.on((ICASTArrayModifier) arrayModifier);
-		} else {
-			return mFunc.on(arrayModifier);
 		}
+		return mFunc.on(arrayModifier);
 	}
-
+	
+	/**
+	 * @param attributeSpecifier
+	 *            AST attribute specifier.
+	 * @return result
+	 */
 	public T dispatch(final IASTAttributeSpecifier attributeSpecifier) {
 		if (attributeSpecifier instanceof IGCCASTAttributeSpecifier) {
 			return mFunc.on((IGCCASTAttributeSpecifier) attributeSpecifier);
-		} else {
-			return mFunc.on(attributeSpecifier);
 		}
+		return mFunc.on(attributeSpecifier);
 	}
-
+	
+	/**
+	 * @param declaration
+	 *            AST declaration.
+	 * @return result
+	 */
 	public T dispatch(final IASTDeclaration declaration) {
 		if (declaration instanceof IASTSimpleDeclaration) {
 			return mFunc.on((IASTSimpleDeclaration) declaration);
@@ -181,7 +197,12 @@ public final class ASTNodeFunctionDispatcher<T> {
 			return mFunc.on(declaration);
 		}
 	}
-
+	
+	/**
+	 * @param declarator
+	 *            AST declarator.
+	 * @return result
+	 */
 	public T dispatch(final IASTDeclarator declarator) {
 		if (declarator instanceof IASTFunctionDeclarator) {
 			if (declarator instanceof IASTStandardFunctionDeclarator) {
@@ -199,7 +220,12 @@ public final class ASTNodeFunctionDispatcher<T> {
 			return mFunc.on(declarator);
 		}
 	}
-
+	
+	/**
+	 * @param declSpecifier
+	 *            AST declaration specifier.
+	 * @return result
+	 */
 	public T dispatch(final IASTDeclSpecifier declSpecifier) {
 		if (declSpecifier instanceof IASTSimpleDeclSpecifier) {
 			return mFunc.on((IASTSimpleDeclSpecifier) declSpecifier);
@@ -215,7 +241,13 @@ public final class ASTNodeFunctionDispatcher<T> {
 			return mFunc.on(declSpecifier);
 		}
 	}
-
+	
+	/**
+	 * @param expression
+	 *            AST expression.
+	 * @return result
+	 */
+	@SuppressWarnings("squid:MethodCyclomaticComplexity")
 	public T dispatch(final IASTExpression expression) {
 		if (expression instanceof IASTIdExpression) {
 			return mFunc.on((IASTIdExpression) expression);
@@ -251,7 +283,12 @@ public final class ASTNodeFunctionDispatcher<T> {
 			return mFunc.on(expression);
 		}
 	}
-
+	
+	/**
+	 * @param initializer
+	 *            AST initializer.
+	 * @return result
+	 */
 	public T dispatch(final IASTInitializer initializer) {
 		if (initializer instanceof IASTEqualsInitializer) {
 			return mFunc.on((IASTEqualsInitializer) initializer);
@@ -263,25 +300,30 @@ public final class ASTNodeFunctionDispatcher<T> {
 			return mFunc.on(initializer);
 		}
 	}
-
+	
+	/**
+	 * @param name
+	 *            AST name.
+	 * @return result
+	 */
 	public T dispatch(final IASTName name) {
 		if (name instanceof IASTImplicitName) {
 			if (name instanceof IASTImplicitDestructorName) {
 				return mFunc.on((IASTImplicitDestructorName) name);
-			} else {
-				return mFunc.on((IASTImplicitName) name);
 			}
-		} else {
-			return mFunc.on(name);
+			return mFunc.on((IASTImplicitName) name);
 		}
+		return mFunc.on(name);
 	}
-
+	
 	/**
 	 * Invokes the function on the actual node type.
 	 *
-	 * @param node node to call the function for
+	 * @param node
+	 *            node to call the function for
 	 * @return the functions return value
 	 */
+	@SuppressWarnings("squid:MethodCyclomaticComplexity")
 	public T dispatch(final IASTNode node) {
 		if (node instanceof IASTExpression) {
 			return dispatch((IASTExpression) node);
@@ -331,19 +373,28 @@ public final class ASTNodeFunctionDispatcher<T> {
 			return mFunc.on(node);
 		}
 	}
-
+	
+	/**
+	 * @param pointerOperator
+	 *            AST pointer operator.
+	 * @return result
+	 */
 	public T dispatch(final IASTPointerOperator pointerOperator) {
 		if (pointerOperator instanceof IASTPointer) {
 			if (pointerOperator instanceof ICASTPointer) {
 				return mFunc.on((ICASTPointer) pointerOperator);
-			} else {
-				return mFunc.on((IASTPointer) pointerOperator);
 			}
-		} else {
-			return mFunc.on(pointerOperator);
+			return mFunc.on((IASTPointer) pointerOperator);
 		}
+		return mFunc.on(pointerOperator);
 	}
-
+	
+	/**
+	 * @param preprocessorStatement
+	 *            AST preprocessor statement.
+	 * @return result
+	 */
+	@SuppressWarnings("squid:MethodCyclomaticComplexity")
 	public T dispatch(final IASTPreprocessorStatement preprocessorStatement) {
 		if (preprocessorStatement instanceof IASTPreprocessorEndifStatement) {
 			return mFunc.on((IASTPreprocessorEndifStatement) preprocessorStatement);
@@ -377,7 +428,13 @@ public final class ASTNodeFunctionDispatcher<T> {
 			return mFunc.on(preprocessorStatement);
 		}
 	}
-
+	
+	/**
+	 * @param statement
+	 *            AST statement.
+	 * @return result
+	 */
+	@SuppressWarnings("squid:MethodCyclomaticComplexity")
 	public T dispatch(final IASTStatement statement) {
 		if (statement instanceof IASTExpressionStatement) {
 			return mFunc.on((IASTExpressionStatement) statement);
@@ -419,53 +476,69 @@ public final class ASTNodeFunctionDispatcher<T> {
 			return mFunc.on(statement);
 		}
 	}
-
+	
+	/**
+	 * @param token
+	 *            AST token.
+	 * @return result
+	 */
 	public T dispatch(final IASTToken token) {
 		if (token instanceof IASTTokenList) {
 			return mFunc.on((IASTTokenList) token);
-		} else {
-			return mFunc.on(token);
 		}
+		return mFunc.on(token);
 	}
-
+	
+	/**
+	 * @param typeId
+	 *            AST type ID.
+	 * @return result
+	 */
 	public T dispatch(final IASTTypeId typeId) {
 		if (typeId instanceof IASTProblemTypeId) {
 			return mFunc.on((IASTProblemTypeId) typeId);
+		}
+		return mFunc.on(typeId);
+	}
+	
+	/**
+	 * @param castDesignator
+	 *            CAST designator.
+	 * @return result
+	 */
+	public T dispatch(final ICASTDesignator castDesignator) {
+		if (castDesignator instanceof ICASTFieldDesignator) {
+			return mFunc.on((ICASTFieldDesignator) castDesignator);
+		} else if (castDesignator instanceof ICASTArrayDesignator) {
+			return mFunc.on((ICASTArrayDesignator) castDesignator);
+		} else if (castDesignator instanceof IGCCASTArrayRangeDesignator) {
+			return mFunc.on((IGCCASTArrayRangeDesignator) castDesignator);
 		} else {
-			return mFunc.on(typeId);
+			return mFunc.on(castDesignator);
 		}
 	}
-
-	public T dispatch(final ICASTDesignator cDesignator) {
-		if (cDesignator instanceof ICASTFieldDesignator) {
-			return mFunc.on((ICASTFieldDesignator) cDesignator);
-		} else if (cDesignator instanceof ICASTArrayDesignator) {
-			return mFunc.on((ICASTArrayDesignator) cDesignator);
-		} else if (cDesignator instanceof IGCCASTArrayRangeDesignator) {
-			return mFunc.on((IGCCASTArrayRangeDesignator) cDesignator);
-		} else {
-			return mFunc.on(cDesignator);
-		}
-	}
-
+	
 	/**
 	 * Invokes the function by using an ASTVisitor instead of multiple instanceof checks in order to detect the first
 	 * first level of subtypes faster.
-	 *
 	 * Note that this is not the default implementation of dispatch(), because calling IASTNode.accept() is not
 	 * guaranteed to be concurency safe. The caller has to explicitly decide if calling IASTNode methods is safe.
 	 *
-	 * @param node node to call the function for
+	 * @param node
+	 *            node to call the function for
 	 * @return the functions return value
 	 */
 	public T dispatchByVisitor(final IASTNode node) {
 		return new DispatchVisitor(node).dispatchByVisitor();
 	}
-
+	
+	/**
+	 * Visitor for dispatching.
+	 */
 	private final class DispatchVisitor extends ASTVisitor {
 		private final IASTNode mExpectedNode;
 		private Optional<T> mResult = Optional.empty();
-
+		
 		DispatchVisitor(final IASTNode expectedNode) {
 			// Visit everything that can be visited to get exactly one call to
 			// visit whenever possible
@@ -474,17 +547,20 @@ public final class ASTNodeFunctionDispatcher<T> {
 			includeInactiveNodes = true;
 			shouldVisitImplicitNames = true;
 			shouldVisitTokens = true;
-
+			
 			// We need to make sure that the visit() overload is actually called
 			// for the node we want and not a child, though
 			mExpectedNode = expectedNode;
 		}
-
+		
+		/**
+		 * @return Dispatch result.
+		 */
 		public T dispatchByVisitor() {
 			mExpectedNode.accept(this);
 			return mResult.orElseGet(this::dispatchNonVisitedNode);
 		}
-
+		
 		private T dispatchNonVisitedNode() {
 			if (mExpectedNode instanceof IASTPreprocessorMacroExpansion) {
 				return mFunc.on((IASTPreprocessorMacroExpansion) mExpectedNode);
@@ -500,7 +576,7 @@ public final class ASTNodeFunctionDispatcher<T> {
 				return mFunc.on(mExpectedNode);
 			}
 		}
-
+		
 		@Override
 		public int visit(final IASTArrayModifier arrayModifier) {
 			if (mExpectedNode.equals(arrayModifier)) {
@@ -508,7 +584,7 @@ public final class ASTNodeFunctionDispatcher<T> {
 			}
 			return PROCESS_ABORT;
 		}
-
+		
 		@Override
 		public int visit(final IASTAttribute attribute) {
 			if (mExpectedNode.equals(attribute)) {
@@ -516,7 +592,7 @@ public final class ASTNodeFunctionDispatcher<T> {
 			}
 			return PROCESS_ABORT;
 		}
-
+		
 		@Override
 		public int visit(final IASTAttributeSpecifier attributeSpecifier) {
 			if (mExpectedNode.equals(attributeSpecifier)) {
@@ -524,7 +600,7 @@ public final class ASTNodeFunctionDispatcher<T> {
 			}
 			return PROCESS_ABORT;
 		}
-
+		
 		@Override
 		public int visit(final IASTDeclaration declaration) {
 			if (mExpectedNode.equals(declaration)) {
@@ -532,7 +608,7 @@ public final class ASTNodeFunctionDispatcher<T> {
 			}
 			return PROCESS_ABORT;
 		}
-
+		
 		@Override
 		public int visit(final IASTDeclarator declarator) {
 			if (mExpectedNode.equals(declarator)) {
@@ -540,7 +616,7 @@ public final class ASTNodeFunctionDispatcher<T> {
 			}
 			return PROCESS_ABORT;
 		}
-
+		
 		@Override
 		public int visit(final IASTDeclSpecifier declSpecifier) {
 			if (mExpectedNode.equals(declSpecifier)) {
@@ -548,7 +624,7 @@ public final class ASTNodeFunctionDispatcher<T> {
 			}
 			return PROCESS_ABORT;
 		}
-
+		
 		@Override
 		public int visit(final IASTEnumerator enumerator) {
 			if (mExpectedNode.equals(enumerator)) {
@@ -556,7 +632,7 @@ public final class ASTNodeFunctionDispatcher<T> {
 			}
 			return PROCESS_ABORT;
 		}
-
+		
 		@Override
 		public int visit(final IASTExpression expression) {
 			if (mExpectedNode.equals(expression)) {
@@ -564,7 +640,7 @@ public final class ASTNodeFunctionDispatcher<T> {
 			}
 			return PROCESS_ABORT;
 		}
-
+		
 		@Override
 		public int visit(final IASTInitializer initializer) {
 			if (mExpectedNode.equals(initializer)) {
@@ -572,7 +648,7 @@ public final class ASTNodeFunctionDispatcher<T> {
 			}
 			return PROCESS_ABORT;
 		}
-
+		
 		@Override
 		public int visit(final IASTName name) {
 			if (mExpectedNode.equals(name)) {
@@ -580,7 +656,7 @@ public final class ASTNodeFunctionDispatcher<T> {
 			}
 			return PROCESS_ABORT;
 		}
-
+		
 		@Override
 		public int visit(final IASTParameterDeclaration parameterDeclaration) {
 			if (mExpectedNode.equals(parameterDeclaration)) {
@@ -588,7 +664,7 @@ public final class ASTNodeFunctionDispatcher<T> {
 			}
 			return PROCESS_ABORT;
 		}
-
+		
 		@Override
 		public int visit(final IASTPointerOperator pointerOperator) {
 			if (mExpectedNode.equals(pointerOperator)) {
@@ -596,7 +672,7 @@ public final class ASTNodeFunctionDispatcher<T> {
 			}
 			return PROCESS_ABORT;
 		}
-
+		
 		@Override
 		public int visit(final IASTProblem problem) {
 			if (mExpectedNode.equals(problem)) {
@@ -604,7 +680,7 @@ public final class ASTNodeFunctionDispatcher<T> {
 			}
 			return PROCESS_ABORT;
 		}
-
+		
 		@Override
 		public int visit(final IASTStatement statement) {
 			if (mExpectedNode.equals(statement)) {
@@ -612,7 +688,7 @@ public final class ASTNodeFunctionDispatcher<T> {
 			}
 			return PROCESS_ABORT;
 		}
-
+		
 		@Override
 		public int visit(final IASTToken token) {
 			if (mExpectedNode.equals(token)) {
@@ -620,7 +696,7 @@ public final class ASTNodeFunctionDispatcher<T> {
 			}
 			return PROCESS_ABORT;
 		}
-
+		
 		@Override
 		public int visit(final IASTTranslationUnit translationUnit) {
 			if (mExpectedNode.equals(translationUnit)) {
@@ -628,7 +704,7 @@ public final class ASTNodeFunctionDispatcher<T> {
 			}
 			return PROCESS_ABORT;
 		}
-
+		
 		@Override
 		public int visit(final IASTTypeId typeId) {
 			if (mExpectedNode.equals(typeId)) {
@@ -636,50 +712,48 @@ public final class ASTNodeFunctionDispatcher<T> {
 			}
 			return PROCESS_ABORT;
 		}
-
+		
 		@Override
-		public int visit(final ICASTDesignator cDesignator) {
-			if (mExpectedNode.equals(cDesignator)) {
-				mResult = Optional.of(dispatch(cDesignator));
+		public int visit(final ICASTDesignator castDesignator) {
+			if (mExpectedNode.equals(castDesignator)) {
+				mResult = Optional.of(dispatch(castDesignator));
 			}
 			return PROCESS_ABORT;
 		}
-
+		
 		@Override
 		public int visit(final ICPPASTBaseSpecifier cppBaseSpecifier) {
 			return PROCESS_ABORT;
 		}
-
+		
 		@Override
 		public int visit(final ICPPASTCapture cppCapture) {
 			return PROCESS_ABORT;
 		}
-
+		
 		@Override
 		public int visit(final ICPPASTClassVirtSpecifier cppClassVirtSpecifier) {
 			return PROCESS_ABORT;
 		}
-
+		
 		@Override
 		public int visit(final ICPPASTDecltypeSpecifier cppDecltypeSpecifier) {
 			return PROCESS_ABORT;
 		}
-
+		
 		@Override
 		public int visit(final ICPPASTNamespaceDefinition cppNamespaceDefinition) {
 			return PROCESS_ABORT;
 		}
-
+		
 		@Override
 		public int visit(final ICPPASTTemplateParameter cppTemplateParameter) {
 			return PROCESS_ABORT;
 		}
-
+		
 		@Override
 		public int visit(final ICPPASTVirtSpecifier cppVirtSpecifier) {
 			return PROCESS_ABORT;
 		}
-
 	}
-
 }

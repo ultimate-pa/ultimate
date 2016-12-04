@@ -32,20 +32,95 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.minimizers.
 
 /**
  * Partition of a sequence of a certain size into n (almost) equally sized parts.
- *
  * If the sequence cannot be divided into equal sized parts, distribute the remainder evenly across the trailing
  * subsequences, so the last r subsequences have exactly one element more than than the first n-r subsequences.
  */
 public class SequencePartitioner implements Iterable<SubsequenceBounds> {
+	private final int mSequenceSize;
+	private final int mNumParts;
+	
+	/**
+	 * @param sequenceSize
+	 *            Sequence size.
+	 * @param numParts
+	 *            number of parts
+	 */
+	public SequencePartitioner(final int sequenceSize, final int numParts) {
+		if (sequenceSize < 0) {
+			throw new IllegalArgumentException("negative size");
+		}
+		
+		if (numParts < 1) {
+			throw new IllegalArgumentException("cannot partition into less than one part");
+		}
+		
+		mNumParts = numParts;
+		mSequenceSize = sequenceSize;
+	}
+	
+	/**
+	 * @param index
+	 *            Index.
+	 * @return subsequence bounds
+	 */
+	public SubsequenceBounds get(final int index) {
+		if (index < 0 || index >= mNumParts) {
+			throw new IndexOutOfBoundsException();
+		}
+		
+		int length = mSequenceSize / mNumParts;
+		int offset = index * length;
+		
+		final int remainder = mSequenceSize % mNumParts;
+		final int shift = index - (mNumParts - remainder);
+		if (shift >= 0) {
+			length += 1;
+			offset += shift;
+		}
+		
+		return new SubsequenceBounds(offset, offset + length);
+	}
+	
+	public int getNumParts() {
+		return mNumParts;
+	}
+	
+	public int getSequenceSize() {
+		return mSequenceSize;
+	}
+	
+	@Override
+	public ListIterator<SubsequenceBounds> iterator() {
+		return listIterator(0);
+	}
+	
+	/**
+	 * @param index
+	 *            Index.
+	 * @return list iterator over subsequence bounds
+	 */
+	public ListIterator<SubsequenceBounds> listIterator(final int index) {
+		return new SubsequenceIterator(index);
+	}
+	
+	/**
+	 * Sequence bounds.
+	 */
 	public static final class SubsequenceBounds {
 		private final int mBegin;
 		private final int mEnd;
-
+		
+		/**
+		 * @param begin
+		 *            Start index.
+		 * @param end
+		 *            end index
+		 */
 		public SubsequenceBounds(final int begin, final int end) {
 			mBegin = begin;
 			mEnd = end;
 		}
-
+		
 		@Override
 		public boolean equals(final Object obj) {
 			if (this == obj) {
@@ -66,19 +141,19 @@ public class SequencePartitioner implements Iterable<SubsequenceBounds> {
 			}
 			return true;
 		}
-
+		
 		public int getBegin() {
 			return mBegin;
 		}
-
+		
 		public int getEnd() {
 			return mEnd;
 		}
-
+		
 		public int getSize() {
 			return mEnd - mBegin;
 		}
-
+		
 		@Override
 		public int hashCode() {
 			final int prime = 31;
@@ -87,35 +162,38 @@ public class SequencePartitioner implements Iterable<SubsequenceBounds> {
 			result = prime * result + mEnd;
 			return result;
 		}
-
+		
 		@Override
 		public String toString() {
 			return "[" + mBegin + ", " + mEnd + ")";
 		}
 	}
-
+	
+	/**
+	 * Sequence iterator.
+	 */
 	class SubsequenceIterator implements ListIterator<SubsequenceBounds> {
 		private int mCursor;
-
+		
 		SubsequenceIterator(final int index) {
 			mCursor = index;
 		}
-
+		
 		@Override
-		public void add(final SubsequenceBounds e) {
+		public void add(final SubsequenceBounds bounds) {
 			throw new UnsupportedOperationException();
 		}
-
+		
 		@Override
 		public boolean hasNext() {
 			return mCursor != mSequenceSize;
 		}
-
+		
 		@Override
 		public boolean hasPrevious() {
 			return mCursor != 0;
 		}
-
+		
 		@Override
 		public SubsequenceBounds next() {
 			final int i = mCursor;
@@ -125,12 +203,12 @@ public class SequencePartitioner implements Iterable<SubsequenceBounds> {
 			mCursor = i + 1;
 			return get(i);
 		}
-
+		
 		@Override
 		public int nextIndex() {
 			return mCursor;
 		}
-
+		
 		@Override
 		public SubsequenceBounds previous() {
 			if (mCursor < 0) {
@@ -140,77 +218,20 @@ public class SequencePartitioner implements Iterable<SubsequenceBounds> {
 			mCursor = i;
 			return get(i);
 		}
-
+		
 		@Override
 		public int previousIndex() {
 			return mCursor - 1;
 		}
-
+		
 		@Override
 		public void remove() {
 			throw new UnsupportedOperationException();
 		}
-
+		
 		@Override
-		public void set(final SubsequenceBounds e) {
+		public void set(final SubsequenceBounds bounds) {
 			throw new UnsupportedOperationException();
 		}
-	}
-
-	private final int mSequenceSize;
-
-	private final int mNumParts;
-
-	/**
-	 * @param sequenceSize
-	 * @param numParts
-	 * @throws IllegalArgumentException
-	 */
-	public SequencePartitioner(final int sequenceSize, final int numParts) {
-		if (sequenceSize < 0) {
-			throw new IllegalArgumentException("negative size");
-		}
-
-		if (numParts < 1) {
-			throw new IllegalArgumentException("cannot partition into less than one part");
-		}
-
-		mNumParts = numParts;
-		mSequenceSize = sequenceSize;
-	}
-
-	public SubsequenceBounds get(final int index) {
-		if (index < 0 || index >= mNumParts) {
-			throw new IndexOutOfBoundsException();
-		}
-
-		int length = mSequenceSize / mNumParts;
-		int offset = index * length;
-
-		final int remainder = mSequenceSize % mNumParts;
-		final int shift = index - (mNumParts - remainder);
-		if (shift >= 0) {
-			length += 1;
-			offset += shift;
-		}
-
-		return new SubsequenceBounds(offset, offset + length);
-	}
-
-	public int getNumParts() {
-		return mNumParts;
-	}
-
-	public int getSequenceSize() {
-		return mSequenceSize;
-	}
-
-	@Override
-	public ListIterator<SubsequenceBounds> iterator() {
-		return listIterator(0);
-	}
-
-	public ListIterator<SubsequenceBounds> listIterator(final int index) {
-		return new SubsequenceIterator(index);
 	}
 }

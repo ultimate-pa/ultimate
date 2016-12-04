@@ -32,26 +32,35 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfa
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceDocument;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceRange;
 
+/**
+ * PST directive.
+ */
 public class PSTDirective extends PSTNode implements IPSTDirective {
-
+	/**
+	 * @param source
+	 *            Source document.
+	 * @param location
+	 *            source range
+	 * @param statement
+	 *            AST preprocessor statement
+	 */
 	public PSTDirective(final ISourceDocument source, final ISourceRange location,
 			final IASTPreprocessorStatement statement) {
 		super(source, location, statement);
 	}
-
+	
 	@Override
 	int dispatchLeave(final IPSTVisitor action) {
 		return action.leave(this);
 	}
-
+	
 	@Override
 	int dispatchVisit(final IPSTVisitor action) {
 		return action.visit(this);
 	}
-
+	
 	@Override
-	public IASTPreprocessorStatement getASTNode() {
+	public IASTPreprocessorStatement getAstNode() {
 		return (IASTPreprocessorStatement) mAstNode;
 	}
-
 }

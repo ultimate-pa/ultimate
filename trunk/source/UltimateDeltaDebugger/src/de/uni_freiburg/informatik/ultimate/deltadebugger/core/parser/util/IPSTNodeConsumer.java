@@ -40,53 +40,99 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfa
 
 /**
  * Simulate a double dispatch function for an IPSTNode argument. Analogous to IASTNodeConsumer for consistency reasons.
- *
  */
 @FunctionalInterface
 public interface IPSTNodeConsumer {
-
+	/**
+	 * @param comment
+	 *            PST comment.
+	 */
 	default void on(final IPSTComment comment) {
 		on((IPSTPreprocessorNode) comment);
 	}
-
+	
+	/**
+	 * @param acslComment
+	 *            PST ACSL comment.
+	 */
 	default void on(final IPSTACSLComment acslComment) {
 		on((IPSTComment) acslComment);
 	}
 	
+	/**
+	 * @param acslNode
+	 *            PST ACSL node.
+	 */
 	default void on(final IPSTACSLNode acslNode) {
 		on((IPSTNode) acslNode);
 	}
 	
+	/**
+	 * @param conditionalBlock
+	 *            PST conditional block.
+	 */
 	default void on(final IPSTConditionalBlock conditionalBlock) {
 		on((IPSTNode) conditionalBlock);
 	}
-
+	
+	/**
+	 * @param directive
+	 *            PST directive.
+	 */
 	default void on(final IPSTDirective directive) {
 		on((IPSTPreprocessorNode) directive);
 	}
-
+	
+	/**
+	 * @param includeDirective
+	 *            PST include directive.
+	 */
 	default void on(final IPSTIncludeDirective includeDirective) {
 		on((IPSTDirective) includeDirective);
 	}
-
+	
+	/**
+	 * @param literalRegion
+	 *            PST literal region.
+	 */
 	default void on(final IPSTLiteralRegion literalRegion) {
 		on((IPSTNode) literalRegion);
 	}
-
+	
+	/**
+	 * @param macroExpansion
+	 *            PST macro expansion.
+	 */
 	default void on(final IPSTMacroExpansion macroExpansion) {
 		on((IPSTPreprocessorNode) macroExpansion);
 	}
-
+	
+	/**
+	 * @param node
+	 *            PST node.
+	 */
 	void on(IPSTNode node);
-
-	default void on(final IPSTPreprocessorNode preprocessOrNode) {
-		on((IPSTNode) preprocessOrNode);
+	
+	/**
+	 * @param preprocessorNode
+	 *            PST preprocessor node.
+	 */
+	default void on(final IPSTPreprocessorNode preprocessorNode) {
+		on((IPSTNode) preprocessorNode);
 	}
-
+	
+	/**
+	 * @param node
+	 *            PST regular node.
+	 */
 	default void on(final IPSTRegularNode node) {
 		on((IPSTNode) node);
 	}
-
+	
+	/**
+	 * @param translationUnit
+	 *            PST translation unit.
+	 */
 	default void on(final IPSTTranslationUnit translationUnit) {
 		on((IPSTRegularNode) translationUnit);
 	}

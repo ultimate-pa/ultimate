@@ -31,5 +31,5 @@ package de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interf
  * modification except removing the whole block should usually be avoided (and maybe even that is not a good idea).
  */
 public interface IPSTOverlappingRegion extends IPSTLiteralRegion {
-
+	// empty interface
 }

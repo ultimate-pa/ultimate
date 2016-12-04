@@ -107,7 +107,7 @@ public class ChangeCollector {
 		// Tokens are not validated, we just want to delete them all.
 		// However, at least ensure that parenthesis are always deleted in
 		// pairs.
-		if (!TokenUtils.isAllParenthesisBalanced(tokens)) {
+		if (!TokenUtils.isAllParenthesesBalanced(tokens)) {
 			mLogger.debug("DeleteTokensChange skipped because of unbalanced parenthesis in " + node);
 			return false;
 		}
@@ -129,7 +129,7 @@ public class ChangeCollector {
 	@SuppressWarnings("squid:S1698")
 	public boolean addDeleteBinaryExpressionOperandChange(final IPSTRegularNode operandNode,
 			final List<String> altOperandReplacements) {
-		final ASTNodeProperty property = operandNode.getASTNode().getPropertyInParent();
+		final ASTNodeProperty property = operandNode.getAstNode().getPropertyInParent();
 		if (property != IASTBinaryExpression.OPERAND_ONE && property != IASTBinaryExpression.OPERAND_TWO) {
 			mLogger.warn("DeleteBinaryExpressionOperand not supported for operand node " + operandNode
 					+ " with property " + property);
@@ -175,7 +175,7 @@ public class ChangeCollector {
 	 */
 	@SuppressWarnings("squid:S1698")
 	public boolean addDeleteConditionalExpressionChange(final IPSTRegularNode node, final String replacement) {
-		final ASTNodeProperty property = node.getASTNode().getPropertyInParent();
+		final ASTNodeProperty property = node.getAstNode().getPropertyInParent();
 		int position;
 		if (property == IASTConditionalExpression.LOGICAL_CONDITION) {
 			position = 0;
@@ -466,10 +466,10 @@ public class ChangeCollector {
 	@SuppressWarnings("squid:S1698")
 	public boolean addDeleteWithCommaChange(final IPSTRegularNode node, final boolean keepOne) {
 		final IPSTRegularNode parent = node.getRegularParent();
-		final ASTNodeProperty childProperty = ASTNodeUtils.getPropertyOfCommaSeparatedChildNodes(parent.getASTNode());
-		if (childProperty == null || node.getASTNode().getPropertyInParent() != childProperty) {
+		final ASTNodeProperty childProperty = ASTNodeUtils.getPropertyOfCommaSeparatedChildNodes(parent.getAstNode());
+		if (childProperty == null || node.getAstNode().getPropertyInParent() != childProperty) {
 			mLogger.warn("DeleteWithCommaChange not supported for node " + node + " with property "
-					+ node.getASTNode().getPropertyInParent());
+					+ node.getAstNode().getPropertyInParent());
 			return false;
 		}
 		

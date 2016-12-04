@@ -37,34 +37,89 @@ import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceDocument;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceRange;
 
+/**
+ * PST node factory interface.
+ */
 public interface IPSTNodeFactory {
-
+	/**
+	 * @param location
+	 *            Source range.
+	 * @param comment
+	 *            AST comment
+	 * @return PST comment
+	 */
 	IPSTComment createComment(ISourceRange location, IASTComment comment);
-
-	/*
-	 * IPSTNodeBlock
+	
+	/* IPSTNodeBlock */
+	/**
+	 * @param location
+	 *            Source range.
+	 * @param conditionalDirectives
+	 *            list of condition directives
+	 * @param activeBranchLocation
+	 *            active branch location
+	 * @return PST conditional block
 	 */
 	IPSTConditionalBlock createConditionalBlock(ISourceRange location, List<IPSTDirective> conditionalDirectives,
 			ISourceRange activeBranchLocation);
-
+	
+	/**
+	 * @param location
+	 *            Source range.
+	 * @param statement
+	 *            AST preprocessor statement
+	 * @return PST directive
+	 */
 	IPSTDirective createDirective(ISourceRange location, IASTPreprocessorStatement statement);
-
+	
+	/**
+	 * @param location
+	 *            Source range.
+	 * @param include
+	 *            AST include statement
+	 * @return PST include directive
+	 */
 	IPSTIncludeDirective createIncludeDirective(ISourceRange location, IASTPreprocessorIncludeStatement include);
-
-	/*
-	 * IPSTPreprocessorNode
+	
+	/* IPSTPreprocessorNode */
+	/**
+	 * @param location
+	 *            Source range.
+	 * @param expansion
+	 *            AST macro expansion
+	 * @return PST macro expansion
 	 */
 	IPSTMacroExpansion createMacroExpansion(ISourceRange location, IASTPreprocessorMacroExpansion expansion);
-
+	
+	/**
+	 * @param location
+	 *            Source range.
+	 * @return PST overlapping region
+	 */
 	IPSTOverlappingRegion createOverlappingRegion(ISourceRange location);
-
-	/*
-	 * IPSTRegularNode
+	
+	/* IPSTRegularNode */
+	/**
+	 * @param location
+	 *            Source range.
+	 * @param astNode
+	 *            AST node
+	 * @return PST regular node
 	 */
 	IPSTRegularNode createRegularNode(ISourceRange location, IASTNode astNode);
-
-	IPSTTranslationUnit createTranslationUnit(ISourceRange location, IASTTranslationUnit tu);
-
+	
+	/**
+	 * @param location
+	 *            Source range.
+	 * @param translationUnit
+	 *            AST translation unit
+	 * @return PST translation unit
+	 */
+	IPSTTranslationUnit createTranslationUnit(ISourceRange location, IASTTranslationUnit translationUnit);
+	
+	/**
+	 * @param sourceDocument
+	 *            Source document.
+	 */
 	void setSourceDocument(ISourceDocument sourceDocument);
-
 }

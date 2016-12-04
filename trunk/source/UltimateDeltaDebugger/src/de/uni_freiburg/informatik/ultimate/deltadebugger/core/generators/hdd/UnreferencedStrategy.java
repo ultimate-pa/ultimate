@@ -94,7 +94,7 @@ public class UnreferencedStrategy implements IHddStrategy {
 	
 	@Override
 	public void createChangeForNode(final IPSTNode node, final ChangeCollector collector) {
-		final IASTNode astNode = node.getASTNode();
+		final IASTNode astNode = node.getAstNode();
 		if (!isUnreferencedNodeToDelete(astNode)) {
 			return;
 		}

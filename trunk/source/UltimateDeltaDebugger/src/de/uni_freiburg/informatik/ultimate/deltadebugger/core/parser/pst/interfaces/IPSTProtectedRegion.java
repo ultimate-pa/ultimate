@@ -29,5 +29,5 @@ package de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interf
  * A protected region explicitly marks a source range that must not be modified.
  */
 public interface IPSTProtectedRegion extends IPSTLiteralRegion {
-
+	// empty interface
 }

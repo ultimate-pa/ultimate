@@ -38,28 +38,44 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfa
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTRegularNode;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTTranslationUnit;
 
+/**
+ * A PST node function dispatcher.
+ * 
+ * @param <T>
+ *            element type
+ */
 public final class PSTNodeFunctionDispatcher<T> {
-
 	private final IPSTNodeFunction<T> mFunc;
-
+	
+	/**
+	 * @param func
+	 *            PST node function.
+	 */
 	public PSTNodeFunctionDispatcher(final IPSTNodeFunction<T> func) {
 		mFunc = func;
 	}
-
+	
+	/**
+	 * @param node
+	 *            PST node.
+	 * @return result
+	 */
 	public T dispatch(final IPSTNode node) {
 		final DispatchVisitor action = new DispatchVisitor();
 		node.accept(action);
 		return action.getResult().orElseGet(() -> mFunc.on(node));
 	}
-
+	
+	/**
+	 * PST visitor with result for dispatching.
+	 */
 	private final class DispatchVisitor extends PSTVisitorWithResult<T> {
-
 		@Override
 		public int visit(final IPSTComment comment) {
 			setResult(mFunc.on(comment));
 			return PROCESS_ABORT;
 		}
-
+		
 		@Override
 		public int visit(final IPSTConditionalBlock conditionalBlock) {
 			setResult(mFunc.on(conditionalBlock));
@@ -83,36 +99,35 @@ public final class PSTNodeFunctionDispatcher<T> {
 			setResult(mFunc.on(directive));
 			return PROCESS_ABORT;
 		}
-
+		
 		@Override
 		public int visit(final IPSTIncludeDirective include) {
 			setResult(mFunc.on(include));
 			return PROCESS_ABORT;
 		}
-
+		
 		@Override
 		public int visit(final IPSTLiteralRegion literalRegion) {
 			setResult(mFunc.on(literalRegion));
 			return PROCESS_ABORT;
 		}
-
+		
 		@Override
 		public int visit(final IPSTMacroExpansion expansion) {
 			setResult(mFunc.on(expansion));
 			return PROCESS_ABORT;
 		}
-
+		
 		@Override
 		public int visit(final IPSTRegularNode node) {
 			setResult(mFunc.on(node));
 			return PROCESS_ABORT;
 		}
-
+		
 		@Override
-		public int visit(final IPSTTranslationUnit tu) {
-			setResult(mFunc.on(tu));
+		public int visit(final IPSTTranslationUnit translationUnit) {
+			setResult(mFunc.on(translationUnit));
 			return PROCESS_ABORT;
 		}
 	}
-
 }

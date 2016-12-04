@@ -25,6 +25,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces;
 
+/**
+ * interface between PST and ACSL comment.
+ */
 public interface IPSTACSLComment extends IPSTComment {
-
+	// empty interface
 }

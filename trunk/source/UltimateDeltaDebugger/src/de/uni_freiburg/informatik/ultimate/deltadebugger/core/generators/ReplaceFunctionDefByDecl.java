@@ -83,7 +83,7 @@ public final class ReplaceFunctionDefByDecl implements IVariantGenerator {
 		translationUnit.accept(new IPSTVisitor() {
 			@Override
 			public int visit(final IPSTRegularNode node) {
-				final IASTNode astNode = node.getASTNode();
+				final IASTNode astNode = node.getAstNode();
 				if (astNode instanceof IASTFunctionDefinition) {
 					final IPSTRegularNode body = node.findRegularChild(((IASTFunctionDefinition) astNode).getBody());
 					if (body != null) {

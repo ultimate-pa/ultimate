@@ -39,15 +39,14 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfa
 
 /**
  * Utility class to collect information about all comma separated children and the corresponding comma locations.
- *
  * Implementation notes: By checking the "gaps" in the PST we can easily find tokens between nodes without preprocessing
  * the source text. Only requirement is that all preprocessor directives and comments actually exist in the PST.
  */
 public final class CommaSeparatedChildFinder {
-
 	private CommaSeparatedChildFinder() {
+		// utility class
 	}
-
+	
 	/**
 	 * Find list of comma separated children of the given node identified by the given node property.
 	 *
@@ -62,17 +61,20 @@ public final class CommaSeparatedChildFinder {
 		GapVisitor.invokeAccept(parentNode, instance);
 		return instance.mResult;
 	}
-
+	
+	/**
+	 * PST gap visitor.
+	 */
 	private static final class Visitor implements IPSTGapVisitor {
 		private final IPSTRegularNode mParentNode;
 		private final ASTNodeProperty mChildProperty;
 		private final List<CommaSeparatedChild> mResult = new ArrayList<>();
-
+		
 		private Visitor(final IPSTRegularNode parentNode, final ASTNodeProperty childProperty) {
 			mParentNode = Objects.requireNonNull(parentNode);
 			mChildProperty = Objects.requireNonNull(childProperty);
 		}
-
+		
 		@Override
 		public int defaultLeave(final IPSTNode node) {
 			for (final IASTNode child : node.getUnexpandedChildNodes()) {
@@ -82,32 +84,32 @@ public final class CommaSeparatedChildFinder {
 			}
 			return PROCESS_CONTINUE;
 		}
-
+		
 		@Override
 		public int visit(final IPSTLiteralRegion literalRegion) {
 			// Also add ast nodes from literal regions (but don't collect commas)
 			defaultLeave(literalRegion);
 			return PROCESS_SKIP;
 		}
-
+		
 		@Override
 		public int visit(final IPSTRegularNode node) {
 			if (node.equals(mParentNode)) {
 				return PROCESS_CONTINUE;
 			}
-			if (node.getASTNode().getPropertyInParent().equals(mChildProperty)) {
-				mResult.add(new CommaSeparatedChild(node.getASTNode(), node));
+			if (node.getAstNode().getPropertyInParent().equals(mChildProperty)) {
+				mResult.add(new CommaSeparatedChild(node.getAstNode(), node));
 			}
 			return PROCESS_SKIP;
 		}
-
+		
 		@Override
 		public int visitGap(final int offset, final int endOffset) {
 			final String text = mParentNode.getSource().getText(offset, endOffset);
 			if (!text.trim().startsWith(",")) {
 				return PROCESS_CONTINUE;
 			}
-
+			
 			// Store the position of the first comma encountered after each
 			// element
 			if (!mResult.isEmpty()) {
@@ -120,7 +122,5 @@ public final class CommaSeparatedChildFinder {
 			}
 			return PROCESS_CONTINUE;
 		}
-
 	}
-
 }

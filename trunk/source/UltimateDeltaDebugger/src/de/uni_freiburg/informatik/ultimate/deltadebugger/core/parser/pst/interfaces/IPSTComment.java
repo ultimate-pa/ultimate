@@ -27,7 +27,10 @@ package de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interf
 
 import org.eclipse.cdt.core.dom.ast.IASTComment;
 
+/**
+ * PST comment interface.
+ */
 public interface IPSTComment extends IPSTPreprocessorNode {
 	@Override
-	IASTComment getASTNode();
+	IASTComment getAstNode();
 }

@@ -38,26 +38,43 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfa
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTTranslationUnit;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTVisitor;
 
+/**
+ * A PST node consumer dispatcher.
+ */
 public final class PSTNodeConsumerDispatcher {
-
+	
 	private final IPSTNodeConsumer mConsumer;
-
+	
+	/**
+	 * @param consumer
+	 *            PST node consumer.
+	 */
 	public PSTNodeConsumerDispatcher(final IPSTNodeConsumer consumer) {
 		mConsumer = consumer;
 	}
-
+	
+	/**
+	 * @param node
+	 *            PST node.
+	 */
 	public void dispatch(final IPSTNode node) {
 		node.accept(new DispatchVisitor());
 	}
-
+	
+	/**
+	 * The visitor for dispatching.
+	 */
 	private final class DispatchVisitor implements IPSTVisitor {
-
+		public DispatchVisitor() {
+			// empty constructor
+		}
+		
 		@Override
 		public int defaultVisit(final IPSTNode node) {
 			mConsumer.on(node);
 			return PROCESS_ABORT;
 		}
-
+		
 		@Override
 		public int visit(final IPSTComment comment) {
 			mConsumer.on(comment);
@@ -81,42 +98,41 @@ public final class PSTNodeConsumerDispatcher {
 			mConsumer.on(conditionalBlock);
 			return PROCESS_ABORT;
 		}
-
+		
 		@Override
 		public int visit(final IPSTDirective directive) {
 			mConsumer.on(directive);
 			return PROCESS_ABORT;
 		}
-
+		
 		@Override
 		public int visit(final IPSTIncludeDirective include) {
 			mConsumer.on(include);
 			return PROCESS_ABORT;
 		}
-
+		
 		@Override
 		public int visit(final IPSTLiteralRegion literalRegion) {
 			mConsumer.on(literalRegion);
 			return PROCESS_ABORT;
 		}
-
+		
 		@Override
 		public int visit(final IPSTMacroExpansion expansion) {
 			mConsumer.on(expansion);
 			return PROCESS_ABORT;
 		}
-
+		
 		@Override
 		public int visit(final IPSTRegularNode node) {
 			mConsumer.on(node);
 			return PROCESS_ABORT;
 		}
-
+		
 		@Override
-		public int visit(final IPSTTranslationUnit tu) {
-			mConsumer.on(tu);
+		public int visit(final IPSTTranslationUnit translationUnit) {
+			mConsumer.on(translationUnit);
 			return PROCESS_ABORT;
 		}
 	}
-
 }

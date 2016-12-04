@@ -34,16 +34,34 @@ import org.eclipse.cdt.core.parser.IToken;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTNode;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.util.TokenCollector.Token;
 
+/**
+ * Utilities for tokens.
+ */
 public final class TokenUtils {
-
 	private TokenUtils() {
-
+		// utility class
 	}
 	
+	/**
+	 * @param parentNode
+	 *            Parent PST node.
+	 * @param expectedTokenTypes
+	 *            expected token types
+	 * @return array of tokens
+	 */
+	@SuppressWarnings("squid:S923")
 	public static Token[] getExpectedTokenArray(final IPSTNode parentNode, final int... expectedTokenTypes) {
 		return TokenUtils.getExpectedTokenArray(TokenCollector.collect(parentNode), expectedTokenTypes);
 	}
-
+	
+	/**
+	 * @param tokens
+	 *            List of tokens.
+	 * @param expectedTokenTypes
+	 *            expected token types
+	 * @return array of tokens
+	 */
+	@SuppressWarnings("squid:S923")
 	public static Token[] getExpectedTokenArray(final List<Token> tokens, final int... expectedTokenTypes) {
 		final Token[] result = new Token[expectedTokenTypes.length];
 		int nextExistingIndex = 0;
@@ -54,14 +72,30 @@ public final class TokenUtils {
 				nextExistingIndex = index + 1;
 			}
 		}
-
+		
 		return result;
 	}
-
+	
+	/**
+	 * @param tokens
+	 *            List of tokens.
+	 * @param tokenType
+	 *            token type
+	 * @return index of the token
+	 */
 	public static int indexOfToken(final List<Token> tokens, final int tokenType) {
 		return indexOfToken(tokens, 0, tokenType);
 	}
-
+	
+	/**
+	 * @param tokens
+	 *            List of tokens.
+	 * @param first
+	 *            first index
+	 * @param tokenType
+	 *            token type
+	 * @return index of the first token occurrence, -1 if not existent
+	 */
 	public static int indexOfToken(final List<Token> tokens, final int first, final int tokenType) {
 		for (int i = first; i != tokens.size(); ++i) {
 			if (tokens.get(i).getType() == tokenType) {
@@ -70,8 +104,13 @@ public final class TokenUtils {
 		}
 		return -1;
 	}
-
-	public static boolean isAllParenthesisBalanced(final List<Token> tokens) {
+	
+	/**
+	 * @param tokens
+	 *            List of tokens.
+	 * @return {@code true} iff all parentheses are balanced
+	 */
+	public static boolean isAllParenthesesBalanced(final List<Token> tokens) {
 		final Map<Integer, Long> counts =
 				tokens.stream().collect(Collectors.groupingBy(Token::getType, Collectors.counting()));
 		if (!counts.getOrDefault(IToken.tLPAREN, 0L).equals(counts.getOrDefault(IToken.tRPAREN, 0L))
@@ -81,5 +120,4 @@ public final class TokenUtils {
 		}
 		return true;
 	}
-
 }

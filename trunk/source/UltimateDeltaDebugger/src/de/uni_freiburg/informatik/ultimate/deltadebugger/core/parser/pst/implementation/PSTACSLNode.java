@@ -32,30 +32,40 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceRange;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.SourceDocumentLocationPrinter;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 
+/**
+ * PST node for ACSL node wrapping.
+ */
 public class PSTACSLNode extends PSTNode implements IPSTACSLNode {
-
 	private final ACSLNode mAcslNode;
-
+	
+	/**
+	 * @param source
+	 *            Source document.
+	 * @param location
+	 *            source range
+	 * @param acslNode
+	 *            ACSL node
+	 */
 	public PSTACSLNode(final ISourceDocument source, final ISourceRange location, final ACSLNode acslNode) {
 		super(source, location, null);
 		mAcslNode = acslNode;
 	}
-
+	
 	@Override
-	public ACSLNode getACSLNode() {
+	public ACSLNode getAcslNode() {
 		return mAcslNode;
 	}
-
+	
 	@Override
 	int dispatchLeave(final IPSTVisitor action) {
 		return action.leave(this);
 	}
-
+	
 	@Override
 	int dispatchVisit(final IPSTVisitor action) {
 		return action.visit(this);
 	}
-
+	
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
@@ -73,5 +83,4 @@ public class PSTACSLNode extends PSTNode implements IPSTACSLNode {
 		sb.append("]");
 		return sb.toString();
 	}
-	
 }

@@ -34,7 +34,6 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceRange;
  * PSTNode factory that creates ACLS comment nodes.
  */
 public class ACSLNodeFactory extends DefaultNodeFactory {
-
 	@Override
 	public IPSTComment createComment(final ISourceRange location, final IASTComment comment) {
 		final String text = mSource.getText(location);
@@ -43,5 +42,4 @@ public class ACSLNodeFactory extends DefaultNodeFactory {
 		}
 		return super.createComment(location, comment);
 	}
-
 }

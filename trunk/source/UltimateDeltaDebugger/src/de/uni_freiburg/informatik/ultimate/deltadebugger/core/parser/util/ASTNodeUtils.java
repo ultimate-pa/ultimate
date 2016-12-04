@@ -47,11 +47,19 @@ import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTStandardFunctionDeclarator;
 import org.eclipse.cdt.core.dom.ast.IBinding;
 
+/**
+ * Utility class for AST nodes.
+ */
 public final class ASTNodeUtils {
-
 	private ASTNodeUtils() {
+		// utility class
 	}
 	
+	/**
+	 * @param astNode
+	 *            AST node.
+	 * @return array of AST child nodes
+	 */
 	public static IASTNode[] getCommaSeparatedChildNodes(final IASTNode astNode) {
 		if (astNode instanceof IASTStandardFunctionDeclarator) {
 			return ((IASTStandardFunctionDeclarator) astNode).getParameters();
@@ -66,7 +74,12 @@ public final class ASTNodeUtils {
 		}
 		return new IASTNode[0];
 	}
-
+	
+	/**
+	 * @param astNode
+	 *            AST node.
+	 * @return property of child nodes
+	 */
 	public static ASTNodeProperty getPropertyOfCommaSeparatedChildNodes(final IASTNode astNode) {
 		if (astNode instanceof IASTStandardFunctionDeclarator) {
 			return IASTStandardFunctionDeclarator.FUNCTION_PARAMETER;
@@ -81,13 +94,23 @@ public final class ASTNodeUtils {
 		}
 		return null;
 	}
-
+	
+	/**
+	 * @param node
+	 *            AST node.
+	 * @return {@code true} iff node is a conditional preprocessor statement
+	 */
 	public static boolean isConditionalPreprocessorStatement(final IASTNode node) {
 		return node instanceof IASTPreprocessorIfStatement || node instanceof IASTPreprocessorIfdefStatement
 				|| node instanceof IASTPreprocessorIfndefStatement || node instanceof IASTPreprocessorElseStatement
 				|| node instanceof IASTPreprocessorElifStatement || node instanceof IASTPreprocessorEndifStatement;
 	}
-
+	
+	/**
+	 * @param node
+	 *            AST node.
+	 * @return {@code true} iff node is a conditional preprocessor statement that was taken
+	 */
 	public static boolean isConditionalPreprocessorStatementTaken(final IASTNode node) {
 		if (node instanceof IASTPreprocessorIfStatement) {
 			return ((IASTPreprocessorIfStatement) node).taken();
@@ -100,32 +123,56 @@ public final class ASTNodeUtils {
 		} else if (node instanceof IASTPreprocessorElifStatement) {
 			return ((IASTPreprocessorElifStatement) node).taken();
 		}
-
+		
 		return false;
 	}
-
+	
+	/**
+	 * @param simpleDeclaration
+	 *            AST simple declaration.
+	 * @return {@code true} iff declaration has references
+	 */
 	public static boolean hasReferences(final IASTSimpleDeclaration simpleDeclaration) {
 		return Arrays.stream(simpleDeclaration.getDeclarators()).anyMatch(ASTNodeUtils::hasReferences);
 	}
-
+	
+	/**
+	 * @param functionDefinition
+	 *            AST function definition.
+	 * @return {@code true} iff function definition has references
+	 */
 	public static boolean hasReferences(final IASTFunctionDefinition functionDefinition) {
 		return hasReferences(functionDefinition.getDeclarator());
 	}
-
+	
+	/**
+	 * @param macroDefintion
+	 *            AST macro definition.
+	 * @return {@code true} iff macro definition has references
+	 */
 	public static boolean hasReferences(final IASTPreprocessorMacroDefinition macroDefintion) {
 		final IASTName astName = macroDefintion.getName();
 		return astName != null && hasReferences(astName);
 	}
-
+	
+	/**
+	 * @param declarator
+	 *            AST declarator.
+	 * @return {@code true} iff declarator has references
+	 */
 	public static boolean hasReferences(final IASTDeclarator declarator) {
 		final IASTName astName = declarator.getName();
 		return astName != null && hasReferences(astName);
 	}
-
+	
+	/**
+	 * @param astName
+	 *            AST name.
+	 * @return {@code true} iff name has references
+	 */
 	public static boolean hasReferences(final IASTName astName) {
 		final IBinding binding = astName.resolveBinding();
 		final IASTName[] names = astName.getTranslationUnit().getReferences(binding);
 		return names.length != 0;
 	}
-	
 }

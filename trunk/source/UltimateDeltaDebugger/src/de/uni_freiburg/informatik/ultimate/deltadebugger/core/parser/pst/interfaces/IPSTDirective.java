@@ -36,14 +36,16 @@ import org.eclipse.cdt.core.dom.ast.IASTPreprocessorStatement;
 /**
  * A preprocessor directive, e.g. #include, #define, #pragma, #if etc. getASTNode() always returns a non-null
  * IASTPreprocessorStatement (which is admittedly not exactly useful by itself).
- *
  */
 public interface IPSTDirective extends IPSTPreprocessorNode {
 	@Override
-	IASTPreprocessorStatement getASTNode();
-
+	IASTPreprocessorStatement getAstNode();
+	
+	/**
+	 * @return {@code true} iff the PST directive is a conditional directive.
+	 */
 	default boolean isConditionalDirective() {
-		final IASTPreprocessorStatement statement = getASTNode();
+		final IASTPreprocessorStatement statement = getAstNode();
 		return statement instanceof IASTPreprocessorIfStatement || statement instanceof IASTPreprocessorIfdefStatement
 				|| statement instanceof IASTPreprocessorIfndefStatement
 				|| statement instanceof IASTPreprocessorElseStatement

@@ -84,27 +84,27 @@ public class SafeStrategy implements IHddStrategy {
 		}
 		
 		// Add a change to delete the operator of unary expressions
-		if (node.getASTNode() instanceof IASTUnaryExpression) {
+		if (node.getAstNode() instanceof IASTUnaryExpression) {
 			collector.addDeleteAllTokensChange(node);
 		}
 		
-		if (node.getASTNode() instanceof IASTIfStatement) {
-			collector.addDeleteIfStatementTokensChange((IPSTRegularNode) node, (IASTIfStatement) node.getASTNode());
+		if (node.getAstNode() instanceof IASTIfStatement) {
+			collector.addDeleteIfStatementTokensChange((IPSTRegularNode) node, (IASTIfStatement) node.getAstNode());
 		}
-		if (node.getASTNode() instanceof IASTForStatement) {
-			collector.addDeleteForStatementTokensChange((IPSTRegularNode) node, (IASTForStatement) node.getASTNode());
+		if (node.getAstNode() instanceof IASTForStatement) {
+			collector.addDeleteForStatementTokensChange((IPSTRegularNode) node, (IASTForStatement) node.getAstNode());
 		}
-		if (node.getASTNode() instanceof IASTWhileStatement) {
+		if (node.getAstNode() instanceof IASTWhileStatement) {
 			collector.addDeleteWhileStatementTokensChange((IPSTRegularNode) node,
-					(IASTWhileStatement) node.getASTNode());
+					(IASTWhileStatement) node.getAstNode());
 		}
 		
-		if (node.getASTNode() instanceof IASTDoStatement) {
+		if (node.getAstNode() instanceof IASTDoStatement) {
 			collector.addDeleteDoStatementTokensChange((IPSTRegularNode) node);
 		}
 		
-		if (node.getASTNode() instanceof IASTCompoundStatement
-				&& node.getASTNode().getPropertyInParent() == IASTCompoundStatement.NESTED_STATEMENT) {
+		if (node.getAstNode() instanceof IASTCompoundStatement
+				&& node.getAstNode().getPropertyInParent() == IASTCompoundStatement.NESTED_STATEMENT) {
 			collector.addDeleteAllTokensChange(node);
 		}
 	}
@@ -121,13 +121,13 @@ public class SafeStrategy implements IHddStrategy {
 			// same time
 			final IPSTRegularNode regularParent = node.getRegularParent();
 			if (regularParent instanceof IPSTTranslationUnit
-					|| regularParent.getASTNode() instanceof IASTCompoundStatement) {
+					|| regularParent.getAstNode() instanceof IASTCompoundStatement) {
 				collector.addDeleteChange(node);
 			}
 		} else if (node instanceof IPSTACSLNode) {
 			final IPSTACSLNode acslNode = (IPSTACSLNode) node;
-			if (acslNode.getACSLNode() instanceof ContractStatement || acslNode.getACSLNode() instanceof LoopStatement
-					|| acslNode.getACSLNode() instanceof LogicStatement) {
+			if (acslNode.getAcslNode() instanceof ContractStatement || acslNode.getAcslNode() instanceof LoopStatement
+					|| acslNode.getAcslNode() instanceof LogicStatement) {
 				// Delete statements, nothing else
 				collector.addDeleteChange(node);
 			}
@@ -168,7 +168,7 @@ public class SafeStrategy implements IHddStrategy {
 		
 		@SuppressWarnings("squid:S1698")
 		static void invoke(final IPSTRegularNode node, final ChangeCollector collector) {
-			final IASTNode astNode = node.getASTNode();
+			final IASTNode astNode = node.getAstNode();
 			final ASTNodeProperty propertyInParent = astNode.getPropertyInParent();
 
 			// Do not delete function parameters. Call Arguments are handled like normal expressions.

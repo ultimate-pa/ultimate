@@ -36,14 +36,23 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceRange;
  * #if/#else/#endif directives. Only nodes in the active branch are children of this node.
  */
 public interface IPSTConditionalBlock extends IPSTNode {
+	/**
+	 * @return Active branch location.
+	 */
 	ISourceRange getActiveBranchLocation();
-
+	
 	@Override
-	default IASTNode getASTNode() {
+	default IASTNode getAstNode() {
 		return null;
 	}
-
+	
+	/**
+	 * @return List of conditional directives.
+	 */
 	List<IPSTDirective> getConditionalDirectives();
-
+	
+	/**
+	 * @return {@code true} iff the conditional block has an active branch.
+	 */
 	boolean hasActiveBranch();
 }

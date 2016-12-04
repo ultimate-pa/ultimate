@@ -27,97 +27,209 @@ package de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interf
 
 import org.eclipse.cdt.core.dom.ast.ASTVisitor;
 
+/**
+ * Visitor interface for a PST (preprocessor syntax tree).
+ */
 public interface IPSTVisitor {
 	int PROCESS_SKIP = ASTVisitor.PROCESS_SKIP;
 	int PROCESS_ABORT = ASTVisitor.PROCESS_ABORT;
 	int PROCESS_CONTINUE = ASTVisitor.PROCESS_CONTINUE;
-
+	
+	/**
+	 * @param node
+	 *            PST node.
+	 * @return instruction how to continue
+	 */
 	default int defaultLeave(final IPSTNode node) {
 		return PROCESS_CONTINUE;
 	}
-
+	
+	/**
+	 * @param node
+	 *            PST node.
+	 * @return instruction how to continue
+	 */
 	default int defaultVisit(final IPSTNode node) {
 		return PROCESS_CONTINUE;
 	}
-
+	
+	/**
+	 * @param comment
+	 *            PST comment.
+	 * @return instruction how to continue
+	 */
 	default int leave(final IPSTComment comment) {
 		return defaultLeave(comment);
 	}
-
+	
+	/**
+	 * @param acslComment
+	 *            PST ACSL comment.
+	 * @return instruction how to continue
+	 */
 	default int leave(final IPSTACSLComment acslComment) {
 		return defaultLeave(acslComment);
 	}
 	
+	/**
+	 * @param acslNode
+	 *            PST ACSL node.
+	 * @return instruction how to continue
+	 */
 	default int leave(final IPSTACSLNode acslNode) {
 		return defaultLeave(acslNode);
 	}
 	
+	/**
+	 * @param conditionalBlock
+	 *            PST conditional block.
+	 * @return instruction how to continue
+	 */
 	default int leave(final IPSTConditionalBlock conditionalBlock) {
 		return defaultLeave(conditionalBlock);
 	}
-
+	
+	/**
+	 * @param directive
+	 *            PST directive.
+	 * @return instruction how to continue
+	 */
 	default int leave(final IPSTDirective directive) {
 		return defaultLeave(directive);
 	}
-
+	
+	/**
+	 * @param include
+	 *            PST include directive.
+	 * @return instruction how to continue
+	 */
 	default int leave(final IPSTIncludeDirective include) {
 		return defaultLeave(include);
 	}
-
+	
+	/**
+	 * @param literalRegion
+	 *            PST literal region.
+	 * @return instruction how to continue
+	 */
 	default int leave(final IPSTLiteralRegion literalRegion) {
 		return PROCESS_SKIP;
 	}
-
+	
+	/**
+	 * @param expansion
+	 *            PST macro expansion.
+	 * @return instruction how to continue
+	 */
 	default int leave(final IPSTMacroExpansion expansion) {
 		return defaultLeave(expansion);
 	}
-
+	
+	/**
+	 * @param node
+	 *            PST regular node.
+	 * @return instruction how to continue
+	 */
 	default int leave(final IPSTRegularNode node) {
 		return defaultLeave(node);
 	}
-
-	default int leave(final IPSTTranslationUnit tu) {
-		return defaultLeave(tu);
+	
+	/**
+	 * @param translationUnit
+	 *            PST translation unit.
+	 * @return instruction how to continue
+	 */
+	default int leave(final IPSTTranslationUnit translationUnit) {
+		return defaultLeave(translationUnit);
 	}
-
+	
+	/**
+	 * @param comment
+	 *            PST comment.
+	 * @return instruction how to continue
+	 */
 	default int visit(final IPSTComment comment) {
 		return defaultVisit(comment);
 	}
-
+	
+	/**
+	 * @param acslComment
+	 *            PST ACSL comment.
+	 * @return instruction how to continue
+	 */
 	default int visit(final IPSTACSLComment acslComment) {
 		return defaultVisit(acslComment);
 	}
-		
+	
+	/**
+	 * @param acslNode
+	 *            PST ACSL node.
+	 * @return instruction how to continue
+	 */
 	default int visit(final IPSTACSLNode acslNode) {
 		return defaultVisit(acslNode);
 	}
 	
+	/**
+	 * @param conditionalBlock
+	 *            PST conditional block.
+	 * @return instruction how to continue
+	 */
 	default int visit(final IPSTConditionalBlock conditionalBlock) {
 		return defaultVisit(conditionalBlock);
 	}
-
+	
+	/**
+	 * @param directive
+	 *            PST directive.
+	 * @return instruction how to continue
+	 */
 	default int visit(final IPSTDirective directive) {
 		return defaultVisit(directive);
 	}
-
+	
+	/**
+	 * @param include
+	 *            PST include directive.
+	 * @return instruction how to continue
+	 */
 	default int visit(final IPSTIncludeDirective include) {
 		return defaultVisit(include);
 	}
-
+	
+	/**
+	 * @param literalRegion
+	 *            PST literal region.
+	 * @return instruction how to continue
+	 */
 	default int visit(final IPSTLiteralRegion literalRegion) {
 		return PROCESS_SKIP;
 	}
-
+	
+	/**
+	 * @param expansion
+	 *            PST expansion.
+	 * @return instruction how to continue
+	 */
 	default int visit(final IPSTMacroExpansion expansion) {
 		return defaultVisit(expansion);
 	}
-
+	
+	/**
+	 * @param node
+	 *            PST regular node.
+	 * @return instruction how to continue
+	 */
 	default int visit(final IPSTRegularNode node) {
 		return defaultVisit(node);
 	}
-
-	default int visit(final IPSTTranslationUnit tu) {
-		return defaultVisit(tu);
+	
+	/**
+	 * @param translationUnit
+	 *            PST translation unit.
+	 * @return instruction how to continue
+	 */
+	default int visit(final IPSTTranslationUnit translationUnit) {
+		return defaultVisit(translationUnit);
 	}
-
 }

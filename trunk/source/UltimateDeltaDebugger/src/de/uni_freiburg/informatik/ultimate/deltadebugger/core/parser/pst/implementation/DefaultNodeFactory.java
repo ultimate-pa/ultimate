@@ -46,56 +46,58 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfa
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceDocument;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceRange;
 
+/**
+ * Default PST node factory.
+ */
 public class DefaultNodeFactory implements IPSTNodeFactory {
-
 	protected ISourceDocument mSource;
-
+	
 	@Override
 	public IPSTComment createComment(final ISourceRange location, final IASTComment comment) {
 		return new PSTComment(mSource, location, comment);
 	}
-
+	
 	@Override
 	public IPSTConditionalBlock createConditionalBlock(final ISourceRange location,
 			final List<IPSTDirective> conditionalDirectives, final ISourceRange activeBranchLocation) {
 		return new PSTConditionalBlock(mSource, location, conditionalDirectives, activeBranchLocation);
 	}
-
+	
 	@Override
 	public IPSTDirective createDirective(final ISourceRange location, final IASTPreprocessorStatement statement) {
 		return new PSTDirective(mSource, location, statement);
 	}
-
+	
 	@Override
 	public IPSTIncludeDirective createIncludeDirective(final ISourceRange location,
 			final IASTPreprocessorIncludeStatement include) {
 		return new PSTIncludeDirective(mSource, location, include);
 	}
-
+	
 	@Override
 	public IPSTMacroExpansion createMacroExpansion(final ISourceRange location,
 			final IASTPreprocessorMacroExpansion expansion) {
 		return new PSTMacroExpansion(mSource, location, expansion);
 	}
-
+	
 	@Override
 	public IPSTOverlappingRegion createOverlappingRegion(final ISourceRange location) {
 		return new PSTOverlappingRegion(mSource, location);
 	}
-
+	
 	@Override
 	public IPSTRegularNode createRegularNode(final ISourceRange location, final IASTNode astNode) {
 		return new PSTRegularNode(mSource, location, astNode);
 	}
-
+	
 	@Override
-	public IPSTTranslationUnit createTranslationUnit(final ISourceRange location, final IASTTranslationUnit tu) {
-		return new PSTTranslationUnit(mSource, location, tu);
+	public IPSTTranslationUnit createTranslationUnit(final ISourceRange location,
+			final IASTTranslationUnit translationUnit) {
+		return new PSTTranslationUnit(mSource, location, translationUnit);
 	}
-
+	
 	@Override
 	public void setSourceDocument(final ISourceDocument sourceDocument) {
 		mSource = sourceDocument;
 	}
-
 }

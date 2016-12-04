@@ -52,19 +52,18 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceRange;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.SourceRewriter;
 
 /**
- * Contains
- *
+ * Utility class for rewrites.
  */
 public final class RewriteUtils {
 	private static final int MAX_PRETTY_PRINTED_LENGTH = 10_000;
-
+	
 	private RewriteUtils() {
+		// utility class
 	}
 	
 	/**
 	 * Pretty print source code using the CDT code formatter. Seems to work without workspace and/or OSGi, but can cause
 	 * extreme lags/freezes for larger inputs.
-	 *
 	 * Maybe this should be removed by something that removes redundant whitespace.
 	 *
 	 * @param input
@@ -78,7 +77,7 @@ public final class RewriteUtils {
 		if (input.length() > MAX_PRETTY_PRINTED_LENGTH) {
 			return removeMultipleEmptyLines(input);
 		}
-
+		
 		final Map<String, String> options = DefaultCodeFormatterConstants.getDefaultSettings();
 		final CodeFormatter formatter = ToolFactory.createDefaultCodeFormatter(options);
 		final TextEdit edits = formatter.format(CodeFormatter.K_TRANSLATION_UNIT, input, 0, input.length(), 0, null);
@@ -90,13 +89,14 @@ public final class RewriteUtils {
 			return input;
 		}
 	}
-
+	
 	/**
 	 * Deleting certain nodes from the source text may require a replacement with a whitespace to ensure that no
 	 * enclosing tokens are joined.
 	 *
 	 * @param node
-	 * @return
+	 *            PST node
+	 * @return string
 	 */
 	public static String getDeletionStringWithWhitespaces(final IPSTNode node) {
 		// Deleteing comments and (function style) macro expansions
@@ -109,16 +109,23 @@ public final class RewriteUtils {
 		// just use a space anywhere for now.
 		return " ";
 	}
-
+	
+	/**
+	 * @param input
+	 *            Input string.
+	 * @return string without empty lines
+	 */
 	public static String removeMultipleEmptyLines(final String input) {
 		return input.replaceAll("(?m)^(\\s*\r?\n){2,}", "\n");
 	}
-
+	
 	/**
 	 * Checks if the given replacement string is the same as the existing source text and would not have any effect.
 	 *
-	 * @param node node
-	 * @param replacementString replacementString
+	 * @param node
+	 *            node
+	 * @param replacementString
+	 *            replacementString
 	 * @return if replacement by the given string should be skipped
 	 */
 	public static boolean skipEquivalentReplacement(final IPSTNode node, final String replacementString) {
@@ -129,7 +136,7 @@ public final class RewriteUtils {
 		final String rhs = replacementString.replaceAll("\\s+", " ");
 		return lhs.equals(rhs);
 	}
-
+	
 	/**
 	 * If any replacement already matches the current source text, skip ALL the other alternatives, not just the one
 	 * that matches. This is important to not endlessly switch between two alternatives that are both possible in
@@ -141,7 +148,8 @@ public final class RewriteUtils {
 	 *            list of replacements to be tested in the given order
 	 * @return list of valid replacement strings
 	 */
-	public static List<String> removeEquivalentReplacements(final IPSTNode node, final List<String> replacementStrings) {
+	public static List<String> removeEquivalentReplacements(final IPSTNode node,
+			final List<String> replacementStrings) {
 		final List<String> validReplacements = new ArrayList<>();
 		for (final String replacement : replacementStrings) {
 			if (RewriteUtils.skipEquivalentReplacement(node, replacement)) {
@@ -151,7 +159,12 @@ public final class RewriteUtils {
 		}
 		return validReplacements;
 	}
-
+	
+	/**
+	 * @param expression
+	 *            AST expression.
+	 * @return list of minimal expression replacements
+	 */
 	public static List<String> getMinimalExpressionReplacements(final IASTExpression expression) {
 		if (expression instanceof IASTLiteralExpression) {
 			final IASTLiteralExpression literalExpression = (IASTLiteralExpression) expression;
@@ -161,23 +174,34 @@ public final class RewriteUtils {
 				return Arrays.asList("\"\"");
 			}
 		}
-
+		
 		final IType expressionType = expression.getExpressionType();
 		if (expressionType instanceof IBasicType) {
 			return Arrays.asList("0", "1");
 		} else if (expressionType instanceof IPointerType) {
 			return Arrays.asList("0");
 		}
-
+		
 		return Collections.emptyList();
 	}
-
+	
+	/**
+	 * @param rewriter
+	 *            Source rewriter.
+	 * @param node
+	 *            PST node
+	 */
 	public static void deleteNodeText(final SourceRewriter rewriter, final IPSTNode node) {
 		rewriter.replace(node, getDeletionStringWithWhitespaces(node));
 	}
-
+	
+	/**
+	 * @param rewriter
+	 *            Source rewriter.
+	 * @param location
+	 *            source range
+	 */
 	public static void replaceByWhitespace(final SourceRewriter rewriter, final ISourceRange location) {
 		rewriter.replace(location, " ");
 	}
-
 }

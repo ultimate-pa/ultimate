@@ -36,20 +36,18 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfa
 
 /**
  * Expands IPSTACSLComment nodes to contain IPSTACSLNodes where possible.
- *
  */
 public final class PSTACSLBuilder implements IPSTVisitor {
-
 	private final ILogger mLogger;
 	/**
 	 * Counter to detect if we are currently inside a function definition.
 	 */
 	private int mEnteredFunctionDefinitions;
-
+	
 	private PSTACSLBuilder(final ILogger logger) {
 		mLogger = logger;
 	}
-
+	
 	/**
 	 * Expand all ACSL comments within the given PST node.
 	 * 
@@ -61,32 +59,31 @@ public final class PSTACSLBuilder implements IPSTVisitor {
 	public static void build(final IPSTNode node, final ILogger logger) {
 		node.accept(new PSTACSLBuilder(logger));
 	}
-
+	
 	@Override
 	public int visit(final IPSTACSLComment acslComment) {
 		// Try to parse it, if it doesn't work just continue
 		final ACSLCommentParser parser = new ACSLCommentParser(acslComment, mEnteredFunctionDefinitions < 1, mLogger);
-		final IPSTACSLNode pstNode = parser.parseAndCreatePST();
+		final IPSTACSLNode pstNode = parser.parseAndCreatePst();
 		if (pstNode != null) {
 			acslComment.addChild(pstNode);
 		}
 		return PROCESS_SKIP;
 	}
-
+	
 	@Override
 	public int visit(final IPSTRegularNode node) {
-		if (node.getASTNode() instanceof IASTFunctionDefinition) {
+		if (node.getAstNode() instanceof IASTFunctionDefinition) {
 			++mEnteredFunctionDefinitions;
 		}
 		return PROCESS_CONTINUE;
 	}
-
+	
 	@Override
 	public int leave(final IPSTRegularNode node) {
-		if (node.getASTNode() instanceof IASTFunctionDefinition) {
+		if (node.getAstNode() instanceof IASTFunctionDefinition) {
 			--mEnteredFunctionDefinitions;
 		}
 		return PROCESS_CONTINUE;
 	}
-
 }
