@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CACSL2BoogieTranslator plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.witnessprinter;
@@ -29,10 +29,10 @@ package de.uni_freiburg.informatik.ultimate.witnessprinter;
 import java.io.IOException;
 import java.io.StringWriter;
 
-import org.apache.commons.collections15.Transformer;
 import org.apache.commons.lang3.StringEscapeUtils;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslationValueProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecution;
@@ -52,44 +52,34 @@ import edu.uci.ics.jung.graph.Hypergraph;
  * 
  */
 public class ViolationWitnessGenerator<TE, E> extends BaseWitnessGenerator<TE, E> {
-
+	
 	private final IProgramExecution<TE, E> mProgramExecution;
 	private final IBacktranslationValueProvider<TE, E> mStringProvider;
 	private final ILogger mLogger;
-
+	
 	public ViolationWitnessGenerator(final IProgramExecution<TE, E> translatedProgramExecution,
-			final IBacktranslationValueProvider<TE, E> stringProvider, final ILogger logger) {
-		super();
+			final IBacktranslationValueProvider<TE, E> stringProvider, final ILogger logger,
+			final IUltimateServiceProvider services) {
+		super(services);
 		assert translatedProgramExecution != null;
 		assert translatedProgramExecution.getLength() > 0;
 		mLogger = logger;
 		mProgramExecution = translatedProgramExecution;
 		mStringProvider = stringProvider;
 	}
-
+	
 	@Override
 	public String makeGraphMLString() {
-		final UltimateGraphMLWriter<GeneratedWitnessNode, GeneratedWitnessEdge<TE, E>> graphWriter = new UltimateGraphMLWriter<>();
+		final UltimateGraphMLWriter<GeneratedWitnessNode, GeneratedWitnessEdge<TE, E>> graphWriter =
+				new UltimateGraphMLWriter<>();
 		final String filename = StringEscapeUtils
 				.escapeXml10(mStringProvider.getFileNameFromStep(mProgramExecution.getTraceElement(0).getStep()));
-
-		graphWriter.setEdgeIDs(new Transformer<GeneratedWitnessEdge<TE, E>, String>() {
-			@Override
-			public String transform(GeneratedWitnessEdge<TE, E> arg0) {
-				return arg0.getName();
-			}
-		});
-
-		graphWriter.setVertexIDs(new Transformer<GeneratedWitnessNode, String>() {
-			@Override
-			public String transform(GeneratedWitnessNode arg0) {
-				return arg0.getName();
-			}
-		});
-
-		addGraphData(graphWriter, "sourcecodelang", null, graph -> "C");
-		addGraphData(graphWriter, "witness-type", null, graph -> "violation_witness");
-
+		
+		graphWriter.setEdgeIDs(arg0 -> arg0.getName());
+		graphWriter.setVertexIDs(arg0 -> arg0.getName());
+		
+		addCanonicalWitnessGraphData(graphWriter, "violation_witness");
+		
 		addEdgeData(graphWriter, "sourcecode", null, edge -> StringEscapeUtils.escapeXml10(edge.getSourceCode()));
 		addEdgeData(graphWriter, "assumption", null, edge -> StringEscapeUtils.escapeXml10(edge.getAssumption()));
 		addEdgeData(graphWriter, "tokens", null, edge -> null);
@@ -99,13 +89,13 @@ public class ViolationWitnessGenerator<TE, E> extends BaseWitnessGenerator<TE, E
 		addEdgeData(graphWriter, "originfile", filename, edge -> null);
 		addEdgeData(graphWriter, "enterFunction", null, edge -> null);
 		addEdgeData(graphWriter, "returnFrom", null, edge -> null);
-
+		
 		addVertexData(graphWriter, "nodetype", "path", vertex -> null);
 		addVertexData(graphWriter, "entry", "false", vertex -> vertex.isEntry() ? "true" : null);
 		addVertexData(graphWriter, "violation", "false", vertex -> vertex.isError() ? "true" : null);
 		// TODO: When we switch to "multi-property" witnesses, we write invariants for FALSE-witnesses
 		addVertexData(graphWriter, "invariant", "true", vertex -> null);
-
+		
 		final Hypergraph<GeneratedWitnessNode, GeneratedWitnessEdge<TE, E>> graph = getGraph();
 		final StringWriter writer = new StringWriter();
 		try {
@@ -124,29 +114,29 @@ public class ViolationWitnessGenerator<TE, E> extends BaseWitnessGenerator<TE, E
 			}
 		}
 	}
-
+	
 	private Hypergraph<GeneratedWitnessNode, GeneratedWitnessEdge<TE, E>> getGraph() {
-		final DirectedSparseGraph<GeneratedWitnessNode, GeneratedWitnessEdge<TE, E>> graph = new OrderedDirectedSparseGraph<>();
-		final GeneratedWitnessNodeEdgeFactory<TE, E> fac = new GeneratedWitnessNodeEdgeFactory<TE, E>(mStringProvider);
-
+		final DirectedSparseGraph<GeneratedWitnessNode, GeneratedWitnessEdge<TE, E>> graph =
+				new OrderedDirectedSparseGraph<>();
+		final GeneratedWitnessNodeEdgeFactory<TE, E> fac = new GeneratedWitnessNodeEdgeFactory<>(mStringProvider);
+		
 		GeneratedWitnessNode current = insertStartNodeAndDummyEdges(fac, graph, 0);
-		GeneratedWitnessNode next = null;
-
+		GeneratedWitnessNode next;
+		
 		final int progExecLength = mProgramExecution.getLength();
-		for (int i = 0; i < progExecLength; ++i) {
-
-			// i = skipGlobalDeclarations(i, mProgramExecution);
-			i = collapseToSingleTraceElement(i, mProgramExecution);
-
-			final AtomicTraceElement<TE> currentATE = mProgramExecution.getTraceElement(i);
-			final ProgramState<E> currentState = mProgramExecution.getProgramState(i);
-			if (i == progExecLength - 1) {
+		for (int idx = 0; idx < progExecLength; ++idx) {
+			
+			idx = collapseToSingleTraceElement(idx, mProgramExecution);
+			
+			final AtomicTraceElement<TE> currentATE = mProgramExecution.getTraceElement(idx);
+			final ProgramState<E> currentState = mProgramExecution.getProgramState(idx);
+			if (idx == progExecLength - 1) {
 				// the last node is the error location
 				next = fac.createErrorWitnessNode();
 			} else {
 				next = fac.createWitnessNode();
 			}
-
+			
 			graph.addVertex(next);
 			if (currentState == null) {
 				graph.addEdge(fac.createWitnessEdge(currentATE), current, next);
@@ -155,27 +145,27 @@ public class ViolationWitnessGenerator<TE, E> extends BaseWitnessGenerator<TE, E
 			}
 			current = next;
 		}
-
+		
 		return graph;
 	}
-
+	
 	private GeneratedWitnessNode insertStartNodeAndDummyEdges(final GeneratedWitnessNodeEdgeFactory<TE, E> fac,
 			final DirectedSparseGraph<GeneratedWitnessNode, GeneratedWitnessEdge<TE, E>> graph,
-			int numberOfUselessEdgesAfterStart) {
+			final int numberOfUselessEdgesAfterStart) {
 		GeneratedWitnessNode current = fac.createInitialWitnessNode();
-		GeneratedWitnessNode next = null;
+		GeneratedWitnessNode next;
 		graph.addVertex(current);
-
+		
 		for (int i = 0; i < numberOfUselessEdgesAfterStart; ++i) {
 			next = fac.createWitnessNode();
 			graph.addVertex(next);
 			graph.addEdge(fac.createDummyWitnessEdge(), current, next);
 			current = next;
 		}
-
+		
 		return current;
 	}
-
+	
 	private int collapseToSingleTraceElement(final int currentIdx, final IProgramExecution<TE, E> programExecution) {
 		int i = currentIdx;
 		for (; i < programExecution.getLength(); i++) {
@@ -184,7 +174,7 @@ public class ViolationWitnessGenerator<TE, E> extends BaseWitnessGenerator<TE, E
 			for (int j = i; j < programExecution.getLength(); j++) {
 				final AtomicTraceElement<TE> nextATE = programExecution.getTraceElement(j);
 				final TE nextLoc = nextATE.getTraceElement();
-
+				
 				if (mStringProvider.getStartLineNumberFromStep(nextLoc) != mStringProvider
 						.getStartLineNumberFromStep(currentLoc)) {
 					return j - 1;

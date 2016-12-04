@@ -42,59 +42,65 @@ import de.uni_freiburg.informatik.ultimate.witnessprinter.Activator;
  *
  */
 public class PreferenceInitializer extends UltimatePreferenceInitializer {
-
+	
 	public enum WitnessVerifierType {
 		CPACHECKER
 	}
-
+	
+	public static final String LABEL_GRAPH_DATA_SPECIFICATION = "Graph data specification";
+	public static final String LABEL_GRAPH_DATA_PROGRAMHASH = "Graph data programhash";
+	public static final String LABEL_GRAPH_DATA_ARCHITECTURE = "Graph data architecture";
+	public static final String LABEL_GRAPH_DATA_PRODUCER = "Graph data producer";
+	public static final String UNUSED_GRAPH_DATA = "UNUSED";
+	
 	private static final String LABEL_WITNESS = "Witness generation";
-
+	
 	public static final String LABEL_WITNESS_GEN = "Generate witnesses";
 	private static final boolean VALUE_WITNESS_GEN = true;
-
+	
 	public static final String LABEL_WITNESS_LOG = "Log witness to console";
 	private static final boolean VALUE_WITNESS_LOG = false;
-
+	
 	public static final String LABEL_WITNESS_WRITE = "Write witness besides input file";
 	private static final boolean VALUE_WITNESS_WRITE = true;
 	private static final String DESC_WITNESS_WRITE =
 			"Write witness as \"<inputfilename>-witness.graphml\" " + "in the same directory as the input file.";
-
+	
 	public static final String LABEL_WITNESS_WRITE_WORKINGDIR = "Write witness to working directory";
 	private static final boolean VALUE_WITNESS_WRITE_WORKINGDIR = true;
 	private static final String DESC_WITNESS_WRITE_WORKINGDIR =
 			"Write witness as \"witness.graphml\" " + "to working directory.";
-
+	
 	public static final String LABEL_WITNESS_VERIFY = "Verify the witness and generate results";
 	private static final boolean VALUE_WITNESS_VERIFY = false;
-
+	
 	public static final String LABEL_WITNESS_VERIFIER = "Use the following witness verifier";
 	private static final WitnessVerifierType VALUE_WITNESS_VERIFIER = WitnessVerifierType.CPACHECKER;
-
+	
 	public static final String LABEL_WITNESS_VERIFIER_COMMAND = "Command to execute witness verifier";
 	private static final String VALUE_WITNESS_VERIFIER_COMMAND = "";
 	private static final String DESC_WITNESS_VERIFIER_COMMAND =
 			"The command gets a witness file " + "as first and an input file as second parameter."
 					+ "For CPA Checker, you should additionally set CPACHECKER_HOME";
-
+	
 	public static final String LABEL_WITNESS_CPACHECKER_PROPERTY = "Path to .prp file";
 	private static final String VALUE_WITNESS_CPACHECKER_PROPERTY = "";
 	private static final String DESC_WITNESS_CPACHECKER_PROPERTY =
 			"Only for CPAChecker. " + "The path to the .prp file may be relative to CPACHECKER_HOME.";
-
+	
 	public static final String LABEL_WITNESS_VERIFIER_TIMEOUT = "Timeout in seconds for witness verifier";
 	private static final int VALUE_WITNESS_VERIFIER_TIMEOUT = 10;
-
+	
 	public static final String LABEL_WITNESS_DELETE_GRAPHML = "Delete the .graphml file after verification";
 	private static final boolean VALUE_WITNESS_DELETE_GRAPHML = false;
 	public static final String LABEL_DO_NOT_USE_ACSL = "Do not use ACSL";
 	private static final Boolean VALUE_DO_NOT_USE_ACSL = true;
 	private static final String DESC_DO_NOT_USE_ACSL = "Prevent the generation of invariants which require ACSL syntax";
-
+	
 	public PreferenceInitializer() {
 		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
 	}
-
+	
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
 		return new UltimatePreferenceItem<?>[] {
@@ -121,16 +127,30 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 						PreferenceType.Boolean, new WitnessVerifierValidator()),
 				new UltimatePreferenceItem<>(LABEL_DO_NOT_USE_ACSL, VALUE_DO_NOT_USE_ACSL, DESC_DO_NOT_USE_ACSL,
 						PreferenceType.Boolean),
-
+				
+				new UltimatePreferenceItem<>("Witness passthrough", "", PreferenceType.Label),
+				new UltimatePreferenceItem<>(LABEL_GRAPH_DATA_SPECIFICATION, UNUSED_GRAPH_DATA,
+						"Write the value of this option to the witness graph data attribute \"specification\"",
+						PreferenceType.String),
+				new UltimatePreferenceItem<>(LABEL_GRAPH_DATA_PROGRAMHASH, UNUSED_GRAPH_DATA,
+						"Write the value of this option to the witness graph data attribute \"programhash\"",
+						PreferenceType.String),
+				new UltimatePreferenceItem<>(LABEL_GRAPH_DATA_ARCHITECTURE, UNUSED_GRAPH_DATA,
+						"Write the value of this option to the witness graph data attribute \"architecture\"",
+						PreferenceType.String),
+				new UltimatePreferenceItem<>(LABEL_GRAPH_DATA_PRODUCER, UNUSED_GRAPH_DATA,
+						"Write the value of this option to the witness graph data attribute \"Producer\"",
+						PreferenceType.String),
+		
 		};
 	}
-
+	
 	public static IPreferenceProvider getPreferences(final IUltimateServiceProvider services) {
 		return services.getPreferenceProvider(Activator.PLUGIN_ID);
 	}
-
+	
 	private static final class WitnessVerifierValidator implements IUltimatePreferenceItemValidator<Boolean> {
-
+		
 		@Override
 		public boolean isValid(final Boolean value) {
 			if (value) {
@@ -139,7 +159,7 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 			}
 			return true;
 		}
-
+		
 		@Override
 		public String getInvalidValueErrorMessage(final Boolean value) {
 			return "You must enable generation and writing of witness results before you can verify them";

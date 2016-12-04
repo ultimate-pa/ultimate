@@ -38,7 +38,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.collections15.Transformer;
 import org.apache.commons.lang3.StringEscapeUtils;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.ConditionAnnotation;
@@ -64,46 +63,34 @@ import edu.uci.ics.jung.graph.Hypergraph;
  *
  */
 public class CorrectnessWitnessGenerator<TTE, TE> extends BaseWitnessGenerator<TTE, TE> {
-
+	
 	private static final String[] ACSL_SUBSTRING = new String[] { "\\old", "\\result", "\\exists" };
-
+	
 	private final ILogger mLogger;
 	private final IBacktranslationValueProvider<TTE, TE> mStringProvider;
 	private final IBacktranslatedCFG<String, TTE> mTranslatedCFG;
 	private final boolean mIsACSLForbidden;
-
+	
 	public CorrectnessWitnessGenerator(final IBacktranslatedCFG<String, TTE> translatedCFG,
 			final IBacktranslationValueProvider<TTE, TE> provider, final ILogger logger,
 			final IUltimateServiceProvider services) {
-		super();
+		super(services);
 		mLogger = logger;
 		mStringProvider = provider;
 		mTranslatedCFG = translatedCFG;
 		mIsACSLForbidden =
 				PreferenceInitializer.getPreferences(services).getBoolean(PreferenceInitializer.LABEL_DO_NOT_USE_ACSL);
 	}
-
+	
 	@Override
 	public String makeGraphMLString() {
 		final UltimateGraphMLWriter<GeneratedWitnessNode, GeneratedWitnessEdge<TTE, TE>> graphWriter =
 				new UltimateGraphMLWriter<>();
-		graphWriter.setEdgeIDs(new Transformer<GeneratedWitnessEdge<TTE, TE>, String>() {
-			@Override
-			public String transform(final GeneratedWitnessEdge<TTE, TE> arg0) {
-				return arg0.getName();
-			}
-		});
-
-		graphWriter.setVertexIDs(new Transformer<GeneratedWitnessNode, String>() {
-			@Override
-			public String transform(final GeneratedWitnessNode arg0) {
-				return arg0.getName();
-			}
-		});
-
-		addGraphData(graphWriter, "sourcecodelang", null, graph -> "C");
-		addGraphData(graphWriter, "witness-type", null, graph -> "correctness_witness");
-
+		graphWriter.setEdgeIDs(arg0 -> arg0.getName());
+		graphWriter.setVertexIDs(arg0 -> arg0.getName());
+		
+		addCanonicalWitnessGraphData(graphWriter, "correctness_witness");
+		
 		addEdgeData(graphWriter, "sourcecode", null, edge -> StringEscapeUtils.escapeXml10(edge.getSourceCode()));
 		addEdgeData(graphWriter, "assumption", null, edge -> StringEscapeUtils.escapeXml10(edge.getAssumption()));
 		addEdgeData(graphWriter, "tokens", null, edge -> null);
@@ -115,13 +102,13 @@ public class CorrectnessWitnessGenerator<TTE, TE> extends BaseWitnessGenerator<T
 		addEdgeData(graphWriter, "enterFunction", null, edge -> null);
 		addEdgeData(graphWriter, "returnFrom", null, edge -> null);
 		addEdgeData(graphWriter, "enterLoopHead", "false", edge -> edge.isEnteringLoopHead());
-
+		
 		addVertexData(graphWriter, "nodetype", "path", vertex -> null);
 		addVertexData(graphWriter, "entry", "false", vertex -> vertex.isEntry() ? "true" : null);
 		addVertexData(graphWriter, "violation", "false", vertex -> vertex.isError() ? "true" : null);
 		// TODO: When we switch to "multi-property" witnesses, we write invariants for FALSE-witnesses
 		addVertexData(graphWriter, "invariant", "true", vertex -> StringEscapeUtils.escapeXml10(vertex.getInvariant()));
-
+		
 		final Hypergraph<GeneratedWitnessNode, GeneratedWitnessEdge<TTE, TE>> graph = getGraph();
 		final StringWriter writer = new StringWriter();
 		try {
@@ -140,7 +127,7 @@ public class CorrectnessWitnessGenerator<TTE, TE> extends BaseWitnessGenerator<T
 			}
 		}
 	}
-
+	
 	private Hypergraph<GeneratedWitnessNode, GeneratedWitnessEdge<TTE, TE>> getGraph() {
 		final List<IExplicitEdgesMultigraph<?, ?, String, TTE, ?>> roots = mTranslatedCFG.getCFGs();
 		if (roots.size() != 1) {
@@ -153,34 +140,34 @@ public class CorrectnessWitnessGenerator<TTE, TE> extends BaseWitnessGenerator<T
 				new DirectedOrderedSparseMultigraph<>();
 		final GeneratedWitnessNodeEdgeFactory<TTE, TE> fac =
 				new GeneratedWitnessNodeEdgeFactory<TTE, TE>(mStringProvider);
-
+		
 		// add initial node to nodecache s.t. it will always be initial
 		nodecache.put(root, annotateInvariant(root, fac.createInitialWitnessNode()));
-
+		
 		final Set<IMultigraphEdge<?, ?, String, TTE, ?>> closed = new HashSet<>();
 		worklist.add(root);
-
+		
 		while (!worklist.isEmpty()) {
 			final IExplicitEdgesMultigraph<?, ?, String, TTE, ?> sourceNode = worklist.remove();
 			final GeneratedWitnessNode sourceWNode = getWitnessNode(sourceNode, mStringProvider, fac, nodecache);
-
+			
 			for (final IMultigraphEdge<?, ?, String, TTE, ?> outgoing : sourceNode.getOutgoingEdges()) {
 				if (!closed.add(outgoing)) {
 					continue;
 				}
 				final TTE label = outgoing.getLabel();
 				final GeneratedWitnessEdge<TTE, TE> edge;
-
+				
 				final GeneratedWitnessNode targetWNode =
 						getWitnessNode(outgoing.getTarget(), mStringProvider, fac, nodecache);
-
+				
 				if (label == null) {
 					edge = fac.createDummyWitnessEdge();
 				} else {
 					final ConditionAnnotation coan = ConditionAnnotation.getAnnotation(outgoing);
-
+					
 					final StepInfo stepInfo = coan != null
-							? (coan.isNegated() ? StepInfo.CONDITION_EVAL_FALSE : StepInfo.CONDITION_EVAL_TRUE)
+							? coan.isNegated() ? StepInfo.CONDITION_EVAL_FALSE : StepInfo.CONDITION_EVAL_TRUE
 							: StepInfo.NONE;
 					// it is a dirty hack that we say whenever our targetnode has an invariant the edge is a
 					// enterLoopHead edge
@@ -188,14 +175,14 @@ public class CorrectnessWitnessGenerator<TTE, TE> extends BaseWitnessGenerator<T
 					edge = fac.createWitnessEdge(new AtomicTraceElement<>(label, label, stepInfo, null),
 							isEnteringLoopHead);
 				}
-
+				
 				graph.addEdge(edge, sourceWNode, targetWNode);
 				worklist.add(outgoing.getTarget());
 			}
 		}
 		return graph;
 	}
-
+	
 	private GeneratedWitnessNode getWitnessNode(final IExplicitEdgesMultigraph<?, ?, String, TTE, ?> node,
 			final IBacktranslationValueProvider<TTE, TE> stringProvider,
 			final GeneratedWitnessNodeEdgeFactory<TTE, TE> fac,
@@ -208,7 +195,7 @@ public class CorrectnessWitnessGenerator<TTE, TE> extends BaseWitnessGenerator<T
 		nodecache.put(node, wnode);
 		return wnode;
 	}
-
+	
 	private GeneratedWitnessNode annotateInvariant(final IExplicitEdgesMultigraph<?, ?, String, TTE, ?> node,
 			final GeneratedWitnessNode wnode) {
 		final String invariant = filterInvariant(node.getLabel());
@@ -217,7 +204,7 @@ public class CorrectnessWitnessGenerator<TTE, TE> extends BaseWitnessGenerator<T
 		}
 		return wnode;
 	}
-
+	
 	private String filterInvariant(final String label) {
 		if (mIsACSLForbidden && label != null && Arrays.stream(ACSL_SUBSTRING).anyMatch(label::contains)) {
 			mLogger.warn("Not writing invariant because ACSL is forbidden: " + label);

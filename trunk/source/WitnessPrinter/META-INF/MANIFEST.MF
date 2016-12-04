@@ -10,7 +10,7 @@ Require-Bundle: Library-UltimateCore,
  Library-ModelCheckerUtils,
  Library-ApacheCommonsLang,
  UltimateCore,
- Library-Jung,
+ Library-Jung;visibility:=reexport,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
