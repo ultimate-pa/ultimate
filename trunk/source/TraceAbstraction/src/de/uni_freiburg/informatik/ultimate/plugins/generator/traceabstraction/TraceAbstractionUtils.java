@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.Increme
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -172,6 +173,25 @@ public class TraceAbstractionUtils {
 		Term renamedFormula = (new Substitution(mgdScript, substitutionMapping)).transform(ps.getFormula());
 		renamedFormula = SmtUtils.simplify(mgdScript, renamedFormula, services, simplificationTechnique);
 		final IPredicate result = predicateFactory.newPredicate(renamedFormula);
+		return result;
+	}
+	
+	
+	/**
+	 * Construct Term which represents the same set of states as ps, but where 
+	 * all globalVars are renamed to oldGlobalVars.
+	 * 
+	 */
+	public static Term renameGlobalsToOldGlobals(final IPredicate ps, final IUltimateServiceProvider services,
+			final ManagedScript mgdScript) {
+		final Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
+		for (final IProgramVar pv : ps.getVars()) {
+			if (pv instanceof IProgramNonOldVar) {
+				final IProgramVar oldVar = ((IProgramNonOldVar) pv).getOldVar();
+				substitutionMapping.put(pv.getTermVariable(), oldVar.getTermVariable());
+			}
+		}
+		final Term result = (new SubstitutionWithLocalSimplification(mgdScript, substitutionMapping)).transform(ps.getFormula());
 		return result;
 	}
 

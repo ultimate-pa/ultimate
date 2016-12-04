@@ -100,7 +100,7 @@ public class HoareAnnotationFragments {
 		return mProgPoint2StatesWithEmptyContext;
 	}
 
-	HashMap<IPredicate, IPredicate> getContext2Entry() {
+	HashMap<IPredicate, IPredicate> getCallpred2Entry() {
 		return mContext2Entry;
 	}
 
