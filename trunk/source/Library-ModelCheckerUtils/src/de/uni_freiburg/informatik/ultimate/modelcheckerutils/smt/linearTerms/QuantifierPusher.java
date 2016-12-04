@@ -121,6 +121,25 @@ public class QuantifierPusher extends TermTransformer {
 	private Term otherFinite(final QuantifiedFormula quantifiedFormula, final ApplicationTerm appTerm) {
 		assert quantifiedFormula.getQuantifier() == QuantifiedFormula.EXISTS && appTerm.getFunction().getName().equals("and")
 				|| quantifiedFormula.getQuantifier() == QuantifiedFormula.FORALL && appTerm.getFunction().getName().equals("or");
+		
+		// 2016-12-03 Matthias: plan for refactoring
+		//
+		// do partition
+		// if you can push something, push and return
+		// if you cannot push, continue
+		//  
+		// apply sequence of eliminations
+		// after each, check topmost connector
+		// if 'other finite' continue
+		// else push (if possible) and return
+		//
+		// if all elimination processed (and still 'other finite')
+		// check for 'same finite' in one 'other finite'
+		// if exists, distribute, apply new pusher to result
+		//            if less quantified return result
+		//            if not less quantified return term after elimination
+		// if not exists return
+		
 //		{
 //			// transform to DNF (resp. CNF)
 //			appTerm = (ApplicationTerm) (new IteRemover(mScript)).transform(appTerm);
