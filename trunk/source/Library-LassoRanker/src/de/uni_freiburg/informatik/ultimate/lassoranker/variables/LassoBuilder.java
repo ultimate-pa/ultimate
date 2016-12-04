@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.LassoPreprocessor;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.InequalityConverter.NlaHandling;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormulaUtils;
@@ -98,20 +98,19 @@ public class LassoBuilder {
 	 * @param loop
 	 *            the loop transition
 	 */
-	public LassoBuilder(final ILogger logger, final ManagedScript mgdScript, final IIcfgSymbolTable symbolTable,
+	public LassoBuilder(final ILogger logger, final CfgSmtToolkit csToolkit,
 			final UnmodifiableTransFormula stem, final UnmodifiableTransFormula loop, final NlaHandling nlaHandling) {
-		assert mgdScript != null;
 		mLogger = logger;
-		mMgdScript = mgdScript;
+		mMgdScript = csToolkit.getManagedScript();
 		mNlaHandling = nlaHandling;
 		mtermVariables = new ArrayList<>();
 
-		mReplacementVarFactory = new ReplacementVarFactory(mMgdScript, symbolTable, true);
+		mReplacementVarFactory = new ReplacementVarFactory(csToolkit, true);
 
 		mLassosUC = new ArrayList<>();
 		mLassosUC.add(
-				new LassoUnderConstruction(ModifiableTransFormulaUtils.buildTransFormula(stem, mReplacementVarFactory, mgdScript),
-						ModifiableTransFormulaUtils.buildTransFormula(loop, mReplacementVarFactory, mgdScript)));
+				new LassoUnderConstruction(ModifiableTransFormulaUtils.buildTransFormula(stem, mReplacementVarFactory, mMgdScript),
+						ModifiableTransFormulaUtils.buildTransFormula(loop, mReplacementVarFactory, mMgdScript)));
 	}
 
 	public ReplacementVarFactory getReplacementVarFactory() {

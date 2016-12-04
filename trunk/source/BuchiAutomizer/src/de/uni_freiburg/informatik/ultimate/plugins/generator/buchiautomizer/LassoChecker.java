@@ -774,11 +774,11 @@ public class LassoChecker {
 			LassoAnalysis laNT = null;
 			try {
 				final boolean overapproximateArrayIndexConnection = false;
-				laNT = new LassoAnalysis(mCsToolkit.getManagedScript(), mSymbolTable, stemTF, loopTF,
-						modifiableGlobalsAtHonda, mAxioms.toArray(new Term[mAxioms.size()]),
-						constructLassoRankerPreferences(withStem, overapproximateArrayIndexConnection,
+				laNT = new LassoAnalysis(mCsToolkit, stemTF, loopTF, modifiableGlobalsAtHonda,
+						mAxioms.toArray(new Term[mAxioms.size()]), constructLassoRankerPreferences(withStem, overapproximateArrayIndexConnection,
 								NlaHandling.UNDERAPPROXIMATE, AnalysisTechnique.GEOMETRIC_NONTERMINATION_ARGUMENTS),
-						mServices, mStorage, mSimplificationTechnique, mXnfConversionTechnique);
+						mServices,
+						mStorage, mSimplificationTechnique, mXnfConversionTechnique);
 				mpreprocessingBenchmarks.add(laNT.getPreprocessingBenchmark());
 			} catch (final TermException e) {
 				e.printStackTrace();
@@ -807,11 +807,11 @@ public class LassoChecker {
 		LassoAnalysis laT = null;
 		try {
 			final boolean overapproximateArrayIndexConnection = true;
-			laT = new LassoAnalysis(mCsToolkit.getManagedScript(), mSymbolTable, stemTF, loopTF,
-					modifiableGlobalsAtHonda, mAxioms.toArray(new Term[mAxioms.size()]),
-					constructLassoRankerPreferences(withStem, overapproximateArrayIndexConnection,
+			laT = new LassoAnalysis(mCsToolkit, stemTF, loopTF, modifiableGlobalsAtHonda,
+					mAxioms.toArray(new Term[mAxioms.size()]), constructLassoRankerPreferences(withStem, overapproximateArrayIndexConnection,
 							NlaHandling.OVERAPPROXIMATE, AnalysisTechnique.RANKING_FUNCTIONS_SUPPORTING_INVARIANTS),
-					mServices, mStorage, mSimplificationTechnique, mXnfConversionTechnique);
+					mServices,
+					mStorage, mSimplificationTechnique, mXnfConversionTechnique);
 			mpreprocessingBenchmarks.add(laT.getPreprocessingBenchmark());
 		} catch (final TermException e) {
 			e.printStackTrace();

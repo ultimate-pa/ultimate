@@ -29,13 +29,17 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformation
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ILocalProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
@@ -46,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.Progr
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ConstantFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -57,7 +62,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class ReplacementVarFactory {
 	
 	private final ManagedScript mMgdScript;
-	private final IIcfgSymbolTable mIIcfgSymbolTable;
+	private final CfgSmtToolkit mCsToolkit;
 	private final Map<Term, IReplacementVarOrConst> mRepVarMapping = new HashMap<>();
 	private final Map<String, TermVariable> mAuxVarMapping = new HashMap<>();
 	private final boolean mUseIntraproceduralReplacementVar;
@@ -67,11 +72,10 @@ public class ReplacementVarFactory {
 	 * {@link IntraproceduralReplacementVar} instead of {@link LocalReplacementVar}, 
 	 * {@link ReplacementOldVar},  {@link ReplacementNonOldVar}, and  {@link ReplacementConst}.
 	 */
-	public ReplacementVarFactory(final ManagedScript mgdScript, final IIcfgSymbolTable symbolTable, 
-			final boolean useIntraproceduralReplacementVars) {
+	public ReplacementVarFactory(final CfgSmtToolkit csToolkit, final boolean useIntraproceduralReplacementVars) {
 		super();
-		mMgdScript = mgdScript;
-		mIIcfgSymbolTable = symbolTable;
+		mMgdScript = csToolkit.getManagedScript();
+		mCsToolkit = csToolkit;
 		mUseIntraproceduralReplacementVar = useIntraproceduralReplacementVars;
 	}
 
@@ -131,7 +135,7 @@ public class ReplacementVarFactory {
 	private void constructAndAddCorrespondingNonOldVarForOldVarDefinition(final Term definition, final TermVariable tv,
 			final ReplacementOldVar oldVar) {
 		final Term nonOldVarDefinition = ProgramVarUtils.renameOldGlobalsToNonOldGlobals(
-				definition, mIIcfgSymbolTable, mMgdScript);
+				definition, mCsToolkit.getSymbolTable(), mMgdScript);
 		final TermVariable nonoldVarTv = mMgdScript.constructFreshTermVariable(
 				"nonold(" + tv.getName() + ")", definition.getSort());
 		final ReplacementNonOldVar nonoldVar = constructReplacementNonOldVar(
@@ -142,7 +146,7 @@ public class ReplacementVarFactory {
 	private ReplacementOldVar constructAndAddCorrespondingOldVarForNonoldDefinition(final Term definition,
 			final TermVariable tv) {
 		final Term oldVarDefinition = ProgramVarUtils.renameNonOldGlobalsToOldGlobals(
-				definition, mIIcfgSymbolTable, mMgdScript);
+				definition, mCsToolkit.getSymbolTable(), mMgdScript);
 		final TermVariable oldVarTv = mMgdScript.constructFreshTermVariable(
 				"old(" + tv.getName() + ")", definition.getSort());
 		final ReplacementOldVar oldVar = constructReplacementOldVar(oldVarDefinition, oldVarTv);
@@ -214,7 +218,7 @@ public class ReplacementVarFactory {
 		final Set<String> procs = new HashSet<>();
 		final Pair<Set<Class<? extends IProgramVarOrConst>>,Set<String>> result = new Pair<>(constOrVarKinds, procs);
 		for (final TermVariable tv : definition.getFreeVars()) {
-			final IProgramVar pv = mIIcfgSymbolTable.getProgramVar(tv);
+			final IProgramVar pv = mCsToolkit.getSymbolTable().getProgramVar(tv);
 			if (pv instanceof ILocalProgramVar) {
 				constOrVarKinds.add(ILocalProgramVar.class);
 				procs.add(pv.getProcedure());
@@ -232,5 +236,42 @@ public class ReplacementVarFactory {
 		}
 		return result;
 	}
+	
+	
+	public IIcfgSymbolTable constructIIcfgSymbolTable() {
+		final DefaultIcfgSymbolTable result = new DefaultIcfgSymbolTable(mCsToolkit.getSymbolTable(), mCsToolkit.getProcedures());
+		for (final Entry<Term, IReplacementVarOrConst> entry : mRepVarMapping.entrySet()) {
+			result.add(entry.getValue());
+		}
+		return result;
+	}
+	
+	public ModifiableGlobalsTable constructModifiableGlobalsTable() {
+		final HashRelation<String, IProgramNonOldVar> proc2Globals = new HashRelation<>();
+		// construct copy
+		for (final String proc : mCsToolkit.getProcedures()) {
+			final Set<IProgramNonOldVar> mod = mCsToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(proc);
+			for (final IProgramNonOldVar nonOld : mod) {
+				proc2Globals.addPair(proc, nonOld);
+			}
+		}
+		// add new vars
+		// this is just a workaround: every global replacement var can be 
+		// modified by each procedure
+		// TODO: check definition
+		for (final Entry<Term, IReplacementVarOrConst> entry : mRepVarMapping.entrySet()) {
+			if (entry.getValue() instanceof ReplacementNonOldVar) {
+				final ReplacementNonOldVar nonOld = (ReplacementNonOldVar) entry.getValue();
+				for (final String proc : mCsToolkit.getProcedures()) {
+					proc2Globals.addPair(proc, nonOld);
+				}
+			}
+
+		}
+		return new ModifiableGlobalsTable(proc2Globals);
+	}
+	
+	
+	
 	
 }

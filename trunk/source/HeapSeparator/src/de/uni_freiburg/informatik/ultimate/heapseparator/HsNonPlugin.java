@@ -65,7 +65,7 @@ public class HsNonPlugin {
 		mServices = services;
 		mManagedScript = csToolkit.getManagedScript();
 		mLogger = logger;
-		mReplacementVarFactory = new ReplacementVarFactory(csToolkit.getManagedScript(), csToolkit.getSymbolTable(), false);
+		mReplacementVarFactory = new ReplacementVarFactory(csToolkit, false);
 	}
 
 	public BoogieIcfgContainer separate(final BoogieIcfgContainer oldBoogieIcfg) {

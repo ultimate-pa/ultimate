@@ -72,6 +72,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
@@ -166,20 +167,12 @@ public class LassoAnalysis {
 	 * Benchmark data from the preprocessing of the lasso.
 	 */
 	private PreprocessingBenchmark mPreprocessingBenchmark;
+	private final CfgSmtToolkit mCfgSmtToolkit;
 
 	/**
 	 * Constructor for the LassoRanker interface. Calling this invokes the preprocessor on the stem and loop formula.
 	 *
 	 * If the stem is null, the stem has to be added separately by calling addStem().
-	 *
-	 * @param script
-	 *            the SMT script used to construct the transition formulae
-	 * @param boogie2smt
-	 *            the boogie2smt object that created the TransFormula's
-	 * @param stem
-	 *            a transition formula corresponding to the lasso's stem
-	 * @param loop
-	 *            a transition formula corresponding to the lasso's loop
 	 * @param modifiableGlobalsAtHonda
 	 *            global BoogieVars that are modifiable in the procedure where the honda of the lasso lies.
 	 * @param axioms
@@ -190,17 +183,25 @@ public class LassoAnalysis {
 	 * @param storage
 	 * @param simplificationTechnique
 	 * @param xnfConversionTechnique
+	 * @param script
+	 *            the SMT script used to construct the transition formulae
+	 * @param boogie2smt
+	 *            the boogie2smt object that created the TransFormula's
+	 * @param stem
+	 *            a transition formula corresponding to the lasso's stem
+	 * @param loop
+	 *            a transition formula corresponding to the lasso's loop
+	 *
 	 * @throws TermException
 	 *             if preprocessing fails
 	 * @throws FileNotFoundException
 	 *             if the file for dumping the script cannot be opened
 	 */
-	public LassoAnalysis(final ManagedScript mgdScript, final IIcfgSymbolTable symbolTable,
-			final UnmodifiableTransFormula stemTransition, final UnmodifiableTransFormula loopTransition,
-			final Set<IProgramNonOldVar> modifiableGlobalsAtHonda, final Term[] axioms,
-			final ILassoRankerPreferences preferences, final IUltimateServiceProvider services,
-			final IToolchainStorage storage, final SimplificationTechnique simplificationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique) throws TermException {
+	public LassoAnalysis(final CfgSmtToolkit csToolkit, final UnmodifiableTransFormula stemTransition,
+			final UnmodifiableTransFormula loopTransition, final Set<IProgramNonOldVar> modifiableGlobalsAtHonda,
+			final Term[] axioms, final ILassoRankerPreferences preferences,
+			final IUltimateServiceProvider services, final IToolchainStorage storage,
+			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique) throws TermException {
 		mServices = services;
 		mStorage = storage;
 		mSimplificationTechnique = simplificationTechnique;
@@ -213,8 +214,9 @@ public class LassoAnalysis {
 
 		mAxioms = axioms;
 		mArrayIndexSupportingInvariants = new HashSet<>();
-		mMgdScript = mgdScript;
-		mSymbolTable = symbolTable;
+		mMgdScript = csToolkit.getManagedScript();
+		mCfgSmtToolkit = csToolkit;
+		mSymbolTable = csToolkit.getSymbolTable();
 
 		mLassoTerminationAnalysisBenchmarks = new ArrayList<>();
 
@@ -253,13 +255,13 @@ public class LassoAnalysis {
 	 * @throws FileNotFoundException
 	 *             if the file for dumping the script cannot be opened
 	 */
-	public LassoAnalysis(final ManagedScript mgdScript, final IIcfgSymbolTable symbolTable, final UnmodifiableTransFormula loop,
+	public LassoAnalysis(final CfgSmtToolkit csToolkit, final IIcfgSymbolTable symbolTable, final UnmodifiableTransFormula loop,
 			final Set<IProgramNonOldVar> modifiableGlobalsAtHonda, final Term[] axioms,
 			final LassoRankerPreferences preferences, final IUltimateServiceProvider services,
 			final IToolchainStorage storage, final XnfConversionTechnique xnfConversionTechnique,
 			final SimplificationTechnique simplificationTechnique) throws TermException, FileNotFoundException {
-		this(mgdScript, symbolTable, null, loop, modifiableGlobalsAtHonda, axioms, preferences, services, storage,
-				simplificationTechnique, xnfConversionTechnique);
+		this(csToolkit, null, loop, modifiableGlobalsAtHonda, axioms, preferences, services, storage, simplificationTechnique,
+				xnfConversionTechnique);
 	}
 
 	/**
@@ -274,7 +276,7 @@ public class LassoAnalysis {
 	 */
 	protected void preprocess() throws TermException {
 		mLogger.info("Starting lasso preprocessing...");
-		final LassoBuilder lassoBuilder = new LassoBuilder(mLogger, mMgdScript, mSymbolTable, mStemTransition,
+		final LassoBuilder lassoBuilder = new LassoBuilder(mLogger, mCfgSmtToolkit, mStemTransition,
 				mLoopTransition, mPreferences.getNlaHandling());
 		assert lassoBuilder.isSane("initial lasso construction");
 		lassoBuilder.preprocess(getPreProcessors(lassoBuilder, mPreferences.isOverapproximateArrayIndexConnection()),
