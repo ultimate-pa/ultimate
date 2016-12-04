@@ -39,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.EqNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.RCFGArrayIndexCollector;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomain;
@@ -56,14 +55,14 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 public class HsNonPlugin {
 
 	private final IUltimateServiceProvider mServices;
-	private final ManagedScript mManagedScript;
+	private final CfgSmtToolkit mCsToolkit;
 	private final ILogger mLogger;
 	private final ReplacementVarFactory mReplacementVarFactory;
 
 	public HsNonPlugin(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit, final ILogger logger) {
 
 		mServices = services;
-		mManagedScript = csToolkit.getManagedScript();
+		mCsToolkit = csToolkit;
 		mLogger = logger;
 		mReplacementVarFactory = new ReplacementVarFactory(csToolkit, false);
 	}
@@ -112,7 +111,7 @@ public class HsNonPlugin {
 		final RCFGWalkerBreadthFirst walker = new RCFGWalkerBreadthFirst(od, mLogger);
 		od.setWalker(walker);
 
-		final HeapSepRcfgVisitor hsv = new HeapSepRcfgVisitor(mLogger, newArrayIdProvider, mManagedScript, vpDomain);
+		final HeapSepRcfgVisitor hsv = new HeapSepRcfgVisitor(mLogger, newArrayIdProvider, mCsToolkit.getManagedScript(), vpDomain);
 		walker.addObserver(hsv);
 		walker.run(BoogieIcfgContainer.extractStartEdges(oldBoogieIcfg));
 
@@ -169,7 +168,7 @@ public class HsNonPlugin {
 		 * Compute the actual partitioning for each array.
 		 */
 		final RCFGArrayIndexCollector vpPreAnalysis = ((VPDomain) vpDomainResult.getUsedDomain()).getPreAnalysis();
-		final NewArrayIdProvider newArrayIdProvider = new NewArrayIdProvider(mManagedScript, vpDomain.getSymbolTable());
+		final NewArrayIdProvider newArrayIdProvider = new NewArrayIdProvider(mCsToolkit);
 		for (final Entry<IProgramVarOrConst, VPState> en : arrayToVPState.entrySet()) {
 			final IProgramVarOrConst currentArray = en.getKey();
 			final VPState state = en.getValue();

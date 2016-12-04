@@ -40,8 +40,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.LocalBoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.IntraproceduralReplacementVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -53,12 +53,10 @@ public class NewArrayIdProvider {
 	private final DefaultIcfgSymbolTable mNewSymbolTable;
 
 	private final ManagedScript mManagedScript;
-	private final IIcfgSymbolTable mSymbolTable;
 
-	public NewArrayIdProvider(ManagedScript ms, IIcfgSymbolTable iIcfgSymbolTable) {
-		mManagedScript = ms;
-		mSymbolTable = iIcfgSymbolTable;
-		mNewSymbolTable = new DefaultIcfgSymbolTable((DefaultIcfgSymbolTable) iIcfgSymbolTable);
+	public NewArrayIdProvider(final CfgSmtToolkit csToolkit) {
+		mManagedScript = csToolkit.getManagedScript();
+		mNewSymbolTable = new DefaultIcfgSymbolTable(csToolkit.getSymbolTable(), csToolkit.getProcedures());
 	}
 
 	/**
@@ -67,7 +65,7 @@ public class NewArrayIdProvider {
 	 * @param indexVector
 	 * @return
 	 */
-	public IProgramVarOrConst getNewArrayId(IProgramVarOrConst originalArrayId, List<EqNode> indexVector) {
+	public IProgramVarOrConst getNewArrayId(final IProgramVarOrConst originalArrayId, final List<EqNode> indexVector) {
 		return mArrayToPartitionInformation.get(originalArrayId).getNewArray(indexVector);
 	}
 
@@ -93,7 +91,7 @@ class IndexPartition {
 	final IProgramVarOrConst arrayId;
 	final Set<EqNode> indices;
 
-	public IndexPartition(IProgramVarOrConst arrayId, Set<EqNode> indices) {
+	public IndexPartition(final IProgramVarOrConst arrayId, final Set<EqNode> indices) {
 		this.arrayId = arrayId;
 		this.indices = Collections.unmodifiableSet(indices);
 	}
@@ -112,20 +110,20 @@ class PartitionInformation {
 	private final Map<EqNode, IndexPartition> indexToIndexPartition = new HashMap<>();
 	private final ManagedScript mManagedScript;
 	
-	public PartitionInformation(IProgramVarOrConst arrayId, ManagedScript mScript, DefaultIcfgSymbolTable newSymbolTable) {
+	public PartitionInformation(final IProgramVarOrConst arrayId, final ManagedScript mScript, final DefaultIcfgSymbolTable newSymbolTable) {
 		this.arrayId = arrayId;
 		indexPartitions = new HashSet<>();
 		mManagedScript = mScript;
 		mNewSymbolTable = newSymbolTable;
 	}
 	
-	public IProgramVarOrConst getNewArray(List<EqNode> indexVector) {
-		List<IndexPartition> partitionVector = 
+	public IProgramVarOrConst getNewArray(final List<EqNode> indexVector) {
+		final List<IndexPartition> partitionVector = 
 				indexVector.stream().map(eqNode -> indexToIndexPartition.get(eqNode)).collect(Collectors.toList());
 		return getNewArrayIdForIndexPartitionVector(partitionVector);
 	}
 
-	private IProgramVarOrConst getNewArrayIdForIndexPartitionVector(List<IndexPartition> partitionVector) {
+	private IProgramVarOrConst getNewArrayIdForIndexPartitionVector(final List<IndexPartition> partitionVector) {
 		IProgramVarOrConst result = partitionVectorToNewArrayId.get(partitionVector);
 		if (result == null) {
 			result = obtainFreshProgramVar(arrayId);
@@ -134,7 +132,7 @@ class PartitionInformation {
 		return result;
 	}
 
-	void addPartition(IndexPartition ip) {
+	void addPartition(final IndexPartition ip) {
 		indexPartitions.add(ip);
 	}
 
@@ -143,17 +141,17 @@ class PartitionInformation {
 		return versionCounter++;
 	}
 
-	private IProgramVarOrConst obtainFreshProgramVar(IProgramVarOrConst originalArrayId) {
+	private IProgramVarOrConst obtainFreshProgramVar(final IProgramVarOrConst originalArrayId) {
 		// TODO: would it be a good idea to introduce something like ReplacementVar for this??
 		
 		IProgramVarOrConst freshVar = null;
 		
 		if (originalArrayId instanceof LocalBoogieVar) {
-			LocalBoogieVar lbv = (LocalBoogieVar) originalArrayId;
-			String newId = lbv.getIdentifier() + "_part_" + getFreshVersionIndex();
-			TermVariable newTv = mManagedScript.constructFreshCopy(lbv.getTermVariable());
-			ApplicationTerm newConst = (ApplicationTerm) mManagedScript.getScript().term(newId + "_const");
-			ApplicationTerm newPrimedConst = (ApplicationTerm) mManagedScript.getScript().term(newId + "_const_primed");
+			final LocalBoogieVar lbv = (LocalBoogieVar) originalArrayId;
+			final String newId = lbv.getIdentifier() + "_part_" + getFreshVersionIndex();
+			final TermVariable newTv = mManagedScript.constructFreshCopy(lbv.getTermVariable());
+			final ApplicationTerm newConst = (ApplicationTerm) mManagedScript.getScript().term(newId + "_const");
+			final ApplicationTerm newPrimedConst = (ApplicationTerm) mManagedScript.getScript().term(newId + "_const_primed");
 			freshVar = new LocalBoogieVar(
 					newId, 
 					lbv.getProcedure(), 
