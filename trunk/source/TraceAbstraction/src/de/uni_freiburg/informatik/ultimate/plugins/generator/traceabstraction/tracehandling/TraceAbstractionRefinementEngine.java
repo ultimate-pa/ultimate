@@ -85,6 +85,10 @@ public final class TraceAbstractionRefinementEngine
 		 */
 		KNOWN_DEPENDING,
 		/**
+		 * The exception is known and we always want it to be thrown.
+		 */
+		KNOWN_THROW,
+		/**
 		 * The exception is unknown and we usually want it to be thrown.
 		 */
 		UNKNOWN;
@@ -99,9 +103,9 @@ public final class TraceAbstractionRefinementEngine
 				case ALL:
 					return true;
 				case UNKNOWN:
-					return this == UNKNOWN;
+					return this == UNKNOWN || this == KNOWN_THROW;
 				case DEPENDING:
-					return this == UNKNOWN || this == KNOWN_DEPENDING;
+					return this == UNKNOWN || this == KNOWN_THROW || this == KNOWN_DEPENDING;
 				case NONE:
 					return false;
 				default:
@@ -379,8 +383,11 @@ public final class TraceAbstractionRefinementEngine
 				// broken SMT solver connection can have various reasons such as misconfiguration or solver crashes
 				exceptionCategory = ExceptionHandlingCategory.KNOWN_DEPENDING;
 			} else if (message.endsWith("Received EOF on stdin. No stderr output.")) {
-				// TODO find out the origin of this exception
-				exceptionCategory = ExceptionHandlingCategory.KNOWN_DEPENDING;
+				// wrong usage of external solver, tell the user
+				exceptionCategory = ExceptionHandlingCategory.KNOWN_THROW;
+			} else if (message.contains("Received EOF on stdin. stderr output:")) {
+				// wrong usage of external solver, tell the user
+				exceptionCategory = ExceptionHandlingCategory.KNOWN_THROW;
 			} else {
 				exceptionCategory = ExceptionHandlingCategory.UNKNOWN;
 			}
@@ -390,40 +397,26 @@ public final class TraceAbstractionRefinementEngine
 		
 		switch (exceptionCategory) {
 			case KNOWN_IGNORE:
-				if (mLogger.isErrorEnabled()) {
-					mLogger.error("Caught known exception: " + exception.getMessage());
-				}
-				if (throwException) {
-					if (mLogger.isInfoEnabled()) {
-						mLogger.info("Global settings require throwing the exception.");
-					}
-					throw new AssertionError(exception);
-				}
-				break;
 			case KNOWN_DEPENDING:
+			case KNOWN_THROW:
 				if (mLogger.isErrorEnabled()) {
 					mLogger.error("Caught known exception: " + exception.getMessage());
-				}
-				if (throwException) {
-					if (mLogger.isInfoEnabled()) {
-						mLogger.info("Global settings require throwing the exception.");
-					}
-					throw new AssertionError(exception);
 				}
 				break;
 			case UNKNOWN:
 				if (mLogger.isErrorEnabled()) {
 					mLogger.error("Caught unknown exception: " + exception.getMessage());
 				}
-				if (throwException) {
-					if (mLogger.isInfoEnabled()) {
-						mLogger.info("Global settings require throwing the exception.");
-					}
-					throw new AssertionError(exception);
-				}
 				break;
 			default:
 				throw new IllegalArgumentException("Unknown exception category: " + exceptionCategory);
+		}
+		
+		if (throwException) {
+			if (mLogger.isInfoEnabled()) {
+				mLogger.info("Global settings require throwing the exception.");
+			}
+			throw new AssertionError(exception);
 		}
 		
 		return null;
