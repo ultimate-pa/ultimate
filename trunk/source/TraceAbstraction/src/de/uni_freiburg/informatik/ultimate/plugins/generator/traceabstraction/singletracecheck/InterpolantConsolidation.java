@@ -81,8 +81,10 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsGeneratorWithStopwatches;
 
 /**
- * Interpolant Consolidation brings predicates which have the same location together and connects them through
- * disjunction. See documentation of B.Musa for more information.
+ * Interpolant Consolidation is a way of either improving a sequence of interpolants or
+ * merging several sequences of interpolants into one, which is the disjunction of the sequences. By doing this we
+ * get a sequence of interpolants that is weaker than any other of the input sequences.
+ * See documentation of B.Musa for more information.
  *
  * @author musab@informatik.uni-freiburg.de
  */
@@ -248,7 +250,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 		}
 
 		// 6. Interpolant Consolidation step
-		final List<IPredicate> pathPositionsToLocations = ppc.getPositionsToStates();
+		final List<IPredicate> pathProgramLocations = ppc.getPositionsToStates();
 		final Map<IPredicate, Set<IPredicate>> locationsToSetOfPredicates = pfconsol.getLocationsToSetOfPredicates();
 
 		final Set<IPredicate> interpolantsBeforeConsolidation = interpolantAutomaton.getStates();
@@ -258,9 +260,8 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 
 		mConsolidatedInterpolants = new IPredicate[mTrace.length() - 1];
 
-		computeConsolidatedInterpolants(pathPositionsToLocations, locationsToSetOfPredicates,
-				interpolantsBeforeConsolidation, mInterpolatingTraceChecker.getInterpolants(),
-				interpolantsAfterConsolidation, mHoareTripleChecker);
+		computeConsolidatedInterpolants(pathProgramLocations, locationsToSetOfPredicates,
+				interpolantsBeforeConsolidation, interpolantsAfterConsolidation, mHoareTripleChecker);
 
 		assert TraceCheckerUtils.checkInterpolantsInductivityBackward(Arrays.asList(mConsolidatedInterpolants), mTrace,
 				mPrecondition, mPostcondition, mPendingContexts, "CP", mCsToolkit, mLogger,
@@ -368,11 +369,21 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 		return preds;
 	}
 
-	private void computeConsolidatedInterpolants(final List<IPredicate> pathPositionsToLocations,
+	/**
+	 * Create for every location of the path program the disjunction
+	 * of all predicates associated with that location.
+	 * @param pathProgramLocations 
+	 * @param locationsToSetOfPredicates
+	 * @param interpolantsBeforeConsolidation - the set containing every interpolant from all sequences of interpolants, it is used only for benchmarks.
+	 * @param interpolantsAfterConsolidation - a list of predicates that is initially empty, but gets filled with consolidated interpolants
+	 * @param htc
+	 */
+	private void computeConsolidatedInterpolants(final List<IPredicate> pathProgramLocations,
 			final Map<IPredicate, Set<IPredicate>> locationsToSetOfPredicates,
 			final Set<IPredicate> interpolantsBeforeConsolidation,
-			final IPredicate[] interpolantsBeforeConsolidationAsArray,
 			final Set<IPredicate> interpolantsAfterConsolidation, final IHoareTripleChecker htc) {
+		
+		
 		final Map<IPredicate, IPredicate> locationsToConsolidatedInterpolants = new HashMap<>();
 
 		int disjunctionsGreaterOneCounter = 0;
@@ -381,7 +392,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 		// has existed before consolidation.
 		int interpolantsDropped = mTrace.length() - 1;
 		for (int i = 0; i < mConsolidatedInterpolants.length; i++) {
-			final IPredicate loc = pathPositionsToLocations.get(i + 1);
+			final IPredicate loc = pathProgramLocations.get(i + 1);
 			if (!locationsToConsolidatedInterpolants.containsKey(loc)) {
 				// Compute the disjunction of the predicates for location i
 				final Set<IPredicate> predicatesForThisLocation = locationsToSetOfPredicates.get(loc);
