@@ -69,8 +69,20 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public class MultiTrackTraceAbstractionRefinementStrategy implements IRefinementStrategy {
+	private enum Track {
+		/**
+		 * SMTInterpol with tree interpolation.
+		 */
+		SMTINTERPOL_TREE_INTERPOLANTS,
+		/**
+		 * Z3 with forward and backward predicates.
+		 */
+		Z3_SPBP,
+	}
+	
 	private static final String LOGIC_FOR_EXTERNAL_SOLVERS = "AUFNIRA";
 	private static final int SMTINTERPOL_TIMEOUT = 10_000;
+	// private static final String Z3_COMMAND = RcfgPreferenceInitializer.Z3_DEFAULT;
 	private static final String Z3_COMMAND = "z3 -smt2 -in SMTLIB2_COMPLIANT=true";
 	
 	private final IUltimateServiceProvider mServices;
@@ -83,11 +95,11 @@ public class MultiTrackTraceAbstractionRefinementStrategy implements IRefinement
 	// TODO Christian 2016-11-11: Matthias wants to get rid of this
 	private final TAPreferences mTaPrefsForInterpolantConsolidation;
 	
-	private final Iterator<InterpolationTechnique> mInterpolationTechniques;
+	private final Iterator<Track> mInterpolationTechniques;
 	
 	private TraceCheckerConstructor mTcConstructor;
 	private TraceCheckerConstructor mPrevTcConstructor;
-	private InterpolationTechnique mNextTechnique;
+	private Track mNextTechnique;
 	
 	private TraceChecker mTraceChecker;
 	private IInterpolantGenerator mInterpolantGenerator;
@@ -188,31 +200,48 @@ public class MultiTrackTraceAbstractionRefinementStrategy implements IRefinement
 		return mInterpolantAutomatonBuilder;
 	}
 	
-	private static Iterator<InterpolationTechnique> initializeInterpolationTechniquesList() {
-		final List<InterpolationTechnique> list = new ArrayList<>(2);
-		list.add(InterpolationTechnique.Craig_TreeInterpolation);
-		list.add(InterpolationTechnique.FPandBP);
+	private static Iterator<Track> initializeInterpolationTechniquesList() {
+		final List<Track> list = new ArrayList<>(2);
+		list.add(Track.SMTINTERPOL_TREE_INTERPOLANTS);
+		list.add(Track.Z3_SPBP);
 		return list.iterator();
 	}
 	
 	private TraceCheckerConstructor constructTraceCheckerConstructor() {
+		final InterpolationTechnique interpolationTechnique = getInterpolationTechnique(mNextTechnique);
+		
 		final ManagedScript managedScript = constructManagedScript(mServices, mPrefs, mNextTechnique);
 		
 		TraceCheckerConstructor result;
 		if (mPrevTcConstructor == null) {
 			result = new TraceCheckerConstructor(mPrefs, managedScript, mServices, mPredicateUnifier, mCounterexample,
-					mNextTechnique);
+					interpolationTechnique);
 		} else {
-			result = new TraceCheckerConstructor(mPrevTcConstructor, managedScript, mNextTechnique);
+			result = new TraceCheckerConstructor(mPrevTcConstructor, managedScript, interpolationTechnique);
 		}
 		
 		mNextTechnique = null;
 		
 		return result;
 	}
+
+	private static InterpolationTechnique getInterpolationTechnique(final Track mode) {
+		final InterpolationTechnique interpolationTechnique;
+		switch (mode) {
+			case SMTINTERPOL_TREE_INTERPOLANTS:
+				interpolationTechnique = InterpolationTechnique.Craig_TreeInterpolation;
+				break;
+			case Z3_SPBP:
+				interpolationTechnique = InterpolationTechnique.FPandBP;
+				break;
+			default:
+				throw new IllegalArgumentException("Unknown mode: " + mode);
+		}
+		return interpolationTechnique;
+	}
 	
 	private static ManagedScript constructManagedScript(final IUltimateServiceProvider services,
-			final TaCheckAndRefinementPreferences prefs, final InterpolationTechnique interpolationTechnique) {
+			final TaCheckAndRefinementPreferences prefs, final Track mode) {
 		final boolean dumpSmtScriptToFile = prefs.getDumpSmtScriptToFile();
 		final String pathOfDumpedScript = prefs.getPathOfDumpedScript();
 		final String baseNameOfDumpedScript =
@@ -220,15 +249,14 @@ public class MultiTrackTraceAbstractionRefinementStrategy implements IRefinement
 		final Settings solverSettings;
 		final SolverMode solverMode;
 		final String logicForExternalSolver;
-		switch (interpolationTechnique) {
-			case Craig_TreeInterpolation:
+		switch (mode) {
+			case SMTINTERPOL_TREE_INTERPOLANTS:
 				solverSettings = new Settings(false, false, null, SMTINTERPOL_TIMEOUT, null, dumpSmtScriptToFile,
 						pathOfDumpedScript, baseNameOfDumpedScript);
 				solverMode = SolverMode.Internal_SMTInterpol;
 				logicForExternalSolver = null;
 				break;
-			case FPandBP:
-				// final String commandExternalSolver = RcfgPreferenceInitializer.Z3_DEFAULT;
+			case Z3_SPBP:
 				solverSettings = new Settings(false, true, Z3_COMMAND, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
 						baseNameOfDumpedScript);
 				solverMode = SolverMode.External_ModelsAndUnsatCoreMode;
@@ -237,7 +265,7 @@ public class MultiTrackTraceAbstractionRefinementStrategy implements IRefinement
 			default:
 				throw new IllegalArgumentException(
 						"Managed script construction not supported for interpolation technique: "
-								+ interpolationTechnique);
+								+ mode);
 		}
 		final Script solver = SolverBuilder.buildAndInitializeSolver(services, prefs.getToolchainStorage(),
 				solverMode, solverSettings, false, false, logicForExternalSolver,
