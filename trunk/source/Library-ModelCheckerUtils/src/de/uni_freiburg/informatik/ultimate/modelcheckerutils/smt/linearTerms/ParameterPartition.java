@@ -103,12 +103,12 @@ public class ParameterPartition {
 				for (final Term term : equivalenceClass) {
 					quantifiedVarsInClass.addAll(param2quantifiedVars.getImage(term));
 				}
-				final Term connectedEquivalenceClass = PartialQuantifierElimination.composeXjunctsInner(
-						script, quantifier, equivalenceClass.toArray(new Term[equivalenceClass.size()]));
+				final Term connectedEquivalenceClass = PartialQuantifierElimination.applyDualFiniteConnective(
+						script, quantifier, equivalenceClass);
 				final Term quantified = SmtUtils.quantifier(script, quantifier, quantifiedVarsInClass, connectedEquivalenceClass);
 				resultParams.add(quantified);
 			}
-			mTermWithPushedQuantifier = PartialQuantifierElimination.composeXjunctsInner(script, quantifier, resultParams);
+			mTermWithPushedQuantifier = PartialQuantifierElimination.applyDualFiniteConnective(script, quantifier, resultParams);
 		}
 		
 		

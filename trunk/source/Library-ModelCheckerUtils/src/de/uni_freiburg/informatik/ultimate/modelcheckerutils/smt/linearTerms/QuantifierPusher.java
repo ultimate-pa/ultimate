@@ -167,8 +167,8 @@ public class QuantifierPusher extends TermTransformer {
 			final Term[] xjuncts = PartialQuantifierElimination.getXjunctsInner(quantifiedFormula.getQuantifier(), appTerm);
 			derResult = xnfDer.tryToEliminate(quantifiedFormula.getQuantifier(), xjuncts, eliminatees);
 			if (eliminatees.isEmpty()) {
-				final Term result = PartialQuantifierElimination.composeXjunctsInner(
-						mScript, quantifiedFormula.getQuantifier(), derResult);
+				final Term result = PartialQuantifierElimination.applyDualFiniteConnective(
+						mScript, quantifiedFormula.getQuantifier(), Arrays.asList(derResult));
 				return result;
 			}
 		} 
@@ -203,8 +203,8 @@ public class QuantifierPusher extends TermTransformer {
 				resultXjuncts[i] = derResult[i];
 			}
 		}
-		final Term resultXJunction = PartialQuantifierElimination.composeXjunctsInner(mScript, 
-				quantifiedFormula.getQuantifier(), resultXjuncts);
+		final Term resultXJunction = PartialQuantifierElimination.applyDualFiniteConnective(mScript, 
+				quantifiedFormula.getQuantifier(), Arrays.asList(resultXjuncts));
 		final Term result = SmtUtils.quantifier(mScript, quantifiedFormula.getQuantifier(), 
 					multiOcucrrenceEliminatees, resultXJunction);
 		return result;

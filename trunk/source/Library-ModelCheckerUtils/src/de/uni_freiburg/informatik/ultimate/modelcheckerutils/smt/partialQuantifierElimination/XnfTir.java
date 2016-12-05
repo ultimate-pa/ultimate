@@ -86,7 +86,7 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 	@Override
 	public Term[] tryToEliminate(final int quantifier, final Term[] inputConjuncts,
 			final Set<TermVariable> eliminatees) {
-		final Term inputConjunction = PartialQuantifierElimination.composeXjunctsInner(mScript, quantifier, inputConjuncts);
+		final Term inputConjunction = PartialQuantifierElimination.applyDualFiniteConnective(mScript, quantifier, Arrays.asList(inputConjuncts));
 		List<Term> currentDisjuncts = new ArrayList<Term>(Arrays.asList(inputConjunction));
 		final Iterator<TermVariable> it = eliminatees.iterator();
 		while (it.hasNext()) {
@@ -116,7 +116,7 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 			currentDisjuncts = nextDisjuncts;
 		}
 		final Term[] resultDisjuncts = currentDisjuncts.toArray(new Term[currentDisjuncts.size()]);
-		final Term resultDisjunction =  PartialQuantifierElimination.composeXjunctsOuter(mScript, quantifier, resultDisjuncts);
+		final Term resultDisjunction =  PartialQuantifierElimination.applyDualFiniteConnective(mScript, quantifier, resultDisjuncts);
 		return new Term[] { resultDisjunction };
 	}
 
@@ -230,12 +230,12 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 		final List<Term> resultDisjunctions;
 		if (antiDer.isEmpty()) {
 			resultDisjunctions = new ArrayList<Term>();
-			final Term tmp = PartialQuantifierElimination.composeXjunctsInner(mScript, quantifier, resultAtoms.toArray(new Term[resultAtoms.size()]));
+			final Term tmp = PartialQuantifierElimination.applyDualFiniteConnective(mScript, quantifier, resultAtoms);
 			assert !Arrays.asList(tmp.getFreeVars()).contains(eliminatee) : "not eliminated";
 			resultDisjunctions.add(tmp);
 		} else {
 			resultAtoms.add(bi.computeAdDisjunction());
-			final Term tmp = PartialQuantifierElimination.composeXjunctsInner(mScript, quantifier, resultAtoms.toArray(new Term[resultAtoms.size()]));
+			final Term tmp = PartialQuantifierElimination.applyDualFiniteConnective(mScript, quantifier, resultAtoms);
 			Term disjunction;
 			if (quantifier == QuantifiedFormula.EXISTS) {
 				disjunction = SmtUtils.toDnf(mServices, mMgdScript, tmp, mXnfConversionTechnique);
@@ -360,13 +360,13 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 						resultAtoms.add(buildInequality(mquantifier, lowerBound, adUpper));
 					}
 				}
-				resultXJuncts.add(PartialQuantifierElimination.composeXjunctsInner(mScript, mquantifier, resultAtoms.toArray(new Term[resultAtoms.size()])));
+				resultXJuncts.add(PartialQuantifierElimination.applyDualFiniteConnective(mScript, mquantifier, resultAtoms));
 				if (!mServices.getProgressMonitorService().continueProcessing()) {
 					throw new ToolchainCanceledException(this.getClass(),
 							"building " + Math.pow(2,mantiDer.size()) + " xjuncts");
 				}
 			}
-			return PartialQuantifierElimination.composeXjunctsOuter(mScript, mquantifier, resultXJuncts.toArray(new Term[resultXJuncts.size()]));
+			return PartialQuantifierElimination.applyDualFiniteConnective(mScript, mquantifier, resultXJuncts.toArray(new Term[resultXJuncts.size()]));
 		}
 
 		private Bound computeBound(final Term term,
