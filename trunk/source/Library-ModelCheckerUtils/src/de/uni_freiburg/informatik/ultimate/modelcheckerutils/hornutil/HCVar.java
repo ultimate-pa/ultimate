@@ -22,7 +22,7 @@ public class HCVar implements IProgramVar {
 	
 	@Override
 	public String toString() {
-		return predicate.getName() + "{" + idx + "}";
+		return predicate.getName() + "{" + idx + "}" + ":" + termVariable.toString();
 	}
 	
 	@Override

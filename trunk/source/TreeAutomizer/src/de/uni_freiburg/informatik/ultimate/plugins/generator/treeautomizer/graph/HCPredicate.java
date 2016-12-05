@@ -2,11 +2,18 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.graph;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+<<<<<<< HEAD
+=======
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.logic.Util;
+>>>>>>> Updated the versioning of variables in SSABuilder, and added Variables Map to HCPredicate operations.
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HCVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClausePredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -22,28 +29,34 @@ public class HCPredicate extends BasicPredicate implements IPredicate {
 
 	@Visualizable
 	protected final HornClausePredicateSymbol mProgramPoint;
+	
+	private final Map<Term, HCVar> mProgramVars;
 
-	protected HCPredicate(final HornClausePredicateSymbol programPoint, final int serialNumber, final Term term,
-			final Set<IProgramVar> vars) {// , Term closedFormula) {
-
-		super(serialNumber, new String[] {}, term, vars, null);
+	protected HCPredicate(HornClausePredicateSymbol programPoint, int serialNumber, Term term,
+			Set<IProgramVar> vars, Map<Term, HCVar> varsMap) {//, Term closedFormula) {
+		
+		super(serialNumber, new String[]{}, term, vars, null);
 		mProgramPoint = programPoint;
+
+		mProgramVars = varsMap;
 	}
 
 	protected HCPredicate(HornClausePredicateSymbol programPoint, Term term,
-			Set<IProgramVar> vars) {//, Term closedFormula) {
+			Set<IProgramVar> vars, Map<Term, HCVar> varsMap) {//, Term closedFormula) {
 		
 		super(HashUtils.hashHsieh(serialHCPredicate, programPoint, term), new String[]{}, term, vars, null);
 		mProgramPoint = programPoint;
+		mProgramVars = varsMap;
 	}
 
-	protected HCPredicate(final HornClausePredicateSymbol programPoint, final Term term) {
-		this(programPoint, term, new HashSet<>());
+
+	protected HCPredicate(HornClausePredicateSymbol programPoint, Term term, Map<Term, HCVar> varsMap) {
+		this(programPoint, term, new HashSet<>(), varsMap);
 	}
 	
-	public HCPredicate(Term formula, HCPredicate oldPredicate) {
+	public HCPredicate(Term formula, HCPredicate oldPredicate, Map<Term, HCVar> varsMap) {
 		// TODO: Intersect oldPredicate.mVars with formula.vars
-		this(oldPredicate.mProgramPoint, HashUtils.hashHsieh(serialHCPredicate, formula, oldPredicate), formula, oldPredicate.mVars);
+		this(oldPredicate.mProgramPoint, HashUtils.hashHsieh(serialHCPredicate, formula, oldPredicate), formula, oldPredicate.mVars, varsMap);
 	}
 	
 	/**
@@ -77,6 +90,10 @@ public class HCPredicate extends BasicPredicate implements IPredicate {
 	public Set<IProgramVar> getVars() {
 		return mVars;
 	}
+	
+	public Map<Term, HCVar> getVarsMap() {
+		return mProgramVars;
+	}
 
 	@Override
 	public String toString() {
@@ -90,7 +107,7 @@ public class HCPredicate extends BasicPredicate implements IPredicate {
 				result += mProgramPoint.toString();
 			}
 		}
-		result += "@(" + mFormula.toString() + ")";
+		result += "@(" + mFormula.toString() + "::" + mProgramVars.toString() + ")";
 		return result;
 	}
 
