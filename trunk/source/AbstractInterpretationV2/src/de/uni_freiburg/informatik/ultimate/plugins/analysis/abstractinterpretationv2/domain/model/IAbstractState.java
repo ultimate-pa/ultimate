@@ -34,7 +34,6 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.FixpointEngine;
 
 /**
@@ -52,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  */
 public interface IAbstractState<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL> {
-
+	
 	/**
 	 * {@link FixpointEngine} will call this method to add a variable to the set of variables of an abstract state s.t.
 	 * they match the current scope.
@@ -60,7 +59,7 @@ public interface IAbstractState<STATE extends IAbstractState<STATE, ACTION, VARD
 	 * All variable names are unique.
 	 *
 	 * @param variable
-	 *            An {@link IBoogieVar} that represents the variable.
+	 *            The variable to add.
 	 * @return A new abstract state that is a copy of this instance except that it contains the freshly added variable.
 	 */
 	STATE addVariable(final VARDECL variable);
@@ -74,14 +73,13 @@ public interface IAbstractState<STATE extends IAbstractState<STATE, ACTION, VARD
 	 * A variable will only be removed if it was added before.
 	 *
 	 * @param variable
-	 *            An {@link IBoogieVar} that represents the variable.
-	 *
+	 *            The variable to remove.
 	 * @return A new abstract state that is a copy of this instance except that the removed variable is missing.
 	 */
 	STATE removeVariable(final VARDECL variable);
 
 	/**
-	 * Adds multiple variables at once (see {@link #addVariable(IBoogieVar)} for details).
+	 * Adds multiple variables at once.
 	 *
 	 * @param variables
 	 *            A {@link Set} describing all the variables that have to be added.
@@ -103,7 +101,7 @@ public interface IAbstractState<STATE extends IAbstractState<STATE, ACTION, VARD
 	 * Check if a given variable exists in the abstract state.
 	 *
 	 * @param var
-	 *            The {@link IBoogieVar} that should be tested.
+	 *            The variable to be tested for containment.
 	 * @return true if the variable exists, false otherwise.
 	 */
 	boolean containsVariable(final VARDECL var);
@@ -120,8 +118,7 @@ public interface IAbstractState<STATE extends IAbstractState<STATE, ACTION, VARD
 	 * Var(this)={x} and Var(dominator)={x}, then return dominator).
 	 * <p>
 	 * Each variable from Var(dominator) is<br>
-	 * <b>either</b> identical to a variable from Var(this), (i.e. they have the same name, the same {@link IBoogieVar},
-	 * and the same type)<br>
+	 * <b>either</b> identical to a variable from Var(this), (i.e. they have the same name, and the same type)<br>
 	 * <b>or</b> has a unique name that is not used by any variable in Var(this).
 	 *
 	 * @param dominator
