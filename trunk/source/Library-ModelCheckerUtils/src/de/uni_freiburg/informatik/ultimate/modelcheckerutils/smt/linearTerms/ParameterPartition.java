@@ -108,7 +108,7 @@ public class ParameterPartition {
 				final Term quantified = SmtUtils.quantifier(script, quantifier, quantifiedVarsInClass, connectedEquivalenceClass);
 				resultParams.add(quantified);
 			}
-			mTermWithPushedQuantifier = SmtUtils.and(script, resultParams);
+			mTermWithPushedQuantifier = PartialQuantifierElimination.composeXjunctsInner(script, quantifier, resultParams);
 		}
 		
 		

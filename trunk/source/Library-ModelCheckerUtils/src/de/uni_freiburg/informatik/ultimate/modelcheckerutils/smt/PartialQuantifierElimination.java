@@ -144,6 +144,23 @@ public class PartialQuantifierElimination {
 	}
 	
 	/**
+	 * Compose term with inner operation of a XNF.
+	 * For the case of existential quantification:
+	 * Compose atoms to a conjunction.
+	 */
+	public static Term composeXjunctsInner(final Script script, final int quantifier, final List<Term> xjunctsInner) {
+		final Term result;
+		if (quantifier == QuantifiedFormula.EXISTS) {
+			result = SmtUtils.and(script, xjunctsInner);
+		} else if (quantifier == QuantifiedFormula.FORALL) {
+			result = SmtUtils.or(script, xjunctsInner);
+		} else {
+			throw new AssertionError("unknown quantifier");
+		}
+		return result;
+	}
+	
+	/**
 	 * Get all parameters of the outer operation of a XNF
 	 * For the case of existential quantification:
 	 * Get all disjuncts of a formula in DNF.
