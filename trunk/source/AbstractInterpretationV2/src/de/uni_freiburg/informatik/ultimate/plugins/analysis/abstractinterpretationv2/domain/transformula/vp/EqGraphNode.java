@@ -27,14 +27,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.stream.Collectors;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -138,12 +136,6 @@ public class EqGraphNode {
 				this.getCcchild().addPair(arrayId, newList);
 			}
 		}
-//		for (EqGraphNode initCcpar : other.getInitCcpar()) {
-//			this.getInitCcpar().add(mapping.get(initCcpar.eqNode));
-//		}
-//		for (EqGraphNode initCcchild : other.getInitCcchild()) {
-//			this.getInitCcchild().add(mapping.get(initCcchild.eqNode));
-//		}
 	}
 
 	public EqGraphNode getRepresentative() {

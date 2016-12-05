@@ -124,8 +124,7 @@ public class VPStateBuilder {
 		for (final EqFunctionNode fnNode1 : fnNodeSet) {
 			for (final EqFunctionNode fnNode2 : fnNodeSet) {
 				if (!fnNode1.equals(fnNode2) && mEqGraph.congruent(getEqNodeToEqGraphNodeMap().get(fnNode1), getEqNodeToEqGraphNodeMap().get(fnNode2))) {
-					mEqGraph.equalityPropagation(getEqNodeToEqGraphNodeMap().get(fnNode1),
-							getEqNodeToEqGraphNodeMap().get(fnNode2));
+					merge(getEqNodeToEqGraphNodeMap().get(fnNode1), getEqNodeToEqGraphNodeMap().get(fnNode2));
 				}
 			}
 		}
