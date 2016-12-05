@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
@@ -56,6 +57,12 @@ public class HCVar implements IProgramVar {
 
 	@Override
 	public ApplicationTerm getPrimedConstant() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Term getTerm() {
 		// TODO Auto-generated method stub
 		return null;
 	}
