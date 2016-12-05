@@ -107,39 +107,39 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 		return mEqNodeToEqGraphNodeMap;
 	}
 
-	void restorePropagation(final EqFunctionNode node) {
+//	void restorePropagation(final EqFunctionNode node) {
+//
+//		final Set<EqFunctionNode> fnNodeSet = mDomain.getArrayIdToEqFnNodeMap().getImage(node.getFunction());
+//		for (final EqFunctionNode fnNode1 : fnNodeSet) {
+//			for (final EqFunctionNode fnNode2 : fnNodeSet) {
+//				if (!fnNode1.equals(fnNode2) && find(getEqNodeToEqGraphNodeMap().get(fnNode1))
+//						.equals(find(getEqNodeToEqGraphNodeMap().get(fnNode2)))) {
+//					equalityPropagation(getEqNodeToEqGraphNodeMap().get(fnNode1),
+//							getEqNodeToEqGraphNodeMap().get(fnNode2));
+//				}
+//			}
+//		}
+//	}
 
-		final Set<EqFunctionNode> fnNodeSet = mDomain.getArrayIdToEqFnNodeMap().getImage(node.getFunction());
-		for (final EqFunctionNode fnNode1 : fnNodeSet) {
-			for (final EqFunctionNode fnNode2 : fnNodeSet) {
-				if (!fnNode1.equals(fnNode2) && find(getEqNodeToEqGraphNodeMap().get(fnNode1))
-						.equals(find(getEqNodeToEqGraphNodeMap().get(fnNode2)))) {
-					equalityPropagation(getEqNodeToEqGraphNodeMap().get(fnNode1),
-							getEqNodeToEqGraphNodeMap().get(fnNode2));
-				}
-			}
-		}
-	}
-
-	public void addToDisEqSet(final EqNode node1, final EqNode node2) {
-		getDisEqualitySet().add(new VPDomainSymmetricPair<>(node1, node2));
-	}
-
-	/**
-	 * Use disEqualitySet to check if there exist contradiction in the graph.
-	 *
-	 * @return true if there is contradiction
-	 */
-	boolean checkContradiction() {
-
-		for (final VPDomainSymmetricPair<EqNode> disEqPair : getDisEqualitySet()) {
-			if (find(mEqNodeToEqGraphNodeMap.get(disEqPair.getFirst()))
-					.equals(find(mEqNodeToEqGraphNodeMap.get(disEqPair.getSecond())))) {
-				return true;
-			}
-		}
-		return false;
-	}
+//	public void addToDisEqSet(final EqNode node1, final EqNode node2) {
+//		getDisEqualitySet().add(new VPDomainSymmetricPair<>(node1, node2));
+//	}
+//
+//	/**
+//	 * Use disEqualitySet to check if there exist contradiction in the graph.
+//	 *
+//	 * @return true if there is contradiction
+//	 */
+//	boolean checkContradiction() {
+//
+//		for (final VPDomainSymmetricPair<EqNode> disEqPair : getDisEqualitySet()) {
+//			if (find(mEqNodeToEqGraphNodeMap.get(disEqPair.getFirst()))
+//					.equals(find(mEqNodeToEqGraphNodeMap.get(disEqPair.getSecond())))) {
+//				return true;
+//			}
+//		}
+//		return false;
+//	}
 
 	/**
 	 * Returns the representative of a @param node's equivalence class.
@@ -154,40 +154,40 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 		return find(node.getRepresentative());
 	}
 
-	/**
-	 * Returns the parents of all nodes in @param node's congruence class.
-	 *
-	 * @param node
-	 * @return
-	 */
-	private Set<EqGraphNode> ccpar(final EqGraphNode node) {
-		return find(node).getCcpar();
-	}
+//	/**
+//	 * Returns the parents of all nodes in @param node's congruence class.
+//	 *
+//	 * @param node
+//	 * @return
+//	 */
+//	private Set<EqGraphNode> ccpar(final EqGraphNode node) {
+//		return find(node).getCcpar();
+//	}
 
 	public HashRelation<IProgramVarOrConst, List<EqGraphNode>> ccchild(final EqGraphNode node) {
 		return find(node).getCcchild();
 	}
 
-	/**
-	 * Check whether @param node1 and @param node2 are congruent.
-	 *
-	 * @param node1
-	 * @param node2
-	 * @return true if they are congruent
-	 */
-	private boolean congruent(final EqGraphNode node1, final EqGraphNode node2) {
-		if (!(node1.eqNode instanceof EqFunctionNode) || !(node2.eqNode instanceof EqFunctionNode)) {
-			return false;
-		}
-
-		final EqFunctionNode fnNode1 = (EqFunctionNode) node1.eqNode;
-		final EqFunctionNode fnNode2 = (EqFunctionNode) node2.eqNode;
-
-		if (!(fnNode1.getFunction().equals(fnNode2.getFunction()))) {
-			return false;
-		}
-		return congruentIgnoreFunctionSymbol(fnNode1, fnNode2);
-	}
+//	/**
+//	 * Check whether @param node1 and @param node2 are congruent.
+//	 *
+//	 * @param node1
+//	 * @param node2
+//	 * @return true if they are congruent
+//	 */
+//	private boolean congruent(final EqGraphNode node1, final EqGraphNode node2) {
+//		if (!(node1.eqNode instanceof EqFunctionNode) || !(node2.eqNode instanceof EqFunctionNode)) {
+//			return false;
+//		}
+//
+//		final EqFunctionNode fnNode1 = (EqFunctionNode) node1.eqNode;
+//		final EqFunctionNode fnNode2 = (EqFunctionNode) node2.eqNode;
+//
+//		if (!(fnNode1.getFunction().equals(fnNode2.getFunction()))) {
+//			return false;
+//		}
+//		return congruentIgnoreFunctionSymbol(fnNode1, fnNode2);
+//	}
 
 	/**
 	 * Checks if the arguments of the given EqFunctionNodes are all congruent.
@@ -211,53 +211,53 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 		return true;
 	}
 
-	/**
-	 * Merge two congruence class. propagation.
-	 *
-	 * @param i1
-	 * @param i2
-	 */
-	void merge(final EqGraphNode node1, final EqGraphNode node2) {
-		if (!find(node1).equals(find(node2))) {
-			union(node1, node2);
-			equalityPropagation(node1, node2);
-		}
-	}
+//	/**
+//	 * Merge two congruence class. propagation.
+//	 *
+//	 * @param i1
+//	 * @param i2
+//	 */
+//	void merge(final EqGraphNode node1, final EqGraphNode node2) {
+//		if (!find(node1).equals(find(node2))) {
+//			union(node1, node2);
+//			equalityPropagation(node1, node2);
+//		}
+//	}
 
-	/**
-	 * Union of two equivalence classes.
-	 *
-	 * @param node1
-	 * @param node2
-	 */
-	private void union(final EqGraphNode node1, final EqGraphNode node2) {
-
-		final EqGraphNode graphNode1Find = find(node1);
-		final EqGraphNode graphNode2Find = find(node2);
-
-		if (!graphNode1Find.equals(graphNode2Find)) {
-			graphNode2Find.addToReverseRepresentative(graphNode1Find);
-			graphNode1Find.setRepresentative(graphNode2Find);
-			graphNode2Find.addToCcpar(graphNode1Find.getCcpar());
-			for (final Entry<IProgramVarOrConst, List<EqGraphNode>> entry : graphNode1Find.getCcchild().entrySet()) {
-				graphNode2Find.getCcchild().addPair(entry.getKey(), entry.getValue());
-			}
-			// graphNode2Find.addToCcchild(graphNode1Find.getCcchild());
-		}
-	}
-
-	private void equalityPropagation(final EqGraphNode node1, final EqGraphNode node2) {
-		final Set<EqGraphNode> p1 = ccpar(node1);
-		final Set<EqGraphNode> p2 = ccpar(node2);
-
-		for (final EqGraphNode t1 : p1) {
-			for (final EqGraphNode t2 : p2) {
-				if (!(find(t1).equals(find(t2))) && congruent(t1, t2)) {
-					merge(t1, t2);
-				}
-			}
-		}
-	}
+//	/**
+//	 * Union of two equivalence classes.
+//	 *
+//	 * @param node1
+//	 * @param node2
+//	 */
+//	private void union(final EqGraphNode node1, final EqGraphNode node2) {
+//
+//		final EqGraphNode graphNode1Find = find(node1);
+//		final EqGraphNode graphNode2Find = find(node2);
+//
+//		if (!graphNode1Find.equals(graphNode2Find)) {
+//			graphNode2Find.addToReverseRepresentative(graphNode1Find);
+//			graphNode1Find.setRepresentative(graphNode2Find);
+//			graphNode2Find.addToCcpar(graphNode1Find.getCcpar());
+//			for (final Entry<IProgramVarOrConst, List<EqGraphNode>> entry : graphNode1Find.getCcchild().entrySet()) {
+//				graphNode2Find.getCcchild().addPair(entry.getKey(), entry.getValue());
+//			}
+//			// graphNode2Find.addToCcchild(graphNode1Find.getCcchild());
+//		}
+//	}
+//
+//	private void equalityPropagation(final EqGraphNode node1, final EqGraphNode node2) {
+//		final Set<EqGraphNode> p1 = ccpar(node1);
+//		final Set<EqGraphNode> p2 = ccpar(node2);
+//
+//		for (final EqGraphNode t1 : p1) {
+//			for (final EqGraphNode t2 : p2) {
+//				if (!(find(t1).equals(find(t2))) && congruent(t1, t2)) {
+//					merge(t1, t2);
+//				}
+//			}
+//		}
+//	}
 
 	// private boolean isArray(final TermVariable term) {
 	// return mDomain.getArrayIdToEqFnNodeMap().containsKey(term);
@@ -278,9 +278,9 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 		if (mVars.contains(variable)) {
 			return this;
 		}
-		final VPState copy = mDomain.getVpStateFactory().copy(this);
-		copy.mVars.add(variable);
-		return copy;
+		final VPStateBuilder copy = mDomain.getVpStateFactory().copy(this);
+		copy.addVariable(variable);
+		return copy.build();
 	}
 
 	@Override
@@ -288,9 +288,9 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 		if (!mVars.contains(variable)) {
 			return this;
 		}
-		final VPState copy = mDomain.getVpStateFactory().copy(this);
-		copy.mVars.remove(variable);
-		return copy;
+		final VPStateBuilder copy = mDomain.getVpStateFactory().copy(this);
+		copy.removeVariable(variable);
+		return copy.build();
 	}
 
 	@Override
@@ -298,9 +298,9 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 		if (variables == null || variables.isEmpty()) {
 			return this;
 		}
-		final VPState copy = mDomain.getVpStateFactory().copy(this);
-		copy.mVars.addAll(variables);
-		return copy;
+		final VPStateBuilder copy = mDomain.getVpStateFactory().copy(this);
+		copy.addVariables(variables);
+		return copy.build();
 	}
 
 	@Override
@@ -308,9 +308,9 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 		if (variables == null || variables.isEmpty()) {
 			return this;
 		}
-		final VPState copy = mDomain.getVpStateFactory().copy(this);
-		copy.mVars.removeAll(variables);
-		return copy;
+		final VPStateBuilder copy = mDomain.getVpStateFactory().copy(this);
+		copy.removeVariables(variables);
+		return copy.build();
 	}
 
 	@Override

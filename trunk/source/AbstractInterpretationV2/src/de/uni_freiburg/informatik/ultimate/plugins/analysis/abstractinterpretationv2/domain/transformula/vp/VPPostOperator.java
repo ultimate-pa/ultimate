@@ -212,7 +212,7 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 		 * no part of the TransFormula influences the state --> return a copy
 		 */
 
-		VPState resultState = mDomain.getVpStateFactory().copy(preState);
+		VPState resultState = preState;//mDomain.getVpStateFactory().copy(preState).build();
 		return Collections.singletonList(resultState);
 	}
 

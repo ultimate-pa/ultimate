@@ -106,6 +106,13 @@ public class EqGraphNode {
 		if (eqNode instanceof EqFunctionNode) {
 			this.ccchild.addPair(((EqFunctionNode)eqNode).getFunction(), initCcchild);
 		}
+	}	
+	
+	public EqGraphNode find() {
+		if (this.getRepresentative().equals(this)) {
+			return this;
+		}
+		return this.getRepresentative().find();
 	}
 
 	void copyFields(EqGraphNode other, Map<EqNode, EqGraphNode> eqNodeToEqGraphNode) {
