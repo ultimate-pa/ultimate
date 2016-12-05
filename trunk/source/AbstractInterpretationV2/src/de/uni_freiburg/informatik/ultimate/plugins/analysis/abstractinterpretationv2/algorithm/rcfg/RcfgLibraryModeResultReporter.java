@@ -27,11 +27,11 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg;
 
+import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResultAtElement;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
@@ -41,21 +41,21 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  */
 public class RcfgLibraryModeResultReporter<STATE extends IAbstractState<STATE, CodeBlock, VARDECL>, VARDECL>
 		extends RcfgResultReporter<STATE, VARDECL> {
-
+	
 	public RcfgLibraryModeResultReporter(final IUltimateServiceProvider services) {
 		super(services);
 	}
-
+	
 	@Override
 	public void reportSafe(final CodeBlock first) {
 		reportSafe(first, "No error locations were reached.");
 	}
-
+	
 	@Override
 	public void reportSafe(final CodeBlock first, final String msg) {
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
 				new GenericResultAtElement<>(first, Activator.PLUGIN_ID, mServices.getBacktranslationService(),
 						"Procedure " + first.getPrecedingProcedure() + " is safe", msg, Severity.INFO));
 	}
-
+	
 }

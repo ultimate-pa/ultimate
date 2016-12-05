@@ -31,11 +31,11 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.ArrayList;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractDomain;
+import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractDomain;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
@@ -46,36 +46,36 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class CompoundDomainMergeOperator implements IAbstractStateBinaryOperator<CompoundDomainState> {
-
+	
 	private final IUltimateServiceProvider mServices;
-
+	
 	public CompoundDomainMergeOperator(final IUltimateServiceProvider services) {
 		mServices = services;
 	}
-
+	
 	@Override
 	public CompoundDomainState apply(final CompoundDomainState first, final CompoundDomainState second) {
 		final List<IAbstractState<?, CodeBlock, IBoogieVar>> firstStates = first.getAbstractStatesList();
 		final List<IAbstractState<?, CodeBlock, IBoogieVar>> secondStates = second.getAbstractStatesList();
 		assert firstStates.size() == secondStates.size();
 		assert first.getDomainList().size() == second.getDomainList().size();
-
+		
 		final List<IAbstractDomain> domains = first.getDomainList();
 		assert domains.size() == firstStates.size();
-
+		
 		final List<IAbstractState<?, CodeBlock, IBoogieVar>> returnStates = new ArrayList<>();
-
+		
 		for (int i = 0; i < firstStates.size(); i++) {
 			returnStates
 					.add(applyInternally(firstStates.get(i), secondStates.get(i), domains.get(i).getMergeOperator()));
 		}
-
+		
 		return new CompoundDomainState(mServices, domains, returnStates);
 	}
-
+	
 	private static <T extends IAbstractState> T applyInternally(final T first, final T second,
 			final IAbstractStateBinaryOperator<T> mergeOperator) {
 		return mergeOperator.apply(first, second);
 	}
-
+	
 }

@@ -28,8 +28,8 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.nonrelational;
 
+import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 
 /**
  * Interface that provides methods that all non-relational abstract states have in common.
@@ -42,8 +42,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  *            The type of the action.
  */
 public interface INonrelationalAbstractState<STATE extends IAbstractState<STATE, ACTION, IProgramVarOrConst>, ACTION>
-        extends IAbstractState<STATE, ACTION, IProgramVarOrConst> {
-
+		extends IAbstractState<STATE, ACTION, IProgramVarOrConst> {
+	
 	/**
 	 * Intersects <tt>this</tt> with another abstract state.
 	 *

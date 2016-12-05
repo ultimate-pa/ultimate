@@ -6,6 +6,7 @@ Bundle-Version: 0.0.1
 Require-Bundle: Library-UltimateCore,
  Library-SMTLIB,
  Library-ModelCheckerUtils,
+ de.uni_freiburg.informatik.ultimate.abstractinterpretation.model,
  Library-UltimateUtil,
  Library-BoogieAST,
  Library-ojAlgo,
@@ -18,7 +19,6 @@ Require-Bundle: Library-UltimateCore,
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ActivationPolicy: lazy
 Export-Package: de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg,
- de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model,
  de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.dataflow,
  de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp,
  de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool

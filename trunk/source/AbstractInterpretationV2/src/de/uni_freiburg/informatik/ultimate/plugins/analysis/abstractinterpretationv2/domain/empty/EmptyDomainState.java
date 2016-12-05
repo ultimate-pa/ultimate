@@ -32,9 +32,9 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 
 /**
  * This is an abstract state of the {@link EmptyDomain}. It does save variable declarations, but no values or value
@@ -53,34 +53,34 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public final class EmptyDomainState<ACTION, VARDECL>
 		implements IAbstractState<EmptyDomainState<ACTION, VARDECL>, ACTION, VARDECL> {
-
+	
 	private static int sId;
 	private final Set<VARDECL> mVarDecls;
 	private final int mId;
-
+	
 	protected EmptyDomainState() {
 		mVarDecls = new HashSet<>();
 		sId++;
 		mId = sId;
 	}
-
+	
 	protected EmptyDomainState(final Set<VARDECL> varDecls) {
 		mVarDecls = varDecls;
 		sId++;
 		mId = sId;
 	}
-
+	
 	@Override
 	public EmptyDomainState<ACTION, VARDECL> addVariable(final VARDECL variable) {
 		assert variable != null;
-
+		
 		final Set<VARDECL> newMap = new HashSet<>(mVarDecls);
 		if (!newMap.add(variable)) {
 			throw new UnsupportedOperationException("Variable names have to be disjoint");
 		}
 		return new EmptyDomainState<ACTION, VARDECL>(newMap);
 	}
-
+	
 	@Override
 	public EmptyDomainState<ACTION, VARDECL> removeVariable(final VARDECL variable) {
 		assert variable != null;
@@ -89,12 +89,12 @@ public final class EmptyDomainState<ACTION, VARDECL>
 		assert result;
 		return new EmptyDomainState<ACTION, VARDECL>(newMap);
 	}
-
+	
 	@Override
 	public EmptyDomainState<ACTION, VARDECL> addVariables(final Collection<VARDECL> variables) {
 		assert variables != null;
 		assert !variables.isEmpty();
-
+		
 		final Set<VARDECL> newMap = new HashSet<>(mVarDecls);
 		for (final VARDECL entry : variables) {
 			if (!newMap.add(entry)) {
@@ -103,29 +103,29 @@ public final class EmptyDomainState<ACTION, VARDECL>
 		}
 		return new EmptyDomainState<ACTION, VARDECL>(newMap);
 	}
-
+	
 	@Override
 	public EmptyDomainState<ACTION, VARDECL> removeVariables(final Collection<VARDECL> variables) {
 		assert variables != null;
 		assert !variables.isEmpty();
-
+		
 		final Set<VARDECL> newMap = new HashSet<>(mVarDecls);
 		for (final VARDECL entry : variables) {
 			newMap.remove(entry);
 		}
 		return new EmptyDomainState<ACTION, VARDECL>(newMap);
 	}
-
+	
 	@Override
 	public boolean isEmpty() {
 		return mVarDecls.isEmpty();
 	}
-
+	
 	@Override
 	public boolean isBottom() {
 		return false;
 	}
-
+	
 	@Override
 	public String toLogString() {
 		final StringBuilder sb = new StringBuilder();
@@ -134,21 +134,21 @@ public final class EmptyDomainState<ACTION, VARDECL>
 		}
 		return sb.toString();
 	}
-
+	
 	@Override
 	public boolean isEqualTo(final EmptyDomainState<ACTION, VARDECL> other) {
 		if (other == null) {
 			return false;
 		}
-
+		
 		if (other.equals(this)) {
 			return true;
 		}
-
+		
 		if (other.mVarDecls.size() != mVarDecls.size()) {
 			return false;
 		}
-
+		
 		for (final VARDECL entry : mVarDecls) {
 			if (!other.mVarDecls.contains(entry)) {
 				return false;
@@ -156,17 +156,17 @@ public final class EmptyDomainState<ACTION, VARDECL>
 		}
 		return true;
 	}
-
+	
 	@Override
 	public String toString() {
 		return toLogString();
 	}
-
+	
 	@Override
 	public int hashCode() {
 		return mId;
 	}
-
+	
 	@Override
 	public boolean equals(final Object obj) {
 		if (this == obj) {
@@ -182,7 +182,7 @@ public final class EmptyDomainState<ACTION, VARDECL>
 		final EmptyDomainState<ACTION, VARDECL> other = (EmptyDomainState<ACTION, VARDECL>) obj;
 		return mId == other.mId;
 	}
-
+	
 	/**
 	 * This method compares if this state contains the same variable declarations than the other state.
 	 *
@@ -193,22 +193,22 @@ public final class EmptyDomainState<ACTION, VARDECL>
 	boolean hasSameVariables(final EmptyDomainState<ACTION, VARDECL> other) {
 		return isEqualTo(other);
 	}
-
+	
 	@Override
 	public Set<VARDECL> getVariables() {
 		return Collections.unmodifiableSet(mVarDecls);
 	}
-
+	
 	@Override
 	public boolean containsVariable(final VARDECL var) {
 		return mVarDecls.contains(var);
 	}
-
+	
 	@Override
 	public Term getTerm(final Script script) {
 		return script.term("true");
 	}
-
+	
 	@Override
 	public EmptyDomainState<ACTION, VARDECL> patch(final EmptyDomainState<ACTION, VARDECL> dominator) {
 		if (dominator.isEmpty()) {
@@ -216,18 +216,18 @@ public final class EmptyDomainState<ACTION, VARDECL>
 		} else if (isEmpty()) {
 			return dominator;
 		}
-
+		
 		final Set<VARDECL> newVarDecls = new HashSet<>();
 		newVarDecls.addAll(mVarDecls);
 		newVarDecls.addAll(dominator.mVarDecls);
-
+		
 		if (newVarDecls.size() == mVarDecls.size()) {
 			return this;
 		}
-
+		
 		return new EmptyDomainState<ACTION, VARDECL>(newVarDecls);
 	}
-
+	
 	@Override
 	public SubsetResult isSubsetOf(final EmptyDomainState<ACTION, VARDECL> other) {
 		assert hasSameVariables(other);

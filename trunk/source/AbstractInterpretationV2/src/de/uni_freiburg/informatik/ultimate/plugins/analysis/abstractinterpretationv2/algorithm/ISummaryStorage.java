@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm;
 
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractState;
 
 /**
  *
@@ -34,8 +34,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  *
  */
 public interface ISummaryStorage<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL, LOCATION> {
-
+	
 	AbstractMultiState<STATE, ACTION, VARDECL> getSummaryPostState(final ACTION summaryAction,
 			final AbstractMultiState<STATE, ACTION, VARDECL> preCallState);
-
+	
 }

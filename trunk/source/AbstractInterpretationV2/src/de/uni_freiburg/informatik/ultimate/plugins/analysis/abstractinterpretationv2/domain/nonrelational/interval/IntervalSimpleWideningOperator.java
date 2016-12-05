@@ -32,8 +32,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
+import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.TypeUtils.TypeUtils;
 
 /**
@@ -43,16 +43,16 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  *
  */
 public class IntervalSimpleWideningOperator implements IAbstractStateBinaryOperator<IntervalDomainState> {
-
+	
 	@Override
 	public IntervalDomainState apply(final IntervalDomainState first, final IntervalDomainState second) {
 		assert first.hasSameVariables(second);
 		assert !first.isBottom() && !second.isBottom();
-
+		
 		final List<IBoogieVar> boolsToTop = new ArrayList<>();
 		final List<IBoogieVar> varsToTop = new ArrayList<>();
 		final List<IBoogieVar> arraysToTop = new ArrayList<>();
-
+		
 		// TODO: Add array support.
 		final Consumer<IBoogieVar> varConsumer = var -> {
 			if (!first.getValue(var).isEqualTo(second.getValue(var))) {
@@ -64,11 +64,11 @@ public class IntervalSimpleWideningOperator implements IAbstractStateBinaryOpera
 				boolsToTop.add(var);
 			}
 		};
-
+		
 		for (final IBoogieVar var : first.getVariables()) {
 			TypeUtils.consumeVariable(varConsumer, boolConsumer, null, var);
 		}
-
+		
 		return first.setVarsToTop(varsToTop, boolsToTop, arraysToTop);
 	}
 }

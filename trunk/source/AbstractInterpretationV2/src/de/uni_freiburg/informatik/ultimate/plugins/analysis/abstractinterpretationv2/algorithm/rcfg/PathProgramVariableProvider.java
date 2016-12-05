@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -37,7 +38,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
@@ -51,30 +51,30 @@ public class PathProgramVariableProvider<STATE extends IAbstractState<STATE, Cod
 	public PathProgramVariableProvider(final ISymbolTableAdapter adapter, final IUltimateServiceProvider services) {
 		super(new PathProgramSymbolTableAdapter(adapter), services);
 	}
-	
+
 	private static class PathProgramSymbolTableAdapter implements ISymbolTableAdapter {
 		
 		private final ISymbolTableAdapter mAdapter;
-		
+
 		public PathProgramSymbolTableAdapter(final ISymbolTableAdapter adapter) {
 			mAdapter = adapter;
 		}
-		
+
 		@Override
 		public Map<String, Declaration> getLocalVariables(final String procedure) {
 			return mAdapter.getLocalVariables(procedure);
 		}
-		
+
 		@Override
 		public Set<IProgramNonOldVar> getGlobals() {
 			return mAdapter.getGlobals();
 		}
-		
+
 		@Override
 		public Set<IProgramConst> getConsts() {
 			return mAdapter.getConsts();
 		}
-		
+
 		@Override
 		public BoogieVar getBoogieVar(final String varId, final DeclarationInformation declarationInformation,
 				final boolean inOldContext) {
@@ -82,14 +82,14 @@ public class PathProgramVariableProvider<STATE extends IAbstractState<STATE, Cod
 			return rtr;
 		}
 	}
-	
+
 	private static class VariableCollector {
 		private final Set<CodeBlock> mPathProgram;
-		
+
 		private VariableCollector(final Set<CodeBlock> pathProgramProjection) {
 			mPathProgram = pathProgramProjection;
 			// mPathProgram.stream().map(a -> )
 		}
 	}
-	
+
 }

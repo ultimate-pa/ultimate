@@ -32,10 +32,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
+import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractDomain;
+import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.AbstractMultiState;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractDomain;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 
 /**
  * The result of an abstract interpretation analysis run.
@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public interface IAbstractInterpretationResult<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL, LOCATION> {
-
+	
 	/**
 	 * @return a {@link Map} mapping to each location that was reachable during the analysis the computed fixpoint as
 	 *         {@link Term}.

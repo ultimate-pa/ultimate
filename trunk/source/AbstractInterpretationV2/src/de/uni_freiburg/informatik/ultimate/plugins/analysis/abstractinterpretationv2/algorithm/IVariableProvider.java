@@ -27,7 +27,7 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm;
 
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractState;
 
 /**
  *
@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @param <VARDECL>
  */
 public interface IVariableProvider<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL> {
-
+	
 	/**
 	 * Defines global and local variables in an {@link IAbstractState} before the execution of action
 	 * <code>current</code>. Will be called for initial edges of a program and for a fresh state.<br>
@@ -56,7 +56,7 @@ public interface IVariableProvider<STATE extends IAbstractState<STATE, ACTION, V
 	 *         <code>current</code> in the program.
 	 */
 	STATE defineInitialVariables(ACTION current, STATE state);
-
+	
 	/**
 	 * Should prepare an {@link IAbstractState} with insertion or removal of variables s.t.
 	 * <ul>

@@ -28,17 +28,17 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign;
 
+import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractDomain;
+import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractPostOperator;
+import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractDomain;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
  * This abstract domain keeps track of the sign of each variable during abstract interpretation. Variables can either be
@@ -48,14 +48,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Boo
  *
  */
 public class SignDomain implements IAbstractDomain<SignDomainState, CodeBlock, IBoogieVar> {
-
+	
 	private final IUltimateServiceProvider mServices;
 	private final BoogieIcfgContainer mRootAnnotation;
 	private final ILogger mLogger;
-
+	
 	private IAbstractPostOperator<SignDomainState, CodeBlock, IBoogieVar> mPostOperator;
 	private final BoogieSymbolTable mSymbolTable;
-
+	
 	public SignDomain(final IUltimateServiceProvider services, final BoogieIcfgContainer rootAnnotation,
 			final BoogieSymbolTable symbolTable) {
 		mServices = services;
@@ -63,22 +63,22 @@ public class SignDomain implements IAbstractDomain<SignDomainState, CodeBlock, I
 		mRootAnnotation = rootAnnotation;
 		mSymbolTable = symbolTable;
 	}
-
+	
 	@Override
 	public SignDomainState createFreshState() {
 		return new SignDomainState(mLogger);
 	}
-
+	
 	@Override
 	public IAbstractStateBinaryOperator<SignDomainState> getWideningOperator() {
 		return new SignMergeOperator();
 	}
-
+	
 	@Override
 	public IAbstractStateBinaryOperator<SignDomainState> getMergeOperator() {
 		return new SignMergeOperator();
 	}
-
+	
 	@Override
 	public IAbstractPostOperator<SignDomainState, CodeBlock, IBoogieVar> getPostOperator() {
 		if (mPostOperator == null) {
@@ -90,7 +90,7 @@ public class SignDomain implements IAbstractDomain<SignDomainState, CodeBlock, I
 		}
 		return mPostOperator;
 	}
-
+	
 	@Override
 	public int getDomainPrecision() {
 		return 50;

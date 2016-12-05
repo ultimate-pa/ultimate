@@ -27,20 +27,20 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon;
 
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
+import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractStateBinaryOperator;
 
 /**
  * Widening operator for octagons that sets increased values directly to infinity.
- * 
+ *
  * @see OctMatrix#widenSimple(OctMatrix)
- * 
+ *
  * @author schaetzc@informatik.uni-freiburg.de
  */
 public class OctSimpleWideningOperator implements IAbstractStateBinaryOperator<OctDomainState> {
-
+	
 	@Override
-	public OctDomainState apply(OctDomainState first, OctDomainState second) {
+	public OctDomainState apply(final OctDomainState first, final OctDomainState second) {
 		return first.widen(second, OctMatrix::widenSimple);
 	}
-
+	
 }

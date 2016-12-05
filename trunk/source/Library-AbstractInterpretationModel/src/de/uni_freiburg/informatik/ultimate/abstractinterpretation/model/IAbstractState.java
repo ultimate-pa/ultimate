@@ -26,7 +26,7 @@
  * to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model;
+package de.uni_freiburg.informatik.ultimate.abstractinterpretation.model;
 
 import java.util.Collection;
 import java.util.Map;
@@ -34,7 +34,6 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.FixpointEngine;
 
 /**
  * An abstract state is an abstraction of all program variables at a certain program location.
@@ -63,7 +62,7 @@ public interface IAbstractState<STATE extends IAbstractState<STATE, ACTION, VARD
 	 * @return A new abstract state that is a copy of this instance except that it contains the freshly added variable.
 	 */
 	STATE addVariable(final VARDECL variable);
-
+	
 	/**
 	 * {@link FixpointEngine} will call this method to remove a variable from the set of variables of an abstract state
 	 * s.t. they match the current scope.
@@ -77,7 +76,7 @@ public interface IAbstractState<STATE extends IAbstractState<STATE, ACTION, VARD
 	 * @return A new abstract state that is a copy of this instance except that the removed variable is missing.
 	 */
 	STATE removeVariable(final VARDECL variable);
-
+	
 	/**
 	 * Adds multiple variables at once.
 	 *
@@ -86,7 +85,7 @@ public interface IAbstractState<STATE extends IAbstractState<STATE, ACTION, VARD
 	 * @return A new abstract state that is a copy of this instance except that it contains the freshly added variables.
 	 */
 	STATE addVariables(final Collection<VARDECL> variables);
-
+	
 	/**
 	 * Remove multiple variables at once (see {@link #removeVariable(String, Object)} for details).
 	 *
@@ -96,7 +95,7 @@ public interface IAbstractState<STATE extends IAbstractState<STATE, ACTION, VARD
 	 *         <code>variables</code> are missing.
 	 */
 	STATE removeVariables(final Collection<VARDECL> variables);
-
+	
 	/**
 	 * Check if a given variable exists in the abstract state.
 	 *
@@ -105,12 +104,12 @@ public interface IAbstractState<STATE extends IAbstractState<STATE, ACTION, VARD
 	 * @return true if the variable exists, false otherwise.
 	 */
 	boolean containsVariable(final VARDECL var);
-
+	
 	/**
 	 * @return an unmodifiable {@link Set} containing all variables declared in this state.
 	 */
 	Set<VARDECL> getVariables();
-
+	
 	/**
 	 * Create a new state that has all the variables and abstraction of this {@link IAbstractState} and of the
 	 * <code>dominator</code> (i.e., Var(return) = Var(this) &cup; Var(dominator)). If both states (this and dominator)
@@ -125,14 +124,14 @@ public interface IAbstractState<STATE extends IAbstractState<STATE, ACTION, VARD
 	 *            The dominator state that should be patched onto <code>this</code>.
 	 */
 	STATE patch(STATE dominator);
-
+	
 	/**
 	 * An abstract state is empty when it does not contain any variable.
 	 *
 	 * @return true if this abstract state is empty, false otherwise.
 	 */
 	boolean isEmpty();
-
+	
 	/**
 	 * An abstract state is bottom when it represents the smallest element of the lattice. This should be equivalent to
 	 * a predicate stating false.
@@ -140,7 +139,7 @@ public interface IAbstractState<STATE extends IAbstractState<STATE, ACTION, VARD
 	 * @return true if this abstract state is bottom, false otherwise.
 	 */
 	boolean isBottom();
-
+	
 	/**
 	 * Check whether this instance is equal to <code>other</code> or not. Instances are equal if they have the same set
 	 * of variables and describe the same abstract state.
@@ -151,7 +150,7 @@ public interface IAbstractState<STATE extends IAbstractState<STATE, ACTION, VARD
 	 *         otherwise.
 	 */
 	boolean isEqualTo(final STATE other);
-
+	
 	/**
 	 * Check whether this instance is a strict subset, a subset, equal, or none of this compared to another instance.
 	 * Only states with the same set of variables can be compared.
@@ -161,7 +160,7 @@ public interface IAbstractState<STATE extends IAbstractState<STATE, ACTION, VARD
 	 * @return A {@link SubsetResult}.
 	 */
 	SubsetResult isSubsetOf(final STATE other);
-
+	
 	/**
 	 * Create an SMT constraint that represents this abstract state. If you do not want to implement this right away,
 	 * just return <code>script.term("true")</code>.
@@ -171,14 +170,14 @@ public interface IAbstractState<STATE extends IAbstractState<STATE, ACTION, VARD
 	 * @return A {@link Term} instance representing this abstract state. Must be false if isBottom is true.
 	 */
 	Term getTerm(final Script script);
-
+	
 	/**
 	 * Is used for debug output.
 	 *
 	 * @return A {@link String} representing this abstract state.
 	 */
 	String toLogString();
-
+	
 	/**
 	 * The result of {@link IAbstractState#isSubsetOf(IAbstractState)}.
 	 *
@@ -205,7 +204,7 @@ public interface IAbstractState<STATE extends IAbstractState<STATE, ACTION, VARD
 		 * If none of the other results apply.
 		 */
 		NONE;
-
+		
 		/**
 		 * Update this (the current result) with another one. Useful to determine the combined {@link SubsetResult} of a
 		 * collection.

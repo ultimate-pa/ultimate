@@ -30,8 +30,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.ArrayDeque;
 import java.util.Deque;
 
+import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 
 /**
  * Enables the construction and evaluation of multiple {@link IEvaluator}s. It is assumed that the order, in which an
@@ -42,10 +42,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  *
  */
 public class ExpressionEvaluator<VALUE, STATE extends IAbstractState<STATE, ACTION, IBoogieVar>, ACTION> {
-
+	
 	private final Deque<IEvaluator<VALUE, STATE, ACTION>> mEvaluators;
 	private IEvaluator<VALUE, STATE, ACTION> mRootEvaluator;
-
+	
 	/**
 	 * The default constructor.
 	 */
@@ -53,7 +53,7 @@ public class ExpressionEvaluator<VALUE, STATE extends IAbstractState<STATE, ACTI
 		mEvaluators = new ArrayDeque<>();
 		mRootEvaluator = null;
 	}
-
+	
 	/**
 	 * Adds a new {@link IEvaluator} to the already existing ones and builds an evaluator tree that defines the order in
 	 * which each {@link IEvaluator} should be evaluated. If there is no evaluator present yet, this function will store
@@ -62,14 +62,14 @@ public class ExpressionEvaluator<VALUE, STATE extends IAbstractState<STATE, ACTI
 	 * @param evaluator
 	 */
 	public void addEvaluator(final IEvaluator<VALUE, STATE, ACTION> evaluator) {
-
+		
 		// TODO Insert sanity checks to be on the safe side.
-
+		
 		if (mEvaluators.isEmpty()) {
 			if (mRootEvaluator != null) {
 				throw new UnsupportedOperationException("The root evaluator is not empty.");
 			}
-
+			
 			mEvaluators.push(evaluator);
 			mRootEvaluator = evaluator;
 		} else {
@@ -80,7 +80,7 @@ public class ExpressionEvaluator<VALUE, STATE extends IAbstractState<STATE, ACTI
 				}
 			}
 		}
-
+		
 		// Pop off all the elements that do not have free operands anymore
 		while (!mEvaluators.isEmpty()) {
 			if (!mEvaluators.peek().hasFreeOperands()) {
@@ -90,7 +90,7 @@ public class ExpressionEvaluator<VALUE, STATE extends IAbstractState<STATE, ACTI
 			}
 		}
 	}
-
+	
 	/**
 	 * Returns the root evaluator of the evaluation tree.
 	 *
@@ -99,7 +99,7 @@ public class ExpressionEvaluator<VALUE, STATE extends IAbstractState<STATE, ACTI
 	public IEvaluator<VALUE, STATE, ACTION> getRootEvaluator() {
 		return mRootEvaluator;
 	}
-
+	
 	/**
 	 * Returns <code>true</code> if there are no evaluators present in the {@link ExpressionEvaluator},
 	 * <code>false</code> otherwise.
@@ -109,7 +109,7 @@ public class ExpressionEvaluator<VALUE, STATE extends IAbstractState<STATE, ACTI
 	public boolean isEmpty() {
 		return mEvaluators.isEmpty();
 	}
-
+	
 	/**
 	 * Returns <code>true</code> if all added {@link IEvaluator}s have been assembled completely. The root of the
 	 * evaluation tree can be obtained via {@link ExpressionEvaluator#getRootEvaluator()}. Returns <code>false</code>
@@ -120,17 +120,17 @@ public class ExpressionEvaluator<VALUE, STATE extends IAbstractState<STATE, ACTI
 	public boolean isFinished() {
 		return isEmpty() && (mRootEvaluator != null);
 	}
-
+	
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
-
+		
 		sb.append(mRootEvaluator);
-
+		
 		if (!mEvaluators.isEmpty()) {
 			sb.append(", Stack: ").append(mEvaluators);
 		}
-
+		
 		return sb.toString();
 	}
 }

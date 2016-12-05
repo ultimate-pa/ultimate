@@ -34,13 +34,13 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
  *
@@ -48,20 +48,20 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Boo
  *
  */
 public class DataflowState implements IAbstractState<DataflowState, CodeBlock, IProgramVar> {
-
+	
 	private static int sId;
 	private final int mId;
-
+	
 	private final Set<IProgramVar> mVars;
 	private final Map<IProgramVar, Set<CodeBlock>> mDef;
 	private final Map<IProgramVar, Set<CodeBlock>> mUse;
 	private final Map<IProgramVar, Set<CodeBlock>> mReachDef;
 	private final Map<IProgramVar, Set<BoogieIcfgLocation>> mNoWrite;
-
+	
 	DataflowState() {
 		this(new HashSet<>(), new HashMap<>(), new HashMap<>(), new HashMap<>(), new HashMap<>());
 	}
-
+	
 	DataflowState(final Set<IProgramVar> vars, final Map<IProgramVar, Set<CodeBlock>> def,
 			final Map<IProgramVar, Set<CodeBlock>> use, final Map<IProgramVar, Set<CodeBlock>> reachdef,
 			final Map<IProgramVar, Set<BoogieIcfgLocation>> noWrite) {
@@ -76,7 +76,7 @@ public class DataflowState implements IAbstractState<DataflowState, CodeBlock, I
 		mId = getFreshId();
 		mNoWrite = noWrite;
 	}
-
+	
 	@Override
 	public DataflowState addVariable(final IProgramVar variable) {
 		if (mVars.contains(variable)) {
@@ -86,7 +86,7 @@ public class DataflowState implements IAbstractState<DataflowState, CodeBlock, I
 		vars.add(variable);
 		return new DataflowState(vars, mDef, mUse, mReachDef, mNoWrite);
 	}
-
+	
 	@Override
 	public DataflowState removeVariable(final IProgramVar variable) {
 		if (!mVars.contains(variable)) {
@@ -104,7 +104,7 @@ public class DataflowState implements IAbstractState<DataflowState, CodeBlock, I
 		use.remove(variable);
 		return new DataflowState(vars, def, use, reachdef, noWrite);
 	}
-
+	
 	@Override
 	public DataflowState addVariables(final Collection<IProgramVar> variables) {
 		if (variables == null || variables.isEmpty()) {
@@ -114,7 +114,7 @@ public class DataflowState implements IAbstractState<DataflowState, CodeBlock, I
 		vars.addAll(variables);
 		return new DataflowState(vars, mDef, mUse, mReachDef, mNoWrite);
 	}
-
+	
 	@Override
 	public DataflowState removeVariables(final Collection<IProgramVar> variables) {
 		if (variables == null || variables.isEmpty()) {
@@ -134,34 +134,34 @@ public class DataflowState implements IAbstractState<DataflowState, CodeBlock, I
 		});
 		return new DataflowState(vars, def, use, reachdef, noWrite);
 	}
-
+	
 	@Override
 	public boolean containsVariable(final IProgramVar var) {
 		return mVars.contains(var);
 	}
-
+	
 	@Override
 	public Set<IProgramVar> getVariables() {
 		return Collections.unmodifiableSet(mVars);
 	}
-
+	
 	@Override
 	public DataflowState patch(final DataflowState dominator) {
 		// TODO Auto-generated method stub
 		return null;
 	}
-
+	
 	@Override
 	public boolean isEmpty() {
 		return mVars.isEmpty();
 	}
-
+	
 	@Override
 	public boolean isBottom() {
 		// A basic dataflow state is never bottom
 		return false;
 	}
-
+	
 	@Override
 	public boolean isEqualTo(final DataflowState other) {
 		if (other == null) {
@@ -181,7 +181,7 @@ public class DataflowState implements IAbstractState<DataflowState, CodeBlock, I
 		}
 		return other.mNoWrite.equals(mNoWrite);
 	}
-
+	
 	@Override
 	public SubsetResult isSubsetOf(final DataflowState other) {
 		if (isEqualTo(other)) {
@@ -189,12 +189,12 @@ public class DataflowState implements IAbstractState<DataflowState, CodeBlock, I
 		}
 		return SubsetResult.NONE;
 	}
-
+	
 	@Override
 	public Term getTerm(final Script script) {
 		return script.term("true");
 	}
-
+	
 	@Override
 	public String toLogString() {
 		final StringBuilder sb = new StringBuilder();
@@ -220,12 +220,12 @@ public class DataflowState implements IAbstractState<DataflowState, CodeBlock, I
 		sb.append('}');
 		return sb.toString();
 	}
-
+	
 	@Override
 	public int hashCode() {
 		return mId;
 	}
-
+	
 	@Override
 	public boolean equals(final Object obj) {
 		if (this == obj) {
@@ -243,40 +243,40 @@ public class DataflowState implements IAbstractState<DataflowState, CodeBlock, I
 		}
 		return other.mId == mId;
 	}
-
+	
 	Map<IProgramVar, Set<CodeBlock>> getDef() {
 		return Collections.unmodifiableMap(mDef);
 	}
-
+	
 	Map<IProgramVar, Set<CodeBlock>> getUse() {
 		return Collections.unmodifiableMap(mUse);
 	}
-
+	
 	Map<IProgramVar, Set<CodeBlock>> getReachingDefinitions() {
 		return Collections.unmodifiableMap(mReachDef);
 	}
-
+	
 	Map<IProgramVar, Set<BoogieIcfgLocation>> getNoWrite() {
 		return Collections.unmodifiableMap(mNoWrite);
 	}
-
+	
 	DataflowState union(final DataflowState other) {
 		if (other == null || other == this || other.isEqualTo(this)) {
 			return this;
 		}
-
+		
 		if (!mVars.equals(other.mVars)) {
 			throw new UnsupportedOperationException("Cannot create union of two incompatible dataflow states");
 		}
-
+		
 		final Set<IProgramVar> vars = AbsIntUtil.getFreshSet(mVars);
 		final Map<IProgramVar, Set<CodeBlock>> def = AbsIntUtil.getFreshMap(mDef);
 		final Map<IProgramVar, Set<CodeBlock>> use = AbsIntUtil.getFreshMap(mUse);
 		final Map<IProgramVar, Set<CodeBlock>> reachdef = AbsIntUtil.getFreshMap(mReachDef);
 		final Map<IProgramVar, Set<BoogieIcfgLocation>> noWrite = AbsIntUtil.getFreshMap(mNoWrite);
-
+		
 		// TODO: What about def and use?
-
+		
 		for (final Entry<IProgramVar, Set<CodeBlock>> otherEntry : other.mReachDef.entrySet()) {
 			final Set<CodeBlock> set = reachdef.get(otherEntry.getKey());
 			if (set == null) {
@@ -288,7 +288,7 @@ public class DataflowState implements IAbstractState<DataflowState, CodeBlock, I
 				reachdef.put(otherEntry.getKey(), newset);
 			}
 		}
-		
+
 		for (final Entry<IProgramVar, Set<BoogieIcfgLocation>> otherEntry : other.mNoWrite.entrySet()) {
 			final Set<BoogieIcfgLocation> set = noWrite.get(otherEntry.getKey());
 			if (set == null) {
@@ -300,19 +300,19 @@ public class DataflowState implements IAbstractState<DataflowState, CodeBlock, I
 				noWrite.put(otherEntry.getKey(), newset);
 			}
 		}
-
+		
 		return new DataflowState(vars, def, use, reachdef, noWrite);
 	}
-
+	
 	private static int getFreshId() {
 		sId++;
 		return sId;
 	}
-
+	
 	public Set<BoogieIcfgLocation> getNowriteLocations(final IProgramVar iProgramVar) {
 		return mNoWrite.get(iProgramVar);
 	}
-	
+
 	public Set<CodeBlock> getReachingDefinitions(final IProgramVar var) {
 		return mReachDef.get(var);
 	}

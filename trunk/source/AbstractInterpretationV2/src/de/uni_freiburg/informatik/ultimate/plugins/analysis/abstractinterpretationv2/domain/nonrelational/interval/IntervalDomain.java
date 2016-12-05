@@ -30,6 +30,9 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.math.BigDecimal;
 
+import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractDomain;
+import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractPostOperator;
+import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -38,12 +41,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSy
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.generic.LiteralCollection;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractDomain;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
  * This abstract domain stores intervals for all variable valuations. Intervals can be of the form [num; num], where num
@@ -54,56 +54,56 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Boo
  *
  */
 public class IntervalDomain implements IAbstractDomain<IntervalDomainState, CodeBlock, IBoogieVar> {
-
+	
 	private final ILogger mLogger;
 	private final LiteralCollection mLiteralCollection;
 	private final IUltimateServiceProvider mServices;
 	private final BoogieIcfgContainer mRootAnnotation;
 	private final BoogieSymbolTable mSymbolTable;
-
+	
 	private IAbstractStateBinaryOperator<IntervalDomainState> mWideningOperator;
 	private IAbstractStateBinaryOperator<IntervalDomainState> mMergeOperator;
 	private IAbstractPostOperator<IntervalDomainState, CodeBlock, IBoogieVar> mPostOperator;
-
+	
 	public IntervalDomain(final ILogger logger, final BoogieSymbolTable symbolTable,
-	        final LiteralCollection literalCollector, final IUltimateServiceProvider services,
-	        final BoogieIcfgContainer rootAnnotation) {
+			final LiteralCollection literalCollector, final IUltimateServiceProvider services,
+			final BoogieIcfgContainer rootAnnotation) {
 		mLogger = logger;
 		mLiteralCollection = literalCollector;
 		mServices = services;
 		mRootAnnotation = rootAnnotation;
 		mSymbolTable = symbolTable;
 	}
-
+	
 	@Override
 	public IntervalDomainState createFreshState() {
 		return new IntervalDomainState(mLogger);
 	}
-
+	
 	@Override
 	public IAbstractStateBinaryOperator<IntervalDomainState> getWideningOperator() {
 		if (mWideningOperator == null) {
 			final IPreferenceProvider ups = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 			final String wideningOperator = ups.getString(IntervalDomainPreferences.LABEL_INTERVAL_WIDENING_OPERATOR);
-
+			
 			if (wideningOperator.equals(IntervalDomainPreferences.VALUE_WIDENING_OPERATOR_SIMPLE)) {
 				mWideningOperator = new IntervalSimpleWideningOperator();
 			} else if (wideningOperator.equals(IntervalDomainPreferences.VALUE_WIDENING_OPERATOR_LITERALS)) {
-				final IAbstractStateBinaryOperator<IntervalDomainState> rtr = new IntervalLiteralWideningOperator(
-				        mLiteralCollection);
+				final IAbstractStateBinaryOperator<IntervalDomainState> rtr =
+						new IntervalLiteralWideningOperator(mLiteralCollection);
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug("Using the following literals during widening: " + mLiteralCollection);
 				}
 				mWideningOperator = rtr;
 			} else {
 				throw new UnsupportedOperationException(
-				        "The widening operator " + wideningOperator + " is not implemented.");
+						"The widening operator " + wideningOperator + " is not implemented.");
 			}
 		}
-
+		
 		return mWideningOperator;
 	}
-
+	
 	@Override
 	public IAbstractStateBinaryOperator<IntervalDomainState> getMergeOperator() {
 		if (mMergeOperator == null) {
@@ -111,7 +111,7 @@ public class IntervalDomain implements IAbstractDomain<IntervalDomainState, Code
 		}
 		return mMergeOperator;
 	}
-
+	
 	@Override
 	public IAbstractPostOperator<IntervalDomainState, CodeBlock, IBoogieVar> getPostOperator() {
 		if (mPostOperator == null) {
@@ -119,11 +119,11 @@ public class IntervalDomain implements IAbstractDomain<IntervalDomainState, Code
 			final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 			final int maxParallelStates = prefs.getInt(AbsIntPrefInitializer.LABEL_MAX_PARALLEL_STATES);
 			mPostOperator = new IntervalPostOperator(mLogger, mSymbolTable, bpl2SmtSymbolTable, maxParallelStates,
-			        mRootAnnotation.getBoogie2SMT(), mRootAnnotation);
+					mRootAnnotation.getBoogie2SMT(), mRootAnnotation);
 		}
 		return mPostOperator;
 	}
-
+	
 	@Override
 	public int getDomainPrecision() {
 		return 1000;

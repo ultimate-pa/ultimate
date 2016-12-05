@@ -27,9 +27,9 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.empty;
 
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractDomain;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
+import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractDomain;
+import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractPostOperator;
+import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractStateBinaryOperator;
 
 /**
  * This domain does exactly nothing. It can be used to test various aspects of the framework.
@@ -41,28 +41,29 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @param <VARDECL>
  *            Any variable declaration.
  */
-public class EmptyDomain<ACTION, VARDECL> implements IAbstractDomain<EmptyDomainState<ACTION,VARDECL>, ACTION, VARDECL> {
-
+public class EmptyDomain<ACTION, VARDECL>
+		implements IAbstractDomain<EmptyDomainState<ACTION, VARDECL>, ACTION, VARDECL> {
+	
 	@Override
-	public EmptyDomainState<ACTION,VARDECL> createFreshState() {
-		return new EmptyDomainState<ACTION,VARDECL>();
+	public EmptyDomainState<ACTION, VARDECL> createFreshState() {
+		return new EmptyDomainState<ACTION, VARDECL>();
 	}
-
+	
 	@Override
-	public IAbstractStateBinaryOperator<EmptyDomainState<ACTION,VARDECL>> getWideningOperator() {
+	public IAbstractStateBinaryOperator<EmptyDomainState<ACTION, VARDECL>> getWideningOperator() {
 		return new EmptyOperator<>();
 	}
-
+	
 	@Override
-	public IAbstractStateBinaryOperator<EmptyDomainState<ACTION,VARDECL>> getMergeOperator() {
+	public IAbstractStateBinaryOperator<EmptyDomainState<ACTION, VARDECL>> getMergeOperator() {
 		return new EmptyOperator<>();
 	}
-
+	
 	@Override
-	public IAbstractPostOperator<EmptyDomainState<ACTION,VARDECL>, ACTION, VARDECL> getPostOperator() {
+	public IAbstractPostOperator<EmptyDomainState<ACTION, VARDECL>, ACTION, VARDECL> getPostOperator() {
 		return new EmptyPostOperator<>();
 	}
-
+	
 	@Override
 	public int getDomainPrecision() {
 		// This domain is the least-expressive domain there is.

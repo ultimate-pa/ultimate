@@ -37,10 +37,10 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractDomain;
+import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractDomain;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractCounterexample;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.IAbstractInterpretationResult;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
@@ -52,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  */
 public final class AbstractInterpretationResult<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL, LOCATION>
 		implements IAbstractInterpretationResult<STATE, ACTION, VARDECL, LOCATION> {
-
+	
 	private final IAbstractDomain<STATE, ACTION, VARDECL> mAbstractDomain;
 	private final List<AbstractCounterexample<AbstractMultiState<STATE, ACTION, VARDECL>, ACTION, VARDECL, LOCATION>> mCounterexamples;
 	private final AbstractInterpretationBenchmark<ACTION, LOCATION> mBenchmark;
@@ -63,7 +63,7 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 	private IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> mRootStorage;
 	private ISummaryStorage<STATE, ACTION, VARDECL, LOCATION> mSummaryMap;
 	private final ITransitionProvider<ACTION, LOCATION> mTransProvider;
-
+	
 	protected AbstractInterpretationResult(final IAbstractDomain<STATE, ACTION, VARDECL> abstractDomain,
 			final ITransitionProvider<ACTION, LOCATION> transProvider) {
 		assert abstractDomain != null;
@@ -76,17 +76,17 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 		mTerms = new LinkedHashSet<>();
 		mTransProvider = transProvider;
 	}
-
+	
 	void reachedError(final ITransitionProvider<ACTION, LOCATION> transitionProvider,
 			final WorklistItem<STATE, ACTION, VARDECL, LOCATION> currentItem,
 			final AbstractMultiState<STATE, ACTION, VARDECL> postState) {
-
+		
 		final List<Triple<AbstractMultiState<STATE, ACTION, VARDECL>, LOCATION, ACTION>> abstractExecution =
 				new ArrayList<>();
-
+		
 		ACTION transition = currentItem.getAction();
 		abstractExecution.add(new Triple<>(postState, transitionProvider.getTarget(transition), transition));
-
+		
 		AbstractMultiState<STATE, ACTION, VARDECL> post = currentItem.getPreState();
 		WorklistItem<STATE, ACTION, VARDECL, LOCATION> current = currentItem.getPredecessor();
 		while (current != null) {
@@ -95,39 +95,39 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 			post = current.getPreState();
 			current = current.getPredecessor();
 		}
-
+		
 		Collections.reverse(abstractExecution);
 		mCounterexamples
 				.add(new AbstractCounterexample<>(post, transitionProvider.getSource(transition), abstractExecution));
 	}
-
+	
 	void saveRootStorage(final IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> rootStateStorage,
 			final ACTION start, final Script script) {
 		mRootStorage = rootStateStorage;
 		mTerms.addAll(rootStateStorage.getTerms(start, script));
 		mLoc2Term.putAll(rootStateStorage.getLoc2Term(start, script));
-
+		
 		final Map<LOCATION, Set<AbstractMultiState<STATE, ACTION, VARDECL>>> loc2states =
 				rootStateStorage.getLoc2States(start);
 		loc2states.entrySet().forEach(a -> mLoc2States.put(a.getKey(),
 				a.getValue().stream().flatMap(b -> b.getStates().stream()).collect(Collectors.toSet())));
 		mLoc2SingleStates.putAll(rootStateStorage.getLoc2SingleStates(start));
 	}
-
+	
 	void saveSummaryStorage(final ISummaryStorage<STATE, ACTION, VARDECL, LOCATION> summaryStorage) {
 		mSummaryMap = summaryStorage;
 	}
-
+	
 	@Override
 	public Set<STATE> getPostStates(final Deque<ACTION> callStack, final ACTION symbol) {
 		return mRootStorage.getAbstractPostStates(callStack, symbol);
 	}
-
+	
 	@Override
 	public Set<STATE> getPostStates(final Deque<ACTION> callStack, final ACTION symbol, final Set<STATE> preStates) {
-
+		
 		final Set<STATE> states = mRootStorage.getAbstractPostStates(callStack, symbol);
-
+		
 		if (states.isEmpty() && mTransProvider.isEnteringScope(symbol)) {
 			// because this is a call, it could also be somewhere in the summary map
 			final AbstractMultiState<STATE, ACTION, VARDECL> summaryState =
@@ -136,50 +136,50 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 				states.addAll(summaryState.getStates());
 			}
 		}
-
+		
 		return states;
 	}
-
+	
 	@Override
 	public Map<LOCATION, Term> getLoc2Term() {
 		return mLoc2Term;
 	}
-
+	
 	@Override
 	public Map<LOCATION, Set<STATE>> getLoc2States() {
 		return mLoc2States;
 	}
-
+	
 	@Override
 	public Map<LOCATION, STATE> getLoc2SingleStates() {
 		return mLoc2SingleStates;
 	}
-
+	
 	@Override
 	public List<AbstractCounterexample<AbstractMultiState<STATE, ACTION, VARDECL>, ACTION, VARDECL, LOCATION>>
 			getCounterexamples() {
 		return mCounterexamples;
 	}
-
+	
 	@Override
 	public boolean hasReachedError() {
 		return !mCounterexamples.isEmpty();
 	}
-
+	
 	public AbstractInterpretationBenchmark<ACTION, LOCATION> getBenchmark() {
 		return mBenchmark;
 	}
-
+	
 	@Override
 	public Set<Term> getTerms() {
 		return mTerms;
 	}
-
+	
 	@Override
 	public String toString() {
 		return toSimplifiedString(a -> a.toStringDirect());
 	}
-
+	
 	@Override
 	public String toSimplifiedString(final Function<Term, String> funSimplify) {
 		final StringBuilder sb = new StringBuilder();
@@ -194,7 +194,7 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 		}
 		return sb.toString();
 	}
-
+	
 	@Override
 	public IAbstractDomain<STATE, ACTION, VARDECL> getUsedDomain() {
 		return mAbstractDomain;

@@ -30,9 +30,9 @@ import java.util.Deque;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 
 /**
  * Interface that describes how abstract states can be stored and retrieved relative to actions of a (program) model.
@@ -41,26 +41,26 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  *
  */
 public interface IAbstractStateStorage<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL, LOCATION> {
-
+	
 	AbstractMultiState<STATE, ACTION, VARDECL> getAbstractPostStates(ACTION transition);
-
+	
 	AbstractMultiState<STATE, ACTION, VARDECL> addAbstractPostState(ACTION transition,
 			AbstractMultiState<STATE, ACTION, VARDECL> state);
-
+	
 	IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> createStorage(ACTION scope);
-
+	
 	Map<LOCATION, Term> getLoc2Term(final ACTION initialTransition, final Script script);
-
+	
 	Map<LOCATION, Set<AbstractMultiState<STATE, ACTION, VARDECL>>> getLoc2States(final ACTION initialTransition);
-
+	
 	Map<LOCATION, STATE> getLoc2SingleStates(final ACTION initialTransition);
-
+	
 	Set<Term> getTerms(final ACTION initialTransition, final Script script);
-
+	
 	Set<STATE> getAbstractPostStates(Deque<ACTION> callStack, ACTION symbol);
-
+	
 	void scopeFixpointReached();
-
+	
 	void saveSummarySubstituion(ACTION action, AbstractMultiState<STATE, ACTION, VARDECL> summaryPostState,
 			ACTION summaryAction);
 }

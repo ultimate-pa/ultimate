@@ -35,12 +35,12 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractPostOperator;
+import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
 
 /**
  * An {@link AbstractMultiState} is an abstract state that consists of many abstract states of the same type.
@@ -53,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public class AbstractMultiState<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL>
 		implements IAbstractState<AbstractMultiState<STATE, ACTION, VARDECL>, ACTION, VARDECL> {
-
+	
 	private static int sNextFreeId;
 	private final Set<STATE> mStates;
 	private final int mMaxSize;
@@ -243,7 +243,7 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, ACTION, VARD
 	public AbstractMultiState<STATE, ACTION, VARDECL> defineVariablesAfter(
 			final IVariableProvider<STATE, ACTION, VARDECL> varProvider, final ACTION transition,
 			final AbstractMultiState<STATE, ACTION, VARDECL> hierachicalPreState) {
-
+		
 		final Set<STATE> newSet = newSet(mStates.size() * hierachicalPreState.mStates.size());
 		for (final STATE localState : mStates) {
 			for (final STATE hierState : hierachicalPreState.mStates) {

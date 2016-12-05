@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
+import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractPostOperator;
 
 /**
  *
@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public final class EmptyPostOperator<ACTION, VARDECL>
 		implements IAbstractPostOperator<EmptyDomainState<ACTION, VARDECL>, ACTION, VARDECL> {
-
+	
 	@Override
 	public List<EmptyDomainState<ACTION, VARDECL>> apply(final EmptyDomainState<ACTION, VARDECL> oldstate,
 			final ACTION concrete) {
@@ -49,7 +49,7 @@ public final class EmptyPostOperator<ACTION, VARDECL>
 		returnList.add(new EmptyDomainState<>(new HashSet<>(oldstate.getVariables())));
 		return returnList;
 	}
-
+	
 	@Override
 	public List<EmptyDomainState<ACTION, VARDECL>> apply(final EmptyDomainState<ACTION, VARDECL> oldstate,
 			final EmptyDomainState<ACTION, VARDECL> oldstateWithFreshVariables, final ACTION transition) {

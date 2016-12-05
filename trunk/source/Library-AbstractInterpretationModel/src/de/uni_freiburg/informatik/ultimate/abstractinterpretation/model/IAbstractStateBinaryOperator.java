@@ -26,7 +26,7 @@
  * to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model;
+package de.uni_freiburg.informatik.ultimate.abstractinterpretation.model;
 
 /**
  * Interface for a binary operator on abstract states.

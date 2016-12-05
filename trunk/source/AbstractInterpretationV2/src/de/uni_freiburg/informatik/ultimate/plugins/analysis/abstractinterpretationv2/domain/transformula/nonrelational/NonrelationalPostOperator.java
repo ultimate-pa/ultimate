@@ -31,9 +31,9 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.ArrayList;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValue;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
@@ -41,30 +41,30 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 		implements IAbstractPostOperator<STATE, CodeBlock, IProgramVarOrConst> {
 	
 	private final ILogger mLogger;
-
+	
 	protected NonrelationalPostOperator(final ILogger logger) {
 		mLogger = logger;
 	}
-
+	
 	@Override
 	public List<STATE> apply(final STATE oldstate, final CodeBlock transition) {
 		assert oldstate != null;
 		assert !oldstate.isBottom() : "Trying to compute post for a bottom state.";
 		assert transition != null;
-
+		
 		final List<STATE> currentStates = new ArrayList<>();
 		currentStates.add(oldstate);
-
+		
 		// TODO
-
+		
 		return currentStates;
 	}
-
+	
 	@Override
 	public List<STATE> apply(final STATE stateBeforeLeaving, final STATE stateAfterLeaving,
 			final CodeBlock transition) {
 		// TODO Auto-generated method stub
 		return null;
 	}
-
+	
 }

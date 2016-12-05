@@ -33,11 +33,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
  *
@@ -45,24 +45,24 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Boo
  *
  */
 public class DataflowPostOperator implements IAbstractPostOperator<DataflowState, CodeBlock, IProgramVar> {
-
+	
 	@Override
 	public List<DataflowState> apply(final DataflowState oldstate, final CodeBlock transition) {
 		final UnmodifiableTransFormula tf = transition.getTransitionFormula();
 		if (tf.getOutVars().isEmpty()) {
 			return Collections.singletonList(oldstate);
 		}
-
+		
 		final Map<IProgramVar, Set<CodeBlock>> reach = new HashMap<>(oldstate.getReachingDefinitions());
 		final Map<IProgramVar, Set<BoogieIcfgLocation>> noWrite = new HashMap<>(oldstate.getNoWrite());
-
+		
 		// for (final Entry<IProgramVar, TermVariable> entry : tf.getOutVars().entrySet()) {
 		// reach.put(entry.getKey(), Collections.singleton(transition));
 		// }
 		final Set<IProgramVar> defSet = computeDefSetFromTransFormula(tf, oldstate.getVariables());
 		final Set<IProgramVar> nonDefSet = new HashSet<>(oldstate.getVariables());
 		nonDefSet.removeAll(defSet);
-
+		
 		for (final IProgramVar pv : defSet) {
 			reach.put(pv, Collections.singleton(transition));
 			noWrite.put(pv, new HashSet<>());
@@ -75,24 +75,24 @@ public class DataflowPostOperator implements IAbstractPostOperator<DataflowState
 			}
 			programPoints.add((BoogieIcfgLocation) transition.getSource());
 		}
-
+		
 		return Collections.singletonList(
 				new DataflowState(oldstate.getVariables(), oldstate.getDef(), oldstate.getUse(), reach, noWrite));
 	}
-
+	
 	@Override
 	public List<DataflowState> apply(final DataflowState stateBeforeLeaving, final DataflowState stateAfterLeaving,
 			final CodeBlock transition) {
 		// TODO Auto-generated method stub
 		return null;
 	}
-
+	
 	private Set<IProgramVar> computeDefSetFromTransFormula(final UnmodifiableTransFormula tf,
 			final Set<IProgramVar> allVariables) {
 		// TODO I think we will need something like "constrained vars"
 		// i.e. the set of IProgramVars x where invar(x) = outVar(x) and where
 		// x is constrained by the formula (i.e. like from an assume statement)
-
+		
 		// for now: rudimentary test if it is an assume -- then return all outvars
 		// otherwise return the AssignedVars
 		if (tf.getInVars().keySet().equals(tf.getOutVars().keySet())) { // TODO: don't use keySet()

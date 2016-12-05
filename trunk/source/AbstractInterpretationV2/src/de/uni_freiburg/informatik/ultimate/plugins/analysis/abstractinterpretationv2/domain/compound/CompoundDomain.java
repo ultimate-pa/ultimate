@@ -29,13 +29,13 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractDomain;
+import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractPostOperator;
+import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractDomain;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
  * Implementation of the compound domain for abstract interpretation.
@@ -45,27 +45,27 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Boo
  */
 @SuppressWarnings("rawtypes")
 public class CompoundDomain implements IAbstractDomain<CompoundDomainState, CodeBlock, IBoogieVar> {
-
+	
 	private final IUltimateServiceProvider mServices;
 	private final List<IAbstractDomain> mDomainList;
 	private final BoogieIcfgContainer mRootAnnotation;
-
+	
 	private IAbstractStateBinaryOperator<CompoundDomainState> mMergeOperator;
 	private IAbstractStateBinaryOperator<CompoundDomainState> mWideningOperator;
 	private IAbstractPostOperator<CompoundDomainState, CodeBlock, IBoogieVar> mPostOperator;
-
+	
 	public CompoundDomain(final IUltimateServiceProvider serviceProvider, final List<IAbstractDomain> domainList,
 			final BoogieIcfgContainer rootAnnotation) {
 		mServices = serviceProvider;
 		mDomainList = domainList;
 		mRootAnnotation = rootAnnotation;
 	}
-
+	
 	@Override
 	public CompoundDomainState createFreshState() {
 		return new CompoundDomainState(mServices, mDomainList);
 	}
-
+	
 	@Override
 	public IAbstractStateBinaryOperator<CompoundDomainState> getWideningOperator() {
 		if (mWideningOperator == null) {
@@ -73,7 +73,7 @@ public class CompoundDomain implements IAbstractDomain<CompoundDomainState, Code
 		}
 		return mWideningOperator;
 	}
-
+	
 	@Override
 	public IAbstractStateBinaryOperator<CompoundDomainState> getMergeOperator() {
 		if (mMergeOperator == null) {
@@ -81,7 +81,7 @@ public class CompoundDomain implements IAbstractDomain<CompoundDomainState, Code
 		}
 		return mMergeOperator;
 	}
-
+	
 	@Override
 	public IAbstractPostOperator<CompoundDomainState, CodeBlock, IBoogieVar> getPostOperator() {
 		if (mPostOperator == null) {
@@ -89,7 +89,7 @@ public class CompoundDomain implements IAbstractDomain<CompoundDomainState, Code
 		}
 		return mPostOperator;
 	}
-
+	
 	@Override
 	public int getDomainPrecision() {
 		// This domain is the most-expressive domain there is.

@@ -26,9 +26,7 @@
  * to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model;
-
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
+package de.uni_freiburg.informatik.ultimate.abstractinterpretation.model;
 
 /**
  * Interface to provide the equality provider for an abstract domain. The equality provider allows for checking whether
@@ -45,8 +43,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
  * @param <EXPRESSION>
  *            The type of the expressions of this equality provider.
  */
-public interface IEqualityProvider<STATE extends IAbstractState<STATE, ACTION, IBoogieVar>, ACTION, VARDECL, EXPRESSION> {
-
+public interface IEqualityProvider<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL, EXPRESSION> {
+	
 	/**
 	 * Checks whether two expressions over a given abstract state are equal, i.e. whether they evaluate to the same
 	 * value. Returns <code>true</code> if and only if the expressions are equal, <code>false</code> otherwise. Note

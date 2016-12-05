@@ -26,11 +26,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.dataflow;
 
+import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractDomain;
+import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractPostOperator;
+import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractDomain;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
@@ -49,44 +49,44 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public class DataflowDomain implements IAbstractDomain<DataflowState, CodeBlock, IProgramVar> {
-
+	
 	private final DataflowPostOperator mPost;
 	private final DataflowMergeOperator mMerge;
 	private final ILogger mLogger;
-
+	
 	public DataflowDomain(final ILogger logger) {
 		mPost = new DataflowPostOperator();
 		mMerge = new DataflowMergeOperator();
 		mLogger = logger;
 	}
-
+	
 	@Override
 	public DataflowState createFreshState() {
 		return new DataflowState();
 	}
-
+	
 	@Override
 	public IAbstractStateBinaryOperator<DataflowState> getWideningOperator() {
 		return mMerge;
 	}
-
+	
 	@Override
 	public IAbstractStateBinaryOperator<DataflowState> getMergeOperator() {
 		return mMerge;
 	}
-
+	
 	@Override
 	public IAbstractPostOperator<DataflowState, CodeBlock, IProgramVar> getPostOperator() {
 		return mPost;
 	}
-
+	
 	@Override
 	public int getDomainPrecision() {
 		throw new UnsupportedOperationException("this domain has no precision");
 	}
-
+	
 	private final class DataflowMergeOperator implements IAbstractStateBinaryOperator<DataflowState> {
-
+		
 		@Override
 		public DataflowState apply(final DataflowState first, final DataflowState second) {
 			final DataflowState rtr = first.union(second);

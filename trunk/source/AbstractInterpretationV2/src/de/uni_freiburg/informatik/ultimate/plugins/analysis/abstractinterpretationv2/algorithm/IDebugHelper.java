@@ -3,7 +3,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.Collections;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractState;
 
 /**
  * IDebugHelper is used to implement some assertions in the {@link FixpointEngine}.
@@ -12,7 +12,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  *
  */
 public interface IDebugHelper<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL, LOCATION> {
-
+	
 	/**
 	 * Check whether the Hoare triple {stateBeforeLeaving} {stateAfterLeaving} transition {\/ postStates} holds.
 	 *
@@ -31,11 +31,11 @@ public interface IDebugHelper<STATE extends IAbstractState<STATE, ACTION, VARDEC
 		return isPostSound(Collections.singleton(stateBeforeLeaving), Collections.singleton(stateBeforeLeaving),
 				postStates, transition);
 	}
-
+	
 	boolean isPostSound(final AbstractMultiState<STATE, ACTION, VARDECL> stateBeforeLeaving,
 			final AbstractMultiState<STATE, ACTION, VARDECL> stateAfterLeaving,
 			final AbstractMultiState<STATE, ACTION, VARDECL> postState, final ACTION transition);
-
+	
 	boolean isPostSound(final Set<STATE> statesBeforeLeaving, final Set<STATE> stateAfterLeaving,
 			final Set<STATE> postStates, final ACTION transition);
 }

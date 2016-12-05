@@ -32,13 +32,13 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
+import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractState.SubsetResult;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState.SubsetResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.BoogieVarMockup;
 import de.uni_freiburg.informatik.ultimate.test.ConsoleLogger;
 
 public class IntervalDomainSubsetTest {
-
+	
 	@Test
 	public void TestSubsetRelatedToBug() {
 		final BoogieVarMockup varA = new BoogieVarMockup("a", BoogieType.TYPE_INT);

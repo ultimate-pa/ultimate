@@ -2,6 +2,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.Objects;
 
+import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractDomain;
+import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PreprocessorAnnotation;
@@ -21,8 +23,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgAbstractStateStorageProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgDebugHelper;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.empty.EmptyDomain;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractDomain;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.dataflow.DataflowDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.RCFGArrayIndexCollector;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomain;
@@ -33,22 +33,22 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.IIcfg;
 
 public class FixpointEngineFutureParameterFactory {
-
+	
 	private final BoogieSymbolTable mSymbolTable;
 	private final IIcfg<?> mRoot;
 	private final IUltimateServiceProvider mServices;
-
+	
 	public FixpointEngineFutureParameterFactory(final IIcfg<?> root, final IUltimateServiceProvider services) {
 		mRoot = root;
 		mServices = services;
-
+		
 		final PreprocessorAnnotation pa = PreprocessorAnnotation.getAnnotation(root);
 		if (pa == null || pa.getSymbolTable() == null) {
 			throw new IllegalArgumentException("Could not get BoogieSymbolTable");
 		}
 		mSymbolTable = pa.getSymbolTable();
 	}
-
+	
 	@SuppressWarnings("unchecked")
 	public <STATE extends IAbstractState<STATE, CodeBlock, IProgramVar>>
 			FixpointEngineParameters<STATE, CodeBlock, IProgramVar, BoogieIcfgLocation, Expression>
@@ -63,13 +63,13 @@ public class FixpointEngineFutureParameterFactory {
 				new FutureRcfgVariableProvider<>(mSymbolTable, mRoot.getSymboltable(), mServices);
 		final IDebugHelper<STATE, CodeBlock, IProgramVar, BoogieIcfgLocation> debugHelper =
 				new RcfgDebugHelper<>(mRoot.getCfgSmtToolkit(), mServices, mRoot.getSymboltable());
-
+		
 		return new FixpointEngineParameters<STATE, CodeBlock, IProgramVar, BoogieIcfgLocation, Expression>(mServices)
 				.setDomain(domain).setLoopDetector(loopDetector).setStorage(storageProvider)
 				.setTransitionProvider(transitionProvider).setVariableProvider(variableProvider)
 				.setDebugHelper(debugHelper).setTimer(timer);
 	}
-
+	
 	public <STATE extends IAbstractState<STATE, CodeBlock, IProgramVar>>
 			FixpointEngineParameters<STATE, CodeBlock, IProgramVar, BoogieIcfgLocation, Expression>
 			createParamsFuture(final IProgressAwareTimer timer,
@@ -87,7 +87,7 @@ public class FixpointEngineFutureParameterFactory {
 				.setTransitionProvider(transitionProvider).setVariableProvider(variableProvider)
 				.setDebugHelper(debugHelper).setTimer(timer);
 	}
-
+	
 	/**
 	 * Creates parameters for when the equality domain is invoked from another plugin (e.g. HeapSeparator) and should
 	 * not take (all) its parameters from the settings.
@@ -117,7 +117,7 @@ public class FixpointEngineFutureParameterFactory {
 				.setTransitionProvider(transitionProvider).setVariableProvider(variableProvider)
 				.setDebugHelper(debugHelper).setTimer(timer);
 	}
-
+	
 	public <STATE extends IAbstractState<STATE, CodeBlock, IProgramVar>> IAbstractDomain<STATE, CodeBlock, IProgramVar>
 			selectDomainFutureCfg() {
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
@@ -125,7 +125,7 @@ public class FixpointEngineFutureParameterFactory {
 		final ILogger logger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		return selectDomainFutureCfg(selectedDomain, logger);
 	}
-
+	
 	@SuppressWarnings("unchecked")
 	private <STATE extends IAbstractState<STATE, CodeBlock, IProgramVar>> IAbstractDomain<STATE, CodeBlock, IProgramVar>
 			selectDomainFutureCfg(final String domainName, final ILogger logger) {
@@ -138,20 +138,20 @@ public class FixpointEngineFutureParameterFactory {
 		}
 		throw new UnsupportedOperationException(getFailureString(domainName));
 	}
-
+	
 	public <DOM extends IAbstractDomain<STATE, CodeBlock, IProgramVar>, STATE extends IAbstractState<STATE, CodeBlock, IProgramVar>>
 			IAbstractDomain<STATE, CodeBlock, IProgramVar>
 			selectDomainFutureCfg(final Class<DOM> domain, final ILogger logger) {
 		return selectDomainFutureCfg(Objects.requireNonNull(domain).getSimpleName(), logger);
 	}
-
+	
 	public IAbstractDomain<VPState, CodeBlock, IProgramVar> createEqualityDomain(final ILogger logger) {
 		final RCFGArrayIndexCollector preAnalysis = new RCFGArrayIndexCollector(mRoot);
 		preAnalysis.postProcess();
 		return new VPDomain(logger, mRoot.getCfgSmtToolkit().getManagedScript(), mServices, mRoot.getSymboltable(),
 				preAnalysis);
 	}
-
+	
 	private static String getFailureString(final String selectedDomain) {
 		return "The value \"" + selectedDomain + "\" of preference \"" + AbsIntPrefInitializer.LABEL_ABSTRACT_DOMAIN
 				+ "\" was not considered before! ";

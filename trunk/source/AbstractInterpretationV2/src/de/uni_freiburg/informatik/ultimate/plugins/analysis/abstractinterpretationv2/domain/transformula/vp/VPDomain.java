@@ -30,6 +30,9 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractDomain;
+import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractPostOperator;
+import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -37,9 +40,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTabl
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractDomain;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
@@ -51,20 +51,20 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  * @author Yu-Wen Chen (yuwenchen1105@gmail.com)
  */
 public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar> {
-
+	
 	private final VPPostOperator mPost;
 	private final VPMergeOperator mMerge;
 	private final ILogger mLogger;
-
+	
 	private final HashRelation<IProgramVarOrConst, EqFunctionNode> mArrayIdToEqFnNodes;
-
+	
 	private final VPStateBottom mBottomState;
 	private final ManagedScript mManagedScript;
 	private final Map<Term, EqNode> mTermToEqNodeMap;
 	private final RCFGArrayIndexCollector mPreAnalysis;
 	private final VPStateFactory mVpStateFactory;
 	private final IIcfgSymbolTable mSymboltable;
-
+	
 	public VPDomain(final ILogger logger, final ManagedScript script, final IUltimateServiceProvider services,
 			final IIcfgSymbolTable symbolTable, final RCFGArrayIndexCollector preAnalysis) {
 		assert script != null;
@@ -79,69 +79,69 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 		mVpStateFactory = new VPStateFactory(this);
 		mSymboltable = symbolTable;
 	}
-
+	
 	@Override
 	public VPState createFreshState() {
 		return getVpStateFactory().createEmptyStateBuilder().build();
 	}
-
+	
 	@Override
 	public IAbstractStateBinaryOperator<VPState> getWideningOperator() {
 		return mMerge;
 	}
-
+	
 	@Override
 	public IAbstractStateBinaryOperator<VPState> getMergeOperator() {
 		return mMerge;
 	}
-
+	
 	@Override
 	public IAbstractPostOperator<VPState, CodeBlock, IProgramVar> getPostOperator() {
 		return mPost;
 	}
-
+	
 	@Override
 	public int getDomainPrecision() {
 		throw new UnsupportedOperationException("this domain has no precision");
 	}
-
+	
 	private final class VPMergeOperator implements IAbstractStateBinaryOperator<VPState> {
-
+		
 		@Override
 		public VPState apply(final VPState first, final VPState second) {
 			return getVpStateFactory().disjoin(first, second);
 		}
 	}
-
+	
 	public Map<Term, EqNode> getTermToEqNodeMap() {
 		return mTermToEqNodeMap;
 	}
-
+	
 	public HashRelation<IProgramVarOrConst, EqFunctionNode> getArrayIdToEqFnNodeMap() {
 		return mArrayIdToEqFnNodes;
 	}
-
+	
 	public HashRelation<IProgramVar, IProgramVar> getArrayToIndices() {
 		// TODO: implement
 		return null;
 	}
-
+	
 	public ManagedScript getManagedScript() {
 		return mManagedScript;
 	}
-
+	
 	public ILogger getLogger() {
 		return mLogger;
 	}
-
+	
 	public RCFGArrayIndexCollector getPreAnalysis() {
 		return mPreAnalysis;
 	}
-
+	
 	public VPStateFactory getVpStateFactory() {
 		return mVpStateFactory;
 	}
-
+	
 	public IIcfgSymbolTable getSymbolTable() {
 		return mSymboltable;
 	}

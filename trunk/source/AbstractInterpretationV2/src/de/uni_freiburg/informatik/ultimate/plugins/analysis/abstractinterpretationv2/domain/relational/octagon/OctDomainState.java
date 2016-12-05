@@ -41,6 +41,7 @@ import java.util.TreeMap;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -50,7 +51,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.FixpointEngine;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.BoogieUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.TypeUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -71,37 +71,37 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @author schaetzc@informatik.uni-freiburg.de
  */
 public final class OctDomainState implements IAbstractState<OctDomainState, CodeBlock, IBoogieVar> {
-
+	
 	/** Counter for created objects. Used to set {@link #mId}. */
 	private static int sId;
-
+	
 	/** A human-readable hash code, unique for each object. */
 	private final int mId;
-
+	
 	/** Function used to generate log strings. */
 	private final Function<OctDomainState, String> mLogStringFunction;
-
+	
 	/** Map of variable names to their {@link IBoogieVar}. */
 	private Set<IBoogieVar> mMapVarToBoogieVar;
-
+	
 	/**
 	 * Map of numerical variable (ints and reals) names to the index of the corresponding block row/column in the
 	 * octagon matrix {@link #mNumericAbstraction}. Block row/column i contains the rows/columns 2i and 2i+1.
 	 */
 	private Map<IBoogieVar, Integer> mMapNumericVarToIndex;
-
+	
 	/** Names of real-valued variables. */
 	private Set<IBoogieVar> mNumericNonIntVars;
-
+	
 	/** Abstract state for numeric variables (ints and reals). This is the actual octagon. */
 	private OctMatrix mNumericAbstraction;
-
+	
 	/**
 	 * Abstract state for boolean variables. This is a non-relational powerset domain and maps each boolean variable
 	 * (name) to the set of values the variable can assume.
 	 */
 	private Map<IBoogieVar, BoolValue> mBooleanAbstraction;
-
+	
 	/**
 	 * The abstract state "bottom" (contains no concrete state) is "un-bottomized" if variables are assigned. This
 	 * should not happen (even though it is a safe over-approximation).
@@ -113,7 +113,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 	private boolean assertNotBottomBeforeAssign() {
 		return !isBottom();
 	}
-
+	
 	/**
 	 * Creates a new, un-initialized abstract state. <b>Most attributes are not initialized and must be set by hand.</b>
 	 *
@@ -124,7 +124,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 		mLogStringFunction = logStringFunction;
 		mId = sId++;
 	}
-
+	
 	/**
 	 * Creates a new abstract state without any variables.
 	 *
@@ -141,7 +141,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 		s.mBooleanAbstraction = new HashMap<>();
 		return s;
 	}
-
+	
 	/** @return Deep copy of this state */
 	public OctDomainState deepCopy() {
 		final OctDomainState s = new OctDomainState(mLogStringFunction);
@@ -152,7 +152,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 		s.mBooleanAbstraction = new HashMap<>(mBooleanAbstraction);
 		return s;
 	}
-
+	
 	/**
 	 * Creates a shallow copy of this OctagonDomainState. Use the {@code unref}... methods to deep-copy single fields
 	 * before modifying them.
@@ -174,7 +174,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 		s.mBooleanAbstraction = mBooleanAbstraction;
 		return s;
 	}
-
+	
 	/**
 	 * Deep-copy {@link #mMapVarToBoogieVar} to {@code other} state iff this and {@code other} share the same object.
 	 * This state remains unchanged.
@@ -188,7 +188,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 			other.mMapVarToBoogieVar = new HashSet<>(mMapVarToBoogieVar);
 		}
 	}
-
+	
 	/**
 	 * Deep-copy {@link #mMapNumericVarToIndex} to {@code other} state iff this and {@code other} share the same object.
 	 * This state remains unchanged.
@@ -202,7 +202,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 			other.mMapNumericVarToIndex = new HashMap<>(mMapNumericVarToIndex);
 		}
 	}
-
+	
 	/**
 	 * Deep-copy {@link #mNumericNonIntVars} to {@code other} state iff this and {@code other} share the same object.
 	 * This state remains unchanged.
@@ -216,7 +216,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 			other.mNumericNonIntVars = new HashSet<>(mNumericNonIntVars);
 		}
 	}
-
+	
 	/**
 	 * Deep-copy {@link #mBooleanAbstraction} to {@code other} state iff this and {@code other} share the same object.
 	 * This state remains unchanged.
@@ -230,12 +230,12 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 			other.mBooleanAbstraction = new HashMap<>(mBooleanAbstraction);
 		}
 	}
-
+	
 	@Override
 	public Set<IBoogieVar> getVariables() {
 		return Collections.unmodifiableSet(mMapVarToBoogieVar);
 	}
-
+	
 	/**
 	 * {@inheritDoc}
 	 * <p>
@@ -245,7 +245,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 	public OctDomainState addVariable(final IBoogieVar variable) {
 		return addVariables(Collections.singleton(variable));
 	}
-
+	
 	/**
 	 * {@inheritDoc}
 	 * <p>
@@ -255,7 +255,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 	public OctDomainState removeVariable(final IBoogieVar variable) {
 		return removeVariables(Collections.singleton(variable));
 	}
-
+	
 	/**
 	 * {@inheritDoc}
 	 * <p>
@@ -265,7 +265,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 	public OctDomainState addVariables(final Collection<IBoogieVar> variables) {
 		// variables = new TreeMap<>(variables); // fixed iteration order -- essential for fast isEqualTo
 		// ... probably no speedup. HashSets should iterate in the same order when adding the very same variables.
-
+		
 		final OctDomainState newState = shallowCopy();
 		for (final IBoogieVar entry : variables) {
 			unrefOtherMapVarToBoogieVar(newState);
@@ -291,7 +291,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 				mNumericAbstraction.addVariables(newState.mMapNumericVarToIndex.size() - mMapNumericVarToIndex.size());
 		return newState;
 	}
-
+	
 	/**
 	 * {@inheritDoc}
 	 * <p>
@@ -299,7 +299,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 	 */
 	@Override
 	public OctDomainState removeVariables(final Collection<IBoogieVar> variables) {
-
+		
 		final OctDomainState newState = shallowCopy();
 		final Set<Integer> indexRemovedNumericVars = new HashSet<>();
 		for (final IBoogieVar name : variables) {
@@ -327,7 +327,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 		}
 		return newState;
 	}
-
+	
 	/**
 	 * Defragments a map with {@code n} entries so that the resulting map's domain are the {@code n} first natural
 	 * numbers <code>{0, 1, 2, ..., n-1}</code>. The order of the old map remains the same, meaning that the map key
@@ -348,32 +348,32 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 			++newIndex;
 		}
 	}
-
+	
 	@Override
 	public boolean containsVariable(final IBoogieVar var) {
 		return mMapVarToBoogieVar.contains(var);
 	}
-
+	
 	@Override
 	public boolean isEmpty() {
 		return mMapVarToBoogieVar.isEmpty();
 	}
-
+	
 	@Override
 	public boolean isBottom() {
 		return isBooleanAbstractionBottom() || isNumericAbstractionBottom();
 	}
-
+	
 	/** @return The numeric abstraction represents no concrete states */
 	private boolean isNumericAbstractionBottom() {
 		return cachedSelectiveClosure().hasNegativeSelfLoop();
 	}
-
+	
 	/** @return The boolean abstraction represents no concrete states */
 	private boolean isBooleanAbstractionBottom() {
 		return mBooleanAbstraction.containsValue(BoolValue.BOT);
 	}
-
+	
 	/**
 	 * Returns the strong closure of the octagon (numerical abstraction) or the tight closure, if all numerical
 	 * variables are integers.
@@ -389,7 +389,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 		}
 		return mNumericAbstraction.cachedStrongClosure();
 	}
-
+	
 	/**
 	 * Returns the best available/cached closure of the octagon (numerical abstraction).
 	 * <p>
@@ -410,12 +410,12 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 		}
 		return mNumericAbstraction;
 	}
-
+	
 	/** @return All numerical variables in this state are integers */
 	private boolean isNumericAbstractionIntegral() {
 		return mNumericNonIntVars.isEmpty();
 	}
-
+	
 	@Override
 	public boolean isEqualTo(final OctDomainState other) {
 		if (other == null) {
@@ -428,11 +428,11 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 			return isEqual;
 		}
 	}
-
+	
 	@Override
 	public SubsetResult isSubsetOf(final OctDomainState other) {
 		assert mMapVarToBoogieVar.equals(other.mMapVarToBoogieVar);
-
+		
 		if (isBottom() && other.isBottom()) {
 			return SubsetResult.EQUAL;
 		}
@@ -442,7 +442,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 		if (other.isBottom()) {
 			return SubsetResult.NONE;
 		}
-
+		
 		for (final Entry<IBoogieVar, BoolValue> thisEntry : mBooleanAbstraction.entrySet()) {
 			final BoolValue thisVal = thisEntry.getValue();
 			final BoolValue otherVal = other.mBooleanAbstraction.get(thisEntry.getKey());
@@ -450,7 +450,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 				return SubsetResult.NONE;
 			}
 		}
-
+		
 		if (!cachedSelectiveClosure().elementwiseRelation(other.mNumericAbstraction,
 				(thisVal, otherVal) -> thisVal.compareTo(otherVal) <= 0)) {
 			// no need to use other.closure
@@ -458,12 +458,12 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 		}
 		return SubsetResult.NON_STRICT;
 	}
-
+	
 	@Override
 	public int hashCode() {
 		return mId;
 	}
-
+	
 	@Override
 	public boolean equals(final Object obj) {
 		if (this == obj) {
@@ -478,7 +478,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 		final OctDomainState other = (OctDomainState) obj;
 		return mId == other.mId;
 	}
-
+	
 	/** For internal use in {@link #isEqualTo(OctDomainState)}. */
 	private boolean numericAbstractionIsEqualTo(final OctDomainState other) {
 		assert mMapNumericVarToIndex.keySet().equals(other.mMapNumericVarToIndex.keySet());
@@ -507,7 +507,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 			return thisClosure.isEqualTo(otherClosure);
 		}
 	}
-
+	
 	/**
 	 * Creates an over-approximation of the intersection of this and another abstract state.
 	 * <p>
@@ -521,7 +521,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 		final OctMatrix numResult = OctMatrix.min(bestAvailableClosure(), other.bestAvailableClosure());
 		return operation(other, BoolValue::intersect, numResult);
 	}
-
+	
 	/**
 	 * Creates an over-approximation of the union of this and another abstract state.
 	 * <p>
@@ -535,7 +535,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 		final OctMatrix numResult = OctMatrix.max(bestAvailableClosure(), other.bestAvailableClosure());
 		return operation(other, BoolValue::union, numResult);
 	}
-
+	
 	/**
 	 * Creates an over-approximation of the union of this and another abstract state using a given widening operator for
 	 * octagons.
@@ -554,7 +554,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 		final OctMatrix numResult = widenOp.apply(mNumericAbstraction, other.bestAvailableClosure());
 		return operation(other, BoolValue::union, numResult);
 	}
-
+	
 	/**
 	 * Performs an operation (for instance join, meet, or widen) on the boolean abstraction of this and another abstract
 	 * state. The octagon (numerical abstraction) of the resulting abstract state is given as an argument.
@@ -585,19 +585,19 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 		result.mNumericAbstraction = numericAbstractionResult;
 		return result;
 	}
-
+	
 	@Override
 	public Term getTerm(final Script script) {
 		if (isBottom()) {
 			return script.term("false");
 		}
-
+		
 		final List<Term> terms = new ArrayList<>();
 		terms.addAll(getTermNumericAbstraction(script));
 		terms.addAll(getTermBooleanAbstraction(script));
 		return Util.and(script, terms.toArray(new Term[terms.size()]));
 	}
-
+	
 	/** For internal use in {@link #getTerm(Script))}. */
 	private List<Term> getTermNumericAbstraction(final Script script) {
 		final Term[] mapIndexToTerm = new Term[mMapNumericVarToIndex.size()];
@@ -607,7 +607,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 		}
 		return cachedSelectiveClosure().getTerm(script, mapIndexToTerm);
 	}
-
+	
 	/** For internal use in {@link #getTerm(Script))}. */
 	private List<Term> getTermBooleanAbstraction(final Script script) {
 		final List<Term> resultTerm = new ArrayList<>(mBooleanAbstraction.size());
@@ -619,7 +619,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 		}
 		return resultTerm;
 	}
-
+	
 	/**
 	 * Finds the SMT term variable for a given variable name.
 	 *
@@ -635,7 +635,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 		}
 		return null;
 	}
-
+	
 	/**
 	 * {@inheritDoc}.
 	 * <p>
@@ -644,11 +644,11 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 	@Override
 	public OctDomainState patch(final OctDomainState dominator) {
 		assertNotBottomBeforeAssign();
-
+		
 		final OctDomainState patchedState = shallowCopy();
 		final BidirectionalMap<Integer, Integer> mapTargetVarToSourceVar = new BidirectionalMap<>();
 		final SortedMap<Integer, IBoogieVar> mapDominatorIndicesOfNewNumericVars = new TreeMap<>();
-
+		
 		for (final IBoogieVar entry : dominator.mMapVarToBoogieVar) {
 			final IBoogieVar newBoogieVar = entry;
 			unrefOtherMapVarToBoogieVar(patchedState);
@@ -682,7 +682,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 		patchedState.mNumericAbstraction.copySelection(dominator.mNumericAbstraction, mapTargetVarToSourceVar);
 		return patchedState;
 	}
-
+	
 	/**
 	 * Copies values from a set of variables in a source abstract state to set of variables in this abstract state. The
 	 * result is a new abstract state. This abstract state remains unchanged. Global variables and constants that are
@@ -701,14 +701,14 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 	 */
 	public OctDomainState copyValuesOnScopeChange(final OctDomainState source,
 			final List<Pair<IBoogieVar, IBoogieVar>> mapTargetToSource) {
-
+		
 		assert assertNotBottomBeforeAssign();
-
+		
 		// TODO closure in advance to reduce information loss
-
+		
 		final BidirectionalMap<Integer, Integer> mapNumericTargetToSource = new BidirectionalMap<>();
 		final List<Pair<IBoogieVar, IBoogieVar>> mapBooleanTargetToSource = new ArrayList<>(mapTargetToSource.size());
-
+		
 		// shared (=global) numeric variables (copy to keep relations between globals and in/out-parameters)
 		for (final IBoogieVar var : sharedGlobalVars(source)) {
 			final Integer targetIndex = mMapNumericVarToIndex.get(var);
@@ -719,7 +719,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 			}
 			// do not copy shared (=global) booleans (again). Already done by patch(...).
 		}
-
+		
 		// in/out-parameters (from one scope) to locals (from another scope)
 		for (final Pair<IBoogieVar, IBoogieVar> assignmentPair : mapTargetToSource) {
 			final IBoogieVar targetVar = assignmentPair.getFirst();
@@ -734,7 +734,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 				mapBooleanTargetToSource.add(new Pair<>(targetVar, sourceVar));
 			}
 		}
-
+		
 		// create new state
 		final OctDomainState newState = shallowCopy();
 		if (!mapNumericTargetToSource.isEmpty()) {
@@ -752,7 +752,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 		}
 		return newState;
 	}
-
+	
 	/**
 	 * Finds global variables and constants that are both present in this and another abstract state.
 	 *
@@ -770,7 +770,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 		}
 		return sharedVars;
 	}
-
+	
 	/**
 	 * Removes all constraints for a variable.
 	 * <p>
@@ -782,7 +782,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 	protected void havocVar(final IBoogieVar var) {
 		havocVars(Collections.singleton(var));
 	}
-
+	
 	/**
 	 * Removes all constrains for a set of variables.
 	 * <p>
@@ -810,7 +810,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 			numVarIndices.forEach(v -> mNumericAbstraction.havocVar(v));
 		}
 	}
-
+	
 	/**
 	 * Updates this abstract state according to the assignment {@code v := v + c} for a variable {@code v} and a
 	 * constant {@code c}.
@@ -826,7 +826,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 		assert assertNotBottomBeforeAssign();
 		mNumericAbstraction.incrementVar(numVarIndex(targetVar), addConstant);
 	}
-
+	
 	/**
 	 * Updates this abstract state according to the assignment {@code v := -v}.
 	 * <p>
@@ -839,7 +839,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 		assert assertNotBottomBeforeAssign();
 		mNumericAbstraction.negateVar(numVarIndex(targetVar));
 	}
-
+	
 	/**
 	 * Updates this abstract state according to the assignment {@code v := c} for a variable {@code v} and a constant
 	 * {@code c}.
@@ -856,7 +856,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 		mNumericAbstraction = cachedSelectiveClosure().copy();
 		mNumericAbstraction.assignVarConstant(numVarIndex(targetVar), constant);
 	}
-
+	
 	/**
 	 * Updates this abstract state according to {@code havoc v; assume min <= v && v <= max;} for a variable {@code v}
 	 * and an interval {@code [min, max]}.
@@ -873,7 +873,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 		mNumericAbstraction = cachedSelectiveClosure().copy();
 		mNumericAbstraction.assignVarInterval(numVarIndex(targetVar), interval.getMin(), interval.getMax());
 	}
-
+	
 	/**
 	 * Updates this abstract state according to {@code assume v == c;} for a variable {@code v} and a constant {@code c}
 	 * .
@@ -888,7 +888,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 	protected void assumeNumericVarConstant(final IBoogieVar targetVar, final OctValue constant) {
 		mNumericAbstraction.assumeVarConstant(numVarIndex(targetVar), constant);
 	}
-
+	
 	/**
 	 * Updates this abstract state according to {@code assume min <= v && v <= max;} for a variable {@code v} and an
 	 * interval {@code [min, max]}.
@@ -903,7 +903,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 	protected void assumeNumericVarInterval(final IBoogieVar targetVar, final OctValue min, final OctValue max) {
 		mNumericAbstraction.assumeVarInterval(numVarIndex(targetVar), min, max);
 	}
-
+	
 	/**
 	 * Updates this abstract state according to {@code assume ± var1 ± var2 <= c;} for variables {@code var1} and
 	 * {@code var2} and a constant {@code c}.
@@ -926,7 +926,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 		mNumericAbstraction.assumeVarRelationLeConstant(numVarIndex(var1), var1Negate, numVarIndex(var2), var2Negate,
 				constant);
 	}
-
+	
 	/**
 	 * Projects a variable of this abstract state to an interval.
 	 *
@@ -937,7 +937,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 	public OctInterval projectToInterval(final IBoogieVar numericVar) {
 		return OctInterval.fromMatrix(cachedSelectiveClosure(), numVarIndex(numericVar));
 	}
-
+	
 	/**
 	 * Projects an expression of the form {@code assume ± var1 ± var2} (for variables {@code var1} and {@code var2} and
 	 * a constant {@code c}) to an interval.
@@ -968,7 +968,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 		// TODO negate min
 		return new OctInterval(min, max);
 	}
-
+	
 	/**
 	 * Returns the index of an numerical variable of this abstract state for the octagon. A variable with index i
 	 * corresponds to the octagon columns/rows 2i and 2i+1.
@@ -982,7 +982,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 		assert index != null : "Not a numeric variable: " + var;
 		return index;
 	}
-
+	
 	/**
 	 * Updates this abstract state according to {@code a := x;  b := y;  ...}. for variables {@code a}, {@code b},
 	 * {@code x}, {@code y}. The assignments are sequential in the iteration order of the given map.
@@ -992,15 +992,15 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 	 * @param mapTargetVarToSourceVar
 	 */
 	protected void copyVars(final List<Pair<IBoogieVar, IBoogieVar>> mapTargetVarToSourceVar) {
-
+		
 		assert assertNotBottomBeforeAssign();
-
+		
 		boolean usedClosure = false;
-
+		
 		for (final Pair<IBoogieVar, IBoogieVar> entry : mapTargetVarToSourceVar) {
 			final IBoogieVar targetVar = entry.getFirst();
 			final IBoogieVar sourceVar = entry.getSecond();
-
+			
 			final Integer targetIndex = mMapNumericVarToIndex.get(targetVar);
 			if (targetIndex != null) {
 				if (!usedClosure) {
@@ -1010,12 +1010,12 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 				final Integer sourceIndex = mMapNumericVarToIndex.get(sourceVar);
 				assert sourceIndex != null : "Incompatible types";
 				mNumericAbstraction.assignVarCopy(targetIndex, sourceIndex);
-
+				
 			} else if (mBooleanAbstraction.containsKey(targetVar)) {
 				final BoolValue value = mBooleanAbstraction.get(sourceVar);
 				assert value != null : "Incompatible types";
 				mBooleanAbstraction.put(targetVar, value);
-
+				
 			}
 			// else: variables of unsupported types are assumed to be \top all the time
 			assert mMapVarToBoogieVar.contains(targetVar)
@@ -1023,7 +1023,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 							+ sourceVar;
 		}
 	}
-
+	
 	/**
 	 ** Updates this abstract state according to {@code targetVar := sourceVar}.
 	 * <p>
@@ -1037,7 +1037,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 	protected void copyVar(final IBoogieVar targetVar, final IBoogieVar sourceVar) {
 		copyVars(Collections.singletonList(new Pair<>(targetVar, sourceVar)));
 	}
-
+	
 	/**
 	 * Assigns a boolean variable a value.
 	 *
@@ -1051,7 +1051,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 		assert assertNotBottomBeforeAssign();
 		mBooleanAbstraction.put(var, value);
 	}
-
+	
 	/**
 	 * Assumes a boolean variable to have a certain value. The resulting value is the intersection of the old and the
 	 * assumed value.
@@ -1064,17 +1064,17 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 	protected void assumeBooleanVar(final IBoogieVar var, final BoolValue value) {
 		mBooleanAbstraction.put(var, mBooleanAbstraction.get(var).intersect(value));
 	}
-
+	
 	@Override
 	public String toString() {
 		return toLogString();
 	}
-
+	
 	@Override
 	public String toLogString() {
 		return mLogStringFunction.apply(this);
 	}
-
+	
 	/**
 	 * Creates a log string, representing this abstract state by printing the full octagon matrix.
 	 *
@@ -1083,7 +1083,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 	public String logStringFullMatrix() {
 		return logStringMatrix(mNumericAbstraction.toStringFull());
 	}
-
+	
 	/**
 	 * Creates a multi-line log string, representing this abstract state by printing only the block lower triangular
 	 * octagon matrix.
@@ -1093,7 +1093,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 	public String logStringHalfMatrix() {
 		return logStringMatrix(mNumericAbstraction.toStringHalf());
 	}
-
+	
 	/**
 	 * Creates a multi-line log string, representing this abstract state by printing the octagon matrix (already given
 	 * as a log string) and the boolean abstraction.
@@ -1114,7 +1114,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 		}
 		return log.toString();
 	}
-
+	
 	/**
 	 * Creates a one-line log string, representing this abstract state by printing interval ranges for all variables and
 	 * sums or differences of variables (for instance {@code x-y \in [-5; 3]}).
@@ -1128,7 +1128,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 		final String plus = " + ";
 		// delimiter for interval bounds ( [a "delimiter" b] )
 		final String delimiter = "; ";
-
+		
 		// Interval bounds --------------------------------------------------------------
 		final StringBuilder intsLog = new StringBuilder("ints: {");
 		final StringBuilder realsLog = new StringBuilder("reals: {");
@@ -1138,7 +1138,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 		for (final Entry<IBoogieVar, Integer> entry : mMapNumericVarToIndex.entrySet()) {
 			final IBoogieVar varName = entry.getKey();
 			final OctInterval interval = OctInterval.fromMatrix(mNumericAbstraction, entry.getValue());
-
+			
 			final StringBuilder curLog;
 			if (mNumericNonIntVars.contains(varName)) {
 				curLog = realsLog;
@@ -1151,7 +1151,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 			curDelimiter = delimiter;
 			curLog.append(varName).append(in).append(interval);
 		}
-
+		
 		// Constraints between two different variables ----------------------------------
 		final StringBuilder relLog = new StringBuilder("relations: {");
 		int rels = 0;
@@ -1167,27 +1167,27 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 				final IBoogieVar colName = colEntry.getKey();
 				final int row2 = rowEntry.getValue() * 2;
 				final int col2 = colEntry.getValue() * 2;
-
+				
 				if (row2 <= col2) {
 					// skip block upper triangular part (is coherent/redundant)
 					// skip diagonal blocks (already logged, see above)
 					continue;
 				}
-
+				
 				final OctInterval sumInterval =
 						new OctInterval(mNumericAbstraction.get(row2, col2 + 1).negateIfNotInfinity(),
 								mNumericAbstraction.get(row2 + 1, col2));
 				final OctInterval colMinusRowInterval =
 						new OctInterval(mNumericAbstraction.get(row2 + 1, col2 + 1).negateIfNotInfinity(),
 								mNumericAbstraction.get(row2, col2));
-
+				
 				if (!sumInterval.isTop()) {
 					relLog.append(curDelimiter);
 					curDelimiter = delimiter;
 					relLog.append(colName).append(plus).append(rowName).append(in).append(sumInterval);
 					rels++;
 				}
-
+				
 				if (!colMinusRowInterval.isTop()) {
 					relLog.append(curDelimiter);
 					curDelimiter = delimiter;
@@ -1196,7 +1196,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 				}
 			}
 		}
-
+		
 		final StringBuilder log = new StringBuilder("{");
 		if (ints > 0) {
 			log.append(intsLog).append("}, ");
@@ -1211,8 +1211,8 @@ public final class OctDomainState implements IAbstractState<OctDomainState, Code
 			log.append("bools: ").append(mBooleanAbstraction);
 		}
 		log.append("}");
-
+		
 		return log.toString();
 	}
-
+	
 }
