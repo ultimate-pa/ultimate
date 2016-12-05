@@ -35,6 +35,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieNonOldVar;
@@ -150,8 +151,16 @@ class PartitionInformation {
 			final LocalBoogieVar lbv = (LocalBoogieVar) originalArrayId;
 			final String newId = lbv.getIdentifier() + "_part_" + getFreshVersionIndex();
 			final TermVariable newTv = mManagedScript.constructFreshCopy(lbv.getTermVariable());
-			final ApplicationTerm newConst = (ApplicationTerm) mManagedScript.getScript().term(newId + "_const");
-			final ApplicationTerm newPrimedConst = (ApplicationTerm) mManagedScript.getScript().term(newId + "_const_primed");
+
+			String constString = newId + "_const";
+			mManagedScript.getScript().declareFun(constString, new Sort[0], newTv.getSort());
+			final ApplicationTerm newConst = (ApplicationTerm) mManagedScript.getScript().term(constString);
+			
+			String constPrimedString = newId + "_const_primed";
+			mManagedScript.getScript().declareFun(constPrimedString, new Sort[0], newTv.getSort());
+			final ApplicationTerm newPrimedConst = (ApplicationTerm) mManagedScript.getScript().term(constPrimedString);
+
+
 			freshVar = new LocalBoogieVar(
 					newId, 
 					lbv.getProcedure(), 

@@ -45,40 +45,28 @@ public class VPStateFactory {
 	
 	private final VPDomain mDomain;
 	private final VPStateBottom mBottomState;
-	private final VPState mTopState;
 
 	public VPStateFactory(VPDomain vpdomain) {
 		mDomain = vpdomain;
 		mBottomState = new VPStateBottom(vpdomain);
-		mTopState = createEmptyState().build();
 	}
 	
-	VPStateBuilder createEmptyState() {
+	VPStateBuilder createEmptyStateBuilder() {
 		
-		/*
-		 * Create fresh EqGraphNodes from EqNodes.
-		 */
-		Set<EqNode> literalSet = new HashSet<>();
-		Map<EqNode, EqGraphNode> eqNodeToEqGraphNodeMap = new HashMap<>();
-		for (EqNode eqNode : mDomain.getTermToEqNodeMap().values()) {
-			getOrConstructEqGraphNode(eqNode, eqNodeToEqGraphNodeMap);
-			if (eqNode.isLiteral()) {
-				literalSet.add(eqNode);
-			}
-		}
-		eqNodeToEqGraphNodeMap = Collections.unmodifiableMap(eqNodeToEqGraphNodeMap);
+		VPStateBuilder builder = new VPStateBuilder(mDomain);
 		
 		/*
 		 * When all EqGraphNodes for the VPState have been created, we can set their
 		 * initCcpar and initCcchild fields
 		 */
-		for (EqGraphNode egn : eqNodeToEqGraphNodeMap.values()) {
-			egn.setupNode(eqNodeToEqGraphNodeMap);
+		for (EqGraphNode egn : builder.getEqNodeToEqGraphNodeMap().values()) {
+			egn.setupNode(builder.getEqNodeToEqGraphNodeMap());
 		}
 		
 		/*
 		 * Generate disequality set for constants
 		 */
+		Set<EqNode> literalSet = mDomain.getLiteralEqNodes();
 		Set<VPDomainSymmetricPair<EqNode>> disEqualitySet = new HashSet<>();
 		for (EqNode node1 : literalSet) {
 			for (EqNode node2 : literalSet) {
@@ -87,42 +75,17 @@ public class VPStateFactory {
 				}
 			}
 		}
+		builder.setDisEqualites(disEqualitySet);
 		
 		/*
 		 * The set of tracked variables (as exposed to the fixpointengine) is empty, initially.
 		 */
 		Set<IProgramVar> vars = new HashSet<>();
+		builder.setVars(vars);
 
-		VPStateBuilder builder = new VPStateBuilder(mDomain)
-				.setEqGraphNodes(eqNodeToEqGraphNodeMap)
-				.setVars(vars)
-				.setDisEqualites(disEqualitySet)
-				.setIsTop(true);
+		builder.setIsTop(true);
+
 		return builder;
-	}
-	
-	private EqGraphNode getOrConstructEqGraphNode(EqNode eqNode, Map<EqNode, EqGraphNode> eqNodeToEqGraphNode) {
-		
-		if (eqNodeToEqGraphNode.containsKey(eqNode)) {
-			return eqNodeToEqGraphNode.get(eqNode);
-		}
-		
-		final EqGraphNode graphNode = new EqGraphNode(eqNode);
-		List<EqGraphNode> argNodes = new ArrayList<>();
-		
-		if (eqNode instanceof EqFunctionNode) {
-
-			for (EqNode arg : ((EqFunctionNode)eqNode).getArgs()) {
-				EqGraphNode argNode = getOrConstructEqGraphNode(arg, eqNodeToEqGraphNode);
-//				argNode.addToInitCcpar(graphNode);
-				argNode.addToCcpar(graphNode);
-				argNodes.add(argNode);
-			}
-//			graphNode.addToInitCcchild(argNodes);
-			graphNode.getCcchild().addPair(((EqFunctionNode)eqNode).getFunction(), argNodes);
-		}
-		eqNodeToEqGraphNode.put(eqNode, graphNode);
-		return graphNode;
 	}
 	
 	public VPStateBottom getBottomState() {
@@ -134,7 +97,7 @@ public class VPStateFactory {
 			return new VPStateBottomBuilder(mDomain);
 		}
 		
-		final VPStateBuilder builder = createEmptyState();
+		final VPStateBuilder builder = createEmptyStateBuilder();
 		
 		for (EqNode eqNode : mDomain.getTermToEqNodeMap().values()) {
 			EqGraphNode newGraphNode = builder.getEqNodeToEqGraphNodeMap().get(eqNode);
@@ -167,6 +130,7 @@ public class VPStateFactory {
 		EqGraphNode gn1 = builder.getEqNodeToEqGraphNodeMap().get(eqNode1);
 		EqGraphNode gn2 = builder.getEqNodeToEqGraphNodeMap().get(eqNode2);
 		builder.merge(gn1, gn2);
+		builder.setIsTop(false);
 		boolean contradiction = builder.checkContradiction();
 		if (contradiction) {
 			return Collections.singleton(this.getBottomState());
@@ -207,31 +171,30 @@ public class VPStateFactory {
 	}
 
 	public Set<VPState> addDisEquality(EqNode n1, EqNode n2, VPState originalState) {
-		VPStateBuilder originalStateCopy = copy(originalState);
+		VPStateBuilder builder = copy(originalState);
 		
-		EqGraphNode gn1 = originalStateCopy.getEqNodeToEqGraphNodeMap().get(n1);
-		EqGraphNode gn2 = originalStateCopy.getEqNodeToEqGraphNodeMap().get(n2);
+		EqGraphNode gn1 = builder.getEqNodeToEqGraphNodeMap().get(n1);
+		EqGraphNode gn2 = builder.getEqNodeToEqGraphNodeMap().get(n2);
 
-
-		VPStateBottom bottom = this.getBottomState();
-		
 		/*
 		 * check if the disequality introduces a contradiction, return bottom in that case
 		 */
-		if (originalStateCopy.find(gn1).equals(originalStateCopy.find(gn2))) {
-			return Collections.singleton(bottom);
+		if (builder.find(gn1).equals(builder.find(gn2))) {
+			return Collections.singleton(getBottomState());
 		}
 		
 		/*
 		 * no contradiction --> introduce disequality
 		 */
-		originalStateCopy.addToDisEqSet(n1, n2);
+		builder.addToDisEqSet(n1, n2);
+		
+		builder.setIsTop(false);
 		
 		
 		/*
 		 * propagate disequality to children
 		 */
-		Set<VPState> result = propagateDisEqualites(originalStateCopy.build(), gn1, gn2);
+		Set<VPState> result = propagateDisEqualites(builder.build(), gn1, gn2);
 
 		return result;
 	}
@@ -288,6 +251,8 @@ public class VPStateFactory {
 	public VPState havoc(final EqNode node, final VPState originalState) {
 		VPStateBuilder builder = copy(originalState);
 		EqGraphNode graphNode = builder.getEqNodeToEqGraphNodeMap().get(node);
+		
+		// TODO: determine if state becomes top through the havoc!
 
 		// Handling the outgoing edge chain
 		EqGraphNode nextRepresentative = graphNode.getRepresentative();

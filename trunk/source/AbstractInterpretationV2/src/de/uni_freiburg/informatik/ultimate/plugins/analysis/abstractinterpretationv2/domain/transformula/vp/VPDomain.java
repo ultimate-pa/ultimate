@@ -26,7 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
 
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -80,7 +82,7 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 
 	@Override
 	public VPState createFreshState() {
-		return getVpStateFactory().createEmptyState().build();
+		return getVpStateFactory().createEmptyStateBuilder().build();
 	}
 
 	@Override
@@ -142,5 +144,16 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 
 	public IIcfgSymbolTable getSymbolTable() {
 		return mSymboltable;
+	}
+
+	public Set<EqNode> getLiteralEqNodes() {
+		// TODO only compute this once!
+		Set<EqNode> literalSet = new HashSet<>();
+		for (EqNode eqNode : getTermToEqNodeMap().values()) {
+			if (eqNode.isLiteral()) {
+				literalSet.add(eqNode);
+			}
+		}
+		return literalSet;
 	}
 }

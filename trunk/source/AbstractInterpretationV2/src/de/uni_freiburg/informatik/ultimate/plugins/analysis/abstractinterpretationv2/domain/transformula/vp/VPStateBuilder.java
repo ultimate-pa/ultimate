@@ -1,6 +1,10 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -20,6 +24,7 @@ public class VPStateBuilder {
 	public VPStateBuilder(VPDomain domain) {
 		mDomain = domain;
 		mEqGraph = new EqGraph();
+		createEqGraphNodes();
 	}
 	
 	public VPStateBuilder setVars(Set<IProgramVar> vars) { 
@@ -28,11 +33,13 @@ public class VPStateBuilder {
 	}
 
 	public VPStateBuilder setEqGraphNodes(Map<EqNode, EqGraphNode> map) {
+		assert map != null;
 		mEqGraph.mEqNodeToEqGraphNodeMap = map;
 		return this;
 	}
 	
 	VPState build() {
+		assert mEqGraph.mEqNodeToEqGraphNodeMap != null;
 		return new VPState(mEqGraph.mEqNodeToEqGraphNodeMap, mDisEqualitySet, mVars, mDomain, mIsTop);
 	}
 
@@ -226,5 +233,40 @@ public class VPStateBuilder {
 			}
 		}
 		return true;
+	}
+
+	private void createEqGraphNodes() {
+		/*
+		 * Create fresh EqGraphNodes from EqNodes.
+		 */
+		Map<EqNode, EqGraphNode> eqNodeToEqGraphNodeMap = new HashMap<>();
+		for (EqNode eqNode : mDomain.getTermToEqNodeMap().values()) {
+			getOrConstructEqGraphNode(eqNode, eqNodeToEqGraphNodeMap);
+		}
+		mEqGraph.mEqNodeToEqGraphNodeMap = Collections.unmodifiableMap(eqNodeToEqGraphNodeMap);
+	}
+
+	private EqGraphNode getOrConstructEqGraphNode(EqNode eqNode, Map<EqNode, EqGraphNode> eqNodeToEqGraphNode) {
+		
+		if (eqNodeToEqGraphNode.containsKey(eqNode)) {
+			return eqNodeToEqGraphNode.get(eqNode);
+		}
+		
+		final EqGraphNode graphNode = new EqGraphNode(eqNode);
+		List<EqGraphNode> argNodes = new ArrayList<>();
+		
+		if (eqNode instanceof EqFunctionNode) {
+
+			for (EqNode arg : ((EqFunctionNode)eqNode).getArgs()) {
+				EqGraphNode argNode = getOrConstructEqGraphNode(arg, eqNodeToEqGraphNode);
+//				argNode.addToInitCcpar(graphNode);
+				argNode.addToCcpar(graphNode);
+				argNodes.add(argNode);
+			}
+//			graphNode.addToInitCcchild(argNodes);
+			graphNode.getCcchild().addPair(((EqFunctionNode)eqNode).getFunction(), argNodes);
+		}
+		eqNodeToEqGraphNode.put(eqNode, graphNode);
+		return graphNode;
 	}
 }
