@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -110,13 +109,21 @@ public class VPStateBuilder {
 	}
 
 
-	void restorePropagation(final EqFunctionNode node) {
-	
-		final Set<EqFunctionNode> fnNodeSet = mDomain.getArrayIdToEqFnNodeMap().getImage(node.getFunction());
+	/**
+	 * An additional process after a function node is havoc, in order to restore the propagation.
+	 * For example, we have two nodes a[i] and a[j], if i = j, by equality propagation,
+	 * we also know a[i] = a[j]. When a[i] is being havoc, we lose the information of a[i] = a[j], 
+	 * which is the result of equality propagation of (i = j). This method is to restore this 
+	 * information.
+	 * 
+	 * @param functionNode
+	 */
+	void restorePropagation(final EqFunctionNode functionNode) {
+
+		final Set<EqFunctionNode> fnNodeSet = mDomain.getArrayIdToEqFnNodeMap().getImage(functionNode.getFunction());
 		for (final EqFunctionNode fnNode1 : fnNodeSet) {
 			for (final EqFunctionNode fnNode2 : fnNodeSet) {
-				if (!fnNode1.equals(fnNode2) && find(getEqNodeToEqGraphNodeMap().get(fnNode1))
-						.equals(find(getEqNodeToEqGraphNodeMap().get(fnNode2)))) {
+				if (!fnNode1.equals(fnNode2) && mEqGraph.congruent(getEqNodeToEqGraphNodeMap().get(fnNode1), getEqNodeToEqGraphNodeMap().get(fnNode2))) {
 					mEqGraph.equalityPropagation(getEqNodeToEqGraphNodeMap().get(fnNode1),
 							getEqNodeToEqGraphNodeMap().get(fnNode2));
 				}
@@ -136,7 +143,8 @@ public class VPStateBuilder {
 		private Map<EqNode, EqGraphNode> mEqNodeToEqGraphNodeMap;
 
 		/**
-		 * Union of two equivalence classes.
+		 * Union of two equivalence classes. 
+		 * The representative of node1 will become the representative of node2.
 		 *
 		 * @param node1
 		 * @param node2
@@ -153,7 +161,32 @@ public class VPStateBuilder {
 				for (final Entry<IProgramVarOrConst, List<EqGraphNode>> entry : graphNode1Find.getCcchild().entrySet()) {
 					graphNode2Find.getCcchild().addPair(entry.getKey(), entry.getValue());
 				}
-				// graphNode2Find.addToCcchild(graphNode1Find.getCcchild());
+				
+				/*
+				 * Because of the change of representative, the disequality set also need to be updated.
+				 */
+				for (VPDomainSymmetricPair<EqNode> pair : mDisEqualitySet) {
+					if (pair.contains(graphNode1Find.eqNode)) {
+						EqNode first = pair.getFirst();
+						EqNode second = pair.getSecond();
+						
+						/*
+						 * TODO check: If both nodes in pair are constant, ignore it.
+						 */
+						if (first.isLiteral() && second.isLiteral()) {
+							continue;
+						}
+						
+						mDisEqualitySet.remove(pair);
+						if (first.equals(graphNode1Find.eqNode)) {
+							mDisEqualitySet.add(
+									new VPDomainSymmetricPair<EqNode>(graphNode2Find.eqNode, second));
+						} else {
+							mDisEqualitySet.add(
+									new VPDomainSymmetricPair<EqNode>(first, graphNode2Find.eqNode));
+						}
+					}
+				}
 			}
 		}
 

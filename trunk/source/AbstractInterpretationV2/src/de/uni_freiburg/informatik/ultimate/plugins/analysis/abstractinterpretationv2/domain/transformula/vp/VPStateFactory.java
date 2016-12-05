@@ -27,12 +27,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -176,17 +173,20 @@ public class VPStateFactory {
 		EqGraphNode gn1 = builder.getEqNodeToEqGraphNodeMap().get(n1);
 		EqGraphNode gn2 = builder.getEqNodeToEqGraphNodeMap().get(n2);
 
+		EqGraphNode gn1Find = builder.find(gn1);
+		EqGraphNode gn2Find = builder.find(gn2);
+		
 		/*
 		 * check if the disequality introduces a contradiction, return bottom in that case
 		 */
-		if (builder.find(gn1).equals(builder.find(gn2))) {
+		if (gn1Find.equals(gn2Find)) {
 			return Collections.singleton(getBottomState());
 		}
 		
 		/*
 		 * no contradiction --> introduce disequality
 		 */
-		builder.addToDisEqSet(n1, n2);
+		builder.addToDisEqSet(gn1Find.eqNode, gn2Find.eqNode);
 		
 		builder.setIsTop(false);
 		
@@ -194,7 +194,7 @@ public class VPStateFactory {
 		/*
 		 * propagate disequality to children
 		 */
-		Set<VPState> result = propagateDisEqualites(builder.build(), gn1, gn2);
+		Set<VPState> result = propagateDisEqualites(builder.build(), gn1Find, gn2Find);
 
 		return result;
 	}
@@ -276,17 +276,17 @@ public class VPStateFactory {
 		}
 
 		// Handling the node itself
-		graphNode.setNodeToInitial();
-		for (final VPDomainSymmetricPair<EqNode> disEqPair : builder.getDisEqualitySet()) {
-			if (disEqPair.getFirst().equals(graphNode.eqNode)) {
-				builder.getDisEqualitySet().remove(disEqPair);
-			} else if (disEqPair.getSecond().equals(graphNode.eqNode)) {
-				builder.getDisEqualitySet().remove(disEqPair);
+		if (graphNode.getRepresentative().equals(graphNode)) {
+			for (final VPDomainSymmetricPair<EqNode> disEqPair : builder.getDisEqualitySet()) {
+				if (disEqPair.contains(node)) {
+					builder.getDisEqualitySet().remove(disEqPair);
+				}
 			}
 		}
+		graphNode.setNodeToInitial();
 
-		if (graphNode.eqNode instanceof EqFunctionNode) {
-			builder.restorePropagation((EqFunctionNode) graphNode.eqNode);
+		if (node instanceof EqFunctionNode) {
+			builder.restorePropagation((EqFunctionNode) node);
 		}
 		
 		VPState resultState = builder.build();
