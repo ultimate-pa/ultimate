@@ -11,6 +11,7 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeRun;
 import de.uni_freiburg.informatik.ultimate.automata.tree.PostfixTree;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
+import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeRun;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.Complement;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.Intersect;
@@ -31,6 +32,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClause
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClausePredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClausePredicateSymbol.HornClauseFalsePredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.script.HornAnnot;
 
@@ -164,13 +166,26 @@ public class TreeAutomizerCEGAR {
 		
 		((TreeAutomatonBU<HCTransFormula, HCPredicate>) mInterpolAutomaton).extendAlphabet(mAbstraction.getAlphabet());
 	}
-
-	private void generalizeCounterExample() {
-		// TODO(mostafa): Add more sound edges that can be helpful in reduction.
+	
+	
+	private void generalizeCounterExample(final TreeAutomatonBU<HCTransFormula, HCPredicate> cExample) {
+		boolean printed = false;
+		for (final TreeAutomatonRule<HCTransFormula, HCPredicate> r : cExample.getRules()) {
+			for (final HCPredicate pf : cExample.getStates()) {
+				if (mPredicateFactory.isSatisfiable(r.getSource(), r.getLetter(), pf)) { 
+					if (!printed) {
+						mLogger.debug("Generalizing counterExample:");
+						printed = true;
+					}
+					mLogger.debug("Adding Rule: " + r.getLetter() + "("+r.getSource()+")" + " --> " + pf);
+					cExample.addRule(new TreeAutomatonRule<HCTransFormula, HCPredicate>(r.getLetter(), r.getSource(), pf));
+				}
+			}
+		}
 	}
 
 	protected boolean refineAbstraction() throws AutomataOperationCanceledException, AutomataLibraryException {
-		generalizeCounterExample();
+	
 		mLogger.debug("Refine begins...");
 		//mLogger.debug(mAbstraction);
 		
@@ -178,6 +193,7 @@ public class TreeAutomizerCEGAR {
 				mInterpolAutomaton, mPredicateFactory)).getResult();
 		mLogger.debug("Complemented counter example automaton:");
 		mLogger.debug(cExample);
+		generalizeCounterExample((TreeAutomatonBU<HCTransFormula, HCPredicate>) cExample);
 		
 		mAbstraction = (TreeAutomatonBU<HCTransFormula, HCPredicate>) (new Intersect<HCTransFormula, HCPredicate>(
 				mAbstraction, cExample, mPredicateFactory)).getResult();

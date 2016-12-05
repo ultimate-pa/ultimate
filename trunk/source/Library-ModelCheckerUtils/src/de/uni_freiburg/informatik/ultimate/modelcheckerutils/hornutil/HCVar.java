@@ -66,4 +66,9 @@ public class HCVar implements IProgramVar {
 		// TODO Auto-generated method stub
 		return null;
 	}
+	
+	@Override
+	public int hashCode() {
+		return getGloballyUniqueId().hashCode();
+	}
 }

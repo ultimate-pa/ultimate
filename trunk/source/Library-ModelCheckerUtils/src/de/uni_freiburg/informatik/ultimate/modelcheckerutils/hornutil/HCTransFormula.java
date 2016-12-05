@@ -56,7 +56,7 @@ public class HCTransFormula {
 	
 	@Override
 	public String toString() {
-		return formula.toString();
+		return formula.toString() + ",in: " + inVars + ",out: " + outVars;
 	}
 	/*
 	@Override

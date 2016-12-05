@@ -1,4 +1,3 @@
-
 package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.graph;
 
 import java.util.HashSet;
@@ -27,17 +26,17 @@ public class HCPredicate extends BasicPredicate implements IPredicate {
 
 	private final Map<Term, HCVar> mProgramVars;
 	
-	protected HCPredicate(final HornClausePredicateSymbol programPoint, final int serialNumber, final Term term,
-			final Set<IProgramVar> vars, final Map<Term, HCVar> varsMap) {// , Term closedFormula) {
-
-		super(serialNumber, new String[] {}, term, vars, null);
+	protected HCPredicate(final HornClausePredicateSymbol programPoint, int serialNumber, final Term term,
+			final Set<IProgramVar> vars, final Map<Term, HCVar> varsMap) {
+		
+		super(serialNumber, new String[]{}, term, vars, null);
 		mProgramPoint = programPoint;
 		
 		mProgramVars = varsMap;
 	}
 	
 	protected HCPredicate(final HornClausePredicateSymbol programPoint, final Term term, final Set<IProgramVar> vars,
-			final Map<Term, HCVar> varsMap) {// , Term closedFormula) {
+			final Map<Term, HCVar> varsMap) {
 
 		super(HashUtils.hashHsieh(serialHCPredicate, programPoint, term), new String[] {}, term, vars, null);
 		mProgramPoint = programPoint;
@@ -46,29 +45,26 @@ public class HCPredicate extends BasicPredicate implements IPredicate {
 	
 	protected HCPredicate(final HornClausePredicateSymbol programPoint, final Term term,
 			final Map<Term, HCVar> varsMap) {
-		this(programPoint, term, new HashSet<>(), varsMap);
+		this(programPoint, term, new HashSet<>(varsMap.values()), varsMap);
+	}
+
+	
+	/**
+	 * The published attributes. Update this and getFieldValue() if you add new attributes.
+	 */
+	private final static String[] s_AttribFields = { "ProgramPoint", "Formula", "Vars" };
+
+
+	//@Override
+	protected String[] getFieldNames() {
+		return s_AttribFields;
 	}
 
 	public HCPredicate(final Term formula, final HCPredicate oldPredicate, final Map<Term, HCVar> varsMap) {
 		// TODO: Intersect oldPredicate.mVars with formula.vars
 		this(oldPredicate.mProgramPoint, HashUtils.hashHsieh(serialHCPredicate, formula, oldPredicate), formula,
-				oldPredicate.mVars, varsMap);
-	}
+				new HashSet<>(varsMap.values()), varsMap);
 
-	/**
-	 * The published attributes. Update this and getFieldValue() if you add new attributes.
-	 */
-	private final static String[] s_AttribFields = { "ProgramPoint", "Formula", "Vars" };
-	
-	protected String[] getFieldNames() {
-		return s_AttribFields;
-	}
-	
-	public HCPredicate(final Term formula, final HCPredicate oldPredicate) {
-		// TODO: Intersect oldPredicate.mVars with formula.vars
-		// TODO (added by Marius): check the following line. I just introduced this to fix the build errors.
-		this(oldPredicate.mProgramPoint, HashUtils.hashHsieh(serialHCPredicate, formula, oldPredicate), formula,
-				oldPredicate.mVars, oldPredicate.mProgramVars);
 	}
 	
 	@Override
