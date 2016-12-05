@@ -96,6 +96,11 @@ class IndexPartition {
 		this.arrayId = arrayId;
 		this.indices = Collections.unmodifiableSet(indices);
 	}
+	
+	@Override
+	public String toString() {
+		return indices.toString();
+	}
 }
 
 class PartitionInformation {
@@ -160,7 +165,6 @@ class PartitionInformation {
 			mManagedScript.getScript().declareFun(constPrimedString, new Sort[0], newTv.getSort());
 			final ApplicationTerm newPrimedConst = (ApplicationTerm) mManagedScript.getScript().term(constPrimedString);
 
-
 			freshVar = new LocalBoogieVar(
 					newId, 
 					lbv.getProcedure(), 
@@ -182,5 +186,19 @@ class PartitionInformation {
 		
 		mNewSymbolTable.add(freshVar);
 		return freshVar;
+	}
+	
+	
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		
+		sb.append("PartitionInformation:\n");
+		
+		sb.append(" array: " + arrayId);
+		
+		sb.append(indexPartitions);
+		
+		return sb.toString();
 	}
 }

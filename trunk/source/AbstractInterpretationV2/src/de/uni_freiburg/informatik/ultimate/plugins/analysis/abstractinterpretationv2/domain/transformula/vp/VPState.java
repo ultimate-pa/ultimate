@@ -414,6 +414,12 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 	}
 
 	public boolean mayEqual(EqNode accessingNode1, EqNode accessingNode2) {
-		return mDisEqualitySet.contains(new VPDomainSymmetricPair<EqNode>(accessingNode1, accessingNode2));
+		return accessingNode1 == accessingNode2 
+				|| !mDisEqualitySet.contains(new VPDomainSymmetricPair<EqNode>(
+						find(accessingNode1), find(accessingNode2)));
+	}
+
+	private EqNode find(EqNode node) {
+		return mEqNodeToEqGraphNodeMap.get(node).find().eqNode;
 	}
 }
