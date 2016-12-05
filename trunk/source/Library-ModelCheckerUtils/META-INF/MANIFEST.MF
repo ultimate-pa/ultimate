@@ -29,5 +29,4 @@ Require-Bundle: Library-UltimateCore,
  BoogiePreprocessor,
  SMTInterpol,
  SMTSolverBridge,
- Library-JavaBDD,
- de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2
+ Library-JavaBDD

@@ -47,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 
 /**
  * Factory for construction of {@link IPredicate}s with unique serial numbers. Sometimes we need different
@@ -58,7 +57,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  *
  */
 public class BasicPredicateFactory {
-	
+
 	protected final IIcfgSymbolTable mSymbolTable;
 	protected final Script mScript;
 	protected final SimplificationTechnique mSimplificationTechnique;
@@ -71,7 +70,7 @@ public class BasicPredicateFactory {
 	protected final ILogger mLogger;
 	protected final Term mDontCareTerm;
 	protected final Term mEmptyStackTerm;
-	
+
 	public BasicPredicateFactory(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final IIcfgSymbolTable symbolTable, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique) {
@@ -85,15 +84,15 @@ public class BasicPredicateFactory {
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
 	}
-	
+
 	protected Term getDontCareTerm() {
 		return mDontCareTerm;
 	}
-	
+
 	protected int constructFreshSerialNumber() {
 		return mSerialNumberCounter++;
 	}
-	
+
 	/**
 	 * Returns true iff each free variables corresponds to a BoogieVar or will be quantified. Throws an Exception
 	 * otherwise.
@@ -110,22 +109,22 @@ public class BasicPredicateFactory {
 		}
 		return true;
 	}
-	
+
 	public boolean isDontCare(final IPredicate pred) {
 		return pred.getFormula() == mDontCareTerm;
 	}
-	
+
 	public boolean isDontCare(final Term term) {
 		return term == mDontCareTerm;
 	}
-	
+
 	public BasicPredicate newPredicate(final Term term) {
 		final TermVarsProc termVarsProc = constructTermVarsProc(term);
 		final BasicPredicate predicate = new BasicPredicate(constructFreshSerialNumber(), termVarsProc.getProcedures(),
 				termVarsProc.getFormula(), termVarsProc.getVars(), termVarsProc.getClosedFormula());
 		return predicate;
 	}
-	
+
 	protected TermVarsProc constructTermVarsProc(final Term term) {
 		final TermVarsProc termVarsProc;
 		if (term == mDontCareTerm) {
@@ -135,15 +134,15 @@ public class BasicPredicateFactory {
 		}
 		return termVarsProc;
 	}
-	
+
 	private TermVarsProc constructDontCare() {
 		return new TermVarsProc(mDontCareTerm, EMPTY_VARS, NO_PROCEDURE, mDontCareTerm);
 	}
-	
+
 	public DebugPredicate newDebugPredicate(final String debugMessage) {
 		return new DebugPredicate(debugMessage, constructFreshSerialNumber(), mDontCareTerm);
 	}
-	
+
 	public IPredicate newBuchiPredicate(final Set<IPredicate> inputPreds) {
 		final Term conjunction = and(inputPreds);
 		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(conjunction, mScript, mSymbolTable);
@@ -151,18 +150,18 @@ public class BasicPredicateFactory {
 				tvp.getClosedFormula(), inputPreds);
 	}
 
-	public <STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL>
-			AbstractStatePredicate<STATE, ACTION, VARDECL> newAbstractStatePredicate(final STATE abstractState) {
-		final Term stateTerm = abstractState.getTerm(mScript);
-		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(stateTerm, mScript, mSymbolTable);
-		return new AbstractStatePredicate<>(constructFreshSerialNumber(), tvp.getProcedures(), tvp.getFormula(),
-				tvp.getVars(), tvp.getClosedFormula(), abstractState);
-	}
-	
+	// public <STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL>
+	// AbstractStatePredicate<STATE, ACTION, VARDECL> newAbstractStatePredicate(final STATE abstractState) {
+	// final Term stateTerm = abstractState.getTerm(mScript);
+	// final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(stateTerm, mScript, mSymbolTable);
+	// return new AbstractStatePredicate<>(constructFreshSerialNumber(), tvp.getProcedures(), tvp.getFormula(),
+	// tvp.getVars(), tvp.getClosedFormula(), abstractState);
+	// }
+
 	public Term and(final IPredicate... preds) {
 		return and(Arrays.asList(preds));
 	}
-	
+
 	public Term and(final Collection<IPredicate> preds) {
 		Term term = mScript.term("true");
 		for (final IPredicate p : preds) {
@@ -173,11 +172,11 @@ public class BasicPredicateFactory {
 		}
 		return term;
 	}
-	
+
 	public Term or(final boolean withSimplifyDDA, final IPredicate... preds) {
 		return or(withSimplifyDDA, Arrays.asList(preds));
 	}
-	
+
 	public Term or(final boolean withSimplifyDDA, final Collection<IPredicate> preds) {
 		Term term = mScript.term("false");
 		for (final IPredicate p : preds) {
@@ -191,57 +190,57 @@ public class BasicPredicateFactory {
 		}
 		return term;
 	}
-	
+
 	public Term not(final IPredicate p) {
 		if (isDontCare(p)) {
 			return mDontCareTerm;
 		}
 		return SmtUtils.not(mScript, p.getFormula());
 	}
-	
+
 	private static final class AuxiliaryTerm extends Term {
-		
+
 		String mName;
-		
+
 		AuxiliaryTerm(final String name) {
 			super(0);
 			mName = name;
 		}
-		
+
 		@Override
 		public Sort getSort() {
 			throw new UnsupportedOperationException("Auxiliary term has no sort");
 		}
-		
+
 		@Override
 		public void toStringHelper(final ArrayDeque<Object> todo) {
 			throw new UnsupportedOperationException("Auxiliary term must not be subterm of other terms");
 		}
-		
+
 		@Override
 		public TermVariable[] getFreeVars() {
 			throw new UnsupportedOperationException("Auxiliary term has no vars");
 		}
-		
+
 		@Override
 		public Theory getTheory() {
 			throw new UnsupportedOperationException("Auxiliary term has no theory");
 		}
-		
+
 		@Override
 		public String toString() {
 			return mName;
 		}
-		
+
 		@Override
 		public String toStringDirect() {
 			return mName;
 		}
-		
+
 		@Override
 		public int hashCode() {
 			throw new UnsupportedOperationException("Auxiliary term must not be contained in any collection");
 		}
 	}
-	
+
 }
