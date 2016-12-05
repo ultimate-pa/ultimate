@@ -1279,4 +1279,33 @@ public final class SmtUtils {
 		assert Util.checkSat(script, script.term("distinct", term, result)) != LBool.SAT;
 		return result;
 	}
+	
+	/**
+	 * @return the dual quantifier:
+	 *  - existential if input is universal, and
+	 *  - universal if input is existential 
+	 */
+	public static int getOtherQuantifier(final int quantifier) {
+		if (quantifier == QuantifiedFormula.EXISTS) {
+			return QuantifiedFormula.FORALL;
+		} else if (quantifier == QuantifiedFormula.FORALL) {
+			return QuantifiedFormula.EXISTS;
+		} else {
+			throw new AssertionError("unknown quantifier");
+		}
+	}
+	
+	/**
+	 * @return "or" if input is existential quantifier and
+	 *         "and" if input is universal quantifier
+	 */
+	public static String getCorrespondingFiniteConnective(final int quantifier) {
+		if (quantifier == QuantifiedFormula.EXISTS) {
+			return "or";
+		} else if (quantifier == QuantifiedFormula.FORALL) {
+			return "and";
+		} else {
+			throw new AssertionError("unknown quantifier");
+		}
+	}
 }
