@@ -78,12 +78,17 @@ public class MultiTrackTraceAbstractionRefinementStrategy implements IRefinement
 		 * Z3 with forward and backward predicates.
 		 */
 		Z3_SPBP,
+		/**
+		 * CVC4 with forward predicates.
+		 */
+		CVC4_FORWARD
 	}
 	
 	private static final String LOGIC_FOR_EXTERNAL_SOLVERS = "AUFNIRA";
 	private static final int SMTINTERPOL_TIMEOUT = 10_000;
 	// private static final String Z3_COMMAND = RcfgPreferenceInitializer.Z3_DEFAULT;
 	private static final String Z3_COMMAND = "z3 -smt2 -in SMTLIB2_COMPLIANT=true";
+	private static final String CVC4_COMMAND = "cvc4 --tear-down-incremental --print-success --lang smt";
 	
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
@@ -204,6 +209,7 @@ public class MultiTrackTraceAbstractionRefinementStrategy implements IRefinement
 		final List<Track> list = new ArrayList<>(2);
 		list.add(Track.SMTINTERPOL_TREE_INTERPOLANTS);
 		list.add(Track.Z3_SPBP);
+		list.add(Track.CVC4_FORWARD);
 		return list.iterator();
 	}
 	
@@ -211,6 +217,8 @@ public class MultiTrackTraceAbstractionRefinementStrategy implements IRefinement
 		final InterpolationTechnique interpolationTechnique = getInterpolationTechnique(mNextTechnique);
 		
 		final ManagedScript managedScript = constructManagedScript(mServices, mPrefs, mNextTechnique);
+		
+		mNextTechnique = null;
 		
 		TraceCheckerConstructor result;
 		if (mPrevTcConstructor == null) {
@@ -220,11 +228,9 @@ public class MultiTrackTraceAbstractionRefinementStrategy implements IRefinement
 			result = new TraceCheckerConstructor(mPrevTcConstructor, managedScript, interpolationTechnique);
 		}
 		
-		mNextTechnique = null;
-		
 		return result;
 	}
-
+	
 	private static InterpolationTechnique getInterpolationTechnique(final Track mode) {
 		final InterpolationTechnique interpolationTechnique;
 		switch (mode) {
@@ -233,6 +239,9 @@ public class MultiTrackTraceAbstractionRefinementStrategy implements IRefinement
 				break;
 			case Z3_SPBP:
 				interpolationTechnique = InterpolationTechnique.FPandBP;
+				break;
+			case CVC4_FORWARD:
+				interpolationTechnique = InterpolationTechnique.ForwardPredicates;
 				break;
 			default:
 				throw new IllegalArgumentException("Unknown mode: " + mode);
@@ -259,6 +268,12 @@ public class MultiTrackTraceAbstractionRefinementStrategy implements IRefinement
 			case Z3_SPBP:
 				solverSettings = new Settings(false, true, Z3_COMMAND, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
 						baseNameOfDumpedScript);
+				solverMode = SolverMode.External_ModelsAndUnsatCoreMode;
+				logicForExternalSolver = LOGIC_FOR_EXTERNAL_SOLVERS;
+				break;
+			case CVC4_FORWARD:
+				solverSettings = new Settings(false, true, CVC4_COMMAND, 0, null, dumpSmtScriptToFile,
+						pathOfDumpedScript, baseNameOfDumpedScript);
 				solverMode = SolverMode.External_ModelsAndUnsatCoreMode;
 				logicForExternalSolver = LOGIC_FOR_EXTERNAL_SOLVERS;
 				break;
