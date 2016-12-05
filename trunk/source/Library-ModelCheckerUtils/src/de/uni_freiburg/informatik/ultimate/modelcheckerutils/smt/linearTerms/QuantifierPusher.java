@@ -122,6 +122,15 @@ public class QuantifierPusher extends TermTransformer {
 		assert quantifiedFormula.getQuantifier() == QuantifiedFormula.EXISTS && appTerm.getFunction().getName().equals("and")
 				|| quantifiedFormula.getQuantifier() == QuantifiedFormula.FORALL && appTerm.getFunction().getName().equals("or");
 		
+		// Step 1:
+		// do partition
+		// if you can push something, push and return
+		// if you cannot push, continue
+		final ParameterPartition pp = new ParameterPartition(mScript, quantifiedFormula);
+		if (!pp.isIsPartitionTrivial()) {
+			return pp.getTermWithPushedQuantifier();
+		}
+		
 		// 2016-12-03 Matthias: plan for refactoring
 		//
 		// do partition
