@@ -114,8 +114,9 @@ public class HsNonPlugin {
 		final HeapSepRcfgVisitor hsv = new HeapSepRcfgVisitor(mLogger, newArrayIdProvider, mCsToolkit.getManagedScript(), vpDomain);
 		walker.addObserver(hsv);
 		walker.run(BoogieIcfgContainer.extractStartEdges(oldBoogieIcfg));
+		
 
-		return null;
+		return oldBoogieIcfg;
 	}
 
 	private void printAIResult(

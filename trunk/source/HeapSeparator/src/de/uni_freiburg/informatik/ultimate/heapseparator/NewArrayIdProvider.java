@@ -152,6 +152,8 @@ class PartitionInformation {
 		
 		IProgramVarOrConst freshVar = null;
 		
+		mManagedScript.lock(this);
+		
 		if (originalArrayId instanceof LocalBoogieVar) {
 			final LocalBoogieVar lbv = (LocalBoogieVar) originalArrayId;
 			final String newId = lbv.getIdentifier() + "_part_" + getFreshVersionIndex();
@@ -159,11 +161,11 @@ class PartitionInformation {
 
 			String constString = newId + "_const";
 			mManagedScript.getScript().declareFun(constString, new Sort[0], newTv.getSort());
-			final ApplicationTerm newConst = (ApplicationTerm) mManagedScript.getScript().term(constString);
+			final ApplicationTerm newConst = (ApplicationTerm) mManagedScript.term(this, constString);
 			
 			String constPrimedString = newId + "_const_primed";
 			mManagedScript.getScript().declareFun(constPrimedString, new Sort[0], newTv.getSort());
-			final ApplicationTerm newPrimedConst = (ApplicationTerm) mManagedScript.getScript().term(constPrimedString);
+			final ApplicationTerm newPrimedConst = (ApplicationTerm) mManagedScript.term(this, constPrimedString);
 
 			freshVar = new LocalBoogieVar(
 					newId, 
@@ -183,6 +185,9 @@ class PartitionInformation {
 		} else {
 			assert false : "case missing --> add it?";
 		}
+		
+		
+		mManagedScript.unlock(this);
 		
 		mNewSymbolTable.add(freshVar);
 		return freshVar;

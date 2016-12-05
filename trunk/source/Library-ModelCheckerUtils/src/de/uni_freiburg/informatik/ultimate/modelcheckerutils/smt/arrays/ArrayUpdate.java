@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -35,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ApplicationTermFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.BinaryEqualityRelation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.BinaryRelation.NoRelationOfThisKindException;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.BinaryRelation.RelationSymbol;
@@ -60,7 +62,7 @@ public class ArrayUpdate {
 	 * term is no array update.
 	 */
 	public ArrayUpdate(Term term, boolean isNegated, 
-			boolean oldArrayIsTermVariable) throws ArrayUpdateException {
+			boolean enforceThatOldArrayIsTermVariable) throws ArrayUpdateException {
 		BinaryEqualityRelation ber = null;
 		try {
 			ber = new BinaryEqualityRelation(term);
@@ -106,7 +108,7 @@ public class ArrayUpdate {
 		if (!mMultiDimensionalStore.getArray().getSort().equals(mNewArray.getSort())) {
 			throw new AssertionError("sort mismatch");
 		}
-		if (oldArrayIsTermVariable && 
+		if (enforceThatOldArrayIsTermVariable && 
 				!(mMultiDimensionalStore.getArray() instanceof TermVariable)) {
 			throw new ArrayUpdateException("old array is no term variable");
 			
@@ -240,5 +242,29 @@ public class ArrayUpdate {
 		public List<Term> getRemainingTerms() {
 			return remainingTerms;
 		}
+	}
+
+	public static List<ArrayUpdate> extractArrayUpdates(Term formula) {
+		HashSet<String> functionSymbolNames = new HashSet<>(3);
+		functionSymbolNames.add("=");
+		functionSymbolNames.add("distinct");
+		functionSymbolNames.add("not");
+
+		List<ArrayUpdate> result = new ArrayList<>();
+
+		ApplicationTermFinder atf = new ApplicationTermFinder(functionSymbolNames, false);
+		for (ApplicationTerm subterm : atf.findMatchingSubterms(formula)) {
+			ArrayUpdate arrayUpdate = null;
+
+			boolean isNegated = subterm.getFunction().getName().equals("not")
+					|| subterm.getFunction().getName().equals("distinct");
+			try {
+				arrayUpdate = new ArrayUpdate(subterm, isNegated, true);
+			} catch (ArrayUpdateException e) {
+				continue;
+			}
+			result.add(arrayUpdate);
+		}
+		return result;
 	}
 }

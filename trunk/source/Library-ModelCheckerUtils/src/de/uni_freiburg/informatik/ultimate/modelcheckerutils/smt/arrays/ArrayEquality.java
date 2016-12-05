@@ -145,25 +145,6 @@ public class ArrayEquality {
 
 		ApplicationTermFinder atf = new ApplicationTermFinder(functionSymbolNames, false);
 		for (ApplicationTerm subterm : atf.findMatchingSubterms(term)) {
-//			if (subterm.getParameters().length == 0) {
-//				continue;
-//			}
-//			String functionSymbolName = subterm.getFunction().getName();
-//			boolean isNegated = false;
-//			ApplicationTerm subtermStripped = null;
-//			
-//			
-//			if ("not".equals(functionSymbolName)) {
-//				if (!(subterm.getParameters()[0] instanceof ApplicationTerm)) {
-//					continue;
-//				}
-//				isNegated = true;
-//				subtermStripped = (ApplicationTerm) subterm.getParameters()[0];
-//				functionSymbolName = subtermStripped.getFunction().getName();
-//			} else {
-//				subtermStripped = subterm;
-//			}
-//		
 			ArrayEquality arrayEquality = null;
 			try {
 				arrayEquality = new ArrayEquality(subterm, true, true);

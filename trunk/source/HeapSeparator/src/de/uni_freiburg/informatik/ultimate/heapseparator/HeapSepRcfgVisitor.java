@@ -26,22 +26,31 @@
  */
 package de.uni_freiburg.informatik.ultimate.heapseparator;
 
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayEquality;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayUpdate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -144,11 +153,46 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 		 *  build a substitution
 		 */
 
-		Map<IProgramVarOrConst, IProgramVarOrConst> substitutionMap = new HashMap<>();
+		final Map<IProgramVar, TermVariable> newInVars = new HashMap<>();
+		final Map<IProgramVar, TermVariable> newOutVars = new HashMap<>();
+		final Map<IProgramVarOrConst, IProgramVarOrConst> substitutionMap = new HashMap<>();
 
+		List<ArrayUpdate> arrayUpdates = ArrayUpdate.extractArrayUpdates(tf.getFormula());
+		/**
+		 * records which store terms have been processed during handling of array updates
+		 *  --> those will not have to be processed later
+		 */
+		Set<Term> storesInArrayUpdates = new HashSet<>();
+		for (ArrayUpdate au : arrayUpdates) {
+			storesInArrayUpdates.add(au.getMultiDimensionalStore().getStoreTerm());
 
-		List<MultiDimensionalSelect> mdSelects = MultiDimensionalSelect.extractSelectShallow(tf.getFormula(), false);//TODO allowArrayValues??
+			IProgramVarOrConst updateLhs = 
+					mVpDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(
+							au.getNewArray(), 
+							VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf));
+			
+			IProgramVarOrConst updateRhsArray = 
+					mVpDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(
+							au.getOldArray(), 
+							VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf));
+
+			List<EqNode> pointers = au.getMultiDimensionalStore().getIndex().stream()
+					.map(indexTerm -> mVpDomain.getPreAnalysis().getTermToEqNodeMap().get(indexTerm))
+					.collect(Collectors.toList());
+
+			IProgramVarOrConst newArrayLhs = mNewArrayIdProvider.getNewArrayId(updateLhs, pointers);
+
+			IProgramVarOrConst newArrayRhs = mNewArrayIdProvider.getNewArrayId(updateRhsArray, pointers);
+
+			updateForSubstitution(updateLhs, newArrayLhs, tf, newInVars, newOutVars, substitutionMap);
+
+			updateForSubstitution(updateRhsArray, newArrayRhs, tf, newInVars, newOutVars, substitutionMap);
+		}
+		
+
+		List<MultiDimensionalSelect> mdSelects = MultiDimensionalSelect.extractSelectShallow(tf.getFormula(), true);//TODO allowArrayValues??
 		for (MultiDimensionalSelect mds : mdSelects) {
+			//TODO: we can't work on the normalized TermVariables like this, I think..
 			IProgramVarOrConst oldArray = 
 					mVpDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(
 							mds.getArray(), 
@@ -158,11 +202,16 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 					.map(indexTerm -> mVpDomain.getPreAnalysis().getTermToEqNodeMap().get(indexTerm))
 					.collect(Collectors.toList());
 			IProgramVarOrConst newArray = mNewArrayIdProvider.getNewArrayId(oldArray, pointers);
-			substitutionMap.put(oldArray, newArray);
+
+			updateForSubstitution(oldArray, newArray, tf, newInVars, newOutVars, substitutionMap);
 		}
 
 		List<MultiDimensionalStore> mdStores = MultiDimensionalStore.extractArrayStoresShallow(tf.getFormula());
 		for (MultiDimensionalStore mds : mdStores) {
+			if (storesInArrayUpdates.contains(mds.getStoreTerm())) {
+				continue;
+			}
+
 			IProgramVarOrConst oldArray = 
 					mVpDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(
 							mds.getArray(), 
@@ -171,13 +220,61 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 					.map(indexTerm -> mVpDomain.getPreAnalysis().getTermToEqNodeMap().get(indexTerm))
 					.collect(Collectors.toList());
 			IProgramVarOrConst newArray = mNewArrayIdProvider.getNewArrayId(oldArray, pointers);
-			substitutionMap.put(oldArray, newArray);
+
+			updateForSubstitution(oldArray, newArray, tf, newInVars, newOutVars, substitutionMap);
 		}
 		
-		//TODO: array equalities, array updates
-		// updates are equalities, but...
+		List<ArrayEquality> arrayEqualities = ArrayEquality.extractArrayEqualities(tf.getFormula());
+		for (ArrayEquality ae : arrayEqualities) {
+			
+			assert false;
+			/*
+			 * plan:
+			 *  - check compatibility (assert)
+			 *  - make an assignment between all the partitions
+			 */
+			
+		}
+		
+		
+		
+		boolean newEmptyNonTheoryConsts = false;
+		Set<IProgramConst> newNonTheoryConsts = null;
+		boolean newEmptyBranchEncoders = false;
+		Collection<TermVariable> newBranchEncoders = null;
+		boolean newEmptyAuxVars = false;
+		TransFormulaBuilder tfBuilder = new TransFormulaBuilder(
+				newInVars, 
+				newOutVars, 
+				newEmptyNonTheoryConsts, 
+				newNonTheoryConsts, 
+				newEmptyBranchEncoders, 
+				newBranchEncoders, 
+				newEmptyAuxVars);
+		
+		Term newFormula = new Substitution(mScript, substitutionMap.entrySet()
+				.stream().collect(Collectors.toMap(
+						en -> en.getKey().getTerm(), 
+						en -> en.getValue().getTerm())))
+				.transform(tf.getFormula());
+		tfBuilder.setFormula(newFormula);
+		
+		return tfBuilder.finishConstruction(mScript);
+	}
 
-		return null;
+
+
+	private void updateForSubstitution(IProgramVarOrConst oldArray, IProgramVarOrConst newArray,
+			final UnmodifiableTransFormula tf, final Map<IProgramVar, TermVariable> newInVars,
+			final Map<IProgramVar, TermVariable> newOutVars,
+			final Map<IProgramVarOrConst, IProgramVarOrConst> substitutionMap) {
+		substitutionMap.put(oldArray, newArray);
+		if (tf.getInVars().containsKey(oldArray)) {
+			newInVars.put((IProgramVar) newArray, (TermVariable) newArray.getTerm());
+		}
+		if (tf.getOutVars().containsKey(oldArray)) {
+			newOutVars.put((IProgramVar) newArray, (TermVariable) newArray.getTerm());
+		}
 	}
 
 

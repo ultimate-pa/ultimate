@@ -59,6 +59,8 @@ public class HeapSeparatorObserver implements IUnmanagedObserver {
 	private ManagedScript mScript;
 
 	private final IUltimateServiceProvider mServices;
+	
+	private BoogieIcfgContainer mBoogieIcfgContainer;
 
 	public HeapSeparatorObserver(final IUltimateServiceProvider services) {
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -76,7 +78,7 @@ public class HeapSeparatorObserver implements IUnmanagedObserver {
 	}
 
 	public IElement getModel() {
-		return null;
+		return mBoogieIcfgContainer;
 	}
 
 	@Override
@@ -90,71 +92,11 @@ public class HeapSeparatorObserver implements IUnmanagedObserver {
 	public boolean process(final IElement root) throws Throwable {
 
 		final BoogieIcfgContainer boogieIcfgContainer = (BoogieIcfgContainer) root;
-
-		mScript = boogieIcfgContainer.getCfgSmtToolkit().getManagedScript();
-		// testSetup(((RootNode) root).getOutgoingEdges().get(0).getTarget());
-		testSetup(((BoogieIcfgContainer) root));
-
-		// TODO taken from CodeCheck, what timer is suitable here?
-		final IProgressAwareTimer timer = mServices.getProgressMonitorService().getChildTimer(0.2);
-
-		final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, BoogieIcfgLocation> result =
-				AbstractInterpreter.run(boogieIcfgContainer, timer, mServices);
-
-		final ObserverDispatcher od = new ObserverDispatcherSequential(mLogger);
-		final RCFGWalkerBreadthFirst walker = new RCFGWalkerBreadthFirst(od, mLogger);
-		od.setWalker(walker);
-
-		final HeapSepRcfgVisitor hsv = null; // new HeapSepRcfgVisitor(mLogger, mOldArrayToPointerToNewArray, mScript);
-		walker.addObserver(hsv);
-		walker.run(BoogieIcfgContainer.extractStartEdges(boogieIcfgContainer));
+		
+		HsNonPlugin hnp = new HsNonPlugin(mServices, boogieIcfgContainer.getCfgSmtToolkit(), mLogger);
+		
+		mBoogieIcfgContainer = hnp.separate(boogieIcfgContainer);
 
 		return false;
-	}
-
-	void testSetup(final BoogieIcfgContainer ra) {
-
-		final IProgramVar m = ra.getBoogie2SMT().getBoogie2SmtSymbolTable().getBoogieVar("m",
-				new DeclarationInformation(StorageClass.LOCAL, "p"), false);
-
-		final IProgramVar p = ra.getBoogie2SMT().getBoogie2SmtSymbolTable().getBoogieVar("p",
-				new DeclarationInformation(StorageClass.LOCAL, "p"), false);
-
-		final IProgramVar q = ra.getBoogie2SMT().getBoogie2SmtSymbolTable().getBoogieVar("q",
-				new DeclarationInformation(StorageClass.LOCAL, "p"), false);
-
-		final IProgramVar i = ra.getBoogie2SMT().getBoogie2SmtSymbolTable().getBoogieVar("#i",
-				new DeclarationInformation(StorageClass.LOCAL, "p"), false);
-
-		final IProgramVar j = ra.getBoogie2SMT().getBoogie2SmtSymbolTable().getBoogieVar("#j",
-				new DeclarationInformation(StorageClass.LOCAL, "p"), false);
-
-		final IProgramVar m1 = ra.getBoogie2SMT().getBoogie2SmtSymbolTable().getBoogieVar("m1",
-				new DeclarationInformation(StorageClass.LOCAL, "p"), false);
-
-		final IProgramVar m2 = ra.getBoogie2SMT().getBoogie2SmtSymbolTable().getBoogieVar("m2",
-				new DeclarationInformation(StorageClass.LOCAL, "p"), false);
-
-		// BoogieVar m1 = new LocalBoogieVar("m1", "p",
-		// //m.getIType(),
-		// null,
-		// mscript.variable("m1_tv", m.getTermVariable().getSort()),
-		// null,null
-		//// (ApplicationTerm) mscript.term("m1_dc"),
-		//// (ApplicationTerm) mscript.term("m1_pc")
-		// );
-		//
-		// BoogieVar m2 = new LocalBoogieVar("m2", "p",
-		// //m.getIType(),
-		// null,
-		// mscript.variable("m2_tv", m.getTermVariable().getSort()),
-		// null,null
-		//// (ApplicationTerm) mscript.term("m2_dc"),
-		//// (ApplicationTerm) mscript.term("m2_pc")
-		// );
-
-		mOldArrayToPointerToNewArray = new NestedMap2<>();
-		mOldArrayToPointerToNewArray.put(m, p, m1);
-		mOldArrayToPointerToNewArray.put(m, q, m2);
 	}
 }
