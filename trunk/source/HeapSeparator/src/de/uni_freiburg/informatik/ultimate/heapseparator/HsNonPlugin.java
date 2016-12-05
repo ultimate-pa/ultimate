@@ -149,7 +149,7 @@ public class HsNonPlugin {
 		 */
 		final Map<IProgramVarOrConst, VPState> arrayToVPState = new HashMap<>();
 		for (final IProgramVarOrConst array : hspav.getArrayToAccessLocations().getDomain()) {
-			VPState disjoinedState = vpDomain.getBottomState();
+			VPState disjoinedState = vpDomain.getVpStateFactory().getBottomState();
 			for (final IcfgLocation loc : hspav.getArrayToAccessLocations().getImage(array)) {
 				final Set<VPState> statesAtLoc = vpDomainResult.getLoc2States().get(loc);
 				if (statesAtLoc == null) {

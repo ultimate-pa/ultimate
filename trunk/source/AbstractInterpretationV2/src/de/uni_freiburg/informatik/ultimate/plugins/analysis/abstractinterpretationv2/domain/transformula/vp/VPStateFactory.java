@@ -53,7 +53,7 @@ public class VPStateFactory {
 		mTopState = createEmptyState().build();
 	}
 	
-	private VPStateBuilder createEmptyState() {
+	VPStateBuilder createEmptyState() {
 		
 		/*
 		 * Create fresh EqGraphNodes from EqNodes.
@@ -92,6 +92,7 @@ public class VPStateFactory {
 		 * The set of tracked variables (as exposed to the fixpointengine) is empty, initially.
 		 */
 		Set<IProgramVar> vars = new HashSet<>();
+
 		VPStateBuilder builder = new VPStateBuilder(mDomain)
 				.setEqGraphNodes(eqNodeToEqGraphNodeMap)
 				.setVars(vars)
@@ -127,28 +128,28 @@ public class VPStateFactory {
 	public VPStateBottom getBottomState() {
 		return mBottomState;
 	}
-	
-	public VPState getTopState() {
-		return mTopState;
-	}
-	
+
 	public VPState copy(VPState originalState) {
-		assert !originalState.isBottom();
-		assert !originalState.isTop();
+		if (originalState.isBottom()) {
+			return originalState;
+		}
 		
-		VPStateBuilder builder = createEmptyState();
+		final VPStateBuilder builder = createEmptyState();
 		
 		for (EqNode eqNode : mDomain.getTermToEqNodeMap().values()) {
 			EqGraphNode newGraphNode = builder.getEqNodeToEqGraphNodeMap().get(eqNode);
 			EqGraphNode oldGraphNode = originalState.getEqNodeToEqGraphNodeMap().get(eqNode);
 			newGraphNode.copyFields(oldGraphNode, builder.getEqNodeToEqGraphNodeMap());
+			assert !originalState.isTop() || newGraphNode.getRepresentative() == newGraphNode;
 		}
 		
 		for (VPDomainSymmetricPair<EqNode> pair : originalState.getDisEqualitySet()) {
 			builder.getDisEqualitySet().add(pair);
+			assert !originalState.isTop() || (pair.mFst.isLiteral() && pair.mSnd.isLiteral()) : 
+				"The only disequalites in a top state are between constants";
 		}
 		
-		builder.setIsTop(false);
+		builder.setIsTop(originalState.isTop());
 
 		return builder.build();
 	}
@@ -170,7 +171,6 @@ public class VPStateFactory {
 		if (contradiction) {
 			return Collections.singleton(this.getBottomState());
 		}
-		
 		
 		/**
 		 * Propagate disequalites
@@ -428,13 +428,16 @@ public class VPStateFactory {
 		 */
 		public VPState disjoin(final VPState first, final VPState second) {
 		
-			if (first.isTop() || second.isTop()) {
-				return this.getTopState();
+			if (first.isTop()) {
+				return first;
 			}
-		
+			if (second.isTop()) {
+				return second;
+			}
 			if (first.isBottom()) {
 				return second;
-			} else if (second.isBottom()) {
+			} 
+			if (second.isBottom()) {
 				return first;
 			}
 		

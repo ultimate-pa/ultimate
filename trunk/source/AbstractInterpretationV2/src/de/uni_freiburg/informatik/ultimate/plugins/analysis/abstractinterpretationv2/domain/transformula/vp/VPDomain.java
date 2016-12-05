@@ -80,7 +80,7 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 
 	@Override
 	public VPState createFreshState() {
-		return getVpStateFactory().getTopState();
+		return getVpStateFactory().createEmptyState().build();
 	}
 
 	@Override
@@ -122,11 +122,6 @@ public class VPDomain implements IAbstractDomain<VPState, CodeBlock, IProgramVar
 	public HashRelation<IProgramVar, IProgramVar> getArrayToIndices() {
 		// TODO: implement
 		return null;
-	}
-
-	@Deprecated
-	public VPStateBottom getBottomState() {
-		return mBottomState;
 	}
 
 	public ManagedScript getManagedScript() {

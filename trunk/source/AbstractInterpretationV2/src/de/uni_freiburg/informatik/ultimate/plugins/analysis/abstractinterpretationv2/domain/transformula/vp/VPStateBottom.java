@@ -28,6 +28,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
 
+import java.util.Collection;
+import java.util.Set;
+
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+
 /**
 *
 * @author Yu-Wen Chen (yuwenchen1105@gmail.com)
@@ -47,5 +52,42 @@ public class VPStateBottom extends VPState {
 	@Override
 	public String toLogString() {
 		return "Bottom reached.";
+	}
+
+	@Override
+	public VPState addVariable(IProgramVar variable) {
+		return this;
+	}
+
+	@Override
+	public VPState removeVariable(IProgramVar variable) {
+		return this;
+	}
+
+	@Override
+	public VPState addVariables(Collection<IProgramVar> variables) {
+		return this;
+	}
+
+	@Override
+	public VPState removeVariables(Collection<IProgramVar> variables) {
+		return this;
+	}
+
+	@Override
+	public Set<IProgramVar> getVariables() {
+		// TODO Auto-generated method stub
+		return super.getVariables();
+	}
+
+	@Override
+	public VPState patch(VPState dominator) {
+		// TODO Auto-generated method stub
+		return super.patch(dominator);
+	}
+
+	@Override
+	public boolean isTop() {
+		return false;
 	}
 }
