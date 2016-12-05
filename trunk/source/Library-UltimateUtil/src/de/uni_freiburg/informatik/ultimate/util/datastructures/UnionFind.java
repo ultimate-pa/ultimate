@@ -31,6 +31,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
@@ -136,6 +137,21 @@ public class UnionFind<E> {
 			mEquivalenceClass.put(e, set1);
 		}
 		mRepresentative.put(set1, set1rep);
+	}
+	
+	/**
+	 * Union operation for arbitrary number of arguments.
+	 */
+	public void union(final Collection<E> elements) {
+		final Iterator<E> it = elements.iterator();
+		if (!it.hasNext()) {
+			return;	
+		} else {
+			final E firstElem = it.next();
+			while (it.hasNext()) {
+				union(firstElem, it.next());
+			}
+		}
 	}
 
 	/**
