@@ -41,9 +41,13 @@ import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XjunctPartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XnfDer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XnfIrd;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XnfTir;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XnfUpd;
 
 /**
  * Transform a Term into form where quantifier are pushed as much inwards
@@ -96,7 +100,7 @@ public class QuantifierPusher extends TermTransformer {
 		Term termToRecurseOn;
 		switch (classification) {
 		case ATOM:
-			termToRecurseOn = quantifiedFormula;
+			termToRecurseOn = applyEliminationToAtom(quantifiedFormula);
 			break;
 		case CORRESPODING_FINITE_CONNECTIVE:
 			termToRecurseOn = pushOverCorrespondingFiniteConnective(quantifiedFormula);
@@ -112,6 +116,17 @@ public class QuantifierPusher extends TermTransformer {
 			throw new AssertionError("unknown value " + classification);
 		}
 		return termToRecurseOn;
+	}
+
+	private Term applyEliminationToAtom(final QuantifiedFormula quantifiedFormula) {
+		final Term elimResult = applyEliminationTechniques(quantifiedFormula.getQuantifier(), 
+				new HashSet<>(Arrays.asList(quantifiedFormula.getVariables())), 
+				new Term[] { quantifiedFormula.getSubformula() });
+		if (elimResult == null) {
+			return quantifiedFormula;
+		} else {
+			return elimResult;
+		}
 	}
 
 	private Term pushOverCorrespondingFiniteConnective(final QuantifiedFormula quantifiedFormula) {
@@ -165,31 +180,46 @@ public class QuantifierPusher extends TermTransformer {
 		// if not exists return
 		
 
+		final int quantifier = quantifiedFormula.getQuantifier();
 		final Set<TermVariable> eliminatees = new HashSet<TermVariable>(Arrays.asList(quantifiedFormula.getVariables()));
 		{
-			final int numberOfEliminateesBefore = eliminatees.size();
-			final Term[] dualFiniteParams = PartialQuantifierElimination.getXjunctsInner(quantifiedFormula.getQuantifier(), appTerm);
-			final List<XjunctPartialQuantifierElimination> elimtechniques = new ArrayList<>();
-			elimtechniques.add(new XnfDer(mMgdScript, mServices));
-			for (final XjunctPartialQuantifierElimination technique : elimtechniques) {
-				// nothing was removed in last iteration, continue with original params
-				final Term[] elimResulDualFiniteParams = technique.tryToEliminate(quantifiedFormula.getQuantifier(), dualFiniteParams, eliminatees);
-				final Term result = PartialQuantifierElimination.applyDualFiniteConnective(
-						mScript, quantifiedFormula.getQuantifier(), Arrays.asList(elimResulDualFiniteParams));
-				if (eliminatees.isEmpty()) {
-					// all were removed
-					return result;
-				}
-				if (numberOfEliminateesBefore > eliminatees.size()) {
-					// something was removed
-					final QuantifiedFormula intermediate = (QuantifiedFormula) SmtUtils.quantifier(mScript, quantifiedFormula.getQuantifier(), eliminatees, result);
-					return tryToPush(intermediate);
-				}
+			
+			final Term[] dualFiniteParams = PartialQuantifierElimination.getXjunctsInner(quantifier, appTerm);
+			final Term eliminationResult = applyEliminationTechniques(quantifier, eliminatees, dualFiniteParams);
+			if (eliminationResult == null) {
+				// nothing was removed, we can return original
+				return quantifiedFormula;
+			} else {
+				return eliminationResult;
 			}
-			// nothing was removed, we can return original
-			return quantifiedFormula;
 		} 
 
+	}
+
+	private Term applyEliminationTechniques(final int quantifier, final Set<TermVariable> eliminatees,
+			final Term[] dualFiniteParams) throws AssertionError {
+		final int numberOfEliminateesBefore = eliminatees.size();
+		final List<XjunctPartialQuantifierElimination> elimtechniques = new ArrayList<>();
+		elimtechniques.add(new XnfDer(mMgdScript, mServices));
+		elimtechniques.add(new XnfIrd(mMgdScript, mServices));
+		elimtechniques.add(new XnfTir(mMgdScript, mServices, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION));
+		elimtechniques.add(new XnfUpd(mMgdScript, mServices));
+		for (final XjunctPartialQuantifierElimination technique : elimtechniques) {
+			// nothing was removed in last iteration, continue with original params
+			final Term[] elimResulDualFiniteParams = technique.tryToEliminate(quantifier, dualFiniteParams, eliminatees);
+			final Term result = PartialQuantifierElimination.applyDualFiniteConnective(
+					mScript, quantifier, Arrays.asList(elimResulDualFiniteParams));
+			if (eliminatees.isEmpty()) {
+				// all were removed
+				return result;
+			}
+			if (numberOfEliminateesBefore > eliminatees.size()) {
+				// something was removed
+				final QuantifiedFormula intermediate = (QuantifiedFormula) SmtUtils.quantifier(mScript, quantifier, eliminatees, result);
+				return tryToPush(intermediate);
+			}
+		}
+		return null;
 	}
 
 	private SubformulaClassification classify(final int quantifier, final Term subformula) {
