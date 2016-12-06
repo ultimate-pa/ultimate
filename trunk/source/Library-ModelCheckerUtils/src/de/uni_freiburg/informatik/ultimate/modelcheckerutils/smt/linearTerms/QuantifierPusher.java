@@ -26,8 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -162,35 +164,30 @@ public class QuantifierPusher extends TermTransformer {
 		//            if not less quantified return term after elimination
 		// if not exists return
 		
-//		{
-//			// transform to DNF (resp. CNF)
-//			appTerm = (ApplicationTerm) (new IteRemover(mScript)).transform(appTerm);
-//			if (quantifiedFormula.getQuantifier() == QuantifiedFormula.EXISTS) {
-//				appTerm = (ApplicationTerm) (new Dnf(mScript, mServices, mFreshTermVariableConstructor)).transform(appTerm);
-//			} else if (quantifiedFormula.getQuantifier() == QuantifiedFormula.FORALL) {
-//				appTerm = (ApplicationTerm) (new Cnf(mScript, mServices, mFreshTermVariableConstructor)).transform(appTerm);
-//			} else {
-//				throw new AssertionError("unknown quantifier");
-//			}
-//		}
-		final Term[] derResult;
+
 		final Set<TermVariable> eliminatees = new HashSet<TermVariable>(Arrays.asList(quantifiedFormula.getVariables()));
 		{
 			final int numberOfEliminateesBefore = eliminatees.size();
-			final XjunctPartialQuantifierElimination xnfDer = new XnfDer(mMgdScript, mServices);
-			final Term[] xjuncts = PartialQuantifierElimination.getXjunctsInner(quantifiedFormula.getQuantifier(), appTerm);
-			derResult = xnfDer.tryToEliminate(quantifiedFormula.getQuantifier(), xjuncts, eliminatees);
-			final Term result = PartialQuantifierElimination.applyDualFiniteConnective(
-					mScript, quantifiedFormula.getQuantifier(), Arrays.asList(derResult));
-			if (eliminatees.isEmpty()) {
-				return result;
+			final Term[] dualFiniteParams = PartialQuantifierElimination.getXjunctsInner(quantifiedFormula.getQuantifier(), appTerm);
+			final List<XjunctPartialQuantifierElimination> elimtechniques = new ArrayList<>();
+			elimtechniques.add(new XnfDer(mMgdScript, mServices));
+			for (final XjunctPartialQuantifierElimination technique : elimtechniques) {
+				// nothing was removed in last iteration, continue with original params
+				final Term[] elimResulDualFiniteParams = technique.tryToEliminate(quantifiedFormula.getQuantifier(), dualFiniteParams, eliminatees);
+				final Term result = PartialQuantifierElimination.applyDualFiniteConnective(
+						mScript, quantifiedFormula.getQuantifier(), Arrays.asList(elimResulDualFiniteParams));
+				if (eliminatees.isEmpty()) {
+					// all were removed
+					return result;
+				}
+				if (numberOfEliminateesBefore > eliminatees.size()) {
+					// something was removed
+					final QuantifiedFormula intermediate = (QuantifiedFormula) SmtUtils.quantifier(mScript, quantifiedFormula.getQuantifier(), eliminatees, result);
+					return tryToPush(intermediate);
+				}
 			}
-			if (numberOfEliminateesBefore > eliminatees.size()) {
-				// something was removed
-				final QuantifiedFormula intermediate = (QuantifiedFormula) SmtUtils.quantifier(mScript, quantifiedFormula.getQuantifier(), eliminatees, result);
-				return tryToPush(intermediate);
-			}
-			return SmtUtils.quantifier(mScript, quantifiedFormula.getQuantifier(), eliminatees, result);
+			// nothing was removed, we can return original
+			return quantifiedFormula;
 		} 
 
 	}
