@@ -33,11 +33,17 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 
 public class UltimateResultProcessor {
 
-	public static void processUltimateResults(final IUltimateServiceProvider services, final JSONObject json) throws JSONException {
+	private static final String TYPE_INVARIANT = "invariant";
+	private static final String LVL_WARNING = "warning";
+	private static final String LVL_INFO = "info";
+	private static final String LVL_ERROR = "error";
+
+	public static void processUltimateResults(final IUltimateServiceProvider services, final JSONObject json)
+			throws JSONException {
 		// get Result from Ultimate
 		final Map<String, List<IResult>> results = services.getResultService().getResults();
 		// add result to the json object
-		final ArrayList<JSONObject> resultList = new ArrayList<JSONObject>();
+		final List<JSONObject> resultList = new ArrayList<>();
 		for (final List<IResult> rList : results.values()) {
 			for (final IResult r : rList) {
 				SimpleLogger.log("processing result " + r.getShortDescription());
@@ -45,82 +51,82 @@ public class UltimateResultProcessor {
 				final UltimateResult packagedResult = new UltimateResult();
 				if (r instanceof ExceptionOrErrorResult) {
 					type = "ExceptionOrError";
-					packagedResult.logLvl = "error";
+					packagedResult.logLvl = LVL_ERROR;
 				} else if (r instanceof CounterExampleResult) {
 					type = "counter";
-					packagedResult.logLvl = "error";
+					packagedResult.logLvl = LVL_ERROR;
 				} else if (r instanceof ProcedureContractResult) {
-					type = "invariant";
-					packagedResult.logLvl = "info";
+					type = TYPE_INVARIANT;
+					packagedResult.logLvl = LVL_INFO;
 				} else if (r instanceof InvariantResult) {
-					type = "invariant";
-					packagedResult.logLvl = "info";
+					type = TYPE_INVARIANT;
+					packagedResult.logLvl = LVL_INFO;
 				} else if (r instanceof PositiveResult) {
 					type = "positive";
-					packagedResult.logLvl = "info";
+					packagedResult.logLvl = LVL_INFO;
 				} else if (r instanceof BenchmarkResult) {
 					type = "benchmark";
-					packagedResult.logLvl = "info";
+					packagedResult.logLvl = LVL_INFO;
 				} else if (r instanceof TerminationArgumentResult) {
-					type = "invariant";
-					packagedResult.logLvl = "info";
+					type = TYPE_INVARIANT;
+					packagedResult.logLvl = LVL_INFO;
 				} else if (r instanceof NonterminatingLassoResult<?, ?, ?>) {
-					type = "invariant";
-					packagedResult.logLvl = "info";
+					type = TYPE_INVARIANT;
+					packagedResult.logLvl = LVL_INFO;
 				} else if (r instanceof AllSpecificationsHoldResult) {
-					type = "invariant";
-					packagedResult.logLvl = "info";
+					type = TYPE_INVARIANT;
+					packagedResult.logLvl = LVL_INFO;
 				} else if (r instanceof UnprovableResult) {
 					type = "unprovable";
-					packagedResult.logLvl = "warning";
+					packagedResult.logLvl = LVL_WARNING;
 				} else if (r instanceof SyntaxErrorResult) {
 					type = "syntaxError";
-					packagedResult.logLvl = "error";
+					packagedResult.logLvl = LVL_ERROR;
 				} else if (r instanceof UnsupportedSyntaxResult) {
 					type = "syntaxUnsupported";
-					packagedResult.logLvl = "error";
+					packagedResult.logLvl = LVL_ERROR;
 				} else if (r instanceof TimeoutResultAtElement) {
 					type = "timeout";
-					packagedResult.logLvl = "error";
+					packagedResult.logLvl = LVL_ERROR;
 				} else if (r instanceof TypeErrorResult<?>) {
 					type = "typeError";
-					packagedResult.logLvl = "error";
+					packagedResult.logLvl = LVL_ERROR;
 				} else if (r instanceof TerminationAnalysisResult) {
 					type = "positive";
-					packagedResult.logLvl = "info";
+					packagedResult.logLvl = LVL_INFO;
 				} else if (r instanceof IResultWithSeverity) {
 					final IResultWithSeverity rws = (IResultWithSeverity) r;
 					if (rws.getSeverity().equals(Severity.ERROR)) {
-						type = "error";
-						packagedResult.logLvl = "error";
+						type = LVL_ERROR;
+						packagedResult.logLvl = LVL_ERROR;
 					} else if (rws.getSeverity().equals(Severity.WARNING)) {
-						type = "warning";
-						packagedResult.logLvl = "warning";
+						type = LVL_WARNING;
+						packagedResult.logLvl = LVL_WARNING;
 					} else if (rws.getSeverity().equals(Severity.INFO)) {
-						type = "info";
-						packagedResult.logLvl = "info";
+						type = LVL_INFO;
+						packagedResult.logLvl = LVL_INFO;
 					} else {
 						throw new IllegalArgumentException("Unknown kind of severity.");
 					}
 				} else if (r instanceof NoResult<?>) {
 					type = "noResult";
-					packagedResult.logLvl = "warning";
+					packagedResult.logLvl = LVL_WARNING;
 				}
+
 				// TODO : Add new "Out of resource" result here ...
 				if (r instanceof IResultWithLocation) {
 					final ILocation loc = ((IResultWithLocation) r).getLocation();
-					if (((IResultWithLocation) r).getLocation() == null) {
-						throw new IllegalArgumentException("Location is null");
+					if (loc == null) {
+						SimpleLogger.log("IResultWithLocation with getLocation()==null, ignoring...");
+						setEmptyLocation(packagedResult);
+					} else {
+						packagedResult.startLNr = loc.getStartLine();
+						packagedResult.endLNr = loc.getEndLine();
+						packagedResult.startCol = loc.getStartColumn();
+						packagedResult.endCol = loc.getEndColumn();
 					}
-					packagedResult.startLNr = loc.getStartLine();
-					packagedResult.endLNr = loc.getEndLine();
-					packagedResult.startCol = loc.getStartColumn();
-					packagedResult.endCol = loc.getEndColumn();
 				} else {
-					packagedResult.startLNr = -1;
-					packagedResult.endLNr = -1;
-					packagedResult.startCol = -1;
-					packagedResult.endCol = -1;
+					setEmptyLocation(packagedResult);
 				}
 				packagedResult.shortDesc = String.valueOf(r.getShortDescription());
 				packagedResult.longDesc = String.valueOf(r.getLongDescription());
@@ -130,6 +136,13 @@ public class UltimateResultProcessor {
 			}
 			json.put("results", new JSONArray(resultList.toArray(new JSONObject[resultList.size()])));
 		}
+	}
+
+	private static void setEmptyLocation(final UltimateResult packagedResult) {
+		packagedResult.startLNr = -1;
+		packagedResult.endLNr = -1;
+		packagedResult.startCol = -1;
+		packagedResult.endCol = -1;
 	}
 
 }
