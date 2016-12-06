@@ -84,7 +84,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 
 	// This is the simplest strategy: to add the backward predicate at the last location to the constraints,
 	// as an additional conjunct
-	private final static boolean USE_ONLY_LAST_BACKWARD_PREDICATES = !false;
+	private final static boolean USE_ONLY_LAST_BACKWARD_PREDICATES = false;
 	private final static boolean USE_LIVE_VARIABLES = false;
 
 	private final NestedRun<? extends IAction, IPredicate> mRun;
@@ -204,6 +204,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		final Set<BoogieIcfgLocation> locations = new LinkedHashSet<>(len);
 		// final Map<BoogieIcfgLocation, IcfgLocation> locationsForProgramPoint = new HashMap<>(len);
 		final Set<IcfgInternalAction> transitions = new LinkedHashSet<>(len - 1);
+//		final Set<CodeBlock> transitionsForAI = new LinkedHashSet<>(len - 1);
 		BoogieIcfgLocation previousLocation = null;
 		// The location where the nestedRun starts
 		final BoogieIcfgLocation startLocation = ((ISLPredicate) mRun.getStateAtPosition(0)).getProgramPoint();
@@ -226,6 +227,8 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 				if (!mRun.getWord().isInternalPosition(i - 1)) {
 					throw new UnsupportedOperationException("interprocedural traces are not supported (yet)");
 				}
+				// Add codeblock to transitions needed for live variable analysis
+//				transitionsForAI.add((CodeBlock) mRun.getSymbol(i-1));
 
 				final UnmodifiableTransFormula transFormula =
 						((IInternalAction) mRun.getSymbol(i - 1)).getTransformula();
