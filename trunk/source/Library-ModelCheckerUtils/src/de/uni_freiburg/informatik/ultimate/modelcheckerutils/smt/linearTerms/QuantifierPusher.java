@@ -59,7 +59,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifi
 public class QuantifierPusher extends TermTransformer {
 	
 	private enum SubformulaClassification { 
-		CORRESPODING_FINITE_CONNECTIVE,
+		CORRESPONDING_FINITE_CONNECTIVE,
 		DUAL_FINITE_CONNECTIVE,
 		SAME_QUANTIFIER,
 		DUAL_QUANTIFIER,
@@ -97,25 +97,26 @@ public class QuantifierPusher extends TermTransformer {
 			quantifiedFormula = processSameQuantifier(quantifiedFormula);
 			classification = classify(quantifiedFormula.getQuantifier(), quantifiedFormula.getSubformula());
 		}
-		Term termToRecurseOn;
+		Term result;
 		switch (classification) {
 		case ATOM:
-			termToRecurseOn = applyEliminationToAtom(quantifiedFormula);
+			result = applyEliminationToAtom(quantifiedFormula);
 			break;
-		case CORRESPODING_FINITE_CONNECTIVE:
-			termToRecurseOn = pushOverCorrespondingFiniteConnective(quantifiedFormula);
+		case CORRESPONDING_FINITE_CONNECTIVE:
+			result = pushOverCorrespondingFiniteConnective(quantifiedFormula);
 			break;
 		case DUAL_FINITE_CONNECTIVE:
-			termToRecurseOn = tryToPushOverDualFiniteConnective(quantifiedFormula);
+			result = tryToPushOverDualFiniteConnective(quantifiedFormula);
 			break;
 		case DUAL_QUANTIFIER:
-			throw new AssertionError("must have been handled above");
+			// unable to push inner quantifier, hence we cannot push
+			result = quantifiedFormula;
 		case SAME_QUANTIFIER:
 			throw new AssertionError("must have been handled above");
 		default:
 			throw new AssertionError("unknown value " + classification);
 		}
-		return termToRecurseOn;
+		return result;
 	}
 
 	private Term applyEliminationToAtom(final QuantifiedFormula quantifiedFormula) {
@@ -234,7 +235,7 @@ public class QuantifierPusher extends TermTransformer {
 			final ApplicationTerm appTerm = (ApplicationTerm) subformula;
 			final String correspondingFiniteConnective = SmtUtils.getCorrespondingFiniteConnective(quantifier);
 			if (appTerm.getFunction().getApplicationString().equals(correspondingFiniteConnective)) {
-				return SubformulaClassification.CORRESPODING_FINITE_CONNECTIVE;
+				return SubformulaClassification.CORRESPONDING_FINITE_CONNECTIVE;
 			}
 			final String dualFiniteConnective = SmtUtils.getCorrespondingFiniteConnective(SmtUtils.getOtherQuantifier(quantifier));
 			if (appTerm.getFunction().getApplicationString().equals(dualFiniteConnective)) {
