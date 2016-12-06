@@ -32,7 +32,6 @@ package de.uni_freiburg.informatik.ultimate.core.lib.results;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
-import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 
 /**
@@ -45,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationS
  * @author Oleksii Saukh
  * @date 27.03.2012
  */
-public class PositiveResult<ELEM extends IElement> extends AbstractResultAtElement<ELEM> implements IResult {
+public class PositiveResult<ELEM extends IElement> extends AbstractResultAtElement<ELEM> {
 	private final Check mCheckedSpecification;
 
 	/**
@@ -63,21 +62,19 @@ public class PositiveResult<ELEM extends IElement> extends AbstractResultAtEleme
 	public String getShortDescription() {
 		if (mCheckedSpecification == null) {
 			return "some specification holds - ERROR (information lost during translation process)";
-		} else {
-			return mCheckedSpecification.getPositiveMessage();
 		}
+		return mCheckedSpecification.getPositiveMessage();
 	}
 
 	@Override
 	public String getLongDescription() {
 		if (mCheckedSpecification == null) {
 			return "some specification holds - ERROR (information lost during translation process)";
-		} else {
-			final StringBuilder sb = new StringBuilder();
-			sb.append("For all program executions holds that ");
-			sb.append(mCheckedSpecification.getPositiveMessage());
-			sb.append(" at this location");
-			return sb.toString();
 		}
+		final StringBuilder sb = new StringBuilder();
+		sb.append("For all program executions holds that ");
+		sb.append(mCheckedSpecification.getPositiveMessage());
+		sb.append(" at this location");
+		return sb.toString();
 	}
 }
