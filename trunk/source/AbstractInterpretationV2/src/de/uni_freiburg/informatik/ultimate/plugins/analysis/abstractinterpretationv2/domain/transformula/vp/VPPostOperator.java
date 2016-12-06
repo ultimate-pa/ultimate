@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -225,12 +226,16 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 			final Set<VPState> resultStates = mDomain.getVpStateFactory().arrayEquality(array1, array2, preState);
 			return resultStates;
 		} else {
-			assert false : "TODO";// TODO
-			return null;
+			/*
+			 * something of the form a != b where a and b are arrays
+			 *  --> we cannot derive anything from this because we only track a finite number
+			 *     of positions in each (infinite) array
+			 */
+			return Collections.singleton(preState);
 		}
 	}
 	
-	private List<VPState> handleArrayUpdateTransition(final VPState preState,
+	private Set<VPState> handleArrayUpdateTransition(final VPState preState,
 			final Map<TermVariable, IProgramVar> tvToPvMap, final boolean negated, final ArrayUpdate au) {
 		final MultiDimensionalStore mdStore = au.getMultiDimensionalStore();
 		final TermVariable newArrayTv = au.getNewArray();
@@ -256,7 +261,7 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 
 			if (!negated) {
 				final VPState resultState = mDomain.getVpStateFactory().havoc(arrayAtIndexNode, preState);
-				final List<VPState> resultStates = new ArrayList<>();
+				final Set<VPState> resultStates = new HashSet<>();
 				resultStates.addAll(mDomain.getVpStateFactory().addEquality(arrayAtIndexNode, valueNode, resultState));
 				return resultStates;
 			} else {
@@ -267,8 +272,24 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 			/*
 			 * we have something of the form b := a[(i_1, ..,i_n) := v] in terms of Boogie -->
 			 */
-			assert false : "does this occur?";
-			return null;
+		
+			if (!negated) {
+//				TODO: treat essentially like an ArrayEquality (except for that one point)
+				assert false : "does this occur?";
+			
+			/*
+			 * for all points p except (i_1, .., i_n), we add 
+			 *   b[p] = a[p] to the state
+			 * and we add b[i_1, ..., i_n] = v
+			 */
+			
+				return null;
+			} else {
+				/*
+				 * see the "negated" case in handleArrayEquality for an explanation
+				 */
+				return Collections.singleton(preState);
+			}
 		}
 	}
 	
