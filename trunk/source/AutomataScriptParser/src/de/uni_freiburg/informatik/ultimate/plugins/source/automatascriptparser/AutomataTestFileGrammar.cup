@@ -197,7 +197,7 @@ terminal ConditionalBooleanOperatorAST OROR; // conditional_or_expression
 terminal Object QUESTION; // conditional_expression
 terminal AssignmentOperatorAST MULTEQ, DIVEQ, MODEQ, PLUSEQ, MINUSEQ; // assignment_operator
 
-terminal Object NESTED_WORD, NESTED_LASSO_WORD; 
+terminal Object WORD, NESTED_WORD, NESTED_LASSO_WORD; 
 
 terminal java.lang.Integer INTEGER_LITERAL;
 terminal java.lang.Boolean BOOLEAN_LITERAL;
@@ -264,26 +264,26 @@ non terminal Object nested_word_symbol;
  /* -------------------- Specification of Automata DEFINITION Files-----------------------*/
  /* -------------------- Specification of terminals   -----------------------*/
  // 1. Automata Types
- terminal Object NESTEDWORD_AUTOMATA, PETRINET_AUTOMATA, BRANCHINGPROCESS_AUTOMATA, ALTERNATING_AUTOMATON, TREE_AUTOMATON;
+ terminal Object NESTEDWORD_AUTOMATA, PETRINET_AUTOMATA, BRANCHINGPROCESS_AUTOMATA, ALTERNATING_AUTOMATON, TREE_AUTOMATON, FINITE_AUTOMATON;
  // 2. Alphabets
  terminal Object ALPHABET, CALL_ALPHABET, INTERNAL_ALPHABET, RETURN_ALPHABET, RANKED_ALPHABET;
 // 3. States & Places
 terminal Object STATES, PLACES, INITIAL_STATES, FINAL_STATES, TRANSITION_TABLE, ACCEPTING_FUNCTION, EXPR_STATE_NEGATE, EXPR_STATE_AND, EXPR_STATE_OR, IS_REVERSED;
 // 4. Transitions
-terminal Object NET_TRANSITIONS, INTERNAL_TRANSITIONS, CALL_TRANSITIONS, RETURN_TRANSITIONS;
+terminal Object NET_TRANSITIONS, TRANSITIONS, INTERNAL_TRANSITIONS, CALL_TRANSITIONS, RETURN_TRANSITIONS;
 // 5. 
 terminal Object INITIAL_MARKINGS, ACCEPTING_PLACES;
  /* -------------------- Specification of non-terminals   -----------------------*/
 non terminal IdentifierListAST identifier_list_opt, identifier_list;
 // Automata types
-non terminal AutomatonAST nwa_definition, petrinetJulian_definition, aa_definition, ta_definition;
+non terminal AutomatonAST nwa_definition, petrinetJulian_definition, aa_definition, ta_definition, fa_definition;
 // Alphabets
 non terminal IdentifierListAST alphabet, call_alphabet, return_alphabet, internal_alphabet;
 // States & Places
 non terminal IdentifierListAST states, initial_states, final_states;  
 non terminal IdentifierListAST places, accepting_places;
 // Transitions & Markings
-non terminal TransitionListAST call_transitions, internal_transitions; 
+non terminal TransitionListAST call_transitions, internal_transitions, transitions; 
 non terminal TransitionListAST return_transitions, transition_list, transition_list_opt;
 non terminal IdentifierListAST transition;
 non terminal TransitionListAST net_transitions, net_transition_list_opt, net_transition_list; 
@@ -383,9 +383,13 @@ type	::=     INT
                 {: RESULT = String.class; :}
         |       NESTED_WORD
         		{: RESULT = de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord.class; :}
+        |       WORD
+        		{: RESULT = de.uni_freiburg.informatik.ultimate.automata.Word.class; :}
         |       NESTED_LASSO_WORD
         		{: RESULT = de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord.class; :}
         |       NESTEDWORD_AUTOMATA
+                {: RESULT = INestedWordAutomaton.class; :}
+        |       FINITE_AUTOMATON
                 {: RESULT = INestedWordAutomaton.class; :}
         |       PETRINET_AUTOMATA         
                 {: RESULT = PetriNetJulian.class; :}
@@ -408,6 +412,12 @@ variable_declaration ::=
                 	  }
                    }:}
         | type:t nwa_definition:nwa
+          {: if (t.equals(INestedWordAutomaton.class))
+                { nwa.setType(t);
+                  m_automataDefinitions.addAutomaton(nwa);}
+             else {reportError(true, "AutomataDefiniton: Type error \"" + t.getSimpleName() + "\" is not compatible with \"INestedWordAutomaton\""); }
+             RESULT = null;:}
+        | type:t fa_definition:nwa
           {: if (t.equals(INestedWordAutomaton.class))
                 { nwa.setType(t);
                   m_automataDefinitions.addAutomaton(nwa);}
@@ -1013,6 +1023,22 @@ nwa_definition ::=      variable_identifier:id EQ
                           m_varDeclarations.put(id, NestedwordAutomatonAST.class);
                           RESULT = nwa; :} ;
 
+fa_definition ::=      variable_identifier:id EQ
+                        LPAREN:l alphabet:intern COMMA
+                               states:states COMMA
+                               initial_states:init_states COMMA
+                               final_states:fin_states COMMA
+                               transitions:int_trans
+                        RPAREN:r
+                        {: NestedwordAutomatonAST nwa = new NestedwordAutomatonAST(getLocation(l$, r$), id);
+                          nwa.setInternalAlphabet(intern.getIdentifierList());
+                          nwa.setStates(states.getIdentifierList());
+                          nwa.setInitialStates(init_states.getIdentifierList());
+                          nwa.setFinalStates(fin_states.getIdentifierList());
+                          nwa.setInternalTransitions(int_trans);
+                          m_varDeclarations.put(id, NestedwordAutomatonAST.class);
+                          RESULT = nwa; :} ;
+
 
 call_alphabet ::=  CALL_ALPHABET EQ LBRACE:l identifier_list_opt:idList  RBRACE:r 
 				   {:RESULT = idList; :} ;
@@ -1044,6 +1070,9 @@ initial_states ::= INITIAL_STATES EQ LBRACE:l identifier_list_opt:idList RBRACE:
 
 final_states ::= FINAL_STATES EQ LBRACE:l identifier_list_opt:idList RBRACE:r
 				{:RESULT = idList; :} ;
+
+transitions ::= TRANSITIONS EQ LBRACE:l transition_list_opt:tList RBRACE:r
+						{:RESULT = tList; :};
 
 call_transitions ::= CALL_TRANSITIONS EQ LBRACE:l transition_list_opt:tList RBRACE:r
 					{:RESULT = tList; :};
