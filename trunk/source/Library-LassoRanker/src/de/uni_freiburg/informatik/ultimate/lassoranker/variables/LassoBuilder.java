@@ -234,11 +234,11 @@ public class LassoBuilder {
 		return sb.toString();
 	}
 
-	public static int computeMaxDagSize(final List<LassoUnderConstruction> lassos) {
+	public static long computeMaxDagSize(final List<LassoUnderConstruction> lassos) {
 		if (lassos.isEmpty()) {
 			return 0;
 		}
-		final int[] sizes = new int[lassos.size()];
+		final long[] sizes = new long[lassos.size()];
 		for (int i = 0; i < lassos.size(); ++i) {
 			sizes[i] = lassos.get(i).getFormulaSize();
 		}
@@ -246,7 +246,7 @@ public class LassoBuilder {
 		return sizes[lassos.size() - 1];
 	}
 
-	public int computeMaxDagSize() {
+	public long computeMaxDagSize() {
 		return computeMaxDagSize(mLassosUC);
 	}
 

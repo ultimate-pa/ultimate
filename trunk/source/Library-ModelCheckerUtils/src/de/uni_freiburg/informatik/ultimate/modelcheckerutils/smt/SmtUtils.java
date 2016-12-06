@@ -124,9 +124,9 @@ public final class SmtUtils {
 	public static ExtendedSimplificationResult simplifyWithStatistics(final ManagedScript script, final Term formula, final IUltimateServiceProvider services,
 			final SimplificationTechnique simplificationTechnique) {
 		final long startTime = System.nanoTime();
-		final int sizeBefore = new DAGSize().treesize(formula);
+		final long sizeBefore = new DAGSize().treesize(formula);
 		final Term simplified = simplify(script, formula, services, simplificationTechnique);
-		final int sizeAfter = new DAGSize().treesize(simplified);
+		final long sizeAfter = new DAGSize().treesize(simplified);
 		final long endTime = System.nanoTime();
 		final ExtendedSimplificationResult result = new ExtendedSimplificationResult(
 				simplified, endTime - startTime, sizeBefore - sizeAfter);

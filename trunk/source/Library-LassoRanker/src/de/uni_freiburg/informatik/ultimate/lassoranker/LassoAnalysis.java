@@ -521,9 +521,9 @@ public class LassoAnalysis {
 		private final List<Integer> mMaxDagSizeLassosAbsolut = new ArrayList<>();
 		private final List<Float> mMaxDagSizeLassosRelative = new ArrayList<>();
 
-		public PreprocessingBenchmark(final int intialMaxDagSizeLassos) {
+		public PreprocessingBenchmark(final long l) {
 			super();
-			mIntialMaxDagSizeLassos = intialMaxDagSizeLassos;
+			mIntialMaxDagSizeLassos = Math.toIntExact(l);
 		}
 
 		public void addPreprocessingData(final String description, final int maxDagSizeNontermination,
@@ -534,9 +534,9 @@ public class LassoAnalysis {
 					.add(computeQuotiontOfLastTwoEntries(mMaxDagSizeLassosAbsolut, mIntialMaxDagSizeLassos));
 		}
 
-		public void addPreprocessingData(final String description, final int maxDagSizeLassos) {
+		public void addPreprocessingData(final String description, final long l) {
 			mPreprocessors.add(description);
-			mMaxDagSizeLassosAbsolut.add(maxDagSizeLassos);
+			mMaxDagSizeLassosAbsolut.add(Math.toIntExact(l));
 			mMaxDagSizeLassosRelative
 					.add(computeQuotiontOfLastTwoEntries(mMaxDagSizeLassosAbsolut, mIntialMaxDagSizeLassos));
 		}

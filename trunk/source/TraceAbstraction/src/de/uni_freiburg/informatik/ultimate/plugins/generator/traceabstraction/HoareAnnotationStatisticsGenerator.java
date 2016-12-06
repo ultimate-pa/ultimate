@@ -140,8 +140,8 @@ public class HoareAnnotationStatisticsGenerator implements IStatisticsDataProvid
 		mNumberOfFragments = numberOfFragments;
 	}
 
-	public void reportAnnotationSize(final int treesize) {
-		mHoareAnnotationTreeSize += treesize;
+	public void reportAnnotationSize(final long l) {
+		mHoareAnnotationTreeSize += l;
 	}
 
 }

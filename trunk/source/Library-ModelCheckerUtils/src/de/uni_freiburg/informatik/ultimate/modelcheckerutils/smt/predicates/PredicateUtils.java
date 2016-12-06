@@ -57,7 +57,7 @@ public class PredicateUtils {
 	 * Returns the DAG size of the predicate's formula. 
 	 * (DAG size means that similar sub-formulas are counted only once.)
 	 */
-	public static int computeDagSizeOfPredicate(final IPredicate p, final FormulaSize size) {
+	public static long computeDagSizeOfPredicate(final IPredicate p, final FormulaSize size) {
 		switch (size) {
 		case DAGSIZE:
 			return (new DAGSize()).size(p.getFormula());
@@ -71,8 +71,8 @@ public class PredicateUtils {
 	/**
 	 * Computes DAG size for an array of predicates.
 	 */
-	public static int[] computeDagSizeOfPredicates(final List<IPredicate> predicates, final FormulaSize size) {
-		final int[] sizeOfPredicates = new int[predicates.size()];
+	public static long[] computeDagSizeOfPredicates(final List<IPredicate> predicates, final FormulaSize size) {
+		final long[] sizeOfPredicates = new long[predicates.size()];
 		for (int i = 0; i < predicates.size(); i++) {
 			sizeOfPredicates[i] = computeDagSizeOfPredicate(predicates.get(i), size);
 		}

@@ -45,9 +45,9 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 public class LassoUnderConstruction {
 	private final ModifiableTransFormula mStem;
 	private final ModifiableTransFormula mLoop;
-	private final int mStemSize;
-	private final int mLoopSize;
-	public LassoUnderConstruction(ModifiableTransFormula stem, ModifiableTransFormula loop) {
+	private final long mStemSize;
+	private final long mLoopSize;
+	public LassoUnderConstruction(final ModifiableTransFormula stem, final ModifiableTransFormula loop) {
 		super();
 		mStem = stem;
 		mLoop = loop;
@@ -67,7 +67,7 @@ public class LassoUnderConstruction {
 //		return mLoopSize;
 //	}
 	
-	public int getFormulaSize() {
+	public long getFormulaSize() {
 		return mStemSize + mLoopSize;
 	}
 	
@@ -88,7 +88,7 @@ public class LassoUnderConstruction {
 	/**
 	 * Check whether the stem of this lasso is feasible.
 	 */
-	public LBool checkStemFeasiblity(Script script) {
+	public LBool checkStemFeasiblity(final Script script) {
 		final Term term = mStem.getFormula();
 		final LBool lbool = Util.checkSat(script, term);
 		return lbool;
