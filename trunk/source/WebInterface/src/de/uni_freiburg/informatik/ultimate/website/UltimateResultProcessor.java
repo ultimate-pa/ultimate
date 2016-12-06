@@ -43,99 +43,95 @@ public class UltimateResultProcessor {
 		// get Result from Ultimate
 		final Map<String, List<IResult>> results = services.getResultService().getResults();
 		// add result to the json object
-		final List<JSONObject> resultList = new ArrayList<>();
-		for (final List<IResult> rList : results.values()) {
-			for (final IResult r : rList) {
-				SimpleLogger.log("processing result " + r.getShortDescription());
-				String type = "UNDEF";
-				final UltimateResult packagedResult = new UltimateResult();
-				if (r instanceof ExceptionOrErrorResult) {
-					type = "ExceptionOrError";
-					packagedResult.logLvl = LVL_ERROR;
-				} else if (r instanceof CounterExampleResult) {
-					type = "counter";
-					packagedResult.logLvl = LVL_ERROR;
-				} else if (r instanceof ProcedureContractResult) {
-					type = TYPE_INVARIANT;
-					packagedResult.logLvl = LVL_INFO;
-				} else if (r instanceof InvariantResult) {
-					type = TYPE_INVARIANT;
-					packagedResult.logLvl = LVL_INFO;
-				} else if (r instanceof PositiveResult) {
-					type = "positive";
-					packagedResult.logLvl = LVL_INFO;
-				} else if (r instanceof BenchmarkResult) {
-					type = "benchmark";
-					packagedResult.logLvl = LVL_INFO;
-				} else if (r instanceof TerminationArgumentResult) {
-					type = TYPE_INVARIANT;
-					packagedResult.logLvl = LVL_INFO;
-				} else if (r instanceof NonterminatingLassoResult<?, ?, ?>) {
-					type = TYPE_INVARIANT;
-					packagedResult.logLvl = LVL_INFO;
-				} else if (r instanceof AllSpecificationsHoldResult) {
-					type = TYPE_INVARIANT;
-					packagedResult.logLvl = LVL_INFO;
-				} else if (r instanceof UnprovableResult) {
-					type = "unprovable";
-					packagedResult.logLvl = LVL_WARNING;
-				} else if (r instanceof SyntaxErrorResult) {
-					type = "syntaxError";
-					packagedResult.logLvl = LVL_ERROR;
-				} else if (r instanceof UnsupportedSyntaxResult) {
-					type = "syntaxUnsupported";
-					packagedResult.logLvl = LVL_ERROR;
-				} else if (r instanceof TimeoutResultAtElement) {
-					type = "timeout";
-					packagedResult.logLvl = LVL_ERROR;
-				} else if (r instanceof TypeErrorResult<?>) {
-					type = "typeError";
-					packagedResult.logLvl = LVL_ERROR;
-				} else if (r instanceof TerminationAnalysisResult) {
-					type = "positive";
-					packagedResult.logLvl = LVL_INFO;
-				} else if (r instanceof IResultWithSeverity) {
-					final IResultWithSeverity rws = (IResultWithSeverity) r;
-					if (rws.getSeverity().equals(Severity.ERROR)) {
-						type = LVL_ERROR;
-						packagedResult.logLvl = LVL_ERROR;
-					} else if (rws.getSeverity().equals(Severity.WARNING)) {
-						type = LVL_WARNING;
-						packagedResult.logLvl = LVL_WARNING;
-					} else if (rws.getSeverity().equals(Severity.INFO)) {
-						type = LVL_INFO;
-						packagedResult.logLvl = LVL_INFO;
-					} else {
-						throw new IllegalArgumentException("Unknown kind of severity.");
-					}
-				} else if (r instanceof NoResult<?>) {
-					type = "noResult";
-					packagedResult.logLvl = LVL_WARNING;
+		final List<JSONObject> jsonResults = new ArrayList<>();
+		for (final List<IResult> toolResults : results.values()) {
+			for (final IResult result : toolResults) {
+				if (result instanceof BenchmarkResult<?>) {
+					SimpleLogger.log("skipping result " + result);
+					continue;
 				}
-
-				// TODO : Add new "Out of resource" result here ...
-				if (r instanceof IResultWithLocation) {
-					final ILocation loc = ((IResultWithLocation) r).getLocation();
-					if (loc == null) {
-						SimpleLogger.log("IResultWithLocation with getLocation()==null, ignoring...");
-						setEmptyLocation(packagedResult);
-					} else {
-						packagedResult.startLNr = loc.getStartLine();
-						packagedResult.endLNr = loc.getEndLine();
-						packagedResult.startCol = loc.getStartColumn();
-						packagedResult.endCol = loc.getEndColumn();
-					}
-				} else {
-					setEmptyLocation(packagedResult);
-				}
-				packagedResult.shortDesc = String.valueOf(r.getShortDescription());
-				packagedResult.longDesc = String.valueOf(r.getLongDescription());
-				packagedResult.type = type;
-				resultList.add(new JSONObject(packagedResult));
-				SimpleLogger.log("added result: " + packagedResult.toString());
+				final UltimateResult jsonResult = processResult(result);
+				jsonResults.add(new JSONObject(jsonResult));
+				SimpleLogger.log("added result: " + jsonResult.toString());
 			}
-			json.put("results", new JSONArray(resultList.toArray(new JSONObject[resultList.size()])));
 		}
+		json.put("results", new JSONArray(jsonResults.toArray(new JSONObject[jsonResults.size()])));
+	}
+
+	private static UltimateResult processResult(final IResult r) {
+		SimpleLogger.log("processing result " + r.getShortDescription());
+		String type = "UNDEF";
+		final UltimateResult packagedResult = new UltimateResult();
+		if (r instanceof ExceptionOrErrorResult) {
+			type = "ExceptionOrError";
+			packagedResult.logLvl = LVL_ERROR;
+		} else if (r instanceof CounterExampleResult) {
+			type = "counter";
+			packagedResult.logLvl = LVL_ERROR;
+		} else if (r instanceof ProcedureContractResult || r instanceof InvariantResult
+				|| r instanceof TerminationArgumentResult || r instanceof NonterminatingLassoResult<?, ?, ?>
+				|| r instanceof AllSpecificationsHoldResult) {
+			type = TYPE_INVARIANT;
+			packagedResult.logLvl = LVL_INFO;
+		} else if (r instanceof PositiveResult || r instanceof TerminationAnalysisResult) {
+			type = "positive";
+			packagedResult.logLvl = LVL_INFO;
+		} else if (r instanceof BenchmarkResult) {
+			type = "benchmark";
+			packagedResult.logLvl = LVL_INFO;
+		} else if (r instanceof UnprovableResult) {
+			type = "unprovable";
+			packagedResult.logLvl = LVL_WARNING;
+		} else if (r instanceof SyntaxErrorResult) {
+			type = "syntaxError";
+			packagedResult.logLvl = LVL_ERROR;
+		} else if (r instanceof UnsupportedSyntaxResult) {
+			type = "syntaxUnsupported";
+			packagedResult.logLvl = LVL_ERROR;
+		} else if (r instanceof TimeoutResultAtElement) {
+			type = "timeout";
+			packagedResult.logLvl = LVL_ERROR;
+		} else if (r instanceof TypeErrorResult<?>) {
+			type = "typeError";
+			packagedResult.logLvl = LVL_ERROR;
+		} else if (r instanceof IResultWithSeverity) {
+			final IResultWithSeverity rws = (IResultWithSeverity) r;
+			if (rws.getSeverity().equals(Severity.ERROR)) {
+				type = LVL_ERROR;
+				packagedResult.logLvl = LVL_ERROR;
+			} else if (rws.getSeverity().equals(Severity.WARNING)) {
+				type = LVL_WARNING;
+				packagedResult.logLvl = LVL_WARNING;
+			} else if (rws.getSeverity().equals(Severity.INFO)) {
+				type = LVL_INFO;
+				packagedResult.logLvl = LVL_INFO;
+			} else {
+				throw new IllegalArgumentException("Unknown kind of severity.");
+			}
+		} else if (r instanceof NoResult<?>) {
+			type = "noResult";
+			packagedResult.logLvl = LVL_WARNING;
+		}
+
+		// TODO : Add new "Out of resource" result here ...
+		if (r instanceof IResultWithLocation) {
+			final ILocation loc = ((IResultWithLocation) r).getLocation();
+			if (loc == null) {
+				SimpleLogger.log("IResultWithLocation with getLocation()==null, ignoring...");
+				setEmptyLocation(packagedResult);
+			} else {
+				packagedResult.startLNr = loc.getStartLine();
+				packagedResult.endLNr = loc.getEndLine();
+				packagedResult.startCol = loc.getStartColumn();
+				packagedResult.endCol = loc.getEndColumn();
+			}
+		} else {
+			setEmptyLocation(packagedResult);
+		}
+		packagedResult.shortDesc = String.valueOf(r.getShortDescription());
+		packagedResult.longDesc = String.valueOf(r.getLongDescription());
+		packagedResult.type = type;
+		return packagedResult;
 	}
 
 	private static void setEmptyLocation(final UltimateResult packagedResult) {
