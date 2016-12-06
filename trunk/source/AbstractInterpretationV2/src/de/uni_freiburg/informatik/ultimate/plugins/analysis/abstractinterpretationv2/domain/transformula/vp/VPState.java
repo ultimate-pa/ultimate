@@ -123,10 +123,11 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 	 * @return
 	 */
 	public EqGraphNode find(final EqGraphNode node) {
-		if (node.getRepresentative().equals(node)) {
-			return node;
-		}
-		return find(node.getRepresentative());
+//		if (node.getRepresentative().equals(node)) {
+//			return node;
+//		}
+//		return find(node.getRepresentative());
+		return node.find();
 	}
 	
 	public HashRelation<IProgramVarOrConst, List<EqGraphNode>> ccchild(final EqGraphNode node) {

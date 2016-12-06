@@ -255,4 +255,8 @@ public class EqGraphNode {
 		}
 		return ((EqGraphNode)other).eqNode.equals(this.eqNode);
 	}
+
+	public void setCcchild(Map<Object, Object> newMap) {
+		ccchild = newMap;
+	}
 }

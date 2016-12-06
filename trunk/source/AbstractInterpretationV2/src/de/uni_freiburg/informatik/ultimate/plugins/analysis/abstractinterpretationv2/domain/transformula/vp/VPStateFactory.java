@@ -30,7 +30,9 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -266,9 +268,15 @@ public class VPStateFactory {
 			nextRepresentative = nextRepresentative.getRepresentative();
 		}
 		nextRepresentative.getCcpar().removeAll(graphNode.getCcpar());
+
 		for (final Entry<IProgramVarOrConst, List<EqGraphNode>> entry : graphNode.getCcchild().entrySet()) {
 			nextRepresentative.getCcchild().removePair(entry.getKey(), entry.getValue());
 		}
+
+//		Map<IProgramVar, Object> newMap = nextRepresentative.getCcchild().entrySet().stream()
+//			.filter(entry -> !graphNode.getCcchild().entrySet().contains(entry))
+//			.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+//		nextRepresentative.setCcchild(newMap);
 
 		// Handling the incoming edges
 		for (final EqGraphNode reverseNode : graphNode.getReverseRepresentative()) {
@@ -277,12 +285,18 @@ public class VPStateFactory {
 
 		// Handling the node itself
 		if (graphNode.getRepresentative().equals(graphNode)) {
-			for (final VPDomainSymmetricPair<EqNode> disEqPair : builder.getDisEqualitySet()) {
-				if (disEqPair.contains(node)) {
-					builder.getDisEqualitySet().remove(disEqPair);
-				}
-			}
+			Set<VPDomainSymmetricPair<EqNode>> newSet = 
+					builder.getDisEqualitySet().stream()
+					.filter(pair -> !pair.contains(node))
+					.collect(Collectors.toSet());
+			builder.setDisEqualites(newSet);
+//			for (final VPDomainSymmetricPair<EqNode> disEqPair : builder.getDisEqualitySet()) {
+//				if (disEqPair.contains(node)) {
+//					builder.getDisEqualitySet().remove(disEqPair);
+//				}
+//			}
 		}
+
 		graphNode.setNodeToInitial();
 
 		if (node instanceof EqFunctionNode) {
