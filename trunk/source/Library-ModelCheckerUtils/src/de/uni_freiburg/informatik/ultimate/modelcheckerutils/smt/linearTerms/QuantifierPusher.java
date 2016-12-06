@@ -26,10 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -44,7 +42,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XjunctPartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XnfDer;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  * Transform a Term into form where quantifier are pushed as much inwards
@@ -76,38 +73,43 @@ public class QuantifierPusher extends TermTransformer {
 	@Override
 	protected void convert(final Term term) {
 		if (term instanceof QuantifiedFormula) {
-			QuantifiedFormula quantifiedFormula = (QuantifiedFormula) term;
-			SubformulaClassification classification = classify(quantifiedFormula.getQuantifier(), quantifiedFormula.getSubformula());
-			if (classification == SubformulaClassification.DUAL_QUANTIFIER) {
-				quantifiedFormula = processDualQuantifier(quantifiedFormula);
-				classification = classify(quantifiedFormula.getQuantifier(), quantifiedFormula.getSubformula());
-			}
-			while (classification == SubformulaClassification.SAME_QUANTIFIER) {
-				quantifiedFormula = processSameQuantifier(quantifiedFormula);
-				classification = classify(quantifiedFormula.getQuantifier(), quantifiedFormula.getSubformula());
-			}
-			Term termToRecurseOn;
-			switch (classification) {
-			case ATOM:
-				termToRecurseOn = term;
-				break;
-			case CORRESPODING_FINITE_CONNECTIVE:
-				termToRecurseOn = pushOverCorrespondingFiniteConnective(quantifiedFormula);
-				break;
-			case DUAL_FINITE_CONNECTIVE:
-				termToRecurseOn = tryToPushOverDualFiniteConnective(quantifiedFormula);
-				break;
-			case DUAL_QUANTIFIER:
-				throw new AssertionError("must have been handled above");
-			case SAME_QUANTIFIER:
-				throw new AssertionError("must have been handled above");
-			default:
-				throw new AssertionError("unknown value " + classification);
-			}
+			final QuantifiedFormula quantifiedFormula = (QuantifiedFormula) term;
+			final Term termToRecurseOn = tryToPush(quantifiedFormula);
 			super.convert(termToRecurseOn);
 		} else {
 			super.convert(term);
 		}
+	}
+
+	private Term tryToPush(QuantifiedFormula quantifiedFormula) throws AssertionError {
+		SubformulaClassification classification = classify(quantifiedFormula.getQuantifier(), quantifiedFormula.getSubformula());
+		if (classification == SubformulaClassification.DUAL_QUANTIFIER) {
+			quantifiedFormula = processDualQuantifier(quantifiedFormula);
+			classification = classify(quantifiedFormula.getQuantifier(), quantifiedFormula.getSubformula());
+		}
+		while (classification == SubformulaClassification.SAME_QUANTIFIER) {
+			quantifiedFormula = processSameQuantifier(quantifiedFormula);
+			classification = classify(quantifiedFormula.getQuantifier(), quantifiedFormula.getSubformula());
+		}
+		Term termToRecurseOn;
+		switch (classification) {
+		case ATOM:
+			termToRecurseOn = quantifiedFormula;
+			break;
+		case CORRESPODING_FINITE_CONNECTIVE:
+			termToRecurseOn = pushOverCorrespondingFiniteConnective(quantifiedFormula);
+			break;
+		case DUAL_FINITE_CONNECTIVE:
+			termToRecurseOn = tryToPushOverDualFiniteConnective(quantifiedFormula);
+			break;
+		case DUAL_QUANTIFIER:
+			throw new AssertionError("must have been handled above");
+		case SAME_QUANTIFIER:
+			throw new AssertionError("must have been handled above");
+		default:
+			throw new AssertionError("unknown value " + classification);
+		}
+		return termToRecurseOn;
 	}
 
 	private Term pushOverCorrespondingFiniteConnective(final QuantifiedFormula quantifiedFormula) {
@@ -178,51 +180,19 @@ public class QuantifierPusher extends TermTransformer {
 			final XjunctPartialQuantifierElimination xnfDer = new XnfDer(mMgdScript, mServices);
 			final Term[] xjuncts = PartialQuantifierElimination.getXjunctsInner(quantifiedFormula.getQuantifier(), appTerm);
 			derResult = xnfDer.tryToEliminate(quantifiedFormula.getQuantifier(), xjuncts, eliminatees);
+			final Term result = PartialQuantifierElimination.applyDualFiniteConnective(
+					mScript, quantifiedFormula.getQuantifier(), Arrays.asList(derResult));
 			if (eliminatees.isEmpty()) {
-				final Term result = PartialQuantifierElimination.applyDualFiniteConnective(
-						mScript, quantifiedFormula.getQuantifier(), Arrays.asList(derResult));
 				return result;
 			}
 			if (numberOfEliminateesBefore > eliminatees.size()) {
 				// something was removed
+				final QuantifiedFormula intermediate = (QuantifiedFormula) SmtUtils.quantifier(mScript, quantifiedFormula.getQuantifier(), eliminatees, result);
+				return tryToPush(intermediate);
 			}
+			return SmtUtils.quantifier(mScript, quantifiedFormula.getQuantifier(), eliminatees, result);
 		} 
-		final HashRelation<TermVariable, Term> eliminatee2param = new HashRelation<>();
-		for (final Term xjunct : derResult) {
-			for (final TermVariable tv : xjunct.getFreeVars()) {
-				if (eliminatees.contains(tv)) {
-					eliminatee2param.addPair(tv, xjunct);
-				}
-			}
-		}
-		final HashRelation<Term, TermVariable> xjunct2singleOccurrenceEliminatee = new HashRelation<>();
-		final List<TermVariable> multiOcucrrenceEliminatees = new ArrayList<>();
-		for (final TermVariable tv : eliminatee2param.getDomain()) {
-			final Set<Term> xjunctsOfTv = eliminatee2param.getImage(tv);
-			if (xjunctsOfTv.size() == 1) {
-				xjunct2singleOccurrenceEliminatee.addPair(xjunctsOfTv.iterator().next(), tv);
-			} else if (xjunctsOfTv.isEmpty()) {
-				throw new AssertionError("superficial var " + tv);
-			} else {
-				multiOcucrrenceEliminatees.add(tv);
-			}
-		}
-		final Term[] resultXjuncts = new Term[derResult.length];
-		for (int i=0; i<derResult.length; i++) {
-			if (xjunct2singleOccurrenceEliminatee.getDomain().contains(derResult[i])) {
-				final Set<TermVariable> vars = xjunct2singleOccurrenceEliminatee.getImage(derResult[i]);
-				final Term quantified = SmtUtils.quantifier(mScript, quantifiedFormula.getQuantifier(), 
-						vars, derResult[i]);
-				resultXjuncts[i] = quantified;
-			} else {
-				resultXjuncts[i] = derResult[i];
-			}
-		}
-		final Term resultXJunction = PartialQuantifierElimination.applyDualFiniteConnective(mScript, 
-				quantifiedFormula.getQuantifier(), Arrays.asList(resultXjuncts));
-		final Term result = SmtUtils.quantifier(mScript, quantifiedFormula.getQuantifier(), 
-					multiOcucrrenceEliminatees, resultXJunction);
-		return result;
+
 	}
 
 	private SubformulaClassification classify(final int quantifier, final Term subformula) {
