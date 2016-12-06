@@ -1,0 +1,61 @@
+// Example that demonstrates how to use finite automata in this automata library
+// Author: Christian Schilling
+// Date: 2016-12-06
+
+
+// Declare a nondeterministic finite automaton called "nfa1".
+FiniteAutomaton nfa1 = (
+     alphabet = {A B},
+     states = {q0 q1 q2},
+     initialStates = {q0},
+     finalStates = {q2},
+     transitions = {
+         (q0 A q0)
+         (q0 A q1)
+         (q1 A q2)
+         (q1 B q1)
+         (q2 A q1)
+     }
+);
+
+// Declare a word "word1".
+Word word1 = [A A B A A B A];
+
+// Check whether nfa1 accepts word1.
+boolean acceptance1 = Accepts(nfa1, word1);
+
+// Print the acceptance test result.
+print(acceptance1);
+
+// Check another word.
+Word word2 = [A B B];
+print(Accepts(nfa1, word2));
+
+// Declare a second finite automaton.
+FiniteAutomaton nfa2 = (
+     alphabet = {A B},
+     states = {q0 q1 q2},
+     initialStates = {q0},
+     finalStates = {q0},
+     transitions = {
+         (q0 A q1)
+         (q0 B q1)
+         (q0 B q2)
+         (q1 A q1)
+         (q1 A q2)
+         (q2 B q0)
+     }
+);
+
+// Check the acceptance for the same words as above.
+print(Accepts(nfa2, word1));
+print(Accepts(nfa2, word2));
+
+// Construct the intersection of nfa1 and nfa2.
+FiniteAutomaton intersecNfa = Intersect(nfa1, nfa2);
+
+// Check whether the language accepted by intersecNfa is empty.
+print(IsEmpty(intersecNfa));
+
+// Print the intersection automaton.
+print(intersecNfa);
