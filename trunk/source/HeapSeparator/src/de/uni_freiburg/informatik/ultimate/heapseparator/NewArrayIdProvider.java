@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.heapseparator;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -82,6 +83,11 @@ public class NewArrayIdProvider {
 		}
 		partitionInfo.addPartition(indexPartition);
 	}
+
+	public List<IProgramVarOrConst> getAllNewArrayIds(IProgramVarOrConst oldLhs) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }
 
 /*
@@ -124,8 +130,14 @@ class PartitionInformation {
 	}
 	
 	public IProgramVarOrConst getNewArray(final List<EqNode> indexVector) {
-		final List<IndexPartition> partitionVector = 
-				indexVector.stream().map(eqNode -> indexToIndexPartition.get(eqNode)).collect(Collectors.toList());
+		List<IndexPartition> partitionVector = new ArrayList<>();
+		for (EqNode eqNode : indexVector) {
+			IndexPartition ip = indexToIndexPartition.get(eqNode);
+			assert ip != null;
+			partitionVector.add(ip);
+		}
+//		final List<IndexPartition> partitionVector = 
+//				indexVector.stream().map(eqNode -> indexToIndexPartition.get(eqNode)).collect(Collectors.toList());
 		return getNewArrayIdForIndexPartitionVector(partitionVector);
 	}
 
@@ -133,13 +145,16 @@ class PartitionInformation {
 		IProgramVarOrConst result = partitionVectorToNewArrayId.get(partitionVector);
 		if (result == null) {
 			result = obtainFreshProgramVar(arrayId);
-			partitionVectorToNewArrayId.put(partitionVector, arrayId);
+			partitionVectorToNewArrayId.put(partitionVector, result);
 		}
 		return result;
 	}
 
 	void addPartition(final IndexPartition ip) {
 		indexPartitions.add(ip);
+		for (EqNode index : ip.indices) {
+			indexToIndexPartition.put(index, ip);
+		}
 	}
 
 	private int getFreshVersionIndex() {

@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.heapseparator;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -34,6 +35,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -45,11 +47,13 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Tra
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayEquality;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayUpdate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
@@ -153,90 +157,16 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 		 *  build a substitution
 		 */
 
-		final Map<IProgramVar, TermVariable> newInVars = new HashMap<>();
-		final Map<IProgramVar, TermVariable> newOutVars = new HashMap<>();
-		final Map<IProgramVarOrConst, IProgramVarOrConst> substitutionMap = new HashMap<>();
-
-		List<ArrayUpdate> arrayUpdates = ArrayUpdate.extractArrayUpdates(tf.getFormula());
-		/**
-		 * records which store terms have been processed during handling of array updates
-		 *  --> those will not have to be processed later
-		 */
-		Set<Term> storesInArrayUpdates = new HashSet<>();
-		for (ArrayUpdate au : arrayUpdates) {
-			storesInArrayUpdates.add(au.getMultiDimensionalStore().getStoreTerm());
-
-			IProgramVarOrConst updateLhs = 
-					mVpDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(
-							au.getNewArray(), 
-							VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf));
-			
-			IProgramVarOrConst updateRhsArray = 
-					mVpDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(
-							au.getOldArray(), 
-							VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf));
-
-			List<EqNode> pointers = au.getMultiDimensionalStore().getIndex().stream()
-					.map(indexTerm -> mVpDomain.getPreAnalysis().getTermToEqNodeMap().get(indexTerm))
-					.collect(Collectors.toList());
-
-			IProgramVarOrConst newArrayLhs = mNewArrayIdProvider.getNewArrayId(updateLhs, pointers);
-
-			IProgramVarOrConst newArrayRhs = mNewArrayIdProvider.getNewArrayId(updateRhsArray, pointers);
-
-			updateForSubstitution(updateLhs, newArrayLhs, tf, newInVars, newOutVars, substitutionMap);
-
-			updateForSubstitution(updateRhsArray, newArrayRhs, tf, newInVars, newOutVars, substitutionMap);
-		}
+		final Map<IProgramVar, TermVariable> newInVars = new HashMap<>(tf.getInVars());
+		final Map<IProgramVar, TermVariable> newOutVars = new HashMap<>(tf.getOutVars());
 		
+		Term intermediateFormula = tf.getFormula();
 
-		List<MultiDimensionalSelect> mdSelects = MultiDimensionalSelect.extractSelectShallow(tf.getFormula(), true);//TODO allowArrayValues??
-		for (MultiDimensionalSelect mds : mdSelects) {
-			//TODO: we can't work on the normalized TermVariables like this, I think..
-			IProgramVarOrConst oldArray = 
-					mVpDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(
-							mds.getArray(), 
-							VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf));
-			assert oldArray != null;
-			List<EqNode> pointers = mds.getIndex().stream()
-					.map(indexTerm -> mVpDomain.getPreAnalysis().getTermToEqNodeMap().get(indexTerm))
-					.collect(Collectors.toList());
-			IProgramVarOrConst newArray = mNewArrayIdProvider.getNewArrayId(oldArray, pointers);
+		intermediateFormula = substituteArrayUpdates(tf, newInVars, newOutVars, intermediateFormula);
 
-			updateForSubstitution(oldArray, newArray, tf, newInVars, newOutVars, substitutionMap);
-		}
+		intermediateFormula = substituteArrayEqualites(tf, newInVars, newOutVars, intermediateFormula);
 
-		List<MultiDimensionalStore> mdStores = MultiDimensionalStore.extractArrayStoresShallow(tf.getFormula());
-		for (MultiDimensionalStore mds : mdStores) {
-			if (storesInArrayUpdates.contains(mds.getStoreTerm())) {
-				continue;
-			}
-
-			IProgramVarOrConst oldArray = 
-					mVpDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(
-							mds.getArray(), 
-							VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf));
-			List<EqNode> pointers = mds.getIndex().stream()
-					.map(indexTerm -> mVpDomain.getPreAnalysis().getTermToEqNodeMap().get(indexTerm))
-					.collect(Collectors.toList());
-			IProgramVarOrConst newArray = mNewArrayIdProvider.getNewArrayId(oldArray, pointers);
-
-			updateForSubstitution(oldArray, newArray, tf, newInVars, newOutVars, substitutionMap);
-		}
-		
-		List<ArrayEquality> arrayEqualities = ArrayEquality.extractArrayEqualities(tf.getFormula());
-		for (ArrayEquality ae : arrayEqualities) {
-			
-			assert false;
-			/*
-			 * plan:
-			 *  - check compatibility (assert)
-			 *  - make an assignment between all the partitions
-			 */
-			
-		}
-		
-		
+		intermediateFormula = substituteRemainingStoresAndSelects(tf, newInVars, newOutVars, intermediateFormula);
 		
 		boolean newEmptyNonTheoryConsts = false;
 		Set<IProgramConst> newNonTheoryConsts = null;
@@ -252,267 +182,257 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 				newBranchEncoders, 
 				newEmptyAuxVars);
 		
-		Term newFormula = new Substitution(mScript, substitutionMap.entrySet()
-				.stream().collect(Collectors.toMap(
-						en -> en.getKey().getTerm(), 
-						en -> en.getValue().getTerm())))
-				.transform(tf.getFormula());
-		tfBuilder.setFormula(newFormula);
+		tfBuilder.setFormula(intermediateFormula);
+		
+		tfBuilder.setInfeasibility(Infeasibility.NOT_DETERMINED);
 		
 		return tfBuilder.finishConstruction(mScript);
 	}
 
 
 
-	private void updateForSubstitution(IProgramVarOrConst oldArray, IProgramVarOrConst newArray,
+	private Term substituteRemainingStoresAndSelects(final UnmodifiableTransFormula tf,
+			final Map<IProgramVar, TermVariable> newInVars, final Map<IProgramVar, TermVariable> newOutVars,
+			Term intermediateFormula) {
+		final Map<Term, Term> substitutionMapPvoc = new HashMap<>();
+		
+		List<MultiDimensionalSelect> mdSelects = 
+				MultiDimensionalSelect.extractSelectShallow(intermediateFormula, true);//TODO allowArrayValues??
+		List<MultiDimensionalSelect> mdSelectsInOriginalTf = 
+				MultiDimensionalSelect.extractSelectShallow(tf.getFormula(), true);//TODO allowArrayValues??
+		for (MultiDimensionalSelect mds : mdSelects) {
+			if (!mdSelectsInOriginalTf.contains(mds)) {
+				// the current mds comes from a replacement we made earlier (during ArrayUpdate or ArrayEquality-handling)
+				continue;
+			}
+			//TODO: we can't work on the normalized TermVariables like this, I think..
+			IProgramVarOrConst oldArray = 
+					mVpDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(
+							mds.getArray(), 
+							VPDomainHelpers.computeProgramVarMappingFromInVarOutVarMappings(newInVars, newOutVars));
+			assert oldArray != null;
+
+			List<EqNode> pointers = convertArrayIndexToEqNodeList(newInVars, newOutVars, mds.getIndex());
+
+			IProgramVarOrConst newArray = mNewArrayIdProvider.getNewArrayId(oldArray, pointers);
+
+			updateMappingsForSubstitution(oldArray, newArray, tf, newInVars, newOutVars, substitutionMapPvoc);
+		}
+
+		List<MultiDimensionalStore> mdStores = MultiDimensionalStore.extractArrayStoresShallow(intermediateFormula);
+		List<MultiDimensionalStore> mdStoresInOriginalTf = MultiDimensionalStore.extractArrayStoresShallow(tf.getFormula());
+		for (MultiDimensionalStore mds : mdStores) {
+			if (!mdStoresInOriginalTf.contains(mds)) {
+				// the current mds comes from a replacement we made earlier (during ArrayUpdate or ArrayEquality-handling)
+				continue;
+			}
+			IProgramVarOrConst oldArray = 
+					mVpDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(
+							mds.getArray(), 
+							VPDomainHelpers.computeProgramVarMappingFromInVarOutVarMappings(newInVars, newOutVars));
+
+			List<EqNode> pointers = convertArrayIndexToEqNodeList(newInVars, newOutVars, mds.getIndex());
+					
+			IProgramVarOrConst newArray = mNewArrayIdProvider.getNewArrayId(oldArray, pointers);
+
+			updateMappingsForSubstitution(oldArray, newArray, tf, newInVars, newOutVars, substitutionMapPvoc);
+		}
+		intermediateFormula = new Substitution(mScript, substitutionMapPvoc).transform(intermediateFormula);	
+		return intermediateFormula;
+	}
+
+
+
+	private Term substituteArrayUpdates(final UnmodifiableTransFormula tf,
+			final Map<IProgramVar, TermVariable> newInVars, final Map<IProgramVar, TermVariable> newOutVars,
+			Term formula) {
+
+		final Map<Term, Term> substitutionMapPvoc = new HashMap<>();
+
+		List<ArrayUpdate> arrayUpdates = ArrayUpdate.extractArrayUpdates(formula);
+		for (ArrayUpdate au : arrayUpdates) {
+
+			IProgramVarOrConst updateLhs = 
+					mVpDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(
+							au.getNewArray(), 
+							VPDomainHelpers.computeProgramVarMappingFromInVarOutVarMappings(newInVars, newOutVars));
+			
+			IProgramVarOrConst updateRhsArray = 
+					mVpDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(
+							au.getOldArray(), 
+							VPDomainHelpers.computeProgramVarMappingFromInVarOutVarMappings(newInVars, newOutVars));
+			
+			List<EqNode> pointers = convertArrayIndexToEqNodeList(newInVars, newOutVars, au.getMultiDimensionalStore().getIndex());
+
+			IProgramVarOrConst newArrayLhs = mNewArrayIdProvider.getNewArrayId(updateLhs, pointers);
+
+			IProgramVarOrConst newArrayRhs = mNewArrayIdProvider.getNewArrayId(updateRhsArray, pointers);
+
+			updateMappingsForSubstitution(updateLhs, newArrayLhs, tf, newInVars, newOutVars, substitutionMapPvoc);
+
+			updateMappingsForSubstitution(updateRhsArray, newArrayRhs, tf, newInVars, newOutVars, substitutionMapPvoc);
+		}
+		
+		Term newTerm = new Substitution(mScript, substitutionMapPvoc).transform(formula);
+		return newTerm;
+	}
+
+
+
+	private List<EqNode> convertArrayIndexToEqNodeList(final Map<IProgramVar, TermVariable> newInVars,
+			final Map<IProgramVar, TermVariable> newOutVars, ArrayIndex index) {
+		List<EqNode> pointers = index.stream()
+				.map(indexTerm -> mVpDomain.getPreAnalysis().getTermToEqNodeMap().get(
+						VPDomainHelpers.computeProgramVarMappingFromInVarOutVarMappings(newInVars, newOutVars).get(indexTerm).getTerm()))
+				.collect(Collectors.toList());
+		return pointers;
+	}
+
+
+
+	private Term substituteArrayEqualites(final UnmodifiableTransFormula tf,
+			final Map<IProgramVar, TermVariable> newInVars, 
+			final Map<IProgramVar, TermVariable> newOutVars, 
+			final Term intermediateFormula) {
+		List<ArrayEquality> arrayEqualities = ArrayEquality.extractArrayEqualities(intermediateFormula);
+		Map<Term, Term> equalitySubstitution = new HashMap<>();
+		for (ArrayEquality ae : arrayEqualities) {
+			/*
+			 * plan:
+			 *  - check compatibility (assert)
+			 *  - make an assignment between all the partitions
+			 */
+			
+			IProgramVarOrConst oldLhs = mVpDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(
+							ae.getLhs(), 
+							VPDomainHelpers.computeProgramVarMappingFromInVarOutVarMappings(newInVars, newOutVars));
+			IProgramVarOrConst oldRhs = mVpDomain.getPreAnalysis().getIProgramVarOrConstOrLiteral(
+							ae.getRhs(), 
+							VPDomainHelpers.computeProgramVarMappingFromInVarOutVarMappings(newInVars, newOutVars));
+			
+			List<Term> newEqualities = new ArrayList<>();
+			
+			List<IProgramVarOrConst> newLhss = mNewArrayIdProvider.getAllNewArrayIds(oldLhs);
+			List<IProgramVarOrConst> newRhss = mNewArrayIdProvider.getAllNewArrayIds(oldRhs);
+			assert newLhss.size() == newRhss.size();
+			for (int i = 0; i < newLhss.size(); i++) {
+				IProgramVarOrConst newLhs = newLhss.get(i);
+				IProgramVarOrConst newRhs = newRhss.get(i);
+				Term newEquality = mScript.term(this, "=", 
+						newLhs.getTerm(), 
+						newRhs.getTerm());
+				newEqualities.add(newEquality);
+				
+				if (tf.getInVars().containsKey(oldLhs)) {
+					newInVars.remove(oldLhs);
+					newInVars.put((IProgramVar) newLhs, (TermVariable) newLhs.getTerm());
+				}
+				if (tf.getInVars().containsKey(oldRhs)) {
+					newInVars.remove(oldRhs);
+					newInVars.put((IProgramVar) newRhs, (TermVariable) newRhs.getTerm());
+				}
+				if (tf.getOutVars().containsKey(oldLhs)) {
+					newOutVars.remove(oldLhs);
+					newOutVars.put((IProgramVar) newLhs, (TermVariable) newLhs.getTerm());
+				}
+				if (tf.getOutVars().containsKey(oldRhs)) {
+					newOutVars.remove(oldRhs);
+					newOutVars.put((IProgramVar) newRhs, (TermVariable) newRhs.getTerm());
+				}
+
+			}
+			Term newConjunctionOfEquations = mScript.term(this, "and", newEqualities.toArray(new Term[newEqualities.size()]));
+			equalitySubstitution.put(ae.getOriginalTerm(), newConjunctionOfEquations);
+		}
+		Term newTerm = new Substitution(mScript, equalitySubstitution).transform(intermediateFormula);
+		return newTerm;
+	}
+
+
+
+	/**
+	 * 
+	 * - updates the maps newInVars and newOutVars
+	 * - updates the map substitutionMap
+	 * 
+	 * This method is for the simple cases, where we just need to replace the arrayIdentifer "one-by-one".
+	 * (not like the ArrayEquality, where we replace one-by-many)
+	 * 
+	 * @param oldArray
+	 * @param newArray
+	 * @param tf
+	 * @param newInVars
+	 * @param newOutVars
+	 * @param substitutionMap
+	 */
+	private void updateMappingsForSubstitution(IProgramVarOrConst oldArray, IProgramVarOrConst newArray,
 			final UnmodifiableTransFormula tf, final Map<IProgramVar, TermVariable> newInVars,
 			final Map<IProgramVar, TermVariable> newOutVars,
-			final Map<IProgramVarOrConst, IProgramVarOrConst> substitutionMap) {
-		substitutionMap.put(oldArray, newArray);
-		if (tf.getInVars().containsKey(oldArray)) {
-			newInVars.put((IProgramVar) newArray, (TermVariable) newArray.getTerm());
+			final Map<Term, Term> substitutionMap) {
+		if (oldArray instanceof IProgramVar) {
+			assert newArray instanceof IProgramVar : "right?..";
+		
+			TermVariable inv = newInVars.get(oldArray);
+			TermVariable outv = newOutVars.get(oldArray);
+
+			TermVariable invNewTv = null;
+			if (inv != null) {
+				invNewTv = mScript.constructFreshCopy((TermVariable) newArray.getTerm());
+				newInVars.remove(oldArray);
+				newInVars.put((IProgramVar) newArray, invNewTv);
+				substitutionMap.put(inv, invNewTv);
+			}
+		
+			if (outv != null) {
+				TermVariable newTv;
+				if (inv == outv) {
+					newTv = invNewTv;
+				} else {
+					newTv = mScript.constructFreshCopy((TermVariable) newArray.getTerm());
+				}
+				newOutVars.remove(oldArray);
+				newOutVars.put((IProgramVar) newArray, newTv);
+				substitutionMap.put(outv, newTv);
+			}
+			
+		} else {
+			/*
+			 * the array id is a constant (or literal)
+			 *  --> there are no changes to the invar/outvar mappings, only to the substitution
+			 */
+			substitutionMap.put(oldArray.getTerm(), newArray.getTerm());
 		}
-		if (tf.getOutVars().containsKey(oldArray)) {
-			newOutVars.put((IProgramVar) newArray, (TermVariable) newArray.getTerm());
-		}
-	}
-
-
-	static UnmodifiableTransFormula substituteInTranformula(TransFormula originalFormula,
-				Map<IProgramVarOrConst, IProgramVarOrConst> substitutionMap) {
-
-		return null;
-	}
-	
-	
-
-
-//	class TransFormulaSubstitution {
+		
 //		
-//		TransFormulaSubstitution(TransFormula originalFormula, 
-//				Map<IProgramVarOrConst, IProgramVarOrConst> substitutionMap) {
-//			
+//		//TODO cases...
+//		if (newInVars.containsKey(oldArray) && !newOutVars.containsKey(oldArray)) {
+//			TermVariable newTv = mScript.constructFreshCopy((TermVariable) newArray.getTerm());
+//			TermVariable oldTv = tf.getInVars().get(oldArray);
+//			substitutionMap.put(oldTv, newTv);
+//			newInVars.remove(oldArray);
+//			newInVars.put((IProgramVar) newArray, newTv);
+//			return;
 //		}
-//	}
-	
-
-//	/**
-//	 * Input: maps that say how arrays should be split a term to split arrays in inVar and outVar mappings 
-//	 * Output: the term where arrays are split 
-//	 * SideEffect: inVar and outVar mappings are updated according to the splitting
-//	 */
-//	class ArraySplitter extends TermTransformer {
-//		Script mscript;
-//		Map<IProgramVar, TermVariable> minVars;
-//		Map<IProgramVar, TermVariable> moutVars;
-//
-//		Set<IProgramVar> minVarsToRemove = new HashSet<IProgramVar>();
-//		Map<IProgramVar, TermVariable> minVarsToAdd = new HashMap<>();
-//		Set<IProgramVar> moutVarsToRemove = new HashSet<IProgramVar>();
-//		Map<IProgramVar, TermVariable> moutVarsToAdd = new HashMap<>();
-//
-//		boolean mequalsMode = false;
-//		// BoogieVar maOld;
-//		TermVariable maOld;
-//		// BoogieVar maNew;
-//		TermVariable maNew;
-//
-//		/**
-//		 * arrayId (old array) X pointerId -> arrayId (split version)
-//		 */
-////		NestedMap2<IProgramVarOrConst, EqNode, ReplacementVar> marrayToPointerToPartition;
-//		/**
-//		 * arrayId (old array) X arrayId (split version) -> Set(pointerIds)
-//		 */
-////		HashRelation3<IProgramVarOrConst, ReplacementVar, EqNode> mArrayIdToNewArrayIdToPointers;
-//		
-//
-//		public ArraySplitter(final Script script,
-////				final NestedMap2<IProgramVarOrConst, EqNode, ReplacementVar> moldArrayToPointerToNewArray,
-////				final HashRelation3<IProgramVarOrConst, ReplacementVar, EqNode> arrayToPartitions,
-//				final Map<IProgramVar, TermVariable> inVars, 
-//				final Map<IProgramVar, TermVariable> outVars) {
-////			marrayToPointerToPartition = moldArrayToPointerToNewArray;
-////			mArrayIdToNewArrayIdToPointers = arrayToPartitions;
-//			mscript = script;
-//			minVars = inVars;
-//			moutVars = outVars;
+//		if (newOutVars.containsKey(oldArray) && !newInVars.containsKey(oldArray)) {
+//			TermVariable newTv = mScript.constructFreshCopy((TermVariable) newArray.getTerm());
+//			TermVariable oldTv = tf.getOutVars().get(oldArray);
+//			substitutionMap.put(oldTv, newTv);
+//			newInVars.remove(oldArray);
+//			newOutVars.put((IProgramVar) newArray, newTv);
+//			return;
 //		}
-//
-//		public ArraySplitter(final Script script,
-////				final NestedMap2<IProgramVarOrConst, EqNode, ReplacementVar> arrayToPointerToPartition,
-////				final HashRelation3<IProgramVarOrConst, ReplacementVar, EqNode> arrayToPartitions,
-//				final Map<IProgramVar, TermVariable> inVars, 
-//				final Map<IProgramVar, TermVariable> outVars,
-//				final TermVariable aOld, final TermVariable aNew) {
-//			this(script, inVars, outVars);
-//			mequalsMode = true;
-//			maOld = aOld;
-//			maNew = aNew;
+//		if (newInVars.containsKey(oldArray) && newOutVars.containsKey(oldArray)) {
+//			TermVariable newTv = mScript.constructFreshCopy((TermVariable) newArray.getTerm());
+//			TermVariable oldTv = tf.getOutVars().get(oldArray);
+//			substitutionMap.put(oldTv, newTv);
+//			newInVars.remove(oldArray);
+//			newOutVars.put((IProgramVar) newArray, newTv);
+//			return;
 //		}
-//
-//		@Override
-//		protected void convert(final Term term) {
-//			if (mequalsMode) {
-//				// TODO: not sure how robust this is..
-//				if (term.equals(maOld)) {
-//					setResult(maNew);
-//					mequalsMode = false;
-//					return;
-//				}
-//			}
-//			if (term instanceof ApplicationTerm) {
-//				final ApplicationTerm appTerm = (ApplicationTerm) term;
-//				if (appTerm.getFunction().getName().equals("select")
-//						|| appTerm.getFunction().getName().equals("store")) {
-//
-//					if (mequalsMode && appTerm.getFunction().getName().equals("store")
-//							&& appTerm.getParameters()[0] instanceof TermVariable) {
-//						// TODO: not sure how robust this is..
-//						super.convert(appTerm);
-//						return;
-//
-//					} else if (appTerm.getParameters()[0] instanceof TermVariable
-//							&& appTerm.getParameters()[1] instanceof TermVariable) {
-//						assert appTerm.getParameters()[0].getSort().isArraySort();
-//
-//						final IProgramVar oldArrayVar =
-//								getBoogieVarFromTermVar(((TermVariable) appTerm.getParameters()[0]), minVars, moutVars);
-//
-//						final Map<IProgramVar, IProgramVar> im = marrayToPartitions.get(oldArrayVar);
-//						if (im != null) {
-//							final IProgramVar ptrName = getBoogieVarFromTermVar(
-//									((TermVariable) appTerm.getParameters()[1]), minVars, moutVars);
-//
-//							final IProgramVar newArrayVar = im.get(ptrName);
-//
-//							final TermVariable newVar = newArrayVar.getTermVariable(); // FIXME probably replace
-//																						// getTermVariable, here
-//
-//							final Term newTerm = appTerm.getFunction().getName().equals("store")
-//									? mscript.term(appTerm.getFunction().getName(), newVar, appTerm.getParameters()[1],
-//											appTerm.getParameters()[2])
-//									: mscript.term(appTerm.getFunction().getName(), newVar, appTerm.getParameters()[1]);
-//
-//							// TODO: do we also need outVars here, sometimes?
-//							minVarsToRemove.add(oldArrayVar);
-//							minVarsToAdd.put(newArrayVar, newVar);
-//
-//							setResult(newTerm);
-//							return;
-//						}
-//					}
-//				} else if (appTerm.getFunction().getName().equals("=")) {
-//					if (appTerm.getParameters()[0].getSort().isArraySort()
-//							&& appTerm.getParameters()[1].getSort().isArraySort()) {
-//
-//						final Term p0 = appTerm.getParameters()[0];
-//						final Term p1 = appTerm.getParameters()[1];
-//
-//						// final ArrayFinder af0 = new ArrayFinder();
-//						// af0.transform(p0);
-//						final TermVariable a0Tv = new ArrayFinder(p0).getResult();
-//						final IProgramVar a0Id = getBoogieVarFromTermVar(a0Tv, minVars, moutVars);
-//
-//						// final ArrayFinder af1 = new ArrayFinder();
-//						// af1.transform(p1);
-//						final TermVariable a1Tv = new ArrayFinder(p1).getResult();
-//						final IProgramVar a1Id = getBoogieVarFromTermVar(a1Tv, minVars, moutVars);
-//
-//						/*
-//						 * sanity check: if anywhere in the program, the two arrays a and b are equated, their
-//						 * partitionings must be compatible i.e., no partition of a may overlap two partitions of b and
-//						 * vice versa
-//						 */
-//						// assert partitionsAreCompatible(findArrayId(p0), findArrayId(p1)); TODO: write those methods
-//						// for the assert..
-//
-//						final ArrayList<Term> equationConjunction = new ArrayList<Term>();
-//
-//						/*
-//						 * for each partition p of a, which has an intersecting partition q of b: equate e1[a_p] =
-//						 * e2[b_q] (where e1, e2 may be stores or just array identifiers (something else?).
-//						 */
-//						for (final Entry<IProgramVar, HashSet<IProgramVar>> a0SplitArrayToPointers : mArrayIdToNewArrayIdToPointers
-//								.get(a0Id).entrySet()) {
-//							for (final Entry<IProgramVar, HashSet<IProgramVar>> a1SplitArrayToPointers : mArrayIdToNewArrayIdToPointers
-//									.get(a1Id).entrySet()) {
-//
-//								final HashSet<IProgramVar> intersection =
-//										new HashSet<IProgramVar>(a0SplitArrayToPointers.getValue());
-//								intersection.retainAll(a1SplitArrayToPointers.getValue());
-//
-//								if (!intersection.isEmpty()) {
-//									final IProgramVar a0New = a0SplitArrayToPointers.getKey();
-//									final IProgramVar a1New = a1SplitArrayToPointers.getKey();
-//									final TermVariable a0NewTv = a0New.getTermVariable(); // TODO replace
-//																							// getTermVariable through a
-//																							// unique version
-//									final TermVariable a1NewTv = a1New.getTermVariable(); // TODO replace
-//																							// getTermVariable through a
-//																							// unique version
-//									equationConjunction.add(mscript.term("=",
-//											new ArraySplitter(mscript, marrayToPointerToPartition, mArrayIdToNewArrayIdToPointers,
-//													minVars, moutVars, a0Tv, a0NewTv)
-//															.transform(appTerm.getParameters()[0]),
-//											new ArraySplitter(mscript, marrayToPointerToPartition, mArrayIdToNewArrayIdToPointers,
-//													minVars, moutVars, a1Tv, a1NewTv)
-//															.transform(appTerm.getParameters()[1])));
-//
-//									if (minVars.containsKey(a0Id)) {
-//										minVarsToRemove.add(a0Id);
-//										minVarsToAdd.put(a0New, a0NewTv);
-//									} else if (moutVars.containsKey(a0Id)) {
-//										moutVarsToRemove.add(a0Id);
-//										moutVarsToAdd.put(a0New, a0NewTv);
-//									} else {
-//										assert false;
-//									}
-//
-//									if (minVars.containsKey(a1Id)) {
-//										minVarsToRemove.add(a1Id);
-//										minVarsToAdd.put(a1Id, a1NewTv);
-//									} else if (moutVars.containsKey(a1Id)) {
-//										moutVarsToRemove.add(a1Id);
-//										moutVarsToAdd.put(a1Id, a1NewTv);
-//									} else {
-//										assert false;
-//									}
-//
-//								}
-//							}
-//						}
-//						setResult(
-//								mscript.term("and", equationConjunction.toArray(new Term[equationConjunction.size()])));
-//						return;
-//					}
-//				}
-//			}
-//
-//			super.convert(term);
+		
+//		if (!(oldArray instanceof IProgramVar)) {
+//			// we have a constant
+//			substitutionMap.put(oldArray.getTerm(), newArray.getTerm());
 //		}
-//
-//		public HashMap<IProgramVar, TermVariable> getUpdatedInVars() {
-//			final HashMap<IProgramVar, TermVariable> result = new HashMap<IProgramVar, TermVariable>(minVars);
-//			for (final IProgramVar bv : minVarsToRemove) {
-//				result.remove(bv);
-//			}
-//			for (final Entry<IProgramVar, TermVariable> en : minVarsToAdd.entrySet()) {
-//				result.put(en.getKey(), en.getValue());
-//			}
-//			return result;
-//		}
-//
-//		public HashMap<IProgramVar, TermVariable> getUpdatedOutVars() {
-//			final HashMap<IProgramVar, TermVariable> result = new HashMap<IProgramVar, TermVariable>(moutVars);
-//			for (final IProgramVar bv : moutVarsToRemove) {
-//				result.remove(bv);
-//			}
-//			for (final Entry<IProgramVar, TermVariable> en : moutVarsToAdd.entrySet()) {
-//				result.put(en.getKey(), en.getValue());
-//			}
-//			return result;
-//		}
-//
-//	}
+	}
 }

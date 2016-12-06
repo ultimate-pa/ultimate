@@ -26,11 +26,16 @@ public class VPDomainHelpers {
 //	}
 	
 	public static Map<TermVariable, IProgramVar> computeProgramVarMappingFromTransFormula(TransFormula tf) {
+		return computeProgramVarMappingFromInVarOutVarMappings(tf.getInVars(), tf.getOutVars());
+	}
+
+	public static Map<TermVariable, IProgramVar> computeProgramVarMappingFromInVarOutVarMappings(
+			Map<IProgramVar, TermVariable> map1, Map<IProgramVar, TermVariable> map2) {
 		Map<TermVariable, IProgramVar> result = new HashMap<>();
-		for (Entry<IProgramVar, TermVariable> en : tf.getInVars().entrySet()) {
+		for (Entry<IProgramVar, TermVariable> en : map1.entrySet()) {
 			result.put(en.getValue(), en.getKey());
 		}
-		for (Entry<IProgramVar, TermVariable> en : tf.getOutVars().entrySet()) {
+		for (Entry<IProgramVar, TermVariable> en : map2.entrySet()) {
 			result.put(en.getValue(), en.getKey());
 		}
 		return result;
