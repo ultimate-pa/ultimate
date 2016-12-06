@@ -16,4 +16,4 @@ Import-Package: javax.servlet,
  org.osgi.service.http,
  org.osgi.util.tracker
 Bundle-ActivationPolicy: lazy
-Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8

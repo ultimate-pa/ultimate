@@ -95,7 +95,7 @@ public class UltimateExecutor {
 	}
 
 	private static String getCheckedArgument(final Request internalRequest, final String paramId) {
-		final String[] rtr = internalRequest.get(paramId);
+		final String[] rtr = internalRequest.getParameterList().get(paramId);
 
 		if (rtr == null) {
 			throw new IllegalArgumentException("The parameter \"" + paramId + "\" was not supplied");
@@ -204,25 +204,25 @@ public class UltimateExecutor {
 			final WebToolchain toolchain) {
 		for (final Setting setting : toolchain.getUserModifiableSettings()) {
 			final String sid = toolchainId + "_" + setting.getSettingIdentifier();
-			if (!internalRequest.containsKey(sid)) {
+			if (!internalRequest.getParameterList().containsKey(sid)) {
 				continue;
 			}
 
-			if (setting.getType() != SettingType.DROPDOWN && internalRequest.get(sid).length != 1) {
+			if (setting.getType() != SettingType.DROPDOWN && internalRequest.getParameterList().get(sid).length != 1) {
 				throw new IllegalArgumentException("Setting ID not unique: " + sid);
 			}
 			switch (setting.getType()) {
 			case BOOLEAN:
-				setting.setBooleanValue(internalRequest.get(sid)[0]);
+				setting.setBooleanValue(internalRequest.getParameterList().get(sid)[0]);
 				break;
 			case DROPDOWN:
-				setting.setDropDownValue(internalRequest.get(sid));
+				setting.setDropDownValue(internalRequest.getParameterList().get(sid));
 				break;
 			case INTEGER:
-				setting.setIntValue(internalRequest.get(sid)[0]);
+				setting.setIntValue(internalRequest.getParameterList().get(sid)[0]);
 				break;
 			case STRING:
-				setting.setStringValue(internalRequest.get(sid)[0]);
+				setting.setStringValue(internalRequest.getParameterList().get(sid)[0]);
 				break;
 			default:
 				throw new IllegalArgumentException("Setting type " + setting.getType() + " is unknown");

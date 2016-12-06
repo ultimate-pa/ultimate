@@ -15,11 +15,12 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
- * 
+ *
  * @author dietsch@informatik.uni-freiburg.de
- * 
+ *
  */
 public class UltimateHttpServlet extends HttpServlet {
+	private static final String CALLBACK = "callback";
 	/**
 	 * The serial version UID.
 	 */
@@ -33,7 +34,7 @@ public class UltimateHttpServlet extends HttpServlet {
 
 	/**
 	 * Constructor.
-	 * 
+	 *
 	 * @see HttpServlet#HttpServlet()
 	 */
 	public UltimateHttpServlet() {
@@ -47,46 +48,48 @@ public class UltimateHttpServlet extends HttpServlet {
 	}
 
 	@Override
-	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+	protected void doGet(final HttpServletRequest request, final HttpServletResponse response)
+			throws ServletException, IOException {
 		mLogger.logDebug("Connection from " + request.getRemoteAddr() + ", GET: " + request.getQueryString());
 		processRequest(request, response);
 	}
 
 	@Override
-	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException,
-			IOException {
+	protected void doPost(final HttpServletRequest request, final HttpServletResponse response)
+			throws ServletException, IOException {
 		mLogger.logDebug("Connection from " + request.getRemoteAddr() + ", POST: " + request.getQueryString()
 				+ " Reading All Request Parameters");
 		processRequest(request, response);
 	}
 
-	private void processRequest(HttpServletRequest request, HttpServletResponse response) throws IOException {
+	private void processRequest(final HttpServletRequest request, final HttpServletResponse response)
+			throws IOException {
 		final ServletLogger sessionLogger = new ServletLogger(this, request.getSession().getId(), DEBUG);
 		final Request internalRequest = new Request(request, sessionLogger);
 		response.setContentType("application/json");
 		final PrintWriter out = response.getWriter();
 
-		if (internalRequest.containsKey("callback")) {
-			out.write(internalRequest.get("callback")[0] + "(");
+		if (internalRequest.getParameterList().containsKey(CALLBACK)) {
+			out.write(internalRequest.getParameterList().get(CALLBACK)[0] + "(");
 		}
 
 		writeJSONResponse(internalRequest, out);
 
-		if (internalRequest.containsKey("callback")) {
+		if (internalRequest.getParameterList().containsKey(CALLBACK)) {
 			out.write(")");
 		}
 	}
 
-	private void writeJSONResponse(Request request, PrintWriter out) {
+	private static void writeJSONResponse(final Request request, final PrintWriter out) {
 		try {
 			JSONObject json = new JSONObject();
 
-			if (request.containsKey("example")) {
-				final Example ex = Example.get(request.get("example")[0]);
+			if (request.getParameterList().containsKey("example")) {
+				final Example ex = Example.get(request.getParameterList().get("example")[0]);
 				if (ex != null) {
 					json.put("exampleContent", ex.getFileContent());
 				}
-			} else if (request.containsKey("action")) {
+			} else if (request.getParameterList().containsKey("action")) {
 				json = handleAction(request);
 				json.put("status", "success");
 			} else {
@@ -108,16 +111,15 @@ public class UltimateHttpServlet extends HttpServlet {
 
 	/**
 	 * Handles a request where the "action" parameter is set!
-	 * 
+	 *
 	 * @param request
 	 *            the parameter list of the request
-	 * @return a json object holding the values that should be sent to the
-	 *         browser
+	 * @return a json object holding the values that should be sent to the browser
 	 * @throws JSONException
 	 *             happens when JSONObject is not used correctly
 	 */
-	private JSONObject handleAction(Request request) throws JSONException {
-		final String[] actions = request.get("action");
+	private static JSONObject handleAction(final Request request) throws JSONException {
+		final String[] actions = request.getParameterList().get("action");
 		if (actions.length != 1) {
 			final JSONObject json = new JSONObject();
 			json.put("error", "Invalid request! error code UI03");
@@ -127,11 +129,10 @@ public class UltimateHttpServlet extends HttpServlet {
 		if (action.equals("execute")) {
 			final UltimateExecutor executor = new UltimateExecutor(request.getLogger());
 			return executor.executeUltimate(request);
-		} else {
-			final JSONObject json = new JSONObject();
-			json.put("error", "Invalid request! error code UI05");
-			request.getLogger().logDebug("Don't know how to handle action: " + action);
-			return json;
 		}
+		final JSONObject json = new JSONObject();
+		json.put("error", "Invalid request! error code UI05");
+		request.getLogger().logDebug("Don't know how to handle action: " + action);
+		return json;
 	}
 }

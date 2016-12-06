@@ -11,19 +11,19 @@ public class Request {
 	private final ServletLogger mLogger;
 	private final HttpServletRequest mRequest;
 
-	Request(HttpServletRequest request, ServletLogger logger) {
+	Request(final HttpServletRequest request, final ServletLogger logger) {
 		mLogger = logger;
 		mParameterList = extractParameter(request);
 		mRequest = request;
 	}
 
-	private Map<String, String[]> extractParameter(HttpServletRequest request) {
+	private Map<String, String[]> extractParameter(final HttpServletRequest request) {
 		if (request == null) {
 			throw new IllegalArgumentException("The request was null");
 		}
-		final Map<String, String[]> paramList = new HashMap<String, String[]>();
+		final Map<String, String[]> paramList = new HashMap<>();
 		final Enumeration<String> paramNames = request.getParameterNames();
-		if(paramNames == null){
+		if (paramNames == null) {
 			throw new IllegalArgumentException("No parameter were transmitted (paramNames == null)");
 		}
 		while (paramNames.hasMoreElements()) {
@@ -45,24 +45,16 @@ public class Request {
 		}
 		return paramList;
 	}
-	
-	public ServletLogger getLogger(){
+
+	public ServletLogger getLogger() {
 		return mLogger;
 	}
-	
-	public String getRequestId(){
+
+	public String getRequestId() {
 		return mRequest.getSession().getId();
 	}
 
 	public Map<String, String[]> getParameterList() {
 		return mParameterList;
-	}
-
-	public boolean containsKey(String key) {
-		return getParameterList().containsKey(key);
-	}
-
-	public String[] get(String key) {
-		return getParameterList().get(key);
 	}
 }
