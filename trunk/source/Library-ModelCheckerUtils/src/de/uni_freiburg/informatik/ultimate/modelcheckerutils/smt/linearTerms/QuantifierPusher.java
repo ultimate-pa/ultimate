@@ -216,8 +216,17 @@ public class QuantifierPusher extends TermTransformer {
 			}
 			if (numberOfEliminateesBefore > eliminatees.size()) {
 				// something was removed
-				final QuantifiedFormula intermediate = (QuantifiedFormula) SmtUtils.quantifier(mScript, quantifier, eliminatees, result);
-				return tryToPush(intermediate);
+				final Term quantified = SmtUtils.quantifier(mScript, quantifier, eliminatees, result);
+				if (quantified instanceof QuantifiedFormula) {
+					final QuantifiedFormula intermediate = (QuantifiedFormula) quantified;
+					return tryToPush(intermediate);
+				} else {
+					// special case:
+					// eliminatees not reported correctly, no quantifier needed
+					// handle similar as empty eliminatees case
+					// TODO: eliminatees should be reported correctly
+					return quantified;
+				}
 			}
 		}
 		return null;
