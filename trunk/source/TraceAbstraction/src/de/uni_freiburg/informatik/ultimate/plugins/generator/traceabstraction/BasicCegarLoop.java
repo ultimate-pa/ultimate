@@ -404,7 +404,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				throw aoce;
 			} finally {
 				if (enhanceMode != InterpolantAutomatonEnhancement.NONE) {
-					assert (interpolantAutomaton instanceof AbstractInterpolantAutomaton) : 
+					assert (interpolantAutomaton instanceof AbstractInterpolantAutomaton) :
 						"if enhancement is used, we need AbstractInterpolantAutomaton";
 					((AbstractInterpolantAutomaton) interpolantAutomaton).switchToReadonlyMode();
 				}
@@ -425,7 +425,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 							+ " not accepted");
 				}
 			}
-			assert new InductivityCheck(mServices, new RemoveUnreachable<CodeBlock, IPredicate>(
+			assert new InductivityCheck(mServices, new RemoveUnreachable<>(
 					new AutomataLibraryServices(mServices), interpolantAutomaton).getResult(), false, true,
 					new IncrementalHoareTripleChecker(super.mCsToolkit)).getResult();
 
@@ -504,9 +504,9 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		case PREDICATE_ABSTRACTION:
 		case PREDICATE_ABSTRACTION_CONSERVATIVE:
 		case PREDICATE_ABSTRACTION_CANNIBALIZE: {
-			final boolean conservativeSuccessorCandidateSelection = 
+			final boolean conservativeSuccessorCandidateSelection =
 					(enhanceMode == InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION_CONSERVATIVE);
-			final boolean cannibalize = 
+			final boolean cannibalize =
 					(enhanceMode == InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION_CANNIBALIZE);
 			final DeterministicInterpolantAutomaton determinized =
 					new DeterministicInterpolantAutomaton(mServices, mCsToolkit, htc, inputInterpolantAutomaton,
@@ -518,7 +518,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		case EAGER:
 		case NO_SECOND_CHANCE:
 		case EAGER_CONSERVATIVE: {
-			final boolean conservativeSuccessorCandidateSelection = 
+			final boolean conservativeSuccessorCandidateSelection =
 					(enhanceMode == InterpolantAutomatonEnhancement.EAGER_CONSERVATIVE);
 			final boolean secondChance =
 					(enhanceMode != InterpolantAutomatonEnhancement.NO_SECOND_CHANCE);
@@ -559,7 +559,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			am = new AutomataMinimization<>(mServices, (INestedWordAutomaton<CodeBlock, IPredicate>) mAbstraction,
 					minimization, mComputeHoareAnnotation, mIteration, predicateFactoryRefinement,
 					MINIMIZE_EVERY_KTH_ITERATION, mStoredRawInterpolantAutomata, mInterpolAutomaton,
-					MINIMIZATION_TIMEOUT, resultCheckPredFac, lcsProvider);
+					MINIMIZATION_TIMEOUT, resultCheckPredFac, lcsProvider, true);
 		} catch (final AutomataMinimizationTimeout e) {
 			mCegarLoopBenchmark.addAutomataMinimizationData(e.getStatistics());
 			throw e.getAutomataOperationCanceledException();

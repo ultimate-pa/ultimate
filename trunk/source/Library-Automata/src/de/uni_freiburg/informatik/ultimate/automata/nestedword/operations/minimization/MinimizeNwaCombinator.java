@@ -101,12 +101,12 @@ public abstract class MinimizeNwaCombinator<LETTER, STATE> extends AbstractMinim
 		switch (mMode) {
 			case SEVPA:
 				mBackingMinimization = new MinimizeSevpa<>(mServices, mOperand,
-						partition, mStateFactory, addMapOldState2newState);
+						partition, mStateFactory, addMapOldState2newState, false);
 				break;
 			case SHRINK_NWA:
 				mBackingMinimization = new ShrinkNwa<>(mServices, mStateFactory,
 						mOperand, partition, addMapOldState2newState, false,
-						false, ShrinkNwa.SUGGESTED_RANDOM_SPLIT_SIZE, false, 0, false, false, true);
+						false, ShrinkNwa.SUGGESTED_RANDOM_SPLIT_SIZE, false, 0, false, false, true, false);
 				break;
 			case NWA_MAX_SAT2:
 				mBackingMinimization = new MinimizeNwaMaxSat2<>(mServices, mStateFactory,

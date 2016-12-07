@@ -264,11 +264,11 @@ public class BuchiCegarLoop {
 		// mRootAnnot.getBoogie2SMT());
 
 		mPref = taPrefs;
-		mDefaultStateFactory = new PredicateFactoryForInterpolantAutomata(mCsToolkitWithRankVars.getManagedScript(), 
+		mDefaultStateFactory = new PredicateFactoryForInterpolantAutomata(mCsToolkitWithRankVars.getManagedScript(),
 				predicateFactory, mPref.computeHoareAnnotation());
 		mPredicateFactoryResultChecking = new PredicateFactoryResultChecking(predicateFactory);
 
-		mStateFactoryForRefinement = new PredicateFactoryRefinement(mServices, 
+		mStateFactoryForRefinement = new PredicateFactoryRefinement(mServices,
 				mCsToolkitWithRankVars.getManagedScript(),predicateFactory, false, Collections.emptySet());
 
 		final IPreferenceProvider baPref = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
@@ -431,7 +431,7 @@ public class BuchiCegarLoop {
 							.concatenate(mCounterexample.getLoop());
 					mCounterexample = new NestedLassoRun<>(newStem, mCounterexample.getLoop());
 					lassoChecker = new LassoChecker(mInterpolation, mCsToolkitWithoutRankVars,
-							mPredicateFactory, mRootAnnot.getBoogie2SMT().getBoogie2SmtSymbolTable(), 
+							mPredicateFactory, mRootAnnot.getBoogie2SMT().getBoogie2SmtSymbolTable(),
 							mCsToolkitWithoutRankVars.getModifiableGlobalsTable(),
 							mRootAnnot.getBoogie2SMT().getAxioms(), mBinaryStatePredicateManager,
 							mCounterexample, generateLassoCheckerIdentifier(), mServices, mStorage, mSimplificationTechnique, mXnfConversionTechnique);
@@ -612,7 +612,7 @@ public class BuchiCegarLoop {
 					am = new AutomataMinimization<>(mServices,
 							mAbstraction, mAutomataMinimization, false,
 							mIteration, mStateFactoryForRefinement, -1, null,
-							mInterpolAutomaton, -1, mPredicateFactoryResultChecking, locProvider);
+							mInterpolAutomaton, -1, mPredicateFactoryResultChecking, locProvider, false);
 				} catch (final AutomataMinimizationTimeout e) {
 					mBenchmarkGenerator.addAutomataMinimizationData(e.getStatistics());
 					throw e.getAutomataOperationCanceledException();
@@ -625,7 +625,7 @@ public class BuchiCegarLoop {
 		} catch (final AutomataOperationCanceledException e) {
 			throw new ToolchainCanceledException(getClass(),
 					"minimizing (" + mAutomataMinimization + ") automaton with " + mAbstraction.size() + " states");
-		} 
+		}
 		mLogger.info("Abstraction has " + mAbstraction.sizeInformation());
 	}
 

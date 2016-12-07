@@ -128,7 +128,7 @@ public final class MinimizeNwaOverapproximation<LETTER, STATE> extends AbstractM
 		super(services, stateFactory, "MinimizeNwaOverapproximation", operand);
 		final TimeoutFlag<LETTER, STATE> timeout = new TimeoutFlag<>(time);
 		final MinimizeSevpa<LETTER, STATE> backgroundMinimizer = new MinimizeSevpa<>(services, operand,
-				initialPartition, stateFactory, addMapOldState2newState, timeout);
+				initialPartition, stateFactory, addMapOldState2newState, timeout, false);
 		constructResult(backgroundMinimizer.getConstructionInterrupted(), backgroundMinimizer.getResult(),
 				forbiddenLanguages, stateFactory);
 	}
@@ -140,7 +140,7 @@ public final class MinimizeNwaOverapproximation<LETTER, STATE> extends AbstractM
 		}
 		
 		boolean correct;
-		correct = new IsIncluded<LETTER, STATE>(mServices, stateFactory, mOperand, getResult()).getResult();
+		correct = new IsIncluded<>(mServices, stateFactory, mOperand, getResult()).getResult();
 		assert correct;
 		
 		if (mLogger.isInfoEnabled()) {
@@ -182,7 +182,7 @@ public final class MinimizeNwaOverapproximation<LETTER, STATE> extends AbstractM
 			final INestedWordAutomatonSimple<LETTER, STATE> intersection;
 			try {
 				intersection =
-						new Intersect<LETTER, STATE>(mServices, stateFactoryIntersect, refinedResult, automaton)
+						new Intersect<>(mServices, stateFactoryIntersect, refinedResult, automaton)
 								.getResult();
 			} catch (final AutomataOperationCanceledException e) {
 				throw e;
@@ -194,7 +194,7 @@ public final class MinimizeNwaOverapproximation<LETTER, STATE> extends AbstractM
 				try {
 					// refine current result
 					refinedResult =
-							new Difference<LETTER, STATE>(mServices, stateFactoryIntersect, refinedResult, automaton)
+							new Difference<>(mServices, stateFactoryIntersect, refinedResult, automaton)
 									.getResult();
 				} catch (final AutomataOperationCanceledException e) {
 					throw e;

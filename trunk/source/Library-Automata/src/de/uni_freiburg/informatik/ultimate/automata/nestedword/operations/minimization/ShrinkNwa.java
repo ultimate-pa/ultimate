@@ -168,6 +168,8 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 
 	private final int mInitialPartitionSize;
 	private int mLargestBlockInitialPartition;
+
+	private final boolean mInitialPartitionSeparatesFinalsAndNonfinals;
 	
 	/**
 	 * This constructor creates a copy of the operand.
@@ -215,7 +217,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 			final boolean firstReturnSplit, final int firstReturnSplitAlternative, final boolean splitAllCallPreds,
 			final boolean returnSplitNaive) throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, null, false, false, splitOutgoing, splitRandomSize, firstReturnSplit,
-				firstReturnSplitAlternative, splitAllCallPreds, returnSplitNaive, true);
+				firstReturnSplitAlternative, splitAllCallPreds, returnSplitNaive, true, false);
 	}
 	
 	/**
@@ -263,7 +265,8 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 			final int firstReturnSplitAlternative,
 			final boolean splitAllCallPreds,
 			final boolean returnSplitNaive,
-			final boolean nondeterministicTransitions)
+			final boolean nondeterministicTransitions,
+			final boolean initialPartitionSeparatesFinalsAndNonfinals)
 			throws AutomataOperationCanceledException {
 		super(services, stateFactory, "shrinkNwa", operand);
 		if (STAT_RETURN_SIZE) {
@@ -287,6 +290,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 			}
 			mDoubleDecker = null;
 		}
+		mInitialPartitionSeparatesFinalsAndNonfinals = initialPartitionSeparatesFinalsAndNonfinals;
 		mPartition = new Partition();
 		mEquivalenceClassIds = 0;
 		mWorkListIntCall = new WorkListIntCall();
@@ -568,18 +572,16 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 								splitReturnHierAlt();
 								mReturnFirstTimeHierAlternative += new GregorianCalendar().getTimeInMillis();
 								continue outer;
-							} else {
-								break outer;
 							}
-						} else {
-							if (DEBUG4) {
-								mLogger.debug("ALTERNATIVE FINISHED");
-							}
-							
-							mFirstReturnSplitAlternative = false;
-							mWorkListRet.fillWithAll();
-							continue outer;
+							break outer;
 						}
+						if (DEBUG4) {
+							mLogger.debug("ALTERNATIVE FINISHED");
+						}
+						
+						mFirstReturnSplitAlternative = false;
+						mWorkListRet.fillWithAll();
+						continue outer;
 					} else if ((mReturnSplitCorrectnessEcs != null) && (!mReturnSplitCorrectnessEcs.isEmpty())) {
 						final Iterator<EquivalenceClass> iterator = mReturnSplitCorrectnessEcs.iterator();
 						assert (iterator.hasNext());
@@ -962,12 +964,36 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 				}
 			}
 		} else {
-			// predefined modules are already split with respect to final states
-			assert assertStatesSeparation(modules) : "The states in the initial modules are not separated with "
-					+ "respect to their final status.";
-			for (final Set<STATE> module : modules) {
-				mPartition.addEcInitialization(module);
-				mLargestBlockInitialPartition = Math.max(mLargestBlockInitialPartition, module.size());
+			if (mInitialPartitionSeparatesFinalsAndNonfinals) {
+				// predefined modules are already split with respect to final states
+				assert assertStatesSeparation(modules) : "The states in the initial modules are not separated with "
+						+ "respect to their final status.";
+				for (final Set<STATE> module : modules) {
+					mPartition.addEcInitialization(module);
+					mLargestBlockInitialPartition = Math.max(mLargestBlockInitialPartition, module.size());
+				}
+			} else {
+				HashSet<STATE> finals = new HashSet<>();
+				HashSet<STATE> nonfinals = new HashSet<>();
+				for (final Set<STATE> module : modules) {
+					for (final STATE state : module) {
+						if (mOperand.isFinal(state)) {
+							finals.add(state);
+						} else {
+							nonfinals.add(state);
+						}
+					}
+					if (!finals.isEmpty()) {
+						mPartition.addEcInitialization(finals);
+						mLargestBlockInitialPartition = Math.max(mLargestBlockInitialPartition, finals.size());
+						finals = new HashSet<>();
+					}
+					if (!nonfinals.isEmpty()) {
+						mPartition.addEcInitialization(nonfinals);
+						mLargestBlockInitialPartition = Math.max(mLargestBlockInitialPartition, nonfinals.size());
+						nonfinals = new HashSet<>();
+					}
+				}
 			}
 		}
 		

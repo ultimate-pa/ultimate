@@ -103,6 +103,8 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 	
 	private final IFlag mTimeout;
 	private boolean mConstructionInterrupted;
+
+	private final boolean mInitialPartitionSeparatesFinalsAndNonfinals;
 	
 	/* EXPERIMENTAL END */
 	
@@ -120,7 +122,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 			final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER, STATE> operand)
 			throws AutomataOperationCanceledException {
-		this(services, operand, null, operand.getStateFactory(), false);
+		this(services, operand, null, operand.getStateFactory(), false, false);
 	}
 	
 	/**
@@ -144,9 +146,11 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 			final INestedWordAutomaton<LETTER, STATE> operand,
 			final Collection<Set<STATE>> equivalenceClasses,
 			final IStateFactory<STATE> stateFactory,
-			final boolean addMapOldState2newState)
+			final boolean addMapOldState2newState,
+			final boolean initialPartitionSeparatesFinalsAndNonfinals)
 					throws AutomataOperationCanceledException {
-		this(services, operand, equivalenceClasses, stateFactory, addMapOldState2newState, new FalseFlag());
+		this(services, operand, equivalenceClasses, stateFactory, addMapOldState2newState, new FalseFlag(),
+				initialPartitionSeparatesFinalsAndNonfinals);
 	}
 	
 	/**
@@ -173,7 +177,8 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 			final Collection<Set<STATE>> equivalenceClasses,
 			final IStateFactory<STATE> stateFactory,
 			final boolean addMapOldState2newState,
-			final IFlag timeout)
+			final IFlag timeout,
+			final boolean initialPartitionSeparatesFinalsAndNonfinals)
 			throws AutomataOperationCanceledException {
 		super(services, stateFactory, "minimizeSevpa", operand);
 		if (mOperand instanceof IDoubleDeckerAutomaton) {
@@ -186,6 +191,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 			mDoubleDecker = null;
 		}
 		mTimeout = timeout;
+		mInitialPartitionSeparatesFinalsAndNonfinals = initialPartitionSeparatesFinalsAndNonfinals;
 		
 		minimize(equivalenceClasses, addMapOldState2newState);
 		mLogger.info(exitMessage());
