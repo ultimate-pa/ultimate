@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE ModelCheckerUtils Library.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE ModelCheckerUtils Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 
 /**
  * Translates Boogie types into SMT sorts and vice versa.
- * 
+ *
  * @author Matthias Heizmann
  *
  */
@@ -54,17 +54,17 @@ public class TypeSortTranslator {
 
 	protected final Script mScript;
 
-	private final Map<IBoogieType, Sort> mType2Sort = new HashMap<IBoogieType, Sort>();
-	private final Map<Sort, IBoogieType> mSort2Type = new HashMap<Sort, IBoogieType>();
+	private final Map<IBoogieType, Sort> mType2Sort = new HashMap<>();
+	private final Map<Sort, IBoogieType> mSort2Type = new HashMap<>();
 	private final Map<String, Map<String, Expression[]>> mType2Attributes;
 
 	private final boolean mBlackHoleArrays;
 
 	private final IUltimateServiceProvider mServices;
 
-	public TypeSortTranslator(final Collection<TypeDeclaration> declarations, final Script script, final boolean blackHoleArrays,
-			final IUltimateServiceProvider services) {
-		mType2Attributes = new HashMap<String, Map<String, Expression[]>>();
+	public TypeSortTranslator(final Collection<TypeDeclaration> declarations, final Script script,
+			final boolean blackHoleArrays, final IUltimateServiceProvider services) {
+		mType2Attributes = new HashMap<>();
 		mServices = services;
 		mBlackHoleArrays = blackHoleArrays;
 		mScript = script;
@@ -114,7 +114,7 @@ public class TypeSortTranslator {
 	 * Return the SMT sort for a boogie type. If the (type,sort) pair is not already stored in mtype2sort the
 	 * corresponding sort is constructed and the pair (sort, type) is added to msort2type which is used for a
 	 * backtranslation.
-	 * 
+	 *
 	 * @param BoogieASTNode
 	 *            BoogieASTNode for which Sort is computed
 	 */
@@ -124,9 +124,8 @@ public class TypeSortTranslator {
 		}
 		if (mType2Sort.containsKey(type)) {
 			return mType2Sort.get(type);
-		} else {
-			return constructSort(type, BoogieASTNode);
 		}
+		return constructSort(type, BoogieASTNode);
 	}
 
 	private void declareType(final TypeDeclaration typeDecl) {
@@ -158,20 +157,20 @@ public class TypeSortTranslator {
 	/**
 	 * Construct the SMT sort for a boogie type. Store the (type, sort) pair in mtype2sort. Store the (sort, type) pair
 	 * in msort2type.
-	 * 
+	 *
 	 * @param BoogieASTNode
 	 *            BoogieASTNode for which Sort is computed
 	 */
 	protected Sort constructSort(final IBoogieType boogieType, final BoogieASTNode BoogieASTNode) {
 		Sort result;
 		if (boogieType instanceof PrimitiveType) {
-			if (boogieType.equals(PrimitiveType.TYPE_BOOL)) {
+			if (boogieType.equals(BoogieType.TYPE_BOOL)) {
 				result = mScript.sort("Bool");
-			} else if (boogieType.equals(PrimitiveType.TYPE_INT)) {
+			} else if (boogieType.equals(BoogieType.TYPE_INT)) {
 				result = mScript.sort("Int");
-			} else if (boogieType.equals(PrimitiveType.TYPE_REAL)) {
+			} else if (boogieType.equals(BoogieType.TYPE_REAL)) {
 				result = mScript.sort("Real");
-			} else if (boogieType.equals(PrimitiveType.TYPE_ERROR)) {
+			} else if (boogieType.equals(BoogieType.TYPE_ERROR)) {
 				throw new IllegalArgumentException("BoogieAST contains type "
 						+ "errors. This plugin supports only BoogieASTs without type errors");
 			} else if (((PrimitiveType) boogieType).getTypeCode() > 0) {
@@ -198,9 +197,8 @@ public class TypeSortTranslator {
 					if (e.getMessage().equals("Sort Array not declared")) {
 						Boogie2SMT.reportUnsupportedSyntax(BoogieASTNode, "Solver does not support arrays", mServices);
 						throw e;
-					} else {
-						throw new AssertionError(e);
 					}
+					throw new AssertionError(e);
 				}
 			}
 		} else if (boogieType instanceof ConstructedType) {

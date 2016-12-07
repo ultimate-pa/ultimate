@@ -63,7 +63,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.IdentifierTranslator;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.IIdentifierTranslator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgStatementExtractor;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.ITermProvider;
@@ -307,7 +307,7 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 			final ITermProvider inValue = inVals.get(i);
 			final Expression inExpression = args[i];
 			
-			final IdentifierTranslator[] translators = new IdentifierTranslator[] { new SimpleTranslator(),
+			final IIdentifierTranslator[] translators = new IIdentifierTranslator[] { new SimpleTranslator(),
 					mBoogie2Smt.new ConstOnlyIdentifierTranslator() };
 			
 			final Term expressionTerm =
@@ -474,7 +474,7 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 		return vals;
 	}
 	
-	private class SimpleTranslator implements IdentifierTranslator {
+	private class SimpleTranslator implements IIdentifierTranslator {
 		@Override
 		public Term getSmtIdentifier(final String id, final DeclarationInformation declInfo, final boolean isOldContext,
 				final BoogieASTNode boogieASTNode) {

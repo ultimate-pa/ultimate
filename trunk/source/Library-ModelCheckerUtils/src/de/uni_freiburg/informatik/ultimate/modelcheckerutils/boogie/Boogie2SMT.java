@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.IdentifierTranslator;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.IIdentifierTranslator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
@@ -162,7 +162,7 @@ public class Boogie2SMT {
 
 	private Term declareAxiom(final Axiom ax, final Expression2Term expression2term) {
 		final ConstOnlyIdentifierTranslator coit = new ConstOnlyIdentifierTranslator();
-		final IdentifierTranslator[] its = new IdentifierTranslator[] { coit };
+		final IIdentifierTranslator[] its = new IIdentifierTranslator[] { coit };
 		final Term closedTerm = expression2term.translateToTerm(its, ax.getFormula()).getTerm();
 		mScript.getScript().assertTerm(closedTerm);
 		return closedTerm;
@@ -187,7 +187,7 @@ public class Boogie2SMT {
 		return mBoogie2SmtSymbolTable.constructAuxiliaryGlobalBoogieVar(identifier, procedure, iType, varList);
 	}
 
-	public class ConstOnlyIdentifierTranslator implements IdentifierTranslator {
+	public class ConstOnlyIdentifierTranslator implements IIdentifierTranslator {
 
 		private final Set<BoogieConst> mNonTheoryConsts = new HashSet<>();
 

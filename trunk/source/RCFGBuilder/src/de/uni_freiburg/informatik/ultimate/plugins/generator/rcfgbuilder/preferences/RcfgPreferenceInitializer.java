@@ -2,27 +2,27 @@
  * Copyright (C) 2013-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE RCFGBuilder plug-in.
- * 
+ *
  * The ULTIMATE RCFGBuilder plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE RCFGBuilder plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE RCFGBuilder plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE RCFGBuilder plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE RCFGBuilder plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE RCFGBuilder plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences;
@@ -42,8 +42,10 @@ public class RcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 	}
 
 	// some solver commands
-	public static final String Z3_NO_EXTENSIONAL_ARRAYS = "z3 SMTLIB2_COMPLIANT=true -memory:1024 -smt2 -in -t:12000 auto_config=false smt.array.extensional=false";
-	public static final String Z3_NO_MBQI = "z3 SMTLIB2_COMPLIANT=true -memory:1024 -smt2 -in -t:12000 auto_config=false smt.mbqi=false";
+	public static final String Z3_NO_EXTENSIONAL_ARRAYS =
+			"z3 SMTLIB2_COMPLIANT=true -memory:1024 -smt2 -in -t:12000 auto_config=false smt.array.extensional=false";
+	public static final String Z3_NO_MBQI =
+			"z3 SMTLIB2_COMPLIANT=true -memory:1024 -smt2 -in -t:12000 auto_config=false smt.mbqi=false";
 	public static final String Z3_DEFAULT = "z3 SMTLIB2_COMPLIANT=true -memory:1024 -smt2 -in -t:12000";
 	public static final String Z3_LOW_TIMEOUT = "z3 SMTLIB2_COMPLIANT=true -memory:1024 -smt2 -in -t:2000";
 	public static final String CVC4 = "cvc4 --tear-down-incremental --print-success --lang smt --tlimit-per=12000";
@@ -57,10 +59,10 @@ public class RcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_Solver = "SMT solver";
 	public static final SolverMode DEF_Solver = SolverMode.External_ModelsAndUnsatCoreMode;
 	// public static final Solver DEF_Solver = Solver.Internal_SMTInterpol;
-	
+
 	public static final String LABEL_FakeNonIncrementalScript = "Fake non-incremental script";
 	public static final boolean DEF_FakeNonIncrementalScript = false;
-	
+
 	public static final String LABEL_ExtSolverCommand = "Command for external solver";
 	public static final String DEF_ExtSolverCommand = Z3_DEFAULT;
 
@@ -87,26 +89,25 @@ public class RcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
 		return new UltimatePreferenceItem<?>[] {
-				new UltimatePreferenceItem<Boolean>(LABEL_ASSUME_FOR_ASSERT, DEF_ASSUME_FOR_ASSERT,
+				new UltimatePreferenceItem<>(LABEL_ASSUME_FOR_ASSERT, DEF_ASSUME_FOR_ASSERT, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_Solver, DEF_Solver, PreferenceType.Combo, SolverMode.values()),
+				new UltimatePreferenceItem<>(LABEL_FakeNonIncrementalScript, DEF_FakeNonIncrementalScript,
 						PreferenceType.Boolean),
-				new UltimatePreferenceItem<SolverMode>(LABEL_Solver, DEF_Solver, PreferenceType.Combo,
-						SolverMode.values()),
-				new UltimatePreferenceItem<Boolean>(LABEL_FakeNonIncrementalScript, DEF_FakeNonIncrementalScript, PreferenceType.Boolean),
-				new UltimatePreferenceItem<String>(LABEL_ExtSolverCommand, DEF_ExtSolverCommand, PreferenceType.String),
-				new UltimatePreferenceItem<String>(LABEL_ExtSolverLogic, DEF_ExtSolverLogic, PreferenceType.String),
-				new UltimatePreferenceItem<Boolean>(LABEL_BitvectorWorkaround, false, PreferenceType.Boolean),
-				new UltimatePreferenceItem<CodeBlockSize>(LABEL_CodeBlockSize, DEF_CodeBlockSize, PreferenceType.Combo,
+				new UltimatePreferenceItem<>(LABEL_ExtSolverCommand, DEF_ExtSolverCommand, PreferenceType.String),
+				new UltimatePreferenceItem<>(LABEL_ExtSolverLogic, DEF_ExtSolverLogic, PreferenceType.String),
+				new UltimatePreferenceItem<>(LABEL_BitvectorWorkaround, false, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_CodeBlockSize, DEF_CodeBlockSize, PreferenceType.Combo,
 						CodeBlockSize.values()),
-				new UltimatePreferenceItem<Boolean>(LABEL_RemoveGotoEdges, false, PreferenceType.Boolean),
-				new UltimatePreferenceItem<Boolean>(LABEL_Simplify, false, PreferenceType.Boolean),
-				new UltimatePreferenceItem<Boolean>(LABEL_CNF, true, PreferenceType.Boolean),
-				new UltimatePreferenceItem<Boolean>(LABEL_DumpToFile, false, PreferenceType.Boolean),
-				new UltimatePreferenceItem<Boolean>(LABEL_DumpUnsatCoreTrackBenchmark, false, PreferenceType.Boolean),
-				new UltimatePreferenceItem<Boolean>(LABEL_DumpMainTrackBenchmark, false, PreferenceType.Boolean),
-				new UltimatePreferenceItem<String>(LABEL_Path, DEF_Path, PreferenceType.Directory), };
+				new UltimatePreferenceItem<>(LABEL_RemoveGotoEdges, false, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_Simplify, false, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_CNF, true, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_DumpToFile, false, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_DumpUnsatCoreTrackBenchmark, false, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_DumpMainTrackBenchmark, false, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_Path, DEF_Path, PreferenceType.Directory), };
 	}
-	
-	public static IPreferenceProvider getPreferences(final IUltimateServiceProvider services){
+
+	public static IPreferenceProvider getPreferences(final IUltimateServiceProvider services) {
 		return services.getPreferenceProvider(Activator.PLUGIN_ID);
 	}
 

@@ -11,7 +11,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 
 /**
  * Utility functions for objects from the Boogie abstract syntax tree (AST).
- * 
+ *
  * @author schaetzc@informatik.uni-freiburg.de
  */
 public class BoogieUtil {
@@ -19,7 +19,7 @@ public class BoogieUtil {
 	/**
 	 * Creates a dummy {@link IBoogieVar} from a given type. This method is used to give generated temporary variables a
 	 * boogie type.
-	 * 
+	 *
 	 * @param identifier
 	 *            the identifier of the variable
 	 * @param type
@@ -42,6 +42,7 @@ public class BoogieUtil {
 
 			@Override
 			public ApplicationTerm getDefaultConstant() {
+				// TODO: type to sort
 				throw new UnsupportedOperationException("Temporary IBoogieVars dont have default constants.");
 			}
 
@@ -55,7 +56,7 @@ public class BoogieUtil {
 	/**
 	 * Determines if a {@link IdentifierExpression} references a variable or constant. {@link IdentifierExpression} can
 	 * also reference functions or procedures. In that case, this method will return {@code false}.
-	 * 
+	 *
 	 * @param ie
 	 *            {@link IdentifierExpression}
 	 * @return expression references a variable or constant
