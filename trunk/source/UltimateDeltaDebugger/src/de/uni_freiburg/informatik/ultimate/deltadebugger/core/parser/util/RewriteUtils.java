@@ -32,8 +32,15 @@ import java.util.List;
 import java.util.Map;
 
 import org.eclipse.cdt.core.ToolFactory;
+import org.eclipse.cdt.core.dom.ast.ASTNodeProperty;
+import org.eclipse.cdt.core.dom.ast.IASTCompoundStatement;
+import org.eclipse.cdt.core.dom.ast.IASTDeclarationStatement;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
+import org.eclipse.cdt.core.dom.ast.IASTLabelStatement;
 import org.eclipse.cdt.core.dom.ast.IASTLiteralExpression;
+import org.eclipse.cdt.core.dom.ast.IASTNode;
+import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclaration;
+import org.eclipse.cdt.core.dom.ast.IASTStatement;
 import org.eclipse.cdt.core.dom.ast.IBasicType;
 import org.eclipse.cdt.core.dom.ast.IPointerType;
 import org.eclipse.cdt.core.dom.ast.IType;
@@ -204,4 +211,39 @@ public final class RewriteUtils {
 	public static void replaceByWhitespace(final SourceRewriter rewriter, final ISourceRange location) {
 		rewriter.replace(location, " ");
 	}
+
+	/**
+	 * @param statement
+	 *            Statement node.
+	 * @return {@code true} iff the given statement must be replaced by ";" and cannot be deleted comepletely
+	 */
+	public static boolean isStatementRequired(final IASTStatement statement) {
+		final ASTNodeProperty property = statement.getPropertyInParent();
+		return property != IASTCompoundStatement.NESTED_STATEMENT && property != IASTLabelStatement.NESTED_STATEMENT;
+	}
+
+	public static boolean isSemicolonRequired(final IASTSimpleDeclaration declaration) {
+		final ASTNodeProperty property = declaration.getPropertyInParent();
+		if (property == IASTDeclarationStatement.DECLARATION) {
+			return isStatementRequired((IASTStatement) declaration.getParent());
+		}
+		return false;
+	}
+
+	/**
+	 * Checks for statements and declarations that need a ";" in order to be deleted.
+	 * 
+	 * @param node
+	 *            PST node.
+	 * @return String to use for deletion.
+	 */
+	public static String getReplacementStringForSafeDeletion(IPSTNode node) {
+		final IASTNode astNode = node.getAstNode();
+		if ((astNode instanceof IASTStatement && isStatementRequired((IASTStatement) astNode))
+				|| (astNode instanceof IASTSimpleDeclaration && isSemicolonRequired((IASTSimpleDeclaration) astNode))) {
+			return ";";
+		}
+		return getDeletionStringWithWhitespaces(node);
+	}
+	
 }

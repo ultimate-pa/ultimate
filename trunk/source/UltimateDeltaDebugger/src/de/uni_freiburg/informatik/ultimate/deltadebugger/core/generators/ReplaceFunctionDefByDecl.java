@@ -43,7 +43,11 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceDocume
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.SourceRewriter;
 
 /**
- * Replaces a function by its declaration.
+ * Replaces a function by its declaration. Replaces a function definition by a prototype. Currently this only replaces a
+ * function body compount statement by a null statement.
+ * 
+ * TODO: Remove an existing inline specifier from the function definition and all already existing prototypes of that
+ * function.
  */
 public final class ReplaceFunctionDefByDecl implements IVariantGenerator {
 	private final ISourceDocument mSource;

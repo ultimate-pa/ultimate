@@ -84,27 +84,27 @@ public class SafeStrategy implements IHddStrategy {
 		}
 		
 		// Add a change to delete the operator of unary expressions
-		if (node.getAstNode() instanceof IASTUnaryExpression) {
+		final IASTNode astNode = node.getAstNode();
+		if (astNode instanceof IASTUnaryExpression) {
 			collector.addDeleteAllTokensChange(node);
 		}
-		
-		if (node.getAstNode() instanceof IASTIfStatement) {
-			collector.addDeleteIfStatementTokensChange((IPSTRegularNode) node, (IASTIfStatement) node.getAstNode());
+
+		if (astNode instanceof IASTIfStatement) {
+			collector.addDeleteIfStatementTokensChange((IPSTRegularNode) node, (IASTIfStatement) astNode);
 		}
-		if (node.getAstNode() instanceof IASTForStatement) {
-			collector.addDeleteForStatementTokensChange((IPSTRegularNode) node, (IASTForStatement) node.getAstNode());
+		if (astNode instanceof IASTForStatement) {
+			collector.addDeleteForStatementTokensChange((IPSTRegularNode) node, (IASTForStatement) astNode);
 		}
-		if (node.getAstNode() instanceof IASTWhileStatement) {
-			collector.addDeleteWhileStatementTokensChange((IPSTRegularNode) node,
-					(IASTWhileStatement) node.getAstNode());
+		if (astNode instanceof IASTWhileStatement) {
+			collector.addDeleteWhileStatementTokensChange((IPSTRegularNode) node, (IASTWhileStatement) astNode);
 		}
-		
-		if (node.getAstNode() instanceof IASTDoStatement) {
+
+		if (astNode instanceof IASTDoStatement) {
 			collector.addDeleteDoStatementTokensChange((IPSTRegularNode) node);
 		}
-		
-		if (node.getAstNode() instanceof IASTCompoundStatement
-				&& node.getAstNode().getPropertyInParent() == IASTCompoundStatement.NESTED_STATEMENT) {
+
+		if (astNode instanceof IASTCompoundStatement
+				&& astNode.getPropertyInParent() == IASTCompoundStatement.NESTED_STATEMENT) {
 			collector.addDeleteAllTokensChange(node);
 		}
 	}
@@ -135,11 +135,6 @@ public class SafeStrategy implements IHddStrategy {
 			// delete every preprocessor node
 			collector.addDeleteChange(node);
 		}
-	}
-	
-	@Override
-	public boolean expandIntoOwnGroup(final IPSTNode node) {
-		return false;
 	}
 	
 	@Override
@@ -305,22 +300,10 @@ public class SafeStrategy implements IHddStrategy {
 			// could try to remove specifiers, like const, restrict etc. though.
 		}
 		
-		@SuppressWarnings("squid:S1698")
 		@Override
 		public void on(final IASTStatement statement) {
-			// delete statements inside compound statements
-			if (statement.getPropertyInParent() == IASTCompoundStatement.NESTED_STATEMENT) {
-				mCollector.addDeleteChange(mCurrentNode);
-				return;
-			}
-			
-			// delete statements after a label
-			if (statement.getPropertyInParent() == IASTLabelStatement.NESTED_STATEMENT) {
-				mCollector.addDeleteChange(mCurrentNode);
-				return;
-			}
-			
-			mCollector.addReplaceChange(mCurrentNode, ";");
+			// delete all statements (if required replace by ";")
+			mCollector.addReplaceChange(mCurrentNode, RewriteUtils.getReplacementStringForSafeDeletion(mCurrentNode));
 		}
 		
 		@SuppressWarnings("squid:S1698")

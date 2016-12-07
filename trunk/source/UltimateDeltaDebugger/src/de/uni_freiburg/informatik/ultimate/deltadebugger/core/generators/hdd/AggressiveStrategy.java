@@ -79,40 +79,38 @@ public class AggressiveStrategy implements IHddStrategy {
 		if (node instanceof IPSTConditionalBlock) {
 			collector.addDeleteConditionalDirectivesChange((IPSTConditionalBlock) node);
 		}
-		
+
 		// Add a change to delete the operator of unary expressions
-		if (node.getAstNode() instanceof IASTUnaryExpression) {
+		final IASTNode astNode = node.getAstNode();
+		if (astNode instanceof IASTUnaryExpression) {
 			collector.addDeleteAllTokensChange(node);
-		}
-		
-		if (node.getAstNode() instanceof IASTIfStatement) {
-			collector.addDeleteIfStatementTokensChange((IPSTRegularNode) node, (IASTIfStatement) node.getAstNode());
-		}
-		if (node.getAstNode() instanceof IASTForStatement) {
-			collector.addDeleteForStatementTokensChange((IPSTRegularNode) node, (IASTForStatement) node.getAstNode());
-		}
-		if (node.getAstNode() instanceof IASTWhileStatement) {
-			collector.addDeleteWhileStatementTokensChange((IPSTRegularNode) node,
-					(IASTWhileStatement) node.getAstNode());
-		}
-		
-		if (node.getAstNode() instanceof IASTDoStatement) {
-			collector.addDeleteDoStatementTokensChange((IPSTRegularNode) node);
-		}
-		
-		if (node.getAstNode() instanceof IASTCompoundStatement
-				&& node.getAstNode().getPropertyInParent() == IASTCompoundStatement.NESTED_STATEMENT) {
-			collector.addDeleteAllTokensChange(node);
-		}
-		
-		if (node.getAstNode() instanceof IASTEqualsInitializer) {
-			collector.addChangeToSplitInitializerExpressionFromDeclaration(node,
-					(IASTEqualsInitializer) node.getAstNode());
 		}
 
-		if (node.getAstNode() instanceof IASTStandardFunctionDeclarator) {
-			collector.addDeleteVarArgsChange((IPSTRegularNode) node, (IASTStandardFunctionDeclarator) node.getAstNode(),
-					false);
+		if (astNode instanceof IASTIfStatement) {
+			collector.addDeleteIfStatementTokensChange((IPSTRegularNode) node, (IASTIfStatement) astNode);
+		}
+		if (astNode instanceof IASTForStatement) {
+			collector.addDeleteForStatementTokensChange((IPSTRegularNode) node, (IASTForStatement) astNode);
+		}
+		if (astNode instanceof IASTWhileStatement) {
+			collector.addDeleteWhileStatementTokensChange((IPSTRegularNode) node, (IASTWhileStatement) astNode);
+		}
+
+		if (astNode instanceof IASTDoStatement) {
+			collector.addDeleteDoStatementTokensChange((IPSTRegularNode) node);
+		}
+
+		if (astNode instanceof IASTCompoundStatement
+				&& astNode.getPropertyInParent() == IASTCompoundStatement.NESTED_STATEMENT) {
+			collector.addDeleteAllTokensChange(node);
+		}
+
+		if (astNode instanceof IASTEqualsInitializer) {
+			collector.addChangeToSplitInitializerExpressionFromDeclaration(node, (IASTEqualsInitializer) astNode);
+		}
+
+		if (astNode instanceof IASTStandardFunctionDeclarator) {
+			collector.addDeleteVarArgsChange((IPSTRegularNode) node, (IASTStandardFunctionDeclarator) astNode, false);
 		}
 	}
 	
@@ -145,17 +143,6 @@ public class AggressiveStrategy implements IHddStrategy {
 			// delete every preprocessor node
 			collector.addDeleteChange(node);
 		}
-	}
-	
-	@Override
-	public boolean expandIntoOwnGroup(final IPSTNode node) {
-		// reduce each function individually
-		/*
-		if (node instanceof IPSTRegularNode) {
-			return node.getASTNode().getPropertyInParent() == IASTFunctionDefinition.FUNCTION_BODY;
-		}
-		*/
-		return false;
 	}
 	
 	@Override
@@ -321,19 +308,8 @@ public class AggressiveStrategy implements IHddStrategy {
 		@SuppressWarnings("squid:S1698")
 		@Override
 		public void on(final IASTStatement statement) {
-			// delete statements inside compound statements
-			if (statement.getPropertyInParent() == IASTCompoundStatement.NESTED_STATEMENT) {
-				mCollector.addDeleteChange(mCurrentNode);
-				return;
-			}
-			
-			// delete statements after a label
-			if (statement.getPropertyInParent() == IASTLabelStatement.NESTED_STATEMENT) {
-				mCollector.addDeleteChange(mCurrentNode);
-				return;
-			}
-			
-			mCollector.addReplaceChange(mCurrentNode, ";");
+			// delete all statements (if required replace by ";")
+			mCollector.addReplaceChange(mCurrentNode, RewriteUtils.getReplacementStringForSafeDeletion(mCurrentNode));
 		}
 		
 		@SuppressWarnings("squid:S1698")
