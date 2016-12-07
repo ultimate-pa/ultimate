@@ -28,7 +28,9 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -43,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayEquality;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayEquality.ArrayEqualityExtractor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayUpdate;
@@ -90,19 +93,27 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 		
 		final Term term = nnfTerm;
 
-		final VPState preparedState = mDomain.getVpStateFactory().havocVariables(tf.getAssignedVars(), oldstate);
+		final VPState havocedState = mDomain.getVpStateFactory().havocVariables(tf.getAssignedVars(), oldstate);
 
 		final Map<TermVariable, IProgramVar> tvToPvMap = VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf);
 
-		final List<VPState> resultStates = handleTransition(preparedState, term, tvToPvMap, false);
+		final List<VPState> resultStates = handleTransition(havocedState, oldstate, term, tvToPvMap, 
+				tf.getAssignedVars(), tf.getInVars(), tf.getOutVars(), false);
 
 		mDomain.getLogger().debug("states after transition " + transition + ": " + resultStates);
 
 		return resultStates;
 	}
 
-	private List<VPState> handleTransition(final VPState preState, final Term term,
-			final Map<TermVariable, IProgramVar> tvToPvMap, final boolean negated) {
+	private List<VPState> handleTransition(
+			final VPState preStateWithHavoccedAssignedVars, 
+			VPState oldstate, 
+			final Term term,
+			final Map<TermVariable, IProgramVar> tvToPvMap, 
+			Set<IProgramVar> assignedVars,
+			Map<IProgramVar, TermVariable> inVars, 
+			Map<IProgramVar, TermVariable> outVars, 
+			final boolean negated) {
 		
 		if (term instanceof ApplicationTerm) {
 			
@@ -114,7 +125,7 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 
 				final List<List<VPState>> andList = new ArrayList<>();
 				for (final Term t : appTerm.getParameters()) {
-					andList.add(handleTransition(preState, t, tvToPvMap, false));
+					andList.add(handleTransition(preStateWithHavoccedAssignedVars, oldstate, t, tvToPvMap, assignedVars, inVars, outVars, false));
 				}
 
 				assert andList.size() > 1;
@@ -140,7 +151,7 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 
 				final List<VPState> orList = new ArrayList<>();
 				for (final Term t : appTerm.getParameters()) {
-					orList.addAll(handleTransition(preState, t, tvToPvMap, false));
+					orList.addAll(handleTransition(preStateWithHavoccedAssignedVars, oldstate, t, tvToPvMap, assignedVars, inVars, outVars, false));
 				}
 				return orList;
 			} else if (applicationName == "=") {
@@ -152,7 +163,7 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 				if (!aeqs.isEmpty()) {
 					assert aeqs.size() == 1 : "?";
 					// we have an array equality (i.e. something like (= a b) where a,b are arrays)
-					return new ArrayList<>(handleArrayEqualityTransition(preState, tvToPvMap, negated, aeqs.get(0)));
+					return new ArrayList<>(handleArrayEqualityTransition(preStateWithHavoccedAssignedVars, oldstate, tvToPvMap, inVars, outVars, negated, aeqs.get(0)));
 				}
 
 				/*
@@ -163,23 +174,87 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 				if (!aus.isEmpty()) {
 					assert aus.size() == 1 : "?";
 					// we have an array update
-					return new ArrayList<>(handleArrayUpdateTransition(preState, tvToPvMap, negated, aus.get(0)));
+					return new ArrayList<>(handleArrayUpdateTransition(preStateWithHavoccedAssignedVars, oldstate, tvToPvMap, inVars, outVars, negated, aus.get(0)));
 				}
 
 				/*
 				 * case "two terms we track are equated"
 				 */
-				final EqNode node1 = mDomain.getPreAnalysis().getEqNode(appTerm.getParameters()[0], tvToPvMap);
-				final EqNode node2 = mDomain.getPreAnalysis().getEqNode(appTerm.getParameters()[1], tvToPvMap);
 				
+			
+				EqNode node1 = mDomain.getPreAnalysis().getEqNode(appTerm.getParameters()[0], tvToPvMap);
+				EqNode node2 = mDomain.getPreAnalysis().getEqNode(appTerm.getParameters()[1], tvToPvMap);
+	
+				// is one of the terms an assignedVar -and- does that var occur in the other term?
+				// --> in that case, replace the occurence with something from the old state that is equal 
+				//     or return the havocced state, if no such node exists
+				
+				// 
+				
+				/*
+				 * TODO: right now, this can only infer a stronger post state if
+				 *  say we have the assignment x := a[x];
+				 *  - there is a node, say y, that is equivalent to x in oldstate  
+				 *  - we track the substituted node, i.e., a[y], in the right version, it can be select or store.
+				 *  we might increase the probability by detecting this in the preanalysis and creating nodes accordingly..
+				 */
+				Term param1 = appTerm.getParameters()[0];
+				Term param2 = appTerm.getParameters()[1];
+				
+				IProgramVar p1Pv = tvToPvMap.get(param1);
+				IProgramVar p2Pv = tvToPvMap.get(param2);
+			
+				if (assignedVars.contains(p1Pv) && inVars.containsKey(p1Pv)) {
+					// param1 is assigned, and used on the other side of the equation
+					// --> replace the occurrences on the other side by something equal in the oldstate if possible
+					
+					final EqNode otherOccurrenceEqNode = mDomain.getPreAnalysis().getEqNode(inVars.get(p1Pv), tvToPvMap);
+					
+					Set<EqNode> equivalentNodes = oldstate.getEquivalentEqNodes(otherOccurrenceEqNode);
+					
+					assert equivalentNodes.size() > 0;
+					if (equivalentNodes.size() == 1) {
+						assert equivalentNodes.iterator().next() == otherOccurrenceEqNode;
+						return Collections.singletonList(preStateWithHavoccedAssignedVars);
+					} 
+					Iterator<EqNode> eqNodesIt = equivalentNodes.iterator();
+					EqNode equivalentNode = null;
+
+					node2 = null;
+					while (node2 == null && eqNodesIt.hasNext()) {
+						equivalentNode = eqNodesIt.next();
+						if (equivalentNode == otherOccurrenceEqNode) {
+							continue;
+						}
+						Term equivalentTerm = equivalentNode.getTerm(mScript.getScript());
+
+						Map<Term, Term> subs = new HashMap<>();
+						subs.put(inVars.get(p1Pv), equivalentTerm);
+						Term otherParamEquivalentTermSubstituted = new Substitution(mScript, subs).transform(param2);
+
+						// technical note: here that tvToPvMap does not need to be augmented, even though the equivalentTerm
+						// may contain variables that the map does not know --> but these are already "normalized" 
+						node2 = mDomain.getPreAnalysis().getEqNode(otherParamEquivalentTermSubstituted, tvToPvMap);
+					}
+
+					if (node2 == null) { // probably unnecessary, to make this a special case -- but might be better understandable..
+						return Collections.singletonList(preStateWithHavoccedAssignedVars);
+					}
+				} else if (assignedVars.contains(p2Pv)) {
+					assert assignedVars.contains(p1Pv);
+					assert false : "TODO: implement"; // do we have assignments where the assigned var ends up on the right of the equality??
+					node1 = null;
+					return Collections.singletonList(preStateWithHavoccedAssignedVars);
+				}
+
 				if (node1 != null && node2 != null) {
 					if (!negated) {
 						final Set<VPState> resultStates =
-								mDomain.getVpStateFactory().addEquality(node1, node2, preState);
+								mDomain.getVpStateFactory().addEquality(node1, node2, preStateWithHavoccedAssignedVars);
 						return new ArrayList<>(resultStates);
 					} else {
 						final Set<VPState> resultStates =
-								mDomain.getVpStateFactory().addDisEquality(node1, node2, preState);
+								mDomain.getVpStateFactory().addDisEquality(node1, node2, preStateWithHavoccedAssignedVars);
 						return new ArrayList<>(resultStates);
 					}
 				}
@@ -187,16 +262,18 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 				/*
 				 * case "otherwise" --> we leave the state unchanged
 				 */
-				return Collections.singletonList(preState);
+				return Collections.singletonList(preStateWithHavoccedAssignedVars);
 			} else if (applicationName == "not") {
 				assert !negated : "we transformed to nnf before, right?";
-				return handleTransition(preState, appTerm.getParameters()[0], tvToPvMap, !negated);
+				return handleTransition(preStateWithHavoccedAssignedVars, oldstate, appTerm.getParameters()[0], tvToPvMap, assignedVars, inVars, outVars, !negated);
 			} else if (applicationName == "distinct") {
 				
+				mScript.lock(this);
 				final Term equality =
-						mScript.getScript().term("=", appTerm.getParameters()[0], appTerm.getParameters()[1]);
+						mScript.term(this, "=", appTerm.getParameters()[0], appTerm.getParameters()[1]);
+				mScript.unlock(this);
 
-				return handleTransition(preState, equality, tvToPvMap, !negated);
+				return handleTransition(preStateWithHavoccedAssignedVars, oldstate, equality, tvToPvMap, assignedVars, inVars, outVars, !negated);
 			}
 			
 		} else if (term instanceof QuantifiedFormula) {
@@ -204,18 +281,36 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 			assert false : "we currently cannot deal with quantifiers";
 			return null;
 		} else if (term instanceof AnnotatedTerm) {
-			return handleTransition(preState, ((AnnotatedTerm) term).getSubterm(), tvToPvMap, negated);
+			return handleTransition(preStateWithHavoccedAssignedVars, oldstate, ((AnnotatedTerm) term).getSubterm(), tvToPvMap, assignedVars, inVars, outVars, negated);
 		}
 		/*
 		 * no part of the TransFormula influences the state --> return a copy
 		 */
 
-		VPState resultState = preState;//mDomain.getVpStateFactory().copy(preState).build();
+		VPState resultState = preStateWithHavoccedAssignedVars;//mDomain.getVpStateFactory().copy(preState).build();
 		return Collections.singletonList(resultState);
 	}
 	
-	private Set<VPState> handleArrayEqualityTransition(final VPState preState,
-			final Map<TermVariable, IProgramVar> tvToPvMap, final boolean negated, final ArrayEquality aeq) {
+//	private boolean isInVarAndAssignedVar(Term term, Map<TermVariable, IProgramVar> tvToPvMap) {
+//		
+//		return false;
+//	}
+//
+//	private boolean isInVarAndAssignedVar(Term term, 
+//			Map<IProgramVar, TermVariable> inVars,
+//			Map<IProgramVar, TermVariable> outVars) {
+//		// TODO Auto-generated method stub
+//		return false;
+//	}
+
+	private Set<VPState> handleArrayEqualityTransition(
+			final VPState preState,
+			final VPState oldstate, 
+			final Map<TermVariable, IProgramVar> tvToPvMap, 
+			final Map<IProgramVar, TermVariable> inVars, 
+			final Map<IProgramVar, TermVariable> outVars, 
+			final boolean negated, 
+			final ArrayEquality aeq) {
 		final Term array1Term = aeq.getLhs();
 		final Term array2Term = aeq.getRhs();
 		final IProgramVarOrConst array1 =
@@ -235,8 +330,13 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 		}
 	}
 	
-	private Set<VPState> handleArrayUpdateTransition(final VPState preState,
-			final Map<TermVariable, IProgramVar> tvToPvMap, final boolean negated, final ArrayUpdate au) {
+	private Set<VPState> handleArrayUpdateTransition(
+			final VPState preState,
+			final VPState oldstate, 
+			final Map<TermVariable, IProgramVar> tvToPvMap, 
+			final Map<IProgramVar, TermVariable> inVars, 
+			final Map<IProgramVar, TermVariable> outVars, 
+			final boolean negated, final ArrayUpdate au) {
 		final MultiDimensionalStore mdStore = au.getMultiDimensionalStore();
 		final TermVariable newArrayTv = au.getNewArray();
 		final Term oldArrayTerm = au.getOldArray();
