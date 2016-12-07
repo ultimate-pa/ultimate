@@ -474,18 +474,33 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 			mReturnAlphabet = getAlphabetMapping(mNwa.getReturnAlphabet(), 'r');
 			mStateMapping = getStateMapping(mNwa.getStates());
 
-			// automata script format for NestedWordAutomaton
-			print("NestedWordAutomaton ");
-			print(name);
-			printAutomatonPrefix();
-			printAlphabets();
-			printStates();
-			printInitialStates(mNwa.getInitialStates());
-			printFinalStates(mNwa.getStates());
-			printCallTransitions(mNwa.getStates());
-			printInternalTransitions(mNwa.getStates());
-			printReturnTransitions(mNwa.getStates());
-			printAutomatonSuffix();
+			final boolean isFiniteAutomaton = mCallAlphabet.isEmpty() && mReturnAlphabet.isEmpty();
+			if (isFiniteAutomaton) {
+				// automata script format for FiniteAutomaton
+				print("FiniteAutomaton ");
+				print(name);
+				printAutomatonPrefix();
+				printAlphabetOfFiniteAutomaton();
+				printStates();
+				printInitialStates(mNwa.getInitialStates());
+				printFinalStates(mNwa.getStates());
+				printTransitionsOfFiniteAutomaton(mNwa.getStates());
+				printAutomatonSuffix();
+				
+			} else {
+				// automata script format for NestedWordAutomaton
+				print("NestedWordAutomaton ");
+				print(name);
+				printAutomatonPrefix();
+				printAlphabets();
+				printStates();
+				printInitialStates(mNwa.getInitialStates());
+				printFinalStates(mNwa.getStates());
+				printCallTransitions(mNwa.getStates());
+				printInternalTransitions(mNwa.getStates());
+				printReturnTransitions(mNwa.getStates());
+				printAutomatonSuffix();
+			}
 		}
 
 		/**
@@ -521,6 +536,12 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 			printValues(mReturnAlphabet);
 			printCollectionSuffix();
 		}
+		
+		private void printAlphabetOfFiniteAutomaton() {
+			printCollectionPrefix("alphabet");
+			printValues(mInternalAlphabet);
+			printCollectionSuffix();
+		}
 
 		private void printStates() {
 			printCollectionPrefix("states");
@@ -544,6 +565,22 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 				}
 			}
 			printCollectionSuffix();
+		}
+		
+		private void printTransitionsOfFiniteAutomaton(final Collection<STATE> allStates) {
+			printlnCollectionPrefix("transitions");
+			for (final STATE state : allStates) {
+				for (final OutgoingInternalTransition<LETTER, STATE> internalTrans : mNwa.internalSuccessors(state)) {
+					printOneTransitionPrefix();
+					print(mStateMapping.get(state));
+					print(' ');
+					print(mInternalAlphabet.get(internalTrans.getLetter()));
+					print(' ');
+					print(mStateMapping.get(internalTrans.getSucc()));
+					printOneTransitionSuffix();
+				}
+			}
+			printLastTransitionsSuffix();
 		}
 
 		private void printCallTransitions(final Collection<STATE> allStates) {
