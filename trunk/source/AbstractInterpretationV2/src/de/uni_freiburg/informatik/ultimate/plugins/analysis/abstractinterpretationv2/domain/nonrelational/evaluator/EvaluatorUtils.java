@@ -34,6 +34,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.TypeUtils.TypeUtils;
 
 /**
@@ -43,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class EvaluatorUtils {
+public final class EvaluatorUtils {
 	/**
 	 * The type of the evaluator. Determines whether integer operations should be assumed, whether there are real-valued
 	 * operations, or whether the evaluator is boolean valued.
@@ -53,6 +55,29 @@ public class EvaluatorUtils {
 	 */
 	public enum EvaluatorType {
 		REAL, INTEGER, BOOL
+	}
+
+	private EvaluatorUtils() {
+		// prevent initialization of utility class
+	}
+
+	/**
+	 * Determines the {@link EvaluatorType} depending on the Boogie {@link PrimitiveType} of an {@link Expression}.
+	 *
+	 * @param type
+	 *            The {@link PrimitiveType} of an {@link Expression}.
+	 * @return The corresponding {@link EvaluatorType}.
+	 */
+	public static EvaluatorType getEvaluatorType(final IBoogieVar var) {
+		final Function<Sort, EvaluatorType> intFunction = t -> EvaluatorType.INTEGER;
+		final Function<Sort, EvaluatorType> realFunction = t -> EvaluatorType.REAL;
+		final Function<Sort, EvaluatorType> boolFunction = t -> EvaluatorType.BOOL;
+		final Function<Sort, EvaluatorType> arrayFunction = t -> {
+			return TypeUtils.applyTypeFunction(intFunction, realFunction, boolFunction, null,
+					TypeUtils.getInnermostArrayValueSort(t));
+		};
+		return TypeUtils.applyTypeFunction(intFunction, realFunction, boolFunction, arrayFunction,
+				var.getDefaultConstant().getSort());
 	}
 
 	/**

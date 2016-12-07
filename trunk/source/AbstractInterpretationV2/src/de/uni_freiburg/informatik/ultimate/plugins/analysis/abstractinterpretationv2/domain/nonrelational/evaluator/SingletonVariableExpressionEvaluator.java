@@ -56,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  *            The type of abstract domain states.
  */
 public class SingletonVariableExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends NonrelationalState<STATE, VALUE>>
-        implements IEvaluator<VALUE, STATE, CodeBlock> {
+		implements IEvaluator<VALUE, STATE, CodeBlock> {
 
 	private final Set<IBoogieVar> mVariableSet;
 	private final IBoogieVar mVar;
@@ -66,11 +66,11 @@ public class SingletonVariableExpressionEvaluator<VALUE extends INonrelationalVa
 	private final EvaluatorType mType;
 
 	public SingletonVariableExpressionEvaluator(final IBoogieVar var,
-	        final INonrelationalValueFactory<VALUE> nonrelationalValueFactory) {
+			final INonrelationalValueFactory<VALUE> nonrelationalValueFactory) {
 		mVar = var;
 		mVariableSet = Collections.singleton(var);
 		mNonrelationalValueFactory = nonrelationalValueFactory;
-		mType = EvaluatorUtils.getEvaluatorType(mVar.getIType());
+		mType = EvaluatorUtils.getEvaluatorType(mVar);
 	}
 
 	@Override
@@ -83,13 +83,14 @@ public class SingletonVariableExpressionEvaluator<VALUE extends INonrelationalVa
 		BooleanValue returnBool = BooleanValue.TOP;
 
 		// TODO: Add array support.
-		final Function<IBoogieVar, Triple<VALUE, BooleanValue, Boolean>> varFunction = var -> new Triple<>(
-		        currentState.getValue(var), BooleanValue.TOP, false);
-		final Function<IBoogieVar, Triple<VALUE, BooleanValue, Boolean>> boolFunction = var -> new Triple<>(
-		        mNonrelationalValueFactory.createTopValue(), currentState.getBooleanValue(var), true);
+		final Function<IBoogieVar, Triple<VALUE, BooleanValue, Boolean>> varFunction =
+				var -> new Triple<>(currentState.getValue(var), BooleanValue.TOP, false);
+		final Function<IBoogieVar, Triple<VALUE, BooleanValue, Boolean>> boolFunction =
+				var -> new Triple<>(mNonrelationalValueFactory.createTopValue(), currentState.getBooleanValue(var),
+						true);
 
-		final Triple<VALUE, BooleanValue, Boolean> valueTriple = TypeUtils.applyVariableFunction(varFunction,
-		        boolFunction, null, mVar);
+		final Triple<VALUE, BooleanValue, Boolean> valueTriple =
+				TypeUtils.applyVariableFunction(varFunction, boolFunction, null, mVar);
 
 		val = valueTriple.getFirst();
 		if (valueTriple.getThird()) {
@@ -99,7 +100,7 @@ public class SingletonVariableExpressionEvaluator<VALUE extends INonrelationalVa
 
 		if (val.isBottom() || returnBool.isBottom()) {
 			returnList.add(new NonrelationalEvaluationResult<>(mNonrelationalValueFactory.createBottomValue(),
-			        BooleanValue.BOTTOM));
+					BooleanValue.BOTTOM));
 		} else {
 			returnList.add(new NonrelationalEvaluationResult<>(val, returnBool));
 		}
@@ -127,7 +128,7 @@ public class SingletonVariableExpressionEvaluator<VALUE extends INonrelationalVa
 	@Override
 	public void addSubEvaluator(final IEvaluator<VALUE, STATE, CodeBlock> evaluator) {
 		throw new UnsupportedOperationException(
-		        "Cannot add a subevaluator to singleton variable expression evaluators.");
+				"Cannot add a subevaluator to singleton variable expression evaluators.");
 	}
 
 	@Override

@@ -42,7 +42,7 @@ import java.util.function.Consumer;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.NumUtil;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.TypeUtil;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.TypeUtils.TypeUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BidirectionalMap;
 
 /**
@@ -1580,8 +1580,8 @@ public class OctMatrix {
 			return script.term("true");
 		}
 		final Term tBound;
-		final boolean minuendIsInt = TypeUtil.isIntTerm(minuend);
-		final boolean subtrahendIsInt = TypeUtil.isIntTerm(subtrahend);
+		final boolean minuendIsInt = TypeUtils.isIntTerm(minuend);
+		final boolean subtrahendIsInt = TypeUtils.isIntTerm(subtrahend);
 		if (minuendIsInt && subtrahendIsInt) {
 			tBound = script.numeral(bound.getValue().round(new MathContext(0, RoundingMode.FLOOR)).toBigIntegerExact());
 		} else {

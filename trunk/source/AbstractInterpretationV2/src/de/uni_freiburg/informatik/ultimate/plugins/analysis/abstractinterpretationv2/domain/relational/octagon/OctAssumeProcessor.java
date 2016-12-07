@@ -43,12 +43,12 @@ import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.BoogieUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.NumUtil;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.TypeUtil;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.TypeUtils.TypeUtils;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Part of the {@link OctPostOperator}, specialized for the {@link AssumeStatement}.
- * 
+ *
  * @author schaetzc@informatik.uni-freiburg.de
  */
 public class OctAssumeProcessor {
@@ -62,7 +62,7 @@ public class OctAssumeProcessor {
 
 	/**
 	 * Assume an expression.
-	 * 
+	 *
 	 * @param assumption
 	 *            Expression to be assumed
 	 * @param oldStates
@@ -75,7 +75,7 @@ public class OctAssumeProcessor {
 
 	/**
 	 * Assume an boolean expression.
-	 * 
+	 *
 	 * @param expr
 	 *            Boolean expression to be assumed.
 	 * @param isNegated
@@ -87,14 +87,14 @@ public class OctAssumeProcessor {
 	private List<OctDomainState> processBooleanOperations(final Expression expr, final boolean isNegated,
 			final List<OctDomainState> oldStates) {
 
-		assert TypeUtil.isBoolean(expr.getType()) : "Expression " + BoogiePrettyPrinter.print(expr) + " is not boolean";
+		assert TypeUtils.isBoolean(expr.getType()) : "Expression " + BoogiePrettyPrinter.print(expr)
+				+ " is not boolean";
 
 		if (expr instanceof BooleanLiteral) {
 			if (((BooleanLiteral) expr).getValue() ^ isNegated) {
 				return oldStates; // assume true
-			} else {
-				return new ArrayList<>(); // assume false
 			}
+			return new ArrayList<>(); // assume false
 
 		} else if (expr instanceof IdentifierExpression) {
 			final IBoogieVar var = mPostOp.getBoogieVar((IdentifierExpression) expr);
@@ -139,9 +139,9 @@ public class OctAssumeProcessor {
 			case COMPLEQ:
 			case COMPLT:
 			case COMPPO:
-				if (TypeUtil.isNumeric(left.getType())) {
+				if (TypeUtils.isNumeric(left.getType())) {
 					return processNumericRelation(binExpr, isNegated, oldStates);
-				} else if (TypeUtil.isBoolean(left.getType())) {
+				} else if (TypeUtils.isBoolean(left.getType())) {
 					return processBooleanRelation(binExpr, isNegated, oldStates);
 				} else {
 					// unsupported relation (e.g. array == array)
@@ -170,7 +170,7 @@ public class OctAssumeProcessor {
 
 	/**
 	 * Assume the logical conjunction of the expressions {@code left} and {@code right}
-	 * 
+	 *
 	 * @param left
 	 *            First expression to be assumed.
 	 * @param negLeft
@@ -193,7 +193,7 @@ public class OctAssumeProcessor {
 
 	/**
 	 * Assume the logical disjunction of the expressions {@code left} and {@code right}
-	 * 
+	 *
 	 * @param left
 	 *            First expression to be assumed.
 	 * @param negLeft
@@ -215,7 +215,7 @@ public class OctAssumeProcessor {
 
 	/**
 	 * Assume the logical equivalence ("if and only if") of the expressions {@code left} and {@code right}
-	 * 
+	 *
 	 * @param left
 	 *            First expression to be assumed.
 	 * @param right
@@ -235,7 +235,7 @@ public class OctAssumeProcessor {
 
 	/**
 	 * Assume a relation between two boolean variables (for instance "boolA == boolB").
-	 * 
+	 *
 	 * @param binExpr
 	 *            Boolean relation to be assumed.
 	 * @param isNegated
@@ -262,7 +262,7 @@ public class OctAssumeProcessor {
 
 	/**
 	 * Assume a relation between two numeric variables (for instance "intA < intB").
-	 * 
+	 *
 	 * @param binExpr
 	 *            Numeric relation to be assumed.
 	 * @param isNegated
@@ -285,7 +285,7 @@ public class OctAssumeProcessor {
 
 	/** @see #processNumericRelation(BinaryExpression, boolean, List) */
 	private List<OctDomainState> processNumericRelationWithoutIfs(final BinaryExpression binExpr,
-			final boolean isNegated, List<OctDomainState> oldStates) {
+			final boolean isNegated, final List<OctDomainState> oldStates) {
 
 		Operator relOp = binExpr.getOperator();
 		if (relOp == BinaryExpression.Operator.COMPPO) {
@@ -304,7 +304,7 @@ public class OctAssumeProcessor {
 			return oldStates; // safe over-approximation
 		}
 		assert left.getType().equals(right.getType());
-		final boolean intRelation = TypeUtil.isNumericInt(left.getType());
+		final boolean intRelation = TypeUtils.isNumericInt(left.getType());
 		boolean strictRelInt = false;
 		switch (relOp) {
 		case COMPEQ:
@@ -326,7 +326,7 @@ public class OctAssumeProcessor {
 
 	/**
 	 * Assume the relation "affineExpression != 0".
-	 * 
+	 *
 	 * @param affExpr
 	 *            Expression to be assumed to be not equal zero.
 	 * @param intRelation
@@ -342,10 +342,9 @@ public class OctAssumeProcessor {
 			if (affExpr.getConstant().signum() == 0) {
 				// (assume 0 != 0) is equivalent to (assume false)
 				return new ArrayList<>();
-			} else {
-				// (assume 0 != ±7) is equivalent to (assume true)
-				return oldStates;
 			}
+			// (assume 0 != ±7) is equivalent to (assume true)
+			return oldStates;
 		}
 
 		// from now on handle (affExpr - c != 0) as (affExpr <= c) or (affExpr >= c) ----------------
@@ -390,7 +389,7 @@ public class OctAssumeProcessor {
 
 	/**
 	 * Assume the relation "affineExpression == 0".
-	 * 
+	 *
 	 * @param affExpr
 	 *            Expression to be assumed to be equal zero.
 	 * @param intRelation
@@ -399,17 +398,16 @@ public class OctAssumeProcessor {
 	 *            Pre-states -- may be modified in-place.
 	 * @return Post-states
 	 */
-	private List<OctDomainState> processAffineEqZero(AffineExpression affExpr, final boolean intRelation,
+	private static List<OctDomainState> processAffineEqZero(AffineExpression affExpr, final boolean intRelation,
 			final List<OctDomainState> oldStates) {
 
 		if (affExpr.isConstant()) {
 			if (affExpr.getConstant().signum() != 0) {
 				// (assume 0 == ±7) is equivalent to (assume false)
 				return new ArrayList<>();
-			} else {
-				// (assume 0 == 0) is equivalent to (assume true)
-				return oldStates;
 			}
+			// (assume 0 == 0) is equivalent to (assume true)
+			return oldStates;
 
 		}
 
@@ -441,7 +439,7 @@ public class OctAssumeProcessor {
 
 	/**
 	 * Assume the relation "affineExpression < 0" or "affineExpression <= 0".
-	 * 
+	 *
 	 * @param affExpr
 	 *            Expression to be assumed to be less than zero.
 	 * @param intRelation
@@ -450,7 +448,7 @@ public class OctAssumeProcessor {
 	 *            Pre-states -- may be modified in-place.
 	 * @return Post-states
 	 */
-	private List<OctDomainState> processAffineLtZero(AffineExpression affExpr, final boolean strictRelInt,
+	private static List<OctDomainState> processAffineLtZero(AffineExpression affExpr, final boolean strictRelInt,
 			final List<OctDomainState> oldStates) {
 
 		// from now on handle (affExpr - c <= 0) as (affExpr <= c) ----------------
@@ -468,10 +466,9 @@ public class OctAssumeProcessor {
 			if (c.signum() < 0) {
 				// (assume 0 <= -7) is equivalent to (assume false)
 				return new ArrayList<>();
-			} else {
-				// (assume 0 <= 7) is equivalent to (assume true)
-				return oldStates;
 			}
+			// (assume 0 <= 7) is equivalent to (assume true)
+			return oldStates;
 
 		} else if ((ovf = affExpr.getOneVarForm()) != null) {
 			final OctValue min;

@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalValue;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.TypeUtil;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.TypeUtils.TypeUtils;
 
 /**
  * Utilities to project octagons to intervals, calculated expression using intervals, and assigning the resulting
@@ -70,7 +70,7 @@ public class IntervalProjection {
 	 * @return Updated states in the same list.
 	 */
 	public List<OctDomainState> assignNumericVarWithoutIfs(final IBoogieVar var, final Expression rhs,
-	        List<OctDomainState> oldStates) {
+			List<OctDomainState> oldStates) {
 
 		oldStates = OctPostOperator.removeBottomStates(oldStates);
 		for (final OctDomainState state : oldStates) {
@@ -92,7 +92,7 @@ public class IntervalProjection {
 	 * @return Updated states in the same list.
 	 */
 	public List<OctDomainState> assignNumericVarAffine(final IBoogieVar var, final AffineExpression rhs,
-	        List<OctDomainState> oldStates) {
+			List<OctDomainState> oldStates) {
 
 		oldStates = OctPostOperator.removeBottomStates(oldStates);
 		for (final OctDomainState state : oldStates) {
@@ -124,8 +124,8 @@ public class IntervalProjection {
 
 		} else if (expr instanceof IdentifierExpression) {
 			final IdentifierExpression iexpr = ((IdentifierExpression) expr);
-			final BoogieVar var = mBpl2smtSymbolTable.getBoogieVar(iexpr.getIdentifier(),
-			        iexpr.getDeclarationInformation(), false);
+			final BoogieVar var =
+					mBpl2smtSymbolTable.getBoogieVar(iexpr.getIdentifier(), iexpr.getDeclarationInformation(), false);
 			assert var != null;
 			final OctInterval octInterval = state.projectToInterval(var);
 			return octInterval.toIvlInterval();
@@ -151,12 +151,12 @@ public class IntervalProjection {
 			case ARITHMUL:
 				return left.multiply(right);
 			case ARITHDIV:
-				if (TypeUtil.isNumericInt(binExpr.getType())) {
+				if (TypeUtils.isNumericInt(binExpr.getType())) {
 					return left.divideInteger(right);
 				}
 				return left.divide(right);
 			case ARITHMOD:
-				assert TypeUtil.isNumericInt(binExpr.getType());
+				assert TypeUtils.isNumericInt(binExpr.getType());
 				return left.modulo(right);
 			default:
 				// see end of this method

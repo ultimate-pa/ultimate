@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.TypeUtil;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.TypeUtils.TypeUtils;
 
 /**
  * Methods to transform Boogie expressions into {@link AffineExpression}s {@link IfThenElseExpression}-free expressions
@@ -93,11 +93,10 @@ public class ExpressionTransformer {
 	public AffineExpression affineExprCached(final Expression expr) {
 		if (mCacheAffineExpr.containsKey(expr)) {
 			return mCacheAffineExpr.get(expr); // may return null
-		} else {
-			final AffineExpression cachedAffExpr = toAffineExpr(expr);
-			mCacheAffineExpr.put(expr, cachedAffExpr);
-			return cachedAffExpr;
 		}
+		final AffineExpression cachedAffExpr = toAffineExpr(expr);
+		mCacheAffineExpr.put(expr, cachedAffExpr);
+		return cachedAffExpr;
 	}
 
 	// TODO implement transformation to AffineExpression, using known concrete values
@@ -152,8 +151,8 @@ public class ExpressionTransformer {
 
 	/** Internal, non-cached version of {@link #affineExprCached(Expression)}. */
 	private AffineExpression toAffineExpr(final Expression expr) {
-		assert TypeUtil.isNumeric(expr.getType()) : "Cannot transform non-numeric expression to affine expression: "
-		        + expr;
+		assert TypeUtils.isNumeric(expr.getType()) : "Cannot transform non-numeric expression to affine expression: "
+				+ expr;
 		if (expr instanceof IntegerLiteral) {
 			final String value = ((IntegerLiteral) expr).getValue();
 			return new AffineExpression(new BigDecimal(value));
@@ -162,8 +161,8 @@ public class ExpressionTransformer {
 			return new AffineExpression(new BigDecimal(value));
 		} else if (expr instanceof IdentifierExpression) {
 			final IdentifierExpression ie = ((IdentifierExpression) expr);
-			IBoogieVar var = mBpl2SmtSymbolTable.getBoogieVar(ie.getIdentifier(), ie.getDeclarationInformation(),
-			        false);
+			IBoogieVar var =
+					mBpl2SmtSymbolTable.getBoogieVar(ie.getIdentifier(), ie.getDeclarationInformation(), false);
 			if (var == null) {
 				var = mBpl2SmtSymbolTable.getBoogieConst(ie.getIdentifier());
 			}
@@ -199,7 +198,7 @@ public class ExpressionTransformer {
 		if (right == null) {
 			return null;
 		}
-		final boolean isInteger = TypeUtil.isNumericInt(expr.getType());
+		final boolean isInteger = TypeUtils.isNumericInt(expr.getType());
 		switch (expr.getOperator()) {
 		case ARITHDIV:
 			return left.divide(right, isInteger);
@@ -219,8 +218,8 @@ public class ExpressionTransformer {
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	/** Internal, non-cached version of {@link #logicNeg(Expression)}. */
-	private Expression logicNeg(final Expression expr) {
-		assert TypeUtil.isBoolean(expr.getType()) : "Logical negation of non-boolean expression: " + expr;
+	private static Expression logicNeg(final Expression expr) {
+		assert TypeUtils.isBoolean(expr.getType()) : "Logical negation of non-boolean expression: " + expr;
 		if (expr instanceof UnaryExpression) {
 			final UnaryExpression unaryExpr = (UnaryExpression) expr;
 			if (unaryExpr.getOperator() == UnaryExpression.Operator.LOGICNEG) {
