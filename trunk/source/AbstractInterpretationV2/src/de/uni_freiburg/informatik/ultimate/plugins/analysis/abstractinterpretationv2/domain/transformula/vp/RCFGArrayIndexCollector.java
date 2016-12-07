@@ -109,13 +109,6 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 	protected void visit(final CodeBlock c) {
 		c.getPrettyPrintedStatements();
 
-		// final Map<Term, Term> substitionMap = new HashMap<Term, Term>();
-		// for (final Entry<IProgramVar, TermVariable> entry : c.getTransitionFormula().getInVars().entrySet()) {
-		// substitionMap.put(entry.getValue(), entry.getKey().getTermVariable());
-		// }
-		// for (final Entry<IProgramVar, TermVariable> entry : c.getTransitionFormula().getOutVars().entrySet()) {
-		// substitionMap.put(entry.getValue(), entry.getKey().getTermVariable());
-		// }
 		final TransFormula tf = c.getTransitionFormula();
 		final Map<Term, Term> substitionMap =
 				VPDomainHelpers.computeNormalizingSubstitution(tf);
@@ -176,6 +169,13 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 		final List<EqNode> arguments = new ArrayList<>();
 		for (final Term arrayIndex : mds.getIndex()) {
 			final EqNode argumentEqNode = getOrConstructEqNode(arrayIndex);
+			if (argumentEqNode == null) {
+				/*
+				 * argument contains something we don't track
+				 *  --> abort..
+				 */
+				return argumentEqNode;
+			}
 			arguments.add(argumentEqNode);
 			mArrayToAccessingEqNodes.addPair(arrayId, argumentEqNode);
 		}
@@ -205,6 +205,13 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 		final List<EqNode> arguments = new ArrayList<>();
 		for (final Term ai : mds.getIndex()) {
 			final EqNode argumentEqNode = getOrConstructEqNode(ai);
+			if (argumentEqNode == null) {
+				/*
+				 * argument contains something we don't track
+				 *  --> abort..
+				 */
+				return argumentEqNode;
+			}
 			arguments.add(argumentEqNode);
 			mArrayToAccessingEqNodes.addPair(arrayId, argumentEqNode);
 		}
@@ -240,7 +247,10 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 			final MultiDimensionalStore mds = new MultiDimensionalStore(at);
 			return constructEqNode(mds);
 		} else {
-			assert false : "should not happen";
+			/*
+			 * Right now, we don't track "non-atomic" array-indices (e.g. arithmetic expressions).
+			 * In the future we may want to track them, but this also means changes to the VPPostOperator..
+			 */
 			return null;
 		}
 	}
@@ -405,23 +415,6 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 		for (final Term t : closure) {
 			getOrConstructEqNode(t);
 		}
-
-		// // find the "other sides" of an equation were one side is a select term
-		// Set<Term> selectTerms = mdSelects.stream().map(mds -> mds.getSelectTerm()).collect(Collectors.toSet());
-		// Set<Term> termsEquatedWithASelectTerm = new HashSet<>();
-		// for (ApplicationTerm eq : equations) {
-		// if (selectTerms.contains(eq.getParameters()[0])
-		// && !selectTerms.contains(eq.getParameters()[1])) {
-		// termsEquatedWithASelectTerm.add(eq.getParameters()[1]);
-		// } else if (selectTerms.contains(eq.getParameters()[1])
-		// && !selectTerms.contains(eq.getParameters()[0])) {
-		// termsEquatedWithASelectTerm.add(eq.getParameters()[0]);
-		// }
-		// }
-		// construct nodes for the "other sides"
-		// for (Term t : termsEquatedWithASelectTerm) {
-		// getOrConstructEqNode(t);
-		// }
 	}
 
 	/**
