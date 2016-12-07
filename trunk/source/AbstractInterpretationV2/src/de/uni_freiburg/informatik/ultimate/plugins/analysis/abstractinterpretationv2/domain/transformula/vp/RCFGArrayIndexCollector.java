@@ -118,7 +118,7 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 		// }
 		final TransFormula tf = c.getTransitionFormula();
 		final Map<Term, Term> substitionMap =
-				computeNormalizingSubstitution(VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf));
+				VPDomainHelpers.computeNormalizingSubstitution(tf);
 		final Term formulaWithNormalizedVariables = new Substitution(mScript, substitionMap).transform(tf.getFormula());
 
 		/*
@@ -155,20 +155,7 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 
 	}
 
-	/**
-	 * compute a substitution mapping that translates the TermVariables in a Term to the corresponding default
-	 * TermVariable of a IProgramVar. (TODO: not so happy with everything that is connected to this..)
-	 *
-	 * @param c
-	 * @return
-	 */
-	private static Map<Term, Term> computeNormalizingSubstitution(final Map<TermVariable, IProgramVar> tvToPvMap) {
-		final Map<Term, Term> substitionMap = new HashMap<>();
-		for (final Entry<TermVariable, IProgramVar> en : tvToPvMap.entrySet()) {
-			substitionMap.put(en.getKey(), en.getValue().getTerm());
-		}
-		return substitionMap;
-	}
+
 
 	private EqNode constructEqNode(final MultiDimensionalStore mds) {
 		EqNode result = mTermToEqNode.get(mds.getStoreTerm());
@@ -350,6 +337,13 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 	public boolean isArrayAccessedAt(final IProgramVarOrConst array, final EqNode index) {
 		return mArrayToAccessingEqNodes.containsPair(array, index);
 	}
+	public Set<EqNode> getAccessingIndicesForArrays(final Set<IProgramVarOrConst> arrays) {
+		Set<EqNode> result = new HashSet<>();
+		for (IProgramVarOrConst a : arrays) {
+			result.addAll(getAccessingIndicesForArray(a));
+		}
+		return result;
+	}
 	
 	public Set<EqNode> getAccessingIndicesForArray(IProgramVarOrConst array) {
 		return Collections.unmodifiableSet(mArrayToAccessingEqNodes.getImage(array));
@@ -438,7 +432,7 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 	 */
 	public EqNode getEqNode(final Term term, final Map<TermVariable, IProgramVar> tvToPvMap) {
 		// our mapping is in terms of normalized terms, so we need to make a substitution before we can look it up
-		final Map<Term, Term> substitionMap = computeNormalizingSubstitution(tvToPvMap);
+		final Map<Term, Term> substitionMap = VPDomainHelpers.computeNormalizingSubstitution(tvToPvMap);
 		final Term termWithNormalizedVariables = new Substitution(mScript, substitionMap).transform(term);
 		final EqNode result = mTermToEqNode.get(termWithNormalizedVariables);
 		return result;

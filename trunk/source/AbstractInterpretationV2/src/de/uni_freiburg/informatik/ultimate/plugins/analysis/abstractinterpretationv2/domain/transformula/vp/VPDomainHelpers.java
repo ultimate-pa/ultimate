@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -39,5 +40,24 @@ public class VPDomainHelpers {
 			result.put(en.getValue(), en.getKey());
 		}
 		return result;
+	}
+
+	public static Map<Term, Term> computeNormalizingSubstitution(TransFormula tf) {
+		return computeNormalizingSubstitution(computeProgramVarMappingFromTransFormula(tf));
+	}
+
+	/**
+	 * compute a substitution mapping that translates the TermVariables in a Term to the corresponding default
+	 * TermVariable of a IProgramVar. (TODO: not so happy with everything that is connected to this..)
+	 *
+	 * @param c
+	 * @return
+	 */
+	public static Map<Term, Term> computeNormalizingSubstitution(final Map<TermVariable, IProgramVar> tvToPvMap) {
+		final Map<Term, Term> substitionMap = new HashMap<>();
+		for (final Entry<TermVariable, IProgramVar> en : tvToPvMap.entrySet()) {
+			substitionMap.put(en.getKey(), en.getValue().getTerm());
+		}
+		return substitionMap;
 	}
 }

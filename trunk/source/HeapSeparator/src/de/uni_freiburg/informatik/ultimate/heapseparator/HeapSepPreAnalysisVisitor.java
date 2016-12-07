@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.heapseparator;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -41,10 +42,17 @@ import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayEquality;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.ConstOrLiteral;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.RCFGArrayIndexCollector;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomain;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainHelpers;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.visitors.SimpleRCFGVisitor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.AbstractRelation;
@@ -66,18 +74,13 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public class HeapSepPreAnalysisVisitor extends SimpleRCFGVisitor {
 
-	/**
-	 * set to collect all pairs of arrays which appear on left and right side
-	 * of an equals, e.g., if (= a b) occurs, we record the pair (a,b), but
-	 * also in the case (among many others)
-	 * (= a (store b i x)) (though it is not clear to me if this case can arise in a normal
-	 * Boogie program
-	 */
-	private final Set<Pair<IProgramVarOrConst, IProgramVarOrConst>> mEquatedArrays;
-	
 	private final HashRelation<IProgramVarOrConst, IcfgLocation> mArrayToAccessLocations;
 
-	private List<ArrayEquality> mArrayEqualities;
+	private final Set<VPDomainSymmetricPair<IProgramVarOrConst>> mArrayEqualities;
+
+	private final ManagedScript mScript;
+
+	private RCFGArrayIndexCollector mVpDomainPreAnalysis;
 
 	/**
 	 * The HeapSepPreAnalysisVisitor computes and provides the following information:
@@ -85,30 +88,38 @@ public class HeapSepPreAnalysisVisitor extends SimpleRCFGVisitor {
 	 *  - for each array at which locations in the CFG it is accessed
 	 * @param logger
 	 */
-	public HeapSepPreAnalysisVisitor(ILogger logger) {
+	public HeapSepPreAnalysisVisitor(ILogger logger, ManagedScript script, VPDomain domain) {
 		super(logger);
-		mEquatedArrays = new HashSet<>();
 		mArrayToAccessLocations = new HashRelation<>();
+		mScript = script;
+		mArrayEqualities = new HashSet<>();
+		mVpDomainPreAnalysis = domain.getPreAnalysis();
 	}
 
 	@Override
 	public void level(IcfgEdge edge) {
 		
 		if (edge instanceof CodeBlock) {
-			mEquatedArrays.addAll(new EquatedArraysFinder((CodeBlock) edge).getResult());
-			
-			mArrayEqualities = ArrayEquality.extractArrayEqualities(((CodeBlock) edge).getTransitionFormula().getFormula());
-			
-//			mArrayToAccessPositions.addAll(new ArrayAccessFinder((CodeBlock) edge, edge.getSource()).getResult());
+
+			UnmodifiableTransFormula tf = ((CodeBlock) edge).getTransitionFormula();
+
+			List<ArrayEquality> aeqs = ArrayEquality.extractArrayEqualities(tf.getFormula());
+			for (ArrayEquality aeq : aeqs) {
+				IProgramVarOrConst first = mVpDomainPreAnalysis.getIProgramVarOrConstOrLiteral(
+						aeq.getLhs(), 
+						VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf));
+				IProgramVarOrConst second = mVpDomainPreAnalysis.getIProgramVarOrConstOrLiteral(
+						aeq.getRhs(), 
+						VPDomainHelpers.computeProgramVarMappingFromTransFormula(tf));
+				
+				mArrayEqualities.add(new VPDomainSymmetricPair<IProgramVarOrConst>(first, second));
+			}
+
 			mArrayToAccessLocations.addAll(findArrayAccesses((CodeBlock) edge));
 		}
 		super.level(edge);
 	}
 	
-	
-
-
-
 	private HashRelation<IProgramVarOrConst, IcfgLocation> findArrayAccesses(CodeBlock edge) {
 		HashRelation<IProgramVarOrConst, IcfgLocation> result = new HashRelation<>();
 		
@@ -129,6 +140,10 @@ public class HeapSepPreAnalysisVisitor extends SimpleRCFGVisitor {
 			result.addPair(pv, edge.getSource());
 		}	
 		return result;
+	}
+	
+	Set<VPDomainSymmetricPair<IProgramVarOrConst>> getArrayEqualities() {
+		return mArrayEqualities;
 	}
 
 	@Override
@@ -151,71 +166,3 @@ public class HeapSepPreAnalysisVisitor extends SimpleRCFGVisitor {
 		return mArrayToAccessLocations;
 	}
 }
-
-class EquatedArraysFinder extends TermTransformer {
-	private final CodeBlock mCodeBlock;
-	private final Set<Pair<IProgramVarOrConst, IProgramVarOrConst>> mEquatedArrays;
-
-	EquatedArraysFinder(CodeBlock edge) {
-		mCodeBlock = edge;
-		mEquatedArrays = new HashSet<>();
-		transform(edge.getTransitionFormula().getFormula());
-	}
-
-	public Collection<? extends Pair<IProgramVarOrConst, IProgramVarOrConst>> getResult() {
-		return mEquatedArrays;
-	}
-
-	@Override
-	public void convertApplicationTerm(ApplicationTerm appTerm, Term[] newArgs) {
-		final String funcName = appTerm.getFunction().getName();
-		if (("=".equals(funcName) || "distinct".equals(funcName))
-				&& appTerm.getParameters()[0].getSort().isArraySort()
-				&& appTerm.getParameters()[1].getSort().isArraySort()) {
-			// we have an array assignment
-			TermVariable a1 = new ArrayFinder(appTerm.getParameters()[0]).getResult();
-			TermVariable a2 = new ArrayFinder(appTerm.getParameters()[1]).getResult();
-
-			if (a1 != a2) {
-				IProgramVar pv1 = HeapSepRcfgVisitor.getBoogieVarFromTermVar(a1, 
-						mCodeBlock.getTransitionFormula().getInVars(), 
-						mCodeBlock.getTransitionFormula().getOutVars());
-				IProgramVar pv2 = HeapSepRcfgVisitor.getBoogieVarFromTermVar(a2, 
-						mCodeBlock.getTransitionFormula().getInVars(), 
-						mCodeBlock.getTransitionFormula().getOutVars());
-				// two non-identical arrays are equated --> store that fact
-//				mEquatedArrays.add(new Pair<IProgramVar, IProgramVar>(pv1, pv2)); //TODO
-			}
-		}
-		super.convertApplicationTerm(appTerm, newArgs);
-	}
-}
-//
-//class ArrayAccessFinder extends TermTransformer {
-//
-//	private final CodeBlock mCodeBlock;
-//	private final IcfgLocation mLocation;
-//	private final HashRelation<IProgramVar, IcfgLocation> mResult;
-//	
-//	public ArrayAccessFinder(CodeBlock edge, IcfgLocation location) {
-//
-//		mCodeBlock = edge;
-//		mResult = new HashRelation<>();
-//		mLocation = location;
-//	}
-//
-//	public HashRelation<IProgramVar, IcfgLocation> getResult() {
-//		return mResult;
-//	}
-//
-//	@Override
-//	public void convertApplicationTerm(ApplicationTerm appTerm, Term[] newArgs) {
-//		String funcName = appTerm.getFunction().getName();
-//		if ("select".equals(funcName)) {
-//			
-//		} else if ("store".equals(funcName)) {
-//
-//		}
-//		super.convertApplicationTerm(appTerm, newArgs);
-//	}
-//}

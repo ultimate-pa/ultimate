@@ -88,8 +88,6 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 		mScript = script;
 	}
 
-
-
 	@Override
 	public boolean performedChanges() {
 		// TODO make smarter?
@@ -144,18 +142,6 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 	}
 
 	private UnmodifiableTransFormula splitArraysInTransFormula(final UnmodifiableTransFormula tf) {
-		/*
-		 * need:
-		 *  - a substitution that also updates the invars/outvars
-		 * plan:
-		 *  use 
-		 *   -- ArrayEquality
-		 *   -- ArrayUpdate
-		 *   -- MultiDimensionalSelect
-		 *   -- MultiDimensionalStore
-		 *    --> the extract-Methods of each
-		 *  build a substitution
-		 */
 
 		final Map<IProgramVar, TermVariable> newInVars = new HashMap<>(tf.getInVars());
 		final Map<IProgramVar, TermVariable> newOutVars = new HashMap<>(tf.getOutVars());
@@ -216,7 +202,7 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 
 			IProgramVarOrConst newArray = mNewArrayIdProvider.getNewArrayId(oldArray, pointers);
 
-			updateMappingsForSubstitution(oldArray, newArray, tf, newInVars, newOutVars, substitutionMapPvoc);
+			updateMappingsForSubstitution(oldArray, newArray, newInVars, newOutVars, substitutionMapPvoc);
 		}
 
 		List<MultiDimensionalStore> mdStores = MultiDimensionalStore.extractArrayStoresShallow(intermediateFormula);
@@ -235,7 +221,7 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 					
 			IProgramVarOrConst newArray = mNewArrayIdProvider.getNewArrayId(oldArray, pointers);
 
-			updateMappingsForSubstitution(oldArray, newArray, tf, newInVars, newOutVars, substitutionMapPvoc);
+			updateMappingsForSubstitution(oldArray, newArray, newInVars, newOutVars, substitutionMapPvoc);
 		}
 		intermediateFormula = new Substitution(mScript, substitutionMapPvoc).transform(intermediateFormula);	
 		return intermediateFormula;
@@ -268,9 +254,9 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 
 			IProgramVarOrConst newArrayRhs = mNewArrayIdProvider.getNewArrayId(updateRhsArray, pointers);
 
-			updateMappingsForSubstitution(updateLhs, newArrayLhs, tf, newInVars, newOutVars, substitutionMapPvoc);
+			updateMappingsForSubstitution(updateLhs, newArrayLhs, newInVars, newOutVars, substitutionMapPvoc);
 
-			updateMappingsForSubstitution(updateRhsArray, newArrayRhs, tf, newInVars, newOutVars, substitutionMapPvoc);
+			updateMappingsForSubstitution(updateRhsArray, newArrayRhs, newInVars, newOutVars, substitutionMapPvoc);
 		}
 		
 		Term newTerm = new Substitution(mScript, substitutionMapPvoc).transform(formula);
@@ -366,7 +352,7 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 	 * @param substitutionMap
 	 */
 	private void updateMappingsForSubstitution(IProgramVarOrConst oldArray, IProgramVarOrConst newArray,
-			final UnmodifiableTransFormula tf, final Map<IProgramVar, TermVariable> newInVars,
+			final Map<IProgramVar, TermVariable> newInVars,
 			final Map<IProgramVar, TermVariable> newOutVars,
 			final Map<Term, Term> substitutionMap) {
 		if (oldArray instanceof IProgramVar) {
@@ -402,37 +388,5 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 			 */
 			substitutionMap.put(oldArray.getTerm(), newArray.getTerm());
 		}
-		
-//		
-//		//TODO cases...
-//		if (newInVars.containsKey(oldArray) && !newOutVars.containsKey(oldArray)) {
-//			TermVariable newTv = mScript.constructFreshCopy((TermVariable) newArray.getTerm());
-//			TermVariable oldTv = tf.getInVars().get(oldArray);
-//			substitutionMap.put(oldTv, newTv);
-//			newInVars.remove(oldArray);
-//			newInVars.put((IProgramVar) newArray, newTv);
-//			return;
-//		}
-//		if (newOutVars.containsKey(oldArray) && !newInVars.containsKey(oldArray)) {
-//			TermVariable newTv = mScript.constructFreshCopy((TermVariable) newArray.getTerm());
-//			TermVariable oldTv = tf.getOutVars().get(oldArray);
-//			substitutionMap.put(oldTv, newTv);
-//			newInVars.remove(oldArray);
-//			newOutVars.put((IProgramVar) newArray, newTv);
-//			return;
-//		}
-//		if (newInVars.containsKey(oldArray) && newOutVars.containsKey(oldArray)) {
-//			TermVariable newTv = mScript.constructFreshCopy((TermVariable) newArray.getTerm());
-//			TermVariable oldTv = tf.getOutVars().get(oldArray);
-//			substitutionMap.put(oldTv, newTv);
-//			newInVars.remove(oldArray);
-//			newOutVars.put((IProgramVar) newArray, newTv);
-//			return;
-//		}
-		
-//		if (!(oldArray instanceof IProgramVar)) {
-//			// we have a constant
-//			substitutionMap.put(oldArray.getTerm(), newArray.getTerm());
-//		}
 	}
 }
