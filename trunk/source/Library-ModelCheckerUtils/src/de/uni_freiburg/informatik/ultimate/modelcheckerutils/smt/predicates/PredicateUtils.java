@@ -211,7 +211,6 @@ public class PredicateUtils {
 		final Set<TermVariable> notYetSubst = new HashSet<TermVariable>();
 		notYetSubst.addAll(Arrays.asList(tf.getFormula().getFreeVars()));
 		Term fTrans = tf.getFormula();
-		String t = fTrans.toString();
 		final Map<TermVariable, IProgramVar> reverseMapping = new HashMap<TermVariable, IProgramVar>();
 		for (final IProgramVar inVar : tf.getInVars().keySet()) {
 			final TermVariable tv = tf.getInVars().get(inVar);
@@ -224,9 +223,7 @@ public class PredicateUtils {
 			}
 			final TermVariable[] vars = { tv };
 			final Term[] values = { cIndex };
-			final Term undamagedFTrans = fTrans;
 			fTrans = script.let(vars, values, fTrans);
-			t = fTrans.toString();
 			notYetSubst.remove(tv);
 		}
 		for (final IProgramVar outVar : tf.getOutVars().keySet()) {
@@ -243,16 +240,20 @@ public class PredicateUtils {
 				final TermVariable[] vars = { tv };
 				final Term[] values = { cIndex };
 				fTrans = script.let(vars, values, fTrans);
-				t = fTrans.toString();
 				notYetSubst.remove(tv);
 			}
 		}
 		for (final TermVariable tv : notYetSubst) {
-			final Term cIndex = reverseMapping.get(tv).getDefaultConstant();
+			final Term cIndex;
+			if (tf.getAuxVars().contains(tv)) {
+				// replace auxvar by corresponding constant
+				cIndex = script.term(tv.getName());
+			} else {
+				cIndex = reverseMapping.get(tv).getDefaultConstant();
+			}
 			final TermVariable[] vars = { tv };
 			final Term[] values = { cIndex };
 			fTrans = script.let(vars, values, fTrans);
-			t = fTrans.toString();
 		}
 		return fTrans;
 	}
