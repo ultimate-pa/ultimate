@@ -1,0 +1,43 @@
+#Sun Nov 08 00:52:02 CET 2015
+file_export_version=3.0
+@de.uni_freiburg.informatik.ultimate.boogie.procedureinliner=0.0.1
+\!/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner=
+/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/to\ procedures,\ called\ more\ than\ once=true
+
+#Sun Nov 08 00:52:02 CET 2015
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=
+file_export_version=3.0
+@de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Interpolants\ consolidation=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Interpolant\ automaton=TWOTRACK
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Compute\ Interpolants\ along\ a\ Counterexample=FPandBP
+
+#Sun Nov 08 00:52:02 CET 2015
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Dump\ SMT\ script\ to\ file=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Logic\ for\ external\ solver=AUFBV
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Translate\ Boogie\ integers\ to\ SMT\ bitvectors=true
+file_export_version=3.0
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Command\ for\ external\ solver=z3 SMTLIB2_COMPLIANT\=true -memory\:2024 -smt2 -in -t\:10000
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Convert\ code\ blocks\ to\ CNF=false
+@de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Size\ of\ a\ code\ block=SequenceOfStatements
+
+#Sun Nov 08 00:52:02 CET 2015
+file_export_version=3.0
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/tree\ interpolation\ mode\ for\ smtinterpol\ \n\ (internal\:\ tree,\ a\ la\ matthias\:\ nested)=ForwardPredicates
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Use\ separate\ solver\ for\ tracechecks\ (currently\ hardcoded\ to\ be\ SMTInterpol)=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/Timeout\ in\ seconds=1000000
+@de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck=0.0.1
+
+#Sun Nov 08 00:52:02 CET 2015
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Check\ division\ by\ zero=IGNORE
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Use\ bitvectors\ instead\ of\ ints=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Check\ for\ the\ main\ procedure\ if\ all\ allocated\ memory\ was\ freed=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/If\ two\ pointers\ are\ subtracted\ or\ compared\ they\ have\ the\ same\ base\ address=IGNORE
+file_export_version=3.0
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Overapproximate\ operations\ on\ floating\ types=true
+@de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=0.0.1
+
