@@ -52,6 +52,9 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.PassRunner;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.exceptions.UncheckedInterruptedException;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.util.RewriteUtils;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.passes.HddPass;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.passes.RemoveUnreferencedPass;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.passes.ReplaceFunctionDefByDeclPass;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.search.minimizers.algorithms.BinarySearchMinimizer;
 
 /**
  * The delta debugger controller can repeat a defined toolchain until the specified input cannot be reduced any
@@ -129,7 +132,10 @@ public class DeltaDebuggerController extends CommandLineController {
 		});
 		
 		// TODO: Make this a setting
-		runner.setPasses(Arrays.asList(HddPass.HDDSTAR));
+		runner.setPasses(Arrays.asList(
+				ReplaceFunctionDefByDeclPass.INSTANCE.copy().minimizer(new BinarySearchMinimizer(false, 10)).build(),
+				RemoveUnreferencedPass.FUNCS, RemoveUnreferencedPass.ALL_DECLS, RemoveUnreferencedPass.ALL_OBJS,
+				RemoveUnreferencedPass.ALL_DECLS, RemoveUnreferencedPass.ALL_OBJS, HddPass.HDDSTAR));
 		
 		// No parallel testing is currently possible because global state is
 		// used to store toolchain results/exception.

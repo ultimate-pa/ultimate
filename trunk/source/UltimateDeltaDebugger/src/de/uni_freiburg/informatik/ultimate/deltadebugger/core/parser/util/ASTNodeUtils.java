@@ -25,13 +25,17 @@
  */
 package de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.util;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import org.eclipse.cdt.core.dom.ast.ASTNodeProperty;
+import org.eclipse.cdt.core.dom.ast.IASTDeclSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTEnumerationSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTExpressionList;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
+import org.eclipse.cdt.core.dom.ast.IASTFunctionDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTInitializerList;
 import org.eclipse.cdt.core.dom.ast.IASTName;
@@ -46,6 +50,7 @@ import org.eclipse.cdt.core.dom.ast.IASTPreprocessorMacroDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTStandardFunctionDeclarator;
 import org.eclipse.cdt.core.dom.ast.IBinding;
+import org.eclipse.cdt.core.parser.IToken;
 
 /**
  * Utility class for AST nodes.
@@ -161,8 +166,18 @@ public final class ASTNodeUtils {
 	 * @return {@code true} iff declarator has references
 	 */
 	public static boolean hasReferences(final IASTDeclarator declarator) {
-		final IASTName astName = declarator.getName();
-		return astName != null && hasReferences(astName);
+		if (hasReferences(declarator.getName())) {
+			return true;
+		}
+		// Check each nested declarator for being unreferenced as well
+		IASTDeclarator nested = declarator.getNestedDeclarator();
+		while (nested != null) {
+			if (hasReferences(nested.getName())) {
+				return true;
+			}
+			nested = nested.getNestedDeclarator();
+		}
+		return false;
 	}
 	
 	/**
@@ -174,5 +189,85 @@ public final class ASTNodeUtils {
 		final IBinding binding = astName.resolveBinding();
 		final IASTName[] names = astName.getTranslationUnit().getReferences(binding);
 		return names.length != 0;
+	}
+	
+	public static boolean isFunctionPrototype(IASTSimpleDeclaration declaration) {
+		final IASTDeclSpecifier declSpecifier = declaration.getDeclSpecifier();
+		if (declSpecifier.getStorageClass() == IASTDeclSpecifier.sc_typedef) {
+			return false;
+		}
+
+		if (declaration.getDeclarators().length != 1) {
+			return false;
+		}
+
+		IASTDeclarator declarator = declaration.getDeclarators()[0];
+		while (declarator instanceof IASTFunctionDeclarator) {
+			if (declarator.getNestedDeclarator() != null) {
+				declarator = declarator.getNestedDeclarator();
+				continue;
+			}
+			// not a prototype if there is a pointer operator
+			if (declarator.getPointerOperators().length != 0) {
+				break;
+			}
+			return true;
+		}
+
+		return false;
+	}
+
+	public static boolean isTypedef(IASTSimpleDeclaration declaration) {
+		final IASTDeclSpecifier declSpecifier = declaration.getDeclSpecifier();
+		return declSpecifier.getStorageClass() == IASTDeclSpecifier.sc_typedef;
+	}
+
+	public static IASTName getNestedDeclaratorName(IASTDeclarator declarator) {
+		IASTDeclarator current = declarator;
+		while (current.getNestedDeclarator() != null) {
+			current = current.getNestedDeclarator();
+		}
+		return current.getName();
+	}
+
+	public static List<Integer> getRequiredDeclSpecifierTokens(final IASTDeclSpecifier declSpecifier) {
+		final List<Integer> requiredTokens = new ArrayList<>();
+		int storageClass = declSpecifier.getStorageClass();
+		switch (storageClass) {
+		case IASTDeclSpecifier.sc_typedef:
+			requiredTokens.add(IToken.t_typedef);
+			break;
+		case IASTDeclSpecifier.sc_extern:
+			requiredTokens.add(IToken.t_extern);
+			break;
+		case IASTDeclSpecifier.sc_static:
+			requiredTokens.add(IToken.t_static);
+			break;
+		case IASTDeclSpecifier.sc_auto:
+			requiredTokens.add(IToken.t_auto);
+			break;
+		case IASTDeclSpecifier.sc_register:
+			requiredTokens.add(IToken.t_register);
+			break;
+		case IASTDeclSpecifier.sc_mutable:
+			requiredTokens.add(IToken.t_mutable);
+			break;
+		default:
+			break;
+		}
+		if (declSpecifier.isConst()) {
+			requiredTokens.add(IToken.t_const);
+		}
+		if (declSpecifier.isVolatile()) {
+			requiredTokens.add(IToken.t_volatile);
+		}
+		if (declSpecifier.isRestrict()) {
+			requiredTokens.add(IToken.t_restrict);
+		}
+		if (declSpecifier.isInline()) {
+			requiredTokens.add(IToken.t_inline);
+		}
+
+		return requiredTokens;
 	}
 }
