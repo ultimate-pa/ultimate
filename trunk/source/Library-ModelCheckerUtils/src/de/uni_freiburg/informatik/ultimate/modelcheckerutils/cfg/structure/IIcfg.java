@@ -25,7 +25,7 @@
  * licensors of the ULTIMATE RCFGBuilder plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
+package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure;
 
 import java.util.Map;
 import java.util.Set;
@@ -35,7 +35,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IVisualizable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 
 /**
  *
@@ -74,8 +73,6 @@ public interface IIcfg<LOC extends IcfgLocation> extends IElement, IVisualizable
 	 * Return all locations that are considered to be loop heads.
 	 */
 	Set<LOC> getLoopLocations();
-
-	CodeBlockFactory getCodeBlockFactory();
 
 	CfgSmtToolkit getCfgSmtToolkit();
 

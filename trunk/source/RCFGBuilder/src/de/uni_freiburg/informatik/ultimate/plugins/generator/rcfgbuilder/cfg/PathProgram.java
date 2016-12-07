@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
@@ -183,11 +184,6 @@ public class PathProgram<LOC extends IcfgLocation> extends BasePayloadContainer 
 	@Override
 	public Map<String, Set<IcfgLocation>> getProcedureErrorNodes() {
 		return mProcError;
-	}
-
-	@Override
-	public CodeBlockFactory getCodeBlockFactory() {
-		return mOriginalIcfg.getCodeBlockFactory();
 	}
 
 	@Override

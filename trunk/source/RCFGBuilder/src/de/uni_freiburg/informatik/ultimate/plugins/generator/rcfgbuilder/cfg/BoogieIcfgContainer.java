@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieDeclar
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
@@ -181,7 +182,6 @@ public class BoogieIcfgContainer extends ModernAnnotations implements IIcfg<Boog
 		return mBoogieDeclarations;
 	}
 
-	@Override
 	public CodeBlockFactory getCodeBlockFactory() {
 		return mCodeBlockFactory;
 	}
