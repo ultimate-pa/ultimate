@@ -252,7 +252,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 		} else {
 			// construct initial partition using collections from constructor
 			assert (mPartition == null
-					&& assertStatesSeparation(equivalenceClasses)) : 
+					&& assertStatesSeparation(equivalenceClasses)) :
 						"initial partition does not separate final/non-final states";
 			mPartition = new Partition(mOperand, states.size());
 			
@@ -321,9 +321,9 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 			nonfinals = states.getNonfinals();
 		} else {
 			// make a copy here if states container has no sets
-			finals = new HashSet<STATE>(
+			finals = new HashSet<>(
 					computeHashCap(mOperand.getFinalStates().size()));
-			nonfinals = new HashSet<STATE>(computeHashCap(
+			nonfinals = new HashSet<>(computeHashCap(
 					mOperand.size() - mOperand.getFinalStates().size()));
 			for (final STATE state : mOperand.getStates()) {
 				if (mOperand.isFinal(state)) {
@@ -392,12 +392,12 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 				HashSet<LETTER> internalLetters;
 				HashSet<LETTER> callLetters;
 				HashSet<LETTER> returnLettersOutgoing;
-				final HashSet<LETTER> returnLetters = new HashSet<LETTER>();
+				final HashSet<LETTER> returnLetters = new HashSet<>();
 				
 				if (naiveSplit) {
-					internalLetters = new HashSet<LETTER>();
-					callLetters = new HashSet<LETTER>();
-					returnLettersOutgoing = new HashSet<LETTER>();
+					internalLetters = new HashSet<>();
+					callLetters = new HashSet<>();
+					returnLettersOutgoing = new HashSet<>();
 					
 					final Iterator<STATE> iterator = a.iterator();
 					while (iterator.hasNext()) {
@@ -545,7 +545,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 				final Iterator<STATE> iterator = x.iterator();
 				while (iterator.hasNext()) {
 					final HashSet<STATE> hashSet =
-							new HashSet<STATE>(computeHashCap(1));
+							new HashSet<>(computeHashCap(1));
 					hashSet.add(iterator.next());
 					final PredecessorSet x2 = new PredecessorSet(hashSet);
 					
@@ -562,7 +562,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 				 * to set of linear predecessors
 				 */
 				final HashMap<EquivalenceClass, HashSet<STATE>> ec2linSet =
-						new HashMap<EquivalenceClass, HashSet<STATE>>();
+						new HashMap<>();
 				
 				final Iterator<STATE> iterator = targetSet.iterator();
 				while (iterator.hasNext()) {
@@ -573,7 +573,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 								inTrans.getHierPred());
 						HashSet<STATE> linSet = ec2linSet.get(ec);
 						if (linSet == null) {
-							linSet = new HashSet<STATE>();
+							linSet = new HashSet<>();
 							ec2linSet.put(ec, linSet);
 						}
 						for (final IncomingReturnTransition<LETTER, STATE> inTransInner : partition.linPredIncoming(
@@ -615,7 +615,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 				
 				// find all hierarchical predecessors of the states in A
 				final Iterator<STATE> iterator = targetSet.iterator();
-				final Collection<STATE> hierPreds = new HashSet<STATE>();
+				final Collection<STATE> hierPreds = new HashSet<>();
 				while (iterator.hasNext()) {
 					for (final IncomingReturnTransition<LETTER, STATE> inTrans : partition
 							.hierPredIncoming(iterator.next(), letter)) {
@@ -625,7 +625,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 				
 				for (final STATE hier : hierPreds) {
 					final HashSet<STATE> hashSet =
-							new HashSet<STATE>(computeHashCap(1));
+							new HashSet<>(computeHashCap(1));
 					hashSet.add(hier);
 					final PredecessorSet x = new PredecessorSet(hashSet);
 					
@@ -639,7 +639,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 				
 				// distinguish linear predecessors by equivalence classes
 				final HashMap<EquivalenceClass, HashSet<STATE>> ec2hierSet =
-						new HashMap<EquivalenceClass, HashSet<STATE>>();
+						new HashMap<>();
 				final Iterator<STATE> iterator = targetSet.iterator();
 				while (iterator.hasNext()) {
 					final STATE state = iterator.next();
@@ -651,7 +651,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 								partition.getEquivalenceClass(lin);
 						HashSet<STATE> set = ec2hierSet.get(ec);
 						if (set == null) {
-							set = new HashSet<STATE>();
+							set = new HashSet<>();
 							ec2hierSet.put(ec, set);
 						}
 						set.add(hier);
@@ -692,13 +692,13 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 			
 			// maps hierarchical states to linear states to return transitions
 			final HashMap<EquivalenceClass, HashMap<EquivalenceClass, List<Set<ReturnTransition>>>> hier2lin2trans =
-					new HashMap<EquivalenceClass, HashMap<EquivalenceClass, List<Set<ReturnTransition>>>>();
+					new HashMap<>();
 			
 			final Iterator<STATE> iterator = targetSet.iterator();
 			// for each successor state 'state' in A:
 			while (iterator.hasNext()) {
 				final STATE state = iterator.next();
-				final HashSet<STATE> hierVisited = new HashSet<STATE>();
+				final HashSet<STATE> hierVisited = new HashSet<>();
 				
 				// for each hierarchical predecessor 'hier' of 'state':
 				for (final IncomingReturnTransition<LETTER, STATE> inTrans : partition.hierPredIncoming(state,
@@ -715,7 +715,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 					
 					HashMap<EquivalenceClass, List<Set<ReturnTransition>>> lin2trans = hier2lin2trans.get(ecHier);
 					if (lin2trans == null) {
-						lin2trans = new HashMap<EquivalenceClass, List<Set<ReturnTransition>>>();
+						lin2trans = new HashMap<>();
 						hier2lin2trans.put(ecHier, lin2trans);
 					}
 					
@@ -731,7 +731,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 								lin2trans.get(ecLin);
 						if (similarSetsList == null) {
 							similarSetsList =
-									new LinkedList<Set<ReturnTransition>>();
+									new LinkedList<>();
 							lin2trans.put(ecLin, similarSetsList);
 						}
 						
@@ -744,7 +744,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 								getSimilarSet(partition, transition,
 										letter, similarSetsList);
 						if (similarSet == null) {
-							similarSet = new HashSet<ReturnTransition>();
+							similarSet = new HashSet<>();
 							similarSetsList.add(similarSet);
 						}
 						
@@ -814,8 +814,8 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 				for (final Set<ReturnTransition> similarSet : similarSetsList) {
 					// set up linear and hierarchical predecessor sets
 					final int size = computeHashCap(similarSet.size());
-					final HashSet<STATE> lins = new HashSet<STATE>(size);
-					final HashSet<STATE> hiers = new HashSet<STATE>(size);
+					final HashSet<STATE> lins = new HashSet<>(size);
+					final HashSet<STATE> hiers = new HashSet<>(size);
 					for (final ReturnTransition trans : similarSet) {
 						lins.add(trans.getLin());
 						hiers.add(trans.getHier());
@@ -878,7 +878,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 		 * list of split equivalence classes
 		 */
 		final LinkedList<EquivalenceClass> intersected =
-				new LinkedList<EquivalenceClass>();
+				new LinkedList<>();
 		
 		// iteratively splits equivalence classes with elements from X
 		final Iterator<STATE> iterator = predSet.iterator();
@@ -1443,7 +1443,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 			if (collection instanceof Set) {
 				mCollection = (Set<STATE>) collection;
 			} else {
-				mCollection = new HashSet<STATE>(computeHashCap(
+				mCollection = new HashSet<>(computeHashCap(
 						collection.size()));
 				for (final STATE state : collection) {
 					mCollection.add(state);
@@ -1556,7 +1556,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 			 * create a new collection for intersection
 			 */
 			if (mIntersection == null) {
-				mIntersection = new HashSet<STATE>();
+				mIntersection = new HashSet<>();
 				intersected.add(this);
 			}
 			return mIntersection;
@@ -1746,10 +1746,10 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 		 */
 		Partition(final INestedWordAutomaton<LETTER, STATE> operand, final int states) {
 			mParentOperand = operand;
-			mEquivalenceClasses = new LinkedList<EquivalenceClass>();
+			mEquivalenceClasses = new LinkedList<>();
 			mWorkList = new WorkList(mParentOperand.size() / 2);
 			mMapState2EquivalenceClass =
-					new HashMap<STATE, EquivalenceClass>(
+					new HashMap<>(
 							computeHashCap(states));
 		}
 		
@@ -1930,7 +1930,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 		 *            set of target states
 		 */
 		private Collection<STATE> neighbors(final Iterable<STATE> states) {
-			final LinkedList<STATE> result = new LinkedList<STATE>();
+			final LinkedList<STATE> result = new LinkedList<>();
 			for (final STATE s : states) {
 				if (mMapState2EquivalenceClass.get(s) != null) {
 					result.add(s);
@@ -2039,7 +2039,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 		}
 		
 		void addSuccReturnHier(final STATE state, final LETTER letter, final PredecessorSet predSet) {
-			final HashSet<STATE> hierSet = new HashSet<STATE>();
+			final HashSet<STATE> hierSet = new HashSet<>();
 			for (final STATE hier : mParentOperand.hierarchicalPredecessorsOutgoing(state, letter)) {
 				hierSet.add(hier);
 			}
@@ -2158,7 +2158,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 		 */
 		public TargetSet(final EquivalenceClass firstEquivalenceClass) {
 			assert firstEquivalenceClass != null;
-			mEquivalenceClasses = new LinkedList<EquivalenceClass>();
+			mEquivalenceClasses = new LinkedList<>();
 			mEquivalenceClasses.add(firstEquivalenceClass);
 			firstEquivalenceClass.setInTargetSet(true);
 		}
@@ -2288,7 +2288,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 				// special case where automaton has no reachable states
 				size = 1;
 			}
-			mQueue = new PriorityQueue<EquivalenceClass>(size,
+			mQueue = new PriorityQueue<>(size,
 					new Comparator<EquivalenceClass>() {
 						@Override
 						public int compare(final EquivalenceClass ec1,
@@ -2432,10 +2432,10 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 				// if unreachable states shall be removed, make a copy
 				case MAKE_COPY:
 					mFinals =
-							new HashSet<STATE>(computeHashCap(
+							new HashSet<>(computeHashCap(
 									mParentOperand.getFinalStates().size()));
 					mNonfinals =
-							new HashSet<STATE>(computeHashCap(
+							new HashSet<>(computeHashCap(
 									mParentOperand.size() - mParentOperand.getFinalStates().size()));
 					break;
 				/*
@@ -2443,8 +2443,8 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 				 * only remember removed states
 				 */
 				case SAVE_REMOVED:
-					mFinals = new HashSet<STATE>();
-					mNonfinals = new HashSet<STATE>();
+					mFinals = new HashSet<>();
+					mNonfinals = new HashSet<>();
 					break;
 				// else the sets are not needed
 				case NONE:
@@ -2628,9 +2628,8 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 			
 			if (finals) {
 				return mFinals.size();
-			} else {
-				return mNonfinals.size();
 			}
+			return mNonfinals.size();
 		}
 		
 		/**
@@ -2644,7 +2643,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 				case MAKE_COPY:
 					return mNonfinals;
 				case SAVE_REMOVED:
-					final LinkedList<STATE> result = new LinkedList<STATE>();
+					final LinkedList<STATE> result = new LinkedList<>();
 					final Iterator<STATE> iterator = getNonfinalsIterator();
 					while (iterator.hasNext()) {
 						result.add(iterator.next());
