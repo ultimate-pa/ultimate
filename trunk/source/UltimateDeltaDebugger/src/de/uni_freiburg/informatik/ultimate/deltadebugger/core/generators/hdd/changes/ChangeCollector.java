@@ -32,13 +32,20 @@ import java.util.Map;
 import org.eclipse.cdt.core.dom.ast.ASTNodeProperty;
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTConditionalExpression;
+import org.eclipse.cdt.core.dom.ast.IASTDeclarationStatement;
+import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
+import org.eclipse.cdt.core.dom.ast.IASTEqualsInitializer;
+import org.eclipse.cdt.core.dom.ast.IASTExpression;
 import org.eclipse.cdt.core.dom.ast.IASTForStatement;
 import org.eclipse.cdt.core.dom.ast.IASTIfStatement;
+import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
+import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTStandardFunctionDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTWhileStatement;
 import org.eclipse.cdt.core.parser.IToken;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.generators.CommaDeleter;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.generators.hdd.HddChange;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTConditionalBlock;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTNode;
@@ -126,7 +133,6 @@ public class ChangeCollector {
 	 *            alternative replacements if the operand could not be deleted
 	 * @return {@code true} iff a change has been added
 	 */
-	@SuppressWarnings("squid:S1698")
 	public boolean addDeleteBinaryExpressionOperandChange(final IPSTRegularNode operandNode,
 			final List<String> altOperandReplacements) {
 		final ASTNodeProperty property = operandNode.getAstNode().getPropertyInParent();
@@ -173,7 +179,6 @@ public class ChangeCollector {
 	 *            replacement string
 	 * @return {@code true} iff a change has been added
 	 */
-	@SuppressWarnings("squid:S1698")
 	public boolean addDeleteConditionalExpressionChange(final IPSTRegularNode node, final String replacement) {
 		final ASTNodeProperty property = node.getAstNode().getPropertyInParent();
 		int position;
@@ -463,7 +468,6 @@ public class ChangeCollector {
 	 *            {@code true} iff one element should be kept
 	 * @return {@code true} iff a change has been added
 	 */
-	@SuppressWarnings("squid:S1698")
 	public boolean addDeleteWithCommaChange(final IPSTRegularNode node, final boolean keepOne) {
 		final IPSTRegularNode parent = node.getRegularParent();
 		final ASTNodeProperty childProperty = ASTNodeUtils.getPropertyOfCommaSeparatedChildNodes(parent.getAstNode());
@@ -472,13 +476,13 @@ public class ChangeCollector {
 					+ node.getAstNode().getPropertyInParent());
 			return false;
 		}
-		
+
 		final List<CommaSeparatedChild> commaPositions = mParentToCommaPositionMap.computeIfAbsent(parent,
-				n -> CommaSeparatedChildFinder.run(n, childProperty));
+				n -> CommaSeparatedChildFinder.runWithVarArgsSupport(n, childProperty));
 		if (keepOne && commaPositions.size() <= 1) {
 			return false;
 		}
-		
+
 		if (!CommaDeleter.isDeletionWithCommaPossible(node, commaPositions)) {
 			mLogger.debug("DeleteWithCommaChange not supported because of missing comma: " + node);
 			return false;
@@ -488,42 +492,98 @@ public class ChangeCollector {
 	}
 	
 	/**
-	 * The varargs token "..." is not a node in the PST and so it cannot be deleted with the existing
-	 * {@code CommaDeleter} implementation to delete it like the other comma separated nodes. A better solution would be
-	 * to change the CommaDeleter to not require a valid node and/or add a special node for this token to the PST. This
-	 * workaround just deletes the "..."-token independently from the other parameters. To prevent syntax errors because
-	 * of trailing comma, it should only be used if there are not other parameters.
+	 * Add a change to delete the varargs placeholder token "..." like a regular parameter declaration including the
+	 * leading comma.
 	 * 
-	 * @param node
-	 *            PST node
+	 * @param parent
+	 *            PST node of the standard function declarator ast node.
 	 * @param astNode
-	 *            standard function declarator
+	 *            AST node of the standard function declarator.
+	 * @param keepOne
+	 *            {@code true} iff one element should be kept
 	 * @return {@code true} iff a change was added
 	 */
-	public boolean addDeleteVarArgsChange(final IPSTRegularNode node, final IASTStandardFunctionDeclarator astNode) {
+	public boolean addDeleteVarArgsChange(final IPSTRegularNode parent, final IASTStandardFunctionDeclarator astNode,
+			boolean keepOne) {
 		if (!astNode.takesVarArgs()) {
-			mLogger.warn("DeleteVarArgsChange not supported for node " + node + " because it does not take varargs");
 			return false;
 		}
-		final List<Token> tokens = TokenCollector.collect(node);
+		final List<Token> tokens = TokenCollector.collect(parent);
 		final Token token = tokens.stream().filter(t -> t.getType() == IToken.tELLIPSIS).findAny().orElse(null);
 		if (token == null) {
-			mLogger.debug("DeleteVarArgsChange not supported because of missing ellipsis: " + node);
+			mLogger.debug("DeleteVarArgsChange not supported because of missing ellipsis token: " + parent);
 			return false;
 		}
-		
+
+		final List<CommaSeparatedChild> commaPositions = mParentToCommaPositionMap.computeIfAbsent(parent,
+				n -> CommaSeparatedChildFinder.runWithVarArgsSupport(n,
+						IASTStandardFunctionDeclarator.FUNCTION_PARAMETER));
+		if (keepOne && commaPositions.size() <= 1) {
+			return false;
+		}
+
+		if (!CommaDeleter.isDeletionWithCommaPossible(token, commaPositions)) {
+			mLogger.debug("DeleteVarArgs not supported because of missing comma: " + token);
+			return false;
+		}
+
+		return addChange(new DeleteWithCommaChange(parent, commaPositions, keepOne, token));
+	}
+	
+	/**
+	 * Split initialization expression from a declaration by replacing the equals character by a semicolon. This may
+	 * allow a deletion of the declaration statement in following HDD applications, while keeping the expression
+	 * side-effects.
+	 * 
+	 * Currently only done for declaration statements with a single declarator and where the initializer is an
+	 * expression (and not an initializer list).
+	 * 
+	 * @param node
+	 *            The equals initializer node.
+	 * @param astNode
+	 *           The AST node, cast done by caller.
+	 * @return {@code true} iff a change has been added
+	 */
+	public boolean addChangeToSplitInitializerExpressionFromDeclaration(final IPSTNode node,
+			IASTEqualsInitializer astNode) {
+		// Is the initializer clause an expression?
+		final IASTInitializerClause clause = astNode.getInitializerClause();
+		if (!(clause instanceof IASTExpression)) {
+			return false;
+		}
+		// Traverse up the tree and ensure this initializer is part of a statement with only one declarator.
+		if (astNode.getPropertyInParent() != IASTDeclarator.INITIALIZER) {
+			return false;
+		}
+		final IASTDeclarator declarator = (IASTDeclarator) astNode.getParent();
+		if (declarator.getPropertyInParent() != IASTSimpleDeclaration.DECLARATOR) {
+			return false;
+		}
+		final IASTSimpleDeclaration declaration = (IASTSimpleDeclaration) declarator.getParent();
+		if (declaration.getDeclarators().length != 1) {
+			return false;
+		}
+		if (declaration.getPropertyInParent() != IASTDeclarationStatement.DECLARATION) {
+			return false;
+		}
+
+		// Now find the assignment token
+		final Token[] tokens = TokenUtils.getExpectedTokenArray(node, IToken.tASSIGN);
+		if (tokens[0] == null) {
+			return false;
+		}
 		return addChange(new HddChange(node) {
 			@Override
-			public void apply(final SourceRewriter rewriter) {
-				RewriteUtils.replaceByWhitespace(rewriter, token);
+			public void apply(SourceRewriter rewriter) {
+				rewriter.replace(tokens[0], ";");
 			}
-			
+
 			@Override
 			public String toString() {
-				return "Delete varargs from function declarator " + getNode();
+				return "Split initializer expression from declaration statement " + getNode();
 			}
 		});
-	}
+	}	
 	
 	/**
 	 * @param node

@@ -30,11 +30,13 @@ import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.exceptions.ChangeConflictException;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.generators.CommaDeleter;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.generators.hdd.HddChange;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTNode;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTRegularNode;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.util.CommaSeparatedChild;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.HierarchicalSourceRangeComparator;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceRange;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.SourceRewriter;
 
 /**
@@ -43,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.SourceRewrite
 public class DeleteWithCommaChange extends HddChange {
 	private final IPSTNode mParent;
 	private final List<CommaSeparatedChild> mCommaPositions;
+	private final ISourceRange mNodeLocation;
 	
 	private final boolean mKeepOne;
 	
@@ -61,6 +64,28 @@ public class DeleteWithCommaChange extends HddChange {
 		super(node);
 		mParent = parent;
 		mCommaPositions = commaPositions;
+		mNodeLocation = node;
+		mKeepOne = keepOne;
+	}
+	
+	/**
+	 * Constructor to delete by location (used to delete the varargs ellipsis token).
+	 * 
+	 * @param parent
+	 *            parent PST node
+	 * @param commaPositions
+	 *            comma positions
+	 * @param keepOne
+	 *            {@code true} iff one element should be kept
+	 * @param nodeLocation
+	 *            varargs token location
+	 */
+	public DeleteWithCommaChange(final IPSTRegularNode parent, final List<CommaSeparatedChild> commaPositions,
+			final boolean keepOne, final ISourceRange nodeLocation) {
+		super(parent);
+		mParent = parent;
+		mCommaPositions = commaPositions;
+		mNodeLocation = nodeLocation;
 		mKeepOne = keepOne;
 	}
 	
@@ -78,39 +103,40 @@ public class DeleteWithCommaChange extends HddChange {
 	
 	@Override
 	public String toString() {
-		return "Delete with comma " + getNode() + " (from " + mParent + ")";
+		return "Delete with comma " + mNodeLocation + " (from " + mParent + ")";
 	}
 	
 	@Override
 	public void updateDeferredChange(final Map<IPSTNode, HddChange> deferredChangeMap) {
-		((CombinedChange) deferredChangeMap.computeIfAbsent(mParent, CombinedChange::new)).addChild(getNode());
+		((CombinedChange) deferredChangeMap.computeIfAbsent(mParent, CombinedChange::new))
+				.addChildLocation(mNodeLocation);
 	}
-	
+
 	/**
 	 * Combined change.
 	 */
 	class CombinedChange extends HddChange {
-		private final List<IPSTNode> mChildrenToDelete = new ArrayList<>();
-		
+		private final List<ISourceRange> mChildLocationsToDelete = new ArrayList<>();
+
 		CombinedChange(final IPSTNode node) {
 			super(node);
 		}
-		
-		void addChild(final IPSTNode child) {
-			mChildrenToDelete.add(child);
+
+		void addChildLocation(final ISourceRange child) {
+			mChildLocationsToDelete.add(child);
 		}
-		
+
 		@Override
 		public void apply(final SourceRewriter rewriter) {
 			// Just sort the nodes instead of relying that they are already
 			// in order (which should be the case, though)
-			mChildrenToDelete.sort(HierarchicalSourceRangeComparator.getInstance());
-			
-			if (mKeepOne && mCommaPositions.size() - mChildrenToDelete.size() < 1) {
+			mChildLocationsToDelete.sort(HierarchicalSourceRangeComparator.getInstance());
+
+			if (mKeepOne && mCommaPositions.size() - mChildLocationsToDelete.size() < 1) {
 				throw new ChangeConflictException("Applying this combination of changes would delete the last element");
 			}
-			
-			CommaDeleter.deleteNodesWithComma(rewriter, mChildrenToDelete, mCommaPositions);
+
+			CommaDeleter.deleteNodesWithComma(rewriter, mChildLocationsToDelete, mCommaPositions);
 		}
 	}
 }

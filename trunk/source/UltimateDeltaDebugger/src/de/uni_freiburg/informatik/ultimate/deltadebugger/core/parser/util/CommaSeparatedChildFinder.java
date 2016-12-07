@@ -31,11 +31,14 @@ import java.util.Objects;
 
 import org.eclipse.cdt.core.dom.ast.ASTNodeProperty;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
+import org.eclipse.cdt.core.dom.ast.IASTStandardFunctionDeclarator;
+import org.eclipse.cdt.core.parser.IToken;
 
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTGapVisitor;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTLiteralRegion;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTNode;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTRegularNode;
+import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.util.TokenCollector.Token;
 
 /**
  * Utility class to collect information about all comma separated children and the corresponding comma locations.
@@ -59,6 +62,32 @@ public final class CommaSeparatedChildFinder {
 	public static List<CommaSeparatedChild> run(final IPSTRegularNode parentNode, final ASTNodeProperty childProperty) {
 		final CommaSeparatedChildFinder.Visitor instance = new Visitor(parentNode, childProperty);
 		GapVisitor.invokeAccept(parentNode, instance);
+		return instance.mResult;
+	}
+	
+	/**
+	 * Find list of comma separated children of the given node identified by the given node property. This method also
+	 * checks for a varargs function and adds a dummy entry for the "..." token.
+	 *
+	 * @param parentNode
+	 *            parent node that may have comma separated children
+	 * @param childProperty
+	 *            property to identify the child nodes
+	 * @return sorted list of all child nodes with comma location
+	 */
+	public static List<CommaSeparatedChild> runWithVarArgsSupport(final IPSTRegularNode parentNode,
+			final ASTNodeProperty childProperty) {
+		final CommaSeparatedChildFinder.Visitor instance = new Visitor(parentNode, childProperty);
+		GapVisitor.invokeAccept(parentNode, instance);
+
+		// Add dummy entry for varargs function parameters
+		if (childProperty == IASTStandardFunctionDeclarator.FUNCTION_PARAMETER
+				&& ((IASTStandardFunctionDeclarator) parentNode.getAstNode()).takesVarArgs()) {
+			final List<Token> tokens = TokenCollector.collect(parentNode);
+			final Token ellipsis = tokens.stream().filter(t -> t.getType() == IToken.tELLIPSIS).findAny().orElse(null);
+			instance.mResult.add(new CommaSeparatedChild(null, ellipsis));
+		}
+
 		return instance.mResult;
 	}
 	

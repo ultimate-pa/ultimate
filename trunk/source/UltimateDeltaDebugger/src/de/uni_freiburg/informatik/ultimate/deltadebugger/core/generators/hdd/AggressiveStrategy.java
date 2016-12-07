@@ -105,11 +105,14 @@ public class AggressiveStrategy implements IHddStrategy {
 			collector.addDeleteAllTokensChange(node);
 		}
 		
+		if (node.getAstNode() instanceof IASTEqualsInitializer) {
+			collector.addChangeToSplitInitializerExpressionFromDeclaration(node,
+					(IASTEqualsInitializer) node.getAstNode());
+		}
+
 		if (node.getAstNode() instanceof IASTStandardFunctionDeclarator) {
-			final IASTStandardFunctionDeclarator astNode = (IASTStandardFunctionDeclarator) node.getAstNode();
-			if (astNode.takesVarArgs()) {
-				collector.addDeleteVarArgsChange((IPSTRegularNode) node, astNode);
-			}
+			collector.addDeleteVarArgsChange((IPSTRegularNode) node, (IASTStandardFunctionDeclarator) node.getAstNode(),
+					false);
 		}
 	}
 	

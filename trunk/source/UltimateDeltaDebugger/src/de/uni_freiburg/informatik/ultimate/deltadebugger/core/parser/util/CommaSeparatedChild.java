@@ -25,11 +25,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.util;
 
-import java.util.Objects;
-
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 
-import de.uni_freiburg.informatik.ultimate.deltadebugger.core.parser.pst.interfaces.IPSTRegularNode;
 import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceRange;
 
 /**
@@ -38,44 +35,44 @@ import de.uni_freiburg.informatik.ultimate.deltadebugger.core.text.ISourceRange;
 public class CommaSeparatedChild {
 	protected ISourceRange mNextCommaLocation;
 	private final IASTNode mAstNode;
-	private final IPSTRegularNode mNode;
-	
+	private final ISourceRange mNodeLocation;
+
 	/**
 	 * @param astNode
 	 *            The child node in the AST.
-	 * @param node
-	 *            the corresponding regular PST node if existing
+	 * @param nodeLocation
+	 *            The corresponding node location if known.
 	 */
-	public CommaSeparatedChild(final IASTNode astNode, final IPSTRegularNode node) {
-		mAstNode = Objects.requireNonNull(astNode);
-		mNode = node;
+	public CommaSeparatedChild(final IASTNode astNode, final ISourceRange nodeLocation) {
+		mAstNode = astNode;
+		mNodeLocation = nodeLocation;
 	}
-	
+
 	/**
-	 * @return IASTNode (not null).
+	 * @return IASTNode (null iff this is a dummy entry for a varargs placeholder).
 	 */
 	public IASTNode astNode() {
 		return mAstNode;
 	}
-	
+
 	/**
 	 * @return Location of the first comma encountered after the child node. null if no comma was found.
 	 */
 	public ISourceRange nextCommaLocation() {
 		return mNextCommaLocation;
 	}
-	
+
 	/**
-	 * @return Regular PST node corresponding to the IASTNode if it exists (null otherwise).
+	 * @return Location of a regular PST node corresponding to the IASTNode if it exists. If this is an entry for a
+	 *         varargs placeholder the location of "..." token. Otherwise null of not found.
 	 */
-	public IPSTRegularNode node() {
-		return mNode;
+	public ISourceRange nodeLocation() {
+		return mNodeLocation;
 	}
-	
+
 	@Override
 	public String toString() {
-		return "CommaSeparatedChild [astNode=" + mAstNode + ", node=" + mNode + ", nextCommaLocation="
-				+ mNextCommaLocation
-				+ "]";
+		return "CommaSeparatedChild [astNode=" + mAstNode + ", nodeLocation=" + mNodeLocation + ", nextCommaLocation="
+				+ mNextCommaLocation + "]";
 	}
 }
