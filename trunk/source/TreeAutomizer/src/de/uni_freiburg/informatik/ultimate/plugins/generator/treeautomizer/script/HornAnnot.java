@@ -9,20 +9,20 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClause;
 
 public class HornAnnot implements IAnnotations {
-	
+
 	private final Script mBackendSolverScript;
-	final Map<String, Object> mp = new HashMap<String, Object>();
-	
+	final Map<String, Object> mp = new HashMap<>();
+
 	public HornAnnot(final List<HornClause> clauses, final Script backendSolver) {
 		mp.put("HoRNClauses", clauses);
 		mBackendSolverScript = backendSolver;
 	}
-	
+
 	@Override
 	public Map<String, Object> getAnnotationsAsMap() {
 		return mp;
 	}
-	
+
 	public Script getScript() {
 		return mBackendSolverScript;
 	}
