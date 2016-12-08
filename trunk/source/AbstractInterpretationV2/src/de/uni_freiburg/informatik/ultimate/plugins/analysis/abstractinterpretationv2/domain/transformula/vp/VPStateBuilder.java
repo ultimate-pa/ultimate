@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -164,7 +165,8 @@ public class VPStateBuilder {
 				/*
 				 * Because of the change of representative, the disequality set also need to be updated.
 				 */
-				for (VPDomainSymmetricPair<EqNode> pair : mDisEqualitySet) {
+				Set<VPDomainSymmetricPair<EqNode>> copyOfDisEqSet = new HashSet<>(mDisEqualitySet);
+				for (VPDomainSymmetricPair<EqNode> pair : copyOfDisEqSet) {
 					if (pair.contains(graphNode1Find.eqNode)) {
 						EqNode first = pair.getFirst();
 						EqNode second = pair.getSecond();
