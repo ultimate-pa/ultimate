@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 
@@ -135,6 +136,11 @@ public class BoogieConst implements IBoogieVar, IProgramConst {
 	@Override
 	public String toString() {
 		return mIdentifier;
+	}
+
+	@Override
+	public Sort getSort() {
+		return getTerm().getSort();
 	}
 
 }

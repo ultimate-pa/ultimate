@@ -34,14 +34,14 @@ import org.junit.Test;
 
 import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractState.SubsetResult;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.BoogieVarMockup;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.TemporaryBoogieVar;
 import de.uni_freiburg.informatik.ultimate.test.ConsoleLogger;
 
 public class IntervalDomainSubsetTest {
-	
+
 	@Test
 	public void TestSubsetRelatedToBug() {
-		final BoogieVarMockup varA = new BoogieVarMockup("a", BoogieType.TYPE_INT);
+		final TemporaryBoogieVar varA = new TemporaryBoogieVar(BoogieType.TYPE_INT, "a");
 
 		IntervalDomainState state1 = new IntervalDomainState(new ConsoleLogger());
 		state1 = state1.addVariable(varA);
@@ -62,7 +62,7 @@ public class IntervalDomainSubsetTest {
 
 	@Test
 	public void TestContainment() {
-		final BoogieVarMockup varA = new BoogieVarMockup("a", BoogieType.TYPE_INT);
+		final TemporaryBoogieVar varA = new TemporaryBoogieVar(BoogieType.TYPE_INT, "a");
 
 		IntervalDomainState s1 = new IntervalDomainState(new ConsoleLogger());
 		s1 = s1.addVariable(varA);

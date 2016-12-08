@@ -1,10 +1,35 @@
+/*
+ * Copyright (C) 2016 Claus Schätzle (schaetzc@informatik.uni-freiburg.de)
+ * Copyright (C) 2016 University of Freiburg
+ *
+ * This file is part of the ULTIMATE AbstractInterpretationV2 plug-in.
+ *
+ * The ULTIMATE AbstractInterpretationV2 plug-in is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE AbstractInterpretationV2 plug-in is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE AbstractInterpretationV2 plug-in. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE AbstractInterpretationV2 plug-in, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission
+ * to convey the resulting work.
+ */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -14,7 +39,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
  *
  * @author schaetzc@informatik.uni-freiburg.de
  */
-public class BoogieUtil {
+public final class BoogieUtil {
+
+	private BoogieUtil() {
+		// do not instantiate utility class
+	}
 
 	/**
 	 * Creates a dummy {@link IBoogieVar} from a given type. This method is used to give generated temporary variables a
@@ -29,28 +58,7 @@ public class BoogieUtil {
 	 * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
 	 */
 	public static IBoogieVar createTemporaryIBoogieVar(final String identifier, final IBoogieType type) {
-		return new IBoogieVar() {
-			@Override
-			public String getGloballyUniqueId() {
-				return identifier;
-			}
-
-			@Override
-			public IBoogieType getIType() {
-				return type;
-			}
-
-			@Override
-			public ApplicationTerm getDefaultConstant() {
-				// TODO: type to sort
-				throw new UnsupportedOperationException("Temporary IBoogieVars dont have default constants.");
-			}
-
-			@Override
-			public String toString() {
-				return identifier;
-			}
-		};
+		return new TemporaryBoogieVar(type, identifier);
 	}
 
 	/**

@@ -171,6 +171,10 @@ public class TypeSortTranslator {
 		}
 	}
 
+	public static Sort constructSort(final IBoogieType boogieType, final Script script) {
+		return constructSort(boogieType, script, a -> null);
+	}
+
 	/**
 	 * Construct the SMT sort for a Boogie type. Does not use any caching and, depending on your funAttributeCache, may
 	 * create many sorts.
