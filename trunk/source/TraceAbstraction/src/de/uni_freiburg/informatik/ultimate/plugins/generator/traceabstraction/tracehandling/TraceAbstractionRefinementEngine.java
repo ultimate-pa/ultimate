@@ -209,6 +209,9 @@ public final class TraceAbstractionRefinementEngine
 			case MULTI_TRACK:
 				return new MultiTrackTraceAbstractionRefinementStrategy(mLogger, prefs, services, mPredicateUnifier,
 						counterexample, abstraction, taPrefsForInterpolantConsolidation);
+			case TAIPAN:
+				return new TaipanRefinementStrategy(mLogger, services, prefs, mPredicateUnifier, counterexample,
+						abstraction);
 			default:
 				throw new IllegalArgumentException(
 						"Unknown refinement strategy specified: " + prefs.getRefinementStrategy());
@@ -429,6 +432,7 @@ public final class TraceAbstractionRefinementEngine
 		
 		switch (prefs.getRefinementStrategy()) {
 			case MULTI_TRACK:
+			case TAIPAN:
 				managedScript = null;
 				break;
 			case FIXED_PREFERENCES:

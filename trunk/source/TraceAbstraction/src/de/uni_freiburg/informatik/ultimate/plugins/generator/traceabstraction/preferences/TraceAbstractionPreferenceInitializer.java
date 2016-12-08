@@ -395,7 +395,11 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		/**
 		 * Multi track strategy that tries Craig interpolation and Sp/Wp interpolation.
 		 */
-		MULTI_TRACK
+		MULTI_TRACK,
+		/**
+		 * Tapian strategy.
+		 */
+		TAIPAN
 	}
 	
 	/**
