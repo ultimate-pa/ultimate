@@ -955,12 +955,49 @@ public final class SmtUtils {
 				final BigInteger bigIntDivident = toInt(affineDivident.getConstant());
 				final BigInteger modulus = BoogieUtils.euclideanMod(bigIntDivident, bigIntDivisor);
 				return script.numeral(modulus);
+			} else {
+				final Term simplifiedNestedModulo = simplifyNestedModulo(script, divident, bigIntDivisor);
+				if (simplifiedNestedModulo == null) {
+					// no simplification was possible, continue
+				} else {
+					return simplifiedNestedModulo;
+				}
 			}
 			final AffineTerm moduloApplied =
 					AffineTerm.applyModuloToAllCoefficients(script, affineDivident, bigIntDivisor);
 			return script.term("mod", moduloApplied.toTerm(script), affineDivisor.toTerm(script));
 		}
 		return script.term("mod", affineDivident.toTerm(script), affineDivisor.toTerm(script));
+	}
+
+	/**
+	 * Check if a divident of an modulo operation with constant divisor is 
+	 * itself a modulo operation. If this is the case we might be able to 
+	 * apply some simplifications.
+	 * @param divident Divident of an outer modulo operation
+	 * @param bigIntDivisor Divisor of an outer modulo operation
+	 * @return Simplified version of the outer modulo operation or null
+	 * (null in case where we could not apply simplifications.)
+	 */
+	private static Term simplifyNestedModulo(final Script script, final Term divident, final BigInteger bigIntDivisor) {
+		if (divident instanceof ApplicationTerm) {
+			final ApplicationTerm appTerm = (ApplicationTerm) divident;
+			if (appTerm.getFunction().getApplicationString().equals("mod")) {
+				final Term innerDivident = appTerm.getParameters()[1];
+				final AffineTerm affineInnerDivisor = (AffineTerm) (new AffineTermTransformer(script)).transform(innerDivident);
+				if (!affineInnerDivisor.isErrorTerm() && affineInnerDivisor.isConstant()) {
+					final BigInteger bigIntInnerDivisor = toInt(affineInnerDivisor.getConstant());
+					if (bigIntInnerDivisor.mod(bigIntDivisor).equals(BigInteger.ZERO) ||
+							bigIntDivisor.mod(bigIntInnerDivisor).equals(BigInteger.ZERO)) {
+						final BigInteger min = bigIntInnerDivisor.min(bigIntDivisor);
+						final Term innerDivisor = appTerm.getParameters()[0];
+						final Term result = mod(script, innerDivisor, script.numeral(min));
+						return result;
+					}
+				}
+			}
+		}
+		return null;
 	}
 
 	public static BigInteger toInt(final Rational integralRational) {
