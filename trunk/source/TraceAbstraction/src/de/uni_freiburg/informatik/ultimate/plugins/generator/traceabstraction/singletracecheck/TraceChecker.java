@@ -97,7 +97,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * 
  * @author heizmann@informatik.uni-freiburg.de
  */
-public class TraceChecker {
+public class TraceChecker implements ITraceChecker {
 	
 	protected final ILogger mLogger;
 	protected final IUltimateServiceProvider mServices;
@@ -230,14 +230,10 @@ public class TraceChecker {
 		return new TraceCheckerStatisticsGenerator();
 	}
 	
-	/**
-	 * Returns
-	 * <ul>
-	 * <li>SAT if the trace does not fulfill its specification,
-	 * <li>UNSAT if the trace does fulfill its specification,
-	 * <li>UNKNOWN if it was not possible to determine if the trace fulfills its specification.
-	 * </ul>
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.ITraceChecker#isCorrect()
 	 */
+	@Override
 	public LBool isCorrect() {
 		return mIsSafe;
 	}
@@ -413,25 +409,42 @@ public class TraceChecker {
 		return result;
 	}
 	
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.ITraceChecker#getTrace()
+	 */
+	@Override
 	public NestedWord<? extends IAction> getTrace() {
 		return mTrace;
 	}
 	
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.ITraceChecker#getPrecondition()
+	 */
+	@Override
 	public IPredicate getPrecondition() {
 		return mPrecondition;
 	}
 	
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.ITraceChecker#getPostcondition()
+	 */
+	@Override
 	public IPredicate getPostcondition() {
 		return mPostcondition;
 	}
 	
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.ITraceChecker#getPendingContexts()
+	 */
+	@Override
 	public Map<Integer, IPredicate> getPendingContexts() {
 		return mPendingContexts;
 	}
 	
-	/**
-	 * Return the RcfgProgramExecution that has been computed by computeRcfgProgramExecution().
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.ITraceChecker#getRcfgProgramExecution()
 	 */
+	@Override
 	public RcfgProgramExecution getRcfgProgramExecution() {
 		if (mRcfgProgramExecution == null) {
 			throw new AssertionError("program execution has not yet been computed");
@@ -443,6 +456,10 @@ public class TraceChecker {
 		endTraceCheck();
 	}
 	
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.ITraceChecker#getTraceCheckerBenchmark()
+	 */
+	@Override
 	public TraceCheckerStatisticsGenerator getTraceCheckerBenchmark() {
 		if (mTraceCheckFinished || mToolchainCanceledException != null) {
 			return mTraceCheckerBenchmarkGenerator;
@@ -450,10 +467,10 @@ public class TraceChecker {
 		throw new AssertionError("Benchmark is only available after the trace check is finished.");
 	}
 	
-	/**
-	 * Returns the {@link ToolchainCanceledException} that was thrown if the computation was cancelled. If the
-	 * computation was not cancelled, we return null.
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.ITraceChecker#getToolchainCanceledExpection()
 	 */
+	@Override
 	public ToolchainCanceledException getToolchainCanceledExpection() {
 		return mToolchainCanceledException;
 	}

@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfCon
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractInterpretationRunner;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarAbsIntRunner;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
@@ -71,7 +71,7 @@ public class InterpolantAutomatonBuilderFactory {
 	private final CfgSmtToolkit mCsToolkit;
 	private final PredicateFactoryForInterpolantAutomata mPredicateFactory;
 	private final BoogieIcfgContainer mRootAnnot;
-	private final AbstractInterpretationRunner mAbsIntRunner;
+	private final CegarAbsIntRunner mAbsIntRunner;
 	private final CegarLoopStatisticsGenerator mBenchmark;
 	
 	private final HoareTripleChecks mHoareTripleChecks;
@@ -84,7 +84,7 @@ public class InterpolantAutomatonBuilderFactory {
 	
 	public InterpolantAutomatonBuilderFactory(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
 			final PredicateFactoryForInterpolantAutomata predFac, final BoogieIcfgContainer RootAnnot,
-			final AbstractInterpretationRunner abstractInterpretationRunner, final TAPreferences taPrefs,
+			final CegarAbsIntRunner abstractInterpretationRunner, final TAPreferences taPrefs,
 			final InterpolationTechnique interpolation,
 			final InterpolantAutomaton interpolantAutomatonConstructionProcedure,
 			final CegarLoopStatisticsGenerator benchmark) {
@@ -107,7 +107,7 @@ public class InterpolantAutomatonBuilderFactory {
 		mBuilderFunction = determineBuilder(abstractInterpretationRunner, mInterpolantAutomatonStyle);
 	}
 	
-	private IBuilderFunction determineBuilder(final AbstractInterpretationRunner abstractInterpretationRunner,
+	private IBuilderFunction determineBuilder(final CegarAbsIntRunner abstractInterpretationRunner,
 			final InterpolantAutomaton interpolAutomatonStyle) {
 		final IBuilderFunction basicBuilder = determineBuilder(interpolAutomatonStyle);
 		if (abstractInterpretationRunner.isDisabled()) {

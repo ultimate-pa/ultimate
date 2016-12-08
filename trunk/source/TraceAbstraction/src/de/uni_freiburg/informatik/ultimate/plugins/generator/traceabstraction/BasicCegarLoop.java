@@ -117,7 +117,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	protected final PredicateFactoryForInterpolantAutomata mPredicateFactoryInterpolantAutomata;
 	protected final PredicateFactoryResultChecking mPredicateFactoryResultChecking;
 
-	private final AbstractInterpretationRunner mAbsIntRunner;
+	private final CegarAbsIntRunner mAbsIntRunner;
 	private final InterpolantAutomatonBuilderFactory mInterpolantAutomatonBuilderFactory;
 
 	protected boolean mFallbackToFpIfInterprocedural = true;
@@ -197,7 +197,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		mDoFaultLocalizationFlowSensitive = prefs
 				.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_FLOW_SENSITIVE);
 
-		mAbsIntRunner = new AbstractInterpretationRunner(services, mCegarLoopBenchmark, rootNode,
+		mAbsIntRunner = new CegarAbsIntRunner(services, mCegarLoopBenchmark, rootNode,
 				mSimplificationTechnique, mXnfConversionTechnique, mCsToolkit);
 		mInterpolantAutomatonBuilderFactory = new InterpolantAutomatonBuilderFactory(mServices, mCsToolkit,
 				mPredicateFactoryInterpolantAutomata, mIcfgContainer, mAbsIntRunner, taPrefs, mInterpolation,
