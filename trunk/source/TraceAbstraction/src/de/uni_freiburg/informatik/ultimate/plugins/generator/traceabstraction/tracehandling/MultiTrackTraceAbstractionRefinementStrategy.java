@@ -69,6 +69,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public class MultiTrackTraceAbstractionRefinementStrategy implements IRefinementStrategy {
+	/**
+	 * Possible tracks.
+	 * 
+	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+	 */
 	private enum Track {
 		/**
 		 * SMTInterpol with tree interpolation.
@@ -84,6 +89,7 @@ public class MultiTrackTraceAbstractionRefinementStrategy implements IRefinement
 		CVC4_FORWARD
 	}
 	
+	private static final String UNKNOWN_MODE = "Unknown mode: ";
 	private static final String LOGIC_FOR_EXTERNAL_SOLVERS = "AUFNIRA";
 	private static final int SMTINTERPOL_TIMEOUT = 10_000;
 	// private static final String Z3_COMMAND = RcfgPreferenceInitializer.Z3_DEFAULT;
@@ -151,7 +157,7 @@ public class MultiTrackTraceAbstractionRefinementStrategy implements IRefinement
 			case INTERPOLANT_GENERATOR:
 				return mInterpolationTechniques.hasNext();
 			default:
-				throw new IllegalArgumentException("Unknown mode: " + advance);
+				throw new IllegalArgumentException(UNKNOWN_MODE + advance);
 		}
 	}
 	
@@ -172,7 +178,7 @@ public class MultiTrackTraceAbstractionRefinementStrategy implements IRefinement
 				mTcConstructor = null;
 				break;
 			default:
-				throw new IllegalArgumentException("Unknown mode: " + advance);
+				throw new IllegalArgumentException(UNKNOWN_MODE + advance);
 		}
 	}
 	
@@ -206,7 +212,7 @@ public class MultiTrackTraceAbstractionRefinementStrategy implements IRefinement
 	}
 	
 	private static Iterator<Track> initializeInterpolationTechniquesList() {
-		final List<Track> list = new ArrayList<>(2);
+		final List<Track> list = new ArrayList<>(3);
 		list.add(Track.SMTINTERPOL_TREE_INTERPOLANTS);
 		list.add(Track.Z3_SPBP);
 		list.add(Track.CVC4_FORWARD);
@@ -244,7 +250,7 @@ public class MultiTrackTraceAbstractionRefinementStrategy implements IRefinement
 				interpolationTechnique = InterpolationTechnique.ForwardPredicates;
 				break;
 			default:
-				throw new IllegalArgumentException("Unknown mode: " + mode);
+				throw new IllegalArgumentException(UNKNOWN_MODE + mode);
 		}
 		return interpolationTechnique;
 	}
@@ -279,8 +285,7 @@ public class MultiTrackTraceAbstractionRefinementStrategy implements IRefinement
 				break;
 			default:
 				throw new IllegalArgumentException(
-						"Managed script construction not supported for interpolation technique: "
-								+ mode);
+						"Managed script construction not supported for interpolation technique: " + mode);
 		}
 		final Script solver = SolverBuilder.buildAndInitializeSolver(services, prefs.getToolchainStorage(),
 				solverMode, solverSettings, false, false, logicForExternalSolver,
