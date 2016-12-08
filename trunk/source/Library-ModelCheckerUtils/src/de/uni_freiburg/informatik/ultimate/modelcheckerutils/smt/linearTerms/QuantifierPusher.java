@@ -182,19 +182,57 @@ public class QuantifierPusher extends TermTransformer {
 		
 
 		final int quantifier = quantifiedFormula.getQuantifier();
-		final Set<TermVariable> eliminatees = new HashSet<TermVariable>(Arrays.asList(quantifiedFormula.getVariables()));
+		final Set<TermVariable> eliminatees = new HashSet<>(Arrays.asList(quantifiedFormula.getVariables()));
 		{
 			
 			final Term[] dualFiniteParams = PartialQuantifierElimination.getXjunctsInner(quantifier, appTerm);
 			final Term eliminationResult = applyEliminationTechniques(quantifier, eliminatees, dualFiniteParams);
 			if (eliminationResult == null) {
-				// nothing was removed, we can return original
+				// nothing was removed
+				for (int i=0; i<dualFiniteParams.length; i++) {
+					if (isCorrespondingFinite(dualFiniteParams[i], quantifier)) {
+						final Term correspondingFinite = applyDistributivityAndPush(quantifier, eliminatees, dualFiniteParams, i);
+						return correspondingFinite;
+					}
+				}
+				// failed to apply distributivity,  return original
 				return quantifiedFormula;
 			} else {
 				return eliminationResult;
 			}
 		} 
 
+	}
+
+	private Term applyDistributivityAndPush(final int quantifier, final Set<TermVariable> eliminatees,
+			final Term[] dualFiniteParams, final int i) {
+		final Term[] correspondingFiniteParams = PartialQuantifierElimination.getXjunctsOuter(quantifier, dualFiniteParams[i]);
+		final List<Term> otherDualFiniteParams = new ArrayList<>(dualFiniteParams.length - 1);
+		for (int j=0; j<dualFiniteParams.length; j++) {
+			if (j != i) {
+				otherDualFiniteParams.add(dualFiniteParams[j]);
+			}
+		}
+		final Term[] resultOuterParams = new Term[correspondingFiniteParams.length];
+		int offset = 0;
+		for (final Term cfp : correspondingFiniteParams) {
+			final List<Term> resultInnerParams = new ArrayList<>();
+			resultInnerParams.add(cfp);
+			resultInnerParams.addAll(otherDualFiniteParams);
+			resultOuterParams[offset] = PartialQuantifierElimination.applyDualFiniteConnective(mScript, quantifier, resultInnerParams);
+			resultOuterParams[offset] = SmtUtils.quantifier(mScript, quantifier, eliminatees, resultOuterParams[offset]);
+			offset++;
+		}
+		final Term result = PartialQuantifierElimination.applyCorrespondingFiniteConnective(mScript, quantifier, resultOuterParams);
+		return result;
+	}
+
+	private boolean isCorrespondingFinite(final Term term, final int quantifier) {
+		if (term instanceof ApplicationTerm) {
+			return ((ApplicationTerm) term).getFunction().getApplicationString().equals(SmtUtils.getCorrespondingFiniteConnective(quantifier));
+		} else {
+			return false;
+		}
 	}
 
 	private Term applyEliminationTechniques(final int quantifier, final Set<TermVariable> eliminatees,

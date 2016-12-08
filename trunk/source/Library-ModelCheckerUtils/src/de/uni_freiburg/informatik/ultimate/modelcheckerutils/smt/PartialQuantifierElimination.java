@@ -114,7 +114,7 @@ public class PartialQuantifierElimination {
 	 * For the case of existential quantification:
 	 * Compose disjuncts to a disjunction.
 	 */
-	public static Term applyDualFiniteConnective(final Script script, final int quantifier, final Term[] xjunctsOuter) {
+	public static Term applyCorrespondingFiniteConnective(final Script script, final int quantifier, final Term[] xjunctsOuter) {
 		final Term result;
 		if (quantifier == QuantifiedFormula.EXISTS) {
 			result = Util.or(script, xjunctsOuter);
@@ -298,7 +298,7 @@ public class PartialQuantifierElimination {
 				newParams[i] = applyDualFiniteConnective(script, quantifier,
 						Arrays.asList(xnfDer.tryToEliminate(quantifier, oldAtoms, eliminateesDER)));
 			}
-			termAfterDER = applyDualFiniteConnective(script, quantifier, newParams);
+			termAfterDER = applyCorrespondingFiniteConnective(script, quantifier, newParams);
 			result = termAfterDER;
 			final Set<TermVariable> remainingAfterDER = new HashSet<>(eliminatees);
 			remainingAfterDER.retainAll(Arrays.asList(result.getFreeVars()));
@@ -341,7 +341,7 @@ public class PartialQuantifierElimination {
 		if (USE_SOS) {
 			final Term[] newParams = applyStoreOverSelect(mgdScript, quantifier, eliminatees, services, logger,
 					simplificationTechnique, script, result);
-			final Term termAfterSOS = applyDualFiniteConnective(script, quantifier, newParams);
+			final Term termAfterSOS = applyCorrespondingFiniteConnective(script, quantifier, newParams);
 			sosChangedTerm = (result != termAfterSOS);
 			result = termAfterSOS;
 		} else {
@@ -394,7 +394,7 @@ public class PartialQuantifierElimination {
 			newParams[i] = applyDualFiniteConnective(script, quantifier,
 					Arrays.asList(xnfIRD.tryToEliminate(quantifier, oldAtoms, eliminateesIRD)));
 		}
-		final Term termAfterIRD = applyDualFiniteConnective(script, quantifier, newParams);
+		final Term termAfterIRD = applyCorrespondingFiniteConnective(script, quantifier, newParams);
 		final Set<TermVariable> remainingAfterIRD = new HashSet<>(eliminatees);
 		remainingAfterIRD.retainAll(Arrays.asList(termAfterIRD.getFreeVars()));
 		eliminatees.retainAll(remainingAfterIRD);
@@ -449,7 +449,7 @@ public class PartialQuantifierElimination {
 			newParams[i] = applyDualFiniteConnective(script, quantifier,
 					Arrays.asList(xnfUsr.tryToEliminate(quantifier, oldAtoms, eliminateesUsr)));
 		}
-		Term termAfterUsr = applyDualFiniteConnective(script, quantifier, newParams);
+		Term termAfterUsr = applyCorrespondingFiniteConnective(script, quantifier, newParams);
 		if (!xnfUsr.getAffectedEliminatees().isEmpty()) {
 			termAfterUsr = elim(mgdScript, quantifier, eliminatees, termAfterUsr, services, logger,
 					simplificationTechnique, xnfConversionTechnique);
@@ -500,7 +500,7 @@ public class PartialQuantifierElimination {
 				}
 			}
 		}
-		Term result = applyDualFiniteConnective(script, quantifier, newXjunctsOuter);
+		Term result = applyCorrespondingFiniteConnective(script, quantifier, newXjunctsOuter);
 		final Set<TermVariable> remainingEliminatees = new HashSet<>(eliminatees);
 		remainingEliminatees.retainAll(Arrays.asList(result.getFreeVars()));
 		eliminatees.retainAll(remainingEliminatees);

@@ -116,7 +116,7 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 			currentDisjuncts = nextDisjuncts;
 		}
 		final Term[] resultDisjuncts = currentDisjuncts.toArray(new Term[currentDisjuncts.size()]);
-		final Term resultDisjunction =  PartialQuantifierElimination.applyDualFiniteConnective(mScript, quantifier, resultDisjuncts);
+		final Term resultDisjunction =  PartialQuantifierElimination.applyCorrespondingFiniteConnective(mScript, quantifier, resultDisjuncts);
 		return new Term[] { resultDisjunction };
 	}
 
@@ -366,7 +366,7 @@ public class XnfTir extends XjunctPartialQuantifierElimination {
 							"building " + Math.pow(2,mantiDer.size()) + " xjuncts");
 				}
 			}
-			return PartialQuantifierElimination.applyDualFiniteConnective(mScript, mquantifier, resultXJuncts.toArray(new Term[resultXJuncts.size()]));
+			return PartialQuantifierElimination.applyCorrespondingFiniteConnective(mScript, mquantifier, resultXJuncts.toArray(new Term[resultXJuncts.size()]));
 		}
 
 		private Bound computeBound(final Term term,
