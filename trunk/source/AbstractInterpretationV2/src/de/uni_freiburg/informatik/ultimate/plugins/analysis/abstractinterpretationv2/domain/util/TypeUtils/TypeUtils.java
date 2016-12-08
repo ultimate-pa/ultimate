@@ -93,7 +93,7 @@ public final class TypeUtils {
 			// TODO: Insert arrayConsumer as soon as array support is implemented.
 			varConsumer.accept(variable);
 		} else {
-			throw new UnsupportedOperationException("Not implemented: " + variable.getDefaultConstant().getSort());
+			throw new UnsupportedOperationException("Not implemented: " + variable.getSort());
 		}
 	}
 
@@ -118,7 +118,7 @@ public final class TypeUtils {
 			// TODO: Insert arrayFunction as soon as array support is implemented.
 			return varFunction.apply(variable);
 		} else {
-			throw new UnsupportedOperationException("Not implemented: " + variable.getDefaultConstant().getSort());
+			throw new UnsupportedOperationException("Not implemented: " + variable.getSort());
 		}
 	}
 
@@ -199,15 +199,15 @@ public final class TypeUtils {
 	}
 
 	public static boolean isNumeric(final IBoogieVar var) {
-		return isNumeric(var.getDefaultConstant().getSort());
+		return isNumeric(var.getSort());
 	}
 
 	public static boolean isBoolean(final IBoogieVar var) {
-		return isBoolean(var.getDefaultConstant().getSort());
+		return isBoolean(var.getSort());
 	}
 
 	private static boolean isArray(final IBoogieVar variable) {
-		return isArray(variable.getDefaultConstant().getSort());
+		return isArray(variable.getSort());
 	}
 
 	public static boolean isNumericNonInt(final IBoogieType type) {
@@ -215,7 +215,7 @@ public final class TypeUtils {
 	}
 
 	public static boolean isNumericNonInt(final IBoogieVar var) {
-		return isNumericNonInt(var.getDefaultConstant().getSort());
+		return isNumericNonInt(var.getSort());
 	}
 
 	public static boolean isNumericInt(final IBoogieType type) {

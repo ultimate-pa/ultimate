@@ -76,8 +76,7 @@ public final class EvaluatorUtils {
 			return TypeUtils.applyTypeFunction(intFunction, realFunction, boolFunction, null,
 					TypeUtils.getInnermostArrayValueSort(t));
 		};
-		return TypeUtils.applyTypeFunction(intFunction, realFunction, boolFunction, arrayFunction,
-				var.getDefaultConstant().getSort());
+		return TypeUtils.applyTypeFunction(intFunction, realFunction, boolFunction, arrayFunction, var.getSort());
 	}
 
 	/**
