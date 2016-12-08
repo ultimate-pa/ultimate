@@ -33,6 +33,7 @@ import java.util.Map;
 
 import org.eclipse.cdt.core.ToolFactory;
 import org.eclipse.cdt.core.dom.ast.ASTNodeProperty;
+import org.eclipse.cdt.core.dom.ast.IASTArrayModifier;
 import org.eclipse.cdt.core.dom.ast.IASTCompoundStatement;
 import org.eclipse.cdt.core.dom.ast.IASTDeclarationStatement;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
@@ -182,6 +183,11 @@ public final class RewriteUtils {
 			}
 		}
 		
+		// Prefer single element arrays over zero sized arrays
+		if (expression.getPropertyInParent() == IASTArrayModifier.CONSTANT_EXPRESSION) {
+			return Arrays.asList("1", "0");
+		}
+				
 		final IType expressionType = expression.getExpressionType();
 		if (expressionType instanceof IBasicType) {
 			return Arrays.asList("0", "1");
