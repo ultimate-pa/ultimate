@@ -39,33 +39,21 @@ public class ConstOrLiteral implements IProgramVarOrConst {
 	
 	final Term mTerm;
 	
-	final IProgramVar mProgramVar;
-
 	final ConstantTerm mConstantTerm;
 	
 	final BoogieConst mBoogieConst;
 	
-	@Deprecated
-	public ConstOrLiteral(IProgramVar pv) {
-		mType = bvocType.PROGRAMVAR;
-		mTerm = pv.getTerm();
-		mProgramVar = pv;
-		mConstantTerm = null;
-		mBoogieConst = null;
-	}
-	
+	// TODO: could BoogieConst be moved out here (like IProgramVar before??)
 	public ConstOrLiteral(BoogieConst bc) {
 		mType = bvocType.BOOGIECONST;
 		mTerm = bc.getTerm();
-		mProgramVar = null;
 		mConstantTerm = null;
 		mBoogieConst = bc;
 	}
 
 	public ConstOrLiteral(ConstantTerm ct) {
-		mType = bvocType.CONST;
+		mType = bvocType.LITERAL;
 		mTerm = ct;
-		mProgramVar = null;
 		mConstantTerm = ct;
 		mBoogieConst = null;
 	}
@@ -75,10 +63,8 @@ public class ConstOrLiteral implements IProgramVarOrConst {
 		switch (mType) {
 		case BOOGIECONST:
 			return mBoogieConst.getGloballyUniqueId();
-		case CONST:
+		case LITERAL:
 			return mConstantTerm.toString();
-		case PROGRAMVAR:
-			return mProgramVar.getGloballyUniqueId();
 		default:
 			assert false;
 			return null;
@@ -95,5 +81,15 @@ public class ConstOrLiteral implements IProgramVarOrConst {
 		return mTerm.toString();
 	}
 	
-	private enum bvocType { PROGRAMVAR, BOOGIECONST, CONST };
+	@Override
+	public boolean isGlobal() {
+		if (mType == bvocType.LITERAL) {
+			return true;
+		} else {
+			assert mType == bvocType.BOOGIECONST;
+			return mBoogieConst.isGlobal();
+		} 
+	}
+	
+	private enum bvocType { BOOGIECONST, LITERAL };
 }

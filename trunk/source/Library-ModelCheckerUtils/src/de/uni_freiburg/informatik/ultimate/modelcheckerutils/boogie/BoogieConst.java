@@ -143,4 +143,9 @@ public class BoogieConst implements IBoogieVar, IProgramConst {
 		return getTerm().getSort();
 	}
 
+	@Override
+	public boolean isGlobal() {
+		return true;
+	}
+
 }

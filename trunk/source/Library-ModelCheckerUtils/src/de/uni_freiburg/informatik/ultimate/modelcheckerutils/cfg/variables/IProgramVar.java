@@ -36,7 +36,7 @@ public interface IProgramVar extends IProgramVarOrConst {
 	 */
 	String getProcedure();
 
-	boolean isGlobal();
+//	boolean isGlobal();
 
 	boolean isOldvar();
 
