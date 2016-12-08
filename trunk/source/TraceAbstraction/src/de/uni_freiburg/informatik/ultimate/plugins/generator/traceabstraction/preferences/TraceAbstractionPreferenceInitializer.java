@@ -393,7 +393,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		 */
 		FIXED_PREFERENCES,
 		/**
-		 * Tapian strategy.
+		 * Taipan strategy.
 		 */
 		TAIPAN,
 		/**
