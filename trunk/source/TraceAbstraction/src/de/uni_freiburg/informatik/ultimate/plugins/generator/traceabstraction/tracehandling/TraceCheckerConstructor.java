@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheckerCraig;
@@ -60,7 +61,9 @@ class TraceCheckerConstructor implements Supplier<TraceChecker> {
 	private final PredicateUnifier mPredicateUnifier;
 	private final IRun<CodeBlock, IPredicate, ?> mCounterexample;
 	private final InterpolationTechnique mInterpolationTechnique;
-	
+	private final int mIteration;
+	private CegarLoopStatisticsGenerator mCegarLoopBenchmark;
+
 	/**
 	 * @param prefs
 	 *            Preferences.
@@ -72,18 +75,23 @@ class TraceCheckerConstructor implements Supplier<TraceChecker> {
 	 *            predicate unifier
 	 * @param counterexample
 	 *            counterexample trace
+	 * @param cegarIteration
+	 * @param cegarLoopBenchmark
 	 */
 	public TraceCheckerConstructor(final TaCheckAndRefinementPreferences prefs, final ManagedScript managedScript,
 			final IUltimateServiceProvider services, final PredicateUnifier predicateUnifier,
-			final IRun<CodeBlock, IPredicate, ?> counterexample, final InterpolationTechnique interpolationTechnique) {
+			final IRun<CodeBlock, IPredicate, ?> counterexample, final InterpolationTechnique interpolationTechnique,
+			final int cegarIteration, final CegarLoopStatisticsGenerator cegarLoopBenchmark) {
 		mPrefs = prefs;
 		mManagedScript = managedScript;
 		mServices = services;
 		mPredicateUnifier = predicateUnifier;
 		mCounterexample = counterexample;
 		mInterpolationTechnique = interpolationTechnique;
+		mIteration = cegarIteration;
+		mCegarLoopBenchmark = cegarLoopBenchmark;
 	}
-	
+
 	/**
 	 * Copy constructor.
 	 *
@@ -100,11 +108,12 @@ class TraceCheckerConstructor implements Supplier<TraceChecker> {
 		mServices = other.mServices;
 		mPredicateUnifier = other.mPredicateUnifier;
 		mCounterexample = other.mCounterexample;
-		
+		mIteration = other.mIteration;
+
 		mManagedScript = managedScript;
 		mInterpolationTechnique = interpolationTechnique;
 	}
-	
+
 	@Override
 	public TraceChecker get() {
 		final TraceChecker traceChecker;
@@ -112,52 +121,52 @@ class TraceCheckerConstructor implements Supplier<TraceChecker> {
 			traceChecker = constructDefault();
 		} else {
 			switch (mInterpolationTechnique) {
-				case Craig_NestedInterpolation:
-				case Craig_TreeInterpolation:
-					traceChecker = constructCraig();
-					break;
-				case ForwardPredicates:
-				case BackwardPredicates:
-				case FPandBP:
-					traceChecker = constructForwardBackward();
-					break;
-				case PathInvariants:
-					traceChecker = constructPathInvariants();
-					break;
-				default:
-					throw new UnsupportedOperationException("unsupported interpolation");
+			case Craig_NestedInterpolation:
+			case Craig_TreeInterpolation:
+				traceChecker = constructCraig();
+				break;
+			case ForwardPredicates:
+			case BackwardPredicates:
+			case FPandBP:
+				traceChecker = constructForwardBackward();
+				break;
+			case PathInvariants:
+				traceChecker = constructPathInvariants();
+				break;
+			default:
+				throw new UnsupportedOperationException("unsupported interpolation");
 			}
-			mPrefs.getCegarLoopBenchmark().addTraceCheckerData(traceChecker.getTraceCheckerBenchmark());
+			mCegarLoopBenchmark.addTraceCheckerData(traceChecker.getTraceCheckerBenchmark());
 		}
-		
+
 		if (traceChecker.getToolchainCanceledExpection() != null) {
 			throw traceChecker.getToolchainCanceledExpection();
 		} else if (mPrefs.getUseSeparateSolverForTracechecks()) {
 			mManagedScript.getScript().exit();
 		}
-		
+
 		return traceChecker;
 	}
-	
+
 	private TraceChecker constructDefault() {
 		final IPredicate precondition = mPredicateUnifier.getTruePredicate();
 		final IPredicate postcondition = mPredicateUnifier.getFalsePredicate();
 		final AssertCodeBlockOrder assertCodeBlocksIncrementally = mPrefs.getAssertCodeBlocksIncrementally();
-		
+
 		final TraceChecker traceChecker;
 		traceChecker = new TraceChecker(precondition, postcondition, new TreeMap<Integer, IPredicate>(),
 				NestedWord.nestedWord(mCounterexample.getWord()), mPrefs.getCfgSmtToolkit(),
 				assertCodeBlocksIncrementally, mServices, true);
 		return traceChecker;
 	}
-	
+
 	private TraceChecker constructCraig() {
 		final IPredicate truePredicate = mPredicateUnifier.getTruePredicate();
 		final IPredicate falsePredicate = mPredicateUnifier.getFalsePredicate();
 		final AssertCodeBlockOrder assertCodeBlocksIncrementally = mPrefs.getAssertCodeBlocksIncrementally();
 		final XnfConversionTechnique xnfConversionTechnique = mPrefs.getXnfConversionTechnique();
 		final SimplificationTechnique simplificationTechnique = mPrefs.getSimplificationTechnique();
-		
+
 		final TraceChecker traceChecker;
 		traceChecker = new InterpolatingTraceCheckerCraig(truePredicate, falsePredicate,
 				new TreeMap<Integer, IPredicate>(), NestedWord.nestedWord(mCounterexample.getWord()),
@@ -166,14 +175,14 @@ class TraceCheckerConstructor implements Supplier<TraceChecker> {
 				mCounterexample.getStateSequence(), false);
 		return traceChecker;
 	}
-	
+
 	private TraceChecker constructForwardBackward() {
 		final IPredicate truePredicate = mPredicateUnifier.getTruePredicate();
 		final IPredicate falsePredicate = mPredicateUnifier.getFalsePredicate();
 		final AssertCodeBlockOrder assertCodeBlocksIncrementally = mPrefs.getAssertCodeBlocksIncrementally();
 		final XnfConversionTechnique xnfConversionTechnique = mPrefs.getXnfConversionTechnique();
 		final SimplificationTechnique simplificationTechnique = mPrefs.getSimplificationTechnique();
-		
+
 		final TraceChecker traceChecker;
 		traceChecker = new TraceCheckerSpWp(truePredicate, falsePredicate, new TreeMap<Integer, IPredicate>(),
 				NestedWord.nestedWord(mCounterexample.getWord()), mPrefs.getCfgSmtToolkit(),
@@ -182,7 +191,7 @@ class TraceCheckerConstructor implements Supplier<TraceChecker> {
 				simplificationTechnique, mCounterexample.getStateSequence());
 		return traceChecker;
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	private TraceChecker constructPathInvariants() {
 		final IPredicate truePredicate = mPredicateUnifier.getTruePredicate();
@@ -190,15 +199,14 @@ class TraceCheckerConstructor implements Supplier<TraceChecker> {
 		final AssertCodeBlockOrder assertCodeBlocksIncrementally = mPrefs.getAssertCodeBlocksIncrementally();
 		final XnfConversionTechnique xnfConversionTechnique = mPrefs.getXnfConversionTechnique();
 		final SimplificationTechnique simplificationTechnique = mPrefs.getSimplificationTechnique();
-		
+
 		final TraceChecker traceChecker;
 		final BoogieIcfgContainer icfgContainer = mPrefs.getIcfgContainer();
 		final boolean useNonlinearConstraints = mPrefs.getUseNonlinearConstraints();
 		final boolean useVarsFromUnsatCore = mPrefs.getUseVarsFromUnsatCore();
 		final boolean dumpSmtScriptToFile = mPrefs.getDumpSmtScriptToFile();
 		final String pathOfDumpedScript = mPrefs.getPathOfDumpedScript();
-		final String baseNameOfDumpedScript =
-				"InVarSynth_" + icfgContainer.getFilename() + "_Iteration" + mPrefs.getIteration();
+		final String baseNameOfDumpedScript = "InVarSynth_" + icfgContainer.getFilename() + "_Iteration" + mIteration;
 		final String solverCommand;
 		if (useNonlinearConstraints) {
 			// solverCommand = "yices-smt2 --incremental";
@@ -212,7 +220,7 @@ class TraceCheckerConstructor implements Supplier<TraceChecker> {
 		final boolean fakeNonIncrementalSolver = false;
 		final Settings settings = new Settings(fakeNonIncrementalSolver, true, solverCommand, -1, null,
 				dumpSmtScriptToFile, pathOfDumpedScript, baseNameOfDumpedScript);
-		
+
 		traceChecker = new InterpolatingTraceCheckerPathInvariantsWithFallback(truePredicate, falsePredicate,
 				new TreeMap<Integer, IPredicate>(), (NestedRun<CodeBlock, IPredicate>) mCounterexample,
 				mPrefs.getCfgSmtToolkit(), assertCodeBlocksIncrementally, mServices, mPrefs.getToolchainStorage(), true,

@@ -92,6 +92,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementEngine;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementStrategy;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.RefinementStrategyFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TaCheckAndRefinementPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessProductAutomaton;
@@ -141,6 +143,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	private final SearchStrategy mSearchStrategy;
 
 	protected IRefinementEngine<NestedWordAutomaton<CodeBlock, IPredicate>> mTraceCheckAndRefinementEngine;
+	private final RefinementStrategyFactory mRefinementStrategyFactory;
 
 	public BasicCegarLoop(final String name, final BoogieIcfgContainer rootNode, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
@@ -197,15 +200,20 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		mDoFaultLocalizationFlowSensitive = prefs
 				.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_ERROR_TRACE_RELEVANCE_ANALYSIS_FLOW_SENSITIVE);
 
-		mAbsIntRunner = new CegarAbsIntRunner(services, mCegarLoopBenchmark, rootNode,
-				mSimplificationTechnique, mXnfConversionTechnique, mCsToolkit);
+		mAbsIntRunner = new CegarAbsIntRunner(services, mCegarLoopBenchmark, rootNode, mSimplificationTechnique,
+				mXnfConversionTechnique, mCsToolkit);
 		mInterpolantAutomatonBuilderFactory = new InterpolantAutomatonBuilderFactory(mServices, mCsToolkit,
 				mPredicateFactoryInterpolantAutomata, mIcfgContainer, mAbsIntRunner, taPrefs, mInterpolation,
 				mInterpolantAutomatonConstructionProcedure, mCegarLoopBenchmark);
 
 		mSearchStrategy = getSearchStrategy(prefs);
-
 		mStoredRawInterpolantAutomata = checkStoreCounterExamples(mPref) ? new ArrayList<>() : null;
+
+		final TaCheckAndRefinementPreferences taCheckAndRefinementPrefs = new TaCheckAndRefinementPreferences(mServices,
+				mPref, mInterpolation, mSimplificationTechnique, mXnfConversionTechnique, mCsToolkit, mPredicateFactory,
+				mIcfgContainer, mToolchainStorage, mInterpolantAutomatonBuilderFactory);
+		mRefinementStrategyFactory = new RefinementStrategyFactory(mLogger, mServices, mToolchainStorage, mPref,
+				taCheckAndRefinementPrefs, mAbsIntRunner, mIcfgContainer, mPredicateFactory);
 	}
 
 	@Override
@@ -274,14 +282,10 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 
 	@Override
 	protected LBool isCounterexampleFeasible() throws AutomataOperationCanceledException {
-		final TaCheckAndRefinementPreferences taCheckAndRefinementPrefs =
-				new TaCheckAndRefinementPreferences(mServices, mPref, mInterpolation, mSimplificationTechnique,
-						mXnfConversionTechnique, mCsToolkit, mPredicateFactory, mIcfgContainer, mToolchainStorage,
-						mInterpolantAutomatonBuilderFactory, mCegarLoopBenchmark, mIteration);
-		mTraceCheckAndRefinementEngine = new TraceAbstractionRefinementEngine(mServices, mLogger,
-				taCheckAndRefinementPrefs, mPredicateFactory, mIcfgContainer, mSimplificationTechnique,
-				mXnfConversionTechnique, mToolchainStorage, mPref, mAbsIntRunner, mIteration, mCounterexample,
-				mAbstraction);
+
+		final IRefinementStrategy strategy = mRefinementStrategyFactory.createStrategy(mCounterexample, mAbstraction,
+				getIteration(), getCegarLoopBenchmark());
+		mTraceCheckAndRefinementEngine = new TraceAbstractionRefinementEngine(mLogger, strategy);
 
 		final PredicateUnifier predicateUnifier = mTraceCheckAndRefinementEngine.getPredicateUnifier();
 		final LBool feasibility = mTraceCheckAndRefinementEngine.getCounterexampleFeasibility();
@@ -366,14 +370,14 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			if (mTraceCheckAndRefinementEngine.getHoareTripleChecker() != null) {
 				htc = mTraceCheckAndRefinementEngine.getHoareTripleChecker();
 			} else {
-				final IHoareTripleChecker ehtc =
-						TraceAbstractionUtils.constructEfficientHoareTripleChecker(mServices, mPref.getHoareTripleChecks(),
-								super.mCsToolkit, mTraceCheckAndRefinementEngine.getPredicateUnifier());
+				final IHoareTripleChecker ehtc = TraceAbstractionUtils.constructEfficientHoareTripleChecker(mServices,
+						mPref.getHoareTripleChecks(), super.mCsToolkit,
+						mTraceCheckAndRefinementEngine.getPredicateUnifier());
 				htc = new CachingHoareTripleChecker_Map(mServices, ehtc,
 						mTraceCheckAndRefinementEngine.getPredicateUnifier());
 			}
 		}
-		
+
 		final InterpolantAutomatonEnhancement enhanceMode;
 		if (mAbsIntRunner.hasShownInfeasibility()) {
 			// Do not enhance if abstract interpretation was strong enough to prove infeasibility.
@@ -386,10 +390,10 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		if (enhanceMode == InterpolantAutomatonEnhancement.NONE) {
 			interpolantAutomaton = inputInterpolantAutomaton;
 		} else {
-			interpolantAutomaton = constructInterpolantAutomatonForOnDemandEnhancement(
-					inputInterpolantAutomaton, predicateUnifier, htc, enhanceMode);
+			interpolantAutomaton = constructInterpolantAutomatonForOnDemandEnhancement(inputInterpolantAutomaton,
+					predicateUnifier, htc, enhanceMode);
 		}
-		
+
 		try {
 			mLogger.debug("Start constructing difference");
 			final PowersetDeterminizer<CodeBlock, IPredicate> psd =
@@ -407,8 +411,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				throw aoce;
 			} finally {
 				if (enhanceMode != InterpolantAutomatonEnhancement.NONE) {
-					assert (interpolantAutomaton instanceof AbstractInterpolantAutomaton) :
-						"if enhancement is used, we need AbstractInterpolantAutomaton";
+					assert (interpolantAutomaton instanceof AbstractInterpolantAutomaton) : "if enhancement is used, we need AbstractInterpolantAutomaton";
 					((AbstractInterpolantAutomaton) interpolantAutomaton).switchToReadonlyMode();
 				}
 			}
@@ -419,19 +422,16 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			}
 			if (mAbsIntRunner.isDisabled()) {
 				// check only if AI did not run
-				final boolean ctxAccepted = new Accepts<>(new AutomataLibraryServices(mServices),
-						interpolantAutomaton, (NestedWord<CodeBlock>) mCounterexample.getWord(),
-						true, false).getResult();
+				final boolean ctxAccepted = new Accepts<>(new AutomataLibraryServices(mServices), interpolantAutomaton,
+						(NestedWord<CodeBlock>) mCounterexample.getWord(), true, false).getResult();
 				if (!ctxAccepted) {
 					throw new AssertionError("enhanced interpolant automaton in iteration " + mIteration
-							+ " broken: counterexample of length " + mCounterexample.getLength()
-							+ " not accepted");
+							+ " broken: counterexample of length " + mCounterexample.getLength() + " not accepted");
 				}
 			}
-			assert new InductivityCheck(mServices, new RemoveUnreachable<>(
-					new AutomataLibraryServices(mServices), interpolantAutomaton).getResult(), false, true,
-					new IncrementalHoareTripleChecker(super.mCsToolkit)).getResult();
-
+			assert new InductivityCheck(mServices,
+					new RemoveUnreachable<>(new AutomataLibraryServices(mServices), interpolantAutomaton).getResult(),
+					false, true, new IncrementalHoareTripleChecker(super.mCsToolkit)).getResult();
 
 			if (REMOVE_DEAD_ENDS) {
 				if (mComputeHoareAnnotation) {
@@ -511,27 +511,24 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					(enhanceMode == InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION_CONSERVATIVE);
 			final boolean cannibalize =
 					(enhanceMode == InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION_CANNIBALIZE);
-			final DeterministicInterpolantAutomaton determinized =
-					new DeterministicInterpolantAutomaton(mServices, mCsToolkit, htc, inputInterpolantAutomaton,
-							mTraceCheckAndRefinementEngine.getPredicateUnifier(), mLogger, conservativeSuccessorCandidateSelection,
-							cannibalize);
+			final DeterministicInterpolantAutomaton determinized = new DeterministicInterpolantAutomaton(mServices,
+					mCsToolkit, htc, inputInterpolantAutomaton, mTraceCheckAndRefinementEngine.getPredicateUnifier(),
+					mLogger, conservativeSuccessorCandidateSelection, cannibalize);
 			result = determinized;
 		}
-		break;
+			break;
 		case EAGER:
 		case NO_SECOND_CHANCE:
 		case EAGER_CONSERVATIVE: {
 			final boolean conservativeSuccessorCandidateSelection =
 					(enhanceMode == InterpolantAutomatonEnhancement.EAGER_CONSERVATIVE);
-			final boolean secondChance =
-					(enhanceMode != InterpolantAutomatonEnhancement.NO_SECOND_CHANCE);
+			final boolean secondChance = (enhanceMode != InterpolantAutomatonEnhancement.NO_SECOND_CHANCE);
 			final NondeterministicInterpolantAutomaton nondet =
-					new NondeterministicInterpolantAutomaton(mServices, mCsToolkit, htc,
-							inputInterpolantAutomaton, predicateUnifier,
-							mLogger, conservativeSuccessorCandidateSelection, secondChance);
+					new NondeterministicInterpolantAutomaton(mServices, mCsToolkit, htc, inputInterpolantAutomaton,
+							predicateUnifier, mLogger, conservativeSuccessorCandidateSelection, secondChance);
 			result = nondet;
 		}
-		break;
+			break;
 		default:
 			throw new UnsupportedOperationException("unknown " + enhanceMode);
 		}
@@ -592,7 +589,6 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			mAbstraction = newAbstraction;
 		}
 	}
-
 
 	@Override
 	protected void computeCFGHoareAnnotation() {

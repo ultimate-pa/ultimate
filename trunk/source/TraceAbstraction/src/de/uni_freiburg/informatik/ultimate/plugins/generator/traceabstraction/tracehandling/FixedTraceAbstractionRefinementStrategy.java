@@ -43,8 +43,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.IInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategyExceptionBlacklist;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantConsolidation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceChecker;
@@ -65,15 +67,16 @@ public class FixedTraceAbstractionRefinementStrategy implements IRefinementStrat
 	private final IRun<CodeBlock, IPredicate, ?> mCounterexample;
 	private final IAutomaton<CodeBlock, IPredicate> mAbstraction;
 	private final PredicateUnifier mPredicateUnifier;
-	
+
 	// TODO Christian 2016-11-11: Matthias wants to get rid of this
 	private final TAPreferences mTaPrefsForInterpolantConsolidation;
-	
+
 	private final TraceCheckerConstructor mFunConstructFromPrefs;
 	private TraceChecker mTraceChecker;
 	private IInterpolantGenerator mInterpolantGenerator;
 	private IInterpolantAutomatonBuilder<CodeBlock, IPredicate> mInterpolantAutomatonBuilder;
-	
+	private final CegarLoopStatisticsGenerator mCegarLoopBenchmark;
+
 	/**
 	 * @param prefs
 	 *            Preferences. pending contexts
@@ -91,12 +94,13 @@ public class FixedTraceAbstractionRefinementStrategy implements IRefinementStrat
 	 *            abstraction
 	 * @param taPrefsForInterpolantConsolidation
 	 *            temporary argument, should be removed
+	 * @param iteration
 	 */
 	public FixedTraceAbstractionRefinementStrategy(final ILogger logger, final TaCheckAndRefinementPreferences prefs,
 			final ManagedScript managedScript, final IUltimateServiceProvider services,
 			final PredicateUnifier predicateUnifier, final IRun<CodeBlock, IPredicate, ?> counterexample,
-			final IAutomaton<CodeBlock, IPredicate> abstraction,
-			final TAPreferences taPrefsForInterpolantConsolidation) {
+			final IAutomaton<CodeBlock, IPredicate> abstraction, final TAPreferences taPrefsForInterpolantConsolidation,
+			final int iteration, final CegarLoopStatisticsGenerator cegarLoopBenchmarks) {
 		mServices = services;
 		mLogger = logger;
 		mPrefs = prefs;
@@ -104,20 +108,21 @@ public class FixedTraceAbstractionRefinementStrategy implements IRefinementStrat
 		mAbstraction = abstraction;
 		mPredicateUnifier = predicateUnifier;
 		mTaPrefsForInterpolantConsolidation = taPrefsForInterpolantConsolidation;
+		mCegarLoopBenchmark = cegarLoopBenchmarks;
 		mFunConstructFromPrefs = new TraceCheckerConstructor(prefs, managedScript, services, predicateUnifier,
-				counterexample, mPrefs.getInterpolationTechnique());
+				counterexample, mPrefs.getInterpolationTechnique(), iteration, cegarLoopBenchmarks);
 	}
-	
+
 	@Override
 	public boolean hasNext(final RefinementStrategyAdvance advance) {
 		return false;
 	}
-	
+
 	@Override
 	public void next(final RefinementStrategyAdvance advance) {
 		throw new NoSuchElementException("This strategy has only one element.");
 	}
-	
+
 	@Override
 	public TraceChecker getTraceChecker() {
 		if (mTraceChecker == null) {
@@ -125,7 +130,7 @@ public class FixedTraceAbstractionRefinementStrategy implements IRefinementStrat
 		}
 		return mTraceChecker;
 	}
-	
+
 	@Override
 	public IInterpolantGenerator getInterpolantGenerator() {
 		if (mInterpolantGenerator == null) {
@@ -133,7 +138,7 @@ public class FixedTraceAbstractionRefinementStrategy implements IRefinementStrat
 		}
 		return mInterpolantGenerator;
 	}
-	
+
 	@Override
 	public IInterpolantAutomatonBuilder<CodeBlock, IPredicate>
 			getInterpolantAutomatonBuilder(final List<InterpolantsPreconditionPostcondition> ipps) {
@@ -142,7 +147,7 @@ public class FixedTraceAbstractionRefinementStrategy implements IRefinementStrat
 		}
 		return mInterpolantAutomatonBuilder;
 	}
-	
+
 	private IInterpolantGenerator constructInterpolantGenerator(final TraceChecker tracechecker) {
 		final TraceChecker localTraceChecker = Objects.requireNonNull(tracechecker,
 				"cannot construct interpolant generator if no trace checker is present");
@@ -161,24 +166,23 @@ public class FixedTraceAbstractionRefinementStrategy implements IRefinementStrat
 		// TODO insert code here to support generating interpolants from a different source
 		throw new AssertionError("Currently only interpolating trace checkers are supported.");
 	}
-	
-	private IInterpolantAutomatonBuilder<CodeBlock, IPredicate>
-			constructInterpolantAutomatonBuilder(final IInterpolantGenerator interpolantGenerator,
-					final List<InterpolantsPreconditionPostcondition> ipps) {
+
+	private IInterpolantAutomatonBuilder<CodeBlock, IPredicate> constructInterpolantAutomatonBuilder(
+			final IInterpolantGenerator interpolantGenerator, final List<InterpolantsPreconditionPostcondition> ipps) {
 		final IInterpolantGenerator localInterpolantGenerator = Objects.requireNonNull(interpolantGenerator,
 				"cannot construct interpolant automaton if no interpolant generator is present");
 		try {
 			if (ipps.isEmpty()) {
 				throw new IllegalArgumentException("Need at least one sequence of interpolants.");
 			}
-			return mPrefs.getInterpolantAutomatonBuilderFactory().createBuilder(mAbstraction,
-					localInterpolantGenerator, mCounterexample, ipps);
+			return mPrefs.getInterpolantAutomatonBuilderFactory().createBuilder(mAbstraction, localInterpolantGenerator,
+					mCounterexample, ipps);
 		} catch (final AutomataOperationCanceledException e) {
 			throw new ToolchainCanceledException(e,
 					new RunningTaskInfo(this.getClass(), "creating interpolant automaton"));
 		}
 	}
-	
+
 	private IInterpolantGenerator consolidateInterpolants(final InterpolatingTraceChecker interpolatingTraceChecker)
 			throws AutomataOperationCanceledException {
 		final CfgSmtToolkit cfgSmtToolkit = mPrefs.getCfgSmtToolkit();
@@ -188,8 +192,17 @@ public class FixedTraceAbstractionRefinementStrategy implements IRefinementStrat
 				cfgSmtToolkit.getModifiableGlobalsTable(), mServices, mLogger, mPredicateUnifier,
 				interpolatingTraceChecker, mTaPrefsForInterpolantConsolidation);
 		// Add benchmark data of interpolant consolidation
-		mPrefs.getCegarLoopBenchmark()
-				.addInterpolationConsolidationData(interpConsoli.getInterpolantConsolidationBenchmarks());
+		mCegarLoopBenchmark.addInterpolationConsolidationData(interpConsoli.getInterpolantConsolidationBenchmarks());
 		return interpConsoli;
+	}
+
+	@Override
+	public PredicateUnifier getPredicateUnifier() {
+		return mPredicateUnifier;
+	}
+
+	@Override
+	public RefinementStrategyExceptionBlacklist getExceptionBlacklist() {
+		return mPrefs.getExceptionBlacklist();
 	}
 }

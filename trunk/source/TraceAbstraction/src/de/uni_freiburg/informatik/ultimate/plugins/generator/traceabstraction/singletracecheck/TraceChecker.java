@@ -2,22 +2,22 @@
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE TraceAbstraction plug-in.
- * 
+ *
  * The ULTIMATE TraceAbstraction plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE TraceAbstraction plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE TraceAbstraction plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -94,11 +94,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * <p>
  * then the trace does not fulfill its specification.
  * <p>
- * 
+ *
  * @author heizmann@informatik.uni-freiburg.de
  */
 public class TraceChecker implements ITraceChecker {
-	
+
 	protected final ILogger mLogger;
 	protected final IUltimateServiceProvider mServices;
 	/**
@@ -139,12 +139,12 @@ public class TraceChecker implements ITraceChecker {
 	protected final AssertCodeBlockOrder mAssertCodeBlocksIncrementally;
 	protected ToolchainCanceledException mToolchainCanceledException;
 	protected final IIcfgSymbolTable mBoogie2SmtSymbolTable;
-	
+
 	/**
 	 * Check if trace fulfills specification given by precondition, postcondition and pending contexts. The
 	 * pendingContext maps the positions of pending returns to predicates which define possible variable valuations in
 	 * the context to which the return leads the trace.
-	 * 
+	 *
 	 * @param assertCodeBlocksIncrementally
 	 *            If set to false, check-sat is called after all CodeBlocks are asserted. If set to true we use Betim's
 	 *            heuristic an incrementally assert CodeBlocks and do check-sat until all CodeBlocks are asserted or the
@@ -156,38 +156,34 @@ public class TraceChecker implements ITraceChecker {
 	 */
 	public TraceChecker(final IPredicate precondition, final IPredicate postcondition,
 			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IAction> trace,
-			final CfgSmtToolkit csToolkit,
-			final AssertCodeBlockOrder assertCodeBlocksIncrementally, final IUltimateServiceProvider services,
-			final boolean computeRcfgProgramExecution) {
-		this(precondition, postcondition, pendingContexts, trace, csToolkit, new DefaultTransFormulas(trace,
-				precondition, postcondition, pendingContexts, csToolkit.getOldVarsAssignmentCache(), false),
-				assertCodeBlocksIncrementally,
-				services, computeRcfgProgramExecution, true);
+			final CfgSmtToolkit csToolkit, final AssertCodeBlockOrder assertCodeBlocksIncrementally,
+			final IUltimateServiceProvider services, final boolean computeRcfgProgramExecution) {
+		this(precondition, postcondition, pendingContexts, trace, csToolkit,
+				new DefaultTransFormulas(trace, precondition, postcondition, pendingContexts,
+						csToolkit.getOldVarsAssignmentCache(), false),
+				assertCodeBlocksIncrementally, services, computeRcfgProgramExecution, true);
 	}
-	
+
 	protected TraceChecker(final IPredicate precondition, final IPredicate postcondition,
 			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IAction> trace,
-			final CfgSmtToolkit csToolkit,
-			final NestedFormulas<UnmodifiableTransFormula, IPredicate> rv,
-			final AssertCodeBlockOrder assertCodeBlocksIncrementally,
-			final IUltimateServiceProvider services, final boolean computeRcfgProgramExecution,
-			final boolean unlockSmtSolverAlsoIfUnsat) {
+			final CfgSmtToolkit csToolkit, final NestedFormulas<UnmodifiableTransFormula, IPredicate> rv,
+			final AssertCodeBlockOrder assertCodeBlocksIncrementally, final IUltimateServiceProvider services,
+			final boolean computeRcfgProgramExecution, final boolean unlockSmtSolverAlsoIfUnsat) {
 		this(precondition, postcondition, pendingContexts, trace, csToolkit, rv, assertCodeBlocksIncrementally,
 				services, computeRcfgProgramExecution, unlockSmtSolverAlsoIfUnsat, csToolkit.getManagedScript());
 	}
-	
+
 	/**
 	 * Commit additionally the DefaultTransFormulas
-	 * 
+	 *
 	 * @param services
 	 */
 	protected TraceChecker(final IPredicate precondition, final IPredicate postcondition,
 			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IAction> trace,
-			final CfgSmtToolkit csToolkit,
-			final NestedFormulas<UnmodifiableTransFormula, IPredicate> rv,
-			final AssertCodeBlockOrder assertCodeBlocksIncrementally,
-			final IUltimateServiceProvider services, final boolean computeRcfgProgramExecution,
-			final boolean unlockSmtSolverAlsoIfUnsat, final ManagedScript managedScriptTc) {
+			final CfgSmtToolkit csToolkit, final NestedFormulas<UnmodifiableTransFormula, IPredicate> rv,
+			final AssertCodeBlockOrder assertCodeBlocksIncrementally, final IUltimateServiceProvider services,
+			final boolean computeRcfgProgramExecution, final boolean unlockSmtSolverAlsoIfUnsat,
+			final ManagedScript managedScriptTc) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mCfgManagedScript = csToolkit.getManagedScript();
@@ -225,19 +221,22 @@ public class TraceChecker implements ITraceChecker {
 			mIsSafe = isSafe;
 		}
 	}
-	
+
 	protected TraceCheckerStatisticsGenerator getBenchmarkGenerator() {
 		return new TraceCheckerStatisticsGenerator();
 	}
-	
-	/* (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.ITraceChecker#isCorrect()
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see
+	 * de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.ITraceChecker#isCorrect()
 	 */
 	@Override
 	public LBool isCorrect() {
 		return mIsSafe;
 	}
-	
+
 	/**
 	 * Like three-argument-checkTrace-Method above but for traces which contain pending returns. The pendingContext maps
 	 * the positions of pending returns to predicates which define possible variable valuations in the context to which
@@ -248,11 +247,11 @@ public class TraceChecker implements ITraceChecker {
 		startTraceCheck();
 		final boolean transferToDifferentScript = mTcSmtManager != mCfgManagedScript;
 		mTraceCheckerBenchmarkGenerator.start(TraceCheckerStatisticsDefinitions.SsaConstructionTime.toString());
-		mNsb = new NestedSsaBuilder(mTrace, mTcSmtManager, mNestedFormulas, mCsToolkit.getModifiableGlobalsTable(), mLogger,
-				transferToDifferentScript);
+		mNsb = new NestedSsaBuilder(mTrace, mTcSmtManager, mNestedFormulas, mCsToolkit.getModifiableGlobalsTable(),
+				mLogger, transferToDifferentScript);
 		final NestedFormulas<Term, Term> ssa = mNsb.getSsa();
 		mTraceCheckerBenchmarkGenerator.stop(TraceCheckerStatisticsDefinitions.SsaConstructionTime.toString());
-		
+
 		mTraceCheckerBenchmarkGenerator.start(TraceCheckerStatisticsDefinitions.SatisfiabilityAnalysisTime.toString());
 		if (mAssertCodeBlocksIncrementally != AssertCodeBlockOrder.NOT_INCREMENTALLY) {
 			mAAA = new AnnotateAndAsserterWithStmtOrderPrioritization(mTcSmtManager, ssa,
@@ -282,7 +281,7 @@ public class TraceChecker implements ITraceChecker {
 		}
 		return isSafe;
 	}
-	
+
 	/**
 	 * Compute a program execution for the checked trace.
 	 * <ul>
@@ -295,7 +294,7 @@ public class TraceChecker implements ITraceChecker {
 	 * CodeBlock violates the specification.
 	 * <li>If we have proven that the trace satisfies its specification (result of trace check is UNSAT) we throw an
 	 * Error.
-	 * 
+	 *
 	 * @param isSafe
 	 */
 	private void computeRcfgProgramExecution(final LBool isSafe) {
@@ -310,9 +309,8 @@ public class TraceChecker implements ITraceChecker {
 						mNestedFormulas.getPrecondition(), mNestedFormulas.getPostcondition(), mPendingContexts,
 						mCsToolkit.getOldVarsAssignmentCache(), true);
 				final TraceChecker tc = new TraceChecker(mNestedFormulas.getPrecondition(),
-						mNestedFormulas.getPostcondition(), mPendingContexts, mNestedFormulas.getTrace(),
-						mCsToolkit, withBE, AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, true,
-						true, mTcSmtManager);
+						mNestedFormulas.getPostcondition(), mPendingContexts, mNestedFormulas.getTrace(), mCsToolkit,
+						withBE, AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, true, true, mTcSmtManager);
 				if (tc.getToolchainCanceledExpection() != null) {
 					throw tc.getToolchainCanceledExpection();
 				}
@@ -330,7 +328,7 @@ public class TraceChecker implements ITraceChecker {
 		}
 		mTraceCheckFinished = true;
 	}
-	
+
 	/**
 	 * Compute program execution in the case that we do not know if the checked specification is violated (result of
 	 * trace check is UNKNOWN).
@@ -341,16 +339,16 @@ public class TraceChecker implements ITraceChecker {
 		final Map<TermVariable, Boolean>[] branchEncoders = new Map[0];
 		unlockSmtManager();
 		mTraceCheckFinished = true;
-		return new RcfgProgramExecution(
-				(List<? extends IcfgEdge>) mNestedFormulas.getTrace().asList(),
-				emptyMap, branchEncoders);
+		return new RcfgProgramExecution((List<? extends IcfgEdge>) mNestedFormulas.getTrace().asList(), emptyMap,
+				branchEncoders);
 	}
-	
+
 	/**
 	 * Compute program execution in the case that the checked specification is violated (result of trace check is SAT).
 	 */
 	private RcfgProgramExecution computeRcfgProgramExecutionCaseSAT(final NestedSsaBuilder nsb) {
-		final RelevantVariables relVars = new RelevantVariables(mNestedFormulas, mCsToolkit.getModifiableGlobalsTable());
+		final RelevantVariables relVars =
+				new RelevantVariables(mNestedFormulas, mCsToolkit.getModifiableGlobalsTable());
 		final RcfgProgramExecutionBuilder rpeb = new RcfgProgramExecutionBuilder(mCsToolkit.getModifiableGlobalsTable(),
 				(NestedWord<CodeBlock>) mTrace, relVars, mBoogie2SmtSymbolTable);
 		for (int i = 0; i < mTrace.length(); i++) {
@@ -383,18 +381,18 @@ public class TraceChecker implements ITraceChecker {
 		unlockSmtManager();
 		return rpeb.getRcfgProgramExecution();
 	}
-	
+
 	protected AnnotateAndAssertCodeBlocks getAnnotateAndAsserterCodeBlocks(final NestedFormulas<Term, Term> ssa) {
 		return new AnnotateAndAssertCodeBlocks(mTcSmtManager, mTraceCheckerLock, ssa, mLogger);
-		
+
 		// AnnotateAndAssertCodeBlocks aaacb =
 		// return new AnnotateAndAsserter(mCsToolkit, ssa, aaacb);
 	}
-	
+
 	private Term getValue(final Term term) {
 		return SmtUtils.getValues(mTcSmtManager.getScript(), Collections.singleton(term)).get(term);
 	}
-	
+
 	private static Boolean getBooleanValue(final Term term) {
 		Boolean result;
 		if (SmtUtils.isTrue(term)) {
@@ -408,42 +406,26 @@ public class TraceChecker implements ITraceChecker {
 		}
 		return result;
 	}
-	
-	/* (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.ITraceChecker#getTrace()
-	 */
-	@Override
+
 	public NestedWord<? extends IAction> getTrace() {
 		return mTrace;
 	}
-	
-	/* (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.ITraceChecker#getPrecondition()
-	 */
+
 	@Override
 	public IPredicate getPrecondition() {
 		return mPrecondition;
 	}
-	
-	/* (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.ITraceChecker#getPostcondition()
-	 */
+
 	@Override
 	public IPredicate getPostcondition() {
 		return mPostcondition;
 	}
-	
-	/* (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.ITraceChecker#getPendingContexts()
-	 */
+
 	@Override
 	public Map<Integer, IPredicate> getPendingContexts() {
 		return mPendingContexts;
 	}
-	
-	/* (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.ITraceChecker#getRcfgProgramExecution()
-	 */
+
 	@Override
 	public RcfgProgramExecution getRcfgProgramExecution() {
 		if (mRcfgProgramExecution == null) {
@@ -451,14 +433,11 @@ public class TraceChecker implements ITraceChecker {
 		}
 		return mRcfgProgramExecution;
 	}
-	
+
 	protected void unlockSmtManager() {
 		endTraceCheck();
 	}
-	
-	/* (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.ITraceChecker#getTraceCheckerBenchmark()
-	 */
+
 	@Override
 	public TraceCheckerStatisticsGenerator getTraceCheckerBenchmark() {
 		if (mTraceCheckFinished || mToolchainCanceledException != null) {
@@ -466,31 +445,34 @@ public class TraceChecker implements ITraceChecker {
 		}
 		throw new AssertionError("Benchmark is only available after the trace check is finished.");
 	}
-	
-	/* (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.ITraceChecker#getToolchainCanceledExpection()
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.ITraceChecker#
+	 * getToolchainCanceledExpection()
 	 */
 	@Override
 	public ToolchainCanceledException getToolchainCanceledExpection() {
 		return mToolchainCanceledException;
 	}
-	
+
 	private void startTraceCheck() {
 		mTcSmtManager.lock(mTraceCheckerLock);
 		mTcSmtManager.echo(mTraceCheckerLock, new QuotedObject("starting trace check"));
 		mTcSmtManager.push(mTraceCheckerLock, 1);
 	}
-	
+
 	private void endTraceCheck() {
 		mTcSmtManager.echo(mTraceCheckerLock, new QuotedObject("finished trace check"));
 		mTcSmtManager.pop(mTraceCheckerLock, 1);
 		mTcSmtManager.unlock(mTraceCheckerLock);
 	}
-	
+
 	/**
 	 * Package private class used by trace checker to lock the {@link ManagedScript}.
 	 */
 	class TraceCheckerLock {
-		
+		// this abomination helps Matthias debug
 	}
 }

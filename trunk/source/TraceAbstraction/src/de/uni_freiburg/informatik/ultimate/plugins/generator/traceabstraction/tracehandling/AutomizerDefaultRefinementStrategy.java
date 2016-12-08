@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.MultiTrackInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
@@ -52,15 +53,16 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  */
 public class AutomizerDefaultRefinementStrategy extends MultiTrackTraceAbstractionRefinementStrategy {
 	private static final String LOGIC_CVC4_DEFAULT = "AUFLIRA";
-	
+
 	public AutomizerDefaultRefinementStrategy(final ILogger logger, final TaCheckAndRefinementPreferences prefs,
 			final IUltimateServiceProvider services, final PredicateUnifier predicateUnifier,
 			final IRun<CodeBlock, IPredicate, ?> counterexample, final IAutomaton<CodeBlock, IPredicate> abstraction,
-			final TAPreferences taPrefsForInterpolantConsolidation) {
+			final TAPreferences taPrefsForInterpolantConsolidation, final int iteration,
+			final CegarLoopStatisticsGenerator cegarLoopBenchmarks) {
 		super(logger, prefs, services, predicateUnifier, counterexample, abstraction,
-				taPrefsForInterpolantConsolidation);
+				taPrefsForInterpolantConsolidation, iteration, cegarLoopBenchmarks);
 	}
-	
+
 	@Override
 	protected Iterator<Track> initializeInterpolationTechniquesList() {
 		final List<Track> list = new ArrayList<>(3);
@@ -69,7 +71,7 @@ public class AutomizerDefaultRefinementStrategy extends MultiTrackTraceAbstracti
 		list.add(Track.CVC4_SPBP);
 		return list.iterator();
 	}
-	
+
 	@Override
 	protected String getCvc4Logic() {
 		return LOGIC_CVC4_DEFAULT;

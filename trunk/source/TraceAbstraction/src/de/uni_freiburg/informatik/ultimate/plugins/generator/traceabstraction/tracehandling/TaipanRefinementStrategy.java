@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -49,9 +50,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarAbsIntRunner;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarAbsIntRunner.IRefineFunction;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.IInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.MultiTrackInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategyExceptionBlacklist;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
@@ -72,37 +75,6 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
 public class TaipanRefinementStrategy implements IRefinementStrategy {
-	/**
-	 * Current mode in this strategy.
-	 *
-	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
-	 */
-	private enum Mode {
-		/**
-		 * SMTInterpol with tree interpolation.
-		 */
-		SMTINTERPOL,
-		/**
-		 * Z3 without interpolant generation.
-		 */
-		Z3_NO_IG,
-		/**
-		 * CVC4 without interpolant generation.
-		 */
-		CVC4_NO_IG,
-		/**
-		 * Abstract interpretation.
-		 */
-		ABSTRACT_INTERPRETATION,
-		/**
-		 * Z3 with interpolant generation.
-		 */
-		Z3_IG,
-		/**
-		 * CVC4 with interpolant generation.
-		 */
-		CVC4_IG,
-	}
 
 	private static final String UNKNOWN_MODE = "Unknown mode: ";
 	private static final int SMTINTERPOL_TIMEOUT = 10_000;
@@ -114,7 +86,7 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 	private final ILogger mLogger;
 	private final TaCheckAndRefinementPreferences mPrefs;
 	private final PredicateUnifier mPredicateUnifier;
-	private final AbstractInterpretationRunner mAbsIntRunner;
+	private final CegarAbsIntRunner mAbsIntRunner;
 	private final IRun<CodeBlock, IPredicate, ?> mCounterexample;
 	private final IAutomaton<CodeBlock, IPredicate> mAbstraction;
 
@@ -129,11 +101,14 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 	private TraceChecker mTraceChecker;
 	private IInterpolantGenerator mInterpolantGenerator;
 	private IInterpolantAutomatonBuilder<CodeBlock, IPredicate> mInterpolantAutomatonBuilder;
+	private final int mIteration;
+	private final CegarLoopStatisticsGenerator mCegarLoopBenchmark;
 
 	public TaipanRefinementStrategy(final ILogger logger, final IUltimateServiceProvider services,
 			final TaCheckAndRefinementPreferences prefs, final PredicateUnifier predicateUnifier,
-			final AbstractInterpretationRunner absIntRunner, final IRun<CodeBlock, IPredicate, ?> counterexample,
-			final IAutomaton<CodeBlock, IPredicate> abstraction) {
+			final CegarAbsIntRunner absIntRunner, final IRun<CodeBlock, IPredicate, ?> counterexample,
+			final IAutomaton<CodeBlock, IPredicate> abstraction, final int iteration,
+			final CegarLoopStatisticsGenerator cegarLoopBenchmark) {
 		mServices = services;
 		mLogger = logger;
 		mPrefs = prefs;
@@ -141,8 +116,9 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 		mAbsIntRunner = absIntRunner;
 		mCounterexample = counterexample;
 		mAbstraction = abstraction;
-
+		mIteration = iteration;
 		mCurrentMode = Mode.SMTINTERPOL;
+		mCegarLoopBenchmark = cegarLoopBenchmark;
 	}
 
 	@Override
@@ -297,12 +273,12 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 	private TraceCheckerConstructor constructTraceCheckerConstructor() {
 		final InterpolationTechnique interpolationTechnique = getInterpolationTechnique(mCurrentMode);
 
-		final ManagedScript managedScript = constructManagedScript(mServices, mPrefs, mCurrentMode);
+		final ManagedScript managedScript = constructManagedScript(mServices, mPrefs, mCurrentMode, mIteration);
 
 		TraceCheckerConstructor result;
 		if (mPrevTcConstructor == null) {
 			result = new TraceCheckerConstructor(mPrefs, managedScript, mServices, mPredicateUnifier, mCounterexample,
-					interpolationTechnique);
+					interpolationTechnique, mIteration, mCegarLoopBenchmark);
 		} else {
 			result = new TraceCheckerConstructor(mPrevTcConstructor, managedScript, interpolationTechnique);
 		}
@@ -332,11 +308,11 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 	}
 
 	private static ManagedScript constructManagedScript(final IUltimateServiceProvider services,
-			final TaCheckAndRefinementPreferences prefs, final Mode mode) {
+			final TaCheckAndRefinementPreferences prefs, final Mode mode, final int iteration) {
 		final boolean dumpSmtScriptToFile = prefs.getDumpSmtScriptToFile();
 		final String pathOfDumpedScript = prefs.getPathOfDumpedScript();
 		final String baseNameOfDumpedScript =
-				"Script_" + prefs.getIcfgContainer().getFilename() + "_Iteration" + prefs.getIteration();
+				"Script_" + prefs.getIcfgContainer().getFilename() + "_Iteration" + iteration;
 		final Settings solverSettings;
 		final SolverMode solverMode;
 		final String logicForExternalSolver;
@@ -367,7 +343,7 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 			throw new IllegalArgumentException(UNKNOWN_MODE + mode);
 		}
 		final Script solver = SolverBuilder.buildAndInitializeSolver(services, prefs.getToolchainStorage(), solverMode,
-				solverSettings, false, false, logicForExternalSolver, "TraceCheck_Iteration" + prefs.getIteration());
+				solverSettings, false, false, logicForExternalSolver, "TraceCheck_Iteration" + iteration);
 		final ManagedScript result = new ManagedScript(services, solver);
 
 		// TODO do we need this?
@@ -392,7 +368,9 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 			mCurrentMode = Mode.ABSTRACT_INTERPRETATION;
 			//$FALL-THROUGH$
 		case ABSTRACT_INTERPRETATION:
-			return constructAiInterpolantGenerator();
+			mAbsIntRunner.generateFixpoints(mCounterexample,
+					(INestedWordAutomatonSimple<CodeBlock, IPredicate>) mAbstraction);
+			return new AiRunnerWrapper(mAbsIntRunner);
 		default:
 			throw new IllegalArgumentException(UNKNOWN_MODE + mode);
 		}
@@ -404,16 +382,21 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 		return (InterpolatingTraceChecker) traceChecker;
 	}
 
-	private IInterpolantGenerator constructAiInterpolantGenerator() {
-		return new AiRunnerWrapper();
+	@Override
+	public PredicateUnifier getPredicateUnifier() {
+		return mPredicateUnifier;
+	}
+
+	@Override
+	public RefinementStrategyExceptionBlacklist getExceptionBlacklist() {
+		return mPrefs.getExceptionBlacklist();
 	}
 
 	private class AiRunnerWrapper implements IInterpolantGenerator {
 		private final CegarAbsIntRunner mRunner;
 
-		public AiRunnerWrapper() {
-			mRunner = new CegarAbsIntRunner(mServices, mPrefs.getCegarLoopBenchmark(), mPrefs.getIcfgContainer(),
-					mPrefs.getSimplificationTechnique(), mPrefs.getXnfConversionTechnique(), mPrefs.getCfgSmtToolkit());
+		public AiRunnerWrapper(final CegarAbsIntRunner runner) {
+			mRunner = runner;
 		}
 
 		@Override
@@ -428,8 +411,8 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 				// FIXME 2016-12-08 Christian: Insert code here.
 				final IRefineFunction refineFun = null;
 
-				return mAbsIntRunner.refine(mPredicateUnifier,
-						(NestedWordAutomaton<CodeBlock, IPredicate>) mAbstraction, mCounterexample, refineFun);
+				return mRunner.refine(mPredicateUnifier, (NestedWordAutomaton<CodeBlock, IPredicate>) mAbstraction,
+						mCounterexample, refineFun);
 			} catch (final AutomataLibraryException e) {
 				if (mLogger.isInfoEnabled()) {
 					mLogger.info("AI refinement threw an exception.");
@@ -439,7 +422,7 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 		}
 
 		public IInterpolantAutomatonBuilder<CodeBlock, IPredicate> getInterpolantAutomatonBuilder() {
-			return mAbsIntRunner.createInterpolantAutomatonBuilder(mPredicateUnifier,
+			return mRunner.createInterpolantAutomatonBuilder(mPredicateUnifier,
 					(NestedWordAutomaton<CodeBlock, IPredicate>) mAbstraction, mCounterexample);
 		}
 
@@ -460,12 +443,45 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 
 		@Override
 		public PredicateUnifier getPredicateUnifier() {
-			throw new UnsupportedOperationException();
+			return mPredicateUnifier;
 		}
 
 		@Override
 		public Word<? extends IAction> getTrace() {
-			return null;
+			throw new UnsupportedOperationException();
 		}
 	}
+
+	/**
+	 * Current mode in this strategy.
+	 *
+	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+	 */
+	private enum Mode {
+		/**
+		 * SMTInterpol with tree interpolation.
+		 */
+		SMTINTERPOL,
+		/**
+		 * Z3 without interpolant generation.
+		 */
+		Z3_NO_IG,
+		/**
+		 * CVC4 without interpolant generation.
+		 */
+		CVC4_NO_IG,
+		/**
+		 * Abstract interpretation.
+		 */
+		ABSTRACT_INTERPRETATION,
+		/**
+		 * Z3 with interpolant generation.
+		 */
+		Z3_IG,
+		/**
+		 * CVC4 with interpolant generation.
+		 */
+		CVC4_IG,
+	}
+
 }

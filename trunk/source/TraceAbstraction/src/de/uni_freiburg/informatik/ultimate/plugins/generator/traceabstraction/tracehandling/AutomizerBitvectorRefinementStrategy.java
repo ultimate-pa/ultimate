@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.MultiTrackInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
@@ -52,15 +53,16 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
  */
 public class AutomizerBitvectorRefinementStrategy extends MultiTrackTraceAbstractionRefinementStrategy {
 	private static final String LOGIC_CVC4_BV = "AUFBV";
-	
+
 	public AutomizerBitvectorRefinementStrategy(final ILogger logger, final TaCheckAndRefinementPreferences prefs,
 			final IUltimateServiceProvider services, final PredicateUnifier predicateUnifier,
 			final IRun<CodeBlock, IPredicate, ?> counterexample, final IAutomaton<CodeBlock, IPredicate> abstraction,
-			final TAPreferences taPrefsForInterpolantConsolidation) {
+			final TAPreferences taPrefsForInterpolantConsolidation, final int iteration,
+			final CegarLoopStatisticsGenerator cegarLoopBenchmarks) {
 		super(logger, prefs, services, predicateUnifier, counterexample, abstraction,
-				taPrefsForInterpolantConsolidation);
+				taPrefsForInterpolantConsolidation, iteration, cegarLoopBenchmarks);
 	}
-	
+
 	@Override
 	protected Iterator<Track> initializeInterpolationTechniquesList() {
 		final List<Track> list = new ArrayList<>(3);
@@ -69,9 +71,10 @@ public class AutomizerBitvectorRefinementStrategy extends MultiTrackTraceAbstrac
 		list.add(Track.Z3_SPBP);
 		return list.iterator();
 	}
-	
+
 	@Override
 	protected String getCvc4Logic() {
 		return LOGIC_CVC4_BV;
 	}
+
 }

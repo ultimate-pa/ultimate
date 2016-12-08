@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2016 Christian Schilling (schillic@informatik.uni-freiburg.de)
  * Copyright (C) 2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE TraceAbstraction plug-in.
- * 
+ *
  * The ULTIMATE TraceAbstraction plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE TraceAbstraction plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE TraceAbstraction plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -35,7 +35,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfCon
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.InterpolantAutomatonBuilderFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
@@ -48,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 
 /**
  * Wrapper for preferences of trace check and refinement selection module.
- * 
+ *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
 public class TaCheckAndRefinementPreferences {
@@ -61,9 +60,7 @@ public class TaCheckAndRefinementPreferences {
 	private final BoogieIcfgContainer mIcfgContainer;
 	private final IToolchainStorage mToolchainStorage;
 	private final InterpolantAutomatonBuilderFactory mInterpolantAutomatonBuilderFactory;
-	private final CegarLoopStatisticsGenerator mCegarLoopBenchmark;
-	private final int mIteration;
-	
+
 	// fields that can be read from the TAPreferences
 	private final RefinementStrategy mRefinementStrategy;
 	private final boolean mUseSeparateSolverForTracechecks;
@@ -74,7 +71,7 @@ public class TaCheckAndRefinementPreferences {
 	private final String mPathOfDumpedScript;
 	private final String mLogicForExternalSolver;
 	private final RefinementStrategyExceptionBlacklist mExceptionBlacklist;
-	
+
 	// fields that can be read from the IUltimateServiceProvider
 	private final AssertCodeBlockOrder mAssertCodeBlocksIncrementally;
 	private final UnsatCores mUnsatCores;
@@ -82,18 +79,16 @@ public class TaCheckAndRefinementPreferences {
 	private final boolean mUseInterpolantConsolidation;
 	private final boolean mUseNonlinearConstraints;
 	private final boolean mUseVarsFromUnsatCore;
-	
+
 	/**
 	 * Constructor from existing trace abstraction and Ultimate preferences.
-	 * 
+	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param taPrefs
 	 *            trace abstraction preferences
 	 * @param interpolationTechnique
 	 *            interpolation technique
-	 * @param iteration
-	 *            iteration number
 	 * @param icfgContainer
 	 *            ICFG container
 	 * @param simplificationTechnique
@@ -108,16 +103,13 @@ public class TaCheckAndRefinementPreferences {
 	 *            toolchain storage
 	 * @param interpolantAutomatonBuilderFactory
 	 *            factory for interpolant automaton builder
-	 * @param cegarLoopBenchmark
-	 *            benchmark object of the CEGAR loop
 	 */
 	public TaCheckAndRefinementPreferences(final IUltimateServiceProvider services, final TAPreferences taPrefs,
 			final InterpolationTechnique interpolationTechnique, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique, final CfgSmtToolkit cfgSmtToolkit,
 			final PredicateFactory predicateFactory, final BoogieIcfgContainer icfgContainer,
 			final IToolchainStorage toolchainStorage,
-			final InterpolantAutomatonBuilderFactory interpolantAutomatonBuilderFactory,
-			final CegarLoopStatisticsGenerator cegarLoopBenchmark, final int iteration) {
+			final InterpolantAutomatonBuilderFactory interpolantAutomatonBuilderFactory) {
 		mInterpolationTechnique = interpolationTechnique;
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
@@ -126,9 +118,7 @@ public class TaCheckAndRefinementPreferences {
 		mIcfgContainer = icfgContainer;
 		mToolchainStorage = toolchainStorage;
 		mInterpolantAutomatonBuilderFactory = interpolantAutomatonBuilderFactory;
-		mCegarLoopBenchmark = cegarLoopBenchmark;
-		mIteration = iteration;
-		
+
 		mRefinementStrategy = taPrefs.getRefinementStrategy();
 		mUseSeparateSolverForTracechecks = taPrefs.useSeparateSolverForTracechecks();
 		mSolverMode = taPrefs.solverMode();
@@ -138,7 +128,7 @@ public class TaCheckAndRefinementPreferences {
 		mPathOfDumpedScript = taPrefs.pathOfDumpedScript();
 		mLogicForExternalSolver = taPrefs.logicForExternalSolver();
 		mExceptionBlacklist = taPrefs.getRefinementStrategyExceptionSpecification();
-		
+
 		final IPreferenceProvider ultimatePrefs = services.getPreferenceProvider(Activator.PLUGIN_ID);
 		mAssertCodeBlocksIncrementally =
 				ultimatePrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_ASSERT_CODEBLOCKS_INCREMENTALLY,
@@ -156,59 +146,59 @@ public class TaCheckAndRefinementPreferences {
 	public RefinementStrategy getRefinementStrategy() {
 		return mRefinementStrategy;
 	}
-	
+
 	public boolean getUseSeparateSolverForTracechecks() {
 		return mUseSeparateSolverForTracechecks;
 	}
-	
+
 	public SolverMode getSolverMode() {
 		return mSolverMode;
 	}
-	
+
 	public boolean getFakeNonIncrementalSolver() {
 		return mFakeNonIncrementalSolver;
 	}
-	
+
 	public String getCommandExternalSolver() {
 		return mCommandExternalSolver;
 	}
-	
+
 	public boolean getDumpSmtScriptToFile() {
 		return mDumpSmtScriptToFile;
 	}
-	
+
 	public String getPathOfDumpedScript() {
 		return mPathOfDumpedScript;
 	}
-	
+
 	public String getLogicForExternalSolver() {
 		return mLogicForExternalSolver;
 	}
-	
+
 	public InterpolationTechnique getInterpolationTechnique() {
 		return mInterpolationTechnique;
 	}
-	
+
 	public SimplificationTechnique getSimplificationTechnique() {
 		return mSimplificationTechnique;
 	}
-	
+
 	public XnfConversionTechnique getXnfConversionTechnique() {
 		return mXnfConversionTechnique;
 	}
-	
+
 	public CfgSmtToolkit getCfgSmtToolkit() {
 		return mCfgSmtToolkit;
 	}
-	
+
 	public PredicateFactory getPredicateFactory() {
 		return mPredicateFactory;
 	}
-	
+
 	public BoogieIcfgContainer getIcfgContainer() {
 		return mIcfgContainer;
 	}
-	
+
 	public IToolchainStorage getToolchainStorage() {
 		return mToolchainStorage;
 	}
@@ -216,35 +206,27 @@ public class TaCheckAndRefinementPreferences {
 	public InterpolantAutomatonBuilderFactory getInterpolantAutomatonBuilderFactory() {
 		return mInterpolantAutomatonBuilderFactory;
 	}
-	
-	public CegarLoopStatisticsGenerator getCegarLoopBenchmark() {
-		return mCegarLoopBenchmark;
-	}
-	
-	public int getIteration() {
-		return mIteration;
-	}
-	
+
 	public AssertCodeBlockOrder getAssertCodeBlocksIncrementally() {
 		return mAssertCodeBlocksIncrementally;
 	}
-	
+
 	public UnsatCores getUnsatCores() {
 		return mUnsatCores;
 	}
-	
+
 	public boolean getUseLiveVariables() {
 		return mUseLiveVariables;
 	}
-	
+
 	public boolean getUseInterpolantConsolidation() {
 		return mUseInterpolantConsolidation;
 	}
-	
+
 	public boolean getUseNonlinearConstraints() {
 		return mUseNonlinearConstraints;
 	}
-	
+
 	public boolean getUseVarsFromUnsatCore() {
 		return mUseVarsFromUnsatCore;
 	}
