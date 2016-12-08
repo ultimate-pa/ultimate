@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RcfgProgramExecution;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractInterpretationRunner;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.CachingHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
@@ -143,6 +144,7 @@ public final class TraceAbstractionRefinementEngine
 	 *            toolchain storage
 	 * @param taPrefsForInterpolantConsolidation
 	 *            trace abstraction preferences (only used for interpolant consolidation)
+	 * @param absIntRunner
 	 * @param iteration
 	 *            current iteration
 	 * @param counterexample
@@ -154,8 +156,9 @@ public final class TraceAbstractionRefinementEngine
 			final TaCheckAndRefinementPreferences prefs, final PredicateFactory predicateFactory,
 			final BoogieIcfgContainer icfgContainer, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique, final IToolchainStorage toolchainStorage,
-			final TAPreferences taPrefsForInterpolantConsolidation, final int iteration,
-			final IRun<CodeBlock, IPredicate, ?> counterexample, final IAutomaton<CodeBlock, IPredicate> abstraction) {
+			final TAPreferences taPrefsForInterpolantConsolidation, final AbstractInterpretationRunner absIntRunner,
+			final int iteration, final IRun<CodeBlock, IPredicate, ?> counterexample,
+			final IAutomaton<CodeBlock, IPredicate> abstraction) {
 		// initialize fields
 		mLogger = logger;
 		mExceptionBlacklist = prefs.getExceptionBlacklist();
@@ -168,7 +171,7 @@ public final class TraceAbstractionRefinementEngine
 				setupManagedScriptInternal(services, prefs, icfgContainer, toolchainStorage, iteration);
 		
 		final IRefinementStrategy strategy = chooseStrategy(counterexample, abstraction, services, managedScript,
-				taPrefsForInterpolantConsolidation, prefs);
+				taPrefsForInterpolantConsolidation, prefs, absIntRunner);
 		
 		mFeasibility = executeStrategy(strategy);
 	}
@@ -201,7 +204,7 @@ public final class TraceAbstractionRefinementEngine
 	private IRefinementStrategy chooseStrategy(final IRun<CodeBlock, IPredicate, ?> counterexample,
 			final IAutomaton<CodeBlock, IPredicate> abstraction, final IUltimateServiceProvider services,
 			final ManagedScript managedScript, final TAPreferences taPrefsForInterpolantConsolidation,
-			final TaCheckAndRefinementPreferences prefs) {
+			final TaCheckAndRefinementPreferences prefs, final AbstractInterpretationRunner absIntRunner) {
 		switch (prefs.getRefinementStrategy()) {
 			case FIXED_PREFERENCES:
 				return new FixedTraceAbstractionRefinementStrategy(mLogger, prefs, managedScript, services,
@@ -210,8 +213,8 @@ public final class TraceAbstractionRefinementEngine
 				return new MultiTrackTraceAbstractionRefinementStrategy(mLogger, prefs, services, mPredicateUnifier,
 						counterexample, abstraction, taPrefsForInterpolantConsolidation);
 			case TAIPAN:
-				return new TaipanRefinementStrategy(mLogger, services, prefs, mPredicateUnifier, counterexample,
-						abstraction);
+				return new TaipanRefinementStrategy(mLogger, services, prefs, mPredicateUnifier, absIntRunner,
+						counterexample, abstraction);
 			default:
 				throw new IllegalArgumentException(
 						"Unknown refinement strategy specified: " + prefs.getRefinementStrategy());

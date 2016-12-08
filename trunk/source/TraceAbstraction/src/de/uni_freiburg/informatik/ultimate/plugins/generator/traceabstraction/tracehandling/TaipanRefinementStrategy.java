@@ -115,6 +115,7 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 	private final ILogger mLogger;
 	private final TaCheckAndRefinementPreferences mPrefs;
 	private final PredicateUnifier mPredicateUnifier;
+	private final AbstractInterpretationRunner mAbsIntRunner;
 	private final IRun<CodeBlock, IPredicate, ?> mCounterexample;
 	private final IAutomaton<CodeBlock, IPredicate> mAbstraction;
 	
@@ -132,11 +133,13 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 	
 	public TaipanRefinementStrategy(final ILogger logger, final IUltimateServiceProvider services,
 			final TaCheckAndRefinementPreferences prefs, final PredicateUnifier predicateUnifier,
-			final IRun<CodeBlock, IPredicate, ?> counterexample, final IAutomaton<CodeBlock, IPredicate> abstraction) {
+			final AbstractInterpretationRunner absIntRunner, final IRun<CodeBlock, IPredicate, ?> counterexample,
+			final IAutomaton<CodeBlock, IPredicate> abstraction) {
 		mServices = services;
 		mLogger = logger;
 		mPrefs = prefs;
 		mPredicateUnifier = predicateUnifier;
+		mAbsIntRunner = absIntRunner;
 		mCounterexample = counterexample;
 		mAbstraction = abstraction;
 		
@@ -408,14 +411,6 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 	}
 	
 	private class AiRunnerWrapper implements IInterpolantGenerator {
-		private final AbstractInterpretationRunner mRunner;
-		
-		public AiRunnerWrapper() {
-			mRunner = new AbstractInterpretationRunner(mServices, mPrefs.getCegarLoopBenchmark(),
-					mPrefs.getIcfgContainer(), mPrefs.getSimplificationTechnique(), mPrefs.getXnfConversionTechnique(),
-					mPrefs.getCfgSmtToolkit());
-		}
-		
 		@Override
 		public IPredicate[] getInterpolants() {
 			// return a fake sequence of interpolants
@@ -428,8 +423,8 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 				// FIXME 2016-12-08 Christian: Insert code here.
 				final IRefineFunction refineFun = null;
 				
-				return mRunner.refine(mPredicateUnifier, (NestedWordAutomaton<CodeBlock, IPredicate>) mAbstraction,
-						mCounterexample, refineFun);
+				return mAbsIntRunner.refine(mPredicateUnifier,
+						(NestedWordAutomaton<CodeBlock, IPredicate>) mAbstraction, mCounterexample, refineFun);
 			} catch (final AutomataLibraryException e) {
 				if (mLogger.isInfoEnabled()) {
 					mLogger.info("AI refinement threw an exception.");
@@ -439,7 +434,7 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 		}
 		
 		public IInterpolantAutomatonBuilder<CodeBlock, IPredicate> getInterpolantAutomatonBuilder() {
-			return mRunner.createInterpolantAutomatonBuilder(mPredicateUnifier,
+			return mAbsIntRunner.createInterpolantAutomatonBuilder(mPredicateUnifier,
 					(NestedWordAutomaton<CodeBlock, IPredicate>) mAbstraction, mCounterexample);
 		}
 		
