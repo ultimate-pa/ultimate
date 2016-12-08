@@ -320,10 +320,6 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			}
 			// s_Logger.info("Trace with values");
 			// s_Logger.info(mTraceCheckAndRefinementSelection.getInterpolatingTraceChecker().getRcfgProgramExecution());
-		} else {
-			final INestedWordAutomatonSimple<CodeBlock, IPredicate> abstraction =
-					(INestedWordAutomatonSimple<CodeBlock, IPredicate>) mAbstraction;
-			mAbsIntRunner.generateFixpoints(mCounterexample, abstraction);
 		}
 
 		return feasibility;
@@ -341,13 +337,6 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	@Override
 	protected boolean refineAbstraction() throws AutomataLibraryException {
 		final PredicateUnifier predUnifier = mTraceCheckAndRefinementEngine.getPredicateUnifier();
-		if (mAbsIntRunner.hasShownInfeasibility()) {
-			return mAbsIntRunner.refine(predUnifier, mInterpolAutomaton, mCounterexample,
-					this::refineWithGivenAutomaton);
-		}
-		mAbsIntRunner.refineAnyways(mTraceCheckAndRefinementEngine.getPredicateUnifier(),
-				(INestedWordAutomaton<CodeBlock, IPredicate>) mAbstraction, mCounterexample,
-				this::refineWithGivenAutomaton);
 		return refineWithGivenAutomaton(mInterpolAutomaton, predUnifier);
 	}
 

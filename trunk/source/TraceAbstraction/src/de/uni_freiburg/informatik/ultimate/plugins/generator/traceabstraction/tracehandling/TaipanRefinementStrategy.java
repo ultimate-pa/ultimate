@@ -30,7 +30,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
@@ -49,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarAbsIntRunner;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarAbsIntRunner.IRefineFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.IInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.MultiTrackInterpolantAutomatonBuilder;
@@ -407,18 +405,7 @@ public class TaipanRefinementStrategy implements IRefinementStrategy {
 
 		@Override
 		public boolean isPerfectSequence() {
-			try {
-				// FIXME 2016-12-08 Christian: Insert code here.
-				final IRefineFunction refineFun = null;
-
-				return mRunner.refine(mPredicateUnifier, (NestedWordAutomaton<CodeBlock, IPredicate>) mAbstraction,
-						mCounterexample, refineFun);
-			} catch (final AutomataLibraryException e) {
-				if (mLogger.isInfoEnabled()) {
-					mLogger.info("AI refinement threw an exception.");
-				}
-			}
-			return false;
+			return mRunner.hasShownInfeasibility();
 		}
 
 		public IInterpolantAutomatonBuilder<CodeBlock, IPredicate> getInterpolantAutomatonBuilder() {

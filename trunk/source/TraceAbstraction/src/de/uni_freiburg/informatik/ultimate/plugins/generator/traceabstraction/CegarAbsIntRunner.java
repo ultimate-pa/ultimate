@@ -30,22 +30,17 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
-import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -86,10 +81,9 @@ public class CegarAbsIntRunner {
 
 	private boolean mSkipIteration;
 
-	public CegarAbsIntRunner(final IUltimateServiceProvider services,
-			final CegarLoopStatisticsGenerator benchmark, final BoogieIcfgContainer root,
-			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
-			final CfgSmtToolkit csToolkit) {
+	public CegarAbsIntRunner(final IUltimateServiceProvider services, final CegarLoopStatisticsGenerator benchmark,
+			final BoogieIcfgContainer root, final SimplificationTechnique simplificationTechnique,
+			final XnfConversionTechnique xnfConversionTechnique, final CfgSmtToolkit csToolkit) {
 		mCegarLoopBenchmark = benchmark;
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -252,52 +246,6 @@ public class CegarAbsIntRunner {
 		}
 	}
 
-	public void refineAnyways(final PredicateUnifier predicateUnifier,
-			final INestedWordAutomaton<CodeBlock, IPredicate> abstraction, final IRun<CodeBlock, IPredicate, ?> cex,
-			final IRefineFunction refineFun) throws AutomataLibraryException {
-		if (mMode == AbstractInterpretationMode.NONE || !mAlwaysRefine || mSkipIteration) {
-			return;
-		}
-		mLogger.info("Refining with AI automaton anyways");
-		final NestedWordAutomaton<CodeBlock, IPredicate> aiInterpolAutomaton =
-				createInterpolantAutomatonBuilder(predicateUnifier, abstraction, cex).getResult();
-		refine(predicateUnifier, aiInterpolAutomaton, cex, refineFun);
-	}
-
-	/**
-	 *
-	 * @return true iff abstract interpretation was strong enough to prove infeasibility of the current counterexample.
-	 */
-	public boolean refine(final PredicateUnifier predUnifier,
-			final NestedWordAutomaton<CodeBlock, IPredicate> aiInterpolAutomaton,
-			final IRun<CodeBlock, IPredicate, ?> currentCex, final IRefineFunction refineFun)
-			throws AutomataLibraryException {
-		if (mMode == AbstractInterpretationMode.NONE) {
-			throw new UnsupportedOperationException("You cannot refine in mode " + AbstractInterpretationMode.NONE);
-		}
-		if (mSkipIteration) {
-			mLogger.debug("Cannot refine with AI when iteration was skipped");
-			return false;
-		}
-		if (mAbsIntResult == null) {
-			mLogger.warn("Cannot refine abstraction with AI automaton without calculating fixpoint first");
-			return false;
-		}
-
-		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AbstIntTime.toString());
-		try {
-			mLogger.info("Refining with AI automaton");
-			final boolean aiResult = refineFun.refine(aiInterpolAutomaton, predUnifier);
-			if (mMode == AbstractInterpretationMode.USE_PREDICATES) {
-				assert hasAiProgress(aiResult, aiInterpolAutomaton, currentCex) : "No progress during AI refinement";
-			}
-			mLogger.info("Finished additional refinement with AI automaton. Progress: " + aiResult);
-			return !mAbsIntResult.hasReachedError();
-		} finally {
-			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.AbstIntTime.toString());
-		}
-	}
-
 	private static Set<CodeBlock> convertCex2Set(final IRun<CodeBlock, IPredicate, ?> currentCex) {
 		final Set<CodeBlock> transitions = new HashSet<>();
 		// words count their states, so 0 is first state, length is last state
@@ -307,35 +255,4 @@ public class CegarAbsIntRunner {
 		}
 		return transitions;
 	}
-
-	private boolean hasAiProgress(final boolean result,
-			final INestedWordAutomaton<CodeBlock, IPredicate> aiInterpolAutomaton,
-			final IRun<CodeBlock, IPredicate, ?> cex) {
-		if (result) {
-			return result;
-		}
-		if (mAbsIntResult == null) {
-			return true;
-		}
-		if (mAbsIntResult.hasReachedError()) {
-			return true;
-		}
-		mLogger.fatal("No progress during refinement with AI. The following run is still accepted.");
-		mLogger.fatal(cex);
-		mLogger.fatal("Used the following AI result: " + mAbsIntResult.toSimplifiedString(this::simplify));
-		mLogger.fatal("Automaton had the following predicates: " + aiInterpolAutomaton.getStates());
-		return false;
-	}
-
-	private String simplify(final Term term) {
-		return SmtUtils.simplify(mCsToolkit.getManagedScript(), term, mServices, mSimplificationTechnique)
-				.toStringDirect();
-	}
-
-	@FunctionalInterface
-	public interface IRefineFunction {
-		boolean refine(NestedWordAutomaton<CodeBlock, IPredicate> interpolAutomaton, PredicateUnifier unifier)
-				throws AssertionError, AutomataOperationCanceledException, AutomataLibraryException;
-	}
-
 }
