@@ -209,8 +209,11 @@ public final class TraceAbstractionRefinementEngine
 			case FIXED_PREFERENCES:
 				return new FixedTraceAbstractionRefinementStrategy(mLogger, prefs, managedScript, services,
 						mPredicateUnifier, counterexample, abstraction, taPrefsForInterpolantConsolidation);
-			case MULTI_TRACK:
-				return new MultiTrackTraceAbstractionRefinementStrategy(mLogger, prefs, services, mPredicateUnifier,
+			case AUTOMIZER_DEFAULT:
+				return new AutomizerDefaultRefinementStrategy(mLogger, prefs, services, mPredicateUnifier,
+						counterexample, abstraction, taPrefsForInterpolantConsolidation);
+			case AUTOMIZER_BITVECTORS:
+				return new AutomizerBitvectorRefinementStrategy(mLogger, prefs, services, mPredicateUnifier,
 						counterexample, abstraction, taPrefsForInterpolantConsolidation);
 			case TAIPAN:
 				return new TaipanRefinementStrategy(mLogger, services, prefs, mPredicateUnifier, absIntRunner,
@@ -394,6 +397,9 @@ public final class TraceAbstractionRefinementEngine
 			} else if (message.contains("Received EOF on stdin. stderr output:")) {
 				// wrong usage of external solver, tell the user
 				exceptionCategory = ExceptionHandlingCategory.KNOWN_THROW;
+			} else if (message.startsWith("Logic does not allow numerals")) {
+				// wrong usage of external solver, tell the user
+				exceptionCategory = ExceptionHandlingCategory.KNOWN_THROW;
 			} else {
 				exceptionCategory = ExceptionHandlingCategory.UNKNOWN;
 			}
@@ -434,7 +440,8 @@ public final class TraceAbstractionRefinementEngine
 		final ManagedScript managedScript;
 		
 		switch (prefs.getRefinementStrategy()) {
-			case MULTI_TRACK:
+			case AUTOMIZER_DEFAULT:
+			case AUTOMIZER_BITVECTORS:
 			case TAIPAN:
 				managedScript = null;
 				break;

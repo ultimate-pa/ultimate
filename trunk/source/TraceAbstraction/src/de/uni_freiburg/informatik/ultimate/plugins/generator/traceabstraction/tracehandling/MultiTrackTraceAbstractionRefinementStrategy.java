@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
@@ -60,7 +59,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
 
 /**
- * {@link IRefinementStrategy} that first tries a {@link InterpolatingTraceChecker} using
+ * {@link IRefinementStrategy} that first tries an {@link InterpolatingTraceChecker} using
  * {@link InterpolationTechnique#Craig_TreeInterpolation} and then {@link InterpolationTechnique#FPandBP}.
  * <p>
  * The class uses a {@link MultiTrackInterpolantAutomatonBuilder} for constructing the interpolant automaton.
@@ -68,13 +67,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public class MultiTrackTraceAbstractionRefinementStrategy implements IRefinementStrategy {
+public abstract class MultiTrackTraceAbstractionRefinementStrategy implements IRefinementStrategy {
 	/**
 	 * Possible tracks.
 	 * 
 	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 	 */
-	private enum Track {
+	protected enum Track {
 		/**
 		 * SMTInterpol with tree interpolation.
 		 */
@@ -91,7 +90,6 @@ public class MultiTrackTraceAbstractionRefinementStrategy implements IRefinement
 	
 	private static final String UNKNOWN_MODE = "Unknown mode: ";
 	private static final String LOGIC_Z3 = "ALL";
-	private static final String LOGIC_CVC4 = "ALL_SUPPORTED";
 	private static final int SMTINTERPOL_TIMEOUT = 10_000;
 	// private static final String Z3_COMMAND = RcfgPreferenceInitializer.Z3_DEFAULT;
 	private static final String Z3_COMMAND = "z3 -smt2 -in SMTLIB2_COMPLIANT=true";
@@ -212,13 +210,7 @@ public class MultiTrackTraceAbstractionRefinementStrategy implements IRefinement
 		return mInterpolantAutomatonBuilder;
 	}
 	
-	private static Iterator<Track> initializeInterpolationTechniquesList() {
-		final List<Track> list = new ArrayList<>(3);
-		list.add(Track.SMTINTERPOL_TREE_INTERPOLANTS);
-		list.add(Track.Z3_SPBP);
-		list.add(Track.CVC4_SPBP);
-		return list.iterator();
-	}
+	protected abstract Iterator<Track> initializeInterpolationTechniquesList();
 	
 	private TraceCheckerConstructor constructTraceCheckerConstructor() {
 		final InterpolationTechnique interpolationTechnique = getInterpolationTechnique(mNextTechnique);
@@ -254,7 +246,7 @@ public class MultiTrackTraceAbstractionRefinementStrategy implements IRefinement
 		return interpolationTechnique;
 	}
 	
-	private static ManagedScript constructManagedScript(final IUltimateServiceProvider services,
+	private ManagedScript constructManagedScript(final IUltimateServiceProvider services,
 			final TaCheckAndRefinementPreferences prefs, final Track mode) {
 		final boolean dumpSmtScriptToFile = prefs.getDumpSmtScriptToFile();
 		final String pathOfDumpedScript = prefs.getPathOfDumpedScript();
@@ -274,13 +266,13 @@ public class MultiTrackTraceAbstractionRefinementStrategy implements IRefinement
 				solverSettings = new Settings(false, true, Z3_COMMAND, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
 						baseNameOfDumpedScript);
 				solverMode = SolverMode.External_ModelsAndUnsatCoreMode;
-				logicForExternalSolver = LOGIC_CVC4;
+				logicForExternalSolver = LOGIC_Z3;
 				break;
 			case CVC4_SPBP:
 				solverSettings = new Settings(false, true, CVC4_COMMAND, 0, null, dumpSmtScriptToFile,
 						pathOfDumpedScript, baseNameOfDumpedScript);
 				solverMode = SolverMode.External_ModelsAndUnsatCoreMode;
-				logicForExternalSolver = LOGIC_Z3;
+				logicForExternalSolver = getCvc4Logic();
 				break;
 			default:
 				throw new IllegalArgumentException(
@@ -299,6 +291,11 @@ public class MultiTrackTraceAbstractionRefinementStrategy implements IRefinement
 		
 		return result;
 	}
+	
+	/**
+	 * @return Logic string used for {@code CVC4}.
+	 */
+	protected abstract String getCvc4Logic();
 	
 	/**
 	 * TODO Refactor this code duplicate with {@link FixedTraceAbstractionRefinementStrategy}.
