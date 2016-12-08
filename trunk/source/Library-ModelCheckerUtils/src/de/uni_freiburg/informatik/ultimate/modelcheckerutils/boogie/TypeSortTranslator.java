@@ -30,6 +30,7 @@ import java.math.BigInteger;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
@@ -75,8 +76,7 @@ public class TypeSortTranslator {
 			// term e.g., "true".
 			final Sort boolSort = mScript.sort("Bool");
 			final IBoogieType boolType = BoogieType.TYPE_BOOL;
-			mType2Sort.put(boolType, boolSort);
-			mSort2Type.put(boolSort, boolType);
+			cacheSort(boolType, boolSort);
 		}
 		for (final TypeDeclaration typeDecl : declarations) {
 			declareType(typeDecl);
@@ -93,13 +93,13 @@ public class TypeSortTranslator {
 			// expressions in interpolants and don't replace them by select
 			// expressions.
 			if (sort.isArraySort()) {
-				assert sort.getName().equals("Array");
+				assert "Array".equals(sort.getName());
 				final Sort indexSort = sort.getArguments()[0];
 				final Sort valueSort = sort.getArguments()[1];
 				final BoogieType[] indexTypes = { (BoogieType) getType(indexSort) };
 				final BoogieType valueType = (BoogieType) getType(valueSort);
 				type = BoogieType.createArrayType(0, indexTypes, valueType);
-			} else if (sort.getRealSort().getName().equals("BitVec")) {
+			} else if ("BitVec".equals(sort.getRealSort().getName())) {
 				final BigInteger bvsize = sort.getIndices()[0];
 				type = BoogieType.createBitvectorType(bvsize.intValueExact());
 				return type;
@@ -115,17 +115,17 @@ public class TypeSortTranslator {
 	 * corresponding sort is constructed and the pair (sort, type) is added to msort2type which is used for a
 	 * backtranslation.
 	 *
-	 * @param BoogieASTNode
+	 * @param astNode
 	 *            BoogieASTNode for which Sort is computed
 	 */
-	public Sort getSort(IBoogieType type, final BoogieASTNode BoogieASTNode) {
+	public Sort getSort(IBoogieType type, final BoogieASTNode astNode) {
 		if (type instanceof BoogieType) {
 			type = ((BoogieType) type).getUnderlyingType();
 		}
 		if (mType2Sort.containsKey(type)) {
 			return mType2Sort.get(type);
 		}
-		return constructSort(type, BoogieASTNode);
+		return constructSort(type, astNode);
 	}
 
 	private void declareType(final TypeDeclaration typeDecl) {
@@ -139,7 +139,7 @@ public class TypeSortTranslator {
 		if (attributes != null) {
 			mType2Attributes.put(id, attributes);
 			final String attributeDefinedIdentifier = Boogie2SmtSymbolTable
-					.checkForAttributeDefinedIdentifier(attributes, Boogie2SmtSymbolTable.s_BUILTINIDENTIFIER);
+					.checkForAttributeDefinedIdentifier(attributes, Boogie2SmtSymbolTable.ID_BUILTIN);
 			if (attributeDefinedIdentifier != null) {
 				// we do not declare or define a Sort since we should use
 				// a built-in Sort.
@@ -155,76 +155,86 @@ public class TypeSortTranslator {
 	}
 
 	/**
-	 * Construct the SMT sort for a boogie type. Store the (type, sort) pair in mtype2sort. Store the (sort, type) pair
+	 * Construct the SMT sort for a Boogie type. Store the (type, sort) pair in mType2sort. Store the (sort, type) pair
 	 * in msort2type.
 	 *
-	 * @param BoogieASTNode
+	 * @param astNode
 	 *            BoogieASTNode for which Sort is computed
 	 */
-	protected Sort constructSort(final IBoogieType boogieType, final BoogieASTNode BoogieASTNode) {
-		Sort result;
+	protected Sort constructSort(final IBoogieType boogieType, final BoogieASTNode astNode) {
+		try {
+			final Sort result = constructSort(boogieType, mScript, mBlackHoleArrays, mType2Attributes::get);
+			cacheSort(boogieType, result);
+			return result;
+		} catch (final SMTLIBException e) {
+			if ("Sort Array not declared".equals(e.getMessage())) {
+				Boogie2SMT.reportUnsupportedSyntax(astNode, "Solver does not support arrays", mServices);
+				throw e;
+			}
+			throw new AssertionError(e);
+		}
+	}
+
+	/**
+	 * Construct the SMT sort for a Boogie type. Does not use any caching and, depending on your funAttributeCache, may
+	 * create many sorts.
+	 */
+	public static Sort constructSort(final IBoogieType boogieType, final Script script, final boolean blackHoleArrays,
+			final Function<String, Map<String, Expression[]>> funAttributeCache) {
 		if (boogieType instanceof PrimitiveType) {
 			if (boogieType.equals(BoogieType.TYPE_BOOL)) {
-				result = mScript.sort("Bool");
+				return script.sort("Bool");
 			} else if (boogieType.equals(BoogieType.TYPE_INT)) {
-				result = mScript.sort("Int");
+				return script.sort("Int");
 			} else if (boogieType.equals(BoogieType.TYPE_REAL)) {
-				result = mScript.sort("Real");
+				return script.sort("Real");
 			} else if (boogieType.equals(BoogieType.TYPE_ERROR)) {
 				throw new IllegalArgumentException("BoogieAST contains type "
 						+ "errors. This plugin supports only BoogieASTs without type errors");
 			} else if (((PrimitiveType) boogieType).getTypeCode() > 0) {
 				final int bitvectorSize = ((PrimitiveType) boogieType).getTypeCode();
 				final BigInteger[] sortIndices = { BigInteger.valueOf(bitvectorSize) };
-				result = mScript.sort("BitVec", sortIndices);
+				return script.sort("BitVec", sortIndices);
 			} else {
 				throw new IllegalArgumentException("Unsupported PrimitiveType " + boogieType);
 			}
 		} else if (boogieType instanceof ArrayType) {
 			final ArrayType arrayType = (ArrayType) boogieType;
-			Sort rangeSort = constructSort(arrayType.getValueType(), BoogieASTNode);
-			if (mBlackHoleArrays) {
-				result = rangeSort;
-			} else {
-				try {
-					for (int i = arrayType.getIndexCount() - 1; i >= 1; i--) {
-						final Sort sorti = constructSort(arrayType.getIndexType(i), BoogieASTNode);
-						rangeSort = mScript.sort("Array", sorti, rangeSort);
-					}
-					final Sort domainSort = constructSort(arrayType.getIndexType(0), BoogieASTNode);
-					result = mScript.sort("Array", domainSort, rangeSort);
-				} catch (final SMTLIBException e) {
-					if (e.getMessage().equals("Sort Array not declared")) {
-						Boogie2SMT.reportUnsupportedSyntax(BoogieASTNode, "Solver does not support arrays", mServices);
-						throw e;
-					}
-					throw new AssertionError(e);
-				}
+			Sort rangeSort = constructSort(arrayType.getValueType(), script, blackHoleArrays, funAttributeCache);
+			if (blackHoleArrays) {
+				return rangeSort;
 			}
+			for (int i = arrayType.getIndexCount() - 1; i >= 1; i--) {
+				final Sort sorti = constructSort(arrayType.getIndexType(i), script, blackHoleArrays, funAttributeCache);
+				rangeSort = script.sort("Array", sorti, rangeSort);
+			}
+			final Sort domainSort =
+					constructSort(arrayType.getIndexType(0), script, blackHoleArrays, funAttributeCache);
+			return script.sort("Array", domainSort, rangeSort);
 		} else if (boogieType instanceof ConstructedType) {
 			final ConstructedType constructedType = (ConstructedType) boogieType;
 			final String name = constructedType.getConstr().getName();
-			final Map<String, Expression[]> attributes = mType2Attributes.get(name);
+			final Map<String, Expression[]> attributes = funAttributeCache.apply(name);
 			if (attributes == null) {
-				result = mScript.sort(name);
-			} else {
-				final String attributeDefinedIdentifier = Boogie2SmtSymbolTable
-						.checkForAttributeDefinedIdentifier(attributes, Boogie2SmtSymbolTable.s_BUILTINIDENTIFIER);
-				if (attributeDefinedIdentifier == null) {
-					result = mScript.sort(name);
-				} else {
-					// use SMT identifier that was defined by our "builtin"
-					// attribute
-					final BigInteger[] indices = Boogie2SmtSymbolTable.checkForIndices(attributes);
-					result = mScript.sort(attributeDefinedIdentifier, indices);
-				}
+				return script.sort(name);
 			}
+			final String attributeDefinedIdentifier = Boogie2SmtSymbolTable
+					.checkForAttributeDefinedIdentifier(attributes, Boogie2SmtSymbolTable.ID_BUILTIN);
+			if (attributeDefinedIdentifier == null) {
+				return script.sort(name);
+			}
+			// use SMT identifier that was defined by our "builtin"
+			// attribute
+			final BigInteger[] indices = Boogie2SmtSymbolTable.checkForIndices(attributes);
+			return script.sort(attributeDefinedIdentifier, indices);
 		} else {
 			throw new IllegalArgumentException("Unsupported type " + boogieType);
 		}
+	}
+
+	private void cacheSort(final IBoogieType boogieType, final Sort result) {
 		mType2Sort.put(boogieType, result);
 		mSort2Type.put(result, boogieType);
-		return result;
 	}
 
 }

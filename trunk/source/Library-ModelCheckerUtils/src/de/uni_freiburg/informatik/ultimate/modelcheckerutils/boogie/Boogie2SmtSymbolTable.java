@@ -78,9 +78,9 @@ public class Boogie2SmtSymbolTable implements IIcfgSymbolTable {
 	 * </ul>
 	 *
 	 */
-	static final String s_BUILTINIDENTIFIER = "builtin";
+	static final String ID_BUILTIN = "builtin";
 
-	private static final String s_INDICESIDENTIFIER = "indices";
+	private static final String ID_INDICES = "indices";
 
 	private final BoogieDeclarations mBoogieDeclarations;
 	private final ManagedScript mScript;
@@ -252,7 +252,7 @@ public class Boogie2SmtSymbolTable implements IIcfgSymbolTable {
 		final Map<String, Expression[]> attributes = extractAttributes(constdecl);
 		if (attributes != null) {
 			final String attributeDefinedIdentifier =
-					checkForAttributeDefinedIdentifier(attributes, s_BUILTINIDENTIFIER);
+					checkForAttributeDefinedIdentifier(attributes, ID_BUILTIN);
 			if (attributeDefinedIdentifier != null) {
 				final BigInteger[] indices = Boogie2SmtSymbolTable.checkForIndices(attributes);
 				if (varlist.getIdentifiers().length > 1) {
@@ -298,7 +298,7 @@ public class Boogie2SmtSymbolTable implements IIcfgSymbolTable {
 		final Map<String, Expression[]> attributes = extractAttributes(funcdecl);
 		final String id = funcdecl.getIdentifier();
 		mBoogieFunction2Attributes.put(id, attributes);
-		final String attributeDefinedIdentifier = checkForAttributeDefinedIdentifier(attributes, s_BUILTINIDENTIFIER);
+		final String attributeDefinedIdentifier = checkForAttributeDefinedIdentifier(attributes, ID_BUILTIN);
 		String smtID;
 		if (attributeDefinedIdentifier == null) {
 			smtID = Boogie2SMT.quoteId(id);
@@ -354,12 +354,12 @@ public class Boogie2SmtSymbolTable implements IIcfgSymbolTable {
 	}
 
 	/**
-	 * Checks if there is an annotation with the name {@link #s_INDICESIDENTIFIER} According to our convention this
+	 * Checks if there is an annotation with the name {@link #ID_INDICES} According to our convention this
 	 * attribute defines the indices for the corresponding SMT function. Returns the array of indices if there is an
 	 * attribute with this name and null otherwise.
 	 */
 	public static BigInteger[] checkForIndices(final Map<String, Expression[]> attributes) {
-		final Expression[] values = attributes.get(s_INDICESIDENTIFIER);
+		final Expression[] values = attributes.get(ID_INDICES);
 		if (values == null) {
 			// no such name
 			return null;
