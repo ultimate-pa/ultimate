@@ -870,4 +870,20 @@ public class PartialQuantifierElimination {
 //		}
 //		return Util.and(script, resultParams.toArray(new Term[resultParams.size()]));
 //	}
+	
+	
+	/**
+	 * Construct new set that contains all Term variables that
+	 * occur in eliminatees and are free variables of term.
+	 * @return 
+	 */
+	public static Set<TermVariable> constructNewEliminatees(final Term term, final Set<TermVariable> eliminatees) {
+		final Set<TermVariable> result = new HashSet<>();
+		for (final TermVariable tv : term.getFreeVars()) {
+			if (eliminatees.contains(tv)) {
+				result.add(tv);
+			}
+		}
+		return result;
+	}
 }

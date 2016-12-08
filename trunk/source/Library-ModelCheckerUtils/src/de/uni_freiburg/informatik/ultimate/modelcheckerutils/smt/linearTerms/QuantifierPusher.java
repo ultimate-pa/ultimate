@@ -248,13 +248,14 @@ public class QuantifierPusher extends TermTransformer {
 			final Term[] elimResulDualFiniteParams = technique.tryToEliminate(quantifier, dualFiniteParams, eliminatees);
 			final Term result = PartialQuantifierElimination.applyDualFiniteConnective(
 					mScript, quantifier, Arrays.asList(elimResulDualFiniteParams));
-			if (eliminatees.isEmpty()) {
+			final Set<TermVariable> eliminateesAfterwards = PartialQuantifierElimination.constructNewEliminatees(result, eliminatees);
+			if (eliminateesAfterwards.isEmpty()) {
 				// all were removed
 				return result;
 			}
-			if (numberOfEliminateesBefore > eliminatees.size()) {
+			if (numberOfEliminateesBefore > eliminateesAfterwards.size()) {
 				// something was removed
-				final Term quantified = SmtUtils.quantifier(mScript, quantifier, eliminatees, result);
+				final Term quantified = SmtUtils.quantifier(mScript, quantifier, eliminateesAfterwards, result);
 				if (quantified instanceof QuantifiedFormula) {
 					final QuantifiedFormula intermediate = (QuantifiedFormula) quantified;
 					return tryToPush(intermediate);
