@@ -254,6 +254,7 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 ////					resultStates.addAll(newStates);
 //				}
 //				resultStates.addAll(newStates);
+				// TODO: this disjoinAll-strategy is a fallback essentially --> is there something better?? 
 				Set<VPState> states = mDomain.getVpStateFactory().addEquality(nodeFromVar, equalEqNode, resultState);
 				resultState = mDomain.getVpStateFactory().disjoinAll(states);
 			}

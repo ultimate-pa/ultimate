@@ -264,6 +264,9 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 		if (t instanceof ApplicationTerm) {
 			assert ((ApplicationTerm) t).getParameters().length == 0 : "not a constant";
 			result = mSymboltable.getProgramConst((ApplicationTerm) t);
+			if (result == null) {
+				result = new ConstOrLiteral((ApplicationTerm) t);
+			}
 		} else if (t instanceof ConstantTerm) {
 			result = new ConstOrLiteral((ConstantTerm) t);
 		} else if (t instanceof TermVariable) {
@@ -275,6 +278,7 @@ public class RCFGArrayIndexCollector extends RCFGEdgeVisitor {
 			return null;
 		}
 		mTermToProgramVarOrConst.put(t, result);
+		assert result != null;
 		return result;
 	}
 

@@ -27,6 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
 
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
@@ -40,22 +41,35 @@ public class ConstOrLiteral implements IProgramVarOrConst {
 	final Term mTerm;
 	
 	final ConstantTerm mConstantTerm;
+
+	final ApplicationTerm mApplicationTerm;
 	
 	final BoogieConst mBoogieConst;
 	
 	// TODO: could BoogieConst be moved out here (like IProgramVar before??)
 	public ConstOrLiteral(BoogieConst bc) {
+		assert false : "not used, right??";
 		mType = bvocType.BOOGIECONST;
 		mTerm = bc.getTerm();
 		mConstantTerm = null;
 		mBoogieConst = bc;
+		mApplicationTerm = null;
+	}
+	
+	public ConstOrLiteral(ApplicationTerm at) {
+		mType = bvocType.APPLICATIONTERMLITERAL;
+		mTerm = at;
+		mConstantTerm = null;
+		mBoogieConst = null;
+		mApplicationTerm = at;
 	}
 
 	public ConstOrLiteral(ConstantTerm ct) {
-		mType = bvocType.LITERAL;
+		mType = bvocType.CONSTANTTERMLITERAL;
 		mTerm = ct;
 		mConstantTerm = ct;
 		mBoogieConst = null;
+		mApplicationTerm = null;
 	}
 	
 	@Override
@@ -63,8 +77,10 @@ public class ConstOrLiteral implements IProgramVarOrConst {
 		switch (mType) {
 		case BOOGIECONST:
 			return mBoogieConst.getGloballyUniqueId();
-		case LITERAL:
+		case CONSTANTTERMLITERAL:
 			return mConstantTerm.toString();
+		case APPLICATIONTERMLITERAL:
+			return mApplicationTerm.toString();
 		default:
 			assert false;
 			return null;
@@ -83,7 +99,9 @@ public class ConstOrLiteral implements IProgramVarOrConst {
 	
 	@Override
 	public boolean isGlobal() {
-		if (mType == bvocType.LITERAL) {
+		if (mType == bvocType.CONSTANTTERMLITERAL) {
+			return true;
+		} else if (mType == bvocType.APPLICATIONTERMLITERAL) {
 			return true;
 		} else {
 			assert mType == bvocType.BOOGIECONST;
@@ -91,5 +109,5 @@ public class ConstOrLiteral implements IProgramVarOrConst {
 		} 
 	}
 	
-	private enum bvocType { BOOGIECONST, LITERAL };
+	private enum bvocType { BOOGIECONST, APPLICATIONTERMLITERAL, CONSTANTTERMLITERAL };
 }

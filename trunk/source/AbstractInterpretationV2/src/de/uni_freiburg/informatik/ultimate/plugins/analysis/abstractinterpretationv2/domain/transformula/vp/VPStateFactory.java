@@ -389,15 +389,17 @@ public class VPStateFactory {
 			return Collections.singleton(first);
 		}
 
-		VPState conjoinedState = copy(first).build();
+//		VPState conjoinedState = copy(first).build();
+		VPStateBuilder builder = copy(first);
 		EqNode conStateGraphNode;
 		EqNode conStateGraphNodeRe;
 
 		for (VPDomainSymmetricPair<EqNode> otherPair : second.getDisEqualitySet()) {
-			conjoinedState.getDisEqualitySet()
+			builder.getDisEqualitySet()
 					.add(new VPDomainSymmetricPair<EqNode>(otherPair.getFirst(), otherPair.getSecond()));
 		}
 
+		VPState conjoinedState = builder.build();
 		Set<VPState> resultStates = new HashSet<>();
 		for (final EqGraphNode otherGraphNode : second.getEqNodeToEqGraphNodeMap().values()) {
 			if (!otherGraphNode.getRepresentative().equals(otherGraphNode)) {

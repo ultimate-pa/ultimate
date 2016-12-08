@@ -528,9 +528,11 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 		 *  - the resulting state(s) is obtained by adding all the extracted (dis)equalities to stateAfterLeaving according
 		 *    to the matching of parameters 
 		 */
-		Set<VPState> resultStates = new HashSet<>();
+//		Set<VPState> resultStates = new HashSet<>();
         VPState copy = mDomain.getVpStateFactory().copy(stateAfterLeaving).build();
-        resultStates.add(copy);
+//        resultStates.add(copy);
+		
+		VPState resultState = copy;
 
 		Set<ApplicationTerm> equations = 
 				new ApplicationTermFinder("=", true)
@@ -553,22 +555,33 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 			Set<Pair<EqNode, EqNode>> equalitiesWithGlobals = 
 					extractEqualitiesWithGlobals(callParam, funcParam, stateBeforeLeaving, variableAssignment, mDomain);
 			for (Pair<EqNode, EqNode> pair : equalitiesWithGlobals) {
-				resultStates.addAll(
-						mDomain.getVpStateFactory().addEquality(
-								pair.getFirst(), pair.getSecond(), resultStates));
+//				resultStates.addAll(
+//						mDomain.getVpStateFactory().addEquality(
+//								pair.getFirst(), pair.getSecond(), resultStates));
+
+				// TODO: fallback, think through
+				Set<VPState> newStates = mDomain.getVpStateFactory().addEquality(
+								pair.getFirst(), pair.getSecond(), resultState);
+				resultState = mDomain.getVpStateFactory().disjoinAll(newStates);
 			}
 			Set<Pair<EqNode, EqNode>> disequalitiesWithGlobals = 
 					extractDisequalitiesWithGlobals(callParam, funcParam, stateBeforeLeaving, variableAssignment, mDomain);
 			for (Pair<EqNode, EqNode> pair : disequalitiesWithGlobals) {
-				resultStates.addAll(
-						mDomain.getVpStateFactory().addDisEquality(
-								pair.getFirst(), pair.getSecond(), resultStates));
+//				resultStates.addAll(
+//						mDomain.getVpStateFactory().addDisEquality(
+//								pair.getFirst(), pair.getSecond(), resultStates));
+				// TODO: fallback, think through
+				Set<VPState> newStates = mDomain.getVpStateFactory().addDisEquality(
+								pair.getFirst(), pair.getSecond(), resultState);
+				resultState = mDomain.getVpStateFactory().disjoinAll(newStates);
+
 			}
 			
 		}
 		
-		assert VPDomainHelpers.containsNoNullElement(resultStates);
-		return new ArrayList<>(resultStates);
+//		assert VPDomainHelpers.containsNoNullElement(resultStates);
+//		return new ArrayList<>(resultStates);
+		return Collections.singletonList(resultState);
 	}
 
 	private Set<Pair<EqNode, EqNode>> extractDisequalitiesWithGlobals(
