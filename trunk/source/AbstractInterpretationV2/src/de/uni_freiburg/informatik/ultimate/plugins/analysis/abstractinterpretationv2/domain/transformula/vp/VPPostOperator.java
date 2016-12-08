@@ -34,6 +34,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -42,9 +45,11 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ApplicationTermFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayEquality;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayEquality.ArrayEqualityExtractor;
@@ -54,7 +59,12 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDim
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf.QuantifierHandling;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  *
@@ -102,9 +112,10 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 
 		mDomain.getLogger().debug("states after transition " + transition + ": " + resultStates);
 
+		assert VPDomainHelpers.containsNoNullElement(resultStates);
 		return resultStates;
 	}
-
+	
 	private List<VPState> handleTransition(
 			final VPState preStateWithHavoccedAssignedVars, 
 			VPState oldstate, 
@@ -291,17 +302,6 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 		return Collections.singletonList(resultState);
 	}
 	
-//	private boolean isInVarAndAssignedVar(Term term, Map<TermVariable, IProgramVar> tvToPvMap) {
-//		
-//		return false;
-//	}
-//
-//	private boolean isInVarAndAssignedVar(Term term, 
-//			Map<IProgramVar, TermVariable> inVars,
-//			Map<IProgramVar, TermVariable> outVars) {
-//		// TODO Auto-generated method stub
-//		return false;
-//	}
 
 	private Set<VPState> handleArrayEqualityTransition(
 			final VPState preState,
@@ -486,12 +486,177 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 	@Override
 	public List<VPState> apply(final VPState stateBeforeLeaving, final VPState stateAfterLeaving,
 			final CodeBlock transition) {
+		
+		if (transition instanceof Call) {
+			List<VPState> result = applyCall(stateBeforeLeaving, stateAfterLeaving, ((Call) transition).getLocalVarsAssignment());
+			VPDomainHelpers.containsNoNullElement(result);
+			return result;
+		} else if (transition instanceof Return) {
+			List<VPState> result = applyCall(stateBeforeLeaving, stateAfterLeaving, ((Return) transition).getAssignmentOfReturn());
+			VPDomainHelpers.containsNoNullElement(result);
+			return result;
+		} else if (transition instanceof Summary) {
+
+			return null;
+		} else {
+			assert false : "unexpected..";
+		}
+		
 		// List<VPState> conjoined = mDomain.getVpStateFactory().conjoin(stateBeforeLeaving, stateAfterLeaving);
 
 		// TODO
 		
 		// return apply(conjoined, transition);
+		assert false;
 		return null;
+	}
+
+	private List<VPState> applyReturn(VPState stateBeforeLeaving, VPState stateAfterLeaving, Return transition) {
+		transition.getAssignmentOfReturn();
+		transition.getLocalVarsAssignmentOfCall();
+		
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	private List<VPState> applyCall(VPState stateBeforeLeaving, VPState stateAfterLeaving, TransFormula variableAssignment) {
+		/*
+		 * Plan:
+		 *   say x1.. xn are the parameters in the call  (sth like call x:= foo(x1, ... xn) )
+		 *  - from stateBeforeLeaving extract all relations (equality/disequality) of x1 .. xn to global variables
+		 *  (- background: stateAfterLeaving already has the relations that the globals have between each other patched into)
+		 *  - the resulting state(s) is obtained by adding all the extracted (dis)equalities to stateAfterLeaving according
+		 *    to the matching of parameters 
+		 */
+		Set<VPState> resultStates = new HashSet<>();
+        VPState copy = mDomain.getVpStateFactory().copy(stateAfterLeaving).build();
+        resultStates.add(copy);
+
+		Set<ApplicationTerm> equations = 
+				new ApplicationTermFinder("=", true)
+					.findMatchingSubterms(
+						variableAssignment.getFormula());
+		for (ApplicationTerm eq : equations) {
+			assert eq.getParameters().length == 2;
+			/*
+			 * Convention:
+			 * say we have a call
+			 *  call x := f(x1, .., xn)
+			 * and a procedure declaration
+			 *  procedure f(p1 ... pn)
+			 * Then x1...xn are called "call parameters"
+			 *  and p1...pn are called "function parameters".
+			 */
+			Term callParam = eq.getParameters()[0];
+			Term funcParam = eq.getParameters()[1];
+			
+			Set<Pair<EqNode, EqNode>> equalitiesWithGlobals = 
+					extractEqualitiesWithGlobals(callParam, funcParam, stateBeforeLeaving, variableAssignment, mDomain);
+			for (Pair<EqNode, EqNode> pair : equalitiesWithGlobals) {
+				resultStates.addAll(
+						mDomain.getVpStateFactory().addEquality(
+								pair.getFirst(), pair.getSecond(), resultStates));
+			}
+			Set<Pair<EqNode, EqNode>> disequalitiesWithGlobals = 
+					extractDisequalitiesWithGlobals(callParam, funcParam, stateBeforeLeaving, variableAssignment, mDomain);
+			for (Pair<EqNode, EqNode> pair : disequalitiesWithGlobals) {
+				resultStates.addAll(
+						mDomain.getVpStateFactory().addDisEquality(
+								pair.getFirst(), pair.getSecond(), resultStates));
+			}
+			
+		}
+		
+		assert VPDomainHelpers.containsNoNullElement(resultStates);
+		return new ArrayList<>(resultStates);
+	}
+
+	private Set<Pair<EqNode, EqNode>> extractDisequalitiesWithGlobals(
+			Term callParam, 
+			Term funcParam, 
+			VPState stateBeforeLeaving, 
+			TransFormula varAssignment,
+			VPDomain domain) {
+
+		return extractDisequalitiesWithProperty(
+				callParam, funcParam, stateBeforeLeaving, varAssignment, domain, 
+				node -> node.isGlobal());
+	}
+
+
+	public static Set<Pair<EqNode, EqNode>> extractDisequalitiesWithProperty(
+			Term callParam, 
+			Term funcParam, 
+			VPState stateBeforeLeaving, 
+			TransFormula varAssignment,
+			VPDomain domain,
+			Predicate<EqNode> property) {
+		Map<TermVariable, IProgramVar> tvToPvMap = 
+				VPDomainHelpers.computeProgramVarMappingFromTransFormula(varAssignment);
+		
+		EqNode callParamNode = domain.getPreAnalysis().getEqNode(callParam, tvToPvMap);
+		EqNode funcParamNode = domain.getPreAnalysis().getEqNode(funcParam, tvToPvMap);
+		
+		//TODO: do this more efficiently if necessary..
+		Set<EqNode> unequalGlobals = 
+				stateBeforeLeaving.getUnequalNodes(callParamNode).stream()
+				.filter(property)
+				.collect(Collectors.toSet());
+				
+				
+		Set<Pair<EqNode, EqNode>> result = new HashSet<>();
+		for (EqNode unequalGlobal : unequalGlobals) {
+			result.add(new Pair<>(funcParamNode, unequalGlobal));
+		}
+		
+		return result;
+	}
+	
+	
+	private Set<Pair<EqNode, EqNode>> extractEqualitiesWithGlobals(
+			Term callParam, 
+			Term funcParam, 
+			VPState stateBeforeLeaving, 
+			TransFormula varAssignment,
+			VPDomain domain) {
+			return extractEqualitiesWithProperty(
+					callParam, funcParam, stateBeforeLeaving, varAssignment, domain, 
+					node -> node.isGlobal());
+		}
+
+	/**
+	 * 
+	 * @param callParam the Term in the stateBeforeLeaving, i.e., we are looking for globals that this term is equal with
+	 * @param funcParam the Term in the stateAfterLeaving, i.e., our resulting pair will equate this term with some global variables
+	 * @param stateBeforeLeaving
+	 * @param call 
+	 * @return
+	 */
+	public static Set<Pair<EqNode, EqNode>> extractEqualitiesWithProperty(
+			Term callParam, 
+			Term funcParam, 
+			VPState stateBeforeLeaving, 
+			TransFormula varAssignment,
+			VPDomain domain,
+			Predicate<EqNode> property) {
+		Map<TermVariable, IProgramVar> tvToPvMap = 
+				VPDomainHelpers.computeProgramVarMappingFromTransFormula(varAssignment);
+		
+		EqNode callParamNode = domain.getPreAnalysis().getEqNode(callParam, tvToPvMap);
+		EqNode funcParamNode = domain.getPreAnalysis().getEqNode(funcParam, tvToPvMap);
+		
+		//TODO: do this more efficiently if necessary..
+		Set<EqNode> equivalentGlobals = 
+				stateBeforeLeaving.getEquivalentEqNodes(callParamNode).stream()
+					.filter(property)
+					.collect(Collectors.toSet());
+		
+		Set<Pair<EqNode, EqNode>> result = new HashSet<>();
+		for (EqNode equivalentGlobal : equivalentGlobals) {
+			result.add(new Pair<>(funcParamNode, equivalentGlobal));
+		}
+		
+		return result;
 	}
 	
 }

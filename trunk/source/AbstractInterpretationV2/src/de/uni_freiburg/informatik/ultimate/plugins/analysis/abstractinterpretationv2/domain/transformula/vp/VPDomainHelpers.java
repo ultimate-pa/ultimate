@@ -1,7 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
 
 
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -59,5 +61,14 @@ public class VPDomainHelpers {
 			substitionMap.put(en.getKey(), en.getValue().getTerm());
 		}
 		return substitionMap;
+	}
+
+	public static boolean containsNoNullElement(Collection<VPState> states) {
+		for (VPState state : states) {
+			if (state == null) {
+				return false;
+			}
+		}
+		return true;
 	}
 }

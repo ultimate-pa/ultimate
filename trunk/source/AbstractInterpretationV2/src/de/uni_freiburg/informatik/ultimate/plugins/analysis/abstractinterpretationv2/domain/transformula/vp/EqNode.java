@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 /**
  * 
  * @author Yu-Wen Chen (yuwenchen1105@gmail.com)
+ * @author Alexander Nutz
  *
  */
 public abstract class EqNode {
@@ -44,6 +45,14 @@ public abstract class EqNode {
 
 	public abstract boolean isLiteral();
 	
+	EqNode(boolean isGlobal) {
+		mIsGlobal = isGlobal;
+	}
+	
+	/**
+	 * Is true iff this EqNode's term only uses global program symbols.
+	 */
+	boolean mIsGlobal;
 
 	Set<EqNode> mParents = new HashSet<>();
 
@@ -57,5 +66,12 @@ public abstract class EqNode {
 	
 	void addParent(EqNode parent) {
 		mParents.add(parent);
+	}
+
+	/**
+	 * Is true iff this EqNode's term only uses global program symbols.
+	 */
+	public boolean isGlobal() {
+		return mIsGlobal;
 	}
 }

@@ -110,9 +110,21 @@ public class VPStateFactory {
 				"The only disequalites in a top state are between constants";
 		}
 		
+		builder.setVars(new HashSet<>(originalState.getVariables()));
+		
 		builder.setIsTop(originalState.isTop());
 
 		return builder;
+	}
+	
+	
+	public Set<VPState> addEquality(final EqNode eqNode1, final EqNode eqNode2, final Set<VPState> originalStates) {
+		Set<VPState> result = new HashSet<>();
+		
+		for (VPState originalState : originalStates) {
+			result.addAll(addEquality(eqNode1, eqNode2, originalState));
+		}
+		return result;
 	}
 	
 	/**
@@ -166,6 +178,16 @@ public class VPStateFactory {
 			 }
 		 }
 		 return result;
+	}
+
+	public Set<VPState> addDisEquality(EqNode n1, EqNode n2, Set<VPState> originalStates) {
+		Set<VPState> result = new HashSet<>();
+		
+		for (VPState originalState : originalStates) {
+			result.addAll(addDisEquality(n1, n2, originalState));
+		}
+
+		return result;
 	}
 
 	public Set<VPState> addDisEquality(EqNode n1, EqNode n2, VPState originalState) {
@@ -500,5 +522,9 @@ public class VPStateFactory {
 			}
 		}
 		return resultStates;
+	}
+
+	public VPState disjoinAll(Set<VPState> resultStates) {
+		return resultStates.stream().reduce((s1, s2) -> disjoin(s1,s2)).get();
 	}
 }

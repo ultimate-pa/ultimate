@@ -43,6 +43,7 @@ public class EqBaseNode extends EqNode {
 	private final boolean mIsLiteral;
 
 	public EqBaseNode(IProgramVarOrConst bv) {
+		super(bv.isGlobal());
 		mVarOrConst = bv;
 		mIsLiteral = bv.getTerm() instanceof ConstantTerm;
 	}

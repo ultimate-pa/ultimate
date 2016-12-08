@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
 
 import java.util.List;
+import java.util.Optional;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -45,6 +46,8 @@ public class EqFunctionNode extends EqNode {
 	private final List<EqNode> args;
 
 	public EqFunctionNode(IProgramVarOrConst function, List<EqNode> args) {
+		super(function.isGlobal() 
+				&& args.stream().map(arg -> arg.mIsGlobal).reduce((b1, b2) -> b1 && b2).get());
 		this.function = function;
 		this.args = args;
 	}

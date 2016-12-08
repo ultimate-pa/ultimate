@@ -35,11 +35,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.xml.soap.Node;
+
 import de.uni_freiburg.informatik.ultimate.abstractinterpretation.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
@@ -167,16 +170,6 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 	}
 	
 	@Override
-	public VPState removeVariable(final IProgramVar variable) {
-		if (!mVars.contains(variable)) {
-			return this;
-		}
-		final VPStateBuilder copy = mDomain.getVpStateFactory().copy(this);
-		copy.removeVariable(variable);
-		return copy.build();
-	}
-	
-	@Override
 	public VPState addVariables(final Collection<IProgramVar> variables) {
 		if (variables == null || variables.isEmpty()) {
 			return this;
@@ -184,6 +177,17 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 		final VPStateBuilder copy = mDomain.getVpStateFactory().copy(this);
 		copy.addVariables(variables);
 		return copy.build();
+	}
+
+	@Override
+	public VPState removeVariable(final IProgramVar variable) {
+		if (!mVars.contains(variable)) {
+			return this;
+		}
+		final VPStateBuilder copy = mDomain.getVpStateFactory().copy(this);
+		copy.removeVariable(variable);
+		VPState result = mDomain.getVpStateFactory().havocVariables(Collections.singleton(variable), copy.build());
+		return result;
 	}
 	
 	@Override
@@ -193,7 +197,8 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 		}
 		final VPStateBuilder copy = mDomain.getVpStateFactory().copy(this);
 		copy.removeVariables(variables);
-		return copy.build();
+		VPState result = mDomain.getVpStateFactory().havocVariables(new HashSet<>(variables), copy.build());
+		return result;
 	}
 	
 	@Override
@@ -208,18 +213,67 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 	
 	@Override
 	public VPState patch(final VPState dominator) {
-		// TODO
-		// VPState state = mDomain.getVpStateFactory().copy(this);
-		//
-		// state = mDomain.getVpStateFactory().havocVariables(dominator.mVars, state);
-		//
-		// List<VPState> conjoined = new ArrayList<>();
-		// conjoined.addAll(mDomain.getVpStateFactory().conjoin(state, dominator));
-		//
-		//
-		//
-		// return result;
-		return null;
+		/*
+		 * plan:
+		 *  - copy dominator
+		 *  - add variables from this
+		 *  - add the following relations from this:
+		 *    where at least one of the related variables does not occur in dominator's variables
+		 *    TODO: is this correct??
+		 */
+
+		VPStateBuilder builder = mDomain.getVpStateFactory().copy(dominator);
+		
+		builder.addVariables(this.mVars);
+		
+		builder.setIsTop(this.isTop() && dominator.isTop());
+		
+//		Set<VPState> resultStates = new HashSet<>();
+//		resultStates.add(builder.build());
+		
+		VPState resultState = builder.build();
+		
+		/*
+		 * for each variable that is in this.mVars, but not in dominator.mVars:
+		 *  obtain all relations with something that is in this or in dominator, and add them.
+		 */
+		for (IProgramVar var : this.mVars) {
+			if (dominator.getVariables().contains(var)) {
+				continue;
+			}
+			
+			EqNode nodeFromVar = mDomain.getPreAnalysis().getEqNode(var.getTerm(), Collections.emptyMap());
+			
+			//TODO inefficient.. (we only need edges from the tree but add the clique..)
+			Set<EqNode> equalEqNodes = this.getEquivalentEqNodes(nodeFromVar);
+			for (EqNode equalEqNode : equalEqNodes) {
+////				Set<VPState> newStates = mDomain.getVpStateFactory().addEquality(nodeFromVar, equalEqNode, resultStates);
+//				Set<VPState> newStates = new HashSet<>();
+//				for (VPState rs : resultStates) {
+//					newStates.addAll(mDomain.getVpStateFactory().addEquality(nodeFromVar, equalEqNode, rs));
+////					resultStates.addAll(newStates);
+//				}
+//				resultStates.addAll(newStates);
+				Set<VPState> states = mDomain.getVpStateFactory().addEquality(nodeFromVar, equalEqNode, resultState);
+				resultState = mDomain.getVpStateFactory().disjoinAll(states);
+			}
+
+			// TODO: inefficient, again, but we have to do this also for the otherwise implicit disequalites with
+			//  other members of the equivalence class, right?
+			Set<EqNode> unEqualEqNodes = this.getUnequalNodes(nodeFromVar);
+			for (EqNode unequalRepresentative : unEqualEqNodes) {
+				for (EqNode unEqualNode : this.getEquivalentEqNodes(unequalRepresentative)) {
+//					Set<VPState> newStates = mDomain.getVpStateFactory().addDisEquality(nodeFromVar, unEqualNode, resultStates);
+//					resultStates.addAll(newStates);
+					Set<VPState> states = mDomain.getVpStateFactory().addDisEquality(nodeFromVar, unEqualNode, resultState);
+					resultState = mDomain.getVpStateFactory().disjoinAll(states);
+				}
+			}
+		}
+		
+//		VPState resultState = mDomain.getVpStateFactory().disjoinAll(resultStates);
+		
+		return resultState;
 	}
 	
 	@Override
@@ -275,6 +329,8 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 		
 		final StringBuilder sb = new StringBuilder();
 		
+		sb.append("VPState:\n");
+		sb.append("Vars: " + mVars + "\n");
 		sb.append("Graph: \n");
 		for (final EqGraphNode graphNode : mEqNodeToEqGraphNodeMap.values()) {
 			if (graphNode.getRepresentative() == graphNode) {
@@ -392,14 +448,18 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 	}
 	
 	/**
-	 *
+	 * TODO: more efficient implementation? (of the methods using this method?)
 	 * @param node
 	 * @return All the eqNodes that are in the same equivalence class as node in this state.
 	 */
 	public Set<EqNode> getEquivalentEqNodes(final EqNode node) {
+		if (node == null) {
+			return Collections.emptySet();
+		}
+		EqGraphNode nodeGraphNode = mEqNodeToEqGraphNodeMap.get(node);
 		final Set<EqNode> result = new HashSet<>();
 		for (final EqGraphNode egn : mEqNodeToEqGraphNodeMap.values()) {
-			if (find(egn).eqNode == node) {
+			if (egn.find() == nodeGraphNode.find()) {
 				result.add(egn.eqNode);
 			}
 		}
@@ -418,5 +478,16 @@ public class VPState implements IAbstractState<VPState, CodeBlock, IProgramVar> 
 
 	private EqNode find(EqNode node) {
 		return mEqNodeToEqGraphNodeMap.get(node).find().eqNode;
+	}
+
+	public Set<EqNode> getUnequalNodes(EqNode callParamNode) {
+		Set<EqNode> result = new HashSet<>();
+		
+		for (VPDomainSymmetricPair<EqNode> pair : mDisEqualitySet) {
+			if (pair.contains(callParamNode)) {
+				result.add(pair.getOther(callParamNode));
+			}
+		}
+		return result;
 	}
 }
