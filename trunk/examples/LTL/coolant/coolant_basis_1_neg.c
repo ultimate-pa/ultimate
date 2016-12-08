@@ -1,8 +1,6 @@
 //#Unsafe
 //@ ltl invariant positive: ![](AP(chainBroken == 1) ==> []AP(chainBroken == 1));
 
-
-
 #include <stdio.h>
 
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));

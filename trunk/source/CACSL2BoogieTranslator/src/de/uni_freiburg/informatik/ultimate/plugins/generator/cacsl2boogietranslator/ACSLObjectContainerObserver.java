@@ -30,15 +30,29 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.ObjectContainer;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 
 public class ACSLObjectContainerObserver implements IUnmanagedObserver {
 	
 	private ACSLNode mAnotation = null;
+	private boolean mListen;
+	private ILogger mLogger;
+	private boolean mWaitForMe;
+	
+	public ACSLObjectContainerObserver(ILogger logger){
+		mLogger = logger;
+	}
 
 	@Override
 	public void init(ModelType modelType, int currentModelIndex, int numberOfModels) throws Throwable {
-		// TODO Auto-generated method stub
+		mWaitForMe = numberOfModels > 1;
+		if (("de.uni_freiburg.informatik.ultimate.ltl2aut".equals(modelType.getCreator()))){
+			mLogger.info("Executing ACSLObjectContainerObserver...");
+			mListen = true;
+		} else {
+			mListen = false;
+		}
 	}
 
 	@Override
@@ -50,6 +64,10 @@ public class ACSLObjectContainerObserver implements IUnmanagedObserver {
 	public ACSLNode getAnnotation(){
 		return mAnotation;
 	}
+	
+	public boolean waitForMe(){
+		return mWaitForMe && mAnotation == null;
+	}
 
 	@Override
 	public boolean performedChanges() {
@@ -58,6 +76,9 @@ public class ACSLObjectContainerObserver implements IUnmanagedObserver {
 
 	@Override
 	public boolean process(IElement root) throws Throwable {
+		if (!mListen){
+			return false;
+		}
 		if (root instanceof ObjectContainer){
 			if (((ObjectContainer) root).getValue() instanceof ACSLNode){
 				ObjectContainer container = (ObjectContainer)root;

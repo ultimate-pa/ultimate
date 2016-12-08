@@ -1,9 +1,9 @@
+//#Unsafe
+//@ ltl invariant positive: []( AP(a >= b) ) ;
+
 #include <stdio.h> 
 #include <assert.h>
 #include <math.h>
-
-//#Unsafe
-//@ ltl invariant positive: []( AP(a >= b) ) ;
 
 //Run of > 8 steps is a violation
 

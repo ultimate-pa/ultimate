@@ -1,9 +1,9 @@
+//#Safe
+//@ ltl invariant positive: [](AP(a > b) ==> X(AP(b > c)));
+
 #include <stdio.h> 
 #include <assert.h>
 #include <math.h>
-
-//#Safe
-//@ ltl invariant positive: [](AP(a > b) ==> X(AP(b > c)));
 
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));
 extern void __VERIFIER_ltl_step() __attribute__ ((__noreturn__));

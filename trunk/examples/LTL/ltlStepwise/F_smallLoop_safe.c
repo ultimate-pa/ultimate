@@ -1,9 +1,9 @@
+//#Unsafe
+//@ ltl invariant positive: []((AP(open >= 0)) ==> (<> AP(open<= 0)));
+
 #include <stdio.h> 
 #include <assert.h>
 #include <math.h>
-
-//#Unsafe
-//@ ltl invariant positive: []((AP(open >= 0)) ==> (<> AP(open<= 0)));
 
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));
 extern void __VERIFIER_ltl_step() __attribute__ ((__noreturn__));
