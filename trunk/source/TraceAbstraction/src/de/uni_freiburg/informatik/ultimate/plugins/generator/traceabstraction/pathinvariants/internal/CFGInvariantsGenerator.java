@@ -55,7 +55,6 @@ public final class CFGInvariantsGenerator {
 	private final IProgressMonitorService pmService;
 	private static boolean INIT_USE_EMPTY_PATTERNS = true;
 
-
 	/**
 	 * Create a generator for invariant maps on {@link ControlFlowGraph}s.
 	 * 
@@ -227,8 +226,7 @@ public final class CFGInvariantsGenerator {
 				}
 			}
 		}
-
-		Set<IProgramVar> varsFromUnsatCore = null;
+		Set<IProgramVar> varsFromUnsatCore = new HashSet<>();
 		if (useVariablesFromUnsatCore && INIT_USE_EMPTY_PATTERNS) {
 			// Execute pre-round with empty patterns for intermediate locations, so we can use the variables from the unsat core
 			Map<BoogieIcfgLocation, IPredicate> resultFromPreRound = executePreRoundWithEmptyPatterns(processor, 0, varsFromUnsatCore, patterns, predicates, smtVars2ProgramVars, 
@@ -357,7 +355,7 @@ public final class CFGInvariantsGenerator {
 			if (smtVarsFromUnsatCore != null) {
 				logService.info(smtVarsFromUnsatCore.size() + " out of " + smtVars2ProgramVars.size() + " SMT variables in unsat core");
 				// The result in pattern processor was 'unsat'
-				varsFromUnsatCore = new HashSet<>(smtVarsFromUnsatCore.size());
+				// varsFromUnsatCore = new HashSet<>(smtVarsFromUnsatCore.size());
 				for (final TermVariable smtVar : smtVarsFromUnsatCore) {
 					varsFromUnsatCore.add(smtVars2ProgramVars.get(smtVar));
 				}
