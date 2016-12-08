@@ -58,16 +58,12 @@ public class TypeSortTranslator {
 	private final Map<IBoogieType, Sort> mType2Sort = new HashMap<>();
 	private final Map<Sort, IBoogieType> mSort2Type = new HashMap<>();
 	private final Map<String, Map<String, Expression[]>> mType2Attributes;
-
-	private final boolean mBlackHoleArrays;
-
 	private final IUltimateServiceProvider mServices;
 
 	public TypeSortTranslator(final Collection<TypeDeclaration> declarations, final Script script,
-			final boolean blackHoleArrays, final IUltimateServiceProvider services) {
+			final IUltimateServiceProvider services) {
 		mType2Attributes = new HashMap<>();
 		mServices = services;
-		mBlackHoleArrays = blackHoleArrays;
 		mScript = script;
 		{
 			// Add type/sort bool to mapping. We need this in our
@@ -163,7 +159,7 @@ public class TypeSortTranslator {
 	 */
 	protected Sort constructSort(final IBoogieType boogieType, final BoogieASTNode astNode) {
 		try {
-			final Sort result = constructSort(boogieType, mScript, mBlackHoleArrays, mType2Attributes::get);
+			final Sort result = constructSort(boogieType, mScript, mType2Attributes::get);
 			cacheSort(boogieType, result);
 			return result;
 		} catch (final SMTLIBException e) {
@@ -179,7 +175,7 @@ public class TypeSortTranslator {
 	 * Construct the SMT sort for a Boogie type. Does not use any caching and, depending on your funAttributeCache, may
 	 * create many sorts.
 	 */
-	public static Sort constructSort(final IBoogieType boogieType, final Script script, final boolean blackHoleArrays,
+	public static Sort constructSort(final IBoogieType boogieType, final Script script,
 			final Function<String, Map<String, Expression[]>> funAttributeCache) {
 		if (boogieType instanceof PrimitiveType) {
 			if (boogieType.equals(BoogieType.TYPE_BOOL)) {
@@ -200,16 +196,13 @@ public class TypeSortTranslator {
 			}
 		} else if (boogieType instanceof ArrayType) {
 			final ArrayType arrayType = (ArrayType) boogieType;
-			Sort rangeSort = constructSort(arrayType.getValueType(), script, blackHoleArrays, funAttributeCache);
-			if (blackHoleArrays) {
-				return rangeSort;
-			}
+			Sort rangeSort = constructSort(arrayType.getValueType(), script, funAttributeCache);
+
 			for (int i = arrayType.getIndexCount() - 1; i >= 1; i--) {
-				final Sort sorti = constructSort(arrayType.getIndexType(i), script, blackHoleArrays, funAttributeCache);
+				final Sort sorti = constructSort(arrayType.getIndexType(i), script, funAttributeCache);
 				rangeSort = script.sort("Array", sorti, rangeSort);
 			}
-			final Sort domainSort =
-					constructSort(arrayType.getIndexType(0), script, blackHoleArrays, funAttributeCache);
+			final Sort domainSort = constructSort(arrayType.getIndexType(0), script, funAttributeCache);
 			return script.sort("Array", domainSort, rangeSort);
 		} else if (boogieType instanceof ConstructedType) {
 			final ConstructedType constructedType = (ConstructedType) boogieType;

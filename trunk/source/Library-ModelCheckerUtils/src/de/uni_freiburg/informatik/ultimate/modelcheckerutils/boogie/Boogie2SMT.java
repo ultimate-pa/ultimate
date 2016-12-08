@@ -55,11 +55,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
  */
 public class Boogie2SMT {
 
-	/**
-	 * if set to true array access returns arbitrary values array store returns arbitrary arrays
-	 */
-	private final boolean mBlackHoleArrays;
-
 	private final BoogieDeclarations mBoogieDeclarations;
 	private final ManagedScript mScript;
 
@@ -78,16 +73,14 @@ public class Boogie2SMT {
 	private final IUltimateServiceProvider mServices;
 
 	public Boogie2SMT(final ManagedScript maScript, final BoogieDeclarations boogieDeclarations,
-			final boolean blackHoleArrays, final boolean bitvectorInsteadOfInt,
-			final IUltimateServiceProvider services) {
+			final boolean bitvectorInsteadOfInt, final IUltimateServiceProvider services) {
 		mServices = services;
-		mBlackHoleArrays = blackHoleArrays;
 		mBoogieDeclarations = boogieDeclarations;
 		mScript = maScript;
 
 		if (bitvectorInsteadOfInt) {
 			mTypeSortTranslator = new TypeSortTranslatorBitvectorWorkaround(boogieDeclarations.getTypeDeclarations(),
-					mScript.getScript(), mBlackHoleArrays, mServices);
+					mScript.getScript(), mServices);
 			mBoogie2SmtSymbolTable = new Boogie2SmtSymbolTable(boogieDeclarations, mScript, mTypeSortTranslator);
 			// mConstOnlyIdentifierTranslator = new ConstOnlyIdentifierTranslator();
 			mOperationTranslator =
@@ -95,8 +88,8 @@ public class Boogie2SMT {
 			mExpression2Term = new Expression2Term(mServices, mScript.getScript(), mTypeSortTranslator,
 					mBoogie2SmtSymbolTable, mOperationTranslator, mScript);
 		} else {
-			mTypeSortTranslator = new TypeSortTranslator(boogieDeclarations.getTypeDeclarations(), mScript.getScript(),
-					mBlackHoleArrays, mServices);
+			mTypeSortTranslator =
+					new TypeSortTranslator(boogieDeclarations.getTypeDeclarations(), mScript.getScript(), mServices);
 			mBoogie2SmtSymbolTable = new Boogie2SmtSymbolTable(boogieDeclarations, mScript, mTypeSortTranslator);
 
 			// mConstOnlyIdentifierTranslator = new ConstOnlyIdentifierTranslator();
@@ -168,9 +161,9 @@ public class Boogie2SMT {
 		return closedTerm;
 	}
 
-	public static void reportUnsupportedSyntax(final BoogieASTNode BoogieASTNode, final String longDescription,
+	public static void reportUnsupportedSyntax(final BoogieASTNode astNode, final String longDescription,
 			final IUltimateServiceProvider services) {
-		final UnsupportedSyntaxResult<BoogieASTNode> result = new UnsupportedSyntaxResult<>(BoogieASTNode,
+		final UnsupportedSyntaxResult<BoogieASTNode> result = new UnsupportedSyntaxResult<>(astNode,
 				ModelCheckerUtils.PLUGIN_ID, services.getBacktranslationService(), longDescription);
 		services.getResultService().reportResult(ModelCheckerUtils.PLUGIN_ID, result);
 		services.getProgressMonitorService().cancelToolchain();
@@ -183,7 +176,6 @@ public class Boogie2SMT {
 	 */
 	public IProgramNonOldVar constructAuxiliaryGlobalBoogieVar(final String identifier, final String procedure,
 			final IBoogieType iType, final VarList varList) {
-
 		return mBoogie2SmtSymbolTable.constructAuxiliaryGlobalBoogieVar(identifier, procedure, iType, varList);
 	}
 
