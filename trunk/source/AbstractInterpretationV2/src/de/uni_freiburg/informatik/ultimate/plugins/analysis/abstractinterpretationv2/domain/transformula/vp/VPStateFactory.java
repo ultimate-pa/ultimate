@@ -30,10 +30,9 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
-import java.util.stream.Collectors;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -261,22 +260,19 @@ public class VPStateFactory {
 		nextRepresentative.getReverseRepresentative().remove(graphNode);
 		while (!(nextRepresentative.equals(nextRepresentative.getRepresentative()))) {
 			nextRepresentative.getCcpar().removeAll(graphNode.getCcpar());
-			// TODO check if pair is correctly removed.
 			for (final Entry<IProgramVarOrConst, List<EqGraphNode>> entry : graphNode.getCcchild().entrySet()) {
 				nextRepresentative.getCcchild().removePair(entry.getKey(), entry.getValue());
 			}
 			nextRepresentative = nextRepresentative.getRepresentative();
 		}
 		nextRepresentative.getCcpar().removeAll(graphNode.getCcpar());
-
+		HashRelation<IProgramVarOrConst, List<EqGraphNode>> copyOfGraphNodeCcchild = new HashRelation<>();
 		for (final Entry<IProgramVarOrConst, List<EqGraphNode>> entry : graphNode.getCcchild().entrySet()) {
+			copyOfGraphNodeCcchild.addPair(entry.getKey(), entry.getValue());
+		}
+		for (final Entry<IProgramVarOrConst, List<EqGraphNode>> entry : copyOfGraphNodeCcchild.entrySet()) {
 			nextRepresentative.getCcchild().removePair(entry.getKey(), entry.getValue());
 		}
-
-//		Map<IProgramVar, Object> newMap = nextRepresentative.getCcchild().entrySet().stream()
-//			.filter(entry -> !graphNode.getCcchild().entrySet().contains(entry))
-//			.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-//		nextRepresentative.setCcchild(newMap);
 
 		// Handling the incoming edges
 		for (final EqGraphNode reverseNode : graphNode.getReverseRepresentative()) {
@@ -290,11 +286,6 @@ public class VPStateFactory {
 					.filter(pair -> !pair.contains(node))
 					.collect(Collectors.toSet());
 			builder.setDisEqualites(newSet);
-//			for (final VPDomainSymmetricPair<EqNode> disEqPair : builder.getDisEqualitySet()) {
-//				if (disEqPair.contains(node)) {
-//					builder.getDisEqualitySet().remove(disEqPair);
-//				}
-//			}
 		}
 
 		graphNode.setNodeToInitial();

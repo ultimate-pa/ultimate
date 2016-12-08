@@ -357,16 +357,87 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 			// TODO: strictly speaking we have to check here, that newArrayId is an outVar, oldArrayId an inVar
 
 			final EqNode arrayAtIndexNode = mDomain.getPreAnalysis().getEqNode(mdStore.getStoreTerm(), tvToPvMap);
+			final List<EqNode> indexNodeList = new ArrayList<>();
+			for (Term index : mdStore.getIndex()) {
+				indexNodeList.add(mDomain.getPreAnalysis().getEqNode(index, tvToPvMap));
+			}
 			final EqNode valueNode = mDomain.getPreAnalysis().getEqNode(value, tvToPvMap);
+			
+			final Set<EqNode> arrayAtIndexNodeCongruentce = new HashSet<>();
 
 			if (!negated) {
-				final VPState resultState = mDomain.getVpStateFactory().havoc(arrayAtIndexNode, preState);
+				VPState resultState = mDomain.getVpStateFactory().copy(preState).build();
+				
+				/*
+				 * Set of fnNodes to be handled (3 cases)
+				 */
+				Set<EqFunctionNode> fnNodes = mDomain.getArrayIdToEqFnNodeMap().getImage(oldArrayId);
+				
+				/*
+				 * Case 1: for nodes that are not congruence with arrayAtIndexNode 
+				 * 			-> copy the information into new state
+				 * 			(which is being done by the copy() method called few lines before)
+				 */
+				for (final VPDomainSymmetricPair<EqNode> pair : resultState.getDisEqualitySet()) {
+					if (pair.contains(arrayAtIndexNode)) {
+						if (pair.getOther(arrayAtIndexNode) instanceof EqFunctionNode) {
+							final EqFunctionNode fNode = (EqFunctionNode)pair.getOther(arrayAtIndexNode);
+							if (fNode.getFunction().equals(oldArrayId)) {
+								fnNodes.remove(fNode);
+							}
+						}
+					} 
+				}
+
+				boolean isContinue;
+				for (EqFunctionNode fnNode : fnNodes) {
+					isContinue = true;
+					/*
+					 * Case 2: fnNode that are congruence with arrayAtIndexNode 
+					 * 			-> havoc and set to valueNode (will be set later)
+					 */
+					assert arrayAtIndexNode instanceof EqFunctionNode;
+					if (resultState.congruentIgnoreFunctionSymbol((EqFunctionNode)arrayAtIndexNode, fnNode)) {
+						resultState = mDomain.getVpStateFactory().havoc(fnNode, resultState);
+						arrayAtIndexNodeCongruentce.add(fnNode);
+					} else {
+						
+						/*
+						 * To catch some remaining nodes for case 1 
+						 * 	-> check each argument, if at least one argument is not equal, do nothing.
+						 */
+						for (int i = 0; i < indexNodeList.size(); i++) {
+							for (final VPDomainSymmetricPair<EqNode> pair : resultState.getDisEqualitySet()) {
+								if (pair.contains(((EqFunctionNode)arrayAtIndexNode).getArgs().get(i))) {
+									if (pair.getOther(((EqFunctionNode)arrayAtIndexNode).getArgs().get(i))
+											.equals(fnNode.getArgs().get(i))) {
+										isContinue = false;
+									}
+								} 
+							}
+						}
+						
+						/*
+						 * Case 3: for those nodes that we are not sure if it's congruence with arrayAtIndexNode or not, 
+						 * 			-> havoc
+						 */
+						if (isContinue) {
+							resultState = mDomain.getVpStateFactory().havoc(fnNode, resultState);
+						}
+					}
+				}
+				
 				final Set<VPState> resultStates = new HashSet<>();
 				resultStates.addAll(mDomain.getVpStateFactory().addEquality(arrayAtIndexNode, valueNode, resultState));
+				for (EqNode congruentNode : arrayAtIndexNodeCongruentce) {
+					// TODO restore these node's information first?
+					resultStates.addAll(mDomain.getVpStateFactory().addEquality(congruentNode, valueNode, resultState));
+				}
 				return resultStates;
 			} else {
-				assert false : "TODO";// TODO
-				return null;
+				final Set<VPState> resultStates = new HashSet<>();
+				resultStates.addAll(mDomain.getVpStateFactory().addDisEquality(arrayAtIndexNode, valueNode, preState));
+				return resultStates;
 			}
 		} else {
 			/*
@@ -374,16 +445,35 @@ public class VPPostOperator implements IAbstractPostOperator<VPState, CodeBlock,
 			 */
 		
 			if (!negated) {
-//				TODO: treat essentially like an ArrayEquality (except for that one point)
-				assert false : "does this occur?";
+				final EqNode arrayAtIndexNode = mDomain.getPreAnalysis().getEqNode(mdStore.getStoreTerm(), tvToPvMap);
+				final EqNode valueNode = mDomain.getPreAnalysis().getEqNode(value, tvToPvMap);
+				
+				/*
+				 * treat essentially like an ArrayEquality (except for that one point)
+				 * for all points p except (i_1, .., i_n), we add 
+				 *   b[p] = a[p] to the state
+				 * and we add b[i_1, ..., i_n] = v
+				 */
+				final VPState resultState = mDomain.getVpStateFactory().havocArray(newArrayId, preState);
+				final Set<VPState> resultStates = new HashSet<>();
+				
+				for (EqFunctionNode oldArrayNode : mDomain.getArrayIdToEqFnNodeMap().getImage(oldArrayId)) { 
+					if (!oldArrayNode.equals(arrayAtIndexNode)) {
+						for (EqFunctionNode newArrayNode : mDomain.getArrayIdToEqFnNodeMap().getImage(newArrayId)) {
+							if (resultState.congruentIgnoreFunctionSymbol(oldArrayNode, newArrayNode)) {
+								resultStates.addAll(mDomain.getVpStateFactory().addEquality(oldArrayNode, newArrayNode, resultState));
+							}
+						}
+					} else {
+						for (EqFunctionNode newArrayNode : mDomain.getArrayIdToEqFnNodeMap().getImage(newArrayId)) {
+							if (resultState.congruentIgnoreFunctionSymbol(oldArrayNode, newArrayNode)) {
+								resultStates.addAll(mDomain.getVpStateFactory().addEquality(newArrayNode, valueNode, resultState));
+							}
+						}
+					}
+				}
 			
-			/*
-			 * for all points p except (i_1, .., i_n), we add 
-			 *   b[p] = a[p] to the state
-			 * and we add b[i_1, ..., i_n] = v
-			 */
-			
-				return null;
+				return resultStates;
 			} else {
 				/*
 				 * see the "negated" case in handleArrayEquality for an explanation
