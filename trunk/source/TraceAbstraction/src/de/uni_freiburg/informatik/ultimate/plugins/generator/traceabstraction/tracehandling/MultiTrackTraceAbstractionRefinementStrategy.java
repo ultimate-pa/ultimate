@@ -84,13 +84,14 @@ public class MultiTrackTraceAbstractionRefinementStrategy implements IRefinement
 		 */
 		Z3_SPBP,
 		/**
-		 * CVC4 with forward predicates.
+		 * CVC4 with forward and backward predicates.
 		 */
-		CVC4_FORWARD
+		CVC4_SPBP
 	}
 	
 	private static final String UNKNOWN_MODE = "Unknown mode: ";
-	private static final String LOGIC_FOR_EXTERNAL_SOLVERS = "AUFNIRA";
+	private static final String LOGIC_Z3 = "ALL";
+	private static final String LOGIC_CVC4 = "ALL_SUPPORTED";
 	private static final int SMTINTERPOL_TIMEOUT = 10_000;
 	// private static final String Z3_COMMAND = RcfgPreferenceInitializer.Z3_DEFAULT;
 	private static final String Z3_COMMAND = "z3 -smt2 -in SMTLIB2_COMPLIANT=true";
@@ -215,7 +216,7 @@ public class MultiTrackTraceAbstractionRefinementStrategy implements IRefinement
 		final List<Track> list = new ArrayList<>(3);
 		list.add(Track.SMTINTERPOL_TREE_INTERPOLANTS);
 		list.add(Track.Z3_SPBP);
-		list.add(Track.CVC4_FORWARD);
+		list.add(Track.CVC4_SPBP);
 		return list.iterator();
 	}
 	
@@ -244,10 +245,8 @@ public class MultiTrackTraceAbstractionRefinementStrategy implements IRefinement
 				interpolationTechnique = InterpolationTechnique.Craig_TreeInterpolation;
 				break;
 			case Z3_SPBP:
+			case CVC4_SPBP:
 				interpolationTechnique = InterpolationTechnique.FPandBP;
-				break;
-			case CVC4_FORWARD:
-				interpolationTechnique = InterpolationTechnique.ForwardPredicates;
 				break;
 			default:
 				throw new IllegalArgumentException(UNKNOWN_MODE + mode);
@@ -275,13 +274,13 @@ public class MultiTrackTraceAbstractionRefinementStrategy implements IRefinement
 				solverSettings = new Settings(false, true, Z3_COMMAND, 0, null, dumpSmtScriptToFile, pathOfDumpedScript,
 						baseNameOfDumpedScript);
 				solverMode = SolverMode.External_ModelsAndUnsatCoreMode;
-				logicForExternalSolver = LOGIC_FOR_EXTERNAL_SOLVERS;
+				logicForExternalSolver = LOGIC_CVC4;
 				break;
-			case CVC4_FORWARD:
+			case CVC4_SPBP:
 				solverSettings = new Settings(false, true, CVC4_COMMAND, 0, null, dumpSmtScriptToFile,
 						pathOfDumpedScript, baseNameOfDumpedScript);
 				solverMode = SolverMode.External_ModelsAndUnsatCoreMode;
-				logicForExternalSolver = LOGIC_FOR_EXTERNAL_SOLVERS;
+				logicForExternalSolver = LOGIC_Z3;
 				break;
 			default:
 				throw new IllegalArgumentException(
