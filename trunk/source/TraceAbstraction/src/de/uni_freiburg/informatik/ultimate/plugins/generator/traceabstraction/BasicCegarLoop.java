@@ -113,26 +113,19 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	protected static final boolean TRACE_HISTOGRAMM_BAILOUT = false;
 	protected static final int MINIMIZATION_TIMEOUT = 1_000;
 
-	protected HoareAnnotationFragments mHaf;
-
 	protected final PredicateFactoryRefinement mStateFactoryForRefinement;
 	protected final PredicateFactoryForInterpolantAutomata mPredicateFactoryInterpolantAutomata;
 	protected final PredicateFactoryResultChecking mPredicateFactoryResultChecking;
 
 	private final CegarAbsIntRunner mAbsIntRunner;
 	private final InterpolantAutomatonBuilderFactory mInterpolantAutomatonBuilderFactory;
-
-	protected boolean mFallbackToFpIfInterprocedural = true;
 	protected final InterpolationTechnique mInterpolation;
 	protected final InterpolantAutomaton mInterpolantAutomatonConstructionProcedure;
 	protected final UnsatCores mUnsatCores;
 	protected final boolean mUseLiveVariables;
 
 	protected final boolean mComputeHoareAnnotation;
-
 	protected final AssertCodeBlockOrder mAssertCodeBlocksIncrementally;
-
-	private INestedWordAutomatonSimple<WitnessEdge, WitnessNode> mWitnessAutomaton;
 
 	private final boolean mDoFaultLocalizationNonFlowSensitive;
 	private final boolean mDoFaultLocalizationFlowSensitive;
@@ -142,8 +135,12 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 
 	private final SearchStrategy mSearchStrategy;
 
-	protected IRefinementEngine<NestedWordAutomaton<CodeBlock, IPredicate>> mTraceCheckAndRefinementEngine;
 	private final RefinementStrategyFactory mRefinementStrategyFactory;
+
+	protected boolean mFallbackToFpIfInterprocedural = true;
+	protected HoareAnnotationFragments mHaf;
+	private INestedWordAutomatonSimple<WitnessEdge, WitnessNode> mWitnessAutomaton;
+	protected IRefinementEngine<NestedWordAutomaton<CodeBlock, IPredicate>> mTraceCheckAndRefinementEngine;
 
 	public BasicCegarLoop(final String name, final BoogieIcfgContainer rootNode, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
