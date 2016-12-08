@@ -87,7 +87,7 @@ public class ParameterPartition {
 					param2quantifiedVars.addPair(xjunct, tv);
 				}
 			}
-			uf.findAndConstructEquivalenceClassIfNeeded(xjunct);
+			uf.makeEquivalenceClass(xjunct);
 		}
 		
 		for (final TermVariable tv : quantifiedVars2param.getDomain()) {
