@@ -362,13 +362,6 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	public boolean process(final IElement root) {
 		initialize(root);
 
-		/*
-		 * test code for heap separation
-		 */
-		mLogger.warn("Heapseparator is run for debugging purposes - this should not happen during a normal Kojak run!");
-		final HsNonPlugin hnp = new HsNonPlugin(mServices, mCsToolkit, mLogger);
-		hnp.separate((BoogieIcfgContainer) root);
-
 		mGraphWriter.writeGraphAsImage(mGraphRoot, String.format("graph_%s_original", mGraphWriter._graphCounter));
 
 		final ImpRootNode originalGraphCopy = copyGraph(mGraphRoot);
